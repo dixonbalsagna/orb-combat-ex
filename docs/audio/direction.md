@@ -31,6 +31,8 @@ Please also listen to `audio/preview/` (or run the demo) and tell me whether the
 
 ## 3. Three music directions
 
+> **Superseded 2026-10-04.** Orb listened to these sketches, found them too spooky (a Halloween atmosphere), liked the hook of sketch A, and chose a tongue-in-cheek, riff-heavy speed-metal version, made by Suno from our prompts. See `suno-direction.md` (the sound, why these read spooky, the hand-back) and `suno-prompts.md`. The text below is kept as history, and its tempo, key, mode and instrument choices are replaced.
+
 Reference moods are described, not named. Each direction has the same job: follow the match arc in section 4 with tempo-locked layers, so it can escalate within a seven-minute fight.
 
 ### A. The Town Band (recommended)
@@ -72,6 +74,8 @@ Reference moods are described, not named. Each direction has the same job: follo
 **A, built on C's percussion, with B as the fallback.** A gives the game an identity that fits its two big ideas (the world answers; collateral has a cost) and is the most original. C makes A's percussion cheap and personal. B is what I can make with no other person and no third-party file, so it is the safe floor. Orb asked for sketches, so they exist: `audio/preview/sketch-a-town-band.wav`, `sketch-b-furnace.wav` and `sketch-c-kitchen-drums.wav` (30 s each, one shared arc and tune, see `audio/README.md`). All three are synthesised stand-ins, so judge the mood, the arrangement and the escalation, not the instrument realism: A's brass wants sampled brass and C wants real recordings.
 
 ## 4. The adaptive score
+
+> **Superseded in part, 2026-10-04.** The 96 BPM time base, the D mode ladder and the eight-stem plan below are replaced by the scheme in `suno-direction.md` section 4: full mixes at **180 BPM in the key of E** for the four acts of a fight (crossfaded on the bar line), a half-time last stand, a 90 BPM fold, stingers, and stems only as an optional upgrade. The mapping from game state to music (acts, the brink, the fold, the finisher) in the arc table still holds.
 
 One tempo, one grid, stems that come and go. Everything below is direction-agnostic: the stems are roles, and A, B or C fill them.
 
