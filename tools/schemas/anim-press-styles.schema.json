@@ -1,0 +1,725 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-press-styles",
+  "title": "anim.pressstyles/1",
+  "description": "data/anim/press_styles.json: how the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick. Used only with RenderAnim.press_styles (default off). Times are 60 Hz ticks. read: which style a blow plays when its beat names none, by how the press was read (\"\" for a hold: the profile it plays today). squash_pose: the pose whose legs, pelvis and spine are the squash, by fighter, and the bones it takes. styles: per style, the timing overrides, the flags, the squash, the stretch, the twist and the afterimages. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every squash pose is a pose; by_fighter keys are fighters of fighters.json; every bone is in profiles.json bone_lag; carry has a carry_ticks) are checked by tools/lib/xref-fight.js (pressstyles-*).",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "read",
+    "squash_pose",
+    "styles"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.pressstyles/1"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "false: no blow plays a style."
+    },
+    "read": {
+      "type": "object",
+      "required": [
+        "rhythm",
+        "mash",
+        "heavy",
+        "taps",
+        "hold",
+        "none"
+      ],
+      "properties": {
+        "rhythm": {
+          "enum": [
+            "tech",
+            "speed",
+            "heavy"
+          ],
+          "description": "The press log reads timed."
+        },
+        "mash": {
+          "enum": [
+            "tech",
+            "speed",
+            "heavy"
+          ]
+        },
+        "heavy": {
+          "enum": [
+            "tech",
+            "speed",
+            "heavy"
+          ]
+        },
+        "taps": {
+          "enum": [
+            "tech",
+            "speed",
+            "heavy"
+          ]
+        },
+        "hold": {
+          "enum": [
+            "",
+            "tech",
+            "speed",
+            "heavy"
+          ],
+          "description": "A hold that is not a heavy blow: \"\" plays the profile it plays today."
+        },
+        "none": {
+          "enum": [
+            "tech",
+            "speed",
+            "heavy"
+          ],
+          "description": "No read."
+        }
+      },
+      "description": "How a blow's style is chosen when its beat does not name one.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "squash_pose": {
+      "type": "object",
+      "required": [
+        "default",
+        "by_fighter",
+        "bones"
+      ],
+      "properties": {
+        "default": {
+          "description": "The squash pose used when the fighter has none of his own.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "by_fighter": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A fighter of fighters.json to his squash pose."
+        },
+        "bones": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "description": "The bones the squash takes from its pose."
+        }
+      },
+      "description": "The pose whose legs, pelvis and spine are the squash.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "styles": {
+      "type": "object",
+      "required": [
+        "tech",
+        "speed",
+        "heavy"
+      ],
+      "properties": {
+        "tech": {
+          "type": "object",
+          "required": [
+            "prof",
+            "alternate",
+            "carry",
+            "carry_ticks",
+            "squash",
+            "lean_back",
+            "back",
+            "stretch",
+            "twist",
+            "twist_ticks",
+            "ghosts"
+          ],
+          "properties": {
+            "prof": {
+              "type": "object",
+              "required": [
+                "solve_hz",
+                "snap_ticks",
+                "load_ease",
+                "load_ticks",
+                "hold_ticks",
+                "follow_ticks",
+                "recover_ticks",
+                "overshoot",
+                "lag"
+              ],
+              "properties": {
+                "solve_hz": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 120,
+                  "description": "The in-betweener's solve rate."
+                },
+                "snap_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of snap."
+                },
+                "load_ease": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "The wind-up's ease exponent."
+                },
+                "load_ticks": {
+                  "type": "object",
+                  "required": [
+                    "light",
+                    "heavy"
+                  ],
+                  "properties": {
+                    "light": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "heavy": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "description": "The wind-up's length by the blow's weight.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "hold_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The contact key is held this long before the follow-through starts (new in this file)."
+                },
+                "follow_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The follow-through."
+                },
+                "recover_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The return."
+                },
+                "overshoot": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far past the pose the limb swings."
+                },
+                "lag": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The loose body's lag."
+                }
+              },
+              "description": "Overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new).",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "alternate": {
+              "type": "boolean",
+              "description": "The striking limb alternates blow to blow."
+            },
+            "carry": {
+              "type": "boolean",
+              "description": "A blow that starts in the last one's follow or recover blends out of that pose instead of the guard."
+            },
+            "carry_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The blend's length when carry is on."
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How much of the squash pose's legs, pelvis and spine the wind-up takes (scaled by the blow's weight)."
+            },
+            "lean_back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Extra spine lean back at full squash, radians."
+            },
+            "back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The body drawn this far back at full squash, model units."
+            },
+            "stretch": {
+              "type": "object",
+              "required": [
+                "spine",
+                "rise",
+                "lead",
+                "ticks",
+                "smear_ticks"
+              ],
+              "properties": {
+                "spine": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Spine extension, radians."
+                },
+                "rise": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Hips up, model units."
+                },
+                "lead": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The body drawn this far ahead, model units."
+                },
+                "ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks to settle after contact."
+                },
+                "smear_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The ticks before contact that count as the smear frame."
+                }
+              },
+              "description": "The release.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "twist": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The loose body's spine yaw toward the striking side, radians."
+            },
+            "twist_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The twist's length."
+            },
+            "ghosts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "speed": {
+          "type": "object",
+          "required": [
+            "prof",
+            "alternate",
+            "carry",
+            "carry_ticks",
+            "squash",
+            "lean_back",
+            "back",
+            "stretch",
+            "twist",
+            "twist_ticks",
+            "ghosts"
+          ],
+          "properties": {
+            "prof": {
+              "type": "object",
+              "required": [
+                "solve_hz",
+                "snap_ticks",
+                "load_ease",
+                "load_ticks",
+                "hold_ticks",
+                "follow_ticks",
+                "recover_ticks",
+                "overshoot",
+                "lag"
+              ],
+              "properties": {
+                "solve_hz": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 120,
+                  "description": "The in-betweener's solve rate."
+                },
+                "snap_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of snap."
+                },
+                "load_ease": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "The wind-up's ease exponent."
+                },
+                "load_ticks": {
+                  "type": "object",
+                  "required": [
+                    "light",
+                    "heavy"
+                  ],
+                  "properties": {
+                    "light": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "heavy": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "description": "The wind-up's length by the blow's weight.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "hold_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The contact key is held this long before the follow-through starts (new in this file)."
+                },
+                "follow_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The follow-through."
+                },
+                "recover_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The return."
+                },
+                "overshoot": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far past the pose the limb swings."
+                },
+                "lag": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The loose body's lag."
+                }
+              },
+              "description": "Overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new).",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "alternate": {
+              "type": "boolean",
+              "description": "The striking limb alternates blow to blow."
+            },
+            "carry": {
+              "type": "boolean",
+              "description": "A blow that starts in the last one's follow or recover blends out of that pose instead of the guard."
+            },
+            "carry_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The blend's length when carry is on."
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How much of the squash pose's legs, pelvis and spine the wind-up takes (scaled by the blow's weight)."
+            },
+            "lean_back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Extra spine lean back at full squash, radians."
+            },
+            "back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The body drawn this far back at full squash, model units."
+            },
+            "stretch": {
+              "type": "object",
+              "required": [
+                "spine",
+                "rise",
+                "lead",
+                "ticks",
+                "smear_ticks"
+              ],
+              "properties": {
+                "spine": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Spine extension, radians."
+                },
+                "rise": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Hips up, model units."
+                },
+                "lead": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The body drawn this far ahead, model units."
+                },
+                "ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks to settle after contact."
+                },
+                "smear_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The ticks before contact that count as the smear frame."
+                }
+              },
+              "description": "The release.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "twist": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The loose body's spine yaw toward the striking side, radians."
+            },
+            "twist_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The twist's length."
+            },
+            "ghosts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "heavy": {
+          "type": "object",
+          "required": [
+            "prof",
+            "alternate",
+            "carry",
+            "carry_ticks",
+            "squash",
+            "lean_back",
+            "back",
+            "stretch",
+            "twist",
+            "twist_ticks",
+            "ghosts"
+          ],
+          "properties": {
+            "prof": {
+              "type": "object",
+              "required": [
+                "solve_hz",
+                "snap_ticks",
+                "load_ease",
+                "load_ticks",
+                "hold_ticks",
+                "follow_ticks",
+                "recover_ticks",
+                "overshoot",
+                "lag"
+              ],
+              "properties": {
+                "solve_hz": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 120,
+                  "description": "The in-betweener's solve rate."
+                },
+                "snap_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of snap."
+                },
+                "load_ease": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "The wind-up's ease exponent."
+                },
+                "load_ticks": {
+                  "type": "object",
+                  "required": [
+                    "light",
+                    "heavy"
+                  ],
+                  "properties": {
+                    "light": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "heavy": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "description": "The wind-up's length by the blow's weight.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "hold_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The contact key is held this long before the follow-through starts (new in this file)."
+                },
+                "follow_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The follow-through."
+                },
+                "recover_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The return."
+                },
+                "overshoot": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far past the pose the limb swings."
+                },
+                "lag": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The loose body's lag."
+                }
+              },
+              "description": "Overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new).",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "alternate": {
+              "type": "boolean",
+              "description": "The striking limb alternates blow to blow."
+            },
+            "carry": {
+              "type": "boolean",
+              "description": "A blow that starts in the last one's follow or recover blends out of that pose instead of the guard."
+            },
+            "carry_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The blend's length when carry is on."
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How much of the squash pose's legs, pelvis and spine the wind-up takes (scaled by the blow's weight)."
+            },
+            "lean_back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Extra spine lean back at full squash, radians."
+            },
+            "back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The body drawn this far back at full squash, model units."
+            },
+            "stretch": {
+              "type": "object",
+              "required": [
+                "spine",
+                "rise",
+                "lead",
+                "ticks",
+                "smear_ticks"
+              ],
+              "properties": {
+                "spine": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Spine extension, radians."
+                },
+                "rise": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Hips up, model units."
+                },
+                "lead": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The body drawn this far ahead, model units."
+                },
+                "ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks to settle after contact."
+                },
+                "smear_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The ticks before contact that count as the smear frame."
+                }
+              },
+              "description": "The release.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "twist": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The loose body's spine yaw toward the striking side, radians."
+            },
+            "twist_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The twist's length."
+            },
+            "ghosts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

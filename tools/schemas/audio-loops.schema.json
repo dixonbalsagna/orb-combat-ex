@@ -42,6 +42,11 @@
             "pattern": "^ogg/[A-Za-z0-9_.-]+\\.ogg$",
             "description": "The encoded game file under audio/music/."
           },
+          "original": {
+            "type": "string",
+            "pattern": "^incoming/[A-Za-z0-9_.-]+\\.(wav|mp3)$",
+            "description": "The untouched original download in audio/music/incoming/ that this file was made from."
+          },
           "tempo": {
             "type": "number",
             "exclusiveMinimum": 0,

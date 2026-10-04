@@ -1290,6 +1290,34 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     }
   }
 
+  // ---- anim press styles: the squash poses exist, the fighters and bones are real, a carry has a length ----
+  const pst = get('data/anim/press_styles.json');
+  if (isObj(pst)) {
+    const PS = 'data/anim/press_styles.json';
+    const allPosesPs = new Set();
+    const mainPs = get('data/anim/poses.json');
+    if (isObj(mainPs) && isObj(mainPs.poses)) for (const k of Object.keys(mainPs.poses)) allPosesPs.add(k);
+    for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.poses\.json$/)) { const d = get(rel); if (isObj(d) && isObj(d.poses)) for (const k of Object.keys(d.poses)) allPosesPs.add(k); }
+    const needPosePs = (id, at) => { if (allPosesPs.size && typeof id === 'string' && !allPosesPs.has(id)) err(PS, at, 'pressstyles-pose', `squash pose "${id}" is not in poses.json nor a wave's poses file`); };
+    if (isObj(pst.squash_pose)) {
+      needPosePs(pst.squash_pose.default, '/squash_pose/default');
+      const fgsPs = get('data/anim/fighters.json');
+      const fidsPs = isObj(fgsPs) && isObj(fgsPs.fighters) ? Object.keys(fgsPs.fighters).filter((k) => !k.startsWith('_')) : [];
+      for (const [fid, pid] of Object.entries(isObj(pst.squash_pose.by_fighter) ? pst.squash_pose.by_fighter : {})) {
+        if (fid.startsWith('_')) continue;
+        if (fidsPs.length && !fidsPs.includes(fid)) err(PS, `/squash_pose/by_fighter/${esc(fid)}`, 'pressstyles-fighter', `"${fid}" is not a fighter of fighters.json (${fidsPs.join(', ')})`);
+        needPosePs(pid, `/squash_pose/by_fighter/${esc(fid)}`);
+      }
+      const profPs = get('data/anim/profiles.json');
+      const bonesPs = isObj(profPs) && isObj(profPs.bone_lag) ? Object.keys(profPs.bone_lag) : [];
+      if (bonesPs.length && Array.isArray(pst.squash_pose.bones)) pst.squash_pose.bones.forEach((b, i) => { if (typeof b === 'string' && !bonesPs.includes(b)) err(PS, `/squash_pose/bones/${i}`, 'pressstyles-bone', `bone "${b}" is not in profiles.json bone_lag`); });
+    }
+    for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
+      if (sid.startsWith('_') || !isObj(st)) continue;
+      if (st.carry === true && typeof st.carry_ticks === 'number' && st.carry_ticks === 0) err(PS, `/styles/${esc(sid)}/carry_ticks`, 'pressstyles-carry', `style "${sid}" carries into the next blow, but carry_ticks is 0, so there is no blend`, 'warning');
+    }
+  }
+
   // ---- fighter ladder: the beam tables never decrease with the tier ----
   for (const rel of docsFor(/^data\/fighters\/[^/]+\/ladder\.json$/)) {
     const lad = get(rel);

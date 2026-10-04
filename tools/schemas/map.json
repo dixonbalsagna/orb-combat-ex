@@ -260,6 +260,10 @@
       "schema": "anim-pairlive.schema.json"
     },
     {
+      "match": "data/anim/press_styles.json",
+      "schema": "anim-press-styles.schema.json"
+    },
+    {
       "match": "data/anim/target_poles.json",
       "schema": "anim-target-poles.schema.json"
     },

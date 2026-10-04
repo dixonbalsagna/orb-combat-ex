@@ -50495,6 +50495,1032 @@
         "rule": "minProperties",
         "pointer": "/cues/M02/stems"
       }
+    },
+    {
+      "id": "anim-pressstyles-live-valid",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/enabled": true
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pressstyles-schema-version",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/schema": "anim.pressstyles/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-pressstyles-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-pressstyles-underscore-key-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-enabled-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "anim-pressstyles-disabled-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/enabled": false
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-read-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/read/none"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/read"
+      }
+    },
+    {
+      "id": "anim-pressstyles-read-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/read/flick": "speed"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/read/flick"
+      }
+    },
+    {
+      "id": "anim-pressstyles-read-style-enum",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/read/mash": "slow"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/read/mash"
+      }
+    },
+    {
+      "id": "anim-pressstyles-read-hold-empty-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/read/hold": ""
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-read-hold-style-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/read/hold": "heavy"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-read-none-empty-not-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/read/none": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/read/none"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/squash_pose/bones"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/squash_pose"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-default-shape",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/squash_pose/default": "Brace"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/squash_pose/default"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-default-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/squash_pose/default": "nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-pose",
+        "pointer": "/squash_pose/default"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-fighter-pose-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/squash_pose/by_fighter/protagonist": "pn.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-pose",
+        "pointer": "/squash_pose/by_fighter/protagonist"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-fighter-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/squash_pose/by_fighter/nobody": "brace"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-fighter",
+        "pointer": "/squash_pose/by_fighter/nobody"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-fighter-note-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/squash_pose/by_fighter/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-bones-empty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/squash_pose/bones": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/squash_pose/bones"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-bones-duplicate",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/squash_pose/bones": [
+              "pelvis",
+              "pelvis"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/squash_pose/bones/1"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-pose-bone-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/squash_pose/bones": [
+              "pelvis",
+              "tail_9"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-bone",
+        "pointer": "/squash_pose/bones/1"
+      }
+    },
+    {
+      "id": "anim-pressstyles-style-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles/speed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles"
+      }
+    },
+    {
+      "id": "anim-pressstyles-style-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/slow": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/slow"
+      }
+    },
+    {
+      "id": "anim-pressstyles-style-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles/heavy/ghosts"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/heavy"
+      }
+    },
+    {
+      "id": "anim-pressstyles-style-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/sparkle": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/heavy/sparkle"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles/heavy/prof/lag"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/heavy/prof"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/shiver": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/heavy/prof/shiver"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-solve-hz-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/solve_hz": 500
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/heavy/prof/solve_hz"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-snap-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/snap_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/prof/snap_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-load-ease-zero",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/load_ease": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/styles/heavy/prof/load_ease"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-load-ticks-zero",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/load_ticks/light": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/prof/load_ticks/light"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-load-ticks-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles/heavy/prof/load_ticks/heavy"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/heavy/prof/load_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-hold-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/hold_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/prof/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-hold-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/hold_ticks": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-prof-follow-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/follow_ticks": 8.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/heavy/prof/follow_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-recover-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/recover_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/prof/recover_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-overshoot-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/overshoot": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/prof/overshoot"
+      }
+    },
+    {
+      "id": "anim-pressstyles-prof-lag-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/prof/lag": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/prof/lag"
+      }
+    },
+    {
+      "id": "anim-pressstyles-alternate-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/alternate": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/heavy/alternate"
+      }
+    },
+    {
+      "id": "anim-pressstyles-carry-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/carry": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/heavy/carry"
+      }
+    },
+    {
+      "id": "anim-pressstyles-carry-ticks-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/carry_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/carry_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-carry-without-ticks-warns",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/speed/carry_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-carry",
+        "pointer": "/styles/speed/carry_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-carry-off-with-ticks-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/carry_ticks": 5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-squash-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/squash": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/heavy/squash"
+      }
+    },
+    {
+      "id": "anim-pressstyles-squash-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/squash": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/squash"
+      }
+    },
+    {
+      "id": "anim-pressstyles-lean-back-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/lean_back": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/lean_back"
+      }
+    },
+    {
+      "id": "anim-pressstyles-back-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/back": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/back"
+      }
+    },
+    {
+      "id": "anim-pressstyles-back-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/back": "far"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/heavy/back"
+      }
+    },
+    {
+      "id": "anim-pressstyles-stretch-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles/heavy/stretch/lead"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/heavy/stretch"
+      }
+    },
+    {
+      "id": "anim-pressstyles-stretch-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/stretch/wobble": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/heavy/stretch/wobble"
+      }
+    },
+    {
+      "id": "anim-pressstyles-stretch-spine-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/stretch/spine": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/stretch/spine"
+      }
+    },
+    {
+      "id": "anim-pressstyles-stretch-rise-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/stretch/rise": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/stretch/rise"
+      }
+    },
+    {
+      "id": "anim-pressstyles-stretch-ticks-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/stretch/ticks": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/heavy/stretch/ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-stretch-smear-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/stretch/smear_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/stretch/smear_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-twist-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/speed/twist": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/speed/twist"
+      }
+    },
+    {
+      "id": "anim-pressstyles-twist-ticks-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/speed/twist_ticks": 7.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/speed/twist_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-ghosts-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/ghosts": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-ghosts-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/ghosts": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/heavy/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-ghosts-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/ghosts": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-original-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/original": "incoming/M02_fight-1_t01_180bpm_E.wav"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-original-mp3-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/original": "incoming/M02_fight-1_t01.mp3"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-original-absent-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M08/gain_db": -6
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-original-folder",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/original": "ogg/M02.wav"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cues/M02/original"
+      }
+    },
+    {
+      "id": "audio-loops-original-extension",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/original": "incoming/M02.flac"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cues/M02/original"
+      }
+    },
+    {
+      "id": "audio-loops-original-type",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/original": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/cues/M02/original"
+      }
     }
   ],
   "text": [
