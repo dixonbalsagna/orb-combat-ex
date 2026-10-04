@@ -12,7 +12,7 @@ const HELP_STEP: float = 15.0   # the help lines' spacing
 const SYSTEM_KEYS: Array = [
 	"N new match", "T/Y toggle AI", "P pause", "F1 how to play", "F2 old HUD", "F3 perf", "F4 feed",
 	"F6 cracks (Shift: destruction, Ctrl: embers)", "F7 flashes", "F8 legacy shapes",
-	"F9 split (Alt: camera angle, Ctrl: hole or stubs)", "F10 split vs AI", "F11 reduced motion",
+	"F9 split (Alt: camera angle, Ctrl: hole or stubs)", "F10 split vs AI", "F11 reduced motion", "Shift+F7 press styles",
 ]
 
 var main: Node       # the Main node (render/core/main.gd)

@@ -1,0 +1,33 @@
+--- a/render/core/main.gd	2026-10-04 16:43:46.365649300 -0700
++++ b/render/core/main.gd	2026-10-04 16:43:46.538523400 -0700
+@@ -122,6 +122,8 @@
+ 	host = SimHost.new()
+ 	host.vfx.cracks_enabled = true     # Orb asked for cracked ground; VFX's destruction stays off until B2's events (F6)
+ 	host.vfx.embers_enabled = true     # VFX's scorch embers, in place of ImpactFx's scorch sparks (Ctrl+F6)
++	RenderAnim.is_enabled()            # reads --press-styles / --no-press-styles
++	host.vfx.press_enabled = RenderAnim.press_styles   # one switch for the press styles: the body motion (Animation) and the looks (VFX) start off together, Shift+F7 flips both
+ 	if args.has("novfx"):
+ 		host.vfx.enabled = false
+ 	if args.has("vfx-quality"):
+@@ -880,6 +882,10 @@
+ 			if code == "F11":
+ 				ui_hud.set_option("reduced_motion", not bool(ui_hud.opts.get("reduced_motion", false)))
+ 				return
++			if code == "F7" and e.shift_pressed:
++				RenderAnim.press_styles = not RenderAnim.press_styles
++				host.vfx.press_enabled = RenderAnim.press_styles
++				return
+ 			if code == "F7":
+ 				flashes_on = not flashes_on
+ 				for pw in all_panes():
+--- a/render/core/hud.gd	2026-10-04 16:43:46.464080600 -0700
++++ b/render/core/hud.gd	2026-10-04 16:43:46.539523500 -0700
+@@ -12,7 +12,7 @@
+ const SYSTEM_KEYS: Array = [
+ 	"N new match", "T/Y toggle AI", "P pause", "F1 how to play", "F2 old HUD", "F3 perf", "F4 feed",
+ 	"F6 cracks (Shift: destruction, Ctrl: embers)", "F7 flashes", "F8 legacy shapes",
+-	"F9 split (Alt: camera angle, Ctrl: hole or stubs)", "F10 split vs AI", "F11 reduced motion",
++	"F9 split (Alt: camera angle, Ctrl: hole or stubs)", "F10 split vs AI", "F11 reduced motion", "Shift+F7 press styles",
+ ]
+ 
+ var main: Node       # the Main node (render/core/main.gd)

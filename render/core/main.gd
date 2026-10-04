@@ -122,6 +122,8 @@ func _ready() -> void:
 	host = SimHost.new()
 	host.vfx.cracks_enabled = true     # Orb asked for cracked ground; VFX's destruction stays off until B2's events (F6)
 	host.vfx.embers_enabled = true     # VFX's scorch embers, in place of ImpactFx's scorch sparks (Ctrl+F6)
+	RenderAnim.is_enabled()            # reads --press-styles / --no-press-styles
+	host.vfx.press_enabled = RenderAnim.press_styles   # one switch for the press styles: the body motion (Animation) and the looks (VFX) start off together, Shift+F7 flips both
 	if args.has("novfx"):
 		host.vfx.enabled = false
 	if args.has("vfx-quality"):
@@ -879,6 +881,10 @@ func _unhandled_input(e: InputEvent) -> void:
 				return
 			if code == "F11":
 				ui_hud.set_option("reduced_motion", not bool(ui_hud.opts.get("reduced_motion", false)))
+				return
+			if code == "F7" and e.shift_pressed:
+				RenderAnim.press_styles = not RenderAnim.press_styles
+				host.vfx.press_enabled = RenderAnim.press_styles
 				return
 			if code == "F7":
 				flashes_on = not flashes_on
