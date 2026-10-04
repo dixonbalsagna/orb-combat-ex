@@ -3,7 +3,7 @@
 // slot 0 on odd seeds and slot 1 on even ones, one Godot process per matchup, at most 3 at a time (the machine rule: each
 // shows as two Windows processes). Prints a table of win rates (Wilson 95% intervals), damage per exchange, launches earned,
 // turn-taking and how the presses read, with Game Design's bands (docs/design/agency-pass.md, "What QA measures").
-//   node qa/timing-edge.js [--matches=40] [--jobs=3] [--plan=core|sweep|energy|flow|blast|all] [--seed=1] [--md=file] [--json=file]
+//   node qa/timing-edge.js [--matches=40] [--jobs=3] [--plan=core|sweep|energy|flow|blast|mirror|all] [--seed=1] [--md=file] [--json=file]
 // Until the agency pass is built the sim has no timing rules, so every row should read about 50%: that is the baseline this
 // reports today, and the same command measures the edge once the rules land.
 const { spawn } = require('child_process');
@@ -77,11 +77,14 @@ const CORE = [
   ['T10', P.timed, 'ai:level=hard', 'timed against the hard AI (agency pass 14)', 40, 60],
   ['T9', P.masher, P.ai, 'masher against the medium AI (control-rules 6: 35 to 50%)', 35, 50],
 ];
+// The four same-script mirrors at a size that can tell a side effect from noise (run with --matches=200): both players read the same script,
+// so anything but 50% is the slot or the spawn side. (At 40 matches the interval is plus or minus 15 points.)
+const MIRRORS = [CORE[3], CORE[4], FLOW[3], FLOW[4]];
 const SWEEP = [0, 20, 40, 60, 80, 100].flatMap(a => [
   ['A' + a + 'm', acc(a), P.masher, `accuracy ${a}% against a masher`, null, null],
   ['A' + a + 's', acc(a), P.styleOnly, `accuracy ${a}% against a style-only player`, null, null],
 ]);
-const MATCHUPS = PLAN === 'core' ? CORE : PLAN === 'sweep' ? SWEEP : PLAN === 'energy' ? ENERGY : PLAN === 'flow' ? FLOW : PLAN === 'blast' ? BLASTAI : [...CORE, ...SWEEP, ...ENERGY, ...FLOW];
+const MATCHUPS = PLAN === 'core' ? CORE : PLAN === 'sweep' ? SWEEP : PLAN === 'energy' ? ENERGY : PLAN === 'flow' ? FLOW : PLAN === 'blast' ? BLASTAI : PLAN === 'mirror' ? MIRRORS : [...CORE, ...SWEEP, ...ENERGY, ...FLOW];
 
 function run(m) {
   const g = godot();
