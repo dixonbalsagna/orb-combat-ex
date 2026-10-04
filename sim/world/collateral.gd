@@ -13,7 +13,7 @@ class_name WorldCollateral
 
 const WS: float = SimConst.WS
 const POP_REF: float = 425.0
-const WINDOW_S: int = 60
+const WINDOW_S: int = 61   # 61 one-second buckets: the current second and the 60 before it, so a kill never leaves the window less than 60 s after it (60 freed a second's kills up to a second early: docs/world/collateral-caps.md section 12)
 ## Budget per rolling 60 s and ceiling on the cumulative total, by tier 1 to 4, as shares of the starting population.
 const BUDGET: Array = [0.02, 0.04, 0.08, 0.15]
 const CEILING: Array = [0.10, 0.30, 0.60, 0.90]
