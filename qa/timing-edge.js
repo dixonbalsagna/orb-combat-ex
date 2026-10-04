@@ -3,7 +3,7 @@
 // slot 0 on odd seeds and slot 1 on even ones, one Godot process per matchup, at most 3 at a time (the machine rule: each
 // shows as two Windows processes). Prints a table of win rates (Wilson 95% intervals), damage per exchange, launches earned,
 // turn-taking and how the presses read, with Game Design's bands (docs/design/agency-pass.md, "What QA measures").
-//   node qa/timing-edge.js [--matches=40] [--jobs=3] [--plan=core|sweep|energy|all] [--seed=1] [--md=file] [--json=file]
+//   node qa/timing-edge.js [--matches=40] [--jobs=3] [--plan=core|sweep|energy|flow|all] [--seed=1] [--md=file] [--json=file]
 // Until the agency pass is built the sim has no timing rules, so every row should read about 50%: that is the baseline this
 // reports today, and the same command measures the edge once the rules land.
 const { spawn } = require('child_process');
@@ -44,6 +44,19 @@ const ENERGY = [
   ['E5s', 'tapper' + SLOW, P.timed, 'the slow mix against a rush-heavy timed script (agency pass 15.6: 40 to 60%; and finishes at least 95%)', 40, 60, 95],
   ['E5', 'tapper' + BLAST, P.timed, 'a blast-heavy timed script against a rush-heavy timed script (agency pass 15.6: 40 to 60%; and finishes at least 95%)', 40, 60, 95],
 ];
+// The flow rows (agency pass 18 and 20: a heavy after a landed strike is the string's ender and launches only at flow 3 or more; the stick earner
+// launches a lone heavy at any flow). The scripts above push the stick on every heavy (stick=1), so their launches never wait for the flow and a
+// timed player has no edge to earn through it. These rows play the same scripts without the stick, so the flow is the only way to a launch.
+const NS = ':forms=1';
+const nsP = { masher: 'masher' + NS, styleOnly: 'tapper:acc=0:mix=LLH' + NS, timed: 'tapper:acc=80:win=4:mix=LLH' + NS, timedMash: 'tapper:win=2:jit=0:acc=80:mix=L' + NS };
+const FLOW = [
+  ['F1', nsP.timed, nsP.masher, 'no stick: timed against a masher', 72, 82],
+  ['F2', nsP.timed, nsP.styleOnly, 'no stick: timed against a style-only player', 62, 70],
+  ['F3', nsP.styleOnly, nsP.masher, 'no stick: style-only against a masher', 55, 62],
+  ['F4', nsP.timed, nsP.timed, 'no stick: mirror, both timed', 45, 55],
+  ['F5', nsP.styleOnly, nsP.styleOnly, 'no stick: mirror, both style-only', 45, 55],
+  ['F6', nsP.timedMash, nsP.masher, 'no stick: timed mash (within the blur window, 2 ticks) against a plain mash', 62, 82],
+];
 const acc = a => `tapper:acc=${a}:win=4:mix=LLH${F}`;
 
 // id, A, B, what, band for A's win share (lo, hi in percent; null: reported only), and optionally the least share of matches that must end in a KO before the cap (percent)
@@ -63,7 +76,7 @@ const SWEEP = [0, 20, 40, 60, 80, 100].flatMap(a => [
   ['A' + a + 'm', acc(a), P.masher, `accuracy ${a}% against a masher`, null, null],
   ['A' + a + 's', acc(a), P.styleOnly, `accuracy ${a}% against a style-only player`, null, null],
 ]);
-const MATCHUPS = PLAN === 'core' ? CORE : PLAN === 'sweep' ? SWEEP : PLAN === 'energy' ? ENERGY : [...CORE, ...SWEEP, ...ENERGY];
+const MATCHUPS = PLAN === 'core' ? CORE : PLAN === 'sweep' ? SWEEP : PLAN === 'energy' ? ENERGY : PLAN === 'flow' ? FLOW : [...CORE, ...SWEEP, ...ENERGY, ...FLOW];
 
 function run(m) {
   const g = godot();
