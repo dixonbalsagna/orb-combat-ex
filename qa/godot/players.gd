@@ -40,6 +40,13 @@ class Pl:
 	var pat_i: int = 0
 	var contacts: Array = []       # contact ticks (live ticks) of the running exchange's blows, both sides
 	var seen_ex = null
+	var blows: Array = []          # a tapper's own pending blows: {b: the beat, off: ticks from the contact to press at, done}
+	var struggle_cb = null         # the contest beat of the struggle this player is pressing through
+	var struggle_off: Array = []
+	var struggle_done: Array = []
+	var d_in: int = 0              # presses made inside an exchange, as the director graded them (its own beat, not ours)
+	var d_on4: int = 0             # ... within beatHalf (4) ticks of a blow's contact (the combo's timed press)
+	var d_on2: int = 0             # ... within blurBeatHalf (2) ticks (the perfect blur's beat)
 	var beat_seen: int = 0         # beats of the running exchange already read for contacts (links add beats as they are taken)
 	var next_idle: int = 0
 	var presses: int = 0
@@ -89,6 +96,7 @@ class Pl:
 	func _plan_exchange(S, slot: int, lt: int) -> void:
 		plan.clear()
 		contacts.clear()
+		blows.clear()
 		beat_seen = 0
 		var ex = S.dirS.ex
 		if ex == null:
@@ -122,8 +130,57 @@ class Pl:
 				var hold_t: int = int(P.get("hold", "16"))
 				if contact + off - hold_t > lt:
 					plan.append({"tick": contact + off - hold_t, "k": 1 if String(P.get("kind", "H")) == "H" else 0, "rel": contact + off})
+			elif kind == "tapper":
+				blows.append({"b": b, "off": off, "done": false})   # pressed against the director's own contact tick, recomputed every call
 			else:
 				plan.append({"tick": maxi(lt + 1, contact + off), "k": _kind_at(pattern)})
+
+	## The steps until beat b runs, counted as the director counts them (DirAlchemy._blows): the exchange's clock gains a tick,
+	## then every beat at or before it runs. A press sent now is read in the first of those steps.
+	func _steps_to(ex, b) -> int:
+		var n: int = 0
+		var tt: float = ex.t
+		while n <= 40 and (n == 0 or tt < b.t):
+			tt += SimConst.DT
+			n += 1
+		return n
+
+	## The finisher's struggle (Combat's struggle scoring, the contest beat's args): the fighter on the brink presses on the
+	## struggle's beats, each within the half-width on the beat with the script's accuracy. Returns true when to press now.
+	func _struggle_press(S, slot: int) -> bool:
+		var ex = S.dirS.ex
+		if ex == null or int(P.get("struggle", "1")) == 0:
+			return false
+		var cb = null
+		for b in ex.beats:
+			if not b.done and b.op == "contest":
+				cb = b
+				break
+		if cb == null or not cb.args.has("sOpen"):
+			return false
+		if (ex.D if cb.args.w == "A" else ex.A) != S.fighters[slot]:
+			return false
+		var st: Dictionary = DirData.struggle()
+		if st.is_empty():
+			return false
+		if struggle_cb != cb:
+			struggle_cb = cb
+			struggle_off.clear()
+			struggle_done.clear()
+			var win: int = mini(int(P.get("win", str(half))), int(st.halfWidthTicks))
+			var acc: float = float(P.get("acc", "100")) / 100.0
+			for i in range(st.beatTicks.size()):
+				struggle_done.append(false)
+				if rng.randf() < acc:
+					struggle_off.append(rng.randi_range(-win, win))
+				else:
+					struggle_off.append((1 if rng.randf() < 0.5 else -1) * rng.randi_range(int(st.halfWidthTicks) + 2, int(st.halfWidthTicks) + 8))
+		var rel: float = (S.T + SimConst.DT - float(cb.args.sOpen)) * 60.0   # the press is read in the next step
+		for i in range(st.beatTicks.size()):
+			if not struggle_done[i] and rel >= float(st.beatTicks[i]) + float(struggle_off[i]):
+				struggle_done[i] = true
+				return true
+		return false
 
 	## The press to send this call: -1 none, 0 light, 1 heavy. `hold` is set when the button stays down.
 	func decide(S, slot: int, lt: int) -> int:
@@ -163,22 +220,40 @@ class Pl:
 					_plan_exchange(S, slot, lt)
 				elif S.dirS.ex != null and int(P.get("follow", "1")) != 0:
 					_read_beats(S, slot, lt)
-				if S.dirS.ex != null and not plan.is_empty():
-					if int(plan[0]["tick"]) <= lt:
-						var k: int = int(plan[0]["k"])
-						plan.pop_front()
-						return k
-				elif lt >= next_idle and (S.dirS.ex == null or plan.is_empty()):
-					if S.dirS.ex == null:
-						return _kind_at(String(P.get("mix", "L")))
+				var ex = S.dirS.ex
+				if ex != null:
+					if _struggle_press(S, slot):
+						return 0
+					for e in blows:
+						if e.done:
+							continue
+						if e.b.done:
+							e.done = true
+							continue
+						if _steps_to(ex, e.b) <= 1 - int(e.off):
+							e.done = true
+							return _kind_at(String(P.get("mix", "L")))
+				elif lt >= next_idle:
+					return _kind_at(String(P.get("mix", "L")))
 		return -1
 
 	## The press went through at live tick lt (kind k): log it, read the beat, classify.
-	func pressed(k: int, lt: int, held: bool) -> void:
+	func pressed(k: int, lt: int, held: bool, S = null, slot: int = -1) -> void:
 		var beat: int = SimPressRead.beat_offset(lt, contacts)
 		SimPressRead.push(log, k, 0, lt, beat)
 		last_press = lt
 		presses += 1
+		if S != null and slot >= 0 and S.dirS.ex != null:
+			var f = S.fighters[slot]
+			var cnt: int = int(f.act.dirI[DirAlchemy.COUNT])
+			if cnt > 0:
+				var db: int = int(f.act.dirI[DirAlchemy.BEAT0 + (cnt - 1) % DirAlchemy.RING])
+				if db != SimPressRead.NO_BEAT:
+					d_in += 1
+					if absi(db) <= half:
+						d_on4 += 1
+					if absi(db) <= int(SimPressRead.params().get("blurBeatHalf", 2)):
+						d_on2 += 1
 		if beat != SimPressRead.NO_BEAT:
 			in_beat_window += 1
 			if absi(beat) <= half:
@@ -245,12 +320,12 @@ func _med(a: Array) -> float:
 
 
 func _blank() -> Dictionary:
-	return {"presses": 0, "onBeat": 0, "inExchange": 0, "styles": {}, "exchanges": 0, "launchEnds": 0, "otherEnds": 0, "damage": 0.0, "hits": 0, "heavyHits": 0, "launchesEarned": 0, "launchesTaken": 0, "airCatches": 0, "alternations": 0, "pairs": 0, "flowMax": 0, "flowTo3": 0, "end_launch": 0, "end_knockback": 0, "end_continue": 0, "strings5": 0, "locks5": 0}
+	return {"presses": 0, "onBeat": 0, "inExchange": 0, "styles": {}, "exchanges": 0, "launchEnds": 0, "otherEnds": 0, "damage": 0.0, "hits": 0, "heavyHits": 0, "launchesEarned": 0, "launchesTaken": 0, "airCatches": 0, "alternations": 0, "pairs": 0, "flowMax": 0, "flowTo3": 0, "end_launch": 0, "end_knockback": 0, "end_continue": 0, "strings5": 0, "locks5": 0, "dIn": 0, "dOn4": 0, "dOn2": 0, "strOpens": 0, "strHits": 0, "strStrays": 0}
 
 
 func _report(s: Dictionary, n: int) -> Dictionary:
 	var ex: float = maxf(1.0, float(s.exchanges))
-	return {"pressesPerMatch": snappedf(float(s.presses) / n, 0.1), "onBeatShare": snappedf(float(s.onBeat) / maxf(1.0, float(s.inExchange)), 0.001), "styles": s.styles, "exchangesPerMatch": snappedf(float(s.exchanges) / n, 0.1), "launchShareOfExchanges": snappedf(float(s.launchEnds) / ex, 0.001), "damagePerMatch": snappedf(float(s.damage) / n, 1.0), "damagePerExchange": snappedf(float(s.damage) / ex, 0.1), "hitsPerMatch": snappedf(float(s.hits) / n, 0.1), "heavyHitsPerMatch": snappedf(float(s.heavyHits) / n, 0.1), "launchesEarnedPerMatch": snappedf(float(s.launchesEarned) / n, 0.1), "launchesTakenPerMatch": snappedf(float(s.launchesTaken) / n, 0.1), "endsLaunch": s.end_launch, "endsKnockback": s.end_knockback, "endsContinue": s.end_continue, "flowMax": s.flowMax, "flowTo3PerMatch": snappedf(float(s.flowTo3) / n, 0.1), "blurStrings": s.strings5, "blurLocked": s.locks5, "blurLockShare": snappedf(float(s.locks5) / maxf(1.0, float(s.strings5)), 0.001)}
+	return {"pressesPerMatch": snappedf(float(s.presses) / n, 0.1), "onBeatShare": snappedf(float(s.onBeat) / maxf(1.0, float(s.inExchange)), 0.001), "styles": s.styles, "exchangesPerMatch": snappedf(float(s.exchanges) / n, 0.1), "launchShareOfExchanges": snappedf(float(s.launchEnds) / ex, 0.001), "damagePerMatch": snappedf(float(s.damage) / n, 1.0), "damagePerExchange": snappedf(float(s.damage) / ex, 0.1), "hitsPerMatch": snappedf(float(s.hits) / n, 0.1), "heavyHitsPerMatch": snappedf(float(s.heavyHits) / n, 0.1), "launchesEarnedPerMatch": snappedf(float(s.launchesEarned) / n, 0.1), "launchesTakenPerMatch": snappedf(float(s.launchesTaken) / n, 0.1), "endsLaunch": s.end_launch, "endsKnockback": s.end_knockback, "endsContinue": s.end_continue, "flowMax": s.flowMax, "flowTo3PerMatch": snappedf(float(s.flowTo3) / n, 0.1), "blurStrings": s.strings5, "blurLocked": s.locks5, "blurLockShare": snappedf(float(s.locks5) / maxf(1.0, float(s.strings5)), 0.001), "directorOnBeat4": snappedf(float(s.dOn4) / maxf(1.0, float(s.dIn)), 0.001), "directorOnBeat2": snappedf(float(s.dOn2) / maxf(1.0, float(s.dIn)), 0.001), "directorPresses": s.dIn, "struggles": s.strOpens, "struggleHits": s.strHits, "struggleStrays": s.strStrays}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
@@ -323,7 +398,7 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array) -
 			if sent[slot] >= 0:
 				if stepped:
 					p.carry = -1
-					p.pressed(sent[slot], lt, p.kind == "holder")
+					p.pressed(sent[slot], lt, p.kind == "holder", S, slot)
 				else:
 					p.carry = sent[slot]
 		# exchange endings and per-player counts, from this tick's events
@@ -343,6 +418,14 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array) -
 					brink_t[int(e.actor)] = S.T
 			elif e.type == "ko":
 				ko_t = S.T
+			elif e.type == "struggle_press":
+				var sw = sums[_idx(pl, by_slot[int(e.actor)])]
+				if str(e.get("kind")) == "hit":
+					sw.strHits += 1
+				else:
+					sw.strStrays += 1
+			elif e.type == "cue" and str(e.get("kind")) == "struggle":
+				sums[_idx(pl, by_slot[int(e.actor)])].strOpens += 1
 			elif e.type == "cue" and str(e.get("kind")) == "blur_locked" and int(e.actor) == ex_attacker and cur_ex != null:
 				ex_locked = true
 			elif e.type == "exchange_end":   # slice 3: the director's ending of this player's exchange (the actor is the attacker)
@@ -402,6 +485,9 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array) -
 		sums[i].presses += pl[i].presses
 		sums[i].onBeat += pl[i].on_beat
 		sums[i].inExchange += pl[i].in_beat_window
+		sums[i].dIn += pl[i].d_in
+		sums[i].dOn4 += pl[i].d_on4
+		sums[i].dOn2 += pl[i].d_on2
 		for st in pl[i].styles:
 			sums[i].styles[st] = int(sums[i].styles.get(st, 0)) + int(pl[i].styles[st])
 	SimCore.dispose(S)

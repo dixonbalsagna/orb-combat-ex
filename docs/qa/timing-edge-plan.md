@@ -16,9 +16,9 @@ Owner: QA and Balance. Orb: "lets run balance tests on your recommendation, cons
 
 | Style | Untimed | Timed (80% of beats) |
 | :--- | :--- | :--- |
-| Blur | `masher` | `tapper:win=3:acc=80:mix=L` (a steady mash within 3 ticks of the beat) |
+| Blur | `masher` | `tapper:win=2:jit=0:acc=80:mix=L` (a steady mash within the blur's 2 ticks of the director's contact) |
 | Power | `holder` | `holder:timed=1:acc=80:win=6` (released within 6 ticks of the flash) |
-| Combo | `tapper:acc=0:mix=LLH` (the style-only player: a sensible mix, never on the beat) | `tapper:acc=80:win=4:mix=LLH` (taps within 4 ticks of a blow landing) |
+| Combo | `tapper:acc=0:mix=LLH` (the style-only player: a sensible mix, never on the beat) | `tapper:acc=80:win=4:jit=0:mix=LLH` (taps within 4 ticks of the director's contact for a blow) |
 
 The classifier can hold a player to the style it meant: the harness prints how many presses read as rhythm, hold, mash or taps, and the share on the beat, so a script that is not doing what it claims shows up.
 
@@ -90,3 +90,20 @@ node qa/timing-edge.js --matches=100 --plan=all --md=docs/qa/timing-edge-results
 ```
 
 Machine rule: 3 jobs, headless only (`--headless --script`).
+
+
+## Scripts press against the director's own beat (2026-10-04, slice 13)
+
+Encounter traced the timed masher to 56% on the director's beat at acc=80 (74% at acc=100). Cause: the script planned each press from `ex.beats` once, as `lt + round((b.t - ex.t) * 60)`, which is up to a tick off the director's count (`DirAlchemy._blows`: the exchange clock gains a tick, then every beat at or before it runs) and does not follow hit-stop; and a link's blow was not pressed at all. The tapper now recomputes the steps to each of its own pending blows every call, the same way, and presses when the steps left equal one less its offset. It also follows chain links and a blur string's blows, and presses the finisher's struggle: the fighter on the brink presses on each of the struggle's beats (`data/combat/finishers.json` contest.struggle `beatTicks`, from the contest beat's `sOpen`), within the half-width with the script's accuracy (`struggle=0` turns it off).
+The harness now reads each press's beat from the director's own log (`DirAlchemy` `BEAT0`) instead of its own list: `directorOnBeat4` (within `beatHalf`, 4 ticks: the combo's timed press), `directorOnBeat2` (within `blurBeatHalf`, 2 ticks: the perfect blur) and `directorPresses` (presses made inside an exchange), plus `struggles`, `struggleHits` and `struggleStrays`.
+Measured on the slice 13 build, against the medium AI, 20 matches (40 against a masher for the last two lines):
+
+| Script | Presses read | Within 4 ticks | Within 2 ticks | Struggle hits, per struggle |
+| :--- | ---: | ---: | ---: | ---: |
+| `tapper:acc=100:win=0:jit=0:mix=L` (the contact script) | 3,190 | 100% | 100% | 3.0 of 3 (39 hits, 0 strays in 13) |
+| `tapper:acc=100:win=2:jit=0:mix=L` | 2,650 | 100% | 100% | 3.0 (78 hits, 0 strays in 26) |
+| `tapper:acc=100:win=4:mix=L` (jitter 1) | 2,739 | 92.4% | 57.5% | 2.6 |
+| `tapper:acc=80:win=2:jit=0:mix=L` (the timed mash) | 3,967 | 84.8% | 84.8% | 2.4 (34 hits, 8 strays in 14) |
+| `tapper:acc=80:win=4:jit=0:mix=LLH` (the timed combo) | 2,769 | 86.7% | 52.2% | 2.3 |
+
+So at acc=80 the script is on the director's beat 85 to 87% of the time (the 80% plus off-beat presses that fall near another blow); the contact script is exactly 100%. The earlier 56% and 74% were the planning error, not the sim. The jitter option adds a tick either side of the window; the timed scripts now use jit=0 so that "within 4" means within 4.

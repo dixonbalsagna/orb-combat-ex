@@ -19,12 +19,12 @@ const N = parseInt(val('matches', '40'), 10), JOBS = Math.min(3, parseInt(val('j
 const F = ':forms=1:stick=1';   // every scripted player takes its forms: a tier-1 fighter never wins (docs/director/masher-probes.md)
 const P = {
   masher: 'masher' + F,                                   // blur, untimed: a press every 8 ticks
-  timedMash: 'tapper:win=3:acc=80:mix=L' + F,             // blur, timed: a steady mash within 3 ticks of the beat, 80% of beats
+  timedMash: 'tapper:win=2:jit=0:acc=80:mix=L' + F,       // blur, timed: a steady mash within the blur's 2 ticks of the director's contact, 80% of blows
   holder: 'holder' + F,                                   // power, untimed
   timedHold: 'holder:timed=1:acc=80:win=6' + F,           // power, timed: released within 6 ticks of the flash, 80% of beats
   styleOnly: 'tapper:acc=0:mix=LLH' + F,                  // combo, style-only: a sensible mix, never on the beat
   timed: 'tapper:acc=80:win=4:mix=LLH' + F,               // combo, timed: taps within 4 ticks of a blow, 80% of beats
-  timedFull: 'tapper:acc=100:win=4:mix=LLH' + F,
+  timedFull: 'tapper:acc=100:win=4:jit=0:mix=LLH' + F,
   ai: 'ai:level=medium',
 };
 // The blaster's cadence matters: a barrage needs four clean bolts inside 90 ticks (interrupts.json blast.barrage), and a tap of the
@@ -38,7 +38,7 @@ const SLOW = ':energy=1:acc=80:win=4:mix=LLH' + F;
 const ENERGY = [
   ['E1', 'masher:energy=1' + F, P.masher, 'a bolt-only player (energy held, a bolt every 8 ticks) against a melee masher: must finish at least 95% (agency pass 16; the win share is reported, see the decided count)', null, null],
   ['E2', 'masher:energy=1' + F, P.ai, 'a bolt-only player against the medium AI (agency pass 16: 20 to 40%)', 20, 40],
-  ['E3', 'tapper' + BLAST, P.ai, 'a mixed blaster (a bolt about every 14 ticks, a tapped heavy now and then) against the medium AI (starting band 25 to 45%, Game Design to confirm)', 25, 45],
+  ['E3', 'tapper' + BLAST, P.ai, 'a mixed blaster (a bolt about every 14 ticks, a tapped heavy now and then) against the medium AI (agency pass section 22: 30 to 50%)', 30, 50],
   ['E4', 'tapper' + BLAST, P.timed, 'a mixed blaster against a timed melee player: must finish at least 95% before the cap (win share reported)', null, null, 95],
   ['E4s', 'tapper' + SLOW, P.timed, 'the slow mix (L L and a tapped H, one press every 24 ticks) against a timed melee player: must finish at least 95% before the cap (win share reported)', null, null, 95],
   ['E5s', 'tapper' + SLOW, P.timed, 'the slow mix against a rush-heavy timed script (agency pass 15.6: 40 to 60%; and finishes at least 95%)', 40, 60, 95],
@@ -48,7 +48,7 @@ const ENERGY = [
 // launches a lone heavy at any flow). The scripts above push the stick on every heavy (stick=1), so their launches never wait for the flow and a
 // timed player has no edge to earn through it. These rows play the same scripts without the stick, so the flow is the only way to a launch.
 const NS = ':forms=1';
-const nsP = { masher: 'masher' + NS, styleOnly: 'tapper:acc=0:mix=LLH' + NS, timed: 'tapper:acc=80:win=4:mix=LLH' + NS, timedMash: 'tapper:win=2:jit=0:acc=80:mix=L' + NS };
+const nsP = { masher: 'masher' + NS, styleOnly: 'tapper:acc=0:mix=LLH' + NS, timed: 'tapper:acc=80:win=4:jit=0:mix=LLH' + NS, timedMash: 'tapper:win=2:jit=0:acc=80:mix=L' + NS };
 const FLOW = [
   ['F1', nsP.timed, nsP.masher, 'no stick: timed against a masher', 72, 82],
   ['F2', nsP.timed, nsP.styleOnly, 'no stick: timed against a style-only player', 62, 70],
@@ -59,10 +59,10 @@ const FLOW = [
 ];
 // The blaster against the medium AI at the sample the EP asked for (run with --matches=100): the mixed blaster and the slow mix.
 const BLASTAI = [
-  ['B1', 'tapper' + BLAST, P.ai, 'a mixed blaster (a bolt about every 14 ticks) against the medium AI (starting band 25 to 45%)', 25, 45],
+  ['B1', 'tapper' + BLAST, P.ai, 'a mixed blaster (a bolt about every 14 ticks) against the medium AI (agency pass section 22: 30 to 50%)', 30, 50],
   ['B2', 'tapper' + SLOW, P.ai, 'the slow mix (L L and a tapped H, one press every 24 ticks) against the medium AI (the same band as reference)', null, null],
 ];
-const acc = a => `tapper:acc=${a}:win=4:mix=LLH${F}`;
+const acc = a => `tapper:acc=${a}:win=4:jit=0:mix=LLH${F}`;
 
 // id, A, B, what, band for A's win share (lo, hi in percent; null: reported only), and optionally the least share of matches that must end in a KO before the cap (percent)
 const CORE = [
