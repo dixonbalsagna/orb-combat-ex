@@ -156,7 +156,7 @@ class World:
 	var craters: float = 0.0
 	var slides: float = 0.0           # knockback slides that have ended (the HUD's other mark counter)
 	var evacuated: float = 0.0        # civilians who fled instead of dying (over budget or at the ceiling); they never return
-	var cbBuckets := PackedFloat32Array()   # casualties per second of match time, 60 buckets (rolling budget window)
+	var cbBuckets := PackedFloat32Array()   # casualties per second of match time, 61 buckets (rolling budget window)
 	var cbSec: float = 0.0            # the last second index the window has advanced to
 	var cbSum: float = 0.0            # sum of the window
 	var maxTier: float = 1.0          # highest tier either fighter has reached this match (the cumulative ceiling)
