@@ -587,3 +587,16 @@ What follows from it:
 - Timing: on-beat presses give flashy skill attacks; a missed beat lapses into a high-speed flurry, not a dead press.
 - Heavy: reliable against a heavily guarding opponent, and the set-up for chains of skilful juggle attacks.
 - This moves melee from "the director composes the exchange" toward "each press is a blow"; the director still owns the choreography of what each blow is.
+
+## Orb, 2026-10-04: stances stay, and every stance has a moveset
+
+Verbatim:
+
+> stances will still be involved, the default represents the characters' martial arts stance, LB represents defensive stance, RB is Energy arts stance, RT is the charging stance, LT is maneuver stance. All face buttons should have an appropriately broad moveset for each stance. Lets work out a way to generatively work all these stances into vast and varied movesets for each character.
+
+What follows from it:
+
+- Five stances, chosen by what is held: none = the fighter's martial arts stance; LB = defensive; RB = energy arts; RT = charging; LT = manoeuvre.
+- Every face button does something in every stance, with a broad moveset per stance.
+- The movesets are to be generated: a system that composes large, varied movesets for each character from parts, not hand-written lists.
+- Pillar 2 ("stances, not combos") keeps its stances; what a press does inside a stance is now a blow or an action of that stance.
