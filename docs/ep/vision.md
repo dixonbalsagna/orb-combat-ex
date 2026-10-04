@@ -537,3 +537,15 @@ Orb, after the mock-up (2026-10-02): "charged shots should have the capability o
 Scope of the next update: (1) expanded energy blasts (agency-pass sections 15 and 16: wild deflects, the spray cone, shots against buildings, mines, more kinds); (2) two fighters, the Protagonist and the rival (the Anti-hero), replacing the KAI and VORR placeholders; Orb supplies their names and edits the voice packet; (3) the framework of the combat alchemy layer in the director (the press window, styles, timing grades, flow). All sessions pause until Orb says go.
 
 Orb, 2026-10-02: "the rival character should have glasses, i want him to be our resident 'scary shiny glasses' trope character". The rival (the Anti-hero) wears glasses whose lenses go opaque with glare at key moments.
+
+## Orb, 2026-10-04: intros, backstory, music
+
+Verbatim:
+
+> I thought the intros looked pretty good, if we can script a system that creates dynamic intros and mixes and matches different scenarios between characters I'd like to see it. I'm thinking about a document defining the backstory so we can flesh out the power system a little more thoroughly. I listened to the music, I feel like they were al a little bit too "spooky" or almost like a "halloween" atmosphere; sketch-a-town-band had the most interesting hook. I have a premium Suno Account, so if you include a Suno 6.0-ready prompt along with the sound samples to direct the Suno model we can really zero in on a coherent sound. I want to lean a little more into a tongue-in-cheek riff-heavy speed metal version of what you gave me already. Direct "Audio & Music" to work with the expectation that Suno will create the final product, and I can feed the final music files back to you.
+
+What follows from it:
+
+- Intros: Orb likes them and wants a system that composes them from mix-and-match scenarios per pair of fighters (Narrative: docs/narrative/dynamic-intros.md; Encounter owns the intro phase).
+- Backstory: a document defining the backstory, so the power system can be fleshed out (Narrative drafts a skeleton of options; Orb fills it).
+- Music: the previews read too spooky; sketch-a-town-band has the best hook; the direction is tongue-in-cheek, riff-heavy speed metal. Suno (Orb's premium account) makes the final music from our prompts and reference samples, and Orb feeds the files back (Audio: docs/audio/suno-direction.md).
