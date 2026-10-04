@@ -21,7 +21,7 @@ export const FRAMES = {
   kite: { name: 'Kite', sw: 5, lens: [[-56, -6], [-8, -30], [56, -18], [30, 18], [-20, 22]] },
   // the lead with its chamfers (the plate cuts on the frame) changed, and dropped: for the side-by-side
   bladebevel: { name: 'Blade lenses, chamfers changed', sw: 5, lens: [[-54, -6], [-42, -20], [10, -31], [68, -28], [76, -22], [36, 14], [-34, 19], [-52, 10]], tabs: true, topplate: true },
-  bladebare: { name: 'Blade lenses, chamfers dropped', sw: 4, lens: [[-52, -12], [74, -28], [36, 14], [-46, 16]], lit: false },
+  bladebare: { name: 'Blade lenses, chamfers dropped', sw: 4, lens: [[-56, -18], [78, -34], [40, 18], [-50, 20]], lit: false },
 };
 
 const abs = key => FRAMES[key].lens.map(([x, y]) => [x * 1.12 + C[0], y * 1.28 + C[1]]);
@@ -43,7 +43,7 @@ function tab(a, s) {
 }
 
 // the glasses layer, drawn over the face. state: 'clear' | 'glare' | 'glint'; stage: 0 to 3 (the battle damage); t: the glint's place, 0 to 1
-export function glassesLayer(key, state, stage, t, id) {
+export function glassesLayer(key, state, stage, t, id, amount = 1) {
   const F = FRAMES[key];
   let R = abs(key), L = mirror(R);
   if (stage >= 3) R = bite(R);
@@ -52,11 +52,11 @@ export function glassesLayer(key, state, stage, t, id) {
   const trL = stage >= 3 ? 'translate(0 2) rotate(2 -10 -34)' : '';
   const lenses = [[L, trL, -1], [R, trR, 1]];
   let o = '';
-  if (state === 'glare') for (const [a, tr] of lenses) o += `<g transform="${tr}">${poly(a, 'none', `stroke="${GLARE_HALO}" stroke-width="20" stroke-linejoin="round" opacity="0.26"`)}</g>`;
+  if (state === 'glare') for (const [a, tr] of lenses) o += `<g transform="${tr}">${poly(a, 'none', `stroke="${GLARE_HALO}" stroke-width="20" stroke-linejoin="round" opacity="${(0.26 * amount).toFixed(2)}"`)}</g>`;
   lenses.forEach(([a, tr, s], i) => {
     const c = centroid(a), cid = `gl-${id}-${i}`;
     let inner;
-    if (state === 'glare') inner = poly(a, GLARE) + `<clipPath id="${cid}"><polygon points="${pts(a)}"/></clipPath><g clip-path="url(#${cid})">${wedge(c[0] + 6 * s, c[1], s)}</g>`;
+    if (state === 'glare') inner = (amount < 1 ? poly(a, TINT, 'opacity="0.46"') : '') + `<g opacity="${amount}">` + poly(a, GLARE) + `<clipPath id="${cid}"><polygon points="${pts(a)}"/></clipPath><g clip-path="url(#${cid})">${wedge(c[0] + 6 * s, c[1], s)}</g></g>`;
     else {
       inner = poly(a, TINT, 'opacity="0.46"') + `<clipPath id="${cid}"><polygon points="${pts(a)}"/></clipPath><g clip-path="url(#${cid})">`;
       if (state === 'glint') inner += `<g transform="translate(${-150 + t * 300} 0)">${wedge(0, c[1], 1)}</g>`;
@@ -88,9 +88,9 @@ function skinDamage(stage, P) {
 }
 
 // the face with the glasses on: a draw function for portrait('X', 'A', expr, id, { draw })
-export const glassedFace = (key, state, stage = 0, t = 0.4) => (fk, e, id, P) => state === 'off'
+export const glassedFace = (key, state, stage = 0, t = 0.4, amount = 1) => (fk, e, id, P) => state === 'off'
   ? FA.refined('A', e, id, P) + skinDamage(stage, P) + `<g transform="translate(150 -140) rotate(28) scale(0.78)">${glassesLayer(key, 'clear', 2, 0, id)}</g>`
-  : FA.refined('A', e, id, P) + skinDamage(stage, P) + glassesLayer(key, state, stage, t, id);
+  : FA.refined('A', e, id, P) + skinDamage(stage, P) + glassesLayer(key, state, stage, t, id, amount);
 
 // the glasses in profile, for the figure kit: a lens and an arm at the eye, in the frame's own shape (head units)
 const PROF = {
@@ -110,4 +110,6 @@ export function profileGlasses(key, state) {
     return s;
   };
 }
-export const INK = { FRAME_INK, FRAME_LIT, GLARE, GLARE_HI };
+export const INK = { FRAME_INK, FRAME_LIT, GLARE, GLARE_HI, TINT };
+// Orb's pick (2026-10-04): frame C, the bare wedge. Everything for the rival uses this key.
+export const APPROVED = 'bladebare';

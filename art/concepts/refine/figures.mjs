@@ -189,6 +189,14 @@ function withBack(concept, add_) {
   return { ...concept, back: (ctx, sk, st, cfg) => add_(ctx, sk, st, cfg) + (prev ? prev(ctx, sk, st, cfg) : '') };
 }
 const headPt = (sk, x, y) => sk.Hd(x, y);
+
+// the rival's long tail (a profile ribbon) and his three flat coat plates, split out so the turnaround can use them view by view
+export function rivalTail(ctx, sk) { return ctx.poly([[-3, 15], [-12, 12], [-20, 0], [-26, -18], [-34, -42], [-22, -22], [-13, -4], [-5, 8]].map(([x, y]) => headPt(sk, x, y)), ctx.pal.hair.mid, { sw: 1.3 }); }
+export function rivalPlates(ctx, sk) {
+  let s = '';
+  for (let i = 0; i < 3; i++) { const x0 = -2 + i * 3.8; s += ctx.poly(Tm(sk, [[x0, 9], [x0 + 3.2, 9], [x0 + 3.2, -14 - i * 2], [x0 + 1.6, -17 - i * 2], [x0, -14 - i * 2]]), i === 1 ? ctx.pal.base.shadow : ctx.pal.base.mid, { sw: 1.2 }); if (!ctx.flat) s += ctx.line(Tm(sk, [[x0 + 0.4, 8], [x0 + 0.4, -13 - i * 2]]), ctx.pal.accent.mid, 0.9); }
+  return s;
+}
 export const OTHER_OPTS = {
   P: {
     base: () => markedConcept('P'),
@@ -207,7 +215,7 @@ export const OTHER_OPTS = {
   A: {
     base: () => markedConcept('A'),
     options: [
-      { name: 'Option 1: the long tail and coat plates', note: 'The tail runs to the knee and three flat coat plates hang straight from the belt (plates, not wings or a pack): a longer, narrower slash.', make: () => withExtra(markedConcept('A'), (ctx, sk) => { let s = ctx.poly([[-3, 15], [-12, 12], [-20, 0], [-26, -18], [-34, -42], [-22, -22], [-13, -4], [-5, 8]].map(([x, y]) => headPt(sk, x, y)), ctx.pal.hair.mid, { sw: 1.3 }); for (let i = 0; i < 3; i++) { const x0 = -2 + i * 3.8; s += ctx.poly(Tm(sk, [[x0, 9], [x0 + 3.2, 9], [x0 + 3.2, -14 - i * 2], [x0 + 1.6, -17 - i * 2], [x0, -14 - i * 2]]), i === 1 ? ctx.pal.base.shadow : ctx.pal.base.mid, { sw: 1.2 }); if (!ctx.flat) s += ctx.line(Tm(sk, [[x0 + 0.4, 8], [x0 + 0.4, -13 - i * 2]]), ctx.pal.accent.mid, 0.9); } return s; }) },
+      { name: 'Option 1: the long tail and coat plates', note: 'The tail runs to the knee and three flat coat plates hang straight from the belt (plates, not wings or a pack): a longer, narrower slash.', make: () => withExtra(markedConcept('A'), (ctx, sk) => rivalTail(ctx, sk) + rivalPlates(ctx, sk)) },
       { name: 'Option 2: the swept shoulder blade', note: 'A swept blade of cloth streams back from one shoulder, low and long, not tall: a second line to the silhouette.', make: () => withExtra(markedConcept('A'), (ctx, sk) => ctx.poly(At(sk.S, [[-2, 4], [-12, 5], [-28, -4], [-40, -14], [-26, -8], [-12, -3], [-2, -1]]), ctx.pal.accent.mid, { sw: 1.3 }) + ctx.poly(At(sk.S, [[-2, 1], [-14, 0], [-30, -12], [-14, -5]]), ctx.pal.base.shadow, { sw: 1 })) },
     ],
   },
