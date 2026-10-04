@@ -5,9 +5,10 @@ class_name DirBlur
 ## the match seed and the exchange, so no stream shifts and a replay matches.
 ##  - The cadence: the chain window opens on the blow, and a link whose press is waiting lands its blow one cadence
 ##    after the last; a press that comes later lands minLeadTicks after it. The first two blows show the cadence.
+##  - On the beat (agency-pass.md section 22): a strike from a press on the beat does timedMul of a light at once;
+##    off it, launch.json blur.strikeMul. The ender is the full one when his flow is fullEnderFlow or more as it plays.
 ##  - The lock: Controls' steady read (SimPressRead: steadyPresses presses in a row, each within blurBeatHalf ticks of
-##    a different blow's contact) locks the blur in for the rest of the string: each strike does a full light's damage
-##    (a plain blur's does launch.json blur.strikeMul), and the ender is the full one.
+##    a different blow's contact). It is the cue for the look (blur_locked), and changes no number.
 ##  - A heavy press in the string ends the blur: the link plays on the template's own timing.
 ## It never launches, in either form. State: the attacker's director integers (DirAlchemy.BLUR_*). Numbers:
 ## data/director/alchemy.json `blur`.
@@ -27,12 +28,7 @@ static func live(S: SimState, f) -> bool:
 	return ex != null and ex.A == f and f.act.dirI.size() > DirAlchemy.BLUR_CAD and f.act.dirI[DirAlchemy.BLUR_CAD] > 0
 
 
-## True once his blur is locked in.
-static func perfect(S: SimState, f) -> bool:
-	return live(S, f) and f.act.dirI[DirAlchemy.BLUR_ON] >= _need()
-
-
-## The presses a lock takes (Controls' steadyPresses).
+## The presses a lock takes (Controls' steadyPresses). The lock is the look's cue.
 static func _need() -> int:
 	return int(SimPressRead.params().get("steadyPresses", 4))
 
@@ -168,7 +164,7 @@ static func onPress(S: SimState, f, hit: bool, steady: bool) -> bool:
 		n = need if steady else mini(n, need - 1)   # a player's lock is Controls' read
 	if n >= need:
 		SimFx.cue(S, f, "blur_locked", "", "")
-		SimEvents.feed(S, f.name + " BLUR LOCKED IN", str(need) + " presses on the beat: full contact, and the full ender")
+		SimEvents.feed(S, f.name + " BLUR LOCKED IN", str(need) + " presses on the beat, each on its own blow")
 	f.act.dirI[DirAlchemy.BLUR_ON] = n
 	return hit
 

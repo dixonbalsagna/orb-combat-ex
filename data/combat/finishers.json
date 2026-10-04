@@ -20,7 +20,7 @@
     "struggle": {
       "resolveTick": 66, "beatTicks": [18, 36, 54], "countInTicks": [-18, 0],
       "halfWidthTicks": 4, "assistHalfWidthTicks": 8, "debounceTicks": 4, "inputs": ["light", "heavy"],
-      "scoring": { "base": 0.23, "perHit": 0.10, "perMiss": -0.05, "perStray": -0.05, "floor": 0.0,
+      "scoring": { "base": 0.23, "perHit": 0.10, "perMiss": -0.05, "perStray": -0.15, "floor": 0.08,
                    "tilts": "the contest's rallyPenalty per Rally used and tiltPerMinute past tiltAfter, as above" },
       "aiHitChance": 0.60,
       "byState": { "base": 0.23, "stanceRead": { "match": 0.15, "other": 0.05, "matches": { "launch": "DEFENSIVE", "melee": "EVASIVE", "beam": "AGGRESSIVE_40KI" } }, "kiBonus": { "atLeast": 50, "add": 0.05 }, "rallyPenalty": 0.10, "tiltPerMinute": 0.10, "tiltAfter": 480, "floor": 0.0, "fighterState": "hooks keyed by roster data: Protagonist Simmering or Boiling +0.10, Anti-hero Pride 50+ +0.10, Empress any guard standing +0.05, Cyborg hatch closed +0.10", "pulses": "at beatTicks (18, 36, 54): struggle_pulse holding or slipping, revealing the drawn result with no further draw", "_note": "spec-wounds.md section 1: the struggle is resolved by state and drawn once at contestOpen. The stance names are the sim's; under ADR 0008 they are the held states Guard, Dodge and Press. The press fields above (halfWidthTicks, assistHalfWidthTicks, debounceTicks, inputs, aiHitChance) and the press scoring retire when Encounter switches the struggle to this block" },

@@ -301,15 +301,16 @@ static func strike(S: SimState, ex, a, d, dmg: float, o = null) -> void:
 			var pp: int = DirLaunch.phrase(S, ex, a)
 			DirBlur.onBlow(S, a)   # a blur string's cadence counts from this blow
 			if DirBlur.live(S, a) and ex.combo > 1.0:
-				# Section 20: a plain blur's strikes do strikeMul of a light each; a blur that is locked in lands clean.
-				if not DirBlur.perfect(S, a):
-					dmg *= float(bl.strikeMul)
+				# Section 22: an on-beat blur strike lands clean at once (timedMul); off the beat it does strikeMul.
+				dmg *= float(DirBlur.cfg().get("timedMul", 1.0)) if (pp >= 0 and ((pp >> 8) & 3) == DirAlchemy.TIMED) else float(bl.strikeMul)
 			elif pp >= 0 and (pp & 1) == SimAct.LIGHT and ((pp >> 8) & 3) == DirAlchemy.MASHED:
 				dmg *= float(bl.strikeMul)
 			# Clean and hard (section 2): in the combo style a strike from a timed press does comboMul.
 			var tm: Dictionary = DirRecipe.cfg().get("timing", {})
 			if pp >= 0 and ((pp >> 8) & 3) == DirAlchemy.TIMED and tm.has("comboMul") and DirRecipe.style(S, a) == "combo":
 				dmg *= float(tm.comboMul)
+			# Section 22: flow adds damage, dmgPer for each point, on every strike of his.
+			dmg *= 1.0 + float(DirRecipe.cfg().get("flow", {}).get("dmgPer", 0.0)) * float(a.act.flow)
 	SimDamage.hit(S, ex, a, d, dmg, o)
 	if dmg > 0.0 and DirBlast.minesOn() and not S.shots.is_empty():
 		SimShots.tripNear(S, d.x, d.y + SimShots.chest, float(DirBlast.data().mine.blowR), "blow", S.fighters.find(a))   # a blow on a mine sets it off in the striker's face
@@ -382,12 +383,12 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 			DirInterrupt.si(ex.A, DirInterrupt.LAST_END, DirInterrupt.END_KNOCK if sent else DirInterrupt.END_STAY)
 			SimFx.launchPlan(S, att, tgt, "", "KNOCK BACK" if sent else "STAY")
 			if sent:
-				# The perfect blur's ender (section 20): locked in, it goes the full distance and is a full set-up; a plain
-				# blur's goes enderDist and is half of one.
-				var perfect: bool = ender and DirBlur.perfect(S, att)
+				# The blur's full ender (section 22): at flow fullEnderFlow or more as it plays, it goes the full distance and is
+				# a full set-up; below that it goes enderDist and is half of one.
+				var perfect: bool = ender and att.act.flow >= int(DirBlur.cfg().get("fullEnderFlow", 99))
 				DirLaunch.knock(S, att, tgt, 1.0 if heavy else (float(bl.get("perfectDist", 1.0)) if perfect else float(bl.enderDist)))
-				SimEvents.feed(S, "KNOCK BACK" if heavy else "BLUR ENDER", "a heavy, but no launch was earned" if heavy else ("locked in: the pattern's closing blow and the full knock-back" if perfect else "the light after " + str(DirInterrupt.gi(att, DirInterrupt.LANDED) - 1) + " landed strikes: the blur closes with its own knock-back"))
-				_knockDecisive(S, ex, att, tgt, "" if (heavy or perfect) else "blurPlain")   # a plain blur's ender is half a set-up (section 14.4); a locked-in blur's is a full one
+				SimEvents.feed(S, "KNOCK BACK" if heavy else "BLUR ENDER", "a heavy, but no launch was earned" if heavy else ("at flow " + str(att.act.flow) + ": the pattern's closing blow and the full knock-back" if perfect else "the light after " + str(DirInterrupt.gi(att, DirInterrupt.LANDED) - 1) + " landed strikes: the blur closes with its own knock-back"))
+				_knockDecisive(S, ex, att, tgt, "" if (heavy or perfect) else "blurPlain")   # a plain blur's ender is half a set-up (section 14.4); at flow fullEnderFlow it is a full one
 			else:
 				SimEvents.feed(S, "STAYS IN REACH", "a light: the brawl goes on")
 			return
@@ -420,9 +421,9 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	DirLaunch.doLaunch(S, att, tgt, r.best, force, longOnly)
 	# The showcase (section 2): a string's ender launched at flow showcaseAt is the showcase ender. The cue is the panel's;
 	# Combat's showcase rows and the extra impact wear wait for their data and for a wear hook on a launch.
-	if not longOnly and why.begins_with("the ender of a string") and att.act.flow >= int(DirRecipe.cfg().get("flow", {}).get("showcaseAt", 99)):
+	if not longOnly and (why.begins_with("the ender of a string") or why == "a heavy with the stick, landing clean") and att.act.flow >= int(DirRecipe.cfg().get("flow", {}).get("showcaseAt", 99)):
 		SimFx.cue(S, att, "showcase_ender", "", "")
-		SimEvents.feed(S, att.name + " SHOWCASE ENDER", "a string's ender at flow " + str(att.act.flow))
+		SimEvents.feed(S, att.name + " SHOWCASE ENDER", ("a string's ender" if why.begins_with("the ender") else "a lone heavy") + " at flow " + str(att.act.flow))
 	if r.best.has("p") and r.best.p.get("building", false):
 		SimFx.hazardTelegraph(S, tgt, "brunt", r.best.p.t, r.best.p.x)
 	S.dirS.lastLaunch2 = S.dirS.lastLaunch

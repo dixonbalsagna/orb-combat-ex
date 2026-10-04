@@ -233,6 +233,8 @@ static func _start(S: SimState, A, kind: String) -> int:
 	S.dirS.ex = ex
 	S.dirS.exN += 1; ex.n = S.dirS.exN   # D1a (granted line): the exchange index for keyed draws (SimRng.keyed)
 	SimWounds.onExchangeStart(S, ex)   # pitch A: which limbs were already battered (only those can be crippled)
+	DirAlchemy.markFlow(A)   # section 22: the flow each held as it began counts in its contests
+	DirAlchemy.markFlow(D)
 	# The brink chapter: who was on the brink as it began (the exchange that causes a brink never sets up or finishes).
 	for s in range(S.fighters.size()):
 		if S.fighters[s].brink:
@@ -759,6 +761,7 @@ static func finisherPlanned(ex) -> bool:
 
 ## The finisher replaces the rest of the exchange: pending beats are dropped and the chain window closes.
 static func startFinisher(S: SimState, ex, W, L) -> void:
+	DirAlchemy.markFlow(W)   # his flow as his finisher starts: it comes off the rival's chance to survive it
 	for b in ex.beats:
 		if not b.done:
 			b.done = true
@@ -814,12 +817,22 @@ static func _opFinisher(S: SimState, ex, a) -> void:
 	SimEvents.feed(S, W.name + " FINISHER", L.name + " is on the brink")
 
 
+## Flow counts in contests (agency-pass.md section 22): flow.contest points for each point of the flow f held as the
+## exchange, or his finisher, started, up to flow.contestMax. It is added to his beam clash score, and it comes off
+## the rival's chance, in points of a hundred, to survive his finisher.
+static func flowEdge(f) -> float:
+	var fl: Dictionary = DirRecipe.cfg().get("flow", {})
+	if not DirInterrupt.on() or not fl.has("contest"):
+		return 0.0
+	return minf(float(fl.get("contestMax", 0.0)), float(fl.contest) * float(DirAlchemy.flowEx(f)))
+
+
 ## The contest roll (one S.rng draw): survive with CONTEST_BASE, less CONTEST_TILT per minute past CONTEST_TILT_AT.
 static func _opContest(S: SimState, ex, a) -> void:
 	var W = ex.A if a.w == "A" else ex.D
 	var L = ex.D if a.w == "A" else ex.A
 	var late: float = SimMathx.jmax(0.0, (S.T - CONTEST_TILT_AT) / 60.0)
-	var chance: float = SimMathx.jmax(0.0, CONTEST_BASE - CONTEST_TILT * late)
+	var chance: float = SimMathx.jmax(0.0, CONTEST_BASE - CONTEST_TILT * late - flowEdge(W) / 100.0)
 	if S.game.timeCap:
 		chance = 0.0   # Q10 (granted; spec-wounds.md section 5): no survival from the time cap; the draw is kept
 	var survived: bool = S.rng.next() < chance
@@ -929,11 +942,14 @@ static func _opContestBranch(S: SimState, ex, a) -> void:
 		var sc: Dictionary = DirData.struggle().scoring
 		var beats: float = float(DirData.struggle().beatTicks.size())
 		var misses: float = beats - float(a.sHits)
-		chance = float(sc.base) + float(sc.perHit) * float(a.sHits) + float(sc.perMiss) * misses + float(sc.perStray) * float(a.sStrays) - float(cs.tiltPerMinute) * late
+		# The press score is floored at scoring.floor, the score of a player who does not press, before the tilts come
+		# off (Combat's docs/combat/struggle-scoring.md): flooding the struggle never does worse than not pressing.
+		chance = maxf(float(sc.get("floor", 0.0)), float(sc.base) + float(sc.perHit) * float(a.sHits) + float(sc.perMiss) * misses + float(sc.perStray) * float(a.sStrays)) - float(cs.tiltPerMinute) * late
 	else:
 		chance = float(cs.base) - float(cs.tiltPerMinute) * late
 	# The Rally tilt (spec-wounds.md §1; contest.rallyPenalty): each Rally the fighter has used costs it 10 points.
 	chance -= float(cs.get("rallyPenalty", 0.0)) * float(L.rallies)
+	chance -= flowEdge(W) / 100.0   # section 22: the flow the winner held as his finisher started
 	chance = SimMathx.jmax(float(cs.floor), chance)
 	if S.game.timeCap:
 		chance = 0.0   # Q10 (granted; spec-wounds.md section 5): no survival from the time cap; the draw is kept

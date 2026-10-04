@@ -181,7 +181,7 @@ static func opBeamEscape(S: SimState, ex, _args) -> void:
 
 ## beam.js startClash sc(f): one draw per call, attacker first.
 static func _clashScore(S: SimState, f) -> float:
-	return f.tier * 10.0 + f.ki * 0.35 + S.rng.range_(0.0, 16.0) + (f.menace * f.md.menaceBeam if f.hasMenace else 0.0)   # D1b: meters.json beam_power
+	return f.tier * 10.0 + f.ki * 0.35 + S.rng.range_(0.0, 16.0) + (f.menace * f.md.menaceBeam if f.hasMenace else 0.0) + DirExchange.flowEdge(f)   # D1b: meters.json beam_power; section 22: his flow
 
 
 ## dAdd: added to the defender's score (an answering heavy blast clashes at -10).

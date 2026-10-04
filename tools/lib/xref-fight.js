@@ -1256,6 +1256,7 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     const AF = 'data/director/alchemy.json';
     const fl = alf.flow;
     if (typeof fl.launchAt === 'number' && typeof fl.showcaseAt === 'number' && fl.launchAt > fl.showcaseAt) err(AF, '/flow/launchAt', 'alchemy-flow', `launchAt ${fl.launchAt} is above showcaseAt ${fl.showcaseAt}; the showcase is the flow's top ending`);
+    if (isObj(alf.blur) && typeof alf.blur.fullEnderFlow === 'number' && typeof fl.max === 'number' && alf.blur.fullEnderFlow > fl.max) err(AF, '/blur/fullEnderFlow', 'alchemy-flow', `fullEnderFlow ${alf.blur.fullEnderFlow} is above flow.max ${fl.max}, so the blur's full ender never plays`, 'warning');
     for (const k of ['enderAfter', 'launchAt', 'showcaseAt']) if (typeof fl[k] === 'number' && typeof fl.max === 'number' && fl[k] > fl.max) err(AF, `/flow/${k}`, 'alchemy-flow', `${k} ${fl[k]} is above max ${fl.max}, so the flow never reaches it`, 'warning');
   }
 

@@ -447,23 +447,27 @@ static func _barrage(S: SimState, sh, by, f, outcome: String, brink0: bool, knoc
 		if DirInterrupt.gi(by, DirInterrupt.BAR_GROUP) == sh.group:
 			return
 		DirInterrupt.si(by, DirInterrupt.BAR_GROUP, sh.group)
-	var flight: int = clampi(sh.total - sh.left, 0, 4095)
-	var fires: Array = [S.tick - flight]   # the fire ticks of the clean bolts inside the window, newest first
+	var flight: int = clampi(sh.total - sh.left, 0, 2047)
+	# A tapped heavy: a charged shot fired with no charge. Section 22: a barrage that includes one gets the weak ender.
+	var tap: bool = c.get("tappedHeavyWeak", false) and sh.kind == String(data().heavy.kind) and sh.dmg <= float(SimShots.kinds[sh.kind].dmg) * float(data().heavy.tapShare) + 0.001
+	var tapped: bool = tap
+	var fires: Array = [S.tick - flight]   # the fire ticks of the clean shots inside the window, newest first
 	for k in [DirInterrupt.BAR_1, DirInterrupt.BAR_2, DirInterrupt.BAR_3]:
 		var v: int = DirInterrupt.gi(by, k)
 		if v != 0 and S.tick - (v >> 12) < int(c.window):
-			fires.append((v >> 12) - (v & 4095))
+			fires.append((v >> 12) - (v & 2047))
+			tapped = tapped or ((v >> 11) & 1) == 1
 	var up: bool = not knocked and S.game.ko == null and S.dirS.ex == null and (f.state == "free" or f.state == "charging")
 	if fires.size() < int(c.enderAfter) or not up or S.tick < DirInterrupt.gi(f, DirInterrupt.BAR_IMMUNE):
 		DirInterrupt.si(by, DirInterrupt.BAR_3, DirInterrupt.gi(by, DirInterrupt.BAR_2))
 		DirInterrupt.si(by, DirInterrupt.BAR_2, DirInterrupt.gi(by, DirInterrupt.BAR_1))
-		DirInterrupt.si(by, DirInterrupt.BAR_1, (S.tick << 12) | flight)
+		DirInterrupt.si(by, DirInterrupt.BAR_1, (S.tick << 12) | (2048 if tap else 0) | flight)
 		# The AI's answer (section 16: a held guard stops the count): as the barrage reaches half way, one draw at its
 		# level's rate, and it holds guard until those bolts have left the window.
 		if f.ai != null and fires.size() == int(c.enderAfter) / 2 and S.rng.next() < float(DirAI.lv().get("barrageGuard", 0.0)):
 			DirInterrupt.si(f, DirInterrupt.BAR_GUARD, S.tick + int(c.window))
 		return
-	var measured: bool = true
+	var measured: bool = not tapped
 	for k in range(int(c.enderAfter) - 1):
 		if int(fires[k]) - int(fires[k + 1]) < int(c.measuredTicks):
 			measured = false
@@ -474,7 +478,7 @@ static func _barrage(S: SimState, sh, by, f, outcome: String, brink0: bool, knoc
 		DirBands.drop(S, f, "a barrage knocked him back")
 	DirLaunch.knock(S, by, f, float(c.enderDist.measured if measured else c.enderDist.plain))
 	SimFx.cue(S, by, "barrage_ender", "", "")
-	SimEvents.feed(S, "BARRAGE ENDER", by.name + "'s " + str(int(c.enderAfter)) + " clean shots inside " + str(int(c.window)) + " ticks: a knock-back, " + ("measured" if measured else "spammed (the weak one)"))
+	SimEvents.feed(S, "BARRAGE ENDER", by.name + "'s " + str(int(c.enderAfter)) + " clean shots inside " + str(int(c.window)) + " ticks: a knock-back, " + ("measured" if measured else ("with a tapped heavy (the weak one)" if tapped else "spammed (the weak one)")))
 	DirExchange.decisiveShot(S, by, f, -sh.id, brink0, "barrage", "barrage" if measured else "barragePlain")
 
 

@@ -26,7 +26,7 @@
   "_beam": "The beam plays (sim/director/beamplay.gd), drawn once as a signature starts charging at the AI. Per level: beamDodge, the chance its dodge is in time when it is dodging; beamWade, the chance it holds toward when it guards (the wade); beamLate, the chance of a late answer when it did not answer in the tell and can pay for one. Its perfect block against a beam uses perfectBlock (guard, press, heavyAdd) times perfectBlockMul. beamLook: the weights of the look of that perfect block",
   "mineMinKi": 40,
   "_mine": "Per level, mineShare: the chance its attack beat in the far band lays a mine instead (it needs mineMinKi of ki). It does not avoid mines",
-  "_timedPress": "Per level, timedPress: the chance each of its attack presses is timed (agency-pass.md section 2: 40, 65 and 85%). A timed press adds to its flow and, in a blur string, counts toward locking the blur in; a press that is not sets both back",
+  "_timedPress": "Per level, timedPress: the chance each of its attack presses is timed (agency-pass.md section 22, where it is ai.timedShare: 15, 45 and 80%). A timed press adds to its flow and, in a blur string, counts toward locking the blur in; a press that is not sets both back",
   "reactTicks": 14,
   "answerTicks": 20,
   "_far": "The far band and the free approach (sim/director/bands.gd). reactTicks: the AI's reaction time to a rival's approach; an approach shorter than this gets no answer. answerTicks: how long after a rival's far taunt begins it presses its answer (past a heavy's 16-tick hold, so it answers a taunt and not a charge being gathered). Per level: farTaunt, the chance its attack beat in the far band is a taunt (a tap); farCharge, the chance it is otherwise a charge (it holds the button); below 1 it sometimes holds the beat instead, which measured slower (matches ran to the time cap at 0.5). After 6 s with no exchange it always charges. farHeavy: when it charges with a heavy, the chance it stays a heavy charge (slow and committed); otherwise it charges light. answerTaunt: the chance it answers a rival's far taunt with an attack press. approachReact: [guard, dodge, meet], the chances it answers a rival's approach by guarding, by dodging or by pressing to meet him; otherwise it carries on as it was",
@@ -57,7 +57,7 @@
       "beamLate": 0.05,
       "buriedBurst": 0.2,
       "barrageGuard": 0.2,
-      "timedPress": 0.4,
+      "timedPress": 0.15,
       "mineShare": 0.02,
       "approachReact": [0.1, 0.05, 0.1]
     },
@@ -85,7 +85,7 @@
       "beamLate": 0.1,
       "buriedBurst": 0.5,
       "barrageGuard": 0.42,
-      "timedPress": 0.65,
+      "timedPress": 0.45,
       "mineShare": 0.04,
       "approachReact": [0.2, 0.1, 0.15]
     },
@@ -113,7 +113,7 @@
       "beamLate": 0.2,
       "buriedBurst": 0.8,
       "barrageGuard": 0.8,
-      "timedPress": 0.85,
+      "timedPress": 0.8,
       "mineShare": 0.06,
       "approachReact": [0.3, 0.2, 0.2]
     }

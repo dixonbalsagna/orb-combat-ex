@@ -43,7 +43,8 @@ const BLUR_U2: int = READ + 8
 const BLUR_U3: int = READ + 9
 const BLUR_U4: int = READ + 10
 const BLUR_AT: int = READ + 11               # ... the live tick its last blow landed on
-const SIZE: int = READ + 12
+const FLOW_EX: int = READ + 12               # his flow when the running exchange, or his finisher, started: it counts in contests
+const SIZE: int = READ + 13
 const PLAIN: int = 0
 const HELD: int = 1
 const MASHED: int = 2
@@ -73,6 +74,19 @@ static func _timed(S: SimState, f) -> bool:
 			if absf(b.t - ex.t) * DirData.TICKS_PER_SEC <= float(TIMED_TICKS) + 0.5:
 				return true
 	return false
+
+
+## Notes his flow as an exchange, or his finisher, starts (agency-pass.md section 22: flow counts in contests, and a
+## contest can come after the flow has lapsed).
+static func markFlow(f) -> void:
+	_size(f)
+	f.act.dirI[FLOW_EX] = f.act.flow
+
+
+## The flow he held then.
+static func flowEx(f) -> int:
+	_size(f)
+	return f.act.dirI[FLOW_EX]
 
 
 ## The freeze a press or a release that arrives now was made in: the frozen ticks since the last live tick.

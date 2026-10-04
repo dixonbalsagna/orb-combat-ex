@@ -14,7 +14,10 @@
     "lapseTicks": 90,
     "enderAfter": 1,
     "launchAt": 3,
-    "showcaseAt": 5
+    "showcaseAt": 5,
+    "dmgPer": 0.04,
+    "contest": 2,
+    "contestMax": 10
   },
   "timing": {
     "comboMul": 1.15
@@ -27,6 +30,8 @@
       9,
       10
     ],
-    "minLeadTicks": 5
+    "minLeadTicks": 5,
+    "timedMul": 1,
+    "fullEnderFlow": 3
   }
 }

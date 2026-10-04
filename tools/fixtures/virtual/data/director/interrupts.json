@@ -183,7 +183,8 @@
         "measured": 1,
         "plain": 0.6
       },
-      "immune": 90
+      "immune": 90,
+      "tappedHeavyWeak": true
     },
     "deflect": {
       "freeApproachTicks": 45,

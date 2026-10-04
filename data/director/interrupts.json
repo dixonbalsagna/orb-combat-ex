@@ -159,7 +159,8 @@
         "plain": 0.6
       },
       "immune": 90,
-      "_note": "A barrage closes (agency-pass.md sections 16 and 21). When enderAfter of a fighter's shots, of any kind, land clean on his rival inside 'window' ticks (not guarded, not shrugged off, not deflected; each shot once, and the shots of a split or a rain once for their group), the last is a knock-back he did not press: decisive (kind barrage), never a launch. measuredTicks: if each was fired this many ticks or more after the one before, it goes enderDist.measured of the tier's knock-back distance and is a full set-up; otherwise enderDist.plain and launch.json setup.weight.barragePlain. immune: the count starts again and the rival cannot be knocked back by another barrage for this many ticks"
+      "tappedHeavyWeak": true,
+      "_note": "A barrage closes (agency-pass.md sections 16 and 21). When enderAfter of a fighter's shots, of any kind, land clean on his rival inside 'window' ticks (not guarded, not shrugged off, not deflected; each shot once, and the shots of a split or a rain once for their group), the last is a knock-back he did not press: decisive (kind barrage), never a launch. measuredTicks: if each was fired this many ticks or more after the one before, it goes enderDist.measured of the tier's knock-back distance and is a full set-up; otherwise enderDist.plain and launch.json setup.weight.barragePlain. immune: the count starts again and the rival cannot be knocked back by another barrage for this many ticks. tappedHeavyWeak (section 22): a barrage that includes a tapped, uncharged heavy shot gets the weak ender, as a spammed one does"
     },
     "deflect": {
       "freeApproachTicks": 45,

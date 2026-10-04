@@ -57,7 +57,10 @@
         "lapseTicks",
         "enderAfter",
         "launchAt",
-        "showcaseAt"
+        "showcaseAt",
+        "dmgPer",
+        "contest",
+        "contestMax"
       ],
       "properties": {
         "enabled": {
@@ -88,6 +91,21 @@
           "type": "integer",
           "minimum": 1,
           "description": "The flow at which a showcase ender can replace the plain one."
+        },
+        "dmgPer": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The damage each flow adds to a blow of the string."
+        },
+        "contest": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The flow a won contest pays."
+        },
+        "contestMax": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The most flow contests can pay a string."
         }
       },
       "description": "The flow of a string (agency-pass.md section 2; sim/director/alchemy.gd).",
@@ -119,7 +137,9 @@
       "required": [
         "enabled",
         "cadences",
-        "minLeadTicks"
+        "minLeadTicks",
+        "timedMul",
+        "fullEnderFlow"
       ],
       "properties": {
         "enabled": {
@@ -139,6 +159,16 @@
           "type": "integer",
           "minimum": 0,
           "description": "The least lead, in ticks, a blur blow has over its press."
+        },
+        "timedMul": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The multiplier of a timed press in a blur string."
+        },
+        "fullEnderFlow": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The flow at which the blur's ender is the full one (a warning if above flow.max)."
         }
       },
       "description": "The blur's pattern and cadence.",
