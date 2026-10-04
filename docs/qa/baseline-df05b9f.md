@@ -304,3 +304,59 @@ The no-stick flow rows (F1 to F6: the same scripts without the stick on heavies,
 | mood actFloors[3] 3100 (100 seeds) | | | | | | | Frenzied act 4 12.2% to 16.3%, overall 6.7 to 8.2%, nothing else moves |
 
 Reading: wearPerDamage 350 shortens the match by 31 s and brings the first brink to 381 s; brink to KO fell 4.4 s (it did not stretch). The structure reach has to come down to about 1.3 to meet 50% on this build (1.8 reached 49.4% on a56187a). Perfect blocks scale about 25 a unit for the medium level (0.55 gave 15.83, so 0.50 would give about 14.6, unmeasured) and about 30 a unit for the hard level (0.70 gave 21.58, so about 0.60 for 18.5, unmeasured). The easy level needs about 0.32 for 8 (unmeasured). The act 4 floor is the clean lever for Frenzied.
+
+---
+
+## Round 2 (2026-10-04): the blasters at 100, measured perfect-block levels, the combined list
+
+Same clean export of df05b9f, nothing applied. Default and swap, seeds 1 to 300 against the baseline's own seeds 1 to 300; masher and pair rows at 100; level runs at 100.
+
+### Blasters against the medium AI, 100 matches (`node qa/timing-edge.js --plan=blast --matches=100`)
+
+| Row | Wins | 95% interval | Band |
+| :--- | ---: | :--- | :--- |
+| B1 mixed blaster (a bolt about every 14 ticks, a tapped heavy now and then) | 66% (66 of 100) | 56 to 75% | 25 to 45 (starting band): FAIL |
+| B2 slow mix (L L and a tapped H, one press every 24 ticks) | 45% (45 of 100) | 36 to 55% | reported |
+
+Encounter's mixed blaster won 45 of 100: his mix is a slower one than B1, closer to the slow mix.
+
+### Perfect-block levels, measured
+
+| Level | Value | Perfect blocks per 100 melee exchanges | Band |
+| :--- | ---: | ---: | :--- |
+| medium | 0.50 (was 0.60) | 14.67 (was 17.07) | 5 to 15: PASS by 0.33 |
+| hard | 0.60 (was 0.90) | 19.90 (was 27.67) | 12 to 20: PASS by 0.1 |
+| easy | 0.32 (was 0.35) | 7.68 (was 8.49) | 3 to 8: PASS |
+
+The interpolations were optimistic (14.6, 18.5, 7.8 predicted). Medium and hard pass narrowly, at one run of 300 matches (medium) and 100 (hard, easy); a further step (0.45 and 0.55) would buy margin.
+
+### The combined list and the list with reach 1.3
+
+Combined = wounds wearPerDamage 350 (both fighters), mood actFloors[3] 3100, perfectBlockMul medium 0.50, hard 0.60, easy 0.32. "+reach" = the same with ladder.reach.structure[3] 1.3 (both fighters).
+
+| Row | Baseline (300 seeds) | wear 350 alone | Combined | Combined + reach 1.3 | Band |
+| :--- | ---: | ---: | ---: | ---: | :--- |
+| KAI win | 47.7% | 51.2% | 46.5% [42.5, 50.5] | 46.5% | 45 to 55 (the interval test fails at 600 matches; the 42% target passes) |
+| Median length / p90 | 494.0 / 604.9 s | 463.0 / 572.3 | 463.1 / 567.9 | 461.9 / 561.6 | 360 to 480 / at most 600 |
+| First brink | 409.0 s | 380.7 | 371.5 | 374.2 | 270 to 420 |
+| Brink to KO | 71.0 s | 66.6 | 72.1 | 70.1 s | 45 to 90 |
+| Front-row structures / all rows | 57.3 / 45.0% | 51.0 / 39.8 | 52.9 / 41.4 | **43.3 / 33.5** | 25 to 50 / 15 to 40 |
+| Civilians lost | 25.8% | 23.3 | 23.4 | 21.1 | 12 to 30 |
+| Tier-4 structures a minute | 11.20 | 11.22 | 11.59 | 8.64 | 6 to 20 |
+| Arms share of limb breaks | 55.8% | 66.0% | 57.7% | 58.5% | 35 to 65 |
+| Frenzied act 4 | 13.1% | 13.2% | 15.9% | 15.4% | at least 15 |
+| Perfect blocks medium / hard / easy | 17.07 / 27.67 / 8.49 | 16.91 | 14.52 / 19.41 / 7.79 | 14.56 | see above |
+| Survival / rallies | 27.7% / 0.32 | 27.4 / 0.32 | 32.6% / 0.41 | 28.6% / 0.35 | 25 to 40 / 0.3 to 0.7 |
+| Brunts | 4.2% | 4.2 | 3.7% (FAIL by 0.3) | 3.9% (FAIL by 0.1) | 4 to 10 |
+| Masher vs medium (100) | 40% | 32% | 32% | 29% | 35 to 50 |
+| Bolt-only vs medium (100) | 27.5% (40) | 20.0% (40) | 48.0% | 41.0% | 20 to 40 |
+| Mixed blaster vs medium (100) | 66% | | 69% | 73% | 25 to 45 |
+| Slow mix vs medium (100) | 45% | | 62% | 57% | reported |
+| Lights-only mirror, brink to KO | 49.6 s | 72.2 s | 72.2 s | 71.3 s | 45 to 55 |
+| Blind 8-tick masher blur locks | 13.4% | | 13.1% | | at most 20 |
+
+What the combined list does: it fixes length (463 s, p90 568 s), the first brink (372 s), Frenzied act 4 (15.9%) and all three perfect-block rows. It leaves the front-row ceiling (52.9%, fixed only by the reach at 1.3: 43.3%) and brunts (3.7%, 0.3 under their floor). It costs: **the lights-only mirror's brink to KO goes from 49.6 s to 72 s and fails its 45 to 55 s band, the bolt-only player's win rate against the medium AI goes from 27.5% (32% in Encounter's 100) to 48%, the mixed blaster from 66% to 69% and the slow mix from 45% to 62%** (all at 100). The raised wear makes every shot and blow more decisive, so the blasters gain most; the mirror runs longer after the brink because the brink opens later, and then ends no faster.
+
+### The medium masher under wear 350 and guardRepeat
+
+The masher with forms against the medium AI under the combined list: 32% at 100 (seeds 1 to 100), 36.0% (72 of 200) at 200 (seeds 1 to 200: the second hundred is 40 of 100), so the 32% was partly noise; the band is 35 to 50. Against guardRepeat on the combined list (medium level, 200 matches each, seeds 1 to 200): **6.5 gives 36.0% (72 of 200); 6.0 gives 45.5% (91 of 200); 5.5 gives 47.5% (95 of 200).** Encounter owns the number; 6.0 would put the masher mid-band under the combined list.

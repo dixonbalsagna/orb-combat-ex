@@ -3,7 +3,7 @@
 // slot 0 on odd seeds and slot 1 on even ones, one Godot process per matchup, at most 3 at a time (the machine rule: each
 // shows as two Windows processes). Prints a table of win rates (Wilson 95% intervals), damage per exchange, launches earned,
 // turn-taking and how the presses read, with Game Design's bands (docs/design/agency-pass.md, "What QA measures").
-//   node qa/timing-edge.js [--matches=40] [--jobs=3] [--plan=core|sweep|energy|flow|all] [--seed=1] [--md=file] [--json=file]
+//   node qa/timing-edge.js [--matches=40] [--jobs=3] [--plan=core|sweep|energy|flow|blast|all] [--seed=1] [--md=file] [--json=file]
 // Until the agency pass is built the sim has no timing rules, so every row should read about 50%: that is the baseline this
 // reports today, and the same command measures the edge once the rules land.
 const { spawn } = require('child_process');
@@ -57,6 +57,11 @@ const FLOW = [
   ['F5', nsP.styleOnly, nsP.styleOnly, 'no stick: mirror, both style-only', 45, 55],
   ['F6', nsP.timedMash, nsP.masher, 'no stick: timed mash (within the blur window, 2 ticks) against a plain mash', 62, 82],
 ];
+// The blaster against the medium AI at the sample the EP asked for (run with --matches=100): the mixed blaster and the slow mix.
+const BLASTAI = [
+  ['B1', 'tapper' + BLAST, P.ai, 'a mixed blaster (a bolt about every 14 ticks) against the medium AI (starting band 25 to 45%)', 25, 45],
+  ['B2', 'tapper' + SLOW, P.ai, 'the slow mix (L L and a tapped H, one press every 24 ticks) against the medium AI (the same band as reference)', null, null],
+];
 const acc = a => `tapper:acc=${a}:win=4:mix=LLH${F}`;
 
 // id, A, B, what, band for A's win share (lo, hi in percent; null: reported only), and optionally the least share of matches that must end in a KO before the cap (percent)
@@ -76,7 +81,7 @@ const SWEEP = [0, 20, 40, 60, 80, 100].flatMap(a => [
   ['A' + a + 'm', acc(a), P.masher, `accuracy ${a}% against a masher`, null, null],
   ['A' + a + 's', acc(a), P.styleOnly, `accuracy ${a}% against a style-only player`, null, null],
 ]);
-const MATCHUPS = PLAN === 'core' ? CORE : PLAN === 'sweep' ? SWEEP : PLAN === 'energy' ? ENERGY : PLAN === 'flow' ? FLOW : [...CORE, ...SWEEP, ...ENERGY, ...FLOW];
+const MATCHUPS = PLAN === 'core' ? CORE : PLAN === 'sweep' ? SWEEP : PLAN === 'energy' ? ENERGY : PLAN === 'flow' ? FLOW : PLAN === 'blast' ? BLASTAI : [...CORE, ...SWEEP, ...ENERGY, ...FLOW];
 
 function run(m) {
   const g = godot();
