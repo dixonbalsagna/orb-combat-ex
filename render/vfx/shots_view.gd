@@ -138,6 +138,9 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 	# The beam plays: a crossing beam's head, the cues' effects, a walk or a wade in progress.
 	if hub.beamplay_enabled:
 		n = _beamplay(n, S, hub, host, cam_x, half_w, a, bh, minpx, alpha)
+	# The melee press styles: each blow's after-image and contact look.
+	if hub.press_enabled:
+		n = _press(n, S, hub, host, cam_x, half_w, a, bh, minpx, alpha)
 	# The rival's glasses glare, over his face.
 	if hub.glare_enabled:
 		n = _glare(n, S, hub, host, cam_x, half_w, a, bh, minpx)
@@ -172,7 +175,7 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 					var dv: Vector2 = Vector2(e.dx * cos(ang), sin(ang) + 0.15).normalized()
 					var d0: float = e.size * (0.25 + 0.75 * eo)
 					var ln: float = e.size * 0.55 * (1.0 - u * 0.6)
-					var sc: Color = e.col
+					var sc: Color = e.col.darkened(0.15)
 					sc.a = alpha * 0.9 * (1.0 - u)
 					n = _put(n, Vector2(rx, e.y) + dv * (d0 - ln * 0.5), dv, ln, maxf(6.0, minpx * 1.5), ez, sc, 0.5, 0.05, SHAPE_STREAK)
 			"burst":
@@ -262,6 +265,190 @@ func _wedge(n: int, base: Vector2, dir: Vector2, l: float, w: float, z: float, c
 ## A thin ring seen edge-on across dir: an ellipse short along dir (a share of its height) and size tall across it.
 func _across(n: int, c: Vector2, dir: Vector2, size: float, along: float, z: float, col: Color, minpx: float) -> int:
 	return _put(n, c, dir, size * along, size, z, col, maxf(0.05, 1.6 * minpx / maxf(size * 0.5, 1.0)), 0.0, SHAPE_RING)
+
+
+## A thin line of uniform width t between two points (a streak at half-width 0.5 both ends: the quad's full height is twice the thickness).
+func _line(n: int, a: Vector2, b: Vector2, t: float, z: float, col: Color) -> int:
+	var d: Vector2 = b - a
+	var l: float = d.length()
+	if l < 0.01:
+		return n
+	return _put(n, (a + b) * 0.5, d / l, l, t * 2.0, z, col, 0.5, 0.5, SHAPE_STREAK)
+
+
+## A body as a few strokes (a head, a torso, two legs and the striking arm): the prototype's figure. wire = a thin outline (the timed blow's echoes),
+## else filled (a ghost). feet is where his feet are in this view; dir the way he faces; fist the striking hand's place in this view.
+func _figure(n: int, feet: Vector2, dir: float, lean: float, fist: Vector2, col: Color, wire: bool, z: float, minpx: float) -> int:
+	var t: float = maxf(1.7, minpx * 1.5) if wire else 3.2
+	var hip := Vector2(feet.x, feet.y + VfxPress.HIP)
+	var neck := Vector2(feet.x + dir * lean * 0.6, feet.y + VfxPress.SHOULDER + 4.0)
+	var head := Vector2(feet.x + dir * lean, feet.y + VfxPress.HEAD_Y)
+	if wire:
+		n = _put(n, head, Vector2(1.0, 0.0), VfxPress.HEAD_R * 2.0, VfxPress.HEAD_R * 2.0, z, col, maxf(0.16, 2.0 * minpx / VfxPress.HEAD_R), 0.0, SHAPE_RING)
+	else:
+		n = _put(n, head, Vector2(1.0, 0.0), VfxPress.HEAD_R * 2.0, VfxPress.HEAD_R * 2.0, z, col, 1.0, 0.0, SHAPE_RING)
+	n = _line(n, hip, neck, t * (1.0 if wire else 1.6), z, col)
+	n = _line(n, hip, Vector2(feet.x - dir * 8.0, feet.y), t, z, col)
+	n = _line(n, hip, Vector2(feet.x + dir * 10.0, feet.y), t, z, col)
+	n = _line(n, Vector2(feet.x + dir * lean * 0.5, feet.y + VfxPress.SHOULDER), fist, t, z + 0.1, col)
+	return n
+
+
+func _dir_of(S: SimState, slot: int) -> float:
+	var fc: float = float(S.fighters[slot].face)
+	return fc if absf(fc) > 0.5 else 1.0
+
+
+## The press styles (press.gd): each blow's after-image and contact look by the way it was pressed.
+func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a: float, bh: float, minpx: float, alpha: float) -> int:
+	var pr: VfxPress = hub.press
+	var al: float = alpha * VfxPress.p("alpha")
+	pr.shown = 0
+	var red: bool = hub.reduced_motion
+	for e: VfxPress.Fx in pr.fx:
+		if n >= CAP - 40:
+			break
+		var rx: float = SimWrap.sdx(cam_x, e.ax)
+		if absf(rx) > half_w + 6.0 * bh:
+			continue
+		var st: float = maxf(e.age - (1.0 - a), 0.0)
+		var u: float = clampf(st / e.life, 0.0, 1.0)
+		var d: float = e.dir
+		var fz: float = host.fighter_z(e.slot, a)
+		var zb: float = fz + Z_FX - 12.0          # behind the fighter: the after-images
+		var zf: float = fz + Z_FX + 8.0           # in front: the contact marks
+		var feet := Vector2(rx, e.ay)
+		var contact: Vector2 = feet + Vector2(e.cx, e.cy)
+		var guard: Vector2 = feet + Vector2(d * VfxPress.GUARD.x, VfxPress.GUARD.y + (6.0 if e.hand == 1 else -2.0))
+		pr.shown += 1
+		match e.style:
+			"speed":
+				# A soft, filled, overlapping blur along the fist's path (layered soft discs and one wide soft streak), and a small round ring.
+				var fade: float = 1.0 - u
+				var bc: Color = e.col.darkened(0.15)
+				bc.a = al * 0.55 * fade
+				if not red:
+					for k in range(5):
+						var f: float = float(k + 1) / 5.0
+						var pc: Vector2 = guard.lerp(contact, f)
+						n = _put(n, pc, Vector2(1.0, 0.0), 18.0 + 14.0 * f, 18.0 + 14.0 * f, zb, bc, 1.0, 0.0, SHAPE_DISC)
+				var path: Vector2 = contact - guard
+				if path.length() > 1.0:
+					var sc: Color = e.col
+					sc.a = al * 0.45 * fade
+					n = _put(n, (guard + contact) * 0.5, path.normalized(), path.length(), VfxPress.p("speed_w") * 2.0, zb - 0.2, sc, 0.9, 0.5, SHAPE_STREAK)
+				var rr: float = lerpf(5.0, VfxPress.p("speed_ring_r"), 1.0 - pow(1.0 - clampf(st / VfxPress.p("speed_ring_life"), 0.0, 1.0), 2.0))
+				var rc: Color = e.col2
+				rc.a = al * (1.0 - clampf(st / VfxPress.p("speed_ring_life"), 0.0, 1.0))
+				n = _put(n, contact, Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zf, rc, maxf(0.16, 3.4 * minpx / rr), 0.0, SHAPE_RING)
+			"tech":
+				# Three sharp wireframe echoes between the old pose and the strike, popping off one at a time from the back to the front;
+				# a thin straight speed line; a hard diamond.
+				var pop: float = VfxPress.p("echo_pop")
+				for g in range(3):
+					if red and g != 2:
+						continue
+					if st >= 2.5 + float(g) * pop:
+						continue
+					var fr: float = float(g + 1) / 4.0
+					var bx: float = -d * maxf(e.lunge, 24.0) * (1.0 - fr)
+					var ec: Color = e.col.darkened(0.3)
+					ec.a = al
+					var fist: Vector2 = guard.lerp(contact, fr)
+					n = _figure(n, Vector2(feet.x + bx, feet.y), d, 4.0 + 10.0 * fr, Vector2(fist.x + bx, fist.y), ec, true, zf - 2.0 + 0.2 * float(g), minpx)
+				var lc: Color = e.col.darkened(0.3)
+				lc.a = al * 0.9 * (1.0 - clampf(st / VfxPress.p("line_life"), 0.0, 1.0))
+				n = _line(n, guard, contact, maxf(1.3, minpx * 1.2), zf - 1.0, lc)
+				var dl: float = VfxPress.p("diamond_life")
+				if st < dl:
+					var dr: float = lerpf(5.0, VfxPress.p("diamond_r"), clampf(st / 4.0, 0.0, 1.0))
+					var dc: Color = e.col.darkened(0.3)
+					dc.a = al * (1.0 - st / dl)
+					n = _put(n, contact, Vector2(1.0, 0.0), dr * 2.0, dr * 2.0, zf, dc, maxf(0.2, 3.6 * minpx / dr), 0.0, 5.0)
+			"heavy":
+				# The release: stacked body ghosts behind him, a filled crescent from the back-swing to the contact, and a double contact ring.
+				var gl: float = VfxPress.p("ghost_life")
+				var gf: float = 1.0 - clampf(st / gl, 0.0, 1.0)
+				if not red:
+					for k in range(4):
+						var fr2: float = float(k + 1) / 5.0
+						var bx2: float = -d * e.lunge * (1.0 - fr2) * 1.3
+						var gc: Color = e.col
+						gc.a = al * (0.20 + 0.08 * float(k)) * gf
+						n = _figure(n, Vector2(feet.x + bx2, feet.y), d, 16.0, Vector2(feet.x + bx2 + d * 30.0, feet.y + 56.0).lerp(contact, fr2), gc, false, zb + 0.1 * float(k), minpx)
+				var back_pt: Vector2 = feet + Vector2(-d * 30.0, 60.0)
+				var ctrl: Vector2 = (back_pt + contact) * 0.5 + Vector2(0.0, 34.0)
+				var cl: float = VfxPress.p("crescent_life")
+				var cf: float = 1.0 - clampf(st / cl, 0.0, 1.0)
+				var cc: Color = e.col
+				cc.a = al * 0.75 * cf
+				var segs: int = 3 if red else 5
+				var prev: Vector2 = back_pt
+				for k in range(segs):
+					var tq: float = float(k + 1) / float(segs)
+					var q: Vector2 = (1.0 - tq) * (1.0 - tq) * back_pt + 2.0 * (1.0 - tq) * tq * ctrl + tq * tq * contact
+					var wq: float = 6.0 + 28.0 * sin(PI * (tq - 0.5 / float(segs)))
+					n = _put(n, (prev + q) * 0.5, (q - prev).normalized(), (q - prev).length() * 1.15, wq, zb + 0.3, cc, 0.6, 0.6, SHAPE_STREAK)
+					prev = q
+				var rl: float = VfxPress.p("ring_life")
+				var rt: float = clampf((st - 2.0) / rl, 0.0, 1.0)
+				if st >= 2.0 and rt < 1.0:
+					var r1: float = lerpf(12.0, VfxPress.p("ring_r"), rt)
+					var c1: Color = e.col.darkened(0.2)
+					c1.a = al * (1.0 - rt)
+					n = _put(n, contact, Vector2(1.0, 0.0), r1 * 2.0, r1 * 2.0, zf, c1, minf(0.5, 9.0 / r1), 0.0, SHAPE_RING)
+					var r2: float = lerpf(6.0, VfxPress.p("ring_r") * 0.5, rt)
+					n = _put(n, contact, Vector2(1.0, 0.0), r2 * 2.0, r2 * 2.0, zf + 0.1, c1, minf(0.5, 5.0 / r2), 0.0, SHAPE_RING)
+			"block":
+				# A shield line in front of the defender and a block flash. Never a knock-back (nothing here moves him).
+				var sf: float = 1.0 - u
+				var shc: Color = e.col
+				shc.a = al * (0.35 + 0.5 * sf)
+				var sh_h: float = VfxPress.p("shield_h")
+				n = _put(n, contact, Vector2(0.0, 1.0), sh_h, maxf(1.4, minpx * 1.6) * 2.0, zf, shc, 0.5, 0.5, SHAPE_STREAK)
+				var ft: float = clampf(st / VfxPress.p("flash_life"), 0.0, 1.0)
+				if ft < 1.0:
+					var fc: Color = e.col2
+					fc.a = al * (1.0 - ft)
+					var fr1: float = 10.0 + ft * 22.0
+					n = _put(n, contact, Vector2(1.0, 0.0), fr1 * 2.0, fr1 * 2.0, zf + 0.1, fc, minf(0.5, 4.0 / fr1), 0.0, SHAPE_RING)
+					var fr3: float = 5.0 + ft * 10.0
+					n = _put(n, contact, Vector2(1.0, 0.0), fr3 * 2.0, fr3 * 2.0, zf + 0.1, fc, minf(0.5, 2.0 / fr3), 0.0, SHAPE_RING)
+	# The heavy's wind-up: a ring that shrinks around the fist as the blow is charged.
+	for s in range(mini(2, S.fighters.size())):
+		var w: VfxPress.Wind = pr.wind[s]
+		if not w.on or n >= CAP - 8:
+			continue
+		var wrx: float = SimWrap.sdx(cam_x, S.fighters[s].x)
+		if absf(wrx) > half_w + 6.0 * bh:
+			continue
+		var wk: float = clampf((w.t + a) / 24.0, 0.0, 1.0)
+		var wr: float = lerpf(VfxPress.p("wind_r"), 9.0, 1.0 - pow(1.0 - wk, 1.5))
+		var wc: Color = w.col
+		wc.a = al * (0.35 + 0.65 * wk)
+		var wd: float = _dir_of(S, s)
+		n = _put(n, Vector2(wrx + wd * 14.0, S.fighters[s].y + 54.0), Vector2(1.0, 0.0), wr * 2.0, wr * 2.0, host.fighter_z(s, a) + Z_FX + 6.0, wc, minf(0.5, (3.0 + 3.0 * wk) / wr), 0.0, SHAPE_RING)
+		pr.shown += 1
+	# A heavy ender's target flies with ghosts behind him (the sim's knockback): the stretch is the ghosts' reach along the path.
+	if not red:
+		for s in range(mini(2, S.fighters.size())):
+			if float(pr.fly[s]) <= 0.0 or n >= CAP - 24:
+				continue
+			var vx: float = SimWrap.sdx(cam_x, S.fighters[s].x)
+			if absf(vx) > half_w + 6.0 * bh:
+				continue
+			var gz: float = host.fighter_z(s, a) + Z_FX - 12.0
+			var vcol: Color = VfxPress.lane_of(S, s)
+			for k in range(1, int(VfxPress.p("fly_ghosts")) + 1):
+				var hp: Vector2 = pr.back(S, s, k * 4)
+				var hrx: float = SimWrap.sdx(cam_x, hp.x)
+				if absf(hrx - vx) < 6.0:
+					continue
+				var gcol: Color = vcol
+				gcol.a = al * (0.34 - 0.09 * float(k))
+				n = _figure(n, Vector2(hrx, hp.y), _dir_of(S, s), 6.0, Vector2(hrx + 10.0, hp.y + 52.0), gcol, false, gz - 0.1 * float(k), minpx)
+			pr.shown += 1
+	return n
 
 
 ## Where a fighter's head is and which way he looks: the host's `fighter_head(i, a)` (Vector3: world x, y, z of the head's centre) when Rendering has

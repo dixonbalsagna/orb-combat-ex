@@ -45,3 +45,7 @@ The glare sits on an estimated head: the pose plus 68 units up, turned with the 
 ## Tested
 
 `effects_check.gd` `_glare()`: on by default; the wearer is the rival's slot and not the Protagonist's; the three colours are violet; the Protagonist's taunt makes none; the rival's taunt starts a full glare; the envelope (attack in under 4 ticks, held 8 to 24 ticks, cleared in 30); it draws its rim, lens and band (3 quads) and nothing without a glare; a signature's wind-up makes a glint; the next two inside the cooldown are not made, and a taunt after it is; the three later cues; the seal break inside the cooldown with a crack; a frozen tick holds it; none in a transformation, a charge or a rubble ring; reduced motion has no ramp; flag off draws nothing; a hidden fighter shows none.
+
+## Sized to Art's lens (2026-10-04)
+
+The EP's note on the first stills: the band ran well past his face. The lens now follows Art's numbers from `art/concepts/refine/approved-rival-turnaround.svg` (each lens 6.2 wide and 3.0 high in head units, the head about 11 wide), scaled to the head's 16 units in the estimate: the wedge is 10 by 4.8 units (`w`, `h`), 4 units forward of the head's centre and 1 up (`fwd`, `up`), in `VfxGlare.DEFAULTS` (code, no JSON). It was 26 by 15. The slash and the rim scale with it. The pictures glare-*.jpg are the earlier, larger size and are due a re-shoot once the frame C head is in.

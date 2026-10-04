@@ -88,3 +88,7 @@ Quads only, in the shots view's one draw (cap raised from 320 to 380): a crossin
 ## The glare (2026-10-04)
 
 Three quads (rim, lens, band; four with a crack) for at most 24 ticks, only while the rival is glaring and at least 200 ticks apart, in the shots view's one draw. No debris. The wild deflect's landing ring (one quad for the shot's flight) is gone.
+
+## The melee press styles (2026-10-04)
+
+Quads only, in the shots view's one draw: speed 7, tech 17 falling to 1 as the echoes pop off, heavy 1 for the wind-up and 27 for the release (15 more for a flying target), block 3. The busiest test tick (both fighters with a heavy and a timed blow, both wind-ups and a fly) draws 84 of 380. No debris. Not measured: the web build under load and an old laptop.

@@ -195,6 +195,7 @@ func _run() -> void:
 	_blast_round2()
 	_beamplay()
 	_glare()
+	_press()
 	print("\neffects check passed" if fails == 0 else "\neffects check FAILED (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -2852,6 +2853,112 @@ func _glare() -> void:
 	view.update(h2, host, 1.0, plains + 350.0, 0.7, 1500.0)
 	_check(view.count == 0, "a hidden fighter shows no glare")
 	f1.hidden = false
+	view.queue_free()
+	SimCore.dispose(S)
+
+
+## The melee press styles (docs/ep/prototypes/melee-trade-v2.html; docs/vfx/press-styles.md): speed, tech, heavy and block each leave their own look.
+func _press() -> void:
+	print("press styles")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.x = plains
+	f0.y = g
+	f1.x = SimWrap.wrap(plains + 90.0)
+	f1.y = g
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var cam: float = plains + 45.0
+	var hit := func(att: int, kind: String, style: String): return VfxMock.ev("damage", {"x": S.fighters[1 - att].x, "y": g + 90.0, "z": 0.0, "amount": 6.0, "col": "#ffffff", "victim": 1 - att, "attacker": att, "region": "core", "kind": kind, "number": true, "style": style})
+	var cue := func(slot: int, name: String): return VfxMock.ev("cue", {"actor": slot, "kind": name, "text": "", "source": ""})
+	var quads_at := func(h: VfxHub) -> int:
+		view.update(h, host, 1.0, cam, 1.0, 1500.0)
+		return view.count
+	var fresh := func() -> VfxHub:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		for k in range(8):
+			_tick(S, h, [])
+		return h
+	_check(VfxLook.PRESS_DEFAULT and VfxHub.new().press_enabled, "on by default")
+	# The style of a blow: the beat's own, else the press log, else speed; heavy is heavy and a guard is a block.
+	var e_h = hit.call(0, "heavy", "")
+	var e_g = hit.call(0, "guard", "")
+	var e_m = hit.call(0, "light", "mash")
+	var e_t = hit.call(0, "light", "timed")
+	var e_n = hit.call(0, "light", "")
+	_check(VfxPress.style_of(S, e_h, 0) == "heavy" and VfxPress.style_of(S, e_g, 0) == "block" and VfxPress.style_of(S, e_m, 0) == "speed" and VfxPress.style_of(S, e_t, 0) == "tech" and VfxPress.style_of(S, e_n, 0) == "speed", "styles: heavy, block, mash is speed, timed is tech, a light with no log is speed")
+	_check(VfxPress.style_of(S, VfxMock.ev("damage", {"attacker": 0, "victim": 1, "kind": "beam", "region": "core"}), 0) == "", "a beam's damage is not a press")
+	# Speed: a soft overlapping blur along the fist's path and a small ring.
+	var hs: VfxHub = fresh.call()
+	_tick(S, hs, [hit.call(0, "light", "mash")])
+	var q_speed: int = quads_at.call(hs)
+	_check(hs.press.made.get("speed", 0) == 1 and q_speed >= 6 and q_speed <= 9, "mash: a blur of soft discs and a streak and a ring (%d quads)" % q_speed)
+	var fx_s: VfxPress.Fx = hs.press.fx[0]
+	_check(fx_s.dir > 0.0 and fx_s.cx > 20.0 and fx_s.cx < 90.0, "the contact is on the victim's front, between the fighters (%.0f of 90)" % fx_s.cx)
+	for k in range(14):
+		_tick(S, hs, [])
+	_check(hs.press.fx.is_empty() and quads_at.call(hs) == 0, "and it is gone in its 8 ticks")
+	# Tech: three wireframe echoes that pop off one at a time, back to front, a speed line and a hard diamond.
+	var ht: VfxHub = fresh.call()
+	_tick(S, ht, [hit.call(1, "light", "timed")])
+	var counts: Array = [quads_at.call(ht)]
+	for k in range(8):
+		_tick(S, ht, [])
+		counts.append(quads_at.call(ht))
+	_check(int(ht.press.made.get("tech", 0)) == 1 and counts[0] >= 15 and counts[0] > counts[3] and counts[3] > counts[6] and counts[6] > counts[8] - 1, "timed: three echoes, a line and a diamond, popping off from the back (quads by tick %s)" % str(counts))
+	_check(ht.press.fx.size() == 1 and ht.press.fx[0].dir < 0.0, "the rival's blow runs the other way (toward the left)")
+	# Heavy: the wind-up ring shrinks; the release has ghosts, a crescent and a double ring.
+	var hh: VfxHub = fresh.call()
+	_tick(S, hh, [cue.call(0, "tell_heavy")])
+	var w0: int = quads_at.call(hh)
+	_check(hh.press.wind[0].on and w0 == 1, "a heavy's wind-up is one shrinking ring (%d)" % w0)
+	for k in range(10):
+		_tick(S, hh, [])
+	_check(quads_at.call(hh) == 1, "and it holds one quad while it charges")
+	_tick(S, hh, [hit.call(0, "heavy", "")])
+	for k in range(3):
+		_tick(S, hh, [])
+	var q_heavy: int = quads_at.call(hh)
+	_check(not hh.press.wind[0].on and int(hh.press.made.get("heavy", 0)) == 1 and q_heavy >= 20, "the release ends the wind-up and draws ghosts, a crescent and two rings (%d quads)" % q_heavy)
+	# A string's ender: the knockback sends the target flying with ghosts behind him.
+	f1.x = SimWrap.wrap(plains + 90.0)
+	for k in range(14):
+		f1.x = SimWrap.wrap(f1.x + 30.0)
+		_tick(S, hh, [])
+	_tick(S, hh, [VfxMock.ev("knockback", {"victim": 1, "attacker": 0, "kind": "slideLong", "amount": 300.0, "dur": 0.5, "n": S.tick + 30, "x": f1.x, "y": g, "z": 0.0})])
+	_check(float(hh.press.fly[1]) > 20.0, "a knockback starts the target's flight (%.0f ticks)" % float(hh.press.fly[1]))
+	var q_fly: int = quads_at.call(hh)
+	f1.x = SimWrap.wrap(plains + 90.0)
+	_check(q_fly >= 12, "and he is drawn with ghosts along his path (%d quads)" % q_fly)
+	# Block: a shield line and a flash; nothing moves.
+	var hb: VfxHub = fresh.call()
+	var x0: float = f1.x
+	_tick(S, hb, [hit.call(0, "guard", "")])
+	var q_block: int = quads_at.call(hb)
+	_check(int(hb.press.made.get("block", 0)) == 1 and q_block == 3 and f1.x == x0, "block: a shield line and a flash (%d quads), and nobody moved" % q_block)
+	_check(hb.press.fx[0].slot == 1 and hb.press.fx[0].dir < 0.0, "the shield is the defender's, facing the attacker")
+	# Reduced motion: the short forms.
+	var hr: VfxHub = fresh.call()
+	hr.reduced_motion = true
+	_tick(S, hr, [hit.call(0, "light", "mash"), hit.call(1, "light", "timed")])
+	var q_red: int = quads_at.call(hr)
+	_check(q_red < q_speed + 17 and q_red >= 6, "reduced motion: no blur discs and one echo (%d quads, against %d and 17)" % [q_red, q_speed])
+	# Off draws nothing; the busiest tick fits the budget.
+	var ho := VfxHub.new()
+	ho.press_enabled = false
+	ho.reset(S, 6)
+	_tick(S, ho, [hit.call(0, "light", "mash")])
+	_check(ho.press.fx.is_empty(), "press_enabled off: nothing")
+	var hz: VfxHub = fresh.call()
+	_tick(S, hz, [cue.call(0, "tell_heavy"), cue.call(1, "tell_heavy"), hit.call(0, "heavy", ""), hit.call(1, "heavy", ""), hit.call(0, "light", "timed"), hit.call(1, "light", "timed")])
+	_check(quads_at.call(hz) <= VfxShotsView.CAP, "the busiest tick draws %d quads of %d" % [view.count, VfxShotsView.CAP])
 	view.queue_free()
 	SimCore.dispose(S)
 

@@ -224,3 +224,7 @@ The 20-tick crossing of a beam and the five plays (swat, split, walk-through, wa
 Frame C (the bare wedge); the glare hides his eyes completely, in his pale violet, held 0.4 s at most. Today it rides his taunt and a signature's wind-up (a glint); the Chin plant, a Pride threshold and the seal break (cracked lens) are accepted once Simulation sends cues for them. `render/vfx/glare.gd`, drawn in the shots view; flag `glare_enabled`. docs/vfx/glare.md (cues needed, rules kept, the head estimate); `effects_check.gd` `_glare()`.
 
 The wild deflect no longer marks its landing on the ground (Orb: the landing is a surprise). docs/vfx/shots-plan.md, the wild deflect row.
+
+### The melee press styles (2026-10-04)
+
+Each press style has its own after-image and contact look (Orb's reference docs/ep/prototypes/melee-trade-v2.html): speed is a soft overlapping blur and a small ring, tech three wireframe echoes, a line and a hard diamond, heavy a shrinking charge ring then ghosts, a filled crescent and a double ring (and a flying target's ghosts), block a shield line and a flash. First build behind `press_enabled`, driven by the `damage` event, the attacker's press log (read only), `tell_heavy` and `knockback`. `render/vfx/press.gd`; docs/vfx/press-styles.md (cost, what Animation and the director need, reduced motion); `effects_check.gd` `_press()`.

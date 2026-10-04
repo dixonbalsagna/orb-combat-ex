@@ -251,7 +251,7 @@ Orb chose option B of the note above. **Done:** the intent gains **`waited`** (0
 
 **What the sim sees:** a new **`escape` edge** (Simulation's I3). Escape stops being a stance derived from `sprint` and the stick, and the `awayDead` test in `act.gd` for Escape goes; `sprint` stays for boost. In the director, an escape is an interrupt of the same family as the burst and the dodge-cancel (Encounter orders them).
 
-## 4a. Air recovery: hold Guard to brake
+## 4a. Air recovery: hold Guard to brake (the button is superseded 2026-10-04: with LT as the manoeuvre stance the brake is LT held and the tech is LT tapped, `lunge-control.md` B4)
 
 **Orb's answer: hold to brake, at a ki cost, not the dodge tap.** Which button: **Guard** (LB on Arena and Brawler, B on Simple, Shift or Semicolon on the keyboard, the Guard button on touch). Reasons: LT held is now *boost* (accelerate, draining ki), so braking on LT would be the opposite on the same button; braking is defensive ("plant yourself"), which is what Guard already says; and every layout has Guard held with a thumb or finger that is free in a knockback.
 
