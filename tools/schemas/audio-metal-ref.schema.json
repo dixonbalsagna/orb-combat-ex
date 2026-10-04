@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/audio-metal-ref",
+  "title": "audio metal reference (schema 1)",
+  "description": "audio/data/metal_ref.json: the reference clips for Suno (audio/synth/metal_sketch.gd, audio/tools/render_suno_refs.gd): the town-band hook re-voiced as a speed-metal arrangement at three tempos. bars: eight bars, each a kind and the chord (semitones above root_midi) of each half bar. hook: [bar, beat, MIDI note, beats, harmony MIDI note], bars counted from 0. Version field: schema. Policy: closed except keys starting with an underscore (the existing `note` is allowed). Cross-references (a hook note sits on a hook bar, inside the bar; brass_bars are bars of the file) are checked by tools/lib/xref-fight.js (metalref-*).",
+  "type": "object",
+  "required": [
+    "schema",
+    "rate",
+    "root_midi",
+    "tempos",
+    "bars",
+    "hook",
+    "brass_bars",
+    "gain"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "rate": {
+      "type": "integer",
+      "minimum": 8000,
+      "description": "The sample rate of the rendered clip."
+    },
+    "root_midi": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 127,
+      "description": "The low note the chords count from (E2 = 40)."
+    },
+    "tempos": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "description": "The tempos rendered, in BPM."
+    },
+    "bars": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "kind",
+          "chords"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "gallop",
+              "hook",
+              "march",
+              "hit"
+            ],
+            "description": "gallop: the palm-muted riff; hook: the riff under the hook; march: the tuba oompah; hit: one huge chord and a crash."
+          },
+          "chords": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer"
+            },
+            "description": "Semitones above root_midi for each half bar."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      }
+    },
+    "hook": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 5,
+        "maxItems": 5,
+        "prefixItems": [
+          {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Bar (from 0)."
+          },
+          {
+            "type": "number",
+            "minimum": 0,
+            "description": "Beat in the bar."
+          },
+          {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127,
+            "description": "MIDI note."
+          },
+          {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Length in beats."
+          },
+          {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127,
+            "description": "Harmony MIDI note."
+          }
+        ],
+        "items": false
+      }
+    },
+    "brass_bars": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "description": "Bars (from 0) in which brass doubles the hook."
+    },
+    "gain": {
+      "type": "object",
+      "required": [
+        "rhythm",
+        "bass",
+        "kick",
+        "snare",
+        "hat",
+        "crash",
+        "lead",
+        "brass",
+        "tuba",
+        "stab"
+      ],
+      "properties": {
+        "rhythm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of rhythm."
+        },
+        "bass": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of bass."
+        },
+        "kick": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of kick."
+        },
+        "snare": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of snare."
+        },
+        "hat": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of hat."
+        },
+        "crash": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of crash."
+        },
+        "lead": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of lead."
+        },
+        "brass": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of brass."
+        },
+        "tuba": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of tuba."
+        },
+        "stab": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mix gain of stab."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

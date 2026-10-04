@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/audio-loops",
+  "title": "audio music loops (schema 1)",
+  "description": "audio/music/loops.json: for each music cue, the encoded game file, its tempo and key, its sample rate, the gain to the loudness target, and (for a loop, not a stinger) the loop start and end in samples and its bars (docs/audio/suno-direction.md section 6, audio/music/README.md). Cues are keyed by their id (M01 to M12). Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (loop.end is after loop.start; the loop length matches its bars at the tempo, a warning) are checked by tools/lib/xref-fight.js (loops-*).",
+  "type": "object",
+  "required": [
+    "schema",
+    "cues"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "cues": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|M[0-9]{2})$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "slug",
+          "file",
+          "tempo",
+          "key",
+          "sample_rate",
+          "gain_db"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "The prompt block's slug, e.g. fight-1."
+          },
+          "file": {
+            "type": "string",
+            "pattern": "^ogg/[A-Za-z0-9_.-]+\\.ogg$",
+            "description": "The encoded game file under audio/music/."
+          },
+          "tempo": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "The measured tempo in BPM."
+          },
+          "key": {
+            "type": "string",
+            "pattern": "^[A-G][#b]?$",
+            "description": "The key, e.g. E."
+          },
+          "sample_rate": {
+            "enum": [
+              44100,
+              48000
+            ],
+            "description": "The sample rate of the file."
+          },
+          "gain_db": {
+            "type": "number",
+            "description": "The gain applied in the game to reach -16 LUFS (usually negative)."
+          },
+          "loop": {
+            "type": "object",
+            "required": [
+              "start",
+              "end",
+              "bars"
+            ],
+            "properties": {
+              "start": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Loop start, in samples."
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Loop end, in samples."
+              },
+              "bars": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Bars in the loop."
+              }
+            },
+            "description": "Absent for a stinger (cut, not looped).",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "stems": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "enum": [
+                "drums",
+                "bass",
+                "guitars",
+                "lead",
+                "brass"
+              ]
+            },
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^ogg/[A-Za-z0-9_.-]+\\.ogg$"
+            },
+            "description": "Stem name to its encoded file, each the same length as the mix."
+          }
+        },
+        "description": "One cue.",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

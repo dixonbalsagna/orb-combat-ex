@@ -1260,6 +1260,36 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     for (const k of ['enderAfter', 'launchAt', 'showcaseAt']) if (typeof fl[k] === 'number' && typeof fl.max === 'number' && fl[k] > fl.max) err(AF, `/flow/${k}`, 'alchemy-flow', `${k} ${fl[k]} is above max ${fl.max}, so the flow never reaches it`, 'warning');
   }
 
+  // ---- audio metal reference: the hook sits on hook bars inside the bar; the brass bars are bars of the file ----
+  const mref = get('audio/data/metal_ref.json');
+  if (isObj(mref) && Array.isArray(mref.bars)) {
+    const MR = 'audio/data/metal_ref.json';
+    const nb = mref.bars.length;
+    if (Array.isArray(mref.hook)) mref.hook.forEach((n, i) => {
+      if (!Array.isArray(n) || n.length !== 5) return;
+      const [bar, beat, , len] = n;
+      if (Number.isInteger(bar) && bar >= nb) err(MR, `/hook/${i}/0`, 'metalref-bar', `hook note ${i} is in bar ${bar}, but the file has ${nb} bars (counted from 0)`);
+      else if (Number.isInteger(bar) && isObj(mref.bars[bar]) && mref.bars[bar].kind !== 'hook') err(MR, `/hook/${i}/0`, 'metalref-bar', `hook note ${i} is in bar ${bar}, which is a "${mref.bars[bar].kind}" bar, not a hook bar`, 'warning');
+      if (typeof beat === 'number' && typeof len === 'number' && beat + len > 4 + 1e-9) err(MR, `/hook/${i}`, 'metalref-bar', `hook note ${i} runs to beat ${beat + len}, past the end of its 4-beat bar`, 'warning');
+    });
+    if (Array.isArray(mref.brass_bars)) mref.brass_bars.forEach((b, i) => { if (Number.isInteger(b) && b >= nb) err(MR, `/brass_bars/${i}`, 'metalref-bar', `brass bar ${b} is outside the file's ${nb} bars (counted from 0)`); });
+  }
+
+  // ---- audio music loops: a loop ends after it starts and is as long as its bars at the tempo ----
+  const lps = get('audio/music/loops.json');
+  if (isObj(lps) && isObj(lps.cues)) {
+    const LP = 'audio/music/loops.json';
+    for (const [cid, c] of Object.entries(lps.cues)) {
+      if (cid.startsWith('_') || !isObj(c) || !isObj(c.loop)) continue;
+      const lo = c.loop;
+      if (Number.isInteger(lo.start) && Number.isInteger(lo.end) && lo.end <= lo.start) err(LP, `/cues/${esc(cid)}/loop/end`, 'loops-order', `loop end ${lo.end} is not after its start ${lo.start}`);
+      else if (Number.isInteger(lo.start) && Number.isInteger(lo.end) && Number.isInteger(lo.bars) && typeof c.tempo === 'number' && typeof c.sample_rate === 'number') {
+        const want = lo.bars * 4 * 60 / c.tempo * c.sample_rate;
+        if (Math.abs((lo.end - lo.start) - want) > want * 0.005) err(LP, `/cues/${esc(cid)}/loop`, 'loops-order', `the loop is ${lo.end - lo.start} samples, but ${lo.bars} bars at ${c.tempo} BPM and ${c.sample_rate} Hz is ${Math.round(want)}; it is off the bar grid`, 'warning');
+      }
+    }
+  }
+
   // ---- fighter ladder: the beam tables never decrease with the tier ----
   for (const rel of docsFor(/^data\/fighters\/[^/]+\/ladder\.json$/)) {
     const lad = get(rel);

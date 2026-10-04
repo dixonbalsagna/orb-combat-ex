@@ -49536,6 +49536,965 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "audio-metal-ref-live-valid",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/rate": 22050
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-metal-ref-key-required",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "del": [
+            "/gain"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-metal-ref-schema-version",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "audio-metal-ref-unknown-key",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "audio-metal-ref-underscore-key-ok",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-metal-ref-rate-integer",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/rate": 22050.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rate"
+      }
+    },
+    {
+      "id": "audio-metal-ref-rate-low",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/rate": 100
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rate"
+      }
+    },
+    {
+      "id": "audio-metal-ref-root-range",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/root_midi": 200
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/root_midi"
+      }
+    },
+    {
+      "id": "audio-metal-ref-tempos-empty",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/tempos": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/tempos"
+      }
+    },
+    {
+      "id": "audio-metal-ref-tempos-zero",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/tempos": [
+              150,
+              0
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/tempos/1"
+      }
+    },
+    {
+      "id": "audio-metal-ref-tempos-duplicate",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/tempos": [
+              150,
+              150
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/tempos/1"
+      }
+    },
+    {
+      "id": "audio-metal-ref-bars-empty",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/bars": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/bars"
+      }
+    },
+    {
+      "id": "audio-metal-ref-bar-kind-enum",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/bars/0/kind": "waltz"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/bars/0/kind"
+      }
+    },
+    {
+      "id": "audio-metal-ref-bar-chords-length",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/bars/0/chords": [
+              0
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/bars/0/chords"
+      }
+    },
+    {
+      "id": "audio-metal-ref-bar-chords-integer",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/bars/0/chords": [
+              0,
+              2.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bars/0/chords/1"
+      }
+    },
+    {
+      "id": "audio-metal-ref-bar-unknown-key",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/bars/0/swing": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bars/0/swing"
+      }
+    },
+    {
+      "id": "audio-metal-ref-hook-note-length",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/hook/0": [
+              2,
+              0,
+              59,
+              1.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/hook/0"
+      }
+    },
+    {
+      "id": "audio-metal-ref-hook-note-beats-zero",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/hook/0/3": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/hook/0/3"
+      }
+    },
+    {
+      "id": "audio-metal-ref-hook-note-midi-range",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/hook/0/2": 200
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/hook/0/2"
+      }
+    },
+    {
+      "id": "audio-metal-ref-hook-note-bar-negative",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/hook/0/0": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hook/0/0"
+      }
+    },
+    {
+      "id": "audio-metal-ref-hook-note-bar-outside",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/hook/0/0": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:metalref-bar",
+        "pointer": "/hook/0/0"
+      }
+    },
+    {
+      "id": "audio-metal-ref-hook-note-on-a-non-hook-bar-warns",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/hook/0/0": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:metalref-bar",
+        "pointer": "/hook/0/0"
+      }
+    },
+    {
+      "id": "audio-metal-ref-hook-note-runs-past-the-bar-warns",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/hook/0/3": 4.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:metalref-bar",
+        "pointer": "/hook/0"
+      }
+    },
+    {
+      "id": "audio-metal-ref-brass-bar-outside",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/brass_bars": [
+              4,
+              9
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:metalref-bar",
+        "pointer": "/brass_bars/1"
+      }
+    },
+    {
+      "id": "audio-metal-ref-brass-bars-duplicate",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/brass_bars": [
+              4,
+              4
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/brass_bars/1"
+      }
+    },
+    {
+      "id": "audio-metal-ref-brass-bars-empty-ok",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/brass_bars": []
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-metal-ref-gain-key-required",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "del": [
+            "/gain/tuba"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/gain"
+      }
+    },
+    {
+      "id": "audio-metal-ref-gain-negative",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/gain/rhythm": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gain/rhythm"
+      }
+    },
+    {
+      "id": "audio-metal-ref-gain-unknown-key",
+      "schema": "audio-metal-ref.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/metal_ref.json",
+          "set": {
+            "/gain/cowbell": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/gain/cowbell"
+      }
+    },
+    {
+      "id": "audio-loops-live-valid",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/schema": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-cues-required",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "del": [
+            "/cues"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-loops-schema-version",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "audio-loops-unknown-key",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "audio-loops-note-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-cues-empty",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/cues"
+      }
+    },
+    {
+      "id": "audio-loops-cue-id-shape",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/fight1": {
+              "slug": "a",
+              "file": "ogg/a.ogg",
+              "tempo": 180,
+              "key": "E",
+              "sample_rate": 44100,
+              "gain_db": -3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/cues/fight1"
+      }
+    },
+    {
+      "id": "audio-loops-cue-key-required",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "del": [
+            "/cues/M02/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/cues/M02"
+      }
+    },
+    {
+      "id": "audio-loops-cue-unknown-key",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/mood": "brave"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/cues/M02/mood"
+      }
+    },
+    {
+      "id": "audio-loops-slug-shape",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/slug": "Fight 1"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cues/M02/slug"
+      }
+    },
+    {
+      "id": "audio-loops-file-shape",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/file": "M02.wav"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cues/M02/file"
+      }
+    },
+    {
+      "id": "audio-loops-file-not-ogg-folder",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/file": "incoming/M02.ogg"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cues/M02/file"
+      }
+    },
+    {
+      "id": "audio-loops-tempo-zero",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/tempo": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/cues/M02/tempo"
+      }
+    },
+    {
+      "id": "audio-loops-tempo-fraction-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/tempo": 179.6
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-key-shape",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/key": "H"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cues/M02/key"
+      }
+    },
+    {
+      "id": "audio-loops-key-flat-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/key": "Bb"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-sample-rate-enum",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/sample_rate": 22050
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/cues/M02/sample_rate"
+      }
+    },
+    {
+      "id": "audio-loops-gain-type",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/gain_db": "quiet"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/cues/M02/gain_db"
+      }
+    },
+    {
+      "id": "audio-loops-gain-positive-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/gain_db": 2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-stinger-has-no-loop-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "del": [
+            "/cues/M02/loop"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-loop-key-required",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "del": [
+            "/cues/M02/loop/bars"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/cues/M02/loop"
+      }
+    },
+    {
+      "id": "audio-loops-loop-unknown-key",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/loop/fade": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/cues/M02/loop/fade"
+      }
+    },
+    {
+      "id": "audio-loops-loop-start-negative",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/loop/start": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/cues/M02/loop/start"
+      }
+    },
+    {
+      "id": "audio-loops-loop-end-integer",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/loop/end": 940800.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/cues/M02/loop/end"
+      }
+    },
+    {
+      "id": "audio-loops-loop-bars-zero",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/loop/bars": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/cues/M02/loop/bars"
+      }
+    },
+    {
+      "id": "audio-loops-loop-end-before-start",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/loop/start": 2000000
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:loops-order",
+        "pointer": "/cues/M02/loop/end"
+      }
+    },
+    {
+      "id": "audio-loops-loop-off-the-bar-grid-warns",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/loop/end": 900000
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:loops-order",
+        "pointer": "/cues/M02/loop"
+      }
+    },
+    {
+      "id": "audio-loops-loop-near-the-grid-ok",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/loop/end": 940900
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-loops-stems-name-enum",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/stems/cowbell": "ogg/a.ogg"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/cues/M02/stems/cowbell"
+      }
+    },
+    {
+      "id": "audio-loops-stems-file-shape",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/stems/drums": "drums.wav"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cues/M02/stems/drums"
+      }
+    },
+    {
+      "id": "audio-loops-stems-empty",
+      "schema": "audio-loops.schema.json",
+      "mutate": [
+        {
+          "file": "audio/music/loops.json",
+          "set": {
+            "/cues/M02/stems": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/cues/M02/stems"
+      }
     }
   ],
   "text": [

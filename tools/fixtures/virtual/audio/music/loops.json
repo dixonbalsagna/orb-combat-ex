@@ -1,0 +1,31 @@
+{
+  "note": "Validator fixture, not game data.",
+  "schema": 1,
+  "cues": {
+    "M02": {
+      "slug": "fight-1",
+      "file": "ogg/M02_fight-1_t01.ogg",
+      "tempo": 180,
+      "key": "E",
+      "sample_rate": 44100,
+      "gain_db": -4.5,
+      "loop": {
+        "start": 0,
+        "end": 940800,
+        "bars": 16
+      },
+      "stems": {
+        "drums": "ogg/M02_fight-1_t01_stem-drums.ogg",
+        "bass": "ogg/M02_fight-1_t01_stem-bass.ogg"
+      }
+    },
+    "M08": {
+      "slug": "finisher",
+      "file": "ogg/M08_finisher_t02.ogg",
+      "tempo": 180,
+      "key": "E",
+      "sample_rate": 48000,
+      "gain_db": -6
+    }
+  }
+}

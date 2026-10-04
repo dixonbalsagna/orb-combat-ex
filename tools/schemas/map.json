@@ -3,7 +3,8 @@
   "roots": [
     "data",
     "audio/data",
-    "ui/data"
+    "ui/data",
+    "audio/music"
   ],
   "rules": [
     {
@@ -87,12 +88,20 @@
       "schema": "audio-mix.schema.json"
     },
     {
+      "match": "audio/data/metal_ref.json",
+      "schema": "audio-metal-ref.schema.json"
+    },
+    {
       "match": "audio/data/sketch_common.json",
       "schema": "audio-sketch-common.schema.json"
     },
     {
       "match": "audio/data/sketch_*.json",
       "schema": "audio-sketch.schema.json"
+    },
+    {
+      "match": "audio/music/loops.json",
+      "schema": "audio-loops.schema.json"
     },
     {
       "match": "ui/data/features.json",
