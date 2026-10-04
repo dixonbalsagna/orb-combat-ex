@@ -834,3 +834,45 @@ With five presses this is the rule in §2 unchanged (none; one to three; four or
 - blasts stay at 10 to 25% of match damage (11.4% today);
 - the mixed blaster's win rate against the medium AI, reported as a new row. The starting band is 25 to 45%;
 - brink to KO between AIs stays at 45 to 90 s.
+
+## 22. Making timing worth it, and the mixed blaster (QA's `docs/qa/baseline-df05b9f.md`, 2026-10-03)
+
+### 1. Timing has to give a substantial edge
+
+**What QA found.** A masher who presses on the blur's beat, against a plain masher, locks only 84 of 730 strings, does 9% more damage an exchange, and wins 50.0%. The band is 62 to 82%, and the rules as built can't reach it. In the combo style the edge is invisible too: the timed player reaches flow 3 six times a match against 0.5, but earns 305 launches against 302, because a lone heavy launches without flow (§18).
+
+**Why the reward is small.** It is paid only at the fourth press in a row, which a live exchange rarely allows, and it is paid in damage. Matches are decided by set-ups and finishers, and there the timed masher's enders were as weak as the plain one's.
+
+**The fix pays timing on every press, and pays flow in the things that decide matches.** It uses only what is built: the press grade, the flow count, the enders and the contests.
+
+| # | Rule | Number (for `alchemy.json`) |
+| ---: | :--- | :--- |
+| 1 | **A timed blur press lands clean at once.** Each on-beat blur strike does ×1.0 of a light, against ×0.8 off the beat. It doesn't wait for the lock | `blur.timedMul` 1.0, `blur.strikeMul` 0.8 |
+| 2 | **Flow adds damage.** Every strike of his does 4% more for each point of flow, up to 20% at flow 5 | `flow.dmgPer` 0.04 |
+| 3 | **The blur's full ender comes from flow.** A blur's ender is the full one (the full knock-back and a full set-up) when his flow is 3 or more as it plays. Below that it is the weak one. This replaces "four presses in a row" as the test for the reward. The four-in-a-row lock stays as the cue for the look | `blur.fullEnderFlow` 3 |
+| 4 | **Flow makes a lone heavy's launch bigger.** A lone heavy still launches by the stick with no flow, which keeps Orb's earner. At flow 3, 4 and 5 its launch does 10%, 20% and 30% more impact wear, and at 5 it is the showcase ender | `flow.launchWear` 0.10 per point above 2 |
+| 5 | **Flow counts in contests.** Each point of flow adds 2 to his clash score, and takes 2 points off the rival's chance to survive his finisher, up to 10 | `flow.contest` 2 |
+| 6 | **The AI times by difficulty.** It presses on the beat on 15%, 45% or 80% of its presses | `ai.timedShare` 0.15, 0.45, 0.8 |
+
+- Flow carries from string to string and falls to 0 on an off-beat press, so a player who keeps time holds these bonuses and one who doesn't never has them.
+- Rules 3 and 5 are the ones that move win rate, because they act on set-ups and finishers. Rules 1, 2 and 4 make the edge visible in every exchange.
+
+**What it should do.**
+
+| Measure | Expected | Band |
+| :--- | :--- | :--- |
+| A timed masher against a plain masher | About 40% more damage a string, and twice the set-ups at the brink | 62 to 82% |
+| A timed combo player against the same style untimed | The same bonuses through flow | 62 to 70% |
+| Match length | **Shorter,** because the AI now times too and its strikes hit harder. The median should come down from 496 s toward 480 | 6:00 to 8:00, or to 8:30 if Orb agrees (§19) |
+| The masher against the medium AI | **Down,** because the medium AI holds some flow and he holds none. It is 50 to 52% today, at the top of the band | 35 to 50% |
+
+QA re-measures all four. If timing overshoots 82%, the first number to lower is `flow.contest`.
+
+### 2. The mixed blaster
+
+**Measured:** the light, light, tapped heavy blaster wins 57.5% against the medium AI at 40 matches (Encounter had 45 of 100, and QA is re-running at 100). Against a melee script that doesn't respond it wins 82 to 88%, which mostly measures the script.
+
+- **The band is 30 to 50%.** It is a fixed pattern with no defence, like the masher, so it should lose slightly more than it wins against the default opponent. The first band of 25 to 45% was set before any reading.
+- **If the 100-match row holds near 55%, the number to move is the ender's strength, not the window.** **A barrage that includes a tapped, uncharged heavy shot gets the weak ender:** 0.6 of the distance and half a set-up. Data: `blast.barrage.tappedHeavyWeak` true.
+- **Why that one.** The window and the count are what stop the stall, and §21 only just fixed that. The trouble is that a mindless rhythm earns the strong ender, since 24 ticks a press counts as measured. A tapped heavy is the lazy shot in that mix. With the weak ender the mixed blaster still closes a fight, and takes twice as many enders to open the rival, like every other untimed plan.
+- Measured bolts alone, and full charged shots, keep the strong results.
