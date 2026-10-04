@@ -218,3 +218,9 @@ The sim's own mines (an entry of `S.shots` with mode MINE) are drawn by their lo
 ### The beam plays on screen (2026-10-03)
 
 The 20-tick crossing of a beam and the five plays (swat, split, walk-through, wade, late answer) each have their own look, driven by the slice 8 cues. `render/vfx/beamplay.gd`, drawn in the shots view; flag `beamplay_enabled`. docs/vfx/shots-plan.md, last section; `effects_check.gd` `_beamplay()`.
+
+### The rival's glasses glare (2026-10-04)
+
+Frame C (the bare wedge); the glare hides his eyes completely, in his pale violet, held 0.4 s at most. Today it rides his taunt and a signature's wind-up (a glint); the Chin plant, a Pride threshold and the seal break (cracked lens) are accepted once Simulation sends cues for them. `render/vfx/glare.gd`, drawn in the shots view; flag `glare_enabled`. docs/vfx/glare.md (cues needed, rules kept, the head estimate); `effects_check.gd` `_glare()`.
+
+The wild deflect no longer marks its landing on the ground (Orb: the landing is a surprise). docs/vfx/shots-plan.md, the wild deflect row.

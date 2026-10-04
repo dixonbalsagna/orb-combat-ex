@@ -256,8 +256,8 @@ func on_events(S: SimState, events: Array, debris: VfxDebris, water: VfxWater, q
 
 
 ## A deflect that sends the shot wild (shot_deflect: from x, y, z to a landing x1, y1 in dur seconds): the ring and the sparks where it was
-## knocked off, in the deflector's colour (once if shot_hit's own deflect came in the same tick), and a thin ring on the ground where it
-## will come down, closing in as it flies (the payoff Orb wants is seeing it land and explode elsewhere, so it is told where).
+## knocked off, in the deflector's colour (once if shot_hit's own deflect came in the same tick). Where it will land is not marked (Orb, 2026-10-04:
+## the landing is a surprise); the tumble, the smoke trail and the landing's explosion are the shot's own and are drawn elsewhere.
 func _on_deflect(S: SimState, e, debris: VfxDebris) -> void:
 	wilds += 1
 	var id: int = int(VfxHub._g(e, "id", -1))
@@ -278,9 +278,6 @@ func _on_deflect(S: SimState, e, debris: VfxDebris) -> void:
 		if explode_enabled and debris != null:
 			explosions += 1
 			VfxExplode.at(S, debris, x, y, z, VfxExplode.radius_for(kn, dmg, 1) * 0.6, "air", "spark")
-	var rad: float = VfxExplode.radius_for(kn, dmg, VfxReact.tier_of(S.fighters[own]) if own >= 0 and own < S.fighters.size() else 1)
-	var dur: float = maxf(float(VfxHub._g(e, "dur", 0.5)), 0.1)
-	_add("mark", float(VfxHub._g(e, "x1", x)), float(VfxHub._g(e, "y1", y)), z, rad, dur * 60.0, lane_of(S, own))
 
 
 ## A mine was set off (mine_trip: it blows in dur seconds): a flash at it now, and its fuse length for the blink.

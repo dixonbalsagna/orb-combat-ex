@@ -22,6 +22,8 @@ const SHAPE_DISC := 2.0
 const SHAPE_HEX := 4.0
 const Z_SHOT := 4.0          # in front of the fighter plane, so a shot is not hidden behind a body it passes
 const Z_FX := 6.0
+const GLARE_HEAD_Y := 68.0   # a standing figure's head centre above its pose (the estimate used when the host has no `fighter_head`)
+const GLARE_Z := 26.0        # in front of the face (Rendering's head flashes sit at 24)
 const PLAY_LIFT := 30.0     # the beam plays sit in front of the ground dust (its puffs are put up to about z 26)
 const Z_HAND := 5.0
 
@@ -136,6 +138,9 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 	# The beam plays: a crossing beam's head, the cues' effects, a walk or a wade in progress.
 	if hub.beamplay_enabled:
 		n = _beamplay(n, S, hub, host, cam_x, half_w, a, bh, minpx, alpha)
+	# The rival's glasses glare, over his face.
+	if hub.glare_enabled:
+		n = _glare(n, S, hub, host, cam_x, half_w, a, bh, minpx)
 	# The mines (concept).
 	n = _mines(n, S, hub, sh, cam_x, half_w, a, bh, minpx, alpha)
 	# The short effects the events call for.
@@ -170,12 +175,6 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 					var sc: Color = e.col
 					sc.a = alpha * 0.9 * (1.0 - u)
 					n = _put(n, Vector2(rx, e.y) + dv * (d0 - ln * 0.5), dv, ln, maxf(6.0, minpx * 1.5), ez, sc, 0.5, 0.05, SHAPE_STREAK)
-			"mark":
-				# Where a wild shot will come down: a thin flat ring on the ground that closes in as it flies.
-				var mr: float = lerpf(e.size * 1.25, e.size * 0.35, u)
-				var mc: Color = e.col
-				mc.a = alpha * 0.4 * smoothstep(0.0, 0.1, u) * (1.0 - smoothstep(0.85, 1.0, u))
-				n = _put(n, Vector2(rx, e.y + 6.0), Vector2(1.0, 0.0), mr * 2.0, mr * 2.0 * 0.28, ez - 1.0, mc, maxf(0.05, 1.6 * minpx / maxf(mr, 1.0)), 0.0, SHAPE_RING)
 			"burst":
 				# A trade: a ring in each colour and eight short lines out of the point.
 				var br: float = lerpf(e.size * 0.3, e.size, eo)
@@ -263,6 +262,67 @@ func _wedge(n: int, base: Vector2, dir: Vector2, l: float, w: float, z: float, c
 ## A thin ring seen edge-on across dir: an ellipse short along dir (a share of its height) and size tall across it.
 func _across(n: int, c: Vector2, dir: Vector2, size: float, along: float, z: float, col: Color, minpx: float) -> int:
 	return _put(n, c, dir, size * along, size, z, col, maxf(0.05, 1.6 * minpx / maxf(size * 0.5, 1.0)), 0.0, SHAPE_RING)
+
+
+## Where a fighter's head is and which way he looks: the host's `fighter_head(i, a)` (Vector3: world x, y, z of the head's centre) when Rendering has
+## one, otherwise an estimate from the pose (the head a standing figure's height above the pose, turned with the body's roll); he looks toward the other.
+func _head_of(S: SimState, host, i: int, a: float) -> Vector4:
+	var o: int = 1 - i
+	var fc: float = float(S.fighters[i].face)      # the sim's facing: 1 right, -1 left
+	var look: float = fc if absf(fc) > 0.5 else (1.0 if SimWrap.sdx(host.fighter_x(i, a), host.fighter_x(o, a)) >= 0.0 else -1.0)
+	if host.has_method("fighter_head"):
+		var hv: Vector3 = host.fighter_head(i, a)
+		return Vector4(hv.x, hv.y, hv.z, look)
+	var ps: Vector3 = host.fighter_pose(i, a)
+	var hh: float = GLARE_HEAD_Y
+	return Vector4(ps.x + hh * sin(ps.z), ps.y + hh * cos(ps.z), host.fighter_z(i, a), look)
+
+
+## The glare (glare.gd): the lens goes opaque in a pale violet wedge (frame C, the bare wedge), a lighter wedge cut across it, and a deeper violet rim.
+## A glint (a signature's wind-up) is a slash crossing a half-opaque lens; a seal break adds a crack. Every shape is hard-edged and in his violet.
+func _glare(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a: float, bh: float, minpx: float) -> int:
+	var gl: VfxGlare = hub.glare
+	for i in range(mini(2, S.fighters.size())):
+		var s: VfxGlare.State = gl.st[i]
+		if s.t < 0.0 or n >= CAP - 8:
+			continue
+		var lvl: float = gl.level(i, a, hub.reduced_motion)
+		if lvl <= 0.01 or S.fighters[i].hidden:
+			continue
+		var hd: Vector4 = _head_of(S, host, i, a)
+		var rx: float = SimWrap.sdx(cam_x, hd.x)
+		if absf(rx) > half_w + 4.0 * bh:
+			continue
+		var look: float = hd.w
+		var fw: float = VfxGlare.p("w")
+		var fh: float = VfxGlare.p("h")
+		var base := Vector2(rx + look * VfxGlare.p("fwd"), hd.y + VfxGlare.p("up"))
+		var dirv := Vector2(look, 0.0)
+		var z: float = hd.z + GLARE_Z
+		var al: float = VfxGlare.p("alpha") * lvl
+		var full: bool = s.kind == "full"
+		var fill: float = 1.0 if full else VfxGlare.p("glint_fill")
+		# The lens: a wedge, narrow toward where he looks, in a pale violet. A deeper violet rim keeps it a lens against a light sky.
+		var halo: Color = VfxGlare.col("halo")
+		halo.a = 0.85 * lvl
+		n = _put(n, base, dirv, fw * 1.0 + minpx * 3.0, fh + minpx * 3.0, z - 0.2, halo, 0.3, 0.5, SHAPE_STREAK)
+		var lens: Color = VfxGlare.col("lens")
+		lens.a = al * fill
+		n = _put(n, base, dirv, fw, fh, z, lens, 0.3, 0.5, SHAPE_STREAK)
+		# The slash: a slanted band of the lighter violet, cut across the lens (it crosses once on a glint).
+		var sw: float = gl.sweep(i, a) if not full else 0.5
+		var sl: Vector2 = Vector2(look * 0.55, 1.0).normalized()
+		var wc: Color = VfxGlare.col("wedge")
+		wc.a = al
+		var slash_c: Vector2 = base + dirv * lerpf(-fw * 0.3, fw * 0.3, sw)
+		n = _put(n, slash_c, sl, fh * 1.25, maxf(fh * 0.26, minpx * 1.5), z + 0.2, wc, 0.5, 0.5, SHAPE_STREAK)
+		if s.crack:
+			var kc: Color = VfxGlare.col("crack")
+			kc.a = al * 0.9
+			var cd: Vector2 = Vector2(look * 0.35, -1.0).normalized()
+			n = _put(n, base + dirv * fw * 0.05, cd, fh * 1.1, maxf(fh * 0.07, minpx * 0.9), z + 0.4, kc, 0.5, 0.5, SHAPE_STREAK)
+		gl.shown += 1
+	return n
 
 
 ## The beam plays (beamplay.gd). All hard-edged wedges and thin rings in the lane colour of whose they are.

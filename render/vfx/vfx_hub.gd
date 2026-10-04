@@ -67,6 +67,8 @@ var shots_enabled: bool = VfxLook.SHOTS_DEFAULT   # energy blasts: every shot in
 var shots := VfxShots.new()
 var beamplay_enabled: bool = VfxLook.BEAMPLAY_DEFAULT   # the beam plays' effects, by cue (beamplay.gd, drawn by shots_view.gd)
 var beamplay := VfxBeamPlay.new()
+var glare_enabled: bool = VfxLook.GLARE_DEFAULT   # the rival's glasses glare (glare.gd, drawn by shots_view.gd)
+var glare := VfxGlare.new()
 var explosions_enabled: bool = VfxLook.EXPLOSIONS_DEFAULT   # the blasts erupt in flame, sparks, smoke and a smouldering scorch; a knocked-loose shot tumbles and smokes (explode.gd)
 var earth_enabled: bool = VfxLook.EARTH_DEFAULT   # material chunks for `debris`, cel flames for `fire`, and the ground-contact events (docs/vfx/earth-plan.md)
 var earth := VfxEarth.new()
@@ -118,6 +120,7 @@ func reset(S: SimState, p_seed: int) -> void:
 	pressure.reset()
 	shots.reset()
 	beamplay.reset()
+	glare.reset()
 	earth.debris = debris
 	earth.reset()
 	water.debris = debris
@@ -245,6 +248,9 @@ func _consume(S: SimState, events: Array) -> void:
 		debris.quality = quality
 		debris.reduced = reduced_motion
 		beamplay.on_events(S, events, debris)
+	if glare_enabled:
+		glare.step(S, frozen)
+		glare.on_events(S, events, xform.forms, rocks.level)
 	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled:
 		debris.quality = quality
 		debris.reduced = reduced_motion

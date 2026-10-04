@@ -194,6 +194,7 @@ func _run() -> void:
 	_explosions()
 	_blast_round2()
 	_beamplay()
+	_glare()
 	print("\neffects check passed" if fails == 0 else "\neffects check FAILED (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -2441,7 +2442,7 @@ func _blast_round2() -> void:
 	_tick(S, hl2, [VfxMock.ev("shot_end", {"id": 93, "kind": "bolt", "x": plains + 700.0, "y": g + 20.0, "z": 0.0, "cause": "life"})])
 	var kl2: Dictionary = kinds_of.call(hl2.debris)
 	_check(hl.shots.explosions == 1 and kl.has(VfxDebris.FLAME) and not kl.has(VfxDebris.CHUNK) and kl2.has(VfxDebris.CHUNK) and kl2.has(VfxDebris.RING), "a stray bolt out of life bursts in the air (flame, sparks, smoke) and, if it is low, as a ground burst")
-	# --- 7. The wild deflect: the knock-off, a mark where it will land, the tumble and the smoke trail, then the landing.
+	# --- 7. The wild deflect: the knock-off, no mark where it will land (Orb: the landing is a surprise), the tumble and the smoke trail, then the landing.
 	var hw := VfxHub.new()
 	hw.reset(S, 6)
 	S.shots = []
@@ -2465,14 +2466,12 @@ func _blast_round2() -> void:
 	_tick(S, hw, [dflt.call(), VfxMock.ev("shot_hit", {"actor": 0, "victim": 1, "kind": "charged", "id": 77, "x": ws.x, "y": ws.y, "z": 0.0, "amount": 0.0, "outcome": "deflect", "link": 0})])
 	var flashes: int = 0
 	var marks: int = 0
-	var mark_life: float = 0.0
 	for e in hw.shots.fx:
 		if e.kind == "flash":
 			flashes += 1
 		if e.kind == "mark":
 			marks += 1
-			mark_life = e.life
-	_check(hw.shots.wilds == 1 and flashes == 1 and marks == 1 and absf(mark_life - 42.0) < 0.5, "a wild deflect: one knock-off flash (shot_hit's deflect and shot_deflect are one), and a mark on the ground for the landing (%d flash, %d mark, %.0f ticks)" % [flashes, marks, mark_life])
+	_check(hw.shots.wilds == 1 and flashes == 1 and marks == 0, "a wild deflect: one knock-off flash (shot_hit's deflect and shot_deflect are one), and no mark on the ground for the landing (%d flash, %d mark)" % [flashes, marks])
 	var wild_col: Color = VfxShots.lane_of(S, 1)
 	var knock: Color = Color.BLACK
 	for e in hw.shots.fx:
@@ -2729,6 +2728,130 @@ func _beamplay() -> void:
 	_tick(S, hoff, [cue.call(1, "beam_walk"), cue.call(0, "beam_fire")])
 	_check(hoff.beamplay.made.is_empty() and not hoff.beamplay.walks[1].on, "beamplay_enabled off: nothing")
 	S.beams = []
+	view.queue_free()
+	SimCore.dispose(S)
+
+
+## The rival's glasses glare (Orb's frame C, Legal's RL-066 rules): the taunt and a signature's wind-up today, the cues the director may send later.
+func _glare() -> void:
+	print("glasses glare")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.x = plains
+	f0.y = g
+	f1.x = SimWrap.wrap(plains + 700.0)
+	f1.y = g
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var cue := func(slot: int, name: String): return VfxMock.ev("cue", {"actor": slot, "kind": name, "text": "", "source": ""})
+	var sig := func(slot: int): return VfxMock.ev("attack", {"actor": slot, "target": 1 - slot, "kind": "sig", "defStance": "defend", "template": "", "ambush": false})
+	_check(VfxLook.GLARE_DEFAULT and VfxHub.new().glare_enabled, "on by default")
+	_check(String(f1.name) == "VORR" and VfxGlare.is_wearer(S, 1) and not VfxGlare.is_wearer(S, 0), "the wearer is the rival's slot (the Anti-hero replaces VORR), not the Protagonist")
+	# The colours: pale violet, never white, and violet still at a small size and in greyscale.
+	for k in ["lens", "wedge", "halo"]:
+		var c: Color = VfxGlare.col(k)
+		var lum: float = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+		_check(c.b > c.g + 0.15 and c.r > c.g and c.s >= 0.2 and c.h > 0.68 and c.h < 0.8 and c.get_luminance() < 0.84 and lum < 0.86, "the %s colour %s is a pale violet: not white, blue over green, violet at a glance (luma %.2f)" % [k, c.to_html(false), lum])
+	# The taunt: a full glare on the rival, nothing on the Protagonist.
+	var h := VfxHub.new()
+	h.reset(S, 6)
+	_tick(S, h, [cue.call(0, "taunt_start")])
+	_check(h.glare.st[0].t < 0.0 and h.glare.st[1].t < 0.0 and h.glare.made.is_empty(), "the Protagonist's taunt makes no glare")
+	_tick(S, h, [cue.call(1, "taunt_start")])
+	_check(h.glare.st[1].t >= 0.0 and h.glare.st[1].kind == "full" and int(h.glare.made.get("taunt_start", 0)) == 1, "the rival's taunt starts a full glare")
+	# The envelope: a quick attack, a hold of 0.4 s at most, a short release, then none.
+	var full_ticks: int = 0
+	var peak: float = 0.0
+	var rises: int = -1
+	var ticks: int = 0
+	for k in range(60):
+		var lv: float = h.glare.level(1, 1.0, false)
+		peak = maxf(peak, lv)
+		if lv >= 0.99:
+			full_ticks += 1
+		if lv >= 0.99 and rises < 0:
+			rises = k
+		if h.glare.st[1].t < 0.0:
+			break
+		ticks += 1
+		_tick(S, h, [])
+	_check(peak > 0.99 and rises <= 4 and full_ticks <= 24 and full_ticks >= 8, "attack in %d ticks, held %d ticks (0.4 s is 24)" % [rises, full_ticks])
+	_check(h.glare.st[1].t < 0.0 and ticks <= 30, "and it is gone after %d ticks (clears)" % ticks)
+	# Drawn: the lens, the wedge across it, and the halo; and never beside an empty head.
+	var h2 := VfxHub.new()
+	h2.reset(S, 6)
+	_tick(S, h2, [cue.call(1, "taunt_start")])
+	for k in range(5):
+		_tick(S, h2, [])
+	view.update(h2, host, 1.0, plains + 350.0, 0.7, 1500.0)
+	var drawn: int = view.count
+	_check(drawn >= 3 and h2.glare.shown >= 1, "a glare draws its halo, lens and wedge (%d quads)" % drawn)
+	var hk := VfxHub.new()
+	hk.reset(S, 6)
+	view.update(hk, host, 1.0, plains + 350.0, 0.7, 1500.0)
+	_check(view.count == 0, "nothing without a glare (%d)" % view.count)
+	# A glint (the signature's wind-up): a slash across a half-opaque lens, and a second inside the cooldown is not made.
+	var h3 := VfxHub.new()
+	h3.reset(S, 6)
+	_tick(S, h3, [sig.call(1)])
+	_check(h3.glare.st[1].kind == "glint" and int(h3.glare.made.get("sig", 0)) == 1, "a signature's wind-up makes a glint")
+	_tick(S, h3, [sig.call(1), cue.call(1, "taunt_start")])
+	_check(int(h3.glare.made.get("sig", 0)) == 1 and int(h3.glare.made.get("taunt_start", 0)) == 0 and int(h3.glare.blocked.get("cooldown", 0)) == 2, "inside the cooldown the next two are not made (not every exchange)")
+	for k in range(int(VfxGlare.p("cooldown")) + 2):
+		_tick(S, h3, [])
+	_tick(S, h3, [cue.call(1, "taunt_start")])
+	_check(int(h3.glare.made.get("taunt_start", 0)) == 1, "after it a taunt glares again")
+	# The cues the director may send later.
+	for nm in ["chin_plant", "pride_threshold", "glare"]:
+		var hc := VfxHub.new()
+		hc.reset(S, 6)
+		_tick(S, hc, [cue.call(1, nm)])
+		_check(hc.glare.st[1].kind == "full" and not hc.glare.st[1].crack, "cue %s: a full glare" % nm)
+	var hs := VfxHub.new()
+	hs.reset(S, 6)
+	_tick(S, hs, [cue.call(1, "taunt_start")])
+	_tick(S, hs, [cue.call(1, "seal_break")])
+	_check(hs.glare.st[1].crack and int(hs.glare.made.get("seal_break", 0)) == 1, "a seal break glares inside the cooldown, with a crack across the lens")
+	hs.glare.step(S, true)
+	var t_held: float = hs.glare.st[1].t
+	hs.glare.step(S, true)
+	_check(hs.glare.st[1].t == t_held, "a frozen tick holds the glare (hit-stop and pause)")
+	# Stacking: no glare in a transformation, a charge or a rubble ring.
+	var hf := VfxHub.new()
+	hf.reset(S, 6)
+	hf.xform.begin(1, 3.0, "live", 0.0)
+	_tick(S, hf, [cue.call(1, "taunt_start")])
+	_check(hf.glare.st[1].t < 0.0 and int(hf.glare.blocked.get("transform", 0)) == 1, "none during his transformation")
+	var hq := VfxHub.new()
+	hq.reset(S, 6)
+	f1.state = "charging"
+	_tick(S, hq, [cue.call(1, "taunt_start")])
+	_check(hq.glare.st[1].t < 0.0 and int(hq.glare.blocked.get("charge", 0)) == 1, "none during a crouch-and-scream charge")
+	f1.state = "free"
+	var hr := VfxHub.new()
+	hr.reset(S, 6)
+	hr.rocks.level[1] = 0.8
+	hr.glare.on_events(S, [cue.call(1, "taunt_start")], [], hr.rocks.level)
+	_check(hr.glare.st[1].t < 0.0 and int(hr.glare.blocked.get("rocks", 0)) == 1, "none inside a rubble ring")
+	# Reduced motion has no ramp; off draws nothing; a hidden fighter shows none.
+	h2.reduced_motion = true
+	_check(h2.glare.level(1, 1.0, true) in [0.0, 1.0], "reduced motion: on or off, no ramp")
+	h2.reduced_motion = false
+	var ho := VfxHub.new()
+	ho.glare_enabled = false
+	ho.reset(S, 6)
+	_tick(S, ho, [cue.call(1, "taunt_start")])
+	_check(ho.glare.st[1].t < 0.0, "glare_enabled off: nothing")
+	f1.hidden = true
+	view.update(h2, host, 1.0, plains + 350.0, 0.7, 1500.0)
+	_check(view.count == 0, "a hidden fighter shows no glare")
+	f1.hidden = false
 	view.queue_free()
 	SimCore.dispose(S)
 
