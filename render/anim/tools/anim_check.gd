@@ -333,6 +333,145 @@ func _test_flight_lead() -> void:
 ## The launch pair live (docs/animation/pair-live.md): a roster id plays as its fighter of data/anim/fighters.json (KAI the protagonist, VORR the antihero, the neutral id rival too);
 ## his waves are baked and his pick lists and entries built; in a real match his blows are his own key sets (pr and ph for the protagonist, w1 and rb for the rival); the energy
 ## cues and shots start the sequence or hold of his role; a far taunt is one of his own gestures and is cut like the shared one.
+## The press styles (docs/animation/press-styles.md, RenderAnim.press_styles, default OFF): each style on each launch fighter through a hand-fed
+## exchange. The style layer sits on top of the contact key (a few hundredths of a radian on the spine), a styled blow is never worse
+## for the joints than the plain one, the contact point is held through a tech blow's beat, VFX's hand-off (press, press_pose, press_path)
+## is filled, and the flag moves no gameplay hash.
+func _press_scene(S: SimState, who: String, kind: String, beats: Array) -> Dictionary:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "KAI" if who == "protagonist" else "VORR"
+	f1.id = "VORR" if who == "protagonist" else "KAI"
+	RenderAnim._fighters.clear()
+	f0.x = 500.0
+	f1.x = 560.0
+	for f in [f0, f1]:
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+	var ex := DirExchange.newEx(f0, f1, kind)
+	ex.n = 931
+	ex.tag = "CHK"
+	for b in beats:
+		DirExchange.schedule(ex, float(b[0]) / 60.0, "strike", {"a": "A", "dmg": float(b[3]), "piece": String(b[1]), "style": String(b[2]), "o": {"big": float(b[3]) >= 40.0}})
+	S.dirS.ex = ex
+	var sent: Array = []
+	for _b in beats:
+		sent.append(false)
+	var res := {"styles": {}, "phases": {}, "viol": 0, "nan": 0, "ring": 0, "path": 0, "dx_max": 0.0, "tip_drift": 0.0}
+	var tip_at_contact := Vector3.ZERO
+	var have_tip := false
+	var n_ticks: int = int(float(beats[beats.size() - 1][0]) + 40.0)
+	for k in range(n_ticks):
+		S.tick = 1000 + k
+		S.T = 200.0 + float(k) / 60.0
+		ex.t = float(k) / 60.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		for bi in range(beats.size()):
+			if not sent[bi] and k >= int(beats[bi][0]):
+				sent[bi] = true
+				var de := SimState.FxEvent.new()
+				de.type = "damage"
+				de.victim = 1.0
+				de.attacker = 0.0
+				de.kind = "heavy" if float(beats[bi][3]) >= 40.0 else "light"
+				de.amount = float(beats[bi][3])
+				de.region = "core"
+				RenderAnim.consume(S, [de])
+		var af0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(af0.q[i].x) or is_nan(af0.q[i].w):
+				res.nan += 1
+		for stage in af0.audit:
+			res.viol += (af0.audit[stage] as Array).size()
+		res["ring"] = maxi(int(res.ring), af0.press_ring.size())
+		res["path"] = maxi(int(res.path), af0.press_path.size())
+		if not af0.press.is_empty():
+			res.styles[String(af0.press.style)] = true
+			res.phases[String(af0.press.phase)] = true
+			res.dx_max = maxf(float(res.dx_max), absf(float(af0.press.dx)))
+			if k == int(beats[0][0]):
+				tip_at_contact = af0.socket(String(af0.press.bone))
+				have_tip = true
+			elif have_tip and k <= int(beats[0][0]) + 8 and String(af0.press.style) == "tech":
+				res.tip_drift = maxf(float(res.tip_drift), af0.socket(String(af0.press.bone)).distance_to(tip_at_contact))
+	var af: AnimFighter = RenderAnim.fighter(S, f0)
+	res["err"] = float(af.debug.get("contact_err_max", 0.0))
+	res["frames"] = int(af.debug.get("contact_frames", 0))
+	return res
+
+
+func _test_press_styles() -> void:
+	_expect(not RenderAnim.press_styles, "press styles: the flag must be OFF by default")
+	_expect(not AnimData.press.is_empty() and AnimData.press.get("styles", {}).has("tech") and AnimData.press.styles.has("speed") and AnimData.press.styles.has("heavy"), "press styles: data/anim/press_styles.json did not load")
+	var scenes := {
+		"tech": ["light", [[42, "strike.jab", "tech", 26.0], [72, "strike.cross", "tech", 26.0]]],
+		"speed": ["light", [[36, "strike.jab", "speed", 20.0], [44, "strike.cross", "speed", 20.0], [52, "strike.jab", "speed", 20.0]]],
+		"heavy": ["heavy", [[60, "strike.haymaker", "heavy", 66.0]]],
+	}
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var audit_was: bool = RenderAnim.joint_audit
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.joint_audit = true
+	RenderAnim.ground_feet = false
+	AnimData.ensure_fighter("KAI")
+	AnimData.ensure_fighter("VORR")
+	for who in ["protagonist", "antihero"]:
+		for sc in scenes:
+			RenderAnim.press_styles = true
+			var on: Dictionary = _press_scene(S, who, scenes[sc][0], scenes[sc][1])
+			RenderAnim.press_styles = false
+			var off: Dictionary = _press_scene(S, who, scenes[sc][0], scenes[sc][1])
+			var tag: String = "press styles %s %s" % [who, sc]
+			_expect(on.styles.has(sc) and on.styles.size() == 1, "%s: the beat's style was not played (%s)" % [tag, on.styles.keys()])
+			_expect(off.styles.is_empty() and float(off.dx_max) == 0.0, "%s: with the flag off the style layer still ran" % tag)
+			_expect(int(on.frames) == scenes[sc][1].size() and float(on.err) < 0.2, "%s: contact frames %d of %d, the style layer is %.3f rad from the contact key (limit 0.2)" % [tag, int(on.frames), scenes[sc][1].size(), float(on.err)])
+			_expect(int(on.nan) == 0, "%s: NaN rotations" % tag)
+			_expect(int(on.viol) <= int(off.viol), "%s: %d joint violations against %d for the plain blow" % [tag, int(on.viol), int(off.viol)])
+			_expect(on.phases.has("contact") and on.phases.has("load") and int(on.ring) > 0 and int(on.path) > 0, "%s: the hand-off (press, press_pose, press_path) is empty (phases %s, ring %d, path %d)" % [tag, on.phases.keys(), int(on.ring), int(on.path)])
+			if sc == "tech":
+				_expect(on.phases.has("hold") and float(on.tip_drift) < 1.5, "%s: the held beat moved the fist %.2f units off the contact point" % [tag, float(on.tip_drift)])
+			if sc == "heavy":
+				_expect(on.phases.has("smear") and float(on.dx_max) > 1.0, "%s: no smear frame or lunge (%s, dx %.2f)" % [tag, on.phases.keys(), float(on.dx_max)])
+	RenderAnim.press_styles = false
+	RenderAnim.joint_audit = audit_was
+	RenderAnim.ground_feet = ground_was
+	# a real seeded match: the flag moves no gameplay hash, and the styles come from the press log when the beat names none
+	var hs: Dictionary = {}
+	var counts: Dictionary = {}
+	for on_flag in [false, true]:
+		RenderAnim.press_styles = on_flag
+		RenderAnim._fighters.clear()
+		main.start_match(7, {"p1": true, "p2": true})
+		var S2: SimState = main.host.S
+		for k in range(1500):
+			main.frame(1.0 / 60.0)
+			for i in range(2):
+				RenderAnim.solve(S2, S2.fighters[i])
+		hs[on_flag] = str(SimHash.stateHash(S2).gameplay)
+		if on_flag:
+			for i in range(2):
+				var pn: Dictionary = RenderAnim.fighter(S2, S2.fighters[i]).debug.get("press_n", {})
+				for kk in pn:
+					counts[kk] = int(counts.get(kk, 0)) + int(pn[kk])
+	RenderAnim.press_styles = false
+	_expect(hs[false] == hs[true], "press styles: the gameplay hash differs with the flag on")
+	var total: int = 0
+	for kk in counts:
+		total += int(counts[kk])
+	_expect(total > 5, "press styles: in a 1500-tick match no blow was given a style (%s)" % [counts])
+	print("  press styles in a 1500-tick AI match: %s" % [counts])
+
+
 func _test_pair_live() -> void:
 	_expect(RenderAnim.pair_live and not AnimData.pair.is_empty(), "pair live test: data/anim/pair_live.json did not load or the live pair is off")
 	_expect(AnimData.fighter_key("KAI") == "protagonist" and AnimData.fighter_key("VORR") == "antihero" and AnimData.fighter_key("rival") == "antihero" and AnimData.fighter_key("Protagonist") == "protagonist" and AnimData.fighter_key("NOBODY") == "", "pair live test: a roster id did not map to its fighter")
@@ -1366,6 +1505,7 @@ func _run() -> void:
 	_test_agency()
 	_test_flight_lead()
 	_test_pair_live()
+	_test_press_styles()
 	_test_joints()
 	RenderAnim.enabled = true
 	RenderAnim.style_override = ""

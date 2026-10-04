@@ -40,6 +40,22 @@ var _have_x: bool = false
 var _prev_cx: float = 0.0
 var _smear: float = 0.0                 # the contact catch: how far behind the anchor the body is drawn (model units), decaying
 var _smear_t0: float = -10.0
+var press: Dictionary = {}             # press styles (docs/animation/press-styles.md): the style of the blow playing and where it is, for VFX (empty when none)
+var press_ring: Array = []             # the last solved poses while a styled blow plays, newest last: {T, q, hips, root_off}: the afterimages (press_pose)
+var press_path: Array = []             # the striking limb's tip over the same solves (model space, root_off included), newest last: {T, tip}
+var _ci_latch: Array = [Vector2.ZERO, Vector2.ZERO]   # the contact point a styled blow landed on (the first limb, the second), kept through the hold
+var _ci_latch_tc: Array = [-1.0, -1.0]
+var _pr_cache: Dictionary = {}         # blow id -> its press style, decided the first time the blow is seen
+var _pr_dx: float = 0.0                # the body drawn this far ahead (model units): the wind-up's lean back, the release's lunge
+var _pr_q: Array[Quaternion] = []      # the pose of the last styled solve (before the contact solve) ...
+var _pr_hips := Vector3.ZERO
+var _pr_curl := Vector2.ZERO
+var _pr_T: float = -10.0
+var _pr_blow: int = -1
+var _pc_q: Array[Quaternion] = []      # ... and the one the previous blow ended on, which a blow with `carry` blends out of
+var _pc_hips := Vector3.ZERO
+var _pc_curl := Vector2.ZERO
+var _pc_ok: bool = false
 var _full_fk: bool = false
 const _LEG_BONES := [16, 17, 19, 20]                  # thigh_l, shin_l, thigh_r, shin_r
 const LEG_CHAIN := [0, 1, 16, 17, 18, 19, 20, 21]   # root, pelvis, thigh, shin, foot of each leg
@@ -1087,6 +1103,8 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	_rushing = false
 	_contact_now = false
 	_tc_left = -1.0
+	_pr_dx = 0.0
+	press = {}
 	var ex = S.dirS.ex
 	if ex != null and (ex.A == f or ex.D == f):
 		_exchange_layers(S, f, ex, T)
@@ -1157,7 +1175,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 		root_off = Vector3(_signed(S.tick, slot), _signed(S.tick + 13, slot) * 0.6, 0.0) * shiver
 	else:
 		root_off = root_off * 0.0
-	root_off.x += _recoil_x + _step_x
+	root_off.x += _recoil_x + _step_x + _pr_dx
 	if _lean_t0 > -5.0 or _over_t0 > -5.0 or _block_t0 > -5.0:
 		root_off.x += _evade_offsets(T)
 	root_off.y += _recoil_y
@@ -1178,6 +1196,8 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	# 7. sockets: only the chains the views read (the head and the near hand); the rest is on demand
 	AnimPose.fk_chain(q, hips, gq, gp, SOCKET_CHAIN)
 	_full_fk = false
+	if RenderAnim.press_styles:
+		_press_record(T)
 	if is_nan(q[0].x) or is_nan(q[5].w):
 		debug["nan"] += 1
 		q[0] = Quaternion.IDENTITY
@@ -1558,12 +1578,18 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	var best_start: float = -1.0e9
 	var lens: Array = []
 	var profs: Array = []
+	var psts: Array = []
 	var prev_tc: float = -1.0e9
 	for n in range(strikes.size()):
 		var tc: float = strikes[n][0]
+		var psn: String = _press_style(S, f, ex, strikes[n])
 		var sp: Dictionary = _part_prof(String(strikes[n][3]))
+		if psn != "":
+			sp = _press_prof(sp, psn)
 		profs.append(sp)
+		psts.append(psn)
 		var Fn: float = float(sp.get("follow_ticks", 6)) * DT * (0.85 + 0.25 * _blow_weight(strikes[n][2]))
+		var Hn: float = float(sp.get("hold_ticks", 0)) * DT
 		var Rn: float = float(sp.get("recover_ticks", 10)) * DT
 		var Sn_: float = float(sp.get("snap_ticks", 3)) * DT
 		var bw: float = _blow_weight(strikes[n][2])
@@ -1572,7 +1598,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		var L: float = clampf(minf(lnom, gap - 0.5 * Fn), Sn_ + 2.0 * DT, lnom)
 		lens.append(L)
 		var start: float = tc - L
-		if T >= start and T < tc + Fn + Rn and start > best_start:
+		if T >= start and T < tc + Fn + Hn + Rn and start > best_start:
 			best = n
 			best_start = start
 		prev_tc = tc
@@ -1582,13 +1608,18 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	_set_lag(float(prof.get("lag", 0.3)))
 	var Sn: float = float(prof.get("snap_ticks", 3)) * DT
 	var bw2: float = _blow_weight(strikes[best][2])
-	var F: float = float(prof.get("follow_ticks", 6)) * DT * (0.85 + 0.25 * bw2)
+	var H: float = float(prof.get("hold_ticks", 0)) * DT   # the contact key held (a tech blow's beat), then the follow-through
+	var F: float = float(prof.get("follow_ticks", 6)) * DT * (0.85 + 0.25 * bw2) + H
 	var R: float = float(prof.get("recover_ticks", 10)) * DT * (0.9 + 0.2 * bw2)
 	var dq: float = 1.0 / float(prof.get("solve_hz", 60.0))
 	var tc2: float = strikes[best][0]
 	var L2: float = lens[best]
 	var heavy2: bool = strikes[best][3] == "heavy"
 	var side: bool = (_hash(int(ex.n), int(strikes[best][1]), slot + 1) & 1) == 1
+	var pstyle: String = String(psts[best])
+	var prow: Dictionary = AnimData.press.get("styles", {}).get(pstyle, {}) if pstyle != "" else {}
+	if pstyle != "" and bool(prow.get("alternate", false)):
+		side = ((best + (_hash(int(ex.n), 0, slot + 1) & 1)) & 1) == 1   # a mashed string alternates its limbs
 	var picks: Array = AnimData.picks["heavy" if heavy2 else "light"]
 	var ksid: String = String(picks[_hash(int(ex.n), int(strikes[best][1]), 3 + slot) % picks.size()])
 	var live_id: String = _pair_pick(S, f, ex, int(strikes[best][1]), heavy2, String(strikes[best][2].get("piece", strikes[best][2].get("strike", ""))))   # his own waves first (docs/animation/pair-live.md), then go-live step 1
@@ -1632,10 +1663,16 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	if T < tc2 - 0.0001:
 		_tc_left = tc2 - T
 	debug["parts"] += 1
+	var ul: float = 1.0
+	if pstyle != "":
+		_press_track(blow_id, T)
 	if dtc < -Sn:
 		var u: float = clampf((tq2 - (tc2 - L2)) / maxf(L2 - Sn, DT), 0.0, 1.0)
+		ul = u
 		u = pow(u, float(prof.get("load_ease", 2.0)))
 		_mix_pose(pc, u)
+		if pstyle != "" and bool(prow.get("carry", false)):
+			_press_carry(prow, blow_id, tq2 - (tc2 - L2))
 	elif dtc < 0.0:
 		_set_pose(pc)
 		var u2: float = clampf((tq2 - (tc2 - Sn)) / Sn, 0.0, 1.0)
@@ -1644,7 +1681,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		curl = pc.curl.lerp(pk.curl, u2)
 	elif dtc < F:
 		_set_pose(pk)
-		var u3: float = clampf(dtc / F, 0.0, 1.0)
+		var u3: float = clampf((dtc - H) / maxf(F - H, DT), 0.0, 1.0)
 		var w3: float = _ease_out_back(u3, float(prof.get("overshoot", 0.1)) * (0.6 + 0.8 * bw2))
 		AnimPose.mix(q, pf.q, w3)
 		hips = pk.hips.lerp(pf.hips, w3)
@@ -1653,18 +1690,29 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		_set_pose(pf)
 		var u4: float = clampf((dtc - F) / R, 0.0, 1.0)
 		var w4: float = u4 * u4 * (3.0 - 2.0 * u4)
-		for i in range(AnimRig.N):
-			q[i] = q[i].slerp(_base[i], w4)
+		if pstyle != "":
+			AnimPose.mix(q, _base, w4)   # the return of a styled blow goes by swing and twist: a plain slerp from a long follow-through folds the arm's own twist
+		else:
+			for i in range(AnimRig.N):
+				q[i] = q[i].slerp(_base[i], w4)
 		hips = pf.hips.lerp(_base_hips, w4)
 		curl = pf.curl.lerp(_base_curl, w4)
+	if pstyle != "":
+		_press_body(prow, pstyle, ul, dtc, Sn, H, F, bw2, ks, side, blow_id, best, tc2, T)
 	# the step from the wind-up into the contact key is the blow itself (on twos it is one step): inertialisation must not take it for a join
 	# and smooth it over the next 0.1 s, or the fist reaches the defender late (--blowjoin restores the old behaviour for an A/B)
 	_blow_snap = dtc >= -(Sn + dq) - 0.0001 and dtc <= 0.0001
 	# timing fidelity: on the frame of contact the pose must be the contact key (checked before the contact solve moves it)
 	if absf(T - tc2) < DT * 0.5:
 		var err: float = 0.0
+		var eb: int = 0
 		for i in range(AnimRig.N):
-			err = maxf(err, q[i].angle_to(pk.q[i]))
+			var ea: float = q[i].angle_to(pk.q[i])
+			if ea > err:
+				err = ea
+				eb = i
+		if err > float(debug["contact_err_max"]):
+			debug["contact_err_bone"] = AnimRig.BONES[eb][0]
 		_contact_now = true
 		debug["contact_frames"] += 1
 		debug["contact_err_max"] = maxf(float(debug["contact_err_max"]), err)
@@ -1674,10 +1722,10 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	if dtc >= -Sn and dtc < F + R * 0.4:
 		if dtc < 0.0:
 			cw = smoothstep(0.0, 1.0, (dtc + Sn) / Sn)
-		elif dtc < F * 0.5:
+		elif dtc < H + (F - H) * 0.5:
 			cw = 1.0
 		else:
-			cw = 1.0 - smoothstep(F * 0.5, F + R * 0.4, dtc)
+			cw = 1.0 - smoothstep(H + (F - H) * 0.5, F + R * 0.4, dtc)
 	if cw > 0.001:
 		_ci_w = cw
 		_ci_limb = String(ks.get("limb", "hand_r"))
@@ -1688,6 +1736,176 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		_ci_opp = ex.D if role == "A" else ex.A
 		_ci_tc = tc2
 		_ci_dmg = float(strikes[best][2].get("dmg", 0.0))
+
+
+## The press style of a blow (data/anim/press_styles.json, only with RenderAnim.press_styles): the beat's own `style` when the director
+## stamps one, else the striker's press log read now (Controls' SimPressRead through DirAlchemy.read: rhythm = tech, mash = speed), a
+## heavy blow is always heavy. "" is the profile the blow plays today. Decided the first time the blow is seen, then kept.
+func _press_style(S: SimState, f, ex, sk: Array) -> String:
+	if not RenderAnim.press_styles or AnimData.press.is_empty() or not bool(AnimData.press.get("enabled", true)):
+		return ""
+	var key: int = int(ex.n) * 64 + int(sk[1])
+	if _pr_cache.has(key):
+		return String(_pr_cache[key])
+	if _pr_cache.size() > 32:
+		_pr_cache.clear()
+	var rows: Dictionary = AnimData.press.get("styles", {})
+	var st: String = ""
+	var args: Dictionary = sk[2]
+	if rows.has(String(args.get("style", ""))):
+		st = String(args.style)
+	elif String(sk[3]) == "heavy":
+		st = "heavy"
+	elif f.act.dirI.size() >= DirAlchemy.SIZE:
+		var rd: Dictionary = DirAlchemy.read(S, f)
+		st = String(AnimData.press.get("read", {}).get(String(rd.get("style", "none")), ""))
+		if st == "heavy":
+			st = ""   # a hold that is not a heavy blow (a light one thrown during the press) plays as it does today
+	_pr_cache[key] = st
+	var pn: Dictionary = debug.get("press_n", {})
+	pn[st] = int(pn.get(st, 0)) + 1
+	debug["press_n"] = pn
+	return st
+
+
+func _press_prof(sp: Dictionary, style: String) -> Dictionary:
+	var out: Dictionary = sp.duplicate()
+	out.merge(AnimData.press.get("styles", {}).get(style, {}).get("prof", {}), true)
+	return out
+
+
+## A new blow of a styled string: what the last blow ended on is kept to blend out of (a blow with `carry`).
+func _press_track(blow_id: int, T: float) -> void:
+	if _pr_blow == blow_id:
+		return
+	_pc_ok = T - _pr_T <= 0.05 and _pr_q.size() == AnimRig.N
+	if _pc_ok:
+		_pc_q = _pr_q.duplicate()
+		_pc_hips = _pr_hips
+		_pc_curl = _pr_curl
+	_pr_blow = blow_id
+
+
+## The retract, blended: the new blow's wind-up starts from the pose the last blow was in, not from the guard, so the arm that
+## struck eases back while the other one comes through.
+func _press_carry(row: Dictionary, blow_id: int, tl: float) -> void:
+	var span: float = float(row.get("carry_ticks", 5)) * DT
+	if not _pc_ok or span <= 0.0 or tl >= span or _pr_blow != blow_id:
+		return
+	var k: float = smoothstep(0.0, 1.0, maxf(tl, 0.0) / span)
+	var tmp: Array[Quaternion] = q.duplicate()
+	for i in range(AnimRig.N):
+		q[i] = _pc_q[i]
+	AnimPose.mix(q, tmp, k)
+	hips = _pc_hips.lerp(hips, k)
+	curl = _pc_curl.lerp(curl, k)
+
+
+func _press_slerp(i: int, to: Quaternion, w: float) -> void:
+	var qa: Quaternion = q[i]
+	if AnimJoints.ik_limits and AnimJoints.is_limb[i] == 1 and absf(qa.dot(to)) <= 0.9:
+		q[i] = AnimJoints.slerp_limb(qa, to, w)
+	else:
+		q[i] = qa.slerp(to, w)
+
+
+## The body of a styled blow on top of its key poses, all inside the joints' range (the squash is a blend of two valid poses, the
+## stretch and the twist are a few hundredths of a radian on the spine, which has no limit of its own, and the limb pass
+## runs after): the wind-up squashes (legs, pelvis and spine toward the squash pose, a lean back), the release stretches (the spine
+## extends, the hips rise, the body is drawn ahead for a few ticks: the smear frame is the tick before contact), a mashed blow twists
+## the loose body toward the striking side. Fills `press` for VFX.
+func _press_body(row: Dictionary, style: String, ul: float, dtc: float, sn: float, hold: float, F: float, bw: float, ks: Dictionary, side: bool, blow_id: int, nth: int, tc: float, T: float) -> void:
+	var ix: Dictionary = AnimRig.index
+	var wsc: float = clampf(0.55 + 0.45 * bw, 0.4, 1.0)
+	var s: float = 0.0
+	var sq: float = float(row.get("squash", 0.0))
+	if sq > 0.0:
+		s = smoothstep(0.0, 0.85, ul) * (1.0 - smoothstep(-3.0 * DT, 0.0, dtc))   # gone on the contact tick: the key pose is the blow
+		s *= sq * wsc
+		if s > 0.001:
+			var sp: Dictionary = AnimData.press.get("squash_pose", {})
+			var pid: String = String(sp.get("by_fighter", {}).get(pair_key, sp.get("default", "brace")))
+			if AnimData.pose_exists(pid):
+				var spp: AnimPose = AnimData.pose(pid)
+				for bn in sp.get("bones", []):
+					var bi: int = ix[String(bn)]
+					_press_slerp(bi, spp.q[bi], s)
+				hips.y = minf(hips.y, lerpf(hips.y, spp.hips.y, s))
+			var lean: float = float(row.get("lean_back", 0.0)) * s
+			q[ix["spine_1"]] = q[ix["spine_1"]] * Quaternion(Vector3(0, 0, 1), lean * 0.5)
+			q[ix["spine_2"]] = q[ix["spine_2"]] * Quaternion(Vector3(0, 0, 1), lean * 0.5)
+			q[ix["head"]] = q[ix["head"]] * Quaternion(Vector3(0, 0, 1), -lean * 0.5)
+			_pr_dx -= float(row.get("back", 0.0)) * s
+	var st: Dictionary = row.get("stretch", {})
+	var e: float = 0.0
+	var smear_t: float = float(st.get("smear_ticks", 0)) * DT
+	var st_t: float = float(st.get("ticks", 3)) * DT
+	var smear: bool = false
+	if float(st.get("spine", 0.0)) > 0.0 or float(st.get("lead", 0.0)) > 0.0 or float(st.get("rise", 0.0)) > 0.0:
+		if dtc < -smear_t - 0.0001:
+			e = smoothstep(-(smear_t + 2.0 * DT), -smear_t, dtc)
+		elif dtc < 0.0001:
+			e = 1.0
+			smear = smear_t > 0.0 and dtc < -0.0001
+		else:
+			e = 1.0 - smoothstep(0.0, st_t, dtc)
+		e *= wsc
+		if e > 0.001:
+			var ext: float = float(st.get("spine", 0.0)) * e
+			q[ix["spine_1"]] = q[ix["spine_1"]] * Quaternion(Vector3(0, 0, 1), -ext * 0.5)
+			q[ix["spine_2"]] = q[ix["spine_2"]] * Quaternion(Vector3(0, 0, 1), -ext * 0.5)
+			q[ix["head"]] = q[ix["head"]] * Quaternion(Vector3(0, 0, 1), ext * 0.4)
+			hips.y += float(st.get("rise", 0.0)) * e
+			_pr_dx += float(st.get("lead", 0.0)) * e
+	var tw: float = float(row.get("twist", 0.0))
+	var twk: float = 0.0
+	if tw > 0.0:
+		var tw_t: float = float(row.get("twist_ticks", 6)) * DT
+		twk = smoothstep(-3.0 * DT, 0.0, dtc) if dtc < 0.0 else 1.0 - smoothstep(0.0, tw_t, dtc)
+		var ang: float = tw * twk * (1.0 if side else -1.0)
+		q[ix["spine_1"]] = q[ix["spine_1"]] * Quaternion(Vector3(0, 1, 0), ang * 0.5)
+		q[ix["spine_2"]] = q[ix["spine_2"]] * Quaternion(Vector3(0, 1, 0), ang * 0.5)
+		q[ix["pelvis"]] = q[ix["pelvis"]] * Quaternion(Vector3(0, 1, 0), -ang * 0.3)
+	var phase: String = "load"
+	if dtc >= 0.0001:
+		phase = "contact" if dtc < 1.5 * DT else ("hold" if dtc < hold else ("follow" if dtc < F else "return"))
+	elif smear:
+		phase = "smear"
+	elif dtc >= -sn - 0.0001:
+		phase = "release"
+	var limb: String = String(ks.get("limb", "hand_r"))
+	if side and limb.contains("_"):
+		limb = limb.substr(0, limb.length() - 1) + ("l" if limb.ends_with("r") else "r")
+	var bone: String = limb.replace("elbow", "forearm").replace("knee", "shin")
+	if not ix.has(bone):
+		bone = "hand_r"
+	press = {"style": style, "phase": phase, "blow": blow_id, "ordinal": nth, "ticks_to_contact": roundi((tc - T) / DT), "limb": limb, "bone": bone, "side": side, "smear": smear, "ghosts": int(row.get("ghosts", 0)), "weight": bw, "squash": s, "stretch": e, "twist": twk, "dx": _pr_dx}
+	if _pr_q.size() != AnimRig.N:
+		_pr_q.resize(AnimRig.N)
+	for i in range(AnimRig.N):
+		_pr_q[i] = q[i]
+	_pr_hips = hips
+	_pr_curl = curl
+	_pr_T = T
+
+
+## What VFX reads (after a solve, while `press` is not empty and for a moment after): the afterimages are `press_pose(k)`, the pose k
+## solves back (0 is the newest), and the smear wedge runs along `press_path` (the striking limb's tip at each of those solves).
+func _press_record(T: float) -> void:
+	if not press.is_empty():
+		var snap: Array[Quaternion] = q.duplicate()
+		press_ring.append({"T": T, "q": snap, "hips": hips, "root_off": root_off})
+		press_path.append({"T": T, "tip": socket(String(press.bone))})
+	while press_ring.size() > 12 or (not press_ring.is_empty() and T - float(press_ring[0].T) > 0.4):
+		press_ring.pop_front()
+	while press_path.size() > 12 or (not press_path.is_empty() and T - float(press_path[0].T) > 0.4):
+		press_path.pop_front()
+
+
+## The pose `back` solves ago ({T, q, hips, root_off}), newest 0; {} when there is none.
+func press_pose(back: int) -> Dictionary:
+	var n: int = press_ring.size()
+	return press_ring[n - 1 - back] if back >= 0 and back < n else {}
 
 
 ## The defensive and clash beats of the exchange (the sim's own: wind, slip, dodge, guardBreak, clashWave). Each is a short
@@ -1818,8 +2036,18 @@ func _contact_one(S: SimState, f, base_limb: String, second: bool) -> void:
 	if mx < 4.0:
 		return
 	var my: float = (opp.y - f.y) + rp.y
+	if not press.is_empty():
+		# a styled blow's held beat keeps the point it landed on: the defender's recoil must not drag the arm after him through the hold
+		var li: int = 1 if second else 0
+		if S.T >= _ci_tc - 0.0001:
+			if absf(float(_ci_latch_tc[li]) - _ci_tc) > 0.0001:
+				_ci_latch_tc[li] = _ci_tc
+				_ci_latch[li] = Vector2(mx, my)
+			else:
+				mx = _ci_latch[li].x
+				my = _ci_latch[li].y
 	var surf: float = float(AnimData.sockets.get("regions", {}).get(_ci_target, {}).get("surface", 6.5))
-	var tgt := Vector3(mx - surf - end_len - _smear_now(S.T) - (_step_x if second else 0.0), my, float(sk.get("reach_z", 5.0)) * zs)
+	var tgt := Vector3(mx - surf - end_len - _smear_now(S.T) - _pr_dx - (_step_x if second else 0.0), my, float(sk.get("reach_z", 5.0)) * zs)
 	var ix: Dictionary = AnimRig.index
 	var a: int
 	var b: int

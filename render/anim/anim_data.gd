@@ -14,6 +14,7 @@ static var picks: Dictionary = {}
 static var profiles: Dictionary = {}
 static var default_profile: String = "snappy"
 static var by_part: Dictionary = {}          # part kind (light, heavy, chain, rush, launch, power) -> profile name
+static var press: Dictionary = {}           # data/anim/press_styles.json: how the three press styles move the body through a strike (used only with RenderAnim.press_styles)
 static var bone_lag := PackedFloat32Array()
 static var cue_poses: Dictionary = {}   # cue kind -> pose id
 static var forms: Dictionary = {}       # transformation: version -> {gather, break, settle, hold} in ticks
@@ -124,6 +125,7 @@ static func load_all() -> void:
 	profiles = prj.get("profiles", {})
 	default_profile = String(prj.get("default", "snappy"))
 	by_part = prj.get("by_part", {})
+	press = _read("press_styles.json")
 	bone_lag.resize(AnimRig.N)
 	var bl: Dictionary = prj.get("bone_lag", {})
 	for i in range(AnimRig.N):

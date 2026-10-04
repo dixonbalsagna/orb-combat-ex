@@ -1,0 +1,30 @@
+{
+ "schema": "anim.pressstyles/1",
+ "_about": "How the three press styles move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick, only how the body gets there and leaves. Used only with RenderAnim.press_styles (--press-styles, default OFF). Times are 60 Hz ticks. read: how a blow's style is chosen when the beat does not name one (rhythm = tech when the press log reads timed, mash, taps and no read = speed, as VFX reads it; a heavy blow is always heavy; a hold that is not a heavy blow plays the profile it plays today). styles.<id>.prof: overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new: the contact key held that long before the follow-through starts). alternate: the striking limb alternates blow to blow. carry: a blow that starts while the last one is still in its follow or recover blends out of that pose (the retract) instead of out of the guard, over carry_ticks. squash: how much of the squash pose's legs, pelvis and spine the wind-up takes (0 to 1, scaled by the blow's weight), lean_back: extra spine lean back at full squash (rad), back: the body drawn this far back at full squash (model units). stretch: the release. spine: spine extension (rad), rise: hips up (model units), lead: the body drawn this far ahead (model units), ticks: how long it takes to settle after contact, smear_ticks: the ticks before contact that count as the smear frame. twist: the loose body's spine yaw toward the striking side (rad) over twist_ticks. ghosts: how many afterimage copies VFX is asked for (press.ghosts). squash_pose: the pose whose legs, pelvis and spine are the squash (a pose id), bones: which bones it takes.",
+ "enabled": true,
+ "read": {"rhythm": "tech", "mash": "speed", "heavy": "heavy", "taps": "speed", "hold": "", "none": "speed"},
+ "squash_pose": {"default": "brace", "by_fighter": {"protagonist": "pn.hold.brace_load", "antihero": "pe.plant_coil.arrive"}, "bones": ["pelvis", "spine_1", "thigh_l", "shin_l", "foot_l", "thigh_r", "shin_r", "foot_r"]},
+ "styles": {
+  "tech": {
+   "prof": {"solve_hz": 60, "snap_ticks": 0, "load_ease": 3.0, "load_ticks": {"light": 6, "heavy": 6}, "hold_ticks": 10, "follow_ticks": 4, "recover_ticks": 6, "overshoot": 0.0, "lag": 0.1},
+   "alternate": false, "carry": false, "carry_ticks": 0,
+   "squash": 0.0, "lean_back": 0.0, "back": 0.0,
+   "stretch": {"spine": 0.0, "rise": 0.0, "lead": 0.0, "ticks": 3, "smear_ticks": 0},
+   "twist": 0.0, "twist_ticks": 6, "ghosts": 3
+  },
+  "speed": {
+   "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.4, "load_ticks": {"light": 3, "heavy": 3}, "hold_ticks": 0, "follow_ticks": 4, "recover_ticks": 7, "overshoot": 0.22, "lag": 0.9},
+   "alternate": true, "carry": true, "carry_ticks": 5,
+   "squash": 0.0, "lean_back": 0.0, "back": 0.0,
+   "stretch": {"spine": 0.0, "rise": 0.0, "lead": 0.0, "ticks": 3, "smear_ticks": 0},
+   "twist": 0.16, "twist_ticks": 7, "ghosts": 2
+  },
+  "heavy": {
+   "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.6, "load_ticks": {"light": 22, "heavy": 24}, "hold_ticks": 10, "follow_ticks": 8, "recover_ticks": 14, "overshoot": 0.06, "lag": 0.45},
+   "alternate": false, "carry": false, "carry_ticks": 0,
+   "squash": 1.0, "lean_back": 0.16, "back": 2.4,
+   "stretch": {"spine": 0.14, "rise": 1.4, "lead": 3.0, "ticks": 4, "smear_ticks": 1},
+   "twist": 0.0, "twist_ticks": 6, "ghosts": 3
+  }
+ }
+}
