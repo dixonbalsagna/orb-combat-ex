@@ -1,0 +1,7 @@
+--- a/sim/world/collateral.gd
++++ b/sim/world/collateral.gd
+@@ -13,5 +13,5 @@
+ const WS: float = SimConst.WS
+ const POP_REF: float = 425.0
+-const WINDOW_S: int = 60
++const WINDOW_S: int = 61   # 61 one-second buckets: the current second and the 60 before it, so a kill never leaves the window less than 60 s after it (60 buckets freed the second's kills up to a second early)
