@@ -549,3 +549,24 @@ What follows from it:
 - Intros: Orb likes them and wants a system that composes them from mix-and-match scenarios per pair of fighters (Narrative: docs/narrative/dynamic-intros.md; Encounter owns the intro phase).
 - Backstory: a document defining the backstory, so the power system can be fleshed out (Narrative drafts a skeleton of options; Orb fills it).
 - Music: the previews read too spooky; sketch-a-town-band has the best hook; the direction is tongue-in-cheek, riff-heavy speed metal. Suno (Orb's premium account) makes the final music from our prompts and reference samples, and Orb feeds the files back (Audio: docs/audio/suno-direction.md).
+
+## Orb, 2026-10-04: questionnaire 15 (pending decisions)
+
+Answers as given:
+
+- Front-row buildings: Other: "hybrid of 2 + 3, pavement should crack and shatter differently from dirt, can windows shatter + multiple levels of dynamic destruction per building" (2 = cut top-tier reach into buildings, 3 = soften landing blasts).
+- Extra blast kinds: Splitting shot (rival) only. Rain hits its thrower: No (rain is not in this update).
+- Glasses frame: C, the bare wedge. Glare hides his eyes: yes, fully hidden.
+- Protagonist look: approve. Rival look: approve.
+- Deflected shot's landing ring: make the landing a surprise.
+- Split-screen rush jolt: this update.
+- Beat-pace loophole in the perfect blur: build the fix.
+- Finisher struggle strictness: 2 of 3 (between lenient and the strict rule that was live).
+- Backstory: "Interview me with a questionnaire".
+- Not answered: how hard medium should be against good timing; the fighters' names; whether to run the split on neutral ids.
+
+Notes, verbatim:
+
+> timing should land clean, instant-looking blows with an after-image, mashing should fire attacks, impact landing on-trigger so they look fast and leave a fluid afterimage blur, holding should be the most fluid looking and account for power hits, use warping or smear effects to illustrate the speed and power of these attacks, right now my feeling on combat is that there is a lot of small downtime breaks, I just played (about ten minutes ago) against Vorr and it seems like they will trade around three to five blows, the AI will slip away in some kind of looping pattern, then I'll catch up to him, and repeat. sometimes it will end up in a launch which looks cool, the speed and acceleration of launches can be tuned to accommodate the viewer,  the 'combat lunges' should be a bit more controllable and easier to spot when they're being used against you, right now an opponent flying from very far away at max speed is very hard to judge, the split screen needs tuning so it is easier to track combat.
+>
+> I would like a prototype animation of the three melee types, mashing, timed and holding, so I know we're on the same page.
