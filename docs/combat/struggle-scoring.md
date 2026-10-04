@@ -1,6 +1,6 @@
 # The finisher's struggle: scoring that does not reward mashing
 
-Owner: Combat and Choreography. Date: 2026-10-03. Status: a proposal for Game Design, who owns the scoring numbers (`docs/design/spec-wounds.md` section 1). No data or code is changed. Checked against HEAD `a50c87d`.
+Owner: Combat and Choreography. Date: 2026-10-03. Status: **ruled on 2026-10-03: `perStray` −0.15 and `scoring.floor` 0.08.** Encounter applies both values in `data/combat/finishers.json` inside slice 13, under the EP's grant, with the code change that floors the press score before the tilts, and measures it. The numbers are Game Design's (`docs/design/spec-wounds.md` section 1). Written against HEAD `a50c87d`.
 
 ## The problem
 
@@ -59,3 +59,14 @@ So pressing on the beats beats mashing by 15 to 45 points, and mashing is no bet
 - **Combat:** two numbers in `data/combat/finishers.json` (`perStray`, `floor`) and the note beside them, in a window. The parity profile ignores the struggle, so the frozen copy is not touched.
 - **Game Design:** the ruling, and the choice between −0.15 and −0.10.
 - **UI:** the struggle's prompt should show three beats and no meter that fills with presses, so it does not invite mashing.
+
+## Stale mentions of the old base
+
+The struggle's base has been 0.23 since Game Design raised it; three places still say 15.
+
+| Where | Whose | State |
+| :--- | :--- | :--- |
+| `docs/combat/variety-pass.md` section 6, row 2 | Combat | fixed: the row now says 0.15 was the parked value and 0.23 is live |
+| `sim/director/exchange.gd`, the comment above the contest's branch ("base 15, +10 per hit, -5 per missed beat or stray") | Encounter | to fix with slice 13, which edits that function: 23, +10, -5 a miss, -15 a stray, floored at 8 |
+| `docs/director/q4-director-control-plan.md` section C ("base 15") | Encounter | a plan of its time; a note would do |
+| `docs/design/spec-wounds.md`, the S4 ruling ("base 15%, up to +30") | Game Design | a dated ruling, superseded further up the same file; a note would do |
