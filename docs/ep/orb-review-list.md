@@ -80,3 +80,9 @@ Written by the EP on 2026-10-01. Paths are from the project folder. The fuller s
 - The rush jolt in split screen (Camera: docs/camera/split-screen.md section 21c): tackle in this update or later.
 - The beat-pace metronome earning the perfect blur about a quarter of the time: build Controls' fix (docs/controls/agency-input.md, option B) or leave it.
 - The fighters' names; the split to PROTAGONIST and RIVAL can run on neutral ids meanwhile.
+
+## New for Orb (2026-10-04)
+
+- Dynamic intros: docs/narrative/dynamic-intros.md (eleven scenario templates; Orb's questions are at the end of section 10) and docs/director/dynamic-intros-plan.md (how it is built; first cut is 3 templates and 9 parts).
+- Backstory: docs/narrative/backstory-skeleton.md (ten questions the power system needs answered, three options each, and three bundles: the Living World, the Proving Ground, the Tide).
+- QA's confirmation of the retuned build: docs/qa/baseline-9fcdf87.md.
