@@ -86,3 +86,4 @@ Written by the EP on 2026-10-01. Paths are from the project folder. The fuller s
 - Dynamic intros: docs/narrative/dynamic-intros.md (eleven scenario templates; Orb's questions are at the end of section 10) and docs/director/dynamic-intros-plan.md (how it is built; first cut is 3 templates and 9 parts).
 - Backstory: docs/narrative/backstory-skeleton.md (ten questions the power system needs answered, three options each, and three bundles: the Living World, the Proving Ground, the Tide).
 - QA's confirmation of the retuned build: docs/qa/baseline-9fcdf87.md.
+- Music for Suno: docs/audio/suno-prompts.md (12 paste-ready prompts; start with M01 title, M02 fight act 1, M05 fight act 4), docs/audio/suno-direction.md (the sound bible; Orb's decisions are in section 7), reference clips to upload in audio/preview/suno-reference/ (150, 180 and 210 BPM), and where to drop the results: audio/music/incoming/ (see audio/music/README.md).
