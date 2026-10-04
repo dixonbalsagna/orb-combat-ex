@@ -132,6 +132,10 @@ Run once from the repo root, in the same commit as `apply-pieces.cjs` and Combat
 
 Run once from the repo root, in the commit that lands the slice's data: `node docs/tools/pending/apply-slice13.cjs`. It does **not** edit `data/`. `data/director/alchemy.json`: `flow.dmgPer`, `flow.contest`, `flow.contestMax` (numbers, 0 or more), `blur.timedMul` (a number above 0) and `blur.fullEnderFlow` (an integer, 0 or more) are required; `blur.fullEnderFlow` above `flow.max` is a warning (`alchemy-flow`). `data/director/interrupts.json`: `blast.barrage.tappedHeavyWeak` (a boolean) is required. `ai.json` keeps its shape. The fixtures get the keys; the earlier whole-blast cases are patched; 23 cases. Re-runnable. Tested on a clean `git archive HEAD` (e10e2ac) with the keys dropped in: 6 errors before, then 0 errors and 0 warnings, self-test passes (3341 of 3341).
 
+## `apply-slice14.cjs`: Encounter's slice 14, the contest floor
+
+Run once from the repo root, in the commit that lands the slice's data: `node docs/tools/pending/apply-slice14.cjs`. It does **not** edit `data/`. `data/director/alchemy.json` `flow.contestFloor` (a number, 0 to 1) is required; the fixture and 6 cases follow. `interrupts.json` `blast.heavy.tapShare` changes value only. Re-runnable. Tested on a clean `git archive HEAD` with the key dropped in: 1 error before, then 0 errors and 0 warnings, self-test passes.
+
 ## Which script goes with which commit (the next big update)
 
 | Script | State | Goes in the commit of | Needs |
