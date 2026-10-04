@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Checks a finished music file before it goes into the game (docs/audio/suno-direction.md, section 6).
 //
-//   node audio/tools/music_check.mjs FILE.wav [--bars 8] [--target -16] [--json]
+//   node audio/tools/music_check.mjs FILE.wav [--bars 8] [--target -16] [--json] [--write-sidecar]
 //
 // Reads a WAV (PCM 16, 24 or 32 bit, or 32-bit float; mono or stereo; any sample rate) and reports:
 //   * the format (a dev check that the file matches the hand-back spec),
@@ -11,10 +11,16 @@
 //     mix up), and how steady it is across the file,
 //   * the best loop points on the bar grid: a downbeat offset, and a loop of N bars whose end meets its start with
 //     the smallest jump.
+//   * a SHA-256 checksum of the file exactly as it is on disk (the record of the original download), and the list of
+//     chunks in it, so we can see whether the download's metadata (LIST, id3 and similar) is present. The tool never
+//     writes to the audio file. With --write-sidecar it adds the checksum and the check date to the sidecar text file
+//     next to it (FILE.txt), inside a marked block that it replaces on each run (Legal's origin record, RL-071). The block
+//     also copies the original's metadata (LIST/INFO tags, id3 and any other chunk), because the shipped copy may not carry it.
 // It is a dev tool: standard library only, nothing ships, and every number is an estimate to check by ear. MP3 is not
 // read; export WAV from Suno.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 const args = process.argv.slice(2);
 const file = args.find((a) => !a.startsWith("--") && !/^-?\d/.test(a));
@@ -23,6 +29,7 @@ const opt = (name, def) => {
   return i >= 0 && args[i + 1] !== undefined ? Number(args[i + 1]) : def;
 };
 const asJson = args.includes("--json");
+const writeSidecar = args.includes("--write-sidecar");
 if (!file) {
   console.error("usage: node audio/tools/music_check.mjs FILE.wav [--bars 8] [--target -16] [--json]");
   process.exit(2);
@@ -33,8 +40,12 @@ function readWav(path) {
   const b = readFileSync(path);
   if (b.toString("ascii", 0, 4) !== "RIFF" || b.toString("ascii", 8, 12) !== "WAVE") throw new Error("not a RIFF/WAVE file (export WAV, not MP3)");
   let pos = 12, fmt = null, data = null;
+  const chunks = [];
+  const meta = [];
   while (pos + 8 <= b.length) {
     const id = b.toString("ascii", pos, pos + 4), size = b.readUInt32LE(pos + 4), body = pos + 8;
+    chunks.push(`${id}:${size}`);
+    if (id !== "fmt " && id !== "data") meta.push({ id, body: b.subarray(body, Math.min(body + size, b.length)) });
     if (id === "fmt ") {
       fmt = { tag: b.readUInt16LE(body), ch: b.readUInt16LE(body + 2), rate: b.readUInt32LE(body + 4), bits: b.readUInt16LE(body + 14) };
       if (fmt.tag === 0xfffe && size >= 26) fmt.tag = b.readUInt16LE(body + 24);
@@ -58,7 +69,31 @@ function readWav(path) {
       ch[c][i] = v;
     }
   }
-  return { fmt, ch, n, rate: fmt.rate };
+  return { fmt, ch, n, rate: fmt.rate, chunks, bytes: b, meta };
+}
+
+// The original's metadata, as text for the sidecar (Legal, RL-071: the shipped copy may not carry it, so the record must).
+// LIST/INFO sub-chunks are listed as key=value; any other chunk (id3, bext, iXML and so on) is kept as its printable text
+// and as base64 of the whole chunk (up to 64 KB), so nothing is lost.
+function metadataText(meta) {
+  const lines = [];
+  for (const m of meta) {
+    if (m.id === "LIST" && m.body.length >= 4) {
+      const type = m.body.toString("ascii", 0, 4);
+      lines.push(`chunk LIST/${type}:`);
+      let p = 4;
+      while (p + 8 <= m.body.length) {
+        const k = m.body.toString("ascii", p, p + 4), n = m.body.readUInt32LE(p + 4);
+        lines.push(`  ${k}=${m.body.toString("utf8", p + 8, p + 8 + n).replace(/\0+$/, "")}`);
+        p += 8 + n + (n & 1);
+      }
+    } else {
+      const printable = (m.body.toString("latin1").match(/[\x20-\x7e]{4,}/g) || []).join(" | ");
+      lines.push(`chunk ${m.id.trim()} (${m.body.length} bytes): ${printable.slice(0, 600)}`);
+      lines.push(`  base64: ${m.body.subarray(0, 65536).toString("base64")}`);
+    }
+  }
+  return lines;
 }
 
 // ---- loudness, BS.1770-4
@@ -205,6 +240,13 @@ const report = {
   peak: { samplePeakDbFS: +(20 * Math.log10(tp.sample)).toFixed(1), truePeakDbTP: +(20 * Math.log10(tp.true)).toFixed(1), truePeakAfterGainDbTP: +(20 * Math.log10(tp.true) + target - L.lufs).toFixed(1) },
   tempo: { estimateBpm: tempo.best, candidates: tempo.candidates, thirds: tempo.best ? steadiness(m, w.rate, tempo.best) : null },
   loop: tempo.best && w.n / w.rate > bars * 4 * 60 / tempo.best + 2 ? loopPoints(m, w.rate, tempo.best, bars, tempo.o, tempo.frameRate) : "too short for a loop of that many bars",
+  original: {
+    sha256: createHash("sha256").update(w.bytes).digest("hex"),
+    bytes: w.bytes.length,
+    chunks: w.chunks,
+    metadata: metadataText(w.meta),
+    metadataChunks: w.chunks.map((c) => c.split(":")[0]).filter((c) => !["fmt ", "data", "fact", "bext"].includes(c) || c === "bext"),
+  },
   notes: [],
 };
 if (![44100, 48000].includes(w.rate)) report.notes.push(`sample rate ${w.rate} Hz: the hand-back spec asks for 44.1 or 48 kHz`);
@@ -212,6 +254,18 @@ if (w.fmt.ch !== 2) report.notes.push("not stereo");
 if (report.peak.truePeakAfterGainDbTP > -1) report.notes.push("true peak after normalising would exceed -1 dBTP: lower the gain, do not limit");
 const th = report.tempo.thirds;
 if (th && Math.max(...th) - Math.min(...th) > 0.02 * tempo.best) report.notes.push("tempo drifts across the file: pick a steadier take, or loop only a short steady section");
+if (report.original.metadataChunks.length === 0) report.notes.push("no metadata chunks in this file (Suno downloads normally carry some): if this is the original download, say so in the sidecar; if it is a converted copy, the metadata was lost");
+if (writeSidecar) {
+  const side = file.replace(/\.[^.]+$/, ".txt");
+  const begin = "--- music_check (do not edit) ---", end = "--- end music_check ---";
+  const block = [begin, `checksum_sha256: ${report.original.sha256}`, `file_bytes: ${report.original.bytes}`, `chunks: ${report.original.chunks.join(" ")}`, `metadata_original_copied: ${report.original.metadata.length ? "yes (below)" : "none to copy"}`, ...report.original.metadata.map((l) => "  " + l), `metadata_kept: ${report.original.metadataChunks.length ? "yes (" + report.original.metadataChunks.join(", ") + " present in the original)" : "NO METADATA CHUNKS FOUND"}`, `checked_on: ${new Date().toISOString().slice(0, 10)}`, `measured: ${report.format.sampleRate} Hz, ${report.format.channels} ch, ${report.format.seconds} s, ${report.loudness.integratedLUFS} LUFS, tempo ${report.tempo.estimateBpm} BPM`, end].join("\n");
+  let text = existsSync(side) ? readFileSync(side, "utf8") : "";
+  const a = text.indexOf(begin), z = text.indexOf(end);
+  if (a >= 0 && z > a) text = text.slice(0, a) + block + text.slice(z + end.length);
+  else text = text.replace(/\s*$/, text ? "\n\n" : "") + block;
+  writeFileSync(side, text.endsWith("\n") ? text : text + "\n");
+  report.notes.push(`sidecar updated: ${side}`);
+}
 if (asJson) console.log(JSON.stringify(report, null, 1));
 else {
   const f = report.format, l = report.loudness, p = report.peak, t = report.tempo;
@@ -219,6 +273,7 @@ else {
   console.log(`  format    ${f.container} ${f.encoding}, ${f.channels} ch, ${f.sampleRate} Hz, ${f.seconds} s`);
   console.log(`  loudness  ${l.integratedLUFS} LUFS integrated (momentary max ${l.momentaryMaxLUFS}); gain to ${l.targetLUFS} LUFS: ${l.gainToTargetDb > 0 ? "+" : ""}${l.gainToTargetDb} dB`);
   console.log(`  peak      sample ${p.samplePeakDbFS} dBFS, true (approx.) ${p.truePeakDbTP} dBTP, after gain ${p.truePeakAfterGainDbTP} dBTP`);
+  console.log(`  original  sha256 ${report.original.sha256}, ${report.original.bytes} bytes, chunks ${report.original.chunks.join(" ")}`);
   console.log(`  tempo     ${t.estimateBpm} BPM (candidates ${t.candidates.map((c) => `${c.bpm} @${c.strength}`).join(", ")}); first, middle, last third: ${t.thirds ? t.thirds.join(", ") : "n/a"}`);
   if (typeof report.loop === "string") console.log(`  loop      ${report.loop}`);
   else {

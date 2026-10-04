@@ -144,8 +144,15 @@ Each riff reference is eight bars: two of gallop riff alone, two of the hook on 
 **What:**
 - **Format:** WAV as Suno delivers it (PCM 16, 24 or 32-bit or 32-bit float, stereo, 44.1 or 48 kHz). Do not convert it, do not normalise it and do not export an MP3 (MP3 is lossy and Godot's web build would then re-compress it). If WAV is not available, tell me what is.
 - **Naming:** `M02_fight-1_t01_180bpm_E.wav` is cue id, slug, take number, the tempo you were aiming for and the key. For stems add `_stem-drums`, `_stem-bass`, `_stem-guitars`, `_stem-lead`, `_stem-brass` and so on, and keep each stem the same length as the mix.
-- **Sidecar:** a text file with the same name (`M02_fight-1_t01.txt`) holding the exact Style text, Exclude text, structure tags, sliders, the model (v6), the date, your Suno plan (Pro or Premier) and the song link or id. Legal's origin log needs "tool, model, date and where the prompt is kept" for every AI-assisted asset.
-- **Do not edit the audio** before handing it back. We choose loop points.
+- **Sidecar:** a text file with the same name (`M02_fight-1_t01.txt`), made from `audio/music/sidecar-template.txt`, holding Legal's record (`docs/legal/suno-music.md`, RL-071): the model version, plan tier, download date, song link or id, the exact prompt (Style, Exclude and structure tags) and sliders, the names of the uploaded clips, who chose the take and what was edited, a checksum of the original, "metadata kept: yes", and the listen and music-recognition result. `node audio/tools/music_check.mjs FILE.wav --write-sidecar` writes the checksum, the chunk list, a copy of the original's metadata and the "metadata kept" line for you (it never writes to the audio).
+- **Every original download stays untouched in `audio/music/incoming/`.** Nothing is ever edited in place, because Suno's terms forbid removing or altering metadata. Only a processed copy is shipped (a normalised, trimmed or encoded copy made from the original); the original and its checksum are the record.
+- **Do not edit the audio** before handing it back. We choose loop points and store them as data, not by cutting the original.
+- **The shipped copy.** Legal has cleared shipping a **processed copy** (gain, a loop cut, an OGG encode) on five conditions (`docs/legal/suno-music.md`, follow-up to RL-071). **The hold on wiring Suno files into the build is lifted** once the conditions below are in the pipeline:
+  1. **No concealing purpose.** No watermark-removal or detection-evasion tool, plugin or setting is ever used on a Suno file.
+  2. **Keep the untouched original and the origin record** (the sidecar) for every shipped file.
+  3. **The notice and the store disclosures say the music is AI-made with Suno** (`audio/music/NOTICE.txt`; Steam and itch.io).
+  4. **Processing stays ordinary:** gain, a cut, an encode. No re-synthesis, no pitch or time tricks, no "cleaning" or restoration tools.
+  5. **The original's metadata is copied into the sidecar**, because the shipped copy may not carry it. `music_check --write-sidecar` does this (LIST/INFO tags, id3 and any other chunk, as text and base64).
 
 **What I do on receipt:**
 1. `node audio/tools/music_check.mjs FILE.wav --bars 32` reports the format, the integrated loudness, the approximate true peak, the tempo (and whether it drifts), and the best bar-aligned loop points.
@@ -179,6 +186,8 @@ Each riff reference is eight bars: two of gallop riff alone, two of the hook on 
 - **Not heard.** The reference clips have not been listened to by a person.
 
 ## 9. Open questions for Legal (through the EP)
+
+**Answered by Legal on 2026-10-04: `docs/legal/suno-music.md` (RL-071), conditional.** In short: generate and download on a paid plan within the monthly cap and keep each original untouched; the music is **not** under the project licence (see `audio/music/NOTICE.txt`) and is never described as human-made; do not register the tracks in Content ID; disclose AI-made music on Steam and itch.io; listen to each final and run a music-recognition check; Orb's direction and selection help and a human melody is optional. Still open with Legal: whether OGG encoding and a loop cut are compatible with the no-altering-metadata term. The original questions follow, for the record.
 
 I do not decide any of these.
 1. **Which plan and which downloads count.** The terms update says paid-plan downloads are yours to use commercially, with monthly download allotments (Pro 20, Premier 60, unlimited for Studio users per Suno's blog). Do the takes we do not use count, and does the cap limit how many cues we can ship?

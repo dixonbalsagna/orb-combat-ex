@@ -1,0 +1,28 @@
+cue: M02 fight-1
+file: M02_fight-1_t01_180bpm_E.wav
+
+suno_model_version: v6
+suno_plan_tier: (Pro or Premier)
+download_date: (YYYY-MM-DD)
+song_link_or_id:
+generated_on_paid_plan: yes
+within_monthly_download_cap: yes
+
+prompt_style_text: (paste the Style of Music text exactly)
+prompt_exclude_text: (paste the Exclude text exactly)
+prompt_structure_tags: (paste the Lyrics box exactly)
+sliders: (Weirdness, Style Influence, Audio Influence, Variety, Max Mode)
+uploaded_clip_names: (for example suno-ref-riff-180bpm-E.wav; sketch-a-town-band.wav; or a take of ours)
+
+who_chose_the_take: (name)
+what_was_edited: (nothing / trimmed to ... / loop points / gain only)
+listened_by: (name, and a second listener if possible)
+music_recognition_check: (app used, date, result: no match / match with ...)
+
+original_kept_untouched_in_incoming: yes
+processing_done: (gain only / loop cut / OGG encode: ordinary processing only, no re-synthesis, no pitch change)
+watermark_or_detection_tools_used: none
+metadata_original_copied: (music_check copies the original's metadata below)
+metadata_kept: (music_check fills this in below)
+
+(music_check adds the checksum block below this line: node audio/tools/music_check.mjs FILE.wav --write-sidecar)

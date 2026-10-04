@@ -4,6 +4,8 @@ Owner: Audio and Music. 2026-10-04. Companion to `suno-direction.md`, which expl
 
 ## How to use a block
 
+> **A note for Orb:** generate and download on the **paid plan**, within the monthly download cap (Legal, `docs/legal/suno-music.md`). Optional: a melody you hum, sing or play and upload as the audio input would give the main theme a human-authored core.
+
 1. In Suno, open **Create**, choose **Custom** mode and the model **v6** (use **v6-wild** only to explore, never for a final).
 2. Paste the **Style of Music** text. Paste the **Exclude** text into the Exclude field (Advanced Options). Paste the **Structure** text into the **Lyrics** box. Leave the title as the block's cue id and slug (for example `M02 fight-1`).
 3. Switch **Instrumental** on if the page has that switch. The text already says instrumental and the exclude list says no vocals, so it works either way.
