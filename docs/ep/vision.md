@@ -570,3 +570,20 @@ Notes, verbatim:
 > timing should land clean, instant-looking blows with an after-image, mashing should fire attacks, impact landing on-trigger so they look fast and leave a fluid afterimage blur, holding should be the most fluid looking and account for power hits, use warping or smear effects to illustrate the speed and power of these attacks, right now my feeling on combat is that there is a lot of small downtime breaks, I just played (about ten minutes ago) against Vorr and it seems like they will trade around three to five blows, the AI will slip away in some kind of looping pattern, then I'll catch up to him, and repeat. sometimes it will end up in a launch which looks cool, the speed and acceleration of launches can be tuned to accommodate the viewer,  the 'combat lunges' should be a bit more controllable and easier to spot when they're being used against you, right now an opponent flying from very far away at max speed is very hard to judge, the split screen needs tuning so it is easier to track combat.
 >
 > I would like a prototype animation of the three melee types, mashing, timed and holding, so I know we're on the same page.
+
+## Orb, 2026-10-04: the melee feel (after the second prototype)
+
+The approved reference is docs/ep/prototypes/melee-trade-v2.html (open it in a browser). Orb asked for it to let both fighters be set to speed, tech, heavy, combo or block and trade blows at once; a heavy knocks back only as a combo ender; a combo is 3, 4 or 5 hits where only the last is a heavy; a blocker is never knocked back; the tech after-image differs from the speed blur.
+
+Verbatim:
+
+> that second prototype looks a lot like what I want the combat to feel like. close up brawls should make fighters slightly 'magnetic' so they can trade continuous strings of blows without interruption. both players should feel like their attacks actually match a button press. mashers should see their fighter landing faster flurries the quicker they tap the attack, a player trying to tech timing combos should see his character landing flashy skill attacks that lapse into high speed flurries when they miss their timing, and the heavy attack should be reliable against a heavy guard opponent, or to set up chains of skillful juggle attacks.
+
+What follows from it:
+
+- Close brawls are slightly magnetic: fighters stay in range and trade continuous strings without the fight breaking apart.
+- Every attack on screen matches a button press, for both players.
+- Mashing: the faster the taps, the faster the flurry.
+- Timing: on-beat presses give flashy skill attacks; a missed beat lapses into a high-speed flurry, not a dead press.
+- Heavy: reliable against a heavily guarding opponent, and the set-up for chains of skilful juggle attacks.
+- This moves melee from "the director composes the exchange" toward "each press is a blow"; the director still owns the choreography of what each blow is.
