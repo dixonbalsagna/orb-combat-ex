@@ -60,7 +60,8 @@
         "showcaseAt",
         "dmgPer",
         "contest",
-        "contestMax"
+        "contestMax",
+        "contestFloor"
       ],
       "properties": {
         "enabled": {
@@ -106,6 +107,12 @@
           "type": "number",
           "minimum": 0,
           "description": "The most flow contests can pay a string."
+        },
+        "contestFloor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The share of the flow a lost contest leaves."
         }
       },
       "description": "The flow of a string (agency-pass.md section 2; sim/director/alchemy.gd).",

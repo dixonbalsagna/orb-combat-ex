@@ -49446,6 +49446,96 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "director-alchemy-flow-contest-floor-required",
+      "schema": "director-alchemy.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/alchemy.json",
+          "del": [
+            "/flow/contestFloor"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/flow"
+      }
+    },
+    {
+      "id": "director-alchemy-flow-contest-floor-negative",
+      "schema": "director-alchemy.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/alchemy.json",
+          "set": {
+            "/flow/contestFloor": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/flow/contestFloor"
+      }
+    },
+    {
+      "id": "director-alchemy-flow-contest-floor-above-one",
+      "schema": "director-alchemy.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/alchemy.json",
+          "set": {
+            "/flow/contestFloor": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/flow/contestFloor"
+      }
+    },
+    {
+      "id": "director-alchemy-flow-contest-floor-type",
+      "schema": "director-alchemy.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/alchemy.json",
+          "set": {
+            "/flow/contestFloor": "half"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/flow/contestFloor"
+      }
+    },
+    {
+      "id": "director-alchemy-flow-contest-floor-edges-ok",
+      "schema": "director-alchemy.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/alchemy.json",
+          "set": {
+            "/flow/contestFloor": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-alchemy-flow-contest-floor-one-ok",
+      "schema": "director-alchemy.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/alchemy.json",
+          "set": {
+            "/flow/contestFloor": 1
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

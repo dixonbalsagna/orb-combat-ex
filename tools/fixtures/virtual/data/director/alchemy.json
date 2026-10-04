@@ -17,7 +17,8 @@
     "showcaseAt": 5,
     "dmgPer": 0.04,
     "contest": 2,
-    "contestMax": 10
+    "contestMax": 10,
+    "contestFloor": 0.08
   },
   "timing": {
     "comboMul": 1.15

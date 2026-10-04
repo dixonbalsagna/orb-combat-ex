@@ -827,12 +827,19 @@ static func flowEdge(f) -> float:
 	return minf(float(fl.get("contestMax", 0.0)), float(fl.contest) * float(DirAlchemy.flowEx(f)))
 
 
+## The flow's cut on a chance to survive a finisher (agency-pass.md sections 22 and 23): W's flowEdge points come off,
+## and the cut never takes the chance below flow.contestFloor. A chance already below it is left as it is.
+static func flowCut(chance: float, W) -> float:
+	var fl: Dictionary = DirRecipe.cfg().get("flow", {})
+	return minf(chance, maxf(float(fl.get("contestFloor", 0.0)), chance - flowEdge(W) / 100.0))
+
+
 ## The contest roll (one S.rng draw): survive with CONTEST_BASE, less CONTEST_TILT per minute past CONTEST_TILT_AT.
 static func _opContest(S: SimState, ex, a) -> void:
 	var W = ex.A if a.w == "A" else ex.D
 	var L = ex.D if a.w == "A" else ex.A
 	var late: float = SimMathx.jmax(0.0, (S.T - CONTEST_TILT_AT) / 60.0)
-	var chance: float = SimMathx.jmax(0.0, CONTEST_BASE - CONTEST_TILT * late - flowEdge(W) / 100.0)
+	var chance: float = flowCut(SimMathx.jmax(0.0, CONTEST_BASE - CONTEST_TILT * late), W)
 	if S.game.timeCap:
 		chance = 0.0   # Q10 (granted; spec-wounds.md section 5): no survival from the time cap; the draw is kept
 	var survived: bool = S.rng.next() < chance
@@ -930,8 +937,9 @@ static func _struggleTick(S: SimState, ex) -> void:
 
 
 ## The contest in "branch" mode: one S.rng draw, as today; the chance comes from the struggle when the finisher opened one
-## (base 15, +10 per hit, -5 per missed beat or stray), otherwise from the contest's base; then the tilt past 8:00. The
-## outcome's beats (landed or survived) are scheduled from here; the KO happens at finalBlow.
+## (base 23, +10 a hit, -5 a missed beat, -15 a stray press, floored at 8: finishers.json contest.struggle.scoring),
+## otherwise from the contest's base; then the tilts: the time past 8:00, the Rallies used, and the winner's flow
+## (flowCut). The outcome's beats (landed or survived) are scheduled from here; the KO happens at finalBlow.
 static func _opContestBranch(S: SimState, ex, a) -> void:
 	var W = ex.A if a.w == "A" else ex.D
 	var L = ex.D if a.w == "A" else ex.A
@@ -949,7 +957,7 @@ static func _opContestBranch(S: SimState, ex, a) -> void:
 		chance = float(cs.base) - float(cs.tiltPerMinute) * late
 	# The Rally tilt (spec-wounds.md §1; contest.rallyPenalty): each Rally the fighter has used costs it 10 points.
 	chance -= float(cs.get("rallyPenalty", 0.0)) * float(L.rallies)
-	chance -= flowEdge(W) / 100.0   # section 22: the flow the winner held as his finisher started
+	chance = flowCut(chance, W)   # sections 22 and 23: the flow the winner held as his finisher started
 	chance = SimMathx.jmax(float(cs.floor), chance)
 	if S.game.timeCap:
 		chance = 0.0   # Q10 (granted; spec-wounds.md section 5): no survival from the time cap; the draw is kept

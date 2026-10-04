@@ -140,7 +140,7 @@
       "ki": 8,
       "windupTicks": 8,
       "chargeTicks": 30,
-      "tapShare": 0.6,
+      "tapShare": 0.4,
       "holdMaxTicks": 45,
       "knockFull": true
     },
