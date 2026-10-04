@@ -90,7 +90,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-068 | Glasses compare: A, B, C clear; D avoid | Art | Low | Clear; D avoid | Closed |
 | RL-069 | Protagonist sheet: big fists, forelock | Art | Medium | CONDITIONAL: fists solid and plated, forelock a swept tuft | Open until Art revises |
 | RL-070 | Rival sheet: tail, coat blades, glasses | Art | Low | Clear | Closed |
-| RL-071 | Suno music: use, licence statement, disclosure, training data, uploads, records | Audio | Medium | CONDITIONAL: paid downloads, untouched originals, separate audio notice, disclose, check each track | Open until Orb confirms the terms |
+| RL-071 | Suno music: use, licence statement, disclosure, training data, uploads, records | Audio | Medium | CONDITIONAL: paid downloads, untouched originals, separate audio notice, disclose, check each track | Open until Orb confirms the terms. Follow-up 2026-10-04: processed OGG copies are clear on conditions |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 

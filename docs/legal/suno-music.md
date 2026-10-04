@@ -48,3 +48,25 @@ Owner: Legal and IP Compliance. 2026-10-04. Answers the questions in `docs/audio
 
 ## Draft audio notice (for `audio/music/NOTICE.txt`)
 > The music in this folder was generated with Suno and is used under Suno's terms of service (paid plan, downloaded files). It is included to build and play this game. It is not licensed under this project's open licence. Do not remove the embedded metadata. If you want to reuse a track elsewhere, check Suno's current terms first. Copyright may not subsist in AI-generated audio.
+
+## Follow-up: shipping a processed copy (2026-10-04)
+
+**Question.** Audio keeps each original download untouched but ships a copy that is loudness-normalised (gain only), cut to a bar-aligned loop and encoded to OGG at about 128 kbps. Encoding and cutting drop the file's metadata and may weaken an inaudible watermark. Does the "do not remove, alter or hide" term allow that?
+
+**Verdict: clear, on conditions.**
+
+**What I verified** (second read of Suno's terms page, again through a page summary, 2026-10-04):
+- The restriction is on removing, altering, obscuring or circumventing a fingerprint, watermark or metadata **"for the purpose of concealing or misrepresenting"** the output's origin, service tier or status. It is aimed at hiding where an output came from or which plan made it.
+- The terms also say you may "edit, process, or convert the format of" an output you are otherwise allowed to use "to the extent such use is incidental".
+- I found no requirement to credit Suno or to show a notice that the output is AI-made.
+
+**Reading.** Normalising gain, cutting a loop and encoding to OGG for the web build is ordinary processing. Any loss of metadata or watermark strength is a side effect, not an effort to conceal origin. So it is allowed.
+
+**Conditions:**
+1. **No concealing purpose.** Do not use a watermark-removal or detection-evasion tool or setting, and do not strip tags with the aim of hiding that the music is AI-made or which plan made it.
+2. **Keep the untouched original and the origin record** for every shipped file, as Audio's pipeline does.
+3. **Say it openly.** The audio notice and the store disclosures say the music is AI-made with Suno. That is what makes the processed copy honest, even though Suno does not require the notice.
+4. **Processing stays ordinary:** gain, cut, encode. Anything meant to disguise the audio (heavy re-synthesis, pitch tricks to defeat detection) is out.
+5. Keep the original's metadata in the origin record (the sidecar), since the shipped copy may not carry it.
+
+**What I could not verify:** the clause text itself (I read summaries, twice), how Suno reads "incidental", and whether Suno scans shipped games for its watermark. If this matters to the launch, a short question to Suno support or counsel would settle it. The risk I see is low, because the term targets concealment and the plan is open about the origin. Not legal advice.
