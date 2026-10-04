@@ -89,7 +89,18 @@ static func flowEx(f) -> int:
 	return f.act.dirI[FLOW_EX]
 
 
-## The freeze a press or a release that arrives now was made in: the frozen ticks since the last live tick.
+## The ticks a PRESS that arrives now waited for the freeze it was made in: the layout's own count (the intent's `waited`), so the
+## press is graded at S.tick - waited, its own tick, and only the first blurBeatHalf ticks of a hit-stop count as on the beat. (The
+## rule before graded every press in a freeze at the freeze's first tick, a window h ticks wider; a metronome at the blows' pace used
+## it to lock the perfect blur.) The AI's presses keep the old rule: its beat is decided where it was planned (DirBlur.aiPress).
+static func _waited(S: SimState, f) -> int:
+	if f.ai != null:
+		return _freeze(S, f)
+	return clampi(f.input.waited, 0, 15)
+
+
+## The freeze a release that arrives now was made in: the frozen ticks since the last live tick (a release is a level falling, not
+## an edge, so the layout has no wait to carry for it).
 static func _freeze(S: SimState, f) -> int:
 	var last: int = f.act.dirI[LIVE_AT]
 	return clampi(S.tick - last - 1, 0, 15) if last > 0 else 0
@@ -146,7 +157,7 @@ static func log(S: SimState, f, weight: int, family: int) -> void:
 		tilt = [[8, 1, 2], [7, 0, 3], [6, 5, 4]][1 - ay][ax + 1] if not (ax == 0 and ay == 0) else 0
 	var n: int = f.act.dirI[COUNT]
 	var k: int = n % RING
-	var h: int = _freeze(S, f)
+	var h: int = _waited(S, f)
 	var at: int = S.tick - h
 	var held: bool = i.heavyHeld if weight == SimAct.HEAVY else i.lightHeld
 	var beat: int = SimPressRead.beat_offset(at, _blows(S, f, at))

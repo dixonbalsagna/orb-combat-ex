@@ -87,6 +87,7 @@ var _tf_t0: int = -1              # the Transform button's press tick, or -1
 var _tf_sent: bool = false
 var _transform_edge: bool = false
 var _escape_edge: bool = false    # a swipe up on Guard (provisional Escape, docs/controls/agency-input.md)
+var _edge_t0: int = -1            # the tick the oldest unconsumed request was made at, -1 for none (the intent's `waited`)
 
 # The Full touch preset: the same widgets go through a SimLayout (touch-full), the stick stays here.
 var full_mode: bool = false
@@ -272,6 +273,7 @@ func release_all() -> void:
 	_tf_t0 = -1
 	_transform_edge = false
 	_escape_edge = false
+	_edge_t0 = -1
 
 
 ## Escape on touch: a swipe up on the Guard button within swipeUpTicks of touching it (Guard stays down). Provisional, like the
@@ -329,6 +331,8 @@ func _axis(a: float) -> float:
 func build() -> SimIntent:
 	if full_mode:
 		return _build_full()
+	if _edge_t0 < 0 and _has_edges():
+		_edge_t0 = tick   # pressed since the last build: it waits from here
 	tick += 1
 	mx = 0.0
 	my = 0.0
@@ -395,7 +399,15 @@ func build() -> SimIntent:
 	i.dash = dashing or sprint
 	i.charge = power and not _power_voided and (tick - _power_t0) >= int(cfg.holdTicks)
 	i.stance = -1.0
+	if _edge_t0 < 0 and _has_edges():
+		_edge_t0 = tick - 1   # made by this build itself (a hold reaching holdTicks): waits 0
+	i.waited = clampi(tick - 1 - _edge_t0, 0, 15) if _edge_t0 >= 0 else 0
 	return i
+
+
+## Whether any request or edge is pending, unconsumed.
+func _has_edges() -> bool:
+	return req_light or req_heavy or req_sig or _guard_press or _dodge_edge or _power_press or _power_tap or _special_edge != 0 or _transform_edge or _escape_edge
 
 
 ## What the on-screen controls show (UI's touch_state_fn, docs/ui/hud-spec.md section 24): {attack: {down, hold 0..1},
@@ -437,6 +449,8 @@ func display_state() -> Dictionary:
 
 ## The Full preset's tick: the widgets resolved in the SimLayout, the floating stick and its flick and sprint here.
 func _build_full() -> SimIntent:
+	if _edge_t0 < 0 and _has_edges():
+		_edge_t0 = tick
 	tick += 1
 	var radius: float = float(cfg.stickRadiusDp) * dp
 	var sprint_now: bool = false
@@ -459,6 +473,8 @@ func _build_full() -> SimIntent:
 	_full.sprint_override = sprint_now
 	var i: SimIntent = _full.build()
 	i.escape = _escape_edge
+	if _edge_t0 >= 0:
+		i.waited = maxi(i.waited, clampi(tick - 1 - _edge_t0, 0, 15))   # the swipe's own wait, beside the layout's
 	if tick <= _dash_until:
 		i.mx = _dash_mx
 		i.my = _dash_my
@@ -507,3 +523,4 @@ func consumed() -> void:
 	_special_edge = 0
 	_transform_edge = false
 	_escape_edge = false
+	_edge_t0 = -1

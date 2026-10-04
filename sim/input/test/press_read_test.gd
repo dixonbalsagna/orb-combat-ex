@@ -31,6 +31,7 @@ func _init() -> void:
 	_timing()
 	_section20_steady()
 	_section20_hitstop()
+	_freeze_own_tick()
 	_section20_recipe()
 	_release()
 	_determinism()
@@ -583,3 +584,53 @@ func _section20_recipe() -> void:
 	SimPressRead.push(held, SimPressRead.LIGHT, 0, 400)
 	var fresh: Dictionary = SimPressRead.classify(held, 403)
 	ok(fresh["mix_short"]["light"] == 1 and fresh["mix_short"]["heavy"] == 4, "s20 lapse: a log the director has not cleared still counts its entries once a press comes (clearing is the director's)")
+
+
+## Presses made in a hit-stop are graded at their own tick (`waited`): the director's S.tick - waited. A blow lands at C and freezes
+## the sim for h ticks (C+1 to C+h); the press arrives on the first live tick, C+h+1. A press made d ticks after the contact
+## (1 <= d <= h) waited h+1-d ticks, so S.tick - waited is C+d, its own tick. Only presses within blurBeatHalf (2) of the contact
+## are on the blur's beat: the first 2 ticks of the freeze.
+func _graded_own(c: int, h: int, d: int) -> int:
+	if d >= 1 and d <= h:
+		var arrival: int = c + h + 1
+		var waited: int = arrival - (c + d)
+		return arrival - waited
+	return c + d
+
+
+## The rule before: every press in the freeze (and the first live tick) graded at S.tick - h, the contact plus 1.
+func _graded_old(c: int, h: int, d: int) -> int:
+	if d >= 1 and d <= h + 1:
+		return c + 1
+	return c + d
+
+
+func _freeze_own_tick() -> void:
+	for h in [4, 5]:
+		for cad in [7, 8, 9, 10]:
+			var blows: Array = []
+			for k in range(6):
+				blows.append(100 + k * (cad + h))
+			for d in range(-3, h + 2):
+				var own: Array = []
+				var old: Array = []
+				for k in range(4):
+					own.append(_graded_own(int(blows[1 + k]), h, d))
+					old.append(_graded_old(int(blows[1 + k]), h, d))
+				var s_own: bool = SimPressRead.classify(_beat_log(own, blows), int(own[3]) + 3)["steady"]
+				var s_old: bool = SimPressRead.classify(_beat_log(old, blows), int(old[3]) + 3)["steady"]
+				var in_freeze: bool = d >= 1 and d <= h
+				var on_beat: bool = absi(d) <= 2
+				ok(s_own == on_beat, "freeze: four presses %d ticks from the contact (hit-stop %d, cadence %d) are %s the blur's beat" % [d, h, cad, "on" if on_beat else "off"])
+				if in_freeze and d > 2:
+					ok(s_old, "freeze: the rule before graded the same press at the freeze's start, so it was on the beat (d %d, h %d)" % [d, h])
+	# The first two ticks of a freeze count; the fourth does not (the brief's numbers, hit-stop 5).
+	var blows5: Array = [100, 117, 134, 151, 168]
+	var first2: Array = [_graded_own(117, 5, 2), _graded_own(134, 5, 2), _graded_own(151, 5, 2), _graded_own(168, 5, 2)]
+	var fourth: Array = [_graded_own(117, 5, 4), _graded_own(134, 5, 4), _graded_own(151, 5, 4), _graded_own(168, 5, 4)]
+	ok(SimPressRead.classify(_beat_log(first2, blows5), int(first2[3]) + 3)["steady"], "freeze: a press 2 ticks into a freeze is on the blur's beat")
+	ok(not SimPressRead.classify(_beat_log(fourth, blows5), int(fourth[3]) + 3)["steady"], "freeze: a press 4 ticks into a freeze is not")
+	# The combo's timed press (beatHalf, 4) still takes the first 4 ticks of a freeze, and not the fifth.
+	var p: Dictionary = SimPressRead.params()
+	ok(SimPressRead.grade_of(_graded_own(100, 5, 4) - 100) == "perfect" and SimPressRead.grade_of(_graded_own(100, 5, 5) - 100) == "good", "freeze: a timed combo press (4 ticks) takes the first 4 ticks of a freeze, the fifth is good")
+	ok(p["blurBeatHalf"] == 2 and p["beatHalf"] == 4, "freeze: the blur's window is 2 and the combo's 4")

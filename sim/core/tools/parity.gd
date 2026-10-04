@@ -184,7 +184,7 @@ func _replays(g: Dictionary) -> String:
 ## unpack refuses integers that are not packed intents.
 func _intentPack() -> String:
 	var bools: Array = ["guard", "guardPress", "dodge", "sprint", "power", "powerPress", "powerTap", "light", "heavy", "sig", "context", "transform", "dash", "charge", "lightHeld", "heavyHeld", "escape"]
-	var fields: Array = ["mx", "my", "mode", "upgrade", "special", "stance"] + bools
+	var fields: Array = ["mx", "my", "mode", "upgrade", "special", "stance", "waited"] + bools
 	var same := func(x: SimIntent, y: SimIntent) -> bool:
 		for k in fields:
 			if x.get(k) != y.get(k):
@@ -202,6 +202,10 @@ func _intentPack() -> String:
 		var i2 := SimIntent.new()
 		i2.mode = v[0]; i2.upgrade = v[1]; i2.special = v[2]; i2.stance = v[3]
 		cases.append(i2)
+	for w in range(16):   # waited, 0 to 15
+		var iw := SimIntent.new()
+		iw.waited = w
+		cases.append(iw)
 	for k in range(-127, 128):
 		var i3 := SimIntent.new()
 		i3.mx = float(k) / 127.0
@@ -216,6 +220,7 @@ func _intentPack() -> String:
 		i4.upgrade = int(floor(r.next() * 3.0))
 		i4.special = int(floor(r.next() * 8.0))
 		i4.stance = float(int(floor(r.next() * 5.0)) - 1)
+		i4.waited = int(floor(r.next() * 16.0))
 		for b in bools:
 			i4.set(b, r.next() < 0.5)
 		cases.append(i4)
@@ -232,7 +237,7 @@ func _intentPack() -> String:
 	var c: SimIntent = SimIntent.canon(off)
 	if c.mx != 64.0 / 127.0 or c.my != -42.0 / 127.0 or SimIntent.pack(c) != SimIntent.pack(off):
 		return "canon() does not put the stick on its 1 / 127 grid"
-	for badp in [-1, 1 << 43, 255, 255 << 8, 3 << 16, 3 << 18, 5 << 35, 7 << 35]:
+	for badp in [-1, 1 << 47, 255, 255 << 8, 3 << 16, 3 << 18, 5 << 35, 7 << 35]:
 		if SimIntent.unpack(badp) != null:
 			return "unpack accepted %d, which is not a packed intent" % badp
 	return ""
@@ -1746,7 +1751,7 @@ func _replayModule() -> String:
 		if SimReplay.play(bad).reason != "format":
 			return "a replay with %s %s was not refused" % [edit[0], str(edit[1])]
 	bad = rp.duplicate(true)
-	bad.inputs[at][2] = 1 << 45
+	bad.inputs[at][2] = 1 << 47   # above the 47-bit record (waited is bits 43 to 46)
 	if SimReplay.play(bad).reason != "format":
 		return "an invalid packed intent was not refused"
 	# D1a: a replay of a mirror setup plays back from its header alone.

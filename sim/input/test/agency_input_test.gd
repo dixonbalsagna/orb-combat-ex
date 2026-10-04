@@ -24,6 +24,7 @@ func _init() -> void:
 	_brawler_transform()
 	_levels()
 	_touch(2.75)
+	_waited()
 	print("agency_input_test: %d checks, %d failed" % [checks, fails])
 	quit(1 if fails > 0 else 0)
 
@@ -41,7 +42,7 @@ func _run(l: SimLayout, n: int) -> SimIntent:
 
 
 func _pack() -> void:
-	ok(SimIntent.BITS == 43, "pack: the record is 43 bits")
+	ok(SimIntent.BITS == 47 and SimIntent.VERSION == 3, "pack: the record is 47 bits, intent version 3 (waited)")
 	for f in ["lightHeld", "heavyHeld", "escape"]:
 		var i := SimIntent.new()
 		i.set(f, true)
@@ -68,7 +69,24 @@ func _pack() -> void:
 	ok(packed < (1 << 40), "pack: an intent without the new fields uses no new bit, so older replays unpack as they were")
 	var uo: SimIntent = SimIntent.unpack(packed)
 	ok(uo != null and not uo.lightHeld and not uo.heavyHeld and not uo.escape and uo.light and uo.guard, "pack: an old packed intent unpacks with the new fields off")
-	ok(SimIntent.unpack(1 << 43) == null, "pack: bits above 42 are refused")
+	ok(SimIntent.unpack(1 << 47) == null, "pack: bits above 46 are refused")
+	# waited: bits 43 to 46, 0 to 15, clamped; an older packed intent has it 0.
+	for w in range(16):
+		var iw := SimIntent.new()
+		iw.waited = w
+		var uw: SimIntent = SimIntent.unpack(SimIntent.pack(iw))
+		ok(uw != null and uw.waited == w and not uw.light and not uw.escape, "pack: waited %d round-trips alone" % w)
+	var big := SimIntent.new()
+	big.waited = 40
+	ok(SimIntent.unpack(SimIntent.pack(big)).waited == 15, "pack: waited clamps to 15")
+	ok(SimIntent.unpack(SimIntent.pack(old)).waited == 0, "pack: an intent without waited unpacks with 0")
+	var wa := SimIntent.new()
+	wa.waited = 6
+	var wb := SimIntent.new()
+	SimIntent.applyIntent(wb, wa)
+	ok(wb.waited == 6, "pack: applyIntent copies waited")
+	SimIntent.clearIntent(wb)
+	ok(wb.waited == 0, "pack: clearIntent clears waited")
 	# clear and apply cover the new fields.
 	var dst := SimIntent.new()
 	SimIntent.applyIntent(dst, all)
@@ -259,3 +277,128 @@ func _touch(dp: float) -> void:
 	hub.intent(0)
 	hub.touch_move(1, 400.0, 300.0 - 45.0 * dp)
 	ok(hub.intent(0).escape, "touch: the hub carries Escape through canon()")
+
+
+## `waited`: how many ticks the oldest edge in the record waited because the sim was frozen. 0 on every live tick.
+func _waited() -> void:
+	# A live press: pressed, built, taken: waited 0, whatever the tick.
+	var l: SimLayout = _mk("arena")
+	_run(l, 5)
+	l.press("pad:west")
+	var i: SimIntent = l.build()
+	ok(i.light and i.waited == 0, "waited: a press taken by the next build waited 0")
+	l.consumed()
+	l.release("pad:west")
+	_run(l, 4)
+	# A freeze: the sim does not take the intent for 4 ticks (hit-stop). The press made before the freeze is 0 on its own build.
+	l.press("pad:west")
+	var seen: Array = []
+	for n in range(5):
+		i = l.build()   # not consumed: frozen
+		seen.append(i.waited)
+	ok(seen == [0, 1, 2, 3, 4], "waited: a press waits one more tick for each build the freeze holds it (%s)" % str(seen))
+	l.consumed()
+	l.release("pad:west")
+	_run(l, 3)
+	# A press made INSIDE a freeze: two frozen builds, then the press, then three more builds before the sim takes it.
+	l.build()
+	l.build()
+	l.press("pad:west")
+	var inside: Array = []
+	for n in range(4):
+		inside.append(l.build().waited)
+	ok(inside == [0, 1, 2, 3], "waited: a press made in a freeze counts from its own tick, not from the freeze's start (%s)" % str(inside))
+	l.consumed()
+	l.release("pad:west")
+	_run(l, 3)
+	# After consumption it resets, and an idle tick has nothing pending.
+	ok(l.build().waited == 0, "waited: nothing pending is 0")
+	# The oldest edge is the one reported (two presses in one freeze).
+	l.press("pad:west")
+	l.build()
+	l.build()
+	l.press("pad:north")
+	var two: SimIntent = l.build()
+	ok(two.light and two.heavy and two.waited == 2, "waited: two edges in one freeze report the oldest's wait")
+	l.consumed()
+	l.release("pad:west")
+	l.release("pad:north")
+	_run(l, 3)
+	# A special and a guard press carry it too.
+	l.press("pad:lb")
+	l.build()
+	l.build()
+	ok(l.build().guardPress and l.build().waited >= 0, "waited: a guard press is an edge too")
+	l.consumed()
+	l.release("pad:lb")
+	_run(l, 3)
+	# A hold reaching holdStart makes its own edge on the build that makes it: 0.
+	var s: SimLayout = _mk("simple-pad")
+	s.press("pad:west")
+	var held: SimIntent = null
+	for n in range(14):
+		held = s.build()
+		if held.heavy:
+			break
+		s.consumed()
+	ok(held.heavy and held.waited == 0, "waited: an edge the layout makes itself (a hold reaching holdStart) waited 0")
+	# Through the hub, canonical: a freeze of three ticks.
+	var hub := SimInputHub.new()
+	hub.set_humans(true, false)
+	hub.key("KeyJ", true)
+	hub.intent(0)
+	hub.consumed()
+	hub.key("KeyJ", false)
+	for n in range(3):
+		hub.intent(0)
+	hub.key("KeyJ", true)
+	var hi: SimIntent = null
+	for n in range(3):
+		hi = hub.intent(0)
+	ok(hi.light and hi.waited == 2, "waited: the hub carries it through the canonical packing (%d)" % hi.waited)
+	hub.consumed()
+	# Touch Simple: a tap is a request until taken; a freeze ages it.
+	var t1 := SimTouch.new()
+	t1.dp = 2.75
+	t1.touch_down(1, 700.0, 300.0, "attack")
+	for n in range(3):
+		t1.build()
+	t1.touch_up(1)
+	var tw: Array = []
+	for n in range(4):
+		tw.append(t1.build().waited)
+	ok(tw == [0, 1, 2, 3], "waited: a touch tap waits the same way (%s)" % str(tw))
+	t1.consumed()
+	ok(t1.build().waited == 0, "waited: and resets once taken")
+	# Full touch: the swipe's Escape ages, the layout's presses too.
+	var t2 := SimTouch.new()
+	t2.dp = 2.75
+	t2.set_preset("touch-full")
+	t2.touch_down(1, 100.0, 500.0, "guard")
+	t2.build()
+	t2.consumed()
+	t2.touch_move(1, 100.0, 500.0 - 45.0 * 2.75)
+	var fw: Array = []
+	for n in range(3):
+		fw.append(t2.build().waited)
+	ok(fw[0] == 0 and fw[2] == 2, "waited: a Full touch swipe ages too (%s)" % str(fw))
+	# The director: a human press is logged at its own tick, S.tick - waited; the AI keeps the old rule.
+	var S: SimState = SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"v2": [true, true]})
+	var f = S.fighters[0]
+	S.tick = 600
+	f.input.waited = 0
+	DirAlchemy.log(S, f, SimAct.LIGHT, 0)
+	var lg: Array = DirAlchemy.logOf(f)
+	ok(lg.size() == 1 and int(lg[0]["down"]) == 600, "director: a live press is logged at S.tick")
+	S.tick = 640
+	f.input.waited = 3
+	DirAlchemy.log(S, f, SimAct.LIGHT, 0)
+	lg = DirAlchemy.logOf(f)
+	ok(lg.size() == 2 and int(lg[1]["down"]) == 637, "director: a press that waited 3 is logged at S.tick - 3, its own tick")
+	S.tick = 680
+	f.input.waited = 15
+	DirAlchemy.log(S, f, SimAct.HEAVY, 0)
+	lg = DirAlchemy.logOf(f)
+	ok(int(lg[2]["down"]) == 665, "director: and one that waited 15 at S.tick - 15")
+	SimCore.dispose(S)

@@ -1,0 +1,34 @@
+--- a/qa/godot/players.gd	2026-10-04 16:12:24.558797800 -0700
++++ b/qa/godot/players.gd	2026-10-04 16:12:24.606378000 -0700
+@@ -31,6 +31,7 @@
+ 	var log: Array = []
+ 	var carry: int = -1            # a press the sim did not consume (hit-stop): sent again on the next call
+ 	var carry_hold: bool = false
++	var carry_ticks: int = 0       # the frozen steps a carried press has waited (the intent's `waited`: a press is graded at its own tick)
+ 	var plan: Array = []           # [{tick, k}] presses planned against the running exchange's blows
+ 	var last_press: int = -1000
+ 	var hold_until: int = -1
+@@ -362,11 +363,15 @@
+ 		ticks += 1
+ 		var ins: Array = [null, null]
+ 		var sent: Array = [-1, -1]
++		var carried: Array = [false, false]
+ 		for slot in range(2):
+ 			var p = by_slot[slot]
+ 			if not p.scripted():
+ 				continue
++			carried[slot] = p.carry >= 0
+ 			var it := SimIntent.new()
++			if p.carry >= 0:
++				it.waited = mini(15, p.carry_ticks)   # a press the freeze held waited this many steps; the sim grades it at its own tick
+ 			if p.forms and S.fighters[slot].act.formReady:
+ 				it.transform = true
+ 			var k: int = p.decide(S, slot, lt)
+@@ -401,6 +406,7 @@
+ 					p.pressed(sent[slot], lt, p.kind == "holder", S, slot)
+ 				else:
+ 					p.carry = sent[slot]
++					p.carry_ticks = (p.carry_ticks + 1) if carried[slot] else 1
+ 		# exchange endings and per-player counts, from this tick's events
+ 		for e in S.out.fx:
+ 			if e.type == "damage" and e.number and int(e.attacker) >= 0 and int(e.attacker) < 2 and e.amount > 0.0:

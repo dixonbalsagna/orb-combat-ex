@@ -67,6 +67,7 @@ var _mode_t: int = -1000
 var _auto_mode: bool = false
 var _mode_t0: int = 0
 var _mode_latch: int = 0            # the latched mode of the toggle and hybrid styles
+var _edge_t0: int = -1              # the layout tick the oldest unconsumed edge was pressed at, -1 for none (the `waited` field)
 var _up_tick: Dictionary = {}       # control -> tick of its last release (the debounce)
 var _last_as: Dictionary = {}       # control -> "base" or "layer": how its last press was taken
 ## "hold" (momentary, the default), "toggle" (the old latch) or "hybrid" (a tap latches, a hold is momentary: touch).
@@ -170,6 +171,7 @@ func release_all() -> void:
 	_tf_t0.clear()
 	_tf_sent.clear()
 	_atk.clear()
+	_edge_t0 = -1
 	_up_tick.clear()
 	_last_as.clear()
 	_mode_latch = 0
@@ -392,6 +394,8 @@ func _axis_value(a: float) -> float:
 
 ## One fixed tick: advance the clock and return the intent v2 for it.
 func build() -> SimIntent:
+	if _edge_t0 < 0 and (not _aedge.is_empty() or _special_edge != 0):
+		_edge_t0 = tick   # pressed since the last build: it waits from here
 	tick += 1
 	var i := SimIntent.new()
 	# Move: a pad stick through the dead zone and the per-axis gate; keys as +-1, as the keyboard always was.
@@ -465,6 +469,11 @@ func build() -> SimIntent:
 		i.mode = _mode
 	else:
 		i.mode = 1 if (_is_down("mode") or _aedge.has("mode")) else _mode_latch
+	# How long the oldest edge waited: 0 on a live tick (pressed since the last build, taken by this one); one more for each build a
+	# freeze held it. An edge this build made itself (a hold reaching holdStart) waits 0.
+	if _edge_t0 < 0 and (not _aedge.is_empty() or _special_edge != 0):
+		_edge_t0 = tick - 1
+	i.waited = clampi(tick - 1 - _edge_t0, 0, 15) if _edge_t0 >= 0 else 0
 	# Today's fields, until I3: a lunge or a sprint is the dash, the channel is the charge.
 	i.dash = sprinting or tick <= _lunge_until
 	i.charge = channel
@@ -513,4 +522,5 @@ func resume() -> void:
 func consumed() -> void:
 	_aedge.clear()
 	_special_edge = 0
+	_edge_t0 = -1
 	_lunge_seen = false

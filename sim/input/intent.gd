@@ -9,10 +9,11 @@ extends RefCounted
 ## Held fields are true on every tick the action is held; edge fields on one tick.
 ## stance is a float like every JS number: -1, or a pressed stance 0 to 3.
 
-## The intent schema version (the replay header's `intent`). 3 when stance, dash and charge leave (I3).
-const VERSION: int = 2
+## The intent schema version (the replay header's `intent`). 3 since `waited` (a press is graded at its own tick, so replays
+## recorded before it are refused rather than played back differently); 4 when stance, dash and charge leave (I3).
+const VERSION: int = 3
 ## pack(): bit widths, least significant first.
-const BITS: int = 43
+const BITS: int = 47
 
 var mx: float = 0.0          # the stick, -1 to 1; canonical values are k / 127 (canon())
 var my: float = 0.0
@@ -35,6 +36,10 @@ var transform: bool = false  # edge: the layout's transform chord completed
 var lightHeld: bool = false  # held: a light attack button is down (a hold gesture reads as light until holdStart, then heavy)
 var heavyHeld: bool = false  # held: a heavy attack button is down
 var escape: bool = false     # edge: the Escape control (provisional: R3, a key, a swipe up on Guard)
+## Ticks (0 to 15) the oldest edge in this record waited, because the sim was frozen (hit-stop, a pausing set piece) when it was
+## pressed: the layout counts its own ticks. A press is graded at S.tick - waited, its own tick, so only the first ticks of a
+## freeze count as on the beat. 0 on every ordinary tick. Bits 43 to 46.
+var waited: int = 0
 # Today's fields, until I3:
 var dash: bool = false
 var charge: bool = false
@@ -63,6 +68,7 @@ static func clearIntent(i: SimIntent) -> void:
 	i.lightHeld = false
 	i.heavyHeld = false
 	i.escape = false
+	i.waited = 0
 	i.dash = false
 	i.charge = false
 	i.stance = -1.0
@@ -90,14 +96,15 @@ static func applyIntent(dst: SimIntent, src: SimIntent) -> void:
 	dst.lightHeld = src.lightHeld
 	dst.heavyHeld = src.heavyHeld
 	dst.escape = src.escape
+	dst.waited = src.waited
 	dst.dash = src.dash
 	dst.charge = src.charge
 	dst.stance = src.stance
 
 
-## The whole record as one integer (43 bits, exact in JSON): mx and my as 8 bits each (k + 127 for k / 127), mode + 1 in
+## The whole record as one integer (47 bits, exact in JSON): mx and my as 8 bits each (k + 127 for k / 127), mode + 1 in
 ## 2 bits, upgrade in 2, special in 3, twelve single bits, then today's stance + 1 in 3 bits, dash and charge, then the
-## agency fields lightHeld, heavyHeld and escape in bits 40 to 42. Replays
+## agency fields lightHeld, heavyHeld and escape in bits 40 to 42, and waited in 43 to 46. Replays
 ## and, later, rollback carry this integer; equal canonical intents are equal integers.
 static func pack(i: SimIntent) -> int:
 	var p: int = _q(i.mx) | (_q(i.my) << 8) | ((clampi(i.mode, -1, 1) + 1) << 16) | (clampi(i.upgrade, 0, 2) << 18) | (clampi(i.special, 0, 7) << 20)
@@ -117,6 +124,7 @@ static func pack(i: SimIntent) -> int:
 		p |= 1 << 41
 	if i.escape:
 		p |= 1 << 42
+	p |= clampi(i.waited, 0, 15) << 43
 	return p
 
 
@@ -161,6 +169,7 @@ static func unpack(p: int) -> SimIntent:
 	i.lightHeld = ((p >> 40) & 1) == 1
 	i.heavyHeld = ((p >> 41) & 1) == 1
 	i.escape = ((p >> 42) & 1) == 1
+	i.waited = (p >> 43) & 15
 	return i
 
 
