@@ -876,3 +876,32 @@ QA re-measures all four. If timing overshoots 82%, the first number to lower is 
 - **If the 100-match row holds near 55%, the number to move is the ender's strength, not the window.** **A barrage that includes a tapped, uncharged heavy shot gets the weak ender:** 0.6 of the distance and half a set-up. Data: `blast.barrage.tappedHeavyWeak` true.
 - **Why that one.** The window and the count are what stop the stall, and §21 only just fixed that. The trouble is that a mindless rhythm earns the strong ender, since 24 ticks a press counts as measured. A tapped heavy is the lazy shot in that mix. With the weak ender the mixed blaster still closes a fight, and takes twice as many enders to open the rival, like every other untimed plan.
 - Measured bolts alone, and full charged shots, keep the strong results.
+
+## 23. Rulings on slice 13 (Encounter's `docs/director/agency-slice-13.md`, 2026-10-04)
+
+§22 is built. Timing now reaches its band when the script is truly on the beat: the timed masher and the timed combo player each win 65.0%. The masher wins 100%, 38% and 1% against the three difficulties, the bolt-only player 33%, and finisher survival is 31.5%. All are in band.
+
+### 1. The mixed blaster: a tapped heavy shot does less
+
+**Measured:** 61 of 100 against the medium AI, against a band of 30 to 50%. The weak ender is already on for that mix, so the ender isn't what carries it. A tapped charged shot does 49.5 for one press, against a bolt's 13.
+
+- **`blast.heavy.tapShare` goes from 0.6 to 0.4.** A tap then does 33, about two and a half bolts, and the full charge is unchanged at 82.5. The charge is what the heavy button is for, and an uncharged tap shouldn't be worth nearly four bolts.
+- The blaster's light, light, tapped heavy cycle falls from 75.5 to 59 damage, about a fifth less.
+- **If he is still over 50% at 100 matches, the next step is 0.3,** and not a ki cost or a delay. One number is easier to tune and to explain.
+- **What to watch:** blasts' share of match damage is 11.6% and will dip. If it falls under 10%, the AI's firing share goes up a step. The bolt-only player is untouched.
+
+### 2. Flow in the finisher contest gets a floor
+
+**The gap:** a flow-5 attacker takes 10 points off the victim's survival. That is about 15% against an average victim, but 0% against a victim on the struggle's floor of 8%.
+
+**The flow's cut never takes survival below the struggle's own floor, 8%.** A victim always keeps what the struggle guarantees a fighter who presses nothing, and a victim who plays the struggle well keeps more: 35% becomes 25% against flow 5. Only the time-cap event sets survival to 0 (`spec-wounds.md` §2). Data: `flow.contestFloor` 0.08.
+
+### 3. The lights-only mirror's brink
+
+**Measured:** brink to KO fell to 34.7 s from 49.6 s, against the 45 to 55 s that was expected. The likely cause is the struggle ruling: a masher's stray presses now void his hits, so mashing the struggle earns no survival.
+
+**The row is re-based to 30 to 55 s, and nothing else moves.** Two players who mash everything, the struggle included, should fall quickly once on the brink. That is the price of mashing the struggle, and it is the rule working. The band that matters, 45 to 90 s between AIs that defend, is unchanged. What this row guards is that such a fight finishes (at least 95% before the cap) and doesn't end in an instant.
+
+### Recorded: a timed player against the medium AI
+
+A timed player wins 40 of 40 against the medium AI, against a band of 70 to 90%. Raising the timed press, the flow's contest bonus and the flow's damage did not move it. The medium AI starts no finishers and holds no flow for 88% of the match. This isn't a tuning question: it is how hard the default opponent should be, and it is with Orb.
