@@ -355,11 +355,13 @@ static func _engage(S: SimState, f) -> void:
 	DirExchange.planOpen = (req >> 4) & 3
 	DirExchange.planMeet = (req & MEET) != 0
 	DirExchange.planMeetEdge = float(data().meet.get("chargerEdge", 0.0)) / 100.0 if (req & CHARGED) != 0 else 0.0   # points off the attacker's chance
+	DirExchange.planCharge = (req & CHARGE) != 0
 	DirExchange.engaging = true
 	var r: int = DirExchange._start(S, f, DirExchange.KIND[req & 3])
 	DirExchange.engaging = false
 	DirExchange.planOpen = 0
 	DirExchange.planMeet = false
+	DirExchange.planCharge = false
 	DirExchange.planMeetEdge = 0.0
 	DirExchange.planEntry = 0
 	DirExchange.planTick = -1

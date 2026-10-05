@@ -385,7 +385,7 @@ static func aiEnder(who) -> bool:
 ## The press behind att's blow at this launch beat: the attacker's is the one that started his exchange or link; the
 ## defender's (a counter) is his newest press. Packed as the press log packs it; -1 when he pressed nothing.
 static func phrase(S: SimState, ex, att) -> int:
-	return DirInterrupt.gi(att, DirInterrupt.PHRASE_P) if att == ex.A else DirAlchemy.last(S, att)
+	return DirInterrupt.gi(att, DirInterrupt.PHRASE_P) if (att == ex.A or DirBrawl.isBrawl(ex)) else DirAlchemy.last(S, att)   # in a brawl each blow notes its own press
 
 
 ## Whether the blow at this launch beat came from a heavy press (the knock-back) or a light one (the brawl goes on). A

@@ -42,6 +42,9 @@ static func aiInput(S: SimState, f) -> void:
 	i.mode = 0   # the physical family, unless this tick's press is a blast (below)
 	if f.act.formReady:
 		i.transform = true
+	if DirBrawl.inBrawl(S, f):
+		DirBrawl.aiInput(S, f)   # in a brawl it chooses at its beats, not on the stance timer
+		return
 	var d: float = SimWrap.sdx(f.x, o.x)
 	var dist: float = absf(d)
 	# Since S2 the AI reads its wounds, not an HP bar: 1 fresh, 0 on the brink (SimWounds.vitality).

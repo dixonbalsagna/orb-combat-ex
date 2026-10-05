@@ -689,6 +689,11 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     for (const name of order) { const ar = isObj(lv[name]) ? lv[name].approachReact : undefined; if (Array.isArray(ar) && ar.every((x) => typeof x === 'number') && ar.reduce((s2, x) => s2 + x, 0) > 1 + 1e-9) err(AI, `/levels/${name}/approachReact`, 'ai-approach-react', `the three chances sum to ${ar.reduce((s2, x) => s2 + x, 0).toFixed(3)}, more than 1`); }
     if (isObj(dai.beamLook) && Object.entries(dai.beamLook).filter(([k]) => !k.startsWith('_')).every(([, v]) => typeof v === 'number') && Object.entries(dai.beamLook).filter(([k]) => !k.startsWith('_')).reduce((s2, [, v]) => s2 + v, 0) <= 0) err(AI, '/beamLook', 'ai-beam-look', 'the three weights of beamLook sum to 0, so a perfect block against a beam has no look to draw');
     if (isObj(dai.stance) && Array.isArray(dai.stance.repick) && dai.stance.repick.length === 2 && typeof dai.stance.repick[0] === 'number' && typeof dai.stance.repick[1] === 'number' && dai.stance.repick[0] > dai.stance.repick[1]) err(AI, '/stance/repick/0', 'stance-repick', `repick runs from ${dai.stance.repick[0]} down to ${dai.stance.repick[1]}`);
+    for (const name of order) {
+      const bw = isObj(lv[name]) ? lv[name].brawl : undefined;
+      if (!isObj(bw)) continue;
+      for (const k of ['string', 'guardTicks']) if (Array.isArray(bw[k]) && bw[k].length === 2 && typeof bw[k][0] === 'number' && typeof bw[k][1] === 'number' && bw[k][0] > bw[k][1]) err(AI, `/levels/${name}/brawl/${k}/0`, 'ai-brawl', `${k} runs from ${bw[k][0]} down to ${bw[k][1]}`);
+    }
     const med = isObj(lv.medium) ? lv.medium.beamAnswer : undefined;
     if (typeof dai.beamAnswer === 'number' && typeof med === 'number' && dai.beamAnswer !== med) err(AI, '/beamAnswer', 'ai-level-beam', `beamAnswer ${dai.beamAnswer} differs from the medium level's ${med} (it is kept for readers of the old shape)`, 'warning');
   }
@@ -737,6 +742,15 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       if (typeof bl2.spray.missShare === 'number' && bl2.spray.missShare > 1) err(IT, '/blast/spray/missShare', 'blast-spray', `missShare ${bl2.spray.missShare} is above 1; it is a share of the sprayed bolts`, 'warning');
     }
     if (isObj(itr.pace) && isObj(itr.pace.cooldown) && typeof itr.pace.cooldown.min === 'number' && typeof itr.pace.cooldown.max === 'number' && itr.pace.cooldown.min > itr.pace.cooldown.max) err(IT, '/pace/cooldown/min', 'pace-order', `cooldown min ${itr.pace.cooldown.min} is above max ${itr.pace.cooldown.max}`);
+    const brl = itr.brawl;
+    if (isObj(brl)) {
+      if (isObj(brl.flurry)) {
+        if (typeof brl.flurry.minGap === 'number' && typeof brl.flurry.maxGap === 'number' && brl.flurry.minGap > brl.flurry.maxGap) err(IT, '/brawl/flurry/minGap', 'brawl-order', `flurry minGap ${brl.flurry.minGap} is above maxGap ${brl.flurry.maxGap}`);
+        if (Array.isArray(brl.flurry.mul)) for (let i = 1; i < brl.flurry.mul.length; i++) { const p = brl.flurry.mul[i - 1]; const q = brl.flurry.mul[i]; if (Array.isArray(p) && Array.isArray(q) && typeof p[0] === 'number' && typeof q[0] === 'number' && q[0] <= p[0]) err(IT, `/brawl/flurry/mul/${i}/0`, 'brawl-order', `the mul table's gap ${q[0]} does not rise above the one before (${p[0]})`); }
+      }
+      if (isObj(brl.flurry) && typeof brl.flurry.runLapseTicks === 'number' && typeof brl.flurry.tradeMaxTicks === 'number' && brl.flurry.runLapseTicks >= brl.flurry.tradeMaxTicks) err(IT, '/brawl/flurry/runLapseTicks', 'brawl-order', `runLapseTicks ${brl.flurry.runLapseTicks} is not below tradeMaxTicks ${brl.flurry.tradeMaxTicks}, so a run could outlast the trade it belongs to`);
+      if (isObj(brl.heavy) && typeof brl.heavy.heldFullTicks === 'number' && typeof brl.heavy.heldMaxTicks === 'number' && brl.heavy.heldFullTicks > brl.heavy.heldMaxTicks) err(IT, '/brawl/heavy/heldFullTicks', 'brawl-order', `heldFullTicks ${brl.heavy.heldFullTicks} is above heldMaxTicks ${brl.heavy.heldMaxTicks}, so a held heavy could never be full`);
+    }
     const bu = itr.buried;
     const embedC = get('data/biomes/contact.json');
     if (isObj(bu) && isObj(embedC) && isObj(embedC.embed) && typeof embedC.embed.ticks === 'number') for (const k of ['guardFromTick', 'burstFromTick']) if (typeof bu[k] === 'number' && bu[k] > embedC.embed.ticks) err(IT, `/buried/${k}`, 'buried-order', `${k} ${bu[k]} is after the burial ends (embed.ticks ${embedC.embed.ticks} in data/biomes/contact.json), so it could never happen`);

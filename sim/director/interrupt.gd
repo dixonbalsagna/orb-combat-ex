@@ -293,13 +293,14 @@ static func perfectBlock(S: SimState, ex, a, d, o: Dictionary) -> void:
 	var pb: Dictionary = DirData.perfectBlock()
 	var c: Dictionary = data().perfectBlock
 	_takeOver(ex)
+	DirBrawl.over(S, ex, "perfect_block")
 	ex.loser = S.fighters.find(a)
 	d.ki = SimMathx.jmin(100.0, d.ki + float(c.ki))
 	a.stunTicks = maxi(a.stunTicks, int(pb.staggerTicks))
 	a.rush = null
 	S.dirS.stop = SimMathx.jmax(S.dirS.stop, float(c.stopTicks) / DirData.TICKS_PER_SEC)
 	var cls: String = String(o.get("class", ""))
-	var launch: bool = cls == "heavy" or cls == "ender" or ex.kind == "heavy"
+	var launch: bool = cls == "heavy" or cls == "ender" or (ex.kind == "heavy" and not DirBrawl.isBrawl(ex))   # in a brawl the blow's own class says it
 	_open(S, d, OPEN_RIPOSTE_LAUNCH if launch else OPEN_RIPOSTE, int(pb.riposteTicks))
 	SimFx.cue(S, d, "perfect_block", "", "")
 	SimFx.ring(S, a.x + a.face * 30.0, a.y + 34.0, 700.0, "#9fe0ff", 0.4, 10.0)
@@ -380,9 +381,10 @@ static func _aiBlocks(S: SimState, ex) -> void:
 		var st: int = int(f.ai.st)
 		var r5: Dictionary = DirAI.skill().perfectBlock
 		var p: float = float(r5.guard) if st == 1 else (float(r5.press) if st == 0 else 0.0)
-		if p > 0.0 and (String(b.args.o.get("class", "")) != "opener" or ex.kind == "heavy"):
+		var cls: String = String(b.args.o.get("class", ""))
+		if p > 0.0 and ((cls == "heavy") if DirBrawl.isBrawl(ex) else (cls != "opener" or ex.kind == "heavy")):
 			p += float(r5.heavyAdd)
-		if p > 0.0 and S.rng.next() < p * float(lv.perfectBlockMul):
+		if p > 0.0 and S.rng.next() < p * float(lv.perfectBlockMul) * (float(lv.get("brawl", {}).get("perfectMul", 1.0)) if DirBrawl.isBrawl(ex) else 1.0):
 			guardPress(S, f)
 
 
@@ -393,13 +395,15 @@ static func dodgeCancel(S: SimState, ex, f) -> bool:
 		return DirBands.cancel(S, f)   # his own approach: nothing had started, so it costs nothing
 	if ex.kind == "sig" or (f != ex.A and f != ex.D) or DirExchange.finisherPlanned(ex) or DirBury.diving(S, f):
 		return false
+	if DirBrawl.isBrawl(ex) and (ex.branch != "" or f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, (ex.D if f == ex.A else ex.A).x)) >= -SimAct.awayDead):
+		return false   # in a brawl a dodge leaves only with the stick away (melee-press-feel.md section 2)
 	var c: Dictionary = data().dodgeCancel
 	# The attacker's cancel is free until his first wind-up starts (agency-pass.md section 1): he was flown in by the
 	# director and may call it off. It still starts the short gap between dodges.
 	var free: bool = c.get("freeBeforeWindup", false) and f == ex.A and ex.combo <= 1.0 and _beforeWindup(ex)
 	if (not free and f.ki < float(c.ki)) or f.act.dodgeCool > 0 or f.state == "launched" or f.state == "down":
 		return false
-	if f == ex.D and S.tick - gi(f, HIT_AT) < int(c.gapTicks):
+	if (f == ex.D or DirBrawl.isBrawl(ex)) and S.tick - gi(f, HIT_AT) < int(c.gapTicks):
 		return false   # the defender cancels only in a gap between strikes, never in hit-stun
 	if free:
 		f.act.dodgeCool = int(c.freeGapTicks)
@@ -407,6 +411,7 @@ static func dodgeCancel(S: SimState, ex, f) -> bool:
 		f.ki -= float(c.ki)
 		f.act.dodgeCool = int(c.cooldownTicks)
 	_takeOver(ex)
+	DirBrawl.over(S, ex, "left")
 	ex.loser = -1
 	ex.A.rush = null
 	ex.D.rush = null
@@ -469,6 +474,7 @@ static func burst(S: SimState, f) -> bool:
 		o.vx = SimDamage.jor(SimMathx.jsign(dx), f.face) * float(c.pushSpeed)
 	if ex != null:
 		_takeOver(ex)
+		DirBrawl.over(S, ex, "burst")
 		ex.loser = -1
 		ex.A.rush = null
 		ex.D.rush = null
@@ -499,7 +505,7 @@ static func lastBlowBlocked(S: SimState, ex) -> bool:
 ## d took a normal block (DirMelee.strike). The AI weighs its reversal once an exchange (R4's rates at medium).
 static func onBlock(S: SimState, ex, d) -> void:
 	si(d, BLOCKED, S.tick)
-	if not on() or d.ai == null or d != ex.D or gi(d, REV_TRIED) == ex.n:
+	if not on() or d.ai == null or (not DirBrawl.revDue(S, d) if DirBrawl.isBrawl(ex) else (d != ex.D or gi(d, REV_TRIED) == ex.n)):
 		return
 	si(d, REV_TRIED, ex.n)
 	if not _canReverse(S, ex, d):
@@ -516,7 +522,7 @@ static func _cost(S: SimState, f) -> float:
 
 
 static func _canReverse(S: SimState, ex, f) -> bool:
-	if ex == null or f != ex.D or not DirData.allows(ex, "reversal") or DirBury.diving(S, f):
+	if ex == null or (f != ex.D and not (DirBrawl.isBrawl(ex) and f == ex.A)) or not DirData.allows(ex, "reversal") or DirBury.diving(S, f):
 		return false
 	var c: Dictionary = data().reversal
 	return S.tick - gi(f, BLOCKED) <= int(c.afterBlockTicks) and S.tick >= gi(f, REV_READY) and f.ki >= _cost(S, f)
@@ -531,9 +537,11 @@ static func reversal(S: SimState, ex, f) -> bool:
 	f.ki -= _cost(S, f)
 	si(f, REV_READY, S.tick + int(c.cooldownTicks))
 	_takeOver(ex)
+	DirBrawl.over(S, ex, "reversal")
 	ex.loser = -1
-	SimAct.clear(ex.A)
-	ex.A.stunTicks = maxi(ex.A.stunTicks, int(c.delayTicks) + int(c.landTicks))
+	var att = ex.D if f == ex.A else ex.A   # the fighter whose blow he blocked (in a brawl either may reverse)
+	SimAct.clear(att)
+	att.stunTicks = maxi(att.stunTicks, int(c.delayTicks) + int(c.landTicks))
 	f.stunTicks = maxi(f.stunTicks, int(c.delayTicks))
 	_open(S, f, OPEN_PLAIN, int(c.delayTicks) + int(c.landTicks))
 	SimAct.clear(f)

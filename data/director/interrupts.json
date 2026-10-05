@@ -16,14 +16,15 @@
         "heavy": 10
       },
       "return": 6,
-      "beam": 12
+      "beam": 12,
+      "blow": 8
     },
     "early": {
       "default": 4,
       "return": 0
     },
     "oneArmedOff": 2,
-    "_note": "ki: gained by the blocker. stopTicks: the hit-stop on the block. windows: the last ticks of the wind-up in which a fresh guard press is a perfect block, by strike class (moveset-rules.md section 11(f)); an opener and a blast depend on the exchange's weight; a class not listed has no window. early: ticks before the window opens in which a press still counts, by class. oneArmedOff: ticks off every window for a blocker with a broken arm. The lockout and the assist factor are Controls' (data/input/timing.json perfectBlock antiMashLockout, assistFactor). Touch's 2 extra ticks need the slot's layout in the sim and are not applied yet"
+    "_note": "ki: gained by the blocker. stopTicks: the hit-stop on the block. windows: the last ticks of the wind-up in which a fresh guard press is a perfect block, by strike class (moveset-rules.md section 11(f)); an opener and a blast depend on the exchange's weight; a class not listed has no window. early: ticks before the window opens in which a press still counts, by class. oneArmedOff: ticks off every window for a blocker with a broken arm. The lockout and the assist factor are Controls' (data/input/timing.json perfectBlock antiMashLockout, assistFactor). Touch's 2 extra ticks need the slot's layout in the sim and are not applied yet. blow: a brawl's light or flurry blow (it is announced only light.contactTicks ahead, so the press is a read of the flurry's rhythm)"
   },
   "dodgeCancel": {
     "ki": 15,
@@ -256,5 +257,73 @@
       "groundDeg": 20
     },
     "_note": "The beam plays (agency-pass.md section 5; rule-of-cool.md section 2; sim/director/beamplay.gd). enabled false: a beam is decided at its fire beat, as before. travelTicks: a signature not answered in its tell reaches the defender this many ticks after it fires, at any distance; the outcome is read on that tick. afterTicks: the exchange's length after that. dodge: a dodge tap in the last beforeTicks of the tell or the first afterTicks of the beam avoids it, with no roll. late: the defender's own signature or heavy energy attack within ticks of the fire stops the beam in a struggle that starts scoreAdd on his score. The perfect block's window against a beam is perfectBlock.windows.beam; its look is the direction held as the beam reaches him: away the swat, level the split, toward the walk. A held guard with the stick toward is the wade (guard damage, no launch). walk: he advances at speed (units a second), for minTicks to maxTicks, and the attacker is left recoverTicks of recovery when he arrives. split: two lesser beams leave him spreadDeg either side of the beam's line, lenBh long, at widthMul of its width and powerMul of its power. swat: the turned beam is lenBh long; a fighter with an anguish meter sends it up at skyDeg, one with a menace meter at the nearest standing building within lenBh, anyone else down at groundDeg"
+  },
+  "brawl": {
+    "enabled": true,
+    "interrupts": [
+      "perfect_block",
+      "reversal"
+    ],
+    "breakBh": 4.5,
+    "pullBhPerSec": 0.5,
+    "stepInTicks": 2,
+    "idleTicks": 60,
+    "heldPressTicks": 10,
+    "stringLapseTicks": 30,
+    "enderAfter": 2,
+    "recoil": 1,
+    "tradeTicks": 2,
+    "damageMul": 0.3,
+    "heavyMul": 2,
+    "heldMul": 1.25,
+    "skillMul": 4,
+    "setMul": 1.5,
+    "aiPerfectEveryTicks": 30,
+    "aiReversalEveryTicks": 120,
+    "light": {
+      "damage": 26,
+      "contactTicks": 2,
+      "blowTicks": 12,
+      "recover": 4
+    },
+    "flurry": {
+      "minGap": 6,
+      "maxGap": 12,
+      "mul": [
+        [
+          6,
+          0.6
+        ],
+        [
+          12,
+          1.2
+        ]
+      ],
+      "reelTicks": 4,
+      "closeAfter": 4,
+      "staggerTicks": 12,
+      "runToClose": 4,
+      "replyTakes": 1,
+      "runLapseTicks": 24,
+      "tradeMaxTicks": 120
+    },
+    "heavy": {
+      "damage": 66,
+      "ki": 4,
+      "windupTicks": 26,
+      "landTicks": 8,
+      "recover": 10,
+      "recoverWhiff": 30,
+      "heldFullTicks": 46,
+      "heldMaxTicks": 180,
+      "heldLandTicks": 8,
+      "staggerTicks": 12,
+      "force": 1600
+    },
+    "hitstop": {
+      "light": 2,
+      "heavy": 6
+    },
+    "_note": "The brawl, slice B1 (sim/director/brawl.gd; docs/design/melee-press-feel.md sections 1 to 3, 5 to 7). enabled: in the close band a light or a heavy against a rival who stands or guards starts a brawl, where each fighter has his own strike line and every press is a blow; false, every exchange is planned from its template as before. interrupts: the takeovers a brawl allows (the dodge-cancel and the burst always apply). breakBh: past this many body heights apart the brawl lets go. pullBhPerSec: drift is pulled back to striking distance (templates.json contact.offset) and to one height at up to this speed. stepInTicks: the first blow's step in to striking distance takes at most this long. idleTicks: with no attack from either for this long it ends. heldPressTicks: a press he cannot throw at once is held this long (the latest only). stringLapseTicks: his string is over when no blow of his was thrown or landed for this long. enderAfter: a heavy thrown after this many landed blows of his string is its ender, the only blow that knocks back. recoil: the push of a blow, units a second (a blow leans him and does not move him). tradeTicks: two light blows that land within this of each other are a trade: both land, their beats carry trade and tradeWith (the other's piece), and a trade cue goes out. damageMul: what a brawl light is worth against the data's light (Game Design, melee-press-feel.md section 9b): the stream, lights and flurry blows, takes it in full; it is QA's lever for match length, and the ratios below are the rule. heavyMul: a heavy and an ender are worth the data's heavy times the scale times this. heldMul: a heavy held to full is worth this much more. skillMul and setMul: a skill strike and a set light, in brawl lights (B2 and later; skillMul also sets what an answering blow outside a brawl is worth). With the brawl on, a blow outside a brawl is worth its form too (DirBrawl.worth): a light-class blow the scale, a heavy-class blow the scale times heavyMul, a chain link's blow one brawl light, and the first damaging blow of a riposte with a light, of a dodge template and of a light charge's arrival a skill strike; a heavy charge's arrival is a heavy held to full; signatures, finishers and the blow on a buried rival keep their damage. aiPerfectEveryTicks: the AI weighs a perfect block against a light at most once in this long (a fresh guard press cannot be mashed), and against every heavy. aiReversalEveryTicks: it weighs a reversal on a block at most once in this long. light: damage, the ticks from press to contact, a lone light's length, and `recover`: after a light his line is free for a heavy this long after its contact. flurry: lights tapped minGap to maxGap ticks apart are a flurry; a blow lasts one tap gap and does mul of a light by its gap ([gap, share] points, straight lines between: the interval over 10, so damage a second is level from 5 to 10 taps); a landed blow reels the rival reelTicks. The run (melee-press-feel.md section 3): each fighter's run goes up one for each light or flurry blow he lands and down replyTakes, never below 0, for each that lands on him; a heavy on him clears it, and so do runLapseTicks without landing; a blocked blow changes nothing. At a run of runToClose his next landed light is the close: it staggers the rival staggerTicks in place, decisive at launch.json setup.weight.blurPlain of a set-up. A trade is on while both have landed a light inside runLapseTicks, and cannot pass tradeMaxTicks without a close: at the limit it breaks for the higher run, then the more blows landed in the trade, then a seeded draw at even odds, and that fighter's next landed blow is the close. closeAfter is the first build's name for runToClose: it is not read, and stays only until the schema lets it go. heavy: damage, its ki, windupTicks then landTicks to contact; his line is free `recover` ticks after a heavy that lands, breaks a guard or ends his string, and recoverWhiff after one that meets nothing (the 76 ticks of the spec are its animation, whose follow-through plays only when nothing follows); held past the wind-up it waits for the release, fully charged at heldFullTicks of hold and let go by itself at heldMaxTicks, and lands heldLandTicks after the release; staggerTicks: a lone heavy that lands, and any heavy on a guard, staggers him in place; force: the launch force of an ender whose launch is earned. hitstop: ticks, by the blow's weight. Clocks: taps, the line, the string and the idle count run on S.tick (through a hit-stop); wind-ups, reels and holds are live ticks"
   }
 }

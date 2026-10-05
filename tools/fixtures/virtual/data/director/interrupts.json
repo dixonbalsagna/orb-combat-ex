@@ -16,7 +16,8 @@
         "heavy": 10
       },
       "return": 6,
-      "beam": 12
+      "beam": 12,
+      "blow": 8
     },
     "early": {
       "default": 4,
@@ -158,6 +159,73 @@
       "min": 0.25,
       "perSec": 0.1,
       "max": 0.6
+    }
+  },
+  "brawl": {
+    "enabled": true,
+    "interrupts": [
+      "perfect_block",
+      "reversal"
+    ],
+    "breakBh": 4.5,
+    "pullBhPerSec": 0.5,
+    "stepInTicks": 2,
+    "idleTicks": 60,
+    "heldPressTicks": 10,
+    "stringLapseTicks": 30,
+    "enderAfter": 2,
+    "recoil": 1,
+    "tradeTicks": 2,
+    "damageMul": 0.3,
+    "heavyMul": 2,
+    "heldMul": 1.25,
+    "skillMul": 4,
+    "setMul": 1.5,
+    "aiPerfectEveryTicks": 30,
+    "aiReversalEveryTicks": 120,
+    "light": {
+      "damage": 26,
+      "contactTicks": 2,
+      "blowTicks": 12,
+      "recover": 4
+    },
+    "flurry": {
+      "minGap": 6,
+      "maxGap": 12,
+      "mul": [
+        [
+          6,
+          0.6
+        ],
+        [
+          12,
+          1.2
+        ]
+      ],
+      "reelTicks": 4,
+      "closeAfter": 4,
+      "staggerTicks": 12,
+      "runToClose": 4,
+      "replyTakes": 1,
+      "runLapseTicks": 24,
+      "tradeMaxTicks": 120
+    },
+    "heavy": {
+      "damage": 66,
+      "ki": 4,
+      "windupTicks": 26,
+      "landTicks": 8,
+      "recover": 10,
+      "recoverWhiff": 30,
+      "heldFullTicks": 46,
+      "heldMaxTicks": 180,
+      "heldLandTicks": 8,
+      "staggerTicks": 12,
+      "force": 1600
+    },
+    "hitstop": {
+      "light": 2,
+      "heavy": 6
     }
   },
   "blast": {

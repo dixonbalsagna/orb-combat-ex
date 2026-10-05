@@ -661,6 +661,8 @@ static func interrupt(name: String) -> Dictionary:
 ## Whether the exchange's branch allows the named interrupt (its "interrupts" list).
 static func allows(ex, name: String) -> bool:
 	_ensure()
+	if DirBrawl.isBrawl(ex):
+		return DirBrawl.allows(name)   # a brawl has no branch: its list is interrupts.json brawl.interrupts
 	for tp in _tpl.templates:
 		if String(tp.id) == ex.tpl:
 			for br in tp.branches:

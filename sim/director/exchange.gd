@@ -44,6 +44,8 @@ static func requestAttack(S: SimState, A, kind: String) -> void:
 	if DirBeam.inClash(S, A):
 		return
 	DirAlchemy.log(S, A, KIND.find(kind), A.act.mode)   # the press log (read-only for now)
+	if DirBrawl.takes(S, A, kind):
+		return   # a brawl is on and he is in it: the press is a blow on his own line, never a request
 	if not A.act.v2:
 		_start(S, A, kind)
 		return
@@ -70,6 +72,7 @@ static var planOpen: int = 0        # ... and the opening that approach began wi
 static var planDefStance: int = -1   # ... and the stance a buried defender is read in (DirBury.stance), -1 otherwise
 static var planMeet: bool = false   # ... and whether it is the meeting after an answered taunt: the rival is pressing too
 static var planMeetEdge: float = 0.0   # ... and the edge of a rival met while he held a heavy charge (off the attacker's clash chance)
+static var planCharge: bool = false   # ... and whether the approach was a held charge: it keeps its template (DirBrawl.starts)
 
 
 ## Starts a queued request the director can take. When both fighters have one waiting, the fighter who did not start
@@ -114,6 +117,8 @@ static func _queues(S: SimState) -> void:
 		if not f.act.v2:
 			continue
 		var up: int = f.input.upgrade
+		if up > 0 and DirBrawl.takes(S, f, "heavy" if up == 1 else "sig"):
+			continue   # in a brawl the hold's edge is a heavy press of its own
 		if up > 0 and not SimAct.upgrade(f, SimAct.HEAVY if up == 1 else SimAct.SIG) and not DirBands.upgrade(S, f, SimAct.HEAVY if up == 1 else SimAct.SIG) and not DirBlast.upgrade(S, f, SimAct.HEAVY if up == 1 else SimAct.SIG):
 			SimAct.push(f, SimAct.HEAVY if up == 1 else SimAct.SIG, f.act.mode, 0, S.tick)
 		if up == 1:
@@ -239,11 +244,23 @@ static func _start(S: SimState, A, kind: String) -> int:
 	for s in range(S.fighters.size()):
 		if S.fighters[s].brink:
 			ex.startBrink |= 1 << s
+	# The brawl (DirBrawl): in the close band a light or a heavy against a rival who stands or guards is the first blow
+	# of a brawl, not a planned exchange. Both fighters then have a strike line, and every press is a blow.
+	if DirBrawl.starts(S, ex, kind, opn, fu, dState):
+		DirInterrupt.onStart(S, ex, KIND.find(kind), A.act.mode, planEntry)
+		DirBrawl.begin(S, ex, kind)
+		SimFx.attack(S, A, D, kind, STN[int(D.stance)], ex.tag, A.ambush)
+		if A.ambush:
+			SimFx.ambush(S, A, D)
+			SimFx.danger(S, D, "ambush", 0.0)
+		return STARTED
 	if kind != "sig" and DirData.hasNeutral() and opn == 0 and not fu and planDefStance < 0:
 		DirAI.react(S, D, dState)   # step 2b: the AI defender's press, before the plan reads defQueued (dState: its state before the lock)
 	# Step 3: staleness, and an opening spent on this attack (the riposte plans from its own template).
 	planStale = DirInterrupt.onStart(S, ex, KIND.find(kind), A.act.mode, planEntry)
 	planContext = "riposte" if (opn == DirInterrupt.OPEN_RIPOSTE or opn == DirInterrupt.OPEN_RIPOSTE_LAUNCH) else ""
+	if planCharge:
+		DirBrawl.noteCharge(A, ex)   # a far charge's arrival: its first blow is worth more (DirBrawl.worth)
 	planLaunch = opn == DirInterrupt.OPEN_RIPOSTE_LAUNCH
 	if opn != 0:
 		DirInterrupt.si(A, DirInterrupt.OPEN_UNTIL, 0)
@@ -314,7 +331,10 @@ static func runBeat(S: SimState, ex, b) -> void:
 			else:
 				who.lastAtkT = S.T
 		"strike":
-			DirMelee.strike(S, ex, A if a.a == "A" else D, A if a.d == "A" else D, a.dmg, a.o)
+			if a.get("brawl", false):
+				DirBrawl.contact(S, ex, b)   # a brawl's blow: it lands, and its line, its string and its close follow
+			else:
+				DirMelee.strike(S, ex, A if a.a == "A" else D, A if a.d == "A" else D, DirBrawl.worth(S, ex, b, a.dmg), a.o)   # outside a brawl a blow is worth its form
 		"launch":
 			DirMelee.launchBeat(S, ex, D if a.rev else A, A if a.rev else D, a.force, false, a)
 		"window":
@@ -341,7 +361,7 @@ static func runBeat(S: SimState, ex, b) -> void:
 		"clashWave":
 			DirMelee.clashWave(S, ex)
 		"chainStrike":
-			DirMelee.strike(S, ex, A, D, 52.0 + ex.combo * 7.0, {"noParry": true, "ignoreStance": true, "big": true, "stop": 0.08})
+			DirMelee.strike(S, ex, A, D, DirBrawl.worth(S, ex, b, 52.0 + ex.combo * 7.0), {"noParry": true, "ignoreStance": true, "big": true, "stop": 0.08})   # with the brawl on, a link's blow is one brawl light
 		"beamCharge":
 			DirBeam.opBeamCharge(S, ex, a)
 		"beamFire":
@@ -467,6 +487,7 @@ static func _blurEnder(S: SimState, ex) -> void:
 
 
 static func endEx(S: SimState, ex) -> void:
+	DirBrawl.over(S, ex, "ko" if S.game.ko != null else "ended")   # a brawl that was not closed yet says so (every brawl_start has its brawl_end)
 	if ex.A.state == "locked":
 		ex.A.state = "free"
 	if ex.D.state == "locked":
@@ -489,7 +510,7 @@ static func endEx(S: SimState, ex) -> void:
 		var le: int = DirInterrupt.gi(ex.A, DirInterrupt.LAST_END)
 		SimFx.exchangeEnd(S, ex.A, "launch" if le == DirInterrupt.END_LAUNCH else ("knockback" if le == DirInterrupt.END_KNOCK else "continue"))
 	S.dirS.ex = null
-	S.dirS.cool = cooldownAfter(ex)
+	S.dirS.cool = DirBrawl.coolAfter(ex) if DirBrawl.isBrawl(ex) else cooldownAfter(ex)   # no pause after a brawl, except after a launch
 	DirBeamPlay.onEnd(S, ex)   # no pause after a walk through a beam
 	DirInterrupt.onEnd(S, ex)   # step 3: a fully blocked string leaves its attacker behind
 	DirBury.onEnd(S, ex)   # a defender taken in his crater is out of it, with his safety
@@ -534,6 +555,9 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 		return
 	ex.t += dt
 	DirInterrupt.tick(S)   # step 3: this tick's inputs inside the exchange (perfect block, reversal, dodge-cancel, burst)
+	DirBrawl.tick(S, ex)   # a brawl's lines: held presses and heavies, the magnet, and what ends it
+	if S.dirS.ex != ex:
+		return
 	DirBeamPlay.lateTick(S, ex)   # a late answer to a beam on its way
 	DirMelee.contactTick(S, ex)   # contact: facing follows the opponent, and resting bodies never overlap
 	var i: int = 0
@@ -566,7 +590,7 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 		if not b.done:
 			pending = true
 			break
-	if not pending and not (ex.ext != null and S.T < ex.ext.until):
+	if not pending and not (ex.ext != null and S.T < ex.ext.until) and not DirBrawl.holds(S, ex):   # a brawl has no set length
 		endEx(S, ex)
 
 

@@ -56,7 +56,22 @@
       "beamWade": 0.3,
       "beamLate": 0.05,
       "mineShare": 0.02,
-      "timedPress": 0.4
+      "timedPress": 0.4,
+      "brawl": {
+        "tapGap": 12,
+        "string": [
+          2,
+          4
+        ],
+        "enderShare": 0.3,
+        "rashHeavy": 1,
+        "guardShare": 0.2,
+        "guardTicks": [
+          20,
+          60
+        ],
+        "perfectMul": 0.3
+      }
     },
     "medium": {
       "beamAnswer": 0.35,
@@ -91,7 +106,22 @@
       "beamWade": 0.5,
       "beamLate": 0.1,
       "mineShare": 0.04,
-      "timedPress": 0.65
+      "timedPress": 0.65,
+      "brawl": {
+        "tapGap": 10,
+        "string": [
+          3,
+          5
+        ],
+        "enderShare": 0.45,
+        "rashHeavy": 0.58,
+        "guardShare": 0.4,
+        "guardTicks": [
+          20,
+          60
+        ],
+        "perfectMul": 0.15
+      }
     },
     "hard": {
       "beamAnswer": 0.6,
@@ -126,7 +156,22 @@
       "beamWade": 0.7,
       "beamLate": 0.2,
       "mineShare": 0.06,
-      "timedPress": 0.85
+      "timedPress": 0.85,
+      "brawl": {
+        "tapGap": 7,
+        "string": [
+          3,
+          5
+        ],
+        "enderShare": 0.6,
+        "rashHeavy": 0.1,
+        "guardShare": 0.4,
+        "guardTicks": [
+          20,
+          60
+        ],
+        "perfectMul": 0.5
+      }
     }
   },
   "beamLook": {

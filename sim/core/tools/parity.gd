@@ -1081,14 +1081,21 @@ func _agencyLines() -> String:
 func _shots() -> String:
 	if not SimShots.errors().is_empty():
 		return "; ".join(SimShots.errors())
+	# no shot comes from nowhere: a match in which nobody presses (two human slots, no input) never has one, and a new
+	# match starts with none and its count at zero whatever the last one left (the AI does fire in a default match)
 	var D := SimCore.createSim()
-	SimCore.newMatch(D, 5)
+	SimCore.newMatch(D, 5, {"p1": false, "p2": false})
 	for t in range(600):
 		SimCore.step(D)
 		D.out.fx.clear()
 		D.out.feed.clear()
-		if not D.shots.is_empty():
-			return "a default match has a shot in flight"
+		if not D.shots.is_empty() or D.shotSeq != 0:
+			return "a match in which nobody presses has a shot in flight"
+	if SimShots.fire(D, 0, "bolt", {"ux": 1.0, "uy": 0.0}) == null or D.shots.size() != 1 or D.shotSeq != 1:
+		return "a bolt could not be fired into the quiet match"
+	SimCore.newMatch(D, 6, {"p1": false, "p2": false})
+	if not D.shots.is_empty() or D.shotSeq != 0:
+		return "a new match kept the last one's shots"
 	SimCore.dispose(D)
 	var dt: float = SimConst.DT
 	var bolt: Dictionary = SimShots.kinds.bolt
@@ -2179,15 +2186,22 @@ func _replayModule() -> String:
 			return "an invalid input entry %s was not refused" % str(wrong)
 	# the new fields travel: a recorded match whose human holds the top bits plays back through JSON
 	var S4 := SimCore.createSim()
-	var rec4 := SimReplay.recorder(S4, 31, {"p1": false, "p2": true})
+	var rec4 := SimReplay.recorder(S4, 31, {"p1": false, "p2": false})   # two human slots, the second idle: nobody strikes him
 	var hold := SimIntent.new()
+	var compared: int = 0
 	for t in range(240):
 		hold.stanceMask = (t / 20) % 16
 		hold.contextHeld = (t / 30) % 2 == 1
 		hold.sigHeld = (t / 45) % 2 == 0
+		var stunned: bool = S4.fighters[0].stunTicks > 0   # a stun ends the held states (SimWounds.gateIntent): such a tick carries none
 		var live: bool = rec4.step([hold, null])   # (a hit-stop tick consumes no input)
-		if live and (S4.fighters[0].input.stanceMask != hold.stanceMask or S4.fighters[0].input.sigHeld != hold.sigHeld or S4.fighters[0].input.contextHeld != hold.contextHeld):
+		if not live or stunned:
+			continue
+		compared += 1
+		if S4.fighters[0].input.stanceMask != hold.stanceMask or S4.fighters[0].input.sigHeld != hold.sigHeld or S4.fighters[0].input.contextHeld != hold.contextHeld:
 			return "the stance mask and the held levels did not reach the fighter's input"
+	if compared < 200:
+		return "only %d of 240 ticks carried the held fields to the fighter's input" % compared
 	var rp4: Dictionary = rec4.finish()
 	SimCore.dispose(S4)
 	var high: int = 0

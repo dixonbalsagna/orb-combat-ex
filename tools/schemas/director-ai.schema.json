@@ -147,7 +147,8 @@
             "beamWade",
             "beamLate",
             "mineShare",
-            "timedPress"
+            "timedPress",
+            "brawl"
           ],
           "properties": {
             "beamAnswer": {
@@ -312,6 +313,73 @@
               "type": "number",
               "minimum": 0,
               "maximum": 1
+            },
+            "brawl": {
+              "type": "object",
+              "required": [
+                "tapGap",
+                "string",
+                "enderShare",
+                "rashHeavy",
+                "guardShare",
+                "guardTicks",
+                "perfectMul"
+              ],
+              "properties": {
+                "tapGap": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The gap between the AI's taps, in ticks."
+                },
+                "string": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "description": "The length of the AI's string, in blows: [lo, hi]."
+                },
+                "enderShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance a string ends on its ender."
+                },
+                "rashHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance of a rash heavy."
+                },
+                "guardShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it guards."
+                },
+                "guardTicks": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "description": "How long it guards, in ticks: [lo, hi]."
+                },
+                "perfectMul": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The multiplier on its perfect-block chance in a brawl."
+                }
+              },
+              "description": "The AI's brawl play at this level.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -347,7 +415,8 @@
             "beamWade",
             "beamLate",
             "mineShare",
-            "timedPress"
+            "timedPress",
+            "brawl"
           ],
           "properties": {
             "beamAnswer": {
@@ -512,6 +581,73 @@
               "type": "number",
               "minimum": 0,
               "maximum": 1
+            },
+            "brawl": {
+              "type": "object",
+              "required": [
+                "tapGap",
+                "string",
+                "enderShare",
+                "rashHeavy",
+                "guardShare",
+                "guardTicks",
+                "perfectMul"
+              ],
+              "properties": {
+                "tapGap": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The gap between the AI's taps, in ticks."
+                },
+                "string": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "description": "The length of the AI's string, in blows: [lo, hi]."
+                },
+                "enderShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance a string ends on its ender."
+                },
+                "rashHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance of a rash heavy."
+                },
+                "guardShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it guards."
+                },
+                "guardTicks": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "description": "How long it guards, in ticks: [lo, hi]."
+                },
+                "perfectMul": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The multiplier on its perfect-block chance in a brawl."
+                }
+              },
+              "description": "The AI's brawl play at this level.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -547,7 +683,8 @@
             "beamWade",
             "beamLate",
             "mineShare",
-            "timedPress"
+            "timedPress",
+            "brawl"
           ],
           "properties": {
             "beamAnswer": {
@@ -712,6 +849,73 @@
               "type": "number",
               "minimum": 0,
               "maximum": 1
+            },
+            "brawl": {
+              "type": "object",
+              "required": [
+                "tapGap",
+                "string",
+                "enderShare",
+                "rashHeavy",
+                "guardShare",
+                "guardTicks",
+                "perfectMul"
+              ],
+              "properties": {
+                "tapGap": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The gap between the AI's taps, in ticks."
+                },
+                "string": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "description": "The length of the AI's string, in blows: [lo, hi]."
+                },
+                "enderShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance a string ends on its ender."
+                },
+                "rashHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance of a rash heavy."
+                },
+                "guardShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it guards."
+                },
+                "guardTicks": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "description": "How long it guards, in ticks: [lo, hi]."
+                },
+                "perfectMul": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The multiplier on its perfect-block chance in a brawl."
+                }
+              },
+              "description": "The AI's brawl play at this level.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,

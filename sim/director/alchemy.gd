@@ -181,8 +181,11 @@ static func log(S: SimState, f, weight: int, family: int) -> void:
 		# its presses at its level's rate.
 		var ex = S.dirS.ex
 		var inEx: bool = ex != null and (f == ex.A or f == ex.D)
-		keep = not inEx and (f.ai != null or beat == SimPressRead.NO_BEAT)
-		if f.ai != null:
+		var brawl: bool = DirBrawl.inBrawl(S, f)   # B1: a press in a brawl neither earns nor loses flow (its beat point is B2)
+		keep = brawl or (not inEx and (f.ai != null or beat == SimPressRead.NO_BEAT))
+		if brawl:
+			timed = false
+		elif f.ai != null:
 			timed = inEx and ((aiBeat == 1) if aiBeat >= 0 else S.rng.next() < float(DirAI.lv().get("timedPress", 0.0)))
 		else:
 			timed = beat != SimPressRead.NO_BEAT and SimPressRead.grade_of(beat) == "perfect"
