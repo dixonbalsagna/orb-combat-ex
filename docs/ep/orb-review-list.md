@@ -107,7 +107,8 @@ Written and waiting for Orb to read:
 - Intro plotlines: docs/narrative/dynamic-intros.md section 11.
 - Move names to pull into the voice lab: docs/narrative/move-names-draft.csv.
 - All five stances' generated movesets (100 moves a fighter, parked): docs/combat/pending/movegen/review-sheet.md.
-- The melee spec with every ruling: docs/design/melee-press-feel.md.
+- The melee spec with every ruling: docs/design/melee-press-feel.md. New tonight in section 11: one chart of the signature kinds per stance with alternatives (one worth your eye: the rival's energy signature as a barrage in place of a beam), and what answers each finisher (a launch: the defensive stance; a melee: the manoeuvre stance; a beam: your own signature press).
+- QA's interim on the wind-up build (3,200 matches): the median match is 478.9 s, inside the band by about a second; KAI wins 49.4% with no slot split.
 
 Landed later in the night (pushed; checks passed on an export):
 - Buildings break in four stages (windows out, cracked with a cut floor, shell, fallen), and a first blast can no longer flatten a building outright. On World's 160-match measure the front row's losses fall from 51.5% to 36.0% and all rows from 40.4% to 27.7%. The stages have no effects of their own yet: VFX is building them.
