@@ -17,6 +17,73 @@ static func _base(y0: float, h: float, fs: int) -> float:
 	return y0 + (h - UiText.height(fs)) * 0.5 + UiText.ascent(fs)
 
 
+## Row 1 of a plate, planned: what shows and where, as offsets from the plate's near edge (the name's side; the plate mirrors). Pure, so
+## `draw` and the tests share it. With `with_chip` (landscape) the stance badge sits at the far end of the row and is NEVER dropped: the
+## whole word if it fits, else the icon alone. When the row is too narrow it gives way in this order (docs/ui/hud-spec.md section 41):
+## the badge's word, the brink mark, the tag's pill (its text with a rule stays), the name's last letters (never under five letters and an
+## ellipsis), and only as the last resort the tag. Returns {name, name_w, name_cut, tag, tag_x, tag_w, tag_pill, brink, brink_x, brink_sz,
+## word, chip_w, chip_x, used_w, tier}; `tier` is how many steps it had to take (0 none).
+static func row1_plan(inner_w: float, s: float, pm: Dictionary, name: String, tag: String, brink: bool, word: String, with_chip: bool) -> Dictionary:
+	var fs: int = int(pm["fs_name"])
+	var afs: int = int(pm["fs_state"])
+	var cfs: int = int(pm["fs_chip"])
+	var isize: float = float(pm["chip_h"]) * 0.68
+	var cw_word: float = isize + UiText.width(word, cfs) + 20.0 * s
+	var cw_icon: float = isize + 18.0 * s
+	var brink_sz: float = float(pm["name_h"]) * 0.8
+	var tw: float = UiText.width(tag, afs) if tag != "" else 0.0
+	var name_full: float = UiText.width(name, fs)
+	var gap: float = 10.0 * s
+	var keep: float = 6.0 * s   # the room kept between the badge and the rest of the row
+	# The tiers, in order: [word?, brink?, tag pill?, name cut?, tag?]
+	var tiers: Array = [[true, true, true, false, true], [false, true, true, false, true], [false, false, true, false, true], [false, false, false, false, true], [false, false, false, true, true], [false, false, false, true, false]]
+	var out: Dictionary = {}
+	for ti in range(tiers.size()):
+		var spec: Array = tiers[ti]
+		var show_word: bool = spec[0] and with_chip
+		var show_brink: bool = spec[1] and brink
+		var pill: bool = spec[2]
+		var cut: bool = spec[3]
+		var show_tag: bool = spec[4] and tag != ""
+		var cw: float = (cw_word if show_word else cw_icon) if with_chip else cw_word
+		var avail: float = inner_w - (cw + keep if with_chip else 0.0)
+		var tag_box: float = (tw + 12.0 * s if pill else tw) if show_tag else 0.0
+		var brink_box: float = (gap + brink_sz) if show_brink else 0.0
+		var rest: float = ((gap + tag_box) if show_tag else 0.0) + brink_box
+		var nm: String = name
+		var nw: float = name_full
+		if cut:
+			nm = _elide(name, fs, avail - rest)
+			nw = UiText.width(nm, fs)
+		if nw + rest <= avail + 0.01 or ti == tiers.size() - 1:
+			var u: float = nw
+			out = {"name": nm, "name_w": nw, "name_cut": nm != name, "tag": tag if show_tag else "", "tag_x": u + gap, "tag_w": tag_box, "tag_pill": pill, "brink": show_brink, "brink_x": 0.0, "brink_sz": brink_sz, "tier": ti}
+			if show_tag:
+				u += gap + tag_box
+			if show_brink:
+				u += gap
+				out["brink_x"] = u
+				u += brink_sz
+			out["used_w"] = u
+			out["word"] = word if show_word else ""
+			out["chip_w"] = cw
+			out["chip_x"] = inner_w - cw
+			return out
+	return out
+
+
+## `text` cut to the most whole letters that fit in `room` px with an ellipsis, never under five letters (the ellipsis is the sixth glyph).
+static func _elide(text: String, fs: int, room: float) -> String:
+	if UiText.width(text, fs) <= room:
+		return text
+	var k: int = text.length() - 1
+	while k > 5:
+		if UiText.width(text.substr(0, k) + "\u2026", fs) <= room:
+			return text.substr(0, k) + "\u2026"
+		k -= 1
+	return text.substr(0, mini(5, text.length())) + "\u2026"
+
+
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary, s: float, t: float, o: Dictionary) -> void:
 	_A = float(o.get("plate_alpha", 1.0))
 	UiText.no_outline = true
@@ -35,31 +102,40 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	var ink: Color = _c(UiLook.col(UiLook.INK))
 	var dim: Color = _c(UiLook.col(UiLook.INK_DIM))
 
-	# Row 1: name, an AI tag, and the brink chip on the far side.
+	# Row 1: name, the YOU or AI tag, the brink mark and (landscape) the stance badge on the far side. One plan (row1_plan) decides what
+	# shows and where, so the badge is always on the row and the tests read the same function.
 	var fs: int = int(pm["fs_name"])
 	var ry: float = rect.position.y + float(pm["name_y"])
 	var rh: float = float(pm["name_h"])
 	var nb: float = _base(ry, rh, fs)
-	var nw: float = UiText.draw(ci, m.name, Vector2(x0 if left else x1, nb), fs, ink, -1 if left else 1, 2.0)
-	# The tag after the name: AI for an AI fighter, and a bright YOU (P1 and P2 for two players) for a human one, so it is never in doubt.
-	var tag_text: String = UiData.t("state.ai") if m.ai else m.you_label
-	if tag_text != "":
+	var tag_text: String = UiData.t("state.ai") if m.ai else m.you_label   # AI for an AI fighter, a bright YOU (P1 and P2 for two players) for a human one, so it is never in doubt
+	var word: String = UiStance.word(m.stance_kind)   # the five stances (UiStance): the held buttons, for both fighters
+	if m.stance_armed > 0.0:
+		word = UiStance.armed_word()   # an armed stance is neither held nor latched: it is for the next blow only
+	var r1: Dictionary = row1_plan(inner_w, s, pm, m.name, tag_text, m.brink and combined, word, combined)
+	var nw: float = UiText.draw(ci, str(r1["name"]), Vector2(x0 if left else x1, nb), fs, ink, -1 if left else 1, 2.0)
+	if str(r1["tag"]) != "":
 		var afs: int = int(pm["fs_state"])
-		var tag: String = tag_text
-		var tw: float = UiText.width(tag, afs)
-		var tx: float = (x0 + nw + 10.0 * s) if left else (x1 - nw - 10.0 * s - tw - 12.0 * s)
-		if m.ai:
-			UiIcons.rrect(ci, Rect2(tx, ry + 1.0, tw + 12.0 * s, rh - 2.0), 5.0 * s, _c(Color(1, 1, 1, 0.12)), _c(UiLook.alpha(UiLook.EDGE, 0.5)), 1.0)
-			UiText.draw(ci, tag, Vector2(tx + 6.0 * s, _base(ry, rh, afs)), afs, dim, -1)
+		var tag: String = str(r1["tag"])
+		var tw_box: float = float(r1["tag_w"])
+		var tx: float = (x0 + float(r1["tag_x"])) if left else (x1 - float(r1["tag_x"]) - tw_box)
+		if bool(r1["tag_pill"]):
+			if m.ai:
+				UiIcons.rrect(ci, Rect2(tx, ry + 1.0, tw_box, rh - 2.0), 5.0 * s, _c(Color(1, 1, 1, 0.12)), _c(UiLook.alpha(UiLook.EDGE, 0.5)), 1.0)
+				UiText.draw(ci, tag, Vector2(tx + 6.0 * s, _base(ry, rh, afs)), afs, dim, -1)
+			else:
+				UiIcons.rrect(ci, Rect2(tx, ry + 1.0, tw_box, rh - 2.0), 5.0 * s, _c(Color(UiLook.col(UiLook.INK), 0.92)), _c(UiLook.alpha(UiLook.INK, 1.0)), 1.0)
+				UiText.draw(ci, tag, Vector2(tx + 6.0 * s, _base(ry, rh, afs)), afs, _c(UiLook.col(UiLook.INK_DARK)), -1)
 		else:
-			UiIcons.rrect(ci, Rect2(tx, ry + 1.0, tw + 12.0 * s, rh - 2.0), 5.0 * s, _c(Color(UiLook.col(UiLook.INK), 0.92)), _c(UiLook.alpha(UiLook.INK, 1.0)), 1.0)
-			UiText.draw(ci, tag, Vector2(tx + 6.0 * s, _base(ry, rh, afs)), afs, _c(UiLook.col(UiLook.INK_DARK)), -1)
-	if m.brink and combined:
-		# Icon only, right after the name (the crown ring, the card and the silhouette say the rest).
+			# A tight plate: the tag's text with a rule under it, no pill (the bright rule is the human's, the dim one the AI's).
+			var tcol: Color = dim if m.ai else ink
+			UiText.draw(ci, tag, Vector2(tx, _base(ry, rh, afs)), afs, tcol, -1)
+			ci.draw_rect(Rect2(tx, ry + rh - maxf(2.0, 2.0 * s), tw_box, maxf(2.0, 2.0 * s)), tcol)
+	if bool(r1["brink"]):
+		# Icon only, after the tag (the crown ring, the card and the silhouette say the rest).
 		var bcol2: Color = _c(Color(UiLook.col(UiLook.STAGE_BROKEN), 1.0 if reduced else (0.6 + 0.4 * (0.5 + 0.5 * sin(t * UiLook.HZ_BRINK * TAU)))))
-		var isz2: float = rh * 0.8
-		var ai_w: float = (UiText.width(tag_text, int(pm["fs_state"])) + 22.0 * s) if tag_text != "" else 0.0
-		var bx2: float = (x0 + nw + 10.0 * s + ai_w) if left else (x1 - nw - 10.0 * s - ai_w - isz2)
+		var isz2: float = float(r1["brink_sz"])
+		var bx2: float = (x0 + float(r1["brink_x"])) if left else (x1 - float(r1["brink_x"]) - isz2)
 		UiIcons.brink(ci, Vector2(bx2 + isz2 * 0.5, ry + rh * 0.5), isz2, bcol2)
 	if m.brink and not combined:
 		var bfs: int = int(pm["fs_state"])
@@ -70,7 +146,7 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 		var isz: float = rh * 0.86
 		# It never crowds the name: the full chip if it fits, the icon alone if not, nothing on the narrowest plates
 		# (the crown, the silhouette and the card still say it).
-		var used: float = nw + (UiText.width(tag_text, int(pm["fs_state"])) + 22.0 * s if tag_text != "" else 0.0)
+		var used: float = float(r1["used_w"])
 		var avail: float = inner_w - used - 10.0 * s
 		var full_w: float = isz + 8.0 * s + bw
 		var show_text: bool = full_w <= avail
@@ -111,35 +187,21 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	ry = rect.position.y + float(pm["chip_y"])
 	rh = float(pm["chip_h"])
 	var cfs: int = int(pm["fs_chip"])
-	var word: String = UiStance.word(m.stance_kind)   # the five stances (UiStance): the held buttons, for both fighters
-	if m.stance_armed > 0.0:
-		word = UiStance.armed_word()   # an armed stance is neither held nor latched: it is for the next blow only
 	var scol: Color = UiStance.col(m.stance_kind)
 	var isize: float = rh * 0.68
-	var cw: float = isize + UiText.width(word, cfs) + 20.0 * s
-	var chip_fits := true
-	if combined:
-		# Beside the name, the YOU or AI tag and the brink mark: the whole word if it fits, else the icon alone (the icon and the colour still say which stance).
-		var tag_w: float = (UiText.width(tag_text, int(pm["fs_state"])) + 22.0 * s) if tag_text != "" else 0.0
-		var brink_w: float = (float(pm["name_h"]) * 0.8 + 4.0 * s) if m.brink else 0.0
-		var avail_w: float = inner_w - (nw + 10.0 * s + tag_w + brink_w + 6.0 * s)
-		if cw > avail_w:
-			word = ""
-			cw = isize + 18.0 * s
-			chip_fits = cw <= avail_w   # a long name and a tag can leave no room even for the icon: the chip is left off rather than cover the tag
+	var cw: float = float(r1["chip_w"])   # beside the name on landscape: the whole word if it fits, else the icon alone (never left off)
+	word = str(r1["word"]) if combined else word
 	var cur: float = (inner_w - cw) if combined else 0.0
 	# A stance change pulses the chip's edge for 0.8 s, so the rival's stance (a read) is seen when it changes.
 	var flash: float = 0.0 if reduced else clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0)
-	if chip_fits:
-		_chip(ci, rect, left, pad, cur, cw, ry, rh, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(scol), 2.0 + 3.0 * flash)
+	_chip(ci, rect, left, pad, cur, cw, ry, rh, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(scol), 2.0 + 3.0 * flash)
 	var cx: float = (x0 + cur + (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5)) if left else (x1 - cur - (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5))
-	if chip_fits:
-		UiIcons.stance5(ci, m.stance_kind, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
-	if m.stance_armed > 0.0 and chip_fits:
+	UiIcons.stance5(ci, m.stance_kind, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
+	if m.stance_armed > 0.0:
 		# The ring round the icon runs down over the arming's 90 ticks (a shape: a held stance has none).
 		ci.draw_arc(Vector2(cx, ry + rh * 0.5), isize * 0.82, -PI * 0.5, -PI * 0.5 + TAU * (1.0 if reduced else clampf(m.stance_armed, 0.0, 1.0)), 24, _c(scol), maxf(2.0, isize * 0.11), true)
 	var tx0: float = (x0 + cur + 8.0 * s + isize + 6.0 * s) if left else (x1 - cur - 8.0 * s - isize - 6.0 * s)
-	if word != "" and chip_fits:
+	if word != "":
 		UiText.draw(ci, word, Vector2(tx0, _base(ry, rh, cfs)), cfs, ink, -1 if left else 1, 1.5)
 	# State chips: after the stance chip (portrait), or on the pips' row after the pips (landscape), never over SIGNATURE.
 	var chip_limit: float = inner_w

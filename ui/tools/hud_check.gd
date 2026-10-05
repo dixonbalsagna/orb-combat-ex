@@ -46,6 +46,7 @@ func _run() -> void:
 	await _energy_rules()
 	await _incoming_rules()
 	await _stance_badge_rules()
+	_plate_row1_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
 	await _armed_touch_rules()
@@ -4245,6 +4246,72 @@ func _remap_rules() -> void:
 	UiRemapModel.save_path = SimInputRemap.USER_PATH
 	if FileAccess.file_exists("user://input_test_remap.json"):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://input_test_remap.json"))
+
+
+# --- Row 1 of a plate: the stance badge is always there (docs/ui/hud-spec.md section 41) -----------------------------------------------
+
+## The one plan function (UiPlate.row1_plan) that `draw` uses, at every landscape size, both touch settings, both long names, every tag, the brink mark
+## on and off and the longest stance words: the badge is on the row, nothing overlaps, the name is never under five letters and the tag stays.
+func _plate_row1_rules() -> void:
+	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(844, 390), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0],
+		[Vector2(2048, 1536), 2.0], [Vector2(1280, 800), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(1920, 1200), 1.5], [Vector2(2560, 1600), 2.0], [Vector2(2340, 1080), 2.75]]
+	var names: Array = ["PROTAGONIST", "RIVAL"]
+	var tags: Array = ["YOU", "P1", "P2", "AI"]
+	var words: Array = ["MANOEUVRE", "MARTIAL", "NEXT BLOW", "ENERGY"]
+	for cs in sizes:
+		for touch in [false, true]:
+			var sz: Vector2 = cs[0]
+			var lay := UiLayout.new()
+			lay.dp = cs[1]
+			lay.touch_ui = touch
+			lay.compute(sz, false)
+			if lay.portrait:
+				continue
+			var pm: Dictionary = lay.pm
+			var s: float = lay.s
+			var inner: float = lay.plate[0].size.x - 2.0 * float(pm["pad"])
+			var cells := 0
+			var bad := PackedStringArray()
+			for nm in names:
+				for tg in tags:
+					for br in [false, true]:
+						for wd in words:
+							cells += 1
+							var p: Dictionary = UiPlate.row1_plan(inner, s, pm, nm, tg, br, wd, true)
+							var tag := "%s %s brink=%s %s" % [nm, tg, str(br), wd]
+							var chip_x: float = float(p["chip_x"])
+							var chip_w: float = float(p["chip_w"])
+							if chip_w <= 0.0 or chip_x < -0.01 or chip_x + chip_w > inner + 0.01:
+								bad.append("badge off the row: " + tag)
+							if float(p["used_w"]) > chip_x - 6.0 * s + 0.01:
+								bad.append("overlap: " + tag)
+							var shown: String = str(p["name"])
+							if shown != nm and (shown.length() < 6 or not shown.ends_with("\u2026") or not nm.begins_with(shown.substr(0, shown.length() - 1))):
+								bad.append("name cut wrongly (%s): %s" % [shown, tag])
+							if str(p["tag"]) != tg:
+								bad.append("tag gone: " + tag)
+							var tier: int = int(p["tier"])
+							# The order of giving way: a cut name has no pill or brink left, a padless tag has no brink, a word means nothing gave way.
+							if bool(p["name_cut"]) and (bool(p["tag_pill"]) or bool(p["brink"])):
+								bad.append("order (cut with pill or brink): " + tag)
+							if not bool(p["tag_pill"]) and bool(p["brink"]):
+								bad.append("order (no pill but brink): " + tag)
+							if str(p["word"]) != "" and tier != 0:
+								bad.append("order (word after a step): " + tag)
+			_ok(bad.is_empty(), "plate row 1 %dx%d dp %.2f touch=%s (inner %.0f px): the badge is on the row in all %d cells, nothing overlaps, the name keeps five letters, the tag stays %s" % [int(sz.x), int(sz.y), cs[1], str(touch), inner, cells, str(bad.slice(0, 3))])
+	# What gives way, concretely: the three sizes that missed before.
+	var lay2 := UiLayout.new()
+	lay2.dp = 1.0
+	lay2.compute(Vector2(844, 390), false)
+	var inner2: float = lay2.plate[0].size.x - 2.0 * float(lay2.pm["pad"])
+	var p2: Dictionary = UiPlate.row1_plan(inner2, lay2.s, lay2.pm, "PROTAGONIST", "YOU", true, "MARTIAL", true)
+	_ok(str(p2["word"]) == "" and not bool(p2["brink"]) and not bool(p2["tag_pill"]) and str(p2["tag"]) == "YOU" and not bool(p2["name_cut"]), "plate row 1 at 844x390: the word, the brink mark and the pill give way, the name stays whole")
+	var p3: Dictionary = UiPlate.row1_plan(120.0, 0.45, lay2.pm, "PROTAGONIST", "YOU", false, "MARTIAL", true)
+	_ok(bool(p3["name_cut"]) and str(p3["tag"]) == "YOU" and str(p3["name"]).length() >= 6, "plate row 1 on a very narrow plate: the name is cut by letters, the tag and the badge stay")
+	var p4: Dictionary = UiPlate.row1_plan(60.0, 0.45, lay2.pm, "PROTAGONIST", "YOU", false, "MARTIAL", true)
+	_ok(str(p4["tag"]) == "" and float(p4["chip_w"]) > 0.0 and str(p4["name"]).length() >= 6, "plate row 1 with no room at all: the tag goes last, the badge stays, the name keeps five letters")
+	var p5: Dictionary = UiPlate.row1_plan(300.0, 1.0, lay2.pm, "RIVAL", "AI", false, "ENERGY", true)
+	_ok(int(p5["tier"]) == 0 and str(p5["word"]) == "ENERGY" and bool(p5["tag_pill"]) and not bool(p5["name_cut"]), "plate row 1 with room: nothing gives way")
 
 
 # --- The Full touch layout, drawn from SimTouch.layout(..., full = true) (docs/ui/hud-spec.md section 24) --------------------------
