@@ -41,3 +41,20 @@ Owner: Legal and IP Compliance. The single origin log for every shipped asset (a
 | Asset ID | Path | Type | Origin | Author or source | If AI | Licence | Status | Review | Notes |
 |---|---|---|---|---|---|---|---|---|---|
 | EXAMPLE-000 (fake, delete when real rows exist) | art/example/tree.svg | art | AI-assisted | Example Person | ExampleTool, model-x, 2000-01-01, prompts/example-000.txt | CC-BY-4.0 | proposed | none | Not a real asset |
+
+## Class-level origin rows (added by Legal, 2026-10-05)
+
+The file-by-file log above stopped at 2026-09-29 while the project kept shipping. These rows record the origin of each **class** of shipped content, which is what a store page and the AI statement need. File-level rows are still required before a store build. **Human-made: none of these classes.** A "human contribution" is stated only where a record exists.
+
+| Class | Where | Origin | Tool | Human contribution (record) | Licence status |
+|---|---|---|---|---|---|
+| Game code (sim, render, UI, tools, tests) | `sim/`, `render/`, `ui/`, `tools/`, `qa/`, `prototype/` | AI-written, Orb directing | Claude Code (Anthropic) | Direction, review, playtesting. Record: git history, `docs/ep/vision.md` | Undecided (no licence; all rights reserved, README 2026-10-05) |
+| Art and animation data (concepts, rigs, poses, keysets, VFX data) | `art/`, `data/anim/`, `render/` | AI-written as code and data; procedural | Claude Code | Direction and review only | Undecided |
+| Dialogue, taunts, move names, UI text | `docs/narrative/`, `data/`, `ui/data/` | AI-drafted | Claude Code | **Orb edits batches by hand in the voice lab.** Record: the voice-lab diffs under `docs/narrative/voice-lab/` (Narrative and the EP to name each batch). "Edited by Orb" only; "written by Orb" only for lines the diff shows Orb wrote | Undecided |
+| Sound effects and grunts | `audio/synth/`, `data/impacts.json`, `data/grunts.json` | Procedural (code), no audio model | Claude Code (the generators) | none | Undecided |
+| Music | none shipped | none yet. Suno is the plan (`suno-music.md`, RL-071) | Suno, paid plan | A melody by Orb only if supplied as the input | Separate audio notice; never the project licence |
+| Fonts | see `licence-register.md` (Open Sans, OFL-1.1) | Third party | n/a | n/a | Own licence, keep the notice |
+| Engine | Godot 4.x | Third party (MIT) | n/a | n/a | Keep the notice in the About screen |
+| Design documents and plans | `docs/` | AI-written, Orb directing | Claude Code | Orb's verbatim answers in `docs/ep/vision.md` are Orb's own words | Undecided |
+
+"Human-made" is not a recorded origin for any row. A claim of "edited by Orb" or "written by Orb" needs the diff or file named here first.
