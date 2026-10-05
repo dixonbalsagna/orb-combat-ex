@@ -232,3 +232,7 @@ Each press style has its own after-image and contact look (Orb's reference docs/
 ### The LT zip's looks (2026-10-05)
 
 The tell (a ground line, the heavy's ring), the travel per reading (speed ghosts and bands, tech wire echoes popping off, heavy stretched ghosts and a wide band), the way out in any direction, a counter, a caught mark and guard broken. First build behind the press styles' flag, against Encounter's B0 lunge cue plus the fields listed. `render/vfx/zip.gd`; docs/vfx/zip.md (the cue, the quads, reduced motion, Legal's four flags); `effects_check.gd` `_zip()`.
+
+### Building stages (plan, 2026-10-05)
+
+A note only: what VFX will draw for World's `building_stage` event (glass shower at windows out, a cladding shed and dust skirt for a part gone, a bigger shed and a plume for a shell, nothing new for rubble) and an ambient shell plume read from the stage query, so a seek or late join still looks wrecked. Not built until World's slice is committed. docs/vfx/building-stages-plan.md.
