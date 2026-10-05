@@ -27,6 +27,9 @@ var shame: int = 0                 # Anti-hero shame stacks, 0..3
 var unrestrained: bool = false     # Anti-hero after Drop the Act
 var facade_age: float = 99.0       # seconds since the Proud front cracked (animation)
 
+var stance_mask: int = 0           # the held stance buttons (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8; 0 martial arts)
+var stance_kind: int = 0           # the stance the badge shows (UiStance: 0 martial, 1 defensive, 2 energy, 3 charging, 4 manoeuvre)
+var beats: Array = []              # seconds to contact of each pending blow that will land on THIS fighter (the beat ring; UiSimBridge.beat_windows)
 var stance: int = 0                # 0 press, 1 guard, 2 dodge, 3 escape (the sim's AGGRESSIVE..ESCAPE order)
 var tier: int = 1                  # 1..4, shown as pips
 var momentum: float = 0.0          # 0..100, the fill toward the next tier (a partial pip, never a number)
@@ -135,6 +138,9 @@ func reset_wounds() -> void:
 	avail = {"transform": false, "special": false}
 	hold = {"transform": 0.0, "special": 0.0}
 	last_stand_left = 0.0
+	stance_mask = 0
+	stance_kind = 0
+	beats = []
 	energy = false
 	recipe = {}
 	form_free = true

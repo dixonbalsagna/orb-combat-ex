@@ -46,12 +46,35 @@ static func patch(hud: UiHud, S) -> void:
 			"avail_transform": bool(f.act.formReady) if "act" in f else false,
 			# ... and it can be taken only between exchanges, on the ground or charging, with nobody out (SimExchange._transforms' own condition).
 			"last_stand_left": float(f.lastStandLeft) / 60.0 if "lastStandLeft" in f else 0.0,   # the sim's own count of live ticks left (SimFighter.sigFree), 60 to the second
+			"stance_mask": int(f.input.stanceMask) if (f.input != null and "stanceMask" in f.input) else 0,   # the held stance buttons (the layout's resolved mask; the AI's is 0 until its stance slice)
 			"energy": int(f.act.mode) == 1 if "act" in f else false,   # the intent's mode: 1 while the mode control is held (or latched on a toggle)
 			"form_free": S.dirS.ex == null and S.game.ko == null and (str(f.state) == "free" or str(f.state) == "charging"),
 		})
+	var windows: Array = beat_windows(S)
+	for i in range(mini(2, windows.size())):
+		hud.hub.patch(i, {"beats": windows[i]})
 	hud.hub.set_move_names(move_names)
 	var w = S.world
 	hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
+
+
+## Seconds to contact of every pending blow in the running exchange, per fighter struck (the beat ring): the director's `strike` and `chainStrike` beats
+## not yet done and within UiBeatRing.LEAD of landing. A strike by the attacker (role A) or the defender (role D) lands on the other fighter. Reads only.
+static func beat_windows(S) -> Array:
+	var out: Array = [[], []]
+	var ex = S.dirS.ex
+	if ex == null:
+		return out
+	for b in ex.beats:
+		if b.done or (b.op != "strike" and b.op != "chainStrike"):
+			continue
+		var attacker_a: bool = true if b.op == "chainStrike" else (str(b.args.a) == "A")
+		var target = ex.D if attacker_a else ex.A
+		var slot: int = S.fighters.find(target)
+		var to_go: float = float(b.t) - float(ex.t)
+		if slot >= 0 and slot < 2 and to_go >= -0.02 and to_go <= UiBeatRing.LEAD:
+			out[slot].append(to_go)
+	return out
 
 
 ## The mix of a fighter's last presses for the Show recipe option (the host's `hud.recipe_fn`): SimPressRead.classify's mix_long, or {} while the

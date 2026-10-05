@@ -111,18 +111,27 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	ry = rect.position.y + float(pm["chip_y"])
 	rh = float(pm["chip_h"])
 	var cfs: int = int(pm["fs_chip"])
-	var word: String = UiData.t("stance." + STANCE_IDS[clampi(m.stance, 0, 3)])
-	var scol: Color = UiLook.stance_col(m.stance)
+	var word: String = UiStance.word(m.stance_kind)   # the five stances (UiStance): the held buttons, for both fighters
+	var scol: Color = UiStance.col(m.stance_kind)
 	var isize: float = rh * 0.68
 	var cw: float = isize + UiText.width(word, cfs) + 20.0 * s
+	if combined:
+		# Beside the name, the YOU or AI tag and the brink mark: the whole word if it fits, else the icon alone (the icon and the colour still say which stance).
+		var tag_w: float = (UiText.width(tag_text, int(pm["fs_state"])) + 22.0 * s) if tag_text != "" else 0.0
+		var brink_w: float = (float(pm["name_h"]) * 0.8 + 4.0 * s) if m.brink else 0.0
+		var avail_w: float = inner_w - (nw + 10.0 * s + tag_w + brink_w + 6.0 * s)
+		if cw > avail_w:
+			word = ""
+			cw = isize + 18.0 * s
 	var cur: float = (inner_w - cw) if combined else 0.0
 	# A stance change pulses the chip's edge for 0.8 s, so the rival's stance (a read) is seen when it changes.
 	var flash: float = 0.0 if reduced else clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0)
 	_chip(ci, rect, left, pad, cur, cw, ry, rh, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(scol), 2.0 + 3.0 * flash)
-	var cx: float = (x0 + cur + 8.0 * s + isize * 0.5) if left else (x1 - cur - 8.0 * s - isize * 0.5)
-	UiIcons.stance(ci, m.stance, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
+	var cx: float = (x0 + cur + (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5)) if left else (x1 - cur - (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5))
+	UiIcons.stance5(ci, m.stance_kind, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
 	var tx0: float = (x0 + cur + 8.0 * s + isize + 6.0 * s) if left else (x1 - cur - 8.0 * s - isize - 6.0 * s)
-	UiText.draw(ci, word, Vector2(tx0, _base(ry, rh, cfs)), cfs, ink, -1 if left else 1, 1.5)
+	if word != "":
+		UiText.draw(ci, word, Vector2(tx0, _base(ry, rh, cfs)), cfs, ink, -1 if left else 1, 1.5)
 	# State chips: after the stance chip (portrait), or on the pips' row after the pips (landscape), never over SIGNATURE.
 	var chip_limit: float = inner_w
 	if combined:

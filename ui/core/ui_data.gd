@@ -219,6 +219,17 @@ static func send() -> Dictionary:
 	return _send
 
 
+const STANCES_PATH := "res://ui/data/stances.json"
+static var _stances: Dictionary = {}
+
+
+## The five stances and their words (ui/data/stances.json).
+static func stances() -> Dictionary:
+	if _stances.is_empty():
+		_stances = _read(STANCES_PATH)
+	return _stances
+
+
 const HOWTO_PATH := "res://ui/data/howto.json"
 static var _howto: Dictionary = {}
 

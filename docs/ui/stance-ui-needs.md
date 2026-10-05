@@ -75,3 +75,7 @@ The key help and the badge can start as soon as the stance mask exists, because 
 4. **No marker when the player's own fighter leaves the pane** (not chosen); the incoming marker of section 34 of the spec stays as it is.
 5. **Move names come from a vocabulary** Narrative drafts and Orb edits; UI composes the names.
 6. The zip strike costs 20 ki (the matrix said 15); the cost shown in the legend and move list comes from Game Design's data, not from my words.
+
+## Built (2026-10-06)
+
+Steps 1 and 2 of the order above, in part: the words file (`ui/data/stances.json`), the five stance icons and the plate's badge for both fighters (always shown), and the beat ring option for both fighters' blows, with its data read from the director's exchange (no new sim event was needed: `UiSimBridge.beat_windows`). Not built: the key help (legend and How to play), the choreographer badge, the move list. See `hud-spec.md` section 36.

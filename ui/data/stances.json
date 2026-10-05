@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "note": "The five stances and what the four face buttons do in each (docs/design/melee-press-feel.md section 10; Orb's stance layout in docs/ep/vision.md). The stance is what the player holds: nothing is martial arts, LB defensive, RB energy arts, RT charging, LT manoeuvre (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8). `name` is the word on the plate's badge, `title` the full name, `cells` the face buttons X (quick), Y (strong), A (context) and B (signature), each as a short name. The words are a first draft for Narrative to edit; the player is the fighter, so they name what you do. Hybrids (LT+RB, LB+RB, LT+LB) are reserved and not in this file: a held pair reads as its newer button. Costs are not here: they are Game Design's data (the zip strike is 20 ki, by Orb's ruling).",
+  "order": ["martial", "defensive", "energy", "charging", "manoeuvre"],
+  "stances": {
+    "martial": { "mask": 0, "name": "MARTIAL", "title": "Martial arts", "enter": "Hold nothing",
+      "cells": { "x": "Light strikes", "y": "Heavy strikes", "a": "Grab and throw", "b": "Signature" } },
+    "defensive": { "mask": 1, "name": "DEFENSIVE", "title": "Defensive", "enter": "Hold the guard button",
+      "cells": { "x": "Check", "y": "Push", "a": "Reversal", "b": "Counter" } },
+    "energy": { "mask": 2, "name": "ENERGY", "title": "Energy arts", "enter": "Hold the energy button",
+      "cells": { "x": "Bolts", "y": "Charged shot", "a": "Mine", "b": "Beam" } },
+    "charging": { "mask": 4, "name": "CHARGING", "title": "Charging", "enter": "Hold the power button",
+      "cells": { "x": "Quick special", "y": "Strong special", "a": "Utility special", "b": "Ultimate" } },
+    "manoeuvre": { "mask": 8, "name": "MANOEUVRE", "title": "Manoeuvre", "enter": "Hold the dodge button",
+      "cells": { "x": "Zip strike", "y": "Zip heavy", "a": "Zip tackle", "b": "Terrain art" } }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/ui-stances",
+  "title": "ui stances (schema 1)",
+  "description": "ui/data/stances.json: the five stances and what the four face buttons do in each (docs/ui/hud-spec.md section 36). DRAFT for Tools: copy to tools/schemas/ui-stances.schema.json and add a map.json rule { \"match\": \"ui/data/stances.json\", \"schema\": \"ui-stances.schema.json\" }. Closed. `order` lists the five ids; `stances` has exactly those ids, each with the intent's stanceMask bit (0, 1, 2, 4 or 8), the badge word, the full name, how it is entered and the four cells.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": { "^_": {} },
+  "required": ["schema", "order", "stances"],
+  "properties": {
+    "schema": { "const": 1 },
+    "note": { "type": "string" },
+    "order": { "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true, "items": { "enum": ["martial", "defensive", "energy", "charging", "manoeuvre"] } },
+    "stances": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["martial", "defensive", "energy", "charging", "manoeuvre"],
+      "properties": {
+        "martial": { "$ref": "#/$defs/stance" },
+        "defensive": { "$ref": "#/$defs/stance" },
+        "energy": { "$ref": "#/$defs/stance" },
+        "charging": { "$ref": "#/$defs/stance" },
+        "manoeuvre": { "$ref": "#/$defs/stance" }
+      }
+    }
+  },
+  "$defs": {
+    "stance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mask", "name", "title", "enter", "cells"],
+      "properties": {
+        "mask": { "enum": [0, 1, 2, 4, 8] },
+        "name": { "type": "string", "minLength": 1, "maxLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "enter": { "type": "string", "minLength": 1 },
+        "cells": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "a", "b"],
+          "properties": {
+            "x": { "type": "string", "minLength": 1 },
+            "y": { "type": "string", "minLength": 1 },
+            "a": { "type": "string", "minLength": 1 },
+            "b": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

@@ -85,6 +85,25 @@ static func stance(ci: CanvasItem, idx: int, c: Vector2, size: float, col: Color
 			arrow(ci, Vector2(x0 + size * 0.24, c.y), size * 0.76, w * 0.9, col)
 
 
+## The five stance icons (UiStance kinds): martial arts the press chevrons, defensive the shield, manoeuvre the curved dash (the three the stance chips
+## have always shown), energy a blast leaving a point, charging the rising carets. Plain shapes, each its own silhouette.
+static func stance5(ci: CanvasItem, kind: int, c: Vector2, size: float, col: Color, width: float = 0.0) -> void:
+	var w: float = width if width > 0.0 else maxf(2.0, size * 0.11)
+	match kind:
+		0:
+			stance(ci, 0, c, size, col, width)
+		1:
+			stance(ci, 1, c, size, col, width)
+		2:
+			ci.draw_circle(c + Vector2(-size * 0.26, 0.0), size * 0.15, col)
+			line(ci, c + Vector2(-size * 0.1, 0.0), c + Vector2(size * 0.44, 0.0), w * 1.1, col, true)
+			ci.draw_arc(c + Vector2(-size * 0.26, 0.0), size * 0.3, deg_to_rad(-60.0), deg_to_rad(60.0), 8, Color(col, 0.7), maxf(1.5, w * 0.7), true)
+		3:
+			caret_up(ci, c + Vector2(0.0, size * 0.04), size * 0.62, col)
+		_:
+			stance(ci, 2, c, size, col, width)
+
+
 ## Eye with a slash: HIDDEN.
 static func eye_slash(ci: CanvasItem, c: Vector2, size: float, col: Color) -> void:
 	var w: float = maxf(2.0, size * 0.1)

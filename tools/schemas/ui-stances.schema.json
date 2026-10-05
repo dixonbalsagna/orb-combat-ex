@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/ui-stances",
+  "title": "ui stances (schema 1)",
+  "description": "ui/data/stances.json: the five stances and what the four face buttons do in each (docs/ui/hud-spec.md section 36). `order` lists the five ids (each once); `stances` has exactly those ids. Each stance has its mask (the intent's stanceMask bit: martial 0, defensive 1, energy 2, charging 4, manoeuvre 8, so the masks are unique), the badge word (`name`, at most 12 characters), the full name (`title`), how it is entered (`enter`) and the four cells x, y, a and b (a short name each). Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "order",
+    "stances"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "order": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "martial",
+          "defensive",
+          "energy",
+          "charging",
+          "manoeuvre"
+        ]
+      },
+      "description": "The five stance ids, each once, in the order the HUD lists them."
+    },
+    "stances": {
+      "type": "object",
+      "required": [
+        "martial",
+        "defensive",
+        "energy",
+        "charging",
+        "manoeuvre"
+      ],
+      "properties": {
+        "martial": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/stance"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "mask": {
+                  "const": 0,
+                  "description": "The intent's stanceMask bit for martial."
+                }
+              }
+            }
+          ]
+        },
+        "defensive": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/stance"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "mask": {
+                  "const": 1,
+                  "description": "The intent's stanceMask bit for defensive."
+                }
+              }
+            }
+          ]
+        },
+        "energy": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/stance"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "mask": {
+                  "const": 2,
+                  "description": "The intent's stanceMask bit for energy."
+                }
+              }
+            }
+          ]
+        },
+        "charging": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/stance"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "mask": {
+                  "const": 4,
+                  "description": "The intent's stanceMask bit for charging."
+                }
+              }
+            }
+          ]
+        },
+        "manoeuvre": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/stance"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "mask": {
+                  "const": 8,
+                  "description": "The intent's stanceMask bit for manoeuvre."
+                }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  },
+  "$defs": {
+    "stance": {
+      "type": "object",
+      "required": [
+        "mask",
+        "name",
+        "title",
+        "enter",
+        "cells"
+      ],
+      "properties": {
+        "mask": {
+          "enum": [
+            0,
+            1,
+            2,
+            4,
+            8
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cells": {
+          "type": "object",
+          "required": [
+            "x",
+            "y",
+            "a",
+            "b"
+          ],
+          "properties": {
+            "x": {
+              "type": "string",
+              "minLength": 1
+            },
+            "y": {
+              "type": "string",
+              "minLength": 1
+            },
+            "a": {
+              "type": "string",
+              "minLength": 1
+            },
+            "b": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  }
+}

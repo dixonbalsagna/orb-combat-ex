@@ -112,6 +112,10 @@
       "schema": "ui-faces.schema.json"
     },
     {
+      "match": "ui/data/stances.json",
+      "schema": "ui-stances.schema.json"
+    },
+    {
       "match": "ui/data/glyphs.json",
       "schema": "ui-glyphs.schema.json"
     },

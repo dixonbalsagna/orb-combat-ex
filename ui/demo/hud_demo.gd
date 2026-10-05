@@ -95,6 +95,16 @@ func _ready() -> void:
 			hud.set_option("control_scheme", str(args["preset"]))
 	if args.has("ready"):
 		hud.consume({"type": "availability", "actor": 0, "action": "transform", "available": true})
+	if args.has("mask") or args.has("rmask"):
+		# The held stance buttons, faked (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8): --mask=N for the first fighter, --rmask=N for the rival.
+		hud.hub.patch(0, {"stance_mask": int(args.get("mask", "0"))})
+		hud.hub.patch(1, {"stance_mask": int(args.get("rmask", "0"))})
+	if args.has("beats"):
+		# The beat ring (--beats=SECONDS to contact of a blow on the rival, and one a little later on the first fighter): turns the option on.
+		hud.set_option("beat_ring", true)
+		var bt: float = float(args["beats"]) if str(args["beats"]) != "1" else 0.25
+		hud.hub.patch(1, {"beats": [bt]})
+		hud.hub.patch(0, {"beats": [bt + 0.12]})
 	if args.has("energy"):
 		# The energy mode on (the mode control held): the plate's blast variants and mark (--energy=SLOT, with --heavy for the big blast).
 		hud.hub.patch(int(args["energy"]) if str(args["energy"]) != "" else 0, {"energy": true})

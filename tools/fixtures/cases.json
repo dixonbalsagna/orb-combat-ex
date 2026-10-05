@@ -59164,6 +59164,3155 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "ui-stances-live-valid",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-stances-key-required-order",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          },
+          "del": [
+            "/order"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-stances-key-required-stances",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ]
+          },
+          "del": [
+            "/stances"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-stances-key-required-schema",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          },
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-stances-schema-version",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 2,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "ui-stances-unknown-key",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            },
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "ui-stances-underscore-key-ok",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            },
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-stances-note-ok",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            },
+            "/note": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-stances-note-type",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            },
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "ui-stances-order-too-short",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/order"
+      }
+    },
+    {
+      "id": "ui-stances-order-too-long",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre",
+              "martial"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/order"
+      }
+    },
+    {
+      "id": "ui-stances-order-duplicate",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "martial",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/order/1"
+      }
+    },
+    {
+      "id": "ui-stances-order-unknown-id",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "brawler"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/order/4"
+      }
+    },
+    {
+      "id": "ui-stances-order-another-order-ok",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "manoeuvre",
+              "charging",
+              "energy",
+              "defensive",
+              "martial"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-stances-stance-missing",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/stances"
+      }
+    },
+    {
+      "id": "ui-stances-stance-unknown-id",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              },
+              "brawler": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stances/brawler"
+      }
+    },
+    {
+      "id": "ui-stances-stance-key-required-mask",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/stances/energy"
+      }
+    },
+    {
+      "id": "ui-stances-stance-key-required-name",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/stances/energy"
+      }
+    },
+    {
+      "id": "ui-stances-stance-key-required-title",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/stances/energy"
+      }
+    },
+    {
+      "id": "ui-stances-stance-key-required-enter",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/stances/energy"
+      }
+    },
+    {
+      "id": "ui-stances-stance-key-required-cells",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy"
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/stances/energy"
+      }
+    },
+    {
+      "id": "ui-stances-stance-unknown-key",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                },
+                "mood": 1
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stances/energy/mood"
+      }
+    },
+    {
+      "id": "ui-stances-stance-underscore-key-ok",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                },
+                "_why": "comment"
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-stances-mask-not-a-bit",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 3,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/stances/energy/mask"
+      }
+    },
+    {
+      "id": "ui-stances-mask-type",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": "2",
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/stances/energy/mask"
+      }
+    },
+    {
+      "id": "ui-stances-mask-differs-from-the-stances-bit",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 4,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/stances/energy/mask"
+      }
+    },
+    {
+      "id": "ui-stances-mask-twice",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 2,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/stances/defensive/mask"
+      }
+    },
+    {
+      "id": "ui-stances-mask-martial-is-zero",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 1,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/stances/martial/mask"
+      }
+    },
+    {
+      "id": "ui-stances-name-empty",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/stances/energy/name"
+      }
+    },
+    {
+      "id": "ui-stances-name-too-long",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ABCDEFGHIJKLM",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxLength",
+        "pointer": "/stances/energy/name"
+      }
+    },
+    {
+      "id": "ui-stances-name-longest-ok",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ABCDEFGHIJKL",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-stances-name-type",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": 7,
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stances/energy/name"
+      }
+    },
+    {
+      "id": "ui-stances-title-empty",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/stances/energy/title"
+      }
+    },
+    {
+      "id": "ui-stances-enter-empty",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/stances/energy/enter"
+      }
+    },
+    {
+      "id": "ui-stances-cells-key-required",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/stances/energy/cells"
+      }
+    },
+    {
+      "id": "ui-stances-cells-unknown-key",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b",
+                  "z": "a"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stances/energy/cells/z"
+      }
+    },
+    {
+      "id": "ui-stances-cell-empty",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": "energy x",
+                  "y": "energy y",
+                  "a": "",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/stances/energy/cells/a"
+      }
+    },
+    {
+      "id": "ui-stances-cell-type",
+      "schema": "ui-stances.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/stances.json",
+          "set": {
+            "/schema": 1,
+            "/order": [
+              "martial",
+              "defensive",
+              "energy",
+              "charging",
+              "manoeuvre"
+            ],
+            "/stances": {
+              "martial": {
+                "mask": 0,
+                "name": "MARTIAL",
+                "title": "martial",
+                "enter": "Hold martial",
+                "cells": {
+                  "x": "martial x",
+                  "y": "martial y",
+                  "a": "martial a",
+                  "b": "martial b"
+                }
+              },
+              "defensive": {
+                "mask": 1,
+                "name": "DEFENSIVE",
+                "title": "defensive",
+                "enter": "Hold defensive",
+                "cells": {
+                  "x": "defensive x",
+                  "y": "defensive y",
+                  "a": "defensive a",
+                  "b": "defensive b"
+                }
+              },
+              "energy": {
+                "mask": 2,
+                "name": "ENERGY",
+                "title": "energy",
+                "enter": "Hold energy",
+                "cells": {
+                  "x": [
+                    "Bolts"
+                  ],
+                  "y": "energy y",
+                  "a": "energy a",
+                  "b": "energy b"
+                }
+              },
+              "charging": {
+                "mask": 4,
+                "name": "CHARGING",
+                "title": "charging",
+                "enter": "Hold charging",
+                "cells": {
+                  "x": "charging x",
+                  "y": "charging y",
+                  "a": "charging a",
+                  "b": "charging b"
+                }
+              },
+              "manoeuvre": {
+                "mask": 8,
+                "name": "MANOEUVRE",
+                "title": "manoeuvre",
+                "enter": "Hold manoeuvre",
+                "cells": {
+                  "x": "manoeuvre x",
+                  "y": "manoeuvre y",
+                  "a": "manoeuvre a",
+                  "b": "manoeuvre b"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stances/energy/cells/x"
+      }
     }
   ],
   "text": [

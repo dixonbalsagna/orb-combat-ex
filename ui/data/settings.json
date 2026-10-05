@@ -20,6 +20,7 @@
       "energy_style",
       "energy_style_p2",
       "show_recipe",
+      "beat_ring",
       "join_prompt",
       { "action": "remap", "label": "Remap controls", "value": "Open", "help": "Change which button or key does what, for the layout you are using.", "needs": "remap" },
       { "action": "remap_two", "label": "Remap player 2's controls", "value": "Open", "help": "Change which button or key does what for player two, when two people play.", "needs": "remap" }

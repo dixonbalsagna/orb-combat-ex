@@ -162,6 +162,7 @@ var _howto_page := 0
 var _l_letter: UiLayer
 var _l_strip_base: UiLayer
 var _l_crown: UiLayer
+var _l_beat: UiLayer                 # the beat ring (UiBeatRing): an option, off by default
 var _l_plate: Array = []
 var _l_sil: Array = []
 var _l_toll: UiLayer
@@ -199,6 +200,7 @@ func _ready() -> void:
 	_div_dark = _bar()
 	_div_light = _bar()
 	_l_crown = _layer(_paint_crown)
+	_l_beat = _layer(_paint_beat)
 	for i in range(2):
 		_l_chips.append(_chip_layer(i))
 	_l_struggle = _layer(_paint_struggle)
@@ -300,7 +302,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_letter, _l_strip_base, _l_crown, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb]
+	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -469,6 +471,9 @@ func _update_layers() -> void:
 			if pop_on or m.parry_t >= 0.0 or m.chain_t >= 0.0 or (m.brink and bool(opts["brink_cue"])):
 				crown_on = true
 	_l_crown.update_sig(_frame if crown_on else null)
+	# The beat ring: only with the option on, with anchors, outside a sim pause and the intro; redrawn in twentieths of its closing.
+	var beat_sig: Array = UiBeatRing.sig(hub.models) if (bool(opts["beat_ring"]) and anchor_fn.is_valid() and not hub.sim_paused and not hub.intro_active) else []
+	_l_beat.update_sig([reduced, beat_sig] if not beat_sig.is_empty() else null)
 
 	for m in hub.models:
 		if m.slot >= _l_plate.size():
@@ -478,7 +483,7 @@ func _update_layers() -> void:
 		_l_plate[m.slot].update_sig([m.name, m.ai, m.stance, m.tier, int(m.momentum), int(m.charge), int(m.ego), m.hidden, m.lost_trail,
 			m.charging, m.chain_n if m.chain_t >= 0.0 else 0, m.brink, m.shame, full, _plate_alpha(m), pulse, m.you_label,
 			m.weight, m.weight_fallback_t < 1.5, m.sig_queued, m.sig_funded, int(m.sig_cap_t * 6.0) if m.sig_funded else 0, m.sig_note if m.sig_note_t < 1.4 else "",
-			0 if reduced else int(clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0) * 5.0), int(m.last_stand_left * 6.0), int(m.last_stand_dur), m.energy])
+			0 if reduced else int(clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0) * 5.0), int(m.last_stand_left * 6.0), int(m.last_stand_dur), m.energy, m.stance_kind])
 		_l_sil[m.slot].update_sig(_sil_sig(m, reduced) if layout.silhouette_on else null)
 
 	var a_toll: float = lerpf(UiLook.TOLL_REST_ALPHA, 1.0, clampf(1.0 - hub.toll_age / UiLook.TOLL_SHOW, 0.0, 1.0)) * (0.45 if cin else 1.0)
@@ -636,6 +641,19 @@ func _paint_crown(ci: CanvasItem) -> void:
 			continue
 		var R: float = UiCrown.radius(float(a.get("h", 90.0)), layout.s)
 		UiCrown.draw(ci, m, a["pos"], R, _t, layout.s, o)
+
+
+func _paint_beat(ci: CanvasItem) -> void:
+	var reduced: bool = bool(opts["reduced_motion"])
+	for m in hub.models:
+		if UiBeatRing.nearest(m.beats).is_empty():
+			continue
+		var a: Dictionary = anchor_fn.call(m.slot)
+		if a.is_empty() or not bool(a.get("visible", true)):
+			continue
+		var striker: UiFighterModel = hub.models[1 - m.slot] if hub.models.size() == 2 else null
+		var human_strikes: bool = striker != null and not striker.ai
+		UiBeatRing.draw(ci, m, a["pos"], UiCrown.radius(float(a.get("h", 90.0)), layout.s), human_strikes, layout.s, reduced)
 
 
 func _paint_plate(ci: CanvasItem, slot: int) -> void:
@@ -2339,7 +2357,7 @@ func _touch_intro_alpha() -> float:
 
 ## The layers that are the fight's HUD (every one but the menus and cards over it and the skip hint): hidden through the intro phase.
 func _play_layers() -> Array:
-	var skip: Array = [_l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_intro]
+	var skip: Array = [_l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_intro, _l_events]   # the events layer keeps the captions of the intro's spoken lines
 	skip.append_array(_l_form)   # the chips fold the intro alpha into their holders
 	var out: Array = []
 	for l in _all_layers():

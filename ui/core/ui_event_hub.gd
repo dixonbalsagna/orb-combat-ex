@@ -466,6 +466,14 @@ func patch(actor: int, d: Dictionary) -> void:
 		m.stance = clampi(int(d["stance"]), 0, 3)
 		if m.stance != old_stance:
 			m.stance_prompt_t = 0.0   # the stance prompt shows for a moment whenever the stance changes
+	if d.has("stance_mask"):
+		var old_kind: int = m.stance_kind
+		m.stance_mask = int(d["stance_mask"])
+		m.stance_kind = UiStance.kind_of_mask(m.stance_mask)
+		if m.stance_kind != old_kind:
+			m.stance_flash_t = 0.0   # the badge pulses when the stance changes, so a rival's change is seen
+	if d.has("beats") and d["beats"] is Array:
+		m.beats = d["beats"]
 	for act in ["transform", "special"]:
 		if d.has("hold_" + act):
 			m.hold[act] = clampf(float(d["hold_" + act]), 0.0, 1.0)

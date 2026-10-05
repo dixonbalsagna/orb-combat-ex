@@ -45,6 +45,8 @@ func _run() -> void:
 	await _intro_laststand_rules()
 	await _energy_rules()
 	await _incoming_rules()
+	await _stance_badge_rules()
+	await _beat_ring_rules()
 	await _touch_controls_rules()
 	await _settings_rules()
 	_touch_full_rules()
@@ -2000,11 +2002,14 @@ func _intro_laststand_rules() -> void:
 	hud.consume({"type": "intro_start", "dur": 5.0, "delay": 0.5})
 	await _frames(hud, 3)
 	var hidden_ok := true
-	for l in [hud._l_plate[0], hud._l_plate[1], hud._l_toll, hud._l_events, hud._l_strip_base, hud._l_crown, hud._l_hints[0], hud._l_prompts[0], hud._l_you, hud._l_touchctl]:
+	for l in [hud._l_plate[0], hud._l_plate[1], hud._l_toll, hud._l_strip_base, hud._l_crown, hud._l_hints[0], hud._l_prompts[0], hud._l_you, hud._l_touchctl]:
 		hidden_ok = hidden_ok and is_equal_approx((l as Control).modulate.a, 0.0)
-	_ok(hidden_ok and is_equal_approx(hud._l_pmenu.modulate.a, 1.0) and is_equal_approx(hud._l_fb.modulate.a, 1.0), "intro: the fight's HUD is hidden through the intro (the menus are not)")
+	_ok(hidden_ok and is_equal_approx(hud._l_pmenu.modulate.a, 1.0) and is_equal_approx(hud._l_fb.modulate.a, 1.0) and is_equal_approx(hud._l_events.modulate.a, 1.0), "intro: the fight's HUD is hidden through the intro (the menus and the events layer, which carries the captions of the spoken lines, are not)")
 	_ok(hud.intro_skip_text() == "" and hud._l_intro.sig == null, "intro: no skip hint until a press can skip (the data's delay)")
-	await _frames(hud, 40)
+	hud.consume({"type": "bark", "speaker": 1, "text": "Took you long enough.", "cues": []})
+	await _frames(hud, 6)
+	_ok(hud._l_events.sig != null and not hud.hub.barks.is_empty(), "intro: a spoken line of the intro still gets its caption while the rest of the HUD is hidden")
+	await _frames(hud, 34)
 	_ok(hud.intro_skip_text() == "Press any key to skip" and hud._l_intro.sig != null, "intro: the skip hint shows once a press can skip, in a keyboard player's words")
 	hud.set_device(0, "xbox")
 	_ok(hud.intro_skip_text() == "Press any button to skip", "intro: a pad player's words say button")
@@ -2406,6 +2411,212 @@ func _incoming_rules() -> void:
 			back = ch
 	_ok(str(back.get("kind", "")) == "" and (hud._l_chips[0] as Control).size.is_equal_approx(UiSplit.pointer_size(hud.layout.s, hud._chip_big)), "incoming hud: when it is not wanted the ordinary pointer chip comes back at its own size")
 	_ok(record_log["first"] == _incoming_record(Vector2(1280, 720), _inc(true, 2.0 - 0.0, Vector2(1.0, 0.0)), {}) or not (record_log["first"] as Dictionary).is_empty(), "incoming hud: the HUD only reads the record (it is rebuilt by the host every frame)")
+	hud.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
+
+
+## The five-stance badge (docs/ui/hud-spec.md section 36): the words file, the mask to a stance, the icons, the plate's chip for both fighters, the flash on a change.
+func _stance_badge_rules() -> void:
+	var sd: Dictionary = UiData.stances()
+	var order: Array = sd.get("order", [])
+	_ok(order == ["martial", "defensive", "energy", "charging", "manoeuvre"] and (sd["stances"] as Dictionary).size() == 5, "stances: the words file has the five stances in Orb's order")
+	var cells_ok := true
+	var masks_ok := true
+	var words: Array = []
+	for i in range(5):
+		var row: Dictionary = sd["stances"][order[i]]
+		for b in ["x", "y", "a", "b"]:
+			cells_ok = cells_ok and str((row["cells"] as Dictionary).get(b, "")) != ""
+		masks_ok = masks_ok and int(row["mask"]) == UiStance.MASKS[i] and UiStance.id(i) == order[i]
+		words.append(UiStance.word(i))
+	_ok(cells_ok and masks_ok, "stances: every stance has a name for X, Y, A and B and the mask the intent carries (0, 1, 2, 4, 8)")
+	_ok(words == ["MARTIAL", "DEFENSIVE", "ENERGY", "CHARGING", "MANOEUVRE"] and UiStance.cell(0, "b") == "Signature" and UiStance.cell(1, "x") == "Check" and UiStance.cell(4, "x") == "Zip strike" and UiStance.title(2) == "Energy arts", "stances: the badge words and the cells of section 10 of the melee notes")
+	_ok(UiStance.kind_of_mask(0) == 0 and UiStance.kind_of_mask(1) == 1 and UiStance.kind_of_mask(2) == 2 and UiStance.kind_of_mask(4) == 3 and UiStance.kind_of_mask(8) == 4 and UiStance.kind_of_mask(10) == 4 and UiStance.kind_of_mask(3) == 1 and UiStance.kind_of_mask(9) == 4 and UiStance.kind_of_mask(12) == 3, "stances: a held mask reads as a stance (RT dominates, then LT; a hybrid reads as its newer button)")
+	var cols := {}
+	for i in range(5):
+		cols[UiStance.col(i).to_html()] = true
+	_ok(cols.size() == 5, "stances: five different colours (and five different icons and words, so colour is never the only cue)")
+	# The icons draw.
+	var layer := UiLayer.new()
+	root.add_child(layer)
+	var drawn := {"n": 0}
+	layer.painter = func(ci: CanvasItem) -> void:
+		for k in range(6):
+			UiIcons.stance5(ci, k, Vector2(30.0 + 50.0 * float(k), 30.0), 30.0, Color.WHITE)
+		drawn["n"] += 1
+	layer.sig = 1
+	layer.queue_redraw()
+	await process_frame
+	await process_frame
+	layer.queue_free()
+	_ok(drawn["n"] >= 1, "stances: the five stance icons draw (and an unknown kind falls back to the manoeuvre icon)")
+	# The plate carries the badge for BOTH fighters, the rival's always, and it follows the mask.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	await _frames(hud, 3)
+	_ok(hud.hub.model(0).stance_kind == 0 and hud.hub.model(1).stance_kind == 0, "stance badge: with nothing held both fighters are martial arts")
+	var r0: int = hud._l_plate[0].redraws
+	var r1: int = hud._l_plate[1].redraws
+	hud.hub.patch(0, {"stance_mask": 4})
+	hud.hub.patch(1, {"stance_mask": 2})
+	await _frames(hud, 2)
+	_ok(hud.hub.model(0).stance_kind == 3 and hud.hub.model(1).stance_kind == 2 and hud._l_plate[0].redraws > r0 and hud._l_plate[1].redraws > r1, "stance badge: each plate redraws with the held stance, the AI rival's too (always shown, no setting)")
+	_ok(hud.hub.model(1).stance_flash_t < 0.2, "stance badge: a change of the rival's stance pulses the badge so it is seen")
+	var r2: int = hud._l_plate[1].redraws
+	hud.hub.patch(1, {"stance_mask": 2})
+	await _frames(hud, 90)
+	var settled: int = hud._l_plate[1].redraws - r2
+	_ok(settled <= 12, "stance badge: the same stance again costs no redraws once the pulse ends (%d in 1.5 s)" % settled)
+	hud.hub.patch(1, {"stance_mask": 0})
+	await _frames(hud, 2)
+	_ok(hud.hub.model(1).stance_kind == 0, "stance badge: letting go returns it to martial arts")
+	hud.queue_free()
+	await process_frame
+	# The bridge reads the mask from the intent (and a missing one is martial arts).
+	var mm := UiFighterModel.new()
+	mm.setup(0, "protagonist", "KAI")
+	var hub := _hub()
+	hub.patch(0, {"stance_mask": 8})
+	_ok(hub.model(0).stance_kind == 4 and hub.model(0).stance_mask == 8, "stance badge: the hub takes the mask from a patch")
+	root.size = Vector2i(1280, 720)
+
+
+class _FakeBeat:
+	var op := "strike"
+	var done := false
+	var t := 0.0
+	var args := {"a": "A"}
+
+
+class _FakeEx:
+	var A = null
+	var D = null
+	var t := 1.0
+	var beats: Array = []
+
+
+class _FakeDir:
+	var ex = null
+
+
+class _FakeSim:
+	var dirS = _FakeDir.new()
+	var fighters: Array = []
+
+
+## The beat ring (docs/ui/hud-spec.md section 36): the windows from the exchange, the ring on either fighter, solid or dashed by who throws it, reduced motion.
+func _beat_ring_rules() -> void:
+	_ok(UiData.options()["beat_ring"]["default"] == false and UiData.options()["beat_ring"].get("accessibility", false), "beat ring: an option, off by default")
+	UiSettings.two_humans = false
+	var keys := []
+	for r in UiSettings.rows():
+		keys.append(r["key"])
+	_ok(keys.has("beat_ring"), "beat ring: it is in Settings")
+	# The windows come from the director's exchange: the pending strikes by either fighter, on the one struck.
+	var S := _FakeSim.new()
+	var fa := Object.new()
+	var fd := Object.new()
+	S.fighters = [fa, fd]
+	var ex := _FakeEx.new()
+	ex.A = fa
+	ex.D = fd
+	ex.t = 1.0
+	var b1 := _FakeBeat.new()
+	b1.t = 1.2
+	var b2 := _FakeBeat.new()
+	b2.args = {"a": "D"}
+	b2.t = 1.3
+	var b3 := _FakeBeat.new()
+	b3.op = "chainStrike"
+	b3.t = 1.4
+	var b4 := _FakeBeat.new()
+	b4.t = 1.9
+	var b5 := _FakeBeat.new()
+	b5.done = true
+	b5.t = 1.1
+	var b6 := _FakeBeat.new()
+	b6.op = "move"
+	b6.t = 1.1
+	ex.beats = [b1, b2, b3, b4, b5, b6]
+	S.dirS.ex = ex
+	var w: Array = UiSimBridge.beat_windows(S)
+	_ok((w[1] as Array).size() == 2 and absf(float(w[1][0]) - 0.2) < 0.001 and absf(float(w[1][1]) - 0.4) < 0.001 and (w[0] as Array).size() == 1 and absf(float(w[0][0]) - 0.3) < 0.001, "beat ring: the attacker's strikes and chained strikes land on the defender, the defender's on the attacker; a blow too far off, a done one and a move are left out")
+	S.dirS.ex = null
+	_ok(UiSimBridge.beat_windows(S) == [[], []], "beat ring: no exchange, no windows")
+	# The ring's own rules.
+	_ok(UiBeatRing.nearest([0.3, 0.1, 0.9, -0.5, 0.2]) == [0.1, 0.2] and UiBeatRing.nearest([]) == [] and UiBeatRing.nearest([0.45])[0] == 0.45, "beat ring: the nearest two blows within the lead, soonest first")
+	var m := UiFighterModel.new()
+	m.slot = 0
+	m.beats = [0.3]
+	var m2 := UiFighterModel.new()
+	m2.slot = 1
+	var sig_a: Array = UiBeatRing.sig([m, m2])
+	m.beats = [0.2]
+	var sig_b: Array = UiBeatRing.sig([m, m2])
+	m.beats = [0.201]
+	var sig_c: Array = UiBeatRing.sig([m, m2])
+	_ok(sig_a != sig_b and sig_b == sig_c and UiBeatRing.sig([m2]) == [], "beat ring: it redraws in twentieths of its closing, not every frame, and nothing with no blow pending")
+	# Drawing: both looks, solid and dashed, moving and reduced.
+	var layer := UiLayer.new()
+	root.add_child(layer)
+	var drawn := {"n": 0}
+	for reduced in [false, true]:
+		for human in [true, false]:
+			var mm := UiFighterModel.new()
+			mm.beats = [0.3, 0.05]
+			var rd: bool = reduced
+			var hm: bool = human
+			layer.painter = func(ci: CanvasItem) -> void:
+				UiBeatRing.draw(ci, mm, Vector2(200.0, 200.0), 60.0, hm, 1.0, rd)
+				drawn["n"] += 1
+			layer.sig = [reduced, human]
+			layer.queue_redraw()
+			await process_frame
+			await process_frame
+	layer.queue_free()
+	_ok(drawn["n"] >= 4, "beat ring: solid and dashed rings draw, closing and still")
+	# In the HUD.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.anchor_fn = func(slot): return {"pos": Vector2(384.0 + 512.0 * float(slot), 396.0), "h": 80.0, "visible": true}
+	await _frames(hud, 3)
+	hud.hub.patch(1, {"beats": [0.3]})
+	hud.hub.patch(0, {"beats": [0.2]})
+	await _frames(hud, 2)
+	_ok(hud._l_beat.sig == null, "beat ring: with the option off nothing is drawn, whatever the sim says")
+	hud.set_option("beat_ring", true)
+	await _frames(hud, 2)
+	_ok(hud._l_beat.sig != null, "beat ring: with it on, a ring closes on each fighter about to be struck (the rival for the player's blows, the player for the rival's)")
+	var rb: int = hud._l_beat.redraws
+	for i in range(30):
+		hud.hub.patch(1, {"beats": [0.3 - float(i) / 100.0]})
+		hud.hub.patch(0, {"beats": [0.2 - float(i) / 150.0]})
+		await _frames(hud, 1)
+	var rate: int = hud._l_beat.redraws - rb
+	_ok(rate >= 3 and rate <= 20, "beat ring: it redraws about twenty times a second at most while it closes (%d in half a second)" % rate)
+	hud.set_option("reduced_motion", true)
+	hud.hub.patch(1, {"beats": [0.3]})
+	await _frames(hud, 2)
+	_ok(hud._l_beat.sig != null and bool((hud._l_beat.sig as Array)[0]), "beat ring: reduced motion gets the still ring (it fills, it does not shrink)")
+	hud.set_option("reduced_motion", false)
+	hud.hub.patch(1, {"beats": []})
+	hud.hub.patch(0, {"beats": []})
+	await _frames(hud, 2)
+	_ok(hud._l_beat.sig == null, "beat ring: it goes when no blow is pending")
+	hud.hub.patch(1, {"beats": [0.3]})
+	hud.consume({"type": "pause_start", "kind": "transform", "actor": 1, "version": "full", "dur": 30.0})
+	await _frames(hud, 2)
+	_ok(hud._l_beat.sig == null, "beat ring: and in a sim pause")
+	hud.consume({"type": "pause_end", "kind": "transform"})
 	hud.queue_free()
 	await process_frame
 	root.size = Vector2i(1280, 720)
