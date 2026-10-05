@@ -98,6 +98,9 @@ var _rush_pin: Array = [false, false]
 var lunge_holds: int = 0                 # lunges held for (counted for the tests); docs/camera/lunge-framing.md
 var _lg_slot: int = -1                   # the attacker of a lunge being held for, else -1
 var _lg_tgt: int = -1
+var _wd_slot: int = -1                   # a one-way lunge's attacker during his wind-up (the incoming read counts down; no hold)
+var _wd_tgt: int = -1
+var _wd_until: float = -1.0e9
 var _lg_until: float = -1.0e9            # the hold ends at this time
 var _lg_strike: float = -1.0e9           # the sim time of the strike (end of the move out)
 var _lg_sep: float = 0.0                 # the separation when the cue came (the one view's zoom holds at it)
@@ -216,6 +219,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_rush_pin = [false, false]
 	_lg_slot = -1
 	_lg_until = -1.0e9
+	_wd_slot = -1
+	_wd_until = -1.0e9
 	_nopin_until = [-1.0e9, -1.0e9]
 	_lead = [0.0, 0.0]
 	_pn_earned_t = -1.0e9
@@ -638,10 +643,14 @@ func _update_orientation(S: SimState) -> void:
 
 # ---------------------------------------------------------------------------------------------------- shots
 
-## A lunge or a charge begins (Encounter's cue: kind lunge_light, lunge_heavy, charge_light or charge_heavy; actor, target,
-## amount = the wind-up's ticks, n = the move's ticks). A lunge goes out and comes back inside about a second, so the camera
-## holds instead of chasing; a charge is a one-way flight at a capped speed that the pane follows. Neither is a rush to cut
-## ahead for.
+## A lunge, a zip or a charge begins (Encounter's cue: kind lunge_light, lunge_heavy, charge_light, charge_heavy, and the
+## zip's zip_light and zip_heavy; actor, target, amount = the wind-up's ticks, n = the move's ticks).
+## - A zip goes out and comes back inside about a second, so the camera holds instead of chasing (docs/camera/lunge-framing.md).
+## - A lunge (B0's, one way: he ends 2.5 body heights from the rival and stays) is followed as for any move; the cue only
+##   starts the rival's incoming countdown at the wind-up. (Holding the camera through its wind-up was measured: 68 more
+##   rush-class jolts in 13 matches, the catch-up when it let go.)
+## - A charge is a one-way flight at a capped speed, treated as any rush (the cut-ahead for a long one).
+## A lunge or a zip is not a rush to cut ahead for.
 func _read_move_cue(S: SimState, ev, kind: String) -> void:
 	var la: int = int(_ef(ev, "actor", -1))
 	var lt: int = int(_ef(ev, "target", -1))
@@ -650,9 +659,15 @@ func _read_move_cue(S: SimState, ev, kind: String) -> void:
 	var wind: float = float(_ef(ev, "amount", 0))
 	var mv: float = float(_ef(ev, "n", 0))
 	if kind.begins_with("charge"):
-		_nopin_until[la] = time + (wind + mv) * DT + 0.5
-		return
+		return   # a charge is a rush as before: a long one is cut ahead for (measured: following it costs 230 jolts in 13 matches)
 	if solo_kind != "" or _ov_kind != "" or fold_active or intro_active or _slam_slot >= 0:
+		return
+	if not kind.begins_with("zip"):
+		_wd_slot = la
+		_wd_tgt = lt
+		_wd_until = time + (wind + 1.0) * DT   # the wind-up and the tick the move starts, so the incoming read has no gap
+		_lg_strike = S.T + (wind + mv) * DT
+		_nopin_until[la] = time + (wind + mv) * DT + 0.5
 		return
 	_lg_slot = la
 	_lg_tgt = lt
@@ -661,7 +676,7 @@ func _read_move_cue(S: SimState, ev, kind: String) -> void:
 	var d: float = SimWrap.sdx(S.fighters[la].x, S.fighters[lt].x)
 	_lg_sep = minf(absf(d), SimConst.HALF)
 	_lg_mid = S.fighters[la].x + d * 0.5
-	_nopin_until[la] = _lg_until
+	_nopin_until[la] = time + (wind + mv) * DT + 0.5
 	lunge_holds += 1
 
 
@@ -681,7 +696,7 @@ func _read_events(S: SimState, events: Array) -> void:
 	for ev in events:
 		if String(_ef(ev, "type", "")) == "cue":
 			var mk: String = String(_ef(ev, "kind", ""))
-			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy":
+			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy" or mk == "zip_light" or mk == "zip_heavy":
 				_read_move_cue(S, ev, mk)
 	for ev in events:
 		match String(_ef(ev, "type", "")):
@@ -1563,6 +1578,7 @@ func _update_pushes() -> void:
 		if _ov_t >= _ov_dur:
 			_ov_kind = ""
 			_cut_now = true
+			_oz_valid = false   # the cut back is a cut: the drawn zoom does not ease down from the close-up (a fighter 1,700 units away was off the screen for 0.3 s while it did)
 	for i in range(2):
 		if _hit_t[i] >= 0.0:
 			_hit_t[i] += DT
@@ -2132,7 +2148,7 @@ func _incoming_for(S: SimState, i: int, f: SplitFrame) -> Dictionary:
 	var r = other.rush
 	var aimed: bool = r != null and r.tgt == me
 	# A lunge's wind-up (he stands still, no rush yet): the countdown starts at the cue, not when he moves.
-	var winding: bool = not aimed and r == null and _lg_slot == 1 - i and _lg_tgt == i and S.T < _lg_strike
+	var winding: bool = not aimed and r == null and S.T < _lg_strike and ((_lg_slot == 1 - i and _lg_tgt == i) or (_wd_slot == 1 - i and _wd_tgt == i and time <= _wd_until))
 	var closing: float = maxf(0.0, -_sep_rate)
 	var eta: float = -1.0
 	if aimed:

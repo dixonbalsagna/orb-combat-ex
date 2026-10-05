@@ -196,9 +196,9 @@ func _run() -> void:
 	for rv in [["long rush", 6000.0, 20, false], ["short rush", 700.0, 14, false], ["long rush reduced", 6000.0, 20, true], ["very fast rush", 18000.0, 15, false]]:
 		await _scenario("rush %s" % rv[0], func(): return _rush_run(float(rv[1]), int(rv[2]), bool(rv[3])), {})
 	await _scenario("incoming closing", func(): return _incoming_closing(), {})
-	await _scenario("rush charge no cut", func(): return _rush_run(6000.0, 20, false, true), {})
-	for lv in [["one view", false, 0.0, true], ["split", true, 0.0, true], ["one view at 49 degrees", false, 49.0, true], ["one view at 49 degrees unheld", false, 49.0, false], ["one view unheld", false, 0.0, false], ["split unheld", true, 0.0, false]]:
-		await _scenario("lunge %s" % lv[0], func(): return _lunge_run(bool(lv[1]), float(lv[2]), bool(lv[3])), {})
+	await _scenario("rush charge", func(): return _rush_run(6000.0, 20, false, true), {})
+	for lv in [["zip one view", false, 0.0, true, false], ["zip split", true, 0.0, true, false], ["zip one view at 49 degrees", false, 49.0, true, false], ["zip one view at 49 degrees unheld", false, 49.0, false, false], ["zip one view unheld", false, 0.0, false, false], ["zip split unheld", true, 0.0, false, false], ["one way one view", false, 0.0, true, true], ["one way split", true, 0.0, true, true], ["one way one view at 49 degrees", false, 49.0, true, true]]:
+		await _scenario("lunge %s" % lv[0], func(): return _lunge_run(bool(lv[1]), float(lv[2]), bool(lv[3]), bool(lv[4])), {})
 	await _scenario("panel clash beams", func(): return _panel_clash_beams(), {})
 	await _scenario("panel beam plays", func(): return _panel_beam_plays(), {})
 	await _scenario("panel event and beam are one", func(): return _panel_dedupe(), {})
@@ -1251,7 +1251,7 @@ func _rush_run(dist: float, ticks: int, reduced: bool, charge: bool = false) -> 
 	_seed_rig()
 	for _i in range(300):
 		_tick_rig()
-	var long: bool = dist * 0.9 >= CamParams.RUSH_CUT_SCREENS * vw and not charge   # a charge is followed, not cut ahead for
+	var long: bool = dist * 0.9 >= CamParams.RUSH_CUT_SCREENS * vw
 	var A = _S.fighters[0]
 	var B = _S.fighters[1]
 	# the rusher starts `dist` from the arrival point, which is 150 units short of B (a rush shorter than the gap to B
@@ -1328,7 +1328,7 @@ func _rush_run(dist: float, ticks: int, reduced: bool, charge: bool = false) -> 
 ## layout change, the zoom and the focus barely move, he is back where his pane had him, and the rival's incoming read
 ## counts down from the cue. Without it (the cue withheld) the numbers are only recorded. `split`: a pair 6,000 apart
 ## (a real lunge is a mid-band move, so this is the artificial case that tests the pane's hold); `pitch` raises the camera.
-func _lunge_run(split: bool, pitch: float, hold: bool) -> Dictionary:
+func _lunge_run(split: bool, pitch: float, hold: bool, one_way: bool = false) -> Dictionary:
 	var ax: float = 20000.0
 	var gap: float = 6000.0 if split else 700.0
 	_pose(ax, 40.0, ax + gap, 40.0)
@@ -1357,23 +1357,40 @@ func _lunge_run(split: bool, pitch: float, hold: bool) -> Dictionary:
 	var aimed_ticks: int = 0
 	var eta_bad: int = 0
 	var late_active: int = 0
+	var wind_changes: int = 0
+	var off_after_strike: int = 0
 	var evs: Array = [_shot_events("rush", {"actor": 0.0, "target": 1.0, "n": strike_tick})]
 	if hold:
-		evs.append(_shot_events("cue", {"kind": "lunge_light", "actor": 0.0, "target": 1.0, "amount": float(wind), "n": mv, "text": "lunge"}))
+		evs.append(_shot_events("cue", {"kind": "lunge_light" if one_way else "zip_light", "actor": 0.0, "target": 1.0, "amount": float(wind), "n": mv, "text": "lunge" if one_way else "zip"}))
 	for k in range(200):
 		var x: float = home
 		if k >= wind and k < wind + mv:
 			x = home + out_dist * smoothstep(0.0, 1.0, float(k - wind + 1) / float(mv))
 		elif k >= wind + mv and k < wind + mv + 4:
 			x = home + out_dist
-		elif k >= wind + mv + 4 and k < wind + 2 * mv + 4:
+		elif k >= wind + mv + 4 and k < wind + 2 * mv + 4 and not one_way:
 			x = home + out_dist * (1.0 - smoothstep(0.0, 1.0, float(k - wind - mv - 3) / float(mv)))
+		elif one_way and k >= wind + mv:
+			x = home + out_dist   # B0's lunge ends 2.5 body heights from the rival and stays
 		A.x = SimWrap.wrap(x)
+		# the sim's rush on the lunger while he moves (set once he moves; the wind-up has none)
+		if k == wind and hold:
+			var lr := SimState.Rush.new()
+			lr.tgt = B
+			lr.off = -187.5
+			lr.end = _S.T + float(mv) * SplitRig.DT
+			A.rush = lr
+		elif k == wind + mv:
+			A.rush = null
 		_tick_rig(evs)
 		evs = []
 		var cur: SplitFrame = _rig.current()
 		if cur.cut:
 			cuts += 1
+		if k <= wind and cur.mode != mode0:
+			wind_changes += 1
+		if one_way and k >= wind + mv and k < wind + mv + 60 and not _on_screen(cur, 0):
+			off_after_strike += 1
 		if k < wind + 2 * mv + 4 + 24:
 			if cur.mode != mode0:
 				mode_changes += 1
@@ -1393,7 +1410,15 @@ func _lunge_run(split: bool, pitch: float, hold: bool) -> Dictionary:
 	var cur1: SplitFrame = _rig.current()
 	var s1: Vector2 = cur1.screen_pos(0, A.x, A.y + CamParams.CHEST, float(A.z))
 	var back_px: float = (s1 - s0).length()
-	if hold:
+	if hold and one_way:
+		# Not held (followed as any move): no cut, no layout change while he winds up, on his pane from the strike on, and
+		# the rival's read counts down from the cue.
+		_check(cuts == 0, "%s: %d cuts during a one-way lunge" % [_label, cuts])
+		_check(wind_changes == 0 or pitch != 0.0, "%s: the layout changed during the wind-up" % _label)   # (the 49 degree pose cycles by itself)
+		_check(off_after_strike == 0, "%s: he was off his pane for %d ticks after the strike" % [_label, off_after_strike])
+		_check(aimed_ticks >= wind + mv - 4 and eta_bad == 0, "%s: the incoming read was aimed on %d ticks and wrong on %d" % [_label, aimed_ticks, eta_bad])
+		_check(_rig.lunge_holds == 0 and _rig.rush_cuts == 0, "%s: %d holds, %d cut-aheads (a one-way lunge is not held)" % [_label, _rig.lunge_holds, _rig.rush_cuts])
+	elif hold:
 		var tol_z: float = 0.02 if split else 0.04
 		var tol_c: float = 0.05 if split else 0.13
 		_check(cuts == 0, "%s: %d cuts during a lunge" % [_label, cuts])
@@ -1701,7 +1726,8 @@ func _opening_default() -> void:
 				min_size = minf(min_size, _apparent_px(i, cur) / vh)
 	_check(not split_seen, "opening default: the layout was not one view")
 	_check(worst_margin >= 0.08, "opening default: a fighter within %.3f of the screen edge" % worst_margin)
-	_check(min_size >= 0.09, "opening default: a fighter only %.3f of the screen height" % min_size)
+	# 0.09 until B0 (the sim's opening now has one fighter 300 units up at 2.5 s, 250 above the other); the camera floor is 0.032.
+	_check(min_size >= 0.075, "opening default: a fighter only %.3f of the screen height" % min_size)
 	stats["opening default"] = "one view, edge margin %.3f of the width, smallest %.3f of the height" % [worst_margin, min_size]
 	SimCore.dispose(_S)
 	_S = null

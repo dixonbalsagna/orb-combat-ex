@@ -1,5 +1,7 @@
 # Framing a lunge that goes out and comes back (a plan; no code yet)
 
+> **Read section 10 first.** B0's lunge (the sim, 2026-10-05) is one way and stays at the rival, so the out-and-back hold below belongs to the zip's cues (`zip_light`, `zip_heavy`); a B0 lunge is not held at all (the cue only starts the rival's countdown).
+
 Owner: Camera & Cinematography. Date: 2026-10-04. **A note only.** The ask (EP, for Orb): LT plus a face button is a mid-range lunge that zips in, strikes and zips back out; plan how a pane frames a fighter who leaves and returns within about a second: **hold the pane, do not chase.** Sources: `docs/design/melee-press-feel.md` section 2b and 2c (wind-up of 6 ticks light and 10 heavy, travel at most 20 ticks, charge speed capped at 6,000 and 4,500 units a second, a far charge becomes a slower visible pursuit), `docs/controls/lunge-control.md`, and this folder's `split-screen.md` section 21d (the long-rush cut-ahead).
 
 ## 1. What the camera sees
@@ -114,3 +116,20 @@ Game Design (`docs/design/melee-press-feel.md` section 2c, "The zip"): LT with X
 6. `zip countered` (the defender's well-timed blow cancels the zip's blow, or catches him in reach, and a brawl starts): the hold ends at once on the first launch, knock-down or `solo_kind` shot as now; a counter without those (a reel in place) ends it at the earlier of the time and the pair coming inside the close band (3 bh), where the brawl's framing takes over.
 
 **Needs from the sim (add to the zip slice's cue):** the exit side or `text` as above; the zip's stated total ticks (the cue's `amount` is the tell and `n` the way in; the way out and the in-reach ticks are not in it, so the hold's length estimate of wind-up + 2 x move + 0.4 s is short by the in-reach ticks: 4 to 22 on the way in and 6 to 12 after; the hold's end should read `back_end` or a total, not a guess). Until then the estimate is lengthened by the in-reach ticks the spec gives (`LUNGE_HOLD_AFTER` 0.4 s covers the short ones; a zip heavy would let go up to 0.2 s early, which is safe).
+
+
+## 10. After B0 landed: what the real cue is, and what broke (2026-10-05)
+
+B0's `cue` is `lunge_light`, `lunge_heavy`, `charge_light` or `charge_heavy` (`actor`, `target`, `amount` = wind-up ticks, `n` = the move's ticks; the `rush` event on the same tick). Its lunge is today's one-way mid-band lunge: he ends 2.5 body heights from the rival and **stays**. My out-and-back hold assumed he came home, so on real cues it held his pane on the start point while he was gone: ten sweep failures (fighter out of its pane for 0.31 s in four real matches, four "moved against its anchor", and others).
+
+**What the rig does now.**
+- `lunge_light` / `lunge_heavy` (one way): **no hold.** The cue starts the rival's incoming countdown at the wind-up (`aimed`, `eta` to the strike) and nothing else; the camera follows him as for any move. I first held the camera through the wind-up (he stands still while the tell reads); in the 13 matches that added 68 rush-class jolts, the catch-up when the hold let go, and the wind-up needs no camera help.
+- `zip_light` / `zip_heavy` (the out-and-back zip, when the sim sends them): the hold of sections 2 and 8, wind-up + 2 x move + 0.4 s, at most 1.6 s. The zip's final cues (`zip_out` with the exit point, `zip_end`) will replace the estimate and decide the far-side case (section 9).
+- `charge_light` / `charge_heavy`: a charge is a rush as before (the cut-ahead for a flight over 1.2 screens). I first excluded charges so the pane would follow them; following costs 230 more jolts in the 13 matches (1,447 against 1,214 with the cut-ahead), so the cut-ahead stays. The trade is that the charger's pane waits at the arrival for up to 1.8 s while he crosses; if Orb wants the charger's own flight seen, that is a design choice with a measured price.
+- Sweep scenarios: `lunge zip ...` (the hold, held against withheld) and `lunge one way ...` (not held: no cut, no hold counted, on his pane from the strike on, the countdown right on all 20 ticks).
+
+**Two failures that were not the hold** (both appear with the camera as it was before the hold, on B0's sim):
+- `opening default: a fighter only 0.086 of the screen height`: B0 changes the opening's trajectory (one fighter is 300 units up at 2.5 s, 250 above the other) so the one view fits them smaller; the camera floor is 0.032. The test's 0.09 became 0.075.
+- `real match 17 full ... out of its pane for 0.31 s (mode merged)`: a last-stand cut-in (a close-up on one fighter, the other 1,700 units away and off the screen) ended with a cut, but the drawn zoom still eased down from the close-up at the comfort rate, so the other fighter stayed off the screen for 0.3 s. It was always possible; B0's match put it in the sweep. The overlay's end now resets the zoom filter (a cut is a cut).
+
+**Numbers** (13 real matches, jolts over 0.05 of the width): before B0 1,258; B0's sim with the camera as it was before the lunge hold 1,155 (rush class 1,132 to 992: the wind-up gives the rush less to do; two sweep failures, the two above); B0's sim with this camera **1,146** (rush class 992, unchanged; chase 29 to 20 from the overlay's zoom reset). The sweep passes; panel_shot and pane_check pass; the gameplay hash is the same with and without the compositor (93bf2a47e738fefc on B0's sim).
