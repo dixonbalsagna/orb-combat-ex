@@ -53,7 +53,7 @@ Fighters in a brawl are held together, so a string can't be broken by drift.
 | :--- | :--- |
 | **Where it holds** | In the close band. It switches on when a brawl starts inside 3 bh. Steps and recoil inside the brawl have slack out to 4.5 bh before it lets go |
 | **How strongly** | Recoil from a blow leans a fighter and doesn't move him. Any drift is pulled back toward striking distance at up to 0.5 bh a second. Walking with the stick is damped to 0.4 of normal, so tilting the stick aims a launch and doesn't wander him off |
-| **What breaks it** | A knock-back. A push. A launch. A dodge with the stick away. Boosting away. 60 ticks with no attack from either fighter |
+| **What breaks it** | A knock-back. A push. A launch. A dodge with the stick away. A zip away (§2c). Boosting away. 60 ticks with no attack from either fighter |
 | **After a knock-back** | They are apart, and nothing draws them back. Closing again is always a player's own move: a lunge, a zip, or flying in (Orb, questionnaire 17). Magnetism holds only while they are in the close band |
 | **What doesn't break it** | A dodge with no direction, which is a sidestep inside the brawl. A guard. A stagger. A lift |
 
@@ -154,7 +154,7 @@ A heavy charge still shrugs off light blasts, and a light one is still stopped b
 
 | Distance | With LT held |
 | :--- | :--- |
-| In reach | The step strike, a heavy on the move, or the tackle (§10) |
+| In reach | The step strike, a heavy on the move, or the tackle (§10). With the stick away from the rival, **the zip away** (below) |
 | **The mid band, 3 to 12.5 bh** | **A zip:** he goes in, strikes, and comes out again (below) |
 | Far, inside the charge range | A piloted charge: it can be steered, and it stays when it arrives |
 | Beyond the charge range | The pursuit, as above. Orb confirmed it over a taunt-only ceiling (questionnaire 17) |
@@ -191,20 +191,90 @@ So a zip is a hit and run. It costs a lot of ki, and for a moment at the rival h
 | **Zip strike** | A light at ×1.0. The rival reels for 4. Pressed again as he comes out, the next zip follows with a 3-tick tell and its blow is ×0.8. Every zip is paid for in full | It lands in the 4 ticks before the rival's own blow would. That blow misses. It is a skill strike: ×1.25, the rival reels for 8, flow +1 | X kept held for 12 ticks more in the tell. A set light on arrival: ×1.25, and the rival reels for 12. He is in reach for 8 ticks before it lands, not 4 |
 | **Zip heavy** | A heavy at ×1.0. The rival staggers for 12, and a set guard breaks. No lift, because the zipper is leaving. Tapped again in the tell, it is rushed: each tap takes 4 ticks off his time in reach before the blow and 15% off the damage, two taps at most | By the same timing, the rival's blow misses: ×1.25, he staggers for 20, flow +1 | Y kept held for 20 ticks more in the tell: ×1.25 and a knock-back |
 
-**Where he goes afterwards:**
+#### Where a zip ends: anywhere around the rival
 
-| The stick, as his blow lands | The way out |
+**Orb** (2026-10-05, approving the prototype `docs/ep/prototypes/lt-zip-v4.html`): "the zip prototype looks right, start building it. consider how players should be able to use it to end up in any spot in a 360 degree around the enemy, and if they use it and are holding a direction away from the opponent, they end further from where they started and this is a useful way to escape from a brawl you aren't ready to commit to."
+
+**The stick, as his blow lands, picks the exit point.** The point is set by a bearing and a distance, both measured from the rival.
+
+| | Rule |
 | :--- | :--- |
-| None | **Back to where he came from.** This is the default |
-| **Toward the rival** | **Through to the rival's far side,** at the distance he started from |
-| Away | Back, as the default |
-| Up or down | Back, as the default. Up and down still lean the blow to a rising or a dropping one (§13), and nothing more |
+| **The bearing** | **The stick's own direction.** He ends on the side of the rival that the stick points to: stick up, above him; stick down, below him; and every angle between |
+| **The distance** | **The distance he started from.** The nearer the stick is to straight away from the rival, the further out he ends: 6 bh more with the stick straight away, 3 bh more at 45 degrees off it, and nothing more once the stick is square to his line or past it |
+| **The cap** | He never ends more than 12.5 bh from the rival, which is the edge of the mid band. So the rival's own lunge, zip or shot still reaches him |
+| **No stick** | **Back to where he started.** This is the default |
+
+So for a zipper who came in from the rival's left:
+
+| Stick | Where he ends |
+| :--- | :--- |
+| None | Back on the left, where he started |
+| Right, which is toward the rival | On the rival's right, at the distance he started from. This is the far side |
+| Up, or down | Straight above the rival, or straight below him, at that distance |
+| A diagonal | On that diagonal, at that distance |
+| Left, which is away | On the left, 6 bh further out than he started |
+| Up and left, or down and left | On that diagonal, 3 bh further out |
+
+- **As a formula:** the distance is the start distance plus 6 bh × (1 − the angle off straight away ÷ 90 degrees), never less than the start distance and never more than 12.5 bh.
+- **The way out** takes 10 ticks, or 12 for a zip heavy, when the exit point is within 8 bh of where his blow landed. It takes 1 tick more for each 2 bh beyond that, and 20 at most.
+- **On the way out** no strike can reach him. A shot that hits him knocks him out of the zip and down, as it does a boosting fighter (`agency-pass.md` §6).
+- Up and down still lean his blow to a rising or a dropping one (§13).
+- A mashed chain works with it: no stick brings him back to the same spot each time, and the stick toward the rival sends him from side to side.
+
+#### The zip away: leaving a brawl
+
+**A zip can be started from inside the close band, and only as a zip away.** In reach, LT with X, Y or B and the stick within 45 degrees of straight away is the zip away. With the stick anywhere else, the same press is the step strike, the heavy on the move or the tackle, as before (§10).
+
+| | Zip away with X | Zip away with Y |
+| :--- | ---: | ---: |
+| Ki | 20 | 30 |
+| The tell, in reach | 10 ticks | 14 ticks |
+| Then his blow lands after | 4 ticks | 12 ticks |
+| In reach after it | 6 ticks | 10 ticks |
+| In reach in all, with no guard | 20 ticks | 36 ticks |
+| Where he ends | 3 to 6 bh further out than he stood, so 4.5 to 9 bh from the rival | The same |
+| After he arrives | 8 ticks of turning: he can move, but not attack, guard or zip | The same |
+
+- **The blow is always thrown.** A zip is an attack. Leaving without a blow is what the dodge and the boost are for.
+- **The tell is longer than a mid-band zip's** (10 and 14 ticks against 6 and 10), because there is no way in for the rival to watch.
+- **It lets the brawl go** (§2). Closing again is either player's own move.
+- With B it is the stance's signature at its tier's price, and it leaves by the same rule.
+
+**How it differs from the other ways out,** so that the three don't overlap:
+
+| | From what state | Price | A blow | Where he ends | What it is for |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **The dodge** (an LT tap) | Free, or as the defender in the gaps of a string | Nothing outside an exchange. 15 ki and 3 s when he is threatened | None | A sidestep. With the stick away, just out of reach | Answering one blow |
+| **The zip away** | Only when he is free to act | 20 or 30 ki | Always | 4.5 to 9 bh out, in one move | Leaving on his own terms, with a parting blow |
+| **The boost** (LT held) | Free | 12 ki a second | None, and no guard or fire | As far as his ki takes him | Travel, the chase, running |
+| **Escape** (its own button) | Any state, a stun included | Its own, and provisional (`agency-pass.md` §6) | None | | The way out of a situation he can't act in, at a risk |
+
+**What stops it being a free reset:**
+1. **The price:** 20 or 30 ki. A second zip away inside 5 s of his last costs 10 ki more.
+2. **He must be free to act.** No zip of any kind while he is reeling, staggered, lifted, launched, guard-broken or exhausted, or in the middle of his own blow.
+3. **He is in reach with no guard for 20 or 36 ticks.** Any hit in that time catches him: the way out is cancelled and he stays in the brawl, with the ki spent.
+4. **It can be countered.** It has no arrival, so the counter's mark is the start of its tell: a tech or heavy strike from then until his blow lands cancels the blow (above). That is a 14-tick window against X and 26 against Y. So a zip away into a rival who is already striking fails. It works when the rival is reeling, guarding or between blows.
+5. **A shot on the way out** knocks him down.
+6. **The turn at the end:** 8 ticks in which he can't attack, guard or zip.
+7. **He is never out of range.** He ends inside the mid band, where a lunge, a zip or a shot reaches him.
+8. **For the AI** a zip away counts as a slip, under the cap of one in a row and three a minute (`agency-pass.md` §25).
+
+#### Ground, buildings and the wrap
+
+- **The wrap.** The bearing and the distance are worked out with the shortest-arc wrap math, like every other distance. A zip across the seam is the same zip.
+- **An exit point inside the ground or a building** is moved. It slides round the circle, at the same distance, toward the bearing he started from, in steps of 15 degrees, to the first point that is clear by 1 bh. It goes the shorter way round, and upward on a tie. If it reaches his start bearing without finding one, he ends where he started.
+- **Water isn't an obstacle.** He can end in it.
+- **The way out goes round or over** anything between him and the exit point, in the same number of ticks. A zip's flight never damages a building or the ground. Only its blow can.
+- **The way in** meets terrain as a lunge does today.
+- All of it is worked out in the sim from the intent's stick, so a replay is identical.
+
+#### The rest of a zip's rules
 
 **The rules of a zip:**
-- **Range:** the mid band. In reach the same buttons are the step strike, the heavy on the move and the tackle.
+- **Range:** the mid band. In reach the same buttons are the step strike, the heavy on the move and the tackle, unless the stick is away, which is the zip away.
 - **The ki is paid at the press** and isn't given back. Without enough ki the press is the plain lunge, which is free and stays.
 - **Where he arrives is fixed at the tell:** along his own line and on his own side, so the defender can read it. The crouch, the streak and the engage ring show it, as for any lunge.
-- **He can be hit for as long as he is in reach:** 10 ticks for a zip strike and 22 for a zip heavy. He has no guard there.
+- **He can be hit for as long as he is in reach:** 10 ticks for a zip strike and 22 for a zip heavy, or 20 and 36 for a zip away. He has no guard there.
 - **On the way in** any shot stops a zip strike. A zip heavy shrugs off bolts but not a charged shot, as a heavy charge does.
 - **He can be outrun.** The zip follows the rival for its longest way in. If the rival has boosted out of the mid band by then, it ends short with no blow.
 - **A zip doesn't start a brawl** unless he is caught or countered. It isn't decisive, apart from a knock-back, and it never starts a struggle (§11).
@@ -220,6 +290,7 @@ So a zip is a hit and run. It costs a lot of ki, and for a moment at the rival h
 | **A heavy strike:** a martial heavy in any reading, a heavy or charged shot at point-blank, or the held reading of his X (the set light, the guard strike, the volley) | Its wind-up ends, or its hold is let go, from 6 ticks before the arrival until the zipper's blow lands | A 10-tick window | An 18-tick window | **The zipper's blow is cancelled.** The heavy lands in full and knocks him back, which is decisive |
 
 - **The zipper's ki stays spent** in every case.
+- **A zip away has no arrival.** Its mark is the start of its tell, so the window runs from there until his blow lands: 14 ticks against X and 26 against Y.
 - **Too early:** the defender's blow is thrown before the zipper arrives and misses. He is in its recovery when the zip lands.
 - **Late, while the zipper is still in reach** (6 ticks after a zip strike lands, 10 after a zip heavy): the zip's blow has landed, and the defender's blow **catches** him. The way out is cancelled, he reels where he is, and a brawl starts around him.
 - **A speed blow** (a flurry blow, a bolt, a check) that lands on him in reach doesn't cancel his blow. It catches him, and his blow is pushed back by his reel.
@@ -254,6 +325,10 @@ So a zip is a hit and run. It costs a lot of ki, and for a moment at the rival h
 | Zips that end with the zipper caught | 20 to 35% |
 | Ki spent on zips, as a share of all ki spent | At most 25% |
 | A zip that starts a brawl without the zipper being caught or countered | Never (a hard test) |
+| An exit point more than 12.5 bh from the rival, or inside the ground or a building | Never (a hard test) |
+| Zips away that get out, against an opponent who answers | 40 to 60% |
+| Zips away, as a share of all zips | At most 30% |
+| Seconds a minute with nothing running (§2b) | Still at most 12, with zips away in |
 
 ## 3. Mash: the faster he taps, the faster the flurry
 
@@ -524,7 +599,7 @@ A hold is 12 ticks, and the intent carries it as `contextHeld`.
 - **Parry:** a check pressed within 4 ticks after a blow lands on his guard. The rival reels for 12 ticks. It doesn't end his string, which is what the perfect block does.
 - **Push:** no damage, a 10-tick wind-up, and the rival is driven back 3 bh, or 5 bh when it is held for 20 ticks. Either way the brawl's hold lets go (§2), and closing again is a player's own move. It isn't decisive. Tapped again inside 30 ticks it is a short shove (above).
 - **Step strike:** a light at ×0.8 with a step of up to 2 bh around, over or under the rival, by the stick. It stays inside the brawl. Pressed within 4 ticks before the rival's contact, his blow misses. The timing mark is the rival's tell, and the director supplies it. It costs 5 ki.
-- **Zip strike, zip heavy and zip tackle:** from the mid band he goes in, strikes and comes out again, for 20, 30 and 25 ki (§2c). The stick toward the rival takes him out on the far side.
+- **Zip strike, zip heavy and zip tackle:** from the mid band he goes in, strikes and comes out again, for 20, 30 and 25 ki (§2c). The stick picks where he ends up around the rival, and the stick away takes him further out, from inside a brawl too.
 - **The four signatures that aren't a beam** (§11). Their kinds are still a proposal.
 - **New with the readings** (2026-10-05), with their first numbers in the tables above: the set light, the rushed and the timed heavy, the guard strike, the stuff, the volley, the aimed throw, the guard throw, the aimed deflect, the aimed mine and the long shove. They are for Orb to see in the prototype.
 
@@ -775,6 +850,7 @@ Orb answered the ten questions in questionnaire 17 (`docs/ep/vision.md`, 2026-10
 - X, Y and B have speed, tech and heavy readings in every stance (§10), and B's readings are its tiers (§11);
 - A has a press and a hold in every stance, and grabs share one lockout (§10);
 - a zip goes back by default, and through to the far side with the stick toward the rival (§2c);
+- Orb approved the zip prototype and asked for an exit anywhere on a circle around the rival, with the stick away ending further out as a way to leave a brawl (§2c);
 - a well-timed tech or heavy strike counters a zip (§2c).
 
 **Still open:**

@@ -271,6 +271,8 @@ The pause budget doesn't grow: beam set pieces play live once the bank is spent 
 
 ## 6. Flight and escape (provisional)
 
+> **A further way to leave a brawl since 2026-10-05:** the zip away, a parting blow and a long exit for 20 or 30 ki (`melee-press-feel.md` §2c). It sits beside the dodge, the boost and Escape, and that page says how the four differ.
+
 Orb: "I need to feel how this works in game... lets get something that works now and then work on it when we have more combat systems in place." This is the simple version to build now. Every number sits in one data block so it can change.
 
 - **One dedicated control boosts,** as Controls proposes. Held, he flies at about 2.2 times normal speed in any direction. The dodge stays a separate tap.
