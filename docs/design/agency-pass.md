@@ -1,5 +1,7 @@
 # The agency pass: rules from Orb's first two-player playtest
 
+> **Melee in the close band is now ruled by `melee-press-feel.md`** (Orb's approved prototype, 2026-10-04): every press is a blow, brawls are magnetic, and both fighters strike at once. Where this page disagrees with it about a close brawl (the styles read from five presses, the blur's knock-back ender, the lone heavy that launches), that page is the newer rule. It also holds the five stances by button (§10), the signatures in three tiers (§11, which replaces the signature limit of §5 here) and the brake's move to LT (§12). Everything else at range here stands.
+
 Owner: Game Design. Orb played two local matches with a second player on 2026-10-02, answered questionnaire 14, and then picked from the pitches (`docs/ep/vision.md`, "Orb's picks after the pitches"). This page is the rules that follow. Three parts are **provisional** because Orb wants to feel them in play first: the signature limit (§5), the escape (§6) and top-tier speed (§8). Every number is a starting value for data.
 
 **Where the pillars bend.**
@@ -201,6 +203,8 @@ The line and the face cut-in always play, whatever the meter does. Narrative's d
 
 **Orb's rule:** hold to brake, it costs ki, and harder hits take longer.
 
+> **The button is now LT,** the manoeuvre stance: a hold brakes and a tap techs (`melee-press-feel.md` §10 and §12). The rate and the rest of this section stand.
+
 - **The input:** hold the boost (§6) during a launch flight. It is the boost turned against his own flight.
 - **The cost:** 20 ki for each second it is held.
 - **Harder hits take longer.** The brake slows him at a fixed rate, so the time and the ki follow the launch's speed: about 0.35 s and 7 ki for a light launch, and about 1 s and 20 ki for a hard one.
@@ -250,6 +254,8 @@ Blast speeds and ranges are in `moveset-rules.md` §11, and blasts use the tier 
 | **Held guard** | Reduced damage | Unchanged |
 
 ### The signature limit (provisional: Orb's to revisit)
+
+> **Replaced on 2026-10-04** by `melee-press-feel.md` §11: every stance has a signature, in three tiers of cost (25, 45 and 75 ki), with one shared cooldown of at most 3 s and no cap. The 40% damage cut and the 30% band below are kept.
 
 Orb disliked the 120 s cooldown and set the slider to 15 s. The mildest limit that should still keep fights from being led by beams is:
 
@@ -905,3 +911,153 @@ QA re-measures all four. If timing overshoots 82%, the first number to lower is 
 ### Recorded: a timed player against the medium AI
 
 A timed player wins 40 of 40 against the medium AI, against a band of 70 to 90%. Raising the timed press, the flow's contest bonus and the flow's damage did not move it. The medium AI starts no finishers and holds no flow for 88% of the match. This isn't a tuning question: it is how hard the default opponent should be, and it is with Orb.
+
+### 4. The slow, deliberate shooter (added after slice 14)
+
+**Measured on slice 14:** the mixed blaster is at 46 of 100 against the medium AI, inside 30 to 50%. Bolt-only is at 31%, blasts are 10.8% of damage, finisher survival is 27.0%, the median is 477 s and the masher is at 38%. One row moved the wrong way: the slow mix (light, light, tapped heavy, one press every 24 ticks) fell from 29 to 7 of 100.
+
+**7% is too low, and the fix is the rule about which barrages are weak.** A pattern that never defends should lose to the default opponent, but a player who fires slowly and deliberately is doing what the measured-fire rule rewards everywhere else. Today every barrage with a tapped heavy in it is weak, however carefully it was fired.
+
+- **A tapped heavy makes the barrage weak only when it was rushed:** fired less than **20 ticks** after the shot before it. Fired 20 ticks or more after, it counts as measured, and the barrage's ender is the strong one if the bolts were measured too. Data: `blast.barrage.tappedHeavyGap` 20.
+- This is the bolt rule again, with a longer gap for the heavier shot: measured fire closes strong, and rushed fire closes weak.
+- `tapShare` stays at 0.4. Raising it would bring the fast mix back over its band.
+- **Bands:** the slow mix against the medium AI at **15 to 35%.** Against the easy AI at least 50%, since slow, careful firing is how a beginner plays. The fast mix stays at 30 to 50%, and QA re-checks it, because it must still read as rushed.
+
+## 24. Re-banding the timing and energy rows (QA's `docs/qa/baseline-9da6e07.md`, 2026-10-04)
+
+With QA's scripts fixed, timing reads as intended: a timed masher beats a plain one 75.0% of the time, with the stick and without it, and a timed player beats a masher 75.0%. The rows below were banded before §22, or were measured at 40 matches, where one row moves about 15 points by chance.
+
+**A rule for these rows first.** The T rows use the stick and the F rows don't. At 40 matches each, a band narrower than 20 points can't be judged. So each pair is **pooled** (80 matches), and no number moves on a row until QA has it at 100 matches or more.
+
+| Row | Measured | Old band | Ruling |
+| :--- | :--- | :--- | :--- |
+| **T1 and F1,** timed against a masher | 75.0% and 85.0%, pooled 80.0% | 72 to 82 | **The band moves to 72 to 85%.** Pooled it is in. §22 made timing stronger, so the top needs a little room |
+| **T2 and F2,** timed against style-only | 57.5% and 80.0%, pooled 68.8% | 62 to 70 | **The band moves to 60 to 75%, pooled.** Pooled it is in. The two halves differ because the stick gives the style-only player launches from lone heavies, which is the earner Orb kept |
+| **T3 and F3,** style-only against a masher | 67.5% and 50.0%, pooled 58.8% | 55 to 62 | **The band moves to 55 to 68%, pooled.** Pooled it is in. With the stick a style-only player launches and a masher doesn't |
+| **T4, T5, F4 and F5,** the mirrors | 47.5% to 62.5% | 45 to 55 | **The band stays, and the rows are only reported at 40 matches.** The same script is on both sides, so anything outside the band there is chance. QA gates them at 200 matches |
+| **T7,** a timed hold against a plain hold | 32.5% | 62 to 82 | **Pending.** The power style's timed upgrade isn't built |
+| **T8,** timed against the medium AI | 95.0% | 70 to 90 | **Recorded.** It is with Orb, as the question of how hard the default opponent should be |
+| **T10,** timed against the hard AI | 35.0% | 40 to 60 | **The band stays.** QA re-runs it at 100. If it is still under 40%, the hard AI's `ai.timedShare` goes from 0.8 to 0.7. A skilled player should win about half against the hard AI |
+| **E5 and E5s,** the blaster against the rush-heavy timed script | 40 of 40 | 40 to 60 | **The band applies only to an opponent who answers** (below) |
+| **The slow mix** against the medium AI | 13% | None | **15 to 35%,** with the change in §23, part 4: a tapped heavy weakens the barrage only when it is rushed (`blast.barrage.tappedHeavyGap` 20). Against the easy AI, at least 50% |
+
+**The blaster against a rusher: the band is for a defending opponent.** The 40 to 60% band asks whether keeping a rival away with blasts is fair against closing in. It only means something when the rusher uses the answers the rules give him:
+- a held heavy charge from the far band, which shrugs off bolts;
+- a guard on the way in;
+- a perfect block for the free approach.
+
+QA's rush script does none of them, so 40 of 40 measures the script. **QA builds a rush script that answers, and the 40 to 60% band applies to that.** Until then the row is reported, and the gates for ranged play are the ones against the medium AI, which does answer: the mixed blaster at 30 to 50% (49% today) and the bolt-only player at 20 to 40% (31%).
+
+**QA's measured list** (wear 350, the act-4 mood floor at 3400, and the perfect-block multipliers at 0.32, 0.45 and 0.55) is accepted. It brings the median to about 469 s and all three perfect-block rows into band. The masher against the medium AI rises to 49% under it, at the top of his band, so that row is the one to watch.
+
+## 25. Rulings from questionnaire 15 and Orb's match against the AI (2026-10-04)
+
+Orb's answers and notes are in `docs/ep/vision.md` (last section). Every number is a starting value.
+
+### 1. Downtime: the fight shouldn't keep stopping
+
+**Orb:** "they will trade around three to five blows, the AI will slip away in some kind of looping pattern, then I'll catch up to him, and repeat."
+
+**The cause.** In reach, an attacking AI circles its rival on an ellipse until its next attack beat, a full turn in about 2.6 s. After a knock-back it does the same from further off. So each exchange is followed by a loop, and the player has to chase.
+
+**The rule: after every exchange somebody presses, and soon.**
+
+| After the exchange ends in | Who acts | Within |
+| :--- | :--- | :--- |
+| **A stay** (both still in reach) | The AI attacks again, or holds guard in reach | 20, 30 or 45 ticks (hard, medium, easy) |
+| **A knock-back** | The AI that won it follows with a lunge or a blast. The one knocked back guards or lunges back when he is up | 30 ticks after the slide ends |
+| **A launch** | The launcher follows: a charge, a ping-pong or a blast | 120 ticks after the landing |
+
+- **The weave is capped at 30 ticks.** The AI may still circle for half a second, as flavour. It can't loop for a full turn.
+- **A cap on slipping away.** Moving out of reach without attacking is a slip. The AI may slip **once in a row** and **three times a minute.** After a slip its next action is an attack, a blast, or a guard in reach.
+- **No new reason to stay in is needed for the player.** His flow already lapses after 90 ticks without a press, so backing off costs him his timing bonuses. The fault was the AI's.
+
+**Data** (`ai.json`): `reengageTicks` 20, 30 and 45; `knockbackFollowTicks` 30; `launchFollowTicks` 120; `weaveMaxTicks` 30; `maxSlipsRow` 1; `maxSlipsPerMin` 3.
+
+**The QA rows:**
+
+| Row | Band |
+| :--- | :--- |
+| **Idle seconds a minute:** time with both fighters free and neither striking, firing, charging, guarding a blow or taunting. Pauses and launch flights don't count | **At most 8 s a minute** |
+| Release to the next request, 90th percentile | At most 2.0 s. The median stays at most 1.0 s |
+| AI slips in a row | Never more than 1 (a hard test) |
+
+**The launch share goes with it.** Launches are 38.5 to 40.6% of the exchanges that separate the fighters, at or over the top of the 25 to 40% band and well above Orb's 30. The AI's use of the launch earners comes down: medium from 0.6 to **0.5** and hard from 1.0 to **0.85.** Fewer launches also means fewer separations to recover from. The band stays 25 to 40%.
+
+### 2. Launches and charges the eye can follow
+
+**Orb:** "the speed and acceleration of launches can be tuned to accommodate the viewer", and a rival flying in from far away at top speed "is very hard to judge".
+
+**A launch keeps its path and its landing point. Only its timing along the path changes.**
+
+| Key | Value | What it does |
+| :--- | :--- | :--- |
+| `launch.easeTicks` | 8 | He covers the first part of the path slowly, so the eye catches which way he went |
+| `launch.easeShare` | 0.15 | That first part is 15% of the path |
+| `launch.topSpeed` | 150 units a tick to start. Camera sets it from what it can hold | Speed along the path never goes above it |
+| `launch.maxAddTicks` | 12 | The flight may take at most this much longer. Past that the camera cuts, by its existing rule |
+
+**The same cap applies to a charge from the far band,** and a charge gets two cues so the defender can judge it:
+- at its start, a flash on the charger and a streak along his line, for 12 ticks;
+- 20 ticks before contact, a marker on the defender.
+
+A held light charge can also be steered a little, up to 15 degrees by the stick. A held heavy stays a straight line.
+
+### 3. Buildings: less levelled, more damaged
+
+**Orb chose the hybrid:** cut the top tiers' reach into buildings, soften landing blasts, and "pavement should crack and shatter differently from dirt, can windows shatter + multiple levels of dynamic destruction per building".
+
+**World's starting split:**
+
+| Lever | Today | Start from |
+| :--- | :--- | :--- |
+| Structure reach at tier 3 | ×1.6 | ×1.6 |
+| Structure reach at tier 4 | ×2.8 | **×2.0** |
+| `area.slam` (a landing's blast on structures) | 0.9 | **0.6** |
+
+**Target:** front-row structures lost at the KO of 40 to 48%, inside the 25 to 50% band. QA measured 45.9% with the reach change alone.
+
+**Staged damage.** A building has five stages, moved by the share of its hp it has lost.
+
+| Stage | Hp lost | What it looks like |
+| ---: | :--- | :--- |
+| 0 | Under 25% | Intact, with scorch marks |
+| 1 | 25% | **Windows out:** the glass is gone and the frames are scorched |
+| 2 | 50% | **A floor or a corner gone** |
+| 3 | 75% | **A shell:** walls standing, with the roof and floors gone |
+| 4 | 100% | **Rubble** |
+
+- **One hit moves a building at most two stages,** or three at tier 4. So no single blast takes an intact tower to rubble. The exceptions are a body going through it (a brunt) and a beam inside its per-tier cap.
+- **The outer part of a big impact's reach only breaks windows.** Past the base radius, in the extra reach that tiers 3 and 4 add, damage stops at stage 2. That is the windows blowing out for blocks that Orb picked, and it cuts front-row losses without shrinking the blast.
+- **Only rubble counts as lost** for the structure bands and the ceiling. QA also reports buildings at stage 2 or worse as "damaged", with a starting band of 55 to 80% of the front row by the KO.
+- **People leave at stage 2.** They are counted under the collateral window as before, so a shell or a heap of rubble is empty.
+
+**Pavement against dirt** (World and VFX):
+
+| | Dirt, sand, soil | Paving |
+| :--- | :--- | :--- |
+| A crater | A bowl with a raised rim and thrown earth | **Plates:** shallower (×0.7 of the depth), with slabs tilted up at the rim and cracks running out to 1.5 times the crater's radius |
+| A skid | A furrow | A line of shattered slabs |
+| Afterwards | Stays dirt | Counts as soil for braking, as already ruled (`balance-targets.md` §20) |
+
+### 4. Blast kinds in this update
+
+**Only the rival's splitting shot ships.** Rain and the curving shot are dropped from this update, and their rules stay written for later (`launch-pair-plan.md` §9).
+- **The split's numbers stand alone.** Each kind was written as its own block, and nothing in the split's rows depends on the other two.
+- The Protagonist has no extra kind in this update. His slower spread build-up is his energy identity for now.
+- For when rain returns: **Orb's answer is that it does not hit its thrower,** which replaces that row in §9.
+- **A deflected shot's landing is a surprise:** no ring marks where it will come down.
+
+### 5. The finisher struggle
+
+**Strictness 2 of 3 is confirmed** as Combat's softer option: each stray press costs 0.10 (`perStray` −0.10), and the floor at the no-press score is kept. A masher loses his struggle, and a player with one or two nervous presses doesn't.
+
+### 6. Unchanged
+
+Orb didn't answer how hard the medium AI should be against a timed player, or the fighters' names. Both stay as they are: the timed player's 95% against medium is recorded (§24), and the build keeps its working ids.
+
+### The earlier rows, finished in this pass
+
+- **The slow mix** (11 to 13% against medium): §23, part 4 stands. A tapped heavy weakens a barrage only when it was rushed (`tappedHeavyGap` 20). Band 15 to 35%.
+- **The timing bands** T1 to T3, F1 to F3 and T10: §24 stands.
+- **A script that doesn't defend:** the 40 to 60% blaster band applies only to an opponent who answers (§24).

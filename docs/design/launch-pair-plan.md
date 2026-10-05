@@ -43,6 +43,8 @@ Combat is writing which waves go live for each fighter (`docs/combat/launch-pair
 
 Blow for Blow, the full showcase sets and the rest of the signatures can follow in later waves.
 
+**Signatures, added 2026-10-04.** Each fighter has one signature for each stance, so five in this update, in three tiers of cost (`melee-press-feel.md` §11). The martial arts stance is built first, and until its melee art is authored its B fires the beam.
+
 ## 4. Energy kinds
 
 Both get the shared base: the bolt, the volley, the charged shot and the mine (`agency-pass.md` §15). **New:** each adds the kinds that fit him.
@@ -127,6 +129,8 @@ Legal's notes in Combat's plan hold for all three.
 If Orb later gives teleporting to him, the flurry can go back to the ripple-step version as a variant.
 
 ## 9. Numbers for the three launch energy kinds
+
+> **Orb's pick (questionnaire 15):** only the rival's splitting shot ships in this update. The curving shot and rain are kept here for later. When rain returns it does **not** hit its thrower, which replaces that row below.
 
 For `data/fight/shots.json`, answering Simulation's plan (`docs/architecture/pending/shots-events-and-kinds.md`). **Every number is a starting value for QA.** For scale, in today's data a light does 26 and a heavy 66; a bolt does 13 and costs 1 ki; a full charged shot does 82.5 and costs 8.
 

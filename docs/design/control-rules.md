@@ -3,6 +3,8 @@
 Owner: Game Design. Orb decided the scheme in `docs/decisions/0008-control-scheme.md` (questionnaire 8). This page sets the game rules it needs: windows, costs, cooldowns, priorities and automatic choices. Controls owns the bindings and layouts, and Encounter owns the director's use of them. Numbers are starting values in ticks (60 a second) and ki (cap 100), and QA tunes them.
 
 > **The agency pass changes several rules on this page** (`agency-pass.md`, from Orb's first two-player playtest): the press queue (§6), the taunt (§4), the escape, the signature's cooldown and the RB toggle. Where the two disagree, the agency pass is the newer rule. This page is updated slice by slice as each lands.
+>
+> **The stances** (`melee-press-feel.md` §10 to §12, 2026-10-04) name what each face button does while a shoulder button is held. B is the signature of the stance he is in, the power layer's three specials are the charging row, and the perfect block stays on the guard button.
 
 **Build order** (Orb, questionnaire 10): the agency fixes first (counters on request, dodge-cancel, burst and the perfect block), then combat variety (blasts and beam struggles; teleports are on hold, §11).
 
