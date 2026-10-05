@@ -715,3 +715,11 @@ The EP's judgment on the tech question, as delegated: "tech" means the same thre
 Orb: "give me the morning summary. ove the next few days I want to start spitballing ideas for special attacks, energy blasts etc. so get a template ready so I can put my ideas in"
 
 The EP's sheet for it: docs/ep/ideas/special-moves.md. It is Orb's file; nobody else edits it.
+
+## 2026-10-05: going to market
+
+Orb asked for "a consult on advertising, where I can get this game listed, and realistic sales expectations. this is a hobby vibe-coded game with a shoestring budget, so I don't expect a miracle, give it to me straight about what I'm up against." Orb wants to "temper my expectations and coordinate a plan to get engagement that translates into real sales", asks "What console stores can I realistically get listed on?", and notes: "by word of mouth a lot of my friends who have Playstations show excitement for this project."
+
+After the EP's consult, Orb: "go, brief Marketing, Legal and Platform for the written plan. upfront AI disclosure is the only ethical path to take for this project."
+
+Standing rule from this: the project discloses its AI-made content upfront, everywhere it is presented or sold. Nothing is ever described as human-made that is not.
