@@ -413,11 +413,11 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				var gl: float = VfxPress.p("ghost_life")
 				var gf: float = 1.0 - clampf(st / gl, 0.0, 1.0)
 				if not red:
-					var ng: int = e.ghosts if e.ghosts > 0 else 3
+					var ng: int = mini(e.ghosts if e.ghosts > 0 else 3, 5)
 					for k in range(ng):
 						var fr2: float = float(k + 1) / float(ng + 1)
 						var gc: Color = e.col
-						gc.a = al * (0.20 + 0.10 * float(k)) * gf
+						gc.a = al * VfxZip.p("ghost_alpha") * float(k + 1) / float(ng) * gf   # one lane tint, 0.35 at most, fainter the older (Legal m05)
 						if e.real:
 							var jg := PackedVector2Array()
 							for q1 in range(e.ja.size()):
@@ -481,12 +481,16 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 		var wrx: float = SimWrap.sdx(cam_x, S.fighters[s].x)
 		if absf(wrx) > half_w + 6.0 * bh:
 			continue
-		var wk: float = clampf((w.t + a) / 24.0, 0.0, 1.0)
-		var wr: float = lerpf(VfxPress.p("wind_r"), 9.0, 1.0 - pow(1.0 - wk, 1.5))
+		# Hollow, thin, lane colour, shrinking only, and only in the last 10 ticks of the wind-up (Legal m07).
+		var wrem: float = 24.0 - (w.t + a)
+		if wrem > VfxZip.p("ring_ticks"):
+			continue
+		var wk: float = clampf(1.0 - wrem / VfxZip.p("ring_ticks"), 0.0, 1.0)
+		var wr: float = lerpf(VfxPress.p("wind_r"), 9.0, wk)
 		var wc: Color = w.col
-		wc.a = al * (0.35 + 0.65 * wk)
+		wc.a = al * (0.3 + 0.6 * wk)
 		var wd: float = _dir_of(S, s)
-		n = _put(n, Vector2(wrx + wd * 14.0, S.fighters[s].y + 54.0), Vector2(1.0, 0.0), wr * 2.0, wr * 2.0, host.fighter_z(s, a) + Z_FX + 6.0, wc, minf(0.5, (3.0 + 3.0 * wk) / wr), 0.0, SHAPE_RING)
+		n = _put(n, Vector2(wrx + wd * 20.0, S.fighters[s].y + 50.0), Vector2(1.0, 0.0), wr * 2.0, wr * 2.0, host.fighter_z(s, a) + Z_FX + 6.0, wc, minf(0.5, 2.2 / wr), 0.0, SHAPE_RING)
 		pr.shown += 1
 	# A heavy ender's target flies with ghosts behind him (the sim's knockback): the stretch is the ghosts' reach along the path.
 	if not red:
@@ -511,6 +515,10 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 
 
 ## The LT zip (zip.gd): the tell, the travel in and out per reading, and the outcome marks. All of it is drawn between points, so it works in any direction.
+## Legal's motion rules (docs/legal/zip-screen.md, movegen-banned.json m01 to m08): the real body is never hidden or replaced (nothing here draws over it: the ghosts and
+## echoes are behind it and trail it); an echo is never ahead of the body; a ghost is one flat lane-colour tint at 0.35 or less, fainter for older ones, at most 5, on the
+## body's real recent path, each overlapping the next by about a third, drawn only while he travels (gone the tick the zip ends); the heavy's ring is thin, hollow and
+## shrinking, in the last 10 ticks of the wind-up; the outcome marks sit below the face.
 func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a: float, bh: float, minpx: float, alpha: float) -> int:
 	var zp: VfxZip = hub.zip
 	var pr: VfxPress = hub.press
@@ -527,16 +535,15 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 		var age: float = maxf(z.age - (1.0 - a), 0.0)
 		var look: float = 1.0 if SimWrap.sdx(f.x, S.fighters[z.target].x) >= 0.0 else -1.0
 		var fz: float = host.fighter_z(z.slot, a)
-		var zb: float = fz + Z_FX - 12.0
+		var zb: float = fz + Z_FX - 12.0          # behind the fighter: ghosts and echoes never cover him
 		var zf: float = fz + Z_FX + 8.0
 		var col: Color = z.col
 		var o := Vector2(SimWrap.sdx(cam_x, z.ox), z.oy)
 		var pt := Vector2(SimWrap.sdx(cam_x, z.px), z.py)
 		var arr: Vector2 = Vector2(SimWrap.sdx(cam_x, z.ax), z.ay) if z.have_a else pt
-		var exit: Vector2 = Vector2(SimWrap.sdx(cam_x, z.ex), z.ey)
 		zp.shown += 1
 		if age < z.t1():
-			# The tell: a thin line along the ground toward the arrival point, and a tick where it ends; the heavy's charge ring shrinks on him.
+			# The tell: a thin line along the ground toward the arrival point, and a tick where it ends; the heavy's ring (hollow, thin, shrinking, the last 10 ticks).
 			var k: float = age / z.t1()
 			var tc: Color = col
 			tc.a = al * VfxZip.p("tell_alpha") * (0.35 + 0.65 * k)
@@ -544,11 +551,13 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 			var gp: float = WorldTerrain.groundY(S, z.px) + 3.0
 			n = _line(n, Vector2(o.x, go), Vector2(pt.x, gp), maxf(VfxZip.p("ground_line_w"), minpx * 1.2), zb, tc)
 			n = _line(n, Vector2(pt.x, gp), Vector2(pt.x, gp + 12.0), maxf(VfxZip.p("ground_line_w"), minpx * 1.2), zb, tc)
-			if z.style == "heavy":
-				var rr: float = lerpf(40.0, 12.0, k)
+			var rem: float = z.t1() - age
+			if z.style == "heavy" and rem <= VfxZip.p("ring_ticks"):
+				var kr: float = 1.0 - rem / VfxZip.p("ring_ticks")
+				var rr: float = lerpf(40.0, 12.0, kr)
 				var hc: Color = col
-				hc.a = al * (0.2 + 0.6 * k)
-				n = _put(n, Vector2(cur.x - look * 12.0, cur.y + 54.0), Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zf, hc, minf(0.5, (2.0 + 2.0 * k) / rr), 0.0, SHAPE_RING)
+				hc.a = al * (0.3 + 0.6 * kr)
+				n = _put(n, Vector2(cur.x + look * 20.0, cur.y + 50.0), Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zf, hc, minf(0.5, 2.2 / rr), 0.0, SHAPE_RING)
 			continue
 		var in_phase: bool = age < z.t2()
 		var out_phase: bool = age >= z.t3() and age < z.t4() and not z.stopped
@@ -558,61 +567,54 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 		if out_phase and style == "heavy":
 			style = "speed"                  # a heavy leaves as a speed zip
 		if style == "tech":
-			# No travel: wire echoes on the straight path popping off back to front, and a thin line at head height.
-			var p0: Vector2 = o if in_phase or age < z.t3() else arr
-			var p1: Vector2 = arr if age < z.t3() else exit
-			var tt: float = (age - z.t2()) if age < z.t3() else (age - z.t3())
-			if tt >= 0.0 and tt < 12.0 and (p1 - p0).length() > 8.0:
+			# Wire echoes between where this leg began and the body, popping off one at a time from the back to the front, and a thin line at head height. They are
+			# strung between the start and the BODY, so none stands ahead of him or at the arrival point before he gets there.
+			var p0: Vector2 = o if age < z.t3() else arr
+			var tt: float = (age - z.t1()) if age < z.t3() else (age - z.t3())
+			if tt >= 0.0 and tt < 12.0 and (cur - p0).length() > 8.0:
 				var ne: int = int(VfxZip.p("echoes"))
 				var pop: float = VfxZip.p("echo_pop")
+				var ep: Array = VfxZip.echo_points(p0, cur, ne)
 				for g in range(ne):
 					if red and g != ne - 1:
 						continue
 					if tt >= 2.0 + float(g) * pop:
 						continue
-					var fr: float = float(g + 1) / float(ne + 1)
 					var ec: Color = col.darkened(0.3)
 					ec.a = al
-					var fp: Vector2 = p0.lerp(p1, fr)
-					n = _figure(n, fp, look, 12.0, fp + Vector2(look * 24.0, 50.0), ec, true, zf - 2.0 + 0.2 * float(g), minpx)
+					var fp: Vector2 = ep[g]
+					n = _figure(n, fp, look, 12.0, fp + Vector2(look * 24.0, 50.0), ec, true, zb + 0.2 * float(g), minpx)
 				var lc: Color = col.darkened(0.3)
 				lc.a = al * 0.6 * (1.0 - clampf(tt / 10.0, 0.0, 1.0))
-				n = _line(n, p0 + Vector2(0.0, 74.0), p1 + Vector2(0.0, 74.0), maxf(1.3, minpx * 1.2), zf - 1.0, lc)
+				n = _line(n, p0 + Vector2(0.0, 74.0), cur + Vector2(0.0, 74.0), maxf(1.3, minpx * 1.2), zb - 0.1, lc)
 			continue
 		if not (in_phase or out_phase):
 			continue
-		# Speed and heavy: ghosts along the path he really took, and the bands. The ghosts sit behind him, closer together the shorter the move.
-		var mvlen: float = z.mv if in_phase else z.out
-		var spc: int = maxi(1, int(round(mvlen / 6.0)))
+		# Speed and heavy: a smear of up to 5 ghosts on the body's real recent path, each overlapping the next by about a third, one flat lane-colour tint at 0.35 or
+		# less and fainter the older. Nothing is drawn where he has not been; a stationary body has no ghosts.
 		var heavy: bool = style == "heavy"
-		var ng: int = 2 if red else int(VfxZip.p("ghosts"))
+		var ng: int = 2 if red else mini(int(VfxZip.p("ghosts")), 5)
+		var trail: Array = VfxZip.trail_points(pr.hist[z.slot], VfxZip.p("ghost_gap"), ng)
 		var oldest: Vector2 = cur
-		for g in range(ng, 0, -1):
-			var hp: Vector2 = pr.back(S, z.slot, g * spc)
-			var gp2 := Vector2(SimWrap.sdx(cam_x, hp.x), hp.y)
-			if (gp2 - cur).length() < VfxZip.p("min_gap"):
-				continue
-			if g == ng:
-				oldest = gp2
-			var gc: Color = col.darkened(0.2)
-			if heavy:
-				gc.a = al * (0.18 + 0.07 * float(ng - g))
-			else:
-				gc.a = al * 0.11 * float(ng + 1 - g)
-			n = _figure(n, gp2, look, 16.0 if heavy else 8.0, gp2 + Vector2(look * 30.0, 56.0), gc, false, zb + 0.1 * float(ng - g), minpx, 2.0 if heavy else 1.0)
+		for g in range(trail.size()):
+			var tp: Vector2 = trail[g]
+			var gp2 := Vector2(SimWrap.sdx(cam_x, tp.x), tp.y)
+			oldest = gp2
+			var gc: Color = col
+			gc.a = al * VfxZip.p("ghost_alpha") * (1.0 - float(g) / float(ng))
+			n = _figure(n, gp2, look, 16.0 if heavy else 8.0, gp2 + Vector2(look * 30.0, 56.0), gc, false, zb + 0.1 * float(ng - g), minpx, 1.5 if heavy else 1.0)
 		var d: Vector2 = cur - oldest
 		if d.length() > 4.0:
-			var bc: Color = col.darkened(0.2)
+			var bc: Color = col
+			bc.a = al * 0.30
 			if heavy:
-				bc.a = al * 0.42
 				n = _put(n, (oldest + cur) * 0.5 + Vector2(0.0, 48.0), d.normalized(), d.length(), VfxZip.p("wide_w") * 2.0, zb - 0.3, bc, 0.9, 0.5, SHAPE_STREAK)
 			else:
-				bc.a = al * 0.42
 				n = _put(n, (oldest + cur) * 0.5 + Vector2(0.0, 74.0), d.normalized(), d.length(), VfxZip.p("band_w") * 2.0, zb - 0.3, bc, 0.9, 0.5, SHAPE_STREAK)
 				if not red:
-					bc.a = al * 0.32
+					bc.a = al * 0.22
 					n = _put(n, (oldest + cur) * 0.5 + Vector2(0.0, 36.0), d.normalized(), d.length(), VfxZip.p("band_w2") * 2.0, zb - 0.3, bc, 0.9, 0.5, SHAPE_STREAK)
-	# The outcome marks.
+	# The outcome marks (no text, nothing on the face, nothing body-wide): all of them sit at or below the chest, and none is white, gold or red.
 	for m: VfxZip.Mark in zp.marks:
 		if n >= CAP - 14:
 			break
@@ -628,35 +630,35 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 		zp.shown += 1
 		match m.kind:
 			"counter":
-				# A hard bar across his path where he is stopped, and the counter's own mark: a diamond (tech) or a double ring (heavy).
+				# A hard bar across his path where he is stopped (below the face), and the counter's own mark: a diamond (tech) or a double ring (heavy).
 				var bk: Color = m.col
 				bk.a = al * (1.0 - u)
-				n = _put(n, c, pv, 96.0, 7.0 * 2.0, zm, bk, 0.5, 0.5, SHAPE_STREAK)
-				var rr: float = lerpf(12.0, 42.0, 1.0 - pow(1.0 - u, 2.0))
+				n = _put(n, c, pv, VfxZip.p("mark_h"), 7.0 * 2.0, zm, bk, 0.5, 0.5, SHAPE_STREAK)
+				var rr: float = lerpf(10.0, VfxZip.p("mark_r"), 1.0 - pow(1.0 - u, 2.0))
 				var mk: Color = m.col
 				mk.a = al * (1.0 - u)
 				if m.style == "heavy":
-					n = _put(n, c, Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zm + 0.1, mk, minf(0.5, 6.0 / rr), 0.0, SHAPE_RING)
+					n = _put(n, c, Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zm + 0.1, mk, minf(0.5, 5.0 / rr), 0.0, SHAPE_RING)
 					n = _put(n, c, Vector2(1.0, 0.0), rr, rr, zm + 0.1, mk, minf(0.5, 3.0 / (rr * 0.5)), 0.0, SHAPE_RING)
 				else:
-					n = _put(n, c, Vector2(1.0, 0.0), rr * 2.2, rr * 2.2, zm + 0.1, mk, maxf(0.16, 4.0 * minpx / rr), 0.0, 5.0)
+					n = _put(n, c, Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zm + 0.1, mk, maxf(0.16, 4.0 * minpx / rr), 0.0, 5.0)
 			"caught":
-				# He is held in reach: a ring closing on him and two brackets beside him.
-				var cr: float = lerpf(38.0, 16.0, 1.0 - pow(1.0 - clampf(ms / 8.0, 0.0, 1.0), 2.0))
+				# He is held in reach: a ring closing on him (round the chest, under the face) and two brackets beside him.
+				var cr: float = lerpf(VfxZip.p("mark_r"), 14.0, 1.0 - pow(1.0 - clampf(ms / 8.0, 0.0, 1.0), 2.0))
 				var cc: Color = m.col
 				cc.a = al * (1.0 - smoothstep(0.6, 1.0, u))
 				n = _put(n, c, Vector2(1.0, 0.0), cr * 2.0, cr * 2.0, zm, cc, minf(0.5, 3.0 / cr), 0.0, SHAPE_RING)
 				for sg in [-1.0, 1.0]:
-					n = _put(n, c + pv * (sg * (cr + 6.0)), dv, 22.0, 4.0, zm, cc, 0.5, 0.5, SHAPE_STREAK)
+					n = _put(n, c + pv * (sg * (cr + 6.0)), dv, 20.0, 4.0, zm, cc, 0.5, 0.5, SHAPE_STREAK)
 			"gbreak":
-				# The shield line breaks into fragments that fly out, with a flash ring.
+				# The shield line breaks into fragments that fly out, with a small flash ring (low on the body, in the lane colour).
 				var gk: Color = m.col
 				gk.a = al * (1.0 - u)
 				for k in range(4):
 					var ang: float = (float(k) - 1.5) * 0.6
 					var fd := Vector2(dv.x * cos(ang) - dv.y * sin(ang), dv.x * sin(ang) + dv.y * cos(ang))
-					n = _put(n, c + fd * (14.0 + 34.0 * u), fd, 14.0, 4.0, zm, gk, 0.5, 0.5, SHAPE_STREAK)
-				var fr3: float = lerpf(10.0, 28.0, u)
+					n = _put(n, c + fd * (14.0 + 30.0 * u), fd, 12.0, 4.0, zm, gk, 0.5, 0.5, SHAPE_STREAK)
+				var fr3: float = lerpf(8.0, 22.0, u)
 				n = _put(n, c, Vector2(1.0, 0.0), fr3 * 2.0, fr3 * 2.0, zm + 0.1, gk, minf(0.5, 4.0 / fr3), 0.0, SHAPE_RING)
 	return n
 

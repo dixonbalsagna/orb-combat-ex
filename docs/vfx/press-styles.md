@@ -66,3 +66,7 @@ Block and a heavy ender's target flying with ghosts (these two are from the earl
 - A block and a fly are not tied to a body phase yet.
 - The fly's ghosts are the weakest read: flat filled figures at the target's earlier positions; the prototype's stretch (the body itself elongating) is not possible from a draw layer and wants Animation's squash and stretch on the target.
 - Rendering's own contact sparks and rings still fire on a hit; this adds to them. Whether it should replace them is the EP's and Orb's call.
+
+## Legal's motion rules applied to the press styles (2026-10-05, docs/legal/zip-screen.md)
+
+The heavy's filled ghosts take the zip ghosts' conditions (m05, m06): one lane-colour tint, 0.35 opacity at most and fainter the older (0.35 times k over n), at most 5, gone in 8 ticks (`ghost_life` is 8). The heavy's wind-up ring (m07) shows only in the last 10 ticks of the wind, thin (2.2 units), hollow and shrinking. The ps-heavy-*.jpg stills above are from before this change (their ghosts were up to 0.5 opaque and the ring showed the whole wind-up); they are not re-shot.

@@ -21,7 +21,8 @@ extends RefCounted
 
 const DEFAULTS: Dictionary = {
 	"zip": {"ghosts": 5.0, "echoes": 4.0, "echo_pop": 2.0, "hold": 14.0, "hold_max": 60.0, "tell_alpha": 0.55, "band_w": 16.0, "band_w2": 10.0, "wide_w": 24.0,
-		"counter_life": 12.0, "caught_life": 22.0, "gbreak_life": 14.0, "alpha": 0.9, "ground_line_w": 1.6, "min_gap": 6.0},
+		"counter_life": 12.0, "caught_life": 22.0, "gbreak_life": 14.0, "alpha": 0.9, "ground_line_w": 1.6, "min_gap": 6.0,
+		"ghost_gap": 16.0, "ghost_alpha": 0.35, "ring_ticks": 10.0, "mark_h": 54.0, "mark_r": 26.0, "min_travel": 4.0, "bh_per_tick": 3.0},
 }
 
 class Zip:
@@ -76,6 +77,7 @@ var zips: Array = []                # Zip, oldest first
 var marks: Array = []               # Mark
 var made: Dictionary = {}           # counters by kind, for the tests
 var shown: int = 0                  # effects drawn last frame (the tests)
+var violations: Dictionary = {}     # cues that break Legal's travel minimum (m02), by kind, for QA and the tests: the sim sets the ticks, so this only counts
 
 static var _data: Dictionary = {}
 static var _loaded: bool = false
@@ -104,7 +106,44 @@ func reset() -> void:
 	zips.clear()
 	marks.clear()
 	made = {}
+	violations = {}
 	warm()
+
+
+## Legal's minimum for a zip's way in and its way out (m02): at least 4 ticks, and never more than 3 body heights between consecutive drawn positions.
+static func min_ticks(distance_bh: float) -> int:
+	return maxi(int(p("min_travel")), int(ceil(distance_bh / p("bh_per_tick"))))
+
+
+## Where the wire echoes stand on a leg from p0 to the body p1: evenly spaced and always short of the body (never ahead of it, never at the arrival point before he gets there).
+static func echo_points(p0: Vector2, p1: Vector2, count: int) -> Array:
+	var out: Array = []
+	for g in range(count):
+		out.append(p0.lerp(p1, float(g + 1) / float(count + 1)))
+	return out
+
+
+## The ghosts' places: up to `count` points on the body's real recent path (the position history, oldest first), each `spacing` along it from the newest,
+## so with a spacing of two thirds of the body's width each overlaps the next by about a third. A stationary body has none.
+static func trail_points(hist: Array, spacing: float, count: int) -> Array:
+	var out: Array = []
+	if hist.size() < 2 or count <= 0:
+		return out
+	var need: float = spacing
+	var acc: float = 0.0
+	var i: int = hist.size() - 1
+	while i > 0 and out.size() < count:
+		var a: Vector2 = hist[i]
+		var b: Vector2 = hist[i - 1]
+		var seg := Vector2(SimWrap.sdx(a.x, b.x), b.y - a.y)
+		var l: float = seg.length()
+		while l > 0.0001 and acc + l >= need and out.size() < count:
+			var t: float = (need - acc) / l
+			out.append(Vector2(SimWrap.wrap(a.x + seg.x * t), a.y + seg.y * t))
+			need += spacing
+		acc += l
+		i -= 1
+	return out
 
 
 ## The zip of a slot that is playing, or null.
@@ -177,6 +216,12 @@ func _start(S: SimState, e, kind: String) -> void:
 	z.mv = maxf(float(VfxHub._g(e, "n", 6.0)), 1.0)
 	z.hold = clampf(float(VfxHub._g(e, "hold", p("hold"))), 1.0, p("hold_max"))
 	z.out = maxf(float(VfxHub._g(e, "out", z.mv)), 1.0)
+	# Legal m02: the way in and the way out last at least max(4, ceil(distance in body heights / 3)) ticks. The sim sets them; count the cues that do not.
+	var dist_bh: float = Vector2(SimWrap.sdx(f.x, ft.x), ft.y - f.y).length() / VfxLook.BH
+	if z.mv < float(min_ticks(dist_bh)):
+		violations["short_in"] = int(violations.get("short_in", 0)) + 1
+	if z.out < float(min_ticks(dist_bh)):
+		violations["short_out"] = int(violations.get("short_out", 0)) + 1
 	z.ox = f.x
 	z.oy = f.y
 	var side: float = 1.0 if SimWrap.sdx(f.x, ft.x) >= 0.0 else -1.0
@@ -230,7 +275,7 @@ func _outcome(S: SimState, e, kind: String) -> void:
 		"lunge_counter":
 			m.kind = "counter"
 			m.x = zf.x
-			m.y = zf.y + 50.0
+			m.y = zf.y + 34.0
 			m.life = p("counter_life")
 			m.col = VfxPress.lane_of(S, who)
 			if z != null:
@@ -239,7 +284,7 @@ func _outcome(S: SimState, e, kind: String) -> void:
 			m.kind = "caught"
 			m.slot = zs
 			m.x = zf.x
-			m.y = zf.y + 40.0
+			m.y = zf.y + 30.0
 			m.life = p("caught_life")
 			m.col = VfxPress.lane_of(S, who)
 			if z != null:
@@ -247,7 +292,7 @@ func _outcome(S: SimState, e, kind: String) -> void:
 		_:
 			m.kind = "gbreak"
 			m.x = wf.x
-			m.y = wf.y + 50.0
+			m.y = wf.y + 34.0
 			m.life = p("gbreak_life")
 			m.col = VfxPress.lane_of(S, who)
 			m.dx = -signf(SimWrap.sdx(wf.x, zf.x)) if absf(SimWrap.sdx(wf.x, zf.x)) > 0.5 else 1.0

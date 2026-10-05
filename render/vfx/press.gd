@@ -20,7 +20,7 @@ const DEFAULTS: Dictionary = {
 	"press": {"hist": 64.0, "reach": 24.0, "lunge": 12.0, "alpha": 0.9,
 		"speed_life": 8.0, "speed_ring_life": 6.0, "speed_w": 7.0, "speed_ring_r": 20.0,
 		"tech_life": 11.0, "echo_pop": 2.5, "line_life": 7.0, "diamond_life": 5.0, "diamond_r": 14.0,
-		"wind_life": 26.0, "wind_r": 34.0, "heavy_life": 18.0, "ghost_life": 10.0, "crescent_life": 8.0, "ring_life": 12.0, "ring_r": 40.0, "fly_max": 40.0, "fly_ghosts": 3.0,
+		"wind_life": 26.0, "wind_r": 34.0, "heavy_life": 18.0, "ghost_life": 8.0, "crescent_life": 8.0, "ring_life": 12.0, "ring_r": 40.0, "fly_max": 40.0, "fly_ghosts": 3.0,
 		"block_life": 12.0, "flash_life": 7.0, "shield_h": 40.0},
 }
 const STYLES: Array = ["speed", "tech", "heavy", "block"]

@@ -2920,10 +2920,10 @@ func _press() -> void:
 	var hh: VfxHub = fresh.call()
 	_tick(S, hh, [cue.call(0, "tell_heavy")])
 	var w0: int = quads_at.call(hh)
-	_check(hh.press.wind[0].on and w0 == 1, "a heavy's wind-up is one shrinking ring (%d)" % w0)
-	for k in range(10):
+	_check(hh.press.wind[0].on and w0 == 0, "a heavy's wind-up ring waits for its last 10 ticks (%d quads at the start)" % w0)
+	for k in range(16):
 		_tick(S, hh, [])
-	_check(quads_at.call(hh) == 1, "and it holds one quad while it charges")
+	_check(quads_at.call(hh) == 1, "then it is one thin hollow ring shrinking onto the fist (Legal m07)")
 	_tick(S, hh, [hit.call(0, "heavy", "")])
 	for k in range(3):
 		_tick(S, hh, [])
@@ -3077,7 +3077,7 @@ func _zip() -> void:
 	var q_tell: int = quads.call(h1)
 	_check(q_tell == 2, "the tell is a ground line and a tick at its end (%d quads)" % q_tell)
 	var q_tell_h: int = quads.call(h2)
-	_check(q_tell_h == 3, "the heavy's tell adds the shrinking charge ring (%d quads)" % q_tell_h)
+	_check(q_tell_h == 2, "the heavy's ring waits for the last 10 ticks of the wind-up (%d quads at its start)" % q_tell_h)
 	# The travel in, speed: stacked ghosts along the real path and two bands.
 	for k in range(6):
 		_tick(S, h1, [])
@@ -3120,24 +3120,86 @@ func _zip() -> void:
 		_tick(S, hh, [])
 	var q_hout: int = fly.call(hh, Vector2(260.0, 0.0), Vector2(0.0, 0.0), 10, 5)
 	_check(hh.zip.of(0) != null and q_hout >= 20, "and it leaves as a speed zip along the way out (%d quads)" % q_hout)
-	# Tech: no travel; echoes pop off along the straight path after the arrival, and again on the way out.
+	# Tech (Legal RL-076, m01 to m04): the body travels, drawn, at least 4 ticks each way; the wire echoes trail behind it and pop off back to front.
+	_check(VfxZip.min_ticks(1.0) == 4 and VfxZip.min_ticks(9.0) == 4 and VfxZip.min_ticks(12.5) == 5 and VfxZip.min_ticks(30.0) == 10, "the travel minimum is max(4, ceil(distance in body heights / 3)) ticks (4, 4, 5, 10)")
+	var hshort: VfxHub = fresh.call()
+	_tick(S, hshort, [lunge.call(0, "lunge_light", "timed", 6, 2, {"out": 2})])
+	_check(int(hshort.zip.violations.get("short_in", 0)) == 1 and int(hshort.zip.violations.get("short_out", 0)) == 1, "a cue with a 2-tick travel is counted as breaking the minimum (the sim sets the ticks)")
 	var ht: VfxHub = fresh.call()
-	_tick(S, ht, [lunge.call(0, "lunge_light", "timed", 6, 2, {"hold": 14.0, "out": 4.0, "ex": plains - 200.0, "ey": g + 90.0})])
+	_tick(S, ht, [lunge.call(0, "lunge_light", "timed", 6, 5, {"hold": 14.0, "out": 5.0, "ex": plains - 200.0, "ey": g + 90.0})])
+	_check(ht.zip.violations.is_empty(), "a tech zip of 5 ticks each way breaks nothing")
 	for k in range(6):
 		_tick(S, ht, [])
-	fly.call(ht, Vector2(0.0, 0.0), Vector2(260.0, 0.0), 2)
-	var q_t0: int = quads.call(ht)
-	var seq: Array = [q_t0]
-	for k in range(7):
+	var seq: Array = []
+	var echo_ok: bool = true
+	for k in range(1, 6):
+		var t: float = float(k) / 5.0
+		f0.x = SimWrap.wrap(plains + 260.0 * t)
+		f0.y = g
 		_tick(S, ht, [])
 		seq.append(quads.call(ht))
-	_check(seq[0] >= 20 and seq[0] > seq[3] and seq[3] > seq[6] and seq[6] >= 1, "tech: no travel; wire echoes pop off back to front along the path (quads by tick %s)" % str(seq))
-	for k in range(6):
+		# every echo is strictly short of the body and past where the leg began
+		var body := Vector2(260.0 * t, g)
+		var org := Vector2(0.0, g)
+		for ep in VfxZip.echo_points(org, body, 4):
+			if (ep - org).dot(body - org) <= 0.0 or (ep - org).length() >= (body - org).length():
+				echo_ok = false
+	_check(echo_ok, "the echoes always stand between the start and the body, never ahead of him or at the arrival point before he gets there")
+	_check(seq[0] >= 15 and seq[1] >= 15, "the echoes are drawn during the travel, not only after it (quads by travel tick %s)" % str(seq))
+	var seq2: Array = []
+	for k in range(7):
+		_tick(S, ht, [])
+		seq2.append(quads.call(ht))
+	_check(seq2[0] >= seq2[3] and seq2[3] >= seq2[6] and seq2[0] > seq2[6], "and they pop off back to front after it (quads by tick %s)" % str(seq2))
+	for k in range(5):
 		_tick(S, ht, [])
 	var z_t: VfxZip.Zip = ht.zip.of(0)
 	var before_out: int = quads.call(ht)
-	var q_tout: int = fly.call(ht, Vector2(260.0, 0.0), Vector2(-200.0, 90.0), 4, 2)
-	_check(z_t != null and before_out == 0 and q_tout >= 15, "and on the way out, along the line to the exit point above and behind (%d quads)" % q_tout)
+	var q_tout: int = fly.call(ht, Vector2(260.0, 0.0), Vector2(-200.0, 90.0), 5, 3)
+	_check(z_t != null and before_out == 0 and q_tout >= 10, "on the way out the echoes trail the body along the drawn path to the exit (%d quads)" % q_tout)
+	# The ghosts (m05, m06): at most 5, one lane tint, 0.35 opacity or less and fainter the older, on the real path two thirds of a body width apart, a stationary body has none.
+	var line_hist: Array = []
+	for k in range(30):
+		line_hist.append(Vector2(26.0 * float(k), 0.0))
+	var tp: Array = VfxZip.trail_points(line_hist, VfxZip.p("ghost_gap"), 5)
+	var gap_ok: bool = tp.size() == 5
+	for k in range(1, tp.size()):
+		if absf(((tp[k - 1] as Vector2) - (tp[k] as Vector2)).length() - VfxZip.p("ghost_gap")) > 0.01:
+			gap_ok = false
+	_check(gap_ok and absf(((tp[0] as Vector2).x) - (26.0 * 29.0 - 16.0)) < 0.01, "five ghosts on the real path, each 16 units behind the last (a third of overlap on a 24-wide body)")
+	var still_hist: Array = []
+	for k in range(20):
+		still_hist.append(Vector2(100.0, 0.0))
+	_check(VfxZip.trail_points(still_hist, 16.0, 5).is_empty(), "a stationary body has no ghost (no copy left standing)")
+	_check(VfxZip.p("ghost_alpha") <= 0.35 and VfxPress.p("ghost_life") <= 8.0, "ghost opacity is 0.35 at most and the press styles' heavy ghosts last 8 ticks at most")
+	var hga: VfxHub = fresh.call()
+	_tick(S, hga, [lunge.call(0, "lunge_light", "mash", 4, 10, {"hold": 6.0, "out": 10.0})])
+	for k in range(4):
+		_tick(S, hga, [])
+	var max_a: float = 0.0
+	var ghosts_seen: int = 0
+	fly.call(hga, Vector2(0.0, 0.0), Vector2(260.0, 0.0), 10, 7)
+	for q in range(view.count):
+		max_a = maxf(max_a, view._buf[q * VfxShotsView.STRIDE + 15])
+		if view._buf[q * VfxShotsView.STRIDE + 18] == 1.0 and view._buf[q * VfxShotsView.STRIDE + 16] >= 0.99:
+			ghosts_seen += 1
+	_check(max_a <= 0.351, "no zip quad in travel is more than 0.35 opaque (max %.2f)" % max_a)
+	_check(ghosts_seen <= 5, "at most 5 filled ghosts (%d filled heads)" % ghosts_seen)
+	for k in range(6):
+		_tick(S, hga, [])
+	fly.call(hga, Vector2(260.0, 0.0), Vector2(0.0, 0.0), 10)
+	_tick(S, hga, [])
+	_check(quads.call(hga) == 0, "and nothing of the zip is drawn once it ends (the smear is gone within 8 ticks)")
+	# The heavy's wind-up ring (m07): only in the last 10 ticks of the wind-up, hollow, thin.
+	var hrg: VfxHub = fresh.call()
+	_tick(S, hrg, [lunge.call(0, "lunge_heavy", "", 22, 8, {})])
+	for k in range(6):
+		_tick(S, hrg, [])
+	var q_early: int = quads.call(hrg)
+	for k in range(10):
+		_tick(S, hrg, [])
+	var q_late: int = quads.call(hrg)
+	_check(q_early == 2 and q_late == 3, "the heavy's ring shows only in the last 10 ticks of the wind-up (%d quads early, %d late)" % [q_early, q_late])
 	# The outcomes.
 	var hc: VfxHub = fresh.call()
 	_tick(S, hc, [lunge.call(0, "lunge_light", "mash", 4, 6, {})])
@@ -3151,6 +3213,11 @@ func _zip() -> void:
 	var hc2: VfxHub = fresh.call()
 	_tick(S, hc2, [outcome.call(1, "lunge_counter", "heavy")])
 	_check(quads.call(hc2) == 3, "a heavy counter: the bar and a double ring")
+	var below: bool = true
+	for mm in hc2.zip.marks:
+		if mm.y - f0.y > 40.0:
+			below = false
+	_check(below, "the outcome marks sit at or below the chest, never on the face (Legal m08)")
 	var hk: VfxHub = fresh.call()
 	_tick(S, hk, [outcome.call(1, "lunge_caught", "")])
 	_check(int(hk.zip.made.get("caught", 0)) == 1 and quads.call(hk) == 3, "caught in reach: a closing ring and two brackets (%d quads)" % view.count)
