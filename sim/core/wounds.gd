@@ -255,6 +255,10 @@ static func gateIntent(f, i: SimIntent) -> void:
 		# "a way out of any situation", so it passes a stun (drop it here if Game Design rules otherwise).
 		i.lightHeld = false
 		i.heavyHeld = false
+		# Intent version 4: the stance mask and the two held levels end with the rest (the EP's ruling, 2026-10-05).
+		i.stanceMask = 0
+		i.contextHeld = false
+		i.sigHeld = false
 	if broken(f, LEGS):
 		i.dash = false
 		i.sprint = false

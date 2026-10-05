@@ -1,5 +1,7 @@
 # The intro phase: the crater-landing entrance and the staredown
 
+**Since 2026-10-06 the phase plays a composed timeline.** The fixed sequence described below is now the classic template of `data/fight/intro.json` (what `"intro": true` plays, tick for tick). The composer, the record a setup passes, the three scenarios, the host's facts, the new events and the `waiting` state are in `docs/architecture/dynamic-intros.md`.
+
 Owner: Simulation and Engine. Status: plan, docs only (2026-10-02). It answers Camera's ask in `docs/camera/rule-of-cool-shots.md` row 7: a skippable window before the clock, with four events.
 
 ## 1. What it is

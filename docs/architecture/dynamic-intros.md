@@ -1,12 +1,10 @@
-# Patch plan: dynamic intros, the first cut
+# Dynamic intros, the first cut (as built)
 
-Owner: Simulation and Engine. Date: 2026-10-04, revised 2026-10-06. Status: **built and proven in a scratch copy of baaba63, parked, not applied.** It applies after World's stages.
+Owner: Simulation and Engine. Status: **in the tree since 2026-10-06, applied on 648c637** (after intent version 4 and World's staged destruction). It was built and proven in scratch first; this is that plan, kept as the record of what was built.
 
-Revision 2 (2026-10-06) folds in Narrative's generative layer (`docs/narrative/dynamic-intros.md` section 11): the host's `facts` record bends the composer through five keys, gestures play as beats, and voice slots carry the facts' tags. Section 6b is new; sections 3, 4, 7, 8, 10 and 11 changed. The EP's rulings are in: Narrative's lengths stand, `"intro": true` stays classic, and who is first is an even draw.
+Revision 2 folded in Narrative's generative layer (`docs/narrative/dynamic-intros.md` section 11): the host's `facts` record bends the composer through five keys, gestures play as beats, and voice slots carry the facts' tags. The EP's rulings are in: Narrative's lengths stand, `"intro": true` stays classic, and who is first is an even draw.
 
 Sources: Encounter's composer plan (`docs/director/dynamic-intros-plan.md`), Narrative's content (`docs/narrative/dynamic-intros.md`: S1 Double Drop, S2 Latecomer, S9 Long Look; voice intents V1, V2, V3, V8), the intro phase as built (`docs/architecture/intro-phase.md`).
-
-The build is in `docs/architecture/pending/dynamic-intros/`: `dynintro.py` and the three files it installs (section 9).
 
 ## 1. What changes, in one paragraph
 
@@ -187,20 +185,15 @@ Every bend's reason goes to the feed on the first pre-clock tick, beside the pic
 | **Narrative** | `intro_line.kind`, `variant`, `stance`, `angle`, `event`, `p` | The line system picks the words and decides whether the line plays, on its own stream. Two lines can be offered close together (V1 at 138 and V8 at 156 in the Double Drop); which plays is the line system's rule |
 | **QA** | Nothing in the batches (they skip) | One row: every template plays for every pair |
 
-## 9. The build, and how to apply it
+## 9. As applied (2026-10-06, on 648c637)
 
-`docs/architecture/pending/dynamic-intros/`:
+- `sim/core/intro.gd` (the playback, rewritten), `sim/director/intro.gd` (new: the composer, `DirIntro`), `data/fight/intro.json` (the three scenarios), and the anchored edits in `sim/core/state.gd`, `fx.gd`, `hash.gd`, `view/fx.gd`, `tools/parity.gd` and `tools/golden_recipes.gd`.
+- In the same window, three lines in `sim/core/wounds.gd`: a stun ends the stance mask and the two held levels of intent version 4, as it ends `lightHeld` and `heavyHeld` (the EP's ruling), with a check.
+- **In the tree:** the classic intro's per-tick state digest is identical before and after the code; the regenerated goldens have identical light digests and tick counts for all 9 matches (172,424 ticks) and both replays; `npm test` 5 of 5; parity 38 checks; render determinism, the loader check, the touch test, the seam sweep and Animation's `anim_check` pass.
+- **Against Animation's render:** a Double Drop and a Latecomer with five facts gestures each, run through the game's own scene headless: every `intro_gesture` event (`actor`, `kind`, `text`) started a motion on its fighter, none skipped.
+- **Tools' schema** (`docs/tools/pending/apply-intro2.cjs`, run by the EP at the commit): with it the validator is at 0 errors and its self-test passes (3,969 of 3,969), proven in a scratch copy of the tree. Without it the validator reports 7 errors on `data/fight/intro.json`.
 
-| File | What it is |
-| :--- | :--- |
-| `dynintro.py` | The slice, in two parts: `python docs/architecture/pending/dynamic-intros/dynintro.py . code`, then `... hash`. It stops if `sim/core/intro.gd` or `data/fight/intro.json` has changed since it was built, or if `sim/director/intro.gd` exists |
-| `src/intro_core.gd.txt` | The new `sim/core/intro.gd` |
-| `src/intro_dir.gd.txt` | The new `sim/director/intro.gd` |
-| `src/intro.json` | The new `data/fight/intro.json` |
-
-It also edits `sim/core/state.gd`, `fx.gd`, `hash.gd`, `view/fx.gd`, `tools/parity.gd` and `tools/golden_recipes.gd` by anchored text. After `code`, run Godot's `--import` once: `DirIntro` is a new class.
-
-## 10. Goldens and proofs (scratch copy of baaba63, after intent version 4)
+## 10. Goldens and proofs (first in a scratch copy of baaba63; the same in the tree, section 9)
 
 **What moves in the goldens.**
 

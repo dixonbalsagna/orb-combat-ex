@@ -43,6 +43,40 @@ static func introHash() -> String:
 	return h.hex()
 
 
+## Composed intros: AI matches whose setup asks the composer for an intro (seeds 7 and up): two free draws, two with a
+## no-repeat list, every template by name with its order and gap drawn, then two with the host's facts. Every tick's fighters and events through
+## the pre-clock ticks and the first two seconds of the fight, with what was composed.
+static func introComposedHash() -> String:
+	var h := SimHash.Hasher.new()
+	SimIntro.errors()   # (the data is loaded on first use)
+	var classic: String = SimIntro.templates[SimIntro.classicI].id
+	var recs: Array = [{"play": true}, {"play": true}, {"play": true, "avoid": [classic, classic]}, {"play": true, "avoid": [classic, classic]}]
+	for tp in SimIntro.templates:
+		recs.append({"play": true, "scenario": tp.id})
+	# two with the host's facts (Narrative's example, docs/narrative/dynamic-intros.md section 11.5), drawn and by name
+	var facts := {"tones": ["neutral", "grave"], "plot": "rivalry.simmering.record", "weights": {"double_drop": 0.9, "latecomer": 1.0, "long_look": 1.8},
+		"gap": -0.6, "look": "long", "clock": 24, "gestures": [{"at": "land_first", "who": "second", "intent": "check"}, {"at": "look_start", "who": "first", "intent": "harden"}],
+		"intents": {"arrive_remark": {"who": "first", "stance": "guarded", "angle": "then", "p": 0.9, "event": "last_ko"},
+			"staredown_pair": {"lines": [{"who": "left", "stance": "guarded", "angle": "then", "event": "last_ko", "p": 0.9}, {"who": "right", "stance": "smug", "angle": "us", "p": 0.9}]}}}
+	recs.append({"play": true, "facts": facts})
+	recs.append({"play": true, "scenario": classic, "facts": facts})
+	for i in range(recs.size()):
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 7 + i, {}, {"intro": recs[i]})
+		h.num(float(S.intro.scenario)); h.num(float(S.intro.first)); h.num(float(S.intro.gap)); h.num(float(S.intro.picks)); h.num(float(S.intro.clock))
+		for t in range(S.intro.left + 120):
+			SimCore.step(S)
+			h.num(S.T)
+			for f in S.fighters:
+				h.num(f.x); h.num(f.y); h.text(f.state)
+			SimHash.hashFx(h, S.out.fx)
+			S.out.fx.clear()
+			S.out.feed.clear()
+		h.text(SimHash.stateHash(S).gameplay)
+		SimCore.dispose(S)
+	return h.hex()
+
+
 ## Every golden vector, as the JSON the generator writes.
 static func build() -> Dictionary:
 	var g := {"format": "orb-golden", "v": 2, "generatedBy": "sim/core/tools/golden.gd (GDScript sim, the source of truth since ADR 0006)", "godot": Engine.get_version_info().string}
@@ -65,6 +99,7 @@ static func build() -> Dictionary:
 	g.mood = moodHash()
 	g.fightHash = SimMood.dataHash() + SimPause.dataHash() + SimIntro.dataHash() + SimShots.dataHash()
 	g.intro = introHash()
+	g.introComposed = introComposedHash()
 	g.wounds = woundsHash()
 	g.checkEvery = CHECK_EVERY
 	g.rosterHash = FighterData.dataHash()

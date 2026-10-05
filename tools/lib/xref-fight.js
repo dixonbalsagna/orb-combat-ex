@@ -885,26 +885,35 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     }
   }
 
-  // ---- fight intro: the timeline runs in order; the animation's opening fits its staredown ----
+  // ---- fight intro: the templates' slots name parts, entrances have one fall and one land, one template is classic ----
   const fint = get('data/fight/intro.json');
-  if (isObj(fint) && isObj(fint.ticks)) {
+  if (isObj(fint) && Array.isArray(fint.templates)) {
     const IT2 = 'data/fight/intro.json';
-    const k = fint.ticks;
-    const lt = (a, b, strict) => { if (typeof k[a] === 'number' && typeof k[b] === 'number' && (strict ? k[a] >= k[b] : k[a] > k[b])) err(IT2, `/ticks/${a}`, 'intro-order', `${a} ${k[a]} must be ${strict ? 'before' : 'at most'} ${b} ${k[b]}`); };
-    lt('fallA', 'landA', true); lt('fallB', 'landB', true); lt('landA', 'landB', false); lt('landB', 'staredown', false); lt('staredown', 'clock', true); lt('skipFrom', 'clock', true);
-    const aint = get('data/anim/intro.json');
-    if (isObj(aint) && typeof k.staredown === 'number' && typeof k.clock === 'number') {
-      const len = (k.clock - k.staredown) / 60;
-      if (typeof aint.tense_lead === 'number' && aint.tense_lead > len) err('data/anim/intro.json', '/tense_lead', 'intro-staredown', `tense_lead ${aint.tense_lead} s is longer than the ${len.toFixed(2)} s staredown (data/fight/intro.json)`, 'warning');
-      const seqs = get('data/anim/waves/intro1.sequences.json');
-      if (isObj(aint.beats)) for (const [shape, b] of Object.entries(aint.beats)) {
-        if (shape.startsWith('_') || !isObj(b) || typeof b.at !== 'number') continue;
-        const dur = isObj(seqs) && isObj(seqs.sequences) && isObj(seqs.sequences[b.seq]) && typeof seqs.sequences[b.seq].dur === 'number' ? seqs.sequences[b.seq].dur / 60 : 0;
-        if (b.at + dur > len) err('data/anim/intro.json', `/beats/${esc(shape)}/at`, 'intro-staredown', `beat "${b.seq}" for ${shape} ends at ${(b.at + dur).toFixed(2)} s, after the ${len.toFixed(2)} s staredown`, 'warning');
-      }
+    const parts = isObj(fint.parts) ? fint.parts : {};
+    for (const [pid, p] of Object.entries(parts)) {
+      if (pid.startsWith('_') || !isObj(p) || p.type !== 'entrance' || !Array.isArray(p.beats)) continue;
+      const falls = p.beats.filter((b) => isObj(b) && b.kind === 'fall').length;
+      const lands = p.beats.filter((b) => isObj(b) && b.kind === 'land').length;
+      if (falls !== 1 || lands !== 1) err(IT2, `/parts/${esc(pid)}/beats`, 'intro-part', `entrance "${pid}" has ${falls} fall and ${lands} land beats; it needs exactly one of each`);
     }
+    const ids = new Map();
+    let classics = 0;
+    let minClock = Infinity;
+    fint.templates.forEach((tp, i) => {
+      if (!isObj(tp)) return;
+      const at = `/templates/${i}`;
+      if (typeof tp.id === 'string') { if (ids.has(tp.id)) err(IT2, `${at}/id`, 'intro-id', `template id "${tp.id}" is already used at /templates/${ids.get(tp.id)}`); else ids.set(tp.id, i); }
+      if (tp.classic === true) classics++;
+      if (typeof tp.clock === 'number') minClock = Math.min(minClock, tp.clock);
+      if (isObj(tp.gap) && typeof tp.gap.min === 'number' && typeof tp.gap.max === 'number' && typeof tp.gap.default === 'number') {
+        if (tp.gap.min > tp.gap.default) err(IT2, `${at}/gap/min`, 'intro-order', `gap min ${tp.gap.min} is above the default ${tp.gap.default}`);
+        if (tp.gap.default > tp.gap.max) err(IT2, `${at}/gap/default`, 'intro-order', `gap default ${tp.gap.default} is above max ${tp.gap.max}`);
+      }
+      if (Array.isArray(tp.slots)) tp.slots.forEach((s, j) => { if (isObj(s) && Array.isArray(s.pool)) s.pool.forEach((pid, k) => { if (typeof pid === 'string' && !(pid in parts)) err(IT2, `${at}/slots/${j}/pool/${k}`, 'intro-pool', `slot "${s.slot}" names part "${pid}", which is not in parts (${Object.keys(parts).filter((x) => !x.startsWith('_')).join(', ')})`); }); });
+    });
+    if (classics !== 1) err(IT2, '/templates', 'intro-classic', `${classics} templates are classic; exactly one must be (the one a plain "intro": true plays)`);
+    if (typeof fint.skipFrom === 'number' && minClock !== Infinity && fint.skipFrom >= minClock) err(IT2, '/skipFrom', 'intro-order', `skipFrom ${fint.skipFrom} is not before the shortest clock (${minClock})`);
   }
-
   // ---- anim last stand: ready keys are shapes, sequences exist ----
   const lsd = get('data/anim/laststand.json');
   if (isObj(lsd) && isObj(lsd.ready)) {

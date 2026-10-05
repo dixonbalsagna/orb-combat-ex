@@ -1,66 +1,54 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/fight-intro",
-  "title": "fight.intro/1 (docs/architecture/intro-phase.md)",
-  "description": "data/fight/intro.json: the intro phase's timeline (sim/core/intro.gd), in sim ticks (60 a second) from the first step. Fighter A is slot 0. The loader checks the order: each fall before its landing, A's landing not after B's, then the staredown, then the clock; skipFrom before the clock. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "title": "fight.intro/2 (docs/architecture/pending/dynamic-intros.md)",
+  "description": "data/fight/intro.json: the intro phase, as templates and parts (sim/core/intro.gd plays it; sim/director/intro.gd picks it). Ticks are sim ticks (60 a second). A template is a scenario: an ordered list of slots, each filled by one part from its pool; a part is a short list of beats with ticks from its start. Roles: first and second by arrival; left and right by start spot; both. skipFrom: a press on a human slot skips from this tick; fallHeight and craterEnergy shape the entrances; clockBend: the most the host's facts may shorten (min, 0 or less) or lengthen (max, 0 or more) a template, in ticks; gesturePoints: where a facts gesture plays (ticks after land_first, land_second, wait and look_start; look_end counted back from the clock). Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pool id is a part; every entrance has one fall and one land; exactly one template is classic; ids are unique; a gap runs min to default to max; skipFrom is before every clock) are checked by tools/lib/xref-fight.js (intro-*). The loader checks that a template fits its clock.",
   "type": "object",
   "required": [
     "schema",
-    "ticks",
+    "skipFrom",
     "fallHeight",
-    "craterEnergy"
+    "craterEnergy",
+    "clockBend",
+    "gesturePoints",
+    "parts",
+    "templates"
   ],
   "properties": {
     "schema": {
-      "const": "fight.intro/1"
+      "const": "fight.intro/2"
     },
-    "ticks": {
+    "skipFrom": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "A press on a human slot skips from this tick."
+    },
+    "fallHeight": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "The height a fighter falls from."
+    },
+    "craterEnergy": {
+      "type": "number",
+      "minimum": 0,
+      "description": "The crater energy of an entrance."
+    },
+    "clockBend": {
       "type": "object",
       "required": [
-        "fallA",
-        "landA",
-        "fallB",
-        "landB",
-        "staredown",
-        "clock",
-        "skipFrom"
+        "min",
+        "max"
       ],
-      "description": "The timeline.",
       "properties": {
-        "fallA": {
+        "min": {
           "type": "integer",
-          "minimum": 0,
-          "description": "A's fall starts."
+          "maximum": 0,
+          "description": "The most a template may be shortened (0 or less)."
         },
-        "landA": {
+        "max": {
           "type": "integer",
           "minimum": 0,
-          "description": "A touches down; the entrance crater is dug."
-        },
-        "fallB": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "B's fall starts."
-        },
-        "landB": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "B touches down."
-        },
-        "staredown": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Both stand."
-        },
-        "clock": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "The fight starts: the intro's length."
-        },
-        "skipFrom": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "A press on a human slot skips from this tick on."
+          "description": "The most a template may be lengthened (0 or more)."
         }
       },
       "additionalProperties": false,
@@ -68,15 +56,312 @@
         "^_": true
       }
     },
-    "fallHeight": {
-      "type": "number",
-      "exclusiveMinimum": 0,
-      "description": "Units above the ground a fall starts from."
+    "gesturePoints": {
+      "type": "object",
+      "required": [
+        "land_first",
+        "land_second",
+        "wait",
+        "look_start",
+        "look_end"
+      ],
+      "properties": {
+        "land_first": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks after the first landing."
+        },
+        "land_second": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks after the second landing."
+        },
+        "wait": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks into the wait."
+        },
+        "look_start": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks into the look."
+        },
+        "look_end": {
+          "type": "integer",
+          "maximum": 0,
+          "description": "Counted back from the clock (0 or less)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     },
-    "craterEnergy": {
-      "type": "number",
-      "minimum": 0,
-      "description": "The entrance crater's energy (World's crater scale); 0 digs none."
+    "parts": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "type",
+          "ticks",
+          "beats"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "entrance",
+              "reaction",
+              "look"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The arrival mode an entrance reports."
+          },
+          "ticks": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How far the part moves the template on."
+          },
+          "beats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "t",
+                "kind"
+              ],
+              "properties": {
+                "t": {
+                  "type": "integer",
+                  "description": "Ticks from the part's start."
+                },
+                "kind": {
+                  "enum": [
+                    "fall",
+                    "land",
+                    "wait",
+                    "line",
+                    "staredown",
+                    "gesture"
+                  ]
+                },
+                "intent": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "description": "What the line or the gesture says or means."
+                },
+                "who": {
+                  "enum": [
+                    "first",
+                    "second",
+                    "left",
+                    "right"
+                  ],
+                  "description": "Overrides the slot's role for this beat."
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "line",
+                          "gesture"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "intent"
+                    ]
+                  }
+                }
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "entrance"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "required": [
+                "mode"
+              ]
+            }
+          }
+        ],
+        "description": "A short list of beats, with ticks from the part's start.",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "templates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "weight",
+          "tone",
+          "clock",
+          "gap",
+          "slots"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The draw's weight."
+          },
+          "tone": {
+            "enum": [
+              "light",
+              "neutral",
+              "grave"
+            ]
+          },
+          "clock": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The intro's length in ticks. The look takes what is left."
+          },
+          "gap": {
+            "type": "object",
+            "required": [
+              "min",
+              "max",
+              "default"
+            ],
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The shortest gap."
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The longest gap."
+              },
+              "default": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The default gap."
+              }
+            },
+            "description": "Ticks from the first landing to the second fall.",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "notTwice": {
+            "type": "boolean",
+            "description": "Never right after itself."
+          },
+          "classic": {
+            "type": "boolean",
+            "description": "The one a plain `true` plays."
+          },
+          "slots": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "slot",
+                "who",
+                "pool"
+              ],
+              "properties": {
+                "slot": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "description": "A label."
+                },
+                "who": {
+                  "enum": [
+                    "first",
+                    "second",
+                    "left",
+                    "right",
+                    "both"
+                  ]
+                },
+                "pool": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "description": "The parts that may fill the slot."
+                },
+                "after": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks after the slot before it ends."
+                },
+                "gap": {
+                  "type": "boolean",
+                  "description": "Add the drawn gap."
+                },
+                "with": {
+                  "type": "boolean",
+                  "description": "Run alongside, without moving the template on."
+                },
+                "draw": {
+                  "type": "boolean",
+                  "description": "false: the part is not left to chance."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      }
     }
   },
   "additionalProperties": false,

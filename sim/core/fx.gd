@@ -286,17 +286,41 @@ static func lastStandEnd(S: SimState, f, kind: String) -> void:
 
 
 ## The intro phase (sim/core/intro.gd). intro_start: the pre-clock window opens, dur seconds long; a press skips it after
-## delay seconds. entrance_fall: actor starts to fall toward x, y (the ground), from height y1, for dur seconds.
-## entrance_land: he touches down; r is the crater's bowl radius (0 if none was dug). staredown_start: both stand, for
-## dur seconds. clock_start: the fight starts with the next tick; kind is full, or skip when a press ended the intro.
-static func introStart(S: SimState, dur: float, skipAfter: float) -> void:
+## delay seconds; kind is the scenario (the template's id), actor the slot that arrives first, n the gap in ticks (the
+## whole timeline is SimIntro.timeline(S)); text is the facts' plot id. entrance_fall: actor starts to fall toward x, y
+## (the ground), from height y1, for dur seconds; mode is his arrival mode (drop). entrance_land: he touches down; r is
+## the crater's bowl radius (0 if none was dug). intro_beat: a beat that is neither a fall nor a landing: kind wait (actor
+## stands waiting for the other, for dur seconds, until the staredown). intro_line: a voice slot: actor may speak now;
+## kind is the intent (arrive_remark, wait_remark, late_reply, staredown_pair) and variant his role by arrival (first or
+## second); stance, angle, event and p are the facts' tags for it, passed through (p is 1 and the rest empty with no
+## facts). The line is optional and the words are the line system's: the sim holds none. intro_gesture: a small
+## non-verbal beat for actor: kind is the gesture's intent (a meaning, not a pose) and text the point it plays at
+## (land_first, land_second, wait, look_start, look_end, or part for one a template wrote). staredown_start: both stand,
+## for dur seconds. clock_start: the fight starts with the next tick; kind is full, or skip when a press ended the intro.
+static func introStart(S: SimState, dur: float, skipAfter: float, scenario: String = "", first: int = -1, gap: int = 0, plot: String = "") -> void:
 	var e := _ev(S, "intro_start")
-	e.dur = dur; e.delay = skipAfter
+	e.dur = dur; e.delay = skipAfter; e.kind = scenario; e.actor = float(first); e.n = gap; e.text = plot
 
 
-static func entranceFall(S: SimState, f, ground: float, top: float, dur: float) -> void:
+static func introBeat(S: SimState, slot: int, kind: String, dur: float) -> void:
+	var e := _ev(S, "intro_beat")
+	e.actor = float(slot); e.kind = kind; e.dur = dur
+
+
+static func introLine(S: SimState, slot: int, intent: String, role: String, tags: Dictionary = {}) -> void:
+	var e := _ev(S, "intro_line")
+	e.actor = float(slot); e.kind = intent; e.variant = role
+	e.stance = String(tags.get("stance", "")); e.angle = String(tags.get("angle", "")); e.event = String(tags.get("event", "")); e.p = float(tags.get("p", 1.0))
+
+
+static func introGesture(S: SimState, slot: int, intent: String, at: String) -> void:
+	var e := _ev(S, "intro_gesture")
+	e.actor = float(slot); e.kind = intent; e.text = at
+
+
+static func entranceFall(S: SimState, f, ground: float, top: float, dur: float, mode: String = "drop") -> void:
 	var e := _ev(S, "entrance_fall")
-	e.actor = float(S.fighters.find(f)); e.x = f.x; e.y = ground; e.z = f.z; e.y1 = top; e.dur = dur
+	e.actor = float(S.fighters.find(f)); e.x = f.x; e.y = ground; e.z = f.z; e.y1 = top; e.dur = dur; e.mode = mode
 
 
 static func entranceLand(S: SimState, f, top: float, r: float) -> void:

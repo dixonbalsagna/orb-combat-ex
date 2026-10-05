@@ -25590,70 +25590,6 @@
       "expect": null
     },
     {
-      "id": "intro-needs-ticks",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "del": [
-            "/ticks"
-          ]
-        }
-      ],
-      "expect": {
-        "rule": "required",
-        "pointer": ""
-      }
-    },
-    {
-      "id": "intro-fractional-tick",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks/landA": 36.5
-          }
-        }
-      ],
-      "expect": {
-        "rule": "type",
-        "pointer": "/ticks/landA"
-      }
-    },
-    {
-      "id": "intro-unknown-key",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks/bow": 200
-          }
-        }
-      ],
-      "expect": {
-        "rule": "additionalProperties",
-        "pointer": "/ticks/bow"
-      }
-    },
-    {
-      "id": "intro-fall-height",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/fallHeight": 0
-          }
-        }
-      ],
-      "expect": {
-        "rule": "exclusiveMinimum",
-        "pointer": "/fallHeight"
-      }
-    },
-    {
       "id": "wounds-last-stand-required",
       "schema": "fighter-wounds.schema.json",
       "mutate": [
@@ -25693,213 +25629,6 @@
           "file": "data/fighters/FIXTURE_HERO/wounds.json",
           "set": {
             "/lastStand/windowS": 0
-          }
-        }
-      ],
-      "expect": null
-    },
-    {
-      "id": "intro-order-valid",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 0,
-              "landA": 36,
-              "fallB": 84,
-              "landB": 114,
-              "staredown": 144,
-              "clock": 300,
-              "skipFrom": 30
-            }
-          }
-        }
-      ],
-      "expect": null
-    },
-    {
-      "id": "intro-fall-after-landing",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 40,
-              "landA": 36,
-              "fallB": 84,
-              "landB": 114,
-              "staredown": 144,
-              "clock": 300,
-              "skipFrom": 30
-            }
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:intro-order",
-        "pointer": "/ticks/fallA"
-      }
-    },
-    {
-      "id": "intro-fall-equals-landing",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 0,
-              "landA": 36,
-              "fallB": 114,
-              "landB": 114,
-              "staredown": 144,
-              "clock": 300,
-              "skipFrom": 30
-            }
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:intro-order",
-        "pointer": "/ticks/fallB"
-      }
-    },
-    {
-      "id": "intro-a-lands-after-b",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 0,
-              "landA": 120,
-              "fallB": 84,
-              "landB": 114,
-              "staredown": 144,
-              "clock": 300,
-              "skipFrom": 30
-            }
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:intro-order",
-        "pointer": "/ticks/landA"
-      }
-    },
-    {
-      "id": "intro-both-land-together-ok",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 0,
-              "landA": 114,
-              "fallB": 84,
-              "landB": 114,
-              "staredown": 144,
-              "clock": 300,
-              "skipFrom": 30
-            }
-          }
-        }
-      ],
-      "expect": null
-    },
-    {
-      "id": "intro-b-lands-after-staredown",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 0,
-              "landA": 36,
-              "fallB": 84,
-              "landB": 150,
-              "staredown": 144,
-              "clock": 300,
-              "skipFrom": 30
-            }
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:intro-order",
-        "pointer": "/ticks/landB"
-      }
-    },
-    {
-      "id": "intro-staredown-not-before-clock",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 0,
-              "landA": 36,
-              "fallB": 84,
-              "landB": 114,
-              "staredown": 300,
-              "clock": 300,
-              "skipFrom": 30
-            }
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:intro-order",
-        "pointer": "/ticks/staredown"
-      }
-    },
-    {
-      "id": "intro-skip-from-not-before-clock",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 0,
-              "landA": 36,
-              "fallB": 84,
-              "landB": 114,
-              "staredown": 144,
-              "clock": 300,
-              "skipFrom": 300
-            }
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:intro-order",
-        "pointer": "/ticks/skipFrom"
-      }
-    },
-    {
-      "id": "intro-skip-from-zero-ok",
-      "schema": "fight-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/fight/intro.json",
-          "set": {
-            "/ticks": {
-              "fallA": 0,
-              "landA": 36,
-              "fallB": 84,
-              "landB": 114,
-              "staredown": 144,
-              "clock": 300,
-              "skipFrom": 0
-            }
           }
         }
       ],
@@ -25946,38 +25675,6 @@
         }
       ],
       "expect": null
-    },
-    {
-      "id": "anim-intro-tense-lead-longer-than-staredown-warns",
-      "schema": "anim-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/anim/intro.json",
-          "set": {
-            "/tense_lead": 3
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:intro-staredown",
-        "pointer": "/tense_lead"
-      }
-    },
-    {
-      "id": "anim-intro-beat-ends-after-staredown-warns",
-      "schema": "anim-intro.schema.json",
-      "mutate": [
-        {
-          "file": "data/anim/intro.json",
-          "set": {
-            "/beats/A/at": 2.5
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:intro-staredown",
-        "pointer": "/beats/A/at"
-      }
     },
     {
       "id": "director-launch-uppercut-valid",
@@ -57593,6 +57290,1880 @@
         "rule": "xref:pairlive-bone",
         "pointer": "/gesture_groups/head/1"
       }
+    },
+    {
+      "id": "fight-intro-live-valid",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/skipFrom": 30
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-schema-version",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/schema": "fight.intro/1"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "fight-intro-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "fight-intro-underscore-key-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-ticks-retired",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/ticks": {
+              "fallA": 0
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/ticks"
+      }
+    },
+    {
+      "id": "fight-intro-key-required-skipFrom",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/skipFrom"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-intro-key-required-fallHeight",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/fallHeight"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-intro-key-required-craterEnergy",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/craterEnergy"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-intro-key-required-clockBend",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/clockBend"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-intro-key-required-gesturePoints",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/gesturePoints"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-intro-key-required-parts",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/parts"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-intro-key-required-templates",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/templates"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-intro-skip-from-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/skipFrom": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/skipFrom"
+      }
+    },
+    {
+      "id": "fight-intro-skip-from-integer",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/skipFrom": 30.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/skipFrom"
+      }
+    },
+    {
+      "id": "fight-intro-skip-from-zero-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/skipFrom": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-skip-from-not-before-the-shortest-clock",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/skipFrom": 9999
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-order",
+        "pointer": "/skipFrom"
+      }
+    },
+    {
+      "id": "fight-intro-fall-height-zero",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/fallHeight": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/fallHeight"
+      }
+    },
+    {
+      "id": "fight-intro-fall-height-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/fallHeight": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/fallHeight"
+      }
+    },
+    {
+      "id": "fight-intro-crater-energy-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/craterEnergy": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/craterEnergy"
+      }
+    },
+    {
+      "id": "fight-intro-crater-energy-zero-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/craterEnergy": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-clock-bend-key-required",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/clockBend": {
+              "min": -60
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/clockBend"
+      }
+    },
+    {
+      "id": "fight-intro-clock-bend-min-positive",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/clockBend": {
+              "min": 10,
+              "max": 60
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/clockBend/min"
+      }
+    },
+    {
+      "id": "fight-intro-clock-bend-max-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/clockBend": {
+              "min": -60,
+              "max": -10
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/clockBend/max"
+      }
+    },
+    {
+      "id": "fight-intro-clock-bend-integer",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/clockBend": {
+              "min": -60.5,
+              "max": 60
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/clockBend/min"
+      }
+    },
+    {
+      "id": "fight-intro-clock-bend-zero-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/clockBend": {
+              "min": 0,
+              "max": 0
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-clock-bend-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/clockBend": {
+              "min": -60,
+              "max": 60,
+              "mid": 0
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/clockBend/mid"
+      }
+    },
+    {
+      "id": "fight-intro-gesture-points-key-required",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/gesturePoints": {
+              "land_first": 12,
+              "land_second": 12,
+              "wait": 20,
+              "look_start": 24
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/gesturePoints"
+      }
+    },
+    {
+      "id": "fight-intro-gesture-points-unknown-name",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/gesturePoints": {
+              "land_first": 12,
+              "land_second": 12,
+              "wait": 20,
+              "look_start": 24,
+              "look_end": -48,
+              "fall": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/gesturePoints/fall"
+      }
+    },
+    {
+      "id": "fight-intro-gesture-points-look-start-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/gesturePoints": {
+              "land_first": 12,
+              "land_second": 12,
+              "wait": 20,
+              "look_start": -1,
+              "look_end": -48
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gesturePoints/look_start"
+      }
+    },
+    {
+      "id": "fight-intro-gesture-points-look-end-positive",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/gesturePoints": {
+              "land_first": 12,
+              "land_second": 12,
+              "wait": 20,
+              "look_start": 24,
+              "look_end": 5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gesturePoints/look_end"
+      }
+    },
+    {
+      "id": "fight-intro-gesture-points-wait-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/gesturePoints": {
+              "land_first": 12,
+              "land_second": 12,
+              "wait": -1,
+              "look_start": 24,
+              "look_end": -48
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gesturePoints/wait"
+      }
+    },
+    {
+      "id": "fight-intro-gesture-points-integer",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/gesturePoints": {
+              "land_first": 12.5,
+              "land_second": 12,
+              "wait": 20,
+              "look_start": 24,
+              "look_end": -48
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/gesturePoints/land_first"
+      }
+    },
+    {
+      "id": "fight-intro-parts-empty",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/parts"
+      }
+    },
+    {
+      "id": "fight-intro-part-id-shape",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/Big Drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/parts/Big Drop"
+      }
+    },
+    {
+      "id": "fight-intro-part-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-part-note-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-part-type-enum",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "dance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/parts/extra_drop/type"
+      }
+    },
+    {
+      "id": "fight-intro-part-key-required",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "look",
+              "beats": []
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/parts/extra_drop"
+      }
+    },
+    {
+      "id": "fight-intro-part-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ],
+              "loud": true
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/parts/extra_drop/loud"
+      }
+    },
+    {
+      "id": "fight-intro-entrance-needs-mode",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/parts/extra_drop"
+      }
+    },
+    {
+      "id": "fight-intro-reaction-needs-no-mode-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_wait": {
+              "type": "reaction",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 14,
+                  "kind": "wait"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-part-ticks-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": -1,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/extra_drop/ticks"
+      }
+    },
+    {
+      "id": "fight-intro-part-ticks-integer",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36.5,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/parts/extra_drop/ticks"
+      }
+    },
+    {
+      "id": "fight-intro-part-mode-shape",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "Big Drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/parts/extra_drop/mode"
+      }
+    },
+    {
+      "id": "fight-intro-beat-key-required",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/parts/extra_drop/beats/0"
+      }
+    },
+    {
+      "id": "fight-intro-beat-t-integer",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0.5,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/parts/extra_drop/beats/0/t"
+      }
+    },
+    {
+      "id": "fight-intro-beat-kind-enum",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "jump"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/parts/extra_drop/beats/0/kind"
+      }
+    },
+    {
+      "id": "fight-intro-beat-who-enum",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall",
+                  "who": "both"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/parts/extra_drop/beats/0/who"
+      }
+    },
+    {
+      "id": "fight-intro-beat-who-left-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall",
+                  "who": "left"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-beat-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall",
+                  "loud": 1
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/parts/extra_drop/beats/0/loud"
+      }
+    },
+    {
+      "id": "fight-intro-line-needs-intent",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_line": {
+              "type": "reaction",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 10,
+                  "kind": "line"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/parts/extra_line/beats/0"
+      }
+    },
+    {
+      "id": "fight-intro-line-with-intent-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_line": {
+              "type": "reaction",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 10,
+                  "kind": "line",
+                  "intent": "remark",
+                  "who": "first"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-gesture-needs-intent",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_line": {
+              "type": "reaction",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 10,
+                  "kind": "gesture"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/parts/extra_line/beats/0"
+      }
+    },
+    {
+      "id": "fight-intro-gesture-with-intent-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_line": {
+              "type": "reaction",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 10,
+                  "kind": "gesture",
+                  "intent": "acknowledge"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-intent-shape",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_line": {
+              "type": "reaction",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 10,
+                  "kind": "line",
+                  "intent": "Wait Remark"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/parts/extra_line/beats/0/intent"
+      }
+    },
+    {
+      "id": "fight-intro-wait-needs-no-intent-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_line": {
+              "type": "reaction",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 10,
+                  "kind": "wait"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-entrance-without-a-fall",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-part",
+        "pointer": "/parts/extra_drop/beats"
+      }
+    },
+    {
+      "id": "fight-intro-entrance-without-a-land",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-part",
+        "pointer": "/parts/extra_drop/beats"
+      }
+    },
+    {
+      "id": "fight-intro-entrance-with-two-falls",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/extra_drop": {
+              "type": "entrance",
+              "mode": "drop",
+              "ticks": 36,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "fall"
+                },
+                {
+                  "t": 5,
+                  "kind": "fall"
+                },
+                {
+                  "t": 36,
+                  "kind": "land"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-part",
+        "pointer": "/parts/extra_drop/beats"
+      }
+    },
+    {
+      "id": "fight-intro-templates-empty",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/templates"
+      }
+    },
+    {
+      "id": "fight-intro-template-key-required",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/templates/0/clock"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/templates/0"
+      }
+    },
+    {
+      "id": "fight-intro-template-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/colour": "red"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/templates/0/colour"
+      }
+    },
+    {
+      "id": "fight-intro-template-note-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-template-id-shape",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/id": "Double Drop"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/templates/0/id"
+      }
+    },
+    {
+      "id": "fight-intro-template-id-twice",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/1/id": "double_drop"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-id",
+        "pointer": "/templates/1/id"
+      }
+    },
+    {
+      "id": "fight-intro-template-weight-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/weight": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/templates/0/weight"
+      }
+    },
+    {
+      "id": "fight-intro-template-weight-zero-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/1/weight": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-template-tone-enum",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/tone": "angry"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/templates/0/tone"
+      }
+    },
+    {
+      "id": "fight-intro-template-clock-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/clock": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/templates/0/clock"
+      }
+    },
+    {
+      "id": "fight-intro-template-clock-integer",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/clock": 300.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/templates/0/clock"
+      }
+    },
+    {
+      "id": "fight-intro-template-gap-key-required",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/gap": {
+              "min": 30,
+              "max": 70
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/templates/0/gap"
+      }
+    },
+    {
+      "id": "fight-intro-template-gap-min-above-default",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/gap": {
+              "min": 60,
+              "default": 48,
+              "max": 70
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-order",
+        "pointer": "/templates/0/gap/min"
+      }
+    },
+    {
+      "id": "fight-intro-template-gap-default-above-max",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/gap": {
+              "min": 30,
+              "default": 80,
+              "max": 70
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-order",
+        "pointer": "/templates/0/gap/default"
+      }
+    },
+    {
+      "id": "fight-intro-template-gap-equal-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/gap": {
+              "min": 48,
+              "default": 48,
+              "max": 48
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-template-gap-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/gap": {
+              "min": -1,
+              "default": 48,
+              "max": 70
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/templates/0/gap/min"
+      }
+    },
+    {
+      "id": "fight-intro-template-not-twice-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/notTwice": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/templates/0/notTwice"
+      }
+    },
+    {
+      "id": "fight-intro-template-classic-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/classic": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/templates/0/classic"
+      }
+    },
+    {
+      "id": "fight-intro-no-classic-template",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/classic": false
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-classic",
+        "pointer": "/templates"
+      }
+    },
+    {
+      "id": "fight-intro-two-classic-templates",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/1/classic": true
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-classic",
+        "pointer": "/templates"
+      }
+    },
+    {
+      "id": "fight-intro-template-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/-": {
+              "id": "extra_one",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "default": 48,
+                "max": 70
+              },
+              "slots": [
+                {
+                  "slot": "entrance",
+                  "who": "first",
+                  "pool": [
+                    "drop"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-slots-empty",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/templates/0/slots"
+      }
+    },
+    {
+      "id": "fight-intro-slot-key-required",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0": {
+              "slot": "entrance",
+              "who": "first"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/templates/0/slots/0"
+      }
+    },
+    {
+      "id": "fight-intro-slot-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/loud": true
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/templates/0/slots/0/loud"
+      }
+    },
+    {
+      "id": "fight-intro-slot-label-shape",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/slot": "The Entrance"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/templates/0/slots/0/slot"
+      }
+    },
+    {
+      "id": "fight-intro-slot-who-enum",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/who": "nobody"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/templates/0/slots/0/who"
+      }
+    },
+    {
+      "id": "fight-intro-slot-who-both-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/who": "both"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-slot-pool-empty",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/pool": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/templates/0/slots/0/pool"
+      }
+    },
+    {
+      "id": "fight-intro-slot-pool-duplicate",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/pool": [
+              "drop",
+              "drop"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/templates/0/slots/0/pool/1"
+      }
+    },
+    {
+      "id": "fight-intro-slot-pool-unknown-part",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/pool": [
+              "nowhere"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-pool",
+        "pointer": "/templates/0/slots/0/pool/0"
+      }
+    },
+    {
+      "id": "fight-intro-slot-after-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/after": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/templates/0/slots/0/after"
+      }
+    },
+    {
+      "id": "fight-intro-slot-after-integer",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/after": 80.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/templates/0/slots/0/after"
+      }
+    },
+    {
+      "id": "fight-intro-slot-gap-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/gap": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/templates/0/slots/0/gap"
+      }
+    },
+    {
+      "id": "fight-intro-slot-with-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/with": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/templates/0/slots/0/with"
+      }
+    },
+    {
+      "id": "fight-intro-slot-draw-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/draw": "no"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/templates/0/slots/0/draw"
+      }
+    },
+    {
+      "id": "fight-intro-slot-draw-false-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/templates/0/slots/0/draw": false
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

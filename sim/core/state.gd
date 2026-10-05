@@ -73,6 +73,15 @@ class IntroState:
 	var left: int = 0         # pre-clock ticks left (0: no intro, or it is over)
 	var t: int = 0            # pre-clock ticks played
 	var landed: int = 0       # a bit per slot: he has touched down
+	var scenario: int = -1    # the composed intro: the template's index in data/fight/intro.json (-1: none is played) ...
+	var first: int = 0        # ... the slot that arrives first ...
+	var gap: int = 0          # ... the ticks between the first landing and the second fall ...
+	var picks: int = 0        # ... and the part in each slot (SimIntro.flatten)
+	var clock: int = 0        # ... and its length in ticks (the template's, bent by the facts)
+	var dug: int = 0          # a bit per slot: his entrance crater is dug
+	var notes: Array = []     # the composer's reasons, waiting for the first pre-clock tick's feed (output only, not hashed)
+	var gestures: Array = []  # the facts' gestures, [tick, slot, intent, point] (events only: they touch no state; not hashed)
+	var facts: Dictionary = {}   # the setup's facts as given (in the replay header): read for the events' tags only, not hashed
 
 
 ## Q10: pausing set pieces (sim/core/pause.gd). Integers; a tick is a real tick, frozen or live.
@@ -396,6 +405,10 @@ class FxEvent:
 	var id: int = 0              # shot_fire, shot_hit, shot_clash, shot_end: the shot's id (shot_clash: the first shot's; b is the other's)
 	var version: String = ""     # pause_start, transform: full, short or live (SimPause.VERSIONS)
 	var gather: float = 0.0      # transform: seconds from this event to the break, where the tier_up comes
+	var stance: String = ""      # intro_line: the mood the facts ask for (Narrative's; the sim reads none of these four)
+	var angle: String = ""       # intro_line: what the line is about
+	var event: String = ""       # intro_line: the past event a `then` line refers to
+	var p: float = 0.0           # intro_line: the chance the line is spoken (the line system's to use)
 	var source: String = ""      # hazard_telegraph, danger: what is coming (brunt, windup, ambush; World adds collapse, landslide, lava)
 	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
 
