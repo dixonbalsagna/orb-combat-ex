@@ -154,7 +154,7 @@ So with the old text kept, the whole window is proven by "light digests and tick
 
 ## 8. The checklist: every owner's lines
 
-Line numbers are as of 01db25c. "Key" means a lookup key; "text" means a comment, a label or a message. A row is done when the file no longer names `KAI`, `VORR`, `kai` or `vorr` as a fighter's key, or the row says it stays.
+Line numbers are as of 208c6c7 (re-read on 2026-10-06 after intent version 4, World's stages, Animation's gesture wave and the dynamic intros; what that added is listed under the table). "Key" means a lookup key; "text" means a comment, a label or a message. A row is done when the file no longer names `KAI`, `VORR`, `kai` or `vorr` as a fighter's key, or the row says it stays.
 
 | Owner | File | Change |
 | :--- | :--- | :--- |
@@ -165,7 +165,7 @@ Line numbers are as of 01db25c. "Key" means a lookup key; "text" means a comment
 | Simulation | `data/fighters/*/fighter.json`, `finishers.base` | `protagonist`, `rival` (Combat's new keys) |
 | Simulation | `data/fighters/names.json`, new | The two rows: name `PROTAGONIST` and `RIVAL`, the titles and signature names as they are |
 | Simulation | `sim/core/fighter_data.gd` | Read `names.json`; fold it into the roster hash; a fighter with no row shows his id |
-| Simulation | `sim/core/tools/golden_recipes.gd` lines 383 to 389 | The arms' `slots` from the roster; the mirror names built from the fighter's name plus `-A`, `-B` |
+| Simulation | `sim/core/tools/golden_recipes.gd` lines 418 to 424 | The arms' `slots` from the roster; the mirror names built from the fighter's name plus `-A`, `-B` |
 | Simulation | `sim/core/tools/parity.gd` (117 lines) | Ids and names from the roster, not literals: the order check, the arm checks, the tallies |
 | Simulation | `sim/core/tools/batch.gd` lines 118, 302 | A record gains `ids` |
 | Simulation | `sim/core/test/golden.json` | Regenerated once, at the end |
@@ -181,15 +181,15 @@ Line numbers are as of 01db25c. "Key" means a lookup key; "text" means a comment
 | Tools | `tools/fixtures/cases.json` lines 155, 161, 187 | The finisher cases: `/select/byFighter/KAI`, the id `kai` |
 | Tools | `tools/fixtures/cases.json` lines 1397, 1403, 14031, 14048, 14054, 14064, 14070 | The `/fighters/KAI` and `/fighters/kai` cases (styles, ragdoll motion) |
 | Tools | `tools/fixtures/cases.json` lines 1955, 1961, 10234 | The UI profile alias cases (`/aliases/kai`, `/fighters/kai`), to match UI's new alias |
-| Tools | `tools/fixtures/cases.json` lines 41416, 41448 | The `replaces` cases, to match Animation's change |
+| Tools | `tools/fixtures/cases.json` lines 41113, 41145 | The `replaces` cases, to match Animation's change |
 | Tools | `tools/fixtures/cases.json` line 11853 | Stays: `last.kai.1` is a line's id |
 | Tools | `tools/fixtures/virtual/data/fighters/FIXTURE_*/` (4 files) | Text only |
 | Tools | A schema for `data/fighters/names.json`; the fighter schema's `identity` | New; the three strings leave `identity` |
-| **Animation** | `data/anim/fighters.json` lines 6, 40 | `replaces`: the new ids, or dropped if the roster id is now the fighter's own key |
-| Animation | `data/anim/pair_live.json` line 8 and its `aliases` | The aliases for the new ids; the text |
+| **Animation** | `data/anim/fighters.json` lines 6, 41 | `replaces`: the new ids, or dropped if the roster id is now the fighter's own key |
+| Animation | `data/anim/pair_live.json` lines 4 to 6 (`aliases`) and line 8 | The aliases already map `rival` to `antihero`. Confirm that the roster ids as the sim spells them, `PROTAGONIST` and `RIVAL` in upper case, resolve to the `protagonist` and `antihero` roles (line 50, line 194: the strikes, entries and the ten gestures hang there). `AnimData.ensure_fighter` is given `f.id` |
 | Animation | `data/anim/ragdoll_motion.json` line 4 | `fighters` keys |
 | Animation | `render/anim/anim_data.gd` line 208 | The id-to-fighter rule's text; the rule if `replaces` is dropped |
-| Animation | `render/anim/tools/anim_check.gd` (25 lines), `coverage_live.gd` (3), `zip_lab.gd` (2), `press_lab.gd` (2), `laststand_lab.gd`, `anim_reel.gd` | The tools' literals: ids from the roster |
+| Animation | `render/anim/tools/anim_check.gd` (35 lines), `coverage_live.gd` (3), `gesture_lab.gd` (lines 9, 52, 90), `zip_entries_lab.gd` (line 8), `zip_lab.gd` (2), `press_lab.gd` (2), `laststand_lab.gd`, `anim_reel.gd` | The tools' literals: ids from the roster. `gesture_lab.gd` and `zip_entries_lab.gd` are new since the first list: each holds a table `{"protagonist": "KAI", "antihero": "VORR"}` |
 | **Rendering** | `render/core/look.gd` line 171 | `DAMAGE_OUTFIT` keys |
 | **VFX** | `render/vfx/glare.gd` line 23 | `WEARERS`: it lists `VORR`, `antihero` and `rival` as "ids and names". Key on the id: `RIVAL` |
 | VFX | `render/vfx/aura.gd` line 112; `render/vfx/tools/effects_check.gd` (2), `react_shots.gd` (1) | Text; the tools' literals |
@@ -209,5 +209,13 @@ Line numbers are as of 01db25c. "Key" means a lookup key; "text" means a comment
 | QA | `qa/balance-report.js`, `qa/tests/tables.test.js`, `qa/tests/diff.test.js` | Stay if they run on the prototype's own roster (the legacy baseline); QA to confirm |
 | QA | `qa/baseline-p0.*`, `qa/known-bugs.md` | Stay: records of past runs |
 | **Nobody** | `sim/core/roster.js`, `sim/core/test/frozen/golden-js.json`, `prototype/` | Stay (ADR 0006) |
+
+**What tonight's files added (re-read on 208c6c7).**
+
+- **New rows above:** Animation's two new tools and its alias check; ten more lines in `anim_check.gd`. Line numbers moved in `golden_recipes.gd`, `fixtures/cases.json` and `data/anim/fighters.json`.
+- **No new fighter id or key** in World's stages data (`data/biomes/stages.json`), the intro data (`data/fight/intro.json`: it names roles, `first`, `second`, `left`, `right`, never a fighter), Tools' new schemas, or the new waves `protag9` and `rival6` (wave names, keyed to Animation's own fighter keys).
+- **`sim/director/intro.gd` line 117** prints the first fighter's displayed name in a feed note (`INTRO first: ...`). It is text and follows `names.json` by itself. It keys on nothing.
+- **Still to be written, so key it right the first time:** the host's intro memory (the no-repeat list for each pair, UI's) and Narrative's plot grammar (`data/narrative/intro_plots.json`, not in the tree yet) are both per pair. They must key a pair by roster ids, never by displayed names. One more line each for UI's and Narrative's briefs.
+- **QA has uncommitted edits** in `qa/godot/bands.js` and `records.gd`; its rows above are unchanged, but the line numbers there will move.
 
 **Two lookups by name were found while listing:** UI's bridge and Audio's babble. Both work tonight only because the name and the id are the same word. With the names changed in this window, both fail visibly if missed, which is the point of ruling 1.
