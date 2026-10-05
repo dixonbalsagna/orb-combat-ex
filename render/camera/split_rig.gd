@@ -93,6 +93,10 @@ var _tf_g: int = 0                       # the beats in ticks (docs/design/moves
 var _tf_b: int = 0
 var _tf_s: int = 0
 var intro_active: bool = false           # between intro_start and clock_start (docs/architecture/intro-phase.md)
+var rush_cuts: int = 0                   # long rushes the rusher's pane was cut ahead for (counted for the tests)
+var _rush_pin: Array = [false, false]
+var _lead: Array = [0.0, 0.0]   # the lead room a chased launch gets: world units the focus is ahead of him, signed
+var _rush_pin_t: Array = [-1.0e9, -1.0e9]   # the last time each pane was pinned (the tests give the arrival a moment)    # the pane is pinned on a rush's arrival point until the rush ends
 var last_stand_shots: int = 0              # last-stand shots started (counted for the tests)
 var intro_cuts: int = 0                  # the intro's hard cuts (counted for the tests)
 var _in_phase: String = ""               # fall, land, stare or face
@@ -201,6 +205,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_sig_attack_t = [-1.0e9, -1.0e9]
 	_sig_done = [true, true]
 	_derived_beams_t = -1.0e9
+	_rush_pin = [false, false]
+	_lead = [0.0, 0.0]
 	_pn_earned_t = -1.0e9
 	_parry_t = [-1.0e9, -1.0e9]
 	_shk = PackedFloat64Array([0.0, 0.0])
@@ -479,7 +485,7 @@ func _slam_step(S: SimState) -> bool:
 		return false
 	for k in range(2):
 		var f = S.fighters[k]
-		if f.rush != null and f.rush.tgt != null:
+		if f.rush != null and f.rush.tgt != null and not _rush_pin[k]:   # a long rush has no door: his pane is already at the arrival
 			var rem: float = f.rush.end - S.T
 			if rem <= CamParams.SLAM_WINDOW and rem >= -DT:
 				_slam_slot = k
@@ -647,6 +653,23 @@ func _read_events(S: SimState, events: Array) -> void:
 				_intro_stare(S, int(float(_ef(ev, "dur", 2.5)) * 60.0 + 0.5))
 			"clock_start":
 				_intro_clock(S, String(_ef(ev, "kind", "full")))
+			"rush":
+				# A fighter rushes at the other (Camera: actor, target, arrival tick n). A long one, in a split, would be a
+				# whip of a screen or more a tick for the rusher's pane and a door closing on cameras thousands of units
+				# apart: the rusher's pane cuts to the arrival point at once and waits there for him (and the other pane
+				# gets the incoming read). Short rushes follow as before.
+				var ra: int = int(_ef(ev, "actor", -1))
+				var rt: int = int(_ef(ev, "target", -1))
+				if ra >= 0 and ra < 2 and rt >= 0 and rt < 2 and ra != rt and sep > 0.999 and solo_kind == "" and _ov_kind == "" and not fold_active and not intro_active and _slam_slot < 0:
+					var rf = S.fighters[ra]
+					var r_off: float = float(rf.rush.off) if rf.rush != null else 0.0
+					var dr: float = absf(SimWrap.sdx(rf.x, S.fighters[rt].x + r_off))   # to the arrival point
+					if dr * maxf(_zo[ra], 0.001) >= CamParams.RUSH_CUT_SCREENS * vw:
+						_rush_pin[ra] = true
+						rush_cuts += 1
+						_cut_now = true
+						if reduced_motion:
+							_cut_fade = CamParams.REDUCED_CUT_FADE
 			"attack":
 				# A signature is asked for: its panel waits for the fire beat, the outcome or the beam, whichever comes
 				# first, and is made once for it (a clash makes more beams later; a swat and a split make some: none of
@@ -1614,6 +1637,8 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 	var alt_f: float = 1.0
 	var h: float = (f.y - WorldTerrain.groundY(S, f.x)) / CamParams.BODY_H
 	alt_f = maxf(CamParams.ALT_FLOOR, 1.0 / (1.0 + maxf(0.0, h - CamParams.ALT_START) / CamParams.ALT_SCALE))
+	if chase_slot == i:
+		alt_f = 1.0   # the altitude zoom-out is for a fighter in a fight; a chased launch stays one size so he stays readable
 	if solo_kind != "" and solo_slot == i:
 		match solo_kind:
 			"launch":
@@ -1828,6 +1853,16 @@ func _update_cameras(S: SimState) -> void:
 		_ppx[i] = f.x
 		_ppy[i] = f.y
 		var zc: float = maxf(_zo[i], 0.001)
+		# Lead room: while a launched fighter is chased (a pane's chase, or a launch shot's follow) the focus sits a little
+		# ahead of him, so more of the pane is in front of him than behind; smoothed so it never moves the picture quickly.
+		var lead_t: float = 0.0
+		if (chase_slot == i or (solo_kind == "launch" and solo_slot == i and solo_phase == "follow")) and f.state == "launched" and not reduced_motion and sep > 0.999 and e < 0.001:
+			var lmax: float = CamParams.CHASE_LEAD_X * vw / zc
+			if absf(_depth_s(S, i, zc) - 1.0) > 0.15:
+				lmax = 0.0   # off the plane the lead shows larger (or smaller) and the depth framing has the pane's room: no lead
+			lead_t = clampf(vxm * CamParams.CHASE_LEAD_T, -lmax, lmax)
+		_lead[i] += (lead_t - _lead[i]) * (1.0 - exp(-DT / CamParams.CHASE_LEAD_TAU))
+		var lead_c: float = _lead[i]
 		# A body low over the ground (a bounce, a lip flight, a tumble) is not followed up: the focus stays at the ground
 		# level until he is above LOW_AIR_DEAD, so a half-body-height bounce moves on the screen as it does in the world
 		# (the chase otherwise follows each rise and the bounce nearly vanishes: 5 to 20 px for 1 to 2 body heights).
@@ -1844,11 +1879,30 @@ func _update_cameras(S: SimState) -> void:
 			var gnd: float = WorldTerrain.groundY(S, f.x)
 			lead_w = smoothstep(CamParams.LOW_AIR_DEAD * 0.5, CamParams.LOW_AIR_DEAD * 1.5, f.y - gnd)
 			fy_ref = lerpf(gnd + CamParams.CHEST, f.y + CamParams.CHEST, lead_w)
+		if _rush_pin[i]:
+			var rp = f.rush
+			if rp == null or rp.tgt == null or solo_kind != "" or sep < 0.999:
+				_rush_pin[i] = false
+				# The rush ended before he got there (a parry, a knock-back): a pane aimed far from him cuts back to him once,
+				# instead of the lag bound whipping across.
+				var ux: float = SimWrap.sdx(_fx[i], f.x) * zc
+				var uy: float = (f.y + CamParams.CHEST - _fy[i]) * zc
+				if sqrt(ux * ux + uy * uy) / vw > CamParams.LAG_HARD:
+					_fx[i] = f.x
+					_fy[i] = f.y + CamParams.CHEST
+					rush_cuts += 1
+					_cut_now = true
+					_cut_fade = CamParams.REDUCED_CUT_FADE if reduced_motion else CamParams.CUT_FADE
+			else:
+				_rush_pin_t[i] = time
+				_fx[i] = SimWrap.wrap(rp.tgt.x + rp.off)
+				_fy[i] = rp.tgt.y + CamParams.CHEST
+				freeze = true
 		if not freeze:
 			# The lag bound (camera-v2.md section 2). e is the fighter's offset from where the camera is aiming, in screen
 			# widths: ordinary up to LAG_SOFT, the filters speed up to 7x by LAG_HARD, the focus is held to LAG_HARD beyond
 			# it (a whip), and farther than LAG_CUT it jumps (a counted safety cut with a short fade).
-			var rx: float = SimWrap.sdx(_fx[i], f.x) * zc
+			var rx: float = (SimWrap.sdx(_fx[i], f.x) + lead_c) * zc
 			var ry: float = (fy_ref - _fy[i]) * zc
 			var e_w: float = sqrt(rx * rx + ry * ry) / vw
 			if e_w > CamParams.LAG_SOFT:
@@ -1866,7 +1920,13 @@ func _update_cameras(S: SimState) -> void:
 			var kx: float = 1.0 - exp(-DT / tau_x)
 			var ky: float = 1.0 - exp(-DT / tau_y)
 			# The lead that makes the discrete filter track a constant speed exactly: DT (1 - k) / k, about tau - DT / 2.
-			var tx: float = f.x + vxm * DT * (1.0 - kx) / kx
+			# The velocity lead cancels the filter's lag at a steady speed; a rush that starts and stops inside one time constant (a
+			# short blitz) would leave the focus up to 700 units past him and slide back when he stops, so in a rush it is bounded.
+			var vlead_x: float = vxm * DT * (1.0 - kx) / kx
+			if f.rush != null:
+				var vlim: float = CamParams.RUSH_LEAD_MAX * vw / zc
+				vlead_x = clampf(vlead_x, -vlim, vlim)
+			var tx: float = f.x + lead_c + vlead_x
 			var ty: float = fy_ref + vym * lead_w * DT * (1.0 - ky) / ky
 			# Aimed at a building (B2): the focus leads toward it, a bounded distance on screen, so it is in frame.
 			if _aim[i] != null and f.state == "launched":
@@ -1876,12 +1936,13 @@ func _update_cameras(S: SimState) -> void:
 			_fx[i] = SimWrap.wrap(_fx[i] + SimWrap.sdx(_fx[i], tx) * kx)
 			_fy[i] += (ty - _fy[i]) * ky
 			if not reduced_motion:
-				var qx: float = SimWrap.sdx(_fx[i], f.x) * zc
+				var qd: float = SimWrap.sdx(_fx[i], f.x) + lead_c
+				var qx: float = qd * zc
 				var qy: float = (f.y + CamParams.CHEST - _fy[i]) * zc
 				var q_w: float = sqrt(qx * qx + qy * qy) / vw
 				if q_w > CamParams.LAG_HARD:
 					var back: float = (q_w - CamParams.LAG_HARD) / q_w   # hold him at the bound: move the focus the excess toward him
-					_fx[i] = SimWrap.wrap(_fx[i] + SimWrap.sdx(_fx[i], f.x) * back)
+					_fx[i] = SimWrap.wrap(_fx[i] + qd * back)
 					_fy[i] += (f.y + CamParams.CHEST - _fy[i]) * back
 					lag_whips += 1
 		# own zoom: first-order filter, then the rate cap
@@ -1990,6 +2051,37 @@ func _mode_name() -> String:
 	return "opening" if split_wanted else "closing"
 
 
+## The other fighter coming at fighter i, for the HUD's edge marker (the marker is UI's; this is what it says). `aimed`: a
+## rush is on at him, and `eta` is its exact time to arrive (the rush's end); otherwise the other fighter is closing fast
+## (the smoothed separation rate over INCOMING_MIN_CLOSING) and `eta` is the distance to contact over that rate. `active`
+## when aimed, or closing fast and off the pane (not `shown`). `side` is +1 when he is to the right in the world,
+## `screen_dir` the unit vector on the screen from the fighter to him (he may be far off it).
+func _incoming_for(S: SimState, i: int, f: SplitFrame) -> Dictionary:
+	var me = S.fighters[i]
+	var other = S.fighters[1 - i]
+	var d: float = SimWrap.sdx(me.x, other.x)
+	var dist: float = sqrt(d * d + pow(other.y - me.y, 2.0))
+	var r = other.rush
+	var aimed: bool = r != null and r.tgt == me
+	var closing: float = maxf(0.0, -_sep_rate)
+	var eta: float = -1.0
+	if aimed:
+		eta = maxf(0.0, r.end - S.T)
+		closing = maxf(closing, maxf(0.0, dist - 150.0) / maxf(eta, DT))
+	elif closing >= CamParams.INCOMING_MIN_CLOSING:
+		eta = maxf(0.0, dist - 150.0) / closing
+	var pi: int = i if f.shows(i) else 0   # in one view the screen is pane 0
+	var pos: Vector2 = f.screen_pos(pi, other.x, other.y + CamParams.CHEST, float(other.z))
+	var shown: bool = pos.x >= 0.0 and pos.x <= vw and pos.y >= 0.0 and pos.y <= vh and f.shows(pi)
+	if shown and bool(f.active[0]) and bool(f.active[1]):
+		var w1: float = f.weight1(pos)
+		shown = (w1 >= 0.5) if pi == 1 else (w1 < 0.5)
+	var mine: Vector2 = f.screen_pos(pi, me.x, me.y + CamParams.CHEST, float(me.z))
+	var dir: Vector2 = (pos - mine).normalized() if (pos - mine).length() > 1.0 else Vector2(1.0 if d >= 0.0 else -1.0, 0.0)
+	return {"active": eta >= 0.0 and (aimed or not shown), "aimed": aimed, "eta": eta, "dist_u": dist, "dist_bh": dist / CamParams.BODY_H,
+		"closing": closing, "side": 1 if d >= 0.0 else -1, "shown": shown, "screen_dir": dir}
+
+
 func _make_frame(S: SimState) -> SplitFrame:
 	var f := SplitFrame.new()
 	f.vw = vw
@@ -2047,6 +2139,7 @@ func _make_frame(S: SimState) -> SplitFrame:
 		if solo_kind == "transform" and _tf_phase == "break" and _tf_ver == "full":
 			rad = maxf(rad, CamParams.CUTAWAY_BREAK_R * vh)   # keep the silhouette against the sky clear of a house in front
 		f.cutaway[ci] = {"request": _ov_kind != "smash", "radius_px": rad, "only": ci if two_up else -1}
+	f.incoming = [_incoming_for(S, 0, f), _incoming_for(S, 1, f)]
 	if _ov_kind != "":
 		# A cut-in is one view: it draws its own camera over both panes, so the frame says one view with no divider. The
 		# layout itself goes on deciding underneath (holding it let a fighter fly 6,000 units away during a cut-in and

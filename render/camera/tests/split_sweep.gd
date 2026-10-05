@@ -70,8 +70,11 @@ var _jolt_trace_seed: int = -1
 var _jolt_t0: float = 0.0
 var _jolt_t1: float = 0.0
 var _jolts: Array = []
+var _scan_rush_t: float = -9.0
+var _rushes: Array = []
 var _scan_prev: SplitFrame = null
 var _scan_rel: Array = [Vector2.ZERO, Vector2.ZERO]
+var _scan_abs: Array = [Vector2.ZERO, Vector2.ZERO]
 var _scan_ok: Array = [false, false]   # the pane was measured last tick too (the first tick after a gap has no velocity to compare)
 var _scan_sig: Dictionary = {}
 var _scan_fx: Array = [Vector2.ZERO, Vector2.ZERO]
@@ -190,6 +193,9 @@ func _run() -> void:
 		await _scenario("intro %s" % iv, func(): return _intro_run(iv), {})
 	await _scenario("panel signature", func(): return _panel_basic(), {})
 	await _scenario("panel ration and priority", func(): return _panel_ration(), {})
+	for rv in [["long rush", 6000.0, 20, false], ["short rush", 700.0, 14, false], ["long rush reduced", 6000.0, 20, true], ["very fast rush", 18000.0, 15, false]]:
+		await _scenario("rush %s" % rv[0], func(): return _rush_run(float(rv[1]), int(rv[2]), bool(rv[3])), {})
+	await _scenario("incoming closing", func(): return _incoming_closing(), {})
 	await _scenario("panel clash beams", func(): return _panel_clash_beams(), {})
 	await _scenario("panel beam plays", func(): return _panel_beam_plays(), {})
 	await _scenario("panel event and beam are one", func(): return _panel_dedupe(), {})
@@ -442,7 +448,8 @@ func _frame_checks(fr: SplitFrame, cur: SplitFrame, alpha: float = 1.0) -> void:
 		# A single shot on one fighter (a launch follow, a KO dolly) leaves the other out of frame by design.
 		# A shot on one fighter (a launch, a cut-in), its ease back to the pair (solo_w), and an expanded pane (e) leave the
 		# other fighter out of the picture by design.
-		var excluded: bool = (_rig.solo_kind != "" and _rig.solo_slot != i) or (_rig._ov_kind != "" and _rig._ov_slot != i) or _rig.solo_w > 0.001 or fr.e > 0.001
+		var pinned: bool = _rig.time - float(_rig._rush_pin_t[i]) < 0.3   # a long rush's pane waits at the arrival point: the rusher is off it by design
+		var excluded: bool = pinned or (_rig.solo_kind != "" and _rig.solo_slot != i) or (_rig._ov_kind != "" and _rig._ov_slot != i) or _rig.solo_w > 0.001 or fr.e > 0.001
 		# A pair that has just passed each other and whose split opens before the flip can happen (the flip waits for the
 		# dwell, for them to stop being merge-close and for the panes to be one view or full apart) opens with the old sides.
 		excluded = excluded or ((fr.mode == "opening" or fr.mode == "closing") and _rig.orientation_pending())
@@ -513,7 +520,7 @@ func _frame_checks(fr: SplitFrame, cur: SplitFrame, alpha: float = 1.0) -> void:
 			_fail_once("tilt", "%s: the divider turned %.0f degrees a second outside a swing at t=%.2f mode %s/%s sep %.3f theta %.3f -> %.3f" % [_label, rad_to_deg(dth), float(_tick) / 60.0, _prev_disp.mode, fr.mode, fr.sep, _prev_disp.theta, fr.theta])
 		# the fighter's offset from its anchor must not jump
 		for i in range(2):
-			if not bool(fr.active[i]) or not bool(_prev_disp.active[i]) or fr.mode == "merged":
+			if not bool(fr.active[i]) or not bool(_prev_disp.active[i]) or fr.mode == "merged" or _rig.time - float(_rig._rush_pin_t[i]) < 0.3:
 				continue
 			var fp: Vector2 = _fpos(i, alpha)
 			var g: Vector2 = fr.screen_pos(i, fp.x, fp.y + CamParams.CHEST, _fz(i, alpha)) - fr.anchor[i]
@@ -1225,6 +1232,118 @@ func _panel_beam_plays() -> Dictionary:
 		_check(_rig.panels == before + 1, "%s: the %s made %d panels (want the one for the signature)" % [_label, play, _rig.panels - before])
 		_S.beams.clear()
 		stats["panel beam play " + play] = "%d panel, %d refused" % [_rig.panels - before, _rig.panels_dropped - drop0]
+	return {}
+
+
+## A rush at the other fighter in a split (the sim's `rush` event: actor, target, arrival tick; the rusher moves in a straight
+## line to the arrival point, a tenth of the way from where he is at each step). A long one (over 1.2 screens): the
+## rusher's pane cuts ahead to the arrival point at once (one cut) and waits there; there is no slam door; the other
+## fighter's incoming read gives the exact time to arrive; when the rusher arrives he is in his pane. A short one is
+## followed as before.
+func _rush_run(dist: float, ticks: int, reduced: bool) -> Dictionary:
+	var ax: float = 20000.0
+	var gap: float = maxf(dist, 6000.0)   # the pair starts far enough apart for a split
+	_pose(ax, 0.0, ax + gap, 0.0)
+	_rig.reduced_motion = reduced
+	_seed_rig()
+	for _i in range(300):
+		_tick_rig()
+	var long: bool = dist * 0.9 >= CamParams.RUSH_CUT_SCREENS * vw
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	# the rusher starts `dist` from the arrival point, which is 150 units short of B (a rush shorter than the gap to B
+	# arrives that far short of him: a short rush from a split)
+	var off: float = -150.0 if dist >= gap - 150.0 else -(gap - dist)
+	A.x = SimWrap.wrap(B.x + off - dist)
+	for _i in range(60):
+		_tick_rig()
+	var r := SimState.Rush.new()
+	r.tgt = B
+	r.off = off
+	r.end = _S.T + float(ticks) * SplitRig.DT
+	A.rush = r
+	var end_tick: int = _S.tick + ticks
+	var ev := _shot_events("rush", {"actor": 0.0, "target": 1.0, "n": end_tick})
+	var cuts: Array = []
+	var cam_move: float = 0.0
+	var slam_seen: bool = false
+	var eta_bad: int = 0
+	var eta_seen: int = 0
+	var first_eta: float = -1.0
+	var off_after: int = 0
+	var evs: Array = [ev]
+	for k in range(ticks + 60):
+		# the sim's stepRush: a tenth of the way (k = dt / rem) toward the arrival point, then he is there
+		if A.rush != null:
+			var rem: float = r.end - _S.T
+			var tx: float = B.x + r.off
+			if rem <= SplitRig.DT * 1.0001:
+				A.x = SimWrap.wrap(tx)
+				A.rush = null
+			else:
+				A.x = SimWrap.wrap(A.x + SimWrap.sdx(A.x, tx) * (SplitRig.DT / rem))
+		var cam_before: float = _rig.current().cam_x[0]
+		_tick_rig(evs)
+		evs = []
+		var cur: SplitFrame = _rig.current()
+		if cur.cut:
+			cuts.append(k)
+		if cur.mode == "slam":
+			slam_seen = true
+		if A.rush != null and k >= 2:
+			cam_move = maxf(cam_move, absf(SimWrap.sdx(cam_before, cur.cam_x[0])))
+			var inc: Dictionary = cur.incoming[1]
+			if bool(inc["aimed"]):
+				eta_seen += 1
+				if first_eta < 0.0:
+					first_eta = float(inc["eta"])
+				var want: float = float(end_tick - _S.tick) / 60.0
+				if absf(float(inc["eta"]) - want) > 2.5 / 60.0:
+					eta_bad += 1
+		if A.rush == null and k > ticks and k < ticks + 12 and not _on_screen(cur, 0):
+			off_after += 1
+	if long and not reduced:
+		_check(cuts.size() == 1 and int(cuts[0]) <= 1, "%s: cuts at %s (want one, at the start)" % [_label, str(cuts)])
+		_check(cam_move < 8.0, "%s: the rusher's pane moved %.0f units a tick during the flight (it should wait at the arrival point)" % [_label, cam_move])
+		_check(_rig.rush_cuts == 1, "%s: %d rush cuts" % [_label, _rig.rush_cuts])
+		_check(not slam_seen, "%s: a slam door on a long rush" % _label)
+		_check(off_after == 0, "%s: the rusher was off the screen for %d ticks after he arrived" % [_label, off_after])
+	elif long and reduced:
+		_check(cuts.size() == 1 and _rig.rush_cuts == 1, "%s: cuts %s (a dissolve in reduced motion)" % [_label, str(cuts)])
+	else:
+		_check(_rig.rush_cuts == 0, "%s: a short rush made a cut ahead" % _label)
+	_check(eta_seen >= ticks - 4 and eta_bad == 0, "%s: the incoming read was right on %d of %d ticks (%d wrong), first eta %.2f s (want %.2f)" % [_label, eta_seen - eta_bad, ticks, eta_bad, first_eta, float(ticks) / 60.0])
+	stats["rush " + _label] = "cuts %s, pane moved at most %.1f u a tick, slam %s, incoming read right %d/%d, first eta %.2f s" % [str(cuts), cam_move, str(slam_seen), eta_seen - eta_bad, eta_seen, first_eta]
+	_rig.reduced_motion = false
+	return {}
+
+
+## Without a rush: the other fighter closing fast (5,000 units a second) from off the pane gets an incoming read with the
+## time to arrive from the distance and the rate; one that is not closing, or is on the pane, does not.
+func _incoming_closing() -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 0.0, ax + 9000.0, 0.0)
+	_seed_rig()
+	for _i in range(300):
+		_tick_rig()
+	var quiet: Dictionary = _rig.current().incoming[1]
+	_check(not bool(quiet["active"]), "%s: a read with nothing closing" % _label)
+	var A = _S.fighters[0]
+	var active_ticks: int = 0
+	var eta_ok: int = 0
+	for k in range(90):
+		A.x = SimWrap.wrap(A.x + 5000.0 / 60.0)
+		_tick_rig()
+		if k > 30:
+			var inc: Dictionary = _rig.current().incoming[1]
+			if bool(inc["active"]):
+				active_ticks += 1
+				var d: float = absf(SimWrap.sdx(A.x, _S.fighters[1].x))
+				var want: float = maxf(0.0, d - 150.0) / 5000.0
+				if absf(float(inc["eta"]) - want) < 0.25:
+					eta_ok += 1
+	_check(active_ticks > 30 and eta_ok > active_ticks * 0.8, "%s: the closing read was active on %d ticks and right on %d" % [_label, active_ticks, eta_ok])
+	stats["incoming closing"] = "active %d ticks, eta within 0.25 s on %d" % [active_ticks, eta_ok]
 	return {}
 
 
@@ -2079,6 +2198,9 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 	_jr = [null, null]
 	_jr_done = []
 	_jolts = []
+	_lr = []
+	_rushes = []
+	_scan_rush_t = -9.0
 	_scan_prev = null
 	_contact = {}
 	_beamcues = {}
@@ -2105,14 +2227,21 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 		var cur: SplitFrame = _rig.current()
 		_journey_tick(cur, ev)
 		_jolt_tick(cur, ev)
+		_launch_read_tick(cur)
 		if _jolt_trace_seed == seed and float(t) / 60.0 >= _jolt_t0 and float(t) / 60.0 <= _jolt_t1:
-			print("  JT %s t=%.3f mode %s solo %s/%d chase %d sep %.2f e %.2f/%d c %.0f st %d/%d | p0 cam %.0f/%.0f z %.2f rel (%.0f,%.0f) | p1 cam %.0f/%.0f z %.2f rel (%.0f,%.0f) | f0 %.0f,%.0f f1 %.0f,%.0f | mz %.3f zo %.3f/%.3f sepr %.0f slam %d u %.0f | fy %.0f/%.0f g1 %.0f z1 %.0f stt %s/%s | s0 %.0f,%.0f s1 %.0f,%.0f" % [_label, float(t) / 60.0, cur.mode, _rig.solo_kind, _rig.solo_slot, _rig.chase_slot, cur.sep, cur.e, cur.e_slot, cur.c.x, 1 if _S.fighters[0].state == "launched" else 0, 1 if _S.fighters[1].state == "launched" else 0, cur.cam_x[0], cur.cam_y[0], cur.cam_z[0], _scan_rel[0].x, _scan_rel[0].y, cur.cam_x[1], cur.cam_y[1], cur.cam_z[1], _scan_rel[1].x, _scan_rel[1].y, _S.fighters[0].x, _S.fighters[0].y, _S.fighters[1].x, _S.fighters[1].y, _rig._mz, _rig._zo[0], _rig._zo[1], _rig._sep_rate, _rig._slam_slot, _rig.u, _rig._fy[0], _rig._fy[1], WorldTerrain.groundY(_S, _S.fighters[1].x), float(_S.fighters[1].z), _S.fighters[0].state, _S.fighters[1].state, cur.screen_pos(0, _S.fighters[0].x, _S.fighters[0].y + CamParams.CHEST, float(_S.fighters[0].z)).x, cur.screen_pos(0, _S.fighters[0].x, _S.fighters[0].y + CamParams.CHEST, float(_S.fighters[0].z)).y, cur.screen_pos(1, _S.fighters[1].x, _S.fighters[1].y + CamParams.CHEST, float(_S.fighters[1].z)).x, cur.screen_pos(1, _S.fighters[1].x, _S.fighters[1].y + CamParams.CHEST, float(_S.fighters[1].z)).y])
+			print("  JT %s t=%.3f mode %s solo %s/%d chase %d sep %.2f e %.2f/%d c %.0f st %d/%d | p0 cam %.0f/%.0f z %.2f rel (%.0f,%.0f) | p1 cam %.0f/%.0f z %.2f rel (%.0f,%.0f) | f0 %.0f,%.0f f1 %.0f,%.0f | mz %.3f zo %.3f/%.3f sepr %.0f slam %d u %.0f | fy %.0f/%.0f g1 %.0f z1 %.0f stt %s/%s | s0 %.0f,%.0f s1 %.0f,%.0f | fx %.0f/%.0f pin %s/%s anc %.0f/%.0f" % [_label, float(t) / 60.0, cur.mode, _rig.solo_kind, _rig.solo_slot, _rig.chase_slot, cur.sep, cur.e, cur.e_slot, cur.c.x, 1 if _S.fighters[0].state == "launched" else 0, 1 if _S.fighters[1].state == "launched" else 0, cur.cam_x[0], cur.cam_y[0], cur.cam_z[0], _scan_rel[0].x, _scan_rel[0].y, cur.cam_x[1], cur.cam_y[1], cur.cam_z[1], _scan_rel[1].x, _scan_rel[1].y, _S.fighters[0].x, _S.fighters[0].y, _S.fighters[1].x, _S.fighters[1].y, _rig._mz, _rig._zo[0], _rig._zo[1], _rig._sep_rate, _rig._slam_slot, _rig.u, _rig._fy[0], _rig._fy[1], WorldTerrain.groundY(_S, _S.fighters[1].x), float(_S.fighters[1].z), _S.fighters[0].state, _S.fighters[1].state, cur.screen_pos(0, _S.fighters[0].x, _S.fighters[0].y + CamParams.CHEST, float(_S.fighters[0].z)).x, cur.screen_pos(0, _S.fighters[0].x, _S.fighters[0].y + CamParams.CHEST, float(_S.fighters[0].z)).y, cur.screen_pos(1, _S.fighters[1].x, _S.fighters[1].y + CamParams.CHEST, float(_S.fighters[1].z)).x, cur.screen_pos(1, _S.fighters[1].x, _S.fighters[1].y + CamParams.CHEST, float(_S.fighters[1].z)).y, _rig._fx[0], _rig._fx[1], str(_rig._rush_pin[0]), str(_rig._rush_pin[1]), _rig._anchors[0].x, _rig._anchors[1].x])
 		for e in ev:
 			var et: String = String(e.type)
 			if et in ["bounce", "left_ground", "land", "tumble_end", "journey_end"]:
 				_contact[et] = int(_contact.get(et, 0)) + 1
 			if _jolt_trace_seed == seed and (et == "beam_outcome" or (et == "cue" and String(e.kind).begins_with("beam_")) or et == "attack"):
 				print("  BEAMEV %s t=%.3f %s %s actor %d kind %s" % [_label, float(t) / 60.0, et, String(e.kind) if et != "attack" else String(e.kind), int(e.actor), String(e.kind)])
+			if et == "rush" and int(e.actor) >= 0 and int(e.target) >= 0:
+				var ra = _S.fighters[int(e.actor)]
+				var rt = _S.fighters[int(e.target)]
+				var rd: float = absf(SimWrap.sdx(ra.x, rt.x))
+				var rn: int = maxi(1, int(e.n) - _S.tick)
+				_rushes.append({"d": rd, "n": rn, "v": rd / (float(rn) / 60.0), "split": _rig.sep >= 0.5, "t": float(t) / 60.0})
 			if et == "attack" and String(e.kind) == "sig":
 				_beamcues["attack_sig"] = int(_beamcues.get("attack_sig", 0)) + 1
 			if et == "cue" and String(e.kind).begins_with("beam_"):
@@ -2197,6 +2326,34 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 		for b in _bn_done:
 			sc += float(b["sy1"]) - float(b["sy0"])
 		_check(sc / float(_bn_done.size()) >= 30.0, "%s: bounces move %.0f px on the screen on average (want at least 30)" % [_label, sc / float(_bn_done.size())])
+	if not _rushes.is_empty():
+		var ds: Array = _rushes.map(func(r): return float(r["d"]))
+		var vs: Array = _rushes.map(func(r): return float(r["v"]))
+		var ns: Array = _rushes.map(func(r): return float(r["n"]))
+		ds.sort()
+		vs.sort()
+		ns.sort()
+		var fast: int = 0
+		var in_split: int = 0
+		for r in _rushes:
+			if float(r["v"]) >= 20000.0:
+				fast += 1
+			if bool(r["split"]):
+				in_split += 1
+		var q: int = _rushes.size()
+		stats["rushes " + _label] = "%d (%d started in a split): distance median %.0f / 90th %.0f / max %.0f u; ticks median %d / max %d; speed median %.0f / 90th %.0f / max %.0f u/s; %d at 20,000 u/s or more" % [q, in_split, ds[q / 2], ds[mini(q - 1, int(0.9 * float(q)))], ds[q - 1], int(ns[q / 2]), int(ns[q - 1]), vs[q / 2], vs[mini(q - 1, int(0.9 * float(q)))], vs[q - 1], fast]
+	if _lr.size() >= 20:
+		var small: int = 0
+		var tight: int = 0
+		var pxs: Array = []
+		for q in _lr:
+			pxs.append(float(q[0]))
+			if float(q[0]) < 40.0 * vh / 720.0:
+				small += 1
+			if float(q[1]) < 0.15:
+				tight += 1
+		pxs.sort()
+		stats["launch read " + _label] = "%d launched-fighter ticks on screen: height median %.0f / 5th %.0f / min %.0f px (at 720p); under 40 px on %d (%.0f%%); room ahead under 0.15 of the width on %d (%.0f%%)" % [_lr.size(), pxs[pxs.size() / 2] * 720.0 / vh, pxs[int(0.05 * float(pxs.size()))] * 720.0 / vh, pxs[0] * 720.0 / vh, small, 100.0 * float(small) / float(_lr.size()), tight, 100.0 * float(tight) / float(_lr.size())]
 	var sig_panels: int = 0
 	for e in _rig.panel_log:
 		if e[1] == "signature":
@@ -2241,6 +2398,9 @@ func _jolt_tick(cur: SplitFrame, ev: Array) -> void:
 		for e in ev:
 			if String(e.type) == "launch":
 				launched = true
+		var rushing: bool = _S.fighters[0].rush != null or _S.fighters[1].rush != null or _rig._slam_slot >= 0 or cur.mode == "slam"
+		if rushing:
+			_scan_rush_t = float(_tick) / 60.0
 		for i in range(2):
 			if not bool(cur.active[i]) or not bool(prev.active[i]) or _share(cur, i) < 0.2 or _share(prev, i) < 0.2:
 				_scan_ok[i] = false   # only a pane with a real share of the screen in both frames is something the player sees
@@ -2263,8 +2423,14 @@ func _jolt_tick(cur: SplitFrame, ev: Array) -> void:
 			# The camera's motion relative to its fighter, and how much that changed since the last tick (a jolt is a change of
 			# velocity, not a velocity: a camera that keeps pace with a fast fighter is not one).
 			var rvel := Vector2((dcx - dfx) * z, ((cur.cam_y[i] - prev.cam_y[i]) - dfy) * z)
+			var avel := Vector2(dcx * z, (cur.cam_y[i] - prev.cam_y[i]) * z)
 			var rel: float = (rvel - _scan_rel[i]).length() / vw if _scan_ok[i] else 0.0
+			# A camera that holds still while a fighter stops or starts is not jolting: both the camera's own velocity and
+			# its velocity relative to the fighter have to change.
+			var absj: float = (avel - _scan_abs[i]).length() / vw if _scan_ok[i] else 0.0
+			rel = minf(rel, absj)
 			_scan_rel[i] = rvel
+			_scan_abs[i] = avel
 			_scan_ok[i] = true
 			var dz: float = absf(log(cur.cam_z[i]) - log(prev.cam_z[i]))
 			var dd: float = 0.0
@@ -2285,7 +2451,9 @@ func _jolt_tick(cur: SplitFrame, ev: Array) -> void:
 				val = dd
 			if which != "":
 				var cause: String = "other"
-				if sig["solo"] != _scan_sig.get("solo", "") or sig["slot"] != _scan_sig.get("slot", -1):
+				if rushing or float(_tick) / 60.0 - _scan_rush_t < 0.25:
+					cause = "rush (the approach and the slam's door)"
+				elif sig["solo"] != _scan_sig.get("solo", "") or sig["slot"] != _scan_sig.get("slot", -1):
 					cause = "solo shot start, end or hand-over"
 				elif sig["mode"] != _scan_sig.get("mode", ""):
 					cause = "layout change (%s to %s)" % [_scan_sig.get("mode", ""), sig["mode"]]
@@ -2294,7 +2462,7 @@ func _jolt_tick(cur: SplitFrame, ev: Array) -> void:
 				elif sig["chase"] != _scan_sig.get("chase", -1) or sig["e"] != _scan_sig.get("e", -1):
 					cause = "chase or expanded pane changed hands"
 				elif launched:
-					cause = "launch or knock-back in progress"
+					cause = "chase (a launch or knock-back in progress)"
 				elif absf(cur.cam_x[i] - SimConst.HALF) > SimConst.HALF - 400.0:
 					cause = "seam"
 				if _jolt_trace_seed >= 0 and float(_tick) / 60.0 >= _jolt_t0 and float(_tick) / 60.0 <= _jolt_t1:
@@ -2424,6 +2592,37 @@ func _journey_tick(cur: SplitFrame, ev: Array) -> void:
 			j["net"] = absf(SimWrap.sdx(float(j["x0"]), f.x))
 			_jr_done.append(j)
 			_jr[v] = null
+
+
+## How readable a launched fighter is while the camera follows him: his height on the screen and the room ahead of him
+## (from where he is to the edge of his pane, or the screen, in the direction he is going, in screen widths). Sampled on
+## every tick a fighter is launched faster than the chase's gate.
+func _launch_read_tick(cur: SplitFrame) -> void:
+	for v in range(2):
+		var f = _S.fighters[v]
+		if f.state != "launched" or sqrt(f.vx * f.vx + f.vy * f.vy) < CamParams.LAUNCH_MIN_SPEED:
+			continue
+		var pi: int = v if cur.shows(v) else (0 if cur.shows(0) else 1)
+		var pos: Vector2 = cur.screen_pos(pi, f.x, f.y + CamParams.CHEST, float(f.z))
+		if pos.x < 0.0 or pos.x > vw or pos.y < 0.0 or pos.y > vh:
+			continue   # off the screen: counted as lost elsewhere
+		var px: float = cur.apparent_height(pi, f.x, f.y, float(f.z))
+		var dirx: float = 1.0 if f.vx >= 0.0 else -1.0
+		var room: float = 0.0
+		var x: float = pos.x
+		while true:
+			x += dirx * 0.02 * vw
+			if x < 0.0 or x > vw:
+				break
+			if cur.shows(0) and cur.shows(1):
+				var w1: float = cur.weight1(Vector2(x, pos.y))
+				if ((w1 >= 0.5) if v == 1 else (w1 < 0.5)) == false:
+					break
+			room += 0.02
+		_lr.append([px, room])
+
+
+var _lr: Array = []
 
 
 func _journey_summary() -> void:

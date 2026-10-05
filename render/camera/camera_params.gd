@@ -65,6 +65,12 @@ const PLANE_Y: float = 0.7             # the fighter plane on screen in the refe
 
 # --- opening, merging, the slam (sections 6 and 7) ---
 const T_OPEN: float = 0.45
+const RUSH_CUT_SCREENS: float = 1.2     # a rush this long in screens (at the rusher pane's zoom) cuts his pane ahead to where it ends
+const INCOMING_MIN_CLOSING: float = 3000.0   # an incoming read shows when the other fighter closes this fast (units a second) off the pane
+const CHASE_LEAD_X: float = 0.12        # lead room for a chased launch: the focus ahead of him by at most this share of the pane width
+const CHASE_LEAD_T: float = 0.25        # seconds of his velocity (the lead before the cap)
+const CHASE_LEAD_TAU: float = 0.3       # the lead is smoothed with this time constant
+const RUSH_LEAD_MAX: float = 0.12        # the follow point's velocity lead in a rush is at most this share of the pane width
 const KNOCK_APART_RATE: float = 1500.0  # a chased fighter flying apart this fast (units a second, smoothed) opens the split at once
 const T_OPEN_URGENT: float = 0.20       # the split opens this fast when a fighter has left the shared view or one was knocked away
 const T_CLOSE: float = 0.55
