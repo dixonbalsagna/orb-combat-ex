@@ -679,3 +679,33 @@ What follows from it:
 - Wanted now: the roles and subroles the first four establish, generic templates for niches not yet touched, and notes and proposals for the other eight.
 - The framing for the fiction: the game should feel like it is based on an imaginary anime's fourth season, with an implied history, backstories and earlier adventures. Orb is writing an original universe that justifies the fighters' abilities, and hands back the taunt and quote lists on the evening of 2026-10-06.
 - Orb is asleep for the night and wants work to continue at full pace.
+
+## Orb, 2026-10-05: questionnaire 18 (overnight)
+
+Answers as given:
+
+- Roster niches to explore: stealth or ambush, heavy or giant, speedster, terrain shaper.
+- Alignment split: hero-heavy, an ensemble of allies.
+- Body variety: 2 of 5 (close to all humanoid; small departures such as tails or size).
+- Signatures: the defensive (LB) and manoeuvre (LT) signatures differ per fighter.
+- The tech zip as a fast drawn dash: accepted.
+- Zip strike price: 20 ki.
+- Zip away: a reliable escape at a higher ki price.
+- Medium AI against a well-timed player: toughen medium against combos.
+- Intros: allow the longer ones; who lands first: random each match.
+- HUD: the rival's stance badge always shown; a beat ring for the rival's blows too. (Not chosen: an in-fight move legend; a marker when the player's own fighter leaves the pane.)
+- Move names: Narrative drafts, Orb edits in the voice lab.
+- Overnight machine use approved: QA's long measurement batches; the fighter rename on neutral ids (Protagonist, Rival). Not approved: the audio encoder install.
+- Next priority when the queue is done: the other four stances' movesets.
+
+Notes, verbatim:
+
+> "Legal wants the tech zip drawn as a very fast dash (4 to 5 ticks) and not a true blink. Accept?"
+>
+> how can we keep the mechanics on the tech zip consistent with our other tech hits across the board? go with your best judgment
+>
+> "Dynamic intros: the Latecomer and the Long Look run 7 to 7.6 seconds (today's is 5, all skippable). And who lands first?"
+>
+> P1 then P2 is pretty standard, as long as the dynamic intros can create many distinct implied plotlines between each character I'd like to see these handled as generatively as possible.
+
+The EP's judgment on the tech question, as delegated: "tech" means the same three things everywhere. The strike pose lands on the contact tick with no in-between; the after-image is sharp wire echoes that trail the body and pop off back to front; the contact mark is the hard diamond. Travel is never part of it: a tech zip crosses as the fastest drawn dash the rules allow and then lands its strike exactly like any other tech hit.
