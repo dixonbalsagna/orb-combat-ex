@@ -100,6 +100,17 @@ func intro_running() -> bool:
 	return "intro" in S and S.intro != null and int(S.intro.left) > 0
 
 
+## Whether fighter i has yet to start his fall in the running intro. The sim holds him high above his start spot
+## until his fall beat, and the views keep him out of sight until then (PaneWorld.render). Read from the state every
+## time (the timeline is the sim's own, which it keeps by template, gap and parts), so a skip or a seek needs nothing
+## remembered. False when no intro runs.
+func intro_held(i: int) -> bool:
+	if not intro_running() or int(S.intro.scenario) < 0:
+		return false
+	var fall: Array = SimIntro.flatten(S.intro.scenario, S.intro.gap, S.intro.picks).fall   # by arrival: first, second
+	return int(S.intro.t) <= int(fall[0 if i == int(S.intro.first) else 1])
+
+
 ## Ask for the intro to be skipped. The sim skips on a press from a human slot, so the next pre-clock tick carries one
 ## in the first human slot's intent. The sim ignores a press before its skipFrom tick (a button still held from the
 ## menu must not skip): a plain request shares that fate, and `hold` keeps asking until the intro ends (the demo's

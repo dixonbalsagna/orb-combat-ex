@@ -137,13 +137,19 @@ Slot 1 arrives first on seeds 1, 3, 5, 6, 10 and 11, slot 0 on the rest.
 | :--- | :--- | :--- |
 | The reference camera (Simulation's file; Camera's call) | In one view it chases the fighter held in the sky, so the one who has arrived is off the screen for most of the wait | The Latecomer, ticks 24 to 295. The other two scenarios were not measured in one view |
 | VFX | A thin pale vertical line stands beside each falling fighter, 90 to 320 pixels to one side. It is gone with VFX's layer hidden | Seed 1 at ticks 20 and 120; seed 12 at tick 255 |
-| Rendering, Animation | The fighter who has not started to fall is drawn, hanging 6,000 units up. Only the one view shows him, small. Not changed here | One view, until his fall |
+| Rendering | The fighter who has not started to fall was drawn, hanging 6,000 units up. Fixed 2026-10-05: see below | One view, until his fall |
 
 Stills from the web build (headless Chrome, the demo). Seed 1, the Double Drop, the first falling at tick 20: ![double drop](img/intro-composed-double-drop.png)
 
 Seed 12, the Latecomer, the first waiting alone at tick 150: ![latecomer](img/intro-composed-latecomer.png)
 
 Seed 2, the Long Look, at tick 260: ![long look](img/intro-composed-long-look.png)
+
+**A fighter is out of sight until his fall starts (2026-10-05).** The sim holds a fighter 6,000 units above his start spot until his fall beat. Until then his view, his ground shadow and his lane cue are not drawn (`SimHost.intro_held`, read from `S.intro` and the sim's own timeline each frame; `PaneWorld.render`). Nothing is remembered, so a skip shows both at once.
+- Over the three templates, either arrival order, one view and the split view: nobody is drawn while held, no shadow lies on a landing spot early, and each fighter is first drawn on the tick after his fall beat, 5 to 7 units below the top. A skip while the latecomer is held shows both with their shadows on the next frame.
+- On the web (seed 12, the Latecomer, tick 150, a camera put on the held fighter and then on his landing spot): both frames are the same, pixel for pixel, as with every fighter, effect, particle and beam layer hidden. So nothing of VFX's or Animation's is drawn for him there, and UI's HUD is hidden for the whole intro.
+
+The held fighter's place in the sky, before and now: ![before](img/intro-held-before.png) ![now](img/intro-held-now.png)
 
 **Checks** (export of HEAD 99eb9ee plus the two files, headless): determinism and determinism `--live` pass; `determinism --intro` and `--intro --live` pass (new: every run starts with a composed intro, and the sim alone starts from the host's own setup), and its negative control fails as it must; pane check passes. On the web: the match opens with an intro, closing the first-run card does not skip it, a click skips it, `?nointro=1` starts with both craters dug, no console message.
 

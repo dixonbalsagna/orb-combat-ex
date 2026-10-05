@@ -116,8 +116,11 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 		v.depth = host.fighter_z(i, a)
 		v.sag = mats.sag(vx, v.depth)
 		v.markers = markers and not host.intro_running()   # no head badge before the clock: UI's HUD is hidden too
+		# The intro: a fighter is out of sight until his fall starts (the sim holds him high above his spot until
+		# then), and so is his shadow on the ground he will land on.
+		v.visible = not host.intro_held(i)
 		v.update(S, S.fighters[i], pose, vx, cam.z)
-		_place_shadow(S, i, wx, vx, pose.y, v.depth)
+		_place_shadow(S, i, wx, vx, pose.y, v.depth, v.visible)
 	_occlusion(S, cam_x, vp)
 	_lane_cues(host, a)
 	_sky_react(host, cam_x)
@@ -329,7 +332,7 @@ func _lane_cues(host: SimHost, a: float) -> void:
 		if snap or dt > 0.0:
 			_cue_z[i] = z
 		var v: FighterView = fighter_views[i]
-		cues.append([host.fighter_x(i, a), v.depth, _cue[i] * RenderLook.LANE_CUE_ALPHA, v._aura_col])
+		cues.append([host.fighter_x(i, a), v.depth, (_cue[i] if v.visible else 0.0) * RenderLook.LANE_CUE_ALPHA, v._aura_col])
 	planet.set_lane_cues(cues)
 
 
@@ -341,11 +344,11 @@ static func _shadow_mesh() -> PlaneMesh:
 
 ## A fighter's ground shadow: on the ground as drawn under him at his depth (or the water over it), fainter and wider
 ## the higher he flies. It is what shows where he is over the ground when a launch carries him into the rows.
-func _place_shadow(S: SimState, i: int, wx: float, vx: float, y: float, z: float) -> void:
+func _place_shadow(S: SimState, i: int, wx: float, vx: float, y: float, z: float, shown: bool = true) -> void:
 	var sh: MeshInstance3D = shadows[i]
 	var g: float = maxf(planet.ground.ground_at(S, wx, z), WorldWater.surfaceAt(S, wx))
 	var up: float = clampf((y - g) / RenderLook.SHADOW_FADE_H, 0.0, 1.0)
-	sh.visible = y >= g - 1.0
+	sh.visible = shown and y >= g - 1.0
 	sh.position = Vector3(vx, g + RenderLook.SHADOW_LIFT, z)
 	sh.scale = Vector3(RenderLook.SHADOW_W * (1.0 + 0.5 * up), 1.0, RenderLook.SHADOW_D * (1.0 + 0.5 * up))
 	(sh.material_override as ShaderMaterial).set_shader_parameter("strength", RenderLook.SHADOW_ALPHA * lerpf(1.0, 0.25, up))
