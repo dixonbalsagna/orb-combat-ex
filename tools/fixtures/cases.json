@@ -72449,6 +72449,427 @@
         "rule": "required",
         "pointer": ""
       }
+    },
+    {
+      "id": "ui-fighter-names-live-valid",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-key-required-names",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1
+          },
+          "del": [
+            "/names"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-fighter-names-key-required-schema",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND"
+            }
+          },
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-fighter-names-schema-version",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 2,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "ui-fighter-names-unknown-key",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND"
+            },
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "ui-fighter-names-underscore-key-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND"
+            },
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-note-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND"
+            },
+            "/note": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-note-type",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND"
+            },
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "ui-fighter-names-names-type",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": [
+              "FIRST"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/names"
+      }
+    },
+    {
+      "id": "ui-fighter-names-names-empty",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/names"
+      }
+    },
+    {
+      "id": "ui-fighter-names-names-one-row-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-names-underscore-row-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND",
+              "_why": "a note"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-id-upper-case",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND",
+              "Alpha": "FIRST"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/names/Alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-id-starts-with-a-digit",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND",
+              "1st": "FIRST"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/names/1st"
+      }
+    },
+    {
+      "id": "ui-fighter-names-id-with-a-dash",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND",
+              "al-pha": "FIRST"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/names/al-pha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-id-with-digits-and-underscore-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND",
+              "fighter_2": "THIRD"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-name-empty",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "",
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-name-too-long",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "AAAAAAAAAAAAAAAAAAAAAAAAA",
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxLength",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-name-longest-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "AAAAAAAAAAAAAAAAAAAAAAAA",
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-name-type",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": 7,
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-name-null",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": null,
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-name-mixed-case-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "First One",
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

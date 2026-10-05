@@ -47,6 +47,7 @@ func _run() -> void:
 	await _incoming_rules()
 	await _stance_badge_rules()
 	_plate_row1_rules()
+	await _display_name_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
 	await _armed_touch_rules()
@@ -409,7 +410,7 @@ func _bridge() -> void:
 				saw_pop = true
 	events = int(hud.hub.stats["events"])
 	var m0: UiFighterModel = hud.hub.model(0)
-	_ok(m0.name == "KAI" and m0.tier >= 1 and m0.charge >= 0.0, "bridge: reads name, tier and charge from the sim")
+	_ok(m0.name == "PROTAGONIST" and m0.tier >= 1 and m0.charge >= 0.0, "bridge: reads name, tier and charge from the sim")
 	var sig_name0: String = str(host.S.fighters[0].sigName).strip_edges().to_upper()
 	_ok(sig_name0 != "" and hud.hub.move_names.has(sig_name0), "bridge: the fighters' signature names are known to the hub (a banner that is only a move name is dropped)")
 	_ok(hud.hub.toll["pop0"] > 0, "bridge: reads the world counters")
@@ -4248,6 +4249,109 @@ func _remap_rules() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://input_test_remap.json"))
 
 
+# --- Display names: nothing a player sees says KAI or VORR ---------------------------------------------------------------------------
+
+## Every string value under `v` (not under a key that starts with "_": notes and flags are not drawn) that has the word AI, as "file: path".
+func _ai_in_value(v, path: String, re: RegEx, out: PackedStringArray) -> void:
+	if v is Dictionary:
+		for k in v:
+			if not str(k).begins_with("_") and str(k) != "note":
+				_ai_in_value(v[k], path + "/" + str(k), re, out)
+	elif v is Array:
+		for i in range((v as Array).size()):
+			_ai_in_value(v[i], path + "/" + str(i), re, out)
+	elif v is String and re.search(str(v)) != null:
+		out.append("%s: %s" % [path, str(v)])
+
+
+func _names_in(lines: Array) -> PackedStringArray:
+	var bad := PackedStringArray()
+	var re := RegEx.new()
+	re.compile("(?i)\\b(kai|vorr)\\b")
+	for l in lines:
+		if re.search(str(l)) != null:
+			bad.append(str(l))
+	return bad
+
+
+## The sim and the data keep the roster ids KAI and VORR; every name a player sees is PROTAGONIST or RIVAL (the alias rows' `_name`, the id as the
+## fallback). The words are looked up, so the later rename only changes the keys there. A tracer on UiText.draw collects every drawn line.
+func _display_name_rules() -> void:
+	_ok(UiData.display_name("KAI") == "PROTAGONIST" and UiData.display_name("vorr") == "RIVAL" and UiData.display_name("EMPRESS") == "EMPRESS" and UiData.display_name("") == "", "display names: KAI and VORR (any case) map to PROTAGONIST and RIVAL, any other name stays itself")
+	_ok(UiData.display_text("K.O.  KAI WINS") == "K.O.  PROTAGONIST WINS" and UiData.display_text("VORR POWERS UP  TIER 2") == "RIVAL POWERS UP  TIER 2" and UiData.display_text("Kai! KAIROS vorr's") == "PROTAGONIST! KAIROS RIVAL's" and UiData.display_text("no names here") == "no names here", "display names: names inside a sentence change by whole word only")
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.hub.patch(0, {"name": "KAI"})
+	hud.hub.patch(1, {"name": "VORR"})
+	_ok(hud.hub.model(0).name == "PROTAGONIST" and hud.hub.model(1).name == "RIVAL" and hud.hub.model(0).id == "kai", "display names: the models show the display names and keep the roster ids as their keys")
+	UiText.trace = []
+	UiText.tracing = true
+	# The match: sim-written banners and feed lines naming the roster names, a bark from each fighter, a KO.
+	hud.consume({"type": "banner", "text": "KAI POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
+	hud.consume({"type": "bark", "speaker": 1, "text": "Not like this.", "priority": 3})
+	hud.consume({"type": "bark", "speaker": 0, "text": "Kai!", "priority": 3})
+	hud.hub.feed_line(1.0, "VORR goes to ground", "KAI found")
+	hud.set_option("show_feed", true)
+	await _frames(hud, 4)
+	hud.consume({"type": "banner", "text": "K.O.  VORR WINS", "col": "#ffd45a", "dur": 4.0})
+	hud.consume({"type": "ko", "winner": 1, "loser": 0})
+	await _frames(hud, 4)
+	var banner_text: String = str(hud.hub.banner.get("text", ""))
+	_ok(not banner_text.contains("VORR") and not banner_text.contains("KAI"), "display names: the sim's banner text is drawn with the display names (%s)" % banner_text)
+	# Every screen: the pause menu, each How to play page, Settings, Remap on both layouts, the feedback panel, the join note.
+	hud.show_pause_menu()
+	await _frames(hud, 3)
+	hud.show_howto(false, 0)
+	for pg in range(4):
+		hud.show_howto(false, pg)
+		await _frames(hud, 2)
+	hud.hide_howto()
+	hud.show_settings()
+	await _frames(hud, 3)
+	hud.hide_settings()
+	for lid in ["arena", "kb-solo", "simple-pad"]:
+		hud.show_remap(lid, 0)
+		await _frames(hud, 2)
+		hud.hide_remap()
+	hud.show_feedback("pause")
+	await _frames(hud, 3)
+	var report: String = hud.feedback_report()
+	hud.hide_feedback()
+	hud.toggle_pause_menu()
+	hud.show_join_note("joined")
+	await _frames(hud, 3)
+	hud.show_join_note("left")
+	await _frames(hud, 3)
+	UiText.tracing = false
+	var seen: Array = UiText.trace.duplicate()
+	UiText.trace = []
+	var bad: PackedStringArray = _names_in(seen)
+	_ok(seen.size() > 100 and bad.is_empty(), "display names: %d lines drawn across the plates, the banners, the barks, the KO, the feed, the pause menu, How to play (four pages), Settings, Remap (three layouts), the feedback panel and the join note: none says KAI or VORR %s" % [seen.size(), str(bad.slice(0, 3))])
+	_ok(_names_in([report]).is_empty() and report.contains("PROTAGONIST") and report.contains("RIVAL"), "display names: the feedback report's setup line names PROTAGONIST and RIVAL")
+	# The computer opponent is never "AI" on screen (Legal: beside the statement that the game is built with AI tools it reads as generative AI).
+	var ai_re := RegEx.new()
+	ai_re.compile("\\bAI\\b")
+	var ai_lines := PackedStringArray()
+	for l in seen:
+		if ai_re.search(str(l)) != null:
+			ai_lines.append(str(l))
+	_ok(ai_lines.is_empty() and seen.has("CPU"), "no AI on screen: no drawn line across those screens has the word AI, and the plate's tag reads CPU %s" % str(ai_lines.slice(0, 3)))
+	_ok(ai_re.search(report) == null and report.contains("(computer)"), "no AI on screen: the feedback report says computer")
+	var data_bad := PackedStringArray()
+	for f in DirAccess.get_files_at("res://ui/data"):
+		if f.ends_with(".json"):
+			_ai_in_value(JSON.parse_string(FileAccess.get_file_as_string("res://ui/data/" + f)), f, ai_re, data_bad)
+	_ok(data_bad.is_empty(), "no AI on screen: no player-facing string in ui/data says AI (notes and keys starting with _ are not drawn) %s" % str(data_bad.slice(0, 4)))
+	hud.queue_free()
+	await process_frame
+
+
 # --- Row 1 of a plate: the stance badge is always there (docs/ui/hud-spec.md section 41) -----------------------------------------------
 
 ## The one plan function (UiPlate.row1_plan) that `draw` uses, at every landscape size, both touch settings, both long names, every tag, the brink mark
@@ -4256,7 +4360,7 @@ func _plate_row1_rules() -> void:
 	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(844, 390), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0],
 		[Vector2(2048, 1536), 2.0], [Vector2(1280, 800), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(1920, 1200), 1.5], [Vector2(2560, 1600), 2.0], [Vector2(2340, 1080), 2.75]]
 	var names: Array = ["PROTAGONIST", "RIVAL"]
-	var tags: Array = ["YOU", "P1", "P2", "AI"]
+	var tags: Array = ["YOU", "P1", "P2", UiData.t("state.ai")]
 	var words: Array = ["MANOEUVRE", "MARTIAL", "NEXT BLOW", "ENERGY"]
 	for cs in sizes:
 		for touch in [false, true]:

@@ -184,6 +184,10 @@ Run once, in the commit that lands the slice's data, after `apply-brawl1.cjs` (a
 
 Run once, in the commit that lands the slice's data: `node docs/tools/pending/apply-wear-mood.cjs`. It does **not** edit `data/`. `data/fighters/<FIGHTER>/wounds.json` gains the required closed `block` {streamArmShare (0 to 1), armWearCap (integer, 0 or more)}, and the rule `block-cap`: armWearCap below `stageAt[1]` (battered; it is in the same file, in wear units, so it is a cross-check, as the loader requires). `data/fight/mood.json` impulses gain seven required integers (0 or more): brawlLight, blocked, skillStrike, brawlHeavy, flurryClose, guardBreak, knockback. The keys are checked, not the values. The two FIXTURE_ fighters' wounds and the virtual mood.json get the keys; 47 cases, each setting its own values. Re-runnable. Tested on a clean `git archive HEAD` with the working tree's data files dropped in: 9 errors before, then 0 errors and 0 warnings, self-test passes (4208 of 4208), a second run changes nothing.
 
+## `apply-ui-fighter-names.cjs`: UI's display names
+
+Schema for `ui/data/fighter_names.json` (the name a player sees for each roster id; UI's draft is `docs/ui/ui-fighter-names.schema.json`). Run once, in the commit where UI lands the file: `node docs/tools/pending/apply-ui-fighter-names.cjs`. Closed except underscore keys; `names` has at least one row; a key is a lower-case roster id; a value is a non-empty string of **at most 24 characters, any case, as UI's draft says** (the EP's note said upper case and 16; the draft and file have no such rule, so I followed them; tell me if the rule should be tighter). 22 cases, each setting the whole file. Re-runnable. Tested on a clean `git archive HEAD` with UI's file dropped in: 1 warning (no schema) before, then 0 errors and 0 warnings, self-test passes (4191 of 4191), a second run changes nothing.
+
 ## Which script goes with which commit
 
 State as of the tree at 648c637 (2026-10-04). **Applied** means the script's keys, rules and cases are in the tree and its commit is made; a script marked applied has nothing left to run and can be deleted. **Do not re-run** `apply-2b`, `apply-m1b`, `apply-contact`, `apply-launch`, `apply-biomes-contact`, `apply-uppercut`, `apply-anim-agency` and `apply-recipes`: they are older than later changes and would overwrite them (checked by running each on a clean export of HEAD). The other applied scripts change nothing on a second run.
@@ -203,6 +207,7 @@ State as of the tree at 648c637 (2026-10-04). **Applied** means the script's key
 | `apply-howto-notes` | parked | UI's move of the stances lines into notes | UI's `howto.json` change |
 | `apply-brawl-9d` | parked | Encounter's follow-up brawl slice data (`interrupts.json`, `ai.json`) | its data |
 | `apply-wear-mood` | parked | Simulation's wear-and-mood slice (`wounds.json` `block`, `mood.json` impulses) | its data |
+| `apply-ui-fighter-names` | parked | UI's display-name switch (`ui/data/fighter_names.json`) | the file |
 | `apply-movegen` (and `xref-movegen.js`) | parked, follows generator version 5 | Combat's landing of parts, identity, cells, the movesets and `lock.json` | the files |
 | (launch pair finishers and templates) | held | Combat's go-live of `launch-pair.json` finishers, `templates.agency.json` and `templates.brawl.json` | their live form |
 

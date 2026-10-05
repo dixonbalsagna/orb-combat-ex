@@ -17,6 +17,8 @@ static var no_outline: bool = false
 ## a fraction of the draw calls.
 static var defer: bool = false
 static var _queue: Array = []
+static var tracing := false          # a test switch: every line drawn is kept in `trace` (hud_check's "no roster name on screen")
+static var trace: Array = []
 
 
 static func flush(ci: CanvasItem) -> void:
@@ -80,6 +82,8 @@ static func height(fs: int) -> float:
 ## Draw a line of text with its baseline at pos.y. align: -1 left, 0 centre, 1 right of pos.x. outline > 0 draws a dark
 ## outline that many pixels wide so the text survives bright explosions. Returns the drawn width.
 static func draw(ci: CanvasItem, text: String, pos: Vector2, fs: int, color: Color, align: int = -1, outline: float = 0.0) -> float:
+	if tracing:
+		trace.append(text)
 	if defer:
 		_queue.append([text, pos, fs, color, align, outline])
 		return width(text, fs)

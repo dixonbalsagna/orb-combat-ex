@@ -96,7 +96,7 @@ func setup(p_slot: int, p_id: String, p_name: String = "") -> void:
 	regions = (profile.get("regions", ["head", "core", "arms", "legs"]) as Array).duplicate()
 	ego_name = str(profile.get("ego", "respect"))
 	sig_cost = float(profile.get("sig_cost", 45))
-	name = p_name if p_name != "" else p_id.to_upper()
+	name = UiData.display_name(p_name if p_name != "" else p_id.to_upper())   # the name a player sees (the id stays the key)
 	left_side = p_slot == 0
 	reset_wounds()
 

@@ -1,0 +1,5 @@
+{
+  "schema": 1,
+  "note": "The names a player sees, keyed by the roster ids as the sim spells them today (lower case). The sim, the data and the replays keep the ids; only what is drawn changes. A fighter with no row shows its own name. When the ids are renamed the keys change here and nothing else; Orb's real names replace the values.",
+  "names": { "kai": "PROTAGONIST", "vorr": "RIVAL" }
+}

@@ -224,6 +224,11 @@ func consume(e) -> void:
 	var type: String = str(d.get("type", ""))
 	if type == "":
 		return
+	if d.get("text") is String:
+		var shown: String = UiData.display_text(str(d["text"]))   # a roster name in an event's text (K.O. KAI WINS) is drawn as its display name
+		if shown != str(d["text"]):
+			d = d.duplicate()
+			d["text"] = shown
 	stats["events"] += 1
 	var actor: int = int(d.get("actor", -1)) if d.has("actor") else -1
 	var m: UiFighterModel = model(actor)
@@ -457,7 +462,7 @@ func patch(actor: int, d: Dictionary) -> void:
 	for k in ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed"]:
 		if d.has(k):
 			# Hiding is removed from the base game (a future fighter); with the flag off the hidden state is ignored.
-			m.set(k, (bool(d[k]) and UiData.feature("hiding")) if k == "hidden" else d[k])
+			m.set(k, (bool(d[k]) and UiData.feature("hiding")) if k == "hidden" else (UiData.display_name(str(d[k])) if k == "name" else d[k]))
 	if d.has("aura") and d["aura"] is Color:
 		m.aura = d["aura"]
 	elif d.has("aura") and d["aura"] is String:
@@ -501,7 +506,7 @@ func patch(actor: int, d: Dictionary) -> void:
 
 
 func feed_line(t: float, tag: String, sub: String) -> void:
-	feed.append({"t": t, "tag": tag, "sub": sub})
+	feed.append({"t": t, "tag": UiData.display_text(tag), "sub": UiData.display_text(sub)})
 	while feed.size() > FEED_KEEP:
 		feed.pop_front()
 

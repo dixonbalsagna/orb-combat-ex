@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/ui-fighter-names",
+  "title": "ui fighter display names (schema 1)",
+  "description": "ui/data/fighter_names.json: the name a player sees for each roster id (lower case, as the sim spells it). DRAFT from UI for Tools to promote into tools/schemas/ and map.json. Policy: closed. A fighter with no row shows its own name.",
+  "type": "object",
+  "required": ["schema", "names"],
+  "properties": {
+    "schema": { "const": 1 },
+    "note": { "type": "string" },
+    "names": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 24 }
+    }
+  },
+  "additionalProperties": false
+}

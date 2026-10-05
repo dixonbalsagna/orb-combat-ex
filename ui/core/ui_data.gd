@@ -4,9 +4,13 @@ class_name UiData
 
 const TERMS_PATH := "res://ui/data/terms.json"
 const PROFILES_PATH := "res://ui/data/readout_profiles.json"
+const NAMES_PATH := "res://ui/data/fighter_names.json"
 
 static var _terms: Dictionary = {}
 static var _profiles: Dictionary = {}
+static var _names: Dictionary = {}          # the roster name or id in upper case -> the name a player sees (the alias rows' `_name`)
+static var _names_re: RegEx = null
+static var _names_built := false
 static var _loaded := false
 
 
@@ -20,6 +24,7 @@ static func ensure() -> void:
 
 static func reload() -> void:
 	_loaded = false
+	_names_built = false
 	ensure()
 
 
@@ -99,6 +104,43 @@ static func banner(text: String) -> String:
 	if m.has(text):
 		return str(m[text])
 	return text.replace(" KI", " CHARGE")
+
+
+static func _build_names() -> void:
+	ensure()
+	_names_built = true
+	_names = {}
+	_names_re = null
+	var tbl: Dictionary = (_read(NAMES_PATH).get("names", {}) as Dictionary)
+	for k in tbl:
+		if str(tbl[k]) != "":
+			_names[str(k).to_upper()] = str(tbl[k])
+	if not _names.is_empty():
+		_names_re = RegEx.new()
+		_names_re.compile("(?i)\\b(" + "|".join(PackedStringArray(_names.keys())) + ")\\b")
+
+
+## The name a player sees for a fighter's roster name or id (KAI, kai): its display name from ui/data/fighter_names.json, or the name itself
+## when there is none. The sim and the data keep the roster ids; only what is drawn changes, so the later
+## rename only changes the keys there.
+static func display_name(name: String) -> String:
+	if not _names_built:
+		_build_names()
+	return str(_names.get(name.to_upper(), name))
+
+
+## `text` with any roster name in it (a banner the sim wrote, a feed line, a caption) as the display name, whole words only.
+static func display_text(text: String) -> String:
+	if not _names_built:
+		_build_names()
+	if _names_re == null or text == "":
+		return text
+	var out: String = ""
+	var at := 0
+	for mt in _names_re.search_all(text):
+		out += text.substr(at, mt.get_start() - at) + str(_names.get(mt.get_string().to_upper(), mt.get_string()))
+		at = mt.get_end()
+	return out + text.substr(at)
 
 
 ## The readout profile for a fighter id (its own entry over the default; aliases such as the sim's placeholder KAI

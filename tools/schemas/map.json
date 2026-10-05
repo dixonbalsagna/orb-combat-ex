@@ -116,6 +116,10 @@
       "schema": "ui-stances.schema.json"
     },
     {
+      "match": "ui/data/fighter_names.json",
+      "schema": "ui-fighter-names.schema.json"
+    },
+    {
       "match": "ui/data/glyphs.json",
       "schema": "ui-glyphs.schema.json"
     },
