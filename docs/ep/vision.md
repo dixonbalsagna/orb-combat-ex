@@ -658,3 +658,11 @@ What follows from it:
 - The zip is approved for building.
 - The stick chooses where he ends up: any spot on a full circle around the enemy (above, below, behind, in front), not only "back" or "the far side".
 - Holding away from the opponent ends him further out than where he started: the zip is also a way to leave a brawl he is not ready to commit to.
+
+## Orb, 2026-10-05: leave headroom on building destruction
+
+Verbatim:
+
+> we're still adding energy blasts and more special moves, so if we're underperforming on building destruction now, that's a good thing, because potentially we'll be seeing more vast swathes of destructive abilities when more energy specials and signatures are created
+
+What follows from it: building loss should sit below its ceiling for now, leaving room for the signatures, specials and blast kinds still to come. The EP's ruling: apply both the hybrid (less top-tier reach, slightly softer landings) and the stage cap (a blast leaves a wreck), which World measured at about 38 to 40% of the front row lost, inside the 25 to 50 band.
