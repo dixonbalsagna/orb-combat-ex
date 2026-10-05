@@ -285,6 +285,8 @@ The player owns **when** each blow happens and **what kind** it is. The director
 - The AI can do everything the player can (§12).
 - The first build is the martial arts stance, for both fighters.
 
+Controls then checked the matrix against its mappings. It fits, and the EP ruled on four gaps for Orb (2026-10-04). They are written in below and in §12: the held context level, one stance at a time until the hybrids exist, the Simple layout's charging row and transform, and the air brake's lock.
+
 ### The matrix
 
 **One rule runs across every stance, so it is learned once:** X is the quick action, Y the strong one, A the stance's context action, and B its signature.
@@ -305,16 +307,18 @@ The player owns **when** each blow happens and **what kind** it is. The director
 | Defensive ki | LB + RB (3) | A ki shield or a zone | Reserved |
 | Terrain while flying | LT + LB (9) | Landscape effects: barriers for the hero, collapses for the villain | Reserved |
 
-Each hybrid gets the same four columns and one signature when it is designed. Until one is switched on in data, holding its two buttons reads as the newer of the two (Controls).
+Each hybrid gets the same four columns and one signature when it is designed. Until one is switched on in data, holding its two buttons reads as the newer of the two, and only the newer button does its own job (§12).
 
 **What each stance button does by itself is unchanged.**
 - **LB** guards, and a fresh press in a wind-up is the perfect block.
 - **RB** makes his attacks energy.
 - **RT** channels, and a tap is the burst when he is threatened.
 - **LT** dodges on the press and boosts when held. In the air after a hit it is his recovery: a tap techs and a hold brakes.
-- **LT and RT together** are still the transform, and the only way to transform.
+- **The transform** is one action, and the only way to transform. It is LT and RT together on a pad, an RB hold on the Simple layout, and the Transform button on touch.
 
 **On the Simple layout** Attack tapped is the stance's X and Attack held is its Y. Signature is its B, and Context is its A. The choreographer picks the energy stance.
+- For a Simple player the sim takes the director's stance choice, and doesn't read the held buttons for it.
+- **The charging row is the exception to tap and hold.** With RT held, Attack is a special that the director picks, Signature is the ultimate, and Context is the utility special.
 
 ### Which cells take which reading
 
@@ -325,7 +329,7 @@ Each hybrid gets the same four columns and one signature when it is designed. Un
 | **Held** | Every Y cell: the charged heavy, a longer push, the charged shot, the heavy charge. Martial A, for his channel |
 | **None** | Every B cell, and the charging stance's three specials. They cost ki |
 
-Mashing the defensive X is locked out: a check can be thrown once every 20 ticks.
+Mashing the defensive X is locked out: a check can be thrown once every 20 ticks. The sim enforces that limit, and the layout passes every press through.
 
 ### How today's inputs map onto it
 
@@ -341,15 +345,16 @@ Mashing the defensive X is locked out: a check can be thrown once every 20 ticks
 | Transform (both triggers for 0.5 s) | **Stays,** as the only way |
 | The dodge on an LT tap; the boost on a hold | **Stay.** Entering the manoeuvre stance is a dodge, and it pays 15 ki when he is threatened. This is looked at again once Orb has played it |
 | The tackle (context while sprinting); the dive grab | **Stay:** manoeuvre A. No sprint wait is needed: LT held is enough |
-| The air brake and the tech | **Move** to LT: a tap techs, and a hold brakes at 20 ki a second. `agency-pass.md` §4 had the brake on Guard |
+| The air brake and the tech | **Move** to LT: a tap techs, and a hold brakes at 20 ki a second. `agency-pass.md` §4 had the brake on Guard. The brake keeps its lock for 20 ticks after a hit (§12) |
 | Context: grab, pick-up, civilians, taunt | **Stay:** martial A |
+| His own channel on a held context press (On the Chin) | **Stays:** martial A, held. The intent carries the hold as a level, `contextHeld`. It is one bit, added in the same format change as the stance mask |
 | The escape stance | **Gone** since the agency pass. The Escape button stays a control of its own |
 
 **New actions,** each for Orb to approve, with first numbers:
 - **Check:** half a light's damage, 6 ticks to contact, once every 20 ticks. His guard stays up against lights and flurry blows while he throws it. A heavy still breaks a set guard (§5).
 - **Parry:** a check pressed within 4 ticks after a blow lands on his guard. The rival reels for 12 ticks. It doesn't end his string, which is what the perfect block does.
 - **Push:** no damage, a 10-tick wind-up, and the rival is driven back 3 bh. Held for 20 ticks it is 5 bh, which takes him out of the brawl (§2). It isn't decisive, and it can be done once a second.
-- **Step strike:** a light at ×0.8 with a step of up to 2 bh around, over or under the rival, by the stick. It stays inside the brawl. Pressed within 4 ticks before the rival's contact, his blow misses.
+- **Step strike:** a light at ×0.8 with a step of up to 2 bh around, over or under the rival, by the stick. It stays inside the brawl. Pressed within 4 ticks before the rival's contact, his blow misses. The timing mark is the rival's tell, and the director supplies it.
 - **The four signatures that aren't a beam** (§11).
 
 **Dropped from the first draft:** the brace, prime and overcharge. The charging row is the three specials, and the perfect block stays on the guard button.
@@ -435,6 +440,7 @@ These are the types. Combat authors each one as a generated frame, with hand-pic
 - **RT dominates.** With RT down he is in the charging stance, whatever else is held. Holding RT ends a held guard, because charging is exposed. The burst on an RT tap still fires from a guard.
 - LT and RT pressed within 6 ticks of each other are the transform chord, and change no stance.
 - Any other pair is a reserved hybrid. Until it ships, it reads as the newer button.
+- **Until the hybrids exist, a stance is exclusive.** While a newer stance button is held, the layout stops reporting the older button's own state: its guard, its energy mode or its sprint. Two things are excepted: RT's burst from a guard, and the transform chord. So sprinting while he channels is dropped for now.
 
 **Switching is instant and free, and it cancels nothing.**
 - A blow keeps the stance it was pressed in. Letting go of the stance button in the middle of it changes nothing.
@@ -453,7 +459,7 @@ These are the types. Combat authors each one as a generated frame, with hand-pic
 | Charging | Exposed and nearly still while he channels. Any clean hit interrupts it |
 | Manoeuvre | Entering it is a dodge. The boost costs 12 ki a second as now, and empty ki is 2 s of exhaustion. No guard |
 
-**While he is launched, lifted or stunned** only the manoeuvre stance works (a tap techs, a hold brakes), with the Escape button.
+**While he is launched, lifted or stunned** only the manoeuvre stance works (a tap techs, a hold brakes), with the Escape button. The brake can't start in the first 20 ticks after the last hit, so a juggle still pays. A hold that is already down when that lock ends starts braking on that tick.
 
 **One tell for each stance,** so a rival's stance can be read: the pose first, and one small cue second. There is no glyph on the HUD unless a setting turns it on.
 
