@@ -51521,6 +51521,478 @@
         "rule": "type",
         "pointer": "/cues/M02/original"
       }
+    },
+    {
+      "id": "anim-tips-live-valid",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/enabled": true
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-tips-key-required",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "del": [
+            "/reaim"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-tips-curl-required",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "del": [
+            "/curl"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-tips-schema-version",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/schema": "anim.tips/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-tips-underscore-key-ok",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-tips-enabled-type",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "anim-tips-disabled-ok",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/enabled": false
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-tips-curl-tip-enum",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/curl/claw": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/curl/claw"
+      }
+    },
+    {
+      "id": "anim-tips-curl-range",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/curl/fist": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/curl/fist"
+      }
+    },
+    {
+      "id": "anim-tips-curl-negative",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/curl/palm": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/curl/palm"
+      }
+    },
+    {
+      "id": "anim-tips-curl-type",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/curl/blade": "open"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/curl/blade"
+      }
+    },
+    {
+      "id": "anim-tips-curl-plate-ok",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/curl/plate": 1.2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-tips-swap-tip-enum",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/swap/antihero/heavy/blade": "claw"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/swap/antihero/heavy/blade"
+      }
+    },
+    {
+      "id": "anim-tips-swap-weight-unknown",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/swap/antihero/medium": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/swap/antihero/medium"
+      }
+    },
+    {
+      "id": "anim-tips-swap-rule-ok",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/swap/protagonist/light": {
+              "palm": "blade"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-tips-swap-fighter-unknown",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/swap/nobody": {
+              "heavy": {},
+              "light": {}
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:tips-fighter",
+        "pointer": "/swap/nobody"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-row-key-required",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "del": [
+            "/reaim/pr.backfist/edge"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/reaim/pr.backfist"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-row-unknown-key",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/strain": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/reaim/pr.backfist/strain"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-own-shape",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/own": "Chest"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/reaim/pr.backfist/own"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-ok-duplicate",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/ok": [
+              "jaw",
+              "jaw"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/reaim/pr.backfist/ok/1"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-ok-type",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/ok": "jaw"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/reaim/pr.backfist/ok"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-keyset-unknown",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.nowhere": {
+              "own": "head",
+              "ok": [],
+              "edge": []
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:tips-keyset",
+        "pointer": "/reaim/pr.nowhere"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-target-not-a-socket",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/ok": [
+              "moon"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:tips-socket",
+        "pointer": "/reaim/pr.backfist/ok/0"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-edge-not-a-socket",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/edge": [
+              "moon"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:tips-socket",
+        "pointer": "/reaim/pr.backfist/edge/0"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-own-not-a-socket",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/own": "moon"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:tips-socket",
+        "pointer": "/reaim/pr.backfist/own"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-own-in-ok",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/ok": [
+              "head"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:tips-socket",
+        "pointer": "/reaim/pr.backfist/ok/0"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-own-in-edge",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/edge": [
+              "head"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:tips-socket",
+        "pointer": "/reaim/pr.backfist/edge/0"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-in-both-lists",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/ok": [
+              "jaw"
+            ],
+            "/reaim/pr.backfist/edge": [
+              "jaw"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:tips-socket",
+        "pointer": "/reaim/pr.backfist/ok/0"
+      }
+    },
+    {
+      "id": "anim-tips-reaim-empty-lists-ok",
+      "schema": "anim-tips.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/tips.json",
+          "set": {
+            "/reaim/pr.backfist/ok": [],
+            "/reaim/pr.backfist/edge": []
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

@@ -1318,6 +1318,34 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     }
   }
 
+  // ---- anim tips: the swap rules are for fighters, the re-aims are for key sets and sockets ----
+  const tipsD = get('data/anim/tips.json');
+  if (isObj(tipsD)) {
+    const TP = 'data/anim/tips.json';
+    const fgsT = get('data/anim/fighters.json');
+    const fidsT = isObj(fgsT) && isObj(fgsT.fighters) ? Object.keys(fgsT.fighters).filter((k) => !k.startsWith('_')) : [];
+    if (fidsT.length && isObj(tipsD.swap)) for (const fid of Object.keys(tipsD.swap)) if (!fid.startsWith('_') && !fidsT.includes(fid)) err(TP, `/swap/${esc(fid)}`, 'tips-fighter', `swap rule for "${fid}", who is not a fighter of fighters.json (${fidsT.join(', ')})`);
+    const sockT = get('data/anim/sockets.json');
+    const regsT = isObj(sockT) && isObj(sockT.regions) ? Object.keys(sockT.regions).filter((k) => !k.startsWith('_')) : [];
+    const keysetsT = new Set();
+    for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.keysets\.json$/)) { const d = get(rel); if (isObj(d) && isObj(d.keysets)) for (const k of Object.keys(d.keysets)) keysetsT.add(k); }
+    const mainKs = get('data/anim/keysets.json');
+    if (isObj(mainKs) && isObj(mainKs.keysets)) for (const k of Object.keys(mainKs.keysets)) keysetsT.add(k);
+    if (isObj(tipsD.reaim)) for (const [ks, r] of Object.entries(tipsD.reaim)) {
+      if (ks.startsWith('_') || !isObj(r)) continue;
+      const at = `/reaim/${esc(ks)}`;
+      if (keysetsT.size && !keysetsT.has(ks)) err(TP, at, 'tips-keyset', `re-aim for "${ks}", which is a key set of no keysets file`);
+      const ok = Array.isArray(r.ok) ? r.ok : [];
+      const edge = Array.isArray(r.edge) ? r.edge : [];
+      if (regsT.length) for (const [k, list] of [['own', typeof r.own === 'string' ? [r.own] : []], ['ok', ok], ['edge', edge]]) list.forEach((tg, i) => { if (typeof tg === 'string' && !regsT.includes(tg)) err(TP, k === 'own' ? `${at}/own` : `${at}/${k}/${i}`, 'tips-socket', `"${tg}" is not a region of sockets.json (${regsT.join(', ')})`); });
+      if (typeof r.own === 'string') {
+        if (ok.includes(r.own)) err(TP, `${at}/ok/${ok.indexOf(r.own)}`, 'tips-socket', `the key set's own socket "${r.own}" is listed as a re-aim target`);
+        if (edge.includes(r.own)) err(TP, `${at}/edge/${edge.indexOf(r.own)}`, 'tips-socket', `the key set's own socket "${r.own}" is listed as a re-aim target`);
+      }
+      ok.forEach((tg, i) => { if (edge.includes(tg)) err(TP, `${at}/ok/${i}`, 'tips-socket', `"${tg}" is in both ok and edge`); });
+    }
+  }
+
   // ---- fighter ladder: the beam tables never decrease with the tier ----
   for (const rel of docsFor(/^data\/fighters\/[^/]+\/ladder\.json$/)) {
     const lad = get(rel);
