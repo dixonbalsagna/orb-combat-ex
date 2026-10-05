@@ -1,0 +1,100 @@
+{
+  "schema": "fight.intro/2",
+  "_about": "The intro phase (sim/core/intro.gd plays it; sim/director/intro.gd picks it; docs/architecture/intro-phase.md; Narrative's scenarios in docs/narrative/dynamic-intros.md). Pre-clock ticks at the start of a match that asks for it. A template is a scenario: an ordered list of slots, each filled by one part from its pool. A part is a short list of beats with ticks from the part's start. Ticks are sim ticks, 60 a second. Roles: first and second by arrival; left and right by start spot; both. Every template ends in the same state: both fighters standing on their start spots, each in his entrance crater.",
+  "skipFrom": 30,
+  "_skipFrom": "a press on a human slot skips from this tick on",
+  "fallHeight": 6000.0,
+  "craterEnergy": 1.5,
+  "_fall": "fallHeight: units above the ground a fall starts from. craterEnergy: the entrance crater's energy (World's crater scale; 0 digs none)",
+  "parts": {
+    "_note": "type: entrance (it has one fall at 0 and one land at its last tick), reaction or look. ticks: how far the part moves the template on. mode: the arrival mode an entrance reports. Beat kinds: fall, land, wait (he stands waiting until the staredown), line (a voice slot: the intent only), staredown. A beat's who overrides its slot's.",
+    "drop": {
+      "type": "entrance",
+      "mode": "drop",
+      "ticks": 36,
+      "beats": [{"t": 0, "kind": "fall"}, {"t": 36, "kind": "land"}]
+    },
+    "drop_quick": {
+      "type": "entrance",
+      "mode": "drop",
+      "ticks": 30,
+      "beats": [{"t": 0, "kind": "fall"}, {"t": 30, "kind": "land"}]
+    },
+    "remark": {
+      "type": "reaction",
+      "ticks": 0,
+      "beats": [{"t": 24, "kind": "line", "intent": "arrive_remark"}]
+    },
+    "wait": {
+      "type": "reaction",
+      "ticks": 0,
+      "beats": [{"t": 14, "kind": "wait"}, {"t": 44, "kind": "line", "intent": "wait_remark"}]
+    },
+    "reply": {
+      "type": "reaction",
+      "ticks": 0,
+      "beats": [{"t": 30, "kind": "line", "intent": "late_reply"}]
+    },
+    "hold": {
+      "type": "look",
+      "ticks": 0,
+      "beats": [
+        {"t": 0, "kind": "staredown"},
+        {"t": 12, "kind": "line", "intent": "staredown_pair", "who": "left"},
+        {"t": 84, "kind": "line", "intent": "staredown_pair", "who": "right"}
+      ]
+    },
+    "long_hold": {
+      "type": "look",
+      "ticks": 0,
+      "beats": [{"t": 0, "kind": "staredown"}]
+    }
+  },
+  "templates": [
+    {
+      "id": "double_drop",
+      "_note": "Narrative's S1, and the opening the game had before: first falls and lands, second falls and lands, they stare. classic: it is what a plain \"intro\": true plays, the left spot first, at the default gap",
+      "classic": true,
+      "weight": 3.0,
+      "tone": "neutral",
+      "clock": 300,
+      "gap": {"min": 30, "max": 70, "default": 48},
+      "slots": [
+        {"slot": "entrance", "who": "first", "pool": ["drop"]},
+        {"slot": "remark", "who": "first", "pool": ["remark"], "with": true},
+        {"slot": "entrance", "who": "second", "pool": ["drop_quick"], "gap": true},
+        {"slot": "remark", "who": "second", "pool": ["remark"], "with": true},
+        {"slot": "look", "who": "both", "pool": ["hold"], "after": 30}
+      ]
+    },
+    {
+      "id": "latecomer",
+      "_note": "Narrative's S2: first lands and waits; second arrives late. The gap is the wait",
+      "weight": 2.0,
+      "tone": "light",
+      "clock": 456,
+      "gap": {"min": 100, "max": 200, "default": 154},
+      "slots": [
+        {"slot": "entrance", "who": "first", "pool": ["drop"]},
+        {"slot": "wait", "who": "first", "pool": ["wait"], "with": true},
+        {"slot": "entrance", "who": "second", "pool": ["drop_quick"], "gap": true},
+        {"slot": "reply", "who": "second", "pool": ["reply"], "with": true},
+        {"slot": "look", "who": "both", "pool": ["hold"], "after": 80}
+      ]
+    },
+    {
+      "id": "long_look",
+      "_note": "Narrative's S9: the double drop with a long, silent stare. notTwice: never right after itself; its weight keeps it to one in six",
+      "weight": 1.0,
+      "tone": "grave",
+      "notTwice": true,
+      "clock": 420,
+      "gap": {"min": 48, "max": 48, "default": 48},
+      "slots": [
+        {"slot": "entrance", "who": "first", "pool": ["drop"]},
+        {"slot": "entrance", "who": "second", "pool": ["drop_quick"], "gap": true},
+        {"slot": "look", "who": "both", "pool": ["long_hold"], "after": 30}
+      ]
+    }
+  ]
+}

@@ -17,4 +17,6 @@ Game Design's section 17 code items (the fuse by cause, `chainR` at every tier, 
 
 **A written plan, not a build:** `shots-events-and-kinds.md`: VFX's four event asks on `shot_end` and `mine_trip`, and the kinds rain, split and curve for the launch pair (ricochet later). For my next window in the sim tree.
 
+**Built and proven, waiting for the sim tree:** dynamic intros, the first cut. The plan and the proofs are `dynamic-intros.md`; the build is the folder `dynamic-intros/` (`dynintro.py` with parts `code` and `hash`, and the three files it installs under `src/`). Apply after Encounter's and World's windows; it needs Tools' schema for the new `data/fight/intro.json`.
+
 What is asked of the core and not yet built is listed in `core-backlog.md`.

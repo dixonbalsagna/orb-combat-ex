@@ -1,0 +1,101 @@
+class_name DirIntro
+## The intro's composer (docs/director/dynamic-intros-plan.md; docs/architecture/intro-phase.md). When a match that plays
+## an intro starts, it picks the scenario (a template of data/fight/intro.json), who arrives first, the gap between the
+## arrivals and the part that fills each slot. SimIntro (sim/core/intro.gd) plays what it picks.
+##
+## Every pick is a keyed draw on the match seed (SimRng.keyed), so S.rng is not read, no stream shifts and a replay
+## composes the same intro. Whatever is picked, the state at the clock is the same, so a fight does not depend on it.
+## Each pick comes back with its reason, which SimIntro writes to the feed on the first pre-clock tick.
+
+## req is the setup's "intro" record (SimIntro.setup): it may fix "scenario", "order" (the slot that arrives first) and
+## "gap"; "avoid" lists the template ids played lately, the newest first (the host's no-repeat list); "facts.tones" lists
+## the tones the pair allows; "classic": true asks for the classic opening.
+## Returns {"scenario": the template's index, "first": a slot, "gap": ticks, "picks": the parts (SimIntro.flatten),
+## "notes": [[tag, text]] for the feed}.
+static func compose(S: SimState, req: Dictionary) -> Dictionary:
+	var T: Array = SimIntro.templates
+	var seed: int = int(S.game.seed)
+	var left: int = SimIntro.leftSlot(S)
+	var notes: Array = []
+	if req.get("classic", false) == true:
+		var ci: int = SimIntro.classicI
+		notes.append(["INTRO: " + T[ci].id, "the classic opening was asked for: the left spot first, the default gap"])
+		return {"scenario": ci, "first": left, "gap": T[ci].gapDef, "picks": 0, "notes": notes}
+	# the scenario: the one asked for, or a draw by weight among those whose tone the pair allows. One played lately
+	# weighs less by each use (1 / (1 + uses)), and one marked notTwice is passed over right after itself.
+	var ti: int = -1
+	var why: String = ""
+	if req.has("scenario"):
+		for i in range(T.size()):
+			if T[i].id == String(req.scenario):
+				ti = i
+		why = "asked for by the setup" if ti >= 0 else ""
+	if ti < 0:
+		var avoid = req.get("avoid", [])
+		if not (avoid is Array):
+			avoid = []
+		var facts = req.get("facts", {})
+		var tones = facts.get("tones") if facts is Dictionary else null
+		var w := PackedFloat64Array()
+		var total: float = 0.0
+		var fit: int = 0
+		var less: Array = []
+		for i in range(T.size()):
+			var x: float = T[i].weight
+			if tones is Array and not tones.has(T[i].tone):
+				x = 0.0
+			if x > 0.0:
+				fit += 1
+				var uses: int = avoid.count(T[i].id)
+				if uses > 0 and T[i].notTwice and String(avoid[0]) == T[i].id:
+					x = 0.0
+					less.append(T[i].id + " passed over (played last)")
+				elif uses > 0:
+					x /= float(1 + uses)
+					less.append("%s at 1/%d (played lately)" % [T[i].id, 1 + uses])
+			w.append(x)
+			total += x
+		if total <= 0.0:
+			ti = SimIntro.classicI
+			why = "nothing else fits"
+		else:
+			var u: float = SimRng.keyed(seed, "intro.scenario", 0) * total
+			var acc: float = 0.0
+			for i in range(T.size()):
+				if w[i] <= 0.0:
+					continue
+				ti = i   # (the last with a weight, should rounding leave u at the very top)
+				acc += w[i]
+				if u < acc:
+					break
+			why = "%d of %d fit" % [fit, T.size()] + ("" if less.is_empty() else "; " + ", ".join(less))
+	var tp: Dictionary = T[ti]
+	notes.append(["INTRO: " + tp.id, why])
+	# who arrives first: the slot asked for, or an even draw
+	var first: int = left
+	var req1 = req.get("order")
+	if (req1 is int or req1 is float) and (int(req1) == 0 or int(req1) == 1):
+		first = int(req1)
+		why = "asked for by the setup"
+	else:
+		first = left if SimRng.keyed(seed, "intro.order", 0) < 0.5 else 1 - left
+		why = "an even draw"
+	# the gap between the first landing and the second fall
+	var gap: int = tp.gapDef
+	var reqG = req.get("gap")
+	if reqG is int or reqG is float:
+		gap = clampi(int(reqG), tp.gapMin, tp.gapMax)
+	else:
+		gap = mini(tp.gapMax, tp.gapMin + int(floor(SimRng.keyed(seed, "intro.gap", 0) * float(tp.gapMax - tp.gapMin + 1))))
+	notes.append(["INTRO first: " + S.fighters[first].name, why + "; the gap is %d ticks (%d to %d)" % [gap, tp.gapMin, tp.gapMax]])
+	# each slot's part, one keyed draw a slot with more than one
+	var picks: int = 0
+	var mul: int = 1
+	for si in range(tp.slots.size()):
+		var n: int = tp.slots[si].pool.size()
+		if n > 1:
+			var pick: int = mini(n - 1, int(floor(SimRng.keyed(seed, "intro.part", si) * float(n))))
+			picks += pick * mul
+			notes.append(["INTRO slot %d: %s" % [si, tp.slots[si].pool[pick]], "of %d" % n])
+		mul *= n
+	return {"scenario": ti, "first": first, "gap": gap, "picks": picks, "notes": notes}
