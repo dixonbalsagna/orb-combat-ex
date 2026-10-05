@@ -965,29 +965,40 @@
    {
     "id": "Z1",
     "stance": "manoeuvre",
-    "ask": "a zip: the body is seen travelling the whole way in and out, never under the floor on its ticks; no vanish, no blink, no ring of copies",
+    "ask": "a zip: the body is drawn and opaque on every tick of the way in and out, each at least 4 ticks; echoes trail behind it and never stand where he will arrive; a far-side exit goes over the rival or round him after the blow",
     "rows": [
      "b13",
-     "s07"
+     "s07",
+     "m01",
+     "m02",
+     "m03",
+     "m04",
+     "m05",
+     "m06"
     ]
    },
    {
     "id": "G1",
     "stance": "any",
-    "ask": "a grab: never on the throat, the hair or a tail; never a clawed hand on the face",
+    "ask": "a grab: it holds the collar, shoulder, upper arm, body, waist or ankle, never the throat, hair, tail or face; no locked or laced hands, nothing lit at the hands; a carry is drawn whole",
     "rows": [
      "b06",
-     "b07"
+     "b07",
+     "g01",
+     "g02",
+     "g03"
     ]
    },
    {
     "id": "E1",
     "stance": "energy",
-    "ask": "an energy hand: open or a blade, no higher than the shoulder; never two fingers or a point, never cupped, never both hands pushed from the chest or drawn to a hip; the light is on the forearm's edge, not a ball in the palm",
+    "ask": "an energy hand: one hand, open or a blade, no higher than the shoulder; the light sits on the plate or the hand's edge, never a ball at the hand; never two fingers or a point, never cupped, never both hands; a beam or charged shot is a straight line; a volley fans from one flick",
     "rows": [
-     "b01",
-     "b02",
-     "b10"
+     "e01",
+     "e02",
+     "e03",
+     "e04",
+     "e05"
     ]
    },
    {
@@ -998,6 +1009,26 @@
      "b01",
      "b06",
      "b09"
+    ]
+   },
+   {
+    "id": "H1",
+    "stance": "any",
+    "ask": "a held pose: any pose held 12 ticks or more keeps open hands out of the hip zone, low hands a shoulder width apart, no hand overhead; no held crossed forearms and no arms-wide invitation; a signature's tell is its own stance, never a crouch with clenched fists, and has no scream",
+    "rows": [
+     "h01",
+     "h02",
+     "h03"
+    ]
+   },
+   {
+    "id": "K1",
+    "stance": "any",
+    "ask": "stacking: at every tick of a tell or a charge, no more than two of the seven power-up marks; a stance's aura is a thin outline or short streaks in the lane colour",
+    "rows": [
+     "k01",
+     "k02",
+     "m07"
     ]
    }
   ],
@@ -1018,11 +1049,11 @@
       "exit": "fade"
      },
      {
-      "direction": "through",
+      "direction": "far_side",
       "entries": [
        "dash"
       ],
-      "exit": "lane_step"
+      "exit": "pivot"
      },
      {
       "direction": "around",
@@ -1031,6 +1062,13 @@
        "arc_dive"
       ],
       "exit": "pivot"
+     },
+     {
+      "direction": "far_side",
+      "entries": [
+       "dash"
+      ],
+      "exit": "arc_dive"
      }
     ]
    },
@@ -1115,11 +1153,6 @@
     "rise",
     "drop"
    ],
-   "through": [
-    "line",
-    "arc_in",
-    "arc_out"
-   ],
    "around": [
     "arc_in",
     "arc_out",
@@ -1141,6 +1174,11 @@
     "line",
     "rise",
     "drop"
+   ],
+   "far_side": [
+    "line",
+    "arc_in",
+    "arc_out"
    ]
   },
   "_arrive": "direction to the paths a blow can land on from there: a rise from under, a drop from over, an arc from around"
@@ -1275,7 +1313,61 @@
      ]
     }
    }
-  ]
+  ],
+  "hands": {
+   "_about": "Every energy hand, for both fighters: its shape, where its light sits, how many hands and how high. A hand not listed here is new vocabulary and needs Legal's screen",
+   "blade_hand": {
+    "shape": "blade",
+    "light": "hand_edge",
+    "hands": 1,
+    "height": "shoulder"
+   },
+   "pinch": {
+    "shape": "pinch",
+    "light": "hand_edge",
+    "hands": 1,
+    "height": "shoulder",
+    "_note": "thumb to forefinger, never two fingers"
+   },
+   "fist_glow": {
+    "shape": "fist",
+    "light": "plate_and_knuckle_edge",
+    "hands": 1,
+    "height": "shoulder",
+    "_note": "the lit fist: light on the plate and the knuckle edges, never a sphere round the fist"
+   },
+   "clawed_palm": {
+    "shape": "claw",
+    "light": "plate_and_knuckle_edge",
+    "hands": 1,
+    "height": "shoulder",
+    "_note": "never at the face"
+   },
+   "open_palm": {
+    "shape": "open",
+    "light": "hand_edge",
+    "hands": 1,
+    "height": "shoulder"
+   },
+   "palm_thrust": {
+    "shape": "open",
+    "light": "hand_edge",
+    "hands": 1,
+    "height": "shoulder"
+   },
+   "ring_hand": {
+    "shape": "open",
+    "light": "hand_edge",
+    "hands": 1,
+    "height": "shoulder"
+   },
+   "flat_palm": {
+    "shape": "open",
+    "light": "hand_edge",
+    "hands": 1,
+    "height": "shoulder"
+   }
+  }
  },
  "readings": {
   "_about": "Game Design's three readings on X, Y and B (docs/design/melee-press-feel.md section 10): speed (tapped, mashed), tech (on the mark), heavy (held). In the martial arts stance a move's forms say which readings it can take; in a cell where every move takes all three the cell says so",
@@ -1295,5 +1387,244 @@
     "held"
    ]
   }
+ },
+ "legal": {
+  "_about": "Legal's row groups beyond the strike rows (docs/legal/movegen-banned.json, RL-076 and RL-081 to RL-086), merged as they stand: every row keeps Legal's rule and why. Where the parts allow it a row gains a form a program can check (kind travel, hand, move or holdPoints), and the generator refuses a match; the rest are about how a thing is drawn, lit or timed, and are conditions for their owner. --check fails if a row here differs from Legal's file",
+  "applies": {
+   "strike.banned": "strike pieces only: the martial cells, the checks, the pushes, and the blow of a zip, a step or a charge. An energy piece is judged by the energy rows: b09 would refuse a lit fist, and e01 is the rule for where an energy hand's light may sit"
+  },
+  "motion": [
+   {
+    "id": "m01",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "a zip (any reading) is drawn on every tick: the body is visible and opaque on each tick of the way in and the way out, never hidden, faded or swapped for a copy",
+    "why": "no vanish or blink (b13, s07)"
+   },
+   {
+    "id": "m02",
+    "kind": "numbers",
+    "owner": "Simulation and Game Design",
+    "check": "a zip's way in and way out are each at least max(4, ceil(bh / 3)) ticks",
+    "rule": "a zip's way in and its way out each last at least 4 ticks, and consecutive drawn positions are at most 3 body heights apart (ticks >= max(4, ceil(distance in bh / 3)))",
+    "why": "a zero or two-tick jump with echoes is a blink step"
+   },
+   {
+    "id": "m03",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "the path is continuous: the body passes through every point between start and arrival, and any copy or echo trails behind the body, never ahead of it, never at the arrival point before the body gets there",
+    "why": "an afterimage that stands where he is about to appear is the vanish-step staging"
+   },
+   {
+    "id": "m04",
+    "kind": "travel",
+    "if": {
+     "kind": [
+      "zip"
+     ],
+     "direction": [
+      "far_side"
+     ]
+    },
+    "then": {
+     "exit": [
+      "pivot",
+      "arc_dive"
+     ]
+    },
+    "rule": "a far-side exit is its own drawn travel that starts after the strike hold, over the rival or round him, with the rival's body in view throughout; he never appears behind the rival in the same tick as the strike",
+    "why": "the appear-behind-you beat needs the vanish"
+   },
+   {
+    "id": "m05",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "a zip ghost is a flat single tint in the fighter's lane colour (never the body's own colours or face), opacity 0.35 or less and fainter for older ones, at most 5 per zip, on the body's real recent path, each overlapping the next by about a third so they read as a smear, never in a ring, fan or spread round the target, gone within 8 ticks of the zip's end",
+    "why": "filled ghosts are allowed as a blur, not as a lineup of body copies"
+   },
+   {
+    "id": "m06",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "the body is always drawn on top of its ghosts at full opacity, and no ghost stays behind as a stationary copy",
+    "why": "a decoy copy is a separate signature"
+   },
+   {
+    "id": "m07",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "a heavy's wind-up ring is hollow, thin, in the lane colour, shrinks onto the striking fist and never grows or holds, lasts the wind-up only (10 ticks or fewer), and never fills or becomes a ball at the hand",
+    "why": "a charging-pose cue under the stacking rule"
+   },
+   {
+    "id": "m08",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "outcome marks (counter bar, closing ring, brackets, guard fragments) carry no text or numbers, never sit on the eyes or face, and are never a full-screen or body-wide gold, white or red flash",
+    "why": "no readout or scanner look, no mark 7"
+   }
+  ],
+  "energy": [
+   {
+    "id": "e01",
+    "kind": "hand",
+    "never": {
+     "light": [
+      "ball",
+      "sphere",
+      "orb"
+     ]
+    },
+    "rule": "no sphere or ball in or at the hand, at rest or growing; a charge is light on the forearm plate or hand edge, and the blast leaves along a line",
+    "why": "the held-and-growing orb"
+   },
+   {
+    "id": "e02",
+    "kind": "hand",
+    "need": {
+     "hands": [
+      1
+     ],
+     "height": [
+      "shoulder",
+      "below"
+     ]
+    },
+    "never": {
+     "shape": [
+      "cupped",
+      "two_hand_push",
+      "wrists_together"
+     ]
+    },
+    "rule": "an energy hand is open or a blade, no higher than the shoulder; never cupped, never both hands pushed from the chest or drawn to a hip, never wrists together (b01, b02)",
+    "why": "the beam-release pose"
+   },
+   {
+    "id": "e03",
+    "kind": "hand",
+    "never": {
+     "shape": [
+      "two_fingers",
+      "pointing_finger"
+     ]
+    },
+    "rule": "no two extended fingers, no single pointing finger as an emitter; the pinch is thumb to forefinger only (b10)",
+    "why": "the beam and the death-beam poses"
+   },
+   {
+    "id": "e04",
+    "kind": "move",
+    "if": {
+     "delivery": [
+      "short_beam",
+      "charged"
+     ]
+    },
+    "then": {
+     "release": [
+      "thrust",
+      "drop"
+     ]
+    },
+    "rule": "a short beam or charged shot is a plain straight line: no spiral, drilling or twisting beam; a second hand may brace the arm but never grips the firing wrist and never sits cupped under it",
+    "why": "the charged beam staging"
+   },
+   {
+    "id": "e05",
+    "kind": "move",
+    "if": {
+     "delivery": [
+      "volley"
+     ]
+    },
+    "then": {
+     "release": [
+      "flick"
+     ]
+    },
+    "rule": "a volley fans from one sweep or flick of one hand or arm; never both palms pumping forward in turn, and no repeated shouted syllable across it (s03)",
+    "why": "the shouted barrage"
+   }
+  ],
+  "grabs": [
+   {
+    "id": "g01",
+    "kind": "holdPoints",
+    "never": [
+     "throat",
+     "hair",
+     "tail",
+     "face"
+    ],
+    "rule": "a hold point is the collar, shoulder, upper arm, body, waist or ankle; never the throat, the hair or a tail (b07), never a clawed hand on the face (b06)",
+    "why": "grip rules"
+   },
+   {
+    "id": "g02",
+    "kind": "drawn",
+    "owner": "Animation",
+    "rule": "no hands locked or laced between the two fighters at any time, and nothing glowing at the hands in a hold",
+    "why": "the test-of-strength image"
+   },
+   {
+    "id": "g03",
+    "kind": "drawn",
+    "owner": "Animation",
+    "rule": "a lift or carry is drawn whole: the carried fighter's body is in view and never hidden by a zip or a cut; a throw is a launch (the planner), not a vanish",
+    "why": "no vanish step (m01)"
+   }
+  ],
+  "held": [
+   {
+    "id": "h01",
+    "kind": "drawn",
+    "owner": "Animation (a lint on poses held 12 ticks or more)",
+    "rule": "any pose held 12 ticks or more (a tell, a hold, a signature sketch, a stance cue) keeps open hands out of the hip zone (x 14 or less, height 24 to 44), hands at least shoulder width apart if both are low, and no hand above 80",
+    "why": "the held charging pose"
+   },
+   {
+    "id": "h02",
+    "kind": "drawn",
+    "owner": "Animation (a lint on poses held 12 ticks or more)",
+    "rule": "no held crossed forearms, no held arms-wide invitation (a taker's open-armed stance belongs to the rival's On the Chin alone)",
+    "why": "the power pose and the take-it stance"
+   },
+   {
+    "id": "h03",
+    "kind": "drawn",
+    "owner": "Animation (a lint on poses held 12 ticks or more)",
+    "rule": "a signature's tell is its own stance, never a crouch with fists clenched at the sides, and carries no scream",
+    "why": "stacking marks 1 and 2"
+   }
+  ],
+  "stacking": [
+   {
+    "id": "k01",
+    "kind": "drawn",
+    "owner": "VFX, Animation and Audio",
+    "rule": "at any tick, no more than two of the seven marks (crouch with clenched fists, scream, upward flame aura, rubble ring with ground crack and wind, lightning on the body, hair change, a flash with a shouted form name); a held tell or a 45-tick charge is checked at every tick, not once",
+    "why": "the stacking rule"
+   },
+   {
+    "id": "k02",
+    "kind": "drawn",
+    "owner": "VFX, Animation and Audio",
+    "rule": "a stance tell's aura is a thin outline or short scattered streaks in the lane colour; a manoeuvre trail is thin and in the lane colour; a defensive rim of light sits on the guarding side only",
+    "why": "stance tells"
+   }
+  ]
+ },
+ "grab": {
+  "_about": "Where a grab may take hold (Legal g01). No grab is generated yet: the context cells list today's",
+  "holdPoints": [
+   "collar",
+   "shoulder",
+   "upper_arm",
+   "body",
+   "waist",
+   "ankle"
+  ]
  }
 }

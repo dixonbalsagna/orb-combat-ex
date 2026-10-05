@@ -14,7 +14,7 @@ Owner: Combat and Choreography. Date: 2026-10-05. Status: parked. Nothing here i
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, or on any match with Legal's rows. It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 17 cases.
+- **To prove the refusals:** `--self-test`, 24 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -42,7 +42,7 @@ Game Design's matrix (`docs/design/melee-press-feel.md` section 10): X quick, Y 
 
 | Stance | Cell | How it is made | The rival | The Protagonist |
 | :--- | :--- | :--- | :--- | :--- |
-| **Manoeuvre** | X: zip strike, step strike, light charge, zip away | a kind, a direction, a posed entry, a way out, and a light from his martial X whose path suits the direction | 8: 6, 2, 0 | 8: 7, 1, 0 |
+| **Manoeuvre** | X: zip strike, step strike, light charge, zip away | a kind, a direction, a posed entry, a way out, and a light from his martial X whose path suits the direction | 8: 7, 1, 0 | 8: 7, 1, 0 |
 | | Y: zip heavy, heavy on the move, heavy charge, pursuit | the same with a heavy from his martial Y | 8: 6, 2, 0 | 8: 6, 2, 0 |
 | **Energy arts** | X: bolts | a hand of his own, a release, what his body does, and the delivery: a bolt (speed, tech) or a volley of three (heavy) | 6: 6, 0, 0 | 6: 5, 1, 0 |
 | | Y: the heavy shot | the same; the delivery is a shot, a charged shot, a short beam, or for the rival a split | 6: 5, 0, 1 | 6: 4, 1, 1 |
@@ -57,7 +57,7 @@ Game Design's matrix (`docs/design/melee-press-feel.md` section 10): X quick, Y 
 - **The Protagonist's three specials are placeholders** (a turning step, three curving shots, a turn aside). They are Combat's first offer so that his charging row is not empty, and they are marked so in the data and on the sheet.
 - **Which of the rival's specials sits on which button is my guess:** the cutting step on X, the barrage volley on Y, the grip and drag on A.
 
-**All five stances:** 100 moves a fighter. The rival: 72 posed, 13 derived, 15 waiting. The Protagonist: 69, 16, 15. The 15 waiting are the 14 special looks and the short beam.
+**All five stances:** 100 moves a fighter. The rival: 73 posed, 12 derived, 15 waiting. The Protagonist: 69, 16, 15. The 15 waiting are the 14 special looks and the short beam.
 
 "Posed" here means the poses exist. Most of what these four stances lack is not a pose but the action itself, which is the next section.
 
@@ -75,14 +75,20 @@ By team. The sheet lists the same under each stance, cell by cell, and `cells.js
 
 ## 4. Legal
 
-- **Applied automatically** to every strike on the sheet: the martial cells, the checks, the pushes, and the blow of every zip, step and charge. No move matches a banned row, and `--check` proves it.
-- **Conditions** are on the sheet as before, with four more for the new stances: Z1 (a zip is drawn the whole way), G1 (grabs), E1 (energy hands), P1 (pushes).
-- **Needs Legal's person screen,** because the rows only know the martial vocabulary:
-  - the five signature frames, and each fighter's version of the counter and the terrain art when they are designed;
-  - the travel kinds and their directions (the zip was screened as a rule, RL-076; the moves were not);
-  - the energy hands, releases and deliveries, the push and the guard layer;
-  - every special's frame, and the Protagonist's three placeholders;
-  - the new grabs: the aimed throw, the guard throw, the zip tackle, the snatch.
+`parts.json` holds Legal's file whole (`docs/legal/movegen-banned.json`, through RL-086), and `--check` fails if any row there is missing from it or differs.
+
+| Rows | Judge | What the generator does |
+| :--- | :--- | :--- |
+| The 13 shape rows (b01 to b13) and 7 sequence rules (s01 to s07) | **strike pieces only:** the martial cells, the checks, the pushes, and the blow of every zip, step and charge | refuses a match; no move matches |
+| Energy, e01 to e05 | energy pieces. **b09 is not applied to them:** a lit fist is allowed where the light sits on the plate and knuckle edges, never as a ball at the hand (e01) | refuses a match, from the hand table in `parts.json` (`shot.hands`: shape, where the light sits, one hand, shoulder height) and the move's delivery and release |
+| Motion, m01 to m08 | zips and their marks | refuses a far-side zip that does not leave over the rival or round him (m04); the rest are how a zip is drawn and timed: conditions for Animation, VFX and Simulation |
+| Grabs, g01 to g03 | grabs | no grab is generated; the hold points a grab may use are listed and checked (g01) |
+| Held, h01 to h03, and stacking, k01 and k02 | any pose held 12 ticks or more; every tick of a tell or a charge | not checkable from parts: conditions H1 and K1 on every signature frame and held action, for Animation's lint and VFX |
+
+- **What the new rows refused:** a volley thrown on a thrust (e05: a volley fans from one flick). It was 12 of the Protagonist's candidates and 20 of the rival's. Of the three volleys each fighter had before, two of the rival's and one of the Protagonist's were on a thrust and are gone. Each energy X cell now holds 2 volleys, both on a flick, and 4 bolts. Nothing else was refused.
+- **One change to my own grammar,** to fit m04: a zip to the far side leaves on a pivot round the rival or an arc dive over him. It had left on a lane step.
+- **Counts:** still 100 moves a fighter. No cell lost a move.
+- **Still needs Legal's eye when drawn** (Legal's own list): the short beam and its braced pose; each fighter's counter and terrain art when designed; the specials when designed.
 
 ## 5. Keys for Tools
 
@@ -114,6 +120,14 @@ What changed since the keys I gave for the martial stance. A filter is as before
 - A travel move: `id`, `kind`, `band`, `direction`, `entry` and `exit` (`{id, set}`, or null for no way out), `blow` (`move`, the parts, `set`), `forms`, `status`, `flags`, `legal`, `asks`, `review`.
 - A table move: `id`, `hand`, `release`, `body`, `delivery`, `forms`, `keys` (`set`, `hand`), `status`, `asks`, `review`.
 - A special cell: `special`, `what`, `state`, and moves of `id`, `look` (a part to a value), `forms`, `status`.
+
+**Added for Legal's new rows (2026-10-06)**
+- `parts.json` `legal`: `applies`, a note; and the groups `motion`, `energy`, `grabs`, `held`, `stacking`, each a list of `{id, kind, rule, why}`. By `kind`: travel and move have `if` and `then` (filters); hand has `never` and optionally `need` (a hand property to a list of values); holdPoints has `never` (a list); numbers has `owner` and `check`; drawn has `owner`.
+- `parts.json` `shot.hands`: a hand to `{shape, light, hands, height}`. `parts.json` `grab.holdPoints`: a list.
+- `travel` has the direction `far_side`.
+- `cells.json`: a frame or context cell may have `asks`, a list of condition ids.
+- A moveset's travel and table cells have `refused`: for travel `{move: {kind, direction, exit}, rows}`; for a table `{move: {delivery, release}, rows, candidates}`. Frame and context cells carry `asks`.
+- Cross-checks: every energy hand a fighter lists is in `shot.hands`; every row of Legal's file is in `parts.json` with the same rule and why; no hold point is one of g01's.
 
 **`combat-moveset-lock.schema.json`** (`combat.moveset.lock/1`): `fighters`, a fighter to a cell id to a list of `[id, [limb, tip, path, target, weight], key set id or null]`.
 

@@ -23,7 +23,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 3
+VERSION = 4
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 
@@ -139,6 +139,27 @@ def sequence_breaks(g, seq, airborne=True):
         elif r["kind"] == "steps":
             if any(s not in r["drawn"] for b in seq for s in b.get("step", [])):
                 out.append(r["id"])
+    return sorted(set(out))
+
+
+def group_hits(parts, m, kind):
+    """Legal's group rows (parts.json legal) a travel or energy move matches. kind: 'travel' or 'energy'."""
+    lg = parts.get("legal", {})
+    out = []
+    if kind == "travel":
+        for r in lg.get("motion", []):
+            if r.get("kind") == "travel" and match(r["if"], m) and not match(r["then"], m):
+                out.append(r["id"])
+    else:
+        hand = parts["shot"]["hands"].get(m["hand"])
+        for r in lg.get("energy", []):
+            if r.get("kind") == "move" and match(r["if"], m) and not match(r["then"], m):
+                out.append(r["id"])
+            if r.get("kind") == "hand":
+                if hand is None:
+                    out.append(r["id"])   # a hand Legal has not screened
+                elif any(hand.get(k) in v for k, v in r.get("never", {}).items()) or any(hand.get(k) not in v for k, v in r.get("need", {}).items()):
+                    out.append(r["id"])
     return sorted(set(out))
 
 
@@ -349,7 +370,7 @@ def travel_cell(ctx, who, cid, cell, done):
     t = parts["travel"]
     ents = ctx["entries"]
     blows = [b for b in done[cell["blows"]]["moves"] if b["status"] != "waiting"]
-    cand = []
+    cand, refused, seen_refused = [], [], set()
     for kind in cell["kinds"]:
         for mv in t["kinds"][kind]["moves"]:
             for e in mv["entries"]:
@@ -359,6 +380,13 @@ def travel_cell(ctx, who, cid, cell, done):
                     if b["path"] not in t["arrive"][mv["direction"]]:
                         continue
                     m = {"kind": kind, "direction": mv["direction"], "entry": e, "exit": mv["exit"], "blow": b["id"], "path": b["path"], "target": b["target"], "limb": b["limb"], "_b": b}
+                    hits = group_hits(parts, m, "travel")
+                    if hits:
+                        key = (kind, mv["direction"], mv["exit"])
+                        if key not in seen_refused:
+                            seen_refused.add(key)
+                            refused.append({"move": {"kind": kind, "direction": mv["direction"], "exit": mv["exit"]}, "rows": hits})
+                        continue
                     m["_forms"] = list(cell["readings"])
                     m["_w"] = idn["weights"].get("entry", {}).get(e, 1) * weight_of(idn, b) * (1.3 if b["status"] == "posed" else 1.0) * jitter(seed, who, cid, kind, mv["direction"], e, b["id"])
                     cand.append(m)
@@ -386,13 +414,13 @@ def travel_cell(ctx, who, cid, cell, done):
                       "blow": {"move": b["id"], "limb": b["limb"], "tip": b["tip"], "path": b["path"], "target": b["target"], "weight": b["weight"], "set": b["keys"].get("set")},
                       "forms": m["_forms"], "status": "posed" if b["status"] == "posed" else "derived", "flags": b["flags"], "legal": b["legal"], "asks": asks, "review": "new"})
     met = {q["name"]: sum(1 for p in picked if quota_ok(q, p)) for q in cell.get("quotas", [])}
-    return {"kind": "travel", "valid": valid, "quotas": met, "moves": moves}
+    return {"kind": "travel", "valid": valid, "refused": refused, "quotas": met, "moves": moves}
 
 
 def table_cell(ctx, who, cid, cell):
     parts, idn, seed = ctx["parts"], ctx["idn"], ctx["seed"]
     blk, en = parts[cell["block"]], idn["energy"]
-    cand = []
+    cand, refused = [], []
     for hand, release, body, delivery in itertools.product(sorted(en["hands"]), blk["release"], blk["body"], cell["delivery"]):
         m = {"hand": hand, "release": release, "body": body, "delivery": delivery}
         if delivery == "split" and not en.get("split"):
@@ -401,6 +429,10 @@ def table_cell(ctx, who, cid, cell):
             continue
         m["_forms"] = [f["form"] for f in blk["forms"] if match(f["when"], m)]
         if not m["_forms"]:
+            continue
+        hits = group_hits(parts, m, "energy")
+        if hits:
+            refused.append({"move": dict(m, _forms=None), "rows": hits})
             continue
         m["_w"] = en["hands"][hand] * en["release"].get(release, 1) * jitter(seed, who, cid, hand, release, body, delivery)
         m["_set"] = next((p["set"] for p in en["posed"] if match(p["when"], m)), None)
@@ -422,7 +454,12 @@ def table_cell(ctx, who, cid, cell):
         moves.append({"id": "mv.%s.%s.%02d" % (who, cid, i + 1), "hand": m["hand"], "release": m["release"], "body": m["body"], "delivery": m["delivery"], "forms": m["_forms"],
                       "keys": keys, "status": "posed" if (m["_set"] and hand_set) else "derived" if m["_set"] else "waiting", "asks": ["E1"], "review": "new"})
     met = {q["name"]: sum(1 for p in picked if quota_ok(q, p)) for q in cell.get("quotas", [])}
-    return {"kind": "table", "valid": valid, "quotas": met, "moves": moves}
+    by = {}
+    for r in refused:   # one line a shape of refusal, not one a candidate
+        k = (r["move"]["delivery"], r["move"]["release"], tuple(r["rows"]))
+        by[k] = by.get(k, 0) + 1
+    refused = [{"move": {"delivery": k[0], "release": k[1]}, "rows": list(k[2]), "candidates": n} for k, n in sorted(by.items())]
+    return {"kind": "table", "valid": valid, "refused": refused, "quotas": met, "moves": moves}
 
 
 def special_cell(ctx, who, cid, cell):
@@ -499,9 +536,9 @@ def build():
                 elif k == "special":
                     doc["cells"][cid] = special_cell(ctx, who, cid, cell)
                 elif k == "context":
-                    doc["cells"][cid] = {"kind": "context", "pressed": cell["pressed"], "held": cell["held"], "_note": "not generated"}
+                    doc["cells"][cid] = {"kind": "context", "pressed": cell["pressed"], "held": cell["held"], "asks": cell.get("asks", []), "_note": "not generated"}
                 else:
-                    doc["cells"][cid] = {"kind": "frame", "slots": cell["slots"], "readings": cell.get("readings", {}), "_note": cell["what"]}
+                    doc["cells"][cid] = {"kind": "frame", "slots": cell["slots"], "readings": cell.get("readings", {}), "asks": cell.get("asks", []), "_note": cell["what"]}
         notes[who]["changes"] = ctx["changes"]
         doc["generator"]["inputs"] = hashlib.sha256((h.hexdigest() + json.dumps(lock_rows(doc), sort_keys=True)).encode("utf-8")).hexdigest()[:16]
         out[who] = doc
@@ -586,6 +623,44 @@ def legal_findings(docs, parts, identity):
                     br = sequence_breaks(g, [b])
                     if br:
                         bad.append("%s: %s breaks %s" % (who, m["id"], ", ".join(br)))
+    for who, doc in docs.items():
+        for cid, c in doc["cells"].items():
+            for m in c.get("moves", []):
+                if c["kind"] == "travel":
+                    hits = group_hits(parts, {"kind": m["kind"], "direction": m["direction"], "exit": (m["exit"]["id"].split(".", 1)[1] if m["exit"] else None)}, "travel")
+                elif c["kind"] == "table":
+                    hits = group_hits(parts, m, "energy")
+                else:
+                    hits = []
+                if hits:
+                    bad.append("%s: %s matches %s" % (who, m["id"], ", ".join(hits)))
+    lg = parts.get("legal", {})
+    for who, idn in identity["fighters"].items():
+        for hand in idn.get("energy", {}).get("hands", {}):
+            hits = group_hits(parts, {"hand": hand, "delivery": "bolt", "release": "thrust"}, "energy")
+            if hits:
+                bad.append("%s: the energy hand %s matches %s" % (who, hand, ", ".join(hits)))
+    for r in lg.get("grabs", []):
+        if r.get("kind") == "holdPoints":
+            hit = set(parts.get("grab", {}).get("holdPoints", [])) & set(r["never"])
+            if hit:
+                bad.append("%s: a grab may hold the %s" % (r["id"], ", ".join(sorted(hit))))
+    lf = os.path.join(ROOT, "docs", "legal", "movegen-banned.json")
+    if os.path.exists(lf):   # nothing of Legal's is dropped or loosened in the copy the generator reads
+        theirs = load(lf)
+        if theirs.get("banned") != g["banned"]:
+            bad.append("parts.json strike.banned differs from docs/legal/movegen-banned.json")
+        mine_seq = {r["id"]: (r["rule"], r["why"]) for r in g["bannedSequences"]}
+        for r in theirs.get("bannedSequences", []):
+            if mine_seq.get(r["id"]) != (r["rule"], r["why"]):
+                bad.append("sequence rule %s differs from Legal's file" % r["id"])
+        for group, rows in theirs.items():
+            if group in ("schema", "_about", "banned", "bannedSequences") or not isinstance(rows, list):
+                continue
+            mine = {r["id"]: (r["rule"], r["why"]) for r in lg.get(group, [])}
+            for r in rows:
+                if mine.get(r["id"]) != (r["rule"], r["why"]):
+                    bad.append("Legal's row %s (%s) is missing from parts.json or differs" % (r["id"], group))
     for p, nexts in g["links"].items():
         for q in nexts:
             br = [b for b in sequence_breaks(g, [{"path": p}, {"path": q}]) if b in ("s04", "s05")]
@@ -604,7 +679,7 @@ def legal_findings(docs, parts, identity):
 # ---------------------------------------------------------------- the sheet
 
 WORDS = {"martial": "martial arts", "energy": "energy arts", "arc_in": "arc in", "arc_out": "arc out", "hand_state": "hand state", "re_aim": "re-aim", "hand_state_re_aim": "hand state and re-aim", "re_aim_edge": "re-aim at the edge",
-         "hand_state_re_aim_edge": "hand state and re-aim at the edge", "zip_away": "zip away", "kiting_turn": "kiting turn", "short_beam": "short beam"}
+         "hand_state_re_aim_edge": "hand state and re-aim at the edge", "zip_away": "zip away", "far_side": "far side", "arc_dive": "arc dive", "kiting_turn": "kiting turn", "short_beam": "short beam"}
 
 
 def w(s):
@@ -654,6 +729,18 @@ def sheet(out, parts, cells, notes):
     for cd in g["conditions"]:
         what, ask = cd["ask"].split(": ", 1)
         L.append("| %s | %s | %s | %s |" % (cd["id"], what, ask, ", ".join(cd["rows"])))
+    L.append("")
+    lgl = parts.get("legal", {})
+    L.append("**Legal's other rows** (RL-076, RL-081 to RL-086; `docs/legal/stances-and-gestures-screen.md`). The strike rows above judge strike pieces only; an energy piece is judged by the energy rows, so a lit fist is allowed where its light sits on the plate and knuckle edges and never as a ball at the hand (e01, not b09).")
+    L.append("")
+    L.append("| Group | Rows | The generator refuses a match | Conditions for the owner |")
+    L.append("| :--- | :--- | :--- | :--- |")
+    for group in ("motion", "energy", "grabs", "held", "stacking"):
+        rows = lgl.get(group, [])
+        auto = [r["id"] for r in rows if r.get("kind") in ("travel", "move", "hand", "holdPoints")]
+        rest = [r["id"] for r in rows if r["id"] not in auto]
+        owner = sorted(set(r.get("owner", "") for r in rows if r["id"] in rest))
+        L.append("| %s | %s to %s | %s | %s%s |" % (group, rows[0]["id"], rows[-1]["id"], ", ".join(auto) or "-", ", ".join(rest) or "-", (" (" + "; ".join(o for o in owner if o) + ")") if rest else ""))
     L.append("")
     L.append("**For every move:** no hand cupped at a hip or drawn back to one and thrust (b02); nothing lit on a melee piece, no ball of light, no raised charging pose (b09); no vanish or blink between blows, and no after-image that hides the body (b13). **For every hand:** no two fingers, no pointing finger, no hand to the forehead, no beckon (b10, b11).")
     L.append("")
@@ -707,13 +794,13 @@ def sheet(out, parts, cells, notes):
             L.append("### %s: %s" % (cid, cell["what"]))
             L.append("")
             if cell["kind"] == "context":
-                L.append("Pressed: %s. Held: %s. Not generated." % ("; ".join(cell["pressed"]), "; ".join(cell["held"])))
+                L.append("Pressed: %s. Held: %s. Not generated.%s" % ("; ".join(cell["pressed"]), "; ".join(cell["held"]), (" Legal: " + ", ".join(cell["asks"]) + ".") if cell.get("asks") else ""))
                 L.append("")
             elif cell["kind"] == "frame":
                 L.append("A frame, the same for both fighters until the kinds are final: " + "; then ".join("%s%s" % (s["slot"], (" (%s)" % ", ".join("%s %s" % (k, v) for k, v in s.items() if k != "slot")) if len(s) > 1 else "") for s in cell["slots"]) + ".")
                 L.append("")
                 if cell.get("readings"):
-                    L.append("Readings: " + "; ".join("%s: %s" % (k, v) for k, v in cell["readings"].items()) + ".")
+                    L.append("Readings: " + "; ".join("%s: %s" % (k, v) for k, v in cell["readings"].items()) + "." + ((" Legal: " + ", ".join(cell["asks"]) + ", and a person's screen.") if cell.get("asks") else ""))
                     L.append("")
             for who in names:
                 c = out[who]["cells"][cid]
@@ -737,13 +824,19 @@ def sheet(out, parts, cells, notes):
                         L.append("Refused by Legal's rows, so never offered: " + "; ".join("%s (%s)" % (" ".join(w(x) for x in r["shape"]), ", ".join(r["rows"])) for r in c["refused"]) + ".")
                         L.append("")
                 elif c["kind"] == "travel":
+                    if c.get("refused"):
+                        L.append("Refused by Legal's rows, so never offered: " + "; ".join("a %s to the %s leaving on the %s (%s)" % (w(r["move"]["kind"]), w(r["move"]["direction"]), w(r["move"]["exit"]), ", ".join(r["rows"])) for r in c["refused"]) + ".")
+                        L.append("")
                     L.append("| # | Kind | Band | Direction | Entry | Way out | Blow on arrival | Status | Legal |")
                     L.append("| ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
                     for m in c["moves"]:
-                        L.append("| %s | %s | %s | %s | `%s` | %s | %s (`%s`) | %s | %s |" % (m["id"].rsplit(".", 1)[1], w(m["kind"]), m["band"], m["direction"], m["entry"]["set"],
+                        L.append("| %s | %s | %s | %s | `%s` | %s | %s (`%s`) | %s | %s |" % (m["id"].rsplit(".", 1)[1], w(m["kind"]), m["band"], w(m["direction"]), m["entry"]["set"],
                                                                                            ("`%s`" % m["exit"]["set"]) if m["exit"] else "stays", blow_text(m["blow"]), m["blow"]["set"] or "new", m["status"], legal_text(m)))
                     L.append("")
                 elif c["kind"] == "table":
+                    if c.get("refused"):
+                        L.append("Refused by Legal's rows, so never offered: " + "; ".join("a %s on a %s (%s; %d candidates)" % (w(r["move"]["delivery"]), r["move"]["release"], ", ".join(r["rows"]), r["candidates"]) for r in c["refused"]) + ".")
+                        L.append("")
                     L.append("| # | Hand | Release | Body | Delivery | Readings | Keys | Status | Legal |")
                     L.append("| ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
                     for m in c["moves"]:
@@ -805,6 +898,14 @@ def self_test(parts, identity):
     expect("a rising fist on a key set Animation flags with a leap is refused (b03)", [r["id"] for r in g["banned"] if banned_hit(r, rise, ["heavy"], 1, flags_of(g, rival, rise, {"legal": [], "flags": ["leap"], "measured": True})) == "match"], ["b03"])
     expect("a lit move is refused whatever its parts (b09)", [r["id"] for r in g["banned"] if banned_hit(r, clasp, ["heavy"], 1, {"has": ["glow"], "not": []}) == "match"], ["b09"])
     expect("a held heavy chambered at a hip is refused (b02, b12)", [r["id"] for r in g["banned"] if banned_hit(r, clasp, ["heavy", "held"], 1, {"has": ["hip_chamber", "cupped_at_hip"], "not": []}) == "match"], ["b02", "b12"])
+    parts_ = parts
+    expect("a volley thrown on a thrust is refused (e05)", group_hits(parts_, {"hand": "blade_hand", "release": "thrust", "body": "planted", "delivery": "volley"}, "energy"), ["e05"])
+    expect("a volley from one flick passes", group_hits(parts_, {"hand": "blade_hand", "release": "flick", "body": "planted", "delivery": "volley"}, "energy"), [])
+    expect("the rival's lit fist is not refused: b09 is for strikes, e01 for energy", group_hits(parts_, {"hand": "fist_glow", "release": "thrust", "body": "planted", "delivery": "bolt"}, "energy"), [])
+    expect("a hand Legal has not screened is refused (e01, e02, e03)", group_hits(parts_, {"hand": "cupped_pair", "release": "thrust", "body": "planted", "delivery": "bolt"}, "energy"), ["e01", "e02", "e03"])
+    expect("a charged shot that is lobbed is refused (e04)", group_hits(parts_, {"hand": "open_palm", "release": "lob", "body": "planted", "delivery": "charged"}, "energy"), ["e04"])
+    expect("a far-side zip that leaves on a fade is refused (m04)", group_hits(parts_, {"kind": "zip", "direction": "far_side", "exit": "fade"}, "travel"), ["m04"])
+    expect("a far-side zip that leaves round him passes", group_hits(parts_, {"kind": "zip", "direction": "far_side", "exit": "pivot"}, "travel"), [])
     jab = {"limb": "hand", "tip": "blade", "path": "line", "target": "head", "step": ["in", "hold"]}
     gut = {"limb": "hand", "tip": "fist", "path": "line", "target": "gut", "step": ["in", "hold"]}
     spin = {"limb": "foot", "tip": "heel", "path": "spin", "target": "chest", "step": ["around", "out"]}

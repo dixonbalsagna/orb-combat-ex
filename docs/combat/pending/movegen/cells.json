@@ -170,6 +170,10 @@
       "who": "Animation",
       "what": "a second look for each grab and throw (wave 4's grabs: designed, not posed)"
      }
+    ],
+    "asks": [
+     "G1",
+     "H1"
     ]
    },
    "b": {
@@ -202,7 +206,11 @@
      "tech": "the quick form on his beat, closing a string",
      "heavy": "the held form"
     },
-    "legal": "a person screens the frame and its hand-picked piece (docs/legal/movegen-screen.md section 3)"
+    "legal": "a person screens the frame and its hand-picked piece (docs/legal/movegen-screen.md section 3)",
+    "asks": [
+     "H1",
+     "K1"
+    ]
    }
   },
   "manoeuvre": {
@@ -375,6 +383,9 @@
       "who": "Animation",
       "what": "the tackle, the lift and the throw are posed (pair2); the snatch is not"
      }
+    ],
+    "asks": [
+     "G1"
     ]
    },
    "b": {
@@ -403,7 +414,12 @@
      "tech": "the same on the mark",
      "heavy": "the terrain art"
     },
-    "legal": "a person screens the frame and each fighter's version; a terrain art is a new set piece"
+    "legal": "a person screens the frame and each fighter's version; a terrain art is a new set piece",
+    "asks": [
+     "H1",
+     "K1",
+     "Z1"
+    ]
    }
   },
   "energy": {
@@ -526,6 +542,10 @@
       "who": "Animation",
       "what": "the mine lay and the shove are posed (energy1, rival3); the aimed lob of a mine is not"
      }
+    ],
+    "asks": [
+     "G1",
+     "E1"
     ]
    },
    "b": {
@@ -546,7 +566,12 @@
      "tech": "on his firing beat",
      "heavy": "the held form"
     },
-    "legal": "screened as built; a new variant or a new hand is new vocabulary"
+    "legal": "screened as built; a new variant or a new hand is new vocabulary",
+    "asks": [
+     "H1",
+     "K1",
+     "E1"
+    ]
    }
   },
   "defensive": {
@@ -747,6 +772,9 @@
       "who": "Animation",
       "what": "the reversal and the swat are posed (step3, energy1); the guard throw is not"
      }
+    ],
+    "asks": [
+     "G1"
     ]
    },
    "b": {
@@ -773,7 +801,11 @@
      "tech": "within the rival's tell",
      "heavy": "the held form"
     },
-    "legal": "a person screens the frame and each fighter's version: the rival catches on his plates, the Protagonist turns it aside with open hands"
+    "legal": "a person screens the frame and each fighter's version: the rival catches on his plates, the Protagonist turns it aside with open hands",
+    "asks": [
+     "H1",
+     "K1"
+    ]
    }
   },
   "charging": {
@@ -834,6 +866,10 @@
       "who": "as X",
       "what": ""
      }
+    ],
+    "asks": [
+     "G1",
+     "H1"
     ]
    },
    "b": {
@@ -854,7 +890,11 @@
      "tech": "on the mark",
      "heavy": "held to full: the ultimate"
     },
-    "legal": "a person screens it: the charge pose and the release are where the stacking rule bites"
+    "legal": "a person screens it: the charge pose and the release are where the stacking rule bites",
+    "asks": [
+     "H1",
+     "K1"
+    ]
    }
   }
  }

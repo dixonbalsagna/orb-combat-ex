@@ -100,6 +100,12 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-078 | LT zip: heavy wind-up ring, counter, caught, guard-broken marks | VFX | Low | Clear: hollow thin shrinking ring; no text, no face marks, no gold/white/red flash | Closed |
 | RL-079 | Animation's 23 parked strike poses (rival4, protag7) | Animation | Low | Clear by eye; full-size look at fist_drop, plate_hammer, palm_heave before live | Open |
 | RL-080 | Four signature sketches and hip-zone width | Animation | Medium | CONDITIONAL: tell poses need hands apart and the wide zone; zone 8 for closed-fist transients, 14 for open hands and held poses | Open |
+| RL-081 | Ten new intro gestures (stances-and-gestures-screen.md) | Animation | Low | Clear; pi.claim (no crouch, aura, shake, shout) and ri.check (no readout) conditional | Open until seen live |
+| RL-082 | Far-side pass, check guard layer, push style | Animation | Low | Clear: m01 to m04, dash rule on the arc dive, no held cross guard, P1 | Closed. Also closes RL-079's full-size look at fist_drop, plate_hammer, palm_heave |
+| RL-083 | Five signature frames; travel kinds and directions of the four generated stances | Combat | Medium | Frames clear as generic; each fighter's version needs a person screen; k01 at every tick of a 45-tick charge | Open per fighter |
+| RL-084 | Energy hands, releases, deliveries; the short beam | Combat, VFX | Low | Clear as written (RL-041 to RL-052); short beam conditional, not yet drawn | Open until the beam is drawn |
+| RL-085 | Specials' frames, the Protagonist's three placeholders, new grabs | Combat | Medium | Clear as placeholders; g01 to g03 on holds | Re-screen when designed |
+| RL-086 | Roster of twelve: what to screen per niche | EP | Low | Note: design, kit and identity screened before art for each template | Standing |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
