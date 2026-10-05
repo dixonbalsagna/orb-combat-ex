@@ -94,7 +94,7 @@ The arithmetic: the most-worn region nets about 0.6 to 0.9 wear per second. That
 
 - **The brink chapter** (balance slice `6be4c3a`; a 100-match probe). Brink to KO had a median of 4 s, because the exchange that breaks the core is usually decisive and starts the finisher at once. **The ruling is the set-up rule,** which includes "no finisher from the exchange that caused the brink". Encounter gates it in the director.
   1. **The exchange that causes the brink never starts a finisher.** It ends on the brink call-out.
-  2. **The set-up.** The rival must first win one decisive exchange against the fighter on the brink. That **opens** them: a visible stagger and a dropped guard. The rival's finisher kind shows in its wind-up, so the fighter on the brink can pick the stance that reads it.
+  2. **The set-up.** The rival must first win one decisive exchange against the fighter on the brink. That **opens** them: a visible stagger and a dropped guard. The rival's finisher kind shows in its wind-up, so the fighter on the brink can pick the stance that reads it. In the five-stance model the answers are the defensive stance for a launch, the manoeuvre stance for a melee, and his own signature for a beam (`melee-press-feel.md` §11).
   3. **The finisher** starts on the next decisive exchange the rival wins while the opening holds.
   4. **The opening closes** when the fighter on the brink wins a decisive exchange (the same moment that fires Spite), survives a finisher, or Rallies. The rival then needs a new set-up.
   5. **The time-cap event** (11:00) overrides this rule: every decisive exchange there is a finisher.

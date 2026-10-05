@@ -19,7 +19,7 @@ No fail state, no fixed timer and no forced order: a beat done early is ticked o
 | 5 | Read the rival's wind-up and answer it | They tap Dodge into a heavy, or hold Guard against lights and then land a perfect block or a reversal | "A heavy is winding up. Tap Dodge, or hold Guard and wait." |
 | 6 | Charge, and fire a signature | They hold Power to charge to 45 ki, then fire the signature | "Charge, then call your signature." |
 | 7 | Take a transformation when it's ready | The form becomes ready and they hold both triggers to take it | "You're ready. Transform when you choose." |
-| 8 | Meet a finisher with the right answer | The rival's finisher telegraphs its kind, and they answer it (hold Guard against a launch, tap Dodge against a melee finisher, or attack with 40 ki against a beam), then see the struggle's pulses hold | "They're going for the finish. Brace, slip or meet it." |
+| 8 | Meet a finisher with the right answer | The rival's finisher telegraphs its kind, and they answer it (hold Guard against a launch, tap Dodge against a melee finisher, or press Signature with 40 ki against a beam; `melee-press-feel.md` §11), then see the struggle's pulses hold | "They're going for the finish. Brace, slip or meet it." |
 | 9 | Be let go | A normal match against an easy rival | "From here, the fight is yours." |
 
 The stance keys went with ADR 0008, so every beat uses the held states: attack, hold Guard, tap Dodge. The hint lines are Narrative's corrected ones (`docs/narrative/rule-of-cool-narrative.md`).

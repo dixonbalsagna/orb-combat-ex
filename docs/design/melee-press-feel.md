@@ -91,10 +91,24 @@ So the downtime is structural. It is short exchanges with a cooldown after each,
 
 | Measure | Today | Target |
 | :--- | ---: | :--- |
-| Seconds a minute with nothing running (no brawl, exchange, flight or set piece in progress) | 22.7, with flights | **At most 12,** of which flights and recoveries are about 5 |
+| Seconds a minute with nothing running, as defined below | 22.7 | **At most 12,** of which free flight to close the distance is about 5 |
 | The same, counting only time in the close band | Not measured | At most 6 |
 | A brawl's length, median | An exchange of 2.3 blows | 6 to 12 s |
 | Blows in a brawl before it breaks, median | 2.3 | 10 or more |
+
+**"Nothing running", defined for QA.**
+- **The ticks counted** are every sim tick (`S.tick`) from the end of the intro to the KO, except ticks when the sim is paused for a cinematic.
+- **A tick is running when any of these is true,** for either fighter:
+  1. a brawl holds;
+  2. an exchange of the old kind is in progress, until the brawl has replaced them all;
+  3. an attack is on its way: a lunge, a charge, a pursuit, a zip or a tackle, from the first tick of its tell or hold to its end, with a zip's way out;
+  4. a shot, a beam or a mine's blast is live, or a fighter is firing or holding a shot;
+  5. a grab, a throw or a carry;
+  6. a struggle, a signature from its tell to its end, a finisher, or any set piece that doesn't pause the sim;
+  7. a fighter is reeling, staggered, lifted, guard-broken, knocked back, launched, tumbling or buried, or in a tech or a brake.
+- **Otherwise nothing is running.** That covers free flight and boosting with no attack pressed, standing or hovering, a guard held with nothing coming, channelling, a taunt, the turn after a zip away, and the director's cooldown.
+- **Against the idle row** (`agency-pass.md` §25, at most 8 s a minute): idle is the narrower measure, where neither fighter is doing anything at all. Nothing running is idle plus channelling and taunting.
+- **Reported** as seconds for each minute of counted ticks, as the median across matches with the 90th percentile beside it, for AI against AI and for a pressing script against the medium AI. This is Encounter's trace ("no exchange is running") with the list above written down, so its 13.4 and 6 s figures stand.
 
 **The masher has to be re-measured.** Encounter found that with a shorter cooldown and an AI that stays in, the masher rises to 63 of 100 against the medium AI, over his 35 to 50% band. Two things in this spec pull him back: a mashed blow is weaker the faster it is thrown (§3), and the AI now guards, parries and pushes inside the brawl. If he is still over the band, the first number to move is how much of a brawl the medium AI spends guarding.
 
@@ -683,14 +697,20 @@ Every tech reading, checked against that:
 | **Energy arts** | X | The spray: bolts at the tap rate, with the spread building (`agency-pass.md` §15.4) | A measured bolt, on his firing beat: no spread, and flow +1, as built | **A volley.** X held for 16 ticks: three bolts together in a tight fan, each a full bolt at a bolt's price. It counts as one press (§13) |
 | | Y | The heavy shot. Faster than one every 20 ticks, each is weaker, as built (`agency-pass.md` §23) | A heavy shot on his firing beat: no spread, and flow +1 | The charged shot: ×1.25 at a full hold. Held on, the short beam. The rival's second press splits it |
 | | B | His signature's quick form | The quick form on his firing beat | His signature's held form |
-| **Charging** | X, Y | The special as authored, on the press. Mashed, it repeats as fast as its recovery allows, at full price each time | The special on its mark: ×1.25 and flow +1. The mark is his beat or the rival's tell, by the special | The special held: its charged cut, up to ×1.25 at a full hold, for the same ki |
+| **Charging** | X, Y | The special as authored, on the press. Each special has its own cooldown, so mashing doesn't repeat it | The special on its mark: ×1.25 and flow +1. The mark is his beat or the rival's tell, by the special | The special held: its charged cut, up to ×1.25 at a full hold, for the same ki |
 | | B | His signature's quick form | The quick form on his beat | His signature's held form. Held to 45 ticks in acts 3 and 4, his ultimate |
 | **Manoeuvre** | X | The zip strike from the mid band (§2c). In reach, the step strike. Mashed, they follow one another, each paid for | A zip strike or a step strike inside the rival's tell: his blow misses, and it is a skill strike | A set light on arrival: ×1.25, and the rival reels for 12 (§2c) |
 | | Y | The zip heavy from the mid band (§2c). In reach, a heavy on the move. Rushed, as the martial heavy | A zip heavy inside the rival's tell: his blow misses, ×1.25, and he staggers for 20 | The zip heavy held: ×1.25 and a knock-back (§2c) |
 | | B | His signature as a zip, in its quick form | The quick form inside the rival's tell | His signature's held form |
 
 - **The check's 20-tick lock is replaced** by its speed reading: checks can't come closer than 10 ticks apart. The sim enforces that floor, and the layout passes every press through.
-- **The specials' three cuts** are Combat's to author, one special at a time.
+- **Where the specials are.** The old power layer and the charging stance are the same thing: RT held, and a face button. So the three specials are the charging row, and no other stance holds one:
+  - **X is the quick special, Y the strong one, and A the utility one.** B is the stance's signature;
+  - **for the rival's first kit** (`moveset-rules.md` §11k): the cutting step on X, the barrage volley on Y, and grip and drag on A. Grip and drag is a grab, so it falls under the grab lockout;
+  - the Protagonist's three take the same places by role, when Combat names them;
+  - **each keeps its price and its own 25 s cooldown** (20, 20 and 25 ki). So its speed reading is the plain special on a tap, its tech reading is the same on its mark, and its heavy reading is its held cut;
+  - they are fixed for each fighter, with a loadout later. The legend's separate Specials row can go, as UI proposes;
+  - the three cuts of each special are Combat's to author, one special at a time.
 - **On the Simple layout** Attack held is still the stance's Y. The held reading of X is the choreographer's to use there.
 
 ### A: a press and a hold
@@ -821,6 +841,20 @@ These are the types. Combat authors each one as a generated frame, with hand-pic
 
 The rival's guard zone needs the zone, which was reserved with the LB + RB hybrid. If the zone can't be built in this update, he takes the counter in his own shape until it can: a block on the plates and a straight answer.
 
+### The kinds on one chart, with alternatives
+
+Orb asked for charts and alternatives before the kinds are final. Three stances share a kind across the roster, in each fighter's own shape. Two take a kind from a menu. Everything in the last three columns is a proposal.
+
+| Stance | The kind | Alternatives for that stance | The Protagonist | The rival |
+| :--- | :--- | :--- | :--- | :--- |
+| **Martial arts** | Shared: **a melee art,** a rush ending in a launch. It is his defining signature | One decisive blow with a long tell. A throw art. A juggle art, which lifts him and keeps him up | The rush, in palms and arcs, ending in a throw | The rush, ending by hand in one straight blow |
+| **Defensive** | His own, from the menu: a counter, a guard zone or an interpose | The other two on the menu | The counter, as a catch | The guard zone |
+| **Energy arts** | Shared: **the beam** | A barrage: many shots from one press. A wave: wide and short. A guided shot | The beam | The beam. The barrage is the alternative that fits him best, since barrages are his identity. A barrage meeting a beam is still a struggle |
+| **Charging** | Shared: **the release,** and in acts 3 and 4 the ultimate | A wave around him. One driven blow. A field that stays for a few seconds. A surge: 15 s of his form's strength | A wave around him, aimed up and away from people | One driven blow |
+| **Manoeuvre** | His own, from the menu: a terrain art, a signature lunge or a cratering dive | The other two on the menu | The signature lunge, on an arc | The cratering dive |
+
+Whatever is picked, the tier, the price and the three readings of B stay as they are.
+
 ### What the tiers touch
 
 - **The last stand** (`spec-wounds.md` §1b): its one free signature covers up to 45 ki. An ultimate fired there costs the other 30, and still needs act 3 or 4.
@@ -849,6 +883,26 @@ The rival's guard zone needs the zone, which was reserved with the LB + RB hybri
   - defensive (LB): if he loses, he takes 20% less from it;
   - any other stance changes nothing.
 - **One struggle in 20 s,** as now, except the beam struggle, which keeps its own rules. When a struggle isn't allowed, the meeting is settled without one: both fighters are knocked back half the distance and take half the damage.
+
+### Answering a finisher, in the five stances
+
+A finisher shows its kind in its wind-up (`spec-wounds.md` §1b), and the fighter on the brink answers it. The right answer opens the finisher struggle. This maps today's three answers onto the stances. The struggle itself doesn't change: 23% base survival, 0.10 off for each stray press, and the floor of 8%.
+
+| The finisher's kind | What answers it | Read when | A second valid answer? |
+| :--- | :--- | :--- | :--- |
+| **A launch** | **The defensive stance:** LB held | On the tick the wind-up ends | No. It was GUARD, and it is the same button |
+| **A melee** | **The manoeuvre stance:** LT, as a tap (the dodge) or a hold | A tap in the last 20 ticks of the wind-up, or a hold on the tick it ends | No. It was DODGE. The tap and the hold are one button |
+| **A beam** | **His own signature:** B, for 40 ki as today | A B press at any time in the wind-up | Yes, by stance and on the same button. B in the energy stance meets it with his beam, in the martial arts stance with his melee art, and in the charging stance with his release. All three count the same |
+
+- **Why B for a beam.** It was PRESS: any attack. A struggle now starts only when two heavy commitments meet (above), and a light isn't one. A signature is. Holding the energy stance isn't enough by itself, because the answer costs ki and has to be a commitment.
+- **In button terms nothing moves:** Guard, Dodge, Signature. So the Simple layout answers with the three buttons it has.
+- **The beam answer is priced as an answer, at 40 ki,** and not at the signature's tier. It ignores the shared cooldown and the ultimate's act gate, and it is thrown at the signature tier whatever the stance.
+- **The defensive and manoeuvre stances' B don't answer a beam.** Those two stances are the answers to the other two kinds.
+- **A wrong answer, no answer, or not enough ki** gives the struggle at its floor of 8%, whatever he presses.
+- **He can correct himself.** Switching stance is instant, and the last answer in place when the wind-up ends is the one that is read. RT still dominates: LB held under RT is the charging stance, and doesn't answer a launch.
+- **In the struggle** any face button presses on the pulse, at the strictness Orb chose (2 of 3). The bends that a held stance gives an ordinary struggle don't apply here, since the stance was the answer.
+- **The telegraph chip** names the kind and the answer: LAUNCH with the defensive stance, MELEE with the manoeuvre stance, BEAM with the signature.
+- The AI answers by the same rule, with its read accuracy by difficulty. The time-cap event still gives no struggle.
 
 ### For QA
 
@@ -1030,6 +1084,6 @@ Orb answered the ten questions in questionnaire 17 (`docs/ep/vision.md`, 2026-10
 
 **Still open:**
 1. Pillar 2's wording (§8).
-2. Which kind each fighter takes from the two menus (§11). The launch pair's are proposed there.
+2. Which kind each fighter takes in each stance (§11, "The kinds on one chart"). The launch pair's are proposed there, with alternatives.
 
 **Settled earlier:** B is the signature in every stance. The perfect block stays on the guard button. The transform stays its own action. The specials stay on the charging row.
