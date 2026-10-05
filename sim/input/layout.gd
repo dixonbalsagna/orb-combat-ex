@@ -275,7 +275,7 @@ func press(c: String) -> bool:
 	_press_tick[c] = tick
 	_chorded.erase(c)
 	if _single.has(c):
-		var power_layer: bool = _is_down("power")
+		var power_layer: bool = _is_down("power") or _armed.has(SimStance.CHARGING)   # the layer IS the charging stance, held or armed
 		var took_layer: bool = false
 		if power_layer:
 			for b in _single[c]:
@@ -404,7 +404,8 @@ func _base_release(action: String, c: String) -> void:
 			_hold_del("mode", c)
 			if mode_style == "hybrid" and tick - _mode_t0 < hold_start:
 				_mode_latch = 1 - _mode_latch   # a tap latches; a hold gave the mode back on release
-			_oneshot_tap(SimStance.ENERGY, c)
+			if mode_style == "hold":   # the toggle and the hybrid latch ARE the arming for energy; the one-shot is not stacked on them
+				_oneshot_tap(SimStance.ENERGY, c)
 		"power":
 			_hold_del("power", c)
 			if not _is_down("power") and not _power_voided and not _chorded.get(c, false) and tick - _power_t0 < hold_start:
