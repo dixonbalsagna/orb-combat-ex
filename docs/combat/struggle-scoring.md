@@ -1,6 +1,6 @@
 # The finisher's struggle: scoring that does not reward mashing
 
-Owner: Combat and Choreography. Date: 2026-10-03. Status: **ruled on 2026-10-03: `perStray` −0.15 and `scoring.floor` 0.08.** Encounter applies both values in `data/combat/finishers.json` inside slice 13, under the EP's grant, with the code change that floors the press score before the tilts, and measures it. The numbers are Game Design's (`docs/design/spec-wounds.md` section 1). Written against HEAD `a50c87d`.
+Owner: Combat and Choreography. Date: 2026-10-03. Status: **ruled. `perStray` is −0.10 and `scoring.floor` is 0.08** (Orb chose strictness 2 of 3 on 2026-10-04, between the lenient −0.05 and the strict −0.15 proposed below). The first ruling, −0.15, went live with slice 13; Encounter sets −0.10 in the brawl's slice B0. The numbers are Game Design's (`docs/design/spec-wounds.md` section 1). Written against HEAD `a50c87d`; the ruled column was added on 2026-10-04.
 
 ## The problem
 
@@ -43,7 +43,21 @@ So pressing on the beats beats mashing by 15 to 45 points, and mashing is no bet
 
 **One case to know.** A blind press every 18 ticks, the struggle's own tempo, averages 26%: it scores 53% when its phase happens to be right and 8% when it is not. That is half of timing, not mashing: the count-in before the struggle gives the phase to a player who listens.
 
-**A softer setting, if a slip should cost less:** `perStray` −0.10 with the same floor. The 8-tick masher still lands on 8%, slower metronomes reach 9 to 10%, and every beat with one stray is 43% in place of 38%.
+**As ruled, at −0.10 with the same floor** (computed the same way):
+
+| Player | At −0.15 | **At −0.10, the ruling** |
+| :--- | ---: | ---: |
+| No presses | 8% | 8% |
+| A blind masher, every 6 or 8 ticks | 8% | 8% |
+| A blind press every 9 ticks | 8% | 11% (8 to 13 by phase) |
+| A blind press every 10 ticks | 8% | 14% (8 to 23) |
+| A blind press every 12 ticks | 12% | 18% (8 to 33) |
+| On every beat | 53% | 53% |
+| On every beat, with one stray | 38% | 43% |
+| On every beat, with two strays | 23% | 33% |
+| One beat, or two | 23%, 38% | the same |
+
+A fast masher still gets nothing over not pressing, and a slip costs a timed player 10 points and not 15. Slower blind pressing earns a little more than at −0.15 (up to 18% at one press every 12 ticks), still under one well-timed press. An earlier version of this note put the slower metronomes at 9 to 10%; the table is the corrected count.
 
 ## What it does overall
 
