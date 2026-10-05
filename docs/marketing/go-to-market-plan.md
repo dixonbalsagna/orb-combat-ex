@@ -17,7 +17,7 @@ Every number has a source link in section 15, or says "estimate". An estimate is
 | Stage | What | Needs to be true first | Hours a week (estimate) | Number to hit before moving on (estimate) |
 |---|---|---|---|---|
 | 1a. Friends | Private play and feedback | Nothing new | 2 to 3 | 10 people played, 5 came back on another day |
-| 1b. Public browser build and itch.io page | Free, public, with an honest "how it's made" | Title settled, licence settled, AI wording read by Legal, placeholder names gone | 3 to 4 | 500 plays, 50 followers, 20 comments from strangers in about 8 weeks |
+| 1b. Public browser build and itch.io page | Free, public, with an honest "how it's made" | Title settled, licence settled, AI wording read by Legal, displayed names neutral | 3 to 4 | 500 plays, 50 followers, 20 comments from strangers in about 8 weeks |
 | 2. Steam page and wishlists | The page, a trailer, wishlists | Stage 1b number hit, at least 4 fighters, Steam build working, your decision to spend $100 | 4 to 5 | 1,000 wishlists after about 12 weeks |
 | 3. Demo and one Steam Next Fest | A demo and a week of attention | Stage 2 number hit | 6 to 8 for about 3 weeks | 2,000 wishlists before launch |
 | 4. Launch | Selling, if the numbers say so | Stage 3 number hit, Legal review of every public claim | 15 to 20 in launch week | First-week sales at or above 0.10 times wishlists |
@@ -27,7 +27,7 @@ Every number has a source link in section 15, or says "estimate". An estimate is
 
 **What is blocked today, and by what.**
 - **The title clash** (the small OrbCombat project, same name, same engine) blocks every public page that carries the title: itch.io, Steam, social handles, domains, a trailer.
-- **The licence** blocks making the repo public, any "open source" wording, taking tips or sales, and the Steam page. Legal recommends MIT code with art, music, dialogue, data and the name reserved, plus a plain permission to play, mod, stream and make fan work (its shape A).
+- **The licence** (the repo is already public with none chosen; Legal is writing what that means) blocks any "open source" wording, taking tips or sales, and the Steam page. Legal recommends MIT code with art, music, dialogue, data and the name reserved, plus a plain permission to play, mod, stream and make fan work (its shape A).
 - **Placeholder names in the live build** (the hero is still KAI, a NO-GO name, review-log RL-002) block public clips and promotion of that URL.
 - **AI-disclosure wording** blocks every public page until the final text is the same everywhere. Legal's text is in `docs/legal/go-to-market.md` section 1 and is used as written (section 4 below). Steam and itch.io both require the disclosure, and itch.io leaves untagged AI projects off its browse pages.
 - None of these blocks Stage 1a, which is friends playing and talking.
@@ -56,18 +56,18 @@ What this means for you:
 
 ## 3. Positioning
 
-**Two sentences [proposal].** [Title] is a free, in-browser energy brawler where every button press is a blow and a fight leaves the world wrecked: buildings break in stages and the planet has no edges. It is made by one person, Orb, working with AI tools, and its characters, names and world are all its own. [homage line: Legal proposes, Orb decides]
+**Two sentences [proposal].** [Title] is a free, in-browser energy brawler where every button press is a blow and a fight leaves the world wrecked: buildings break in stages and the planet has no edges. It is directed by one person, Orb, and built with AI tools, with original characters, world and story. [homage line: Legal proposes, Orb decides]
 
 **Three hooks, true on the live build as of this draft (verify each one on the build before it is used):**
 1. **A planet with no edges.** Fly one way and you come back round. Evidence: `docs/design/pillars.md` pillar 1; the seam tests in `qa/`.
 2. **Buildings break in stages.** Windows out, cracked, a stripped shell, fallen. Evidence: the stage looks in `docs/rendering/building-stages.md`; the 2026-10-05 morning summary in `docs/ep/orb-review-list.md`.
-3. **Every press is a blow.** Brawl slice B1 is committed (`5a0d527`). I could not confirm from here that it is on the live page, so check before you claim it. Evidence: `docs/design/melee-press-feel.md`.
+3. **Every press is a blow.** Brawl slice B1 is deployed (the live page runs e6f51bd or later; EP loaded it on 2026-10-05). The brawl has five known balance faults being repaired, so "every press is a blow" is true and "balanced" is **not** a claim to make. Evidence: `docs/design/melee-press-feel.md`.
 
 The call to action is always the same: **play it free in your browser, no install.** That is a delivery fact, not a hook.
 
 **What I will not say:**
 - Not "spiritual successor", not any franchise or fan-game name, and no franchise words in tags, keywords, repo topics or hashtags (`docs/legal/originality-rules.md`, "Words we use in public"). Describe the genre in plain words: energy brawler, flying fighter, side-on fighter.
-- Not "handcrafted", "hand-drawn", "human-made", "composed by", "AI-free", "no AI", or "created by Orb" for anything a tool made. Say "directed by Orb". Nothing is called human-made unless the asset log and the store text say so.
+- Not "handcrafted", "hand-drawn", "human-made", "made by hand", "composed by", "AI-free", "no AI", "created by Orb" for anything a tool made, or "built by one person" without the AI clause. Say "directed by Orb". Nothing is called human-made unless the asset log and the store text say so.
 - No implied endorsement by Valve, itch.io, Sony, Microsoft, Nintendo, Godot, Anthropic or Suno. Platform logos only as their brand rules allow. "Steam Deck Verified" only after the badge is awarded.
 - Not "open source" for the whole project. At most "open-source code", and only under Legal's shape A or C.
 - Not "clone", "tribute" or "parody" in store text, and no "like", "inspired by" or "for fans of" followed by a franchise or character name, in text, tags or keywords.
@@ -84,7 +84,8 @@ The call to action is always the same: **play it free in your browser, no instal
 | Every press is a blow | melee-press-feel.md | live now? (verify) | unreviewed |
 | Two fighters today | live build | live now | unreviewed |
 | Five stances | ui/data/stances.json, live HUD | live now (verify) | unreviewed |
-| Made by one person, Orb, working with AI tools (Legal's statement, as written) | docs/legal/go-to-market.md section 1; asset-origins.md | live now | wording is Legal's, to confirm facts |
+| Directed by one person, Orb, and built with AI tools (Legal's statement, as amended in RL-090 to RL-093) | docs/legal/go-to-market.md section 1 and 10.1; asset-origins.md | live now | wording is Legal's, to confirm facts |
+| Original characters, world and story (not "all names" while the title clash is open) | docs/legal/go-to-market.md 10.2 | live now | clear (Legal 10.2) |
 | Four fighters, music, controller play | roadmap P4 and P5 | not yet | do not claim |
 | Online play, consoles, a campaign | open-questions.md Q9, Q10 | not yet | do not claim |
 
@@ -93,9 +94,10 @@ The call to action is always the same: **play it free in your browser, no instal
 The wording is Legal's, from `docs/legal/go-to-market.md` section 1. I use it **as written**, with no shortening or rewording, and the same text everywhere. Brackets are facts for Orb to confirm. If a tool is added later, every place changes the same day. Never write "no AI".
 
 - **Store page short form** (Steam "About This Game", the itch.io description, video descriptions, devlog footers, creator messages):
-  > **How this game was made.** Orb Combat EX is made by one person, Orb, working with AI tools. AI tools wrote the game's code and drafted its art, animation data, dialogue, UI text and design documents. The music was generated with Suno. [There is no voice acting.] Nothing in the game is generated by AI while you play. Orb directs the project, makes the creative decisions, edits the dialogue by hand, and tests and plays the game. No part of this game is described as human-made unless this page says so.
+  > **How this game was made.** Orb Combat EX is a one-person project: Orb directs it and builds it with AI tools. AI tools wrote the game's code and drafted its art, animation data, dialogue, UI text and design documents. [Include only once music ships:] The music was generated with Suno. [There is no voice acting.] Nothing in the game is generated by AI while you play. Orb directs the project, makes the creative decisions, edits the dialogue by hand, and tests and plays the game. No part of this game is described as human-made unless this page says so.
 - **README and credits, long form:** Legal's "Made with AI" paragraph, copied from its section 1.
-- **Credits roll, one line each:** "Direction and editing: Orb. Code, art data, dialogue drafts and design documents: Claude (Anthropic). Music: generated with Suno."
+- **Credits roll, one line each:** "Direction and editing: Orb. Code, art data, dialogue drafts and design documents: Claude (Anthropic). [Once music ships:] Music: generated with Suno."
+- **Where Orb's hand is real, say exactly that and no more** (Legal 10.3): "directed by Orb" for the project; "edited by Orb" only for dialogue batches with a voice-lab diff on record; "written by Orb" only for a specific line Orb wrote; "melody by Orb" only if Orb supplied one into Suno and kept the file. Nothing wholesale. Before any such claim, the diff or file is named in `asset-origins.md`.
 - **The title inside the text** follows the title decision. Until then the draft keeps "[Title]".
 
 The facts must match `docs/legal/asset-origins.md` on the day of publishing, and the music line needs Suno's paid-plan records (Legal section 5).
@@ -104,10 +106,12 @@ The facts must match `docs/legal/asset-origins.md` on the day of publishing, and
 1. The first lines of the itch.io description, plus itch.io's generative-AI field, ticked Yes for graphics, sound, text and dialogue, and code.
 2. Steam's content survey (pre-generated AI content: yes; live-generated: no), plus the first paragraph of the Steam "About" text.
 3. In the game: an About or Credits screen reachable from the title screen (UI to confirm it exists; the live build I viewed shows no such line).
-4. The README, and the first screen of the repo.
+4. The README, and the first screen of the repo. The long form goes at the top of the public README now (Legal 10.7; done and pushed 2026-10-05).
 5. The footer of every devlog, and the description and pinned comment of every video.
 6. Every message to a creator or reviewer, in its first lines.
 7. The trailer's end card.
+8. Any tip or sponsor page, and any social profile that promotes the game: the short form, or at least "built with AI tools". A tip page also never says tips "support human artists" or the like.
+9. Steam's content survey must also cover AI-assisted marketing assets (capsule art, trailer), not only the game.
 
 ## 5. Audience and where they are
 
@@ -131,14 +135,17 @@ Numbers are estimates unless a source is given. They are set so that hitting one
 ### Stage 1a. Friends (private, now)
 - **Game first:** nothing new. The live build as it is.
 - **Paperwork first:** none. Playing with friends is not publishing. See the risk in section 13 about the build being reachable by anyone with the link.
-- **Do:** five friends play two matches each, ideally two of them together. Ask the three questions in section 11. Note what confuses people.
+- **Do:** five friends play two matches each, ideally two of them together. Ask the three questions in section 11. Note what confuses people. Until Orb answers where feedback should go, you collect it in person or in whatever private chat you already share with those friends. Nothing is built for it and no form is set up.
+- **Allowed now, and not:** friends playing, private feedback. No clips, no posts, no links on social media or in communities, no creator outreach. The promotion hold (RL-014, M7) stands until the names a player sees are neutral. UI is switching the displayed names to PROTAGONIST and RIVAL; Legal lifts the hold once that is live. Do not link devlogs or posts to `docs/ep/vision.md` or Legal's screening notes.
+- **If you later use a feedback form** (Legal 10.5): anonymous, no name, email, age or account asked; a two-line notice at the top (who runs it, why, where answers go, how to ask for deletion); "Please do not put personal details in your answers"; "for people 16 and over" in the invitation; a form tool with its own privacy statement, not your personal inbox and not a public GitHub issue; answers deleted once the findings are written up; no friend quoted by name without asking. **No signup list at Stage 1a or 1b.** Use itch.io follows and Steam wishlists, where the platform holds the data.
+- **Friends with PlayStations:** a DualSense on a PC or laptop works (untested by us); say so, and do not promise a console version.
 - **Hours:** 2 to 3 a week for 3 to 4 weeks.
 - **Move on when:** 10 different people have played, at least 5 played again on a different day without being nagged, and at least 3 two-player sessions happened.
 - **Stop line:** if nobody wants a second match, fix the game, not the marketing.
 
 ### Stage 1b. Public browser build and itch.io page
 - **Game first:**
-  - the placeholder names are gone (the hero rename is queued);
+  - the names a player sees are neutral (the displayed names are being switched to PROTAGONIST and RIVAL);
   - an About or Credits screen with the AI line and the Godot licence text;
   - How to play works for a first-time player on keyboard, controller and touch;
   - it runs on an old laptop (`/bench/` on the live site) and in three browsers.
@@ -148,7 +155,7 @@ Numbers are estimates unless a source is given. They are set so that hitting one
   - the name on the account decided;
   - Legal's review of the page text, screenshots and AI wording;
   - Legal's answer on whether public clips may start (RL-014, public-readiness M7).
-- **Do:** one itch.io page with the live game embedded, the one-line disclosure first, one short clip, a devlog post a month and replies to every comment. Post to one or two communities after reading their rules.
+- **Do:** one itch.io page with the live game embedded, Legal's AI statement first, one short clip, a devlog post a month and replies to every comment. Post to one or two communities after reading their rules.
 - **Hours:** 3 to 4 a week.
 - **Move on when (about 8 weeks after going public):** 500 plays, 50 followers, 20 written comments from people you do not know, and no repeated "broken" or "not fun" theme.
 - **Stop line:** under 150 plays after 8 weeks means the hook is not landing. Stay here, change the pitch or the first minute of play, and do not open Steam.
@@ -219,7 +226,7 @@ The rhythm is by week since you started a stage, not by date. Real dates start w
 
 **Capture checklist (before anything is posted):**
 1. No franchise names, imagery or sounds, in the clip or the caption.
-2. No placeholder names showing (the KAI hold, RL-014, until Legal lifts it).
+2. No names showing that are not neutral (the KAI and VORR hold, RL-014, until the displayed names are PROTAGONIST and RIVAL and Legal lifts it). No link to `docs/ep/vision.md` or Legal's screening notes.
 3. Legal's AI statement (short form, unchanged) is in the caption, description or pinned comment.
 4. No unreleased feature is implied.
 5. Legal has seen the template at least once; after that each clip follows the template.
@@ -227,11 +234,11 @@ The rhythm is by week since you started a stage, not by date. Real dates start w
 
 ## 8. Pricing options
 
-Selling an open-source game has a catch, and Legal has named it (`docs/legal/go-to-market.md` section 3). The current plan (MIT code, CC BY 4.0 content) lets **anyone sell the game's art, dialogue and data** with a credit, which defeats paid builds. Legal recommends **shape A**: MIT code, with art, music, dialogue, data and the name reserved, plus a plain permission to play, mod, stream and make fan work, and the official builds sold as the convenient, supported version. Its fallback is shape B (source-available, so not "open source"). Under any shape, AI-made parts may have no copyright, so a copy of them cannot always be stopped. The real protection is the name (trademark), being the official build, updates and the community. Do not call the game "open source" in store text; at most "open-source code" under shape A or C.
+Selling an open-source game has a catch, and Legal has named it (`docs/legal/go-to-market.md` section 3). **No licence is in force today**: the repo is public with all rights reserved for now. The earlier draft (MIT code, CC BY 4.0 content) would have let **anyone sell the game's art, dialogue and data** with a credit, which defeats paid builds, so it is withdrawn. Legal recommends **shape A**: MIT code, with art, music, dialogue, data and the name reserved, plus a plain permission to play, mod, stream and make fan work, and the official builds sold as the convenient, supported version. Its fallback is shape B (source-available, so not "open source"). Under any shape, AI-made parts may have no copyright, so a copy of them cannot always be stopped. The real protection is the name (trademark), being the official build, updates and the community. Do not call the game "open source" in store text; at most "open-source code" under shape A or C.
 
 | Option | What it means | Likely money (estimate) | Trade-offs |
 |---|---|---|---|
-| A. Free everywhere, optional tips on itch.io | Browser and downloads free; itch.io "name your own price" with a $0 minimum | Press coverage of free itch games suggests 1 to 3% of downloaders tip, about $3 each. 5,000 downloads would be about $150 to $450 before fees (secondary source, treat as rough) | Honest, simple, fits an open-source game, no Steam fee. Little money. Accepting any money needs Legal and probably a lawyer first (`licence-recommendation.md` section 9, item 6) |
+| A. Free everywhere, optional tips on itch.io | Browser and downloads free; itch.io "name your own price" with a $0 minimum | Press coverage of free itch games suggests 1 to 3% of downloaders tip, about $3 each. 5,000 downloads would be about $150 to $450 before fees (secondary source, treat as rough) | Honest, simple, fits an open-source game, no Steam fee. Little money. Tips only after the licence, the title and Suno's paid plan are settled; never with perks (a perk makes it a sale); say "support the project", not "buy"; the AI statement goes on the tip page; tips are taxable income (Legal 10.6). Ask an accountant |
 | B. Paid on itch.io only ($3 to $8), free browser build kept | Pay for the downloadable build, updates and support | itch.io takes 10% by default (you can set 0 to 100%) plus about 2.9% and $0.30 a payment. Most small paid titles earn little | Cheap and no $100. The free browser build competes with your own paid one, so the paid version must give a clear reason to buy (more fighters, controller play, updates) |
 | C. Paid on Steam ($5 to $10), browser build stays free | The route most of this plan prepares | See section 9 | Steam takes 30% up to $10 million. $100 fee comes back only after $1,000 in sales. Needs identity and tax checks, an AI disclosure on the page, and a real roster to defend the price |
 | D. Free on Steam | Free listing, no sales | Nothing, apart from the wishlists and reach | Still costs the $100 fee and still shows the AI disclosure. Only worth it as a front door to a free game |
@@ -270,7 +277,7 @@ Stay free if any of these is true when you reach the Stage 2 decision:
 
 ## 11. Friends and first players: playtesters and reviewers, honestly
 
-**The ladder.** A friend plays, answers three questions, joins a list if they want to hear more, joins a free playtest, and at launch tells people what they honestly think. Every step is optional, and none is rewarded with anything for a good opinion.
+**The ladder.** A friend plays, answers three questions, follows the game on itch.io or wishlists it on Steam if they want to hear more (no email list; the platform holds that data), joins a free playtest, and at launch tells people what they honestly think. Every step is optional, and none is rewarded with anything for a good opinion.
 
 **Three questions** (anonymous by default; collect no personal data until Legal's privacy review, and send the answers somewhere that is not your personal email):
 1. In one sentence, what is this game?
@@ -296,9 +303,10 @@ No testimonials are planned today. The log in `store-copy-draft.md` stays empty 
 
 ## 12. Consoles and the friends with PlayStations
 
-Consoles are later and cost money, and Platform's companion piece owns the facts. What I can say for the plan:
-- Your friends can try the browser build now on a phone or a PC, and the build has touch controls (the phone checklist is `docs/controls/phone-test-checklist.md`; I have not seen it tested on many phones).
-- A PlayStation release is a Stage 5 question, not a promise. Do not tell anyone it is coming.
+Consoles are later and cost money, and Platform's companion piece (`docs/perf/stores-and-consoles.md`) owns the facts. What I can say for the plan:
+- Friends with PlayStations can play today with a **DualSense plugged into a PC or laptop** (web or Windows build), or on a phone or tablet in the browser. We have not tested the DualSense ourselves. There is **no PS5 route today**: do not promise the PS5's own browser, and PS Remote Play does not run our game.
+- The build has touch controls (checklist: `docs/controls/phone-test-checklist.md`; not seen tested on many phones).
+- A PlayStation release is a Stage 5 question, not a promise. Platform says PlayStation has the strictest entry rule (a legal entity, with sole traders accepted in Europe only), then Sony's approval and a paid porting layer. Do not tell anyone it is coming.
 - If those friends would buy it on a console, that is useful evidence, but it is not the same as buying it. Ask them what they would pay and where they would play.
 
 ## 13. Risks
@@ -307,14 +315,14 @@ Consoles are later and cost money, and Platform's companion piece owns the facts
 |---|---|---|
 | **Hostility to AI-made games** | Negative comments, review bombing, being blocked or muted in some communities, fewer reviews | See "Responding without arguing" below. Plan for a lower reach, and keep the disclosure first and plain |
 | **Title clash** | A rename after an audience exists wastes the promotion | Settle it before any public page; do not buy a domain or handle until then |
-| **Licence** | The current CC BY 4.0 content licence lets others sell the assets; "open source" wording can become false | Settle first (Legal's shape A); no money until Legal clears it; no "open source" in store text |
-| **The live build is reachable now** | The GitHub Pages URL shows KAI and VORR to anyone who finds it, against Legal's public-readiness item M7 | EP to ask Legal and Orb whether the URL should be unlisted until the rename lands |
+| **Licence** | No licence today (all rights reserved); the draft CC BY 4.0 would have let others sell the assets, so it is withdrawn. "Open source" wording can be false under some shapes | Settle first (Legal's shape A); no money until Legal clears it; no "open source" in store text. Under shape A the true wording is "free to play; the code is open source (MIT); art, music, dialogue, data and the name are not", and never "free and open source" for the project |
+| **The live build and the repo are already public** | The GitHub Pages URL shows KAI and VORR to anyone who finds it (Legal's public-readiness item M7), and the GitHub repository is public with no licence chosen (EP, 2026-10-05; Legal is writing what that means) | Treat Stage 1a as friends only: do not share the link beyond them. Ask Legal what the unlicensed public repo means for the plan |
 | **Franchise comparisons** | Commenters will use franchise names | Never use them yourself, do not argue comparisons, and keep every public line to our own words (`originality-rules.md`) |
 | **Content depth** | Two fighters reads as thin at a price | The Stage 2 game condition |
 | **Expectation mismatch** | Fighting-game purists expect frame data and rollback netcode | Say "stance-based brawler" early |
 | **One person, finite hours** | Burnout | The hour estimates and the stop lines; drop recurring tasks before dropping sleep |
 | **Money admin** | Steam needs a verified person or entity, tax forms and a waiting period | Section 14 question 3; counsel for the pseudonym |
-| **Privacy** | A younger audience, signups and feedback forms | Anonymous by default, nothing collected before Legal's privacy review |
+| **Privacy** | A younger audience, signups and feedback forms | Anonymous form under Legal's 10.5 conditions, "for people 16 and over", no signup list at Stages 1a or 1b (itch.io follows and Steam wishlists instead) |
 | **Stale numbers** | Steam rules, itch tags and survey figures change | Re-check the sources before each stage |
 | **Cloning** | A copy with a new name appears on a store | Trademark, being the original and the updates; counsel for takedowns |
 

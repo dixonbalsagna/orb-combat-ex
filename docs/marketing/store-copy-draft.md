@@ -100,7 +100,7 @@ Every asset gets a row in `docs/legal/asset-origins.md` (tool, model, date, prom
 | Asset | Made from | Made with | Origin record | AI disclosure | Hours (estimate) |
 |---|---|---|---|---|---|
 | Screenshots (5 to 8 for Steam, a few for itch.io) | Real captures of the build at a recorded version, in the moments listed below | The game, plus a screen or headless-browser capture tool (a tool, not content) | Capture date, build commit and scene | Covered by the page statement | 2 |
-| Capsule art (header, small, main, vertical) and library hero and logo | One real capture, plus the title lettering | Art creates the logo and lettering with AI tools, or Orb picks a licensed font from the register | Logo: tool, model, date, prompt location, what Orb changed. Font: a `licence-register.md` row | Store-page statement covers it. Say "AI-made" in the origin log | 3 to 4 |
+| Capsule art (header, small, main, vertical) and library hero and logo | One real capture, plus the title lettering | Art creates the logo and lettering with AI tools, or Orb picks a licensed font from the register | Logo: tool, model, date, prompt location, what Orb changed. Font: a `licence-register.md` row | Store-page statement covers it, and **Steam's survey must also cover AI-assisted marketing assets** (capsule, trailer), not only the game (Legal 10.1). Say "AI-made" in the origin log | 3 to 4 |
 | itch.io cover and GIFs | Real captures | As screenshots | As screenshots | As above | 1 |
 | Trailer (30 to 60 seconds) | Real captures only. No concept art, no mock-ups, no stock footage | A free editor (tool recorded). The music is the game's own Suno track, from the track log (paid-plan date and kept originals) | Footage: build version and scene list. Music: the Suno record (Legal section 5; Legal to confirm trailer use is within Suno's terms) | End card carries the statement. No voiceover, so "[There is no voice acting]" stays true | 4 to 6 |
 
@@ -113,7 +113,7 @@ Every asset gets a row in `docs/legal/asset-origins.md` (tool, model, date, prom
 6. The world wrapping: a fighter leaves one edge and returns round the other side.
 7. End card: title, "Play free in your browser" [if so], Legal's statement.
 
-**Trailer rules:** no franchise reference in captions, no on-screen claim that is not in section E, no balance numbers, no fake reaction clips, no "coming soon" features, no quotes unless they are in section D. Placeholder names (KAI, VORR) must not appear: the capture hold (RL-002, RL-014, public-readiness M7) applies until Legal lifts it.
+**Trailer rules:** no franchise reference in captions, no on-screen claim that is not in section E, no balance numbers, no fake reaction clips, no "coming soon" features, no quotes unless they are in section D. Placeholder names (KAI, VORR) must not appear: the promotion hold (RL-002, RL-014, public-readiness M7) stands until the names a player sees are neutral (PROTAGONIST and RIVAL, being switched in the UI) and Legal lifts it. No link from any asset or post to `docs/ep/vision.md` or Legal's screening notes. The AI statement also goes on any tip page; tips only after the licence, the title and Suno's paid plan are settled, never with perks.
 
 ## D. Planned testimonials
 
@@ -136,7 +136,7 @@ Verify each on the day it is published against the live build, then Legal marks 
 | C1 | Free to play in your browser, no install | A1, trailer end card | live build URL | open it in three browsers | unreviewed |
 | C2 | A side-on energy brawler | A1, A2 | live build | none | unreviewed |
 | C3 | For one or two players | A1, A2 | docs/design/modes.md; live build | two-player on one screen works | unreviewed |
-| C4 | Every press is a blow | A1, A2 | docs/design/melee-press-feel.md; commit 5a0d527 | confirm the brawl slice is deployed | unreviewed |
+| C4 | Every press is a blow | A1, A2 | docs/design/melee-press-feel.md; brawl slice B1 deployed (live page at e6f51bd or later, EP 2026-10-05) | play a fight on the day. Never claim "balanced" or "fair": five balance faults are being repaired | clear (Legal 10.2, B1 live) |
 | C5 | Buildings break in four stages | A1, A2, trailer | docs/rendering/building-stages.md | play a fight and watch one building | unreviewed |
 | C6 | Craters stay where they land | A1 | pillars.md, pillar 4 | check in the build | unreviewed |
 | C7 | The planet has no edges; you come back round | A1, A2, trailer | pillars.md, pillar 1; qa seam tests | fly across the seam in the build | unreviewed |
@@ -147,7 +147,9 @@ Verify each on the day it is published against the live build, then Legal marks 
 | C12 | [Controller or touch controls] | A1, A2 | docs/controls | test each device | unreviewed |
 | C13 | [N] fighters | A2 | roster at release | count them | do not claim until true |
 | C14 | [Versus, AI, Training modes] | A2 | modes.md; build | only modes that exist | do not claim until true |
-| C15 | How this game was made (Legal's statement) | A1, A2, README, credits, descriptions | docs/legal/go-to-market.md section 1; asset-origins.md | facts match the origin log; Suno paid-plan records | Legal's own text |
+| C15 | How this game was made (Legal's statement as amended: "a one-person project: Orb directs it and builds it with AI tools"). The Suno sentence only once music ships | A1, A2, README, credits, descriptions, tip and social pages | docs/legal/go-to-market.md sections 1 and 10.1; asset-origins.md | facts match the origin log; Suno paid-plan records when music ships | Legal's own text |
+| C23 | Directed by one person, Orb, and built with AI tools | pitch | same | same | Legal 10.1 |
+| C24 | Original characters, world and story (not "all names" while the title clash is open) | A1, A2 | Legal 10.2 | none | clear (Legal 10.2) |
 | C16 | [There is no voice acting] | A1 statement | Orb to confirm | confirm | unreviewed |
 | C17 | Nothing is generated by AI while you play | A1 statement | design: no live generation | confirm with Orb | unreviewed |
 | C18 | This game collects no personal data | A1, README | Legal section 6; Platform to confirm | no analytics; host logs | unreviewed |
@@ -161,6 +163,6 @@ Verify each on the day it is published against the live build, then Legal marks 
 1. What is the public title? (Blocks every page. Orb decides: contact the OrbCombat author, or change it.)
 2. Which licence shape? (Blocks C21, the repo, any money.)
 3. Is there any voice acting, and will anything ever be generated while the game runs? (C16, C17; Legal's questions 5 and 6.)
-4. Where does feedback go? A private target, not Orb's personal email.
+4. Where does feedback go? A private target, not Orb's personal email. Until Orb answers, Orb collects it in person or in a private chat. If a form is used, Legal's 10.5 conditions apply: anonymous, a two-line notice, "do not put personal details", "for people 16 and over", a form tool with its own privacy statement, deleted after write-up; no signup list at Stages 1a or 1b.
 5. Is the browser build's host free of third-party scripts and logs only what is needed? (C18; Platform.)
 6. When does Legal lift the capture hold so real screenshots and clips can be made?
