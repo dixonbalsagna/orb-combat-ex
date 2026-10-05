@@ -119,6 +119,16 @@ Landed later in the night (pushed; checks passed on an export):
 - Dynamic intros are in the sim: an intro is composed from parts and templates, with gestures. A match still opens with the classic intro until the match start asks for a composed one (UI has that task).
 - A held-pose check on Legal's rules now gates the animation data. Three poses changed for it: the shrug's elbows bend, the last stand's rise brings its arms forward, the energy ready's hand moved off the hip (docs/animation/held-lint.md).
 
-In the queue, in order: Encounter's first brawl slice (every press a blow; being applied); the fighter rename to PROTAGONIST and RIVAL; the zip. Rendering: each building's look per stage. UI: composed intros at match start, the stance badge, the beat ring for the rival's blows.
+- Each building now looks its stage: windows out with soot, cracked with a sheared corner, a stripped dark shell (stills: docs/rendering/building-stages.md). Pavement cracking differently from dirt needs one more World slice.
+- A match now opens with a composed intro: one of three openings by seed (both drop in, a long stare-down, one arrives late). Skipping works as before; `?nointro=1` on the play page starts in the fight. Known gaps: no gestures play in them yet, a rematch on the same seed opens the same way, and with split screen off the camera loses the fighter on the ground for part of the longest intro. All three have a fix planned for Simulation's next slice.
+- The HUD shows the five stances: a badge on both plates (the rival's always), a five-chip row with the button that holds each stance, a legend whose button names follow the held stance, and a Stances page in How to play. Only the energy stance shows new names (bolt, charged shot, mine, beam), because only its moves exist today; the others show what the buttons do now. An optional beat ring (Settings, Controls; off by default) closes on whoever is about to be struck.
+- Controls fixed two touch faults (an armed charging stance now throws a special; the energy latch no longer re-arms itself).
+
+In the queue, in order: Encounter's first brawl slice (every press a blow; being applied); Simulation's next slice (default intro gestures, a rematch counter, the one-view camera); the fighter rename to PROTAGONIST and RIVAL; the zip.
+
+New small questions for you:
+- Simple touch cannot reach the third (utility) special directly. A context button under Power would fix it. Build it?
+- Intro plots for the launch pair have three placeholders that are yours: who carries the old injury in their grudge (set to the Protagonist for now), the two past events they refer to, and each fighter's vetoed stances (docs/narrative/pending/intro_plots.json).
+- The stance names and every button name per stance are drafts in ui/data/stances.json for you to edit.
 
 To watch: time at power tier 4 is 7.05% a minute after the building change, against a floor of 6. QA's overnight baseline will say whether it holds.
