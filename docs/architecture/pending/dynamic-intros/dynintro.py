@@ -38,8 +38,18 @@ if part=='code':
 	var first: int = 0        # ... the slot that arrives first ...
 	var gap: int = 0          # ... the ticks between the first landing and the second fall ...
 	var picks: int = 0        # ... and the part in each slot (SimIntro.flatten)
+	var clock: int = 0        # ... and its length in ticks (the template's, bent by the facts)
 	var dug: int = 0          # a bit per slot: his entrance crater is dug
 	var notes: Array = []     # the composer's reasons, waiting for the first pre-clock tick's feed (output only, not hashed)
+	var gestures: Array = []  # the facts' gestures, [tick, slot, intent, point] (events only: they touch no state; not hashed)
+	var facts: Dictionary = {}   # the setup's facts as given (in the replay header): read for the events' tags only, not hashed
+'''),
+    ('''	var gather: float = 0.0      # transform: seconds from this event to the break, where the tier_up comes
+''','''	var gather: float = 0.0      # transform: seconds from this event to the break, where the tier_up comes
+	var stance: String = ""      # intro_line: the mood the facts ask for (Narrative's; the sim reads none of these four)
+	var angle: String = ""       # intro_line: what the line is about
+	var event: String = ""       # intro_line: the past event a `then` line refers to
+	var p: float = 0.0           # intro_line: the chance the line is spoken (the line system's to use)
 '''),
     ])
 
@@ -54,16 +64,19 @@ static func introStart(S: SimState, dur: float, skipAfter: float) -> void:
 	e.dur = dur; e.delay = skipAfter
 ''','''## The intro phase (sim/core/intro.gd). intro_start: the pre-clock window opens, dur seconds long; a press skips it after
 ## delay seconds; kind is the scenario (the template's id), actor the slot that arrives first, n the gap in ticks (the
-## whole timeline is SimIntro.timeline(S)). entrance_fall: actor starts to fall toward x, y (the ground), from height
-## y1, for dur seconds; mode is his arrival mode (drop). entrance_land: he touches down; r is the crater's bowl radius (0
-## if none was dug). intro_beat: a beat that is neither a fall nor a landing: kind wait (actor stands waiting for the
-## other, for dur seconds, until the staredown). intro_line: a voice slot: actor may speak now; kind is the intent
-## (arrive_remark, wait_remark, late_reply, staredown_pair) and variant his role by arrival (first or second). The line
-## is optional and the words are the line system's: the sim holds none. staredown_start: both stand, for dur seconds.
-## clock_start: the fight starts with the next tick; kind is full, or skip when a press ended the intro.
-static func introStart(S: SimState, dur: float, skipAfter: float, scenario: String = "", first: int = -1, gap: int = 0) -> void:
+## whole timeline is SimIntro.timeline(S)); text is the facts' plot id. entrance_fall: actor starts to fall toward x, y
+## (the ground), from height y1, for dur seconds; mode is his arrival mode (drop). entrance_land: he touches down; r is
+## the crater's bowl radius (0 if none was dug). intro_beat: a beat that is neither a fall nor a landing: kind wait (actor
+## stands waiting for the other, for dur seconds, until the staredown). intro_line: a voice slot: actor may speak now;
+## kind is the intent (arrive_remark, wait_remark, late_reply, staredown_pair) and variant his role by arrival (first or
+## second); stance, angle, event and p are the facts' tags for it, passed through (p is 1 and the rest empty with no
+## facts). The line is optional and the words are the line system's: the sim holds none. intro_gesture: a small
+## non-verbal beat for actor: kind is the gesture's intent (a meaning, not a pose) and variant the point it plays at
+## (land_first, land_second, wait, look_start, look_end, or part for one a template wrote). staredown_start: both stand,
+## for dur seconds. clock_start: the fight starts with the next tick; kind is full, or skip when a press ended the intro.
+static func introStart(S: SimState, dur: float, skipAfter: float, scenario: String = "", first: int = -1, gap: int = 0, plot: String = "") -> void:
 	var e := _ev(S, "intro_start")
-	e.dur = dur; e.delay = skipAfter; e.kind = scenario; e.actor = float(first); e.n = gap
+	e.dur = dur; e.delay = skipAfter; e.kind = scenario; e.actor = float(first); e.n = gap; e.text = plot
 
 
 static func introBeat(S: SimState, slot: int, kind: String, dur: float) -> void:
@@ -71,9 +84,15 @@ static func introBeat(S: SimState, slot: int, kind: String, dur: float) -> void:
 	e.actor = float(slot); e.kind = kind; e.dur = dur
 
 
-static func introLine(S: SimState, slot: int, intent: String, role: String) -> void:
+static func introLine(S: SimState, slot: int, intent: String, role: String, tags: Dictionary = {}) -> void:
 	var e := _ev(S, "intro_line")
 	e.actor = float(slot); e.kind = intent; e.variant = role
+	e.stance = String(tags.get("stance", "")); e.angle = String(tags.get("angle", "")); e.event = String(tags.get("event", "")); e.p = float(tags.get("p", 1.0))
+
+
+static func introGesture(S: SimState, slot: int, intent: String, at: String) -> void:
+	var e := _ev(S, "intro_gesture")
+	e.actor = float(slot); e.kind = intent; e.variant = at
 '''),
     ('''static func entranceFall(S: SimState, f, ground: float, top: float, dur: float) -> void:
 	var e := _ev(S, "entrance_fall")
@@ -84,10 +103,10 @@ static func introLine(S: SimState, slot: int, intent: String, role: String) -> v
 '''),
     ])
     edit('sim/core/hash.gd', [
-    ('''"intro_start": ["dur", "delay"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur"]''','''"intro_start": ["dur", "delay", "kind", "actor", "n"], "intro_beat": ["actor", "kind", "dur"], "intro_line": ["actor", "kind", "variant"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur", "mode"]'''),
+    ('''"intro_start": ["dur", "delay"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur"]''','''"intro_start": ["dur", "delay", "kind", "actor", "n", "text"], "intro_beat": ["actor", "kind", "dur"], "intro_line": ["actor", "kind", "variant", "stance", "angle", "event", "p"], "intro_gesture": ["actor", "kind", "variant"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur", "mode"]'''),
     ])
     edit('sim/core/view/fx.gd', [
-    ('''"intro_start", "entrance_fall",''','''"intro_start", "intro_beat", "intro_line", "entrance_fall",'''),
+    ('''"intro_start", "entrance_fall",''','''"intro_start", "intro_beat", "intro_line", "intro_gesture", "entrance_fall",'''),
     ])
 
     # ---- a golden vector for composed intros (it pins the composer's keyed draws and the timelines)
@@ -103,7 +122,7 @@ static func introLine(S: SimState, slot: int, intent: String, role: String) -> v
 
 
 ## Composed intros: AI matches whose setup asks the composer for an intro (seeds 7 and up): two free draws, two with a
-## no-repeat list, then every template by name with its order and gap drawn. Every tick's fighters and events through
+## no-repeat list, every template by name with its order and gap drawn, then two with the host's facts. Every tick's fighters and events through
 ## the pre-clock ticks and the first two seconds of the fight, with what was composed.
 static func introComposedHash() -> String:
 	var h := SimHash.Hasher.new()
@@ -112,10 +131,17 @@ static func introComposedHash() -> String:
 	var recs: Array = [{"play": true}, {"play": true}, {"play": true, "avoid": [classic, classic]}, {"play": true, "avoid": [classic, classic]}]
 	for tp in SimIntro.templates:
 		recs.append({"play": true, "scenario": tp.id})
+	# two with the host's facts (Narrative's example, docs/narrative/dynamic-intros.md section 11.5), drawn and by name
+	var facts := {"tones": ["neutral", "grave"], "plot": "rivalry.simmering.record", "weights": {"double_drop": 0.9, "latecomer": 1.0, "long_look": 1.8},
+		"gap": -0.6, "look": "long", "clock": 24, "gestures": [{"at": "land_first", "who": "second", "intent": "check"}, {"at": "look_start", "who": "first", "intent": "harden"}],
+		"intents": {"arrive_remark": {"who": "first", "stance": "guarded", "angle": "then", "p": 0.9, "event": "last_ko"},
+			"staredown_pair": {"lines": [{"who": "left", "stance": "guarded", "angle": "then", "event": "last_ko", "p": 0.9}, {"who": "right", "stance": "smug", "angle": "us", "p": 0.9}]}}}
+	recs.append({"play": true, "facts": facts})
+	recs.append({"play": true, "scenario": classic, "facts": facts})
 	for i in range(recs.size()):
 		var S := SimCore.createSim()
 		SimCore.newMatch(S, 7 + i, {}, {"intro": recs[i]})
-		h.num(float(S.intro.scenario)); h.num(float(S.intro.first)); h.num(float(S.intro.gap)); h.num(float(S.intro.picks))
+		h.num(float(S.intro.scenario)); h.num(float(S.intro.first)); h.num(float(S.intro.gap)); h.num(float(S.intro.picks)); h.num(float(S.intro.clock))
 		for t in range(S.intro.left + 120):
 			SimCore.step(S)
 			h.num(S.T)
@@ -159,6 +185,7 @@ static func introComposedHash() -> String:
 		S0.intro.first = 0
 		S0.intro.gap = 0
 		S0.intro.picks = 0
+		S0.intro.clock = 0
 		return SimHash.stateHash(S0).gameplay
 	# the full intro, two human slots that press nothing'''),
     ('''## Fight lanes, L0 and L2 (docs/architecture/fight-lanes.md). The player never steers depth: the intent has no depth field''','''## Composed intros (docs/architecture/intro-phase.md): every template, with either fighter first, at its shortest, default
@@ -179,6 +206,7 @@ func _introComposed() -> String:
 		S0.intro.first = 0
 		S0.intro.gap = 0
 		S0.intro.picks = 0
+		S0.intro.clock = 0
 		return SimHash.stateHash(S0).gameplay
 	var Q := SimCore.createSim()
 	SimCore.newMatch(Q, 5, {"p1": false, "p2": false}, {"intro": "skip"})
@@ -197,10 +225,10 @@ func _introComposed() -> String:
 			for gap in gaps:
 				var label: String = "%s, slot %d first, gap %d" % [tp.id, first, gap]
 				var rec := {"play": true, "scenario": tp.id, "order": first, "gap": gap}
-				var tl: Dictionary = SimIntro.flatten(ti, gap, 0)
 				var S := SimCore.createSim()
 				SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": rec})
-				if S.intro.scenario != ti or S.intro.first != first or S.intro.gap != gap or S.intro.left != tp.clock or S.fighters[0].state != "intro":
+				var tl: Dictionary = SimIntro.flatten(ti, gap, S.intro.picks)
+				if S.intro.scenario != ti or S.intro.first != first or S.intro.gap != gap or S.intro.left != tp.clock or S.intro.clock != tp.clock or S.fighters[0].state != "intro":
 					return label + ": the match did not start as the record asked"
 				var view: Dictionary = SimIntro.timeline(S)
 				var exp: Array = ["0 intro_start %d %s" % [first, tp.id], "%d clock_start -1 full" % (tp.clock - 1)]
@@ -267,6 +295,9 @@ func _introComposed() -> String:
 					SimCore.dispose(K)
 	if waits == 0 or lines == 0:
 		return "no template has a wait beat, or none has a line (%d, %d)" % [waits, lines]
+	var bent: String = _introFacts(want, clockState)
+	if bent != "":
+		return bent
 	# the composer's draws
 	var C := SimCore.createSim()
 	SimCore.newMatch(C, 5, {"p1": false, "p2": false}, {"intro": "skip"})
@@ -360,11 +391,168 @@ func _introComposed() -> String:
 	return ""
 
 
+## The host's facts (Narrative's plotlines, docs/narrative/dynamic-intros.md section 11) bend a composed intro through five
+## keys, and whatever they say the state at the clock is the same. want: that state; clockState: how it is taken.
+func _introFacts(want: String, clockState: Callable) -> String:
+	var quiet := SimIntent.new()
+	var T: Array = SimIntro.templates
+	var ids: Array = []
+	for tp in T:
+		ids.append(tp.id)
+	var C := SimCore.createSim()
+	SimCore.newMatch(C, 5, {"p1": false, "p2": false}, {"intro": "skip"})
+	var N: int = 300
+	# weights: a template at 0 is never drawn; one at 10 is drawn more often than without
+	var plain: Array = []
+	plain.resize(T.size())
+	plain.fill(0)
+	var heavy: Array = plain.duplicate()
+	var last: int = T.size() - 1
+	for s in range(1, N + 1):
+		C.game.seed = s
+		plain[DirIntro.compose(C, {"play": true}).scenario] += 1
+		var c: Dictionary = DirIntro.compose(C, {"play": true, "facts": {"weights": {ids[last]: 10.0, ids[0]: 0.0}, "unknown key": [1, 2], "avoidPlot": ["a.b.c"]}})
+		heavy[c.scenario] += 1
+	if heavy[0] != 0 or heavy[last] <= plain[last]:
+		return "the facts' weights: %s drawn %d times at weight 0, %s %d times at x10 against %d plain" % [ids[0], heavy[0], ids[last], heavy[last], plain[last]]
+	# the gap: -1 is the short end, 1 the long end, 0 no bend, and between them it moves that share of the way
+	for s in range(1, 60):
+		C.game.seed = s
+		for tp in T:
+			var base: int = DirIntro.compose(C, {"play": true, "scenario": tp.id}).gap
+			for bend in [-1.0, -0.6, 0.0, 0.5, 1.0]:
+				var g: int = DirIntro.compose(C, {"play": true, "scenario": tp.id, "facts": {"gap": bend}}).gap
+				var to: float = float(tp.gapMin) if bend < 0.0 else float(tp.gapMax)
+				var wantG: int = clampi(int(floor(float(base) + (to - float(base)) * absf(bend) + 0.5)), tp.gapMin, tp.gapMax)
+				if g != wantG or (bend == -1.0 and g != tp.gapMin) or (bend == 1.0 and g != tp.gapMax) or (bend == 0.0 and g != base):
+					return "the facts' gap %s moved %s's gap from %d to %d (range %d to %d)" % [str(bend), tp.id, base, g, tp.gapMin, tp.gapMax]
+			if DirIntro.compose(C, {"play": true, "scenario": tp.id, "gap": tp.gapDef, "facts": {"gap": 1.0}}).gap != tp.gapDef:
+				return "the facts moved a gap the setup fixed"
+	SimCore.dispose(C)
+	# the look, the clock, the gestures and the voice tags, played through: the template with the most ways to fill it
+	var ti: int = 0
+	for i in range(T.size()):
+		if T[i].fills > T[ti].fills:
+			ti = i
+	var tp2: Dictionary = T[ti]
+	var lookSlot: int = -1
+	var lookPart: String = ""
+	for si in range(tp2.slots.size()):
+		if tp2.slots[si].pool.size() > 1 and not tp2.slots[si].draw:
+			lookSlot = si
+			lookPart = tp2.slots[si].pool[tp2.slots[si].pool.size() - 1]
+	if lookSlot < 0:
+		return "no template has a slot the facts' look can choose for"
+	var bendC: int = mini(24, SimIntro.clockBend[1])
+	var facts := {"plot": "test.plot.id", "look": lookPart, "clock": bendC, "gap": -1.0,
+		"gestures": [{"at": "land_first", "who": "second", "intent": "check"}, {"at": "look_start", "who": "both", "intent": "appraise"},
+			{"at": "look_end", "who": "left", "intent": "harden"}, {"at": "no_such_point", "who": "first", "intent": "ease"}, {"at": "land_second", "who": "nobody", "intent": "ease"}],
+		"intents": {"arrive_remark": {"who": "first", "stance": "guarded", "angle": "then", "p": 0.9, "event": "last_ko"},
+			"staredown_pair": {"lines": [{"who": "left", "stance": "warm", "angle": "us", "p": 0.5}, {"who": "right", "stance": "smug", "angle": "you"}]}}}
+	var pairTags: int = 0
+	for run in range(4):   # either fighter first, with the facts' look and then with the slot's own
+		var first: int = run % 2
+		var lookWant: String = lookPart if run < 2 else tp2.slots[lookSlot].pool[0]
+		facts.look = lookWant
+		var label: String = "%s with facts (look %s), slot %d first" % [tp2.id, lookWant, first]
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": {"play": true, "scenario": tp2.id, "order": first, "facts": facts}})
+		var it = S.intro
+		var left: int = SimIntro.leftSlot(S)
+		var tl: Dictionary = SimIntro.flatten(ti, it.gap, it.picks)
+		if it.gap != tp2.gapMin or it.clock != tp2.clock + bendC or it.left != it.clock or tp2.slots[lookSlot].pool[(it.picks / _fillsBelow(tp2, lookSlot)) % tp2.slots[lookSlot].pool.size()] != lookWant:
+			return label + ": gap %d, clock %d, picks %d are not what the facts ask" % [it.gap, it.clock, it.picks]
+		var wantG: Array = ["%d %d check land_first" % [tl.land[0] + SimIntro.points.land_first, 1 - first],
+			"%d 0 appraise look_start" % (tl.staredown + SimIntro.points.look_start), "%d 1 appraise look_start" % (tl.staredown + SimIntro.points.look_start),
+			"%d %d harden look_end" % [it.clock + SimIntro.points.look_end, left]]
+		var gotG: Array = []
+		var view: Dictionary = SimIntro.timeline(S)
+		if view.plot != "test.plot.id" or view.clock != it.clock:
+			return label + ": the timeline does not carry the plot and the bent clock"
+		var viewG: int = 0
+		for b in view.beats:
+			viewG += 1 if b.kind == "gesture" else 0
+		var plotSeen: bool = false
+		var fed: bool = false
+		for t in range(it.clock):
+			S.out.fx.clear()
+			S.out.feed.clear()
+			if SimCore.step(S, [quiet, quiet]) or S.T != 0.0:
+				return label + ": pre-clock tick %d was live" % t
+			for line in S.out.feed:
+				fed = fed or String(line.tag) == "INTRO plot: test.plot.id"
+			for e in S.out.fx:
+				if e.type == "intro_start":
+					plotSeen = e.text == "test.plot.id" and absf(e.dur - float(it.clock) / 60.0) < 0.000001
+				elif e.type == "intro_gesture":
+					gotG.append("%d %d %s %s" % [t, int(e.actor), e.kind, e.variant])
+				elif e.type == "staredown_start" and absf(e.dur - float(it.clock - t) / 60.0) > 0.000001:
+					return label + ": the staredown's length does not follow the bent clock"
+				elif e.type == "intro_line":
+					var k: int = int(e.actor)
+					var tags: String = "%s|%s|%s|%s" % [e.stance, e.angle, e.event, str(e.p)]
+					var wantT: String = "|||1.0"
+					if e.kind == "arrive_remark" and k == first:
+						wantT = "guarded|then|last_ko|0.9"
+					elif e.kind == "staredown_pair":
+						wantT = "warm|us||0.5" if k == left else "smug|you||1.0"
+						pairTags += 1
+					if tags != wantT:
+						return label + ": the %s slot of slot %d carries %s, wanted %s" % [e.kind, k, tags, wantT]
+		wantG.sort()
+		gotG.sort()
+		if gotG != wantG or viewG != wantG.size():
+			return label + ": the gestures were %s, wanted %s (%d in the timeline)" % [str(gotG), str(wantG), viewG]
+		if not plotSeen or not fed:
+			return label + ": the plot id did not reach intro_start and the feed"
+		if S.intro.left != 0 or clockState.call(S) != want:
+			return label + ": the state at the clock is not the one the setup's skip gives"
+		SimCore.dispose(S)
+	if pairTags == 0:
+		return "no run offered the staredown's pair of lines, so their tags went unchecked"
+	# a clock bend past the data's range is clamped; one that leaves no room is dropped
+	var K := SimCore.createSim()
+	SimCore.newMatch(K, 5, {}, {"intro": {"play": true, "scenario": tp2.id, "facts": {"clock": 100000}}})
+	if K.intro.clock != tp2.clock + SimIntro.clockBend[1]:
+		return "a clock bend of 100000 gave %d ticks" % K.intro.clock
+	var need: int = SimIntro.flatten(K.intro.scenario, K.intro.gap, K.intro.picks).need
+	SimCore.newMatch(K, 5, {}, {"intro": {"play": true, "scenario": tp2.id, "gap": tp2.gapMax, "facts": {"clock": SimIntro.clockBend[0]}}})
+	need = SimIntro.flatten(K.intro.scenario, K.intro.gap, K.intro.picks).need
+	if K.intro.clock < need or (tp2.clock + SimIntro.clockBend[0] >= need) != (K.intro.clock == tp2.clock + SimIntro.clockBend[0]):
+		return "a negative clock bend gave %d ticks where the intro needs %d" % [K.intro.clock, need]
+	SimCore.dispose(K)
+	# a replay carries the facts and plays the same intro
+	var R := SimCore.createSim()
+	var rec := SimReplay.recorder(R, 23, {"p1": false, "p2": true}, {"intro": {"play": true, "facts": facts}})
+	var sc: int = R.intro.scenario
+	for t in range(700):
+		rec.step([quiet, null])
+		R.out.fx.clear()
+		R.out.feed.clear()
+	var rp: Dictionary = rec.finish()
+	SimCore.dispose(R)
+	var back = JSON.parse_string(JSON.stringify(rp))
+	if not (back.setup.intro.facts is Dictionary) or back.setup.intro.facts.plot != "test.plot.id" or back.setup.intro.facts.gestures.size() != facts.gestures.size():
+		return "the replay's header lost the facts"
+	var res: Dictionary = SimReplay.play(back)
+	if not res.ok:
+		return "a replay of an intro with facts (%s): %s at tick %d" % [T[sc].id, res.reason, res.firstBadTick]
+	return ""
+
+
+## The product of the pool sizes of the slots before slot si: the weight of its digit in a template's picks.
+func _fillsBelow(tp: Dictionary, si: int) -> int:
+	var m: int = 1
+	for i in range(si):
+		m *= tp.slots[i].pool.size()
+	return m
+
+
 ## Fight lanes, L0 and L2 (docs/architecture/fight-lanes.md). The player never steers depth: the intent has no depth field'''),
     ])
 
 if part=='hash':
     edit('sim/core/hash.gd', [
-    ('''_obj(out, S.intro, ["left", "t", "landed"])''','''_obj(out, S.intro, ["left", "t", "landed", "scenario", "first", "gap", "picks", "dug"])'''),
+    ('''_obj(out, S.intro, ["left", "t", "landed"])''','''_obj(out, S.intro, ["left", "t", "landed", "scenario", "first", "gap", "picks", "clock", "dug"])'''),
     ])
 print("dynamic intros applied:", part)

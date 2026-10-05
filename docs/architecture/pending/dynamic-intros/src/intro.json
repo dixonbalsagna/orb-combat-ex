@@ -6,8 +6,12 @@
   "fallHeight": 6000.0,
   "craterEnergy": 1.5,
   "_fall": "fallHeight: units above the ground a fall starts from. craterEnergy: the entrance crater's energy (World's crater scale; 0 digs none)",
+  "clockBend": {"min": -60, "max": 60},
+  "_clockBend": "the most a match's facts may shorten or lengthen a template (facts.clock, in ticks); a bend that leaves no room is dropped",
+  "gesturePoints": {"land_first": 12, "land_second": 12, "wait": 20, "look_start": 24, "look_end": -48},
+  "_gesturePoints": "where a gesture from a match's facts plays (facts.gestures, Narrative's plotlines): ticks after the first landing, the second landing, the wait beat and the staredown's start; look_end is counted back from the clock. A point the template does not have is skipped",
   "parts": {
-    "_note": "type: entrance (it has one fall at 0 and one land at its last tick), reaction or look. ticks: how far the part moves the template on. mode: the arrival mode an entrance reports. Beat kinds: fall, land, wait (he stands waiting until the staredown), line (a voice slot: the intent only), staredown. A beat's who overrides its slot's.",
+    "_note": "type: entrance (it has one fall at 0 and one land at its last tick), reaction or look. ticks: how far the part moves the template on. mode: the arrival mode an entrance reports. Beat kinds: fall, land, wait (he stands waiting until the staredown), line (a voice slot: the intent only), staredown. A beat's who overrides its slot's. A slot's part is an even keyed draw over its pool, unless the slot says draw false: then it is the pool's first part. Either way a part the match's facts name (facts.look) is taken when the pool holds it.",
     "drop": {
       "type": "entrance",
       "mode": "drop",
@@ -44,7 +48,7 @@
         {"t": 84, "kind": "line", "intent": "staredown_pair", "who": "right"}
       ]
     },
-    "long_hold": {
+    "long": {
       "type": "look",
       "ticks": 0,
       "beats": [{"t": 0, "kind": "staredown"}]
@@ -64,7 +68,7 @@
         {"slot": "remark", "who": "first", "pool": ["remark"], "with": true},
         {"slot": "entrance", "who": "second", "pool": ["drop_quick"], "gap": true},
         {"slot": "remark", "who": "second", "pool": ["remark"], "with": true},
-        {"slot": "look", "who": "both", "pool": ["hold"], "after": 30}
+        {"slot": "look", "who": "both", "pool": ["hold", "long"], "after": 30, "draw": false}
       ]
     },
     {
@@ -79,7 +83,7 @@
         {"slot": "wait", "who": "first", "pool": ["wait"], "with": true},
         {"slot": "entrance", "who": "second", "pool": ["drop_quick"], "gap": true},
         {"slot": "reply", "who": "second", "pool": ["reply"], "with": true},
-        {"slot": "look", "who": "both", "pool": ["hold"], "after": 80}
+        {"slot": "look", "who": "both", "pool": ["hold"], "after": 80, "draw": false}
       ]
     },
     {
@@ -93,7 +97,7 @@
       "slots": [
         {"slot": "entrance", "who": "first", "pool": ["drop"]},
         {"slot": "entrance", "who": "second", "pool": ["drop_quick"], "gap": true},
-        {"slot": "look", "who": "both", "pool": ["long_hold"], "after": 30}
+        {"slot": "look", "who": "both", "pool": ["long"], "after": 30, "draw": false}
       ]
     }
   ]

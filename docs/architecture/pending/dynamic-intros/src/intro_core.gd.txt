@@ -7,7 +7,8 @@ class_name SimIntro
 ## The timeline is data (data/fight/intro.json): a template (a scenario) is a list of slots, each filled by one part, and a
 ## part is a short list of beats. The director's composer (sim/director/intro.gd, DirIntro) picks the template, who
 ## arrives first, the gap between the arrivals and each slot's part, with keyed draws on the match seed; this module plays
-## what it picked. The pick is three or four integers in S.intro (hashed); the beats are worked out from them and the data.
+## what it picked. The pick is a few integers in S.intro (hashed); the beats are worked out from them and the data. What
+## the facts add for the view only (gestures, the voice slots' tags) rides beside them and touches no gameplay state.
 ##
 ## It is a match setting, in newMatch's setup and so in the replay header:
 ##   "intro": "skip"   its effects at once (both craters, both fighters on the ground) with no pre-clock tick. It is what a
@@ -15,8 +16,10 @@ class_name SimIntro
 ##   "intro": true     the classic opening: the template marked classic, the left spot first, its default gap
 ##   "intro": {...}    a composed opening ("play": true): the composer draws it. The record may fix "scenario" (a template's
 ##                     id), "order" (the slot that arrives first) and "gap" (ticks), and may carry "avoid" (template ids
-##                     played lately, the newest first: the host's no-repeat list) and "facts" (today: "tones", the tones
-##                     the pair allows). "classic": true asks for the classic opening
+##                     played lately, the newest first: the host's no-repeat list) and "facts": what the host resolved
+##                     about the pair (Narrative's plotlines, docs/narrative/dynamic-intros.md section 11). The composer
+##                     reads tones, weights, gap, look, clock and gestures; plot and intents are passed through on the
+##                     events; anything else is ignored. "classic": true asks for the classic opening
 ##   "intro": false    the old flat start
 ## A press on a human slot skips it (after skipFrom ticks): the landings left are applied at once, in order.
 ##
@@ -37,7 +40,9 @@ const BOTH: int = -1      # ... or nobody in particular
 const OWN: int = -2       # (in a part: the beat takes its slot's role)
 const ROLES: Dictionary = {"first": FIRST, "second": SECOND, "left": LEFT, "right": RIGHT, "both": BOTH}
 const ROLE_NAMES: Array = ["first", "second", "left", "right"]
-const KINDS: Array = ["fall", "land", "wait", "line", "staredown"]
+const KINDS: Array = ["fall", "land", "wait", "line", "staredown", "gesture"]
+const POINTS: Array = ["land_first", "land_second", "wait", "look_start", "look_end"]   # where a facts gesture may play
+const MAX_GESTURES: int = 16
 const MAX_FILLS: int = 64   # the ways one template's slots can be filled, at most (each is checked when the data loads)
 
 static var _loaded: bool = false
@@ -47,7 +52,9 @@ static var skipFrom: int = 0         # a press skips from this tick on
 static var fallHeight: float = 0.0   # units above the ground the fall starts from
 static var craterE: float = 0.0      # the entrance crater's energy (WorldCrater.dig)
 static var parts: Dictionary = {}    # id -> {type, mode, ticks, beats: [{t, kind, intent, who}]}
-static var templates: Array = []     # in the file's order: {id, weight, tone, clock, gapMin, gapMax, gapDef, notTwice, classic, fills, slots: [{who, pool, after, gap, with}]}
+static var templates: Array = []     # in the file's order: {id, weight, tone, clock, gapMin, gapMax, gapDef, notTwice, classic, fills, slots: [{who, pool, after, gap, with, draw}]}
+static var clockBend: Array = [0, 0] # the least and the most a match's facts may add to a template's clock
+static var points: Dictionary = {}   # a gesture point -> its ticks from its anchor (look_end: from the clock, negative)
 static var classicI: int = 0         # the template a plain "intro": true plays
 static var _flat: Dictionary = {}    # "template:gap:picks" -> its timeline (flatten)
 # the classic opening's ticks, for tools: A is the first to arrive, B the second
@@ -78,6 +85,17 @@ static func _ensure() -> void:
 	craterE = float(j.get("craterEnergy", 0.0))
 	if not (fallHeight > 0.0) or craterE < 0.0:
 		_err("fallHeight must be above 0 and craterEnergy at least 0")
+	var cb = j.get("clockBend", {})
+	clockBend = [int(float(cb.get("min", 0))), int(float(cb.get("max", 0)))] if cb is Dictionary else [0, 0]
+	if clockBend[0] > 0 or clockBend[1] < 0:
+		_err("clockBend: min must be 0 or less and max 0 or more")
+	points = {}
+	var gp = j.get("gesturePoints", {})
+	for name in POINTS:
+		var v = gp.get(name) if gp is Dictionary else null
+		points[name] = int(float(v)) if (v is float or v is int) else 0
+		if (name == "look_end") != (points[name] < 0) and points[name] != 0:
+			_err("gesturePoints." + name + ": look_end counts back from the clock (negative); the others count on (0 or more)")
 	parts = {}
 	var pj = j.get("parts", {})
 	if not (pj is Dictionary):
@@ -101,8 +119,8 @@ static func _ensure() -> void:
 				if who == OWN or who == BOTH:
 					_err(where + "beats: who must be first, second, left or right")
 			var bt: int = _tick(where + "beats.t", b.get("t"))
-			if kind == "line" and String(b.get("intent", "")) == "":
-				_err(where + "beats: a line needs an intent")
+			if (kind == "line" or kind == "gesture") and String(b.get("intent", "")) == "":
+				_err(where + "beats: a line and a gesture need an intent")
 			falls += 1 if kind == "fall" else 0
 			lands += 1 if kind == "land" else 0
 			beats.append({"t": bt, "kind": kind, "intent": String(b.get("intent", "")), "who": who})
@@ -146,7 +164,7 @@ static func _ensure() -> void:
 				if parts[pid].type == "entrance" and who != FIRST and who != SECOND:
 					_err(where + "slots: an entrance is first's or second's")
 			t.fills *= pool.size()
-			t.slots.append({"who": who, "pool": pool, "after": _tick(where + "slots.after", s.get("after", 0)), "gap": s.get("gap", false) == true, "with": s.get("with", false) == true})
+			t.slots.append({"who": who, "pool": pool, "after": _tick(where + "slots.after", s.get("after", 0)), "gap": s.get("gap", false) == true, "with": s.get("with", false) == true, "draw": s.get("draw", true) == true})
 		templates.append(t)
 		var ti: int = templates.size() - 1
 		if t.classic and classicI < 0:
@@ -159,9 +177,11 @@ static func _ensure() -> void:
 		# every way to fill it, at the shortest, the default and the longest gap, must be a whole intro inside its length
 		for gap in [t.gapMin, t.gapDef, t.gapMax]:
 			for picks in range(t.fills):
-				var why: String = flatten(ti, gap, picks).why
-				if why != "":
-					_err(where + "with a gap of %d and fill %d: %s" % [gap, picks, why])
+				var fl: Dictionary = flatten(ti, gap, picks)
+				if fl.why != "":
+					_err(where + "with a gap of %d and fill %d: %s" % [gap, picks, fl.why])
+				elif fl.need > t.clock:
+					_err(where + "with a gap of %d and fill %d it needs %d ticks, and the clock is %d" % [gap, picks, fl.need, t.clock])
 	if classicI < 0:
 		_err("templates: one must be marked classic")
 		classicI = 0
@@ -175,7 +195,8 @@ static func _ensure() -> void:
 
 ## The timeline of template ti with this gap and these parts (picks: one digit a slot, the first slot lowest, each in
 ## the base of its pool's size): {"beats": [{t, kind, role, intent, mode}] in time order, "fall" and "land": the ticks by
-## arrival (first, second), "staredown", "why": "" or what is wrong with it}. A pure function of the data, kept.
+## arrival (first, second), "staredown", "wait" (the wait beat's tick, or -1), "need" (the shortest clock it fits in),
+## "why": "" or what is wrong with it}. A pure function of the data, kept.
 static func flatten(ti: int, gap: int, picks: int) -> Dictionary:
 	var key: String = "%d:%d:%d" % [ti, gap, picks]
 	if _flat.has(key):
@@ -185,6 +206,7 @@ static func flatten(ti: int, gap: int, picks: int) -> Dictionary:
 	var fallT: Array = [-1, -1]
 	var landT: Array = [-1, -1]
 	var stare: int = -1
+	var waitT: int = -1
 	var why: String = ""
 	var cursor: int = 0
 	var p: int = picks
@@ -207,6 +229,8 @@ static func flatten(ti: int, gap: int, picks: int) -> Dictionary:
 				stare = bt
 			elif role == BOTH:
 				why = "a " + b.kind + " beat needs one fighter"
+			elif b.kind == "wait":
+				waitT = bt
 			var at: int = beats.size()   # in time order; beats of one tick stay in the order they were written
 			while at > 0 and beats[at - 1].t > bt:
 				at -= 1
@@ -220,9 +244,8 @@ static func flatten(ti: int, gap: int, picks: int) -> Dictionary:
 			why = "the first to arrive lands after the second"
 		elif stare < landT[1]:
 			why = "the staredown must come after both landings"
-		elif stare >= tp.clock or cursor > tp.clock or (not beats.is_empty() and beats[beats.size() - 1].t >= tp.clock):
-			why = "it does not fit inside the clock (%d)" % tp.clock
-	var res := {"beats": beats, "fall": fallT, "land": landT, "staredown": stare, "why": why}
+	var need: int = maxi(maxi(stare + 1, cursor), (beats[beats.size() - 1].t + 1) if not beats.is_empty() else 0)
+	var res := {"beats": beats, "fall": fallT, "land": landT, "staredown": stare, "wait": waitT, "need": need, "why": why}
 	_flat[key] = res
 	return res
 
@@ -275,8 +298,12 @@ static func setup(S: SimState, su: Dictionary) -> void:
 		it.first = c.first
 		it.gap = c.gap
 		it.picks = c.picks
+		it.clock = c.clock
 		it.notes = c.notes
-		it.left = templates[it.scenario].clock
+		it.gestures = c.gestures
+		var facts = req.get("facts")
+		it.facts = facts if facts is Dictionary else {}
+		it.left = it.clock
 		for f in S.fighters:
 			f.state = "intro"
 			f.vx = 0.0
@@ -298,7 +325,7 @@ static func tick(S: SimState, inputs) -> bool:
 	var tl: Dictionary = flatten(it.scenario, it.gap, it.picks)
 	var t: int = it.t
 	if t == 0:
-		SimFx.introStart(S, float(tp.clock) / float(TPS), float(skipFrom) / float(TPS), tp.id, it.first, it.gap)
+		SimFx.introStart(S, float(it.clock) / float(TPS), float(skipFrom) / float(TPS), tp.id, it.first, it.gap, String(it.facts.get("plot", "")))
 		for n in it.notes:   # the composer's reasons, for the debug feed
 			SimEvents.feed(S, n[0], n[1])
 		it.notes = []
@@ -326,12 +353,18 @@ static func tick(S: SimState, inputs) -> bool:
 				S.fighters[k].state = "waiting"   # he stands waiting for the other, until the staredown
 				SimFx.introBeat(S, k, "wait", float(tl.staredown - t) / float(TPS))
 		elif b.kind == "line":
-			SimFx.introLine(S, k, b.intent, ROLE_NAMES[FIRST if k == it.first else SECOND])
+			var arrival: String = ROLE_NAMES[FIRST if k == it.first else SECOND]
+			SimFx.introLine(S, k, b.intent, arrival, lineTags(it.facts, b.intent, [arrival, ROLE_NAMES[LEFT if k == leftSlot(S) else RIGHT]]))
+		elif b.kind == "gesture":
+			SimFx.introGesture(S, k, b.intent, "part")
 		elif b.kind == "staredown":
 			for f in S.fighters:
 				if f.state == "waiting":
 					f.state = "intro"
-			SimFx.staredownStart(S, float(tp.clock - t) / float(TPS))
+			SimFx.staredownStart(S, float(it.clock - t) / float(TPS))
+	for g in it.gestures:   # the facts' gestures: [tick, slot, intent, point], in time order
+		if g[0] == t:
+			SimFx.introGesture(S, g[1], g[2], g[3])
 	for r in range(who.size()):   # r: 0 the first to arrive, 1 the second
 		var k: int = who[r]
 		var f = S.fighters[k]
@@ -351,16 +384,49 @@ static func tick(S: SimState, inputs) -> bool:
 
 
 ## The intro this match plays, for the view (Camera plans its cuts from it at intro_start): {"scenario": the template's
-## id, "first": the slot that arrives first, "gap", "clock": its length in ticks, "beats": [{t, kind, actor (a slot, or
-## -1), intent, mode}]}. Empty when the match plays none.
+## id, "plot": the facts' plot id, "first": the slot that arrives first, "gap", "clock": its length in ticks, "beats":
+## [{t, kind, actor (a slot, or -1), intent, mode, at}] in time order, the facts' gestures among them (kind gesture, at
+## their point)}. Empty when the match plays none.
 static func timeline(S: SimState) -> Dictionary:
 	var it = S.intro
 	if it.scenario < 0:
 		return {}
 	var out: Array = []
 	for b in flatten(it.scenario, it.gap, it.picks).beats:
-		out.append({"t": b.t, "kind": b.kind, "actor": slotOf(S, b.role), "intent": b.intent, "mode": b.mode})
-	return {"scenario": templates[it.scenario].id, "first": it.first, "gap": it.gap, "clock": templates[it.scenario].clock, "beats": out}
+		out.append({"t": b.t, "kind": b.kind, "actor": slotOf(S, b.role), "intent": b.intent, "mode": b.mode, "at": "part" if b.kind == "gesture" else ""})
+	for g in it.gestures:
+		var at: int = out.size()
+		while at > 0 and out[at - 1].t > g[0]:
+			at -= 1
+		out.insert(at, {"t": g[0], "kind": "gesture", "actor": g[1], "intent": g[2], "mode": "", "at": g[3]})
+	return {"scenario": templates[it.scenario].id, "plot": String(it.facts.get("plot", "")), "first": it.first, "gap": it.gap, "clock": it.clock, "beats": out}
+
+
+## The tags the facts give a voice slot (facts.intents, Narrative's: the sim reads none of them): {stance, angle, event,
+## p}. slot is the line's intent; roles are the speaker's names (first or second, and left or right). An entry with
+## "lines" holds one row a speaker; a row or an entry that names another "who" is not his. No entry: no tags, p 1.
+static func lineTags(facts: Dictionary, slot: String, roles: Array) -> Dictionary:
+	var out := {"stance": "", "angle": "", "event": "", "p": 1.0}
+	var all = facts.get("intents")
+	var e = all.get(slot) if all is Dictionary else null
+	if not (e is Dictionary):
+		return out
+	if e.get("lines") is Array:
+		var row = null
+		for r in e.lines:
+			if r is Dictionary and roles.has(String(r.get("who", ""))):
+				row = r
+				break
+		e = row
+	elif e.has("who") and not roles.has(String(e.who)):
+		e = null
+	if e is Dictionary:
+		out.stance = String(e.get("stance", ""))
+		out.angle = String(e.get("angle", ""))
+		out.event = String(e.get("event", ""))
+		var pv = e.get("p", 1.0)
+		out.p = clampf(float(pv), 0.0, 1.0) if (pv is float or pv is int) else 1.0
+	return out
 
 
 ## The slot a role names in this match, or -1 for both.

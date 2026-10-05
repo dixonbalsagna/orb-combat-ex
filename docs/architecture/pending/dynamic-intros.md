@@ -1,6 +1,8 @@
 # Patch plan: dynamic intros, the first cut
 
-Owner: Simulation and Engine. Date: 2026-10-04. Status: **built and proven in a scratch copy of fd326de, parked, not applied.** Encounter has the sim tree (the brawl's groundwork), World is next; this applies after them.
+Owner: Simulation and Engine. Date: 2026-10-04, revised 2026-10-06. Status: **built and proven in a scratch copy of baaba63, parked, not applied.** It applies after World's stages.
+
+Revision 2 (2026-10-06) folds in Narrative's generative layer (`docs/narrative/dynamic-intros.md` section 11): the host's `facts` record bends the composer through five keys, gestures play as beats, and voice slots carry the facts' tags. Section 6b is new; sections 3, 4, 7, 8, 10 and 11 changed. The EP's rulings are in: Narrative's lengths stand, `"intro": true` stays classic, and who is first is an even draw.
 
 Sources: Encounter's composer plan (`docs/director/dynamic-intros-plan.md`), Narrative's content (`docs/narrative/dynamic-intros.md`: S1 Double Drop, S2 Latecomer, S9 Long Look; voice intents V1, V2, V3, V8), the intro phase as built (`docs/architecture/intro-phase.md`).
 
@@ -36,7 +38,7 @@ The intro phase stops playing one fixed sequence. It plays a **timeline composed
 | `order` | Fixes the slot that arrives first (0 or 1). Left out: an even draw |
 | `gap` | Fixes the gap in ticks (clamped to the template's range). Left out: drawn in the range |
 | `avoid` | The host's no-repeat list: template ids played lately, the newest first |
-| `facts` | What the host knows about the pair. Today one fact is read: `tones`, the tones the pair allows (`light`, `neutral`, `grave`). Left out: all |
+| `facts` | What the host resolved about the pair: Narrative's flat record (section 6b). The composer reads `tones`, `weights`, `gap`, `look`, `clock` and `gestures`; it passes `plot` and `intents` through on events; it ignores every other key (`avoidPlot` is the host's own memory). Left out: no bend |
 | `classic` | `true` asks for the classic opening whatever else is said |
 
 - **The host owns memory.** The sim never reads a file or a clock. The host keeps the last few scenarios for a pair and passes them as `avoid`. A match with no list avoids nothing.
@@ -80,8 +82,14 @@ Templates and parts, as in Encounter's plan, with Narrative's beats as the rows.
 | `templates[].gap` | The range and the default of the gap: ticks from the first landing to the second fall |
 | `templates[].weight`, `tone`, `notTwice`, `classic` | The draw's weight; the tone the `tones` fact filters on; never right after itself; the one a plain `true` plays |
 | `slots[].who` | `first`, `second` (by arrival), `left`, `right` (by start spot) or `both` |
-| `slots[].pool` | The parts that may fill the slot. The first cut's pools hold one part each; the pick is built and drawn for more |
-| `slots[].after`, `gap`, `with` | Ticks after the slot before it ends; add the drawn gap; run alongside without moving the template on |
+| `slots[].pool` | The parts that may fill the slot. A part the facts name (`facts.look`) is taken when the pool holds it. Otherwise an even keyed draw, or the pool's first part when the slot says `"draw": false` |
+| `slots[].after`, `gap`, `with`, `draw` | Ticks after the slot before it ends; add the drawn gap; run alongside without moving the template on; `false`: the part is not left to chance |
+| `clockBend {min, max}` | The most the facts may shorten or lengthen a template, in ticks (-60 to 60) |
+| `gesturePoints` | Where a facts gesture plays: ticks after `land_first`, `land_second`, `wait` and `look_start`; `look_end` is counted back from the clock |
+
+A part may also write a `gesture` beat itself (`{"t", "kind": "gesture", "intent"}`); none does yet.
+
+**The look.** The Double Drop's look pool is `["hold", "long"]`, the Latecomer's `["hold"]`, the Long Look's `["long"]` (the part was `long_hold`; it is `long` now, Narrative's word). All three look slots are `"draw": false`, so with no facts the look is `hold` where a template has it, as before.
 
 **The three templates, at their default gap.**
 
@@ -127,9 +135,28 @@ The staredown's two lines need about 144 ticks, so a wait long enough to read as
 - **Explainable.** On the first pre-clock tick the feed gets a line a pick: `INTRO: latecomer` with `3 of 3 fit; double_drop at 1/2 (played lately)`, then `INTRO first: <name>` with the reason and the gap.
 - Narrative's preferences (who is never early, who lands soft) are the host's to pass as `order`, or later facts; the first cut reads only `tones`.
 
+## 6b. The host's facts: what bends a pick
+
+Narrative's grammar (relationship, state, event) stays on the host. The composer sees only its flat result.
+
+| Key | Shape | What the composer does |
+| :--- | :--- | :--- |
+| `tones` | a list | Filters the templates, as before |
+| `weights` | `{template id: multiplier}` | Multiplies each template's weight before the draw. A missing id is 1; 0 removes it; below 0 counts as 0 |
+| `gap` | -1 to 1 | Moves the drawn gap that share of the way to the short end (below 0) or the long end (above 0) of the template's range. A gap the setup fixed is not moved |
+| `look` | a part id | Any slot whose pool holds that part takes it |
+| `clock` | ticks, may be negative | Added to the template's length, inside `clockBend`. If the intro then has no room for its beats the bend is dropped. The look takes the difference |
+| `gestures` | `[{at, who, intent}]` | Each becomes a gesture at its point's tick. `who`: `first`, `second`, `left`, `right` or `both`. A point the template does not have (`wait` outside the Latecomer), an unknown `who`, or a tick outside the intro is skipped. 16 at most |
+| `plot` | a string | The feed (`INTRO plot: ...`) and `intro_start`. Nothing else |
+| `intents` | `{slot: {who, stance, angle, p, event}}`, or `{slot: {lines: [...]}}` | Not read. Each voice slot's event carries its entry's tags (section 8) |
+| anything else | | Ignored. The first cut's records (only `tones`) work unchanged |
+
+Every bend's reason goes to the feed on the first pre-clock tick, beside the picks.
+
 ## 7. The playback
 
-- **State** (`S.intro`, integers, hashed): `scenario` (the template's index, -1 when none plays), `first`, `gap`, `picks`, and `dug` (a bit a slot: his crater is dug), beside today's `left`, `t`, `landed`. The beats are worked out from those and the data; they are not state.
+- **State** (`S.intro`, integers, hashed): `scenario` (the template's index, -1 when none plays), `first`, `gap`, `picks`, `clock` (the composed length) and `dug` (a bit a slot: his crater is dug), beside today's `left`, `t`, `landed`. The beats are worked out from those and the data; they are not state.
+- **Payload, not hashed:** the facts as given and the gestures resolved from them. They only fill events and never touch gameplay state; they come from the setup, which is in the replay header, so a replay rebuilds them.
 - **Fighter states:** `intro` as today, and **`waiting`** for the first to arrive, from his `wait` beat to the staredown. The sim holds through the intro, so the state is for the view.
 - **Skip:** as today. The landings left are applied at once, the first to arrive first.
 - **The end state is the same for every intro.** Both fighters free on their start spots, each in his crater. One thing had to be made order-proof: the crater records are a list. When the right spot's fighter lands first, the two records are put back in the order of the start spots as the second one is dug. So the state at the clock equals the state the setup's `skip` gives, whatever was composed and whenever it was skipped. The check proves it for every template, either order, three gaps and four skip points.
@@ -139,22 +166,25 @@ The staredown's two lines need about 144 ticks, so a wait long enough to read as
 
 | Event | Fields | Change |
 | :--- | :--- | :--- |
-| `intro_start` | dur, delay, **kind** (the scenario), **actor** (the slot that arrives first), **n** (the gap) | Three new fields |
+| `intro_start` | dur, delay, **kind** (the scenario), **actor** (the slot that arrives first), **n** (the gap), **text** (the facts' plot id) | Four new fields. `dur` is the composed length |
 | `entrance_fall` | actor, x, y, z, y1, dur, **mode** (`drop`) | One new field |
 | `entrance_land`, `staredown_start`, `clock_start` | as today | |
 | `intro_beat` | actor, kind (`wait`), dur (seconds until the staredown) | New |
-| `intro_line` | actor (who may speak), kind (the intent: `arrive_remark`, `wait_remark`, `late_reply`, `staredown_pair`), variant (his role by arrival: `first` or `second`) | New. A voice slot: the intent only. The sim holds no words; a slot with no line plays silent |
+| `intro_line` | actor (who may speak), kind (the slot: `arrive_remark`, `wait_remark`, `late_reply`, `staredown_pair`), variant (his role by arrival: `first` or `second`), **stance**, **angle**, **event**, **p** | New. A voice slot. The four tags are the facts' entry for this slot and this speaker, passed through unread; with no entry they are empty and `p` is 1. The sim holds no words |
+| `intro_gesture` | actor, kind (the gesture's intent: a meaning, not a pose), variant (the point: `land_first`, `land_second`, `wait`, `look_start`, `look_end`, or `part`) | New. Narrative's field names `intent` and `at` are `kind` and `variant` here, as every event uses the shared fields |
 
-`SimIntro.timeline(S)` returns the whole composed timeline at any time (the scenario, who is first, the gap, the length, and every beat with its tick and slot), so nobody has to rebuild it from events.
+`SimIntro.timeline(S)` returns the whole composed timeline at any time (the scenario, the plot id, who is first, the gap, the composed length, and every beat with its tick and slot, the facts' gestures among them), so nobody has to rebuild it from events.
+
+**Which entry of `intents` a slot gets.** The slot's name picks the entry. An entry with `lines` holds one row a speaker: the row whose `who` is the speaker's role (`first` or `second`, or `left` or `right`). A plain entry with a `who` applies only to that speaker, so the second fighter's `arrive_remark` carries no tags when the entry says `first`.
 
 | Who | Reads | Does |
 | :--- | :--- | :--- |
-| **Rendering, UI (the host)** | The setup's record | Sends `{"play": true, "avoid": [...], "facts": {...}}` for a varied intro; `true` for Classic; `"skip"` for intros off. Keeps the no-repeat list for each pair. Nothing changes until it does: `true` still plays today's intro |
-| **Animation** | `f.state == "waiting"`; `intro_beat` kind `wait`; `entrance_fall.mode` | A waiting idle. Its intro code tests `state == "intro"` today, so a waiting fighter needs a pose before the host asks for the Latecomer |
+| **Rendering, UI (the host)** | The setup's record | Sends `{"play": true, "avoid": [...], "facts": {...}}` for a varied intro; `true` for Classic; `"skip"` for intros off. Keeps the no-repeat list for each pair, runs Narrative's grammar and resolves it into `facts`. Nothing changes until it does: `true` still plays today's intro |
+| **Animation** | `f.state == "waiting"`; `intro_beat` kind `wait`; `entrance_fall.mode`; `intro_gesture` | A waiting idle. Its intro code tests `state == "intro"` today, so a waiting fighter needs a pose before the host asks for the Latecomer. A pose for each gesture intent, a fighter at a time; a missing one is a silent skip |
 | **Camera** | `intro_start.kind` and `dur`; `SimIntro.timeline(S)`; `staredown_start.dur` | A shot recipe for each scenario: the hold on the empty spot (Latecomer), the long two-shot (Long Look). Its cuts must come from the events' durations, not from 300 |
 | **UI** | `intro_start.dur` and `delay` | The skip prompt, as today. Captions from `intro_line` through the line system. The opening setting (Varied, Classic, Skip) |
 | **Audio** | `intro_line`; `intro_start.kind` | The voice; the sound dropping out for `long_look` |
-| **Narrative** | `intro_line.kind` and `variant`, with the pair | The line system picks the words. Two lines can be offered close together (V1 at 138 and V8 at 156 in the Double Drop); which plays is the line system's rule |
+| **Narrative** | `intro_line.kind`, `variant`, `stance`, `angle`, `event`, `p` | The line system picks the words and decides whether the line plays, on its own stream. Two lines can be offered close together (V1 at 138 and V8 at 156 in the Double Drop); which plays is the line system's rule |
 | **QA** | Nothing in the batches (they skip) | One row: every template plays for every pair |
 
 ## 9. The build, and how to apply it
@@ -170,40 +200,43 @@ The staredown's two lines need about 144 ticks, so a wait long enough to read as
 
 It also edits `sim/core/state.gd`, `fx.gd`, `hash.gd`, `view/fx.gd`, `tools/parity.gd` and `tools/golden_recipes.gd` by anchored text. After `code`, run Godot's `--import` once: `DirIntro` is a new class.
 
-## 10. Goldens and proofs (scratch copy of fd326de; the files it touches are unchanged on e87d8e5)
+## 10. Goldens and proofs (scratch copy of baaba63, after intent version 4)
 
 **What moves in the goldens.**
 
 | | Moves? |
 | :--- | :--- |
-| The nine golden matches and both replays | **No.** After `code`, every checkpoint is equal, light and full. After `hash`, light digests and tick counts are identical; the full-state checkpoints and the six tick-0 states move, because `S.intro`'s five new fields are in every state hash |
+| The nine golden matches and both replays | **No.** After `code`, every checkpoint is equal, light and full. After `hash`, light digests and tick counts are identical; the full-state checkpoints and the six tick-0 states move, because `S.intro`'s six new fields are in every state hash |
 | The fight data hash | Yes: `intro.json` changed |
 | The intro vector (`intro`: seed 7 with `"intro": true`) | Yes, by its events only: the classic opening now sends four voice slots and the new event fields |
-| A new vector, `introComposed` | New: seven composed intros (two free draws, two with a no-repeat list, each template by name), every tick's fighters and events, and what was composed. It pins the keyed draws and the timelines across platforms |
+| A new vector, `introComposed` | New: nine composed intros (two free draws, two with a no-repeat list, each template by name, two with Narrative's example facts), every tick's fighters and events, and what was composed. It pins the keyed draws, the bends and the timelines across platforms |
 
 One regeneration covers both parts.
 
 **Proofs.**
 
 1. **A plain `"intro": true` is today's intro, state for state.** A per-tick digest of the whole gameplay state over four matches that play it (900 ticks each, one skipped by a press) is identical on HEAD and on the build.
-2. **`code`:** parity passes on HEAD's goldens but for the fight data hash and the intro vector. Regenerated: all 9 matches (174,956 ticks) and both replays equal at every checkpoint.
+2. **`code`:** parity passes on HEAD's goldens but for the fight data hash and the two intro vectors. Regenerated: all 9 matches (172,441 ticks) and both replays equal at every checkpoint.
 3. **`hash`:** light digests and tick counts identical.
-4. **The new check "composed intros"** runs every template with either fighter first at its shortest, default and longest gap (14 intros). For each: every beat's event comes on its tick with its slot; the first to arrive is `waiting` only where the template says and only until the staredown; the state at the clock equals the state the setup's `skip` gives; the tick after the clock is live; a skip press at four points gives the same state. Then the composer over 600 seeds: the same seed and record compose the same intro; the shares follow the weights; both orders come up; the gaps stay in range and vary; a `notTwice` template never follows itself; one played three times lately is drawn less; the `tones` fact filters; a record's `scenario`, `order` and `gap` are obeyed and the gap clamped; nothing fitting gives the classic. Then two recorded matches with a record (one played through, one skipped) replay exactly, and the header keeps the record.
-5. **Gates on the build:** parity 37 checks, determinism, the loader check, the touch test (167), the seam sweep, `npm test` 5 of 5, and Animation's `anim_check` (5,346 checks; it starts matches with `"intro": true`).
-6. **The validator** reports 5 errors, all on `data/fight/intro.json` against the old schema (section 11).
-7. **Cost:** the composer runs once a match, about 30 microseconds. Nothing is added to a live tick.
+4. **The check "composed intros"** runs every template with either fighter first at its shortest, default and longest gap (14 intros). For each: every beat's event comes on its tick with its slot; the first to arrive is `waiting` only where the template says and only until the staredown; the state at the clock equals the state the setup's `skip` gives; the tick after the clock is live; a skip press at four points gives the same state. Then the composer over 600 seeds: the same seed and record compose the same intro; the shares follow the weights; both orders come up; the gaps stay in range and vary; a `notTwice` template never follows itself; one played three times lately is drawn less; the `tones` fact filters; a record's `scenario`, `order` and `gap` are obeyed and the gap clamped; nothing fitting gives the classic. Then two recorded matches with a record (one played through, one skipped) replay exactly, and the header keeps the record.
+5. **The facts, in the same check.** A template the weights put at 0 is never drawn in 300 seeds and one at x10 is drawn more than without; unknown keys change nothing. The gap bend at -1, -0.6, 0, 0.5 and 1 lands where the rule says, for every template over 59 seeds, and does not move a gap the setup fixed. Then four played intros (either fighter first, with the facts' look and with the slot's own): the look part, the gap and the bent clock are what the facts ask; each gesture's event comes on its point's tick for the right slot, `both` gives two, an unknown point and an unknown `who` are skipped; each voice slot carries its own tags and no other's; the plot id is on `intro_start`, in the timeline and in the feed; the staredown's length follows the bent clock; **the state at the clock is still the one the setup's skip gives.** A clock bend past the range is clamped and one with no room is dropped. A recorded match with the facts replays exactly, and the header keeps them.
+6. **Gates on the build:** parity 37 checks, determinism, the loader check, the touch test (167), the seam sweep, `npm test` 5 of 5, and Animation's `anim_check` (it starts matches with `"intro": true`).
+7. **The validator** reports 7 errors, all on `data/fight/intro.json` against the old schema (section 11).
+8. **Cost:** the composer runs once a match. Nothing is added to a live tick.
 
 ## 11. New keys for Tools (`tools/schemas/fight-intro.schema.json`)
 
 The file's shape changes, so its schema is replaced, not extended.
 
 - Gone: `ticks {fallA, landA, fallB, landB, staredown, clock, skipFrom}`.
-- Top level: `schema` (`fight.intro/2`), `skipFrom` (integer, at least 0), `fallHeight`, `craterEnergy` (kept), `parts` (an open table), `templates` (an array, at least one).
-- A part: `type` (`entrance`, `reaction`, `look`), `mode` (string; required for an entrance), `ticks` (integer, at least 0), `beats[]` of `{t (integer), kind (fall, land, wait, line, staredown), intent (string, required for a line), who (first, second, left, right)}`.
-- A template: `id`, `weight` (at least 0), `tone` (`light`, `neutral`, `grave`), `clock` (integer), `gap {min, max, default}` (integers, min <= default <= max), `notTwice` and `classic` (booleans, optional), `slots[]` of `{slot (a label), who (first, second, left, right, both), pool (part ids, at least one), after (integer), gap, with (booleans)}`.
+- Top level: `schema` (`fight.intro/2`), `skipFrom` (integer, at least 0), `fallHeight`, `craterEnergy` (kept), `clockBend {min (0 or less), max (0 or more)}` (integers), `gesturePoints {land_first, land_second, wait, look_start (0 or more), look_end (0 or less)}` (integers), `parts` (an open table), `templates` (an array, at least one).
+- A part: `type` (`entrance`, `reaction`, `look`), `mode` (string; required for an entrance), `ticks` (integer, at least 0), `beats[]` of `{t (integer), kind (fall, land, wait, line, staredown, gesture), intent (string, required for a line and a gesture), who (first, second, left, right)}`.
+- A template: `id`, `weight` (at least 0), `tone` (`light`, `neutral`, `grave`), `clock` (integer), `gap {min, max, default}` (integers, min <= default <= max), `notTwice` and `classic` (booleans, optional), `slots[]` of `{slot (a label), who (first, second, left, right, both), pool (part ids, at least one), after (integer), gap, with, draw (booleans)}`.
 - Cross-checks worth having: every pool id is a part; exactly one template is `classic`; ids are unique. The loader already refuses a template that does not fit its clock.
 
 Until the schema lands, the validator reports the new file.
+
+**The `facts` record is not a data file,** so it has no schema of mine: it is the setup's, passed by the host. Narrative's section 11.5 is its definition, and its grammar file (`data/narrative/intro_plots.json`) is Narrative's and Tools' to give a schema. If Tools wants a check that a grammar's output is a valid record, the shape is section 6b's table.
 
 ## 12. Decisions taken, and open points
 
@@ -212,4 +245,7 @@ Until the schema lands, the validator reports the new file.
 3. **Who is first is an even draw.** Today it is always the left spot. Narrative's rules about who waits belong to the pair, so the host passes `order` when it has a preference.
 4. **The Long Look's gap does not vary.** Narrative lists no gap swap for it.
 5. **The voice slots' ticks are mine, from Narrative's "about" times.** They are data.
-6. **`facts` reads one fact.** History, the settlement in view and the rest wait for the scenarios that need them.
+6. **`facts` is Narrative's flat record** (section 6b). The grammar, the history and the plot pick are the host's.
+7. **The look is not left to chance.** Its slots are `"draw": false`: the facts choose it, or the template's own first part plays. An even draw would have made half of the plain Double Drops a silent long stare.
+8. **A fifth gesture point, `wait`.** Narrative's table lists gestures "at the wait" for the Latecomer beside its four named points, so the build has it; it is skipped in a template with no wait.
+9. **Mine, as data, for Narrative to tune:** the gesture points' ticks (12 after a landing, 20 into the wait, 24 into the look, 48 before the clock) and the clock bend's range (60 either way; Narrative's bends are 24 and 36).
