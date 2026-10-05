@@ -144,6 +144,10 @@ Run once from the repo root, in the commit that lands the slice's data: `node do
 
 For `docs/combat/pending/recipes.brawl.json` (with Encounter's slice B2). Run once from the repo root, in the commit where that file lands as `data/combat/recipes.json` (drop `_target` and `_changes`): `node docs/tools/pending/apply-brawl-recipes.cjs`. It does **not** edit `data/`. In `combat-recipes.schema.json`: `pieces[id].path` is required (line, arc_in, arc_out, rise, drop or spin) and `pieces[id].sends` is an optional list of across, up, down or turned; `beat` is optional (`default` and any of the six paths, integers 20 to 28); `brawl` is optional (any of light, lightToward, flurry, skill, juggle, heavy, lift, break, ender, each a pool name). New rule `recipes-brawl`: every pool `brawl` names exists for every fighter; every piece of a fighter's `power.last` has `sends`; when `beat` is there it has a value for every path a piece uses, or a `default`. The fixture becomes the whole new file; the earlier whole-row `pieces` cases carry a path now; 28 cases. Re-runnable. Tested on a clean `git archive HEAD` (5efdcde) with the draft as `data/combat/recipes.json`: 76 errors before, then 0 errors and 0 warnings, self-test passes (3525 of 3525).
 
+## `apply-stages.cjs`: World's staged destruction, slice 1
+
+Schema for the new file `data/biomes/stages.json` (`biomes.stages/1`; `docs/world/staged-destruction.md`). Run once from the repo root, in the commit where World lands the file: `node docs/tools/pending/apply-stages.cjs`. It does **not** edit `data/`. It adds `biomes-stages.schema.json` (closed; `hpAt` exactly 3 numbers, each above 0 and below 1; `cutFloorsStage` an integer 1 to 3; `_about` and other underscore keys allowed), the map entry, a fixture and 22 cases, and the rule `stages-order` (hpAt strictly decreasing, an error). Re-runnable. Tested on a clean `git archive HEAD` (a995d16) with the file dropped in: 0 errors and 0 warnings, self-test passes.
+
 ## Which script goes with which commit (the next big update)
 
 | Script | State | Goes in the commit of | Needs |
