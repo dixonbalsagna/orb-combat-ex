@@ -71,6 +71,7 @@ var glare_enabled: bool = VfxLook.GLARE_DEFAULT   # the rival's glasses glare (g
 var glare := VfxGlare.new()
 var press_enabled: bool = VfxLook.PRESS_DEFAULT   # the melee press styles (press.gd, drawn by shots_view.gd)
 var press := VfxPress.new()
+var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
 var explosions_enabled: bool = VfxLook.EXPLOSIONS_DEFAULT   # the blasts erupt in flame, sparks, smoke and a smouldering scorch; a knocked-loose shot tumbles and smokes (explode.gd)
 var earth_enabled: bool = VfxLook.EARTH_DEFAULT   # material chunks for `debris`, cel flames for `fire`, and the ground-contact events (docs/vfx/earth-plan.md)
 var earth := VfxEarth.new()
@@ -124,6 +125,7 @@ func reset(S: SimState, p_seed: int) -> void:
 	beamplay.reset()
 	glare.reset()
 	press.reset()
+	zip.reset()
 	earth.debris = debris
 	earth.reset()
 	water.debris = debris
@@ -257,6 +259,8 @@ func _consume(S: SimState, events: Array) -> void:
 	if press_enabled:
 		press.step(S, frozen)
 		press.on_events(S, events, reduced_motion)
+		zip.step(S, frozen)
+		zip.on_events(S, events, reduced_motion)
 	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled:
 		debris.quality = quality
 		debris.reduced = reduced_motion

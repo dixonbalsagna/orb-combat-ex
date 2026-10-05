@@ -141,6 +141,7 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 	# The melee press styles: each blow's after-image and contact look.
 	if hub.press_enabled:
 		n = _press(n, S, hub, host, cam_x, half_w, a, bh, minpx, alpha)
+		n = _zip(n, S, hub, host, cam_x, half_w, a, bh, minpx, alpha)
 	# The rival's glasses glare, over his face.
 	if hub.glare_enabled:
 		n = _glare(n, S, hub, host, cam_x, half_w, a, bh, minpx)
@@ -278,15 +279,15 @@ func _line(n: int, a: Vector2, b: Vector2, t: float, z: float, col: Color) -> in
 
 ## A body as a few strokes (a head, a torso, two legs and the striking arm): the prototype's figure. wire = a thin outline (the timed blow's echoes),
 ## else filled (a ghost). feet is where his feet are in this view; dir the way he faces; fist the striking hand's place in this view.
-func _figure(n: int, feet: Vector2, dir: float, lean: float, fist: Vector2, col: Color, wire: bool, z: float, minpx: float) -> int:
-	var t: float = maxf(1.7, minpx * 1.5) if wire else 3.2
+func _figure(n: int, feet: Vector2, dir: float, lean: float, fist: Vector2, col: Color, wire: bool, z: float, minpx: float, thick: float = 1.0) -> int:
+	var t: float = maxf(1.7, minpx * 1.5) if wire else 3.2 * thick
 	var hip := Vector2(feet.x, feet.y + VfxPress.HIP)
 	var neck := Vector2(feet.x + dir * lean * 0.6, feet.y + VfxPress.SHOULDER + 4.0)
 	var head := Vector2(feet.x + dir * lean, feet.y + VfxPress.HEAD_Y)
 	if wire:
 		n = _put(n, head, Vector2(1.0, 0.0), VfxPress.HEAD_R * 2.0, VfxPress.HEAD_R * 2.0, z, col, maxf(0.16, 2.0 * minpx / VfxPress.HEAD_R), 0.0, SHAPE_RING)
 	else:
-		n = _put(n, head, Vector2(1.0, 0.0), VfxPress.HEAD_R * 2.0, VfxPress.HEAD_R * 2.0, z, col, 1.0, 0.0, SHAPE_RING)
+		n = _put(n, head, Vector2(1.0, 0.0), VfxPress.HEAD_R * 2.0 * thick, VfxPress.HEAD_R * 2.0 * thick, z, col, 1.0, 0.0, SHAPE_RING)
 	n = _line(n, hip, neck, t * (1.0 if wire else 1.6), z, col)
 	n = _line(n, hip, Vector2(feet.x - dir * 8.0, feet.y), t, z, col)
 	n = _line(n, hip, Vector2(feet.x + dir * 10.0, feet.y), t, z, col)
@@ -506,6 +507,157 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				gcol.a = al * (0.34 - 0.09 * float(k))
 				n = _figure(n, Vector2(hrx, hp.y), _dir_of(S, s), 6.0, Vector2(hrx + 10.0, hp.y + 52.0), gcol, false, gz - 0.1 * float(k), minpx)
 			pr.shown += 1
+	return n
+
+
+## The LT zip (zip.gd): the tell, the travel in and out per reading, and the outcome marks. All of it is drawn between points, so it works in any direction.
+func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a: float, bh: float, minpx: float, alpha: float) -> int:
+	var zp: VfxZip = hub.zip
+	var pr: VfxPress = hub.press
+	var al: float = alpha * VfxZip.p("alpha")
+	var red: bool = hub.reduced_motion
+	zp.shown = 0
+	for z: VfxZip.Zip in zp.zips:
+		if n >= CAP - 50:
+			break
+		var f = S.fighters[z.slot]
+		var cur: Vector2 = Vector2(SimWrap.sdx(cam_x, host.fighter_x(z.slot, a)), host.fighter_pose(z.slot, a).y)
+		if absf(cur.x) > half_w + 40.0 * bh and absf(SimWrap.sdx(cam_x, z.ox)) > half_w + 40.0 * bh:
+			continue
+		var age: float = maxf(z.age - (1.0 - a), 0.0)
+		var look: float = 1.0 if SimWrap.sdx(f.x, S.fighters[z.target].x) >= 0.0 else -1.0
+		var fz: float = host.fighter_z(z.slot, a)
+		var zb: float = fz + Z_FX - 12.0
+		var zf: float = fz + Z_FX + 8.0
+		var col: Color = z.col
+		var o := Vector2(SimWrap.sdx(cam_x, z.ox), z.oy)
+		var pt := Vector2(SimWrap.sdx(cam_x, z.px), z.py)
+		var arr: Vector2 = Vector2(SimWrap.sdx(cam_x, z.ax), z.ay) if z.have_a else pt
+		var exit: Vector2 = Vector2(SimWrap.sdx(cam_x, z.ex), z.ey)
+		zp.shown += 1
+		if age < z.t1():
+			# The tell: a thin line along the ground toward the arrival point, and a tick where it ends; the heavy's charge ring shrinks on him.
+			var k: float = age / z.t1()
+			var tc: Color = col
+			tc.a = al * VfxZip.p("tell_alpha") * (0.35 + 0.65 * k)
+			var go: float = WorldTerrain.groundY(S, z.ox) + 3.0
+			var gp: float = WorldTerrain.groundY(S, z.px) + 3.0
+			n = _line(n, Vector2(o.x, go), Vector2(pt.x, gp), maxf(VfxZip.p("ground_line_w"), minpx * 1.2), zb, tc)
+			n = _line(n, Vector2(pt.x, gp), Vector2(pt.x, gp + 12.0), maxf(VfxZip.p("ground_line_w"), minpx * 1.2), zb, tc)
+			if z.style == "heavy":
+				var rr: float = lerpf(40.0, 12.0, k)
+				var hc: Color = col
+				hc.a = al * (0.2 + 0.6 * k)
+				n = _put(n, Vector2(cur.x - look * 12.0, cur.y + 54.0), Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zf, hc, minf(0.5, (2.0 + 2.0 * k) / rr), 0.0, SHAPE_RING)
+			continue
+		var in_phase: bool = age < z.t2()
+		var out_phase: bool = age >= z.t3() and age < z.t4() and not z.stopped
+		if z.stopped and age >= z.t2():
+			continue
+		var style: String = z.style
+		if out_phase and style == "heavy":
+			style = "speed"                  # a heavy leaves as a speed zip
+		if style == "tech":
+			# No travel: wire echoes on the straight path popping off back to front, and a thin line at head height.
+			var p0: Vector2 = o if in_phase or age < z.t3() else arr
+			var p1: Vector2 = arr if age < z.t3() else exit
+			var tt: float = (age - z.t2()) if age < z.t3() else (age - z.t3())
+			if tt >= 0.0 and tt < 12.0 and (p1 - p0).length() > 8.0:
+				var ne: int = int(VfxZip.p("echoes"))
+				var pop: float = VfxZip.p("echo_pop")
+				for g in range(ne):
+					if red and g != ne - 1:
+						continue
+					if tt >= 2.0 + float(g) * pop:
+						continue
+					var fr: float = float(g + 1) / float(ne + 1)
+					var ec: Color = col.darkened(0.3)
+					ec.a = al
+					var fp: Vector2 = p0.lerp(p1, fr)
+					n = _figure(n, fp, look, 12.0, fp + Vector2(look * 24.0, 50.0), ec, true, zf - 2.0 + 0.2 * float(g), minpx)
+				var lc: Color = col.darkened(0.3)
+				lc.a = al * 0.6 * (1.0 - clampf(tt / 10.0, 0.0, 1.0))
+				n = _line(n, p0 + Vector2(0.0, 74.0), p1 + Vector2(0.0, 74.0), maxf(1.3, minpx * 1.2), zf - 1.0, lc)
+			continue
+		if not (in_phase or out_phase):
+			continue
+		# Speed and heavy: ghosts along the path he really took, and the bands. The ghosts sit behind him, closer together the shorter the move.
+		var mvlen: float = z.mv if in_phase else z.out
+		var spc: int = maxi(1, int(round(mvlen / 6.0)))
+		var heavy: bool = style == "heavy"
+		var ng: int = 2 if red else int(VfxZip.p("ghosts"))
+		var oldest: Vector2 = cur
+		for g in range(ng, 0, -1):
+			var hp: Vector2 = pr.back(S, z.slot, g * spc)
+			var gp2 := Vector2(SimWrap.sdx(cam_x, hp.x), hp.y)
+			if (gp2 - cur).length() < VfxZip.p("min_gap"):
+				continue
+			if g == ng:
+				oldest = gp2
+			var gc: Color = col.darkened(0.2)
+			if heavy:
+				gc.a = al * (0.18 + 0.07 * float(ng - g))
+			else:
+				gc.a = al * 0.11 * float(ng + 1 - g)
+			n = _figure(n, gp2, look, 16.0 if heavy else 8.0, gp2 + Vector2(look * 30.0, 56.0), gc, false, zb + 0.1 * float(ng - g), minpx, 2.0 if heavy else 1.0)
+		var d: Vector2 = cur - oldest
+		if d.length() > 4.0:
+			var bc: Color = col.darkened(0.2)
+			if heavy:
+				bc.a = al * 0.42
+				n = _put(n, (oldest + cur) * 0.5 + Vector2(0.0, 48.0), d.normalized(), d.length(), VfxZip.p("wide_w") * 2.0, zb - 0.3, bc, 0.9, 0.5, SHAPE_STREAK)
+			else:
+				bc.a = al * 0.42
+				n = _put(n, (oldest + cur) * 0.5 + Vector2(0.0, 74.0), d.normalized(), d.length(), VfxZip.p("band_w") * 2.0, zb - 0.3, bc, 0.9, 0.5, SHAPE_STREAK)
+				if not red:
+					bc.a = al * 0.32
+					n = _put(n, (oldest + cur) * 0.5 + Vector2(0.0, 36.0), d.normalized(), d.length(), VfxZip.p("band_w2") * 2.0, zb - 0.3, bc, 0.9, 0.5, SHAPE_STREAK)
+	# The outcome marks.
+	for m: VfxZip.Mark in zp.marks:
+		if n >= CAP - 14:
+			break
+		var mx: float = SimWrap.sdx(cam_x, m.x)
+		if absf(mx) > half_w + 6.0 * bh:
+			continue
+		var ms: float = maxf(m.age - (1.0 - a), 0.0)
+		var u: float = clampf(ms / m.life, 0.0, 1.0)
+		var c := Vector2(mx, m.y)
+		var dv := Vector2(m.dx, m.dy)
+		var pv := Vector2(-m.dy, m.dx)
+		var zm: float = host.fighter_z(m.slot, a) + Z_FX + 8.0
+		zp.shown += 1
+		match m.kind:
+			"counter":
+				# A hard bar across his path where he is stopped, and the counter's own mark: a diamond (tech) or a double ring (heavy).
+				var bk: Color = m.col
+				bk.a = al * (1.0 - u)
+				n = _put(n, c, pv, 96.0, 7.0 * 2.0, zm, bk, 0.5, 0.5, SHAPE_STREAK)
+				var rr: float = lerpf(12.0, 42.0, 1.0 - pow(1.0 - u, 2.0))
+				var mk: Color = m.col
+				mk.a = al * (1.0 - u)
+				if m.style == "heavy":
+					n = _put(n, c, Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zm + 0.1, mk, minf(0.5, 6.0 / rr), 0.0, SHAPE_RING)
+					n = _put(n, c, Vector2(1.0, 0.0), rr, rr, zm + 0.1, mk, minf(0.5, 3.0 / (rr * 0.5)), 0.0, SHAPE_RING)
+				else:
+					n = _put(n, c, Vector2(1.0, 0.0), rr * 2.2, rr * 2.2, zm + 0.1, mk, maxf(0.16, 4.0 * minpx / rr), 0.0, 5.0)
+			"caught":
+				# He is held in reach: a ring closing on him and two brackets beside him.
+				var cr: float = lerpf(38.0, 16.0, 1.0 - pow(1.0 - clampf(ms / 8.0, 0.0, 1.0), 2.0))
+				var cc: Color = m.col
+				cc.a = al * (1.0 - smoothstep(0.6, 1.0, u))
+				n = _put(n, c, Vector2(1.0, 0.0), cr * 2.0, cr * 2.0, zm, cc, minf(0.5, 3.0 / cr), 0.0, SHAPE_RING)
+				for sg in [-1.0, 1.0]:
+					n = _put(n, c + pv * (sg * (cr + 6.0)), dv, 22.0, 4.0, zm, cc, 0.5, 0.5, SHAPE_STREAK)
+			"gbreak":
+				# The shield line breaks into fragments that fly out, with a flash ring.
+				var gk: Color = m.col
+				gk.a = al * (1.0 - u)
+				for k in range(4):
+					var ang: float = (float(k) - 1.5) * 0.6
+					var fd := Vector2(dv.x * cos(ang) - dv.y * sin(ang), dv.x * sin(ang) + dv.y * cos(ang))
+					n = _put(n, c + fd * (14.0 + 34.0 * u), fd, 14.0, 4.0, zm, gk, 0.5, 0.5, SHAPE_STREAK)
+				var fr3: float = lerpf(10.0, 28.0, u)
+				n = _put(n, c, Vector2(1.0, 0.0), fr3 * 2.0, fr3 * 2.0, zm + 0.1, gk, minf(0.5, 4.0 / fr3), 0.0, SHAPE_RING)
 	return n
 
 

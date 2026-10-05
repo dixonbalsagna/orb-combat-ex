@@ -92,3 +92,7 @@ Three quads (rim, lens, band; four with a crack) for at most 24 ticks, only whil
 ## The melee press styles (2026-10-04)
 
 Quads only, in the shots view's one draw: speed 7, tech 17 falling to 1 as the echoes pop off, heavy 1 for the wind-up and 27 for the release (15 more for a flying target), block 3. The busiest test tick (both fighters with a heavy and a timed blow, both wind-ups and a fly) draws 84 of 380. No debris. Not measured: the web build under load and an old laptop.
+
+## The LT zip (2026-10-05)
+
+Quads only, in the shots view's one draw: a tell 2 to 3, speed travel about 27, tech about 21 falling to 6 as the echoes pop off, heavy travel about 26, an outcome mark 2 to 5. No debris. One zip at most about 27 plus its strike marks. Not measured: the web build under load and an old laptop.

@@ -228,3 +228,7 @@ The wild deflect no longer marks its landing on the ground (Orb: the landing is 
 ### The melee press styles (2026-10-04)
 
 Each press style has its own after-image and contact look (Orb's reference docs/ep/prototypes/melee-trade-v2.html): speed is a soft overlapping blur and a small ring, tech three wireframe echoes, a line and a hard diamond, heavy a shrinking charge ring then ghosts, a filled crescent and a double ring (and a flying target's ghosts), block a shield line and a flash. First build behind `press_enabled`, driven by the `damage` event, the attacker's press log (read only), `tell_heavy` and `knockback`. `render/vfx/press.gd`; docs/vfx/press-styles.md (cost, what Animation and the director need, reduced motion); `effects_check.gd` `_press()`.
+
+### The LT zip's looks (2026-10-05)
+
+The tell (a ground line, the heavy's ring), the travel per reading (speed ghosts and bands, tech wire echoes popping off, heavy stretched ghosts and a wide band), the way out in any direction, a counter, a caught mark and guard broken. First build behind the press styles' flag, against Encounter's B0 lunge cue plus the fields listed. `render/vfx/zip.gd`; docs/vfx/zip.md (the cue, the quads, reduced motion, Legal's four flags); `effects_check.gd` `_zip()`.

@@ -196,6 +196,7 @@ func _run() -> void:
 	_beamplay()
 	_glare()
 	_press()
+	_zip()
 	print("\neffects check passed" if fails == 0 else "\neffects check FAILED (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -3011,6 +3012,178 @@ class FakeAnim:
 	func press_pose(back: int) -> Dictionary:
 		var n: int = press_ring.size()
 		return press_ring[n - 1 - back] if back >= 0 and back < n else {}
+
+
+## The LT zip (docs/ep/prototypes/lt-zip-v4.html; docs/vfx/zip.md): the tell, the travel per reading in and out, the outcome marks, in any direction.
+func _zip() -> void:
+	print("LT zip")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var cam: float = plains + 200.0
+	var lunge := func(slot: int, kind: String, style: String, wind: int, mv: int, extra: Dictionary):
+		var d: Dictionary = {"actor": slot, "kind": kind, "text": "", "source": "", "target": 1 - slot, "amount": float(wind), "n": float(mv), "style": style}
+		d.merge(extra)
+		return VfxMock.ev("cue", d)
+	var outcome := func(slot: int, kind: String, style: String): return VfxMock.ev("cue", {"actor": slot, "kind": kind, "text": "", "source": "", "target": 1 - slot, "style": style})
+	var quads := func(h: VfxHub) -> int:
+		view.update(h, host, 1.0, cam, 1.0, 1500.0)
+		return view.count
+	var place := func():
+		f0.x = plains
+		f0.y = g
+		f1.x = SimWrap.wrap(plains + 300.0)
+		f1.y = g
+	# A fresh hub with the zipper at the start; step a number of ticks with the zipper moving from a to b (world offsets from plains) over `ticks`, one tick each.
+	var fresh := func() -> VfxHub:
+		var h := VfxHub.new()
+		h.press_enabled = true
+		h.reset(S, 6)
+		place.call()
+		for k in range(4):
+			_tick(S, h, [])
+		return h
+	var fly := func(h: VfxHub, a: Vector2, b: Vector2, ticks: int, sample_k: int = 0) -> int:
+		var qs: int = 0
+		for k in range(1, ticks + 1):
+			var t: float = float(k) / float(ticks)
+			f0.x = SimWrap.wrap(plains + lerpf(a.x, b.x, t))
+			f0.y = lerpf(a.y, b.y, t)
+			_tick(S, h, [])
+			if k == sample_k:
+				qs = quads.call(h)
+		return qs
+	_check(not VfxLook.PRESS_DEFAULT and not VfxHub.new().press_enabled, "behind the press styles' flag, off by default")
+	# The cue: a light lunge with no reading is speed, a heavy one is heavy, and a named reading wins.
+	var h1: VfxHub = fresh.call()
+	_tick(S, h1, [lunge.call(0, "lunge_light", "", 8, 10, {})])
+	var z1: VfxZip.Zip = h1.zip.of(0)
+	_check(z1 != null and z1.style == "speed" and z1.wind == 8.0 and z1.mv == 10.0 and not z1.has_exit, "a light lunge cue starts a speed zip (wind-up 8, move 10, exit back to the start)")
+	var h2: VfxHub = fresh.call()
+	_tick(S, h2, [lunge.call(0, "lunge_heavy", "", 16, 12, {})])
+	_check(h2.zip.of(0).style == "heavy", "a heavy lunge cue starts a heavy zip")
+	var h3: VfxHub = fresh.call()
+	_tick(S, h3, [lunge.call(0, "lunge_light", "timed", 6, 2, {"ex": plains + 450.0, "ey": g + 120.0, "hold": 16.0, "out": 6.0})])
+	var z3: VfxZip.Zip = h3.zip.of(0)
+	_check(z3.style == "tech" and z3.has_exit and absf(z3.ey - (g + 120.0)) < 0.1 and z3.hold == 16.0 and z3.out == 6.0, "the cue's own reading, exit point, strike ticks and way-out ticks are read")
+	# The tell: a line along the ground toward the arrival point; the heavy adds its ring.
+	var q_tell: int = quads.call(h1)
+	_check(q_tell == 2, "the tell is a ground line and a tick at its end (%d quads)" % q_tell)
+	var q_tell_h: int = quads.call(h2)
+	_check(q_tell_h == 3, "the heavy's tell adds the shrinking charge ring (%d quads)" % q_tell_h)
+	# The travel in, speed: stacked ghosts along the real path and two bands.
+	for k in range(6):
+		_tick(S, h1, [])
+	var from_a := Vector2(0.0, 0.0)
+	var to_a := Vector2(260.0, 0.0)
+	var q_speed: int = fly.call(h1, from_a, to_a, 10, 7)
+	var z1b: VfxZip.Zip = h1.zip.of(0)
+	_check(z1b != null and q_speed >= 20, "speed travel: ghosts and two bands along the path (%d quads)" % q_speed)
+	# Every travel effect is drawn between points: the same zip straight up draws the same, along the vertical.
+	var hv: VfxHub = fresh.call()
+	_tick(S, hv, [lunge.call(0, "lunge_light", "mash", 4, 10, {})])
+	for k in range(4):
+		_tick(S, hv, [])
+	var q_vert: int = fly.call(hv, Vector2(0.0, 0.0), Vector2(0.0, 220.0), 10, 7)
+	var vertical_band: bool = false
+	for q in range(view.count):
+		var o: int = q * VfxShotsView.STRIDE
+		if view._buf[o + 18] == 0.0 and absf(view._buf[o + 4]) > 3.0 * absf(view._buf[o]) and absf(view._buf[o + 4]) > 40.0:
+			vertical_band = true
+	_check(q_vert >= 20 and vertical_band, "straight up draws a vertical band along the path (%d quads)" % q_vert)
+	var hd: VfxHub = fresh.call()
+	_tick(S, hd, [lunge.call(0, "lunge_light", "mash", 4, 10, {})])
+	for k in range(4):
+		_tick(S, hd, [])
+	var q_diag: int = fly.call(hd, Vector2(0.0, 0.0), Vector2(260.0, 200.0), 10, 7)
+	var diag_band: bool = false
+	for q in range(view.count):
+		var o2: int = q * VfxShotsView.STRIDE
+		if view._buf[o2 + 18] == 0.0 and absf(view._buf[o2]) > 40.0 and absf(view._buf[o2 + 4]) > 40.0:
+			diag_band = true
+	_check(q_diag >= 20 and diag_band, "a diagonal draws a slanted band (%d quads)" % q_diag)
+	# Heavy: stretched ghosts and a wide band; it leaves as a speed zip.
+	var hh: VfxHub = fresh.call()
+	_tick(S, hh, [lunge.call(0, "lunge_heavy", "", 4, 10, {"hold": 6.0, "out": 10.0})])
+	for k in range(4):
+		_tick(S, hh, [])
+	var q_heavy: int = fly.call(hh, Vector2(0.0, 0.0), Vector2(260.0, 0.0), 10, 7)
+	_check(q_heavy >= 20, "heavy travel: stacked ghosts and one wide band (%d quads)" % q_heavy)
+	for k in range(9):
+		_tick(S, hh, [])
+	var q_hout: int = fly.call(hh, Vector2(260.0, 0.0), Vector2(0.0, 0.0), 10, 5)
+	_check(hh.zip.of(0) != null and q_hout >= 20, "and it leaves as a speed zip along the way out (%d quads)" % q_hout)
+	# Tech: no travel; echoes pop off along the straight path after the arrival, and again on the way out.
+	var ht: VfxHub = fresh.call()
+	_tick(S, ht, [lunge.call(0, "lunge_light", "timed", 6, 2, {"hold": 14.0, "out": 4.0, "ex": plains - 200.0, "ey": g + 90.0})])
+	for k in range(6):
+		_tick(S, ht, [])
+	fly.call(ht, Vector2(0.0, 0.0), Vector2(260.0, 0.0), 2)
+	var q_t0: int = quads.call(ht)
+	var seq: Array = [q_t0]
+	for k in range(7):
+		_tick(S, ht, [])
+		seq.append(quads.call(ht))
+	_check(seq[0] >= 20 and seq[0] > seq[3] and seq[3] > seq[6] and seq[6] >= 1, "tech: no travel; wire echoes pop off back to front along the path (quads by tick %s)" % str(seq))
+	for k in range(6):
+		_tick(S, ht, [])
+	var z_t: VfxZip.Zip = ht.zip.of(0)
+	var before_out: int = quads.call(ht)
+	var q_tout: int = fly.call(ht, Vector2(260.0, 0.0), Vector2(-200.0, 90.0), 4, 2)
+	_check(z_t != null and before_out == 0 and q_tout >= 15, "and on the way out, along the line to the exit point above and behind (%d quads)" % q_tout)
+	# The outcomes.
+	var hc: VfxHub = fresh.call()
+	_tick(S, hc, [lunge.call(0, "lunge_light", "mash", 4, 6, {})])
+	for k in range(4):
+		_tick(S, hc, [])
+	fly.call(hc, Vector2(0.0, 0.0), Vector2(260.0, 0.0), 6)
+	_tick(S, hc, [outcome.call(1, "lunge_counter", "tech")])
+	_check(hc.zip.of(0).stopped and int(hc.zip.made.get("counter", 0)) == 1, "a counter stops the zip where it is")
+	var q_ctr: int = quads.call(hc)
+	_check(q_ctr == 2, "a tech counter: a hard bar across his path and a diamond (%d quads)" % q_ctr)
+	var hc2: VfxHub = fresh.call()
+	_tick(S, hc2, [outcome.call(1, "lunge_counter", "heavy")])
+	_check(quads.call(hc2) == 3, "a heavy counter: the bar and a double ring")
+	var hk: VfxHub = fresh.call()
+	_tick(S, hk, [outcome.call(1, "lunge_caught", "")])
+	_check(int(hk.zip.made.get("caught", 0)) == 1 and quads.call(hk) == 3, "caught in reach: a closing ring and two brackets (%d quads)" % view.count)
+	var hg: VfxHub = fresh.call()
+	_tick(S, hg, [outcome.call(1, "lunge_guard_broken", "")])
+	_check(int(hg.zip.made.get("gbreak", 0)) == 1 and quads.call(hg) == 5, "guard broken: four fragments and a flash (%d quads)" % view.count)
+	for k in range(20):
+		_tick(S, hg, [])
+	_check(hg.zip.marks.is_empty(), "and the marks are gone in their lives")
+	# Reduced motion: two ghosts and one band; the tech's last echo only.
+	var hr: VfxHub = fresh.call()
+	hr.reduced_motion = true
+	_tick(S, hr, [lunge.call(0, "lunge_light", "mash", 4, 10, {})])
+	for k in range(4):
+		_tick(S, hr, [])
+	var q_red: int = fly.call(hr, Vector2(0.0, 0.0), Vector2(260.0, 0.0), 10, 7)
+	_check(q_red < q_speed and q_red >= 5, "reduced motion: two ghosts and one band (%d quads against %d)" % [q_red, q_speed])
+	# Off draws nothing; the busiest tick fits.
+	var ho := VfxHub.new()
+	ho.press_enabled = false
+	ho.reset(S, 6)
+	_tick(S, ho, [lunge.call(0, "lunge_light", "mash", 4, 10, {})])
+	_check(ho.zip.zips.is_empty(), "press_enabled off: nothing")
+	var hz: VfxHub = fresh.call()
+	_tick(S, hz, [lunge.call(0, "lunge_heavy", "", 4, 10, {}), lunge.call(1, "lunge_light", "mash", 4, 10, {})])
+	for k in range(4):
+		_tick(S, hz, [])
+	f1.x = SimWrap.wrap(plains + 300.0)
+	fly.call(hz, Vector2(0.0, 0.0), Vector2(260.0, 0.0), 10)
+	_tick(S, hz, [outcome.call(1, "lunge_counter", "heavy"), outcome.call(0, "lunge_guard_broken", "")])
+	_check(quads.call(hz) <= VfxShotsView.CAP, "the busiest tick draws %d quads of %d" % [view.count, VfxShotsView.CAP])
+	view.queue_free()
+	SimCore.dispose(S)
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:

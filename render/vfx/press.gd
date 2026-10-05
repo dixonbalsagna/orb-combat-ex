@@ -17,7 +17,7 @@ extends RefCounted
 ## (the fist runs from his guard in front of the chest to the contact point). All of it is drawn by shots_view.gd; presentation only, no random number.
 
 const DEFAULTS: Dictionary = {
-	"press": {"hist": 24.0, "reach": 24.0, "lunge": 12.0, "alpha": 0.9,
+	"press": {"hist": 64.0, "reach": 24.0, "lunge": 12.0, "alpha": 0.9,
 		"speed_life": 8.0, "speed_ring_life": 6.0, "speed_w": 7.0, "speed_ring_r": 20.0,
 		"tech_life": 11.0, "echo_pop": 2.5, "line_life": 7.0, "diamond_life": 5.0, "diamond_r": 14.0,
 		"wind_life": 26.0, "wind_r": 34.0, "heavy_life": 18.0, "ghost_life": 10.0, "crescent_life": 8.0, "ring_life": 12.0, "ring_r": 40.0, "fly_max": 40.0, "fly_ghosts": 3.0,
@@ -149,6 +149,22 @@ static func anim_of(S: SimState, slot: int):
 	if not RenderAnim.press_styles or not RenderAnim.is_enabled() or slot < 0 or slot >= S.fighters.size():
 		return null
 	return RenderAnim.fighter(S, S.fighters[slot])
+
+
+## The style a fighter's next blow would have, read the way style_of reads it (Animation's playing blow, else his press log, else speed): for a zip's cue.
+static func read_style(S: SimState, slot: int) -> String:
+	var af = anim_of(S, slot)
+	if af != null and not af.press.is_empty() and STYLES.has(String(af.press.get("style", ""))) and String(af.press.style) != "block":
+		return String(af.press.style)
+	if slot >= 0 and slot < S.fighters.size():
+		var f = S.fighters[slot]
+		if f.act != null and f.act.dirI.size() >= DirAlchemy.SIZE:
+			match String(DirAlchemy.read(S, f).get("style", "none")):
+				"rhythm":
+					return "tech"
+				"hold":
+					return "heavy"
+	return "speed"
 
 
 static func lane_of(S: SimState, slot: int) -> Color:
