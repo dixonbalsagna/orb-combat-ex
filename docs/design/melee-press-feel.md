@@ -414,7 +414,7 @@ So for a zipper who came in from the rival's left:
 
 **Encounter's stopgap is withdrawn.** It let a fighter on the brink no longer break the rival's run by replying. It made the lights-only mirror finish, with brink to KO at 17.4 s against a band of 30 to 55 s. It also took the trade away from the fighter who most needs it. On the brink he now trades like anyone else.
 
-**What keeps brink to KO in its band.** The trade's limit sets how often a mash against a mash closes, and the close's set-up weight sets how many closes open a fighter on the brink. As built, with the limit at 120 and one fighter making nearly every close, a weight of 0.25 read 34.2 s. With the momentum rule of §9d the weight goes back to 0.5, and the estimate is 36 to 45 s. It is reasoned and not measured.
+**What keeps brink to KO in its band.** The trade's limit sets how often a mash against a mash closes, and the close's set-up weight sets how many closes open a fighter on the brink. As built, with the limit at 120 and one fighter making nearly every close, a weight of 0.25 read 34.2 s. With the momentum rule of §9d I put the weight back to 0.5 and estimated 36 to 45 s. As built it reads 26 to 29 s at any weight from 0.34 to 0.5, so the weight is 0.34 and the mirror's band is re-based to 25 to 50 s (§9e).
 
 **Data:** `flurry.runToClose` 4, `flurry.replyTakes` 1, `flurry.runLapseTicks` 24, `flurry.tradeMaxTicks` 120, `flurry.staggeredAddsRun` false, `flurry.levelWithin` 1 and `flurry.momentum` 0.9. The AI's tap interval at each difficulty is a lever for the masher bands, because the faster tapper closes.
 - **The look** (Orb): the impact lands on the trigger, with a fluid after-image blur.
@@ -547,9 +547,9 @@ The player owns **when** each blow happens and **what kind** it is. The director
 | A trade that isn't broken on the tick of its limit | Never (a hard test) |
 | From a trade's break to its close, or to the trade's end | At most 24 ticks |
 | Lights-only mirror: matches finished before the cap | At least 95% |
-| Lights-only mirror: brink to KO, median | 30 to 55 s, kept. The first lever is the trade's clock |
-| Lights-only mirror: share of closes made by the fighter on the brink | 10 to 40%. It was 35 to 65%, which assumed closes shared evenly, and the set-up rule needs runs of them (§9d) |
-| Lights-only mirror: matches won from the first slot | 40 to 60% |
+| Lights-only mirror: brink to KO, median | 25 to 50 s. It was 30 to 55 s, set for the exchange model (§9e) |
+| Lights-only mirror: share of closes made by the fighter on the brink | Reported. Retired as a band: the state it is counted in selects for his closes (§9e) |
+| Lights-only mirror: matches won from the first slot | 40 to 60%, read on 200 matches |
 | An even mash: level trades that change who has the momentum | 5 to 15% |
 | A masher tapping every 8 ticks of `S.tick` against the medium AI | 35 to 50% |
 | A faster masher against a slower one (6 ticks against 12): closes a minute | Reported, as the cost of tapping slowly |
@@ -562,11 +562,11 @@ QA re-based the rows that were counted for each exchange (`docs/qa/brawl-rebase.
 | :--- | :--- | :--- |
 | **Perfect blocks for each 100 blows thrown,** by the easy, medium and hard AI. It was for each 100 melee exchanges, at 3 to 8, 5 to 15 and 12 to 20 | **1.3 to 3.5, 2.2 to 6.5 and 5.2 to 8.7** | Confirmed: the old bands divided by an exchange's old 2.3 blows. QA also reports the split, against heavies and against lights, with no band yet. A heavy has a wind-up to read, and a light doesn't |
 | **Brawls a minute, and blows a minute.** It was exchanges started a minute, 15 to 28 | Reported | Confirmed. The old row is retired when the planned exchange is gone |
-| **Share of fight time in a brawl** | 45 to 60%, by the last brawl slice | Confirmed |
+| **Share of fight time in a brawl** | 45 to 60% for a pressing player, and 30 to 50% for the AI against itself, by the last brawl slice | Confirmed, and the AI's share re-based in §9e: it now fires too often to brawl for half the fight |
 | **A brawl's median length** | **2.5 to 6 s** | **Corrected.** QA proposed my 6 to 12 s. That was set when a knock-back drew the fighters back together by itself. Orb removed that (questionnaire 17), so a brawl ends with its string's ender, and one string is 3 to 5 blows and a heavy |
 | **Blows in a brawl, median** | 10 or more, both fighters counted | Confirmed |
 | **After a knock-back, the time to the next brawl, lunge, zip or shot** | A median of at most 2 s, and a 90th percentile of at most 4 s | **New.** With shorter brawls, this is the row that checks there is no downtime after three to five blows |
-| **Of the brawl endings that separate the fighters** (a knock-back or a launch) | **Knock-backs 60 to 75%, launches 25 to 40%** | **Corrected** from 55 to 75%. The two shares add up to 100, and the launch share of separations keeps its band |
+| **Of the brawl endings that separate the fighters** (a knock-back or a launch) | **Knock-backs 60 to 75%, launches 25 to 40%, read from B2** | **Corrected** from 55 to 75%: the two shares add up to 100. Until flow is earned in a brawl an ender rarely launches, so the row waits for B2 (§9e) |
 | **"The brawl continues"** | Retired in a brawl | Confirmed. A brawl continues until it ends. The old row stays for the planned exchanges that remain |
 | **Strings in a brawl, and closes a minute.** It was chains for each 100 exchanges | Reported | Confirmed. One limit, from §9d: no fighter is closed on more than about 33 times a minute |
 
@@ -816,6 +816,47 @@ Two causes. Every melee blow was re-valued by its form and shots weren't, so a t
 **The trade's limit, for QA.** The longest trade read 132 ticks with the limit at 120, because the close comes with the chosen fighter's next blow that lands. That is the rule working. The row now reads: **the trade breaks on the tick of its limit** (a hard test on the `trade_break` event), **and from the break to the close, or to the trade's end, is at most 24 ticks.**
 
 **Not ruled, and why.** Timed against plain read 0 of 40 because QA's timed script is blind in a brawl, and there is no beat point until B2. The perfect blocks at 17.9 for each 100 exchanges are counted against exchanges, and a brawl is one exchange with many blows: that row needs counting by blows, which is QA's to re-base.
+
+### 9e. Rulings on Encounter's slice of rulings 3 to 5 (2026-10-05)
+
+Encounter built rulings 3 to 5 of §9d (`docs/director/brawl-b1b.md`). Most rows are in band: match length (434 and 464 s), the 8-tick masher (88, 37 and 0), blasts' share (11.8%), the mood, level trades changing hands (10.6 and 10.3%), the time from a knock-back to the next engagement (a median of 0.98 s), a pressing player's brawls (3.9 s, 63 blows, 54.1% of fight time), and the AI's heavy after a close (it reaches the rival 284 times in 289).
+
+**Where Encounter left my numbers, and whether that stands:**
+
+| Key | I ruled | Built | Ruling |
+| :--- | :--- | :--- | :--- |
+| `brawl.damageMul` | 0.30, as B1 had it | 0.38 | **Accepted.** It is the lever for match length, and length is in band with it |
+| `setup.weight.blurPlain` | 0.5 | 0.34 | **Accepted.** See the mirror, below |
+| Medium `brawl.rashHeavy` | Not ruled | 0.33 | **Accepted.** It holds the masher's band |
+| `vsShooter.enderShare` | 0.5, 0.2, 0.1 | 0.5, 0.45, 0.3 | **Accepted for now.** My shares stopped shooters winning at all. Looked at again after Simulation's slice |
+| `vsShooter.heavyApproachShare` | 0.2, 0.6, 0.9 | 0.05, 0.1, 0.3 | **Accepted for now,** and for the same reason. The rule stands, and my numbers were far too strong |
+| Medium `barrageGuard` | 0.42 | 0.05 | **Accepted until Simulation's slice, and no longer.** It was lowered because a guard soaked every blocked shot. Once a blocked shot reaches the core it goes back up. Medium must not guard a barrage less than easy does |
+| `blastShare` | 0.2, 0.4, 0.5 | 0.3, 0.55, 0.65 | **Accepted.** It is the lever I named for blasts' share of damage |
+
+**1. The lights-only mirror.** Brink to KO reads 26.1 and 28.8 s against 30 to 55 s, at every value in the ranges I gave. The momentum doesn't move it.
+- **The band is re-based to 25 to 50 s.** The old one was set for the exchange model. In the brawl, closes between two even mashers come at a fixed pace, about one every 2.3 s, and six of them open a fighter. So a brink with no defence in it runs about 25 to 30 s by construction. A floor of 25 s still catches what the row is for: the 17.4 s of the first stopgap, and a mirror that never ends.
+- **The weight stays at 0.34.** Taking it to 0.25 for 2 or 3 more seconds would make every flurry's close matter less in real play. The brink's length in real matches is guarded by the main row, brink to KO at 45 to 90 s, which reads 60.4 s.
+- **The share of closes made by the fighter on the brink is retired as a band,** and stays as a reported number. It read 48.8 and 70.3% against 10 to 40%. Encounter's reading is right: the state it is counted in lasts longest when the fighter on the brink holds the momentum, so the row mostly counts his closes. The checks for a fair mash are the other two rows, and both pass: level trades that change hands, and wins from the first slot.
+- **Wins from the first slot are read on 200 matches.** On 60 the row is good to about 13 points.
+
+**2. The AI against itself.** Its brawls last a median of 1.7 s and take 17.3% of fight time, and nothing is running for 19.9 s a minute. A pressing player's brawls are in band, so the brawl works. The AI's use of it is the problem, and it matters, because an AI match is the first thing a visitor sees.
+
+Why they are short: the AI ends a string with an ender whenever two blows have landed, and an ender knocks back. And a reversal or a perfect block still plays its old template and ends the brawl: those are 37% of the AI's brawl endings.
+
+- **The AI closes fewer strings with an ender.** After two landed blows it throws the ender at a share by level. Otherwise it keeps tapping to the flurry's close, or drops into a guard for 20 to 40 ticks and goes again. Both keep the brawl together. Data: `brawl.enderShare` 0.6, 0.4 and 0.35 for easy, medium and hard.
+- **It weighs a reversal half as often,** as a stopgap: `aiReversalEveryTicks` 240, from 120.
+- **To build, after B2: a perfect block and a reversal resolve inside the brawl.** The perfect block staggers the attacker in place and the riposte is the blocker's next blow. The reversal's heavy lands as a brawl heavy. Neither ends the brawl. This is §6 and §2 as written; B1 kept the old templates as a shortcut.
+- **The band for the AI against itself is re-based: 30 to 50% of fight time in a brawl,** where a pressing player keeps 45 to 60%. The AI now fires more than half as often as it attacks, which is how blasts' share is held, so it can't also brawl for half the fight. The median brawl stays at 2.5 to 6 s for both.
+- **For the demo, before the last brawl slice:** a median brawl of at least 2.5 s, at least 30% of fight time in a brawl, and nothing running for at most 15 s a minute.
+- Fewer enders means fewer decisive exchanges, so match length has to be read again with this. `brawl.damageMul` is still its lever.
+
+**3. Brawl endings that separate** read 87% knock-backs and 13% launches, against 60 to 75% and 25 to 40%. **No change, and the row is read from B2.** In a brawl only an ender reaches a launch decision, and until flow is earned in a brawl an ender launches only when it is held to full. The standing row, launches of the exchanges that separate, reads 31.9% and is in band.
+
+**What waits for Simulation's blocked-shots slice,** and isn't touched now:
+- the mixed blaster (28 of 100) and bolt-only (8 of 100). Both should rise when a blocked shot reaches the core;
+- then, in this order: medium's `barrageGuard` back up to at least easy's 0.2, starting at 0.3; `vsShooter.heavyApproachShare` back toward 0.2, 0.4 and 0.6, as far as the shooters' bands allow; and the final `block.shotArmShare`;
+- **the acts.** Acts 2 and 4 start at 66 and 250 s, against 90 to 150 s and 270 to 345 s, because the forms come about a quarter early. The lever is the ladder's `chargePerSec`: 0.4, from 0.5, as a start. It is Simulation's data and can go in the same regeneration;
+- **KAI at 55.5%.** It is half a point out on 100 matches an arm, which is good to 7 points. Nothing in this slice is by fighter. Read it on the next full baseline.
 
 ## 10. Stances and the face buttons
 
