@@ -2,6 +2,8 @@
 
 Status: draft for Orb and the EP, not reviewed by Legal. Nothing here has been posted, registered, bought or sent to anyone. Written 2026-10-05 by Marketing. Not legal or financial advice.
 
+Built inside Legal's `docs/legal/go-to-market.md` (RL-088). Where the two differ, Legal's wins. The draft store copy, tags and keywords, capsule art and trailer plan, planned testimonials and the full claims list are in `docs/marketing/store-copy-draft.md`.
+
 Every number has a source link in section 15, or says "estimate". An estimate is my judgement, not a measurement, and no number here is a promise of results. Wording you may later show the public is marked **[proposal]** and goes to Legal before use. "[Title]" stands for the game's public title, because the current one is conditional (section 3).
 
 ## 1. One-page summary
@@ -25,9 +27,9 @@ Every number has a source link in section 15, or says "estimate". An estimate is
 
 **What is blocked today, and by what.**
 - **The title clash** (the small OrbCombat project, same name, same engine) blocks every public page that carries the title: itch.io, Steam, social handles, domains, a trailer.
-- **The licence** blocks making the repo public, any "free and open source" claim, taking tips or sales, and the Steam page.
+- **The licence** blocks making the repo public, any "open source" wording, taking tips or sales, and the Steam page. Legal recommends MIT code with art, music, dialogue, data and the name reserved, plus a plain permission to play, mod, stream and make fan work (its shape A).
 - **Placeholder names in the live build** (the hero is still KAI, a NO-GO name, review-log RL-002) block public clips and promotion of that URL.
-- **AI-disclosure wording** (Legal is writing it) blocks every public page.
+- **AI-disclosure wording** blocks every public page until the final text is the same everywhere. Legal's text is in `docs/legal/go-to-market.md` section 1 and is used as written (section 4 below). Steam and itch.io both require the disclosure, and itch.io leaves untagged AI projects off its browse pages.
 - None of these blocks Stage 1a, which is friends playing and talking.
 
 **What I would do this week.** Nothing public. Send the live link to five friends, ask each to play two matches, and ask three questions (section 11). That is two to three hours.
@@ -54,7 +56,7 @@ What this means for you:
 
 ## 3. Positioning
 
-**Two sentences [proposal].** [Title] is a free, in-browser energy brawler where every button press is a blow and a fight leaves the world wrecked: buildings break in stages and the planet has no edges. It is made by one person directing AI tools, and its fighters, names and world are all its own. [homage line: Legal proposes, Orb decides]
+**Two sentences [proposal].** [Title] is a free, in-browser energy brawler where every button press is a blow and a fight leaves the world wrecked: buildings break in stages and the planet has no edges. It is made by one person, Orb, working with AI tools, and its characters, names and world are all its own. [homage line: Legal proposes, Orb decides]
 
 **Three hooks, true on the live build as of this draft (verify each one on the build before it is used):**
 1. **A planet with no edges.** Fly one way and you come back round. Evidence: `docs/design/pillars.md` pillar 1; the seam tests in `qa/`.
@@ -65,7 +67,10 @@ The call to action is always the same: **play it free in your browser, no instal
 
 **What I will not say:**
 - Not "spiritual successor", not any franchise or fan-game name, and no franchise words in tags, keywords, repo topics or hashtags (`docs/legal/originality-rules.md`, "Words we use in public"). Describe the genre in plain words: energy brawler, flying fighter, side-on fighter.
-- Not "handcrafted", "hand-drawn", "human-made", "passion project crafted by artists", or "no AI". Nothing is called human-made unless the asset log says so.
+- Not "handcrafted", "hand-drawn", "human-made", "composed by", "AI-free", "no AI", or "created by Orb" for anything a tool made. Say "directed by Orb". Nothing is called human-made unless the asset log and the store text say so.
+- No implied endorsement by Valve, itch.io, Sony, Microsoft, Nintendo, Godot, Anthropic or Suno. Platform logos only as their brand rules allow. "Steam Deck Verified" only after the badge is awarded.
+- Not "open source" for the whole project. At most "open-source code", and only under Legal's shape A or C.
+- Not "clone", "tribute" or "parody" in store text, and no "like", "inspired by" or "for fans of" followed by a franchise or character name, in text, tags or keywords.
 - Not anything not yet in the build: online play, twelve fighters, consoles, a story mode. The roster of twelve is a plan, not a feature.
 - Not balance numbers as promises.
 
@@ -79,24 +84,24 @@ The call to action is always the same: **play it free in your browser, no instal
 | Every press is a blow | melee-press-feel.md | live now? (verify) | unreviewed |
 | Two fighters today | live build | live now | unreviewed |
 | Five stances | ui/data/stances.json, live HUD | live now (verify) | unreviewed |
-| Made by one person directing AI; code, art and music are AI-generated | asset-origins.md | live now | unreviewed, wording is Legal's |
+| Made by one person, Orb, working with AI tools (Legal's statement, as written) | docs/legal/go-to-market.md section 1; asset-origins.md | live now | wording is Legal's, to confirm facts |
 | Four fighters, music, controller play | roadmap P4 and P5 | not yet | do not claim |
 | Online play, consoles, a campaign | open-questions.md Q9, Q10 | not yet | do not claim |
 
 ## 4. AI disclosure: wording and where it appears
 
-Legal is writing the final wording. This is my proposal for what it should achieve, so Legal can start from it.
+The wording is Legal's, from `docs/legal/go-to-market.md` section 1. I use it **as written**, with no shortening or rewording, and the same text everywhere. Brackets are facts for Orb to confirm. If a tool is added later, every place changes the same day. Never write "no AI".
 
-**One line [proposal]**, used wherever space is short:
-> Made by one person, Orb, directing AI tools. The code, art and music are AI-generated.
+- **Store page short form** (Steam "About This Game", the itch.io description, video descriptions, devlog footers, creator messages):
+  > **How this game was made.** Orb Combat EX is made by one person, Orb, working with AI tools. AI tools wrote the game's code and drafted its art, animation data, dialogue, UI text and design documents. The music was generated with Suno. [There is no voice acting.] Nothing in the game is generated by AI while you play. Orb directs the project, makes the creative decisions, edits the dialogue by hand, and tests and plays the game. No part of this game is described as human-made unless this page says so.
+- **README and credits, long form:** Legal's "Made with AI" paragraph, copied from its section 1.
+- **Credits roll, one line each:** "Direction and editing: Orb. Code, art data, dialogue drafts and design documents: Claude (Anthropic). Music: generated with Suno."
+- **The title inside the text** follows the title decision. Until then the draft keeps "[Title]".
 
-**The paragraph [proposal]**, used on store pages:
-> How this game was made: [Title] is made by one person, Orb, who directs AI tools to build it. The code was written by Claude (Anthropic) under Orb's direction. The art and animation are AI-generated. The music is made with an AI music tool [tool name: Audio to confirm, Legal to clear]. Sound effects are synthesised by code written with AI assistance. Orb decides what the game is, what stays in it and what is cut, and tests it with friends. No generative AI runs while you play.
-
-The facts in it must match `docs/legal/asset-origins.md` on the day it is published. If Orb hand-edits dialogue (the voice lab), the paragraph may say so only once the log says so. Never describe anything as human-made unless the log does.
+The facts must match `docs/legal/asset-origins.md` on the day of publishing, and the music line needs Suno's paid-plan records (Legal section 5).
 
 **Where it appears:**
-1. The first line of the itch.io description, plus itch.io's own generative-AI field.
+1. The first lines of the itch.io description, plus itch.io's generative-AI field, ticked Yes for graphics, sound, text and dialogue, and code.
 2. Steam's content survey (pre-generated AI content: yes; live-generated: no), plus the first paragraph of the Steam "About" text.
 3. In the game: an About or Credits screen reachable from the title screen (UI to confirm it exists; the live build I viewed shows no such line).
 4. The README, and the first screen of the repo.
@@ -160,7 +165,7 @@ Numbers are estimates unless a source is given. They are set so that hitting one
   - the verified identity and tax details Steam requires (`docs/legal/pre-store-checklist.md` section 5);
   - the AI survey answered;
   - counsel's read of the store text (`licence-recommendation.md` section 9).
-- **Facts:** Steam's page review takes about 3 to 5 business days (ask for 7), and a new game must show a Coming Soon page for at least 2 weeks before release.
+- **Facts:** Steam's page review takes about 3 to 5 business days (ask for 7; Legal read 1 to 5). A new game must show a public Coming Soon page for at least 2 weeks before release, and **there are 30 days between paying the fee and being allowed to release** (Legal section 6). Identity, tax and bank setup is free and can start earlier. Paying the fee starts the 30-day clock, so no demo, Next Fest or launch date can be earlier than 30 days after payment.
 - **Do:** open the page early, add the free-browser link and a "Play now in your browser" line, and send itch followers to the wishlist button.
 - **Hours:** 4 to 5 a week.
 - **Move on when (about 12 weeks after the page opens):** 1,000 wishlists. For scale, a commonly cited "healthy launch" is 7,000 to 10,000 wishlists, which you are unlikely to reach.
@@ -215,14 +220,14 @@ The rhythm is by week since you started a stage, not by date. Real dates start w
 **Capture checklist (before anything is posted):**
 1. No franchise names, imagery or sounds, in the clip or the caption.
 2. No placeholder names showing (the KAI hold, RL-014, until Legal lifts it).
-3. The AI line is in the caption or the first comment.
+3. Legal's AI statement (short form, unchanged) is in the caption, description or pinned comment.
 4. No unreleased feature is implied.
 5. Legal has seen the template at least once; after that each clip follows the template.
 6. Nothing is posted in a community whose rules you have not read that day.
 
 ## 8. Pricing options
 
-Selling an open-source game has a catch. Under MIT and CC BY, **anyone can copy, build and sell the game**, including a copy of yours (`docs/legal/pre-store-checklist.md` section 6). What protects you is the trademark (the title and logo), being the original, being where the updates come from, and the store page. You are also reconsidering the licence, so this section may change with that answer.
+Selling an open-source game has a catch, and Legal has named it (`docs/legal/go-to-market.md` section 3). The current plan (MIT code, CC BY 4.0 content) lets **anyone sell the game's art, dialogue and data** with a credit, which defeats paid builds. Legal recommends **shape A**: MIT code, with art, music, dialogue, data and the name reserved, plus a plain permission to play, mod, stream and make fan work, and the official builds sold as the convenient, supported version. Its fallback is shape B (source-available, so not "open source"). Under any shape, AI-made parts may have no copyright, so a copy of them cannot always be stopped. The real protection is the name (trademark), being the official build, updates and the community. Do not call the game "open source" in store text; at most "open-source code" under shape A or C.
 
 | Option | What it means | Likely money (estimate) | Trade-offs |
 |---|---|---|---|
@@ -274,7 +279,16 @@ Stay free if any of these is true when you reach the Stage 2 decision:
 
 Add one for two-player sessions: "Did you and the other player both feel in control?"
 
-**What to say to friends:** "Tell me what you really think. I am not asking for stars or for you to post anything. If you do post a review anywhere, say you know me." Never ask for a positive review, never offer anything for one, and never use fake or friend accounts to inflate numbers. Steam has rules on this; read its current review rules before launch.
+**What to say to friends:** "Tell me what you really think. I am not asking for stars or for you to post anything. If you do post a review anywhere, say you know me." Never ask for a positive review, never trade keys, gifts or favours for one, and never use fake or friend accounts to inflate numbers.
+
+**Testimonials (Legal section 7; the US FTC reviews rule):**
+1. Real quotes only, from people who really played it, and not only the flattering ones.
+2. A friend's quote may appear in marketing only if the connection is stated ("a friend of the developer"). It is never presented as an independent review.
+3. Get permission, quote exactly, keep the message.
+4. A review written from a free key is fine if the reviewer says so and was told nothing about what to write. Steam labels keyed reviews.
+5. Word of mouth is not a quote. "Friends are excited" never becomes "players love it".
+
+No testimonials are planned today. The log in `store-copy-draft.md` stays empty until real quotes exist.
 
 **Free tools worth using:** Steam Playtest (a free Steamworks feature using a separate test app, which needs a store page) and Steam keys for creators.
 
@@ -293,7 +307,7 @@ Consoles are later and cost money, and Platform's companion piece owns the facts
 |---|---|---|
 | **Hostility to AI-made games** | Negative comments, review bombing, being blocked or muted in some communities, fewer reviews | See "Responding without arguing" below. Plan for a lower reach, and keep the disclosure first and plain |
 | **Title clash** | A rename after an audience exists wastes the promotion | Settle it before any public page; do not buy a domain or handle until then |
-| **Licence** | Others can sell copies; "free and open source" claims may become false if you change licence | Settle first; no money until Legal clears it |
+| **Licence** | The current CC BY 4.0 content licence lets others sell the assets; "open source" wording can become false | Settle first (Legal's shape A); no money until Legal clears it; no "open source" in store text |
 | **The live build is reachable now** | The GitHub Pages URL shows KAI and VORR to anyone who finds it, against Legal's public-readiness item M7 | EP to ask Legal and Orb whether the URL should be unlisted until the rename lands |
 | **Franchise comparisons** | Commenters will use franchise names | Never use them yourself, do not argue comparisons, and keep every public line to our own words (`originality-rules.md`) |
 | **Content depth** | Two fighters reads as thin at a price | The Stage 2 game condition |
@@ -322,7 +336,7 @@ Three replies you can adapt:
 One question each. My recommendation follows.
 
 1. **The title clash:** do you contact the OrbCombat author, add a distinguishing word, or choose another title? (Blocks every public page. Recommend: decide this first; it is the cheapest to settle before an audience exists.)
-2. **The licence:** keep MIT and CC BY, keep the code MIT with the art and audio all rights reserved, or stay private until release? (Blocks the repo, tips, sales and Steam.)
+2. **The licence:** do you take Legal's shape A (MIT code; art, music, dialogue, data and the name reserved, with a plain permission to play, mod, stream and make fan work)? (Blocks the repo, tips, sales and Steam. Legal's fallback is shape B, source-available.)
 3. **Who is named on the stores and in the licence files:** your legal name, "Orb", or a project name? (Steam and itch.io payouts need a real person or entity either way.)
 4. **Are you willing to spend Steam's $100 fee, but only after the Stage 1b number is hit?**
 5. **How many hours a week can you honestly give: 2, 4 or 6?** (This sets how many channels we use.)
@@ -349,6 +363,8 @@ One question each. My recommendation follows.
 **AI sentiment**
 - [Quantic Foundry, December 2025](https://quanticfoundry.com/2025/12/18/gen-ai/). I could not open the page directly (it returned an access error); the sample size and percentages come from search-result summaries of it.
 - [PC Gamer on the AI-disclosure review study](https://www.pcgamer.com/software/ai/data-analyst-finds-ai-stigma-on-steam-can-reduce-the-number-of-reviews-a-game-gets-by-around-53-percent-and-the-reviews-it-does-get-are-more-negative/). It measured reviews, not sales.
+
+**Legal's companion piece:** `docs/legal/go-to-market.md` (RL-088), sections 1, 3, 4, 6 and 7, which this plan follows. Its sources are listed there, with how well each could be read.
 
 **Project files** (all read 2026-10-05): `CLAUDE.md`, `docs/ep/vision.md` (section "going to market"), `docs/ep/orb-review-list.md`, `docs/legal/pre-store-checklist.md`, `licence-recommendation.md`, `originality-rules.md`, `review-log.md`, `name-screening.md`, `public-readiness-edits.md`, `asset-origins.md`, `docs/design/open-questions.md`, `docs/decisions/0005-lean-team-and-token-discipline.md`, and the live build at https://dixonbalsagna.github.io/orb-combat-ex/play/ (viewed in the browser pane: a side-on fight with five-stance HUD; fighters still named KAI and VORR; no AI line visible on the first screen).
 
