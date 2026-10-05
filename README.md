@@ -6,7 +6,7 @@ A free fighting game about wrecking a planet. No combo lists: pick a stance and 
 
 Every fighter, move and planet here is original. **Licence:** not chosen yet, so all rights are reserved for now. Please do not copy or redistribute this code or content until a licence is added. You may play the hosted build. "Meridian" is the team's internal codename.
 
-**Privacy.** This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button opens a public GitHub issue page only when you click it.
+**Privacy.** This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game.
 
 ## What's here
 - `CLAUDE.md` project brief, loaded by every Claude Code session in this folder

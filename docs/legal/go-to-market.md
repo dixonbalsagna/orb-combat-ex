@@ -233,7 +233,8 @@ Platform read the code (no analytics, accounts, crash upload or network calls) a
 - **The feedback panel** opens a prefilled GitHub "new issue" page in the player's own browser **when they click**, with a body they can read first. The game sends nothing. This is a user-initiated link to a third party, not collection by us. **Conditions:** the prefill holds no personal data (the user-agent and display scale are device facts, not identity); the panel says plainly that **a GitHub issue is public** and to leave out personal details; GitHub's own privacy policy applies from that click.
 - **The web build reads the user-agent and display scale locally** to lay out the interface and fill the issue text. They stay on the device unless the player submits the issue. Fine.
 - **Hosting:** GitHub Pages logs visitors' IP addresses on its own servers and we cannot turn that off. That is the host's collection.
-- **The line to publish (README and store page):** "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button opens a public GitHub issue page only when you click it." Use "collects and sends nothing" for the game, never "no data is collected anywhere". Re-check with a network log before each store build, as Platform proposes. If an analytics tool, an account, a crash upload or online play is added, section 6's privacy rules apply.
+- **Superseded by 11.3: the line depends on the feedback target in use (today it is "none": the button copies a report to the clipboard and nothing opens on GitHub).**
+- **The line to publish when the target is GitHub (README and store page):** "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button opens a public GitHub issue page only when you click it." Use "collects and sends nothing" for the game, never "no data is collected anywhere". Re-check with a network log before each store build, as Platform proposes. If an analytics tool, an account, a crash upload or online play is added, section 6's privacy rules apply.
 
 ### 9.2 Console and Steamworks SDK terms against shape A (and B)
 | | Finding | Source and grade |
@@ -353,6 +354,33 @@ Confirmed 2026-10-05 from GitHub: `dixonbalsagna/orb-combat-ex`, public, no lice
 4. **Keep the repository description and topics free of franchise words** (they are empty now: good).
 5. **No tips, sales or promotion** from the repo until the licence, the title and the names are settled.
 6. **Know what is public:** every committed document is public, including Orb's verbatim notes in `docs/ep/vision.md`, the director charters, and my screening notes that name franchises as analysis (public-readiness items S3 and S5, which I advised keeping). Orb's private notes are in the git-ignored `.private/` and are not in the repo. Counts today outside `docs/legal`: franchise names in 4 files, a fan game's name in 5, a web series' name in 2, with 0 hits for the old repo name. Marketing should not link to those documents from a devlog. The history is public too, so the "fresh history" option in `public-readiness-edits.md` no longer applies.
+
+## 11. The live site and the capture hold (2026-10-05, evening)
+
+Read: the landing page and play page HTML as served, the first screen of the play page, the About text and privacy text in the build's data (`ui/data/howto.json`, `ui/data/send.json`, `ui/data/feedback.json`, `ui/widgets/ui_feedback.gd`), and commits 4bc9497 and b63ae0e. I did not play a match.
+
+### 11.1 The capture hold
+- **Names:** the display switch is live (PROTAGONIST, RIVAL, a CPU tag, "Computer vs computer demo"). The **titles and signature names** (Martial Artist, Challenger, Keeper's Lance, The Barrage, FIELD SCAR) are generic descriptive words with no franchise or conflict I can see (read, not searched). They **do not count as placeholder names for the hold.** If Narrative renames them later, old clips simply date; that is not a legal matter.
+- **Ruling: private capture may start now,** with one rule: **recapture any scene that shows an old title or signature name** (anything with "Meridian", "Calamity" or "MERIDIAN SCAR") once 4bc9497 is live. Check each file by eye before it is stored.
+- **Publishing stays held** until: the **title is decided** (Orb, section 4), Marketing has made the store-copy edits (`store-copy-screen.md`), and I have reviewed each asset. A clip that shows the working title "Orb Combat EX" may not be published.
+- **Still to check if it appears in a clip:** the rival's **On the Chin** move and its bravado line. The exact-phrase search of the line noted in RL-041 has not been run.
+
+### 11.2 The landing page
+The committed text (b63ae0e: "Free to play. The build runs in your browser. Built with AI tools under one person's direction; licence not chosen yet, all rights reserved for now.") is **true and clear**. My preferred line, for a tidier read and a link to the full statement:
+> **Free to play. The build runs in your browser. Built with AI tools under one person's direction (the About page in the game has the whole story). Licence not chosen yet: all rights reserved for now, so please do not copy or redistribute it.**
+Label the GitHub link **"Source code (all rights reserved for now)"**.
+
+### 11.3 What else must change before Stage 1b
+1. **The privacy line is not true today.** The build's feedback target is `none`: the SEND button is hidden and COPY REPORT puts a plain-text report on the player's clipboard. **Nothing opens on GitHub.** So "The feedback button opens a public GitHub issue page only when you click it" (README, the About page, `hud_check.gd`, my 9.1 line, the store copy) is wrong. Use the line for the target in use:
+   - **none (today):** "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game."
+   - **github:** "...The feedback button opens a public GitHub issue page only when you click it."
+   - **mailto or form:** "...The feedback button opens a private email or form only when you click it. What you send reaches Orb only: please leave out personal details." Under these two targets the sender's **email address or form answers reach Orb**, so a short privacy notice is needed (who, why, how to ask for deletion) and the stored answers are deleted after use (10.5).
+   The line in the build must change with `_target`; ask UI to key it to the target as data, so it cannot drift again.
+2. **Third-party notices are not in the About pages.** Godot (MIT) requires its copyright and licence notice to ship with the game, and Open Sans (OFL-1.1) requires its notice. Add both to "Licence and privacy" (Godot's text is in its own "Licences" listing; `licence-register.md` has the rows). This is a **Must** before Stage 1b.
+3. **The working title** is on the page title, the landing page and two UI lines, and in the feedback report heading: Orb's open decision (section 4). Nothing else in 1b can finish before it.
+4. **Source files in the public repo** still carry KAI, VORR and "Meridian" (fighter ids, `project.godot`'s first comment, QA labels): public-readiness S4, a Should, not visible to a player.
+5. **Music and voice sentences** stay behind their flags until music ships and Orb confirms there is no voice acting.
+6. **`noindex`:** no longer needed for the names. Add it only if Orb wants the page kept out of search results under the disputed working title until the decision.
 
 ## Sources and how well I could read them (all read 2026-10-05)
 - **Primary:** [Steam Direct](https://partner.steamgames.com/steamdirect) (fee, tax, bank, identity, waits); [Suno terms](https://suno.com/terms) (effective 2026-09-03) and [Suno pricing](https://suno.com/pricing); [US Copyright Office, AI report Part 2 notice](https://copyright.gov/newsnet/2025/1060.html) (2025-01-29); GitHub and store search APIs for OrbCombat and the title.
