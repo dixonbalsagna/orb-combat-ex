@@ -240,3 +240,7 @@ A note only: what VFX will draw for World's `building_stage` event (glass shower
 ### Building stages built (2026-10-05)
 
 World's `building_stage` event drawn: the union of the steps a jump crosses (glass, a shed of cladding panels and a dust skirt, a belch of smoke at a shell), the whole tick's events read first (the floors' own burst dedupes the small shed), nearest-fighter first with a per-tick budget so 69 events in a tick stay inside the pool, and a shell smoking by state. `render/vfx/stages.gd`; docs/vfx/building-stages-plan.md ("Built"); `effects_check.gd` `_stages()` and `_real_stages()`.
+
+### The intro's thin vertical line (2026-10-05)
+
+A thin pale vertical line stood 90 to 320 px beside each falling fighter in the played intro, from the sky down to the ground. It was a **wind mark** (`trail_state.gd`): marks are lens-shaped dashes fixed in the world for a camera that flies past, spawned 0.7 to 5 body heights to the side of the flight and up to 30 body heights long; the intro's scripted drop (fighter state `intro`) does not fly the camera past, so each mark stood beside the faller as a pole. They are no longer made while a fighter is in the intro state (the random draws are still made, so the stream does not change); the fall's ribbon and the landing are unchanged. `effects_check.gd` `_intro_marks()` fails before (10 marks at once in seeds 1 and 12) and passes after (0); still `img/intro-fall-no-line.jpg` (seed 1, the double drop).

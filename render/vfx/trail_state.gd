@@ -124,7 +124,9 @@ func step(S: SimState, f, dt: float, rng: SimRng, quality: int, reduced: bool) -
 		var r4: float = rng.next()
 		var r5: float = rng.next()
 		var cap: int = VfxLook.MARKS_BY_QUALITY[clampi(quality, 0, 2)]
-		if not reduced and marks.size() < cap and r0 < VfxLook.MARK_P * k:
+		# Not in the played intro's scripted drop: wind marks are fixed in the world for a camera that flies past, and the drop's camera does not, so each one stood
+		# beside the falling fighter as a thin pale vertical line from the sky to the ground. The draws above are made all the same, so the stream does not change.
+		if not reduced and f.state != "intro" and marks.size() < cap and r0 < VfxLook.MARK_P * k:
 			var ahead: float = lerpf(VfxLook.MARK_AHEAD_MIN_BH, VfxLook.MARK_AHEAD_MAX_BH, r1) * VfxLook.BH
 			var off: float = lerpf(VfxLook.MARK_OFF_MIN_BH, VfxLook.MARK_OFF_MAX_BH, r2) * VfxLook.BH * (1.0 if r3 < 0.5 else -1.0)
 			var perp := Vector2(-dir.y, dir.x)

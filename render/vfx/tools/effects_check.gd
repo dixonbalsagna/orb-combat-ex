@@ -186,6 +186,7 @@ func _run() -> void:
 	_earth()
 	_trails()
 	_intro()
+	_intro_marks()
 	_rocks()
 	_rocks_world()
 	_blast()
@@ -3486,6 +3487,36 @@ func _real_stages() -> void:
 	var tot_e: int = int(h.stages.made.get("events", 0))
 	_check(tot_e > 0 and max_bits <= VfxLook.DEBRIS_CAP, "a real match (seed 12345, 16000 ticks): %d building_stage events read, steps %s, busiest tick %d, glass %d, sheds %d, plumes %d; the pool never past its cap (%d of %d)" % [tot_e, str(steps), busiest, int(h.stages.made.get("glass", 0)), int(h.stages.made.get("shed", 0)), int(h.stages.made.get("plume", 0)), max_bits, VfxLook.DEBRIS_CAP])
 	SimCore.dispose(S)
+
+
+## The intro's fall (the played entrance): a scripted drop is not a flight past the camera, so it leaves no world-fixed wind mark (a thin pale vertical line standing 90 to 320 px
+## beside the falling fighter, from the sky to the ground), and the other fighter's drop leaves none beside the first.
+func _intro_marks() -> void:
+	print("intro fall")
+	var worst: int = 0
+	var seen_fall: int = 0
+	var fall_ticks: int = 0
+	for seed in [1, 12]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, seed, {}, {"intro": true})
+		var h := VfxHub.new()
+		h.reset(S, seed)
+		for t in range(420):
+			SimCore.step(S)
+			var evs: Array = S.out.fx.duplicate()
+			h.consume(S, evs)
+			S.out.fx.clear()
+			for i in range(2):
+				var f = S.fighters[i]
+				if String(f.state) == "intro":
+					fall_ticks += 1
+					worst = maxi(worst, h.trails[i].marks.size())
+			for e in evs:
+				if String(e.type) == "entrance_fall":
+					seen_fall += 1
+		SimCore.dispose(S)
+	_check(seen_fall > 0 and fall_ticks > 0, "the played intro falls (%d falls seen, %d fighter-ticks in the intro state)" % [seen_fall, fall_ticks])
+	_check(worst == 0, "no wind mark stands beside a fighter in the intro's fall (most seen at once: %d)" % worst)
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:
