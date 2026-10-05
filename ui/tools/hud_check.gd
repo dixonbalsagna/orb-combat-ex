@@ -2548,6 +2548,8 @@ func _beat_ring_rules() -> void:
 	_ok((w[1] as Array).size() == 2 and absf(float(w[1][0]) - 0.2) < 0.001 and absf(float(w[1][1]) - 0.4) < 0.001 and (w[0] as Array).size() == 1 and absf(float(w[0][0]) - 0.3) < 0.001, "beat ring: the attacker's strikes and chained strikes land on the defender, the defender's on the attacker; a blow too far off, a done one and a move are left out")
 	S.dirS.ex = null
 	_ok(UiSimBridge.beat_windows(S) == [[], []], "beat ring: no exchange, no windows")
+	fa.free()   # the two stand-in fighters are plain Objects: free them or the run ends with "ObjectDB instances were leaked"
+	fd.free()
 	# The ring's own rules.
 	_ok(UiBeatRing.nearest([0.3, 0.1, 0.9, -0.5, 0.2]) == [0.1, 0.2] and UiBeatRing.nearest([]) == [] and UiBeatRing.nearest([0.45])[0] == 0.45, "beat ring: the nearest two blows within the lead, soonest first")
 	var m := UiFighterModel.new()
