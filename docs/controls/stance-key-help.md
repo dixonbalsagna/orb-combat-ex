@@ -42,6 +42,10 @@ So no special is reached any other way on any layout. Two things the legend shou
 
 `stanceMask` is the one truth for "which stance": an armed stance is in the mask (including armed charging), and `special` is nonzero only on the tick a special is pressed. Encounter should read the mask, not `guard`, `power` or `special`, to know the stance.
 
+## 4. Full touch under the nameplates: `top_limit`
+
+`SimTouch.layout(vw, vh, dp, portrait, left_handed, margin, full, top_limit)` takes an optional **`top_limit`**, in pixels from the top of the screen (Full only; -1, the default, is none). UI passes its plates' lower edge, and the host passes the same value to the same call so the hit test uses the same circles. With no limit, or when the preset already clears it, **nothing changes** (tested against the old offsets at 15 sizes, both hands). Otherwise the vertical offsets and the radii scale together, in 1% steps, to the largest scale that keeps every button's top edge at or under the limit, no radius under 24 dp (the 48 dp target), no two buttons closer than the 2 dp gap and none past the bottom corner; the stick zone also starts no higher than the limit. At 1560 x 720, density 2, limit 213 px: radii 32 to 29 dp, DODGE's top 168 to 217 px, POWER's 172 to 221, ENERGY's 176 to 224. A screen too short for any fit gets the tightest layout (50%), still at the radius floor. The hit radius stays the drawn radius plus 8 dp, as before; UI's plates take their own touches first.
+
 ## Status of `lunge-control.md`
 
 It is ready to commit: the intent version 4 build note, the zip-away re-rule (35 and 40 ki, 4 and 6 tick tells, the counter marks) and the hold-key correction are in, and nothing in it is pending. This file and the `layout.gd` and `stance_test.gd` edits are new in the tree and also ready.

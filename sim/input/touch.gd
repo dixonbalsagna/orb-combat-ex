@@ -60,6 +60,8 @@ const FULL_PORT: Dictionary = {
 	"transform": [-182.0, -136.0, 24.0, "R"], "dodge": [40.0, -186.0, 26.0, "L"], "guard": [40.0, -122.0, 26.0, "L"],
 }
 
+const FIT_MIN_R_DP: float = 24.0   # the 48 dp target: a fitted button is never smaller
+
 var cfg: Dictionary
 var dp: float = 1.0               # pixels per dp; the host sets it from the screen
 var tick: int = 0                 # build() calls so far (the host's ticks, hit-stop included)
@@ -165,26 +167,81 @@ func set_mode_style(s: String) -> void:
 ## Where the buttons are, in pixels: {name: {x, y, r}} for the circles (r is the visual radius) and
 ## {"stick": {x0, x1, y0, y1}} for the zone where a left-thumb touch starts the floating stick. margin is the safe
 ## margin in pixels from the screen edge (UI's safe area).
-static func layout(vw: float, vh: float, dp_: float, portrait: bool, left_handed: bool = false, margin: float = 8.0, full: bool = false) -> Dictionary:
+## `top_limit` (Full only; pixels from the top of the screen, -1 for none): no button's top edge is above it, so a short screen can keep
+## the buttons clear of the nameplates. If the preset's offsets already clear it, nothing changes. Otherwise the rows are pulled
+## closer together (the vertical offsets and the radii scale by the same factor, in steps of 1%, the largest that fits), radii never
+## below the 48 dp floor (24 dp), no two buttons closer than the usual 2 dp gap, none past the bottom corner; the stick zone also
+## starts no higher than the limit. On a screen too short even for that, the tightest fit is returned (the 50% step). The hit test uses
+## the same dictionary, so what is drawn is what is hit.
+static func layout(vw: float, vh: float, dp_: float, portrait: bool, left_handed: bool = false, margin: float = 8.0, full: bool = false, top_limit: float = -1.0) -> Dictionary:
 	var src: Dictionary = (FULL_PORT if portrait else FULL_LAND) if full else (PORT if portrait else LAND)
-	var out: Dictionary = {}
-	var cx: float = vw - margin
-	var cy: float = vh - margin
-	for k in src:
-		var a: Array = src[k]
-		var x: float = cx + float(a[0]) * dp_
-		if a.size() > 3 and a[3] == "L":
-			x = margin + float(a[0]) * dp_
-		if left_handed:
-			x = vw - x
-		out[k] = {"x": x, "y": cy + float(a[1]) * dp_, "r": float(a[2]) * dp_}
+	var out: Dictionary = _place(src, vw, vh, dp_, left_handed, margin, 1.0)
+	if full and top_limit >= 0.0 and not _clears(out, top_limit):
+		var pct: int = 99
+		while pct >= 50:
+			var cand: Dictionary = _place(src, vw, vh, dp_, left_handed, margin, float(pct) / 100.0, true)
+			if _clears(cand, top_limit) and _spaced(cand, vh - margin, dp_):
+				out = cand
+				break
+			pct -= 1
+		if pct < 50:
+			out = _place(src, vw, vh, dp_, left_handed, margin, 0.5, true)
 	var zone_w: float = vw * 0.42
 	var zone_top: float = vh * (0.55 if portrait else 0.30)
+	if full and top_limit >= 0.0:
+		zone_top = maxf(zone_top, top_limit)
 	if left_handed:
 		out["stick"] = {"x0": vw - zone_w, "x1": vw, "y0": zone_top, "y1": vh}
 	else:
 		out["stick"] = {"x0": 0.0, "x1": zone_w, "y0": zone_top, "y1": vh}
 	return out
+
+
+## The buttons of a preset placed against the bottom corners. `k` scales the vertical offsets (1.0 is the preset as authored); with
+## `fit` the radii scale with it, never under the 48 dp floor.
+static func _place(src: Dictionary, vw: float, vh: float, dp_: float, left_handed: bool, margin: float, k: float, fit: bool = false) -> Dictionary:
+	var out: Dictionary = {}
+	var cx: float = vw - margin
+	var cy: float = vh - margin
+	for n in src:
+		var a: Array = src[n]
+		var x: float = cx + float(a[0]) * dp_
+		if a.size() > 3 and a[3] == "L":
+			x = margin + float(a[0]) * dp_
+		if left_handed:
+			x = vw - x
+		var dy: float = float(a[1])
+		var r: float = float(a[2])
+		if fit:
+			dy *= k
+			r = maxf(FIT_MIN_R_DP, minf(r, r * k))
+		out[n] = {"x": x, "y": cy + dy * dp_, "r": r * dp_}
+	return out
+
+
+## Whether every button's top edge is at or below `top_limit`.
+static func _clears(lay: Dictionary, top_limit: float) -> bool:
+	for n in lay:
+		var c: Dictionary = lay[n]
+		if float(c.y) - float(c.r) < top_limit - 0.01:
+			return false
+	return true
+
+
+## Whether no two buttons are closer than a 2 dp gap and none reaches past `bottom` (the bottom corner the offsets start from).
+static func _spaced(lay: Dictionary, bottom: float, dp_: float) -> bool:
+	var names: Array = lay.keys()
+	for i in range(names.size()):
+		var a: Dictionary = lay[names[i]]
+		if float(a.y) + float(a.r) > bottom + 0.01:
+			return false
+		for j in range(i + 1, names.size()):
+			var b: Dictionary = lay[names[j]]
+			var dx: float = float(a.x) - float(b.x)
+			var dy: float = float(a.y) - float(b.y)
+			if sqrt(dx * dx + dy * dy) < float(a.r) + float(b.r) + 2.0 * dp_ - 0.01:
+				return false
+	return true
 
 
 ## Which control a point is on: "attack", "guard", "power", "context", "stick" (the move zone) or "". The host asks

@@ -21,6 +21,7 @@ func _init() -> void:
 	_layout()
 	_buttons()
 	_armed_display()
+	_top_limit()
 	_stick()
 	_fingers()
 	_hub()
@@ -183,6 +184,98 @@ func _buttons() -> void:
 	t.release_all()
 	d = t.display_state()
 	ok(d["full"].is_empty() and not d.guard.down, "full: and is empty after release_all")
+
+
+## The layout as it was before `top_limit` existed: the offsets from the bottom corners, written out here as the reference.
+func _old_layout(vw: float, vh: float, dpv: float, port: bool, lh: bool, margin: float) -> Dictionary:
+	var src: Dictionary = SimTouch.FULL_PORT if port else SimTouch.FULL_LAND
+	var out: Dictionary = {}
+	for k in src:
+		var a: Array = src[k]
+		var x: float = vw - margin + float(a[0]) * dpv
+		if a.size() > 3 and a[3] == "L":
+			x = margin + float(a[0]) * dpv
+		if lh:
+			x = vw - x
+		out[k] = {"x": x, "y": vh - margin + float(a[1]) * dpv, "r": float(a[2]) * dpv}
+	return out
+
+
+## top_limit: the Full preset fits under the nameplates on a short screen, and with no limit nothing changes.
+func _top_limit() -> void:
+	var cases: Array = [[1560.0, 720.0, 2.0, false, 213.0], [2400.0, 1080.0, 2.6, false, 324.0], [2340.0, 1080.0, 2.75, false, 324.0], [2532.0, 1170.0, 3.0, false, 351.0],
+		[2560.0, 1600.0, 2.0, false, 480.0], [1920.0, 1200.0, 1.5, false, 360.0], [1280.0, 800.0, 1.0, false, 240.0], [2048.0, 1536.0, 2.0, false, 300.0],
+		[1280.0, 720.0, 1.0, false, 216.0], [844.0, 390.0, 1.0, false, 117.0], [1560.0, 720.0, 2.0, false, 200.0], [1560.0, 720.0, 2.0, false, 230.0],
+		[1170.0, 2532.0, 3.0, true, 456.0], [828.0, 1792.0, 2.0, true, 320.0], [390.0, 844.0, 1.0, true, 150.0]]
+	var fitted: int = 0
+	for cs in cases:
+		var vw: float = cs[0]
+		var vh: float = cs[1]
+		var dpv: float = cs[2]
+		var port: bool = cs[3]
+		var lim: float = cs[4]
+		for lh in [false, true]:
+			var tag: String = "limit %dx%d dp %.2f %s %s at %d" % [int(vw), int(vh), dpv, "portrait" if port else "landscape", "left" if lh else "right", int(lim)]
+			# No limit (omitted, -1, or one nothing reaches): exactly the old layout.
+			var old: Dictionary = _old_layout(vw, vh, dpv, port, lh, 8.0)
+			var same: bool = true
+			for lay in [SimTouch.layout(vw, vh, dpv, port, lh, 8.0, true), SimTouch.layout(vw, vh, dpv, port, lh, 8.0, true, -1.0), SimTouch.layout(vw, vh, dpv, port, lh, 8.0, true, 0.0)]:
+				for k in old:
+					same = same and absf(float(lay[k].x) - float(old[k].x)) < 1e-9 and absf(float(lay[k].y) - float(old[k].y)) < 1e-9 and absf(float(lay[k].r) - float(old[k].r)) < 1e-9
+			ok(same, "%s: with no limit the layout is exactly what it was" % tag)
+			var lay2: Dictionary = SimTouch.layout(vw, vh, dpv, port, lh, 8.0, true, lim)
+			var simple_same: bool = str(SimTouch.layout(vw, vh, dpv, port, lh, 8.0, false, lim)) == str(SimTouch.layout(vw, vh, dpv, port, lh, 8.0, false))
+			ok(simple_same, "%s: the Simple layout ignores a limit" % tag)
+			var changed: bool = false
+			for k in old:
+				changed = changed or absf(float(lay2[k].y) - float(old[k].y)) > 1e-9
+			var top_of_old: float = 1.0e9
+			for k in old:
+				top_of_old = minf(top_of_old, float(old[k].y) - float(old[k].r))
+			ok(changed == (top_of_old < lim - 0.01), "%s: it moves only when the old layout reached the limit" % tag)
+			if changed:
+				fitted += 1
+			var names: Array = old.keys()
+			var view := Rect2(0.0, 0.0, vw, vh)
+			var up: bool = true
+			var small: bool = true
+			var clash: bool = true
+			var on: bool = true
+			var hits: bool = true
+			var t := SimTouch.new()
+			t.dp = dpv
+			t.set_preset("touch-full")
+			for i in range(names.size()):
+				var a: Dictionary = lay2[names[i]]
+				up = up and float(a.y) - float(a.r) >= lim - 0.01 if changed else up
+				small = small and float(a.r) >= 24.0 * dpv - 0.01
+				on = on and view.encloses(Rect2(float(a.x) - float(a.r), float(a.y) - float(a.r), 2.0 * float(a.r), 2.0 * float(a.r)))
+				for j in range(i + 1, names.size()):
+					var b: Dictionary = lay2[names[j]]
+					var dx: float = float(a.x) - float(b.x)
+					var dy: float = float(a.y) - float(b.y)
+					clash = clash and sqrt(dx * dx + dy * dy) >= float(a.r) + float(b.r) + 2.0 * dpv - 0.01
+				# What is drawn is what is hit: the centre and a point just inside the edge, in four directions.
+				hits = hits and t.widget_at(float(a.x), float(a.y), lay2) == names[i]
+				for dir in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
+					hits = hits and t.widget_at(float(a.x) + dir.x * float(a.r) * 0.85, float(a.y) + dir.y * float(a.r) * 0.85, lay2) == names[i]
+			ok(up, "%s: no button's top edge is above the limit" % tag)
+			ok(small, "%s: no button is under the 48 dp floor" % tag)
+			ok(clash, "%s: no two buttons touch (2 dp gap kept)" % tag)
+			ok(on, "%s: every button is on screen" % tag)
+			ok(hits, "%s: the centre and the inside of every button hit that button" % tag)
+			ok(float(lay2["stick"].y0) >= lim - 0.01 or not changed, "%s: the stick zone starts under the limit when it moved" % tag)
+	ok(fitted >= 6, "limit: the short screens are the ones that fit (%d cases moved)" % fitted)
+	# Rendering's case: 1560 x 720, density 2, plates to 213 px. The old layout's DODGE top was 168.
+	var r: Dictionary = SimTouch.layout(1560.0, 720.0, 2.0, false, false, 8.0, true, 213.0)
+	ok(float(r["dodge"].y) - float(r["dodge"].r) >= 212.99 and float(r["power"].y) - float(r["power"].r) >= 212.99 and float(r["mode"].y) - float(r["mode"].r) >= 212.99, "limit: at 1560 x 720 density 2 DODGE, POWER and ENERGY clear the plates")
+	# A screen too short for any fit still gives the tightest, valid layout (radii at the floor or more, no crash).
+	var tight: Dictionary = SimTouch.layout(640.0, 360.0, 1.0, false, false, 8.0, true, 300.0)
+	var floor_ok: bool = tight.size() == 10
+	for k in tight:
+		if k != "stick":
+			floor_ok = floor_ok and float(tight[k].r) >= 24.0 - 0.01
+	ok(floor_ok, "limit: an impossible limit returns the tightest layout, radii at the floor")
 
 
 func _tap(t: SimTouch, w: String, id: int) -> void:
