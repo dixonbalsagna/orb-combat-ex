@@ -109,4 +109,11 @@ Written and waiting for Orb to read:
 - All five stances' generated movesets (100 moves a fighter, parked): docs/combat/pending/movegen/review-sheet.md.
 - The melee spec with every ruling: docs/design/melee-press-feel.md.
 
-In the queue, in order: World's building stages; Simulation's dynamic intros; Encounter's first brawl slice (every press a blow); the fighter rename to PROTAGONIST and RIVAL; the zip.
+Landed later in the night (pushed; checks passed on an export):
+- Buildings break in four stages (windows out, cracked with a cut floor, shell, fallen), and a first blast can no longer flatten a building outright. On World's 160-match measure the front row's losses fall from 51.5% to 36.0% and all rows from 40.4% to 27.7%. The stages have no effects of their own yet: VFX is building them.
+- Animation's zip entries, the far-side pass (over or round the rival), the check's guard and the push style, and ten intro gestures for the launch pair. GIFs: art/animation/review/gestures/, art/animation/review/zip/, art/animation/review/press-styles/. Nothing drives them in a match yet.
+- Legal screened the gestures, the pass and the other four stances' moves: nothing ruled out (docs/legal/stances-and-gestures-screen.md). The short beam must be seen drawn before it goes live.
+
+In the queue, in order: Simulation's dynamic intros (being applied); Encounter's first brawl slice (every press a blow); the fighter rename to PROTAGONIST and RIVAL; the zip. VFX: effects for the building stages.
+
+To watch: time at power tier 4 is 7.05% a minute after the building change, against a floor of 6. QA's overnight baseline will say whether it holds.
