@@ -1,0 +1,28 @@
+{
+  "schema": "combat.banned/1",
+  "_about": "Legal's banned rows for the moveset generator (docs/legal/movegen-screen.md). For Combat to merge into parts.json as `strike.banned` and `strike.bannedSequences`. A row matches when every field it names matches; a field with a list matches if any value in it matches. Fields are the grammar's own: limb, tip, path, target, weight, form, arms, plus `flags` for a property of how a piece is posed. The rows describe shapes, not sources. The generator must refuse to emit a piece, or a string, that matches a row, and the build must fail if one slips through.",
+  "banned": [
+    {"id": "b01", "match": {"arms": [2], "flags": ["wrists_together"]}, "why": "two hands with wrists together pushed forward: a famous beam-release pose"},
+    {"id": "b02", "match": {"flags": ["cupped_at_hip", "drawn_to_hip_then_thrust"]}, "why": "hands cupped at a hip, or drawn back to one hip and thrust: the franchise's best-known wind-up. Applies to every weight and every form, including held heavies"},
+    {"id": "b03", "match": {"limb": ["hand"], "tip": ["fist", "palm", "heel"], "path": ["rise"], "target": ["jaw", "head"], "flags": ["leap", "spin"]}, "why": "a rising blow with a leap or a spin: the jumping, turning uppercut"},
+    {"id": "b04", "match": {"path": ["spin"], "flags": ["multi_turn", "travelling"]}, "why": "more than a single turn, or a spin that travels: a multi-hit whirling kick"},
+    {"id": "b05", "match": {"limb": ["hand"], "path": ["drop"], "arms": [2], "flags": ["clasped"]}, "why": "two clasped fists brought down: the double axe-handle smash"},
+    {"id": "b06", "match": {"limb": ["hand"], "tip": ["palm", "blade"], "target": ["head", "jaw"], "flags": ["claw", "grip"]}, "why": "a clawed hand or grip on the face"},
+    {"id": "b07", "match": {"target": ["throat", "hair", "tail"]}, "why": "grips on the throat, hair or tail are never used (the grab rules)"},
+    {"id": "b08", "match": {"limb": ["hand"], "tip": ["blade", "fist"], "path": ["line"], "target": ["gut", "chest"], "flags": ["passes_through"]}, "why": "an arm passing through the body"},
+    {"id": "b09", "match": {"flags": ["glow", "energy_ball", "held_raise_overhead", "growing_orb"]}, "why": "a melee piece never carries light, a ball or a raised charging pose"},
+    {"id": "b10", "match": {"limb": ["hand"], "flags": ["two_fingers", "pointing_finger", "to_forehead"]}, "why": "two fingers or a pointing finger, or a hand to the forehead: the franchise's beam and teleport poses"},
+    {"id": "b11", "match": {"limb": ["hand"], "flags": ["beckon"]}, "why": "a beckoning hand"},
+    {"id": "b12", "match": {"weight": ["heavy"], "form": ["held"], "flags": ["hip_chamber", "two_hand_chamber"]}, "why": "a held heavy is charged with one arm drawn back at shoulder height, never at a hip and never with both hands together"},
+    {"id": "b13", "match": {"flags": ["vanish", "blink_cut", "afterimage_hides_body"]}, "why": "no vanish or blink between blows; the fighter is drawn the whole way"}
+  ],
+  "bannedSequences": [
+    {"id": "s01", "rule": "no more than 3 pieces in a row with the same limb, tip and path", "why": "a barrage of identical blows is a famous shouted-barrage signature"},
+    {"id": "s02", "rule": "no more than 2 blows in a row to the same target, and never two to the gut in a row", "why": "a stomach-punch trade; also keeps Blow for Blow ours"},
+    {"id": "s03", "rule": "a flurry never repeats a shouted syllable across its blows", "why": "a chanted barrage; audio and the generator both enforce it"},
+    {"id": "s04", "rule": "a spin is never followed by another spin, and never by a head kick", "why": "a multi-turn whirl; also the grammar's light rule"},
+    {"id": "s05", "rule": "a rising blow is never followed by another rising blow while he is airborne", "why": "an aerial uppercut chain"},
+    {"id": "s06", "rule": "a launch is never followed by a clasped two-hand overhead blow", "why": "the double smash ender (see b05)"},
+    {"id": "s07", "rule": "no string places a piece after a step that is not drawn: no vanish, blink or teleport step", "why": "the vanishing-step staging"}
+  ]
+}

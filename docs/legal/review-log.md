@@ -91,6 +91,10 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-069 | Protagonist sheet: big fists, forelock | Art | Medium | CONDITIONAL: fists solid and plated, forelock a swept tuft | Open until Art revises |
 | RL-070 | Rival sheet: tail, coat blades, glasses | Art | Low | Clear | Closed |
 | RL-071 | Suno music: use, licence statement, disclosure, training data, uploads, records | Audio | Medium | CONDITIONAL: paid downloads, untouched originals, separate audio notice, disclose, check each track | Open until Orb confirms the terms. Follow-up 2026-10-04: processed OGG copies are clear on conditions |
+| RL-072 | Generated movesets: the 36 new and derived shapes (movegen-screen.md) | Combat | Low | Clear, with conditions on rising and palm strikes, drops, spins, held heavies | Open until Combat merges the banned rows |
+| RL-073 | Moveset banned rows (movegen-banned.json) and the rule for later stances and signature slots | Combat | Medium | Delivered: 13 shape rows, 7 sequence rules; a person screens every signature frame, new vocabulary and stance tell | Open; rows only grow |
+| RL-074 | Five stance tells and shoulder-button stances | Combat, Controls | Low | Clear; energy-arts lit hand and charging aura conditional | Re-screen with the first render |
+| RL-075 | Identity split: Protagonist palms and arcs, rival fists behind plates, glasses always on | Combat | Low | Clear | Closed |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
