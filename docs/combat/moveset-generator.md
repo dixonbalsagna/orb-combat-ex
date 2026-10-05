@@ -394,3 +394,12 @@ I recommend 30 as above, started on what is posed.
 | **Game Design** | Which of each fighter's three specials is the quick, the strong and the utility one. The Protagonist's specials |
 | **Animation** | The four asks in section 5.1, and whether 21 new key sets fits the slice |
 | **Art and Narrative** | The "never" rows and the hand-picked pieces of each fighter |
+
+## 8. As generated (2026-10-05)
+
+Orb confirmed the identity split and lifted the hold for the martial arts stance (`docs/ep/vision.md`, questionnaire 17). The inputs, the reference generator, the two moveset files and the review sheet are parked in `pending/movegen/`; its README has the counts and the keys for Tools. What differs from the sections above:
+
+- **The rival's hands are a mix:** a closed fist on his heavies and enders, blade hands first on his lights. Section 2's table gave him fists throughout; `pending/movegen/identity.json` is the current data.
+- **Martial B is a generic frame** with nothing hand-picked, because the signature's kind is not final. The hand-picked spines in section 3.2 are an illustration only.
+- **A juggle is up to 5 skill strikes,** so the light cell has two more quotas: 10 moves that can be a flurry blow and 10 that can be a skill strike.
+- **The counts:** 22 new key sets (section 6 said 21), 14 derived moves, and the two fighters share 43% of their shapes (section 6 said 46%).

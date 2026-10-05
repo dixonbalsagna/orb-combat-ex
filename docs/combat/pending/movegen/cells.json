@@ -1,0 +1,59 @@
+{
+ "schema": "combat.cells/1",
+ "_target": "data/combat/cells.json",
+ "_about": "PARKED. What each face button holds in each stance (Game Design's matrix, docs/design/melee-press-feel.md sections 10 and 13): X quick, Y strong, A the stance's context action, B its signature. Only the martial arts stance is filled; the other four come with their slices. A filter is part values that must all hold; any is a list of filters of which one must.",
+ "seed": 20261004,
+ "spread": {"path": 0.55, "target": 0.7, "tip": 0.7, "shape": 0.5},
+ "_spread": "each pick marks down the shapes that share its path, its target or its tip, and more those that share limb, path and target, so a cell spreads over the grammar",
+ "stances": {
+  "martial": {
+   "held": 0,
+   "x": {
+    "kind": "strikes",
+    "what": "light strikes: the light, the flurry blow, the skill strike, the juggle strike",
+    "filter": {"weight": ["light"]},
+    "count": 30,
+    "quotas": [
+     {"name": "toward", "min": 5, "filter": {"limb": ["elbow", "knee", "shoulder", "head"]}},
+     {"name": "away", "min": 5, "filter": {"limb": ["foot"]}},
+     {"name": "none", "min": 5, "filter": {"limb": ["hand"], "path": ["line", "arc_in", "arc_out"]}},
+     {"name": "down", "min": 5, "any": [{"path": ["drop"]}, {"target": ["legs", "shins"]}]},
+     {"name": "up", "min": 5, "any": [{"path": ["rise"]}, {"target": ["head", "jaw"]}]},
+     {"name": "flurry", "min": 10, "form": "flurry"},
+     {"name": "skill", "min": 10, "form": "skill"}
+    ],
+    "_quotas": "filled in this order before the cell is filled freely. The first five are the stick's leans (a weight of 3 at run time, not a filter). The last two keep both readings deep: a juggle is up to 5 skill strikes (Orb)"
+   },
+   "y": {
+    "kind": "strikes",
+    "what": "heavy strikes: the guard breaker, the lift, the ender; a fully held lone heavy may launch (Orb)",
+    "filter": {"weight": ["heavy"]},
+    "count": 16,
+    "quotas": [
+     {"name": "up", "min": 3, "sends": "up"},
+     {"name": "down", "min": 3, "sends": "down"},
+     {"name": "across", "min": 3, "sends": "across"},
+     {"name": "turned", "min": 3, "sends": "turned"},
+     {"name": "lift", "min": 4, "form": "lift"},
+     {"name": "break", "min": 4, "form": "break"}
+    ]
+   },
+   "a": {
+    "kind": "context",
+    "what": "today's context actions, one for each context; not generated",
+    "actions": ["grab_throw", "pick_up", "civilians", "taunt_far", "dive_grab"],
+    "held": "channel"
+   },
+   "b": {
+    "kind": "frame",
+    "what": "the stance's signature. Its kind is not final (Orb wants charts and alternatives), so the frame is generic and nothing is hand-picked",
+    "slots": [
+     {"slot": "tell", "ticks": 30},
+     {"slot": "open", "from": "a lunge from the mid band; nothing in reach"},
+     {"slot": "rush", "count": 4, "from": "x", "order": "links"},
+     {"slot": "launcher", "count": 1, "from": "y", "by": "sends"}
+    ]
+   }
+  }
+ }
+}

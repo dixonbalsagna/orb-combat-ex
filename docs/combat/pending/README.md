@@ -82,6 +82,10 @@ Merged, ready-to-apply copies of the three combat data files, prepared on 2026-1
 
 `strikes.launchpair.json`: Combat's rows for the Protagonist's eight own strikes and two entries, and for the Anti-hero's body hook and rib shot (range, ticks, classes, tags), replacing the rows Animation borrowed from wave 1 slots. Lunge and clear are left for Animation's strike_lab.
 
+## Generated movesets
+
+`movegen/`: the moveset generator's inputs (`parts.json`, `identity.json`, `cells.json`), its reference script, the generated martial arts stance for both fighters (30 lights and 16 heavies each) and the review sheet. Its README has the counts and the keys for Tools. Parked; design in `../moveset-generator.md`.
+
 ## The launch pair: readiness and apply order
 
 `apply-order.md`: the five files below checked against HEAD `a56187a` on 2026-10-03, what had drifted, the order they move into `data/combat/` (with Simulation's split and Encounter's slices 10 and 11), what each step does to the goldens and the frozen parity copy (never refreshed), and every new key for Tools. Fighter ids in the five files are `protagonist` and `rival`.

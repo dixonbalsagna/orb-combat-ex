@@ -1,0 +1,1008 @@
+{
+ "schema": "combat.parts/1",
+ "_target": "data/combat/parts.json",
+ "_about": "PARKED. The grammar a strike is assembled from (docs/combat/moveset-generator.md section 1): a move is a limb, a tip, a path, a target and a weight, and everything else is derived from those by the rules here. One block for each stance's parts; this is the martial arts stance's.",
+ "strike": {
+  "tips": {
+   "hand": {
+    "fist": [
+     "line",
+     "arc_in",
+     "arc_out",
+     "rise",
+     "drop",
+     "spin"
+    ],
+    "blade": [
+     "line",
+     "arc_in",
+     "arc_out",
+     "drop"
+    ],
+    "palm": [
+     "line",
+     "rise"
+    ],
+    "heel": [
+     "drop",
+     "arc_out",
+     "spin"
+    ],
+    "plate": [
+     "arc_in",
+     "drop"
+    ]
+   },
+   "foot": {
+    "ball": [
+     "line",
+     "rise"
+    ],
+    "heel": [
+     "line",
+     "drop",
+     "spin",
+     "arc_out"
+    ],
+    "instep": [
+     "arc_in"
+    ],
+    "edge": [
+     "line",
+     "arc_out"
+    ],
+    "sole": [
+     "line",
+     "drop"
+    ]
+   },
+   "elbow": {
+    "point": [
+     "arc_in",
+     "rise",
+     "drop",
+     "spin"
+    ]
+   },
+   "knee": {
+    "cap": [
+     "rise",
+     "line",
+     "arc_in"
+    ]
+   },
+   "shoulder": {
+    "plate": [
+     "line"
+    ]
+   },
+   "head": {
+    "brow": [
+     "line"
+    ]
+   }
+  },
+  "_tips": "limb to tip to the paths that tip can travel. hand.heel is the bottom or the back of a closed fist; hand.plate is a blow the forearm leads",
+  "targets": {
+   "hand": {
+    "line": [
+     "head",
+     "jaw",
+     "chest",
+     "gut",
+     "arm"
+    ],
+    "arc_in": [
+     "head",
+     "jaw",
+     "chest",
+     "gut"
+    ],
+    "arc_out": [
+     "head",
+     "jaw",
+     "chest",
+     "arm"
+    ],
+    "rise": [
+     "jaw",
+     "chest",
+     "gut"
+    ],
+    "drop": [
+     "head",
+     "chest",
+     "arm"
+    ],
+    "spin": [
+     "head",
+     "chest"
+    ]
+   },
+   "foot": {
+    "line": [
+     "chest",
+     "gut",
+     "legs"
+    ],
+    "arc_in": [
+     "chest",
+     "gut",
+     "legs",
+     "shins"
+    ],
+    "arc_out": [
+     "chest",
+     "gut"
+    ],
+    "rise": [
+     "gut"
+    ],
+    "drop": [
+     "chest",
+     "gut",
+     "legs"
+    ],
+    "spin": [
+     "chest",
+     "gut",
+     "legs"
+    ]
+   },
+   "elbow": {
+    "arc_in": [
+     "jaw",
+     "chest"
+    ],
+    "rise": [
+     "jaw"
+    ],
+    "drop": [
+     "chest"
+    ],
+    "spin": [
+     "jaw",
+     "chest"
+    ]
+   },
+   "knee": {
+    "rise": [
+     "gut"
+    ],
+    "line": [
+     "gut",
+     "legs"
+    ],
+    "arc_in": [
+     "gut",
+     "legs"
+    ]
+   },
+   "shoulder": {
+    "line": [
+     "chest"
+    ]
+   },
+   "head": {
+    "line": [
+     "jaw",
+     "chest"
+    ]
+   }
+  },
+  "_targets": "limb to path to the places it can land. No foot reaches the head",
+  "lightNever": [
+   {
+    "path": [
+     "spin"
+    ]
+   },
+   {
+    "limb": [
+     "head"
+    ]
+   },
+   {
+    "limb": [
+     "foot"
+    ],
+    "path": [
+     "drop"
+    ]
+   }
+  ],
+  "_lightNever": "a shape matching one of these is never light",
+  "sends": {
+   "line": "across",
+   "arc_in": "turned",
+   "arc_out": "turned",
+   "rise": "up",
+   "drop": "down",
+   "spin": "turned"
+  },
+  "links": {
+   "line": [
+    "line",
+    "arc_in",
+    "rise",
+    "drop"
+   ],
+   "arc_in": [
+    "arc_out",
+    "spin",
+    "line"
+   ],
+   "arc_out": [
+    "arc_in",
+    "line",
+    "drop"
+   ],
+   "rise": [
+    "drop",
+    "arc_in",
+    "line"
+   ],
+   "drop": [
+    "rise",
+    "line"
+   ],
+   "spin": [
+    "line",
+    "arc_in"
+   ]
+  },
+  "_links": "the paths that flow out of a path: the order of a string, and of a frame's rush",
+  "step": {
+   "line": [
+    "in",
+    "hold"
+   ],
+   "arc_in": [
+    "hold",
+    "around"
+   ],
+   "arc_out": [
+    "around",
+    "hold"
+   ],
+   "rise": [
+    "in",
+    "hold"
+   ],
+   "drop": [
+    "hold",
+    "in"
+   ],
+   "spin": [
+    "around",
+    "out"
+   ]
+  },
+  "beat": {
+   "line": 20,
+   "arc_in": 24,
+   "arc_out": 24,
+   "rise": 24,
+   "drop": 26,
+   "spin": 28
+  },
+  "_beat": "the beat point by path, in ticks after contact (Game Design: 20 to 28)",
+  "forms": [
+   {
+    "form": "light",
+    "when": {
+     "weight": [
+      "light"
+     ]
+    }
+   },
+   {
+    "form": "flurry",
+    "when": {
+     "weight": [
+      "light"
+     ],
+     "limb": [
+      "hand",
+      "elbow",
+      "knee",
+      "shoulder"
+     ],
+     "path": [
+      "line",
+      "arc_in",
+      "rise"
+     ],
+     "arms": [
+      0,
+      1
+     ]
+    }
+   },
+   {
+    "form": "skill",
+    "when": {
+     "weight": [
+      "light"
+     ]
+    },
+    "unless": "flurry"
+   },
+   {
+    "form": "juggle",
+    "when": {
+     "weight": [
+      "light"
+     ]
+    },
+    "unless": "flurry"
+   },
+   {
+    "form": "heavy",
+    "when": {
+     "weight": [
+      "heavy"
+     ]
+    }
+   },
+   {
+    "form": "held",
+    "when": {
+     "weight": [
+      "heavy"
+     ]
+    }
+   },
+   {
+    "form": "ender",
+    "when": {
+     "weight": [
+      "heavy"
+     ]
+    }
+   },
+   {
+    "form": "lift",
+    "when": {
+     "weight": [
+      "heavy"
+     ],
+     "target": [
+      "jaw",
+      "gut"
+     ],
+     "path": [
+      "line",
+      "arc_in",
+      "arc_out",
+      "rise",
+      "spin"
+     ]
+    }
+   },
+   {
+    "form": "break",
+    "any": [
+     {
+      "weight": [
+       "heavy"
+      ],
+      "path": [
+       "drop"
+      ]
+     },
+     {
+      "weight": [
+       "heavy"
+      ],
+      "limb": [
+       "shoulder"
+      ]
+     },
+     {
+      "weight": [
+       "heavy"
+      ],
+      "arms": [
+       2
+      ]
+     }
+    ]
+   }
+  ],
+  "_forms": "the forms a move can take, by rule (docs/design/melee-press-feel.md section 13). arms is the number of arms the posed strike it starts from uses; a generated shape uses one",
+  "swap": [
+   "fist",
+   "blade",
+   "palm"
+  ],
+  "_swap": "hand tips one key set can show by a hand-state swap, where the tip can travel that path",
+  "tagTips": {
+   "hands_open_or_claw": [
+    "palm",
+    "blade"
+   ]
+  },
+  "_tagTips": "a key set that carries one of Legal's tags keeps to these tips when its hand state is swapped",
+  "reaim": {
+   "limbs": [
+    "hand",
+    "foot"
+   ],
+   "neighbours": {
+    "head": [
+     "jaw"
+    ],
+    "jaw": [
+     "head"
+    ],
+    "chest": [
+     "gut",
+     "arm"
+    ],
+    "gut": [
+     "chest"
+    ],
+    "legs": [
+     "shins"
+    ],
+    "shins": [
+     "legs"
+    ],
+    "arm": [
+     "chest"
+    ]
+   }
+  },
+  "_reaim": "sockets the contact solve can reach from a posed key set's own. A guess until Animation confirms it",
+  "legalTags": [
+   {
+    "tag": "no_leap",
+    "when": {
+     "limb": [
+      "hand"
+     ],
+     "path": [
+      "rise"
+     ]
+    },
+    "why": "the feet stay down on a rising blow"
+   },
+   {
+    "tag": "no_held_raise",
+    "when": {
+     "limb": [
+      "hand"
+     ],
+     "path": [
+      "rise",
+      "drop"
+     ]
+    },
+    "why": "the arm lowers at once"
+   },
+   {
+    "tag": "single_turn",
+    "when": {
+     "path": [
+      "spin"
+     ]
+    },
+    "why": "one turn, never a travelling or repeated spin"
+   },
+   {
+    "tag": "no_clasp",
+    "when": {
+     "limb": [
+      "hand"
+     ],
+     "path": [
+      "drop"
+     ]
+    },
+    "why": "one fist, or two apart: never two clasped"
+   },
+   {
+    "tag": "not_at_hip",
+    "when": {
+     "limb": [
+      "hand"
+     ],
+     "tip": [
+      "palm"
+     ],
+     "path": [
+      "line"
+     ]
+    },
+    "why": "the hand is never chambered at the hip"
+   }
+  ],
+  "_legalTags": "conditions a shape carries onto its key set, from Legal's rulings on the posed strikes. A move also keeps the tags of the posed strike it starts from",
+  "banned": [],
+  "_banned": "shapes never generated, for every fighter: Legal's to fill from its screens. Each row is part values and a reason"
+ },
+ "strikes": {
+  "_about": "Every posed strike as a shape of the grammar. limb, target, weight, uses and ground are Combat's strike rows; tip and path are Combat's reading of each strike's look and of Animation's hand state at contact, until the manifests carry them. The rival's four tail strikes are left out: they wait for Orb's ruling",
+  "strike.jab": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "line",
+   "target": "head",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.cross": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "line",
+   "target": "chest",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.hook": {
+   "limb": "hand",
+   "tip": "plate",
+   "path": "arc_in",
+   "target": "head",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.backfist": {
+   "limb": "hand",
+   "tip": "heel",
+   "path": "arc_out",
+   "target": "head",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.palm_heel": {
+   "limb": "hand",
+   "tip": "palm",
+   "path": "line",
+   "target": "chest",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.spear_hand": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "line",
+   "target": "gut",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.uppercut": {
+   "limb": "hand",
+   "tip": "fist",
+   "path": "rise",
+   "target": "jaw",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.hammer": {
+   "limb": "hand",
+   "tip": "fist",
+   "path": "drop",
+   "target": "head",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.overhand": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "drop",
+   "target": "head",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.haymaker": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "arc_in",
+   "target": "head",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.short_elbow": {
+   "limb": "elbow",
+   "tip": "point",
+   "path": "arc_in",
+   "target": "jaw",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.rising_elbow": {
+   "limb": "elbow",
+   "tip": "point",
+   "path": "rise",
+   "target": "jaw",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.spinning_elbow": {
+   "limb": "elbow",
+   "tip": "point",
+   "path": "spin",
+   "target": "jaw",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "plant"
+  },
+  "strike.dropping_elbow": {
+   "limb": "elbow",
+   "tip": "point",
+   "path": "drop",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.twin_spear": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "line",
+   "target": "chest",
+   "weight": "light",
+   "uses": {
+    "arms": 2
+   },
+   "ground": "ok"
+  },
+  "strike.double_palm": {
+   "limb": "hand",
+   "tip": "palm",
+   "path": "line",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "arms": 2
+   },
+   "ground": "ok"
+  },
+  "strike.double_hammer": {
+   "limb": "hand",
+   "tip": "plate",
+   "path": "drop",
+   "target": "head",
+   "weight": "heavy",
+   "uses": {
+    "arms": 2
+   },
+   "ground": "ok"
+  },
+  "strike.cross_arm_ram": {
+   "limb": "elbow",
+   "tip": "point",
+   "path": "arc_in",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "arms": 2
+   },
+   "ground": "plant"
+  },
+  "strike.front_kick": {
+   "limb": "foot",
+   "tip": "ball",
+   "path": "line",
+   "target": "gut",
+   "weight": "light",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.side_kick": {
+   "limb": "foot",
+   "tip": "edge",
+   "path": "line",
+   "target": "chest",
+   "weight": "light",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.low_kick": {
+   "limb": "foot",
+   "tip": "instep",
+   "path": "arc_in",
+   "target": "legs",
+   "weight": "light",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.snap_round": {
+   "limb": "foot",
+   "tip": "instep",
+   "path": "arc_in",
+   "target": "chest",
+   "weight": "light",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.roundhouse": {
+   "limb": "foot",
+   "tip": "instep",
+   "path": "arc_in",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.axe_kick": {
+   "limb": "foot",
+   "tip": "heel",
+   "path": "drop",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.spinning_heel": {
+   "limb": "foot",
+   "tip": "heel",
+   "path": "spin",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.stomp": {
+   "limb": "foot",
+   "tip": "sole",
+   "path": "drop",
+   "target": "gut",
+   "weight": "heavy",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.sweep": {
+   "limb": "foot",
+   "tip": "instep",
+   "path": "arc_in",
+   "target": "shins",
+   "weight": "light",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "only"
+  },
+  "strike.drop_kick": {
+   "limb": "foot",
+   "tip": "sole",
+   "path": "line",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "legs": 2
+   },
+   "ground": "no"
+  },
+  "strike.short_knee": {
+   "limb": "knee",
+   "tip": "cap",
+   "path": "line",
+   "target": "gut",
+   "weight": "light",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.rising_knee": {
+   "limb": "knee",
+   "tip": "cap",
+   "path": "rise",
+   "target": "gut",
+   "weight": "heavy",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.driving_knee": {
+   "limb": "knee",
+   "tip": "cap",
+   "path": "line",
+   "target": "gut",
+   "weight": "heavy",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.headbutt": {
+   "limb": "head",
+   "tip": "brow",
+   "path": "line",
+   "target": "jaw",
+   "weight": "heavy",
+   "uses": {
+    "head": 1
+   },
+   "ground": "ok"
+  },
+  "strike.shoulder_check": {
+   "limb": "shoulder",
+   "tip": "plate",
+   "path": "line",
+   "target": "chest",
+   "weight": "light",
+   "uses": {},
+   "ground": "ok"
+  },
+  "strike.body_ram": {
+   "limb": "shoulder",
+   "tip": "plate",
+   "path": "line",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {},
+   "ground": "plant"
+  },
+  "strike.palm_push": {
+   "limb": "hand",
+   "tip": "palm",
+   "path": "line",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.ridge_hand": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "arc_in",
+   "target": "head",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.rising_palm": {
+   "limb": "hand",
+   "tip": "palm",
+   "path": "rise",
+   "target": "jaw",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.knife_chop": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "drop",
+   "target": "arm",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.hammer_fist": {
+   "limb": "hand",
+   "tip": "heel",
+   "path": "drop",
+   "target": "head",
+   "weight": "light",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.crescent_kick": {
+   "limb": "foot",
+   "tip": "edge",
+   "path": "arc_out",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.hook_kick": {
+   "limb": "foot",
+   "tip": "heel",
+   "path": "arc_out",
+   "target": "chest",
+   "weight": "light",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.spinning_back_kick": {
+   "limb": "foot",
+   "tip": "heel",
+   "path": "spin",
+   "target": "gut",
+   "weight": "heavy",
+   "uses": {
+    "legs": 1
+   },
+   "ground": "plant"
+  },
+  "strike.body_hook": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "arc_in",
+   "target": "gut",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  },
+  "strike.rib_shot": {
+   "limb": "hand",
+   "tip": "blade",
+   "path": "line",
+   "target": "chest",
+   "weight": "heavy",
+   "uses": {
+    "arms": 1
+   },
+   "ground": "ok"
+  }
+ }
+}
