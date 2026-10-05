@@ -26,6 +26,7 @@ var sheet: String = ""
 var json_out: String = ""
 var measure: bool = false
 var variant: String = ""
+var reaim: bool = false        # --reaim (with --json): every strike at each neighbouring target of the same limb (head, jaw, chest, gut, legs, shins, arm), solved at its own distance: where a re-aim lands and holds
 var sweep: bool = false        # --sweep (with --measure): the farthest distance each strike still reaches and the nearest it stays clear at
 var sheet_pre: float = 0.0     # --sheet-pre=S: the sheet takes each strike this many seconds before contact (the wind-up) instead of at contact
 var label_text: String = ""    # --label=TEXT: the caption (an A/B pair names its version); empty: the strike, its distance and its weight
@@ -52,6 +53,8 @@ func _initialize() -> void:
 			measure = true
 		elif a == "--sweep":
 			sweep = true
+		elif a == "--reaim":
+			reaim = true
 		elif a.begins_with("--sheet-pre="):
 			sheet_pre = float(a.substr(12))
 		elif a.begins_with("--label="):
@@ -178,6 +181,32 @@ func _run() -> void:
 			var jf2 := FileAccess.open(json_out, FileAccess.WRITE)
 			jf2.store_string(JSON.stringify({"tool": "strike_lab", "wave": wave, "sweep": srep}))
 			jf2.close()
+		quit(0)
+		return
+	if reaim:
+		var rrep: Array = []
+		var rsi: int = 0
+		RenderAnim.joint_audit = true
+		for m in list:
+			var row: Dictionary = {"id": String(m.id), "name": String(m.name), "limb": String(m.limb), "target": String(m.target), "weight": String(m.weight), "dist": float(m.offset), "targets": {}}
+			for tg in ["head", "jaw", "chest", "gut", "legs", "shins", "arm_r"]:
+				RenderAnim.force_target = tg
+				var rr: Dictionary = _measure_one(S, f0, f1, m, String(m.id), float(m.offset), rsi)
+				rsi += 1
+				var landed: bool = float(rr.gap) <= 1.0 and float(rr.gap2) <= 1.0
+				var verdict: String = "no"
+				if landed:
+					verdict = "ok" if (int(rr.viol) == 0 and float(rr.clip) <= 6.0) else "edge"
+				row.targets[tg] = {"v": verdict, "gap": snappedf(float(rr.gap), 0.1), "gap2": snappedf(float(rr.gap2), 0.1), "step": snappedf(float(rr.step), 0.1), "clip": snappedf(float(rr.clip), 0.1), "viol": int(rr.viol), "dev": snappedf(float(rr.dev), 0.01)}
+			rrep.append(row)
+		RenderAnim.force_target = ""
+		RenderAnim.force_keyset = ""
+		RenderAnim.joint_audit = false
+		print("re-aim (%s): %d strikes x 7 targets" % [wave, rrep.size()])
+		if json_out != "":
+			var jf3 := FileAccess.open(json_out, FileAccess.WRITE)
+			jf3.store_string(JSON.stringify({"tool": "strike_lab", "wave": wave, "reaim": rrep}))
+			jf3.close()
 		quit(0)
 		return
 	for m in list:
@@ -383,6 +412,10 @@ func _measure_one(S: SimState, f0, f1, m, kid: String, dist: float, si: int) -> 
 	var af0: AnimFighter = null
 	var clip: Dictionary = {"depth": 0.0, "pair": ""}
 	var max_step: float = 0.0
+	var viol: int = 0
+	var dev: float = 0.0
+	var ksm: Dictionary = AnimData.keysets.get(kid, {})
+	var pkm: AnimPose = AnimData.pose(String(ksm["keys"][1]["pose"]), false) if ksm.has("keys") else null
 	for k in range(int((TC + DT * 4.0) / DT)):
 		S.tick = base_tick + k
 		S.T = base_t + float(k) * DT
@@ -395,9 +428,15 @@ func _measure_one(S: SimState, f0, f1, m, kid: String, dist: float, si: int) -> 
 		af0 = RenderAnim.solve(S, f0)
 		var af1: AnimFighter = RenderAnim.solve(S, f1)
 		max_step = maxf(max_step, af0._step_x)
+		if RenderAnim.joint_audit and ex.t > TC - DT * 1.5 and ex.t < TC + DT * 3.5:
+			viol += (af0.audit.get("D", []) as Array).size()
+			# how far the solved arm or leg is from the key pose's: a re-aim that bends the limb far from what was drawn breaks the silhouette
+			if pkm != null and absf(ex.t - TC) < DT * 0.5:
+				for bn in ["upper_arm_r", "forearm_r", "thigh_r", "shin_r", "upper_arm_l", "forearm_l", "thigh_l", "shin_l"]:
+					dev = maxf(dev, af0.q[AnimRig.index[bn]].angle_to(pkm.q[AnimRig.index[bn]]))
 		if ex.t > TC - DT * 1.5:
 			var c: Dictionary = _clip(af0, af1, dist, kid)
 			if float(c.depth) > float(clip.depth):
 				clip = c
 	var d0: Dictionary = af0.debug
-	return {"gap": float(d0.get("gap_max", 0.0)), "gap2": float(d0.get("gap2_max", 0.0)), "step": max_step, "clip": float(clip.depth), "clip_pair": String(clip.pair)}
+	return {"gap": float(d0.get("gap_max", 0.0)), "gap2": float(d0.get("gap2_max", 0.0)), "step": max_step, "clip": float(clip.depth), "clip_pair": String(clip.pair), "viol": viol, "dev": dev}

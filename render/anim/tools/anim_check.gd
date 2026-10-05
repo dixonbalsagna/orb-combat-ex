@@ -476,6 +476,86 @@ func _test_press_styles() -> void:
 	print("  press styles in a 1500-tick AI match: %s" % [counts])
 
 
+## The hand state of a blow's tip (data/anim/tips.json, RenderAnim.hand_tips): the rival's posed heavy hands close to a fist at the contact tick, the Protagonist's stay open,
+## a beat's own `tip` wins, a light blow of the rival stays a blade, the flag off leaves the key set's own hands, and the same blow lands the same way either way.
+func _hand_scene(S: SimState, who: String, piece: String, tip: String, heavy: bool) -> Dictionary:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "KAI" if who == "protagonist" else "VORR"
+	f1.id = "VORR" if who == "protagonist" else "KAI"
+	RenderAnim._fighters.clear()
+	f0.x = 500.0
+	f1.x = 558.0
+	for f in [f0, f1]:
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+	var ex := DirExchange.newEx(f0, f1, "heavy" if heavy else "light")
+	ex.n = 933
+	ex.tag = "CHK"
+	var args := {"a": "A", "dmg": 66.0 if heavy else 22.0, "piece": piece, "o": {"big": heavy}}
+	if tip != "":
+		args["tip"] = tip
+	DirExchange.schedule(ex, 60.0 / 60.0, "strike", args)
+	S.dirS.ex = ex
+	var res := {"curl": 0.0, "kid": ""}
+	for k in range(75):
+		S.tick = 1000 + k
+		S.T = 200.0 + float(k) / 60.0
+		ex.t = float(k) / 60.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		var af0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		if k == 60:
+			res["curl"] = af0.curl.y
+			res["kid"] = af0._part
+	return res
+
+
+func _test_hand_tips() -> void:
+	_expect(RenderAnim.hand_tips and not AnimData.tips.is_empty() and AnimData.tips.reaim.size() >= 80, "hand tips: data/anim/tips.json did not load (%d re-aim rows)" % AnimData.tips.get("reaim", {}).size())
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	AnimData.ensure_fighter("KAI")
+	AnimData.ensure_fighter("VORR")
+	var untagged: Array = []
+	var n_tagged: int = 0
+	for kid in AnimData.keysets:
+		var ksx: Dictionary = AnimData.keysets[kid]
+		if String(ksx.get("_combat", "")) == "":
+			continue
+		n_tagged += 1
+		if not ["fist", "blade", "palm", "heel", "plate", "ball", "instep", "edge", "sole", "point", "cap", "brow"].has(String(ksx.get("tip", ""))) or not ["line", "arc_in", "arc_out", "rise", "drop", "spin"].has(String(ksx.get("path", ""))):
+			untagged.append(kid)
+	_expect(n_tagged >= 60 and untagged.is_empty(), "hand tips: %d of %d strike key sets have no tip or path (%s)" % [untagged.size(), n_tagged, untagged.slice(0, 5)])
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.ground_feet = false
+	var fist: float = float(AnimData.tips.curl.fist)
+	var a: Dictionary = _hand_scene(S, "antihero", "strike.haymaker", "", true)
+	_expect(absf(float(a.curl) - fist) < 0.05 and String(a.kid) == "w1.haymaker", "hand tips: the rival's haymaker (posed blade) has hand curl %.2f at contact, a fist is %.2f (%s)" % [float(a.curl), fist, a.kid])
+	var l: Dictionary = _hand_scene(S, "antihero", "strike.jab", "", false)
+	_expect(float(l.curl) < 0.05, "hand tips: the rival's light jab changed its blade hand (curl %.2f)" % float(l.curl))
+	var p: Dictionary = _hand_scene(S, "protagonist", "strike.haymaker", "", true)
+	_expect(float(p.curl) < 0.05, "hand tips: the Protagonist's haymaker closed its hand (curl %.2f)" % float(p.curl))
+	var t: Dictionary = _hand_scene(S, "protagonist", "strike.jab", "fist", false)
+	_expect(absf(float(t.curl) - fist) < 0.05, "hand tips: a beat's own tip (fist) was not shown (curl %.2f)" % float(t.curl))
+	var t2: Dictionary = _hand_scene(S, "antihero", "strike.haymaker", "blade", true)
+	_expect(float(t2.curl) < 0.05, "hand tips: a beat's own tip (blade) did not win over the rule (curl %.2f)" % float(t2.curl))
+	RenderAnim.hand_tips = false
+	var o: Dictionary = _hand_scene(S, "antihero", "strike.haymaker", "", true)
+	RenderAnim.hand_tips = true
+	_expect(float(o.curl) < 0.05, "hand tips: with the flag off the haymaker still closed (curl %.2f)" % float(o.curl))
+	RenderAnim.ground_feet = ground_was
+	print("  hand tips: the rival's heavy hand closes to a fist (%.2f), his light blade and the Protagonist's heavy stay open, a beat's own tip wins" % float(a.curl))
+
+
 func _test_pair_live() -> void:
 	_expect(RenderAnim.pair_live and not AnimData.pair.is_empty(), "pair live test: data/anim/pair_live.json did not load or the live pair is off")
 	_expect(AnimData.fighter_key("KAI") == "protagonist" and AnimData.fighter_key("VORR") == "antihero" and AnimData.fighter_key("rival") == "antihero" and AnimData.fighter_key("Protagonist") == "protagonist" and AnimData.fighter_key("NOBODY") == "", "pair live test: a roster id did not map to its fighter")
@@ -1510,6 +1590,7 @@ func _run() -> void:
 	_test_flight_lead()
 	_test_pair_live()
 	_test_press_styles()
+	_test_hand_tips()
 	_test_joints()
 	RenderAnim.enabled = true
 	RenderAnim.style_override = ""

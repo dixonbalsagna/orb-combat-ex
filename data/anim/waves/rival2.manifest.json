@@ -32,7 +32,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "plate",
+   "path": "line"
   },
   {
    "id": "rb.body_hook",
@@ -65,7 +67,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "blade",
+   "path": "arc_in"
   },
   {
    "id": "rb.rib_shot",
@@ -98,7 +102,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "blade",
+   "path": "line"
   }
  ],
  "skipped": []

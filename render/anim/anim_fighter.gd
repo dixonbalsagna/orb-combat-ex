@@ -1664,11 +1664,13 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		_tc_left = tc2 - T
 	debug["parts"] += 1
 	var ul: float = 1.0
+	var hw: float = 1.0   # how far the hand has taken its tip: closes over the wind-up, opens over the return
 	if pstyle != "":
 		_press_track(blow_id, T)
 	if dtc < -Sn:
 		var u: float = clampf((tq2 - (tc2 - L2)) / maxf(L2 - Sn, DT), 0.0, 1.0)
 		ul = u
+		hw = smoothstep(0.0, 0.7, u)
 		u = pow(u, float(prof.get("load_ease", 2.0)))
 		_mix_pose(pc, u)
 		if pstyle != "" and bool(prow.get("carry", false)):
@@ -1697,8 +1699,11 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 				q[i] = q[i].slerp(_base[i], w4)
 		hips = pf.hips.lerp(_base_hips, w4)
 		curl = pf.curl.lerp(_base_curl, w4)
+		hw = 1.0 - w4
 	if pstyle != "":
 		_press_body(prow, pstyle, ul, dtc, Sn, H, F, bw2, ks, side, blow_id, best, tc2, T)
+	if RenderAnim.hand_tips:
+		_hand_tip(ks, side, heavy2, strikes[best][2], hw)
 	# the step from the wind-up into the contact key is the blow itself (on twos it is one step): inertialisation must not take it for a join
 	# and smooth it over the next 0.1 s, or the fist reaches the defender late (--blowjoin restores the old behaviour for an A/B)
 	_blow_snap = dtc >= -(Sn + dq) - 0.0001 and dtc <= 0.0001
@@ -1736,6 +1741,35 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		_ci_opp = ex.D if role == "A" else ex.A
 		_ci_tc = tc2
 		_ci_dmg = float(strikes[best][2].get("dmg", 0.0))
+
+
+## The hand state of a blow's tip (data/anim/tips.json): the beat's own `tip` (the generator's move part), else the fighter's rule for a key set posed
+## with another tip (the rival's heavies close to a fist). Only the striking hand's finger curl changes, by `w`; nothing about the pose, the reach
+## or the contact solve does. Blade and palm are both an open hand on this rig (one curl a hand).
+func _hand_tip(ks: Dictionary, side: bool, heavy: bool, args: Dictionary, w: float) -> void:
+	var T: Dictionary = AnimData.tips
+	if T.is_empty() or not bool(T.get("enabled", true)) or w <= 0.001:
+		return
+	var curls: Dictionary = T.get("curl", {})
+	var want: String = String(args.get("tip", ""))
+	if not curls.has(want):
+		var rule: Dictionary = T.get("swap", {}).get(pair_key, {}).get("heavy" if heavy else "light", {})
+		want = String(rule.get(String(ks.get("tip", "")), ""))
+	if not curls.has(want):
+		return
+	var target: float = float(curls[want])
+	for key in ["limb", "limb2"]:
+		var lb: String = String(ks.get(key, ""))
+		if not lb.begins_with("hand"):
+			continue
+		var right: bool = lb.ends_with("r")
+		if side:
+			right = not right
+		if right:
+			curl.y = lerpf(curl.y, target, w)
+		else:
+			curl.x = lerpf(curl.x, target, w)
+	debug["hand_tips"] = int(debug.get("hand_tips", 0)) + 1
 
 
 ## The press style of a blow (data/anim/press_styles.json, only with RenderAnim.press_styles): the beat's own `style` when the director

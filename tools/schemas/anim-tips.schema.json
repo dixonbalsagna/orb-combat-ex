@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-tips",
+  "title": "anim.tips/1",
+  "description": "data/anim/tips.json: the striking surface of a blow (docs/animation/moveset-parts.md). curl: the finger curl of each hand tip; swap: a fighter's own rule for a key set posed with another tip, by the weight of the blow (posed tip to shown tip); reaim: for each key set, the neighbouring sockets its contact may be re-aimed at (ok: lands within 1 unit and breaks no joint; edge: lands but strains; written by strike_lab.gd --reaim). Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (swap keys are fighters of fighters.json; reaim keys are key sets of the parked waves; every target is a sockets.json region; a key set's own is its own target) are for tools/lib/xref-fight.js (tips-*).",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "curl",
+    "swap",
+    "reaim"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.tips/1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "curl": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "fist",
+          "blade",
+          "palm",
+          "heel",
+          "plate"
+        ]
+      },
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 2
+      }
+    },
+    "swap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "heavy": {
+            "type": "object",
+            "additionalProperties": {
+              "enum": [
+                "fist",
+                "blade",
+                "palm",
+                "heel",
+                "plate"
+              ]
+            }
+          },
+          "light": {
+            "type": "object",
+            "additionalProperties": {
+              "enum": [
+                "fist",
+                "blade",
+                "palm",
+                "heel",
+                "plate"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "reaim": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "own",
+          "ok",
+          "edge"
+        ],
+        "properties": {
+          "own": {
+            "type": "string",
+            "pattern": "^[a-z][a-z_]*$"
+          },
+          "ok": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z_]*$"
+            },
+            "uniqueItems": true
+          },
+          "edge": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z_]*$"
+            },
+            "uniqueItems": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "patternProperties": {
+    "^_": true
+  },
+  "additionalProperties": false
+}

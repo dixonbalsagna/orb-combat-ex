@@ -47,12 +47,16 @@ func _initialize() -> void:
 			show_path = true
 		elif a == "--measure":
 			measure = true
+		elif a == "--no-hand-tips":
+			RenderAnim.hand_tips = false
+		elif a == "--no-press":
+			RenderAnim.press_styles = false
 		elif a.begins_with("--size="):
 			var p: PackedStringArray = a.substr(7).split("x")
 			size = Vector2i(int(p[0]), int(p[1]))
 		elif a.begins_with("--step="):
 			step = int(a.substr(7))
-	RenderAnim.press_styles = not off
+	RenderAnim.press_styles = not off and not OS.get_cmdline_user_args().has("--no-press")
 	RenderAnim.joint_audit = measure
 	DirData.templatesProfile = "dynamic"
 	var vpn := SubViewport.new()

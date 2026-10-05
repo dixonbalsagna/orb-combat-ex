@@ -32,7 +32,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "blade",
+   "path": "line"
   },
   {
    "id": "w1.cross",
@@ -65,7 +67,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "blade",
+   "path": "line"
   },
   {
    "id": "w1.hook",
@@ -98,7 +102,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "plate",
+   "path": "arc_in"
   },
   {
    "id": "w1.backfist",
@@ -131,7 +137,9 @@
    ],
    "alt": null,
    "_genericAb": true,
-   "_family": "hand_arc"
+   "_family": "hand_arc",
+   "tip": "heel",
+   "path": "arc_out"
   },
   {
    "id": "w1.palm_heel",
@@ -167,7 +175,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "palm",
+   "path": "line"
   },
   {
    "id": "w1.spear_hand",
@@ -200,7 +210,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "blade",
+   "path": "line"
   },
   {
    "id": "w1.uppercut",
@@ -236,7 +248,9 @@
    ],
    "alt": "upright and open-chested",
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "fist",
+   "path": "rise"
   },
   {
    "id": "w1.hammer",
@@ -269,7 +283,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "fist",
+   "path": "drop"
   },
   {
    "id": "w1.overhand",
@@ -302,7 +318,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": "hand_arc"
+   "_family": "hand_arc",
+   "tip": "blade",
+   "path": "drop"
   },
   {
    "id": "w1.haymaker",
@@ -335,7 +353,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "blade",
+   "path": "arc_in"
   },
   {
    "id": "w1.short_elbow",
@@ -368,7 +388,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "point",
+   "path": "arc_in"
   },
   {
    "id": "w1.rising_elbow",
@@ -401,7 +423,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "point",
+   "path": "rise"
   },
   {
    "id": "w1.spinning_elbow",
@@ -436,7 +460,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "point",
+   "path": "spin"
   },
   {
    "id": "w1.dropping_elbow",
@@ -469,7 +495,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "point",
+   "path": "drop"
   },
   {
    "id": "w1.twin_spear",
@@ -502,7 +530,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "blade",
+   "path": "line"
   },
   {
    "id": "w1.double_palm",
@@ -539,7 +569,9 @@
    ],
    "alt": "elbows in",
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "palm",
+   "path": "line"
   },
   {
    "id": "w1.double_hammer",
@@ -575,7 +607,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "plate",
+   "path": "drop"
   },
   {
    "id": "w1.cross_arm_ram",
@@ -610,7 +644,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "plate",
+   "path": "line"
   },
   {
    "id": "w1.front_kick",
@@ -643,7 +679,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "ball",
+   "path": "line"
   },
   {
    "id": "w1.side_kick",
@@ -676,7 +714,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "edge",
+   "path": "line"
   },
   {
    "id": "w1.low_kick",
@@ -709,7 +749,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "instep",
+   "path": "arc_in"
   },
   {
    "id": "w1.snap_round",
@@ -742,7 +784,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "instep",
+   "path": "arc_in"
   },
   {
    "id": "w1.roundhouse",
@@ -775,7 +819,9 @@
    ],
    "alt": "guard stays up",
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "instep",
+   "path": "arc_in"
   },
   {
    "id": "w1.axe_kick",
@@ -808,7 +854,9 @@
    ],
    "alt": "leaning back, arms wide",
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "heel",
+   "path": "drop"
   },
   {
    "id": "w1.spinning_heel",
@@ -843,7 +891,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "heel",
+   "path": "spin"
   },
   {
    "id": "w1.stomp",
@@ -876,7 +926,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "sole",
+   "path": "drop"
   },
   {
    "id": "w1.sweep",
@@ -909,7 +961,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "instep",
+   "path": "arc_in"
   },
   {
    "id": "w1.drop_kick",
@@ -942,7 +996,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "sole",
+   "path": "line"
   },
   {
    "id": "w1.short_knee",
@@ -975,7 +1031,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "cap",
+   "path": "line"
   },
   {
    "id": "w1.rising_knee",
@@ -1008,7 +1066,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "cap",
+   "path": "rise"
   },
   {
    "id": "w1.driving_knee",
@@ -1041,7 +1101,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "cap",
+   "path": "line"
   },
   {
    "id": "w1.headbutt",
@@ -1074,7 +1136,9 @@
    ],
    "alt": "hands pulled back",
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "brow",
+   "path": "line"
   },
   {
    "id": "w1.shoulder_check",
@@ -1105,7 +1169,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "plate",
+   "path": "line"
   },
   {
    "id": "w1.body_ram",
@@ -1136,7 +1202,9 @@
    ],
    "alt": null,
    "_genericAb": false,
-   "_family": null
+   "_family": null,
+   "tip": "plate",
+   "path": "line"
   }
  ],
  "skipped": [

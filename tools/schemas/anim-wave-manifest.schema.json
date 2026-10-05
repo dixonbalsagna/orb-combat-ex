@@ -38,7 +38,9 @@
           "look",
           "orig",
           "poses",
-          "alt"
+          "alt",
+          "tip",
+          "path"
         ],
         "properties": {
           "id": {
@@ -216,6 +218,34 @@
               "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$"
             },
             "description": "Load, contact, follow."
+          },
+          "tip": {
+            "enum": [
+              "fist",
+              "blade",
+              "palm",
+              "heel",
+              "plate",
+              "ball",
+              "instep",
+              "edge",
+              "sole",
+              "point",
+              "cap",
+              "brow"
+            ],
+            "description": "The striking surface as posed (docs/animation/moveset-parts.md): hand fist, blade, palm, heel (the back or bottom of the fist), plate (the forearm leads); foot ball, heel, instep, edge, sole; elbow point; knee cap; shoulder plate; head brow."
+          },
+          "path": {
+            "enum": [
+              "line",
+              "arc_in",
+              "arc_out",
+              "rise",
+              "drop",
+              "spin"
+            ],
+            "description": "The angle the limb travels: line, arc_in (toward the centre line), arc_out (away from it), rise, drop, spin (one turn)."
           },
           "alt": {
             "anyOf": [

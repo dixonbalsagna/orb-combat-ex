@@ -264,6 +264,10 @@
       "schema": "anim-press-styles.schema.json"
     },
     {
+      "match": "data/anim/tips.json",
+      "schema": "anim-tips.schema.json"
+    },
+    {
       "match": "data/anim/target_poles.json",
       "schema": "anim-target-poles.schema.json"
     },
