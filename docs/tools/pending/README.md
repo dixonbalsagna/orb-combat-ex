@@ -176,6 +176,10 @@ Schema for `ui/data/stances.json` (the five stances, their badge words and face 
 
 Run once, in the commit where UI moves the stances lines into notes: `node docs/tools/pending/apply-howto-notes.cjs`. It does **not** edit `ui/`. It widens `note` in `ui-howto.schema.json` to six names: `kbd_p2`, `reopen`, `stances_table`, `stances_table_touch`, `stances_full` and `stances_simple`; 12 cases, each setting its own whole item. Re-runnable. Tested on a clean `git archive HEAD` (766a0ed): 0 errors and 0 warnings, self-test passes (4027 of 4027), a second run changes nothing.
 
+## `apply-brawl-9d.cjs`: Encounter's follow-up to the first brawl (Game Design section 9d)
+
+Run once, in the commit that lands the slice's data, after `apply-brawl1.cjs` (applied): `node docs/tools/pending/apply-brawl-9d.cjs`. It does **not** edit `data/`. `interrupts.json` `brawl.flurry` gains `staggeredAddsRun` (boolean), `levelWithin` (integer, 0 or more) and `momentum` (0.5 to 1), all required, and **loses** `closeAfter` (now an unknown key); `brawl` gains the required `shotHeavyMul` (above 0). `ai.json`: each level's `brawl` gains the required `heavyAfterClose` (0 to 1), and each level gains the required closed `vsShooter` {guardShare, enderShare, heavyApproachShare} (0 to 1, all three required; **it is the level's own key, beside `brawl`**, as section 9d reads: "each level's `vsShooter`"; tell me if it belongs inside `brawl`). The 9c keys (`answerBy`, `guardMaxTicks`, `attackIntoGap`) stay unknown (cases say so); nothing for `launch.json`. The fixtures and the 138 earlier brawl cases that set a whole block follow; the `closeAfter` case becomes a retired-key case; 45 new cases, each setting its own whole block. Re-runnable. Tested on a clean `git archive HEAD` (222f58b) with scratch values in the data: 11 errors before, then 0 errors and 0 warnings, self-test passes (4205 of 4205), a second run changes nothing.
+
 ## Which script goes with which commit
 
 State as of the tree at 648c637 (2026-10-04). **Applied** means the script's keys, rules and cases are in the tree and its commit is made; a script marked applied has nothing left to run and can be deleted. **Do not re-run** `apply-2b`, `apply-m1b`, `apply-contact`, `apply-launch`, `apply-biomes-contact`, `apply-uppercut`, `apply-anim-agency` and `apply-recipes`: they are older than later changes and would overwrite them (checked by running each on a clean export of HEAD). The other applied scripts change nothing on a second run.
@@ -193,6 +197,7 @@ State as of the tree at 648c637 (2026-10-04). **Applied** means the script's key
 | `apply-intro2` | applied (208c6c7) | Simulation's `data/fight/intro.json` (`fight.intro/2`); after `apply-stages` (applied) | its data |
 | `apply-ui-stances` | applied (014c56a) | UI's stances badge | done |
 | `apply-howto-notes` | parked | UI's move of the stances lines into notes | UI's `howto.json` change |
+| `apply-brawl-9d` | parked | Encounter's follow-up brawl slice data (`interrupts.json`, `ai.json`) | its data |
 | `apply-movegen` (and `xref-movegen.js`) | parked, follows generator version 5 | Combat's landing of parts, identity, cells, the movesets and `lock.json` | the files |
 | (launch pair finishers and templates) | held | Combat's go-live of `launch-pair.json` finishers, `templates.agency.json` and `templates.brawl.json` | their live form |
 
