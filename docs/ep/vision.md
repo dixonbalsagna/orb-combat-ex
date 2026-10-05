@@ -644,3 +644,17 @@ What follows from it:
 - LT + an attack: zip to the opponent, land the strike, zip back. That is the default.
 - LT + an attack + the stick toward the opponent: zip in, land the strike, then zip through to the opponent's other side.
 - A well-timed heavy or tech strike from the defender counters a zip.
+
+## Orb, 2026-10-05: build the zip; any spot around the enemy
+
+The approved reference is docs/ep/prototypes/lt-zip-v4.html.
+
+Verbatim:
+
+> the zip prototype looks right, start building it. consider how players should be able to use it to end up in any spot in a 360 degree around the enemy, and if they use it and are holding a direction away from the opponent, they end further from where they started and this is a useful way to escape from a brawl you aren't ready to commit to.
+
+What follows from it:
+
+- The zip is approved for building.
+- The stick chooses where he ends up: any spot on a full circle around the enemy (above, below, behind, in front), not only "back" or "the far side".
+- Holding away from the opponent ends him further out than where he started: the zip is also a way to leave a brawl he is not ready to commit to.
