@@ -124,6 +124,16 @@
               }
             },
             "additionalProperties": false
+          },
+          "entry_in": {
+            "description": "The entry (a `name` of an entrymap row) the zip's way in plays.",
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "entry_out": {
+            "description": "The entry the zip's way out plays.",
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
           }
         },
         "patternProperties": {
@@ -176,6 +186,30 @@
       "type": "number",
       "minimum": 0,
       "maximum": 60
+    },
+    "pass": {
+      "type": "object",
+      "required": [
+        "over",
+        "round"
+      ],
+      "properties": {
+        "over": {
+          "description": "The entry a zip over the rival plays.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "round": {
+          "description": "The entry a zip round the rival plays.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        }
+      },
+      "description": "The entries a zip past the rival plays.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     }
   },
   "patternProperties": {

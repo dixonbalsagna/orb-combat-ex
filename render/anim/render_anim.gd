@@ -27,6 +27,7 @@ static var blow_join: bool = false        # --blowjoin: the blow's own snap is s
 static var last_stand_poses: bool = true   # the last stand's body cue (docs 9.20); --no-last-stand-poses switches it off
 static var pair_live: bool = true           # the launch pair play their own waves live (strikes, entries, blast presses, taunts: docs/animation/pair-live.md); --no-pair-live switches it off (the before)
 static var hand_tips: bool = true             # a blow shows the hand state of its tip (data/anim/tips.json: the rival's heavies close to a fist); --no-hand-tips switches it off
+static var intro_gestures: bool = true         # the sim's intro_gesture events play the fighter's own motion for the intent (docs/animation/intro-gestures.md); inert until the composer sends them; --no-intro-gestures switches it off
 static var press_styles: bool = false        # the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md); --press-styles switches it on, OFF by default
 static var flight_lead: bool = true         # a fast launched body flies head first (docs 9.23); --no-flight-lead switches it off (the before)
 static var agency_poses: bool = true       # the agency slice's events (knockback, embed, the far taunt, the charges) play their poses (docs 9.22); --no-agency-poses switches them off
@@ -82,6 +83,8 @@ static func _read_args() -> void:
 			pair_live = false
 		elif a == "--press-styles":
 			press_styles = true
+		elif a == "--no-intro-gestures":
+			intro_gestures = false
 		elif a == "--no-press-styles":
 			press_styles = false
 		elif a == "--no-hand-tips":
@@ -221,6 +224,13 @@ static func consume(S: SimState, events: Array) -> void:
 							gd[key] = gv
 					var t_ev: float = S.T - float(S.tick - int(e.tick)) * (1.0 / 60.0)   # the event's own time
 					fighter(S, S.fighters[ga]).on_ground_event(String(e.type), gd, t_ev)
+			"intro_gesture":
+				# Narrative's gesture beat (docs/narrative/dynamic-intros.md section 11): kind is the intent, text the point it is at (land_first, look_start ...), actor the fighter's slot
+				var gi: int = int(_ev(e, "actor", -1))
+				if gi >= 0 and gi < S.fighters.size():
+					var tb: bool = String(S.fighters[gi].state) == "intro"
+					var tg: float = float(int(e.tick)) / 60.0 if tb else S.T - float(S.tick - int(e.tick)) * (1.0 / 60.0)
+					fighter(S, S.fighters[gi]).on_gesture(String(_ev(e, "intent", String(e.kind))), tg, tb)
 			"last_stand_ready", "last_stand_end":
 				var gl: int = int(_ev(e, "actor", -1))
 				if gl >= 0 and gl < S.fighters.size():

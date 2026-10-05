@@ -584,11 +584,463 @@
             "description": "The far taunt played first, one of the taunts.",
             "type": "string",
             "minLength": 1
+          },
+          "gestures": {
+            "type": "object",
+            "propertyNames": {
+              "pattern": "^(_.*|[a-z]+)$"
+            },
+            "description": "Optional. The body gestures a fighter plays for each intent (acknowledge, appraise, dismiss, defer, brace, ease, claim, check, soften, harden).",
+            "properties": {
+              "acknowledge": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "appraise": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "dismiss": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "defer": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "brace": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "ease": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "claim": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "check": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "soften": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "harden": {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
+                    "description": "A sequence or a pose id of the wave files."
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much of the gesture the body takes (optional)."
+                  },
+                  "mask": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "head",
+                        "torso",
+                        "arms",
+                        "legs"
+                      ]
+                    },
+                    "description": "The groups of gesture_groups the gesture moves (optional)."
+                  },
+                  "hold": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds a pose is held (for a pose id)."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
           }
         },
         "additionalProperties": false,
         "patternProperties": {
           "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "gesture_groups": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(_.*|head|torso|arms|legs)$"
+      },
+      "description": "Optional. The bone groups a gesture may move (head, torso, arms, legs); the rest of the body keeps playing the fight.",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
         }
       },
       "patternProperties": {

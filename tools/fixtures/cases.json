@@ -41555,7 +41555,7 @@
             "/fighters/test": {
               "shape": "P",
               "waves": {
-                "strikes": "protag9"
+                "strikes": "nowave9"
               },
               "pose_profile": {
                 "hand_states": {
@@ -42460,7 +42460,7 @@
               "shape": "P",
               "waves": {
                 "strikes": "protag1",
-                "entries": "protag9"
+                "entries": "nowave9"
               },
               "pose_profile": {
                 "hand_states": {
@@ -42492,7 +42492,7 @@
               "shape": "P",
               "waves": {
                 "strikes": "protag1",
-                "energy": "protag9"
+                "energy": "nowave9"
               },
               "pose_profile": {
                 "hand_states": {
@@ -43852,7 +43852,7 @@
               "waves": {
                 "strikes": "protag1",
                 "more": [
-                  "protag9"
+                  "nowave9"
                 ]
               },
               "pose_profile": {
@@ -43887,7 +43887,7 @@
                 "strikes": "protag1",
                 "more": [
                   "protag4",
-                  "protag9"
+                  "nowave9"
                 ]
               },
               "pose_profile": {
@@ -55869,6 +55869,1730 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "anim-zip-entry-in-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/readings/speed/entry_in": "dash"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-entry-out-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/readings/speed/entry_out": "hop_back"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-entry-in-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/readings/speed/entry_in": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/readings/speed/entry_in"
+      }
+    },
+    {
+      "id": "anim-zip-entry-in-shape",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/readings/speed/entry_in": "Dash"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/readings/speed/entry_in"
+      }
+    },
+    {
+      "id": "anim-zip-entry-out-shape",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/readings/speed/entry_out": "hop back"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/readings/speed/entry_out"
+      }
+    },
+    {
+      "id": "anim-zip-entry-in-unknown",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/readings/speed/entry_in": "nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:zip-entry",
+        "pointer": "/readings/speed/entry_in"
+      }
+    },
+    {
+      "id": "anim-zip-entry-out-unknown",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/readings/speed/entry_out": "nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:zip-entry",
+        "pointer": "/readings/speed/entry_out"
+      }
+    },
+    {
+      "id": "anim-zip-entry-in-every-reading-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/readings/heavy/entry_in": "rising",
+            "/readings/hold/entry_in": "skid"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-key-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pass"
+      }
+    },
+    {
+      "id": "anim-zip-pass-unknown-key",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive",
+              "under": "skid"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/pass/under"
+      }
+    },
+    {
+      "id": "anim-zip-pass-note-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive",
+              "_why": "comment"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-over-shape",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "Dash",
+              "round": "arc_dive"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/pass/over"
+      }
+    },
+    {
+      "id": "anim-zip-pass-over-unknown",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "nowhere",
+              "round": "arc_dive"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:zip-entry",
+        "pointer": "/pass/over"
+      }
+    },
+    {
+      "id": "anim-zip-pass-round-unknown",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "nowhere"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:zip-entry",
+        "pointer": "/pass/round"
+      }
+    },
+    {
+      "id": "anim-zip-pass-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": "over"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pass"
+      }
+    },
+    {
+      "id": "anim-pressstyles-push-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/push": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-push-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/push": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/push"
+      }
+    },
+    {
+      "id": "anim-pressstyles-push-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/push": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "sparkle": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/push/sparkle"
+      }
+    },
+    {
+      "id": "anim-pressstyles-push-ghosts-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/push": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": -1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/push/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-push-squash-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/push": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 2,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/push/squash"
+      }
+    },
+    {
+      "id": "anim-pressstyles-style-unknown-still-rejected",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/slide": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/slide"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-guard-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "pelvis"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/guard"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": 0.5,
+              "extra": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/guard/extra"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-note-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": 0.5,
+              "_why": "comment"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-guard-pose-shape",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "Brace",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/guard/pose"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-pose-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "nowhere",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-pose",
+        "pointer": "/guard/pose"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-bones-empty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/guard/bones"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-bones-duplicate",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "pelvis",
+                "pelvis"
+              ],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/guard/bones/1"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-bone-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm",
+                "tail_9"
+              ],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-bone",
+        "pointer": "/guard/bones/1"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-bone-with-a-side",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm_l"
+              ],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-bone",
+        "pointer": "/guard/bones/0"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-bone-without-a-pair",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "pelvis"
+              ],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-bone",
+        "pointer": "/guard/bones/0"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-arm-bones-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "clavicle",
+                "upper_arm",
+                "forearm",
+                "hand"
+              ],
+              "weight": 0.5
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-guard-weight-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": 1.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/guard/weight"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-weight-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": -0.1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/guard/weight"
+      }
+    },
+    {
+      "id": "anim-pressstyles-guard-weight-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": 1
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-guard-weight-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/guard": {
+              "pose": "brace",
+              "bones": [
+                "upper_arm",
+                "forearm"
+              ],
+              "weight": 0
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gestures-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "acknowledge": {
+                "seq": "pg.taunt_close"
+              },
+              "brace": {
+                "seq": "brace",
+                "w": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gestures-every-intent-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "acknowledge": {
+                "seq": "brace"
+              },
+              "appraise": {
+                "seq": "brace"
+              },
+              "dismiss": {
+                "seq": "brace"
+              },
+              "defer": {
+                "seq": "brace"
+              },
+              "brace": {
+                "seq": "brace"
+              },
+              "ease": {
+                "seq": "brace"
+              },
+              "claim": {
+                "seq": "brace"
+              },
+              "check": {
+                "seq": "brace"
+              },
+              "soften": {
+                "seq": "brace"
+              },
+              "harden": {
+                "seq": "brace"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gestures-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": "bow"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/roles/protagonist/gestures"
+      }
+    },
+    {
+      "id": "anim-pairlive-gestures-empty-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {}
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gestures-note-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "_why": "comment",
+              "acknowledge": {
+                "seq": "brace"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-intent-unknown",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "wave": {
+                "seq": "brace"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/roles/protagonist/gestures/wave"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-intent-shape",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "Acknowledge Him": {
+                "seq": "brace"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/roles/protagonist/gestures/Acknowledge Him"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-key-required",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "w": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/roles/protagonist/gestures/brace"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-unknown-key",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "speed": 2
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/roles/protagonist/gestures/brace/speed"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-note-key-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "_why": "comment"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-seq-shape",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "Brace Pose"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/roles/protagonist/gestures/brace/seq"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-seq-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": 3
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/roles/protagonist/gestures/brace/seq"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-seq-unknown",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "pg.nowhere"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pairlive-gesture",
+        "pointer": "/roles/protagonist/gestures/brace/seq"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-pose-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "claim": {
+                "seq": "brace"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-weight-range",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "w": 1.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/roles/protagonist/gestures/brace/w"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-weight-negative",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "w": -0.1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/roles/protagonist/gestures/brace/w"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-weight-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "w": "half"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/roles/protagonist/gestures/brace/w"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-hold-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "hold": 0.6
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-hold-zero",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "hold": 0
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/roles/protagonist/gestures/brace/hold"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-hold-negative",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "hold": -1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/roles/protagonist/gestures/brace/hold"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-hold-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "hold": "long"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/roles/protagonist/gestures/brace/hold"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-hold-with-w-and-mask-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "hold": 1.5,
+                "w": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-weight-edges-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "w": 0
+              },
+              "ease": {
+                "seq": "brace",
+                "w": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gestures-for-the-other-fighter-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/antihero/gestures": {
+              "acknowledge": {
+                "seq": "pg.taunt_close"
+              },
+              "brace": {
+                "seq": "brace",
+                "w": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-mask-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "mask": [
+                  "head",
+                  "arms"
+                ]
+              }
+            },
+            "/roles/antihero/gestures": {},
+            "/gesture_groups": {
+              "head": [
+                "head",
+                "neck"
+              ],
+              "arms": [
+                "upper_arm_l",
+                "upper_arm_r"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-mask-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "mask": "head"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/roles/protagonist/gestures/brace/mask"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-mask-empty",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "mask": []
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/roles/protagonist/gestures/brace/mask"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-mask-duplicate",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "mask": [
+                  "head",
+                  "head"
+                ]
+              }
+            },
+            "/gesture_groups": {
+              "head": [
+                "head"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/roles/protagonist/gestures/brace/mask/1"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-mask-group-enum",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "mask": [
+                  "tail"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/roles/protagonist/gestures/brace/mask/0"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-mask-group-not-defined",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {
+              "brace": {
+                "seq": "brace",
+                "mask": [
+                  "legs"
+                ]
+              }
+            },
+            "/gesture_groups": {
+              "head": [
+                "head"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pairlive-gesture",
+        "pointer": "/roles/protagonist/gestures/brace/mask/0"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {},
+            "/roles/antihero/gestures": {},
+            "/gesture_groups": {
+              "head": [
+                "head",
+                "neck"
+              ],
+              "torso": [
+                "spine_1",
+                "spine_2"
+              ],
+              "arms": [
+                "upper_arm_l"
+              ],
+              "legs": [
+                "thigh_l"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/gesture_groups": [
+              "head"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/gesture_groups"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-name-enum",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/gesture_groups": {
+              "tail": [
+                "head"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/gesture_groups/tail"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-note-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {},
+            "/roles/antihero/gestures": {},
+            "/gesture_groups": {
+              "_why": "comment",
+              "head": [
+                "head"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-empty-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/gestures": {},
+            "/roles/antihero/gestures": {},
+            "/gesture_groups": {}
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-list-empty",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/gesture_groups": {
+              "head": []
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/gesture_groups/head"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-bone-duplicate",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/gesture_groups": {
+              "head": [
+                "head",
+                "head"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/gesture_groups/head/1"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-bone-shape",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/gesture_groups": {
+              "head": [
+                "Head"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/gesture_groups/head/0"
+      }
+    },
+    {
+      "id": "anim-pairlive-gesture-groups-bone-unknown",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/gesture_groups": {
+              "head": [
+                "head",
+                "tail_9"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pairlive-bone",
+        "pointer": "/gesture_groups/head/1"
+      }
     }
   ],
   "text": [

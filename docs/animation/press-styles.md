@@ -116,3 +116,8 @@ The review GIFs are `art/animation/review/press-styles/<scene>-<fighter>.gif`, e
 - The squash borrows another pose's legs, so a fighter whose borrowed pose has an odd stance reads odd: the rival's `pe.plant_coil.arrive` is deep; Orb's eye decides.
 - `chainStrike` args and the beat fields in section 4 are sim work (Combat or Encounter); until then the style comes from the log and the weight.
 - The first-sight read can disagree with VFX's read one tick later; stamping `style` on the beat removes that.
+
+## 11. Two additions (2026-10-06)
+
+- **`push`, a fourth style** (the defensive stance's push): a beat's `style: "push"` plays a blow with no impact snap: a 10-tick wind-up, the contact reached over 5 ticks, a 10-tick follow-through, no overshoot. Tech, speed and heavy are unchanged.
+- **The guard layer** (`guard` in `press_styles.json`): a strike beat with `check: true` (a check thrown over the guard) keeps the arm that is not striking in the defensive guard pose (weight 0.9), and a foot, knee or head blow guards both arms. Details and the checks are in `docs/animation/zip.md` section 8.

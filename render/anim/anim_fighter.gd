@@ -41,6 +41,7 @@ var _prev_cx: float = 0.0
 var _smear: float = 0.0                 # the contact catch: how far behind the anchor the body is drawn (model units), decaying
 var _smear_t0: float = -10.0
 var press: Dictionary = {}             # press styles (docs/animation/press-styles.md): the style of the blow playing and where it is, for VFX (empty when none)
+var _gest: Dictionary = {}              # an intro gesture playing: {id, t0, dur, w, mask (group names), pose (a single pose, not a sequence)}
 var zip: Dictionary = {}               # the LT zip (docs/animation/zip.md): its phase and look for VFX, empty when no zip is playing
 var zip_path: Array = []               # where the zipping body was over the last solves: {T, x, y, phase}, newest last (the path of the body for the blur)
 var _zip: Dictionary = {}              # the zip told to this body (AnimZip.start), cleared when it is over
@@ -1082,6 +1083,8 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 			curl = curl.lerp(rp.curl, lw)
 	_agency_layer(S, f, T)
 	_energy_layer(S, f, T)
+	if not _gest.is_empty():
+		_gesture_layer(S, f, T)
 	if _gc_hold_t0 >= 0.0 and AnimData.pose_exists("gc.hold.brace_tumble"):
 		var hin: float = float(AnimData.ground.get("hold", {}).get("in", 0.08))
 		var hout: float = float(AnimData.ground.get("hold", {}).get("out", 0.15))
@@ -1494,7 +1497,7 @@ func _live_pick(S: SimState, f, ex, ordinal: int, heavy: bool) -> String:
 ## An entry (data/anim/waves/*.entries.json, parked: no live beat names one yet): a sequence of poses over `dur` seconds. A phase with
 ## `ticks` holds that long, the others share the rest by their weight `w`; the poses cross-fade over three ticks at each boundary. The
 ## strike that follows takes over from here by its own load (the join is inertialised).
-func _entry_layer(es: float, dur: float, id: String, T: float, dq: float, wt: float = 1.0) -> void:
+func _entry_layer(es: float, dur: float, id: String, T: float, dq: float, wt: float = 1.0, fit: bool = false) -> void:
 	var en = AnimData.entries.get(id)
 	if en == null or T < es - 0.0001 or T >= es + dur + 0.05:
 		return
@@ -1511,6 +1514,11 @@ func _entry_layer(es: float, dur: float, id: String, T: float, dq: float, wt: fl
 	for p in ph:
 		var seg: float = float(p.ticks) * DT if p.has("ticks") else flex * float(p.get("w", 1.0)) / maxf(sumw, 0.001)
 		bounds.append(float(bounds[-1]) + seg)
+	if fit and float(bounds[-1]) > 0.0001:
+		# a zip plays an entry at its own speed: every phase shrinks together so the whole sequence fits the zip's ticks
+		var fk: float = dur / float(bounds[-1])
+		for bi in range(bounds.size()):
+			bounds[bi] = float(bounds[bi]) * fk
 	var tt: float = floorf(clampf(T - es, 0.0, dur) / dq + 0.0001) * dq
 	var e: float = 1.5 * DT
 	var base_q: Array[Quaternion] = []
@@ -1738,6 +1746,8 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		_press_body(prow, pstyle, ul, dtc, Sn, H, F, bw3, ks, side, blow_id, best, tc2, T)
 	if RenderAnim.hand_tips:
 		_hand_tip(ks, side, heavy2, strikes[best][2], hw)
+	if RenderAnim.press_styles and bool(bargs.get("check", false)):
+		_guard_layer(ks, side, hw)
 	# the step from the wind-up into the contact key is the blow itself (on twos it is one step): inertialisation must not take it for a join
 	# and smooth it over the next 0.1 s, or the fist reaches the defender late (--blowjoin restores the old behaviour for an A/B)
 	_blow_snap = dtc >= -(Sn + dq) - 0.0001 and dtc <= 0.0001
@@ -1777,6 +1787,32 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		_ci_dmg = float(strikes[best][2].get("dmg", 0.0))
 
 
+## The guard layer a check is thrown over (data/anim/press_styles.json `guard`): the arm that is not striking stays in the guard pose, closing over the wind-up and opening over the return. A hand
+## or elbow blow guards the other arm; a foot, knee or head blow guards both. Only the arm bones and the finger curl change, so the strike and its contact solve are the key set's own.
+func _guard_layer(ks: Dictionary, side: bool, w: float) -> void:
+	var G: Dictionary = AnimData.press.get("guard", {})
+	if G.is_empty() or w <= 0.001 or not AnimData.pose_exists(String(G.get("pose", ""))):
+		return
+	var gp: AnimPose = AnimData.pose(String(G.pose))
+	var lb: String = String(ks.get("limb", "hand_r"))
+	var right_strikes: bool = lb.ends_with("r") != side if lb.contains("_") else true
+	var sides: Array = []
+	if lb.begins_with("hand") or lb.begins_with("elbow"):
+		sides = ["l" if right_strikes else "r"]
+	else:
+		sides = ["l", "r"]
+	var ww: float = clampf(w * float(G.get("weight", 0.9)), 0.0, 1.0)
+	for sd in sides:
+		for bn in G.get("bones", []):
+			var bi: int = AnimRig.index[String(bn) + "_" + String(sd)]
+			_press_slerp(bi, gp.q[bi], ww)
+		if sd == "l":
+			curl.x = lerpf(curl.x, gp.curl.x, ww)
+		else:
+			curl.y = lerpf(curl.y, gp.curl.y, ww)
+	debug["guards"] = int(debug.get("guards", 0)) + 1
+
+
 ## The hand state of a blow's tip (data/anim/tips.json): the beat's own `tip` (the generator's move part), else the fighter's rule for a key set posed
 ## with another tip (the rival's heavies close to a fist). Only the striking hand's finger curl changes, by `w`; nothing about the pose, the reach
 ## or the contact solve does. Blade and palm are both an open hand on this rig (one curl a hand).
@@ -1804,6 +1840,72 @@ func _hand_tip(ks: Dictionary, side: bool, heavy: bool, args: Dictionary, w: flo
 		else:
 			curl.x = lerpf(curl.x, target, w)
 	debug["hand_tips"] = int(debug.get("hand_tips", 0)) + 1
+
+
+## An intro gesture (Narrative's intents: acknowledge, appraise, dismiss, defer, brace, ease, claim, check, soften, harden; docs/narrative/dynamic-intros.md section 11): the sim's
+## `intro_gesture {actor, intent, at}` starts the fighter's own small motion for the intent from data/anim/pair_live.json `gestures` (a sequence or a pose, a weight, the groups of bones it
+## plays on: head, torso, arms, legs, in `gesture_groups`), played over whatever he is standing in and eased in and out. A fighter with no motion for the intent plays nothing (a silent skip).
+func on_gesture(intent: String, T: float, tick_clock: bool = false) -> void:
+	if not RenderAnim.pair_live or not RenderAnim.intro_gestures or pair_key == "":
+		return
+	var tbl: Dictionary = AnimData.pair.get("roles", {}).get(pair_key, {}).get("gestures", {})
+	if not tbl.has(intent):
+		debug["gesture_skips"] = int(debug.get("gesture_skips", 0)) + 1
+		return
+	var g: Dictionary = tbl[intent]
+	var id: String = String(g.get("seq", ""))
+	var dur: float = 0.0
+	var is_pose: bool = false
+	if AnimData.entries.has(id):
+		dur = float(AnimData.entries[id].dur) / 60.0
+	elif AnimData.pose_exists(id):
+		dur = float(g.get("hold", 0.5))
+		is_pose = true
+	else:
+		debug["gesture_skips"] = int(debug.get("gesture_skips", 0)) + 1
+		return
+	_gest = {"id": id, "t0": T, "dur": dur, "w": float(g.get("w", 1.0)), "mask": g.get("mask", ["head", "torso", "arms"]), "pose": is_pose, "intent": intent, "tb": tick_clock}
+	debug["gestures"] = int(debug.get("gestures", 0)) + 1
+
+
+func _gesture_layer(S: SimState, f, T: float) -> void:
+	var g: Dictionary = _gest
+	if bool(g.tb):
+		T = float(S.tick) / 60.0   # the intro runs on the sim's tick: its clock is frozen at 0 until the match starts
+	var u: float = T - float(g.t0)
+	var fade: float = 0.15
+	if u < -0.0001:
+		return
+	if u > float(g.dur) + fade or f.state == "launched" or f.state == "down" or _en_busy(S, f):
+		_gest = {}
+		return
+	var env: float = smoothstep(0.0, 0.1, u) * (1.0 - smoothstep(float(g.dur), float(g.dur) + fade, u)) * float(g.w) * (0.6 if RenderAnim.reduced_motion else 1.0)
+	if env <= 0.001:
+		return
+	var base_q: Array[Quaternion] = q.duplicate()
+	var base_h: Vector3 = hips
+	var base_c: Vector2 = curl
+	if bool(g.pose):
+		_mix_pose(AnimData.pose(String(g.id)), 1.0)
+	else:
+		_entry_layer(float(g.t0), float(g.dur), String(g.id), T, DT, 1.0)
+	# only the groups of bones the gesture plays on take it (a bow does not move the feet); the rest keep what they were
+	var on: Dictionary = {}
+	var groups: Dictionary = AnimData.pair.get("gesture_groups", {})
+	for gn in g.mask:
+		for bn in groups.get(String(gn), []):
+			on[int(AnimRig.index[String(bn)])] = true
+	var all: bool = on.is_empty()
+	for i in range(AnimRig.N):
+		if all or on.has(i):
+			q[i] = base_q[i].slerp(q[i], env)
+		else:
+			q[i] = base_q[i]
+	if all or on.has(int(AnimRig.index["pelvis"])):
+		hips = base_h.lerp(hips, env)
+	else:
+		hips = base_h
+	curl = base_c.lerp(curl, env) if (all or on.has(int(AnimRig.index["hand_r"]))) else base_c
 
 
 ## The press style of a blow (data/anim/press_styles.json, only with RenderAnim.press_styles): the beat's own `style` when the director

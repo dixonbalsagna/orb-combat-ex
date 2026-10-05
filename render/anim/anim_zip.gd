@@ -32,6 +32,12 @@ static func start(af: AnimFighter, spec: Dictionary, T: float) -> void:
 	z["t0"] = float(spec.get("t0", T))
 	z["via"] = String(spec.get("via", "auto"))   # auto: a back-step if the sim moves him away from the rival on the way out, a run otherwise (up, down, through, around)
 	z["btn"] = String(spec.get("btn", "x"))
+	# an entry of his own played at the zip's speed over the way in or out (Combat's rows name them: spiral in, pivot out), and a far-side pass by name (over, round)
+	z["entry_in"] = String(spec.get("entry_in", row.get("entry_in", "")))
+	z["entry_out"] = String(spec.get("entry_out", row.get("entry_out", "")))
+	var pas: String = String(spec.get("pass", ""))
+	if pas != "" and z.entry_out == "":
+		z["entry_out"] = String(AnimData.zip.get("pass", {}).get(pas, ""))
 	z["T1"] = float(z.tell)
 	z["T2"] = float(z.tell + z.inn)
 	z["T3"] = float(z.T2 + z.ho + z.hits * z.hd)
@@ -65,6 +71,13 @@ static func _pose_id(af: AnimFighter, name: String) -> String:
 	if id == "" or not AnimData.pose_exists(id):
 		id = String(P.get("default", {}).get(name, ""))
 	return id if AnimData.pose_exists(id) else ""
+
+
+## The fighter's own entry sequence for a name ("spiral" or "entry.spiral"), "" when he has none (the zip then plays its run and back-step poses).
+static func _entry_id(af: AnimFighter, name: String) -> String:
+	if name == "":
+		return ""
+	return AnimData.resolve_entry(af.pair_key, name if name.begins_with("entry.") else "entry." + name)
 
 
 static func _mix(af: AnimFighter, name: String, w: float) -> void:
@@ -161,10 +174,15 @@ static func layers(af: AnimFighter, S: SimState, f, T: float, dt: float) -> void
 		"in":
 			var u: float = clampf((tk - float(z.T1)) / maxf(float(z.inn), 1.0), 0.0, 1.0)
 			af._skip_inertia = true
-			travelling = true
-			var w: float = smoothstep(0.0, 0.3, u) * (1.0 - 0.4 * smoothstep(0.8, 1.0, u))
-			_mix(af, String(row.tell_pose), (1.0 - w) * 0.9)
-			_mix(af, String(row.travel_pose), w)
+			var eid_in: String = _entry_id(af, String(z.entry_in))
+			if eid_in != "":
+				var t_in: float = float(z.t0) + float(z.T1) * DT
+				af._entry_layer(t_in, float(z.inn) * DT, eid_in, T, DT, 1.0, true)
+			else:
+				travelling = true
+				var w: float = smoothstep(0.0, 0.3, u) * (1.0 - 0.4 * smoothstep(0.8, 1.0, u))
+				_mix(af, String(row.tell_pose), (1.0 - w) * 0.9)
+				_mix(af, String(row.travel_pose), w)
 			if rd == "heavy":
 				var st: Dictionary = row.get("stretch", {})
 				_stretch(af, st, 1.0)
@@ -189,7 +207,11 @@ static func layers(af: AnimFighter, S: SimState, f, T: float, dt: float) -> void
 					if vm.length() > 200.0:
 						z["via_now"] = "back" if vm.x * af.vface < -0.5 * vm.length() else "run"
 			var w2: float = 1.0 - smoothstep(0.6, 1.0, v)
-			if via == "back":
+			var eid_out: String = _entry_id(af, String(z.entry_out))
+			if eid_out != "":
+				var t_out: float = float(z.t0) + float(z.T3) * DT
+				af._entry_layer(t_out, float(z.out) * DT, eid_out, T, DT, 1.0, true)
+			elif via == "back":
 				_mix(af, "back", w2 * 0.9)
 				_mix(af, "back_travel", w2 * smoothstep(0.1, 0.5, v) * 0.7)
 			else:

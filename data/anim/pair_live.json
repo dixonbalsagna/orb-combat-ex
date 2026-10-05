@@ -5,7 +5,7 @@
   "anti-hero": "antihero",
   "anti_hero": "antihero"
  },
- "_about": "How the launch pair's parked waves play in a live match (docs/animation/pair-live.md). aliases: other names for a fighter of fighters.json (the neutral id rival is the antihero). A roster id is mapped to a fighter of data/anim/fighters.json (its key, or the id it `replaces`: KAI is the protagonist, VORR the antihero), whose waves are baked when his first body is built. shared: waves baked for both. gated: a strike that joins its fighter's pick list only while its gate is open (both_ground: both fighters near the ground; striker_air: the striker well above it); the other strikes of his strike waves (the manifest's light and heavy ones, never the tail) are the pick lists, walked as the go-live step 1 lists are. kinds: a shot kind (data/fight/shots.json) to the energy role it plays. cues: the sim's render cues (SimFx.cue) to what they start. spray_gap: ticks between a fighter's bolts under which the next one is a spray beat (the spread window of agency-pass.md 15.4). roles: per fighter, what each role plays: seq (a sequence of a parked wave, started where the cue or the shot says), hold (a pose held and eased: ticks, in and out seconds, w the weight), charged (charge: the pose held from the charge cue, full: the pose it takes at the flash, release: the hold on the shot), taunts (the far taunts: one is picked by a hash of the tick), taunt_first (the gesture a stand-off opens with, before any blow has landed), taunt_close, taunt_close_air (the close taunt when he is in the air), drop_the_act, crown_release, shove (events the sim does not send yet: they play when it does). Render only, outside the sim's data hash.",
+ "_about": "How the launch pair's parked waves play in a live match (docs/animation/pair-live.md). aliases: other names for a fighter of fighters.json (the neutral id rival is the antihero). A roster id is mapped to a fighter of data/anim/fighters.json (its key, or the id it `replaces`: KAI is the protagonist, VORR the antihero), whose waves are baked when his first body is built. shared: waves baked for both. gated: a strike that joins its fighter's pick list only while its gate is open (both_ground: both fighters near the ground; striker_air: the striker well above it); the other strikes of his strike waves (the manifest's light and heavy ones, never the tail) are the pick lists, walked as the go-live step 1 lists are. kinds: a shot kind (data/fight/shots.json) to the energy role it plays. cues: the sim's render cues (SimFx.cue) to what they start. spray_gap: ticks between a fighter's bolts under which the next one is a spray beat (the spread window of agency-pass.md 15.4). roles: per fighter, what each role plays: seq (a sequence of a parked wave, started where the cue or the shot says), hold (a pose held and eased: ticks, in and out seconds, w the weight), charged (charge: the pose held from the charge cue, full: the pose it takes at the flash, release: the hold on the shot), taunts (the far taunts: one is picked by a hash of the tick), taunt_first (the gesture a stand-off opens with, before any blow has landed), taunt_close, taunt_close_air (the close taunt when he is in the air), drop_the_act, crown_release, shove (events the sim does not send yet: they play when it does). Render only, outside the sim's data hash. gesture_groups: the groups of bones an intro gesture plays on (head, torso, arms, legs). roles.<fighter>.gestures: for each of Narrative's ten gesture intents (docs/narrative/dynamic-intros.md section 11) the fighter's own small motion: seq (a sequence or a pose id), w (a weight, optional), mask (the groups it plays on, default head, torso and arms), hold (seconds, for a pose). An intent a fighter has no entry for plays nothing. Started by the sim's `intro_gesture {actor, intent, at}` (the intent in `kind`, the point in `text`).",
  "shared": [
   "energy1"
  ],
@@ -106,6 +106,89 @@
    "taunt_first": "pg.taunt_nod",
    "taunt_close_air": {
     "seq": "pg.taunt_close_air"
+   },
+   "gestures": {
+    "acknowledge": {
+     "seq": "pg.taunt_nod",
+     "w": 0.5,
+     "mask": [
+      "head",
+      "torso"
+     ]
+    },
+    "appraise": {
+     "seq": "pi.appraise",
+     "mask": [
+      "head",
+      "torso"
+     ]
+    },
+    "dismiss": {
+     "seq": "pi.dismiss",
+     "mask": [
+      "head",
+      "torso"
+     ]
+    },
+    "defer": {
+     "seq": "pi.defer",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "brace": {
+     "seq": "in.hold.tense",
+     "w": 0.8,
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ],
+     "hold": 0.6
+    },
+    "ease": {
+     "seq": "pg.taunt_bounce",
+     "w": 0.5,
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "claim": {
+     "seq": "pi.claim",
+     "mask": [
+      "head",
+      "torso",
+      "arms",
+      "legs"
+     ]
+    },
+    "check": {
+     "seq": "pi.check",
+     "mask": [
+      "head",
+      "torso"
+     ]
+    },
+    "soften": {
+     "seq": "pi.soften",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "harden": {
+     "seq": "pg.taunt_fist_palm",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    }
    }
   },
   "antihero": {
@@ -178,7 +261,121 @@
    },
    "drop_the_act": {
     "seq": "rw.drop_the_act"
+   },
+   "gestures": {
+    "acknowledge": {
+     "seq": "ri.acknowledge",
+     "mask": [
+      "head",
+      "torso"
+     ]
+    },
+    "appraise": {
+     "seq": "rw.taunt_head_tilt",
+     "mask": [
+      "head",
+      "torso"
+     ]
+    },
+    "dismiss": {
+     "seq": "rw.taunt_back_turned",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "defer": {
+     "seq": "ri.defer",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "brace": {
+     "seq": "in.hold.tense",
+     "w": 0.8,
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ],
+     "hold": 0.6
+    },
+    "ease": {
+     "seq": "rw.taunt_dust_plate",
+     "w": 0.7,
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "claim": {
+     "seq": "rw.taunt_stillness",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "check": {
+     "seq": "ri.check",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "soften": {
+     "seq": "ri.soften",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    },
+    "harden": {
+     "seq": "rw.drop_the_act",
+     "mask": [
+      "head",
+      "torso",
+      "arms"
+     ]
+    }
    }
   }
+ },
+ "gesture_groups": {
+  "head": [
+   "head",
+   "neck"
+  ],
+  "torso": [
+   "spine_1",
+   "spine_2"
+  ],
+  "arms": [
+   "clavicle_l",
+   "upper_arm_l",
+   "forearm_l",
+   "hand_l",
+   "fingers_l",
+   "clavicle_r",
+   "upper_arm_r",
+   "forearm_r",
+   "hand_r",
+   "fingers_r"
+  ],
+  "legs": [
+   "pelvis",
+   "thigh_l",
+   "shin_l",
+   "foot_l",
+   "thigh_r",
+   "shin_r",
+   "foot_r"
+  ]
  }
 }

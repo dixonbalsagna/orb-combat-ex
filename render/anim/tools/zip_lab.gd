@@ -4,6 +4,7 @@ extends SceneTree
 ## style of its reading and `zip: true`), the damage events of each contact and the defender's answer. A close fixed side view, wide enough for the whole zip. Scenes (--scene=):
 ##   speed | tech | heavy      LT + X in that reading, back to where he came from (--btn=x|y|b picks the strike: a jab string, a kick, both hands)
 ##   through                   the stick toward the rival: zip in, strike, run through to his far side (the facing turns)
+##   pass-over, pass-round     the same far-side exit as an arc dive over him or a pivot round him (entries at zip speed); --entry-in= and --entry-out= name any entry
 ##   up | down                 an exit up (a run up and back), a zip from above that exits down
 ##   away                      the stick away: the way out ends further than he started
 ##   caught | countered        the defender answers a timed tech or heavy: the zipper is caught in reach, or countered on arrival
@@ -30,6 +31,9 @@ var fighter: String = "protagonist"
 var btn: String = "x"
 var reading: String = ""
 var via_arg: String = ""
+var entry_in: String = ""
+var entry_out: String = ""
+var pass_arg: String = ""
 var out: String = "zip.rgb"
 var off: bool = false
 var ghosts: bool = false
@@ -47,6 +51,12 @@ func _initialize() -> void:
 			fighter = a.substr(10)
 		elif a.begins_with("--btn="):
 			btn = a.substr(6)
+		elif a.begins_with("--entry-in="):
+			entry_in = a.substr(11)
+		elif a.begins_with("--entry-out="):
+			entry_out = a.substr(12)
+		elif a.begins_with("--pass="):
+			pass_arg = a.substr(7)
 		elif a.begins_with("--via="):
 			via_arg = a.substr(6)
 		elif a.begins_with("--reading="):
@@ -82,9 +92,13 @@ func _plan() -> Dictionary:
 	match scene:
 		"speed", "tech", "heavy":
 			p.reading = scene
-		"through":
+		"through", "pass-over", "pass-round":
 			p.reading = "speed" if reading == "" else reading
 			p.via = "through"
+			if scene == "pass-over":
+				pass_arg = "over"
+			elif scene == "pass-round":
+				pass_arg = "round"
 		"up":
 			p.reading = "speed" if reading == "" else reading
 			p.via = "up"
@@ -172,6 +186,12 @@ func _run() -> void:
 	var rd: String = String(plan.reading)
 	var row: Dictionary = AnimData.zip.readings[rd]
 	var spec := {"reading": rd, "btn": btn}
+	if entry_in != "":
+		spec["entry_in"] = entry_in
+	if entry_out != "":
+		spec["entry_out"] = entry_out
+	if pass_arg != "":
+		spec["pass"] = pass_arg
 	if via_arg != "":
 		spec["via"] = via_arg   # else the body reads the way out from the sim's own motion (auto)
 	var T0: float = 200.0 + float(PRE) * DT

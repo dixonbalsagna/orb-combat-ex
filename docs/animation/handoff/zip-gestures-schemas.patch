@@ -1,0 +1,387 @@
+diff -ru a/tools/schemas/anim-pairlive.schema.json b/tools/schemas/anim-pairlive.schema.json
+--- a/tools/schemas/anim-pairlive.schema.json	2026-10-04 22:08:21.273196200 -0700
++++ b/tools/schemas/anim-pairlive.schema.json	2026-10-04 22:08:21.274707000 -0700
+@@ -584,6 +584,63 @@
+             "description": "The far taunt played first, one of the taunts.",
+             "type": "string",
+             "minLength": 1
++          },
++          "gestures": {
++            "type": "object",
++            "propertyNames": {
++              "enum": [
++                "acknowledge",
++                "appraise",
++                "dismiss",
++                "defer",
++                "brace",
++                "ease",
++                "claim",
++                "check",
++                "soften",
++                "harden"
++              ]
++            },
++            "additionalProperties": {
++              "type": "object",
++              "required": [
++                "seq"
++              ],
++              "properties": {
++                "seq": {
++                  "type": "string",
++                  "pattern": "^[a-z]+[0-9]*\\.[a-z0-9_.]+$",
++                  "description": "A sequence or a pose id."
++                },
++                "w": {
++                  "type": "number",
++                  "minimum": 0,
++                  "maximum": 1
++                },
++                "mask": {
++                  "type": "array",
++                  "items": {
++                    "enum": [
++                      "head",
++                      "torso",
++                      "arms",
++                      "legs"
++                    ]
++                  },
++                  "uniqueItems": true
++                },
++                "hold": {
++                  "type": "number",
++                  "exclusiveMinimum": 0,
++                  "description": "Seconds a pose is held (for a pose id)."
++                }
++              },
++              "additionalProperties": false,
++              "patternProperties": {
++                "^_": true
++              }
++            },
++            "description": "Narrative's ten gesture intents: the fighter's own small motion for each. An intent he has no entry for plays nothing."
+           }
+         },
+         "additionalProperties": false,
+@@ -594,6 +651,26 @@
+       "patternProperties": {
+         "^_": true
+       }
++    },
++    "gesture_groups": {
++      "type": "object",
++      "propertyNames": {
++        "enum": [
++          "head",
++          "torso",
++          "arms",
++          "legs"
++        ]
++      },
++      "additionalProperties": {
++        "type": "array",
++        "items": {
++          "type": "string",
++          "pattern": "^[a-z][a-z0-9_]*$"
++        },
++        "minItems": 1
++      },
++      "description": "The groups of bones an intro gesture plays on."
+     }
+   },
+   "additionalProperties": false,
+diff -ru a/tools/schemas/anim-press-styles.schema.json b/tools/schemas/anim-press-styles.schema.json
+--- a/tools/schemas/anim-press-styles.schema.json	2026-10-04 22:08:21.271893700 -0700
++++ b/tools/schemas/anim-press-styles.schema.json	2026-10-04 22:08:21.273701000 -0700
+@@ -853,12 +853,236 @@
+           "patternProperties": {
+             "^_": true
+           }
++        },
++        "push": {
++          "type": "object",
++          "required": [
++            "prof",
++            "alternate",
++            "carry",
++            "carry_ticks",
++            "squash",
++            "lean_back",
++            "back",
++            "stretch",
++            "twist",
++            "twist_ticks",
++            "ghosts"
++          ],
++          "properties": {
++            "prof": {
++              "type": "object",
++              "required": [
++                "solve_hz",
++                "snap_ticks",
++                "load_ease",
++                "load_ticks",
++                "hold_ticks",
++                "follow_ticks",
++                "recover_ticks",
++                "overshoot",
++                "lag"
++              ],
++              "properties": {
++                "solve_hz": {
++                  "type": "integer",
++                  "minimum": 1,
++                  "maximum": 120,
++                  "description": "The in-betweener's solve rate."
++                },
++                "snap_ticks": {
++                  "type": "integer",
++                  "minimum": 0,
++                  "description": "Ticks of snap."
++                },
++                "load_ease": {
++                  "type": "number",
++                  "exclusiveMinimum": 0,
++                  "description": "The wind-up's ease exponent."
++                },
++                "load_ticks": {
++                  "type": "object",
++                  "required": [
++                    "light",
++                    "heavy"
++                  ],
++                  "properties": {
++                    "light": {
++                      "type": "integer",
++                      "minimum": 1
++                    },
++                    "heavy": {
++                      "type": "integer",
++                      "minimum": 1
++                    }
++                  },
++                  "description": "The wind-up's length by the blow's weight.",
++                  "additionalProperties": false,
++                  "patternProperties": {
++                    "^_": true
++                  }
++                },
++                "hold_ticks": {
++                  "type": "integer",
++                  "minimum": 0,
++                  "description": "The contact key is held this long before the follow-through starts (new in this file)."
++                },
++                "follow_ticks": {
++                  "type": "integer",
++                  "minimum": 0,
++                  "description": "The follow-through."
++                },
++                "recover_ticks": {
++                  "type": "integer",
++                  "minimum": 0,
++                  "description": "The return."
++                },
++                "overshoot": {
++                  "type": "number",
++                  "minimum": 0,
++                  "description": "How far past the pose the limb swings."
++                },
++                "lag": {
++                  "type": "number",
++                  "minimum": 0,
++                  "description": "The loose body's lag."
++                }
++              },
++              "description": "Overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new).",
++              "additionalProperties": false,
++              "patternProperties": {
++                "^_": true
++              }
++            },
++            "alternate": {
++              "type": "boolean",
++              "description": "The striking limb alternates blow to blow."
++            },
++            "carry": {
++              "type": "boolean",
++              "description": "A blow that starts in the last one's follow or recover blends out of that pose instead of the guard."
++            },
++            "carry_ticks": {
++              "type": "integer",
++              "minimum": 0,
++              "description": "The blend's length when carry is on."
++            },
++            "squash": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1,
++              "description": "How much of the squash pose's legs, pelvis and spine the wind-up takes (scaled by the blow's weight)."
++            },
++            "lean_back": {
++              "type": "number",
++              "minimum": 0,
++              "description": "Extra spine lean back at full squash, radians."
++            },
++            "back": {
++              "type": "number",
++              "minimum": 0,
++              "description": "The body drawn this far back at full squash, model units."
++            },
++            "stretch": {
++              "type": "object",
++              "required": [
++                "spine",
++                "rise",
++                "lead",
++                "ticks",
++                "smear_ticks"
++              ],
++              "properties": {
++                "spine": {
++                  "type": "number",
++                  "minimum": 0,
++                  "description": "Spine extension, radians."
++                },
++                "rise": {
++                  "type": "number",
++                  "minimum": 0,
++                  "description": "Hips up, model units."
++                },
++                "lead": {
++                  "type": "number",
++                  "minimum": 0,
++                  "description": "The body drawn this far ahead, model units."
++                },
++                "ticks": {
++                  "type": "integer",
++                  "minimum": 0,
++                  "description": "Ticks to settle after contact."
++                },
++                "smear_ticks": {
++                  "type": "integer",
++                  "minimum": 0,
++                  "description": "The ticks before contact that count as the smear frame."
++                }
++              },
++              "description": "The release.",
++              "additionalProperties": false,
++              "patternProperties": {
++                "^_": true
++              }
++            },
++            "twist": {
++              "type": "number",
++              "minimum": 0,
++              "description": "The loose body's spine yaw toward the striking side, radians."
++            },
++            "twist_ticks": {
++              "type": "integer",
++              "minimum": 0,
++              "description": "The twist's length."
++            },
++            "ghosts": {
++              "type": "integer",
++              "minimum": 0,
++              "description": "Afterimage copies VFX is asked for (press.ghosts)."
++            }
++          },
++          "additionalProperties": false,
++          "patternProperties": {
++            "^_": true
++          },
++          "description": "A push: no impact snap (the blow drives into its contact over 5 ticks), a long follow-through and a body drive. A beat names it as its `style`."
+         }
+       },
+       "additionalProperties": false,
+       "patternProperties": {
+         "^_": true
+       }
++    },
++    "guard": {
++      "type": "object",
++      "required": [
++        "pose",
++        "bones",
++        "weight"
++      ],
++      "properties": {
++        "pose": {
++          "type": "string",
++          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$",
++          "description": "The guard pose (a pose id)."
++        },
++        "bones": {
++          "type": "array",
++          "items": {
++            "type": "string",
++            "pattern": "^[a-z_]+$"
++          },
++          "minItems": 1,
++          "description": "Arm bones without a side (clavicle, upper_arm, forearm, hand): the guard arm's side is added."
++        },
++        "weight": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 1
++        }
++      },
++      "additionalProperties": false,
++      "description": "The guard layer a check is thrown over: the arm that is not striking stays in this pose."
+     }
+   },
+   "additionalProperties": false,
+diff -ru a/tools/schemas/anim-zip.schema.json b/tools/schemas/anim-zip.schema.json
+--- a/tools/schemas/anim-zip.schema.json	2026-10-04 22:08:21.271073100 -0700
++++ b/tools/schemas/anim-zip.schema.json	2026-10-04 22:08:21.273701000 -0700
+@@ -2,7 +2,7 @@
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "$id": "meridian/anim-zip",
+   "title": "anim.zip/1",
+-  "description": "data/anim/zip.json: the body of the LT zip (docs/animation/zip.md). readings: per press reading (speed, tech, heavy, press = the tackle, hold = the lift and throw) the default ticks of each phase (tell; in = the way in and out = the way out, each at least 4: Legal's floor on a zip's travel, RL-076, so the body is drawn travelling on every tick; hits blows of hd ticks each in reach, lift = the held A's lift), which poses play (tell_pose, travel_pose, hold_pose, held_pose, throw_pose: names of `poses`), the after-images asked of VFX (ghosts), the squash of the tell and the stretch of the way in. poses: per fighter key (a key of fighters.json) and default and shared, a name to a pose id. orient: the body turns along its path (max rad, rate, a speed under which it does not, gain). carry: the lifted fighter's cosmetic rise. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pose id is a pose; every pose name a reading uses is in every poses block) are for tools/lib/xref-fight.js (zip-*).",
++  "description": "data/anim/zip.json: the body of the LT zip (docs/animation/zip.md). readings: per press reading (speed, tech, heavy, press = the tackle, hold = the lift and throw) the default ticks of each phase (tell; in = the way in and out = the way out, each at least 4: Legal's floor on a zip's travel, RL-076, so the body is drawn travelling on every tick; hits blows of hd ticks each in reach, lift = the held A's lift), which poses play (tell_pose, travel_pose, hold_pose, held_pose, throw_pose: names of `poses`), the after-images asked of VFX (ghosts), the squash of the tell and the stretch of the way in. poses: per fighter key (a key of fighters.json) and default and shared, a name to a pose id. orient: the body turns along its path (max rad, rate, a speed under which it does not, gain). carry: the lifted fighter's cosmetic rise. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pose id is a pose; every pose name a reading uses is in every poses block) are for tools/lib/xref-fight.js (zip-*). entry_in and entry_out (optional) name an entry played at zip speed over the way in or out; pass: the entries of a far-side exit (over, round).",
+   "type": "object",
+   "required": [
+     "schema",
+@@ -124,6 +124,16 @@
+               }
+             },
+             "additionalProperties": false
++          },
++          "entry_in": {
++            "type": "string",
++            "pattern": "^[a-z][a-z0-9_]*$",
++            "description": "An entry of his own (a name of his entries, such as spiral) played at the zip's speed: every phase of the sequence squeezed into the way in or the way out."
++          },
++          "entry_out": {
++            "type": "string",
++            "pattern": "^[a-z][a-z0-9_]*$",
++            "description": "An entry of his own (a name of his entries, such as spiral) played at the zip's speed: every phase of the sequence squeezed into the way in or the way out."
+           }
+         },
+         "patternProperties": {
+@@ -176,6 +186,23 @@
+       "type": "number",
+       "minimum": 0,
+       "maximum": 60
++    },
++    "pass": {
++      "type": "object",
++      "properties": {
++        "over": {
++          "type": "string",
++          "pattern": "^[a-z][a-z0-9_]*$",
++          "description": "An entry of his own (a name of his entries, such as spiral) played at the zip's speed: every phase of the sequence squeezed into the way in or the way out."
++        },
++        "round": {
++          "type": "string",
++          "pattern": "^[a-z][a-z0-9_]*$",
++          "description": "An entry of his own (a name of his entries, such as spiral) played at the zip's speed: every phase of the sequence squeezed into the way in or the way out."
++        }
++      },
++      "additionalProperties": false,
++      "description": "A far-side exit goes over (an arc dive) or round (a pivot) the rival: the entry names played at the zip's speed for a spec's `pass`."
+     }
+   },
+   "patternProperties": {

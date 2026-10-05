@@ -559,7 +559,7 @@ func _test_hand_tips() -> void:
 ## The LT zip's body (docs/animation/zip.md, RenderAnim.press_styles): each reading on each launch fighter, the sim's part played by hand (the zipper moved along the zip, the strike beats
 ## with `zip: true`, the damage events). The phases come in order, the screen never sees a joint past its limit, every reading is drawn travelling for at least 4 ticks each way (Legal RL-076: no vanish and reappear, the tech zip included) and the heavy one has a smear frame, the
 ## hand-off (zip, zip_path, press_pose with a world position) is filled, and with the flag off nothing plays.
-func _zip_scene(S: SimState, who: String, reading: String, off: bool) -> Dictionary:
+func _zip_scene(S: SimState, who: String, reading: String, off: bool, extra: Dictionary = {}) -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
 	f0.id = "KAI" if who == "protagonist" else "VORR"
@@ -602,7 +602,9 @@ func _zip_scene(S: SimState, who: String, reading: String, off: bool) -> Diction
 			x = lerpf(444.0, 375.0, clampf((tk - float(t3)) / maxf(float(t4 - t3), 1.0), 0.0, 1.0))
 		f0.x = x
 		if k == pre:
-			RenderAnim.zip_start(S, f0, {"reading": reading, "btn": "x"})
+			var zspec := {"reading": reading, "btn": "x"}
+			zspec.merge(extra, true)
+			RenderAnim.zip_start(S, f0, zspec)
 		var te := SimState.FxEvent.new()
 		te.type = "tick"
 		te.dt = 1.0 / 60.0
@@ -634,6 +636,7 @@ func _zip_scene(S: SimState, who: String, reading: String, off: bool) -> Diction
 	var d: Dictionary = RenderAnim.fighter(S, f0).debug
 	res.frames = int(d.get("contact_frames", 0))
 	res.err = float(d.get("contact_err_max", 0.0))
+	res["entries"] = int(d.get("entries", 0))
 	return res
 
 
@@ -703,7 +706,9 @@ func _beat_scene(S: SimState, who: String, ops: Array) -> Dictionary:
 		DirExchange.schedule(ex, float(o[0]) / 60.0, String(o[1]), o[2])
 		last = maxi(last, int(o[0]))
 	S.dirS.ex = ex
-	var res := {"hold_ticks": 0, "sides": [], "squash": 0.0, "styles": {}, "ghosts": 0}
+	var res := {"hold_ticks": 0, "sides": [], "squash": 0.0, "styles": {}, "ghosts": 0, "release_ticks": 0, "guard_dev": 0.0}
+	var gpose: AnimPose = AnimData.pose(String(AnimData.press.get("guard", {}).get("pose", "stance.defensive")))
+	var ua_l: int = AnimRig.index["upper_arm_l"]
 	for k in range(last + 40):
 		S.tick = 1000 + k
 		S.T = 200.0 + float(k) / 60.0
@@ -718,6 +723,9 @@ func _beat_scene(S: SimState, who: String, ops: Array) -> Dictionary:
 		if not af0.press.is_empty():
 			res.styles[String(af0.press.style)] = true
 			res.hold_ticks += 1 if String(af0.press.phase) == "hold" else 0
+			res.release_ticks += 1 if String(af0.press.phase) == "release" else 0
+			if String(af0.press.phase) == "contact":
+				res.guard_dev = maxf(float(res.guard_dev), af0.q[ua_l].angle_to(gpose.q[ua_l]))
 			res.squash = maxf(float(res.squash), float(af0.press.squash))
 			res.ghosts = maxi(int(res.ghosts), int(af0.press.ghosts))
 			if String(af0.press.phase) == "contact":
@@ -848,6 +856,124 @@ func _test_tech_consistency() -> void:
 	RenderAnim.ground_feet = ground_was
 	_expect(worst < 0.15, "tech consistency: the tech blow's pose differs by %.3f rad between idle, a string and a zip (%s); the limit is 0.15 (the contact solve's small differences)" % [worst, where])
 	print("  tech consistency: the same perfect tech cross from idle, in a string and at the end of a zip: worst difference %.3f rad (%s)" % [worst, where])
+
+
+## The zip slice: an entry of his own played at the zip's speed over the way in, a far-side pass by name, the guard layer a check is thrown over, and the push style (no impact snap).
+func _test_zip_slice() -> void:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	AnimData.ensure_fighter("KAI")
+	AnimData.ensure_fighter("VORR")
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	for who in ["protagonist", "antihero"]:
+		var plain: Dictionary = _zip_scene(S, who, "speed", false)
+		var spiral: Dictionary = _zip_scene(S, who, "speed", false, {"entry_in": "spiral"})
+		var over: Dictionary = _zip_scene(S, who, "speed", false, {"pass": "over"})
+		var round: Dictionary = _zip_scene(S, who, "speed", false, {"pass": "round"})
+		var missing: Dictionary = _zip_scene(S, who, "speed", false, {"entry_in": "no_such_entry"})
+		var tag: String = "zip slice %s" % who
+		_expect(int(spiral.entries) > int(plain.entries) and int(over.entries) > int(plain.entries) and int(round.entries) > int(plain.entries), "%s: the entries did not play (spiral %d, over %d, round %d against %d)" % [tag, int(spiral.entries), int(over.entries), int(round.entries), int(plain.entries)])
+		_expect(int(spiral.viol) == 0 and int(over.viol) == 0 and int(round.viol) == 0, "%s: a joint past its limit reaches the screen with an entry (spiral %d, over %d, round %d)" % [tag, int(spiral.viol), int(over.viol), int(round.viol)])
+		_expect(missing.phases == ["tell", "in", "reach", "out", "settle"] and int(missing.entries) == int(plain.entries), "%s: a name he has no entry for should play the run pose (%s, %d entries)" % [tag, missing.phases, int(missing.entries)])
+		var base := {"a": "A", "d": "D", "dmg": 12.0, "piece": "strike.cross", "o": {"big": false}}
+		var chk: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"style": "speed", "check": true, "hand": "r"})]])
+		var nochk: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"style": "speed", "hand": "r"})]])
+		_expect(float(chk.guard_dev) < float(nochk.guard_dev) - 0.15, "%s: a check keeps the other arm in the guard (%.2f rad from it against %.2f without)" % [tag, float(chk.guard_dev), float(nochk.guard_dev)])
+		var push: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"piece": "strike.shoulder_check", "style": "push"})]])
+		var tech: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"style": "tech", "grade": "perfect"})]])
+		_expect(push.styles.has("push") and int(push.release_ticks) >= 4 and int(tech.release_ticks) <= 1, "%s: a push should drive into its contact with no snap (%d ticks of drive against %d for a tech blow)" % [tag, int(push.release_ticks), int(tech.release_ticks)])
+	RenderAnim.press_styles = false
+	RenderAnim.ground_feet = ground_was
+	print("  zip slice: an entry plays at zip speed over the way in, a far-side pass over or round, a missing entry falls back, a check holds the guard arm, a push drives with no snap")
+
+
+## The intro gestures (Narrative's ten intents, docs/animation/intro-gestures.md): the sim's `intro_gesture {actor, intent, at}` event, staged here, starts the fighter's own motion for the intent
+## over his idle. Every intent plays on both launch fighters (the table is complete), a masked one leaves the legs where the idle has them, no joint past its limit reaches the screen, a gesture
+## plays on the intro's tick clock (the match clock is frozen at 0 in the intro), a fighter with no entry for an intent plays nothing and no error, and the flag off plays nothing.
+func _gesture_run(S: SimState, who: String, intent: String, state: String, ticks: int) -> Dictionary:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "KAI" if who == "protagonist" else ("VORR" if who == "antihero" else "NOBODY")
+	f1.id = "VORR" if who == "protagonist" else "KAI"
+	RenderAnim._fighters.clear()
+	S.dirS.ex = null
+	for f in [f0, f1]:
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = state
+	f0.x = 500.0
+	f1.x = 560.0
+	var res := {"played": false, "viol": 0, "legs": 0.0, "moved": 0.0}
+	var thigh: int = AnimRig.index["thigh_r"]
+	var idle_thigh: Quaternion = Quaternion.IDENTITY
+	for pass_i in range(2):   # the first pass without the event, for the idle's legs; the second with it
+		RenderAnim._fighters.clear()
+		for k in range(ticks):
+			S.tick = 1000 + k
+			S.T = 0.0 if state == "intro" else 200.0 + float(k) / 60.0
+			var te := SimState.FxEvent.new()
+			te.type = "tick"
+			te.dt = 1.0 / 60.0
+			te.frozen = false
+			RenderAnim.consume(S, [te])
+			if pass_i == 1 and k == 10:
+				var ge := SimState.FxEvent.new()
+				ge.type = "intro_gesture"
+				ge.actor = 0.0
+				ge.kind = intent
+				ge.text = "land_first"
+				ge.tick = S.tick
+				RenderAnim.consume(S, [ge])
+			var a0: AnimFighter = RenderAnim.solve(S, f0)
+			RenderAnim.solve(S, f1)
+			if pass_i == 0 and k == 24:
+				idle_thigh = a0.q[thigh]
+			if pass_i == 1:
+				res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+				if not a0._gest.is_empty():
+					res.played = true
+					res.moved = maxf(float(res.moved), a0.q[AnimRig.index["head"]].angle_to(AnimData.pose("stance.aggressive").q[AnimRig.index["head"]]))
+				if k == 24:
+					res.legs = a0.q[thigh].angle_to(idle_thigh)
+	return res
+
+
+func _test_gestures() -> void:
+	_expect(AnimData.pair.get("gesture_groups", {}).has("head") and AnimData.pair.roles.protagonist.has("gestures") and AnimData.pair.roles.antihero.has("gestures"), "gestures: pair_live.json has no gestures table")
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	AnimData.ensure_fighter("KAI")
+	AnimData.ensure_fighter("VORR")
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.ground_feet = false
+	var intents: Array = ["acknowledge", "appraise", "dismiss", "defer", "brace", "ease", "claim", "check", "soften", "harden"]
+	for who in ["protagonist", "antihero"]:
+		var tbl: Dictionary = AnimData.pair.roles[who].gestures
+		_expect(tbl.size() == 10, "gestures %s: %d of the ten intents have a motion" % [who, tbl.size()])
+		for intent in intents:
+			var r: Dictionary = _gesture_run(S, who, intent, "free", 90)
+			_expect(bool(r.played) and int(r.viol) == 0, "gestures %s %s: played %s, %d joint violations on screen" % [who, intent, r.played, int(r.viol)])
+			if (tbl[intent].get("mask", []) as Array).has("legs") == false and (tbl[intent].get("mask", []) as Array).size() > 0:
+				_expect(float(r.legs) < 0.05, "gestures %s %s: a masked gesture moved the legs by %.3f rad" % [who, intent, float(r.legs)])
+		var ri: Dictionary = _gesture_run(S, who, "appraise", "intro", 90)
+		_expect(bool(ri.played), "gestures %s: a gesture did not play on the intro's tick clock" % who)
+	var none: Dictionary = _gesture_run(S, "nobody", "claim", "free", 60)
+	_expect(not bool(none.played), "gestures: a fighter with no table played a motion")
+	var unk: Dictionary = _gesture_run(S, "protagonist", "no_such_intent", "free", 60)
+	_expect(not bool(unk.played), "gestures: an unknown intent played a motion")
+	RenderAnim.intro_gestures = false
+	var offr: Dictionary = _gesture_run(S, "protagonist", "claim", "free", 60)
+	RenderAnim.intro_gestures = true
+	_expect(not bool(offr.played), "gestures: with the flag off a gesture still played")
+	RenderAnim.ground_feet = ground_was
+	print("  gestures: all ten intents play on both launch fighters over their idles (masked ones leave the legs), on the intro's tick clock too, a fighter or an intent with no entry is a silent skip")
 
 
 func _test_pair_live() -> void:
@@ -1895,6 +2021,8 @@ func _run() -> void:
 	_test_zip()
 	_test_beat_fields()
 	_test_tech_consistency()
+	_test_zip_slice()
+	_test_gestures()
 	_test_joints()
 	RenderAnim.enabled = true
 	RenderAnim.style_override = ""

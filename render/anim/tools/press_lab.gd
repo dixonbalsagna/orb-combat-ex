@@ -7,6 +7,8 @@ extends SceneTree
 ##   speed   five mashed blows, 8 ticks apart: contact on the trigger frame, alternating limbs, a loose body, the retract blended
 ##   heavy   one held blow: the wind-up squash, the release's stretch with its smear frame, the held follow-through
 ##   combo   three mashed blows and a heavy closer (the style changes inside a string)
+##   push    one push: no impact snap, the blow drives into its contact (style push)
+##   check   three checks (`check: true`): a cross, a short elbow and a low kick thrown over the guard: the other arm stays set
 ## Needs a window to draw; run it with --no-window (offscreen), never a window.
 ##   godot --no-window --path . -s res://render/anim/tools/press_lab.gd -- --scene=speed --fighter=protagonist --out=a.rgb [--off] [--path] [--size=300x190] [--step=1]
 ## --off plays the same beats with the press styles off (the before). --path draws the striking limb's tip path (the VFX hand-off) as dots.
@@ -17,6 +19,8 @@ const SCENES := {   # beats: [contact tick, piece, style, damage]
 	"tech": {"kind": "light", "beats": [[42, "strike.jab", "tech", 26.0], [72, "strike.cross", "tech", 26.0], [102, "strike.hook", "tech", 30.0]]},
 	"speed": {"kind": "light", "beats": [[36, "strike.jab", "speed", 20.0], [44, "strike.cross", "speed", 20.0], [52, "strike.jab", "speed", 20.0], [60, "strike.cross", "speed", 20.0], [68, "strike.hook", "speed", 22.0]]},
 	"heavy": {"kind": "heavy", "beats": [[60, "strike.haymaker", "heavy", 66.0]]},
+	"push": {"kind": "light", "beats": [[48, "strike.shoulder_check", "push", 10.0]]},
+	"check": {"kind": "light", "beats": [[42, "strike.cross", "speed", 12.0, {"check": true}], [62, "strike.short_elbow", "speed", 12.0, {"check": true}], [82, "strike.low_kick", "speed", 12.0, {"check": true}]]},
 	"combo": {"kind": "light", "beats": [[36, "strike.jab", "speed", 20.0], [45, "strike.cross", "speed", 20.0], [54, "strike.hook", "speed", 22.0], [90, "strike.haymaker", "heavy", 66.0]]},
 }
 const FIGHTERS := {"protagonist": "KAI", "antihero": "VORR"}
@@ -175,7 +179,10 @@ func _run() -> void:
 	ex.tag = "LAB"
 	for b in beats:
 		var heavy_b: bool = float(b[3]) >= 40.0
-		DirExchange.schedule(ex, float(b[0]) * DT, "strike", {"a": "A", "dmg": float(b[3]), "piece": String(b[1]), "style": String(b[2]), "o": {"big": heavy_b}})
+		var bargs := {"a": "A", "dmg": float(b[3]), "piece": String(b[1]), "style": String(b[2]), "o": {"big": heavy_b}}
+		if b.size() > 4:
+			bargs.merge(b[4], true)
+		DirExchange.schedule(ex, float(b[0]) * DT, "strike", bargs)
 	S.dirS.ex = ex
 	var n_ticks: int = int(end_t / DT) + 2
 	var sent: Array = []

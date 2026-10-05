@@ -1120,6 +1120,18 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       }
     }
     if (Array.isArray(plv.gated) && strikeNames.size) plv.gated.forEach((g, i) => { if (isObj(g) && typeof g.strike === 'string' && !strikeNames.has(g.strike)) err(PL, `/gated/${i}/strike`, 'pairlive-gated', `gated strike "${g.strike}" is no strike of any wave manifest`); });
+    for (const [fid, r] of Object.entries(isObj(plv.roles) ? plv.roles : {})) {
+      if (fid.startsWith('_') || !isObj(r) || !isObj(r.gestures)) continue;
+      for (const [intent, g] of Object.entries(r.gestures)) if (!intent.startsWith('_') && isObj(g)) { const v = g.seq; if ((poseSet.size || seqSet.size) && typeof v === 'string' && !poseSet.has(v) && !seqSet.has(v)) err(PL, `/roles/${esc(fid)}/gestures/${esc(intent)}/seq`, 'pairlive-gesture', `gesture "${v}" is neither a pose nor a sequence of the wave files`); }
+    }
+    const profPl = get('data/anim/profiles.json');
+    const bonesPl = isObj(profPl) && isObj(profPl.bone_lag) ? Object.keys(profPl.bone_lag) : [];
+    const groupsPl = isObj(plv.gesture_groups) ? plv.gesture_groups : {};
+    if (bonesPl.length) for (const [gk, list] of Object.entries(groupsPl)) if (!gk.startsWith('_') && Array.isArray(list)) list.forEach((b, i) => { if (typeof b === 'string' && !bonesPl.includes(b)) err(PL, `/gesture_groups/${esc(gk)}/${i}`, 'pairlive-bone', `gesture group "${gk}" has bone "${b}", which is not in profiles.json bone_lag`); });
+    for (const [fid, r] of Object.entries(isObj(plv.roles) ? plv.roles : {})) {
+      if (fid.startsWith('_') || !isObj(r) || !isObj(r.gestures)) continue;
+      for (const [intent, g] of Object.entries(r.gestures)) if (!intent.startsWith('_') && isObj(g) && Array.isArray(g.mask)) g.mask.forEach((m, i) => { if (typeof m === 'string' && !(m in groupsPl)) err(PL, `/roles/${esc(fid)}/gestures/${esc(intent)}/mask/${i}`, 'pairlive-gesture', `mask group "${m}" is not a key of gesture_groups`); });
+    }
     const shotsPl = get('data/fight/shots.json');
     if (isObj(shotsPl) && isObj(shotsPl.kinds) && isObj(plv.kinds)) for (const k of Object.keys(shotsPl.kinds)) if (!k.startsWith('_') && !(k in plv.kinds)) err(PL, '/kinds', 'pairlive-kind', `shot kind "${k}" of data/fight/shots.json has no energy role in kinds`, 'warning');
   }
@@ -1322,6 +1334,12 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       }
     }
     if (isObj(pst.beat) && isObj(pst.beat.charge) && typeof pst.beat.charge.tapped === 'number' && typeof pst.beat.charge.held === 'number' && pst.beat.charge.tapped > pst.beat.charge.held) err(PS, '/beat/charge/tapped', 'pressstyles-beat', `a tapped heavy (${pst.beat.charge.tapped}) loads more than a held one (${pst.beat.charge.held})`, 'warning');
+    if (isObj(pst.guard)) {
+      needPosePs(pst.guard.pose, '/guard/pose');
+      const profG = get('data/anim/profiles.json');
+      const bonesG = isObj(profG) && isObj(profG.bone_lag) ? Object.keys(profG.bone_lag) : [];
+      if (bonesG.length && Array.isArray(pst.guard.bones)) pst.guard.bones.forEach((bn, i) => { if (typeof bn === 'string' && !(bonesG.includes(bn + '_l') && bonesG.includes(bn + '_r'))) err(PS, `/guard/bones/${i}`, 'pressstyles-bone', `guard bone "${bn}" has no _l and _r pair in profiles.json bone_lag (a guard bone is written without its side)`); });
+    }
     for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
       if (sid.startsWith('_') || !isObj(st)) continue;
       if (st.carry === true && typeof st.carry_ticks === 'number' && st.carry_ticks === 0) err(PS, `/styles/${esc(sid)}/carry_ticks`, 'pressstyles-carry', `style "${sid}" carries into the next blow, but carry_ticks is 0, so there is no blend`, 'warning');
@@ -1380,6 +1398,11 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       if (typeof r.hits === 'number' && r.hits > 0 && r.hd === 0) err(ZP, `/readings/${esc(rk)}/hd`, 'zip-phase', `reading "${rk}" has ${r.hits} blows of 0 ticks each`);
       if (typeof r.hold_pose === 'string' && r.held_pose === undefined) err(ZP, `/readings/${esc(rk)}`, 'zip-phase', `reading "${rk}" has a hold pose but no held pose for the one it carries`, 'warning');
     }
+    const entryNames = new Set();
+    for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.entrymap\.json$/)) { const d = get(rel); if (isObj(d) && Array.isArray(d.entries)) for (const r of d.entries) if (isObj(r) && typeof r.name === 'string') entryNames.add(r.name); }
+    const needEntry = (n, at) => { if (entryNames.size && typeof n === 'string' && !entryNames.has(n)) err(ZP, at, 'zip-entry', `"${n}" is the name of no entrymap row (${[...entryNames].join(', ')})`); };
+    if (isObj(zip.readings)) for (const [rk, r] of Object.entries(zip.readings)) if (!rk.startsWith('_') && isObj(r)) { needEntry(r.entry_in, `/readings/${esc(rk)}/entry_in`); needEntry(r.entry_out, `/readings/${esc(rk)}/entry_out`); }
+    if (isObj(zip.pass)) { needEntry(zip.pass.over, '/pass/over'); needEntry(zip.pass.round, '/pass/round'); }
     const def = blocks.find(([k]) => k === 'default');
     if (def) for (const [bk, blk] of blocks) if (bk !== 'default' && bk !== 'shared') for (const n of Object.keys(def[1])) if (!n.startsWith('_') && !(n in blk)) err(ZP, `/poses/${esc(bk)}`, 'zip-name', `fighter "${bk}" has no pose for "${n}", which the default block has`, 'warning');
   }
