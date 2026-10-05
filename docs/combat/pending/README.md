@@ -100,7 +100,9 @@ One page for Orb: what each of the six waves adds in plain words, its new-pose c
 
 ## The alchemist's recipes, the traded-blows set piece and the charges (parked; the rules are Game Design's)
 
-`recipes.slice11.json`: the next version of the live `data/combat/recipes.json`, for Encounter's slice 11 (`../alchemist-recipes.md` section 6): a `pieces` block with each pool strike's limb and target, two more blur patterns (reap, breach) with `patternGates`, and the blur's two forms as Game Design ruled them. Not moved.
+`brawl-prep.md`, `recipes.brawl.json` and `channel.rival.json`: Combat's data for Encounter's brawl (`docs/director/brawl-plan.md`). The next version of the live recipes (a path on every piece, the beat point by path, a `brawl` block and four pools: flurry, skill, lift, break) and On the Chin's beats with the `chin_plant` cue. Slice B1 runs on the live file unchanged. Not moved.
+
+`recipes.slice11.json` (**landed** at `5493345`, kept as the record): the next version of the live `data/combat/recipes.json`, for Encounter's slice 11 (`../alchemist-recipes.md` section 6): a `pieces` block with each pool strike's limb and target, two more blur patterns (reap, breach) with `patternGates`, and the blur's two forms as Game Design ruled them. Not moved.
 
 `recipes.alchemist.json`: **landed** as `data/combat/recipes.json` at `08a6002` and kept as the record. In the form of `data/combat/recipes.json` (`combat.recipes/1`): the three styles at their base and with timing, the flow's endings, six blur patterns, and each fighter's pools with every piece's status (live, posed or waiting). `templates.agency.json`: the traded-blows set piece (in-house label Blow for Blow: turns, a different strike and place each turn, the travel, 3 poses, camera notes, Legal's twelve rules), the light and heavy charges at range, and the meeting when a taunt is answered. Read them with `../alchemist-recipes.md`.
 

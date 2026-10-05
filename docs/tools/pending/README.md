@@ -136,6 +136,10 @@ Run once from the repo root, in the commit that lands the slice's data: `node do
 
 Run once from the repo root, in the commit that lands the slice's data: `node docs/tools/pending/apply-slice14.cjs`. It does **not** edit `data/`. `data/director/alchemy.json` `flow.contestFloor` (a number, 0 to 1) is required; the fixture and 6 cases follow. `interrupts.json` `blast.heavy.tapShare` changes value only. Re-runnable. Tested on a clean `git archive HEAD` with the key dropped in: 1 error before, then 0 errors and 0 warnings, self-test passes.
 
+## `apply-brawl0.cjs`: Encounter's slice B0, the brawl groundwork
+
+Run once from the repo root, in the commit that lands the slice's data: `node docs/tools/pending/apply-brawl0.cjs`. It does **not** edit `data/`. `data/director/interrupts.json`: `bands.lunge.windupTicks` {light, heavy} (integers, 0 or more) and the required top-level `pace` {cooldown {min, perSec, max}} (numbers, 0 or more; `_note` allowed). `data/director/ai.json`: the required top-level `stance` {repick [first, second], press {fresh, hurt, hurtBelow}, guard {hurt, fresh, hurtBelow}, evade, escape {hurt, hurtBelow, lowKi, lowKiBelow, rest}, circle {r, x, y, rate}, swayRate, evadeBackoff} (numbers, 0 or more except circle x and y; `_note` allowed). Rules: `pace-order` (cooldown.min at most max) and `stance-repick` (repick's first at most its second). The fixtures get the keys, the earlier whole-bands cases are patched, 46 cases. `contest.struggle.scoring.perStray` changes value only. Re-runnable. Tested on a clean `git archive HEAD` (35f3a28) with scratch values for the keys: 3 errors before, then 0 errors and 0 warnings, self-test passes (3543 of 3543). The bounds on the stance numbers (all 0 or more) are my reading of "numbers"; tell me if a key may be negative or must be a share.
+
 ## Which script goes with which commit (the next big update)
 
 | Script | State | Goes in the commit of | Needs |

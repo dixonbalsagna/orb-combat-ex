@@ -1,0 +1,73 @@
+{
+ "schema": "combat-channels/0-draft",
+ "_target": "data/combat/channels.json (a new file, combat.channels/1): a fighter's held context action in the martial arts stance",
+ "_about": "PARKED. The rival's channel, On the Chin, staged as beats (../launch-pair-movesets.md section 5). The rules and their numbers are Game Design's (docs/design/spec-wounds.md: the 12-tick hold, 4 s, 3 hits or 1 signature, the reductions, the 25 s cooldown) and belong in the director's data; this file is the staging only. Ticks are from the start of each beat. Poses are Animation's rival1 (parked)",
+ "rival": {
+  "id": "on_the_chin",
+  "entry": {
+   "beat": "plant",
+   "ticks": 12,
+   "cue": "chin_plant",
+   "cueAt": 0,
+   "who": "self",
+   "sequence": "rv.on_the_chin",
+   "pose": "rv.on_the_chin.plant",
+   "_note": "the entry beat: it starts on the tick the 12-tick hold of the context button completes. chin_plant is sent on its first tick, so the glare's 0.4 s covers the plant and is gone as the stance settles (docs/vfx/glare.md; docs/legal/glasses-rules.md)"
+  },
+  "beats": [
+   {
+    "beat": "plant",
+    "ticks": 12,
+    "pose": "rv.on_the_chin.plant",
+    "cue": "chin_plant"
+   },
+   {
+    "beat": "stance",
+    "ticks": [
+     0,
+     240
+    ],
+    "pose": "rv.on_the_chin.plant",
+    "_note": "held while the button is; nothing moves him"
+   },
+   {
+    "beat": "hit_absorbed",
+    "ticks": 6,
+    "react": 0.2,
+    "_note": "the computed reaction at low strength over the stance"
+   },
+   {
+    "beat": "acknowledgement",
+    "ticks": 6,
+    "pose": "rv.on_the_chin.lift"
+   },
+   {
+    "beat": "absorb_completed",
+    "ticks": 18,
+    "pose": "rv.on_the_chin.done"
+   },
+   {
+    "beat": "signature_absorbed",
+    "ticks": 90,
+    "sequence": "rv.chin_beam",
+    "pause": "the bank, else live with a cut"
+   },
+   {
+    "beat": "let_go_early",
+    "ticks": 20
+   },
+   {
+    "beat": "thrown_out",
+    "pose": "showcase.seal_break",
+    "_note": "a throw beats it"
+   }
+  ],
+  "limits": [
+   "arms a little forward of the body line and slightly below shoulder height: never a flat cross, never behind the body",
+   "no head thrown back, no closed eyes",
+   "no scream, no aura",
+   "the arms-open stance is his alone"
+  ]
+ },
+ "protagonist": null
+}
