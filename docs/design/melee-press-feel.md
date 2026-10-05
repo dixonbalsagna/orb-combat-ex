@@ -724,6 +724,22 @@ The half share and the cap of 30 were for the brawl's stream, six blows a second
 - **the arms over 65% of limb breaks with this in:** lower `block.shotArmWearCap` to 45, which is under battered. Blocked shots then stop battering the arms at all, and the leak into the core starts sooner, so the share would come down with it, to about 0.4 to 0.5. This is the second lever because nothing has measured it yet;
 - the mixed blaster over 50%: still how the AI treats a shooter.
 
+**Settled on Simulation's measurements: the shot cap is 30 and the share is 0.5.** Yes to its proposal, which goes one step past the lever of 45 that I had named. The readings, at 100 matches an arm and before Encounter's slice:
+
+| `shotArmWearCap` | `shotArmShare` | Bolt-only against medium (20 to 40%) | Arms' share of limb breaks (35 to 65%) |
+| ---: | ---: | ---: | ---: |
+| 75 | 0.6 | 30 | 70% |
+| 75 | 0.5 | 17 | 74% |
+| 45 | 0.5 | 21 | 68% |
+| **30** | **0.5** | **27** | **61%** |
+
+- At 75 a blocked shot batters an arm, and a battered arm can be crippled. At 45 a block fills an arm three quarters of the way and landed lights finish it, which is the same effect that took the blows' cap from 45 to 30. At 30 the arms get from shots what they get from blows, and the bolt-only player wins by the leak into the core alone.
+- **So the rule is now one line: a block fills the arms to 30, whatever was blocked. Past that, a blow is soaked and a shot comes through to the core.**
+- **What it costs:** blocked shots never weaken a guard's arms. "The guard leaks" means the core wears through it. That is accepted.
+- **Data:** `block.shotArmWearCap` 30 and `block.shotArmShare` 0.5. The two shot keys stay apart from the blows' keys, so that either can move alone later.
+- At these values the other rows read KAI 55 and 52, Calm about 26% and Frenzied about 14%. The median of 497 and 516 s and the mixed blaster at 77 still wait on Encounter's slice, as ruled.
+- **The lever from here** is the share alone, inside 0.45 to 0.6, picked on Encounter's committed slice. On 34 seeds, 0.6 at this cap read over the band. The caps of 45 and 75 are withdrawn as levers.
+
 **2. The mood** (Calm read 4.2% of match time and Frenzied 63.4%, against 30 to 55% and 5 to 20%; act 2 began at 77.8 s against 90 to 150 s).
 
 The mood adds 1.5 points for every strike, and strikes now come six a second. So a blow feeds the mood by its form, as it does damage:
