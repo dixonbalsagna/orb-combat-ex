@@ -130,5 +130,7 @@ New small questions for you:
 - Simple touch cannot reach the third (utility) special directly. A context button under Power would fix it. Build it?
 - Intro plots for the launch pair have three placeholders that are yours: who carries the old injury in their grudge (set to the Protagonist for now), the two past events they refer to, and each fighter's vetoed stances (docs/narrative/pending/intro_plots.json).
 - The stance names and every button name per stance are drafts in ui/data/stances.json for you to edit.
+- Mash against mash (Game Design's new rule, docs/design/melee-press-feel.md section 3): the faster tapper wins the trade and closes with the stagger; a trade cannot pass 90 ticks; a dead-even one is settled by a seeded draw the player cannot see. Is that how you want it to feel? Encounter is building the brawl to it.
+- Hold to flurry (docs/controls/hold-to-flurry.md): since tap speed now decides a mash, do you want an accessibility switch where holding X throws a light every 10 ticks (6 a second, no damage bonus, never graded as timed)? Controls recommends doing it in the brawl itself so replays and inputs do not change. Not built.
 
 To watch: time at power tier 4 is 7.05% a minute after the building change, against a floor of 6. QA's overnight baseline will say whether it holds.
