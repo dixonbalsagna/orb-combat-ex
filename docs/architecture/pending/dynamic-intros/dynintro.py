@@ -71,7 +71,7 @@ static func introStart(S: SimState, dur: float, skipAfter: float) -> void:
 ## kind is the intent (arrive_remark, wait_remark, late_reply, staredown_pair) and variant his role by arrival (first or
 ## second); stance, angle, event and p are the facts' tags for it, passed through (p is 1 and the rest empty with no
 ## facts). The line is optional and the words are the line system's: the sim holds none. intro_gesture: a small
-## non-verbal beat for actor: kind is the gesture's intent (a meaning, not a pose) and variant the point it plays at
+## non-verbal beat for actor: kind is the gesture's intent (a meaning, not a pose) and text the point it plays at
 ## (land_first, land_second, wait, look_start, look_end, or part for one a template wrote). staredown_start: both stand,
 ## for dur seconds. clock_start: the fight starts with the next tick; kind is full, or skip when a press ended the intro.
 static func introStart(S: SimState, dur: float, skipAfter: float, scenario: String = "", first: int = -1, gap: int = 0, plot: String = "") -> void:
@@ -92,7 +92,7 @@ static func introLine(S: SimState, slot: int, intent: String, role: String, tags
 
 static func introGesture(S: SimState, slot: int, intent: String, at: String) -> void:
 	var e := _ev(S, "intro_gesture")
-	e.actor = float(slot); e.kind = intent; e.variant = at
+	e.actor = float(slot); e.kind = intent; e.text = at
 '''),
     ('''static func entranceFall(S: SimState, f, ground: float, top: float, dur: float) -> void:
 	var e := _ev(S, "entrance_fall")
@@ -103,7 +103,7 @@ static func introGesture(S: SimState, slot: int, intent: String, at: String) -> 
 '''),
     ])
     edit('sim/core/hash.gd', [
-    ('''"intro_start": ["dur", "delay"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur"]''','''"intro_start": ["dur", "delay", "kind", "actor", "n", "text"], "intro_beat": ["actor", "kind", "dur"], "intro_line": ["actor", "kind", "variant", "stance", "angle", "event", "p"], "intro_gesture": ["actor", "kind", "variant"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur", "mode"]'''),
+    ('''"intro_start": ["dur", "delay"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur"]''','''"intro_start": ["dur", "delay", "kind", "actor", "n", "text"], "intro_beat": ["actor", "kind", "dur"], "intro_line": ["actor", "kind", "variant", "stance", "angle", "event", "p"], "intro_gesture": ["actor", "kind", "text"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur", "mode"]'''),
     ])
     edit('sim/core/view/fx.gd', [
     ('''"intro_start", "entrance_fall",''','''"intro_start", "intro_beat", "intro_line", "intro_gesture", "entrance_fall",'''),
@@ -485,7 +485,7 @@ func _introFacts(want: String, clockState: Callable) -> String:
 				if e.type == "intro_start":
 					plotSeen = e.text == "test.plot.id" and absf(e.dur - float(it.clock) / 60.0) < 0.000001
 				elif e.type == "intro_gesture":
-					gotG.append("%d %d %s %s" % [t, int(e.actor), e.kind, e.variant])
+					gotG.append("%d %d %s %s" % [t, int(e.actor), e.kind, e.text])
 				elif e.type == "staredown_start" and absf(e.dur - float(it.clock - t) / 60.0) > 0.000001:
 					return label + ": the staredown's length does not follow the bent clock"
 				elif e.type == "intro_line":

@@ -171,7 +171,7 @@ Every bend's reason goes to the feed on the first pre-clock tick, beside the pic
 | `entrance_land`, `staredown_start`, `clock_start` | as today | |
 | `intro_beat` | actor, kind (`wait`), dur (seconds until the staredown) | New |
 | `intro_line` | actor (who may speak), kind (the slot: `arrive_remark`, `wait_remark`, `late_reply`, `staredown_pair`), variant (his role by arrival: `first` or `second`), **stance**, **angle**, **event**, **p** | New. A voice slot. The four tags are the facts' entry for this slot and this speaker, passed through unread; with no entry they are empty and `p` is 1. The sim holds no words |
-| `intro_gesture` | actor, kind (the gesture's intent: a meaning, not a pose), variant (the point: `land_first`, `land_second`, `wait`, `look_start`, `look_end`, or `part`) | New. Narrative's field names `intent` and `at` are `kind` and `variant` here, as every event uses the shared fields |
+| `intro_gesture` | actor, kind (the gesture's intent: a meaning, not a pose), text (the point: `land_first`, `land_second`, `wait`, `look_start`, `look_end`, or `part`) | New. Narrative's field names `intent` and `at` are `kind` and `text` here: the shared event fields, and the names Animation's render reads (`docs/animation/intro-gestures.md`) |
 
 `SimIntro.timeline(S)` returns the whole composed timeline at any time (the scenario, the plot id, who is first, the gap, the composed length, and every beat with its tick and slot, the facts' gestures among them), so nobody has to rebuild it from events.
 
