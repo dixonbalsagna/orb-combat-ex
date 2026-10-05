@@ -65,5 +65,24 @@ Until the cue exists the hold can be built and tested against an injected event 
 
 ## 7. Open
 
-- Whether the lunger's own pane should show a faint marker where he is when he leaves the frame (the pane holds, so the player may lose sight of him for up to 0.3 s): proposed yes, a small chip on the nearest edge, drawn by UI from `shown` of the lunger's own `incoming`-style record; Camera would add a `self_off` flag. Say if wanted.
+- Whether the lunger's own pane should show a faint marker where he is when he leaves the frame (the pane holds, so the player may lose sight of him for up to 0.3 s): proposed yes, a small chip on the nearest edge, drawn by UI; Camera would add a `self_off` flag (his own fighter is not on his pane). Say if wanted.
 - Whether a lunge that is cancelled (Controls: a free cancel before the commit point) returns by the same rule: yes, the hold ends on the return marker or the fallback timer, whichever is first.
+
+## 8. Built (2026-10-04, against Encounter's B0 cue)
+
+The hold is in the rig and tested against an injected cue of B0's shape (`cue` event, kind `lunge_light`, `lunge_heavy`, `charge_light` or `charge_heavy`; `actor`, `target`, `amount` = wind-up ticks, `n` = move ticks).
+
+- **Lunge cue:** `_read_move_cue` starts the hold: layout frozen (`_update_trigger` and `_slam_step` stand down), the one view's zoom held at the separation at the cue, its focus held at the cue midpoint plus at most `LUNGE_FOCUS_LEAD` (0.1) of the width, the lunger's pane (in a split) frozen in focus and zoom. The hold lasts wind-up + 2 x move + `LUNGE_HOLD_AFTER` (0.4 s), at most `LUNGE_HOLD_MAX` (1.6 s), and ends at once on a launch, a knock-down or a shot. B0 has no return marker, so the second move is assumed to equal the first; if a return takes longer the hold lets go early, which is safe.
+- **Charge cue:** the charger is excluded from the long-rush cut-ahead for the charge plus 0.5 s; his pane follows. (The `rush` event goes out on the cue's tick; cues are read first so the order of the two does not matter.)
+- **Incoming read:** during the wind-up (cue seen, no `rush` on the fighter yet) the rival's `incoming` is `aimed` with `eta` counting to the strike; once he moves the `rush` takes over (same end tick); after the strike it is inactive.
+- **Sweep scenarios** (`lunge ...`): the hold against the same lunge with the cue withheld.
+
+| Scenario | Cuts | Zoom moved (ln) held / unheld | Camera moved (width) held / unheld | Layout changes held / unheld |
+| :--- | ---: | :--- | :--- | :--- |
+| one view, 700 apart | 0 | 0.006 / 0.132 | 0.100 / 0.228 | 0 / 0 |
+| split, 6,000 apart (artificial) | 0 / 1 | 0.000 / 0.052 | 0.000 / 0.396 | 0 / 0 |
+| one view at 49 degrees | 0 | 0.000 / 0.088 | 0.000 / 0.410 | 0 / 10 ticks |
+
+He is back at his start screen position to the pixel, and the rival's incoming read is `aimed` with an `eta` right to 2.5 ticks for the 20 ticks of wind-up and move, and inactive after the strike. A charge test (`rush charge no cut`, 6,000 units in 20 ticks) makes no cut-ahead.
+
+**Not built:** the self-off chip for the lunger (section 7). `shown` in `incoming` means the attacker is visible on this pane; the chip rule for UI is `active and not shown`, or `aimed` for the countdown.

@@ -95,6 +95,14 @@ var _tf_s: int = 0
 var intro_active: bool = false           # between intro_start and clock_start (docs/architecture/intro-phase.md)
 var rush_cuts: int = 0                   # long rushes the rusher's pane was cut ahead for (counted for the tests)
 var _rush_pin: Array = [false, false]
+var lunge_holds: int = 0                 # lunges held for (counted for the tests); docs/camera/lunge-framing.md
+var _lg_slot: int = -1                   # the attacker of a lunge being held for, else -1
+var _lg_tgt: int = -1
+var _lg_until: float = -1.0e9            # the hold ends at this time
+var _lg_strike: float = -1.0e9           # the sim time of the strike (end of the move out)
+var _lg_sep: float = 0.0                 # the separation when the cue came (the one view's zoom holds at it)
+var _lg_mid: float = 0.0                 # the pair's midpoint when the cue came (the one view's focus holds near it)
+var _nopin_until: Array = [-1.0e9, -1.0e9]   # a lunge or a charge by this fighter is not a one-way rush: no cut ahead
 var _lead: Array = [0.0, 0.0]   # the lead room a chased launch gets: world units the focus is ahead of him, signed
 var _rush_pin_t: Array = [-1.0e9, -1.0e9]   # the last time each pane was pinned (the tests give the arrival a moment)    # the pane is pinned on a rush's arrival point until the rush ends
 var last_stand_shots: int = 0              # last-stand shots started (counted for the tests)
@@ -206,6 +214,9 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_sig_done = [true, true]
 	_derived_beams_t = -1.0e9
 	_rush_pin = [false, false]
+	_lg_slot = -1
+	_lg_until = -1.0e9
+	_nopin_until = [-1.0e9, -1.0e9]
 	_lead = [0.0, 0.0]
 	_pn_earned_t = -1.0e9
 	_parry_t = [-1.0e9, -1.0e9]
@@ -245,6 +256,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 		if String(_ef(ev, "type", "")) == "relocate":
 			cut = true
 	_read_events(S, events)
+	_update_lunge(S)
 	_update_shake(events)
 	_flash = maxf(0.0, _flash - DT)
 	_update_orientation(S)
@@ -387,6 +399,8 @@ func _update_trigger(S: SimState) -> void:
 	if solo_kind != "":
 		# The dwell timers wait while a shot has the screen; its end decides.
 		return
+	if _lg_slot >= 0:
+		return   # a lunge out and back: the layout holds (lunge-framing.md)
 	if _slam_slot >= 0 or _slam_step(S):
 		return
 	_view_lost = _outside_one_view(S) if sep < 0.5 else false
@@ -473,7 +487,7 @@ func _set_split(want: bool, why: String = "trigger") -> void:
 ## The slam: a rush toward the other fighter, seen while split, starts a lean, then a 0.14 s door-shut timed to the
 ## contact. Returns true while a slam owns the layout.
 func _slam_step(S: SimState) -> bool:
-	if not split_wanted or sep < 0.5 or _solo_follow(S):
+	if not split_wanted or sep < 0.5 or _solo_follow(S) or _lg_slot >= 0:
 		return false
 	# Not while a pane still holds the screen (e above 0.05, the ease back from a shot): the door sets e from its own clock,
 	# so starting it then moved the divider 0.4 of the width in a tick (found by the jolt scan).
@@ -624,7 +638,51 @@ func _update_orientation(S: SimState) -> void:
 
 # ---------------------------------------------------------------------------------------------------- shots
 
+## A lunge or a charge begins (Encounter's cue: kind lunge_light, lunge_heavy, charge_light or charge_heavy; actor, target,
+## amount = the wind-up's ticks, n = the move's ticks). A lunge goes out and comes back inside about a second, so the camera
+## holds instead of chasing; a charge is a one-way flight at a capped speed that the pane follows. Neither is a rush to cut
+## ahead for.
+func _read_move_cue(S: SimState, ev, kind: String) -> void:
+	var la: int = int(_ef(ev, "actor", -1))
+	var lt: int = int(_ef(ev, "target", -1))
+	if la < 0 or la > 1 or lt < 0 or lt > 1 or la == lt:
+		return
+	var wind: float = float(_ef(ev, "amount", 0))
+	var mv: float = float(_ef(ev, "n", 0))
+	if kind.begins_with("charge"):
+		_nopin_until[la] = time + (wind + mv) * DT + 0.5
+		return
+	if solo_kind != "" or _ov_kind != "" or fold_active or intro_active or _slam_slot >= 0:
+		return
+	_lg_slot = la
+	_lg_tgt = lt
+	_lg_until = time + minf((wind + 2.0 * mv) * DT + CamParams.LUNGE_HOLD_AFTER, CamParams.LUNGE_HOLD_MAX)
+	_lg_strike = S.T + (wind + mv) * DT
+	var d: float = SimWrap.sdx(S.fighters[la].x, S.fighters[lt].x)
+	_lg_sep = minf(absf(d), SimConst.HALF)
+	_lg_mid = S.fighters[la].x + d * 0.5
+	_nopin_until[la] = _lg_until
+	lunge_holds += 1
+
+
+## The hold ends at its time, or when anything makes it not a lunge out and back: a launch, a knock-down, a shot.
+func _update_lunge(S: SimState) -> void:
+	if _lg_slot < 0:
+		return
+	var over: bool = time >= _lg_until or solo_kind != "" or fold_active or intro_active
+	for f in S.fighters:
+		if f.state == "launched" or f.state == "down" or f.state == "ko":
+			over = true
+	if over:
+		_lg_slot = -1
+
+
 func _read_events(S: SimState, events: Array) -> void:
+	for ev in events:
+		if String(_ef(ev, "type", "")) == "cue":
+			var mk: String = String(_ef(ev, "kind", ""))
+			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy":
+				_read_move_cue(S, ev, mk)
 	for ev in events:
 		match String(_ef(ev, "type", "")):
 			"last_stand_ready":
@@ -660,7 +718,7 @@ func _read_events(S: SimState, events: Array) -> void:
 				# gets the incoming read). Short rushes follow as before.
 				var ra: int = int(_ef(ev, "actor", -1))
 				var rt: int = int(_ef(ev, "target", -1))
-				if ra >= 0 and ra < 2 and rt >= 0 and rt < 2 and ra != rt and sep > 0.999 and solo_kind == "" and _ov_kind == "" and not fold_active and not intro_active and _slam_slot < 0:
+				if ra >= 0 and ra < 2 and rt >= 0 and rt < 2 and ra != rt and sep > 0.999 and solo_kind == "" and _ov_kind == "" and not fold_active and not intro_active and _slam_slot < 0 and time >= float(_nopin_until[ra]):
 					var rf = S.fighters[ra]
 					var r_off: float = float(rf.rush.off) if rf.rush != null else 0.0
 					var dr: float = absf(SimWrap.sdx(rf.x, S.fighters[rt].x + r_off))   # to the arrival point
@@ -1594,6 +1652,12 @@ func _merged_target(S: SimState) -> Vector3:
 	var mx: float = A.x + d * 0.5
 	var my: float = clampf((A.y + B.y) * 0.5 + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
 	var ahead: float = minf(SimConst.HALF, absf(d) + maxf(0.0, _sep_rate) * CamParams.ZOOM_OUT_LOOKAHEAD)
+	if _lg_slot >= 0:
+		# A lunge out and back: the zoom stays at the size of the pair at the cue, and the focus stays near where it was
+		# (it may lean toward the lunger by LUNGE_FOCUS_LEAD of the width).
+		ahead = _lg_sep
+		var lim: float = CamParams.LUNGE_FOCUS_LEAD * vw / maxf(_mz, 0.001)
+		mx = _lg_mid + clampf(SimWrap.sdx(_lg_mid, mx), -lim, lim)
 	var z: float = zoom_u(vw, vh, ahead, _pair_dy(A, B), maxf(A.tier, B.tier), _m(), true)
 	var mult: float = maxf(_push_mult(0), _push_mult(1)) * _intro_mult()
 	if solo_kind == "ko":
@@ -1879,6 +1943,8 @@ func _update_cameras(S: SimState) -> void:
 			var gnd: float = WorldTerrain.groundY(S, f.x)
 			lead_w = smoothstep(CamParams.LOW_AIR_DEAD * 0.5, CamParams.LOW_AIR_DEAD * 1.5, f.y - gnd)
 			fy_ref = lerpf(gnd + CamParams.CHEST, f.y + CamParams.CHEST, lead_w)
+		if _lg_slot == i and sep > 0.5 and not _rush_pin[i]:
+			freeze = true   # the lunger's pane holds on his home: he comes back to a place, not to a moving picture
 		if _rush_pin[i]:
 			var rp = f.rush
 			if rp == null or rp.tgt == null or solo_kind != "" or sep < 0.999:
@@ -1947,6 +2013,8 @@ func _update_cameras(S: SimState) -> void:
 					lag_whips += 1
 		# own zoom: first-order filter, then the rate cap
 		var zt: float = _own_zoom_target(S, i)
+		if _lg_slot == i and sep > 0.5:
+			zt = _zo[i]   # the lunger's pane keeps its size through the lunge
 		var tau_z: float = CamParams.TAU_Z
 		if (solo_kind == "ko" or solo_kind == "finisher") and solo_slot == i:
 			tau_z = CamParams.KO_DOLLY / 3.0
@@ -2063,11 +2131,16 @@ func _incoming_for(S: SimState, i: int, f: SplitFrame) -> Dictionary:
 	var dist: float = sqrt(d * d + pow(other.y - me.y, 2.0))
 	var r = other.rush
 	var aimed: bool = r != null and r.tgt == me
+	# A lunge's wind-up (he stands still, no rush yet): the countdown starts at the cue, not when he moves.
+	var winding: bool = not aimed and r == null and _lg_slot == 1 - i and _lg_tgt == i and S.T < _lg_strike
 	var closing: float = maxf(0.0, -_sep_rate)
 	var eta: float = -1.0
 	if aimed:
 		eta = maxf(0.0, r.end - S.T)
 		closing = maxf(closing, maxf(0.0, dist - 150.0) / maxf(eta, DT))
+	elif winding:
+		aimed = true
+		eta = maxf(0.0, _lg_strike - S.T)
 	elif closing >= CamParams.INCOMING_MIN_CLOSING:
 		eta = maxf(0.0, dist - 150.0) / closing
 	var pi: int = i if f.shows(i) else 0   # in one view the screen is pane 0

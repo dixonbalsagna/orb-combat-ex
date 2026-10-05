@@ -196,6 +196,9 @@ func _run() -> void:
 	for rv in [["long rush", 6000.0, 20, false], ["short rush", 700.0, 14, false], ["long rush reduced", 6000.0, 20, true], ["very fast rush", 18000.0, 15, false]]:
 		await _scenario("rush %s" % rv[0], func(): return _rush_run(float(rv[1]), int(rv[2]), bool(rv[3])), {})
 	await _scenario("incoming closing", func(): return _incoming_closing(), {})
+	await _scenario("rush charge no cut", func(): return _rush_run(6000.0, 20, false, true), {})
+	for lv in [["one view", false, 0.0, true], ["split", true, 0.0, true], ["one view at 49 degrees", false, 49.0, true], ["one view at 49 degrees unheld", false, 49.0, false], ["one view unheld", false, 0.0, false], ["split unheld", true, 0.0, false]]:
+		await _scenario("lunge %s" % lv[0], func(): return _lunge_run(bool(lv[1]), float(lv[2]), bool(lv[3])), {})
 	await _scenario("panel clash beams", func(): return _panel_clash_beams(), {})
 	await _scenario("panel beam plays", func(): return _panel_beam_plays(), {})
 	await _scenario("panel event and beam are one", func(): return _panel_dedupe(), {})
@@ -1240,7 +1243,7 @@ func _panel_beam_plays() -> Dictionary:
 ## rusher's pane cuts ahead to the arrival point at once (one cut) and waits there; there is no slam door; the other
 ## fighter's incoming read gives the exact time to arrive; when the rusher arrives he is in his pane. A short one is
 ## followed as before.
-func _rush_run(dist: float, ticks: int, reduced: bool) -> Dictionary:
+func _rush_run(dist: float, ticks: int, reduced: bool, charge: bool = false) -> Dictionary:
 	var ax: float = 20000.0
 	var gap: float = maxf(dist, 6000.0)   # the pair starts far enough apart for a split
 	_pose(ax, 0.0, ax + gap, 0.0)
@@ -1248,7 +1251,7 @@ func _rush_run(dist: float, ticks: int, reduced: bool) -> Dictionary:
 	_seed_rig()
 	for _i in range(300):
 		_tick_rig()
-	var long: bool = dist * 0.9 >= CamParams.RUSH_CUT_SCREENS * vw
+	var long: bool = dist * 0.9 >= CamParams.RUSH_CUT_SCREENS * vw and not charge   # a charge is followed, not cut ahead for
 	var A = _S.fighters[0]
 	var B = _S.fighters[1]
 	# the rusher starts `dist` from the arrival point, which is 150 units short of B (a rush shorter than the gap to B
@@ -1272,6 +1275,8 @@ func _rush_run(dist: float, ticks: int, reduced: bool) -> Dictionary:
 	var first_eta: float = -1.0
 	var off_after: int = 0
 	var evs: Array = [ev]
+	if charge:
+		evs = [_shot_events("cue", {"kind": "charge_light", "actor": 0.0, "target": 1.0, "amount": 0.0, "n": ticks, "text": "charge"}), ev]
 	for k in range(ticks + 60):
 		# the sim's stepRush: a tenth of the way (k = dt / rem) toward the arrival point, then he is there
 		if A.rush != null:
@@ -1315,6 +1320,92 @@ func _rush_run(dist: float, ticks: int, reduced: bool) -> Dictionary:
 	_check(eta_seen >= ticks - 4 and eta_bad == 0, "%s: the incoming read was right on %d of %d ticks (%d wrong), first eta %.2f s (want %.2f)" % [_label, eta_seen - eta_bad, ticks, eta_bad, first_eta, float(ticks) / 60.0])
 	stats["rush " + _label] = "cuts %s, pane moved at most %.1f u a tick, slam %s, incoming read right %d/%d, first eta %.2f s" % [str(cuts), cam_move, str(slam_seen), eta_seen - eta_bad, eta_seen, first_eta]
 	_rig.reduced_motion = false
+	return {}
+
+
+## A lunge that goes out and comes back inside a second (Encounter's cue: lunge_light with the wind-up in `amount` and the
+## move in `n`, then the lunger zips to 2.5 body heights from the rival and back). With the hold (the cue seen): no cut, no
+## layout change, the zoom and the focus barely move, he is back where his pane had him, and the rival's incoming read
+## counts down from the cue. Without it (the cue withheld) the numbers are only recorded. `split`: a pair 6,000 apart
+## (a real lunge is a mid-band move, so this is the artificial case that tests the pane's hold); `pitch` raises the camera.
+func _lunge_run(split: bool, pitch: float, hold: bool) -> Dictionary:
+	var ax: float = 20000.0
+	var gap: float = 6000.0 if split else 700.0
+	_pose(ax, 40.0, ax + gap, 40.0)
+	_rig.pitch_deg = pitch
+	_seed_rig()
+	for _i in range(300):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	var home: float = A.x
+	var out_dist: float = 750.0 if split else gap - 187.5   # the longest a mid-band lunge goes out is 12.5 bh less 2.5
+	var wind: int = 6
+	var mv: int = 15
+	var cur0: SplitFrame = _rig.current()
+	var mode0: String = cur0.mode
+	var z0: float = cur0.cam_z[0]
+	var cx0: float = cur0.cam_x[0]
+	var cy0: float = cur0.cam_y[0]
+	var s0: Vector2 = cur0.screen_pos(0, A.x, A.y + CamParams.CHEST, float(A.z))
+	var strike_tick: int = _S.tick + wind + mv
+	var cuts: int = 0
+	var mode_changes: int = 0
+	var dz: float = 0.0
+	var dcx: float = 0.0
+	var off_ticks: int = 0
+	var aimed_ticks: int = 0
+	var eta_bad: int = 0
+	var late_active: int = 0
+	var evs: Array = [_shot_events("rush", {"actor": 0.0, "target": 1.0, "n": strike_tick})]
+	if hold:
+		evs.append(_shot_events("cue", {"kind": "lunge_light", "actor": 0.0, "target": 1.0, "amount": float(wind), "n": mv, "text": "lunge"}))
+	for k in range(200):
+		var x: float = home
+		if k >= wind and k < wind + mv:
+			x = home + out_dist * smoothstep(0.0, 1.0, float(k - wind + 1) / float(mv))
+		elif k >= wind + mv and k < wind + mv + 4:
+			x = home + out_dist
+		elif k >= wind + mv + 4 and k < wind + 2 * mv + 4:
+			x = home + out_dist * (1.0 - smoothstep(0.0, 1.0, float(k - wind - mv - 3) / float(mv)))
+		A.x = SimWrap.wrap(x)
+		_tick_rig(evs)
+		evs = []
+		var cur: SplitFrame = _rig.current()
+		if cur.cut:
+			cuts += 1
+		if k < wind + 2 * mv + 4 + 24:
+			if cur.mode != mode0:
+				mode_changes += 1
+			dz = maxf(dz, absf(log(cur.cam_z[0]) - log(z0)))
+			dcx = maxf(dcx, absf(SimWrap.sdx(cx0, cur.cam_x[0])) * cur.cam_z[0] / vw)
+			if not _on_screen(cur, 0):
+				off_ticks += 1
+		var inc: Dictionary = cur.incoming[1]
+		if k < wind + mv - 1:
+			if bool(inc["aimed"]):
+				aimed_ticks += 1
+				var want: float = float(strike_tick - _S.tick) / 60.0
+				if absf(float(inc["eta"]) - want) > 2.5 / 60.0:
+					eta_bad += 1
+		elif k > wind + mv + 8 and k < wind + mv + 40 and bool(inc["active"]):
+			late_active += 1
+	var cur1: SplitFrame = _rig.current()
+	var s1: Vector2 = cur1.screen_pos(0, A.x, A.y + CamParams.CHEST, float(A.z))
+	var back_px: float = (s1 - s0).length()
+	if hold:
+		var tol_z: float = 0.02 if split else 0.04
+		var tol_c: float = 0.05 if split else 0.13
+		_check(cuts == 0, "%s: %d cuts during a lunge" % [_label, cuts])
+		_check(mode_changes == 0, "%s: the layout changed %d ticks during a lunge" % [_label, mode_changes])
+		_check(dz <= tol_z, "%s: the zoom moved %.3f (ln) during a lunge (want at most %.2f)" % [_label, dz, tol_z])
+		_check(dcx <= tol_c, "%s: the camera moved %.3f of the width during a lunge (want at most %.2f)" % [_label, dcx, tol_c])
+		_check(back_px <= 5.0, "%s: he is %.1f px from where he started when the lunge is over" % [_label, back_px])
+		_check(aimed_ticks >= wind + mv - 4 and eta_bad == 0, "%s: the incoming read was aimed on %d ticks and wrong on %d" % [_label, aimed_ticks, eta_bad])
+		_check(late_active == 0, "%s: the incoming read stayed on for %d ticks after the strike" % [_label, late_active])
+		_check(_rig.lunge_holds == 1 and _rig.rush_cuts == 0, "%s: %d holds, %d cut-aheads" % [_label, _rig.lunge_holds, _rig.rush_cuts])
+	stats["lunge " + _label] = "holds %d, cuts %d, layout changed on %d ticks, zoom moved %.3f, camera moved %.3f of the width, off its pane %d ticks, back within %.1f px, aimed %d ticks (wrong %d)" % [_rig.lunge_holds, cuts, mode_changes, dz, dcx, off_ticks, back_px, aimed_ticks, eta_bad]
+	_rig.pitch_deg = 0.0
 	return {}
 
 
