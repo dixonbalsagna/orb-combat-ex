@@ -173,16 +173,36 @@ So a zip is a hit and run. It costs a lot of ki, and for a moment at the rival h
 | :--- | ---: | ---: | ---: |
 | Ki, paid at the press | 20 | 30 | 25 |
 | The tell, before he moves | 6 ticks | 10 ticks | 12 ticks, which is the hold |
-| The way in | 8 to 14 ticks | 10 to 18 ticks | 8 to 14 ticks |
+| The way in, by distance | 6 to 8 ticks | 8 to 10 ticks | 6 to 8 ticks |
 | In reach before his blow lands | 4 ticks | 12 ticks | 6 ticks |
 | In reach after it | 6 ticks | 10 ticks | The carry, 12 ticks |
 | The way out | 10 ticks | 12 ticks | 10 ticks |
-| Press to contact | 18 to 24 ticks | 32 to 40 ticks | 26 to 32 ticks |
-| The whole zip | 34 to 40 ticks | 54 to 62 ticks | 48 to 54 ticks |
+| Press to contact | 16 to 18 ticks | 30 to 32 ticks | 24 to 26 ticks |
+| The whole zip | 32 to 34 ticks | 52 to 54 ticks | 46 to 48 ticks |
 
 - **LT + B** is the stance's signature, delivered as a zip in its quick, timed or held form. It costs its tier's price (§11), which includes the zip, and it has its tier's tell in place of the zip's.
 - **The zip tackle** is the tackle as today: it beats a guard, carries him 4 bh along the line and throws him off, which is a knock-back. It is a grab, so it falls under the grab lockout (§10).
 - **The prices are raised** from the first draft's 15, 25 and 20, for Orb's "great cost to stamina". Five zip strikes or three zip heavies empty a full bar, and an empty bar is 2 s of exhaustion.
+
+#### The floor on travel (Legal, RL-076)
+
+Legal screened the zip (`docs/legal/zip-screen.md`). A fighter who is at one place and then at the rival two ticks later is the vanish-and-reappear staging, and that is to be avoided. A zip is clear when the body is seen travelling. So every zip, in every reading, on the way in and on the way out:
+- **takes at least max(4, the distance in bh ÷ 3, rounded up) ticks.** That is 4 ticks up to 12 bh and 5 at the top of the mid band;
+- **has the body drawn on every tick,** never hidden, faded or replaced by a copy, and never more than 3 bh from where it was drawn the tick before;
+- **leaves by its own drawn travel after the strike.** An exit to the far side goes over or round the rival, with the rival in view. He is never simply behind the rival on the tick the strike lands.
+
+**Travel by reading:**
+
+| Reading | The way in | The way out |
+| :--- | :--- | :--- |
+| **Tech** | On the floor: 4 ticks, or 5 from beyond 12 bh | On the floor for its path: 4 ticks up to 12 bh of path, and 1 more for each 3 bh after |
+| **Speed** | 6 to 8 ticks, as in the table above | 10 ticks, growing with the path (below) |
+| **Heavy** | 8 to 10 ticks | 12 ticks, growing with the path |
+
+- **The ways in above replace the first draft's 8 to 14 and 10 to 18 ticks.** They are the approved prototype's, and they are what Legal screened. The speed and heavy readings were already above the floor.
+- **Checked against the floor:** the 10 and 12-tick ways out, their growth of 1 tick for each 2 bh of path, and the zip away's exit of 3 to 6 bh in 10 or 12 ticks are all above it at every distance a zip can cover.
+- **What the tech reading keeps.** It no longer crosses in an instant. Its edge over the speed reading is about 2 to 4 ticks less on the way in, a faster way out, and its one clean skill strike, which makes the rival's blow miss.
+- A tech zip strike is 14 or 15 ticks from the press to contact.
 
 **The strike lands in the reading it was pressed with** (§10):
 
@@ -216,7 +236,7 @@ So for a zipper who came in from the rival's left:
 | Up and left, or down and left | On that diagonal, 3 bh further out |
 
 - **As a formula:** the distance is the start distance plus 6 bh × (1 − the angle off straight away ÷ 90 degrees), never less than the start distance and never more than 12.5 bh.
-- **The way out** takes 10 ticks, or 12 for a zip heavy, when the exit point is within 8 bh of where his blow landed. It takes 1 tick more for each 2 bh beyond that, and 20 at most.
+- **The way out** takes 10 ticks, or 12 for a zip heavy, when the exit point is within 8 bh of where his blow landed. It takes 1 tick more for each 2 bh beyond that, and 20 at most. A tech zip leaves on the floor in place of this. No way out is ever under the floor.
 - **On the way out** no strike can reach him. A shot that hits him knocks him out of the zip and down, as it does a boosting fighter (`agency-pass.md` §6).
 - Up and down still lean his blow to a rising or a dropping one (§13).
 - A mashed chain works with it: no stick brings him back to the same spot each time, and the stick toward the rival sends him from side to side.
@@ -264,7 +284,7 @@ So for a zipper who came in from the rival's left:
 - **The wrap.** The bearing and the distance are worked out with the shortest-arc wrap math, like every other distance. A zip across the seam is the same zip.
 - **An exit point inside the ground or a building** is moved. It slides round the circle, at the same distance, toward the bearing he started from, in steps of 15 degrees, to the first point that is clear by 1 bh. It goes the shorter way round, and upward on a tie. If it reaches his start bearing without finding one, he ends where he started.
 - **Water isn't an obstacle.** He can end in it.
-- **The way out goes round or over** anything between him and the exit point, in the same number of ticks. A zip's flight never damages a building or the ground. Only its blow can.
+- **The way out goes round or over** anything between him and the exit point. That takes the same number of ticks, or more where the longer path needs them to stay on the floor. A zip's flight never damages a building or the ground. Only its blow can.
 - **The way in** meets terrain as a lunge does today.
 - All of it is worked out in the sim from the intent's stick, so a replay is identical.
 
@@ -320,6 +340,7 @@ So for a zipper who came in from the rival's left:
 | Measure | Band |
 | :--- | :--- |
 | A zip's cost, and its ticks in reach | Exactly the table (a hard test) |
+| A zip's travel under Legal's floor, in or out, in any reading | Never (a hard test) |
 | Zip strikes that land clean, against an opponent who answers | 35 to 55% |
 | Zips countered: the blow cancelled by a tech or heavy strike | 10 to 25% |
 | Zips that end with the zipper caught | 20 to 35% |
@@ -852,6 +873,8 @@ Orb answered the ten questions in questionnaire 17 (`docs/ep/vision.md`, 2026-10
 - a zip goes back by default, and through to the far side with the stick toward the rival (§2c);
 - Orb approved the zip prototype and asked for an exit anywhere on a circle around the rival, with the stick away ending further out as a way to leave a brawl (§2c);
 - a well-timed tech or heavy strike counters a zip (§2c).
+
+**Legal, 2026-10-05** (RL-076): a floor on every zip's travel, so that the body is always seen crossing (§2c).
 
 **Still open:**
 1. Pillar 2's wording (§8).
