@@ -1700,14 +1700,14 @@ func _intro_real() -> void:
 
 ## Composed intros (docs/architecture/dynamic-intros.md): every template, either fighter first, the gap at its shortest,
 ## default and longest, played by the sim and framed two ways. Split view (the rig): while a shot has a subject he is on the
-## screen and no smaller than the camera's floor, a two-shot has both, and both are there after the clock. One view (the
-## sim's reference camera, sim/core/view/camera.gd, and the candidate fix in intro_cam_candidate.gd): the subject is who is
-## on stage, not who is held up in the sky before his fall: the one falling, else the ones that are down. The reference
-## camera's misses are recorded; the candidate's are asserted (docs/camera/split-screen.md section 22).
+## screen and no smaller than the camera's floor, a two-shot has both, and both are there after the clock; and the frame
+## says no divider (sep and fade at zero) so none is drawn. One view (the sim's camera, sim/core/view/camera.gd, which has
+## carried Camera's block since 4bc9497): the subject is who is on stage, not who is held up in the sky before his fall:
+## the one falling, else the ones that are down (docs/camera/split-screen.md section 22; before the block the camera lost
+## its subject on 364 of these ticks and zoomed to 0.088).
 func _intro_composed_all() -> void:
 	var gaps: Dictionary = {"double_drop": [30, 48, 70], "latecomer": [100, 154, 200], "long_look": [48]}
-	var tot: Dictionary = {"split_off": 0, "two_off": 0, "ref_off": 0, "new_off": 0, "runs": 0}
-	var zmin_ref: float = 1.0e9
+	var tot: Dictionary = {"split_off": 0, "two_off": 0, "new_off": 0, "div": 0, "runs": 0}
 	var zmin_new: float = 1.0e9
 	for sc in gaps:
 		for order in [0, 1]:
@@ -1715,9 +1715,8 @@ func _intro_composed_all() -> void:
 				var r: Dictionary = _intro_composed(String(sc), int(order), int(g))
 				for k in tot:
 					tot[k] = int(tot[k]) + int(r.get(k, 0))
-				zmin_ref = minf(zmin_ref, float(r["zmin_ref"]))
 				zmin_new = minf(zmin_new, float(r["zmin_new"]))
-	stats["intro composed"] = "%d intros: split view off-screen subject ticks %d (two-shot %d); one view off-screen subject ticks: reference camera %d, candidate %d; smallest zoom %.3f reference, %.3f candidate (floor %.3f)" % [int(tot["runs"]), int(tot["split_off"]), int(tot["two_off"]), int(tot["ref_off"]), int(tot["new_off"]), zmin_ref, zmin_new, CamParams.R_FLOOR * vh / CamParams.BODY_H]
+	stats["intro composed"] = "%d intros: split view off-screen subject ticks %d (two-shot %d), divider ticks %d; one view off-screen subject ticks %d, smallest zoom %.3f (floor %.3f)" % [int(tot["runs"]), int(tot["split_off"]), int(tot["two_off"]), int(tot["div"]), int(tot["new_off"]), zmin_new, CamParams.R_FLOOR * vh / CamParams.BODY_H]
 
 
 func _intro_composed(sc: String, order: int, gap: int) -> Dictionary:
@@ -1727,8 +1726,8 @@ func _intro_composed(sc: String, order: int, gap: int) -> Dictionary:
 	_watch_first()
 	_S.dt = SplitRig.DT
 	var clock: int = int(_S.intro.clock)
-	var cam_ref := SimCamera.new()
-	var cam_new := IntroCamCandidate.new()
+	var cam_new := SimCamera.new()
+	var div_ticks: int = 0
 	var floor_z: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
 	var split_off: int = 0
 	var subj_ticks: int = 0
@@ -1737,9 +1736,7 @@ func _intro_composed(sc: String, order: int, gap: int) -> Dictionary:
 	var both_ok: bool = true
 	var clock_t: int = -1
 	var floor_bad: int = 0
-	var ref_off: int = 0
 	var new_off: int = 0
-	var zmin_ref: float = 1.0e9
 	var zmin_new: float = 1.0e9
 	var key_prev: String = ""
 	var since: int = 0
@@ -1755,6 +1752,9 @@ func _intro_composed(sc: String, order: int, gap: int) -> Dictionary:
 		_tick += 1
 		_watch()
 		var cur: SplitFrame = _rig.current()
+		# UI draws its divider when sep and fade are both over 0.01 (ui/widgets/ui_split.gd divider_active): not in an intro
+		if _S.intro.left > 0 and cur.sep > 0.01 and cur.line_alpha > 0.01:
+			div_ticks += 1
 		if _rig.solo_kind == "intro" and t > 0:
 			var sl: int = _rig.solo_slot
 			subj_ticks += 1
@@ -1771,7 +1771,6 @@ func _intro_composed(sc: String, order: int, gap: int) -> Dictionary:
 		if clock_t >= 0 and t > clock_t + 20 and t < clock_t + 30:
 			both_ok = both_ok and _on_screen(cur, 0) and _on_screen(cur, 1)
 		# the one view: the subjects are who is on stage
-		cam_ref.camStep(_S, SplitRig.DT, vw, vh)
 		cam_new.camStep(_S, SplitRig.DT, vw, vh)
 		var held: Array = [false, false]
 		var falling: int = -1
@@ -1797,28 +1796,23 @@ func _intro_composed(sc: String, order: int, gap: int) -> Dictionary:
 		if since >= need and _S.intro.left > 0:
 			for si in subj:
 				var f2 = _S.fighters[si]
-				for pair in [[cam_ref, 0], [cam_new, 1]]:
-					var cm = pair[0]
-					var dx: float = absf(SimWrap.sdx(cm.x, f2.x)) * cm.z
-					var dy: float = absf((f2.y + CamParams.CHEST) - cm.y) * cm.z
-					if dx > 0.46 * vw or dy > 0.46 * vh:
-						if int(pair[1]) == 0:
-							ref_off += 1
-						else:
-							new_off += 1
+				var dx: float = absf(SimWrap.sdx(cam_new.x, f2.x)) * cam_new.z
+				var dy: float = absf((f2.y + CamParams.CHEST) - cam_new.y) * cam_new.z
+				if dx > 0.46 * vw or dy > 0.46 * vh:
+					new_off += 1
 		if _S.intro.left > 0:
-			zmin_ref = minf(zmin_ref, cam_ref.z)
 			zmin_new = minf(zmin_new, cam_new.z)
 	_check(subj_ticks > 100, "%s: only %d ticks had a shot subject" % [_label, subj_ticks])
 	_check(split_off == 0, "%s: the split view's subject was off the screen for %d ticks" % [_label, split_off])
 	_check(floor_bad == 0, "%s: the split view's subject was under the size floor for %d ticks" % [_label, floor_bad])
 	_check(two_off == 0, "%s: a fighter was off the screen for %d ticks of the two-shot" % [_label, two_off])
 	_check(both_ok and absi(clock_t - clock) <= 1, "%s: both on the screen after the clock (clock at %d, want %d)" % [_label, clock_t, clock])
-	_check(new_off == 0, "%s: the one view (candidate) lost its subject for %d ticks" % [_label, new_off])
-	_check(zmin_new >= floor_z - 0.001, "%s: the one view (candidate) zoomed to %.3f (floor %.3f)" % [_label, zmin_new, floor_z])
+	_check(div_ticks == 0, "%s: the frame asked for a divider on %d intro ticks" % [_label, div_ticks])
+	_check(new_off == 0, "%s: the one view lost its subject for %d ticks" % [_label, new_off])
+	_check(zmin_new >= floor_z - 0.001, "%s: the one view zoomed to %.3f (floor %.3f)" % [_label, zmin_new, floor_z])
 	SimCore.dispose(_S)
 	_S = null
-	return {"split_off": split_off, "two_off": two_off, "ref_off": ref_off, "new_off": new_off, "runs": 1, "zmin_ref": zmin_ref, "zmin_new": zmin_new}
+	return {"split_off": split_off, "two_off": two_off, "new_off": new_off, "div": div_ticks, "runs": 1, "zmin_new": zmin_new}
 
 
 ## The default opening (the setup's default is "skip": both fighters already on their craters, 900 units apart): the first
