@@ -2,7 +2,7 @@ extends SceneTree
 ## The scripted masher (docs/design/control-rules.md section 6, QA bands): a human slot pressing light every `gap` ticks and
 ## nothing else (and, with --forms=1, the transform input when a form is ready), against the AI at one level. It plays seeded matches on the live sim through the real input path (a v2 human
 ## slot) and prints one JSON line: how many the masher won, lost, timed out, and the median match length.
-##   godot --headless --path . --script res://qa/godot/masher.gd -- <matches> <baseSeed> --level=easy|medium|hard [--gap=8] [--capsec=900]
+##   godot --headless --path . --script res://qa/godot/masher.gd -- <matches> <baseSeed> --level=easy|medium|hard [--gap=8] [--clock=tick|live] [--capsec=900]
 ## The masher takes slot 0 in odd seeds and slot 1 in even ones, so the spawn side and the slot cancel. Read-only with respect to sim/.
 
 func _init() -> void:
@@ -10,6 +10,7 @@ func _init() -> void:
 	var level: String = ""
 	var gap: int = 8
 	var capsec: float = 900.0
+	var clock: String = "tick"   # tick: the taps count S.tick (a player's real tap rate, as the brawl counts it; Game Design's ruling 4); live: live ticks, as before
 	var wall: float = 300.0       # real seconds one match may take before it is ended as a timeout
 	var budget: float = 3600.0    # real seconds the whole run may take before it stops starting matches
 	var forms: bool = false       # --forms=1: also send `transform` whenever a form is ready (the masher who has learned the one prompt the game shows)
@@ -23,6 +24,8 @@ func _init() -> void:
 			forms = int(a.substr(8)) != 0
 		elif a.begins_with("--slot="):
 			fixed_slot = int(a.substr(7))
+		elif a.begins_with("--clock="):
+			clock = a.substr(8)
 		elif a.begins_with("--wall="):
 			wall = float(a.substr(7))
 		elif a.begins_with("--budget="):
@@ -105,8 +108,10 @@ func _init() -> void:
 				if pending:
 					pending = false
 					wait = 0
-				if live % gap == 0:
+				if clock != "tick" and live % gap == 0:
 					pending = true
+			if clock == "tick" and not pending and S.tick % gap == 0:
+				pending = true
 		lens.append(S.T)
 		if S.game.ko == null:
 			timeouts += 1
@@ -116,5 +121,5 @@ func _init() -> void:
 			wins += 1
 		SimCore.dispose(S)
 	lens.sort()
-	print(JSON.stringify({"masher": true, "level": level if level != "" else "data", "gap": gap, "forms": forms, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "wins": wins, "losses": losses, "timeouts": timeouts, "medianSec": (snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0), "launchesByMasher": snappedf(float(by_masher) / maxi(1, n_done), 0.01), "launchesOnMasher": snappedf(float(on_masher) / maxi(1, n_done), 0.01), "airCatchesOfAI": snappedf(float(caught_ai) / maxi(1, n_done), 0.01), "airCatchesOfMasher": snappedf(float(caught_masher) / maxi(1, n_done), 0.01)}))
+	print(JSON.stringify({"masher": true, "level": level if level != "" else "data", "gap": gap, "clock": clock, "forms": forms, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "wins": wins, "losses": losses, "timeouts": timeouts, "medianSec": (snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0), "launchesByMasher": snappedf(float(by_masher) / maxi(1, n_done), 0.01), "launchesOnMasher": snappedf(float(on_masher) / maxi(1, n_done), 0.01), "airCatchesOfAI": snappedf(float(caught_ai) / maxi(1, n_done), 0.01), "airCatchesOfMasher": snappedf(float(caught_masher) / maxi(1, n_done), 0.01)}))
 	quit(0)

@@ -79,7 +79,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var rec := {"seed": seed, "arm": arm, "names": [fs[0].name, fs[1].name], "attacks": {"light": 0, "heavy": 0, "sig": 0}, "ambush": 0,
 		"launches": {}, "melee": {}, "beams": [], "parries": [0, 0], "chains": [], "hides": [0, 0], "found": 0, "seam": 0, "maxMove": 0.0,
 		"bad": "", "koAt": -1.0, "winner": -1, "maxTier": [1, 1], "lowSec": 0.0, "lowCas": 0.0, "casByTier": [0.0, 0.0, 0.0, 0.0, 0.0],
-		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "fronts": 0}
+		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "fronts": 0}
 	var prev_x: Array = [fs[0].x, fs[1].x]
 	var was_launched: Array = [false, false]
 	var ended: Array = [false, false]   # a flight ended this tick: its open launch takes the class of the contact if no event named one
@@ -300,6 +300,20 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			if e.type == "cue":   # the director's cues by kind: perfect_block, dodge_cancel, burst (step 3)
 				var cq: String = str(e.get("kind"))
 				rec.cues[cq] = rec.cues.get(cq, 0) + 1
+				# the brawl's events (docs/director/brawl-b1.md section 4), compact: a brawl is one exchange, so the rows counted per exchange are re-based on these
+				if cq == "brawl_end":
+					var bw: String = str(e.get("text"))
+					rec.brawl.ends[bw] = int(rec.brawl.ends.get(bw, 0)) + 1
+					rec.brawl.lens.append(int(e.get("amount")))                       # live ticks
+					rec.brawl.nblows.append(int(e.get("x")) + int(e.get("y")))        # blows the starter and the rival threw
+				elif cq == "blow":
+					var bk: String = str(e.get("text"))
+					rec.brawl.blows[bk] = int(rec.brawl.blows.get(bk, 0)) + 1
+				elif cq == "stagger":
+					var sk: String = str(e.get("text"))
+					rec.brawl.staggers[sk] = int(rec.brawl.staggers.get(sk, 0)) + 1
+				elif cq == "trade_break":
+					rec.brawl.tradeBreaks += 1
 			# reach (Encounter's contact slice): every damaging strike of a light or heavy melee exchange (a light, a heavy or a guarded hit; signatures and their guarded hits are beams, not strikes) is measured from the attacker to the victim at the damage event: the horizontal distance must stay within 68 units, and a height difference beyond 68 is allowed only on sloped ground
 			var rex = S.dirS.ex
 			if e.type == "damage" and e.number and e.amount > 0.0 and rex != null and str(rex.tag).begins_with("BURIED") and (str(rex.kind) == "light" or str(rex.kind) == "heavy"):

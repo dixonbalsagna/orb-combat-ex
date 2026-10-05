@@ -27,6 +27,7 @@ extends SceneTree
 ## Read-only with respect to sim/: it only calls the sim's public functions.
 
 class Pl:
+	static var brawl = null     # the DirBrawl script when the build has one (loaded dynamically: an older export has none), for its reads beatAt, busy and inBrawl
 	var kind: String = "ai"
 	var P: Dictionary = {}
 	var rng := RandomNumberGenerator.new()
@@ -36,6 +37,10 @@ class Pl:
 	var carry_ticks: int = 0       # the frozen steps a carried press has waited (the intent's `waited`: a press is graded at its own tick)
 	var plan: Array = []           # [{tick, k}] presses planned against the running exchange's blows
 	var last_press: int = -1000
+	var last_press_tick: int = -1000   # the S.tick of the last press (the clock a tapping player's real rate counts)
+	var brawl_prev_c: int = -1         # the last beatAt read, to see a new blow go on its way
+	var brawl_off: int = 0
+	var brawl_done: bool = true
 	var hold_until: int = -1
 	var hold_kind: int = 0
 	var pending_rel: int = -1      # a timed hold's release tick
@@ -185,6 +190,29 @@ class Pl:
 				return true
 		return false
 
+	## The tapper inside a brawl. The beat list holds a light's blow for 2 ticks only, so the old oracle never sees it (the script went blind). The
+	## director's own read is DirBrawl.beatAt(S, f): the S.tick of his blow on its way (B2: its beat point), or -1. A rhythm player throws one blow
+	## at a time, never a flurry (taps slower than 12 ticks are not one): a new blow goes on its way, the next press is planned at its read tick plus
+	## the script's offset (accuracy and window as before), and not sooner than `minGap` ticks (default 14) after his last press.
+	## With the line free and nothing on its way he starts the next blow after `idle` ticks, as he starts an exchange outside a brawl.
+	func _brawl_press(S, slot: int) -> int:
+		var f = S.fighters[slot]
+		var c: int = int(brawl.call("beatAt", S, f))
+		var min_gap: int = int(P.get("mingap", "14"))
+		if c >= 0:
+			if brawl_prev_c < 0:
+				brawl_off = _offset()
+				brawl_done = false
+			brawl_prev_c = c
+			if not brawl_done and S.tick + 1 >= c + brawl_off and S.tick - last_press_tick >= min_gap:
+				brawl_done = true
+				return _kind_at(String(P.get("mix", "L")))
+			return -1
+		brawl_prev_c = -1
+		if not bool(brawl.call("busy", S, f)) and S.tick - last_press_tick >= maxi(min_gap, int(P.get("idle", "24"))):
+			return _kind_at(String(P.get("mix", "L")))
+		return -1
+
 	## The press to send this call: -1 none, 0 light, 1 heavy. `hold` is set when the button stays down.
 	func decide(S, slot: int, lt: int) -> int:
 		if carry >= 0:
@@ -192,7 +220,9 @@ class Pl:
 		match kind:
 			"masher":
 				var gap: int = int(P.get("gap", "8"))
-				if lt - last_press >= gap:
+				# clock=tick: the taps count S.tick, which runs through hit-stop (a player's real tap rate; the brawl's flurry counts it); the default counts live ticks
+				var due: bool = (S.tick - last_press_tick >= gap) if String(P.get("clock", "live")) == "tick" else (lt - last_press >= gap)
+				if due:
 					return 1 if String(P.get("kind", "L")) == "H" else 0
 			"mix":
 				var gap2: int = int(P.get("gap", "12"))
@@ -227,6 +257,8 @@ class Pl:
 				if ex != null:
 					if _struggle_press(S, slot):
 						return 0
+					if brawl != null and bool(brawl.call("inBrawl", S, S.fighters[slot])):
+						return _brawl_press(S, slot)
 					for e in blows:
 						if e.done:
 							continue
@@ -245,6 +277,7 @@ class Pl:
 		var beat: int = SimPressRead.beat_offset(lt, contacts)
 		SimPressRead.push(log, k, 0, lt, beat)
 		last_press = lt
+		last_press_tick = S.tick if S != null else lt
 		presses += 1
 		if S != null and slot >= 0 and S.dirS.ex != null:
 			var f = S.fighters[slot]
@@ -300,6 +333,9 @@ func _init() -> void:
 	var n: int = int(pos[0]) if pos.size() > 0 else 20
 	var base: int = int(pos[1]) if pos.size() > 1 else 1
 	SimInputData.load_and_apply()
+	if ResourceLoader.exists("res://sim/director/brawl.gd"):
+		Pl.brawl = load("res://sim/director/brawl.gd")
+	var g: Dictionary = _gblank()
 	var sums: Array = [_blank(), _blank()]
 	var wins: Array = [0, 0]
 	var timeouts: int = 0
@@ -315,7 +351,7 @@ func _init() -> void:
 			break
 		var seed: int = base + i
 		var slot_a: int = 0 if seed % 2 == 1 else 1
-		var res: Dictionary = _match(seed, [spec_a, spec_b], [slot_a, 1 - slot_a], capsec, sums, int(wall * 1000.0))
+		var res: Dictionary = _match(seed, [spec_a, spec_b], [slot_a, 1 - slot_a], capsec, sums, int(wall * 1000.0), g)
 		n_done += 1
 		if res.get("wall", false):
 			wall_capped += 1
@@ -327,7 +363,7 @@ func _init() -> void:
 		else:
 			wins[res.winner] += 1
 	lens.sort()
-	var out: Dictionary = {"players": true, "a": spec_a, "b": spec_b, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "aWins": wins[0], "bWins": wins[1], "timeouts": timeouts, "medianSec": snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0, "brinkToKoMedian": (snappedf(_med(brinks), 0.1) if brinks.size() > 0 else -1.0), "alternationShare": snappedf(float(sums[0].alternations) / maxf(1.0, float(sums[0].pairs)), 0.001), "stats": [_report(sums[0], maxi(1, n_done)), _report(sums[1], maxi(1, n_done))]}
+	var out: Dictionary = {"players": true, "a": spec_a, "b": spec_b, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "aWins": wins[0], "bWins": wins[1], "timeouts": timeouts, "medianSec": snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0, "brinkToKoMedian": (snappedf(_med(brinks), 0.1) if brinks.size() > 0 else -1.0), "alternationShare": snappedf(float(sums[0].alternations) / maxf(1.0, float(sums[0].pairs)), 0.001), "stats": [_report(sums[0], maxi(1, n_done), g.sec), _report(sums[1], maxi(1, n_done), g.sec)], "brawl": _greport(g)}
 	print(JSON.stringify(out))
 	quit(0)
 
@@ -339,16 +375,32 @@ func _med(a: Array) -> float:
 
 
 func _blank() -> Dictionary:
-	return {"presses": 0, "onBeat": 0, "inExchange": 0, "styles": {}, "exchanges": 0, "launchEnds": 0, "otherEnds": 0, "damage": 0.0, "hits": 0, "heavyHits": 0, "launchesEarned": 0, "launchesTaken": 0, "airCatches": 0, "alternations": 0, "pairs": 0, "flowMax": 0, "flowTo3": 0, "end_launch": 0, "end_knockback": 0, "end_continue": 0, "strings5": 0, "locks5": 0, "dIn": 0, "dOn4": 0, "dOn2": 0, "strOpens": 0, "strHits": 0, "strStrays": 0}
+	return {"presses": 0, "onBeat": 0, "inExchange": 0, "styles": {}, "exchanges": 0, "launchEnds": 0, "otherEnds": 0, "damage": 0.0, "hits": 0, "heavyHits": 0, "launchesEarned": 0, "launchesTaken": 0, "airCatches": 0, "alternations": 0, "pairs": 0, "flowMax": 0, "flowTo3": 0, "end_launch": 0, "end_knockback": 0, "end_continue": 0, "strings5": 0, "locks5": 0, "dIn": 0, "dOn4": 0, "dOn2": 0, "closes": 0, "strOpens": 0, "strHits": 0, "strStrays": 0}
 
 
-func _report(s: Dictionary, n: int) -> Dictionary:
+func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
 	var ex: float = maxf(1.0, float(s.exchanges))
-	return {"pressesPerMatch": snappedf(float(s.presses) / n, 0.1), "onBeatShare": snappedf(float(s.onBeat) / maxf(1.0, float(s.inExchange)), 0.001), "styles": s.styles, "exchangesPerMatch": snappedf(float(s.exchanges) / n, 0.1), "launchShareOfExchanges": snappedf(float(s.launchEnds) / ex, 0.001), "damagePerMatch": snappedf(float(s.damage) / n, 1.0), "damagePerExchange": snappedf(float(s.damage) / ex, 0.1), "hitsPerMatch": snappedf(float(s.hits) / n, 0.1), "heavyHitsPerMatch": snappedf(float(s.heavyHits) / n, 0.1), "launchesEarnedPerMatch": snappedf(float(s.launchesEarned) / n, 0.1), "launchesTakenPerMatch": snappedf(float(s.launchesTaken) / n, 0.1), "endsLaunch": s.end_launch, "endsKnockback": s.end_knockback, "endsContinue": s.end_continue, "flowMax": s.flowMax, "flowTo3PerMatch": snappedf(float(s.flowTo3) / n, 0.1), "blurStrings": s.strings5, "blurLocked": s.locks5, "blurLockShare": snappedf(float(s.locks5) / maxf(1.0, float(s.strings5)), 0.001), "directorOnBeat4": snappedf(float(s.dOn4) / maxf(1.0, float(s.dIn)), 0.001), "directorOnBeat2": snappedf(float(s.dOn2) / maxf(1.0, float(s.dIn)), 0.001), "directorPresses": s.dIn, "struggles": s.strOpens, "struggleHits": s.strHits, "struggleStrays": s.strStrays}
+	return {"pressesPerMatch": snappedf(float(s.presses) / n, 0.1), "onBeatShare": snappedf(float(s.onBeat) / maxf(1.0, float(s.inExchange)), 0.001), "styles": s.styles, "exchangesPerMatch": snappedf(float(s.exchanges) / n, 0.1), "launchShareOfExchanges": snappedf(float(s.launchEnds) / ex, 0.001), "damagePerMatch": snappedf(float(s.damage) / n, 1.0), "damagePerExchange": snappedf(float(s.damage) / ex, 0.1), "hitsPerMatch": snappedf(float(s.hits) / n, 0.1), "heavyHitsPerMatch": snappedf(float(s.heavyHits) / n, 0.1), "launchesEarnedPerMatch": snappedf(float(s.launchesEarned) / n, 0.1), "launchesTakenPerMatch": snappedf(float(s.launchesTaken) / n, 0.1), "endsLaunch": s.end_launch, "endsKnockback": s.end_knockback, "endsContinue": s.end_continue, "flowMax": s.flowMax, "flowTo3PerMatch": snappedf(float(s.flowTo3) / n, 0.1), "blurStrings": s.strings5, "blurLocked": s.locks5, "blurLockShare": snappedf(float(s.locks5) / maxf(1.0, float(s.strings5)), 0.001), "directorOnBeat4": snappedf(float(s.dOn4) / maxf(1.0, float(s.dIn)), 0.001), "directorOnBeat2": snappedf(float(s.dOn2) / maxf(1.0, float(s.dIn)), 0.001), "directorPresses": s.dIn, "struggles": s.strOpens, "struggleHits": s.strHits, "struggleStrays": s.strStrays, "closes": s.closes, "closesPerMin": snappedf(float(s.closes) / maxf(0.001, secs / 60.0), 0.1)}
+
+
+## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
+func _gblank() -> Dictionary:
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0}
+
+
+func _greport(g: Dictionary) -> Dictionary:
+	var mins: float = maxf(0.001, g.sec / 60.0)
+	return {"brawls": g.brawls, "brawlsPerMin": snappedf(float(g.brawls) / mins, 0.1), "ends": g.ends, "blows": g.blows,
+		"closes": g.closes, "closesPerMin": snappedf(float(g.closes) / mins, 0.1), "heavyStaggers": g.heavyStaggers,
+		"closesByBrinkFighter": g.closesBrink, "closesWhileOneOnBrink": g.closesOneBrink, "brinkCloseShare": snappedf(float(g.closesBrink) / maxf(1.0, float(g.closesOneBrink)), 0.001),
+		"tradeBreaks": g.tradeBreaks, "tradeBreaksOnLimit": g.onLimit, "tradeLimit": g.limit, "breakToCloseLate": g.late,
+		"momentumBreaks": g.momBreaks, "momentumChanges": g.momChanges, "momentumChangeShare": snappedf(float(g.momChanges) / maxf(1.0, float(g.momBreaks)), 0.001),
+		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
+		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
-func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, wall_ms: int = 300000) -> Dictionary:
+func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, wall_ms: int = 300000, g: Dictionary = {}) -> Dictionary:
 	var pl: Array = []
 	for i in range(2):
 		var p := Pl.new()
@@ -377,6 +429,11 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 	var ex_locked: bool = false    # the perfect blur locked in this exchange (cue blur_locked)
 	var brink_t: Dictionary = {}   # slot -> first brink_enter time
 	var ko_t: float = -1.0
+	var brink_now := {}            # fighter index -> on the brink now (brink_enter and brink_exit)
+	var last_closer: int = -1      # the fighter who made the last close in this brawl
+	var tb_tick: int = -1          # the S.tick of a trade's break still waiting for its close
+	if not g.is_empty() and g.limit < 0 and Pl.brawl != null:
+		g.limit = int(Pl.brawl.call("cfg").flurry.tradeMaxTicks)
 	var wall0: int = Time.get_ticks_msec()
 	var walled: bool = false
 	while S.T < capsec and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
@@ -430,6 +487,58 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 				else:
 					p.carry = sent[slot]
 					p.carry_ticks = (p.carry_ticks + 1) if carried[slot] else 1
+		# the brawl's events (docs/director/brawl-b1.md section 4), counted for Game Design's rows
+		if not g.is_empty():
+			if tb_tick >= 0 and S.tick - tb_tick > 24:
+				g.late += 1
+				tb_tick = -2
+			for e in S.out.fx:
+				if e.type == "brink_enter":
+					brink_now[int(e.actor)] = true
+				elif e.type == "brink_exit":
+					brink_now.erase(int(e.actor))
+				elif e.type == "cue":
+					var ck: String = str(e.get("kind"))
+					if ck == "brawl_start":
+						g.brawls += 1
+						last_closer = -1
+					elif ck == "brawl_end":
+						var why: String = str(e.get("text"))
+						g.ends[why] = int(g.ends.get(why, 0)) + 1
+						tb_tick = -1
+						last_closer = -1
+					elif ck == "blow":
+						var bt: String = str(e.get("text"))
+						g.blows[bt] = int(g.blows.get(bt, 0)) + 1
+					elif ck == "trade":
+						g.trades += 1
+					elif ck == "perfect_block":
+						g.perfectBlocks += 1
+					elif ck == "guard_break":
+						g.guardBreaks += 1
+					elif ck == "trade_break":
+						g.tradeBreaks += 1
+						if int(e.get("n")) == g.limit:
+							g.onLimit += 1
+						tb_tick = S.tick
+						if last_closer >= 0:
+							g.momBreaks += 1
+							if int(e.actor) != last_closer:
+								g.momChanges += 1
+					elif ck == "stagger" and str(e.get("text")) == "flurry":
+						var closer: int = int(e.target)
+						g.closes += 1
+						if closer >= 0 and closer < 2 and by_slot[closer].scripted():
+							sums[_idx(pl, by_slot[closer])].closes += 1
+						if brink_now.has(closer) != brink_now.has(1 - closer):
+							g.closesOneBrink += 1
+							if brink_now.has(closer):
+								g.closesBrink += 1
+						last_closer = closer
+						if tb_tick >= 0:
+							tb_tick = -1
+					elif ck == "stagger" and str(e.get("text")) == "heavy":
+						g.heavyStaggers += 1
 		# exchange endings and per-player counts, from this tick's events
 		for e in S.out.fx:
 			if e.type == "damage" and e.number and int(e.attacker) >= 0 and int(e.attacker) < 2 and e.amount > 0.0:
@@ -519,6 +628,12 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 		sums[i].dOn2 += pl[i].d_on2
 		for st in pl[i].styles:
 			sums[i].styles[st] = int(sums[i].styles.get(st, 0)) + int(pl[i].styles[st])
+	if not g.is_empty():
+		g.sec += t
+		if winner >= 0 and S.game.ko != null:
+			g.decided += 1
+			if 1 - S.fighters.find(S.game.ko) == 0:   # the winner took the first slot (slot 0)
+				g.slot0Wins += 1
 	SimCore.dispose(S)
 	return {"winner": winner, "t": t, "brink": brink, "wall": walled}
 

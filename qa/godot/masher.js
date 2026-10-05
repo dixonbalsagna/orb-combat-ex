@@ -4,11 +4,11 @@
 const { spawn } = require('child_process');
 const { godot, guard, ROOT } = require('./godot');
 
-function runLevel(level, n, base, forms = false) {
+function runLevel(level, n, base, forms = false, gap = 8) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/masher.gd', '--', String(n), String(base), `--level=${level}`, `--forms=${forms ? 1 : 0}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/masher.gd', '--', String(n), String(base), `--level=${level}`, `--forms=${forms ? 1 : 0}`, `--gap=${gap}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -22,11 +22,11 @@ function runLevel(level, n, base, forms = false) {
 
 // Levels run side by side (three Godot processes).
 // The lights-only mirror (Game Design, agency pass 13): two mashers who take their forms play each other; at least 95% of the matches must finish before the cap (two beginners on one button must not sit in a stalemate).
-function runMirror(n, base) {
+function runMirror(n, base, specA = 'masher:forms=1', specB = null, tag = 'live') {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), '--a=masher:forms=1', '--b=masher:forms=1'], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${specA}`, `--b=${specB || specA}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -34,7 +34,7 @@ function runMirror(n, base) {
       const line = out.split(String.fromCharCode(10)).find(l => l.startsWith('{') && l.includes('"players"'));
       if (code !== 0 || !line) return reject(new Error('players.gd failed for the mirror (exit ' + code + ')' + String.fromCharCode(10) + out.slice(0, 1200)));
       const r = JSON.parse(line);
-      resolve({ mirror: true, n: r.n, finished: r.aWins + r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, brink: r.brinkToKoMedian });
+      resolve({ mirror: true, tag, specA, specB: specB || specA, n: r.n, aWins: r.aWins, bWins: r.bWins, finished: r.aWins + r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, brink: r.brinkToKoMedian, brawl: r.brawl, stats: r.stats });
     });
   });
 }
@@ -61,7 +61,14 @@ function runPair(tag, a, b, n, base) {
 async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'] } = {}) {
   const withForms = await Promise.all(levels.map(l => runLevel(l, n, base, true)));
   const noForms = await Promise.all(levels.map(l => runLevel(l, n, base, false)));
-  const mirror = await runMirror(Math.min(n, 60), base);   // one more process; the mirror's matches are the slow ones (a stalemate runs to the cap), so it gets fewer
+  // Game Design's ruling 4 (melee-press-feel.md 9d): the masher taps on S.tick; the banded row is the 8-tick script, 6 and 10 are reported beside it.
+  const gaps = await Promise.all([6, 10].map(g => runLevel('medium', n, base, true, g)));
+  // The lights-only mirror, twice: the first counts live ticks (as every earlier baseline did), the second counts S.tick (the real tap rate); then a 6-tick against a 12-tick tapper (closes a minute).
+  const mirror = await runMirror(Math.min(n, 60), base);   // the mirror's matches are the slow ones (a stalemate runs to the cap), so it gets fewer
+  const mirrors = await Promise.all([
+    runMirror(Math.min(n, 60), base, 'masher:forms=1:clock=tick', null, 'tick'),
+    runMirror(Math.min(n, 60), base, 'masher:forms=1:clock=tick:gap=6', 'masher:forms=1:clock=tick:gap=12', 'fast-slow'),
+  ]);
   const E = ':energy=1:forms=1:stick=1', R = ':forms=1:stick=1';
   const pairs = await Promise.all([
     runPair('bolt-melee', 'masher:energy=1:forms=1', 'masher:forms=1', Math.min(n, 40), base),
@@ -82,15 +89,43 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
     runPair('blur-m12', 'masher:gap=12' + M, ai, n, base),
     runPair('blur-m14', 'masher:gap=14' + M, ai, n, base),
   ]);
-  return [...withForms, ...noForms, mirror, ...pairs, ...blur1, ...blur2];
+  return [...withForms, ...noForms, ...gaps, mirror, ...mirrors, ...pairs, ...blur1, ...blur2];
 }
 
 const BANDS = { easy: [0.60, 1, 'at least 60%'], medium: [0.35, 0.50, '35 to 50%'], hard: [0, 0.15, 'at most 15%'] };
 
+
+// The lights-only mirror's rows (agency pass 13 and 23; melee-press-feel.md sections 3, 9 and 9d), for each variant: 'live' counts live ticks (every earlier baseline), 'tick' counts S.tick
+// (the real tap rate; the brawl's flurry counts it), 'fast-slow' is a 6-tick tapper against a 12-tick tapper (reported).
+function mirrorRows(m) {
+  const b = m.brawl || {}, sfx = m.tag === 'live' ? '' : '.' + m.tag, lab = m.tag === 'live' ? '' : ` (${m.tag === 'tick' ? 'taps on S.tick' : 'a 6-tick tapper against a 12-tick tapper'})`;
+  const rows = [];
+  const pct = v => (100 * v).toFixed(1) + '%';
+  if (m.tag === 'fast-slow') {
+    const [a, c] = m.stats, dec = m.aWins + m.bWins;
+    rows.push({ id: 'masher.fastslow', ref: '§9d', what: 'A faster masher against a slower one (6 ticks against 12): closes a minute, and who wins (reported, as the cost of tapping slowly)', status: 'INFO', value: `closes a minute: ${a.closesPerMin} for the 6-tick tapper, ${c.closesPerMin} for the 12-tick tapper; the 6-tick tapper wins ${m.aWins} of ${dec}`, band: 'reported', note: `${m.n} matches; closes are flurry staggers; the clock is S.tick` });
+    return rows;
+  }
+  rows.push({ id: 'masher.mirror' + sfx, ref: '§6 masher', what: 'Two lights-only players (mashers who take their forms) finish the match before the cap' + lab, status: m.finished / m.n >= 0.95 ? 'PASS' : 'FAIL', value: `${pct(m.finished / m.n)} (${m.finished} of ${m.n}; ${m.timeouts} ran to the cap)`, band: 'at least 95%', note: `median ${m.medianSec} s; point estimate` });
+  if (m.brink >= 0) rows.push({ id: 'masher.brink' + sfx, ref: '§6 masher', what: 'Lights-only mirror: brink to KO, median (30 to 55 s, re-based at agency pass section 23)' + lab, status: m.brink >= 30 && m.brink <= 55 ? 'PASS' : 'FAIL', value: m.brink.toFixed(1) + ' s', band: '30 to 55 s', note: `${m.finished} matches that ended in a KO; the overall band stays 45 to 90 s` });
+  if (b.closes !== undefined) {
+    const one = b.closesWhileOneOnBrink || 0;
+    rows.push({ id: 'masher.brinkcloses' + sfx, ref: '§9d', what: 'Lights-only mirror: share of closes made by the fighter on the brink, while only one of them is on it (10 to 40%)' + lab, status: one >= 20 ? (b.brinkCloseShare >= 0.10 && b.brinkCloseShare <= 0.40 ? 'PASS' : 'FAIL') : 'PENDING', value: one ? `${pct(b.brinkCloseShare)} (${b.closesByBrinkFighter} of ${one} closes)` : 'no close with one fighter on the brink', band: '10 to 40%', note: `${b.closes} closes in ${m.n} matches; PENDING under 20 closes in the count` });
+    const dec = b.decided || 0;
+    rows.push({ id: 'masher.firstslot' + sfx, ref: '§9d', what: 'Lights-only mirror: matches won from the first slot (40 to 60%)' + lab, status: dec >= 20 ? (b.firstSlotShare >= 0.40 && b.firstSlotShare <= 0.60 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${pct(b.firstSlotShare)} (${b.firstSlotWins} of ${dec})` : 'no decided match', band: '40 to 60%', note: `point estimate; the interval at ${dec} matches is about +-${dec ? Math.round(98 / Math.sqrt(dec)) : '-'} points` });
+    rows.push({ id: 'masher.momentum' + sfx, ref: '§9d', what: 'An even mash: trade breaks that change who has the momentum, as a share of the breaks after a first close in the brawl (5 to 15%)' + lab, status: b.momentumBreaks >= 20 ? (b.momentumChangeShare >= 0.05 && b.momentumChangeShare <= 0.15 ? 'PASS' : 'FAIL') : 'PENDING', value: b.momentumBreaks ? `${pct(b.momentumChangeShare)} (${b.momentumChanges} of ${b.momentumBreaks})` : 'no trade break after a close', band: '5 to 15%', note: 'an approximation until trade_break carries the runs: it counts every break (a lead of 2 also takes the close), not only level trades; Encounter to add the two runs to the event' });
+    rows.push({ id: 'masher.tradelimit' + sfx, ref: '§9d', what: 'A trade that is not broken on the tick of its limit: never (hard test)' + lab, status: b.tradeBreaks ? (b.tradeBreaksOnLimit === b.tradeBreaks ? 'PASS' : 'FAIL') : 'PENDING', value: b.tradeBreaks ? `${b.tradeBreaksOnLimit} of ${b.tradeBreaks} breaks on the limit (${b.tradeLimit} ticks)` : 'no trade broke', band: 'every break on the limit', note: 'a trade longer than the limit that never produced a trade_break is not seen by this row; the longest trade is the close, not the break' });
+    rows.push({ id: 'masher.breakclose' + sfx, ref: '§9d', what: 'From a trade break to its close, or to the brawl end: at most 24 ticks (hard test)' + lab, status: b.tradeBreaks ? (b.breakToCloseLate === 0 ? 'PASS' : 'FAIL') : 'PENDING', value: b.tradeBreaks ? `${b.breakToCloseLate} of ${b.tradeBreaks} breaks took longer` : 'no trade broke', band: '0 over 24 ticks', note: 'counted on S.tick from the trade_break event to the next flurry close or brawl_end' });
+    rows.push({ id: 'masher.closes' + sfx, ref: '§9d', what: 'Lights-only mirror: brawls, blows and closes (reported)' + lab, status: 'INFO', value: `${b.brawlsPerMin} brawls a minute, ${b.closesPerMin} closes a minute, ${b.heavyStaggers} heavy staggers; blows ${JSON.stringify(b.blows)}; ends ${JSON.stringify(b.ends)}`, band: 'reported', note: `${m.n} matches` });
+  }
+  return rows;
+}
+
 function masherRows(results) {
   const rows = results.filter(r => !r.mirror && !r.pair).map(r => {
     const [lo, hi, text] = BANDS[r.level], decided = r.wins + r.losses, v = decided ? r.wins / decided : NaN, ok = decided && v >= lo && v <= hi, forms = !!r.forms;
-    return { id: 'masher.' + (forms ? '' : 'noforms.') + r.level, ref: '§6 masher', what: `A scripted masher (light every ${r.gap} ticks, ${forms ? 'takes forms' : 'no forms'}) wins against the ${r.level} AI`, status: decided ? (forms ? (ok ? 'PASS' : 'FAIL') : 'INFO') : 'PENDING', value: decided ? `${(v * 100).toFixed(1)}% (${r.wins} of ${decided})` : 'no decided matches', band: forms ? text : `(${text} if forms are taken)`, note: `${r.n} matches, ${r.timeouts} timed out, median ${r.medianSec} s; point estimate only${forms ? '' : '; a beginner who never transforms fights at tier 1 (Game Design to rule)'}; per match: launches by the masher ${r.launchesByMasher}, of which air catches ${r.airCatchesOfAI}; launches on the masher ${r.launchesOnMasher}, air catches ${r.airCatchesOfMasher}` };
+    const odd = r.gap !== 8;   // 6 and 10 are reported beside the banded 8-tick script (Game Design's ruling 4)
+    return { id: 'masher.' + (forms ? '' : 'noforms.') + r.level + (odd ? '.g' + r.gap : ''), ref: '§6 masher', what: `A scripted masher (light every ${r.gap} ${r.clock === 'live' ? 'live ' : 'S.'}ticks, ${forms ? 'takes forms' : 'no forms'}) wins against the ${r.level} AI`, status: decided ? (forms && !odd ? (ok ? 'PASS' : 'FAIL') : 'INFO') : 'PENDING', value: decided ? `${(v * 100).toFixed(1)}% (${r.wins} of ${decided})` : 'no decided matches', band: forms ? text : `(${text} if forms are taken)`, note: `${r.n} matches, ${r.timeouts} timed out, median ${r.medianSec} s; point estimate only${forms ? '' : '; a beginner who never transforms fights at tier 1 (Game Design to rule)'}; per match: launches by the masher ${r.launchesByMasher}, of which air catches ${r.airCatchesOfAI}; launches on the masher ${r.launchesOnMasher}, air catches ${r.airCatchesOfMasher}` };
   });
   for (const r of results.filter(x => x.pair)) {
     const dec = r.aWins + r.bWins;
@@ -107,9 +142,7 @@ function masherRows(results) {
     else if (r.pair === 'blast-slow-medium') rows.push({ id: 'masher.blast.slowmedium', ref: '§6 masher', what: 'The slow blaster (L L and a tapped H, one press every 24 ticks) wins against the medium AI (reported; the band of the mixed blaster, 30 to 50%, is the reference)', status: 'INFO', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec})` : 'no decided matches', band: '(25 to 45%)', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
     else if (r.pair === 'blast-medium') rows.push({ id: 'masher.blast.medium', ref: '§6 masher', what: 'A mixed blaster (a bolt about every 14 ticks, a tapped heavy now and then) wins against the medium AI (agency pass section 22: 30 to 50%)', status: dec ? (r.aWins / dec >= 0.30 && r.aWins / dec <= 0.50 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec})` : 'no decided matches', band: '30 to 50%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
   }
-  const m = results.find(r => r.mirror);
-  if (m) rows.push({ id: 'masher.mirror', ref: '§6 masher', what: 'Two lights-only players (mashers who take their forms) finish the match before the cap', status: m.finished / m.n >= 0.95 ? 'PASS' : 'FAIL', value: `${(100 * m.finished / m.n).toFixed(1)}% (${m.finished} of ${m.n}; ${m.timeouts} ran to the cap)`, band: 'at least 95%', note: `median ${m.medianSec} s; point estimate` });
-  if (m && m.brink >= 0) rows.push({ id: 'masher.brink', ref: '§6 masher', what: 'Lights-only mirror: brink to KO, median (30 to 55 s, re-based at agency pass section 23)', status: m.brink >= 30 && m.brink <= 55 ? 'PASS' : 'FAIL', value: m.brink.toFixed(1) + ' s', band: '30 to 55 s', note: `${m.finished} matches that ended in a KO; the overall band stays 45 to 90 s` });
+  for (const m of results.filter(r => r.mirror)) rows.push(...mirrorRows(m));
   rows.push({ id: 'masher.expert', ref: '§6 masher', what: 'An expert script (guards, punishes with a heavy, perfect-blocks heavies and enders) wins against the medium AI (at most 15%)', status: 'PENDING', value: '', band: 'at most 15%', note: 'needs the expert script: it reads the rival tells (Encounter scratch build has one, not in the tree)' });
   return rows;
 }

@@ -89,3 +89,7 @@ A mirror under B1's first close rule ran to the 900 s cap in every match and hun
 - **`--budget=<real seconds>`** (default 3,600; 5,400 for `records.gd`) stops starting matches after that long; `players.gd` and `masher.gd` report `n` (run), `requested` and `budgetStopped`, and `records.gd` writes the short list and the runner (`runRecords`) rejects a batch that comes back short.
 - `qa/godot/godot.js` `guard()` kills a child and its engine process by PID after `QA_PROC_MS` (default 100 minutes) and says so; it wraps every spawn in `godot.js`, `masher.js`, `timing-edge.js` and `feel.js`.
 Checked with a 6-match masher mirror at `--wall=4 --budget=15` (one match capped, all six run), the masher at `--wall=3 --budget=10` (four of six run, budgetStopped) and `records.gd` at `--budget=4` (two of five records, both wall-capped).
+
+## 9. Built (2026-10-05, on e6f51bd; see docs/qa/brawl-rebase.md)
+
+Section 7's plan is built: the tapper presses inside a brawl against `DirBrawl.beatAt` (loaded dynamically; outside a brawl the old oracle stays), with a `mingap` of 14 ticks and the same accuracy and window; B2 turns `beatAt` into the beat point and the same code reads it. The brawl events are read by `players.gd` and `records.gd`; the rows are in `masher.js` (the mirrors) and `bands.js` (the re-based rows).

@@ -329,6 +329,21 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     else R.point('7.parry', '§7', 'Parries per 100 melee exchanges', { v: sum(D.map(r => sum(r.parries))) / m * 100, lo: 5, hi: 15 });
     // control-rules 6 / moveset-rules 11: perfect blocks per 100 melee exchanges by AI level (the main run is the data's level, medium)
     if (D.every(r => r.cues)) R.point('7.pb.medium', '§7', 'Perfect blocks per 100 melee exchanges, medium AI (5 to 15)', { v: sum(D.map(r => r.cues.perfect_block || 0)) / m * 100, lo: 5, hi: 15, unit: 'num' });
+    // ---- the rows counted per exchange, re-based for a brawl (docs/qa/brawl-rebase.md): one brawl is one exchange of many blows, so the per-exchange rows above read against a different unit.
+    // The per-exchange rows stay as they are (for the comparison with every earlier baseline); these are reported beside them, with the proposed bases, until Game Design confirms the bands.
+    if (D.every(r => r.brawl && r.cues)) {
+      const blowsAll = sum(D.map(r => sum(Object.values(r.brawl.blows)))), nb = sum(D.map(r => r.cues.brawl_start || 0));
+      if (blowsAll > 0) {
+        const mins = sum(D.map(r => r.koAt)) / 60, pbn = sum(D.map(r => r.cues.perfect_block || 0));
+        R.info('7.pb.perblow', '§7 brawl', 'Perfect blocks per 100 blows thrown in brawls (the brawl basis; proposed band to be set by Game Design)', (pbn / blowsAll * 100).toFixed(2), `${pbn} perfect blocks over ${blowsAll} blows; the per-exchange row above reads ${(pbn / m * 100).toFixed(2)}`);
+        R.info('10.brawl.perMin', '§10 brawl', 'Brawls a minute, blows a minute, closes a minute (flurry staggers), heavy staggers a minute, trade breaks a minute', `${(nb / mins).toFixed(1)}, ${(blowsAll / mins).toFixed(1)}, ${(sum(D.map(r => r.brawl.staggers.flurry || 0)) / mins).toFixed(1)}, ${(sum(D.map(r => r.brawl.staggers.heavy || 0)) / mins).toFixed(1)}, ${(sum(D.map(r => r.brawl.tradeBreaks)) / mins).toFixed(1)}`, 'proposed basis for "exchanges started a minute": brawls and strings, not exchanges of the old kind');
+        const lensT = D.flatMap(r => r.brawl.lens), nbl = D.flatMap(r => r.brawl.nblows);
+        if (lensT.length) R.info('10.brawl.len', '§10 brawl', 'Median brawl length and blows (B5: 6 to 12 s and 10 blows or more; the share of fight time in a brawl 45 to 60%)', `${(median(lensT) / 60).toFixed(1)} s and ${median(nbl)} blows; ${(sum(lensT) / 60 / sum(D.map(r => r.koAt)) * 100).toFixed(1)}% of fight time`, `${lensT.length} brawls in ${D.length} matches (live ticks; 90th percentile ${(lensT.slice().sort((a, b) => a - b)[Math.floor(lensT.length * 0.9)] / 60).toFixed(1)} s)`);
+        const ends = {}; for (const r of D) for (const [k, v] of Object.entries(r.brawl.ends)) ends[k] = (ends[k] || 0) + v;
+        const tot = sum(Object.values(ends));
+        if (tot) R.info('10.brawl.ends', '§10 brawl', 'How brawls end, as shares of brawls (the basis for "knock-backs" and "continues": a brawl continues until it ends; the 25 to 35% and 40 to 50% bands read against launch decisions)', Object.entries(ends).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${(v / tot * 100).toFixed(1)}%`).join(', '), `${tot} brawl endings`);
+      }
+    }
     R.point('7.chain', '§7', 'Chains per 100 melee exchanges (10 to 30, agency pass 14; strings now come from the presses)', { v: sum(D.map(r => r.chains.length)) / m * 100, lo: 10, hi: 30 });
     const slip = sum(D.map(r => r.melee['PURSUIT — TARGET SLIPS AWAY'] || 0)), caught = sum(D.map(r => r.melee['PURSUIT — CAUGHT'] || 0));
     R.rate('7.slip', '§7', 'Pursuit slip rate (escape gamble)', { v: slip / (slip + caught), ci: wl(slip, slip + caught), lo: 0.35, hi: 0.65 });
