@@ -666,3 +666,16 @@ Verbatim:
 > we're still adding energy blasts and more special moves, so if we're underperforming on building destruction now, that's a good thing, because potentially we'll be seeing more vast swathes of destructive abilities when more energy specials and signatures are created
 
 What follows from it: building loss should sit below its ceiling for now, leaving room for the signatures, specials and blast kinds still to come. The EP's ruling: apply both the hybrid (less top-tier reach, slightly softer landings) and the stage cap (a blast leaves a wreck), which World measured at about 38 to 40% of the front row lost, inside the 25 to 50 band.
+
+## Orb, 2026-10-05: a roster of twelve; "an imaginary anime's fourth season"
+
+Verbatim:
+
+> I plan to finish the lists you wanted me working on by this time tomorrow. I'm going to sleep so I want you working full steam on this project. I want some generic templates to consider for fighter niches we haven't touched yet so I can start working on the full roster of characters I want to see. I want to lay the groundwork for a full roster of twelve, so classify the roles and subroles we've already established with our first four in our roster, then give me notes and proposals for fighters who can fill out the rest. ((Spitballing: rough ideas ahead but hopefully, with the list of taunts, quotes etc that I hand back tomorrow evening, we'll be able to fully flesh out an implied history , backstories, previous adventures etc. to create the feeling of a game based on an imaginary anime's fourth season. I am currently working on a distinct original universe that will justify the abilities these characters have.))
+
+What follows from it:
+
+- The roster target is twelve fighters (it was four). The first four are the Protagonist, the rival (the Anti-hero), the Empress and the Cyborg.
+- Wanted now: the roles and subroles the first four establish, generic templates for niches not yet touched, and notes and proposals for the other eight.
+- The framing for the fiction: the game should feel like it is based on an imaginary anime's fourth season, with an implied history, backstories and earlier adventures. Orb is writing an original universe that justifies the fighters' abilities, and hands back the taunt and quote lists on the evening of 2026-10-06.
+- Orb is asleep for the night and wants work to continue at full pace.
