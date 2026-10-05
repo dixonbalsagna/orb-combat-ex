@@ -40,7 +40,8 @@
           "poses",
           "alt",
           "tip",
-          "path"
+          "path",
+          "flags"
         ],
         "properties": {
           "id": {
@@ -218,6 +219,27 @@
               "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$"
             },
             "description": "Load, contact, follow."
+          },
+          "flags": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "leap",
+                "spin",
+                "multi_turn",
+                "travelling",
+                "clasped",
+                "wrists_together",
+                "two_hand_chamber",
+                "cupped_at_hip",
+                "hip_chamber",
+                "drawn_to_hip_then_thrust",
+                "held_raise_overhead",
+                "passes_through"
+              ]
+            },
+            "description": "The pose flags this key set shows, read off its three key poses (render/anim/tools/waves/flags.mjs; docs/combat/pending/movegen/README.md section 3): the twelve flags Legal's banned shapes name. An empty list means none of them is shown. travelling and passes_through are never set from the poses (a motion and the contact solve's)."
           },
           "tip": {
             "enum": [

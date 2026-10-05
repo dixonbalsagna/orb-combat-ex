@@ -34,119 +34,15 @@
    "_genericAb": false,
    "_family": null,
    "tip": "cap",
-   "path": "arc_in"
+   "path": "arc_in",
+   "flags": []
   },
   {
-   "id": "pm.elbow_drop",
-   "combat": "strike.elbow_drop",
-   "name": "elbow_drop",
-   "weight": "light",
-   "target": "chest",
-   "limb": "elbow_r",
-   "limb2": null,
-   "offset": 38,
-   "reach": 72,
-   "band": "close",
-   "ticks": {
-    "load": 12,
-    "follow": 6,
-    "recover": 10
-   },
-   "ground": "ok",
-   "uses": {
-    "arms": 1
-   },
-   "from": null,
-   "legal": [],
-   "look": "From above and short: the point of the elbow dropped onto the chest, the other open hand holding the guard down.",
-   "orig": "the point of the elbow dropped short onto the chest, the other open hand holding the guard down",
-   "poses": [
-    "pm.elbow_drop.chamber",
-    "pm.elbow_drop.contact",
-    "pm.elbow_drop.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": null,
-   "tip": "point",
-   "path": "drop"
-  },
-  {
-   "id": "pm.palm_slap",
-   "combat": "strike.palm_slap",
-   "name": "palm_slap",
-   "weight": "light",
-   "target": "head",
-   "limb": "hand_r",
-   "limb2": null,
-   "offset": 58,
-   "reach": 98,
-   "band": "long",
-   "ticks": {
-    "load": 6,
-    "follow": 4,
-    "recover": 6
-   },
-   "ground": "ok",
-   "uses": {
-    "arms": 1
-   },
-   "from": "hook",
-   "legal": [],
-   "look": "An open palm swung round on a wide arc to the head, the free hand up at his cheek.",
-   "orig": "an open palm swung round on a wide arc to the head, the free hand up at his cheek",
-   "poses": [
-    "pm.palm_slap.chamber",
-    "pm.palm_slap.contact",
-    "pm.palm_slap.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": "hand_arc",
-   "tip": "palm",
-   "path": "arc_in"
-  },
-  {
-   "id": "pm.palm_drop",
-   "combat": "strike.palm_drop",
-   "name": "palm_drop",
+   "id": "pm.back_chop",
+   "combat": "strike.back_chop",
+   "name": "back_chop",
    "weight": "light",
    "target": "arm_r",
-   "limb": "hand_r",
-   "limb2": null,
-   "offset": 56,
-   "reach": 86,
-   "band": "long",
-   "ticks": {
-    "load": 14,
-    "follow": 6,
-    "recover": 12
-   },
-   "ground": "ok",
-   "uses": {
-    "arms": 1
-   },
-   "from": null,
-   "legal": [],
-   "look": "A flat palm brought down onto the rival's arm, the elbow bent through it.",
-   "orig": "a flat palm brought down onto the rival arm, the elbow bent through it",
-   "poses": [
-    "pm.palm_drop.chamber",
-    "pm.palm_drop.contact",
-    "pm.palm_drop.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": null,
-   "tip": "palm",
-   "path": "drop"
-  },
-  {
-   "id": "pm.blade_back",
-   "combat": "strike.blade_back",
-   "name": "blade_back",
-   "weight": "light",
-   "target": "chest",
    "limb": "hand_r",
    "limb2": null,
    "offset": 58,
@@ -163,18 +59,19 @@
    },
    "from": "hook",
    "legal": [],
-   "look": "A blade hand swung back out across the chest, the back of the forearm leading.",
-   "orig": "a blade hand swung back out across the chest, the back of the forearm leading, the chest opened away",
+   "look": "A blade hand swung back out across the rival's arm, the back of the forearm leading.",
+   "orig": "a blade hand swung back out across the rival arm, the back of the forearm leading, the chest opened away",
    "poses": [
-    "pm.blade_back.chamber",
-    "pm.blade_back.contact",
-    "pm.blade_back.follow"
+    "pm.back_chop.chamber",
+    "pm.back_chop.contact",
+    "pm.back_chop.follow"
    ],
    "alt": null,
    "_genericAb": false,
    "_family": "hand_arc",
    "tip": "blade",
-   "path": "arc_out"
+   "path": "arc_out",
+   "flags": []
   },
   {
    "id": "pm.palm_rise",
@@ -197,8 +94,12 @@
     "arms": 1
    },
    "from": null,
-   "legal": [],
-   "look": "The heel of an open palm lifted into the gut from a low crouch.",
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip",
+    "no_leap"
+   ],
+   "look": "The heel of an open palm lifted into the gut from a low crouch, the feet planted.",
    "orig": "the heel of an open palm lifted into the gut from a low crouch, the other hand across the chest",
    "poses": [
     "pm.palm_rise.chamber",
@@ -209,7 +110,85 @@
    "_genericAb": false,
    "_family": null,
    "tip": "palm",
-   "path": "rise"
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "pm.palm_lift",
+   "combat": "strike.palm_lift",
+   "name": "palm_lift",
+   "weight": "light",
+   "target": "jaw",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "upper",
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip",
+    "no_leap",
+    "no_held_raise"
+   ],
+   "look": "The heel of an open palm lifted under the chin, the body rising behind it, no turn, the arm lowering at once.",
+   "orig": "the heel of an open palm lifted under the chin, the body rising behind it, no turn, the arm lowering at once",
+   "poses": [
+    "pm.palm_lift.chamber",
+    "pm.palm_lift.contact",
+    "pm.palm_lift.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "pm.lift_kick",
+   "combat": "strike.lift_kick",
+   "name": "lift_kick",
+   "weight": "light",
+   "target": "gut",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 82,
+   "band": "mid",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 6
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "The ball of the foot lifted up into the belly from low, the hands up and open.",
+   "orig": "the ball of the foot lifted up into the belly from low, the hands up and open",
+   "poses": [
+    "pm.lift_kick.chamber",
+    "pm.lift_kick.contact",
+    "pm.lift_kick.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "ball",
+   "path": "rise",
+   "flags": []
   },
   {
    "id": "pm.edge_crescent",
@@ -244,19 +223,58 @@
    "_genericAb": false,
    "_family": null,
    "tip": "edge",
-   "path": "arc_out"
+   "path": "arc_out",
+   "flags": []
   },
   {
-   "id": "pm.elbow_back",
-   "combat": "strike.elbow_back",
-   "name": "elbow_back",
+   "id": "pm.fist_chop",
+   "combat": "strike.fist_chop",
+   "name": "fist_chop",
    "weight": "light",
-   "target": "jaw",
-   "limb": "elbow_r",
+   "target": "arm_r",
+   "limb": "hand_r",
    "limb2": null,
-   "offset": 38,
-   "reach": 64,
-   "band": "close",
+   "offset": 56,
+   "reach": 86,
+   "band": "long",
+   "ticks": {
+    "load": 14,
+    "follow": 6,
+    "recover": 12
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "no_clasp"
+   ],
+   "look": "One fist brought down on the rival's arm, the elbow bent through it, the other hand open and apart.",
+   "orig": "one fist brought down on the rival arm, the elbow bent through it, the other hand open and apart",
+   "poses": [
+    "pm.fist_chop.chamber",
+    "pm.fist_chop.contact",
+    "pm.fist_chop.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "pm.palm_heave",
+   "combat": "strike.palm_heave",
+   "name": "palm_heave",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
    "ticks": {
     "load": 6,
     "follow": 4,
@@ -267,19 +285,24 @@
     "arms": 1
    },
    "from": null,
-   "legal": [],
-   "look": "The point of the elbow swung back and round to the jaw, no turn of the body.",
-   "orig": "the point of the elbow swung back and round to the jaw, no turn of the body",
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip",
+    "no_leap"
+   ],
+   "look": "The heel of an open palm lifted into the chest from low, the feet planted, no turn.",
+   "orig": "the heel of an open palm lifted into the chest from low, the feet planted, the other hand across the chest",
    "poses": [
-    "pm.elbow_back.chamber",
-    "pm.elbow_back.contact",
-    "pm.elbow_back.follow"
+    "pm.palm_heave.chamber",
+    "pm.palm_heave.contact",
+    "pm.palm_heave.follow"
    ],
    "alt": null,
    "_genericAb": false,
    "_family": null,
-   "tip": "point",
-   "path": "arc_out"
+   "tip": "palm",
+   "path": "rise",
+   "flags": []
   }
  ],
  "skipped": []

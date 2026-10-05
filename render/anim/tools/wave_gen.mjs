@@ -9,6 +9,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { tipPath } from './waves/tip_path.mjs';
+import { poseFlags } from './waves/flags.mjs';
 
 const argv = process.argv.slice(2);
 const wave = argv[0] || 'wave1';
@@ -366,6 +367,7 @@ for (const m of manifest) {
   if (!tp) throw new Error(`no tip and path for ${m.id}: add it to render/anim/tools/waves/tip_path.mjs`);
   m.tip = tp.tip;
   m.path = tp.path;
+  m.flags = poseFlags(outPoses[`${m.id}.chamber`], outPoses[`${m.id}.contact`], outPoses[`${m.id}.follow`], outKeysets[m.id], tp.path);   // the pose flags Legal's rows name (docs/combat/pending/movegen/README.md section 3)
   for (const kid of [m.id, m.id + '~b', m.id + '~g']) if (outKeysets[kid]) { outKeysets[kid].tip = tp.tip; outKeysets[kid].path = tp.path; }   // the key set carries them too: AnimFighter reads the posed tip for a hand-state swap
 }
 mkdirSync(outDir, { recursive: true });

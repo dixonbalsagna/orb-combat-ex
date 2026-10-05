@@ -48,53 +48,58 @@ The one-line rule for the generator: a re-aim is allowed when the key set's `rea
 
 A glint on the striking limb is VFX's (`press.gd`); the body gives it everything it needs, from the press hand-off (`docs/animation/press-styles.md` section 6), already live: `AnimFighter.press` (the blow's `style`, `phase`, `ticks_to_contact`, the striking `limb` and its tip `bone`, `smear`, `side`), `press_path` (the tip's position over the last 12 solves) and `press_pose(k)`. For the beat itself, the sim's beat tick (`args.beat` on the beat, Encounter's B0 field list) tells **when**; the body says **where**: the striking limb's tip, `press_path`'s newest point, for a blow that is playing, or the **next** blow's limb (its `ks.limb` with its side) for one that is coming, which I will add to `press` as `next_bone` once the beat carries the next piece. The optional beat ring in settings is a UI and VFX drawing at the fighter's feet or hands; nothing is needed from Animation for it.
 
-## 5. The first slice's new key sets: 21 and 4, as four parked waves
+## 5. The first slice's new key sets: 23 and 4, as four parked waves (matched to Combat's sheet on 2026-10-05)
 
-**It fits, as one wave a fighter** (the wave names are `^(wave|protag|rival)[0-9]+$`, so the rival's is `rival4` and the Protagonist's `protag7`; the signature sketches are `rival5` and `protag8`, sequence waves like the existing hold waves), **built in this release, parked like every wave** (baked only with `--waves`, never in the fighters' `waves.more` until Legal's go, so no pick list draws them live):
+Combat's review sheet (`docs/combat/pending/movegen/review-sheet.md`, regenerated after Legal's screen) lists **8 new key sets for the Protagonist and 15 for the rival** (13 lights and 2 heavies). The waves now realise exactly those, shape for shape (limb, tip, path, target, weight), one key set each, so the generator's "waiting" moves find their keys. **One wave a fighter, parked like every wave** (baked only with `--waves`, never in the fighters' `waves.more`, so no pick list draws them until Legal's go on the poses): `rival4` (prefix `rm`) and `protag7` (prefix `pm`); the signature sketches are `rival5` (`rs`) and `protag8` (`ps`), sequence waves like the existing hold waves. The bake cost when they go live is 71 poses, about 27 ms native.
 
-| Wave | Holds | Poses |
-| :--- | :--- | ---: |
-| `rival4` (prefix `rm`) | 12 lights and 1 heavy | 39 |
-| `protag7` (prefix `pm`) | 8 lights | 24 |
-| `rival5` (`rs`) | the signature's tell and held end (two sketches, also as two sequences) | 2 + 2 |
-| `protag8` (`ps`) | the same for the Protagonist | 2 + 2 |
+| Move (sheet id) | Key set | Shape: limb, tip, path, target (weight) | Legal |
+| :--- | :--- | :--- | :--- |
+| rival x05 | `rm.elbow_drop` | elbow point, drop, chest (light) | none |
+| rival x16 | `rm.forearm_drop` | hand plate, drop, arm | L3 |
+| rival x17 | `rm.fist_drop` | hand fist, drop, head | L3 |
+| rival x18 | `rm.short_uppercut` | hand fist, rise, jaw | L1 |
+| rival x21 | `rm.knee_lift` | knee cap, rise, gut | none |
+| rival x22 | `rm.arm_chop` | hand blade, drop, arm | L3 |
+| rival x24 | `rm.lift_kick` | foot ball, rise, gut | none |
+| rival x25 | `rm.fist_sweep` | hand fist, arc out, arm | none |
+| rival x26 | `rm.plate_drop` | hand plate, drop, chest | L3 |
+| rival x27 | `rm.low_thrust` | foot sole, line, legs | none |
+| rival x28 | `rm.gut_rise` | hand fist, rise, gut | L1 |
+| rival x29 | `rm.plate_hammer` | hand plate, drop, head | L3 |
+| rival x30 | `rm.knee_hook` | knee cap, arc in, legs | none |
+| rival y03 | `rm.fist_rise` | hand fist, rise, chest (heavy) | L1, L6 |
+| rival y15 | `rm.heel_backhand` | hand heel, arc out, arm (heavy) | L6 |
+| protagonist x05 | `pm.knee_hook` | knee cap, arc in, legs | none |
+| protagonist x15 | `pm.back_chop` | hand blade, arc out, arm | none |
+| protagonist x18 | `pm.palm_rise` | hand palm, rise, gut | L1, L2 |
+| protagonist x19 | `pm.palm_lift` | hand palm, rise, jaw | L1, L2, L8 |
+| protagonist x24 | `pm.lift_kick` | foot ball, rise, gut | none |
+| protagonist x27 | `pm.edge_crescent` | foot edge, arc out, gut | none |
+| protagonist x28 | `pm.fist_chop` | hand fist, drop, arm | L3 |
+| protagonist x29 | `pm.palm_heave` | hand palm, rise, chest | L1, L2 |
 
-The bake cost when they go live is 63 poses, about 25 ms native, a tenth of what the pair bakes now.
+What changed from the first pass (which Combat's list had not yet reached me): the rival lost eight shapes that are not on the sheet (the collar chop, elbow thrust, plate rise, plate sweep, heel stamp, rib scythe, spear rise and a hook knee to the gut) and gained the arm chop, knee lift, lift kick, fist sweep, plate drop and hammer, low thrust, short uppercut and heel backhand; the Protagonist lost the elbow drop, palm slap, palm drop and elbow back and gained the lift kick, the palm lift and heave, the fist chop and and his back chop now lands on the arm. The rival has no palm anywhere (his row). **Legal's conditions are kept in the poses, not only tagged:** a rising blow keeps the feet down, no turn, the arm lowering at once (the follow comes down to 70 or lower), and its hand is chambered **low and forward, never at a hip** (x 18 or more, nothing in the hip zone); a dropping blow is one arm; the palms are open hands, never clawed; `pose_lint` runs each Legal tag on the poses (`not_at_hip`, `no_leap`, `no_held_raise`, `hands_open_or_claw`, `no_clasp`) and passes.
 
-**The shapes** (limb, tip, path, target; each is a key set with the generator's `strike.<name>` as its Combat id, so a beat's `piece` finds it once the wave is in the pick lists):
+**Checked:** `wave_gen`, `pose_lint` (0 errors on all four waves), the strike lab's reach sweep and the contact sheets (`art/animation/review/rival4`, `protag7`), `validate.js`, and `joint_scan --strict --waves` (the new poses included, none past a limit). **Not yet:** Legal's eye on the poses themselves (the sheet screened the shapes), Combat's own ranges (the rows borrow the nearest posed strike's range and ticks, flagged `_estimate`), Orb's eye on the looks.
 
-| The rival (`rm.`) | Shape |
-| :--- | :--- |
-| elbow_drop | elbow point, drop, chest (a short light version of the dropping elbow; Combat's named "new" shape) |
-| forearm_drop | hand plate, drop, arm (the signature's opening piece) |
-| fist_drop | hand fist, drop, head (the signature's piece against a guard) |
-| gut_rise | hand fist, rise, gut |
-| collar_chop | hand blade, drop, chest |
-| elbow_thrust | elbow point, line, chest |
-| hook_knee | knee cap, arc in, gut |
-| plate_rise | hand plate, rise, jaw |
-| plate_sweep | hand plate, arc in, chest |
-| heel_stamp | foot heel, drop, shins |
-| rib_scythe | hand blade, arc in, gut |
-| spear_rise | hand blade, rise, jaw |
-| fist_rise (heavy) | hand fist, rise, chest |
+**The four signature sketches** are the tell (30 ticks or more, held) and the held end of each fighter's martial arts signature: the rival's, a sunk stance with the lead blade hand out at eye height measuring the distance and the head low, and after the launcher his striking arm lowered and open, the head turned up after the rival; the Protagonist's, the open hands low and wide with the palms down in a coiled circling step, and after the launcher the feet settled, the hands loose and in front of the hips, and a slight bow. They are held poses, so Legal screens them by eye every time (no hand at the hip, no crossed arms, no arm held raised); each carries `not_at_hip` and `hands_open_or_claw`, and `pose_lint` passes them.
 
-| The Protagonist (`pm.`) | Shape |
-| :--- | :--- |
-| knee_hook | knee cap, arc in, legs (Combat's named "new" shape) |
-| elbow_drop | elbow point, drop, chest (Combat's named) |
-| palm_slap | hand palm, arc in, head |
-| palm_drop | hand palm, drop, arm |
-| blade_back | hand blade, arc out, chest |
-| palm_rise | hand palm, rise, gut |
-| edge_crescent | foot edge, arc out, gut |
-| elbow_back | elbow point, arc out, jaw |
+## 5a. The pose flags on a manifest row
 
-**Combat's own list of the 21 lives in its scratch, not in the tree.** I built the ones its document names (the elbow drop on both, the knee hook, the plate and the fist dropped for the signature, the heavy fist rise) and filled the rest from the grammar's gaps in each fighter's identity weights (fists, plates, blades, drops and rises for the rival; palms, blades, arcs and the foot's edge for the Protagonist), 12 + 1 and 8 as sized. If Combat's generator asks for other shapes the swap is cheap (each is three poses over a base), so **please send me the sheet's list of the 21 by limb, tip, path and target** and I will rename or replace the ones that differ.
+Every manifest row now has a `flags` list: the flags among the twelve Combat's generator reads (`leap`, `spin`, `multi_turn`, `travelling`, `clasped`, `wrists_together`, `two_hand_chamber`, `cupped_at_hip`, `drawn_to_hip_then_thrust`, `hip_chamber`, `held_raise_overhead`, `passes_through`) that the key set's three key poses **show**. `wave_gen` reads them off the poses (`render/anim/tools/waves/flags.mjs`) with the numbers `pose_lint`'s Legal rules use, and the schema line is `docs/animation/handoff/manifest-flags-schema.patch`. They are factual and conservative, because the generator **refuses** a move whose key set lists one:
 
-**Checked:** `wave_gen`, `pose_lint` (0 errors on all four; the notes are small reach clamps and elbow folds the limb pass trims), the strike lab's reach sweep (every strike lands at its Combat-row contact distance on the hips alone, in the borrowed ranges), the contact sheets (`art/animation/review/rival4`, `protag7`), and `validate.js` (with the schema patch). **Not yet:** Legal's screen of the shapes (the eye screen: every new shape is new), Combat's own ranges (the rows borrow the nearest posed strike's range and ticks, flagged `_estimate`; the reach tables in the review folders are what to correct them with), Orb's eye on the looks, and a hand-state or re-aim row for each (they come from `tips.json` as for the posed ones, after the next `--reaim` run).
-
-**The four signature sketches** are the tell (30 ticks or more, held) and the held end of each fighter's martial arts signature (`docs/combat/moveset-generator.md` section 3.2, martial B): the rival's, a sunk stance with the lead blade hand out at eye height measuring the distance and the head low; after the launcher his striking arm lowered and open, the head turned up after the rival; the Protagonist's, the open hands low and wide with the palms down in a coiled circling step, and after the launcher the feet settled, the hands loose at his sides and a slight bow. They are held poses, so Legal screens them by eye every time (no hand at the hip, no crossed arms, no arm held raised); I wrote each with `not_at_hip` and `hands_open_or_claw` marks.
+| Flag | Present when | Today |
+| :--- | :--- | :--- |
+| `leap` | both feet off the floor in a key pose (or the airborne family) | the drop kick (both fighters) and the body ram |
+| `spin` | a blow that is not a spin turns 100 degrees or more at contact | the body ram (158 degrees) |
+| `multi_turn` | hip and spine twist over 140 degrees in any key pose | the body ram |
+| `clasped` | both hands fists within 6 units | none |
+| `wrists_together` | both wrists within 7 units at contact | none (the two-hand blows keep a hand apart) |
+| `two_hand_chamber` | both hands within 10 units in the wind-up | none |
+| `cupped_at_hip`, `hip_chamber`, `drawn_to_hip_then_thrust` | the striking hand at or behind the hip line (x 8 or less, height 24 to 44) in the wind-up; open or clawed; and thrust 36 or more ahead | none. The zone is narrower than `pose_lint`'s `not_at_hip` (x within 14) on purpose: the shipping uppercut dips its fist low and in front of the hip (x 12) before it rises, and Legal cleared it; it is not drawn back to the hip, and a flag would refuse it. If Legal wants the wider zone the uppercut, `short_uppercut` and the rising palms list them and the generator refuses them: a one-number change in `flags.mjs` |
+| `held_raise_overhead` | a hand above 80 in the follow-through | none |
+| `travelling` | **never from the poses:** a spin that travels is a motion, not a pose; no strike key set carries one | none |
+| `passes_through` | **never from the poses:** it is the contact solve's: it puts the tip on the defender's surface (minus the fist), so a reach past it is not possible, and `strike_lab` finds every strike landing within 1 unit of the surface | none; a lint on the solve can be added if Legal wants it checked rather than argued |
 
 ## 6. What I did not plan, as asked
 

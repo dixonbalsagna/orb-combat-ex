@@ -34,7 +34,8 @@
    "_genericAb": false,
    "_family": null,
    "tip": "plate",
-   "path": "line"
+   "path": "line",
+   "flags": []
   },
   {
    "id": "rb.body_hook",
@@ -69,7 +70,8 @@
    "_genericAb": false,
    "_family": null,
    "tip": "blade",
-   "path": "arc_in"
+   "path": "arc_in",
+   "flags": []
   },
   {
    "id": "rb.rib_shot",
@@ -104,7 +106,8 @@
    "_genericAb": false,
    "_family": null,
    "tip": "blade",
-   "path": "line"
+   "path": "line",
+   "flags": []
   }
  ],
  "skipped": []

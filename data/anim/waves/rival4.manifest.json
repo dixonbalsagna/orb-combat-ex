@@ -34,7 +34,8 @@
    "_genericAb": false,
    "_family": null,
    "tip": "point",
-   "path": "drop"
+   "path": "drop",
+   "flags": []
   },
   {
    "id": "rm.forearm_drop",
@@ -69,7 +70,8 @@
    "_genericAb": false,
    "_family": null,
    "tip": "plate",
-   "path": "drop"
+   "path": "drop",
+   "flags": []
   },
   {
    "id": "rm.fist_drop",
@@ -104,7 +106,263 @@
    "_genericAb": false,
    "_family": null,
    "tip": "fist",
-   "path": "drop"
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "rm.short_uppercut",
+   "combat": "strike.short_uppercut",
+   "name": "short_uppercut",
+   "weight": "light",
+   "target": "jaw",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 10,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "upper",
+   "legal": [
+    "no_leap",
+    "no_held_raise"
+   ],
+   "look": "A short fist rising under the chin, the feet planted and the arm lowering at once.",
+   "orig": "a short fist rising under the chin, the feet planted, the arm lowering at once",
+   "poses": [
+    "rm.short_uppercut.chamber",
+    "rm.short_uppercut.contact",
+    "rm.short_uppercut.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "rm.knee_lift",
+   "combat": "strike.knee_lift",
+   "name": "knee_lift",
+   "weight": "light",
+   "target": "gut",
+   "limb": "knee_r",
+   "limb2": null,
+   "offset": 28,
+   "reach": 48,
+   "band": "close",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "A short knee lifted into the gut, the hands pulling the guard down.",
+   "orig": "a short knee lifted into the gut, the hands pulling the guard down",
+   "poses": [
+    "rm.knee_lift.chamber",
+    "rm.knee_lift.contact",
+    "rm.knee_lift.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "cap",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "rm.arm_chop",
+   "combat": "strike.arm_chop",
+   "name": "arm_chop",
+   "weight": "light",
+   "target": "arm_r",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 6
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "A blade hand chopped down onto the rival's arm, the elbow bent through it.",
+   "orig": "a blade hand chopped down onto the rival arm, the elbow bent through the chop",
+   "poses": [
+    "rm.arm_chop.chamber",
+    "rm.arm_chop.contact",
+    "rm.arm_chop.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "blade",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "rm.lift_kick",
+   "combat": "strike.lift_kick",
+   "name": "lift_kick",
+   "weight": "light",
+   "target": "gut",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 82,
+   "band": "mid",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 6
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "The ball of the foot lifted up into the belly from low, the body leaning back off the line.",
+   "orig": "the ball of the foot lifted up into the belly from low, the body leaning back off the line",
+   "poses": [
+    "rm.lift_kick.chamber",
+    "rm.lift_kick.contact",
+    "rm.lift_kick.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "ball",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "rm.fist_sweep",
+   "combat": "strike.fist_sweep",
+   "name": "fist_sweep",
+   "weight": "light",
+   "target": "arm_r",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 6
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "hook",
+   "legal": [],
+   "look": "A fist swung out and back across the rival's arm, the chest opened away.",
+   "orig": "a fist swung out and back across the rival arm, the chest opened away from him",
+   "poses": [
+    "rm.fist_sweep.chamber",
+    "rm.fist_sweep.contact",
+    "rm.fist_sweep.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": "hand_arc",
+   "tip": "fist",
+   "path": "arc_out",
+   "flags": []
+  },
+  {
+   "id": "rm.plate_drop",
+   "combat": "strike.plate_drop",
+   "name": "plate_drop",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 56,
+   "reach": 86,
+   "band": "long",
+   "ticks": {
+    "load": 14,
+    "follow": 6,
+    "recover": 12
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "The plate of the forearm dropped onto the chest, the body folding over it.",
+   "orig": "the plate of the forearm dropped onto the chest, the whole body folded over it from the waist",
+   "poses": [
+    "rm.plate_drop.chamber",
+    "rm.plate_drop.contact",
+    "rm.plate_drop.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "plate",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "rm.low_thrust",
+   "combat": "strike.low_thrust",
+   "name": "low_thrust",
+   "weight": "light",
+   "target": "legs",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 50,
+   "reach": 76,
+   "band": "mid",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "The sole thrust straight into the thigh, the standing leg firm, the hands up.",
+   "orig": "the sole thrust straight into the thigh, the standing leg firm, the hands up",
+   "poses": [
+    "rm.low_thrust.chamber",
+    "rm.low_thrust.contact",
+    "rm.low_thrust.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "sole",
+   "path": "line",
+   "flags": []
   },
   {
    "id": "rm.gut_rise",
@@ -127,7 +385,9 @@
     "arms": 1
    },
    "from": null,
-   "legal": [],
+   "legal": [
+    "no_leap"
+   ],
    "look": "A fist rising into the gut from a crouch, the shoulder under it.",
    "orig": "a fist rising into the gut from a crouch, the shoulder under it, the other hand across the chest",
    "poses": [
@@ -139,23 +399,24 @@
    "_genericAb": false,
    "_family": null,
    "tip": "fist",
-   "path": "rise"
+   "path": "rise",
+   "flags": []
   },
   {
-   "id": "rm.collar_chop",
-   "combat": "strike.collar_chop",
-   "name": "collar_chop",
+   "id": "rm.plate_hammer",
+   "combat": "strike.plate_hammer",
+   "name": "plate_hammer",
    "weight": "light",
-   "target": "chest",
+   "target": "head",
    "limb": "hand_r",
    "limb2": null,
-   "offset": 58,
-   "reach": 98,
+   "offset": 56,
+   "reach": 86,
    "band": "long",
    "ticks": {
-    "load": 6,
-    "follow": 4,
-    "recover": 6
+    "load": 14,
+    "follow": 6,
+    "recover": 12
    },
    "ground": "ok",
    "uses": {
@@ -163,60 +424,26 @@
    },
    "from": null,
    "legal": [],
-   "look": "A blade hand chopped down onto the collar, the elbow bent through it.",
-   "orig": "a blade hand chopped down onto the collar, the elbow bent through the chop",
+   "look": "The plate of the forearm dropped onto the head like a bar, one arm only.",
+   "orig": "the plate of the forearm dropped onto the head like a bar from a tall stance, one arm only, the other hand apart",
    "poses": [
-    "rm.collar_chop.chamber",
-    "rm.collar_chop.contact",
-    "rm.collar_chop.follow"
+    "rm.plate_hammer.chamber",
+    "rm.plate_hammer.contact",
+    "rm.plate_hammer.follow"
    ],
    "alt": null,
    "_genericAb": false,
    "_family": null,
-   "tip": "blade",
-   "path": "drop"
+   "tip": "plate",
+   "path": "drop",
+   "flags": []
   },
   {
-   "id": "rm.elbow_thrust",
-   "combat": "strike.elbow_thrust",
-   "name": "elbow_thrust",
+   "id": "rm.knee_hook",
+   "combat": "strike.knee_hook",
+   "name": "knee_hook",
    "weight": "light",
-   "target": "chest",
-   "limb": "elbow_r",
-   "limb2": null,
-   "offset": 38,
-   "reach": 64,
-   "band": "close",
-   "ticks": {
-    "load": 6,
-    "follow": 4,
-    "recover": 5
-   },
-   "ground": "ok",
-   "uses": {
-    "arms": 1
-   },
-   "from": null,
-   "legal": [],
-   "look": "The point of the elbow driven straight into the chest, the other hand pulling the guard aside.",
-   "orig": "the point of the elbow driven straight into the chest, the other hand pulling the guard aside",
-   "poses": [
-    "rm.elbow_thrust.chamber",
-    "rm.elbow_thrust.contact",
-    "rm.elbow_thrust.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": null,
-   "tip": "point",
-   "path": "line"
-  },
-  {
-   "id": "rm.hook_knee",
-   "combat": "strike.hook_knee",
-   "name": "hook_knee",
-   "weight": "light",
-   "target": "gut",
+   "target": "legs",
    "limb": "knee_r",
    "limb2": null,
    "offset": 28,
@@ -233,193 +460,19 @@
    },
    "from": null,
    "legal": [],
-   "look": "The knee swung in on a short arc to the gut, the hands pulling the guard open.",
-   "orig": "the knee swung in on a short arc to the gut, the hands pulling the guard open",
+   "look": "The knee swung in low on a short arc to the legs, the hands up for balance.",
+   "orig": "the knee swung in low on a short arc to the legs, the hands up for balance",
    "poses": [
-    "rm.hook_knee.chamber",
-    "rm.hook_knee.contact",
-    "rm.hook_knee.follow"
+    "rm.knee_hook.chamber",
+    "rm.knee_hook.contact",
+    "rm.knee_hook.follow"
    ],
    "alt": null,
    "_genericAb": false,
    "_family": null,
    "tip": "cap",
-   "path": "arc_in"
-  },
-  {
-   "id": "rm.plate_rise",
-   "combat": "strike.plate_rise",
-   "name": "plate_rise",
-   "weight": "light",
-   "target": "jaw",
-   "limb": "hand_r",
-   "limb2": null,
-   "offset": 38,
-   "reach": 64,
-   "band": "close",
-   "ticks": {
-    "load": 6,
-    "follow": 4,
-    "recover": 6
-   },
-   "ground": "ok",
-   "uses": {
-    "arms": 1
-   },
-   "from": null,
-   "legal": [],
-   "look": "The plate of the forearm smashed up under the chin, the body rising behind it.",
-   "orig": "the plate of the forearm smashed up under the chin, the body rising behind it, the arm lowering at once",
-   "poses": [
-    "rm.plate_rise.chamber",
-    "rm.plate_rise.contact",
-    "rm.plate_rise.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": null,
-   "tip": "plate",
-   "path": "rise"
-  },
-  {
-   "id": "rm.plate_sweep",
-   "combat": "strike.plate_sweep",
-   "name": "plate_sweep",
-   "weight": "light",
-   "target": "chest",
-   "limb": "hand_r",
-   "limb2": null,
-   "offset": 58,
-   "reach": 98,
-   "band": "long",
-   "ticks": {
-    "load": 6,
-    "follow": 4,
-    "recover": 6
-   },
-   "ground": "ok",
-   "uses": {
-    "arms": 1
-   },
-   "from": "hook",
-   "legal": [],
-   "look": "The plate of the forearm swept in across the chest on a flat arc.",
-   "orig": "the plate of the forearm swept in across the chest on a flat arc, the elbow leading",
-   "poses": [
-    "rm.plate_sweep.chamber",
-    "rm.plate_sweep.contact",
-    "rm.plate_sweep.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": "hand_arc",
-   "tip": "plate",
-   "path": "arc_in"
-  },
-  {
-   "id": "rm.heel_stamp",
-   "combat": "strike.heel_stamp",
-   "name": "heel_stamp",
-   "weight": "light",
-   "target": "shins",
-   "limb": "foot_r",
-   "limb2": null,
-   "offset": 50,
-   "reach": 76,
-   "band": "mid",
-   "ticks": {
-    "load": 6,
-    "follow": 4,
-    "recover": 5
-   },
-   "ground": "plant",
-   "uses": {
-    "legs": 1
-   },
-   "from": null,
-   "legal": [],
-   "look": "The heel stamped down the shin, the standing leg firm.",
-   "orig": "the heel stamped down the shin, the standing leg firm, the hands up",
-   "poses": [
-    "rm.heel_stamp.chamber",
-    "rm.heel_stamp.contact",
-    "rm.heel_stamp.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": null,
-   "tip": "heel",
-   "path": "drop"
-  },
-  {
-   "id": "rm.rib_scythe",
-   "combat": "strike.rib_scythe",
-   "name": "rib_scythe",
-   "weight": "light",
-   "target": "gut",
-   "limb": "hand_r",
-   "limb2": null,
-   "offset": 58,
-   "reach": 98,
-   "band": "long",
-   "ticks": {
-    "load": 6,
-    "follow": 4,
-    "recover": 6
-   },
-   "ground": "ok",
-   "uses": {
-    "arms": 1
-   },
-   "from": "hook",
-   "legal": [],
-   "look": "A blade hand scything in along the ribs, the hip turned through.",
-   "orig": "a blade hand scything in along the ribs, the hip turned through, the other hand back at his chest",
-   "poses": [
-    "rm.rib_scythe.chamber",
-    "rm.rib_scythe.contact",
-    "rm.rib_scythe.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": "hand_arc",
-   "tip": "blade",
-   "path": "arc_in"
-  },
-  {
-   "id": "rm.spear_rise",
-   "combat": "strike.spear_rise",
-   "name": "spear_rise",
-   "weight": "light",
-   "target": "jaw",
-   "limb": "hand_r",
-   "limb2": null,
-   "offset": 58,
-   "reach": 98,
-   "band": "long",
-   "ticks": {
-    "load": 6,
-    "follow": 4,
-    "recover": 5
-   },
-   "ground": "ok",
-   "uses": {
-    "arms": 1
-   },
-   "from": "upper",
-   "legal": [],
-   "look": "A blade hand thrust up under the chin, the feet planted.",
-   "orig": "a blade hand thrust up under the chin, the feet planted, the arm lowering at once",
-   "poses": [
-    "rm.spear_rise.chamber",
-    "rm.spear_rise.contact",
-    "rm.spear_rise.follow"
-   ],
-   "alt": null,
-   "_genericAb": false,
-   "_family": null,
-   "tip": "blade",
-   "path": "rise"
+   "path": "arc_in",
+   "flags": []
   },
   {
    "id": "rm.fist_rise",
@@ -457,7 +510,44 @@
    "_genericAb": false,
    "_family": null,
    "tip": "fist",
-   "path": "rise"
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "rm.heel_backhand",
+   "combat": "strike.heel_backhand",
+   "name": "heel_backhand",
+   "weight": "heavy",
+   "target": "arm_r",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 88,
+   "band": "long",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 6
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "hook",
+   "legal": [],
+   "look": "The back of the fist swung out hard across the rival's arm, the whole torso behind it.",
+   "orig": "the back of the fist swung out hard across the rival arm, the whole torso thrown round behind it",
+   "poses": [
+    "rm.heel_backhand.chamber",
+    "rm.heel_backhand.contact",
+    "rm.heel_backhand.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": "hand_arc",
+   "tip": "heel",
+   "path": "arc_out",
+   "flags": []
   }
  ],
  "skipped": []

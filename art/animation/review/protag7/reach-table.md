@@ -5,10 +5,10 @@ Measured by `strike_lab.gd --measure --sweep`: each strike played against a dumm
 | Strike | Combat contact | Combat reach | Hips alone | With step-in | Clear from | Verdict |
 | :--- | ---: | ---: | ---: | ---: | ---: | :--- |
 | knee_hook | 28 | 48 | 36 | 54 | 26 | lands on the hips alone |
-| elbow_drop | 38 | 72 | 52 | 72 | 30 | lands on the hips alone |
-| palm_slap | 58 | 98 | 76 | 98 | 40 | lands on the hips alone |
-| palm_drop | 56 | 86 | 72 | 92 | 34 | lands on the hips alone |
-| blade_back | 58 | 88 | 76 | 92 | 38 | lands on the hips alone |
-| palm_rise | 54 | 98 | 76 | 98 | 34 | lands on the hips alone |
+| back_chop | 58 | 88 | 72 | 88 | 40 | lands on the hips alone |
+| palm_rise | 54 | 98 | 74 | 98 | 34 | lands on the hips alone |
+| palm_lift | 58 | 98 | 72 | 92 | 34 | lands on the hips alone |
+| lift_kick | 54 | 82 | 60 | 78 | 24 | lands on the hips alone |
 | edge_crescent | 50 | 72 | 64 | 78 | 34 | lands on the hips alone |
-| elbow_back | 38 | 64 | 40 | 60 | 28 | lands on the hips alone |
+| fist_chop | 56 | 86 | 72 | 92 | 34 | lands on the hips alone |
+| palm_heave | 58 | 98 | 74 | 96 | 34 | lands on the hips alone |

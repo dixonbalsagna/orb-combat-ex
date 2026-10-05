@@ -25,7 +25,7 @@
    "legal": [
     "hands_open_or_claw"
    ],
-   "look": "A heavy hook dug in along the ribs: the elbow at a right angle, the hip turned through, the other forearm plate across his own chest.",
+   "look": "A round hook with the open hand dug in along the ribs, the elbow bent and the hip turned through, the other open hand up at his cheek.",
    "orig": "a round hook with the open hand dug in along the ribs, the elbow bent and the hip turned through, the other open hand up at his cheek",
    "poses": [
     "ph.body_hook.chamber",
@@ -36,7 +36,8 @@
    "_genericAb": false,
    "_family": null,
    "tip": "blade",
-   "path": "arc_in"
+   "path": "arc_in",
+   "flags": []
   }
  ],
  "skipped": []
