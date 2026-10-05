@@ -12,7 +12,7 @@ export const sequences = {
     { id: 'lift', ticks: 10, sketch: { family: 'upright', lean: 4, spine: { lean: -2, twist: 8 }, head: { pitch: -8, yaw: 14, roll: 12 }, hand_r: [8, 38, 26], hand_l: [8, 38, -24],
         foot_r: [-4, 2.5, 8], foot_l: [4, 2.5, -7], ...OPEN },
       orig: 'the shoulders rising, the head cocked to one side, the open hands turning out at his sides' },
-    { id: 'shrug', ticks: 22, sketch: { family: 'upright', lean: 0, hips: [0, 0, 0], spine: { lean: -4, twist: 12 }, head: { pitch: -12, yaw: 22, roll: 20 }, hand_r: [16, 46, 34], hand_l: [14, 46, -32],
+    { id: 'shrug', ticks: 22, sketch: { family: 'upright', lean: 0, hips: [0, 0, 0], spine: { lean: -4, twist: 12 }, head: { pitch: -12, yaw: 22, roll: 20 }, hand_r: [18, 48, 24], hand_l: [16, 48, -23],
         foot_r: [-4, 2.5, 8], foot_l: [4, 2.5, -7], ...OPEN },
       orig: 'the shrug held: the shoulders up, the palms open and turned up away from the body, the chin lifted: "is that all"' },
     { id: 'settle', ticks: 13, from: 'stance.aggressive', over: { lean: 6, head: { pitch: -4, yaw: 8 }, ...OPEN },

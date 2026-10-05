@@ -1090,6 +1090,17 @@ func _test_pair_live() -> void:
 ## 3. the rule itself: a thigh twisted 170 degrees (the flipped knee of a kick) is out of range, and the pass folds the knee the right way;
 ## 4. the limited IK reaches a kick, a high kick and a hand behind the shoulder with the bend plane inside the twist range and the end where it was asked;
 ## 5. a ragdoll thrown to its extremes keeps every elbow and knee inside its hinge before the last pass; 6. a live match: no frame that reaches the screen is past a limit.
+## Legal's held-pose rules (RL-087 scope, render/anim/anim_held_lint.gd): no pose held 12 ticks or more fails the pair, emitter, arms-wide or crouch tests; the scope must be present in Legal's file.
+func _test_held() -> void:
+	var r: Dictionary = AnimHeldLint.scan()
+	_expect(bool(r.ok), "held poses: the heldScope is missing from docs/legal/movegen-banned.json")
+	_expect(int(r.held) >= 100, "held poses: only %d held poses found (the scan lost its sources)" % int(r.held))
+	var names: Array = []
+	for f in r.fails:
+		names.append("%s: %s" % [f.pose, "; ".join(f.why)])
+	_expect((r.fails as Array).is_empty(), "held poses: %d fail Legal's held rules (%s)" % [(r.fails as Array).size(), " | ".join(names.slice(0, 3))])
+
+
 func _test_joints() -> void:
 	AnimData.load_every_wave()
 	var rp: Dictionary = AnimJointLint.poses()
@@ -2024,6 +2035,7 @@ func _run() -> void:
 	_test_zip_slice()
 	_test_gestures()
 	_test_joints()
+	_test_held()
 	RenderAnim.enabled = true
 	RenderAnim.style_override = ""
 	RenderAnim.debug_checks = false
