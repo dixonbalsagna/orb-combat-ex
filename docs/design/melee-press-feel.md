@@ -694,6 +694,24 @@ What punishes a guard is now the brawl's own: guard fatigue after 3 s, and the h
 - a limb breaks in under half of matches, so this share is good to about 15 points on 100 of them. Read it on both arms pooled, 200 matches;
 - this is a stopgap in one respect: when Combat's pieces carry their targets, a blow's region should follow the piece and the stick (§13), and not a table.
 
+**Blocked shots are ruled apart from blocked blows** (after the re-ruling went live at arms 57%, Calm 25% and Frenzied 15%). The cap was built on every blocked hit, bolts included. So a guard soaked shots for ever, and a player who only shoots could no longer wear a guarding rival down: bolt-only read 1 of 100 against the medium AI, and 10 to 14 with Encounter's slice, against a band of 20 to 40%. It read 36 on B1.
+
+The half share and the cap of 30 were for the brawl's stream, six blows a second on a guard. Shots were never that problem. A shot costs ki, comes more slowly, and wearing a guard down is how a shooter beats one. So:
+- **the share of 0.5 and the cap of 30 apply to blocked melee blows only:** lights, flurry blows and heavies;
+- **a blocked shot of any kind puts half of its wear on the arms, up to a cap of 75.** That is past battered, which is 60, and short of broken, which is 90. So shots can wear a guard until it leaks, and shots alone never bring an arm to the point of breaking. A blocked heavy or charged shot keeps its split to the legs, as before;
+- **Data:** `block.shotArmShare` 0.5 and `block.shotArmWearCap` 75. The loader's rule for this cap is "under broken", where the melee cap's is "under battered".
+
+**What I expect,** reasoned and not measured:
+- **bolt-only** comes back into its band, at about 20 to 30%. It won't reach B1's 36, because the share is half of what it was and the AI now approaches a shooter differently (ruling 5);
+- **the arms' share of limb breaks** rises a few points, to about 60 to 63%. A guard shot down to battered can then be crippled by a heavy. That is inside the band and near its top;
+- **the mixed blaster** rises from wherever Encounter's slice leaves it, since blocked heavy shots wear the arms again.
+
+**The levers:**
+- if bolt-only passes 40%, lower `block.shotArmShare` to 0.35. The cap has to stay over 60, or the guard never leaks;
+- if bolt-only is still under 20%, raise the share to 0.7;
+- if the arms pass 65% of limb breaks, the landed light's pick goes to 10 and 6, as already ruled. The shot cap isn't the lever for that;
+- if the mixed blaster passes 50%, the lever is still how the AI treats a shooter, and not what a blocked shot wears.
+
 **2. The mood** (Calm read 4.2% of match time and Frenzied 63.4%, against 30 to 55% and 5 to 20%; act 2 began at 77.8 s against 90 to 150 s).
 
 The mood adds 1.5 points for every strike, and strikes now come six a second. So a blow feeds the mood by its form, as it does damage:
