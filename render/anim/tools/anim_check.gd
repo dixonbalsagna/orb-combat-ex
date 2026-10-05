@@ -1258,6 +1258,12 @@ func _test_agency() -> void:
 	print("agency test: knockback mid-slide %.3f rad, embed, taunt cut, charge held and ended on a fall, feint peel, reduced motion %.2f of %.2f, off plays nothing" % [seen, w_red, ar2._ag_w])
 
 
+## The raw (unrounded) ragdoll states of the one-tick and the two-tick runs must agree to this much. The two runs do the same float operations in the same order, so they agree to within float noise
+## (1e-12 or so); a tick-driven term that reads something stepped per rendered frame is off by about 1e-6 or more (the stale wear was 5e-6 a tick). The test used to round both to 0.0001 before comparing,
+## which passed or failed on whether a value straddled a rounding boundary and hid how large the difference was.
+const RD_FRAME_TOL := 1.0e-7
+
+
 ## The active ragdoll (overhaul unit A): the same match at one tick a frame and at two ticks a frame ends with the same ragdoll state
 ## (it is stepped per sim tick, never per frame); reduced motion shrinks the motion; the overhaul can be switched off; the ground
 ## events of World's plan (a stub shaped like docs/world/ground-contact.md) move the body. The gameplay hash is compared in the main loop.
@@ -1282,12 +1288,12 @@ func _rd_run(per_frame: int, until: int, reduced: bool, enabled: bool = true) ->
 	for f in S.fighters:
 		var rd2: AnimRagdoll = RenderAnim.fighter(S, f)._rd
 		for i in range(AnimRagdoll.N):
-			th.append(snappedf(rd2.th[i], 0.0001))
-		th.append(snappedf(rd2.out_w, 0.0001))
+			th.append(rd2.th[i])
+		th.append(rd2.out_w)
 		var afx: AnimFighter = RenderAnim.fighter(S, f)
 		for i in range(5):
-			th.append(snappedf(afx._sx[i], 0.0001))
-		th.append(snappedf(afx._look, 0.0001))
+			th.append(afx._sx[i])
+		th.append(afx._look)
 	RenderAnim.reduced_motion = false
 	return {"th": th, "maxe": maxe, "active": active, "ticks": main.host.ticks, "look": maxlook}
 
@@ -1298,7 +1304,7 @@ func _test_ragdoll() -> void:
 	_expect(a.ticks == b.ticks, "ragdoll test: the runs ended on different ticks (%d, %d)" % [a.ticks, b.ticks])
 	var di: int = -1
 	for i in range(mini(a.th.size(), b.th.size())):
-		if a.th[i] != b.th[i]:
+		if absf(float(a.th[i]) - float(b.th[i])) > RD_FRAME_TOL:
 			di = i
 			break
 	_expect(di < 0, "ragdoll test: the ragdoll state differs between one tick a frame and two at entry %d of %d (%s against %s; per fighter: 12 joints, out_w, 5 cloth, look)" % [di, a.th.size(), str(a.th[di] if di >= 0 else 0), str(b.th[di] if di >= 0 else 0)])

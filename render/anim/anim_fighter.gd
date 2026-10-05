@@ -264,6 +264,7 @@ func on_tick(dt: float, frozen: bool, S: SimState = null, f = null) -> void:
 	_ip_acc += dt * (0.5 if frozen else 1.0)
 	if S != null and f != null:
 		update_face(S, f)   # the facing is decided once per sim tick too, so everything keyed on it replays
+		_wound_read(f)   # the wear is read on the tick too (it was read at solve time, so at two ticks a frame the first tick stepped the ragdoll on the last tick's wear)
 		# a stagger with no cue of its own (the 12 ticks a blocked string leaves its attacker, the loser of a finisher's set-up): a short one
 		var sn: int = int(f.stunTicks)
 		if sn > 0 and _stun_prev == 0 and RenderAnim.step3_cues and _seq.is_empty() and _stun_watch == 0 and f.state == "free" and AnimData.entries.has("s3.stagger_short"):
