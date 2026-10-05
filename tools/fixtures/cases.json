@@ -73745,7 +73745,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73790,7 +73792,9 @@
             "/block": {
               "extra": 1,
               "streamArmShare": 0.5,
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73815,7 +73819,9 @@
             "/block": {
               "_note": "a note",
               "streamArmShare": 0.5,
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73835,7 +73841,9 @@
               540000
             ],
             "/block": {
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73859,7 +73867,9 @@
             ],
             "/block": {
               "streamArmShare": -0.1,
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73883,7 +73893,9 @@
             ],
             "/block": {
               "streamArmShare": 1.1,
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73907,7 +73919,9 @@
             ],
             "/block": {
               "streamArmShare": "half",
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73931,7 +73945,9 @@
             ],
             "/block": {
               "streamArmShare": 0,
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73952,7 +73968,9 @@
             ],
             "/block": {
               "streamArmShare": 1,
-              "armWearCap": 270000
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73972,7 +73990,9 @@
               540000
             ],
             "/block": {
-              "streamArmShare": 0.5
+              "streamArmShare": 0.5,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -73996,7 +74016,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": -1
+              "armWearCap": -1,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -74020,7 +74042,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": 270000.5
+              "armWearCap": 270000.5,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -74044,7 +74068,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": "high"
+              "armWearCap": "high",
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -74068,7 +74094,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": 0
+              "armWearCap": 0,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -74089,7 +74117,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": 360000
+              "armWearCap": 360000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -74113,7 +74143,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": 400000
+              "armWearCap": 400000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -74137,7 +74169,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": 359999
+              "armWearCap": 359999,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -74158,7 +74192,9 @@
             ],
             "/block": {
               "streamArmShare": 0.5,
-              "armWearCap": 250
+              "armWearCap": 250,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
             }
           }
         }
@@ -83403,6 +83439,477 @@
               "guardShare": 0,
               "enderShare": 1,
               "heavyApproachShare": 1
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-shot-valid",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-shot-share-required",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmWearCap": 450000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/block"
+      }
+    },
+    {
+      "id": "wounds-block-shot-share-negative",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": -0.1,
+              "shotArmWearCap": 450000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/block/shotArmShare"
+      }
+    },
+    {
+      "id": "wounds-block-shot-share-above-one",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 1.1,
+              "shotArmWearCap": 450000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/block/shotArmShare"
+      }
+    },
+    {
+      "id": "wounds-block-shot-share-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": "half",
+              "shotArmWearCap": 450000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/block/shotArmShare"
+      }
+    },
+    {
+      "id": "wounds-block-shot-share-zero-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0,
+              "shotArmWearCap": 450000
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-shot-share-one-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 1,
+              "shotArmWearCap": 450000
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-shot-cap-required",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/block"
+      }
+    },
+    {
+      "id": "wounds-block-shot-cap-negative",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": -1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/block/shotArmWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-shot-cap-integer",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/block/shotArmWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-shot-cap-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": "high"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/block/shotArmWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-shot-cap-zero-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 0
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-shot-cap-at-broken",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 540000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:block-shot-cap",
+        "pointer": "/block/shotArmWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-shot-cap-above-broken",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 600000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:block-shot-cap",
+        "pointer": "/block/shotArmWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-shot-cap-just-below-broken-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 539999
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-shot-cap-may-pass-battered-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 400000
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-shot-cap-follows-the-fighters-own-broken",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              100,
+              200,
+              300
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 150,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 300
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:block-shot-cap",
+        "pointer": "/block/shotArmWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-shot-blow-cap-keeps-its-rule",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 360000,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 450000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:block-cap",
+        "pointer": "/block/armWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-shot-both-caps-over-ok-for-their-own-thresholds",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 359999,
+              "shotArmShare": 0.5,
+              "shotArmWearCap": 539999
             }
           }
         }

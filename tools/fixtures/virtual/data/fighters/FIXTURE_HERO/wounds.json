@@ -79,7 +79,9 @@
   },
   "block": {
     "streamArmShare": 0.5,
-    "armWearCap": 270000
+    "armWearCap": 270000,
+    "shotArmShare": 0.5,
+    "shotArmWearCap": 432000
   },
   "penalties": {
     "coreKiRegen": 0.7,

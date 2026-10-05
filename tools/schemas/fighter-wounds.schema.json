@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/fighter-wounds",
   "title": "wounds/1 (D1a as built, docs/architecture/d1-roster-data.md sections 3 and 7b)",
-  "description": "data/fighters/<id>/wounds.json: the per-fighter wound numbers, loaded into a WoundsDef (sim/core/fighter_data.gd). Version field: schema. Policy: closed at every level, except keys starting with an underscore. Integer fields (units and ticks) must be integral; other numbers carry at most 15 significant digits (checked by the validator). Cross-references (a block's armWearCap below stageAt[1] (block-cap); stage thresholds strictly increase, family weights match the region count) are checked by tools/lib/xref.js. The stricter brink (brinkLimbs), the act-1 damping and the overtime ramp are part of the shape.",
+  "description": "data/fighters/<id>/wounds.json: the per-fighter wound numbers, loaded into a WoundsDef (sim/core/fighter_data.gd). Version field: schema. Policy: closed at every level, except keys starting with an underscore. Integer fields (units and ticks) must be integral; other numbers carry at most 15 significant digits (checked by the validator). Cross-references (a block's armWearCap below stageAt[1] (block-cap) and its shotArmWearCap below stageAt[2] (block-shot-cap); stage thresholds strictly increase, family weights match the region count) are checked by tools/lib/xref.js. The stricter brink (brinkLimbs), the act-1 damping and the overtime ramp are part of the shape.",
   "type": "object",
   "required": [
     "schema",
@@ -410,7 +410,9 @@
       "type": "object",
       "required": [
         "streamArmShare",
-        "armWearCap"
+        "armWearCap",
+        "shotArmShare",
+        "shotArmWearCap"
       ],
       "properties": {
         "streamArmShare": {
@@ -423,9 +425,20 @@
           "type": "integer",
           "minimum": 0,
           "description": "No blocked blow takes the arms' wear past this, in wear units; below battered (stageAt[1]), so blocking alone never batters an arm (rule block-cap)."
+        },
+        "shotArmShare": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The share of a blocked shot's chip wear that goes to the arms (a blocked shot wears the arms by its own share and cap, apart from blocked blows)."
+        },
+        "shotArmWearCap": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "No blocked shot takes the arms' wear past this, in wear units; below broken (stageAt[2]; rule block-shot-cap)."
         }
       },
-      "description": "Blocked blows and the arms.",
+      "description": "Blocked blows and shots, and the arms.",
       "additionalProperties": false,
       "patternProperties": {
         "^_": true

@@ -11,6 +11,7 @@
 - `block.armWearCap` 180000 (30 points at 6000 units a point; first ruled at 45): no blocked blow, light or heavy, takes the arms past it. What is over the cap is soaked and does not spill into the core. An arm already past the cap from landed blows takes nothing from a block.
 - The loader refuses a cap at or over battered (`stageAt[1]`), so blocking alone can never batter an arm.
 - A blocked blow is a light when its exchange's kind is `light`. The brawl sets the kind for each blow, so no line of Encounter's was needed.
+- These two keys are for blocked melee blows. A blocked shot has its own share and cap, and what is over its cap reaches the core (section 5).
 
 **Where a landed light lands** (`wounds.json` `family.light`): 12, 4, 11, 5 for head, core, arms, legs. It was 3, 1, 3, 1, which is 12, 4, 12, 4.
 
@@ -94,3 +95,46 @@ Run in a scratch copy, 100 matches, default arm, each starting from the first ru
 The share and the cap alone leave the arms near 80% until blocks are off the arms altogether. The landed-light pick is the strong lever: one step of 1 in 32 with the cap at 30 moved the share from 83% to 57%, and 4 in 32 overshot to 13%.
 
 A limb breaks in 30 to 50 of 100 matches, so a share read on 100 matches is good to about 15 points either way, and on 200 to about 10.
+
+## 5. Blocked shots (2026-10-05, on Encounter's brawl repairs, 5651c59)
+
+**What went wrong.** After section 1 a bolt-only player won 1 of 100 against the medium AI (band 20 to 40; 36 on the first brawl build). The cap was not the cause. Before, a blocked hit's wear went through the limb rule: a limb fills to just under broken and the rest spills into the core, so shots on a guard ended up wearing the core, and the core is what brings the brink. Section 1's cap soaks what is over it, so a guarding fighter's core took nothing from a blocked shot, at any cap.
+
+**The rule** (Game Design, `melee-press-feel.md` section 9d): a block fills the arms to 30 whatever was blocked; past that a blow is soaked and a shot comes through to the core.
+
+| What was blocked | To the arms | Over the arms' cap | To the legs |
+| :--- | :--- | :--- | :--- |
+| A light or flurry blow | `block.streamArmShare` 0.5, up to `block.armWearCap` (30 points) | soaked | nothing |
+| A heavy blow | `guardWearSplit.arms` 0.7, up to `block.armWearCap` | soaked | `guardWearSplit.legs` 0.3 |
+| A bolt (a shot of power under 2) | `block.shotArmShare` 0.5, up to `block.shotArmWearCap` (180000, 30 points) | **into the core** | nothing |
+| A heavy or charged shot (power 2 or more) | the same | **into the core** | `guardWearSplit.legs` 0.3 |
+
+- **As built:** `SimWounds.addGuardWear(S, f, damage, how)` with `BLOCK_HEAVY`, `BLOCK_LIGHT`, `BLOCK_SHOT` and `BLOCK_SHOT_HEAVY`. `SimDamage.hit` works out which: a guarded hit of kind `blast` is a shot, a bolt when the director names a power under 2 in `o.shot`, else a heavy one; a blow goes by its exchange's kind.
+- **Two lines of Encounter's file,** by the EP's grant: in `sim/director/blast.gd` the mine's hit and the plain shot's hit pass `"shot": sh.power`. The director already reads a heavy shot as power 2 or more.
+- **The loader** keeps `shotArmWearCap` under broken and `armWearCap` under battered. The two shot keys stay apart from the blows' keys though the caps are equal today.
+- **The lever** is `shotArmShare`, inside 0.45 to 0.6. The caps of 45 and 75 were read and withdrawn: at 75 shots batter an arm that a heavy can then cripple (arms 70 to 74% of limb breaks), and at 45 a block does three quarters of the work again (68%).
+- **Check** (`parity.gd`): "blocked shots and the arms".
+
+**Read in the tree** at share 0.5, 100 an arm and 100 seeds a pair (QA's `players.gd` pairs):
+
+| | Band | Default | Swap |
+| :--- | :--- | ---: | ---: |
+| Bolt-only against the medium AI | 20 to 40 of 100 | 33 | |
+| Mixed blaster against the medium AI | 30 to 50 of 100 | 42 | |
+| Arms' share of limb breaks | 35 to 65% | 67% | 59% |
+| Median length (90th percentile) | 360 to 480 s | 435.7 s (567.8) | 451.8 s (588.2) |
+| KAI's wins of 100 | | 59 | 55 |
+| Calm, Tense, Frenzied | 20 to 40, 40 to 65, 5 to 20% | 22.3, 61.2, 16.5 | 23.6, 62.3, 14.1 |
+| Acts 2, 3 and 4 begin, median | | 66, 159, 251 s | 66, 164, 259 s |
+
+Pooled, the arms took 46 of 73 limb breaks, 63%.
+
+**What fills the ladder** (asked with this slice: acts 2 and 4 start about a quarter early). Ten AI matches read tick by tick, by where each fighter's power came from up to each form step:
+
+| Form step | Median | Damage taken | Damage dealt | The passive fill | Charging |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 1 (power 30) | 65 s | 56% | 33% | 11% | 0% |
+| 2 (power 65) | 163 s | 54% | 33% | 13% | 0% |
+| 3 (power 100) | 273 s | 54% | 32% | 13% | 0% |
+
+The AI spent a median of 0.0 s charging before each step, so `chargePerSec` is not a lever for the acts and was left alone. Nine tenths of the ladder is damage: a hit gives its victim 1% of the damage as power and its attacker 0.6% (two constants in `sim/core/damage.gd`). The brawl's damage scale went from 0.30 to 0.38 in Encounter's slice, which is the likely reason the acts came forward (act 2 began at 78 s before it and at 66 s after; not isolated by a run). The levers that would move the acts are those two rates or the thresholds (30, 65, 100 in `ladder.json`).

@@ -197,7 +197,7 @@ data/fighters/roster.json    ["KAI", "VORR"] (Tools' schema today; the loader al
 
 **Guard lever.** `wounds.json guardWearSplit {arms, legs}` (Tools' schema) splits a guard-family hit's wear between the arms and the legs (`SimWounds.addGuardWear`). The region pick still makes its one `S.rng` draw, and the damage event still reports the arms.
 
-**Blocked blows.** `wounds.json block {streamArmShare, armWearCap}` (2026-10-05, `brawl-wear-and-mood.md`): a blocked light puts `streamArmShare` of its wear on the arms and nothing on the legs, a blocked heavy still splits by `guardWearSplit`, and no blocked blow takes the arms past `armWearCap` (wear units; the loader refuses a cap at or over battered).
+**Blocked blows.** `wounds.json block {streamArmShare, armWearCap}` (2026-10-05, `brawl-wear-and-mood.md`): a blocked light puts `streamArmShare` of its wear on the arms and nothing on the legs, a blocked heavy still splits by `guardWearSplit`, and no blocked blow takes the arms past `armWearCap` (wear units; the loader refuses a cap at or over battered). A blocked shot goes by `block {shotArmShare, shotArmWearCap}`: its share to the arms up to its cap, and what is over the cap into the core (the loader refuses a cap at or over broken).
 
 **The proof, as run.**
 1. With today's numbers in data (the split `{1, 0}`, no caps), parity against the pre-D1b goldens passed everything except the roster hash, which changes with any data file. That covered tick-0, the wounds, Rally and crippling vectors, all 9 matches (171,671 ticks) and the replays.

@@ -54,6 +54,7 @@ func _init() -> void:
 	check("the break", _formBreak())
 	check("the form impulse", _formImpulse())
 	check("blocked blows and the arms", _blockedArms())
+	check("blocked shots and the arms", _blockedShots())
 	check("the mood by a blow's form", _moodForms())
 	check("depth in the core", _depth())
 	check("the intro phase", _intro())
@@ -2065,7 +2066,7 @@ func _blockedArms() -> String:
 	var k: float = SimWounds.wearK(S, f)
 	if wd.blockArmCap <= 0 or wd.blockArmCap >= wd.stageAt[1] or wd.blockArmShare <= 0.0:
 		return "the block data gives a share of %s and a cap of %d" % [str(wd.blockArmShare), wd.blockArmCap]
-	SimWounds.addGuardWear(S, f, 10.0, true)
+	SimWounds.addGuardWear(S, f, 10.0, SimWounds.BLOCK_LIGHT)
 	if f.wear[A] != int(SimMathx.jround(10.0 * wd.blockArmShare * k)) or f.wear[L] != 0:
 		return "a blocked light put %d on the arms and %d on the legs" % [f.wear[A], f.wear[L]]
 	f.wear[A] = 0
@@ -2074,25 +2075,109 @@ func _blockedArms() -> String:
 		return "a blocked heavy put %d on the arms and %d on the legs" % [f.wear[A], f.wear[L]]
 	var legs0: int = f.wear[L]
 	for n in range(300):
-		SimWounds.addGuardWear(S, f, 10.0, n % 2 == 0)
+		SimWounds.addGuardWear(S, f, 10.0, SimWounds.BLOCK_LIGHT if n % 2 == 0 else SimWounds.BLOCK_HEAVY)
 		if f.wear[A] > wd.blockArmCap or f.stage[A] >= 2:
 			return "blocked blows took the arms to %d, past the cap of %d (stage %d)" % [f.wear[A], wd.blockArmCap, f.stage[A]]
 	if f.wear[A] != wd.blockArmCap or f.wear[L] <= legs0 or f.wear[SimWounds.CORE] != 0 or f.wear[SimWounds.HEAD] != 0:
 		return "after 300 blocked blows: arms %d (cap %d), legs %d, core %d" % [f.wear[A], wd.blockArmCap, f.wear[L], f.wear[SimWounds.CORE]]
 	f.wear[A] = wd.blockArmCap + 6000
-	SimWounds.addGuardWear(S, f, 50.0, true)
+	SimWounds.addGuardWear(S, f, 50.0, SimWounds.BLOCK_LIGHT)
 	SimWounds.addGuardWear(S, f, 50.0)
 	if f.wear[A] != wd.blockArmCap + 6000:
 		return "a block wore an arm that was already past the cap"
 	f.wear[A] = 0
 	S.out.fx.clear()
-	SimDamage.hurt(S, f, 10.0, S.fighters[1], "guard", "guard", "", true, "brawl", true)
+	SimDamage.hurt(S, f, 10.0, S.fighters[1], "guard", "guard", "", true, "brawl", SimWounds.BLOCK_LIGHT)
 	var e = S.out.fx[S.out.fx.size() - 1] if not S.out.fx.is_empty() else null
 	for q in S.out.fx:
 		if q.type == "damage":
 			e = q
 	if f.wear[A] != int(SimMathx.jround(10.0 * wd.blockArmShare * k)) or e == null or e.type != "damage" or e.mode != "brawl" or e.kind != "guard":
 		return "a blocked brawl blow through the damage path wore the arms %d and sent %s" % [f.wear[A], "nothing" if e == null else e.kind + "/" + e.mode]
+	SimCore.dispose(S)
+	return ""
+
+
+## Blocked shots are ruled apart from blocked blows (melee-press-feel.md section 9d): a blocked shot of any kind puts
+## block.shotArmShare of its wear on the arms, up to block.shotArmWearCap (under broken), and what is over the cap goes
+## into the core; a blocked blow's wear over its own cap is soaked and never reaches the core. A blocked bolt puts nothing
+## on the legs, and a heavy or charged shot keeps guardWearSplit's share there. Through the damage path, a guarded hit of
+## kind blast is a shot: a bolt when the director names a power under 2, else a heavy one.
+func _blockedShots() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+	var f = S.fighters[0]
+	var by = S.fighters[1]
+	var wd = f.wd
+	var A: int = SimWounds.ARMS
+	var L: int = SimWounds.LEGS
+	var C: int = SimWounds.CORE
+	var k: float = SimWounds.wearK(S, f)
+	var one: int = int(SimMathx.jround(10.0 * wd.shotArmShare * k))
+	var legs1: int = int(SimMathx.jround(10.0 * wd.guardLegs * k))
+	if one <= 0 or wd.shotArmCap < 2 * one or wd.shotArmCap >= wd.stageAt[2]:
+		return "the block data gives shots a share of %s and a cap of %d" % [str(wd.shotArmShare), wd.shotArmCap]
+	SimWounds.addGuardWear(S, f, 10.0, SimWounds.BLOCK_SHOT)
+	if f.wear[A] != one or f.wear[L] != 0 or f.wear[C] != 0:
+		return "a blocked bolt put %d on the arms, %d on the legs and %d on the core" % [f.wear[A], f.wear[L], f.wear[C]]
+	SimWounds.addGuardWear(S, f, 10.0, SimWounds.BLOCK_SHOT_HEAVY)
+	if f.wear[A] != 2 * one or f.wear[L] != legs1 or f.wear[C] != 0:
+		return "a blocked heavy shot put %d on the arms and %d on the legs" % [f.wear[A] - one, f.wear[L]]
+	# the bolt that crosses the cap: the arms stop on it and the rest is the core's
+	var part: int = one / 3 + 1
+	f.wear[A] = wd.shotArmCap - part
+	f.wear[L] = 0
+	SimWounds.updateStages(S, f)
+	SimWounds.addGuardWear(S, f, 10.0, SimWounds.BLOCK_SHOT)
+	if f.wear[A] != wd.shotArmCap or f.wear[C] != one - part or f.wear[L] != 0:
+		return "the bolt that crossed the cap left the arms at %d (cap %d) and the core at %d (expected %d)" % [f.wear[A], wd.shotArmCap, f.wear[C], one - part]
+	# at the cap every blocked shot's arm share is the core's; the arms stay, and shots never break them
+	for n in range(40):
+		SimWounds.addGuardWear(S, f, 10.0, SimWounds.BLOCK_SHOT)
+	if f.wear[A] != wd.shotArmCap or f.wear[C] != one - part + 40 * one or f.wear[L] != 0 or f.wear[SimWounds.HEAD] != 0 or f.stage[A] != SimWounds.stageOf(wd.shotArmCap, wd.stageAt) or f.stage[A] >= 3:
+		return "after 40 bolts on arms at the cap: arms %d (cap %d, stage %d), core %d (expected %d), legs %d" % [f.wear[A], wd.shotArmCap, f.stage[A], f.wear[C], one - part + 40 * one, f.wear[L]]
+	var core0: int = f.wear[C]
+	SimWounds.addGuardWear(S, f, 10.0, SimWounds.BLOCK_SHOT_HEAVY)
+	if f.wear[A] != wd.shotArmCap or f.wear[C] != core0 + one or f.wear[L] != legs1:
+		return "a blocked heavy shot on arms at the cap: arms %d, core %d (expected %d), legs %d" % [f.wear[A], f.wear[C], core0 + one, f.wear[L]]
+	# a blocked blow over its own cap is soaked: nothing reaches the core
+	f.wear[A] = wd.blockArmCap
+	f.wear[C] = 0
+	SimWounds.updateStages(S, f)
+	SimWounds.addGuardWear(S, f, 50.0, SimWounds.BLOCK_LIGHT)
+	SimWounds.addGuardWear(S, f, 50.0)
+	if f.wear[A] != wd.blockArmCap or f.wear[C] != 0:
+		return "a blocked blow over its cap: arms %d (cap %d), core %d" % [f.wear[A], wd.blockArmCap, f.wear[C]]
+	# through the damage path: the defender holds DEFENSIVE; the event's amount is what was dealt
+	for c in [[1.0, SimWounds.BLOCK_SHOT], [3.0, SimWounds.BLOCK_SHOT_HEAVY], [null, SimWounds.BLOCK_SHOT_HEAVY]]:
+		for r in range(4):
+			f.wear[r] = 0
+		SimWounds.updateStages(S, f)
+		f.stance = 1.0
+		f.state = "free"
+		S.out.fx.clear()
+		var o := {"kind": "blast", "stop": 0.0, "shake": 3.0}
+		if c[0] != null:
+			o["shot"] = c[0]
+		var dealt: float = SimDamage.hit(S, null, by, f, 20.0, o)
+		var e = null
+		for q in S.out.fx:
+			if q.type == "damage":
+				e = q
+		var k2: float = SimWounds.wearK(S, f)
+		var wantA: int = int(SimMathx.jround(dealt * wd.shotArmShare * k2))
+		var wantL: int = int(SimMathx.jround(dealt * wd.guardLegs * k2)) if c[1] == SimWounds.BLOCK_SHOT_HEAVY else 0
+		if e == null or e.kind != "blast" or e.region != "arms" or dealt <= 0.0 or f.wear[A] != wantA or f.wear[L] != wantL:
+			return "a guarded shot of power %s wore the arms %d (expected %d) and the legs %d (expected %d)" % [str(c[0]), f.wear[A], wantA, f.wear[L], wantL]
+	# an unguarded shot is not a blocked one: its wear lands by the spread family, whole
+	for r in range(4):
+		f.wear[r] = 0
+	SimWounds.updateStages(S, f)
+	f.stance = 0.0
+	var dealt2: float = SimDamage.hit(S, null, by, f, 20.0, {"kind": "blast", "shot": 1.0, "ignoreStance": true})
+	var sum: int = f.wear[0] + f.wear[1] + f.wear[2] + f.wear[3]
+	if sum != int(SimMathx.jround(dealt2 * SimWounds.wearK(S, f))):
+		return "an unguarded shot wore %d in all, and %d was dealt" % [sum, int(SimMathx.jround(dealt2 * SimWounds.wearK(S, f)))]
 	SimCore.dispose(S)
 	return ""
 

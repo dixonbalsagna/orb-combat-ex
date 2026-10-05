@@ -127,20 +127,37 @@ static func wearK(S: SimState, f) -> float:
 	return k
 
 
-## A hit into a raised guard (family guard). A blocked heavy's wear is split between the arms and the legs by f.wd.guardArms
-## and guardLegs (wounds.json guardWearSplit), so legs can become battered from guarding. A blocked light or flurry blow
-## (stream: a guard in a brawl takes six a second) puts f.wd.blockArmShare of its wear on the arms and the rest is soaked.
-## Either way no blocked blow takes the arms past f.wd.blockArmCap: what is over it is soaked, not spilled, so blocking
-## alone never batters an arm (melee-press-feel.md section 9d, ruling 1).
-static func addGuardWear(S: SimState, f, damage: float, stream: bool = false) -> void:
+## What was blocked (addGuardWear's how).
+const BLOCK_HEAVY: int = 0        # a heavy blow
+const BLOCK_LIGHT: int = 1        # a light or flurry blow (a guard in a brawl takes six a second)
+const BLOCK_SHOT: int = 2         # a bolt: a shot under SHOT_HEAVY power
+const BLOCK_SHOT_HEAVY: int = 3   # a heavy or charged shot
+const SHOT_HEAVY: float = 2.0     # a shot of this power or more is a heavy one (the director's blast rules read the same line)
+
+
+## A hit into a raised guard (family guard), by what was blocked (melee-press-feel.md section 9d, ruling 1 and "Blocked
+## shots are ruled apart").
+##   a heavy blow   f.wd.guardArms to the arms and guardLegs to the legs (wounds.json guardWearSplit)
+##   a light blow   f.wd.blockArmShare to the arms; the rest is soaked
+##   a shot         f.wd.shotArmShare to the arms; a heavy or charged shot also puts guardLegs on the legs, a bolt nothing
+## The arms take a blocked blow's wear only up to f.wd.blockArmCap (under battered), and what is over it is soaked: blows
+## on a guard never batter an arm and never reach the core, so a pure blocker is not worn to the brink through his guard.
+## The arms take a blocked shot's wear up to f.wd.shotArmCap (past battered, under broken), and what is over it goes
+## into the core: a guard shot at long enough leaks. That is how a fighter who only shoots can beat a guard.
+static func addGuardWear(S: SimState, f, damage: float, how: int = BLOCK_HEAVY) -> void:
 	var wd = f.wd
-	var share: float = wd.blockArmShare if stream else wd.guardArms
+	var shot: bool = how == BLOCK_SHOT or how == BLOCK_SHOT_HEAVY
+	var share: float = wd.shotArmShare if shot else (wd.blockArmShare if how == BLOCK_LIGHT else wd.guardArms)
 	if share > 0.0:
-		var room: int = wd.blockArmCap - f.wear[ARMS]
-		if room > 0:
-			f.wear[ARMS] += mini(room, int(SimMathx.jround(damage * share * wearK(S, f))))
+		var add: int = int(SimMathx.jround(damage * share * wearK(S, f)))
+		var take: int = clampi((wd.shotArmCap if shot else wd.blockArmCap) - f.wear[ARMS], 0, add)
+		var over: int = (add - take) if shot else 0
+		f.wear[ARMS] += take
+		if over > 0:
+			f.wear[CORE] = mini(WEAR_MAX, f.wear[CORE] + over)
+		if take > 0 or over > 0:
 			updateStages(S, f)
-	if not stream and wd.guardLegs > 0.0:
+	if (how == BLOCK_HEAVY or how == BLOCK_SHOT_HEAVY) and wd.guardLegs > 0.0:
 		addWear(S, f, LEGS, damage * wd.guardLegs)
 
 

@@ -283,7 +283,7 @@ static func _mineHit(S: SimState, sh, by, f) -> bool:
 		return true
 	var guarded: bool = f.stance == 1.0 and f.state != "down" and f.state != "launched"
 	var brink0: bool = f.brink
-	SimDamage.hit(S, null, by, f, sh.dmg, {"kind": "blast", "ignoreStance": not guarded, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 7.0})
+	SimDamage.hit(S, null, by, f, sh.dmg, {"kind": "blast", "shot": sh.power, "ignoreStance": not guarded, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 7.0})
 	SimFx.shotHit(S, sh, f, "guard" if guarded else "hit")
 	if guarded or S.game.ko != null or S.dirS.ex != null or (f.state != "free" and f.state != "charging"):
 		return true
@@ -422,7 +422,7 @@ static func hit(S: SimState, sh, f) -> bool:
 			SimFx.cue(S, f, "charge_stopped", "", "")
 			outcome = "stop"
 	var brink0: bool = f.brink
-	SimDamage.hit(S, null, by, f, dmg, {"kind": "blast", "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 3.0 if sh.power < 2.0 else 7.0})
+	SimDamage.hit(S, null, by, f, dmg, {"kind": "blast", "shot": sh.power, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 3.0 if sh.power < 2.0 else 7.0})
 	SimFx.shotHit(S, sh, f, outcome)
 	var knocked: bool = _knock(S, sh, by, f, outcome, brink0)
 	_barrage(S, sh, by, f, outcome, brink0, knocked)

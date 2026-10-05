@@ -80,6 +80,9 @@
   "block": {
     "streamArmShare": 0.5,
     "armWearCap": 180000,
+    "shotArmShare": 0.5,
+    "shotArmWearCap": 180000,
+    "_shots": "blocked shots, ruled apart from blocked blows (melee-press-feel.md section 9d). shotArmShare: a blocked shot of any kind puts this share of its wear on the arms; the lever, inside 0.45 to 0.6. shotArmWearCap: the arms take a blocked shot's wear only up to this, in wear units (180000 is 30 points), and what is over it goes into the core: a guard shot at long enough leaks, where a blocked blow's wear over its own cap is soaked. The loader keeps it under broken. A blocked heavy or charged shot (power 2 or more) also keeps guardWearSplit's share to the legs; a blocked bolt puts nothing there. The two keys above are for blocked melee blows only",
     "_note": "blocked blows and the arms (melee-press-feel.md section 9d, ruling 1). streamArmShare: a blocked light or flurry blow puts this share of its chip wear on the arms, and the rest is soaked (nothing goes to the legs); the lever is 0.3 to 0.7. armWearCap: no blocked blow, light or heavy, takes the arms past this, in wear units: 180000 is 30 points, where bruised begins (re-ruled from 45: a block that fills an arm to 45 of the 60 that batter it does three quarters of the work), so blocking alone never batters an arm"
   },
   "penalties": {
