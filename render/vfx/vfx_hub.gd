@@ -70,6 +70,8 @@ var beamplay := VfxBeamPlay.new()
 var glare_enabled: bool = VfxLook.GLARE_DEFAULT   # the rival's glasses glare (glare.gd, drawn by shots_view.gd)
 var glare := VfxGlare.new()
 var press_enabled: bool = VfxLook.PRESS_DEFAULT   # the melee press styles (press.gd, drawn by shots_view.gd)
+var stages_enabled: bool = VfxLook.STAGES_DEFAULT   # building stages (stages.gd)
+var stages := VfxStages.new()
 var press := VfxPress.new()
 var beat_glint_enabled: bool = false          # the beat option (UI's beat ring for every blow, the rival's too): a glint on the striking limb at the beat (press.gd)
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
@@ -126,6 +128,7 @@ func reset(S: SimState, p_seed: int) -> void:
 	beamplay.reset()
 	glare.reset()
 	press.reset()
+	stages.reset()
 	zip.reset()
 	earth.debris = debris
 	earth.reset()
@@ -257,13 +260,18 @@ func _consume(S: SimState, events: Array) -> void:
 	if glare_enabled:
 		glare.step(S, frozen)
 		glare.on_events(S, events, xform.forms, rocks.level)
+	if stages_enabled:
+		debris.quality = quality
+		debris.reduced = reduced_motion
+		stages.step(S, frozen, debris, Callable(self, "front_z"), quality, reduced_motion)
+		stages.on_events(S, events, debris, Callable(self, "front_z"), quality, reduced_motion)
 	if press_enabled:
 		press.beat_glint = beat_glint_enabled
 		press.step(S, frozen)
 		press.on_events(S, events, reduced_motion)
 		zip.step(S, frozen)
 		zip.on_events(S, events, reduced_motion)
-	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled:
+	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled or stages_enabled:
 		debris.quality = quality
 		debris.reduced = reduced_motion
 		water.begin_tick()

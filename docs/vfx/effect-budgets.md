@@ -96,3 +96,7 @@ Quads only, in the shots view's one draw: speed 7, tech 17 falling to 1 as the e
 ## The LT zip (2026-10-05)
 
 Quads only, in the shots view's one draw: a tell 2 to 3, speed travel about 27, tech about 21 falling to 6 as the echoes pop off, heavy travel about 26, an outcome mark 2 to 5. No debris. One zip at most about 27 plus its strike marks. Not measured: the web build under load and an old laptop.
+
+## Building stages (2026-10-05)
+
+Debris pool only, no quads and no new draw call. One event at full strength: a 0 to 1 about 15 bits, a 2 to 3 about 25, a 0 to 3 about 40 (quality low 14, reduced motion 20). A tick's stage events are budgeted at 300 bits (a token chip and puff each past it, none past 1.6 times): 69 events in one tick spawned 368 bits. A real 16,000-tick match sent 68 events, busiest tick 56, and the pool stayed within its 460. The shell plume: at most 12 puffs alive. Not measured: the web build under load and an old laptop.

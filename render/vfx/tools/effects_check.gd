@@ -198,6 +198,8 @@ func _run() -> void:
 	_press()
 	_zip()
 	_real()
+	_stages()
+	_real_stages()
 	print("\neffects check passed" if fails == 0 else "\neffects check FAILED (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -3258,7 +3260,7 @@ func _zip() -> void:
 ## a tech blow's look is the same everywhere.
 func _real() -> void:
 	print("press and zip on real director output")
-	var tot := {"lunge": 0, "charge": 0, "tells": 0, "beat": 0, "blows": 0, "agree": 0, "disagree": 0, "glints": 0, "short": 0}
+	var tot := {"lunge": 0, "charge": 0, "tells": 0, "beat": 0, "blows": 0, "agree": 0, "disagree": 0, "glints": 0, "short": 0, "stage_events": 0, "max_bits": 0, "steps": {}}
 	var styles_seen := {}
 	for seed in [4, 12345, 7]:
 		var S := SimCore.createSim()
@@ -3287,7 +3289,12 @@ func _real() -> void:
 							tot["agree"] += 1
 						else:
 							tot["disagree"] += 1
+			for e2 in evs:
+				if String(e2.type) == "building_stage":
+					var sk: String = "%d_%d" % [int(e2.from), int(e2.to)]
+					tot["steps"][sk] = int(tot["steps"].get(sk, 0)) + 1
 			h.consume(S, evs)
+			tot["max_bits"] = maxi(int(tot["max_bits"]), h.debris.bits.size())
 			S.out.fx.clear()
 			for z: VfxZip.Zip in h.zip.zips:
 				var key: int = int(z.ox) * 7 + z.slot
@@ -3301,6 +3308,7 @@ func _real() -> void:
 						tot["short"] += 1
 			tot["blows"] += 0
 		tot["glints"] += int(h.press.made.get("glint", 0))
+		tot["stage_events"] += int(h.stages.made.get("events", 0))
 		view.queue_free()
 		SimCore.dispose(S)
 	print("    real matches: %s, styles from beats %s" % [str(tot), str(styles_seen.keys())])
@@ -3346,6 +3354,138 @@ func _real() -> void:
 	_check(str(seqs[0]) == str(seqs[1]), "and it draws the same quads tick by tick (%s against %s)" % [str(seqs[0]), str(seqs[1])])
 	view2.queue_free()
 	SimCore.dispose(S2)
+
+
+## Building stages (World's building_stage event; docs/vfx/building-stages-plan.md): each step, each jump, the dedupe, a busy tick and the shell's smoke.
+func _stages() -> void:
+	print("building stages")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var idx: Array = []
+	for i in range(S.buildings.size()):
+		if S.buildings[i].alive and int(S.buildings[i].floors) >= 1:
+			idx.append(i)
+	_check(idx.size() >= 70, "the world has buildings to stage (%d standing)" % idx.size())
+	var ev := func(i: int, from_s: int, to_s: int):
+		var b = S.buildings[i]
+		return VfxMock.ev("building_stage", {"b": i, "from": from_s, "to": to_s, "x": b.x, "y": WorldStructures.baseY(S, b), "z": b.z, "w": b.w, "h": b.h * 0.4, "kind": "house", "cx": b.x - 300.0, "owner": 0, "n": 0})
+	var fresh := func() -> VfxHub:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		_tick(S, h, [])
+		return h
+	_check(VfxLook.STAGES_DEFAULT and VfxHub.new().stages_enabled, "on by default")
+	var b0: int = idx[0]
+	# 0 to 1: glass.
+	var h1: VfxHub = fresh.call()
+	var n0: int = h1.debris.spawned
+	_tick(S, h1, [ev.call(b0, 0, 1)])
+	_check(int(h1.stages.made.get("glass", 0)) == 1 and not h1.stages.made.has("shed") and h1.debris.spawned - n0 >= 6, "0 to 1: a glass shower and nothing else (%d bits)" % (h1.debris.spawned - n0))
+	# 1 to 2: a skirt and a small shed.
+	var h2: VfxHub = fresh.call()
+	_tick(S, h2, [ev.call(b0, 1, 2)])
+	_check(int(h2.stages.made.get("shed", 0)) == 1 and int(h2.stages.made.get("skirt", 0)) == 1 and not h2.stages.made.has("glass") and not h2.stages.made.has("belch"), "1 to 2: a shed and a dust skirt, no glass and no smoke")
+	# the dedupe: the same tick's floor_hit for the same building keeps the floors' own burst
+	var h2b: VfxHub = fresh.call()
+	var fh = VfxMock.ev("floor_hit", {"b": b0, "floor": 3, "n": 1, "outcome": "crack", "ratio": 0.5, "x": S.buildings[b0].x, "y": 100.0, "z": S.buildings[b0].z, "ux": 1.0, "uy": 0.0, "kind": "bolt", "owner": 0, "victim": -1})
+	_tick(S, h2b, [fh, ev.call(b0, 1, 2)])
+	_check(not h2b.stages.made.has("shed") and int(h2b.stages.made.get("deduped", 0)) == 1, "1 to 2 in a tick with that building's floor_hit draws no shed of its own")
+	# 2 to 3: the big shed, the skirt and the smoke.
+	var h3: VfxHub = fresh.call()
+	var n3: int = h3.debris.spawned
+	_tick(S, h3, [ev.call(b0, 2, 3)])
+	_check(int(h3.stages.made.get("shed", 0)) == 1 and int(h3.stages.made.get("belch", 0)) == 1 and not h3.stages.made.has("glass"), "2 to 3: the cladding stripped, a skirt and a belch of smoke (%d bits)" % (h3.debris.spawned - n3))
+	# the common jump, 0 to 3: the union: glass, then the shed and smoke; no second, small shed
+	var hj: VfxHub = fresh.call()
+	_tick(S, hj, [ev.call(b0, 0, 3)])
+	_check(int(hj.stages.made.get("glass", 0)) == 1 and int(hj.stages.made.get("shed", 0)) == 1 and int(hj.stages.made.get("belch", 0)) == 1, "0 to 3: glass, then the big shed and the smoke, one shed only")
+	var hj2: VfxHub = fresh.call()
+	_tick(S, hj2, [ev.call(b0, 0, 2)])
+	_check(int(hj2.stages.made.get("glass", 0)) == 1 and int(hj2.stages.made.get("shed", 0)) == 1 and not hj2.stages.made.has("belch"), "0 to 2: glass and the small shed")
+	var hj3: VfxHub = fresh.call()
+	_tick(S, hj3, [ev.call(b0, 1, 3)])
+	_check(not hj3.stages.made.has("glass") and int(hj3.stages.made.get("shed", 0)) == 1 and int(hj3.stages.made.get("belch", 0)) == 1, "1 to 3: no glass (it was out already), the shed and the smoke")
+	# to 4: nothing
+	var h4: VfxHub = fresh.call()
+	var n4: int = h4.debris.spawned
+	_tick(S, h4, [ev.call(b0, 3, 4), ev.call(b0, 0, 4)])
+	_check(h4.debris.spawned == n4 and h4.stages.made.get("glass", 0) == 0, "to 4 draws nothing (building_fall carries the collapse)")
+	# A busy tick: 69 events at once stay inside the pool and the per-tick budget, nearest first.
+	var hb: VfxHub = fresh.call()
+	var many: Array = []
+	for k in range(69):
+		many.append(ev.call(idx[k], 0, 3))
+	var nb: int = hb.debris.spawned
+	_tick(S, hb, many)
+	_check(hb.debris.bits.size() <= VfxLook.DEBRIS_CAP and hb.debris.spawned - nb <= VfxLook.SPAWN_PER_TICK + VfxLook.SHARD_PER_TICK, "69 events in one tick stay inside the pool (%d bits of %d, %d spawned, %d events skipped by the budget)" % [hb.debris.bits.size(), VfxLook.DEBRIS_CAP, hb.debris.spawned - nb, int(hb.stages.made.get("skipped", 0))])
+	_check(int(hb.stages.made.get("events", 0)) == 69, "and all 69 were read")
+	# Quality and reduced motion thin it.
+	var hq: VfxHub = fresh.call()
+	hq.quality = 0
+	var nq: int = hq.debris.spawned
+	_tick(S, hq, [ev.call(b0, 0, 3)])
+	var q_low: int = hq.debris.spawned - nq
+	var hr: VfxHub = fresh.call()
+	hr.reduced_motion = true
+	var nr: int = hr.debris.spawned
+	_tick(S, hr, [ev.call(b0, 0, 3)])
+	_check(q_low < (hj.debris.spawned - 0) and hr.debris.spawned - nr < hj.debris.spawned, "quality low and reduced motion draw fewer bits (%d and %d against %d)" % [q_low, hr.debris.spawned - nr, hj.debris.spawned])
+	# A shell keeps smoking by state: a building under 35% of its hit points, with a fighter near, lets a thin puff rise; it stops when the building is gone.
+	var hs: VfxHub = fresh.call()
+	var sb = S.buildings[b0]
+	var hp0: float = sb.hp
+	S.fighters[0].x = sb.x + 200.0
+	sb.hp = sb.maxhp * 0.2
+	_check(WorldStructures.stage(sb) == 3, "the test building is a shell by its hit points (stage %d)" % WorldStructures.stage(sb))
+	for k in range(100):
+		_tick(S, hs, [])
+	var smoked: int = int(hs.stages.made.get("plume", 0))
+	_check(smoked >= 2 and smoked <= 12 and hs.stages.plume_ticks.size() <= 12, "a shell smokes by state: %d puffs in 100 ticks, never more than 12 alive" % smoked)
+	sb.alive = false
+	var before: int = int(hs.stages.made.get("plume", 0))
+	for k in range(60):
+		_tick(S, hs, [])
+	_check(int(hs.stages.made.get("plume", 0)) == before, "and it stops when the building is gone")
+	sb.alive = true
+	var hn: VfxHub = fresh.call()
+	hn.reduced_motion = true
+	for k in range(100):
+		_tick(S, hn, [])
+	_check(int(hn.stages.made.get("plume", 0)) == 0, "no plume in reduced motion")
+	sb.hp = hp0
+	var ho := VfxHub.new()
+	ho.stages_enabled = false
+	ho.reset(S, 6)
+	_tick(S, ho, [ev.call(b0, 0, 3)])
+	_check(ho.stages.made.is_empty(), "stages_enabled off: nothing")
+	SimCore.dispose(S)
+
+
+## A longer real match for the building stages: the AI's building_stage events (World's staged destruction), read in place, the pool never past its cap.
+func _real_stages() -> void:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 12345)
+	var h := VfxHub.new()
+	h.reset(S, 12345)
+	var steps: Dictionary = {}
+	var max_bits: int = 0
+	var busiest: int = 0
+	for t in range(16000):
+		SimCore.step(S)
+		var evs: Array = S.out.fx.duplicate()
+		var in_tick: int = 0
+		for e2 in evs:
+			if String(e2.type) == "building_stage":
+				in_tick += 1
+				var sk: String = "%d_%d" % [int(e2.from), int(e2.to)]
+				steps[sk] = int(steps.get(sk, 0)) + 1
+		busiest = maxi(busiest, in_tick)
+		h.consume(S, evs)
+		max_bits = maxi(max_bits, h.debris.bits.size())
+		S.out.fx.clear()
+	var tot_e: int = int(h.stages.made.get("events", 0))
+	_check(tot_e > 0 and max_bits <= VfxLook.DEBRIS_CAP, "a real match (seed 12345, 16000 ticks): %d building_stage events read, steps %s, busiest tick %d, glass %d, sheds %d, plumes %d; the pool never past its cap (%d of %d)" % [tot_e, str(steps), busiest, int(h.stages.made.get("glass", 0)), int(h.stages.made.get("shed", 0)), int(h.stages.made.get("plume", 0)), max_bits, VfxLook.DEBRIS_CAP])
+	SimCore.dispose(S)
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:

@@ -236,3 +236,7 @@ The tell (a ground line, the heavy's ring), the travel per reading (speed ghosts
 ### Building stages (plan, 2026-10-05)
 
 A note only: what VFX will draw for World's `building_stage` event (glass shower at windows out, a cladding shed and dust skirt for a part gone, a bigger shed and a plume for a shell, nothing new for rubble) and an ambient shell plume read from the stage query, so a seek or late join still looks wrecked. Not built until World's slice is committed. docs/vfx/building-stages-plan.md.
+
+### Building stages built (2026-10-05)
+
+World's `building_stage` event drawn: the union of the steps a jump crosses (glass, a shed of cladding panels and a dust skirt, a belch of smoke at a shell), the whole tick's events read first (the floors' own burst dedupes the small shed), nearest-fighter first with a per-tick budget so 69 events in a tick stay inside the pool, and a shell smoking by state. `render/vfx/stages.gd`; docs/vfx/building-stages-plan.md ("Built"); `effects_check.gd` `_stages()` and `_real_stages()`.

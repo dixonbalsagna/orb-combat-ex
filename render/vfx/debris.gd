@@ -550,6 +550,53 @@ func floor_hit(S: SimState, bx: float, w: float, front_z: float, xi: float, xo: 
 	_yspread = 60.0
 
 
+## Building stages (stages.gd, docs/vfx/building-stages-plan.md). Counts are the caller's (already scaled by quality and by how far the building is).
+## Glass from a facade's standing floors (y0 to y1), thrown away from the blast (dirx): a shower of pale slivers and a few triangles, falling and fading.
+func stage_glass(bx: float, w: float, y0: float, y1: float, front_z: float, dirx: float, count: int) -> void:
+	_biome = VfxPalette.biome_key(bx)
+	_tone = 0
+	for k in range(count):
+		var px: float = bx + _rs.range_(-0.5, 0.5) * w
+		var py: float = _rs.range_(y0, maxf(y1, y0 + 1.0))
+		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), dirx * _rs.range_(40.0, 200.0) + _rs.range_(-40.0, 40.0), _rs.range_(-60.0, 220.0), 1.0, _rs.range_(1.0, 1.9))
+		_add(b)
+
+
+## Cladding panels shed from the facade between y0 and y1: slabs that tumble away from the blast.
+func stage_shed(bx: float, w: float, y0: float, y1: float, front_z: float, dirx: float, count: int, kscale: float) -> void:
+	_biome = VfxPalette.biome_key(bx)
+	_tone = 0
+	for k in range(count):
+		var px: float = bx + _rs.range_(-0.5, 0.5) * w
+		var py: float = _rs.range_(y0, maxf(y1, y0 + 1.0))
+		var kind: int = CHUNK if k % 5 != 0 else STEEL
+		var b: Bit = _bit(kind, px, py, front_z + VfxLook.Z_SHARD_OVER + _rs.range_(0.0, 30.0), dirx * _rs.range_(30.0, 160.0) + _rs.range_(-30.0, 30.0), _rs.range_(-40.0, 120.0), kscale, _rs.range_(1.2, 2.2))
+		_add(b)
+
+
+## A low skirt of dust round the base (the building's own ground), n puffs thrown out along the ground and up.
+func stage_skirt(S: SimState, bx: float, w: float, h: float, front_z: float, n: int) -> void:
+	_biome = VfxPalette.biome_key(bx)
+	var g: float = WorldTerrain.groundY(S, bx)
+	var base: float = clampf(0.4 * (w + 0.1 * h), 120.0, 700.0)
+	for k in range(n):
+		var t: float = (float(k) + _rd.next()) / float(maxi(n, 1)) - 0.5
+		_tone = k % 3
+		_puff_at(bx + t * w * 1.2, g + _rd.range_(0.0, 80.0), front_z + _rd.range_(6.0, 40.0), signf(t) * _rd.range_(80.0, 360.0), _rd.range_(60.0, 260.0), base * 0.5, base * _rd.range_(0.8, 1.2), _rd.range_(1.8, 3.0), true)
+	_tone = 0
+
+
+## Smoke from a building's top: kind 0 a belch (n larger puffs as the shell is made), 1 the thin plume of a standing shell (one slow grey puff).
+func stage_smoke(bx: float, y: float, front_z: float, n: int, kind: int) -> void:
+	_biome = VfxPalette.biome_key(bx)
+	var grey := Color(0.36, 0.36, 0.40, 1.0)
+	for k in range(n):
+		if kind == 0:
+			dust_puff(_biome, bx + _rd.range_(-80.0, 80.0), y + _rd.range_(-30.0, 30.0), front_z + _rd.range_(0.0, 30.0), _rd.range_(-30.0, 30.0), _rd.range_(60.0, 150.0), 60.0, 190.0, _rd.range_(2.2, 3.4), 0, grey)
+		else:
+			dust_puff(_biome, bx + _rd.range_(-40.0, 40.0), y, front_z + _rd.range_(0.0, 20.0), _rd.range_(-14.0, 14.0), _rd.range_(40.0, 70.0), 30.0, 90.0, 2.5, 0, grey)
+
+
 ## Window glass blowing out along a band of the facade and falling: one sliver about every window width.
 func window_row(bx: float, w: float, ym: float, half_band: float, front_z: float, scale: float) -> void:
 	var q: float = VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)] * (0.5 if reduced else 1.0)
