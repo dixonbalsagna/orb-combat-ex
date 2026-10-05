@@ -112,6 +112,8 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	rh = float(pm["chip_h"])
 	var cfs: int = int(pm["fs_chip"])
 	var word: String = UiStance.word(m.stance_kind)   # the five stances (UiStance): the held buttons, for both fighters
+	if m.stance_armed > 0.0:
+		word = UiStance.armed_word()   # an armed stance is neither held nor latched: it is for the next blow only
 	var scol: Color = UiStance.col(m.stance_kind)
 	var isize: float = rh * 0.68
 	var cw: float = isize + UiText.width(word, cfs) + 20.0 * s
@@ -129,6 +131,9 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	_chip(ci, rect, left, pad, cur, cw, ry, rh, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(scol), 2.0 + 3.0 * flash)
 	var cx: float = (x0 + cur + (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5)) if left else (x1 - cur - (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5))
 	UiIcons.stance5(ci, m.stance_kind, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
+	if m.stance_armed > 0.0:
+		# The ring round the icon runs down over the arming's 90 ticks (a shape: a held stance has none).
+		ci.draw_arc(Vector2(cx, ry + rh * 0.5), isize * 0.82, -PI * 0.5, -PI * 0.5 + TAU * (1.0 if reduced else clampf(m.stance_armed, 0.0, 1.0)), 24, _c(scol), maxf(2.0, isize * 0.11), true)
 	var tx0: float = (x0 + cur + 8.0 * s + isize + 6.0 * s) if left else (x1 - cur - 8.0 * s - isize - 6.0 * s)
 	if word != "":
 		UiText.draw(ci, word, Vector2(tx0, _base(ry, rh, cfs)), cfs, ink, -1 if left else 1, 1.5)

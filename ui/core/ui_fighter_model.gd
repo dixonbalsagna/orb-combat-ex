@@ -28,6 +28,7 @@ var unrestrained: bool = false     # Anti-hero after Drop the Act
 var facade_age: float = 99.0       # seconds since the Proud front cracked (animation)
 
 var stance_mask: int = 0           # the held stance buttons (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8; 0 martial arts)
+var stance_armed: float = 0.0      # an armed stance (Full touch: a tap arms it for the next blow): the share of its 90 ticks left, 0 when none or held. The host patches it from Controls' state
 var stance_kind_t: float = 99.0    # seconds since the stance (stance_kind) last changed (the legend and the prompt row show for 3 s)
 var stance_kind: int = 0           # the stance the badge shows (UiStance: 0 martial, 1 defensive, 2 energy, 3 charging, 4 manoeuvre)
 var beats: Array = []              # seconds to contact of each pending blow that will land on THIS fighter (the beat ring; UiSimBridge.beat_windows)
@@ -142,6 +143,7 @@ func reset_wounds() -> void:
 	stance_mask = 0
 	stance_kind = 0
 	stance_kind_t = 99.0
+	stance_armed = 0.0
 	beats = []
 	energy = false
 	recipe = {}

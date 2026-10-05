@@ -251,8 +251,8 @@ static func draw_marker(ci: CanvasItem, m: UiFighterModel, c: Vector2, R: float,
 		var hc: Color = UiLook.col(UiLook.HIDDEN)
 		UiIcons.eye_slash(ci, p, size * 0.95, Color(hc, a))
 	else:
-		var sc: Color = UiLook.stance_col(m.stance)
-		UiIcons.stance(ci, m.stance, p, size * 0.85, Color(sc, a))
+		var sc: Color = UiStance.col(m.stance_kind)   # the five stances, as the badge shows them
+		UiIcons.stance5(ci, m.stance_kind, p, size * 0.85, Color(sc, a))
 
 
 ## How opaque this fighter's crown body is right now (0 to 1). Normally the transient pop's envelope. With the accessibility

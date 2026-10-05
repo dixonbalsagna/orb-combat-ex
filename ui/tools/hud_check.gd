@@ -48,6 +48,7 @@ func _run() -> void:
 	await _stance_badge_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
+	await _armed_touch_rules()
 	await _beat_ring_rules()
 	await _touch_controls_rules()
 	await _settings_rules()
@@ -3084,6 +3085,105 @@ func _stances_page_rules() -> void:
 	_ok(drawn["n"] >= 4, "stances page: it draws as the table, as tabs, as Simple's one line and as Full touch's table")
 	h3.hide_howto()
 	h3.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
+
+
+## The rest of the key help (docs/ui/key-help-plan.md): the crown's stance icon, Full touch's stance labels and the armed stance ("next blow").
+func _armed_touch_rules() -> void:
+	var stances_d: Dictionary = UiData.stances()["stances"]
+	var set_live := func(flags: Array) -> void:
+		for i in range(5):
+			stances_d[UiStance.id(i)]["_live"] = flags[i]
+	var head_flags: Array = [false, false, true, false, false]
+	set_live.call(head_flags)
+	_ok(UiStance.touch_word("mode") == "ENERGY" and UiStance.touch_word("guard") == "" and UiStance.touch_word("power") == "" and UiStance.touch_word("dodge") == "" and UiStance.touch_word("light") == "", "touch labels: a Full touch stance button is named for its stance once the stance is live (energy now), and keeps the old word until then")
+	set_live.call([true, true, true, true, true])
+	_ok(UiStance.touch_word("guard") == "DEFENSIVE" and UiStance.touch_word("power") == "CHARGING" and UiStance.touch_word("dodge") == "MANOEUVRE", "touch labels: and all four when they are live")
+	set_live.call(head_flags)
+	_ok(UiStance.armed_word() == "NEXT BLOW" and UiStance.armed_word(true) == "NEXT", "armed: the words (the badge says NEXT BLOW, a touch button NEXT)")
+	# The crown's marker draws every stance (it reads the five-stance icons, not the old four).
+	var layer := UiLayer.new()
+	layer.size = Vector2(400, 300)
+	root.add_child(layer)
+	var drawn := {"n": 0}
+	layer.painter = func(ci: CanvasItem) -> void:
+		for k in range(5):
+			var mm := UiFighterModel.new()
+			mm.stance_kind = k
+			UiCrown.draw_marker(ci, mm, Vector2(60.0 + 70.0 * float(k), 150.0), 60.0, 1.0, 0.0, 1.0)
+		drawn["n"] += 1
+	layer.sig = 1
+	layer.queue_redraw()
+	await process_frame
+	await process_frame
+	_ok(drawn["n"] >= 1, "crown: the stance mark above a fighter draws for all five stances")
+	# Full touch: the labels and the armed and latched rings draw, and a change of arming redraws.
+	var lay := UiLayout.new()
+	lay.touch_ui = true
+	lay.touch_full = true
+	lay.dp = 2.6
+	lay.compute(Vector2(2400, 1080), false)
+	var base: Array = UiTouchControls.sig(lay, {"full": {}}, 1.0, false)
+	var armed_a: Array = UiTouchControls.sig(lay, {"full": {"guard": {"armed": 0.8}}}, 1.0, false)
+	var armed_b: Array = UiTouchControls.sig(lay, {"full": {"guard": {"armed": 0.7}}}, 1.0, false)
+	var armed_c: Array = UiTouchControls.sig(lay, {"full": {"guard": {"armed": 0.799}}}, 1.0, false)
+	var latched: Array = UiTouchControls.sig(lay, {"full": {"mode": {"latched": true}}}, 1.0, false)
+	_ok(base != armed_a and armed_a != armed_b and armed_a == armed_c and base != latched and latched != armed_a, "touch armed: arming and latching redraw the controls, in twelfths of the 90 ticks, and not for a tick's change")
+	var tdrawn := {"n": 0}
+	for st in [{"full": {"guard": {"armed": 0.6}, "power": {"armed": 0.2, "down": false}, "dodge": {"armed": 0.05}, "mode": {"latched": true}}}, {"full": {"guard": {"down": true}}}, {"full": {}}]:
+		var stc: Dictionary = st
+		layer.size = Vector2(2400, 1080)
+		layer.painter = func(ci: CanvasItem) -> void:
+			UiTouchControls.draw(ci, lay, 1.0, stc, 1.0, false)
+			tdrawn["n"] += 1
+		layer.sig = tdrawn["n"]
+		layer.queue_redraw()
+		await process_frame
+		await process_frame
+	set_live.call([true, true, true, true, true])
+	layer.painter = func(ci: CanvasItem) -> void:
+		UiTouchControls.draw(ci, lay, 1.0, {"full": {"guard": {"armed": 0.5}}}, 1.0, false)
+		tdrawn["n"] += 1
+	layer.sig = 99
+	layer.queue_redraw()
+	await process_frame
+	await process_frame
+	set_live.call(head_flags)
+	layer.queue_free()
+	_ok(tdrawn["n"] >= 4, "touch armed: the Full controls draw with a stance armed, latched, held, and with the stances live")
+	# The plate's badge: NEXT BLOW with a running ring while a stance is armed.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.hub.model(0).ai = false
+	await _frames(hud, 3)
+	hud.hub.patch(0, {"stance_mask": 1})
+	await _frames(hud, 2)
+	var r0: int = hud._l_plate[0].redraws
+	hud.hub.patch(0, {"stance_armed": 0.9})
+	await _frames(hud, 2)
+	var r1: int = hud._l_plate[0].redraws
+	_ok(hud.hub.model(0).stance_armed == 0.9 and r1 > r0, "armed badge: the plate redraws when a stance is armed")
+	for i in range(30):
+		hud.hub.patch(0, {"stance_armed": 0.9 - float(i) / 60.0})
+		await _frames(hud, 1)
+	var run: int = hud._l_plate[0].redraws - r1
+	_ok(run >= 3 and run <= 20, "armed badge: the ring runs down in twelfths, not every frame (%d redraws over half a second)" % run)
+	hud.hub.patch(0, {"stance_armed": 0.0})
+	await _frames(hud, 2)
+	_ok(hud.hub.model(0).stance_armed == 0.0, "armed badge: spent or lapsed it is the held stance's badge again")
+	hud.set_option("reduced_motion", true)
+	var rr0: int = hud._l_plate[0].redraws
+	hud.hub.patch(0, {"stance_armed": 0.8})
+	await _frames(hud, 2)
+	var rr1: int = hud._l_plate[0].redraws
+	for i in range(20):
+		hud.hub.patch(0, {"stance_armed": 0.8 - float(i) / 40.0})
+		await _frames(hud, 1)
+	_ok(rr1 > rr0 and hud._l_plate[0].redraws == rr1, "armed badge: under reduced motion the ring is steady (no running down, no redraws)")
+	hud.queue_free()
 	await process_frame
 	root.size = Vector2i(1280, 720)
 

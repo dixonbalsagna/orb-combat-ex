@@ -42,11 +42,16 @@ static func sig(lay: UiLayout, state: Dictionary, intro_a: float, transform_avai
 		var fb := 0
 		var fi := 0
 		var full: Dictionary = state.get("full", {})
+		var arm_sig: Array = []
 		for n in FULL_NAMES:
-			if bool((full.get(n, {}) as Dictionary).get("down", false)):
+			var fs_: Dictionary = full.get(n, {})
+			if bool(fs_.get("down", false)):
 				fb |= (1 << fi)
+			if float(fs_.get("armed", 0.0)) > 0.0 or bool(fs_.get("latched", false)):
+				arm_sig.append([fi, int(clampf(float(fs_.get("armed", 0.0)), 0.0, 1.0) * 12.0), bool(fs_.get("latched", false))])
 			fi += 1
 		bits |= fb << 4
+		bits = bits * 31 + hash(arm_sig)
 	var st: Dictionary = state.get("stick", {})
 	var sk: Array = []
 	if bool(st.get("active", false)):
@@ -112,7 +117,7 @@ static func draw(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, int
 				if down and hold > 0.0:
 					ci.draw_arc(p, r * 1.14, -PI * 0.5, -PI * 0.5 + TAU * hold, 40, Color(UiLook.col(UiLook.WARN)), maxf(3.0, r * 0.1), true)
 			"guard":
-				UiIcons.stance(ci, 1, p, r * 1.0, dark if down else UiLook.stance_col(1))
+				UiIcons.stance5(ci, 1, p, r * 1.0, dark if down else UiStance.col(1))
 			"power":
 				UiIcons.caret_up(ci, p + Vector2(0.0, r * 0.1), r * 0.95, icol)
 				if down:
@@ -186,6 +191,19 @@ static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionar
 			if pulse_step >= 0:
 				_form_pulse(ci, p, r, line, pulse_step)
 		var word: String = UiData.t("prompt." + n) if (n == "power" or n == "guard") else UiData.t("prompt.full_" + n)
+		var stance_word: String = UiStance.touch_word(n)   # a stance button is named for its stance once the stance is live
+		if stance_word != "":
+			word = stance_word
+		# An armed stance (a tap: the next blow only, 90 ticks) shows a ring that runs down and the word NEXT; energy's latch a steady ring.
+		var fstate: Dictionary = full.get(n, {})
+		var armed: float = clampf(float(fstate.get("armed", 0.0)), 0.0, 1.0)
+		if UiHints.HOLD_STANCES.has(n):
+			var scol: Color = UiStance.col(int(UiHints.HOLD_STANCES[n]))
+			if armed > 0.0:
+				ci.draw_arc(p, r * 1.12, -PI * 0.5, -PI * 0.5 + TAU * armed, 40, scol, maxf(3.0, line * 2.0), true)
+				word = UiStance.armed_word(true)
+			elif bool(fstate.get("latched", false)):
+				ci.draw_arc(p, r * 1.12, 0.0, TAU, 40, scol, maxf(3.0, line * 2.0), true)
 		var fs: int = UiText.px(14.0, s)
 		while fs > int(UiLook.text_floor) and UiText.width(word, fs) > r * 1.7:
 			fs -= 1

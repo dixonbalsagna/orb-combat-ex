@@ -83,6 +83,10 @@ func _ready() -> void:
 			tstate = {"attack": {"down": true, "hold": 0.6}, "guard": {"down": false}, "power": {"down": true}, "stick": {"active": true, "base": Vector2(size.x * 0.2, size.y * 0.72), "thumb": Vector2(size.x * 0.2 + 90.0, size.y * 0.72 - 40.0), "sprint": false}}
 		if args.has("full"):
 			tstate["full"] = {"light": {"down": str(args["touch"]) == "press"}, "guard": {"down": str(args["touch"]) == "press"}}
+			if args.has("armed"):
+				# An armed stance on Full touch (--armed=SHARE of the 90 ticks left, 1 for 0.6): guard armed, energy latched.
+				var share: float = float(args["armed"]) if str(args["armed"]) != "1" else 0.6
+				tstate["full"] = {"guard": {"armed": share}, "dodge": {"armed": minf(share, 0.3)}, "mode": {"latched": true}}
 		hud.touch_state_fn = func(): return tstate
 		hud.consume({"type": "availability", "actor": 0, "action": "transform", "available": str(args["touch"]) == "press"})
 	if args.has("device"):
@@ -99,6 +103,9 @@ func _ready() -> void:
 		# The held stance buttons, faked (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8): --mask=N for the first fighter, --rmask=N for the rival.
 		hud.hub.patch(0, {"stance_mask": int(args.get("mask", "0"))})
 		hud.hub.patch(1, {"stance_mask": int(args.get("rmask", "0"))})
+	if args.has("armed"):
+		# The plate's badge for an armed stance: NEXT BLOW with the ring (the first fighter's defensive stance armed).
+		hud.hub.patch(0, {"stance_mask": 1, "stance_armed": float(args["armed"]) if str(args["armed"]) != "1" else 0.6})
 	if args.has("beats"):
 		# The beat ring (--beats=SECONDS to contact of a blow on the rival, and one a little later on the first fighter): turns the option on.
 		hud.set_option("beat_ring", true)

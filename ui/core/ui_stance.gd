@@ -63,6 +63,19 @@ static func specials_row() -> bool:
 	return not live(CHARGING)
 
 
+## The badge's word for an armed stance ("NEXT BLOW"), or the touch button's short one ("NEXT").
+static func armed_word(short: bool = false) -> String:
+	return str(UiData.stances().get("_armed_short" if short else "_armed_word", "NEXT BLOW"))
+
+
+## The Full touch button's word for the stance it holds (its name) once the stance is live; "" keeps the old word (GUARD, POWER, DODGE).
+static func touch_word(action: String) -> String:
+	if not UiHints.HOLD_STANCES.has(action):
+		return ""
+	var kind: int = int(UiHints.HOLD_STANCES[action])
+	return word(kind) if live(kind) else ""
+
+
 ## A small number that changes when any stance's live flag does (for a redraw key).
 static func live_bits() -> int:
 	var n := 0

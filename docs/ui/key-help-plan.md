@@ -90,3 +90,7 @@ Steps 1 and 2 remove the disagreement the EP asked about and wait on no one; I w
 ## Built (2026-10-05)
 
 Steps 1 and 2 (the five-chip prompt row and the live legend; a stance's names show only where `stances.json` `_live` is true, which on HEAD is the energy stance alone, and the Specials row stays until the charging stance is live), with the finisher telegraph's answers moved to the five-stance wording (`stances.json` `_counters`). See `hud-spec.md` section 37. Not built: How to play's stances page, the Remap and Settings words, the crown icon, and Full touch's labels and armed-stance display (Controls' `docs/controls/stance-key-help.md`).
+
+## Built (2026-10-06, the last pieces)
+
+The crown's mark, Full touch's stance labels and the armed-stance display (section 39 of the spec). The armed state needs Controls to expose it (see the spec); the HUD shows it when the touch state and the model carry it.
