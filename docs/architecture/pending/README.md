@@ -19,4 +19,6 @@ Game Design's section 17 code items (the fuse by cause, `chainR` at every tier, 
 
 **Built and proven, waiting for the sim tree:** dynamic intros, the first cut. The plan and the proofs are `dynamic-intros.md`; the build is the folder `dynamic-intros/` (`dynintro.py` with parts `code` and `hash`, and the three files it installs under `src/`). Apply after Encounter's and World's windows; it needs Tools' schema for the new `data/fight/intro.json`.
 
+**Notes, not a build:** `zip-and-brawl-core-notes.md`: short answers for Encounter's zip slice (the point rush, shots on the way out, the tackle's `held` state, exhaustion) and for brawl B1 (`DirS.brawlI`, and what can move or free a locked fighter).
+
 What is asked of the core and not yet built is listed in `core-backlog.md`.

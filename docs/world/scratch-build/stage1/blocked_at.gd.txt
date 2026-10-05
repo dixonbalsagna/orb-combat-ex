@@ -1,0 +1,24 @@
+## Is the point (x, y) at depth z inside the ground or a standing building, or within `margin` of either? (The zip's exit point: margin 1 body height,
+## BH.) The ground is the wrapped heightfield's height at x (heaps and craters included); a building blocks inside its box widened by the margin, from its
+## ground to its standing height now (curH: a damaged building or a shell is lower, a rubble heap is ground), when its nearest face is within Z_REACH in depth of z
+## (the reach of every blast); a skyscraper's cleared floors (a tunnel) are open. Water does not block. Pure: no draw, no state.
+static func blockedAt(S: SimState, x: float, y: float, z: float = 0.0, margin: float = 75.0) -> bool:
+	if y - margin < WorldTerrain.groundY(S, x, z):
+		return true
+	for bi in near(S, x, margin):
+		var b = S.buildings[bi]
+		if not b.alive or absf(SimWrap.sdx(x, b.x)) > b.w * 0.5 + margin:
+			continue
+		if maxf(0.0, absf(z - b.z) - b.d * 0.5) > Z_REACH:
+			continue
+		var gy: float = baseY(S, b)
+		if y < gy - margin or y > gy + curH(b) + margin:
+			continue
+		if b.floors >= WorldBrunt.FLOORS_MIN and b.fmask != (1 << b.floors) - 1:
+			var k: int = clampi(int(floor((y - gy) / WorldBrunt.floorH(b))), 0, b.floors - 1)
+			if not WorldBrunt.isStanding(b, k) and y - margin > gy and absf(SimWrap.sdx(x, b.x)) <= b.w * 0.5 - margin:
+				continue   # inside a cleared floor, clear of the walls by the margin: open
+		return true
+	return false
+
+
