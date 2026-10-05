@@ -388,6 +388,30 @@ func run_match(seed: int, arm: String, cap: int, capsec: float) -> Dictionary:
 			r.lost += 1
 		rows[key] = r
 	rec.rows = rows
+	# The wrecked stat for World's staged destruction: buildings at stage 3 (a shell) or 4 (gone) at the KO, by row. WorldStructures.stage(b)
+	# lands with World's stages slice; until it exists the record carries -1 and the rows stay pending.
+	rec.wrecked = -1
+	rec.wreckedRows = {}
+	var ws = load("res://sim/world/structures.gd")
+	var has_stage: bool = false
+	if ws != null:
+		for mth in ws.get_script_method_list():
+			if String(mth.name) == "stage":
+				has_stage = true
+	if has_stage:
+		var wr: int = 0
+		var wrows := {}
+		for b in S.buildings:
+			var wrow = b.get("row")
+			var wkey: String = "1" if wrow == null else str(int(wrow))
+			var wd: Dictionary = wrows.get(wkey, {"n": 0, "wrecked": 0})
+			wd.n += 1
+			if int(ws.call("stage", b)) >= 3:
+				wd.wrecked += 1
+				wr += 1
+			wrows[wkey] = wd
+		rec.wrecked = wr
+		rec.wreckedRows = wrows
 	rec.craters = S.world.craters
 	if fs[0].get("breathWear") != null:
 		rec.breathWear = float(fs[0].breathWear + fs[1].breathWear) / SimWounds.WEAR_SCALE   # S4: wear recovered by second breath

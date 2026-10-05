@@ -130,6 +130,13 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
       const all = D.map(r => sum(Object.values(r.rows).map(x => x.lost)) / sum(Object.values(r.rows).map(x => x.n)));
       R.info('4.struct.all', '§4', 'Structures lost, all rows (watch metric, not a gate; §21 band 15 to 40%)', (mean(all) * 100).toFixed(1) + '%', `rows ${[...rowKeys].sort().join(', ')}`);
       for (const k of [...rowKeys].sort()) R.info(`4.struct.row${k}`, '§4', `Structures lost, row ${k}`, (mean(D.map(r => (r.rows[k] ? r.rows[k].lost / r.rows[k].n : NaN)).filter(Number.isFinite)) * 100).toFixed(1) + '%');
+      // the wrecked stat (World's staged destruction): buildings at stage 3 or 4 at the KO; -1 in a record means WorldStructures.stage does not exist yet
+      const wr = D.filter(r => r.wrecked !== undefined && r.wrecked >= 0);
+      if (wr.length) {
+        R.info('4.struct.wrecked', '§4', 'Structures wrecked at the KO (stage 3 or 4), all rows, mean share (default arm)', (mean(wr.map(r => r.wrecked / r.nStructs)) * 100).toFixed(1) + '%', `${wr.length} matches`);
+        const wrk = new Set(); for (const r of wr) for (const k of Object.keys(r.wreckedRows || {})) wrk.add(k);
+        for (const k of [...wrk].sort()) R.info(`4.struct.wrecked.row${k}`, '§4', `Structures wrecked at the KO, row ${k}`, (mean(wr.map(r => (r.wreckedRows[k] ? r.wreckedRows[k].wrecked / r.wreckedRows[k].n : NaN)).filter(Number.isFinite)) * 100).toFixed(1) + '%');
+      } else R.pending('4.struct.wrecked', '§4', 'Structures wrecked at the KO (stage 3 or 4)', 'pending World stages slice: WorldStructures.stage(b) does not exist in this build');
     } else R.pending('4.struct.rows', '§4', 'Structures lost split by row, all-rows watch metric', 'the sim has one row of buildings (docs/world/buildings-in-depth.md); the split appears once buildings carry a row');
     R.pending('4.cyborg', '§4', 'Civilians left at 4:00: at least 25% alive in at least 80% of matches', 'game scale: needs 7-minute matches (Wounds S2)');
   }
