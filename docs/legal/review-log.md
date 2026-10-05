@@ -113,6 +113,9 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-091 | Human-made question and the origin log (10.3; asset-origins.md class rows) | Marketing, Narrative | Medium | Nothing wholesale is human-made; "edited by Orb" with the voice-lab diff; "written by Orb" only per line | Open until diffs are named |
 | RL-092 | Public clips hold (RL-014, M7) while the live build shows KAI and VORR; feedback form and signup list; tips; pseudonym; open-source wording (10.4 to 10.8) | Marketing, Platform | Medium | Hold stands for promotion until player-visible names are neutral (display-name change is enough); anonymous form clear; no mailing list yet; no tips before licence, title and Suno plan; use platform lists | Open |
 | RL-093 | Repository already public with no licence (10.9) | EP, Orb | Medium | What visitors may and may not do stated; add the AI disclosure and a do-not-redistribute line to the README now; do not merge outside PRs; no tips, sales or promotion yet | Open until Orb picks the licence |
+| RL-094 | Store copy draft (store-copy-screen.md): A1 and A2 copy, tags, never-use list, 25+2 claims | Marketing | Medium | CLEAR with six edits: "computer-controlled opponent", procedural-code clarifier, synthesised vocal sounds, privacy line verbatim, no (R) or registered, sound box when music ships | Open until edits made |
+| RL-095 | Capsule art and trailer plan; Suno track in a trailer | Marketing, Art, Audio | Medium | CLEAR with conditions: logo look-alike screen, stacking rule per frame, no placeholder names; Suno track allowed on paid plan with originals kept, disclosure, no Content ID | Open |
+| RL-096 | Never-use words moved to one Legal file (never-use-words.md); capture hold stays until names are neutral | Marketing | Low | Clear | Open until UI switch is live |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
