@@ -608,3 +608,25 @@ Verbatim: "I want you to answer this questionnaire in my stead. I had a conversa
 What Orb confirmed to Controls directly (as Controls records it in docs/controls/stance-questionnaire.md): RT dominates; hybrids LT+RB (evasive energy), LB+RB (defensive ki) and LT+LB (terrain while flying); the AI can do anything the player can; simplified and accessibility controls let a player hand stance choices to the choreographer at any granularity; B gives every fighter its own array of signatures; struggles affect all fighters.
 
 The EP's answers, which Orb can overrule: docs/ep/stance-answers-2026-10-04.md.
+
+## Orb, 2026-10-05: questionnaire 17 (melee and stances)
+
+Answers as given:
+
+- A lone heavy: "A fully held heavy may also launch" (so the string's ender and a fully held heavy both launch; a tapped lone heavy does not).
+- A mashed string closes with a stagger in place, so the brawl stays together.
+- After a knock-back the re-close is always the player's own move (no automatic pull).
+- The beat is shown on the body, plus an optional beat ring in settings.
+- The five signature kinds: "I'd like to hear more on this, it looks good I just want some quick charts and alternatives before this is finalized".
+- The 75 ki ultimate: only in the last two acts.
+- New small actions: all three (check with a parry when timed after a block, push, step strike).
+- The stick leans which limb he strikes with: yes.
+- Identity split (Protagonist: palms, blade hands, arcs; rival: fists, plates, straight lines): yes.
+- The rival's hands: a mix, fists on heavies and blade hands on lights.
+- The rival's glasses: always on.
+- A juggle: up to 5 skill strikes.
+- Go-aheads ticked: build the dynamic intros first cut (three scenarios); a far charge becomes a slower visible pursuit, not a taunt-only ceiling. Not ticked: the audio encoder install; the fighter split on neutral ids.
+
+Notes, verbatim:
+
+> just played the latest update. we've got some work to do but the combat is getting to a good place. we're aiming for snappy combos, attack trades that look pre-planned, variety of attacks. I like the thought that holding LT creates mid-range lunging attacks, these can be utilized at great cost to stamina, can I see a version of the latest combo prototype specifically showcasing the face buttons combined with LT? I want to see the lunging behavior. in the game I would expect every stance to be able to connect blows against a player using this, but the character should zip back and forth in a stylistic blur, matching our visual cues we established for speed, tech and heavy.
