@@ -1,12 +1,10 @@
 # The moveset generator
 
-Owner: Combat and Choreography. Date: 2026-10-04. Status: a design, with a scratch prototype behind its numbers. Nothing in the tree is edited. Written against HEAD `91b139b`.
+Owner: Combat and Choreography. Date: 2026-10-04. Status: a design, with a scratch prototype behind its numbers. Nothing in the tree is edited. Written against HEAD `5ed93bf`; the cells are Game Design's matrix (`docs/design/melee-press-feel.md` sections 10, 11 and 13, on disk).
 
 **Orb's direction** (`docs/ep/vision.md`, last two sections): five stances by what is held (none: the fighter's martial arts stance; LB: defensive; RB: energy arts; RT: charging; LT: manoeuvre), "all face buttons should have an appropriately broad moveset for each stance", and "a way to generatively work all these stances into vast and varied movesets for each character". In the brawl each press is a blow: mashing gives faster flurries, timing gives flashy skill attacks that lapse into flurries, and the heavy beats a heavy guard and sets up juggles.
 
 **What this replaces.** Today a fighter's moveset is a hand-kept list: 36 posed strikes for the rival and 43 for the Protagonist, sorted by hand into seven pools (`data/combat/recipes.json`). The two lists share 35 strikes, which is 97% of the smaller one. The generator composes each fighter's moves from parts under his own rules, so the lists grow by data and the two fighters stop sharing a moveset.
-
-**Game Design's stance-by-button matrix is still to come.** Section 3 uses a provisional one, marked as such. The generator takes the matrix as input, so nothing else here depends on it.
 
 ## 1. A move, its parts, and the grammar
 
@@ -20,8 +18,8 @@ A **cell** is one face button in one stance: 5 stances by 4 buttons, 20 cells a 
 | **Path** | the angle the limb travels | line, arc in, arc out, rise, drop, spin (one turn) | new. Today it is only in each strike's written look |
 | **Range step** | what his feet or his flight do with it | in, hold, around, out; a full entry in the manoeuvre stance | tempo `stepIn` and `stepAround`; the 15 posed entries |
 | **Weight** | light or heavy | light, heavy | the strike rows |
-| **Form** | how the press was made, which sets its speed and timing class | flurry (mashed), light, skill (timed), heavy, held, ender, juggle | Game Design's press-feel draft; the styles of `recipes.json` |
-| **Hooks** | what it leaves behind | `sends` (across, up, down, turned), `links` (the paths that flow out of it), `beat` (the tick of its beat point), `ends` | the `sends` and `ends` tags; the blur patterns |
+| **Form** | how the press was made, which sets its speed and timing class | light, flurry blow, skill strike, heavy, held heavy, ender, juggle strike | Game Design's forms table (`melee-press-feel.md` section 13) |
+| **Hooks** | what it leaves behind | `sends` (across, up, down, turned), `links` (the paths that flow out of it), `beat` (the tick of its beat point) | the `sends` and `ends` tags; the blur patterns |
 | **Keys** | the pose key set that plays it, and how it is got | posed; a hand-state swap; a re-aim; a new key set (section 5) | Animation's manifests |
 
 **The grammar** is four small tables, all data:
@@ -36,8 +34,8 @@ For strikes the four tables give **193 shapes** (limb, tip, path, target, weight
 **Everything derived is derived by rule,** so a move never carries a number the generator invented:
 - `sends` follows the path: a line sends across, a rise up, a drop down, an arc or a spin turned.
 - The range step follows the path: a line steps in or holds, an arc steps around, a spin goes around or out.
-- The beat point follows the path: 20 ticks for a line, 24 for an arc or a rise, 26 for a drop, 28 for a spin, inside Game Design's 20 to 28.
-- **Damage, speed, reach band and reaction come from the cell's class and the form, never from the variant.** Two moves of one cell differ in limb, tip, path, target and hooks, and are worth the same. That is what keeps a generated set balanced: no variant can be the best button.
+- The beat point follows the path: 20 ticks for a line, 24 for an arc or a rise, 26 for a drop, 28 for a spin. Game Design has accepted these.
+- **A variant may change how a press is delivered, and never what it is worth** (Game Design's rule). Its role, its timing, its reach band, its damage and ki, and its result are the cell's and the form's. Two moves of one cell differ in limb, tip, target, path, step and what follows them best. So no generated move can be the best button.
 
 **What exists and where it goes:**
 
@@ -47,7 +45,7 @@ For strikes the four tables give **193 shapes** (limb, tip, path, target, weight
 | The seven pools | written by the generator from the cells, so Encounter's reader does not change |
 | Blur patterns and `patternGates` | the `links` rule orders a string; the eight patterns stay as named phrases the director may still draw; gates gain `stance` |
 | Strike rows (range, ticks, tags) | the numbers of a posed key set, unchanged |
-| Finishers | phrases with slots: the Protagonist's flurry already asks for "a different strike and a new side each time", which is a draw from a cell |
+| Finishers and signatures | frames with slots, filled from the cells (section 3.2, martial B) |
 
 ## 2. Identity: the same grammar, two different fighters
 
@@ -60,102 +58,139 @@ Each fighter has an identity block: a weight for every tip, path and limb, a lis
 | **Paths** | arc in 3, arc out 3, spin 2, rise 2, drop 1.5, line 1 | line 3, drop 2.5, rise 1.5, arc in 1, arc out 0.5, spin 0.5 |
 | **Limbs** | hand 3, foot 3, the rest 1 or under | hand 3, foot 2, elbow 2, knee 1.5, shoulder 1.5, head 1 |
 | **Never** | a forearm plate (he has none); a closed fist on a straight light; a clawed hand; two fists clasped; a leap on a rising blow; an arm held raised after a blow; more than one turn | a foot that arcs outward (the crescent and the hook kick are the Protagonist's); a rising palm (his too); crossed forearms held; a roll or a cartwheel |
-| **Defence** (section 3) | redirects and parries with open hands, catches; never a block | blocks and checks on his plates; never a redirect |
-| **Energy** (section 3) | open palm, the ring hand, a flat palm; lobs and flicks | the blade hand, the pinch, the lit fist; thrusts and drops |
 
 - **The "never" rows are of two kinds.** His own (the other fighter's signature shapes, so they stay signatures) and Legal's (section 5). Both are data rows of part values, checked by the generator and again by the validator.
 - **The weights are a proposal** drawn from what is written: the Protagonist's circles and arcs and open hands, the rival's blades, plates and straight lines. Art, Narrative and Orb can change a number and regenerate.
 - **A drift from the brief to note.** The posed data does not yet match "fists behind plates": 11 of the rival's 15 posed hand strikes land with an open blade hand, 2 with a claw and 2 with a fist. With the weights above his cells ask for fists, which Animation can give by a hand-state swap on the same key sets (section 5).
 
-**Measured on the prototype,** for a martial arts stance of 46 moves each:
+**Measured on the prototype,** over the martial arts stance's two strike cells (46 moves each):
 
 | | Shapes the two fighters share |
 | :--- | ---: |
 | Today's pools | 35 of 36, 97% |
-| Generated, preferring what is posed (the first slice's setting) | 19 of 46, 41% |
-| Generated, identity first | 14 of 46, 30% |
+| Generated, preferring what is posed (the first slice's setting) | 21 of 46, 46%: 53% of the lights and 31% of the heavies |
+| Generated, identity first | 16 of 46, 35% |
 
 ## 3. Five stances by four buttons
 
-**The matrix below is provisional,** until Game Design's arrives. Buttons are named by position.
+**The matrix is Game Design's.** One rule runs across every stance: X is the quick action, Y the strong one, A the stance's context action, and B its signature.
 
-| Stance | West | North | East | South |
+| Stance | X: quick | Y: strong | A: context | B: signature |
 | :--- | :--- | :--- | :--- | :--- |
-| **Martial arts** (nothing held) | hands, light | heavy | legs and knees, light | close: elbow, shoulder, head |
-| **Defensive** (LB) | turn a blow aside with the arms | the counter | the low line: shins and steps | slip and sway |
-| **Energy arts** (RB) | the bolt | the charged shot | the area shot | the swat and the shove |
-| **Charging** (RT) | the charge itself | the charged blow | the burst | the taunt |
-| **Manoeuvre** (LT) | the step strike | the pursuit | the grab | the break-off |
+| **Martial arts** (nothing held) | light strikes: flurry blows and skill strikes | heavy strikes: the guard breaker, the lift, the ender | grab and throw, pick-up, civilians, the taunt at range, a dive grab in the air; held, his channel | his defining signature, a melee art (45 ki) |
+| **Defensive** (LB) | the check; timed after a blocked blow, a parry | the push | reversal after a block; deflect at range | a counter (an art, 25 ki) |
+| **Energy arts** (RB) | bolts and volleys | the charged shot; a short beam; the split | a mine at range; the shove in reach | the beam (45 ki) |
+| **Charging** (RT) | his quick special | his strong special | his utility special | his ultimate (75 ki) |
+| **Manoeuvre** (LT) | the step strike; beyond reach, the piloted light lunge | a heavy on the move; the piloted heavy charge; the pursuit | tackle, dive grab, a snatch on the fly | a terrain art (25 ki) |
 
-### 3.1 How many variants a cell should have
+Three hybrids are reserved and not built: LT with RB, LB with RB, LT with LB.
 
-A cell needs enough moves that a string never shows one twice and two strings running do not match, with one limb broken. It does not need more: past that, each extra move costs a look from Animation and a screen from Legal and is seen less often than it is worth.
+### 3.1 How many moves a cell holds
 
-| Cell kind | Variants | Why |
+| Cell | Moves | Why |
 | :--- | ---: | :--- |
-| A light cell in the martial arts stance | 12 to 14 | Pressed up to ten times a second. A string of five never repeats, and with one arm or leg broken at least 8 remain |
-| The heavy cell | 12 | Seen once or twice a string, but it carries the lifts, the enders and the guard breaks, each of which wants a few of its own |
-| The close cell | 8 | Only 14 shapes exist for elbow, shoulder and head |
-| Defensive | 6 each | Two lines (high and mid, or low) by about three manners |
-| Energy arts | 6 each | The shot's kind is fixed by the cell; the variants are how it is thrown |
-| Charging | 4 to 5 each | Few and memorable: a charge reads by its pose |
-| Manoeuvre | 6 to 8 each | 15 entries are posed, and each takes a blow on arrival |
+| **Martial X** | 30 | Every light shape: hands, feet and the close limbs. It is pressed up to ten times a second, and the stick leans the pick five ways, so each lean needs its own depth |
+| **Martial Y** | 16 | Every heavy shape. It carries the lifts, the enders and the guard breaks, and an ender is picked by where it sends |
+| **Martial A** | one action for each context, in 2 or 3 looks | The context decides the action; only the look varies |
+| **Martial B** | 1 signature, in at least 3 variants | Hand-picked pieces in a generated frame |
+| Defensive and energy cells | 6 each | The action is fixed by the cell; the variants are the limb and line, or how a shot is thrown |
+| Charging cells | 4 or 5 looks for each special | Few and memorable |
+| Manoeuvre cells | 6 to 8 each | 15 entries are posed, and each takes a blow on arrival |
 
-That is **46 moves in the martial arts stance and about 140 across the five,** for each fighter.
+That is 46 strikes in the martial arts stance, and about 140 moves across the five, for each fighter.
 
-**Forms multiply what the player sees, not what is authored.** In the martial arts stance a move lists the forms it can take, by rule: a light on a line, an inward arc or a rise can be a flurry blow; a light that arcs out, drops or kicks can be a skill strike; a heavy can be held, lift, or end a string; a spin is a skill strike or an ender, never a flurry blow. So the mashed flurry and the timed skill strike draw on different moves of the same cell, as Orb asked, and a missed beat falls back to the flurry's moves.
+**The stick leans the pick** inside X and Y (Game Design): nothing held favours hands on a line or an arc; toward, the close limbs; away, feet; up, rising shapes and high targets; down, dropping shapes and low targets. It is a weight of 3 and not a filter. So the generator fills **quotas** before it fills freely: **at least 5 moves under each lean in X, and at least 3 heavies for each way of sending in Y** (up, down, across, turned). A quota is one more data row on the cell.
+
+**Forms multiply what the player sees, not what is authored.** A move lists the forms it can take, by rule: a light on a line, an inward arc or a rise can be a flurry blow; a light that arcs out, drops or kicks can be a skill strike or a juggle strike; a heavy can be held, lift, or end a string; a spin is a skill strike or an ender, never a flurry blow. So the mashed flurry and the timed skill strike draw on different moves of the same cell, as Orb asked, and a missed beat falls back to the flurry's moves. The forms' numbers are Game Design's table.
+
+**A press may be delivered as 1, 2 or 3 pieces** that share the cell's damage and ki (Game Design): two bolts for one, or a double tap for one strike. The piece count is data on the move, and it is the only way a variant touches what the sim does.
 
 ### 3.2 Worked samples: the prototype's output
 
-Seed 20261004. One cell per stance, both fighters. "Keys" says how the move's poses are got (section 5). The martial arts cell is shown at the identity-first setting, where the two fighters differ most; the first slice would run at the setting that prefers what is posed.
+Seed 20261004, at the first slice's setting (preferring what is posed). "Keys" says how the move's poses are got (section 5).
 
-**Martial arts, west (hands, light).** 14 moves each; the first 8 are shown. The rival's are chosen from 54 valid shapes and the Protagonist's from 45.
+**Martial X: light strikes.** 30 moves each, from 81 valid shapes for the rival and 75 for the Protagonist. The first 10 are shown; the quotas put the close limbs and the feet first.
 
-| The rival | Tip | Path | Target | Step | Sends | Beat | Keys |
-| :--- | :--- | :--- | :--- | :--- | :--- | ---: | :--- |
-| 01 | fist | line | chest | in, hold | across | 20 | hand state: cross |
-| 02 | plate | drop | arm | hold, in | down | 26 | new key set |
-| 03 | blade | line | gut | in, hold | across | 20 | posed: spear hand |
-| 04 | plate | arc in | head | hold, around | turned | 24 | posed: hook |
-| 05 | fist | rise | jaw | in, hold | up | 24 | new key set |
-| 06 | blade | drop | head | hold, in | down | 26 | new key set |
-| 07 | fist | line | arm | in, hold | across | 20 | hand state and re-aim: cross |
-| 08 | plate | drop | chest | hold, in | down | 26 | new key set |
+| The rival | Limb | Tip | Path | Target | Step | Sends | Beat | Keys |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | ---: | :--- |
+| 01 | shoulder | plate | line | chest | in, hold | across | 20 | posed: shoulder check |
+| 02 | elbow | point | rise | jaw | in, hold | up | 24 | posed: rising elbow |
+| 03 | knee | cap | line | gut | in, hold | across | 20 | posed: short knee |
+| 04 | elbow | point | arc in | jaw | hold, around | turned | 24 | posed: short elbow |
+| 05 | elbow | point | drop | chest | hold, in | down | 26 | new key set |
+| 06 | foot | ball | line | gut | in, hold | across | 20 | posed: front kick |
+| 07 | foot | instep | arc in | legs | hold, around | turned | 24 | posed: low kick |
+| 08 | foot | edge | line | chest | in, hold | across | 20 | posed: side kick |
+| 09 | foot | instep | arc in | shins | hold, around | turned | 24 | posed: sweep |
+| 10 | foot | instep | arc in | chest | hold, around | turned | 24 | posed: snap round |
 
-| The Protagonist | Tip | Path | Target | Step | Sends | Beat | Keys |
-| :--- | :--- | :--- | :--- | :--- | :--- | ---: | :--- |
-| 01 | blade | arc in | head | hold, around | turned | 24 | posed: hook |
-| 02 | heel | arc out | jaw | around, hold | turned | 24 | re-aim: backfist |
-| 03 | palm | rise | gut | in, hold | up | 24 | new key set |
-| 04 | blade | drop | arm | hold, in | down | 26 | posed: knife-hand chop |
-| 05 | palm | line | chest | in, hold | across | 20 | posed: palm heel |
-| 06 | heel | arc out | head | around, hold | turned | 24 | posed: backfist |
-| 07 | blade | arc in | jaw | hold, around | turned | 24 | re-aim: hook |
-| 08 | palm | rise | chest | in, hold | up | 24 | new key set |
+| The Protagonist | Limb | Tip | Path | Target | Step | Sends | Beat | Keys |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | ---: | :--- |
+| 01 | elbow | point | arc in | jaw | hold, around | turned | 24 | posed: short elbow |
+| 02 | elbow | point | rise | jaw | in, hold | up | 24 | posed: rising elbow |
+| 03 | knee | cap | line | gut | in, hold | across | 20 | posed: short knee |
+| 04 | knee | cap | arc in | legs | hold, around | turned | 24 | new key set |
+| 05 | elbow | point | drop | chest | hold, in | down | 26 | new key set |
+| 06 | foot | heel | arc out | chest | around, hold | turned | 24 | posed: hook kick |
+| 07 | foot | instep | arc in | shins | hold, around | turned | 24 | posed: sweep |
+| 08 | foot | edge | line | chest | in, hold | across | 20 | posed: side kick |
+| 09 | foot | instep | arc in | legs | hold, around | turned | 24 | posed: low kick |
+| 10 | foot | heel | arc out | gut | around, hold | turned | 24 | re-aim: hook kick |
 
-Across all 14, the rival's paths are 4 lines, 3 drops, 3 rises, 3 inward arcs and 1 outward; the Protagonist's are 6 arcs, 3 rises, 2 drops and 3 lines.
+Over all 30: the rival has 16 hand, 7 foot, 3 elbow, 3 knee and 1 shoulder; 10 lines, 7 inward arcs, 5 rises, 5 drops and 3 outward arcs. The Protagonist has 16 hand, 9 foot, 3 elbow and 2 knee; 13 arcs, 7 lines, 5 rises and 5 drops. Under the stick the rival has 10, 7, 7, 13 and 9 moves (nothing, toward, away, up, down) and the Protagonist 9, 5, 9, 13 and 9.
 
-**Defensive, LB and west (turn a blow aside with the arms).** Parts: manner, what he does it with, the line covered, the step, and what it sets up.
+**Martial Y: heavy strikes.** 16 each, from 98 and 97 valid shapes. The first 8 are shown; the quotas put three of each send first.
 
-| The rival | Manner | With | Line | Step | Sets up | Keys |
+| The rival | Limb | Tip | Path | Target | Sends | Keys |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 01 | block | plate | high | out | a light counter | posed: guard |
-| 02 | check | plate | mid | in | a heavy counter | posed: the forearm check |
-| 03 | block | both plates | high | hold | a break-off | posed: guard |
-| 04 | parry | plate | mid | around | a turn | new |
-| 05 | check | plate | mid | hold | a light counter | posed: the forearm check |
-| 06 | block | both plates | high | out | a break-off | posed: guard |
+| 01 | hand | fist | rise | jaw | up | posed: uppercut |
+| 02 | knee | cap | rise | gut | up | posed: rising knee |
+| 03 | hand | fist | rise | chest | up | new key set |
+| 04 | hand | plate | drop | head | down | posed: double hammer |
+| 05 | elbow | point | drop | chest | down | posed: dropping elbow |
+| 06 | hand | blade | drop | head | down | posed: overhand |
+| 07 | hand | blade | line | chest | across | posed: rib shot |
+| 08 | knee | cap | line | gut | across | posed: driving knee |
 
-| The Protagonist | Manner | With | Line | Step | Sets up | Keys |
+| The Protagonist | Limb | Tip | Path | Target | Sends | Keys |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 01 | redirect | palm | high | around | a bind | new |
-| 02 | parry | blade | mid | hold | a light counter | new |
-| 03 | catch | palm | mid | in | a turn | new |
-| 04 | redirect | blade | high | around | a heavy counter | new |
-| 05 | parry | palm | mid | hold | a turn | new |
-| 06 | catch | both hands | high | in | a bind | new |
+| 01 | hand | palm | rise | jaw | up | posed: rising palm |
+| 02 | knee | cap | rise | gut | up | posed: rising knee |
+| 03 | hand | fist | rise | jaw | up | posed: uppercut |
+| 04 | hand | blade | drop | head | down | posed: double hammer |
+| 05 | foot | heel | drop | chest | down | posed: axe kick |
+| 06 | foot | sole | drop | gut | down | posed: stomp |
+| 07 | hand | palm | line | chest | across | posed: double palm |
+| 08 | foot | sole | line | chest | across | posed: drop kick |
 
-**Energy arts, RB and west (the bolt).** The shot's kind is the cell's; the parts are the hand, the release, what his body does and the count.
+**Martial B: the defining signature.** Game Design: a rush of his own strikes that ends in a launch, opening with a lunge from the mid band; a generated frame with hand-picked pieces. The frame: a tell of at least 30 ticks; a rush of four lights from his X cell, ordered by the `links` rule, his hand-picked pieces first; then a launcher from his Y cell, chosen by where the variant sends.
+
+| The rival | The rush | The launcher |
+| :--- | :--- | :--- |
+| High in the air | the plate dropped on the arm (new), cross, short elbow, spear hand | the dropping elbow, down |
+| On the ground | cross, short elbow, a cross to the arm (re-aimed), hook | the rising knee, up |
+| Against a guard | a fist dropped on the head (new), cross, short elbow, a cross to the arm | the body ram, across |
+
+| The Protagonist | The rush | The launcher |
+| :--- | :--- | :--- |
+| On the ground or low | low kick, hook kick, knife-hand chop, palm heel | the rising palm, up |
+| In the air | hook kick, knife-hand chop, palm heel, hammer-fist | the double palm, across |
+| Against a guard | knife-hand chop, palm heel, hammer-fist, front kick | the spinning back kick, turned |
+
+The same two or three pieces come back in every variant (the cross and the short elbow; the knife-hand chop and the palm heel). That is the hand-picked spine doing its work: the signature is recognisable, and the rest is fresh.
+
+**Defensive X: the check,** a short blow from behind the guard. The strike grammar, narrowed to short paths (line, rise, arc in) by hand, elbow or knee, thrown over the guard pose.
+
+| | The rival | The Protagonist |
+| :--- | :--- | :--- |
+| 01 | a blade on a line to the chest (posed: cross) | a blade on a line to the chest (posed: cross) |
+| 02 | a blade on a line to the gut (posed: spear hand) | a blade arcing in to the jaw (re-aim: hook) |
+| 03 | a rising elbow to the jaw (posed) | a palm on a line to the gut (hand state: spear hand) |
+| 04 | an elbow arcing in to the jaw (posed: short elbow) | a rising elbow to the jaw (posed) |
+| 05 | a fist on a line to the chest (hand state: cross) | a palm on a line to the chest (posed: palm heel) |
+| 06 | a knee on a line to the gut (posed: short knee) | an elbow arcing in to the jaw (posed: short elbow) |
+
+**Energy X: the bolt.** The shot's kind is the cell's; the parts are the hand, the release, what his body does and the count.
 
 | The rival | Hand | Release | Body | Count | Keys |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -175,63 +210,58 @@ Across all 14, the rival's paths are 4 lines, 3 drops, 3 rises, 3 inward arcs an
 | 05 | ring hand | flick | rising | a fan of three | posed: his arc of bolts |
 | 06 | flat palm | thrust | kiting turn | a pair | new |
 
-The count changes what the sim fires, so it is not a free variant: a cell may vary it only if Game Design gives each count its numbers. The hand, the release and the body are looks.
+The count is the piece count of Game Design's delivery rule: a pair or a fan shares one press's damage and ki, and counts once.
 
-**Charging, RT and north (the charged blow).** A charge pose, then a heavy from the strike grammar released from it.
+**Charging X: his quick special.** A special is a fixed frame for each fighter; the generator makes its looks. The rival's is the cutting step of wave 7 (a change of level and a wide cutting blow as he arrives). The Protagonist's specials are not designed, so his row is a placeholder frame: a turn that carries him round the rival, and an arc on arrival.
 
-| The rival | Charge pose | Level | Blow | Keys |
-| :--- | :--- | :--- | :--- | :--- |
-| 01 | low brace | full | a rising fist to the jaw | both posed (uppercut) |
-| 02 | channel | partial | a dropping elbow to the chest | both posed |
-| 03 | low brace | full | a knee on a line to the gut | both posed (driving knee) |
-| 04 | channel | partial | a blade on an inward arc to the head | both posed (haymaker) |
-| 05 | channel | full | both soles on a line to the chest | both posed (drop kick) |
+| | The rival: level, how he gets there, the blow | The Protagonist (placeholder): the turn, where he comes out, the blow |
+| :--- | :--- | :--- |
+| 01 | up; a dash from out of reach; haymaker | air roll; over; crescent kick |
+| 02 | down; a step in reach; spinning elbow | pivot; around; ridge hand |
+| 03 | up; a dash from out of reach; roundhouse | cartwheel step; around; spinning back kick |
+| 04 | down; a step in reach; spinning heel | air roll; over; hook kick |
+| 05 | up; a step in reach; spinning elbow | pivot; around; crescent kick |
 
-| The Protagonist | Charge pose | Level | Blow | Keys |
-| :--- | :--- | :--- | :--- | :--- |
-| 01 | open-hand brace | full | a blade on an inward arc to the head | both posed (haymaker) |
-| 02 | coil | partial | a sole dropping to the gut | both posed (stomp) |
-| 03 | open-hand brace | full | a spinning heel to the chest | both posed |
-| 04 | coil | partial | a palm on a line to the arm | pose posed; blow re-aimed (double palm) |
-| 05 | coil | full | the edge of the foot arcing out to the gut | pose posed; blow re-aimed (crescent kick) |
-
-**Manoeuvre, LT and west (the step strike).** An entry, its direction, and a light on arrival whose path suits the direction (a rise from under, a drop or an outward arc from over, an arc from around).
+**Manoeuvre X: the step strike.** A step around, over or under the rival, by the stick, and a light on arrival whose path suits the direction (an arc from around, a drop or an outward arc from over, a rise or a line from under).
 
 | The rival | Entry | Direction | Blow on arrival | Keys |
 | :--- | :--- | :--- | :--- | :--- |
-| 01 | dash | toward | the ball of the foot on a line to the gut | both posed (front kick) |
-| 02 | rising | under | a rising fist to the jaw | entry posed; blow new |
-| 03 | step in | toward | a blade on a line to the chest | both posed (cross) |
-| 04 | lane step | around | the instep arcing in to the shins | both posed (sweep) |
-| 05 | arc dive | over | the plate dropping on the arm | entry posed; blow new |
-| 06 | fade | away | the edge of the foot on a line to the chest | both posed (side kick) |
+| 01 | lane step | around | the instep arcing in to the legs | both posed (low kick) |
+| 02 | arc dive | over | the back of the fist arcing out to the head | both posed (backfist) |
+| 03 | rising | under | the ball of the foot on a line to the gut | both posed (front kick) |
+| 04 | pivot | around | the plate arcing in to the head | both posed (hook) |
+| 05 | arc dive | over | a fist dropped on the head | entry posed; blow new |
+| 06 | coil spring | under | the edge of the foot on a line to the chest | both posed (side kick) |
+| 07 | lane step | around | the instep arcing in to the shins | both posed (sweep) |
+| 08 | arc dive | over | the back of the fist arcing out to the jaw | entry posed; blow re-aimed (backfist) |
 
 | The Protagonist | Entry | Direction | Blow on arrival | Keys |
 | :--- | :--- | :--- | :--- | :--- |
-| 01 | pivot | around | the instep arcing in to the shins | both posed (sweep) |
-| 02 | air roll | over | the back of the fist arcing out to the head | both posed (backfist) |
-| 03 | cartwheel step | around | a blade arcing in to the jaw | entry posed; blow re-aimed (hook) |
-| 04 | rising | under | a rising palm to the gut | entry posed; blow new |
-| 05 | fade | away | the edge of the foot on a line to the chest | both posed (side kick) |
-| 06 | arc dive | over | a blade dropping on the arm | both posed (knife-hand chop) |
-
-Both fighters got the fade into a side kick. That is the identity setting at work: shared shapes are allowed, and the "never" rows and weights decide how many.
+| 01 | pivot | around | the back of the fist arcing out to the head | both posed (backfist) |
+| 02 | air roll | over | the hammer-fist dropped on the head | both posed |
+| 03 | rising | under | the ball of the foot on a line to the gut | both posed (front kick) |
+| 04 | cartwheel step | around | the instep arcing in to the shins | both posed (sweep) |
+| 05 | arc dive | over | the heel arcing out to the chest | both posed (hook kick) |
+| 06 | rising | under | a blade on a line to the gut | both posed (spear hand) |
+| 07 | spiral | around | the instep arcing in to the legs | both posed (low kick) |
+| 08 | air roll | over | a blade dropped on the arm | both posed (knife-hand chop) |
 
 ## 4. Generated offline, chosen at run time
 
 **I agree with offline generation, a seed and a review sheet.** The moveset is vocabulary, and vocabulary has to be seen before it ships: Animation must know which key sets to make, Legal must screen a fixed list, QA must be able to count it, and Orb must be able to look at it. A director that invented shapes during a match could show none of them in advance.
 
-| Offline, into data | At run time, by the director |
+| Offline, into data | At run time, by the director (Game Design's order) |
 | :--- | :--- |
-| Which moves exist in each cell, with all their parts | Which move of the cell this press plays: a keyed draw, past his last two picks |
-| Each move's key set and how it is got | The range step, from the two allowed, by where the rival is |
-| The pools and the `pieces` block of `recipes.json`, written from the cells | The form, from how the press was made (mashed, timed, held) |
-| The review sheet | The order of a string, by the `links` rule or a drawn pattern |
-| | What is closed right now: gates (ground, band, stance), broken limbs, pieces still waiting |
+| Which moves exist in each cell, with all their parts | 1. The situation removes what cannot be thrown: air, ground, wall, water; the form; a broken limb |
+| Each move's key set and how it is got | 2. The range picks the close pieces or the lunge pieces |
+| The pools and the `pieces` block of `recipes.json`, written from the cells | 3. The stick leans the pick |
+| The quotas each cell was filled to | 4. The last presses rule out a repeat inside the string |
+| The review sheet | 5. The flow unlocks the showier variants |
+| | 6. A seeded draw settles what is left |
 
 **The pipeline.**
-1. **Inputs,** all Combat's data: the grammar's four tables, the identity blocks, the cells (from Game Design's matrix), and the seed.
-2. **Generate.** For each cell: every valid shape the identity allows, scored by the identity weights, by how its keys are got, and by a small keyed jitter; then picked one at a time, each pick marking down the shapes that share its path, target or tip, so a cell spreads over the grammar and does not cluster.
+1. **Inputs,** all Combat's data: the grammar's four tables, the identity blocks, the cells with their counts and quotas (from Game Design's matrix), and the seed.
+2. **Generate.** For each cell: every valid shape the identity allows, scored by the identity weights, by how its keys are got, and by a small keyed jitter; then picked one at a time, quotas first, each pick marking down the shapes that share its path, target or tip, so a cell spreads over the grammar and does not cluster.
 3. **The sheet.** One row a move: its parts, its hooks, its keys, the Legal rows it passed, and Animation's picture of its contact pose.
 4. **Review.** Combat, Animation and Legal mark each new row accept, change or reject. Orb sees the accepted sheet.
 5. **Lock.** Accepted moves are written to the fighter's moveset file and keep their ids for good. Rejected shapes go on a list the generator never proposes again.
@@ -239,6 +269,8 @@ Both fighters got the fade into a side kick. That is the identity setting at wor
 **Determinism.** The only randomness is a hash of the seed, the fighter, the cell and the shape: there is no generator state. The same inputs give the same file, byte for byte, and CI checks it. The file is hashed with the combat data, so a replay names the moveset it ran on.
 
 **Growth is by appending.** Adding a part or raising a count fills only the free places of a cell; locked moves do not move. A full regeneration (a new seed, or a changed weight) is a deliberate act with its own sheet, because Animation's work hangs on the ids.
+
+**The move list is free.** Orb's answers ask for a per-fighter move list first, before a practice mode. It is the moveset file printed by cell.
 
 ## 5. What it asks of Animation, Tools and Legal
 
@@ -262,31 +294,25 @@ Partly, and more than is used today. A pose is a parametric sketch, the striking
 
 So what is posed reaches about twice as many moves as it plays today, with no new key set.
 
-**For a 46-move martial arts stance:**
-
-| Setting | The rival | The Protagonist | New key sets |
-| :--- | :--- | :--- | ---: |
-| Preferring what is posed | 30 posed, 8 by swap or re-aim | 29 posed, 9 by swap or re-aim | 8 each |
-| Identity first | 22 posed, 7 by swap or re-aim | 23 posed, 7 by re-aim | 17 and 16 |
-
 **The asks:**
-1. **A `tip` and a `path` on every manifest row,** so the counts above are read from Animation's data and not from my reading of each look.
+1. **A `tip` and a `path` on every manifest row,** so the counts are read from Animation's data and not from my reading of each look.
 2. **Confirm the two derivations:** the hand-state swap, and how far the contact solve can re-aim before the silhouette breaks. My neighbour table is a guess to correct.
 3. **Path templates for new key sets:** a chamber, a contact and a follow for each limb and path (about 20), with the target's height as a parameter, composed offline by `wave_gen` under the fighter's profile and the joint limits. Each composed set still gets a look on the sheet. If templates do not read well enough, a new key set is drawn, three sketches each.
-4. **What stays hand-drawn:** spins, each fighter's identity core, held poses (charges, taunts, energy hands), and almost all of the defensive stance, where only the guard and two checks are posed.
+4. **What stays hand-drawn:** spins, each fighter's hand-picked pieces, held poses (signature tells, charges, taunts, energy hands), and the guard layer the checks are thrown over.
 
 ### 5.2 Tools: the schemas
 
 | File | Schema | Holds |
 | :--- | :--- | :--- |
-| `data/combat/parts.json` | `combat.parts/1` | the grammar: tips by limb, paths by tip, targets by limb and path, the weight rule, `links`, and the rules that derive `sends`, the step and the beat; one block for each stance's parts |
-| `data/combat/identity.json` | `combat.identity/1` | for each fighter: weights by tip, path and limb, the `never` rows, the reuse setting, the rejected shapes |
-| `data/combat/cells.json` | `combat.cells/1` | stance by button: the cell's class, its filter over the parts, its least and most variants |
-| `data/combat/movesets/<fighter>.json` | `combat.moveset/1` | generated and locked: the generator's version, the seed and the inputs' hash, then for each cell its moves: id, parts, forms, step, hooks, keys (level and the key set it starts from), the Legal rows passed, the review state |
+| `data/combat/parts.json` | `combat.parts/1` | the grammar: tips by limb, paths by tip, targets by limb and path, the weight rule, `links`, and the rules that derive `sends`, the step, the beat and the forms; one block for each stance's parts |
+| `data/combat/identity.json` | `combat.identity/1` | for each fighter: weights by tip, path and limb, the `never` rows, the reuse setting, his hand-picked pieces, the rejected shapes |
+| `data/combat/cells.json` | `combat.cells/1` | stance by button: the cell's filter over the parts, its count, its quotas (the stick's five leans, the four sends), and for a frame cell (a signature, a special) its slots |
+| `data/combat/movesets/<fighter>.json` | `combat.moveset/1` | generated and locked: the generator's version, the seed and the inputs' hash, then for each cell its moves: id, parts, forms, piece count, step, hooks, keys (level and the key set it starts from), the Legal rows passed, the review state |
 
 Cross-checks:
 - every move is a valid shape of `parts.json`, and matches no `never` row and no banned shape;
-- no cell holds a shape twice; each cell is inside its count;
+- no cell holds a shape twice; each cell meets its count and its quotas;
+- a move delivered in pieces has shares that add up to the cell's values (Game Design's rule);
 - a move's key set is a manifest row when its level says posed, swapped or re-aimed;
 - the pools and `pieces` of `recipes.json` agree with the moveset files;
 - **the generated files are up to date:** generating again from the committed inputs gives the committed files.
@@ -298,43 +324,73 @@ The generator itself is a script under `tools/`, so it is Tools' to hold. The pr
 A generated move must not land on a franchise's signature move. Four layers, the first two automatic:
 
 1. **Banned shapes, as data.** Each row is a set of part values with a reason in plain words, and no franchise's name. The generator never emits a match, and the validator checks again. The list starts from Legal's rulings already in the manifests and the review log: no hand chambered at the hip; no two fists clasped; no leap on a rising blow; no arm held raised after it; one turn at most; wrists apart; no crossed forearms held; no fist punched ahead and not both arms trailed back on an entry; and for energy, no two-finger hand, no cupped hands, no two-hand push from the chest, no sphere growing in a palm.
-2. **Marks.** A part value can carry one of the stacking rule's seven marks. A move or a phrase that would stack three is not generated; two goes to the manual screen.
+2. **Marks.** A part value can carry one of the stacking rule's seven marks. No moment may show more than two, so a move or a frame that would stack three is not generated, and two goes to the manual screen.
 3. **The sheet.** Legal screens only the shapes that are new since the last lock: go, change or no. A "no" becomes a banned shape, widened to the pattern behind it, so it cannot come back in another cell or for another fighter.
-4. **Where the eye is always needed.** A single strike is ordinary martial arts. The risk is in what is held and what is strung together: charge poses, energy hands, taunts, entries, and any named phrase (a pattern, a showcase, a finisher). Those are screened by eye every time.
+4. **Where the eye is always needed.** A single strike is ordinary martial arts. The risk is in what is held and what is strung together: signature tells, charge poses, energy hands, taunts, entries, and every frame (a signature, a special, a pattern, a finisher). Those are screened by eye every time.
 
-The prototype's own output shows why. The rival's second step strike is a rising entry into a rising fist under the jaw: legal with his feet staying down and no turn, and exactly the row the "no leap" shape exists for.
+The prototype's own output shows why. One of the rival's heavies is a rising fist to the jaw, and one of his step strikes rises from under the rival: together they are legal only with his feet staying down and no turn, which is exactly the row the "no leap" shape exists for.
 
 **Names.** A generated move has an id made of its cell and a number, and is described by its parts. It gets a name only from Narrative, with Legal's phrase search.
 
 ## 6. The first slice: the martial arts stance, for both fighters
 
-It is the stance the approved brawl plays in, most of it is posed, and Encounter's press-to-blow work needs a pool for each button.
+X, Y, A and the defining signature on B. It is where most of a match is spent, most of it is posed, and it is the first build in Orb's sequencing.
+
+### 6.1 Sized against the matrix
+
+At the setting that prefers what is posed, with the quotas of section 3.1:
+
+| Cell | Moves | The rival: posed, derived, new | The Protagonist: posed, derived, new |
+| :--- | ---: | :--- | :--- |
+| **X**, light strikes | 30 | 14, 4, **12** | 16, 6, **8** |
+| **Y**, heavy strikes | 16 | 13, 2, **1** | 14, 2, **0** |
+| **Both strike cells** | 46 | 27, 6, **13** | 30, 8, **8** |
+| **A**, context | 5 actions and the held channel | Today's actions and their shared poses. His taunts (4 far, 1 close) and On the Chin (6 poses) are posed. New: nothing | Today's actions and their shared poses. His taunts (3 far, 1 close) are posed; he has no channel yet. New: nothing |
+| **B**, the defining signature | 1 frame, 3 variants | The rush and the launchers are X and Y moves. New: the tell and the held end, **2 sketches** | The same: **2 sketches** |
+
+- **"Derived"** is a hand-state swap or a re-aim on a posed key set: no new sketch, a look on the sheet.
+- **21 new strike key sets and 4 signature sketches in all.** 20 of the 21 are lights: the posed sets hold 16 lights for the rival and 20 for the Protagonist, and X asks for 30.
+- **The slice can start on what is posed.** New moves sit in the file as waiting, and the director skips them: X plays at 18 for the rival and 22 for the Protagonist from the first day, and Y at 15 and 16. Each key set that arrives turns one move on.
+- **With a leg broken on the ground** X keeps 20 and 19 moves, and Y keeps 13 and 7. The Protagonist's heavies lean on his legs; 7 is enough for a cell thrown once or twice a string, and in the air he has all 16.
+- **A second look for each grab and throw** waits for wave 4's grabs (16 designed, none posed), outside this slice.
+
+**If 21 new key sets is too many for the slice,** the lever is X's count, and it costs sameness:
+
+| X holds | New light key sets (rival, Protagonist) | Lights the two share |
+| ---: | :--- | ---: |
+| 30, as above | 12 and 8 | 53% |
+| 30, reusing harder | 9 and 5 | 57% |
+| 26 | 9 and 6 | 54% |
+| 24, reusing harder | 5 and 3 | 67% |
+
+I recommend 30 as above, started on what is posed.
+
+### 6.2 Who does what
 
 | Who | What |
 | :--- | :--- |
-| **Game Design** | the four cells of the stance (the matrix), and the class numbers of each form |
-| **Combat** | `parts.json` (the strike grammar), the two identity blocks, the four cells; run the generator at the setting that prefers what is posed; the sheet; then the lock |
+| **Combat** | `parts.json` (the strike grammar), the two identity blocks with their hand-picked pieces, the four cells; run the generator; the sheet; then the lock |
 | **Tools** | the four schemas and the cross-checks; the generator under `tools/` |
-| **Animation** | `tip` and `path` on the manifests; the hand-state swap and the re-aim; 8 new key sets for each fighter |
-| **Legal** | the banned shapes as data; the screen of 92 rows, 16 of them new key sets |
-| **Encounter** | a pool for each button in the brawl; the `links` rule as a preference when it orders a string; the beat point by move |
+| **Animation** | `tip` and `path` on the manifests; the hand-state swap and the re-aim; 21 new key sets and 4 signature sketches |
+| **Legal** | the banned shapes as data; the screen of 92 strike rows (21 new shapes by eye) and the two signature frames |
+| **Encounter** | a pool for each button in the brawl; the stick's lean; the `links` rule as a preference when it orders a string; the beat point by move; the signature frame's slots |
 | **QA** | the tests below |
 
 **Exit:**
-- Each fighter has 46 moves over the four cells: 38 from what is posed and 8 new.
-- The two fighters share under 45% of their shapes (97% today).
-- With one arm or one leg broken, each light cell still has 8 moves.
-- No string of five shows a move twice.
+- Each fighter has 30 lights and 16 heavies in the file, with at least 18 lights and 15 heavies playable.
+- Under each lean of the stick, X has at least 5 moves; Y has at least 3 heavies for each send.
+- The two fighters share under 50% of their shapes (97% today).
+- No string shows a move twice, and the same three-blow series comes in under 10% of strings (Game Design's bands).
 - Every move has passed the banned shapes, and every new shape has Legal's go.
 - Generating again from the seed gives the same files.
 
-**After it:** the manoeuvre stance (the entries are posed, and it reuses the strike grammar on arrival), then energy arts, charging, and the defensive stance last, since it needs the most new poses.
+**After it:** the manoeuvre stance (the entries are posed, and it reuses the strike grammar on arrival), then energy arts, the defensive stance, and charging last, since the Protagonist's three specials are not designed.
 
 ## 7. Open, through the EP
 
 | For | Question |
 | :--- | :--- |
-| **Game Design** | The matrix. Whether a cell may hold variants that change what the sim does (a pair of bolts against one), or only looks. The forms' numbers |
 | **Orb** | The identity weights read as "open hands and arcs" against "fists, plates and straight lines": is that the split wanted, and should the rival's posed blade hands become fists? The rival's tail is still waiting, and would add an `own` limb to his cells |
-| **Animation** | The four asks in section 5.1 |
-| **Art and Narrative** | The "never" rows of each fighter |
+| **Game Design** | Which of each fighter's three specials is the quick, the strong and the utility one. The Protagonist's specials |
+| **Animation** | The four asks in section 5.1, and whether 21 new key sets fits the slice |
+| **Art and Narrative** | The "never" rows and the hand-picked pieces of each fighter |
