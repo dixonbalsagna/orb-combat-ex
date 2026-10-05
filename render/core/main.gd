@@ -473,7 +473,7 @@ func render_view(a: float) -> void:
 		pane.render(host, a, host.camera_x(a), host.camera(a), PaneShake.capped(host.jitter, vh, _shake()), cam_pitch)
 	view_cam_x = pane.view_cam_x
 	host.impact.heat_changed = false
-	UiSimBridge.patch(ui_hud, S)
+	UiSimBridge.patch(ui_hud, S, host.hub)   # the hub is read for the armed stance's badge (UI's bridge writes nothing to it)
 	ui_hud.queue_redraw()
 	hud.queue_redraw()
 
