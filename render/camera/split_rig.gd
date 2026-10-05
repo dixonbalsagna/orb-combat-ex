@@ -178,8 +178,8 @@ var _started: bool = false
 # ---------------------------------------------------------------------------------------------------- public
 
 func reset(S: SimState, p_vw: float, p_vh: float) -> void:
-	vw = p_vw
-	vh = p_vh
+	vw = maxf(p_vw, 2.0)   # a view of no size (a page still loading, a hidden pane) must not leave a zero in the zoom maths
+	vh = maxf(p_vh, 2.0)
 	var A = S.fighters[0]
 	var B = S.fighters[1]
 	u = SimWrap.sdx(A.x, B.x)
@@ -240,6 +240,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	r_now = _metric(S)
 	split_wanted = r_now < _r_split()
 	sep = 1.0 if split_wanted else 0.0
+	_intro_adopt(S)
 	_snap_cameras(S)
 	_started = true
 	_cur = _make_frame(S)
@@ -250,6 +251,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 ## Advance one sim tick. `events` are that tick's fx events (tier_up, cinematic_start, cinematic_end, fold_start,
 ## unfold, relocate are read; the rest ignored).
 func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+	if p_vw < 2.0 or p_vh < 2.0:
+		return   # no view to frame yet (hidden, or not laid out): keep the last frame; the first real size resets
 	if not _started or p_vw != vw or p_vh != vh:
 		reset(S, p_vw, p_vh)
 		return
@@ -1408,6 +1411,44 @@ func _intro_cut(S: SimState, slot: int) -> void:
 	if slot >= 0:
 		_snap_focus(S, slot)
 		_zo[slot] = _own_zoom_target(S, slot)
+
+
+## A reset in the middle of a composed intro (the window resized or rotated, a page that laid out late, a replay seek):
+## the intro's events are not repeated, so the shot is worked out from the sim's state instead. Without this the rig took the
+## pair for far apart (one fighter is held 6,000 units up before his fall), opened a split with its divider across the
+## screen, and did not know the intro was running (Camera's block of this fault: the black diagonal line in the EP's capture).
+## The fighter falling gets the fall shot; one down with the other still held up gets the landing shot; both down is the
+## staredown with the ticks left to the clock; both held up (before the first fall) is the one view, no shot yet.
+func _intro_adopt(S: SimState) -> void:
+	if S.intro == null or int(S.intro.left) <= 0:
+		return
+	intro_active = true
+	_in_t = 0
+	var held: Array = [false, false]
+	var falling: int = -1
+	for i in range(2):
+		var f = S.fighters[i]
+		if f.state == "intro" or f.state == "waiting":
+			var g: float = WorldTerrain.groundY(S, f.x)
+			if f.y >= g + SimIntro.fallHeight - 1.0:
+				held[i] = true
+			elif f.y > g + 4.0:
+				falling = i
+	# the intro's shots own the screen: not a split chosen from a pair that is far apart because one is up in the sky
+	split_wanted = false
+	sep = 0.0
+	if falling >= 0:
+		var fg: float = WorldTerrain.groundY(S, S.fighters[falling].x)
+		_intro_fall(S, falling, fg, fg + SimIntro.fallHeight)
+	elif held[0] != held[1]:
+		var a: int = 1 if held[0] else 0
+		var cr: float = 150.0
+		for c in S.craters:
+			if absf(SimWrap.sdx(c.x, S.fighters[a].x)) < 8.0:
+				cr = c.r
+		_intro_land(S, a, cr)
+	elif not held[0] and not held[1]:
+		_intro_stare(S, int(S.intro.left))
 
 
 func _intro_fall(S: SimState, a: int, ground_y: float, top_y: float) -> void:

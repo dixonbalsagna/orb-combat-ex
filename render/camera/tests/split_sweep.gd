@@ -242,6 +242,7 @@ func _run() -> void:
 		_real_match(int(seeds[mini(1, seeds.size() - 1)]), -1, 49.0, FULL_TICKS, 2)
 	_intro_real()
 	_intro_composed_all()
+	_intro_resize_all()
 	_opening_default()
 	_sim_unchanged()
 	print("frames checked  %d, checks %d" % [frames_checked, checks])
@@ -1813,6 +1814,92 @@ func _intro_composed(sc: String, order: int, gap: int) -> Dictionary:
 	SimCore.dispose(_S)
 	_S = null
 	return {"split_off": split_off, "two_off": two_off, "new_off": new_off, "div": div_ticks, "runs": 1, "zmin_new": zmin_new}
+
+
+## A view whose size changes during an intro (a page that lays out late, a window dragged or a phone turned, a hidden pane
+## shown): the size is 0, then small, then full, and drops to three quarters in the middle of each fall. A step with no view
+## does nothing; any other size change resets the rig mid-intro and it works the shot out from the sim's state. The EP's
+## capture of a black diagonal line across a falling shot was a reset like this one: the rig took the pair (one fighter held
+## up 6,000 units) for far apart, opened a split and did not know an intro was running. Checks, every tick with a view:
+## the frame asks for no divider and shows one pane while the intro runs, the subject of an intro shot is on the screen
+## three ticks after the resize, nothing is NaN, and a few seconds into the match both are on the screen.
+func _intro_resize_all() -> void:
+	for cfg in [["double_drop", 0, 48], ["latecomer", 0, 154], ["latecomer", 1, 100], ["long_look", 1, 48]]:
+		_intro_resize(String(cfg[0]), int(cfg[1]), int(cfg[2]))
+
+
+func _intro_resize(sc: String, order: int, gap: int) -> void:
+	_begin("intro resize %s first %d gap %d" % [sc, order, gap])
+	SimCore.newMatch(_S, 3, {"p1": true, "p2": true}, {"intro": {"play": true, "scenario": sc, "order": order, "gap": gap}})
+	_rig.reset(_S, vw, vh)
+	_watch_first()
+	_S.dt = SplitRig.DT
+	var clock: int = int(_S.intro.clock)
+	var div_ticks: int = 0
+	var two_pane: int = 0
+	var off: int = 0
+	var bad: int = 0
+	var second_fall: int = -1
+	var last_size: Vector2 = Vector2(vw, vh)
+	var since_resize: int = 99
+	var first_fall_seen: int = -1
+	for t in range(0, clock + 240):
+		SimCore.step(_S)
+		var ev: Array = _S.out.fx.duplicate()
+		_S.out.fx.clear()
+		_S.out.feed.clear()
+		for e in ev:
+			if String(e.type) == "entrance_fall":
+				if first_fall_seen < 0:
+					first_fall_seen = t
+				else:
+					second_fall = t
+		var sz: Vector2 = Vector2(vw, vh)
+		if t < 6:
+			sz = Vector2.ZERO
+		elif t < 12:
+			sz = Vector2(320.0, 180.0)
+		elif first_fall_seen >= 0 and t >= first_fall_seen + 8 and t < first_fall_seen + 14:
+			sz = Vector2(vw * 0.75, vh * 0.75)
+		elif second_fall >= 0 and t >= second_fall + 4 and t < second_fall + 10:
+			sz = Vector2(vw * 0.6, vh * 0.6)
+		if sz != last_size:
+			since_resize = 0
+		else:
+			since_resize += 1
+		last_size = sz
+		_rig.step(_S, sz.x, sz.y, ev)
+		_tick += 1
+		if sz.x < 2.0:
+			continue
+		var cur: SplitFrame = _rig.current()
+		for i in range(2):
+			for v in [cur.cam_x[i], cur.cam_y[i], cur.cam_z[i]]:
+				if is_nan(v) or is_inf(v):
+					bad += 1
+		if _S.intro.left > 0:
+			if cur.sep > 0.01 and cur.line_alpha > 0.01:
+				div_ticks += 1
+			if cur.shows(0) and cur.shows(1):
+				two_pane += 1
+			if _rig.solo_kind == "intro" and since_resize >= 3:
+				var sl: int = _rig.solo_slot
+				var pt: Vector2 = cur.screen_pos(0 if not cur.shows(sl) or sl == 0 else sl, _S.fighters[sl].x, _S.fighters[sl].y + CamParams.CHEST, float(_S.fighters[sl].z))
+				if pt.x < 0.0 or pt.x > cur.vw or pt.y < 0.0 or pt.y > cur.vh:
+					off += 1
+	var fin: SplitFrame = _rig.current()
+	var both: bool = true
+	for i in range(2):
+		var q: Vector2 = fin.screen_pos(0 if not fin.shows(i) or i == 0 else i, _S.fighters[i].x, _S.fighters[i].y + CamParams.CHEST, float(_S.fighters[i].z))
+		both = both and q.x >= 0.0 and q.x <= fin.vw and q.y >= 0.0 and q.y <= fin.vh
+	_check(div_ticks == 0, "%s: the frame asked for a divider on %d intro ticks" % [_label, div_ticks])
+	_check(two_pane == 0, "%s: two panes were up on %d intro ticks (the mask would draw a line)" % [_label, two_pane])
+	_check(off == 0, "%s: the shot's subject was off the screen for %d ticks after a resize" % [_label, off])
+	_check(bad == 0, "%s: %d camera values were not finite" % [_label, bad])
+	_check(both, "%s: a fighter off the screen a few seconds into the match" % _label)
+	stats["intro resize " + sc + " " + str(order)] = "divider ticks %d, two-pane ticks %d, subject off %d, bad values %d" % [div_ticks, two_pane, off, bad]
+	SimCore.dispose(_S)
+	_S = null
 
 
 ## The default opening (the setup's default is "skip": both fighters already on their craters, 900 units apart): the first
