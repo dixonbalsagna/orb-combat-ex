@@ -18,7 +18,7 @@ const wj = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
       title: 'biomes.stages/1',
       description: 'data/biomes/stages.json: the stages of a building\'s destruction (docs/world/staged-destruction.md; WorldStructures.stage). hpAt: the health shares (of its full health) at which a building enters its next stage, three numbers falling from the first. cutFloorsStage: the stage from which cut floors show. Version field: schema. Policy: closed except keys starting with an underscore. The order of hpAt (strictly decreasing) is checked by tools/lib/xref-fight.js (stages-order).',
       type: 'object',
-      required: ['schema', 'hpAt', 'cutFloorsStage'],
+      required: ['schema', 'hpAt', 'cutFloorsStage', 'leaveFrac'],
       properties: {
         schema: { const: 'biomes.stages/1' },
         hpAt: {
@@ -29,6 +29,7 @@ const wj = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
           description: 'The health shares at which a building enters stages 1, 2 and 3, strictly decreasing.',
         },
         cutFloorsStage: { type: 'integer', minimum: 1, maximum: 3, description: 'The stage from which cut floors show.' },
+        leaveFrac: { type: 'number', minimum: 0, maximum: 0.9, description: 'One blast (damageArea, not a beam or a brunt) cannot take a standing building below this share of its hit points, so a second blast finishes it. 0 is off.' },
       },
       additionalProperties: false,
       patternProperties: { '^_': true },
@@ -57,6 +58,7 @@ const wj = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
       _about: 'Validator fixture, not game data.',
       hpAt: live && Array.isArray(live.hpAt) ? live.hpAt : [0.9, 0.65, 0.35],
       cutFloorsStage: live && Number.isInteger(live.cutFloorsStage) ? live.cutFloorsStage : 2,
+      leaveFrac: live && typeof live.leaveFrac === 'number' ? live.leaveFrac : 0.1,
     });
   }
 }
@@ -110,6 +112,14 @@ const wj = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
     x('cut-floors-integer', { set: { '/cutFloorsStage': 1.5 } }, { rule: 'type', pointer: '/cutFloorsStage' }),
     x('cut-floors-edges-ok', { set: { '/cutFloorsStage': 1 } }, null),
     x('cut-floors-last-ok', { set: { '/cutFloorsStage': 3 } }, null),
+    x('leave-frac-required', { del: ['/leaveFrac'] }, { rule: 'required', pointer: '' }),
+    x('leave-frac-negative', { set: { '/leaveFrac': -0.1 } }, { rule: 'minimum', pointer: '/leaveFrac' }),
+    x('leave-frac-above-limit', { set: { '/leaveFrac': 0.95 } }, { rule: 'maximum', pointer: '/leaveFrac' }),
+    x('leave-frac-one', { set: { '/leaveFrac': 1 } }, { rule: 'maximum', pointer: '/leaveFrac' }),
+    x('leave-frac-type', { set: { '/leaveFrac': 'some' } }, { rule: 'type', pointer: '/leaveFrac' }),
+    x('leave-frac-off-ok', { set: { '/leaveFrac': 0 } }, null),
+    x('leave-frac-limit-ok', { set: { '/leaveFrac': 0.9 } }, null),
+    x('leave-frac-first-value-ok', { set: { '/leaveFrac': 0.1 } }, null),
   ];
   let n = 0;
   for (const k of add) if (!c.cases.some((y) => y.id === k.id)) { c.cases.push(k); n++; }

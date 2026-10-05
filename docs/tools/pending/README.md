@@ -146,7 +146,7 @@ For `docs/combat/pending/recipes.brawl.json` (with Encounter's slice B2). Run on
 
 ## `apply-stages.cjs`: World's staged destruction, slice 1
 
-Schema for the new file `data/biomes/stages.json` (`biomes.stages/1`; `docs/world/staged-destruction.md`). Run once from the repo root, in the commit where World lands the file: `node docs/tools/pending/apply-stages.cjs`. It does **not** edit `data/`. It adds `biomes-stages.schema.json` (closed; `hpAt` exactly 3 numbers, each above 0 and below 1; `cutFloorsStage` an integer 1 to 3; `_about` and other underscore keys allowed), the map entry, a fixture and 22 cases, and the rule `stages-order` (hpAt strictly decreasing, an error). Re-runnable. Tested on a clean `git archive HEAD` (a995d16) with the file dropped in: 0 errors and 0 warnings, self-test passes.
+Schema for the new file `data/biomes/stages.json` (`biomes.stages/1`; `docs/world/staged-destruction.md`). Run once from the repo root, in the commit where World lands the file: `node docs/tools/pending/apply-stages.cjs`. It does **not** edit `data/`. It adds `biomes-stages.schema.json` (closed; `hpAt` exactly 3 numbers, each above 0 and below 1; `cutFloorsStage` an integer 1 to 3; `leaveFrac` a number 0 to 0.9 (0 is off); `_about` and other underscore keys allowed), the map entry, a fixture and 30 cases, and the rule `stages-order` (hpAt strictly decreasing, an error). Re-runnable. Tested on a clean `git archive HEAD` (a995d16) with the file dropped in: 0 errors and 0 warnings, self-test passes.
 
 ## `apply-movegen.cjs`: Combat's generated movesets
 
