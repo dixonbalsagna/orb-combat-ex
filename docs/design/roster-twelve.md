@@ -1,14 +1,14 @@
 # A roster of twelve: roles, the first four, and templates for the rest
 
-Owner: Game Design. Version 2, 2026-10-05. This is the mechanical half of the roster document. Narrative's identity half is `docs/narrative/roster-twelve-identity.md`, and the EP merges the two. **Version 2 lines the templates up one to one with Narrative's nine,** adds the juggernaut, and ends with one table of twelve (§8).
+Owner: Game Design. Version 3, 2026-10-05. This is the mechanical half of the roster document. Narrative's identity half is `docs/narrative/roster-twelve-identity.md`, and the EP merges the two. **Version 3 takes Orb's answers in questionnaire 18:** four niches are certain (the stalker, the heavy, the speedster and the shaper), the cast is hero-heavy, and every fighter is on the shared human rig. The templates line up one to one with Narrative's nine, and §8 is one table of twelve.
 
 **Orb's ask** (`docs/ep/vision.md`, 2026-10-05): "I want to lay the groundwork for a full roster of twelve, so classify the roles and subroles we've already established with our first four in our roster, then give me notes and proposals for fighters who can fill out the rest", with "generic templates to consider for fighter niches we haven't touched yet".
 
 **How to read it.**
 - §1 is a set of eight axes for describing any fighter in this game.
 - §2 puts the first four on those axes and lists the gaps they leave.
-- §3 is nine templates, each paired with one of Narrative's identities. Eight fill the roster and the ninth is the spare. §3b keeps four more as alternatives.
-- §4 shows three ways to pick the twelve, with what each covers.
+- §3 is nine templates, each paired with one of Narrative's identities. Four are certain, and four of the other five fill the roster. §3b keeps four more as alternatives.
+- §4 shows three ways to fill the four open slots, with what each covers.
 - §5 is the order to build them in on a zero budget.
 - §8 is the single view: one table of twelve.
 
@@ -20,7 +20,7 @@ A generic fighting game sorts fighters by range and speed. This game has more to
 
 | # | Axis | The question | The values so far |
 | ---: | :--- | :--- | :--- |
-| 1 | **Role and subrole** | How does he win a fight? | Duelist, Commander, Devourer (§2). The templates add eight more, and the spare a ninth |
+| 1 | **Role and subrole** | How does he win a fight? | Duelist, Commander, Devourer (§2). The templates add nine more |
 | 2 | **Range home** | Where does he want the fight? | The brawl (in reach), zip range (the mid band), far (energy), or anywhere |
 | 3 | **Stance spine** | Which two of the five stances are his best, and which one is his worst? | Martial arts, defensive, energy arts, charging, manoeuvre |
 | 4 | **The world** | What is the landscape to him? | He tends it, ignores it, annexes it or feeds on it (Narrative's words). Still free: builds on it, hides in it, is part of it, plays to it |
@@ -84,6 +84,11 @@ Every fighter costs the same base on top of his template: an identity block for 
 
 The names in brackets are Narrative's identity templates. The pairing is where the fit is natural, and Orb can re-pair any of them.
 
+**Orb's answers** (questionnaire 18):
+- the niches to explore most are stealth or ambush, the heavy or giant, the speedster and the terrain shaper. So **T2, T3, T4 and T9 are certain,** and the shaper is a full slot and no longer the spare;
+- the cast is hero-heavy: an ensemble of allies;
+- body variety is 2 of 5: close to all humanoid, with small departures such as a tail or a size. So every template is on the shared rig, and the giant becomes an armoured heavy (T4).
+
 ### T1. The grappler (Narrative's Veteran)
 
 | | |
@@ -140,22 +145,25 @@ The names in brackets are Narrative's identity templates. The pairing is where t
 2. **Hide the tells, not the body.** On a shared screen he is drawn faded, the rival's lock is denied, and his next attack shows no tell, no streak and no engage ring. The rival has to read the body itself. This works everywhere, and it is the cheapest.
 3. **Both:** answer 1 where each player has a screen, and answer 2 on a shared one.
 
-### T4. The giant (Narrative's Colossus)
+### T4. The heavy (Narrative's Colossus)
+
+**Changed by Orb's answer on body variety** (questionnaire 18): he is an armoured heavy at normal or slightly larger height, on the shared rig. He isn't a giant on a second skeleton.
 
 | | |
 | :--- | :--- |
-| **The niche** | He doesn't move when hit, and the ground answers where he stands |
-| **Role and subrole** | Bulwark. The giant |
+| **The niche** | He doesn't move when hit, and the ground answers where he lands |
+| **Role and subrole** | Bulwark. The heavy |
 | **Range home** | The brawl, and he makes the rival come to him |
 | **Stances** | Best: martial arts (the heavies), defensive. Worst: manoeuvre |
-| **Signature mechanic** | **Size and weight.** He is several times the others' size. Stream blows (lights and flurry blows) don't reel him. He is knocked back half as far and lifted for half as long. In return he is a bigger target, his zips cost more, and a tech or heavy counter staggers him for longer. His landings and his heavies damage structures at one tier above his own, and the ground under him cracks and tilts |
+| **Signature mechanic** | **Weight.** Stream blows (lights and flurry blows) don't reel him. He is knocked back half as far and lifted for half as long. In return his zips cost more, his tells are the longest on the roster, and a tech or heavy counter staggers him for longer. His landings and his heavies damage structures at one tier above his own, and the ground under him cracks |
+| **Size** | The same height as the others, or up to about a fifth taller and broader. That is one scale on the shared skeleton. His reach grows with it, and the brawl's distances don't change |
 | **Meter** | **Footing.** It fills while he holds his ground, and empties when he is knocked back or launched |
-| **Forms** | Growth, or waking: each form is visibly more of him |
+| **Forms** | More of him: each form adds mass and plating, inside the same height |
 | **The world** | He is part of it. He breaks it by being there, and would rather not |
 | **Wounds** | Armoured: less wear from stream blows, full wear from heavies, and his legs are the region to break |
-| **Against the four** | The Protagonist redirects, and the giant gives him the most force to redirect. The rival's barrages chip him, so the rival must finish by hand. The Empress has many bodies with one region each, and the giant is one body that has to be worn down. The Cyborg grows by eating, and the giant is big from the first second |
-| **New tech** | **High.** The rig, the joint limits, the reach bands and the brawl's magnetism are all measured in body heights, and the camera frames two bodies of one size on a planet that wraps |
-| **Risk** | A fighter who ignores mashing is hard on new players, and a slow one is dull to play in a game about flight |
+| **Against the four** | The Protagonist redirects, and the heavy gives him the most force to redirect. The rival's barrages chip him, so the rival must finish by hand. The Empress has many bodies with one region each, and the heavy is one body that has to be worn down. The Cyborg grows by eating, and the heavy is big from the first second |
+| **New tech** | **Low to medium.** Armour is data on reel, knock-back and lift. The scale is one number on the shared rig, and QA checks his reach and the camera's framing with it. There is no second skeleton |
+| **Risk** | A fighter who ignores mashing is hard on new players, and a slow one is dull to play in a game about flight. Narrative wrote the Colossus as several times the others' size, so that picture has to shrink to this |
 
 ### T5. The zoner (Narrative's Former Villain)
 
@@ -225,7 +233,9 @@ The names in brackets are Narrative's identity templates. The pairing is where t
 | **New tech** | **Low to medium.** Armour is data on reel and knock-back. The mark is the wounds system with a display, and the stick already leans a blow toward a region. New: the mark's order, the clock, and an AI that defends a marked region |
 | **Risk** | A fighter who ignores mashing is hard on new players. Inevitability can feel unfair, so the mark has to be visible and the set-back real. He is also the template with no joke in him, which is Narrative's risk to carry |
 
-### T9. The shaper (Narrative's Caretaker), the spare
+**With the heavy in the roster** (T4), the armour is the heavy's alone. The juggernaut keeps the mark and the clock, and reels like anyone else.
+
+### T9. The shaper (Narrative's Caretaker)
 
 | | |
 | :--- | :--- |
@@ -240,7 +250,7 @@ The names in brackets are Narrative's identity templates. The pairing is where t
 | **Wounds** | Ordinary. His works are his armour |
 | **Against the four** | The Protagonist tends by leaving, and the shaper tends by walling. The rival levels buildings for Pride, and the shaper puts a wall in front of them. The Empress changes the sky for everyone, and the shaper changes the ground in one place. The Cyborg's floods and his works meet head on |
 | **New tech** | **Medium.** The heightfield already deforms, and a ridge is a crater turned over. New: barriers as world objects, mending a building, and a launch planner and AI that read the new ground |
-| **Risk** | **Narrative marks him as the least distinct niche,** because every fighter already reshapes the world once a match. What sets him apart is that he does it all match and can mend. Pillar 1 also says there are no walls and no corners: his works must be cover and launch surfaces, and never a cage |
+| **Risk** | Orb has made him a full slot (questionnaire 18). **Narrative marks him as the least distinct niche,** because every fighter already reshapes the world once a match. What sets him apart is that he does it all match and can mend. Pillar 1 also says there are no walls and no corners: his works must be cover and launch surfaces, and never a cage |
 
 ### 3b. Four alternatives, kept from version 1
 
@@ -251,7 +261,7 @@ These have no identity from Narrative yet. Each could replace the mechanics of a
 | **The trapper** | The fight happens where he has prepared: more mines than anyone, chained, with an aimed mine and a zone | The zoner's hot lanes (T5), as a device version of the same slot | Low to medium | Still whole |
 | **The banker** | He stores ki past the bar in plain sight and spends it in one beat. One late transformation | The zoner (T5) or the juggernaut (T8) | Low | His rising clock went to the juggernaut |
 | **The warden** | A counter-fighter who stands between the fight and the town, and turns shots away from buildings with a timed guard | The grappler (T1) or the puppeteer (T6) | Medium | His guarding of buildings went to the puppeteer's helpers |
-| **The armoured heavy** | The giant's weight at normal height | The giant (T4), if a second skeleton is too dear | Low to medium | His armour went to the juggernaut |
+| **The true giant** | Several times the others' size, on a second skeleton, with every measure in body heights re-done | The heavy (T4), in some later roster | High | Not wanted now: Orb's body variety is 2 of 5 |
 
 Two other readings of the wildcard, if the bill isn't wanted:
 - **The mimic.** A read of the rival lets him load one of the rival's cells for 20 s, drawn in his own hands and paths.
@@ -268,68 +278,72 @@ Two other readings of the wildcard, if the bill isn't wanted:
 | T1 Grappler | Best | Best | Worst | | |
 | T2 Speedster | Best | | | Worst | Best |
 | T3 Stalker | | Worst | Best | | Best |
-| T4 Giant | Best | Best | | | Worst |
+| T4 Heavy | Best | Best | | | Worst |
 | T5 Zoner | Worst | | Best | Best | |
 | T6 Puppeteer | | Best | | Best | Worst |
 | T7 Wildcard | | Worst | | | |
 | T8 Juggernaut | Best | | Worst | Best | |
-| T9 Shaper, the spare | Worst | Best | | Best | |
+| T9 Shaper | Worst | Best | | Best | |
 
-## 4. Three sets of twelve
+## 4. Sets of twelve, for a hero-heavy cast
 
-### Set A: Narrative's twelve
+**Fixed by Orb** (questionnaire 18): the first four, and the four niches to explore most. Those are the speedster (T2), the stalker (T3), the heavy (T4) and the shaper (T9). That is eight fighters.
 
-The first four and T1 to T8. This is the set in §8.
+**Four slots are open,** and five templates are left for them: the grappler (T1), the zoner (T5), the puppeteer (T6), the wildcard (T7) and the juggernaut (T8). Each set below leaves one of them out.
 
-**What it covers:** eleven roles, every range home, every stance as somebody's best and somebody's worst, and twelve different meters and forms. **What it costs:** two high-cost templates, the stalker and the giant.
+**Hero-heavy** means most of the cast stands with the Protagonist, as an ensemble of allies. Who is in which camp is Narrative's and Orb's. What the mechanics add is that a fighter on the heroes' side needs a relation to the world that isn't destruction. The heavy, the shaper, the grappler and the puppeteer each have one: he would rather not break it, he mends it, he throws away from people, and his helper stands over a building.
 
-### Set B: the spare in place of the stalker
+### Set A: the ensemble
 
-| Out | In | Effect |
-| :--- | :--- | :--- |
-| T3 Stalker (the Turncoat) | T9 Shaper (the Caretaker) | The hidden-information question goes away. The roster loses its second fighter at zip range and gains one who builds |
+**Open slots:** the grappler, the zoner, the puppeteer and the wildcard. **Left out:** the juggernaut.
 
-### Set C: the spare in place of the giant
+This is the set in §8, and the one I'd pick for a hero-heavy cast. With the heavy now armoured at normal size, the juggernaut's armour repeats it. The juggernaut is also the template written as the season's real threat, and a hero-heavy cast has less room for a third villain. His mark and his clock are kept for whoever Orb wants as that threat later.
 
-| Out | In | Effect |
-| :--- | :--- | :--- |
-| T4 Giant (the Colossus) | T9 Shaper (the Caretaker) | No second skeleton and no new camera work. Every fighter is one human-sized body, and the juggernaut is the only armoured one |
+### Set B: the ensemble with its threat
 
-If both high-cost templates have to wait, the second slot could take one of the alternatives in §3b. It would need an identity from Narrative first.
+**Open slots:** the grappler, the zoner, the puppeteer and the juggernaut. **Left out:** the wildcard.
+
+The juggernaut gives his armour up to the heavy, and keeps the mark and the clock. The cast gets one serious villain beside the two comic ones. The wildcard's nine specials are the dearest content among the five, so this set is also a little cheaper.
+
+### Set C: the lowest cost
+
+**Open slots:** the grappler, the zoner, the wildcard and the juggernaut. **Left out:** the puppeteer, which waits for the Empress's guard and puts more bodies on camera.
 
 ### The three sets side by side
 
 | Count of fighters | Set A | Set B | Set C |
 | :--- | ---: | ---: | ---: |
-| At home in the brawl | 4 | 4 | 3 |
-| At home at zip range | 2 | 1 | 2 |
-| At home far away | 3 | 4 | 4 |
-| At home anywhere | 3 | 3 | 3 |
-| Martial arts among the best two | 7 | 7 | 6 |
-| Defensive among the best two | 5 | 6 | 5 |
-| Energy arts among the best two | 4 | 3 | 4 |
-| Charging among the best two | 3 | 4 | 4 |
-| Manoeuvre among the best two | 3 | 2 | 3 |
-| High-cost templates | 2 | 1 | 1 |
+| At home in the brawl | 3 | 4 | 4 |
+| At home at zip range | 2 | 2 | 2 |
+| At home far away | 4 | 4 | 4 |
+| At home anywhere | 3 | 2 | 2 |
+| Martial arts among the best two | 6 | 7 | 7 |
+| Defensive among the best two | 6 | 6 | 5 |
+| Energy arts among the best two | 4 | 4 | 4 |
+| Charging among the best two | 3 | 4 | 3 |
+| Manoeuvre among the best two | 3 | 3 | 3 |
+| High-cost templates | 1 | 1 | 1 |
 | Roles | 11 | 11 | 11 |
 
-The rival is counted as at home far away, where he starts. The wildcard has no best stance, so the stance rows count eleven fighters. Narrative's camps for set A are 4 heroes, 2 rivals, 3 villains and 3 wildcards.
+- The rival is counted as at home far away, where he starts. The wildcard has no best stance, so sets A and C count eleven fighters on the stance rows.
+- **The one high-cost template in every set is the stalker,** and he is certain. So the question of what is hidden, and from whom (§3, T3), is worth settling early.
+- Every stance is somebody's best and somebody's worst in all three sets. Manoeuvre and charging are the thinnest.
 
 ## 5. Build order on a zero budget
 
-Three things are built once and shared: **the generator** (it fills a fighter's cells from parts under an identity block), **the rig** (one human skeleton with joint limits and posed key sets), and **the director** (the brawl, the zip, struggles, the launch planner). A template is cheap when it is those three with new numbers.
+Three things are built once and shared: **the generator** (it fills a fighter's cells from parts under an identity block), **the rig** (one human skeleton with joint limits and posed key sets), and **the director** (the brawl, the zip, struggles, the launch planner). A template is cheap when it is those three with new numbers. With Orb's answer on body variety, every template is now on the shared rig.
 
-| Order | Template | Reuses | What is new | Wait for |
-| ---: | :--- | :--- | :--- | :--- |
-| 1 | **T2 Speedster** | All three, as they are | An identity block and numbers | The zip slices |
-| 2 | **T8 Juggernaut** | All three, and the wounds system | Armour as data; the mark and the clock | The brawl slices |
-| 3 | **T5 Zoner** | All three, and the beams | The hot lane | The energy stance's slice |
-| 4 | **T7 Wildcard** | All three | The bill; nine specials | The special loadout, which is planned for later |
-| 5 | **T1 Grappler** | The rig, the director's grabs and the launch planner | Paired poses, which are new to the generator | The grab lockout and the aimed throw |
-| 6 | **T9 Shaper,** if used | The rig and the generator | Barriers, mending, a planner that reads new ground | The LT + LB hybrid, and World |
-| 7 | **T6 Puppeteer** | The Empress's guard bodies and their AI | Orders, the pincer, a camera for more bodies | The Empress |
-| 8 | **T3 Stalker** | The rig, the generator, the kept hiding kit | The hidden-information answer; an AI built on the ambush | That answer |
-| 9 | **T4 Giant** | The generator's grammar | A second skeleton, and every measure that is in body heights | Last |
+| Order | Template | In the roster | Reuses | What is new | Wait for |
+| ---: | :--- | :--- | :--- | :--- | :--- |
+| 1 | **T2 Speedster** | Certain | All three, as they are | An identity block and numbers | The zip slices |
+| 2 | **T4 Heavy** | Certain | All three | Armour as data; one scale on the rig | The brawl slices |
+| 3 | **T5 Zoner** | Open slot | All three, and the beams | The hot lane | The energy stance's slice |
+| 4 | **T8 Juggernaut** | Open slot | All three, and the wounds system | The mark and the clock | The brawl slices |
+| 5 | **T7 Wildcard** | Open slot | All three | The bill; nine specials | The special loadout, which is planned for later |
+| 6 | **T1 Grappler** | Open slot | The rig, the director's grabs and the launch planner | Paired poses, which are new to the generator | The grab lockout and the aimed throw |
+| 7 | **T9 Shaper** | Certain | The rig and the generator | Barriers, mending, a planner that reads new ground | The LT + LB hybrid, and World |
+| 8 | **T6 Puppeteer** | Open slot | The Empress's guard bodies and their AI | Orders, the pincer, a camera for more bodies | The Empress |
+| 9 | **T3 Stalker** | Certain | The rig, the generator, the kept hiding kit | The hidden-information answer; an AI built on the ambush | That answer. He is last only because of it |
 
 **Three notes on scope.**
 - **The Empress and the Cyborg aren't built yet.** Their systems (simple second bodies, feeding, molts, a moving weak point) are what the puppeteer would reuse. Finishing the first four comes before any template.
@@ -350,30 +364,34 @@ Two threads for each fighter is 12 threads across a roster of twelve, and each i
 
 ## 7. What Orb is asked to choose
 
+**Answered in questionnaire 18:** the niches to explore most (stealth, the heavy, the speedster, the terrain shaper), a hero-heavy cast, and bodies close to all humanoid, so the giant is an armoured heavy on the shared rig.
+
+**Still to choose:**
 1. Do the eight axes describe a fighter the way Orb thinks of one? Is one missing?
 2. Are the first four's subroles in play right: the redirector, the closer, the court and the scavenger?
-3. Which set: Narrative's twelve, or the spare in place of the stalker or the giant?
+3. The four open slots: which four of the grappler, the zoner, the puppeteer, the wildcard and the juggernaut? Or which set in §4?
 4. The stalker: which answer to what is hidden, and from whom (§3, T3)?
-5. The puppeteer: helpers that act for themselves, or one that the player steers?
-6. The wildcard: the bill, the mimic or the mood rider?
-7. Threads between fighters: wanted?
+5. The heavy: the same height as the others, or up to a fifth taller?
+6. The puppeteer: helpers that act for themselves, or one that the player steers?
+7. The wildcard: the bill, the mimic or the mood rider?
+8. Threads between fighters: wanted?
 
 ## 8. The twelve, in one table
 
-Set A: the first four, and T1 to T8 under Narrative's identities. Every row is an option.
+Set A: the first four, the four niches Orb named, and four of the five open templates, under Narrative's identities. Every row is an option. The camps aren't shown, because Narrative is re-weighting them for a hero-heavy cast.
 
-| # | Fighter | Camp | Role | Niche | Best stances | Worst stance | The world | Meter, and what fills it | New tech needed |
+| # | Fighter | Status | Role | Niche | Best stances | Worst stance | The world | Meter, and what fills it | New tech needed |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | **The Protagonist** (the Heart) | Hero | Duelist | The redirector: palms, arcs, catches | Martial, defensive | Energy, by a little | Tends it, by leaving | Respect: the rival's full commitment | Being built: the launch pair |
-| 2 | **The rival** (the Foil) | Rival | Duelist | The closer: barrages, then by hand | Energy, martial | Manoeuvre, by a little | Ignores it, and shows off on it | Pride: his own wins | Being built: the launch pair |
-| 3 | **The Empress** (the Spectacle) | Villain | Commander | The court: a guard, cutting beams, twelve revisions | Defensive, energy | Martial, early | Annexes it | Wrath: her own losses | Her guard's bodies, the long ladder. Not built |
-| 4 | **The Cyborg** (the Appetite) | Villain | Devourer | The scavenger: eats, regrows, molts | Martial, manoeuvre | Defensive | Feeds on it | Hunger: what he consumes | Feeding, molts, the moving chip. Not built |
-| 5 | **The Veteran** | Hero | Grappler | The catcher: aimed throws, a grab that beats a zip | Martial, defensive | Energy | Tends it, gruffly | Grip: time in reach | Medium: paired poses, a struggle-out |
-| 6 | **The Prodigy** | Hero | Skirmisher | The quick study: fastest early, learns repeats | Manoeuvre, martial | Charging | Doesn't think about it | Pace: clean zips and punished repeats | Low: numbers on the zip |
-| 7 | **The Turncoat** | Wildcard | Ambusher | The stalker: cover, then the ambush | Manoeuvre, energy | Defensive | Hides in it | Unseen: time without the rival's lock | High: the hidden-information answer, an ambush AI |
-| 8 | **The Colossus** | Wildcard | Bulwark | The giant: size, weight, ground that answers | Martial, defensive | Manoeuvre | Is part of it | Footing: holding his ground | High: a second skeleton, reach and camera |
-| 9 | **The Former Villain** | Rival | Zoner | The old gun: wide beams and hot lanes | Energy, charging | Martial | Remembers it, and scars it | Old ground: the rival boxed between lanes | Low to medium: the hot lane |
-| 10 | **The Legacy** | Hero | Summoner | The heir: two helpers and the pincer | Charging, defensive | Manoeuvre | Tends it, nervously | Sync: landing in time with a helper | Medium, after the Empress: orders, more bodies on camera |
-| 11 | **The Showman** | Wildcard | Wildcard | The bill: nine specials in three turns | Even | Defensive | Plays to it | Applause: variety, and an unharmed audience | Low to medium: the special loadout, the bill |
-| 12 | **The Harbinger** | Villain | Juggernaut | The forecaster: a marked region, armour, a clock | Charging, martial | Energy | Walks through it | The clock: time and wear taken | Low to medium: armour data, the mark |
-| Spare | **The Caretaker** | Wildcard | Support | The shaper: works that stand, and mending | Charging, defensive | Martial | Builds on it and mends it | Standing: what still stands | Medium: barriers, mending |
+| 1 | **The Protagonist** (the Heart) | Being built | Duelist | The redirector: palms, arcs, catches | Martial, defensive | Energy, by a little | Tends it, by leaving | Respect: the rival's full commitment | The launch pair's work |
+| 2 | **The rival** (the Foil) | Being built | Duelist | The closer: barrages, then by hand | Energy, martial | Manoeuvre, by a little | Ignores it, and shows off on it | Pride: his own wins | The launch pair's work |
+| 3 | **The Empress** (the Spectacle) | Planned | Commander | The court: a guard, cutting beams, twelve revisions | Defensive, energy | Martial, early | Annexes it | Wrath: her own losses | Her guard's bodies, the long ladder |
+| 4 | **The Cyborg** (the Appetite) | Planned | Devourer | The scavenger: eats, regrows, molts | Martial, manoeuvre | Defensive | Feeds on it | Hunger: what he consumes | Feeding, molts, the moving chip |
+| 5 | **The Prodigy** | Certain | Skirmisher | The speedster: fastest early, learns repeats | Manoeuvre, martial | Charging | Doesn't think about it | Pace: clean zips and punished repeats | Low: numbers on the zip |
+| 6 | **The Turncoat** | Certain | Ambusher | The stalker: cover, then the ambush | Manoeuvre, energy | Defensive | Hides in it | Unseen: time without the rival's lock | High: the hidden-information answer, an ambush AI |
+| 7 | **The Colossus** | Certain | Bulwark | The heavy: armour and weight, at normal or slightly larger size | Martial, defensive | Manoeuvre | Is part of it | Footing: holding his ground | Low to medium: armour data, one scale on the rig |
+| 8 | **The Caretaker** | Certain | Support | The shaper: works that stand, and mending | Charging, defensive | Martial | Builds on it and mends it | Standing: what still stands | Medium: barriers, mending |
+| 9 | **The Veteran** | Open slot | Grappler | The catcher: aimed throws, a grab that beats a zip | Martial, defensive | Energy | Tends it, gruffly | Grip: time in reach | Medium: paired poses, a struggle-out |
+| 10 | **The Former Villain** | Open slot | Zoner | The old gun: wide beams and hot lanes | Energy, charging | Martial | Remembers it, and scars it | Old ground: the rival boxed between lanes | Low to medium: the hot lane |
+| 11 | **The Legacy** | Open slot | Summoner | The heir: two helpers and the pincer | Charging, defensive | Manoeuvre | Tends it, nervously | Sync: landing in time with a helper | Medium, after the Empress: orders, more bodies on camera |
+| 12 | **The Showman** | Open slot | Wildcard | The bill: nine specials in three turns | Even | Defensive | Plays to it | Applause: variety, and an unharmed audience | Low to medium: the special loadout, the bill |
+| Left out of set A | **The Harbinger** | Open slot | Juggernaut | The forecaster: a marked region and a clock | Charging, martial | Energy | Walks through it | The clock: time and wear taken | Low to medium: the mark |
