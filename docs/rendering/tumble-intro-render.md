@@ -108,6 +108,45 @@ The staredown on the web build (Chrome, `?intro=1`, the demo): ![web staredown](
 
 **The cloud band at Camera's low angle** (my open item): nothing to change. At pitch -6 degrees and Camera's zoom after a landing (1.13 to 1.21) the clouds reach the top of the frame; the sky there is not bare. ![low angle](img/intro-low-angle-t44.png)
 
+### 2.3c A composed intro by default (2026-10-05)
+
+A normal match now starts with an intro composed from its seed (Simulation's dynamic intros, `docs/architecture/dynamic-intros.md`). `main._match_setup()` sends `{"intro": {"play": true}}`: no facts and no no-repeat list yet. `--nointro` starts from the end state, and on the web `/play/?nointro=1` does. `--bench` starts that way too, so its frames stay a fight's. A tool-driven scene adds nothing. `--intro` and `?intro=1` now do nothing.
+
+**Which intro a seed gets.** The same seed opens the same way every time.
+
+| Seeds (1 to 12) | Scenario | Length | Gap |
+| :--- | :--- | ---: | :--- |
+| 1, 4 to 11 | Double Drop | 300 ticks | 32 to 69 |
+| 2, 3 | Long Look | 420 | 48 |
+| 12 | Latecomer | 456 | 197 |
+
+Slot 1 arrives first on seeds 1, 3, 5, 6, 10 and 11, slot 0 on the rest.
+
+- **It ends where a skip starts.** Each scenario played to its clock leaves the fighters and the craters a skip gives.
+- **Skipping is as before.** A press after tick 30 skips it and fires nothing at the clock. In the demo a click takes player one over and skips it (checked on the web too).
+- **Gestures need facts.** The sim sends `intro_gesture` only for gestures in the setup's facts, and the game sends no facts yet, so none play. With facts carrying four gestures, all four events started Animation's motion through the host.
+
+**The camera through the longest intro** (the Latecomer at its longest gap, 200: the first lands at tick 36, the second falls at 236 and lands at 266, the staredown is from 346, the clock at 456).
+
+- **Split view (the game's default, Camera's rig).** It cuts: on the first to arrive from tick 1 to 236 (his fall, his landing, his wait); on the latecomer from 237 to 346; a two-shot from 347 to 395; a close-up of each (396 to 419, 420 to 443); a two-shot to the clock. Each fighter is on the screen whenever he is the subject. Both are on it together for about 60 of the 456 ticks.
+- **One view (`--nosplit`, the sim's reference camera, `sim/core/view/camera.gd`).** It frames the midpoint of the two, and it counts the fighter who has not started to fall, who is held 6,000 units up. From tick 24 to 295 it sits about 4,600 units up at zoom 0.09, and the fighter who has landed and waits is off the bottom of the screen. Neither is wholly on the screen during either fall. Both are in frame from tick 296.
+
+**Faults seen, by owner.**
+
+| Owner | Fault | Where |
+| :--- | :--- | :--- |
+| The reference camera (Simulation's file; Camera's call) | In one view it chases the fighter held in the sky, so the one who has arrived is off the screen for most of the wait | The Latecomer, ticks 24 to 295. The other two scenarios were not measured in one view |
+| VFX | A thin pale vertical line stands beside each falling fighter, 90 to 320 pixels to one side. It is gone with VFX's layer hidden | Seed 1 at ticks 20 and 120; seed 12 at tick 255 |
+| Rendering, Animation | The fighter who has not started to fall is drawn, hanging 6,000 units up. Only the one view shows him, small. Not changed here | One view, until his fall |
+
+Stills from the web build (headless Chrome, the demo). Seed 1, the Double Drop, the first falling at tick 20: ![double drop](img/intro-composed-double-drop.png)
+
+Seed 12, the Latecomer, the first waiting alone at tick 150: ![latecomer](img/intro-composed-latecomer.png)
+
+Seed 2, the Long Look, at tick 260: ![long look](img/intro-composed-long-look.png)
+
+**Checks** (export of HEAD 99eb9ee plus the two files, headless): determinism and determinism `--live` pass; `determinism --intro` and `--intro --live` pass (new: every run starts with a composed intro, and the sim alone starts from the host's own setup), and its negative control fails as it must; pane check passes. On the web: the match opens with an intro, closing the first-run card does not skip it, a click skips it, `?nointro=1` starts with both craters dug, no console message.
+
 ### 2.3b Found against Simulation's parked code (fixed in 74ede76)
 
 - **The landing's dust and debris hang in the air until the clock.** The parked `sim.gd` marks an intro tick as frozen for effects (`SimFx.tickMark(S, dt, true)`), and every effects consumer steps frozen ticks at a tenth speed (the hit-stop's slow motion). Fighter A lands at tick 36; at tick 200 his crater's debris is still airborne. Marked live (`false`) in my scratch copy, the dust and debris settle as they should, and my host test still passes. **Ask for Simulation:** mark intro ticks live for effects. The fight's clock is stopped, but the entrance is a live presentation. Simulation did so in 74ede76.
@@ -135,4 +174,4 @@ Tick 200 with the parked code, and with intro ticks marked live: ![hanging](img/
 
 1. With World's G3 (the contact events): the contact point in the blend, the shadow's extent, the pane check for a body over a rim.
 2. With World's G1 (rims): the rim term in the bowl function.
-3. With Simulation's intro slice: the host's side is built (section 2.3) and the intro runs end to end (section 2.3a). Left: passing `"intro": true` by default, which is Orb's call after seeing it.
+3. With Simulation's intro slice: the host's side is built (section 2.3) and the intro runs end to end (section 2.3a). A composed intro is the default since 2026-10-05 (section 2.3c).

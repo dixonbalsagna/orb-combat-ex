@@ -26,8 +26,9 @@ extends Node3D
 ## join turns the split screen on if it was off; T makes P2 human or hands the slot back; the pause menu's entry hands
 ## it back at once. UI's HUD is told each player's device and layout every frame (_sync_players).
 ##
-## The intro phase (docs/architecture/intro-phase.md): --intro plays it (_match_setup), and on the web /play/?intro=1
-## does; without it the sim starts from its end state. SimHost passes intents on pre-clock ticks; any press skips it.
+## The intro phase (docs/architecture/dynamic-intros.md): a match starts with an intro composed from its seed
+## (_match_setup). --nointro starts from the intro's end state, and on the web /play/?nointro=1 does. SimHost passes
+## intents on pre-clock ticks; any press skips it.
 ##
 ## Command-line options (after "--"): --seed=N, --human (take P1 at start), --legacy-hud, --frames=N (quit after N frames),
 ## --shot=path.png (save the last frame), --bench (vsync off; print frame-time stats at quit, also split by whether two
@@ -231,12 +232,17 @@ func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 	render_view(host.alpha())
 
 
-## What the game adds to a match's setup. The intro phase (docs/architecture/intro-phase.md): --intro plays it.
-## Without it nothing is added and the sim's own default stands: the match starts from the intro's end state (both
-## entrance craters dug, no pre-clock tick), until the camera, the animation and the HUD have their sides. A tool that
-## drives the scene itself never adds anything, so its matches are the ones its own reference sim plays.
+## What the game adds to a match's setup: a composed intro (docs/architecture/dynamic-intros.md, the record form).
+## The sim draws the scenario, who arrives first and the gap from the match seed, so a seed always opens the same way.
+## No facts and no no-repeat list are sent yet. With --nointro nothing is added and the sim's own default stands: the
+## match starts from the intro's end state (both entrance craters dug, no pre-clock tick). --bench does the same, so
+## its frames are a fight's from the first, as they always were. A tool that drives the scene itself never adds
+## anything, so its matches are the ones its own reference sim plays. (--intro once asked for the intro; it is
+## accepted and does nothing.)
 func _match_setup() -> Dictionary:
-	return {"intro": true} if args.has("intro") and not manual else {}
+	if manual or args.has("nointro") or args.has("bench"):
+		return {}
+	return {"intro": {"play": true}}
 
 
 ## For Camera's compositor: a new pane, a follower of the first, in a SubViewport of its own (its own World3D),
@@ -937,7 +943,7 @@ func _notification(what: int) -> void:
 
 
 ## The options a web page's URL may set (parse_args): off unless the URL names them.
-const URL_ARGS: Array = ["intro", "skyreact"]
+const URL_ARGS: Array = ["nointro", "skyreact"]
 
 
 static func fresh_seed() -> int:
@@ -951,8 +957,8 @@ static func parse_args() -> Dictionary:
 			var kv: PackedStringArray = a.substr(2).split("=", true, 1)
 			out[kv[0]] = kv[1] if kv.size() > 1 else "1"
 	# On the web the page's own URL can set the options named in URL_ARGS (the page passes the game no arguments):
-	# /play/?intro=1 plays the intro phase, /play/?skyreact=1 lets the clouds part at tier 3 and 4. A value of 0, or
-	# none of these keys, changes nothing.
+	# /play/?nointro=1 starts without the intro, /play/?skyreact=1 lets the clouds part at tier 3 and 4. A value of 0,
+	# or none of these keys, changes nothing.
 	if OS.has_feature("web"):
 		for pair in str(JavaScriptBridge.eval("location.search", true)).trim_prefix("?").split("&", false):
 			var kv: PackedStringArray = pair.split("=", true, 1)

@@ -12,6 +12,8 @@ extends SceneTree
 ## --live waits for a real frame after every simulated one (use it without --headless to render on the GPU too).
 ## --negative-control nudges a fighter's x by 0.001 once, at frame 300 of every rendered run, as a renderer write
 ## would; the check must then fail.
+## --intro starts every run with a composed intro, as the game does (the pre-clock ticks are ticks like any other);
+## the sim alone then starts from the host's own setup with the intro added.
 
 const EVERY := 60
 
@@ -19,6 +21,8 @@ var seeds: Array = [12345, 4]
 var max_ticks: int = 5400
 var live: bool = false
 var negative: bool = false
+var intro: bool = false
+var intro_setup: Dictionary = {"intro": {"play": true}}
 var main: Node
 var _log: Array = []
 
@@ -33,6 +37,8 @@ func _initialize() -> void:
 			live = true
 		elif a == "--negative-control":
 			negative = true
+		elif a == "--intro":
+			intro = true
 	var vpn := SubViewport.new()
 	vpn.size = Vector2i(1280, 720)
 	vpn.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -68,7 +74,14 @@ func _run() -> void:
 ## The sim alone, as the parity tools run it: [[tick, hash], ...] every EVERY ticks, then the last tick.
 func _pure(seed: int) -> Array:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed)
+	if intro:
+		# The host's own setup for its two players (the hub's: both slots on intent v2), then the intro. With an intro
+		# those keys are in the gameplay hash from tick 0, so the reference must start from the same setup.
+		var su: Dictionary = main.host.hub.setup()
+		su.merge(intro_setup, true)
+		SimCore.newMatch(S, seed, {}, su)
+	else:
+		SimCore.newMatch(S, seed)
 	var V := SimFxView.new(seed)
 	var out: Array = []
 	var t: int = 0
@@ -90,7 +103,7 @@ func _pure(seed: int) -> Array:
 ## final frame may run a tick or two past it; those are not recorded).
 func _rendered(seed: int, last: int, dt_of: Callable) -> Array:
 	var out: Array = []
-	main.start_match(seed, {"p1": true, "p2": true})
+	main.start_match(seed, {"p1": true, "p2": true}, intro_setup if intro else null)
 	var host: SimHost = main.host
 	var rec := func(n: int):
 		if n <= last and (n % EVERY == 0 or n == last):
