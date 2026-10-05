@@ -4,40 +4,201 @@
  "_about": "PARKED. How each fighter bends the grammar (docs/combat/moveset-generator.md section 2), as Orb confirmed it on 2026-10-05 (docs/ep/vision.md, questionnaire 17): the Protagonist is palms, blade hands and arcs; the rival is fists, plates and straight lines, with fists on his heavies and blade hands on his lights. A weight multiplies a shape's score; a tip is written limb.tip. Fighter keys are the neutral working ids.",
  "fighters": {
   "rival": {
-   "waves": ["wave1", "rival2"],
+   "waves": [
+    "wave1",
+    "rival2"
+   ],
    "_waves": "Animation's manifests that hold his posed strikes; a later wave's row replaces an earlier one's for the same strike",
    "weights": {
-    "limb": {"hand": 3, "foot": 2, "elbow": 2, "knee": 1.5, "shoulder": 1.5, "head": 1},
-    "path": {"line": 3, "drop": 2.5, "rise": 1.5, "arc_in": 1, "arc_out": 0.5, "spin": 0.5},
-    "tip": {"hand.plate": 3, "hand.heel": 1, "hand.palm": 0.6, "foot.ball": 1.5, "foot.sole": 1.5, "foot.edge": 1.5, "foot.heel": 1, "foot.instep": 1, "elbow.point": 2.5, "knee.cap": 2, "shoulder.plate": 1.5, "head.brow": 1.5}
+    "limb": {
+     "hand": 3,
+     "foot": 2,
+     "elbow": 2,
+     "knee": 1.5,
+     "shoulder": 1.5,
+     "head": 1
+    },
+    "path": {
+     "line": 3,
+     "drop": 2.5,
+     "rise": 1.5,
+     "arc_in": 1,
+     "arc_out": 0.5,
+     "spin": 0.5
+    },
+    "tip": {
+     "hand.plate": 3,
+     "hand.heel": 1,
+     "foot.ball": 1.5,
+     "foot.sole": 1.5,
+     "foot.edge": 1.5,
+     "foot.heel": 1,
+     "foot.instep": 1,
+     "elbow.point": 2.5,
+     "knee.cap": 2,
+     "shoulder.plate": 1.5,
+     "head.brow": 1.5
+    }
    },
    "weightsBy": [
-    {"when": {"weight": ["light"]}, "tip": {"hand.blade": 3, "hand.fist": 1.2}, "_why": "Orb: blade hands on his lights"},
-    {"when": {"weight": ["heavy"]}, "tip": {"hand.fist": 3, "hand.heel": 1.5}, "_why": "Orb: fists on his heavies"}
+    {
+     "when": {
+      "weight": [
+       "light"
+      ]
+     },
+     "tip": {
+      "hand.blade": 3,
+      "hand.fist": 1.2
+     },
+     "_why": "Orb: blade hands on his lights"
+    },
+    {
+     "when": {
+      "weight": [
+       "heavy"
+      ]
+     },
+     "tip": {
+      "hand.fist": 3,
+      "hand.heel": 1.5
+     },
+     "_why": "Orb: fists on his heavies"
+    }
    ],
    "never": [
-    {"shape": {"weight": ["heavy"], "limb": ["hand"], "tip": ["blade", "palm"]}, "why": "Orb: a closed fist on his heavies and his enders; a plate may lead"},
-    {"shape": {"limb": ["foot"], "path": ["arc_out"]}, "why": "the crescent and the hook kick are the Protagonist's"},
-    {"shape": {"limb": ["hand"], "tip": ["palm"], "path": ["rise"]}, "why": "the rising palm is the Protagonist's"}
+    {
+     "shape": {
+      "weight": [
+       "heavy"
+      ],
+      "limb": [
+       "hand"
+      ],
+      "tip": [
+       "blade"
+      ]
+     },
+     "why": "Orb: a closed fist on his heavies and his enders; a plate may lead"
+    },
+    {
+     "shape": {
+      "limb": [
+       "hand"
+      ],
+      "tip": [
+       "palm"
+      ]
+     },
+     "why": "Orb's split gives him fists, plates and blade hands: no palm strike. His posed palm heel and double palm stay posed and out of his cells; a rising palm is the Protagonist's"
+    },
+    {
+     "shape": {
+      "limb": [
+       "foot"
+      ],
+      "path": [
+       "arc_out"
+      ]
+     },
+     "why": "the crescent and the hook kick are the Protagonist's"
+    }
    ],
    "tipOf": {},
-   "reuse": {"posed": 16, "hand_state": 9, "re_aim": 4, "hand_state_re_aim": 2.3}
+   "reuse": {
+    "posed": 16,
+    "hand_state": 9,
+    "re_aim": 4,
+    "hand_state_re_aim": 2.3
+   },
+   "tipFlags": {
+    "hand.palm": [
+     "claw"
+    ]
+   },
+   "_tipFlags": "how he shows a tip, as a pose flag for Legal's rows: his palm is drawn clawed (wave 1). He has no palm strike today; if one returns, a palm of his to the head or jaw is refused (b06)"
   },
   "protagonist": {
-   "waves": ["protag1", "protag6"],
+   "waves": [
+    "protag1",
+    "protag6"
+   ],
    "weights": {
-    "limb": {"hand": 3, "foot": 3, "elbow": 1, "knee": 1, "shoulder": 0.7, "head": 0.2},
-    "path": {"arc_in": 3, "arc_out": 3, "spin": 2, "rise": 2, "drop": 1.5, "line": 1},
-    "tip": {"hand.palm": 3, "hand.blade": 3, "hand.heel": 2, "hand.fist": 0.4, "foot.edge": 2.5, "foot.heel": 1.5, "foot.instep": 1.5, "foot.ball": 1, "foot.sole": 1, "elbow.point": 1, "knee.cap": 1, "shoulder.plate": 1, "head.brow": 1}
+    "limb": {
+     "hand": 3,
+     "foot": 3,
+     "elbow": 1,
+     "knee": 1,
+     "shoulder": 0.7,
+     "head": 0.2
+    },
+    "path": {
+     "arc_in": 3,
+     "arc_out": 3,
+     "spin": 2,
+     "rise": 2,
+     "drop": 1.5,
+     "line": 1
+    },
+    "tip": {
+     "hand.palm": 3,
+     "hand.blade": 3,
+     "hand.heel": 2,
+     "hand.fist": 0.4,
+     "foot.edge": 2.5,
+     "foot.heel": 1.5,
+     "foot.instep": 1.5,
+     "foot.ball": 1,
+     "foot.sole": 1,
+     "elbow.point": 1,
+     "knee.cap": 1,
+     "shoulder.plate": 1,
+     "head.brow": 1
+    }
    },
    "weightsBy": [],
    "never": [
-    {"shape": {"limb": ["hand"], "tip": ["plate"]}, "why": "he has no forearm plates"},
-    {"shape": {"weight": ["light"], "limb": ["hand"], "tip": ["fist"], "path": ["line"]}, "why": "his straight lights are open hands"}
+    {
+     "shape": {
+      "limb": [
+       "hand"
+      ],
+      "tip": [
+       "plate"
+      ]
+     },
+     "why": "he has no forearm plates"
+    },
+    {
+     "shape": {
+      "weight": [
+       "light"
+      ],
+      "limb": [
+       "hand"
+      ],
+      "tip": [
+       "fist"
+      ],
+      "path": [
+       "line"
+      ]
+     },
+     "why": "his straight lights are open hands"
+    }
    ],
-   "tipOf": {"strike.hook": "blade", "strike.double_hammer": "blade"},
+   "tipOf": {
+    "strike.hook": "blade",
+    "strike.double_hammer": "blade"
+   },
    "_tipOf": "where the rival's forearm plate leads a shared strike, his open hand does",
-   "reuse": {"posed": 16, "hand_state": 9, "re_aim": 4, "hand_state_re_aim": 2.3}
+   "reuse": {
+    "posed": 16,
+    "hand_state": 9,
+    "re_aim": 4,
+    "hand_state_re_aim": 2.3
+   },
+   "tipFlags": {}
   }
  },
  "_reuse": "how strongly a shape that is already posed, or one swap or re-aim from it, is preferred. These are the first slice's values: they prefer what is posed. Lower them toward 1 and identity decides more, at the cost of new key sets",

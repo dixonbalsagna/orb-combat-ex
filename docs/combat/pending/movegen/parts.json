@@ -455,9 +455,393 @@
    }
   },
   "_reaim": "sockets the contact solve can reach from a posed key set's own. A guess until Animation confirms it",
-  "legalTags": [
+  "banned": [
    {
-    "tag": "no_leap",
+    "id": "b01",
+    "match": {
+     "arms": [
+      2
+     ],
+     "flags": [
+      "wrists_together"
+     ]
+    },
+    "why": "two hands with wrists together pushed forward: a famous beam-release pose"
+   },
+   {
+    "id": "b02",
+    "match": {
+     "flags": [
+      "cupped_at_hip",
+      "drawn_to_hip_then_thrust"
+     ]
+    },
+    "why": "hands cupped at a hip, or drawn back to one hip and thrust: the franchise's best-known wind-up. Applies to every weight and every form, including held heavies"
+   },
+   {
+    "id": "b03",
+    "match": {
+     "limb": [
+      "hand"
+     ],
+     "tip": [
+      "fist",
+      "palm",
+      "heel"
+     ],
+     "path": [
+      "rise"
+     ],
+     "target": [
+      "jaw",
+      "head"
+     ],
+     "flags": [
+      "leap",
+      "spin"
+     ]
+    },
+    "why": "a rising blow with a leap or a spin: the jumping, turning uppercut"
+   },
+   {
+    "id": "b04",
+    "match": {
+     "path": [
+      "spin"
+     ],
+     "flags": [
+      "multi_turn",
+      "travelling"
+     ]
+    },
+    "why": "more than a single turn, or a spin that travels: a multi-hit whirling kick"
+   },
+   {
+    "id": "b05",
+    "match": {
+     "limb": [
+      "hand"
+     ],
+     "path": [
+      "drop"
+     ],
+     "arms": [
+      2
+     ],
+     "flags": [
+      "clasped"
+     ]
+    },
+    "why": "two clasped fists brought down: the double axe-handle smash"
+   },
+   {
+    "id": "b06",
+    "match": {
+     "limb": [
+      "hand"
+     ],
+     "tip": [
+      "palm",
+      "blade"
+     ],
+     "target": [
+      "head",
+      "jaw"
+     ],
+     "flags": [
+      "claw",
+      "grip"
+     ]
+    },
+    "why": "a clawed hand or grip on the face"
+   },
+   {
+    "id": "b07",
+    "match": {
+     "target": [
+      "throat",
+      "hair",
+      "tail"
+     ]
+    },
+    "why": "grips on the throat, hair or tail are never used (the grab rules)"
+   },
+   {
+    "id": "b08",
+    "match": {
+     "limb": [
+      "hand"
+     ],
+     "tip": [
+      "blade",
+      "fist"
+     ],
+     "path": [
+      "line"
+     ],
+     "target": [
+      "gut",
+      "chest"
+     ],
+     "flags": [
+      "passes_through"
+     ]
+    },
+    "why": "an arm passing through the body"
+   },
+   {
+    "id": "b09",
+    "match": {
+     "flags": [
+      "glow",
+      "energy_ball",
+      "held_raise_overhead",
+      "growing_orb"
+     ]
+    },
+    "why": "a melee piece never carries light, a ball or a raised charging pose"
+   },
+   {
+    "id": "b10",
+    "match": {
+     "limb": [
+      "hand"
+     ],
+     "flags": [
+      "two_fingers",
+      "pointing_finger",
+      "to_forehead"
+     ]
+    },
+    "why": "two fingers or a pointing finger, or a hand to the forehead: the franchise's beam and teleport poses"
+   },
+   {
+    "id": "b11",
+    "match": {
+     "limb": [
+      "hand"
+     ],
+     "flags": [
+      "beckon"
+     ]
+    },
+    "why": "a beckoning hand"
+   },
+   {
+    "id": "b12",
+    "match": {
+     "weight": [
+      "heavy"
+     ],
+     "form": [
+      "held"
+     ],
+     "flags": [
+      "hip_chamber",
+      "two_hand_chamber"
+     ]
+    },
+    "why": "a held heavy is charged with one arm drawn back at shoulder height, never at a hip and never with both hands together"
+   },
+   {
+    "id": "b13",
+    "match": {
+     "flags": [
+      "vanish",
+      "blink_cut",
+      "afterimage_hides_body"
+     ]
+    },
+    "why": "no vanish or blink between blows; the fighter is drawn the whole way"
+   }
+  ],
+  "_banned": "Legal's shape rows (docs/legal/movegen-banned.json, RL-073), merged as they stand. A row matches when every field it names matches; a list matches on any of its values; form matches any of a move's forms; flags matches any flag the move is known to have. The generator never emits a match, and --check fails on one. Rows are only added, never removed, without Legal",
+  "bannedSequences": [
+   {
+    "id": "s01",
+    "kind": "run",
+    "same": [
+     "limb",
+     "tip",
+     "path"
+    ],
+    "max": 3,
+    "rule": "no more than 3 pieces in a row with the same limb, tip and path",
+    "why": "a barrage of identical blows is a famous shouted-barrage signature"
+   },
+   {
+    "id": "s02",
+    "kind": "run",
+    "same": [
+     "target"
+    ],
+    "max": 2,
+    "tighter": [
+     {
+      "when": {
+       "target": [
+        "gut"
+       ]
+      },
+      "max": 1
+     }
+    ],
+    "rule": "no more than 2 blows in a row to the same target, and never two to the gut in a row",
+    "why": "a stomach-punch trade; also keeps Blow for Blow ours"
+   },
+   {
+    "id": "s03",
+    "kind": "audio",
+    "rule": "a flurry never repeats a shouted syllable across its blows",
+    "why": "a chanted barrage; audio and the generator both enforce it"
+   },
+   {
+    "id": "s04",
+    "kind": "after",
+    "after": {
+     "path": [
+      "spin"
+     ]
+    },
+    "never": [
+     {
+      "path": [
+       "spin"
+      ]
+     },
+     {
+      "limb": [
+       "foot"
+      ],
+      "target": [
+       "head"
+      ]
+     }
+    ],
+    "rule": "a spin is never followed by another spin, and never by a head kick",
+    "why": "a multi-turn whirl; also the grammar's light rule"
+   },
+   {
+    "id": "s05",
+    "kind": "after",
+    "after": {
+     "path": [
+      "rise"
+     ]
+    },
+    "never": [
+     {
+      "path": [
+       "rise"
+      ]
+     }
+    ],
+    "state": "airborne",
+    "rule": "a rising blow is never followed by another rising blow while he is airborne",
+    "why": "an aerial uppercut chain"
+   },
+   {
+    "id": "s06",
+    "kind": "after",
+    "after": {
+     "event": [
+      "launch"
+     ]
+    },
+    "never": [
+     {
+      "limb": [
+       "hand"
+      ],
+      "path": [
+       "drop"
+      ],
+      "arms": [
+       2
+      ]
+     }
+    ],
+    "rule": "a launch is never followed by a clasped two-hand overhead blow",
+    "why": "the double smash ender (see b05)"
+   },
+   {
+    "id": "s07",
+    "kind": "steps",
+    "drawn": [
+     "in",
+     "hold",
+     "around",
+     "out"
+    ],
+    "rule": "no string places a piece after a step that is not drawn: no vanish, blink or teleport step",
+    "why": "the vanishing-step staging"
+   }
+  ],
+  "_bannedSequences": "Legal's sequence rules, each with a form a program can check beside Legal's words. run: at most `max` blows in a row that share the parts in `same` (tighter: a smaller max where a filter holds). after: a blow matching `after` is never followed by one matching a `never` filter (state: only in that state at run time; the generator's own strings obey it always). steps: a string uses only drawn steps. audio: not checkable from parts; Audio and the director's line picker hold it",
+  "flags": {
+   "_about": "How a move gets the pose flags Legal's rows name. A flag is known present, known absent, or unknown. Known present: the generator's own rules below, or a `flags` list on the manifest row of the key set it starts from (Animation's data; no row has one yet). Known absent: the key set carries the Legal tag that rules the flag out (`clearedBy`). Unknown otherwise: the row then becomes an ask in the sheet's Legal column, not a refusal",
+   "fromTip": "identity.json `tipFlags`: a fighter's way of showing a tip (the rival's palm is drawn clawed)",
+   "clearedBy": {
+    "no_leap": [
+     "leap"
+    ],
+    "single_turn": [
+     "multi_turn",
+     "travelling",
+     "spin"
+    ],
+    "no_held_raise": [
+     "held_raise_overhead"
+    ],
+    "no_clasp": [
+     "clasped"
+    ],
+    "wrists_apart": [
+     "wrists_together",
+     "clasped",
+     "two_hand_chamber"
+    ],
+    "not_at_hip": [
+     "cupped_at_hip",
+     "drawn_to_hip_then_thrust",
+     "hip_chamber"
+    ]
+   },
+   "byVocabulary": [
+    "two_fingers",
+    "pointing_finger",
+    "to_forehead",
+    "beckon",
+    "grip",
+    "vanish",
+    "blink_cut"
+   ],
+   "_byVocabulary": "flags no part of the grammar can produce: there is no such hand state, target or step. A new one is new vocabulary and gets Legal's screen",
+   "fromAnimation": [
+    "leap",
+    "spin",
+    "multi_turn",
+    "travelling",
+    "clasped",
+    "wrists_together",
+    "two_hand_chamber",
+    "hip_chamber",
+    "cupped_at_hip",
+    "drawn_to_hip_then_thrust",
+    "held_raise_overhead",
+    "passes_through",
+    "claw"
+   ],
+   "fromVfx": [
+    "glow",
+    "energy_ball",
+    "growing_orb",
+    "afterimage_hides_body"
+   ]
+  },
+  "conditions": [
+   {
+    "id": "L1",
     "when": {
      "limb": [
       "hand"
@@ -466,61 +850,136 @@
       "rise"
      ]
     },
-    "why": "the feet stay down on a rising blow"
+    "rows": [
+     "b03",
+     "b09",
+     "s05"
+    ],
+    "ask": "a rising blow: feet stay down, no turn, the arm lowers at once, no glow; never strung into another rising blow in the air"
    },
    {
-    "tag": "no_held_raise",
-    "when": {
-     "limb": [
-      "hand"
-     ],
-     "path": [
-      "rise",
-      "drop"
-     ]
-    },
-    "why": "the arm lowers at once"
-   },
-   {
-    "tag": "single_turn",
-    "when": {
-     "path": [
-      "spin"
-     ]
-    },
-    "why": "one turn, never a travelling or repeated spin"
-   },
-   {
-    "tag": "no_clasp",
-    "when": {
-     "limb": [
-      "hand"
-     ],
-     "path": [
-      "drop"
-     ]
-    },
-    "why": "one fist, or two apart: never two clasped"
-   },
-   {
-    "tag": "not_at_hip",
+    "id": "L2",
     "when": {
      "limb": [
       "hand"
      ],
      "tip": [
       "palm"
+     ]
+    },
+    "rows": [
+     "b02",
+     "b06",
+     "b09"
+    ],
+    "ask": "a palm strike: a blow only, nothing leaves the hand; never chambered at a hip; never a clawed hand on the face"
+   },
+   {
+    "id": "L3",
+    "when": {
+     "limb": [
+      "hand"
+     ],
+     "path": [
+      "drop"
+     ]
+    },
+    "rows": [
+     "b05",
+     "b09"
+    ],
+    "ask": "a dropping blow: one fist, blade or plate; two hands stay apart; never clasped, never held raised"
+   },
+   {
+    "id": "L4",
+    "when": {
+     "limb": [
+      "hand"
+     ],
+     "tip": [
+      "fist",
+      "blade"
      ],
      "path": [
       "line"
+     ],
+     "target": [
+      "gut",
+      "chest"
      ]
     },
-    "why": "the hand is never chambered at the hip"
+    "rows": [
+     "b08",
+     "s01",
+     "s02",
+     "s03"
+    ],
+    "ask": "a straight blow to the gut or chest: it never passes through the body; strung, never a run at one place"
+   },
+   {
+    "id": "L5",
+    "when": {
+     "path": [
+      "spin"
+     ]
+    },
+    "rows": [
+     "b04",
+     "s04"
+    ],
+    "ask": "a spin: a single turn, never travelling; never followed by another spin"
+   },
+   {
+    "id": "L6",
+    "when": {
+     "weight": [
+      "heavy"
+     ]
+    },
+    "rows": [
+     "b02",
+     "b09",
+     "b12"
+    ],
+    "ask": "held: charged with one arm drawn back at shoulder height; never at a hip, never both hands together, no light"
+   },
+   {
+    "id": "L7",
+    "when": {
+     "limb": [
+      "elbow"
+     ],
+     "arms": [
+      2
+     ]
+    },
+    "rows": [
+     "b01"
+    ],
+    "ask": "a crossed-arm ram: the arms cross only for the strike, wrists apart, never a held cross"
+   },
+   {
+    "id": "L8",
+    "when": {
+     "target": [
+      "head",
+      "jaw"
+     ],
+     "limb": [
+      "hand"
+     ],
+     "tip": [
+      "palm",
+      "blade"
+     ]
+    },
+    "rows": [
+     "b06"
+    ],
+    "ask": "to the head or jaw: a strike, never a grip"
    }
   ],
-  "_legalTags": "conditions a shape carries onto its key set, from Legal's rulings on the posed strikes. A move also keeps the tags of the posed strike it starts from",
-  "banned": [],
-  "_banned": "shapes never generated, for every fighter: Legal's to fill from its screens. Each row is part values and a reason"
+  "_conditions": "Legal's conditions from its screen of the sheet (docs/legal/movegen-screen.md section 1), for Animation: the sheet's Legal column lists the ids that apply to a row. They bite when a move is held or strung"
  },
  "strikes": {
   "_about": "Every posed strike as a shape of the grammar. limb, target, weight, uses and ground are Combat's strike rows; tip and path are Combat's reading of each strike's look and of Animation's hand state at contact, until the manifests carry them. The rival's four tail strikes are left out: they wait for Orb's ruling",

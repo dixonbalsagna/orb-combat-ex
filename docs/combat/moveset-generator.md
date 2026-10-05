@@ -402,4 +402,5 @@ Orb confirmed the identity split and lifted the hold for the martial arts stance
 - **The rival's hands are a mix:** a closed fist on his heavies and enders, blade hands first on his lights. Section 2's table gave him fists throughout; `pending/movegen/identity.json` is the current data.
 - **Martial B is a generic frame** with nothing hand-picked, because the signature's kind is not final. The hand-picked spines in section 3.2 are an illustration only.
 - **A juggle is up to 5 skill strikes,** so the light cell has two more quotas: 10 moves that can be a flurry blow and 10 that can be a skill strike.
-- **The counts:** 22 new key sets (section 6 said 21), 14 derived moves, and the two fighters share 43% of their shapes (section 6 said 46%).
+- **The counts:** 23 new key sets (section 6 said 21), 13 derived moves, and the two fighters share 43% of their shapes (section 6 said 46%).
+- **Legal's rows are merged** (`docs/legal/movegen-banned.json`, RL-072 to RL-075): 13 banned shapes and 7 sequence rules in `parts.json`, refused by the generator and tested by its `--check`. The rival has no palm strike. Section 5.3 above was the proposal; `pending/movegen/README.md` section 3 is how it works.

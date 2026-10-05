@@ -1,7 +1,7 @@
 {
  "schema": "combat.recipes/1",
  "_target": "data/combat/recipes.json",
- "_changes": "PARKED for Encounter's brawl (docs/director/brawl-plan.md), built on the live file at d24c5c1. New: `beat` (the beat point by path), `brawl` (which pool each kind of press draws on), four pools for each fighter (brawl.flurry, brawl.skill, brawl.lift, brawl.break), and on every `pieces` row a `path`, with `sends` on the heavies. Nothing that exists is changed, so slice B1 runs on the live file as it is. Drop _target and _changes when it lands",
+ "_changes": "PARKED for Encounter's brawl (docs/director/brawl-plan.md), built on the live file at 9272577. New: `beat` (the beat point by path), `brawl` (which pool each kind of press draws on), four pools for each fighter (brawl.flurry, brawl.skill, brawl.lift, brawl.break), and on every `pieces` row a `path`, with `sends` on the heavies. Changed: two blur patterns, pendulum (its last step goes to the gut) and undercut (chest, head, head after the two kicks), so that no pattern has three blows running at one place or two running to the gut (Legal's rule s02). Nothing else that exists is changed, so slice B1 runs on the live file as it is. Drop _target and _changes when it lands",
  "_about": "PARKED: ready to become data/combat/recipes.json as it stands (drop _target), but not moved. The pieces each of Game Design's recipes calls (docs/design/agency-pass.md section 2), per fighter. Fighter keys are the neutral working ids (protagonist, rival) until Orb names the pair. The rules and numbers quoted are Game Design's; the director's own numbers (the window, the flow's thresholds, the multipliers) belong in Encounter's data/director/alchemy.json. Checked against HEAD 45a95b9: every posed id is a strike of a wave manifest, and every blur step fills for both fighters.",
  "_status": {
   "live": "plays in live matches today. Nothing in these pools does yet: KAI and VORR still draw on the placeholder key sets, and go-live step 1 is a flag, off",
@@ -140,7 +140,7 @@
    ],
    [
     "hand",
-    "chest"
+    "gut"
    ]
   ],
   "drill": [
@@ -198,11 +198,11 @@
    ],
    [
     "hand",
-    "gut"
+    "chest"
    ],
    [
     "hand",
-    "chest"
+    "head"
    ],
    [
     "hand",

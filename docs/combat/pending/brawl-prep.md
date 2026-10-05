@@ -21,7 +21,7 @@ Two files: `recipes.brawl.json`, the next version of the live recipes, and `chan
 
 ## 2. What is new, and which slice reads it
 
-All of it is added to `recipes.json`; nothing that exists changes.
+All of it is added to `recipes.json`. One thing that exists changes: **two blur patterns,** for Legal's sequence rule s02 (never more than two blows running at one place, never two running to the gut; `docs/legal/movegen-banned.json`). `pendulum` ended with three blows to the chest: its last step now goes to the gut. `undercut` had two to the gut: it is now legs, gut, chest, head, head. Both still fill for both fighters. The live file keeps the old two until it is edited in a window, and the moveset generator's `--check` fails against it until then.
 
 | New | What it is | Read from |
 | :--- | :--- | :--- |
