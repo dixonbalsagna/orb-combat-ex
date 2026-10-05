@@ -7,9 +7,10 @@ class_name DirBrawl
 ##    one tap gap and its damage goes with the gap (flurry.mul), so a faster flurry is not a stronger one.
 ##  - The run and the close (the spec's section 3): his run goes up one for each light or flurry blow he lands and
 ##    down one for each that lands on him; a heavy on him clears it, and so do runLapseTicks without landing. At a
-##    run of runToClose his next landed light staggers the rival in place: decisive, at half a set-up. A trade (both
-##    landing inside the lapse) cannot pass tradeMaxTicks: at the limit it breaks for the higher run, then the more
-##    blows landed in it, then a seeded draw, and that fighter's next landed blow is the close.
+##    run of runToClose his next landed light staggers the rival in place: decisive, at half a set-up. A blow on a
+##    staggered fighter adds nothing to the run. A trade (both landing inside the lapse) cannot pass tradeMaxTicks:
+##    at the limit it breaks for a lead of more than levelWithin, and a level trade is a seeded draw in which the
+##    last closer of this brawl has `momentum` (section 9d); that fighter's next landed blow is the close.
 ##  - A heavy winds up windupTicks and lands landTicks later. Held past its wind-up it lands heldLandTicks after the
 ##    release, fully charged at heldFullTicks. Thrown after enderAfter landed blows of his string it is the ender: a
 ##    knock-back, or a launch when a launch is earned (held to full; flow). A lone heavy staggers; held to full with the
@@ -58,10 +59,12 @@ const CHG_N: int = BASE + 25   # the number of the exchange his far charge's arr
 const ANSWERED: int = BASE + 26 # 1 once the AI rival has answered his running string (melee-press-feel.md section 9c)
 const AI_ANS_AT: int = BASE + 27 # the AI: S.tick its answer comes (its reaction time after the blow that called for it); 0 none
 const LL_AT: int = BASE + 28    # S.tick his last light or flurry blow landed; 0 none
-const TRADE_N: int = BASE + 29  # light and flurry blows he has landed in the running trade
+const AI_AFTER: int = BASE + 29 # the AI: 1 when a close has landed on it and its answer, a heavy as its stagger ends, is still to weigh
 const TRADE_T0: int = BASE + 30 # on the exchange's attacker, for both: S.tick the running trade began; 0 when none is on
 const TRADE_WIN: int = BASE + 31 # ... and whose next landed blow closes a trade that reached its limit: his slot plus 1; 0 none
-const END: int = BASE + 32
+const LAST_CLOSER: int = BASE + 32 # on the exchange's attacker, for both: who made the last close in this brawl, 1 the attacker, 2 the other; 0 nobody yet
+const SAFE_UNTIL: int = BASE + 33 # S.tick until which he cannot be closed on again (closeGuardTicks after he recovers from a close); -1 while that close's stagger lasts
+const END: int = BASE + 34
 const LIGHT: int = 0
 const FLURRY: int = 1
 const HEAVY: int = 2
@@ -239,6 +242,21 @@ static func _setPiece(ex) -> bool:
 	return DirExchange.finisherPlanned(ex)
 
 
+## True when o is a shooter to f (melee-press-feel.md section 9d, ruling 5): he has fired in the last
+## shooter.firedTicks and has landed no melee blow on f in the last shooter.noMeleeTicks.
+static func shooter(S: SimState, f, o) -> bool:
+	var sh: Dictionary = cfg().get("shooter", {})
+	if sh.is_empty() or not on() or not DirBlast.on():
+		return false
+	return S.tick - DirInterrupt.gi(o, DirInterrupt.BLAST_AT) <= int(sh.firedTicks) and S.tick - DirInterrupt.gi(f, DirInterrupt.HIT_AT) > int(sh.noMeleeTicks)
+
+
+## What a heavy shot is worth while the brawl is on (ruling 5): its kind's damage times the brawl's scale times
+## shotHeavyMul, as a heavy blow is. DirBlast multiplies by this where it reads the kind's damage. Bolts keep their value.
+static func shotScale() -> float:
+	return float(cfg().damageMul) * float(cfg().shotHeavyMul) if (on() and cfg().has("shotHeavyMul")) else 1.0
+
+
 ## The AI's reversal in a brawl (DirInterrupt.onBlock): it weighs one on a block at most once in aiReversalEveryTicks.
 static func revDue(S: SimState, f) -> bool:
 	if S.tick - _g(f, REV_AT) < int(cfg().aiReversalEveryTicks):
@@ -406,7 +424,7 @@ static func _throw(S: SimState, f, weight: int, p: int, paid: bool, arrived: boo
 		else:
 			_s(o, PB_AT, S.tick)
 	var args := {"a": role, "d": "D" if role == "A" else "A", "dmg": dmg, "o": o2, "brawl": true, "bk": kind,
-		"style": "heavy" if kind == HEAVY else "speed", "grade": "none", "k": k, "n": k, "closing": kind != HEAVY and _closes(ex, f),
+		"style": "heavy" if kind == HEAVY else "speed", "grade": "none", "k": k, "n": k, "closing": kind != HEAVY and _closes(S, ex, f),
 		"charge": 0.0, "hand": "r" if (k % 2) == 1 else "l", "ender": ender}
 	var piece: String = _piece(S, f, weight, ((pp >> 2) & 3) == 2, ender)
 	if piece != "":
@@ -499,8 +517,12 @@ static func _piece(S: SimState, f, weight: int, toward: bool, ender: bool) -> St
 # ---------------------------------------------------------------- the run and the trade (melee-press-feel.md section 3)
 
 ## True when f's next light or flurry blow that lands is the close: his run is at runToClose, or a trade that reached
-## its limit broke his way.
-static func _closes(ex, f) -> bool:
+## its limit broke his way. Never while the rival is still in a close's stagger, or inside closeGuardTicks of his
+## recovery from it (section 9d): f's run still counts then, and a run of runToClose closes on his first blow after it.
+static func _closes(S: SimState, ex, f) -> bool:
+	var o = ex.D if f == ex.A else ex.A
+	if _g(o, SAFE_UNTIL) < 0 or S.tick < _g(o, SAFE_UNTIL):
+		return false
 	return _g(f, RUN) >= int(cfg().flurry.runToClose) or _g(ex.A, TRADE_WIN) == (1 if f == ex.A else 2)
 
 
@@ -508,14 +530,14 @@ static func _closes(ex, f) -> bool:
 static func _tradeReset(ex) -> void:
 	_s(ex.A, TRADE_T0, 0)
 	_s(ex.A, TRADE_WIN, 0)
-	_s(ex.A, TRADE_N, 0)
-	_s(ex.D, TRADE_N, 0)
 
 
 ## Once a live tick: a run lapses runLapseTicks after his last landed blow. A trade is on while both have landed a
-## light or a flurry blow inside that time; it cannot pass tradeMaxTicks without a close. At the limit it breaks for
-## the fighter with the higher run, then the one who has landed more blows in this trade, then a seeded draw at even
-## odds: his next landed blow is the close.
+## light or a flurry blow inside that time; it cannot pass tradeMaxTicks without a close. At the limit it breaks, on
+## the first live tick at or after it (a hit-stop holds the sim, and so the break): a lead of more than levelWithin
+## takes the close, and runs within it are a level trade, settled by a seeded draw in which the fighter who made the
+## last close in this brawl has `momentum`; when nobody has closed yet the odds are even (melee-press-feel.md section
+## 9d, ruling 3). His next landed blow is the close.
 static func _tradeTick(S: SimState, ex) -> void:
 	var fl: Dictionary = cfg().flurry
 	var lapse: int = int(fl.runLapseTicks)
@@ -536,17 +558,26 @@ static func _tradeTick(S: SimState, ex) -> void:
 	if _g(ex.A, TRADE_WIN) != 0 or S.tick - _g(ex.A, TRADE_T0) < int(fl.tradeMaxTicks):
 		return
 	var w: int = 0
-	if _g(ex.A, RUN) != _g(ex.D, RUN):
+	var last: int = _g(ex.A, LAST_CLOSER)
+	var how: String = "lead"
+	if absi(_g(ex.A, RUN) - _g(ex.D, RUN)) > int(fl.levelWithin):
 		w = 1 if _g(ex.A, RUN) > _g(ex.D, RUN) else 2
-	elif _g(ex.A, TRADE_N) != _g(ex.D, TRADE_N):
-		w = 1 if _g(ex.A, TRADE_N) > _g(ex.D, TRADE_N) else 2
 	else:
-		w = 1 if SimRng.keyed(int(S.game.seed), "brawl.trade", S.dirS.exN * 4096 + (_g(ex.A, TRADE_T0) & 4095)) < 0.5 else 2
+		how = "draw"
+		var pA: float = 0.5 if last == 0 else (float(fl.momentum) if last == 1 else 1.0 - float(fl.momentum))
+		w = 1 if SimRng.keyed(int(S.game.seed), "brawl.trade", S.dirS.exN * 4096 + (_g(ex.A, TRADE_T0) & 4095)) < pA else 2
 	_s(ex.A, TRADE_WIN, w)
 	var who = ex.A if w == 1 else ex.D
 	var e = _ev(S, who, "trade_break")
 	e.target = float(S.fighters.find(ex.D if w == 1 else ex.A))
 	e.n = S.tick - _g(ex.A, TRADE_T0)
+	# For QA: the limit; the two runs at the break, his and the rival's; how it was settled (lead or draw); and who made
+	# the last close in this brawl (0 nobody yet, 1 he did, 2 the rival did: a draw with 2 is momentum changing hands).
+	e.amount = float(int(fl.tradeMaxTicks))
+	e.x = float(_g(who, RUN))
+	e.y = float(_g(ex.D if w == 1 else ex.A, RUN))
+	e.text = how
+	e.k = 0.0 if last == 0 else (1.0 if last == w else 2.0)
 	SimEvents.feed(S, "THE TRADE BREAKS", who.name + "'s next blow that lands closes it, after " + str(S.tick - _g(ex.A, TRADE_T0)) + " ticks")
 
 
@@ -614,11 +645,11 @@ static func contact(S: SimState, ex, b) -> void:
 	# A light or a flurry blow. The run (melee-press-feel.md section 3): his goes up one and the rival's comes down by
 	# replyTakes, never below 0. At a run of runToClose, or when a trade that reached its limit broke his way, this blow
 	# is the close. Otherwise the rival reels, and his next blow waits for the reel's end.
-	var closing: bool = _closes(ex, f)
+	var closing: bool = _closes(S, ex, f)
 	_s(f, LL_AT, S.tick)
-	_s(f, TRADE_N, _g(f, TRADE_N) + 1)
 	if not closing:
-		_s(f, RUN, _g(f, RUN) + 1)
+		if o.stunTicks <= 0 or bool(c.flurry.staggeredAddsRun):
+			_s(f, RUN, _g(f, RUN) + 1)   # a blow on a staggered fighter does its damage and adds nothing to the run: a close does not start the next lead
 		_s(o, RUN, maxi(0, _g(o, RUN) - int(c.flurry.replyTakes)))
 		_reel(S, o, int(c.flurry.reelTicks))
 		return
@@ -627,6 +658,10 @@ static func contact(S: SimState, ex, b) -> void:
 	_s(f, RUN, 0)
 	_s(o, RUN, 0)
 	_tradeReset(ex)
+	_s(ex.A, LAST_CLOSER, 1 if f == ex.A else 2)   # the momentum of a level trade is his
+	_s(o, SAFE_UNTIL, -1)   # no second close on him until closeGuardTicks after he recovers from this one
+	if o.ai != null:
+		_s(o, AI_AFTER, 1)   # its answer to being closed on: a heavy as its stagger ends, at its level's rate
 	o.stunTicks = maxi(o.stunTicks, int(c.flurry.staggerTicks))
 	_drop(S, ex, o)
 	_strEnd(f)
@@ -703,6 +738,8 @@ static func tick(S: SimState, ex) -> void:
 			return
 		if not SimAct.peek(f).is_empty():
 			SimAct.clear(f)
+		if _g(f, SAFE_UNTIL) < 0 and f.stunTicks <= 0:
+			_s(f, SAFE_UNTIL, S.tick + int(c.flurry.closeGuardTicks))   # he has recovered from a close: he cannot be closed on again for this long
 		# A boost with the stick away leaves, at the dodge-cancel's price and by its rules (a dodge tap is DirInterrupt's).
 		if ex.t > SimConst.DT * 1.5 and f.input.sprint and f.stunTicks <= 0 and f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, o.x)) < -SimAct.awayDead and DirInterrupt.dodgeCancel(S, ex, f):
 			_inTick = false
@@ -785,6 +822,8 @@ static func _hold(S: SimState, ex, f, start: bool) -> void:
 ## which it must attack; a heavy against a rival who is guarding, at its level's guard-break rate; its signature as outside.
 ## Into a running flurry it throws its closing heavy only at its level's rashHeavy. It answers a paced string by its
 ## answerBy-th landed blow with a guard, and attacks into a gap (section 9c; the parry, the push and the burst come later).
+## A close that landed on it is answered with a heavy as its stagger ends, at heavyAfterClose. Against a shooter it
+## takes its level's vsShooter numbers: no guard, and seldom the ender that would knock him back to his range.
 ## It writes real presses and holds, as a player does. It does not leave a brawl (B5).
 static func aiInput(S: SimState, f) -> void:
 	var ex = S.dirS.ex
@@ -798,6 +837,18 @@ static func aiInput(S: SimState, f) -> void:
 		return
 	if _now(S) < _g(f, AI_HOLD):
 		i.heavyHeld = true
+	# Its answer to being closed on (section 9d, ruling 4): a heavy as its stagger ends, at its level's heavyAfterClose.
+	# The closer's blows on it while it staggered added nothing to his run, so his fresh run has to race the wind-up.
+	if _g(f, AI_AFTER) == 1:
+		_s(f, AI_AFTER, 0)
+		if _g(f, LINE) == 0 and S.rng.next() < float(bl.get("heavyAfterClose", 0.0)):
+			_s(f, AI_GUARD, 0)
+			_s(f, AI_LEFT, 0)
+			_s(f, AI_CLOSE, 0)
+			_aiHeavy(S, f, lv, false)
+			return
+	# Against a shooter (ruling 5) its guard share and its ender share are its level's vsShooter numbers.
+	var vs: Dictionary = lv.get("vsShooter", {}) if shooter(S, f, o) else {}
 	var flurried: bool = _g(o, TAP_GAP) > 0 and S.tick - _g(o, LAST_TAP) <= int(c.flurry.maxGap) and o.stunTicks <= 0 and o.stance != 1.0
 	# Section 9c: it answers a string by its answerBy-th landed blow, and doesn't stand and take the next. The answer B1
 	# has is the guard: after its reaction time it drops what it was doing and guards for guardMaxTicks, then it must
@@ -836,8 +887,8 @@ static func aiInput(S: SimState, f) -> void:
 		return   # a new choice waits for its blow to land
 	if _g(f, AI_CLOSE) == 1:
 		_s(f, AI_CLOSE, 0)
-		if _g(f, STRING_N) >= int(c.enderAfter) and (not flurried or S.rng.next() < float(bl.get("rashHeavy", 0.0))) and S.rng.next() < float(bl.get("enderShare", 0.5)):
-			_aiHeavy(S, f, lv)
+		if _g(f, STRING_N) >= int(c.enderAfter) and (not flurried or S.rng.next() < float(bl.get("rashHeavy", 0.0))) and S.rng.next() < float(vs.get("enderShare", bl.get("enderShare", 0.5))):
+			_aiHeavy(S, f, lv, true)
 			return
 	# A new choice.
 	if SimFighter.sigFree(f) or (f.ki >= 50.0 and S.T >= f.sigReadyT and S.rng.next() < float(DirAI.skill().sigPick)):
@@ -845,9 +896,9 @@ static func aiInput(S: SimState, f) -> void:
 		_s(f, AI_NEXT, S.tick + gap)
 		return
 	if o.stance == 1.0 and S.rng.next() < float(lv.get("breakGuard", 0.0)):
-		_aiHeavy(S, f, lv)
+		_aiHeavy(S, f, lv, true)
 		return
-	if left == 0 and S.rng.next() < float(bl.get("guardShare", 0.3)):
+	if left == 0 and S.rng.next() < float(vs.get("guardShare", bl.get("guardShare", 0.3))):
 		var g: Array = bl.get("guardTicks", [20, 60])
 		_s(f, AI_GUARD, S.tick + int(S.rng.range_(float(g[0]), float(g[1]) + 0.999)))
 		_s(f, AI_LEFT, -1)   # after a guard it must attack
@@ -861,11 +912,11 @@ static func aiInput(S: SimState, f) -> void:
 	i.light = true
 
 
-## Its heavy: tapped, or held to the full charge at its level's rate.
-static func _aiHeavy(S: SimState, f, lv: Dictionary) -> void:
+## Its heavy: tapped, or (hold) held to the full charge at its level's rate.
+static func _aiHeavy(S: SimState, f, lv: Dictionary, hold: bool) -> void:
 	var c: Dictionary = cfg()
 	f.input.heavy = true
 	f.input.heavyHeld = true
-	if S.rng.next() < float(lv.get("heldHeavy", 0.0)) * float(lv.get("earnerUse", 1.0)):
+	if hold and S.rng.next() < float(lv.get("heldHeavy", 0.0)) * float(lv.get("earnerUse", 1.0)):
 		_s(f, AI_HOLD, _now(S) + int(c.heavy.heldFullTicks) + 1)
 	_s(f, AI_NEXT, S.tick + int(c.heavy.windupTicks))

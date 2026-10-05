@@ -203,12 +203,15 @@
         ]
       ],
       "reelTicks": 4,
-      "closeAfter": 4,
       "staggerTicks": 12,
       "runToClose": 4,
       "replyTakes": 1,
       "runLapseTicks": 24,
-      "tradeMaxTicks": 120
+      "tradeMaxTicks": 120,
+      "staggeredAddsRun": false,
+      "levelWithin": 1,
+      "momentum": 0.9,
+      "closeGuardTicks": 90
     },
     "heavy": {
       "damage": 66,
@@ -226,6 +229,11 @@
     "hitstop": {
       "light": 2,
       "heavy": 6
+    },
+    "shotHeavyMul": 2,
+    "shooter": {
+      "firedTicks": 90,
+      "noMeleeTicks": 120
     }
   },
   "blast": {

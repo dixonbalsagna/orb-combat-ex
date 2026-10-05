@@ -148,7 +148,8 @@
             "beamLate",
             "mineShare",
             "timedPress",
-            "brawl"
+            "brawl",
+            "vsShooter"
           ],
           "properties": {
             "beamAnswer": {
@@ -323,7 +324,8 @@
                 "rashHeavy",
                 "guardShare",
                 "guardTicks",
-                "perfectMul"
+                "perfectMul",
+                "heavyAfterClose"
               ],
               "properties": {
                 "tapGap": {
@@ -373,9 +375,48 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "The multiplier on its perfect-block chance in a brawl."
+                },
+                "heavyAfterClose": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance of a heavy right after a close."
                 }
               },
               "description": "The AI's brawl play at this level.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "vsShooter": {
+              "type": "object",
+              "required": [
+                "guardShare",
+                "enderShare",
+                "heavyApproachShare"
+              ],
+              "properties": {
+                "guardShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it guards against a shooter in a brawl."
+                },
+                "enderShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it throws the ender (which would knock him away) against a shooter."
+                },
+                "heavyApproachShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it comes in with the heavy lunge or charge, the approach a bolt does not stop."
+                }
+              },
+              "description": "The AI against a shooter (a rival who has fired in the last 90 ticks and landed no melee blow in the last 120).",
               "additionalProperties": false,
               "patternProperties": {
                 "^_": true
@@ -416,7 +457,8 @@
             "beamLate",
             "mineShare",
             "timedPress",
-            "brawl"
+            "brawl",
+            "vsShooter"
           ],
           "properties": {
             "beamAnswer": {
@@ -591,7 +633,8 @@
                 "rashHeavy",
                 "guardShare",
                 "guardTicks",
-                "perfectMul"
+                "perfectMul",
+                "heavyAfterClose"
               ],
               "properties": {
                 "tapGap": {
@@ -641,9 +684,48 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "The multiplier on its perfect-block chance in a brawl."
+                },
+                "heavyAfterClose": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance of a heavy right after a close."
                 }
               },
               "description": "The AI's brawl play at this level.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "vsShooter": {
+              "type": "object",
+              "required": [
+                "guardShare",
+                "enderShare",
+                "heavyApproachShare"
+              ],
+              "properties": {
+                "guardShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it guards against a shooter in a brawl."
+                },
+                "enderShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it throws the ender (which would knock him away) against a shooter."
+                },
+                "heavyApproachShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it comes in with the heavy lunge or charge, the approach a bolt does not stop."
+                }
+              },
+              "description": "The AI against a shooter (a rival who has fired in the last 90 ticks and landed no melee blow in the last 120).",
               "additionalProperties": false,
               "patternProperties": {
                 "^_": true
@@ -684,7 +766,8 @@
             "beamLate",
             "mineShare",
             "timedPress",
-            "brawl"
+            "brawl",
+            "vsShooter"
           ],
           "properties": {
             "beamAnswer": {
@@ -859,7 +942,8 @@
                 "rashHeavy",
                 "guardShare",
                 "guardTicks",
-                "perfectMul"
+                "perfectMul",
+                "heavyAfterClose"
               ],
               "properties": {
                 "tapGap": {
@@ -909,9 +993,48 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "The multiplier on its perfect-block chance in a brawl."
+                },
+                "heavyAfterClose": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance of a heavy right after a close."
                 }
               },
               "description": "The AI's brawl play at this level.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "vsShooter": {
+              "type": "object",
+              "required": [
+                "guardShare",
+                "enderShare",
+                "heavyApproachShare"
+              ],
+              "properties": {
+                "guardShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it guards against a shooter in a brawl."
+                },
+                "enderShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it throws the ender (which would knock him away) against a shooter."
+                },
+                "heavyApproachShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The chance it comes in with the heavy lunge or charge, the approach a bolt does not stop."
+                }
+              },
+              "description": "The AI against a shooter (a rival who has fired in the last 90 ticks and landed no melee blow in the last 120).",
               "additionalProperties": false,
               "patternProperties": {
                 "^_": true

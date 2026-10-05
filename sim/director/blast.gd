@@ -166,7 +166,7 @@ static func _fire(S: SimState, f, weight: int, charge: float) -> void:
 	var kind: String = String(w.kind)
 	var o2: Dictionary = {"target": S.fighters.find(o)}
 	if weight == SimAct.HEAVY:
-		o2["dmg"] = float(SimShots.kinds[kind].dmg) * (float(w.tapShare) + (1.0 - float(w.tapShare)) * charge)
+		o2["dmg"] = float(SimShots.kinds[kind].dmg) * DirBrawl.shotScale() * (float(w.tapShare) + (1.0 - float(w.tapShare)) * charge)   # a heavy shot takes a heavy blow's worth (melee-press-feel.md 9d)
 	else:
 		var g: int = DirInterrupt.gi(f, DirInterrupt.BLAST_GROUP)
 		var gap: int = S.tick - DirInterrupt.gi(f, DirInterrupt.BLAST_LAST)
@@ -449,7 +449,7 @@ static func _barrage(S: SimState, sh, by, f, outcome: String, brink0: bool, knoc
 		DirInterrupt.si(by, DirInterrupt.BAR_GROUP, sh.group)
 	var flight: int = clampi(sh.total - sh.left, 0, 2047)
 	# A tapped heavy: a charged shot fired with no charge. Section 22: a barrage that includes one gets the weak ender.
-	var tap: bool = c.get("tappedHeavyWeak", false) and sh.kind == String(data().heavy.kind) and sh.dmg <= float(SimShots.kinds[sh.kind].dmg) * float(data().heavy.tapShare) + 0.001
+	var tap: bool = c.get("tappedHeavyWeak", false) and sh.kind == String(data().heavy.kind) and sh.dmg <= float(SimShots.kinds[sh.kind].dmg) * DirBrawl.shotScale() * float(data().heavy.tapShare) + 0.001
 	var tapped: bool = tap
 	var fires: Array = [S.tick - flight]   # the fire ticks of the clean shots inside the window, newest first
 	for k in [DirInterrupt.BAR_1, DirInterrupt.BAR_2, DirInterrupt.BAR_3]:
@@ -488,7 +488,7 @@ static func _knock(S: SimState, sh, by, f, outcome: String, brink0: bool) -> boo
 	var c: Dictionary = data()
 	if not c.heavy.get("knockFull", false) or S.game.ko != null or S.dirS.ex != null:
 		return false
-	if sh.kind != String(c.heavy.kind) or sh.dmg < float(SimShots.kinds[sh.kind].dmg) - 0.001:
+	if sh.kind != String(c.heavy.kind) or sh.dmg < float(SimShots.kinds[sh.kind].dmg) * DirBrawl.shotScale() - 0.001:
 		return false
 	if (outcome != "hit" and outcome != "stop") or (f.state != "free" and f.state != "charging"):
 		return false

@@ -70,7 +70,13 @@
           20,
           60
         ],
-        "perfectMul": 0.3
+        "perfectMul": 0.3,
+        "heavyAfterClose": 0.2
+      },
+      "vsShooter": {
+        "guardShare": 0,
+        "enderShare": 0.5,
+        "heavyApproachShare": 0.2
       }
     },
     "medium": {
@@ -120,7 +126,13 @@
           20,
           60
         ],
-        "perfectMul": 0.15
+        "perfectMul": 0.15,
+        "heavyAfterClose": 0.6
+      },
+      "vsShooter": {
+        "guardShare": 0,
+        "enderShare": 0.2,
+        "heavyApproachShare": 0.6
       }
     },
     "hard": {
@@ -170,7 +182,13 @@
           20,
           60
         ],
-        "perfectMul": 0.5
+        "perfectMul": 0.5,
+        "heavyAfterClose": 0.9
+      },
+      "vsShooter": {
+        "guardShare": 0,
+        "enderShare": 0.1,
+        "heavyApproachShare": 0.9
       }
     }
   },

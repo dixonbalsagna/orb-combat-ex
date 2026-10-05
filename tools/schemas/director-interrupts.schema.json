@@ -1456,7 +1456,9 @@
         "light",
         "flurry",
         "heavy",
-        "hitstop"
+        "hitstop",
+        "shotHeavyMul",
+        "shooter"
       ],
       "properties": {
         "enabled": {
@@ -1569,12 +1571,15 @@
             "maxGap",
             "mul",
             "reelTicks",
-            "closeAfter",
             "staggerTicks",
             "runToClose",
             "replyTakes",
             "runLapseTicks",
-            "tradeMaxTicks"
+            "tradeMaxTicks",
+            "staggeredAddsRun",
+            "levelWithin",
+            "momentum",
+            "closeGuardTicks"
           ],
           "properties": {
             "minGap": {
@@ -1616,11 +1621,6 @@
               "minimum": 0,
               "description": "Ticks the rival reels."
             },
-            "closeAfter": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Ticks after which a flurry closes."
-            },
             "staggerTicks": {
               "type": "integer",
               "minimum": 0,
@@ -1645,6 +1645,26 @@
               "type": "integer",
               "minimum": 1,
               "description": "The most ticks a trade can last before it closes."
+            },
+            "staggeredAddsRun": {
+              "type": "boolean",
+              "description": "Whether a blow that lands on a staggered rival adds to the run (Game Design section 9d: it does not)."
+            },
+            "levelWithin": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Runs within this many blows of each other are a level trade, settled by the momentum."
+            },
+            "momentum": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 1,
+              "description": "The chance, in a level trade, that the fighter who made the last close in this brawl makes this one (0.5 is even; 1 is always)."
+            },
+            "closeGuardTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks the AI keeps its guard up after a close (a later addition from Encounter)."
             }
           },
           "additionalProperties": false,
@@ -1776,6 +1796,35 @@
           "type": "number",
           "exclusiveMinimum": 0,
           "description": "The worth of a heavy blow."
+        },
+        "shotHeavyMul": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The worth of a heavy shot against the brawl's scale (Game Design section 9d)."
+        },
+        "shooter": {
+          "type": "object",
+          "required": [
+            "firedTicks",
+            "noMeleeTicks"
+          ],
+          "properties": {
+            "firedTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "A rival who has fired within this many ticks counts as a shooter."
+            },
+            "noMeleeTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "A shooter has landed no melee blow within this many ticks."
+            }
+          },
+          "description": "Who the AI treats as a shooter in a brawl (Game Design section 9d): fired in the last firedTicks and landed no melee blow in the last noMeleeTicks.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
         }
       },
       "description": "The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.",

@@ -223,19 +223,26 @@ static func aiInput(S: SimState, f) -> void:
 				i.light = true
 			if (i.light or i.heavy) and DirBlast.on() and DirBands.band(f, o) != DirBands.CLOSE and not DirBands.taunting(o) and S.rng.next() < float(lv().get("blastShare", 0.0)):
 				i.mode = 1   # it fires instead: a volley of bolts for a light, a charged shot for a heavy (DirBlast)
-			if (i.light or i.heavy) and DirBlast.minesOn() and DirBands.band(f, o) == DirBands.FAR and f.ki >= float(skill().get("mineMinKi", 40.0)) and S.rng.next() < float(lv().get("mineShare", 0.0)):
+			# Against a shooter (DirBrawl.shooter) it comes in with the approach a bolt does not stop, at its level's rate: the
+			# heavy lunge from the mid band, the heavy charge from the far band.
+			var vsHeavy: bool = (i.light or i.heavy) and DirBands.band(f, o) != DirBands.CLOSE and not DirBands.taunting(o) and DirBrawl.shooter(S, f, o) and S.rng.next() < float(lv().get("vsShooter", {}).get("heavyApproachShare", 0.0))
+			if vsHeavy:
+				i.heavy = true
+				i.light = false
+				i.mode = 0
+			if not vsHeavy and (i.light or i.heavy) and DirBlast.minesOn() and DirBands.band(f, o) == DirBands.FAR and f.ki >= float(skill().get("mineMinKi", 40.0)) and S.rng.next() < float(lv().get("mineShare", 0.0)):
 				i.light = false
 				i.heavy = false
 				i.mode = 1
 				i.context = true   # a mine where it stands, in place of this beat's attack (DirBlast.layMine)
 			elif (i.light or i.heavy) and DirBands.farOn() and DirBands.band(f, o) == DirBands.FAR and not DirBands.taunting(o):
 				var u: float = S.rng.next()
-				var ft: float = float(lv().get("farTaunt", 0.0)) if not DirBands.tauntSpent(f) else 0.0
+				var ft: float = float(lv().get("farTaunt", 0.0)) if (not DirBands.tauntSpent(f) and not vsHeavy) else 0.0
 				var urge: bool = S.T - SimMathx.jmax(f.exT, o.exT) > GAP_URGE   # no lull: after a long gap it always goes
 				if u < ft and not urge:
 					pass   # a tap: the taunt
 				elif urge or u < ft + float(lv().get("farCharge", 1.0)):
-					if i.heavy and S.rng.next() >= float(lv().get("farHeavy", 1.0)) * float(lv().get("earnerUse", 1.0)):   # a heavy charge is an earner too
+					if i.heavy and not vsHeavy and S.rng.next() >= float(lv().get("farHeavy", 1.0)) * float(lv().get("earnerUse", 1.0)):   # a heavy charge is an earner too
 						i.heavy = false   # the heavy charge is slow and committed: more often it charges light
 						i.light = true
 					DirInterrupt.si(f, DirInterrupt.AI_HOLD, 2 if i.heavy else 1)   # it holds the button: the charge
