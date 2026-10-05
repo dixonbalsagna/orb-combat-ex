@@ -21,4 +21,6 @@ Game Design's section 17 code items (the fuse by cause, `chainR` at every tier, 
 
 **Notes, not a build:** `zip-and-brawl-core-notes.md`: short answers for Encounter's zip slice (the point rush, shots on the way out, the tackle's `held` state, exhaustion) and for brawl B1 (`DirS.brawlI`, and what can move or free a locked fighter).
 
+**A written plan, not a build:** `fighter-split.md`: the rename of the roster ids to `PROTAGONIST` and `RIVAL`, every file that names the old ids and its owner, displayed names as one data file, the order for one window and one regeneration, and the risks.
+
 What is asked of the core and not yet built is listed in `core-backlog.md`.
