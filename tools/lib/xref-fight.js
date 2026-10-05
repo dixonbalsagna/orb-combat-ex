@@ -688,6 +688,7 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     }
     for (const name of order) { const ar = isObj(lv[name]) ? lv[name].approachReact : undefined; if (Array.isArray(ar) && ar.every((x) => typeof x === 'number') && ar.reduce((s2, x) => s2 + x, 0) > 1 + 1e-9) err(AI, `/levels/${name}/approachReact`, 'ai-approach-react', `the three chances sum to ${ar.reduce((s2, x) => s2 + x, 0).toFixed(3)}, more than 1`); }
     if (isObj(dai.beamLook) && Object.entries(dai.beamLook).filter(([k]) => !k.startsWith('_')).every(([, v]) => typeof v === 'number') && Object.entries(dai.beamLook).filter(([k]) => !k.startsWith('_')).reduce((s2, [, v]) => s2 + v, 0) <= 0) err(AI, '/beamLook', 'ai-beam-look', 'the three weights of beamLook sum to 0, so a perfect block against a beam has no look to draw');
+    if (isObj(dai.stance) && Array.isArray(dai.stance.repick) && dai.stance.repick.length === 2 && typeof dai.stance.repick[0] === 'number' && typeof dai.stance.repick[1] === 'number' && dai.stance.repick[0] > dai.stance.repick[1]) err(AI, '/stance/repick/0', 'stance-repick', `repick runs from ${dai.stance.repick[0]} down to ${dai.stance.repick[1]}`);
     const med = isObj(lv.medium) ? lv.medium.beamAnswer : undefined;
     if (typeof dai.beamAnswer === 'number' && typeof med === 'number' && dai.beamAnswer !== med) err(AI, '/beamAnswer', 'ai-level-beam', `beamAnswer ${dai.beamAnswer} differs from the medium level's ${med} (it is kept for readers of the old shape)`, 'warning');
   }
@@ -735,6 +736,7 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       if (typeof bl2.spray.slopeMin === 'number' && typeof bl2.spray.slopeMax === 'number' && bl2.spray.slopeMin > bl2.spray.slopeMax) err(IT, '/blast/spray/slopeMin', 'blast-spray', `slopeMin ${bl2.spray.slopeMin} is above slopeMax ${bl2.spray.slopeMax}`);
       if (typeof bl2.spray.missShare === 'number' && bl2.spray.missShare > 1) err(IT, '/blast/spray/missShare', 'blast-spray', `missShare ${bl2.spray.missShare} is above 1; it is a share of the sprayed bolts`, 'warning');
     }
+    if (isObj(itr.pace) && isObj(itr.pace.cooldown) && typeof itr.pace.cooldown.min === 'number' && typeof itr.pace.cooldown.max === 'number' && itr.pace.cooldown.min > itr.pace.cooldown.max) err(IT, '/pace/cooldown/min', 'pace-order', `cooldown min ${itr.pace.cooldown.min} is above max ${itr.pace.cooldown.max}`);
     const bu = itr.buried;
     const embedC = get('data/biomes/contact.json');
     if (isObj(bu) && isObj(embedC) && isObj(embedC.embed) && typeof embedC.embed.ticks === 'number') for (const k of ['guardFromTick', 'burstFromTick']) if (typeof bu[k] === 'number' && bu[k] > embedC.embed.ticks) err(IT, `/buried/${k}`, 'buried-order', `${k} ${bu[k]} is after the burial ends (embed.ticks ${embedC.embed.ticks} in data/biomes/contact.json), so it could never happen`);

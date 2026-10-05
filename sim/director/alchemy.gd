@@ -297,6 +297,16 @@ static func heldAt(f, tick: int, weight: int) -> void:
 			return
 
 
+## Controls' grade of his newest press against its beat (perfect, good or off); none when it had no blow to time against.
+static func gradeOf(f) -> String:
+	_size(f)
+	var n: int = f.act.dirI[COUNT]
+	if n == 0:
+		return "none"
+	var beat: int = f.act.dirI[BEAT0 + (n - 1) % RING]
+	return "none" if beat == SimPressRead.NO_BEAT else SimPressRead.grade_of(beat)
+
+
 ## His newest press as a packed integer, if it is still alive; else -1.
 static func last(S: SimState, f) -> int:
 	_size(f)

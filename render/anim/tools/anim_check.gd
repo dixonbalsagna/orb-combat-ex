@@ -707,7 +707,14 @@ func _test_pair_live() -> void:
 			if i == 1 and not (pre == "w1" or pre == "rb"):
 				own[1] = false
 	_expect(own[0] and own[1] and n_picks > 20, "pair live test: in a 1500-tick match his blows were not all his own key sets (protagonist own %s, rival own %s, %d picks)" % [own[0], own[1], n_picks])
-	# the energy press and the pair's own events, on stub bodies outside an exchange
+	# the energy press and the pair's own events, on stub bodies outside an exchange: the match is stepped on until no exchange runs (the poses do not start for a fighter in
+	# one, and a brawl's lunge may be mid-flight at tick 1,500), and if one still runs after 400 ticks it is cleared: this test is of the stub bodies, not of the match
+	var guard: int = 0
+	while S.dirS.ex != null and guard < 400:
+		main.frame(1.0 / 60.0)
+		guard += 1
+	if S.dirS.ex != null:
+		S.dirS.ex = null
 	var rows: Array = [["protagonist", "pg.bolt", "pg.spray", "pn.hold.brace_load", "pn.hold.brace_hold", "pn.hold.palm_thrust"], ["antihero", "rw.bolt", "en.spray", "rw.charged_brace.charge", "rw.charged_brace.charge", "rw.charged_brace.release"]]
 	var ok_energy := true
 	var why := ""

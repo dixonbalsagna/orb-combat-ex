@@ -109,7 +109,11 @@
     "lunge": {
       "speed": 4000,
       "minTicks": 3,
-      "maxTicks": 20
+      "maxTicks": 20,
+      "windupTicks": {
+        "light": 6,
+        "heavy": 10
+      }
     },
     "far": {
       "light": {
@@ -147,6 +151,13 @@
       "minTicks": 3,
       "maxTicks": 20,
       "chargerEdge": 10
+    }
+  },
+  "pace": {
+    "cooldown": {
+      "min": 0.25,
+      "perSec": 0.1,
+      "max": 0.6
     }
   },
   "blast": {

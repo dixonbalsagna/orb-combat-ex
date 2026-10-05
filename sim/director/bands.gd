@@ -114,25 +114,48 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
 	if b == FAR:
 		m = c.charge[_weightName(weight)] if charge else c.far[_weightName(weight)]
 	var n: int = clampi(int(ceil(maxf(0.0, d - eng) / float(m.speed) * DirData.TICKS_PER_SEC)), int(m.minTicks), int(m.maxTicks))
+	# The mid-band lunge winds up before it moves (melee-press-feel.md section 2b): a crouch the defender can read.
+	var wind: int = int(c.lunge.get("windupTicks", {}).get(_weightName(weight), 0)) if (b == MID and not charge) else 0
 	A.state = "free"
 	A.hideT = 0.0
 	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
-	var r := SimState.Rush.new()
-	r.tgt = D
-	r.off = _endOff(S, D, SimMathx.jsign(DirMelee.sideOff(A, D, eng, "own")))
-	r.end = S.T + float(n) * SimConst.DT
-	A.rush = r
+	A.rush = null
+	if wind == 0:
+		_startRush(S, A, D, n)
 	DirInterrupt.si(A, DirInterrupt.TAUNT_AGE, 0)
-	DirInterrupt.si(A, DirInterrupt.APPR_LEFT, n)
+	DirInterrupt.si(A, DirInterrupt.APPR_WIND, wind)
+	DirInterrupt.si(A, DirInterrupt.APPR_LEFT, wind + n)
 	var free: bool = S.tick < DirInterrupt.gi(A, DirInterrupt.FREE_UNTIL)   # a deflect's free approach: this charge or lunge uses it
 	if free:
 		DirInterrupt.si(A, DirInterrupt.FREE_UNTIL, 0)
 	DirInterrupt.si(A, DirInterrupt.APPR_REQ, weight | ((entry + 1) << 2) | (opn << 4) | (CHARGE if charge else 0) | (FREE if free else 0))
 	DirInterrupt.si(A, DirInterrupt.APPR_TICK, pressTick)
-	SimFx.rush(S, A, D, S.tick + n)
+	SimFx.rush(S, A, D, S.tick + wind + n)
+	if charge or b == MID:
+		_startCue(S, A, D, ("charge_" if charge else "lunge_") + _weightName(weight), "charge" if charge else "lunge", wind, n)
 	var what: String = ": CHARGES" if charge else (": LUNGE" if b == MID else ": FLIES IN")
-	SimEvents.feed(S, A.name + " " + String(DirExchange.KIND[weight]).to_upper() + what, NAMES[b] + " band, " + SimMathx.jstr(SimMathx.jround(d / BH)) + " bh; the exchange starts at the wind-up, in " + str(n) + " ticks")
-	_aiChoose(S, D, n)
+	SimEvents.feed(S, A.name + " " + String(DirExchange.KIND[weight]).to_upper() + what, NAMES[b] + " band, " + SimMathx.jstr(SimMathx.jround(d / BH)) + " bh; " + ("he winds up for " + str(wind) + " ticks; " if wind > 0 else "") + "the exchange starts at the wind-up, in " + str(wind + n) + " ticks")
+	_aiChoose(S, D, wind + n)
+
+
+## The start cue of a lunge or a charge, for Camera and VFX (docs/camera/lunge-framing.md). The cue's name gives the
+## kind and the weight (lunge_light, lunge_heavy, charge_light, charge_heavy). On the same event: text is the kind
+## (lunge or charge), target the rival's slot, amount the wind-up's ticks and n the ticks of the move after it.
+static func _startCue(S: SimState, A, D, name: String, kind: String, wind: int, out: int) -> void:
+	SimFx.cue(S, A, name, kind, "")
+	var e = S.out.fx[S.out.fx.size() - 1]
+	e.target = float(S.fighters.find(D))
+	e.amount = float(wind)
+	e.n = out
+
+
+## The approach's move: A is carried to engageBh from D, on his own side, over n ticks.
+static func _startRush(S: SimState, A, D, n: int) -> void:
+	var r := SimState.Rush.new()
+	r.tgt = D
+	r.off = _endOff(S, D, SimMathx.jsign(DirMelee.sideOff(A, D, float(data().engageBh) * BH, "own")))
+	r.end = S.T + float(n) * SimConst.DT
+	A.rush = r
 
 
 ## Where the approach ends, as an offset from D on the given side: engageBh away. On a slope the ground there can stand
@@ -263,8 +286,7 @@ static func _tauntTick(S: SimState, f) -> void:
 	var held: bool = f.input.heavyHeld if w == SimAct.HEAVY else f.input.lightHeld
 	if held and age >= int(c.charge[_weightName(w)].holdTicks) and who(S) < 0 and o.state != "launched" and o.state != "locked" and not o.hidden:
 		endTaunt(S, f, false, "takeoff_" + _weightName(w))
-		begin(S, f, o, w, ((req >> 2) & 3) - 1, DirInterrupt.gi(f, DirInterrupt.APPR_TICK), 0, true)
-		SimFx.cue(S, f, "charge_" + _weightName(w), "", "")
+		begin(S, f, o, w, ((req >> 2) & 3) - 1, DirInterrupt.gi(f, DirInterrupt.APPR_TICK), 0, true)   # it sends charge_light or charge_heavy (_startCue)
 		return
 	if age >= int(c.taunt.windowTicks) and not held:
 		endTaunt(S, f, false)
@@ -292,7 +314,8 @@ static func tick(S: SimState) -> void:
 		if left <= 0:
 			continue
 		var req: int = DirInterrupt.gi(f, DirInterrupt.APPR_REQ)
-		if S.game.ko != null or S.dirS.ex != null or f.state != "free" or f.stunTicks > 0 or (f.rush == null and left > 2):
+		var wind: int = DirInterrupt.gi(f, DirInterrupt.APPR_WIND)
+		if S.game.ko != null or S.dirS.ex != null or f.state != "free" or f.stunTicks > 0 or (f.rush == null and left > 2 and wind == 0):
 			drop(S, f, "he was stopped on the way")
 			continue
 		if (req & CHARGE) != 0 and (req & 3) == SimAct.LIGHT and not f.input.lightHeld and not f.input.heavyHeld and f.input.upgrade == 0 and not SimAct.assisted(f, "autoCharge"):
@@ -301,6 +324,15 @@ static func tick(S: SimState) -> void:
 			continue
 		left -= 1
 		DirInterrupt.si(f, DirInterrupt.APPR_LEFT, left)
+		if wind > 0:
+			# The lunge's wind-up: he holds his crouch, and moves when it ends.
+			wind -= 1
+			DirInterrupt.si(f, DirInterrupt.APPR_WIND, wind)
+			f.vx = 0.0
+			f.vy = 0.0
+			if wind == 0:
+				_startRush(S, f, SimRoster.opp(S, f), left)
+			continue
 		if left == 0:
 			_engage(S, f)
 			return
@@ -342,6 +374,7 @@ static func drop(S: SimState, f, why: String) -> void:
 	if (DirInterrupt.gi(f, DirInterrupt.APPR_REQ) & MEET) != 0:
 		SimRoster.opp(S, f).rush = null
 	DirInterrupt.si(f, DirInterrupt.APPR_LEFT, 0)
+	DirInterrupt.si(f, DirInterrupt.APPR_WIND, 0)
 	f.rush = null
 	SimEvents.feed(S, f.name + " APPROACH ENDS", why)
 

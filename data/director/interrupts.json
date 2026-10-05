@@ -80,7 +80,11 @@
     "lunge": {
       "speed": 4000,
       "minTicks": 3,
-      "maxTicks": 20
+      "maxTicks": 20,
+      "windupTicks": {
+        "light": 6,
+        "heavy": 10
+      }
     },
     "far": {
       "light": {
@@ -188,6 +192,14 @@
       "blowR": 60,
       "_note": "Mines (agency-pass.md sections 15.5 and 17). With the energy family held, the context press lays a mine of 'kind' (data/fight/shots.json) where he is for 'ki': on the ground when his feet are within groundWithinBh of it, else hovering. Within shoveWithinBh of the rival the press is the energy shove's (not built: nothing). blowR: a landed blow whose target's chest is within this of a mine sets it off. The cap, the gap, the arming, the trigger, the blast, the chain and the fuse are the kind's own. A mine's blast on the rival cannot be dodged or deflected; unguarded it knocks him back from the mine and is decisive"
     }
+  },
+  "pace": {
+    "cooldown": {
+      "min": 0.25,
+      "perSec": 0.1,
+      "max": 0.6
+    },
+    "_note": "Pacing between exchanges (sim/director/exchange.gd cooldownAfter). cooldown: the seconds after an exchange before the next may start: min, plus perSec for each second the exchange ran, at most max. bands.lunge.windupTicks (melee-press-feel.md section 2b): a mid-band lunge holds its crouch this many ticks before it moves, by the press's weight"
   },
   "signature": {
     "provisional": true,

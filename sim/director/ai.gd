@@ -28,6 +28,14 @@ static func aiInput(S: SimState, f) -> void:
 	var o = SimRoster.opp(S, f)
 	var i: SimIntent = f.input
 	var a = f.ai
+	# The stance numbers are data (ai.json stance); the constants below stand in when the block is missing.
+	var stn: Dictionary = skill().get("stance", {})
+	var cir: Dictionary = stn.get("circle", {})
+	var circleR: float = float(cir.get("r", CIRCLE_R))
+	var circleX: float = float(cir.get("x", CIRCLE_X))
+	var circleY: float = float(cir.get("y", CIRCLE_Y))
+	var circleRate: float = float(cir.get("rate", CIRCLE_RATE))
+	var swayRate: float = float(stn.get("swayRate", SWAY_RATE))
 	# I2b: the AI writes the v2 record. Its stance choice lives in a.st, and the held states below stand for it, so the
 	# director reads the AI's stance through the same path as a player's (SimAct.stance). A ready form is taken at once.
 	f.act.v2 = true
@@ -51,8 +59,12 @@ static func aiInput(S: SimState, f) -> void:
 	else:
 		a.atk = SimMathx.jmax(a.atk, CAD_MIN[int(a.st)])
 	if a.t <= 0.0:
-		a.t = S.rng.range_(0.7, 1.6)
-		var w: Array = [2.4 if hpF > 0.35 else 1.0, 1.6 if hpF < 0.55 else 0.7, 1.2, 3.2 if hpF < 0.3 else (1.2 if f.ki < 25.0 else 0.25)]
+		var rp: Array = stn.get("repick", [0.7, 1.6])
+		a.t = S.rng.range_(float(rp[0]), float(rp[1]))
+		var wp: Dictionary = stn.get("press", {})
+		var wg: Dictionary = stn.get("guard", {})
+		var we: Dictionary = stn.get("escape", {})
+		var w: Array = [float(wp.get("fresh", 2.4)) if hpF > float(wp.get("hurtBelow", 0.35)) else float(wp.get("hurt", 1.0)), float(wg.get("hurt", 1.6)) if hpF < float(wg.get("hurtBelow", 0.55)) else float(wg.get("fresh", 0.7)), float(stn.get("evade", 1.2)), float(we.get("hurt", 3.2)) if hpF < float(we.get("hurtBelow", 0.3)) else (float(we.get("lowKi", 1.2)) if f.ki < float(we.get("lowKiBelow", 25.0)) else float(we.get("rest", 0.25)))]
 		# Step 3: against a rival that has opened three exchanges running with one weight, the AI guards more (its level's weight): the guard, the perfect
 		# block and the punish window are the answers to a masher.
 		if DirInterrupt.on() and DirInterrupt.gi(o, DirInterrupt.WEIGHT_RUN) >= 3:
@@ -132,13 +144,13 @@ static func aiInput(S: SimState, f) -> void:
 		i.dash = absf(sd) > 1500.0
 		# Sweep low over land; over the sea, sweep at the surface rather than diving.
 		i.my = -1.0 if not sea else (1.0 if f.y < SURFACE_Y else 0.0)
-	elif st == 0.0 and dist <= CIRCLE_R:
+	elif st == 0.0 and dist <= circleR:
 		# In reach an AGGRESSIVE fighter never halts (dynamic feel): it circles the opponent on an ellipse, weaving,
 		# until its attack beat. The two slots circle half a turn apart. No draws.
-		var ph: float = S.T * CIRCLE_RATE + (3.14159265358979 if f == S.fighters[1] else 0.0)
-		var cx: float = SimWrap.sdx(f.x, o.x + CIRCLE_X * SimDetMath.sin(ph))
+		var ph: float = S.T * circleRate + (3.14159265358979 if f == S.fighters[1] else 0.0)
+		var cx: float = SimWrap.sdx(f.x, o.x + circleX * SimDetMath.sin(ph))
 		var cy: float = SimMathx.jmax(o.y, SURFACE_Y) if sea else o.y
-		cy = cy + CIRCLE_Y * SimDetMath.cos(ph) - f.y
+		cy = cy + circleY * SimDetMath.cos(ph) - f.y
 		i.mx = SimMathx.jsign(cx) if absf(cx) > 20.0 else 0.0
 		i.my = SimMathx.jsign(cy) if absf(cy) > 20.0 else 0.0
 	elif st == 0.0:
@@ -151,16 +163,16 @@ static func aiInput(S: SimState, f) -> void:
 	elif st == 1.0:
 		# DEFENSIVE holds its ground, but in reach it sways (a small step back and in, and a bob) rather than freezing.
 		i.mx = 0.0
-		if dist <= CIRCLE_R:
-			var sw: float = SimDetMath.sin(S.T * SWAY_RATE + (1.5707963267949 if f == S.fighters[1] else 0.0))
+		if dist <= circleR:
+			var sw: float = SimDetMath.sin(S.T * swayRate + (1.5707963267949 if f == S.fighters[1] else 0.0))
 			i.mx = -0.5 * SimMathx.jsign(d) if sw > 0.3 else (0.5 * SimMathx.jsign(d) if sw < -0.3 else 0.0)
-			i.my = 0.35 if SimDetMath.cos(S.T * SWAY_RATE) > 0.0 else -0.35
+			i.my = 0.35 if SimDetMath.cos(S.T * swayRate) > 0.0 else -0.35
 		if sea and f.y < 0.0:
 			i.my = 1.0
 		if f.ki < 55.0 and dist > 350.0:
 			i.charge = true
 	elif st == 2.0:
-		i.mx = -SimMathx.jsign(d) if dist < 500.0 else SimMathx.jsign(d) * 0.5
+		i.mx = -SimMathx.jsign(d) if dist < float(stn.get("evadeBackoff", 500.0)) else SimMathx.jsign(d) * 0.5
 		i.my = 1.0 if sea and f.y < 0.0 else SimDetMath.sin(S.T * 1.7 + f.x * 0.01)
 	else:
 		# Escape: head for cover (forest and ridge preferred over water, away from the opponent), then sink into it.

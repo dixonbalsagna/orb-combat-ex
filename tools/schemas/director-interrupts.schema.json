@@ -17,7 +17,8 @@
     "blast",
     "signature",
     "buried",
-    "beamPlays"
+    "beamPlays",
+    "pace"
   ],
   "properties": {
     "schema": {
@@ -414,7 +415,8 @@
           "required": [
             "speed",
             "minTicks",
-            "maxTicks"
+            "maxTicks",
+            "windupTicks"
           ],
           "properties": {
             "speed": {
@@ -431,6 +433,30 @@
               "type": "integer",
               "minimum": 1,
               "description": "And at most this many."
+            },
+            "windupTicks": {
+              "type": "object",
+              "required": [
+                "light",
+                "heavy"
+              ],
+              "properties": {
+                "light": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of wind-up before a light lunge."
+                },
+                "heavy": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of wind-up before a heavy lunge."
+                }
+              },
+              "description": "The lunge's wind-up by the blow's weight.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "description": "The mid band's approach: the distance to cover at `speed`, in whole ticks between minTicks and maxTicks.",
@@ -1352,6 +1378,49 @@
         }
       },
       "description": "The beam plays (agency-pass.md section 5; sim/director/beamplay.gd): how a signature that reaches a defender plays out.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "pace": {
+      "type": "object",
+      "required": [
+        "cooldown"
+      ],
+      "properties": {
+        "cooldown": {
+          "type": "object",
+          "required": [
+            "min",
+            "perSec",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The least a blow's cooldown can be, in ticks."
+            },
+            "perSec": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How much the cooldown grows for each blow in the last second."
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The most a blow's cooldown can be, in ticks."
+            }
+          },
+          "description": "The cooldown between blows of a brawl.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "description": "The brawl's pace (docs/director/brawl-plan.md).",
       "additionalProperties": false,
       "patternProperties": {
         "^_": true

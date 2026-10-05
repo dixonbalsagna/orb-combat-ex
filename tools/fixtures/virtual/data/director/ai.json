@@ -134,5 +134,37 @@
     "walk": 1,
     "swat": 1
   },
-  "mineMinKi": 40
+  "mineMinKi": 40,
+  "stance": {
+    "repick": [
+      0.7,
+      1.6
+    ],
+    "press": {
+      "fresh": 2.4,
+      "hurt": 1,
+      "hurtBelow": 0.35
+    },
+    "guard": {
+      "hurt": 1.6,
+      "fresh": 0.7,
+      "hurtBelow": 0.55
+    },
+    "evade": 1.2,
+    "escape": {
+      "hurt": 3.2,
+      "hurtBelow": 0.3,
+      "lowKi": 1.2,
+      "lowKiBelow": 25,
+      "rest": 0.25
+    },
+    "circle": {
+      "r": 260,
+      "x": 120,
+      "y": 70,
+      "rate": 2.4
+    },
+    "swayRate": 5,
+    "evadeBackoff": 500
+  }
 }

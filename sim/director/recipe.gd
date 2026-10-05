@@ -122,6 +122,31 @@ static func pick(S: SimState, f, pool: String, salt: int) -> String:
 	return id
 
 
+## What a blow tells Animation and VFX (docs/director/brawl-plan.md section 2.7), on its beat's args: style (speed, a
+## plain or mashed light; tech, a light from a timed press; heavy), grade (Controls' grade of the press's beat), k (its
+## place among his strikes of the exchange) and n (how many of his there are so far), closing (the blur's own closing
+## blow), charge (1 for a held press, else 0), hand (r, l, r, ... by k) and ender (a heavy that ends his string).
+static func _announce(S: SimState, ex, b, who, p: int, weight: int, closing: bool, last: bool) -> void:
+	var rh: int = ((p >> 8) & 3) if p >= 0 else 0
+	var role: String = "A" if who == ex.A else "D"
+	var k: int = 1
+	var n: int = 0
+	for x in ex.beats:
+		if x.op == "chainStrike" or (x.op == "strike" and x.args != null):
+			if ("A" if (x.op == "chainStrike" or x.args == null) else String(x.args.get("a", "A"))) == role:
+				n += 1
+				if x == b:
+					k = n
+	b.args["style"] = "heavy" if weight == SimAct.HEAVY else ("tech" if rh == DirAlchemy.TIMED else "speed")
+	b.args["grade"] = DirAlchemy.gradeOf(who)
+	b.args["k"] = k
+	b.args["n"] = n
+	b.args["closing"] = closing
+	b.args["charge"] = 1.0 if rh == DirAlchemy.HELD else 0.0
+	b.args["hand"] = "r" if (k % 2) == 1 else "l"
+	b.args["ender"] = who == ex.A and weight == SimAct.HEAVY and last and DirInterrupt.gi(who, DirInterrupt.LANDED) >= 1
+
+
 ## Gives every strike the exchange has pending, and has not dressed yet, its piece (after a plan: the opener, a link, the
 ## blur's own ender). Each fighter's strikes draw on his own style and his newest press. blurEnder: this link is the
 ## blur's closing blow.
@@ -137,7 +162,7 @@ static func dress(S: SimState, ex, blurEnder: bool = false) -> void:
 	for b in ex.beats:
 		if b.done or (b.op != "strike" and b.op != "chainStrike"):
 			continue
-		if b.args != null and b.args.has("piece"):
+		if b.args != null and (b.args.has("piece") or b.args.has("style")):
 			continue
 		var who = ex.A if (b.op == "chainStrike" or b.args == null or String(b.args.get("a", "A")) == "A") else ex.D
 		var p: int = DirInterrupt.gi(ex.A, DirInterrupt.PHRASE_P) if who == ex.A else DirAlchemy.last(S, who)
@@ -153,10 +178,14 @@ static func dress(S: SimState, ex, blurEnder: bool = false) -> void:
 		if id == "":
 			id = pick(S, who, poolName(S, who, weight, toward, b == lastA and (closing or blurEnder or weight == SimAct.HEAVY)), salt)
 		salt += 1
-		if id == "":
-			continue
 		if b.args == null:
 			b.args = {}
+		if b.op == "chainStrike":
+			b.args["a"] = "A"   # a link's blow carries what a strike does
+			b.args["d"] = "D"
+		_announce(S, ex, b, who, p, weight, closing or (blurEnder and b == lastA), b == lastA)
+		if id == "":
+			continue
 		b.args["piece"] = id
 		picked.append(who.name + " " + id)
 	if not picked.is_empty():

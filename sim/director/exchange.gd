@@ -502,8 +502,11 @@ const COOL_PER_SEC: float = 0.1
 const COOL_MAX: float = 0.6
 
 
+## The numbers are data (interrupts.json pace.cooldown); the constants above stand in when the block is missing.
 static func cooldownAfter(ex) -> float:
-	return SimMathx.jclamp(COOL_MIN + COOL_PER_SEC * ex.t, COOL_MIN, COOL_MAX)
+	var c: Dictionary = DirInterrupt.data().get("pace", {}).get("cooldown", {})
+	var lo: float = float(c.get("min", COOL_MIN))
+	return SimMathx.jclamp(lo + float(c.get("perSec", COOL_PER_SEC)) * ex.t, lo, float(c.get("max", COOL_MAX)))
 
 
 static func dirUpdate(S: SimState, dt: float) -> void:

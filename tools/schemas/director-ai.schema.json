@@ -15,7 +15,8 @@
     "reactTicks",
     "answerTicks",
     "beamLook",
-    "mineMinKi"
+    "mineMinKi",
+    "stance"
   ],
   "properties": {
     "schema": {
@@ -769,6 +770,189 @@
       "type": "number",
       "minimum": 0,
       "description": "The ki below which the AI lays no mine."
+    },
+    "stance": {
+      "type": "object",
+      "required": [
+        "repick",
+        "press",
+        "guard",
+        "evade",
+        "escape",
+        "circle",
+        "swayRate",
+        "evadeBackoff"
+      ],
+      "properties": {
+        "repick": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "description": "The AI re-picks its stance between these two numbers of seconds (the first is at most the second)."
+        },
+        "press": {
+          "type": "object",
+          "required": [
+            "fresh",
+            "hurt",
+            "hurtBelow"
+          ],
+          "properties": {
+            "fresh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The weight of the press stance when fresh."
+            },
+            "hurt": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The weight of the press stance when hurt."
+            },
+            "hurtBelow": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Hurt means health below this share."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "guard": {
+          "type": "object",
+          "required": [
+            "hurt",
+            "fresh",
+            "hurtBelow"
+          ],
+          "properties": {
+            "hurt": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The weight of the guard stance when hurt."
+            },
+            "fresh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The weight of the guard stance when fresh."
+            },
+            "hurtBelow": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Hurt means health below this share."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "evade": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The weight of the evade stance."
+        },
+        "escape": {
+          "type": "object",
+          "required": [
+            "hurt",
+            "hurtBelow",
+            "lowKi",
+            "lowKiBelow",
+            "rest"
+          ],
+          "properties": {
+            "hurt": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The weight of the escape stance when hurt."
+            },
+            "hurtBelow": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Hurt means health below this share."
+            },
+            "lowKi": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The weight of the escape stance when low on ki."
+            },
+            "lowKiBelow": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Low on ki means ki below this (0 to 100)."
+            },
+            "rest": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The weight of the escape stance otherwise."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "circle": {
+          "type": "object",
+          "required": [
+            "r",
+            "x",
+            "y",
+            "rate"
+          ],
+          "properties": {
+            "r": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The circling radius."
+            },
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The circle's horizontal extent, in units."
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The circle's vertical extent, in units."
+            },
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How fast it circles, in radians a second."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "swayRate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How fast it sways, in radians a second."
+        },
+        "evadeBackoff": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How far an evade backs off, in units."
+        }
+      },
+      "description": "The AI's stance choice (docs/director/brawl-plan.md section 3).",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     }
   },
   "additionalProperties": false,

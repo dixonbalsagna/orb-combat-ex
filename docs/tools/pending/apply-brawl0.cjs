@@ -172,7 +172,7 @@ const haveAi = liveAi && liveAi.stance;
     it('pace-cooldown-max-type', { set: { [C + 'max']: 'long' } }, { rule: 'type', pointer: C + 'max' }),
     it('pace-cooldown-min-above-max', { set: { [C + 'min']: 20, [C + 'max']: 10 } }, { rule: 'xref:pace-order', pointer: C + 'min' }),
     it('pace-cooldown-min-equals-max-ok', { set: { [C + 'min']: 8, [C + 'max']: 8 } }, null),
-    it('pace-cooldown-fractions-ok', { set: { [C + 'min']: 2.5, [C + 'perSec']: 0.5 } }, null),
+    it('pace-cooldown-fractions-ok', { set: { [C + 'min']: 0.25, [C + 'perSec']: 0.5, [C + 'max']: 0.75 } }, null),
     ai('stance-required', { del: ['/stance'] }, { rule: 'required', pointer: '' }),
     ai('stance-key-required', { del: [S + 'evade'] }, { rule: 'required', pointer: '/stance' }),
     ai('stance-unknown-key', { set: { [S + 'extra']: 1 } }, { rule: 'additionalProperties', pointer: S + 'extra' }),
