@@ -99,3 +99,45 @@ The body reads only what the sim already decides; nothing here moves a position.
 - **The push style.** `styles.push` in `press_styles.json`, a beat's `style: "push"`: no impact snap (the blow drives into its contact over 5 ticks from a 10-tick wind-up), no overshoot, a 10-tick follow-through and a 12-tick return, a squash of 0.35 and a body drive of 4 units. Contact lands on the contact tick, within 0.02 rad of the key (`press-styles/push-<fighter>.gif`).
 - **Tests:** `anim_check` `_test_zip_slice`: an entry, a pass over and a pass round play on both fighters with no joint past its limit, a missing name falls back, a check holds the guard arm (0.15 rad closer to the guard than without), a push drives for 4 ticks or more where a tech blow has none.
 - **Schema keys** (sent to the EP as a one-liner first; the delta patch is `docs/animation/handoff/zip-gestures-schemas.patch`): `readings.<r>.entry_in`, `entry_out` and the top-level `pass` in `zip.json`; `styles.push` and the top-level `guard` in `press_styles.json`.
+
+## 9. Contract with the director (2026-10-07; Animation's answers to Encounter's four questions, no code yet)
+
+**The rule: the read is the truth, the cues are edges.** The body polls `DirZip.read(S, f)` once per solve and poses from it; the cues only mark the moments (start, the exit becoming known, an early end) so VFX and I can start and stop a layer on the right tick. Nothing in a cue is needed twice.
+
+**1. The read (yes).** `DirZip.read(S, f)` returns an empty dictionary when `f` is not zipping, else:
+
+| Field | Meaning |
+| :--- | :--- |
+| `reading`, `btn` | `speed`, `tech`, `heavy`, `press`, `hold`; `x`, `y`, `b`, `a` (so the start cue carries neither) |
+| `phase`, `n`, `len` | `tell`, `in`, `reach`, `out` or `settle`; the live ticks since the phase began (a hit-stop does not advance it), and the phase's length in ticks. This replaces my time-derived phase, which drifts through a hit-stop |
+| `tell`, `in`, `hits`, `hd`, `out`, `lift` | the whole plan, as now (`out` is the default until `zip_out`, then the real one) |
+| `blow` | the index of the blow in reach (0 first), for the look only: the strike beats still carry the blow |
+| `via`, `pass`, `entry_in`, `entry_out` | the way out and the entries, empty until known (`via`: `back` or `run`; `pass`: `over`, `round` or empty); an empty `entry_*` means the body's default from `zip.json` |
+| `dist_bh` | the distance at the start in body heights, so I can assert the floor on a live zip |
+
+Without a read (the lab, a replay with the flag off) the body keeps its time-derived phase from `zip_start`. That is a fallback, not a second path to maintain: both end in the same `z` dictionary.
+
+**2. The exit (yes, with no earlier warning, and late degrades without a pop).** The out phase is posed from `out` ticks and `via`, `pass`, `entry_out`: the entry is squeezed into `out`, so I need those on the **first tick of the out** and no sooner. `zip_out` therefore works if it is **on the last tick of reach or earlier; the least notice is zero ticks**: the cue is consumed before the solve of the same tick, so the first out tick is posed from it. If it arrives late (after the out has begun), the body has already played the default way out; it switches to the named entry or the pass over **3 ticks** (a blend, not a pop) and the entry plays in the ticks that are left. The arc dive and the pivot need the rival in view, which the render keeps on its own. The exit's geometry (dx, dy) stays the sim's: I need only `ticks`, `via` and `pass`. The last blow's contact tick must come before the first out tick (it does by construction: the follow-through is in reach).
+
+**3. One list of end reasons.** Split what is one list into two: **exit kinds** (how a zip that finishes leaves: `home`, `far`, `point`) come in `zip_out` and in the read's `via` and `pass`; they are not ends. **End reasons** (the zip stopped early) are on `zip_end`, `text` = the reason:
+
+| Reason | When | The body |
+| :--- | :--- | :--- |
+| `stopped` (my `cancelled`: one word, `stopped`) | the zipper let go or the sim cancelled it, nothing hit him | layers off, the stance takes over over 4 ticks (a blend from the pose he is in); no reaction |
+| `outrun` | the rival got away and the zipper arrives at nothing | the whiff he already has (`_over_commit`: carried past, off balance), then the stance; if he has no momentum, as `stopped`. A small addition on my side when the cue exists |
+| `countered` | a blow met him on arrival | layers off on that tick; the sim's damage event plays the crumple (the heavy hit path) |
+| `caught` | a light hit him in reach | layers off on that tick; the damage event plays the flinch and recoil |
+
+`zip_end` must arrive on the same tick as the damage event or earlier; later, one tick of the zip pose shows under the reaction. The normal ends (`home`, `far`, `point`) need no `zip_end`: the read goes to `settle` and then empty.
+
+**4. Routing (three lines in `render_anim.gd`'s cue branch once the names are final).** `who` is the cue's actor, `t_cue` the event's own time, as the other cues use:
+
+```
+"zip_light", "zip_heavy":  zip_start(S, S.fighters[who], {"t0": t_cue})      # reading, btn and the plan come from DirZip.read
+"zip_out":                 zip_out(S, S.fighters[who], t_cue)                # new: latches via, pass, entry_out and the real out ticks from the read
+"zip_end":                 zip_end(S, S.fighters[who], String(e.text))       # the reason, as in the table
+```
+
+`zip_light` and `zip_heavy` both route to the same line (the reading says which look); VFX can still tell them apart by the cue name. `zip_out` is the one new function (`AnimZip.out`, about ten lines: it sets `via`, `entry_out`, `out` and `T4` and starts the 3-tick blend if the out has already begun); I write it with the routing, in my files.
+
+**Legal's standing rules (RL-076, `docs/legal/zip-screen.md`) still hold for what is built, and I assert them on the live zip when it exists.** The body is drawn on every tick of the zip with a travel or entry pose, never hidden, faded or replaced; each way takes at least max(4, ceil(distance in body heights / 3)) ticks, which the sim sets and the read's `in`, `out` and `dist_bh` let me check (a live zip below the floor fails `anim_check`'s zip slice, as the lab's does now); the arc dive plays only over the way out, after the last blow's follow-through, so it is never under a strike tick and never behind the rival at that tick. The one thing that would break the last two is a way out that begins before the last contact tick: please keep the strike inside reach.
