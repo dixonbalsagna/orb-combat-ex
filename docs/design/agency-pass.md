@@ -1,6 +1,6 @@
 # The agency pass: rules from Orb's first two-player playtest
 
-> **Melee in the close band is now ruled by `melee-press-feel.md`** (Orb's approved prototype, 2026-10-04): every press is a blow, brawls are magnetic, and both fighters strike at once. Where this page disagrees with it about a close brawl (the styles read from five presses, the blur's knock-back ender, the lone heavy that launches), that page is the newer rule. It also holds the five stances by button (§10), the signatures in three tiers (§11, which replaces the signature limit of §5 here) and the brake's move to LT (§12). Everything else at range here stands.
+> **Melee in the close band is now ruled by `melee-press-feel.md`** (Orb's approved prototype, 2026-10-04): every press is a blow, brawls are magnetic, and both fighters strike at once. Where this page disagrees with it about a close brawl (the styles read from five presses, the blur's knock-back ender, the tapped lone heavy that launches), that page is the newer rule. It also holds the five stances by button (§10), the signatures in three tiers (§11, which replaces the signature limit of §5 here) and the brake's move to LT (§12). Everything else at range here stands.
 
 Owner: Game Design. Orb played two local matches with a second player on 2026-10-02, answered questionnaire 14, and then picked from the pitches (`docs/ep/vision.md`, "Orb's picks after the pitches"). This page is the rules that follow. Three parts are **provisional** because Orb wants to feel them in play first: the signature limit (§5), the escape (§6) and top-tier speed (§8). Every number is a starting value for data.
 
@@ -662,6 +662,8 @@ Spam is the bigger show and the weaker attack, which is the same rule as mashing
 | The wild flight's shape | `speed` ×0.8 of the shot's own; `minTicks` 12; `arcPer` 0.15 for the near landings and 0.35 for the far ones | It visibly flies off before it comes down, and the far ones arc higher |
 
 ## 18. Flow and the four earners: what a player who never times still has (2026-10-02)
+
+> **Earner 3 is narrower since 2026-10-05** (`melee-press-feel.md` §5, Orb's questionnaire 17): a lone heavy launches with the stick only when it was held to full, 46 ticks. A tapped one lifts.
 
 Encounter's alchemy plan (`docs/director/alchemy-plan.md`, A4) reads "flow earns the ending" as replacing the four earners. **It replaces one of them, not all four.** Orb picked the four earners in questionnaire 14, and then picked "timing earns the ending". Both hold.
 

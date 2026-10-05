@@ -19,6 +19,8 @@ Orb's picture is that both are solid all-rounders (`pitches.md` §7). Pillar 5 i
 
 **Balance.** Every pairing stays inside 45 to 55%. The placeholder `dmgMul` values (0.95 and 1.02) go: QA re-centres with each fighter's own numbers. The rival also has his situational bands: he wins under 45% of the matches that end before Apex, and over 60% of those that reach it (`pitches.md` §7).
 
+**Confirmed by Orb** (questionnaire 17, 2026-10-05). The identity split stands: palms, blade hands and arcs for the Protagonist, and fists, plates and straight lines for the rival. The rival's hands are a mix: fists on his heavies and blade hands on his lights. His glasses are always on, so no blow, wound, form or set piece takes them off.
+
 ## 2. Stats and forms
 
 - **Base stats are the same for both,** since both are all-rounders: today's placeholder speed, damage, ki and wear numbers. Their differences come from the rows above, not from base stats.
