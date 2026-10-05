@@ -712,6 +712,18 @@ The half share and the cap of 30 were for the brawl's stream, six blows a second
 - if the arms pass 65% of limb breaks, the landed light's pick goes to 10 and 6, as already ruled. The shot cap isn't the lever for that;
 - if the mixed blaster passes 50%, the lever is still how the AI treats a shooter, and not what a blocked shot wears.
 
+**Where a blocked shot's wear goes once the arms are full** (re-ruled after Simulation built the above: bolt-only still read 1 of 100). I had the cause wrong. It wasn't the cap's height. On B1 a blocked hit's wear filled the limb and the rest spilled into the core, and the core is what brings the brink. That is how a bolt-only player won 36 of 100. The cap I ruled soaks everything over it, so a guarding fighter's core took nothing from a blocked shot at any cap.
+
+- **A blocked shot's arm wear over `block.shotArmWearCap` goes into the core.** This is Simulation's proposal, and it needs no new key. It is the leak I wanted from shots: a guard takes a shot in the arms until they are full, and after that the shot comes through.
+- **Blocked melee blows keep soaking what is over their cap. A blocked blow never reaches the core, and that is intended.** A fighter who only guards can't be worn to the brink by lights, or by heavies on his guard. A guard is beaten by breaking it, by a grab, or by waiting out its fatigue, and not by tapping on it. That is Orb's rule that the heavy is what is reliable against a guard.
+- **The starting share is 0.6,** with the cap still at 75. Simulation's what-ifs read 17 of 100 at 0.5 and 20 of the first 34 at 0.7, so about 0.6 should sit near 30. **The final value is picked on Encounter's committed slice,** between 0.5 and 0.7, because ruling 5 changes how the AI meets a shooter.
+- **Data:** `block.shotArmShare` 0.6 and `block.shotArmWearCap` 75, with the spill to the core as the rule.
+
+**The levers, replacing the list above for shots:**
+- bolt-only outside 20 to 40%: the share, inside 0.5 to 0.7;
+- **the arms over 65% of limb breaks with this in:** lower `block.shotArmWearCap` to 45, which is under battered. Blocked shots then stop battering the arms at all, and the leak into the core starts sooner, so the share would come down with it, to about 0.4 to 0.5. This is the second lever because nothing has measured it yet;
+- the mixed blaster over 50%: still how the AI treats a shooter.
+
 **2. The mood** (Calm read 4.2% of match time and Frenzied 63.4%, against 30 to 55% and 5 to 20%; act 2 began at 77.8 s against 90 to 150 s).
 
 The mood adds 1.5 points for every strike, and strikes now come six a second. So a blow feeds the mood by its form, as it does damage:
