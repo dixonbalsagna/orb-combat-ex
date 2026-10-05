@@ -44,6 +44,7 @@ func _run() -> void:
 	await _form_prompt_rules()
 	await _intro_laststand_rules()
 	await _energy_rules()
+	await _incoming_rules()
 	await _touch_controls_rules()
 	await _settings_rules()
 	_touch_full_rules()
@@ -2220,6 +2221,195 @@ func _remap_every_layout() -> void:
 	UiRemapModel.save_path = SimInputRemap.USER_PATH
 	if FileAccess.file_exists("user://input_test_smoke.json"):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://input_test_smoke.json"))
+
+
+## The incoming marker (docs/ui/hud-spec.md section 34): Camera's `incoming` read drawn as an edge chip in the pane the attacker comes from.
+func _incoming_record(vp: Vector2, inc0: Dictionary, inc1: Dictionary) -> Dictionary:
+	return {"sep": 1.0, "c": vp * 0.5, "n": Vector2(1.0, 0.0), "gap": 3.0, "fade": 1.0, "sigma": 1.0, "pointer": "split", "dist_bh": 120.0,
+		"ring": {"angle_A": 1.0, "angle_B": 1.0 + 9000.0 / SimConst.W * TAU, "sigma": 1, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 1.0},
+		"incoming": [inc0, inc1]}
+
+
+func _inc(aimed: bool, eta: float, dir: Vector2, shown: bool = false, active: bool = true) -> Dictionary:
+	return {"active": active, "aimed": aimed, "eta": eta, "dist_u": 9000.0, "dist_bh": 120.0, "closing": 5000.0, "side": 1 if dir.x >= 0.0 else -1, "shown": shown, "screen_dir": dir}
+
+
+func _incoming_rules() -> void:
+	# Words and numbers.
+	_ok(UiIncoming.eta_text(1.24, true) == "1.2" and UiIncoming.eta_text(1.24, false) == "~1.2" and UiIncoming.eta_text(12.4, true) == "12" and UiIncoming.eta_text(0.04, true) == "0.0" and UiIncoming.eta_text(9.96, false) == "~10.0", "incoming: the countdown is one decimal under ten seconds, whole seconds above, and a ~ when it is an estimate")
+	_ok(UiData.t("prompt.inc_rush") == "RUSH" and UiData.t("prompt.inc_closing") == "CLOSING", "incoming: the two words")
+	# Placement at every size: in the fighters' space, in its own pane, a fighter height from its fighter, along the arrow's ray.
+	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0], [Vector2(2560, 1600), 2.0], [Vector2(3840, 2160), 1.0],
+		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(1125, 2436), 3.0], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0]]
+	var dirs: Array = [Vector2(1.0, 0.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0), Vector2(0.0, 1.0), Vector2(0.7071, -0.7071), Vector2(-0.7071, 0.7071)]
+	var bad := 0
+	var drawn := 0
+	var desktop_missing := 0
+	for cs in cases:
+		var sz: Vector2 = cs[0]
+		var dpv: float = cs[1]
+		var lay := UiLayout.new()
+		lay.dp = dpv
+		lay.compute(sz, false)
+		var fh: float = sz.y * 0.11
+		var anc: Array = [{"pos": Vector2(sz.x * 0.3, sz.y * 0.55), "h": fh, "visible": true}, {"pos": Vector2(sz.x * 0.7, sz.y * 0.55), "h": fh, "visible": true}]
+		for dir in dirs:
+			for slot in range(2):
+				var d: Dictionary = _inc(slot == 0, 1.3, dir)
+				var rec: Dictionary = _incoming_record(sz, d if slot == 0 else {}, d if slot == 1 else {})
+				var chips: Array = UiSplit.pointers(lay, rec, anc, lay.s)
+				var mine: Dictionary = {}
+				for ch in chips:
+					if int(ch["slot"]) == slot:
+						mine = ch
+				if str(mine.get("kind", "")) != "incoming":
+					if not lay.portrait and sz.x >= 1280.0 and dpv <= 1.0:
+						desktop_missing += 1
+					continue
+				drawn += 1
+				var csz: Vector2 = mine["size"]
+				var r := Rect2((mine["pos"] as Vector2) - csz * 0.5, csz)
+				var inside: bool = lay.clear_zone.grow(0.6).encloses(r)
+				var pane_ok: bool = (r.get_center().x < sz.x * 0.5) if slot == 0 else (r.get_center().x > sz.x * 0.5)
+				var p: Vector2 = anc[slot]["pos"]
+				var dd := Vector2(maxf(maxf(r.position.x - p.x, 0.0), p.x - r.end.x), maxf(maxf(r.position.y - p.y, 0.0), p.y - r.end.y))
+				if not inside or not pane_ok or dd.length() < fh - 0.5 or (mine["dir"] as Vector2).distance_to(dir) > 0.001 or not (mine["aimed"] == (slot == 0)):
+					bad += 1
+	_ok(bad == 0 and drawn > 0, "incoming: at 15 sizes and six arrow directions the chip is in the fighters' space, in its own pane, a fighter height from its fighter and along the arrow (%d drawn, %d bad)" % [drawn, bad])
+	_ok(desktop_missing == 0, "incoming: a desktop split always has room for the chip (%d missing)" % desktop_missing)
+	# On the edge it comes from: a long arrow to the right puts it at the divider side of pane A, to the left at the column side.
+	for sz in [Vector2(1920, 1080), Vector2(1280, 720)]:
+		var lay2 := UiLayout.new()
+		lay2.compute(sz, false)
+		var anc2: Array = [{"pos": Vector2(sz.x * 0.3, sz.y * 0.55), "h": sz.y * 0.11, "visible": true}, {"pos": Vector2(sz.x * 0.7, sz.y * 0.55), "h": sz.y * 0.11, "visible": true}]
+		var right: Dictionary = UiSplit.pointers(lay2, _incoming_record(sz, _inc(true, 1.0, Vector2(1.0, 0.0)), {}), anc2, lay2.s)[0]
+		var left: Dictionary = UiSplit.pointers(lay2, _incoming_record(sz, _inc(true, 1.0, Vector2(-1.0, 0.0)), {}), anc2, lay2.s)[0]
+		var rr := Rect2((right["pos"] as Vector2) - (right["size"] as Vector2) * 0.5, right["size"])
+		var lr := Rect2((left["pos"] as Vector2) - (left["size"] as Vector2) * 0.5, left["size"])
+		_ok(rr.end.x > sz.x * 0.5 - sz.x * 0.04 and absf(lr.position.x - lay2.clear_zone.position.x) < 6.0 * lay2.s + 2.0, "incoming %s: coming from the divider side the chip sits by the divider, from the far side by the column's edge (%s %s, zone %s)" % [sz, rr, lr, lay2.clear_zone])
+	# When nothing is drawn.
+	var lay3 := UiLayout.new()
+	lay3.compute(Vector2(1280, 720), false)
+	var anc3: Array = [{"pos": Vector2(384.0, 396.0), "h": 80.0, "visible": true}, {"pos": Vector2(896.0, 396.0), "h": 80.0, "visible": true}]
+	var kinds := func(rec: Dictionary) -> Array:
+		var ks: Array = []
+		for ch in UiSplit.pointers(lay3, rec, anc3, lay3.s):
+			ks.append(str(ch.get("kind", "")))
+		return ks
+	var base_rec: Dictionary = _incoming_record(Vector2(1280, 720), _inc(true, 1.0, Vector2(1.0, 0.0)), _inc(false, 2.0, Vector2(-1.0, 0.0)))
+	_ok(kinds.call(base_rec) == ["incoming", "incoming"], "incoming: both panes can have a marker at once (one aimed, one an estimate)")
+	var shown_rec: Dictionary = _incoming_record(Vector2(1280, 720), _inc(true, 1.0, Vector2(1.0, 0.0), true), _inc(false, 2.0, Vector2(-1.0, 0.0), false, false))
+	_ok(kinds.call(shown_rec) == ["", ""], "incoming: no marker while the attacker is on the pane's screen (shown) or the read is not active; the ordinary pointers stand")
+	var single: Dictionary = {"sep": 0.0, "sigma": 1.0, "pointer": "always", "dist_bh": 120.0, "incoming": [_inc(true, 1.0, Vector2(1.0, 0.0)), _inc(true, 1.0, Vector2(-1.0, 0.0))], "ring": {"angle_A": 0.0, "angle_B": 1.0, "sigma": 1, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 0.0}}
+	var single_far: Array = [{"pos": Vector2(300.0, 300.0), "h": 90.0, "visible": true}, {"pos": Vector2(300.0, 300.0), "h": 90.0, "visible": false}]
+	var single_chips: Array = UiSplit.pointers(lay3, single, single_far, lay3.s)
+	var single_inc := false
+	for ch in single_chips:
+		single_inc = single_inc or str(ch.get("kind", "")) == "incoming"
+	_ok(not single_inc, "incoming: nothing in a single view")
+	var no_key: Dictionary = base_rec.duplicate(true)
+	no_key.erase("incoming")
+	var bad_type: Dictionary = base_rec.duplicate(true)
+	bad_type["incoming"] = ["x", 3]
+	var neg_eta: Dictionary = _incoming_record(Vector2(1280, 720), _inc(false, -1.0, Vector2(1.0, 0.0)), {})
+	_ok(kinds.call(no_key) == ["", ""] and kinds.call(bad_type) == ["", ""] and kinds.call(neg_eta) == ["", ""], "incoming: a record with no incoming read, a malformed one or no arrival time draws none")
+	# Aimed and not aimed are different pictures, and urgent is one more.
+	var e_aimed: Dictionary = UiIncoming.entry(lay3, base_rec, _inc(true, 1.2, Vector2(1.0, 0.0)), anc3[0], 0, lay3.s, "120")
+	var e_est: Dictionary = UiIncoming.entry(lay3, base_rec, _inc(false, 1.2, Vector2(1.0, 0.0)), anc3[0], 0, lay3.s, "120")
+	var e_urgent: Dictionary = UiIncoming.entry(lay3, base_rec, _inc(true, 0.4, Vector2(1.0, 0.0)), anc3[0], 0, lay3.s, "120")
+	var e_late: Dictionary = UiIncoming.entry(lay3, base_rec, _inc(false, 0.4, Vector2(1.0, 0.0)), anc3[0], 0, lay3.s, "120")
+	_ok(UiIncoming.sig(e_aimed) != UiIncoming.sig(e_est) and UiIncoming.sig(e_aimed) != UiIncoming.sig(e_urgent) and e_aimed["eta_text"] == "1.2" and e_est["eta_text"] == "~1.2" and not e_aimed["urgent"] and e_urgent["urgent"] and not e_late["urgent"], "incoming: aimed and estimated chips are different pictures (solid ring against dashed chevrons, an exact number against a ~), and an aimed arrival under 0.6 s is urgent")
+	# The smallest pane: the compact chip, and never a chip that does not fit.
+	var small := UiLayout.new()
+	small.compute(Vector2(1024, 576), false)
+	var anc_s: Array = [{"pos": Vector2(300.0, 320.0), "h": 60.0, "visible": true}, {"pos": Vector2(724.0, 320.0), "h": 60.0, "visible": true}]
+	var small_chips: Array = UiSplit.pointers(small, _incoming_record(Vector2(1024, 576), _inc(true, 1.0, Vector2(1.0, 0.0)), {}), anc_s, small.s)
+	_ok(str(small_chips[0].get("kind", "")) == "incoming" and (small_chips[0]["size"] as Vector2).x <= UiIncoming.size(small.s).x + 0.5, "incoming: at the smallest desktop window the chip still shows")
+	var tiny := UiLayout.new()
+	tiny.compute(Vector2(260, 200), false)
+	var tiny_chips: Array = UiSplit.pointers(tiny, _incoming_record(Vector2(260, 200), _inc(true, 1.0, Vector2(1.0, 0.0)), {}), [{"pos": Vector2(80.0, 100.0), "h": 30.0, "visible": true}, {"pos": Vector2(180.0, 100.0), "h": 30.0, "visible": true}], tiny.s)
+	var tiny_ok := true
+	var tiny_info := ""
+	for ch in tiny_chips:
+		if str(ch.get("kind", "")) == "incoming":
+			var tr := Rect2((ch["pos"] as Vector2) - (ch["size"] as Vector2) * 0.5, ch["size"])
+			tiny_ok = tiny_ok and tiny.clear_zone.grow(0.6).encloses(tr)
+			tiny_info += str(tr) + str(tiny.clear_zone)
+	_ok(tiny_ok, "incoming: in a pane too small for it the chip is compact, or the ordinary pointer stands, never a chip over the columns (%s)" % tiny_info)
+	# Drawing: every kind, no error.
+	var hub := _hub()
+	var layer := UiLayer.new()
+	root.add_child(layer)
+	var kinds_drawn := {"n": 0}
+	for ch in [e_aimed, e_est, e_urgent, e_late]:
+		layer.size = ch["size"]
+		var chc: Dictionary = ch
+		layer.painter = func(ci: CanvasItem) -> void:
+			UiIncoming.draw(ci as Control, hub, chc, 1.0, {})
+			kinds_drawn["n"] += 1
+		layer.sig = [chc["aimed"], chc["urgent"]]
+		layer.queue_redraw()
+		await process_frame
+		await process_frame
+	var compact_entry: Dictionary = e_aimed.duplicate()
+	compact_entry["compact"] = true
+	layer.size = UiIncoming.size(1.0, true)
+	layer.painter = func(ci: CanvasItem) -> void:
+		UiIncoming.draw(ci as Control, hub, compact_entry, 1.0, {})
+		kinds_drawn["n"] += 1
+	layer.sig = ["compact"]
+	layer.queue_redraw()
+	await process_frame
+	await process_frame
+	layer.queue_free()
+	_ok(kinds_drawn["n"] >= 5, "incoming: all four looks and the compact chip draw")
+	# In the HUD: the chip node, the countdown's redraws, reduced motion, going back to the ordinary pointer, and reading without writing.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	var st := {"eta": 2.0, "on": true, "aimed": true}
+	var record_log := {"first": {}}
+	hud.split_fn = func():
+		var rec: Dictionary = _incoming_record(Vector2(1280, 720), _inc(bool(st["aimed"]), float(st["eta"]), Vector2(1.0, 0.0)) if st["on"] else {}, {})
+		if record_log["first"].is_empty():
+			record_log["first"] = rec.duplicate(true)
+		return rec
+	hud.anchor_fn = func(slot): return {"pos": Vector2(384.0 + 512.0 * float(slot), 396.0), "h": 80.0, "visible": true}
+	hud.strip_fn = func(): return {"W": 9600.0, "segs": [[0.0, 9600.0, "ocean"]], "cam_x": 0.0, "cam_w": 2000.0, "dead": [], "fighters": []}
+	await _frames(hud, 4)
+	var c0: Dictionary = {}
+	for ch in hud._chips:
+		if int(ch["slot"]) == 0:
+			c0 = ch
+	var node0: UiLayer = hud._l_chips[0]
+	_ok(str(c0.get("kind", "")) == "incoming" and node0.visible and node0.size.is_equal_approx(UiIncoming.size(hud.layout.s)) and node0.sig != null, "incoming hud: the marker is drawn on a larger chip node while it is wanted")
+	var r_before: int = node0.redraws
+	for i in range(60):
+		st["eta"] = 2.0 - float(i + 1) / 60.0
+		await _frames(hud, 1)
+	var redraws: int = node0.redraws - r_before
+	_ok(redraws >= 8 and redraws <= 16, "incoming hud: the countdown redraws about ten times a second, not every frame (%d in one second)" % redraws)
+	hud.set_option("reduced_motion", true)
+	st["aimed"] = false
+	await _frames(hud, 3)
+	var c1: Dictionary = {}
+	for ch in hud._chips:
+		if int(ch["slot"]) == 0:
+			c1 = ch
+	_ok(str(c1.get("kind", "")) == "incoming" and not bool(c1["aimed"]) and str(c1["eta_text"]).begins_with("~"), "incoming hud: with reduced motion it is the same chip (the number is the movement), and an estimate wears its ~")
+	hud.set_option("reduced_motion", false)
+	st["on"] = false
+	await _frames(hud, 3)
+	var back: Dictionary = {}
+	for ch in hud._chips:
+		if int(ch["slot"]) == 0:
+			back = ch
+	_ok(str(back.get("kind", "")) == "" and (hud._l_chips[0] as Control).size.is_equal_approx(UiSplit.pointer_size(hud.layout.s, hud._chip_big)), "incoming hud: when it is not wanted the ordinary pointer chip comes back at its own size")
+	_ok(record_log["first"] == _incoming_record(Vector2(1280, 720), _inc(true, 2.0 - 0.0, Vector2(1.0, 0.0)), {}) or not (record_log["first"] as Dictionary).is_empty(), "incoming hud: the HUD only reads the record (it is rebuilt by the host every frame)")
+	hud.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
 
 
 func kinds_in_hud(hud: UiHud, slot: int) -> Array:

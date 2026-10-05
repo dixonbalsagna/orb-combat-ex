@@ -169,6 +169,12 @@ func _parse_args() -> Dictionary:
 		if a.begins_with("--"):
 			var kv: PackedStringArray = a.substr(2).split("=", true, 1)
 			out[kv[0]] = kv[1] if kv.size() > 1 else "1"
+	if OS.has_feature("web"):
+		# On the web the same arguments come from the page's query string (?split&incoming=aimed&at=0.4), for stills from the web build.
+		var qs = JavaScriptBridge.eval("window.location.search", true)
+		for a in str(qs).trim_prefix("?").split("&", false):
+			var kv2: PackedStringArray = a.split("=", true, 1)
+			out[kv2[0]] = kv2[1] if kv2.size() > 1 else "1"
 	return out
 
 
@@ -250,7 +256,20 @@ func _split_record() -> Dictionary:
 	var W := 9600.0
 	var xs: Array = [2150.0 + 250.0 * sin(t * 0.2), 2900.0 + 300.0 * sin(t * 0.17 + 1.0)]
 	var ring := {"angle_A": xs[0] / W * TAU, "angle_B": xs[1] / W * TAU, "sigma": split_sigma, "arc_A": 0.5, "arc_B": 0.5, "swing": 0.0, "sep": split_sep, "W": 153600.0}
-	return {"sep": split_sep, "c": vp * 0.5, "n": _split_n(), "gap": maxf(3.0, 0.005 * vp.x), "fade": clampf(split_sep * 5.0, 0.0, 1.0), "slam": 0.0, "sigma": split_sigma, "dist_bh": 48.0 + 30.0 * sin(t * 0.3), "pointer": "split", "ring": ring}
+	var rec := {"sep": split_sep, "c": vp * 0.5, "n": _split_n(), "gap": maxf(3.0, 0.005 * vp.x), "fade": clampf(split_sep * 5.0, 0.0, 1.0), "slam": 0.0, "sigma": split_sigma, "dist_bh": 48.0 + 30.0 * sin(t * 0.3), "pointer": "split", "ring": ring}
+	if args.has("incoming"):
+		# Camera's incoming read (docs/camera/split-screen.md 21d): --incoming shows both looks (pane A aimed from the divider side, pane B an estimate from the far side),
+		# --incoming=aimed or --incoming=closing shows one look in both panes. The countdown runs 3 s down and starts again.
+		var eta: float = 3.0 - fposmod(t, 3.0)
+		var mode: String = str(args["incoming"])
+		var a_aimed: bool = mode != "closing"
+		var b_aimed: bool = mode == "aimed"
+		var dirs: Array = [Vector2(float(split_sigma), 0.0), Vector2(float(split_sigma), -0.45).normalized()]
+		rec["incoming"] = [
+			{"active": true, "aimed": a_aimed, "eta": eta, "dist_u": 9000.0, "dist_bh": 120.0, "closing": 6000.0, "side": split_sigma, "shown": false, "screen_dir": dirs[0]},
+			{"active": true, "aimed": b_aimed, "eta": eta + 0.7, "dist_u": 7000.0, "dist_bh": 94.0, "closing": 3600.0, "side": split_sigma, "shown": false, "screen_dir": dirs[1]},
+		]
+	return rec
 
 
 func _anchor(slot: int) -> Dictionary:

@@ -524,14 +524,19 @@ func _update_layers() -> void:
 			_chip_seen[i] = false
 			continue
 		chip.visible = true
-		chip.size = psz
+		var csz: Vector2 = found["size"] if found.has("size") else psz   # an incoming marker is a larger chip
 		var target: Vector2 = found["pos"]
 		if not _chip_seen[i] or bool(opts["reduced_motion"]):
 			_chip_at[i] = target
 		else:
 			_chip_at[i] = (_chip_at[i] as Vector2).lerp(target, 1.0 - exp(-_dt * 20.0))
 		_chip_seen[i] = true
-		chip.position = (_chip_at[i] as Vector2) - psz * 0.5
+		chip.size = csz
+		chip.position = (_chip_at[i] as Vector2) - csz * 0.5
+		if str(found.get("kind", "")) == "incoming":
+			# The countdown changes every tenth of a second and is not held back; the picture redraws only when a number, the arrow or the kind changes.
+			chip.update_sig(UiIncoming.sig(found))
+			continue
 		# The number holds for at least a quarter second, so a fast-changing distance redraws the chip at most four times a second.
 		if str(found["text"]) != _chip_text[i] and (_t - float(_chip_text_t[i]) >= (0.6 if _chip_big else 0.25) or _chip_text[i] == ""):
 			_chip_text[i] = str(found["text"])
@@ -2567,7 +2572,10 @@ func _paint_ring(ci: CanvasItem) -> void:
 func _paint_chip(ci: CanvasItem, slot: int) -> void:
 	for ch in _chips:
 		if int(ch["slot"]) == slot:
-			UiSplit.draw_chip(ci as Control, hub, slot, ch["dir"], _chip_text[slot], layout.s, _o())
+			if str(ch.get("kind", "")) == "incoming":
+				UiIncoming.draw(ci as Control, hub, ch, layout.s, _o())
+			else:
+				UiSplit.draw_chip(ci as Control, hub, slot, ch["dir"], _chip_text[slot], layout.s, _o())
 
 
 ## The divider's two bars (a dark edge under a light line): transform only, no draw commands. Updated when its rounded

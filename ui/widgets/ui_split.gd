@@ -173,7 +173,7 @@ static func rival_side(sp: Dictionary, slot: int) -> int:
 const BIG_FROM := 100.0
 const BIG_UNTIL := 85.0   # and it stays big until the distance falls below this
 
-## The chips to draw: [{slot, pos, dir, text}]. `anchors` is [{pos, h, visible}] per slot from the host's anchor_fn. `big` is the
+## The chips to draw: [{slot, pos, dir, text}] (an incoming marker, kind "incoming", has more: size, eta_text, aimed, urgent, compact; see UiIncoming). `anchors` is [{pos, h, visible}] per slot from the host's anchor_fn. `big` is the
 ## large chip (the host decides it with BIG_FROM and BIG_UNTIL, so it does not flicker around the limit).
 static func pointers(lay: UiLayout, sp: Dictionary, anchors: Array, s: float, big: bool = false) -> Array:
 	var mode: String = str(sp.get("pointer", "split"))
@@ -191,6 +191,13 @@ static func pointers(lay: UiLayout, sp: Dictionary, anchors: Array, s: float, bi
 			continue
 		var p: Vector2 = an["pos"]
 		if split_open:
+			# The rival is coming at this fighter fast from off the pane: the incoming marker (UiIncoming) stands in for the ordinary pointer.
+			var inc: Dictionary = UiIncoming.data(sp, i)
+			if not inc.is_empty():
+				var ent: Dictionary = UiIncoming.entry(lay, sp, inc, an, i, s, txt)
+				if not ent.is_empty():
+					out.append(ent)
+					continue
 			var c: Vector2 = sp["c"]
 			var nrm: Vector2 = sp["n"]
 			var dirn: Vector2 = nrm if i == 0 else -nrm   # from this pane's fighter toward the rival
@@ -273,6 +280,10 @@ static func _clamp_to(p: Vector2, lay: UiLayout, big: bool = false) -> Vector2:
 
 ## The distance as text, ROUNDED so the chip redraws a few times a second and not every frame while the fighters move: to
 ## the nearest 5 under 100, the nearest 25 under 1,000, then tenths of a thousand ("1.2k").
+static func dist_text(bh: float) -> String:
+	return _dist_text(bh)
+
+
 static func _dist_text(bh: float) -> String:
 	if bh >= 1000.0:
 		return "%.1fk" % (bh / 1000.0)
@@ -283,8 +294,8 @@ static func _dist_text(bh: float) -> String:
 
 ## What a chip's picture depends on (its position does not: the chip is a node the HUD moves, so following a fighter costs no
 ## redraw). The arrow's direction changes slowly and is rounded to about 5 degrees; the distance text is rounded (see _dist_text).
-static func chip_sig(slot: int, dir: Vector2, text: String, alpha: float, big: bool = false) -> Array:
-	return [slot, int(dir.x * 12.0), int(dir.y * 12.0), text, int(alpha * 20.0), big]
+static func chip_sig(slot: int, dir: Vector2, text: String, alpha: float, big: bool = false, extra: Array = []) -> Array:
+	return [slot, int(dir.x * 12.0), int(dir.y * 12.0), text, int(alpha * 20.0), big] + extra
 
 
 ## One chip, drawn at the centre of `ci` (a node of pointer_size): the arrow along `dir`, the rival's strip shape (circle for A,
