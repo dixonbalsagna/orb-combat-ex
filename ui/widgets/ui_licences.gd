@@ -95,19 +95,51 @@ static func lines(max_w: float, fs: int) -> Array:
 	return out
 
 
-## UiText.wrap, with any word wider than the line broken by letters (a web address on a phone).
+## Greedy word wrap with each word measured once (a cache per font size: the text repeats its words thousands of times, and measuring every trial line
+## was over a second on a throttled phone-class CPU). A word wider than the line is broken by letters (a web address on a phone).
+static var _word_w: Dictionary = {}
+
+
+static func _w(word: String, fs: int) -> float:
+	var key := "%d|%s" % [fs, word]
+	if not _word_w.has(key):
+		_word_w[key] = UiText.width(word, fs)
+	return float(_word_w[key])
+
+
 static func _wrap(text: String, fs: int, max_w: float) -> PackedStringArray:
 	var out := PackedStringArray()
-	for ln in UiText.wrap(text, fs, max_w):
-		if UiText.width(ln, fs) <= max_w:
-			out.append(ln)
+	var space: float = _w(" ", fs)
+	var line := ""
+	var line_w := 0.0
+	for word in text.split(" ", false):
+		var ww: float = _w(word, fs)
+		if ww > max_w:
+			if line != "":
+				out.append(line)
+				line = ""
+				line_w = 0.0
+			var cur := ""
+			var cur_w := 0.0
+			for ch in word:
+				var cw: float = _w(ch, fs)
+				if cur != "" and cur_w + cw > max_w:
+					out.append(cur)
+					cur = ""
+					cur_w = 0.0
+				cur += ch
+				cur_w += cw
+			line = cur
+			line_w = cur_w
 			continue
-		var cur := ""
-		for ch in ln:
-			if cur != "" and UiText.width(cur + ch, fs) > max_w:
-				out.append(cur)
-				cur = ""
-			cur += ch
-		if cur != "":
-			out.append(cur)
+		var joined: float = ww if line == "" else line_w + space + ww
+		if joined <= max_w:
+			line = word if line == "" else line + " " + word
+			line_w = joined
+		else:
+			out.append(line)
+			line = word
+			line_w = ww
+	if line != "":
+		out.append(line)
 	return out

@@ -603,7 +603,7 @@ func _update_layers() -> void:
 	_l_fb.update_sig(UiFeedback.sig(layout.vp, _fb_state, _fb_tags, _fb_status_ok, dp, layout.s, bool(opts["touch_ui"]), "%s|%s" % [_fb_opened, bool(_fb_issue.get("fallback", false))]) if _fb_open else null)
 	_l_tele.update_sig(UiReads.telegraph_sig(hub, bool(opts["show_prompts"]), reduced))
 	_l_hint.update_sig(UiReads.hint_sig(hub))
-	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d|%d" % [_howto_tab, _howto_held(), UiStance.live_bits(), _howto_scroll]) if _howto_open else null)
+	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d|%d|%s" % [_howto_tab, _howto_held(), UiStance.live_bits(), _howto_scroll, _howto_first]) if _howto_open else null)
 
 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
 	_l_settings.update_sig(_settings_sig() if (_set_open and not _rm_open) else null)
@@ -745,7 +745,7 @@ func show_howto(first_run: bool = false, page: int = 0) -> void:
 		return
 	_howto_open = true
 	_howto_first = first_run
-	_howto_page = clampi(page, 0, maxi(UiHowto.page_count() - 1, 0))
+	_howto_page = clampi(page, 0, maxi(UiHowto.page_count(first_run) - 1, 0))   # the first run shows the gameplay pages only
 	_howto_scroll = 0
 	_howto_scroll_f = 0.0
 	_howto_tab = -1
@@ -787,7 +787,7 @@ func howto_action(act: String) -> void:
 		return
 	match act:
 		"next":
-			if _howto_page >= UiHowto.page_count() - 1:
+			if _howto_page >= UiHowto.page_count(_howto_first) - 1:
 				hide_howto()
 			else:
 				_howto_page += 1
@@ -843,7 +843,7 @@ func _howto_held() -> int:
 
 ## What the stances page needs beyond the layout: the held stance, the tab chosen, and whether the touch controls are the Full ones.
 func _howto_extra() -> Dictionary:
-	return {"held": _howto_held(), "tab": _howto_tab, "full_touch": bool(opts["touch_ui"]) and str(opts["touch_preset"]) == "touch-full", "scroll": _howto_scroll}
+	return {"held": _howto_held(), "tab": _howto_tab, "full_touch": bool(opts["touch_ui"]) and str(opts["touch_preset"]) == "touch-full", "scroll": _howto_scroll, "first_run": _howto_first}
 
 
 ## The glyph family and slot of the first human fighter, for the controls page ("kbd" and slot 0 if none is set).

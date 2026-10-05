@@ -70,7 +70,8 @@
         { "icon": "struggle", "col": 1, "text": "Finisher rings show hold or slip. GUARD a launch, DODGE a melee, PRESS a beam." },
         { "icon": "toll", "col": 1, "text": "The top chip counts what the fight costs the world." },
         { "icon": "strip", "col": 1, "text": "The strip is the whole planet. It wraps." },
-        { "note": "reopen", "col": 1, "text": "" }
+        { "note": "reopen", "col": 1, "text": "" },
+        { "icon": "first_run_about", "col": 1, "text": "About this game and its licences: Pause, then About." }
       ]
     },
     {

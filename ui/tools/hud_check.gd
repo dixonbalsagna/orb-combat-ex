@@ -50,6 +50,7 @@ func _run() -> void:
 	await _display_name_rules()
 	await _about_rules()
 	await _licences_rules()
+	await _first_run_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
 	await _armed_touch_rules()
@@ -1358,7 +1359,7 @@ func _howto_rules() -> void:
 	_ok(hud.howto_page() == 2, "howto: Enter and Right go forward a page each")
 	hud._unhandled_input(key.call(KEY_LEFT))
 	_ok(hud.howto_page() == 1, "howto: Left goes back")
-	for _i in range(UiHowto.page_count() - 1):
+	for _i in range(UiHowto.page_count(true) - 1):
 		hud._unhandled_input(key.call(KEY_SPACE))
 	_ok(not hud.is_howto_open() and closed == [true] and hud.howto_seen(), "howto: Space past the last page closes it and, for the first run, records that it has been seen")
 	hud.advance(1.0 / 60.0)
@@ -4500,6 +4501,71 @@ func _about_rules() -> void:
 	for _i in range(a):
 		hud.howto_action("next")
 	_ok(hud.howto_page() == a, "about: it is also reached by paging through How to play")
+	hud.hide_howto()
+	hud.queue_free()
+	await process_frame
+
+
+# --- The first run shows the gameplay pages only ---------------------------------------------------------------------------------------
+
+func _first_run_rules() -> void:
+	var line := "About this game and its licences: Pause, then About."
+	var ids_first: Array = []
+	for pg in UiHowto.pages_for(true):
+		ids_first.append(str(pg["id"]))
+	_ok(ids_first == ["idea", "controls", "stances", "reads"] and UiHowto.page_count(true) == 4 and UiHowto.page_count(false) == 7 and UiHowto.page_count() == 7, "first run: the card has the four gameplay pages (the idea, the controls, stances, reading the fight); the full card has seven")
+	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0], [Vector2(2560, 1600), 2.0], [Vector2(3840, 2160), 1.0],
+		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(1125, 2436), 3.0], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0]]
+	var bad := PackedStringArray()
+	var cells := 0
+	for cs in sizes:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(cs[0], false)
+		for touch in [false, true]:
+			for dev in ["kbd", "xbox"]:
+				for pg in range(4):
+					cells += 1
+					var p: Dictionary = UiHowto.plan(cs[0], lay.s, cs[1], touch, pg, dev, 0, "", "neutral", {"first_run": true})
+					var full: Dictionary = UiHowto.plan(cs[0], lay.s, cs[1], touch, pg, dev, 0)
+					var has_line: int = _paragraphs(p).count(line)
+					var in_full: int = _paragraphs(full).count(line)
+					var card: Rect2 = p["card"]
+					var ok: bool = bool(p["fits"]) and int(p["pages"]) == 4 and (p["dots"] as Array).size() == 4 and bool(p["is_last"]) == (pg == 3) and card.size.y > 0.0 and Rect2(Vector2.ZERO, cs[0]).encloses(card)
+					ok = ok and has_line == (1 if pg == 3 else 0) and in_full == 0 and int(full["pages"]) == 7 and bool(full["is_last"]) == false
+					for rec in p["items"]:
+						ok = ok and card.encloses(rec["rect"])
+					if not ok:
+						bad.append("%s dp %.1f touch=%s %s page %d" % [str(cs[0]), cs[1], str(touch), dev, pg])
+	_ok(bad.is_empty(), "first run: at 15 sizes, both device families, touch off and on, the card has four pages that fit, GOT IT on the fourth, and the line \"%s\" on the last page only, never on the full card (%d cells, %d bad %s)" % [line, cells, bad.size(), str(bad.slice(0, 3))])
+	# The flow in the HUD: the first run walks four pages and closes (and is then marked seen); the pause menu's How to play walks all seven.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.advance(1.0 / 60.0)
+	hud.show_howto(true)
+	var seen_pages: Array = []
+	var guard := 0
+	while hud.is_howto_open() and guard < 12:
+		seen_pages.append(hud.howto_page())
+		_ok(int(hud.howto_plan()["pages"]) == 4, "first run: page %d of the card says four pages" % hud.howto_page())
+		hud.howto_action("next")
+		guard += 1
+	_ok(seen_pages == [0, 1, 2, 3] and not hud.is_howto_open(), "first run: Next walks pages 0 to 3 and then closes the card (%s)" % str(seen_pages))
+	hud.show_pause_menu()
+	hud.pause_menu_choose("howto")
+	seen_pages = []
+	guard = 0
+	while hud.is_howto_open() and guard < 12:
+		seen_pages.append(hud.howto_page())
+		hud.howto_action("next")
+		guard += 1
+	_ok(seen_pages == [0, 1, 2, 3, 4, 5, 6], "pause menu: How to play keeps all seven pages (%s)" % str(seen_pages))
+	hud.pause_menu_choose("about")
+	_ok(hud.is_howto_open() and hud.howto_page() == UiHowto.page_index("about") and int(hud.howto_plan()["pages"]) == 7, "pause menu: About still opens on the About page of the full card")
 	hud.hide_howto()
 	hud.queue_free()
 	await process_frame

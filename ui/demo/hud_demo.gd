@@ -4,7 +4,7 @@ extends Control
 ##
 ## Run:  godot --path . res://ui/demo/hud_demo.tscn
 ## Options after "--": --scenario=hero_vs_proud|empress_vs_cyborg|placeholders|stress|controls   --shot=file.png (save a frame)
-##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] --ko --feedback[=copied|review]
+##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] --ko --feedback[=copied|review]
 ## Keys: Tab scenario | Space pause | R restart | S silhouette | F4 feed | C captions | M reduced motion | K crown always on | B brink ring | T arc thickness
 ##       Z clear zones | L region label | V viewport size | +/- fighter size | H hide this legend
 
@@ -177,7 +177,7 @@ func _ready() -> void:
 		if args.has("rfocus"):
 			hud._rm_focus = hud._rm_row_index(str(args["rfocus"]))
 	if args.has("howto"):
-		hud.show_howto(false, int(args["howto"]) if str(args["howto"]).is_valid_int() else 0)
+		hud.show_howto(args.has("firstrun"), int(args["howto"]) if str(args["howto"]).is_valid_int() else 0)
 
 
 func _parse_args() -> Dictionary:

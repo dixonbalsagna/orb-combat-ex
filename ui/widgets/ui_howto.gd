@@ -12,8 +12,24 @@ const PAGE_PAD := 24.0
 const FIRST_PAGE := 0
 
 
-static func page_count() -> int:
-	return (UiData.howto().get("pages", []) as Array).size()
+## The pages that are reference, not gameplay: the first run's card leaves them out (the player finds them from the pause menu's About entry).
+const REFERENCE_PAGES: Array = ["about", "about_more", "licences"]
+
+
+## The pages the card shows: all of them, or for the first run only the gameplay pages (they come first, so the page indexes are the same).
+static func pages_for(first_run: bool) -> Array:
+	var pages: Array = UiData.howto().get("pages", [])
+	if not first_run:
+		return pages
+	var out: Array = []
+	for pg in pages:
+		if not REFERENCE_PAGES.has(str((pg as Dictionary).get("id", ""))):
+			out.append(pg)
+	return out
+
+
+static func page_count(first_run: bool = false) -> int:
+	return pages_for(first_run).size()
 
 
 ## Whether an About-page sentence named by its icon is shown: the privacy line for the feedback target in use (none, github, or a private mailto or form),
@@ -47,7 +63,7 @@ static func page_index(id: String) -> int:
 ## glyph family ("kbd", "xbox", ...), `slot` the player's slot (P1 or P2 keys), `touch` true for the touch controls page.
 static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, device: String = "kbd", slot: int = 0, preset: String = "", style: String = "neutral", extra: Dictionary = {}) -> Dictionary:
 	var data: Dictionary = UiData.howto()
-	var pages: Array = data.get("pages", [])
+	var pages: Array = pages_for(bool(extra.get("first_run", false)))
 	var n: int = pages.size()
 	var pi: int = clampi(page_i, 0, maxi(n - 1, 0))
 	var page: Dictionary = pages[pi] if n > 0 else {}
@@ -149,6 +165,8 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			if not UiGlyphs.bound(preset, first, slot):
 				continue
 		var icon_name: String = str(it.get("icon", ""))
+		if icon_name.begins_with("first_run_") and not bool(extra.get("first_run", false)):
+			continue   # a line only the first run's card carries (where to find About)
 		if icon_name.begins_with("about_") and not about_shown(icon_name):
 			continue   # a sentence of the About pages that is true only while its flag is on (features.json), or for the feedback target in use (send.json)
 		var x: float = body.position.x + float(col) * (colw + gap)
@@ -195,7 +213,7 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			rec["lines"] = lines_a
 			heights[col] = float(heights[col]) + ha + item_gap
 		else:
-			var plain: bool = icon_name == "" or icon_name.begins_with("about_")   # a text-only paragraph (the About page): no icon, the whole column
+			var plain: bool = icon_name == "" or icon_name.begins_with("about_") or icon_name.begins_with("first_run_")   # a text-only paragraph (the About page): no icon, the whole column
 			var tx: float = x if plain else x + isz + gap * 0.8
 			var st: String = str(it.get("stance", ""))
 			var lines_i: PackedStringArray = UiText.wrap(text, fs_body, maxf(colw - (tx - x) - (name_w if st != "" else 0.0), 20.0))
