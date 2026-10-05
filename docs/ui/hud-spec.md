@@ -997,3 +997,42 @@ The last of `docs/ui/key-help-plan.md`: the old four-stance model is now gone fr
 - **The pointer chip.** The rival's direction chip (diamond, distance, arrow), at the screen edge level with its fighter, now slides along the edge past any touch button (`UiSplit._chip_free`: clear of both fighters and of every button's rectangle, as `UiLayout.touch_keys()` names them, Simple's three or Full's nine) and hides only if there is no clear place. SIGN keeps its place.
 - **A plate fix found on the way.** At 1560 by 720 a long name (PROTAGONIST) and its YOU tag left no room for even the icon-only stance chip, which then covered the tag; the chip is now left off a plate where it cannot fit beside the tag.
 - **Tests (`_touch_full_rules`, 1560x720 d2 and 2048x1536 d2 added, both hands, every size):** the host's call with the HUD's limit is the HUD's own layout; no button under a plate; no pointer chip over a button (a run of chips at four heights on both sides; without the fix 3 to 4 chips per size were over a button at the tablet sizes).
+
+
+## 41. Plan, nothing built: the stance badge on every plate with an 11-letter name (2026-10-05)
+
+**The ask.** The fighters are about to read PROTAGONIST and RIVAL on screen, and the rival's stance badge is always shown (Orb). Today (section 36) the badge shares the landscape plate's first row with the name, the YOU, P1, P2 or AI tag and, briefly, the brink mark, and section 40's fix leaves the badge off when nothing fits. That fix is a stopgap: the long name is about to be the normal case.
+
+**What fits, measured** (`UiLayout` at each size, the plate's inner width against the row's parts; text sizes follow the text floor, so the name cannot shrink where it is already at the floor):
+
+| Size, density | Plate inner width | PROTAGONIST | YOU tag | Icon-only badge | Name + tag + badge | Name + badge, no tag |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1920x1080, 1.0 | 364 | 168 | 61 | 38 | 311, fits | 216 |
+| 1280x720, 1.0 | 243 | 112 | 45 | 27 | 215, fits | 146 |
+| 1024x576, 1.0 | 193 | 98 | 42 | 25 | 193, **zero slack** | 128 |
+| 844x390, 1.0 | 161 | 98 (at the floor) | 40 | 23 | 188, **misses by 27** | 126 |
+| 1560x720, 2.0, touch | 243 | 168 | 66 | 34 | 306, **misses by 63** | 208 |
+| 2532x1170, 3.0, touch | 407 | 251 | 101 | 50 | 459, **misses by 52** | 312 |
+| 2048x1536, 2.0 | 485 | 223 | 80 | 51 | 413, fits | 288 |
+
+(Name + tag + badge includes the brink mark's width, the worst case: all four parts on the row. The full-word badge fits on none of these with PROTAGONIST and a tag except the largest sizes; icon-only is the normal badge already.) Two cases matter: the player is the Rival and the opponent plate reads PROTAGONIST with an AI tag (a shorter tag; with the brink mark it still misses at 844x390 and at both touch sizes above, and without it only at 1560x720 touch), and the player is the Protagonist (PROTAGONIST + YOU on the player's own plate, the long case); the rival's own plate (RIVAL, 5 letters) always fits. Name + badge with no tag fits at every size, so the room is missing only for the tag and the brink mark.
+
+**The options.**
+1. **The name shrinks.** Not available: the name is already at the text floor (14 px, or 12 dp on dense screens) at 844x390 and 1560x720 touch. Orb's text floor is not ours to lower.
+2. **The name elides before the badge goes.** Always possible, costs the name's last letters (PROTAGON…); recoverable from the tag line elsewhere (the cards, the crown). Needs one measuring function.
+3. **The YOU tag gives way first.** It is the "never in doubt" cue for who the human is; losing it on the smallest plates is the costliest loss of the three.
+4. **The badge moves to the plate's second row.** That row already carries the pips, the weight mark and the SIGNATURE chip (and the state chips after the pips), and a second badge position means the rival's badge jumps between two places by size: the worst for a read that has to be found at a glance.
+5. **A third plate row only where needed.** It costs about 30 px at the scale in height for every plate at every size and shrinks the fight's clear zone, for a badge that fits on a line by dropping two other items.
+
+**Recommendation: reserve the badge first, then give way in this order, all by measured width.**
+1. The badge, icon-only (it is a stance icon and a colour: already readable and what the rival read needs), is reserved at the plate's far end and never dropped. The full word returns only where it fits beside everything else, as now.
+2. The brink mark gives way first (a temporary state; the crown, the card and the silhouette say it, and the non-combined plate already drops it first).
+3. The tag keeps its shape but gives up its padding (its pill becomes the tag's text with a thin rule: saves about 12 px at the scale).
+4. The name elides last, by letters, never below five, with a data short form first when Narrative gives one (`name_short` per fighter in `ui/data`, optional; PROTAG, say): the full name, then the short name, then letters cut with an ellipsis.
+5. If even that fails (it should not at any size we ship) the badge still shows and the tag goes, with the plate's colour edge keeping the human's side.
+
+**What it costs.** About a day (size S to M): the first row's layout moves out of `UiPlate.draw` into a pure plan function (`UiPlate.row1_plan(inner_w, name, tag, brink, badge_word, ...)` returning the rectangles and what is shown), which `draw` and the tests share. One optional data key (`name_short`, a closed-schema key Tools adds). No change to the plate's height, the hit areas or the sim. Redraw cost unchanged (the signature already includes the stance and the plate's text).
+
+**Tests I would add (`hud_check`):** at every landscape size in the table plus the 15 sizes of the other rules, both touch settings, both name cases (PROTAGONIST, RIVAL), every tag (YOU, P1, P2, AI) and brink on and off: the badge is on the row, no two of the row's parts overlap, the badge is inside the plate, the name is never cut below five letters, and the badge is the last thing to go (a property of the plan function, so the test needs no drawing).
+
+**Decision for the EP:** the ladder above (badge, then the brink mark, then the tag's padding, then the name) or a different order. The names are in data, so the rename itself does not change code once this lands.
