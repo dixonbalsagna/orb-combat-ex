@@ -382,7 +382,40 @@ So for a zipper who came in from the rival's left:
   - it interrupts a heavy's wind-up sooner (§7);
   - it raises the mood faster.
 - **What speed costs:** every blow is weaker, so a guard soaks more of it, and a perfect block ends it.
-- **The close.** After four flurry blows land in a row with nothing landed in reply, the next blow **staggers** the rival for 12 ticks. He isn't knocked back, so the brawl stays together. It is decisive, at half a set-up, exactly as the plain blur's ender was (`agency-pass.md` §13 and §14.4). A masher can still open and finish a rival.
+- **The close.** At a run of four, his next blow that lands **staggers** the rival for 12 ticks. He isn't knocked back, so the brawl stays together. It is decisive, at half a set-up, exactly as the plain blur's ender was (`agency-pass.md` §13 and §14.4). A masher can still open and finish a rival. The run, and what happens when both fighters mash, are below.
+
+**The run, and the trade** (ruled 2026-10-05, on Encounter's first brawl build).
+
+*The fault.* The close was "four flurry blows landed in a row with nothing landed in reply". Two fighters who both mash always reply, so neither ever closed, nobody won a decisive exchange, and a match of lights alone never ended. Before the brawl, the blur's free ender ended it.
+
+*The ruling: a close goes to whoever is winning the trade, and a trade can't go on for ever.* It holds at every wound state, and not only on the brink.
+
+**The run.** Each fighter in a brawl has a run against the rival.
+
+| What happens | His run |
+| :--- | :--- |
+| A light or a flurry blow of his lands | +1 |
+| A light or a flurry blow lands on him | −1, and never below 0. It used to clear the run |
+| A real answer lands on him: a skill strike, a heavy, a parry, a stuff, a push, a perfect block or a counter | Cleared |
+| His blow is blocked | No change |
+| 24 ticks pass with no blow of his landing | Cleared |
+| His run is at 4 and his next light or flurry blow lands | **The close.** His run is spent, and the rival's is cleared |
+
+- Against a rival who lands nothing, this is the old rule: four blows, and the fifth staggers.
+- Against a slower masher, the faster tapper's run climbs, and he closes. So the quicker he taps, the sooner his flurry wins, which is what Orb asked of mashing. His damage a second is still the same as the slower one's.
+- Against a timed player, each skill strike clears the masher's run. Timing still beats mashing.
+
+**The trade.** A trade is on while both fighters have landed a light or a flurry blow in the last 24 ticks.
+- **A trade can't pass 90 ticks without a close.** At 90 ticks it breaks: one of the two closes with his next blow that lands.
+- **Who closes:** the fighter with the higher run. If the runs are level, the one who has landed more blows in this trade. If that is level too, a seeded draw at even odds.
+- The trade's clock starts again after a close, a stagger, a real answer or a knock-back, and when the trade stops.
+- It isn't a struggle, and there is no pause and no pulse. Both fighters keep throwing, every press is still a blow, and it ends as any mash ends: a stagger in place, with the brawl still together.
+
+**Encounter's stopgap is withdrawn.** It let a fighter on the brink no longer break the rival's run by replying. It made the lights-only mirror finish, with brink to KO at 17.4 s against a band of 30 to 55 s. It also took the trade away from the fighter who most needs it. On the brink he now trades like anyone else.
+
+**What keeps brink to KO in its band.** The trade's clock sets how often a mash against a mash closes. Under the stopgap the rival closed about every 0.9 s. With the clock at 90 ticks, two even mashers close about every 1.7 s, and the closes are shared between them. That should put the lights-only brink at about 35 to 50 s. It is reasoned and not measured. The levers, in order: the clock (60 to 120 ticks), and then the close's set-up weight.
+
+**Data:** `flurry.runToClose` 4, `flurry.replyTakes` 1, `flurry.runLapseTicks` 24, `flurry.tradeMaxTicks` 90. The AI's tap interval at each difficulty is now a lever for the masher bands, because the faster tapper closes.
 - **The look** (Orb): the impact lands on the trigger, with a fluid after-image blur.
 
 ## 4. Tech: skill strikes on the beat
@@ -464,6 +497,7 @@ Each fighter's blows land on his own line. These rules settle the meetings.
 | Two blows land more than 2 ticks apart | Both land, in order. The reeling fighter's next blow is pushed back by the reel |
 | A skill strike and a flurry blow land within 2 ticks | The skill strike wins the beat, and the flurry blow is voided (`agency-pass.md` §2) |
 | Two lights, flurry blows or skill strikes of the same kind land within 2 ticks | A trade: both land |
+| Two flurries trade for 90 ticks with no close | The trade breaks: one fighter closes with a stagger in place (§3) |
 | Three clean blows land during a heavy's wind-up | The heavy is stopped. Fewer, and it comes through |
 | Two held heavies or enders land within 6 ticks | **A struggle:** the fist clash on the pulse, if one is allowed (one per 20 s). Otherwise a double slide: both are knocked back half the distance |
 | Two tapped heavies that aren't enders land within 2 ticks | Both land, and both stagger for 12 ticks. Nobody is lifted, and there is no struggle |
@@ -509,6 +543,11 @@ The player owns **when** each blow happens and **what kind** it is. The director
 | Launches from a lone heavy held to full | At most 10% of launches. The launch share of separations stays in its 25 to 40% band |
 | Juggles ended by a burst | 20 to 40% |
 | A masher against the easy and medium AI, and a lights-only mirror finishing | The bands in `agency-pass.md` §13 and §23 still hold |
+| A trade that passes 90 ticks without a close | Never (a hard test) |
+| Lights-only mirror: matches finished before the cap | At least 95% |
+| Lights-only mirror: brink to KO, median | 30 to 55 s, kept. The first lever is the trade's clock |
+| Lights-only mirror: share of closes made by the fighter on the brink | 35 to 65% |
+| A faster masher against a slower one (6 ticks against 12): closes a minute | Reported, as the cost of tapping slowly |
 
 ### 9b. Rulings on the first brawl slice (B1), 2026-10-05
 
@@ -1021,7 +1060,7 @@ Damage is in the brawl's worths (§9b): a brawl light is the data's light × 0.2
 | Form | How it is pressed | Damage | Press to contact | Whole blow | A clean hit leaves the rival | Hit-stop | Flow |
 | :--- | :--- | :--- | ---: | ---: | :--- | ---: | :--- |
 | **Light** | X: a string's first press, or a press after the beat window | A brawl light | 4 | 24 | Reeling for 4 | 2 | Starts the beat |
-| **Flurry blow** | X again before the beat window | A brawl light × the interval ÷ 10: ×0.6 at 6 ticks to ×1.2 at 12 | 2 or less | The tap interval, 6 to 12 | Reeling for 4. After four unanswered, the next staggers him for 12 | 2 | To 0, if it missed a beat |
+| **Flurry blow** | X again before the beat window | A brawl light × the interval ÷ 10: ×0.6 at 6 ticks to ×1.2 at 12 | 2 or less | The tap interval, 6 to 12 | Reeling for 4. At a run of four, the next staggers him for 12 (§3) | 2 | To 0, if it missed a beat |
 | **Skill strike** | X within 4 ticks of the beat point | 4 brawl lights | 6 | 30 | Reeling for 8 | 4 | +1 |
 | **Set light** | X held for 12 ticks after a light lands, then let go | 1.5 brawl lights | 4 after the release | 20 after the release | Reeling for 12. He doesn't reel from flurry blows while he holds | 4 | No change. Its contact starts a new beat |
 | **Heavy** | Y, tapped | A brawl heavy | 34: 26 of wind-up and 8 to land | 76 | Lifted for 30. A set guard breaks: down for 40, staggered for 12 | 6 | No change |
