@@ -62,7 +62,7 @@ var opts: Dictionary = {
 	"camera_panels": "full",   # Camera's panel cut-ins (rule-of-cool row 11): full, still or off; the host calls SplitView.set_panel_mode on option_changed
 	"camera_zoom": 7,          # Camera's framing, 0 to 10 (render/camera reads it from these opts); the HUD only carries it
 	"camera_shake": 2,         # Camera's shake, 0 to 10 (an accessibility option); the HUD only carries it
-	"pad_preset": "arena",     # the pad layout in use (arena, brawler or simple-pad); the host keeps it equal to SimInputHub.pad_preset
+	"pad_preset": "arena",     # the pad layout in use (arena or simple-pad); the host keeps it equal to SimInputHub.pad_preset
 	"match_end_feedback": true, # the SEND FEEDBACK pill after a KO; the host turns it off if its own results screen has the button
 	"keep_hints": false,       # accessibility: a tutorial hint stays up after its beat is done, until the next hint
 	"touch_preset": "touch-simple",  # touch-simple (attack, guard, power) or touch-full (nine buttons); the host sets SimInputHub.set_touch_preset from option_changed

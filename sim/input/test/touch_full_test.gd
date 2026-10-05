@@ -31,6 +31,7 @@ func _mk() -> SimTouch:
 	var t := SimTouch.new()
 	t.dp = 2.75
 	t.set_preset("touch-full")
+	t.set_stance_oneshot(false)   # these tests are of the hold semantics; the one-shot (touch Full's default) is in stance_test.gd
 	return t
 
 
@@ -223,7 +224,7 @@ func _fingers() -> void:
 	t.touch_down(4, 0.0, 0.0, "power")
 	t.touch_down(5, 0.0, 0.0, "dodge")
 	var i: SimIntent = t.build()
-	ok(i.mx > 0.0 and i.guard and i.dodge and i.powerPress, "fingers: five touches at once all register")
+	ok(i.mx > 0.0 and i.dodge and i.powerPress and not i.guard and i.stanceMask == 4, "fingers: five touches at once register; RT dominates, so Guard goes neutral (a stance is exclusive)")
 	t.consumed()
 	t.release_all()
 	i = t.build()

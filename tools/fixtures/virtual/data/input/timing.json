@@ -78,6 +78,24 @@
     "staleTicks": 60,
     "mixShort": 3,
     "assistFactor": 2,
-    "debounce": 2
+    "debounce": 2,
+    "zipMashPresses": 3,
+    "zipMashGap": 10,
+    "holdLight": 8,
+    "holdHeavy": 16,
+    "holdSig": 20,
+    "holdSigCharging": 45,
+    "holdContext": 18
+  },
+  "stance": {
+    "releaseGrace": 2,
+    "oneshotTicks": 90
+  },
+  "aim": {
+    "deadZone": 0.35,
+    "latchTicks": 12,
+    "snapMax": 1,
+    "dwellTicks": 3,
+    "exitWindow": 12
   }
 }

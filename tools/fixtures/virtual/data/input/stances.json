@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "_note": "Validator fixture, not game data.",
+  "hybrids": [
+    3,
+    10
+  ]
+}

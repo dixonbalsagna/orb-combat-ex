@@ -36,6 +36,10 @@ var _leaves: Array = []
 ## for the data default. Touch Full reads "toggle" as the toggle and anything else as its hybrid (a tap latches, a hold is
 ## momentary). The Simple layouts leave the mode to the director.
 var mode_styles: Array = ["", ""]
+## Each player's stance settings (the accessibility options): the one-shot arming ("" the device default: off, and on for touch Full;
+## "on" or "off") and the trigger sensitivity (0 the data default, else the on threshold, 0.2 to 0.6).
+var stance_oneshot_pref: Array = ["", ""]
+var trigger_pref: Array = [0.0, 0.0]
 var _was: Array = [false, false]
 
 
@@ -311,15 +315,20 @@ func intent(slot: int) -> SimIntent:
 			var d: int = slot_pad[slot]
 			if pads.has(d):
 				pads[d].set_mode_style(style)
+				pads[d].set_stance_oneshot(stance_oneshot_of(slot))
+				if float(trigger_pref[slot]) > 0.0:
+					pads[d].set_trigger_threshold(float(trigger_pref[slot]))
 				i = pads[d].build()
 			else:
 				i = SimIntent.new()
 		"touch":
 			touch.set_mode_style(style)
+			touch.set_stance_oneshot(stance_oneshot_of(slot))
 			i = touch.build()
 		_:
 			var kl: SimLayout = _kb_layout(slot)
 			kl.set_mode_style(style)
+			kl.set_stance_oneshot(stance_oneshot_of(slot))
 			i = kl.build()
 	return SimIntent.canon(i)
 
@@ -375,6 +384,32 @@ func setup() -> Dictionary:
 	return {"v2": [true, true], "assists": assists}
 
 
+## Whether a slot's stance buttons arm a stance with a tap (the one-shot): the player's choice, else the device's default (touch Full).
+func stance_oneshot_of(slot: int) -> bool:
+	var p: String = str(stance_oneshot_pref[slot])
+	if p == "on":
+		return true
+	if p == "off":
+		return false
+	return slot_device[slot] == "touch" and touch.full_mode
+
+
+## The accessibility setting "stance buttons arm a stance with a tap": "on", "off" or "" for the device default. -1 is both players.
+func set_stance_oneshot(setting: String, slot: int = -1) -> void:
+	for s in range(2):
+		if slot < 0 or s == slot:
+			stance_oneshot_pref[s] = setting
+
+
+## The trigger sensitivity (the on threshold, 0.2 to 0.6; 0 for the data default). -1 is both players.
+func set_trigger_threshold(on: float, slot: int = -1) -> void:
+	for s in range(2):
+		if slot < 0 or s == slot:
+			trigger_pref[s] = on
+			if on > 0.0 and slot_device[s] == "pad" and pads.has(slot_pad[s]):
+				pads[slot_pad[s]].set_trigger_threshold(on)   # takes effect before the next event, not the next build
+
+
 ## The energy style a slot plays with ("hold" or "toggle"; the data default when the player has not chosen).
 func mode_style_of(slot: int) -> String:
 	var s: String = str(mode_styles[slot])
@@ -393,6 +428,7 @@ func set_mode_style(style: String, slot: int = -1) -> void:
 ## it is that player's own. The cached pad layouts of the slots affected are dropped (their holds let go) and each pad
 ## takes the new preset on its next input. Slot claims are kept.
 func set_pad_preset(id: String, slot: int = -1) -> void:
+	id = SimInputData.migrate(id)   # a retired preset (the Brawler) becomes Arena
 	if SimInputData.preset(id).is_empty():
 		return
 	if slot < 0:

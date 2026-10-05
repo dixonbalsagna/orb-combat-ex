@@ -43,7 +43,7 @@ func _run(l: SimLayout, n: int) -> SimIntent:
 
 
 func _hold_every_layout() -> void:
-	var cases: Array = [["arena", "pad:rb", "pad:west"], ["brawler", "pad:west", "pad:rb"], ["kb-solo", "kb:KeyQ", "kb:KeyJ"], ["kb-shared-p1", "kb:KeyE", "kb:KeyF"], ["kb-shared-p2", "kb:KeyO", "kb:KeyH"]]
+	var cases: Array = [["arena", "pad:rb", "pad:west"], ["kb-solo", "kb:KeyQ", "kb:KeyJ"], ["kb-shared-p1", "kb:KeyE", "kb:KeyF"], ["kb-shared-p2", "kb:KeyO", "kb:KeyH"]]
 	for c in cases:
 		var l: SimLayout = _mk(c[0])
 		ok(l.mode_style == "hold", "%s: momentary is the default" % c[0])

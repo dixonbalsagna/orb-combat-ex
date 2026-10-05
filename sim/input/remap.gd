@@ -418,5 +418,5 @@ static func apply_file(d: Dictionary) -> Array:
 						dropped.append("%s: unknown action %s" % [id, str(o.get("action", ""))])
 				SimInputData.set_overrides(id, entries, slot)
 			else:
-				dropped.append("unknown preset %s" % id)
+				dropped.append(("retired preset %s (now %s): its remap is dropped" % [id, SimInputData.migrate(id)]) if SimInputData.RETIRED.has(id) else ("unknown preset %s" % id))
 	return dropped

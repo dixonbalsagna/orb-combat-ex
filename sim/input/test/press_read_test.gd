@@ -22,6 +22,8 @@ func _init() -> void:
 	_data()
 	_log()
 	_hold()
+	_cells()
+	_zip()
 	_rhythm()
 	_mash()
 	_taps_and_stale()
@@ -89,9 +91,9 @@ func _hold() -> void:
 	var log: Array = []
 	SimPressRead.push(log, SimPressRead.HEAVY, 0, 100)
 	ok(SimPressRead.classify(log, 105)["style"] == "taps" and SimPressRead.classify(log, 105)["hold_ticks"] == 5, "hold: down 5 ticks is not yet a hold")
-	ok(SimPressRead.classify(log, 111)["style"] != "hold", "hold: 11 ticks is not a hold")
-	var c: Dictionary = SimPressRead.classify(log, 112)
-	ok(c["style"] == "hold" and c["hold_ticks"] == 12, "hold: 12 ticks down is a hold, live, before the release")
+	ok(SimPressRead.classify(log, 115)["style"] != "hold", "hold: 15 ticks of a heavy is not a hold (Y's cell is 16)")
+	var c: Dictionary = SimPressRead.classify(log, 116)
+	ok(c["style"] == "hold" and c["hold_ticks"] == 16, "hold: 16 ticks down is a heavy's hold, live, before the release")
 	ok(SimPressRead.classify(log, 400)["style"] == "hold", "hold: a button still down stays a hold however long")
 	SimPressRead.release(log, SimPressRead.HEAVY, 130)
 	ok(SimPressRead.classify(log, 131)["style"] == "taps", "hold: released, it is over")
@@ -102,6 +104,102 @@ func _hold() -> void:
 	var m: Array = _mk([100, 108, 116, 124], [0, 0, 0, 0])
 	SimPressRead.push(m, SimPressRead.LIGHT, 0, 130, 0)
 	ok(SimPressRead.classify(m, 143)["style"] == "hold", "hold: the precedence puts a hold over a rhythm and a mash")
+
+
+## A one-press log of `kind` made in `stance`, down at 100 and released at 100 + `held` (still down if held < 0).
+func _one(kind: int, stance: int, held: int) -> Array:
+	var log: Array = []
+	SimPressRead.push(log, kind, 0, 100, NB, -1, stance)
+	if held >= 0:
+		SimPressRead.release(log, kind, 100 + held)
+	return log
+
+
+## The hold is per cell (Game Design, 2026-10-05): X 8, Y 16, B 20, B in the charging stance 45, A 18.
+func _cells() -> void:
+	var p: Dictionary = SimPressRead.params()
+	ok(p["holdLight"] == 8 and p["holdHeavy"] == 16 and p["holdSig"] == 20 and p["holdSigCharging"] == 45 and p["holdContext"] == 18, "cells: the data's five holds")
+	var cells: Array = [[SimPressRead.LIGHT, 0, 8, "X"], [SimPressRead.HEAVY, 0, 16, "Y"], [SimPressRead.SIG, 0, 20, "B"], [SimPressRead.SIG, 8, 20, "B in manoeuvre"], [SimPressRead.SIG, 2, 20, "B in energy"],
+		[SimPressRead.SIG, 4, 45, "B in charging"], [SimPressRead.CONTEXT, 0, 18, "A"]]
+	for c in cells:
+		var below: Dictionary = SimPressRead.classify(_one(c[0], c[1], -1), 100 + int(c[2]) - 1)
+		var live: Dictionary = SimPressRead.classify(_one(c[0], c[1], -1), 100 + int(c[2]))
+		var over: Dictionary = SimPressRead.classify(_one(c[0], c[1], int(c[2])), 100 + int(c[2]) + 1)
+		ok(below["style"] != "hold", "cells: %s down %d ticks is not yet a hold" % [c[3], int(c[2]) - 1])
+		ok(live["style"] == "hold", "cells: %s still down at %d ticks is a hold, live" % [c[3], c[2]])
+		ok(over["style"] != "hold", "cells: %s let go is no longer a hold" % c[3])
+	ok(SimPressRead.hold_ticks_for({"kind": SimPressRead.SIG, "stance": 4}, p) == 45 and SimPressRead.hold_ticks_for({"kind": SimPressRead.SIG}, p) == 20, "cells: an entry with no stance field reads as martial")
+	ok(SimPressRead.hold_ticks_for({"kind": SimPressRead.HEAVY}, p, {"hold_ticks": 30}) == 30, "cells: a caller can set one number for every cell")
+	# The CONTEXT kind has its own log slot and mix count, and does not stand in for a blow.
+	var l: Array = []
+	SimPressRead.push(l, SimPressRead.CONTEXT, 0, 100)
+	SimPressRead.push(l, SimPressRead.LIGHT, 0, 110)
+	SimPressRead.release(l, SimPressRead.CONTEXT, 105)
+	ok(int(l[0]["up"]) == 105 and int(l[1]["up"]) == -1 and int(l[0]["stance"]) == 0, "context: a release closes its own kind; the stance field is stored")
+	var m: Dictionary = SimPressRead.classify(l, 112)["mix_long"]
+	ok(int(m.get("context", -1)) == 1 and int(m["light"]) == 1, "context: the mix counts it on its own")
+	var s: Array = []
+	SimPressRead.push(s, SimPressRead.LIGHT, 0, 100, NB, -1, 12)
+	ok(int(s[0]["stance"]) == 12, "stance: the stance mask the press was made in is on the entry")
+
+
+## zip_read: the starter is the press at `zip_start`; heavy, tech, speed, else plain (docs/controls/lunge-control.md B6.4).
+func _zip() -> void:
+	var p: Dictionary = SimPressRead.params()
+	ok(p["zipMashPresses"] == 3 and p["zipMashGap"] == 10, "zip: the speed reading is 3 presses, 10 ticks apart")
+	# No starter in the log: plain.
+	ok(SimPressRead.zip_read([], 120, 100, NB) == "plain" and SimPressRead.zip_read(_one(SimPressRead.LIGHT, 8, 3), 120, 77, NB) == "plain", "zip: no starter is plain")
+	# Plain: a tap, off the beat, with nothing after.
+	ok(SimPressRead.zip_read(_one(SimPressRead.LIGHT, 8, 3), 120, 100, NB) == "plain", "zip: a single tap is plain")
+	# Heavy: the starter held for its cell's hold.
+	ok(SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, 16), 130, 100, NB) == "heavy", "zip: Y held 16 ticks is heavy")
+	ok(SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, 15), 130, 100, NB) == "plain", "zip: Y held 15 ticks is not")
+	ok(SimPressRead.zip_read(_one(SimPressRead.LIGHT, 8, 8), 130, 100, NB) == "heavy", "zip: X held 8 ticks is heavy (X's own cell)")
+	ok(SimPressRead.zip_read(_one(SimPressRead.CONTEXT, 8, 18), 130, 100, NB) == "heavy" and SimPressRead.zip_read(_one(SimPressRead.CONTEXT, 8, 17), 130, 100, NB) == "plain", "zip: A held 18 ticks is heavy, 17 is not")
+	ok(SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, -1), 116, 100, NB) == "heavy" and SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, -1), 115, 100, NB) == "plain", "zip: still down at now counts, live")
+	# Tech: the starter on a blow's beat.
+	var t: Array = []
+	SimPressRead.push(t, SimPressRead.LIGHT, 0, 100, 4, -1, 8)
+	SimPressRead.release(t, SimPressRead.LIGHT, 103)
+	ok(SimPressRead.zip_read(t, 120, 100, NB) == "tech", "zip: a starter 4 ticks off a blow's contact is tech")
+	var t5: Array = []
+	SimPressRead.push(t5, SimPressRead.LIGHT, 0, 100, 5, -1, 8)
+	SimPressRead.release(t5, SimPressRead.LIGHT, 103)
+	ok(SimPressRead.zip_read(t5, 120, 100, NB) == "plain" and SimPressRead.zip_read(t5, 120, 100, NB, {"touch": true}) == "tech", "zip: 5 ticks off is plain, and tech on touch (the wider window)")
+	ok(SimPressRead.zip_read(t5, 120, 100, NB, {"offset": 2}) == "tech", "zip: the device offset is applied")
+	# Tech: a later press on the zip's arrival.
+	var a: Array = _one(SimPressRead.LIGHT, 8, 3)
+	SimPressRead.push(a, SimPressRead.LIGHT, 0, 140, NB, -1, 8)
+	SimPressRead.release(a, SimPressRead.LIGHT, 143)
+	ok(SimPressRead.zip_read(a, 150, 100, 142) == "tech" and SimPressRead.zip_read(a, 150, 100, 150) == "plain", "zip: a press within 4 ticks of the arrival is tech, 10 ticks off is not")
+	ok(SimPressRead.zip_read(a, 150, 100, NB) == "plain", "zip: with no arrival yet there is nothing to time")
+	# Speed: the starter and two more presses, each within 10 ticks of the last.
+	var s: Array = _mk([100, 108, 116])
+	ok(SimPressRead.zip_read(s, 125, 100, NB) == "speed", "zip: three presses 8 ticks apart is speed")
+	var s2: Array = _mk([100, 108])
+	ok(SimPressRead.zip_read(s2, 125, 100, NB) == "plain", "zip: two presses is not enough")
+	var s3: Array = _mk([100, 111, 119])
+	ok(SimPressRead.zip_read(s3, 125, 100, NB) == "plain", "zip: a gap of 11 breaks the string")
+	var s4: Array = _mk([100, 110, 120])
+	ok(SimPressRead.zip_read(s4, 130, 100, NB) == "speed", "zip: a gap of exactly 10 holds the string")
+	# A press made before the starter does not count toward it.
+	var s5: Array = _mk([90, 100, 108])
+	ok(SimPressRead.zip_read(s5, 125, 100, NB) == "plain", "zip: earlier presses are not part of the zip")
+	# Precedence: heavy over tech over speed.
+	var h: Array = []
+	SimPressRead.push(h, SimPressRead.HEAVY, 0, 100, 0, -1, 8)
+	SimPressRead.release(h, SimPressRead.HEAVY, 120)
+	SimPressRead.push(h, SimPressRead.LIGHT, 0, 105, NB, -1, 8)
+	SimPressRead.push(h, SimPressRead.LIGHT, 0, 112, NB, -1, 8)
+	ok(SimPressRead.zip_read(h, 130, 100, NB) == "heavy", "zip: heavy beats tech and speed")
+	var tm: Array = []
+	SimPressRead.push(tm, SimPressRead.LIGHT, 0, 100, 1, -1, 8)
+	SimPressRead.release(tm, SimPressRead.LIGHT, 103)
+	SimPressRead.push(tm, SimPressRead.LIGHT, 0, 108, NB, -1, 8)
+	SimPressRead.push(tm, SimPressRead.LIGHT, 0, 115, NB, -1, 8)
+	ok(SimPressRead.zip_read(tm, 130, 100, NB) == "tech", "zip: tech beats speed")
+	# Deterministic.
+	ok(SimPressRead.zip_read(s, 125, 100, NB) == SimPressRead.zip_read(s.duplicate(true), 125, 100, NB), "zip: the same log, the same reading")
 
 
 func _rhythm() -> void:

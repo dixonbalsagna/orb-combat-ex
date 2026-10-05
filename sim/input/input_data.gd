@@ -30,7 +30,12 @@ const EXTRA: Dictionary = {
 	"fullAt": 0.9,        # a stick reaches full speed at this fraction of its travel
 }
 
+## Presets that were removed, and the preset a saved choice of them becomes (the Brawler's attacks sat on RB and RT, which are
+## stance buttons now: a fighting-game player remaps Arena). A saved remap of a retired preset is dropped.
+const RETIRED: Dictionary = {"brawler": "arena"}
+
 static var timing: Dictionary = {}
+static var stances: Dictionary = {}     # data/input/stances.json: the enabled hybrid masks
 static var presets: Dictionary = {}
 static var actions: Dictionary = {}
 static var loaded: bool = false
@@ -56,6 +61,8 @@ static func load_data(dir: String = DIR) -> bool:
 			presets[str(p["id"])] = p
 	else:
 		ok = false
+	var st = _read(dir + "stances.json")
+	stances = st if st is Dictionary else {"schema": 1, "hybrids": []}
 	var a = _read(dir + "actions.json")
 	actions = {}
 	if a is Dictionary and a.has("actions"):
@@ -63,6 +70,21 @@ static func load_data(dir: String = DIR) -> bool:
 			actions[str(x["id"])] = x
 	loaded = true
 	return ok
+
+
+## The hybrid stance masks switched on in data/input/stances.json (LT+RB 10, LB+RB 3, LT+LB 9). None until Game Design ships one:
+## until then a held pair reads as its newer button (SimStance).
+static func hybrids() -> Array:
+	ensure()
+	var out: Array = []
+	for m in stances.get("hybrids", []):
+		out.append(int(m))
+	return out
+
+
+## A preset id with a retired one mapped to its replacement (the Brawler to Arena); any other id comes back unchanged.
+static func migrate(id: String) -> String:
+	return str(RETIRED.get(id, id))
 
 
 static func _read(path: String):

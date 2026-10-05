@@ -121,10 +121,11 @@ func _diff_and_apply() -> void:
 	ok(pz == ar and _used(pz).get("pad:start", "") == "pause", "apply: pause cannot be rebound (Start stays pause)")
 	var tc: Dictionary = SimInputData.original("touch-simple")
 	ok(SimInputRemap.apply_overrides(tc, [{"controls": ["touch:power"], "action": "guard"}]) == tc, "apply: touch presets are not remapped")
-	# The Brawler's special3 sits on the mode button: it follows mode.
-	var bw: Dictionary = SimInputData.original("brawler")
-	var bw2: Dictionary = SimInputRemap.apply_overrides(bw, [{"controls": ["pad:dpad_down"], "action": "mode"}])
-	ok(_used(bw2).get("pad:dpad_down", "") == "mode" and _used(bw2, "power").get("pad:dpad_down", "") == "special3", "apply: on the Brawler special3 follows mode")
+	# On Simple the utility special (RT + LB) sits on the context button: it follows context.
+	var sp: Dictionary = SimInputData.original("simple-pad")
+	var sp2: Dictionary = SimInputRemap.apply_overrides(sp, [{"controls": ["pad:dpad_down"], "action": "context"}])
+	ok(_used(sp2).get("pad:dpad_down", "") == "context" and _used(sp2, "power").get("pad:dpad_down", "") == "special3", "apply: on Simple the utility special follows context")
+	ok(SimInputData.migrate("brawler") == "arena" and SimInputData.migrate("arena") == "arena" and not SimInputData.presets.has("brawler"), "migrate: the retired Brawler maps to Arena and is gone from the data")
 	# Everything the shipped presets say still validates after an identity apply.
 	for id in SimInputData.presets:
 		var pr: Dictionary = SimInputData.presets[id]

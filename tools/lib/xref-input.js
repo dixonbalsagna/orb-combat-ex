@@ -146,8 +146,11 @@ function xrefInput({ get, err, esc, isObj }) {
         if (Number.isInteger(a) && Number.isInteger(b) && a > b) err(TIMING, `/hitstopTicks/${chain[i]}`, 'timing-hitstop-order', `${chain[i]} (${a}) should not exceed ${chain[i + 1]} (${b}); the impact hierarchy is ${label}`, 'warning');
       }
     }
+    const am = isObj(timing.aim) ? timing.aim : {};
+    if (Number.isInteger(am.dwellTicks) && Number.isInteger(am.exitWindow) && am.dwellTicks > am.exitWindow) err(TIMING, '/aim/dwellTicks', 'timing-aim', `dwellTicks ${am.dwellTicks} is above exitWindow ${am.exitWindow}: a direction cannot be held for more ticks than the exit read looks back over`);
     const rd = isObj(timing.read) ? timing.read : {};
     const lt2 = (x, y, pointer, what) => { if (Number.isInteger(rd[x]) && Number.isInteger(rd[y]) && rd[x] > rd[y]) err(TIMING, pointer, 'timing-read', what); };
+    lt2('holdSig', 'holdSigCharging', '/read/holdSig', `holdSig ${rd.holdSig} is above holdSigCharging ${rd.holdSigCharging}: the ultimate's hold should not be shorter than the signature's`);
     lt2('rhythmNeed', 'rhythmOf', '/read/rhythmNeed', `rhythmNeed ${rd.rhythmNeed} is more than the ${rd.rhythmOf} presses rhythm looks at`);
     lt2('mashPresses', 'logSize', '/read/mashPresses', `a mash of ${rd.mashPresses} presses cannot be seen in a log of ${rd.logSize}`);
     lt2('mixShort', 'logSize', '/read/mixShort', `mixShort ${rd.mixShort} is more than the ${rd.logSize} presses the log keeps`);

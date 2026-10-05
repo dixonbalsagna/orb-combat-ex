@@ -118,120 +118,6 @@
       ]
     },
     {
-      "id": "brawler",
-      "name": "Brawler",
-      "device": "pad",
-      "players": 1,
-      "bindings": [
-        {
-          "controls": [
-            "pad:ls"
-          ],
-          "action": "move"
-        },
-        {
-          "controls": [
-            "pad:lt"
-          ],
-          "action": "dodge"
-        },
-        {
-          "controls": [
-            "pad:lb"
-          ],
-          "action": "guard"
-        },
-        {
-          "controls": [
-            "pad:rb"
-          ],
-          "action": "light"
-        },
-        {
-          "controls": [
-            "pad:rt"
-          ],
-          "action": "heavy"
-        },
-        {
-          "controls": [
-            "pad:west"
-          ],
-          "action": "mode"
-        },
-        {
-          "controls": [
-            "pad:north"
-          ],
-          "action": "power"
-        },
-        {
-          "controls": [
-            "pad:east"
-          ],
-          "action": "signature"
-        },
-        {
-          "controls": [
-            "pad:south"
-          ],
-          "action": "context"
-        },
-        {
-          "controls": [
-            "pad:rb"
-          ],
-          "layer": "power",
-          "action": "special1"
-        },
-        {
-          "controls": [
-            "pad:rt"
-          ],
-          "layer": "power",
-          "action": "special2"
-        },
-        {
-          "controls": [
-            "pad:west"
-          ],
-          "layer": "power",
-          "action": "special3"
-        },
-        {
-          "controls": [
-            "pad:east"
-          ],
-          "layer": "power",
-          "action": "signature"
-        },
-        {
-          "controls": [
-            "pad:start"
-          ],
-          "action": "pause"
-        },
-        {
-          "controls": [
-            "pad:back"
-          ],
-          "action": "hints"
-        },
-        {
-          "controls": [
-            "pad:r3"
-          ],
-          "action": "escape"
-        },
-        {
-          "controls": [
-            "pad:dpad_up"
-          ],
-          "action": "transform"
-        }
-      ]
-    },
-    {
       "id": "simple-pad",
       "name": "Simple",
       "device": "pad",
@@ -322,6 +208,13 @@
             "pad:r3"
           ],
           "action": "escape"
+        },
+        {
+          "controls": [
+            "pad:lb"
+          ],
+          "layer": "power",
+          "action": "special3"
         }
       ]
     },

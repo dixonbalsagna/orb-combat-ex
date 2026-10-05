@@ -33,10 +33,10 @@
   "hidden": ["glyph_style"],
   "hidden_note": "glyph_style has one choice.",
   "labels": {
-    "pad_preset": { "arena": "Arena", "brawler": "Brawler", "simple-pad": "Simple" },
+    "pad_preset": { "arena": "Arena", "simple-pad": "Simple" },
     "energy_style": { "hold": "Hold", "toggle": "Toggle" },
     "energy_style_p2": { "hold": "Hold", "toggle": "Toggle" },
-    "pad_preset_p2": { "arena": "Arena", "brawler": "Brawler", "simple-pad": "Simple" },
+    "pad_preset_p2": { "arena": "Arena", "simple-pad": "Simple" },
     "touch_preset": { "touch-simple": "Simple", "touch-full": "Full" },
     "vfx_quality": { "auto": "Auto", "high": "High", "medium": "Medium", "low": "Low" },
     "control_hints": { "auto": "Auto", "always": "Always", "off": "Off" },
@@ -77,7 +77,6 @@
     "cancel": "CANCEL",
     "layouts": {
       "arena": "Arena (controller)",
-      "brawler": "Brawler (controller)",
       "simple-pad": "Simple (controller)",
       "kb-solo": "Keyboard",
       "kb-shared-p1": "Keyboard, player 1",

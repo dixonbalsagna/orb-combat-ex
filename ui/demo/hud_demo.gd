@@ -4,7 +4,7 @@ extends Control
 ##
 ## Run:  godot --path . res://ui/demo/hud_demo.tscn
 ## Options after "--": --scenario=hero_vs_proud|empress_vs_cyborg|placeholders|stress|controls   --shot=file.png (save a frame)
-##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|brawler|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] --ko --feedback[=copied|review]
+##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] --ko --feedback[=copied|review]
 ## Keys: Tab scenario | Space pause | R restart | S silhouette | F4 feed | C captions | M reduced motion | K crown always on | B brink ring | T arc thickness
 ##       Z clear zones | L region label | V viewport size | +/- fighter size | H hide this legend
 
@@ -88,8 +88,8 @@ func _ready() -> void:
 	if args.has("device"):
 		hud.set_device(0, str(args["device"]))
 	if args.has("preset"):
-		# A control layout: a pad preset (arena, brawler, simple-pad) or any layout id (kb-solo, kb-shared-p2) forced onto the legend and the card.
-		if ["arena", "brawler", "simple-pad"].has(str(args["preset"])):
+		# A control layout: a pad preset (arena, simple-pad) or any layout id (kb-solo, kb-shared-p2) forced onto the legend and the card.
+		if ["arena", "simple-pad"].has(str(args["preset"])):
 			hud.set_option("pad_preset", str(args["preset"]))
 		else:
 			hud.set_option("control_scheme", str(args["preset"]))
@@ -140,7 +140,7 @@ func _ready() -> void:
 		# Two people: player two is a human on a pad (--p2=kbd puts them on the keyboard's other half).
 		hud.hub.model(1).ai = false
 		hud.set_device(1, "kbd" if str(args["p2"]) == "kbd" else "xbox")
-		hud.set_option("pad_preset_p2", "brawler")
+		hud.set_option("pad_preset_p2", "simple-pad")
 	if args.has("joinnote"):
 		hud.show_join_note(str(args["joinnote"]))
 	if args.has("pause"):

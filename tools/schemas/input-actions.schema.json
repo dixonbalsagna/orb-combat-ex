@@ -60,7 +60,10 @@
                 "transform",
                 "lightHeld",
                 "heavyHeld",
-                "escape"
+                "escape",
+                "stanceMask",
+                "contextHeld",
+                "sigHeld"
               ]
             }
           },

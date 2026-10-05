@@ -214,6 +214,18 @@ For a slot that isn't v2, today's `stance` field works as before, so the keyboar
 - "action state": every rule above asserted, including the gate with its flag off and on.
 - A v2 replay: two v2 slots, record, play and JSON round trip, with the derived stance taking at least three values.
 
+## 6d. Intent version 4 as built (2026-10-05): the record past 53 bits
+
+Controls added the stance mask (bits 47 to 50), `contextHeld` (51) and `sigHeld` (52) in `sim/input` (`docs/controls/lunge-control.md`): `BITS` 53, `VERSION` 4. That fills what a JSON number can hold exactly, so the core changed how a replay stores the record (the EP's ruling, option b):
+
+- **The sim still packs one integer.** `SimIntent.pack` and `unpack` are unchanged in shape. A GDScript integer has 63 usable bits, so **10 bits are spare** and the next fields need no format change.
+- **Only the replay's JSON splits it.** An input entry is `[tick, slot, low, high]`: the packed intent's low 32 bits and the bits above them (`SimReplay.split` and `join`); both null for no intent. Each part is far below 2^53, so it survives JSON. The replay format is v4; a v3 file, an entry of the old shape, half an entry, a fraction or a part out of range is refused.
+- **The hash:** `stanceMask`, `contextHeld` and `sigHeld` are appended to `INTENT` in `hash.gd`.
+- **Goldens:** one regeneration. Light digests and tick counts did not move (nothing reads the new fields yet); every full-state checkpoint and the tick-0 states moved, because the intent is in the state hash. The golden replays are scripted recipes, not stored replay records, so nothing in them was rewritten.
+- **Checks:** the pack test covers masks 0 to 15 with both levels, the top bit, the first invalid integer at 1 << 53, and every case's two-number entry through JSON. The replay check refuses the bad entries above and plays back a recorded match that holds the new fields.
+- **I3 stays its own slice** (the legacy `stance`, `dash` and `charge`). It is a behaviour migration for the AI and the old layouts, not a record edit, and it frees 5 more bits when it lands.
+- **Open, for Controls and Encounter:** under a stun `SimWounds.gateIntent` ends the held states (`guard`, `sprint`, `power`, `lightHeld`, `heavyHeld`). It does not touch the stance mask or the two new levels. Nothing reads them yet; the rule is needed before the zip does.
+
 ## 7. Open points
 
 1. **Controls:** confirm the two power edges (`powerPress`, `powerTap`) are enough for the burst rule, and the `sprint` threshold in the layout.

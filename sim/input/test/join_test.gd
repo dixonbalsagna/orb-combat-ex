@@ -230,20 +230,25 @@ func _presets() -> void:
 	_tick(S, hub, 2)
 	hub.pad_button(1, "west", true)    # player two joins
 	_tick(S, hub, 2)
-	hub.set_pad_preset("brawler", 1)
-	ok(hub.layout_of(0) == "arena" and hub.layout_of(1) == "brawler", "presets: each player has their own layout")
+	hub.set_pad_preset("simple-pad", 1)
+	ok(hub.layout_of(0) == "arena" and hub.layout_of(1) == "simple-pad", "presets: each player has their own layout")
 	hub.pad_button(1, "west", false)
-	hub.pad_button(1, "rb", true)      # the Brawler's light
+	hub.pad_button(1, "west", true)    # Simple's attack: a light on release (the bridge)
 	var i1: SimIntent = hub.intent(1)
 	var i0: SimIntent = hub.intent(0)
-	ok(i1.light and not i0.light, "presets: RB is player two's light, and player one's pad is unaffected")
+	ok(not i1.light and not i0.light, "presets: a Simple attack is not a light until it is let go, and player one's pad is unaffected")
+	hub.consumed()
+	hub.pad_button(1, "west", false)
+	ok(hub.intent(1).light, "presets: the Simple player's X let go is their light")
+	hub.consumed()
+	hub.pad_button(1, "rb", true)       # on Simple RB is the transform, not a light; on Arena it would be the energy hold
+	ok(not hub.intent(1).light and hub.intent(1).mode == -1, "presets: RB is not a light on Simple, and the director keeps the mode")
 	hub.consumed()
 	hub.pad_button(1, "rb", false)
-	hub.pad_button(1, "west", true)     # on the Brawler X is the mode button, not a light
-	ok(not hub.intent(1).light, "presets: X is not a light on the Brawler")
-	hub.consumed()
+	hub.set_pad_preset("brawler", 1)    # the Brawler is retired: a saved choice of it becomes Arena
+	ok(hub.layout_of(1) == "arena", "presets: a saved Brawler choice migrates to Arena")
 	hub.set_pad_preset("simple-pad", 0)
-	ok(hub.layout_of(0) == "simple-pad" and hub.layout_of(1) == "brawler", "presets: changing player one's leaves player two's")
+	ok(hub.layout_of(0) == "simple-pad" and hub.layout_of(1) == "arena", "presets: changing player one's leaves player two's")
 	ok(hub.setup()["assists"][0].has("autoBurst") and hub.setup()["assists"][1].is_empty(), "presets: only the Simple player gets assists")
 	hub.set_pad_preset("arena")
 	ok(hub.layout_of(0) == "arena" and hub.layout_of(1) == "arena", "presets: with no slot the default applies to both")

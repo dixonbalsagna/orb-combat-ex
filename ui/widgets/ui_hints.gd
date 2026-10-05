@@ -40,7 +40,7 @@ static func visible_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: 
 
 
 ## The layout id this fighter plays on: touch-simple on touch; on a keyboard kb-solo, or kb-shared-p1 and kb-shared-p2 when two humans
-## share it; on a pad the pad_preset option (arena, brawler or simple-pad). `o["control_scheme"]` overrides it (a test, or a preview).
+## share it; on a pad the pad_preset option (arena or simple-pad). `o["control_scheme"]` overrides it (a test, or a preview).
 static func preset_id(m: UiFighterModel, o: Dictionary) -> String:
 	var forced: String = str(o.get("control_scheme", ""))
 	if forced != "":

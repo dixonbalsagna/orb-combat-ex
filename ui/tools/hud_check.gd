@@ -876,30 +876,31 @@ func _controls_rules() -> void:
 		return " ".join(parts)
 	_ok(lbl.call("kb-solo", "move", "kbd") == "WASD" and lbl.call("kb-solo", "dodge", "kbd") == "Space" and lbl.call("kb-solo", "guard", "kbd") == "Shift" and lbl.call("kb-solo", "light", "kbd") == "J" and lbl.call("kb-solo", "transform", "kbd") == "R", "glyphs: kb-solo reads WASD, Space, Shift, J and R for transform (the single key beats the chord)")
 	_ok(lbl.call("kb-shared-p2", "move", "kbd") == "IJKL" and lbl.call("kb-shared-p2", "guard", "kbd") == ";" and lbl.call("kb-shared-p2", "dodge", "kbd") == "." and lbl.call("kb-shared-p2", "transform", "kbd") == ". + /", "glyphs: kb-shared-p2 reads IJKL, ; and . and the chord . + / for transform")
-	_ok(lbl.call("arena", "guard", "xbox") == "LB" and lbl.call("arena", "dodge", "xbox") == "LT" and lbl.call("arena", "transform", "xbox") == "LT + RT" and lbl.call("brawler", "light", "xbox") == "RB" and lbl.call("simple-pad", "transform", "xbox") == "RB", "glyphs: the pad presets read LB guard, LT dodge, the LT + RT chord (RB on Simple) for transform")
-	_ok(UiGlyphs.bound("brawler", "mode") and not UiGlyphs.bound("simple-pad", "mode") and not UiGlyphs.bound("simple-pad", "heavy") and UiGlyphs.bound("arena", "specials") and UiGlyphs.bound("", "mode"), "glyphs: a layout that does not bind an action is told apart (Simple has no mode or heavy key)")
+	_ok(lbl.call("arena", "guard", "xbox") == "LB" and lbl.call("arena", "dodge", "xbox") == "LT" and lbl.call("arena", "transform", "xbox") == "LT + RT" and lbl.call("simple-pad", "transform", "xbox") == "RB", "glyphs: the pad presets read LB guard, LT dodge, the LT + RT chord (RB on Simple) for transform")
+	_ok(UiGlyphs.bound("arena", "mode") and not UiGlyphs.bound("simple-pad", "mode") and not UiGlyphs.bound("simple-pad", "heavy") and UiGlyphs.bound("arena", "specials") and UiGlyphs.bound("", "mode"), "glyphs: a layout that does not bind an action is told apart (Simple has no mode or heavy key)")
 	# Options: hitstop_scale and the hot-seat layout are in the data.
 	var od: Dictionary = UiData.option_defaults()
 	_ok(is_equal_approx(float(od.get("hitstop_scale", -1.0)), 1.0) and od.get("hotseat_alt_layout") == false and od.get("show_prompts") == false, "options: hitstop_scale defaults to 1.0, the hot-seat layout to off, prompts to off")
 	var o: Dictionary = UiData.options()
 	# Settings: Camera's zoom and shake (0 to 10), the pad layout, and a change signal the host applies from.
 	_ok(float(od.get("camera_zoom", -1.0)) == 7.0 and float(od.get("camera_shake", -1.0)) == 2.0 and float(o["camera_zoom"]["min"]) == 0.0 and float(o["camera_zoom"]["max"]) == 10.0 and float(o["camera_shake"]["max"]) == 10.0 and float(o["camera_zoom"]["step"]) == 1.0 and o["camera_shake"].get("accessibility", false), "options: camera_zoom (0 to 10, default 7) and camera_shake (0 to 10, default 2, accessibility) are in the data")
-	_ok(od.get("pad_preset") == "arena" and (o["pad_preset"]["choices"] as Array) == ["arena", "brawler", "simple-pad"] and o["pad_preset"]["group"] == "controls", "options: pad_preset offers arena, brawler and simple-pad, default arena")
+	_ok(od.get("pad_preset") == "arena" and (o["pad_preset"]["choices"] as Array) == ["arena", "simple-pad"] and o["pad_preset"]["group"] == "controls", "options: pad_preset offers arena and simple-pad, default arena (Brawler is retired)")
 	var pad_ids_ok := true
 	for pid0 in o["pad_preset"]["choices"]:
 		if SimInputData.preset(str(pid0)).is_empty() or str(SimInputData.preset(str(pid0)).get("device", "")) != "pad":
 			pad_ids_ok = false
-	_ok(pad_ids_ok and SimInputData.preset("arena").get("name", "") == "Arena" and SimInputData.preset("simple-pad").get("name", "") == "Simple", "options: every pad_preset choice is a pad layout in data/input/layouts.json (named Arena, Brawler, Simple)")
-	_ok(UiData.clamp_option("camera_zoom", 15) == 10.0 and UiData.clamp_option("camera_zoom", -3) == 0.0 and UiData.clamp_option("camera_zoom", 6.4) == 6.0 and UiData.clamp_option("camera_shake", 4) == 4.0 and UiData.clamp_option("glyph_style", "family") == "family" and UiData.clamp_option("no_such_option", 99) == 99, "options: a slider is held to 0..10 in whole steps, other keys pass through")
+	_ok(pad_ids_ok and SimInputData.preset("arena").get("name", "") == "Arena" and SimInputData.preset("simple-pad").get("name", "") == "Simple", "options: every pad_preset choice is a pad layout in data/input/layouts.json (named Arena, Simple)")
+	_ok(UiData.clamp_option("pad_preset", "brawler") == "arena" and UiData.clamp_option("pad_preset_p2", "brawler") == "arena" and UiData.clamp_option("pad_preset", "simple-pad") == "simple-pad" and UiData.clamp_option("pad_preset", "no-such-layout") == "arena" and UiData.clamp_option("energy_style", "toggle") == "toggle", "options: a retired layout in a saved setting (brawler) reads as Arena, an unknown choice as the default, a real one as it is")
+	_ok(UiData.clamp_option("camera_zoom", 15) == 10.0 and UiData.clamp_option("camera_zoom", -3) == 0.0 and UiData.clamp_option("camera_zoom", 6.4) == 6.0 and UiData.clamp_option("camera_shake", 4) == 4.0 and UiData.clamp_option("glyph_style", "neutral") == "neutral" and UiData.clamp_option("no_such_option", 99) == 99, "options: a slider is held to 0..10 in whole steps, other keys pass through")
 	var oh: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(oh)
 	await process_frame
 	var got: Array = []
 	oh.option_changed.connect(func(k, v): got.append([k, v]))
-	oh.set_option("pad_preset", "brawler")
-	oh.set_option("pad_preset", "brawler")
+	oh.set_option("pad_preset", "simple-pad")
+	oh.set_option("pad_preset", "simple-pad")
 	oh.set_option("camera_zoom", 99)
-	_ok(got == [["pad_preset", "brawler"], ["camera_zoom", 10.0]] and oh.opts["pad_preset"] == "brawler" and oh.opts["camera_zoom"] == 10.0 and oh.opts["camera_shake"] == 2, "options: set_option announces a change once (so the host can set SimInputHub.pad_preset) and clamps the sliders")
+	_ok(got == [["pad_preset", "simple-pad"], ["camera_zoom", 10.0]] and oh.opts["pad_preset"] == "simple-pad" and oh.opts["camera_zoom"] == 10.0 and oh.opts["camera_shake"] == 2, "options: set_option announces a change once (so the host can set SimInputHub.pad_preset) and clamps the sliders")
 	# The Transform prompt: the layout's own control, while a form is ready and prompts are on.
 	var tm := UiFighterModel.new()
 	tm.ai = false
@@ -2085,9 +2086,9 @@ func _energy_rules() -> void:
 				return str(r["label"])
 		return ""
 	var all_hold := true
-	for preset in ["arena", "brawler", "kb-solo", "kb-shared-p1", "kb-shared-p2"]:
+	for preset in ["arena", "kb-solo", "kb-shared-p1", "kb-shared-p2"]:
 		all_hold = all_hold and lab.call(preset, "hold") == "Energy (hold)" and lab.call(preset, "toggle") == "Energy (toggle)"
-	_ok(all_hold and lab.call("simple-pad", "hold") == "", "energy: the legend says Energy (hold) on Arena, Brawler and every keyboard layout, (toggle) for a player who set it, and Simple (the game picks) has no energy row")
+	_ok(all_hold and lab.call("simple-pad", "hold") == "", "energy: the legend says Energy (hold) on Arena and every keyboard layout, (toggle) for a player who set it, and Simple (the game picks) has no energy row")
 	var po := {"energy_style": "hold", "energy_style_p2": "toggle"}
 	var m1 := UiFighterModel.new()
 	m1.slot = 1
@@ -2161,7 +2162,7 @@ class _FakeState:
 
 
 ## The Remap screen itself, not only its model: every layout opens, lists Escape, starts a capture on every row it can change and cancels, with no script error
-## (the layouts moved under it once: Controls' Escape, the dropped L3 + R3 chord, the Brawler's D-pad transform), and Escape is on the controls the data says.
+## (the layouts moved under it twice: Controls' Escape and the dropped L3 + R3 chord, then the Brawler's retirement), and Escape is on the controls the data says.
 func _remap_every_layout() -> void:
 	UiRemapModel.save_path = "user://input_test_smoke.json"
 	root.size = Vector2i(1280, 720)
@@ -2192,13 +2193,13 @@ func _remap_every_layout() -> void:
 				captures += 1
 		opened += 1
 		hud.hide_remap()
-	_ok(opened == 6 and no_escape.is_empty() and captures >= 40, "remap every layout: all %d layouts open, list Escape (%s without) and start a capture on every row they can change (%d)" % [opened, no_escape, captures])
-	var esc := {"arena": ["pad:r3"], "brawler": ["pad:r3"], "simple-pad": ["pad:r3"], "kb-solo": ["kb:KeyC"], "kb-shared-p1": ["kb:KeyX"], "kb-shared-p2": ["kb:Quote"]}
+	_ok(opened == 5 and no_escape.is_empty() and captures >= 40, "remap every layout: all %d layouts open, list Escape (%s without) and start a capture on every row they can change (%d)" % [opened, no_escape, captures])
+	var esc := {"arena": ["pad:r3"], "simple-pad": ["pad:r3"], "kb-solo": ["kb:KeyC"], "kb-shared-p1": ["kb:KeyX"], "kb-shared-p2": ["kb:Quote"]}
 	var esc_ok := true
 	for id in esc:
 		esc_ok = esc_ok and _binding_controls(SimInputData.preset(id), "escape") == esc[id]
 	_ok(esc_ok, "remap every layout: Escape is R3 on the pads and C, X and Quote on the keyboards")
-	var tf := {"brawler": ["pad:dpad_up"], "simple-pad": ["pad:rb"]}
+	var tf := {"simple-pad": ["pad:rb"]}
 	var tf_ok := true
 	for id in tf:
 		tf_ok = tf_ok and _binding_controls(SimInputData.preset(id), "transform") == tf[id]
@@ -2207,15 +2208,13 @@ func _remap_every_layout() -> void:
 		if str(b["action"]) == "transform":
 			arena_chords.append(b["controls"])
 	tf_ok = tf_ok and arena_chords == [["pad:lt", "pad:rt"]]
-	_ok(tf_ok, "remap every layout: Transform is both triggers on Arena, D-pad up on Brawler (a hold) and RB on Simple; the L3 + R3 chord is gone")
+	_ok(tf_ok, "remap every layout: Transform is both triggers on Arena and RB on Simple; the L3 + R3 chord is gone")
 	var lbl := func(action: String, preset: String) -> String:
 		var parts := PackedStringArray()
 		for sp in UiGlyphs.specs_for(action, "xbox", 0, "neutral", preset):
 			parts.append(str(sp.get("label", "")))
 		return " ".join(parts)
 	_ok(lbl.call("escape", "arena") == "R3" and lbl.call("transform", "arena") == "LT + RT" and lbl.call("transform", "simple-pad") == "RB", "remap every layout: the glyphs say R3 for Escape, LT + RT and RB for Transform")
-	var bg: Array = UiGlyphs.specs_for("transform", "xbox", 0, "neutral", "brawler")
-	_ok(bg.size() >= 1 and str(bg[0].get("kind", "")) != "", "remap every layout: the Brawler's Transform draws a glyph (the D-pad's up)")
 	hud.queue_free()
 	await process_frame
 	UiRemapModel.save_path = SimInputRemap.USER_PATH
@@ -2452,14 +2451,14 @@ func _hints_rules() -> void:
 	hub.consume({"type": "availability", "actor": 0, "action": "transform", "available": true})
 	_ok(UiHints.rows(m, "kb-solo").size() == 12, "hints: Transform joins the legend only while a form is ready")
 	_ok(UiHints.rows(m, "no_such_scheme").size() == UiHints.rows(m, "today").size() and UiHints.rows(m, "today").size() == 12, "hints: an unknown scheme falls back to today (a layout is looked up by its own id)")
-	_ok(UiHints.rows(m, "simple-pad").size() == 9 and UiHints.rows(m, "arena").size() == 12 and UiHints.rows(m, "brawler").size() == 12, "hints: Simple's legend is shorter (no heavy, mode or specials) and Arena and Brawler show every row")
+	_ok(UiHints.rows(m, "simple-pad").size() == 9 and UiHints.rows(m, "arena").size() == 12, "hints: Simple's legend is shorter (no heavy, mode or specials) and Arena shows every row")
 	hub.consume({"type": "availability", "actor": 0, "action": "transform", "available": false})
 	var pid := func(dev: String, slot: int, o: Dictionary) -> String:
 		var mm := UiFighterModel.new()
 		mm.device = dev
 		mm.slot = slot
 		return UiHints.preset_id(mm, o)
-	_ok(pid.call("kbd", 0, {}) == "kb-solo" and pid.call("kbd", 0, {"humans": 2}) == "kb-shared-p1" and pid.call("kbd", 1, {"humans": 2}) == "kb-shared-p2" and pid.call("xbox", 0, {"pad_preset": "brawler"}) == "brawler" and pid.call("xbox", 0, {}) == "arena" and pid.call("kbd", 0, {"touch": true}) == "touch-simple" and pid.call("kbd", 0, {"control_scheme": "simple-pad"}) == "simple-pad", "hints: the layout comes from the device, how many humans share the keyboard, the pad preset and touch")
+	_ok(pid.call("kbd", 0, {}) == "kb-solo" and pid.call("kbd", 0, {"humans": 2}) == "kb-shared-p1" and pid.call("kbd", 1, {"humans": 2}) == "kb-shared-p2" and pid.call("xbox", 0, {"pad_preset": "simple-pad"}) == "simple-pad" and pid.call("xbox", 0, {}) == "arena" and pid.call("kbd", 0, {"touch": true}) == "touch-simple" and pid.call("kbd", 0, {"control_scheme": "simple-pad"}) == "simple-pad", "hints: the layout comes from the device, how many humans share the keyboard, the pad preset and touch")
 	# Geometry: the legend sits in the column under the prompt row, clear of the fight, and not on touch or in portrait.
 	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1366, 768), 1.0], [Vector2(1280, 720), 1.0], [Vector2(2560, 1080), 1.0], [Vector2(1024, 576), 1.0]]:
 		var lay := UiLayout.new()
@@ -2698,7 +2697,7 @@ func _settings_rules() -> void:
 	var pads_ok := true
 	for c in od["pad_preset"]["choices"]:
 		pads_ok = pads_ok and sd["labels"]["pad_preset"].has(c)
-	_ok(pads_ok and sd["labels"]["pad_preset"]["simple-pad"] == "Simple" and sd["labels"]["pad_preset"]["arena"] == "Arena", "settings: Arena, Brawler and Simple are the words for the three pad layouts")
+	_ok(pads_ok and sd["labels"]["pad_preset"]["simple-pad"] == "Simple" and sd["labels"]["pad_preset"]["arena"] == "Arena", "settings: Arena and Simple are the words for the pad layouts")
 	# Rows that wait for a feature are listed but disabled and skipped by the focus.
 	UiData.set_feature("touch_full", false)
 	UiData.set_feature("remap", false)
@@ -2736,7 +2735,7 @@ func _settings_rules() -> void:
 	var vo := {"camera_zoom": 7.0, "pad_preset": "arena", "left_handed": false, "thickness": 1.0, "hitstop_scale": 0.5}
 	_ok(UiSettings.value_word(rzoom, vo) == "7" and UiSettings.value_word(rpad, vo) == "Arena" and UiSettings.value_word(rtog, vo) == "Off" and UiSettings.value_word(rthick, vo) == "Normal" and UiSettings.value_word(rhit, vo) == "50%", "settings: values read as words (7, Arena, Off, Normal, 50%)")
 	_ok(UiSettings.stepped(rzoom, vo, 1) == 8.0 and UiSettings.stepped(rzoom, {"camera_zoom": 10.0}, 1) == 10.0 and UiSettings.stepped(rzoom, {"camera_zoom": 0.0}, -1) == 0.0, "settings: a slider steps by one and stops at its ends")
-	_ok(UiSettings.stepped(rpad, vo, 1) == "brawler" and UiSettings.stepped(rpad, {"pad_preset": "simple-pad"}, 1) == "arena" and UiSettings.stepped(rpad, vo, -1) == "simple-pad", "settings: a choice cycles round its list in both directions")
+	_ok(UiSettings.stepped(rpad, vo, 1) == "simple-pad" and UiSettings.stepped(rpad, {"pad_preset": "simple-pad"}, 1) == "arena" and UiSettings.stepped(rpad, vo, -1) == "simple-pad", "settings: a choice cycles round its list in both directions")
 	_ok(UiSettings.stepped(rtog, vo, 1) == true and UiSettings.stepped(rthick, vo, 1) == 1.5, "settings: a toggle flips and a numeric choice moves to the next choice")
 	var trk := Rect2(100, 0, 200, 48)
 	_ok(UiSettings.slider_at(rzoom, trk, 100.0) == 0.0 and UiSettings.slider_at(rzoom, trk, 300.0) == 10.0 and UiSettings.slider_at(rzoom, trk, 200.0) == 5.0 and UiSettings.slider_at(rzoom, trk, 999.0) == 10.0, "settings: a point on the track is a whole step of the slider")
@@ -2843,7 +2842,7 @@ func _settings_rules() -> void:
 	hud.settings_action("home")
 	_ok(hud.settings_focus() == idx_of.call("pad_preset"), "settings keys: Home goes to the first row")
 	hud._unhandled_input(key.call(KEY_RIGHT))
-	_ok(hud.opts["pad_preset"] == "brawler" and ev["changes"].back() == ["pad_preset", "brawler"], "settings keys: Right changes the controller layout and the host hears it (pad_preset, brawler)")
+	_ok(hud.opts["pad_preset"] == "simple-pad" and ev["changes"].back() == ["pad_preset", "simple-pad"], "settings keys: Right changes the controller layout and the host hears it (pad_preset, simple-pad)")
 	hud._unhandled_input(key.call(KEY_LEFT))
 	hud._unhandled_input(key.call(KEY_LEFT))
 	_ok(hud.opts["pad_preset"] == "simple-pad", "settings keys: Left cycles back round the list")
@@ -2873,7 +2872,7 @@ func _settings_rules() -> void:
 	hud._unhandled_input(pad.call(JOY_BUTTON_DPAD_RIGHT))
 	hud._unhandled_input(pad.call(JOY_BUTTON_DPAD_RIGHT))
 	var after_pad: String = str(hud.opts["pad_preset"])
-	_ok(after_pad == "simple-pad", "settings pad: D-pad right changes a choice (brawler, then simple)")
+	_ok(after_pad == "arena", "settings pad: D-pad right changes a choice (simple, then round to arena)")
 	hud._unhandled_input(pad.call(JOY_BUTTON_DPAD_DOWN))
 	_ok(hud.settings_focus() == idx_of.call("left_handed"), "settings pad: D-pad down moves the focus")
 	hud._unhandled_input(pad.call(JOY_BUTTON_A))
@@ -2980,7 +2979,7 @@ func _settings_rules() -> void:
 	hud.hide_settings()
 	# Remembered: the changes are in the prefs file and a new HUD applies them.
 	hud.settings_set("camera_shake", 9)
-	hud.settings_set("pad_preset", "brawler")
+	hud.settings_set("pad_preset", "simple-pad")
 	hud.queue_free()
 	await process_frame
 	var hud2: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
@@ -2992,7 +2991,7 @@ func _settings_rules() -> void:
 	hud2.option_changed.connect(func(k, v): got.append(k))
 	var fresh_ok: bool = hud2.opts["camera_shake"] == 2 and hud2.opts["pad_preset"] == "arena"
 	hud2.load_saved_options()
-	_ok(fresh_ok and hud2.opts["camera_shake"] == 9.0 and hud2.opts["pad_preset"] == "brawler" and got.has("pad_preset") and got.has("camera_shake") and hud2.opts["show_prompts"] == false, "settings: what the player changed on the screen comes back on the next run (and the host hears it), and nothing else does")
+	_ok(fresh_ok and hud2.opts["camera_shake"] == 9.0 and hud2.opts["pad_preset"] == "simple-pad" and got.has("pad_preset") and got.has("camera_shake") and hud2.opts["show_prompts"] == false, "settings: what the player changed on the screen comes back on the next run (and the host hears it), and nothing else does")
 	# The screen draws without error at a desktop and a phone size, and costs nothing while closed.
 	var redraws: int = hud2.redraw_count()
 	hud2.advance(1.0 / 60.0)
@@ -3031,20 +3030,20 @@ func _remap_rules() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiRemapModel.save_path))
 	var solo: Dictionary = SimInputData.preset("kb-solo")
 	# The layouts and the entries each has.
-	_ok(UiRemapModel.layouts() == ["arena", "brawler", "simple-pad", "kb-solo", "kb-shared-p1", "kb-shared-p2"], "remap: the keyboard and pad layouts can be changed, touch cannot")
+	_ok(UiRemapModel.layouts() == ["arena", "simple-pad", "kb-solo", "kb-shared-p1", "kb-shared-p2"], "remap: the keyboard and pad layouts can be changed, touch cannot")
 	var ids := func(id: String) -> Array:
 		var out: Array = []
 		for e in UiRemapModel.entries(SimInputData.preset(id)):
 			out.append(e["id"])
 		return out
-	_ok(ids.call("kb-solo") == ["move", "light", "heavy", "signature", "guard", "dodge", "power", "mode", "context", "escape", "transform"] and ids.call("arena") == ["light", "heavy", "signature", "guard", "dodge", "power", "mode", "context", "escape"] and ids.call("simple-pad") == ["light", "signature", "guard", "dodge", "power", "context", "escape", "transform"] and ids.call("brawler") == ["light", "heavy", "signature", "guard", "dodge", "power", "mode", "context", "escape", "transform"], "remap: a keyboard lists Fly (four keys) and every action, a pad its single-control actions")
+	_ok(ids.call("kb-solo") == ["move", "light", "heavy", "signature", "guard", "dodge", "power", "mode", "context", "escape", "transform"] and ids.call("arena") == ["light", "heavy", "signature", "guard", "dodge", "power", "mode", "context", "escape"] and ids.call("simple-pad") == ["light", "signature", "guard", "dodge", "power", "context", "escape", "transform"], "remap: a keyboard lists Fly (four keys) and every action, a pad its single-control actions")
 	var fixed_ids := func(id: String) -> Array:
 		var out: Array = []
 		for r in UiRemapModel.rows(SimInputData.preset(id)):
 			if bool(r["fixed"]):
 				out.append(r["id"])
 		return out
-	_ok(fixed_ids.call("arena") == ["move@fixed0", "transform@fixed0"] and fixed_ids.call("kb-solo") == ["transform@fixed0"] and fixed_ids.call("simple-pad") == ["move@fixed0"] and fixed_ids.call("brawler") == ["move@fixed0"], "remap: the pad stick and the chords are listed as fixed rows (greyed, no capture); Pause, Hints, gestures and the power layer are not listed")
+	_ok(fixed_ids.call("arena") == ["move@fixed0", "transform@fixed0"] and fixed_ids.call("kb-solo") == ["transform@fixed0"] and fixed_ids.call("simple-pad") == ["move@fixed0"], "remap: the pad stick and the chords are listed as fixed rows (greyed, no capture); Pause, Hints, gestures and the power layer are not listed")
 	# A free key: the layered special follows Light (Controls' applier), nothing else moves.
 	var r1: Dictionary = UiRemapModel.attempt("kb-solo", "light", "kb:KeyZ")
 	_ok(r1["status"] == "ok" and (r1["overrides"] as Array) == [{"controls": ["kb:KeyZ"], "action": "light"}], "remap: a free key is an override row for Light")
@@ -3100,11 +3099,6 @@ func _remap_rules() -> void:
 	var spz: Dictionary = SimInputData.preset("simple-pad")
 	_ok(_binding_controls(spz, "light") == ["pad:lt"] and _binding_controls(spz, "special_auto", "power") == ["pad:lt"] and _binding_controls(spz, "upgrade_heavy", "", "hold") == ["pad:lt"] and UiRemapModel.attempt("simple-pad", "heavy_none", "pad:rt")["status"] == "reserved", "remap: on Simple the hold-for-heavy and the auto special follow Light")
 	UiRemapModel.commit("simple-pad", [])
-	var rb_taken: Dictionary = UiRemapModel.attempt("brawler", "mode", "pad:dpad_up")
-	var rb: Dictionary = UiRemapModel.attempt("brawler", "mode", "pad:dpad_left")
-	UiRemapModel.commit("brawler", rb["overrides"])
-	_ok(rb_taken["status"] == "conflict" and rb_taken["with"] == "transform" and _binding_controls(SimInputData.preset("brawler"), "special3", "power") == ["pad:dpad_left"], "remap: on Brawler the third special follows Mode, and D-pad up is Transform's now")
-	UiRemapModel.commit("brawler", [])
 	# The glyphs everywhere follow the player's layout.
 	var lbl := func(action: String, layer_preset: String) -> String:
 		var parts := PackedStringArray()
@@ -3930,7 +3924,7 @@ func _two_player_rules() -> void:
 		mm.slot = slot
 		return UiHints.preset_id(mm, o)
 	_ok(pid.call("kbd", 0, {"kbd_humans": 2}) == "kb-shared-p1" and pid.call("kbd", 1, {"kbd_humans": 2}) == "kb-shared-p2", "two players: two people on the keyboard get the shared-keyboard halves")
-	_ok(pid.call("kbd", 0, {"kbd_humans": 1, "humans": 2}) == "kb-solo" and pid.call("xbox", 1, {"pad_preset": "arena", "pad_preset_p2": "brawler"}) == "brawler" and pid.call("xbox", 0, {"pad_preset": "simple-pad", "pad_preset_p2": "brawler"}) == "simple-pad", "two players: one on the keyboard and one on a pad is the solo layout and the pad's own layout (player two's option for slot 1)")
+	_ok(pid.call("kbd", 0, {"kbd_humans": 1, "humans": 2}) == "kb-solo" and pid.call("xbox", 1, {"pad_preset": "arena", "pad_preset_p2": "simple-pad"}) == "simple-pad" and pid.call("xbox", 0, {"pad_preset": "simple-pad", "pad_preset_p2": "arena"}) == "simple-pad", "two players: one on the keyboard and one on a pad is the solo layout and the pad's own layout (player two's option for slot 1)")
 	_ok(pid.call("xbox", 1, {"slot_presets": {1: "simple-pad"}, "pad_preset_p2": "arena"}) == "simple-pad" and pid.call("kbd", 0, {"slot_presets": {1: "simple-pad"}}) == "kb-solo", "two players: a layout the host names for a slot wins")
 	# The join prompt's fade and its fit.
 	_ok(UiJoin.alpha(-1.0) == 0.0 and UiJoin.alpha(1.0) == 1.0 and UiJoin.alpha(UiJoin.SHOW) == 1.0 and is_equal_approx(UiJoin.alpha(UiJoin.SHOW + UiJoin.FADE * 0.5), 0.5) and UiJoin.alpha(UiJoin.SHOW + UiJoin.FADE + 1.0) == 0.0, "two players: the join prompt is full from the start, fades after 25 s of fight time and is gone")
@@ -4009,11 +4003,11 @@ func _two_player_rules() -> void:
 	hud.hub.model(1).ai = false
 	hud.hub.model(0).device = "kbd"
 	hud.hub.model(1).device = "xbox"
-	hud.set_option("pad_preset_p2", "brawler")
+	hud.set_option("pad_preset_p2", "simple-pad")
 	var o2: Dictionary = hud._o()
-	_ok(UiHints.preset_id(hud.hub.model(0), o2) == "kb-solo" and UiHints.preset_id(hud.hub.model(1), o2) == "brawler", "two players: player one's legend is the solo keyboard's and player two's is the pad's own layout")
-	hud.set_slot_layout(1, "simple-pad")
-	_ok(UiHints.preset_id(hud.hub.model(1), hud._o()) == "simple-pad", "two players: a layout the host names for a slot is the one its legend shows")
+	_ok(UiHints.preset_id(hud.hub.model(0), o2) == "kb-solo" and UiHints.preset_id(hud.hub.model(1), o2) == "simple-pad", "two players: player one's legend is the solo keyboard's and player two's is the pad's own layout")
+	hud.set_slot_layout(1, "arena")
+	_ok(UiHints.preset_id(hud.hub.model(1), hud._o()) == "arena", "two players: a layout the host names for a slot is the one its legend shows")
 	hud.set_slot_layout(1, "")
 	hud.hub.model(1).device = "kbd"
 	_ok(UiHints.preset_id(hud.hub.model(0), hud._o()) == "kb-shared-p1" and UiHints.preset_id(hud.hub.model(1), hud._o()) == "kb-shared-p2", "two players: both on the keyboard they get the two halves")
@@ -4058,7 +4052,7 @@ func _two_player_rules() -> void:
 	hud.hub.model(0).device = "kbd"
 	hud.hub.model(1).device = "xbox"
 	hud.settings_action("accept")
-	_ok(hud.is_remap_open() and hud.remap_layout() == "brawler", "two players: Remap player 2's controls opens player two's own layout (the pad layout set for player two)")
+	_ok(hud.is_remap_open() and hud.remap_layout() == "simple-pad", "two players: Remap player 2's controls opens player two's own layout (the pad layout set for player two)")
 	hud.hide_remap()
 	hud.hide_settings()
 	hud.hub.model(1).device = "kbd"

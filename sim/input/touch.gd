@@ -88,6 +88,8 @@ var _tf_sent: bool = false
 var _transform_edge: bool = false
 var _escape_edge: bool = false    # a swipe up on Guard (provisional Escape, docs/controls/agency-input.md)
 var _edge_t0: int = -1            # the tick the oldest unconsumed request was made at, -1 for none (the intent's `waited`)
+var _stance_since: Dictionary = {}   # Simple: stance bit -> tick it went on (the newest wins)
+var _stance_on: int = 0
 
 # The Full touch preset: the same widgets go through a SimLayout (touch-full), the stick stays here.
 var full_mode: bool = false
@@ -130,6 +132,13 @@ func set_preset(id: String) -> void:
 	_full = SimLayout.new(SimInputData.preset(id)) if full_mode else null
 	if _full != null:
 		_full.mode_style = "hybrid"   # a thumb is busy: a tap latches energy, a hold is momentary
+		_full.set_stance_oneshot(true)   # and one thumb cannot hold a stance and fly: a tap arms a stance for the next blow
+
+
+## One-shot stance arming (a tap on a stance button arms it for the next blow); Full touch only, Simple has no spare buttons.
+func set_stance_oneshot(on: bool) -> void:
+	if _full != null:
+		_full.set_stance_oneshot(on)
 
 
 ## The player's energy style ("hold", "toggle", "hybrid"; the Simple touch layout leaves the mode to the director). Full touch is
@@ -274,6 +283,8 @@ func release_all() -> void:
 	_transform_edge = false
 	_escape_edge = false
 	_edge_t0 = -1
+	_stance_since.clear()
+	_stance_on = 0
 
 
 ## Escape on touch: a swipe up on the Guard button within swipeUpTicks of touching it (Guard stays down). Provisional, like the
@@ -395,8 +406,20 @@ func build() -> SimIntent:
 				i.heavyHeld = true
 			else:
 				i.lightHeld = true
+	# The stances (SimStance): Guard is LB, Power is RT, the stick's outer ring is LT (the manoeuvre stance: the zip's LT); the
+	# director picks the energy stance (mode -1). Exclusive, as the layouts: RT dominates, else the newest button is the stance.
+	var on_now: int = (1 if guard else 0) | (4 if power else 0) | (8 if sprint else 0)
+	for b in SimStance.BITS:
+		if on_now & b != 0 and _stance_on & b == 0:
+			_stance_since[b] = tick
+	_stance_on = on_now
+	var mask: int = SimStance.resolve(on_now, SimStance.newest_of(on_now, _stance_since), SimStance.hybrids())
+	i.stanceMask = mask
+	i.guard = i.guard and (mask & SimStance.DEFENSIVE) != 0
+	i.guardPress = i.guardPress and (mask & SimStance.DEFENSIVE) != 0
+	i.sprint = i.sprint and (mask & SimStance.MANOEUVRE) != 0
 	# Today's fields, until I3: a flick's dash or a sprint is the dash; Power held past holdTicks is the channel.
-	i.dash = dashing or sprint
+	i.dash = dashing or i.sprint
 	i.charge = power and not _power_voided and (tick - _power_t0) >= int(cfg.holdTicks)
 	i.stance = -1.0
 	if _edge_t0 < 0 and _has_edges():

@@ -11,7 +11,10 @@
 //   data/director/ai.json          per level the required `brawl` {tapGap, string [lo, hi], enderShare, rashHeavy, guardShare,
 //                                  guardTicks [lo, hi], perfectMul} (`_brawl` is a note and is allowed)
 // Ranges (mine, from the brief; tell me if a type is unclear): ticks are integers of 0 or more; shares 0 to 1; lo at most hi; flurry.minGap
-// at most maxGap; the mul table's gaps strictly increasing; heavy.heldFullTicks at most heldMaxTicks. Rules: brawl-order and ai-brawl.
+// at most maxGap; the mul table's gaps strictly increasing and its multipliers above 0 up to 2; heavy.heldFullTicks at most heldMaxTicks.
+// Encounter's final names: heavy.recover and heavy.recoverWhiff (both required; recoverTicks is gone), light.recover, tradeTicks (ticks) and
+// heldMul (above 0), and skillMul, setMul and heavyMul (above 0), all required. flurry.mul has at least two points. The new cue name `trade`
+// is a sim render cue that nothing in tools checks. Rules: brawl-order and ai-brawl.
 // The fixtures get the keys, and every case sets its own values (a whole `brawl` block or level block), so none depends on the real file.
 // Re-runnable (a second run changes nothing).
 const fs = require('fs');
@@ -41,9 +44,14 @@ const VALID = {
   damageMul: 1,
   aiPerfectEveryTicks: 120,
   aiReversalEveryTicks: 180,
-  light: { damage: 6, contactTicks: 6, blowTicks: 12 },
-  flurry: { minGap: 4, maxGap: 20, mul: [[4, 0.5], [8, 0.75], [12, 1]], reelTicks: 10, closeAfter: 30, staggerTicks: 8 },
-  heavy: { damage: 30, ki: 8, windupTicks: 20, landTicks: 6, recoverTicks: 20, heldFullTicks: 40, heldMaxTicks: 60, heldLandTicks: 8, staggerTicks: 20, force: 1 },
+  tradeTicks: 8,
+  heldMul: 1.2,
+  skillMul: 1.2,
+  setMul: 0.8,
+  heavyMul: 1.5,
+  light: { damage: 6, contactTicks: 6, blowTicks: 12, recover: 10 },
+  flurry: { minGap: 4, maxGap: 20, mul: [[6, 0.6], [12, 1.2]], reelTicks: 10, closeAfter: 30, staggerTicks: 8 },
+  heavy: { damage: 30, ki: 8, windupTicks: 20, landTicks: 6, recover: 20, recoverWhiff: 30, heldFullTicks: 40, heldMaxTicks: 60, heldLandTicks: 8, staggerTicks: 20, force: 1 },
   hitstop: { light: 2, heavy: 5 },
 };
 const VALID_AI = { tapGap: 8, string: [3, 6], enderShare: 0.4, rashHeavy: 0.1, guardShare: 0.3, guardTicks: [20, 60], perfectMul: 1 };
@@ -73,11 +81,11 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
       damageMul: num0('The multiplier on a brawl blow\'s damage.'),
       aiPerfectEveryTicks: ticks('The AI aims a perfect block about this often, in ticks.'),
       aiReversalEveryTicks: ticks('The AI aims a reversal about this often, in ticks.'),
-      light: obj({ damage: num0('Damage of a light blow.'), contactTicks: ticks('Ticks to contact.'), blowTicks: ticks('Ticks of the whole blow.') }),
+      light: obj({ damage: num0('Damage of a light blow.'), contactTicks: ticks('Ticks to contact.'), blowTicks: ticks('Ticks of the whole blow.'), recover: ticks('Recovery after a light blow.') }),
       flurry: obj({
         minGap: ticks('The shortest gap between blows of a flurry, in ticks.'),
         maxGap: ticks('The longest gap that still counts as a flurry.'),
-        mul: { type: 'array', minItems: 1, items: { type: 'array', minItems: 2, maxItems: 2, prefixItems: [ticks('Gap in ticks.'), share('The share of damage a blow at that gap keeps.')], items: false }, description: 'Gap to share of damage, the gaps strictly increasing.' },
+        mul: { type: 'array', minItems: 2, items: { type: 'array', minItems: 2, maxItems: 2, prefixItems: [ticks('Gap in ticks.'), { type: 'number', exclusiveMinimum: 0, maximum: 2, description: 'The multiplier on a blow\'s damage at that gap (above 0, up to 2; Game Design: x1.1 at an 11-tick gap, x1.2 at 12).' }], items: false }, description: 'Gap to damage multiplier, the gaps strictly increasing.' },
         reelTicks: ticks('Ticks the rival reels.'),
         closeAfter: ticks('Ticks after which a flurry closes.'),
         staggerTicks: ticks('Ticks of stagger a flurry\'s end gives.'),
@@ -87,15 +95,21 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
         ki: num0('The ki it costs.'),
         windupTicks: ticks('Wind-up.'),
         landTicks: ticks('Ticks to land.'),
-        recoverTicks: ticks('Recovery.'),
+        recover: ticks('Recovery after a heavy that lands.'),
+        recoverWhiff: ticks('Recovery after a heavy that misses.'),
         heldFullTicks: ticks('Ticks held to a full charge.'),
         heldMaxTicks: ticks('The most it can be held.'),
         heldLandTicks: ticks('Ticks to land a held heavy.'),
         staggerTicks: ticks('Ticks of stagger it gives.'),
         force: num0('The knock force.'),
-      }),
+      }, { required: ['damage', 'ki', 'windupTicks', 'landTicks', 'recover', 'recoverWhiff', 'heldFullTicks', 'heldMaxTicks', 'heldLandTicks', 'staggerTicks', 'force'] }),
       hitstop: obj({ light: ticks('Hit-stop of a light blow.'), heavy: ticks('Hit-stop of a heavy blow.') }),
-    }, { description: 'The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.' });
+      tradeTicks: ticks('The window, in ticks, in which two blows landing together are a trade.'),
+      heldMul: { type: 'number', exclusiveMinimum: 0, description: 'The worth of a held blow.' },
+      skillMul: { type: 'number', exclusiveMinimum: 0, description: 'The worth of a skill blow.' },
+      setMul: { type: 'number', exclusiveMinimum: 0, description: 'The worth of a set-up blow.' },
+      heavyMul: { type: 'number', exclusiveMinimum: 0, description: 'The worth of a heavy blow.' },
+    }, { required: ['enabled', 'interrupts', 'breakBh', 'pullBhPerSec', 'stepInTicks', 'idleTicks', 'heldPressTicks', 'stringLapseTicks', 'enderAfter', 'recoil', 'damageMul', 'aiPerfectEveryTicks', 'aiReversalEveryTicks', 'tradeTicks', 'heldMul', 'skillMul', 'setMul', 'heavyMul', 'light', 'flurry', 'heavy', 'hitstop'], description: 'The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.' });
     if (!s.required.includes('brawl')) s.required.push('brawl');
     s.description = s.description.replace('Orders (', () => 'Orders (a brawl flurry\'s minGap at most its maxGap and its mul gaps strictly increasing, and a heavy\'s heldFullTicks at most its heldMaxTicks (brawl-order); ');
     wj(f, s);
@@ -227,6 +241,9 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
     it('light-unknown-key', (o) => { o.light.extra = 1; }, { rule: 'additionalProperties', pointer: B + 'light/extra' }),
     it('light-damage-negative', (o) => { o.light.damage = -1; }, { rule: 'minimum', pointer: B + 'light/damage' }),
     it('light-contact-integer', (o) => { o.light.contactTicks = 5.5; }, { rule: 'type', pointer: B + 'light/contactTicks' }),
+    it('light-recover-required', (o) => { delete o.light.recover; }, { rule: 'required', pointer: B + 'light' }),
+    it('light-recover-negative', (o) => { o.light.recover = -1; }, { rule: 'minimum', pointer: B + 'light/recover' }),
+    it('light-recover-integer', (o) => { o.light.recover = 10.5; }, { rule: 'type', pointer: B + 'light/recover' }),
     it('light-blow-negative', (o) => { o.light.blowTicks = -1; }, { rule: 'minimum', pointer: B + 'light/blowTicks' }),
     // ---- flurry ----
     it('flurry-key-required', (o) => { delete o.flurry.mul; }, { rule: 'required', pointer: B + 'flurry' }),
@@ -240,12 +257,15 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
     it('flurry-mul-row-too-long', (o) => { o.flurry.mul = [[4, 0.5, 1]]; }, { rule: 'maxItems', pointer: B + 'flurry/mul/0' }),
     it('flurry-mul-gap-integer', (o) => { o.flurry.mul = [[4.5, 0.5]]; }, { rule: 'type', pointer: B + 'flurry/mul/0/0' }),
     it('flurry-mul-gap-negative', (o) => { o.flurry.mul = [[-1, 0.5]]; }, { rule: 'minimum', pointer: B + 'flurry/mul/0/0' }),
-    it('flurry-mul-share-range', (o) => { o.flurry.mul = [[4, 1.5]]; }, { rule: 'maximum', pointer: B + 'flurry/mul/0/1' }),
-    it('flurry-mul-share-negative', (o) => { o.flurry.mul = [[4, -0.1]]; }, { rule: 'minimum', pointer: B + 'flurry/mul/0/1' }),
+    it('flurry-mul-above-limit', (o) => { o.flurry.mul = [[4, 2.5]]; }, { rule: 'maximum', pointer: B + 'flurry/mul/0/1' }),
+    it('flurry-mul-zero', (o) => { o.flurry.mul = [[4, 0]]; }, { rule: 'exclusiveMinimum', pointer: B + 'flurry/mul/0/1' }),
+    it('flurry-mul-negative', (o) => { o.flurry.mul = [[4, -0.1]]; }, { rule: 'exclusiveMinimum', pointer: B + 'flurry/mul/0/1' }),
+    it('flurry-mul-above-one-ok', (o) => { o.flurry.mul = [[11, 1.1], [12, 1.2]]; }, null),
     it('flurry-mul-gaps-equal', (o) => { o.flurry.mul = [[4, 0.5], [4, 0.75]]; }, { rule: 'xref:brawl-order', pointer: B + 'flurry/mul/1/0' }),
     it('flurry-mul-gaps-falling', (o) => { o.flurry.mul = [[8, 0.5], [4, 0.75]]; }, { rule: 'xref:brawl-order', pointer: B + 'flurry/mul/1/0' }),
-    it('flurry-mul-one-row-ok', (o) => { o.flurry.mul = [[10, 1]]; }, null),
-    it('flurry-mul-share-edges-ok', (o) => { o.flurry.mul = [[1, 0], [2, 1]]; }, null),
+    it('flurry-mul-one-point', (o) => { o.flurry.mul = [[10, 1]]; }, { rule: 'minItems', pointer: B + 'flurry/mul' }),
+    it('flurry-mul-three-points-ok', (o) => { o.flurry.mul = [[4, 0.5], [8, 0.75], [12, 1]]; }, null),
+    it('flurry-mul-edges-ok', (o) => { o.flurry.mul = [[1, 0.1], [2, 2]]; }, null),
     it('flurry-reel-negative', (o) => { o.flurry.reelTicks = -1; }, { rule: 'minimum', pointer: B + 'flurry/reelTicks' }),
     it('flurry-close-integer', (o) => { o.flurry.closeAfter = 30.5; }, { rule: 'type', pointer: B + 'flurry/closeAfter' }),
     it('flurry-stagger-negative', (o) => { o.flurry.staggerTicks = -1; }, { rule: 'minimum', pointer: B + 'flurry/staggerTicks' }),
@@ -257,7 +277,29 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
     it('heavy-ki-fraction-ok', (o) => { o.heavy.ki = 7.5; }, null),
     it('heavy-windup-negative', (o) => { o.heavy.windupTicks = -1; }, { rule: 'minimum', pointer: B + 'heavy/windupTicks' }),
     it('heavy-land-integer', (o) => { o.heavy.landTicks = 6.5; }, { rule: 'type', pointer: B + 'heavy/landTicks' }),
-    it('heavy-recover-negative', (o) => { o.heavy.recoverTicks = -1; }, { rule: 'minimum', pointer: B + 'heavy/recoverTicks' }),
+    it('heavy-recover-ticks-retired', (o) => { o.heavy.recoverTicks = 20; }, { rule: 'additionalProperties', pointer: B + 'heavy/recoverTicks' }),
+    it('heavy-recover-required', (o) => { delete o.heavy.recover; }, { rule: 'required', pointer: B + 'heavy' }),
+    it('heavy-recover-whiff-required', (o) => { delete o.heavy.recoverWhiff; }, { rule: 'required', pointer: B + 'heavy' }),
+    it('heavy-recover-negative-value', (o) => { o.heavy.recover = -1; }, { rule: 'minimum', pointer: B + 'heavy/recover' }),
+    it('heavy-recover-whiff-negative', (o) => { o.heavy.recoverWhiff = -1; }, { rule: 'minimum', pointer: B + 'heavy/recoverWhiff' }),
+    it('heavy-recover-whiff-integer', (o) => { o.heavy.recoverWhiff = 30.5; }, { rule: 'type', pointer: B + 'heavy/recoverWhiff' }),
+    it('trade-ticks-required', (o) => { delete o.tradeTicks; }, { rule: 'required', pointer: '/brawl' }),
+    it('trade-ticks-negative', (o) => { o.tradeTicks = -1; }, { rule: 'minimum', pointer: B + 'tradeTicks' }),
+    it('trade-ticks-integer', (o) => { o.tradeTicks = 8.5; }, { rule: 'type', pointer: B + 'tradeTicks' }),
+    it('trade-ticks-zero-ok', (o) => { o.tradeTicks = 0; }, null),
+    it('held-mul-required', (o) => { delete o.heldMul; }, { rule: 'required', pointer: '/brawl' }),
+    it('held-mul-zero', (o) => { o.heldMul = 0; }, { rule: 'exclusiveMinimum', pointer: B + 'heldMul' }),
+    it('held-mul-type', (o) => { o.heldMul = 'big'; }, { rule: 'type', pointer: B + 'heldMul' }),
+    it('held-mul-ok', (o) => { o.heldMul = 2; }, null),
+    it('skill-mul-required', (o) => { delete o.skillMul; }, { rule: 'required', pointer: '/brawl' }),
+    it('set-mul-required', (o) => { delete o.setMul; }, { rule: 'required', pointer: '/brawl' }),
+    it('heavy-mul-required', (o) => { delete o.heavyMul; }, { rule: 'required', pointer: '/brawl' }),
+    it('skill-mul-ok', (o) => { o.skillMul = 1.2; }, null),
+    it('skill-mul-zero', (o) => { o.skillMul = 0; }, { rule: 'exclusiveMinimum', pointer: B + 'skillMul' }),
+    it('set-mul-ok', (o) => { o.setMul = 0.8; }, null),
+    it('set-mul-negative', (o) => { o.setMul = -1; }, { rule: 'exclusiveMinimum', pointer: B + 'setMul' }),
+    it('heavy-mul-ok', (o) => { o.heavyMul = 1.5; }, null),
+    it('heavy-mul-type', (o) => { o.heavyMul = 'big'; }, { rule: 'type', pointer: B + 'heavyMul' }),
     it('heavy-held-full-integer', (o) => { o.heavy.heldFullTicks = 40.5; }, { rule: 'type', pointer: B + 'heavy/heldFullTicks' }),
     it('heavy-held-max-negative', (o) => { o.heavy.heldMaxTicks = -1; }, { rule: 'minimum', pointer: B + 'heavy/heldMaxTicks' }),
     it('heavy-held-full-above-max', (o) => { o.heavy.heldFullTicks = 90; o.heavy.heldMaxTicks = 60; }, { rule: 'xref:brawl-order', pointer: B + 'heavy/heldFullTicks' }),

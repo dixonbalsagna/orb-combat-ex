@@ -7,8 +7,8 @@ extends RefCounted
 ## (Encounter and Simulation own it); this file only builds and reads it.
 ##
 ## A log is an Array of entries, oldest first, at most `logSize` long (20: the running mix; the recipe reads the latest `mixShort`, 5):
-##   {kind: int (LIGHT, HEAVY, SIG), mode: int (0 physical, 1 energy), down: int tick, up: int tick or -1 while held,
-##    beat: int}
+##   {kind: int (LIGHT, HEAVY, SIG, CONTEXT), mode: int (0 physical, 1 energy), down: int tick, up: int tick or -1 while held,
+##    beat: int, stance: int (the stance mask the press was made in, 0 martial; absent reads as 0)}
 ## `beat` is the signed distance in ticks from the press to the nearest blow contact of the running exchange (negative:
 ## early), or NO_BEAT outside one. A charged press (a hold at range or close) also carries `flash`: the tick the sim's
 ## charge flashed, or NO_FLASH; releasing on the flash is the timed release. The director stamps the PLANNED flash tick when
@@ -30,6 +30,7 @@ extends RefCounted
 const LIGHT: int = 0
 const HEAVY: int = 1
 const SIG: int = 2
+const CONTEXT: int = 3   # A: the grab, the channel, the zip tackle (a press and a hold)
 const NO_BEAT: int = 32767
 const NO_FLASH: int = 32767
 
@@ -52,6 +53,13 @@ const DEFAULTS: Dictionary = {
 	"blurBeatBonus": 0,   # added on touch or at 30 fps ("slow"); 0 by ruling (two more ticks would cover a whole 7-tick beat)
 	"assistFactor": 2,    # accessibility: the beat window doubles
 	"perfectStreak": 3,   # this many perfect presses in a row make a timed string
+	"zipMashPresses": 3,  # a zip has three hits: the starter and two more presses make its speed reading
+	"zipMashGap": 10,     # ... each within this many ticks of the one before
+	"holdLight": 8,       # the hold reading of each button (Game Design, 2026-10-05): X
+	"holdHeavy": 16,      # Y
+	"holdSig": 20,        # B (the 45 ki signature)
+	"holdSigCharging": 45,   # B in the charging stance (the ultimate)
+	"holdContext": 18,    # A
 }
 
 
@@ -65,9 +73,9 @@ static func params() -> Dictionary:
 
 
 ## A new press at `tick`. Trims the log to `logSize` and returns it. `beat_offset` is NO_BEAT outside an exchange.
-static func push(log: Array, kind: int, mode: int, tick: int, beat_offset: int = NO_BEAT, size: int = -1) -> Array:
+static func push(log: Array, kind: int, mode: int, tick: int, beat_offset: int = NO_BEAT, size: int = -1, stance: int = 0) -> Array:
 	var n: int = size if size > 0 else SimInputData.ti(["read", "logSize"], int(DEFAULTS["logSize"]))
-	log.append({"kind": kind, "mode": mode, "down": tick, "up": -1, "beat": beat_offset, "flash": NO_FLASH})
+	log.append({"kind": kind, "mode": mode, "down": tick, "up": -1, "beat": beat_offset, "flash": NO_FLASH, "stance": stance})
 	while log.size() > n:
 		log.pop_front()
 	return log
@@ -117,6 +125,61 @@ static func release_grade(entry: Dictionary, opts: Dictionary = {}) -> String:
 	if g != "off":
 		return g
 	return "early" if d - int(opts.get("offset", 0)) < 0 else "late"
+
+
+## How long a button of this entry must be down to be a hold: its cell's number (X 8, Y 16, B 20, B in the charging stance 45, A 18).
+## `opts.hold_ticks` overrides it for every cell (a caller with its own rule).
+static func hold_ticks_for(entry: Dictionary, p: Dictionary, opts: Dictionary = {}) -> int:
+	if opts.has("hold_ticks"):
+		return int(opts["hold_ticks"])
+	match int(entry.get("kind", LIGHT)):
+		LIGHT: return int(p["holdLight"])
+		HEAVY: return int(p["holdHeavy"])
+		SIG: return int(p["holdSigCharging"]) if (int(entry.get("stance", 0)) & 4) != 0 else int(p["holdSig"])
+		CONTEXT: return int(p["holdContext"])
+	return int(p["holdTicks"])
+
+
+## The reading of a zip (docs/controls/lunge-control.md B6.4): "plain", "speed", "tech" or "heavy". The starter is the press made at
+## `zip_start` (the press that began the zip); `arrival` is the tick of the zip's first contact (NO_BEAT if not known yet). Precedence
+## is the classifier's: hold, then timed, then mashed.
+##   heavy: the starter button is down for its cell's hold ticks (still down at `now` counts);
+##   tech: the starter is within beatHalf of a blow's contact (its `beat`), or a later press is within beatHalf of `arrival`;
+##   speed: the starter and `zipMashPresses` minus one more presses, each within `zipMashGap` ticks of the one before.
+## `opts` as classify's (touch, assist, offset, p).
+static func zip_read(log: Array, now: int, zip_start: int, arrival: int, opts: Dictionary = {}) -> String:
+	var p: Dictionary = opts.get("p", params())
+	var si: int = -1
+	for k in range(log.size()):
+		if int(log[k]["down"]) == zip_start:
+			si = k
+	if si < 0:
+		return "plain"
+	var st: Dictionary = log[si]
+	var end: int = int(st["up"]) if int(st["up"]) >= 0 else now
+	if end - int(st["down"]) >= hold_ticks_for(st, p, opts):
+		return "heavy"
+	var half: int = _half(p, opts)
+	var shift: int = int(opts.get("offset", 0))
+	var b: int = int(st["beat"])
+	if b != NO_BEAT and absi(b - shift) <= half:
+		return "tech"
+	if arrival != NO_BEAT:
+		for k in range(si + 1, log.size()):
+			if absi(int(log[k]["down"]) - arrival - shift) <= half:
+				return "tech"
+	var chain: int = 1
+	var prev: int = int(st["down"])
+	for k in range(si + 1, log.size()):
+		var d: int = int(log[k]["down"])
+		if d - prev <= int(p["zipMashGap"]):
+			chain += 1
+			prev = d
+		else:
+			break
+	if chain >= int(p["zipMashPresses"]):
+		return "speed"
+	return "plain"
 
 
 static func _half(p: Dictionary, opts: Dictionary) -> int:
@@ -175,7 +238,7 @@ static func classify(log: Array, now: int, opts: Dictionary = {}) -> Dictionary:
 		if int(e["up"]) < 0:
 			var held: int = now - int(e["down"])
 			out["hold_ticks"] = held
-			if held >= int(p["holdTicks"]):
+			if held >= hold_ticks_for(e, p, opts):
 				out["style"] = "hold"
 				out["timing"] = "perfect" if out["release"] == "perfect" else ("good" if out["release"] == "good" else "none")
 				return out
@@ -253,7 +316,7 @@ static func classify(log: Array, now: int, opts: Dictionary = {}) -> Dictionary:
 
 
 static func _mix(log: Array, n: int, lapsed: bool) -> Dictionary:
-	var m: Dictionary = {"light": 0, "heavy": 0, "sig": 0, "energy": 0}
+	var m: Dictionary = {"light": 0, "heavy": 0, "sig": 0, "context": 0, "energy": 0}
 	if lapsed:
 		return m
 	for k in range(maxi(0, log.size() - n), log.size()):
@@ -261,6 +324,7 @@ static func _mix(log: Array, n: int, lapsed: bool) -> Dictionary:
 			LIGHT: m["light"] += 1
 			HEAVY: m["heavy"] += 1
 			SIG: m["sig"] += 1
+			CONTEXT: m["context"] += 1
 		if int(log[k]["mode"]) == 1:
 			m["energy"] += 1
 	return m

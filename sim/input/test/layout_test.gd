@@ -165,12 +165,13 @@ func _keyboard() -> void:
 	l.consumed()
 	l.release("kb:Space")
 	_run(l, 2)
-	# Two triggers more than 6 ticks apart are two actions: a sprint and a channel, no transform.
+	# Two triggers more than 6 ticks apart are two actions, no transform; a stance is exclusive, so RT (the newer, and the one that
+	# dominates) is the stance and the sprint goes neutral: no sprint with a channel any more.
 	l.press("kb:Space")
 	_run(l, 8)
 	l.press("kb:KeyE")
 	i = _run(l, 40)
-	ok(i.sprint and i.charge and not i.transform, "chord: 8 ticks apart is no chord: sprint and channel")
+	ok(i.charge and i.power and not i.sprint and not i.transform and i.stanceMask == 4, "chord: 8 ticks apart is no chord: RT dominates, the sprint goes neutral, the channel runs")
 	l.release("kb:Space")
 	l.release("kb:KeyE")
 	_run(l, 2)

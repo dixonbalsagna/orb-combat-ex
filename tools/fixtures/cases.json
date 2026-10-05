@@ -4481,13 +4481,13 @@
         {
           "file": "data/input/layouts.json",
           "set": {
-            "/presets/2/bindings/2/gesture": "wiggle"
+            "/presets/1/bindings/2/gesture": "wiggle"
           }
         }
       ],
       "expect": {
         "rule": "enum",
-        "pointer": "/presets/2/bindings/2/gesture"
+        "pointer": "/presets/1/bindings/2/gesture"
       }
     },
     {
@@ -4497,7 +4497,7 @@
         {
           "file": "data/input/layouts.json",
           "set": {
-            "/presets/2/slot/_note": "a comment"
+            "/presets/1/slot/_note": "a comment"
           }
         }
       ],
@@ -4526,13 +4526,13 @@
         {
           "file": "data/input/layouts.json",
           "set": {
-            "/presets/3/bindings/1/controls/0": "pad:south"
+            "/presets/2/bindings/1/controls/0": "pad:south"
           }
         }
       ],
       "expect": {
         "rule": "xref:layout-device",
-        "pointer": "/presets/3/bindings/1/controls/0"
+        "pointer": "/presets/2/bindings/1/controls/0"
       }
     },
     {
@@ -4558,13 +4558,13 @@
         {
           "file": "data/input/layouts.json",
           "set": {
-            "/presets/2/bindings/2/action": "upgrade_sig"
+            "/presets/1/bindings/2/action": "upgrade_sig"
           }
         }
       ],
       "expect": {
         "rule": "xref:layout-required",
-        "pointer": "/presets/2"
+        "pointer": "/presets/1"
       }
     },
     {
@@ -4622,23 +4622,7 @@
         {
           "file": "data/input/layouts.json",
           "set": {
-            "/presets/5/pair": "kb-solo"
-          }
-        }
-      ],
-      "expect": {
-        "rule": "xref:layout-pair",
-        "pointer": "/presets/5/pair"
-      }
-    },
-    {
-      "id": "input-layouts-pair-shares-key",
-      "schema": "input-layouts.schema.json",
-      "mutate": [
-        {
-          "file": "data/input/layouts.json",
-          "set": {
-            "/presets/5/bindings/1/controls/0": "kb:KeyF"
+            "/presets/4/pair": "kb-solo"
           }
         }
       ],
@@ -4648,19 +4632,35 @@
       }
     },
     {
+      "id": "input-layouts-pair-shares-key",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/4/bindings/1/controls/0": "kb:KeyF"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:layout-pair",
+        "pointer": "/presets/3/pair"
+      }
+    },
+    {
       "id": "input-layouts-reserved-key",
       "schema": "input-layouts.schema.json",
       "mutate": [
         {
           "file": "data/input/layouts.json",
           "set": {
-            "/presets/3/bindings/1/controls/0": "kb:KeyP"
+            "/presets/2/bindings/1/controls/0": "kb:KeyP"
           }
         }
       ],
       "expect": {
         "rule": "xref:layout-reserved",
-        "pointer": "/presets/3/bindings/1/controls/0"
+        "pointer": "/presets/2/bindings/1/controls/0"
       }
     },
     {
@@ -4670,13 +4670,13 @@
         {
           "file": "data/input/layouts.json",
           "del": [
-            "/presets/3/bindings/0/axis"
+            "/presets/2/bindings/0/axis"
           ]
         }
       ],
       "expect": {
         "rule": "xref:layout-axis",
-        "pointer": "/presets/3/bindings/0"
+        "pointer": "/presets/2/bindings/0"
       }
     },
     {
@@ -54034,6 +54034,663 @@
       "expect": {
         "rule": "type",
         "pointer": "/stance/evadeBackoff"
+      }
+    },
+    {
+      "id": "input-stances-live-valid",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/schema": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-stances-key-required",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "del": [
+            "/hybrids"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "input-stances-schema-required",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "input-stances-schema-version",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "input-stances-unknown-key",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "input-stances-note-ok",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-stances-hybrids-type",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/hybrids": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/hybrids"
+      }
+    },
+    {
+      "id": "input-stances-hybrids-empty-ok",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/hybrids": []
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-stances-hybrids-all-ok",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/hybrids": [
+              3,
+              9,
+              10
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-stances-hybrids-not-a-hybrid",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/hybrids": [
+              3,
+              5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/hybrids/1"
+      }
+    },
+    {
+      "id": "input-stances-hybrids-single-button",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/hybrids": [
+              4
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/hybrids/0"
+      }
+    },
+    {
+      "id": "input-stances-hybrids-duplicate",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/hybrids": [
+              3,
+              3
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/hybrids/1"
+      }
+    },
+    {
+      "id": "input-stances-hybrids-string",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/hybrids": [
+              "3"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/hybrids/0"
+      }
+    },
+    {
+      "id": "input-timing-stance-release-grace-negative",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/stance/releaseGrace": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/stance/releaseGrace"
+      }
+    },
+    {
+      "id": "input-timing-stance-release-grace-range",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/stance/releaseGrace": 7
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/stance/releaseGrace"
+      }
+    },
+    {
+      "id": "input-timing-stance-release-grace-integer",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/stance/releaseGrace": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stance/releaseGrace"
+      }
+    },
+    {
+      "id": "input-timing-stance-release-grace-zero-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/stance/releaseGrace": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-stance-oneshot-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/stance/oneshotTicks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/stance/oneshotTicks"
+      }
+    },
+    {
+      "id": "input-timing-stance-oneshot-type",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/stance/oneshotTicks": "long"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stance/oneshotTicks"
+      }
+    },
+    {
+      "id": "input-timing-stance-unknown-key",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/stance/mask": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stance/mask"
+      }
+    },
+    {
+      "id": "input-timing-stance-note-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/stance/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-dwell-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/dwellTicks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/aim/dwellTicks"
+      }
+    },
+    {
+      "id": "input-timing-aim-dwell-range",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/dwellTicks": 13
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/aim/dwellTicks"
+      }
+    },
+    {
+      "id": "input-timing-aim-dwell-integer",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/dwellTicks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/aim/dwellTicks"
+      }
+    },
+    {
+      "id": "input-timing-aim-exit-window-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/exitWindow": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/aim/exitWindow"
+      }
+    },
+    {
+      "id": "input-timing-aim-exit-window-range",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/exitWindow": 13
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/aim/exitWindow"
+      }
+    },
+    {
+      "id": "input-timing-aim-dwell-above-window",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/dwellTicks": 8,
+            "/aim/exitWindow": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:timing-aim",
+        "pointer": "/aim/dwellTicks"
+      }
+    },
+    {
+      "id": "input-timing-aim-dwell-equals-window-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/dwellTicks": 6,
+            "/aim/exitWindow": 6
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-read-zip-mash-presses-low",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/zipMashPresses": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/read/zipMashPresses"
+      }
+    },
+    {
+      "id": "input-timing-read-zip-mash-presses-integer",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/zipMashPresses": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/read/zipMashPresses"
+      }
+    },
+    {
+      "id": "input-timing-read-zip-mash-gap-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/zipMashGap": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/read/zipMashGap"
+      }
+    },
+    {
+      "id": "input-timing-read-hold-light-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/holdLight": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/read/holdLight"
+      }
+    },
+    {
+      "id": "input-timing-read-hold-heavy-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/holdHeavy": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/read/holdHeavy"
+      }
+    },
+    {
+      "id": "input-timing-read-hold-sig-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/holdSig": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/read/holdSig"
+      }
+    },
+    {
+      "id": "input-timing-read-hold-sig-charging-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/holdSigCharging": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/read/holdSigCharging"
+      }
+    },
+    {
+      "id": "input-timing-read-hold-context-type",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/holdContext": "long"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/read/holdContext"
+      }
+    },
+    {
+      "id": "input-timing-read-hold-sig-above-charging",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/holdSig": 60,
+            "/read/holdSigCharging": 45
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:timing-read",
+        "pointer": "/read/holdSig"
+      }
+    },
+    {
+      "id": "input-timing-read-hold-sig-equals-charging-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/read/holdSig": 45,
+            "/read/holdSigCharging": 45
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-actions-field-stance-mask-ok",
+      "schema": "input-actions.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/actions.json",
+          "set": {
+            "/actions/4/fields/1": "stanceMask"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-actions-field-context-held-ok",
+      "schema": "input-actions.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/actions.json",
+          "set": {
+            "/actions/4/fields/1": "contextHeld"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-actions-field-sig-held-ok",
+      "schema": "input-actions.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/actions.json",
+          "set": {
+            "/actions/4/fields/1": "sigHeld"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-actions-field-unknown-name",
+      "schema": "input-actions.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/actions.json",
+          "set": {
+            "/actions/4/fields/1": "stanceMasks"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/actions/4/fields/1"
       }
     }
   ],

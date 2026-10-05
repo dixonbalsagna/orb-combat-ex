@@ -364,6 +364,10 @@
       "schema": "input-layouts.schema.json"
     },
     {
+      "match": "data/input/stances.json",
+      "schema": "input-stances.schema.json"
+    },
+    {
       "match": "data/input/timing.json",
       "schema": "input-timing.schema.json"
     },

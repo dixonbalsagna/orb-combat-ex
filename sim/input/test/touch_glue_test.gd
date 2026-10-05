@@ -105,7 +105,7 @@ func _run() -> void:
 	f.ki = 100.0
 	_touch(4, _at("attack"), true)
 	got = ""
-	for i in range(30):
+	for i in range(90):
 		_frames(1)
 		var ex2 = host.S.dirS.ex
 		if ex2 != null and ex2.A == f:

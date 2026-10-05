@@ -1,7 +1,7 @@
 extends SceneTree
 ## Headless checks for the aim helper (sim/input/aim.gd, docs/controls/agency-input.md 1b): the 8-sector snap, the dead zone,
 ## the keyboard's eight directions and a stick's every sector, the 12-tick latch, the director's snap, the toward, level and
-## away pool, and determinism. Pure functions. From the repo root:
+## away pool, the sixteen sectors, the angle and bearing to a degree, the exit read from the sample ring, and determinism. Pure functions. From the repo root:
 ##   godot --headless --path . --script res://sim/input/test/aim_test.gd
 ## Exit 0 if every check passes.
 
@@ -25,6 +25,9 @@ func _init() -> void:
 	_latch()
 	_snap()
 	_pool()
+	_sector16()
+	_angles()
+	_ring()
 	_determinism()
 	print("aim_test: %d checks, %d failed" % [checks, fails])
 	quit(1 if fails > 0 else 0)
@@ -171,3 +174,133 @@ func _determinism() -> void:
 		SimAim.update(l1, x, 1.0 - float(t % 5) * 0.5, t)
 		SimAim.update(l2, x, 1.0 - float(t % 5) * 0.5, t)
 	ok(str(l1) == str(l2) and SimAim.read(l1, 41) == SimAim.read(l2, 41), "determinism: the same feed, the same latch")
+
+
+func _unit(deg: float) -> Array:
+	var r: float = deg * PI / 180.0
+	return [cos(r), sin(r)]
+
+
+func _sector16() -> void:
+	# The centre of each of the sixteen sectors, and the same stick pushed 5 degrees either side stays in it.
+	for k in range(16):
+		var c: float = float(k) * 22.5
+		for off in [-5.0, 0.0, 5.0]:
+			var v: Array = _unit(c + off)
+			ok(SimAim.sector16(v[0], v[1]) == k, "sector16: %.1f degrees is sector %d" % [c + off, k])
+	# The edge: 11 degrees is still right, 12 degrees is the next one up.
+	var e1: Array = _unit(11.0)
+	var e2: Array = _unit(12.0)
+	ok(SimAim.sector16(e1[0], e1[1]) == 0 and SimAim.sector16(e2[0], e2[1]) == 1, "sector16: the edge falls at 11.25 degrees")
+	ok(SimAim.sector16(0.0, 0.0) == SimAim.NONE and SimAim.sector16(0.34, 0.0) == SimAim.NONE and SimAim.sector16(0.36, 0.0) == 0, "sector16: the same dead zone as the 8-sector")
+	var agree: bool = true
+	for k in range(8):
+		var v: Array = _unit(float(k) * 45.0)
+		agree = agree and SimAim.sector16(v[0], v[1]) == 2 * SimAim.sector(v[0], v[1])
+	ok(agree, "sector16: an axis or a diagonal is twice the 8-sector number")
+	ok(SimAim.sector16(1.0, 1.0) == 2 and SimAim.sector16(-1.0, 1.0) == 6 and SimAim.sector16(-1.0, -1.0) == 10 and SimAim.sector16(1.0, -1.0) == 14, "sector16: a keyboard diagonal is a diagonal sector")
+
+
+func _angles() -> void:
+	# The bearing, to a degree, over the whole circle (checked against the real trig, within one degree).
+	var worst: int = 0
+	for d in range(0, 360, 7):
+		var v: Array = _unit(float(d))
+		var b: int = SimAim.bearing_deg(v[0] * 0.9, v[1] * 0.9)
+		var diff: int = absi(b - d)
+		diff = mini(diff, 360 - diff)
+		worst = maxi(worst, diff)
+	ok(worst <= 1, "bearing: within one degree of the true angle all the way round (worst %d)" % worst)
+	ok(SimAim.bearing_deg(1.0, 0.0) == 0 and SimAim.bearing_deg(0.0, 1.0) == 90 and SimAim.bearing_deg(-1.0, 0.0) == 180 and SimAim.bearing_deg(0.0, -1.0) == 270, "bearing: right 0, up 90, left 180, down 270")
+	ok(SimAim.bearing_deg(0.0, 0.0) == 0, "bearing: no stick is 0")
+	ok(SimAim.angle_off_away_deg(1.0, 0.0, 1) == 0 and SimAim.angle_off_away_deg(-1.0, 0.0, 1) == 180 and SimAim.angle_off_away_deg(0.0, 1.0, 1) == 90, "off away: straight away 0, back at him 180, square 90")
+	ok(SimAim.angle_off_away_deg(-1.0, 0.0, -1) == 0 and SimAim.angle_off_away_deg(1.0, 0.0, -1) == 180, "off away: the sign flips which way is away")
+	var w2: int = 0
+	for d in range(0, 181, 5):
+		var v: Array = _unit(float(d))
+		w2 = maxi(w2, absi(SimAim.angle_off_away_deg(v[0], v[1], 1) - d))
+		w2 = maxi(w2, absi(SimAim.angle_off_away_deg(-v[0], v[1], -1) - d))
+	ok(w2 <= 1, "off away: within one degree every 5 degrees (worst %d)" % w2)
+	var inside: Array = _unit(44.0)
+	var outside: Array = _unit(47.0)
+	ok(SimAim.within_away_cone(inside[0], inside[1], 1), "cone: 44 degrees off away is inside")
+	ok(SimAim.within_away_cone(1.0, 1.0, 1), "cone: a keyboard diagonal (exactly 45) is inside, inclusive")
+	ok(not SimAim.within_away_cone(outside[0], outside[1], 1), "cone: 47 degrees is outside")
+	ok(not SimAim.within_away_cone(0.0, 0.0, 1) and not SimAim.within_away_cone(0.2, 0.0, 1), "cone: no stick (dead zone) is not away")
+	ok(SimAim.within_away_cone(-1.0, 1.0, -1) and not SimAim.within_away_cone(-1.0, 0.0, 1), "cone: the sign flips the side")
+	ok(absf(SimAim.exit_distance(4.0, 0) - 10.0) < 1e-9, "exit: straight away from 4 bh goes 6 bh further, 10")
+	ok(absf(SimAim.exit_distance(4.0, 45) - 7.0) < 1e-9, "exit: 45 degrees off adds half, 7")
+	ok(absf(SimAim.exit_distance(4.0, 90) - 4.0) < 1e-9 and absf(SimAim.exit_distance(4.0, 150) - 4.0) < 1e-9, "exit: square to his line or back toward him adds nothing")
+	ok(absf(SimAim.exit_distance(9.0, 0) - 12.5) < 1e-9, "exit: capped at 12.5 bh")
+	ok(absf(SimAim.exit_distance(14.0, 90) - 14.0) < 1e-9, "exit: never less than the start (a start past the cap keeps its own)")
+	ok(absf(SimAim.exit_distance(2.0, 30) - (2.0 + 6.0 * (1.0 - 30.0 / 90.0))) < 1e-9, "exit: a one-degree grid, 30 degrees off from 2 bh")
+
+
+func _feed(ring: Array, samples: Array) -> void:
+	for s in samples:
+		SimAim.push_sample(ring, s[0], s[1])
+
+
+func _rep(v: Array, n: int) -> Array:
+	var out: Array = []
+	for k in range(n):
+		out.append(v)
+	return out
+
+
+func _ring() -> void:
+	var r: Array = SimAim.new_ring()
+	ok(r.size() == 37 and SimAim.read_exit(r)["sector"] == SimAim.NONE, "ring: flat 37 integers and an empty one reads as none")
+	# Held right for 5 of 12 ticks, rest at neutral: the exit is right, with the vector on the 1/127 grid.
+	r = SimAim.new_ring()
+	_feed(r, _rep([0.0, 0.0], 7) + _rep([0.8, 0.0], 5))
+	var e: Dictionary = SimAim.read_exit(r)
+	ok(e["sector"] == 0 and e["count"] == 5 and e["x"] == roundi(0.8 * 127.0) and e["y"] == 0, "ring: five ticks of right reads as right on the grid")
+	# Under the dwell (3) it is not held.
+	r = SimAim.new_ring()
+	_feed(r, _rep([0.0, 0.0], 10) + _rep([0.0, 1.0], 2))
+	ok(SimAim.read_exit(r)["sector"] == SimAim.NONE, "ring: two ticks is below the dwell: the zip goes back")
+	# A spring-back: held up for 8 ticks, then the stick returns through the dead zone.
+	r = SimAim.new_ring()
+	_feed(r, _rep([0.0, 0.0], 2) + _rep([0.0, 0.9], 8) + [[0.0, 0.1], [0.0, 0.0]])
+	var up: Dictionary = SimAim.read_exit(r)
+	ok(up["sector"] == 4 and up["count"] == 8, "ring: a spring-back to neutral does not lose the held direction")
+	# Most ticks wins: 6 left, 4 up.
+	r = SimAim.new_ring()
+	_feed(r, _rep([0.0, 1.0], 4) + _rep([-1.0, 0.0], 6) + _rep([0.0, 0.0], 2))
+	ok(SimAim.read_exit(r)["sector"] == 8, "ring: the direction held longest wins")
+	# A tie goes to the newer: 4 down then 4 right.
+	r = SimAim.new_ring()
+	_feed(r, _rep([0.0, -1.0], 4) + _rep([1.0, 0.0], 4) + _rep([0.0, 0.0], 4))
+	ok(SimAim.read_exit(r)["sector"] == 0, "ring: a tie goes to the newer direction")
+	# A keyboard diagonal is a held sector with a full vector.
+	r = SimAim.new_ring()
+	_feed(r, _rep([1.0, 1.0], 12))
+	var dg: Dictionary = SimAim.read_exit(r)
+	ok(dg["sector"] == 2 and dg["count"] == 12 and dg["x"] == 127 and dg["y"] == 127 and SimAim.bearing_deg(float(dg["x"]), float(dg["y"])) == 45, "ring: a keyboard diagonal reads as 45 degrees")
+	# The vector is the mean of the sector's samples.
+	r = SimAim.new_ring()
+	_feed(r, [[0.9, 0.05], [0.9, 0.15], [0.9, 0.05], [0.9, 0.15]])
+	var wb: Dictionary = SimAim.read_exit(r)
+	ok(wb["sector"] == 0 and wb["count"] == 4 and absi(int(wb["y"]) - roundi(0.10 * 127.0)) <= 1 and wb["x"] == roundi(0.9 * 127.0), "ring: the vector is the mean of the held samples")
+	# The ring forgets: samples older than the 12-tick window are gone.
+	r = SimAim.new_ring()
+	_feed(r, _rep([0.0, 1.0], 12) + _rep([0.0, 0.0], 12))
+	ok(SimAim.read_exit(r)["sector"] == SimAim.NONE, "ring: after 12 ticks of nothing the old direction is gone")
+	# The window and the dwell are data.
+	r = SimAim.new_ring()
+	_feed(r, _rep([0.0, 1.0], 8) + _rep([0.0, 0.0], 4))
+	ok(SimAim.read_exit(r)["sector"] == 4 and SimAim.read_exit(r, {"exitWindow": 4})["sector"] == SimAim.NONE and SimAim.read_exit(r, {"dwellTicks": 9})["sector"] == SimAim.NONE, "ring: the window and the dwell are data")
+	# Deterministic and integer.
+	var r1: Array = SimAim.new_ring()
+	var r2: Array = SimAim.new_ring()
+	for t in range(30):
+		var x: float = sin(float(t) * 0.7)
+		var y: float = cos(float(t) * 0.4)
+		SimAim.push_sample(r1, x, y)
+		SimAim.push_sample(r2, x, y)
+	ok(r1 == r2 and SimAim.read_exit(r1) == SimAim.read_exit(r2), "ring: the same feed, the same ring and the same read")
+	var ints: bool = true
+	for v in r1:
+		ints = ints and typeof(v) == TYPE_INT
+	ok(ints, "ring: every slot is an integer (a director can keep and hash it)")

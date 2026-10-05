@@ -21,6 +21,14 @@ extends RefCounted
 ##    transform is sent once they have been held transformConfirm ticks. A single transform control does the same alone;
 ##  - mode is momentary by default (docs/controls/agency-input.md): held, the attacks are the energy ones; the mode style
 ##    "toggle" keeps the old latch (an accessibility setting) and "hybrid" (touch) latches on a tap and is momentary on a hold;
+##  - the stances (docs/controls/lunge-control.md A2): the four shoulder controls (guard LB 1, mode RB 2, power RT 4, dodge LT 8) are
+##    the stance buttons, and the layout reports ONE number, `stanceMask`, resolved by SimStance: RT dominates, a pending
+##    transform chord changes no stance, and until hybrids are enabled a held pair reports only its newest bit. **A stance is
+##    exclusive**: while a newer stance button is the reported one, the older button's own fields go neutral (guard false, mode 0,
+##    sprint false); RT's edges (powerPress, powerTap, the burst from a guard) and the dodge edge always report; letting go of the
+##    newer button hands the stance back with no new edge. A stance button released keeps the mask for releaseGrace ticks (a
+##    flutter does not flicker the stance); an optional one-shot arms a stance for the next blow;
+##  - sigHeld and contextHeld are levels like lightHeld and heavyHeld (B and A held, on any layer for the signature);
 ##  - lightHeld and heavyHeld are levels: true while a light or a heavy button is down (a Simple attack control with a hold
 ##    gesture reads as light until holdStart, then as heavy), so the sim can tell a tap from a hold and see its release;
 ##  - escape is an edge from its own control (provisional: R3, a key, a swipe up on Guard on touch);
@@ -68,6 +76,15 @@ var _auto_mode: bool = false
 var _mode_t0: int = 0
 var _mode_latch: int = 0            # the latched mode of the toggle and hybrid styles
 var _edge_t0: int = -1              # the layout tick the oldest unconsumed edge was pressed at, -1 for none (the `waited` field)
+var _stance_since: Dictionary = {}  # stance bit -> tick it went on (the newest wins)
+var _stance_off_t: Dictionary = {}  # stance bit -> tick it went off (the release grace)
+var _stance_on: int = 0             # the stance bits that were on at the last build
+var _stance_press_t: Dictionary = {}   # stance bit -> tick of its press (a tap arms a one-shot)
+var _armed: Dictionary = {}         # stance bit -> tick it was armed (the one-shot)
+var _last_mask: int = 0
+## One-shot (accessibility, and touch Full by default): a TAP on a stance button arms that stance for the next blow, which clears it
+## (or oneshot_ticks without one); a hold is momentary as usual; a tap on an armed button cancels it.
+var stance_oneshot: bool = false
 var _up_tick: Dictionary = {}       # control -> tick of its last release (the debounce)
 var _last_as: Dictionary = {}       # control -> "base" or "layer": how its last press was taken
 ## "hold" (momentary, the default), "toggle" (the old latch) or "hybrid" (a tap latches, a hold is momentary: touch).
@@ -80,6 +97,8 @@ var chord_window: int
 var lunge_ticks: int
 var mode_cooldown: int
 var debounce_ticks: int
+var release_grace: int
+var oneshot_ticks: int
 var deadzone: float
 var full_at: float
 var quant: float
@@ -94,6 +113,8 @@ func _init(p_preset: Dictionary = {}) -> void:
 	lunge_ticks = SimInputData.ti(["dodge", "lungeTicks"], 12)
 	mode_cooldown = SimInputData.ti(["mode", "toggleCooldown"], 12)
 	debounce_ticks = SimInputData.ti(["read", "debounce"], 2)
+	release_grace = SimInputData.ti(["stance", "releaseGrace"], 2)
+	oneshot_ticks = SimInputData.ti(["stance", "oneshotTicks"], 90)
 	mode_style = str(SimInputData.t(["mode", "style"], "hold"))
 	deadzone = SimInputData.tf(["stick", "deadzone"], 0.2)
 	full_at = SimInputData.tf(["stick", "fullAt"], 0.9)
@@ -174,12 +195,32 @@ func release_all() -> void:
 	_edge_t0 = -1
 	_up_tick.clear()
 	_last_as.clear()
+	_stance_since.clear()
+	_stance_off_t.clear()
+	_stance_on = 0
+	_stance_press_t.clear()
+	_armed.clear()
+	_last_mask = 0
 	_mode_latch = 0
 	if not _auto_mode:
 		_mode = 0
 	for ch in _chords:
 		ch["active"] = false
 		ch["sent"] = false
+
+
+## The sensitivity of the triggers (the accessibility setting): they are down at `on` and up 0.1 below it.
+func set_trigger_threshold(on: float) -> void:
+	trig_on = clampf(on, 0.2, 0.6)
+	trig_off = maxf(0.05, trig_on - 0.1)
+
+
+## Switch the one-shot stance arming on or off. Switching it off disarms.
+func set_stance_oneshot(on: bool) -> void:
+	if on == stance_oneshot:
+		return
+	stance_oneshot = on
+	_armed.clear()
 
 
 ## Change how the mode control works ("hold", "toggle" or "hybrid"). The same style again changes nothing.
@@ -240,7 +281,7 @@ func press(c: String) -> bool:
 			for b in _single[c]:
 				if b["layer"] == "power":
 					took_layer = true
-					_layer_press(str(b["action"]))
+					_layer_press(str(b["action"]), c)
 		if took_layer:
 			_as[c] = "layer"
 		else:
@@ -272,6 +313,10 @@ func release(c: String) -> void:
 			if not _atk[c]["fired"]:
 				_aedge["light"] = true   # a tap on a hold-attack control, taken on release (the bridge)
 			_atk.erase(c)
+	elif _as.get(c, "") == "layer" and _single.has(c):
+		for b in _single[c]:
+			if b["layer"] == "power" and str(b["action"]) == "signature":
+				_hold_del("signature", c)   # the ultimate's hold ends with the button
 	_as.erase(c)
 	_tf_t0.erase(c)
 	_tf_sent.erase(c)
@@ -299,14 +344,16 @@ func axis(c: String, x: float, y: float) -> void:
 		_stick = Vector2(x, y)
 
 
-func _layer_press(action: String) -> void:
+func _layer_press(action: String, c: String) -> void:
 	_power_voided = true
 	match action:
 		"special1": _special_edge = 1
 		"special2": _special_edge = 2
 		"special3": _special_edge = 3
 		"special_auto": _special_edge = 7
-		"signature": _aedge["signature"] = true
+		"signature":
+			_aedge["signature"] = true
+			_hold_add("signature", c)   # B held in the charging stance (the ultimate's hold): sigHeld
 
 
 func _base_press(action: String, c: String) -> void:
@@ -314,42 +361,68 @@ func _base_press(action: String, c: String) -> void:
 		"guard":
 			_hold_add("guard", c)
 			_aedge["guardPress"] = true
+			_stance_press_t[SimStance.DEFENSIVE] = tick
 		"dodge":
 			_hold_add("dodge", c)
 			_aedge["dodge"] = true
 			_dodge_t0 = tick
+			_stance_press_t[SimStance.MANOEUVRE] = tick
 		"power":
 			_hold_add("power", c)
 			_aedge["powerPress"] = true
 			_power_t0 = tick
 			_power_voided = false
+			_stance_press_t[SimStance.CHARGING] = tick
 		"transform":
 			_tf_t0[c] = tick
 		"mode":
 			_hold_add("mode", c)
 			_aedge["mode"] = true
 			_mode_t0 = tick
+			_stance_press_t[SimStance.ENERGY] = tick
 		"light", "heavy":
 			_hold_add(action, c)
 			_aedge[action] = true
-		"signature", "context", "escape":
+		"signature", "context":
+			_hold_add(action, c)   # sigHeld and contextHeld
+			_aedge[action] = true
+		"escape":
 			_aedge[action] = true
 
 
 func _base_release(action: String, c: String) -> void:
 	match action:
-		"guard", "dodge":
+		"guard":
 			_hold_del(action, c)
-		"light", "heavy":
+			_oneshot_tap(SimStance.DEFENSIVE, c)
+		"dodge":
+			_hold_del(action, c)
+			_oneshot_tap(SimStance.MANOEUVRE, c)
+		"light", "heavy", "signature", "context":
 			_hold_del(action, c)
 		"mode":
 			_hold_del("mode", c)
 			if mode_style == "hybrid" and tick - _mode_t0 < hold_start:
 				_mode_latch = 1 - _mode_latch   # a tap latches; a hold gave the mode back on release
+			_oneshot_tap(SimStance.ENERGY, c)
 		"power":
 			_hold_del("power", c)
 			if not _is_down("power") and not _power_voided and not _chorded.get(c, false) and tick - _power_t0 < hold_start:
 				_aedge["powerTap"] = true
+			_oneshot_tap(SimStance.CHARGING, c)
+
+
+## A stance button was let go: if one-shot is on and it was a tap (not part of the transform chord), it arms the stance for the next
+## blow, or cancels it if it was already armed.
+func _oneshot_tap(bit: int, c: String) -> void:
+	if not stance_oneshot or _chorded.get(c, false):
+		return
+	if tick - int(_stance_press_t.get(bit, -1000)) >= hold_start:
+		return
+	if _armed.has(bit):
+		_armed.erase(bit)
+	else:
+		_armed[bit] = tick
 
 
 func _check_chords(c: String) -> void:
@@ -372,6 +445,18 @@ func _check_chords(c: String) -> void:
 			ch["sent"] = false
 			for k in ch["controls"]:
 				_chorded[k] = true
+
+
+## The stance bits of a pending or held transform chord: its two controls are left out of the stance, whatever they are bound to.
+func _chord_stance_bits() -> int:
+	var m: int = 0
+	for ch in _chords:
+		if ch["action"] == "transform" and ch["active"]:
+			for k in ch["controls"]:
+				for pair in [["guard", 1], ["mode", 2], ["power", 4], ["dodge", 8]]:
+					if _held.get(pair[0], []).has(k):
+						m |= int(pair[1])
+	return m
 
 
 func _chord_active_on(action: String) -> bool:
@@ -444,6 +529,8 @@ func build() -> SimIntent:
 	i.heavy = _aedge.has("heavy")
 	i.sig = _aedge.has("signature")
 	i.context = _aedge.has("context")
+	i.sigHeld = _is_down("signature") or _aedge.has("signature")        # B held (the signature's held reading), on any layer
+	i.contextHeld = _is_down("context") or _aedge.has("context")        # A held (the channel, the zip tackle)
 	i.escape = _aedge.has("escape")
 	i.special = _special_edge
 	# The attack levels: a press shorter than a tick still counts for its tick; a hold-gesture control reads as light until
@@ -469,6 +556,42 @@ func build() -> SimIntent:
 		i.mode = _mode
 	else:
 		i.mode = 1 if (_is_down("mode") or _aedge.has("mode")) else _mode_latch
+	# The stances (SimStance): which stance buttons are on, which went on last, and the one number the layout reports.
+	var mode_on: bool = (i.mode == 1)
+	var on_now: int = (1 if (_is_down("guard") or _aedge.has("guardPress")) else 0) | (2 if mode_on else 0) | (4 if (_is_down("power") or _aedge.has("powerPress")) else 0) | (8 if (_is_down("dodge") or _aedge.has("dodge") or sprint_override) else 0)
+	for b in SimStance.BITS:
+		if on_now & b != 0:
+			if _stance_on & b == 0:
+				_stance_since[b] = tick
+		elif _stance_on & b != 0:
+			_stance_off_t[b] = tick
+	_stance_on = on_now
+	var for_mask: int = on_now
+	var since: Dictionary = _stance_since.duplicate()
+	if release_grace > 0:
+		for b in SimStance.BITS:   # a button let go a moment ago still holds the mask, so a flutter does not flicker the stance
+			if on_now & b == 0 and _last_mask & b != 0 and tick - int(_stance_off_t.get(b, -1000)) < release_grace:
+				for_mask |= b
+	for b in _armed.keys():   # a one-shot: armed by a tap, cleared by the next blow or by oneshot_ticks
+		if tick - int(_armed[b]) > oneshot_ticks:
+			_armed.erase(b)
+		else:
+			for_mask |= int(b)
+			since[b] = maxi(int(since.get(b, -1000000)), int(_armed[b]))
+	for_mask &= ~_chord_stance_bits()   # a pending transform chord changes no stance
+	var mask: int = SimStance.resolve(for_mask, SimStance.newest_of(for_mask, since), SimStance.hybrids())
+	i.stanceMask = mask
+	# Exclusive: a stance button that is not the reported stance reports nothing of its own (its edges to RT's burst, and the dodge
+	# edge, always report).
+	i.guard = i.guard and (mask & SimStance.DEFENSIVE) != 0
+	i.guardPress = i.guardPress and (mask & SimStance.DEFENSIVE) != 0
+	sprinting = sprinting and (mask & SimStance.MANOEUVRE) != 0
+	i.sprint = sprinting
+	if not _auto_mode:
+		i.mode = 1 if ((mode_on or _armed.has(SimStance.ENERGY)) and (mask & SimStance.ENERGY) != 0) else 0   # an armed one-shot energy stance makes the next blow energy
+	if not _armed.is_empty() and (i.light or i.heavy or i.sig or i.context or i.special != 0):
+		_armed.clear()
+	_last_mask = mask
 	# How long the oldest edge waited: 0 on a live tick (pressed since the last build, taken by this one); one more for each build a
 	# freeze held it. An edge this build made itself (a hold reaching holdStart) waits 0.
 	if _edge_t0 < 0 and (not _aedge.is_empty() or _special_edge != 0):

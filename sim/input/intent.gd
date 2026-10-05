@@ -9,11 +9,12 @@ extends RefCounted
 ## Held fields are true on every tick the action is held; edge fields on one tick.
 ## stance is a float like every JS number: -1, or a pressed stance 0 to 3.
 
-## The intent schema version (the replay header's `intent`). 3 since `waited` (a press is graded at its own tick, so replays
-## recorded before it are refused rather than played back differently); 4 when stance, dash and charge leave (I3).
-const VERSION: int = 3
+## The intent schema version (the replay header's `intent`). 3 since `waited` (a press is graded at its own tick); 4 since the
+## stance mask, `contextHeld` and `sigHeld` (the stances, docs/controls/lunge-control.md): replays recorded before it are refused
+## rather than played back differently. 5 when stance, dash and charge leave (I3, its own later slice).
+const VERSION: int = 4
 ## pack(): bit widths, least significant first.
-const BITS: int = 47
+const BITS: int = 53
 
 var mx: float = 0.0          # the stick, -1 to 1; canonical values are k / 127 (canon())
 var my: float = 0.0
@@ -40,6 +41,12 @@ var escape: bool = false     # edge: the Escape control (provisional: R3, a key,
 ## pressed: the layout counts its own ticks. A press is graded at S.tick - waited, its own tick, so only the first ticks of a
 ## freeze count as on the beat. 0 on every ordinary tick. Bits 43 to 46.
 var waited: int = 0
+## The stances (version 4): one bit per shoulder button, resolved by the layout (SimStance): LB 1 defensive, RB 2 energy, RT 4
+## charging, LT 8 manoeuvre, 0 martial. Bits 47 to 50. A stance is exclusive until hybrids exist (LT+RB 10, LB+RB 3, LT+LB 9 are the
+## reserved ones), RT dominates, and a pending transform chord changes no stance. Distinct from the legacy `stance` float below.
+var stanceMask: int = 0
+var contextHeld: bool = false   # held: a Context button is down (A's hold: the martial channel, the zip tackle). Bit 51
+var sigHeld: bool = false       # held: a Signature button is down, on any layer (B's held reading). Bit 52
 # Today's fields, until I3:
 var dash: bool = false
 var charge: bool = false
@@ -69,6 +76,9 @@ static func clearIntent(i: SimIntent) -> void:
 	i.heavyHeld = false
 	i.escape = false
 	i.waited = 0
+	i.stanceMask = 0
+	i.contextHeld = false
+	i.sigHeld = false
 	i.dash = false
 	i.charge = false
 	i.stance = -1.0
@@ -97,14 +107,18 @@ static func applyIntent(dst: SimIntent, src: SimIntent) -> void:
 	dst.heavyHeld = src.heavyHeld
 	dst.escape = src.escape
 	dst.waited = src.waited
+	dst.stanceMask = src.stanceMask
+	dst.contextHeld = src.contextHeld
+	dst.sigHeld = src.sigHeld
 	dst.dash = src.dash
 	dst.charge = src.charge
 	dst.stance = src.stance
 
 
-## The whole record as one integer (47 bits, exact in JSON): mx and my as 8 bits each (k + 127 for k / 127), mode + 1 in
+## The whole record as one integer (53 bits; the sim keeps it as one integer and only the replay's JSON splits it): mx and my as 8 bits each (k + 127 for k / 127), mode + 1 in
 ## 2 bits, upgrade in 2, special in 3, twelve single bits, then today's stance + 1 in 3 bits, dash and charge, then the
-## agency fields lightHeld, heavyHeld and escape in bits 40 to 42, and waited in 43 to 46. Replays
+## agency fields lightHeld, heavyHeld and escape in bits 40 to 42, waited in 43 to 46, then stanceMask in 47 to 50, contextHeld in 51
+## and sigHeld in 52. Replays
 ## and, later, rollback carry this integer; equal canonical intents are equal integers.
 static func pack(i: SimIntent) -> int:
 	var p: int = _q(i.mx) | (_q(i.my) << 8) | ((clampi(i.mode, -1, 1) + 1) << 16) | (clampi(i.upgrade, 0, 2) << 18) | (clampi(i.special, 0, 7) << 20)
@@ -125,6 +139,11 @@ static func pack(i: SimIntent) -> int:
 	if i.escape:
 		p |= 1 << 42
 	p |= clampi(i.waited, 0, 15) << 43
+	p |= (i.stanceMask & 15) << 47
+	if i.contextHeld:
+		p |= 1 << 51
+	if i.sigHeld:
+		p |= 1 << 52
 	return p
 
 
@@ -170,6 +189,9 @@ static func unpack(p: int) -> SimIntent:
 	i.heavyHeld = ((p >> 41) & 1) == 1
 	i.escape = ((p >> 42) & 1) == 1
 	i.waited = (p >> 43) & 15
+	i.stanceMask = (p >> 47) & 15
+	i.contextHeld = ((p >> 51) & 1) == 1
+	i.sigHeld = ((p >> 52) & 1) == 1
 	return i
 
 

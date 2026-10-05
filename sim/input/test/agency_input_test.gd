@@ -1,7 +1,7 @@
 extends SceneTree
 ## Headless checks for the agency pass's input side (docs/controls/agency-input.md): the intent's three new fields (the
 ## attack levels and the Escape edge) and their packing, the Escape control on every layout (R3, a key, a swipe up on Guard),
-## the Brawler's new transform control, and lightHeld and heavyHeld on pads, keyboards and touch. From the repo root:
+## and lightHeld and heavyHeld on pads, keyboards and touch. From the repo root:
 ##   godot --headless --path . --script res://sim/input/test/agency_input_test.gd
 ## Exit 0 if every check passes.
 
@@ -21,7 +21,6 @@ func _init() -> void:
 	SimInputData.clear_overrides()
 	_pack()
 	_escape_controls()
-	_brawler_transform()
 	_levels()
 	_touch(2.75)
 	_waited()
@@ -42,7 +41,7 @@ func _run(l: SimLayout, n: int) -> SimIntent:
 
 
 func _pack() -> void:
-	ok(SimIntent.BITS == 47 and SimIntent.VERSION == 3, "pack: the record is 47 bits, intent version 3 (waited)")
+	ok(SimIntent.BITS == 53 and SimIntent.VERSION == 4, "pack: the record is 53 bits, intent version 4 (the stance mask, contextHeld, sigHeld)")
 	for f in ["lightHeld", "heavyHeld", "escape"]:
 		var i := SimIntent.new()
 		i.set(f, true)
@@ -69,7 +68,7 @@ func _pack() -> void:
 	ok(packed < (1 << 40), "pack: an intent without the new fields uses no new bit, so older replays unpack as they were")
 	var uo: SimIntent = SimIntent.unpack(packed)
 	ok(uo != null and not uo.lightHeld and not uo.heavyHeld and not uo.escape and uo.light and uo.guard, "pack: an old packed intent unpacks with the new fields off")
-	ok(SimIntent.unpack(1 << 47) == null, "pack: bits above 46 are refused")
+	ok(SimIntent.unpack(1 << 53) == null and SimIntent.unpack(-1) == null, "pack: bits above 52 and a negative are refused")
 	# waited: bits 43 to 46, 0 to 15, clamped; an older packed intent has it 0.
 	for w in range(16):
 		var iw := SimIntent.new()
@@ -97,7 +96,7 @@ func _pack() -> void:
 
 ## Escape is an edge on its own control; nothing else sets it.
 func _escape_controls() -> void:
-	for c in [["arena", "pad:r3"], ["brawler", "pad:r3"], ["simple-pad", "pad:r3"], ["kb-solo", "kb:KeyC"], ["kb-shared-p1", "kb:KeyX"], ["kb-shared-p2", "kb:Quote"]]:
+	for c in [["arena", "pad:r3"], ["simple-pad", "pad:r3"], ["kb-solo", "kb:KeyC"], ["kb-shared-p1", "kb:KeyX"], ["kb-shared-p2", "kb:Quote"]]:
 		var l: SimLayout = _mk(c[0])
 		ok(not _run(l, 3).escape, "%s: no Escape at rest" % c[0])
 		l.press(c[1])
@@ -119,7 +118,7 @@ func _escape_controls() -> void:
 	var ai: SimIntent = a.build()
 	ok(ai.escape and not ai.transform and not ai.light and not ai.heavy and not ai.dodge and not ai.guardPress and not ai.powerPress, "arena: R3 is Escape and nothing else")
 	# Every layout the player can remap has Escape bound once, and it is not a required action.
-	for id in ["arena", "brawler", "simple-pad", "kb-solo", "kb-shared-p1", "kb-shared-p2"]:
+	for id in ["arena", "simple-pad", "kb-solo", "kb-shared-p1", "kb-shared-p2"]:
 		var used: Dictionary = SimInputRemap.controls_used(SimInputData.preset(id))
 		var n: int = 0
 		for k in used:
@@ -130,25 +129,6 @@ func _escape_controls() -> void:
 	# Remappable: Escape moves to another control.
 	var r: Dictionary = SimInputRemap.rebind(SimInputData.original("arena"), "escape", null, 0, ["pad:dpad_down"])
 	ok(r["ok"] and SimInputRemap.controls_used(r["preset"]).get("pad:dpad_down", "") == "escape", "arena: Escape can be remapped")
-
-
-func _brawler_transform() -> void:
-	var l: SimLayout = _mk("brawler")
-	l.press("pad:dpad_up")
-	var got: bool = false
-	for k in range(35):
-		var i: SimIntent = l.build()
-		l.consumed()
-		got = got or i.transform
-	ok(got, "brawler: D-pad up held 30 ticks is the transform (L3 and R3 are Escape and free)")
-	l.release("pad:dpad_up")
-	var l2: SimLayout = _mk("brawler")
-	l2.press("pad:dpad_up")
-	var any: bool = false
-	for k in range(20):
-		any = any or l2.build().transform
-		l2.consumed()
-	ok(not any, "brawler: released early, no transform")
 
 
 func _levels() -> void:
@@ -183,14 +163,6 @@ func _levels() -> void:
 	l.release("pad:west")
 	l.analog("pad:rt", 0.0)
 	_run(l, 2)
-	# The Brawler: RB light, RT heavy.
-	var b: SimLayout = _mk("brawler")
-	b.press("pad:rb")
-	ok(_run(b, 4).lightHeld, "levels: Brawler RB is the light level")
-	b.release("pad:rb")
-	b.analog("pad:rt", 0.9)
-	ok(_run(b, 4).heavyHeld, "levels: Brawler RT is the heavy level")
-	b.analog("pad:rt", 0.0)
 	# Keyboards.
 	var k: SimLayout = _mk("kb-solo")
 	k.press("kb:KeyJ")

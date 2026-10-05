@@ -180,11 +180,11 @@ func _replays(g: Dictionary) -> String:
 	return ""
 
 
-## I1 (intent v2): pack and unpack are inverse on every field's range, canon() puts the stick on its 1 / 127 grid, and
-## unpack refuses integers that are not packed intents.
+## I1 (intent v2) to version 4: pack and unpack are inverse on every field's range, canon() puts the stick on its 1 / 127
+## grid, unpack refuses integers that are not packed intents, and a replay's two-number entry carries the whole record.
 func _intentPack() -> String:
-	var bools: Array = ["guard", "guardPress", "dodge", "sprint", "power", "powerPress", "powerTap", "light", "heavy", "sig", "context", "transform", "dash", "charge", "lightHeld", "heavyHeld", "escape"]
-	var fields: Array = ["mx", "my", "mode", "upgrade", "special", "stance", "waited"] + bools
+	var bools: Array = ["guard", "guardPress", "dodge", "sprint", "power", "powerPress", "powerTap", "light", "heavy", "sig", "context", "transform", "dash", "charge", "lightHeld", "heavyHeld", "escape", "contextHeld", "sigHeld"]
+	var fields: Array = ["mx", "my", "mode", "upgrade", "special", "stance", "waited", "stanceMask"] + bools
 	var same := func(x: SimIntent, y: SimIntent) -> bool:
 		for k in fields:
 			if x.get(k) != y.get(k):
@@ -206,6 +206,13 @@ func _intentPack() -> String:
 		var iw := SimIntent.new()
 		iw.waited = w
 		cases.append(iw)
+	for m in range(16):   # the stance mask, 0 to 15, alone and with the two held levels
+		for lv in range(4):
+			var im := SimIntent.new()
+			im.stanceMask = m
+			im.contextHeld = (lv & 1) != 0
+			im.sigHeld = (lv & 2) != 0
+			cases.append(im)
 	for k in range(-127, 128):
 		var i3 := SimIntent.new()
 		i3.mx = float(k) / 127.0
@@ -221,6 +228,7 @@ func _intentPack() -> String:
 		i4.special = int(floor(r.next() * 8.0))
 		i4.stance = float(int(floor(r.next() * 5.0)) - 1)
 		i4.waited = int(floor(r.next() * 16.0))
+		i4.stanceMask = int(floor(r.next() * 16.0))
 		for b in bools:
 			i4.set(b, r.next() < 0.5)
 		cases.append(i4)
@@ -231,13 +239,27 @@ func _intentPack() -> String:
 			return "unpack(pack(i)) differs for packed %d" % p
 		if SimIntent.pack(u) != p:
 			return "pack(unpack(p)) differs for %d" % p
+		# the replay's entry: two numbers, each exact as a JSON number, that join back to the same integer
+		var two: Array = SimReplay.split(p)
+		var back = JSON.parse_string(JSON.stringify(two))
+		if two[0] < 0 or two[0] > SimReplay.LOW_MASK or two[1] < 0 or SimReplay.join(back[0], back[1]) != p:
+			return "a replay entry does not carry packed %d through JSON (%s)" % [p, str(two)]
+	var top := SimIntent.new()
+	top.sigHeld = true   # the record's top bit
+	if (SimIntent.pack(top) ^ SimIntent.pack(neutral)) != 1 << (SimIntent.BITS - 1) or SimIntent.BITS != 53:
+		return "sigHeld is not the top bit of a 53-bit record (BITS %d, packed %d)" % [SimIntent.BITS, SimIntent.pack(top)]
+	if SimReplay.split(-1) != [null, null] or SimReplay.join(null, null) != -1:
+		return "no intent is not [null, null] in a replay entry"
+	for badpair in [[null, 0], [0, null], [0.5, 0], [0, 0.5], [-1, 0], [0, -1], [SimReplay.LOW_MASK + 1, 0], [0, SimReplay.HIGH_MAX + 1], ["1", 0]]:
+		if SimReplay.join(badpair[0], badpair[1]) != -2:
+			return "a replay entry %s was joined" % str(badpair)
 	var off := SimIntent.new()
 	off.mx = 0.5
 	off.my = -0.3333
 	var c: SimIntent = SimIntent.canon(off)
 	if c.mx != 64.0 / 127.0 or c.my != -42.0 / 127.0 or SimIntent.pack(c) != SimIntent.pack(off):
 		return "canon() does not put the stick on its 1 / 127 grid"
-	for badp in [-1, 1 << 47, 255, 255 << 8, 3 << 16, 3 << 18, 5 << 35, 7 << 35]:
+	for badp in [-1, 1 << 53, 1 << 62, 255, 255 << 8, 3 << 16, 3 << 18, 5 << 35, 7 << 35]:
 		if SimIntent.unpack(badp) != null:
 			return "unpack accepted %d, which is not a packed intent" % badp
 	return ""
@@ -1739,21 +1761,47 @@ func _replayModule() -> String:
 	for q in range(at, bad.inputs.size()):
 		if bad.inputs[q][2] == null:
 			continue
-		var alt: SimIntent = SimIntent.unpack(int(bad.inputs[q][2]))
+		var alt: SimIntent = SimIntent.unpack(SimReplay.join(bad.inputs[q][2], bad.inputs[q][3]))
 		alt.mx = -1.0 if alt.mx > 0.0 else 1.0
-		bad.inputs[q][2] = SimIntent.pack(alt)
+		var two: Array = SimReplay.split(SimIntent.pack(alt))
+		bad.inputs[q][2] = two[0]
+		bad.inputs[q][3] = two[1]
 	if SimReplay.play(bad).ok:
 		return "a changed input was not caught"
-	# I1: format v3 refuses an older file, another intent schema, and an input that is not a packed intent.
-	for edit in [["v", 2], ["intent", SimIntent.VERSION + 1], ["intent", 1]]:
+	# Format v4 refuses an older file, another intent schema, and an input that is not a packed intent.
+	for edit in [["v", 3], ["v", 2], ["intent", SimIntent.VERSION + 1], ["intent", SimIntent.VERSION - 1], ["intent", 1]]:
 		bad = rp.duplicate(true)
 		bad[edit[0]] = edit[1]
 		if SimReplay.play(bad).reason != "format":
 			return "a replay with %s %s was not refused" % [edit[0], str(edit[1])]
-	bad = rp.duplicate(true)
-	bad.inputs[at][2] = 1 << 47   # above the 47-bit record (waited is bits 43 to 46)
-	if SimReplay.play(bad).reason != "format":
-		return "an invalid packed intent was not refused"
+	# an entry above the 53-bit record, one of the old shape, one with half an intent, one with a fraction
+	for wrong in [[0, 1 << (SimIntent.BITS - 32)], [1 << 40], [0, null], [0.5, 0]]:
+		bad = rp.duplicate(true)
+		bad.inputs[at] = [bad.inputs[at][0], bad.inputs[at][1]] + wrong
+		if SimReplay.play(bad).reason != "format":
+			return "an invalid input entry %s was not refused" % str(wrong)
+	# the new fields travel: a recorded match whose human holds the top bits plays back through JSON
+	var S4 := SimCore.createSim()
+	var rec4 := SimReplay.recorder(S4, 31, {"p1": false, "p2": true})
+	var hold := SimIntent.new()
+	for t in range(240):
+		hold.stanceMask = (t / 20) % 16
+		hold.contextHeld = (t / 30) % 2 == 1
+		hold.sigHeld = (t / 45) % 2 == 0
+		var live: bool = rec4.step([hold, null])   # (a hit-stop tick consumes no input)
+		if live and (S4.fighters[0].input.stanceMask != hold.stanceMask or S4.fighters[0].input.sigHeld != hold.sigHeld or S4.fighters[0].input.contextHeld != hold.contextHeld):
+			return "the stance mask and the held levels did not reach the fighter's input"
+	var rp4: Dictionary = rec4.finish()
+	SimCore.dispose(S4)
+	var high: int = 0
+	for inp in rp4.inputs:
+		if inp[3] != null:
+			high = maxi(high, int(inp[3]))
+	if high < (1 << (SimIntent.BITS - 33)):
+		return "the recorded entries never used the record's top bit (high part %d)" % high
+	r = SimReplay.play(JSON.parse_string(JSON.stringify(rp4)))
+	if not r.ok:
+		return "a replay with the version 4 fields: %s at tick %d" % [r.reason, r.firstBadTick]
 	# D1a: a replay of a mirror setup plays back from its header alone.
 	var S2 := SimCore.createSim()
 	var rec2 := SimReplay.recorder(S2, 21, {}, SimGolden.armSetup("mirror-hero-flip"))

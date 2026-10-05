@@ -29,7 +29,8 @@
       "id": "signature",
       "kind": "press",
       "fields": [
-        "sig"
+        "sig",
+        "sigHeld"
       ]
     },
     {
@@ -37,7 +38,8 @@
       "kind": "hold",
       "fields": [
         "guard",
-        "guardPress"
+        "guardPress",
+        "stanceMask"
       ]
     },
     {
@@ -45,7 +47,8 @@
       "kind": "hold",
       "fields": [
         "dodge",
-        "dodgePress"
+        "dodgePress",
+        "stanceMask"
       ]
     },
     {
@@ -53,7 +56,8 @@
       "kind": "hold",
       "fields": [
         "power",
-        "powerPress"
+        "powerPress",
+        "stanceMask"
       ],
       "layer": "power"
     },
@@ -97,7 +101,8 @@
       "id": "context",
       "kind": "press",
       "fields": [
-        "context"
+        "context",
+        "contextHeld"
       ]
     },
     {
@@ -111,7 +116,8 @@
       "id": "mode",
       "kind": "press",
       "fields": [
-        "mode"
+        "mode",
+        "stanceMask"
       ]
     },
     {

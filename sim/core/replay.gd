@@ -1,23 +1,29 @@
 class_name SimReplay
 extends RefCounted
 ## Replays: a seed, the AI flags and the intents the host passed to step() reproduce a match bit for bit. The GDScript
-## twin of replay.js, format v3 (I1, intent v2). A replay is plain JSON-able data:
+## twin of replay.js, format v4 (intent version 4). A replay is plain JSON-able data:
 ##   {format, v, intent, data, seed, setup, ai, ticks, inputs, toggles, checkpoints, final}
 ##   intent       SimIntent.VERSION: the intent schema the inputs are packed in. Another version is refused.
 ##   data         dataHash(): the combat data and the roster data the match ran on (S4, D1a). It plays back only on the
 ##                same data.
 ##   setup        newMatch's setup (D1a): {"slots", "names", "flip"}, {} for the default match.
-##   inputs       [tick, slot, packed intent or null], only where a slot's intent changed from its previous one. Packed is
-##                SimIntent.pack(): one integer for the whole record.
+##   inputs       [tick, slot, low, high], only where a slot's intent changed from its previous one: SimIntent.pack(), one
+##                integer for the whole record, written as two numbers (split: its low 32 bits, and the bits above
+##                them), because a JSON number is exact only below 2^53 and the record may grow past that. Both are null
+##                for no intent.
 ##   toggles      [tick, slot]: toggleAI before that tick
 ##   checkpoints  [tick, gameplay hash] every CHECK_EVERY ticks; final: the gameplay hash at the end
 ## Intents, not raw keys, are recorded, so a replay does not depend on the key mapping or the layout. The recorder steps
 ## the sim with the canonical form of each intent (SimIntent.canon: the stick on its 1 / 127 grid), so what it records
 ## is exactly what was played.
-## v1 (replay.js) had a `sim` modes field; v2 stored each intent as a dictionary of eight fields.
+## v1 (replay.js) had a `sim` modes field; v2 stored each intent as a dictionary of eight fields; v3 stored the packed
+## intent as one number.
 
 const FORMAT: String = "meridian-replay"
-const V: int = 3
+const V: int = 4
+const LOW_BITS: int = 32             # a packed intent's low part in a replay's entry ...
+const LOW_MASK: int = 0xFFFFFFFF
+const HIGH_MAX: int = 0x7FFFFFFF     # ... and the most its high part can be (63 bits in all: a packed intent is never negative)
 const CHECK_EVERY: int = 60
 
 var S: SimState
@@ -47,12 +53,33 @@ func step(inputs = null) -> bool:
 			cur[k] = SimIntent.unpack(p)
 		if p != _last[k]:
 			_last[k] = p
-			replay.inputs.append([replay.ticks, k, p if p >= 0 else null])
+			replay.inputs.append([replay.ticks, k] + split(p))
 	var r: bool = SimCore.step(S, cur if inputs != null else null)
 	replay.ticks += 1
 	if replay.ticks % CHECK_EVERY == 0:
 		replay.checkpoints.append([replay.ticks, SimHash.stateHash(S).gameplay])
 	return r
+
+
+## A packed intent as the two numbers an entry stores: [its low 32 bits, the bits above]; [null, null] for none (p < 0).
+static func split(p: int) -> Array:
+	if p < 0:
+		return [null, null]
+	return [p & LOW_MASK, p >> LOW_BITS]
+
+
+## The packed intent of an entry's two numbers: -1 for none (both null), -2 if they are not the two parts of one (not
+## whole numbers, or out of range, or only one of them null).
+static func join(lo, hi) -> int:
+	if lo == null and hi == null:
+		return -1
+	if not ((lo is float or lo is int) and (hi is float or hi is int)):
+		return -2
+	var a: float = float(lo)
+	var b: float = float(hi)
+	if a != floor(a) or b != floor(b) or a < 0.0 or b < 0.0 or a > float(LOW_MASK) or b > float(HIGH_MAX):
+		return -2
+	return int(a) | (int(b) << LOW_BITS)
 
 
 func toggle(idx: int) -> void:
@@ -74,10 +101,12 @@ static func play(rp: Dictionary) -> Dictionary:
 		return refuse
 	var packed: Array = []
 	for inp in rp.get("inputs", []):
+		if not (inp is Array) or inp.size() != 4:
+			return refuse
 		var it = null
-		if inp[2] != null:
-			var f: float = float(inp[2])
-			it = SimIntent.unpack(int(f)) if f == floor(f) else null
+		var p: int = join(inp[2], inp[3])
+		if p != -1:
+			it = SimIntent.unpack(p) if p >= 0 else null
 			if it == null:
 				return refuse
 		packed.append(it)

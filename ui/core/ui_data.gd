@@ -206,6 +206,10 @@ static func clamp_option(key: String, value):
 		var v: float = clampf(float(value), float(o["min"]), float(o["max"]))
 		v = float(o["min"]) + roundf((v - float(o["min"])) / step) * step
 		return v
+	if value is String and o.has("choices") and not (o["choices"] as Array).has(value):
+		# A choice the data no longer offers (a saved "brawler" layout, retired in favour of the stance layout): the nearest one it replaced, else the default.
+		var legacy := {"brawler": "arena"}
+		return legacy.get(value, o.get("default", value))
 	return value
 
 

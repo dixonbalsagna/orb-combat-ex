@@ -1,0 +1,137 @@
+diff -ruN a/tools/schemas/input-actions.schema.json b/tools/schemas/input-actions.schema.json
+--- a/tools/schemas/input-actions.schema.json	2026-10-04 20:51:44.848799400 -0700
++++ b/tools/schemas/input-actions.schema.json	2026-10-04 20:51:44.850802000 -0700
+@@ -60,7 +60,10 @@
+                 "transform",
+                 "lightHeld",
+                 "heavyHeld",
+-                "escape"
++                "escape",
++                "stanceMask",
++                "contextHeld",
++                "sigHeld"
+               ]
+             }
+           },
+diff -ruN a/tools/schemas/input-stances.schema.json b/tools/schemas/input-stances.schema.json
+--- a/tools/schemas/input-stances.schema.json	1969-12-31 16:00:00.000000000 -0800
++++ b/tools/schemas/input-stances.schema.json	2026-10-04 20:51:44.860825200 -0700
+@@ -0,0 +1,19 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/input-stances",
++  "title": "input stances (schema 1)",
++  "description": "data/input/stances.json: the hybrid stance masks that are switched on (docs/controls/lunge-control.md A2, sim/input/stance.gd). The mask is LB 1, RB 2, RT 4, LT 8. Until a mask is listed, a held pair reads as its newer button. RT (4) dominates and is never part of a hybrid. Version field: schema. Policy: closed except keys starting with an underscore.",
++  "type": "object",
++  "required": ["schema", "hybrids"],
++  "properties": {
++    "schema": { "const": 1 },
++    "hybrids": {
++      "type": "array",
++      "uniqueItems": true,
++      "items": { "enum": [3, 9, 10] },
++      "description": "3 is LB+RB (defensive ki), 9 is LT+LB (terrain while flying), 10 is LT+RB (evasive energy)."
++    }
++  },
++  "additionalProperties": false,
++  "patternProperties": { "^_": true }
++}
+diff -ruN a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+--- a/tools/schemas/input-timing.schema.json	2026-10-04 20:51:44.847288000 -0700
++++ b/tools/schemas/input-timing.schema.json	2026-10-04 20:51:44.860825200 -0700
+@@ -209,6 +209,39 @@
+           "minimum": 0,
+           "maximum": 4,
+           "description": "The director snaps to a target within this many 45-degree sectors (1)."
++        },
++        "dwellTicks": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 12,
++          "description": "The zip's exit read: a stick direction counts as held if it was the sector for at least this many of the last exitWindow ticks (3)."
++        },
++        "exitWindow": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 12,
++          "description": "The exit read looks back this many ticks (12; the sample ring holds 12)."
++        }
++      },
++      "additionalProperties": false,
++      "patternProperties": {
++        "^_": true
++      }
++    },
++    "stance": {
++      "type": "object",
++      "description": "The stance buttons (docs/controls/lunge-control.md A2, sim/input/stance.gd, layout.gd). Optional: the code defaults are these values.",
++      "properties": {
++        "releaseGrace": {
++          "type": "integer",
++          "minimum": 0,
++          "maximum": 6,
++          "description": "A released stance button keeps the stance mask this many ticks, so a flutter of the finger does not flicker the stance (2). The mask only: the button's own fields end at once."
++        },
++        "oneshotTicks": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "With one-shot arming on, a tap on a stance button arms the stance for the next blow, and it lapses unspent after this many ticks (90)."
+         }
+       },
+       "additionalProperties": false,
+@@ -316,6 +349,41 @@
+           "type": "integer",
+           "minimum": 0,
+           "description": "A press of an attack button within this many ticks of its own release is the same press."
++        },
++        "zipMashPresses": {
++          "type": "integer",
++          "minimum": 2,
++          "description": "A zip's speed reading: the starter and this many minus one more presses (3) ..."
++        },
++        "zipMashGap": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "... each within this many ticks of the one before (10)."
++        },
++        "holdLight": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "X (light) down this many ticks is a hold (8). The hold is per button cell; holdTicks stays as the fallback."
++        },
++        "holdHeavy": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "Y (heavy) hold (16)."
++        },
++        "holdSig": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "B (the signature) hold (20)."
++        },
++        "holdSigCharging": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "B in the charging stance, the ultimate's hold (45)."
++        },
++        "holdContext": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "A (context) hold (18)."
+         }
+       },
+       "additionalProperties": false,
+diff -ruN a/tools/schemas/map.json b/tools/schemas/map.json
+--- a/tools/schemas/map.json	2026-10-04 20:51:44.849802100 -0700
++++ b/tools/schemas/map.json	2026-10-04 20:51:44.854802400 -0700
+@@ -364,6 +364,10 @@
+       "schema": "input-layouts.schema.json"
+     },
+     {
++      "match": "data/input/stances.json",
++      "schema": "input-stances.schema.json"
++    },
++    {
+       "match": "data/input/timing.json",
+       "schema": "input-timing.schema.json"
+     },

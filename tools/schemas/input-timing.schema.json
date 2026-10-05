@@ -209,6 +209,39 @@
           "minimum": 0,
           "maximum": 4,
           "description": "The director snaps to a target within this many 45-degree sectors (1)."
+        },
+        "dwellTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "The zip's exit read: a stick direction counts as held if it was the sector for at least this many of the last exitWindow ticks (3)."
+        },
+        "exitWindow": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "The exit read looks back this many ticks (12; the sample ring holds 12)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "stance": {
+      "type": "object",
+      "description": "The stance buttons (docs/controls/lunge-control.md A2, sim/input/stance.gd, layout.gd). Optional: the code defaults are these values.",
+      "properties": {
+        "releaseGrace": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "A released stance button keeps the stance mask this many ticks, so a flutter of the finger does not flicker the stance (2). The mask only: the button's own fields end at once."
+        },
+        "oneshotTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "With one-shot arming on, a tap on a stance button arms the stance for the next blow, and it lapses unspent after this many ticks (90)."
         }
       },
       "additionalProperties": false,
@@ -316,6 +349,41 @@
           "type": "integer",
           "minimum": 0,
           "description": "A press of an attack button within this many ticks of its own release is the same press."
+        },
+        "zipMashPresses": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "A zip's speed reading: the starter and this many minus one more presses (3) ..."
+        },
+        "zipMashGap": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "... each within this many ticks of the one before (10)."
+        },
+        "holdLight": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "X (light) down this many ticks is a hold (8). The hold is per button cell; holdTicks stays as the fallback."
+        },
+        "holdHeavy": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Y (heavy) hold (16)."
+        },
+        "holdSig": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "B (the signature) hold (20)."
+        },
+        "holdSigCharging": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "B in the charging stance, the ultimate's hold (45)."
+        },
+        "holdContext": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A (context) hold (18)."
         }
       },
       "additionalProperties": false,
