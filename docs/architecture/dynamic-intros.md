@@ -293,3 +293,93 @@ Whichever resolves it, the rule of section 7 holds: facts bend only what the int
 - **`avoid` alone is not enough on one seed.** It changes the weights, but the keyed draws stay the same, so the same scenario can still win, and the order and the gap do not change at all. The fix is a rematch counter: a `take` number in the record, used as the index of each keyed draw. It is 4 lines in the composer, neutral when left out, and can ride with step 1 above.
 - **Who keeps the list: Rendering's host** (`render/core/sim_host.gd` or `main.gd`). It is the object that starts every match and outlives one, and it already builds the record (`_match_setup`). After `newMatch` it reads what was composed from `SimIntro.timeline(S)` (`scenario`, later `plot`) and files it under the pair, keyed by the two roster ids. UI's sim bridge is a read-only adapter from the sim to the HUD and should not hold session memory. UI owns the opening setting (Varied, Classic, Skip) and, when profiles exist, saving the list between sessions.
 
+## 15. The data shape the resolver reads (for Narrative to fill; step 2, not built)
+
+The EP ruled (2026-10-06): the composer resolves plots, Rendering's host keeps the memory, and step 1 (`defaultFacts` and `take`) is my next slice. This section is the shape step 2 will read, so Narrative fills it rather than guessing. It follows Narrative's own draft (its section 11.5) and makes every choice a selector the sim can resolve without story logic in code.
+
+**One file: `data/narrative/intro_plots.json`** (`schema`: `narrative.intro_plots/1`). The sim reads it, so it joins the data hash. Five tables.
+
+| Table | Keyed by | A row holds |
+| :--- | :--- | :--- |
+| `states` | state id (`fresh`, `simmering`, `settled`, `reversed`) | A bend: `weights`, `gap`, `look`, `clock`, `gestures`, `voice` |
+| `stateRules` | an ordered list | `state`, and `when`: ranges on the record's numbers. The first row that holds wins; the last has no `when` |
+| `types` | type id (`rivalry`, `grudge`, ...) | `roles` (two names), `rolesBy`, `tones`, `weights`, `stance`, `gestures` |
+| `pairs` | a list | `ids` (two roster ids, either order), `types` (eligible, with weights), `roles` (who is which, where data fixes it), `events` |
+| `fighters` | roster id | `neverStance`, `neverType` |
+
+Plus `vocab` (`stances`, `angles`, `gestures`: the closed lists, checked at load) and `defaultPair` (the `types` for a pair with no row).
+
+**One example row of each.**
+
+```json
+{
+  "states": {
+    "simmering": {
+      "weights": {"long_look": 1.5, "double_drop": 0.9},
+      "gap": -0.6, "look": "long", "clock": 24,
+      "gestures": [{"at": "look_start", "who": "last_loser", "intent": "harden"},
+                   {"at": "land_first", "who": "last_winner", "intent": "check"}],
+      "voice": {"p": 0.9, "angle": {"last_loser": "then", "last_winner": "us", "else": "now"}}
+    }
+  },
+  "stateRules": [
+    {"state": "fresh", "when": {"meetings": [0, 0]}},
+    {"state": "reversed", "when": {"trailingJustWon": [1, 1]}},
+    {"state": "settled", "when": {"meetings": [5, 9999], "trailingJustWon": [0, 0]}},
+    {"state": "simmering"}
+  ],
+  "types": {
+    "rivalry": {
+      "roles": ["leader", "chaser"], "rolesBy": "record",
+      "tones": ["neutral", "grave"],
+      "weights": {"double_drop": 1.0, "latecomer": 1.0, "long_look": 1.2},
+      "stance": {"leader": ["formal", "cold"], "chaser": ["guarded", "wry"]},
+      "gestures": [{"at": "look_start", "who": "leader", "intent": "appraise"}]
+    }
+  },
+  "pairs": [
+    {"ids": ["PROTAGONIST", "RIVAL"], "types": {"rivalry": 3, "sparring": 1},
+     "roles": {"lesson": {"teacher": "PROTAGONIST"}},
+     "events": [{"id": "the_bridge", "kind": "ledger", "type": "betrayal"}]}
+  ],
+  "fighters": {"RIVAL": {"neverStance": ["warm"], "neverType": []}},
+  "defaultPair": {"types": {"sparring": 1}}
+}
+```
+
+**Field rules.**
+
+| Field | Rule |
+| :--- | :--- |
+| `weights`, `gap`, `look`, `clock` | Exactly section 6b's keys. A plot's `weights` are the state's times the type's, template by template; `gap`, `look` and `clock` come from the state |
+| `gestures[].who`, `voice.angle` keys | **A selector,** one of: `both`; `first`, `second`, `left`, `right` (the composer's own); `last_winner`, `last_loser` (from the record; a row that names one is skipped when there is no record); in a type's row, one of that type's two role names. Nothing else. So "the wronged hardens" is written `last_loser`, and "the teacher waits" as the role name `teacher` |
+| `gestures[].at`, `intent` | A point of section 6b and a word of `vocab.gestures`. A type's "gesture flavour" must be written as rows like these, with a point and a selector: a bare list of words gives the sim nothing to place |
+| `voice.p` | The chance, passed through on every voice slot |
+| `voice.angle` | The angle each fighter speaks about, by selector; `else` for anyone no key names. The same angle rides on every slot that fighter speaks in |
+| `types.<id>.rolesBy` | `record`: the first role is whoever is ahead on wins (the left spot on a tie). `data`: the pair's `roles` row names who holds the first role; with no row the type is not eligible for that pair |
+| `types.<id>.stance` | For each role, stances in order of preference. The first one not in that fighter's `neverStance` is used; if all are vetoed the slot carries no stance |
+| `types.<id>.tones` | Becomes the facts' `tones` |
+| `pairs[].types` | Eligible types with draw weights. A type in either fighter's `neverType` is removed. A type seeded by an event (`events[].type`) is added at weight 1 if absent |
+| `pairs[].events` | `kind`: `ledger` or `unseen`. The record's own last ending is always offered first, as kind `record`; then a ledger event of the drawn type; then any; then `unseen`. The chosen event's `id` rides on the voice slots as `event` |
+| `stateRules[].when` | Each key is one of the record's numbers below, with an inclusive `[min, max]`. All keys of a row must hold |
+
+**The record the host passes** (in the setup's `intro` record, as `history`; whole numbers and slots, never names, so the sim needs no roster lookup):
+
+| Key | Meaning |
+| :--- | :--- |
+| `meetings` | Bouts this pair has had |
+| `wins` | `[slot 0's, slot 1's]` |
+| `lastWinner` | A slot, or -1 for none |
+| `lastEnd` | `ko`, `timecap`, `scarred`, `destroyed`, or empty |
+| `streakEnded` | The length of the run the last bout broke, 0 if none |
+| `sinceMet` | Matches played since they last met |
+
+From these the sim works out the numbers a `when` may test: `meetings`, `lead` (the gap in wins), `trailingJustWon` (0 or 1), `streakEnded`, `sinceMet`, `lastWasKo`, `lastWasTimecap`, `lastScarred` (0 or 1 each). If Narrative's table needs another, name it and it is one line.
+
+**What comes out** is section 6b's flat `facts`, with `plot` as `type.state.eventKind`, and one `lines` row for the left and the right fighter under every voice slot, each with his stance, angle, `p` and `event`. A replay stores the `history` it was given, so it resolves the same plot.
+
+**Three questions for Narrative.**
+1. Is "the wronged" always the last bout's loser, and "the new leader" its winner? The selectors assume so.
+2. One angle a fighter for the whole intro, or may it differ by slot? The shape above is one a fighter.
+3. The state table in its section 11.6 uses "close score" and "long-time leader". Give them as numbers (`lead` at most 1; `lead` at least 3) so they can be `when` ranges.
+
