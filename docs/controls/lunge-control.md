@@ -7,13 +7,17 @@ Owner: Controls and Game Feel. Date: 2026-10-04. **A note only: no code, no data
 | # | Question | Recommendation |
 | :--- | :--- | :--- |
 | 1 | The mapping | **The stance is what is held.** None: martial. **LB** defensive, **RB** energy, **RT** charging, **LT** manoeuvre. The four face buttons are **X, Y, B, A** and stay the four existing edges (`light`, `heavy`, `sig`, `context`); the move is the (stance, button) cell. Four of the five stance buttons already work this way in the built layouts |
-| 2 | Two stance buttons at once | **The most recently pressed wins while held**; releasing it returns to the older one. The **transform chord (LT + RT)** keeps its rule: pressed within 6 ticks of each other they are the chord and change no stance. No hybrids by default (a second slot is possible later) |
-| 3 | The intent | One new field, **`stanceHeld` (0 to 4, distinct from today's legacy `stance` float), 3 bits at 47 to 49**, resolved by the layout. Intent version **4**; **replays before it are refused** |
+| 2 | Two stance buttons at once | **A set, not a sequence** (Orb's and the EP's answers, 2026-10-04): the layout reports which of the four shoulder buttons are held and the sim looks the set up in a table. **RT dominates**: with RT down the set is RT alone. The **transform chord (LT + RT)** keeps its rule: pressed within 6 ticks of each other they are the chord and change no stance. Hybrids (LT+RB, LB+RB, LT+LB) are **data**: until a hybrid is enabled the layout reports only the newest held bit, so no format change is needed to switch one on |
+| 3 | The intent | One new field, **`stanceMask`: a 4-bit mask, one bit per shoulder button (LB 1, RB 2, RT 4, LT 8), bits 47 to 50**, `BITS` 51. Intent version **4**; **replays before it are refused**. **2 spare bits (51, 52) remain** in a JSON-safe 53-bit integer; **Simulation does not have to split the record now** (A5) |
 | 4 | Triggers | Digital with hysteresis as today (on 0.35, off 0.25); no analogue depth; RT is the charging stance, held; a 2-tick release debounce on all four stance buttons |
 | 5 | Accessibility | A per-player **"stance buttons: hold or latch"** setting; on touch the default is a **one-shot latch** (tap a stance, then a face button; it clears after one blow or 90 ticks) |
 | 6 | The Brawler preset | **Retire it** (its attacks sit on RB and RT, which are now stance buttons); a fighting-game player remaps Arena |
 | 7 | LT, manoeuvre | **LT is the pilot's stance.** A lunge or charge started with LT held is **piloted** (steer, throttle, a free cancel before the commit point, at a ki cost); without LT it is the plain straight line. **Air recovery moves to LT**: tap at a bounce or tumble is the tech, hold in the air is the brake |
 | 8 | Reading a lunge | A minimum travel time, a speed cap by distance, a range ceiling for charges, an ease-out, a marker on the defender and a tell before it starts (Part B) |
+
+## Answers recorded (the EP for Orb, 2026-10-04, `docs/ep/stance-answers-2026-10-04.md`)
+
+Accepted as written except four. **Struggles** start only when two heavy commitments meet (signature against signature, a held heavy or a string's ender against the same, a beam breaking a shield); light, flurry and skill blows that meet trade. **Signatures:** one per stance and hybrid is the target, the five base stances ship first; tiered cost; no per-match cap; a shared cooldown of at most 3 s. **Move list** first, generated from the moveset data; practice mode later. **Build order:** the intent's stance field **once as a 4-bit mask** (this note), then the martial stance for both fighters, the other four stances, hybrids, the choreographer's settings; hybrids and their signatures, the special loadout, practice mode and per-stance choreographer granularity are **deferred** (presets first). **Brawler is retired** with a migration to Arena. **Answer 5** (the dodge on entering manoeuvre) stands and is flagged for a revisit after Orb plays it: the fix if it annoys is a dodge on a **tap only**.
 
 # Part A: stances on the controls
 
@@ -79,14 +83,30 @@ Its attacks are on **RB** (light) and **RT** (heavy), and its mode button is X. 
 
 ## A2. Two stance buttons held at once
 
-The layout resolves it; the sim reads one value.
+The layout reports the **set of held stance buttons** (after hold, latch, debounce and the one-shot, A4 and A5); the sim reads it as a number and looks the stance up in a data table. Order does not matter.
 
-1. **The transform chord comes first.** LT and RT pressed within 6 ticks (the chord window) are the transform chord whether or not a form is ready (today's rule 3). While the chord is pending or held, **no stance changes**: `stanceHeld` stays what it was. If a form is not ready the chord does nothing but its cue, as now.
-2. **Otherwise the most recently pressed stance button wins while it is held.** Pressing a second stance button while the first is down switches to the second; releasing it returns to the first if that is still held, else to martial. It is a stack of the held stance buttons, newest on top.
-3. **A sprint with a channel still works.** LT then RT more than 6 ticks apart are two stances (RT wins) and two states: `sprint` stays true (LT held 12 ticks), `power` stays true (RT held). The stance is only what the face presses read.
-4. **No hybrids by default.** Ten pairs exist (guard and energy, manoeuvre and energy, and so on) and a "hybrid stance" per pair would be a fifth to fifteenth stance. Recency gives a player access to all five stances; it gives no combination. **If Game Design wants hybrids** the intent grows a second slot, `stanceSecond` (0 none, 1 to 4), 3 bits more (A5); I would not build it before there is a matrix to put in it.
+**The mask.** Four bits, one per shoulder button: **LB 1 (defensive), RB 2 (energy), RT 4 (charging), LT 8 (manoeuvre)**. 0 is the martial stance. The reported values and what they mean:
 
-Why recency rather than a fixed priority: a priority makes some stances unreachable while another is held, and a player in a juggle who presses LB then RB expects the last button they touched to be the one that counts.
+| Mask | Held | Stance |
+| ---: | :--- | :--- |
+| 0 | nothing | martial |
+| 1 | LB | defensive |
+| 2 | RB | energy |
+| 4 | RT | charging (RT dominates: it is the only bit reported while RT is down) |
+| 8 | LT | manoeuvre |
+| 10 | LT + RB | **hybrid, evasive energy** (data-enabled; deferred) |
+| 3 | LB + RB | **hybrid, defensive ki** (data-enabled; deferred) |
+| 9 | LT + LB | **hybrid, terrain while flying** (data-enabled; deferred) |
+
+Every other combination is **never reported**: RT with anything reports 4; LB with RT, RB with RT and the like are RT. A set the data has not enabled reports **only the newest held bit** (a small recency rule in the layout, which keeps the number a base stance until hybrids ship).
+
+1. **The transform chord comes first.** LT and RT pressed within 6 ticks (the chord window) are the transform chord whether or not a form is ready (today's rule 3). While it is pending or held, **no stance changes**: the layout leaves the chord's two bits out of the mask, so it reports what it did before the chord. If a form is not ready the chord does nothing but its cue, as now.
+2. **RT dominates.** With RT down the mask is 4 and the face presses read the charging stance. **RT's own press still fires**: `powerPress` and, when threatened, the burst, from a guard. Ending the held guard is the **sim's** rule (a charging fighter is exposed), not the layout's: `guard` keeps reporting the physical LB so the burst and the perfect-block logic read it.
+3. **A sprint with a channel still works.** LT then RT more than 6 ticks apart: the mask is 4, `sprint` stays true (LT held 12 ticks), `power` stays true. The stance is only what the face presses read.
+4. **Hybrids are enabled in data.** A new `data/input/stances.json` (Tools' schema) lists the enabled hybrid masks. The three hybrids and their signatures are **deferred** (answer 33): the five base stances ship first, with the mask format already carrying the hybrids, so turning one on later is a data change and **needs no second format break**.
+
+Why a set and not recency: with hybrids the order a player presses two shoulders in must not matter, and a set lets Game Design add or remove a hybrid without touching the layout or the format. Recency survives only as the fallback for sets that are not yet hybrids.
+
 
 ## A3. What happens to every current input
 
@@ -99,7 +119,7 @@ Why recency rather than a fixed priority: a priority makes some stances unreacha
 | **dodge, sprint (LT)** | a tap dodges on press, held 12 ticks sprints; boost drains ki | unchanged **and** it is the manoeuvre stance from the first tick; the dodge on press still fires (see below) |
 | **power (RT)** | channel; a tap is the burst; RT with a face is a special | unchanged **and** it is the charging stance; the specials are its row |
 | **energy (RB)** | hold for energy attacks (built) | unchanged **and** it is the energy stance |
-| **specials chord (RT + face)** | `special` 1 to 3 on X, Y, A; the signature on B | unchanged for now: the layout keeps emitting `special` and `sig`, and also `stanceHeld = charging`, so the director can read either until the matrix lands; **no layout change until Game Design's matrix is ruled** |
+| **specials chord (RT + face)** | `special` 1 to 3 on X, Y, A; the signature on B | unchanged for now: the layout keeps emitting `special` and `sig`, and also the mask with the RT bit (4), so the director can read either until the matrix lands; **no layout change until Game Design's matrix is ruled** |
 | **escape (R3)** | the Escape edge | unchanged: a control of its own, not a stance (its release is never a stance change) |
 | **flight boost on LT** | hold 12 ticks to sprint; drains ki | unchanged |
 | **transform (LT + RT)** | the chord, 30 ticks | unchanged; suppresses stance changes while pending (A2) |
@@ -129,16 +149,16 @@ Why recency rather than a fixed priority: a priority makes some stances unreacha
 
 | | |
 | :--- | :--- |
-| New field | **`stanceHeld`**: 0 martial, 1 defensive, 2 energy, 3 charging, 4 manoeuvre, **3 bits at 47 to 49**, `BITS` becomes 50. Resolved by the layout (A2) so replays and the AI carry one value |
+| New field | **`stanceMask`**, a **4-bit mask** (A2): LB 1, RB 2, RT 4, LT 8, **bits 47 to 50**, `BITS` becomes 51. Resolved by the layout for hold, latch, debounce, one-shot and the RT and chord rules, so replays and the AI carry one number; the sim maps it to a stance with a data table. Named `stanceMask` (`SimIntent.stanceMask`) to avoid the clash with today's legacy `stance` float, which I3 removes |
 | Kept | `guard`, `guardPress`, `dodge`, `sprint`, `power`, `powerPress`, `powerTap`, `mode`, `light`, `lightHeld`, `heavy`, `heavyHeld`, `sig`, `special`, `context`, `escape`, `waited`, `transform`: each shoulder button keeps reporting its own state, because the existing director logic reads them. `mode` equals "RB held", not the resolved stance |
-| Room left | 3 spare bits (50 to 52) in a JSON-safe 53-bit integer. A `stanceSecond` for hybrids would use them all; **after that the record needs a second integer** (the replay would carry two), which is a format decision for Simulation |
+| Room left | **2 spare bits (51, 52)** in a JSON-safe 53-bit integer (JSON numbers are exact below 2^53). **Simulation does not have to split the record now.** Hybrids need no more bits (they are masks 3, 9 and 10). A further field wider than 2 bits would force a second integer: the replay's input entries are `[tick, slot, packed]`, and a split would add a fourth element `packed2`, with a format bump, the pack, unpack and hash changes and a golden. **I3 frees 5 bits when it removes the legacy `stance` (3 bits), `dash` and `charge` (bits 35 to 39)**, but that renumbers the record and is a format break of its own. **Recommendation: no split until a field needs it; record the decision when the next wide field is asked for** |
 | Replays | **Replays recorded before this stop playing back.** The intent version goes to **4**; `SimReplay.play` refuses another version (reason `format`). An old packed intent would unpack fine (the new bits are zero, martial), but the sim plays differently once a stance means something, so a silent replay would diverge |
-| Hash and golden | `stanceHeld` appended to `INTENT` in `sim/core/hash.gd`; the golden regenerates once; the pack test in `parity.gd` covers 0 to 4 and the first invalid integer moves to `1 << 50` |
-| The AI | writes the same record: Encounter's AI must set `stanceHeld` for its blows to be stance moves (martial, `0`, is what it writes today) |
-| The press log | each entry gains the **stance** (0 to 4) in place of `mode`'s 0 or 1 (energy is stance 2): the classifier's mix counts (light, heavy, sig, energy) become counts by stance and by button; `classify` keeps its style, timing and grades |
-| Tests | the layout tests for A2 (recency, the chord exception, the stack release), the touch one-shot latch, the debounce, the pack round trip; about a day on my side once the matrix exists |
+| Hash and golden | `stanceMask` appended to `INTENT` in `sim/core/hash.gd`; the golden regenerates once; the pack test in `parity.gd` covers masks 0 to 15 and the first invalid integer moves to `1 << 51` |
+| The AI | writes the same record: Encounter's AI sets the mask for its blows to be stance moves (0, martial, is what it writes today); it may write any mask the player could (the hybrids when enabled) |
+| The press log | each entry gains the **stance mask** (0 to 15) beside `mode` (energy is mask 2): the classifier's mix counts (light, heavy, sig, energy) become counts by stance and by button; `classify` keeps its style, timing and grades; the hybrid masks are just more stances |
+| Tests | the layout tests for A2 (the mask for every held set, RT dominance, the chord exception, newest-bit fallback, hybrids switched on by data), the touch one-shot latch, the debounce, the pack round trip for masks 0 to 15; about a day on my side once the matrix exists |
 
-**Do not build before Game Design's matrix exists.** The field is useful only when the director reads it; adding it earlier changes a format for nothing.
+**Do not build before Game Design's matrix exists** (the EP's order, 2026-10-04). **Build the mask once, as the whole 4-bit field, so hybrids never need a second format break;** then the martial stance for both fighters, the other four, the hybrids, the choreographer's settings. The field is useful only when the director reads it; adding it earlier changes a format for nothing.
 
 # Part B: lunges and far approaches, in the manoeuvre stance
 
@@ -176,7 +196,7 @@ With stances the control of a flight has a natural home: **LT, the manoeuvre sta
 
 **Why LT.** The control of a flight is manoeuvring, and LT is already the flight button (boost, dodge, sprint). Holding it through an approach is a visible, deliberate commitment (a cost in ki and in a held finger), and releasing it is a feint a player can feel. An unpiloted lunge is cheap and predictable; a piloted one is flexible and costs ki, which is the trade a "more controllable lunge" should have. It also answers "easier to spot when they're used against you": the defender can see which kind is coming.
 
-**Inputs by layout:** pad Arena: LT held with the attack press, kept held; keyboard: Space (or Period for P2) held through the flight; touch Full: the Dodge button held; touch Simple: the stick's outer ring held (the sprint ring) with the Attack press; Simple pad: A held. The steer and throttle are the left stick (or WASD). **No new intent field**: the sim reads `stanceHeld == manoeuvre` (or the `dodge` hold) at the press and each tick.
+**Inputs by layout:** pad Arena: LT held with the attack press, kept held; keyboard: Space (or Period for P2) held through the flight; touch Full: the Dodge button held; touch Simple: the stick's outer ring held (the sprint ring) with the Attack press; Simple pad: A held. The steer and throttle are the left stick (or WASD). **No new intent field**: the sim reads the mask's LT bit (8) at the press and each tick.
 
 ## B3. What the defender needs to read it
 
@@ -231,8 +251,8 @@ Orb's ruling was "hold to brake at a ki cost" (not the dodge tap); the button wa
 | Who | What |
 | :--- | :--- |
 | **Game Design** | the stance-by-button matrix (5 by 4, plus the Simple column); whether hybrids exist; whether a stance entered while threatened pays the dodge-cancel; the brake's and the piloted flight's ki per tick; the charge ceiling; whether Brawler is retired; whether a longer approach is acceptable for eight-minute matches |
-| **Simulation** | `stanceHeld` in the intent (bits 47 to 49), intent version 4, the hash line, the pack test, one golden; whether the 53-bit record is to be split before hybrids |
-| **Encounter** (`bands.gd`, `interrupts.json` `bands`) | read `stanceHeld`; the piloted approach (steer, throttle, release-cancel, commit point, ki); the minimum and maximum times, speed cap, range ceiling, ease-out; the AI writes `stanceHeld`; the press log keeps the stance |
+| **Simulation** | `stanceMask` in the intent (bits 47 to 50), intent version 4, the hash line, the pack test, one golden; **the 53-bit record needs no split now** (2 spare bits; split only when a field wider than 2 bits is asked for, or decide at I3, which frees 5) |
+| **Encounter** (`bands.gd`, `interrupts.json` `bands`) | read the mask; the piloted approach (steer, throttle, release-cancel, commit point, ki); the minimum and maximum times, speed cap, range ceiling, ease-out; the AI writes the mask; the press log keeps it |
 | **Controls** | the layout's stance stack and one-shot latch, the touch badge states, the trigger debounce and sensitivity setting, the D-pad one-shot, the tests; migrating a Brawler choice; no code until the matrix exists |
 | **UI** | the stance badge (which stance is active, the armed one-shot), the settings ("Stance buttons: hold or latch", the trigger sensitivity), the off-screen arrowhead, the Brawler removal text |
 | **Animation** | one stance pose per stance; the 4-tick crouch before a mid lunge; the charge and takeoff poses per weight |
