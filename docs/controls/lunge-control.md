@@ -14,6 +14,7 @@ Owner: Controls and Game Feel. Date: 2026-10-04. **A note only: no code, no data
 | 6 | The Brawler preset | **Retire it** (its attacks sit on RB and RT, which are now stance buttons); a fighting-game player remaps Arena |
 | 7 | LT, manoeuvre | **LT is the pilot's stance.** A lunge or charge started with LT held is **piloted** (steer, throttle, a free cancel before the commit point, at a ki cost); without LT it is the plain straight line. **Air recovery moves to LT**: tap at a bounce or tumble is the tech, hold in the air is the brake |
 | 8 | Reading a lunge | A minimum travel time, a speed cap by distance, a range ceiling for charges, an ease-out, a marker on the defender and a tell before it starts (Part B) |
+| 9 | **The zip (B6)** | **Needs intent version 4 first**, with three bits, not two: `stanceMask` (LT held), `contextHeld` (A hold) and **a new `sigHeld`** (B held, for B's heavy reading). That fills the 53-bit record exactly. The exit is read from the stick over the **12 ticks before the way out begins**, in **16 sectors** around the enemy, dead zone 0.35. A dodge is **not delayed**: it fires on the LT press as now, and a face press within 8 ticks while LT is still down and he is not threatened **converts it into the zip**. The reading of a zip is the classifier's: held is heavy, on the beat is tech, three presses is speed |
 
 ## Answers recorded (the EP for Orb, 2026-10-04, `docs/ep/stance-answers-2026-10-04.md`)
 
@@ -243,6 +244,80 @@ Orb's ruling was "hold to brake at a ki cost" (not the dodge tap); the button wa
 - **Simple:** A (dodge) held; **touch:** the Dodge button held or the outer ring.
 - **Cost of the choice:** a player who holds LT in a juggle also dodges on the press (the dodge is the first tick of the stance). Inside a launched state the dodge edge is only a tech (at its windows) or ignored, so there is no dodge-cancel; Game Design to confirm.
 
+## B6. The zip (Orb, 2026-10-05; `lt-zip-v4.html`): can it run, how the exit is read, the dodge, the readings
+
+The approved zip: **LT held plus X, Y or B (or A, press or hold) in the mid band**; he zips to the rival, strikes, and zips out. By default he **returns to where he started**; with the stick **toward** the rival he **crosses through** to the far side; Orb's later words generalise that to **any spot on a full circle around the enemy**, and **away from the rival ends him further out than he started**, a way to leave a brawl he is not ready to commit to. Every button reads **speed, tech or heavy**, and A has a press and a hold with a grab lockout. A well-timed heavy or tech strike by the rival counters a zip.
+
+### B6.1 Can it run on today's intent (version 3)? No: version 4 first, and it needs three bits, not two
+
+Plainly: **the zip cannot run on version 3, and it needs one more bit than the stance work planned.**
+
+| What the zip needs to see | Version 3 has | So |
+| :--- | :--- | :--- |
+| **LT is down**, from the first tick | `dodge` is an edge on the press; `sprint` turns true only after **12 ticks** of holding | cannot tell "LT held, then X" (a zip) from "LT tapped, then X" (a dodge, then an attack): by tick 12 the player has long since pressed. A stand-in on `sprint` would make every zip start 200 ms late. **Needs `stanceMask`, LT bit (8)** |
+| **A held**: the hold of A's press-and-hold | `context` is an edge only | **Needs `contextHeld`** (bit 51, already ruled) |
+| **B held**: B's heavy reading (X, Y and B all read speed, tech and heavy) | `sig` is an edge only; X and Y have `lightHeld` and `heavyHeld` | **Needs `sigHeld`: a new level bit** (B is the only face button with no held level) |
+| The stick | `mx`, `my` on the 1/127 grid | present |
+| X and Y held, the edges | present | present |
+
+So the one format change is **`stanceMask` (bits 47 to 50), `contextHeld` (bit 51) and `sigHeld` (bit 52), intent version 4**, and **that fills the 53-bit JSON-safe record exactly: no spare bit remains.** The next field after it needs a second integer. **Options, for Simulation and the EP, before the tree is handed over:**
+1. **Ride I3 along (my recommendation):** retire the legacy `stance`, `dash` and `charge` in the same version 4 break. They are bits 35 to 39 (five bits), they are still read by `fighter.gd`, and the record is renumbered once; that leaves five spare bits and no second integer. It is more sim work than the stance fields, which is why it is a decision, not an assumption.
+2. **Split now:** a second integer in each replay input entry (`[tick, slot, packed, packed2]`), which gives plenty of room and a second format change shape; more plumbing (pack, unpack, hash, golden, replay) but no dependence on I3.
+3. **Accept the full record:** fine until the next field; the cost is that the next field forces option 2.
+
+(If the zip's B reading were dropped, `sigHeld` would not be needed and one bit would remain; Orb's words say B has the speed, tech and heavy readings, so I assume it stays.)
+
+### B6.2 When the stick is read for the exit, and how its direction is told apart
+
+**When: at the start of the way out, from the last 12 ticks.** The exit is decided after the strike, not at the press: use the **aim latch** (`SimAim`) over the 12 ticks before the zip's way out begins. It keeps the player's last deliberate direction when they let go of the stick as the strike lands, and it lets a defender's counter show before the attacker commits (the exit is a late, reactive choice). **A direction counts only if it was held for at least 3 of those ticks** (a spring-back after a release swings through intermediate angles for 1 to 2 ticks; the dwell rule ignores it). A player who pushes at the press and holds it reads as pushing; one who pushed and let go 20 ticks ago reads neutral.
+
+**What is read: the stick's direction as seen from the enemy.** The mental model is one sentence: **"push where you want to end up, relative to him."** The exit spot is on a circle around the enemy in the stick's direction on screen: stick up, above him; stick left, to his left; and so on. That agrees with Orb's examples: if the zipper started on his right, **pushing left is toward the rival and ends on the far side (the cross-through)**; **pushing right is away and ends on the starting side, further out**.
+
+| Stick (seen from the enemy, relative to where he started) | The exit |
+| :--- | :--- |
+| **Neutral** (no direction held for 3 of the last 12 ticks, inside the dead zone) | the zip back to **where he started** (the default) |
+| **Toward** (within 22.5 degrees of the direction across the enemy) | the **cross-through**: the far side at the ring's radius, level with the enemy |
+| **Any angle between** | the spot **on the ring at that angle**: above, below, behind, in front, and every 22.5 degrees in between (16 sectors) |
+| **Away** (within 45 degrees of directly away: the 5 sectors centred on away) | the starting side, **further out than he started** (a way to leave the brawl; the radius below) |
+
+**The dead zone and the sectors.** The dead zone is the aim's: a **circle of 0.35** of full deflection. The angle is quantised to **16 sectors of 22.5 degrees** (not the aim's 8): enough to give "any spot in a 360 degree" a feel of continuity on an analogue stick, and the 8 directions of a keyboard are exactly 8 of the 16 sectors (every even one), so a keyboard player reaches every spot the main compass names and an analogue player adds the in-betweens. `SimAim` gains a `sector16` and the dwell read; no trig (comparison and multiplication only, as `sector`).
+
+| Device | How the direction is read |
+| :--- | :--- |
+| **Pad stick** | analogue, the 16 sectors, dead zone 0.35; the dwell rule above rejects the spring-back |
+| **Keyboard** (WASD or IJKL) | eight directions only: two keys held give a diagonal; **the keys need to be held for 3 ticks together** to read as a diagonal, so two keys pressed 1 to 2 ticks apart do not read as the first key alone; opposite keys cancel; no keys is neutral |
+| **Touch** | the floating stick, analogue as a pad. **Full touch** cannot hold the Dodge button and the stick with one thumb, so the zip uses the **one-shot latch** (tap Dodge, then the stick with the left thumb and the attack with the right). **Simple touch**: the stick's **outer ring is LT**, so the zip's direction is the same finger's direction, with no second finger |
+
+**The radii are Game Design's and Encounter's** (proposals: the ring at **4 bh** around the enemy for every direction except away; away ends at **the start distance plus 4 bh, at least 9 bh, at most 12.5 bh** so he leaves the brawl but stays inside the mid band and inside the "never out of range" pillar; the contact radius for the strike itself stays 2.5 bh as an approach's engage point). I have only the input rules.
+
+### B6.3 The dodge on an LT press: the rule (answer 5)
+
+A zip needs LT **held** with no dodge firing first. Three ways:
+
+1. **Dodge on release (a tap only):** rejected. It costs the dodge its no-latency tap (the dodge fires on the release, a tap of 6 to 10 ticks, 100 to 170 ms late), and the dodge-cancel is the defender's answer to a blow in flight: a delay there is a lost exchange.
+2. **No dodge when a face press follows within N ticks:** impossible as stated, because the dodge fires before the face press exists.
+3. **Fire the dodge on the press, and let a face press convert it:** **recommended.** The dodge stays instant. **If a face press arrives within 8 ticks of the LT press (133 ms) while LT is still down, and the fighter was not threatened when he pressed LT, the sim cancels the dodge's free lunge and starts the zip from where he stands.** The lunge has moved him at most a body height in 8 ticks, and the free dodge costs nothing, so there is nothing to refund.
+   - **If he was threatened** (a wind-up on, a blow or shot coming, an exchange as defender), **the dodge stands**: it just saved him, and the zip then starts from his dodge position as a counter. He pays the dodge-cancel (15 ki and the 3 s cooldown) **and** the zip's cost, which is the price of dodging and zipping in one motion.
+   - **A tap and then an attack** (LT released before the face press) is a dodge and an attack, never a zip: only LT down at the face press tick makes a zip, so the two are told apart exactly.
+   - **LT held past 8 ticks, or into the sprint**, then a face press: the zip simply starts (no dodge to convert; the player is already flying).
+
+What the sim needs: the LT bit of the mask at the face press, `act.dodgeTick` (it has it), and whether the fighter was threatened at the LT press (the director has that). **No layout change and no delayed dodge.** Answer 5 stands as the EP recorded it, with this as its fix: the unwanted dodge on a zip is converted away, the wanted one stays.
+
+### B6.4 The speed, tech and heavy readings of a zip's press (the classifier)
+
+The three readings are the classifier's existing ones, applied to the press that starts the zip and the presses that follow it. Precedence is the classifier's (**hold, then tech (timed), then speed (mash)**; a single plain press is the plain zip).
+
+| Reading | What it is for a zip | The rule |
+| :--- | :--- | :--- |
+| **Heavy: held** | the starter is held | the starter button is down for the zip's **hold ticks** (the far charge's: light 8, heavy 16; B and A are Game Design's, proposed 16 and 18 as in the prototype): the zip is the heavy zip (the wind-up before it goes; release on the flash is the timed release, perfect within 4 ticks, the guard break). Needs `lightHeld`, `heavyHeld`, **`sigHeld`** or `contextHeld` |
+| **Tech: timed** | the starter is on a beat | the starter press is within **4 ticks (`beatHalf`) of a blow's contact** in the running exchange, either fighter's (the usual `beat`, graded perfect or good): a clean fast single hit. **A follow-up press within 4 ticks of the zip's own arrival** (its first contact) is the tech upgrade of a plain zip. **The mark of a counter is his arrival:** the defender's tech or heavy press is graded against the zip's arrival contact (a planned strike beat the director already lists in `blows`) |
+| **Speed: mashed** | a zip's three hits | **three presses inside the zip**: the starter and **two more, each within 10 ticks of the one before** (`mashGap`) and before the exit begins. A zip has three hits, so its mash is three presses, not the general four (`mashPresses` 4); the director extends the zip by one hit for each accepted press, up to three. One press is the plain one-hit zip; two is still plain |
+| **Press and hold on A** | a grab zip, and its lockout | press (A tapped) and hold (A held 18 ticks, `contextHeld`); **after any A zip a lockout of 150 ticks (2.5 s) follows in which A does nothing** (the prototype's number; "no grab spamming"). A press during the lockout is dropped, **and does not restart it** (unlike the perfect block's anti-mash): the sim owns the lockout, the HUD shows it |
+
+**What I will build in the classifier (pure, tested, when the tree is handed over):** `SimPressRead` gains a `CONTEXT` kind (so A's presses and holds are in the log), `zip_read(log, zip_start, arrival, opts)` returning `plain`, `speed`, `tech` or `heavy` with the three-press mash rule and the arrival mark, and a `sector16` in `SimAim` with the 3-tick dwell. All numbers in the `read` and `aim` blocks of `timing.json` (new keys: `zipMashPresses` 3, `zipMashGap` 10, `aim.sectors` 16, `aim.dwellTicks` 3, `aim.exitWindow` 12, with Tools' schema).
+
+**Costs** (the prototype's, for Game Design): X 15, Y 25, B 40 ki, plus 10 for the heavy reading; A press 20, hold 30. The zip is a deliberate, expensive manoeuvre: Orb's "at great cost to stamina".
+
 ## B5. Measures for QA and Encounter
 
 - Far charge flight: **p10 at least 30 ticks** (light), **median at least 45**; no flight above the cap (6 000 u/s light, 4 500 heavy).
@@ -258,6 +333,7 @@ Orb's ruling was "hold to brake at a ki cost" (not the dodge tap); the button wa
 | :--- | :--- |
 | **Game Design** | the stance-by-button matrix (5 by 4, plus the Simple column); whether hybrids exist; whether a stance entered while threatened pays the dodge-cancel; the brake's and the piloted flight's ki per tick; the charge ceiling; whether Brawler is retired; whether a longer approach is acceptable for eight-minute matches |
 | **Simulation** | `stanceMask` (bits 47 to 50) and `contextHeld` (bit 51) in the intent, intent version 4, the hash line, the pack test, one golden; **the 53-bit record needs no split now** (1 spare bit; split when a field of more than one bit is asked for, or decide at I3, which frees 5); the director's stance for a Simple slot (`mode` -1) |
+| **Simulation** (the zip) | `sigHeld` (bit 52) with the mask and `contextHeld` in version 4, **the record is then full**: decide I3-with-v4 (recommended), a split, or acceptance, before the tree is handed over |
 | **Encounter** (`bands.gd`, `interrupts.json` `bands`) | read the mask; the piloted approach (steer, throttle, release-cancel, commit point, ki); the minimum and maximum times, speed cap, range ceiling, ease-out; the AI writes the mask; the press log keeps it |
 | **Controls** | the layout's stance stack and one-shot latch, the touch badge states, the trigger debounce and sensitivity setting, the D-pad one-shot, the tests; migrating a Brawler choice; no code until the matrix exists |
 | **UI** | the stance badge (which stance is active, the armed one-shot), the settings ("Stance buttons: hold or latch", the trigger sensitivity), the off-screen arrowhead, the Brawler removal text |
