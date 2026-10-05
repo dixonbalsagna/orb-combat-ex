@@ -93,3 +93,20 @@ Written by the EP on 2026-10-01. Paths are from the project folder. The fuller s
 - Roster of twelve (2026-10-05): start with docs/ep/roster-twelve-overview.md; detail in docs/design/roster-twelve.md and docs/narrative/roster-twelve-identity.md. Eleven questions for Orb are listed in the overview.
 - Move names for the voice lab: docs/narrative/move-names-draft.csv (60 rows, the voice lab's eight columns; pull it in and edit) with the rules in docs/narrative/move-names-draft.md.
 - Intro plotlines: docs/narrative/dynamic-intros.md section 11 (the generative layer; Orb's questions at 11.11; what Orb authors: the canon ledger rows and about 32 lines a fighter).
+
+## Morning summary for Orb (night of 2026-10-05; the EP updates this as work lands)
+
+Live on the play page (pushed, build green, checks passed on an export):
+- Lunges wind up before they move (6 ticks light, 10 heavy), with a tell.
+- The stance input: the game now reads which stance button is held, a held A and a held B. Replays recorded before this no longer play back. The Brawler control layout is retired (a saved choice loads as Arena).
+- The finisher struggle at strictness 2; the rival's heavies land with a fist; the deflect landing ring is gone; the glasses glare; split-screen camera fixes and an incoming-attacker marker.
+- Press styles and the zip's looks are in but switched off: Shift+F7 turns the body motion and effects on together. Nothing drives a zip yet.
+
+Written and waiting for Orb to read:
+- Roster of twelve: docs/ep/roster-twelve-overview.md (one open disagreement: leave out the Harbinger or the Showman).
+- Intro plotlines: docs/narrative/dynamic-intros.md section 11.
+- Move names to pull into the voice lab: docs/narrative/move-names-draft.csv.
+- All five stances' generated movesets (100 moves a fighter, parked): docs/combat/pending/movegen/review-sheet.md.
+- The melee spec with every ruling: docs/design/melee-press-feel.md.
+
+In the queue, in order: World's building stages; Simulation's dynamic intros; Encounter's first brawl slice (every press a blow); the fighter rename to PROTAGONIST and RIVAL; the zip.
