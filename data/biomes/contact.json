@@ -42,7 +42,7 @@
     "cap": 1.0
   },
   "area": {
-    "slam": 0.9,
+    "slam": 0.75,
     "touch": 0.4,
     "laterShare": 0.0
   },

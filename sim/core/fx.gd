@@ -417,6 +417,14 @@ static func floorHitShot(S: SimState, b, floor_: int, n: int, outcome: String, r
 	e.kind = b.kind; e.owner = float(slot); e.victim = -1.0
 
 
+## A building's stage changed (WorldStructures.stage: 0 intact, 1 windows out, 2 a part gone, 3 a shell, 4 rubble): b, from, to, where it stands (x, y its
+## ground, z its depth, w its width), h its standing height now, kind, cx the blast's x, owner the causing slot, n the floors lost in the step.
+static func buildingStage(S: SimState, b, from_: int, to_: int, cx: float, owner: float, n: int, h: float) -> void:
+	var e := _ev(S, "building_stage")
+	e.b = float(b.idx); e.from = float(from_); e.to = float(to_); e.x = b.x; e.y = WorldStructures.baseY(S, b); e.z = b.z; e.w = b.w; e.h = h
+	e.kind = b.kind; e.cx = cx; e.owner = owner; e.n = n
+
+
 ## B2: a brunt hit floors of a skyscraper: the lowest floor, how many were cleared (0 for a crack or a dent).
 static func floorHit(S: SimState, f, b, floor_: int, n: int, outcome: String, ratio: float, y: float, by) -> void:
 	var e := _ev(S, "floor_hit")

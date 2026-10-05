@@ -153,4 +153,5 @@ static func dataHash() -> String:
 	h.text(SimShots.dataHash())   # shots: data/fight/shots.json
 	h.text(WorldContact.dataHash())   # World's ground contact: data/biomes/contact.json
 	h.text(WorldBlast.dataHash())     # World's shot blast: data/biomes/blast.json
+	h.text(WorldStructures.stagesHash())   # World's building stages: data/biomes/stages.json
 	return h.hex()

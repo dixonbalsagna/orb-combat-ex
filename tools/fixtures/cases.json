@@ -55373,6 +55373,502 @@
         "rule": "xref:pressstyles-beat",
         "pointer": "/beat/charge/tapped"
       }
+    },
+    {
+      "id": "biomes-stages-live-valid",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/cutFloorsStage": 2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-key-required",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "del": [
+            "/hpAt"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "biomes-stages-cut-floors-required",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "del": [
+            "/cutFloorsStage"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "biomes-stages-schema-version",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/schema": "biomes.stages/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "biomes-stages-unknown-key",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "biomes-stages-underscore-key-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-hp-at-type",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/hpAt"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-too-short",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.9,
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/hpAt"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-too-long",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.9,
+              0.65,
+              0.35,
+              0.1
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/hpAt"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-item-type",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.9,
+              "half",
+              0.35
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/hpAt/1"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-zero",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.9,
+              0.65,
+              0
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/hpAt/2"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-one",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              1,
+              0.65,
+              0.35
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/hpAt/0"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-negative",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.9,
+              0.65,
+              -0.1
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/hpAt/2"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-rising",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.5,
+              0.65,
+              0.35
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:stages-order",
+        "pointer": "/hpAt/1"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-equal",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.9,
+              0.65,
+              0.65
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:stages-order",
+        "pointer": "/hpAt/2"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-last-above",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.9,
+              0.35,
+              0.65
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:stages-order",
+        "pointer": "/hpAt/2"
+      }
+    },
+    {
+      "id": "biomes-stages-hp-at-close-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/hpAt": [
+              0.99,
+              0.5,
+              0.01
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-cut-floors-low",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/cutFloorsStage": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/cutFloorsStage"
+      }
+    },
+    {
+      "id": "biomes-stages-cut-floors-high",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/cutFloorsStage": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/cutFloorsStage"
+      }
+    },
+    {
+      "id": "biomes-stages-cut-floors-integer",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/cutFloorsStage": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/cutFloorsStage"
+      }
+    },
+    {
+      "id": "biomes-stages-cut-floors-edges-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/cutFloorsStage": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-cut-floors-last-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/cutFloorsStage": 3
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-leave-frac-required",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "del": [
+            "/leaveFrac"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "biomes-stages-leave-frac-negative",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/leaveFrac": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/leaveFrac"
+      }
+    },
+    {
+      "id": "biomes-stages-leave-frac-above-limit",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/leaveFrac": 0.95
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/leaveFrac"
+      }
+    },
+    {
+      "id": "biomes-stages-leave-frac-one",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/leaveFrac": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/leaveFrac"
+      }
+    },
+    {
+      "id": "biomes-stages-leave-frac-type",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/leaveFrac": "some"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/leaveFrac"
+      }
+    },
+    {
+      "id": "biomes-stages-leave-frac-off-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/leaveFrac": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-leave-frac-limit-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/leaveFrac": 0.9
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-leave-frac-first-value-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/leaveFrac": 0.1
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

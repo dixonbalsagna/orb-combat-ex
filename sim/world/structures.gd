@@ -36,6 +36,87 @@ const RING_KEEP: float = 0.25               # a building past a blast's ring cap
 const RUBBLE_BOWL_CAP: float = 0.3         # inside a fresh bowl the heap is at most this share of the local depth
 
 
+# ---- the stages of a building's destruction (docs/world/staged-destruction.md) ----
+const STAGES_PATH: String = "res://data/biomes/stages.json"
+const STAGES_SCHEMA: String = "biomes.stages/1"
+static var _hpAt: Array = [0.9, 0.65, 0.35]
+static var _cutStage: int = 2
+static var _leave: float = 0.0
+static var _stLoaded: bool = false
+static var _stErrors: Array = []
+static var _stHash: String = ""
+
+
+static func stagesErrors() -> Array:
+	if not _stLoaded:
+		_stLoad()
+	return _stErrors
+
+
+static func stagesHash() -> String:
+	if not _stLoaded:
+		_stLoad()
+	return _stHash
+
+
+static func _stLoad() -> void:
+	_stLoaded = true
+	_stErrors = []
+	var f := FileAccess.open(STAGES_PATH, FileAccess.READ)
+	if f == null:
+		_stErrors.append("stages.json: cannot open " + STAGES_PATH)
+		return
+	var j = JSON.parse_string(f.get_as_text())
+	if not (j is Dictionary) or j.get("schema", "") != STAGES_SCHEMA:
+		_stErrors.append("stages.json: not a %s object" % STAGES_SCHEMA)
+		return
+	var hp = j.get("hpAt")
+	if not (hp is Array) or hp.size() != 3 or not (hp[0] > hp[1] and hp[1] > hp[2] and hp[2] > 0.0 and hp[0] < 1.0):
+		_stErrors.append("stages.json: hpAt is three numbers, strictly decreasing, in (0, 1)")
+		return
+	var h := SimHash.Hasher.new()
+	h.text("biomes.stages")
+	FighterData._canon(h, j)
+	_stHash = h.hex()
+	_hpAt = [float(hp[0]), float(hp[1]), float(hp[2])]
+	_cutStage = clampi(int(j.get("cutFloorsStage", 2)), 1, 3)
+	_leave = clampf(float(j.get("leaveFrac", 0.0)), 0.0, 0.9)
+
+
+## The stage of a building, 0 to 4: 0 intact, 1 windows out, 2 a part gone, 3 a shell, 4 rubble (not alive). A pure function of its hit points and its
+## cut floors (and so of the hashed state): Rendering calls it every frame, a seek or a late join needs nothing saved.
+static func stage(b) -> int:
+	if not _stLoaded:
+		_stLoad()
+	if not b.alive:
+		return 4
+	var f: float = b.hp / b.maxhp
+	var s: int = 0
+	if f < float(_hpAt[0]):
+		s = 1
+		if f < float(_hpAt[1]):
+			s = 2
+			if f < float(_hpAt[2]):
+				s = 3
+	if b.floors >= WorldBrunt.FLOORS_MIN and b.fmask != (1 << b.floors) - 1:
+		s = maxi(s, _cutStage)
+	return s
+
+
+## The share of its hit points a blast must leave a standing building (stages.json leaveFrac; 0 off).
+static func leaveFrac() -> float:
+	if not _stLoaded:
+		_stLoad()
+	return _leave
+
+
+## Send building_stage when the building's stage is no longer s0 (taken before the damage). n: the floors lost in the step.
+static func stageEmit(S: SimState, b, s0: int, cause, cx: float, n: int = 0) -> void:
+	var s1: int = stage(b)
+	if s1 != s0:
+		SimFx.buildingStage(S, b, s0, s1, cx, WorldCrater._slot(S, cause), n, curH(b))
+
+
 ## Standing height shrinks with damage to 30 percent of full; a destroyed building is gone (the rubble heap is ground).
 static func curH(b) -> float:
 	if not b.alive:
@@ -146,6 +227,7 @@ static func damageBuilding(S: SimState, b, d: float, cause, mode: String = "burs
 	if not b.alive or d <= 0.0:
 		return
 	var before: float = b.hp
+	var s0: int = stage(b)
 	b.hp -= d
 	var frac: float = SimMathx.jmin(before, d) / b.maxhp
 	var dead: float = SimMathx.jmin(b.popAlive, b.pop * frac * 1.3)
@@ -177,6 +259,8 @@ static func damageBuilding(S: SimState, b, d: float, cause, mode: String = "burs
 			S.world.fallFold += 1.0
 	else:
 		SimFx.debris(S, b.x, gy + curH(b), 4, "#77808f", 300.0)
+	if not local:   # (a collapse called by a floors path is reported by that path)
+		stageEmit(S, b, s0, cause, cx)
 
 
 ## Bring building b down now (its hp is spent): everything left in it is lost or flees, and it falls in the given mode.
@@ -281,7 +365,11 @@ static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, c
 		var kp: float = keep if (capLeft >= 0 and levelled >= capLeft) else 0.0
 		if inRing and ringCap >= 0 and ringLevelled >= ringCap:
 			kp = RING_KEEP
-		damageBuilding(S, b, dmg * (1.0 - SimMathx.jclamp(d / r, 0.0, 1.0) * 0.7), cause, "implode", x, evt, false, kp)
+		var dd: float = dmg * (1.0 - SimMathx.jclamp(d / r, 0.0, 1.0) * 0.7)
+		var lv: float = leaveFrac()
+		if not beam and lv > 0.0 and b.hp > lv * b.maxhp:   # a blast cannot finish a standing building (stages.json leaveFrac): it leaves it at that share and the next blast takes it
+			dd = minf(dd, b.hp - lv * b.maxhp)
+		damageBuilding(S, b, dd, cause, "implode", x, evt, false, kp)
 		if S.world.structuresLost > lost0:
 			levelled += 1
 			if inRing:

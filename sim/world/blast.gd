@@ -125,7 +125,10 @@ static func shotBuilding(S: SimState, slot: int, kind: String, power: float, b, 
 	var by = f
 	if b.floors >= WorldBrunt.FLOORS_MIN:
 		var oc: Dictionary = WorldBrunt.outcomeDmg(S, b, y, dmg)
+		var s0: int = WorldStructures.stage(b)
+		var fm0: int = b.fmask
 		var c: Dictionary = _floors(S, b, oc, by, x, y, slot, vx / sp, vy / sp)
+		WorldStructures.stageEmit(S, b, s0, by, x, WorldBrunt._bits(fm0 & ~b.fmask))
 		res.outcome = "collapse" if c.collapse else ("pancake" if c.pancake else oc.outcome)
 		res.levelled = not b.alive
 	else:

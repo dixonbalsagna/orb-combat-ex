@@ -356,6 +356,10 @@
       "schema": "biomes-blast.schema.json"
     },
     {
+      "match": "data/biomes/stages.json",
+      "schema": "biomes-stages.schema.json"
+    },
+    {
       "match": "data/input/actions.json",
       "schema": "input-actions.schema.json"
     },

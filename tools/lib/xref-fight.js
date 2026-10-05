@@ -1384,6 +1384,12 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     if (def) for (const [bk, blk] of blocks) if (bk !== 'default' && bk !== 'shared') for (const n of Object.keys(def[1])) if (!n.startsWith('_') && !(n in blk)) err(ZP, `/poses/${esc(bk)}`, 'zip-name', `fighter "${bk}" has no pose for "${n}", which the default block has`, 'warning');
   }
 
+  // ---- biomes stages: the health thresholds strictly fall ----
+  const stg = get('data/biomes/stages.json');
+  if (isObj(stg) && Array.isArray(stg.hpAt)) for (let i = 1; i < stg.hpAt.length; i++) {
+    if (typeof stg.hpAt[i] === 'number' && typeof stg.hpAt[i - 1] === 'number' && stg.hpAt[i] >= stg.hpAt[i - 1]) err('data/biomes/stages.json', `/hpAt/${i}`, 'stages-order', `hpAt[${i}] ${stg.hpAt[i]} is not below hpAt[${i - 1}] ${stg.hpAt[i - 1]}; the thresholds must strictly fall`);
+  }
+
   // ---- fighter ladder: the beam tables never decrease with the tier ----
   for (const rel of docsFor(/^data\/fighters\/[^/]+\/ladder\.json$/)) {
     const lad = get(rel);

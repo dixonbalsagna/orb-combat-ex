@@ -476,6 +476,7 @@ func _init() -> void:
 			break
 	Sr.out.fx.clear()
 	WorldStructures.damageArea(Sr, tw.x + 4000.0, 0.0, 6000.0, 1.0e7, Sr.fighters[1])
+	WorldStructures.damageArea(Sr, tw.x + 4000.0, 0.0, 6000.0, 1.0e7, Sr.fighters[1])   # (the stage cap: the first blast leaves them standing, the second finishes them)
 	var fell: int = 0
 	var implode: int = 0
 	for e in Sr.out.fx:
@@ -757,6 +758,7 @@ func _init() -> void:
 				tall3 = bb
 				break
 		WorldStructures.damageArea(Sh, tall3.x, 0.0, 600.0, 1.0e8, Sh.fighters[1])
+		WorldStructures.damageArea(Sh, tall3.x, 0.0, 600.0, 1.0e8, Sh.fighters[1])   # (the second blast of the stage cap)
 		check(not tall3.alive, "an area blast still levels a skyscraper whole")
 
 	print("== terrain fixes T1 to T4 (docs/world/terrain-audit.md) ==")

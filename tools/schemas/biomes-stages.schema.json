@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-stages",
+  "title": "biomes.stages/1",
+  "description": "data/biomes/stages.json: the stages of a building's destruction (docs/world/staged-destruction.md; WorldStructures.stage). hpAt: the health shares (of its full health) at which a building enters its next stage, three numbers falling from the first. cutFloorsStage: the stage from which cut floors show. Version field: schema. Policy: closed except keys starting with an underscore. The order of hpAt (strictly decreasing) is checked by tools/lib/xref-fight.js (stages-order).",
+  "type": "object",
+  "required": [
+    "schema",
+    "hpAt",
+    "cutFloorsStage",
+    "leaveFrac"
+  ],
+  "properties": {
+    "schema": {
+      "const": "biomes.stages/1"
+    },
+    "hpAt": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "exclusiveMaximum": 1
+      },
+      "description": "The health shares at which a building enters stages 1, 2 and 3, strictly decreasing."
+    },
+    "cutFloorsStage": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3,
+      "description": "The stage from which cut floors show."
+    },
+    "leaveFrac": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.9,
+      "description": "One blast (damageArea, not a beam or a brunt) cannot take a standing building below this share of its hit points, so a second blast finishes it. 0 is off."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

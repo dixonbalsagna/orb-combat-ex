@@ -488,6 +488,23 @@ static func _splash(S: SimState, f, b, dmg: float, by, evt: float, cx: float, fa
 ## floors lost (through the collateral module, so the budget and the token apply), then the pancake. Returns
 ## {"pancake": bool, "collapse": bool}.
 static func applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: float, f, y: float) -> Dictionary:
+	var s0: int = WorldStructures.stage(b)
+	var fm0: int = b.fmask
+	var r: Dictionary = _applyFloors(S, b, oc, by, evt, cx, f, y)
+	WorldStructures.stageEmit(S, b, s0, by, cx, _bits(fm0 & ~b.fmask))
+	return r
+
+
+## The number of set bits.
+static func _bits(m: int) -> int:
+	var n: int = 0
+	while m != 0:
+		n += m & 1
+		m >>= 1
+	return n
+
+
+static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: float, f, y: float) -> Dictionary:
 	var res := {"pancake": false, "collapse": false}
 	var F: int = b.floors
 	if b.fdmg.size() != F:
