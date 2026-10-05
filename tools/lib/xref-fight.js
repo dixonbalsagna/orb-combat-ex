@@ -1314,6 +1314,14 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       const bonesPs = isObj(profPs) && isObj(profPs.bone_lag) ? Object.keys(profPs.bone_lag) : [];
       if (bonesPs.length && Array.isArray(pst.squash_pose.bones)) pst.squash_pose.bones.forEach((b, i) => { if (typeof b === 'string' && !bonesPs.includes(b)) err(PS, `/squash_pose/bones/${i}`, 'pressstyles-bone', `bone "${b}" is not in profiles.json bone_lag`); });
     }
+    if (isObj(pst.beat) && isObj(pst.beat.grade)) {
+      const g = pst.beat.grade;
+      for (const [k, pair] of [['hold_ticks', 'a better grade holds the beat at least as long'], ['ghosts', 'a better grade shows at least as many after-images']]) {
+        const seq = ['perfect', 'good', 'off'].map((n) => (isObj(g[n]) ? g[n][k] : undefined));
+        for (let i = 1; i < seq.length; i++) if (typeof seq[i] === 'number' && typeof seq[i - 1] === 'number' && seq[i] > seq[i - 1]) err(PS, `/beat/grade/${['perfect', 'good', 'off'][i]}/${k}`, 'pressstyles-beat', `${['perfect', 'good', 'off'][i]} ${k} ${seq[i]} is above ${['perfect', 'good', 'off'][i - 1]}'s ${seq[i - 1]}; ${pair}`, 'warning');
+      }
+    }
+    if (isObj(pst.beat) && isObj(pst.beat.charge) && typeof pst.beat.charge.tapped === 'number' && typeof pst.beat.charge.held === 'number' && pst.beat.charge.tapped > pst.beat.charge.held) err(PS, '/beat/charge/tapped', 'pressstyles-beat', `a tapped heavy (${pst.beat.charge.tapped}) loads more than a held one (${pst.beat.charge.held})`, 'warning');
     for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
       if (sid.startsWith('_') || !isObj(st)) continue;
       if (st.carry === true && typeof st.carry_ticks === 'number' && st.carry_ticks === 0) err(PS, `/styles/${esc(sid)}/carry_ticks`, 'pressstyles-carry', `style "${sid}" carries into the next blow, but carry_ticks is 0, so there is no blend`, 'warning');

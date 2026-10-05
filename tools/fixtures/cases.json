@@ -54692,6 +54692,687 @@
         "rule": "enum",
         "pointer": "/actions/4/fields/1"
       }
+    },
+    {
+      "id": "anim-pressstyles-beat-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/closing"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/charge"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/grade"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/wobble": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/beat/wobble"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-note-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-perfect-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/grade/perfect"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat/grade"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-good-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/grade/good"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat/grade"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-off-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/grade/off"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat/grade"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-none-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/grade/none"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat/grade"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/poor": {
+              "hold_ticks": 3,
+              "ghosts": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/beat/grade/poor"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-perfect-hold-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/perfect/hold_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/grade/perfect/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-perfect-ghosts-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/perfect/ghosts": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/grade/perfect/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-good-hold-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/good/hold_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/grade/good/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-good-ghosts-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/good/ghosts": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/grade/good/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-off-hold-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/off/hold_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/grade/off/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-off-ghosts-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/off/ghosts": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/grade/off/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-none-hold-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/none/hold_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/grade/none/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-none-ghosts-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/none/ghosts": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/grade/none/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-hold-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/perfect/hold_ticks": 10.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beat/grade/perfect/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-ghosts-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/good/ghosts": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/grade/good/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/grade/good/ghosts"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat/grade/good"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/good/sparkle": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/beat/grade/good/sparkle"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/off/hold_ticks": 0,
+            "/beat/grade/off/ghosts": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-hold-rising-warns",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/perfect/hold_ticks": 4,
+            "/beat/grade/good/hold_ticks": 8,
+            "/beat/grade/off/hold_ticks": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-beat",
+        "pointer": "/beat/grade/good/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-ghosts-rising-warns",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/perfect/ghosts": 1,
+            "/beat/grade/good/ghosts": 3,
+            "/beat/grade/off/ghosts": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-beat",
+        "pointer": "/beat/grade/good/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-grade-equal-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/grade/perfect/hold_ticks": 6,
+            "/beat/grade/good/hold_ticks": 6,
+            "/beat/grade/off/hold_ticks": 6
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-beat-closing-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/closing": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat/closing"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-closing-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/closing/hold_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/closing/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-closing-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/closing/hold_ticks": 6.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beat/closing/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-closing-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/closing/ghosts": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/beat/closing/ghosts"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-closing-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/closing/hold_ticks": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/charge/load_min"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat/charge"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/beat/charge/extra"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-tapped-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/tapped": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/charge/tapped"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-tapped-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/tapped": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/charge/tapped"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-held-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/held": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/charge/held"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-held-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/held": "full"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beat/charge/held"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-load-min-zero",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/load_min": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/beat/charge/load_min"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-load-min-range",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/load_min": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/charge/load_min"
+      }
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-load-min-one-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/load_min": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-above-one-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/held": 1.4
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-beat-charge-tapped-above-held-warns",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/charge/tapped": 1.2,
+            "/beat/charge/held": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-beat",
+        "pointer": "/beat/charge/tapped"
+      }
     }
   ],
   "text": [

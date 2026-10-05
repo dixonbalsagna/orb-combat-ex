@@ -53,20 +53,21 @@ On every `strike` and `chainStrike` beat, set when the director plans the string
 
 `chainStrike` beats have **no `args` today** (the renderer invents `{"o": {"big": true}}`): please give them the same dictionary as a `strike` (`a`, `dmg`, `piece`, plus the fields above). The beat must also be announced early enough for the wind-up: tech wants 6 ticks before contact, speed 3, heavy 24 (shorter, the wind-up is cut to what there is, as today). **Ruling (EP, 2026-10-04):** speed takes only 2 ticks of notice from idle, inside a running flurry the next blow is known a tap gap ahead; the build's speed load is 2 ticks and `anim_check` asserts it.
 
-### What I will read from the beat once Encounter's slice B0 lands
+### What is read from the beat (Encounter's slice B0, committed 4bc5ff1)
 
-Until then the style comes from `args.style` if present, else the weight and the press log (section 3); nothing breaks if a field is missing. With B0 (`style`, `grade`, `k`, `n`, `closing`, `charge`, `hand`, `ender`, and `chainStrike` with the same args as `strike`):
+The beat's fields are read in place of the press log; the log is now only the fallback for a beat that names no `style` (a lab, an old tool, an exchange the planner did not dress). Numbers are in `data/anim/press_styles.json` under `beat` (a schema line is `docs/animation/handoff/press-styles-beat-schema.patch`).
 
-| Field | What I will do with it |
+| Field | What the body does with it |
 | :--- | :--- |
-| `style` | replaces the log read entirely (the first choice already honours it) |
-| `grade` | tech: `perfect` gets the full 10-tick hold and 3 after-images, `good` a 6-tick hold and 2; a lapsed beat arrives as `style: "speed"` and plays speed |
-| `k`, `n` | speed's alternation by `k` (today it counts the attacker's own blows); the blow with `k == n` is the closer |
-| `closing` / `ender` | the closer of a string takes the heavy hold (and the smear) whatever its style; `ender` says it is the knock-back blow |
-| `charge` (0 to 1) | heavy: the squash depth and the wind-up length scale with it (today the damage stands in) |
-| `hand` | the striking side outright: replaces my alternation by parity (and the hash side), so the sim's choice and the picture agree; a broken-arm override still wins |
+| `style` (speed, tech, heavy) | the blow's style outright |
+| `grade` (perfect, good, off, none) | tech only: a `perfect` press holds its contact beat 10 ticks and asks VFX for 3 after-images, `good` 6 and 2, `off` 4 and 1, `none` 6 and 2 |
+| `hand` (`r` or `l`) | the striking side outright, over the alternation by `k` (B0's `hand` alternates by `k` as a stand-in; when Combat's cells name the side it comes from the piece and the body follows). A broken-arm override still wins |
+| `closing`, `ender` | the closing blow of a string, and a heavy that ends it, hold their follow-through at least 6 ticks whatever their style, so the blow that ends it lands and stays |
+| `charge` (0 to 1) | heavy: a held (1) heavy winds up for its whole time and squashes to the full depth; a tapped (0) one for 0.6 of it and a squash at the weight 0.25 (about two thirds of the depth) |
+| `k`, `n` | carried on `press` for VFX (`ordinal` is the blow's place in the body's own list); the alternation uses `hand` |
+| `chainStrike` args | a chainStrike now carries `a`, `d` and the beat fields like a strike, and its own `style` and `hand` are played; before, the render invented `{"o": {"big": true}}` |
 
-`chainStrike` with `args` lets the render drop its invented `{"o": {"big": true}}` and style a chain blow like any other.
+**Tech means the same thing everywhere** (the EP's rule, questionnaire 18): the strike pose lands on the contact tick with no in-between, is held, and returns the same way, from idle, in a string and at the end of a zip's dash; the dash itself gets no snap. `anim_check` now compares the same perfect tech cross three ways (idle, after a speed jab in a string, at the end of a tech zip) pose by pose on the contact tick and the twelve after it: the worst difference is 0.08 rad (the contact solve and the zip's own settle), limit 0.15.
 
 ## 5. Squash, stretch and smear inside the joint limits
 

@@ -673,6 +673,183 @@ func _test_zip() -> void:
 	print("  zip: speed, tech and heavy on both fighters play tell, in, reach, out; no joint past its limit on screen; every reading is drawn travelling at least 4 ticks each way, the heavy one smears")
 
 
+## What the beat tells (Encounter's slice B0: style, grade, k, n, closing, charge, hand, ender; a chainStrike carries a and d): read in place of the press log, behind the press-styles flag.
+## A perfect tech blow holds its beat longer than a good one, the beat's `hand` is the striking side, a held heavy squashes deeper than a tapped one, the closing blow of a string holds,
+## and a chainStrike's own style is the one played.
+func _bm(a: Dictionary, b: Dictionary) -> Dictionary:
+	var o: Dictionary = a.duplicate()
+	o.merge(b, true)
+	return o
+
+
+func _beat_scene(S: SimState, who: String, ops: Array) -> Dictionary:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "KAI" if who == "protagonist" else "VORR"
+	f1.id = "VORR" if who == "protagonist" else "KAI"
+	RenderAnim._fighters.clear()
+	f0.x = 500.0
+	f1.x = 560.0
+	for f in [f0, f1]:
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+	var ex := DirExchange.newEx(f0, f1, "light")
+	ex.n = 961
+	ex.tag = "BCK"
+	var last: int = 0
+	for o in ops:
+		DirExchange.schedule(ex, float(o[0]) / 60.0, String(o[1]), o[2])
+		last = maxi(last, int(o[0]))
+	S.dirS.ex = ex
+	var res := {"hold_ticks": 0, "sides": [], "squash": 0.0, "styles": {}, "ghosts": 0}
+	for k in range(last + 40):
+		S.tick = 1000 + k
+		S.T = 200.0 + float(k) / 60.0
+		ex.t = float(k) / 60.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		var af0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		if not af0.press.is_empty():
+			res.styles[String(af0.press.style)] = true
+			res.hold_ticks += 1 if String(af0.press.phase) == "hold" else 0
+			res.squash = maxf(float(res.squash), float(af0.press.squash))
+			res.ghosts = maxi(int(res.ghosts), int(af0.press.ghosts))
+			if String(af0.press.phase) == "contact":
+				res.sides.append(bool(af0.press.side))
+	return res
+
+
+func _test_beat_fields() -> void:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	AnimData.ensure_fighter("KAI")
+	AnimData.ensure_fighter("VORR")
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	for who in ["protagonist", "antihero"]:
+		var base := {"a": "A", "d": "D", "dmg": 26.0, "piece": "strike.cross", "o": {"big": false}}
+		var perfect: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"style": "tech", "grade": "perfect", "k": 1, "n": 1, "hand": "r", "closing": false, "charge": 0.0, "ender": false})]])
+		var good: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"style": "tech", "grade": "good", "k": 1, "n": 1, "hand": "l", "closing": false, "charge": 0.0, "ender": false})]])
+		var tag: String = "beat fields %s" % who
+		_expect(int(perfect.hold_ticks) > int(good.hold_ticks) and int(perfect.hold_ticks) >= 8, "%s: a perfect tech blow holds %d ticks and a good one %d (the data: 10 and 6)" % [tag, int(perfect.hold_ticks), int(good.hold_ticks)])
+		_expect(int(perfect.ghosts) == 3 and int(good.ghosts) == 2, "%s: the grade's after-images are %d and %d (3 and 2)" % [tag, int(perfect.ghosts), int(good.ghosts)])
+		_expect(perfect.sides == [false] and good.sides == [true], "%s: the beat's hand did not set the side (r %s, l %s)" % [tag, perfect.sides, good.sides])
+		var held: Dictionary = _beat_scene(S, who, [[80, "strike", _bm(base, {"piece": "strike.haymaker", "dmg": 66.0, "style": "heavy", "grade": "none", "k": 1, "n": 1, "hand": "r", "closing": false, "charge": 1.0, "ender": false, "o": {"big": true}})]])
+		var tapped: Dictionary = _beat_scene(S, who, [[80, "strike", _bm(base, {"piece": "strike.haymaker", "dmg": 66.0, "style": "heavy", "grade": "none", "k": 1, "n": 1, "hand": "r", "closing": false, "charge": 0.0, "ender": false, "o": {"big": true}})]])
+		_expect(float(held.squash) > float(tapped.squash) + 0.1, "%s: a held heavy squashes %.2f and a tapped one %.2f" % [tag, float(held.squash), float(tapped.squash)])
+		var plain: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"style": "speed", "grade": "none", "k": 1, "n": 1, "hand": "r", "closing": false, "charge": 0.0, "ender": false})]])
+		var closer: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"style": "speed", "grade": "none", "k": 1, "n": 1, "hand": "r", "closing": true, "charge": 0.0, "ender": false})]])
+		_expect(int(closer.hold_ticks) > int(plain.hold_ticks), "%s: the closing blow holds %d ticks against %d for a plain one" % [tag, int(closer.hold_ticks), int(plain.hold_ticks)])
+		var chain: Dictionary = _beat_scene(S, who, [[50, "strike", _bm(base, {"style": "speed", "k": 1, "n": 2, "hand": "r"})], [70, "chainStrike", {"a": "A", "d": "D", "style": "tech", "grade": "perfect", "k": 2, "n": 2, "hand": "l", "closing": true, "charge": 0.0, "ender": false}]])
+		_expect(chain.styles.has("tech") and chain.styles.has("speed"), "%s: a chainStrike's own style was not played (%s)" % [tag, chain.styles.keys()])
+	RenderAnim.press_styles = false
+	RenderAnim.ground_feet = ground_was
+	print("  beat fields: grade sets a tech blow's hold and after-images, hand the side, charge a heavy's squash, closing the hold, and a chainStrike plays its own style")
+
+
+## "Tech" means the same thing everywhere (the EP's rule, docs/ep/vision.md questionnaire 18): the strike pose lands on the contact tick with no in-between, held the same beat, returning
+## the same way, whether the blow comes from idle, at the end of a string or at the end of a zip's dash; the dash itself gets no snap. The same perfect tech cross, three ways, the
+## pose of every bone compared on the contact tick and the twelve after it.
+func _tech_poses(S: SimState, who: String, mode: String) -> Array:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "KAI" if who == "protagonist" else "VORR"
+	f1.id = "VORR" if who == "protagonist" else "KAI"
+	RenderAnim._fighters.clear()
+	for f in [f0, f1]:
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+	f1.x = 560.0
+	var pre: int = 20
+	var tc: int = pre + (40 if mode != "zip" else 10)   # contact tick
+	var ex := DirExchange.newEx(f0, f1, "light")
+	ex.n = 971
+	ex.tag = "TCK"
+	var tech := {"a": "A", "d": "D", "dmg": 26.0, "piece": "strike.cross", "style": "tech", "grade": "perfect", "k": 1, "n": 1, "hand": "r", "closing": false, "charge": 0.0, "ender": false, "o": {"big": false}}
+	if mode == "zip":
+		tech["zip"] = true
+	if mode == "string":
+		DirExchange.schedule(ex, float(tc - 14) / 60.0, "strike", {"a": "A", "d": "D", "dmg": 20.0, "piece": "strike.jab", "style": "speed", "grade": "none", "k": 1, "n": 2, "hand": "l", "closing": false, "charge": 0.0, "ender": false, "o": {"big": false}})
+		tech["k"] = 2
+		tech["n"] = 2
+	DirExchange.schedule(ex, float(tc) / 60.0, "strike", tech)
+	S.dirS.ex = ex
+	var out: Array = []
+	var row: Dictionary = AnimData.zip.readings.tech
+	for k in range(tc + 14):
+		S.tick = 1000 + k
+		S.T = 200.0 + float(k) / 60.0
+		ex.t = float(k) / 60.0
+		var x: float = 500.0
+		if mode == "zip":
+			var t1: int = pre + int(row.tell)
+			var t2: int = tc
+			x = lerpf(375.0, 500.0, clampf(float(k - t1) / maxf(float(t2 - t1), 1.0), 0.0, 1.0)) if k >= t1 else 375.0
+			if k == pre:
+				RenderAnim.zip_start(S, f0, {"reading": "tech", "btn": "x", "tell": int(row.tell), "in": tc - pre - int(row.tell), "hits": 1, "hd": 16, "out": 4})
+		f0.x = x
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		if k == tc:
+			var de := SimState.FxEvent.new()
+			de.type = "damage"
+			de.victim = 1.0
+			de.attacker = 0.0
+			de.kind = "light"
+			de.amount = 26.0
+			de.region = "core"
+			RenderAnim.consume(S, [de])
+		var af0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		if k >= tc:
+			out.append(af0.q.duplicate())
+	return out
+
+
+func _test_tech_consistency() -> void:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	AnimData.ensure_fighter("KAI")
+	AnimData.ensure_fighter("VORR")
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	var worst: float = 0.0
+	var where: String = ""
+	for who in ["protagonist", "antihero"]:
+		var idle: Array = _tech_poses(S, who, "idle")
+		for mode in ["string", "zip"]:
+			var other: Array = _tech_poses(S, who, mode)
+			_expect(idle.size() == other.size() and idle.size() >= 13, "tech consistency %s %s: %d and %d frames from the contact tick on" % [who, mode, idle.size(), other.size()])
+			for i in range(mini(idle.size(), other.size())):
+				var d: float = 0.0
+				for b in range(AnimRig.N):
+					d = maxf(d, (idle[i][b] as Quaternion).angle_to(other[i][b]))
+				if d > worst:
+					worst = d
+					where = "%s %s, %d ticks after contact" % [who, mode, i]
+	RenderAnim.press_styles = false
+	RenderAnim.ground_feet = ground_was
+	_expect(worst < 0.15, "tech consistency: the tech blow's pose differs by %.3f rad between idle, a string and a zip (%s); the limit is 0.15 (the contact solve's small differences)" % [worst, where])
+	print("  tech consistency: the same perfect tech cross from idle, in a string and at the end of a zip: worst difference %.3f rad (%s)" % [worst, where])
+
+
 func _test_pair_live() -> void:
 	_expect(RenderAnim.pair_live and not AnimData.pair.is_empty(), "pair live test: data/anim/pair_live.json did not load or the live pair is off")
 	_expect(AnimData.fighter_key("KAI") == "protagonist" and AnimData.fighter_key("VORR") == "antihero" and AnimData.fighter_key("rival") == "antihero" and AnimData.fighter_key("Protagonist") == "protagonist" and AnimData.fighter_key("NOBODY") == "", "pair live test: a roster id did not map to its fighter")
@@ -1716,6 +1893,8 @@ func _run() -> void:
 	_test_press_styles()
 	_test_hand_tips()
 	_test_zip()
+	_test_beat_fields()
+	_test_tech_consistency()
 	_test_joints()
 	RenderAnim.enabled = true
 	RenderAnim.style_override = ""

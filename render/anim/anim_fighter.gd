@@ -1554,7 +1554,10 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 			ordinal += 1
 		elif b.op == "chainStrike":
 			if role == "A" and (not ex.cancel or b.t <= ct + 0.0001):
-				strikes.append([t0 + b.t, ordinal, {"o": {"big": true}}, "chain"])
+				var cargs: Dictionary = {"o": {"big": true}}
+				if b.args != null:
+					cargs.merge(b.args, true)   # B0: a chainStrike carries a, d and the beat fields (style, grade, k, n, closing, charge, hand, ender) as a strike does
+				strikes.append([t0 + b.t, ordinal, cargs, "chain"])
 			ordinal += 1
 		elif b.op == "entry" and String(b.args.get("who", "A")) == role:
 			entries.append([t0 + b.t, float(b.args.dur), AnimData.resolve_entry(pair_key, String(b.args.get("id", "")))])
@@ -1596,7 +1599,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		var psn: String = _press_style(S, f, ex, strikes[n])
 		var sp: Dictionary = _part_prof(String(strikes[n][3]))
 		if psn != "":
-			sp = _press_prof(sp, psn)
+			sp = _press_prof(sp, psn, strikes[n][2])
 			if bool(strikes[n][2].get("zip", false)):
 				sp["load_ticks"] = {"light": 2, "heavy": 3}   # a zip's tell was the wind-up: the blow lands on the arrival
 				sp["load_ease"] = 1.0
@@ -1635,8 +1638,22 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	if pstyle != "" and bool(strikes[best][2].get("zip", false)):
 		prow = prow.duplicate()
 		prow["squash"] = 0.0
-	if pstyle != "" and bool(prow.get("alternate", false)):
-		side = ((best + (_hash(int(ex.n), 0, slot + 1) & 1)) & 1) == 1   # a mashed string alternates its limbs
+	var bargs: Dictionary = strikes[best][2]
+	var bw3: float = bw2
+	if pstyle != "":
+		var BT: Dictionary = AnimData.press.get("beat", {})
+		if bargs.has("hand"):
+			side = String(bargs.hand) == "l"   # B0: the beat names the striking side (the planner's own; today it alternates by k)
+		elif bool(prow.get("alternate", false)):
+			side = ((best + (_hash(int(ex.n), 0, slot + 1) & 1)) & 1) == 1   # no side on the beat: a mashed string alternates its limbs
+		if pstyle == "tech" and bargs.has("grade"):
+			var gd: Dictionary = BT.get("grade", {}).get(String(bargs.grade), {})
+			if gd.has("ghosts"):
+				prow = prow.duplicate()
+				prow["ghosts"] = int(gd.ghosts)
+		if pstyle == "heavy" and bargs.has("charge"):
+			var cw: Dictionary = BT.get("charge", {})
+			bw3 = lerpf(float(cw.get("tapped", bw2)), float(cw.get("held", 1.0)), clampf(float(bargs.charge), 0.0, 1.0))
 	var picks: Array = AnimData.picks["heavy" if heavy2 else "light"]
 	var ksid: String = String(picks[_hash(int(ex.n), int(strikes[best][1]), 3 + slot) % picks.size()])
 	var live_id: String = _pair_pick(S, f, ex, int(strikes[best][1]), heavy2, String(strikes[best][2].get("piece", strikes[best][2].get("strike", ""))))   # his own waves first (docs/animation/pair-live.md), then go-live step 1
@@ -1718,7 +1735,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		curl = pf.curl.lerp(_base_curl, w4)
 		hw = 1.0 - w4
 	if pstyle != "":
-		_press_body(prow, pstyle, ul, dtc, Sn, H, F, bw2, ks, side, blow_id, best, tc2, T)
+		_press_body(prow, pstyle, ul, dtc, Sn, H, F, bw3, ks, side, blow_id, best, tc2, T)
 	if RenderAnim.hand_tips:
 		_hand_tip(ks, side, heavy2, strikes[best][2], hw)
 	# the step from the wind-up into the contact key is the blow itself (on twos it is one step): inertialisation must not take it for a join
@@ -1819,9 +1836,28 @@ func _press_style(S: SimState, f, ex, sk: Array) -> String:
 	return st
 
 
-func _press_prof(sp: Dictionary, style: String) -> Dictionary:
+## The style's timing over the part's, then what the beat tells (B0's fields, data/anim/press_styles.json `beat`): a tech blow's grade sets its held beat (a perfect press holds the full
+## beat, a good one less, an off one least); the closing blow of a string and a string's ender hold their follow-through at least that long (the blow that ends it lands and stays);
+## a held heavy winds up for its whole time and a tapped one for less.
+func _press_prof(sp: Dictionary, style: String, args: Dictionary = {}) -> Dictionary:
 	var out: Dictionary = sp.duplicate()
 	out.merge(AnimData.press.get("styles", {}).get(style, {}).get("prof", {}), true)
+	var B: Dictionary = AnimData.press.get("beat", {})
+	if B.is_empty():
+		return out
+	if style == "tech" and args.has("grade"):
+		var g: Dictionary = B.get("grade", {}).get(String(args.grade), {})
+		if g.has("hold_ticks"):
+			out["hold_ticks"] = int(g.hold_ticks)
+	if bool(args.get("closing", false)) or bool(args.get("ender", false)):
+		out["hold_ticks"] = maxi(int(out.get("hold_ticks", 0)), int(B.get("closing", {}).get("hold_ticks", 0)))
+	if style == "heavy" and args.has("charge"):
+		var lm: float = float(B.get("charge", {}).get("load_min", 1.0))
+		var lt: Dictionary = (out.get("load_ticks", {}) as Dictionary).duplicate()
+		var ck: float = lerpf(lm, 1.0, clampf(float(args.charge), 0.0, 1.0))
+		for key in lt:
+			lt[key] = maxi(1, roundi(float(lt[key]) * ck))
+		out["load_ticks"] = lt
 	return out
 
 
