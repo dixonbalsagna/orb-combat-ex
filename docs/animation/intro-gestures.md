@@ -58,3 +58,12 @@ No gesture is held: the longest peak is 14 ticks, and each eases back to the idl
 ## 6. Not done
 
 Narrative's `who` (`first`, `second`, `left`, `right`, `both`) is the composer's: it resolves it to actors and sends one event each. The gestures at the four timing points play wherever the sim places them; I have not seen them in a live intro because none sends them. The two reused gestures with a long own length (`rw.drop_the_act`, 90 ticks) run their length and are not cut.
+
+## 7. Legal's two conditions (RL-081, RL-082: `docs/legal/stances-and-gestures-screen.md`)
+
+All ten gestures are clear. Two conditions are kept in the data and here:
+
+- **`pi.claim`** has no crouch, no clench, no aura and no ground or wind effect, and a **14-tick peak** (its `breath` phase; the 10-tick `plant` is the stance widening). The hands are open, at waist height and 2.2 shoulder widths apart, the feet widen and the chest comes up: nothing else. It is used only for the **claim** intent: `pair_live.json` names it in `gestures.claim` of the Protagonist and nowhere else, and no other table, pick list or cue refers to `pi.claim`. VFX draws nothing on it (the intent has no look of its own); if a look is ever asked for, Legal sees it first.
+- **`ri.check`** shows **no readout or numbers on the forearm plate** and keeps the **forearm at chest height**: the `cuff` pose's hand is at (26, 56), chest height, and the plate is the plain forearm plate; Art and VFX put nothing on it (no display, no glyphs, no light).
+
+Also from the screen, for the zip: **the arc dive never hides behind the rival at the strike tick and keeps the dash rule.** The pass plays only over the way out (`pass: over`), which starts after the strike's hold, so the arc dive is never under a strike tick; the body is drawn on every tick, and the way out is at least 4 ticks (the floor); the position stays the sim's, and the entry is played squeezed into the zip's own ticks. `anim_check` checks the floor and the drawn travel.
