@@ -86,3 +86,31 @@ The hold is in the rig and tested against an injected cue of B0's shape (`cue` e
 He is back at his start screen position to the pixel, and the rival's incoming read is `aimed` with an `eta` right to 2.5 ticks for the 20 ticks of wind-up and move, and inactive after the strike. A charge test (`rush charge no cut`, 6,000 units in 20 ticks) makes no cut-ahead.
 
 **Not built:** the self-off chip for the lunger (section 7). `shown` in `incoming` means the attacker is visible on this pane; the chip rule for UI is `active and not shown`, or `aimed` for the countdown.
+
+## 9. The zip that exits on the rival's far side (a lunge that does not return)
+
+Game Design (`docs/design/melee-press-feel.md` section 2c, "The zip"): LT with X, Y or B zips in, strikes and zips back by default; with the stick toward the rival at the press he **exits on the rival's far side**. The press-to-contact is 18 to 24 ticks for a zip strike and 32 to 40 for a zip heavy, the way out 10 to 12 ticks, the whole zip 34 to 62 ticks, and the arrival is fixed at the tell. For the camera the far-side zip is a lunge that does not return: **one move, the lunger's pane follows him to the far side after the strike, no cut.**
+
+**What changes against the default zip (sections 2 and 8).**
+
+| | Returns (default) | Far-side exit |
+| :--- | :--- | :--- |
+| Layout | frozen from the cue to 0.4 s after he is home | frozen the same way, to 0.4 s after the exit ends (a layout flip while the sides swap would be the worst moment) |
+| Zoom (one view) | held at the cue's separation | held to the strike; then released to the filters (the pair's separation after the exit is about the same as before, so it barely moves, and the rate cap bounds it) |
+| Focus (one view) | held near the cue midpoint | held to the strike; then released: the midpoint travels to the far-side pair and the filters carry it (a body-height-scale move, well inside the lag bound) |
+| The lunger's pane (split) | frozen on home | frozen to the strike; then **follows** him with the ordinary lag bound across the rival to the far side. He is in reach 6 to 10 ticks after the blow and the way out is 10 to 12, so he moves at most the mid band (937 units) in 12 ticks, 0.1 of a pane width a tick at the usual zoom, which the follow keeps pace with. No cut: the cut-ahead is excluded (a zip is not a rush) and the lag-bound safety cut needs 1.5 widths |
+| The rival's pane | held; the hit push only | held; the hit push only. After the exit the lunger is on the other side: the incoming read's `side` flips, which UI's chip should show without a jump (the data changes sign in one tick) |
+| Incoming read | `aimed` from the cue to the strike, inactive after | the same; after the strike, inactive (he is leaving) |
+
+**How the rig knows which one it is.** Wanted from the sim, in order of preference: (1) the cue carries it: `text` is "zip" for the default and "zip_far" for the far-side exit (the tell fixes the arrival, so the exit is known at the cue); (2) a field on the cue (`side`: +1 or -1 for the exit, 0 for a return). **Without either, the rig can observe it:** the exit is a far-side one when the lunger crosses the rival's position after the strike (the sign of `sdx(lunger, rival)` flips from the cue's), and on that tick the focus hold lets go. That fallback costs a half-screen lag at the release, so the cue is better. If neither exists the default hold is used and a far-side exit is followed with the hold released at the crossing.
+
+**What the scenario list gains** (for when the zip slice sends its cues; they go in `split_sweep.gd` beside the `lunge ...` ones, injected the way those are):
+
+1. `lunge far side, one view`: no cut; layout unchanged from the cue to 0.4 s after the exit; the zoom moves at most 0.06 (ln) over the zip and never faster than the rate cap; the lunger is on the screen on every tick after the strike (it is one view); the camera's jerk (change of velocity relative to him) stays under 0.05 of the width.
+2. `lunge far side, split` (artificial 6,000-unit pair, the exit 750 units): the lunger's pane makes no cut; it moves at most 0.12 of the width a tick; he is within 0.15 of the width of his anchor 0.5 s after the exit; the rival's pane does not move more than the hit push.
+3. `lunge far side, 49 degrees`: the same as 1, judged on the layout only inside the hold window (the test pose cycles by itself at 49 degrees; Orb's brief said not to chase it).
+4. `lunge far side, cue withheld` and `lunge far side, observed only` (the fallback): recorded, not asserted, so the cost of the fallback is on the page.
+5. `zip outrun` (Game Design: "He can be outrun... it ends short with no blow"): the cue is seen and the rival leaves the mid band; the hold ends at the earlier of its time and the lunger being 12.5 bh from the rival with no strike; no cut and no layout change.
+6. `zip countered` (the defender's well-timed blow cancels the zip's blow, or catches him in reach, and a brawl starts): the hold ends at once on the first launch, knock-down or `solo_kind` shot as now; a counter without those (a reel in place) ends it at the earlier of the time and the pair coming inside the close band (3 bh), where the brawl's framing takes over.
+
+**Needs from the sim (add to the zip slice's cue):** the exit side or `text` as above; the zip's stated total ticks (the cue's `amount` is the tell and `n` the way in; the way out and the in-reach ticks are not in it, so the hold's length estimate of wind-up + 2 x move + 0.4 s is short by the in-reach ticks: 4 to 22 on the way in and 6 to 12 after; the hold's end should read `back_end` or a total, not a guess). Until then the estimate is lengthened by the in-reach ticks the spec gives (`LUNGE_HOLD_AFTER` 0.4 s covers the short ones; a zip heavy would let go up to 0.2 s early, which is safe).
