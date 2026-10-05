@@ -22,8 +22,8 @@ Legal screened the martial arts stance (`docs/legal/movegen-screen.md`, RL-072):
 | G1 | a grab | it holds the collar, shoulder, upper arm, body, waist or ankle, never the throat, hair, tail or face; no locked or laced hands, nothing lit at the hands; a carry is drawn whole | b06, b07, g01, g02, g03 |
 | E1 | an energy hand | one hand, open or a blade, no higher than the shoulder; the light sits on the plate or the hand's edge, never a ball at the hand; never two fingers or a point, never cupped, never both hands; a beam or charged shot is a straight line; a volley is one sweep, flick or single thrust of one hand, never pumped | e01, e02, e03, e04, e05 |
 | P1 | a push | a shove on the chest or gut, no light, hands apart when it is two; never a grip | b01, b06, b09 |
-| H1 | a held pose | any pose held 12 ticks or more keeps open hands out of the hip zone, low hands a shoulder width apart, no hand overhead; no held crossed forearms and no arms-wide invitation; a signature's tell is its own stance, never a crouch with clenched fists, and has no scream | h01, h02, h03 |
 | K1 | stacking | at every tick of a tell or a charge, no more than two of the seven power-up marks; a stance's aura is a thin outline or short streaks in the lane colour | k01, k02, m07 |
+| H1 | a held pose | held 12 ticks or more, it is judged by its class (legal.heldScope): the pair test on every held pose, the emitter test on charges, tells, signatures, energy poses and a held heavy's hold; no held crossed forearms and no arms-wide invitation (a shrug is not one); a signature's tell is its own stance, never a crouch with clenched fists, and has no scream | h01, h02, h03 |
 
 **Legal's other rows** (RL-076, RL-081 to RL-086; `docs/legal/stances-and-gestures-screen.md`). The strike rows above judge strike pieces only; an energy piece is judged by the energy rows, so a lit fist is allowed where its light sits on the plate and knuckle edges and never as a ball at the hand (e01, not b09).
 
@@ -202,7 +202,7 @@ Readings: speed: the quick form; tech: the quick form on his beat, closing a str
 
 ### manoeuvre.x: the zip strike from the mid band (20 ki), the step strike in reach (5 ki), a piloted light charge from far; in reach with the stick away, the zip away
 
-**The Protagonist:** 8 moves from 262 candidates; 7 posed, 1 derived, 0 waiting. Quotas: zip 3 of 3; step 3 of 3; charge 1 of 1; zip away 1 of 1.
+**The Protagonist:** 8 moves from 283 candidates; 7 posed, 1 derived, 0 waiting. Quotas: zip 3 of 3; step 3 of 3; charge 1 of 1; zip away 1 of 1.
 
 | # | Kind | Band | Direction | Entry | Way out | Blow on arrival | Status | Legal |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -215,7 +215,7 @@ Readings: speed: the quick form; tech: the quick form on his beat, closing a str
 | 07 | charge | far | toward | `pe.spiral` | stays | hand blade, drop to the arm (`pr.knife_chop`) | posed | L3; carries: hands open or claw |
 | 08 | zip away | close | away | `pe.rooted` | `pe.fade` | hand blade, line to the head (`pr.jab`) | posed | Z1, L8 |
 
-**The rival:** 8 moves from 233 candidates; 7 posed, 1 derived, 0 waiting. Quotas: zip 3 of 3; step 3 of 3; charge 1 of 1; zip away 1 of 1.
+**The rival:** 8 moves from 252 candidates; 7 posed, 1 derived, 0 waiting. Quotas: zip 3 of 3; step 3 of 3; charge 1 of 1; zip away 1 of 1.
 
 | # | Kind | Band | Direction | Entry | Way out | Blow on arrival | Status | Legal |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -230,7 +230,7 @@ Readings: speed: the quick form; tech: the quick form on his beat, closing a str
 
 ### manoeuvre.y: the zip heavy from the mid band (30 ki), a heavy on the move in reach (10 ki), a piloted heavy charge, and the pursuit past charge range
 
-**The Protagonist:** 8 moves from 146 candidates; 6 posed, 2 derived, 0 waiting. Quotas: zip 3 of 3; step 2 of 2; charge 1 of 1; pursuit 1 of 1; zip away 1 of 1.
+**The Protagonist:** 8 moves from 154 candidates; 6 posed, 2 derived, 0 waiting. Quotas: zip 3 of 3; step 2 of 2; charge 1 of 1; pursuit 1 of 1; zip away 1 of 1.
 
 | # | Kind | Band | Direction | Entry | Way out | Blow on arrival | Status | Legal |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -243,7 +243,7 @@ Readings: speed: the quick form; tech: the quick form on his beat, closing a str
 | 07 | pursuit | beyond | toward | `pe.arc_dive` | stays | hand palm, line to the chest (`pr.palm_push`) | posed | L2, L6; carries: hands open or claw, no cross hold, not at hip |
 | 08 | zip away | close | away | `pe.rooted` | `pe.fade` | hand palm, line to the arm (`pr.double_palm`) | derived | Z1, L2, L6; carries: hands open or claw, not at hip, wrists apart |
 
-**The rival:** 8 moves from 141 candidates; 6 posed, 2 derived, 0 waiting. Quotas: zip 3 of 3; step 2 of 2; charge 1 of 1; pursuit 1 of 1; zip away 1 of 1.
+**The rival:** 8 moves from 149 candidates; 6 posed, 2 derived, 0 waiting. Quotas: zip 3 of 3; step 2 of 2; charge 1 of 1; pursuit 1 of 1; zip away 1 of 1.
 
 | # | Kind | Band | Direction | Entry | Way out | Blow on arrival | Status | Legal |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |

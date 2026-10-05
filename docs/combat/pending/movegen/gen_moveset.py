@@ -657,7 +657,11 @@ def legal_findings(docs, parts, identity):
             if mine_seq.get(r["id"]) != (r["rule"], r["why"]):
                 bad.append("sequence rule %s differs from Legal's file" % r["id"])
         for group, rows in theirs.items():
-            if group in ("schema", "_about", "banned", "bannedSequences") or not isinstance(rows, list):
+            if group in ("schema", "_about", "banned", "bannedSequences"):
+                continue
+            if not isinstance(rows, list):   # a block that is not rows (heldScope): the copy must be the same
+                if lg.get(group) != rows:
+                    bad.append("Legal's block %s is missing from parts.json or differs" % group)
                 continue
             mine = {r["id"]: (r["rule"], r["why"]) for r in lg.get(group, [])}
             for r in rows:

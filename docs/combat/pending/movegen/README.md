@@ -83,7 +83,7 @@ By team. The sheet lists the same under each stance, cell by cell, and `cells.js
 | Energy, e01 to e05 | energy pieces. **b09 is not applied to them:** a lit fist is allowed where the light sits on the plate and knuckle edges, never as a ball at the hand (e01) | refuses a match, from the hand table in `parts.json` (`shot.hands`: shape, where the light sits, one hand, shoulder height) and the move's delivery and release |
 | Motion, m01 to m08 | zips and their marks | refuses a far-side zip that does not leave over the rival or round him (m04); the rest are how a zip is drawn and timed: conditions for Animation, VFX and Simulation |
 | Grabs, g01 to g03 | grabs | no grab is generated; the hold points a grab may use are listed and checked (g01) |
-| Held, h01 to h03, and stacking, k01 and k02 | any pose held 12 ticks or more; every tick of a tell or a charge | not checkable from parts: conditions H1 and K1 on every signature frame and held action, for Animation's lint and VFX |
+| Held, h01 to h03 with `heldScope` (RL-087), and stacking, k01 and k02 | any pose held 12 ticks or more, by its class (the pair test on every held pose; the emitter test on charges, tells, signatures, energy poses and a held heavy's hold); every tick of a tell or a charge | not checkable from parts: conditions H1 and K1 on every signature frame and held action, for Animation's lint and VFX. `heldScope` is copied whole into `parts.json` `legal`, and `--check` compares it |
 
 - **What the new rows refuse today: nothing.** Legal reworded e05 on 2026-10-06: a volley is one motion of one hand or arm (a sweep, a flick or a single thrust), never both palms pumping in turn or one hand pumping repeatedly. So a volley on a single thrust is allowed again, and the generator refuses a pumped volley or one from two hands, neither of which the grammar can produce.
 - **One change to my own grammar,** to fit m04: a zip to the far side leaves on a pivot round the rival or an arc dive over him. It had left on a lane step.
@@ -127,6 +127,7 @@ What changed since the keys I gave for the martial stance. A filter is as before
 - `travel` has the direction `far_side`.
 - `cells.json`: a frame or context cell may have `asks`, a list of condition ids.
 - A moveset's travel and table cells have `refused`: for travel `{move: {kind, direction, exit}, rows}`; for a table `{move: {delivery, release}, rows, candidates}`. Frame and context cells carry `asks`.
+- `parts.json` `legal` may also hold a block that is not rows, copied from Legal's file as it stands (`heldScope`: `classes`, `pairTest`, `emitterTest`).
 - Cross-checks: every energy hand a fighter lists is in `shot.hands`; every row of Legal's file is in `parts.json` with the same rule and why; no hold point is one of g01's.
 
 **`combat-moveset-lock.schema.json`** (`combat.moveset.lock/1`): `fighters`, a fighter to a cell id to a list of `[id, [limb, tip, path, target, weight], key set id or null]`.

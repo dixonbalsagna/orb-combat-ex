@@ -1012,16 +1012,6 @@
     ]
    },
    {
-    "id": "H1",
-    "stance": "any",
-    "ask": "a held pose: any pose held 12 ticks or more keeps open hands out of the hip zone, low hands a shoulder width apart, no hand overhead; no held crossed forearms and no arms-wide invitation; a signature's tell is its own stance, never a crouch with clenched fists, and has no scream",
-    "rows": [
-     "h01",
-     "h02",
-     "h03"
-    ]
-   },
-   {
     "id": "K1",
     "stance": "any",
     "ask": "stacking: at every tick of a tell or a charge, no more than two of the seven power-up marks; a stance's aura is a thin outline or short streaks in the lane colour",
@@ -1029,6 +1019,16 @@
      "k01",
      "k02",
      "m07"
+    ]
+   },
+   {
+    "id": "H1",
+    "stance": "any",
+    "ask": "a held pose: held 12 ticks or more, it is judged by its class (legal.heldScope): the pair test on every held pose, the emitter test on charges, tells, signatures, energy poses and a held heavy's hold; no held crossed forearms and no arms-wide invitation (a shrug is not one); a signature's tell is its own stance, never a crouch with clenched fists, and has no scream",
+    "rows": [
+     "h01",
+     "h02",
+     "h03"
     ]
    }
   ],
@@ -1060,6 +1060,13 @@
       "entries": [
        "spiral",
        "arc_dive"
+      ],
+      "exit": "pivot"
+     },
+     {
+      "direction": "far_side",
+      "entries": [
+       "dash"
       ],
       "exit": "pivot"
      },
@@ -1597,14 +1604,14 @@
     "id": "h01",
     "kind": "drawn",
     "owner": "Animation (a lint on poses held 12 ticks or more)",
-    "rule": "any pose held 12 ticks or more (a tell, a hold, a signature sketch, a stance cue) keeps open hands out of the hip zone (x 14 or less, height 24 to 44), hands at least shoulder width apart if both are low, and no hand above 80",
+    "rule": "held 12 ticks or more, scoped by class (see heldScope): the pair test applies to every held pose; the emitter test applies to the charge, tell, signature, energy and hold classes only",
     "why": "the held charging pose"
    },
    {
     "id": "h02",
     "kind": "drawn",
     "owner": "Animation (a lint on poses held 12 ticks or more)",
-    "rule": "no held crossed forearms, no held arms-wide invitation (a taker's open-armed stance belongs to the rival's On the Chin alone)",
+    "rule": "no held crossed forearms; no held arms-wide invitation. Arms wide means both arms near straight (elbows within 25 degrees of straight) and both hands 32 or more out to opposite sides, held 12 ticks or more; a shrug (elbows bent 40 degrees or more, palms up, shoulders raised) is not arms wide. A taker's open-armed stance belongs to the rival's On the Chin alone",
     "why": "the power pose and the take-it stance"
    },
    {
@@ -1630,7 +1637,50 @@
     "rule": "a stance tell's aura is a thin outline or short scattered streaks in the lane colour; a manoeuvre trail is thin and in the lane colour; a defensive rim of light sits on the guarding side only",
     "why": "stance tells"
    }
-  ]
+  ],
+  "heldScope": {
+   "_about": "Legal's scope for the held-pose lint (2026-10-06). A pose's class comes from its sequence family, or from a `_legal.class` mark on the pose or sequence. Unmarked poses in the charging, tell, signature, energy and held-heavy families are lint class charge, tell, signature, energy or hold; every other unmarked pose is rest or gesture.",
+   "classes": {
+    "rest": [
+     "intro fall, set, land, roll",
+     "last stand ready, brace, slump (non-energy)",
+     "knockback, get-up, stagger"
+    ],
+    "gesture": [
+     "taunts",
+     "intro and stand-off gestures",
+     "the drop of the act"
+    ],
+    "charge": [
+     "charge holds",
+     "flight charge holds"
+    ],
+    "tell": [
+     "signature tells",
+     "stance cues",
+     "signature held ends"
+    ],
+    "energy": [
+     "emitter holds, beams, channel, release, rain, finish holds"
+    ],
+    "hold": [
+     "a held heavy's hold frame"
+    ]
+   },
+   "pairTest": {
+    "applies": "every held pose, every class",
+    "fails": "both hands within 10 units of each other AND both in the hip zone (x 14 or less, height 24 to 44); or both wrists forward and within 7 units of each other (wrists_together)",
+    "exempt": "a named gesture where one hand holds or brushes the other hand or wrist (the cuff, the dusting, the close taunt tap) with the body upright and no thrust or light after it"
+   },
+   "emitterTest": {
+    "applies": "classes charge, tell, signature, energy, hold",
+    "fails": "the hand that emits or strikes next is an open or clawed hand in the hip zone with its wrist at x 8 or less (drawn to a hip then thrust); or any hand above 82 (80 plus a 2-unit tolerance for float error). A closed fist chambered at the hip (a punch chamber) and a relaxed free hand hanging at the side while the other arm acts both pass"
+   },
+   "armsWideTest": {
+    "applies": "class charge, tell, signature, energy, hold, and any held pose that is not marked gesture with bent elbows",
+    "fails": "both arms near straight and out wide, held 12 ticks or more, except the rival's On the Chin"
+   }
+  }
  },
  "grab": {
   "_about": "Where a grab may take hold (Legal g01). No grab is generated yet: the context cells list today's",
