@@ -4252,7 +4252,7 @@ func _remap_rules() -> void:
 ## Full is the tablet layout (Controls' docs/controls/remap.md): nine buttons reach about 270 dp up from the bottom, so a landscape screen
 ## shorter than about 390 dp (a small phone) has the top buttons under the nameplates. The sizes here are tablets and large phones.
 func _touch_full_rules() -> void:
-	var sizes: Array = [[Vector2(2400, 1080), 2.6], [Vector2(2340, 1080), 2.75], [Vector2(2532, 1170), 3.0], [Vector2(2560, 1600), 2.0], [Vector2(1920, 1200), 1.5], [Vector2(1280, 800), 1.0],
+	var sizes: Array = [[Vector2(2400, 1080), 2.6], [Vector2(2340, 1080), 2.75], [Vector2(2532, 1170), 3.0], [Vector2(2560, 1600), 2.0], [Vector2(1920, 1200), 1.5], [Vector2(1280, 800), 1.0], [Vector2(1560, 720), 2.0], [Vector2(2048, 1536), 2.0],
 		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0]]
 	for cs in sizes:
 		for lh in [false, true]:
@@ -4292,6 +4292,38 @@ func _touch_full_rules() -> void:
 						over.append("%s>%s" % [names[i], o[0]])
 			_ok(bad == 0 and small == 0 and clash == 0, "%s: every button is on screen, at least 48 dp across, and none overlap (%d off, %d small, %d clash)" % [tag, bad, small, clash])
 			_ok(over.is_empty(), "%s: nothing in the HUD or the fight is under a button %s" % [tag, str(over)])
+			# What is drawn is what is hit: the HUD's layout and the host's call (SimTouch.layout with touch_top_limit) are the same dictionary.
+			var host_lay: Dictionary = SimTouch.layout(sz.x, sz.y, dpv, lay.portrait, lh, maxf(maxf(sz.x - lay.safe.end.x, sz.y - lay.safe.end.y), 8.0 * dpv), true, lay.touch_top_limit)
+			var same := host_lay.size() == lay.touch_ctrl.size()
+			for k in host_lay:
+				same = same and lay.touch_ctrl.has(k) and str(host_lay[k]) == str(lay.touch_ctrl[k])
+			_ok(same and lay.touch_top_limit > 0.0, "%s: the host's call with the HUD's top limit (%.0f px) is the HUD's own layout" % [tag, lay.touch_top_limit])
+			# No button's top edge above the plates' lower edge where the screen allows (the tightest fit is allowed on a screen too short for it).
+			var under_plate := 0
+			for n in names:
+				var rb: Rect2 = UiTouchControls.rect_of(lay.touch_ctrl[n])
+				for pi in range(2):
+					if rb.intersects(lay.plate[pi]):
+						under_plate += 1
+			_ok(under_plate == 0, "%s: no button is under a plate (%d)" % [tag, under_plate])
+			# The pointer chips (the rival's direction): far apart in one view and in split screen, never over a touch button.
+			var anc: Array = []
+			for pi in range(2):
+				anc.append({"pos": Vector2(sz.x * (0.3 + 0.4 * float(pi)), sz.y * 0.8), "h": 90.0 * lay.s, "visible": true})
+			var chips_bad := 0
+			var chips_n := 0
+			for rec in [{"pointer": "always", "dist_bh": 300.0, "sigma": 1, "ring": {"angle_A": 0.0, "angle_B": 2.0, "sigma": 1, "W": 9600.0}}, {"pointer": "always", "dist_bh": 300.0, "sigma": -1, "ring": {"angle_A": 0.0, "angle_B": -2.0, "sigma": -1, "W": 9600.0}}]:
+				for ay in [0.3, 0.55, 0.8, 0.9]:
+					anc[0]["pos"] = Vector2(sz.x * 0.2, sz.y * ay)
+					anc[1]["pos"] = Vector2(sz.x * 3.0, sz.y * ay)
+					anc[1]["visible"] = false
+					for ch in UiSplit.pointers(lay, rec, anc, lay.s, false):
+						chips_n += 1
+						var cr := Rect2(ch["pos"] - UiSplit.pointer_size(lay.s) * 0.5, UiSplit.pointer_size(lay.s))
+						for n in names:
+							if cr.intersects(UiTouchControls.rect_of(lay.touch_ctrl[n])):
+								chips_bad += 1
+			_ok(chips_bad == 0, "%s: no pointer chip is over a touch button (%d chips checked, %d over)" % [tag, chips_n, chips_bad])
 			var key_sig: Array = UiTouchControls.sig(lay, {"full": {"light": {"down": true}}}, 0.0, true)
 			var key_sig2: Array = UiTouchControls.sig(lay, {"full": {}}, 0.0, true)
 			_ok(key_sig != key_sig2, "%s: a held button changes the layer's signature" % tag)

@@ -2576,6 +2576,12 @@ func _paint_pause(ci: CanvasItem) -> void:
 	ci.draw_rect(Rect2(c.x + bw * 0.8, c.y - bh, bw, bh * 2.0), ink)
 
 
+## The pixels from the top of the screen under which Full touch's buttons must sit (the plates' lower edge; -1 when not Full touch).
+## The host passes it as SimTouch.layout's last argument in touch_layout(), the same call the HUD draws from, so what is drawn is what is hit.
+func touch_top_limit() -> float:
+	return layout.touch_top_limit
+
+
 ## The touch targets the HUD owns, name to global rectangle: the stance ring of each human fighter ("stance_0" to "stance_3",
 ## with a "slot" in touch_target_at) and "pause". Empty unless the touch_ui option is on. Controls hit-tests these; the HUD
 ## never consumes a touch itself (docs/controls/platform-plan.md section 7).

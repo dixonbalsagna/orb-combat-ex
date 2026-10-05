@@ -34,6 +34,7 @@ var touch_reserve := Rect2()                 # portrait: kept free for Controls'
 var left_handed := false                     # the touch buttons on the left, the stick on the right (SimTouch mirrors them)
 var face: Array = [Rect2(), Rect2()]        # per slot: the square for the speaker's face cut-in, in its column above the bark lane (empty: the face is embedded in the bark panel)
 var touch_full := false                      # the Full touch layout (nine buttons, SimTouch.layout with full = true) instead of Simple's three
+var touch_top_limit := -1.0                 # Full touch: the lowest edge of the plates (px from the top); SimTouch.layout keeps its buttons under it. -1 when not Full touch. The host passes the same value for its hit test
 var touch_ctrl: Dictionary = {}              # SimTouch.layout(...) for this screen in touch mode: attack, guard, power, context circles and the stick zone
 var bark_single := false                     # touch landscape: one bark lane, on the side away from the buttons, the lines stacking as in portrait
 var cards_one := false                       # touch landscape: the buttons leave room for one wound card a side, not two
@@ -258,9 +259,11 @@ func _pass(insets: Vector4) -> void:
 	hints = [Rect2(), Rect2()]
 	# The touch controls (Controls' SimTouch): the same call and the same inputs as the host's touch_layout(), so what is drawn is what is hit.
 	touch_ctrl = {}
+	touch_top_limit = -1.0
 	if touch_ui:
 		var tmargin: float = maxf(maxf(vp.x - safe.end.x, vp.y - safe.end.y), 8.0 * dp)
-		touch_ctrl = SimTouch.layout(vp.x, vp.y, dp, portrait, left_handed, tmargin, touch_full)
+		touch_top_limit = (safe.position.y + float(pm["h"]) + 4.0 * s) if touch_full else -1.0   # the plates' lower edge: Full's buttons sit under it on a short screen
+		touch_ctrl = SimTouch.layout(vp.x, vp.y, dp, portrait, left_handed, tmargin, touch_full, touch_top_limit)
 	if portrait:
 		_portrait()
 		var fb_h2: float = maxf(touch_min if touch_ui else 40.0 * s, 34.0)
@@ -291,6 +294,11 @@ func touch_keys() -> Array:
 				out.append(k)
 		return out
 	return ["attack", "guard", "power"]
+
+
+## The bounding box of the drawn touch buttons (empty when none): what the fight, the columns and the pointer chips must stay clear of.
+func touch_box() -> Rect2:
+	return _ctrl_box() if touch_ui and not touch_ctrl.is_empty() else Rect2()
 
 
 ## The bounding box of the drawn touch buttons: what the fight and the columns must stay clear of.

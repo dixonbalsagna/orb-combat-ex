@@ -238,10 +238,13 @@ static func _edge_chip(lay: UiLayout, p: Vector2, dx: float, half: float, anchor
 ## parallel to the edge) to the nearest clear spot inside the safe area, or return an off-screen sentinel (x < -1e8) to hide it.
 static func _dodge(pos: Vector2, along: Vector2, lay: UiLayout, anchors: Array, big: bool = false) -> Vector2:
 	var psz: Vector2 = pointer_size(lay.s, big)
-	if _chip_clear(pos, psz, anchors):
+	if _chip_free(pos, psz, lay, anchors):
 		return pos
 	var step: float = psz.y * 0.25
 	var reach: float = psz.y
+	var boxes: Rect2 = lay.touch_box()
+	if boxes.size.y > 0.0:
+		reach = maxf(reach, boxes.size.y + psz.y * 2.0)   # far enough to slide past a column of touch buttons
 	for an in anchors:
 		if not an.is_empty():
 			reach = maxf(reach, float(an.get("h", 0.0)) * 2.5 + psz.y)
@@ -249,10 +252,21 @@ static func _dodge(pos: Vector2, along: Vector2, lay: UiLayout, anchors: Array, 
 	while float(k) * step <= reach:
 		for sgn in [1.0, -1.0]:
 			var cand: Vector2 = _clamp_to(pos + along * (sgn * float(k) * step), lay, big)
-			if _chip_clear(cand, psz, anchors):
+			if _chip_free(cand, psz, lay, anchors):
 				return cand
 		k += 1
 	return Vector2(-1e9, -1e9)
+
+
+## Clear of every fighter (see _chip_clear) and of every touch button (the layout's own rectangles, so what is drawn is what is hit).
+static func _chip_free(pos: Vector2, psz: Vector2, lay: UiLayout, anchors: Array) -> bool:
+	if not _chip_clear(pos, psz, anchors):
+		return false
+	var r := Rect2(pos - psz * 0.5, psz)
+	for k in lay.touch_keys():
+		if lay.touch_ctrl.has(k) and r.intersects(UiTouchControls.rect_of(lay.touch_ctrl[k]).grow(2.0 * lay.s)):
+			return false
+	return true
 
 
 ## True when the chip's rectangle at `pos` is at least one fighter height from every visible anchor.
