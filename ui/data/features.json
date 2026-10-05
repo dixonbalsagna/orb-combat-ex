@@ -1,9 +1,11 @@
 {
   "schema": 1,
-  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now.",
+  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence.",
   "features": {
     "hiding": false,
     "touch_full": true,
-    "remap": true
+    "remap": true,
+    "about_music": false,
+    "about_voice": false
   }
 }

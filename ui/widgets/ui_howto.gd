@@ -16,6 +16,15 @@ static func page_count() -> int:
 	return (UiData.howto().get("pages", []) as Array).size()
 
 
+## The index of the page with this id (the About page is "about"), or -1.
+static func page_index(id: String) -> int:
+	var pages: Array = UiData.howto().get("pages", [])
+	for i in range(pages.size()):
+		if str((pages[i] as Dictionary).get("id", "")) == id:
+			return i
+	return -1
+
+
 ## The geometry of page `page_i` for a viewport: {card, title, close, back, next, dots, items[], cs, fits, tm, ...}. `device` is the
 ## glyph family ("kbd", "xbox", ...), `slot` the player's slot (P1 or P2 keys), `touch` true for the touch controls page.
 static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, device: String = "kbd", slot: int = 0, preset: String = "", style: String = "neutral", extra: Dictionary = {}) -> Dictionary:
@@ -119,6 +128,9 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			var first: String = str((it["actions"] as Array)[0]) if it.has("actions") else str(it["action"])
 			if not UiGlyphs.bound(preset, first, slot):
 				continue
+		var icon_name: String = str(it.get("icon", ""))
+		if icon_name.begins_with("about_") and not UiData.feature(icon_name):
+			continue   # a sentence of the About page that is true only once its flag is on (features.json)
 		var x: float = body.position.x + float(col) * (colw + gap)
 		var y: float = body.position.y + float(heights[col])
 		var rec: Dictionary = {"item": it, "col": col, "fs": fs_body, "fs_small": fs_small}
@@ -163,12 +175,14 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			rec["lines"] = lines_a
 			heights[col] = float(heights[col]) + ha + item_gap
 		else:
-			var tx: float = x + isz + gap * 0.8
+			var plain: bool = icon_name == "" or icon_name.begins_with("about_")   # a text-only paragraph (the About page): no icon, the whole column
+			var tx: float = x if plain else x + isz + gap * 0.8
 			var st: String = str(it.get("stance", ""))
 			var lines_i: PackedStringArray = UiText.wrap(text, fs_body, maxf(colw - (tx - x) - (name_w if st != "" else 0.0), 20.0))
-			var hi: float = maxf(isz, float(lines_i.size()) * lh) + 2.0
+			var hi: float = (float(lines_i.size()) * lh if plain else maxf(isz, float(lines_i.size()) * lh)) + 2.0
 			rec["rect"] = Rect2(x, y, colw, hi)
 			rec["kind"] = "icon"
+			rec["plain"] = plain
 			rec["icon_c"] = Vector2(x + isz * 0.5, y + isz * 0.5)
 			rec["isz"] = isz
 			rec["text_x"] = tx
@@ -399,7 +413,8 @@ static func draw(ci: CanvasItem, p: Dictionary, device: String, slot: int, style
 					UiText.draw(ci, ln, Vector2(rec["label_x"], ly), fs_body, ink, -1)
 					ly += lh
 			_:
-				_icon(ci, str(it.get("icon", "")), rec["icon_c"], rec["isz"], float(p["cs"]))
+				if not bool(rec.get("plain", false)):
+					_icon(ci, str(it.get("icon", "")), rec["icon_c"], rec["isz"], float(p["cs"]))
 				var ty: float = r.position.y + UiText.ascent(fs_body) + (lh - UiText.height(fs_body)) * 0.5
 				if rec["stance"] != "":
 					# The stance's name in its own words (terms.json), beside its line.

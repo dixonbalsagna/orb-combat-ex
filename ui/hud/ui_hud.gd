@@ -30,7 +30,7 @@ signal remap_slot_changed(layout_id: String, overrides: Array, slot: int)   # th
 signal remap_changed(layout_id: String, overrides: Array)   # the player changed a layout's controls: the host applies the rows (Controls' applier) and saves
 signal pause_menu_opened                   # the pause menu opened: the host freezes the sim and lets go of held keys
 signal pause_menu_closed(reason: String)   # it closed: "resume" (the host unfreezes) or "new" (the host unfreezes and starts a match)
-signal pause_entry(entry: String)          # an entry was chosen: resume, howto, settings, feedback, new (then new_yes or new_no)
+signal pause_entry(entry: String)          # an entry was chosen: resume, howto, settings, feedback, about, new (then new_yes or new_no)
 signal new_match_requested                 # New match was confirmed
 signal lane_colors_changed(a: Color, b: Color)   # a fighter's lane colour (its aura, used for its plate, bark and face borders) changed: the host passes them to SplitView.set_panel_colors
 signal player_two_leave_requested          # the pause menu's "Player two: hand back to the AI" was chosen: the host gives slot 1 back to the AI
@@ -998,6 +998,8 @@ func pause_menu_choose(id: String) -> void:
 			show_settings()
 		"feedback":
 			show_feedback("pause")
+		"about":
+			show_howto(false, UiHowto.page_index("about"))   # How to play, opened on its About page (how the game was made, the licence line, privacy)
 		"new":
 			_pm_confirm = true
 			_pm_focus = 1   # Keep playing is where the focus starts: the match is not lost by a stray Enter

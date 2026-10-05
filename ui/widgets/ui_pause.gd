@@ -1,13 +1,13 @@
 class_name UiPause
 extends RefCounted
-## The pause menu (docs/ui/hud-spec.md section 28): a card with Resume, How to play, Settings, Send feedback and New match, opened by the
+## The pause menu (docs/ui/hud-spec.md section 28): a card with Resume, How to play, Settings, Send feedback, About (How to play on its About page) and New match, opened by the
 ## host's pause key or button, with a focus ring so a keyboard or a pad can reach every entry. New match asks first (Start it, or Keep
 ## playing). `plan` is pure geometry (so hud_check proves every button is a 48 dp target inside the card at every size, one column when the
 ## height allows and two when it does not), `hit` says what a point is on, `draw` paints from a plan. Every word is in terms.json (prompt.pause_*).
 
-const ENTRIES: Array = ["resume", "howto", "settings", "feedback", "new"]
+const ENTRIES: Array = ["resume", "howto", "settings", "feedback", "about", "new"]
 ## While two people play, player two can be handed back to the AI from here.
-const ENTRIES_TWO: Array = ["resume", "howto", "settings", "feedback", "p2_leave", "new"]
+const ENTRIES_TWO: Array = ["resume", "howto", "settings", "feedback", "about", "p2_leave", "new"]
 const CONFIRM: Array = ["new_yes", "new_no"]
 const KEYS: Dictionary = {"resume": "pause_resume_key", "howto": "pause_howto_key", "new": "pause_new_key"}
 
