@@ -192,6 +192,10 @@ Schema for `ui/data/fighter_names.json` (the name a player sees for each roster 
 
 Run once, in the commit that lands Simulation's slice: `node docs/tools/pending/apply-intro-default.cjs`. It does **not** edit `data/`. `fight-intro.schema.json` gains an optional closed top-level `defaultFacts` (a `_defaultFacts` note is allowed beside it) with optional `look` (a part id), `gestures` (at most 8 of {at, who, intent}, all three required; at is land_first, land_second, wait, look_start or look_end, who is first, second, left, right or both), `intents` (a voice slot's intent to {who, stance, angle, event, p 0 to 1} or {lines: [the same record]}; any lower-case slot name), `tones`, `weights` (template id to a number 0 or more), `gap` (-1 to 1), `clock` (integer) and `plot`. New rule `intro-default`: `look` names a part of type look and every `weights` id is a template. `take` is a key of the match setup and has no schema. 52 cases, each setting its own whole block and its own part and template. Re-runnable. Tested on a clean `git archive HEAD` with the working tree's `data/fight/intro.json` dropped in: 1 error before, then 0 errors and 0 warnings, self-test passes (4290 of 4290), a second run changes nothing.
 
+## `apply-wear-shots.cjs`: Simulation's blocked-shots keys
+
+Run once, in the commit that lands the slice's data (after `apply-wear-mood.cjs`, applied): `node docs/tools/pending/apply-wear-shots.cjs`. It does **not** edit `data/`. The `block` record of `wounds.json` gains two required keys: `shotArmShare` (number, 0 to 1) and `shotArmWearCap` (integer, 0 or more, wear units). New rule `block-shot-cap`, beside `block-cap`: `shotArmWearCap` is below `stageAt[2]` (broken); `armWearCap` keeps its rule (below `stageAt[1]`). The fixtures and the 36 earlier block values get the keys; 19 new cases, each setting its own values. Re-runnable. Tested on a clean `git archive HEAD` (cd9eb08) with the two keys dropped into both fighters' files: 4 errors before, then 0 errors and 0 warnings, self-test passes (4309 of 4309), a second run changes nothing.
+
 ## Which script goes with which commit
 
 State as of the tree at 648c637 (2026-10-04). **Applied** means the script's keys, rules and cases are in the tree and its commit is made; a script marked applied has nothing left to run and can be deleted. **Do not re-run** `apply-2b`, `apply-m1b`, `apply-contact`, `apply-launch`, `apply-biomes-contact`, `apply-uppercut`, `apply-anim-agency` and `apply-recipes`: they are older than later changes and would overwrite them (checked by running each on a clean export of HEAD). The other applied scripts change nothing on a second run.
@@ -213,6 +217,7 @@ State as of the tree at 648c637 (2026-10-04). **Applied** means the script's key
 | `apply-wear-mood` | parked | Simulation's wear-and-mood slice (`wounds.json` `block`, `mood.json` impulses) | its data |
 | `apply-ui-fighter-names` | parked | UI's display-name switch (`ui/data/fighter_names.json`) | the file |
 | `apply-intro-default` | parked | Simulation's default-facts slice (`data/fight/intro.json` `defaultFacts`) | its data |
+| `apply-wear-shots` | parked | Simulation's blocked-shots slice (`wounds.json` `block.shotArm*`) | its data |
 | `apply-movegen` (and `xref-movegen.js`) | parked, follows generator version 5 | Combat's landing of parts, identity, cells, the movesets and `lock.json` | the files |
 | (launch pair finishers and templates) | held | Combat's go-live of `launch-pair.json` finishers, `templates.agency.json` and `templates.brawl.json` | their live form |
 
