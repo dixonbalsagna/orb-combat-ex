@@ -389,12 +389,16 @@ The same two frames now: ![now](img/sky-gb002b-high-now.png) ![now, 300 higher](
 
 `tools/sky_check.gd` guards it in two halves. The numbers run always, and are all of it under `--headless` (20 checks): by default nothing parts at tier 4, from a camera on the ground, 3,000 and 9,000 up; `--skyreact` turns it on and the web page's URL may name it; switched on it is full at tier 4, half at tier 3, nothing for a fighter off the screen and nothing with reduced motion; the pattern's place steps the same across the planet's seam and stands still with reduced motion. The pictures need a window and test the reaction switched on: with the clouds off, tier 4 changes no pixel of the sky; with them on, the last of the band above the horizon is unchanged; a tier 4 fighter off the screen changes nothing; with reduced motion nothing parts; and the clouds do part somewhere round the planet. Low and high camera, 8 places each. The pictures were last run on 8fd6aba, before this change.
 
+**Buildings by damage stage (2026-10-04).** A building has its own look at each of World's four stages: 1 its windows are out, 2 it is cracked with a top corner sheared off, 3 it is a shell (the bare frame, no roof, a broken top), 4 it falls as before. The look is read from the state (`WorldStructures.stage`), all of it is in `building.gdshader`, and VFX's effects are drawn over it. `docs/rendering/building-stages.md` has the stills, the cost and what the ground part would need.
+
+Houses at stages 0 to 3: ![houses](img/bstage-houses-far.png)
+
 **Windows, and windows blowing out (feature 12).** The buildings had no windows, so VFX's glass came out of blank walls.
 - **Windows.** `building.gdshader` draws them on every wall: a row a floor (the building's height over its floor count), a column every 62 units along the wall (`WINDOW_PITCH`), 30% of them lit by a hash of the building and the cell (`WINDOW_LIT_SHARE`). No textures, no geometry, no draw call. They fade to the wall's tone before they alias at far zoom. `--nowindows` leaves the walls blank, for A/B.
 - **Blow-outs.** VFX throws the glass and lists each blow-out in `host.vfx.react.blowouts` as `{b, at, strength, lo, hi}`. Each frame the first pane passes the list to `PlanetView.blow_windows`. From `at` the facade's windows on VFX's rows of floors draw as dark openings: `round(floors x strength x 0.6)` rows, at most VFX's `floors_max`, spread up the building. I apply VFX's row rule to the building and do not read `lo` and `hi`.
 - **They stay out** for the match, and a new match clears them. One bit a floor a building, in a small data texture the panes share (62 floors at most).
 - **Limit.** VFX prunes its list after six seconds, so a replay seek does not bring back blow-outs older than that. A sim record of them would fix it.
-- **Not built:** windows going out from the sim's own building damage. Today a damaged building gets shorter, and the windows of the floors that are gone go with them.
+- **Windows going out from the sim's own building damage** are part of the damage stages, below.
 
 A block as it stands, and after a blow-out wave from between the fighters: ![windows](img/cool-windows-before.png) ![blown](img/cool-windows-after.png)
 
@@ -657,6 +661,7 @@ All commands run from the repo root; each exits 0 on success.
 | Cue check | `godot --headless --path . --script res://render/tools/cue_check.gd -- --profile=spaced` | passed (46 checks over two full matches; hash with and without the poses) |
 | Outline check | `godot --path . --script res://render/tools/outline_check.gd` (needs a window; under `--headless` it exits with code 2, not run) | passed: 0 crack pixels over 24 poses; the unbaked control 9,024 (`docs/rendering/outline-normals-plan.md`) |
 | Sky check | `godot --headless --path . --script res://render/tools/sky_check.gd` (with a window it also compares pictures of the reaction switched on) | passed headless: 20 checks (the reaction is off by default; `--skyreact`; the pattern's place across the seam). The 10 picture checks were last run on 8fd6aba |
+| Stage check | `godot --headless --path . --script res://render/tools/stage_check.gd` | passed: 10 checks (a building is handed World's damage stage from the state; a fallen one is placed once) |
 | Cull check | `godot --path . --script res://render/tools/cull_check.gd` (needs a window; under `--headless` it exits with code 2, not run) | passed: 7 buildings, 504 views, the game's picture and the rasterizer-culled reference at most 30 of 255 apart (tolerance 64); the control with the old fault put back fails 52 of 72 views, up to 229 apart |
 | Sim parity (Simulation's) | `godot --headless --path . --script res://sim/core/tools/parity.gd` | still passes |
 

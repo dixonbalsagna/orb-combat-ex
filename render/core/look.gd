@@ -82,6 +82,15 @@ const WINDOW_LIT_SHARE: float = 0.3
 const WINDOW_LIT: String = "#f3cf86"
 const WINDOW_GLASS: String = "#2c3550"
 const BUILDING_INSIDE := "#12131a"       # the inside of a tower seen through its cut floors (a tunnel)
+## A building's look by World's damage stage (WorldStructures.stage; building.gdshader): 1 its windows are out, 2 it
+## is cracked and a top corner is sheared off, 3 it is a shell (the bare frame, no lid, a broken top).
+const DMG_BITE := Vector2(0.36, 0.3)     # stage 2: the sheared corner's share of the width, and of the standing height
+const DMG_CRACK := Vector3(1.8, 16.0, 26.0)   # stage 2: a crack's width, the length of one of its jags and how far a jag swings (units)
+const DMG_SOOT: float = 0.84             # stage 2 and 3: the walls keep this much of their colour
+const DMG_RAG: float = 0.34              # stage 3: the broken top takes up to this share of the standing height
+const DMG_PANELS: float = 0.2            # stage 3: the share of a shell's cells that keep their cladding
+const DMG_FRAME := "#4b4a4f"             # stage 3: the bare frame, mixed into the wall's colour
+const ROOF_OVER: float = 1.2             # a house's roof is this much wider than its walls
 const CROWD_GAP: float = 20.0
 const CROWD_DEEP: float = 90.0
 const Z_TREE_MIN: float = -120.0 * WS

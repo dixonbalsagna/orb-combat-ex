@@ -63,7 +63,8 @@ var _foot: Array = []                # per building: the lowest and highest grou
 var _falls: Dictionary = {}          # building -> [sim time its sink starts, standing height]: implodes in progress
 var _fold: Array = []                # [cx, sim time]: a district of implodes folded into one event this tick
 var _copies: Array = []
-var _bld_seen: Array = []          # per building: [curH, alive, fmask]
+var _bld_seen: Array = []          # per building: [curH, alive, fmask, hp, stage], the height and stage as it last stood
+var _drawn: Array = []             # per building: [height, stage 0 to 3, standing] as drawn (a falling one keeps its last look)
 var _grow := PackedInt32Array()    # this refresh's buildings with more people than figures at home
 var _tree_seen: Array = []         # per tree: alive
 var _tree_z := PackedFloat64Array()
@@ -275,9 +276,12 @@ func refresh(S: SimState, force: bool) -> void:
 				_falls[bi] = [float(_fold[1]) + delay, seen[0]]
 		if moved or force:
 			_foot[bi] = _footing(S, b)
-		if moved or h != seen[0] or b.alive != seen[1] or b.fmask != seen[2] or _falls.has(bi):
-			_set_building(S, bi, b, h)
-			_bld_seen[bi] = [h if b.alive else seen[0], b.alive, b.fmask]
+		# A fallen building is set once, when it falls (and while it sinks): its height is not compared, so the fallen
+		# ones cost nothing a frame. A standing one is set again when its height, floors or hit points change (a cut
+		# tower's stage moves with its hit points alone).
+		if moved or (b.alive and (h != seen[0] or b.hp != seen[3])) or b.alive != seen[1] or b.fmask != seen[2] or _falls.has(bi):
+			var st: int = _set_building(S, bi, b, h)
+			_bld_seen[bi] = [h if b.alive else seen[0], b.alive, b.fmask, b.hp, st]
 		if moved or show != _shown[bi]:
 			_set_crowd(S, bi, b, show)
 	# People sheltering in a building (World's RELOCATE) are shown there as their runners arrive: one figure for each
@@ -349,8 +353,11 @@ func _footing(S: SimState, b) -> Vector2:
 	return Vector2(lo, hi)
 
 
-func _set_building(S: SimState, bi: int, b, h: float) -> void:
+## Place building bi at standing height h and hand the shader its look. Returns World's damage stage it is drawn at
+## (0 to 3: a building that is falling keeps the stage it last stood at).
+func _set_building(S: SimState, bi: int, b, h: float) -> int:
 	var tower: bool = b.kind == "tower"
+	var stage: int = mini(WorldStructures.stage(b), 3) if b.alive else int(_bld_seen[bi][4])
 	var zd: Vector2 = _depth(b)
 	var zc: float = zd.x
 	var d: float = zd.y
@@ -375,6 +382,7 @@ func _set_building(S: SimState, bi: int, b, h: float) -> void:
 	if (ct[0] as Image).get_pixel(k, 0) != cut:
 		(ct[0] as Image).set_pixel(k, 0, cut)
 		ct[2] = true
+	_drawn[bi] = [h, stage, standing]
 	_write_windows(S, bi, b, sink)
 	# The sim's footing (World's T4): the highest ground under the footprint on the fighter plane. The fighter's brunt
 	# geometry uses it, so the drawn top is base + height; the box runs down to the lowest ground as drawn under it.
@@ -387,10 +395,11 @@ func _set_building(S: SimState, bi: int, b, h: float) -> void:
 		mm.set_instance_color(k, RenderLook.col(RenderLook.TOWER if tower else RenderLook.HOUSE))
 	else:
 		mm.set_instance_transform(k, _hidden(b.x))
-	if not tower and standing:
-		roof.set_instance_transform(k, Transform3D(Basis.from_scale(Vector3(b.w * 1.2, RenderLook.ROOF_H, d * 1.1)), Vector3(b.x, base + h - sink + RenderLook.ROOF_H * 0.5, zc)))
+	if not tower and standing and stage < 3:   # a shell has lost its roof
+		roof.set_instance_transform(k, Transform3D(Basis.from_scale(Vector3(b.w * RenderLook.ROOF_OVER, RenderLook.ROOF_H, d * 1.1)), Vector3(b.x, base + h - sink + RenderLook.ROOF_H * 0.5, zc)))
 	else:
 		roof.set_instance_transform(k, _hidden(b.x))
+	return stage
 
 
 ## Building bi's crowd: `alive` of its figures stand at home, on the ground as drawn.
@@ -413,17 +422,19 @@ func _set_crowd(S: SimState, bi: int, b, alive: int) -> void:
 			_crowd.set_instance_transform(ci, _hidden(x))
 
 
-## A building's windows for building.gdshader (two texels of win_tex): a bit per floor whose windows are out (24, 24
-## and 14 bits, as the floor cut packs them) and the height of a floor (0: no windows); then the wall's base and how
-## many floors stand. The shader draws a row of windows a floor from these.
+## A building's windows and damage stage for building.gdshader (two texels of win_tex): a bit per floor whose windows
+## are out (24, 24 and 14 bits, as the floor cut packs them) and the height of a floor (0: it does not stand); then
+## the wall's base, how many floors stand and the stage it is drawn at (_drawn). The shader draws a row of windows a
+## floor from these, and the stage's look over them.
 func _write_windows(S: SimState, bi: int, b, sink: float = 0.0) -> void:
 	var wt: Array = _win0 if _row0[bi] >= 0 else _win
 	var k: int = _row0[bi] if _row0[bi] >= 0 else bi
+	var dr: Array = _drawn[bi]
 	var floors: int = maxi(int(b.floors), 1)
 	var fh: float = b.h / float(floors)
 	var m: int = int(_blown[bi])
-	var a := Color(float(m & 0xFFFFFF), float((m >> 24) & 0xFFFFFF), float((m >> 48) & 0x3FFF), fh if b.alive else 0.0)
-	var c := Color(WorldStructures.baseY(S, b) - sink, ceilf(WorldStructures.curH(b) / maxf(fh, 1.0)), 0.0, 0.0)
+	var a := Color(float(m & 0xFFFFFF), float((m >> 24) & 0xFFFFFF), float((m >> 48) & 0x3FFF), fh if dr[2] else 0.0)
+	var c := Color(WorldStructures.baseY(S, b) - sink, ceilf(float(dr[0]) / maxf(fh, 1.0)), float(dr[1]), 0.0)
 	var img: Image = wt[0]
 	if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c:
 		img.set_pixel(k, 0, a)
@@ -901,6 +912,13 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("win_lit_share", RenderLook.WINDOW_LIT_SHARE)
 	m.set_shader_parameter("win_lit", RenderLook.col(RenderLook.WINDOW_LIT))
 	m.set_shader_parameter("win_glass", RenderLook.col(RenderLook.WINDOW_GLASS))
+	m.set_shader_parameter("dmg_bite", RenderLook.DMG_BITE)
+	m.set_shader_parameter("dmg_crack", RenderLook.DMG_CRACK)
+	m.set_shader_parameter("dmg_soot", RenderLook.DMG_SOOT)
+	m.set_shader_parameter("dmg_rag", RenderLook.DMG_RAG)
+	m.set_shader_parameter("dmg_panels", RenderLook.DMG_PANELS)
+	m.set_shader_parameter("dmg_frame", RenderLook.col(RenderLook.DMG_FRAME))
+	m.set_shader_parameter("roof_over", RenderLook.ROOF_OVER)
 	mats.track(m)
 	return m
 
@@ -968,6 +986,7 @@ func _make_props(S: SimState) -> void:
 	_roof0 = _multimesh(prism, maxi(1, _row0_b.size()), 1400.0, false, false, z0, z1)
 	_tree = _multimesh(cone, S.trees.size(), 400.0)
 	_bld_seen.clear()
+	_drawn.clear()
 	_foot.resize(nb)
 	_foot.fill(Vector2.ZERO)
 	_top.resize(nb)
@@ -975,7 +994,8 @@ func _make_props(S: SimState) -> void:
 	_falls.clear()
 	_fold = []
 	for bi in range(nb):
-		_bld_seen.append([-1.0, false, -1])
+		_bld_seen.append([-1.0, false, -1, -1.0, 0])
+		_drawn.append([0.0, 0, false])
 		_roof.set_instance_color(bi, Color(RenderLook.col(RenderLook.ROOF), 0.0))   # alpha 0: a roof (building.gdshader)
 		if _row0[bi] >= 0:
 			_bld.set_instance_transform(bi, _hidden(S.buildings[bi].x))
