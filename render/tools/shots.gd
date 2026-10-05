@@ -110,7 +110,7 @@ func _stage_craters(S: SimState) -> void:
 	WorldCrater.dig(S, c + 80.0 * SimConst.WS, 0.6, A, "impact", 0.92, 0.35)
 	var x: float = c + 170.0 * SimConst.WS
 	while x < c + 510.0 * SimConst.WS:
-		WorldCrater.scorch(S, x, 4.2, "MERIDIAN SCAR", A)
+		WorldCrater.scorch(S, x, 4.2, "FIELD SCAR", A)
 		x += 30.0 * SimConst.WS
 	WorldCrater.dig(S, x + 20.0 * SimConst.WS, 1.5, A, "beam")
 	_feed(S, 18)

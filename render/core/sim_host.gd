@@ -38,6 +38,9 @@ var fx_usec: int = 0            # cost of the last fx consume and camera step
 var _prev := PackedFloat64Array()
 var _cur := PackedFloat64Array()
 var _skip_intro: int = 0        # skip_intro(): 0 not asked, 1 for the next pre-clock tick, 2 until the intro ends
+var setup_used: Dictionary = {} # the whole setup the last match started from (the hub's keys, then the caller's): a match input like the seed, so a reference sim or a replay starts from the same one
+var _intro_mem: Dictionary = {} # the session's intro memory: a pair of roster ids -> {seed, n, avoid} (intro_record). Never saved, and never in the sim
+const INTRO_AVOID: int = 5      # Narrative's rule: the last five scenarios a pair opened with
 
 
 func _init() -> void:
@@ -45,13 +48,17 @@ func _init() -> void:
 
 
 ## A new match. ai is {"p1": bool, "p2": bool}; missing entries keep the current setting (both AI at first). setup adds
-## to the match setup: the intro phase's "intro" (true plays it, "skip" starts from its state at the clock).
-func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> void:
+## to the match setup: the intro phase's "intro" (true plays it, "skip" starts from its state at the clock). remember:
+## the match is the game's own, so the opening it composes is filed in the session's intro memory (intro_record).
+func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remember: bool = false) -> void:
 	seed = p_seed & 0xFFFFFFFF
 	var su: Dictionary = hub.setup()   # both slots are v2; a Simple layout sets its assists
 	su.merge(setup, true)
 	_skip_intro = 0
+	setup_used = su.duplicate(true)
 	SimCore.newMatch(S, seed, ai, su)
+	if remember:
+		_intro_file(su)
 	cam.reset()
 	fxv.reset(seed)
 	impact.reset(seed)
@@ -92,6 +99,58 @@ func advance(frame_dt: float, vw: float, vh: float) -> int:
 ## Interpolation factor between the previous and the current tick, for the frame being drawn.
 func alpha() -> float:
 	return clampf(acc / SimConst.DT, 0.0, 1.0)
+
+
+## The intro record for the game's own next match on this seed (docs/architecture/dynamic-intros.md sections 14 and
+## 16): a composed opening, with what the session remembers of the pair that will fight (the setup's slots, or the
+## roster's first two). `take` is how many matches the pair has already played on this seed (left out at 0): the sim
+## uses it as the index of its keyed draws, so a rematch on one seed opens another way. `avoid` is the scenarios the
+## pair opened with lately, the newest first, five at most (left out when empty): a scenario just played weighs
+## less. A fresh session's record is {"play": true} and nothing else. The memory is the host's: the sim never reads
+## it, it is not saved, and the record goes into the setup like the seed (setup_used).
+func intro_record(p_seed: int, setup: Dictionary = {}) -> Dictionary:
+	var rec: Dictionary = {"play": true}
+	var m = _intro_mem.get(_pair_key(setup))
+	if m != null:
+		if int(m.seed) == (p_seed & 0xFFFFFFFF) and int(m.n) > 0:
+			rec["take"] = mini(int(m.n), DirIntro.MAX_TAKE)
+		if not (m.avoid as Array).is_empty():
+			rec["avoid"] = (m.avoid as Array).duplicate()
+	return rec
+
+
+## Forget every pair's openings: a new session.
+func intro_forget() -> void:
+	_intro_mem.clear()
+
+
+## File the opening the match just composed under its pair: one more match on this seed (another seed starts the
+## count again), and its scenario at the head of the pair's last five. Only a composed record is filed.
+func _intro_file(su: Dictionary) -> void:
+	if not (su.get("intro") is Dictionary) or not ("intro" in S) or S.intro == null or int(S.intro.scenario) < 0:
+		return
+	var id: String = String(SimIntro.timeline(S).get("scenario", ""))
+	if id == "":
+		return
+	var key: String = _pair_key(su)
+	var m: Dictionary = _intro_mem.get(key, {"seed": seed, "n": 0, "avoid": []})
+	if int(m.seed) != seed:
+		m.seed = seed
+		m.n = 0
+	m.n = int(m.n) + 1
+	(m.avoid as Array).push_front(id)
+	if (m.avoid as Array).size() > INTRO_AVOID:
+		(m.avoid as Array).resize(INTRO_AVOID)
+	_intro_mem[key] = m
+
+
+## The pair a setup's match is fought by, whichever side each is on: the two roster ids in order, joined.
+static func _pair_key(su: Dictionary) -> String:
+	var ids: Array = []
+	for id in su.get("slots", FighterData.order().slice(0, 2)):
+		ids.append(str(id))
+	ids.sort()
+	return "|".join(PackedStringArray(ids))
 
 
 ## Whether the intro phase is running (docs/architecture/intro-phase.md): the match's pre-clock ticks, in which the

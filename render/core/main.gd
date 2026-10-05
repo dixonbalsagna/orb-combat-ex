@@ -215,9 +215,11 @@ func all_panes() -> Array:
 	return panes + [inset] if inset != null else panes
 
 
-## A new match. setup: additions to the match setup; left out, the game's own (_match_setup).
+## A new match. setup: additions to the match setup; left out, the game's own (_match_setup), and the host files the
+## opening it composes in the session's intro memory.
 func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
-	host.new_match(seed, ai, setup if setup is Dictionary else _match_setup())
+	var own: bool = not (setup is Dictionary)
+	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
 	var fl: Array = UiSimBridge.fighters(host.S)
 	ui_hud.setup(fl[0], fl[1])
 	for p in all_panes():
@@ -233,16 +235,18 @@ func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 
 
 ## What the game adds to a match's setup: a composed intro (docs/architecture/dynamic-intros.md, the record form).
-## The sim draws the scenario, who arrives first and the gap from the match seed, so a seed always opens the same way.
-## No facts and no no-repeat list are sent yet. With --nointro nothing is added and the sim's own default stands: the
+## The sim draws the scenario, who arrives first and the gap from the match seed and the record. The record carries
+## what the host remembers of the pair this session (SimHost.intro_record): `take`, so a rematch on the same seed
+## opens another way, and `avoid`, the pair's last five scenarios. No facts are sent: the sim uses its default ones.
+## With --nointro nothing is added and the sim's own default stands: the
 ## match starts from the intro's end state (both entrance craters dug, no pre-clock tick). --bench does the same, so
 ## its frames are a fight's from the first, as they always were. A tool that drives the scene itself never adds
 ## anything, so its matches are the ones its own reference sim plays. (--intro once asked for the intro; it is
 ## accepted and does nothing.)
-func _match_setup() -> Dictionary:
+func _match_setup(seed: int = 0) -> Dictionary:
 	if manual or args.has("nointro") or args.has("bench"):
 		return {}
-	return {"intro": {"play": true}}
+	return {"intro": host.intro_record(seed)}
 
 
 ## For Camera's compositor: a new pane, a follower of the first, in a SubViewport of its own (its own World3D),
