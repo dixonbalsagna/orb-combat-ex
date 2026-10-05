@@ -102,3 +102,39 @@ Slice 1 first (it answers Orb's front-row question and gives Rendering the stage
 - Measured on seeds 1 to 160, default arm only; QA's re-baseline decides the final pair.
 
 Scratch: `hy.gd` (the hybrid measure), `stg.gd` (the stage mix at the KO), `mk_hv.sh` and `mk_leave.py` (the settings and the `leave` prototype), `mat.gd` (the paved shares) are in `docs/world/scratch-build/staged/`.
+
+## 6. Slice 1 built in scratch (2026-10-04), and the list for VFX and Rendering
+
+**Built and proven in a scratch copy of a995d16** (`docs/world/scratch-build/stage1/`: `mk_stage1.py` applies it to any tree, `stagecheck.gd`, `stages.json`). On the scratch copy: golden regenerated once, `npm test --prefix sim` 5 of 5, `probe.gd`, `probe_rows.gd`, `directcheck.gd`, `minecheck.gd`, `blastcheck.gd`, `stagecheck.gd` 0 failed, render determinism and the seam sweep pass, `node tools/validate.js` 0 errors and one warning (`stages.json` has no schema yet: Tools'). 100 matches, HEAD against slice 1: length 465.3 against 471.6 s, civilians 24% against 23%, structures 79.4 against 73.2 of 196, craters 34 against 35; 160 matches: front row 47.7%, all rows 37.0%, civilians 22.2%, tier 4 at 8.75% a minute, C1 clean (as section 1); stage mix at the KO (40 matches): intact 53.2%, windows out 2.8%, part 2.2%, shell 7.3%, rubble 34.5% (front row 41.8, 3.1, 2.1, 8.5, 44.5).
+
+**Lines touched in Simulation's files (the grant):**
+- `sim/core/fx.gd`: one function, `buildingStage(S, b, from_, to_, cx, owner, n, h)`, 7 lines, before `floorHit`.
+- `sim/core/hash.gd`: one entry in `FX_FIELDS`: `"building_stage": ["b", "from", "to", "x", "y", "z", "w", "h", "kind", "cx", "owner", "n"]`. Every field already exists on `FxEvent`; `state.gd` is not touched.
+- `sim/core/replay.gd`: one line in `dataHash()`: `h.text(WorldStructures.stagesHash())`.
+- `sim/core/view/fx.gd`: `"building_stage"` added to the list of events the view passes over (one token; without it the view reports an unknown event).
+World's: `structures.gd` (the loader, `stage`, `stageEmit`, the emission in `damageBuilding` when it is not a collapse called by a floors path), `brunt.gd` (`applyFloors` reports its stage change once; `_bits`), `blast.gd` (a shot's floors hit reports once), `data/biomes/stages.json`, both `ladder.json` (`reach.structure[3]` 1.8), `contact.json` (`area.slam` 0.75), `sim/world/tools/stagecheck.gd`, `golden.json`. Tools': the schema `biomes.stages/1` and its line in `tools/schemas/map.json`, the event in `fx-events.md`.
+
+**For VFX and Rendering: the stage queries and events.**
+- *Query, any time, seek-safe:* `WorldStructures.stage(b)` gives 0 intact, 1 windows out, 2 a part gone, 3 a shell, 4 rubble, from the building's hashed state; `WorldStructures.curH(b)` is the standing height, `b.fmask` the standing floors (a skyscraper), `b.fdmg` the damage on each floor, `b.hp / b.maxhp` the rest. Nothing about a stage is stored, so a replay seek or a late join reads the right look from the state.
+- *Event, once a change:* `building_stage {b, from, to, x, y, z, w, h, kind, cx, owner, n}`: b the building's index (`S.buildings[b]`), from and to the stages (a blow past two thresholds is one event, 1 to 3; a building levelled at once 0 to 4), x its centre, y its ground, z its depth, w its width, h its standing height after the change, kind `house` or `tower`, cx the x of the blast or hit (glass and panels fly away from it), owner the causing fighter's slot, n the floors lost in the step (a skyscraper hit). To 4 it is sent beside `building_fall` (the fall's detail stays there).
+- *Suggested reads (theirs to choose):* stage 1, the windows blow out (a glass shower from the floors that face `cx`; the shock record of section 2 will make this survive seeks); stage 2, a sheared corner or the cut floors (`floor_hit` and `floors_fall` carry the detail); stage 3, a shell: cladding stripped, the dark inside seen, smoke; stage 4 as today.
+- *Slice 3's additions (not built):* the query `WorldContact.surfaceAt(S, x)` (exists today: paving, rock, soil, sand, rubble); `crater` gains `surface` and `crackR` (the cracked ring in crater radii); `land`, `bounce` and `slide_dust` already carry the surface name; Rendering already reads `S.crack` for cracked paving (the knockback slide writes it; craters and skids on paving will write it too).
+
+## 7. Slice 2 measured: a gentle stage cap on a relaxed pair (scratch on HEAD a995d16, 160 matches each, shells on 40)
+
+The cap (`leave`: one blast cannot take a standing building below that share of its hit points; beams and brunts excluded) with the reach and slam relaxed. Front row and all rows at the KO, civilians, tier 4 a minute (all rows), and the share of buildings in stage 3 (a shell) at the KO, all rows / front row. C1 is clean in every run.
+
+| reach / slam / leave | Front row | All rows | Civilians | Tier 4 a minute | Shells (all / front) |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 2.8 / 0.9 / none (today) | 52.1 | 40.6 | 23.9 | 10.15 | 5.9 / 6.4 |
+| 1.8 / 0.75 / none (slice 1) | 47.7 | 37.0 | 22.2 | 8.75 | 7.3 / 8.5 |
+| 2.0 / 0.9 / 0.10 | 39.4 | 30.6 | 23.7 | 8.78 | 14.3 / 17.1 |
+| 2.2 / 0.9 / 0.10 | 39.9 | 31.0 | 24.4 | 9.09 | 15.4 / 18.3 |
+| 2.2 / 0.9 / 0.15 | 38.4 | 29.7 | 23.9 | 8.04 | 17.9 / 21.6 |
+| 2.4 / 0.9 / 0.10 | 41.1 | 31.8 | 24.7 | 9.27 | 15.9 / 18.8 |
+| 2.4 / 0.9 / 0.15 | 39.1 | 30.4 | 23.6 | 8.34 | 19.2 / 23.1 |
+| **2.8 / 0.9 / 0.10** | **42.2** | 32.9 | 25.3 | 9.50 | **16.1 / 19.3** |
+| 3.2 / 1.0 / 0.10 | 44.7 | 34.7 | 25.1 | 10.11 | 14.8 / 17.3 |
+| 3.6 / 0.9 / 0.10 | 44.9 | 34.9 | 26.2 | 10.11 | 17.7 / 21.3 |
+
+**Reading.** The cap is a switch more than a dial: any `leave` from 0.10 to 0.40 turns "one blast kills" into "two blasts kill" and takes about 10 points off the front row, so a relaxed pair does not leave it at 45 to 50: every setting with reach 2.0 to 2.4 lands at 38 to 41%, under the band's foot (25 to 50 is the band; 45 to 50 was the target). **What it gives that the pair does not is the stages:** shells at the KO go from 5.9% to 14 to 19% of all buildings (6.4% to 17 to 23% of the front row), and the buildings that are left standing are wrecks. To bring the front row up to 45 with the cap the reach has to go **up** (3.2 to 3.6 with slam 0.9 to 1.0 gives 44.7 to 44.9, civilians 25 to 26%), which is the opposite of Orb's "cut the reach". **Recommendation: if Orb wants the stages, `leave` 0.10 with the reach and slam as they are today** (2.8 / 0.9 / 0.10: front row 42.2%, all rows 32.9%, tier 4 at 9.5% a minute, civilians 25.3%, shells 16.1%): under the ceiling of 50 with the slam's read untouched; the pair of slice 1 then stays out. If Orb wants both a lower reach and the stages, the front row falls to 38 to 40, and the lever to bring it back is a higher slam, not a lower one. Either way the stage function and event of slice 1 are the same; the choice is two data numbers (`reach.structure[3]` and `area.slam`) and the cap's one (`area.leaveFrac`, with its 4 lines in `damageArea`).
