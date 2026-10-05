@@ -299,14 +299,36 @@ func _dir_of(S: SimState, slot: int) -> float:
 	return fc if absf(fc) > 0.5 else 1.0
 
 
-## The press styles (press.gd): each blow's after-image and contact look by the way it was pressed.
+## A body from a real pose's joints (VfxPress.JOINTS order: Animation's press_pose through the rig's forward kinematics): a head ring, the spine, both arms and both
+## legs as thin strokes. base is where the body's anchor (his feet) is in this view; joints are offsets from it. wire = an outline, else a filled ghost.
+func _figure_j(n: int, base: Vector2, joints: PackedVector2Array, col: Color, wire: bool, z: float, minpx: float) -> int:
+	if joints.size() < 16:
+		return n
+	var t: float = maxf(1.7, minpx * 1.5) if wire else 3.4
+	var head: Vector2 = base + joints[0] + Vector2(0.0, 5.0)
+	if wire:
+		n = _put(n, head, Vector2(1.0, 0.0), VfxPress.HEAD_R * 2.0, VfxPress.HEAD_R * 2.0, z, col, maxf(0.16, 2.0 * minpx / VfxPress.HEAD_R), 0.0, SHAPE_RING)
+	else:
+		n = _put(n, head, Vector2(1.0, 0.0), VfxPress.HEAD_R * 2.0, VfxPress.HEAD_R * 2.0, z, col, 1.0, 0.0, SHAPE_RING)
+	var tw: float = t if wire else t * 1.7
+	n = _line(n, base + joints[3], base + joints[2], tw, z, col)
+	n = _line(n, base + joints[2], base + joints[1], tw, z, col)
+	n = _line(n, base + joints[1], head, tw * 0.8, z, col)
+	for pair in [[4, 5], [5, 6], [7, 8], [8, 9], [10, 11], [11, 12], [13, 14], [14, 15]]:
+		n = _line(n, base + joints[pair[0]], base + joints[pair[1]], t, z + 0.1, col)
+	return n
+
+
+## The press styles (press.gd): each blow's after-image and contact look by the way it was pressed. With Animation's hand-off (the blow's real earlier pose and the
+## real path of the striking limb's tip) the echoes and ghosts are real poses and the blur, the line and the crescent follow the real fist; without it they are
+## estimates (a stand-in figure and a straight guard-to-contact path).
 func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a: float, bh: float, minpx: float, alpha: float) -> int:
 	var pr: VfxPress = hub.press
 	var al: float = alpha * VfxPress.p("alpha")
 	pr.shown = 0
 	var red: bool = hub.reduced_motion
 	for e: VfxPress.Fx in pr.fx:
-		if n >= CAP - 40:
+		if n >= CAP - 60:
 			break
 		var rx: float = SimWrap.sdx(cam_x, e.ax)
 		if absf(rx) > half_w + 6.0 * bh:
@@ -320,6 +342,15 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 		var feet := Vector2(rx, e.ay)
 		var contact: Vector2 = feet + Vector2(e.cx, e.cy)
 		var guard: Vector2 = feet + Vector2(d * VfxPress.GUARD.x, VfxPress.GUARD.y + (6.0 if e.hand == 1 else -2.0))
+		# The fist's path: the real one when Animation gave it, else guard to contact.
+		var pts: PackedVector2Array = PackedVector2Array()
+		if e.path.size() >= 2:
+			for q0 in e.path:
+				pts.append(feet + q0)
+		else:
+			pts.append(guard)
+			pts.append(contact)
+		var start: Vector2 = pts[0]
 		pr.shown += 1
 		match e.style:
 			"speed":
@@ -328,37 +359,48 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				var bc: Color = e.col.darkened(0.15)
 				bc.a = al * 0.55 * fade
 				if not red:
-					for k in range(5):
-						var f: float = float(k + 1) / 5.0
-						var pc: Vector2 = guard.lerp(contact, f)
+					var nd: int = 6 if e.real else 5
+					for k in range(nd):
+						var f: float = float(k + 1) / float(nd)
+						var fi: float = f * float(pts.size() - 1)
+						var i0: int = mini(int(fi), pts.size() - 2)
+						var pc: Vector2 = pts[i0].lerp(pts[i0 + 1], fi - float(i0))
 						n = _put(n, pc, Vector2(1.0, 0.0), 18.0 + 14.0 * f, 18.0 + 14.0 * f, zb, bc, 1.0, 0.0, SHAPE_DISC)
-				var path: Vector2 = contact - guard
-				if path.length() > 1.0:
-					var sc: Color = e.col
-					sc.a = al * 0.45 * fade
-					n = _put(n, (guard + contact) * 0.5, path.normalized(), path.length(), VfxPress.p("speed_w") * 2.0, zb - 0.2, sc, 0.9, 0.5, SHAPE_STREAK)
+				var sc: Color = e.col.darkened(0.15)
+				sc.a = al * 0.45 * fade
+				for k in range(pts.size() - 1):
+					var seg: Vector2 = pts[k + 1] - pts[k]
+					if seg.length() > 0.5:
+						n = _put(n, (pts[k] + pts[k + 1]) * 0.5, seg.normalized(), seg.length() * 1.1, VfxPress.p("speed_w") * 2.0, zb - 0.2, sc, 0.9, 0.5, SHAPE_STREAK)
 				var rr: float = lerpf(5.0, VfxPress.p("speed_ring_r"), 1.0 - pow(1.0 - clampf(st / VfxPress.p("speed_ring_life"), 0.0, 1.0), 2.0))
 				var rc: Color = e.col2
 				rc.a = al * (1.0 - clampf(st / VfxPress.p("speed_ring_life"), 0.0, 1.0))
 				n = _put(n, contact, Vector2(1.0, 0.0), rr * 2.0, rr * 2.0, zf, rc, maxf(0.16, 3.4 * minpx / rr), 0.0, SHAPE_RING)
 			"tech":
-				# Three sharp wireframe echoes between the old pose and the strike, popping off one at a time from the back to the front;
+				# Echoes between the old pose and the strike (real earlier poses when we have them), popping off one at a time from the back to the front;
 				# a thin straight speed line; a hard diamond.
 				var pop: float = VfxPress.p("echo_pop")
-				for g in range(3):
-					if red and g != 2:
+				var ne: int = e.ghosts if e.ghosts > 0 else 3
+				for g in range(ne):
+					if red and g != ne - 1:
 						continue
 					if st >= 2.5 + float(g) * pop:
 						continue
-					var fr: float = float(g + 1) / 4.0
-					var bx: float = -d * maxf(e.lunge, 24.0) * (1.0 - fr)
+					var fr: float = float(g + 1) / float(ne + 1)
 					var ec: Color = e.col.darkened(0.3)
 					ec.a = al
-					var fist: Vector2 = guard.lerp(contact, fr)
-					n = _figure(n, Vector2(feet.x + bx, feet.y), d, 4.0 + 10.0 * fr, Vector2(fist.x + bx, fist.y), ec, true, zf - 2.0 + 0.2 * float(g), minpx)
+					if e.real:
+						var jj := PackedVector2Array()
+						for k in range(e.ja.size()):
+							jj.append(e.ja[k].lerp(e.jb[k], fr))
+						n = _figure_j(n, Vector2(rx + lerpf(e.old_dx, 0.0, fr), e.ay), jj, ec, true, zf - 2.0 + 0.2 * float(g), minpx)
+					else:
+						var bx: float = -d * maxf(e.lunge, 24.0) * (1.0 - fr)
+						var fist: Vector2 = guard.lerp(contact, fr)
+						n = _figure(n, Vector2(feet.x + bx, feet.y), d, 4.0 + 10.0 * fr, Vector2(fist.x + bx, fist.y), ec, true, zf - 2.0 + 0.2 * float(g), minpx)
 				var lc: Color = e.col.darkened(0.3)
 				lc.a = al * 0.9 * (1.0 - clampf(st / VfxPress.p("line_life"), 0.0, 1.0))
-				n = _line(n, guard, contact, maxf(1.3, minpx * 1.2), zf - 1.0, lc)
+				n = _line(n, start, pts[pts.size() - 1], maxf(1.3, minpx * 1.2), zf - 1.0, lc)
 				var dl: float = VfxPress.p("diamond_life")
 				if st < dl:
 					var dr: float = lerpf(5.0, VfxPress.p("diamond_r"), clampf(st / 4.0, 0.0, 1.0))
@@ -366,30 +408,46 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 					dc.a = al * (1.0 - st / dl)
 					n = _put(n, contact, Vector2(1.0, 0.0), dr * 2.0, dr * 2.0, zf, dc, maxf(0.2, 3.6 * minpx / dr), 0.0, 5.0)
 			"heavy":
-				# The release: stacked body ghosts behind him, a filled crescent from the back-swing to the contact, and a double contact ring.
+				# The release: stacked body ghosts behind him, a filled crescent along the fist's path, and a double contact ring.
 				var gl: float = VfxPress.p("ghost_life")
 				var gf: float = 1.0 - clampf(st / gl, 0.0, 1.0)
 				if not red:
-					for k in range(4):
-						var fr2: float = float(k + 1) / 5.0
-						var bx2: float = -d * e.lunge * (1.0 - fr2) * 1.3
+					var ng: int = e.ghosts if e.ghosts > 0 else 3
+					for k in range(ng):
+						var fr2: float = float(k + 1) / float(ng + 1)
 						var gc: Color = e.col
-						gc.a = al * (0.20 + 0.08 * float(k)) * gf
-						n = _figure(n, Vector2(feet.x + bx2, feet.y), d, 16.0, Vector2(feet.x + bx2 + d * 30.0, feet.y + 56.0).lerp(contact, fr2), gc, false, zb + 0.1 * float(k), minpx)
-				var back_pt: Vector2 = feet + Vector2(-d * 30.0, 60.0)
-				var ctrl: Vector2 = (back_pt + contact) * 0.5 + Vector2(0.0, 34.0)
+						gc.a = al * (0.20 + 0.10 * float(k)) * gf
+						if e.real:
+							var jg := PackedVector2Array()
+							for q1 in range(e.ja.size()):
+								jg.append(e.ja[q1].lerp(e.jb[q1], fr2))
+							n = _figure_j(n, Vector2(rx + lerpf(e.old_dx, 0.0, fr2), e.ay), jg, gc, false, zb + 0.1 * float(k), minpx)
+						else:
+							var bx2: float = -d * e.lunge * (1.0 - fr2) * 1.3
+							n = _figure(n, Vector2(feet.x + bx2, feet.y), d, 16.0, Vector2(feet.x + bx2 + d * 30.0, feet.y + 56.0).lerp(contact, fr2), gc, false, zb + 0.1 * float(k), minpx)
 				var cl: float = VfxPress.p("crescent_life")
 				var cf: float = 1.0 - clampf(st / cl, 0.0, 1.0)
 				var cc: Color = e.col
 				cc.a = al * 0.75 * cf
-				var segs: int = 3 if red else 5
-				var prev: Vector2 = back_pt
-				for k in range(segs):
-					var tq: float = float(k + 1) / float(segs)
-					var q: Vector2 = (1.0 - tq) * (1.0 - tq) * back_pt + 2.0 * (1.0 - tq) * tq * ctrl + tq * tq * contact
-					var wq: float = 6.0 + 28.0 * sin(PI * (tq - 0.5 / float(segs)))
-					n = _put(n, (prev + q) * 0.5, (q - prev).normalized(), (q - prev).length() * 1.15, wq, zb + 0.3, cc, 0.6, 0.6, SHAPE_STREAK)
-					prev = q
+				var arc := PackedVector2Array()
+				if e.path.size() >= 3:
+					arc = pts
+				else:
+					var back_pt: Vector2 = feet + Vector2(-d * 30.0, 60.0)
+					var ctrl: Vector2 = (back_pt + contact) * 0.5 + Vector2(0.0, 34.0)
+					arc.append(back_pt)
+					var segs0: int = 3 if red else 5
+					for k in range(segs0):
+						var tq0: float = float(k + 1) / float(segs0)
+						arc.append((1.0 - tq0) * (1.0 - tq0) * back_pt + 2.0 * (1.0 - tq0) * tq0 * ctrl + tq0 * tq0 * contact)
+				var asegs: int = arc.size() - 1
+				for k in range(asegs):
+					var seg2: Vector2 = arc[k + 1] - arc[k]
+					if seg2.length() < 0.3:
+						continue
+					var tq: float = (float(k) + 0.5) / float(asegs)
+					var wq: float = 6.0 + 28.0 * sin(PI * tq)
+					n = _put(n, (arc[k] + arc[k + 1]) * 0.5, seg2.normalized(), seg2.length() * 1.15, wq, zb + 0.3, cc, 0.6, 0.6, SHAPE_STREAK)
 				var rl: float = VfxPress.p("ring_life")
 				var rt: float = clampf((st - 2.0) / rl, 0.0, 1.0)
 				if st >= 2.0 and rt < 1.0:

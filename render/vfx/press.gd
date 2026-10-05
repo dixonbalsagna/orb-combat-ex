@@ -24,6 +24,10 @@ const DEFAULTS: Dictionary = {
 		"block_life": 12.0, "flash_life": 7.0, "shield_h": 40.0},
 }
 const STYLES: Array = ["speed", "tech", "heavy", "block"]
+## The joints a pose is drawn from (Animation's rig names), in the order the view reads them.
+const JOINTS: Array = ["head", "neck", "spine_2", "pelvis", "upper_arm_r", "forearm_r", "hand_r", "upper_arm_l", "forearm_l", "hand_l", "thigh_l", "shin_l", "foot_l", "thigh_r", "shin_r", "foot_r"]
+## Tests set this to fake Animation's AnimFighter: Callable(S, slot) -> an object with press, press_ring, press_path, press_pose(k), vface; unset it reads RenderAnim.
+static var anim_hook: Callable = Callable()
 ## A body's proportions in units (a fighter is about 75 tall, VfxLook.BH): hip, shoulder, neck and head centre above the feet, head radius, and the guard
 ## fist (forward of the chest and its height).
 const HIP: float = 34.0
@@ -48,6 +52,12 @@ class Fx:
 	var col: Color = Color.WHITE
 	var col2: Color = Color.WHITE
 	var small: bool = false         # reduced motion or a low-quality tick: the short form
+	var real: bool = false          # Animation's hand-off was used: ja and jb are real poses, path the real fist path
+	var ghosts: int = 0             # how many after-images Animation asks for (press.ghosts), 0: ours
+	var ja: PackedVector2Array = PackedVector2Array()   # the old pose's joints (JOINTS order), offsets from its anchor, x turned to the world
+	var jb: PackedVector2Array = PackedVector2Array()   # the strike pose's joints
+	var old_dx: float = 0.0         # where the old pose's anchor was, along x, from the blow's anchor
+	var path: PackedVector2Array = PackedVector2Array() # the striking limb's tip over the last solves, offsets from the anchor (feet), oldest first
 
 class Wind:
 	var on: bool = false
@@ -116,6 +126,10 @@ static func style_of(S: SimState, e, attacker: int) -> String:
 		return forced
 	if kind == "heavy":
 		return "heavy"
+	# Animation's own read of the blow that is playing (picture and body agree).
+	var af = anim_of(S, attacker)
+	if af != null and not af.press.is_empty() and STYLES.has(String(af.press.get("style", ""))) and String(af.press.style) != "block":
+		return String(af.press.style)
 	if attacker >= 0 and attacker < S.fighters.size():
 		var f = S.fighters[attacker]
 		if f.act != null and f.act.dirI.size() >= DirAlchemy.SIZE:
@@ -126,6 +140,15 @@ static func style_of(S: SimState, e, attacker: int) -> String:
 				"hold":
 					return "heavy"
 	return "speed"
+
+
+## Animation's AnimFighter for a slot while its press styles are on (RenderAnim.press_styles), or null. Read only.
+static func anim_of(S: SimState, slot: int):
+	if anim_hook.is_valid():
+		return anim_hook.call(S, slot)
+	if not RenderAnim.press_styles or not RenderAnim.is_enabled() or slot < 0 or slot >= S.fighters.size():
+		return null
+	return RenderAnim.fighter(S, S.fighters[slot])
 
 
 static func lane_of(S: SimState, slot: int) -> Color:
@@ -161,7 +184,16 @@ func step(S: SimState, frozen: bool) -> void:
 		while h.size() > int(p("hist")):
 			h.pop_front()
 		var w: Wind = wind[s]
-		if w.on:
+		var af = anim_of(S, s)
+		if af != null and not af.press.is_empty() and String(af.press.get("style", "")) == "heavy" and String(af.press.get("phase", "")) == "load":
+			# Animation's own wind-up: the ring is as far in as the blow is loaded (its ticks to contact).
+			w.on = true
+			w.t = clampf(24.0 - float(af.press.get("ticks_to_contact", 24)), 0.0, 24.0)
+			w.ax = S.fighters[s].x
+			w.ay = S.fighters[s].y
+			w.dir = _dir_to(S, s)
+			w.col = lane_of(S, s)
+		elif w.on:
 			w.t += 1.0
 			if w.t > p("wind_life"):
 				w.on = false
@@ -254,7 +286,64 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 			x.cy = region_y("core")
 			x.col = lane_of(S, vic)
 			x.life = p("block_life")
+	_take_real(S, x, att, style)
 	fx.append(x)
 	while fx.size() > 24:
 		fx.pop_front()
 	made[style] = int(made.get(style, 0)) + 1
+
+
+## Animation's hand-off for a blow: the old pose and the strike pose as joints (the rig's forward kinematics over press_pose), the fist's real path, and
+## the ghosts it asks for. Nothing is kept by reference: the AnimFighter's ring moves on.
+func _take_real(S: SimState, x: Fx, att: int, style: String) -> void:
+	var af = anim_of(S, att)
+	if af == null:
+		return
+	x.ghosts = int(af.press.get("ghosts", 0)) if not af.press.is_empty() else 0
+	var sx: float = 1.0 if float(af.vface) >= 0.0 else -1.0
+	var nr: int = af.press_ring.size()
+	var fa = S.fighters[att]
+	if nr >= 2 and (style == "tech" or style == "heavy"):
+		var pn: Dictionary = af.press_pose(0)
+		var span: float = 0.1 if style == "tech" else 0.4
+		var po: Dictionary = pn
+		for k in range(1, nr):
+			var c: Dictionary = af.press_pose(k)
+			if float(pn.T) - float(c.T) <= span + 0.001:
+				po = c
+		if po != pn:
+			x.ja = joints_of(po, sx)
+			x.jb = joints_of(pn, sx)
+			var ago: int = clampi(roundi((float(pn.T) - float(po.T)) * 60.0), 1, maxi(hist[att].size() - 1, 1))
+			x.old_dx = SimWrap.sdx(fa.x, back(S, att, ago).x)
+			x.real = x.ja.size() >= 16 and x.jb.size() >= 16
+	var np: int = af.press_path.size()
+	if np >= 2:
+		var pnew: float = float(af.press_path[np - 1].T)
+		for k in range(np):
+			var ent: Dictionary = af.press_path[k]
+			var tip: Vector3 = ent.tip
+			var ag: int = clampi(roundi((pnew - float(ent.T)) * 60.0), 0, maxi(hist[att].size() - 1, 0))
+			var hp: Vector2 = back(S, att, ag)
+			x.path.append(Vector2(SimWrap.sdx(fa.x, hp.x) + sx * tip.x, (hp.y - fa.y) + tip.y))
+		# The fist ends where the real tip ends.
+		if style != "block":
+			var last: Vector2 = x.path[x.path.size() - 1]
+			x.cx = last.x
+			x.cy = last.y
+
+
+## A pose's joints (JOINTS order) as offsets from the body's anchor, x turned by the facing sign (Animation: flip x by vface for the world).
+static func joints_of(pose: Dictionary, sx: float) -> PackedVector2Array:
+	AnimRig.setup()
+	var gq: Array[Quaternion] = []
+	gq.resize(AnimRig.N)
+	var gp := PackedVector3Array()
+	gp.resize(AnimRig.N)
+	AnimPose.fk(pose.q, pose.hips, gq, gp)
+	var ro: Vector3 = pose.root_off
+	var out := PackedVector2Array()
+	for nm in JOINTS:
+		var v: Vector3 = gp[AnimRig.index[nm]] + ro
+		out.append(Vector2(sx * v.x, v.y))
+	return out

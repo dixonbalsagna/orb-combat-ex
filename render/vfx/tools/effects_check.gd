@@ -2882,11 +2882,12 @@ func _press() -> void:
 		return view.count
 	var fresh := func() -> VfxHub:
 		var h := VfxHub.new()
+		h.press_enabled = true
 		h.reset(S, 6)
 		for k in range(8):
 			_tick(S, h, [])
 		return h
-	_check(VfxLook.PRESS_DEFAULT and VfxHub.new().press_enabled, "on by default")
+	_check(not VfxLook.PRESS_DEFAULT and not VfxHub.new().press_enabled, "off by default (it matches Animation's press-styles flag, also off)")
 	# The style of a blow: the beat's own, else the press log, else speed; heavy is heavy and a guard is a block.
 	var e_h = hit.call(0, "heavy", "")
 	var e_g = hit.call(0, "guard", "")
@@ -2950,6 +2951,33 @@ func _press() -> void:
 	_tick(S, hr, [hit.call(0, "light", "mash"), hit.call(1, "light", "timed")])
 	var q_red: int = quads_at.call(hr)
 	_check(q_red < q_speed + 17 and q_red >= 6, "reduced motion: no blur discs and one echo (%d quads, against %d and 17)" % [q_red, q_speed])
+	# --- Animation's hand-off (docs/animation/press-styles.md section 6): the style, the real earlier pose, the real fist path and the real wind-up.
+	var fa_f := FakeAnim.new()
+	fa_f.fill(f0)
+	VfxPress.anim_hook = func(_S, slot): return fa_f if slot == 0 else null
+	var ha: VfxHub = fresh.call()
+	fa_f.press = {"style": "tech", "phase": "contact", "blow": 1, "ordinal": 1, "ticks_to_contact": 0, "limb": "arm_r", "bone": "hand_r", "side": false, "smear": false, "ghosts": 3, "weight": 0.5, "squash": 0.0, "stretch": 0.0, "twist": 0.0, "dx": 0.0}
+	_tick(S, ha, [hit.call(0, "light", "")])
+	var xa: VfxPress.Fx = ha.press.fx[0] if not ha.press.fx.is_empty() else null
+	_check(xa != null and xa.style == "tech" and xa.real and xa.ja.size() == 16 and xa.jb.size() == 16 and xa.ghosts == 3, "with the hand-off the style is Animation's (tech, over a light blow's own read), the pose pair is real (%d joints) and it asks for 3 ghosts" % (xa.ja.size() if xa != null else 0))
+	_check(xa != null and xa.path.size() == 7 and absf(xa.cx - xa.path[6].x) < 0.01 and xa.cx > 20.0, "the fist's path is Animation's (%d points) and the contact is where the tip ends (%.0f)" % [xa.path.size() if xa != null else 0, xa.cx if xa != null else 0.0])
+	var q_real: int = quads_at.call(ha)
+	_check(q_real >= 36, "real echoes are whole bodies: %d quads at the blow" % q_real)
+	_check(xa != null and absf(xa.old_dx) < 60.0, "the old pose's anchor comes from the position history (%.1f units back)" % (xa.old_dx if xa != null else 0.0))
+	# A speed blow follows the real path (the blur runs along its points) and keeps its small count.
+	fa_f.press = {"style": "speed", "phase": "contact", "ghosts": 2, "ticks_to_contact": 0}
+	var hsp: VfxHub = fresh.call()
+	_tick(S, hsp, [hit.call(0, "light", "")])
+	_check(hsp.press.fx[0].style == "speed" and quads_at.call(hsp) >= 8, "a speed blow with the real path draws its blur along it (%d quads)" % view.count)
+	# The heavy's wind-up is the real phase: the ring is as far in as the blow is loaded.
+	var hw: VfxHub = fresh.call()
+	fa_f.press = {"style": "heavy", "phase": "load", "ticks_to_contact": 12, "ghosts": 3}
+	_tick(S, hw, [])
+	_check(hw.press.wind[0].on and absf(hw.press.wind[0].t - 12.0) < 0.5, "the wind-up follows Animation's phase and ticks to contact (t %.0f of 24)" % hw.press.wind[0].t)
+	fa_f.press = {}
+	_tick(S, hw, [])
+	_check(hw.press.wind[0].on, "and it falls back to the cue's timer when Animation's phase ends")
+	VfxPress.anim_hook = Callable()
 	# Off draws nothing; the busiest tick fits the budget.
 	var ho := VfxHub.new()
 	ho.press_enabled = false
@@ -2961,6 +2989,28 @@ func _press() -> void:
 	_check(quads_at.call(hz) <= VfxShotsView.CAP, "the busiest tick draws %d quads of %d" % [view.count, VfxShotsView.CAP])
 	view.queue_free()
 	SimCore.dispose(S)
+
+
+## A stand-in for Animation's AnimFighter (press, press_ring, press_path, press_pose(k), vface): rest poses with the arm swinging out over seven solves.
+class FakeAnim:
+	var press: Dictionary = {}
+	var press_ring: Array = []
+	var press_path: Array = []
+	var vface: float = 1.0
+
+	func fill(f) -> void:
+		AnimRig.setup()
+		for k in range(7):
+			var q: Array[Quaternion] = []
+			for i in range(AnimRig.N):
+				q.append(Quaternion.IDENTITY)
+			q[AnimRig.index["upper_arm_r"]] = Quaternion(Vector3(0, 0, 1), -0.2 * float(k))
+			press_ring.append({"T": float(k) / 60.0, "q": q, "hips": Vector3.ZERO, "root_off": Vector3.ZERO})
+			press_path.append({"T": float(k) / 60.0, "tip": Vector3(10.0 + 8.0 * float(k), 50.0, 0.0)})
+
+	func press_pose(back: int) -> Dictionary:
+		var n: int = press_ring.size()
+		return press_ring[n - 1 - back] if back >= 0 and back < n else {}
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:
