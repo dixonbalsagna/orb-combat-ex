@@ -241,6 +241,7 @@ func _run() -> void:
 		_real_match(int(seeds[0]), -1, 0.0, FULL_TICKS, 2)
 		_real_match(int(seeds[mini(1, seeds.size() - 1)]), -1, 49.0, FULL_TICKS, 2)
 	_intro_real()
+	_intro_composed_all()
 	_opening_default()
 	_sim_unchanged()
 	print("frames checked  %d, checks %d" % [frames_checked, checks])
@@ -1695,6 +1696,129 @@ func _intro_real() -> void:
 	stats["intro real"] = "events %s, cuts %s, faller off %d ticks, two-shot starts off %d ticks" % [str(seen), str(cuts), off, two_off]
 	SimCore.dispose(_S)
 	_S = null
+
+
+## Composed intros (docs/architecture/dynamic-intros.md): every template, either fighter first, the gap at its shortest,
+## default and longest, played by the sim and framed two ways. Split view (the rig): while a shot has a subject he is on the
+## screen and no smaller than the camera's floor, a two-shot has both, and both are there after the clock. One view (the
+## sim's reference camera, sim/core/view/camera.gd, and the candidate fix in intro_cam_candidate.gd): the subject is who is
+## on stage, not who is held up in the sky before his fall: the one falling, else the ones that are down. The reference
+## camera's misses are recorded; the candidate's are asserted (docs/camera/split-screen.md section 22).
+func _intro_composed_all() -> void:
+	var gaps: Dictionary = {"double_drop": [30, 48, 70], "latecomer": [100, 154, 200], "long_look": [48]}
+	var tot: Dictionary = {"split_off": 0, "two_off": 0, "ref_off": 0, "new_off": 0, "runs": 0}
+	var zmin_ref: float = 1.0e9
+	var zmin_new: float = 1.0e9
+	for sc in gaps:
+		for order in [0, 1]:
+			for g in gaps[sc]:
+				var r: Dictionary = _intro_composed(String(sc), int(order), int(g))
+				for k in tot:
+					tot[k] = int(tot[k]) + int(r.get(k, 0))
+				zmin_ref = minf(zmin_ref, float(r["zmin_ref"]))
+				zmin_new = minf(zmin_new, float(r["zmin_new"]))
+	stats["intro composed"] = "%d intros: split view off-screen subject ticks %d (two-shot %d); one view off-screen subject ticks: reference camera %d, candidate %d; smallest zoom %.3f reference, %.3f candidate (floor %.3f)" % [int(tot["runs"]), int(tot["split_off"]), int(tot["two_off"]), int(tot["ref_off"]), int(tot["new_off"]), zmin_ref, zmin_new, CamParams.R_FLOOR * vh / CamParams.BODY_H]
+
+
+func _intro_composed(sc: String, order: int, gap: int) -> Dictionary:
+	_begin("intro %s first %d gap %d" % [sc, order, gap])
+	SimCore.newMatch(_S, 3, {"p1": true, "p2": true}, {"intro": {"play": true, "scenario": sc, "order": order, "gap": gap}})
+	_rig.reset(_S, vw, vh)
+	_watch_first()
+	_S.dt = SplitRig.DT
+	var clock: int = int(_S.intro.clock)
+	var cam_ref := SimCamera.new()
+	var cam_new := IntroCamCandidate.new()
+	var floor_z: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
+	var split_off: int = 0
+	var subj_ticks: int = 0
+	var two_t: int = 0
+	var two_off: int = 0
+	var both_ok: bool = true
+	var clock_t: int = -1
+	var floor_bad: int = 0
+	var ref_off: int = 0
+	var new_off: int = 0
+	var zmin_ref: float = 1.0e9
+	var zmin_new: float = 1.0e9
+	var key_prev: String = ""
+	var since: int = 0
+	for t in range(0, clock + 60):
+		SimCore.step(_S)
+		var ev: Array = _S.out.fx.duplicate()
+		_S.out.fx.clear()
+		_S.out.feed.clear()
+		for e in ev:
+			if String(e.type) == "clock_start":
+				clock_t = t
+		_rig.step(_S, vw, vh, ev)
+		_tick += 1
+		_watch()
+		var cur: SplitFrame = _rig.current()
+		if _rig.solo_kind == "intro" and t > 0:
+			var sl: int = _rig.solo_slot
+			subj_ticks += 1
+			if not _on_screen(cur, sl):
+				split_off += 1
+			if _apparent_px(sl, cur) < CamParams.R_FLOOR * vh - 0.5:
+				floor_bad += 1
+		if _rig._in_phase == "stare" and _rig.intro_active:
+			two_t += 1
+		else:
+			two_t = 0
+		if two_t > 15 and not (_on_screen(cur, 0) and _on_screen(cur, 1)):
+			two_off += 1
+		if clock_t >= 0 and t > clock_t + 20 and t < clock_t + 30:
+			both_ok = both_ok and _on_screen(cur, 0) and _on_screen(cur, 1)
+		# the one view: the subjects are who is on stage
+		cam_ref.camStep(_S, SplitRig.DT, vw, vh)
+		cam_new.camStep(_S, SplitRig.DT, vw, vh)
+		var held: Array = [false, false]
+		var falling: int = -1
+		for i in range(2):
+			var f = _S.fighters[i]
+			if f.state == "intro" or f.state == "waiting":
+				var g0: float = WorldTerrain.groundY(_S, f.x)
+				if f.y >= g0 + SimIntro.fallHeight - 1.0:
+					held[i] = true
+				elif f.y > g0 + 4.0:
+					falling = i
+		var subj: Array = []
+		if falling >= 0:
+			subj = [falling]
+		else:
+			for i in range(2):
+				if not held[i]:
+					subj.append(i)
+		var key: String = str(subj) + (" falling" if falling >= 0 else "")
+		since = since + 1 if key == key_prev else 0
+		key_prev = key
+		var need: int = 3 if falling >= 0 else 90   # a fall is followed rigidly; the other framings ease in
+		if since >= need and _S.intro.left > 0:
+			for si in subj:
+				var f2 = _S.fighters[si]
+				for pair in [[cam_ref, 0], [cam_new, 1]]:
+					var cm = pair[0]
+					var dx: float = absf(SimWrap.sdx(cm.x, f2.x)) * cm.z
+					var dy: float = absf((f2.y + CamParams.CHEST) - cm.y) * cm.z
+					if dx > 0.46 * vw or dy > 0.46 * vh:
+						if int(pair[1]) == 0:
+							ref_off += 1
+						else:
+							new_off += 1
+		if _S.intro.left > 0:
+			zmin_ref = minf(zmin_ref, cam_ref.z)
+			zmin_new = minf(zmin_new, cam_new.z)
+	_check(subj_ticks > 100, "%s: only %d ticks had a shot subject" % [_label, subj_ticks])
+	_check(split_off == 0, "%s: the split view's subject was off the screen for %d ticks" % [_label, split_off])
+	_check(floor_bad == 0, "%s: the split view's subject was under the size floor for %d ticks" % [_label, floor_bad])
+	_check(two_off == 0, "%s: a fighter was off the screen for %d ticks of the two-shot" % [_label, two_off])
+	_check(both_ok and absi(clock_t - clock) <= 1, "%s: both on the screen after the clock (clock at %d, want %d)" % [_label, clock_t, clock])
+	_check(new_off == 0, "%s: the one view (candidate) lost its subject for %d ticks" % [_label, new_off])
+	_check(zmin_new >= floor_z - 0.001, "%s: the one view (candidate) zoomed to %.3f (floor %.3f)" % [_label, zmin_new, floor_z])
+	SimCore.dispose(_S)
+	_S = null
+	return {"split_off": split_off, "two_off": two_off, "ref_off": ref_off, "new_off": new_off, "runs": 1, "zmin_ref": zmin_ref, "zmin_new": zmin_new}
 
 
 ## The default opening (the setup's default is "skip": both fighters already on their craters, 900 units apart): the first

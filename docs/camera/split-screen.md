@@ -427,3 +427,45 @@ UI draws the marker (an edge chip on the `side` edge with the distance and a cou
 **4. Scan fix.** The jolt scan's rush tail now updates every tick (it used to update only on flagged jolts, filing the tail as "other"), and a camera that holds still while a fighter stops no longer counts (the metric is the smaller of the camera's change of velocity relative to the fighter and its own).
 
 **Depends on others.** Controls' lunge tell and Game Design's launch ease are not needed by anything above; when the rush speed cap or a wind-up arrives (below) the 1.2-screen threshold and the pin will fire less often, and when a launch ease arrives `LAG_HARD`'s whip count should fall by itself (the sweep's `lag whips` count is the check).
+
+
+## 22. Composed intros in both views (EP brief 2026-10-05; Rendering's measure, `docs/rendering/tumble-intro-render.md` section 2.3c)
+
+**Split view (the rig): checked, not assumed.** The sweep (`intro composed ...`) plays every template (Double Drop, Latecomer, Long Look) with either fighter first and the gap at its shortest, default and longest (14 intros, composed by the sim from the setup's record `{"play": true, "scenario", "order", "gap"}`), and checks every tick: while a shot has a subject he is on the screen (no tick of 14 intros where he is not) and no smaller than the camera's floor (R_FLOOR, 0.032 of the height); the two-shot has both; both are on the screen 20 to 30 ticks after the clock, and the clock comes at the composed length (300, 456, 420). The rig reads the intro from the events and their durations, so no change was needed for the longer templates.
+
+**One view (the sim's reference camera, `sim/core/view/camera.gd`): the fault is Simulation's file; the fix is below, tested in a copy.** `camStep` frames the midpoint of both fighters, and a fighter who has not started his fall is held 6,000 units up (state `intro`, `y` = ground + `fallHeight`). Over the same 14 intros, measured with the subject being who is on stage (the one falling, else the ones who are down, 90 ticks after the set changes for the camera to settle): the reference camera has a subject off the screen on **364 ticks** and zooms to **0.088** (the floor is 0.307 pixels a unit). The candidate in `render/camera/tests/intro_cam_candidate.gd` has **0 ticks** and a smallest zoom of **0.494**.
+
+**The exact change for `sim/core/view/camera.gd`** (Simulation's; I have not edited it). Insert at the top of `camStep`, before `var a = S.fighters[0]`:
+
+```gdscript
+	# A fighter held up in the sky before his fall is not on stage (the midpoint chased him 6,000 units up while the one
+	# who had landed was off the bottom of the screen). While one falls the camera falls with him; with one held and
+	# nobody falling it frames the other; any other state is the framing below.
+	var held: Array = [false, false]
+	var falling: int = -1
+	for i in range(2):
+		var f = S.fighters[i]
+		if f.state == "intro" or f.state == "waiting":
+			var g: float = WorldTerrain.groundY(S, f.x)
+			if f.y >= g + SimIntro.fallHeight - 1.0:
+				held[i] = true
+			elif f.y > g + 4.0:
+				falling = i
+	if falling >= 0 or held[0] != held[1]:
+		var k0: float = 1.0 - SimDetMath.pow(0.02, dt)
+		var zs: float = SimMathx.jmin(SimMathx.jmin(vw / 700.0, (vh * 0.8) / 500.0), 1.15)
+		z += (zs - z) * k0
+		if falling >= 0:
+			var fl = S.fighters[falling]
+			x = fl.x
+			y = SimMathx.jclamp(fl.y + 40.0, -180.0, SimConst.CEILING - 200.0)
+		else:
+			var on = S.fighters[1] if held[0] else S.fighters[0]
+			x = SimWrap.wrap(x + SimWrap.sdx(x, on.x) * k0)
+			y += (SimMathx.jclamp(on.y + 40.0, -180.0, SimConst.CEILING - 200.0) - y) * k0
+		return
+```
+
+Notes for Simulation: (1) a fall is followed rigidly (his `x` and `y` exactly, the zoom easing to the one-fighter size 1.15 at 720p), so the faller is always in the frame; when a fall begins the camera jumps to him in one tick (a cut, as the split view's is), and after the landing it eases back to the two-fighter framing by the existing filters; (2) `view/camera.js` is the twin: the same block in JS (`f.state === "intro" || f.state === "waiting"`, `Math.min`, `Math.max`); camera parity is not in the goldens (the nine matches never run an intro) but the twin should match; (3) the intro's skip is unaffected (both fighters are set to the end state at once); (4) nothing here touches the sim state or a hash. If Simulation prefers, the camera file can move to Camera now (its header says it goes to Camera once the renderer exists) and I carry the change.
+
+**Not changed:** the fighter held in the sky is still drawn in one view (Rendering's third fault): the camera now ignores him, so he is off the screen above the frame, which is also Rendering's call.
