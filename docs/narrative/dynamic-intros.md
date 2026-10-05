@@ -1,6 +1,6 @@
 # Dynamic intros: the content side
 
-Owner: Narrative and Fighter Identity. Version 1, 2026-10-04. Answers the EP's brief from Orb ("if we can script a system that creates dynamic intros and mixes and matches different scenarios between characters I'd like to see it"). This is the **content**: what an intro is built from, eleven scenario templates as beat lists, which parts need a voice line (as slots, intent only: **Orb writes the lines**), and the rules that keep it coherent and fresh. The sim side is Simulation's and Encounter's (`docs/architecture/intro-phase.md`); this document changes none of it and says what it needs. Presentation text treats the player as the fighter. No franchise scenes, names or poses.
+Owner: Narrative and Fighter Identity. Version 2, 2026-10-06 (section 11 added: the generative layer of implied plotlines; Orb allows longer intros and says the first to land is an even draw). Version 1, 2026-10-04. Answers the EP's brief from Orb ("if we can script a system that creates dynamic intros and mixes and matches different scenarios between characters I'd like to see it"). This is the **content**: what an intro is built from, eleven scenario templates as beat lists, which parts need a voice line (as slots, intent only: **Orb writes the lines**), and the rules that keep it coherent and fresh. The sim side is Simulation's and Encounter's (`docs/architecture/intro-phase.md`); this document changes none of it and says what it needs. Presentation text treats the player as the fighter. No franchise scenes, names or poses.
 
 Read with: `docs/architecture/intro-phase.md` (the fixed timeline today), `docs/camera/rule-of-cool-shots.md` row 7 (the shot), `matchups.md` (stakes and registers per pair), `taunt-system.md` (the challenge and accept lines), `dialogue-director.md` section 3.3 (the seen memory), and `voice-lab/staredown-last-stand.csv` (the staredown lines Orb is editing; not touched here).
 
@@ -23,6 +23,8 @@ An intro is a **template** (a curated sequence of beats, section 4) with its **p
 | 7 | **The closing** | `hold` (the staredown, nothing more), `look-away` (one of them breaks the stare first), `dare` (a challenge and an accept, from the taunt system), `rush` (both launch at the clock) | The template; `dare` and `rush` need the sim's first-move support (section 9). |
 
 **Two layers of mixing.** The **template** is curated, so every combination of beats is coherent. **Swap points** inside it let the parameters change without a new template: each template lists which axes may vary (section 4). So a pair of fighters does not only get a different template; it gets a different order, a different arrival and a different closing within one.
+
+**A third layer, above both** (section 11): a **plotline** (a relationship type, the state it is in, and an event) chooses and bends the template, so the same two fighters tell a different small story each time their relationship is in a different place, without anyone writing a scene for each pair.
 
 ## 3. Roles, and a common vocabulary
 
@@ -212,7 +214,7 @@ For the rematch hook (axis 6) the game keeps a small **local record**, `user://r
 **Freshness.**
 
 9. **Determinism.** The template and all parameters are chosen from a **seeded stream** (the match seed plus the constant `"intro"`), with weights, and written into the setup's `intro` record (`scenario`, `order`, `arrivals`, `closing`, `facts`), so the replay and an online peer reproduce the intro exactly. The selector reads the history record only on the host, and sends its facts in the setup.
-10. **No repeat of a template** within the last **5 intros of the same pair** or the last **3 intros of any pair**. A template's weight is multiplied by 1 / (1 + recent uses), so repeats lose but never vanish when little else is eligible.
+10. **No repeat of a template** within the last **5 intros of the same pair** or the last **3 intros of any pair** (and, in section 11, no repeat of a *plot id* within 5 intros of the same pair). A template's weight is multiplied by 1 / (1 + recent uses), so repeats lose but never vanish when little else is eligible.
 11. **No repeat of an arrival mode** by the same fighter two intros in a row; no repeat of a **line** within 10 intros (the seen memory); no S9 twice in a row and at most one in six.
 12. **Rare things stay rare.** S9, S10 and S11 carry low base weights, so a player meets them as an occasion.
 13. **Honest count.** With 11 templates, two orders, about 6 compatible arrival combinations, four closings and a few times of day, a pair has **a few thousand variants**, but a player recognises a *template* after a few uses, so the freshness that matters is the 11 skeletons and the swap points, and **about 8 to 10 intros between two that feel alike** with the no-repeat rules. Lines add more.
@@ -282,3 +284,334 @@ Every pose passes Legal's silhouette check (RL-038: no one famous landing, and t
 3. How long may a **first-time intro** run? The templates run 4.5 to 7 s; the baseline is 5 s today.
 4. Do you want the **opening challenge** (S10), where the clock starts with both fighters rushing, or should the fight always begin from a stand?
 5. Should the **Empress's guard** be on screen in the intro (S5), or arrive only when the fight starts?
+
+## 11. The generative layer: implied plotlines (version 2, 2026-10-06)
+
+Orb's answers on the first cut: **longer intros are allowed**; for who lands first, "P1 then P2 is pretty standard" (the build draws the order evenly, which is fine); and the real ask: "as long as the dynamic intros can create many distinct implied plotlines between each character I'd like to see these handled as generatively as possible." This section is the layer above the eleven scenarios that answers it. **Everything here is an option for Orb, and the vocabulary is a draft.**
+
+### 11.1 The idea: a scenario is how it looks, a plotline is what it is about
+
+A **scenario** (section 4) is a sequence of beats: who lands when, the wait, the look. It has no opinion about the two fighters. A **plotline** is the small story the pair is *in*: "a student early for a lesson", "an old grudge about to be renewed", "a rival who has just lost". A plotline **picks a scenario and bends it**, so the same Double Drop can be a warm reunion, a cold ranking or a wounded rematch, and the same two fighters have a different opening every time their story is in a different place.
+
+Nobody writes 66 scenes (twelve fighters, 66 pairs). Three things are written **once and for everyone**: the **grammar** (types and states, below), the **bend table** (what each state and each type does to a scenario), and each fighter's **lines by stance**. A pair adds only a few facts: what its relationship is, where the record puts it, and which event (if any) is in its past.
+
+### 11.2 The grammar of a plotline
+
+A plotline is four things: **a type, a state, an event and the roles.** All four are data, and none is a scene.
+
+**1. The type** (what the relationship is). Eleven, drawn from the stakes in `matchups.md` and the new stakes in `roster-twelve-identity.md` section 5.3. Each has two roles.
+
+| Type | Roles (A / B) | Tones | What it is about |
+|---|---|---|---|
+| `sparring` | peer / peer | light, neutral | Nothing but pride, between friends. |
+| `rivalry` | leader / chaser | neutral, grave | Who is ahead, by the record. |
+| `world_at_stake` | protector / threat | neutral, grave | A planet or its people in the balance. |
+| `appetite` | hunter / hunted | light, neutral | One means to eat the other. |
+| `lesson` | teacher / student | light, neutral | What one was taught by the other. |
+| `grudge` | ahead / wronged | neutral, grave | An old defeat or injury, still sore. |
+| `betrayal` | betrayer / betrayed | neutral, grave | A changed allegiance, and what it cost. |
+| `performance` | performer / audience | light | One is playing to a crowd. |
+| `awe` | admirer / admired | light, neutral | A newcomer in front of a legend. |
+| `debt` | debtor / creditor | neutral | Something owed, unspoken. |
+| `kinship` | elder / heir | neutral, grave | A mantle handed down, or refused. |
+
+**2. The state** (where the story is). Four, the same for every type.
+
+| State | Meaning | How it is read from the record |
+|---|---|---|
+| **fresh** | A beginning: they have not been here before. | No meeting yet (or the first of this plot). |
+| **simmering** | Unsettled, and heating. | A close record, a recent bout, or a return after a long gap. |
+| **settled** | Resolved, a habit, even affectionate. | Many meetings, a long streak, or a decided score. |
+| **reversed** | The order has flipped: the leader fell, an ally turned, a debt was paid. | An upset: the loser of the last bout is the long-time leader, or the streak was broken. |
+
+States move as the record does (section 11.6), so a pair's intros tell a progression: fresh, then simmering after a close first bout, then settled after a long run, then reversed on an upset, then simmering again.
+
+**3. The event** (what has happened that they are both thinking of). Three kinds, so a pair never has *nothing*:
+
+| Kind | From | What a line can do with it |
+|---|---|---|
+| `record` | The pair's rivalry record (`user://rivalry.json`): who won last, how it ended (a knockout, a scarred planet, the time cap), a broken streak. | Name the *last time*, truthfully. |
+| `ledger` | A **canon ledger** event both fighters belong to (section 3.4 of `roster-twelve-identity.md`): "the lighthouse", "the bridge". | Refer to it by name; never explain it. |
+| `unseen` | Nothing named: a deliberately unexplained reference ("that night", "the last time we spoke"). | Hint that there is a past, which is the fourth-season feeling. |
+
+A ledger event can also **seed a type**: if two fighters share a `betrayal` event, `betrayal` becomes an eligible type for that pair without anyone listing it.
+
+**4. The roles** (who is which). Fixed by the pair's data where the type is asymmetric (the Veteran is the teacher), or by the record where it is symmetric (the leader is whoever is ahead). **Arrival order then crosses with role**: who lands first is a draw (Orb's rule, an even draw), so the **same plotline has two readings**. The teacher arrives first (waiting, unhurried) or the student does (early, nervous); the leader arrives first (arrogant, ahead of time) or the chaser (hungry, early). That cross is where the generativity comes from, and it needs no extra authoring.
+
+### 11.3 What a plotline bends: six channels
+
+A plotline changes a scenario only through six named channels, all small and all optional, so a scenario that ignores one is still coherent.
+
+| # | Channel | What it does | In the composer |
+|---|---|---|---|
+| 1 | **Scenario weights** | Multiplies each template's weight: a grudge favours the Long Look; awe favours the Latecomer; a settled, light plot favours the Double Drop. | `facts.weights` |
+| 2 | **The gap** | Bends the gap between landings toward the short end (tension) or the long (one waits) within the template's range. A number from -1 to 1. | `facts.gap` |
+| 3 | **The look** | Prefers a look part: `hold`, or `long` (the Long Look's stretched stare); `away` (one breaks the stare first) when the pose exists. | `facts.look` |
+| 4 | **Gestures** | Inserts small non-verbal beats at named points (`land_first`, `land_second`, `look_start`, `look_end`), by role. A closed list of ten **gesture intents**; Animation maps each to the fighter's own pose, and a missing pose is a silent skip. | `facts.gestures` |
+| 5 | **Voice intents** | Tags each voice slot with a **stance** and an **angle** (below), and a probability of speaking, so the line system picks a line in the right mood about the right thing. | `facts.intents` |
+| 6 | **Length** | Adds or removes ticks from the clock (a settled plot is brisk, a simmering one holds) within the loader's check. | `facts.clock` |
+
+**The two closed vocabularies Orb's lines are tagged with.**
+
+| | Values |
+|---|---|
+| **Stances** (the mood a line is said in) | warm, wry, formal, guarded, cold, wounded, smug, awed |
+| **Angles** (what a line is about) | `you` (the other, an appraisal), `me` (oneself), `us` (what they share), `then` (a past event, with `{event}`), `now` (the place and the moment), `them` (a third party: the crowd, a settlement, the world) |
+| **Gesture intents** | acknowledge, appraise, dismiss, defer, brace, ease, claim, check, soften, harden |
+
+A gesture intent is a **meaning**, not a pose: `check` is a glance at the sky, a cuff or a watch (each fighter's own); `defer` a small step back or bow; `claim` planting the feet and taking the space. That is how one grammar fits twelve different bodies.
+
+### 11.4 The bend table (written once)
+
+A plotline's bend is **a state's bend plus a type's bend**. Four rows for the states, eleven for the types.
+
+**The state bends** (the same for every type):
+
+| State | Weights (x) | Gap | Look | Clock | Gestures | Voice (probability, angle) |
+|---|---|---|---|---|---|---|
+| fresh | none | 0 | hold | 0 | both `appraise` at the look | 0.8; `you`, `now` |
+| simmering | long_look 1.5, double_drop 0.9 | -0.6 (short, tense) | long | +24 | the wronged `harden`; the other `check` | 0.9; `then`, `us` |
+| settled | double_drop 1.2, long_look 0.5 | 0 | hold | -24 | both `ease`, one `acknowledge` | 0.6; `us`, `now` |
+| reversed | latecomer 1.5 | +0.5 (a wait) | hold | +36 | the new leader `claim`; the fallen `harden` or `defer` | 1.0; `then`, `me` |
+
+The `weights` the host passes are **the product** of the state's and the type's multipliers, template by template.
+
+**The type bends** (stance by role, the scenarios it favours, a gesture flavour):
+
+| Type | Stance: A / B | Favours (a weight multiplier) | Gesture flavour |
+|---|---|---|---|
+| `sparring` | warm / warm (wry) | double_drop 1.2, latecomer 1.0 | acknowledge, ease |
+| `rivalry` | formal (cold) / guarded (wry) | double_drop 1.0, latecomer 1.0, long_look 1.2 | appraise, harden |
+| `world_at_stake` | guarded / smug (cold) | double_drop 1.0, long_look 2.0, latecomer 0 | brace, claim |
+| `appetite` | smug / guarded | latecomer 1.2, double_drop 1.0, long_look 0.5 | check, brace |
+| `lesson` | wry (formal) / awed (guarded) | latecomer 1.5 (the teacher waits), double_drop 1.0 | defer, appraise |
+| `grudge` | smug (formal) / wounded (cold) | long_look 1.8, latecomer 1.0, double_drop 0.7 | harden, dismiss |
+| `betrayal` | guarded (wry) / wounded (cold) | long_look 1.8, double_drop 0.8, latecomer 0.5 | dismiss, harden |
+| `performance` | smug / wry | double_drop 1.3, latecomer 1.0, long_look 0.2 | claim, dismiss |
+| `awe` | awed / warm (formal) | double_drop 1.0, latecomer 1.5 | defer, acknowledge |
+| `debt` | guarded / formal | double_drop 1.0, long_look 1.2 | check, acknowledge |
+| `kinship` | warm (formal) / guarded (awed) | long_look 1.4, latecomer 1.2 | soften, brace |
+
+Bracketed stances are the second pick, used when the pair's voice vetoes the first (the rival never speaks `warm`; the Empress's guard is never `awed`). A fighter's data lists the stances it never says.
+
+**How the bend lands on the three built scenarios.**
+
+| Scenario | The gap channel | The look channel | Gestures at | Voice slots tagged |
+|---|---|---|---|---|
+| **Double Drop** | Moves the second fall closer or further (30 to 70 ticks) | `hold` or `long` | `land_first`, `land_second`, `look_start` | `arrive_remark` (first), `staredown_pair` (left then right) |
+| **Latecomer** | Lengthens or shortens the wait (100 to 200 ticks) | `hold` | `land_first`, the wait (`check`, `ease`), `land_second` | `wait_remark` (first), `late_reply` (second), `staredown_pair` |
+| **Long Look** | Fixed | `long` | `look_start`, `look_end` | none (silent): the bend lives in the two gestures and the length |
+
+Every other scenario (S3 to S11) takes the same six channels.
+
+### 11.5 What the composer reads: the `facts` record
+
+The host resolves a plotline into a **flat, resolved `facts` record** and passes it in the setup. **The grammar stays on the host's side** (`data/narrative/intro_plots.json`, a draft shape below), and the composer reads only flat keys, so it stays small and deterministic. The whole record is stored in the replay header, so a replay reproduces the intro even if the grammar is edited later.
+
+New keys beside today's `tones` (`pending/dynamic-intros.md` section 3):
+
+| Key | Shape | The composer |
+|---|---|---|
+| `tones` | list of `light`, `neutral`, `grave` | As today: filters the templates. |
+| `plot` | a string id, such as `rivalry.simmering.record` | Shown in the feed: `INTRO plot: rivalry.simmering.record`. Nothing else. |
+| `weights` | `{ "template id": multiplier }` | Multiplies each template's weight before the draw. A missing id is 1. |
+| `gap` | a number, -1 to 1 | Moves the drawn gap that fraction toward the short or long end of the template's range. Left out: no bend. |
+| `look` | a part id, such as `long` | Prefers it for the `look` slot when the template's pool holds it. |
+| `clock` | integer ticks, may be negative | Added to the template's clock, then the loader's fit check runs. |
+| `gestures` | list of `{ at, who, intent }` | Appended as beats of kind `gesture` at the named points. `who` is `first`, `second`, `left`, `right` or `both`. |
+| `intents` | `{ slot: { stance, angle, p, event } }` | Passed through in the `intro_line` event: the sim holds no words. |
+| `avoidPlot` | list of plot ids played lately for this pair | Host-owned memory (no repeat, section 11.8). |
+
+**New fields on events** (additions only, so nothing reading today's events breaks): `intro_line` gains `stance`, `angle`, `event` and `p`; a new `intro_gesture {actor, intent, at}` is sent at the gesture's tick; `intro_start` carries the `plot` id. Unknown keys are ignored, so the first cut keeps working when only `tones` is passed.
+
+**Presentation stays presentation.** The sim passes `stance`, `angle`, `event` and `p` through and reads none of them; the line system decides whether the line plays (using `p`, on its own seeded stream) and which line it is. A replay shows the same intro, and the same lines, because the facts and the line stream are both recorded.
+
+**The grammar file** (`data/narrative/intro_plots.json`, draft; host side):
+
+```json
+{ "schema": "narrative.intro_plots/1",
+  "stances": ["warm","wry","formal","guarded","cold","wounded","smug","awed"],
+  "angles": ["you","me","us","then","now","them"],
+  "gestures": ["acknowledge","appraise","dismiss","defer","brace","ease","claim","check","soften","harden"],
+  "states": {
+    "simmering": { "gap": -0.6, "look": "long", "clock": 24,
+      "gestures": [{"at":"look_start","who":"wronged","intent":"harden"}, {"at":"land_first","who":"other","intent":"check"}],
+      "voice": {"p": 0.9, "angles": ["then","us"]} } },
+  "types": {
+    "grudge": { "roles": ["ahead","wronged"], "tones": ["neutral","grave"],
+      "stance": {"ahead": ["smug","formal"], "wronged": ["wounded","cold"]},
+      "weights": {"long_look": 1.8, "latecomer": 1.0, "double_drop": 0.7} } },
+  "derive": { "see": "section 11.6" } }
+```
+
+**The resolved `facts` for example B in section 11.7** (the Protagonist arrives first, so `first` is the Protagonist and `second` the rival; `last_ko` is the record's event). The composer uses only the slots the template it draws has: the Long Look is silent, so the voice intents apply if it draws the Double Drop or the Latecomer instead.
+
+```json
+{
+  "tones": [
+    "neutral",
+    "grave"
+  ],
+  "plot": "rivalry.simmering.record",
+  "weights": {
+    "double_drop": 0.9,
+    "latecomer": 1.0,
+    "long_look": 1.8
+  },
+  "gap": -0.6,
+  "look": "long",
+  "clock": 24,
+  "gestures": [
+    {
+      "at": "land_first",
+      "who": "second",
+      "intent": "check"
+    },
+    {
+      "at": "look_start",
+      "who": "first",
+      "intent": "harden"
+    }
+  ],
+  "intents": {
+    "arrive_remark": {
+      "who": "first",
+      "stance": "guarded",
+      "angle": "then",
+      "p": 0.9,
+      "event": "last_ko"
+    },
+    "late_reply": {
+      "who": "second",
+      "stance": "smug",
+      "angle": "us",
+      "p": 0.9
+    },
+    "staredown_pair": {
+      "lines": [
+        {
+          "who": "left",
+          "stance": "guarded",
+          "angle": "then",
+          "event": "last_ko",
+          "p": 0.9
+        },
+        {
+          "who": "right",
+          "stance": "smug",
+          "angle": "us",
+          "p": 0.9
+        }
+      ]
+    }
+  },
+  "avoidPlot": [
+    "rivalry.fresh.unseen"
+  ]
+}
+```
+
+### 11.6 How a plotline is chosen for a pair
+
+All of it on the host, from the pair's data and the record, with **keyed draws on the match seed** (`intro.plot.type`, `intro.plot.event`) so a replay and an online peer agree; a peer or replay may pass `facts` and skip the draw.
+
+1. **Eligible types.** From the pair's data. If it has none, the default by the two fighters' circles (`roster-twelve-identity.md` section 5.3): the Circle with the Circle gives `sparring`, `lesson`, `awe`; the Circle with the Court gives `world_at_stake`, `appetite`; the Old Guard pair gives `rivalry`, `grudge`, `debt`; the Drifters give `debt`, `betrayal`, `performance`. A shared ledger event seeds its own type. A fighter's veto removes types.
+2. **The type** is drawn by weight from the eligible ones; one played lately weighs 1 / (1 + its uses in `avoidPlot`).
+3. **The state** is derived from the record (table below). With no record the state is `fresh`.
+4. **The event** is the best of: the record's last ending (if there is one), a shared ledger event of this type, any shared ledger event, else `unseen`.
+5. **The roles** are fixed by the pair's data, or by the record (the leader is who is ahead).
+6. **The bend** is read from the grammar, resolved into `facts`, and passed in the setup. The composer then draws the scenario, order and gap as before.
+
+**How the state follows the record** (so the plotline advances):
+
+| The record says | State |
+|---|---|
+| No meeting | fresh |
+| 1 to 2 meetings, a split or close score | simmering |
+| The last bout was a time-cap, a planet scarred or destroyed, or a return after more than 10 other matches | simmering |
+| 5 or more meetings, or one side 3 or more ahead, with the trailing side not just won | settled |
+| The trailing side just won, or a streak of 3 or more just ended, or the last winner is not the long-time leader | reversed |
+
+### 11.7 Three states of one pair: the Protagonist and the rival
+
+The type is `rivalry` throughout (the Protagonist warm to the rival, the rival contemptuous with a hidden envy). **No line text is shown**: Orb writes the lines, so each voice slot is a stance, an angle and, where there is one, an event. The first cut's slots are `arrive_remark`, `wait_remark`, `late_reply` and `staredown_pair`.
+
+**A. Fresh: their first bout of the season.** The record is empty. The event is `unseen`.
+
+- **Chosen:** type `rivalry`, state `fresh`, tones neutral or grave. The weights are the type's alone (a fresh state adds none): Double Drop 1.0, Latecomer 1.0, Long Look 1.2. Gap 0, look `hold`, clock 0.
+- **Gestures:** both `appraise` at the look.
+- **If the Protagonist is first:** he lands, glances round at the empty second spot with open interest (his `arrive_remark`: `warm`, `you`, `p` 0.8), the rival lands without hurry, and at the staredown the left fighter's line is `warm` about *you* (sizing him up fondly), the right fighter's `cold` about *you* (ranking him). Nobody mentions a past; the stare has weight because it is the first.
+- **If the rival is first:** he lands, stands still (a held, wordless `appraise`), and the Protagonist arrives with his easy, slightly apologetic energy (`late_reply`, `warm`, `now`). Same facts, a different opening.
+
+**B. Simmering: a rematch, the rival won last by a knockout.** The record says the rival won, and it ended in a KO. The event is `record`.
+
+- **Chosen:** type `rivalry`, state `simmering`; roles: leader is the rival, chaser the Protagonist. Tones neutral and grave. The weights are the product of the type's and the state's: **Long Look 1.2 x 1.5 = 1.8**, Latecomer 1.0, Double Drop 1.0 x 0.9 = 0.9. Gap -0.6 (short), look `long`, clock +24.
+- **Gestures:** the Protagonist (the chaser, the wronged) `harden` at the look; the rival `check`.
+- **If the Protagonist is first:** he lands and braces (`arrive_remark`: `guarded`, `then`, the event is the last KO: a remark about *last time*, plainly said, `p` 0.9). The rival arrives close behind (a short gap), unbothered (`late_reply`: `smug`, `us`). The Long Look holds both in the two-shot, faces cut in, no more words.
+- **If the rival is first:** he arrives early to claim the ground (`claim`), says nothing, and watches the Protagonist land. The Protagonist's `staredown_pair` line is `guarded`, `then`.
+
+**C. Reversed: the Protagonist has just beaten the rival, after losing three in a row.** The record says a streak of three just ended. The event is `record`.
+
+- **Chosen:** type `rivalry`, state `reversed`; roles now: leader is the Protagonist, chaser the rival. Gap +0.5 (a wait), look `hold`, clock +36. The weights: **Latecomer 1.0 x 1.5 = 1.5** (the one who is waiting is the point), Long Look 1.2, Double Drop 1.0.
+- **Gestures:** the Protagonist (the new leader) `claim`, quietly, with no gloating; the rival `harden` (or `defer` if his voice allows).
+- **If the rival is first:** he is early, to prove it was a fluke, and he waits (his `wait_remark`: `wounded`, `me`, the old "this does not count" mood). The Protagonist lands, a little embarrassed to be ahead (`late_reply`: `warm`, `us`, said gently). The rival does not take it as kindness.
+- **If the Protagonist is first:** he waits, uneasily, and the rival is late: **wounded pride**, a long walk to the stare. The staredown lines are `wounded` and `warm` about *us*.
+
+**What this shows:** one type gives the same pair six distinguishable readings (three states x two arrivals), and more once the scenario draw is added; only the lines by stance and angle need writing, once, for every pair.
+
+### 11.8 The count of distinct openings
+
+**What counts as distinct.** A *story* is a type, a state, an event and a reading (who arrives first). An *opening* is a story in a scenario. Two openings are distinct if their story or their scenario differs (the gap, the gestures and the exact lines make them feel different again, and are not counted).
+
+| Per pair, an assumption | Value | Why |
+|---|---|---|
+| Eligible types | 3 (1 to 5) | Defaults by circle, plus a shared ledger event |
+| States over a relationship | 4 | Fresh, simmering, settled, reversed, as the record advances |
+| Events | 2.5 | The record's last ending, 0 to 2 shared ledger events, and `unseen` |
+| Readings | 2 | Who arrives first |
+| Scenarios eligible after the tone gate | 2 in the first cut (of 3); about 7 with all eleven | The weights, not a rule |
+
+| | Stories | Openings, first cut (3 scenarios) | Openings, all eleven |
+|---|---|---|---|
+| **One pair** (3 types) | 3 x 4 x 2.5 x 2 = **60** | 60 x 2 = **120** | 60 x 7 = **420** |
+| **The launch pair** (rivalry, grudge, sparring, lesson if Orb picks it: 4 types) | 4 x 4 x 2.5 x 2 = **80** | **160** | **560** |
+| **Twelve fighters** (66 pairs) | 66 x 60 = **about 4,000** | about **8,000** | about **28,000** |
+
+**The honest reading.** These are counts of *what the system can compose*, not of what a player can tell apart. What a player learns to *read* is the **story shape**: 11 types x 4 states x 2 readings = **88 shapes**, the same for every pair ("a teacher waiting", "a grudge renewed"). The pair adds the event and the voice. So the freshness a player feels is: the shape (88), the pair's own event, and the stance lines. With the no-repeat rule (a plot id not played within 5 intros for the same pair) a pair gives **at least 60 stories before one can return**, and because the **state follows the record**, the stories are not drawn at random: they *advance*, which is the point (a pair's openings read as a serial, not a shuffle).
+
+**What would make the number a lie:** if every state's bend looks the same on screen, or if the lines are not tagged by stance and angle, then 88 shapes collapse to a handful. The cheapest guard is Animation mapping the ten gesture intents for each fighter, and Orb writing at least one line for each slot and stance.
+
+### 11.9 What Orb must author, and what Narrative authors
+
+| Orb | How much | Why only Orb |
+|---|---|---|
+| **The canon ledger rows** (events: a name, a season, who was there, what changed, and optionally the type it seeds) | 4 to 6 for the launch pair; about 24 for twelve (two a fighter) | They are the universe. |
+| **The lines, by slot and stance** | The first cut's four slots, for each of the 8 stances: **32 lines a fighter** at the least, plus 3 to 5 `then` lines with `{event}`. 2 fighters: about 80 lines. 12: about 480. | They are the voice. |
+| **The staredown lines already in the voice lab, tagged** with a stance and an angle | The existing staredown pairs (`staredown-last-stand.csv`) get two more columns when Orb next edits | One edit, two uses. |
+| **Pair data for marquee pairs** (about 12): the types, and who is which role | A line each | A relationship is Orb's to decide. The rest come from the circles. |
+| **Each fighter's stances never said** (a veto) | A short list | A voice rule. |
+
+| Narrative (this document) | |
+|---|---|
+| The grammar, the bend table and the vocabularies | Done, as a draft in this section; Orb edits |
+| The derivation rules (default types by circle, states from the record) | Done (11.6) |
+| The `data/narrative/intro_plots.json` file | On request, as a draft with every type and state filled |
+| A first batch of lines by slot and stance for the launch pair | On request, in the voice lab's format, after Orb's pass |
+
+### 11.10 What this needs, beyond section 9
+
+- **Encounter and Simulation:** the composer reads `weights`, `gap`, `look`, `clock` and `gestures` from `facts` and ignores the rest; `intro_line` carries `stance`, `angle`, `event` and `p`; a new `intro_gesture` event; the setup stores the whole `facts` record. A `gesture` beat kind. The existing parts (`hold`, `long`) cover the look channel for now.
+- **The host (UI and Rendering):** the plot pick (11.6) and the rivalry record, with `avoidPlot` as its memory. The record's state machine is a small function.
+- **Animation:** a pose or small motion for each of the ten gesture intents, per fighter, starting with the launch pair; and a missing one is a silent skip.
+- **Camera:** none beyond section 9; the gestures play inside the existing shots.
+- **Audio:** none beyond section 9.
+- **The line system (Narrative):** a line carries `slot`, `stance` and `angle` (and `event` for `then`); the picker takes the best match and falls back from exact to stance to slot to silence; the seen memory still applies.
+- **Tools:** the schema for the new `facts` keys and for `intro_plots.json`.
+
+### 11.11 Questions for Orb
+
+1. Should a pair's **state advance with the record** (the openings tell a serial), or should the host draw a state at random so a first meeting can still feel old?
+2. Is **the type list** right (eleven)? Which would you cut, and what is missing?
+3. Do you want **the event named** when it is the last bout (a line may say "last time"), or left to `unseen` so it is only ever hinted?
+4. Should some pairs **never** get certain types (for example, the Anti-hero and the Cyborg never `sparring`)? Say which, and I add the vetoes.
+5. How many **stances** do you want each fighter's voice to cover: all eight, or a subset (the rival never `warm`)?
