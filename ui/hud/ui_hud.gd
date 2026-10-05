@@ -158,6 +158,7 @@ var _l_hint: UiLayer
 var _howto_open := false
 var _howto_first := false
 var _howto_page := 0
+var _howto_tab := -1                 # the stances page on a narrow screen: the stance tab shown (-1 follows the stance held)
 # The cached layers, back to front (see UiLayer): each redraws only when its signature changes.
 var _l_letter: UiLayer
 var _l_strip_base: UiLayer
@@ -236,9 +237,9 @@ func _ready() -> void:
 	_l_tele = _layer(_paint_tele)     # the finisher telegraph and the tutorial hint share the banner slot (telegraph first)
 	_l_hint = _layer(_paint_hint)
 	_l_fbpill = _layer(_paint_fbpill)
+	_l_join = _layer(_paint_join)     # under the menus: the pause menu and How to play cover the join prompt, not the other way round
 	_l_pmenu = _layer(_paint_pmenu)
 	_l_howto = _layer(_paint_howto)
-	_l_join = _layer(_paint_join)
 	_l_settings = _layer(_paint_settings)
 	_l_remap = _layer(_paint_remap)
 	_l_fb = _layer(_paint_fb)        # last: over everything
@@ -600,7 +601,7 @@ func _update_layers() -> void:
 	_l_fb.update_sig(UiFeedback.sig(layout.vp, _fb_state, _fb_tags, _fb_status_ok, dp, layout.s, bool(opts["touch_ui"]), "%s|%s" % [_fb_opened, bool(_fb_issue.get("fallback", false))]) if _fb_open else null)
 	_l_tele.update_sig(UiReads.telegraph_sig(hub, bool(opts["show_prompts"]), reduced))
 	_l_hint.update_sig(UiReads.hint_sig(hub))
-	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"])) if _howto_open else null)
+	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d" % [_howto_tab, _howto_held(), UiStance.live_bits()]) if _howto_open else null)
 
 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
 	_l_settings.update_sig(_settings_sig() if (_set_open and not _rm_open) else null)
@@ -743,6 +744,7 @@ func show_howto(first_run: bool = false, page: int = 0) -> void:
 	_howto_open = true
 	_howto_first = first_run
 	_howto_page = clampi(page, 0, maxi(UiHowto.page_count() - 1, 0))
+	_howto_tab = -1
 	_l_howto.invalidate()
 	howto_opened.emit(first_run)
 
@@ -792,6 +794,24 @@ func howto_action(act: String) -> void:
 				_l_howto.invalidate()
 		"close":
 			hide_howto()
+		"tab_next", "tab_prev":
+			# The stances page on a narrow screen shows one stance at a time: Up and Down (or a tap) change it.
+			var cur: int = _howto_tab if _howto_tab >= 0 else _howto_held()
+			_howto_tab = posmod(cur + (1 if act == "tab_next" else -1), 5)
+			_l_howto.invalidate()
+
+
+## The stance the first human holds now (the stances page starts on it).
+func _howto_held() -> int:
+	for m in hub.models:
+		if not m.ai:
+			return m.stance_kind
+	return 0
+
+
+## What the stances page needs beyond the layout: the held stance, the tab chosen, and whether the touch controls are the Full ones.
+func _howto_extra() -> Dictionary:
+	return {"held": _howto_held(), "tab": _howto_tab, "full_touch": bool(opts["touch_ui"]) and str(opts["touch_preset"]) == "touch-full"}
 
 
 ## The glyph family and slot of the first human fighter, for the controls page ("kbd" and slot 0 if none is set).
@@ -818,7 +838,7 @@ func _howto_preset() -> String:
 
 
 func howto_plan() -> Dictionary:
-	return UiHowto.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), _howto_page, _howto_device(), _howto_slot(), _howto_preset(), str(opts["glyph_style"]))
+	return UiHowto.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), _howto_page, _howto_device(), _howto_slot(), _howto_preset(), str(opts["glyph_style"]), _howto_extra())
 
 
 func _paint_howto(ci: CanvasItem) -> void:
@@ -873,6 +893,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					howto_action("next")
 				KEY_LEFT, KEY_BACKSPACE:
 					howto_action("back")
+				KEY_DOWN:
+					howto_action("tab_next")
+				KEY_UP:
+					howto_action("tab_prev")
 				KEY_ESCAPE:
 					howto_action("close")
 		get_viewport().set_input_as_handled()
@@ -883,6 +907,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					howto_action("next")
 				JOY_BUTTON_DPAD_LEFT:
 					howto_action("back")
+				JOY_BUTTON_DPAD_DOWN:
+					howto_action("tab_next")
+				JOY_BUTTON_DPAD_UP:
+					howto_action("tab_prev")
 				JOY_BUTTON_B, JOY_BUTTON_START:
 					howto_action("close")
 		get_viewport().set_input_as_handled()
@@ -897,6 +925,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				howto_action("next")
 			elif not pl["is_first"] and (pl["back"] as Rect2).has_point(pos):
 				howto_action("back")
+			else:
+				for tb in ((pl["stances"] as Dictionary).get("tabs", []) as Array):
+					if (tb["rect"] as Rect2).has_point(pos):
+						_howto_tab = int(tb["kind"])
+						_l_howto.invalidate()
 		get_viewport().set_input_as_handled()
 
 
@@ -1535,6 +1568,9 @@ func _rm_control_word(control: String) -> String:
 
 func _rm_action_word(id: String) -> String:
 	var a: String = id.get_slice("#", 0)
+	var sw: Dictionary = UiStance.remap_words(a)   # a stance button is named for its stance once the stance is live
+	if sw.has("label"):
+		return str(sw["label"])
 	return str((_rm_words().get("actions", {}) as Dictionary).get(a, a))
 
 
@@ -1557,7 +1593,7 @@ func _rm_rows() -> Array:
 			if not specs.is_empty() and str(e["action"]) != "move":
 				specs.append({"kind": "plus", "label": "+"})
 			specs.append(UiGlyphs.spec_control(str(c), fam, style))
-		out.append({"kind": UiSettings.BIND, "key": str(e["id"]), "label": _rm_action_word(str(e["action"])), "help": str((w.get("helps", {}) as Dictionary).get(str(e["action"]), "")),
+		out.append({"kind": UiSettings.BIND, "key": str(e["id"]), "label": _rm_action_word(str(e["action"])), "help": str(UiStance.remap_words(str(e["action"])).get("help", (w.get("helps", {}) as Dictionary).get(str(e["action"]), ""))),
 			"enabled": not bool(e["fixed"]), "specs": specs})
 	out.append({"kind": UiSettings.BUTTON, "key": "", "action": "reset", "label": str(w.get("reset", "Reset")), "value": str(w.get("reset_button", "Reset")),
 		"help": str(w.get("reset_help", "")), "enabled": true})

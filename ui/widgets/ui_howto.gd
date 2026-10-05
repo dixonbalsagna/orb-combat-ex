@@ -18,7 +18,7 @@ static func page_count() -> int:
 
 ## The geometry of page `page_i` for a viewport: {card, title, close, back, next, dots, items[], cs, fits, tm, ...}. `device` is the
 ## glyph family ("kbd", "xbox", ...), `slot` the player's slot (P1 or P2 keys), `touch` true for the touch controls page.
-static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, device: String = "kbd", slot: int = 0, preset: String = "", style: String = "neutral") -> Dictionary:
+static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, device: String = "kbd", slot: int = 0, preset: String = "", style: String = "neutral", extra: Dictionary = {}) -> Dictionary:
 	var data: Dictionary = UiData.howto()
 	var pages: Array = data.get("pages", [])
 	var n: int = pages.size()
@@ -39,7 +39,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, dev
 		need_h = 0.0
 		all_fit = true
 		for k in range(n):
-			var r: Dictionary = _layout(card, cs, tm, touch, pages[k], k, n, device, slot, data, preset, style)
+			var r: Dictionary = _layout(card, cs, tm, touch, pages[k], k, n, device, slot, data, preset, style, extra)
 			need_h = maxf(need_h, float(r["need_h"]))
 			all_fit = all_fit and bool(r["fits"])
 		if all_fit or cs <= cs_min + 0.001:
@@ -48,7 +48,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, dev
 	# The card is as tall as its tallest page needs (centred), not the whole screen.
 	var h2: float = minf(ch, maxf(need_h, 240.0 * cs))
 	card = Rect2(card.position.x, (vp.y - h2) * 0.5, cw, h2)
-	var out: Dictionary = _layout(card, cs, tm, touch, page, pi, n, device, slot, data, preset, style)
+	var out: Dictionary = _layout(card, cs, tm, touch, page, pi, n, device, slot, data, preset, style, extra)
 	out["fits"] = all_fit
 	out["page"] = pi
 	out["pages"] = n
@@ -56,7 +56,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, dev
 	return out
 
 
-static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictionary, pi: int, n: int, device: String, slot: int, data: Dictionary, preset: String = "", style: String = "neutral") -> Dictionary:
+static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictionary, pi: int, n: int, device: String, slot: int, data: Dictionary, preset: String = "", style: String = "neutral", extra: Dictionary = {}) -> Dictionary:
 	var pad: float = maxf(PAGE_PAD * cs, 10.0)
 	var fs_title: int = UiText.px(36.0, cs)
 	var fs_body: int = UiText.px(24.0, cs)
@@ -84,6 +84,9 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 	var items: Array = page.get("items", [])
 	if touch and page.has("touch_items"):
 		items = page["touch_items"]
+	var stances_page: bool = str(page.get("id", "")) == "stances"   # its items are the page's notes; the table is laid out below
+	if stances_page:
+		items = []
 	var cols: int = 2 if body.size.x >= float(fs_body) * 38.0 else 1
 	var gap: float = maxf(pad * 0.7, 8.0)
 	var colw: float = (body.size.x - gap * float(cols - 1)) / float(cols)
@@ -110,6 +113,10 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 		var y: float = body.position.y + float(heights[col])
 		var rec: Dictionary = {"item": it, "col": col, "fs": fs_body, "fs_small": fs_small}
 		var text: String = str(it.get("text", ""))
+		if it.has("action") and UiHints.HOLD_STANCES.has(str(it["action"])):
+			var hw: String = UiStance.howto_word(int(UiHints.HOLD_STANCES[str(it["action"])]))   # the stance button's row, named for its stance once the stance is live
+			if hw != "":
+				text = hw
 		if it.has("heading"):
 			if float(heights[col]) > 0.0:
 				heights[col] = float(heights[col]) + item_gap * 1.5
@@ -161,8 +168,12 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			heights[col] = float(heights[col]) + hi + item_gap
 		placed.append(rec)
 	var tallest: float = maxf(float(heights[0]), float(heights[1]))
+	var st: Dictionary = {}
+	if stances_page:
+		st = _stances_block(page, body, tm, touch, device, slot, preset, style, extra, fs_body, fs_small, gap, isz)
+		tallest = float(st["tallest"]) + item_gap
 	# The fit: the tallest column is inside the body, every line is inside its column, and the title clears the close button.
-	var fits: bool = tallest - item_gap <= body.size.y + 0.5
+	var fits: bool = tallest - item_gap <= body.size.y + 0.5 and (st.is_empty() or bool(st["fits"]))
 	var title_text: String = str(page.get("title", ""))
 	var dl: Dictionary = page.get("device_label", {})
 	if not dl.is_empty():
@@ -175,7 +186,135 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 	var need_h: float = (body_top - card.position.y) + tallest - item_gap + pad * 0.6 + btn_h + pad
 	return {"need_h": need_h, "card": card, "inner": inner, "body": body, "close": close, "back": back, "next": nxt, "dots": dots, "dot_r": dot_r, "items": placed, "cs": cs, "fits": fits,
 		"fs_title": fs_title, "fs_body": fs_body, "fs_small": fs_small, "lh": lh, "btn_h": btn_h, "pad": pad, "title_text": title_text, "kicker": kicker,
-		"title_h": title_h, "tallest": tallest, "is_last": pi >= n - 1, "is_first": pi <= 0, "cols": cols}
+		"title_h": title_h, "tallest": tallest, "is_last": pi >= n - 1, "is_first": pi <= 0, "cols": cols, "stances": st}
+
+
+const FACE_ACTIONS: Array = ["light", "heavy", "context", "signature"]   # X, Y, A, B as the layout binds them
+const FACE_KEYS: Array = ["x", "y", "a", "b"]
+
+
+## The words under a stance's face button: the stance's own name for it once the stance is live, what the button really does today (the legend's old
+## word for that layout) otherwise. The page promises nothing the game does not have, and a column fills in when its flag flips.
+static func _cell_text(kind: int, row: int, preset: String) -> String:
+	if UiStance.live(kind):
+		var c: String = UiStance.cell(kind, FACE_KEYS[row])
+		if c != "":
+			return c
+	return UiHints.old_label(preset, FACE_ACTIONS[row])
+
+
+## The stances page (docs/ui/key-help-plan.md step C): five stances across and the four face buttons down, with the player's own glyphs on both axes; on a
+## narrow screen one stance at a time with five tabs. Simple and Simple touch get one line and no table (the game picks the stance). Pure geometry.
+static func _stances_block(page: Dictionary, body: Rect2, tm: float, touch: bool, device: String, slot: int, preset: String, style: String, extra: Dictionary, fs_body: int, fs_small: int, gap: float, isz: float) -> Dictionary:
+	var notes := {}
+	for it in page.get("items", []):
+		notes[str(it.get("icon", ""))] = str(it.get("text", ""))   # the page's lines are icon-row items whose `icon` names the line (the howto schema allows any icon name)
+	var full_touch: bool = bool(extra.get("full_touch", false))
+	var simple: bool = preset == "simple-pad" or (touch and not full_touch)
+	var held: int = clampi(int(extra.get("held", 0)), 0, 4)
+	var sel: int = clampi(int(extra.get("tab", -1)), -1, 4)
+	if sel < 0:
+		sel = held
+	var out := {"mode": "none", "tallest": 0.0, "fits": true, "heads": [], "cells": [], "rowheads": [], "tabs": [], "tab_w": 0.0, "notes": [], "held": held, "sel": sel, "title": null}
+	var lh_s: float = UiText.height(fs_small) * 1.12
+	var lh_b: float = UiText.height(fs_body) * 1.12
+	var note_fs: int = fs_small
+	var note_texts: Array = []
+	if simple:
+		note_texts = [str(notes.get("stances_simple", ""))]
+	else:
+		note_texts = [str(notes.get("stances_table", ""))]
+		if full_touch:
+			note_texts.append(str(notes.get("stances_full", "")))
+	var gh: float = float(fs_small) * 1.5
+	# The row heads: the layout's own glyphs for X, Y, A and B (the words on Full touch's buttons on a touch screen).
+	var head_w := 0.0
+	var head_specs: Array = []
+	for a in FACE_ACTIONS:
+		var specs: Array = []
+		var w := 0.0
+		if touch:
+			var word: String = UiData.t("prompt.full_" + a)
+			w = UiText.width(word, fs_small)
+			specs = [{"word": word}]
+		else:
+			specs = UiGlyphs.group_specs([a], device, slot, style, preset)
+			for sp in specs:
+				w += UiGlyphs.width_spec(sp, gh) + gh * 0.08
+		head_specs.append(specs)
+		head_w = maxf(head_w, w)
+	head_w += gap
+	var y: float = body.position.y
+	if not simple:
+		var col_w: float = (body.size.x - head_w - gap * 5.0) / 5.0
+		var need: float = UiText.width("Utility special", fs_small) * 0.62 + gap
+		var names_w := 0.0
+		for k in range(5):
+			names_w = maxf(names_w, UiText.width(UiStance.word(k), fs_small))
+		var wide: bool = col_w >= maxf(need, names_w + gap)
+		if wide:
+			out["mode"] = "table"
+			var ih: float = isz * 0.8
+			var hold_h: float = gh
+			var head_h: float = ih + float(fs_small) * 1.3 + (0.0 if touch else hold_h) + gap
+			for k in range(5):
+				var cx: float = body.position.x + head_w + gap * 0.5 + float(k) * (col_w + gap)
+				var hspecs: Array = []
+				if not touch and UiPrompts.STANCE_ACTIONS[k] != "":
+					hspecs = UiGlyphs.specs_for(UiPrompts.STANCE_ACTIONS[k], device, slot, style, preset)
+				(out["heads"] as Array).append({"kind": k, "rect": Rect2(cx, y, col_w, head_h), "icon_c": Vector2(cx + col_w * 0.5, y + ih * 0.5), "icon_sz": ih, "name_y": y + ih + float(fs_small) * 0.95,
+					"specs": hspecs, "hold_y": y + ih + float(fs_small) * 1.3 + hold_h * 0.5, "enter": str(UiData.stances().get("stances", {}).get(UiStance.id(k), {}).get("enter", "")) if (UiPrompts.STANCE_ACTIONS[k] == "" and not touch) else ""})
+			y += head_h
+			for r in range(4):
+				var lines_max := 1
+				var cell_lines: Array = []
+				for k in range(5):
+					var ls: PackedStringArray = UiText.wrap(_cell_text(k, r, preset), fs_small, maxf(col_w - gap, 20.0))
+					cell_lines.append(ls)
+					lines_max = maxi(lines_max, ls.size())
+				var rh: float = maxf(gh, float(lines_max) * lh_s) + gap * 0.6
+				(out["rowheads"] as Array).append({"rect": Rect2(body.position.x, y, head_w, rh), "specs": head_specs[r], "y": y + rh * 0.5 - gap * 0.3, "gh": gh})
+				for k in range(5):
+					var cx2: float = body.position.x + head_w + gap * 0.5 + float(k) * (col_w + gap)
+					(out["cells"] as Array).append({"kind": k, "row": r, "rect": Rect2(cx2, y, col_w, rh), "lines": cell_lines[k], "fs": fs_small, "lh": lh_s})
+				y += rh
+		else:
+			out["mode"] = "tabs"
+			var tab_w: float = body.size.x / 5.0
+			out["tab_w"] = tab_w
+			out["fits"] = tab_w >= tm - 0.5   # each tab is a touch target
+			var tab_h: float = tm
+			for k in range(5):
+				(out["tabs"] as Array).append({"kind": k, "rect": Rect2(body.position.x + float(k) * tab_w, y, tab_w, tab_h), "named": tab_w >= UiText.width(UiStance.word(k), fs_small) + isz * 0.7 + gap * 2.0})
+			y += tab_h + gap
+			# The selected stance: its icon, full name and the button that holds it; then its one line (only if live), then the four rows.
+			var ih2: float = isz * 0.9
+			var sh_h: float = maxf(ih2, gh) + gap * 0.5
+			var hspec: Array = []
+			if not touch and UiPrompts.STANCE_ACTIONS[sel] != "":
+				hspec = UiGlyphs.specs_for(UiPrompts.STANCE_ACTIONS[sel], device, slot, style, preset)
+			out["title"] = {"kind": sel, "icon_c": Vector2(body.position.x + ih2 * 0.5, y + sh_h * 0.5), "icon_sz": ih2, "text_x": body.position.x + ih2 + gap, "text_y": y + sh_h * 0.5 + float(fs_body) * 0.35, "specs": hspec, "gh": gh, "right": body.end.x,
+				"text": UiStance.title(sel)}
+			y += sh_h
+			var blurb: String = UiStance.blurb(sel)
+			if blurb != "":
+				var bl: PackedStringArray = UiText.wrap(blurb, fs_small, body.size.x)
+				(out["notes"] as Array).append({"lines": bl, "y": y, "fs": fs_small, "dim": true})
+				y += float(bl.size()) * lh_s + gap * 0.4
+			for r in range(4):
+				var ls2: PackedStringArray = UiText.wrap(_cell_text(sel, r, preset), fs_body, maxf(body.size.x - head_w - gap, 20.0))
+				var rh2: float = maxf(gh, float(ls2.size()) * lh_b) + gap * 0.5
+				(out["rowheads"] as Array).append({"rect": Rect2(body.position.x, y, head_w, rh2), "specs": head_specs[r], "y": y + rh2 * 0.5 - gap * 0.25, "gh": gh})
+				(out["cells"] as Array).append({"kind": sel, "row": r, "rect": Rect2(body.position.x + head_w + gap, y, body.size.x - head_w - gap, rh2), "lines": ls2, "fs": fs_body, "lh": lh_b})
+				y += rh2
+		y += gap * 0.6
+	for nt in note_texts:
+		var nl: PackedStringArray = UiText.wrap(str(nt), note_fs, body.size.x)
+		(out["notes"] as Array).append({"lines": nl, "y": y, "fs": note_fs, "dim": false})
+		y += float(nl.size()) * lh_s + gap * 0.4
+	out["tallest"] = y - body.position.y
+	out["fits"] = bool(out["fits"]) and (y - body.position.y) <= body.size.y + 0.5
+	return out
 
 
 ## The redraw key: changes only with the page, the size, the device and the touch mode.
@@ -249,6 +388,8 @@ static func draw(ci: CanvasItem, p: Dictionary, device: String, slot: int, style
 				for ln in rec["lines"]:
 					UiText.draw(ci, ln, Vector2(float(rec["text_x"]) + float(rec["name_w"]), ty), fs_body, ink, -1)
 					ty += lh
+	if not (p["stances"] as Dictionary).is_empty():
+		_draw_stances(ci, p)
 	# The footer: back, the page dots, next (or got it).
 	var b: Dictionary = data.get("buttons", {})
 	var back: Rect2 = p["back"]
@@ -263,6 +404,93 @@ static func draw(ci: CanvasItem, p: Dictionary, device: String, slot: int, style
 	UiText.no_outline = false
 
 
+static func _draw_stances(ci: CanvasItem, p: Dictionary) -> void:
+	var st: Dictionary = p["stances"]
+	var ink := Color(UiLook.col(UiLook.INK))
+	var dim := Color(UiLook.col(UiLook.INK_DIM))
+	var fs_small: int = p["fs_small"]
+	var held: int = int(st["held"])
+	var sel: int = int(st["sel"])
+	var mode: String = str(st["mode"])
+	# The held stance's column (or the selected tab) is tinted in its colour.
+	if mode == "table":
+		for hd in st["heads"]:
+			var k: int = int(hd["kind"])
+			var col: Color = UiStance.col(k)
+			var top: Rect2 = hd["rect"]
+			var bottom: float = top.end.y
+			for c in st["cells"]:
+				if int(c["kind"]) == k:
+					bottom = maxf(bottom, (c["rect"] as Rect2).end.y)
+			if k == held:
+				UiIcons.rrect(ci, Rect2(top.position, Vector2(top.size.x, bottom - top.position.y)), 8.0, Color(col, 0.13), Color(col, 0.7), 1.6)
+			UiIcons.stance5(ci, k, hd["icon_c"], float(hd["icon_sz"]), col)
+			UiText.draw(ci, UiStance.word(k), Vector2(top.get_center().x, float(hd["name_y"])), fs_small, ink, 0)
+			var specs: Array = hd["specs"]
+			if not specs.is_empty():
+				var w := 0.0
+				var gh: float = float(fs_small) * 1.5
+				for sp in specs:
+					w += UiGlyphs.width_spec(sp, gh) + gh * 0.08
+				var gx: float = top.get_center().x - w * 0.5
+				for sp in specs:
+					gx += UiGlyphs.draw_spec(ci, sp, Vector2(gx, float(hd["hold_y"])), gh, 1.0, true) + gh * 0.08
+			elif str(hd["enter"]) != "":
+				UiText.draw(ci, str(hd["enter"]), Vector2(top.get_center().x, float(hd["hold_y"]) + float(fs_small) * 0.3), int(float(fs_small) * 0.9), dim, 0)
+	elif mode == "tabs":
+		for tb in st["tabs"]:
+			var k2: int = int(tb["kind"])
+			var r: Rect2 = tb["rect"]
+			var on: bool = k2 == sel
+			var col2: Color = UiStance.col(k2)
+			UiIcons.rrect(ci, r.grow(-2.0), r.size.y * 0.22, Color(col2, 0.18) if on else Color(UiLook.col(UiLook.SCRIM), 0.6), Color(col2, 0.95 if on else 0.4), 2.4 if on else 1.2)
+			var icon_sz: float = r.size.y * 0.5
+			if bool(tb["named"]):
+				UiIcons.stance5(ci, k2, Vector2(r.position.x + r.size.y * 0.55, r.get_center().y), icon_sz, col2)
+				UiText.draw(ci, UiStance.word(k2), Vector2(r.position.x + r.size.y * 0.95, r.get_center().y + float(fs_small) * 0.35), fs_small, ink, -1)
+			else:
+				UiIcons.stance5(ci, k2, r.get_center(), icon_sz, col2)
+			if k2 == held and not on:
+				ci.draw_circle(Vector2(r.end.x - 7.0, r.position.y + 7.0), 3.0, col2)   # the stance held now
+		var tt = st["title"]
+		if tt is Dictionary:
+			var kk: int = int(tt["kind"])
+			UiIcons.stance5(ci, kk, tt["icon_c"], float(tt["icon_sz"]), UiStance.col(kk))
+			UiText.draw(ci, str(tt["text"]), Vector2(float(tt["text_x"]), float(tt["text_y"])), int(p["fs_body"]), ink, -1)
+			var tspecs: Array = tt["specs"]
+			if not tspecs.is_empty():
+				var tw := 0.0
+				for sp in tspecs:
+					tw += UiGlyphs.width_spec(sp, float(tt["gh"])) + float(tt["gh"]) * 0.08
+				var tx: float = float(tt["right"]) - tw
+				for sp in tspecs:
+					tx += UiGlyphs.draw_spec(ci, sp, Vector2(tx, (tt["icon_c"] as Vector2).y), float(tt["gh"]), 1.0, true) + float(tt["gh"]) * 0.08
+	# The row heads and the cells.
+	for rh in st["rowheads"]:
+		var rr: Rect2 = rh["rect"]
+		var gx2: float = rr.position.x
+		for sp in rh["specs"]:
+			if sp.has("word"):
+				UiText.draw(ci, str(sp["word"]), Vector2(gx2, float(rh["y"]) + float(fs_small) * 0.35), fs_small, ink, -1)
+				gx2 += UiText.width(str(sp["word"]), fs_small)
+			else:
+				gx2 += UiGlyphs.draw_spec(ci, sp, Vector2(gx2, float(rh["y"])), float(rh["gh"]), 1.0, true) + float(rh["gh"]) * 0.08
+	for c in st["cells"]:
+		var cr: Rect2 = c["rect"]
+		var fs: int = int(c["fs"])
+		var lh: float = float(c["lh"])
+		var ty: float = cr.position.y + (cr.size.y - float(c["lines"].size()) * lh) * 0.5 + UiText.ascent(fs) - 1.0
+		var centred: bool = mode == "table"
+		for ln in c["lines"]:
+			UiText.draw(ci, ln, Vector2(cr.get_center().x if centred else cr.position.x, ty), fs, ink, 0 if centred else -1)
+			ty += lh
+	for nt in st["notes"]:
+		var ny: float = float(nt["y"]) + UiText.ascent(int(nt["fs"]))
+		for ln in nt["lines"]:
+			UiText.draw(ci, ln, Vector2((p["body"] as Rect2).position.x, ny), int(nt["fs"]), dim if bool(nt["dim"]) else Color(dim, 1.0), -1)
+			ny += UiText.height(int(nt["fs"])) * 1.12
+
+
 static func _button(ci: CanvasItem, r: Rect2, label: String, fs: int, primary: bool) -> void:
 	var ink := Color(UiLook.col(UiLook.INK))
 	UiIcons.rrect(ci, r, r.size.y * 0.3, Color(ink, 0.92) if primary else Color(UiLook.col(UiLook.SCRIM), 0.8), Color(UiLook.col(UiLook.EDGE), 0.7), 1.8)
@@ -275,6 +503,10 @@ static func _icon(ci: CanvasItem, name: String, c: Vector2, sz: float, cs: float
 	var dim := Color(UiLook.col(UiLook.INK_DIM), 0.7)
 	var w: float = maxf(2.0, sz * 0.07)
 	var r: float = sz * 0.42
+	if name.begins_with("stance5_"):
+		var k5: int = int(name.get_slice("_", 1))
+		UiIcons.stance5(ci, k5, c, sz * 0.85, UiStance.col(k5))
+		return
 	if name.begins_with("stance_"):
 		var i: int = int(name.get_slice("_", 1))
 		UiIcons.stance(ci, i, c, sz * 0.85, UiLook.stance_col(i))

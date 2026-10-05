@@ -45,3 +45,7 @@ The stance names themselves and the cells are already in `stances.json` (Orb edi
 
 1. Not-live columns: the dimmed old words under the tag "New moves soon" (my recommendation), or collapsed to the header?
 2. Words: build on my drafts now (Narrative edits the data later, as with the stance names), or wait for Narrative's?
+
+## Built (2026-10-05)
+
+Built on the EP's rulings: a not-live column shows what the four buttons really do today, at normal weight and with no "New moves soon" tag (the page promises nothing), and the words are my drafts in data. See `hud-spec.md` section 38. The "New moves soon" tag in sections 1 and 4 above was dropped; the page's lines are `howto.json` icon-row items.

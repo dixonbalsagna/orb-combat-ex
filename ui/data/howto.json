@@ -14,11 +14,9 @@
         { "icon": "auto", "col": 0, "text": "No combo inputs to learn. Blows and combos play out on their own." },
         { "icon": "body", "col": 0, "text": "No health bars. Damage shows on the bodies." },
         { "icon": "finisher", "col": 0, "text": "A finisher ends the fight, not a clock." },
-        { "heading": "What you are doing", "col": 1},
-        { "icon": "stance_0", "col": 1, "text": "Pushing the attack. The rest state.", "stance": "press" },
-        { "icon": "stance_1", "col": 1, "text": "Hold guard. Hold firm, punish.", "stance": "guard" },
-        { "icon": "stance_2", "col": 1, "text": "Tap dodge. Slip away, counter.", "stance": "dodge" },
-        { "icon": "stance_3", "col": 1, "text": "Hold dodge and move away. A gamble.", "stance": "escape" }
+        { "heading": "Your stance", "col": 1 },
+        { "icon": "stance5_0", "col": 1, "text": "Nothing held: your martial arts. Hold a shoulder button to change stance." },
+        { "icon": "stance5_2", "col": 1, "text": "Each stance changes what your four buttons do: see Stances." }
       ]
     },
     {
@@ -49,6 +47,15 @@
         { "icon": "form", "col": 1, "text": "Transform: the button pulses when a form is ready." },
         { "icon": "stance_3", "col": 1, "text": "Escape: swipe up on Guard." },
         { "icon": "touch_pause", "col": 1, "text": "Pause: the top button." }
+      ]
+    },
+    {
+      "id": "stances",
+      "title": "Stances",
+      "items": [
+        { "icon": "stances_table", "col": 0, "text": "Hold a shoulder button to change stance. Let go and you are back in martial arts." },
+        { "icon": "stances_full", "col": 0, "text": "Tap a stance button to use it for your next blow, or hold it to stay in the stance." },
+        { "icon": "stances_simple", "col": 0, "text": "The game picks your stance for you." }
       ]
     },
     {

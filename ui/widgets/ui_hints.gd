@@ -79,6 +79,16 @@ const FACE_CELLS := {"light": "x", "heavy": "y", "context": "a", "signature": "b
 const HOLD_STANCES := {"guard": 1, "mode": 2, "power": 3, "dodge": 4}
 
 
+## The legend's own word for an action in a layout's scheme (hints.json): what the button does today, for a stance that is not live.
+static func old_label(scheme: String, action: String) -> String:
+	var schemes: Dictionary = data().get("schemes", {})
+	var sc: Dictionary = schemes.get(scheme, schemes.get("today", {}))
+	for r in sc.get("rows", []):
+		if r.has("action") and str(r["action"]) == action:
+			return str(r.get("label", ""))
+	return ""
+
+
 ## True for a layout with the stance buttons (it binds a mode and a power button): its legend reads by stance. Simple does not, and keeps its rows as written.
 static func stance_layout(scheme: String, slot: int) -> bool:
 	return UiGlyphs.bound(scheme, "mode", slot) and UiGlyphs.bound(scheme, "power", slot)

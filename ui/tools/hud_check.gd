@@ -47,6 +47,7 @@ func _run() -> void:
 	await _incoming_rules()
 	await _stance_badge_rules()
 	await _key_help_rules()
+	await _stances_page_rules()
 	await _beat_ring_rules()
 	await _touch_controls_rules()
 	await _settings_rules()
@@ -1239,7 +1240,7 @@ func _responsive() -> void:
 ## The How to play card: every page fits at every size, every button is a target, and the flow works (docs/ui/hud-spec.md section 17).
 func _howto_rules() -> void:
 	var n: int = UiHowto.page_count()
-	_ok(n == 3, "howto: three pages (the idea, the controls, reading the fight)")
+	_ok(n == 4, "howto: four pages (the idea, the controls, the stances, reading the fight)")
 	# Orb's direction: the player IS the fighter. The copy says bluntly what they control and what is automatic, and never frames the
 	# player as directing someone else.
 	var all_text := ""
@@ -1351,6 +1352,7 @@ func _howto_rules() -> void:
 	_ok(hud.howto_page() == 2, "howto: Enter and Right go forward a page each")
 	hud._unhandled_input(key.call(KEY_LEFT))
 	_ok(hud.howto_page() == 1, "howto: Left goes back")
+	hud._unhandled_input(key.call(KEY_SPACE))
 	hud._unhandled_input(key.call(KEY_SPACE))
 	hud._unhandled_input(key.call(KEY_SPACE))
 	_ok(not hud.is_howto_open() and closed == [true] and hud.howto_seen(), "howto: Space past the last page closes it and, for the first run, records that it has been seen")
@@ -2846,6 +2848,249 @@ func _key_help_rules() -> void:
 	root.size = Vector2i(1280, 720)
 
 
+## How to play's stances page and the Remap words that follow the live flags (docs/ui/how-to-play-stances-plan.md).
+func _stances_plan(sz: Vector2, dpv: float, touch: bool, preset: String, extra: Dictionary, device: String = "kbd", slot: int = 0) -> Dictionary:
+	var lay := UiLayout.new()
+	lay.dp = dpv
+	lay.compute(sz, false)
+	var pi: int = 2
+	return UiHowto.plan(sz, lay.s, dpv, touch, pi, device, slot, preset, "neutral", extra)
+
+
+func _stances_page_rules() -> void:
+	var pages: Array = UiData.howto()["pages"]
+	_ok(str(pages[2]["id"]) == "stances" and str(pages[2]["title"]) == "Stances" and UiHowto.page_count() == 4, "stances page: the third of four pages, titled Stances")
+	var stances_d: Dictionary = UiData.stances()["stances"]
+	var set_live := func(flags: Array) -> void:
+		for i in range(5):
+			stances_d[UiStance.id(i)]["_live"] = flags[i]
+	var head_flags: Array = [false, false, true, false, false]
+	set_live.call(head_flags)
+	# A wide screen: the table, with the player's own glyphs on both axes.
+	var p: Dictionary = _stances_plan(Vector2(1920, 1080), 1.0, false, "kb-solo", {"held": 2})
+	var st: Dictionary = p["stances"]
+	_ok(str(st["mode"]) == "table" and (st["heads"] as Array).size() == 5 and (st["cells"] as Array).size() == 20 and (st["rowheads"] as Array).size() == 4 and int(st["held"]) == 2 and bool(p["fits"]), "stances page 1920x1080: a table of five stances by four buttons that fits, the held stance marked")
+	var cell_words := func(stp: Dictionary, kind: int) -> Array:
+		var out: Array = []
+		for c in stp["cells"]:
+			if int(c["kind"]) == kind:
+				out.append(" ".join(c["lines"]))
+		return out
+	_ok(cell_words.call(st, 2) == ["Bolts", "Charged shot", "Mine", "Beam"] and cell_words.call(st, 0) == ["Light", "Heavy", "Context", "Signature"] and cell_words.call(st, 4) == ["Light", "Heavy", "Context", "Signature"], "stances page: the live stance (energy) shows its four names and a not-live stance shows what the buttons really do today, at normal weight, with no tag")
+	var tags := false
+	for hd in st["heads"]:
+		tags = tags or str(hd.get("enter", "")).contains("soon")
+	for nt in st["notes"]:
+		for ln in nt["lines"]:
+			tags = tags or str(ln).to_lower().contains("soon")
+	_ok(not tags, "stances page: nothing on it says 'soon' or promises a stance that is not in the game")
+	set_live.call([true, true, true, true, true])
+	var p_live: Dictionary = _stances_plan(Vector2(1920, 1080), 1.0, false, "kb-solo", {"held": 0})
+	_ok(cell_words.call(p_live["stances"], 4) == ["Zip strike", "Zip heavy", "Zip tackle", "Terrain art"] and cell_words.call(p_live["stances"], 1) == ["Check", "Push", "Reversal", "Counter"] and cell_words.call(p_live["stances"], 3)[3] == "Ultimate (hold)", "stances page: flipping the stances to live fills the columns in (a data change only)")
+	set_live.call(head_flags)
+	var hold_labels := func(stp: Dictionary, preset_device: String) -> Array:
+		var out: Array = []
+		for hd in stp["heads"]:
+			var parts := PackedStringArray()
+			for sp in hd["specs"]:
+				parts.append(str(sp.get("label", "")))
+			out.append(" ".join(parts) if not parts.is_empty() else str(hd["enter"]))
+		return out
+	_ok(hold_labels.call(st, "kbd") == ["Hold nothing", "Shift", "Q", "E", "Space"], "stances page: each column's header carries the key that holds the stance on the solo keyboard (martial arts: nothing held)")
+	var pa: Dictionary = _stances_plan(Vector2(1920, 1080), 1.0, false, "arena", {"held": 0}, "xbox", 0)
+	_ok(hold_labels.call(pa["stances"], "xbox") == ["Hold nothing", "LB", "RB", "RT", "LT"], "stances page: and the pad's own buttons on Arena")
+	var rowhead_words := func(stp: Dictionary) -> Array:
+		var out: Array = []
+		for rh in stp["rowheads"]:
+			var parts := PackedStringArray()
+			for sp in rh["specs"]:
+				parts.append(str(sp.get("label", sp.get("word", ""))))
+			out.append(" ".join(parts))
+		return out
+	_ok(rowhead_words.call(st) == ["J", "K", "I", "L"], "stances page: the rows are the player's own Light, Heavy, Context and Signature keys")
+	var p2: Dictionary = _stances_plan(Vector2(1920, 1080), 1.0, false, "kb-shared-p2", {"held": 0}, "kbd", 1)
+	_ok(rowhead_words.call(p2["stances"]) == ["H", "M", ",", "U"], "stances page: player two's keys on a shared keyboard")
+	var notes_of := func(stp: Dictionary) -> String:
+		var s := ""
+		for nt in stp["notes"]:
+			s += " ".join(nt["lines"]) + " | "
+		return s
+	_ok(str(notes_of.call(st)).begins_with("Hold a shoulder button to change stance. Let go and you are back in martial arts.") and not str(notes_of.call(st)).contains("Tap a stance button"), "stances page: the line under the table, and no touch line on a keyboard")
+	# A narrow screen: one stance at a time, with five tabs.
+	var narrow_ok := true
+	var narrow_info := ""
+	for cs in [[Vector2(360, 640), 1.0], [Vector2(390, 844), 1.0], [Vector2(750, 1334), 2.0], [Vector2(1170, 2532), 3.0]]:
+		var pn: Dictionary = _stances_plan(cs[0], cs[1], false, "kb-solo", {"held": 3, "tab": -1})
+		var sn: Dictionary = pn["stances"]
+		var ok: bool = str(sn["mode"]) == "tabs" and (sn["tabs"] as Array).size() == 5 and int(sn["sel"]) == 3 and (sn["cells"] as Array).size() == 4 and bool(pn["fits"])
+		for tb in sn["tabs"]:
+			ok = ok and (tb["rect"] as Rect2).size.x >= UiLook.text_floor and (tb["rect"] as Rect2).size.y >= pn["tm"] - 0.5 and (tb["rect"] as Rect2).size.x >= float(pn["tm"]) - 0.5
+		narrow_ok = narrow_ok and ok
+		narrow_info += "%s:%s " % [cs[0], sn["mode"]]
+	_ok(narrow_ok, "stances page narrow (360x640, 390x844, 750x1334, 1170x2532): five tabs of at least a touch target, the held stance's tab selected, its four rows, and it fits (%s)" % narrow_info)
+	var pt: Dictionary = _stances_plan(Vector2(360, 640), 1.0, false, "kb-solo", {"held": 0, "tab": 4})
+	_ok(int(pt["stances"]["sel"]) == 4 and cell_words.call(pt["stances"], 4) == ["Light", "Heavy", "Context", "Signature"] and (pt["stances"]["title"] as Dictionary)["text"] == "Manoeuvre", "stances page narrow: choosing a tab shows that stance (its full name, and its real words while it is not live)")
+	set_live.call([true, true, true, true, true])
+	var pt2: Dictionary = _stances_plan(Vector2(360, 640), 1.0, false, "kb-solo", {"held": 0, "tab": 4})
+	_ok(cell_words.call(pt2["stances"], 4) == ["Zip strike", "Zip heavy", "Zip tackle", "Terrain art"] and str((pt2["stances"]["notes"] as Array)[0]["lines"][0]).begins_with("Dodge, boost"), "stances page narrow: a live stance shows its names and its one line")
+	set_live.call(head_flags)
+	var pt3: Dictionary = _stances_plan(Vector2(360, 640), 1.0, false, "kb-solo", {"held": 0, "tab": 2})
+	var blurb_shown := false
+	for nt in pt3["stances"]["notes"]:
+		blurb_shown = blurb_shown or str(nt["lines"][0]).begins_with("Blasts instead of blows")
+	var pt4: Dictionary = _stances_plan(Vector2(360, 640), 1.0, false, "kb-solo", {"held": 0, "tab": 4})
+	var blurb_hidden := true
+	for nt in pt4["stances"]["notes"]:
+		blurb_hidden = blurb_hidden and not str(nt["lines"][0]).begins_with("Dodge, boost")
+	_ok(blurb_shown and blurb_hidden, "stances page: a stance's one-line description shows only while the stance is live")
+	# Simple and Simple touch: one line, no table. Full touch: the table and the arming line.
+	var ps: Dictionary = _stances_plan(Vector2(1280, 720), 1.0, false, "simple-pad", {"held": 0}, "xbox")
+	var sp_: Dictionary = ps["stances"]
+	_ok(str(sp_["mode"]) == "none" and (sp_["cells"] as Array).is_empty() and (sp_["tabs"] as Array).is_empty() and str(notes_of.call(sp_)).begins_with("The game picks your stance for you."), "stances page: Simple has no table, one line (the game picks the stance)")
+	var pts: Dictionary = _stances_plan(Vector2(2400, 1080), 2.6, true, "touch-simple", {"held": 0, "full_touch": false}, "touch")
+	_ok(str(pts["stances"]["mode"]) == "none" and str(notes_of.call(pts["stances"])).begins_with("The game picks your stance for you."), "stances page: Simple touch has no table either")
+	var ptf: Dictionary = _stances_plan(Vector2(2400, 1080), 2.6, true, "touch-simple", {"held": 0, "full_touch": true}, "touch")
+	var stf: Dictionary = ptf["stances"]
+	_ok(str(stf["mode"]) != "none" and not (stf["cells"] as Array).is_empty() and str(notes_of.call(stf)).contains("Tap a stance button to use it for your next blow, or hold it to stay in the stance.") and rowhead_words.call(stf) == ["LIGHT", "HEAVY", "CONTEXT", "SIGN"], "stances page: Full touch has the table (its own button words) and the arming line")
+	# The page fits at the 15 sizes for every kind of layout.
+	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0], [Vector2(2560, 1600), 2.0], [Vector2(3840, 2160), 1.0],
+		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(1125, 2436), 3.0], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0]]
+	var variants: Array = [["kb-solo", false, "kbd", {"held": 1}], ["kb-shared-p2", false, "kbd", {"held": 4}], ["arena", false, "xbox", {"held": 3}], ["simple-pad", false, "xbox", {"held": 0}], ["touch-simple", true, "touch", {"held": 0, "full_touch": false}], ["touch-simple", true, "touch", {"held": 2, "full_touch": true}]]
+	var fit_bad := 0
+	var fit_info := ""
+	for flags in [head_flags, [true, true, true, true, true]]:
+		set_live.call(flags)
+		for sz in sizes:
+			for v in variants:
+				# The controls page on a shared keyboard (its extra note) does not fit at 360x640 or 1560x720 at density 2, on HEAD before this page existed too:
+				# not this page's doing, and not a layout those sizes use (reported to the EP).
+				if v[0] == "kb-shared-p2" and (sz[0] == Vector2(360, 640) or sz[0] == Vector2(1560, 720)):
+					continue
+				var pp: Dictionary = _stances_plan(sz[0], sz[1], v[1], v[0], v[3], v[2], 1 if v[0] == "kb-shared-p2" else 0)
+				var sb: Dictionary = pp["stances"]
+				var body: Rect2 = pp["body"]
+				var inside := true
+				for c in sb["cells"]:
+					inside = inside and body.grow(1.0).encloses(c["rect"] as Rect2)
+				if not bool(pp["fits"]) or not inside:
+					fit_bad += 1
+					fit_info += "%s %s " % [sz[0], v[0]]
+	set_live.call(head_flags)
+	_ok(fit_bad == 0, "stances page: it fits, with every cell inside the body, at 15 sizes for six layouts, with the stances at HEAD's flags and all live (%d bad %s)" % [fit_bad, fit_info])
+	# The words on the other pages follow the live flags too.
+	var controls_text := func() -> String:
+		var s := ""
+		for it in (UiData.howto()["pages"] as Array)[1]["items"]:
+			pass
+		var pc: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "kbd", 0, "kb-solo", "neutral", {})
+		for rec in pc["items"]:
+			for ln in rec["lines"]:
+				s += str(ln) + " | "
+		return s
+	var ct_head: String = controls_text.call()
+	_ok(ct_head.contains("Energy stance (hold; Settings can make it a toggle)") and ct_head.contains("Guard (hold)") and ct_head.contains("Power (hold to charge)") and not ct_head.contains("Defensive stance"), "controls page: a stance's button is named for its stance once the stance is live (energy now), and keeps the old word until then")
+	set_live.call([true, true, true, true, true])
+	var ct_live: String = controls_text.call()
+	_ok(ct_live.contains("Defensive stance (hold)") and ct_live.contains("Charging stance (hold to charge)") and ct_live.contains("Manoeuvre stance (hold), dodge (tap)"), "controls page: and all four once they are live")
+	set_live.call(head_flags)
+	var legacy := false
+	for pg in pages:
+		for it in pg["items"]:
+			legacy = legacy or it.has("stance")
+	_ok(not legacy, "idea page: no row carries the old four-stance list any more")
+	# The Remap rows follow the flags.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.set_option("pad_preset", "arena")
+	hud.hub.model(0).device = "xbox"
+	await _frames(hud, 3)
+	hud.show_remap("arena")
+	await _frames(hud, 2)
+	var row_of := func(key: String) -> Dictionary:
+		for r in hud._rm_rows():
+			if str(r["key"]) == key:
+				return r
+		return {}
+	_ok(str(row_of.call("mode")["label"]) == "Energy stance (hold)" and str(row_of.call("guard")["label"]) == "Guard" and str(row_of.call("power")["label"]) == "Power" and str(row_of.call("dodge")["label"]) == "Dodge" and str(row_of.call("mode")["help"]).begins_with("Hold for energy attacks"), "remap: the energy row is named for its stance (it is live) and the other three stance buttons keep their old words and helps")
+	set_live.call([false, true, true, false, false])
+	_ok(str(row_of.call("guard")["label"]) == "Defensive stance (hold)" and str(row_of.call("guard")["help"]).begins_with("Hold for the defensive stance") and str(row_of.call("power")["label"]) == "Power", "remap: flipping the defensive stance live renames its row and help (data only)")
+	set_live.call(head_flags)
+	_ok(str(row_of.call("guard")["label"]) == "Guard", "remap: and back")
+	hud.hide_remap()
+	hud.queue_free()
+	await process_frame
+	# In the HUD: the stances page on a narrow screen, Up and Down and a tap choose the tab; a wide screen has none.
+	root.size = Vector2i(390, 844)
+	var h2: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(h2)
+	h2.setup(["kai", "vorr"], ["KAI", "VORR"])
+	h2.hub.model(0).ai = false
+	h2.hub.model(1).ai = true
+	h2.hub.patch(0, {"stance_mask": 4})
+	await _frames(h2, 3)
+	h2.show_howto(false, 2)
+	await _frames(h2, 2)
+	var plan_n: Dictionary = h2.howto_plan()
+	var kd := func(code: int) -> InputEventKey:
+		var e := InputEventKey.new()
+		e.keycode = code
+		e.pressed = true
+		return e
+	_ok(str(plan_n["stances"]["mode"]) == "tabs" and int(plan_n["stances"]["sel"]) == 3 and h2._l_howto.sig != null, "stances page hud: on a phone it opens on the held stance's tab (RT held: charging)")
+	h2._unhandled_input(kd.call(KEY_DOWN))
+	_ok(int(h2.howto_plan()["stances"]["sel"]) == 4 and h2.howto_page() == 2, "stances page hud: Down moves to the next tab (the page stays)")
+	h2._unhandled_input(kd.call(KEY_UP))
+	h2._unhandled_input(kd.call(KEY_UP))
+	_ok(int(h2.howto_plan()["stances"]["sel"]) == 2, "stances page hud: Up moves back")
+	var tab0: Rect2 = (h2.howto_plan()["stances"]["tabs"] as Array)[0]["rect"]
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = tab0.get_center()
+	h2._unhandled_input(click)
+	_ok(int(h2.howto_plan()["stances"]["sel"]) == 0 and h2.howto_page() == 2, "stances page hud: a tap on a tab chooses it")
+	h2.hide_howto()
+	h2.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
+	var h3: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(h3)
+	h3.setup(["kai", "vorr"], ["KAI", "VORR"])
+	h3.hub.model(0).ai = false
+	await _frames(h3, 3)
+	h3.show_howto(false, 2)
+	await _frames(h3, 2)
+	_ok(str(h3.howto_plan()["stances"]["mode"]) == "table" and (h3.howto_plan()["stances"]["tabs"] as Array).is_empty(), "stances page hud: a desktop window shows the whole table")
+	_ok(h3._l_join.get_index() < h3._l_pmenu.get_index() and h3._l_join.get_index() < h3._l_howto.get_index() and h3._l_join.get_index() < h3._l_settings.get_index(), "layers: the join prompt is under the pause menu, How to play and Settings (it showed over How to play)")
+	# It draws in every mode.
+	var layer := UiLayer.new()
+	layer.size = Vector2(1280, 720)
+	root.add_child(layer)
+	var drawn := {"n": 0}
+	for v in [["kb-solo", false, {"held": 2}, Vector2(1280, 720), 1.0], ["kb-solo", false, {"held": 3, "tab": 1}, Vector2(360, 640), 1.0], ["simple-pad", false, {"held": 0}, Vector2(1280, 720), 1.0], ["touch-simple", true, {"held": 0, "full_touch": true}, Vector2(2400, 1080), 2.6]]:
+		set_live.call(head_flags if int(drawn["n"]) % 2 == 0 else [true, true, true, true, true])
+		var pl: Dictionary = _stances_plan(v[3], v[4], v[1], v[0], v[2], "touch" if v[1] else "kbd")
+		layer.size = v[3]
+		layer.painter = func(ci: CanvasItem) -> void:
+			UiHowto.draw(ci, pl, "touch" if v[1] else "kbd", 0, "neutral", v[1])
+			drawn["n"] += 1
+		layer.sig = [v[0], int(drawn["n"])]
+		layer.queue_redraw()
+		await process_frame
+		await process_frame
+	set_live.call(head_flags)
+	layer.queue_free()
+	_ok(drawn["n"] >= 4, "stances page: it draws as the table, as tabs, as Simple's one line and as Full touch's table")
+	h3.hide_howto()
+	h3.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
+
+
 func kinds_in_hud(hud: UiHud, slot: int) -> Array:
 	var ks: Array = []
 	for c in UiPrompts.plan(hud.hub.models[slot], hud.layout.prompts[slot], hud.layout.s, hud._o()):
@@ -3687,7 +3932,7 @@ func _remap_rules() -> void:
 	hud._rm_focus = idx.call("light")
 	hud._unhandled_input(pad.call(JOY_BUTTON_A))
 	hud._unhandled_input(pad.call(JOY_BUTTON_RIGHT_SHOULDER))
-	_ok(hud.remap_mode() == "confirm" and str(hud.remap_plan()["status"]) == "RB is already Energy. Swap them?", "remap pad: a bumper that is Mode's asks")
+	_ok(hud.remap_mode() == "confirm" and str(hud.remap_plan()["status"]) == "RB is already Energy stance (hold). Swap them?", "remap pad: a bumper that is Mode's asks")
 	hud._unhandled_input(pad.call(JOY_BUTTON_A))
 	var arena_now: Dictionary = SimInputData.preset("arena")
 	_ok(hud.remap_mode() == "list" and _binding_controls(arena_now, "light") == ["pad:rb"] and _binding_controls(arena_now, "mode") == ["pad:west"] and _binding_controls(arena_now, "special1", "power") == ["pad:rb"], "remap pad: A swaps (Light on RB, Mode on the west button, the first special with Light)")

@@ -63,6 +63,38 @@ static func specials_row() -> bool:
 	return not live(CHARGING)
 
 
+## A small number that changes when any stance's live flag does (for a redraw key).
+static func live_bits() -> int:
+	var n := 0
+	for k in range(5):
+		if live(k):
+			n |= 1 << k
+	return n
+
+
+## The one-line description of the stance (stances.json `_blurb`), only while the stance is live (otherwise "": it would describe moves that are not in the game).
+static func blurb(kind: int) -> String:
+	return str(_row(kind).get("_blurb", "")) if live(kind) else ""
+
+
+## The controls page's row for the button that holds the stance (stances.json `_howto`), only while it is live; "" keeps the data's own words.
+static func howto_word(kind: int) -> String:
+	return str(_row(kind).get("_howto", "")) if live(kind) else ""
+
+
+## The Remap screen's {label, help} for the action that holds a stance (guard, mode, power, dodge), only while that stance is live; {} keeps the old words.
+static func remap_words(action: String) -> Dictionary:
+	if not UiHints.HOLD_STANCES.has(action):
+		return {}
+	var kind: int = int(UiHints.HOLD_STANCES[action])
+	if not live(kind):
+		return {}
+	var row: Dictionary = _row(kind)
+	if not row.has("_remap"):
+		return {}
+	return {"label": str(row["_remap"]), "help": str(row.get("_remap_help", ""))}
+
+
 ## What a face button does in the stance: button is "x", "y", "a" or "b".
 static func cell(kind: int, button: String) -> String:
 	return str((_row(kind).get("cells", {}) as Dictionary).get(button, ""))
