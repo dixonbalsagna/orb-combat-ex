@@ -93,4 +93,4 @@ Steps 1 and 2 (the five-chip prompt row and the live legend; a stance's names sh
 
 ## Built (2026-10-06, the last pieces)
 
-The crown's mark, Full touch's stance labels and the armed-stance display (section 39 of the spec). The armed state needs Controls to expose it (see the spec); the HUD shows it when the touch state and the model carry it.
+The crown's mark, Full touch's stance labels and the armed-stance display (section 39 of the spec). Wired to Controls' hub accessors on 2026-10-05 (spec section 39); the host passes its hub as `UiSimBridge.patch`'s third argument.

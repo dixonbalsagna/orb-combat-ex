@@ -21,7 +21,7 @@ static func fighters(S) -> Array:
 
 
 ## Copy per-fighter state into the HUD. Call once per tick or per frame; it writes only to the HUD's models.
-static func patch(hud: UiHud, S) -> void:
+static func patch(hud: UiHud, S, input_hub = null) -> void:
 	var move_names: Array = []
 	for i in range(S.fighters.size()):
 		var f = S.fighters[i]
@@ -56,6 +56,21 @@ static func patch(hud: UiHud, S) -> void:
 	hud.hub.set_move_names(move_names)
 	var w = S.world
 	hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
+	patch_input(hud, input_hub)   # the arming, when the host passes its input hub (SimHost.hub)
+
+
+## The arming, from Controls' input hub (read-only: `armed_stance`, `armed_share`, `energy_latched` per slot): an armed stance (Full touch: a tap arms it for the
+## next blow, 90 ticks) is in the intent's mask but is not held, so the badge says NEXT BLOW with a ring that runs down. `stance_armed` is the share left, and
+## stays a little above 0 for as long as a stance is armed: the share reaches exactly 0.0 on the last tick before the lapse while the arming still counts, so
+## the test is `armed_stance != 0`, never `share > 0`. Energy's latch is not an arming (the stance is simply energy); nothing is patched for it here.
+## `hub` is the host's SimInputHub (SimHost.hub); null does nothing.
+static func patch_input(hud: UiHud, hub) -> void:
+	if hub == null:
+		return
+	for slot in range(mini(2, hud.hub.models.size())):
+		var armed: int = int(hub.armed_stance(slot))
+		var share: float = float(hub.armed_share(slot))
+		hud.hub.patch(slot, {"stance_armed": maxf(share, 0.02) if armed != 0 else 0.0})
 
 
 ## Seconds to contact of every pending blow in the running exchange, per fighter struck (the beat ring): the director's `strike` and `chainStrike` beats

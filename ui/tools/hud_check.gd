@@ -49,6 +49,7 @@ func _run() -> void:
 	await _key_help_rules()
 	await _stances_page_rules()
 	await _armed_touch_rules()
+	await _armed_hub_rules()
 	await _beat_ring_rules()
 	await _touch_controls_rules()
 	await _settings_rules()
@@ -3184,6 +3185,119 @@ func _armed_touch_rules() -> void:
 		await _frames(hud, 1)
 	_ok(rr1 > rr0 and hud._l_plate[0].redraws == rr1, "armed badge: under reduced motion the ring is steady (no running down, no redraws)")
 	hud.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
+
+
+## The armed stance from a real input hub (Controls' armed_stance, armed_share, energy_latched): arm, run down, lapse, cancel, spent by a blow, the latch.
+func _hub_tick(h: SimInputHub, n: int) -> void:
+	for i in range(n):
+		h.intent(0)
+		h.intent(1)
+		h.consumed()
+
+
+func _hub_tap(h: SimInputHub, button: String) -> void:
+	h.pad_button(9, button, true)
+	_hub_tick(h, 3)
+	h.pad_button(9, button, false)
+	_hub_tick(h, 2)
+
+
+func _armed_hub_rules() -> void:
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = false
+	var ih := SimInputHub.new()
+	ih.set_humans(true, true)
+	ih.pad_button(3, "south", true)
+	ih.pad_button(3, "south", false)
+	ih.pad_button(9, "south", true)
+	ih.pad_button(9, "south", false)
+	ih.consumed()
+	ih.set_stance_oneshot("on", 1)
+	var share_of := func(slot: int) -> float:
+		return hud.hub.model(slot).stance_armed
+	UiSimBridge.patch_input(hud, ih)
+	_ok(share_of.call(0) == 0.0 and share_of.call(1) == 0.0, "armed hub: nothing armed at rest")
+	UiSimBridge.patch_input(hud, null)
+	_ok(share_of.call(1) == 0.0, "armed hub: no hub, no change, no error")
+	# A tap arms: nearly the whole window, on that player only.
+	_hub_tap(ih, "lb")
+	UiSimBridge.patch_input(hud, ih)
+	_ok(share_of.call(1) > 0.9 and share_of.call(0) == 0.0 and ih.armed_stance(1) == 1, "armed hub: a tap on LB arms the defensive stance for player two (nearly the whole window left), and not for player one")
+	# It runs down, and the model is armed for exactly as long as the hub says (the share reaches 0.0 on the last tick while still armed).
+	var consistent := true
+	var min_while_armed := 9.0
+	var half := -1.0
+	var ticks := 0
+	for i in range(100):
+		_hub_tick(ih, 1)
+		ticks += 1
+		UiSimBridge.patch_input(hud, ih)
+		var armed: bool = ih.armed_stance(1) != 0
+		consistent = consistent and (share_of.call(1) > 0.0) == armed
+		if armed:
+			min_while_armed = minf(min_while_armed, share_of.call(1))
+		if ticks == 40:
+			half = share_of.call(1)
+	_ok(consistent and min_while_armed >= 0.02 and half > 0.35 and half < 0.65, "armed hub: it runs down (about half at 45 ticks: %.2f), is armed in the HUD for exactly as long as the hub says armed (the share's last 0.0 included: smallest %.3f), and the model never reads armed after the lapse" % [half, min_while_armed])
+	_ok(share_of.call(1) == 0.0 and ih.armed_stance(1) == 0, "armed hub: lapsed after the 90 ticks it is nothing")
+	# A second tap cancels.
+	_hub_tap(ih, "lb")
+	UiSimBridge.patch_input(hud, ih)
+	var armed_again: float = share_of.call(1)
+	_hub_tap(ih, "lb")
+	UiSimBridge.patch_input(hud, ih)
+	_ok(armed_again > 0.9 and share_of.call(1) == 0.0, "armed hub: a second tap cancels it")
+	# A blow spends it.
+	_hub_tap(ih, "lb")
+	UiSimBridge.patch_input(hud, ih)
+	var before_blow: float = share_of.call(1)
+	ih.pad_button(9, "west", true)
+	_hub_tick(ih, 2)
+	ih.pad_button(9, "west", false)
+	_hub_tick(ih, 2)
+	UiSimBridge.patch_input(hud, ih)
+	_ok(before_blow > 0.9 and share_of.call(1) == 0.0 and ih.armed_stance(1) == 0, "armed hub: a light blow spends the arming")
+	# Two armed: the newer is the one shown.
+	_hub_tap(ih, "lt")
+	_hub_tick(ih, 4)
+	_hub_tap(ih, "lb")
+	UiSimBridge.patch_input(hud, ih)
+	_ok(ih.armed_stance(1) == 1 and share_of.call(1) > 0.9, "armed hub: two armed, the newest (LB) is the one the share follows")
+	ih.pad_button(9, "west", true)
+	_hub_tick(ih, 2)
+	ih.pad_button(9, "west", false)
+	_hub_tick(ih, 2)
+	# The energy latch is not an arming.
+	ih.set_mode_style("hybrid", 1)
+	_hub_tap(ih, "rb")
+	UiSimBridge.patch_input(hud, ih)
+	_ok(ih.energy_latched(1) and ih.armed_stance(1) == 0 and share_of.call(1) == 0.0, "armed hub: a tap on RB latches energy and arms nothing (the badge is simply energy)")
+	# In the HUD: the badge redraws for the real arming, and the bridge takes the hub as a third argument.
+	await _frames(hud, 3)
+	var r0: int = hud._l_plate[1].redraws
+	ih.set_mode_style("hold", 1)
+	_hub_tap(ih, "lb")
+	UiSimBridge.patch_input(hud, ih)
+	await _frames(hud, 2)
+	_ok(hud._l_plate[1].redraws > r0 and hud.hub.model(1).stance_armed > 0.9, "armed hub: the plate redraws for a real arming")
+	hud.queue_free()
+	await process_frame
+	var host := SimHost.new()
+	host.new_match(5)
+	var hud2: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud2)
+	var fl: Array = UiSimBridge.fighters(host.S)
+	hud2.setup(fl[0], fl[1])
+	host.hub.set_humans(true, false)
+	UiSimBridge.patch(hud2, host.S, host.hub)
+	_ok(hud2.hub.model(0).stance_armed == 0.0 and hud2.hub.model(1).stance_armed == 0.0, "armed hub: UiSimBridge.patch(hud, S, hub) reads the host's own hub (nothing armed, no error)")
+	hud2.queue_free()
 	await process_frame
 	root.size = Vector2i(1280, 720)
 
