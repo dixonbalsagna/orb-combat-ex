@@ -13,7 +13,7 @@
    "twist": 0.0, "twist_ticks": 6, "ghosts": 3
   },
   "speed": {
-   "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.4, "load_ticks": {"light": 3, "heavy": 3}, "hold_ticks": 0, "follow_ticks": 4, "recover_ticks": 7, "overshoot": 0.22, "lag": 0.9},
+   "prof": {"solve_hz": 60, "snap_ticks": 0, "load_ease": 1.4, "load_ticks": {"light": 2, "heavy": 2}, "hold_ticks": 0, "follow_ticks": 4, "recover_ticks": 7, "overshoot": 0.22, "lag": 0.9},
    "alternate": true, "carry": true, "carry_ticks": 5,
    "squash": 0.0, "lean_back": 0.0, "back": 0.0,
    "stretch": {"spine": 0.0, "rise": 0.0, "lead": 0.0, "ticks": 3, "smear_ticks": 0},

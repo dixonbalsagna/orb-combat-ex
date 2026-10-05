@@ -395,6 +395,8 @@ func _press_scene(S: SimState, who: String, kind: String, beats: Array) -> Dicti
 		if not af0.press.is_empty():
 			res.styles[String(af0.press.style)] = true
 			res.phases[String(af0.press.phase)] = true
+			if String(af0.press.phase) == "load" and int(af0.press.ordinal) == 0:
+				res["load_ticks"] = maxi(int(res.get("load_ticks", 0)), int(af0.press.ticks_to_contact))
 			res.dx_max = maxf(float(res.dx_max), absf(float(af0.press.dx)))
 			if k == int(beats[0][0]):
 				tip_at_contact = af0.socket(String(af0.press.bone))
@@ -440,6 +442,8 @@ func _test_press_styles() -> void:
 			_expect(on.phases.has("contact") and on.phases.has("load") and int(on.ring) > 0 and int(on.path) > 0, "%s: the hand-off (press, press_pose, press_path) is empty (phases %s, ring %d, path %d)" % [tag, on.phases.keys(), int(on.ring), int(on.path)])
 			if sc == "tech":
 				_expect(on.phases.has("hold") and float(on.tip_drift) < 1.5, "%s: the held beat moved the fist %.2f units off the contact point" % [tag, float(on.tip_drift)])
+			if sc == "speed":
+				_expect(int(on.get("load_ticks", 99)) <= 2, "%s: the first blow from idle winds up %d ticks ahead (the ruling: 2, press-to-blow wins)" % [tag, int(on.get("load_ticks", 99))])
 			if sc == "heavy":
 				_expect(on.phases.has("smear") and float(on.dx_max) > 1.0, "%s: no smear frame or lunge (%s, dx %.2f)" % [tag, on.phases.keys(), float(on.dx_max)])
 	RenderAnim.press_styles = false

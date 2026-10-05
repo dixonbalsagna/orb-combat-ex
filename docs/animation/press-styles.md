@@ -10,8 +10,8 @@ All times are 60 Hz ticks, relative to the blow's contact tick `tc` (the sim fix
 
 | | Tech (timed) | Speed (mashed) | Heavy (held) |
 | :--- | :--- | :--- | :--- |
-| Wind-up (load) | a 6-tick tell: the load key eased in hard at the end (ease 3), then **held** | 3 ticks, soft (ease 1.4) | 24 ticks (22 for a light heavy), eased (1.6), scaled by the blow's weight |
-| Snap into contact | **0 ticks**: the contact key lands on `tc` with nothing in between | 1 tick | 1 tick, and the **smear frame** is the tick before `tc` |
+| Wind-up (load) | a 6-tick tell: the load key eased in hard at the end (ease 3), then **held** | **2 ticks** (ease 1.4; the ruling of 2026-10-04: press-to-blow wins, a speed blow from idle lands within 2 ticks of the press) | 24 ticks (22 for a light heavy), eased (1.6), scaled by the blow's weight |
+| Snap into contact | **0 ticks**: the contact key lands on `tc` with nothing in between | **0 ticks**: the contact key lands on `tc` (the trigger frame) | 1 tick, and the **smear frame** is the tick before `tc` |
 | Contact pose | the contact key, held **10 ticks** (the held beat); the fist keeps the point it landed on | the contact key on the trigger frame, overshoot 0.22 | the contact key, held **10 ticks**, then an 8-tick follow-through |
 | Return | 6 ticks, quick | 7 ticks, **blended**: the next blow starts from where this one is, not from the guard | 14 ticks, eased |
 | Limbs | the key set's own side | **alternate** blow to blow | the key set's own side |
@@ -51,7 +51,22 @@ On every `strike` and `chainStrike` beat, set when the director plans the string
 | `closing` | bool | the string's last blow: the only one that sends the defender back, so it takes the heavy hold even in a speed string |
 | `charge` | 0 to 1, the share of the hold | heavy only: how deep the squash goes and how long the wind-up (today the blow's damage stands in) |
 
-`chainStrike` beats have **no `args` today** (the renderer invents `{"o": {"big": true}}`): please give them the same dictionary as a `strike` (`a`, `dmg`, `piece`, plus the fields above). The beat must also be announced early enough for the wind-up: tech wants 6 ticks before contact, speed 3, heavy 24 (shorter, the wind-up is cut to what there is, as today).
+`chainStrike` beats have **no `args` today** (the renderer invents `{"o": {"big": true}}`): please give them the same dictionary as a `strike` (`a`, `dmg`, `piece`, plus the fields above). The beat must also be announced early enough for the wind-up: tech wants 6 ticks before contact, speed 3, heavy 24 (shorter, the wind-up is cut to what there is, as today). **Ruling (EP, 2026-10-04):** speed takes only 2 ticks of notice from idle, inside a running flurry the next blow is known a tap gap ahead; the build's speed load is 2 ticks and `anim_check` asserts it.
+
+### What I will read from the beat once Encounter's slice B0 lands
+
+Until then the style comes from `args.style` if present, else the weight and the press log (section 3); nothing breaks if a field is missing. With B0 (`style`, `grade`, `k`, `n`, `closing`, `charge`, `hand`, `ender`, and `chainStrike` with the same args as `strike`):
+
+| Field | What I will do with it |
+| :--- | :--- |
+| `style` | replaces the log read entirely (the first choice already honours it) |
+| `grade` | tech: `perfect` gets the full 10-tick hold and 3 after-images, `good` a 6-tick hold and 2; a lapsed beat arrives as `style: "speed"` and plays speed |
+| `k`, `n` | speed's alternation by `k` (today it counts the attacker's own blows); the blow with `k == n` is the closer |
+| `closing` / `ender` | the closer of a string takes the heavy hold (and the smear) whatever its style; `ender` says it is the knock-back blow |
+| `charge` (0 to 1) | heavy: the squash depth and the wind-up length scale with it (today the damage stands in) |
+| `hand` | the striking side outright: replaces my alternation by parity (and the hash side), so the sim's choice and the picture agree; a broken-arm override still wins |
+
+`chainStrike` with `args` lets the render drop its invented `{"o": {"big": true}}` and style a chain blow like any other.
 
 ## 5. Squash, stretch and smear inside the joint limits
 
