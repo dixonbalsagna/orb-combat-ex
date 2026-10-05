@@ -631,7 +631,7 @@ Heat stages, Humbled bursts and boil-overs are power states with no cinematic. T
   - blitzes 2 to 6 a minute in Tense and Frenzied.
 - **Re-based for the brawl** (2026-10-05). With every press a blow, a blow feeds the mood by its form, and a blocked blow's wear on the arms is halved and capped. The numbers are in `melee-press-feel.md` §9d.
 - **M1 retune** (M1 `4123f3a` measured Calm 87.5%, Tense 12.4% and Frenzied 0.1%, with act 2 at 5:15, act 3 at 5:54 and act 4 at 6:18). The −6 decay outpaced the impulses, and the only early beats were cores reaching battered. The values above are the ruling, and the targets are:
-  - *band shares over the match:* Calm 30 to 55%, Tense 35 to 60%, Frenzied 5 to 20%;
+  - *band shares over the match:* Calm 20 to 40%, Tense 40 to 65%, Frenzied 5 to 20%. Calm was 30 to 55% and Tense 35 to 60% until the brawl: act 3's floor is the Tense line, so Calm can't pass about 38% of a match, and a brawl leaves fewer gaps (`melee-press-feel.md` §9d);
   - *by act:* Calm at least 60% of act 1; Frenzied at least 15% of act 4, which is the climax;
   - *act timing (medians):* act 2 at 1:30 to 2:30, act 3 at 2:30 to 4:00, act 4 at 4:30 to 5:45. Act 4 arrives before the first brink in at least 80% of matches, so the brink chapter plays in the top act.
   - *Tuning, data only:* decay first, as a whole number from 3 to 5 per second, then the floors. If no decay value lands the shares, because linear decay is knife-edged, Simulation adds a proportional term as a small code change: decay = 2 + 0.08 × (mood − floor) per second. It settles about 25 points above each act's floor at today's impulse rate: Calm in act 1, and Tense from act 2.

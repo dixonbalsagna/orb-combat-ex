@@ -686,6 +686,14 @@ A blocked blow wears the arms, and in a brawl a guard takes six blows a second. 
 
 What punishes a guard is now the brawl's own: guard fatigue after 3 s, and the heavy that breaks a set guard.
 
+**Re-ruled after Simulation built it** (`docs/architecture/brawl-wear-and-mood.md`). With the values above the arms still took 83% of limb breaks. Two causes: a block could fill an arm to 45 of the 60 that batter it, which is three quarters of the work; and a landed light picks the arms 3 times in 8 and the legs once. With blocks wearing nothing at all the arms read 59%, so the block levers can't reach the band alone. With the pick at 2 and 2 the arms read 13%, so that lever is steep. Both move, each a little:
+- **the cap comes down to 30,** which is half of battered. The share stays at 0.5;
+- **a landed light picks the arms 11 times in 32 and the legs 5,** where it was 12 and 4. Head and core keep their shares;
+- **Data:** `block.armWearCap` 30, `block.streamArmShare` 0.5, and `family.light` at 12, 4, 11, 5 in the file's own order;
+- **my estimate is about 50%,** reasoned from Simulation's what-ifs and not measured. If the arms are still over 65%, the pick goes to 10 and 6. If they fall under 35%, the cap goes back to 45;
+- a limb breaks in under half of matches, so this share is good to about 15 points on 100 of them. Read it on both arms pooled, 200 matches;
+- this is a stopgap in one respect: when Combat's pieces carry their targets, a blow's region should follow the piece and the stick (§13), and not a table.
+
 **2. The mood** (Calm read 4.2% of match time and Frenzied 63.4%, against 30 to 55% and 5 to 20%; act 2 began at 77.8 s against 90 to 150 s).
 
 The mood adds 1.5 points for every strike, and strikes now come six a second. So a blow feeds the mood by its form, as it does damage:
@@ -704,7 +712,12 @@ The mood adds 1.5 points for every strike, and strikes now come six a second. So
 
 - A flurry blow's 20 doesn't shrink with a faster tap, so mashing faster still raises the mood faster (§3).
 - **Data** (`mood.json` `impulses`): `brawlLight` 20, `skillStrike` 90, `brawlHeavy` 120, `flurryClose` 180, `guardBreak` 240, `knockback` 180. The first lever is `brawlLight`, from 15 to 30, and then the decay.
-- **The acts** should move back by themselves once ruling 1 is in: the early act 2 is most likely the battered-limb beat, fired by arms worn through blocking. Re-measure before touching the act beats.
+- **The acts:** I guessed that the early act 2 came from arms battered by blocking. That was wrong. Simulation found that the acts follow the forms: act 2 begins at 78 s because the first form is taken at 79 s. The mood can't move that. The lever is the ladder's first step, and it waits for Encounter's slice.
+
+**Re-ruled after Simulation built it.** With the values above Calm read 8.1% and Frenzied 44.1%. The whole feed is 195 units a second against a decay of 180, and `brawlLight` is under a fifth of it. Simulation's what-if with `brawlLight` 15 and the decay at 4 read Calm 25.0% and Frenzied 13.1%, and changed nothing else in the fight.
+- **`brawlLight` goes to 15, and the decay to 4 points a second.** Four is the decay `spec-wounds.md` §9 ruled in the first place. Data: `impulses.brawlLight` 15 and `rates.decay` 4.
+- **Calm's band is re-based to 20 to 40% of match time, and Tense to 40 to 65%.** Frenzied stays at 5 to 20%. The old 30 to 55% for Calm can't be reached: act 3's floor is the Tense line, so from about 187 s the mood is never Calm, and Calm tops out near 38% of a match. It was also set for a fight with long gaps between exchanges, and a brawl has few.
+- **Act 3's floor stays where it is.** A fight past its second form shouldn't read as calm. Calm at 60% or more of act 1, and Frenzied at 15% or more of act 4, are kept.
 
 **3. An even mash and who closes** (the first lead persisted: 943 closes against 41 in Encounter's mirror, and the same slot won 16 of 20).
 
@@ -742,6 +755,8 @@ Two causes. Every melee blow was re-valued by its form and shots weren't, so a t
   - It comes in with the approach a bolt doesn't stop: the heavy lunge or the heavy charge.
 - **Data** (`ai.json`, each level's `vsShooter`): `guardShare` 0; `enderShare` 0.5, 0.2, 0.1; `heavyApproachShare` 0.2, 0.6, 0.9. And `brawl.shotHeavyMul` 2.
 - **Blasts' share of damage** was 10.1%, at the floor of its band, and heavy shots at ×0.6 will take it lower. If it falls under 10%, the lever is how often the AI fires, and not what a shot is worth.
+
+**Match length, after rulings 1 and 2.** The median rose from 455 to 495 s, and to 523 s with the fighters swapped, which is over the 8:00 of acceptance test W3. Blocks wear less, so the brink comes later. **Don't move the wear now.** Encounter's slice of rulings 3 to 5 changes length in both directions: the set-up weight and the limit on closes at the brink, heavy shots at ×0.6, and the AI against a shooter. Re-measure after it. If the median is still over 8:00 then, the first lever is `brawl.damageMul`, because what got longer is the brawl, and the second is `wearPerDamage`, which also moves shots and landings. Until then W3 reads as waiting on that slice.
 
 **Two readings from QA's smoke, and what they change.**
 - **The timed tapper loses 0 of 10 to a masher.** That is a true reading of B1. There is no skill strike yet, so one blow every 14 to 24 ticks is a slow masher with nothing for his rhythm. Nothing in this section changes. It does fix **what B2 has to deliver first,** before the juggle or anything else:
