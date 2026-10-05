@@ -185,3 +185,117 @@ Each slice is built in scratch, measured, gated, applied and reported by itself.
 | **The AI's presses become real presses** | Its timing is no longer a draw | Its on-beat share is set by when it presses; the rows for its levels are re-measured in B5 |
 | **Goldens churn** | Every slice from B1 changes AI matches | One regeneration a slice, each gated on a clean copy as now |
 | **The exchange templates left behind** | Close-band branches go unused as slices land | They stay as data until B5, then Combat retires them |
+
+## 7. The zip slice (Z)
+
+Orb approved the zip prototype (`docs/ep/prototypes/lt-zip-v4.html`) and said to start building it. Rules: `docs/design/melee-press-feel.md` §2c, "The zip". Camera: `docs/camera/lunge-framing.md` §8 and §9. This section is a plan; nothing is built.
+
+### 7.1 Can it come before B1, and on which intent?
+
+**Before B1: yes. On today's intent: no (the EP's ruling, from Controls' `lunge-control.md` B6).** The zip needs intent version 4: the stance mask's LT bit, `contextHeld` and a new `sigHeld`. So the order after B0 is Controls' version 4, World's staged destruction, Simulation's dynamic intros, then Z.
+
+| Zip | What it reads | State |
+| :--- | :--- | :--- |
+| **LT + X, the zip strike** | The mask's LT bit, `light`, `lightHeld` for the held reading, the latched stick | With version 4 |
+| **LT + Y, the zip heavy** | The same with `heavy` and `heavyHeld` | With version 4 |
+| **LT + B, the signature zip** | `sig` and `sigHeld`. B is the beam until a stance's own signature is authored | With version 4 and the signatures (the spec's §11) |
+| **LT + A held, the zip tackle** | `contextHeld`. The tackle is not in the sim today, so there is nothing to reuse | With version 4 and the tackle itself |
+
+- **It does not depend on the brawl.** A zip is an approach, one blow and an exit. Where the spec says "a brawl starts" (he is caught or countered), Z starts today's exchange with the defender as its attacker; B1 later points that at the brawl.
+- **The dodge that becomes a zip** (Controls): an LT press is a dodge at once. When a face press follows within 8 ticks and he was not threatened, the director turns it into the zip: the dodge's move is cut and the tell starts from where he is. It reads the mask's LT bit, `act.dodgeTick` and the threatened flag. This is Z's to build.
+
+### 7.2 What it reuses
+
+| From today | Used for |
+| :--- | :--- |
+| `DirBands.begin` and its wind-up (B0) | The tell: 6 ticks for a strike, 10 for a heavy, then the way in. The arrival point is fixed at the tell, on his own side |
+| The `rush` event and the start cue (B0, `_startCue`) | The tell's announcement |
+| A point rush (the rush already has a point form) | The way out: back to where he started, to the rival's far side, or to the exit point the stick names |
+| The blast rules against a charge (`DirBlast.hit`) | On the way in any shot stops a zip strike; a zip heavy shrugs off bolts but not a charged shot |
+| The press log and its grade | The reading (tapped, timed, held) and the defender's counter timing |
+| `DirLaunch.knock`, `decisive` | The held zip heavy's knock-back, and the heavy counter's |
+
+New: the zip itself, a small director module (`sim/director/zip.gd`), which holds the phases and resolves the one blow. It is not an exchange with a beat list.
+
+### 7.3 The phases and their outcomes
+
+Phases, in ticks from the table in the spec: the tell; the way in; in reach before the blow; the blow; in reach after it; the way out.
+
+| What happens | When | Outcome |
+| :--- | :--- | :--- |
+| **A shot meets him** | On the way in | A zip strike is stopped; a zip heavy shrugs off a bolt and is stopped by a charged shot. The ki stays spent |
+| **Outrun** | The rival has left the mid band by the end of the longest way in | It ends short. No blow |
+| **Countered by a tech strike** | The defender's tech press from 4 ticks before the arrival until the blow lands | The zip's blow is cancelled. He staggers 12 ticks in reach, and an exchange starts with the defender attacking. The counter is a skill strike |
+| **Countered by a heavy** | The defender's heavy lands (its wind-up ends or its hold is let go) from 6 ticks before the arrival until the blow lands | The blow is cancelled. The heavy lands in full and knocks him back: decisive |
+| **Blocked** | The defender holds guard against a zip strike | It chips. A perfect block on a fresh press staggers him in reach |
+| **Dodged** | A dodge on the arrival, 15 ki | It misses |
+| **Lands** | Otherwise | The blow in its reading: a light at ×1.0 (reel 4), timed ×1.25 (reel 8, flow +1), held ×1.25 (reel 12); a heavy at ×1.0 (stagger 12, a set guard breaks, no lift), timed ×1.25 (stagger 20, flow +1), held ×1.25 and a knock-back |
+| **Caught** | Any blow of the defender's lands on him while he is in reach (6 ticks after a zip strike, 10 after a zip heavy). He has no guard there | The way out is lost. An exchange starts with the defender attacking |
+| **Out** | After the in-reach ticks | The exit point by the stick (below). No strike reaches him on the way out; a shot that hits him there knocks him down |
+
+**Hard rules:** the price is paid at the press and never returned; a zip never starts an exchange unless he is caught or countered; it is not decisive apart from a knock-back; it never starts a struggle. No zip starts while he reels, is staggered, lifted, launched, guard-broken, exhausted or in the middle of a blow.
+
+**Where a zip ends** (Game Design, the spec's §2c):
+
+| Part | Rule | In the director |
+| :--- | :--- | :--- |
+| **The stick** | Controls' aim latch, read on the tick his blow lands: 16 sectors of 22.5 degrees, a 0.35 dead zone, held 3 of the last 12 ticks | `SimAim`, which the alchemy log already feeds each tick |
+| **No stick** | Back to his start point | A point rush to the start point |
+| **The bearing** | The stick's own direction from the rival: up is above him, down below, any angle | The sector's centre |
+| **The distance** | His start distance plus 6 bh × (1 − the angle between the stick and straight away, over 90 degrees); never less than the start distance, never more than 12.5 bh. Straight toward is the far side at the start distance | Computed with the shortest-arc wrap |
+| **The way out** | 10 ticks (12 for a zip heavy), plus 1 for each 2 bh of path beyond 8 bh, 20 at most | The point rush's length |
+| **An exit point inside ground or a building** | It slides round the circle in 15 degree steps toward his start bearing, to the first point clear by 1 bh; else his start point. Water is no obstacle | World's ground and structure reads at each step: at most 24 probes, once a zip |
+
+**Is 16 sectors too coarse?** For the bearing, no: a stick cannot be aimed finer in the ticks a zip gives. For the distance it needs two tolerances written down. The line to the rival is at any angle and the sectors are fixed to the screen, so the stick is up to 11.25 degrees off what the player meant: the distance is then up to 0.75 bh off, which is fine. But "straight toward" and "straight away" would almost never be exact. So: toward is the sector nearest the line to the rival (the far side at the start distance), and the zip away's "within 45 degrees of straight away" is read on the sector's centre with half a sector of grace (56.25 degrees). The obstacle rule's 15 degree steps are finer than the input, which is harmless.
+
+**The zip away** (from inside the close band, the stick within 45 degrees of straight away): 20 or 30 ki; a tell of 10 or 14 ticks in reach; the blow always thrown 4 or 12 ticks later; 6 or 10 ticks more in reach; the exit 3 to 6 bh further out; then 8 ticks where he can move but not attack, guard or zip. A tech or heavy strike from the start of the tell until his blow lands counters it, and any hit in reach cancels the exit. A second one inside 5 s costs 10 ki more. It breaks magnetism, so in B1 it is one of the ways out of a brawl, and for the AI it counts as a slip.
+
+### 7.4 The cues
+
+| Cue | When | Fields |
+| :--- | :--- | :--- |
+| `zip_light`, `zip_heavy` | The tell starts | As B0's start cue: `actor`, `target`, `text` the kind (`zip`), `amount` the tell's ticks, `n` the way in; and `dur` the whole zip's ticks for the default exit |
+| `zip_out` | His blow lands (the exit is read there) | `text` the exit (`back`, `far`, `point`, or `away` for the zip away), `x` and `y` the exit point after the obstacle rule, `n` the ticks of the way out |
+| `zip_end` | He is at the exit point, or the zip ended early | `text` why: `home`, `far`, `point`, `stopped`, `outrun`, `countered`, `caught`. This is Camera's return marker |
+
+**One conflict for Camera.** Camera wants the exit side at the tell. Game Design reads the stick on the tick the blow lands. So the tell can only promise the default, and `zip_out` gives the real exit point 10 to 20 ticks before he gets there.
+
+### 7.5 The AI
+
+| | Easy | Medium | Hard |
+| :--- | :--- | :--- | :--- |
+| **Uses a zip** (in the mid band, with the ki, on an attack beat) | Rarely | Sometimes, more against a rival who guards at range or channels | Often, and picks the timed reading at its timed share |
+| **Its exit** | Back | Back; the far side against a cornered-looking guard | Any |
+| **Answers one** (one draw at its reaction time, as for a lunge today) | Guards a zip strike | Guards, or dodges on the arrival; counters at a low rate | Counters with a timed press or a held heavy at its level's rate; fires during the tell |
+| **Punishes him in reach** | Seldom | At its punish rate | Nearly always |
+
+Per level in `ai.json`: `zipShare`, `zipHeavyShare`, `zipCounter`, `zipDodge`, and its punish rate reused for "caught". It writes real presses with LT held, as a player does.
+
+### 7.6 Hashed state
+
+Per fighter, about 12 integers: the phase and its ticks left; the kind and the reading; the price paid; the start point and the exit point (as fixed-point integers); the rapid-zip count; the tick of his last zip away; the defender's counter mark; the 8 ticks after a zip away. Nothing shared.
+
+### 7.7 What Z must hold, and its new rows
+
+- **Kept:** the masher 35 to 50%, timed against plain 62 to 82%, bolt-only 20 to 40%, blasts' share 10 to 25%, match median to 480 s.
+- **New (the spec's):** a zip's cost and its ticks in reach exactly the table (a hard test); zip strikes that land clean against an opponent who answers 35 to 55%; zips countered 10 to 25%; zips that end with the zipper caught 20 to 35%; ki spent on zips at most 25% of all ki spent; a zip that starts an exchange without a catch or a counter: never (a hard test).
+- **Also reported:** zips a minute and ki a minute by level; what the AI's zips do to the masher, who never zips.
+- **Goldens:** regenerated; AI matches change as soon as the AI zips.
+
+### 7.8 What Z needs from others
+
+| Who | What |
+| :--- | :--- |
+| **Game Design** | The two stick tolerances in §7.3 (toward, and the zip away's 45 degrees). What "the rival's own blow" is for the timed reading when no exchange is running: today only his arriving lunge or charge has a known contact. Whether an empty bar's 2 s of exhaustion exists yet: nothing in the sim is named for it |
+| **Controls** | Intent version 4 first: the mask's LT bit, `contextHeld`, `sigHeld`; the latched stick read at the contact tick; the threatened flag for the dodge that becomes a zip |
+| **Simulation** | To confirm: the point rush can carry the way out, and no strike reaches a fighter on it. A knock-down from a shot on the way out. The tackle, when the zip tackle is wanted |
+| **World** | A read that says whether a point is inside ground or a building with 1 bh to spare, for the exit's obstacle rule (it may exist already) |
+| **Animation** | The zip in and out, the strike in its three readings from a zip, the stagger in reach, the caught and countered reactions |
+| **VFX** | The streak both ways, the engage ring, the counter's flash |
+| **Camera** | The cue fields in §7.4; `zip_end` is its return marker |
+| **Tools** | The schema for a `zip` block in `interrupts.json` (the table's ticks and prices, the multipliers, the counter windows) and the AI's four keys |
+| **QA** | A zipper script (each reading, each exit), a counter script (timed tech, held heavy), a puncher who hits him in reach; the rows in §7.7 |
+
+### 7.9 Order
+
+Z1: the zip strike and the zip heavy with the three readings, the exit rule, the counters, caught, the dodge that becomes a zip, the AI, the cues. Z2: the zip away. Later, with their inputs: the zip tackle (`contextHeld`, the tackle) and the signature zip (the stance signatures). B1 follows Z1 unchanged, except that a caught or countered zipper then starts a brawl.
