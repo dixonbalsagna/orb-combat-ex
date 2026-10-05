@@ -2915,7 +2915,8 @@ func _stances_page_rules() -> void:
 		for nt in stp["notes"]:
 			s += " ".join(nt["lines"]) + " | "
 		return s
-	_ok(str(notes_of.call(st)).begins_with("Hold a shoulder button to change stance. Let go and you are back in martial arts.") and not str(notes_of.call(st)).contains("Tap a stance button"), "stances page: the line under the table, and no touch line on a keyboard")
+	_ok(str(notes_of.call(st)).begins_with("Hold Shift (defensive), Q (energy), E (charging) or Space (manoeuvre) to change stance. Let go and you are back in martial arts.") and not str(notes_of.call(st)).contains("Tap a stance button"), "stances page: the line under the table names the player's own keys (the solo keyboard), and has no touch line")
+	_ok(str(notes_of.call(pa["stances"])).begins_with("Hold LB (defensive), RB (energy), RT (charging) or LT (manoeuvre) to change stance.") and str(notes_of.call(p2["stances"])).begins_with("Hold ; (defensive), O (energy), / (charging) or . (manoeuvre) to change stance."), "stances page: and the pad's buttons on Arena, and player two's keys on a shared keyboard")
 	# A narrow screen: one stance at a time, with five tabs.
 	var narrow_ok := true
 	var narrow_info := ""
@@ -2951,21 +2952,17 @@ func _stances_page_rules() -> void:
 	_ok(str(pts["stances"]["mode"]) == "none" and str(notes_of.call(pts["stances"])).begins_with("The game picks your stance for you."), "stances page: Simple touch has no table either")
 	var ptf: Dictionary = _stances_plan(Vector2(2400, 1080), 2.6, true, "touch-simple", {"held": 0, "full_touch": true}, "touch")
 	var stf: Dictionary = ptf["stances"]
-	_ok(str(stf["mode"]) != "none" and not (stf["cells"] as Array).is_empty() and str(notes_of.call(stf)).contains("Tap a stance button to use it for your next blow, or hold it to stay in the stance.") and rowhead_words.call(stf) == ["LIGHT", "HEAVY", "CONTEXT", "SIGN"], "stances page: Full touch has the table (its own button words) and the arming line")
+	_ok(str(stf["mode"]) != "none" and not (stf["cells"] as Array).is_empty() and str(notes_of.call(stf)).begins_with("Use the stance buttons to change stance.") and str(notes_of.call(stf)).contains("Tap a stance button to use it for your next blow, or hold it to stay in the stance.") and rowhead_words.call(stf) == ["LIGHT", "HEAVY", "CONTEXT", "SIGN"], "stances page: Full touch has the table (its own button words) and the arming line")
 	# The page fits at the 15 sizes for every kind of layout.
 	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0], [Vector2(2560, 1600), 2.0], [Vector2(3840, 2160), 1.0],
 		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(1125, 2436), 3.0], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0]]
 	var variants: Array = [["kb-solo", false, "kbd", {"held": 1}], ["kb-shared-p2", false, "kbd", {"held": 4}], ["arena", false, "xbox", {"held": 3}], ["simple-pad", false, "xbox", {"held": 0}], ["touch-simple", true, "touch", {"held": 0, "full_touch": false}], ["touch-simple", true, "touch", {"held": 2, "full_touch": true}]]
-	var fit_bad := 0
+	var fit_bad := 0   # every layout at every size, the shared keyboard's included
 	var fit_info := ""
 	for flags in [head_flags, [true, true, true, true, true]]:
 		set_live.call(flags)
 		for sz in sizes:
 			for v in variants:
-				# The controls page on a shared keyboard (its extra note) does not fit at 360x640 or 1560x720 at density 2, on HEAD before this page existed too:
-				# not this page's doing, and not a layout those sizes use (reported to the EP).
-				if v[0] == "kb-shared-p2" and (sz[0] == Vector2(360, 640) or sz[0] == Vector2(1560, 720)):
-					continue
 				var pp: Dictionary = _stances_plan(sz[0], sz[1], v[1], v[0], v[3], v[2], 1 if v[0] == "kb-shared-p2" else 0)
 				var sb: Dictionary = pp["stances"]
 				var body: Rect2 = pp["body"]

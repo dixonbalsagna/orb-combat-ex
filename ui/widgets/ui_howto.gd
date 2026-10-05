@@ -34,22 +34,31 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, dev
 	var cs_min: float = UiLook.text_floor / 24.0
 	var need_h: float = 0.0
 	var all_fit: bool = true
-	# Lay every page out at one scale so the card keeps one size across pages; shrink the type until all of them fit.
+	# Lay every page out at one scale so the card keeps one size across pages; shrink the type until all of them fit. At the smallest type a page that
+	# still does not fit is laid out tight (rows and gaps closer together) before the card gives up: the shared keyboard's Controls page, with its extra note,
+	# needed that on a phone and at density 2.
+	var tight := false
+	var ex: Dictionary = extra.duplicate()
 	while true:
+		ex["tight"] = tight
 		need_h = 0.0
 		all_fit = true
 		for k in range(n):
-			var r: Dictionary = _layout(card, cs, tm, touch, pages[k], k, n, device, slot, data, preset, style, extra)
+			var r: Dictionary = _layout(card, cs, tm, touch, pages[k], k, n, device, slot, data, preset, style, ex)
 			need_h = maxf(need_h, float(r["need_h"]))
 			all_fit = all_fit and bool(r["fits"])
-		if all_fit or cs <= cs_min + 0.001:
+		if all_fit or (cs <= cs_min + 0.001 and tight):
 			break
+		if cs <= cs_min + 0.001:
+			tight = true
+			continue
 		cs = maxf(cs_min, cs - 0.04)
 	# The card is as tall as its tallest page needs (centred), not the whole screen.
 	var h2: float = minf(ch, maxf(need_h, 240.0 * cs))
 	card = Rect2(card.position.x, (vp.y - h2) * 0.5, cw, h2)
-	var out: Dictionary = _layout(card, cs, tm, touch, page, pi, n, device, slot, data, preset, style, extra)
+	var out: Dictionary = _layout(card, cs, tm, touch, page, pi, n, device, slot, data, preset, style, ex)
 	out["fits"] = all_fit
+	out["tight"] = tight
 	out["page"] = pi
 	out["pages"] = n
 	out["tm"] = tm
@@ -92,8 +101,9 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 	var colw: float = (body.size.x - gap * float(cols - 1)) / float(cols)
 	var heights: Array = [0.0, 0.0]
 	var placed: Array = []
-	var isz: float = maxf(34.0 * cs, float(fs_body) * 1.7)
-	var item_gap: float = maxf(10.0 * cs, 5.0)
+	var tight: bool = bool(extra.get("tight", false))
+	var isz: float = maxf(34.0 * cs, float(fs_body) * (1.35 if tight else 1.7))
+	var item_gap: float = maxf(10.0 * cs, 5.0) * (0.55 if tight else 1.0)
 	# Stance rows put the stance's name and its line side by side; the names share one column width.
 	var name_w: float = 0.0
 	for it0 in items:
@@ -170,7 +180,7 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 	var tallest: float = maxf(float(heights[0]), float(heights[1]))
 	var st: Dictionary = {}
 	if stances_page:
-		st = _stances_block(page, body, tm, touch, device, slot, preset, style, extra, fs_body, fs_small, gap, isz)
+		st = _stances_block(page, body, tm, touch, device, slot, preset, style, extra, fs_body, fs_small, gap * (0.6 if tight else 1.0), isz * (0.85 if tight else 1.0))
 		tallest = float(st["tallest"]) + item_gap
 	# The fit: the tallest column is inside the body, every line is inside its column, and the title clears the close button.
 	var fits: bool = tallest - item_gap <= body.size.y + 0.5 and (st.is_empty() or bool(st["fits"]))
@@ -223,7 +233,17 @@ static func _stances_block(page: Dictionary, body: Rect2, tm: float, touch: bool
 	if simple:
 		note_texts = [str(notes.get("stances_simple", ""))]
 	else:
-		note_texts = [str(notes.get("stances_table", ""))]
+		if touch:
+			note_texts = [str(notes.get("stances_table_touch", ""))]
+		else:
+			# The line names the player's own inputs: {defensive}, {energy}, {charging} and {manoeuvre} become the keys or buttons that hold them in the layout.
+			var line: String = str(notes.get("stances_table", ""))
+			for k in range(1, 5):
+				var parts := PackedStringArray()
+				for sp in UiGlyphs.specs_for(UiPrompts.STANCE_ACTIONS[k], device, slot, style, preset):
+					parts.append(str(sp.get("label", "")))
+				line = line.replace("{%s}" % UiStance.id(k), " ".join(parts))
+			note_texts = [line]
 		if full_touch:
 			note_texts.append(str(notes.get("stances_full", "")))
 	var gh: float = float(fs_small) * 1.5

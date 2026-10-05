@@ -53,7 +53,8 @@
       "id": "stances",
       "title": "Stances",
       "items": [
-        { "icon": "stances_table", "col": 0, "text": "Hold a shoulder button to change stance. Let go and you are back in martial arts." },
+        { "icon": "stances_table", "col": 0, "text": "Hold {defensive} (defensive), {energy} (energy), {charging} (charging) or {manoeuvre} (manoeuvre) to change stance. Let go and you are back in martial arts." },
+        { "icon": "stances_table_touch", "col": 0, "text": "Use the stance buttons to change stance. Let go and you are back in martial arts." },
         { "icon": "stances_full", "col": 0, "text": "Tap a stance button to use it for your next blow, or hold it to stay in the stance." },
         { "icon": "stances_simple", "col": 0, "text": "The game picks your stance for you." }
       ]
