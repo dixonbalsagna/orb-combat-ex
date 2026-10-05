@@ -26,12 +26,18 @@ func _init() -> void:
 	var out: String = ""
 	var cap: int = 200000        # tick safety only; the match cap is in sim seconds (hit-stop ticks do not advance S.T)
 	var capsec: float = 900.0     # the S4 ruling: 15:00 of sim time
+	var wall: float = 300.0       # real seconds one match may take before it is ended as a timeout (rec.wallCapped)
+	var budget: float = 5400.0    # real seconds the whole run may take before it stops starting matches (the runner then reports the batch as short)
 	var level: String = ""        # the AI level for the run (DirAI.level): easy, medium or hard; "" follows data/director/ai.json
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--arm="):
 			arm = a.substr(6)
 		elif a.begins_with("--out="):
 			out = a.substr(6)
+		elif a.begins_with("--wall="):
+			wall = float(a.substr(7))
+		elif a.begins_with("--budget="):
+			budget = float(a.substr(9))
 		elif a.begins_with("--capsec="):
 			capsec = float(a.substr(9))
 		elif a.begins_with("--level="):
@@ -50,15 +56,19 @@ func _init() -> void:
 		var dai = load("res://sim/director/ai.gd")   # loaded as a resource: a typed class reference would not parse on a sim before step 3 (no level)
 		dai.set("level", level)
 	var recs: Array = []
+	var t_proc: int = Time.get_ticks_msec()
 	for i in range(n):
-		recs.append(run_match(base + i, arm, cap, capsec))
+		if float(Time.get_ticks_msec() - t_proc) > budget * 1000.0:
+			print("records: time budget of %d s used after %d of %d matches" % [int(budget), i, n])
+			break
+		recs.append(run_match(base + i, arm, cap, capsec, int(wall * 1000.0)))
 	var f := FileAccess.open(out, FileAccess.WRITE)
 	f.store_string(JSON.stringify(recs))
 	f.close()
 	quit(0)
 
 
-func run_match(seed: int, arm: String, cap: int, capsec: float) -> Dictionary:
+func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 300000) -> Dictionary:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed)
 	SimGolden.applyArm(arm, S.fighters)
@@ -95,7 +105,12 @@ func run_match(seed: int, arm: String, cap: int, capsec: float) -> Dictionary:
 	var ex_start: float = 0.0
 	var last_release: float = -1.0
 	var ticks: int = 0
+	var wall0: int = Time.get_ticks_msec()
+	var walled: bool = false
 	while ticks < cap and (S.T < capsec or S.game.ko != null) and not (S.game.ko != null and S.game.koT > 3.0):
+		if (ticks & 255) == 0 and Time.get_ticks_msec() - wall0 > wall_ms:
+			walled = true
+			break
 		SimCore.step(S)
 		ticks += 1
 		var dT: float = S.T - prev_t
@@ -372,6 +387,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float) -> Dictionary:
 			break
 	rec.ticks = ticks
 	rec.timeout = S.game.ko == null
+	rec.wallCapped = walled
 	if rec.koAt < 0.0:
 		rec.koAt = S.T
 	rec.civPct = S.world.casualties / S.world.pop0 * 100.0

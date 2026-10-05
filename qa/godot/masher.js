@@ -2,13 +2,13 @@
 // masher.gd plays the matches in one Godot process per level; this turns the wins into band rows. Point estimates only, with the sample size in the note:
 // at 40 matches the 95% interval is about 30 points wide (the medium row read 60% at 40 matches and 43% at 200), so the default is 100 and a row near a band edge needs more (--masher=N).
 const { spawn } = require('child_process');
-const { godot, ROOT } = require('./godot');
+const { godot, guard, ROOT } = require('./godot');
 
 function runLevel(level, n, base, forms = false) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/masher.gd', '--', String(n), String(base), `--level=${level}`, `--forms=${forms ? 1 : 0}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/masher.gd', '--', String(n), String(base), `--level=${level}`, `--forms=${forms ? 1 : 0}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -26,7 +26,7 @@ function runMirror(n, base) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), '--a=masher:forms=1', '--b=masher:forms=1'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), '--a=masher:forms=1', '--b=masher:forms=1'], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -44,7 +44,7 @@ function runPair(tag, a, b, n, base) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${a}`, `--b=${b}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${a}`, `--b=${b}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);

@@ -27,6 +27,20 @@ function findGodot() {
   return null;
 }
 
+// A backstop for every Godot child (the GDScript runners end themselves by --capsec, --wall and --budget; this is for a child that does not):
+// after QA_PROC_MS (default 100 minutes) the child and its engine process are killed by PID, and the run fails with a message that says so.
+const PROC_MS = parseInt(process.env.QA_PROC_MS || String(100 * 60 * 1000), 10);
+function guard(p, ms = PROC_MS) {
+  const t = setTimeout(() => {
+    p.killedByGuard = true;
+    process.stderr.write(`  QA guard: pid ${p.pid} ran over ${Math.round(ms / 60000)} minutes; killed
+`);
+    try { if (process.platform === 'win32') spawnSync('taskkill', ['/PID', String(p.pid), '/T', '/F']); else p.kill('SIGKILL'); } catch (e) { /* already gone */ }
+  }, ms);
+  p.on('close', () => clearTimeout(t));
+  return p;
+}
+
 let cached;
 const godot = () => (cached === undefined ? (cached = findGodot()) : cached);
 
@@ -42,17 +56,17 @@ function runRecords({ arm = 'default', base = 1, count = 100, jobs = Math.max(1,
   const t0 = Date.now();
   return Promise.all(blocks.map(b => new Promise((resolve, reject) => {
     const args = ['--headless', '--path', ROOT, '--script', 'res://qa/godot/records.gd', '--', String(b.n), String(b.start), `--arm=${arm}`, `--out=${b.out.replace(/\\/g, '/')}`, `--capsec=${capSec}`].concat(level ? [`--level=${level}`] : []);
-    const p = spawn(g.exe, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = guard(spawn(g.exe, args, { stdio: ['ignore', 'pipe', 'pipe'] }));
     let err = '';
     p.stdout.on('data', d => { err += d; }); p.stderr.on('data', d => { err += d; });
     p.on('error', reject);
     p.on('close', code => (code === 0 && fs.existsSync(b.out) ? resolve() : reject(new Error(`records.gd exited ${code} for seeds ${b.start}..${b.start + b.n - 1}\n${err.split('\n').filter(l => !/^Godot Engine/.test(l)).join('\n').slice(0, 2000)}`))));
   }))).then(() => {
-    const recs = blocks.flatMap(b => JSON.parse(fs.readFileSync(b.out, 'utf8')));
+    const recs = blocks.flatMap(b => { const r = JSON.parse(fs.readFileSync(b.out, 'utf8')); if (r.length !== b.n) throw new Error(`records.gd stopped short for seeds ${b.start}..${b.start + b.n - 1}: ${r.length} of ${b.n} matches (its time budget ran out)`); return r; });
     fs.rmSync(dir, { recursive: true, force: true });
     if (!quiet) process.stderr.write(`  ${arm}: ${count} matches from seed ${base} in ${((Date.now() - t0) / 1000).toFixed(0)} s (${jobs} jobs)\n`);
     return recs;
   }, e => { fs.rmSync(dir, { recursive: true, force: true }); throw e; });
 }
 
-module.exports = { findGodot, godot, runRecords, ROOT };
+module.exports = { findGodot, godot, runRecords, guard, ROOT };

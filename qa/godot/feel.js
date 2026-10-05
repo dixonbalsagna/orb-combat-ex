@@ -2,13 +2,13 @@
 // matches on the live sim and sorts every frame into freeze, active or idle; this turns its summary into band rows for the
 // §10 dynamic-feel targets. One Godot process, read-only, about a minute for 40 matches.
 const { spawn } = require('child_process');
-const { godot, ROOT } = require('./godot');
+const { godot, guard, ROOT } = require('./godot');
 
 function runFeel({ matches = 40, base = 1 } = {}) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/feel/feel_probe.gd', '--', String(matches), String(base)], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/feel/feel_probe.gd', '--', String(matches), String(base)], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);

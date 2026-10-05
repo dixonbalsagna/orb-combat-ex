@@ -4,7 +4,9 @@ extends SceneTree
 ## human slot). Each scripted player keeps the press log the sim will keep (SimPressRead, Controls' classifier and thresholds
 ## from data/input/timing.json `read`) and reports what the classifier reads, how many of its presses were on the beat, and
 ## how its exchanges ended, so the same script measures today's sim (no timing rules: expect no edge) and the agency-pass sim.
-##   godot --headless --path . --script res://qa/godot/players.gd -- <matches> <baseSeed> --a=<spec> --b=<spec> [--capsec=900]
+##   godot --headless --path . --script res://qa/godot/players.gd -- <matches> <baseSeed> --a=<spec> --b=<spec> [--capsec=900] [--wall=300] [--budget=3600]
+## Hard caps, so a run cannot hang: --capsec ends a match at that sim time, --wall ends a match after that many real seconds (recorded as a timeout, and counted in wallCapped),
+## --budget stops starting matches after that many real seconds (budgetStopped; n is then the matches run and requested the matches asked for).
 ## A spec is kind[:key=value...]:
 ##   ai[:level=easy|medium|hard]                     the AI (the director drives the slot)
 ##   masher[:gap=8][:kind=L|H][:forms=1]             a press every gap live ticks
@@ -280,8 +282,14 @@ func _init() -> void:
 	var spec_a: String = "masher"
 	var spec_b: String = "ai:level=medium"
 	var capsec: float = 900.0
+	var wall: float = 300.0       # real seconds one match may take before it is ended as a timeout
+	var budget: float = 3600.0    # real seconds the whole run may take before it stops starting matches
 	for a in OS.get_cmdline_user_args():
-		if a.begins_with("--a="):
+		if a.begins_with("--wall="):
+			wall = float(a.substr(7))
+		elif a.begins_with("--budget="):
+			budget = float(a.substr(9))
+		elif a.begins_with("--a="):
 			spec_a = a.substr(4)
 		elif a.begins_with("--b="):
 			spec_b = a.substr(4)
@@ -297,10 +305,20 @@ func _init() -> void:
 	var timeouts: int = 0
 	var lens: Array = []
 	var brinks: Array = []   # brink to KO of each match that ended in a KO: seconds from the loser's first brink_enter
+	var t_proc: int = Time.get_ticks_msec()
+	var n_done: int = 0
+	var wall_capped: int = 0
+	var budget_stopped: bool = false
 	for i in range(n):
+		if float(Time.get_ticks_msec() - t_proc) > budget * 1000.0:
+			budget_stopped = true
+			break
 		var seed: int = base + i
 		var slot_a: int = 0 if seed % 2 == 1 else 1
-		var res: Dictionary = _match(seed, [spec_a, spec_b], [slot_a, 1 - slot_a], capsec, sums)
+		var res: Dictionary = _match(seed, [spec_a, spec_b], [slot_a, 1 - slot_a], capsec, sums, int(wall * 1000.0))
+		n_done += 1
+		if res.get("wall", false):
+			wall_capped += 1
 		lens.append(res.t)
 		if res.brink >= 0.0:
 			brinks.append(res.brink)
@@ -309,7 +327,7 @@ func _init() -> void:
 		else:
 			wins[res.winner] += 1
 	lens.sort()
-	var out: Dictionary = {"players": true, "a": spec_a, "b": spec_b, "n": n, "aWins": wins[0], "bWins": wins[1], "timeouts": timeouts, "medianSec": snappedf(lens[lens.size() >> 1], 0.1), "brinkToKoMedian": (snappedf(_med(brinks), 0.1) if brinks.size() > 0 else -1.0), "alternationShare": snappedf(float(sums[0].alternations) / maxf(1.0, float(sums[0].pairs)), 0.001), "stats": [_report(sums[0], n), _report(sums[1], n)]}
+	var out: Dictionary = {"players": true, "a": spec_a, "b": spec_b, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "aWins": wins[0], "bWins": wins[1], "timeouts": timeouts, "medianSec": snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0, "brinkToKoMedian": (snappedf(_med(brinks), 0.1) if brinks.size() > 0 else -1.0), "alternationShare": snappedf(float(sums[0].alternations) / maxf(1.0, float(sums[0].pairs)), 0.001), "stats": [_report(sums[0], maxi(1, n_done)), _report(sums[1], maxi(1, n_done))]}
 	print(JSON.stringify(out))
 	quit(0)
 
@@ -330,7 +348,7 @@ func _report(s: Dictionary, n: int) -> Dictionary:
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
-func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array) -> Dictionary:
+func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, wall_ms: int = 300000) -> Dictionary:
 	var pl: Array = []
 	for i in range(2):
 		var p := Pl.new()
@@ -359,8 +377,13 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array) -
 	var ex_locked: bool = false    # the perfect blur locked in this exchange (cue blur_locked)
 	var brink_t: Dictionary = {}   # slot -> first brink_enter time
 	var ko_t: float = -1.0
+	var wall0: int = Time.get_ticks_msec()
+	var walled: bool = false
 	while S.T < capsec and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
 		ticks += 1
+		if (ticks & 255) == 0 and Time.get_ticks_msec() - wall0 > wall_ms:
+			walled = true
+			break
 		var ins: Array = [null, null]
 		var sent: Array = [-1, -1]
 		var carried: Array = [false, false]
@@ -497,7 +520,7 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array) -
 		for st in pl[i].styles:
 			sums[i].styles[st] = int(sums[i].styles.get(st, 0)) + int(pl[i].styles[st])
 	SimCore.dispose(S)
-	return {"winner": winner, "t": t, "brink": brink}
+	return {"winner": winner, "t": t, "brink": brink, "wall": walled}
 
 
 ## The index (0 or 1) of player object p in the pl array of the match, found through the sums' order: players are kept in spec order.

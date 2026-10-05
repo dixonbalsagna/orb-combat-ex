@@ -10,6 +10,8 @@ func _init() -> void:
 	var level: String = ""
 	var gap: int = 8
 	var capsec: float = 900.0
+	var wall: float = 300.0       # real seconds one match may take before it is ended as a timeout
+	var budget: float = 3600.0    # real seconds the whole run may take before it stops starting matches
 	var forms: bool = false       # --forms=1: also send `transform` whenever a form is ready (the masher who has learned the one prompt the game shows)
 	var fixed_slot: int = -1       # -1 alternates by seed; 0 or 1 pins the masher to that slot
 	for a in OS.get_cmdline_user_args():
@@ -21,6 +23,10 @@ func _init() -> void:
 			forms = int(a.substr(8)) != 0
 		elif a.begins_with("--slot="):
 			fixed_slot = int(a.substr(7))
+		elif a.begins_with("--wall="):
+			wall = float(a.substr(7))
+		elif a.begins_with("--budget="):
+			budget = float(a.substr(9))
 		elif a.begins_with("--capsec="):
 			capsec = float(a.substr(9))
 		else:
@@ -42,7 +48,16 @@ func _init() -> void:
 	var on_masher: int = 0      # launches the AI caused (the masher was the victim)
 	var caught_ai: int = 0      # the AI was launched and the follow-up reached it before it landed (an air catch)
 	var caught_masher: int = 0
+	var t_proc: int = Time.get_ticks_msec()
+	var n_done: int = 0
+	var wall_capped: int = 0
+	var budget_stopped: bool = false
 	for i in range(n):
+		if float(Time.get_ticks_msec() - t_proc) > budget * 1000.0:
+			budget_stopped = true
+			break
+		n_done += 1
+		var wall0: int = Time.get_ticks_msec()
 		var seed: int = base + i
 		var slot: int = fixed_slot if fixed_slot >= 0 else (0 if seed % 2 == 1 else 1)
 		var S: SimState = SimCore.createSim()
@@ -54,6 +69,9 @@ func _init() -> void:
 		while S.T < capsec and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
 			var it := SimIntent.new()
 			ticks += 1
+			if (ticks & 255) == 0 and Time.get_ticks_msec() - wall0 > int(wall * 1000.0):
+				wall_capped += 1
+				break
 			it.light = pending
 			if pending:
 				it.waited = mini(15, wait)
@@ -98,5 +116,5 @@ func _init() -> void:
 			wins += 1
 		SimCore.dispose(S)
 	lens.sort()
-	print(JSON.stringify({"masher": true, "level": level if level != "" else "data", "gap": gap, "forms": forms, "n": n, "wins": wins, "losses": losses, "timeouts": timeouts, "medianSec": snappedf(lens[lens.size() >> 1], 0.1), "launchesByMasher": snappedf(float(by_masher) / n, 0.01), "launchesOnMasher": snappedf(float(on_masher) / n, 0.01), "airCatchesOfAI": snappedf(float(caught_ai) / n, 0.01), "airCatchesOfMasher": snappedf(float(caught_masher) / n, 0.01)}))
+	print(JSON.stringify({"masher": true, "level": level if level != "" else "data", "gap": gap, "forms": forms, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "wins": wins, "losses": losses, "timeouts": timeouts, "medianSec": (snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0), "launchesByMasher": snappedf(float(by_masher) / maxi(1, n_done), 0.01), "launchesOnMasher": snappedf(float(on_masher) / maxi(1, n_done), 0.01), "airCatchesOfAI": snappedf(float(caught_ai) / maxi(1, n_done), 0.01), "airCatchesOfMasher": snappedf(float(caught_masher) / maxi(1, n_done), 0.01)}))
 	quit(0)

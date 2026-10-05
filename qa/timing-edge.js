@@ -9,7 +9,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { godot, ROOT } = require('./godot/godot');
+const { godot, guard, ROOT } = require('./godot/godot');
 const S = require('../prototype/tools/stats');
 
 const args = process.argv.slice(2), val = (k, d) => { const a = args.find(x => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : d; };
@@ -90,7 +90,7 @@ function run(m) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(N), String(BASE), `--a=${m[1]}`, `--b=${m[2]}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(N), String(BASE), `--a=${m[1]}`, `--b=${m[2]}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -124,6 +124,9 @@ async function pool(items, n, fn) {
     let verdict = r.lo === null ? 'reported' : (w * 100 >= r.lo && w * 100 <= r.hi ? (ci[0] * 100 >= r.lo - 2 && ci[1] * 100 <= r.hi + 2 ? 'PASS' : 'in band, interval wide') : 'FAIL');
     if (r.finMin != null) verdict = finOk ? (verdict === 'reported' ? 'PASS' : verdict) : 'FAIL (finish)';
     const [a, b] = r.stats;
+    // A scripted player that pressed almost nothing was blind (its beat source is gone, as in a brawl before the beat read exists): the row is not a reading.
+    const blind = [[r.a, a], [r.b, b]].filter(([spec, st]) => !String(spec).startsWith('ai') && st.pressesPerMatch < 100).map(([spec]) => spec);
+    if (blind.length) verdict = 'SCRIPT BLIND (not a reading: fewer than 100 presses a match)';
     lines.push(`| ${r.id} | ${r.what} | ${pct(w)} (${r.aWins} of ${dec}) | ${pct(ci[0])} to ${pct(ci[1])} | ${band}${r.finMin != null ? ' and finish at least ' + r.finMin + '%' : ''} | ${fin.toFixed(0)}% | ${verdict} | ${a.damagePerExchange} / ${b.damagePerExchange} | ${a.launchesEarnedPerMatch} / ${b.launchesEarnedPerMatch} | ${pct(r.alternationShare)} | ${pct(a.onBeatShare)} | ${a.blurLocked} of ${a.blurStrings} |`);
   }
   console.log(lines.join('\n'));

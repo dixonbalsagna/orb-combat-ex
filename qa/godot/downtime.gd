@@ -82,8 +82,11 @@ func _run(setup: String, n: int, base: int, gap: int) -> Dictionary:
 		var ti := 0
 		var tc := 0
 		var tci := 0
+		var wall0: int = Time.get_ticks_msec()
 		while S.T < 900.0 and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
 			ticks += 1
+			if (ticks & 255) == 0 and Time.get_ticks_msec() - wall0 > 300000:   # a match may take 5 real minutes at most
+				break
 			var ins = null
 			if setup == "press":
 				var it := SimIntent.new()
