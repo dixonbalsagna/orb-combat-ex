@@ -106,6 +106,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-084 | Energy hands, releases, deliveries; the short beam | Combat, VFX | Low | Clear as written (RL-041 to RL-052); short beam conditional, not yet drawn | Open until the beam is drawn |
 | RL-085 | Specials' frames, the Protagonist's three placeholders, new grabs | Combat | Medium | Clear as placeholders; g01 to g03 on holds | Re-screen when designed |
 | RL-086 | Roster of twelve: what to screen per niche | EP | Low | Note: design, kit and identity screened before art for each template | Standing |
+| RL-087 | Held-pose lint scope (h01 to h03) and the 14 non-rest failures | Animation | Low | Scoped by class: pair test for all, emitter test for charge, tell, signature, energy, hold classes; none need redrawing; shrug is not h02 if elbows bend | Open until the lint is re-run on the scope |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
