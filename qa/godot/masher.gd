@@ -50,10 +50,13 @@ func _init() -> void:
 		var ticks: int = 0
 		var live: int = 0
 		var pending: bool = false
+		var wait: int = 0         # the frozen steps the pending press has waited (the intent's `waited`: a press is graded at its own tick, not when the freeze lifts)
 		while S.T < capsec and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
 			var it := SimIntent.new()
 			ticks += 1
 			it.light = pending
+			if pending:
+				it.waited = mini(15, wait)
 			if forms and S.fighters[slot].act.formReady:
 				it.transform = true
 			var ins: Array = [null, null]
@@ -77,10 +80,13 @@ func _init() -> void:
 						caught_masher += 1
 					else:
 						caught_ai += 1
+			if pending and not stepped:
+				wait += 1
 			if stepped:
 				live += 1
 				if pending:
 					pending = false
+					wait = 0
 				if live % gap == 0:
 					pending = true
 		lens.append(S.T)
