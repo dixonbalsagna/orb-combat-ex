@@ -86,3 +86,7 @@ Steps 1 and 2 remove the disagreement the EP asked about and wait on no one; I w
 1. **The face cells on screen during a fight.** The plan puts them in the legend (live, shown for 3 s after a stance change). The alternative is a strip of four chips (X, Y, A, B with the cell names) in the prompt row. The legend is cheaper and already exists; the strip is more visible but crowds the row. Recommendation: the legend.
 2. **The Specials row** goes because the charging stance's cells replace it. Confirm the power layer is the same thing as the charging stance (RT held, then a face button).
 3. Game Design's ruling on the finisher counters (section 6).
+
+## Built (2026-10-05)
+
+Steps 1 and 2 (the five-chip prompt row and the live legend; a stance's names show only where `stances.json` `_live` is true, which on HEAD is the energy stance alone, and the Specials row stays until the charging stance is live), with the finisher telegraph's answers moved to the five-stance wording (`stances.json` `_counters`). See `hud-spec.md` section 37. Not built: How to play's stances page, the Remap and Settings words, the crown icon, and Full touch's labels and armed-stance display (Controls' `docs/controls/stance-key-help.md`).

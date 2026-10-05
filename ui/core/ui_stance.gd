@@ -44,6 +44,25 @@ static func title(kind: int) -> String:
 	return str(_row(kind).get("title", id(kind).capitalize()))
 
 
+## The legend's word for the button that holds the stance ("Defensive (hold)"), or for an energy button set to toggle ("Energy (toggle)").
+static func legend(kind: int, toggle: bool = false) -> String:
+	var row: Dictionary = _row(kind)
+	if toggle and row.has("_legend_toggle"):
+		return str(row["_legend_toggle"])
+	return str(row.get("_legend", title(kind) + " (hold)"))
+
+
+## Whether the stance's four cell names are true on the live build (stances.json `_live`): the legend shows them only then, and keeps its old words otherwise.
+static func live(kind: int) -> bool:
+	var row: Dictionary = _row(kind)
+	return bool(row.get("live", row.get("_live", false)))
+
+
+## Whether the legend keeps the Specials row: yes until the charging stance is live (its cells then name the specials).
+static func specials_row() -> bool:
+	return not live(CHARGING)
+
+
 ## What a face button does in the stance: button is "x", "y", "a" or "b".
 static func cell(kind: int, button: String) -> String:
 	return str((_row(kind).get("cells", {}) as Dictionary).get(button, ""))

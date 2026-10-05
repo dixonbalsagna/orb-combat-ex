@@ -1,17 +1,23 @@
 {
   "schema": 1,
-  "note": "The five stances and what the four face buttons do in each (docs/design/melee-press-feel.md section 10; Orb's stance layout in docs/ep/vision.md). The stance is what the player holds: nothing is martial arts, LB defensive, RB energy arts, RT charging, LT manoeuvre (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8). `name` is the word on the plate's badge, `title` the full name, `cells` the face buttons X (quick), Y (strong), A (context) and B (signature), each as a short name. The words are a first draft for Narrative to edit; the player is the fighter, so they name what you do. Hybrids (LT+RB, LB+RB, LT+LB) are reserved and not in this file: a held pair reads as its newer button. Costs are not here: they are Game Design's data (the zip strike is 20 ki, by Orb's ruling).",
+  "note": "The five stances and what the four face buttons do in each (docs/design/melee-press-feel.md section 10; Orb's stance layout in docs/ep/vision.md). The stance is what the player holds: nothing is martial arts, LB defensive, RB energy arts, RT charging, LT manoeuvre (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8). `name` is the word on the plate's badge, `title` the full name, `cells` the face buttons X (quick), Y (strong), A (context) and B (signature), each as a short name. `_legend` is the legend's word for the button that holds the stance, `_legend_toggle` the energy button's word for a player who set toggle (underscore keys until Tools promotes them). `_live` says whether the four cell names are true on the live build: a stance with `_live` false keeps the legend's old words for its face buttons and its stance button (and the charging stance not being live keeps the Specials row); flipping one to true is this data change only (underscore key until Tools promotes it). Set on HEAD 2026-10-05: only the energy stance is live (bolts, the charged shot, a mine and the signature beam all exist; martial arts has no grab and throw on A, defensive has no check, push or counter, charging has no ultimate on B, manoeuvre has no zip). The words are a first draft for Narrative to edit; the player is the fighter, so they name what you do. Hybrids (LT+RB, LB+RB, LT+LB) are reserved and not in this file: a held pair reads as its newer button. Costs are not here: they are Game Design's data (the zip strike is 20 ki, by Orb's ruling).",
   "order": ["martial", "defensive", "energy", "charging", "manoeuvre"],
+  "_counters": {
+    "launch": { "kind": "defensive", "word": "the defensive stance" },
+    "melee": { "kind": "manoeuvre", "word": "the manoeuvre stance" },
+    "beam": { "kind": "signature", "word": "the signature" }
+  },
+  "_counters_note": "What answers each finisher kind (Game Design, docs/design/melee-press-feel.md sections 10 and 11): a launch the defensive stance, a melee the manoeuvre stance, a beam the Signature press (B) from the martial, energy or charging stance. The finisher telegraph chip reads this for its icon and words. The sim still reads the old answers (reads.json finisher_counter) until Encounter builds the rule; the words say the stance, never a timing, so they hold for both.",
   "stances": {
-    "martial": { "mask": 0, "name": "MARTIAL", "title": "Martial arts", "enter": "Hold nothing",
+    "martial": { "mask": 0, "name": "MARTIAL", "title": "Martial arts", "_live": false, "enter": "Hold nothing",
       "cells": { "x": "Light strikes", "y": "Heavy strikes", "a": "Grab and throw", "b": "Signature" } },
-    "defensive": { "mask": 1, "name": "DEFENSIVE", "title": "Defensive", "enter": "Hold the guard button",
+    "defensive": { "mask": 1, "name": "DEFENSIVE", "title": "Defensive", "_live": false, "_legend": "Defensive (hold)", "enter": "Hold the guard button",
       "cells": { "x": "Check", "y": "Push", "a": "Reversal", "b": "Counter" } },
-    "energy": { "mask": 2, "name": "ENERGY", "title": "Energy arts", "enter": "Hold the energy button",
+    "energy": { "mask": 2, "name": "ENERGY", "title": "Energy arts", "_live": true, "_legend": "Energy (hold)", "_legend_toggle": "Energy (toggle)", "enter": "Hold the energy button",
       "cells": { "x": "Bolts", "y": "Charged shot", "a": "Mine", "b": "Beam" } },
-    "charging": { "mask": 4, "name": "CHARGING", "title": "Charging", "enter": "Hold the power button",
-      "cells": { "x": "Quick special", "y": "Strong special", "a": "Utility special", "b": "Ultimate" } },
-    "manoeuvre": { "mask": 8, "name": "MANOEUVRE", "title": "Manoeuvre", "enter": "Hold the dodge button",
+    "charging": { "mask": 4, "name": "CHARGING", "title": "Charging", "_live": false, "_legend": "Charging (hold)", "enter": "Hold the power button",
+      "cells": { "x": "Quick special", "y": "Strong special", "a": "Utility special", "b": "Ultimate (hold)" } },
+    "manoeuvre": { "mask": 8, "name": "MANOEUVRE", "title": "Manoeuvre", "_live": false, "_legend": "Manoeuvre (hold)", "enter": "Hold the dodge button",
       "cells": { "x": "Zip strike", "y": "Zip heavy", "a": "Zip tackle", "b": "Terrain art" } }
   }
 }

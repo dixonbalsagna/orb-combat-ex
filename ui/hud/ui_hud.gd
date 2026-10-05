@@ -574,7 +574,7 @@ func _update_layers() -> void:
 							_hint_t0[h.slot] = hub.t_now
 			_prev_ai[m.slot] = m.ai
 			var ya: float = UiHints.visible_alpha(m, str(opts["control_hints"]), prompts_on, hub.t_now - float(_hint_t0[m.slot]))
-			var ha: float = 0.0 if (touch_on or layout.portrait) else ya   # the legend is for a keyboard or a pad; the YOU marker is for every screen
+			var ha: float = 0.0 if (touch_on or layout.portrait) else UiHints.legend_alpha(m, str(opts["control_hints"]), prompts_on, hub.t_now - float(_hint_t0[m.slot]))   # the legend is for a keyboard or a pad; the YOU marker is for every screen
 			if ya > 0.01 and m.you_label != "" and anchor_fn.is_valid():
 				var an: Dictionary = anchor_fn.call(m.slot)
 				var ap: Vector2 = an.get("pos", Vector2.ZERO)
@@ -2336,7 +2336,7 @@ func _humans() -> int:
 
 
 func _you_alpha(m: UiFighterModel) -> float:
-	return UiHints.visible_alpha(m, str(opts["control_hints"]), bool(opts["show_prompts"]), hub.t_now - float(_hint_t0[m.slot]))
+	return UiHints.legend_alpha(m, str(opts["control_hints"]), bool(opts["show_prompts"]), hub.t_now - float(_hint_t0[m.slot]))
 
 
 func _touch_state() -> Dictionary:

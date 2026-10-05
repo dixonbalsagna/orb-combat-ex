@@ -28,6 +28,7 @@ var unrestrained: bool = false     # Anti-hero after Drop the Act
 var facade_age: float = 99.0       # seconds since the Proud front cracked (animation)
 
 var stance_mask: int = 0           # the held stance buttons (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8; 0 martial arts)
+var stance_kind_t: float = 99.0    # seconds since the stance (stance_kind) last changed (the legend and the prompt row show for 3 s)
 var stance_kind: int = 0           # the stance the badge shows (UiStance: 0 martial, 1 defensive, 2 energy, 3 charging, 4 manoeuvre)
 var beats: Array = []              # seconds to contact of each pending blow that will land on THIS fighter (the beat ring; UiSimBridge.beat_windows)
 var stance: int = 0                # 0 press, 1 guard, 2 dodge, 3 escape (the sim's AGGRESSIVE..ESCAPE order)
@@ -140,6 +141,7 @@ func reset_wounds() -> void:
 	last_stand_left = 0.0
 	stance_mask = 0
 	stance_kind = 0
+	stance_kind_t = 99.0
 	beats = []
 	energy = false
 	recipe = {}
@@ -202,6 +204,7 @@ func advance(dt: float, sim_dt: float = -1.0) -> void:
 	weight_fallback_t += sdt
 	sig_note_t += sdt
 	stance_flash_t += sdt
+	stance_kind_t += sdt
 	if last_stand_left > 0.0:
 		last_stand_left = maxf(0.0, last_stand_left - sdt)   # a host that patches the sim's own count (the bridge) overwrites this every tick
 	# The signature's cap (180 ticks, 3 s) runs while the intent is funded and the director's clock is running.

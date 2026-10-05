@@ -39,6 +39,15 @@ static func visible_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: 
 	return clampf((intro - t) / 2.0, 0.0, 1.0)
 
 
+## How strongly the legend shows: the usual alpha, and full for 3 s after the held stance changes (the last half second fades), so the first time a
+## stance button is held the answer to "what do these do now" is on the screen even after the 12 s are over. Not when the legend is off.
+static func legend_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: float) -> float:
+	var base: float = visible_alpha(m, mode, prompts_on, t)
+	if m.ai or mode == "off":
+		return base
+	return maxf(base, clampf((3.0 - m.stance_kind_t) / 0.5, 0.0, 1.0))
+
+
 ## The layout id this fighter plays on: touch-simple on touch; on a keyboard kb-solo, or kb-shared-p1 and kb-shared-p2 when two humans
 ## share it; on a pad the pad_preset option (arena or simple-pad). `o["control_scheme"]` overrides it (a test, or a preview).
 static func preset_id(m: UiFighterModel, o: Dictionary) -> String:
@@ -62,10 +71,24 @@ static func preset_id(m: UiFighterModel, o: Dictionary) -> String:
 
 ## The rows to show now, from the layout's scheme (falling back to "today"): an action or group and a word. A row for an action the
 ## layout does not bind is skipped, and a row marked only_when_avail appears only while the fighter can use that action.
+## The Specials row (Power then the three specials) stays in a stance layout's legend until the charging stance is live (`UiStance.specials_row`): then the
+## face rows name the specials while the power button is held (Game Design: the power layer and the charging stance are the same thing).
+## The legend's face rows read by stance: the action of each face button, and the cell (x quick, y strong, a context, b signature) of the held stance.
+const FACE_CELLS := {"light": "x", "heavy": "y", "context": "a", "signature": "b"}
+## The four stance buttons: the action that holds each, and the stance it holds (UiStance kinds).
+const HOLD_STANCES := {"guard": 1, "mode": 2, "power": 3, "dodge": 4}
+
+
+## True for a layout with the stance buttons (it binds a mode and a power button): its legend reads by stance. Simple does not, and keeps its rows as written.
+static func stance_layout(scheme: String, slot: int) -> bool:
+	return UiGlyphs.bound(scheme, "mode", slot) and UiGlyphs.bound(scheme, "power", slot)
+
+
 static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> Array:
 	var schemes: Dictionary = data().get("schemes", {})
 	var sc: Dictionary = schemes.get(scheme, schemes.get("today", {}))
 	var out: Array = []
+	var by_stance: bool = stance_layout(scheme, m.slot)
 	for r in sc.get("rows", []):
 		var acts: Array = r["actions"] if r.has("actions") else [r.get("action", "")]
 		if not UiGlyphs.bound(scheme, str(acts[0]), m.slot):
@@ -77,9 +100,24 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 			if a == "transform" and m.form_shown:
 				continue   # the form-ready chip above the legend already says it
 		var label: String = str(r.get("label", ""))
-		if str(acts[0]) == "mode":
-			label = UiData.t("prompt.mode_toggle" if energy == "toggle" else "prompt.mode_hold")   # Energy (hold), or (toggle) for a player who set it
-		out.append({"acts": acts, "label": label})
+		var held := false
+		var aid: String = str(acts[0])
+		if by_stance and r.has("action") and FACE_CELLS.has(aid):
+			var cell: String = UiStance.cell(m.stance_kind, str(FACE_CELLS[aid]))
+			if cell != "" and UiStance.live(m.stance_kind):
+				label = cell   # what this face button does in the stance held now (only for a stance whose names are true on the live build)
+		elif by_stance and r.has("action") and HOLD_STANCES.has(aid):
+			var kind: int = int(HOLD_STANCES[aid])
+			if UiStance.live(kind):
+				label = UiStance.legend(kind, kind == UiStance.ENERGY and energy == "toggle")   # Defensive (hold), Energy (hold or toggle), ...
+			elif kind == UiStance.ENERGY:
+				label = UiData.t("prompt.mode_toggle" if energy == "toggle" else "prompt.mode_hold")
+			held = m.stance_kind == kind
+		elif aid == "mode":
+			label = UiData.t("prompt.mode_toggle" if energy == "toggle" else "prompt.mode_hold")
+		if by_stance and r.has("actions") and not UiStance.specials_row():
+			continue
+		out.append({"acts": acts, "label": label, "held": held})
 	return out
 
 
@@ -129,7 +167,7 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dic
 	var y: float = rect.position.y + pad
 	var placed: Array = []
 	for i in range(shown.size()):
-		placed.append({"specs": full[i], "label": shown[i]["label"], "y": y + row_h * 0.5})
+		placed.append({"specs": full[i], "label": shown[i]["label"], "held": bool(shown[i].get("held", false)), "y": y + row_h * 0.5})
 		y += row_h
 	out["rows"] = placed
 	out["label_x"] = rect.position.x + pad + maxw + gap
@@ -151,7 +189,7 @@ static func _widest_label(placed: Array, fs: int) -> float:
 
 
 static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold") -> Array:
-	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy]
+	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind]
 
 
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:
@@ -170,6 +208,10 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 	UiIcons.rrect(ci, Rect2(bx, box.position.y, box.size.x, box.size.y), 8.0 * s, Color(UiLook.col(UiLook.SCRIM), 0.5 * alpha), Color(UiLook.col(UiLook.EDGE), 0.25 * alpha), 1.2)
 	for r in p["rows"]:
 		var x: float = rect.position.x + float(p["pad"]) + shift
+		if bool(r.get("held", false)):
+			# The stance held now: a bar on the box's edge by its row (a shape, not a colour).
+			var hb: float = float(p["row_h"]) * 0.7
+			ci.draw_rect(Rect2(bx + 1.0, float(r["y"]) - hb * 0.5, maxf(3.0, 3.0 * s), hb), Color(UiLook.col(UiLook.INK), alpha))
 		for sp in r["specs"]:
 			var w: float = UiGlyphs.draw_spec(ci, sp, Vector2(x, float(r["y"])), gh, alpha, true)
 			x += w + gap * 0.4

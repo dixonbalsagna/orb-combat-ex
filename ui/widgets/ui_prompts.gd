@@ -13,8 +13,10 @@ class_name UiPrompts
 ## chips, each a touch target at least 48 dp, always shown, icon only (no key glyph to read on a phone). The hold buttons
 ## (Special, Transform) belong to Controls' touch controls. `touch_rects` gives the chips' rectangles for Controls to hit-test.
 
-## The action whose control holds each state ("" for none: PRESS is the rest state, ESCAPE is dodge held while moving away).
-const STANCE_ACTIONS: Array = ["", "guard", "dodge", ""]
+## The action whose control holds each stance, by UiStance kind ("" for martial arts: nothing is held): defensive is the guard button, energy the
+## mode button, charging the power button, manoeuvre the dodge button, each as the player's own layout binds it.
+const STANCE_ACTIONS: Array = ["", "guard", "mode", "power", "dodge"]
+const STANCES := 5
 const HOLD_ACTIONS: Array = ["transform"]
 const STANCE_SHOW := 3.0
 
@@ -35,7 +37,7 @@ static func has_content(m: UiFighterModel, prompts_on: bool, touch: bool = false
 ## The redraw key for the row.
 static func sig(m: UiFighterModel, prompts_on: bool, touch: bool = false, preset: String = "") -> Array:
 	var fade: int = int(clampf((STANCE_SHOW - m.stance_prompt_t) * 4.0, 0.0, 4.0)) if (not prompts_on and not touch) else 4
-	return [m.stance, m.device, prompts_on, touch, stance_visible(m, prompts_on), fade, m.avail["transform"], int(m.hold["transform"] * 30.0), preset, m.form_shown, m.form_loud]
+	return [m.stance_kind, m.device, prompts_on, touch, stance_visible(m, prompts_on), fade, m.avail["transform"], int(m.hold["transform"] * 30.0), preset, m.form_shown, m.form_loud]
 
 
 ## The chips of the row, in order, as {name, rect, kind, i or act, gw, h, y, gap}: the geometry that both draw and touch_rects
@@ -57,19 +59,25 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Arr
 	var y: float = rect.position.y + rect.size.y * 0.5
 	var x: float = rect.position.x if left else rect.end.x
 	if touch or stance_visible(m, prompts_on):
-		for i in range(4):
-			var gw: float = 0.0 if (touch or STANCE_ACTIONS[i] == "") else UiGlyphs.width(STANCE_ACTIONS[i], m.device, m.slot, h * 0.8, style, preset)
-			var cw: float = (h + 4.0) if touch else (h + gw + gap * 1.5)
+		# The room the stance chips may take leaves the weight mark and, when it is wanted, the short Transform chip their places.
+		var reserve: float = h + 4.0 + gap
+		if (prompts_on or m.form_loud) and not touch and not m.form_shown and bool(m.avail["transform"]):
+			reserve += UiGlyphs.width("transform", m.device, m.slot, h * 0.8, style, preset) + gap * 2.0 + h * 0.5 + gap
+		var tier: int = 0 if touch else fit_tier(m, rect.size.x - reserve, h, gap, style, preset)
+		for i in range(STANCES):
+			var show_glyph: bool = (not touch) and STANCE_ACTIONS[i] != "" and glyph_shown(tier, i, m.stance_kind)
+			var gw: float = UiGlyphs.width(STANCE_ACTIONS[i], m.device, m.slot, h * 0.8, style, preset) if show_glyph else 0.0
+			var cw: float = (h + 4.0) if touch else (h + gw + (gap * 1.5 if show_glyph else gap * 0.6))
 			if grid:
 				# Two rows of two, from the column edge inward.
 				var col: int = i % 2
 				var row: int = i / 2
 				var gx0: float = rect.position.x + float(col) * (cw + gap) if left else rect.end.x - cw - float(col) * (cw + gap)
 				var gy: float = rect.position.y + float(row) * (h + 4.0 + gap) + (h + 4.0) * 0.5
-				out.append({"name": "stance_%d" % i, "kind": "stance", "i": i, "gw": gw, "h": h, "y": gy, "gap": gap, "rect": Rect2(gx0, gy - h * 0.5 - 2.0, cw, h + 4.0)})
+				out.append({"name": "stance_%d" % i, "kind": "stance", "i": i, "gw": gw, "glyph": false, "tier": tier, "h": h, "y": gy, "gap": gap, "rect": Rect2(gx0, gy - h * 0.5 - 2.0, cw, h + 4.0)})
 				continue
 			var cx: float = x if left else x - cw
-			out.append({"name": "stance_%d" % i, "kind": "stance", "i": i, "gw": gw, "h": h, "y": y, "gap": gap, "rect": Rect2(cx, y - h * 0.5 - 2.0, cw, h + 4.0)})
+			out.append({"name": "stance_%d" % i, "kind": "stance", "i": i, "gw": gw, "glyph": show_glyph, "tier": tier, "h": h, "y": y, "gap": gap, "rect": Rect2(cx, y - h * 0.5 - 2.0, cw, h + 4.0)})
 			x += (cw + gap) if left else -(cw + gap)
 	# The weight mark beside the stance ring (light or heavy, sticky). It comes before the hold prompts: it is a read, they are a reminder.
 	if not touch and stance_visible(m, prompts_on):
@@ -102,6 +110,38 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Arr
 	return out
 
 
+## Which of the five stance chips carry the glyph of their button, by fit tier: 0 all of them, 1 the held stance and its neighbours, 2 the held stance only,
+## 3 none (icons only). The held chip is always told by its fill and edge as well, so no tier loses which stance it is.
+static func glyph_shown(tier: int, i: int, held: int) -> bool:
+	match tier:
+		0:
+			return true
+		1:
+			return absi(i - held) <= 1
+		2:
+			return i == held
+		_:
+			return false
+
+
+## The width of the five chips at a tier, for the player's layout.
+static func chips_width(m: UiFighterModel, tier: int, h: float, gap: float, style: String, preset: String) -> float:
+	var w := 0.0
+	for i in range(STANCES):
+		var g: bool = STANCE_ACTIONS[i] != "" and glyph_shown(tier, i, m.stance_kind)
+		var gw: float = UiGlyphs.width(STANCE_ACTIONS[i], m.device, m.slot, h * 0.8, style, preset) if g else 0.0
+		w += h + gw + (gap * 1.5 if g else gap * 0.6)
+	return w + gap * float(STANCES - 1)
+
+
+## The first tier at which the five chips fit the row (0 full, 1 near the held one, 2 the held one, 3 icons only: always taken if nothing fits).
+static func fit_tier(m: UiFighterModel, room: float, h: float, gap: float, style: String, preset: String) -> int:
+	for tier in range(3):
+		if chips_width(m, tier, h, gap, style, preset) <= room:
+			return tier
+	return 3
+
+
 ## The touch targets of the row: name to global rectangle (empty unless touch).
 static func touch_rects(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
@@ -129,18 +169,18 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 		var gap: float = c["gap"]
 		if c["kind"] == "stance":
 			var i: int = c["i"]
-			var current: bool = i == m.stance
-			UiIcons.rrect(ci, r, h * 0.25, Color(UiLook.col(UiLook.SCRIM), (0.75 if current else 0.5) * fade), Color(UiLook.stance_col(i), (0.95 if current else 0.35) * fade), 2.0 if current else 1.2)
+			var current: bool = i == m.stance_kind
+			UiIcons.rrect(ci, r, h * 0.25, Color(UiLook.col(UiLook.SCRIM), (0.75 if current else 0.5) * fade), Color(UiStance.col(i), (0.95 if current else 0.35) * fade), 2.0 if current else 1.2)
 			if touch:
 				# The stance ring: the icon alone, big, centred in a square target, and the weight mark on the current stance.
-				UiIcons.stance(ci, i, r.get_center(), h * 0.55, Color(UiLook.stance_col(i), fade))
+				UiIcons.stance5(ci, i, r.get_center(), h * 0.55, Color(UiStance.col(i), fade))
 				if current:
 					var heavy_t: bool = m.weight == "heavy"
 					UiReads.weight_mark(ci, Vector2(r.end.x - h * 0.3, r.position.y + h * 0.2), h * 0.4, heavy_t, Color(UiLook.col(UiLook.INK), fade), heavy_t and m.weight_fallback_t < 1.5)
 			else:
-				UiIcons.stance(ci, i, Vector2(r.position.x + h * 0.55, y), h * 0.72, Color(UiLook.stance_col(i), fade))
-				# GUARD and DODGE show the control that holds them in this layout; the current chip is told apart by its border and fill.
-				if STANCE_ACTIONS[i] != "":
+				UiIcons.stance5(ci, i, Vector2(r.position.x + h * 0.55, y), h * 0.72, Color(UiStance.col(i), fade))
+				# Each stance but martial arts shows the control that holds it in this layout (as far as the row has room: see fit_tier); the current chip is told apart by its border and fill.
+				if bool(c.get("glyph", false)):
 					UiGlyphs.draw(ci, STANCE_ACTIONS[i], m.device, m.slot, Vector2(r.position.x + h + gap * 0.3, y), h * 0.8, fade, true, style, preset)
 		elif c["kind"] == "weight":
 			UiIcons.rrect(ci, r, h * 0.25, Color(UiLook.col(UiLook.SCRIM), 0.6 * fade), Color(UiLook.col(UiLook.EDGE), 0.4 * fade), 1.2)

@@ -69,11 +69,19 @@ static func draw_telegraph(ci: CanvasItem, hub: UiEventHub, lay: UiLayout, s: fl
 	var tw: float = UiText.width(label, fs)
 	var counter: String = str((UiData.reads().get("finisher_counter", {}) as Dictionary).get(kind, ""))
 	var ci_idx: int = UiPlate.STANCE_IDS.find(counter)
+	# What answers it in the five-stance model (ui/data/stances.json `_counters`: a stance, or the signature press), when the data says; the old read otherwise.
+	var cinfo: Dictionary = (UiData.stances().get("_counters", {}) as Dictionary).get(kind, {})
+	var ckind: String = str(cinfo.get("kind", ""))
+	var cword: String = str(cinfo.get("word", ""))
+	var five: int = UiStance.IDS.find(ckind)
+	if ckind != "":
+		ci_idx = five if five >= 0 else 99
 	var answer: String = UiData.t("state.answer")
 	var aw: float = UiText.width(answer, int(float(fs) * 0.85))
+	var cww: float = UiText.width(cword, int(float(fs) * 0.85)) if cword != "" else 0.0
 	var w: float = pad + sz + pad * 0.8 + tw + pad
 	if prompts and ci_idx >= 0:
-		w += pad + aw + pad * 0.6 + sz * 0.9 + pad * 0.4
+		w += pad + aw + pad * 0.6 + sz * 0.9 + pad * 0.4 + (cww + pad * 0.5 if cword != "" else 0.0)
 	w = minf(w, slot.size.x)
 	var h: float = minf(slot.size.y - 2.0, maxf(sz, float(fs) * 1.3) + pad)
 	var r := Rect2(slot.get_center().x - w * 0.5, slot.get_center().y - h * 0.5, w, h)
@@ -87,7 +95,16 @@ static func draw_telegraph(ci: CanvasItem, hub: UiEventHub, lay: UiLayout, s: fl
 	if prompts and ci_idx >= 0 and r.end.x - tx - tw > aw + sz:
 		var ax: float = tx + tw + pad
 		UiText.draw(ci, answer, Vector2(ax, r.get_center().y + float(fs) * 0.3), int(float(fs) * 0.85), Color(UiLook.col(UiLook.INK_DIM)), -1)
-		UiIcons.stance(ci, ci_idx, Vector2(ax + aw + pad * 0.6 + sz * 0.45, r.get_center().y), sz * 0.85, UiLook.stance_col(ci_idx))
+		var ic := Vector2(ax + aw + pad * 0.6 + sz * 0.45, r.get_center().y)
+		if ckind != "" and five >= 0:
+			UiIcons.stance5(ci, five, ic, sz * 0.85, UiStance.col(five))
+		elif ckind != "":
+			UiIcons.star4(ci, ic, sz * 0.8, ink)   # the signature press
+		else:
+			UiIcons.stance(ci, ci_idx, ic, sz * 0.85, UiLook.stance_col(ci_idx))
+		var wx: float = ic.x + sz * 0.55
+		if cword != "" and r.end.x - wx - pad * 0.5 >= cww:
+			UiText.draw(ci, cword, Vector2(wx, r.get_center().y + float(fs) * 0.3), int(float(fs) * 0.85), ink, -1)
 	UiText.no_outline = false
 
 

@@ -46,6 +46,7 @@ func _run() -> void:
 	await _energy_rules()
 	await _incoming_rules()
 	await _stance_badge_rules()
+	await _key_help_rules()
 	await _beat_ring_rules()
 	await _touch_controls_rules()
 	await _settings_rules()
@@ -1469,7 +1470,7 @@ func _reads_hud() -> void:
 	pm0.left_side = true
 	var chips: Array = UiPrompts.plan(pm0, hud.layout.prompts[0], hud.layout.s, {"touch": false, "prompts": false, "glyph_style": "neutral"})
 	var kinds: Array = chips.map(func(c): return c["kind"])
-	_ok(kinds.count("stance") == 4 and kinds.has("weight"), "reads: the held-state row has a weight mark beside the four states")
+	_ok(kinds.count("stance") == 5 and kinds.has("weight"), "reads: the held-state row has a weight mark beside the five stances")
 	var last_r: Rect2 = chips[chips.size() - 1]["rect"]
 	_ok(last_r.end.x <= hud.layout.prompts[0].end.x + 0.5, "reads: and it stays inside the column")
 	hud.queue_free()
@@ -2624,6 +2625,227 @@ func _beat_ring_rules() -> void:
 	root.size = Vector2i(1280, 720)
 
 
+## The key help for five stances (docs/ui/key-help-plan.md, steps A and B): the prompt row's five chips and the live legend.
+func _chip_info(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dictionary:
+	var chips: Array = UiPrompts.plan(m, rect, s, o)
+	var st: Array = []
+	for c in chips:
+		if c["kind"] == "stance":
+			st.append(c)
+	return {"chips": chips, "stance": st}
+
+
+func _key_help_rules() -> void:
+	var lay := UiLayout.new()
+	lay.compute(Vector2(1920, 1080), false)
+	var mk := func(device: String, slot: int, kind: int) -> UiFighterModel:
+		var mm := UiFighterModel.new()
+		mm.slot = slot
+		mm.left_side = slot == 0
+		mm.device = device
+		mm.stance_kind = kind
+		return mm
+	var base_o := {"glyph_style": "neutral", "prompts": true}
+	# Each layout's own glyphs on the five chips (full tier at 1080p).
+	var labels_of := func(m: UiFighterModel, preset: String) -> Array:
+		var out: Array = []
+		for act in UiPrompts.STANCE_ACTIONS:
+			var parts := PackedStringArray()
+			if act != "":
+				for sp in UiGlyphs.specs_for(act, m.device, m.slot, "neutral", preset):
+					parts.append(str(sp.get("label", "")))
+			out.append(" ".join(parts))
+		return out
+	var ma: UiFighterModel = mk.call("xbox", 0, 0)
+	var mkb: UiFighterModel = mk.call("kbd", 0, 0)
+	var mp2: UiFighterModel = mk.call("kbd", 1, 0)
+	_ok(labels_of.call(ma, "arena") == ["", "LB", "RB", "RT", "LT"] and labels_of.call(mkb, "kb-solo") == ["", "Shift", "Q", "E", "Space"] and labels_of.call(mk.call("kbd", 0, 0), "kb-shared-p1") == ["", "Shift", "E", "Q", "Space"] and labels_of.call(mp2, "kb-shared-p2") == ["", ";", "O", "/", "."], "key help: each layout's stance buttons are its own bindings (Arena LB RB RT LT, the solo keyboard Shift Q E Space, the shared halves' own)")
+	var info: Dictionary = _chip_info(mkb, lay.prompts[0], lay.s, base_o.merged({"control_scheme": "kb-solo"}))
+	_ok((info["stance"] as Array).size() == 5 and int((info["stance"][0] as Dictionary)["tier"]) == 0, "key help: five stance chips, and at 1080p every one carries its glyph (tier 0)")
+	# The held chip is the badge's stance: the row and the badge read one field.
+	var agree := true
+	for k in range(5):
+		var mh: UiFighterModel = mk.call("xbox", 0, k)
+		var chips: Array = _chip_info(mh, lay.prompts[0], lay.s, base_o.merged({"control_scheme": "arena"}))["stance"]
+		var held := -1
+		for c in chips:
+			if c["i"] == mh.stance_kind:
+				held = int(c["i"])
+		agree = agree and held == k and UiStance.word(k) != "" and UiPrompts.sig(mh, true, false, "arena")[0] == k
+	_ok(agree, "key help: the held chip is the badge's stance (the row and the badge never disagree: both read stance_kind)")
+	# The three fit tiers, at 720p and at 360 by 640 (the row's own width).
+	var l720 := UiLayout.new()
+	l720.compute(Vector2(1280, 720), false)
+	var tiers := {}
+	for who in [["kbd", "kb-solo"], ["xbox", "arena"]]:
+		var mh2: UiFighterModel = mk.call(who[0], 0, 2)
+		var ch: Array = _chip_info(mh2, l720.prompts[0], l720.s, base_o.merged({"control_scheme": who[1]}))["stance"]
+		tiers[who[1] + "@720"] = int((ch[0] as Dictionary)["tier"])
+		var last: Rect2 = (ch[ch.size() - 1] as Dictionary)["rect"]
+		var first: Rect2 = (ch[0] as Dictionary)["rect"]
+		_ok(first.position.x >= l720.prompts[0].position.x - 0.5 and last.end.x <= l720.prompts[0].end.x + 0.5, "key help 720p %s: the five chips are inside the row at tier %d" % [who[1], tiers[who[1] + "@720"]])
+	var narrow := Rect2(Vector2(10.0, 400.0), Vector2(190.0, 40.0))
+	var mt: UiFighterModel = mk.call("kbd", 0, 2)
+	var found := {}
+	var tier_at := {}
+	for width in [460.0, 400.0, 360.0, 330.0, 300.0, 270.0, 240.0, 215.0, 190.0, 175.0, 120.0]:
+		var r := Rect2(narrow.position, Vector2(width, 40.0))
+		var ch2: Array = _chip_info(mt, r, 1.0, base_o.merged({"control_scheme": "kb-solo"}))["stance"]
+		found[int((ch2[0] as Dictionary)["tier"])] = true
+		tier_at[width] = int((ch2[0] as Dictionary)["tier"])
+		var inside := true
+		if width >= 175.0:
+			inside = (ch2[ch2.size() - 1]["rect"] as Rect2).end.x <= r.end.x + 0.5
+		_ok(inside, "key help: five chips in a %d px row stay inside it (tier %d)" % [int(width), int((ch2[0] as Dictionary)["tier"])])
+	_ok(found.has(0) and found.has(1) and found.has(2) and found.has(3), "key help: all four fit tiers are reached as the row narrows (full, near the held chip, the held chip only, icons only)")
+	# The held chip shows its glyph even at the smallest tier but one.
+	var held_glyph := true
+	var checked := 0
+	for width in tier_at:
+		if int(tier_at[width]) <= 2:
+			var ch3: Array = _chip_info(mt, Rect2(narrow.position, Vector2(width, 40.0)), 1.0, base_o.merged({"control_scheme": "kb-solo"}))["stance"]
+			held_glyph = held_glyph and bool((ch3[2] as Dictionary)["glyph"])
+			checked += 1
+	_ok(held_glyph and checked >= 3, "key help: at every tier but the last the held stance's chip carries its glyph (%d widths checked, tiers %s)" % [checked, tier_at])
+	# 360 by 640: the row has none in portrait (the layout gives it no height); the chips are never drawn outside it.
+	var lp := UiLayout.new()
+	lp.compute(Vector2(360, 640), false)
+	_ok(lp.prompts[0].size.y <= 0.0 or _chip_info(mt, lp.prompts[0], lp.s, base_o)["stance"].size() == 5, "key help 360x640: a phone gives the row no height (none drawn) or all five chips fit")
+	var l_small := UiLayout.new()
+	l_small.compute(Vector2(1024, 576), false)
+	var ch4: Array = _chip_info(mt, l_small.prompts[0], l_small.s, base_o.merged({"control_scheme": "kb-solo"}))["stance"]
+	_ok(ch4.size() == 5 and (ch4[4]["rect"] as Rect2).end.x <= l_small.prompts[0].end.x + 0.5, "key help 1024x576: the five chips fit the row")
+	# The row keeps the weight mark and the Transform chip when they are wanted.
+	var mtf: UiFighterModel = mk.call("kbd", 0, 1)
+	mtf.avail["transform"] = true
+	var kinds2: Array = (_chip_info(mtf, l720.prompts[0], l720.s, base_o.merged({"control_scheme": "kb-solo"}))["chips"] as Array).map(func(c): return c["kind"])
+	_ok(kinds2.has("hold") and kinds2.has("weight") and kinds2.count("stance") == 5, "key help: five chips, the weight mark and the Transform chip share the 720p row (the chips narrow first)")
+	# The legend: the face rows follow the held stance, for a stance whose names are true on the live build (stances.json `_live`).
+	var hub := _hub()
+	var m: UiFighterModel = hub.model(0)
+	m.ai = false
+	var stances_d: Dictionary = UiData.stances()["stances"]
+	var set_live := func(flags: Array) -> void:
+		for i in range(5):
+			stances_d[UiStance.id(i)]["_live"] = flags[i]
+	var head_flags: Array = [false, false, true, false, false]   # HEAD, 2026-10-05: only the energy stance's four names are honest
+	var saved_flags: Array = []
+	for i in range(5):
+		saved_flags.append(bool(stances_d[UiStance.id(i)].get("_live", false)))
+	_ok(saved_flags == head_flags, "legend: the data's live flags are the build's (only the energy stance: bolts, the charged shot, a mine and the signature beam exist; no grab and throw on A, no check, push or counter, no ultimate on B, no zip)")
+	var cells_of := func(kind: int, preset: String) -> Array:
+		m.stance_kind = kind
+		var out: Array = []
+		for r in UiHints.rows(m, preset):
+			if (r["acts"] as Array)[0] in ["light", "heavy", "context", "signature"] and (r["acts"] as Array).size() == 1:
+				out.append(r["label"])
+		return out
+	var want := {0: ["Light strikes", "Heavy strikes", "Grab and throw", "Signature"], 1: ["Check", "Push", "Reversal", "Counter"], 2: ["Bolts", "Charged shot", "Mine", "Beam"], 3: ["Quick special", "Strong special", "Utility special", "Ultimate (hold)"], 4: ["Zip strike", "Zip heavy", "Zip tackle", "Terrain art"]}
+	var old_words := ["Light", "Heavy", "Context", "Signature"]
+	var head_ok := true
+	for k in want:
+		for preset in ["arena", "kb-solo", "kb-shared-p2"]:
+			var got: Array = cells_of.call(k, preset)
+			head_ok = head_ok and got == (want[k] if head_flags[k] else old_words)
+	_ok(head_ok, "legend: on the live build the energy stance names its four buttons and every other stance keeps the old words (Light, Heavy, Context, Signature): nothing is named that the sim does not do")
+	set_live.call([true, true, true, true, true])
+	var live_ok := true
+	for k in want:
+		for preset in ["arena", "kb-solo", "kb-shared-p2"]:
+			live_ok = live_ok and cells_of.call(k, preset) == want[k]
+	_ok(live_ok, "legend: flipping every stance to live (a data change only) makes the four face rows read as the held stance names them, on every stance layout")
+	set_live.call([false, true, false, false, false])
+	_ok(cells_of.call(1, "arena") == want[1] and cells_of.call(0, "arena") == old_words and cells_of.call(2, "arena") == old_words, "legend: one stance flipped live shows its names and the others still do not")
+	set_live.call(head_flags)
+	m.stance_kind = 0
+	var order_of := func(preset: String) -> Array:
+		return UiHints.rows(m, preset).map(func(r): return (r["acts"] as Array)[0])
+	_ok(order_of.call("arena") == ["move", "light", "heavy", "context", "signature", "guard", "mode", "power", "dodge", "power", "escape"], "legend: the rows run Fly, X Y A B, the four stance buttons, the Specials row (until the charging stance is live) and Escape")
+	var hold_words := func(energy: String) -> Array:
+		var out: Array = []
+		for r in UiHints.rows(m, "arena", energy):
+			if (r["acts"] as Array)[0] in ["guard", "mode", "power", "dodge"] and (r["acts"] as Array).size() == 1:
+				out.append(r["label"])
+		return out
+	_ok(hold_words.call("hold") == ["Guard (hold)", "Energy (hold)", "Power (hold)", "Dodge, sprint"] and hold_words.call("toggle")[1] == "Energy (toggle)", "legend: a stance button keeps its old word until its stance is live (the energy one says hold or toggle by the player's setting)")
+	set_live.call([true, true, true, true, true])
+	_ok(hold_words.call("hold") == ["Defensive (hold)", "Energy (hold)", "Charging (hold)", "Manoeuvre (hold)"] and hold_words.call("toggle")[1] == "Energy (toggle)", "legend: live stances name their buttons (Defensive, Energy, Charging, Manoeuvre)")
+	var specials_in := func() -> bool:
+		for r in UiHints.rows(m, "arena"):
+			if (r["acts"] as Array).size() > 1:
+				return true
+		return false
+	_ok(not specials_in.call() and not UiStance.specials_row(), "legend: with the charging stance live the Specials row is dropped (its cells name the specials)")
+	set_live.call(head_flags)
+	_ok(specials_in.call() and UiStance.specials_row(), "legend: and it stays while the charging stance is not live")
+	m.stance_kind = 1
+	var held_rows: Array = []
+	for r in UiHints.rows(m, "arena"):
+		if bool(r["held"]):
+			held_rows.append((r["acts"] as Array)[0])
+	_ok(held_rows == ["guard"], "legend: the row of the stance held now is marked")
+	m.stance_kind = 0
+	_ok(UiHints.rows(m, "simple-pad").size() == 8 and (UiHints.rows(m, "simple-pad")[1]["label"] == "Light (hold: heavy)"), "legend: Simple keeps its rows as written (the choreographer picks the stance)")
+	var tf_rows: int = UiHints.rows(m, "arena").size()
+	m.avail["transform"] = true
+	_ok(UiHints.rows(m, "arena").size() == tf_rows + 1 and (UiHints.rows(m, "arena").back()["acts"] as Array)[0] == "transform", "legend: Transform is the last row, and only while a form is ready")
+	m.avail["transform"] = false
+	# Three seconds after the held stance changes the legend shows, even long after its first twelve.
+	var alpha_at := func(t: float, stance_t: float) -> float:
+		m.stance_kind_t = stance_t
+		return UiHints.legend_alpha(m, "auto", false, t)
+	_ok(alpha_at.call(40.0, 99.0) == 0.0 and alpha_at.call(40.0, 0.0) == 1.0 and alpha_at.call(40.0, 2.4) == 1.0 and alpha_at.call(40.0, 2.75) > 0.0 and alpha_at.call(40.0, 2.75) < 1.0 and alpha_at.call(40.0, 3.2) == 0.0, "legend: a stance change shows it for 3 s (the last half second fades), when it had faded after its first twelve")
+	_ok(UiHints.legend_alpha(m, "off", false, 0.0) == 0.0 and (func() -> float:
+		m.stance_kind_t = 0.0
+		return UiHints.legend_alpha(m, "off", false, 40.0)).call() == 0.0, "legend: the control hints option 'off' still hides it")
+	m.ai = true
+	m.stance_kind_t = 0.0
+	_ok(UiHints.legend_alpha(m, "auto", false, 40.0) == 0.0, "legend: an AI fighter has none")
+	m.ai = false
+	# The finisher telegraph answers in the five-stance model (Game Design): a launch the defensive stance, a melee the manoeuvre stance, a beam the signature.
+	var ctr: Dictionary = UiData.stances().get("_counters", {})
+	_ok(ctr.get("launch", {}).get("kind") == "defensive" and ctr.get("melee", {}).get("kind") == "manoeuvre" and ctr.get("beam", {}).get("kind") == "signature" and str(ctr["launch"]["word"]) == "the defensive stance" and str(ctr["melee"]["word"]) == "the manoeuvre stance" and str(ctr["beam"]["word"]) == "the signature", "telegraph: the chip's answers come from data: LAUNCH the defensive stance, MELEE the manoeuvre stance, BEAM the signature")
+	var thub := _hub()
+	var tlay := UiLayout.new()
+	tlay.compute(Vector2(1920, 1080), false)
+	var tl := UiLayer.new()
+	root.add_child(tl)
+	var tdrawn := {"n": 0}
+	for fk in ["launch", "melee", "beam"]:
+		thub.consume({"type": "finisher_start", "actor": 1, "target": 0, "kind": fk, "dur": 3.0})
+		tl.painter = func(ci: CanvasItem) -> void:
+			UiReads.draw_telegraph(ci, thub, tlay, 1.0, true, false)
+			UiReads.draw_telegraph(ci, thub, tlay, 1.0, false, true)
+			tdrawn["n"] += 1
+		tl.sig = fk
+		tl.queue_redraw()
+		await process_frame
+		await process_frame
+	tl.queue_free()
+	_ok(tdrawn["n"] >= 3 and UiData.reads()["finisher_counter"]["beam"] == "press", "telegraph: the three answers draw with prompts on and off (the sim's own read data is untouched)")
+	# In the HUD: a stance change redraws the legend and the row, and shows them.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	await _frames(hud, 4)
+	hud.hub.t_now = 60.0
+	hud.hub.model(0).stance_prompt_t = 99.0
+	await _frames(hud, 2)
+	var legend_off: bool = hud._l_hints[0].sig == null
+	var row_off: bool = hud._l_prompts[0].sig == null
+	hud.hub.patch(0, {"stance_mask": 8})
+	await _frames(hud, 3)
+	_ok(legend_off and row_off and hud._l_hints[0].sig != null and hud._l_prompts[0].sig != null, "key help hud (%s %s %s %s): after the legend and the row had faded, holding a stance button brings both back" % [legend_off, row_off, hud._l_hints[0].sig != null, hud._l_prompts[0].sig != null])
+	await _frames(hud, 200)
+	_ok(hud._l_hints[0].sig == null and hud._l_prompts[0].sig == null, "key help hud: and they fade again about three seconds later")
+	hud.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
+
+
 func kinds_in_hud(hud: UiHud, slot: int) -> Array:
 	var ks: Array = []
 	for c in UiPrompts.plan(hud.hub.models[slot], hud.layout.prompts[slot], hud.layout.s, hud._o()):
@@ -2660,7 +2882,7 @@ func _hints_rules() -> void:
 	_ok(UiHints.visible_alpha(m, "always", true, 0.0) == 0.0, "hints: an AI fighter never gets a legend")
 	m.ai = false
 	var rows0: Array = UiHints.rows(m, "kb-solo")
-	_ok(rows0.size() == 11, "hints: eleven rows at first on a keyboard (fly, light, heavy, signature, guard, dodge, power, mode, context, specials, escape)")
+	_ok(rows0.size() == 11, "hints: eleven rows at first on a keyboard (fly, the four face buttons, the four stance buttons, specials, escape)")
 	hub.consume({"type": "availability", "actor": 0, "action": "transform", "available": true})
 	_ok(UiHints.rows(m, "kb-solo").size() == 12, "hints: Transform joins the legend only while a form is ready")
 	_ok(UiHints.rows(m, "no_such_scheme").size() == UiHints.rows(m, "today").size() and UiHints.rows(m, "today").size() == 12, "hints: an unknown scheme falls back to today (a layout is looked up by its own id)")

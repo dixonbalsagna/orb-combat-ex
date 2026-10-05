@@ -472,6 +472,8 @@ func patch(actor: int, d: Dictionary) -> void:
 		m.stance_kind = UiStance.kind_of_mask(m.stance_mask)
 		if m.stance_kind != old_kind:
 			m.stance_flash_t = 0.0   # the badge pulses when the stance changes, so a rival's change is seen
+			m.stance_kind_t = 0.0    # and the legend and the prompt row show for 3 s
+			m.stance_prompt_t = 0.0
 	if d.has("beats") and d["beats"] is Array:
 		m.beats = d["beats"]
 	for act in ["transform", "special"]:
