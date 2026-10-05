@@ -14,7 +14,7 @@ Owner: Combat and Choreography. Date: 2026-10-05. Status: parked. Nothing here i
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, or on any match with Legal's rows. It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 24 cases.
+- **To prove the refusals:** `--self-test`, 26 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -85,7 +85,7 @@ By team. The sheet lists the same under each stance, cell by cell, and `cells.js
 | Grabs, g01 to g03 | grabs | no grab is generated; the hold points a grab may use are listed and checked (g01) |
 | Held, h01 to h03, and stacking, k01 and k02 | any pose held 12 ticks or more; every tick of a tell or a charge | not checkable from parts: conditions H1 and K1 on every signature frame and held action, for Animation's lint and VFX |
 
-- **What the new rows refused:** a volley thrown on a thrust (e05: a volley fans from one flick). It was 12 of the Protagonist's candidates and 20 of the rival's. Of the three volleys each fighter had before, two of the rival's and one of the Protagonist's were on a thrust and are gone. Each energy X cell now holds 2 volleys, both on a flick, and 4 bolts. Nothing else was refused.
+- **What the new rows refuse today: nothing.** Legal reworded e05 on 2026-10-06: a volley is one motion of one hand or arm (a sweep, a flick or a single thrust), never both palms pumping in turn or one hand pumping repeatedly. So a volley on a single thrust is allowed again, and the generator refuses a pumped volley or one from two hands, neither of which the grammar can produce.
 - **One change to my own grammar,** to fit m04: a zip to the far side leaves on a pivot round the rival or an arc dive over him. It had left on a lane step.
 - **Counts:** still 100 moves a fighter. No cell lost a move.
 - **Still needs Legal's eye when drawn** (Legal's own list): the short beam and its braced pose; each fighter's counter and terrain art when designed; the specials when designed.
@@ -122,7 +122,7 @@ What changed since the keys I gave for the martial stance. A filter is as before
 - A special cell: `special`, `what`, `state`, and moves of `id`, `look` (a part to a value), `forms`, `status`.
 
 **Added for Legal's new rows (2026-10-06)**
-- `parts.json` `legal`: `applies`, a note; and the groups `motion`, `energy`, `grabs`, `held`, `stacking`, each a list of `{id, kind, rule, why}`. By `kind`: travel and move have `if` and `then` (filters); hand has `never` and optionally `need` (a hand property to a list of values); holdPoints has `never` (a list); numbers has `owner` and `check`; drawn has `owner`.
+- `parts.json` `legal`: `applies`, a note; and the groups `motion`, `energy`, `grabs`, `held`, `stacking`, each a list of `{id, kind, rule, why}`. By `kind`: travel and move have `if` and `then` (filters), and a move row may have `hand` with a `need`; hand has `never` and optionally `need` (a hand property to a list of values); holdPoints has `never` (a list); numbers has `owner` and `check`; drawn has `owner`.
 - `parts.json` `shot.hands`: a hand to `{shape, light, hands, height}`. `parts.json` `grab.holdPoints`: a list.
 - `travel` has the direction `far_side`.
 - `cells.json`: a frame or context cell may have `asks`, a list of condition ids.

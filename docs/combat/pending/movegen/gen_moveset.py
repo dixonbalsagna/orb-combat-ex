@@ -23,7 +23,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 4
+VERSION = 5
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 
@@ -153,8 +153,10 @@ def group_hits(parts, m, kind):
     else:
         hand = parts["shot"]["hands"].get(m["hand"])
         for r in lg.get("energy", []):
-            if r.get("kind") == "move" and match(r["if"], m) and not match(r["then"], m):
-                out.append(r["id"])
+            if r.get("kind") == "move" and match(r["if"], m):
+                need = r.get("hand", {}).get("need", {})
+                if not match(r["then"], m) or (hand is not None and any(hand.get(k) not in v for k, v in need.items())):
+                    out.append(r["id"])
             if r.get("kind") == "hand":
                 if hand is None:
                     out.append(r["id"])   # a hand Legal has not screened
@@ -899,8 +901,12 @@ def self_test(parts, identity):
     expect("a lit move is refused whatever its parts (b09)", [r["id"] for r in g["banned"] if banned_hit(r, clasp, ["heavy"], 1, {"has": ["glow"], "not": []}) == "match"], ["b09"])
     expect("a held heavy chambered at a hip is refused (b02, b12)", [r["id"] for r in g["banned"] if banned_hit(r, clasp, ["heavy", "held"], 1, {"has": ["hip_chamber", "cupped_at_hip"], "not": []}) == "match"], ["b02", "b12"])
     parts_ = parts
-    expect("a volley thrown on a thrust is refused (e05)", group_hits(parts_, {"hand": "blade_hand", "release": "thrust", "body": "planted", "delivery": "volley"}, "energy"), ["e05"])
+    expect("a volley on a single thrust of one hand passes (e05, as Legal reworded it)", group_hits(parts_, {"hand": "blade_hand", "release": "thrust", "body": "planted", "delivery": "volley"}, "energy"), [])
     expect("a volley from one flick passes", group_hits(parts_, {"hand": "blade_hand", "release": "flick", "body": "planted", "delivery": "volley"}, "energy"), [])
+    expect("a volley pumped repeatedly is refused (e05)", group_hits(parts_, {"hand": "blade_hand", "release": "pump", "body": "planted", "delivery": "volley"}, "energy"), ["e05"])
+    two = json.loads(json.dumps(parts_))
+    two["shot"]["hands"]["both_palms"] = {"shape": "open", "light": "hand_edge", "hands": 2, "height": "shoulder"}
+    expect("a volley from both palms is refused (e02, e05)", group_hits(two, {"hand": "both_palms", "release": "thrust", "body": "planted", "delivery": "volley"}, "energy"), ["e02", "e05"])
     expect("the rival's lit fist is not refused: b09 is for strikes, e01 for energy", group_hits(parts_, {"hand": "fist_glow", "release": "thrust", "body": "planted", "delivery": "bolt"}, "energy"), [])
     expect("a hand Legal has not screened is refused (e01, e02, e03)", group_hits(parts_, {"hand": "cupped_pair", "release": "thrust", "body": "planted", "delivery": "bolt"}, "energy"), ["e01", "e02", "e03"])
     expect("a charged shot that is lobbed is refused (e04)", group_hits(parts_, {"hand": "open_palm", "release": "lob", "body": "planted", "delivery": "charged"}, "energy"), ["e04"])

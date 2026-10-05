@@ -59,7 +59,7 @@ All five are clear as generic frames. A person screens each fighter's version (t
 Clear as written, because the six hands, the emitting strikes and the volley, arc, lob, charged, lit-fist and crown releases were screened earlier (RL-041 to RL-052, RL-062). The generator's combinations add no new hand pose. **Conditions that stay with them (e01 to e05):**
 - the **ring hand** and **flat palm** (Protagonist) and the **pinch** (rival): one hand, open, no higher than the shoulder; the pinch is thumb to forefinger, not two fingers; no ball in or at the hand;
 - the rival's **fist glow** and **clawed palm**: light on the plate and knuckle edges, never a sphere round the fist or in the claw; the claw never at the face;
-- **volley** (a fan of three, and the rival's fan of shards): from one sweep or flick, never both palms pumping in turn, no shouted barrage;
+- **volley** (a fan of three, and the rival's fan of shards): one motion of one hand or arm (a sweep, a flick or a single thrust) releases the fan; never both palms pumping in turn or one hand pumping repeatedly, no shouted barrage;
 - **charged shot:** plates stack along the forearm (the rival) or a thin charge line on the forearm (the Protagonist); never a sphere growing in a palm, arm at shoulder height or lower;
 - **split, spray, lob, the drop (palm down) blast:** clear as screened.
 - **Short beam (not drawn yet): conditional.** A plain straight line (no spiral or drill), one hand thrust at shoulder height or lower, never both hands from the chest or wrists together, a bracing hand never cupped under or gripping the firing wrist, no scream. I must see the braced pose and the beam drawn before it goes live.

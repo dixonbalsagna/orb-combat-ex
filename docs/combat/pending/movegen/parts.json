@@ -992,7 +992,7 @@
    {
     "id": "E1",
     "stance": "energy",
-    "ask": "an energy hand: one hand, open or a blade, no higher than the shoulder; the light sits on the plate or the hand's edge, never a ball at the hand; never two fingers or a point, never cupped, never both hands; a beam or charged shot is a straight line; a volley fans from one flick",
+    "ask": "an energy hand: one hand, open or a blade, no higher than the shoulder; the light sits on the plate or the hand's edge, never a ball at the hand; never two fingers or a point, never cupped, never both hands; a beam or charged shot is a straight line; a volley is one sweep, flick or single thrust of one hand, never pumped",
     "rows": [
      "e01",
      "e02",
@@ -1060,6 +1060,13 @@
       "entries": [
        "spiral",
        "arc_dive"
+      ],
+      "exit": "pivot"
+     },
+     {
+      "direction": "far_side",
+      "entries": [
+       "dash"
       ],
       "exit": "pivot"
      },
@@ -1541,10 +1548,19 @@
     },
     "then": {
      "release": [
-      "flick"
+      "sweep",
+      "flick",
+      "thrust"
      ]
     },
-    "rule": "a volley fans from one sweep or flick of one hand or arm; never both palms pumping forward in turn, and no repeated shouted syllable across it (s03)",
+    "hand": {
+     "need": {
+      "hands": [
+       1
+      ]
+     }
+    },
+    "rule": "a volley is one motion of one hand or arm (a sweep, a flick or a single thrust) that releases the fan; never both palms pumping forward in turn or one hand pumping repeatedly, and no repeated shouted syllable across it (s03)",
     "why": "the shouted barrage"
    }
   ],

@@ -40,7 +40,7 @@
     {"id": "e02", "rule": "an energy hand is open or a blade, no higher than the shoulder; never cupped, never both hands pushed from the chest or drawn to a hip, never wrists together (b01, b02)", "why": "the beam-release pose"},
     {"id": "e03", "rule": "no two extended fingers, no single pointing finger as an emitter; the pinch is thumb to forefinger only (b10)", "why": "the beam and the death-beam poses"},
     {"id": "e04", "rule": "a short beam or charged shot is a plain straight line: no spiral, drilling or twisting beam; a second hand may brace the arm but never grips the firing wrist and never sits cupped under it", "why": "the charged beam staging"},
-    {"id": "e05", "rule": "a volley fans from one sweep or flick of one hand or arm; never both palms pumping forward in turn, and no repeated shouted syllable across it (s03)", "why": "the shouted barrage"}
+    {"id": "e05", "rule": "a volley is one motion of one hand or arm (a sweep, a flick or a single thrust) that releases the fan; never both palms pumping forward in turn or one hand pumping repeatedly, and no repeated shouted syllable across it (s03)", "why": "the shouted barrage"}
   ],
   "grabs": [
     {"id": "g01", "rule": "a hold point is the collar, shoulder, upper arm, body, waist or ankle; never the throat, the hair or a tail (b07), never a clawed hand on the face (b06)", "why": "grip rules"},
