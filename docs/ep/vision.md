@@ -709,3 +709,9 @@ Notes, verbatim:
 > P1 then P2 is pretty standard, as long as the dynamic intros can create many distinct implied plotlines between each character I'd like to see these handled as generatively as possible.
 
 The EP's judgment on the tech question, as delegated: "tech" means the same three things everywhere. The strike pose lands on the contact tick with no in-between; the after-image is sharp wire echoes that trail the body and pop off back to front; the contact mark is the hard diamond. Travel is never part of it: a tech zip crosses as the fastest drawn dash the rules allow and then lands its strike exactly like any other tech hit.
+
+## 2026-10-05, morning: ideas for special attacks
+
+Orb: "give me the morning summary. ove the next few days I want to start spitballing ideas for special attacks, energy blasts etc. so get a template ready so I can put my ideas in"
+
+The EP's sheet for it: docs/ep/ideas/special-moves.md. It is Orb's file; nobody else edits it.
