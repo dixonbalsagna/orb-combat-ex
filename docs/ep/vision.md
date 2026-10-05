@@ -630,3 +630,17 @@ Answers as given:
 Notes, verbatim:
 
 > just played the latest update. we've got some work to do but the combat is getting to a good place. we're aiming for snappy combos, attack trades that look pre-planned, variety of attacks. I like the thought that holding LT creates mid-range lunging attacks, these can be utilized at great cost to stamina, can I see a version of the latest combo prototype specifically showcasing the face buttons combined with LT? I want to see the lunging behavior. in the game I would expect every stance to be able to connect blows against a player using this, but the character should zip back and forth in a stylistic blur, matching our visual cues we established for speed, tech and heavy.
+
+## Orb, 2026-10-05: modifiers on every button, and the LT zip
+
+Verbatim:
+
+> in all states X, Y, B all should have speed, tech, heavy modifiers. A should have a press and a hold, no grab spamming. LT plus an attack should cause the fighter to zip to the opponent to land the strike and zip back by default. LT plus an attack plus the movement stick pushed towards the opponent should zip to the opponent, land the strike, then zip the fighter on the other side of the opponent. please update a new prototype animation so we can see different permutations of this playing out. well timed heavy and tech strikes should be able to counter this,
+
+What follows from it:
+
+- In every stance X, Y and B each read three ways: speed (mashed), tech (timed), heavy (held).
+- A has a press and a hold. Grabs cannot be spammed.
+- LT + an attack: zip to the opponent, land the strike, zip back. That is the default.
+- LT + an attack + the stick toward the opponent: zip in, land the strike, then zip through to the opponent's other side.
+- A well-timed heavy or tech strike from the defender counters a zip.
