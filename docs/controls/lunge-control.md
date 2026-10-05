@@ -37,7 +37,7 @@ A stance is a **held state**, not a mode you switch and forget: the physical sta
 
 The four face buttons are **X (west) `light`**, **Y (north) `heavy`**, **B (east) `sig`**, **A (south) `context`**, positional on every pad family, as today. That gives a 5 by 4 grid of cells. The grid is Game Design's; the existing `context` rules are already a small stance matrix (guarding: reversal or deflect; sprinting: tackle; energy: shove; in the air: dive grab), and the power layer is the charging row (X, Y, A are the three specials and B the signature).
 
-**The stance buttons keep their own jobs.** Holding LB still guards; holding RT still channels; holding LT still dodges, sprints and boosts; holding RB still makes the attacks energy. The stance only adds what a face press means. Nothing a shoulder button does today is taken away.
+**The stance buttons keep their own jobs.** Holding LB still guards; holding RT still channels; holding LT still dodges, sprints and boosts; holding RB still makes the attacks energy. The stance only adds what a face press means. Nothing a shoulder button does today is taken away **while it is the stance**; if a newer stance button is pressed over it, it goes neutral until the newer one is let go (A2: a stance is exclusive until hybrids exist).
 
 ### Keyboard, one player (solo)
 
