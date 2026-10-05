@@ -26,7 +26,7 @@ export const sequences = {
     { family: 'upright', lean: 6, hips: [1, -3, 0], spine: { lean: 2, twist: -8 }, head: { pitch: -2, yaw: 6 }, hand_r: [14, 54, 12], hand_l: [20, 52, -8], foot_r: [-8, 2.5, 8], foot_l: [10, 2.5, -7] },
     { brace: 'at the brink: bent narrow over the hurt, the blade hands low along the thighs', rise: 'one cold breath: drawn up tall and narrow, the chin lifted, the blade hands still at his sides', settle: 'the guard set again, the shoulders square and the eyes level' }),
   ready_e: ready('E',
-    { family: 'crouched', lean: 16, hips: [0, -10, 0], spine: { lean: 12 }, head: { pitch: 12 }, hand_r: [8, 34, 14], hand_l: [8, 32, -12], foot_r: [-10, 2.5, 10], foot_l: [10, 2.5, -9] },
+    { family: 'crouched', lean: 16, hips: [0, -10, 0], spine: { lean: 12 }, head: { pitch: 12 }, hand_r: [12, 34, 14], hand_l: [8, 32, -12], foot_r: [-10, 2.5, 10], foot_l: [10, 2.5, -9] },
     { family: 'upright', lean: 2, hips: [0, -3, 0], spine: { lean: -4 }, head: { pitch: -8 }, hand_r: [18, 60, 26], hand_l: [18, 58, -24], foot_r: [-10, 2.5, 10], foot_l: [10, 2.5, -9] },
     { family: 'upright', lean: 6, hips: [1, -4, 0], spine: { lean: 2, twist: -6 }, head: { pitch: -4 }, hand_r: [14, 56, 22], hand_l: [20, 54, -16], foot_r: [-10, 2.5, 10], foot_l: [12, 2.5, -9] },
     { brace: 'at the brink: curled in over the hurt, the arms low', rise: 'the arms coming up and forward as he rises, the chest and head lifting: the whole body opening', settle: 'the arms drawing back to a wide guard' }),

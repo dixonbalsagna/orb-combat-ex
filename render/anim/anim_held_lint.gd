@@ -9,7 +9,7 @@ extends RefCounted
 ##   h02 arms wide (the same classes, and any held pose that is not a gesture with bent elbows)   fails if both elbows are within 25 degrees of straight and both hands are 32 or more out to opposite
 ##                                              sides; outside the rival's On the Chin. A shrug (elbows bent 40 or more) is not arms wide
 ##   h03   a crouch (the crouched family, or hips 8 down) with both hands closed fists at the sides, in a tell or a signature
-## A pose's class: a `_legal.class`-style mark where a pose has one (none do yet: it would need a schema key), else the family of the sequence or pose by name (CLASS_RULES below, from the scope's
+## A pose's class (a pose that matches no family is reported "unclassed" and fails, so a new family has to be given a class on purpose): a `_legal.class`-style mark where a pose has one (none do yet: it would need a schema key), else the family of the sequence or pose by name (CLASS_RULES below, from the scope's
 ## `classes`: rest, gesture, charge, tell, signature, energy, hold); an unmarked pose is rest. What counts as held: a sequence or entry phase of 12 ticks or more; a pair_live role's pose held that
 ## long, the charge and full poses of a charged shot, a gesture's pose; and every pose named `.hold.`, `ready_`, a stance or a stance cue (their length is the sim's).
 ## The scope's thresholds are Legal's, written in its file as prose (RL-087); they are constants here, named for the rule they come from. The file is read for the scope's presence and its class list.
@@ -28,11 +28,13 @@ const SHRUG_BEND := 40.0          # h02: a bend this much or more is a shrug, no
 const CLASS_RULES := [
 	["rs.hold.sig_tell", "tell"], ["ps.hold.sig_tell", "tell"], ["rs.tell.", "tell"], ["ps.tell.", "tell"],
 	["rs.hold.sig_end", "tell"], ["ps.hold.sig_end", "tell"], ["rs.end.", "tell"], ["ps.end.", "tell"],
-	["stance.", "tell"], ["cue.", "tell"],
+	["rs.", "tell"], ["ps.", "tell"], ["st.", "tell"], ["stance.", "tell"], ["cue.", "tell"],
 	["ag.hold.charge", "charge"], ["pn.hold.brace", "charge"], ["charge.hold", "charge"], ["beam.charge", "charge"],
 	["ag.taunt", "gesture"], ["pg.taunt", "gesture"], ["rw.taunt", "gesture"], ["rw.drop_the_act", "gesture"], ["pi.", "gesture"], ["ri.", "gesture"], ["in.cuff", "gesture"], ["emote.", "gesture"],
-	["ls.ready_", "rest"], ["ls.", "rest"], ["rv.", "energy"], ["pn.", "energy"], ["pg.", "energy"], ["en.", "energy"], ["rw.", "energy"], ["pf.", "energy"], ["beam.", "energy"], ["pe.", "energy"],
+	["ls.ready_e.", "energy"], ["ls.ready_", "rest"], ["ls.", "rest"], ["rv.", "energy"], ["pn.", "energy"], ["pg.", "energy"], ["en.", "energy"], ["rw.", "energy"], ["pf.", "energy"], ["beam.", "energy"], ["pe.", "energy"],
 	["zp.hold", "hold"],
+	# one-off motion and reaction poses that nothing emits from (knock-backs, the buried fighter, get-ups, intro landings, the stagger and block reactions, the pair's clash, check and grab poses)
+	["ag.", "rest"], ["gc.", "rest"], ["in.", "rest"], ["pp.", "rest"], ["s3.", "rest"], ["zp.", "rest"],
 ]
 ## a named gesture where one hand holds or brushes the other hand or wrist: exempt from the pair test (the cuff, the dusting, the close taunt's tap)
 const BRUSH := ["in.cuff.", "rw.taunt_dust_plate.", "rw.taunt_close.", "pg.taunt_close"]
@@ -51,7 +53,7 @@ static func _class_of(pid: String) -> String:
 	for r in CLASS_RULES:
 		if pid.begins_with(String(r[0])):
 			return String(r[1])
-	return "rest"
+	return "unclassed"
 
 
 static func _bend(p: AnimPose, bone: String) -> float:
@@ -121,6 +123,8 @@ static func scan() -> Dictionary:
 		var hl = d.get("hand_l")
 		var hs: Dictionary = d.get("hands", {})
 		var why: Array = []
+		if cls == "unclassed":
+			why.append("class: no family in CLASS_RULES matches this pose (unclassed); add its prefix with the right class")
 		var brush: bool = false
 		for b in BRUSH:
 			brush = brush or pid.begins_with(b)
