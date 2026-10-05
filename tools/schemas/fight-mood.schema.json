@@ -46,7 +46,14 @@
         "form",
         "finisherStart",
         "taunt",
-        "landmarkFall"
+        "landmarkFall",
+        "brawlLight",
+        "blocked",
+        "skillStrike",
+        "brawlHeavy",
+        "flurryClose",
+        "guardBreak",
+        "knockback"
       ],
       "properties": {
         "strike": {
@@ -101,6 +108,34 @@
           "type": "integer",
           "minimum": 0,
           "description": "The mood impulse for a landmark falling (600 units is +10 points); dormant until D1."
+        },
+        "brawlLight": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skillStrike": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "brawlHeavy": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "flurryClose": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "guardBreak": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "knockback": {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "additionalProperties": false,

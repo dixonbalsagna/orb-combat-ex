@@ -114,7 +114,8 @@ static func _loadMood(j: Dictionary) -> void:
 		den = 1
 	imp = {}
 	var ij: Dictionary = j.get("impulses", {})
-	for k in ["strike", "heavyStrike", "chainLink", "parry", "clash", "beamLands", "regionBroken", "buildingLaunch", "buildingChain", "form", "finisherStart", "taunt", "landmarkFall"]:
+	for k in ["strike", "heavyStrike", "chainLink", "parry", "clash", "beamLands", "regionBroken", "buildingLaunch", "buildingChain", "form", "finisherStart", "taunt", "landmarkFall",
+			"brawlLight", "blocked", "skillStrike", "brawlHeavy", "flurryClose", "guardBreak", "knockback"]:
 		var u: int = _int("mood.impulses." + k, ij.get(k))
 		imp[k] = [u, int(floor(float(u * num) / float(den)))]
 	for k in ij:
@@ -333,8 +334,26 @@ static func tick(S: SimState) -> void:
 		var e = fx[k]
 		match e.type:
 			"damage":
+				# A blow feeds the mood by its form (melee-press-feel.md section 9d, ruling 2): a brawl's blows come six a
+				# second and are worth a fraction of a planned exchange's strike; a blocked blow has its own (0).
 				if e.number and (e.kind == "light" or e.kind == "heavy"):
-					add += _imp(fs, "heavyStrike" if e.kind == "heavy" else "strike", int(e.attacker))
+					if e.mode == "brawl":
+						add += _imp(fs, "brawlHeavy" if e.kind == "heavy" else "brawlLight", int(e.attacker))
+					elif e.mode == "skill":
+						add += _imp(fs, "skillStrike", int(e.attacker))
+					else:
+						add += _imp(fs, "heavyStrike" if e.kind == "heavy" else "strike", int(e.attacker))
+				elif e.number and e.kind == "guard":
+					add += _imp(fs, "blocked", int(e.attacker))
+			"cue":
+				# the brawl's own cues (docs/director/brawl-b1.md section 4): a flurry's close, and a guard broken by a heavy;
+				# target is who did it
+				if e.kind == "stagger" and e.text == "flurry":
+					add += _imp(fs, "flurryClose", int(e.target))
+				elif e.kind == "guard_break":
+					add += _imp(fs, "guardBreak", int(e.target))
+			"knockback":
+				add += _imp(fs, "knockback", int(e.attacker))
 			"parry":
 				add += _imp(fs, "parry", int(e.actor))
 			"clash_draw":
@@ -360,7 +379,7 @@ static func tick(S: SimState) -> void:
 				_countAttack(fs, e)
 	var ex = S.dirS.ex
 	var combo: int = int(ex.combo) if ex != null else 0
-	if combo > m.lastCombo and m.lastCombo >= 1:
+	if combo > m.lastCombo and m.lastCombo >= 1 and ex.tpl != "brawl":   # (a brawl's earned beat is its flurry's close)
 		add += _imp(fs, "chainLink", fs.find(ex.A))
 	m.lastCombo = combo
 	if S.world != null and S.world.pop0 > 0.0:

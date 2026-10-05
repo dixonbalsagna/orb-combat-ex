@@ -16,7 +16,15 @@
     "form": 300,
     "finisherStart": 900,
     "taunt": 180,
-    "landmarkFall": 600
+    "landmarkFall": 600,
+    "brawlLight": 15,
+    "blocked": 0,
+    "skillStrike": 90,
+    "brawlHeavy": 120,
+    "flurryClose": 180,
+    "guardBreak": 240,
+    "knockback": 180,
+    "_brawl": "a blow feeds the mood by its form (melee-press-feel.md section 9d, ruling 2). In a brawl: a light or a flurry blow that lands brawlLight (the lever, 15 to 30), a heavy or an ender brawlHeavy, a flurry's close flurryClose, a broken guard guardBreak. Anywhere: a blocked blow blocked, a knock-back knockback, a skill strike skillStrike (from brawl B2). A strike of a planned exchange outside a brawl is still strike or heavyStrike"
   },
   "aggressiveMul": {
     "num": 3,
@@ -29,7 +37,7 @@
   },
   "rates": {
     "bothAggressive": 1,
-    "decay": 3,
+    "decay": 4,
     "bothGuarded": 4,
     "proportional": {
       "on": false,

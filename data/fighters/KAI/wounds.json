@@ -47,10 +47,10 @@
   "focusWear": 30.0,
   "family": {
     "light": [
-      3.0,
-      1.0,
-      3.0,
-      1.0
+      12.0,
+      4.0,
+      11.0,
+      5.0
     ],
     "heavy": [
       1.0,
@@ -70,12 +70,17 @@
       1.0,
       1.0
     ],
-    "_note": "region pick weights (head, core, arms, legs) by hit family"
+    "_note": "region pick weights (head, core, arms, legs) by hit family. light: a landed light picks the arms 11 times in 32 and the legs 5 (it was 12 and 4, as 3, 1, 3, 1: a brawl is mostly lights, and the arms took 83% of limb breaks; melee-press-feel.md section 9d). Game Design's next step if the arms are still over 65%: 12, 4, 10, 6"
   },
   "guardWearSplit": {
     "arms": 0.7,
     "legs": 0.3,
-    "_note": "a guard hit's wear: this share to the arms, this to the legs (Game Design: spread so legs can become battered)"
+    "_note": "a guard hit's wear: this share to the arms, this to the legs (Game Design: spread so legs can become battered). A blocked heavy's; a blocked light's is block's"
+  },
+  "block": {
+    "streamArmShare": 0.5,
+    "armWearCap": 180000,
+    "_note": "blocked blows and the arms (melee-press-feel.md section 9d, ruling 1). streamArmShare: a blocked light or flurry blow puts this share of its chip wear on the arms, and the rest is soaked (nothing goes to the legs); the lever is 0.3 to 0.7. armWearCap: no blocked blow, light or heavy, takes the arms past this, in wear units: 180000 is 30 points, where bruised begins (re-ruled from 45: a block that fills an arm to 45 of the 60 that batter it does three quarters of the work), so blocking alone never batters an arm"
   },
   "penalties": {
     "coreKiRegen": 0.7,

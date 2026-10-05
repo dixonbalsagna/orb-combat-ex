@@ -278,6 +278,10 @@ There is no per-second mood event. Readers that want the value read `S.mood` (a 
 
 A transformation's break adds `impulses.form` to the mood (900 units, 15 points; `rates.decay` is 3: QA's values). It is given by a call, `SimMood.onForm(S, f)` from `SimFighter.tierUp`, and not read from the `tier_up` event: on a full or short version the break lands on a frozen tick inside the pause, where `tick()` does not run. The parity check "the form impulse" holds it on such a tick.
 
+## 8f. The mood by a blow's form (2026-10-05)
+
+A blow feeds the mood by what kind of blow it was (Game Design, `docs/design/melee-press-feel.md` section 9d, ruling 2). The `damage` event carries the form in `mode`, and `SimMood.tick` picks the impulse from it. The rules, the new impulses, what was measured and the levers are in `brawl-wear-and-mood.md`.
+
 ## 9. Open points
 
 - **Taunts and transformations** have no sim events yet. Their impulses are in the data and dormant until `taunt` (Encounter or Narrative) and `form_change` (F1) exist.

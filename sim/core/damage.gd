@@ -15,15 +15,16 @@ static func jor(v: float, d: float) -> float:
 ## fam: the wounds hit family (wounds.gd family()); kind, col and number describe the damage event. The defaults are a
 ## landing or collision: spread over the body, kind "impact", no damage number.
 ## Returns the region the damage wore, or -1.
-static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: String = "impact", col: String = "", number: bool = false) -> int:
+## form: what kind of blow it was, for the mood (brawl, skill, or empty). stream: a blocked light (SimWounds.addGuardWear).
+static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: String = "impact", col: String = "", number: bool = false, form: String = "", stream: bool = false) -> int:
 	# Since S2 hp is a readout only (the HUD bar): it floors at 0, and wounds and finishers decide the match.
 	f.hp = f.hp - amt if SimWounds.HP_ENDS_MATCH else SimMathx.jmax(0.0, f.hp - amt)
 	f.hurtT = S.T
 	var region: int = SimWounds.pickRegion(S, f, fam) if amt > 0.0 else -1
-	SimFx.damage(S, f, by, amt, SimWounds.REGIONS[region] if region >= 0 else "", kind, col, number)
+	SimFx.damage(S, f, by, amt, SimWounds.REGIONS[region] if region >= 0 else "", kind, col, number, form)
 	if region >= 0:
 		if fam == "guard":
-			SimWounds.addGuardWear(S, f, amt)   # D1b lever: a guard hit's wear is split between arms and legs
+			SimWounds.addGuardWear(S, f, amt, stream)   # a blocked heavy's wear is split between arms and legs; a blocked light's is half soaked
 		else:
 			SimWounds.addWear(S, f, region, amt)
 	# The Wounds hook (wounds-plan.md S1/S2): the HP bar ends the match until Encounter's S2 flips HP_ENDS_MATCH; then
@@ -82,7 +83,9 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	SimFx.shake(S, jor(o.get("shake", 0.0), 6.0), D.x, D.z)
 	var fam: String = SimWounds.family(ex, D, o, dStance)
 	var kind: String = o.get("kind", "") if o.get("kind", "") != "" else ("guard" if fam == "guard" else ("beam" if ex != null and ex.kind == "sig" else ("heavy" if ex != null and ex.kind == "heavy" else "light")))
-	var region: int = hurt(S, D, dd, A, fam, kind, "#ffd45a" if o.get("ignoreStance", false) else "#ffffff", true)
+	# The blow's form, for the mood: the director may name it (o.form: skill, from brawl B2); a blow of a brawl is brawl.
+	var form: String = String(o.get("form", "brawl" if (ex != null and ex.tpl == "brawl") else ""))
+	var region: int = hurt(S, D, dd, A, fam, kind, "#ffd45a" if o.get("ignoreStance", false) else "#ffffff", true, form, ex != null and ex.kind == "light")
 	if kind == "heavy" and dd > 0.0:
 		SimWounds.stagger(S, D)
 	SimWounds.noteBlow(S, ex, A, D, region, kind, o)

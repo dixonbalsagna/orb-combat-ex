@@ -37,6 +37,8 @@ class WoundsDef:
 	var armsBrokenLightMul: float = 1.0
 	var guardArms: float = 1.0     # guardWearSplit: a guard hit's wear, this share to the arms ...
 	var guardLegs: float = 0.0     # ... and this share to the legs
+	var blockArmShare: float = 1.0 # block.streamArmShare: a blocked light's chip wear, this share to the arms (the rest is soaked)
+	var blockArmCap: int = 0       # block.armWearCap: no blocked blow takes the arms past this (wear units)
 	var legsBrokenGuardScale: float = 1.0
 	var act1Damping: float = 0.0   # wear x this while the act index is 1
 	var overtimeStart: float = 0.0 # seconds (startTicks / 60)
@@ -336,6 +338,16 @@ static func _wounds(id: String, j: Dictionary) -> WoundsDef:
 	w.guardLegs = float(gs.get("legs", 0.0))
 	if w.guardArms < 0.0 or w.guardLegs < 0.0 or absf(w.guardArms + w.guardLegs - 1.0) > 1e-9:
 		_err(where + ": guardWearSplit shares must be 0 to 1 and sum to 1")
+	var bk = j.get("block")
+	if not (bk is Dictionary and bk.has("streamArmShare") and bk.has("armWearCap")):
+		_err(where + ": block needs streamArmShare and armWearCap")
+		bk = {}
+	w.blockArmShare = float(bk.get("streamArmShare", 1.0))
+	w.blockArmCap = _int(where + " block.armWearCap", bk.get("armWearCap", 0))
+	if w.blockArmShare < 0.0 or w.blockArmShare > 1.0 or w.blockArmCap < 0:
+		_err(where + ": block.streamArmShare must be 0 to 1 and block.armWearCap at least 0")
+	if w.stageAt.size() == 3 and w.blockArmCap >= w.stageAt[1]:
+		_err(where + ": block.armWearCap must be under battered (stageAt[1]): blocking alone never batters an arm")
 	w.legsBrokenGuardScale = float(p.get("legsBrokenGuardScale", 1.0))
 	var cr: Dictionary = j.get("cripple", {})
 	for key in ["regions", "blows", "base", "tierAhead", "lateAct", "lateBonus", "defensive", "maxPerFighter", "surgePower"]:

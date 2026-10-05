@@ -77,6 +77,10 @@
     "legs": 0.4,
     "_note": "guard wear: arms 60 percent, legs 40 percent"
   },
+  "block": {
+    "streamArmShare": 0.5,
+    "armWearCap": 270000
+  },
   "penalties": {
     "coreKiRegen": 0.7,
     "legsSpeed": 0.85,

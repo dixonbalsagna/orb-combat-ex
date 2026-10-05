@@ -69,9 +69,9 @@ static func banner(S: SimState, text: String, col: String, dur: float) -> void:
 ## A damage number; the consumer prints String(Math.round(amount)).
 ## A damage event: who hit whom, where on the body and how. x, y is where a damage number shows; number is false
 ## for landings and collisions, which never showed one.
-static func damage(S: SimState, f, attacker, amount: float, region: String, kind: String, col: String, number: bool) -> void:
+static func damage(S: SimState, f, attacker, amount: float, region: String, kind: String, col: String, number: bool, form: String = "") -> void:
 	var e := _ev(S, "damage")
-	e.x = f.x; e.y = f.y + 90.0; e.z = f.z; e.amount = amount; e.col = col
+	e.x = f.x; e.y = f.y + 90.0; e.z = f.z; e.amount = amount; e.col = col; e.mode = form   # mode: the blow's form (brawl, skill, or empty)
 	e.victim = float(S.fighters.find(f)); e.attacker = -1.0 if attacker == null else float(S.fighters.find(attacker))
 	e.region = region; e.kind = kind; e.number = number
 

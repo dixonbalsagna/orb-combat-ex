@@ -72870,6 +72870,870 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "wounds-block-valid",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-required",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ]
+          },
+          "del": [
+            "/block"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "wounds-block-unknown-key",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "extra": 1,
+              "streamArmShare": 0.5,
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/block/extra"
+      }
+    },
+    {
+      "id": "wounds-block-underscore-key-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "_note": "a note",
+              "streamArmShare": 0.5,
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-share-required",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/block"
+      }
+    },
+    {
+      "id": "wounds-block-share-negative",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": -0.1,
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/block/streamArmShare"
+      }
+    },
+    {
+      "id": "wounds-block-share-above-one",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 1.1,
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/block/streamArmShare"
+      }
+    },
+    {
+      "id": "wounds-block-share-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": "half",
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/block/streamArmShare"
+      }
+    },
+    {
+      "id": "wounds-block-share-zero-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0,
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-share-one-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 1,
+              "armWearCap": 270000
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-cap-required",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/block"
+      }
+    },
+    {
+      "id": "wounds-block-cap-negative",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": -1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/block/armWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-cap-integer",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 270000.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/block/armWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-cap-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": "high"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/block/armWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-cap-zero-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 0
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-cap-at-battered",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 360000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:block-cap",
+        "pointer": "/block/armWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-cap-above-battered",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 400000
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:block-cap",
+        "pointer": "/block/armWearCap"
+      }
+    },
+    {
+      "id": "wounds-block-cap-just-below-battered-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              180000,
+              360000,
+              540000
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 359999
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-block-cap-follows-the-fighters-own-battered",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/stageAt": [
+              100,
+              200,
+              300
+            ],
+            "/block": {
+              "streamArmShare": 0.5,
+              "armWearCap": 250
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:block-cap",
+        "pointer": "/block/armWearCap"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlLight-required",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "del": [
+            "/impulses/brawlLight"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/impulses"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlLight-negative",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlLight": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/impulses/brawlLight"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlLight-integer",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlLight": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/brawlLight"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlLight-zero-ok",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlLight": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "mood-impulse-blocked-required",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "del": [
+            "/impulses/blocked"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/impulses"
+      }
+    },
+    {
+      "id": "mood-impulse-blocked-negative",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/blocked": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/impulses/blocked"
+      }
+    },
+    {
+      "id": "mood-impulse-blocked-integer",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/blocked": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/blocked"
+      }
+    },
+    {
+      "id": "mood-impulse-blocked-zero-ok",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/blocked": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "mood-impulse-skillStrike-required",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "del": [
+            "/impulses/skillStrike"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/impulses"
+      }
+    },
+    {
+      "id": "mood-impulse-skillStrike-negative",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/skillStrike": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/impulses/skillStrike"
+      }
+    },
+    {
+      "id": "mood-impulse-skillStrike-integer",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/skillStrike": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/skillStrike"
+      }
+    },
+    {
+      "id": "mood-impulse-skillStrike-zero-ok",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/skillStrike": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "mood-impulse-brawlHeavy-required",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "del": [
+            "/impulses/brawlHeavy"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/impulses"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlHeavy-negative",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlHeavy": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/impulses/brawlHeavy"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlHeavy-integer",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlHeavy": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/brawlHeavy"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlHeavy-zero-ok",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlHeavy": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "mood-impulse-flurryClose-required",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "del": [
+            "/impulses/flurryClose"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/impulses"
+      }
+    },
+    {
+      "id": "mood-impulse-flurryClose-negative",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/flurryClose": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/impulses/flurryClose"
+      }
+    },
+    {
+      "id": "mood-impulse-flurryClose-integer",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/flurryClose": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/flurryClose"
+      }
+    },
+    {
+      "id": "mood-impulse-flurryClose-zero-ok",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/flurryClose": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "mood-impulse-guardBreak-required",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "del": [
+            "/impulses/guardBreak"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/impulses"
+      }
+    },
+    {
+      "id": "mood-impulse-guardBreak-negative",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/guardBreak": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/impulses/guardBreak"
+      }
+    },
+    {
+      "id": "mood-impulse-guardBreak-integer",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/guardBreak": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/guardBreak"
+      }
+    },
+    {
+      "id": "mood-impulse-guardBreak-zero-ok",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/guardBreak": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "mood-impulse-knockback-required",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "del": [
+            "/impulses/knockback"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/impulses"
+      }
+    },
+    {
+      "id": "mood-impulse-knockback-negative",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/knockback": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/impulses/knockback"
+      }
+    },
+    {
+      "id": "mood-impulse-knockback-integer",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/knockback": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/knockback"
+      }
+    },
+    {
+      "id": "mood-impulse-knockback-zero-ok",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/knockback": 0
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

@@ -53,6 +53,8 @@ func _init() -> void:
 	check("act rule and time cap", _actRule())
 	check("the break", _formBreak())
 	check("the form impulse", _formImpulse())
+	check("blocked blows and the arms", _blockedArms())
+	check("the mood by a blow's form", _moodForms())
 	check("depth in the core", _depth())
 	check("the intro phase", _intro())
 	check("composed intros", _introComposed())
@@ -1936,6 +1938,108 @@ func _depth() -> String:
 	SimFighter.stepDepth(S, a, dt)
 	if a.zT != -1200.0 or a.z != -1200.0:
 		return "a flight's end did not become the home depth (z %s, home %s)" % [str(a.z), str(a.zT)]
+	SimCore.dispose(S)
+	return ""
+
+
+## Blocked blows and the arms (melee-press-feel.md section 9d, ruling 1): a blocked light puts block.streamArmShare of
+## its wear on the arms and none on the legs; a blocked heavy splits as guardWearSplit says; no blocked blow takes the arms
+## past block.armWearCap, so blocking alone never batters them and nothing spills into the core; an arm already past the
+## cap takes nothing from a block; and the damage path passes a blocked light through as one.
+func _blockedArms() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+	var f = S.fighters[0]
+	var wd = f.wd
+	var A: int = SimWounds.ARMS
+	var L: int = SimWounds.LEGS
+	var k: float = SimWounds.wearK(S, f)
+	if wd.blockArmCap <= 0 or wd.blockArmCap >= wd.stageAt[1] or wd.blockArmShare <= 0.0:
+		return "the block data gives a share of %s and a cap of %d" % [str(wd.blockArmShare), wd.blockArmCap]
+	SimWounds.addGuardWear(S, f, 10.0, true)
+	if f.wear[A] != int(SimMathx.jround(10.0 * wd.blockArmShare * k)) or f.wear[L] != 0:
+		return "a blocked light put %d on the arms and %d on the legs" % [f.wear[A], f.wear[L]]
+	f.wear[A] = 0
+	SimWounds.addGuardWear(S, f, 10.0)
+	if f.wear[A] != int(SimMathx.jround(10.0 * wd.guardArms * k)) or f.wear[L] != int(SimMathx.jround(10.0 * wd.guardLegs * k)):
+		return "a blocked heavy put %d on the arms and %d on the legs" % [f.wear[A], f.wear[L]]
+	var legs0: int = f.wear[L]
+	for n in range(300):
+		SimWounds.addGuardWear(S, f, 10.0, n % 2 == 0)
+		if f.wear[A] > wd.blockArmCap or f.stage[A] >= 2:
+			return "blocked blows took the arms to %d, past the cap of %d (stage %d)" % [f.wear[A], wd.blockArmCap, f.stage[A]]
+	if f.wear[A] != wd.blockArmCap or f.wear[L] <= legs0 or f.wear[SimWounds.CORE] != 0 or f.wear[SimWounds.HEAD] != 0:
+		return "after 300 blocked blows: arms %d (cap %d), legs %d, core %d" % [f.wear[A], wd.blockArmCap, f.wear[L], f.wear[SimWounds.CORE]]
+	f.wear[A] = wd.blockArmCap + 6000
+	SimWounds.addGuardWear(S, f, 50.0, true)
+	SimWounds.addGuardWear(S, f, 50.0)
+	if f.wear[A] != wd.blockArmCap + 6000:
+		return "a block wore an arm that was already past the cap"
+	f.wear[A] = 0
+	S.out.fx.clear()
+	SimDamage.hurt(S, f, 10.0, S.fighters[1], "guard", "guard", "", true, "brawl", true)
+	var e = S.out.fx[S.out.fx.size() - 1] if not S.out.fx.is_empty() else null
+	for q in S.out.fx:
+		if q.type == "damage":
+			e = q
+	if f.wear[A] != int(SimMathx.jround(10.0 * wd.blockArmShare * k)) or e == null or e.type != "damage" or e.mode != "brawl" or e.kind != "guard":
+		return "a blocked brawl blow through the damage path wore the arms %d and sent %s" % [f.wear[A], "nothing" if e == null else e.kind + "/" + e.mode]
+	SimCore.dispose(S)
+	return ""
+
+
+## The mood by a blow's form (melee-press-feel.md section 9d, ruling 2): each kind of blow adds its own impulse, read from
+## this tick's events; a strike of a planned exchange outside a brawl is still strike or heavyStrike; the AGGRESSIVE
+## multiplier applies to who did it.
+func _moodForms() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+	var a = S.fighters[0]
+	var b = S.fighters[1]
+	var I: Dictionary = SimMood.imp
+	for key in ["brawlLight", "blocked", "skillStrike", "brawlHeavy", "flurryClose", "guardBreak", "knockback"]:
+		if not I.has(key):
+			return "mood.json impulses." + key + " is not loaded"
+	if I.brawlLight[0] <= 0 or I.brawlLight[0] >= I.strike[0] or I.brawlHeavy[0] >= I.heavyStrike[0] or I.blocked[0] != 0:
+		return "a brawl's blow should feed the mood less than a planned strike, and a blocked one nothing"
+	# what one tick adds with these events, over what the same tick adds with none
+	var gain := func(make: Callable) -> int:
+		var out: Array = [0, 0]
+		for pass_ in range(2):
+			S.mood.v = SimMood.mood.range / 2
+			S.out.fx.clear()
+			if pass_ == 1:
+				make.call()
+			var v0: int = S.mood.v
+			SimMood.tick(S)
+			out[pass_] = S.mood.v - v0
+		S.out.fx.clear()
+		return out[1] - out[0]
+	var cue := func(name: String, text: String) -> void:
+		SimFx.cue(S, b, name, text, "")
+		S.out.fx[S.out.fx.size() - 1].target = 0.0
+	for aggressive in [false, true]:
+		a.stance = 0.0 if aggressive else 1.0
+		b.stance = 1.0
+		var col: int = 1 if aggressive else 0
+		var cases: Array = [
+			["brawlLight", func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", true, "brawl")],
+			["brawlHeavy", func(): SimFx.damage(S, b, a, 5.0, "core", "heavy", "", true, "brawl")],
+			["skillStrike", func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", true, "skill")],
+			["strike", func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", true)],
+			["heavyStrike", func(): SimFx.damage(S, b, a, 5.0, "core", "heavy", "", true)],
+			["blocked", func(): SimFx.damage(S, b, a, 5.0, "arms", "guard", "", true, "brawl")],
+			["flurryClose", func(): cue.call("stagger", "flurry")],
+			["guardBreak", func(): cue.call("guard_break", "")],
+			["knockback", func(): SimFx.knockback(S, b, a, "short", 300.0, S.tick + 12)],
+		]
+		for c in cases:
+			var got: int = gain.call(c[1])
+			if got != I[c[0]][col]:
+				return "%s%s added %d to the mood, the data says %d" % [c[0], " (AGGRESSIVE)" if aggressive else "", got, I[c[0]][col]]
+		# a lone heavy's stagger is not a flurry's close, and a blow with no number is nothing
+		if gain.call(func(): cue.call("stagger", "heavy")) != 0 or gain.call(func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", false, "brawl")) != 0:
+			return "a heavy's stagger or an unnumbered blow fed the mood"
 	SimCore.dispose(S)
 	return ""
 

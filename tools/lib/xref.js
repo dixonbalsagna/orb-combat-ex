@@ -795,6 +795,7 @@ function xref(docs, root = repoRoot) {
     if (!isObj(d)) continue;
     const key = m[2] === 'wounds' ? 'stageAt' : 'thresholds';
     if (Array.isArray(d[key]) && !increasing(d[key])) err(file, `/${key}`, 'increasing', `${key} must be strictly increasing (got ${JSON.stringify(d[key])})`);
+    if (m[2] === 'wounds' && isObj(d.block) && Number.isInteger(d.block.armWearCap) && Array.isArray(d.stageAt) && d.stageAt.length >= 2 && typeof d.stageAt[1] === 'number' && d.block.armWearCap >= d.stageAt[1]) err(file, '/block/armWearCap', 'block-cap', `armWearCap ${d.block.armWearCap} is not below battered (stageAt[1] ${d.stageAt[1]}), so blocking alone could batter an arm`);
     if (m[2] === 'wounds' && isObj(d.regions) && isObj(d.family)) {
       const n = plainKeys(d.regions).length;
       for (const [fam, w] of Object.entries(d.family)) {

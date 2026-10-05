@@ -16,7 +16,14 @@
     "form": 600,
     "finisherStart": 900,
     "taunt": 180,
-    "landmarkFall": 600
+    "landmarkFall": 600,
+    "brawlLight": 20,
+    "blocked": 0,
+    "skillStrike": 90,
+    "brawlHeavy": 120,
+    "flurryClose": 180,
+    "guardBreak": 240,
+    "knockback": 180
   },
   "aggressiveMul": {
     "num": 3,

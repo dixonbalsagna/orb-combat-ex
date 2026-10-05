@@ -104,10 +104,7 @@ static func pickRegion(S: SimState, f, fam: String) -> int:
 
 static func addWear(S: SimState, f, region: int, damage: float) -> void:
 	var wd = f.wd
-	var k: float = wd.wearPerDamage * SimMathx.jmin(wd.overtimeCap, 1.0 + wd.overtimePerMin * SimMathx.jmax(0.0, S.T - wd.overtimeStart) / 60.0)
-	if act(S) == 1:
-		k *= wd.act1Damping
-	var add: int = int(SimMathx.jround(damage * k))
+	var add: int = int(SimMathx.jround(damage * wearK(S, f)))
 	if wd.spill[region]:
 		# Pitch A: a limb wears to battered and stops; the rest spills into the core (all of it once the limb is broken).
 		var cap: int = f.wear[region] if f.stage[region] == 3 else wd.stageAt[2] - 1
@@ -121,13 +118,30 @@ static func addWear(S: SimState, f, region: int, damage: float) -> void:
 	updateStages(S, f)
 
 
-## A hit into a raised guard (family guard): its wear is split between the arms and the legs by f.wd.guardArms and
-## guardLegs (wounds.json guardWearSplit), so legs can become battered from guarding (Game Design's lever on the arm skew).
-static func addGuardWear(S: SimState, f, damage: float) -> void:
-	if f.wd.guardArms > 0.0:
-		addWear(S, f, ARMS, damage * f.wd.guardArms)
-	if f.wd.guardLegs > 0.0:
-		addWear(S, f, LEGS, damage * f.wd.guardLegs)
+## Wear units for a point of damage on f now: his wearPerDamage, the overtime ramp, and act 1's damping.
+static func wearK(S: SimState, f) -> float:
+	var wd = f.wd
+	var k: float = wd.wearPerDamage * SimMathx.jmin(wd.overtimeCap, 1.0 + wd.overtimePerMin * SimMathx.jmax(0.0, S.T - wd.overtimeStart) / 60.0)
+	if act(S) == 1:
+		k *= wd.act1Damping
+	return k
+
+
+## A hit into a raised guard (family guard). A blocked heavy's wear is split between the arms and the legs by f.wd.guardArms
+## and guardLegs (wounds.json guardWearSplit), so legs can become battered from guarding. A blocked light or flurry blow
+## (stream: a guard in a brawl takes six a second) puts f.wd.blockArmShare of its wear on the arms and the rest is soaked.
+## Either way no blocked blow takes the arms past f.wd.blockArmCap: what is over it is soaked, not spilled, so blocking
+## alone never batters an arm (melee-press-feel.md section 9d, ruling 1).
+static func addGuardWear(S: SimState, f, damage: float, stream: bool = false) -> void:
+	var wd = f.wd
+	var share: float = wd.blockArmShare if stream else wd.guardArms
+	if share > 0.0:
+		var room: int = wd.blockArmCap - f.wear[ARMS]
+		if room > 0:
+			f.wear[ARMS] += mini(room, int(SimMathx.jround(damage * share * wearK(S, f))))
+			updateStages(S, f)
+	if not stream and wd.guardLegs > 0.0:
+		addWear(S, f, LEGS, damage * wd.guardLegs)
 
 
 ## Recovery, once per tick from stepFighter: out of exchanges a region below 60 fades f.wd.fadeOut; a battered region fades

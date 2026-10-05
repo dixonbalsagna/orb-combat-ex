@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/fighter-wounds",
   "title": "wounds/1 (D1a as built, docs/architecture/d1-roster-data.md sections 3 and 7b)",
-  "description": "data/fighters/<id>/wounds.json: the per-fighter wound numbers, loaded into a WoundsDef (sim/core/fighter_data.gd). Version field: schema. Policy: closed at every level, except keys starting with an underscore. Integer fields (units and ticks) must be integral; other numbers carry at most 15 significant digits (checked by the validator). Cross-references (stage thresholds strictly increase, family weights match the region count) are checked by tools/lib/xref.js. The stricter brink (brinkLimbs), the act-1 damping and the overtime ramp are part of the shape.",
+  "description": "data/fighters/<id>/wounds.json: the per-fighter wound numbers, loaded into a WoundsDef (sim/core/fighter_data.gd). Version field: schema. Policy: closed at every level, except keys starting with an underscore. Integer fields (units and ticks) must be integral; other numbers carry at most 15 significant digits (checked by the validator). Cross-references (a block's armWearCap below stageAt[1] (block-cap); stage thresholds strictly increase, family weights match the region count) are checked by tools/lib/xref.js. The stricter brink (brinkLimbs), the act-1 damping and the overtime ramp are part of the shape.",
   "type": "object",
   "required": [
     "schema",
@@ -19,7 +19,8 @@
     "act1Damping",
     "overtime",
     "guardWearSplit",
-    "lastStand"
+    "lastStand",
+    "block"
   ],
   "properties": {
     "schema": {
@@ -400,6 +401,31 @@
           "description": "The window in seconds of his free time; 0 switches it off. The loader requires a whole number of ticks."
         }
       },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "block": {
+      "type": "object",
+      "required": [
+        "streamArmShare",
+        "armWearCap"
+      ],
+      "properties": {
+        "streamArmShare": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The share of a blocked light or flurry blow's chip wear that goes to the arms; the rest is soaked (melee-press-feel.md section 9d, ruling 1)."
+        },
+        "armWearCap": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "No blocked blow takes the arms' wear past this, in wear units; below battered (stageAt[1]), so blocking alone never batters an arm (rule block-cap)."
+        }
+      },
+      "description": "Blocked blows and the arms.",
       "additionalProperties": false,
       "patternProperties": {
         "^_": true
