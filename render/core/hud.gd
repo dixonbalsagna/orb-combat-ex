@@ -10,9 +10,9 @@ const FEED_LINES := 8
 const HELP_STEP: float = 15.0   # the help lines' spacing
 ## The demo's help: the system and debug keys. The fighters' controls are UI's (its legend, hints and How to play).
 const SYSTEM_KEYS: Array = [
-	"N new match", "T/Y toggle AI", "P pause", "F1 how to play", "F2 old HUD", "F3 perf", "F4 feed",
+	"N new match", "T/Y toggle computer", "P pause", "F1 how to play", "F2 old HUD", "F3 perf", "F4 feed",
 	"F6 cracks (Shift: destruction, Ctrl: embers)", "F7 flashes", "F8 legacy shapes",
-	"F9 split (Alt: camera angle, Ctrl: hole or stubs)", "F10 split vs AI", "F11 reduced motion", "Shift+F7 press styles",
+	"F9 split (Alt: camera angle, Ctrl: hole or stubs)", "F10 split vs computer", "F11 reduced motion", "Shift+F7 press styles",
 ]
 
 var main: Node       # the Main node (render/core/main.gd)
@@ -53,8 +53,9 @@ func _draw() -> void:
 		var k: float = b.t / 0.12 if b.t < 0.12 else (maxf(0.0, (b.dur - b.t) / 0.3) if b.t > b.dur - 0.3 else 1.0)
 		var fs: int = int(round(clampf(vw * 0.045, 22.0, 44.0)))
 		var c: Color = RenderLook.col(b.col)
-		_text(b.text, Vector2(vw * 0.5 + 2, vh * 0.28 + (1.0 - k) * 8.0 + 2), fs, Color(0, 0, 0, 0.6 * k), 0)
-		_text(b.text, Vector2(vw * 0.5, vh * 0.28 + (1.0 - k) * 8.0), fs, Color(c, k), 0)
+		var bt: String = UiData.display_text(str(b.text))   # a banner the sim wrote may name a fighter
+		_text(bt, Vector2(vw * 0.5 + 2, vh * 0.28 + (1.0 - k) * 8.0 + 2), fs, Color(0, 0, 0, 0.6 * k), 0)
+		_text(bt, Vector2(vw * 0.5, vh * 0.28 + (1.0 - k) * 8.0), fs, Color(c, k), 0)
 	_feed(host, vh)
 	_strip(S, host, vw, vh)
 	_prompt(host, vw, vh)
@@ -69,23 +70,46 @@ func _prompt(host: SimHost, vw: float, vh: float) -> void:
 	var dp: float = _dp()
 	var touch: bool = main.ui_hud != null and bool(main.ui_hud.opts.get("touch_ui", false))
 	if not main.started and not card and touch:
-		# A touch screen has no keys to list: one line, at least 12 dp like UI's text floor.
-		_text("AI vs AI demo. Tap to take control of P1.", Vector2(vw * 0.5, vh - 96.0 * dp), int(round(16.0 * dp)), Color(1, 1, 1, 0.9), 0)
+		# A touch screen has no keys to list: one line, at least 12 dp like UI's text floor. It sits in the gap between
+		# the touch buttons, on two lines when it is too long for the gap.
+		var fs: int = int(round(16.0 * dp))
+		var gap: Vector2 = _touch_gap(vw, dp)
+		var msg: Array = ["Computer vs computer demo. Tap to take control of P1."]
+		if font.get_string_size(msg[0], HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > gap.y - gap.x:
+			msg = ["Computer vs computer demo.", "Tap to take control of P1."]
+		for k in range(msg.size()):
+			_text(msg[k], Vector2((gap.x + gap.y) * 0.5, vh - 96.0 * dp - float(msg.size() - 1 - k) * 1.3 * float(fs)), fs, Color(1, 1, 1, 0.9), 0)
 	elif not main.started and not card and intro:
-		_text("AI vs AI demo. Press any key to take control of P1.", Vector2(vw * 0.5, vh - 62.0), 16, Color(1, 1, 1, 0.9), 0)
+		_text("Computer vs computer demo. Press any key to take control of P1.", Vector2(vw * 0.5, vh - 62.0), 16, Color(1, 1, 1, 0.9), 0)
 	elif not main.started and not card:
 		# The system and debug keys only (UI's legend and hints own the fighters' controls), wrapped to the screen's width.
 		var lines: Array = _wrap(SYSTEM_KEYS, ",  ", 11, vw - 24.0)
 		var n_sys: int = lines.size()
 		lines.append_array(_wrap(_flash_items(), "   ", 11, vw - 24.0))
 		var y0: float = vh - 62.0 - HELP_STEP * float(lines.size() - 1) if not legacy else 124.0
-		_text("AI vs AI demo. Press any key to take control of P1.", Vector2(vw * 0.5, y0 - 18.0), 16, Color(1, 1, 1, 0.9), 0)
+		_text("Computer vs computer demo. Press any key to take control of P1.", Vector2(vw * 0.5, y0 - 18.0), 16, Color(1, 1, 1, 0.9), 0)
 		for k in range(lines.size()):
 			_text(lines[k], Vector2(vw * 0.5, y0 + HELP_STEP * float(k)), 11, Color(1, 1, 1, 0.7 if k < n_sys else 0.6), 0)
 	if not intro:
 		_text("seed %d   tick %d%s" % [host.seed, host.ticks, "   PAUSED" if host.paused else ""], Vector2(vw - 10, vh - 30), 10, Color(1, 1, 1, 0.5), 1)
 	if show_perf:
 		_perf(vw)
+
+
+## The stretch of the screen's width between the touch buttons on its left and on its right (x0, x1), a little inside
+## them: where a line of text is clear of every button. The whole width, less a margin, with no buttons on a side.
+func _touch_gap(vw: float, dp: float) -> Vector2:
+	var x0: float = 0.0
+	var x1: float = vw
+	var lay: Dictionary = main.touch_layout()
+	for k in lay:
+		var c = lay[k]
+		if c is Dictionary and c.has("r"):
+			if float(c.x) < vw * 0.5:
+				x0 = maxf(x0, float(c.x) + float(c.r))
+			else:
+				x1 = minf(x1, float(c.x) - float(c.r))
+	return Vector2(x0 + 8.0 * dp, x1 - 8.0 * dp)
 
 
 func _dp() -> float:
@@ -124,12 +148,19 @@ static func main_keys() -> Array:
 	return ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "[", "]"]
 
 
+## A fighter's name as a player sees it: UI's display name for the roster name (ui/data/fighter_names.json). The sim,
+## the data and the replays keep the roster's own names; only what is drawn here changes. Text the sim wrote (the
+## banner, the feed, the floating words) goes through UiData.display_text for the same reason.
+static func _name(f) -> String:
+	return UiData.display_name(str(f.name))
+
+
 func _panel(f, right: bool, bw: float, vw: float) -> void:
 	var x: float = vw - bw - 14.0 if right else 14.0
 	var y: float = 12.0
 	var al: int = 1 if right else -1
 	var ax: float = x + bw if right else x
-	_text(f.name + ("  (AI)" if f.ai != null else ""), Vector2(ax, y + 12), 15, Color.WHITE, al)
+	_text(_name(f) + ("  (CPU)" if f.ai != null else ""), Vector2(ax, y + 12), 15, Color.WHITE, al)
 	var st: String = RenderLook.STANCE_LONG[int(f.stance)]
 	_text(f.title + "  ·  " + st + ("  ·  HIDDEN" if f.hidden else ""), Vector2(ax, y + 27), 11, Color(1, 1, 1, 0.75), al)
 	var fr: float = f.hp / f.maxhp
@@ -161,7 +192,7 @@ func _labels(S: SimState, host: SimHost) -> void:
 		if f.hidden:
 			_text("HIDDEN", p, 12, Color(190.0 / 255.0, 220.0 / 255.0, 1.0, 0.95), 0)
 		else:
-			_text("%s %s T%d" % [f.name, RenderLook.STANCE_SHORT[int(f.stance)], int(f.tier)], p, 11, Color(1, 1, 1, 0.9), 0)
+			_text("%s %s T%d" % [_name(f), RenderLook.STANCE_SHORT[int(f.stance)], int(f.tier)], p, 11, Color(1, 1, 1, 0.9), 0)
 
 
 func _floats(host: SimHost) -> void:
@@ -171,7 +202,7 @@ func _floats(host: SimHost) -> void:
 		var p: Vector2 = cam.unproject_position(Vector3(SimWrap.sdx(cx, fl.x), fl.y, 0.0))
 		var fs: int = int(round(14.0 + minf(10.0, fl.txt.length() * 2.0)))
 		var c: Color = RenderLook.col(fl.col)
-		_text(fl.txt, p, fs, Color(c, 1.0 - fl.t / 0.9), 0)
+		_text(UiData.display_text(str(fl.txt)), p, fs, Color(c, 1.0 - fl.t / 0.9), 0)
 
 
 func _feed(host: SimHost, vh: float) -> void:
@@ -181,8 +212,9 @@ func _feed(host: SimHost, vh: float) -> void:
 		var l = host.feed[i]
 		var age: float = host.S.T - l.t
 		var a: float = clampf(1.0 - age / 12.0, 0.35, 0.95)
-		_text("%6.1f  %s" % [l.t, l.tag], Vector2(14, y), 11, Color(1.0, 0.85, 0.45, a), -1)
-		_text(l.sub, Vector2(66 + font.get_string_size(l.tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x + 16, y), 11, Color(1, 1, 1, a * 0.85), -1)
+		var tag: String = UiData.display_text(str(l.tag))   # the director's lines name the fighters
+		_text("%6.1f  %s" % [l.t, tag], Vector2(14, y), 11, Color(1.0, 0.85, 0.45, a), -1)
+		_text(UiData.display_text(str(l.sub)), Vector2(66 + font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x + 16, y), 11, Color(1, 1, 1, a * 0.85), -1)
 		y += 14.0
 
 
