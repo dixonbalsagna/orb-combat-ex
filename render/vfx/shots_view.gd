@@ -354,6 +354,15 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 		var start: Vector2 = pts[0]
 		pr.shown += 1
 		match e.style:
+			"glint":
+				# The beat's glint (the option UI's beat ring goes with): a small hard ring and a short streak on the striking limb's tip at the contact tick.
+				var gr: float = lerpf(4.0, VfxPress.p("glint_r"), u)
+				var gc2: Color = e.col2
+				gc2.a = al * (1.0 - u)
+				n = _put(n, contact, Vector2(1.0, 0.0), gr * 2.0, gr * 2.0, zf + 0.2, gc2, maxf(0.14, 2.4 * minpx / gr), 0.0, SHAPE_RING)
+				var gd: Vector2 = (contact - pts[maxi(pts.size() - 2, 0)])
+				if gd.length() > 0.5:
+					n = _line(n, contact - gd.normalized() * 14.0, contact, maxf(1.4, minpx * 1.2), zf + 0.2, gc2)
 			"speed":
 				# A soft, filled, overlapping blur along the fist's path (layered soft discs and one wide soft streak), and a small round ring.
 				var fade: float = 1.0 - u

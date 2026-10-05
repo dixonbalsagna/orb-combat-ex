@@ -70,3 +70,9 @@ Applied 2026-10-05, the flag still off:
 - The pictures are staged: the cue is sent as Encounter's will be and his position is scripted along the zip (the sim does not move him yet).
 - At gameplay zoom the soft ghosts are faint against sand; the alphas are in `_zip`.
 - The ground line is flat along the ground under him and under the arrival point; for an airborne arrival it does not rise.
+
+## On the director's real cues (B0, 2026-10-05)
+
+The real cue is `lunge_light`, `lunge_heavy`, `charge_light` or `charge_heavy` with `actor`, `target`, `text` (`lunge` or `charge`), `amount` (the wind-up's ticks, 0 for a charge) and `n` (the move's ticks). It carries no reading, hold, way-out ticks or exit point yet, so the defaults stand: a heavy cue is heavy, a light one reads the press log or Animation's blow, `hold` is 14, `out` is `n`, and he returns to where he started. A `charge_*` cue is a one-way flight: its tell and travel draw, with no strike hold and no way out. In three headless AI matches (seeds 4, 12345, 7; 5,400 ticks each) the director sent 20 lunge and 16 charge cues; each one's tell (the ground line and its tick) drew on the tick it started (`effects_check.gd` `_real()`).
+
+Today's cue is the old mid-band lunge, not the LT zip, so its move is 3 to 20 ticks and `VfxZip.violations` counts the short ones (34 of the 36 cues): that is the count Legal's travel minimum (m02) will want at zero when the zip's cue replaces it.

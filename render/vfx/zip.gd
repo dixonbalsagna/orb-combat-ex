@@ -20,7 +20,7 @@ extends RefCounted
 ## `lunge_guard_broken`. Presentation only: it reads cues and fighters, draws no random number.
 
 const DEFAULTS: Dictionary = {
-	"zip": {"ghosts": 5.0, "echoes": 4.0, "echo_pop": 2.0, "hold": 14.0, "hold_max": 60.0, "tell_alpha": 0.55, "band_w": 16.0, "band_w2": 10.0, "wide_w": 24.0,
+	"zip": {"ghosts": 5.0, "echoes": 3.0, "echo_pop": 2.5, "hold": 14.0, "hold_max": 60.0, "tell_alpha": 0.55, "band_w": 16.0, "band_w2": 10.0, "wide_w": 24.0,
 		"counter_life": 12.0, "caught_life": 22.0, "gbreak_life": 14.0, "alpha": 0.9, "ground_line_w": 1.6, "min_gap": 6.0,
 		"ghost_gap": 16.0, "ghost_alpha": 0.35, "ring_ticks": 10.0, "mark_h": 54.0, "mark_r": 26.0, "min_travel": 4.0, "bh_per_tick": 3.0},
 }
@@ -29,7 +29,8 @@ class Zip:
 	var slot: int = 0
 	var target: int = 1
 	var style: String = "speed"     # speed, tech or heavy
-	var heavy_kind: bool = false    # the cue was lunge_heavy
+	var heavy_kind: bool = false    # the cue was lunge_heavy or charge_heavy
+	var one_way: bool = false       # a charge: a one-way flight, there is no strike hold and no way out
 	var age: float = 0.0
 	var wind: float = 6.0
 	var mv: float = 6.0
@@ -185,7 +186,7 @@ func on_events(S: SimState, events: Array, _reduced: bool) -> void:
 			continue
 		var kind: String = String(e.kind)
 		match kind:
-			"lunge_light", "lunge_heavy":
+			"lunge_light", "lunge_heavy", "charge_light", "charge_heavy":
 				_start(S, e, kind)
 			"lunge_counter", "lunge_caught", "lunge_guard_broken":
 				_outcome(S, e, kind)
@@ -201,7 +202,8 @@ func _start(S: SimState, e, kind: String) -> void:
 	var z := Zip.new()
 	z.slot = slot
 	z.target = tgt
-	z.heavy_kind = kind == "lunge_heavy"
+	z.heavy_kind = kind.ends_with("_heavy")
+	z.one_way = kind.begins_with("charge")
 	var st: String = String(VfxHub._g(e, "style", ""))
 	if st == "mash":
 		st = "speed"
@@ -216,11 +218,14 @@ func _start(S: SimState, e, kind: String) -> void:
 	z.mv = maxf(float(VfxHub._g(e, "n", 6.0)), 1.0)
 	z.hold = clampf(float(VfxHub._g(e, "hold", p("hold"))), 1.0, p("hold_max"))
 	z.out = maxf(float(VfxHub._g(e, "out", z.mv)), 1.0)
+	if z.one_way:
+		z.hold = 1.0
+		z.out = 1.0
 	# Legal m02: the way in and the way out last at least max(4, ceil(distance in body heights / 3)) ticks. The sim sets them; count the cues that do not.
 	var dist_bh: float = Vector2(SimWrap.sdx(f.x, ft.x), ft.y - f.y).length() / VfxLook.BH
 	if z.mv < float(min_ticks(dist_bh)):
 		violations["short_in"] = int(violations.get("short_in", 0)) + 1
-	if z.out < float(min_ticks(dist_bh)):
+	if z.out < float(min_ticks(dist_bh)) and not z.one_way:
 		violations["short_out"] = int(violations.get("short_out", 0)) + 1
 	z.ox = f.x
 	z.oy = f.y

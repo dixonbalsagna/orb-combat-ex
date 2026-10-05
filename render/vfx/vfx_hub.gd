@@ -71,6 +71,7 @@ var glare_enabled: bool = VfxLook.GLARE_DEFAULT   # the rival's glasses glare (g
 var glare := VfxGlare.new()
 var press_enabled: bool = VfxLook.PRESS_DEFAULT   # the melee press styles (press.gd, drawn by shots_view.gd)
 var press := VfxPress.new()
+var beat_glint_enabled: bool = false          # the beat option (UI's beat ring for every blow, the rival's too): a glint on the striking limb at the beat (press.gd)
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
 var explosions_enabled: bool = VfxLook.EXPLOSIONS_DEFAULT   # the blasts erupt in flame, sparks, smoke and a smouldering scorch; a knocked-loose shot tumbles and smokes (explode.gd)
 var earth_enabled: bool = VfxLook.EARTH_DEFAULT   # material chunks for `debris`, cel flames for `fire`, and the ground-contact events (docs/vfx/earth-plan.md)
@@ -257,6 +258,7 @@ func _consume(S: SimState, events: Array) -> void:
 		glare.step(S, frozen)
 		glare.on_events(S, events, xform.forms, rocks.level)
 	if press_enabled:
+		press.beat_glint = beat_glint_enabled
 		press.step(S, frozen)
 		press.on_events(S, events, reduced_motion)
 		zip.step(S, frozen)

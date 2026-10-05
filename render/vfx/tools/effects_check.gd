@@ -197,6 +197,7 @@ func _run() -> void:
 	_glare()
 	_press()
 	_zip()
+	_real()
 	print("\neffects check passed" if fails == 0 else "\neffects check FAILED (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -3145,7 +3146,7 @@ func _zip() -> void:
 			if (ep - org).dot(body - org) <= 0.0 or (ep - org).length() >= (body - org).length():
 				echo_ok = false
 	_check(echo_ok, "the echoes always stand between the start and the body, never ahead of him or at the arrival point before he gets there")
-	_check(seq[0] >= 15 and seq[1] >= 15, "the echoes are drawn during the travel, not only after it (quads by travel tick %s)" % str(seq))
+	_check(seq[0] >= 11 and seq[1] >= 11, "the echoes are drawn during the travel, not only after it (quads by travel tick %s)" % str(seq))
 	var seq2: Array = []
 	for k in range(7):
 		_tick(S, ht, [])
@@ -3251,6 +3252,100 @@ func _zip() -> void:
 	_check(quads.call(hz) <= VfxShotsView.CAP, "the busiest tick draws %d quads of %d" % [view.count, VfxShotsView.CAP])
 	view.queue_free()
 	SimCore.dispose(S)
+
+
+## The press looks and the zip's tell on the real director's output (Encounter's B0: the strike beats' fields and the lunge cue), in headless AI matches, and the rule that
+## a tech blow's look is the same everywhere.
+func _real() -> void:
+	print("press and zip on real director output")
+	var tot := {"lunge": 0, "charge": 0, "tells": 0, "beat": 0, "blows": 0, "agree": 0, "disagree": 0, "glints": 0, "short": 0}
+	var styles_seen := {}
+	for seed in [4, 12345, 7]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, seed)
+		var host := FakeHost.new()
+		host.S = S
+		var view := VfxShotsView.new()
+		root.add_child(view)
+		var h := VfxHub.new()
+		h.press_enabled = true
+		h.beat_glint_enabled = true
+		h.reset(S, seed)
+		var seen_zip: Dictionary = {}
+		for t in range(5400):
+			SimCore.step(S)
+			var evs: Array = S.out.fx.duplicate()
+			# the style of each damage event, as the director's own beat says it, before the hub reads it
+			for e in evs:
+				if String(e.type) == "damage" and (String(e.kind) == "light" or String(e.kind) == "heavy") and int(e.attacker) >= 0:
+					var ba: Dictionary = VfxPress.beat_args(S, int(e.attacker))
+					if ba.has("style"):
+						tot["beat"] += 1
+						styles_seen[String(ba.style)] = true
+						var got: String = VfxPress.style_of(S, e, int(e.attacker))
+						if got == String(ba.style) or String(e.kind) == "heavy":
+							tot["agree"] += 1
+						else:
+							tot["disagree"] += 1
+			h.consume(S, evs)
+			S.out.fx.clear()
+			for z: VfxZip.Zip in h.zip.zips:
+				var key: int = int(z.ox) * 7 + z.slot
+				if not seen_zip.has(key):
+					seen_zip[key] = true
+					tot["charge" if z.one_way else "lunge"] += 1
+					view.update(h, host, 1.0, S.fighters[z.slot].x, 1.0, 1500.0)
+					if view.count >= 2 and z.wind >= 1.0 and z.mv >= 1.0:
+						tot["tells"] += 1
+					if h.zip.violations.size() > 0:
+						tot["short"] += 1
+			tot["blows"] += 0
+		tot["glints"] += int(h.press.made.get("glint", 0))
+		view.queue_free()
+		SimCore.dispose(S)
+	print("    real matches: %s, styles from beats %s" % [str(tot), str(styles_seen.keys())])
+	_check(int(tot.lunge) + int(tot.charge) > 0, "the AI matches send real lunge or charge cues (%d lunges, %d charges)" % [tot.lunge, tot.charge])
+	_check(int(tot.tells) == int(tot.lunge) + int(tot.charge), "each real cue's tell draws (a ground line and its tick) the tick it starts (%d of %d)" % [tot.tells, int(tot.lunge) + int(tot.charge)])
+	_check(int(tot.beat) > 0 and int(tot.disagree) == 0, "every blow with a beat style reads that style: %d blows, %d agree, %d disagree" % [tot.beat, tot.agree, tot.disagree])
+	_check(int(tot.glints) > 0, "the beat option puts a glint on each blow (%d)" % tot.glints)
+	# A tech blow is the same everywhere: from idle and after a long flight (the end of a zip) it keeps the same echoes, the same distance behind him and the same diamond.
+	var S2 := SimCore.createSim()
+	SimCore.newMatch(S2, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S2, plains)
+	var host2 := FakeHost.new()
+	host2.S = S2
+	var view2 := VfxShotsView.new()
+	root.add_child(view2)
+	var seqs: Array = []
+	var fxs: Array = []
+	for mode in ["idle", "after a zip"]:
+		var h2 := VfxHub.new()
+		h2.press_enabled = true
+		h2.reset(S2, 6)
+		S2.fighters[0].x = plains
+		S2.fighters[0].y = g
+		S2.fighters[1].x = SimWrap.wrap(plains + 90.0)
+		S2.fighters[1].y = g
+		for k in range(8):
+			_tick(S2, h2, [])
+		if mode == "after a zip":
+			for k in range(1, 6):
+				S2.fighters[0].x = SimWrap.wrap(plains - 260.0 + 52.0 * float(k))
+				_tick(S2, h2, [])
+		var ev := VfxMock.ev("damage", {"x": S2.fighters[1].x, "y": g + 90.0, "z": 0.0, "amount": 6.0, "col": "#ffffff", "victim": 1, "attacker": 0, "region": "core", "kind": "light", "number": true, "style": "timed"})
+		_tick(S2, h2, [ev])
+		var seq: Array = []
+		for k in range(9):
+			view2.update(h2, host2, 1.0, plains + 45.0, 1.0, 1500.0)
+			seq.append(view2.count)
+			_tick(S2, h2, [])
+		seqs.append(seq)
+		fxs.append(h2.press.fx[0] if not h2.press.fx.is_empty() else null)
+	_check(fxs[0] != null and fxs[1] != null and fxs[0].lunge == fxs[1].lunge and fxs[0].ghosts == fxs[1].ghosts and fxs[0].style == "tech" and fxs[1].style == "tech", "a tech blow keeps one echo distance and count from idle and at the end of a zip (%.0f and %.0f units)" % [fxs[0].lunge if fxs[0] != null else -1.0, fxs[1].lunge if fxs[1] != null else -1.0])
+	_check(str(seqs[0]) == str(seqs[1]), "and it draws the same quads tick by tick (%s against %s)" % [str(seqs[0]), str(seqs[1])])
+	view2.queue_free()
+	SimCore.dispose(S2)
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:

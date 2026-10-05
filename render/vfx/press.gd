@@ -17,7 +17,7 @@ extends RefCounted
 ## (the fist runs from his guard in front of the chest to the contact point). All of it is drawn by shots_view.gd; presentation only, no random number.
 
 const DEFAULTS: Dictionary = {
-	"press": {"hist": 64.0, "reach": 24.0, "lunge": 12.0, "alpha": 0.9,
+	"press": {"hist": 64.0, "reach": 24.0, "lunge": 12.0, "echo_back": 24.0, "glint_life": 5.0, "glint_r": 14.0, "alpha": 0.9,
 		"speed_life": 8.0, "speed_ring_life": 6.0, "speed_w": 7.0, "speed_ring_r": 20.0,
 		"tech_life": 11.0, "echo_pop": 2.5, "line_life": 7.0, "diamond_life": 5.0, "diamond_r": 14.0,
 		"wind_life": 26.0, "wind_r": 34.0, "heavy_life": 18.0, "ghost_life": 8.0, "crescent_life": 8.0, "ring_life": 12.0, "ring_r": 40.0, "fly_max": 40.0, "fly_ghosts": 3.0,
@@ -73,6 +73,7 @@ var fly: Array = [0.0, 0.0]         # ticks of flight left per slot (a heavy end
 var hist: Array = [[], []]          # per slot: Vector2 (world x, y) of the last ticks, newest last
 var made: Dictionary = {}           # counters by style, for the tests
 var shown: int = 0                  # effects drawn last frame (the tests)
+var beat_glint: bool = false        # the beat option (UI's ring for every blow, the rival's too): a glint on the striking limb at the beat. hub.beat_glint_enabled sets it
 var clock: int = 0
 
 static var _data: Dictionary = {}
@@ -108,6 +109,24 @@ func reset() -> void:
 	warm()
 
 
+## What the director wrote on the strike beat that has just landed for this attacker (Encounter's B0, docs/director/brawl-b0.md: style, grade, k, n, closing, charge, hand
+## and ender on its args), read only from the running exchange: the newest done strike or chain-strike beat of his. {} when there is none.
+static func beat_args(S: SimState, attacker: int) -> Dictionary:
+	var ex = S.dirS.ex
+	if ex == null or attacker < 0 or attacker >= S.fighters.size():
+		return {}
+	var role: String = "A" if S.fighters[attacker] == ex.A else "D"
+	var best = null
+	for b in ex.beats:
+		if not b.done or b.args == null or (b.op != "strike" and b.op != "chainStrike"):
+			continue
+		if String(b.args.get("a", "A")) != role or not b.args.has("style"):
+			continue
+		if best == null or float(b.t) >= float(best.t):
+			best = b
+	return best.args if best != null else {}
+
+
 ## The look of a blow. The beat's own `style` when the director sends it; else the press log's read, read only (never DirAlchemy's resizing).
 static func style_of(S: SimState, e, attacker: int) -> String:
 	var kind: String = String(e.kind)
@@ -126,6 +145,10 @@ static func style_of(S: SimState, e, attacker: int) -> String:
 		return forced
 	if kind == "heavy":
 		return "heavy"
+	# The director's own word on this blow (its strike beat's `style`).
+	var bst: String = String(beat_args(S, attacker).get("style", ""))
+	if STYLES.has(bst) and bst != "block":
+		return bst
 	# Animation's own read of the blow that is playing (picture and body agree).
 	var af = anim_of(S, attacker)
 	if af != null and not af.press.is_empty() and STYLES.has(String(af.press.get("style", ""))) and String(af.press.style) != "block":
@@ -278,9 +301,13 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 	var reach: float = minf(absf(SimWrap.sdx(fa.x, fv.x)) - 10.0, 200.0)
 	x.cx = x.dir * maxf(reach, 14.0)
 	x.cy = region_y(String(VfxHub._g(e, "region", "core"))) + (fv.y - fa.y)
-	var o: Vector2 = back(S, att, 6)
-	x.lunge = clampf(absf(SimWrap.sdx(o.x, fa.x)), p("lunge"), 60.0)
-	x.hand = int(made.get("speed", 0)) % 2 if style == "speed" else 0
+	# The same everywhere: a tech or heavy blow's echoes sit a fixed distance behind him, from idle, in a brawl or at the end of a zip (Orb: tech is the same
+	# three things everywhere). The body's recent travel never enters it.
+	x.lunge = p("echo_back")
+	var ba: Dictionary = beat_args(S, att)
+	x.hand = (1 if String(ba.get("hand", "r")) == "l" else 0) if ba.has("hand") else (int(made.get("speed", 0)) % 2 if style == "speed" else 0)
+	x.ghosts = 3 if String(ba.get("grade", "")) == "perfect" else (2 if ba.has("grade") else 0)
+	made["beat"] = int(made.get("beat", 0)) + (1 if ba.has("style") else 0)
 	x.col = lane_of(S, att)
 	x.col2 = lane_of(S, vic) if style == "block" else x.col.lightened(0.25)
 	x.small = reduced
@@ -303,7 +330,25 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 			x.col = lane_of(S, vic)
 			x.life = p("block_life")
 	_take_real(S, x, att, style)
+	if bool(ba.get("ender", false)) and style == "heavy":
+		fly[vic] = maxf(float(fly[vic]), p("fly_max"))
 	fx.append(x)
+	if beat_glint:
+		var gl := Fx.new()
+		gl.style = "glint"
+		gl.slot = att
+		gl.vic = vic
+		gl.dir = x.dir
+		gl.ax = x.ax
+		gl.ay = x.ay
+		gl.cx = x.cx
+		gl.cy = x.cy
+		gl.col = x.col
+		gl.col2 = x.col.lightened(0.2)
+		gl.life = p("glint_life")
+		gl.path = x.path
+		fx.append(gl)
+		made["glint"] = int(made.get("glint", 0)) + 1
 	while fx.size() > 24:
 		fx.pop_front()
 	made[style] = int(made.get(style, 0)) + 1
@@ -331,7 +376,7 @@ func _take_real(S: SimState, x: Fx, att: int, style: String) -> void:
 			x.ja = joints_of(po, sx)
 			x.jb = joints_of(pn, sx)
 			var ago: int = clampi(roundi((float(pn.T) - float(po.T)) * 60.0), 1, maxi(hist[att].size() - 1, 1))
-			x.old_dx = SimWrap.sdx(fa.x, back(S, att, ago).x)
+			x.old_dx = -x.dir * p("echo_back") * 0.75
 			x.real = x.ja.size() >= 16 and x.jb.size() >= 16
 	var np: int = af.press_path.size()
 	if np >= 2:
