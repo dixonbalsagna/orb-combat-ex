@@ -1,8 +1,7 @@
 // Assembles the GitHub Pages site. Node built-ins only; deterministic (no clock, no random).
 //   node tools/build-site.mjs --web <dir with the Godot web export> --out <site dir> [--commit <sha>] [--band <dir>]
 // Layout of <site dir>:
-//   index.html               landing page linking to the two builds
-//   prototype/index.html     the single-file browser prototype (a stable URL Orb shares)
+//   index.html               landing page linking to the Godot build
 //   play/                    the Godot web export (index.html, .js, .wasm, .pck, ...)
 //   bench/index.html         a one-click benchmark: the same export (loaded from ../play/) with the bench arguments
 //                            baked in, a results panel and a "copy result" button. Not linked from the landing page.
@@ -10,13 +9,13 @@
 //                            byte-identical to /play/'s (the same Godot version and templates) only its index.html and
 //                            index.pck are shipped and the engine is loaded from ../play/ (no second 39 MB wasm); otherwise
 //                            the whole export is copied. Not linked from the landing page.
+// The original prototype (prototype/index.html) is not published: it still shows placeholder names and "AI" to a player (Legal's hold). The file
+// stays in the repo, untouched.
 // Docs: docs/tools/README.md
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, resolve } from 'node:path';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const opt = (name) => {
   const i = args.indexOf(name);
@@ -31,21 +30,15 @@ if (!web || !out) {
 }
 const webDir = resolve(web);
 const outDir = resolve(out);
-const protoHtml = join(root, 'prototype', 'index.html');
 
 if (!existsSync(join(webDir, 'index.html')) || !readdirSync(webDir).some((f) => f.endsWith('.wasm'))) {
   console.error(`error: ${webDir} does not look like a Godot web export (needs index.html and a .wasm)`);
   process.exit(1);
 }
-if (!existsSync(protoHtml)) {
-  console.error(`error: ${protoHtml} is missing`);
-  process.exit(1);
-}
 
 rmSync(outDir, { recursive: true, force: true });
-mkdirSync(join(outDir, 'prototype'), { recursive: true });
+mkdirSync(outDir, { recursive: true });
 mkdirSync(join(outDir, 'bench'), { recursive: true });
-cpSync(protoHtml, join(outDir, 'prototype', 'index.html'));
 cpSync(webDir, join(outDir, 'play'), { recursive: true });
 
 // ---- /bench/: the exported page, retargeted at ../play/ and given the bench arguments and a results panel ----
@@ -177,10 +170,9 @@ writeFileSync(
 </head>
 <body>
 <h1>Orb Combat EX</h1>
-<p>Free and open source. Both builds run in your browser.</p>
+<p>Free and open source. The build runs in your browser.</p>
 <ul>
   <li><a href="play/">Play the Godot build</a> (work in progress)</li>
-  <li><a href="prototype/">Play the original prototype</a></li>
 </ul>
 <p><a href="https://github.com/dixonbalsagna/orb-combat-ex">Source code</a></p>
 </body>
@@ -189,4 +181,4 @@ writeFileSync(
 );
 
 const files = readdirSync(outDir, { recursive: true }).length;
-console.log(`site built in ${outDir}: /, /prototype/, /play/, /bench/${bandMode ? `, /band/ (${bandMode})` : ''} (${files} entries)`);
+console.log(`site built in ${outDir}: /, /play/, /bench/${bandMode ? `, /band/ (${bandMode})` : ''} (${files} entries)`);

@@ -104,7 +104,7 @@ jobs:
   # Builds the Pages site on every run, so a broken export shows up on pull requests
   # and branches too. Only pushes to main (and manual runs on main) upload it.
   site:
-    name: Build site (prototype + Godot web export)
+    name: Build site (Godot web export)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -130,7 +130,7 @@ jobs:
           "$GODOT" --headless --path research/band-proto --import
           mkdir -p "${RUNNER_TEMP}/band"
           "$GODOT" --headless --path research/band-proto --export-release "Web" "${RUNNER_TEMP}/band/index.html"
-      - name: Assemble the site (/, /prototype/, /play/, /bench/, /band/)
+      - name: Assemble the site (/, /play/, /bench/, /band/)
         run: node tools/build-site.mjs --web "${RUNNER_TEMP}/web" --out "${RUNNER_TEMP}/site" --commit "${GITHUB_SHA}" --band "${RUNNER_TEMP}/band"
       - name: Upload the Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
