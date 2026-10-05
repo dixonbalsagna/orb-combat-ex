@@ -3,8 +3,9 @@
 //     node docs/tools/pending/apply-brawl-9d.cjs
 // It does NOT edit data/. Keys fixed by Encounter:
 //   data/director/interrupts.json  brawl.flurry gains staggeredAddsRun (boolean; false), levelWithin (integer, 0 or more; 1) and momentum
-//                                  (a share, 0.5 to 1; 0.9), all required; brawl.flurry.closeAfter is REMOVED (no longer allowed);
-//                                  brawl gains shotHeavyMul (a number above 0; 2), required
+//                                  (a share, 0.5 to 1; 0.9) and closeGuardTicks (ticks, integer 0 or more; 90), all required; brawl.flurry.closeAfter is REMOVED (no longer allowed);
+//                                  brawl gains shotHeavyMul (a number above 0; 2), required, and shooter {firedTicks (integer, at least 1;
+//                                  90), noMeleeTicks (integer, at least 1; 120)} (closed; both required; who counts as a shooter), required
 //   data/director/ai.json          each level's brawl gains heavyAfterClose (a share, 0 to 1; 0.2, 0.6, 0.9), required; each level gains
 //                                  vsShooter {guardShare, enderShare, heavyApproachShare} (shares, 0 to 1; closed; all three required),
 //                                  required (it is the level's own key, beside brawl: melee-press-feel.md section 9d says "each level's vsShooter")
@@ -18,7 +19,7 @@ const closed = { additionalProperties: false, patternProperties: { '^_': true } 
 const obj = (props, opts = {}) => Object.assign({ type: 'object', required: opts.required === undefined ? Object.keys(props) : opts.required, properties: props }, opts.description ? { description: opts.description } : {}, closed);
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const share = (d) => ({ type: 'number', minimum: 0, maximum: 1, description: d });
-const NEW_FLURRY = { staggeredAddsRun: false, levelWithin: 1, momentum: 0.9 };
+const NEW_FLURRY = { staggeredAddsRun: false, levelWithin: 1, momentum: 0.9, closeGuardTicks: 90 };
 
 // =============================== interrupts schema ===============================
 {
@@ -39,12 +40,32 @@ const NEW_FLURRY = { staggeredAddsRun: false, levelWithin: 1, momentum: 0.9 };
     for (const k of ['staggeredAddsRun', 'levelWithin', 'momentum']) if (!fl.required.includes(k)) fl.required.push(k);
     changed = true;
   }
+  if (!fl.properties.closeGuardTicks) {
+    fl.properties.closeGuardTicks = { type: 'integer', minimum: 0, description: 'Ticks the AI keeps its guard up after a close (a later addition from Encounter).' };
+    if (!fl.required.includes('closeGuardTicks')) fl.required.push('closeGuardTicks');
+    changed = true;
+  }
   if (!b.properties.shotHeavyMul) {
     b.properties.shotHeavyMul = { type: 'number', exclusiveMinimum: 0, description: 'The worth of a heavy shot against the brawl\'s scale (Game Design section 9d).' };
     b.required.push('shotHeavyMul');
     changed = true;
   }
   if (changed) wj(f, s);
+}
+
+// =============================== shooter (a later addition from Encounter) ===============================
+{
+  const f = 'tools/schemas/director-interrupts.schema.json';
+  const s = rj(f);
+  const b = s.properties.brawl;
+  if (!b.properties.shooter) {
+    b.properties.shooter = obj({
+      firedTicks: { type: 'integer', minimum: 1, description: 'A rival who has fired within this many ticks counts as a shooter.' },
+      noMeleeTicks: { type: 'integer', minimum: 1, description: 'A shooter has landed no melee blow within this many ticks.' },
+    }, { description: 'Who the AI treats as a shooter in a brawl (Game Design section 9d): fired in the last firedTicks and landed no melee blow in the last noMeleeTicks.' });
+    b.required.push('shooter');
+    wj(f, s);
+  }
 }
 
 // =============================== ai schema ===============================
@@ -85,6 +106,7 @@ const NEW_FLURRY = { staggeredAddsRun: false, levelWithin: 1, momentum: 0.9 };
       if (fl.closeAfter !== undefined) { delete fl.closeAfter; changed = true; }
       for (const [k, v] of Object.entries(NEW_FLURRY)) if (fl[k] === undefined) { fl[k] = v; changed = true; }
       if (o.brawl.shotHeavyMul === undefined) { o.brawl.shotHeavyMul = 2; changed = true; }
+      if (o.brawl.shooter === undefined) { o.brawl.shooter = { firedTicks: 90, noMeleeTicks: 120 }; changed = true; }
       if (changed) wj(f, o);
     }
   }
@@ -120,6 +142,7 @@ const NEW_FLURRY = { staggeredAddsRun: false, levelWithin: 1, momentum: 0.9 };
       for (const [k, v] of Object.entries(NEW_FLURRY)) if (b.flurry[k] === undefined) { b.flurry[k] = v; ch = true; }
     }
     if (b.shotHeavyMul === undefined) { b.shotHeavyMul = 2; ch = true; }
+    if (b.shooter === undefined) { b.shooter = { firedTicks: 90, noMeleeTicks: 120 }; ch = true; }
     return ch;
   };
   for (const k of c.cases) {
@@ -142,10 +165,11 @@ const NEW_FLURRY = { staggeredAddsRun: false, levelWithin: 1, momentum: 0.9 };
   const VALID = {
     enabled: true, interrupts: ['hit', 'guard'], breakBh: 6, pullBhPerSec: 0.5, stepInTicks: 6, idleTicks: 90, heldPressTicks: 12, stringLapseTicks: 60, enderAfter: 5, recoil: 0.2, damageMul: 1, aiPerfectEveryTicks: 120, aiReversalEveryTicks: 180, tradeTicks: 8, heldMul: 1.2, skillMul: 1.2, setMul: 0.8, heavyMul: 1.5,
     light: { damage: 6, contactTicks: 6, blowTicks: 12, recover: 10 },
-    flurry: { minGap: 4, maxGap: 20, mul: [[6, 0.6], [12, 1.2]], reelTicks: 10, staggerTicks: 8, runToClose: 4, replyTakes: 1, runLapseTicks: 24, tradeMaxTicks: 90, staggeredAddsRun: false, levelWithin: 1, momentum: 0.9 },
+    flurry: { minGap: 4, maxGap: 20, mul: [[6, 0.6], [12, 1.2]], reelTicks: 10, staggerTicks: 8, runToClose: 4, replyTakes: 1, runLapseTicks: 24, tradeMaxTicks: 90, staggeredAddsRun: false, levelWithin: 1, momentum: 0.9, closeGuardTicks: 90 },
     heavy: { damage: 30, ki: 8, windupTicks: 20, landTicks: 6, recover: 20, recoverWhiff: 30, heldFullTicks: 40, heldMaxTicks: 60, heldLandTicks: 8, staggerTicks: 20, force: 1 },
     hitstop: { light: 2, heavy: 5 },
     shotHeavyMul: 2,
+    shooter: { firedTicks: 90, noMeleeTicks: 120 },
   };
   const VALID_AI = { tapGap: 8, string: [3, 6], enderShare: 0.4, rashHeavy: 0.1, guardShare: 0.3, guardTicks: [20, 60], perfectMul: 1, heavyAfterClose: 0.6 };
   const VS = { guardShare: 0, enderShare: 0.2, heavyApproachShare: 0.6 };
@@ -179,6 +203,24 @@ const NEW_FLURRY = { staggeredAddsRun: false, levelWithin: 1, momentum: 0.9 };
     it('shot-heavy-mul-negative', (o) => { o.shotHeavyMul = -1; }, { rule: 'exclusiveMinimum', pointer: B + 'shotHeavyMul' }),
     it('shot-heavy-mul-type', (o) => { o.shotHeavyMul = 'double'; }, { rule: 'type', pointer: B + 'shotHeavyMul' }),
     it('shot-heavy-mul-fraction-ok', (o) => { o.shotHeavyMul = 0.5; }, null),
+    it('close-guard-required', (o) => { delete o.flurry.closeGuardTicks; }, { rule: 'required', pointer: B + 'flurry' }),
+    it('close-guard-negative', (o) => { o.flurry.closeGuardTicks = -1; }, { rule: 'minimum', pointer: B + 'flurry/closeGuardTicks' }),
+    it('close-guard-integer', (o) => { o.flurry.closeGuardTicks = 90.5; }, { rule: 'type', pointer: B + 'flurry/closeGuardTicks' }),
+    it('close-guard-type', (o) => { o.flurry.closeGuardTicks = 'long'; }, { rule: 'type', pointer: B + 'flurry/closeGuardTicks' }),
+    it('close-guard-zero-ok', (o) => { o.flurry.closeGuardTicks = 0; }, null),
+    it('shooter-required', (o) => { delete o.shooter; }, { rule: 'required', pointer: '/brawl' }),
+    it('shooter-unknown-key', (o) => { o.shooter.mood = 1; }, { rule: 'additionalProperties', pointer: B + 'shooter/mood' }),
+    it('shooter-underscore-key-ok', (o) => { o.shooter._why = 'a note'; }, null),
+    it('shooter-fired-required', (o) => { delete o.shooter.firedTicks; }, { rule: 'required', pointer: B + 'shooter' }),
+    it('shooter-fired-zero', (o) => { o.shooter.firedTicks = 0; }, { rule: 'minimum', pointer: B + 'shooter/firedTicks' }),
+    it('shooter-fired-negative', (o) => { o.shooter.firedTicks = -90; }, { rule: 'minimum', pointer: B + 'shooter/firedTicks' }),
+    it('shooter-fired-integer', (o) => { o.shooter.firedTicks = 90.5; }, { rule: 'type', pointer: B + 'shooter/firedTicks' }),
+    it('shooter-fired-one-ok', (o) => { o.shooter.firedTicks = 1; }, null),
+    it('shooter-no-melee-required', (o) => { delete o.shooter.noMeleeTicks; }, { rule: 'required', pointer: B + 'shooter' }),
+    it('shooter-no-melee-zero', (o) => { o.shooter.noMeleeTicks = 0; }, { rule: 'minimum', pointer: B + 'shooter/noMeleeTicks' }),
+    it('shooter-no-melee-integer', (o) => { o.shooter.noMeleeTicks = 1.5; }, { rule: 'type', pointer: B + 'shooter/noMeleeTicks' }),
+    it('shooter-no-melee-type', (o) => { o.shooter.noMeleeTicks = 'long'; }, { rule: 'type', pointer: B + 'shooter/noMeleeTicks' }),
+    it('shooter-no-melee-one-ok', (o) => { o.shooter.noMeleeTicks = 1; }, null),
     it('nine-c-key-answer-by-unknown', (o) => { o.answerBy = 10; }, { rule: 'additionalProperties', pointer: B + 'answerBy' }),
     it('nine-c-key-guard-max-unknown', (o) => { o.flurry.guardMaxTicks = 10; }, { rule: 'additionalProperties', pointer: B + 'flurry/guardMaxTicks' }),
     it('run-lapse-still-below-trade-max', (o) => { o.flurry.runLapseTicks = 90; o.flurry.tradeMaxTicks = 90; }, { rule: 'xref:brawl-order', pointer: B + 'flurry/runLapseTicks' }),
