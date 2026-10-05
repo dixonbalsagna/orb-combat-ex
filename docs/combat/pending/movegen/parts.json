@@ -1,7 +1,7 @@
 {
  "schema": "combat.parts/1",
  "_target": "data/combat/parts.json",
- "_about": "PARKED. The grammar a strike is assembled from (docs/combat/moveset-generator.md section 1): a move is a limb, a tip, a path, a target and a weight, and everything else is derived from those by the rules here. One block for each stance's parts; this is the martial arts stance's.",
+ "_about": "PARKED. The grammar every move is assembled from (docs/combat/moveset-generator.md section 1). strike: a blow is a limb, a tip, a path, a target and a weight, and everything else is derived by the rules here. travel, shot and push are the parts the other stances add. What is posed is read from Animation's data (the strike and entry manifests in data/anim/waves, and data/anim/tips.json), never from this file",
  "strike": {
   "tips": {
    "hand": {
@@ -62,6 +62,9 @@
      "rise",
      "drop",
      "spin"
+    ],
+    "plate": [
+     "line"
     ]
    },
    "knee": {
@@ -82,7 +85,7 @@
     ]
    }
   },
-  "_tips": "limb to tip to the paths that tip can travel. hand.heel is the bottom or the back of a closed fist; hand.plate is a blow the forearm leads",
+  "_tips": "limb to tip to the paths that tip can travel. hand.heel is the bottom or the back of a closed fist; hand.plate is a blow the forearm leads; elbow.plate is both forearms as a wedge (Animation's reading of the crossed-arm ram)",
   "targets": {
    "hand": {
     "line": [
@@ -162,6 +165,9 @@
     ],
     "spin": [
      "jaw",
+     "chest"
+    ],
+    "line": [
      "chest"
     ]
    },
@@ -414,9 +420,10 @@
   "swap": [
    "fist",
    "blade",
-   "palm"
+   "palm",
+   "heel"
   ],
-  "_swap": "hand tips one key set can show by a hand-state swap, where the tip can travel that path",
+  "_swap": "hand tips a key set can show by a hand-state swap, where the tip can travel that path (Animation: confirmed; a beat's own tip wins)",
   "tagTips": {
    "hands_open_or_claw": [
     "palm",
@@ -425,36 +432,13 @@
   },
   "_tagTips": "a key set that carries one of Legal's tags keeps to these tips when its hand state is swapped",
   "reaim": {
-   "limbs": [
-    "hand",
-    "foot"
-   ],
-   "neighbours": {
-    "head": [
-     "jaw"
-    ],
-    "jaw": [
-     "head"
-    ],
-    "chest": [
-     "gut",
-     "arm"
-    ],
-    "gut": [
-     "chest"
-    ],
-    "legs": [
-     "shins"
-    ],
-    "shins": [
-     "legs"
-    ],
-    "arm": [
-     "chest"
-    ]
+   "source": "data/anim/tips.json",
+   "levels": {
+    "ok": "re_aim",
+    "edge": "re_aim_edge"
    }
   },
-  "_reaim": "sockets the contact solve can reach from a posed key set's own. A guess until Animation confirms it",
+  "_reaim": "how far a key set's contact can be re-aimed is Animation's measured table, one row a key set: ok is free, edge lands but strains and needs a look",
   "banned": [
    {
     "id": "b01",
@@ -977,491 +961,339 @@
      "b06"
     ],
     "ask": "to the head or jaw: a strike, never a grip"
+   },
+   {
+    "id": "Z1",
+    "stance": "manoeuvre",
+    "ask": "a zip: the body is seen travelling the whole way in and out, never under the floor on its ticks; no vanish, no blink, no ring of copies",
+    "rows": [
+     "b13",
+     "s07"
+    ]
+   },
+   {
+    "id": "G1",
+    "stance": "any",
+    "ask": "a grab: never on the throat, the hair or a tail; never a clawed hand on the face",
+    "rows": [
+     "b06",
+     "b07"
+    ]
+   },
+   {
+    "id": "E1",
+    "stance": "energy",
+    "ask": "an energy hand: open or a blade, no higher than the shoulder; never two fingers or a point, never cupped, never both hands pushed from the chest or drawn to a hip; the light is on the forearm's edge, not a ball in the palm",
+    "rows": [
+     "b01",
+     "b02",
+     "b10"
+    ]
+   },
+   {
+    "id": "P1",
+    "stance": "defensive",
+    "ask": "a push: a shove on the chest or gut, no light, hands apart when it is two; never a grip",
+    "rows": [
+     "b01",
+     "b06",
+     "b09"
+    ]
    }
   ],
   "_conditions": "Legal's conditions from its screen of the sheet (docs/legal/movegen-screen.md section 1), for Animation: the sheet's Legal column lists the ids that apply to a row. They bite when a move is held or strung"
  },
- "strikes": {
-  "_about": "Every posed strike as a shape of the grammar. limb, target, weight, uses and ground are Combat's strike rows; tip and path are Combat's reading of each strike's look and of Animation's hand state at contact, until the manifests carry them. The rival's four tail strikes are left out: they wait for Orb's ruling",
-  "strike.jab": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "line",
-   "target": "head",
-   "weight": "light",
-   "uses": {
-    "arms": 1
+ "travel": {
+  "_about": "The manoeuvre stance: how he gets to the blow. A move is a kind, a direction, the entry that carries him, the way out, and a blow from one of his strike cells whose path suits the direction",
+  "kinds": {
+   "zip": {
+    "band": "mid",
+    "what": "in, the blow, and out again (docs/design/melee-press-feel.md section 2c)",
+    "moves": [
+     {
+      "direction": "back",
+      "entries": [
+       "dash"
+      ],
+      "exit": "fade"
+     },
+     {
+      "direction": "through",
+      "entries": [
+       "dash"
+      ],
+      "exit": "lane_step"
+     },
+     {
+      "direction": "around",
+      "entries": [
+       "spiral",
+       "arc_dive"
+      ],
+      "exit": "pivot"
+     }
+    ]
    },
-   "ground": "ok"
-  },
-  "strike.cross": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "line",
-   "target": "chest",
-   "weight": "light",
-   "uses": {
-    "arms": 1
+   "zip_away": {
+    "band": "close",
+    "what": "leaving a brawl with a parting blow",
+    "moves": [
+     {
+      "direction": "away",
+      "entries": [
+       "rooted"
+      ],
+      "exit": "fade"
+     }
+    ]
    },
-   "ground": "ok"
-  },
-  "strike.hook": {
-   "limb": "hand",
-   "tip": "plate",
-   "path": "arc_in",
-   "target": "head",
-   "weight": "light",
-   "uses": {
-    "arms": 1
+   "step": {
+    "band": "close",
+    "what": "a step of up to 2 bh around, over or under the rival, and the blow",
+    "moves": [
+     {
+      "direction": "around",
+      "entries": [
+       "lane_step",
+       "pivot",
+       "cartwheel_step"
+      ],
+      "exit": null
+     },
+     {
+      "direction": "over",
+      "entries": [
+       "arc_dive",
+       "air_roll"
+      ],
+      "exit": null
+     },
+     {
+      "direction": "under",
+      "entries": [
+       "rising",
+       "coil_spring"
+      ],
+      "exit": null
+     }
+    ]
    },
-   "ground": "ok"
-  },
-  "strike.backfist": {
-   "limb": "hand",
-   "tip": "heel",
-   "path": "arc_out",
-   "target": "head",
-   "weight": "light",
-   "uses": {
-    "arms": 1
+   "charge": {
+    "band": "far",
+    "what": "a piloted charge from far",
+    "moves": [
+     {
+      "direction": "toward",
+      "entries": [
+       "dash",
+       "skid",
+       "spiral"
+      ],
+      "exit": null
+     }
+    ]
    },
-   "ground": "ok"
+   "pursuit": {
+    "band": "beyond",
+    "what": "the pursuit past charge range, into a heavy",
+    "moves": [
+     {
+      "direction": "toward",
+      "entries": [
+       "dash",
+       "arc_dive"
+      ],
+      "exit": null
+     }
+    ]
+   }
   },
-  "strike.palm_heel": {
-   "limb": "hand",
-   "tip": "palm",
-   "path": "line",
-   "target": "chest",
-   "weight": "light",
-   "uses": {
-    "arms": 1
+  "arrive": {
+   "back": [
+    "line",
+    "arc_in",
+    "rise",
+    "drop"
+   ],
+   "through": [
+    "line",
+    "arc_in",
+    "arc_out"
+   ],
+   "around": [
+    "arc_in",
+    "arc_out",
+    "spin"
+   ],
+   "away": [
+    "line",
+    "arc_out"
+   ],
+   "over": [
+    "drop",
+    "arc_out"
+   ],
+   "under": [
+    "rise",
+    "line"
+   ],
+   "toward": [
+    "line",
+    "rise",
+    "drop"
+   ]
+  },
+  "_arrive": "direction to the paths a blow can land on from there: a rise from under, a drop from over, an arc from around"
+ },
+ "shot": {
+  "_about": "The energy arts stance: the shot's kind is the cell's, and a move is how it is thrown. hand comes from the fighter's own list (identity.json energy.hands)",
+  "release": [
+   "thrust",
+   "flick",
+   "lob",
+   "drop"
+  ],
+  "body": [
+   "planted",
+   "kiting_turn",
+   "backpedal",
+   "rising"
+  ],
+  "rules": [
+   {
+    "if": {
+     "release": [
+      "drop"
+     ]
+    },
+    "then": {
+     "body": [
+      "rising"
+     ]
+    },
+    "why": "a shot down needs height"
    },
-   "ground": "ok"
-  },
-  "strike.spear_hand": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "line",
-   "target": "gut",
-   "weight": "light",
-   "uses": {
-    "arms": 1
+   {
+    "if": {
+     "release": [
+      "lob"
+     ]
+    },
+    "then": {
+     "body": [
+      "planted",
+      "backpedal",
+      "kiting_turn"
+     ],
+     "delivery": [
+      "bolt",
+      "shot"
+     ]
+    },
+    "why": "a lob is one shot, thrown from a footing"
    },
-   "ground": "ok"
-  },
-  "strike.uppercut": {
-   "limb": "hand",
-   "tip": "fist",
-   "path": "rise",
-   "target": "jaw",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
+   {
+    "if": {
+     "delivery": [
+      "volley"
+     ]
+    },
+    "then": {
+     "release": [
+      "flick",
+      "thrust"
+     ]
+    },
+    "why": "three bolts in a tight fan leave on a flick or a thrust"
    },
-   "ground": "ok"
-  },
-  "strike.hammer": {
-   "limb": "hand",
-   "tip": "fist",
-   "path": "drop",
-   "target": "head",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
+   {
+    "if": {
+     "delivery": [
+      "short_beam"
+     ]
+    },
+    "then": {
+     "release": [
+      "thrust"
+     ],
+     "body": [
+      "planted",
+      "kiting_turn"
+     ]
+    },
+    "why": "a held beam is braced"
    },
-   "ground": "ok"
-  },
-  "strike.overhand": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "drop",
-   "target": "head",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
+   {
+    "if": {
+     "delivery": [
+      "charged",
+      "split"
+     ]
+    },
+    "then": {
+     "release": [
+      "thrust",
+      "drop"
+     ]
+    }
+   }
+  ],
+  "forms": [
+   {
+    "form": "speed",
+    "when": {
+     "delivery": [
+      "bolt",
+      "shot",
+      "split"
+     ]
+    }
    },
-   "ground": "ok"
-  },
-  "strike.haymaker": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "arc_in",
-   "target": "head",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
+   {
+    "form": "tech",
+    "when": {
+     "delivery": [
+      "bolt",
+      "shot"
+     ],
+     "release": [
+      "thrust"
+     ],
+     "body": [
+      "planted",
+      "kiting_turn"
+     ]
+    }
    },
-   "ground": "ok"
-  },
-  "strike.short_elbow": {
-   "limb": "elbow",
-   "tip": "point",
-   "path": "arc_in",
-   "target": "jaw",
-   "weight": "light",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.rising_elbow": {
-   "limb": "elbow",
-   "tip": "point",
-   "path": "rise",
-   "target": "jaw",
-   "weight": "light",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.spinning_elbow": {
-   "limb": "elbow",
-   "tip": "point",
-   "path": "spin",
-   "target": "jaw",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "plant"
-  },
-  "strike.dropping_elbow": {
-   "limb": "elbow",
-   "tip": "point",
-   "path": "drop",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.twin_spear": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "line",
-   "target": "chest",
-   "weight": "light",
-   "uses": {
-    "arms": 2
-   },
-   "ground": "ok"
-  },
-  "strike.double_palm": {
-   "limb": "hand",
-   "tip": "palm",
-   "path": "line",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "arms": 2
-   },
-   "ground": "ok"
-  },
-  "strike.double_hammer": {
-   "limb": "hand",
-   "tip": "plate",
-   "path": "drop",
-   "target": "head",
-   "weight": "heavy",
-   "uses": {
-    "arms": 2
-   },
-   "ground": "ok"
-  },
-  "strike.cross_arm_ram": {
-   "limb": "elbow",
-   "tip": "point",
-   "path": "arc_in",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "arms": 2
-   },
-   "ground": "plant"
-  },
-  "strike.front_kick": {
-   "limb": "foot",
-   "tip": "ball",
-   "path": "line",
-   "target": "gut",
-   "weight": "light",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.side_kick": {
-   "limb": "foot",
-   "tip": "edge",
-   "path": "line",
-   "target": "chest",
-   "weight": "light",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.low_kick": {
-   "limb": "foot",
-   "tip": "instep",
-   "path": "arc_in",
-   "target": "legs",
-   "weight": "light",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.snap_round": {
-   "limb": "foot",
-   "tip": "instep",
-   "path": "arc_in",
-   "target": "chest",
-   "weight": "light",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.roundhouse": {
-   "limb": "foot",
-   "tip": "instep",
-   "path": "arc_in",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.axe_kick": {
-   "limb": "foot",
-   "tip": "heel",
-   "path": "drop",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.spinning_heel": {
-   "limb": "foot",
-   "tip": "heel",
-   "path": "spin",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.stomp": {
-   "limb": "foot",
-   "tip": "sole",
-   "path": "drop",
-   "target": "gut",
-   "weight": "heavy",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.sweep": {
-   "limb": "foot",
-   "tip": "instep",
-   "path": "arc_in",
-   "target": "shins",
-   "weight": "light",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "only"
-  },
-  "strike.drop_kick": {
-   "limb": "foot",
-   "tip": "sole",
-   "path": "line",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "legs": 2
-   },
-   "ground": "no"
-  },
-  "strike.short_knee": {
-   "limb": "knee",
-   "tip": "cap",
-   "path": "line",
-   "target": "gut",
-   "weight": "light",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.rising_knee": {
-   "limb": "knee",
-   "tip": "cap",
-   "path": "rise",
-   "target": "gut",
-   "weight": "heavy",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.driving_knee": {
-   "limb": "knee",
-   "tip": "cap",
-   "path": "line",
-   "target": "gut",
-   "weight": "heavy",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.headbutt": {
-   "limb": "head",
-   "tip": "brow",
-   "path": "line",
-   "target": "jaw",
-   "weight": "heavy",
-   "uses": {
-    "head": 1
-   },
-   "ground": "ok"
-  },
-  "strike.shoulder_check": {
-   "limb": "shoulder",
-   "tip": "plate",
-   "path": "line",
-   "target": "chest",
-   "weight": "light",
-   "uses": {},
-   "ground": "ok"
-  },
-  "strike.body_ram": {
-   "limb": "shoulder",
-   "tip": "plate",
-   "path": "line",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {},
-   "ground": "plant"
-  },
-  "strike.palm_push": {
-   "limb": "hand",
-   "tip": "palm",
-   "path": "line",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.ridge_hand": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "arc_in",
-   "target": "head",
-   "weight": "light",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.rising_palm": {
-   "limb": "hand",
-   "tip": "palm",
-   "path": "rise",
-   "target": "jaw",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.knife_chop": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "drop",
-   "target": "arm",
-   "weight": "light",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.hammer_fist": {
-   "limb": "hand",
-   "tip": "heel",
-   "path": "drop",
-   "target": "head",
-   "weight": "light",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.crescent_kick": {
-   "limb": "foot",
-   "tip": "edge",
-   "path": "arc_out",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.hook_kick": {
-   "limb": "foot",
-   "tip": "heel",
-   "path": "arc_out",
-   "target": "chest",
-   "weight": "light",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.spinning_back_kick": {
-   "limb": "foot",
-   "tip": "heel",
-   "path": "spin",
-   "target": "gut",
-   "weight": "heavy",
-   "uses": {
-    "legs": 1
-   },
-   "ground": "plant"
-  },
-  "strike.body_hook": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "arc_in",
-   "target": "gut",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
-  },
-  "strike.rib_shot": {
-   "limb": "hand",
-   "tip": "blade",
-   "path": "line",
-   "target": "chest",
-   "weight": "heavy",
-   "uses": {
-    "arms": 1
-   },
-   "ground": "ok"
+   {
+    "form": "heavy",
+    "when": {
+     "delivery": [
+      "volley",
+      "charged",
+      "short_beam"
+     ]
+    }
+   }
+  ]
+ },
+ "readings": {
+  "_about": "Game Design's three readings on X, Y and B (docs/design/melee-press-feel.md section 10): speed (tapped, mashed), tech (on the mark), heavy (held). In the martial arts stance a move's forms say which readings it can take; in a cell where every move takes all three the cell says so",
+  "martial": {
+   "speed": [
+    "light",
+    "flurry",
+    "heavy"
+   ],
+   "tech": [
+    "skill",
+    "juggle",
+    "heavy"
+   ],
+   "heavy": [
+    "light",
+    "held"
+   ]
   }
  }
 }

@@ -404,3 +404,7 @@ Orb confirmed the identity split and lifted the hold for the martial arts stance
 - **A juggle is up to 5 skill strikes,** so the light cell has two more quotas: 10 moves that can be a flurry blow and 10 that can be a skill strike.
 - **The counts:** 23 new key sets (section 6 said 21), 13 derived moves, and the two fighters share 43% of their shapes (section 6 said 46%).
 - **Legal's rows are merged** (`docs/legal/movegen-banned.json`, RL-072 to RL-075): 13 banned shapes and 7 sequence rules in `parts.json`, refused by the generator and tested by its `--check`. The rival has no palm strike. Section 5.3 above was the proposal; `pending/movegen/README.md` section 3 is how it works.
+
+## 9. All five stances, on Animation's data (2026-10-05, later)
+
+`pending/movegen/` now holds all five stances for both fighters, 100 moves each, generated from Animation's own tip, path, flag and re-aim data and held by a lock so an id never changes shape. In the martial arts stance no move waits for a key set any more. The counts, what each stance still needs from Simulation, Animation and VFX, what needs Legal's person screen, and the keys for Tools are in `pending/movegen/README.md`. Sections 3.2 and 6 above are the earlier samples and sizing.

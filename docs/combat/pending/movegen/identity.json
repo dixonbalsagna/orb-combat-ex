@@ -6,7 +6,8 @@
   "rival": {
    "waves": [
     "wave1",
-    "rival2"
+    "rival2",
+    "rival4"
    ],
    "_waves": "Animation's manifests that hold his posed strikes; a later wave's row replaces an earlier one's for the same strike",
    "weights": {
@@ -38,6 +39,20 @@
      "knee.cap": 2,
      "shoulder.plate": 1.5,
      "head.brow": 1.5
+    },
+    "entry": {
+     "dash": 3,
+     "step_in": 3,
+     "rising": 2,
+     "coil_spring": 2.5,
+     "lane_step": 1.5,
+     "pivot": 1,
+     "arc_dive": 1,
+     "spiral": 0.3,
+     "skid": 2,
+     "fade": 1,
+     "hop_back": 1,
+     "rooted": 2
     }
    },
    "weightsBy": [
@@ -108,20 +123,153 @@
    "reuse": {
     "posed": 16,
     "hand_state": 9,
-    "re_aim": 4,
-    "hand_state_re_aim": 2.3
+    "re_aim": 6,
+    "re_aim_edge": 2.5,
+    "hand_state_re_aim": 4,
+    "hand_state_re_aim_edge": 2
    },
    "tipFlags": {
     "hand.palm": [
      "claw"
     ]
    },
-   "_tipFlags": "how he shows a tip, as a pose flag for Legal's rows: his palm is drawn clawed (wave 1). He has no palm strike today; if one returns, a palm of his to the head or jaw is refused (b06)"
+   "_tipFlags": "how he shows a tip, as a pose flag for Legal's rows: his palm is drawn clawed (wave 1). He has no palm strike today; if one returns, a palm of his to the head or jaw is refused (b06)",
+   "entryWaves": [
+    "wave2"
+   ],
+   "energy": {
+    "hands": {
+     "blade_hand": 3,
+     "fist_glow": 2.5,
+     "pinch": 2,
+     "clawed_palm": 1.5,
+     "open_palm": 1
+    },
+    "posedHands": {
+     "blade_hand": "rv.hold.hand_blade_hand",
+     "fist_glow": "rv.hold.hand_fist_glow",
+     "pinch": "rv.hold.hand_pinch",
+     "clawed_palm": "rv.hold.hand_clawed_palm",
+     "open_palm": "rv.hold.hand_open_palm"
+    },
+    "release": {
+     "thrust": 3,
+     "drop": 2,
+     "flick": 1.5,
+     "lob": 0.7
+    },
+    "split": true,
+    "posed": [
+     {
+      "when": {
+       "delivery": [
+        "volley"
+       ]
+      },
+      "set": "rw.volley_fan"
+     },
+     {
+      "when": {
+       "release": [
+        "lob"
+       ]
+      },
+      "set": "rw.lob"
+     },
+     {
+      "when": {
+       "release": [
+        "drop"
+       ]
+      },
+      "set": "rw.hold.blast_down"
+     },
+     {
+      "when": {
+       "delivery": [
+        "charged"
+       ]
+      },
+      "set": "rw.charged_brace"
+     },
+     {
+      "when": {
+       "delivery": [
+        "bolt",
+        "shot"
+       ],
+       "release": [
+        "thrust"
+       ]
+      },
+      "set": "rw.bolt"
+     }
+    ]
+   },
+   "specials": {
+    "_about": "His three specials (docs/combat/pending/wave7-first-kit.md). Which sits on X, Y and A is Combat's guess until Game Design rules",
+    "x": {
+     "id": "special.cutting_step",
+     "what": "a sudden change of level and a wide cutting blow as he arrives",
+     "status": "designed (wave 7), not posed",
+     "parts": {
+      "level": [
+       "up",
+       "down"
+      ],
+      "entry": [
+       "a step in reach",
+       "a dash from out of reach"
+      ],
+      "blow": [
+       "haymaker",
+       "roundhouse",
+       "spinning heel",
+       "spinning elbow"
+      ]
+     }
+    },
+    "y": {
+     "id": "special.barrage_volley",
+     "what": "both arms open through a half turn and a fan of shards leaves along the sweep",
+     "status": "designed (wave 7), hands and brace posed",
+     "parts": {
+      "range": [
+       "a tight fan that ends in the ring",
+       "the full fan",
+       "darts in a narrower fan"
+      ],
+      "place": [
+       "in the air",
+       "skimming the ground",
+       "one arm, braced off a wall"
+      ]
+     }
+    },
+    "a": {
+     "id": "special.grip_and_drag",
+     "what": "a grab at speed, a drag along the ground on the rival's back, and a throw",
+     "status": "designed (wave 7), waits for the held state",
+     "parts": {
+      "reach": [
+       "straight to the reach",
+       "a dash, or a skid on the ground"
+      ],
+      "place": [
+       "along the ground",
+       "a pull-down, then the drag",
+       "a dive carrying him, then the spike",
+       "along a wall"
+      ]
+     }
+    }
+   }
   },
   "protagonist": {
    "waves": [
     "protag1",
-    "protag6"
+    "protag6",
+    "protag7"
    ],
    "weights": {
     "limb": {
@@ -154,6 +302,20 @@
      "knee.cap": 1,
      "shoulder.plate": 1,
      "head.brow": 1
+    },
+    "entry": {
+     "pivot": 3,
+     "spiral": 3,
+     "arc_dive": 2.5,
+     "air_roll": 3,
+     "cartwheel_step": 3,
+     "lane_step": 2,
+     "dash": 1,
+     "rising": 1.5,
+     "fade": 1.5,
+     "coil_spring": 0.5,
+     "skid": 1,
+     "rooted": 1
     }
    },
    "weightsBy": [],
@@ -191,17 +353,174 @@
     "strike.hook": "blade",
     "strike.double_hammer": "blade"
    },
-   "_tipOf": "where the rival's forearm plate leads a shared strike, his open hand does",
+   "_tipOf": "Animation poses his hook and his double hammer with the forearm leading, as the rival's; he has no plates, so for him the open hand leads",
    "reuse": {
     "posed": 16,
     "hand_state": 9,
-    "re_aim": 4,
-    "hand_state_re_aim": 2.3
+    "re_aim": 6,
+    "re_aim_edge": 2.5,
+    "hand_state_re_aim": 4,
+    "hand_state_re_aim_edge": 2
    },
-   "tipFlags": {}
+   "tipFlags": {},
+   "entryWaves": [
+    "protag2"
+   ],
+   "energy": {
+    "hands": {
+     "palm_thrust": 3,
+     "ring_hand": 3,
+     "flat_palm": 2
+    },
+    "posedHands": {
+     "palm_thrust": "pn.hold.palm_thrust",
+     "ring_hand": "pn.hold.ring_hand"
+    },
+    "release": {
+     "lob": 2.5,
+     "flick": 2,
+     "thrust": 1.5,
+     "drop": 1.5
+    },
+    "split": false,
+    "posed": [
+     {
+      "when": {
+       "delivery": [
+        "volley"
+       ]
+      },
+      "set": "pg.volley_arc"
+     },
+     {
+      "when": {
+       "release": [
+        "lob"
+       ]
+      },
+      "set": "pg.lob"
+     },
+     {
+      "when": {
+       "release": [
+        "drop"
+       ]
+      },
+      "set": "pg.hold.blast_down"
+     },
+     {
+      "when": {
+       "delivery": [
+        "charged"
+       ]
+      },
+      "set": "pg.charged"
+     },
+     {
+      "when": {
+       "delivery": [
+        "bolt",
+        "shot"
+       ],
+       "release": [
+        "thrust"
+       ]
+      },
+      "set": "pg.bolt"
+     }
+    ]
+   },
+   "specials": {
+    "_about": "PLACEHOLDERS. His specials are not designed: these three frames are Combat's first offer, for Game Design and Orb, so that his charging row is not empty on the sheet",
+    "x": {
+     "id": "special.turning_step",
+     "what": "a turn that carries him round the rival, and an arc as he arrives",
+     "status": "placeholder: not designed",
+     "parts": {
+      "turn": [
+       "pivot",
+       "cartwheel step",
+       "air roll"
+      ],
+      "exit": [
+       "around",
+       "over"
+      ],
+      "blow": [
+       "crescent kick",
+       "hook kick",
+       "ridge hand",
+       "spinning back kick"
+      ]
+     },
+     "rules": [
+      {
+       "if": {
+        "turn": [
+         "air roll"
+        ]
+       },
+       "then": {
+        "exit": [
+         "over"
+        ]
+       }
+      },
+      {
+       "if": {
+        "turn": [
+         "pivot",
+         "cartwheel step"
+        ]
+       },
+       "then": {
+        "exit": [
+         "around"
+        ]
+       }
+      }
+     ]
+    },
+    "y": {
+     "id": "special.curving_three",
+     "what": "three curving shots released one after another from the ring hand, each bent a different way",
+     "status": "placeholder: not designed",
+     "parts": {
+      "bend": [
+       "left, right, over",
+       "over, left, right",
+       "right, over, left"
+      ],
+      "body": [
+       "planted",
+       "backpedal",
+       "rising"
+      ]
+     }
+    },
+    "a": {
+     "id": "special.turn_aside",
+     "what": "an open-hand redirect that takes the rival's line past him and leaves him on the far side",
+     "status": "placeholder: not designed",
+     "parts": {
+      "hand": [
+       "lead palm",
+       "rear palm"
+      ],
+      "step": [
+       "around",
+       "under"
+      ],
+      "leaves": [
+       "behind him",
+       "at his flank"
+      ]
+     }
+    }
+   }
   }
  },
- "_reuse": "how strongly a shape that is already posed, or one swap or re-aim from it, is preferred. These are the first slice's values: they prefer what is posed. Lower them toward 1 and identity decides more, at the cost of new key sets",
+ "_reuse": "how strongly a shape that is already posed, or one swap or re-aim from it, is preferred. A re-aim Animation measured as ok is free; one at the edge needs a look, so it is preferred less. These are the first slice's values: lower them toward 1 and identity decides more, at the cost of new key sets",
  "rejected": [],
  "_rejected": "shapes a review turned down, by fighter: never proposed again"
 }

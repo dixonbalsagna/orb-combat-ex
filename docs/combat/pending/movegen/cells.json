@@ -1,9 +1,14 @@
 {
  "schema": "combat.cells/1",
  "_target": "data/combat/cells.json",
- "_about": "PARKED. What each face button holds in each stance (Game Design's matrix, docs/design/melee-press-feel.md sections 10 and 13): X quick, Y strong, A the stance's context action, B its signature. Only the martial arts stance is filled; the other four come with their slices. A filter is part values that must all hold; any is a list of filters of which one must.",
+ "_about": "PARKED. What each face button holds in each stance (Game Design's matrix, docs/design/melee-press-feel.md sections 10, 11 and 13): X quick, Y strong, A the stance's context action (a press and a hold), B its signature. X, Y and B each read three ways: speed, tech, heavy. A filter is part values that must all hold; any is a list of filters of which one must. needs lists what a cell asks of others before it can play",
  "seed": 20261004,
- "spread": {"path": 0.55, "target": 0.7, "tip": 0.7, "shape": 0.5},
+ "spread": {
+  "path": 0.55,
+  "target": 0.7,
+  "tip": 0.7,
+  "shape": 0.5
+ },
  "_spread": "each pick marks down the shapes that share its path, its target or its tip, and more those that share limb, path and target, so a cell spreads over the grammar",
  "stances": {
   "martial": {
@@ -11,48 +16,845 @@
    "x": {
     "kind": "strikes",
     "what": "light strikes: the light, the flurry blow, the skill strike, the juggle strike",
-    "filter": {"weight": ["light"]},
+    "filter": {
+     "weight": [
+      "light"
+     ]
+    },
     "count": 30,
     "quotas": [
-     {"name": "toward", "min": 5, "filter": {"limb": ["elbow", "knee", "shoulder", "head"]}},
-     {"name": "away", "min": 5, "filter": {"limb": ["foot"]}},
-     {"name": "none", "min": 5, "filter": {"limb": ["hand"], "path": ["line", "arc_in", "arc_out"]}},
-     {"name": "down", "min": 5, "any": [{"path": ["drop"]}, {"target": ["legs", "shins"]}]},
-     {"name": "up", "min": 5, "any": [{"path": ["rise"]}, {"target": ["head", "jaw"]}]},
-     {"name": "flurry", "min": 10, "form": "flurry"},
-     {"name": "skill", "min": 10, "form": "skill"}
+     {
+      "name": "toward",
+      "min": 5,
+      "filter": {
+       "limb": [
+        "elbow",
+        "knee",
+        "shoulder",
+        "head"
+       ]
+      }
+     },
+     {
+      "name": "away",
+      "min": 5,
+      "filter": {
+       "limb": [
+        "foot"
+       ]
+      }
+     },
+     {
+      "name": "none",
+      "min": 5,
+      "filter": {
+       "limb": [
+        "hand"
+       ],
+       "path": [
+        "line",
+        "arc_in",
+        "arc_out"
+       ]
+      }
+     },
+     {
+      "name": "down",
+      "min": 5,
+      "any": [
+       {
+        "path": [
+         "drop"
+        ]
+       },
+       {
+        "target": [
+         "legs",
+         "shins"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "up",
+      "min": 5,
+      "any": [
+       {
+        "path": [
+         "rise"
+        ]
+       },
+       {
+        "target": [
+         "head",
+         "jaw"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "flurry",
+      "min": 10,
+      "form": "flurry"
+     },
+     {
+      "name": "skill",
+      "min": 10,
+      "form": "skill"
+     }
     ],
     "_quotas": "filled in this order before the cell is filled freely. The first five are the stick's leans (a weight of 3 at run time, not a filter). The last two keep both readings deep: a juggle is up to 5 skill strikes (Orb)"
    },
    "y": {
     "kind": "strikes",
     "what": "heavy strikes: the guard breaker, the lift, the ender; a fully held lone heavy may launch (Orb)",
-    "filter": {"weight": ["heavy"]},
+    "filter": {
+     "weight": [
+      "heavy"
+     ]
+    },
     "count": 16,
     "quotas": [
-     {"name": "up", "min": 3, "sends": "up"},
-     {"name": "down", "min": 3, "sends": "down"},
-     {"name": "across", "min": 3, "sends": "across"},
-     {"name": "turned", "min": 3, "sends": "turned"},
-     {"name": "lift", "min": 4, "form": "lift"},
-     {"name": "break", "min": 4, "form": "break"}
+     {
+      "name": "up",
+      "min": 3,
+      "sends": "up"
+     },
+     {
+      "name": "down",
+      "min": 3,
+      "sends": "down"
+     },
+     {
+      "name": "across",
+      "min": 3,
+      "sends": "across"
+     },
+     {
+      "name": "turned",
+      "min": 3,
+      "sends": "turned"
+     },
+     {
+      "name": "lift",
+      "min": 4,
+      "form": "lift"
+     },
+     {
+      "name": "break",
+      "min": 4,
+      "form": "break"
+     }
     ]
    },
    "a": {
     "kind": "context",
-    "what": "today's context actions, one for each context; not generated",
-    "actions": ["grab_throw", "pick_up", "civilians", "taunt_far", "dive_grab"],
-    "held": "channel"
+    "what": "today's context actions; not generated",
+    "pressed": [
+     "grab and quick throw",
+     "pick-up",
+     "lift a civilian clear",
+     "dive grab from above",
+     "taunt"
+    ],
+    "held": [
+     "the aimed throw",
+     "his channel (On the Chin for the rival)"
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "contextHeld; the aimed throw as a knock-back; the grab lockout of 90 ticks"
+     },
+     {
+      "who": "Animation",
+      "what": "a second look for each grab and throw (wave 4's grabs: designed, not posed)"
+     }
+    ]
    },
    "b": {
     "kind": "frame",
-    "what": "the stance's signature. Its kind is not final (Orb wants charts and alternatives), so the frame is generic and nothing is hand-picked",
+    "what": "his defining signature, a melee art. The kinds are proposed and not final, so the frame is generic and nothing is hand-picked",
     "slots": [
-     {"slot": "tell", "ticks": 30},
-     {"slot": "open", "from": "a lunge from the mid band; nothing in reach"},
-     {"slot": "rush", "count": 4, "from": "x", "order": "links"},
-     {"slot": "launcher", "count": 1, "from": "y", "by": "sends"}
+     {
+      "slot": "tell",
+      "ticks": 30
+     },
+     {
+      "slot": "open",
+      "from": "a lunge from the mid band; nothing in reach"
+     },
+     {
+      "slot": "rush",
+      "count": 4,
+      "from": "x",
+      "order": "links"
+     },
+     {
+      "slot": "launcher",
+      "count": 1,
+      "from": "y",
+      "by": "sends"
+     }
+    ],
+    "readings": {
+     "speed": "the quick form",
+     "tech": "the quick form on his beat, closing a string",
+     "heavy": "the held form"
+    },
+    "legal": "a person screens the frame and its hand-picked piece (docs/legal/movegen-screen.md section 3)"
+   }
+  },
+  "manoeuvre": {
+   "held": 8,
+   "x": {
+    "kind": "travel",
+    "what": "the zip strike from the mid band (20 ki), the step strike in reach (5 ki), a piloted light charge from far; in reach with the stick away, the zip away",
+    "blows": "martial.x",
+    "kinds": [
+     "zip",
+     "step",
+     "charge",
+     "zip_away"
+    ],
+    "count": 8,
+    "readings": [
+     "speed",
+     "tech",
+     "heavy"
+    ],
+    "quotas": [
+     {
+      "name": "zip",
+      "min": 3,
+      "filter": {
+       "kind": [
+        "zip"
+       ]
+      }
+     },
+     {
+      "name": "step",
+      "min": 3,
+      "filter": {
+       "kind": [
+        "step"
+       ]
+      }
+     },
+     {
+      "name": "charge",
+      "min": 1,
+      "filter": {
+       "kind": [
+        "charge"
+       ]
+      }
+     },
+     {
+      "name": "zip away",
+      "min": 1,
+      "filter": {
+       "kind": [
+        "zip_away"
+       ]
+      }
+     }
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the zip as a move: in, the blow, out; its ki; the floor on its travel ticks; where it ends by the stick"
+     },
+     {
+      "who": "Simulation",
+      "what": "the step strike: a light at 0.8 with a step of up to 2 bh, and the slip when it lands in the rival's tell"
+     },
+     {
+      "who": "Animation",
+      "what": "the dash, the fade and the lane step played at zip speed, drawn the whole way; a pass to the far side"
+     },
+     {
+      "who": "VFX",
+      "what": "the zip's blur by reading: the smear, the sharp echoes, the squash"
+     }
     ]
+   },
+   "y": {
+    "kind": "travel",
+    "what": "the zip heavy from the mid band (30 ki), a heavy on the move in reach (10 ki), a piloted heavy charge, and the pursuit past charge range",
+    "blows": "martial.y",
+    "kinds": [
+     "zip",
+     "step",
+     "charge",
+     "pursuit",
+     "zip_away"
+    ],
+    "count": 8,
+    "readings": [
+     "speed",
+     "tech",
+     "heavy"
+    ],
+    "quotas": [
+     {
+      "name": "zip",
+      "min": 3,
+      "filter": {
+       "kind": [
+        "zip"
+       ]
+      }
+     },
+     {
+      "name": "step",
+      "min": 2,
+      "filter": {
+       "kind": [
+        "step"
+       ]
+      }
+     },
+     {
+      "name": "charge",
+      "min": 1,
+      "filter": {
+       "kind": [
+        "charge"
+       ]
+      }
+     },
+     {
+      "name": "pursuit",
+      "min": 1,
+      "filter": {
+       "kind": [
+        "pursuit"
+       ]
+      }
+     },
+     {
+      "name": "zip away",
+      "min": 1,
+      "filter": {
+       "kind": [
+        "zip_away"
+       ]
+      }
+     }
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the zip heavy (no lift: he is leaving), the heavy on the move, the pursuit"
+     },
+     {
+      "who": "Animation",
+      "what": "as X"
+     }
+    ]
+   },
+   "a": {
+    "kind": "context",
+    "what": "not generated",
+    "pressed": [
+     "a snatch on the fly (pick-up, civilian)",
+     "the dive grab from above"
+    ],
+    "held": [
+     "the tackle in reach",
+     "the zip tackle from the mid band (25 ki)"
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the snatch on the fly; the zip tackle"
+     },
+     {
+      "who": "Animation",
+      "what": "the tackle, the lift and the throw are posed (pair2); the snatch is not"
+     }
+    ]
+   },
+   "b": {
+    "kind": "frame",
+    "what": "his signature as a zip; held, a terrain art. It differs for each fighter (Orb), and the kinds are not final, so the frame is generic",
+    "slots": [
+     {
+      "slot": "tell",
+      "ticks": 20
+     },
+     {
+      "slot": "zip in",
+      "from": "x"
+     },
+     {
+      "slot": "take hold",
+      "from": "the tackle"
+     },
+     {
+      "slot": "into the landscape",
+      "by": "the launch planner"
+     }
+    ],
+    "readings": {
+     "speed": "the quick form, as a zip",
+     "tech": "the same on the mark",
+     "heavy": "the terrain art"
+    },
+    "legal": "a person screens the frame and each fighter's version; a terrain art is a new set piece"
+   }
+  },
+  "energy": {
+   "held": 2,
+   "x": {
+    "kind": "table",
+    "what": "bolts: the spray (speed), the measured bolt (tech), the volley of three (heavy)",
+    "block": "shot",
+    "delivery": [
+     "bolt",
+     "volley"
+    ],
+    "count": 6,
+    "quotas": [
+     {
+      "name": "heavy",
+      "min": 2,
+      "form": "heavy"
+     },
+     {
+      "name": "tech",
+      "min": 2,
+      "form": "tech"
+     },
+     {
+      "name": "speed",
+      "min": 3,
+      "form": "speed"
+     }
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the volley: three bolts in a tight fan as one press"
+     },
+     {
+      "who": "VFX",
+      "what": "each fighter's bolt in his own family; no ball in the palm"
+     }
+    ]
+   },
+   "y": {
+    "kind": "table",
+    "what": "the heavy shot (speed, tech), the charged shot and the short beam (heavy), and for the rival the split on a second press",
+    "block": "shot",
+    "delivery": [
+     "shot",
+     "charged",
+     "short_beam",
+     "split"
+    ],
+    "count": 6,
+    "quotas": [
+     {
+      "name": "speed",
+      "min": 2,
+      "form": "speed"
+     },
+     {
+      "name": "tech",
+      "min": 1,
+      "form": "tech"
+     },
+     {
+      "name": "heavy",
+      "min": 3,
+      "form": "heavy"
+     },
+     {
+      "name": "short beam",
+      "min": 1,
+      "filter": {
+       "delivery": [
+        "short_beam"
+       ]
+      }
+     },
+     {
+      "name": "split",
+      "min": 1,
+      "filter": {
+       "delivery": [
+        "split"
+       ]
+      }
+     }
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the short beam as a shot kind; the split (SimShots.split) for the rival"
+     },
+     {
+      "who": "Animation",
+      "what": "a braced pose for the short beam; the split's second release"
+     },
+     {
+      "who": "VFX",
+      "what": "the short beam and the split, in each fighter's family"
+     }
+    ]
+   },
+   "a": {
+    "kind": "context",
+    "what": "not generated",
+    "pressed": [
+     "a mine at range",
+     "the shove in reach"
+    ],
+    "held": [
+     "an aimed mine, lobbed up to 6 bh",
+     "the long shove, 5 bh"
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the aimed mine; the long shove"
+     },
+     {
+      "who": "Animation",
+      "what": "the mine lay and the shove are posed (energy1, rival3); the aimed lob of a mine is not"
+     }
+    ]
+   },
+   "b": {
+    "kind": "frame",
+    "what": "the beam, as built: the biome variants, the beam struggle and the beam answers",
+    "slots": [
+     {
+      "slot": "tell",
+      "ticks": 30
+     },
+     {
+      "slot": "the beam",
+      "from": "the live signature"
+     }
+    ],
+    "readings": {
+     "speed": "the quick form",
+     "tech": "on his firing beat",
+     "heavy": "the held form"
+    },
+    "legal": "screened as built; a new variant or a new hand is new vocabulary"
+   }
+  },
+  "defensive": {
+   "held": 1,
+   "x": {
+    "kind": "strikes",
+    "what": "the check, a short blow from behind the guard: mashed (speed), the parry when timed after a blocked blow (tech), the guard strike when held (heavy)",
+    "filter": {
+     "weight": [
+      "light"
+     ],
+     "limb": [
+      "hand",
+      "elbow",
+      "knee"
+     ],
+     "path": [
+      "line",
+      "rise",
+      "arc_in"
+     ],
+     "target": [
+      "jaw",
+      "chest",
+      "gut",
+      "arm",
+      "legs"
+     ]
+    },
+    "count": 6,
+    "layer": "guard",
+    "readings": [
+     "speed",
+     "tech",
+     "heavy"
+    ],
+    "quotas": [
+     {
+      "name": "high",
+      "min": 2,
+      "filter": {
+       "target": [
+        "jaw",
+        "arm"
+       ]
+      }
+     },
+     {
+      "name": "mid",
+      "min": 2,
+      "filter": {
+       "target": [
+        "chest",
+        "gut"
+       ]
+      }
+     },
+     {
+      "name": "close limb",
+      "min": 2,
+      "filter": {
+       "limb": [
+        "elbow",
+        "knee"
+       ]
+      }
+     }
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the check (half a light, 6 ticks, once in 20), the parry (the rival reels 12), the guard strike"
+     },
+     {
+      "who": "Animation",
+      "what": "the guard layer a check is thrown over: the other arm stays set"
+     },
+     {
+      "who": "VFX",
+      "what": "the parry's mark"
+     }
+    ]
+   },
+   "y": {
+    "kind": "strikes",
+    "what": "the push: 3 bh and short shoves (speed), the stuff inside the rival's tell (tech), the long push of 5 bh (heavy). No damage",
+    "filter": {
+     "any": [
+      {
+       "path": [
+        "line"
+       ],
+       "target": [
+        "chest",
+        "gut"
+       ],
+       "limb": [
+        "hand"
+       ],
+       "tip": [
+        "palm"
+       ]
+      },
+      {
+       "path": [
+        "line"
+       ],
+       "target": [
+        "chest"
+       ],
+       "limb": [
+        "shoulder",
+        "elbow"
+       ],
+       "tip": [
+        "plate"
+       ]
+      },
+      {
+       "path": [
+        "line"
+       ],
+       "target": [
+        "chest",
+        "gut"
+       ],
+       "limb": [
+        "foot"
+       ],
+       "tip": [
+        "sole",
+        "ball"
+       ]
+      }
+     ]
+    },
+    "count": 6,
+    "anyWeight": true,
+    "as": "push",
+    "notFlags": [
+     "leap",
+     "spin",
+     "multi_turn"
+    ],
+    "readings": [
+     "speed",
+     "tech",
+     "heavy"
+    ],
+    "quotas": [
+     {
+      "name": "chest",
+      "min": 2,
+      "filter": {
+       "target": [
+        "chest"
+       ]
+      }
+     },
+     {
+      "name": "gut",
+      "min": 1,
+      "filter": {
+       "target": [
+        "gut"
+       ]
+      }
+     }
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the push (no damage, 10-tick wind-up, 3 bh; 5 bh held), the short shove, the stuff"
+     },
+     {
+      "who": "Animation",
+      "what": "a pushed fighter's slide back is posed (s3.shoved); the push itself reuses strike key sets with no impact snap"
+     }
+    ]
+   },
+   "a": {
+    "kind": "context",
+    "what": "not generated",
+    "pressed": [
+     "the reversal after a block (20 ki)",
+     "the deflect at range"
+    ],
+    "held": [
+     "the guard throw, in reach",
+     "the aimed deflect at range (10 ki)"
+    ],
+    "needs": [
+     {
+      "who": "Simulation",
+      "what": "the guard throw; the aimed deflect"
+     },
+     {
+      "who": "Animation",
+      "what": "the reversal and the swat are posed (step3, energy1); the guard throw is not"
+     }
+    ]
+   },
+   "b": {
+    "kind": "frame",
+    "what": "a counter: he sets himself, catches the next blow and answers it. It differs for each fighter (Orb), and the kinds are not final, so the frame is generic",
+    "slots": [
+     {
+      "slot": "set",
+      "ticks": 40
+     },
+     {
+      "slot": "catch",
+      "from": "the blow that would land"
+     },
+     {
+      "slot": "answer",
+      "count": 1,
+      "from": "martial.y",
+      "by": "sends"
+     }
+    ],
+    "readings": {
+     "speed": "the quick form",
+     "tech": "within the rival's tell",
+     "heavy": "the held form"
+    },
+    "legal": "a person screens the frame and each fighter's version: the rival catches on his plates, the Protagonist turns it aside with open hands"
+   }
+  },
+  "charging": {
+   "held": 4,
+   "x": {
+    "kind": "special",
+    "what": "his quick special: as authored (speed), on its mark (tech), its charged cut (heavy)",
+    "slot": "x",
+    "count": 5,
+    "readings": [
+     "speed",
+     "tech",
+     "heavy"
+    ],
+    "needs": [
+     {
+      "who": "Game Design",
+      "what": "which special sits on which button; the Protagonist's specials"
+     },
+     {
+      "who": "Animation",
+      "what": "each special's cuts: none is posed as a whole"
+     },
+     {
+      "who": "Simulation",
+      "what": "a special's charged cut and its mark"
+     }
+    ]
+   },
+   "y": {
+    "kind": "special",
+    "what": "his strong special, in the same three readings",
+    "slot": "y",
+    "count": 5,
+    "readings": [
+     "speed",
+     "tech",
+     "heavy"
+    ],
+    "needs": [
+     {
+      "who": "as X",
+      "what": ""
+     }
+    ]
+   },
+   "a": {
+    "kind": "special",
+    "what": "his utility special: pressed, and its held cut",
+    "slot": "a",
+    "count": 4,
+    "readings": [
+     "pressed",
+     "held"
+    ],
+    "needs": [
+     {
+      "who": "as X",
+      "what": ""
+     }
+    ]
+   },
+   "b": {
+    "kind": "frame",
+    "what": "his release; in acts 3 and 4, held to full, his ultimate (75 ki)",
+    "slots": [
+     {
+      "slot": "tell",
+      "ticks": 45
+     },
+     {
+      "slot": "the release",
+      "from": "what he has gathered"
+     }
+    ],
+    "readings": {
+     "speed": "the release",
+     "tech": "on the mark",
+     "heavy": "held to full: the ultimate"
+    },
+    "legal": "a person screens it: the charge pose and the release are where the stacking rule bites"
    }
   }
  }

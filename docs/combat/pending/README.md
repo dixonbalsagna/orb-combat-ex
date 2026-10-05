@@ -82,9 +82,13 @@ Merged, ready-to-apply copies of the three combat data files, prepared on 2026-1
 
 `strikes.launchpair.json`: Combat's rows for the Protagonist's eight own strikes and two entries, and for the Anti-hero's body hook and rib shot (range, ticks, classes, tags), replacing the rows Animation borrowed from wave 1 slots. Lunge and clear are left for Animation's strike_lab.
 
+## The split
+
+`split-rename.py`: Combat's part of the rename to PROTAGONIST and RIVAL, as exact text edits on `data/combat` (a dry run by default, `--apply` to write). The change list is `apply-order.md` section 9. For the window with Simulation.
+
 ## Generated movesets
 
-`movegen/`: the moveset generator's inputs (`parts.json`, `identity.json`, `cells.json`), its reference script, the generated martial arts stance for both fighters (30 lights and 16 heavies each) and the review sheet. Its README has the counts and the keys for Tools. Parked; design in `../moveset-generator.md`.
+`movegen/`: the moveset generator's inputs (`parts.json`, `identity.json`, `cells.json`, `lock.json`), its reference script, the generated movesets for both fighters over all five stances (100 moves each) and the review sheet. Its README has the counts and the keys for Tools. Parked; design in `../moveset-generator.md`.
 
 ## The launch pair: readiness and apply order
 
