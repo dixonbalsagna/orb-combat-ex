@@ -1,10 +1,11 @@
 {
   "schema": "biomes.stages/1",
-  "_about": "The stages of a building's destruction (docs/world/staged-destruction.md; WorldStructures.stage). Stage 0 is intact and 4 is rubble (not alive), fixed in code. hpAt: the share of its hit points a building must fall under to reach stage 1 (windows out), 2 (a part gone) and 3 (a shell). cutFloorsStage: the stage a skyscraper with a cut floor is at least in.",
+  "_about": "The stages of a building's destruction (docs/world/staged-destruction.md; WorldStructures.stage). Stage 0 is intact and 4 is rubble (not alive), fixed in code. hpAt: the share of its hit points a building must fall under to reach stage 1 (windows out), 2 (a part gone) and 3 (a shell). cutFloorsStage: the stage a skyscraper with a cut floor is at least in. leaveFrac: one blast (damageArea, not a beam or a brunt) cannot take a standing building below this share of its hit points, so a second blast finishes it (0 is off).",
   "hpAt": [
     0.9,
     0.65,
     0.35
   ],
-  "cutFloorsStage": 2
+  "cutFloorsStage": 2,
+  "leaveFrac": 0.1
 }
