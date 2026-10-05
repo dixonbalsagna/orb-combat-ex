@@ -27,7 +27,7 @@ Lunges, charges, blasts and everything at range are unchanged. A lunge or a char
 
 **The brawl.** It starts when the fighters are within 3 bh and either presses attack. Each fighter then has his own strike line. Nobody waits for the other's string to finish.
 
-| The press | Press to contact | How long the blow takes |
+| The press | Press to contact | How long the blow runs, if nothing follows |
 | :--- | ---: | :--- |
 | **A mash blow** | **On the press:** 2 ticks at most | 6 to 12 ticks, by tap rate (§3) |
 | **A skill strike** (on the beat) | 6 ticks | 30 ticks, ending on its beat (§4) |
@@ -353,9 +353,9 @@ So for a zipper who came in from the rival's left:
 
 ## 3. Mash: the faster he taps, the faster the flurry
 
-- **The flurry follows the taps.** The time between blows is the time between taps, held between **6 and 12 ticks.** That is 5 to 10 blows a second.
+- **The flurry follows the taps.** The time between blows is the time between taps, held between **6 and 12 ticks.** That is 5 to 10 blows a second. Taps are timed on the sim's tick, which runs through hit-stop, so it is his real tap rate that counts (§9b).
 - Taps slower than one every 12 ticks aren't a flurry. Each is a separate light.
-- **Faster isn't stronger.** A blow's damage scales with its interval: ×0.6 of a light at 6 ticks, ×0.8 at 8, and ×1.0 at 10 to 12. So the damage per second is the same at every speed.
+- **Faster isn't stronger.** A blow's damage scales with its interval, as the interval ÷ 10: ×0.6 of a brawl light at 6 ticks, ×0.8 at 8, ×1.0 at 10 and ×1.2 at 12. So the damage per second is the same at every speed. A brawl light is a quarter of the data's light (§9b).
 - **What speed buys:**
   - it reaches the flurry's closing stagger sooner;
   - it interrupts a heavy's wind-up sooner (§7);
@@ -373,7 +373,7 @@ So for a zipper who came in from the rival's left:
 | **Early** | A press before that window is a **flurry blow,** thrown at once. This is Orb's "lapse into high speed flurries when they miss their timing". It is never a dead press |
 | **Late** | A press after the window is a fresh light. The rhythm starts again from it |
 | **The first press** | A light. It can't be on or off a beat, and the beat runs from its contact |
-| **A skill strike** | ×1.25 of a light. It reels the rival for 8 ticks, where a flurry blow reels him for 4, and that pushes his next blow back. It adds 1 to the flow |
+| **A skill strike** | Worth 4 brawl lights, which is the data's light in full (§9b). It reels the rival for 8 ticks, where a flurry blow reels him for 4, and that pushes his next blow back. It adds 1 to the flow |
 | **A missed beat** | The flow goes to 0, as now |
 | **How the beat is shown** | On the body: at the beat point the striking limb **sets** with a glint, and a short tick sounds. The piece's rhythm is the cue. **A beat ring** is an option in settings, off by default: a ring on the rival that closes on the beat point (Orb, questionnaire 17) |
 | **The look** (Orb) | A clean, instant-looking blow with a crisp after-image, distinct from the flurry's smear |
@@ -396,16 +396,16 @@ The existing bands hold: timed against the same style untimed at 62 to 82%.
 - **How it ends:** with the string's heavy ender (below), or when he drops.
 - **His way out:** a burst, at its usual price: 30 ki, and 8 s before he can burst again. It works while he is lifted. A juggler who guards as it fires soaks it, as now.
 
-**What a full juggle is worth.** With the data's light at 26 and heavy at 66, and the flow's 4% a count:
+**What a full juggle is worth.** With the brawl's worths (§9b: a skill strike at 26 and a heavy at 33 today), and the flow's 4% a count:
 
 | | Damage |
 | :--- | ---: |
-| A full juggle: the heavy, five strikes on the beat, the ender | 271 |
-| The same with every strike at full worth | 327 |
-| Two four-hit timed strings (a light, two skill strikes, the ender) | 332 |
-| The old juggle of three, now | 229. It was 245 |
+| A full juggle: the heavy, five strikes on the beat, the ender | 173 |
+| The same with every strike at full worth | 218 |
+| Two four-hit timed strings (a light, two skill strikes, the ender) | 195 |
+| A juggle of three | 141 |
 
-So a full juggle is about 80% of two strings. What the fourth and fifth strikes buy is a flow of 5, which is the showcase, and a certain launch. The rival is also out of the fight for about 3.5 s while it lasts.
+So a full juggle is about 89% of two strings, near the top of its band (§9). If QA finds it over, the first lever is the worth of the fourth and fifth strikes. What the fourth and fifth strikes buy is a flow of 5, which is the showcase, and a certain launch. The rival is also out of the fight for about 3.5 s while it lasts.
 
 **A lone heavy held to full may launch** (Orb, questionnaire 17).
 - **Fully held is 46 ticks of hold.** The charge flashes at that tick, and he can let go at any time after it. It lands 8 ticks after the release, so no sooner than 54 ticks after the press.
@@ -489,6 +489,72 @@ The player owns **when** each blow happens and **what kind** it is. The director
 | Juggles ended by a burst | 20 to 40% |
 | A masher against the easy and medium AI, and a lights-only mirror finishing | The bands in `agency-pass.md` §13 and §23 still hold |
 
+### 9b. Rulings on the first brawl slice (B1), 2026-10-05
+
+Encounter has the first brawl slice running, and the core holds:
+- blows a second follow taps a second within 1%, from 5 to 10 taps;
+- press to contact is 2 ticks at the median and at the 95th percentile;
+- 99.8% of presses in a brawl become a blow inside 10 ticks against the medium AI. It was 15.4%;
+- time with nothing running falls from 13.4 to about 6 s a minute.
+
+It raised four things. Every number below is a starting value.
+
+**1. Damage: a blow is worth what its form is worth, and the stream is cheap.**
+
+A brawling fighter lands six lights a second, where the old exchange landed about one. At the data's 26 a light, AI matches fell to about 280 s and a pressed match to about 65 s.
+
+- **The brawl scale stays:** `brawl.damageMul` 0.25. It sets what a **brawl light** is worth against the data's light, which is 6.5 today.
+- **It is not one scale on every blow.** The stream, which is lights and flurry blows, takes it in full. A paced blow is worth more brawl lights, by how much of the stream it gives up:
+
+| Form | Worth, in brawl lights | At today's data | Why |
+| :--- | ---: | ---: | :--- |
+| A light; a flurry blow at 10 ticks | 1 | 6.5 | The stream. It is the same damage a second at any tap rate |
+| A skill strike; the first juggle strike | 4 | 26 | One takes 30 ticks, and a flurry lands 3 lights' worth in that time. So timing pays a third more than mashing |
+| A set light | 1.5 | 9.75 | A light and a set light take 20 ticks together, which puts them between mashing and timing |
+| A heavy; an ender | 5: the data's heavy × the scale × 2 | 33 | One takes 44 ticks, and a flurry lands 4.4 in that time. It also lifts, breaks a guard or ends the string |
+| A held heavy at full; a timed heavy | ×1.25 of the heavy | 41 | |
+| A rushed heavy | ×0.9, ×0.8, then ×0.7 of the heavy | 30, 26, then 23 | |
+
+- **Damage for each tick, in brawl lights:** mashing 0.10, a heavy on repeat 0.115, and a four-hit timed string 0.138. So timing and heavies still matter.
+- **Data:** `brawl.damageMul` 0.25, `brawl.skillMul` 4, `brawl.setMul` 1.5 and `brawl.heavyMul` 2.
+- **The ratios are the rule, and the scale is QA's lever for match length.** B1's 396 to 474 s was measured with every blow at ×0.25. With skill strikes and heavies at their worth, matches will be shorter, so expect `brawl.damageMul` to come down toward 0.2. The target is the median length band.
+- **Wear isn't re-tuned for this.** Shots, signatures and landings are tuned against it. What changed is only how often melee lands.
+
+**Blows outside a brawl follow the same rule:** a blow is worth its form, wherever it is thrown.
+
+| The blow | Its worth |
+| :--- | :--- |
+| A riposte with a light | A skill strike's: 4 brawl lights. In number it is what it is today |
+| A riposte with a heavy; the reversal's heavy | A brawl heavy's: 33, and not 66 |
+| The old dodge templates | The one answering blow is worth a skill strike. Any other blow in them is a brawl light |
+| A mid-band lunge's blow on arrival | A brawl light or a brawl heavy, by its button. It is the first blow of the brawl |
+| A far charge's blow on arrival | A skill strike's worth for a light charge, and a held heavy's at full for a heavy charge |
+| The check; the step strike | Half a brawl light; ×0.8 of one. The guard strike is worth a set light |
+| The zips (§2c) | The data's own values: a light at 26 and a heavy at 66. They are bought with ki |
+| Shots, signatures, throws and landings | Unchanged |
+
+**2. The flurry's table runs to ×1.2.** A flurry blow is worth a brawl light × its interval ÷ 10: ×0.6 at 6 ticks, ×0.8 at 8, ×1.0 at 10, ×1.1 at 11 and ×1.2 at 12. Damage a second is then level from 5 to 10 taps a second, and the band stays "within 10%". A tap slower than one every 12 ticks is a separate light at ×1.0.
+
+**3. The heavy's 76 ticks are its animation, and not a lock.** They are 34 to contact and 42 of follow-through, as the prototype plays it when nothing follows. He can act again after the recovery below, and his next action blends out of the follow-through.
+
+| What the heavy did | His line is free, after contact | So |
+| :--- | :--- | :--- |
+| It landed clean and lifted him | 10 ticks | The juggle's first strike is pressed on the heavy's beat point. A juggle strike pressed in its window always lands: the lift holds until it does |
+| It landed on a guard and broke it | 10 ticks | He is free 2 ticks before the blocker's 12-tick stagger ends, and the guard stays down until tick 40. A heavy on a guard is a win for the attacker |
+| It landed as an ender, or launched | 10 ticks | He can follow at once |
+| It traded with another tapped heavy | 12 ticks | That is the stagger both take |
+| It was perfect-blocked | The perfect block's own stagger | Unchanged |
+| It whiffed: dodged, sidestepped or out of reach | 30 ticks | This is the punish |
+| It was stopped in its wind-up | The reel of the blow that stopped it | |
+
+- The same holds for the held, the rushed and the timed heavy.
+- **Every "whole blow" figure in §1 and §13 is an animation length of this kind.** A light, a flurry blow or a skill strike frees his line for the next X at once, which is how a flurry or a missed beat follows straight on. For anything else it is free 4 ticks after contact.
+- **Data:** `heavy.recover` 10 and `heavy.recoverWhiff` 30.
+
+**4. The flurry's clock is the sim's tick.** Taps are timed on `S.tick`, which runs through hit-stop, so the player's real tap rate is what counts. Hit-stop never delays the next blow of the fighter who landed the last one. QA's rate rows are all read against `S.tick`: blows a second against taps a second, damage a second across tap rates, and press to contact.
+
+**What B1 doesn't have yet.** There is no beat point until B2, so flow is neither earned nor lost in a brawl. Until then an ender launches only when it is held to full, and timed play against plain play reads near even. The timing rows of §9 are read from B2 on.
+
 ## 10. Stances and the face buttons
 
 **Orb:** "stances will still be involved, the default represents the characters' martial arts stance, LB represents defensive stance, RB is Energy arts stance, RT is the charging stance, LT is maneuver stance. All face buttons should have an appropriately broad moveset for each stance."
@@ -554,10 +620,10 @@ So the button picks the move, and how it is pressed picks the reading. The gramm
 
 | Stance | Button | Speed (mashed) | Tech (timed) | Heavy (held) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Martial arts** | X | Flurry blows (§3) | A skill strike, on his beat (§4) | **A set light.** After the light lands, X held for 12 ticks sets him, and letting go throws one hard light: ×1.25, and the rival reels for 12. He doesn't reel from flurry blows while he holds |
+| **Martial arts** | X | Flurry blows (§3) | A skill strike, on his beat (§4) | **A set light.** After the light lands, X held for 12 ticks sets him, and letting go throws one hard light, worth 1.5 brawl lights, and the rival reels for 12. He doesn't reel from flurry blows while he holds |
 | | Y | A heavy (§5). Tapped again in the first 16 ticks of its wind-up, it is **rushed:** each tap takes 4 ticks off the wind-up and 10% off the damage, three taps at most | **A timed heavy,** on his beat after a landed blow: 16 ticks of wind-up in place of 26, ×1.25, flow +1. This is how a timed string closes fast | The held heavy (§5): ×1.25 at 46 ticks, and the launch or the long lift |
 | | B | His signature's quick form | The quick form on his beat, closing a string | His signature's held form |
-| **Defensive** | X | Checks. They come 10 to 16 ticks apart by the tap rate, at ×0.3 to ×0.5 of a light. Guard fatigue runs twice as fast while he mashes them | The parry: a check within 4 ticks after a blow lands on his guard. The rival reels for 12 | **A guard strike.** X held for 16 ticks: a full light, and the rival staggers for 12. His guard is open to a heavy while he holds |
+| **Defensive** | X | Checks. They come 10 to 16 ticks apart by the tap rate, at ×0.3 to ×0.5 of a brawl light. Guard fatigue runs twice as fast while he mashes them | The parry: a check within 4 ticks after a blow lands on his guard. The rival reels for 12 | **A guard strike.** X held for 16 ticks: a set light's worth, and the rival staggers for 12. His guard is open to a heavy while he holds |
 | | Y | The push: 3 bh. Tapped again within 30 ticks it is a short shove of 1 bh, 12 ticks apart at the fastest. Three shoves in a row let the brawl go | **A stuff:** a push within the rival's tell. His blow is voided and he staggers for 8 | The long push: held for 20 ticks, 5 bh |
 | | B | His signature's quick form | The quick form within the rival's tell | His signature's held form |
 | **Energy arts** | X | The spray: bolts at the tap rate, with the spread building (`agency-pass.md` §15.4) | A measured bolt, on his firing beat: no spread, and flow +1, as built | **A volley.** X held for 16 ticks: three bolts together in a tight fan, each a full bolt at a bolt's price. It counts as one press (§13) |
@@ -616,10 +682,10 @@ A hold is 12 ticks, and the intent carries it as `contextHeld`.
 | The escape stance | **Gone** since the agency pass. The Escape button stays a control of its own |
 
 **New actions.** Orb approved the check with its parry, the push and the step strike (questionnaire 17). The zips come from Orb's notes there, and their numbers are in §2c. First numbers:
-- **Check:** half a light's damage, 6 ticks to contact. Mashed, checks come no closer than 10 ticks apart and are weaker (above). His guard stays up against lights and flurry blows while he throws it. A heavy still breaks a set guard (§5).
+- **Check:** half a brawl light's damage (§9b), 6 ticks to contact. Mashed, checks come no closer than 10 ticks apart and are weaker (above). His guard stays up against lights and flurry blows while he throws it. A heavy still breaks a set guard (§5).
 - **Parry:** a check pressed within 4 ticks after a blow lands on his guard. The rival reels for 12 ticks. It doesn't end his string, which is what the perfect block does.
 - **Push:** no damage, a 10-tick wind-up, and the rival is driven back 3 bh, or 5 bh when it is held for 20 ticks. Either way the brawl's hold lets go (§2), and closing again is a player's own move. It isn't decisive. Tapped again inside 30 ticks it is a short shove (above).
-- **Step strike:** a light at ×0.8 with a step of up to 2 bh around, over or under the rival, by the stick. It stays inside the brawl. Pressed within 4 ticks before the rival's contact, his blow misses. The timing mark is the rival's tell, and the director supplies it. It costs 5 ki.
+- **Step strike:** a brawl light at ×0.8 (§9b) with a step of up to 2 bh around, over or under the rival, by the stick. It stays inside the brawl. Pressed within 4 ticks before the rival's contact, his blow misses. The timing mark is the rival's tell, and the director supplies it. It costs 5 ki.
 - **Zip strike, zip heavy and zip tackle:** from the mid band he goes in, strikes and comes out again, for 20, 30 and 25 ki (§2c). The stick picks where he ends up around the rival, and the stick away takes him further out, from inside a brawl too.
 - **The four signatures that aren't a beam** (§11). Their kinds are still a proposal.
 - **New with the readings** (2026-10-05), with their first numbers in the tables above: the set light, the rushed and the timed heavy, the guard strike, the stuff, the volley, the aimed throw, the guard throw, the aimed deflect, the aimed mine and the long shove. They are for Orb to see in the prototype.
@@ -812,20 +878,20 @@ It is a weight of ×3 and not a filter, so a broken limb or a repeat still falls
 
 ### The forms' numbers, for the martial arts stance
 
-Damage is against the light and heavy values in data. Flow, tier, form and wounds multiply on top, as now.
+Damage is in the brawl's worths (§9b): a brawl light is the data's light × 0.25, and a brawl heavy is the data's heavy × 0.5. Flow, tier, form and wounds multiply on top, as now. "Whole blow" is the animation's length if nothing follows, and not a lock.
 
 | Form | How it is pressed | Damage | Press to contact | Whole blow | A clean hit leaves the rival | Hit-stop | Flow |
 | :--- | :--- | :--- | ---: | ---: | :--- | ---: | :--- |
-| **Light** | X: a string's first press, or a press after the beat window | Light ×1.0 | 4 | 24 | Reeling for 4 | 2 | Starts the beat |
-| **Flurry blow** | X again before the beat window | Light ×0.6 at 6-tick taps, ×0.8 at 8, ×1.0 at 10 or slower | 2 or less | The tap interval, 6 to 12 | Reeling for 4. After four unanswered, the next staggers him for 12 | 2 | To 0, if it missed a beat |
-| **Skill strike** | X within 4 ticks of the beat point | Light ×1.25 | 6 | 30 | Reeling for 8 | 4 | +1 |
-| **Set light** | X held for 12 ticks after a light lands, then let go | Light ×1.25 | 4 after the release | 20 after the release | Reeling for 12. He doesn't reel from flurry blows while he holds | 4 | No change. Its contact starts a new beat |
-| **Heavy** | Y, tapped | Heavy ×1.0 | 34: 26 of wind-up and 8 to land | 76 | Lifted for 30. A set guard breaks: down for 40, staggered for 12 | 6 | No change |
-| **Rushed heavy** | Y tapped again in the first 16 ticks of its wind-up, three times at most | Heavy ×0.9, ×0.8, then ×0.7 | 30, 26, then 22 | 72, 68, then 64 | As the heavy. At three taps the lift is 20 | 6 | No change |
-| **Timed heavy** | Y within 4 ticks of his beat point, after a landed blow | Heavy ×1.25 | 24: 16 of wind-up and 8 to land | 66 | As the heavy, or as the ender when it closes a string | 6 | +1 |
-| **Held heavy** | Y held, then released | Heavy ×1.0, rising to ×1.25 at 46 ticks of hold | 8 after the release | 96 | Lifted for 30. At a full charge: launched along the stick, or lifted for 45 with no stick | 6 | No change |
+| **Light** | X: a string's first press, or a press after the beat window | A brawl light | 4 | 24 | Reeling for 4 | 2 | Starts the beat |
+| **Flurry blow** | X again before the beat window | A brawl light × the interval ÷ 10: ×0.6 at 6 ticks to ×1.2 at 12 | 2 or less | The tap interval, 6 to 12 | Reeling for 4. After four unanswered, the next staggers him for 12 | 2 | To 0, if it missed a beat |
+| **Skill strike** | X within 4 ticks of the beat point | 4 brawl lights | 6 | 30 | Reeling for 8 | 4 | +1 |
+| **Set light** | X held for 12 ticks after a light lands, then let go | 1.5 brawl lights | 4 after the release | 20 after the release | Reeling for 12. He doesn't reel from flurry blows while he holds | 4 | No change. Its contact starts a new beat |
+| **Heavy** | Y, tapped | A brawl heavy | 34: 26 of wind-up and 8 to land | 76 | Lifted for 30. A set guard breaks: down for 40, staggered for 12 | 6 | No change |
+| **Rushed heavy** | Y tapped again in the first 16 ticks of its wind-up, three times at most | A brawl heavy ×0.9, ×0.8, then ×0.7 | 30, 26, then 22 | 72, 68, then 64 | As the heavy. At three taps the lift is 20 | 6 | No change |
+| **Timed heavy** | Y within 4 ticks of his beat point, after a landed blow | A brawl heavy ×1.25 | 24: 16 of wind-up and 8 to land | 66 | As the heavy, or as the ender when it closes a string | 6 | +1 |
+| **Held heavy** | Y held, then released | A brawl heavy, rising to ×1.25 at 46 ticks of hold | 8 after the release | 96 | Lifted for 30. At a full charge: launched along the stick, or lifted for 45 with no stick | 6 | No change |
 | **Ender** | Y after two or more landed blows of the string | As the heavy or the held heavy | As the heavy | As the heavy | Knocked back. Launched at flow 3 or more, at a full charge, or after a juggle of three or more | 6 | Spent by a launch, as now |
-| **Juggle strike** | X within 4 ticks of the beat point while he is lifted | Light ×1.25, then ×0.85, ×0.7, ×0.55 and ×0.4 of that by its place in the juggle | 6 | 30 | Lifted again for one beat. Five at most | 4 | +1 |
+| **Juggle strike** | X within 4 ticks of the beat point while he is lifted | 4 brawl lights, then ×0.85, ×0.7, ×0.55 and ×0.4 of that by its place in the juggle | 6 | 30 | Lifted again for one beat. Five at most | 4 | +1 |
 
 - **The beat point** is 24 ticks after contact by default. Combat's values by path are accepted: 20 for a line, 24 for an arc or a rise, 26 for a drop and 28 for a spin.
 - **Reach:** every form is the close band. From the mid band a lunge comes first (§2b).
