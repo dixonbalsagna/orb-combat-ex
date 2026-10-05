@@ -4,7 +4,7 @@ Owner: Game Design. Orb approved the second melee prototype (`docs/ep/prototypes
 
 > close up brawls should make fighters slightly 'magnetic' so they can trade continuous strings of blows without interruption. both players should feel like their attacks actually match a button press. mashers should see their fighter landing faster flurries the quicker they tap the attack, a player trying to tech timing combos should see his character landing flashy skill attacks that lapse into high speed flurries when they miss their timing, and the heavy attack should be reliable against a heavy guard opponent, or to set up chains of skillful juggle attacks.
 
-It is built on the alchemy framework that exists: the press log, the timing grade, the flow count, the pieces and the blur cadence. **Every number is a starting value.** Orb answered ten questions about it in questionnaire 17, and the answers are written in (§14). The stances, the signatures and the rules for a generated moveset are §10 to §13.
+It is built on the alchemy framework that exists: the press log, the timing grade, the flow count, the pieces and the blur cadence. **Every number is a starting value.** Orb answered ten questions about it in questionnaire 17 and added to it on 2026-10-05 (three readings on every attack button, a press and a hold on A, the zip and its counters). All of it is written in (§14). The stances, the signatures and the rules for a generated moveset are §10 to §13.
 
 ## 0. What changes, in one paragraph
 
@@ -163,56 +163,83 @@ A heavy charge still shrugs off light blasts, and a light one is still stopped b
 
 **Orb** (questionnaire 17): "I like the thought that holding LT creates mid-range lunging attacks, these can be utilized at great cost to stamina... in the game I would expect every stance to be able to connect blows against a player using this, but the character should zip back and forth in a stylistic blur, matching our visual cues we established for speed, tech and heavy."
 
-So a zip is a hit and run. It costs a lot of ki, and for a moment at the rival he can be hit by anything.
+**Orb** (2026-10-05): "LT plus an attack should cause the fighter to zip to the opponent to land the strike and zip back by default. LT plus an attack plus the movement stick pushed towards the opponent should zip to the opponent, land the strike, then zip the fighter on the other side of the opponent... well timed heavy and tech strikes should be able to counter this".
 
-| | X: zip strike | Y: zip heavy | A: zip tackle |
+So a zip is a hit and run. It costs a lot of ki, and for a moment at the rival he can be hit by anything. Every number is a starting value.
+
+**What each button's zip is:**
+
+| | LT + X: zip strike | LT + Y: zip heavy | LT + A held: zip tackle |
 | :--- | ---: | ---: | ---: |
-| Ki, paid at the press | 15 | 25 | 20 |
-| The tell, before he moves | 6 ticks | 10 ticks | 8 ticks |
+| Ki, paid at the press | 20 | 30 | 25 |
+| The tell, before he moves | 6 ticks | 10 ticks | 12 ticks, which is the hold |
 | The way in | 8 to 14 ticks | 10 to 18 ticks | 8 to 14 ticks |
 | In reach before his blow lands | 4 ticks | 12 ticks | 6 ticks |
 | In reach after it | 6 ticks | 10 ticks | The carry, 12 ticks |
 | The way out | 10 ticks | 12 ticks | 10 ticks |
-| Press to contact | 18 to 24 ticks | 32 to 40 ticks | 22 to 28 ticks |
-| The whole zip | 34 to 40 ticks | 54 to 62 ticks | 44 to 50 ticks |
+| Press to contact | 18 to 24 ticks | 32 to 40 ticks | 26 to 32 ticks |
+| The whole zip | 34 to 40 ticks | 54 to 62 ticks | 48 to 54 ticks |
 
-| | What the blow is |
+- **LT + B** is the stance's signature, delivered as a zip in its quick, timed or held form. It costs its tier's price (§11), which includes the zip, and it has its tier's tell in place of the zip's.
+- **The zip tackle** is the tackle as today: it beats a guard, carries him 4 bh along the line and throws him off, which is a knock-back. It is a grab, so it falls under the grab lockout (§10).
+- **The prices are raised** from the first draft's 15, 25 and 20, for Orb's "great cost to stamina". Five zip strikes or three zip heavies empty a full bar, and an empty bar is 2 s of exhaustion.
+
+**The strike lands in the reading it was pressed with** (§10):
+
+| | Speed (tapped, or mashed) | Tech (timed) | Heavy (held) |
+| :--- | :--- | :--- | :--- |
+| **Zip strike** | A light at ×1.0. The rival reels for 4. Pressed again as he comes out, the next zip follows with a 3-tick tell and its blow is ×0.8. Every zip is paid for in full | It lands in the 4 ticks before the rival's own blow would. That blow misses. It is a skill strike: ×1.25, the rival reels for 8, flow +1 | X kept held for 12 ticks more in the tell. A set light on arrival: ×1.25, and the rival reels for 12. He is in reach for 8 ticks before it lands, not 4 |
+| **Zip heavy** | A heavy at ×1.0. The rival staggers for 12, and a set guard breaks. No lift, because the zipper is leaving. Tapped again in the tell, it is rushed: each tap takes 4 ticks off his time in reach before the blow and 15% off the damage, two taps at most | By the same timing, the rival's blow misses: ×1.25, he staggers for 20, flow +1 | Y kept held for 20 ticks more in the tell: ×1.25 and a knock-back |
+
+**Where he goes afterwards:**
+
+| The stick, as his blow lands | The way out |
 | :--- | :--- |
-| **Zip strike** | A light at ×1.0. The rival reels for 4 ticks |
-| **Zip heavy** | A heavy at ×1.0. The rival staggers for 12 ticks, and a set guard breaks (§5). It doesn't lift him, because the zipper is leaving |
-| **Zip tackle** | The tackle, as today. It beats a guard, carries him 4 bh along the line and throws him off, which is a knock-back |
-
-B in this stance is its signature (§11).
+| None | **Back to where he came from.** This is the default |
+| **Toward the rival** | **Through to the rival's far side,** at the distance he started from |
+| Away | Back, as the default |
+| Up or down | Back, as the default. Up and down still lean the blow to a rising or a dropping one (§13), and nothing more |
 
 **The rules of a zip:**
 - **Range:** the mid band. In reach the same buttons are the step strike, the heavy on the move and the tackle.
 - **The ki is paid at the press** and isn't given back. Without enough ki the press is the plain lunge, which is free and stays.
 - **Where he arrives is fixed at the tell:** along his own line and on his own side, so the defender can read it. The crouch, the streak and the engage ring show it, as for any lunge.
-- **Where he leaves is his choice,** read from the stick as the blow lands. No stick, or away, takes him back to where he came from. Toward takes him through to the far side at the same distance. Up or down takes him out above or below.
 - **He can be hit for as long as he is in reach:** 10 ticks for a zip strike and 22 for a zip heavy. He has no guard there.
-- **A hit on him in reach catches him.** The way out is cancelled, he reels where he is, and a brawl starts around him.
 - **On the way in** any shot stops a zip strike. A zip heavy shrugs off bolts but not a charged shot, as a heavy charge does.
 - **He can be outrun.** The zip follows the rival for its longest way in. If the rival has boosted out of the mid band by then, it ends short with no blow.
-- **Each zip needs its own tell,** so zip strikes come one every 34 to 40 ticks at the fastest. That is about 25 ki a second. Six zip strikes or four zip heavies empty a full bar, and an empty bar is 2 s of exhaustion.
-- **A zip doesn't start a brawl** unless he is caught. It isn't decisive, apart from the tackle's knock-back, and it never starts a struggle (§11).
-- **The three readings carry over,** with the looks already set for them:
-  - zips pressed one after another have the speed look;
-  - a zip strike that lands within 4 ticks before the rival's own blow would is the tech reading. His blow misses, the strike is a skill strike (×1.25, flow +1), and it has the crisp look;
-  - the zip heavy has the heavy look.
+- **A zip doesn't start a brawl** unless he is caught or countered. It isn't decisive, apart from a knock-back, and it never starts a struggle (§11).
+- **The looks** are the ones already set: the smear for zips mashed one after another, the crisp snap for a timed one, and the squash for a held one.
 
-**How a defender answers a zip, by the stance he is in:**
+#### Countering a zip
 
-| His stance | What works |
+**A well-timed tech or heavy strike from the defender cancels the zip's blow.** The mark is the zipper's arrival: the tick the engage ring closes on.
+
+| The defender's strike | Well timed is | Against a zip strike | Against a zip heavy | What it does |
+| :--- | :--- | ---: | ---: | :--- |
+| **A tech strike:** the tech reading of his X in the stance he is in (a skill strike, the parry, a measured bolt at point-blank, a step strike), or the stuff | Pressed from 4 ticks before the arrival until the zipper's blow lands | An 8-tick window | A 16-tick window | **The zipper's blow is cancelled.** He staggers for 12 ticks in reach, and a brawl starts with the defender ahead. The counter is a skill strike: ×1.25 and flow +1 |
+| **A heavy strike:** a martial heavy in any reading, a heavy or charged shot at point-blank, or the held reading of his X (the set light, the guard strike, the volley) | Its wind-up ends, or its hold is let go, from 6 ticks before the arrival until the zipper's blow lands | A 10-tick window | An 18-tick window | **The zipper's blow is cancelled.** The heavy lands in full and knocks him back, which is decisive |
+
+- **The zipper's ki stays spent** in every case.
+- **Too early:** the defender's blow is thrown before the zipper arrives and misses. He is in its recovery when the zip lands.
+- **Late, while the zipper is still in reach** (6 ticks after a zip strike lands, 10 after a zip heavy): the zip's blow has landed, and the defender's blow **catches** him. The way out is cancelled, he reels where he is, and a brawl starts around him.
+- **A speed blow** (a flurry blow, a bolt, a check) that lands on him in reach doesn't cancel his blow. It catches him, and his blow is pushed back by his reel.
+- **After he has left,** the blow misses.
+- **A signature zip** in its quick or timed form is countered like a zip heavy. In its held form a counter only takes 30% off it.
+- A tapped heavy takes 34 ticks to land, so against a zip strike the heavy counter is a held heavy let go on the arrival, a rushed heavy, or a read. Against a zip heavy a tapped heavy pressed at the tell is in time.
+
+**What else works, by the stance the defender is in:**
+
+| His stance | Besides the counter |
 | :--- | :--- |
-| **Martial arts** | A light pressed as the zipper arrives lands inside his 10 ticks in reach, and catches him. Pressed within 4 ticks of the arrival it is a skill strike. A heavy that is already winding up lands on him clean |
-| **Defensive** | A held guard blocks a zip strike. A perfect block on a fresh press staggers him in reach. A check pressed within 4 ticks of the block is a parry, and catches him. A push shoves him off his line as he arrives. A zip heavy breaks a guard that is set, and the tackle beats any guard |
-| **Energy arts** | A bolt during the tell stops a zip strike on its way in, and a charged shot stops a zip heavy. A bolt at point-blank lands on arrival and catches him. The shove throws him off. A mine on his line goes off on him |
+| **Martial arts** | The skill strike and the heavy are the counters above. A flurry blow or a light catches him |
+| **Defensive** | A held guard blocks a zip strike. A perfect block on a fresh press staggers him in reach. The parry and the stuff are tech strikes, so they counter. A zip heavy breaks a guard that is set, and the tackle beats any guard |
+| **Energy arts** | A bolt during the tell stops a zip strike on its way in, and a charged shot stops a zip heavy. At point-blank a measured bolt is a tech strike and a charged shot is a heavy, so they counter. The shove throws him off. A mine on his line goes off on him |
 | **Charging** | He is exposed while he channels, and a zip is the tool against that. Switching is instant, so he can let go and answer from any other stance inside the tell. From the stance itself, the burst on an RT tap (30 ki) throws the zipper back |
-| **Manoeuvre** | A dodge on the arrival makes it miss, for 15 ki. A step strike pressed within 4 ticks before his blow lands slips it and lands. Boosting out of the mid band outruns it |
+| **Manoeuvre** | A dodge on the arrival makes it miss, for 15 ki. A step strike inside his tell is a tech strike, so it counters. Boosting out of the mid band outruns it |
 
 **Piloted charges** come from the far band, with LT held through the flight.
 - **Steering:** up or down by as much as 4 bh, and the stick toward or away changes the speed by up to 20%, never over the top speed or under the shortest flight. The steer row above applies to a piloted charge only.
-- **The price is the zip's:** 15 ki for a light and 25 for a heavy, paid at take-off. This replaces the 12 ki a second of the first draft, which was too cheap for "great cost". Calling it off before the commit point gives nothing back.
+- **The price is the zip's:** 20 ki for a light and 30 for a heavy, paid at take-off. Calling it off before the commit point gives nothing back.
 - Letting go of LT before the commit point stops it, as letting go of the attack does.
 
 **The air brake is on LT:** a hold brakes at 20 ki a second, and a tap techs. Holding Guard during his own charge still stops him into a guard.
@@ -223,9 +250,10 @@ B in this stance is its signature (§11).
 | :--- | :--- |
 | A zip's cost, and its ticks in reach | Exactly the table (a hard test) |
 | Zip strikes that land clean, against an opponent who answers | 35 to 55% |
+| Zips countered: the blow cancelled by a tech or heavy strike | 10 to 25% |
 | Zips that end with the zipper caught | 20 to 35% |
 | Ki spent on zips, as a share of all ki spent | At most 25% |
-| A zip that starts a brawl without the zipper being caught | Never (a hard test) |
+| A zip that starts a brawl without the zipper being caught or countered | Never (a hard test) |
 
 ## 3. Mash: the faster he taps, the faster the flurry
 
@@ -381,15 +409,15 @@ Controls then checked the matrix against its mappings. It fits, and the EP ruled
 
 ### The matrix
 
-**One rule runs across every stance, so it is learned once:** X is the quick action, Y the strong one, A the stance's context action, and B its signature. **The kinds of signature in the B column are proposed, and not final** (§11).
+**One rule runs across every stance, so it is learned once:** X is the quick action, Y the strong one, A the stance's context action, and B its signature. X, Y and B each read three ways by how they are pressed (speed, tech and heavy), and A has a press and a hold. Both are set out under the matrix. **The kinds of signature in the B column are proposed, and not final** (§11).
 
-| Stance | Held (mask) | X: quick | Y: strong | A: context | B: signature (tier, §11) |
+| Stance | Held (mask) | X: quick | Y: strong | A: context, pressed and held | B: signature (§11) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Martial arts** | Nothing (0) | Light strikes: flurry blows and skill strikes (§3, §4) | Heavy strikes: the guard breaker, the lift, the ender (§5) | Grab and throw, pick-up, civilians, the taunt at range, a dive grab in the air. Held: his own channel where he has one (On the Chin for the rival) | **His defining signature,** a melee art (signature) |
-| **Defensive** | LB (1) | **Check:** a short blow from behind the guard. Timed just after a blow lands on his guard, it is a parry | **Push:** a shove that makes space | Reversal after a block; deflect a shot at range. Both as today | **A counter** that catches the next blow and answers it (art) |
-| **Energy arts** | RB (2) | Bolts and volleys | The charged shot; held on, a short beam; a second press splits it (the rival) | A mine at range; the shove in reach. Both as today | **The beam** (signature) |
-| **Charging** | RT (4) | His quick special | His strong special | His utility special | **His ultimate** (ultimate) |
-| **Manoeuvre** | LT (8) | **Zip strike** from the mid band: in, a light, and out again (15 ki). **Step strike** in reach (5 ki). A piloted light charge from far | **Zip heavy** from the mid band: in, a heavy, and out again (25 ki). A heavy on the move in reach (10 ki). A piloted heavy charge from far, and the pursuit past charge range (§2c) | **Zip tackle** from the mid band (20 ki). Tackle in reach and dive grab from above, as today; a snatch on the fly (pick-up, civilian) | **A terrain art:** he takes the rival into the landscape (art) |
+| **Martial arts** | Nothing (0) | Light strikes (§3, §4) | Heavy strikes (§5) | Pressed: the grab, the pick-up, civilians, the dive grab, or the taunt. Held: the aimed throw, or his channel (On the Chin) | **His defining signature,** a melee art |
+| **Defensive** | LB (1) | **The check** | **The push** | Pressed: the reversal after a block, or the deflect. Held: the guard throw, or the aimed deflect | **A counter** |
+| **Energy arts** | RB (2) | Bolts | The heavy shot | Pressed: a mine at range, the shove in reach. Held: an aimed mine, or the long shove | **The beam** |
+| **Charging** | RT (4) | His quick special | His strong special | His utility special, pressed or held | **His release.** In acts 3 and 4, held to full, his ultimate |
+| **Manoeuvre** | LT (8) | **Zip strike** from the mid band (20 ki). **Step strike** in reach (5 ki). A piloted light charge from far | **Zip heavy** from the mid band (30 ki). A heavy on the move in reach (10 ki). A piloted heavy charge from far, and the pursuit past charge range (§2c) | Pressed: a snatch on the fly, or the dive grab. Held: the tackle in reach, or the zip tackle from the mid band (25 ki) | **His signature as a zip** (§2c). Held, a terrain art |
 
 **Reserved, and not in this update:**
 
@@ -408,20 +436,69 @@ Each hybrid gets the same four columns and one signature when it is designed. Un
 - **LT** dodges on the press and boosts when held. In the air after a hit it is his recovery: a tap techs and a hold brakes.
 - **The transform** is one action, and the only way to transform. It is LT and RT together on a pad, an RB hold on the Simple layout, and the Transform button on touch.
 
-**On the Simple layout** Attack tapped is the stance's X and Attack held is its Y. Signature is its B, and Context is its A. The choreographer picks the energy stance.
+**On the Simple layout** Attack tapped is the stance's X and Attack held is its Y. Signature is its B, and Context is its A, pressed or held. The choreographer picks the energy stance.
 - For a Simple player the sim takes the director's stance choice, and doesn't read the held buttons for it.
 - **The charging row is the exception to tap and hold.** With RT held, Attack is a special that the director picks, Signature is the ultimate, and Context is the utility special.
 
-### Which cells take which reading
+### Three readings on X, Y and B
 
-| Reading | Where it applies |
-| :--- | :--- |
-| **Speed** (tap rate) | Martial X (the flurry) and energy X (the spray, `agency-pass.md` §15.4). Manoeuvre X, as zips one after another, each paid for (§2c) |
-| **Tech** (on the beat) | Martial X (skill strikes), energy X (measured bolts), defensive X (the parry), manoeuvre X (a step strike or a zip strike on the rival's tell slips his blow) |
-| **Held** | Every Y cell: the charged heavy, a longer push, the charged shot, the heavy charge. Martial A, for his channel |
-| **None** | Every B cell, and the charging stance's three specials. They cost ki |
+**Orb** (2026-10-05): "in all states X, Y, B all should have speed, tech, heavy modifiers."
 
-Mashing the defensive X is locked out: a check can be thrown once every 20 ticks. The sim enforces that limit, and the layout passes every press through.
+So the button picks the move, and how it is pressed picks the reading. The grammar is the same in every cell:
+
+| Reading | How it is pressed | What it does, in every cell | Its look |
+| :--- | :--- | :--- | :--- |
+| **Speed** | A tap. Tapped again quickly, it repeats | The cell's plain move, on the press. Mashed, it comes faster and each one is weaker, so the damage for each second stays level | The smear |
+| **Tech** | A tap within 4 ticks of the cell's mark | A cleaner result and 1 flow. In a strike cell it is also ×1.25. Off the mark it is the speed reading, and never a dead press | The crisp snap |
+| **Heavy** | Held to the hold point, then let go | Slower, with a tell. Up to ×1.25 at a full hold, with the cell's strong result | The squash and smear |
+
+- **The mark** is one of two things, by the cell. For an attack it is **his own beat:** the beat point after his last landed blow or shot. For an answer it is **the rival's tell:** the 4 ticks before the rival's blow lands. The director supplies both.
+- **A reading never changes what X or Y costs in ki.** B's readings are its tiers, and they do (§11).
+- Every number below is a starting value.
+
+| Stance | Button | Speed (mashed) | Tech (timed) | Heavy (held) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Martial arts** | X | Flurry blows (§3) | A skill strike, on his beat (§4) | **A set light.** After the light lands, X held for 12 ticks sets him, and letting go throws one hard light: ×1.25, and the rival reels for 12. He doesn't reel from flurry blows while he holds |
+| | Y | A heavy (§5). Tapped again in the first 16 ticks of its wind-up, it is **rushed:** each tap takes 4 ticks off the wind-up and 10% off the damage, three taps at most | **A timed heavy,** on his beat after a landed blow: 16 ticks of wind-up in place of 26, ×1.25, flow +1. This is how a timed string closes fast | The held heavy (§5): ×1.25 at 46 ticks, and the launch or the long lift |
+| | B | His signature's quick form | The quick form on his beat, closing a string | His signature's held form |
+| **Defensive** | X | Checks. They come 10 to 16 ticks apart by the tap rate, at ×0.3 to ×0.5 of a light. Guard fatigue runs twice as fast while he mashes them | The parry: a check within 4 ticks after a blow lands on his guard. The rival reels for 12 | **A guard strike.** X held for 16 ticks: a full light, and the rival staggers for 12. His guard is open to a heavy while he holds |
+| | Y | The push: 3 bh. Tapped again within 30 ticks it is a short shove of 1 bh, 12 ticks apart at the fastest. Three shoves in a row let the brawl go | **A stuff:** a push within the rival's tell. His blow is voided and he staggers for 8 | The long push: held for 20 ticks, 5 bh |
+| | B | His signature's quick form | The quick form within the rival's tell | His signature's held form |
+| **Energy arts** | X | The spray: bolts at the tap rate, with the spread building (`agency-pass.md` §15.4) | A measured bolt, on his firing beat: no spread, and flow +1, as built | **A volley.** X held for 16 ticks: three bolts together in a tight fan, each a full bolt at a bolt's price. It counts as one press (§13) |
+| | Y | The heavy shot. Faster than one every 20 ticks, each is weaker, as built (`agency-pass.md` §23) | A heavy shot on his firing beat: no spread, and flow +1 | The charged shot: ×1.25 at a full hold. Held on, the short beam. The rival's second press splits it |
+| | B | His signature's quick form | The quick form on his firing beat | His signature's held form |
+| **Charging** | X, Y | The special as authored, on the press. Mashed, it repeats as fast as its recovery allows, at full price each time | The special on its mark: ×1.25 and flow +1. The mark is his beat or the rival's tell, by the special | The special held: its charged cut, up to ×1.25 at a full hold, for the same ki |
+| | B | His signature's quick form | The quick form on his beat | His signature's held form. Held to 45 ticks in acts 3 and 4, his ultimate |
+| **Manoeuvre** | X | The zip strike from the mid band (§2c). In reach, the step strike. Mashed, they follow one another, each paid for | A zip strike or a step strike inside the rival's tell: his blow misses, and it is a skill strike | A set light on arrival: ×1.25, and the rival reels for 12 (§2c) |
+| | Y | The zip heavy from the mid band (§2c). In reach, a heavy on the move. Rushed, as the martial heavy | A zip heavy inside the rival's tell: his blow misses, ×1.25, and he staggers for 20 | The zip heavy held: ×1.25 and a knock-back (§2c) |
+| | B | His signature as a zip, in its quick form | The quick form inside the rival's tell | His signature's held form |
+
+- **The check's 20-tick lock is replaced** by its speed reading: checks can't come closer than 10 ticks apart. The sim enforces that floor, and the layout passes every press through.
+- **The specials' three cuts** are Combat's to author, one special at a time.
+- **On the Simple layout** Attack held is still the stance's Y. The held reading of X is the choreographer's to use there.
+
+### A: a press and a hold
+
+**Orb** (2026-10-05): "A should have a press and a hold, no grab spamming."
+
+A hold is 12 ticks, and the intent carries it as `contextHeld`.
+
+| Stance | A pressed | A held |
+| :--- | :--- | :--- |
+| **Martial arts** | By the situation: in reach, the grab and a quick throw. Near an object, the pick-up. Near a civilian, lifting him clear. From above, the dive grab. Otherwise the taunt | In reach, **the aimed throw:** he keeps hold for up to 30 ticks and the stick aims it. It is a knock-back and never a launch. When a blow is coming at him, his channel if he has one (On the Chin) |
+| **Defensive** | The reversal after a block (20 ki). At range, the deflect | In reach, **the guard throw:** a grab from behind his guard, which beats a rival who is guarding too. At range, **the aimed deflect:** the stick sends the shot back where he points, for 10 ki |
+| **Energy arts** | A mine at range. The shove in reach | At range, **an aimed mine,** lobbed up to 6 bh where the stick points. In reach, **the long shove:** 5 bh, for 10 ki |
+| **Charging** | His utility special | Its held cut, for the same ki |
+| **Manoeuvre** | A snatch on the fly (pick-up, civilian). From above, the dive grab | **The tackle** in reach. From the mid band, **the zip tackle** (25 ki, §2c) |
+
+**Grabs can't be spammed.** The grabs are the grab, the aimed throw, the guard throw, the dive grab, the tackle and the zip tackle.
+- **One lockout for all of them:** after any grab is tried, landed or not, he can't try another for **90 ticks.**
+- **A fighter who has just been thrown can't be grabbed** for 120 ticks after he is free again.
+- **A grab that misses or is beaten** leaves the grabber open for 20 ticks.
+- **A press during the lockout** gives its cue and does nothing. So mashing A gets one grab and then nothing.
+- Grabs cost no ki of their own. The zip tackle has the zip's price.
+- The AI is held to the same lockout.
+- **For QA:** two grab tries by one fighter inside 90 ticks never happen (a hard test), and grabs are at most 15% of a fighter's decisive results.
 
 ### How today's inputs map onto it
 
@@ -443,12 +520,13 @@ Mashing the defensive X is locked out: a check can be thrown once every 20 ticks
 | The escape stance | **Gone** since the agency pass. The Escape button stays a control of its own |
 
 **New actions.** Orb approved the check with its parry, the push and the step strike (questionnaire 17). The zips come from Orb's notes there, and their numbers are in §2c. First numbers:
-- **Check:** half a light's damage, 6 ticks to contact, once every 20 ticks. His guard stays up against lights and flurry blows while he throws it. A heavy still breaks a set guard (§5).
+- **Check:** half a light's damage, 6 ticks to contact. Mashed, checks come no closer than 10 ticks apart and are weaker (above). His guard stays up against lights and flurry blows while he throws it. A heavy still breaks a set guard (§5).
 - **Parry:** a check pressed within 4 ticks after a blow lands on his guard. The rival reels for 12 ticks. It doesn't end his string, which is what the perfect block does.
-- **Push:** no damage, a 10-tick wind-up, and the rival is driven back 3 bh, or 5 bh when it is held for 20 ticks. Either way the brawl's hold lets go (§2), and closing again is a player's own move. It isn't decisive, and it can be done once a second.
+- **Push:** no damage, a 10-tick wind-up, and the rival is driven back 3 bh, or 5 bh when it is held for 20 ticks. Either way the brawl's hold lets go (§2), and closing again is a player's own move. It isn't decisive. Tapped again inside 30 ticks it is a short shove (above).
 - **Step strike:** a light at ×0.8 with a step of up to 2 bh around, over or under the rival, by the stick. It stays inside the brawl. Pressed within 4 ticks before the rival's contact, his blow misses. The timing mark is the rival's tell, and the director supplies it. It costs 5 ki.
-- **Zip strike, zip heavy and zip tackle:** from the mid band he goes in, strikes and comes out again, for 15, 25 and 20 ki (§2c).
+- **Zip strike, zip heavy and zip tackle:** from the mid band he goes in, strikes and comes out again, for 20, 30 and 25 ki (§2c). The stick toward the rival takes him out on the far side.
 - **The four signatures that aren't a beam** (§11). Their kinds are still a proposal.
+- **New with the readings** (2026-10-05), with their first numbers in the tables above: the set light, the rushed and the timed heavy, the guard strike, the stuff, the volley, the aimed throw, the guard throw, the aimed deflect, the aimed mine and the long shove. They are for Orb to see in the prototype.
 
 **Dropped from the first draft:** the brace, prime and overcharge. The charging row is the three specials, and the perfect block stays on the guard button.
 
@@ -460,17 +538,20 @@ B gives every fighter his own array of signatures: one for each stance, so five 
 
 ### The tiers
 
-| Tier | Ki | Damage, against today's signature | The pause it may take (`spec-wounds.md` §8b) | Shortest tell before it can land | Whose |
+| Tier | Ki | Damage, against today's signature | The pause it may take (`spec-wounds.md` §8b) | Shortest tell before it can land | Which reading of B |
 | :--- | ---: | ---: | :--- | ---: | :--- |
-| **Art** | 25 | ×0.55 | Live, 0.8 s | 20 ticks | The defensive and manoeuvre stances |
-| **Signature** | 45 | ×1.0 | Short, 1.5 s | 30 ticks | The martial arts and energy arts stances |
-| **Ultimate** | 75 | ×1.7 | Full, 3 s | 45 ticks | The charging stance, in acts 3 and 4 only |
+| **Art** | 25 | ×0.55 | Live, 0.8 s | 20 ticks | **Quick:** B tapped, in any stance. **Timed:** B tapped on its mark, for ×1.25 and 1 flow at the same price |
+| **Signature** | 45 | ×1.0 | Short, 1.5 s | 30 ticks | **Held:** B held for 20 ticks and let go, in any stance |
+| **Ultimate** | 75 | ×1.7 | Full, 3 s | 45 ticks | The charging stance only, in acts 3 and 4: B held for 45 ticks |
 
+- **The readings of B are its tiers** (Orb, 2026-10-05: every attack button has speed, tech and heavy modifiers). So the tier is chosen by the press and not by the stance, and every stance has a cheap form and a full form of its one signature. This replaces the first draft, where each stance had one tier.
+- **The quick form is a cut of the held form:** the same authored signature, shortened. So there is still one signature to author for each stance.
+- **The timed form's mark** is his own beat in the martial arts, energy arts and charging stances, where it closes a string or a volley. Its tell is 10 ticks there, because the string is the warning. In the defensive and manoeuvre stances the mark is the rival's tell.
 - **Damage for each ki spent is the same in every tier,** within 10%. So no tier is the best buy. They differ in what they do and what they risk.
 - **One shared cooldown** covers all of a fighter's signatures: 120 ticks after an art, and 180 ticks (3 s) after a signature or an ultimate. It starts when the signature ends. It is there only to stop two in a row.
 - **The ultimate is available only in the last two acts** (Orb, questionnaire 17). Those are acts 3 and 4, so from about 3:15 (`spec-wounds.md` §9). Before then charging B gives a "not ready" cue and spends nothing.
 - **No cap per match, and no cooldown of its own for any signature.** This replaces the 45 ki and 15 s limit of `agency-pass.md` §5. The 40% cut to a signature's damage made there is kept, and it is the ×1.0 in the table.
-- A hybrid's signature gets its tier when the hybrid is designed.
+- A hybrid's signature gets the same three readings when the hybrid is designed.
 
 ### What each signature is (proposed, not final)
 
@@ -484,6 +565,12 @@ These are the types. Combat authors each one as a generated frame, with hand-pic
 | **Charging** | The ultimate | Everything he has gathered, let go at once. Its shape is the fighter's own. He is exposed through its whole tell | Any clean hit during the tell stops it, and half its ki is lost. Distance. A signature that meets it, which makes a struggle with the ultimate ahead |
 | **Manoeuvre** | A terrain art | He takes hold of the rival in flight and puts him into the landscape: the ground, a ridge, the sea or a building. The launch planner picks the target with his personality term, so the hero steers away from people and the villain toward them | A dodge. A hit during its approach. A guard doesn't stop it, because it is a grab |
 
+- **The quick and the held form of each proposed kind:**
+  - *the melee art:* quick, its opening strikes, ending in a knock-back. Held, the whole rush, ending in a launch;
+  - *the counter:* quick, as in the table. Held, it also catches an art and answers with a launch, and a signature is weakened by 50%;
+  - *the beam:* quick, a snap beam of half a second. Held, the beam as built;
+  - *the charging stance:* quick, a pulse around him. Held, the release. Held to full in acts 3 and 4, the ultimate;
+  - *the terrain art:* quick, a zip in, one signature blow, and out. Held, he takes the rival into the landscape.
 - **Pillar 7 holds for all five.** The stance picks the signature. The biome, the altitude and the defender's stance pick its variant. Each signature ships with at least three variants.
 - **Collateral.** Each signature's damage to the world is capped by power tier, as the beam's is (`balance-targets.md` §15). The terrain art counts as a landing for structures.
 - **Legal's stacking rule holds:** no moment shows more than two of the seven power-up marks (`rule-of-cool.md`, rule 9). An ultimate's staging has to fit inside it.
@@ -553,7 +640,7 @@ These are the types. Combat authors each one as a generated frame, with hand-pic
 | Defensive | Guard fatigue after 3 s. A guard held 30 ticks is set, and a heavy breaks it (§5). He moves at 0.6 speed |
 | Energy arts | No guard while RB is held. Spread builds with fast fire. Every shot costs ki |
 | Charging | Exposed and nearly still while he channels. Any clean hit interrupts it |
-| Manoeuvre | Entering it is a dodge. Its moves cost the most: 5 to 25 ki each (§2c). The boost costs 12 ki a second as now, and empty ki is 2 s of exhaustion. No guard |
+| Manoeuvre | Entering it is a dodge. Its moves cost the most: 5 to 30 ki each (§2c). The boost costs 12 ki a second as now, and empty ki is 2 s of exhaustion. No guard |
 
 **While he is launched, lifted or stunned** only the manoeuvre stance works (a tap techs, a hold brakes), with the Escape button. The brake can't start in the first 20 ticks after the last hit, so a juggle still pays. A hold that is already down when that lock ends starts braking on that tick.
 
@@ -636,7 +723,10 @@ Damage is against the light and heavy values in data. Flow, tier, form and wound
 | **Light** | X: a string's first press, or a press after the beat window | Light ×1.0 | 4 | 24 | Reeling for 4 | 2 | Starts the beat |
 | **Flurry blow** | X again before the beat window | Light ×0.6 at 6-tick taps, ×0.8 at 8, ×1.0 at 10 or slower | 2 or less | The tap interval, 6 to 12 | Reeling for 4. After four unanswered, the next staggers him for 12 | 2 | To 0, if it missed a beat |
 | **Skill strike** | X within 4 ticks of the beat point | Light ×1.25 | 6 | 30 | Reeling for 8 | 4 | +1 |
+| **Set light** | X held for 12 ticks after a light lands, then let go | Light ×1.25 | 4 after the release | 20 after the release | Reeling for 12. He doesn't reel from flurry blows while he holds | 4 | No change. Its contact starts a new beat |
 | **Heavy** | Y, tapped | Heavy ×1.0 | 34: 26 of wind-up and 8 to land | 76 | Lifted for 30. A set guard breaks: down for 40, staggered for 12 | 6 | No change |
+| **Rushed heavy** | Y tapped again in the first 16 ticks of its wind-up, three times at most | Heavy ×0.9, ×0.8, then ×0.7 | 30, 26, then 22 | 72, 68, then 64 | As the heavy. At three taps the lift is 20 | 6 | No change |
+| **Timed heavy** | Y within 4 ticks of his beat point, after a landed blow | Heavy ×1.25 | 24: 16 of wind-up and 8 to land | 66 | As the heavy, or as the ender when it closes a string | 6 | +1 |
 | **Held heavy** | Y held, then released | Heavy ×1.0, rising to ×1.25 at 46 ticks of hold | 8 after the release | 96 | Lifted for 30. At a full charge: launched along the stick, or lifted for 45 with no stick | 6 | No change |
 | **Ender** | Y after two or more landed blows of the string | As the heavy or the held heavy | As the heavy | As the heavy | Knocked back. Launched at flow 3 or more, at a full charge, or after a juggle of three or more | 6 | Spent by a launch, as now |
 | **Juggle strike** | X within 4 ticks of the beat point while he is lifted | Light ×1.25, then ×0.85, ×0.7, ×0.55 and ×0.4 of that by its place in the juggle | 6 | 30 | Lifted again for one beat. Five at most | 4 | +1 |
@@ -644,7 +734,7 @@ Damage is against the light and heavy values in data. Flow, tier, form and wound
 - **The beat point** is 24 ticks after contact by default. Combat's values by path are accepted: 20 for a line, 24 for an arc or a rise, 26 for a drop and 28 for a spin.
 - **Reach:** every form is the close band. From the mid band a lunge comes first (§2b).
 - **An ender can be stopped** by three clean blows in its wind-up, like any heavy. QA watches it: enders stopped by a mashing rival should be at most 40%. If it is higher, the first lever is one more blow to stop an ender.
-- **Martial B** is signature tier (§11). **Martial A** keeps today's context numbers.
+- **Martial B** has a quick form at the art tier and a held form at the signature tier (§11). **Martial A** keeps today's context numbers, with the aimed throw on a hold and the grab lockout (§10).
 - The other stances' numbers come with their slices. Where a cell exists today, its numbers stand: the bolts, the charged shot, the reversal, the tackle, and the specials at 20, 20 and 25 ki.
 
 ### How a variant is picked at run time
@@ -680,6 +770,12 @@ Orb answered the ten questions in questionnaire 17 (`docs/ep/vision.md`, 2026-10
 - holding LT makes mid-range lunges that zip in and out, at a great cost in ki (§2c, §10);
 - a far charge becomes a slower pursuit that everyone can see, and not a taunt-only ceiling (§2c);
 - the identity split is confirmed, the rival's hands are fists on heavies and blade hands on lights (§13), and his glasses are always on (`launch-pair-plan.md` §1).
+
+**Orb, 2026-10-05, after the questionnaire** (`docs/ep/vision.md`, "modifiers on every button, and the LT zip"):
+- X, Y and B have speed, tech and heavy readings in every stance (§10), and B's readings are its tiers (§11);
+- A has a press and a hold in every stance, and grabs share one lockout (§10);
+- a zip goes back by default, and through to the far side with the stick toward the rival (§2c);
+- a well-timed tech or heavy strike counters a zip (§2c).
 
 **Still open:**
 1. Pillar 2's wording (§8).
