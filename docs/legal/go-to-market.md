@@ -83,7 +83,7 @@ The recommendation in `licence-recommendation.md` (MIT for code, **CC BY 4.0 for
 | **Music** | Suno notice, separate (as RL-071) | Same | Same (cannot be open) |
 | **A third party can** | Fork the code, sell a game built from it **only with their own content**, learn from it, port it | Read, learn, modify, run, contribute; **not** sell a competing game from the code for 2 years | Do anything with the code and content, including sell the same game under a new name |
 | **Calling it "open source"** | Code yes, project partly (say "open-source code") | **No.** Source-available is not open source; saying it is would be false | Yes |
-| **Steam and itch.io** | Fine | Fine; I found no Steam rule against it (not read in Steamworks), but never describe the game as open source | Fine; expect clones |
+| **Steam and itch.io** | Fine | Fine. Valve's open-source note (read 2026-10-05) lists MIT, BSD, Apache 2.0 and WTFPL as fine with the Steamworks SDK and copyleft such as GPL as a problem; never describe the game as open source | Fine; expect clones |
 | **Console port** | **Works.** The permissive code allows a closed fork. The platform code (SDK headers, certification layer, which the console agreements forbid publishing) lives in a **private repo** or comes from a porting firm | **Works.** Orb holds the copyright, so Orb can add private platform code. Contributors need a licence that lets Orb relicense (a CLA, not only a DCO) | Works the same as A; the private platform layer is Orb's own |
 | **Protection against a clone** | The name, the reserved content (where copyright subsists) and the store; code can be copied | The licence adds a contractual ban on competing sales, but it is only as strong as the copyright under it, and AI-written code may have none | Only the name |
 | **Cost to Orb** | Low. One custom content notice to draft | Medium. Contributors, "open source" wording, community goodwill | Lowest, but the weakest "commercial control" |
@@ -223,6 +223,41 @@ Pay-what-you-want and paid projects are open to individuals; payout and tax deta
 - **Platform:** which stores and in what order; whose account holds the Steam listing; the build pipeline (public repo, private platform repo); whether the browser build or any store build collects anything; the Steam Deck plan.
 - **Audio:** Suno plan status and per-track dates; confirmation that no shipped track was made on the free plan.
 - **Art and Narrative:** any image or voice tools used, and which text Orb hand-edits (for the human-contribution record).
+
+## 9. Addendum (2026-10-05): after Platform's companion piece
+
+Platform's `docs/perf/stores-and-consoles.md` section 10 agrees with the points above (a private platform repo, Steam's 30 days). Four additions.
+
+### 9.1 "Collects nothing at launch": the two things Platform found
+Platform read the code (no analytics, accounts, crash upload or network calls) and measured the live play page on load (4 requests, all to its own origin, no cookie, nothing in local storage; the feedback panel and a full match not exercised). Read against my line, both are fine, with wording:
+- **The feedback panel** opens a prefilled GitHub "new issue" page in the player's own browser **when they click**, with a body they can read first. The game sends nothing. This is a user-initiated link to a third party, not collection by us. **Conditions:** the prefill holds no personal data (the user-agent and display scale are device facts, not identity); the panel says plainly that **a GitHub issue is public** and to leave out personal details; GitHub's own privacy policy applies from that click.
+- **The web build reads the user-agent and display scale locally** to lay out the interface and fill the issue text. They stay on the device unless the player submits the issue. Fine.
+- **Hosting:** GitHub Pages logs visitors' IP addresses on its own servers and we cannot turn that off. That is the host's collection.
+- **The line to publish (README and store page):** "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button opens a public GitHub issue page only when you click it." Use "collects and sends nothing" for the game, never "no data is collected anywhere". Re-check with a network log before each store build, as Platform proposes. If an analytics tool, an account, a crash upload or online play is added, section 6's privacy rules apply.
+
+### 9.2 Console and Steamworks SDK terms against shape A (and B)
+| | Finding | Source and grade |
+| :-- | :-- | :-- |
+| **Steamworks SDK and open source** | Valve says permissive licences (MIT, BSD, Apache 2.0, WTFPL) work with the SDK; **copyleft such as GPL is "problematic"**, and if an app contains open-source code that cannot be combined with the SDK it must not be distributed on Steam. Valve offers no review: the developer warrants having the rights. So **shape A (MIT) and shape C fit**. **Shape B fits too**, because Orb holds the copyright to its own code. | Primary: Valve's open-source page, read 2026-10-05 |
+| **What may be public** | The SDK Access Agreement lets you distribute only the contents of its `redistributable_bin` folder with the game. The rest of the SDK must not be republished, so it stays out of the public repo (Platform's private repo plan is right). The agreement also bars reverse-engineering the SDK or replacing its function. The page itself says it holds Valve confidential information, so **do not copy its text into the repo.** I found no limit on open-source-licensing the game. | Primary, but the page is marked confidential: treat details as NDA-class |
+| **Never** | Copy code from the **OrbCombat repo (GPL-3.0)** or any GPL or AGPL project into the game: it would conflict with Steam's rule and with shape A. Third-party add-ons (a Steam plugin for Godot) need their licence read first; GodotSteam is MIT as far as I know (not checked today). | Primary and general |
+| **Console SDK terms** | **Behind NDA; I cannot read them.** What is known publicly: console SDKs, headers and documentation are confidential and cannot be in a public repo or shipped as Godot export templates; platform agreements make you warrant your rights in the content; GPL-style licences generally clash with console SDKs. Shape A fits the first two. A lawyer reads the actual agreement before signing. | Public Godot console documentation; the rest general and **unverified** |
+
+### 9.3 Steam Deck Verified and the neutral glyph set (RL-037)
+- **The rule (primary: Valve's Steam Deck compatibility page, read 2026-10-05):** on-screen glyphs must match the inputs being used, whether Deck, Steam Controller or Xbox glyphs, and keyboard and mouse glyphs must not show when they are not the active input.
+- **Verdict on the neutral position diamond: it will probably fail** the literal reading, because it is none of those glyph families. It was right for non-Steam builds, where it avoided the console makers' symbols (RL-037 stands there).
+- **Route 1 (best on Steam): Steam Input's own glyph images**, supplied by Valve's API at run time and updated when the player remaps (secondary: Steamworks API guides; I could not read the terms for the images, so confirm in Steamworks that they are free to use in a Steam build). Never commit the images to the public repo or use them in non-Steam builds.
+- **Route 2 (works without the API): our own plain lettered glyphs** for Deck and Xbox-family pads only: a plain white circle with A, B, X or Y, and LB, RB, LT, RT as plain labels, no colours, no console shapes. Deck and Xbox use those letter names, so they match; a plain letter in a circle is generic. Keep the neutral diamond for all other pads, because Nintendo swaps A with B and X with Y, and show no PlayStation symbols (circle, cross, triangle, square), which are the PlayStation maker's marks.
+- **Consoles:** each maker's glyph and symbol rules are in its guidelines, **behind NDA**; follow them at that point, and do not use their symbols before.
+
+### 9.4 Ratings exposure from civilian casualties
+**I cannot predict a rating; the questionnaire does.** Public criteria (secondary: PEGI and ESRB descriptions): PEGI 12 allows non-realistic violence toward human-like characters and fantasy violence; PEGI 16 starts when violence looks as it would in real life. ESRB's Teen band allows violence and minimal blood, with descriptors such as Cartoon Violence and Fantasy Violence; blood and gore and intense violence push upward. Expect **Teen or PEGI 12 or 16** for a stylised side-on fighter, with these as the escalators to watch:
+1. **Blood, gore or dismemberment** (the wounds and broken-limb rules): keep any blood stylised or absent, and no severed parts.
+2. **Realism of the casualties:** small stylised civilian figures that are knocked out of the scene or fade are safer than visible deaths up close.
+3. **Children, hospitals, schools** among the civilians: avoid them, since "violence against innocents" reads worse.
+4. **Frequency and focus:** collateral damage is a design pillar, so answer "yes" to violence toward non-combatants honestly.
+
+**What to do:** run the free IARC questionnaire early (Google Play Console and Microsoft's partner programme host it) and the Steam Content Survey with the real build, read the outcome, and decide whether to soften the casualty staging **before** the store page. Do not promise a rating in marketing. Orb should decide how graphic the casualties are meant to be.
 
 ## Sources and how well I could read them (all read 2026-10-05)
 - **Primary:** [Steam Direct](https://partner.steamgames.com/steamdirect) (fee, tax, bank, identity, waits); [Suno terms](https://suno.com/terms) (effective 2026-09-03) and [Suno pricing](https://suno.com/pricing); [US Copyright Office, AI report Part 2 notice](https://copyright.gov/newsnet/2025/1060.html) (2025-01-29); GitHub and store search APIs for OrbCombat and the title.

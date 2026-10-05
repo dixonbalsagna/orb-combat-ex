@@ -134,3 +134,17 @@ New small questions for you:
 - Hold to flurry (docs/controls/hold-to-flurry.md): since tap speed now decides a mash, do you want an accessibility switch where holding X throws a light every 10 ticks (6 a second, no damage bonus, never graded as timed)? Controls recommends doing it in the brawl itself so replays and inputs do not change. Not built.
 
 To watch: time at power tier 4 is 7.05% a minute after the building change, against a floor of 6. QA's overnight baseline will say whether it holds.
+
+## Going to market (2026-10-05)
+
+The written plan, in three parts: docs/marketing/go-to-market-plan.md (stages, numbers, scenarios; its section 14 has the questions), docs/legal/go-to-market.md (disclosure wording, ownership, licence shapes, the title, Suno, paperwork; section 8 has nine questions), docs/perf/stores-and-consoles.md (store by store, with costs and an order).
+
+Questions for Orb, the ones that block the most first:
+1. The title: write to the OrbCombat author, or pick a new name now?
+2. The licence: Legal's shape A (MIT code; art, music, dialogue, data and the name reserved, with a plain permission to play, mod, stream and make fan work)?
+3. Selling as an individual or a company? (PlayStation needs a legal entity.) Country and whether you own a Mac decide which consoles and iOS are open; answer only what you are comfortable with.
+4. Stage 1a this week: five friends, two matches each, three questions?
+5. How graphic should civilian casualties be? It drives the age rating (Legal expects Teen or PEGI 12 to 16; blood, dismemberment and realistic deaths push it up).
+6. The rest of Marketing's section 14: the $100 Steam fee, weekly hours, Discord or not, free or paid, the four-fighter minimum before a Steam page.
+
+Parked until a Steam build is near (no work started): Steam Deck Verified needs button glyphs that match the pad (Legal, RL-089: the neutral diamond set will probably fail on Deck; a plain lettered A B X Y set for Deck and Xbox-family pads, or Steam Input's own); honest minimum specs need a real old laptop, a phone and a Steam Deck measured; Platform asks to resume its unfinished frame-budget work.

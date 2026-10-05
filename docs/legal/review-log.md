@@ -108,6 +108,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-086 | Roster of twelve: what to screen per niche | EP | Low | Note: design, kit and identity screened before art for each template | Standing |
 | RL-087 | Held-pose lint scope (h01 to h03) and the 14 non-rest failures | Animation | Low | Scoped by class: pair test for all, emitter test for charge, tell, signature, energy, hold classes; none need redrawing; shrug is not h02 if elbows bend | Open until the lint is re-run on the scope |
 | RL-088 | Go-to-market: AI disclosure, ownership, licence shapes, title, Suno on sale, paperwork, claims (go-to-market.md) | EP, Marketing, Platform | Medium | CONDITIONAL: disclose on Steam and itch.io; shape A recommended (drops CC BY 4.0 for content); title clash open; Suno paid plan and records; lawyer one-sitting before first sale | Open until Orb answers the nine questions |
+| RL-089 | Addendum to go-to-market: privacy wording, Steamworks and console SDK terms, Steam Deck glyphs (amends RL-037), ratings exposure | Platform | Medium | Privacy line clear with wording; shape A fits Steam; neutral diamond likely fails Deck Verified, so Steam Input glyphs or plain lettered Deck/Xbox glyphs; ratings: answer the questionnaire early | Open until Orb picks the shape and sees a questionnaire result |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
