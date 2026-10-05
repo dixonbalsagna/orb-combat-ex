@@ -600,3 +600,11 @@ What follows from it:
 - Every face button does something in every stance, with a broad moveset per stance.
 - The movesets are to be generated: a system that composes large, varied movesets for each character from parts, not hand-written lists.
 - Pillar 2 ("stances, not combos") keeps its stances; what a press does inside a stance is now a blow or an action of that stance.
+
+## Orb, 2026-10-04: stance questionnaire delegated to the EP
+
+Verbatim: "I want you to answer this questionnaire in my stead. I had a conversation with controls & game feel and I feel you're suited to take over this task."
+
+What Orb confirmed to Controls directly (as Controls records it in docs/controls/stance-questionnaire.md): RT dominates; hybrids LT+RB (evasive energy), LB+RB (defensive ki) and LT+LB (terrain while flying); the AI can do anything the player can; simplified and accessibility controls let a player hand stance choices to the choreographer at any granularity; B gives every fighter its own array of signatures; struggles affect all fighters.
+
+The EP's answers, which Orb can overrule: docs/ep/stance-answers-2026-10-04.md.
