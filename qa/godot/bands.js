@@ -316,9 +316,9 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     const vars = {}; let nb = 0; for (const r of D) for (const b of r.beams) { vars[b.variant] = (vars[b.variant] || 0) + 1; nb++; }
     const top = Object.entries(vars).sort((x, y) => y[1] - x[1])[0] || ['none', 0];
     R.point('6.variant.cap', '§6', `No beam variant above 40% of beams: largest is ${top[0]}`, { v: top[1] / nb, hi: 0.40, unit: 'pct' });
-    const allVariants = ['HORIZON CLEAVE', 'BOULEVARD RAZE', 'FIRESTORM', 'RIDGE BORE', 'GLASS TRENCH', 'MERIDIAN SCAR'];
-    const floorOf = v => (v === 'MERIDIAN SCAR' ? 0.02 : 0.03), missing = allVariants.filter(v => (vars[v] || 0) / nb < floorOf(v));
-    R.add({ id: '6.variant.floor', ref: '§6', what: 'Every beam variant at least 3% of beams (one planet; MERIDIAN SCAR at least 2%, §21)', status: missing.length ? 'FAIL' : 'PASS', value: allVariants.map(v => `${v} ${(((vars[v] || 0) / nb) * 100).toFixed(1)}%`).join(', '), band: 'at least 3.0% each (SCAR 2.0%)', note: missing.length ? 'below the floor: ' + missing.join(', ') + '. The bands are meant to hold over 20 seeded planets; QA has one planet' : '' });
+    const allVariants = ['HORIZON CLEAVE', 'BOULEVARD RAZE', 'FIRESTORM', 'RIDGE BORE', 'GLASS TRENCH', 'FIELD SCAR'];
+    const floorOf = v => (v === 'FIELD SCAR' ? 0.02 : 0.03), missing = allVariants.filter(v => (vars[v] || 0) / nb < floorOf(v));
+    R.add({ id: '6.variant.floor', ref: '§6', what: 'Every beam variant at least 3% of beams (one planet; FIELD SCAR at least 2%, §21)', status: missing.length ? 'FAIL' : 'PASS', value: allVariants.map(v => `${v} ${(((vars[v] || 0) / nb) * 100).toFixed(1)}%`).join(', '), band: 'at least 3.0% each (SCAR 2.0%)', note: missing.length ? 'below the floor: ' + missing.join(', ') + '. The bands are meant to hold over 20 seeded planets; QA has one planet' : '' });
     R.pending('6.planets', '§6', 'Location and variant bands over a fixed set of at least 20 seeded planets', 'the sim has one planet (W1: variable circumference / procedural planets)');
   }
 
@@ -440,8 +440,8 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
       if (b) { withBrink++; if (st[4] !== undefined && st[4] < b.t) before++; }
     }
     const T = sum(Object.values(tot)), sh = (o, k) => o[k] / Math.max(1e-9, sum(Object.values(o)));
-    R.point('mood.calm', '§9', 'Mood: Calm share of match time (30 to 55%)', { v: tot.calm / T, lo: 0.30, hi: 0.55, unit: 'pct' });
-    R.point('mood.tense', '§9', 'Mood: Tense share of match time (35 to 60%)', { v: tot.tense / T, lo: 0.35, hi: 0.60, unit: 'pct' });
+    R.point('mood.calm', '§9', 'Mood: Calm share of match time (20 to 40%, re-based for the brawl, spec-wounds §9)', { v: tot.calm / T, lo: 0.20, hi: 0.40, unit: 'pct' });
+    R.point('mood.tense', '§9', 'Mood: Tense share of match time (40 to 65%, re-based for the brawl, spec-wounds §9)', { v: tot.tense / T, lo: 0.40, hi: 0.65, unit: 'pct' });
     R.point('mood.frenzied', '§9', 'Mood: Frenzied share of match time (5 to 20%)', { v: tot.frenzied / T, lo: 0.05, hi: 0.20, unit: 'pct' });
     R.point('mood.calmAct1', '§9', 'Calm share of act 1 (at least 60%)', { v: sh(byAct[1], 'calm'), lo: 0.60, unit: 'pct' });
     R.point('mood.frenziedAct4', '§9', 'Frenzied share of act 4, the climax (at least 15%)', { v: sh(byAct[4], 'frenzied'), lo: 0.15, unit: 'pct' });
