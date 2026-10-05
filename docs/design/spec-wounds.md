@@ -629,6 +629,7 @@ Heat stages, Humbled bursts and boil-overs are power states with no cinematic. T
   - Frenzied at most 25% of match time;
   - Calm at least 15% of match time (the fight breathes);
   - blitzes 2 to 6 a minute in Tense and Frenzied.
+- **Re-based for the brawl** (2026-10-05). With every press a blow, a blow feeds the mood by its form, and a blocked blow's wear on the arms is halved and capped. The numbers are in `melee-press-feel.md` §9d.
 - **M1 retune** (M1 `4123f3a` measured Calm 87.5%, Tense 12.4% and Frenzied 0.1%, with act 2 at 5:15, act 3 at 5:54 and act 4 at 6:18). The −6 decay outpaced the impulses, and the only early beats were cores reaching battered. The values above are the ruling, and the targets are:
   - *band shares over the match:* Calm 30 to 55%, Tense 35 to 60%, Frenzied 5 to 20%;
   - *by act:* Calm at least 60% of act 1; Frenzied at least 15% of act 4, which is the climax;

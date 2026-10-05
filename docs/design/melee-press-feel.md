@@ -398,6 +398,7 @@ So for a zipper who came in from the rival's left:
 | A light or a flurry blow lands on him | −1, and never below 0. It used to clear the run |
 | A real answer lands on him: a skill strike, a heavy, a parry, a stuff, a push, a perfect block or a counter | Cleared |
 | His blow is blocked | No change |
+| His blow lands on a staggered rival | No change. It does its damage and adds nothing (§9d) |
 | 24 ticks pass with no blow of his landing | Cleared |
 | His run is at 4 and his next light or flurry blow lands | **The close.** His run is spent, and the rival's is cleared |
 
@@ -406,16 +407,16 @@ So for a zipper who came in from the rival's left:
 - Against a timed player, each skill strike clears the masher's run. Timing still beats mashing.
 
 **The trade.** A trade is on while both fighters have landed a light or a flurry blow in the last 24 ticks.
-- **A trade can't pass 90 ticks without a close.** At 90 ticks it breaks: one of the two closes with his next blow that lands.
-- **Who closes:** the fighter with the higher run. If the runs are level, the one who has landed more blows in this trade. If that is level too, a seeded draw at even odds.
+- **A trade can't pass its limit without a close.** The limit is 120 ticks as built (it was 90 in the first ruling). At the limit it breaks: one of the two closes with his next blow that lands.
+- **Who closes:** a lead of 2 or more in the runs takes it. Runs within 1 of each other are a level trade, settled by a seeded draw in which the fighter who made the last close in this brawl has 9 chances in 10. If nobody has closed yet, the odds are even (§9d).
 - The trade's clock starts again after a close, a stagger, a real answer or a knock-back, and when the trade stops.
 - It isn't a struggle, and there is no pause and no pulse. Both fighters keep throwing, every press is still a blow, and it ends as any mash ends: a stagger in place, with the brawl still together.
 
 **Encounter's stopgap is withdrawn.** It let a fighter on the brink no longer break the rival's run by replying. It made the lights-only mirror finish, with brink to KO at 17.4 s against a band of 30 to 55 s. It also took the trade away from the fighter who most needs it. On the brink he now trades like anyone else.
 
-**What keeps brink to KO in its band.** The trade's clock sets how often a mash against a mash closes. Under the stopgap the rival closed about every 0.9 s. With the clock at 90 ticks, two even mashers close about every 1.7 s, and the closes are shared between them. That should put the lights-only brink at about 35 to 50 s. It is reasoned and not measured. The levers, in order: the clock (60 to 120 ticks), and then the close's set-up weight.
+**What keeps brink to KO in its band.** The trade's limit sets how often a mash against a mash closes, and the close's set-up weight sets how many closes open a fighter on the brink. As built, with the limit at 120 and one fighter making nearly every close, a weight of 0.25 read 34.2 s. With the momentum rule of §9d the weight goes back to 0.5, and the estimate is 36 to 45 s. It is reasoned and not measured.
 
-**Data:** `flurry.runToClose` 4, `flurry.replyTakes` 1, `flurry.runLapseTicks` 24, `flurry.tradeMaxTicks` 90. The AI's tap interval at each difficulty is now a lever for the masher bands, because the faster tapper closes.
+**Data:** `flurry.runToClose` 4, `flurry.replyTakes` 1, `flurry.runLapseTicks` 24, `flurry.tradeMaxTicks` 120, `flurry.staggeredAddsRun` false, `flurry.levelWithin` 1 and `flurry.momentum` 0.9. The AI's tap interval at each difficulty is a lever for the masher bands, because the faster tapper closes.
 - **The look** (Orb): the impact lands on the trigger, with a fluid after-image blur.
 
 ## 4. Tech: skill strikes on the beat
@@ -497,7 +498,7 @@ Each fighter's blows land on his own line. These rules settle the meetings.
 | Two blows land more than 2 ticks apart | Both land, in order. The reeling fighter's next blow is pushed back by the reel |
 | A skill strike and a flurry blow land within 2 ticks | The skill strike wins the beat, and the flurry blow is voided (`agency-pass.md` §2) |
 | Two lights, flurry blows or skill strikes of the same kind land within 2 ticks | A trade: both land |
-| Two flurries trade for 90 ticks with no close | The trade breaks: one fighter closes with a stagger in place (§3) |
+| Two flurries trade to the limit of 120 ticks with no close | The trade breaks: one fighter closes with a stagger in place (§3) |
 | Three clean blows land during a heavy's wind-up | The heavy is stopped. Fewer, and it comes through |
 | Two held heavies or enders land within 6 ticks | **A struggle:** the fist clash on the pulse, if one is allowed (one per 20 s). Otherwise a double slide: both are knocked back half the distance |
 | Two tapped heavies that aren't enders land within 2 ticks | Both land, and both stagger for 12 ticks. Nobody is lifted, and there is no struggle |
@@ -543,10 +544,14 @@ The player owns **when** each blow happens and **what kind** it is. The director
 | Launches from a lone heavy held to full | At most 10% of launches. The launch share of separations stays in its 25 to 40% band |
 | Juggles ended by a burst | 20 to 40% |
 | A masher against the easy and medium AI, and a lights-only mirror finishing | The bands in `agency-pass.md` §13 and §23 still hold |
-| A trade that passes 90 ticks without a close | Never (a hard test) |
+| A trade that isn't broken on the tick of its limit | Never (a hard test) |
+| From a trade's break to its close, or to the trade's end | At most 24 ticks |
 | Lights-only mirror: matches finished before the cap | At least 95% |
 | Lights-only mirror: brink to KO, median | 30 to 55 s, kept. The first lever is the trade's clock |
-| Lights-only mirror: share of closes made by the fighter on the brink | 35 to 65% |
+| Lights-only mirror: share of closes made by the fighter on the brink | 10 to 40%. It was 35 to 65%, which assumed closes shared evenly, and the set-up rule needs runs of them (§9d) |
+| Lights-only mirror: matches won from the first slot | 40 to 60% |
+| An even mash: level trades that change who has the momentum | 5 to 15% |
+| A masher tapping every 8 ticks of `S.tick` against the medium AI | 35 to 50% |
 | A faster masher against a slower one (6 ticks against 12): closes a minute | Reported, as the cost of tapping slowly |
 
 ### 9b. Rulings on the first brawl slice (B1), 2026-10-05
@@ -591,7 +596,8 @@ A brawling fighter lands six lights a second, where the old exchange landed abou
 | A far charge's blow on arrival | A skill strike's worth for a light charge, and a held heavy's at full for a heavy charge |
 | The check; the step strike | Half a brawl light; ×0.8 of one. The guard strike is worth a set light |
 | The zips (§2c) | The data's own values: a light at 26 and a heavy at 66. They are bought with ki |
-| Shots, signatures, throws and landings | Unchanged |
+| A heavy shot; a charged shot | A brawl heavy's worth, and ×1.25 of it (§9d). This was "unchanged" at first |
+| Bolts, signatures, throws and landings | Unchanged |
 
 **2. The flurry's table runs to ×1.2.** A flurry blow is worth a brawl light × its interval ÷ 10: ×0.6 at 6 ticks, ×0.8 at 8, ×1.0 at 10, ×1.1 at 11 and ×1.2 at 12. Damage a second is then level from 5 to 10 taps a second, and the band stays "within 10%". A tap slower than one every 12 ticks is a separate light at ×1.0.
 
@@ -646,6 +652,83 @@ The AI has the player's tools at the player's prices. It reads only what a playe
 **Two limits.** The AI never answers faster than its difficulty's reaction time. It doesn't read the player's inputs: it reads the beat and the tell, as a player does. The check is the band, a timed player against medium at 70 to 90%. The masher's bands shouldn't move with these.
 
 **The HUD.** The rival's stance badge is always shown (§12). The beat ring option covers the rival's blows too (§4).
+
+### 9d. Rulings on the first brawl build, as measured (2026-10-05)
+
+Encounter built B1 to §3 and §9b (`docs/director/brawl-b1.md`). The core holds: 99.1% of presses in a brawl become a blow inside 10 ticks, press to contact is 2 ticks, nothing running is 5.6 s a minute for a pressing player, damage a second is level across tap rates, the median match is 455 s, KAI is at 49.5%, and the lights-only mirror finishes 60 of 60 with brink to KO at 34.2 s.
+
+**As built, and accepted:** `brawl.damageMul` 0.30 and `flurry.tradeMaxTicks` 120.
+
+Five things were out. They are ruled below in the order to build them. Every number is a starting value for data.
+
+**1. Blocked blows and the arms** (acceptance test W5: the arms took 90.9% of limb breaks, against 35 to 65%).
+
+A blocked blow wears the arms, and in a brawl a guard takes six blows a second. So:
+- **a blocked light or flurry blow puts half of its chip wear on the arms,** and the other half is soaked. A blocked heavy is as before;
+- **wear from blocked blows can't take an arm past 45.** That is the middle of bruised. Blocking alone never batters an arm, so it never makes one breakable, and it never fires the act beat for a battered limb;
+- **Data:** `block.streamArmShare` 0.5 and `block.armWearCap` 45. The first lever is the share, from 0.3 to 0.7.
+
+What punishes a guard is now the brawl's own: guard fatigue after 3 s, and the heavy that breaks a set guard.
+
+**2. The mood** (Calm read 4.2% of match time and Frenzied 63.4%, against 30 to 55% and 5 to 20%; act 2 began at 77.8 s against 90 to 150 s).
+
+The mood adds 1.5 points for every strike, and strikes now come six a second. So a blow feeds the mood by its form, as it does damage:
+
+| What happens | Mood units (60 is one point) | Why |
+| :--- | ---: | :--- |
+| A light or a flurry blow lands in a brawl | 20 | A third of a point. A full mash is about 2 to 3 points a second, under the decay of 3 |
+| The same, blocked | 0 | |
+| A skill strike lands (from B2) | 90 | The old strike's |
+| A heavy or an ender lands in a brawl | 120 | |
+| A flurry's close | 180 | The old chain link's. It is the mash's earned beat |
+| A guard is broken | 240 | The old parry's |
+| A knock-back | 180 | |
+| A strike of a planned exchange outside a brawl | As now: 90, or 210 for a heavy | |
+| Everything else | As now | |
+
+- A flurry blow's 20 doesn't shrink with a faster tap, so mashing faster still raises the mood faster (§3).
+- **Data** (`mood.json` `impulses`): `brawlLight` 20, `skillStrike` 90, `brawlHeavy` 120, `flurryClose` 180, `guardBreak` 240, `knockback` 180. The first lever is `brawlLight`, from 15 to 30, and then the decay.
+- **The acts** should move back by themselves once ruling 1 is in: the early act 2 is most likely the battered-limb beat, fired by arms worn through blocking. Re-measure before touching the act beats.
+
+**3. An even mash and who closes** (the first lead persisted: 943 closes against 41 in Encounter's mirror, and the same slot won 16 of 20).
+
+The cause is the stagger. The closer lands one or two free blows on a staggered rival, those start his next run, and an even exchange of blows never takes the lead away. My −1 for a reply can't recover it at equal tap rates.
+
+The set-up rule also needs runs of closes. A close by the fighter on the brink wipes the rival's set-up progress, so closes shared evenly would never open him. The fix keeps momentum and lets it change hands:
+- **a blow that lands on a staggered fighter does its damage and adds nothing to the run.** So a close doesn't start the next lead;
+- **at the trade's limit, a lead of 2 or more takes the close.** That is a lead earned by tapping faster;
+- **runs within 1 of each other are a level trade, settled by a seeded draw.** The fighter who made the last close in this brawl has **9 chances in 10.** If nobody has closed yet in this brawl, the odds are even. This replaces "the one who has landed more blows in this trade";
+- **the close's set-up weight goes back to 0.5.** It was lowered to 0.25 while one fighter made nearly every close. With a 9 in 10 momentum, four closes in a row is what the rival can be asked for, and eight is too many.
+
+So an even mash has momentum. It changes hands by chance about once in ten level trades, which is about every 23 s of even mashing. It changes hands by choice whenever the trailing fighter does anything better than mash evenly: taps faster, times a blow, throws a heavy, guards, or leaves. The first close of a brawl is an even draw, so no slot is favoured.
+
+- **Data:** `flurry.staggeredAddsRun` false, `flurry.levelWithin` 1, `flurry.momentum` 0.9, `setup.weight.blurPlain` 0.5, and `flurry.tradeMaxTicks` stays 120.
+- **Reasoned, and not measured:** brink to KO in the lights-only mirror at about 36 to 45 s. The levers, in order: the momentum (0.85 to 0.95), and then the weight (0.34 to 0.5).
+
+**4. The medium AI against a faster tapper** (a presser at an 8-tick gap won 16 of 20 against the medium AI, which taps every 10).
+
+The §9c answers stay off until B2. Without the parry a guard only costs the AI, as Encounter found. Until then:
+- **the medium AI taps every 8 ticks.** That is an ordinary player's mash, so against him the trade is level and the draw decides. Easy stays slower and hard is faster: 12, 8 and 6 as starting values. A player has to tap faster than 8 to out-tap medium, and nobody out-taps hard;
+- **its answer to being closed on is a heavy.** When a flurry's close has landed on it, its next action is a heavy, at a share by level: 0.2, 0.6 and 0.9. A heavy started as its stagger ends lands in 34 ticks. A fresh run at an 8-tick gap can't close before 40. It clears the rival's run and staggers him, or knocks him back as an ender. A player at a 6-tick gap beats it, and that is his reward for the speed;
+- **the masher's band is read against a real-rate masher.** QA's masher taps on live ticks, which is slower on `S.tick`. The band of 35 to 50% against medium should be read with a script that taps every 8 ticks of `S.tick`, and reported at 6 and 10 as well.
+- **Data** (`ai.json`, each level's `brawl`): `tapGap` 12, 8, 6; `heavyAfterClose` 0.2, 0.6, 0.9.
+
+**5. The mixed blaster** (77 of 100 against the medium AI, against 30 to 50%).
+
+Two causes. Every melee blow was re-valued by its form and shots weren't, so a tapped heavy shot is worth 66 against a brawl heavy's 39.6. And the AI helps a shooter: in reach it guards against someone who isn't striking, and its ender knocks him back to the range he wants.
+
+- **Heavy shots take a heavy's worth.** A heavy shot is the data's value × the brawl's scale × 2, which is 39.6 today, and a charged shot is ×1.25 of that. This amends §9b, which left all shots alone.
+- **Bolts keep their value.** A bolt costs ki and has to be aimed, and the bolt-only rows are in their bands (36 of 100). A bolt is the next lever (×0.8) only if bolt-only passes 40%.
+- **`tapShare` stays at 0.4.** It was set for the slow shooter (`agency-pass.md` §23).
+- **Against a shooter the AI changes what it does.** A shooter is a rival who has fired in the last 90 ticks and landed no melee blow in the last 120.
+  - In a brawl with him it doesn't guard, and it doesn't throw the ender that would knock him away: it keeps the flurry to its close, which staggers him in place.
+  - It comes in with the approach a bolt doesn't stop: the heavy lunge or the heavy charge.
+- **Data** (`ai.json`, each level's `vsShooter`): `guardShare` 0; `enderShare` 0.5, 0.2, 0.1; `heavyApproachShare` 0.2, 0.6, 0.9. And `brawl.shotHeavyMul` 2.
+- **Blasts' share of damage** was 10.1%, at the floor of its band, and heavy shots at ×0.6 will take it lower. If it falls under 10%, the lever is how often the AI fires, and not what a shot is worth.
+
+**The trade's limit, for QA.** The longest trade read 132 ticks with the limit at 120, because the close comes with the chosen fighter's next blow that lands. That is the rule working. The row now reads: **the trade breaks on the tick of its limit** (a hard test on the `trade_break` event), **and from the break to the close, or to the trade's end, is at most 24 ticks.**
+
+**Not ruled, and why.** Timed against plain read 0 of 40 because QA's timed script is blind in a brawl, and there is no beat point until B2. The perfect blocks at 17.9 for each 100 exchanges are counted against exchanges, and a brawl is one exchange with many blows: that row needs counting by blows, which is QA's to re-base.
 
 ## 10. Stances and the face buttons
 
