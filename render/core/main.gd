@@ -734,12 +734,13 @@ func _input(e: InputEvent) -> void:
 
 
 ## The touch controls' geometry for the current screen (sim/input/touch.gd): UI draws the buttons from the same
-## call, with the same inputs, so what is drawn is what is hit.
+## call, with the same inputs, so what is drawn is what is hit. The last input is UI's top limit: Full touch's buttons
+## sit under the plates' lower edge (-1 when the layout is not Full touch, which limits nothing).
 func touch_layout() -> Dictionary:
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	var safe: Rect2 = ui_hud.layout.safe
 	var margin: float = maxf(maxf(vp.x - safe.end.x, vp.y - safe.end.y), 8.0 * ui_hud.dp)
-	return SimTouch.layout(vp.x, vp.y, ui_hud.dp, ui_hud.layout.portrait, bool(ui_hud.opts.get("left_handed", false)), margin, host.hub.touch.full_mode)
+	return SimTouch.layout(vp.x, vp.y, ui_hud.dp, ui_hud.layout.portrait, bool(ui_hud.opts.get("left_handed", false)), margin, host.hub.touch.full_mode, ui_hud.touch_top_limit())
 
 
 ## A finger on the screen: UI's own targets (pause, feedback) and any open overlay come first; the rest is the
