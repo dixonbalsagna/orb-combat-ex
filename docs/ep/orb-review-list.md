@@ -114,6 +114,10 @@ Landed later in the night (pushed; checks passed on an export):
 - Animation's zip entries, the far-side pass (over or round the rival), the check's guard and the push style, and ten intro gestures for the launch pair. GIFs: art/animation/review/gestures/, art/animation/review/zip/, art/animation/review/press-styles/. Nothing drives them in a match yet.
 - Legal screened the gestures, the pass and the other four stances' moves: nothing ruled out (docs/legal/stances-and-gestures-screen.md). The short beam must be seen drawn before it goes live.
 
-In the queue, in order: Simulation's dynamic intros (being applied); Encounter's first brawl slice (every press a blow); the fighter rename to PROTAGONIST and RIVAL; the zip. VFX: effects for the building stages.
+- Effects for each building stage: glass showers, falling cladding, dust, and smoke rising from a shell (stills: docs/vfx/img/bs-*.jpg). The building itself still looks intact at every stage until Rendering's per-stage look lands.
+- Dynamic intros are in the sim: an intro is composed from parts and templates, with gestures. A match still opens with the classic intro until the match start asks for a composed one (UI has that task).
+- A held-pose check on Legal's rules now gates the animation data. Three poses changed for it: the shrug's elbows bend, the last stand's rise brings its arms forward, the energy ready's hand moved off the hip (docs/animation/held-lint.md).
+
+In the queue, in order: Encounter's first brawl slice (every press a blow; being applied); the fighter rename to PROTAGONIST and RIVAL; the zip. Rendering: each building's look per stage. UI: composed intros at match start, the stance badge, the beat ring for the rival's blows.
 
 To watch: time at power tier 4 is 7.05% a minute after the building change, against a floor of 6. QA's overnight baseline will say whether it holds.
