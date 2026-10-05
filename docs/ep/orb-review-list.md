@@ -91,3 +91,5 @@ Written by the EP on 2026-10-01. Paths are from the project folder. The fuller s
 - Moveset generator design: docs/combat/moveset-generator.md (samples per stance for both fighters). Questions: are the identity weights the split wanted; the rival's posed hand strikes are mostly open blade hands, not fists (swap them?).
 - Generated martial-stance movesets (parked, for review): docs/combat/pending/movegen/review-sheet.md (92 rows: 30 lights and 16 heavies per fighter).
 - Roster of twelve (2026-10-05): start with docs/ep/roster-twelve-overview.md; detail in docs/design/roster-twelve.md and docs/narrative/roster-twelve-identity.md. Eleven questions for Orb are listed in the overview.
+- Move names for the voice lab: docs/narrative/move-names-draft.csv (60 rows, the voice lab's eight columns; pull it in and edit) with the rules in docs/narrative/move-names-draft.md.
+- Intro plotlines: docs/narrative/dynamic-intros.md section 11 (the generative layer; Orb's questions at 11.11; what Orb authors: the canon ledger rows and about 32 lines a fighter).

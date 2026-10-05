@@ -36,15 +36,21 @@ Gaps the four leave: no fighter who wins by grabbing, by trapping or zoning, by 
 
 Game Design keeps its extra niches as alternatives: a banker (a charging-stance fighter), a warden (a counter-fighter who guards a town by standing in it), a mine trapper, a mimic and a mood rider.
 
-## Three ways to fill twelve
+## After Orb's answers (questionnaire 18, 2026-10-05)
 
-- Set A: Narrative's twelve (the first four plus the eight templates above, without the Caretaker). Two high-cost fighters.
-- Set B: the Caretaker in place of the stalker. One high-cost fighter.
-- Set C: the Caretaker in place of the giant. One high-cost fighter.
+Orb chose: stealth, heavy, speedster and terrain shaper as the niches to explore; a hero-heavy cast, "an ensemble of allies"; bodies close to all humanoid (2 of 5).
 
-Narrative's suggested balance: 4 heroes, 2 rivals, 3 villains, 3 wildcards.
+Both directors revised for that:
 
-Build order advice for a zero budget: speedster, juggernaut, zoner, wildcard, grappler, (shaper), puppeteer, stalker, giant.
+- Certain: the speedster (the Prodigy), the stealth fighter (the Turncoat), the heavy (the Colossus, now a big armoured human on the shared rig, up to about a fifth taller, not a giant) and the terrain shaper (the Caretaker, now a full slot).
+- Four slots stay open, with five candidates: grappler (the Veteran), zoner (the Former Villain), puppeteer (the Legacy), wildcard (the Showman), juggernaut (the Harbinger).
+- The two directors differ on which to leave out, and that is Orb's call:
+  - Game Design leaves out the juggernaut: the heavy now carries its armour, and a hero-heavy cast has less room for another villain.
+  - Narrative leaves out the Showman, keeping the Harbinger as the arc's real threat. That gives 7 allies and 5 threats; swapping the Harbinger for the Showman gives 8 and 4.
+- Narrative's cast for 7 and 5. Allies: the Protagonist, the Veteran, the Prodigy, the Legacy, the Colossus, the Caretaker, and the Turncoat on probation. Threats: the rival, the Empress, the Cyborg, the Harbinger, the Former Villain.
+- All twelve are humanoid, with size differences (the Prodigy small, the Colossus big, the Harbinger tall), the Empress's tail and the Cyborg's machine parts.
+
+Build order advice for a zero budget: speedster, heavy, zoner, wildcard or juggernaut, grappler, shaper, puppeteer, stealth last (it is the one high-cost template, and needs an answer to what each player sees).
 
 ## The "fourth season" feeling
 
