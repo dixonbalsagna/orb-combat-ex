@@ -242,3 +242,54 @@ Until the schema lands, the validator reports the new file.
 7. **The look is not left to chance.** Its slots are `"draw": false`: the facts choose it, or the template's own first part plays. An even draw would have made half of the plain Double Drops a silent long stare.
 8. **A fifth gesture point, `wait`.** Narrative's table lists gestures "at the wait" for the Latecomer beside its four named points, so the build has it; it is skipped in a template with no wait.
 9. **Mine, as data, for Narrative to tune:** the gesture points' ticks (12 after a landing, 20 into the wait, 24 into the look, 48 before the clock) and the clock bend's range (60 either way; Narrative's bends are 24 and 36).
+
+## 13. Proposal: a plotline for the default intro (2026-10-06, not built)
+
+**The gap.** The game now opens every match with `{"intro": {"play": true}}` and no facts. The composer draws the scenario, the order and the gap, but a gesture and a voice slot's tags come only from facts, so a default intro has neither. Orb asked for intros "as generatively as possible", with implied plotlines.
+
+**Two places the plot could be resolved.**
+
+| | The host resolves (Narrative's section 11 as written) | The composer resolves when no facts are sent |
+| :--- | :--- | :--- |
+| Where the grammar runs | Host code, in UI or Rendering | One pure function beside the composer, in `sim/director` |
+| What the host passes | The whole resolved `facts` | Only its memory: the pair's history, `avoid`, `avoidPlot`, and a rematch counter |
+| Headless matches (QA's harness, tools, an online peer) | Get no plot unless each brings the host's resolver | Get the same plot as the game, from the seed |
+| Determinism | Rests on the host's own draws | Under the parity gate: keyed draws, a golden vector |
+| What the sim gains | Nothing | Narrative's grammar as sim data (in the data hash, with a schema) and about 150 lines |
+
+**Recommendation: the composer resolves, and the host keeps only memory.** A record that already carries `facts` is used as given, so a replay, a peer and a host that wants to override all still work. It comes in two steps.
+
+**Step 1, cheap: every default intro is a first meeting.** When a composed intro's record has no `facts`, the composer uses a `defaultFacts` block from `data/fight/intro.json`: Narrative's `fresh` row (both appraise at the start of the look; the look is `hold`; voice slots tagged `you` and `now` at 0.8).
+- About 20 lines and one data block. It fits the next slice after brawl B1.
+- **Goldens:** the nine matches do not move. The `introComposed` vector moves (its records without facts gain two gestures and tags), so one regeneration, with light digests and tick counts identical for the matches.
+- It is not generative yet: every default intro has the same two gestures. It makes the gestures and tags live and visible while step 2 is built.
+
+**Step 2, the generative layer proper.** `DirIntro.resolve(seed, pair, history)` returns the same flat `facts` record the composer already takes:
+- the pair's relationship type from data, the state from the host's `history` (none: `fresh`), a keyed draw among the plots that fit, passing over `avoidPlot`;
+- the type's and the state's bends multiplied, roles turned into slots, each fighter's stance vetoes applied.
+- **Cost:** about 150 lines, a loader for `data/narrative/intro_plots.json`, Tools' schema, about 120 lines of checks. A slice of its own.
+- **It needs from Narrative:** the grammar as real data (it is a draft shape today), each pair's type, and each fighter's vetoed stances, as files the sim may read.
+- **It needs from the host:** `history` for the pair (who won last, how it ended, the streak) in the setup's record.
+- **Goldens:** the data hash (a new file) and the `introComposed` vector. The nine matches do not move.
+
+Whichever resolves it, the rule of section 7 holds: facts bend only what the intro shows and how long it runs. The state at the clock is the same.
+
+## 14. Two answers for the host (2026-10-06)
+
+**The hub's setup keys and the gameplay hash.** `act.v2` and `act.assist` are in the gameplay hash, so a setup's `v2` and `assists` change it from tick 0, with or without an intro. Measured: with the hub's keys against none, the tick-0 hashes differ in both cases.
+
+- Without an intro the difference vanishes at the first live tick **for an AI slot**, because the AI marks its own slot v2 as it first acts (`DirAI.aiInput`). A tool that compares every 60 ticks never saw it.
+- With an intro no live tick runs until the clock, so the difference stays through every pre-clock tick. That is what Rendering's determinism tool met.
+- For a human slot the keys differ for the whole match either way: v2 changes how his stance is read, and an assist changes what a press does.
+- **So Rendering's fix is the rule, not a workaround:** a setup is a match input like the seed, and it is in the replay header for that reason. A reference sim starts from the host's own setup.
+
+**The no-repeat list.** A seed always composes the same intro; that is what lets a replay and a peer match. So a rematch on the same seed opens the same way until the host says otherwise.
+
+| What the host passes, in the setup's `intro` record | Effect today |
+| :--- | :--- |
+| `avoid`: the scenario ids this pair played lately, the newest first (Narrative's rule: the last 5) | A scenario weighs 1 / (1 + its uses); the Long Look never follows itself |
+| `facts.avoidPlot`, once plots exist | The same for plots |
+
+- **`avoid` alone is not enough on one seed.** It changes the weights, but the keyed draws stay the same, so the same scenario can still win, and the order and the gap do not change at all. The fix is a rematch counter: a `take` number in the record, used as the index of each keyed draw. It is 4 lines in the composer, neutral when left out, and can ride with step 1 above.
+- **Who keeps the list: Rendering's host** (`render/core/sim_host.gd` or `main.gd`). It is the object that starts every match and outlives one, and it already builds the record (`_match_setup`). After `newMatch` it reads what was composed from `SimIntro.timeline(S)` (`scenario`, later `plot`) and files it under the pair, keyed by the two roster ids. UI's sim bridge is a read-only adapter from the sim to the HUD and should not hold session memory. UI owns the opening setting (Varied, Classic, Skip) and, when profiles exist, saving the list between sessions.
+
