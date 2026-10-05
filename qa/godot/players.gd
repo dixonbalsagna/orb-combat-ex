@@ -385,7 +385,21 @@ func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
 
 ## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
 func _gblank() -> Dictionary:
-	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0}
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
+
+
+## An event field as an int, 0 when the build's event has no such field.
+func _ei(e, k: String) -> int:
+	var v = e.get(k)
+	return int(v) if v != null else 0
+
+
+func _p95(a: Array) -> int:
+	if a.size() == 0:
+		return 0
+	var b: Array = a.duplicate()
+	b.sort()
+	return int(b[mini(b.size() - 1, int(float(b.size()) * 0.95))])
 
 
 func _greport(g: Dictionary) -> Dictionary:
@@ -396,7 +410,9 @@ func _greport(g: Dictionary) -> Dictionary:
 		"tradeBreaks": g.tradeBreaks, "tradeBreaksOnLimit": g.onLimit, "tradeLimit": g.limit, "breakToCloseLate": g.late,
 		"momentumBreaks": g.momBreaks, "momentumChanges": g.momChanges, "momentumChangeShare": snappedf(float(g.momChanges) / maxf(1.0, float(g.momBreaks)), 0.001),
 		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
-		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades}
+		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades,
+		"exactTradeFields": g.exact > 0 and g.exact == g.tradeBreaks, "levelTrades": g.drawsAfterClose, "levelChanges": g.drawChanges, "levelChangeShare": snappedf(float(g.drawChanges) / maxf(1.0, float(g.drawsAfterClose)), 0.001),
+		"breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
@@ -518,9 +534,28 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 						g.guardBreaks += 1
 					elif ck == "trade_break":
 						g.tradeBreaks += 1
-						if int(e.get("n")) == g.limit:
+						# the break comes on the first live tick at or after the limit (a hit-stop holds the sim), so lateness is counted and a break before the limit is the fault
+						var lim: int = _ei(e, "amount") if _ei(e, "amount") > 0 else g.limit
+						var late_by: int = _ei(e, "n") - lim
+						if late_by < 0:
+							g.early += 1
+						else:
+							g.lateTicks.append(late_by)
+						if late_by == 0:
 							g.onLimit += 1
 						tb_tick = S.tick
+						var how: String = str(e.get("text"))
+						if how == "lead" or how == "draw":   # the exact fields (Encounter's next slice): who it breaks for, the runs, how it was settled, who closed last
+							g.exact += 1
+							var kk: int = _ei(e, "k")     # 0 nobody has closed in this brawl, 1 the actor, 2 the target
+							if how == "lead":
+								g.leads += 1
+							else:
+								g.draws += 1
+								if kk > 0:
+									g.drawsAfterClose += 1
+									if kk == 2:
+										g.drawChanges += 1    # a draw that went against the last closer: the momentum changed hands
 						if last_closer >= 0:
 							g.momBreaks += 1
 							if int(e.actor) != last_closer:
