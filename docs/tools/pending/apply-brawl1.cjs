@@ -5,7 +5,8 @@
 //   data/director/interrupts.json  the required top-level `brawl` {enabled, interrupts[], breakBh, pullBhPerSec, stepInTicks, idleTicks,
 //                                  heldPressTicks, stringLapseTicks, enderAfter, recoil, damageMul, aiPerfectEveryTicks,
 //                                  aiReversalEveryTicks, light {damage, contactTicks, blowTicks}, flurry {minGap, maxGap, mul [[gap, share]],
-//                                  reelTicks, closeAfter, staggerTicks}, heavy {damage, ki, windupTicks, landTicks, recoverTicks,
+//                                  reelTicks, closeAfter, staggerTicks, runToClose, replyTakes,
+//                                  runLapseTicks, tradeMaxTicks}, heavy {damage, ki, windupTicks, landTicks, recoverTicks,
 //                                  heldFullTicks, heldMaxTicks, heldLandTicks, staggerTicks, force}, hitstop {light, heavy}} (closed; _note
 //                                  allowed) and the optional perfectBlock.windows.blow (a number, 0 or more)
 //   data/director/ai.json          per level the required `brawl` {tapGap, string [lo, hi], enderShare, rashHeavy, guardShare,
@@ -16,6 +17,9 @@
 // heldMul (above 0), and skillMul, setMul and heavyMul (above 0), all required. flurry.mul has at least two points. The new cue name `trade`
 // is a sim render cue that nothing in tools checks. Rules: brawl-order and ai-brawl.
 // The fixtures get the keys, and every case sets its own values (a whole `brawl` block or level block), so none depends on the real file.
+// Follows docs/design/melee-press-feel.md section 3 as of 2026-10-05: flurry gains four required keys, runToClose (integer, at least 1; 4),
+// replyTakes (integer, 0 or more; 1), runLapseTicks (ticks; 24) and tradeMaxTicks (integer, at least 1; 90), and the rule brawl-order
+// gains: runLapseTicks below tradeMaxTicks. Encounter's final key list may differ slightly; tell me and I change them.
 // Re-runnable (a second run changes nothing).
 const fs = require('fs');
 const rj = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -50,11 +54,12 @@ const VALID = {
   setMul: 0.8,
   heavyMul: 1.5,
   light: { damage: 6, contactTicks: 6, blowTicks: 12, recover: 10 },
-  flurry: { minGap: 4, maxGap: 20, mul: [[6, 0.6], [12, 1.2]], reelTicks: 10, closeAfter: 30, staggerTicks: 8 },
+  flurry: { minGap: 4, maxGap: 20, mul: [[6, 0.6], [12, 1.2]], reelTicks: 10, closeAfter: 30, staggerTicks: 8, runToClose: 4, replyTakes: 1, runLapseTicks: 24, tradeMaxTicks: 90 },
   heavy: { damage: 30, ki: 8, windupTicks: 20, landTicks: 6, recover: 20, recoverWhiff: 30, heldFullTicks: 40, heldMaxTicks: 60, heldLandTicks: 8, staggerTicks: 20, force: 1 },
   hitstop: { light: 2, heavy: 5 },
 };
 const VALID_AI = { tapGap: 8, string: [3, 6], enderShare: 0.4, rashHeavy: 0.1, guardShare: 0.3, guardTicks: [20, 60], perfectMul: 1 };
+const isPlain = (o) => o !== null && typeof o === 'object' && !Array.isArray(o);
 const live = (f) => (fs.existsSync(f) ? rj(f) : null);
 const liveIt = live('data/director/interrupts.json');
 const liveAi = live('data/director/ai.json');
@@ -89,6 +94,10 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
         reelTicks: ticks('Ticks the rival reels.'),
         closeAfter: ticks('Ticks after which a flurry closes.'),
         staggerTicks: ticks('Ticks of stagger a flurry\'s end gives.'),
+        runToClose: { type: 'integer', minimum: 1, description: 'The run of blows after which a mash against a mash closes for whoever is winning the trade (Game Design, melee-press-feel.md section 3).' },
+        replyTakes: { type: 'integer', minimum: 0, description: 'How many blows a reply takes off the rival\'s run.' },
+        runLapseTicks: ticks('Ticks without a blow after which a run lapses; below tradeMaxTicks.'),
+        tradeMaxTicks: { type: 'integer', minimum: 1, description: 'The most ticks a trade can last before it closes.' },
       }),
       heavy: obj({
         damage: num0('Damage of a heavy blow.'),
@@ -111,7 +120,7 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
       heavyMul: { type: 'number', exclusiveMinimum: 0, description: 'The worth of a heavy blow.' },
     }, { required: ['enabled', 'interrupts', 'breakBh', 'pullBhPerSec', 'stepInTicks', 'idleTicks', 'heldPressTicks', 'stringLapseTicks', 'enderAfter', 'recoil', 'damageMul', 'aiPerfectEveryTicks', 'aiReversalEveryTicks', 'tradeTicks', 'heldMul', 'skillMul', 'setMul', 'heavyMul', 'light', 'flurry', 'heavy', 'hitstop'], description: 'The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.' });
     if (!s.required.includes('brawl')) s.required.push('brawl');
-    s.description = s.description.replace('Orders (', () => 'Orders (a brawl flurry\'s minGap at most its maxGap and its mul gaps strictly increasing, and a heavy\'s heldFullTicks at most its heldMaxTicks (brawl-order); ');
+    s.description = s.description.replace('Orders (', () => 'Orders (a brawl flurry\'s minGap at most its maxGap its mul gaps strictly increasing, its runLapseTicks below its tradeMaxTicks, and a heavy\'s heldFullTicks at most its heldMaxTicks (brawl-order); ');
     wj(f, s);
   }
 }
@@ -147,6 +156,7 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
     if (o.brawl === undefined) {
       if (o.perfectBlock && o.perfectBlock.windows) o.perfectBlock.windows.blow = haveIt && liveIt.perfectBlock.windows.blow !== undefined ? liveIt.perfectBlock.windows.blow : 8;
       const src = haveIt ? strip(liveIt.brawl) : clone(VALID);
+      if (haveIt && isPlain(src.flurry)) for (const k of ['runToClose', 'replyTakes', 'runLapseTicks', 'tradeMaxTicks']) if (src.flurry[k] === undefined) src.flurry[k] = VALID.flurry[k]; // a live file written before section 3
       const out = {};
       for (const k of Object.keys(o)) { out[k] = o[k]; if (k === 'pace') out.brawl = src; }
       if (out.brawl === undefined) out.brawl = src;
@@ -177,6 +187,7 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
       "        if (typeof brl.flurry.minGap === 'number' && typeof brl.flurry.maxGap === 'number' && brl.flurry.minGap > brl.flurry.maxGap) err(IT, '/brawl/flurry/minGap', 'brawl-order', `flurry minGap ${brl.flurry.minGap} is above maxGap ${brl.flurry.maxGap}`);",
       "        if (Array.isArray(brl.flurry.mul)) for (let i = 1; i < brl.flurry.mul.length; i++) { const p = brl.flurry.mul[i - 1]; const q = brl.flurry.mul[i]; if (Array.isArray(p) && Array.isArray(q) && typeof p[0] === 'number' && typeof q[0] === 'number' && q[0] <= p[0]) err(IT, `/brawl/flurry/mul/${i}/0`, 'brawl-order', `the mul table's gap ${q[0]} does not rise above the one before (${p[0]})`); }",
       "      }",
+      "      if (isObj(brl.flurry) && typeof brl.flurry.runLapseTicks === 'number' && typeof brl.flurry.tradeMaxTicks === 'number' && brl.flurry.runLapseTicks >= brl.flurry.tradeMaxTicks) err(IT, '/brawl/flurry/runLapseTicks', 'brawl-order', `runLapseTicks ${brl.flurry.runLapseTicks} is not below tradeMaxTicks ${brl.flurry.tradeMaxTicks}, so a run could outlast the trade it belongs to`);",
       "      if (isObj(brl.heavy) && typeof brl.heavy.heldFullTicks === 'number' && typeof brl.heavy.heldMaxTicks === 'number' && brl.heavy.heldFullTicks > brl.heavy.heldMaxTicks) err(IT, '/brawl/heavy/heldFullTicks', 'brawl-order', `heldFullTicks ${brl.heavy.heldFullTicks} is above heldMaxTicks ${brl.heavy.heldMaxTicks}, so a held heavy could never be full`);",
       "    }",
       a,
@@ -268,6 +279,24 @@ const haveAi = liveAi && liveAi.levels && liveAi.levels.medium && liveAi.levels.
     it('flurry-mul-edges-ok', (o) => { o.flurry.mul = [[1, 0.1], [2, 2]]; }, null),
     it('flurry-reel-negative', (o) => { o.flurry.reelTicks = -1; }, { rule: 'minimum', pointer: B + 'flurry/reelTicks' }),
     it('flurry-close-integer', (o) => { o.flurry.closeAfter = 30.5; }, { rule: 'type', pointer: B + 'flurry/closeAfter' }),
+    it('flurry-run-to-close-required', (o) => { delete o.flurry.runToClose; }, { rule: 'required', pointer: B + 'flurry' }),
+    it('flurry-run-to-close-zero', (o) => { o.flurry.runToClose = 0; }, { rule: 'minimum', pointer: B + 'flurry/runToClose' }),
+    it('flurry-run-to-close-integer', (o) => { o.flurry.runToClose = 3.5; }, { rule: 'type', pointer: B + 'flurry/runToClose' }),
+    it('flurry-run-to-close-one-ok', (o) => { o.flurry.runToClose = 1; }, null),
+    it('flurry-reply-takes-required', (o) => { delete o.flurry.replyTakes; }, { rule: 'required', pointer: B + 'flurry' }),
+    it('flurry-reply-takes-negative', (o) => { o.flurry.replyTakes = -1; }, { rule: 'minimum', pointer: B + 'flurry/replyTakes' }),
+    it('flurry-reply-takes-integer', (o) => { o.flurry.replyTakes = 0.5; }, { rule: 'type', pointer: B + 'flurry/replyTakes' }),
+    it('flurry-reply-takes-zero-ok', (o) => { o.flurry.replyTakes = 0; }, null),
+    it('flurry-run-lapse-required', (o) => { delete o.flurry.runLapseTicks; }, { rule: 'required', pointer: B + 'flurry' }),
+    it('flurry-run-lapse-negative', (o) => { o.flurry.runLapseTicks = -1; }, { rule: 'minimum', pointer: B + 'flurry/runLapseTicks' }),
+    it('flurry-run-lapse-integer', (o) => { o.flurry.runLapseTicks = 24.5; }, { rule: 'type', pointer: B + 'flurry/runLapseTicks' }),
+    it('flurry-trade-max-required', (o) => { delete o.flurry.tradeMaxTicks; }, { rule: 'required', pointer: B + 'flurry' }),
+    it('flurry-trade-max-zero', (o) => { o.flurry.tradeMaxTicks = 0; }, { rule: 'minimum', pointer: B + 'flurry/tradeMaxTicks' }),
+    it('flurry-trade-max-integer', (o) => { o.flurry.tradeMaxTicks = 90.5; }, { rule: 'type', pointer: B + 'flurry/tradeMaxTicks' }),
+    it('flurry-run-lapse-above-trade-max', (o) => { o.flurry.runLapseTicks = 100; o.flurry.tradeMaxTicks = 90; }, { rule: 'xref:brawl-order', pointer: B + 'flurry/runLapseTicks' }),
+    it('flurry-run-lapse-equal-trade-max', (o) => { o.flurry.runLapseTicks = 90; o.flurry.tradeMaxTicks = 90; }, { rule: 'xref:brawl-order', pointer: B + 'flurry/runLapseTicks' }),
+    it('flurry-run-lapse-just-below-trade-max-ok', (o) => { o.flurry.runLapseTicks = 89; o.flurry.tradeMaxTicks = 90; }, null),
+    it('flurry-run-lapse-zero-ok', (o) => { o.flurry.runLapseTicks = 0; o.flurry.tradeMaxTicks = 1; }, null),
     it('flurry-stagger-negative', (o) => { o.flurry.staggerTicks = -1; }, { rule: 'minimum', pointer: B + 'flurry/staggerTicks' }),
     // ---- heavy ----
     it('heavy-key-required', (o) => { delete o.heavy.force; }, { rule: 'required', pointer: B + 'heavy' }),
