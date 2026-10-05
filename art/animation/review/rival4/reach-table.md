@@ -15,7 +15,7 @@ Measured by `strike_lab.gd --measure --sweep`: each strike played against a dumm
 | plate_drop | 56 | 86 | 82 | 98 | 46 | lands on the hips alone |
 | low_thrust | 50 | 76 | 58 | 78 | 30 | lands on the hips alone |
 | gut_rise | 54 | 98 | 76 | 98 | 38 | lands on the hips alone |
-| plate_hammer | 56 | 86 | 70 | 94 | 38 | lands on the hips alone |
+| plate_hammer | 56 | 86 | 68 | 94 | 40 | lands on the hips alone |
 | knee_hook | 28 | 48 | 36 | 54 | 24 | lands on the hips alone |
 | fist_rise | 58 | 98 | 70 | 98 | 44 | lands on the hips alone |
 | heel_backhand | 58 | 88 | 64 | 92 | 42 | lands on the hips alone |

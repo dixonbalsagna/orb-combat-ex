@@ -556,6 +556,123 @@ func _test_hand_tips() -> void:
 	print("  hand tips: the rival's heavy hand closes to a fist (%.2f), his light blade and the Protagonist's heavy stay open, a beat's own tip wins" % float(a.curl))
 
 
+## The LT zip's body (docs/animation/zip.md, RenderAnim.press_styles): each reading on each launch fighter, the sim's part played by hand (the zipper moved along the zip, the strike beats
+## with `zip: true`, the damage events). The phases come in order, the screen never sees a joint past its limit, every reading is drawn travelling for at least 4 ticks each way (Legal RL-076: no vanish and reappear, the tech zip included) and the heavy one has a smear frame, the
+## hand-off (zip, zip_path, press_pose with a world position) is filled, and with the flag off nothing plays.
+func _zip_scene(S: SimState, who: String, reading: String, off: bool) -> Dictionary:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "KAI" if who == "protagonist" else "VORR"
+	f1.id = "VORR" if who == "protagonist" else "KAI"
+	RenderAnim._fighters.clear()
+	for f in [f0, f1]:
+		f.vx = 0.0
+		f.vy = 0.0
+		f.y = 0.0
+		f.state = "free"
+	f1.x = 500.0
+	var row: Dictionary = AnimData.zip.readings[reading]
+	var pre: int = 20
+	var t1: int = int(row.tell)
+	var t2: int = t1 + int(row["in"])
+	var t3: int = t2 + int(row.hits) * int(row.hd)
+	var t4: int = t3 + int(row.out)
+	var heavy: bool = reading == "heavy"
+	var ex := DirExchange.newEx(f0, f1, "heavy" if heavy else "light")
+	ex.n = 951
+	ex.tag = "ZCK"
+	var pcs: Array = ["strike.jab", "strike.cross", "strike.jab"]
+	if heavy:
+		pcs = ["strike.hook"]
+	for i in range(int(row.hits)):
+		DirExchange.schedule(ex, float(pre + t2 + i * int(row.hd)) / 60.0, "strike", {"a": "A", "dmg": 66.0 if heavy else 22.0, "piece": String(pcs[i % pcs.size()]), "style": reading, "zip": true, "o": {"big": heavy}})
+	S.dirS.ex = ex
+	var res := {"phases": [], "viol": 0, "in_travel": 0, "out_ticks": 0, "smear": 0, "path": 0, "ghost_pos": false, "frames": 0, "err": 0.0}
+	for k in range(pre + t4 + 30):
+		S.tick = 1000 + k
+		S.T = 200.0 + float(k) / 60.0
+		ex.t = float(k) / 60.0
+		var tk: float = float(k - pre)
+		var x: float = 375.0
+		if tk >= float(t2) and tk < float(t3):
+			x = 444.0
+		elif tk >= float(t1) and tk < float(t2):
+			x = lerpf(375.0, 444.0, clampf((tk - float(t1)) / maxf(float(t2 - t1), 1.0), 0.0, 1.0))
+		elif tk >= float(t3) and tk < float(t4):
+			x = lerpf(444.0, 375.0, clampf((tk - float(t3)) / maxf(float(t4 - t3), 1.0), 0.0, 1.0))
+		f0.x = x
+		if k == pre:
+			RenderAnim.zip_start(S, f0, {"reading": reading, "btn": "x"})
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		for i in range(int(row.hits)):
+			if k == pre + t2 + i * int(row.hd):
+				var de := SimState.FxEvent.new()
+				de.type = "damage"
+				de.victim = 1.0
+				de.attacker = 0.0
+				de.kind = "heavy" if heavy else "light"
+				de.amount = 66.0 if heavy else 22.0
+				de.region = "core"
+				RenderAnim.consume(S, [de])
+		var af0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		res.viol += AnimJoints.violations(af0.q, af0._rd.shape_key).size()
+		if not af0.zip.is_empty():
+			if res.phases.is_empty() or String(res.phases[res.phases.size() - 1]) != String(af0.zip.phase):
+				res.phases.append(String(af0.zip.phase))
+			res.in_travel += 1 if (String(af0.zip.phase) == "in" and bool(af0.zip.travelling)) else 0
+			res.out_ticks += 1 if String(af0.zip.phase) == "out" else 0
+			res.smear += 1 if bool(af0.zip.smear) else 0
+			res.path = maxi(int(res.path), af0.zip_path.size())
+			var e: Dictionary = af0.press_pose(2)
+			if not e.is_empty() and e.has("pos"):
+				res.ghost_pos = true
+	var d: Dictionary = RenderAnim.fighter(S, f0).debug
+	res.frames = int(d.get("contact_frames", 0))
+	res.err = float(d.get("contact_err_max", 0.0))
+	return res
+
+
+func _test_zip() -> void:
+	_expect(not AnimData.zip.is_empty() and AnimData.zip.readings.has("speed") and AnimData.zip.readings.has("heavy"), "zip: data/anim/zip.json did not load")
+	for rdn in ["speed", "tech", "heavy", "press", "hold"]:
+		var rrow: Dictionary = AnimData.zip.readings.get(rdn, {})
+		_expect(int(rrow.get("in", 0)) >= 4 and int(rrow.get("out", 0)) >= 4 and String(rrow.get("travel_pose", "")) != "", "zip: the %s reading's way in is %d ticks, its way out %d, its travel pose %s (floor: 4 ticks each way and a drawn travel pose)" % [rdn, int(rrow.get("in", 0)), int(rrow.get("out", 0)), rrow.get("travel_pose", "")])
+	for id in ["zp.hold.tackle", "zp.hold.carried", "zp.hold.lift", "zp.hold.lifted", "zp.hold.throw"]:
+		_expect(AnimData.pose_exists(id), "zip: the grab pose %s is not baked" % id)
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	AnimData.ensure_fighter("KAI")
+	AnimData.ensure_fighter("VORR")
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.ground_feet = false
+	for who in ["protagonist", "antihero"]:
+		for rd in ["speed", "tech", "heavy"]:
+			RenderAnim.press_styles = true
+			var on: Dictionary = _zip_scene(S, who, rd, false)
+			RenderAnim.press_styles = false
+			var off: Dictionary = _zip_scene(S, who, rd, true)
+			var tag: String = "zip %s %s" % [who, rd]
+			_expect(on.phases == ["tell", "in", "reach", "out", "settle"], "%s: the phases were %s" % [tag, on.phases])
+			_expect(off.phases.is_empty(), "%s: with the flag off a zip still played (%s)" % [tag, off.phases])
+			_expect(int(on.viol) == 0, "%s: %d joint violations reach the screen" % [tag, int(on.viol)])
+			_expect(int(on.frames) >= 1 and float(on.err) < 0.2, "%s: contact frames %d, the style layer is %.3f rad from the contact key" % [tag, int(on.frames), float(on.err)])
+			_expect(int(on.path) > 6 and bool(on.ghost_pos), "%s: the hand-off is empty (zip_path %d, previous poses with a position %s)" % [tag, int(on.path), on.ghost_pos])
+			_expect(int(on.in_travel) >= 4 and int(on.out_ticks) >= 4, "%s: the body travels %d ticks in and %d out; Legal's floor (RL-076) is 4 each way, drawn on every tick" % [tag, int(on.in_travel), int(on.out_ticks)])
+			_expect(int(on.smear) == 0 or rd == "heavy", "%s: a smear frame outside the heavy zip" % tag)
+			if rd == "heavy":
+				_expect(int(on.smear) >= 1, "%s: no smear frame on the way in" % tag)
+	RenderAnim.press_styles = false
+	RenderAnim.ground_feet = ground_was
+	print("  zip: speed, tech and heavy on both fighters play tell, in, reach, out; no joint past its limit on screen; every reading is drawn travelling at least 4 ticks each way, the heavy one smears")
+
+
 func _test_pair_live() -> void:
 	_expect(RenderAnim.pair_live and not AnimData.pair.is_empty(), "pair live test: data/anim/pair_live.json did not load or the live pair is off")
 	_expect(AnimData.fighter_key("KAI") == "protagonist" and AnimData.fighter_key("VORR") == "antihero" and AnimData.fighter_key("rival") == "antihero" and AnimData.fighter_key("Protagonist") == "protagonist" and AnimData.fighter_key("NOBODY") == "", "pair live test: a roster id did not map to its fighter")
@@ -1591,6 +1708,7 @@ func _run() -> void:
 	_test_pair_live()
 	_test_press_styles()
 	_test_hand_tips()
+	_test_zip()
 	_test_joints()
 	RenderAnim.enabled = true
 	RenderAnim.style_override = ""

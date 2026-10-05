@@ -4,7 +4,7 @@
 const OPEN = { hands: { r: 'open', l: 'open' } };
 export const holds = {
   // weight sunk onto the rear leg and the body turned side-on, the lead blade hand out at eye height as if measuring the distance, the rear hand folded at the chest, the head low
-  sig_tell: { sketch: { family: 'crouched', lean: 10, hips: [-6, -10, 0], spine: { lean: 6, twist: -20 }, head: { pitch: 4, yaw: 4 }, hand_r: [29, 64, 10], pole_hand_r: [4, 4, 8], hand_l: [14, 52, -8],
+  sig_tell: { sketch: { family: 'crouched', lean: 10, hips: [-6, -10, 0], spine: { lean: 6, twist: -20 }, head: { pitch: 4, yaw: 4 }, hand_r: [29, 64, 10], pole_hand_r: [4, 4, 8], hand_l: [12, 54, -12],
       foot_r: [-12, 2.5, 9], foot_l: [16, 2.5, -7], ...OPEN, _legal: ['hands_open_or_claw', 'not_at_hip'] },
     orig: 'the tell: weight sunk onto the rear leg, the body turned side-on, the lead blade hand out at eye height measuring the distance, the other hand folded at his chest, the head low' },
   // the launcher thrown: the striking arm lowered and open, the other hand at the chest, the weight settled, the head turned up after the rival

@@ -1346,6 +1346,34 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     }
   }
 
+  // ---- anim zip: the phases have ticks, the pose names resolve, the pose ids are poses, the fighters are real ----
+  const zip = get('data/anim/zip.json');
+  if (isObj(zip)) {
+    const ZP = 'data/anim/zip.json';
+    const allPosesZ = new Set();
+    const mainZ = get('data/anim/poses.json');
+    if (isObj(mainZ) && isObj(mainZ.poses)) for (const k of Object.keys(mainZ.poses)) allPosesZ.add(k);
+    for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.poses\.json$/)) { const d = get(rel); if (isObj(d) && isObj(d.poses)) for (const k of Object.keys(d.poses)) allPosesZ.add(k); }
+    const blocks = isObj(zip.poses) ? Object.entries(zip.poses).filter(([k, v]) => !k.startsWith('_') && isObj(v)) : [];
+    const fgsZ = get('data/anim/fighters.json');
+    const fidsZ = isObj(fgsZ) && isObj(fgsZ.fighters) ? Object.keys(fgsZ.fighters).filter((k) => !k.startsWith('_')) : [];
+    for (const [bk, blk] of blocks) {
+      if (fidsZ.length && bk !== 'default' && bk !== 'shared' && !fidsZ.includes(bk)) err(ZP, `/poses/${esc(bk)}`, 'zip-fighter', `poses for "${bk}", which is neither a fighter of fighters.json (${fidsZ.join(', ')}), default nor shared`);
+      if (allPosesZ.size) for (const [name, pid] of Object.entries(blk)) if (!name.startsWith('_') && typeof pid === 'string' && !allPosesZ.has(pid)) err(ZP, `/poses/${esc(bk)}/${esc(name)}`, 'zip-pose', `pose "${pid}" is not in poses.json nor a wave's poses file`);
+    }
+    // the names a reading uses resolve in the default or shared block; a fighter block has every name the default has
+    const resolvable = new Set();
+    for (const [bk, blk] of blocks) if (bk === 'default' || bk === 'shared') for (const n of Object.keys(blk)) if (!n.startsWith('_')) resolvable.add(n);
+    if (blocks.length && isObj(zip.readings)) for (const [rk, r] of Object.entries(zip.readings)) {
+      if (rk.startsWith('_') || !isObj(r)) continue;
+      for (const k of ['tell_pose', 'travel_pose', 'hold_pose', 'held_pose', 'throw_pose']) if (typeof r[k] === 'string' && r[k] !== '' && !resolvable.has(r[k])) err(ZP, `/readings/${esc(rk)}/${k}`, 'zip-name', `reading "${rk}" uses pose name "${r[k]}", which is in neither the default nor the shared poses block`);
+      if (typeof r.hits === 'number' && r.hits > 0 && r.hd === 0) err(ZP, `/readings/${esc(rk)}/hd`, 'zip-phase', `reading "${rk}" has ${r.hits} blows of 0 ticks each`);
+      if (typeof r.hold_pose === 'string' && r.held_pose === undefined) err(ZP, `/readings/${esc(rk)}`, 'zip-phase', `reading "${rk}" has a hold pose but no held pose for the one it carries`, 'warning');
+    }
+    const def = blocks.find(([k]) => k === 'default');
+    if (def) for (const [bk, blk] of blocks) if (bk !== 'default' && bk !== 'shared') for (const n of Object.keys(def[1])) if (!n.startsWith('_') && !(n in blk)) err(ZP, `/poses/${esc(bk)}`, 'zip-name', `fighter "${bk}" has no pose for "${n}", which the default block has`, 'warning');
+  }
+
   // ---- fighter ladder: the beam tables never decrease with the tier ----
   for (const rel of docsFor(/^data\/fighters\/[^/]+\/ladder\.json$/)) {
     const lad = get(rel);

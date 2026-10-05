@@ -1,5 +1,5 @@
 // The pose flags of a strike key set (docs/combat/pending/movegen/README.md section 3: the twelve flags the moveset generator reads from a manifest row's `flags`, which Legal's banned
-// shapes name). Read off the three key poses' geometry with the same numbers pose_lint.gd's Legal rules use (hip zone: x 8 or less and height 24 to 44 (see inHip); a raised hand: above 80; a leap:
+// shapes name). Read off the three key poses' geometry with the same numbers pose_lint.gd's Legal rules use (hip zone: x 8 or less for a closed fist and 14 or less for an open hand, height 24 to 44 (see inHip); a raised hand: above 80; a leap:
 // both feet above 6; one turn: hip and spine twist under 140 degrees), but without needing the `_legal` tag: a flag is present when a key pose shows it. Conservative on purpose: the
 // generator REFUSES a move whose key set lists a flag, so a flag is listed only where the geometry says it plainly; what the poses cannot show is left to Legal's eye (the sheet's
 // conditions).
@@ -17,9 +17,10 @@
 //   passes_through             never from the poses: it is the contact solve's (it solves the tip onto the surface of the defender, so it cannot pass it); see docs/animation/moveset-parts.md
 const FLAGS = ['leap', 'spin', 'multi_turn', 'travelling', 'clasped', 'wrists_together', 'two_hand_chamber', 'cupped_at_hip', 'hip_chamber', 'drawn_to_hip_then_thrust', 'held_raise_overhead', 'passes_through'];
 const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-// the hand drawn back to the hip: at or behind the hip line (x 8 or less), at hip height. pose_lint's `not_at_hip` zone is wider (x within 14: a hand chambered low in front of the hip, as in a dip before a rising blow, is not
-// `drawn to the hip`); the generator refuses a move on a flag, so the narrow zone keeps the shipping uppercut a move and still catches a hand pulled back to the hip
-const inHip = t => t && t[0] <= 8 && t[0] >= -14 && t[1] >= 24 && t[1] <= 44;
+// the hand drawn back to the hip (Legal, RL-076 and docs/legal/movegen-banned.json): the zone is x 8 or less for a closed fist in a transient wind-up and x 14 or less for an open hand, a palm or any
+// held pose (a held heavy's hold frame also keeps the hand at or below 80 high), at hip height (24 to 44). A fist dips low in front of the hip in an uppercut's wind-up (x 12) and is cleared; an open
+// hand there is the cupped hand Legal rules out. The generator refuses a move on a flag, so a flag is listed only where the pose shows it plainly.
+const inHip = (t, closed) => t && t[0] <= (closed ? 8 : 14) && t[0] >= -14 && t[1] >= 24 && t[1] <= 44;
 const twist = p => Math.abs(p.hip_twist || 0) + Math.abs(p.spine?.twist || 0);
 export function poseFlags(chamber, contact, follow, ks, path) {
   const out = new Set();
@@ -40,7 +41,7 @@ export function poseFlags(chamber, contact, follow, ks, path) {
   if (chamber.hand_r && chamber.hand_l && d3(chamber.hand_r, chamber.hand_l) < 10) out.add('two_hand_chamber');
   if (hand) {
     const st = (chamber.hands || {})[side];
-    if (inHip(chamber[hand])) {
+    if (inHip(chamber[hand], st === 'fist')) {
       out.add('hip_chamber');
       if (st === 'open' || st === 'claw') out.add('cupped_at_hip');
       if (contact[hand] && contact[hand][0] >= 36) out.add('drawn_to_hip_then_thrust');

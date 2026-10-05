@@ -1,0 +1,56 @@
+--- a/tools/schemas/anim-zip.schema.json	2026-10-04 19:36:19.759298800 -0700
++++ b/tools/schemas/anim-zip.schema.json	2026-10-04 19:36:19.803037300 -0700
+@@ -2,7 +2,7 @@
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "$id": "meridian/anim-zip",
+   "title": "anim.zip/1",
+-  "description": "data/anim/zip.json: the body of the LT zip (docs/animation/zip.md). readings: per press reading (speed, tech, heavy, press = the tackle, hold = the lift and throw) the default ticks of each phase (tell, in = the way in, hits blows of hd ticks each in reach, out = the way out, lift = the held A's lift), which poses play (tell_pose, travel_pose, hold_pose, held_pose, throw_pose: names of `poses`), the after-images asked of VFX (ghosts), snap (no travel pose: he is simply there), the squash of the tell and the stretch of the way in. poses: per fighter key (a key of fighters.json) and default and shared, a name to a pose id. orient: the body turns along its path (max rad, rate, a speed under which it does not, gain). carry: the lifted fighter's cosmetic rise. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pose id is a pose; every pose name a reading uses is in every poses block) are for tools/lib/xref-fight.js (zip-*).",
++  "description": "data/anim/zip.json: the body of the LT zip (docs/animation/zip.md). readings: per press reading (speed, tech, heavy, press = the tackle, hold = the lift and throw) the default ticks of each phase (tell; in = the way in and out = the way out, each at least 4: Legal's floor on a zip's travel, RL-076, so the body is drawn travelling on every tick; hits blows of hd ticks each in reach, lift = the held A's lift), which poses play (tell_pose, travel_pose, hold_pose, held_pose, throw_pose: names of `poses`), the after-images asked of VFX (ghosts), the squash of the tell and the stretch of the way in. poses: per fighter key (a key of fighters.json) and default and shared, a name to a pose id. orient: the body turns along its path (max rad, rate, a speed under which it does not, gain). carry: the lifted fighter's cosmetic rise. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pose id is a pose; every pose name a reading uses is in every poses block) are for tools/lib/xref-fight.js (zip-*).",
+   "type": "object",
+   "required": [
+     "schema",
+@@ -41,7 +41,6 @@
+           "tell_pose",
+           "travel_pose",
+           "ghosts",
+-          "snap",
+           "squash",
+           "lean"
+         ],
+@@ -52,7 +51,7 @@
+           },
+           "in": {
+             "type": "integer",
+-            "minimum": 1
++            "minimum": 4
+           },
+           "hits": {
+             "type": "integer",
+@@ -64,7 +63,7 @@
+           },
+           "out": {
+             "type": "integer",
+-            "minimum": 1
++            "minimum": 4
+           },
+           "tell_pose": {
+             "type": "string",
+@@ -72,7 +71,7 @@
+           },
+           "travel_pose": {
+             "type": "string",
+-            "pattern": "^[a-z_]*$"
++            "pattern": "^[a-z_]+$"
+           },
+           "hold_pose": {
+             "type": "string",
+@@ -95,9 +94,6 @@
+             "minimum": 0,
+             "maximum": 8
+           },
+-          "snap": {
+-            "type": "boolean"
+-          },
+           "squash": {
+             "type": "number",
+             "minimum": 0,

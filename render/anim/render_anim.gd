@@ -110,6 +110,20 @@ static func _read_args() -> void:
 			_style_arg = a.substr(13)
 
 
+## The LT zip (docs/animation/zip.md): the sim's zip tells the body of the zipper what it is (AnimZip.start: reading, btn, via and the phase ticks), that it ended early
+## (caught, countered, cancelled) and that the fighter it strikes is held (carried by a tackle, lifted by a held A). A no-op unless press_styles is on.
+static func zip_start(S: SimState, f, spec: Dictionary) -> void:
+	AnimZip.start(fighter(S, f), spec, S.T)
+
+
+static func zip_end(S: SimState, f, reason: String) -> void:
+	AnimZip.end(fighter(S, f), reason, S.T)
+
+
+static func zip_held(S: SimState, f, kind: String, dur: float) -> void:
+	AnimZip.held(fighter(S, f), kind, S.T, dur)
+
+
 static func is_enabled() -> bool:
 	_read_args()
 	if _quality_arg != "" and quality != _quality_arg:

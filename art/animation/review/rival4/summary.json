@@ -201,21 +201,21 @@
    "severity": "note",
    "source": "pose_lint",
    "subject": "rm.plate_hammer.contact",
-   "detail": "hand_r target [48, 82, 10] is 1.5 units out of reach (the limb is clamped to [49.3, 81.4, 10.0])",
-   "action": "accept the clamped end (`fix-reach`)"
-  },
-  {
-   "severity": "note",
-   "source": "pose_lint",
-   "subject": "rm.plate_hammer.contact",
-   "detail": "foot_r target [-6, 3, 9] is 4.1 units out of reach (the limb is clamped to [-3.5, 5.6, 8.6])",
+   "detail": "foot_r target [-6, 3, 9] is 2.4 units out of reach (the limb is clamped to [-4.4, 4.3, 8.7])",
    "action": "accept the clamped end (`fix-reach`)"
   },
   {
    "severity": "note",
    "source": "pose_lint",
    "subject": "rm.plate_hammer.follow",
-   "detail": "hand_l target [15, 58, -9] is 4.6 units out of reach (the limb is clamped to [18.9, 55.9, -7.8])",
+   "detail": "hand_r target [32, 67, 12] is 4.0 units out of reach (the limb is clamped to [35.5, 66.5, 11.5])",
+   "action": "accept the clamped end (`fix-reach`)"
+  },
+  {
+   "severity": "note",
+   "source": "pose_lint",
+   "subject": "rm.plate_hammer.follow",
+   "detail": "hand_l target [15, 58, -9] is 2.5 units out of reach (the limb is clamped to [12.6, 57.9, -8.2])",
    "action": "accept the clamped end (`fix-reach`)"
   },
   {

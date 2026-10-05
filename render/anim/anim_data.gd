@@ -14,6 +14,7 @@ static var picks: Dictionary = {}
 static var profiles: Dictionary = {}
 static var default_profile: String = "snappy"
 static var by_part: Dictionary = {}          # part kind (light, heavy, chain, rush, launch, power) -> profile name
+static var zip: Dictionary = {}             # data/anim/zip.json: the body of the LT zip (phases, poses, the look of each reading; used only with RenderAnim.press_styles)
 static var tips: Dictionary = {}            # data/anim/tips.json: the striking surface of a blow (the hand closes to a fist or opens to a blade), the re-aim table
 static var press: Dictionary = {}           # data/anim/press_styles.json: how the three press styles move the body through a strike (used only with RenderAnim.press_styles)
 static var bone_lag := PackedFloat32Array()
@@ -128,6 +129,7 @@ static func load_all() -> void:
 	by_part = prj.get("by_part", {})
 	press = _read("press_styles.json")
 	tips = _read("tips.json")
+	zip = _read("zip.json")
 	bone_lag.resize(AnimRig.N)
 	var bl: Dictionary = prj.get("bone_lag", {})
 	for i in range(AnimRig.N):

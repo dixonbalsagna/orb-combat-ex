@@ -1,0 +1,20 @@
+{
+ "schema": "anim.zip/1",
+ "_about": "The body of the LT zip (docs/animation/zip.md; Orb's prototype docs/ep/prototypes/lt-zip-v4.html; docs/design/melee-press-feel.md section 2c). Render only, outside the sim's data hash, and behind RenderAnim.press_styles (the same flag as the press styles: --press-styles, Shift+F7). The sim moves the fighter along the zip; the body only poses. readings: per press reading the default ticks of each phase when the zip's spec does not give them (the prototype's, with the floor of Legal's RL-076 on the tech reading (the way in and the way out each at least 4 ticks, the body drawn travelling on every tick): tell, in = the way in, hits blows of hd ticks each in reach, out = the way out), which poses play in each phase (run: the low run of the speed reading, run_clean: the tech reading's fast, upright, clean dash (the entry's skid run, upright and long in the stride), coil: the crouch of a wind-up, lunge: the stretched lunge, back: the back-step), how many after-images VFX is asked for (ghosts), the squash of the tell and the stretch of the way in (the press styles' numbers for the heavy). poses: the existing pose each name is, per fighter (the entries' dash, coil, spring and hop back) and the shared grab poses (wave pair2). orient: the body turns along its path: the most (rad), how fast (a rate), and the speed (units a second) under which it does not. carry: the rival's cosmetic lift in a held throw (model units).",
+ "enabled": true,
+ "readings": {
+  "speed": {"tell": 6, "in": 6, "hits": 3, "hd": 8, "out": 6, "tell_pose": "run_tell", "travel_pose": "run", "ghosts": 3, "squash": 0.0, "lean": 0.0},
+  "tech": {"tell": 6, "in": 4, "hits": 1, "hd": 16, "out": 4, "tell_pose": "run_tell", "travel_pose": "run_clean", "ghosts": 4, "squash": 0.0, "lean": 0.0},
+  "heavy": {"tell": 26, "in": 8, "hits": 1, "hd": 22, "out": 10, "tell_pose": "coil", "travel_pose": "lunge", "ghosts": 5, "squash": 1.0, "lean": 0.12, "stretch": {"spine": 0.14, "rise": 0.0, "lead": 3.0}},
+  "press": {"tell": 8, "in": 7, "hits": 1, "hd": 22, "out": 8, "tell_pose": "run_tell", "travel_pose": "run", "ghosts": 3, "squash": 0.0, "lean": 0.0, "hold_pose": "tackle", "held_pose": "carried"},
+  "hold": {"tell": 22, "in": 7, "hits": 1, "hd": 30, "out": 10, "tell_pose": "coil", "travel_pose": "run", "ghosts": 4, "squash": 0.8, "lean": 0.1, "hold_pose": "lift", "held_pose": "lifted", "lift": 18, "throw_pose": "throw"}
+ },
+ "poses": {
+  "protagonist": {"run_tell": "pe.dash.start", "run": "pe.dash.travel", "run_clean": "pe.skid.run", "coil": "pe.plant_coil.start", "lunge": "pe.coil_spring.travel", "back": "pe.hop_back.start", "back_travel": "pe.hop_back.travel"},
+  "antihero": {"run_tell": "w2.dash.start", "run": "w2.dash.travel", "run_clean": "w2.skid.run", "coil": "w2.plant_coil.start", "lunge": "w2.coil_spring.travel", "back": "w2.hop_back.start", "back_travel": "w2.hop_back.travel"},
+  "default": {"run_tell": "approach.launch", "run": "move.dash", "run_clean": "move.burst", "coil": "brace", "lunge": "move.burst", "back": "move.brake", "back_travel": "move.brake"},
+  "shared": {"tackle": "zp.hold.tackle", "carried": "zp.hold.carried", "lift": "zp.hold.lift", "lifted": "zp.hold.lifted", "throw": "zp.hold.throw"}
+ },
+ "orient": {"max": 1.2, "rate": 18.0, "speed": 700.0, "gain": 0.85},
+ "carry": 26.0
+}

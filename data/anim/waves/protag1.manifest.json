@@ -1580,8 +1580,8 @@
    "_family": null,
    "tip": "plate",
    "path": "line",
-   "_via": "profile",
-   "flags": []
+   "flags": [],
+   "_via": "profile"
   }
  ],
  "skipped": []

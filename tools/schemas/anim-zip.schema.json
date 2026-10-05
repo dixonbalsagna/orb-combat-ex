@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-zip",
+  "title": "anim.zip/1",
+  "description": "data/anim/zip.json: the body of the LT zip (docs/animation/zip.md). readings: per press reading (speed, tech, heavy, press = the tackle, hold = the lift and throw) the default ticks of each phase (tell; in = the way in and out = the way out, each at least 4: Legal's floor on a zip's travel, RL-076, so the body is drawn travelling on every tick; hits blows of hd ticks each in reach, lift = the held A's lift), which poses play (tell_pose, travel_pose, hold_pose, held_pose, throw_pose: names of `poses`), the after-images asked of VFX (ghosts), the squash of the tell and the stretch of the way in. poses: per fighter key (a key of fighters.json) and default and shared, a name to a pose id. orient: the body turns along its path (max rad, rate, a speed under which it does not, gain). carry: the lifted fighter's cosmetic rise. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pose id is a pose; every pose name a reading uses is in every poses block) are for tools/lib/xref-fight.js (zip-*).",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "readings",
+    "poses",
+    "orient",
+    "carry"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.zip/1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "readings": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "speed",
+          "tech",
+          "heavy",
+          "press",
+          "hold"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "tell",
+          "in",
+          "hits",
+          "hd",
+          "out",
+          "tell_pose",
+          "travel_pose",
+          "ghosts",
+          "squash",
+          "lean"
+        ],
+        "properties": {
+          "tell": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "in": {
+            "type": "integer",
+            "minimum": 4
+          },
+          "hits": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hd": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "out": {
+            "type": "integer",
+            "minimum": 4
+          },
+          "tell_pose": {
+            "type": "string",
+            "pattern": "^[a-z_]*$"
+          },
+          "travel_pose": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "hold_pose": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "held_pose": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "throw_pose": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "lift": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ghosts": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8
+          },
+          "squash": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "lean": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.4
+          },
+          "stretch": {
+            "type": "object",
+            "properties": {
+              "spine": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.4
+              },
+              "rise": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 6
+              },
+              "lead": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 12
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "patternProperties": {
+          "^_": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "poses": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$"
+        }
+      }
+    },
+    "orient": {
+      "type": "object",
+      "required": [
+        "max",
+        "rate",
+        "speed",
+        "gain"
+      ],
+      "properties": {
+        "max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.6
+        },
+        "rate": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "carry": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 60
+    }
+  },
+  "patternProperties": {
+    "^_": true
+  },
+  "additionalProperties": false
+}

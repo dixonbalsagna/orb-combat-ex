@@ -96,7 +96,7 @@ Every manifest row now has a `flags` list: the flags among the twelve Combat's g
 | `clasped` | both hands fists within 6 units | none |
 | `wrists_together` | both wrists within 7 units at contact | none (the two-hand blows keep a hand apart) |
 | `two_hand_chamber` | both hands within 10 units in the wind-up | none |
-| `cupped_at_hip`, `hip_chamber`, `drawn_to_hip_then_thrust` | the striking hand at or behind the hip line (x 8 or less, height 24 to 44) in the wind-up; open or clawed; and thrust 36 or more ahead | none. The zone is narrower than `pose_lint`'s `not_at_hip` (x within 14) on purpose: the shipping uppercut dips its fist low and in front of the hip (x 12) before it rises, and Legal cleared it; it is not drawn back to the hip, and a flag would refuse it. If Legal wants the wider zone the uppercut, `short_uppercut` and the rising palms list them and the generator refuses them: a one-number change in `flags.mjs` |
+| `cupped_at_hip`, `hip_chamber`, `drawn_to_hip_then_thrust` | the striking hand in the hip zone in the wind-up (Legal's width, RL-076: **x 8 or less for a closed fist in a transient wind-up, x 14 or less for an open hand, a palm or any held pose**; height 24 to 44); open or clawed for `cupped`; thrust 36 or more ahead for `drawn_to_hip_then_thrust` | none. The closed-fist zone is the narrower one on purpose: the shipping uppercut dips its fist low and in front of the hip (x 12) before it rises, and Legal cleared it; an open hand in the same place is the cupped hand Legal rules out (and `pose_lint`'s `not_at_hip` already checks x within 14) |
 | `held_raise_overhead` | a hand above 80 in the follow-through | none |
 | `travelling` | **never from the poses:** a spin that travels is a motion, not a pose; no strike key set carries one | none |
 | `passes_through` | **never from the poses:** it is the contact solve's: it puts the tip on the defender's surface (minus the fist), so a reach past it is not possible, and `strike_lab` finds every strike landing within 1 unit of the surface | none; a lint on the solve can be added if Legal wants it checked rather than argued |
@@ -105,3 +105,22 @@ Every manifest row now has a `flags` list: the flags among the twelve Combat's g
 
 - **LT plus a face button, the mid-range lunge** (the zip in, the strike and the zip out in a stylistic blur): nothing planned until the EP's prototype is shown to Orb. What exists to build on: the press styles' smear and after-image hand-off, the rush and entry poses, and the contact solve's step-in.
 - **A juggle of up to 5 skill strikes, a fully held lone heavy that may launch:** nothing needed from Animation; the contact solve already reaches a defender in the air (the gated drop kick and sweep prove it), and the press styles already treat a held blow as the heavy.
+
+## 8. Legal's figures on the held poses (RL-076, 2026-10-05)
+
+Shoulder width on the rig is 20 units (the upper arms' joints, measured on the baked poses). Hands apart is the 3D distance between the two hand bones; the hip zone is x 14 or less and height 24 to 44 in a pose's own coordinates, so a hand is outside it by height or by reach.
+
+| Held pose | Hands apart | In shoulder widths | Hands (spec x, height) | Outside the hip zone | Hand state |
+| :--- | ---: | ---: | :--- | :--- | :--- |
+| `rs.hold.sig_tell` (the rival's tell) | 30.0 | 1.5 | lead (29, 64), rear (12, 54) | yes: 64 and 54 are above 44 | both flat open hands; the lead one is a flat open blade at eye height: the open state has no curl, so no point, no two fingers, no beckon |
+| `rs.hold.sig_end` (the rival's held end) | 23.2 | 1.16 | (16, 44), (10, 54) | the low hand is at 44, the edge of the zone, with x 16 (the zone is x 14 or less), the other at 54 | open |
+| `ps.hold.sig_tell` (the Protagonist's tell) | 42.2 | 2.11 | (26, 46), (22, 46) | yes: x 22 or more | open palms down |
+| `ps.hold.sig_end` | 26.0 | 1.30 | (18, 42), (18, 42) | yes: x 18 | open |
+| `zp.hold.tackle` | 24.0 | 1.20 | (40, 52) twice | yes | open |
+| `zp.hold.lift` | 24.0 | 1.26 | (25, 65) twice | yes | open, shoulder height |
+| `zp.hold.throw` | 24.4 | 1.22 | (42, 50), (40, 46) | yes | open |
+| `zp.hold.carried` and `lifted` | 30.0 | 1.55 | (14, 47) and (14, 48) | yes: 47 and 48 | open, limp |
+
+The two tells keep both hands apart by at least 1.5 shoulder widths (the rival's, widened from 1.32 in this round) and 2.1 (the Protagonist's) and outside the hip zone for the whole hold; neither pose has an arm above 80. The held poses (`rs`, `ps`, `zp`) carry `not_at_hip` and `hands_open_or_claw`, and `pose_lint` passes all of them.
+
+**The three poses Legal asked to see full size** are in `art/animation/review/legal-rl076-fullsize.png` (chamber, contact and follow of `rm.fist_drop`, `rm.plate_hammer` and `pm.palm_heave`). The raised arm lowers at once on all three: the wind-up's high hand (84, 83 and 24 high) is transient, the contact is at 68, 74 and 62, and the follow is at 63, 71 and 60, at or below the contact, and the strike block's recover phase eases it back to the guard (10 ticks for a light blow). Nothing is held: no follow is above 80 and no hold pose has an arm raised. `rm.plate_hammer`'s contact was lowered from 82 to 74 and leaned further forward for this review, so it no longer reads as a raised arm.

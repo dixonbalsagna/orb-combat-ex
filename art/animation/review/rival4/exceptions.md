@@ -35,9 +35,9 @@ Match checks: not run (--no-match). Strike lab: 15 strikes measured at their own
 | pose_lint | rm.low_thrust.follow | right elbow at 160 degrees | the runtime limb pass trims the fold to 150 degrees, so the pose shows less than authored; relax it if the full fold is meant |
 | pose_lint | rm.gut_rise.follow | left elbow at 160 degrees | the runtime limb pass trims the fold to 150 degrees, so the pose shows less than authored; relax it if the full fold is meant |
 | pose_lint | rm.plate_hammer.chamber | hand_r target [14, 83, 9] is 1.5 units out of reach (the limb is clamped to [15.3, 82.4, 9.0]) | accept the clamped end (`fix-reach`) |
-| pose_lint | rm.plate_hammer.contact | hand_r target [48, 82, 10] is 1.5 units out of reach (the limb is clamped to [49.3, 81.4, 10.0]) | accept the clamped end (`fix-reach`) |
-| pose_lint | rm.plate_hammer.contact | foot_r target [-6, 3, 9] is 4.1 units out of reach (the limb is clamped to [-3.5, 5.6, 8.6]) | accept the clamped end (`fix-reach`) |
-| pose_lint | rm.plate_hammer.follow | hand_l target [15, 58, -9] is 4.6 units out of reach (the limb is clamped to [18.9, 55.9, -7.8]) | accept the clamped end (`fix-reach`) |
+| pose_lint | rm.plate_hammer.contact | foot_r target [-6, 3, 9] is 2.4 units out of reach (the limb is clamped to [-4.4, 4.3, 8.7]) | accept the clamped end (`fix-reach`) |
+| pose_lint | rm.plate_hammer.follow | hand_r target [32, 67, 12] is 4.0 units out of reach (the limb is clamped to [35.5, 66.5, 11.5]) | accept the clamped end (`fix-reach`) |
+| pose_lint | rm.plate_hammer.follow | hand_l target [15, 58, -9] is 2.5 units out of reach (the limb is clamped to [12.6, 57.9, -8.2]) | accept the clamped end (`fix-reach`) |
 | pose_lint | rm.plate_hammer.follow | left elbow at 160 degrees | the runtime limb pass trims the fold to 150 degrees, so the pose shows less than authored; relax it if the full fold is meant |
 | pose_lint | rm.heel_backhand.contact | hand_l target [12, 58, -8] is 3.2 units out of reach (the limb is clamped to [12.7, 60.9, -7.1]) | accept the clamped end (`fix-reach`) |
 | pose_lint | rm.heel_backhand.contact | foot_r target [-6, 3, 9] is 3.7 units out of reach (the limb is clamped to [-3.5, 5.2, 8.6]) | accept the clamped end (`fix-reach`) |

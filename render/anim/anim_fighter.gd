@@ -41,6 +41,13 @@ var _prev_cx: float = 0.0
 var _smear: float = 0.0                 # the contact catch: how far behind the anchor the body is drawn (model units), decaying
 var _smear_t0: float = -10.0
 var press: Dictionary = {}             # press styles (docs/animation/press-styles.md): the style of the blow playing and where it is, for VFX (empty when none)
+var zip: Dictionary = {}               # the LT zip (docs/animation/zip.md): its phase and look for VFX, empty when no zip is playing
+var zip_path: Array = []               # where the zipping body was over the last solves: {T, x, y, phase}, newest last (the path of the body for the blur)
+var _zip: Dictionary = {}              # the zip told to this body (AnimZip.start), cleared when it is over
+var _zh: Dictionary = {}               # held by a zip (carried, lifted): {kind, t0, dur}
+var _zip_tilt: float = 0.0             # the body turned along its path (rad), smoothed
+var _zip_dy: float = 0.0               # the lifted fighter's cosmetic rise (model units)
+var _zip_phase: String = ""
 var press_ring: Array = []             # the last solved poses while a styled blow plays, newest last: {T, q, hips, root_off}: the afterimages (press_pose)
 var press_path: Array = []             # the striking limb's tip over the same solves (model space, root_off included), newest last: {T, tip}
 var _ci_latch: Array = [Vector2.ZERO, Vector2.ZERO]   # the contact point a styled blow landed on (the first limb, the second), kept through the hold
@@ -1105,6 +1112,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	_tc_left = -1.0
 	_pr_dx = 0.0
 	press = {}
+	AnimZip.layers(self, S, f, T, dt)
 	var ex = S.dirS.ex
 	if ex != null and (ex.A == f or ex.D == f):
 		_exchange_layers(S, f, ex, T)
@@ -1176,6 +1184,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	else:
 		root_off = root_off * 0.0
 	root_off.x += _recoil_x + _step_x + _pr_dx
+	root_off.y += _zip_dy
 	if _lean_t0 > -5.0 or _over_t0 > -5.0 or _block_t0 > -5.0:
 		root_off.x += _evade_offsets(T)
 	root_off.y += _recoil_y
@@ -1189,6 +1198,8 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	if RenderAnim.debug_checks:
 		layers = ("cue:" + String(_cue.get("kind", "")) + " " if not _cue.is_empty() else "") + ("rush " if _rushing else "") + ("react " if not _reacts.is_empty() else "") + ("ik " if _ci_w > 0.001 else "") + ("beam " if f.beamCharge != null else "") + (f.state + " ")
 	_lead_layer(S, f, dt)
+	if not zip.is_empty() or absf(_zip_tilt) > 0.002:
+		AnimZip.orient(self, S, f, dt)
 	# 6b. the limb pass: elbows and knees stay hinges in human range, arms stay out of the shoulder's blind spot
 	if RenderAnim.joint_audit:
 		audit["D"] = AnimJoints.violations(q, _rd.shape_key)
@@ -1197,7 +1208,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	AnimPose.fk_chain(q, hips, gq, gp, SOCKET_CHAIN)
 	_full_fk = false
 	if RenderAnim.press_styles:
-		_press_record(T)
+		_press_record(T, f)
 	if is_nan(q[0].x) or is_nan(q[5].w):
 		debug["nan"] += 1
 		q[0] = Quaternion.IDENTITY
@@ -1586,6 +1597,9 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		var sp: Dictionary = _part_prof(String(strikes[n][3]))
 		if psn != "":
 			sp = _press_prof(sp, psn)
+			if bool(strikes[n][2].get("zip", false)):
+				sp["load_ticks"] = {"light": 2, "heavy": 3}   # a zip's tell was the wind-up: the blow lands on the arrival
+				sp["load_ease"] = 1.0
 		profs.append(sp)
 		psts.append(psn)
 		var Fn: float = float(sp.get("follow_ticks", 6)) * DT * (0.85 + 0.25 * _blow_weight(strikes[n][2]))
@@ -1618,6 +1632,9 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	var side: bool = (_hash(int(ex.n), int(strikes[best][1]), slot + 1) & 1) == 1
 	var pstyle: String = String(psts[best])
 	var prow: Dictionary = AnimData.press.get("styles", {}).get(pstyle, {}) if pstyle != "" else {}
+	if pstyle != "" and bool(strikes[best][2].get("zip", false)):
+		prow = prow.duplicate()
+		prow["squash"] = 0.0
 	if pstyle != "" and bool(prow.get("alternate", false)):
 		side = ((best + (_hash(int(ex.n), 0, slot + 1) & 1)) & 1) == 1   # a mashed string alternates its limbs
 	var picks: Array = AnimData.picks["heavy" if heavy2 else "light"]
@@ -1925,15 +1942,22 @@ func _press_body(row: Dictionary, style: String, ul: float, dtc: float, sn: floa
 
 ## What VFX reads (after a solve, while `press` is not empty and for a moment after): the afterimages are `press_pose(k)`, the pose k
 ## solves back (0 is the newest), and the smear wedge runs along `press_path` (the striking limb's tip at each of those solves).
-func _press_record(T: float) -> void:
-	if not press.is_empty():
+func _press_record(T: float, f = null) -> void:
+	if not press.is_empty() or not zip.is_empty():
 		var snap: Array[Quaternion] = q.duplicate()
-		press_ring.append({"T": T, "q": snap, "hips": hips, "root_off": root_off})
-		press_path.append({"T": T, "tip": socket(String(press.bone))})
+		var wp := Vector2.ZERO
+		if f != null:
+			wp = Vector2(f.x, f.y)
+		press_ring.append({"T": T, "q": snap, "hips": hips, "root_off": root_off, "pos": wp, "vface": vface})
+		press_path.append({"T": T, "tip": socket(String(press.get("bone", zip.get("bone", "hand_r"))))})
+		if not zip.is_empty():
+			zip_path.append({"T": T, "x": wp.x, "y": wp.y, "phase": String(zip.get("phase", ""))})
 	while press_ring.size() > 12 or (not press_ring.is_empty() and T - float(press_ring[0].T) > 0.4):
 		press_ring.pop_front()
 	while press_path.size() > 12 or (not press_path.is_empty() and T - float(press_path[0].T) > 0.4):
 		press_path.pop_front()
+	while zip_path.size() > 24 or (not zip_path.is_empty() and T - float(zip_path[0].T) > 0.8):
+		zip_path.pop_front()
 
 
 ## The pose `back` solves ago ({T, q, hips, root_off}), newest 0; {} when there is none.
