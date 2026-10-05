@@ -16,6 +16,24 @@ static func page_count() -> int:
 	return (UiData.howto().get("pages", []) as Array).size()
 
 
+## Whether an About-page sentence named by its icon is shown: the privacy line for the feedback target in use (none, github, or a private mailto or form),
+## and any other `about_` item while its flag in features.json is on.
+static func about_shown(icon_name: String) -> bool:
+	if icon_name.begins_with("about_privacy_"):
+		return icon_name == "about_privacy_" + privacy_kind()
+	return UiData.feature(icon_name)
+
+
+## Which privacy line is true: the feedback button's target (send.json `_target`, with the address it needs) as none, github or private.
+static func privacy_kind() -> String:
+	match UiFeedback.send_target():
+		"github":
+			return "github"
+		"mailto", "form":
+			return "private"
+	return "none"
+
+
 ## The index of the page with this id (the About page is "about"), or -1.
 static func page_index(id: String) -> int:
 	var pages: Array = UiData.howto().get("pages", [])
@@ -65,7 +83,9 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, page_i: int, dev
 	# The card is as tall as its tallest page needs (centred), not the whole screen.
 	var h2: float = minf(ch, maxf(need_h, 240.0 * cs))
 	card = Rect2(card.position.x, (vp.y - h2) * 0.5, cw, h2)
-	var out: Dictionary = _layout(card, cs, tm, touch, page, pi, n, device, slot, data, preset, style, ex)
+	var ex_final: Dictionary = ex.duplicate()
+	ex_final["final"] = true   # only the shown page wraps the licence text (about 90,000 characters)
+	var out: Dictionary = _layout(card, cs, tm, touch, page, pi, n, device, slot, data, preset, style, ex_final)
 	out["fits"] = all_fit
 	out["tight"] = tight
 	out["page"] = pi
@@ -129,8 +149,8 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			if not UiGlyphs.bound(preset, first, slot):
 				continue
 		var icon_name: String = str(it.get("icon", ""))
-		if icon_name.begins_with("about_") and not UiData.feature(icon_name):
-			continue   # a sentence of the About page that is true only once its flag is on (features.json)
+		if icon_name.begins_with("about_") and not about_shown(icon_name):
+			continue   # a sentence of the About pages that is true only while its flag is on (features.json), or for the feedback target in use (send.json)
 		var x: float = body.position.x + float(col) * (colw + gap)
 		var y: float = body.position.y + float(heights[col])
 		var rec: Dictionary = {"item": it, "col": col, "fs": fs_body, "fs_small": fs_small}
@@ -197,7 +217,11 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 		st = _stances_block(page, body, tm, touch, device, slot, preset, style, extra, fs_body, fs_small, gap * (0.6 if tight else 1.0), isz * (0.85 if tight else 1.0))
 		tallest = float(st["tallest"]) + item_gap
 	# The fit: the tallest column is inside the body, every line is inside its column, and the title clears the close button.
-	var fits: bool = tallest - item_gap <= body.size.y + 0.5 and (st.is_empty() or bool(st["fits"]))
+	var lic: Dictionary = {}
+	if str(page.get("id", "")) == "licences":
+		lic = _licences_block(body, float(heights[0]), item_gap, fs_small, cs, bool(extra.get("final", false)), int(extra.get("scroll", 0)))
+		tallest = float(lic["tallest"]) + item_gap
+	var fits: bool = tallest - item_gap <= body.size.y + 0.5 and (st.is_empty() or bool(st["fits"])) and (lic.is_empty() or bool(lic["fits"]))
 	var title_text: String = str(page.get("title", ""))
 	var dl: Dictionary = page.get("device_label", {})
 	if not dl.is_empty():
@@ -210,7 +234,35 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 	var need_h: float = (body_top - card.position.y) + tallest - item_gap + pad * 0.6 + btn_h + pad
 	return {"need_h": need_h, "card": card, "inner": inner, "body": body, "close": close, "back": back, "next": nxt, "dots": dots, "dot_r": dot_r, "items": placed, "cs": cs, "fits": fits,
 		"fs_title": fs_title, "fs_body": fs_body, "fs_small": fs_small, "lh": lh, "btn_h": btn_h, "pad": pad, "title_text": title_text, "kicker": kicker,
-		"title_h": title_h, "tallest": tallest, "is_last": pi >= n - 1, "is_first": pi <= 0, "cols": cols, "stances": st}
+		"title_h": title_h, "tallest": tallest, "is_last": pi >= n - 1, "is_first": pi <= 0, "cols": cols, "stances": st, "licences": lic}
+
+
+## The scrolling area of the third-party licences page, under its intro line: {rect, rows, lh, fits, tallest, total, top, max, lines, bar, thumb, fs}.
+## `lines` (the visible window, from line `top`) are filled only for the shown page (`final`): wrapping the engine's licence texts is not done in the fit passes.
+static func _licences_block(body: Rect2, used_h: float, item_gap: float, fs_small: int, cs: float, final: bool, scroll: int) -> Dictionary:
+	var lhs: float = UiText.height(fs_small) * 1.15
+	var top: float = body.position.y + used_h + item_gap
+	var bar_w: float = maxf(6.0 * cs, 5.0)
+	var area := Rect2(body.position.x, top, body.size.x, maxf(body.end.y - top, 0.0))
+	var rows: int = int(area.size.y / lhs)
+	var min_rows := 4
+	var out := {"rect": area, "rows": rows, "lh": lhs, "fits": rows >= min_rows, "tallest": used_h + item_gap + float(min_rows) * lhs, "total": 0, "top": 0, "max": 0, "lines": [], "bar": Rect2(), "thumb": Rect2(), "fs": fs_small}
+	if not final or rows < 1:
+		return out
+	var lines: Array = UiLicences.lines(area.size.x - bar_w - 8.0 * cs, fs_small)
+	var total: int = lines.size()
+	var mx: int = maxi(0, total - rows)
+	var t: int = clampi(scroll, 0, mx)
+	out["total"] = total
+	out["max"] = mx
+	out["top"] = t
+	out["lines"] = lines.slice(t, mini(total, t + rows))
+	var track := Rect2(area.end.x - bar_w, area.position.y, bar_w, float(rows) * lhs)
+	var th: float = maxf(track.size.y * float(rows) / float(maxi(total, 1)), minf(track.size.y, 24.0 * cs))
+	var ty: float = track.position.y + (track.size.y - th) * (float(t) / float(mx) if mx > 0 else 0.0)
+	out["bar"] = track
+	out["thumb"] = Rect2(track.position.x, ty, bar_w, th)
+	return out
 
 
 const FACE_ACTIONS: Array = ["light", "heavy", "context", "signature"]   # X, Y, A, B as the layout binds them
@@ -425,6 +477,19 @@ static func draw(ci: CanvasItem, p: Dictionary, device: String, slot: int, style
 					ty += lh
 	if not (p["stances"] as Dictionary).is_empty():
 		_draw_stances(ci, p)
+	var lic: Dictionary = p["licences"]
+	if not lic.is_empty() and (lic["lines"] as Array).size() > 0:
+		var lhs: float = lic["lh"]
+		var lfs: int = lic["fs"]
+		var area: Rect2 = lic["rect"]
+		var ly2: float = area.position.y + UiText.ascent(lfs) + (lhs - UiText.height(lfs)) * 0.5
+		for ln in lic["lines"]:
+			var kind: int = int(ln[0])
+			if kind != 2:
+				UiText.draw(ci, str(ln[1]), Vector2(area.position.x, ly2), lfs, ink if kind == 1 else Color(ink, 0.82), -1)
+			ly2 += lhs
+		ci.draw_rect(lic["bar"], Color(dim, 0.18))
+		ci.draw_rect(lic["thumb"], Color(ink, 0.7))
 	# The footer: back, the page dots, next (or got it).
 	var b: Dictionary = data.get("buttons", {})
 	var back: Rect2 = p["back"]

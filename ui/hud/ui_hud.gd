@@ -158,6 +158,8 @@ var _l_hint: UiLayer
 var _howto_open := false
 var _howto_first := false
 var _howto_page := 0
+var _howto_scroll := 0                # the third-party licences page: the first visible line
+var _howto_scroll_f := 0.0            # ... and the fractional part while a finger or the wheel drags
 var _howto_tab := -1                 # the stances page on a narrow screen: the stance tab shown (-1 follows the stance held)
 # The cached layers, back to front (see UiLayer): each redraws only when its signature changes.
 var _l_letter: UiLayer
@@ -601,7 +603,7 @@ func _update_layers() -> void:
 	_l_fb.update_sig(UiFeedback.sig(layout.vp, _fb_state, _fb_tags, _fb_status_ok, dp, layout.s, bool(opts["touch_ui"]), "%s|%s" % [_fb_opened, bool(_fb_issue.get("fallback", false))]) if _fb_open else null)
 	_l_tele.update_sig(UiReads.telegraph_sig(hub, bool(opts["show_prompts"]), reduced))
 	_l_hint.update_sig(UiReads.hint_sig(hub))
-	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d" % [_howto_tab, _howto_held(), UiStance.live_bits()]) if _howto_open else null)
+	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d|%d" % [_howto_tab, _howto_held(), UiStance.live_bits(), _howto_scroll]) if _howto_open else null)
 
 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
 	_l_settings.update_sig(_settings_sig() if (_set_open and not _rm_open) else null)
@@ -744,6 +746,8 @@ func show_howto(first_run: bool = false, page: int = 0) -> void:
 	_howto_open = true
 	_howto_first = first_run
 	_howto_page = clampi(page, 0, maxi(UiHowto.page_count() - 1, 0))
+	_howto_scroll = 0
+	_howto_scroll_f = 0.0
 	_howto_tab = -1
 	_l_howto.invalidate()
 	howto_opened.emit(first_run)
@@ -787,18 +791,46 @@ func howto_action(act: String) -> void:
 				hide_howto()
 			else:
 				_howto_page += 1
+				_howto_scroll = 0
+				_howto_scroll_f = 0.0
 				_l_howto.invalidate()
 		"back":
 			if _howto_page > 0:
 				_howto_page -= 1
+				_howto_scroll = 0
+				_howto_scroll_f = 0.0
 				_l_howto.invalidate()
 		"close":
 			hide_howto()
 		"tab_next", "tab_prev":
+			if _howto_on_licences():
+				howto_scroll(3.0 if act == "tab_next" else -3.0)   # the licences page scrolls: Up and Down move three lines
+				return
 			# The stances page on a narrow screen shows one stance at a time: Up and Down (or a tap) change it.
 			var cur: int = _howto_tab if _howto_tab >= 0 else _howto_held()
 			_howto_tab = posmod(cur + (1 if act == "tab_next" else -1), 5)
 			_l_howto.invalidate()
+
+
+func _howto_on_licences() -> bool:
+	return _howto_open and _howto_page == UiHowto.page_index("licences")
+
+
+## Scroll the third-party licences page by `lines` (positive is down); the offset stays inside the text. Does nothing on other pages.
+func howto_scroll(lines: float) -> void:
+	if not _howto_on_licences():
+		return
+	var mx: int = int(howto_plan()["licences"].get("max", 0))
+	_howto_scroll_f = clampf(_howto_scroll_f + lines, 0.0, float(mx))
+	var now: int = int(_howto_scroll_f)
+	if now != _howto_scroll:
+		_howto_scroll = now
+		_l_howto.invalidate()
+
+
+## The licences page's visible rows (a page is rows - 1 lines).
+func _howto_rows() -> int:
+	return int(howto_plan()["licences"].get("rows", 8))
 
 
 ## The stance the first human holds now (the stances page starts on it).
@@ -811,7 +843,7 @@ func _howto_held() -> int:
 
 ## What the stances page needs beyond the layout: the held stance, the tab chosen, and whether the touch controls are the Full ones.
 func _howto_extra() -> Dictionary:
-	return {"held": _howto_held(), "tab": _howto_tab, "full_touch": bool(opts["touch_ui"]) and str(opts["touch_preset"]) == "touch-full"}
+	return {"held": _howto_held(), "tab": _howto_tab, "full_touch": bool(opts["touch_ui"]) and str(opts["touch_preset"]) == "touch-full", "scroll": _howto_scroll}
 
 
 ## The glyph family and slot of the first human fighter, for the controls page ("kbd" and slot 0 if none is set).
@@ -897,6 +929,14 @@ func _unhandled_input(event: InputEvent) -> void:
 					howto_action("tab_next")
 				KEY_UP:
 					howto_action("tab_prev")
+				KEY_PAGEDOWN:
+					howto_scroll(float(_howto_rows() - 1))
+				KEY_PAGEUP:
+					howto_scroll(-float(_howto_rows() - 1))
+				KEY_HOME:
+					howto_scroll(-1e9)
+				KEY_END:
+					howto_scroll(1e9)
 				KEY_ESCAPE:
 					howto_action("close")
 		get_viewport().set_input_as_handled()
@@ -914,7 +954,18 @@ func _unhandled_input(event: InputEvent) -> void:
 				JOY_BUTTON_B, JOY_BUTTON_START:
 					howto_action("close")
 		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion:
+		# A finger or the mouse dragging on the licences page scrolls it (a drag up reads further down).
+		if _howto_on_licences() and (event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
+			var lic: Dictionary = howto_plan()["licences"]
+			if not lic.is_empty() and (lic["rect"] as Rect2).has_point(event.position):
+				howto_scroll(-event.relative.y / float(lic["lh"]))
+		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton:
+		if event.pressed and (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+			howto_scroll(-3.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 3.0)
+			get_viewport().set_input_as_handled()
+			return
 		# A tap arrives as a mouse click too (Godot emulates it), so only clicks are handled: one tap, one action.
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			var pl: Dictionary = howto_plan()
