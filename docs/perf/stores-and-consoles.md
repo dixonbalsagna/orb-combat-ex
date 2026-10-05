@@ -193,7 +193,46 @@ Full steps in section 3. Summary: legal entity (EU sole traders accepted) [S], d
 - Steam revenue share: Game Informer (2018) and others [S]; Epic Games Store terms: Epic's news post and press [S]; Microsoft Store individual fee: Microsoft Windows developer blog, 2025-09-10 [S]
 - In-repo: `CLAUDE.md`, `docs/ep/vision.md`, `docs/decisions/0001-engine-choice.md`, `docs/decisions/0005-lean-team-and-token-discipline.md`, `docs/controls/platform-plan.md`, `docs/controls/prompt-glyphs.md`, `docs/legal/pre-store-checklist.md`, `docs/tools/README.md`, `research/engine-spike/RESULT.md`, `research/engine-spike/results/final/summary.md`.
 
-## 10. Needed from Marketing and Legal (through the EP)
+## 10. Added 2026-10-05 after Legal's go-to-market piece (`docs/legal/go-to-market.md`, RL-088)
+
+Legal's facts that touch this document and agree with it: platform code stays in a **private** repo whichever licence shape Orb picks; Godot cannot publish console templates; Steam Direct is $100 a product, 30 days from fee to release, a public Coming Soon page for two weeks, review 1 to 5 days, tax interview, bank and identity check; age ratings come through Steam's content survey and IARC on Xbox, Nintendo and Google Play; Legal found no public AI rule for the console stores. The two Steam waits in section 4.3 (21 versus 30 days) resolve to Legal's 30.
+
+### 10.1 The stores and their order
+Section 1's table is the order: web build, itch.io, Steam (Windows, Linux), Steam Deck Verified, Android, then Xbox, Switch, PlayStation 5, iOS last. Nothing past Steam starts until Orb answers Legal's open question 9 (a private platform repo and a porting firm) and the entity question below.
+
+### 10.2 Whose account holds the Steam listing: a question for Orb
+Valve accepts an individual or a company; the bank account holder name must match the legal ID [O: Steam Direct, Steamworks onboarding]. Legal's wording: an individual with "Orb" as the public name, or a company later. **Question for Orb: should the Steam listing be held by you as an individual, or by a company you form?** Why it matters beyond Steam: PlayStation needs a legal entity (EU sole traders excepted), so choosing "individual" for Steam does not carry over to PlayStation. No personal details belong in this repo, and I have asked for none.
+
+### 10.3 Build pipeline: public repo plus private platform repo
+Today (read from the repo, 2026-10-05): one public repo. `.github/workflows/ci.yml` runs on free GitHub runners with no secrets: QA regression suite, frozen JS core record, data jobs, then `site` (Godot web export, `tools/build-site.mjs`) and `deploy` to GitHub Pages [G: `docs/tools/README.md`]. Export presets exist for Web and Windows Desktop only.
+
+Proposed (for Tools and Legal; not a change):
+1. **Public repo** keeps game code, data, art, QA, and the web and plain desktop export presets. Nothing from any SDK, platform agreement, W4 source or signing key enters it (Legal's rule).
+2. **Private platform repo**, a private GitHub repo owned by Orb and outside this folder, holds: the Steamworks plugin and its configuration, console port source from W4 or a porting firm, signing keys and store credentials, and per-platform export presets. It consumes the public repo as a git submodule or a pinned tag, never the other way round.
+3. Store uploads run from the private repo's CI or by hand with `steamcmd`. The public CI keeps its no-secrets rule.
+4. A release is a tag of the public repo plus a tag of the private repo, so any store build is reproducible. The determinism golden hashes, already checked in the public CI, are the gate before any store build.
+5. Steam Deck and desktop Linux need a Linux export preset in the private repo's list; it does not exist yet.
+
+### 10.4 Does any build collect data today?
+I searched `render/`, `sim/`, `ui/`, `audio/`, `tools/`, `data/`, `export_presets.cfg` and `project.godot` on 2026-10-05 for network and telemetry calls (`HTTPRequest`, WebSocket, `fetch`, analytics, crash upload, beacons) and read the web export's header include. **Result: no analytics, accounts, crash upload or network requests in the game, and no third-party scripts, fonts or CDN links in the web shell.** Details:
+- **Feedback panel** (`ui/widgets/ui_feedback.gd`): on the player's click it opens a GitHub "new issue" page in their own browser with a pre-filled body they can read first. The game sends nothing. Legal should still read it against "no data collection": it is a user-initiated link to a third party, not collection by us.
+- **Web build reads** the browser's user-agent string and display scale (`ui_feedback.gd`, `ui_hud.gd`) to lay out the interface and fill the issue text. Both stay on the device unless the player submits an issue.
+- **Hosting:** GitHub Pages logs visitors' IP addresses on its own servers (Legal's privacy note). We cannot turn that off on Pages.
+- **Steam later** gives us the Steam ID only if we use a Steamworks feature; no build does yet.
+- **Limit of this check:** a text search of the repo, not a network capture. Before any store build, Tools or QA should load the built site with network logging on and confirm zero requests beyond the site's own files.
+
+### 10.5 The Steam Deck plan
+1. **Build.** Add a Linux export preset (native) and keep the Windows build as a Proton fallback. Neither is tested.
+2. **Controls and glyphs.** Pad support exists. The neutral glyph set (RL-037) has to meet Valve's "glyphs must match the inputs in use" rule [O]. Plan the Steam Input glyph switch Legal already described, behind the same lookup in `docs/controls/prompt-glyphs.md`, once Legal has read the terms for Steam's glyph images.
+3. **Text.** Audit the smallest text at 1280 by 800 against Valve's 9-pixel rule [O].
+4. **Performance.** Valve's bar is 30 fps at 800p in the default configuration [O]. We have no Deck number. Until a Deck is borrowed, the best proxy is the CPU-throttled web bench (10.6).
+5. **Submit.** Valve reviews once the Steam page is live. Timing **UNCONFIRMED**.
+6. **Fallback.** If it is not Verified, the game still runs as Playable or untested, and the store page says what was tested.
+
+### 10.6 Correction to section 6: an old-laptop proxy already exists
+Section 6 says nothing measures an old laptop. Tools has built a bench page and a script: `https://dixonbalsagna.github.io/orb-combat-ex/bench/` runs the web build with fixed 60 Hz steps and a fixed seed and reports frame times, and `node tools/bench-web.mjs --dir build/site --cpu-throttle 4,6 --floor` runs it under Chrome's CPU throttle [G: `docs/tools/README.md`, "The bench page and the old-laptop range"]. It is a range, not a measurement: the throttle models a slower CPU, not a weak GPU, memory or a hot laptop, and I have not run it. The one-click page on a friend's real old laptop or phone is the cheapest real number, and the first thing to ask Marketing's friends for. The wave-1 brief remains the plan for the canonical worst-case scene.
+
+## 11. Needed from Marketing and Legal (through the EP)
 
 - **Legal:** do console agreements and the Steamworks SDK terms allow the game's open licence; the private-repo rule for platform code; ratings exposure from civilian casualties; platform AI-content policies; whether a neutral glyph set passes Steam Deck Verified; the entity question.
 - **Marketing:** the audience and the store-page text; which of Orb's friends can lend a Deck, an old laptop or a phone; sales expectations that the cost table here should be set against.
