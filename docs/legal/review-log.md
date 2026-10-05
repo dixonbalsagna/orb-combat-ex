@@ -95,6 +95,11 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-073 | Moveset banned rows (movegen-banned.json) and the rule for later stances and signature slots | Combat | Medium | Delivered: 13 shape rows, 7 sequence rules; a person screens every signature frame, new vocabulary and stance tell | Open; rows only grow |
 | RL-074 | Five stance tells and shoulder-button stances | Combat, Controls | Low | Clear; energy-arts lit hand and charging aura conditional | Re-screen with the first render |
 | RL-075 | Identity split: Protagonist palms and arcs, rival fists behind plates, glasses always on | Combat | Low | Clear | Closed |
+| RL-076 | LT zip: tech reading with 2 ticks of travel (zip-screen.md) | VFX, Combat | Medium | AVOID as built; CLEAR at 4+ drawn ticks, body visible every tick, echoes trail behind, far-side exit drawn | Open until VFX and Encounter set the tick floor |
+| RL-077 | LT zip: filled stacked ghosts (amends RL-052 for zips) | VFX | Medium | CONDITIONAL: flat lane colour, 0.35 or less, 5 or fewer, real path and overlapping, never a ring, gone in 8 ticks, body on top | Open |
+| RL-078 | LT zip: heavy wind-up ring, counter, caught, guard-broken marks | VFX | Low | Clear: hollow thin shrinking ring; no text, no face marks, no gold/white/red flash | Closed |
+| RL-079 | Animation's 23 parked strike poses (rival4, protag7) | Animation | Low | Clear by eye; full-size look at fist_drop, plate_hammer, palm_heave before live | Open |
+| RL-080 | Four signature sketches and hip-zone width | Animation | Medium | CONDITIONAL: tell poses need hands apart and the wide zone; zone 8 for closed-fist transients, 14 for open hands and held poses | Open |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 

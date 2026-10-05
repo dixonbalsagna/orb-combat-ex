@@ -24,5 +24,15 @@
     {"id": "s05", "rule": "a rising blow is never followed by another rising blow while he is airborne", "why": "an aerial uppercut chain"},
     {"id": "s06", "rule": "a launch is never followed by a clasped two-hand overhead blow", "why": "the double smash ender (see b05)"},
     {"id": "s07", "rule": "no string places a piece after a step that is not drawn: no vanish, blink or teleport step", "why": "the vanishing-step staging"}
+  ],
+  "motion": [
+    {"id": "m01", "rule": "a zip (any reading) is drawn on every tick: the body is visible and opaque on each tick of the way in and the way out, never hidden, faded or swapped for a copy", "why": "no vanish or blink (b13, s07)"},
+    {"id": "m02", "rule": "a zip's way in and its way out each last at least 4 ticks, and consecutive drawn positions are at most 3 body heights apart (ticks >= max(4, ceil(distance in bh / 3)))", "why": "a zero or two-tick jump with echoes is a blink step"},
+    {"id": "m03", "rule": "the path is continuous: the body passes through every point between start and arrival, and any copy or echo trails behind the body, never ahead of it, never at the arrival point before the body gets there", "why": "an afterimage that stands where he is about to appear is the vanish-step staging"},
+    {"id": "m04", "rule": "a far-side exit is its own drawn travel that starts after the strike hold, over the rival or round him, with the rival's body in view throughout; he never appears behind the rival in the same tick as the strike", "why": "the appear-behind-you beat needs the vanish"},
+    {"id": "m05", "rule": "a zip ghost is a flat single tint in the fighter's lane colour (never the body's own colours or face), opacity 0.35 or less and fainter for older ones, at most 5 per zip, on the body's real recent path, each overlapping the next by about a third so they read as a smear, never in a ring, fan or spread round the target, gone within 8 ticks of the zip's end", "why": "filled ghosts are allowed as a blur, not as a lineup of body copies"},
+    {"id": "m06", "rule": "the body is always drawn on top of its ghosts at full opacity, and no ghost stays behind as a stationary copy", "why": "a decoy copy is a separate signature"},
+    {"id": "m07", "rule": "a heavy's wind-up ring is hollow, thin, in the lane colour, shrinks onto the striking fist and never grows or holds, lasts the wind-up only (10 ticks or fewer), and never fills or becomes a ball at the hand", "why": "a charging-pose cue under the stacking rule"},
+    {"id": "m08", "rule": "outcome marks (counter bar, closing ring, brackets, guard fragments) carry no text or numbers, never sit on the eyes or face, and are never a full-screen or body-wide gold, white or red flash", "why": "no readout or scanner look, no mark 7"}
   ]
 }
