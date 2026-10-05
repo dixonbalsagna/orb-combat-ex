@@ -1,0 +1,710 @@
+{
+  "schema": "narrative.intro_plots/1",
+  "_about": "DRAFT, parked (docs/narrative/pending/). Narrative's grammar of implied plotlines (docs/narrative/dynamic-intros.md section 11) in the shape Simulation wrote down (docs/architecture/dynamic-intros.md section 15). The launch pair is filled (ids protagonist and rival); the grammar rows (states, stateRules, types) are for every pair. No spoken lines: only intents, gesture intents and voice tags, since the lines are Orb's, in the voice lab. Keys that start with an underscore are notes. Convention kept by every row: a STATE's gestures sit at look_start and land_first, a TYPE's at land_second and look_end, so a state and a type never name the same fighter at the same point.",
+  "vocab": {
+    "stances": [
+      "warm",
+      "wry",
+      "formal",
+      "guarded",
+      "cold",
+      "wounded",
+      "smug",
+      "awed"
+    ],
+    "angles": [
+      "you",
+      "me",
+      "us",
+      "then",
+      "now",
+      "them"
+    ],
+    "gestures": [
+      "acknowledge",
+      "appraise",
+      "dismiss",
+      "defer",
+      "brace",
+      "ease",
+      "claim",
+      "check",
+      "soften",
+      "harden"
+    ]
+  },
+  "states": {
+    "fresh": {
+      "weights": {},
+      "gap": 0,
+      "look": "hold",
+      "clock": 0,
+      "gestures": [
+        {
+          "at": "look_start",
+          "who": "both",
+          "intent": "appraise"
+        }
+      ],
+      "voice": {
+        "p": 0.8,
+        "angle": {
+          "else": "you"
+        }
+      }
+    },
+    "simmering": {
+      "weights": {
+        "long_look": 1.5,
+        "double_drop": 0.9
+      },
+      "gap": -0.6,
+      "look": "long",
+      "clock": 24,
+      "gestures": [
+        {
+          "at": "look_start",
+          "who": "last_loser",
+          "intent": "harden"
+        },
+        {
+          "at": "land_first",
+          "who": "last_winner",
+          "intent": "check"
+        }
+      ],
+      "voice": {
+        "p": 0.9,
+        "angle": {
+          "last_loser": "then",
+          "last_winner": "us",
+          "else": "now"
+        }
+      }
+    },
+    "settled": {
+      "weights": {
+        "double_drop": 1.2,
+        "long_look": 0.5
+      },
+      "gap": 0,
+      "look": "hold",
+      "clock": -24,
+      "gestures": [
+        {
+          "at": "look_start",
+          "who": "both",
+          "intent": "ease"
+        },
+        {
+          "at": "look_end",
+          "who": "last_winner",
+          "intent": "acknowledge"
+        }
+      ],
+      "voice": {
+        "p": 0.6,
+        "angle": {
+          "last_winner": "us",
+          "else": "now"
+        }
+      }
+    },
+    "reversed": {
+      "weights": {
+        "latecomer": 1.5
+      },
+      "gap": 0.5,
+      "look": "hold",
+      "clock": 36,
+      "gestures": [
+        {
+          "at": "look_start",
+          "who": "last_winner",
+          "intent": "claim"
+        },
+        {
+          "at": "look_start",
+          "who": "last_loser",
+          "intent": "harden"
+        }
+      ],
+      "voice": {
+        "p": 1.0,
+        "angle": {
+          "last_loser": "me",
+          "last_winner": "us",
+          "else": "then"
+        }
+      }
+    }
+  },
+  "stateRules": [
+    {
+      "_note": "fresh: no meeting yet",
+      "state": "fresh",
+      "when": {
+        "meetings": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "_note": "reversed: a run of 3 or more has just been broken",
+      "state": "reversed",
+      "when": {
+        "streakEnded": [
+          3,
+          9999
+        ]
+      }
+    },
+    {
+      "_note": "reversed: the side that was behind has just won, after at least 3 meetings (two meetings is only a split)",
+      "state": "reversed",
+      "when": {
+        "trailingJustWon": [
+          1,
+          1
+        ],
+        "meetings": [
+          3,
+          9999
+        ]
+      }
+    },
+    {
+      "_note": "simmering: the last bout ran to the time cap",
+      "state": "simmering",
+      "when": {
+        "lastWasTimecap": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "_note": "simmering: the last bout scarred or destroyed a planet",
+      "state": "simmering",
+      "when": {
+        "lastScarred": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "_note": "simmering: they have not met for more than 10 matches",
+      "state": "simmering",
+      "when": {
+        "sinceMet": [
+          11,
+          9999
+        ]
+      }
+    },
+    {
+      "_note": "settled: 5 or more meetings and the trailing side did not just win",
+      "state": "settled",
+      "when": {
+        "meetings": [
+          5,
+          9999
+        ],
+        "trailingJustWon": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "_note": "settled: a long-time leader, lead 3 or more, and the trailing side did not just win",
+      "state": "settled",
+      "when": {
+        "lead": [
+          3,
+          9999
+        ],
+        "trailingJustWon": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "_note": "simmering: everything else (1 to 4 meetings, a close score of lead 0 or 1 included)",
+      "state": "simmering"
+    }
+  ],
+  "types": {
+    "sparring": {
+      "roles": [
+        "ahead",
+        "behind"
+      ],
+      "rolesBy": "record",
+      "tones": [
+        "light",
+        "neutral"
+      ],
+      "weights": {
+        "double_drop": 1.2,
+        "latecomer": 1.0
+      },
+      "stance": {
+        "ahead": [
+          "warm",
+          "wry"
+        ],
+        "behind": [
+          "warm",
+          "wry"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "both",
+          "intent": "acknowledge"
+        },
+        {
+          "at": "look_end",
+          "who": "both",
+          "intent": "ease"
+        }
+      ]
+    },
+    "rivalry": {
+      "roles": [
+        "leader",
+        "chaser"
+      ],
+      "rolesBy": "record",
+      "tones": [
+        "light",
+        "neutral",
+        "grave"
+      ],
+      "weights": {
+        "double_drop": 1.0,
+        "latecomer": 1.0,
+        "long_look": 1.2
+      },
+      "stance": {
+        "leader": [
+          "formal",
+          "cold",
+          "warm"
+        ],
+        "chaser": [
+          "guarded",
+          "wry",
+          "warm"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "leader",
+          "intent": "appraise"
+        },
+        {
+          "at": "look_end",
+          "who": "chaser",
+          "intent": "harden"
+        }
+      ]
+    },
+    "world_at_stake": {
+      "roles": [
+        "protector",
+        "threat"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "neutral",
+        "grave"
+      ],
+      "weights": {
+        "double_drop": 1.0,
+        "long_look": 2.0
+      },
+      "stance": {
+        "protector": [
+          "guarded"
+        ],
+        "threat": [
+          "smug",
+          "cold"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "protector",
+          "intent": "brace"
+        },
+        {
+          "at": "look_end",
+          "who": "threat",
+          "intent": "claim"
+        }
+      ]
+    },
+    "appetite": {
+      "roles": [
+        "hunter",
+        "hunted"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "light",
+        "neutral"
+      ],
+      "weights": {
+        "latecomer": 1.2,
+        "double_drop": 1.0
+      },
+      "stance": {
+        "hunter": [
+          "smug"
+        ],
+        "hunted": [
+          "guarded"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "hunter",
+          "intent": "check"
+        },
+        {
+          "at": "look_end",
+          "who": "hunted",
+          "intent": "brace"
+        }
+      ]
+    },
+    "lesson": {
+      "roles": [
+        "teacher",
+        "student"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "light",
+        "neutral"
+      ],
+      "weights": {
+        "latecomer": 1.5,
+        "double_drop": 1.0
+      },
+      "stance": {
+        "teacher": [
+          "wry",
+          "formal"
+        ],
+        "student": [
+          "awed",
+          "guarded"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "student",
+          "intent": "defer"
+        },
+        {
+          "at": "look_end",
+          "who": "teacher",
+          "intent": "appraise"
+        }
+      ]
+    },
+    "grudge": {
+      "roles": [
+        "ahead",
+        "wronged"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "neutral",
+        "grave"
+      ],
+      "weights": {
+        "long_look": 1.8,
+        "double_drop": 0.7
+      },
+      "stance": {
+        "ahead": [
+          "smug",
+          "formal",
+          "guarded"
+        ],
+        "wronged": [
+          "wounded",
+          "cold"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "wronged",
+          "intent": "harden"
+        },
+        {
+          "at": "look_end",
+          "who": "ahead",
+          "intent": "dismiss"
+        }
+      ]
+    },
+    "betrayal": {
+      "roles": [
+        "betrayer",
+        "betrayed"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "neutral",
+        "grave"
+      ],
+      "weights": {
+        "long_look": 1.8,
+        "double_drop": 0.8
+      },
+      "stance": {
+        "betrayer": [
+          "guarded",
+          "wry"
+        ],
+        "betrayed": [
+          "wounded",
+          "cold"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "betrayer",
+          "intent": "dismiss"
+        },
+        {
+          "at": "look_end",
+          "who": "betrayed",
+          "intent": "harden"
+        }
+      ]
+    },
+    "performance": {
+      "roles": [
+        "performer",
+        "audience"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "light",
+        "neutral"
+      ],
+      "weights": {
+        "double_drop": 1.3,
+        "latecomer": 1.0
+      },
+      "stance": {
+        "performer": [
+          "smug"
+        ],
+        "audience": [
+          "wry"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "performer",
+          "intent": "claim"
+        },
+        {
+          "at": "look_end",
+          "who": "audience",
+          "intent": "dismiss"
+        }
+      ]
+    },
+    "awe": {
+      "roles": [
+        "admirer",
+        "admired"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "light",
+        "neutral"
+      ],
+      "weights": {
+        "double_drop": 1.0,
+        "latecomer": 1.5
+      },
+      "stance": {
+        "admirer": [
+          "awed"
+        ],
+        "admired": [
+          "warm",
+          "formal"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "admirer",
+          "intent": "defer"
+        },
+        {
+          "at": "look_end",
+          "who": "admired",
+          "intent": "acknowledge"
+        }
+      ]
+    },
+    "debt": {
+      "roles": [
+        "debtor",
+        "creditor"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "neutral",
+        "grave"
+      ],
+      "weights": {
+        "double_drop": 1.0,
+        "long_look": 1.2
+      },
+      "stance": {
+        "debtor": [
+          "guarded"
+        ],
+        "creditor": [
+          "formal"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "debtor",
+          "intent": "check"
+        },
+        {
+          "at": "look_end",
+          "who": "creditor",
+          "intent": "acknowledge"
+        }
+      ]
+    },
+    "kinship": {
+      "roles": [
+        "elder",
+        "heir"
+      ],
+      "rolesBy": "data",
+      "tones": [
+        "neutral",
+        "grave"
+      ],
+      "weights": {
+        "long_look": 1.4,
+        "double_drop": 1.0
+      },
+      "stance": {
+        "elder": [
+          "warm",
+          "formal"
+        ],
+        "heir": [
+          "guarded",
+          "awed"
+        ]
+      },
+      "gestures": [
+        {
+          "at": "land_second",
+          "who": "elder",
+          "intent": "soften"
+        },
+        {
+          "at": "look_end",
+          "who": "heir",
+          "intent": "brace"
+        }
+      ]
+    }
+  },
+  "pairs": [
+    {
+      "_note": "The launch pair. rivalry and sparring are record-driven and need no roles; grudge is data-driven, and WHO carries the old injury is a placeholder for Orb. The ledger events are placeholders for Orb's canon ledger (events_a seeds grudge); unseen_1 is a deliberate unnamed reference. lesson is left out until Orb names a teacher.",
+      "ids": [
+        "protagonist",
+        "rival"
+      ],
+      "types": {
+        "rivalry": 3,
+        "sparring": 1,
+        "grudge": 1
+      },
+      "roles": {
+        "grudge": {
+          "wronged": "protagonist"
+        }
+      },
+      "events": [
+        {
+          "id": "ledger_1",
+          "kind": "ledger",
+          "type": "grudge"
+        },
+        {
+          "id": "unseen_1",
+          "kind": "unseen"
+        }
+      ]
+    }
+  ],
+  "fighters": {
+    "protagonist": {
+      "neverStance": [
+        "formal",
+        "cold",
+        "smug"
+      ],
+      "neverType": []
+    },
+    "rival": {
+      "neverStance": [
+        "warm",
+        "awed"
+      ],
+      "neverType": []
+    }
+  },
+  "defaultPair": {
+    "types": {
+      "sparring": 1
+    }
+  },
+  "_notExpressed": [
+    "1. A state a pair STARTS in. Every first meeting is `fresh`, but in a fourth season most pairs have a past: a `pairs[].startState` (used while meetings is 0) would let a marquee pair open `simmering` or `settled`.",
+    "2. Default types by circle. defaultPair is flat; twelve fighters need a `circles` table (fighter to circle) and a `circlePairs` table (two circles to types), so 66 pairs need no row each.",
+    "3. A tone a state adds. states have no `tones`, so a simmering plot cannot lean grave except through weights. A `states.<id>.tones` filter, intersected with the type's, would do it.",
+    "4. A gesture that depends on role AND arrival order together (the teacher waits calmly, the student waits nervously). `wait` rows can name only first, second, left or right, so no `wait` gesture is written.",
+    "5. A per-fighter gesture veto or swap (harden, or defer when his voice vetoes it). fighters has neverStance and neverType but no neverGesture.",
+    "6. A stance or an angle that changes by slot (wry at the arrival, cold at the stare). Both are one per fighter for the whole intro.",
+    "7. A tie rule for two rows naming the same fighter at the same point. The rows here avoid it by convention (state gestures at look_start and land_first, type gestures at land_second and look_end); the resolver should drop the type's row if they meet.",
+    "8. Event weights. pairs[].events are an ordered list, with no weight between ledger events.",
+    "9. A pair's own register (the Protagonist warm to the rival, the rival contemptuous). Stance lists are per type and role, so the pair's register comes only from the fighters' vetoes: here the Protagonist never says formal, cold or smug, so a rivalry leader falls through to warm for him and formal for the rival, but a chaser stays guarded for both. A `fighters.<id>.stanceTo.<other>` would say it directly.",
+    "10. A `look` of `away` (one breaks the stare first): there is no such part or pose yet."
+  ]
+}

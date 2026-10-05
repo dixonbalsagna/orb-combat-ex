@@ -303,16 +303,16 @@ A plotline is four things: **a type, a state, an event and the roles.** All four
 
 | Type | Roles (A / B) | Tones | What it is about |
 |---|---|---|---|
-| `sparring` | peer / peer | light, neutral | Nothing but pride, between friends. |
-| `rivalry` | leader / chaser | neutral, grave | Who is ahead, by the record. |
+| `sparring` | ahead / behind | light, neutral | Nothing but pride, between friends. |
+| `rivalry` | leader / chaser | light, neutral, grave | Who is ahead, by the record. |
 | `world_at_stake` | protector / threat | neutral, grave | A planet or its people in the balance. |
 | `appetite` | hunter / hunted | light, neutral | One means to eat the other. |
 | `lesson` | teacher / student | light, neutral | What one was taught by the other. |
-| `grudge` | ahead / wronged | neutral, grave | An old defeat or injury, still sore. |
+| `grudge` | ahead / wronged | neutral, grave | An old defeat or injury, still sore. (Who is wronged comes from the pair's data, not the last bout: see 11.12.) |
 | `betrayal` | betrayer / betrayed | neutral, grave | A changed allegiance, and what it cost. |
-| `performance` | performer / audience | light | One is playing to a crowd. |
+| `performance` | performer / audience | light, neutral | One is playing to a crowd. |
 | `awe` | admirer / admired | light, neutral | A newcomer in front of a legend. |
-| `debt` | debtor / creditor | neutral | Something owed, unspoken. |
+| `debt` | debtor / creditor | neutral, grave | Something owed, unspoken. |
 | `kinship` | elder / heir | neutral, grave | A mantle handed down, or refused. |
 
 **2. The state** (where the story is). Four, the same for every type.
@@ -369,28 +369,28 @@ A plotline's bend is **a state's bend plus a type's bend**. Four rows for the st
 
 | State | Weights (x) | Gap | Look | Clock | Gestures | Voice (probability, angle) |
 |---|---|---|---|---|---|---|
-| fresh | none | 0 | hold | 0 | both `appraise` at the look | 0.8; `you`, `now` |
-| simmering | long_look 1.5, double_drop 0.9 | -0.6 (short, tense) | long | +24 | the wronged `harden`; the other `check` | 0.9; `then`, `us` |
-| settled | double_drop 1.2, long_look 0.5 | 0 | hold | -24 | both `ease`, one `acknowledge` | 0.6; `us`, `now` |
-| reversed | latecomer 1.5 | +0.5 (a wait) | hold | +36 | the new leader `claim`; the fallen `harden` or `defer` | 1.0; `then`, `me` |
+| fresh | none | 0 | hold | 0 | both `appraise` at the look | 0.8; `you` |
+| simmering | long_look 1.5, double_drop 0.9 | -0.6 (short, tense) | long | +24 | the last loser `harden` at the look; the last winner `check` at the first landing | 0.9; the last loser `then`, the last winner `us` |
+| settled | double_drop 1.2, long_look 0.5 | 0 | hold | -24 | both `ease` at the look; the last winner `acknowledge` at its end | 0.6; the last winner `us`, the other `now` |
+| reversed | latecomer 1.5 | +0.5 (a wait) | hold | +36 | the last winner `claim`; the last loser `harden` | 1.0; the last loser `me`, the last winner `us`, the rest `then` |
 
 The `weights` the host passes are **the product** of the state's and the type's multipliers, template by template.
 
-**The type bends** (stance by role, the scenarios it favours, a gesture flavour):
+**The type bends** (stance by role, the scenarios it favours, a gesture at two points). A weight only counts for a scenario the type's tones admit (the Double Drop is `neutral`, the Latecomer `light`, the Long Look `grave`), so none is listed that the tone gate would remove. The gestures follow one convention: **a state's gestures sit at the look's start and the first landing, a type's at the second landing and the look's end**, so a state and a type never name the same fighter at the same point.
 
-| Type | Stance: A / B | Favours (a weight multiplier) | Gesture flavour |
-|---|---|---|---|
-| `sparring` | warm / warm (wry) | double_drop 1.2, latecomer 1.0 | acknowledge, ease |
-| `rivalry` | formal (cold) / guarded (wry) | double_drop 1.0, latecomer 1.0, long_look 1.2 | appraise, harden |
-| `world_at_stake` | guarded / smug (cold) | double_drop 1.0, long_look 2.0, latecomer 0 | brace, claim |
-| `appetite` | smug / guarded | latecomer 1.2, double_drop 1.0, long_look 0.5 | check, brace |
-| `lesson` | wry (formal) / awed (guarded) | latecomer 1.5 (the teacher waits), double_drop 1.0 | defer, appraise |
-| `grudge` | smug (formal) / wounded (cold) | long_look 1.8, latecomer 1.0, double_drop 0.7 | harden, dismiss |
-| `betrayal` | guarded (wry) / wounded (cold) | long_look 1.8, double_drop 0.8, latecomer 0.5 | dismiss, harden |
-| `performance` | smug / wry | double_drop 1.3, latecomer 1.0, long_look 0.2 | claim, dismiss |
-| `awe` | awed / warm (formal) | double_drop 1.0, latecomer 1.5 | defer, acknowledge |
-| `debt` | guarded / formal | double_drop 1.0, long_look 1.2 | check, acknowledge |
-| `kinship` | warm (formal) / guarded (awed) | long_look 1.4, latecomer 1.2 | soften, brace |
+| Type | Tones | Stance: A / B | Favours (a multiplier) | Gestures: at the second landing / at the look's end |
+|---|---|---|---|---|
+| `sparring` | light, neutral | warm (wry) / warm (wry) | double_drop 1.2, latecomer 1.0 | both `acknowledge` / both `ease` |
+| `rivalry` | all three | formal (cold, warm) / guarded (wry, warm) | double_drop 1.0, latecomer 1.0, long_look 1.2 | leader `appraise` / chaser `harden` |
+| `world_at_stake` | neutral, grave | guarded / smug (cold) | double_drop 1.0, long_look 2.0 | protector `brace` / threat `claim` |
+| `appetite` | light, neutral | smug / guarded | latecomer 1.2, double_drop 1.0 | hunter `check` / hunted `brace` |
+| `lesson` | light, neutral | wry (formal) / awed (guarded) | latecomer 1.5 (the teacher waits), double_drop 1.0 | student `defer` / teacher `appraise` |
+| `grudge` | neutral, grave | smug (formal, guarded) / wounded (cold) | long_look 1.8, double_drop 0.7 | wronged `harden` / ahead `dismiss` |
+| `betrayal` | neutral, grave | guarded (wry) / wounded (cold) | long_look 1.8, double_drop 0.8 | betrayer `dismiss` / betrayed `harden` |
+| `performance` | light, neutral | smug / wry | double_drop 1.3, latecomer 1.0 | performer `claim` / audience `dismiss` |
+| `awe` | light, neutral | awed / warm (formal) | double_drop 1.0, latecomer 1.5 | admirer `defer` / admired `acknowledge` |
+| `debt` | neutral, grave | guarded / formal | double_drop 1.0, long_look 1.2 | debtor `check` / creditor `acknowledge` |
+| `kinship` | neutral, grave | warm (formal) / guarded (awed) | long_look 1.4, double_drop 1.0 | elder `soften` / heir `brace` |
 
 Bracketed stances are the second pick, used when the pair's voice vetoes the first (the rival never speaks `warm`; the Empress's guard is never `awed`). A fighter's data lists the stances it never says.
 
@@ -449,6 +449,7 @@ New keys beside today's `tones` (`pending/dynamic-intros.md` section 3):
 ```json
 {
   "tones": [
+    "light",
     "neutral",
     "grave"
   ],
@@ -522,15 +523,19 @@ All of it on the host, from the pair's data and the record, with **keyed draws o
 5. **The roles** are fixed by the pair's data, or by the record (the leader is who is ahead).
 6. **The bend** is read from the grammar, resolved into `facts`, and passed in the setup. The composer then draws the scenario, order and gap as before.
 
-**How the state follows the record** (so the plotline advances):
+**How the state follows the record** (so the plotline advances). These are the `stateRules` in `pending/intro_plots.json`, in order; **the first row that holds wins**. The numbers are the ones the host's `history` gives (`meetings`, `lead`, `trailingJustWon`, `streakEnded`, `sinceMet`, `lastWasTimecap`, `lastScarred`).
 
-| The record says | State |
-|---|---|
-| No meeting | fresh |
-| 1 to 2 meetings, a split or close score | simmering |
-| The last bout was a time-cap, a planet scarred or destroyed, or a return after more than 10 other matches | simmering |
-| 5 or more meetings, or one side 3 or more ahead, with the trailing side not just won | settled |
-| The trailing side just won, or a streak of 3 or more just ended, or the last winner is not the long-time leader | reversed |
+| # | State | When |
+|---|---|---|
+| 1 | fresh | `meetings` 0 |
+| 2 | reversed | `streakEnded` 3 or more (a run of 3 has just been broken) |
+| 3 | reversed | `trailingJustWon` 1 and `meetings` 3 or more (two meetings is only a split) |
+| 4 | simmering | the last bout ran to the time cap |
+| 5 | simmering | the last bout scarred or destroyed a planet |
+| 6 | simmering | `sinceMet` 11 or more (a return after a long gap) |
+| 7 | settled | `meetings` 5 or more and `trailingJustWon` 0 |
+| 8 | settled | **a long-time leader**: `lead` 3 or more and `trailingJustWon` 0 |
+| 9 | simmering | everything else: 1 to 4 meetings, **a close score** (`lead` 0 or 1) included |
 
 ### 11.7 Three states of one pair: the Protagonist and the rival
 
@@ -538,22 +543,22 @@ The type is `rivalry` throughout (the Protagonist warm to the rival, the rival c
 
 **A. Fresh: their first bout of the season.** The record is empty. The event is `unseen`.
 
-- **Chosen:** type `rivalry`, state `fresh`, tones neutral or grave. The weights are the type's alone (a fresh state adds none): Double Drop 1.0, Latecomer 1.0, Long Look 1.2. Gap 0, look `hold`, clock 0.
+- **Chosen:** type `rivalry`, state `fresh`, all three tones. The weights are the type's alone (a fresh state adds none): Double Drop 1.0, Latecomer 1.0, Long Look 1.2. Gap 0, look `hold`, clock 0.
 - **Gestures:** both `appraise` at the look.
-- **If the Protagonist is first:** he lands, glances round at the empty second spot with open interest (his `arrive_remark`: `warm`, `you`, `p` 0.8), the rival lands without hurry, and at the staredown the left fighter's line is `warm` about *you* (sizing him up fondly), the right fighter's `cold` about *you* (ranking him). Nobody mentions a past; the stare has weight because it is the first.
-- **If the rival is first:** he lands, stands still (a held, wordless `appraise`), and the Protagonist arrives with his easy, slightly apologetic energy (`late_reply`, `warm`, `now`). Same facts, a different opening.
+- **If the Protagonist is first:** he lands, glances round at the empty second spot with open interest (his `arrive_remark`: `warm` about *you*, `p` 0.8; on a tie he is the leader and, as he never says `formal`, `cold` or `smug`, the data gives him `warm`), the rival lands without hurry, and at the staredown each speaks in his own stance about *you*: the Protagonist `warm` (sizing him up fondly), the rival `guarded` or `wry` as the chaser (he never says `warm`). Nobody mentions a past; the stare has weight because it is the first.
+- **If the rival is first:** he lands, stands still (a held, wordless `appraise`), and the Protagonist arrives with his easy, slightly apologetic energy (`late_reply`, `warm`, about *you*). Same facts, a different opening.
 
 **B. Simmering: a rematch, the rival won last by a knockout.** The record says the rival won, and it ended in a KO. The event is `record`.
 
-- **Chosen:** type `rivalry`, state `simmering`; roles: leader is the rival, chaser the Protagonist. Tones neutral and grave. The weights are the product of the type's and the state's: **Long Look 1.2 x 1.5 = 1.8**, Latecomer 1.0, Double Drop 1.0 x 0.9 = 0.9. Gap -0.6 (short), look `long`, clock +24.
-- **Gestures:** the Protagonist (the chaser, the wronged) `harden` at the look; the rival `check`.
+- **Chosen:** type `rivalry`, state `simmering`; roles: leader is the rival, chaser the Protagonist. All three tones. The weights are the product of the type's and the state's: **Long Look 1.2 x 1.5 = 1.8**, Latecomer 1.0, Double Drop 1.0 x 0.9 = 0.9. Gap -0.6 (short), look `long`, clock +24.
+- **Gestures:** the Protagonist (the last loser) `harden` at the look; the rival (the last winner) `check` at the first landing; and, from the type, the rival (the leader) `appraise` at the second landing and the Protagonist (the chaser) `harden` again at the look's end (the resolver keeps one).
 - **If the Protagonist is first:** he lands and braces (`arrive_remark`: `guarded`, `then`, the event is the last KO: a remark about *last time*, plainly said, `p` 0.9). The rival arrives close behind (a short gap), unbothered (`late_reply`: `smug`, `us`). The Long Look holds both in the two-shot, faces cut in, no more words.
 - **If the rival is first:** he arrives early to claim the ground (`claim`), says nothing, and watches the Protagonist land. The Protagonist's `staredown_pair` line is `guarded`, `then`.
 
 **C. Reversed: the Protagonist has just beaten the rival, after losing three in a row.** The record says a streak of three just ended. The event is `record`.
 
 - **Chosen:** type `rivalry`, state `reversed`; roles now: leader is the Protagonist, chaser the rival. Gap +0.5 (a wait), look `hold`, clock +36. The weights: **Latecomer 1.0 x 1.5 = 1.5** (the one who is waiting is the point), Long Look 1.2, Double Drop 1.0.
-- **Gestures:** the Protagonist (the new leader) `claim`, quietly, with no gloating; the rival `harden` (or `defer` if his voice allows).
+- **Gestures:** the Protagonist (the last winner) `claim`, quietly, with no gloating; the rival (the last loser) `harden`. (The shape cannot swap `harden` for `defer` by a fighter's voice: 11.12, note 5.)
 - **If the rival is first:** he is early, to prove it was a fluke, and he waits (his `wait_remark`: `wounded`, `me`, the old "this does not count" mood). The Protagonist lands, a little embarrassed to be ahead (`late_reply`: `warm`, `us`, said gently). The rival does not take it as kindness.
 - **If the Protagonist is first:** he waits, uneasily, and the rival is late: **wounded pride**, a long walk to the stare. The staredown lines are `wounded` and `warm` about *us*.
 
@@ -615,3 +620,30 @@ The type is `rivalry` throughout (the Protagonist warm to the rival, the rival c
 3. Do you want **the event named** when it is the last bout (a line may say "last time"), or left to `unseen` so it is only ever hinted?
 4. Should some pairs **never** get certain types (for example, the Anti-hero and the Cyborg never `sparring`)? Say which, and I add the vetoes.
 5. How many **stances** do you want each fighter's voice to cover: all eight, or a subset (the rival never `warm`)?
+
+### 11.12 Answers to Simulation, and what the shape cannot express (2026-10-05)
+
+The grammar is now real data, parked as **`docs/narrative/pending/intro_plots.json`** (states, stateRules, types, pairs, fighters, vocab and a default pair; the launch pair filled, using the neutral ids `protagonist` and `rival`; no spoken lines). Every row uses only the selectors in `docs/architecture/dynamic-intros.md` section 15, the six gesture points, the ten gesture intents and the closed stance and angle lists; a script checks all of it, and that no weight sits on a scenario the type's tones would remove.
+
+**1. Is "the wronged" always the last bout's loser, and "the new leader" its winner? No.**
+- In the **states** (the generic bends) I now write exactly what the record knows: **`last_loser`** and **`last_winner`**. They are whoever lost and won the latest bout, with no claim about who was wronged.
+- In the **types**, the roles are the type's own. For `rivalry` and `sparring` they come **from the record** (the leader is who is ahead), and for `grudge`, `betrayal`, `lesson`, `awe`, `debt`, `kinship`, `performance`, `appetite` and `world_at_stake` they come **from the pair's data**. *The wronged* in a grudge is whoever the pair's row names (an old defeat or injury from the canon ledger), and may well **not** be the last loser.
+- "The new leader" is not "the last winner" either: a win can close a gap without taking the lead. The state's rows now say `last_winner` and mean only that.
+
+**2. One angle a fighter, or one per slot? One a fighter, for the whole intro.** A fighter has one thing on their mind for the opening (the last bout, what they share, the moment), and an angle that jumps between slots reads as two characters. The stance is the same: one per fighter. The two lines of the staredown pair are two fighters, so they differ naturally. A fighter who is wry at the arrival and cold at the stare is not expressible (note 6 below); I do not think the first cut needs it.
+
+**3. "Close score" and "long-time leader" as numbers.** *Close score* is **`lead` 0 or 1**; *long-time leader* is **`lead` 3 or more** (with at least 5 meetings for `settled`'s other row). They are rows 8 and 9 in the table in 11.6. I define `trailingJustWon` as 1 when the last winner had **strictly fewer wins before that bout** (level at a tie: 0), so a first win by the trailing side is a reversal only from the third meeting on (row 3).
+
+**What the shape cannot express** (listed in the file under `_notExpressed`, not bent to fit):
+1. **A state a pair starts in.** Every first meeting is `fresh`, but a fourth season gives most pairs a past; a `pairs[].startState` would let a marquee pair open `simmering`.
+2. **Default types by circle** (a flat `defaultPair` only): a `circles` table and a `circlePairs` table would give 66 pairs defaults without 66 rows.
+3. **A tone a state adds:** a simmering plot cannot lean grave except through weights; a `states.<id>.tones` filter would do it.
+4. **A gesture that depends on role and arrival order together** (the teacher waits calmly, the student nervously): `wait` rows name only first, second, left or right, so none is written.
+5. **A per-fighter gesture veto or swap** (`harden`, or `defer` when the voice vetoes it): `fighters` has `neverStance` and `neverType` only.
+6. **A stance or angle that changes by slot.**
+7. **A tie rule** for two rows that name the same fighter at the same point. The convention avoids it (state gestures at the look's start and the first landing, type gestures at the second landing and the look's end), but the resolver should drop the type's row if they meet.
+8. **Weights between ledger events** (an ordered list only).
+9. **A pair's own register** (the Protagonist warm to the rival). Stance lists are per type and role, so the register comes only from the vetoes: the Protagonist never says `formal`, `cold` or `smug`, so a rivalry leader falls through to `warm` for him and stays `formal` for the rival. A `fighters.<id>.stanceTo.<other>` would say it directly.
+10. **A look of `away`** (one breaks the stare first): no part or pose exists.
+
+**Placeholders in the file, for Orb:** which fighter carries the old injury in the launch pair's `grudge` (set to the Protagonist), the two events (`ledger_1`, a canon-ledger placeholder that seeds `grudge`, and `unseen_1`, an unnamed reference), and each fighter's vetoed stances.
