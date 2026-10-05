@@ -93,7 +93,7 @@ So the downtime is structural. It is short exchanges with a cooldown after each,
 | :--- | ---: | :--- |
 | Seconds a minute with nothing running, as defined below | 22.7 | **At most 12,** of which free flight to close the distance is about 5 |
 | The same, counting only time in the close band | Not measured | At most 6 |
-| A brawl's length, median | An exchange of 2.3 blows | 6 to 12 s |
+| A brawl's length, median | An exchange of 2.3 blows | **2.5 to 6 s.** It was 6 to 12 s, set when a knock-back drew the fighters back together by itself. Orb removed that, so a brawl now ends with its string's ender (§9, "Bands re-based") |
 | Blows in a brawl before it breaks, median | 2.3 | 10 or more |
 
 **"Nothing running", defined for QA.**
@@ -554,6 +554,22 @@ The player owns **when** each blow happens and **what kind** it is. The director
 | A masher tapping every 8 ticks of `S.tick` against the medium AI | 35 to 50% |
 | A faster masher against a slower one (6 ticks against 12): closes a minute | Reported, as the cost of tapping slowly |
 
+### Bands re-based for the brawl
+
+QA re-based the rows that were counted for each exchange (`docs/qa/brawl-rebase.md`). A brawl is one exchange of many blows, so those rows read a different unit than they were banded on. **QA's file is the source** for where each row is read. Its proposals are confirmed here, with two corrections. The old rows stay in the baseline beside these, for comparison, until the planned exchange is gone.
+
+| The row | The band | Ruling |
+| :--- | :--- | :--- |
+| **Perfect blocks for each 100 blows thrown,** by the easy, medium and hard AI. It was for each 100 melee exchanges, at 3 to 8, 5 to 15 and 12 to 20 | **1.3 to 3.5, 2.2 to 6.5 and 5.2 to 8.7** | Confirmed: the old bands divided by an exchange's old 2.3 blows. QA also reports the split, against heavies and against lights, with no band yet. A heavy has a wind-up to read, and a light doesn't |
+| **Brawls a minute, and blows a minute.** It was exchanges started a minute, 15 to 28 | Reported | Confirmed. The old row is retired when the planned exchange is gone |
+| **Share of fight time in a brawl** | 45 to 60%, by the last brawl slice | Confirmed |
+| **A brawl's median length** | **2.5 to 6 s** | **Corrected.** QA proposed my 6 to 12 s. That was set when a knock-back drew the fighters back together by itself. Orb removed that (questionnaire 17), so a brawl ends with its string's ender, and one string is 3 to 5 blows and a heavy |
+| **Blows in a brawl, median** | 10 or more, both fighters counted | Confirmed |
+| **After a knock-back, the time to the next brawl, lunge, zip or shot** | A median of at most 2 s, and a 90th percentile of at most 4 s | **New.** With shorter brawls, this is the row that checks there is no downtime after three to five blows |
+| **Of the brawl endings that separate the fighters** (a knock-back or a launch) | **Knock-backs 60 to 75%, launches 25 to 40%** | **Corrected** from 55 to 75%. The two shares add up to 100, and the launch share of separations keeps its band |
+| **"The brawl continues"** | Retired in a brawl | Confirmed. A brawl continues until it ends. The old row stays for the planned exchanges that remain |
+| **Strings in a brawl, and closes a minute.** It was chains for each 100 exchanges | Reported | Confirmed. One limit, from §9d: no fighter is closed on more than about 33 times a minute |
+
 ### 9b. Rulings on the first brawl slice (B1), 2026-10-05
 
 Encounter has the first brawl slice running, and the core holds:
@@ -702,7 +718,8 @@ The set-up rule also needs runs of closes. A close by the fighter on the brink w
 
 So an even mash has momentum. It changes hands by chance about once in ten level trades, which is about every 23 s of even mashing. It changes hands by choice whenever the trailing fighter does anything better than mash evenly: taps faster, times a blow, throws a heavy, guards, or leaves. The first close of a brawl is an even draw, so no slot is favoured.
 
-- **Data:** `flurry.staggeredAddsRun` false, `flurry.levelWithin` 1, `flurry.momentum` 0.9, `setup.weight.blurPlain` 0.5, and `flurry.tradeMaxTicks` stays 120.
+- **A fighter can't be closed on again for 90 ticks after he recovers from a close** (added after QA's smoke). The rival's run still counts, and a run of 4 closes on the first blow after the 90. QA's smoke read 79.5 closes a minute for a 6-tick tapper against a 12-tick one. With this, nobody is staggered by closes more than about 33 times a minute, which is about a tenth of his time.
+- **Data:** `flurry.staggeredAddsRun` false, `flurry.levelWithin` 1, `flurry.momentum` 0.9, `flurry.closeGuardTicks` 90, `setup.weight.blurPlain` 0.5, and `flurry.tradeMaxTicks` stays 120.
 - **Reasoned, and not measured:** brink to KO in the lights-only mirror at about 36 to 45 s. The levers, in order: the momentum (0.85 to 0.95), and then the weight (0.34 to 0.5).
 
 **4. The medium AI against a faster tapper** (a presser at an 8-tick gap won 16 of 20 against the medium AI, which taps every 10).
@@ -725,6 +742,15 @@ Two causes. Every melee blow was re-valued by its form and shots weren't, so a t
   - It comes in with the approach a bolt doesn't stop: the heavy lunge or the heavy charge.
 - **Data** (`ai.json`, each level's `vsShooter`): `guardShare` 0; `enderShare` 0.5, 0.2, 0.1; `heavyApproachShare` 0.2, 0.6, 0.9. And `brawl.shotHeavyMul` 2.
 - **Blasts' share of damage** was 10.1%, at the floor of its band, and heavy shots at ×0.6 will take it lower. If it falls under 10%, the lever is how often the AI fires, and not what a shot is worth.
+
+**Two readings from QA's smoke, and what they change.**
+- **The timed tapper loses 0 of 10 to a masher.** That is a true reading of B1. There is no skill strike yet, so one blow every 14 to 24 ticks is a slow masher with nothing for his rhythm. Nothing in this section changes. It does fix **what B2 has to deliver first,** before the juggle or anything else:
+  1. the skill strike at its worth of 4 brawl lights (§9b);
+  2. the skill strike as a real answer: it clears the rival's run, and reels him for 8 ticks;
+  3. **the grade is taken at the press.** A press inside the beat window is on the beat even when a reel holds the blow for a few ticks. A masher's blows reel him for 4 ticks of every 6 to 12, so without this he could never land on a beat. A reel doesn't move his beat point either;
+  4. a skill strike wins a beat it shares with a flurry blow (§7).
+  The check after B2 is the existing one: timed against the same style untimed at 62 to 82%.
+- **A 6-tick tapper beats a 12-tick one 10 of 10.** That is the rule working: in a mash against a mash the faster tapper wins, and the answer to a faster masher isn't to mash. What was too much is the rate, 79.5 closes a minute, and the 90-tick limit in ruling 3 is for that.
 
 **The trade's limit, for QA.** The longest trade read 132 ticks with the limit at 120, because the close comes with the chosen fighter's next blow that lands. That is the rule working. The row now reads: **the trade breaks on the tick of its limit** (a hard test on the `trade_break` event), **and from the break to the close, or to the trade's end, is at most 24 ticks.**
 
