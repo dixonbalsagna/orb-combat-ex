@@ -141,6 +141,20 @@ func set_stance_oneshot(on: bool) -> void:
 		_full.set_stance_oneshot(on)
 
 
+## Read-only, for the HUD: the share of the one-shot window left for the newest armed stance (0 to 1; 0 when none, and always 0 on
+## the Simple layout, which has no arming), which stance it is (the bit LB 1, RB 2, RT 4, LT 8; 0 none), and whether energy is latched.
+func armed_share() -> float:
+	return _full.armed_share(_full.armed_newest()) if _full != null else 0.0
+
+
+func armed_stance() -> int:
+	return _full.armed_newest() if _full != null else 0
+
+
+func energy_latched() -> bool:
+	return _full != null and _full.energy_latched()
+
+
 ## The player's energy style ("hold", "toggle", "hybrid"; the Simple touch layout leaves the mode to the director). Full touch is
 ## hybrid unless the player chose the toggle.
 func set_mode_style(s: String) -> void:
@@ -453,6 +467,17 @@ func display_state() -> Dictionary:
 					out.power = {"down": true}
 				elif f.w == "transform":
 					out.transform = {"down": true}
+		# The four stance widgets also carry what the HUD shows for them: `armed`, the share of the one-shot window left (0 to 1; 0 when
+		# not armed), and `latched` (energy's latch). A widget is listed while it is held, armed or latched.
+		for pair in [["guard", SimStance.DEFENSIVE], ["mode", SimStance.ENERGY], ["power", SimStance.CHARGING], ["dodge", SimStance.MANOEUVRE]]:
+			var wid: String = str(pair[0])
+			var share: float = _full.armed_share(int(pair[1]))
+			var lat: bool = wid == "mode" and _full.energy_latched()
+			if out["full"].has(wid) or share > 0.0 or lat:
+				var e: Dictionary = out["full"].get(wid, {"down": false})
+				e["armed"] = share
+				e["latched"] = lat
+				out["full"][wid] = e
 		return out
 	for id in _touches:
 		var t: Dictionary = _touches[id]

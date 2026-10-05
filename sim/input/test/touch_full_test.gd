@@ -20,6 +20,7 @@ func _init() -> void:
 	SimInputData.load_data()
 	_layout()
 	_buttons()
+	_armed_display()
 	_stick()
 	_fingers()
 	_hub()
@@ -182,6 +183,99 @@ func _buttons() -> void:
 	t.release_all()
 	d = t.display_state()
 	ok(d["full"].is_empty() and not d.guard.down, "full: and is empty after release_all")
+
+
+func _tap(t: SimTouch, w: String, id: int) -> void:
+	t.touch_down(id, 0.0, 0.0, w)
+	_run(t, 3)
+	t.touch_up(id)
+
+
+## The HUD's view of the arming in display_state()["full"][id]: `armed` is the share of the 90 ticks left, `latched` is energy's latch.
+func _armed_display() -> void:
+	var t := SimTouch.new()
+	t.dp = 2.75
+	t.set_preset("touch-full")   # the one-shot is on by default here
+	ok(t.display_state()["full"].is_empty() and t.armed_share() == 0.0 and t.armed_stance() == 0 and not t.energy_latched(), "armed: nothing listed at rest")
+	# A tap on Guard arms it: listed, not down, nearly the whole window.
+	_tap(t, "guard", 1)
+	_run(t, 1)
+	var g: Dictionary = t.display_state()["full"].get("guard", {})
+	ok(g.has("armed") and not g["down"] and g["armed"] > 0.95 and g["latched"] == false and t.armed_stance() == 1 and t.armed_share() > 0.95, "armed: a tap on Guard lists it armed with nearly the whole window")
+	ok(not t.display_state()["full"].has("dodge") and not t.display_state()["full"].has("power") and not t.display_state()["full"].has("mode"), "armed: the other stance widgets are not listed")
+	# It runs down.
+	_run(t, 44)
+	var half: float = t.display_state()["full"]["guard"]["armed"]
+	ok(absf(half - 0.5) < 0.06 and half < g["armed"], "armed: about half left at 45 ticks (%.3f)" % half)
+	# And lapses.
+	_run(t, 50)
+	ok(t.display_state()["full"].is_empty() and t.armed_share() == 0.0 and t.armed_stance() == 0, "armed: after the 90 ticks it lapses and is no longer listed")
+	# A second tap cancels.
+	_tap(t, "power", 2)
+	_run(t, 2)
+	ok(t.display_state()["full"]["power"]["armed"] > 0.9 and t.armed_stance() == 4, "armed: Power armed")
+	_tap(t, "power", 3)
+	_run(t, 2)
+	ok(not t.display_state()["full"].has("power") and t.armed_stance() == 0, "armed: a second tap cancels it")
+	# Two armed: both listed, the newest is the stance.
+	_tap(t, "dodge", 4)
+	_run(t, 6)
+	_tap(t, "guard", 5)
+	_run(t, 2)
+	var f2: Dictionary = t.display_state()["full"]
+	ok(f2["dodge"]["armed"] > 0.0 and f2["guard"]["armed"] > f2["dodge"]["armed"] and t.armed_stance() == 1, "armed: two armed are both listed, the newer is the stance")
+	# A blow spends what is armed.
+	t.touch_down(6, 0.0, 0.0, "light")
+	_run(t, 2)
+	t.touch_up(6)
+	_run(t, 1)
+	ok(t.display_state()["full"].is_empty() and t.armed_stance() == 0, "armed: the blow spends the arming")
+	# A held stance widget is listed with no arming.
+	t.touch_down(7, 0.0, 0.0, "guard")
+	_run(t, 20)
+	var h: Dictionary = t.display_state()["full"]["guard"]
+	ok(h["down"] and h["armed"] == 0.0 and h["latched"] == false, "armed: a held Guard is down, not armed, not latched")
+	t.touch_up(7)
+	_run(t, 20)
+	# The energy latch: a tap on Mode latches (and does not arm), a blow does not spend it, the next tap puts it away.
+	_tap(t, "mode", 8)
+	_run(t, 2)
+	var m: Dictionary = t.display_state()["full"].get("mode", {})
+	ok(m.has("latched") and m["latched"] and m["armed"] == 0.0 and not m["down"] and t.energy_latched() and t.armed_stance() == 0, "armed: a tap on Mode latches energy and arms nothing")
+	t.touch_down(9, 0.0, 0.0, "light")
+	_run(t, 2)
+	t.touch_up(9)
+	_run(t, 40)
+	ok(t.display_state()["full"]["mode"]["latched"] and t.energy_latched(), "armed: the latch outlives a blow and the 90 ticks")
+	_tap(t, "mode", 10)
+	_run(t, 2)
+	ok(not t.display_state()["full"].has("mode") and not t.energy_latched(), "armed: the second tap puts it away")
+	# Simple touch has no arming at all.
+	var s := SimTouch.new()
+	s.dp = 2.75
+	ok(s.armed_share() == 0.0 and s.armed_stance() == 0 and not s.energy_latched(), "armed: Simple touch reads as nothing armed")
+	# Reading it changes nothing: identical intents with and without the reads.
+	var a := SimTouch.new()
+	var b := SimTouch.new()
+	for x in [a, b]:
+		x.dp = 2.75
+		x.set_preset("touch-full")
+	var same: bool = true
+	for k in range(120):
+		if k == 4:
+			a.touch_down(1, 0.0, 0.0, "dodge")
+			b.touch_down(1, 0.0, 0.0, "dodge")
+		if k == 8:
+			a.touch_up(1)
+			b.touch_up(1)
+		var ia: int = SimIntent.pack(a.build())
+		b.display_state()
+		b.armed_share()
+		var ib: int = SimIntent.pack(b.build())
+		a.consumed()
+		b.consumed()
+		same = same and ia == ib
+	ok(same, "armed: the reads change nothing in the intents")
 
 
 func _stick() -> void:

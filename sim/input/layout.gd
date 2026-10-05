@@ -223,6 +223,32 @@ func set_stance_oneshot(on: bool) -> void:
 	_armed.clear()
 
 
+## Read-only, for the HUD (nothing here is in the intent, the replay or the hash). The share of the one-shot window an armed stance
+## has left: 1.0 on the tick it was armed, running down to 0.0 on the last tick before it lapses; 0.0 when `bit` is not armed.
+func armed_share(bit: int) -> float:
+	if not _armed.has(bit) or oneshot_ticks <= 0:
+		return 0.0
+	return clampf(float(oneshot_ticks - (tick - int(_armed[bit]))) / float(oneshot_ticks), 0.0, 1.0)
+
+
+## The armed stance bits (LB 1, RB 2, RT 4, LT 8), a set; 0 when none is armed. Only the newest one is the stance (the mask is exclusive).
+func armed_bits() -> int:
+	var m: int = 0
+	for b in _armed.keys():
+		m |= int(b)
+	return m
+
+
+## The armed stance that was armed last (the one the mask reports), 0 when none.
+func armed_newest() -> int:
+	return SimStance.newest_of(armed_bits(), _armed)
+
+
+## Whether the energy stance is latched on (the toggle and hybrid styles: a tap latches, the next tap puts it away).
+func energy_latched() -> bool:
+	return _mode_latch == 1 and mode_style != "hold"
+
+
 ## Change how the mode control works ("hold", "toggle" or "hybrid"). The same style again changes nothing.
 func set_mode_style(s: String) -> void:
 	if s == mode_style:

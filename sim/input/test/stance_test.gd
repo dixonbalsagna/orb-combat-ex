@@ -29,6 +29,7 @@ func _init() -> void:
 	_grace()
 	_hybrids()
 	_oneshot()
+	_armed_view()
 	_levels()
 	_keyboards()
 	_touch(2.75)
@@ -410,6 +411,104 @@ func _oneshot() -> void:
 	ok(m.build().stanceMask == 0 and m.build().mode == 0, "oneshot: the second tap unlatches, and nothing is left armed behind it")
 
 
+## The HUD's read-only view of the arming: the share of the 90-tick window left, which stance, the latch.
+func _armed_view() -> void:
+	var l: SimLayout = _mk("arena")
+	ok(l.armed_share(2) == 0.0 and l.armed_bits() == 0 and l.armed_newest() == 0 and not l.energy_latched(), "armed view: nothing at rest")
+	l.set_stance_oneshot(true)
+	l.press("pad:rb")
+	_run(l, 3)
+	l.release("pad:rb")
+	l.build()
+	l.consumed()
+	var s0: float = l.armed_share(2)
+	ok(s0 > 0.97 and s0 <= 1.0 and l.armed_bits() == 2 and l.armed_newest() == 2 and l.armed_share(1) == 0.0, "armed view: a tap arms energy with nearly the whole window left")
+	_run(l, 44)
+	var s1: float = l.armed_share(2)
+	ok(s1 < s0 and absf(s1 - 0.5) < 0.06, "armed view: it runs down, about half at 45 ticks (%.3f)" % s1)
+	_run(l, 40)
+	var s2: float = l.armed_share(2)
+	ok(s2 < s1 and s2 > 0.0, "armed view: still armed and almost out at 85 ticks (%.3f)" % s2)
+	_run(l, 10)
+	ok(l.armed_share(2) == 0.0 and l.armed_bits() == 0, "armed view: lapsed after the 90 ticks, share 0 and nothing armed")
+	# A second tap cancels.
+	l.press("pad:lb")
+	_run(l, 3)
+	l.release("pad:lb")
+	_run(l, 2)
+	ok(l.armed_share(1) > 0.9 and l.armed_newest() == 1, "armed view: LB armed")
+	l.press("pad:lb")
+	_run(l, 3)
+	l.release("pad:lb")
+	_run(l, 2)
+	ok(l.armed_share(1) == 0.0 and l.armed_bits() == 0, "armed view: a second tap cancels it")
+	# Two armed: the newest is the stance, both show.
+	l.press("pad:lt")
+	_run(l, 3)
+	l.release("pad:lt")
+	_run(l, 5)
+	l.press("pad:lb")
+	_run(l, 3)
+	l.release("pad:lb")
+	_run(l, 2)
+	ok(l.armed_bits() == 9 and l.armed_newest() == 1 and l.armed_share(8) > 0.0 and l.armed_share(1) > l.armed_share(8), "armed view: two armed, the newer is the stance and has more window left")
+	# A blow consumes whatever is armed.
+	l.press("pad:west")
+	_run(l, 2)
+	ok(l.armed_bits() == 0 and l.armed_share(1) == 0.0 and l.armed_share(8) == 0.0, "armed view: the blow spends the arming")
+	l.release("pad:west")
+	# The energy latch (the hybrid style): a tap latches, a blow does not spend it, the next tap puts it away.
+	var m: SimLayout = _mk("arena")
+	m.set_mode_style("hybrid")
+	m.set_stance_oneshot(true)
+	m.press("pad:rb")
+	_run(m, 3)
+	m.release("pad:rb")
+	_run(m, 3)
+	ok(m.energy_latched() and m.armed_bits() == 0, "armed view: a tap latches energy and arms nothing")
+	m.press("pad:west")
+	_run(m, 2)
+	m.release("pad:west")
+	_run(m, 3)
+	ok(m.energy_latched(), "armed view: a blow does not spend the latch")
+	m.press("pad:rb")
+	_run(m, 3)
+	m.release("pad:rb")
+	_run(m, 3)
+	ok(not m.energy_latched(), "armed view: the second tap puts it away")
+	# The hold style has no latch.
+	var h: SimLayout = _mk("arena")
+	h.press("pad:rb")
+	_run(h, 20)
+	h.release("pad:rb")
+	_run(h, 3)
+	ok(not h.energy_latched(), "armed view: the hold style never latches")
+	# Reading it changes nothing: the same feed with and without the reads gives the same intents.
+	var a: SimLayout = _mk("arena")
+	var b: SimLayout = _mk("arena")
+	a.set_stance_oneshot(true)
+	b.set_stance_oneshot(true)
+	var same: bool = true
+	for t in range(130):
+		if t == 5:
+			a.press("pad:rb")
+			b.press("pad:rb")
+		if t == 8:
+			a.release("pad:rb")
+			b.release("pad:rb")
+		var ia: int = SimIntent.pack(a.build())
+		b.armed_share(2)
+		b.armed_bits()
+		b.armed_newest()
+		b.energy_latched()
+		var ib: int = SimIntent.pack(b.build())
+		# keep both layouts on the same tick count: b built once, a built once
+		a.consumed()
+		b.consumed()
+		same = same and ia == ib
+	ok(same, "armed view: the reads change nothing in the intents")
+
+
 func _levels() -> void:
 	# Arena: B (east) is the signature, A (south) is context.
 	var l: SimLayout = _mk("arena")
@@ -592,6 +691,7 @@ func _hub() -> void:
 		hub.intent(1)
 		hub.consumed()
 	ok(hub.intent(1).stanceMask == 2 and hub.intent(0).stanceMask == 0, "hub: player two's tap armed energy, player one's pad did not")
+	ok(hub.armed_stance(1) == 2 and hub.armed_share(1) > 0.9 and hub.armed_stance(0) == 0 and hub.armed_share(0) == 0.0 and not hub.energy_latched(1), "hub: armed_stance and armed_share read the slot's own arming, and energy is not latched on the hold style")
 	hub.consumed()
 	# The mask passes through the canonical packing for every held set.
 	hub.set_stance_oneshot("off", 1)

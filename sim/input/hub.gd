@@ -384,6 +384,38 @@ func setup() -> Dictionary:
 	return {"v2": [true, true], "assists": assists}
 
 
+## Read-only, for the HUD (nothing here touches the intent, the replay or the hash). `armed_stance(slot)` is the stance the slot has
+## armed for its next blow, as the bit LB 1 (defensive), RB 2 (energy), RT 4 (charging) or LT 8 (manoeuvre), 0 when none; if more than
+## one is armed it is the newest, which is the one the mask reports. `armed_share(slot)` is the share of the 90-tick window it has left,
+## 1.0 when just armed down to 0.0 as it lapses (0.0 when none). `energy_latched(slot)` is true while energy is latched on (a tap
+## on the toggle or hybrid style). All three read the slot's own device layout, so they are 0 / false on a slot with no device and
+## on touch Simple, which has no arming.
+func armed_stance(slot: int) -> int:
+	var l: SimLayout = _stance_layout(slot)
+	return l.armed_newest() if l != null else 0
+
+
+func armed_share(slot: int) -> float:
+	var l: SimLayout = _stance_layout(slot)
+	return l.armed_share(l.armed_newest()) if l != null else 0.0
+
+
+func energy_latched(slot: int) -> bool:
+	var l: SimLayout = _stance_layout(slot)
+	return l != null and l.energy_latched()
+
+
+func _stance_layout(slot: int) -> SimLayout:
+	match slot_device[slot]:
+		"pad":
+			return pads.get(slot_pad[slot], null)
+		"touch":
+			return touch._full
+		"kb":
+			return _kb_layout(slot)
+	return null
+
+
 ## Whether a slot's stance buttons arm a stance with a tap (the one-shot): the player's choice, else the device's default (touch Full).
 func stance_oneshot_of(slot: int) -> bool:
 	var p: String = str(stance_oneshot_pref[slot])
