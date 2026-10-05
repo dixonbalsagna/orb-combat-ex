@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/fight-intro",
   "title": "fight.intro/2 (docs/architecture/pending/dynamic-intros.md)",
-  "description": "data/fight/intro.json: the intro phase, as templates and parts (sim/core/intro.gd plays it; sim/director/intro.gd picks it). Ticks are sim ticks (60 a second). A template is a scenario: an ordered list of slots, each filled by one part from its pool; a part is a short list of beats with ticks from its start. Roles: first and second by arrival; left and right by start spot; both. skipFrom: a press on a human slot skips from this tick; fallHeight and craterEnergy shape the entrances; clockBend: the most the host's facts may shorten (min, 0 or less) or lengthen (max, 0 or more) a template, in ticks; gesturePoints: where a facts gesture plays (ticks after land_first, land_second, wait and look_start; look_end counted back from the clock). Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pool id is a part; every entrance has one fall and one land; exactly one template is classic; ids are unique; a gap runs min to default to max; skipFrom is before every clock) are checked by tools/lib/xref-fight.js (intro-*). The loader checks that a template fits its clock.",
+  "description": "data/fight/intro.json: the intro phase, as templates and parts (sim/core/intro.gd plays it; sim/director/intro.gd picks it). Ticks are sim ticks (60 a second). A template is a scenario: an ordered list of slots, each filled by one part from its pool; a part is a short list of beats with ticks from its start. Roles: first and second by arrival; left and right by start spot; both. skipFrom: a press on a human slot skips from this tick; fallHeight and craterEnergy shape the entrances; clockBend: the most the host's facts may shorten (min, 0 or less) or lengthen (max, 0 or more) a template, in ticks; gesturePoints: where a facts gesture plays (ticks after land_first, land_second, wait and look_start; look_end counted back from the clock). Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pool id is a part; every entrance has one fall and one land; exactly one template is classic; ids are unique; a gap runs min to default to max; skipFrom is before every clock) are checked by tools/lib/xref-fight.js (intro-*); defaultFacts.look names a part of type look and every defaultFacts.weights id is a template (intro-default). The loader checks that a template fits its clock.",
   "type": "object",
   "required": [
     "schema",
@@ -361,6 +361,203 @@
         "patternProperties": {
           "^_": true
         }
+      }
+    },
+    "defaultFacts": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "look": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The part the look is, where the slot's pool has it (rule intro-default: a part of type look)."
+        },
+        "gestures": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": [
+              "at",
+              "who",
+              "intent"
+            ],
+            "properties": {
+              "at": {
+                "enum": [
+                  "land_first",
+                  "land_second",
+                  "wait",
+                  "look_start",
+                  "look_end"
+                ]
+              },
+              "who": {
+                "enum": [
+                  "first",
+                  "second",
+                  "left",
+                  "right",
+                  "both"
+                ]
+              },
+              "intent": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The gesture's intent."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "description": "The gestures played at the points of gesturePoints."
+        },
+        "intents": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "who": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$",
+                    "description": "A role (first, second, left, right, or a plot role): the speaker this entry is for."
+                  },
+                  "stance": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "A stance the line is about."
+                  },
+                  "angle": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The angle of the line (for example you)."
+                  },
+                  "event": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "An event the line is about."
+                  },
+                  "p": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "The chance the line plays."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "lines"
+                ],
+                "properties": {
+                  "lines": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [],
+                      "properties": {
+                        "who": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_]*$",
+                          "description": "A role (first, second, left, right, or a plot role): the speaker this entry is for."
+                        },
+                        "stance": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "A stance the line is about."
+                        },
+                        "angle": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "The angle of the line (for example you)."
+                        },
+                        "event": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "An event the line is about."
+                        },
+                        "p": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "description": "The chance the line plays."
+                        }
+                      },
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^_": true
+                      }
+                    },
+                    "description": "One row a speaker: the row whose who is the speaker's role."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              }
+            ]
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A voice slot's intent to the tags of its line, or to a list of rows a speaker."
+        },
+        "tones": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "The tones a composed intro may take."
+        },
+        "weights": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A template id to its weight (rule intro-default: every id is a template)."
+        },
+        "gap": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "Where in the template's gap range the gap falls."
+        },
+        "clock": {
+          "type": "integer",
+          "description": "A bend of the clock, in ticks."
+        },
+        "plot": {
+          "type": "string",
+          "description": "A plot id."
+        }
+      },
+      "description": "The facts a composed intro takes when the setup's record sends none (a first meeting). A record's own facts keys, all optional.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
       }
     }
   },

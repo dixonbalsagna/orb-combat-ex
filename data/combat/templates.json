@@ -972,7 +972,7 @@
       "forest": "FIRESTORM",
       "mountains": "RIDGE BORE",
       "desert": "GLASS TRENCH",
-      "plains": "MERIDIAN SCAR"
+      "plains": "FIELD SCAR"
     },
     "tagFormat": "{A.sigName} over {biome} ({variant}) → {out}",
     "outcome": {

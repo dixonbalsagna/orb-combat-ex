@@ -410,7 +410,7 @@
     "trigger": { "kinds": ["sig"], "defender": "any" },
     "spacedTiming": "identical",
     "_spacedNote": "Identical in the first spaced pass: the beam's follow-on timing (rise 0.55 s, dodge and escape at +0.02, hold +0.9, clash 1.6 s and +2.6 s) lives inside the ops in beam.gd. 'laterSpaced' lists proposed values for when Encounter exposes those constants.",
-    "variants": { "ocean": "HORIZON CLEAVE", "city": "BOULEVARD RAZE", "village": "BOULEVARD RAZE", "forest": "FIRESTORM", "mountains": "RIDGE BORE", "desert": "GLASS TRENCH", "plains": "MERIDIAN SCAR" },
+    "variants": { "ocean": "HORIZON CLEAVE", "city": "BOULEVARD RAZE", "village": "BOULEVARD RAZE", "forest": "FIRESTORM", "mountains": "RIDGE BORE", "desert": "GLASS TRENCH", "plains": "FIELD SCAR" },
     "tagFormat": "{A.sigName} over {biome} ({variant}) → {out}",
     "outcome": {
       "_formula": "beam.gd lines 15-23, evaluated in this order",

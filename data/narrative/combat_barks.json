@@ -16,11 +16,11 @@
     "trigger": "signature_start",
     "fighters": {
       "KAI": {
-        "move_name": "Meridian Lance",
+        "move_name": "Keeper's Lance",
         "lines": [
-          { "id": "shout.kai.sig.1", "text": "Meridian Lance!" },
+          { "id": "shout.kai.sig.1", "text": "Keeper's Lance!" },
           { "id": "shout.kai.sig.2", "text": "Lance!" },
-          { "id": "shout.kai.sig.3", "text": "Here. Meridian Lance!" }
+          { "id": "shout.kai.sig.3", "text": "Here. Keeper's Lance!" }
         ],
         "kind": "line", "speaker_role": "self", "priority": 4,
         "display": { "style": "shout", "dur_s": 0.8 },
@@ -29,11 +29,11 @@
         "tags": ["move_name", "signature"]
       },
       "VORR": {
-        "move_name": "Calamity Wave",
+        "move_name": "The Barrage",
         "lines": [
-          { "id": "shout.vorr.sig.1", "text": "Calamity Wave." },
-          { "id": "shout.vorr.sig.2", "text": "Wave." },
-          { "id": "shout.vorr.sig.3", "text": "Look. Calamity Wave." }
+          { "id": "shout.vorr.sig.1", "text": "The Barrage." },
+          { "id": "shout.vorr.sig.2", "text": "Barrage." },
+          { "id": "shout.vorr.sig.3", "text": "Look. The Barrage." }
         ],
         "kind": "line", "speaker_role": "self", "priority": 4,
         "display": { "style": "shout", "dur_s": 0.8 },

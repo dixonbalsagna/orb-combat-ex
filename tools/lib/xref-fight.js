@@ -928,6 +928,16 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     if (classics !== 1) err(IT2, '/templates', 'intro-classic', `${classics} templates are classic; exactly one must be (the one a plain "intro": true plays)`);
     if (typeof fint.skipFrom === 'number' && minClock !== Infinity && fint.skipFrom >= minClock) err(IT2, '/skipFrom', 'intro-order', `skipFrom ${fint.skipFrom} is not before the shortest clock (${minClock})`);
   }
+  // ---- fight intro: the default facts name a look part and templates that exist ----
+  if (isObj(fint) && isObj(fint.defaultFacts)) {
+    const IT3 = 'data/fight/intro.json';
+    const df = fint.defaultFacts;
+    const partsD = isObj(fint.parts) ? fint.parts : {};
+    if (typeof df.look === 'string' && (!isObj(partsD[df.look]) || partsD[df.look].type !== 'look')) err(IT3, '/defaultFacts/look', 'intro-default', `look "${df.look}" is not a part of type look`);
+    const tids = new Set(Array.isArray(fint.templates) ? fint.templates.filter(isObj).map((tp) => tp.id) : []);
+    if (isObj(df.weights) && tids.size) for (const k of Object.keys(df.weights)) if (!k.startsWith('_') && !tids.has(k)) err(IT3, `/defaultFacts/weights/${esc(k)}`, 'intro-default', `weight for "${k}", which is not a template id`);
+  }
+
   // ---- anim last stand: ready keys are shapes, sequences exist ----
   const lsd = get('data/anim/laststand.json');
   if (isObj(lsd) && isObj(lsd.ready)) {

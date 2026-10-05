@@ -19,7 +19,9 @@ class_name SimIntro
 ##                     played lately, the newest first: the host's no-repeat list) and "facts": what the host resolved
 ##                     about the pair (Narrative's plotlines, docs/narrative/dynamic-intros.md section 11). The composer
 ##                     reads tones, weights, gap, look, clock and gestures; plot and intents are passed through on the
-##                     events; anything else is ignored. "classic": true asks for the classic opening
+##                     events; anything else is ignored. A record with no "facts" takes the data's defaultFacts (a
+##                     first meeting). "take" (0, 1, 2, ...: the host's rematch counter) makes the same seed compose
+##                     a different opening on each take. "classic": true asks for the classic opening
 ##   "intro": false    the old flat start
 ## A press on a human slot skips it (after skipFrom ticks): the landings left are applied at once, in order.
 ##
@@ -55,6 +57,7 @@ static var parts: Dictionary = {}    # id -> {type, mode, ticks, beats: [{t, kin
 static var templates: Array = []     # in the file's order: {id, weight, tone, clock, gapMin, gapMax, gapDef, notTwice, classic, fills, slots: [{who, pool, after, gap, with, draw}]}
 static var clockBend: Array = [0, 0] # the least and the most a match's facts may add to a template's clock
 static var points: Dictionary = {}   # a gesture point -> its ticks from its anchor (look_end: from the clock, negative)
+static var defaultFacts: Dictionary = {}   # the facts a composed intro takes when its record sends none (DirIntro.compose)
 static var classicI: int = 0         # the template a plain "intro": true plays
 static var _flat: Dictionary = {}    # "template:gap:picks" -> its timeline (flatten)
 # the classic opening's ticks, for tools: A is the first to arrive, B the second
@@ -191,6 +194,25 @@ static func _ensure() -> void:
 		land = c.land
 		staredown = c.staredown
 		clock = templates[classicI].clock
+	# the default facts: a record's own facts keys. What the composer and the playback read of them is checked here
+	defaultFacts = {}
+	var df = j.get("defaultFacts")
+	if df is Dictionary:
+		defaultFacts = df
+		var dl = df.get("look")
+		if dl != null and not (dl is String and parts.has(dl) and parts[dl].type == "look"):
+			_err("defaultFacts.look: not a look part")
+		var dg = df.get("gestures", [])
+		if not (dg is Array) or dg.size() * 2 > MAX_GESTURES:
+			_err("defaultFacts.gestures: a list of at most %d" % (MAX_GESTURES / 2))
+			dg = []
+		for g in dg:
+			if not (g is Dictionary and POINTS.has(String(g.get("at", ""))) and ROLES.has(String(g.get("who", ""))) and String(g.get("intent", "")) != ""):
+				_err("defaultFacts.gestures: each needs at (a gesture point), who (a role) and intent")
+		if not (df.get("intents", {}) is Dictionary):
+			_err("defaultFacts.intents: a record by voice slot")
+	elif df != null:
+		_err("defaultFacts: a record of facts")
 
 
 ## The timeline of template ti with this gap and these parts (picks: one digit a slot, the first slot lowest, each in
@@ -301,8 +323,7 @@ static func setup(S: SimState, su: Dictionary) -> void:
 		it.clock = c.clock
 		it.notes = c.notes
 		it.gestures = c.gestures
-		var facts = req.get("facts")
-		it.facts = facts if facts is Dictionary else {}
+		it.facts = c.facts   # the record's own, or the data's default when it sent none (DirIntro.compose)
 		it.left = it.clock
 		for f in S.fighters:
 			f.state = "intro"

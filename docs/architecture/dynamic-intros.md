@@ -36,7 +36,8 @@ The intro phase stops playing one fixed sequence. It plays a **timeline composed
 | `order` | Fixes the slot that arrives first (0 or 1). Left out: an even draw |
 | `gap` | Fixes the gap in ticks (clamped to the template's range). Left out: drawn in the range |
 | `avoid` | The host's no-repeat list: template ids played lately, the newest first |
-| `facts` | What the host resolved about the pair: Narrative's flat record (section 6b). The composer reads `tones`, `weights`, `gap`, `look`, `clock` and `gestures`; it passes `plot` and `intents` through on events; it ignores every other key (`avoidPlot` is the host's own memory). Left out: no bend |
+| `facts` | What the host resolved about the pair: Narrative's flat record (section 6b). The composer reads `tones`, `weights`, `gap`, `look`, `clock` and `gestures`; it passes `plot` and `intents` through on events; it ignores every other key (`avoidPlot` is the host's own memory). Left out: the data's `defaultFacts`, a first meeting (section 16). An empty set `{}`: no bend |
+| `take` | The host's rematch counter: 0, 1, 2 and so on. It is the index of every keyed draw, so one seed composes a different opening on each take. Left out: 0 (section 16) |
 | `classic` | `true` asks for the classic opening whatever else is said |
 
 - **The host owns memory.** The sim never reads a file or a clock. The host keeps the last few scenarios for a pair and passes them as `avoid`. A match with no list avoids nothing.
@@ -243,7 +244,7 @@ Until the schema lands, the validator reports the new file.
 8. **A fifth gesture point, `wait`.** Narrative's table lists gestures "at the wait" for the Latecomer beside its four named points, so the build has it; it is skipped in a template with no wait.
 9. **Mine, as data, for Narrative to tune:** the gesture points' ticks (12 after a landing, 20 into the wait, 24 into the look, 48 before the clock) and the clock bend's range (60 either way; Narrative's bends are 24 and 36).
 
-## 13. Proposal: a plotline for the default intro (2026-10-06, not built)
+## 13. Proposal: a plotline for the default intro (2026-10-06; step 1 is built, section 16)
 
 **The gap.** The game now opens every match with `{"intro": {"play": true}}` and no facts. The composer draws the scenario, the order and the gap, but a gesture and a voice slot's tags come only from facts, so a default intro has neither. Orb asked for intros "as generatively as possible", with implied plotlines.
 
@@ -383,3 +384,27 @@ From these the sim works out the numbers a `when` may test: `meetings`, `lead` (
 2. One angle a fighter for the whole intro, or may it differ by slot? The shape above is one a fighter.
 3. The state table in its section 11.6 uses "close score" and "long-time leader". Give them as numbers (`lead` at most 1; `lead` at least 3) so they can be `when` ranges.
 
+## 16. Step 1 as built: the default facts, the take, and the one-view camera (2026-10-05)
+
+**The default facts** (`data/fight/intro.json` `defaultFacts`; `SimIntro.defaultFacts`).
+
+- A composed record with no `facts` key takes them: Narrative's `fresh` row. Both fighters `appraise` at the look's start, the look is `hold` where the slot's pool has it, and each of the four voice slots is tagged `you` at 0.8.
+- A record that sends `facts`, even an empty set, is used as given. The classic opening takes none.
+- The block has a record's own facts keys, so the composer reads it through the same code. The loader checks its `look` (a look part), its `gestures` (a point, a role, an intent; 8 at most) and that `intents` is a record.
+- The feed says so on the first pre-clock tick: `INTRO facts: the default`.
+- The game's default record `{"play": true}` therefore now sends two `intro_gesture` events and tagged `intro_line` events. Played through the full scene on all three templates, both mannequins played the gesture (the Protagonist's `pi.appraise`, the rival's `rw.taunt_head_tilt`).
+
+**The take** (the record's `take`; `DirIntro.compose`).
+
+- A whole number from 0 to 65535. It is the index of the keyed draws for the scenario, the order and the gap; a slot's part is drawn at take x 64 + the slot.
+- Left out, or 0, composes exactly what was composed before. A take always composes the same intro, and what the record fixes (`scenario`, `order`, `gap`) stays fixed.
+- **For Rendering's host:** on a rematch of the same seed, send the pair's count of matches on that seed as `take`, beside `avoid`. Over 200 seeds, the second take is another opening on more than 9 in 10.
+- It lives in the setup's record, so it is in the replay header. No new state, and nothing new in the hash.
+
+**The one-view camera** (`sim/core/view/camera.gd`). Camera's block from `docs/camera/split-screen.md` section 22 is at the top of `camStep`: a fighter held in the sky before his fall is not framed, a faller is followed, and a lone fighter on the ground is framed by himself. Camera's sweep over 14 composed intros now reads 0 ticks with a subject off the screen (it was 364) and a smallest zoom of 0.494 (it was 0.088). **The file is Camera's from this commit.** It stays under the sim's gate, because the goldens record the camera at every checkpoint: a change to it runs `npm test --prefix sim`. The JS twin is frozen (ADR 0006) and does not follow.
+
+**Goldens.** The nine matches and the two replays did not move (light digests, tick counts and every checkpoint, camera included). `fightHash` moved (the intro file's hash) and so did `introComposed`: its records without facts now carry the default, and it gained a second take, a third take and a record with an empty set of facts.
+
+**Check** (`sim/core/tools/parity.gd`): "the intro's default facts and the take". It plays every template with no facts, with an empty set and as the classic opening, compares the gestures and tags sent, skips each with a press, and draws six takes on 200 seeds.
+
+**Next: step 2,** the resolver that reads a pair's plot (sections 13 and 15). The default facts stand in until then.

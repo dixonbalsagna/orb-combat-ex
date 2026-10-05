@@ -185,12 +185,12 @@ func _init() -> void:
 	for P in [0.5, 1.0, 2.0, 3.0, 4.0, 4.5]:
 		var S6 := fresh()
 		for k in range(40):
-			WorldCrater.scorch(S6, X(3000.0) + 20.0 * SimConst.WS * float(k), P, "MERIDIAN SCAR", null)
+			WorldCrater.scorch(S6, X(3000.0) + 20.0 * SimConst.WS * float(k), P, "FIELD SCAR", null)
 		var depth1: float = 0.0
 		for i in range(SimConst.NC):
 			depth1 = minf(depth1, S6.deform[i])
 		for k in range(40):
-			WorldCrater.scorch(S6, X(3000.0) + 20.0 * SimConst.WS * float(k), P, "MERIDIAN SCAR", null)
+			WorldCrater.scorch(S6, X(3000.0) + 20.0 * SimConst.WS * float(k), P, "FIELD SCAR", null)
 		var depth2: float = 0.0
 		for i in range(SimConst.NC):
 			depth2 = minf(depth2, S6.deform[i])

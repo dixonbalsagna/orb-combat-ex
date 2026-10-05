@@ -44,7 +44,8 @@ static func introHash() -> String:
 
 
 ## Composed intros: AI matches whose setup asks the composer for an intro (seeds 7 and up): two free draws, two with a
-## no-repeat list, every template by name with its order and gap drawn, then two with the host's facts. Every tick's fighters and events through
+## no-repeat list, every template by name with its order and gap drawn, then two with the host's facts, a second and a
+## third take, and one with an empty set of facts (the others without facts take the data's default). Every tick's fighters and events through
 ## the pre-clock ticks and the first two seconds of the fight, with what was composed.
 static func introComposedHash() -> String:
 	var h := SimHash.Hasher.new()
@@ -60,6 +61,9 @@ static func introComposedHash() -> String:
 			"staredown_pair": {"lines": [{"who": "left", "stance": "guarded", "angle": "then", "event": "last_ko", "p": 0.9}, {"who": "right", "stance": "smug", "angle": "us", "p": 0.9}]}}}
 	recs.append({"play": true, "facts": facts})
 	recs.append({"play": true, "scenario": classic, "facts": facts})
+	recs.append({"play": true, "take": 1})
+	recs.append({"play": true, "take": 2})
+	recs.append({"play": true, "facts": {}})
 	for i in range(recs.size()):
 		var S := SimCore.createSim()
 		SimCore.newMatch(S, 7 + i, {}, {"intro": recs[i]})

@@ -19,6 +19,35 @@
     "look_end": -48
   },
   "_gesturePoints": "where a gesture from a match's facts plays (facts.gestures, Narrative's plotlines): ticks after the first landing, the second landing, the wait beat and the staredown's start; look_end is counted back from the clock. A point the template does not have is skipped",
+  "defaultFacts": {
+    "look": "hold",
+    "gestures": [
+      {
+        "at": "look_start",
+        "who": "both",
+        "intent": "appraise"
+      }
+    ],
+    "intents": {
+      "arrive_remark": {
+        "angle": "you",
+        "p": 0.8
+      },
+      "wait_remark": {
+        "angle": "you",
+        "p": 0.8
+      },
+      "late_reply": {
+        "angle": "you",
+        "p": 0.8
+      },
+      "staredown_pair": {
+        "angle": "you",
+        "p": 0.8
+      }
+    }
+  },
+  "_defaultFacts": "Validator fixture, not game data: the default facts.",
   "parts": {
     "_note": "type: entrance (it has one fall at 0 and one land at its last tick), reaction or look. ticks: how far the part moves the template on. mode: the arrival mode an entrance reports. Beat kinds: fall, land, wait (he stands waiting until the staredown), line (a voice slot: the intent only), staredown. A beat's who overrides its slot's. A slot's part is an even keyed draw over its pool, unless the slot says draw false: then it is the pool's first part. Either way a part the match's facts name (facts.look) is taken when the pool holds it.",
     "drop": {

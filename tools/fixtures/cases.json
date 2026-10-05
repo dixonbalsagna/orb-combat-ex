@@ -73734,6 +73734,4669 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "fight-intro-default-valid",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-empty-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {}
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting",
+              "take": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/defaultFacts/take"
+      }
+    },
+    {
+      "id": "fight-intro-default-underscore-key-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting",
+              "_why": "a note"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-look-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": 5,
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/look"
+      }
+    },
+    {
+      "id": "fight-intro-default-look-shape",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "Hold Long",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/defaultFacts/look"
+      }
+    },
+    {
+      "id": "fight-intro-default-look-unknown-part",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "nowhere",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-default",
+        "pointer": "/defaultFacts/look"
+      }
+    },
+    {
+      "id": "fight-intro-default-look-part-of-another-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_other",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-default",
+        "pointer": "/defaultFacts/look"
+      }
+    },
+    {
+      "id": "fight-intro-default-gestures-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": "appraise",
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/gestures"
+      }
+    },
+    {
+      "id": "fight-intro-default-gestures-eight-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-gestures-nine",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                },
+                {
+                  "at": "wait",
+                  "who": "first",
+                  "intent": "brace"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/defaultFacts/gestures"
+      }
+    },
+    {
+      "id": "fight-intro-default-gesture-key-required-at",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/defaultFacts/gestures/0"
+      }
+    },
+    {
+      "id": "fight-intro-default-gesture-key-required-who",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "wait",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/defaultFacts/gestures/0"
+      }
+    },
+    {
+      "id": "fight-intro-default-gesture-key-required-intent",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "wait",
+                  "who": "both"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/defaultFacts/gestures/0"
+      }
+    },
+    {
+      "id": "fight-intro-default-gesture-at-enum",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "later",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/defaultFacts/gestures/0/at"
+      }
+    },
+    {
+      "id": "fight-intro-default-gesture-who-enum",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "wait",
+                  "who": "last_loser",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/defaultFacts/gestures/0/who"
+      }
+    },
+    {
+      "id": "fight-intro-default-gesture-intent-empty",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "wait",
+                  "who": "both",
+                  "intent": ""
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/defaultFacts/gestures/0/intent"
+      }
+    },
+    {
+      "id": "fight-intro-default-gesture-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "wait",
+                  "who": "both",
+                  "intent": "appraise",
+                  "w": 1
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/defaultFacts/gestures/0/w"
+      }
+    },
+    {
+      "id": "fight-intro-default-gesture-every-point-and-role-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "land_first",
+                  "who": "first",
+                  "intent": "check"
+                },
+                {
+                  "at": "land_second",
+                  "who": "second",
+                  "intent": "check"
+                },
+                {
+                  "at": "wait",
+                  "who": "left",
+                  "intent": "check"
+                },
+                {
+                  "at": "look_start",
+                  "who": "right",
+                  "intent": "check"
+                },
+                {
+                  "at": "look_end",
+                  "who": "both",
+                  "intent": "check"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-intents-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": [],
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/intents"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-slot-name-shape",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                },
+                "Arrive Remark": {
+                  "p": 1
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/defaultFacts/intents/Arrive Remark"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8,
+                  "mood": 1
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/defaultFacts/intents/arrive_remark"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-p-above-one",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 1.5
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/defaultFacts/intents/arrive_remark"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-p-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": -0.1
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/defaultFacts/intents/arrive_remark"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-p-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": "often"
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/defaultFacts/intents/arrive_remark"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-p-edges-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                },
+                "wait_remark": {
+                  "p": 1
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-intent-empty-record-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                },
+                "late_reply": {}
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-intent-every-tag-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                },
+                "wait_remark": {
+                  "who": "first",
+                  "stance": "martial",
+                  "angle": "you",
+                  "event": "a_fall",
+                  "p": 0.5
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-intent-tag-empty",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/defaultFacts/intents/arrive_remark"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-lines-empty",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": []
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/defaultFacts/intents/staredown_pair"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-lines-row-unknown-key",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "mood": 1
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/defaultFacts/intents/staredown_pair"
+      }
+    },
+    {
+      "id": "fight-intro-default-intent-lines-with-a-tag-beside",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left"
+                    }
+                  ],
+                  "angle": "you"
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/defaultFacts/intents/staredown_pair"
+      }
+    },
+    {
+      "id": "fight-intro-default-tones-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": "grave",
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/tones"
+      }
+    },
+    {
+      "id": "fight-intro-default-tones-item-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                5
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/tones/0"
+      }
+    },
+    {
+      "id": "fight-intro-default-tones-empty-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-weights-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": [
+                1
+              ],
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/weights"
+      }
+    },
+    {
+      "id": "fight-intro-default-weight-negative",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": -1
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/defaultFacts/weights/df_template"
+      }
+    },
+    {
+      "id": "fight-intro-default-weight-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": "heavy"
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/weights/df_template"
+      }
+    },
+    {
+      "id": "fight-intro-default-weight-zero-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 0
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-weight-id-shape",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2,
+                "Df Template": 1
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/defaultFacts/weights/Df Template"
+      }
+    },
+    {
+      "id": "fight-intro-default-weight-id-not-a-template",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "nowhere": 1
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:intro-default",
+        "pointer": "/defaultFacts/weights/nowhere"
+      }
+    },
+    {
+      "id": "fight-intro-default-gap-below-minus-one",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": -1.1,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/defaultFacts/gap"
+      }
+    },
+    {
+      "id": "fight-intro-default-gap-above-one",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 1.1,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/defaultFacts/gap"
+      }
+    },
+    {
+      "id": "fight-intro-default-gap-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": "wide",
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/gap"
+      }
+    },
+    {
+      "id": "fight-intro-default-gap-edges-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": -1,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-gap-one-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 1,
+              "clock": 0,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-clock-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": "long",
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/clock"
+      }
+    },
+    {
+      "id": "fight-intro-default-clock-integer",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 30.5,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/clock"
+      }
+    },
+    {
+      "id": "fight-intro-default-clock-negative-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": -30,
+              "plot": "first_meeting"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-plot-type",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/parts/df_look": {
+              "type": "look",
+              "ticks": 0,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "staredown"
+                }
+              ]
+            },
+            "/parts/df_other": {
+              "type": "reaction",
+              "ticks": 10,
+              "beats": [
+                {
+                  "t": 0,
+                  "kind": "wait"
+                }
+              ]
+            },
+            "/templates/-": {
+              "id": "df_template",
+              "weight": 1,
+              "tone": "neutral",
+              "clock": 300,
+              "gap": {
+                "min": 30,
+                "max": 70,
+                "default": 48
+              },
+              "slots": [
+                {
+                  "slot": "look",
+                  "who": "both",
+                  "pool": [
+                    "df_look"
+                  ]
+                }
+              ]
+            },
+            "/defaultFacts": {
+              "look": "df_look",
+              "gestures": [
+                {
+                  "at": "look_start",
+                  "who": "both",
+                  "intent": "appraise"
+                }
+              ],
+              "intents": {
+                "arrive_remark": {
+                  "angle": "you",
+                  "p": 0.8
+                },
+                "staredown_pair": {
+                  "lines": [
+                    {
+                      "who": "left",
+                      "angle": "you"
+                    },
+                    {
+                      "who": "right",
+                      "angle": "now",
+                      "p": 0.5
+                    }
+                  ]
+                }
+              },
+              "tones": [
+                "neutral"
+              ],
+              "weights": {
+                "df_template": 2
+              },
+              "gap": 0,
+              "clock": 0,
+              "plot": 5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/defaultFacts/plot"
+      }
+    },
+    {
+      "id": "fight-intro-default-note-beside-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "set": {
+            "/_defaultFacts": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-intro-default-absent-ok",
+      "schema": "fight-intro.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/intro.json",
+          "del": [
+            "/defaultFacts"
+          ]
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

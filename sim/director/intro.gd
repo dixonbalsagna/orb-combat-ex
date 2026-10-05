@@ -9,7 +9,11 @@ class_name DirIntro
 ##
 ## The host's facts about the pair (Narrative's plotlines, docs/narrative/dynamic-intros.md section 11) bend the picks
 ## through five flat keys: weights (the scenario's draw), gap, look (a part), clock and gestures. The grammar that makes
-## them stays on the host's side; nothing here knows a plot.
+## them stays on the host's side; nothing here knows a plot. A record that sends no facts takes the data's default
+## (intro.json defaultFacts: a first meeting), so the game's default opening has gestures and voice tags.
+
+const MAX_TAKE: int = 65535
+const TAKE_BASE: int = 64   # the part draws' index: take x this + the slot
 
 ## req is the setup's "intro" record (SimIntro.setup): it may fix "scenario", "order" (the slot that arrives first) and
 ## "gap"; "avoid" lists the template ids played lately, the newest first (the host's no-repeat list); "classic": true
@@ -18,9 +22,12 @@ class_name DirIntro
 ## template's range), look (a part id, taken by any slot whose pool holds it), clock (ticks added to the template's
 ## length, inside intro.json's clockBend, and dropped if the intro no longer fits), gestures ([{at, who, intent}]: at is
 ## land_first, land_second, wait, look_start or look_end; who is first, second, left, right or both), plot (an id, for
-## the feed). Other keys are not read.
+## the feed). Other keys are not read. With no "facts" in the record the data's defaultFacts are used; an empty set
+## is used as given. "take" is the host's rematch counter (0 to MAX_TAKE; none is 0): it is the index of every keyed
+## draw, so one seed composes a different opening on each take, and the same one on the same take.
 ## Returns {"scenario": the template's index, "first": a slot, "gap": ticks, "picks": the parts (SimIntro.flatten),
-## "clock": the intro's length, "gestures": [[tick, slot, intent, point]] in time order, "notes": [[tag, text]] for the feed}.
+## "clock": the intro's length, "gestures": [[tick, slot, intent, point]] in time order, "facts": the facts used (the
+## playback reads its plot and voice tags from them), "notes": [[tag, text]] for the feed}.
 static func compose(S: SimState, req: Dictionary) -> Dictionary:
 	var T: Array = SimIntro.templates
 	var seed: int = int(S.game.seed)
@@ -29,10 +36,21 @@ static func compose(S: SimState, req: Dictionary) -> Dictionary:
 	if req.get("classic", false) == true:
 		var ci: int = SimIntro.classicI
 		notes.append(["INTRO: " + T[ci].id, "the classic opening was asked for: the left spot first, the default gap"])
-		return {"scenario": ci, "first": left, "gap": T[ci].gapDef, "picks": 0, "clock": T[ci].clock, "gestures": [], "notes": notes}
-	var facts = req.get("facts", {})
+		return {"scenario": ci, "first": left, "gap": T[ci].gapDef, "picks": 0, "clock": T[ci].clock, "gestures": [], "facts": {}, "notes": notes}
+	# the facts: the record's own. When it sends none, the data's default (a first meeting), until a pair's plot is
+	# resolved here (docs/architecture/dynamic-intros.md section 13)
+	var facts = req.get("facts")
 	if not (facts is Dictionary):
-		facts = {}
+		facts = SimIntro.defaultFacts
+		if not facts.is_empty():
+			notes.append(["INTRO facts: the default", "the setup sent none: a first meeting"])
+	# the take: the host's rematch counter, the index of every keyed draw below
+	var take: int = 0
+	var rt = req.get("take")
+	if rt is int or rt is float:
+		take = clampi(int(rt), 0, MAX_TAKE)
+		if take > 0:
+			notes.append(["INTRO take: %d" % take, "the host's rematch counter: this take's draws"])
 	if String(facts.get("plot", "")) != "":
 		notes.append(["INTRO plot: " + String(facts.plot), "the host's facts about the pair"])
 	# the scenario: the one asked for, or a draw by weight among those whose tone the pair allows. The facts' weights
@@ -78,7 +96,7 @@ static func compose(S: SimState, req: Dictionary) -> Dictionary:
 			ti = SimIntro.classicI
 			why = "nothing else fits"
 		else:
-			var u: float = SimRng.keyed(seed, "intro.scenario", 0) * total
+			var u: float = SimRng.keyed(seed, "intro.scenario", take) * total
 			var acc: float = 0.0
 			for i in range(T.size()):
 				if w[i] <= 0.0:
@@ -97,7 +115,7 @@ static func compose(S: SimState, req: Dictionary) -> Dictionary:
 		first = int(req1)
 		why = "asked for by the setup"
 	else:
-		first = left if SimRng.keyed(seed, "intro.order", 0) < 0.5 else 1 - left
+		first = left if SimRng.keyed(seed, "intro.order", take) < 0.5 else 1 - left
 		why = "an even draw"
 	# the gap between the first landing and the second fall: asked for, or drawn in the template's range and then moved
 	# by the facts toward its short end (below 0) or its long end (above 0)
@@ -106,7 +124,7 @@ static func compose(S: SimState, req: Dictionary) -> Dictionary:
 	if reqG is int or reqG is float:
 		gap = clampi(int(reqG), tp.gapMin, tp.gapMax)
 	else:
-		gap = mini(tp.gapMax, tp.gapMin + int(floor(SimRng.keyed(seed, "intro.gap", 0) * float(tp.gapMax - tp.gapMin + 1))))
+		gap = mini(tp.gapMax, tp.gapMin + int(floor(SimRng.keyed(seed, "intro.gap", take) * float(tp.gapMax - tp.gapMin + 1))))
 		var gb = facts.get("gap")
 		if gb is float or gb is int:
 			var b: float = clampf(float(gb), -1.0, 1.0)
@@ -129,7 +147,7 @@ static func compose(S: SimState, req: Dictionary) -> Dictionary:
 			pick = sl.pool.find(look)
 			how = "the facts' look"
 		elif n > 1 and sl.draw:
-			pick = mini(n - 1, int(floor(SimRng.keyed(seed, "intro.part", si) * float(n))))
+			pick = mini(n - 1, int(floor(SimRng.keyed(seed, "intro.part", take * TAKE_BASE + si) * float(n))))
 			how = "of %d" % n
 		if n > 1:
 			notes.append(["INTRO slot %d: %s" % [si, sl.pool[pick]], how if how != "" else "the slot's own"])
@@ -182,7 +200,7 @@ static func compose(S: SimState, req: Dictionary) -> Dictionary:
 				gestures.insert(ins, [gt, k, intent, at])
 		if not gestures.is_empty() or dropped > 0:
 			notes.append(["INTRO gestures: %d" % gestures.size(), "from the facts" + ("" if dropped == 0 else "; %d skipped (no such point here, or no room)" % dropped)])
-	return {"scenario": ti, "first": first, "gap": gap, "picks": picks, "clock": clock, "gestures": gestures, "notes": notes}
+	return {"scenario": ti, "first": first, "gap": gap, "picks": picks, "clock": clock, "gestures": gestures, "facts": facts, "notes": notes}
 
 
 ## The slot a role names, given who arrives first and who stands on the left spot.

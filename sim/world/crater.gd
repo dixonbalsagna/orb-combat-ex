@@ -75,7 +75,7 @@ const SCORCH_D_P: float = 2.2 * WS
 const SCORCH_INT0: float = 0.35       # burn intensity = clamp(INT0 + INT_P * P, 0, 1)
 const SCORCH_INT_P: float = 0.15
 ## Per beam variant: [depth factor, width factor]. Ridge bore drills, glass trench fuses a wide shallow strip.
-const SCORCH_VARIANT: Dictionary = {"RIDGE BORE": [1.6, 0.8], "GLASS TRENCH": [0.8, 1.3], "FIRESTORM": [1.0, 1.1], "BOULEVARD RAZE": [0.8, 1.0], "MERIDIAN SCAR": [1.0, 1.0], "HORIZON CLEAVE": [1.0, 1.0]}
+const SCORCH_VARIANT: Dictionary = {"RIDGE BORE": [1.6, 0.8], "GLASS TRENCH": [0.8, 1.3], "FIRESTORM": [1.0, 1.1], "BOULEVARD RAZE": [0.8, 1.0], "FIELD SCAR": [1.0, 1.0], "HORIZON CLEAVE": [1.0, 1.0]}
 
 
 ## The beam-power scalar: charge and tier in one number. power runs 0 to 100 and the tier is 1 + floor(power / 25),

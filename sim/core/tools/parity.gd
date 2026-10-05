@@ -58,6 +58,7 @@ func _init() -> void:
 	check("depth in the core", _depth())
 	check("the intro phase", _intro())
 	check("composed intros", _introComposed())
+	check("the intro's default facts and the take", _introDefault())
 	check("the last stand", _lastStand())
 	check("a hidden fighter is found when he charges or is launched", _foundAnnounced())
 	check("shots", _plainShots())
@@ -1505,7 +1506,7 @@ func _introComposed() -> String:
 		for first in [0, 1]:
 			for gap in gaps:
 				var label: String = "%s, slot %d first, gap %d" % [tp.id, first, gap]
-				var rec := {"play": true, "scenario": tp.id, "order": first, "gap": gap}
+				var rec := {"play": true, "scenario": tp.id, "order": first, "gap": gap, "facts": {}}   # (no facts at all: the template's own beats)
 				var S := SimCore.createSim()
 				SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": rec})
 				var tl: Dictionary = SimIntro.flatten(ti, gap, S.intro.picks)
@@ -1647,7 +1648,7 @@ func _introComposed() -> String:
 	# a replay carries the record and composes the same intro, played through and skipped
 	for skipAt in [-1, SimIntro.skipFrom + 20]:
 		var R := SimCore.createSim()
-		var setup := {"intro": {"play": true, "avoid": [T[heavy].id], "facts": {"tones": ["light", "neutral", "grave"]}}}
+		var setup := {"intro": {"play": true, "avoid": [T[heavy].id], "take": 2, "facts": {"tones": ["light", "neutral", "grave"]}}}
 		var rec2 := SimReplay.recorder(R, 11, {"p1": false, "p2": true}, setup)
 		var sc: int = R.intro.scenario
 		var fed: bool = false
@@ -1664,11 +1665,119 @@ func _introComposed() -> String:
 		var rp: Dictionary = rec2.finish()
 		SimCore.dispose(R)
 		var back = JSON.parse_string(JSON.stringify(rp))
-		if not (back.setup.intro is Dictionary) or back.setup.intro.avoid[0] != T[heavy].id:
+		if not (back.setup.intro is Dictionary) or back.setup.intro.avoid[0] != T[heavy].id or int(back.setup.intro.take) != 2:
 			return "the replay's header lost the intro record"
 		var res: Dictionary = SimReplay.play(back)
 		if not res.ok:
 			return "a replay of a composed intro (%s): %s at tick %d" % [T[sc].id, res.reason, res.firstBadTick]
+	return ""
+
+
+## A composed intro whose record sends no facts takes the data's default (intro.json defaultFacts, a first meeting): its
+## gestures and voice tags play. A record with facts of its own, even an empty set, and the classic opening take none of
+## it. The take (the host's rematch counter) is the index of the composer's draws: none is take 0, a take composes the
+## same intro every time, what the record fixes stays fixed, and over six takes a seed composes different openings.
+func _introDefault() -> String:
+	if not SimIntro.errors().is_empty():
+		return "; ".join(SimIntro.errors())
+	var D: Dictionary = SimIntro.defaultFacts
+	if D.is_empty() or not (D.get("gestures") is Array) or D.gestures.is_empty() or not (D.get("intents") is Dictionary) or D.intents.is_empty():
+		return "intro.json has no defaultFacts with a gesture and a voice slot's tags"
+	var quiet := SimIntent.new()
+	var press := SimIntent.new()
+	press.light = true
+	var T: Array = SimIntro.templates
+	var tagged: int = 0
+	var recs: Array = [["the classic opening", {"classic": true}, false]]
+	for tp in T:
+		recs.append([tp.id + " with no facts", {"play": true, "scenario": tp.id}, true])
+		recs.append([tp.id + " with an empty set of facts", {"play": true, "scenario": tp.id, "facts": {}}, false])
+	for r in recs:
+		var label: String = r[0]
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 9, {"p1": false, "p2": false}, {"intro": r[1]})
+		var it = S.intro
+		var left: int = SimIntro.leftSlot(S)
+		var want: Array = []
+		if r[2]:
+			var rec2: Dictionary = r[1].duplicate()
+			rec2["facts"] = D
+			want = DirIntro.compose(S, rec2).gestures
+			if want.is_empty():
+				return label + ": the default facts give this template no gesture"
+		if it.gestures != want or (it.facts != D if r[2] else not it.facts.is_empty()):
+			return label + ": the match holds %d gestures, and %d were expected" % [it.gestures.size(), want.size()]
+		var got: Array = []
+		var fed: bool = false
+		for t in range(it.clock):
+			S.out.fx.clear()
+			S.out.feed.clear()
+			if SimCore.step(S, [quiet, quiet]):
+				return label + ": pre-clock tick %d was live" % t
+			for line in S.out.feed:
+				fed = fed or String(line.tag) == "INTRO facts: the default"
+			for e in S.out.fx:
+				if e.type == "intro_gesture":
+					got.append([t, int(e.actor), e.kind, e.text])
+				elif e.type == "intro_line":
+					var tg: Dictionary = SimIntro.lineTags(D if r[2] else {}, e.kind, [e.variant, "left" if int(e.actor) == left else "right"])
+					if e.angle != tg.angle or e.stance != tg.stance or e.event != tg.event or absf(e.p - tg.p) > 0.000001:
+						return label + ": the line %s was tagged '%s' at %s" % [e.kind, e.angle, str(e.p)]
+					tagged += 1 if e.angle != "" else 0
+		if got != want or fed != r[2]:
+			return label + ": the gestures sent were %s, expected %s (the feed %s the default)" % [str(got), str(want), "named" if fed else "did not name"]
+		if S.intro.left != 0 or S.fighters[0].state != "free" or S.fighters[1].state != "free":
+			return label + ": the intro did not end at its clock"
+		SimCore.dispose(S)
+		# a press still skips it, and the gestures left are not sent after the skip
+		var K := SimCore.createSim()
+		SimCore.newMatch(K, 9, {"p1": false, "p2": false}, {"intro": r[1]})
+		for t in range(SimIntro.skipFrom):
+			SimCore.step(K, [quiet, quiet])
+		K.out.fx.clear()
+		if SimCore.step(K, [quiet, press]) or K.intro.left != 0 or K.fighters[0].state != "free" or K.fighters[1].state != "free" or K.craters.size() != 2:
+			return label + ": a press at tick %d did not skip the intro" % SimIntro.skipFrom
+		for t in range(60):
+			SimCore.step(K, [quiet, quiet])
+		for e in K.out.fx:
+			if e.type == "intro_gesture" or e.type == "intro_line":
+				return label + ": a %s was sent after the skip" % e.type
+		SimCore.dispose(K)
+	if tagged == 0:
+		return "no voice slot was tagged by the default facts"
+	# the take
+	var C := SimCore.createSim()
+	SimCore.newMatch(C, 5, {"p1": false, "p2": false}, {"intro": "skip"})
+	var key := func(c: Dictionary) -> String:
+		return "%d:%d:%d:%d" % [c.scenario, c.first, c.gap, c.picks]
+	var N: int = 200
+	var varied: int = 0
+	var second: int = 0   # seeds whose second take is another opening than their first
+	var last: Dictionary = T[T.size() - 1]
+	for s in range(1, N + 1):
+		C.game.seed = s
+		var k0: String = key.call(DirIntro.compose(C, {"play": true}))
+		for same in [0, 0.0, -3, "two", DirIntro.MAX_TAKE + 1000]:   # (none of these is a later take; past the most is the most)
+			var want0: String = k0 if not (same is int and same > 0) else key.call(DirIntro.compose(C, {"play": true, "take": DirIntro.MAX_TAKE}))
+			if key.call(DirIntro.compose(C, {"play": true, "take": same})) != want0:
+				return "seed %d: a take of %s did not compose the intro it should" % [s, str(same)]
+		var seen := {k0: true}
+		for take in range(1, 6):
+			var a: Dictionary = DirIntro.compose(C, {"play": true, "take": take})
+			if key.call(a) != key.call(DirIntro.compose(C, {"play": true, "take": float(take)})):
+				return "seed %d: take %d composed two different intros" % [s, take]
+			var tp: Dictionary = T[a.scenario]
+			if a.gap < tp.gapMin or a.gap > tp.gapMax or SimIntro.flatten(a.scenario, a.gap, a.picks).why != "":
+				return "seed %d, take %d composed an intro outside its template" % [s, take]
+			seen[key.call(a)] = true
+			second += 1 if take == 1 and key.call(a) != k0 else 0
+			var f: Dictionary = DirIntro.compose(C, {"play": true, "take": take, "scenario": last.id, "order": 1, "gap": last.gapMin})
+			if f.scenario != T.size() - 1 or f.first != 1 or f.gap != last.gapMin:
+				return "seed %d, take %d moved what the record fixed" % [s, take]
+		varied += 1 if seen.size() >= 3 else 0
+	SimCore.dispose(C)
+	if varied < N * 9 / 10 or second < N * 9 / 10:
+		return "of %d seeds, %d composed another opening on the second take and %d three or more over six takes" % [N, second, varied]
 	return ""
 
 

@@ -40,7 +40,7 @@ data/fighters/roster.json    ["KAI", "VORR"] (Tools' schema today; the loader al
 {
   "schema": "fighter/1",
   "id": "KAI",
-  "identity": { "name": "KAI", "title": "Meridian Warden", "role": "hero", "sigName": "Meridian Lance",
+  "identity": { "name": "KAI", "title": "Martial Artist", "role": "hero", "sigName": "Keeper's Lance",
                 "col": "#3d8fdc", "aura": "#8fd6ff", "hair": "#22c7a9" },
   "stats": { "care": 1.0, "dmgMul": 1.0, "spd": 1.0, "maxhp": 1600.0 },
   "kit": { "canHide": false },
