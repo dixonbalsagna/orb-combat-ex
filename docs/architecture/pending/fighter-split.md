@@ -296,3 +296,66 @@ Since 208c6c7: UI draws `PROTAGONIST` and `RIVAL` through `ui/data/fighter_names
 **Goldens.** One regeneration, in the rename window. After it, against step A: tick counts identical; full-state checkpoints move (the title leaves the hash); light digests move (the feed and the banner print ids and keys). From then on a change to any displayed word touches no golden, no replay and no data hash.
 
 **Order.** Step A and its gate as in section 4. Then this step, with UI's, Rendering's, Tools' and Narrative's lines in the same working tree: between the sim's change and UI's, a player would read `PROTAGONIST.SIG` on a banner.
+
+## 10. The window, owner by owner (dry run on 07f5652, 2026-10-05)
+
+**The dry run.** A scratch copy of 07f5652 with the window's edits: my part (`rename_sim.py`: the folders, the roster, the ids, `name` the id, `sigName` the key, `title` gone, the tools' literals), Combat's `docs/combat/pending/split-rename.py --apply`, Tools' `docs/tools/pending/apply-split-keys.cjs`, the frozen copy and Encounter's map. Results there:
+
+- Goldens regenerate with **every tick count identical** on the nine matches and the two replays. Light digests and full-state checkpoints move, by the words and the ids.
+- Pass with nothing more: `parity` (45 ok), the loader check, render determinism, UI's `hud_check` (4,433 checks), Animation's `anim_check`, QA's self-test (16 of 16) and QA's runner.
+- Fail until their owner's line is in: Audio's `babble_check` (2), VFX's `effects_check` (14), the validator (6 errors, the fighter schema) and one case of the validator's self-test.
+- Not covered by any headless gate: Rendering's HUD line that draws `f.title`. It is a runtime error once the field is gone.
+
+**So the window can be one commit, if the lines of part A land first.** Each line in part A accepts both spellings and changes nothing today. I tested the Audio and VFX ones in the scratch copy: with them, both checks pass.
+
+### A. Before the window: accept both spellings (any order, each owner's own commit, no golden moves)
+
+| Owner | File and line (07f5652) | The edit | Why before |
+| :--- | :--- | :--- | :--- |
+| **Tools** | `tools/schemas/fighter.schema.json`, `identity.required` | Drop `name`, `title` and `sigName` from the required list; keep them allowed until the window | The validator's 6 errors in the window |
+| Tools | `tools/schemas/ui-fighter-names.schema.json` | A row may be `{name, title, sigName}` as well as a bare string; its fixtures follow | UI's new shape |
+| **UI** | `ui/data/fighter_names.json` line 4 | The new shape, with rows for both spellings: `kai` and `protagonist` (name `PROTAGONIST`, title `Martial Artist`, sigName `Keeper's Lance`), `vorr` and `rival` (`RIVAL`, `Challenger`, `The Barrage`) | The one display file |
+| UI | `ui/core/ui_data.gd`, `_build_names`, `display_name`, `display_text` (lines 109 to 143) | Read the new rows; add `display_title(id)`; `display_text` turns the key `<ID>.SIG` into the signature's name, matched before the bare id and in any case | Section 9 |
+| UI | `ui/core/ui_sim_bridge.gd` lines 18, 19, 42 | The readout profile id and the name from `f.id` | A lookup by name |
+| UI | `ui/data/readout_profiles.json` lines 42, 43 | Add an alias `rival` like `vorr`. **UI's decision:** `protagonist` is already a real profile's id, so the stand-in's alias cannot share it; either he reads the real Protagonist profile from the window on, or the bridge maps roster ids to profiles explicitly | Else the rival reads the default profile |
+| UI | Where the banner is drawn | Put the banner in upper case after `display_text` (the sim did it; from the window it sends a key) | Section 9 |
+| **Rendering** | `render/core/hud.gd` line 165 | `UiData.display_title(str(f.id))` in place of `f.title` | **Breaks at run time if missed** |
+| Rendering | `render/core/hud.gd` line 155 | `UiData.display_name(str(f.id))` | A lookup by name |
+| Rendering | `render/core/look.gd` line 180 | `DAMAGE_OUTFIT` gains `"PROTAGONIST": "protagonist", "RIVAL": "empress"` | Else both wear the default marks |
+| Rendering | `render/core/fighter_view.gd` lines 197, 199 | Look the outfit up by `f.id`. The damage seed hashes the name: seed it from the outfit's key instead, or the marks change once at the window | A lookup by name |
+| **VFX** | `render/vfx/glare.gd` line 23 | `WEARERS` gains `"RIVAL"` | Else the rival loses his glare |
+| VFX | `render/vfx/tools/effects_check.gd` line 2762 | The check's own test accepts `RIVAL` as well as `VORR` | Its last failing check |
+| VFX | `render/vfx/blast.gd` line 74 | `POWERUP_OFF.has(String(f.id))` (the list is empty today) | A lookup by name |
+| **Audio** | `audio/data/cues.json` lines 5, 6 | Add `"PROTAGONIST": "protagonist"` and `"RIVAL": "anti_hero"` beside the two rows | `babble_check` fails without them |
+| Audio | `audio/audio_cues.gd` lines 76, 147; `audio/audio_babble.gd` line 87 | `.id` in place of `.name` | Lookups by name |
+| **Animation** | `data/anim/ragdoll_motion.json` line 4 | `fighters` gains `"PROTAGONIST":"P","RIVAL":"A"` | It is keyed by the exact roster id: else the rival falls with the Protagonist's shape. No check catches it |
+
+Animation needs nothing else: `AnimData.fighter_key` already takes either spelling (his key in any case, `replaces`, the alias `rival`). QA needs nothing: its runner counts wins by slot, and ran clean.
+
+### B. The window: one commit, in this order, in one working tree
+
+| Step | Owner | What |
+| :--- | :--- | :--- |
+| 1 | Simulation | `rename_sim.py`: `data/fighters/KAI` and `VORR` become `PROTAGONIST` and `RIVAL`; `roster.json`; each `fighter.json` (`id`; `identity` loses `name`, `title`, `sigName`; `finishers.base` is `protagonist` or `rival`); `fighter_data.gd`, `roster.gd`, `state.gd`, `hash.gd`; `golden_recipes.gd`, `parity.gd`, `batch.gd` |
+| 2 | Combat | `python docs/combat/pending/split-rename.py --apply`: `finishers.json` (`byFighter`, the two finisher ids and their `fighter`, the shape key `antihero` to `rival`), `styles.json`, a note in `recipes.json` |
+| 3 | Tools | `node docs/tools/pending/apply-split-keys.cjs`, and one fixture: the case `finishers-duplicate-id` now also finds `/select/byFighter/RIVAL` [`xref:finisher-key`]; its expectation follows |
+| 4 | Combat's frozen copy, by the EP's grant | `sim/director/test/combat-parity/finishers.json`: the same seven edits as Combat's in `finishers.json` (lines 6, 7, 100, 101, 139, 140, 188) |
+| 5 | Encounter | `data/director/alchemy.json` lines 7, 8: the map's keys become `PROTAGONIST` and `RIVAL`, or the two rows go (the pool's key is then the id in lower case). It cannot hold both spellings: Tools' rule wants every key in the roster |
+| 6 | Simulation | Regenerate the goldens once; `npm test`, parity, determinism plain and `--intro`, the loader check, the validator and its self-test; then the other owners' gates |
+
+Steps 1 to 5 cannot be committed apart: between them the director finds no finisher for the new ids.
+
+**The proof at step 6:** tick counts identical on every golden run, and a 30-match batch whose report is the same on every line but its digest and the two names in the wins. The words are the only thing that moved.
+
+### C. After the window: clean up (any order, no hurry, no golden moves)
+
+| Owner | What |
+| :--- | :--- |
+| UI | Drop the rows `kai` and `vorr` (names file, readout aliases); comments in `ui_hud.gd` (13, 320), `ui_data.gd`, `ui_event_hub.gd` (228); the mock's and `hud_check`'s literals |
+| Rendering, VFX, Audio | Drop the old keys from `DAMAGE_OUTFIT`, `WEARERS` and `cues.json`; comments in `aura.gd` (112), `react_shots.gd` (24), `grunts.json` (7, 252) |
+| Animation | `data/anim/fighters.json` lines 6, 41: `replaces` goes or names the new ids; `ragdoll_motion.json` drops the old keys; the tools' literals (`anim_held_lint.gd` 71 and 72, `anim_check.gd`, the labs) |
+| Narrative | `data/narrative/combat_barks.json` lines 18, 31, 145, 146: the per-fighter keys become roster ids (nothing reads the file yet). The parked plot data already uses `protagonist` and `rival` |
+| QA | Labels and comments (`bands.js` 45, 81 to 83; `run-godot.js` 108 to 131; `selftest.js`; `lib/arms.js`); the path in `run-godot.js` line 92 (`data/fighters/VORR/meters.json`; the runner survives it, but its feature test then reads nothing) |
+| Tools | Forbid `name`, `title` and `sigName` in `identity`; the text of the four virtual fixtures; the fixture cases on `/fighters/KAI` |
+| Nobody | `sim/core/roster.js`, the frozen JS goldens, `prototype/` (ADR 0006) |
+
