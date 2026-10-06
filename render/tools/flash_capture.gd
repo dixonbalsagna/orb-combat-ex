@@ -10,8 +10,8 @@ extends RefCounted
 ##   first-run card, no notice, no intro, and no tick until step() asks for one.
 ## - start(scenario, {reduced}): sets one of Tools' worst cases up as tools/flash/flash_worst.gd does (the same
 ##   seeds, the same slots human or AI, the same inputs through the real pad path, and the same few writes into the
-##   sim: full ki for the beam cases, forms made ready, a tier raised, a blast through a row of buildings) and holds
-##   the sim. Scenarios: mash, clash, signature, transform, collapse, ai. An unknown one plays `ai` and says so in
+##   sim: full ki for the beam cases, forms made ready, a tier raised, both fighters set down beside the tallest
+##   tower and a blast through a row of buildings for `collapse`) and holds the sim. Scenarios: mash, clash, signature, transform, collapse, ai. An unknown one plays `ai` and says so in
 ##   `error`. `reduced` is VFX's forced reduced motion, which also puts the flash register in its reduced mode.
 ## - step(): runs exactly one tick with that tick's inputs, draws it, and resolves with the tick when the next
 ##   animation frame starts, by which time the browser has shown the frame. `tick` is the tick on screen, and
@@ -27,7 +27,8 @@ extends RefCounted
 ## - The scenes are Tools' staging, not play: the writes into the sim above are made here too, so a capture match is
 ##   not a match the determinism tools know. The split view, the HUD and the camera are the game's own.
 ##
-## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export): keep the two in step.
+## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export). Tools' drift check
+## fails when the two differ (docs/tools/flash-check.md): change them together.
 
 const SCENARIOS: Array = ["mash", "clash", "signature", "transform", "collapse", "ai"]
 const SEED: int = 12345
@@ -184,7 +185,27 @@ func _ready_forms(S: SimState, t: int, ticks: Array) -> void:
 			f.act.formReady = true
 
 
+## At the start of a match the nearest building is far off the screen: both fighters are set down beside the tallest
+## tower, so the blasts that follow are in view.
+func _to_the_city(S: SimState) -> void:
+	var tall = null
+	for b in S.buildings:
+		if b.alive and (tall == null or b.h > tall.h):
+			tall = b
+	if tall == null:
+		return
+	for i in range(2):
+		var f = S.fighters[i]
+		f.x = SimWrap.wrap(tall.x - 900.0 + 60.0 * float(i))
+		f.y = WorldTerrain.groundY(S, f.x) + 10.0
+		f.vx = 0.0
+		f.vy = 0.0
+
+
 func _stage_collapse(S: SimState, t: int) -> void:
+	if t == 0:
+		_to_the_city(S)
+		return
 	if t < 90 or (t - 90) % 150 != 0:
 		return
 	var alive: Array = []

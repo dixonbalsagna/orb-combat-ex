@@ -67,8 +67,8 @@ Tools' analyser measures pixels against the standard (`docs/tools/flash-check.md
 - **The crowd runs on the shader's clock.** The crowd's run and startle cycles use `TIME` in `crowd.gdshader`, not ticks, so between two captured frames they move by however long the capture took. Nothing else in `render/` or `render/vfx` does.
 - **The picture is the page's canvas** at the size the driver gives the window, at a device scale of 1. The hook sets no size. The standard's own reference is 1024 by 768; the driver's default is 960 by 540.
 - **The scenes are Tools' staging, not play.** They write the sim (full ki, forms made ready, a tier raised, staged blasts), so a capture match is not one the determinism tools know. The code that does it is in the build and unreachable without the argument.
-- **`collapse` at seed 12345 shows no collapse.** The fighters start in the desert and the staged blasts land on buildings off the screen; the clip counts casualties and nothing falls in view. That is the staging's, copied as it is. A seed that starts in the city, through `seed`, would put it on screen.
-- **The scenarios' rules are a copy** of Tools' file, because `tools/` is not in an export. If one changes, the other must.
+- **`collapse` moves the fight.** At the start the nearest building is 18,000 units away, so on tick 0 both fighters are set down beside the tallest tower (Tools' `_to_the_city`, the same lines in both stagings) and the blasts that follow are in view.
+- **The scenarios' rules are a copy** of Tools' file, because `tools/` is not in an export. Tools' drift check fails when the two differ (`docs/tools/flash-check.md`), so they are changed together.
 
 ## Cost
 
