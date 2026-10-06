@@ -838,3 +838,13 @@ Standing from this: the public site serves no playable build until Orb says it r
 > pick a handful of cool screenshots and at least one combat gif from our files and put some cool sounding captions under them please!
 
 Standing from this: the holding page sells the vision (procedural, dynamic combos, real-time anime brawling), with screenshots and at least one combat clip; it must not read as a list of basic fixes. Orb's description of the change, for all copy: "the shift from an auto-battler style that didn't really work to a more fluid, dynamic combat style more in line with a traditional fighting game."
+
+## No in-progress character art in public; a hold to save usage (Orb, 2026-10-06)
+
+On the draft holding page, which used a strip of Art's sky concept sheet showing the fighters' new designs:
+
+> pick a different set of landscape screenshots or create eye-catching brand new ones in a test environment, I don't want any in-progress character art to be out. the fighters in past builds are fine but not in-progress stuff please.
+>
+> and finally, I just looked at my usage and I'm at 88% for the week! I'd like to save on tokens because I have one other little project I'm working on, so please let everything finish up and put a hold on.
+
+Standing from this: no in-progress character art on any public page; fighters as they appeared in past builds are fine. Pictures for the holding page are to be landscape screenshots, re-chosen or newly staged, when work resumes. All directors are on hold after their current step until Orb says to resume.

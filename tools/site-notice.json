@@ -2,17 +2,47 @@
   "_why": "The words of the offline notice, in one place (Legal's RL-121 text, 2026-10-06; Legal may amend them). tools/build-site.mjs renders them as plain static HTML: no script, no external request, no tracking, no description or social meta, noindex. The working title is in the visible heading and the tab title only. Block kinds: h2 (a heading), p (a paragraph), small (a small paragraph), ul (a list of items).",
   "title": "Orb Combat EX (working title)",
   "blocks": [
-    { "h2": "The playable build is offline for now." },
-    { "p": "Our own automated check found some scenes that flash more often than the recommended limit of three times a second. We have taken the build down while we fix them. No independent photosensitivity analyser has been run." },
-    { "h2": "What we are working on for its return" },
-    { "ul": [
-      "Planned: flashing effects reduced and checked again, a notice before anything plays, and a setting to reduce flashing further.",
-      "Planned: a reworked close-range fight: light, medium and heavy attacks on three buttons, a launcher, and energy attacks up close.",
-      "Planned: a brawl you can move with the stick, and more control of your fighter in general.",
-      "Planned: better support for phones, in landscape."
-    ] },
-    { "p": "There is no date yet." },
-    { "small": "Orb Combat EX is a one-person project: Orb directs it and builds it with AI tools. AI tools wrote the game's code and drafted its art, animation data, dialogue, UI text and design documents." },
-    { "small": "This page collects and sends no personal data. It is hosted on GitHub Pages, which keeps its own server logs." }
+    {
+      "p": "A one-person project: Orb directs it and builds it with AI tools."
+    },
+    {
+      "h2": "The playable build is offline for now."
+    },
+    {
+      "p": "Our own automated check found some scenes that flash more often than the recommended limit of three times a second. We have taken the build down while we fix them. No independent photosensitivity analyser has been run. There is no date yet."
+    },
+    {
+      "h2": "Combos that build as you fight"
+    },
+    {
+      "p": "No combo lists to memorise. Every press is a blow, and the fight director is designed to thread your light, medium and heavy strikes into combos on the fly, shaped by where you stand and how the fight is going. No two exchanges are meant to play out the same way twice. The fight director is ordinary game code, not an AI model."
+    },
+    {
+      "h2": "Brawling you steer"
+    },
+    {
+      "p": "Planned: a brawl in your hands. Flurries you steer across the sky, charged heavies that shrug off jabs, launchers you aim with the stick, point-blank energy, and zips that carry you past a rival's guard and out the other side."
+    },
+    {
+      "h2": "The planet is the arena."
+    },
+    {
+      "p": "No walls, no corners. Fly far enough in one direction and you loop the world: city, desert, ocean, mountains. Planned: a sky that turns from noon to night as you cross it."
+    },
+    {
+      "h2": "Power has weight."
+    },
+    {
+      "p": "Beams carve trenches. Towers shed their glass, crack, hollow out and fall, one stage at a time. The world keeps every scar until the match ends."
+    },
+    {
+      "small": "Features described here are in development and may change."
+    },
+    {
+      "small": "Orb Combat EX is a one-person project: Orb directs it and builds it with AI tools. AI tools wrote the game's code and drafted its art, animation data, dialogue, UI text and design documents. Its procedural systems (planets, fight choreography, the computer-controlled opponent) are ordinary code, not AI models."
+    },
+    {
+      "small": "This page collects and sends no personal data. It is hosted on GitHub Pages, which keeps its own server logs."
+    }
   ]
 }
