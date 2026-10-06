@@ -419,6 +419,11 @@
       "id": "h07",
       "rule": "a manner (the rival's show-off, the Protagonist's pointed) is a way of throwing, not a gesture: the rival's open tell keeps the limb drawn back (never arms spread as an invitation, never a beckon), and his limb left out after landing lasts 12 ticks or fewer; no taunt pose is part of a blow",
       "why": "h02 and the taunt rules"
+    },
+    {
+      "id": "h08",
+      "rule": "a heave (the deep-sink rising blow) may take one sliding half step of up to about 22 units when the closing slack needs it: the rear foot stays on the ground, no leap, no rise before the blow (the stand is the heave's own), the other foot never leaves the ground; reach beyond that is a stepping drive's job, so Encounter limits a heave's slack to what the step covers",
+      "why": "D4 and L1: grounded, never the jumping rising uppercut; a small slide is not a leap"
     }
   ],
   "stacking": [
