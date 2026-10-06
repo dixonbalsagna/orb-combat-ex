@@ -130,6 +130,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-108 | Heave kneel read | Animation | Low | No legal reason to ease; grounded rise to chest or gut is an ordinary uppercut | Closed |
 | RL-109 | The launcher and energy in reach (launcher-and-reach-screen.md): 17 rows, R1 adopted as e08, e06 clarified (lit fist allowed) | Combat | Medium | PASS with conditions; launcher no new shape; bolts and blasts need contact and shot seen drawn | Open |
 | RL-110 | Vicious plan (ahead of C4b) and the flash rate | Combat, VFX | Medium | s08 (arm as three places, two per place); k05 (three full flashes a second over the whole screen, flash analysis); rating question still open | Open |
+| RL-111 | Correction to RL-109 and RL-110: Orb confirmed vicious blows inside the clinch on 2026-10-06 (docs/ep/vision.md, last section) | Combat | Low | Design confirmed; the launch pair's plan has no bite, gouge or claw, so the rating question does not arise for them and stays open for the Cyborg; s08 applies; poses screened when Combat and Animation have them (clinch slice, last in the order) | Open until poses exist |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
