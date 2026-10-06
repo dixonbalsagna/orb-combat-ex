@@ -47,7 +47,7 @@ open(p, 'w', encoding='utf-8').write(json.dumps(d, indent=2) + '\n')
 def state(s):
     s = rep(s, "	var floors: int = 1        # floor count", "	var district: int = 0      # D1: the district it stands in (index over all settlements), set at generation\n	var shape: String = \"\"      # D1: the render shape (settlements.json shapes)\n	var landmark: int = 0      # D1: 1-based landmark index (0 none)\n	var floors: int = 1        # floor count")
     s = rep(s, "var low := PackedFloat32Array()", "var lanes := PackedFloat32Array()      # L1: the lane table (world/lanes.gd build), derived, not hashed: read by the ground shader and the props\nvar low := PackedFloat32Array()")
-    s = rep(s, "	var rubble: float = 0.0      # building_fall: the heap height left", "	var rubble: float = 0.0      # building_fall: the heap height left\n	var landmark: float = 0.0    # building_fall: the landmark index of the fallen building (0 none)")
+    s = rep(s, "	var rubble: float = 0.0      # building_fall: the heap height left", "	var rubble: float = 0.0      # building_fall: the heap height left\n	var landmark: bool = false   # building_fall: the fallen building is a landmark (Game Design's mood reads it: landmarkFall)")
     return s
 
 
@@ -56,7 +56,7 @@ rw('sim/core/state.gd', state)
 
 # ------------------------------------------------------------ hash.gd
 def hsh(s):
-    s = rep(s, '"floors", "fmask"]', '"floors", "fmask", "district", "shape", "landmark"]')
+    s = rep(s, '"floors", "fmask", "wear"]', '"floors", "fmask", "wear", "district", "shape", "landmark"]')
     s = rep(s, '"building_fall": ["b", "x", "y", "w", "depth", "mode", "delay", "cx", "rubble", "n"]', '"building_fall": ["b", "x", "y", "w", "depth", "mode", "delay", "cx", "rubble", "n", "landmark"]')
     return s
 
@@ -67,7 +67,7 @@ rw('sim/core/hash.gd', hsh)
 # ------------------------------------------------------------ fx.gd
 def fx(s):
     s = rep(s, "static func buildingFall(S: SimState, b: int, x: float, z: float, w: float, h: float, mode: String, delay: float, cx: float, rubble: float, n: float) -> void:\n	var e := _ev(S, \"building_fall\")\n	e.b = float(b); e.x = x; e.y = z; e.w = w; e.depth = h; e.mode = mode; e.delay = delay; e.cx = cx; e.rubble = rubble; e.n = n\n",
-            "static func buildingFall(S: SimState, b: int, x: float, z: float, w: float, h: float, mode: String, delay: float, cx: float, rubble: float, n: float, landmark: float = 0.0) -> void:\n	var e := _ev(S, \"building_fall\")\n	e.b = float(b); e.x = x; e.y = z; e.w = w; e.depth = h; e.mode = mode; e.delay = delay; e.cx = cx; e.rubble = rubble; e.n = n; e.landmark = landmark\n")
+            "static func buildingFall(S: SimState, b: int, x: float, z: float, w: float, h: float, mode: String, delay: float, cx: float, rubble: float, n: float, landmark: bool = false) -> void:\n	var e := _ev(S, \"building_fall\")\n	e.b = float(b); e.x = x; e.y = z; e.w = w; e.depth = h; e.mode = mode; e.delay = delay; e.cx = cx; e.rubble = rubble; e.n = n; e.landmark = landmark\n")
     return s
 
 
@@ -76,7 +76,7 @@ rw('sim/core/fx.gd', fx)
 
 # ------------------------------------------------------------ structures.gd: the landmark on the fall event
 def structures(s):
-    return rep(s, "			SimFx.buildingFall(S, b.idx, b.x, b.z, b.w, b.h, mode, delay, cx, heap, 1.0)", "			SimFx.buildingFall(S, b.idx, b.x, b.z, b.w, b.h, mode, delay, cx, heap, 1.0, float(b.landmark))")
+    return rep(s, "			SimFx.buildingFall(S, b.idx, b.x, b.z, b.w, b.h, mode, delay, cx, heap, 1.0)", "			SimFx.buildingFall(S, b.idx, b.x, b.z, b.w, b.h, mode, delay, cx, heap, 1.0, b.landmark > 0)")
 
 
 rw('sim/world/structures.gd', structures)
