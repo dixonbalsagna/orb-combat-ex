@@ -58,6 +58,13 @@ function runPair(tag, a, b, n, base) {
   });
 }
 
+// At most `k` Godot jobs at once (the standing cap is three): the tasks are thunks, run by k workers, results in order.
+async function pool(tasks, k = 3) {
+  const out = new Array(tasks.length); let next = 0;
+  await Promise.all(Array.from({ length: Math.min(k, tasks.length) }, async () => { while (next < tasks.length) { const i = next++; out[i] = await tasks[i](); } }));
+  return out;
+}
+
 // Two waves of three processes: the masher who takes forms (the banded rows) and the one who never transforms (INFO), per Encounter's finding in docs/director/masher-probes.md.
 async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'] } = {}) {
   const withForms = await Promise.all(levels.map(l => runLevel(l, n, base, true)));
@@ -66,20 +73,20 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   const gaps = await Promise.all([6, 10].map(g => runLevel('medium', n, base, true, g)));
   // The lights-only mirror, twice: the first counts live ticks (as every earlier baseline did), the second counts S.tick (the real tap rate); then a 6-tick against a 12-tick tapper (closes a minute).
   const mirror = await runMirror(MIRROR_N, base);   // the mirror's matches are the slow ones (a stalemate runs to the cap), so it gets fewer
-  const mirrors = await Promise.all([
-    runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick', null, 'tick'),
-    runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick', 'masher:forms=1:clock=tick:off=7', 'tickoff'),
-    runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick:gap=6', 'masher:forms=1:clock=tick:gap=12', 'fast-slow'),
+  const mirrors = await pool([
+    () => runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick', null, 'tick'),
+    () => runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick', 'masher:forms=1:clock=tick:off=7', 'tickoff'),
+    () => runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick:gap=6', 'masher:forms=1:clock=tick:gap=12', 'fast-slow'),
   ]);
   const E = ':energy=1:forms=1:stick=1', R = ':forms=1:stick=1';
-  const pairs = await Promise.all([
-    runPair('bolt-melee', 'masher:energy=1:forms=1', 'masher:forms=1', Math.min(n, 40), base),
-    runPair('bolt-medium', 'masher:energy=1:forms=1', 'ai:level=medium', Math.min(n, 100), base),
-    runPair('blast-rush', 'tapper:idle=14:acc=80:win=4:mix=LLLH' + E, 'tapper:acc=80:win=4:mix=LLH' + R, Math.min(n, 40), base),
-    runPair('blast-rush-slow', 'tapper:acc=80:win=4:mix=LLH' + E, 'tapper:acc=80:win=4:mix=LLH' + R, Math.min(n, 40), base),
-    runPair('zip-medium', 'zipper:forms=1', 'ai:level=medium', Math.min(n, 100), base),
-    runPair('blast-medium', 'tapper:idle=14:acc=80:win=4:mix=LLLH' + E, 'ai:level=medium', Math.min(n, 100), base),
-    runPair('blast-slow-medium', 'tapper:acc=80:win=4:mix=LLH' + E, 'ai:level=medium', Math.min(n, 100), base),
+  const pairs = await pool([
+    () => runPair('bolt-melee', 'masher:energy=1:forms=1', 'masher:forms=1', Math.min(n, 40), base),
+    () => runPair('bolt-medium', 'masher:energy=1:forms=1', 'ai:level=medium', Math.min(n, 100), base),
+    () => runPair('blast-rush', 'tapper:idle=14:acc=80:win=4:mix=LLLH' + E, 'tapper:acc=80:win=4:mix=LLH' + R, Math.min(n, 40), base),
+    () => runPair('blast-rush-slow', 'tapper:acc=80:win=4:mix=LLH' + E, 'tapper:acc=80:win=4:mix=LLH' + R, Math.min(n, 40), base),
+    () => runPair('zip-medium', 'zipper:forms=1', 'ai:level=medium', Math.min(n, 100), base),
+    () => runPair('blast-medium', 'tapper:idle=14:acc=80:win=4:mix=LLLH' + E, 'ai:level=medium', Math.min(n, 100), base),
+    () => runPair('blast-slow-medium', 'tapper:acc=80:win=4:mix=LLH' + E, 'ai:level=medium', Math.min(n, 100), base),
   ]);
   // Agency pass section 20: how often the perfect blur locks, live against the medium AI. A blind 8-tick masher at most 20% of five-blow strings; a script that presses on every contact (and follows the chain links) at least 80%; a metronome on the real clock at 10, 12 and 14 ticks (Encounter measured 9, 27 and 26%; the same 20% ceiling is QA's assumption until Game Design rules).
   const M = ':forms=1:stick=1', ai = 'ai:level=medium';

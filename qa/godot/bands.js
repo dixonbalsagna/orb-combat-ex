@@ -42,8 +42,8 @@ const wl = (k, n) => S.wilson(k, n);
 const decided = recs => recs.filter(r => !r.timeout);
 const p1Wins = recs => decided(recs).filter(r => r.winner === 0).length;
 
-// KAI's win rate over both slots (default: KAI in P1, swap: KAI in P2).
-function kaiRate(A) {
+// The Protagonist's win rate over both slots (default: the Protagonist in P1, swap: the Protagonist in P2).
+function protagonistRate(A) {
   const d = decided(A.default), s = decided(A.swap);
   const k = d.filter(r => r.winner === 0).length + s.filter(r => r.winner === 1).length, n = d.length + s.length;
   return { v: k / n, ci: wl(k, n), k, n };
@@ -77,10 +77,10 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
 
   // ---- 1. win rate
   if (have('default', 'swap')) {
-    const k = kaiRate(A);
-    R.rate('1.kai', '§1', 'KAI win rate, averaged over both slots (1v1 pairing)', { v: k.v, ci: k.ci, lo: 0.45, hi: 0.55, note: `${k.k} of ${k.n} decided matches` });
-    R.rate('9.kai42', '§9', 'KAI at least 42% (the placeholder-balance target from slice S0)', { v: k.v, ci: k.ci, lo: 0.42, hi: 1, note: 'the 45 to 55% band applies to the real roster' });
-  } else R.pending('1.kai', '§1', 'KAI win rate over both slots', 'needs arms default and swap');
+    const k = protagonistRate(A);
+    R.rate('1.protagonist', '§1', 'Protagonist win rate, averaged over both slots (1v1 pairing)', { v: k.v, ci: k.ci, lo: 0.45, hi: 0.55, note: `${k.k} of ${k.n} decided matches` });
+    R.rate('9.protagonist42', '§9', 'The Protagonist at least 42% (the placeholder-balance target from slice S0)', { v: k.v, ci: k.ci, lo: 0.42, hi: 1, note: 'the 45 to 55% band applies to the real roster' });
+  } else R.pending('1.protagonist', '§1', 'Protagonist win rate over both slots', 'needs arms default and swap');
   for (const m of ['mirror-villain', 'mirror-hero']) {
     if (have(m, m + '-flip')) {
       const e = mirrorEffects(A, m);
@@ -552,8 +552,11 @@ function zipBlock(R, D, wl, sum) {
   if (spent > 0) R.point('zip.kiShare', '§2c', 'Ki spent on zips, as a share of all ki spent (at most 25%)', { v: zipKi / spent, hi: 0.25, unit: 'pct' });
   R.info('zip.reported', '§2c', 'Zips reported: blocked, dodged (a zip that completed and did no damage), stopped by a shot, outrun, knocked down, and every end', `blocked ${pct(guard)}, dodged ${pct(dodged)}, stopped by a shot ${pct(shot)}, outrun ${pct(outrun)}, down ${pct(down)}; ends ${JSON.stringify(zips.reduce((a, z) => { a[z.end || 'open'] = (a[z.end || 'open'] || 0) + 1; return a; }, {}))}`, `${n} zips in ${D.length} matches`);
   // hard tests
-  const badPrice = zips.filter(z => Math.abs(z.price - kindOf(z).price) > 0.5);
-  R.add({ id: 'zip.price', ref: '§2c', what: 'A zip costs exactly the table ki, paid at the press (hard test)', status: badPrice.length ? 'FAIL' : 'PASS', value: badPrice.length ? `${badPrice.length} of ${n} off the table, first: ${badPrice[0].kind} paid ${badPrice[0].price}, seed ${badPrice[0].seed}` : `${n} of ${n} on the table`, band: 'strike 20, heavy 30 (within 0.5, the regeneration of one tick)', note: 'read as the ki the zipper held the tick before the cue less the ki after it' });
+  // the price: the director prints it when the zip starts (feedKi, exact); the ki the zipper lost in that tick (price) also holds the regeneration and any gain of the same tick, so it is read as a check with a margin and its outliers are counted, not failed
+  const haveFeed = zips.every(z => z.feedKi !== undefined);
+  const badPrice = haveFeed ? zips.filter(z => Math.abs(z.feedKi - kindOf(z).price) > 0.001) : zips.filter(z => Math.abs(z.price - kindOf(z).price) > 0.5);
+  const noisy = haveFeed ? zips.filter(z => Math.abs(z.price - kindOf(z).price) > 0.5).length : 0;
+  R.add({ id: 'zip.price', ref: '§2c', what: 'A zip costs exactly the table ki, paid at the press (hard test)', status: badPrice.length ? 'FAIL' : 'PASS', value: badPrice.length ? `${badPrice.length} of ${n} off the table, first: ${badPrice[0].kind} paid ${haveFeed ? badPrice[0].feedKi : badPrice[0].price}, seed ${badPrice[0].seed}` : `${n} of ${n} on the table${haveFeed ? '' : ' (read from the ki a tick later: within 0.5)'}`, band: 'strike 20, heavy 30', note: haveFeed ? `read from the director's own line at the press (exact); the ki the zipper lost in that same tick is off the table by more than 0.5 in ${noisy} of ${n} (a gain or a regeneration landing in the tick), reported and not failed` : 'read as the ki the zipper held the tick before the cue less the ki after it (within 0.5, the regeneration of one tick); records made before the harness read the director line' });
   const badTell = zips.filter(z => z.tell !== kindOf(z).tell || z.dur < kindOf(z).whole[0] || z.dur > kindOf(z).whole[1] + 12);
   R.add({ id: 'zip.table', ref: '§2c', what: 'A zip tell is the table ticks and its whole length is in the table range for the default exit (hard test; the ticks in reach are the zip.reach row)', status: badTell.length ? 'FAIL' : 'PASS', value: badTell.length ? `${badTell.length} of ${n} off the table, first: ${badTell[0].kind} tell ${badTell[0].tell}, whole ${badTell[0].dur}, seed ${badTell[0].seed}` : `${n} of ${n} on the table`, band: 'strike tell 6, whole 32 to 34; heavy tell 10, whole 52 to 54 (up to 12 more for a longer exit)', note: 'the tell and the whole length; the ticks in reach are read from the cues in the next row' });
   // ticks in reach (Encounter: zip_light and zip_heavy carry the plan in x and y; zip_out carries amount = in reach before the blow, dur = after, k = reading 0 speed, 1 tech, 2 held)
@@ -592,4 +595,4 @@ function levelRows(byLevel) {
   return rows;
 }
 
-module.exports = { levelRows, evaluate, hasEvent, kaiRate, mirrorEffects, median, q, fmt, SCALES, PLANET };
+module.exports = { levelRows, evaluate, hasEvent, protagonistRate, mirrorEffects, median, q, fmt, SCALES, PLANET };

@@ -461,6 +461,14 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		if pl_after > pl_before and not new_fl.is_empty():
 			new_fl[new_fl.size() - 1].pl = true   # the planner launch: its LAUNCH line is in the same tick as its launch event (the last one if a scripted launch follows in the tick)
 		new_fl.clear()
+		for l in S.out.feed:   # the zip's own price, as the director prints it ("... bh; 20 ki; a tell of ..."): exact, where the ki a tick later is shared with the regeneration and every gain
+			var ft: String = str(l.tag)
+			if ft.ends_with(" ZIP STRIKE") or ft.ends_with(" ZIP HEAVY"):
+				var fa: int = 0 if ft.begins_with(str(fs[0].name)) else 1
+				if zopen.has(fa):
+					var fparts: PackedStringArray = str(l.sub).split(";")
+					if fparts.size() >= 2:
+						rec.zips[zopen[fa]]["feedKi"] = float(fparts[1].strip_edges().replace(" ki", ""))
 		S.out.feed.clear()
 		for zi in range(2):
 			var dkz: float = float(prev_ki[zi]) - float(fs[zi].ki)

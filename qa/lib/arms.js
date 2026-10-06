@@ -4,15 +4,15 @@ const { createHarness, runMatch, Hasher } = require('../../prototype/tools/match
 const S = require('../../prototype/tools/stats');
 
 const PLAN = [
-  { arm: 'default', base: 100001, core: true, label: 'KAI in P1, VORR in P2 (as shipped)' },
-  { arm: 'swap', base: 200001, core: true, label: 'VORR in P1, KAI in P2' },
-  { arm: 'mirror-villain', base: 300001, core: true, label: 'VORR-A in P1, VORR-B in P2' },
-  { arm: 'mirror-hero', base: 400001, core: true, label: 'KAI-A in P1, KAI-B in P2' },
+  { arm: 'default', base: 100001, core: true, label: 'the Protagonist in P1, the Rival in P2 (as shipped)' },
+  { arm: 'swap', base: 200001, core: true, label: 'the Rival in P1, the Protagonist in P2' },
+  { arm: 'mirror-villain', base: 300001, core: true, label: 'RIVAL-A in P1, RIVAL-B in P2' },
+  { arm: 'mirror-hero', base: 400001, core: true, label: 'PROTAGONIST-A in P1, PROTAGONIST-B in P2' },
   // The same four with the spawn sides exchanged, to separate the slot (P1 or P2) from the side of the map a fighter starts on.
-  { arm: 'default-flip', base: 500001, label: 'KAI in P1 starting east, VORR in P2 starting west' },
-  { arm: 'swap-flip', base: 600001, label: 'VORR in P1 starting east, KAI in P2 starting west' },
-  { arm: 'mirror-villain-flip', base: 700001, label: 'VORR-A in P1 starting east, VORR-B in P2 starting west' },
-  { arm: 'mirror-hero-flip', base: 800001, label: 'KAI-A in P1 starting east, KAI-B in P2 starting west' },
+  { arm: 'default-flip', base: 500001, label: 'the Protagonist in P1 starting east, the Rival in P2 starting west' },
+  { arm: 'swap-flip', base: 600001, label: 'the Rival in P1 starting east, the Protagonist in P2 starting west' },
+  { arm: 'mirror-villain-flip', base: 700001, label: 'RIVAL-A in P1 starting east, RIVAL-B in P2 starting west' },
+  { arm: 'mirror-hero-flip', base: 800001, label: 'PROTAGONIST-A in P1 starting east, PROTAGONIST-B in P2 starting west' },
 ];
 
 // Run `count` matches of one arm from seed `base` (plus an optional shift). Returns { recs, agg } with agg.digest, agg.base, agg.label.

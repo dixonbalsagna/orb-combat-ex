@@ -11,7 +11,7 @@ let pass = 0, fail = 0;
 const t = async (name, fn) => { try { await fn(); pass++; console.log('  ok    ' + name); } catch (e) { fail++; console.log('  FAIL  ' + name + '\n        ' + e.message.split('\n')[0]); } };
 
 // A minimal record with the fields the tests read.
-const rec = (o = {}) => ({ seed: 1, arm: 'default', names: ['KAI', 'VORR'], timeout: false, winner: 0, koAt: 100, tierT: [0, -1, 20, 40, -1], maxTier: [3, 2], fronts: 0, wear: [null, null], events: [], fxCounts: {}, launches: {}, melee: {}, beams: [], parries: [0, 0], chains: [], hides: [0, 0], hiddenSec: [0, 0], fightSec: { plains: 10 }, exLens: [], exGaps: [], flights: [], underSec: 0, lowSec: 1, lowCas: 0, pop0: 425, civPct: 30, ambush: 0, rows: { 1: { lost: 10, n: 47 } }, menace: [0, 0], ...o });
+const rec = (o = {}) => ({ seed: 1, arm: 'default', names: ['PROTAGONIST', 'RIVAL'], timeout: false, winner: 0, koAt: 100, tierT: [0, -1, 20, 40, -1], maxTier: [3, 2], fronts: 0, wear: [null, null], events: [], fxCounts: {}, launches: {}, melee: {}, beams: [], parries: [0, 0], chains: [], hides: [0, 0], hiddenSec: [0, 0], fightSec: { plains: 10 }, exLens: [], exGaps: [], flights: [], underSec: 0, lowSec: 1, lowCas: 0, pop0: 425, civPct: 30, ambush: 0, rows: { 1: { lost: 10, n: 47 } }, menace: [0, 0], ...o });
 const withEvents = (r, evs) => { const fx = { ...r.fxCounts }; for (const e of evs) fx[e.type] = (fx[e.type] || 0) + 1; return { ...r, events: evs, fxCounts: fx }; };
 const byId = res => Object.fromEntries(res.map(r => [r.id, r]));
 const ctx = A => ({ A, runRecords: async () => [rec()] });
@@ -103,12 +103,12 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const r = byId(await runTests(ctx({ default: [withEvents(rec(), [{ type: 'brunt_chain', t: 5 }])] }), ['H5'])).H5;
     assert.strictEqual(r.status, 'PENDING');
   });
-  await t('the band evaluator marks KAI below 45% as FAIL and 50% as PASS, and lists structures by row once rows exist', async () => {
-    const mk = (kaiWins, n) => Array.from({ length: n }, (_, i) => rec({ seed: i, winner: i < kaiWins ? 0 : 1 }));
-    const swapMk = (kaiWins, n) => Array.from({ length: n }, (_, i) => rec({ seed: i, winner: i < kaiWins ? 1 : 0 }));
-    const low = evaluate({ default: mk(30, 100), swap: swapMk(30, 100) }).find(r => r.id === '1.kai');
+  await t('the band evaluator marks the Protagonist below 45% as FAIL and 50% as PASS, and lists structures by row once rows exist', async () => {
+    const mk = (protagonistWins, n) => Array.from({ length: n }, (_, i) => rec({ seed: i, winner: i < protagonistWins ? 0 : 1 }));
+    const swapMk = (protagonistWins, n) => Array.from({ length: n }, (_, i) => rec({ seed: i, winner: i < protagonistWins ? 1 : 0 }));
+    const low = evaluate({ default: mk(30, 100), swap: swapMk(30, 100) }).find(r => r.id === '1.protagonist');
     assert.strictEqual(low.status, 'FAIL');
-    const mid = evaluate({ default: mk(200, 400), swap: swapMk(200, 400) }).find(r => r.id === '1.kai');
+    const mid = evaluate({ default: mk(200, 400), swap: swapMk(200, 400) }).find(r => r.id === '1.protagonist');
     assert.strictEqual(mid.status, 'PASS');
     const rows = evaluate({ default: Array.from({ length: 10 }, () => rec({ rows: { 1: { lost: 10, n: 47 }, 2: { lost: 20, n: 60 } } })) });
     assert.ok(rows.find(r => r.id === '4.struct.row2'), 'no per-row line');

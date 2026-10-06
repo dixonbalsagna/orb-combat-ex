@@ -89,7 +89,7 @@ function simInfo() {
   const alt = process.env.QA_GODOT_ROOT ? path.resolve(process.env.QA_GODOT_ROOT) : null;   // a clean export of a commit, for comparisons
   const dirty = alt ? 0 : git('status', '--short', '--', 'sim').split('\n').filter(Boolean).length;
   const src = f => { try { return fs.readFileSync(path.join(alt || ROOT, f), 'utf8'); } catch (e) { return ''; } };
-  const s0 = /MENACE_DECAY/.test(src('sim/core/fighter.gd')) || /"decay"/.test(src('data/fighters/VORR/meters.json')), s1 = fs.existsSync(path.join(alt || ROOT, 'sim/core/wounds.gd'));   // S0: menace decay, in code (before D1b) or in the meters data (after)
+  const s0 = /MENACE_DECAY/.test(src('sim/core/fighter.gd')) || /"decay"/.test(src('data/fighters/RIVAL/meters.json')), s1 = fs.existsSync(path.join(alt || ROOT, 'sim/core/wounds.gd'));   // S0: menace decay, in code (before D1b) or in the meters data (after)
   return `${alt ? 'clean export of ' + (process.env.QA_SIM_COMMIT ? 'commit ' + process.env.QA_SIM_COMMIT : 'an unlabelled commit (set QA_SIM_COMMIT; the working tree HEAD is not the export)') : 'commit ' + (git('rev-parse', '--short', 'HEAD') || '?') + (dirty ? ` + ${dirty} uncommitted sim file(s)` : '')}; slices in the tree: S0 ${s0 ? 'yes' : 'no'}, S1 ${s1 ? 'yes' : 'no'}`;
 }
 function digest(recs) { const h = new (require('../prototype/tools/match-runner').Hasher)(); for (const r of recs) h.str(r.hash); return h.hex(); }
@@ -105,22 +105,22 @@ function printTests(tests) {
   for (const t of tests) console.log(`  ${pad(t.status, 7)} ${pad(t.id, 3)} ${pad(t.spec, 18)} ${t.title.length > 90 ? t.title.slice(0, 89) + '…' : t.title}\n            ${t.detail}`);
 }
 
-// Slice S0 re-test (wounds-plan.md): KAI at 42% or better on at least 400 matches per arm, both slots, and the §10 pacing rows still pass.
+// Slice S0 re-test (wounds-plan.md): the Protagonist at 42% or better on at least 400 matches per arm, both slots, and the §10 pacing rows still pass.
 function s0Retest(A) {
   if (!A.default || !A.swap) return { status: 'PENDING', note: 'needs arms default and swap' };
-  const k = require('./godot/bands').kaiRate(A), per = { P1: A.default.filter(r => !r.timeout && r.winner === 0).length / A.default.filter(r => !r.timeout).length, P2: A.swap.filter(r => !r.timeout && r.winner === 1).length / A.swap.filter(r => !r.timeout).length };
+  const k = require('./godot/bands').protagonistRate(A), per = { P1: A.default.filter(r => !r.timeout && r.winner === 0).length / A.default.filter(r => !r.timeout).length, P2: A.swap.filter(r => !r.timeout && r.winner === 1).length / A.swap.filter(r => !r.timeout).length };
   const rows = evaluate(A, { scale: SCALE, cap: CAP }), pacing = rows.filter(r => r.ref === '§10' && r.status !== 'PENDING' && r.status !== 'INFO');
   const enough = Math.min(A.default.length, A.swap.length) >= 400, low = k.ci[1] < 0.42;
   const menace = mean2(A.default.map(r => r.menace[1]));
   const status = !enough ? 'INCONCLUSIVE' : k.v >= 0.42 ? 'PASS' : 'FAIL';
-  return { status, kai: k.v, ci: k.ci, kaiAsP1: per.P1, kaiAsP2: per.P2, matchesPerArm: Math.min(A.default.length, A.swap.length), pacingPass: pacing.filter(r => r.status === 'PASS').length, pacingFail: pacing.filter(r => r.status === 'FAIL').map(r => r.id), meanFinalVorrMenace: menace, sure: enough ? (low ? 'the whole interval is below 42%' : k.ci[0] >= 0.42 ? 'the whole interval is at or above 42%' : 'the interval straddles 42%') : 'fewer than 400 matches per arm' };
+  return { status, protagonist: k.v, ci: k.ci, protagonistAsP1: per.P1, protagonistAsP2: per.P2, matchesPerArm: Math.min(A.default.length, A.swap.length), pacingPass: pacing.filter(r => r.status === 'PASS').length, pacingFail: pacing.filter(r => r.status === 'FAIL').map(r => r.id), meanFinalRivalMenace: menace, sure: enough ? (low ? 'the whole interval is below 42%' : k.ci[0] >= 0.42 ? 'the whole interval is at or above 42%' : 'the interval straddles 42%') : 'fewer than 400 matches per arm' };
 }
 const mean2 = a => a.reduce((x, y) => x + y, 0) / a.length;
 function printS0(s) {
-  console.log('\nSLICE S0 RE-TEST (KAI at 42% or better; at least 400 matches per arm, both slots)');
-  if (!s.kai) { console.log('  ' + s.status + ' ' + s.note); return; }
-  console.log(`  ${s.status}  KAI ${(s.kai * 100).toFixed(1)}% [${(s.ci[0] * 100).toFixed(1)}, ${(s.ci[1] * 100).toFixed(1)}] over both slots (${(s.kaiAsP1 * 100).toFixed(1)}% from P1, ${(s.kaiAsP2 * 100).toFixed(1)}% from P2), ${s.matchesPerArm} matches per arm: ${s.sure}`);
-  console.log(`  pacing rows (§10): ${s.pacingPass} pass${s.pacingFail.length ? ', FAIL: ' + s.pacingFail.join(', ') : ''}; VORR's mean menace at the KO ${s.meanFinalVorrMenace.toFixed(1)}`);
+  console.log('\nSLICE S0 RE-TEST (the Protagonist at 42% or better; at least 400 matches per arm, both slots)');
+  if (!s.protagonist) { console.log('  ' + s.status + ' ' + s.note); return; }
+  console.log(`  ${s.status}  the Protagonist ${(s.protagonist * 100).toFixed(1)}% [${(s.ci[0] * 100).toFixed(1)}, ${(s.ci[1] * 100).toFixed(1)}] over both slots (${(s.protagonistAsP1 * 100).toFixed(1)}% from P1, ${(s.protagonistAsP2 * 100).toFixed(1)}% from P2), ${s.matchesPerArm} matches per arm: ${s.sure}`);
+  console.log(`  pacing rows (§10): ${s.pacingPass} pass${s.pacingFail.length ? ', FAIL: ' + s.pacingFail.join(', ') : ''}; the Rival's mean menace at the KO ${s.meanFinalRivalMenace.toFixed(1)}`);
 }
 
 function toMarkdown(r) {
@@ -128,7 +128,7 @@ function toMarkdown(r) {
   L.push('# Baseline on the GDScript sim\n');
   L.push(`Generated by \`node qa/run-godot.js --matches=${r.matches}${r.scale !== 'testbed' ? ' --scale=' + r.scale : ''}\`. Godot ${r.godot}; ${r.sim}. Seeds ${r.seedBase}..${r.seedBase + r.matches - 1} in every arm; cap ${r.cap} sim-seconds (S.T). Every number reproduces from the seeds: the digests are below.\n`);
   L.push('| Arm | Digest |\n| :--- | :--- |\n' + Object.entries(r.digests).map(([a, d]) => `| ${a} | \`${d}\` |`).join('\n') + '\n');
-  if (r.s0) L.push(`## Slice S0 re-test\n\n${r.s0.status}: ${r.s0.kai ? `KAI ${(r.s0.kai * 100).toFixed(1)}% [${(r.s0.ci[0] * 100).toFixed(1)}, ${(r.s0.ci[1] * 100).toFixed(1)}] over both slots (${(r.s0.kaiAsP1 * 100).toFixed(1)}% from P1, ${(r.s0.kaiAsP2 * 100).toFixed(1)}% from P2), ${r.s0.matchesPerArm} matches per arm; ${r.s0.sure}. Pacing rows passing: ${r.s0.pacingPass}${r.s0.pacingFail.length ? '; failing: ' + r.s0.pacingFail.join(', ') : ''}.` : r.s0.note}\n`);
+  if (r.s0) L.push(`## Slice S0 re-test\n\n${r.s0.status}: ${r.s0.protagonist ? `the Protagonist ${(r.s0.protagonist * 100).toFixed(1)}% [${(r.s0.ci[0] * 100).toFixed(1)}, ${(r.s0.ci[1] * 100).toFixed(1)}] over both slots (${(r.s0.protagonistAsP1 * 100).toFixed(1)}% from P1, ${(r.s0.protagonistAsP2 * 100).toFixed(1)}% from P2), ${r.s0.matchesPerArm} matches per arm; ${r.s0.sure}. Pacing rows passing: ${r.s0.pacingPass}${r.s0.pacingFail.length ? '; failing: ' + r.s0.pacingFail.join(', ') : ''}.` : r.s0.note}\n`);
   if (r.bands) {
     L.push('## Bands (`docs/design/balance-targets.md`)\n');
     L.push('| Status | § | Measure | Value | Band | Note |\n| :--- | :--- | :--- | :--- | :--- | :--- |');
