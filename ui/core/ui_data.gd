@@ -138,7 +138,7 @@ static func _build_names() -> void:
 		_sig_re.compile("(?i)\\b(" + alt + ")\\.SIG\\b")   # the signature's key (<ID>.SIG), in any case
 
 
-## The name a player sees for a fighter's roster id or name (KAI, kai, PROTAGONIST): its display name from ui/data/fighter_names.json, or the name itself
+## The name a player sees for a fighter's roster id or name (PROTAGONIST, protagonist): its display name from ui/data/fighter_names.json, or the name itself
 ## when there is none. The sim and the data keep the roster ids; only what is drawn changes, so the rename only changes the keys there.
 static func display_name(name: String) -> String:
 	if not _names_built:
@@ -161,7 +161,7 @@ static func display_sig(id: String) -> String:
 
 
 ## `text` with a roster id in it as what a player reads: a signature key (PROTAGONIST.SIG, any case) as the signature's name (the fighter's own
-## name when it has none), then a bare roster id in capitals (K.O.  KAI WINS) as the fighter's display name; whole words only.
+## name when it has none), then a bare roster id in capitals (K.O.  PROTAGONIST WINS) as the fighter's display name; whole words only.
 static func display_text(text: String) -> String:
 	if not _names_built:
 		_build_names()
@@ -182,8 +182,8 @@ static func display_text(text: String) -> String:
 	return out + text.substr(at)
 
 
-## The readout profile for a fighter id (its own entry over the default; aliases such as the sim's placeholder KAI
-## and VORR map onto a base profile with overrides).
+## The readout profile for a fighter id (its own entry over the default; aliases such as the stand-ins' stand_in_protagonist
+## and rival map onto a base profile with overrides).
 static func profile(id: String) -> Dictionary:
 	ensure()
 	var out: Dictionary = (_profiles.get("default", {}) as Dictionary).duplicate(true)

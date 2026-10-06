@@ -6,7 +6,7 @@ extends RefCounted
 ##
 ## Scenarios: "hero_vs_proud" (the Protagonist against the Anti-hero: heat track, Pride mask, shame, facade crack, Rally),
 ##            "empress_vs_cyborg" (mantle, revision reprint, chip rail, hatch, regrowth),
-##            "placeholders" (the greybox fighters KAI and VORR), "stress" (a seeded flood),
+##            "placeholders" (the greybox fighters PROTAGONIST and RIVAL), "stress" (a seeded flood),
 ##            "controls" (Controls' rulings: parry clean tail, press acks, the finisher struggle rings, availability, prompts).
 ## Uses its own seeded generator: nothing here touches the sim's random streams.
 
@@ -25,7 +25,7 @@ static func fighters(scn: String) -> Array:
 		"empress_vs_cyborg":
 			return [["empress", "cyborg"], ["THE EMPRESS", "THE CYBORG"]]
 		"placeholders":
-			return [["kai", "vorr"], ["KAI", "VORR"]]
+			return [["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"]]
 		"stress", "controls":
 			return [["protagonist", "anti_hero"], ["PROTAGONIST", "ANTI-HERO"]]
 	return [["protagonist", "anti_hero"], ["PROTAGONIST", "ANTI-HERO"]]
@@ -155,7 +155,7 @@ func _build_hero_proud() -> void:
 	_bark(19.0, 0, "Wait for it...", "sigh", 1, 2, false)
 	_rs(19.4, 0, "arms", "broken")
 	_st(21.4, 1, {"tier": 2, "momentum": 5.0, "ego": 60.0})
-	_e(21.6, {"type": "banner", "text": "VORR POWERS UP  TIER 2", "col": "#c9a8ff", "dur": 1.4})
+	_e(21.6, {"type": "banner", "text": "RIVAL POWERS UP  TIER 2", "col": "#c9a8ff", "dur": 1.4})
 	# The facade cracks, and Drop the Act fires with it.
 	_st(23.0, 1, {"ego": 30.0})
 	_e(23.2, {"type": "facade_crack", "actor": 1})

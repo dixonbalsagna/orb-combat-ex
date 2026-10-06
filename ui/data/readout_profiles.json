@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "How each fighter's damage is read (docs/design/spec-wounds.md section 3). Content, not code: a new fighter that reuses these types is data only. The sim's placeholder fighters (KAI, VORR) use the default profile with their prototype ego meters.",
+  "note": "How each fighter's damage is read (docs/design/spec-wounds.md section 3). Content, not code: a new fighter that reuses these types is data only. The sim's placeholder fighters (PROTAGONIST, RIVAL) use the default profile, through the aliases stand_in_protagonist and rival, with their prototype ego meters.",
   "default": {
     "regions": ["head", "core", "arms", "legs"],
     "crown": "plain",
@@ -39,8 +39,6 @@
     "rail": ["head", "chest", "back", "hip"]
   },
   "aliases": {
-    "kai": { "base": "default", "ego": "anguish" },
-    "vorr": { "base": "default", "ego": "menace" },
     "stand_in_protagonist": { "base": "default", "ego": "anguish" },
     "rival": { "base": "default", "ego": "menace" }
   }

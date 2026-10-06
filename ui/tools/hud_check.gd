@@ -100,7 +100,7 @@ func _terms() -> void:
 	var p: Dictionary = UiData.profile("anti_hero")
 	_ok(p.get("ego") == "pride" and int(p.get("shame_max", 0)) == 3, "profile: anti_hero")
 	_ok((UiData.profile("empress").get("regions") as Array).size() == 5, "profile: empress has a fifth region")
-	_ok(UiData.profile("kai").get("ego") == "anguish", "profile: placeholder KAI alias")
+	_ok(UiData.profile("stand_in_protagonist").get("ego") == "anguish" and UiData.profile("rival").get("ego") == "menace", "profile: the stand-ins' aliases (anguish and menace)")
 
 
 # --- Layout --------------------------------------------------------------------------------------------------------
@@ -594,7 +594,7 @@ func _layer_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.set_option("control_hints", "off")   # the control legend fades over seconds 10 to 12 of a match; this test is about the base layers
 	hud.anchor_fn = func(slot): return {"pos": Vector2(400.0 + 400.0 * float(slot), 400.0), "h": 120.0, "visible": true}
 	hud.strip_fn = func(): return {"W": 9600.0, "segs": [[0.0, 4800.0, "ocean"], [4800.0, 9600.0, "city"]], "cam_x": 100.0, "cam_w": 2000.0, "dead": [], "fighters": [{"x": 50.0, "slot": 0, "hidden": false, "aura": Color.WHITE, "seen_x": 50.0}, {"x": 900.0, "slot": 1, "hidden": false, "aura": Color.WHITE, "seen_x": 900.0}]}
@@ -720,7 +720,7 @@ func _split_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	var st := {"sigma": 1.0, "sep": 1.0, "phi": 0.3, "dist": 40000.0}
 	hud.split_fn = func():
 		var n := Vector2(st["sigma"] * cos(st["phi"]), -sin(st["phi"]))
@@ -1124,7 +1124,7 @@ func _split_cost() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = true   # two AI fighters, as in the demo: no YOU marker follows them, so this measures the split layers alone
 	hud.hub.model(1).ai = true
 	var st := {"t": 0.0}
@@ -1861,7 +1861,7 @@ func _form_prompt_rules() -> void:
 	root.size = Vector2i(1920, 1080)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
 	hud.set_option("show_prompts", false)
@@ -1942,7 +1942,7 @@ func _form_prompt_rules() -> void:
 	root.size = Vector2i(390, 844)
 	var th: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(th)
-	th.setup(["kai", "vorr"], ["KAI", "VORR"])
+	th.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	th.hub.model(0).ai = false
 	th.hub.model(1).ai = true
 	th.set_option("touch_ui", true)
@@ -2004,7 +2004,7 @@ func _intro_laststand_rules() -> void:
 	root.size = Vector2i(1920, 1080)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
 	await _frames(hud, 3)
@@ -2122,7 +2122,7 @@ func _energy_rules() -> void:
 	lay.compute(Vector2(1920, 1080), false)
 	var count_marks := func(energy: bool, weight: String) -> int:
 		var mm := UiFighterModel.new()
-		mm.setup(0, "protagonist", "KAI")
+		mm.setup(0, "protagonist", "PROTAGONIST")
 		mm.energy = energy
 		mm.weight = weight
 		var rec := {"n": 0}
@@ -2143,7 +2143,7 @@ func _energy_rules() -> void:
 	root.size = Vector2i(1920, 1080)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	await _frames(hud, 3)
 	var r0: int = hud._l_plate[0].redraws
@@ -2184,7 +2184,7 @@ func _remap_every_layout() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
 	var opened := 0
@@ -2382,7 +2382,7 @@ func _incoming_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	var st := {"eta": 2.0, "on": true, "aimed": true}
 	var record_log := {"first": {}}
 	hud.split_fn = func():
@@ -2466,7 +2466,7 @@ func _stance_badge_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
 	await _frames(hud, 3)
@@ -2490,7 +2490,7 @@ func _stance_badge_rules() -> void:
 	await process_frame
 	# The bridge reads the mask from the intent (and a missing one is martial arts).
 	var mm := UiFighterModel.new()
-	mm.setup(0, "protagonist", "KAI")
+	mm.setup(0, "protagonist", "PROTAGONIST")
 	var hub := _hub()
 	hub.patch(0, {"stance_mask": 8})
 	_ok(hub.model(0).stance_kind == 4 and hub.model(0).stance_mask == 8, "stance badge: the hub takes the mask from a patch")
@@ -2597,7 +2597,7 @@ func _beat_ring_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
 	hud.anchor_fn = func(slot): return {"pos": Vector2(384.0 + 512.0 * float(slot), 396.0), "h": 80.0, "visible": true}
@@ -2837,7 +2837,7 @@ func _key_help_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
 	await _frames(hud, 4)
@@ -3007,7 +3007,7 @@ func _stances_page_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
 	hud.set_option("pad_preset", "arena")
@@ -3032,7 +3032,7 @@ func _stances_page_rules() -> void:
 	root.size = Vector2i(390, 844)
 	var h2: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(h2)
-	h2.setup(["kai", "vorr"], ["KAI", "VORR"])
+	h2.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	h2.hub.model(0).ai = false
 	h2.hub.model(1).ai = true
 	h2.hub.patch(0, {"stance_mask": 4})
@@ -3064,7 +3064,7 @@ func _stances_page_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var h3: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(h3)
-	h3.setup(["kai", "vorr"], ["KAI", "VORR"])
+	h3.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	h3.hub.model(0).ai = false
 	await _frames(h3, 3)
 	h3.show_howto(false, 2)
@@ -3163,7 +3163,7 @@ func _armed_touch_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	await _frames(hud, 3)
 	hud.hub.patch(0, {"stance_mask": 1})
@@ -3214,7 +3214,7 @@ func _armed_hub_rules() -> void:
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	root.add_child(hud)
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = false
 	var ih := SimInputHub.new()
@@ -4280,32 +4280,32 @@ func _names_in(lines: Array) -> PackedStringArray:
 	return bad
 
 
-## The sim and the data keep the roster ids KAI and VORR; every name a player sees is PROTAGONIST or RIVAL (the alias rows' `_name`, the id as the
+## The roster ids are PROTAGONIST and RIVAL and every name a player sees is looked up from them (fighter_names.json, the id as the
 ## fallback). The words are looked up, so the later rename only changes the keys there. A tracer on UiText.draw collects every drawn line.
 func _display_name_rules() -> void:
-	_ok(UiData.display_name("KAI") == "PROTAGONIST" and UiData.display_name("vorr") == "RIVAL" and UiData.display_name("EMPRESS") == "EMPRESS" and UiData.display_name("") == "", "display names: KAI and VORR (any case) map to PROTAGONIST and RIVAL, any other name stays itself")
-	_ok(UiData.display_text("K.O.  KAI WINS") == "K.O.  PROTAGONIST WINS" and UiData.display_text("VORR POWERS UP  TIER 2") == "RIVAL POWERS UP  TIER 2" and UiData.display_text("KAI! KAIROS VORR's") == "PROTAGONIST! KAIROS RIVAL's" and UiData.display_text("my rival, Kai") == "my rival, Kai" and UiData.display_text("no names here") == "no names here", "display names: names inside a sentence change by whole word and in capitals only (the English word rival and a mixed-case Kai are left alone)")
+	_ok(UiData.display_name("PROTAGONIST") == "PROTAGONIST" and UiData.display_name("rival") == "RIVAL" and UiData.display_name("EMPRESS") == "EMPRESS" and UiData.display_name("") == "", "display names: the roster ids (any case) map to their names, any other name stays itself")
+	_ok(UiData.display_text("K.O.  PROTAGONIST WINS") == "K.O.  PROTAGONIST WINS" and UiData.display_text("RIVAL POWERS UP  TIER 2") == "RIVAL POWERS UP  TIER 2" and UiData.display_text("PROTAGONIST! PROTAGONISTS RIVAL's") == "PROTAGONIST! PROTAGONISTS RIVAL's" and UiData.display_text("my rival, protagonist") == "my rival, protagonist" and UiData.display_text("no names here") == "no names here", "display names: names inside a sentence change by whole word and in capitals only (the English word rival and a mixed-case Kai are left alone)")
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	hud.size = Vector2(1280, 720)
 	root.add_child(hud)
 	await process_frame
-	hud.setup(["kai", "vorr"], ["KAI", "VORR"])
+	hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
-	hud.hub.patch(0, {"name": "KAI"})
-	hud.hub.patch(1, {"name": "VORR"})
-	_ok(hud.hub.model(0).name == "PROTAGONIST" and hud.hub.model(1).name == "RIVAL" and hud.hub.model(0).id == "kai", "display names: the models show the display names and keep the roster ids as their keys")
+	hud.hub.patch(0, {"name": "PROTAGONIST"})
+	hud.hub.patch(1, {"name": "RIVAL"})
+	_ok(hud.hub.model(0).name == "PROTAGONIST" and hud.hub.model(1).name == "RIVAL" and hud.hub.model(0).id == "stand_in_protagonist", "display names: the models show the display names and keep the roster ids as their keys")
 	UiText.trace = []
 	UiText.tracing = true
 	# The match: sim-written banners and feed lines naming the roster names, a bark from each fighter, a KO.
-	hud.consume({"type": "banner", "text": "KAI POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
+	hud.consume({"type": "banner", "text": "PROTAGONIST POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
 	hud.consume({"type": "bark", "speaker": 1, "text": "Not like this.", "priority": 3})
-	hud.consume({"type": "bark", "speaker": 0, "text": "KAI!", "priority": 3})
-	hud.hub.feed_line(1.0, "VORR goes to ground", "KAI found")
+	hud.consume({"type": "bark", "speaker": 0, "text": "PROTAGONIST!", "priority": 3})
+	hud.hub.feed_line(1.0, "RIVAL goes to ground", "PROTAGONIST found")
 	hud.set_option("show_feed", true)
 	await _frames(hud, 4)
-	hud.consume({"type": "banner", "text": "K.O.  VORR WINS", "col": "#ffd45a", "dur": 4.0})
+	hud.consume({"type": "banner", "text": "K.O.  RIVAL WINS", "col": "#ffd45a", "dur": 4.0})
 	hud.consume({"type": "ko", "winner": 1, "loser": 0})
 	await _frames(hud, 4)
 	var banner_text: String = str(hud.hub.banner.get("text", ""))
@@ -4511,35 +4511,24 @@ func _about_rules() -> void:
 # --- The fighter rename: every word about a fighter is looked up by roster id (docs/ui/hud-spec.md section 46) -----------------------------
 
 func _rename_rules() -> void:
-	# The words: name, title and signature name by roster id, for both spellings of the id.
+	# The words: name, title and signature name by roster id, in either case.
 	var ok_words := true
-	for id in ["kai", "KAI", "protagonist", "PROTAGONIST"]:
+	for id in ["protagonist", "PROTAGONIST"]:
 		ok_words = ok_words and UiData.display_name(id) == "PROTAGONIST" and UiData.display_title(id) == "Martial Artist" and UiData.display_sig(id) == "Keeper's Lance"
-	for id in ["vorr", "VORR", "rival", "RIVAL"]:
+	for id in ["rival", "RIVAL"]:
 		ok_words = ok_words and UiData.display_name(id) == "RIVAL" and UiData.display_title(id) == "Challenger" and UiData.display_sig(id) == "The Barrage"
-	_ok(ok_words and UiData.display_title("EMPRESS") == "" and UiData.display_sig("EMPRESS") == "" and UiData.display_name("EMPRESS") == "EMPRESS", "rename: both spellings of each roster id give the same name, title and signature name; a fighter with no row shows its id and has no title")
-	_ok(UiData.display_text("PROTAGONIST.SIG FIRES") == "Keeper's Lance FIRES" and UiData.display_text("rival.sig and RIVAL.SIG") == "The Barrage and The Barrage" and UiData.display_text("KAI.SIG, VORR.SIG") == "Keeper's Lance, The Barrage" and UiData.display_text("PROTAGONIST.SIGNAL RIVAL") == "PROTAGONIST.SIGNAL RIVAL" and UiData.display_text("K.O.  PROTAGONIST WINS") == "K.O.  PROTAGONIST WINS", "rename: the signature's key (<ID>.SIG, any case) reads as the signature's name before the bare id, and a bare id in capitals as the name")
+	_ok(ok_words and UiData.display_title("EMPRESS") == "" and UiData.display_sig("EMPRESS") == "" and UiData.display_name("EMPRESS") == "EMPRESS", "rename: each roster id, in either case, gives its name, title and signature name; a fighter with no row shows its id and has no title")
+	_ok(UiData.display_text("PROTAGONIST.SIG FIRES") == "Keeper's Lance FIRES" and UiData.display_text("rival.sig and RIVAL.SIG") == "The Barrage and The Barrage" and UiData.display_text("PROTAGONIST.SIGNAL RIVAL") == "PROTAGONIST.SIGNAL RIVAL" and UiData.display_text("K.O.  PROTAGONIST WINS") == "K.O.  PROTAGONIST WINS", "rename: the signature's key (<ID>.SIG, any case) reads as the signature's name before the bare id, and a bare id in capitals as the name")
 	# The readout profiles: a stand-in keeps reading as it does today (its meter is the sim's anguish), the real Protagonist's profile is not borrowed.
-	_ok(UiSimBridge.profile_id("PROTAGONIST") == "stand_in_protagonist" and UiSimBridge.profile_id("RIVAL") == "rival" and UiSimBridge.profile_id("KAI") == "kai" and UiSimBridge.profile_id("VORR") == "vorr" and UiSimBridge.profile_id("EMPRESS") == "empress", "rename: the bridge maps the roster id to a readout profile (the stand-in Protagonist to its alias, the others by id)")
-	_ok(str(UiData.profile("stand_in_protagonist")["ego"]) == "anguish" and str(UiData.profile("rival")["ego"]) == "menace" and str(UiData.profile("kai")["ego"]) == "anguish" and str(UiData.profile("vorr")["ego"]) == "menace" and str(UiData.profile("protagonist")["ego"]) != "anguish", "rename: the stand-ins' aliases read anguish and menace as today; the real Protagonist profile is a different one")
-	# The sim as it is, and as it will be after the window: fighters carry the new ids, the name is the id, there is no title and the signature's name is its key.
-	# Whichever the sim is today, the check expects by whether it is already renamed; the staged run renames a sim that is not.
-	for staged in [false, true]:
+	_ok(UiSimBridge.profile_id("PROTAGONIST") == "stand_in_protagonist" and UiSimBridge.profile_id("RIVAL") == "rival" and UiSimBridge.profile_id("EMPRESS") == "empress", "rename: the bridge maps the roster id to a readout profile (the stand-in Protagonist to its alias, the others by id)")
+	_ok(str(UiData.profile("stand_in_protagonist")["ego"]) == "anguish" and str(UiData.profile("rival")["ego"]) == "menace" and str(UiData.profile("protagonist")["ego"]) != "anguish", "rename: the stand-ins' aliases read anguish and menace as today; the real Protagonist profile is a different one")
+	# The sim as it is (the rename window is closed): fighters carry the roster ids PROTAGONIST and RIVAL, the name is the id, there is no title and the signature's name is its key.
+	for _run in [0]:
 		var host := SimHost.new()
 		host.new_match(5)
-		var renamed: bool = str(host.S.fighters[0].id) == "PROTAGONIST"
-		if staged and not renamed:
-			for f in host.S.fighters:
-				var rid: String = "PROTAGONIST" if f.id == "KAI" else "RIVAL"
-				f.id = rid
-				f.name = rid
-				if "title" in f:
-					f.title = ""   # the field is gone after the window
-				f.sigName = rid + ".SIG"
-		var after: bool = staged or renamed
-		var tag := "rename (%s sim)" % ("staged: new ids, name the id, no title, the signature's key" if staged else ("already renamed" if renamed else "today's"))
+		var tag := "rename (the sim's roster ids)"
 		var fl: Array = UiSimBridge.fighters(host.S)
-		_ok((fl[0] as Array) == (["stand_in_protagonist", "rival"] if after else ["kai", "vorr"]) and (fl[1] as Array) == (["PROTAGONIST", "RIVAL"] if after else ["KAI", "VORR"]), "%s: the bridge reads ids and names from the roster id (%s)" % [tag, str(fl)])
+		_ok((fl[0] as Array) == ["stand_in_protagonist", "rival"] and (fl[1] as Array) == ["PROTAGONIST", "RIVAL"], "%s: the bridge reads ids and names from the roster id (%s)" % [tag, str(fl)])
 		root.size = Vector2i(1280, 720)
 		var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 		hud.size = Vector2(1280, 720)

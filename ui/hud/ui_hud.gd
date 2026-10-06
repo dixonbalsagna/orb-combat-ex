@@ -10,7 +10,7 @@ extends Control
 ## How a host uses it:
 ##   var hud := preload("res://ui/hud/ui_hud.tscn").instantiate()
 ##   $HUD.add_child(hud)
-##   hud.setup(["kai", "vorr"], ["KAI", "VORR"])          # readout profile ids and display names
+##   hud.setup(["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"])   # readout profile ids and the roster names (the HUD shows their display names)
 ##   hud.anchor_fn = func(slot): return {"pos": <fighter torso on screen>, "h": <fighter height in px>, "visible": true}
 ##   hud.strip_fn = func(): return {...}                  # planet strip data (see UiStrip)
 ##   every tick:   hud.consume_all(events); UiSimBridge.patch(hud, S)
@@ -317,7 +317,7 @@ func redraw_count() -> int:
 	return n
 
 
-## Fighters: readout profile ids ("protagonist", "anti_hero", "empress", "cyborg", or a placeholder such as "kai") and names.
+## Fighters: readout profile ids ("protagonist", "anti_hero", "empress", "cyborg", or a stand-in's alias such as "stand_in_protagonist") and names.
 func setup(ids: Array, names: Array) -> void:
 	hub.setup_fighters(ids, names)
 	_last_size = Vector2.ZERO

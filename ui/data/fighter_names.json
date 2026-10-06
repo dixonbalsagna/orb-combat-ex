@@ -1,10 +1,8 @@
 {
   "schema": 1,
-  "note": "Every word a player reads about a fighter, keyed by roster id in lower case: its name, its title and the name of its signature move. The sim keeps ids and keys only (the signature's key is <ID>.SIG; docs/architecture/pending/fighter-split.md sections 9 and 10), so Orb's real names are an edit to this file. A row for the old spelling (kai, vorr) and one for the new (protagonist, rival) during the id rename; drop the old pair after it. A fighter with no row shows its own id; a row with no title or sigName has none. A bare string row is just the name.",
+  "note": "Every word a player reads about a fighter, keyed by roster id in lower case: its name, its title and the name of its signature move. The sim keeps ids and keys only (the signature's key is <ID>.SIG; docs/architecture/pending/fighter-split.md sections 9 and 10), so Orb's real names are an edit to this file. A fighter with no row shows its own id; a row with no title or sigName has none. A bare string row is just the name.",
   "names": {
-    "kai": { "name": "PROTAGONIST", "title": "Martial Artist", "sigName": "Keeper's Lance" },
     "protagonist": { "name": "PROTAGONIST", "title": "Martial Artist", "sigName": "Keeper's Lance" },
-    "vorr": { "name": "RIVAL", "title": "Challenger", "sigName": "The Barrage" },
     "rival": { "name": "RIVAL", "title": "Challenger", "sigName": "The Barrage" }
   }
 }

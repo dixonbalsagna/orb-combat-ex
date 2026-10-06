@@ -225,7 +225,7 @@ func consume(e) -> void:
 	if type == "":
 		return
 	if d.get("text") is String:
-		var shown: String = UiData.display_text(str(d["text"]))   # a roster name in an event's text (K.O. KAI WINS) is drawn as its display name
+		var shown: String = UiData.display_text(str(d["text"]))   # a roster name in an event's text (K.O.  PROTAGONIST WINS) is drawn as its display name
 		if shown != str(d["text"]):
 			d = d.duplicate()
 			d["text"] = shown
