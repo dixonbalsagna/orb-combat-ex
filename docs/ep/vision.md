@@ -723,3 +723,29 @@ Orb asked for "a consult on advertising, where I can get this game listed, and r
 After the EP's consult, Orb: "go, brief Marketing, Legal and Platform for the written plan. upfront AI disclosure is the only ethical path to take for this project."
 
 Standing rule from this: the project discloses its AI-made content upfront, everywhere it is presented or sold. Nothing is ever described as human-made that is not.
+
+## Orb, 2026-10-05 (late evening): questionnaire 19, rule of cool and the control scheme, with play notes
+
+Orb played the live build at about 10:30pm on 2026-10-05 (the brawl with press styles on, before or around the retune).
+
+**Answers.**
+- Control ideas wanted: 3 zip chains; 4 chase your own launch; 5 a visible spark-lock; 6 just release on the heavy; 7 the taunt as a gamble; 9 haptics; 10 the fire-on-the-move hybrid. Not picked: 1 stance switch flourishes; 2 the right stick calling the launch; 8 a playable intro attitude.
+- Q3, the player's say over a launch: the player nudges, the director stages it.
+- Q4, zip chains: until ki runs out.
+- Q5, an even mash: both thrown back, nobody wins.
+- Q6, how flashy an ordinary exchange of lights looks: 4 of 10.
+- Q7, a perfect timed string's payoff: keep it subtle.
+- Q8, damaged buildings: throw the rival through a shell to finish it; otherwise nothing new, just scenery.
+- Q9, intros: keep them watch-only.
+- Q10, stance switch flourishes: none.
+- Q11, how hard a failed flashy option hurts: 3 of 10.
+- Q12, rumble: every landed blow; closes, launches and landings; buildings breaking; beam struggles. (Not picked: the player's beat.)
+- Q13, Simple controls: yes, all of the spectacle, chosen for them.
+
+**Q14, in Orb's words:** "I just played around with it at roughly 10:30pm 10/5/2026. It feels closer to where I want it to be. The flurry should be across all attacks, not just light. light mashing, heavy mashing should both have the rapid attack pattern. holding a button should charge up an attack. so a charged heavy should have benefits that a charged light attack doesn't, while charging a light attack is less powerful and doesn't knockback but faster to charge. mashing X and Y alternating should give you a rapid attack mixup made up of heavy and light attacks. movement during combos should not feel "locked", i was trying to move while exchanging blows and the "magnetic" attraction was too strong, each player should be able to nudge the center of attraction between the fighters during an exchange. players should always feel like they are able to control their character, with few exceptions like during knockbacks. just hitting B and getting locked into what feels like a beam-attack cutscene doesn't feel right, B needs a recast and its own unique moveset. [[I'm trying to think how A functions, just spitballing here: tapping A should be a shove, mashing A should function like your fighter getting into a clinch then some kind of "trip-attack" (combat mostly takes place midair so think how a flying combatant would take control) that turns into a throw, and holding A should charge up a tackle that hits at high speed and can crater both fighters, causing no damage to the tackler.]] I didn't get to test getting knocked back and regaining control. I didn't get to test building destruction."
+
+**Feedback from another player, an earlier session (as Orb relays it):** "Holding RT and then hitting any face button didn't give the special attack i was expecting. context button didn't seem to do anything. the finisher attack zoomed in and looked really cool."
+
+**More combat feedback (Orb):** "Y just feels really underpowered right now. an opponent flurrying on me should get punished if they don't block correctly when I charge a full Y attack. I suddenly realized a staple of modern fighting games are the two-button combined power attacks: A+B (grab-related) / X+A / Y+B / X+Y . I don't want to add combinations that cross the pad, like Y+X / X+B unless you make a really good pitch as to how that will benefit the control scheme. Please consider folding these into our combat mechanics."
+
+EP's note: on a standard pad the adjacent pairs are A+B, X+A, Y+B and X+Y, and the two that cross the pad are X+B and Y+A. Orb's "Y+X" in the cross-pad list is read as Y+A, to be confirmed with Orb.
