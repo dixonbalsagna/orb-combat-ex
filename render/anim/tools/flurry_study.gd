@@ -29,8 +29,8 @@ const PIECES := {   # blows that land on the chest or the gut (a blow aimed at t
 ## contacts are ticks from the scenario's start; `pre` and `post` are the idle ticks before the first and after the last contact
 const SCENARIOS := [
 	{"id": "xmash", "label": "X mash: a light about every 6 ticks", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30, 36, 42, 48, 54, 60, 66, 72], "post": 40},
-	{"id": "xhold", "label": "X held: a burst of eight, gaps 4 4 5 6 8 11 15", "style": "burst", "set": "burst", "kind": "light", "dmg": 12.0,
-		"contacts": [30, 34, 38, 43, 49, 57, 68, 83], "post": 44},
+	{"id": "xhold", "label": "X held: one light, a 16-tick set, then the stream, gaps 4 4 5 6 8 11", "style": "burst", "set": "burst", "kind": "light", "dmg": 12.0,
+		"contacts": [30, 46, 50, 54, 59, 65, 73, 84], "post": 44},
 	{"id": "ymash", "label": "Y mash: a medium about every 14 ticks", "style": "medium", "set": "medium", "kind": "heavy", "dmg": 50.0, "contacts": [34, 48, 62, 76, 90], "post": 44},
 	{"id": "bmash", "label": "B mash: a super-heavy about every 28 ticks (PROVISIONAL pieces)", "style": "super", "set": "super", "kind": "heavy", "dmg": 90.0, "contacts": [44, 72, 100, 128], "post": 56},
 	{"id": "bmash2", "label": "B mash on today's heavy pieces at the super style", "style": "super", "set": "super2", "kind": "heavy", "dmg": 90.0, "contacts": [44, 72, 100, 128], "post": 56},
@@ -57,6 +57,8 @@ var tier_style: String = "super"   # the style, the gap, the wind-up and the fir
 var tier_gap: int = 80
 var tier_windup: int = 28
 var tier_first: int = 44
+var tier_hands_pk: Array = []   # the arm of each blow of a tier run (`window.__hands_pk`, `__hands_rk`: "r,r,l,..."): the free arm (l) mirrors the key set (Legal e09: the arm is chosen per throw)
+var tier_hands_rk: Array = []
 var tier_names: Array = []      # the super-heavy tier's stills: `window.__tier = "su_knee,su_plate"` (or --tier=...) names the pieces; one blow every 80 ticks on a 28-tick wind-up, each fighter's own
 var cap: bool = false
 var only: String = ""
@@ -104,6 +106,12 @@ func _ready() -> void:
 		tier_gap = int(float(_js("window.__gap || 80", 80.0)))
 		tier_windup = int(float(_js("window.__windup || 28", 28.0)))
 		tier_first = int(float(_js("window.__first || 44", 44.0)))
+		var hp = String(_js("window.__hands_pk || ''", ""))
+		if hp != "":
+			tier_hands_pk = hp.split(",")
+		var hr = String(_js("window.__hands_rk || ''", ""))
+		if hr != "":
+			tier_hands_rk = hr.split(",")
 		var tn = _js("window.__tier || ''", "")
 		if String(tn) != "":
 			tier_names = String(tn).split(",")
@@ -191,10 +199,15 @@ func _tier_pieces() -> Array:
 	var pre2: String = "pk." if fighter == "protagonist" else "rk."   # the energy-in-reach pieces
 	var out: Array = []
 	for nm in tier_names:
-		if AnimData.keysets.has(pre + String(nm)):
-			out.append(String(nm))
-		elif AnimData.keysets.has(pre2 + String(nm)):
-			out.append(String(nm))
+		var s: String = String(nm)
+		if s.length() > 3 and s.substr(2, 1) == ".":
+			# a prefixed name ("pk.bolt_flat") is one fighter's own: a run is each fighter's order
+			if s.begins_with(pre2) and AnimData.keysets.has(s):
+				out.append(s.substr(3))
+		elif AnimData.keysets.has(pre + s):
+			out.append(s)
+		elif AnimData.keysets.has(pre2 + s):
+			out.append(s)
 	return out
 
 
@@ -255,7 +268,8 @@ func _start_scenario() -> void:
 		if sc.has("windup"):
 			bargs["windup"] = int(sc.windup)
 		if String(sc.id) == "tier":
-			bargs["hand"] = "r"   # the tier's stills are all the drawn side (the director's own pick may mirror a piece)
+			var hl: Array = tier_hands_pk if fighter == "protagonist" else tier_hands_rk
+			bargs["hand"] = String(hl[i % hl.size()]) if not hl.is_empty() else "r"   # the tier's stills are the drawn side unless a run names the arm of each blow
 		DirExchange.schedule(ex, float(contacts[i]) * DT, "strike", bargs)
 		sent.append(false)
 	S.dirS.ex = ex

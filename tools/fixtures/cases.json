@@ -107550,6 +107550,1177 @@
         "rule": "additionalProperties",
         "pointer": "/keysets/pu.su_drive/hold_ticks"
       }
+    },
+    {
+      "id": "anim-press-styles-set-valid",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-on-another-style-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/tech/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-key-required-pose",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/set"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-key-required-from",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/set"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-key-required-to-before",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/set"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-key-required-in",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/set"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-key-required-out",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/set"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-key-required-w",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/set"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-key-required-min-gap",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/set"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14,
+              "extra": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/burst/set/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-note-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14,
+              "_why": "a note"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-pose-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": "bu.set",
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/set/pose"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-pose-empty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {},
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/styles/burst/set/pose"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-pose-id-shape",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "Bu Set"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/styles/burst/set/pose/protagonist"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-pose-id-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": 5
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/set/pose/protagonist"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-pose-fighter-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive",
+                "nobody": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-set",
+        "pointer": "/styles/burst/set/pose/nobody"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-pose-fighter-key-shape",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive",
+                "No Body": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/styles/burst/set/pose/No Body"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-pose-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "bu.nowhere"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-set",
+        "pointer": "/styles/burst/set/pose/protagonist"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-from-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": -1,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/set/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-from-above-thirty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 31,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/set/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-from-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 2.5,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/set/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-from-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 0,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-from-thirty-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 30,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-to-before-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": -1,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/set/to_before"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-to-before-above-thirty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 31,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/set/to_before"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-to-before-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2.5,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/set/to_before"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-to-before-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 0,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-to-before-thirty-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 30,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-in-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": -1,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/set/in"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-in-above-thirty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 31,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/set/in"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-in-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2.5,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/set/in"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-in-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 0,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-in-thirty-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 30,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-out-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": -1,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/set/out"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-out-above-thirty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 31,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/set/out"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-out-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2.5,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/set/out"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-out-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 0,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-out-thirty-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 30,
+              "w": 0.9,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-w-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": -0.1,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/set/w"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-w-above-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 1.1,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/set/w"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-w-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": "half",
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/set/w"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-w-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-w-one-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 1,
+              "min_gap": 14
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-set-min-gap-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": -1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/set/min_gap"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-min-gap-above-sixty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 61
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/set/min_gap"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-min-gap-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 14.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/set/min_gap"
+      }
+    },
+    {
+      "id": "anim-press-styles-set-min-gap-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/set": {
+              "pose": {
+                "protagonist": "stance.aggressive"
+              },
+              "from": 3,
+              "to_before": 2,
+              "in": 2,
+              "out": 2,
+              "w": 0.9,
+              "min_gap": 0
+            }
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

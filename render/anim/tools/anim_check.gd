@@ -589,6 +589,9 @@ func _test_riposte() -> void:
 
 
 ## The flurry look study's three strengths (docs/animation/flurry-study.md): X light (speed), Y medium, B super, and the burst's gap rule. `contacts` are ticks; `extra` is merged into every beat (windup).
+var _tier_damage: bool = false   # a tier scene sends the damage event of every blow, so the defender reacts as in the study scene (the heads close on each other in a run)
+
+
 func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contacts: Array, extra: Dictionary = {}, kind: String = "light") -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
@@ -619,6 +622,9 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 	for i in range(contacts.size()):
 		var bargs := {"a": "A", "dmg": 20.0 if kind == "light" else 60.0, "piece": "strike." + String(pieces[i % pieces.size()]), "style": style, "o": {"big": kind == "heavy"}}
 		bargs.merge(extra, true)
+		if bargs.has("_hands"):
+			bargs["hand"] = String((bargs["_hands"] as Array)[i % (bargs["_hands"] as Array).size()])   # the arm of each blow of a run
+			bargs.erase("_hands")
 		DirExchange.schedule(ex, float(contacts[i]) / 60.0, "strike", bargs)
 	S.dirS.ex = ex
 	var res := {"reach": [], "nan": 0, "screen": 0, "ghosts": 0, "squash": 0.0, "lead": 0.0, "load_first": [], "load_run": 0, "err": 0.0, "frames": 0, "parts": [], "exc": [], "sides": []}
@@ -650,12 +656,32 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 		te.dt = 1.0 / 60.0
 		te.frozen = false
 		RenderAnim.consume(S, [te])
+		if _tier_damage and cset.has(k):
+			var dmg_e := SimState.FxEvent.new()
+			dmg_e.type = "damage"
+			dmg_e.victim = 1.0
+			dmg_e.attacker = 0.0
+			dmg_e.kind = kind
+			dmg_e.amount = 20.0 if kind == "light" else 60.0
+			dmg_e.region = "core"
+			RenderAnim.consume(S, [dmg_e])
 		var af0: AnimFighter = RenderAnim.solve(S, f0)
-		RenderAnim.solve(S, f1)
+		var af1t: AnimFighter = RenderAnim.solve(S, f1)
 		for i in range(AnimRig.N):
 			if is_nan(af0.q[i].x) or is_nan(af0.q[i].w):
 				res.nan += 1
 		res.screen += AnimJoints.violations(af0.q, af0._rd.shape_key).size()
+		if k >= int(contacts[0]) - 2:
+			var hg: float = (float(f1.x) - float(f0.x)) + af1t.vface * af1t.socket("head").x - af0.vface * af0.socket("head").x   # the world gap between the two heads (the defender is drawn mirrored)
+			if hg < float(res.get("hmin", 1.0e9)):
+				res["hmin"] = hg
+				res["hmin_k"] = k - int(contacts[0])
+		if af0.burst_set > 0.5:
+			res["set_ticks"] = int(res.get("set_ticks", 0)) + 1
+			res["set_first"] = mini(int(res.get("set_first", 9999)), k)
+			res["set_last"] = maxi(int(res.get("set_last", 0)), k)
+			res["set_apart"] = minf(float(res.get("set_apart", 1.0e9)), af0.socket("hand_r").distance_to(af0.socket("hand_l")))
+			res["set_top"] = maxf(float(res.get("set_top", 0.0)), maxf(af0.socket("hand_r").y, af0.socket("hand_l").y))
 		if not af0.press.is_empty():
 			res.ghosts = maxi(int(res.ghosts), int(af0.press.ghosts))
 			res.squash = maxf(float(res.squash), float(af0.press.squash))
@@ -700,6 +726,10 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 			var tr := {"dt": k - int(contacts[0]), "ph": String(af0.press.get("phase", "")), "ks": af0._part, "px": af0.socket("pelvis").x, "tw": absf(af0.socket("upper_arm_r").x - af0.socket("upper_arm_l").x)}
 			for sn in ["hand_r", "hand_l", "foot_r", "foot_l"]:
 				tr[sn] = (af0.socket(sn) - pv).snapped(Vector3(0.1, 0.1, 0.1))
+			tr["hgap"] = (float(f1.x) - float(f0.x)) + af1t.vface * af1t.socket("head").x - af0.vface * af0.socket("head").x   # the world gap between the two heads (the defender is drawn mirrored)
+			var el: Vector3 = af0.socket("forearm_r")
+			var hd: Vector3 = af0.socket("hand_r")
+			tr["fa"] = rad_to_deg(atan2(hd.y - el.y, hd.x - el.x))   # the forearm's angle in the side view (0 level, up positive): a line is level, a flick rises, a sweep falls
 			tr["abs_hand_r"] = af0.socket("hand_r").y
 			tr["abs_hand_l"] = af0.socket("hand_l").y
 			tr["pv_y"] = pv.y
@@ -991,8 +1021,8 @@ func _test_flurry_tiers() -> void:
 		# the narrowing: the same straight blow drawn back farther when it is thrown slower (a controlled pair of scenes; the pieces of the real burst differ in how far they draw back)
 		var tight: Dictionary = _tier_scene(S, who, "burst", ["cross", "palm_heel", "spear_hand"], [30, 34, 38, 43])
 		var plain: Dictionary = _tier_scene(S, who, "speed", ["cross", "palm_heel", "spear_hand"], [30, 34, 38, 43])
-		var slow: Dictionary = _tier_scene(S, who, "burst", ["cross", "palm_heel", "spear_hand"], [30, 45, 60, 75])
-		var slow_plain: Dictionary = _tier_scene(S, who, "speed", ["cross", "palm_heel", "spear_hand"], [30, 45, 60, 75])
+		var slow: Dictionary = _tier_scene(S, who, "burst", ["cross", "palm_heel", "spear_hand"], [30, 42, 54, 66])
+		var slow_plain: Dictionary = _tier_scene(S, who, "speed", ["cross", "palm_heel", "spear_hand"], [30, 42, 54, 66])
 		var early: float = float(tight.dev)
 		var late: float = float(slow.dev)
 		# the same blows at the same tight gaps carry the arms less far from their guard in the burst than in a plain mash, and a slow burst is not narrowed at all
@@ -1168,6 +1198,83 @@ func _test_tier_drives() -> void:
 	_expect(bad.is_empty(), "tier drives: %s" % "; ".join(bad))
 	_expect(judged >= 16, "tier drives: only %d pieces of the tier were found (16 are the first set)" % judged)
 	print("tier drives: %d pieces of the super-heavy tier read as their drive (a pace, half a turn, one limb crossing, sunk then tall, risen then sunk, one turn)" % judged)
+
+
+## The burst's set (Game Design brawl-second-pass section 3; data/anim/press_styles.json burst.set; docs/animation/energy-reach.md section 5): one light at once, then about 10 ticks of a set pose before the stream
+## at 18, 22, 26, 31, 37, 45 and 56 ticks from the press. Played on the new ticks the set shows between the first light and the stream's first blow and nowhere else; the stream's own gaps (4 to 11) show none.
+func _test_burst_set() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	var seen: Array = []
+	for who in ["protagonist", "antihero"]:
+		var r: Dictionary = _tier_scene(S, who, "burst", ["cross", "palm_heel", "spear_hand", "cross", "palm_heel", "spear_hand", "cross", "palm_heel"], [30, 46, 50, 54, 59, 65, 73, 84], {}, "light")
+		var n: int = int(r.get("set_ticks", 0))
+		_expect(n >= 7 and n <= 13 and int(r.get("set_first", 0)) >= 32 and int(r.get("set_last", 9999)) <= 44, "burst set %s: the set pose shows %d ticks (%d to %d): it belongs between the first light (30) and the stream (46), about 10 ticks" % [who, n, int(r.get("set_first", 0)), int(r.get("set_last", 0))])
+		_expect(int(r.nan) == 0 and int(r.screen) == 0 and int(r.frames) == 8, "burst set %s: %d NaN, %d joint violations on screen, %d of 8 contacts" % [who, int(r.nan), int(r.screen), int(r.frames)])
+		# honest to h05 although short of 12 ticks: the hands a shoulder width apart (16 or more), never above the shoulder (76), never together
+		_expect(float(r.get("set_apart", 0.0)) >= 16.0 and float(r.get("set_top", 999.0)) <= 76.0, "burst set %s: the hands come within %.1f of each other, or up to %.0f high (16 apart, 76 at most)" % [who, float(r.get("set_apart", 0.0)), float(r.get("set_top", 999.0))])
+		var r2: Dictionary = _tier_scene(S, who, "burst", ["cross", "palm_heel", "spear_hand", "cross"], [30, 34, 38, 43], {}, "light")
+		_expect(int(r2.get("set_ticks", 0)) == 0, "burst set %s: the stream's own gaps (4 and 5 ticks) show the set pose %d ticks" % [who, int(r2.get("set_ticks", 0))])
+		seen.append("%s: %d ticks (%d to %d), hands %.0f apart and no higher than %.0f" % [who, n, int(r.get("set_first", 0)), int(r.get("set_last", 0)), float(r.get("set_apart", 0.0)), float(r.get("set_top", 0.0))])
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	S.dirS.ex = null
+	print("burst set: %s" % " | ".join(seen))
+
+
+## Energy in reach (slice C2t; docs/animation/energy-reach.md; Legal e06, e08, e09): the twelve point-blank pieces read as a blow and a shot at once, and a mashed run reads as varied on screen. A bolt lands below the
+## collar (the hand 38 to 62 high), a line is level, a flick rises and a sweep falls in the side view (the three paths differ at the contact itself, by the forearm's angle), and in Combat's sample run of twelve
+## (the order, the arm and the mirror of each bolt) the two heads keep a hand's width (18 or more) between them.
+func _test_energy_reach() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	_tier_damage = true
+	var seen: Array = []
+	var runs := {
+		"protagonist": [["bolt_flat", "bolt_thrust", "bolt_sweep", "bolt_flick", "bolt_thrust", "bolt_sweep", "bolt_flick", "bolt_thrust", "bolt_flat", "bolt_flick", "bolt_sweep", "bolt_thrust"], ["r", "r", "r", "l", "r", "r", "r", "r", "l", "r", "r", "r"]],
+		"antihero": [["bolt_blade", "bolt_fist", "bolt_sweep", "bolt_flick", "bolt_fist", "bolt_blade", "bolt_sweep", "bolt_fist", "bolt_flick", "bolt_sweep", "bolt_fist", "bolt_blade"], ["r", "r", "r", "l", "r", "r", "l", "r", "r", "r", "r", "r"]],
+	}
+	var lines := {"protagonist": ["bolt_thrust", "bolt_flat", "bolt_flick", "bolt_sweep"], "antihero": ["bolt_blade", "bolt_fist", "bolt_flick", "bolt_sweep"]}
+	for who in ["protagonist", "antihero"]:
+		var fa: Dictionary = {}
+		for nm in lines[who]:
+			var r: Dictionary = _tier_scene(S, who, "speed", [String(nm)], [40], {"windup": 2, "hand": "r"}, "light")
+			_expect(int(r.nan) == 0 and int(r.screen) == 0 and int(r.frames) == 1 and float(r.err) < 0.25, "energy reach %s %s: %d NaN, %d on screen, %d of 1 contacts, error %.3f" % [who, nm, int(r.nan), int(r.screen), int(r.frames), float(r.err)])
+			for tr in r.get("trace", []):
+				if int(tr.dt) == 0:
+					fa[nm] = float(tr.fa)
+					_expect(float(tr.abs_hand_r) >= 38.0 and float(tr.abs_hand_r) <= 62.0, "energy reach %s %s: the hand lands %.0f high (the chest or the gut: 38 to 62, below the collar)" % [who, nm, float(tr.abs_hand_r)])
+		var line_a: float = maxf(float(fa.get(lines[who][0], 0.0)), float(fa.get(lines[who][1], 0.0)))
+		var flick_a: float = float(fa.get("bolt_flick", 0.0))
+		var sweep_a: float = float(fa.get("bolt_sweep", 0.0))
+		_expect(flick_a > line_a + 12.0 and sweep_a < minf(float(fa.get(lines[who][0], 0.0)), float(fa.get(lines[who][1], 0.0))) - 6.0, "energy reach %s: the contacts do not differ by path: forearm angle %.0f flick, %.0f sweep, %.0f and %.0f the lines (a flick rises, a sweep falls)" % [who, flick_a, sweep_a, float(fa.get(lines[who][0], 0.0)), float(fa.get(lines[who][1], 0.0))])
+		var run: Array = runs[who]
+		var cs: Array = []
+		for i in range(12):
+			cs.append(30 + 6 * i)
+		var rr: Dictionary = _tier_scene(S, who, "speed", run[0], cs, {"windup": 2, "_hands": run[1]}, "light")
+		_expect(int(rr.nan) == 0 and int(rr.screen) == 0, "energy reach %s run: %d NaN, %d joint violations on screen" % [who, int(rr.nan), int(rr.screen)])
+		_expect(float(rr.get("hmin", 0.0)) >= 18.0, "energy reach %s run: the heads come within %.1f of each other (a hand's width, 18 or more, Legal e09)" % [who, float(rr.get("hmin", 0.0))])
+		seen.append("%s: flick %.0f, sweep %.0f, lines %.0f and %.0f degrees; the run's heads no nearer than %.0f" % [who, flick_a, sweep_a, float(fa.get(lines[who][0], 0.0)), float(fa.get(lines[who][1], 0.0)), float(rr.get("hmin", 0.0))])
+	_tier_damage = false
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	S.dirS.ex = null
+	print("energy reach: %s" % " | ".join(seen))
 
 
 ## Combat's eight rules for a medium on Y's 12-tick wind-up (data/anim/medium_wind.json, docs/animation/super-heavy.md): the data covers the mediums, the held-only ones are named, and the rules do what they say:
@@ -2854,6 +2961,8 @@ func _run() -> void:
 	_test_windups()
 	_test_tier_drives()
 	_test_medium_wind()
+	_test_energy_reach()
+	_test_burst_set()
 	_test_zip_view()
 	_test_riposte()
 	_test_hand_tips()

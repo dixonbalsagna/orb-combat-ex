@@ -247,6 +247,7 @@ var _ci_target: String = "chest"
 var _ci_side: bool = false
 var _ci_limb2: String = ""             # a second striking limb of a two-limb blow (a key set's limb2), or ""
 var _ci_step: float = -1.0              # the key set's own step-in limit (model units), or -1 for the limb's default in sockets.json
+var burst_set: float = 0.0               # how far the burst's set pose is laid over the body this tick (0 to 0.9; VFX and the tools read it)
 var _ci_step_k: float = 1.0                # the share of that step a medium on 12 ticks takes (Combat's w6: a half step)
 var _ci_opp = null
 var _ci_tc: float = 0.0
@@ -1678,6 +1679,7 @@ func _entry_layer(es: float, dur: float, id: String, T: float, dq: float, wt: fl
 
 
 func _exchange_layers(S: SimState, f, ex, T: float) -> void:
+	burst_set = 0.0
 	var role: String = "A" if ex.A == f else "D"
 	var t0: float = T - ex.t
 	var strikes: Array = []
@@ -1773,6 +1775,15 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 			best_start = start
 		prev_tc = tc
 	if best < 0:
+		# between a burst's blows (the 16-tick gap after its first light, once that blow's own window is over): the set pose still shows
+		var prev: int = -1
+		for n2 in range(strikes.size()):
+			if float(strikes[n2][0]) <= T and psts[n2] == "burst" and (prev < 0 or float(strikes[n2][0]) > float(strikes[prev][0])):
+				prev = n2
+		if prev >= 0:
+			var brow: Dictionary = AnimData.press.get("styles", {}).get("burst", {})
+			if brow.has("set"):
+				_burst_set(brow.set, strikes, float(strikes[prev][0]), T)
 		return
 	var prof: Dictionary = profs[best]
 	_set_lag(float(prof.get("lag", 0.3)))
@@ -1907,6 +1918,8 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		if not press.is_empty():
 			press["sure"] = bool(bargs.get("sure", false))
 			press["riposte"] = bool(bargs.get("_rip", false))
+		if prow.has("set"):
+			_burst_set(prow.set, strikes, tc2, T)
 	if RenderAnim.hand_tips:
 		_hand_tip(ks, side, heavy2, strikes[best][2], hw)
 	if RenderAnim.press_styles and bool(bargs.get("check", false)):
@@ -2156,6 +2169,34 @@ func _press_track(blow_id: int, T: float) -> void:
 
 ## The retract, blended: the new blow's wind-up starts from the pose the last blow was in, not from the guard, so the arm that
 ## struck eases back while the other one comes through.
+## The burst's set (Game Design, brawl-second-pass section 3: one light at once, then he sets himself for about 10 ticks before the stream, which is the burst's tell): when the next blow of the exchange is 14 ticks
+## or more behind a burst blow, the body is mixed toward the fighter's set pose from a few ticks after the blow until a few before the next. `row` is the style's `set` (data/anim/press_styles.json): `pose` by fighter,
+## `from` (ticks after the blow it comes in), `to_before` (ticks before the next blow it is gone), `in`, `out`, `w`, `min_gap`. Fills `press.set` for VFX and the tools.
+func _burst_set(row: Dictionary, strikes: Array, tc: float, T: float) -> void:
+	var nxt: float = 1.0e9
+	for n in range(strikes.size()):
+		var t2: float = float(strikes[n][0])
+		if t2 > tc + 0.0001 and t2 < nxt:
+			nxt = t2
+	if nxt > 1.0e8 or (nxt - tc) / DT < float(row.get("min_gap", 14)):
+		return
+	var pid: String = String(row.get("pose", {}).get(pair_key, ""))
+	if pid == "" or not AnimData.pose_exists(pid):
+		return
+	var a: float = tc + float(row.get("from", 4)) * DT
+	var b: float = nxt - float(row.get("to_before", 3)) * DT
+	var w: float = smoothstep(a, a + float(row.get("in", 2)) * DT, T) * (1.0 - smoothstep(b - float(row.get("out", 3)) * DT, b, T)) * float(row.get("w", 0.9))
+	if w <= 0.001:
+		return
+	var sp: AnimPose = AnimData.pose(pid)
+	AnimPose.mix(q, sp.q, w)
+	hips = hips.lerp(sp.hips, w)
+	curl = curl.lerp(sp.curl, w)
+	burst_set = w
+	if not press.is_empty():
+		press["set"] = w
+
+
 func _press_carry(row: Dictionary, blow_id: int, tl: float) -> void:
 	var span: float = float(row.get("carry_ticks", 5)) * DT
 	if not _pc_ok or span <= 0.0 or tl >= span or _pr_blow != blow_id:

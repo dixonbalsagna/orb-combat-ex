@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/anim-press-styles",
   "title": "anim.pressstyles/1",
-  "description": "data/anim/press_styles.json: how the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick. Used only with RenderAnim.press_styles (default off). Times are 60 Hz ticks. read: which style a blow plays when its beat names none, by how the press was read (\"\" for a hold: the profile it plays today). squash_pose: the pose whose legs, pelvis and spine are the squash, by fighter, and the bones it takes. styles: per style, the timing overrides, the flags, the squash, the stretch, the twist and the afterimages. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (a riposte style names a key of styles (pressstyles-riposte); every squash pose is a pose; by_fighter keys are fighters of fighters.json; every bone is in profiles.json bone_lag; carry has a carry_ticks) are checked by tools/lib/xref-fight.js (pressstyles-*).",
+  "description": "data/anim/press_styles.json: how the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick. Used only with RenderAnim.press_styles (default off). Times are 60 Hz ticks. read: which style a blow plays when its beat names none, by how the press was read (\"\" for a hold: the profile it plays today). squash_pose: the pose whose legs, pelvis and spine are the squash, by fighter, and the bones it takes. styles: per style, the timing overrides, the flags, the squash, the stretch, the twist and the afterimages. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (a style's set.pose names fighters of fighters.json and real poses (pressstyles-set); a riposte style names a key of styles (pressstyles-riposte); every squash pose is a pose; by_fighter keys are fighters of fighters.json; every bone is in profiles.json bone_lag; carry has a carry_ticks) are checked by tools/lib/xref-fight.js (pressstyles-*).",
   "type": "object",
   "required": [
     "schema",
@@ -610,6 +610,76 @@
               },
               "additionalProperties": false,
               "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            },
+            "set": {
+              "type": "object",
+              "required": [
+                "pose",
+                "from",
+                "to_before",
+                "in",
+                "out",
+                "w",
+                "min_gap"
+              ],
+              "description": "Optional. The pose a style's first blow sets from (the burst's set): a fighter's pose, and how it is blended in and out.",
+              "properties": {
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter key to the pose he sets from (rule pressstyles-set: a fighter of fighters.json and a real pose)."
+                },
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow at which the set begins."
+                },
+                "to_before": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow by which the set has been reached."
+                },
+                "in": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend in."
+                },
+                "out": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend out."
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the pose is taken."
+                },
+                "min_gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 60,
+                  "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -829,6 +899,76 @@
               },
               "additionalProperties": false,
               "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            },
+            "set": {
+              "type": "object",
+              "required": [
+                "pose",
+                "from",
+                "to_before",
+                "in",
+                "out",
+                "w",
+                "min_gap"
+              ],
+              "description": "Optional. The pose a style's first blow sets from (the burst's set): a fighter's pose, and how it is blended in and out.",
+              "properties": {
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter key to the pose he sets from (rule pressstyles-set: a fighter of fighters.json and a real pose)."
+                },
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow at which the set begins."
+                },
+                "to_before": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow by which the set has been reached."
+                },
+                "in": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend in."
+                },
+                "out": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend out."
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the pose is taken."
+                },
+                "min_gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 60,
+                  "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -1048,6 +1188,76 @@
               },
               "additionalProperties": false,
               "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            },
+            "set": {
+              "type": "object",
+              "required": [
+                "pose",
+                "from",
+                "to_before",
+                "in",
+                "out",
+                "w",
+                "min_gap"
+              ],
+              "description": "Optional. The pose a style's first blow sets from (the burst's set): a fighter's pose, and how it is blended in and out.",
+              "properties": {
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter key to the pose he sets from (rule pressstyles-set: a fighter of fighters.json and a real pose)."
+                },
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow at which the set begins."
+                },
+                "to_before": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow by which the set has been reached."
+                },
+                "in": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend in."
+                },
+                "out": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend out."
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the pose is taken."
+                },
+                "min_gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 60,
+                  "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -1267,6 +1477,76 @@
               },
               "additionalProperties": false,
               "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            },
+            "set": {
+              "type": "object",
+              "required": [
+                "pose",
+                "from",
+                "to_before",
+                "in",
+                "out",
+                "w",
+                "min_gap"
+              ],
+              "description": "Optional. The pose a style's first blow sets from (the burst's set): a fighter's pose, and how it is blended in and out.",
+              "properties": {
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter key to the pose he sets from (rule pressstyles-set: a fighter of fighters.json and a real pose)."
+                },
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow at which the set begins."
+                },
+                "to_before": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow by which the set has been reached."
+                },
+                "in": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend in."
+                },
+                "out": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend out."
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the pose is taken."
+                },
+                "min_gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 60,
+                  "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -1486,6 +1766,76 @@
               },
               "additionalProperties": false,
               "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            },
+            "set": {
+              "type": "object",
+              "required": [
+                "pose",
+                "from",
+                "to_before",
+                "in",
+                "out",
+                "w",
+                "min_gap"
+              ],
+              "description": "Optional. The pose a style's first blow sets from (the burst's set): a fighter's pose, and how it is blended in and out.",
+              "properties": {
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter key to the pose he sets from (rule pressstyles-set: a fighter of fighters.json and a real pose)."
+                },
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow at which the set begins."
+                },
+                "to_before": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow by which the set has been reached."
+                },
+                "in": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend in."
+                },
+                "out": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend out."
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the pose is taken."
+                },
+                "min_gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 60,
+                  "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -1706,6 +2056,76 @@
               },
               "additionalProperties": false,
               "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            },
+            "set": {
+              "type": "object",
+              "required": [
+                "pose",
+                "from",
+                "to_before",
+                "in",
+                "out",
+                "w",
+                "min_gap"
+              ],
+              "description": "Optional. The pose a style's first blow sets from (the burst's set): a fighter's pose, and how it is blended in and out.",
+              "properties": {
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter key to the pose he sets from (rule pressstyles-set: a fighter of fighters.json and a real pose)."
+                },
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow at which the set begins."
+                },
+                "to_before": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow by which the set has been reached."
+                },
+                "in": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend in."
+                },
+                "out": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend out."
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the pose is taken."
+                },
+                "min_gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 60,
+                  "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -1926,6 +2346,76 @@
               },
               "additionalProperties": false,
               "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            },
+            "set": {
+              "type": "object",
+              "required": [
+                "pose",
+                "from",
+                "to_before",
+                "in",
+                "out",
+                "w",
+                "min_gap"
+              ],
+              "description": "Optional. The pose a style's first blow sets from (the burst's set): a fighter's pose, and how it is blended in and out.",
+              "properties": {
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter key to the pose he sets from (rule pressstyles-set: a fighter of fighters.json and a real pose)."
+                },
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow at which the set begins."
+                },
+                "to_before": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow by which the set has been reached."
+                },
+                "in": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend in."
+                },
+                "out": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend out."
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the pose is taken."
+                },
+                "min_gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 60,
+                  "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,

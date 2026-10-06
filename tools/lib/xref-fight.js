@@ -1419,6 +1419,16 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       }
     }
     for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
+      if (sid.startsWith('_') || !isObj(st) || !isObj(st.set) || !isObj(st.set.pose)) continue;
+      const fgsSet = get('data/anim/fighters.json');
+      const fidsSet = isObj(fgsSet) && isObj(fgsSet.fighters) ? Object.keys(fgsSet.fighters).filter((k) => !k.startsWith('_')) : [];
+      for (const [fk, pid] of Object.entries(st.set.pose)) {
+        if (fk.startsWith('_')) continue;
+        if (fidsSet.length && !fidsSet.includes(fk)) err(PS, `/styles/${esc(sid)}/set/pose/${esc(fk)}`, 'pressstyles-set', `"${fk}" is not a fighter of fighters.json (${fidsSet.join(', ')})`);
+        if (typeof pid === 'string' && allPosesPs.size && !allPosesPs.has(pid)) err(PS, `/styles/${esc(sid)}/set/pose/${esc(fk)}`, 'pressstyles-set', `pose "${pid}" is not in poses.json nor a wave's poses`);
+      }
+    }
+    for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
       if (sid.startsWith('_') || !isObj(st)) continue;
       if (st.carry === true && typeof st.carry_ticks === 'number' && st.carry_ticks === 0) err(PS, `/styles/${esc(sid)}/carry_ticks`, 'pressstyles-carry', `style "${sid}" carries into the next blow, but carry_ticks is 0, so there is no blend`, 'warning');
     }
