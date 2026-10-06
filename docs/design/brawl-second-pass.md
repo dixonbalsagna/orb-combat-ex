@@ -183,6 +183,22 @@ Controls found two traps in "a tap lands when the wind-up ends, and a hold keeps
   - From 12 ticks the pose is a wind-up, and from then it is armoured against lights, since it can no longer be one. Mediums end it until tick 20, as they do a heavy.
   - The clock is live ticks, as on every layout, if the bridge can count them. If it can't, the rule is the two figures: 14 and 30.
   - `read.simpleMediumStart` 12 and `read.simpleHeavyStart` 28.
+- **Simple's buttons under three strengths.** Simple has no diamond, so each of its buttons carries one cell of the full layout.
+
+| Simple's button | What it is | Its readings |
+| :--- | :--- | :--- |
+| **X, Attack** | X and Y, by the length of the hold | A tap is the light. Held, it is the medium from 12 ticks and the heavy from 28, thrown on the release (above) |
+| **Y, Heavy** | B's cell, whole | A tap is the heavy, 28 ticks after the press and armoured from its first tick. On a staggered rival it is the launcher (§3). Held, it is the charged heavy. With RT held it is the signature's hold (§5) |
+| **B, Guard** | As now | A hold guards, and a tap in time is the perfect block |
+| **A, Dodge** | As now | A tap dodges, and a hold sprints |
+| **LB, Context** | A's cell | In reach, the shove, the clinch and the tackle (§4). Out of reach, the pick-up, the civilian and the taunt, as now |
+| **RT, Power** | As now | Held, it charges. With X, the director's pick of a special. With Y, the signature |
+
+  - **Y is the heavy because the launcher needs it.** A stagger lasts 12 ticks and a heavy by Attack's hold takes 28, so on Simple the route would be out of reach. With Y it is the same as everywhere: Attack until he staggers, then Y.
+  - **The binding doesn't change.** Simple's Y sends the `signature` edge, and from C2a that edge with no stance held is B's. Only the label changes, from Signature to Heavy.
+  - **The two heavies are told apart by the hold.** A heavy let go from Attack was wound by its hold, and lands 2 ticks after the release. A heavy pressed on Y winds for 28 ticks from the press. Both arrive as B's edge, so the director reads which it is from the held level before the edge.
+  - **No tap fires a signature, on any layout.** On Simple it is RT + Y, held to its first flash. If Simple touch can't make that with its thumbs, Controls designs the gesture, and the hold stays as its tell.
+  - The pairs, the charged medium, the burst and the energy blows in reach aren't on Simple's buttons. The director throws the pairs and the energy blows, and the hold-to-flurry setting gives the flurry.
 
 **The bands for press to contact, by button:** X at 2 ticks, with 95% inside 4. Y at 12 ticks, and never past 16. B at 28 ticks, and never past 32. On every button the move starts within 10 ticks of the press, which is the band Encounter already measures.
 
@@ -194,20 +210,22 @@ Controls found two traps in "a tap lands when the wind-up ends, and a hold keeps
 
 **Orb:** "X Light Hold should give a high speed burst of low damage attacks that quickly slows down on a curve." Lights never charge.
 
-The press throws the light, as always. While X stays down, more blows follow by themselves, fast at first and then slowing.
+The press throws the light, as always. **The burst starts when the hold is certain, 16 ticks after the press.** From there more blows follow by themselves, fast at first and then slowing.
 
 | Blow | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Lands, in ticks from the press | 2 | 6 | 10 | 15 | 21 | 29 | 40 | 55 |
-| The gap before it | | 4 | 4 | 5 | 6 | 8 | 11 | 15 |
-| Worth, in brawl lights | 1 | 0.28 | 0.28 | 0.35 | 0.42 | 0.56 | 0.77 | 1.05 |
+| Lands, in ticks from the press | 2 | 18 | 22 | 26 | 31 | 37 | 45 | 56 |
+| The gap before it | | 16 | 4 | 4 | 5 | 6 | 8 | 11 |
+| Worth, in brawl lights | 1 | 1 | 0.28 | 0.28 | 0.35 | 0.42 | 0.56 | 0.77 |
 
-- **It is one move of eight blows, in under a second,** and it is worth 4.7 brawl lights in all. Each blow after the first is worth 0.07 for each tick of its gap.
-- **It doesn't beat a mash or a timed string.** Over the same 55 ticks a mash is worth 6.3, so the burst is three quarters of it. A light and one skill strike are worth 5 in 32 ticks.
-- **It is the easy option.** It settles the question of holding to flurry: a player who can't mash holds.
+- **A tap of X never throws two lights.** My first table landed the second blow 6 ticks after the press, which needs the burst to start at 4. Taps run 3 to 6 ticks on a pad, 4 to 8 on a keyboard and 5 to 12 on touch. So at 4 nearly every keyboard and touch tap threw a second light, and at 8, as Controls built it, most touch taps still would. That breaks "one press is one attack" (the EP's finding, from `docs/controls/windup-read.md` §5).
+- **So the hold is read on the same line as Y's and A's: 16 live ticks.** By Controls' model no pad or keyboard tap reaches it, and under 2% of touch taps do, which is inside the band for a tap read as a hold (§11). That figure is modelled and not measured. A hold now begins at 16 ticks on X, Y and A alike, and the energy stance's volley already sits there.
+- **Until 16 ticks a held X is a tap:** one light, and then he sets himself for about 10 ticks. Let go in that time, nothing more is thrown. The set is the burst's tell, and the rival can answer in it.
+- **It is still one move of eight blows in under a second,** and it is still worth 4.7 brawl lights in all. The second blow is a full light, since it is the one he set. Each of the six after it is worth 0.07 for each tick of its gap.
+- **It doesn't beat a mash or a timed string.** Over the same 56 ticks a mash is worth 6.4, so the burst is 73% of it. A light and one skill strike are worth 5 in 32 ticks.
+- **It is the easy option.** A player who can't mash holds, and gets about three quarters of a mash.
 - Its blows reel the rival for 2 ticks each. Each one after the first adds half a point to his run, so if nothing answers it, the eighth blow is the close.
 - Letting go stops it after the blow in hand. After the eighth he is open for 8 ticks. Any other press replaces it.
-- A long tap throws a second blow at 6 ticks. That costs nothing: a blow from a held X is never worth more than a mashed one.
 
 ### A held Y or B keeps winding
 
@@ -260,7 +278,7 @@ The press throws the light, as always. While X stays down, more blows follow by 
 - **So the B flurry's second blow launches** when the first lands clean: the hammer, and then the launch.
 - **The stagger has a ping, and both players hear it** (the EP's ruling). Local play shares its speakers, so the cue can't be private. It tells the defender that he is open as much as it tells the attacker to press B.
 
-**The route to teach:** mash X until he staggers, then B, and aim with the stick. The game says when, because the close has its own cue.
+**The route to teach:** mash X until he staggers, then B, and aim with the stick. On Simple, B is the Y button (§2). The game says when, because the close has its own cue.
 
 **The other launches stand,** and each is a step up in skill: the full charged heavy, which is the read and is worth 8 to 10; the lift and then a heavy, since a heavy that lands on a lifted rival launches him (C6a); and a charged heavy at a flow of 3 (C3).
 
@@ -286,7 +304,7 @@ The press throws the light, as always. While X stays down, more blows follow by 
 
 **A failed option hurts 3 of 10** (Orb, questionnaire 19). A whiffed heavy leaves him open for 20 ticks. The rule for every flashy option: failing never leaves him open for more than 20 ticks, and never adds damage of its own.
 
-**Data:** `burst` (gaps 4, 4, 5, 6, 8, 11, 15; rate 0.07; reel 2; run 0.5 a blow; open 8); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (a stagger of at least 12, wind-up 14, worth 3, ki 5, held press 10, and the AI's shares 0.15, 0.35 and 0.6).
+**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.07; reel 2; run 0.5 a blow; open 8); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (a stagger of at least 12, wind-up 14, worth 3, ki 5, held press 10, and the AI's shares 0.15, 0.35 and 0.6).
 
 ## 4. A: the shove, the clinch and the tackle
 
@@ -319,7 +337,7 @@ Orb's sketch, with one move to a press. A is how a fighter takes hold of the oth
 
 B is the heavy now, and it has its moveset. So the signature needs another place.
 
-- **The fighter's defining signature is on RT + B,** the charging stance's B. That is where the control scheme first had it.
+- **The fighter's defining signature is on RT + B,** the charging stance's B. On Simple that is RT + Y (§2). That is where the control scheme first had it.
 - **It takes a hold, which is its tell.** Held to the first flash at 24 ticks, it is his art, for 25 ki. Held to the second at 48, it is his signature, for 45. In acts 3 and 4, held 45 ticks more, it is his ultimate. Let go before the first flash, nothing fires: he gets the "not ready" cue and spends nothing. The tiers and prices are those of `melee-press-feel.md` §11.
 - **Signatures play live.** An art has no pause and no camera of its own. A signature takes a pause of at most 1 s, and only when it lands clean. A struggle is staged as before. Finishers keep their staging, which the other player called "really cool".
 - **The player keeps hold of it.** A beam lasts while B is held, up to its tier's length, and ends when he lets go. Ki is spent by the second as it fires. The stick nudges its aim. A melee art is a string that the player drives: each press is its next blow, and he can stop.
@@ -511,7 +529,7 @@ C1 is unchanged and is being built. After it, the buttons come in two halves, so
 | Order | Slice | What | What it needs |
 | ---: | :--- | :--- | :--- |
 | 1 | **C1** | **Control** (§1) and **the even mash** with its double hit (§7) | As ruled. Being built |
-| 2 | **C2a** | **The taps and the flurries** (§2): Y as a 12-tick medium, B as a 28-tick heavy with its armoured wind-up, the tap rule read at the wind-up's end with its grace, the three flurries, the mix-up. **The burst** on a held X (§3). **B stops firing the beam,** and RT + B fires it as it does today | Combat: today's heavies re-tagged as mediums, and a first set of super-heavy pieces. Animation: the mediums re-timed to 12 ticks, the heavy's wind-up and blow, the burst at its gaps. Encounter: wind-ups on live ticks, a flurry for each button, armour, B off the signature. Controls: the hold points become wind-up lengths, with the grace. Legal: the new tier and the burst, seen drawn |
+| 2 | **C2a** | **The taps and the flurries** (§2): Y as a 12-tick medium, B as a 28-tick heavy with its armoured wind-up, the tap rule read at the wind-up's end with its grace, the three flurries, the mix-up. **The burst** on a held X (§3). **B stops firing the beam,** and RT + B fires it as it does today | Combat: today's heavies re-tagged as mediums, and a first set of super-heavy pieces. Animation: the mediums re-timed to 12 ticks, the heavy's wind-up and blow, the burst at its new gaps, with the 10-tick set before its stream. Encounter: wind-ups on live ticks, a flurry for each button, armour, B off the signature. Controls: the hold points become wind-up lengths, with the grace. Legal: the new tier and the burst, seen drawn |
 | 3 | **C2t** | **The test slice,** for Orb's four questions (§13). **Giving ground,** with a wound blow's reach (§1). **The stagger's half nudge** (§1). **The launcher** (§3). **Energy arts in reach:** the point-blank bolt and the blast (§5b) | Encounter: the four rules, and the AI's shares for giving ground, following and the launcher. Simulation: the stick as held, read in a stun. Animation: the heavy at a 14-tick wind-up, and two energy poses a fighter. VFX: §5b's list. Combat: the two energy pieces for each fighter. Legal: the two energy poses and the flash rate, seen drawn. QA: §13's rows |
 | | | **Orb plays C1, C2a and C2t** | |
 | 4 | **C2b** | **The holds** on Y and B (§3): the charged medium, the charged heavy with its knock-back, launch and lift, the just release, the fresh and the set guard, the wrench. **The shove** on a tapped A (§4). The two settings: a latched charge, and charges off | Animation: charge poses and their flashes. Encounter: the charges, the guard rules, the AI's shove against a heavy. Controls: the tap on A, and the two settings. Simulation: the crippling blow's trigger. UI: the charge cue |
@@ -540,7 +558,7 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | Row | Now | With this page |
 | :--- | :--- | :--- |
 | Press to contact | 2 ticks for a light | **By button:** X at 2, with 95% inside 4. Y at 12, never past 16. B at 28, never past 32. Every press starts its move within 10 ticks |
-| A tap that is read as a hold, by device | Not a row | **New:** under 2% on a pad and a keyboard, and under 5% on touch. The lever is the grace |
+| A tap that is read as a hold, by device | Not a row | **New:** under 2% on a pad and a keyboard, and under 5% on touch. The lever is the grace. It covers X as well: a tap of X that throws a second light counts here, and the lever there is the burst's start |
 | The burst against a mash over the same time | Not a row | **New:** 70 to 80% of the mash's damage. Never over |
 | Each flurry against the one it beats, head to head | Not a row | **New:** X against Y, Y against B and B against X each win 55 to 75% |
 | The masher against the medium AI | 35 to 50%, tapping X every 8 ticks | Kept for the X masher. **New, reported:** the Y masher, the B masher, the alternator and the player who only holds X |
