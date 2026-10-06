@@ -13,6 +13,7 @@ render_mode unshaded, blend_mix, depth_draw_never, cull_disabled;
 
 uniform vec4 albedo : source_color = vec4(1.0);   // rgb: the lane colour; a: the whole arc's opacity
 uniform float flash = 0.0;
+uniform float flash_fill = 1.0;   // 0: a flash the shared flash register refused: the lines flash, the fill does not deepen
 uniform float fill = 1.0;
 uniform vec2 size = vec2(52.0, 88.0);   // the quad, in world units (RenderLook.GUARD_SIZE)
 uniform float radius = 46.0;            // the arc's circle (RenderLook.GUARD_RADIUS)
@@ -38,7 +39,7 @@ void fragment() {
 	// The line: never thinner than a pixel and a quarter each side.
 	float w = max(1.4, 1.25 * px) * (1.0 + 1.5 * flash);
 	float line = (1.0 - smoothstep(w - px, w + px, abs(r - radius))) * (0.8 + 0.2 * flash);
-	float inner = fill * fill_alpha * (1.0 + 2.0 * flash) * smoothstep(radius - fill_depth, radius, r) * step(r, radius);
+	float inner = fill * fill_alpha * (1.0 + 2.0 * flash * flash_fill) * smoothstep(radius - fill_depth, radius, r) * step(r, radius);
 	float w2 = 0.6 * w;
 	float line2 = flash * 0.8 * (1.0 - smoothstep(w2 - px, w2 + px, abs(r - radius - (1.0 - flash) * 14.0)));
 	ALBEDO = albedo.rgb;

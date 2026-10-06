@@ -339,6 +339,10 @@ const SLIDE_LEAN: float = 0.35           # radians: a sliding fighter stays upri
 const SLIDE_CROUCH: float = 6.0          # and crouches this much
 const HIDDEN_ALPHA: float = 0.22
 const HIT_FLASH_S: float = 0.12
+## A hit the shared flash register refuses the white body for: the outline lights in this colour for HIT_FLASH_S (a
+## thin line, not a flash). A beam it refuses: no white core, the rest at BEAM_SOFT of its strength.
+const HIT_EDGE := "#e8ecf2"
+const BEAM_SOFT: float = 0.45
 
 static var _colors: Dictionary = {}
 

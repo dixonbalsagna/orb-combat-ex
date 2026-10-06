@@ -119,13 +119,14 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 		# The intro: a fighter is out of sight until his fall starts (the sim holds him high above his spot until
 		# then), and so is his shadow on the ground he will land on.
 		v.visible = not host.intro_held(i)
+		v.hit_white_T = host.hit_flash_T[i] if i < host.hit_flash_T.size() else -INF
 		v.update(S, S.fighters[i], pose, vx, cam.z)
 		_place_shadow(S, i, wx, vx, pose.y, v.depth, v.visible)
 	_occlusion(S, cam_x, vp)
 	_lane_cues(host, a)
 	_sky_react(host, cam_x)
 	vfx_layer.update(host, a, cam_x, cam.z, vp.x)
-	beams.update(S, cam_x, cam.z)
+	beams.update(S, cam_x, cam.z, host)
 	particles.update(host.fxv, host.impact, cam_x, cam.z, cam_rig.half_width(vp.x, RenderLook.Z_PARTICLES), fighter_views)
 
 

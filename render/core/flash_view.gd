@@ -42,7 +42,12 @@ var crown_fn: Callable
 var info_fn: Callable
 var started_fn: Callable
 var up_fn: Callable
+## pulses_fn(wanted, colour) -> int: how many of a starting flash's pulses the shared flash register grants (each swell
+## is a flash; main asks it). Unset, all of them (a tool). With none granted the flash still shows, once and calm: it
+## fades in, holds and fades, with no swell, sweep or jitter, as with reduced motion.
+var pulses_fn: Callable
 var leader: FlashView = null   # a second pane's copy: the first pane's view it follows
+var _granted: int = -1         # the pulses granted to the flash showing (-1: not asked, the data's count)
 
 var cur: String = ""           # the flash showing, or ""
 var _t0: float = 0.0           # sim time it started
@@ -168,6 +173,7 @@ func _follow() -> void:
 		for key in ["family", "grow", "sweep", "jitter", "seed"]:
 			_mat.set_shader_parameter(key, leader._mat.get_shader_parameter(key))
 	reduced_motion = leader.reduced_motion
+	_granted = leader._granted
 	_hold_end = leader._hold_end
 	_out = leader._out
 
@@ -254,7 +260,15 @@ func _env(T: float) -> float:
 
 
 func _pulses() -> int:
-	return 1 if reduced_motion else maxi(1, int(FlashSet.pulse(cur).get("count", 1)))
+	if reduced_motion:
+		return 1
+	var n: int = maxi(1, int(FlashSet.pulse(cur).get("count", 1)))
+	return n if _granted < 0 else clampi(_granted, 1, n)
+
+
+## The flash showing is the calm one: reduced motion, or the register granted none of its pulses.
+func _calm() -> bool:
+	return reduced_motion or _granted == 0
 
 
 ## The envelope times any forced fade.
@@ -275,15 +289,20 @@ func _start(id: String, T: float, bearing: float) -> void:
 	cur = id
 	_t0 = T
 	var p: Dictionary = FlashSet.pulse(id)
+	_granted = -1
+	if pulses_fn.is_valid():
+		var info: bool = String(f.get("class", "")) == "info"
+		var rim: Color = FlashSet.info_colours(family)[1] if info else FlashSet.emotion_colours(family)[0]
+		_granted = int(pulses_fn.call(1 if reduced_motion else maxi(1, int(p.get("count", 1))), rim))
 	_hold_end = T + (_pulses() - 1) * (float(p.get("on", 0.0)) + float(p.get("off", 0.0))) + float(p.get("on", 0.0))
 	_out = -1.0
 	_cool[id] = T + float(f.get("cooldown", 0.0))
 	_write(id, f, bearing)
 	var fam: int = FlashSet.shape_of(family)
 	_mat.set_shader_parameter("family", fam)
-	_mat.set_shader_parameter("grow", 0.0 if reduced_motion else 0.45)
-	_mat.set_shader_parameter("sweep", 0.0 if reduced_motion else deg_to_rad(float(RenderLook.FLASH_SWEEP.get(id, 0.0))))
-	_mat.set_shader_parameter("jitter", 0.0 if reduced_motion else float(RenderLook.FLASH_JITTER.get(id, 0.0)) * FighterView.HEIGHT / _unit)
+	_mat.set_shader_parameter("grow", 0.0 if _calm() else 0.45)
+	_mat.set_shader_parameter("sweep", 0.0 if _calm() else deg_to_rad(float(RenderLook.FLASH_SWEEP.get(id, 0.0))))
+	_mat.set_shader_parameter("jitter", 0.0 if _calm() else float(RenderLook.FLASH_JITTER.get(id, 0.0)) * FighterView.HEIGHT / _unit)
 	_mat.set_shader_parameter("seed", float(SimRng.deriveSeed(int(T * 60.0) * 2 + actor, "vfx.flash") % 10007))
 	if started_fn.is_valid():
 		started_fn.call(actor, id)

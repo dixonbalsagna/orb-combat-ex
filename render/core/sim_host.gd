@@ -13,6 +13,9 @@ signal ticked(n: int)
 ## Every tick, with that tick's fx events and new feed lines, just before S.out is cleared: the hook for other
 ## render-side readers (UI's HUD). Listeners only read.
 signal drained(events: Array, lines: Array)
+## Once a tick, after VFX has consumed the tick's events (and so after its own flashes have asked the shared flash
+## register): the moment Rendering's flashes that start from an event ask (main: head flashes, guard, cues).
+signal flashes_due(events: Array)
 ## A player joined or left: {kind: "joined" | "left", slot, device} (UI's "P2 joined" line), from the input hub.
 signal input_note(note: Dictionary)
 
@@ -41,6 +44,16 @@ var _skip_intro: int = 0        # skip_intro(): 0 not asked, 1 for the next pre-
 var setup_used: Dictionary = {} # the whole setup the last match started from (the hub's keys, then the caller's): a match input like the seed, so a reference sim or a replay starts from the same one
 var _intro_mem: Dictionary = {} # the session's intro memory: a pair of roster ids -> {seed, n, avoid} (intro_record). Never saved, and never in the sim
 const INTRO_AVOID: int = 5      # Narrative's rule: the last five scenarios a pair opened with
+## Rendering's flashes under VFX's shared flash register (hub.flashes; docs/rendering/flash-sources.md). These are the
+## sources a fight makes many of: they leave a slot of the second's three for the big events, and get none under
+## reduced flashing. The register's own LOW list should name them; until it does, ask_flash keeps the rule itself.
+const FLASH_LOW: Array = ["head_flash", "guard_flash", "cue_flare", "body_hit"]
+var flash_refused: Dictionary = {}   # a low source's refusals the host made itself (the register does not list it yet)
+var hit_flash_T: Array = [-INF, -INF]   # per slot: the hurtT of the last hit whose white body the register granted
+var clash_flash: bool = true         # the running beam clash's flare was granted
+var _hit_T: Array = [NAN, NAN]       # per slot: the hurtT last asked for
+var _beam_ok: Dictionary = {}        # a live beam's instance id -> whether its bright form was granted
+var _clash_on: bool = false
 
 
 func _init() -> void:
@@ -57,6 +70,12 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 	_skip_intro = 0
 	setup_used = su.duplicate(true)
 	SimCore.newMatch(S, seed, ai, su)
+	flash_refused.clear()
+	hit_flash_T = [-INF, -INF]
+	_hit_T = [NAN, NAN]
+	_beam_ok.clear()
+	clash_flash = true
+	_clash_on = false
 	if remember:
 		_intro_file(su)
 	cam.reset()
@@ -159,6 +178,48 @@ func intro_running() -> bool:
 	return "intro" in S and S.intro != null and int(S.intro.left) > 0
 
 
+## Ask VFX's shared flash register whether a full flash of Rendering's may be drawn now (it takes a slot of the
+## second's three if so). col: the flash's colour (a red one is never granted). A source in FLASH_LOW is low priority:
+## the register's rule for those (at most two of the three, none under reduced flashing) is applied here while the
+## register does not list the source itself. The caller draws its fallback when this is false.
+func ask_flash(source: String, col: Color = Color.WHITE) -> bool:
+	var reg: VfxFlashRegistry = vfx.flashes
+	if FLASH_LOW.has(source) and not VfxFlashRegistry.LOW.has(source):
+		if reg.reduced or reg.in_window() >= VfxFlashRegistry.LOW_CAP:
+			flash_refused[source] = int(flash_refused.get(source, 0)) + 1
+			return false
+	return reg.ask(source, col, S.tick)
+
+
+## Whether a beam's bright form (its white core, at full strength) was granted. One the host has not seen in a tick
+## (a tool's posed state) is drawn as designed.
+func beam_flash(b) -> bool:
+	return bool(_beam_ok.get(b.get_instance_id(), true))
+
+
+## A beam that appeared this tick asks once, for every pane; a clash asks once as it starts.
+func _ask_beams() -> void:
+	var live: Dictionary = {}
+	for b in S.beams:
+		var id: int = b.get_instance_id()
+		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else ask_flash("beam", RenderLook.col(b.col))
+	_beam_ok = live
+	var on: bool = S.game.clash != null
+	if on and not _clash_on:
+		clash_flash = ask_flash("beam_clash")
+	_clash_on = on
+
+
+## A hit that landed this tick asks once for the body's white flash (FighterView draws an outline when refused).
+func _ask_hits() -> void:
+	for i in range(mini(2, S.fighters.size())):
+		var ht: float = S.fighters[i].hurtT
+		if not is_equal_approx(ht, _hit_T[i]) or is_nan(_hit_T[i]):
+			_hit_T[i] = ht
+			if ht <= S.T and S.T - ht < RenderLook.HIT_FLASH_S and ask_flash("body_hit"):
+				hit_flash_T[i] = ht
+
+
 ## Whether fighter i has yet to start his fall in the running intro. The sim holds him high above his start spot
 ## until his fall beat, and the views keep him out of sight until then (PaneWorld.render). Read from the state every
 ## time (the timeline is the sim's own, which it keeps by template, gap and parts), so a skip or a seek needs nothing
@@ -229,6 +290,13 @@ func tick(vw: float, vh: float) -> void:
 	pending_cues.append_array(audio_cues.consume(S, S.out.fx))
 	drained.emit(S.out.fx, lines)
 	vfx.consume(S, S.out.fx)
+	# Rendering's flashes ask the shared register here, after VFX's of this tick: the ones that start from an event
+	# (main), then a new beam and a clash, then a new hit's white body, the commonest and least needed, last.
+	if not vfx.enabled:
+		vfx.flashes.begin_tick(vfx.reduced_motion or vfx.reduced_flashing)   # the hub does not run its register with VFX off
+	flashes_due.emit(S.out.fx)
+	_ask_beams()
+	_ask_hits()
 	S.out.fx.clear()
 	if fxv.shake > 0.5:
 		jitter = Vector2((cam_rng.next() - 0.5) * fxv.shake, (cam_rng.next() - 0.5) * fxv.shake)

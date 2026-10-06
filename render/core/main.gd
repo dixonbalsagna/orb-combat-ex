@@ -189,6 +189,7 @@ func _ready() -> void:
 	_touch_last = bool(ui_hud.opts["touch_ui"])
 	ui_hud.touch_state_fn = host.touch.display_state
 	host.drained.connect(_on_drained)
+	host.flashes_due.connect(_on_flashes_due)
 	host.input_note.connect(_on_input_note)
 	Input.joy_connection_changed.connect(_on_joy_connection)
 	audio = AudioVoices.new(host.audio_cues.bank)
@@ -315,6 +316,24 @@ static func _pane_viewport(size: Vector2i) -> SubViewport:
 	return sv
 
 
+## The tick's events that start one of Rendering's flashes, after VFX has consumed the tick (SimHost.flashes_due), so
+## each asks the shared flash register after VFX's own: head flashes first (they carry what a fighter senses), then
+## a perfect block's guard flash, then a cue's flare. The white body of a hit asks last (SimHost._ask_hits).
+func _on_flashes_due(events: Array) -> void:
+	_flash_events(events)
+	_guard_events(events)
+	_cue_events(events)
+
+
+## How many of a head flash's pulses the shared flash register grants (FlashView.pulses_fn): each swell is a flash.
+func _flash_pulses(wanted: int, col: Color) -> int:
+	var n: int = 0
+	for k in range(wanted):
+		if host.ask_flash("head_flash", col):
+			n += 1
+	return n
+
+
 ## A fighter's head flashes: its family, the switches, and the hooks to UI (the crown, the info setting, the dimming
 ## of an always-on crown) and to Audio (the cue when a flash starts).
 func _setup_flash(v: FighterView, i: int) -> void:
@@ -328,6 +347,7 @@ func _setup_flash(v: FighterView, i: int) -> void:
 	fl.info_fn = ui_hud.info_flashes
 	fl.up_fn = ui_hud.set_flash_up
 	fl.started_fn = _flash_started
+	fl.pulses_fn = _flash_pulses
 
 
 func _flash_started(actor: int, id: String) -> void:
@@ -362,11 +382,17 @@ func _cue_events(events: Array) -> void:
 		var kind: String = String(e.kind)
 		var who: int = int(e.actor)
 		var pose: Dictionary = RenderLook.CUE_POSES.get(kind, {})
+		# A cue's flare is a full flash: each fighter it plays on asks the register once, for every pane.
+		var flare_ok: Array = [true, true]
+		if float(pose.get("flare", 0.0)) > 0.0:
+			for i in range(mini(2, fighter_views.size())):
+				if who < 0 or i == who:
+					flare_ok[i] = host.ask_flash("cue_flare", fighter_views[i]._aura_col)
 		for pw in all_panes():
 			var views: Array = pw.fighter_views
 			for i in range(views.size()):
 				if who < 0 or i == who:
-					views[i].cue(kind, T)
+					views[i].cue(kind, T, flare_ok[i] if i < 2 else true)
 			if pose.has("ring_other") and who >= 0 and who < 2 and views.size() == 2:
 				views[1 - who].ring(T, float(pose.ring_other))
 
@@ -375,10 +401,12 @@ func _cue_events(events: Array) -> void:
 func _guard_events(events: Array) -> void:
 	for e in events:
 		if e.type == "parry":
+			var who: int = int(e.actor)
+			# The arc's flash asks the register once, for every pane; refused, its lines flash and its fill does not.
+			var full: bool = who >= 0 and who < fighter_views.size() and host.ask_flash("guard_flash", fighter_views[who]._aura_col)
 			for pw in all_panes():
-				var who: int = int(e.actor)
 				if who >= 0 and who < pw.fighter_views.size():
-					pw.fighter_views[who].guard_flash(host.S.T)
+					pw.fighter_views[who].guard_flash(host.S.T, full)
 
 
 ## The flashes today's events can drive (spec section 6); the rest wait for Encounter's events and have debug keys.
@@ -499,9 +527,6 @@ func _on_drained(events: Array, lines: Array) -> void:
 		var vp: Vector2 = get_viewport().get_visible_rect().size
 		split_rig.step(host.S, vp.x, vp.y, events)
 	planet.consume(events, host.S.T)
-	_flash_events(events)
-	_cue_events(events)
-	_guard_events(events)
 	RenderAnim.consume(host.S, events)
 	ui_hud.consume_all(events)
 	UiSimBridge.feed(ui_hud, lines)

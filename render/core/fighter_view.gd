@@ -69,6 +69,11 @@ static var guard_reduced: bool = false   # the reduced version, the line alone (
 var _guard_mat: ShaderMaterial
 var _guard_a: float = 0.0          # how far up it is, 0 to 1
 var _guard_flash_t0: float = -1.0  # the sim time of the last perfect block
+var _guard_full: bool = true       # ... and whether the shared flash register granted its full flash (the fill deepening)
+## The hurtT of the last hit whose white body the shared flash register granted (SimHost.hit_flash_T; the pane sets
+## it every frame). A hit it did not grant lights the outline instead.
+var hit_white_T: float = -INF
+var _edge: bool = false            # the outline is lit for a refused hit
 var _faded: bool = false
 var _flash: bool = false
 var _stance: int = -1
@@ -268,19 +273,24 @@ func snap_damage(forget: bool = false) -> void:
 
 
 ## A cue from Combat (RenderLook.CUE_POSES), started at sim time T; kinds with no pose are ignored.
-func cue(kind: String, T: float) -> void:
+## flare_ok: the shared flash register granted the cue's flare (refused, the pose, spark and ring still play).
+func cue(kind: String, T: float, flare_ok: bool = true) -> void:
 	var p = RenderLook.CUE_POSES.get(kind)
 	if p == null:
 		return
 	_cue = p.duplicate()
+	if not flare_ok:
+		_cue["flare"] = 0.0
 	_cue["t0"] = T
 	_cue["kind"] = kind
 	cues_started[kind] = int(cues_started.get(kind, 0)) + 1
 
 
-## A perfect block (the sim's parry event, for the one who blocked): the guard arc flashes.
-func guard_flash(T: float) -> void:
+## A perfect block (the sim's parry event, for the one who blocked): the guard arc flashes. full: the shared flash
+## register granted it; refused, the arc's lines flash and its fill does not deepen.
+func guard_flash(T: float, full: bool = true) -> void:
 	_guard_flash_t0 = T
+	_guard_full = full
 
 
 ## A ring around this fighter (the other one circles it), at alpha a.
@@ -394,7 +404,16 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 		pivot.position.y = PIVOT_Y
 	var punch: bool = f.state == "locked" or f.beamCharge != null
 	var front: Vector2 = Vector2(30, 12) if punch else Vector2(22, 0)
-	var flash: bool = T - f.hurtT < RenderLook.HIT_FLASH_S and T >= f.hurtT
+	# A hit just landed: the body goes white if the shared flash register granted it (at most a few a second across
+	# the screen), and otherwise the outline lights, which is a thin line and not a flash.
+	var hit: bool = T - f.hurtT < RenderLook.HIT_FLASH_S and T >= f.hurtT
+	var flash: bool = hit and is_equal_approx(f.hurtT, hit_white_T)
+	var edge: bool = hit and not flash
+	if edge != _edge and anim_body != null:
+		_edge = edge
+		var hull := (anim_body.mi.material_override as ShaderMaterial).next_pass as ShaderMaterial
+		if hull != null:
+			hull.set_shader_parameter("col", RenderLook.col(RenderLook.HIT_EDGE if edge else RenderLook.OUTLINE))
 	if anim_body != null:
 		var af: AnimFighter = RenderAnim.solve(S, f)
 		if af.version != anim_body.applied_version:
@@ -466,6 +485,7 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 		guard.scale = Vector3(m, 1.0, 1.0)
 		_guard_mat.set_shader_parameter("albedo", Color(_aura_col, RenderLook.GUARD_ALPHA * ga))
 		_guard_mat.set_shader_parameter("flash", gf)
+		_guard_mat.set_shader_parameter("flash_fill", 1.0 if _guard_full else 0.0)
 		_guard_mat.set_shader_parameter("fill", 0.0 if guard_reduced else 1.0)
 	ripple.visible = f.hidden
 	if f.hidden:
