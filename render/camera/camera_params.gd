@@ -72,6 +72,10 @@ const CHASE_LEAD_T: float = 0.25        # seconds of his velocity (the lead befo
 const CHASE_LEAD_TAU: float = 0.3       # the lead is smoothed with this time constant
 const RUSH_LEAD_MAX: float = 0.12        # the follow point's velocity lead in a rush is at most this share of the pane width
 const ZIP_FRAME_TAU: float = 0.20        # the zip frame (the box the camera holds) is followed with this time constant
+const SCROLL_MAX: float = 0.045          # the scroll governor: the scenery crosses the screen no faster than this much of its width a tick ...
+const SCROLL_MAX_REDUCED: float = 0.03   # ... and this much under reduced motion or reduced flashing (Tools' flash analyser: collapse, 4.5 flashes a second)
+const BRAWL_FOCUS_TAU: float = 0.05       # the one view follows a brawl's centre eased with this time constant (its drift as the lead)
+const BRAWL_RELEASE: float = 0.5         # and eases back to the pair's middle over this long when the brawl ends
 const ZIP_RELEASE: float = 0.6          # after a hold the frame eases back to the live pair for this long
 const ZIP_HOLD_MARGIN: float = 0.6        # a zip's hold runs this long past the cue's whole-zip ticks, until zip_end decides
 const ZIP_HOLD_MAX: float = 2.2           # and never longer than this from the cue
@@ -136,9 +140,14 @@ const LAG_SOFT: float = 0.06           # a tracked fighter this far from his anc
 const LAG_HARD: float = 0.20           # ... this far: the focus is held to it (a whip)
 const LAG_GAIN: float = 6.0            # the filters speed up by 1 + LAG_GAIN * (e - SOFT) / (HARD - SOFT)
 const LAG_CUT: float = 1.5             # farther than this in one tick: a cut (a counted safety net)
-const CUT_FADE: float = 0.08           # the cut's fade-in from 70% brightness, seconds
-const CUT_DIM: float = 0.30
-const REDUCED_CUT_FADE: float = 0.30
+const CUT_FADE: float = 0.08           # a safety cut's dip fades in over this, seconds
+# The dip's depth is chosen so that no pixel can change by 10% of the maximum relative luminance (WCAG 2.2 criterion 2.3.1's
+# threshold for a flash): a dip of d darkens a pixel of luminance L by d x L, at most d. It was 0.30, which on a bright sky
+# is 0.21; it is under 0.10 now whatever is on the screen, so even unasked it cannot be a general flash. The register is
+# asked at its leading edge as well (split_view.gd), and a refused dip is a cut with no dip.
+const CUT_DIM: float = 0.09
+const REDUCED_CUT_DIM: float = 0.06    # reduced motion: shallower still, and a slow one-way ease back
+const REDUCED_CUT_FADE: float = 0.60
 
 # --- fighters in depth (docs/camera/depth-and-chains.md) ---
 const K_FACTOR: float = 1.8660254      # 1 / (2 tan 15 degrees): the camera's distance to the fighter plane is K_FACTOR * vh / zoom
@@ -215,7 +224,13 @@ const PANEL_KINDS: Dictionary = {
 	"clash": {"prio": 1, "dur": 0.7, "earned": true},
 	"riposte": {"prio": 1, "dur": 0.7, "earned": true},
 	"rally": {"prio": 1, "dur": 0.7, "earned": true},
+	"double": {"prio": 3, "dur": 0.75, "earned": false},   # the even mash's double hit: the pair at the contact; rationed apart (DOUBLE_RATION)
 }
+const DOUBLE_RATION: float = 45.0        # a double hit's close-up: the first of a match, then at most once in this many seconds
+const DOUBLE_OPEN_BEFORE: int = 6        # it opens this many ticks before the blows land
+const DOUBLE_MAIN_RULES: float = 0.8     # the main view's rules (no push, the pull-back, half the shake) run this long past the contact
+const DOUBLE_SLIDE_SPAN: float = 1000.0  # the pull-back holds both slides: 6 body heights each way is 900 units, and some room
+const DOUBLE_PANEL_PUSH: float = 0.03    # the close-up pushes 3% inside its own frame
 
 # --- the winner in the wreckage (rule-of-cool.md row 8) ---
 const WRECK_AT: float = 1.8            # seconds after the KO: the loser's close-up has played, the sim's slow motion is ending

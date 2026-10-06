@@ -83,6 +83,8 @@ var _contact: Dictionary = {}
 var _beamcues: Dictionary = {}
 var _bn: Array = []             # bounces being watched: how far the fighter moves in the world and on the screen after one
 var _bn_done: Array = []
+var _dip_ts: Array = []          # the times of the brightness dips in a match (safety cuts, a rush's cut back, the intro's end)
+var _dips_seen: int = 0
 var _intro_ref: Array = []
 var _jr: Array = [null, null]            # a launched fighter's journey in progress, by victim slot
 var _jr_done: Array = []                 # the journeys that ended, for the match's summary
@@ -198,6 +200,11 @@ func _run() -> void:
 		await _scenario("rush %s" % rv[0], func(): return _rush_run(float(rv[1]), int(rv[2]), bool(rv[3])), {})
 	await _scenario("incoming closing", func(): return _incoming_closing(), {})
 	await _scenario("rush charge", func(): return _rush_run(6000.0, 20, false, true), {})
+	for bv in [["drift", false, true], ["drift across the seam", true, true], ["drift across the seam, the fighters' midpoint", true, false]]:
+		await _scenario("brawl %s" % bv[0], func(): return _brawl_drift(bool(bv[1]), bool(bv[2])), {})
+	await _scenario("double hit", func(): return _double_hit_run(), {})
+	for gv in [["fast", 100.0, false, false], ["fast, reduced flashing", 100.0, false, true], ["fast, reduced motion", 100.0, true, false], ["slow", 20.0, false, false]]:
+		await _scenario("scroll governor %s" % gv[0], func(): return _scroll_gov_run(float(gv[1]), bool(gv[2]), bool(gv[3])), {})
 	for zv in [["home", false, 0.0, "home", "", "done", false], ["far side", false, 0.0, "far", "over", "done", false], ["point over", false, 0.0, "point", "over", "done", false],
 			["point under", false, 0.0, "point", "under", "done", false], ["home at 49 degrees", false, 49.0, "home", "", "done", false],
 			["far side at 49 degrees", false, 49.0, "far", "over", "done", false], ["home across the seam", false, 0.0, "home", "", "done", true],
@@ -1601,6 +1608,205 @@ func _zip_run(pending: bool, pitch: float, exit: String, pas: String, end_text: 
 	return {}
 
 
+## A brawling pair drifting (Encounter's C1: the sticks move the brawl's centre, at most 0.3 body heights a tick, the speed eased
+## over 8 ticks), forward, braking, reversing, across the world's seam, with one tick on which a strike places its attacker and
+## the pair's middle jumps a body height. The rig reads the centre through `brawl_read` (DirBrawl.centre's dictionary). Checks:
+## both fighters on the screen on every tick; no cut and no layout change; the camera's velocity never changing by more than
+## 0.05 of the width in a tick. `centred` false is the record of the same drift with the camera on the fighters' midpoint.
+func _brawl_drift(seam: bool, centred: bool) -> Dictionary:
+	var c0: float = SimConst.W - 700.0 if seam else 20000.0
+	_pose(c0 - 60.0, 40.0, c0 + 60.0, 40.0)
+	_seed_rig()
+	for _i in range(200):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	var st: Dictionary = {"cx": c0, "v": 0.0}
+	if centred:
+		_rig.brawl_read = func(_S2): return {"x": float(st["cx"]), "y": 40.0, "vx": float(st["v"]) * 60.0, "vy": 0.0, "part": 0, "double": -1}
+	var cur0: SplitFrame = _rig.current()
+	var mode0: String = cur0.mode
+	var cuts: int = 0
+	var changes: int = 0
+	var off: int = 0
+	var jerk: float = 0.0
+	var cam_prev: float = cur0.cam_x[0]
+	var vel_prev: float = 0.0
+	var top: float = 22.5
+	var ramp: int = 8
+	# the stick: push right 70 ticks, let go (8 to brake), 20 ticks still, push left 70, let go
+	for k in range(260):
+		var want: float = 0.0
+		if k < 70:
+			want = top
+		elif k >= 98 and k < 168:
+			want = -top
+		var v: float = float(st["v"])
+		v += clampf(want - v, -top / float(ramp), top / float(ramp))
+		st["v"] = v
+		st["cx"] = SimWrap.wrap(float(st["cx"]) + v)
+		if k == 130:
+			st["cx"] = SimWrap.wrap(float(st["cx"]) + 75.0)   # a strike places its attacker: the pair's middle jumps a body height
+		A.x = SimWrap.wrap(float(st["cx"]) - 60.0)
+		B.x = SimWrap.wrap(float(st["cx"]) + 60.0)
+		A.vx = v * 60.0
+		B.vx = v * 60.0
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		if cur.cut:
+			cuts += 1
+		if cur.mode != mode0:
+			changes += 1
+		if not (_on_screen(cur, 0) and _on_screen(cur, 1)):
+			off += 1
+		var vel_now: float = SimWrap.sdx(cam_prev, cur.cam_x[0]) * cur.cam_z[0] / vw
+		cam_prev = cur.cam_x[0]
+		if k > 0:
+			jerk = maxf(jerk, absf(vel_now - vel_prev))
+		vel_prev = vel_now
+	if centred:
+		_check(_rig.brawl_focus_ticks >= 250, "%s: the camera followed the brawl's centre on only %d ticks" % [_label, _rig.brawl_focus_ticks])
+		_check(cuts == 0, "%s: %d cuts while a brawl drifted" % [_label, cuts])
+		_check(changes == 0, "%s: the layout changed on %d ticks" % [_label, changes])
+		_check(off == 0, "%s: a fighter was off the screen for %d ticks of the drift" % [_label, off])
+		_check(jerk <= 0.05, "%s: the camera's velocity changed by %.3f of the width in a tick (a whip)" % [_label, jerk])
+	stats["brawl " + _label] = "centred %s: cuts %d, layout changed %d ticks, off %d ticks, camera jerk %.3f of the width" % [str(centred), cuts, changes, off, jerk]
+	_rig.brawl_read = Callable()
+	return {}
+
+
+## The even mash's double hit (Encounter's C1; Game Design's ruling, brawl-second-pass.md section 7): the cue comes 8 ticks before
+## the blows land, then both fighters slide 6 body heights apart over 24 ticks. A close-up (the panel kind `double`) opens 6
+## ticks before the contact, is fully open at it and shut after about 40 ticks; the main view starts pulling back at the
+## contact (not before), takes no push, and both stay on the screen; the close-up is rationed: the first of a match plays, one
+## 20 s later does not, one 50 s after the first does.
+func _double_hit_run() -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 40.0, ax + 120.0, 40.0)
+	_seed_rig()
+	for _i in range(200):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	var cx: float = ax + 60.0
+	var plays: Array = []
+	var off: int = 0
+	var cuts: int = 0
+	var z_contact: float = 0.0
+	var z_after: float = 0.0
+	var z_before_max: float = 0.0
+	var z0: float = _rig.current().cam_z[0]
+	var open_at_contact: float = 0.0
+	var open_before: float = 1.0
+	var closed_by: int = -1
+	for rep_i in range(3):
+		var wait_ticks: int = [0, 20 * 60, 30 * 60][rep_i]
+		for _w in range(wait_ticks):
+			_tick_rig()
+		A.x = ax
+		B.x = ax + 120.0
+		z0 = _rig.current().cam_z[0]
+		var panels0: int = _rig.double_panels
+		var evs: Array = [_shot_events("cue", {"kind": "double_hit", "actor": 0.0, "target": 1.0, "text": "both", "k": 3.0, "amount": 8.0, "n": _S.tick + 8, "dur": 240.0, "x": cx, "y": 40.0})]
+		var opened: bool = false
+		for k in range(90):
+			# the blows land at tick 8; then both slide 6 body heights from the centre over 24 ticks
+			if k >= 8:
+				var u: float = smoothstep(0.0, 1.0, float(k - 8 + 1) / 24.0)
+				A.x = ax - 450.0 * u
+				B.x = ax + 120.0 + 450.0 * u
+			_tick_rig(evs)
+			evs = []
+			var cur: SplitFrame = _rig.current()
+			if cur.cut:
+				cuts += 1
+			if not (_on_screen(cur, 0) and _on_screen(cur, 1)):
+				off += 1
+			if rep_i == 0:
+				var op: float = float(cur.panel.get("open", 0.0)) if not cur.panel.is_empty() else 0.0
+				if k == 8:
+					open_at_contact = op
+					z_contact = cur.cam_z[0]
+				if k == 2:
+					open_before = op   # 6 ticks before the contact it has only just begun (the wipe takes 5)
+				if k == 32:
+					z_after = cur.cam_z[0]
+				if k < 8:
+					z_before_max = maxf(z_before_max, absf(log(cur.cam_z[0]) - log(z0)))
+				if closed_by < 0 and k > 12 and op <= 0.0:
+					closed_by = k
+		plays.append(_rig.double_panels - panels0)
+	_check(int(plays[0]) == 1, "%s: the first double hit made %d close-ups (want 1)" % [_label, int(plays[0])])
+	_check(int(plays[1]) == 0, "%s: a double hit 20 s later made %d close-ups (the ration is 45 s)" % [_label, int(plays[1])])
+	_check(int(plays[2]) == 1, "%s: a double hit 50 s after the first made %d close-ups (want 1)" % [_label, int(plays[2])])
+	_check(open_at_contact >= 0.9, "%s: the close-up is open %.2f at the contact (want 0.9 or more)" % [_label, open_at_contact])
+	_check(open_before < 0.9, "%s: the close-up was already open %.2f 6 ticks before the contact" % [_label, open_before])
+	_check(closed_by >= 0 and closed_by <= 60, "%s: the close-up shut at tick %d (want within about 45 of the cue)" % [_label, closed_by])
+	_check(z_before_max <= 0.03, "%s: the main view moved %.3f (ln) before the contact (it starts pulling back at the contact)" % [_label, z_before_max])
+	_check(z_after < z_contact * 0.97, "%s: the main view did not pull back for the slides (%.3f to %.3f)" % [_label, z_contact, z_after])
+	_check(off == 0, "%s: a fighter was off the screen for %d ticks of a double hit" % [_label, off])
+	_check(cuts == 0, "%s: %d cuts during a double hit" % [_label, cuts])
+	stats["double hit result"] = "close-ups %s, open at the contact %.2f, shut by tick %d, main zoom %.3f at the contact to %.3f 24 ticks later, off %d, cuts %d" % [str(plays), open_at_contact, closed_by, z_contact, z_after, off, cuts]
+	return {}
+
+
+## The scroll governor (Tools' flash analyser, 2026-10-06: the collapse clip, a pursuit across a city at 6,000 units a second,
+## 4.5 flashes in a second): a pair moving together across the world at `step` units a tick, 600 apart, in the one view. When it
+## is fast the scenery must cross the screen no faster than SCROLL_MAX of the width a tick (SCROLL_MAX_REDUCED under reduced
+## motion or reduced flashing), both stay on the screen and no smaller than the camera's floor; when it is slow the governor
+## does nothing at all.
+func _scroll_gov_run(step: float, reduced: bool, flash_red: bool) -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 40.0, ax + 600.0, 40.0)
+	_rig.reduced_motion = reduced
+	_rig.flash_reduced = flash_red
+	_seed_rig()
+	for _i in range(200):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	var worst: float = 0.0
+	var off: int = 0
+	var zmin: float = 1.0e9
+	var z_before: float = _rig.current().cam_z[0]
+	var gov0: int = _rig.scroll_gov_ticks
+	var cam_prev: float = _rig.current().cam_x[0]
+	var jerk: float = 0.0
+	var vel_prev: float = 0.0
+	for k in range(200):
+		A.x = SimWrap.wrap(A.x + step)
+		B.x = SimWrap.wrap(B.x + step)
+		A.vx = step * 60.0
+		B.vx = step * 60.0
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		var vel: float = SimWrap.sdx(cam_prev, cur.cam_x[0]) * cur.cam_z[0] / vw
+		cam_prev = cur.cam_x[0]
+		if k >= 60:
+			worst = maxf(worst, absf(vel))
+			zmin = minf(zmin, cur.cam_z[0])
+			if not (_on_screen(cur, 0) and _on_screen(cur, 1)):
+				off += 1
+		if k >= 1 and not cur.cut:
+			jerk = maxf(jerk, absf(vel - vel_prev))
+		vel_prev = vel
+	var z_after: float = _rig.current().cam_z[0]
+	var lim: float = CamParams.SCROLL_MAX_REDUCED if (reduced or flash_red) else CamParams.SCROLL_MAX
+	var floor_z: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
+	if step >= 50.0:
+		_check(worst <= lim * 1.15, "%s: the scenery crossed %.3f of the width a tick (the limit is %.3f)" % [_label, worst, lim])
+		_check(_rig.scroll_gov_ticks > gov0, "%s: the governor never held the zoom back" % _label)
+		_check(zmin >= floor_z - 0.001, "%s: the zoom fell to %.3f (floor %.3f)" % [_label, zmin, floor_z])
+	else:
+		_check(_rig.scroll_gov_ticks == gov0, "%s: the governor held the zoom back at a slow drift (%d ticks)" % [_label, _rig.scroll_gov_ticks - gov0])
+	_check(off == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off])
+	_check(jerk <= 0.05, "%s: the camera's velocity changed by %.3f of the width in a tick" % [_label, jerk])
+	stats["scroll governor " + _label] = "step %.0f u/tick: scenery %.3f of the width a tick at most, zoom %.2f to %.2f (smallest %.2f, floor %.2f), jerk %.3f, off %d" % [step, worst, z_before, z_after, zmin, floor_z, jerk, off]
+	_rig.reduced_motion = false
+	_rig.flash_reduced = false
+	return {}
+
+
 ## Without a rush: the other fighter closing fast (5,000 units a second) from off the pane gets an incoming read with the
 ## time to arrive from the distance and the rate; one that is not closing, or is on the pane, does not.
 func _incoming_closing() -> Dictionary:
@@ -2694,6 +2900,8 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 	_beamcues = {}
 	_bn = []
 	_bn_done = []
+	_dip_ts = []
+	_dips_seen = 0
 	while t < limit and not (_S.game.ko != null and _S.game.koT > 3.0):
 		SimCore.step(_S)
 		var ev: Array = _S.out.fx.duplicate()
@@ -2770,6 +2978,9 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 			var p0: Vector2 = cur.screen_pos(0, f0.x, f0.y + CamParams.CHEST, float(f0.z))
 			var p1: Vector2 = cur.screen_pos(1, f1.x, f1.y + CamParams.CHEST, float(f1.z))
 			print("  [%s] T %.3f th %.3f sig %d/%d u %.0f solo %s/%d chase %d anc %.3f/%.3f/%.3f/%.3f c %.0f/%.0f cut %s fa %.2f sw %s r %.4f/%.4f %s sep %.2f e %.2f slam %d rush0 %s rush1 %s p0 (%.0f,%.0f) p1 (%.0f,%.0f) x0 %.0f x1 %.0f y0 %.0f y1 %.0f z0 %.0f z1 %.0f st %s/%s vx0 %.0f cam0 %.0f/%.0f/%.3f cam1 %.0f/%.0f/%.3f" % [_label, float(t) / 60.0, cur.theta, _rig.sigma_shown, _rig.sigma_u, _rig.u, _rig.solo_kind, _rig.solo_slot, _rig.chase_slot, cur.anchor[0].x, cur.anchor[0].y, cur.anchor[1].x, cur.anchor[1].y, cur.c.x, cur.c.y, cur.cut, _rig._flip_age, _rig.split_wanted, _rig.r_now, _rig._r_merge(), cur.mode, cur.sep, cur.e, _rig._slam_slot, f0.rush != null, f1.rush != null, p0.x, p0.y, p1.x, p1.y, f0.x, f1.x, f0.y, f1.y, float(f0.z), float(f1.z), f0.state, f1.state, f0.vx, cur.cam_x[0], cur.cam_y[0], cur.cam_z[0], cur.cam_x[1], cur.cam_y[1], cur.cam_z[1]])
+		if _rig.dips != _dips_seen:
+			_dips_seen = _rig.dips
+			_dip_ts.append(float(t) / 60.0)
 		modes[cur.mode] = int(modes.get(cur.mode, 0)) + 1
 		if cur.slam:
 			slams += 1
@@ -2800,6 +3011,17 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 		mods.append("%s %d" % [k, modes[k]])
 	stats[_label] = "%d ticks: %s; layout changes %d, slams %d, cut-ins %d, panels %d (%.1f a minute, %d refused) %s" % [t, ", ".join(PackedStringArray(mods)), _rig.mode_change_times().size(), slams, _rig.cut_ins, _rig.panels, float(_rig.panels) * 3600.0 / float(maxi(t, 1)), _rig.panels_dropped, str(_rig.panel_log.map(func(e): return e[1]))]
 	_check(float(_rig.cut_ins) <= float(CamParams.OV_MAX_PER_MIN) * (float(t) / 3600.0) + 2.0, "%s: %d camera-only cut-ins in %.0f s (cap %d a minute)" % [_label, _rig.cut_ins, float(t) / 60.0, CamParams.OV_MAX_PER_MIN])
+	var mingap: float = 1.0e9
+	var per_s: int = 0
+	for qi in range(_dip_ts.size()):
+		if qi > 0:
+			mingap = minf(mingap, float(_dip_ts[qi]) - float(_dip_ts[qi - 1]))
+		var inw: int = 0
+		for qj in range(_dip_ts.size()):
+			if float(_dip_ts[qj]) >= float(_dip_ts[qi]) and float(_dip_ts[qj]) < float(_dip_ts[qi]) + 1.0:
+				inw += 1
+		per_s = maxi(per_s, inw)
+	stats["dips " + _label] = "%d brightness dips in %.0f s, the closest %.2f s apart, at most %d in any second" % [_dip_ts.size(), float(t) / 60.0, mingap if _dip_ts.size() > 1 else -1.0, per_s]
 	_journey_summary()
 	if not _bn_done.is_empty():
 		var rise: float = 0.0
@@ -2963,6 +3185,8 @@ func _jolt_tick(cur: SplitFrame, ev: Array) -> void:
 				var cause: String = "other"
 				if float(_tick) / 60.0 < _scan_zip_until:
 					cause = "zip (the cue's window)"
+				elif _rig._bc_on:
+					cause = "brawl drift (the centre's focus)"
 				elif rushing or float(_tick) / 60.0 - _scan_rush_t < 0.25:
 					cause = "rush (the approach and the slam's door)"
 				elif sig["solo"] != _scan_sig.get("solo", "") or sig["slot"] != _scan_sig.get("slot", -1):

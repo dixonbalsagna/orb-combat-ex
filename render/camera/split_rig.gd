@@ -107,6 +107,24 @@ var _lg_sep: float = 0.0                 # the separation when the cue came (the
 var _lg_mid: float = 0.0                 # the pair's midpoint when the cue came (the box's x is counted from it)
 var _lg_box: Array = [0.0, 0.0, 0.0, 0.0]   # the zip's frame: x0, x1 (from _lg_mid), y0, y1: the pair at the cue, widened by what the zip will do
 var _lg_cap: float = -1.0e9              # the hold never runs past this time
+var flash_reduced: bool = false          # the reduced-flashing setting (the host passes the register's `reduced`): calmer passes
+var scroll_gov_ticks: int = 0            # ticks the scroll governor held the zoom back (counted for the tests)
+var _vsm: Array = [0.0, 0.0]             # each pane's focus speed, eased (units a second)
+var _pfx: Array = [0.0, 0.0]              # last tick's pane focus x
+var _vsm_m: float = 0.0                  # the one view's
+var dips: int = 0                        # brightness dips started (a safety cut, a rush's cut back, the intro's end), for the flash report
+var dip_times: Array = []                # the last 64 of their times
+var double_panels: int = 0               # double-hit close-ups made (counted for the tests)
+var _dbl_start: float = -1.0e9           # the double hit: when its cue came,
+var _dbl_contact: float = -1.0e9         # when its blows land,
+var _dbl_until: float = -1.0e9           # and until when the main view keeps its rules (no push, the pull-back, half the shake)
+var _dbl_last_t: float = -1.0e9          # the last close-up made (the ration)
+var brawl_read: Callable = Callable()   # a test's stand-in for DirBrawl.centre (returns the same dictionary, or {})
+var brawl_focus_ticks: int = 0           # ticks the merged focus followed a brawl's centre (counted for the tests)
+var _bc_on: bool = false                 # the merged focus is the brawl's centre, eased (or easing back to the pair's middle)
+var _bcx: float = 0.0
+var _bcy: float = 0.0
+var _bc_rel_t: float = 0.0
 var _lg_rel: bool = false                # the hold has ended and the frame is easing back to the live pair (no step)
 var _lg_rel_t: float = 0.0
 var _lg_f: Array = [0.0, 0.0, 0.0, 0.0]  # the box as the camera follows it: centre x (from _lg_mid), width, centre y, height (eased, so the merged camera's velocity lead sees a motion and not a step)
@@ -224,6 +242,13 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_rush_pin = [false, false]
 	_lg_slot = -1
 	_lg_rel = false
+	_vsm = [0.0, 0.0]
+	_vsm_m = 0.0
+	_bc_on = false
+	_dbl_start = -1.0e9
+	_dbl_contact = -1.0e9
+	_dbl_until = -1.0e9
+	_dbl_last_t = -1.0e9
 	_lg_until = -1.0e9
 	_lg_cap = -1.0e9
 	_wd_slot = -1
@@ -272,6 +297,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 			cut = true
 	_read_events(S, events)
 	_update_lunge(S)
+	_update_brawl_focus(S)
 	_update_shake(events)
 	_flash = maxf(0.0, _flash - DT)
 	_update_orientation(S)
@@ -707,6 +733,31 @@ func _read_move_cue(S: SimState, ev, kind: String) -> void:
 	lunge_holds += 1
 
 
+## The even mash ends in a double hit (Encounter's C1: the cue comes 8 ticks before the two blows land, n the tick they land,
+## x and y the centre; then both slide 6 bh apart). Game Design's ruling (brawl-second-pass.md section 7): a picture-in-picture
+## close-up of the two, opening 6 ticks before the contact and closing as they part, that REPLACES the impact push; the main
+## view starts pulling back at the contact to hold both slides, takes no push, and keeps half its shake; the close-up is rationed:
+## the first of a match, then at most once in 45 s (the rest play in the main view alone, with the same rules).
+func _double_hit(S: SimState, ev) -> void:
+	var a: int = int(_ef(ev, "actor", -1))
+	if a < 0 or a > 1:
+		return
+	var ahead: float = float(_ef(ev, "amount", 8.0))
+	_dbl_start = time
+	_dbl_contact = time + ahead * DT
+	_dbl_until = _dbl_contact + CamParams.DOUBLE_MAIN_RULES
+	if time - _dbl_last_t < CamParams.DOUBLE_RATION:
+		return
+	_panel_request(S, "double", a)
+	if not _pn.is_empty() and String(_pn["kind"]) == "double" and not _pn.has("cx"):
+		_dbl_last_t = time
+		double_panels += 1
+		_pn["cx"] = float(_ef(ev, "x", S.fighters[a].x))
+		_pn["cy"] = float(_ef(ev, "y", S.fighters[a].y))
+		_pn["pw"] = absf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)) + 2.0 * CamParams.PANEL_BODY
+		_pn["t"] = -(ahead - float(CamParams.DOUBLE_OPEN_BEFORE)) * DT   # it opens DOUBLE_OPEN_BEFORE ticks before the contact
+
+
 ## Widen the zip's frame by a point (world x counted from the pair's midpoint at the cue).
 func _lg_extend(x: float, y: float) -> void:
 	var rx: float = SimWrap.sdx(_lg_mid, x)
@@ -753,6 +804,60 @@ func _zip_end(ev) -> void:
 		_lg_until = minf(time + CamParams.LUNGE_HOLD_AFTER, _lg_cap)
 	else:
 		_lg_end()
+
+
+## A brawl's centre (DirBrawl.centre: the point midway between the two, the speed the pair moves at, empty when no brawl is
+## running; a zip's ticks in reach are a quiet brawl and are the zip hold's), or a test's stand-in.
+func _brawl_centre(S: SimState) -> Dictionary:
+	if brawl_read.is_valid():
+		return brawl_read.call(S)
+	var ex = S.dirS.ex
+	if ex == null or not DirBrawl.isBrawl(ex) or DirBrawl.quiet(ex):
+		return {}
+	return DirBrawl.centre(S, ex)
+
+
+## The scroll governor: how much of its zoom a view that is moving fast gives up so the scenery crosses the screen no faster
+## than SCROLL_MAX of the width a tick (SCROLL_MAX_REDUCED under reduced motion or reduced flashing). A charge or a pursuit at
+## 6,000 units a second crossed a city at 0.1 of the width a tick, six screens a second, and the façades alternating light and
+## dark were Tools' collapse clip's 4.5 flashes a second. The fighters stay at least R_FLOOR (23 px at 720p); a launched body
+## is not governed (his launch chase has its own size and anchor).
+func _scroll_gov(speed: float, z: float) -> float:
+	var lim: float = CamParams.SCROLL_MAX_REDUCED if (reduced_motion or flash_reduced) else CamParams.SCROLL_MAX
+	var w: float = speed * DT * z / vw
+	if w <= lim:
+		return 1.0
+	scroll_gov_ticks += 1
+	return lim / w
+
+
+## The one view's focus in a brawl is the brawl's centre, eased (BRAWL_FOCUS_TAU) with its drift as the lead that cancels the
+## ease's lag at a steady speed. A strike places its attacker and the pair's middle jumps up to a body height on 0 to 2 ticks of
+## 85,000: a camera that took the fighters' midpoint stepped with it. At the brawl's end the focus eases back to the live
+## middle (BRAWL_RELEASE), and a brawl's start takes the live middle, so neither is a step.
+func _update_brawl_focus(S: SimState) -> void:
+	var c: Dictionary = _brawl_centre(S)
+	var A = S.fighters[0]
+	var B = S.fighters[1]
+	var d: float = SimWrap.sdx(A.x, B.x)
+	var kb: float = 1.0 - exp(-DT / CamParams.BRAWL_FOCUS_TAU)
+	if not c.is_empty():
+		if not _bc_on:
+			_bcx = SimWrap.wrap(A.x + d * 0.5)
+			_bcy = (A.y + B.y) * 0.5
+			_bc_on = true
+		_bc_rel_t = 0.0
+		var tx: float = float(c["x"]) + float(c.get("vx", 0.0)) * CamParams.BRAWL_FOCUS_TAU
+		var ty: float = float(c["y"]) + float(c.get("vy", 0.0)) * CamParams.BRAWL_FOCUS_TAU
+		_bcx = SimWrap.wrap(_bcx + SimWrap.sdx(_bcx, tx) * kb)
+		_bcy += (ty - _bcy) * kb
+		brawl_focus_ticks += 1
+	elif _bc_on:
+		_bc_rel_t += DT
+		_bcx = SimWrap.wrap(_bcx + SimWrap.sdx(_bcx, A.x + d * 0.5) * kb)
+		_bcy += ((A.y + B.y) * 0.5 - _bcy) * kb
+		if _bc_rel_t > CamParams.BRAWL_RELEASE:
+			_bc_on = false
 
 
 ## The hold ends: the layout, the incoming read and the rest stop at once, but the frame the camera was holding eases back to
@@ -802,6 +907,8 @@ func _read_events(S: SimState, events: Array) -> void:
 			var mk: String = String(_ef(ev, "kind", ""))
 			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy" or mk == "zip_light" or mk == "zip_heavy":
 				_read_move_cue(S, ev, mk)
+			elif mk == "double_hit":
+				_double_hit(S, ev)
 			elif mk == "zip_out":
 				_zip_out(S, ev)
 			elif mk == "zip_end":
@@ -1025,6 +1132,8 @@ func _update_shake(events: Array) -> void:
 		match String(_ef(ev, "type", "")):
 			"shake":
 				var k: float = float(_ef(ev, "k", 0.0))
+				if time >= _dbl_start and time < _dbl_until:
+					k *= 0.5   # the double hit: the main view keeps half its usual shake
 				var x: float = float(_ef(ev, "x", _cur.cam_x[0]))
 				var f: Array = [0.0, 0.0]
 				for i in range(2):
@@ -1334,6 +1443,19 @@ func _panel_frame(S: SimState) -> Dictionary:
 		if den > 1e-6:
 			z = 1.0 / den
 	var fx: float = 0.40 if f.face >= 0.0 else 0.60   # room in front of him
+	if String(_pn["kind"]) == "double" and _pn.has("cx"):
+		# the pair at the contact: both bodies across the strip, at the point where the blows land, a small push of its own
+		var zp: float = minf(CamParams.PANEL_FILL * ph / CamParams.PANEL_BODY, 0.92 * rect.size.x / maxf(float(_pn["pw"]), 1.0))
+		if not still:
+			zp *= 1.0 + CamParams.DOUBLE_PANEL_PUSH * clampf(t / dur, 0.0, 1.0)
+		return {
+			"kind": "double", "slot": slot, "open": open, "still": still, "band": int(_pn["band"]),
+			"rect": rect, "slant": (1.0 if slot == 0 else -1.0) * ph * CamParams.PANEL_SLANT,
+			"size": Vector2i(int(ceil(rect.size.x)), int(ceil(ph))),
+			"cam_x": SimWrap.wrap(float(_pn["cx"])),
+			"cam_y": clampf((float(_pn["cy"]) + CamParams.PANEL_FOCUS) - (ph * CamParams.PLANE_Y - ph * 0.5) / zp, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP),
+			"cam_z": zp,
+		}
 	return {
 		"kind": _pn["kind"], "slot": slot, "open": open, "still": still, "band": int(_pn["band"]),
 		"rect": rect, "slant": (1.0 if slot == 0 else -1.0) * ph * CamParams.PANEL_SLANT,
@@ -1513,6 +1635,17 @@ func _low_pitch(deg: float, anchor_y: float) -> float:
 ## pushing in, two face cuts before the clock) and the clock (a 3-tick punch-in, then the ordinary framing). A press that
 ## skips it ends the shot in a 0.08 s fade. Reduced motion: no fall and no faces, no pitch, shake or punch, and each cut
 ## is a 0.3 s dissolve.
+## A safety cut's brightness dip (the compositor darkens the screen by CUT_DIM, fading in over CUT_FADE; a dissolve of
+## REDUCED_CUT_FADE in reduced motion). Logged, so the sweep can say how often dips come (Tools' flash analyser, 2026-10-06).
+func _cut_dip() -> void:
+	_cut_fade = CamParams.REDUCED_CUT_FADE if reduced_motion else CamParams.CUT_FADE
+	if not reduced_motion:
+		dip_times.append(time)
+		if dip_times.size() > 64:
+			dip_times.pop_front()
+		dips += 1
+
+
 func _intro_cut(S: SimState, slot: int) -> void:
 	_cut_now = true
 	intro_cuts += 1
@@ -1648,7 +1781,7 @@ func _intro_clock(S: SimState, kind: String) -> void:
 		_force_merged(S)
 		_snap_cameras(S)
 		_cut_now = true
-		_cut_fade = CamParams.REDUCED_CUT_FADE if reduced_motion else CamParams.CUT_FADE
+		_cut_dip()
 	_in_phase = ""
 	if kind == "skip":
 		_in_stare_t = -1
@@ -1821,6 +1954,10 @@ func _merged_target(S: SimState) -> Vector3:
 	var ahead: float = minf(SimConst.HALF, absf(d) + maxf(0.0, _sep_rate) * CamParams.ZOOM_OUT_LOOKAHEAD)
 	var dy_pair: float = _pair_dy(A, B)
 	var y_mid: float = (A.y + B.y) * 0.5
+	if _bc_on and _lg_slot < 0 and not _lg_rel:
+		mx = _bcx
+		y_mid = _bcy
+		my = clampf(y_mid + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
 	if _lg_slot >= 0 or _lg_rel:
 		# A zip out and back: the frame is the box the zip will use (the pair at the cue, widened to the exit and the bow at
 		# the blow), so the zoom stays and the focus sits where the pair will be, not where the zipper is.
@@ -1829,12 +1966,17 @@ func _merged_target(S: SimState) -> Vector3:
 		dy_pair = maxf(dy_pair, float(_lg_f[3]))
 		y_mid = float(_lg_f[2])
 		my = clampf(y_mid + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
+	if time >= _dbl_contact - DT and time < _dbl_until:
+		ahead = maxf(ahead, CamParams.DOUBLE_SLIDE_SPAN)   # the pull-back starts at the contact, to hold both slides (6 bh each way)
 	var z: float = zoom_u(vw, vh, ahead, dy_pair, maxf(A.tier, B.tier), _m(), true)
 	var mult: float = maxf(_push_mult(0), _push_mult(1)) * _intro_mult()
 	if solo_kind == "ko":
 		pass
 	var pz: float = 1.0 / cos(deg_to_rad(_pitch_now))
-	z = clampf(z * mult * pz * _wide_mult(), maxf(CamParams.ZOOM_MIN, CamParams.R_FLOOR * vh / CamParams.BODY_H * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
+	var gov_m: float = 1.0
+	if A.state != "launched" and B.state != "launched":
+		gov_m = _scroll_gov(_vsm_m, z)
+	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(CamParams.ZOOM_MIN, CamParams.R_FLOOR * vh / CamParams.BODY_H * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
 	if _pitch_now != 0.0:
 		# Put the pair's chest midpoint at 0.7 of the height, as the straight-on camera does: a few Newton steps on cam_y.
 		var cwx: float = SimWrap.wrap(mx)
@@ -1922,6 +2064,9 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 				alt_f = 1.0
 	var z: float = r * vh / CamParams.BODY_H * tier_f * alt_f
 	z *= _push_mult(i) * _hit_mult(i)
+	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
+		var zfl: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
+		z = maxf(z * _scroll_gov(float(_vsm[i]), z), minf(z, zfl))
 	if solo_kind == "launch" and solo_slot == i and solo_phase == "land":
 		z *= 1.0 + CamParams.LAND_PUSH * sin(PI * clampf(_land_t / 0.3, 0.0, 1.0))
 	var zmax: float = _zcap() * (1.0 + CamParams.TIER_PUSH)
@@ -2127,7 +2272,7 @@ func _update_cameras(S: SimState) -> void:
 					_fy[i] = f.y + CamParams.CHEST
 					rush_cuts += 1
 					_cut_now = true
-					_cut_fade = CamParams.REDUCED_CUT_FADE if reduced_motion else CamParams.CUT_FADE
+					_cut_dip()
 			else:
 				_rush_pin_t[i] = time
 				_fx[i] = SimWrap.wrap(rp.tgt.x + rp.off)
@@ -2151,7 +2296,7 @@ func _update_cameras(S: SimState) -> void:
 				_fy[i] = f.y + CamParams.CHEST
 				lag_cuts += 1
 				_cut_now = true
-				_cut_fade = CamParams.REDUCED_CUT_FADE if reduced_motion else CamParams.CUT_FADE
+				_cut_dip()
 			var kx: float = 1.0 - exp(-DT / tau_x)
 			var ky: float = 1.0 - exp(-DT / tau_y)
 			# The lead that makes the discrete filter track a constant speed exactly: DT (1 - k) / k, about tau - DT / 2.
@@ -2181,6 +2326,12 @@ func _update_cameras(S: SimState) -> void:
 					_fy[i] += (f.y + CamParams.CHEST - _fy[i]) * back
 					lag_whips += 1
 		# own zoom: first-order filter, then the rate cap
+		# the scroll governor reads how fast the pane's camera is actually moving (a pinned pane is not: it waits)
+		var dfx: float = absf(SimWrap.sdx(_pfx[i], _fx[i]))
+		if dfx > 1500.0 or _rush_pin[i]:
+			dfx = 0.0   # a jump (a cut ahead, a seam) is not a scroll
+		_vsm[i] = float(_vsm[i]) + (minf(dfx / DT, 60000.0) - float(_vsm[i])) * 0.2
+		_pfx[i] = _fx[i]
 		var zt: float = _own_zoom_target(S, i)
 		var tau_z: float = CamParams.TAU_Z
 		if (solo_kind == "ko" or solo_kind == "finisher") and solo_slot == i:
@@ -2216,7 +2367,9 @@ func _update_cameras(S: SimState) -> void:
 		var vmy: float = (mt.y - _pmy) / DT
 		if absf(vmx * DT) > 1500.0:
 			vmx = 0.0   # the midpoint's target flipped across the antipode: not a motion
+		var mx_old: float = _mx
 		_mx = SimWrap.wrap(_mx + SimWrap.sdx(_mx, mt.x + vmx * DT * (1.0 - km) / km) * km)
+		_vsm_m += (minf(absf(SimWrap.sdx(mx_old, _mx)) / DT, 60000.0) - _vsm_m) * 0.2
 		_my += (mt.y + vmy * DT * (1.0 - km) / km - _my) * km
 		var dzm: float = (log(mt.z) - log(_mz)) * km
 		var capm: float = (CamParams.SLAM_ZOOM_RATE if stiff else CamParams.ZOOM_RATE_TRANS) * DT

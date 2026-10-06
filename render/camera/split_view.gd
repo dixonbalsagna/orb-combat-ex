@@ -38,6 +38,11 @@ var _panel_frames: int = 0            # frames the current panel has been drawn 
 var _host_ticks: int = -1
 var _host_seed: int = -1
 var _attached: bool = false
+var flash_reduced: bool = false      # the reduced-flashing setting: the host's flash register's `reduced`, read each tick
+var _panel_asked: bool = false
+var _panel_blocked: bool = false      # the flash register refused the strip now running: it is not drawn
+var _dip_prev: float = 0.0            # the last frame's fade (a safety cut's brightness dip)
+var _dip_ok: bool = true              # whether the dip now running was granted by the flash register
 
 
 func _init() -> void:
@@ -114,6 +119,21 @@ func detach() -> void:
 
 func is_attached() -> bool:
 	return _attached
+
+
+## A safety cut's brightness dip is a whole-screen change, so it asks the shared flash register (Rendering's
+## SimHost.ask_flash, source "cut_dip", a big-event source) as it begins: granted, it plays; refused, the cut has no dip. A new
+## dip is a fade that rises from nothing or by a fifth or more over the last frame's. A host with no register (a tool's
+## stand-in) grants every dip.
+func _dip_gate(fade: float) -> float:
+	if fade <= 0.0:
+		_dip_ok = true
+	elif fade > _dip_prev + 0.2:
+		_dip_ok = true
+		if main != null and main.get("host") != null and main.host.has_method("ask_flash"):
+			_dip_ok = bool(main.host.ask_flash("cut_dip", Color(0.03, 0.04, 0.06)))
+	_dip_prev = fade
+	return fade if _dip_ok else 0.0
 
 
 ## The player's settings (docs/camera/split-screen.md sections 2 and 13). Solo against the AI: split like two players
@@ -207,7 +227,17 @@ func _ensure_panel_viewport(sz: Vector2i) -> bool:
 ## The strip: placed from the frame's panel, shown while its wipe is open, and the inset only renders while it is up.
 func _present_panel(fr: SplitFrame) -> void:
 	var p: Dictionary = fr.panel
-	if p.is_empty() or _panel_vp == null or float(p["open"]) <= 0.001:
+	# A strip that opens and shuts is a change over a tenth of the screen and then another: it asks the shared flash register
+	# as it begins (source "cut_in_panel", a big-event source) and is not drawn when refused (the beam's white and the
+	# explosion before it have asked first). Tools' recount found the strip opening and closing between a beam's flashes.
+	if p.is_empty():
+		_panel_blocked = false
+		_panel_asked = false
+	elif not _panel_asked and float(p["open"]) > 0.001:
+		_panel_asked = true
+		if main != null and main.get("host") != null and main.host.has_method("ask_flash"):
+			_panel_blocked = not bool(main.host.ask_flash("cut_in_panel", Color(0.3, 0.3, 0.35)))
+	if p.is_empty() or _panel_blocked or _panel_vp == null or float(p["open"]) <= 0.001:
 		_panel_rect.visible = false
 		if _panel_vp != null:
 			_panel_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -236,6 +266,9 @@ func _on_ticked(n: int) -> void:
 		shake_b.reset(int(h.seed))
 		_host_seed = int(h.seed)
 	_host_ticks = n
+	if h.get("vfx") != null and h.vfx.get("flashes") != null:
+		flash_reduced = bool(h.vfx.flashes.reduced)
+		main.split_rig.flash_reduced = flash_reduced
 	var vh: float = maxf(get_viewport().get_visible_rect().size.y, 1.0)
 	var amounts: PackedFloat64Array = main.split_rig.current().shake
 	shake_a.scale = _shake()
@@ -295,9 +328,10 @@ func present(fr: SplitFrame) -> void:
 	_mat.set_shader_parameter("feather", fr.feather)
 	_mat.set_shader_parameter("gap", fr.gap)
 	_mat.set_shader_parameter("gap_alpha", fr.line_alpha)
-	_mat.set_shader_parameter("dim0", CamParams.CUT_DIM * fr.fade)
-	_mat.set_shader_parameter("dim1", CamParams.CUT_DIM * fr.fade)
-	_solo.modulate = Color(1.0 - CamParams.CUT_DIM * fr.fade, 1.0 - CamParams.CUT_DIM * fr.fade, 1.0 - CamParams.CUT_DIM * fr.fade)
+	var dim: float = (CamParams.REDUCED_CUT_DIM if (reduced_motion or flash_reduced) else CamParams.CUT_DIM) * _dip_gate(fr.fade)
+	_mat.set_shader_parameter("dim0", dim)
+	_mat.set_shader_parameter("dim1", dim)
+	_solo.modulate = Color(1.0 - dim, 1.0 - dim, 1.0 - dim)
 	_mat.set_shader_parameter("active0", 1.0 if fr.shows(0) else 0.0)
 	_mat.set_shader_parameter("active1", 1.0 if (fr.shows(1) and v1 != null) else 0.0)
 	_present_panel(fr)
