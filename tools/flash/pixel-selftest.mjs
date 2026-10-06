@@ -24,7 +24,7 @@ const cases = [
 try {
   for (const c of cases) {
     const out = join(tmp, c.scene);
-    const cap = spawnSync(process.execPath, [join(here, 'capture-web.mjs'), '--mock', '--scenario', c.scene, '--ticks', '120', '--out', out, ...bp], { encoding: 'utf8' });
+    const cap = spawnSync(process.execPath, [join(here, 'capture-web.mjs'), '--mock', '--scenario', c.scene, '--ticks', '240', '--out', out, ...bp], { encoding: 'utf8' });
     if (cap.status === 2 && /no (chrome|edge) executable/.test(cap.stderr)) {
       if (argv.includes('--require-browser')) { console.log('pixel self-test FAILED: no browser found'); process.exit(1); }
       console.log('pixel self-test skipped: no Chrome or Edge found (pass --browser-path, or --require-browser to make it a failure)');

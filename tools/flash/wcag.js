@@ -18,12 +18,18 @@
 // of the last `memory` frames (one second by default), a down change on the frame it first stands that far below its highest value of those frames. Nothing older than that
 // window is remembered, so the changes counted on a frame depend only on the frames from `memory` before it, and the first `memory` frames of a clip count no change (the warm-up).
 // A swing that takes longer than the memory is not a change; a fade shorter than it is one change.
+// THE STRICTER CROSS-CHECK (Legal, RL-120): the same analysis again with a memory of two seconds, so a swell of up to two seconds followed by a fall is a pair, as in the broadcast method
+// (Harding, ITU-R BT.1702), which follows each transition from one direction reversal to the next with no time limit. A fixed two-second memory stays start-independent (its warm-up is
+// two seconds); the unlimited reversal-to-reversal rule is the limit of memory going to infinity and cannot be, since its reference is whatever the clip's first reversal was.
+// THE COMBINED RULE (RL-120): FAIL when the worst second is over 3 on the primary reading, with the area threshold 15% lower, or on the stricter cross-check (general or red);
+// OVER GATE when the primary reading is over 2.5 and nothing is over 3; PASS otherwise.
 'use strict';
 const zlib = require('zlib');
 
 const DEFAULTS = {
   fps: 60,
   memory: null,          // frames a pixel remembers (null: one second, `fps`): the warm-up before any change is counted
+  crossMemory: null,     // the stricter cross-check's memory (null: two seconds, 2 x `fps`; 0: no cross-check)
   lumDelta: 0.10,        // general flash: the change, of a maximum of 1.0
   darkBelow: 0.80,       // general flash: the darker state must be below this relative luminance
   redShare: 0.80,        // red flash: R/(R+G+B) at or above this is a saturated red
@@ -303,6 +309,11 @@ function analyse(frames, opts = {}) {
   const dg = new WindowDetector(n, o.lumDelta, o.darkBelow, H);
   const dr = new WindowRedDetector(n, o, H);
   const pg = new Pool(n, f0.w, f0.h, ww, wh, thr, o.poolMin, o.levels), pr = new Pool(n, f0.w, f0.h, ww, wh, thr, o.poolMin, o.levels);
+  const H2 = o.crossMemory === 0 ? 0 : Math.max(H + 1, Math.round(o.crossMemory || 2 * o.fps));
+  const crossOn = H2 > 0 && count > H2 + 1;
+  const dg2 = crossOn ? new WindowDetector(n, o.lumDelta, o.darkBelow, H2) : null;
+  const dr2 = crossOn ? new WindowRedDetector(n, o, H2) : null;
+  const pg2 = crossOn ? new Pool(n, f0.w, f0.h, ww, wh, thr, o.poolMin, [1]) : null, pr2 = crossOn ? new Pool(n, f0.w, f0.h, ww, wh, thr, o.poolMin, [1]) : null;
   const lum = new Float32Array(n);
   const means = new Float64Array(count);
   for (let k = 0; k < count; k++) {
@@ -314,6 +325,7 @@ function analyse(frames, opts = {}) {
     means[k] = sum / n;
     pg.push(k, dg, dg.push(lum));
     pr.push(k, dr, dr.push(d));
+    if (crossOn) { pg2.push(k, dg2, dg2.push(lum)); pr2.push(k, dr2, dr2.push(d)); }
   }
   const mid = o.levels.indexOf(1) >= 0 ? o.levels.indexOf(1) : Math.floor(o.levels.length / 2);
   const per = (pool) => pool.events.map((evs) => worstWindow(evs, o.fps));
@@ -336,11 +348,24 @@ function analyse(frames, opts = {}) {
     windowByTick: Object.fromEntries([...pool.series].map(([f, v]) => [f + 1, v])),
   });
   const gs = section(pg, gl, g), rs = section(pr, rl, r);
+  const cross = crossOn ? { memoryFrames: H2, warmupFrames: H2, general: worstWindow(pg2.events[0], o.fps), red: worstWindow(pr2.events[0], o.fps) } : null;
+  const val = (a, b) => Math.max(a.flashes, b.flashes);
+  const primary = val(g, r), lower = Math.max(gl[0].flashes, rl[0].flashes), higher = Math.max(gl[gl.length - 1].flashes, rl[rl.length - 1].flashes);
+  const stricter = cross ? val(cross.general, cross.red) : null;
+  const reasons = [];
+  if (primary > o.maxFlashes) reasons.push(`the primary reading counts ${primary} (over ${o.maxFlashes})`);
+  if (lower > o.maxFlashes) reasons.push(`with the area threshold 15% lower it counts ${lower} (over ${o.maxFlashes})`);
+  if (stricter !== null && stricter > o.maxFlashes) reasons.push(`with a ${H2}-frame memory it counts ${stricter} (over ${o.maxFlashes})`);
+  const verdict = reasons.length ? 'FAIL' : primary > o.gate ? 'OVER GATE' : 'PASS';
+  if (verdict === 'OVER GATE') reasons.push(`the primary reading counts ${primary} (over our gate of ${o.gate})`);
+  const combined = { verdict, reasons, primary, lower, higher, stricter, stricterAtTick: cross ? (cross.general.flashes >= cross.red.flashes ? cross.general.atFrame : cross.red.atFrame) + 1 : null, crossChecked: crossOn };
   return {
+    cross: cross && { memoryFrames: H2, warmupFrames: H2, general: { flashes: cross.general.flashes, atTick: cross.general.atFrame + 1, qualifyingChanges: cross.general.changes }, red: { flashes: cross.red.flashes, atTick: cross.red.atFrame + 1, qualifyingChanges: cross.red.changes } },
+    combined,
     frames: count, width: f0.w, height: f0.h, fps: o.fps, memoryFrames: H, warmupFrames: H, windowPx: [ww, wh], thresholdPx: thr, thresholdOfWindow: o.areaShare,
     general: gs, red: rs,
     dips: { list: dips, shortestGapFrames: gaps.length ? Math.min(...gaps) : null },
-    pass: g.flashes <= o.gate && r.flashes <= o.gate,
+    pass: verdict === 'PASS',
     passStandard: g.flashes <= o.maxFlashes && r.flashes <= o.maxFlashes,
     params: o,
   };

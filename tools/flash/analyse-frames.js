@@ -5,13 +5,14 @@
 // A clip is a folder of PNGs named so that they sort in play order (frame-000001.png ...), one per sim tick (so 60 a second), optionally with clip.json
 // ({ "scenario": "mash", "reduced": false, "fps": 60 }) beside them, which tools/flash/capture-web.mjs writes. A folder whose subfolders are clips analyses each.
 // --scale N box-averages N x N pixels first (default: the smallest factor that brings the width to 640 or under); the area window and its threshold are fractions of the frame, so they
-// scale with it. Exit 0 when every clip shows no more than 2.5 general and 2.5 red flashes in any second (OUR gate, Legal's RL-119; the standard's limit is 3 and is reported separately), 1 when one does, 2 on bad input.
+// scale with it. Exit 0 when every clip is PASS by the combined rule (Legal's RL-119 and RL-120: the primary reading at 2.5 or below, and no sensitivity run over 3: the area threshold 15% lower, a two-second memory), 1 when one is not, 2 on bad input.
 //
 // What a pass means, and does not: docs/tools/flash-check.md. It is NOT a recognised analyser (Harding / PEAT); a pass is worded only as Legal's sentence printed below.
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const W = require('./wcag.js');
+const V = require('./verdict.js');
 
 function listClips(root) {
   const pngs = (d) => fs.readdirSync(d).filter((f) => /\.png$/i.test(f)).sort();
@@ -45,7 +46,7 @@ function main(argv) {
   if (!clips.length) { console.error('no PNG frames found'); return 2; }
   const report = [];
   let bad = 0;
-  console.log(`${'clip'.padEnd(26)} ${'frames'.padStart(6)} ${'size'.padStart(9)} ${'general'.padStart(8)} ${'red'.padStart(5)} ${'largest window'.padStart(15)} ${'dips'.padStart(5)}  result`);
+  console.log(`${'clip'.padEnd(26)} ${'frames'.padStart(6)} ${'size'.padStart(9)} ${V.HEADER}`);
   for (const c of clips) {
     let meta = {};
     try { meta = JSON.parse(fs.readFileSync(path.join(c.dir, 'clip.json'), 'utf8')); } catch { /* optional */ }
@@ -60,20 +61,16 @@ function main(argv) {
     let r;
     try { r = W.analyse(get, opts); } catch (e) { console.error(`${c.dir}: ${e.message}`); return 2; }
     const name = path.basename(c.dir) + (meta.reduced ? ' (reduced)' : '');
-    const big = `${(100 * Math.max(r.general.largestWindowOfThreshold, r.red.largestWindowOfThreshold)).toFixed(0)}% of limit`;
     if (!r.pass) bad++;
-    const verdict = r.pass ? 'no failure found' : (r.passStandard ? `OVER OUR GATE (${r.params.gate}), within the standard (${r.params.maxFlashes})` : `FAIL: over the standard (${r.params.maxFlashes})`) + ` from tick ${(r.general.flashes >= r.red.flashes ? r.general.atTick : r.red.atTick)}${r.red.flashes > r.general.flashes ? ' (red)' : ''}`;
-    console.log(`${name.padEnd(26)} ${String(r.frames).padStart(6)} ${(r.width + 'x' + r.height).padStart(9)} ${String(r.general.flashes).padStart(8)} ${String(r.red.flashes).padStart(5)} ${big.padStart(15)} ${String(r.dips.list.length).padStart(5)}  ${verdict}`);
+    console.log(`${name.padEnd(26)} ${String(r.frames).padStart(6)} ${(r.width + 'x' + r.height).padStart(9)} ${V.columns(r)}`);
     if (argv.includes('--dips')) for (const d of r.dips.list) console.log(`    dip at tick ${d.tick}: ${(100 * d.areaOfFrame).toFixed(0)}% of the frame, mean luminance ${d.meanBefore.toFixed(3)} to ${d.meanMin.toFixed(3)} (depth ${d.drop.toFixed(3)})`);
     report.push({ clip: c.dir, meta, scale, result: r });
   }
   const out = opt('--json');
   if (out) fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n');
   console.log(bad
-    ? `
-frame analysis FAILED in ${bad} of ${clips.length} clips under this reading of criterion 2.3.1`
-    : `
-An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (${clips.length} clip${clips.length === 1 ? '' : 's'}; the reading and what it cannot see: docs/tools/flash-check.md. This is not a clearance.)`);
+    ? String.fromCharCode(10) + `frame analysis: ${bad} of ${clips.length} clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVER GATE: over 2.5 on the primary reading). See docs/tools/flash-check.md.`
+    : String.fromCharCode(10) + `An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (${clips.length} clip${clips.length === 1 ? '' : 's'}; the reading and what it cannot see: docs/tools/flash-check.md. This is not a clearance.)`);
   return bad ? 1 : 0;
 }
 

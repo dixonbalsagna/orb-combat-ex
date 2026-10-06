@@ -12,8 +12,10 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const here = dirname(fileURLToPath(import.meta.url));
+const V = createRequire(import.meta.url)('./verdict.js');
 const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const DIR = opt('--dir'), PATH = opt('--path', '/index.html?flashcap=1'), OUT = opt('--out'), FLASH = opt('--flash');
@@ -107,21 +109,22 @@ await Promise.all(Array.from({ length: JOBS }, async () => {
     const r = await one(job);
     results.push(r);
     if (r.captured) { console.log(`${job.id}: captured`); continue; }
-    console.log(r.error ? `${job.id}: CAPTURE FAILED: ${r.error}` : `${job.id}: ${r.result.general.flashes} general, ${r.result.red.flashes} red, largest window ${(100 * Math.max(r.result.general.largestWindowOfThreshold, r.result.red.largestWindowOfThreshold)).toFixed(0)}% of the limit, ${r.result.dips.list.length} dips, ${r.seconds}s${r.cross && !r.cross.missing ? `, register count ${r.cross.agrees ? 'agrees' : 'DIFFERS'} with the headless run (${(100 * r.cross.share).toFixed(1)}% of ticks)` : ''}`);
+    console.log(r.error ? `${job.id}: CAPTURE FAILED: ${r.error}` : `${job.id}: ${r.result.combined.verdict}, primary ${r.result.general.flashes} general ${r.result.red.flashes} red, area-15% ${r.result.combined.lower}, 2 s memory ${r.result.combined.stricter === null ? 'n/a' : r.result.combined.stricter}, ${r.result.dips.list.length} dips, ${r.seconds}s${r.cross && !r.cross.missing ? `, register count ${r.cross.agrees ? 'agrees' : 'DIFFERS'} with the headless run (${(100 * r.cross.share).toFixed(1)}% of ticks)` : ''}`);
   }
 }));
 if (argv.includes('--capture-only')) { console.log(`captured ${results.length} clips into ${OUT}; analyse them with analyse-frames.js`); process.exit(results.some((r) => r.error) ? 1 : 0); }
 results.sort((a, b) => a.id.localeCompare(b.id));
 writeFileSync(join(OUT, 'summary.json'), JSON.stringify(results, null, 2) + '\n');
 
-console.log(`\n${'clip'.padEnd(24)} ${'ticks'.padStart(5)} ${'general'.padStart(8)} ${'red'.padStart(4)} ${'window/limit'.padStart(13)} ${'dips'.padStart(5)}  ${'register web/headless max'.padEnd(26)} result`);
+console.log(`
+${'clip'.padEnd(24)} ${'ticks'.padStart(5)} ${V.HEADER}  ${'register web/headless max'.padEnd(26)}`);
 let bad = 0;
 for (const r of results) {
   if (r.error) { bad++; console.log(`${r.id.padEnd(24)} CAPTURE FAILED: ${r.error}`); continue; }
   const x = r.cross && !r.cross.missing ? `${r.cross.maxWeb}/${r.cross.maxHead} ${r.cross.agrees ? 'same' : 'DIFFERENT'}` : 'n/a';
   const ok = r.result.pass && (!r.cross || r.cross.missing || r.cross.agrees);
   if (!ok) bad++;
-  console.log(`${r.id.padEnd(24)} ${String(r.ticks).padStart(5)} ${String(r.result.general.flashes).padStart(8)} ${String(r.result.red.flashes).padStart(4)} ${(Math.round(100 * Math.max(r.result.general.largestWindowOfThreshold, r.result.red.largestWindowOfThreshold)) + '%').padStart(13)} ${String(r.result.dips.list.length).padStart(5)}  ${x.padEnd(26)} ${ok ? 'no failure found' : (r.result.passStandard ? 'OVER OUR GATE (2.5), within the standard' : 'FAIL: over the standard (3)')}`);
+  console.log(`${r.id.padEnd(24)} ${String(r.ticks).padStart(5)} ${V.columns(r.result)}  ${x}${ok ? '' : ' <-- NOT PASS'}`);
 }
 for (const r of results.filter((x) => !x.error)) {
   const d = r.result.dips;
@@ -129,7 +132,7 @@ for (const r of results.filter((x) => !x.error)) {
 }
 console.log(bad
   ? `
-pixel run FAILED the gate (2.5 flashes in any second, Legal's RL-119; the standard's limit is 3) in ${bad} of ${results.length} clips (frames kept in ${OUT} for the failures)`
+pixel run: ${bad} of ${results.length} clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in ${OUT} for them)`
   : `
 An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (${results.length} clips; every register count agrees with the headless run; docs/tools/flash-check.md has the reading and its limits. This is not a clearance.)`);
 process.exit(bad ? 1 : 0);

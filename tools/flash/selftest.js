@@ -84,8 +84,10 @@ check('the same strobe at 4 a second is 4 flashes and fails', full4.general.flas
 check('a full-frame strobe at 10 a second fails', !run(strobe(BLACK, WHITE, 3, 2)).pass);
 {
   // the frame here is 96 x 72, so the window is 32 x 24 = 768 px and a quarter of it is 192 px (2.78% of the frame)
-  const r = run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.15, 0.15]));   // 15 x 11 = 165 px: under a quarter of the window
-  check('a 2.4% corner strobing 10 a second is under a quarter of a window and passes', r.pass && r.general.flashes === 0 && r.thresholdPx === 192, JSON.stringify([r.general, r.thresholdPx]));
+  const r = run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.12, 0.12]));   // 12 x 9 = 108 px: well under a quarter of the window (192)
+  check('a 1.6% corner strobing 10 a second is well under a quarter of a window and passes', r.pass && r.general.flashes === 0 && r.thresholdPx === 192, JSON.stringify([r.general, r.thresholdPx]));
+  const e = run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.15, 0.15]));   // 15 x 11 = 165 px: under the threshold but within 15% of it
+  check('a corner of 165 px (192 is the threshold) reads 0 on the primary reading but 10 with the threshold 15% lower, and FAILS by the combined rule', e.general.flashes === 0 && e.combined.lower === 10 && e.combined.verdict === 'FAIL' && !e.pass, JSON.stringify(e.combined));
 }
 {
   const r = run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.2, 0.2]));    // 20 x 15 = 300 px: over it
@@ -96,12 +98,12 @@ check('a 9% corner strobing 10 a second fails (it passed under the lenient total
   // the window is slid, and only one window counts: two blobs far apart, each under the threshold, pass; the same pixels together fail
   const two = (n) => {
     const st = [], a = frame(BLACK, BLACK), b = frame(BLACK, BLACK);
-    for (let y = 0; y < HEI; y++) for (let x = 0; x < WID; x++) { const in1 = x < 0.15 * WID && y < 0.15 * HEI, in2 = x >= 0.85 * WID && y >= 0.85 * HEI; if (in1 || in2) { const p = (y * WID + x) * 4; b.data[p] = b.data[p + 1] = b.data[p + 2] = 255; } }
+    for (let y = 0; y < HEI; y++) for (let x = 0; x < WID; x++) { const in1 = x < 0.12 * WID && y < 0.12 * HEI, in2 = x >= 0.88 * WID && y >= 0.88 * HEI; if (in1 || in2) { const p = (y * WID + x) * 4; b.data[p] = b.data[p + 1] = b.data[p + 2] = 255; } }
     for (let i = 0; i < n; i++) st.push(Math.floor(i / 3) % 2 ? b : a);
     return st;
   };
   const r = run(two(120));
-  check('two 2.4% blobs at opposite corners (4.8% together) strobing 10 a second pass: no one window holds a quarter of its pixels', r.pass && r.general.flashes === 0, JSON.stringify(r.general));
+  check('two 1.6% blobs at opposite corners (3.2% together) strobing 10 a second pass: no one window holds a quarter of its pixels', r.pass && r.general.flashes === 0, JSON.stringify(r.general));
   // a thin strip across the whole frame: 0.9 x 0.05 of it is 4.5% of the frame, over the lenient total but only 15% of any window
   const strip = run(strobe(BLACK, WHITE, 3, 2, [0.05, 0.45, 0.95, 0.5]));
   check('a thin strip across the frame (4.5% of it, 15% of a window) strobing 10 a second passes under the window test', strip.pass && strip.general.flashes === 0, JSON.stringify(strip.general));
@@ -142,6 +144,17 @@ check('the flashes are counted in any one second, not over the whole clip: 3 a s
   check('the changes counted after frame 200 are the same events whether the clip starts at frame 0 or at frame 100', base === cut, base + ' | ' + cut);
   const lv = run(strobe(BLACK, WHITE, 3, 4)).general;
   check('the report carries the counts with the area threshold 15% lower and higher, and how many changes of the worst second are within 15% of the threshold', typeof lv.flashesIfThresholdLower === 'number' && typeof lv.flashesIfThresholdHigher === 'number' && typeof lv.marginal === 'number' && lv.worstSecond.length > 0);
+}
+
+// ---- the stricter cross-check: a two-second memory counts a swell the one-second memory ignores
+{
+  // luminance as a triangle between 0.30 and 0.50, 150 frames up and 150 down: 0.096 in any second (under 0.10), 0.19 in any two seconds
+  const toGrey = (L) => Math.round(255 * (1.055 * Math.pow(L, 1 / 2.4) - 0.055));
+  const fr = [];
+  for (let i = 0; i < 900; i++) { const ph = i % 300; const L = 0.30 + 0.20 * (ph < 150 ? ph / 150 : (300 - ph) / 150); const g = toGrey(L); fr.push(frame([g, g, g], [g, g, g])); }
+  const r = run(fr);
+  check('a swell too slow for the one-second memory (0.096 a second) is no change there but is one with the two-second memory', r.general.qualifyingChanges === 0 && r.cross && r.cross.general.qualifyingChanges > 0, JSON.stringify([r.general.qualifyingChanges, r.cross]));
+  check('a clip too short for the two-second warm-up has no cross-check and says so', run(strobe(BLACK, WHITE, 10, 2)).combined.crossChecked === false);
 }
 
 // ---- the red flash
