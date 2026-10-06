@@ -176,9 +176,13 @@ const SKY_REACT_S: float = 1.5           # the reaction eases in and out over th
 const DAMAGE_GRIME: String = "#2a2220"   # scuffs on clothing and gear, and a tear's frayed edge
 const DAMAGE_BRUISE: String = "#6b3a62"  # bruises on skin
 const DAMAGE_GROW_S: float = 0.6         # a stage's marks grow in over this long
-## Which of Art's outfits (data/art/damage.json) each placeholder fighter wears, until the roster names one.
-const DAMAGE_OUTFIT: Dictionary = {"KAI": "protagonist", "VORR": "empress"}
+## Which of Art's outfits (data/art/damage.json) each fighter wears, by roster id, until the roster names one. Both
+## spellings of the two ids stand until the roster's rename is in (docs/architecture/pending/fighter-split.md).
+const DAMAGE_OUTFIT: Dictionary = {"KAI": "protagonist", "VORR": "empress", "PROTAGONIST": "protagonist", "RIVAL": "empress"}
 const DAMAGE_OUTFIT_DEFAULT: String = "protagonist"
+## The seed of each outfit's marks, in 97ths (where the scuffs, bruises and tears fall on the body). They are the
+## numbers the two fighters' names gave before the seed moved to the outfit, so a rename moves no mark.
+const DAMAGE_SEED_97: Dictionary = {"protagonist": 16, "empress": 48}
 const OUTLINE_F_MAX: float = 2.5         # the most a corner's outline reaches past the width (outline_bake.gd)
 const OUTLINE := "#0a0d14"               # fighter outline colour
 const SHORE_FLOOD: float = 24.0          # dry land at most this far below the water beside it is drawn under that water (World's shore step is at most 0.25 bh)

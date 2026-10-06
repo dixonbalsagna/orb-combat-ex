@@ -148,11 +148,43 @@ static func main_keys() -> Array:
 	return ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "[", "]"]
 
 
-## A fighter's name as a player sees it: UI's display name for the roster name (ui/data/fighter_names.json). The sim,
-## the data and the replays keep the roster's own names; only what is drawn here changes. Text the sim wrote (the
-## banner, the feed, the floating words) goes through UiData.display_text for the same reason.
+## A fighter's name as a player sees it: UI's display name for his roster id (ui/data/fighter_names.json). The sim,
+## the data and the replays keep the roster's ids; only what is drawn here changes. Text the sim wrote (the banner,
+## the feed, the floating words) goes through UiData.display_text for the same reason.
 static func _name(f) -> String:
-	return UiData.display_name(str(f.name))
+	return UiData.display_name(str(f.id))
+
+
+static var _ui_title: int = -1   # whether UiData has display_title: -1 not looked yet, 0 no, 1 yes
+
+## A fighter's title as a player sees it: UI's display title for his roster id (UiData.display_title), once UI has
+## the function and a title for him. Until then, his own title field while the sim still gives him one (it goes at
+## the roster's rename: docs/architecture/pending/fighter-split.md section 10). With neither, no title.
+static func _title(f) -> String:
+	if _ui_title < 0:
+		_ui_title = 0
+		for m in (load("res://ui/core/ui_data.gd") as Script).get_script_method_list():
+			if String(m.name) == "display_title":
+				_ui_title = 1
+	var t: String = ""
+	if _ui_title == 1:
+		t = str((load("res://ui/core/ui_data.gd") as Script).call("display_title", str(f.id)))
+	if t == "" and "title" in f:
+		t = str(f.title)
+	return t
+
+
+## The two lines at the head of a fighter's panel in the old HUD: his name (and CPU for the computer), then his title
+## with his stance. No draw call, so a check can ask for them (tools/hud_words_check.gd).
+static func panel_words(f) -> Array:
+	var title: String = _title(f)
+	var st: String = RenderLook.STANCE_LONG[int(f.stance)]
+	return [_name(f) + ("  (CPU)" if f.ai != null else ""), (title + "  ·  " if title != "" else "") + st + ("  ·  HIDDEN" if f.hidden else "")]
+
+
+## The label over a fighter's head in the old HUD.
+static func label_words(f) -> String:
+	return "HIDDEN" if f.hidden else "%s %s T%d" % [_name(f), RenderLook.STANCE_SHORT[int(f.stance)], int(f.tier)]
 
 
 func _panel(f, right: bool, bw: float, vw: float) -> void:
@@ -160,9 +192,9 @@ func _panel(f, right: bool, bw: float, vw: float) -> void:
 	var y: float = 12.0
 	var al: int = 1 if right else -1
 	var ax: float = x + bw if right else x
-	_text(_name(f) + ("  (CPU)" if f.ai != null else ""), Vector2(ax, y + 12), 15, Color.WHITE, al)
-	var st: String = RenderLook.STANCE_LONG[int(f.stance)]
-	_text(f.title + "  ·  " + st + ("  ·  HIDDEN" if f.hidden else ""), Vector2(ax, y + 27), 11, Color(1, 1, 1, 0.75), al)
+	var words: Array = panel_words(f)
+	_text(words[0], Vector2(ax, y + 12), 15, Color.WHITE, al)
+	_text(words[1], Vector2(ax, y + 27), 11, Color(1, 1, 1, 0.75), al)
 	var fr: float = f.hp / f.maxhp
 	var hpc: Color = RenderLook.col("#5ed17a" if fr > 0.5 else ("#f1c232" if fr > 0.25 else "#e5484d"))
 	_bar(x, y + 33, bw, 12, fr, hpc, right)
@@ -190,9 +222,9 @@ func _labels(S: SimState, host: SimHost) -> void:
 			continue
 		var p: Vector2 = cam.unproject_position(top)
 		if f.hidden:
-			_text("HIDDEN", p, 12, Color(190.0 / 255.0, 220.0 / 255.0, 1.0, 0.95), 0)
+			_text(label_words(f), p, 12, Color(190.0 / 255.0, 220.0 / 255.0, 1.0, 0.95), 0)
 		else:
-			_text("%s %s T%d" % [_name(f), RenderLook.STANCE_SHORT[int(f.stance)], int(f.tier)], p, 11, Color(1, 1, 1, 0.9), 0)
+			_text(label_words(f), p, 11, Color(1, 1, 1, 0.9), 0)
 
 
 func _floats(host: SimHost) -> void:

@@ -87,6 +87,19 @@ var _dmg_detail: float = -1.0
 var _dmg_snap: bool = true                # the next update shows the marks at once (the first frame, or a posed tool)
 
 
+## The outfit a roster id wears (RenderLook.DAMAGE_OUTFIT; the default for an id it does not list).
+static func damage_outfit(id: String) -> String:
+	return String(RenderLook.DAMAGE_OUTFIT.get(id, RenderLook.DAMAGE_OUTFIT_DEFAULT))
+
+
+## The seed of a fighter's damage marks, 0 to 1. It is his outfit's (RenderLook.DAMAGE_SEED_97), so the marks stay
+## where they are when the roster renames him; an id with no outfit of its own gets a seed from the id.
+static func damage_seed(id: String) -> float:
+	if RenderLook.DAMAGE_OUTFIT.has(id) and RenderLook.DAMAGE_SEED_97.has(RenderLook.DAMAGE_OUTFIT[id]):
+		return float(RenderLook.DAMAGE_SEED_97[RenderLook.DAMAGE_OUTFIT[id]]) / 97.0
+	return float(absi(id.hash()) % 97) / 97.0
+
+
 func build(f) -> void:
 	name = f.name
 	add_child(pivot)
@@ -194,9 +207,9 @@ func _build_anim(f) -> void:
 	bm.set_shader_parameter("gear", pal["gear"])
 	bm.set_shader_parameter("grime", RenderLook.col(RenderLook.DAMAGE_GRIME))
 	bm.set_shader_parameter("bruise", RenderLook.col(RenderLook.DAMAGE_BRUISE))
-	bm.set_shader_parameter("damage_seed", float(absi(String(f.name).hash()) % 97) / 97.0)
+	bm.set_shader_parameter("damage_seed", damage_seed(String(f.id)))
 	# How much of each mark the fighter's outfit shows at each stage: Art's stage data (render/core/damage_look.gd).
-	var marks: Dictionary = RenderDamage.marks(String(RenderLook.DAMAGE_OUTFIT.get(String(f.name), RenderLook.DAMAGE_OUTFIT_DEFAULT)))
+	var marks: Dictionary = RenderDamage.marks(damage_outfit(String(f.id)))
 	bm.set_shader_parameter("mark_scuff", marks["scuff"])
 	bm.set_shader_parameter("mark_bruise", marks["bruise"])
 	bm.set_shader_parameter("mark_tear", marks["tear"])
