@@ -199,6 +199,33 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const gap = masherRows([{ ...base('zip-turret', { brawls: 10, ends: {}, zipEnds: { done: 100 }, drop: {} }), zips: 100 }]);
     assert.strictEqual(gap.find(r => r.id === 'zip.drop.bolt').status, 'PENDING', 'no zip ended down: a coverage gap, never a pass');
   });
+  await t('second-pass rows: dead stick and the held stick against the AI; perfect blocks by strength, energy share and wind-ups read from cues, PENDING without them', async () => {
+    const { masherRows } = require('./masher');
+    const base = (pair, brawl) => ({ pair, n: 60, aWins: 30, bWins: 30, timeouts: 0, medianSec: 100, zips: 0, brawl });
+    const C = { ticks: 5000, over: 0, maxStepBh: 0.2 };
+    const good = masherRows([
+      base('c1-hold-one', { brawls: 60, ends: {}, centre: C, hold: { ticks: 4000, dead: 0, deadStates: {} } }),
+      base('c1-drift-one', { brawls: 60, ends: {}, centre: C, drift: { n: 55, latMax: 2, latMean: 1, rateBhPerSec: 2.0, maxStepBh: 0.2 } }),
+      base('c1-drift-ai', { brawls: 60, ends: {}, centre: C, drift: { n: 50, latMax: 2, latMean: 1, rateBhPerSec: 1.6, maxStepBh: 0.2 } }),
+    ]), g = k => good.find(r => r.id === k);
+    assert.strictEqual(g('c1.dead').status, 'PASS', 'good dead ' + g('c1.dead').value);
+    assert.strictEqual(g('c1.aistick').status, 'PASS', 'good aistick ' + g('c1.aistick').value);   // 1.6 over 2.0 is 0.8
+    const bad = masherRows([
+      base('c1-hold-one', { brawls: 60, ends: {}, centre: C, hold: { ticks: 4000, dead: 120, deadStates: { staggered: 120 } } }),
+      base('c1-drift-one', { brawls: 60, ends: {}, centre: C, drift: { n: 55, latMax: 2, latMean: 1, rateBhPerSec: 2.0, maxStepBh: 0.2 } }),
+      base('c1-drift-ai', { brawls: 60, ends: {}, centre: C, drift: { n: 50, latMax: 2, latMean: 1, rateBhPerSec: 1.0, maxStepBh: 0.2 } }),
+    ]), b = k => bad.find(r => r.id === k);
+    assert.strictEqual(b('c1.dead').status, 'FAIL', 'bad dead ' + b('c1.dead').value);
+    assert.strictEqual(b('c1.aistick').status, 'FAIL', 'bad aistick ' + b('c1.aistick').value);   // 1.0 over 2.0 is 0.5
+    // the rows read from the AI's records
+    const none = evaluate({ default: [rec()] });
+    for (const k of ['10.energy.share', '10.windup.perMin']) assert.strictEqual(none.find(r => r.id === k).status, 'PENDING', k);
+    const mk = (j) => rec({ seed: j, koAt: 300, cues: { windup_start: 6 }, cueText: { 'perfect_block:light': 5, 'perfect_block:medium': 3 }, brawl: { ends: {}, blows: { flurry: 400, light: 50, medium: 60, 'energy bolt': 30 }, staggers: {}, tradeBreaks: 0, lens: [1800, 1800], nblows: [] } });
+    const rows = evaluate({ default: Array.from({ length: 50 }, (_, j) => mk(j)) }), r = k => rows.find(x => x.id === k);
+    assert.strictEqual(r('10.energy.share').status, 'PASS', 'energy ' + r('10.energy.share').value);   // 30 over 540 is 5.6%
+    assert.strictEqual(r('10.windup.perMin').status, 'PASS', 'windup ' + r('10.windup.perMin').value);  // 6 over 1 minute of brawl
+    assert.ok(/medium/.test(r('7.pb.byStrength').value));
+  });
   await t('perfect blocks a minute: easy 0.5 to 2, hard 2 to 5.5 from the level runs; the per-exchange row is reported only', async () => {
     const { levelRows } = require('./bands');
     const mk = pb => Array.from({ length: 10 }, () => rec({ koAt: 300, melee: { 'TRADE BLOWS': 20 }, cues: { perfect_block: pb }, brawl: { blows: { light: 500 } } }));

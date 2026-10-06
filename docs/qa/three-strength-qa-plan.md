@@ -98,3 +98,64 @@ Built against the cues and reads that `docs/director/brawl-plan.md` §9.2 promis
 | the drop | `zip.drop` (hard; the hooked shot) and `zip.drop.bolt` (a real bolt; a coverage gap is PENDING, never a pass) | `drop_start`, `drop_land`, `drop_end` are **event types of their own** (`sim/core/fx.gd`), not cues, which the zip rows had read as cues until this batch: the earlier "0, 0, 0" in the baseline was that, and not only the missing coverage |
 
 The drop row, what was found. A real bolt cannot reach a zipper on his way out in practice: the way out is 3 to 10 ticks, a bolt needs 6 to leave, and the zip's reach is itself a brawl, in which an energy press is a link and not a bolt. So the hard row (`zip.drop`) reports a shot of power 1 to `DirZip.shot` on a tick of the way out (`turret:...:hook=1`), the way Encounter's own check does; a second pair (`zip-turret`) fires real bolts with chance 25% a tick whenever no exchange runs, and reports how often one lands on the way out. On the build at 53d13b55, the hooked shot gives `zip_end down`, one `drop_start`, one `drop_end` and the state `dropped` in between. **`drop_land` did not fire in 3 of 3 drops** (the zipper was on the ground at the time, I suppose), so the row asks for one start and one end for each down, and reports the lands; Encounter to say whether a drop that begins on the ground should land.
+
+
+## H. Orb's four playtest questions, as rows (2026-10-06; from `brawl-second-pass.md` §11 and §13)
+
+Orb will play C1, C2a and C2t. The four questions are his acceptance test; the rows below are the checks that say a build is ready for him. **Built** means the harness has it and a self-test, with PENDING until the build has the field. **Paper** means the row is defined and the harness waits for a cue or a script that the build does not have yet.
+
+### H1. "Can I move my character around during active combat?" (C1; the stagger's half is C2t)
+
+| Row | Band | Kind | State | How |
+| :--- | :--- | :--- | :--- | :--- |
+| `c1.dead`: no live brawl tick with a dead stick, outside a knock-back and its kind | none | hard | **Built** | pair `c1-hold-one`: a lights masher holds a stick on every live tick of a brawl against a rival with no stick; after the ramp (14 ticks) a tick on which he does not move along it, in a state that is not launched, down, dropped, buried, held, thrown, lifted or carried, is dead; counted by state. **On 53d13b55 a 2-match smoke gives 12,369 dead of 15,323 held ticks, all in the state `locked`: this is the lock Orb felt, and the row's "before".** States reached today: striking, mashing, staggered, reeling. Wind-up, charge and guard come with C2a and C2b |
+| `c1.aistick`: a held stick against the medium AI moves the brawl at least 0.7 as far as against no stick | at least 0.7 | point | **Built** | pairs `c1-drift-ai` (the stick against `ai:level=medium`) over `c1-drift-one` (the same script against a rival with no stick), as bh a second after the ramp |
+| the AI holds against a player's stick on under 25% of the ticks he holds it | under 25% | point | **Paper** | needs the AI's own stick read on a tick (a `nudge` field on the AI's intent, or a cue) |
+| the drift itself, and the latency of 2 ticks | | | built in §G | |
+
+### H2. "Can I move my character when the opponent is charging up an attack?" (C2t, against wind-ups)
+
+| Row | Band | Kind | State | How |
+| :--- | :--- | :--- | :--- | :--- |
+| a fighter with his hands down moves within 2 ticks of his stick while the rival winds up or charges | 2 ticks | hard | **Paper** | a `giver` script (hands down, stick away from the rival from a seeded tick) against a rival who taps Y or B. Needs the wind-up's start and end on a cue (`windup_start` with actor, strength and the tick it will land; the end as `blow` or `windup_lost`) and the fighter's own step (readable) |
+| out of a tapped heavy that is not followed, started by tick 16: out every time | 100% | hard | **Paper** | the giver starts at a seeded tick 0 to 16 into the 28-tick wind-up; the rival script does not follow; the blow must miss (no damage to him, the rival open 20 ticks). Needs the tapped B (C2a) |
+| the same, followed from the heavy's first tick: it lands | never out | hard | **Paper** | the rival holds toward him from the first tick (script `follow=1`); the blow must land |
+| a medium: out only if he starts in its first 6 ticks | reported | reported | **Paper** | a seeded start tick sweep 0 to 11 |
+| the medium AI winds up or charges a medium or a heavy, a minute of brawl | 4 to 10 | point | **Built** | `10.windup.perMin` counts `windup_start` cues over minutes of brawl; PENDING until the cue exists |
+| a player's heavies miss the medium AI by its giving ground | 10 to 25% | point | **Paper** | needs the AI's giving-ground flag on the miss (a cue `gave_ground` or a `whiff` text) |
+| the AI follows a player who gives ground | shares 0.3, 0.6, 0.9 by level | reported | **Paper** | same cue |
+
+### H3. "Can I reliably launch my opponent?" (C2t)
+
+| Row | Band | Kind | State | How |
+| :--- | :--- | :--- | :--- | :--- |
+| from a stagger of 12 ticks or more, a tapped B lands and launches | every time | hard | **Paper** | a `launcher` script: mash X until a `stagger` cue on the rival, then a B tap on the next tick. Needs the tapped B in the intent (Controls to say which field) and a launch event tied to the B |
+| the route (X every 8 ticks, B on the stagger) launches in 50 to 75% of the brawls it is tried in against medium, 70 to 90% easy, 30 to 55% hard | by level | point, 100 brawls | **Paper** | the same script against each AI level; brawls tried = brawls with a stagger |
+| a first launch inside 30 s of the first brawl, in at least 80% of matches at medium | at least 80% | point | **Paper** | from `brawl_start` and `launch` ticks |
+| launches a match by the route's player at medium, and on him | 4 to 10; 4 to 8 | point | **Paper** | the launch events by victim; collateral (civilians and structures lost) is reported beside it |
+
+### H4. "Do energy attacks look cool as part of close-range combos?" (C2t, §5b)
+
+| Row | Band | Kind | State | How |
+| :--- | :--- | :--- | :--- | :--- |
+| a point-blank bolt lands 2 ticks after its press | exact | hard | **Paper** | a script that holds RB and presses X in reach (`stanceMask` bit 2); the press tick (`press_ack`) and the damage tick |
+| a clean blast knocks back 4 bh | 4 bh | hard | **Paper** | RB + Y; the separation 30 ticks after the blast against the one before, along the stick's lean |
+| no more than three full flashes in any second | at most 3 | hard | **Paper** | a mashed RB + X for 10 s; needs a `flash` cue with a full or spark text (the harness already reads `rec.cueText['flash:<text>']`) |
+| energy blows are 5 to 15% of the medium AI's brawl blows | 5 to 15% | point | **Built** | `10.energy.share` reads brawl blow texts that name energy, a bolt or a blast; PENDING until one exists |
+| a blocked point-blank bolt reaches the core once the arms are at their cap | reported | hard when built | **Paper** | needs the wear by region on the guard event |
+| the bolt-only and mixed blaster rows | read again | | existing | the pairs `bolt-medium` and `blast-medium` stand; their bands are Game Design's to re-read after C2t |
+
+### H5. The other rows from §11
+
+- **Perfect blocks.** Banded by the minute at all three levels (1 to 4 medium, 0.5 to 2 easy, 2 to 5.5 hard): already in the baseline and unchanged. **Per 100 blows by strength is reported** (`7.pb.byStrength`, built): lights, mediums, heavies, read from `perfect_block` cues carrying the strength as their text and from the brawl's blow texts; bands (lights 0.5 to 1.5, mediums 2 to 6, heavies 6 to 15 at medium) are held after the first three-strength baseline. The total per 100 blows stays INFO. The harness needs the cue to carry the strength (`perfect_block` text) and the blow texts to name the strength (`light`, `medium`, `heavy`); the names are in `STRENGTH` in `bands.js`.
+- **The zip drop.** A hard test by injection with no band: `zip.drop` (built) stays; `zip.drop.bolt` is reported only and now expected to stay PENDING.
+- **`care`.** Protagonist 0.8 and rival −0.5, when Simulation applies it. It gets its own baseline: a **before** (the arms on the sha before the change) and an **after** (the same on the sha after), over the standing eight arms at 400, or the four core arms at 400 to save time, with the rows named in advance: the Protagonist's win rate over both slots (45 to 55), civilians lost at the KO (12 to 30%) and its split by fighter, structures lost, the brawl share, the brunts and flights rows, and the fight's biome shares (which way the AI nudges a brawl). A paired comparison by seed tells the change from the noise. The two runs cost about 2 hours each for eight arms on three jobs, or an hour each for four. It cannot be read until C1 gives the AI a nudge: before C1, `care` moves nothing.
+
+### H6. What the harness needs, in one list (for Encounter and Controls, through the EP)
+
+1. `windup_start` (actor, strength, the tick the blow lands) and its end (`blow` or `windup_lost`), for the giving-ground rows and the AI's wind-up rate.
+2. A way to press B as a tap and as a hold in a scripted intent (which field), and the RB + X and RB + Y cells in reach.
+3. The AI's own stick on a tick (or a share of ticks), for "the AI holds against a player's stick".
+4. A `gave_ground` flag (or a `whiff` text that says why) on a blow that missed.
+5. A `flash` cue with a full or spark text, and `perfect_block` with the strength as its text.
+6. The strength on `blow` texts: light, medium, heavy, and bolt or blast for energy.

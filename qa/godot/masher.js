@@ -92,6 +92,8 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   const W = 'masher:forms=1:clock=tick', n1 = Math.min(n, 60);
   const c1 = await pool([
     () => runPair('c1-drift-one', W + ':drift=east', W + ':off=7', n1, base, ['--capsec=150']),
+    () => runPair('c1-hold-one', W + ':hold=east', W + ':off=7', n1, base, ['--capsec=150']),
+    () => runPair('c1-drift-ai', W + ':drift=east:dat=24:dlen=60', 'ai:level=medium', n1, base, ['--capsec=150']),
     () => runPair('c1-drift-both', W + ':drift=east', W + ':off=7:drift=east', n1, base, ['--capsec=150']),
     () => runPair('c1-walk-both', W + ':walk=1', W + ':off=7:walk=1', n1, base, ['--capsec=150']),
     () => runPair('c1-walk-jab', W + ':walk=1:jab=6', W + ':off=7:walk=1', n1, base, ['--capsec=150']),
@@ -159,6 +161,23 @@ function c1Rows(r, results) {
   const has = (c.ticks || 0) > 0 || (ends.walk || 0) > 0 || (b.doubleHits || 0) > 0;
   const none = (id, ref, what, band) => ({ id, ref, what, status: 'PENDING', value: 'the build has no C1 (no DirBrawl.centre, no walk end, no double hit in these runs)', band, note: `${r.n} matches` });
   const rows = [];
+  if (r.pair === 'c1-hold-one') {
+    // Orb's test 1 (brawl-second-pass.md section 13): no live tick of a brawl with a dead stick outside a knock-back and its kind (a hard test). The stick is held on every live tick of a brawl; a tick after the ramp (14 ticks)
+    // on which the fighter does not move along it, in a state that is not launched, down, dropped, buried, held, thrown, lifted or carried, is a dead tick. The rival holds no stick, so nothing cancels it.
+    const hd = b.hold || {};
+    const what = 'No live tick of a brawl with a dead stick, outside a knock-back and its kind (hard test; states reached: striking and mashing, staggered, reeling; the wind-up, charge and guard states come with C2a and C2b)';
+    rows.push({ id: 'c1.dead', ref: '§11 second pass', what, status: hd.dead ? 'FAIL' : (hd.ticks ? 'PASS' : 'PENDING'), value: hd.ticks ? `${hd.dead} dead ticks of ${hd.ticks} held ticks; by state ${JSON.stringify(hd.deadStates || {})}` : 'the stick was never held long enough in a brawl', band: 'none', note: `${r.n} matches; before C1 this is the lock itself (every held tick of a locked fighter is dead; 12,369 of 15,323 on 53d13b55 in a 2-match smoke); a fighter against a building face or the ground also stops, which this read cannot tell from a dead stick: look at the states first` });
+    return rows;
+  }
+  if (r.pair === 'c1-drift-ai') {
+    // a held stick moves the brawl against the medium AI at least 0.7 as far as against a rival who holds none (the c1-drift-one pair, the same script)
+    const ref = (results || []).find(x => x.pair === 'c1-drift-one'), r0 = ref && ref.brawl && ref.brawl.drift ? ref.brawl.drift.rateBhPerSec : -1;
+    const what = 'A held stick against the medium AI moves the brawl at least 0.7 as far as against a rival who holds no stick (the AI holds against it on under 25% of the ticks: that read needs the AI\'s stick on a cue)';
+    if (!has || !d.n || !(r0 > 0)) { rows.push({ id: 'c1.aistick', ref: '§11 second pass', what, status: 'PENDING', value: 'the build has no C1, or no drift was measured on one of the two runs', band: 'at least 0.7', note: `${r.n} matches` }); return rows; }
+    const ratio = d.rateBhPerSec / r0;
+    rows.push({ id: 'c1.aistick', ref: '§11 second pass', what, status: ratio >= 0.7 ? 'PASS' : 'FAIL', value: `${ratio.toFixed(2)} (${d.rateBhPerSec} bh a second against the medium AI, ${r0} against a rival with no stick)`, band: 'at least 0.7', note: `${d.n} drifts against the AI and ${ref.brawl.drift.n} against the script; point estimates` });
+    return rows;
+  }
   if (r.pair === 'c1-drift-one' || r.pair === 'c1-drift-both') {
     const one = r.pair === 'c1-drift-one', rate = d.rateBhPerSec;
     if (!has || !d.n) { rows.push(none('c1.drift.' + (one ? 'one' : 'both'), '§1 second pass', `The centre drift under a held stick: ${one ? 'one fighter' : 'both fighters'} (reported; 0.4 and 0.8 of free-flight speed)`, 'reported')); return rows; }

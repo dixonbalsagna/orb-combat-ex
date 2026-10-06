@@ -351,6 +351,7 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     }
     zipBlock(R, D, wl, sum);
     doubleBlock(R, D, wl, sum);
+    secondPassRows(R, D, sum);
     R.point('7.chain', '§7', 'Chains per 100 melee exchanges (10 to 30, agency pass 14; strings now come from the presses)', { v: sum(D.map(r => r.chains.length)) / m * 100, lo: 10, hi: 30 });
     const slip = sum(D.map(r => r.melee['PURSUIT — TARGET SLIPS AWAY'] || 0)), caught = sum(D.map(r => r.melee['PURSUIT — CAUGHT'] || 0));
     R.rate('7.slip', '§7', 'Pursuit slip rate (escape gamble)', { v: slip / (slip + caught), ci: wl(slip, slip + caught), lo: 0.35, hi: 0.65 });
@@ -603,6 +604,31 @@ function doubleBlock(R, D, wl, sum) {
     const m = a => a.reduce((x, y) => x + y, 0) / a.length;
     R.info('double.after', '§7 second pass', 'The double hit: damage to each and the separation 30 ticks after the landing (reported; the rule: 4 brawl lights each, thrown back 6 bh each way, so about 12 bh apart from the centre)', `${m(dl.map(d => d.dmgA)).toFixed(1)} and ${m(dl.map(d => d.dmgB)).toFixed(1)} damage; apart ${m(dl.map(d => d.sep0)).toFixed(1)} bh at the throw, ${m(dl.map(d => d.sep30)).toFixed(1)} bh after 30 ticks`, `${dl.length} double hits`);
   }
+}
+
+// ---- Game Design's rows from the second pass (docs/design/brawl-second-pass.md section 11), read from the AI's own matches. Each is PENDING until the build has the cue or the blow text it needs.
+// Perfect blocks per 100 blows by strength (reported until the first three-strength baseline): lights, mediums, heavies, from rec.cueText 'perfect_block:<strength>' over rec.brawl.blows; the build's own names go in STRENGTH.
+const STRENGTH = { light: ['light', 'flurry'], medium: ['medium', 'y'], heavy: ['heavy', 'b'] };
+function secondPassRows(R, D, sum) {
+  const mins = sum(D.map(r => ((r.brawl || {}).lens || []).reduce((a, b) => a + b, 0))) / 3600;   // minutes of brawl (live ticks)
+  const blows = {}, pbs = {}, ct = {};
+  for (const r of D) {
+    for (const [k, v] of Object.entries((r.brawl || {}).blows || {})) blows[k] = (blows[k] || 0) + v;
+    for (const [k, v] of Object.entries(r.cueText || {})) ct[k] = (ct[k] || 0) + v;
+  }
+  const pbOf = names => sum(names.map(n => ct['perfect_block:' + n] || 0)), blowOf = names => sum(names.map(n => blows[n] || 0));
+  const parts = [];
+  for (const [kind, names] of Object.entries(STRENGTH)) { const b = blowOf(names); parts.push(`${kind} ${b ? (100 * pbOf(names) / b).toFixed(2) : '-'} (${pbOf(names)} over ${b})`); }
+  const typed = sum(Object.keys(ct).filter(k => k.startsWith('perfect_block:') && !k.endsWith(':')).map(k => ct[k]));
+  R.info('7.pb.byStrength', '§7 second pass', 'Perfect blocks per 100 blows by strength (reported; held as bands after the first three-strength baseline: lights 0.5 to 1.5, mediums 2 to 6, heavies 6 to 15 at medium)', typed ? parts.join('; ') : 'the perfect_block cue carries no strength text on this build', `${D.length} matches; the total per 100 blows is retired as a band`);
+  // energy in the medium AI's brawl blows (5 to 15%): blows whose text names energy
+  const eKeys = Object.keys(blows).filter(k => /energy|bolt|blast/.test(k)), allB = sum(Object.values(blows));
+  if (eKeys.length && allB) R.point('10.energy.share', '§5b', "Energy blows as a share of the AI's brawl blows (5 to 15%)", { v: sum(eKeys.map(k => blows[k])) / allB, lo: 0.05, hi: 0.15, unit: 'pct' });
+  else R.pending('10.energy.share', '§5b', "Energy blows as a share of the AI's brawl blows (5 to 15%)", 'the build has no energy blow in reach (no brawl blow text names energy, a bolt or a blast)');
+  // the medium AI winds up a medium or a heavy 4 to 10 times in a minute of brawl
+  const wu = sum(D.map(r => (r.cues || {}).windup_start || 0)), hasWu = D.some(r => (r.cues || {}).windup_start);
+  if (hasWu && mins > 0) R.point('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10; giving ground needs the moment to come)', { v: wu / mins, lo: 4, hi: 10, unit: 'num' });
+  else R.pending('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10)', 'the build has no windup_start cue (the three strengths are C2a)');
 }
 
 function levelRows(byLevel) {

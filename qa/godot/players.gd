@@ -48,6 +48,9 @@ class Pl:
 	var dr_dir: float = 0.0
 	var dr_cx: Array = []          # the brawl's centre x each tick of the window (the director's DirBrawl.centre when the build has it, else the midpoint of the two)
 	var dr_cv: Array = []          # its velocity x each tick, when the build gives one
+	var hold_last_tick: int = -1   # hold=...: the S.tick of the last tick the stick was held in a brawl, and where he stood then
+	var hold_last_x: float = 0.0
+	var hold_run: int = 0          # consecutive live ticks the stick has been held in a brawl
 	var hooked: bool = false       # turret hook=1: this zip has had its shot reported
 	var hk_n: int = 0              # the tick of the way out the shot is reported on (0 to 2, drawn at the tell)
 	var start_off: int = 0         # off=N: the first tap waits a seeded 0 to N ticks, so two identical mashers do not press on the same ticks (the mirror's tie-break)
@@ -257,7 +260,8 @@ class Pl:
 	func stick_script(S, slot: int, it, k: int) -> int:
 		var walk: bool = int(P.get("walk", "0")) != 0
 		var drift: String = String(P.get("drift", ""))
-		if not walk and drift == "":
+		var hold: String = String(P.get("hold", ""))
+		if not walk and drift == "" and hold == "":
 			return k
 		var f = S.fighters[slot]
 		var o = S.fighters[1 - slot]
@@ -265,6 +269,8 @@ class Pl:
 		if not inb:
 			if dr_cx.size() > 0:
 				_drift_done()
+			hold_run = 0
+			hold_last_tick = -1
 			st_since = -1
 			walk_t0 = -1
 			jab_tick = -1
@@ -288,6 +294,25 @@ class Pl:
 				it.guard = true
 			if int(P.get("wheld", "0")) != 0:
 				it.lightHeld = true
+		if hold != "":
+			# hold=east|west|away|toward: the stick is held on every live tick of a brawl. A tick on which it does nothing is a dead tick (brawl-second-pass.md section 11: a hard test outside a knock-back and its kind):
+			# after the ramp (14 ticks) the fighter must still be moving along the stick, read as his own step on the live tick before; the state he was in is counted.
+			var hd: float = 1.0 if hold == "east" else (-1.0 if hold == "west" else (toward if hold == "toward" else -toward))
+			it.mx = hd
+			if S.tick != hold_last_tick:
+				if hold_last_tick >= 0 and S.tick - hold_last_tick == 1:
+					hold_run += 1
+					if hold_run >= 14 and not G.is_empty():
+						G.holdTicks += 1
+						var stp: float = SimWrap.sdx(hold_last_x, f.x) * hd
+						var exempt: bool = f.state == "launched" or f.state == "down" or f.state == "dropped" or f.state == "buried" or f.state == "held" or f.state == "thrown" or f.state == "lifted" or f.state == "carried"
+						if stp < 0.001 and not exempt:
+							G.deadTicks += 1
+							G.deadStates[str(f.state)] = int(G.deadStates.get(str(f.state), 0)) + 1
+				else:
+					hold_run = 0
+				hold_last_tick = S.tick
+				hold_last_x = f.x
 		var dat: int = int(P.get("dat", "24"))
 		if drift != "" and age >= dat and age < dat + int(P.get("dlen", "60")):
 			var dd: float = 1.0 if drift == "east" else (-1.0 if drift == "west" else (toward if drift == "toward" else -toward))
@@ -580,7 +605,7 @@ func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
 
 ## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
 func _gblank() -> Dictionary:
-	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "doubleHits": 0, "lastBlow": -1000, "walkBrawls": 0, "walkEarly": 0, "walkLags": [], "driftN": 0, "driftLat": [], "driftRate": [], "driftMaxStep": 0.0, "centreTicks": 0, "centreMaxStep": 0.0, "centreOver": 0, "dropStart": 0, "dropLand": 0, "dropEnd": 0, "dropStateBad": 0, "dropEndBad": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "doubleHits": 0, "lastBlow": -1000, "walkBrawls": 0, "walkEarly": 0, "walkLags": [], "driftN": 0, "driftLat": [], "driftRate": [], "driftMaxStep": 0.0, "centreTicks": 0, "centreMaxStep": 0.0, "centreOver": 0, "holdTicks": 0, "deadTicks": 0, "deadStates": {}, "dropStart": 0, "dropLand": 0, "dropEnd": 0, "dropStateBad": 0, "dropEndBad": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
 
 
 ## An event field as an int, 0 when the build's event has no such field.
@@ -614,7 +639,7 @@ func _greport(g: Dictionary) -> Dictionary:
 		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
 		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades,
 		"exactTradeFields": g.exact > 0 and g.exact == g.tradeBreaks, "levelTrades": g.drawsAfterClose, "levelChanges": g.drawChanges, "levelChangeShare": snappedf(float(g.drawChanges) / maxf(1.0, float(g.drawsAfterClose)), 0.001),
-		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "doubleHits": g.doubleHits, "walk": {"brawls": g.walkBrawls, "early": g.walkEarly, "lagMin": (g.walkLags.min() if g.walkLags.size() > 0 else -1), "lagMax": (g.walkLags.max() if g.walkLags.size() > 0 else -1), "n": g.walkLags.size()}, "drift": {"n": g.driftN, "latMax": (g.driftLat.max() if g.driftLat.size() > 0 else -1), "latMean": (snappedf(_mean(g.driftLat), 0.01) if g.driftLat.size() > 0 else -1.0), "rateBhPerSec": (snappedf(_mean(g.driftRate), 0.001) if g.driftRate.size() > 0 else -1.0), "maxStepBh": snappedf(g.driftMaxStep, 0.001)}, "centre": {"ticks": g.centreTicks, "maxStepBh": snappedf(g.centreMaxStep, 0.001), "over": g.centreOver}, "drop": {"start": g.dropStart, "land": g.dropLand, "end": g.dropEnd, "stateBad": g.dropStateBad, "endBad": g.dropEndBad}, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
+		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "doubleHits": g.doubleHits, "walk": {"brawls": g.walkBrawls, "early": g.walkEarly, "lagMin": (g.walkLags.min() if g.walkLags.size() > 0 else -1), "lagMax": (g.walkLags.max() if g.walkLags.size() > 0 else -1), "n": g.walkLags.size()}, "drift": {"n": g.driftN, "latMax": (g.driftLat.max() if g.driftLat.size() > 0 else -1), "latMean": (snappedf(_mean(g.driftLat), 0.01) if g.driftLat.size() > 0 else -1.0), "rateBhPerSec": (snappedf(_mean(g.driftRate), 0.001) if g.driftRate.size() > 0 else -1.0), "maxStepBh": snappedf(g.driftMaxStep, 0.001)}, "centre": {"ticks": g.centreTicks, "maxStepBh": snappedf(g.centreMaxStep, 0.001), "over": g.centreOver}, "hold": {"ticks": g.holdTicks, "dead": g.deadTicks, "deadStates": g.deadStates}, "drop": {"start": g.dropStart, "land": g.dropLand, "end": g.dropEnd, "stateBad": g.dropStateBad, "endBad": g.dropEndBad}, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
