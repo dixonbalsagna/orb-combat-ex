@@ -419,8 +419,8 @@
     },
     {
       "id": "k03",
-      "rule": "a charge flash (a tier mark at 12, 14, 24, 40 or 48 ticks, or a 'full flash') is a thin ring or edge flash on the charging hand, forearm or plate, in the lane colour, 4 ticks or fewer, never body-wide, never gold, white or red, never with a shouted name; a held B shows at most two of the seven marks at any tick through its 48 ticks, and no scream at any tier",
-      "why": "marks 3, 7 and 2 across a long held charge"
+      "rule": "a charge flash or ring (a tier mark at 16 or 24 ticks for a medium, 32 or 44 for a heavy, a full-charge flash, or the wind-up ring) is a thin ring or edge flash on the charging hand, forearm or plate, in the lane colour, 4 ticks or fewer, never body-wide, never gold, white or red, never with a shouted name; a wind-up ring is hollow, thin, lane-coloured and shrinks onto the limb (m07); a held charge shows at most two of the seven marks at any tick, and no scream at any tier. Tick counts are the design's and may change: the conditions, not the numbers, are the rule",
+      "why": "marks 3, 7 and 2 across a held charge; restated to the three-strength spec"
     },
     {
       "id": "k04",
