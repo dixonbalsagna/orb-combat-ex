@@ -350,6 +350,11 @@
       "id": "e08",
       "rule": "R1 adopted: an energy blow in reach is one open, blade or lit-fist hand at shoulder height or lower, lit as a thin edge before it lands, the shot going off at contact as a thin edge or short cone, each body taking a rim of its colour on the near side and never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash; the blast's 12-tick wind-up is a held pose (h05) with its gather a thin ring or edge at the palm; the blade hand is a flat blade, never a pointed finger or two fingers (e03)",
       "why": "R1 with the lit fist and the finger rule added"
+    },
+    {
+      "id": "e09",
+      "rule": "a mashed run of point-blank bolts must read as varied on screen, not only in data: no two bolts in a row with the same arm, path and place; no regular left-right alternation (an irregular order, with the free arm taking a bolt now and then); at least three different paths (line, outward arc, inward arc) in any five; each hand lands below the collar line on the chest or gut and never at the neck, throat or face; the two bodies keep a hand's width between the heads",
+      "why": "e06 for a mashed run: the same arm pumping, or two palms pumping in turn, is the barrage image"
     }
   ],
   "grabs": [

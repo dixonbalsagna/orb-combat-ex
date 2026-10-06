@@ -36,3 +36,20 @@ Pass, no new shape. A heavy thrown on half of B's wind-up at a staggered rival, 
 
 ## 7. The flash rate
 Game Design's hard limit (three full flashes a second) and Combat's (one in 20 ticks, which is three a second) are the same ceiling, and it is the standard one for photosensitivity (no more than three flashes in any one second). **k05** makes it explicit: **counted over the whole screen**, both fighters and every effect together, each flash small (a thin edge or short cone), **none red**, a reduced-motion setting that halves the rate. What I need to see: a recorded **3-second mashed sequence of point-blank bolts by both fighters at once** on the real build, with a flash count taken from the recording (a flash analysis, an accessibility check rather than a legal one). I cannot run that analysis myself; if it shows more than three, VFX drops sparks to the hand for the rest as planned. A person with photosensitivity should not be the test.
+
+## 8. Drawn (2026-10-06): the six nudges closed, and the twelve energy pieces
+
+**The six nudges: closed, all pass.** The new sheets show the follow at 3, 6 and 10 ticks after contact with the striking hand lowered (plate, hook and elbow heave: the forearm across his centre; hammer: the arm bent forward at head height; blade jaw: the striking arm low and forward, the lead hand back at his head as a guard, nothing crossed); and `pu.su_ball_heave` with the hands at different depths and heights in the load. Animation's numbers (no hand above 73 by 6 ticks after contact; the solve fix for the dummy's head; `anim_check` failing above 76 at 6 ticks) are accepted. One watch: the ball heave's reaching hand in the load frames at 12 and 6 ticks out is near head height; the h05 lint (nothing above 80 before the last 6 ticks) settles it.
+
+**Energy in reach, per piece** (poses only; no light is drawn yet, so e08, k03 and k05 are still to be seen with VFX's cone, rim and flash):
+
+| Piece | Verdict |
+| :-- | :-- |
+| `pk.bolt_thrust`, `pk.bolt_flat`, `pk.bolt_flick`, `pk.bolt_sweep` | **Pass.** One arm, the hand set on the chest or the belly, the other hand open in guard; shoulder height or lower; no hip, no cupped hand, no two-hand chamber |
+| `pk.blast_chest`, `pk.blast_gut` | **Pass.** The 12-tick gather keeps both forearms low and forward and apart; h05 judges it on the solve |
+| `rk.bolt_blade`, `rk.bolt_fist`, `rk.bolt_flick`, `rk.blast_chest`, `rk.blast_gut` | **Pass.** One arm, a blade hand or the fist (the lit edge to come), the other hand open |
+| `rk.bolt_sweep` | **Nudge.** At the closing distance the sweeping forearm crosses at the Protagonist's neck line and the two heads overlap. The hand lands on the chest below the collar, and the bodies keep a hand's width between the heads (e09) |
+| `pk.run` | **Nudge.** Five different bolts at 6-tick gaps, but the frames show the same arm each time in nearly the same pose. A mashed run must read as varied on screen (e09), not only in data |
+| `rk.run` | **Nudge.** Same as `pk.run`, and the rival closes on the dummy until the heads touch: fix the spacing |
+
+**Animation's flag, ruled:** a 2-tick flick and sweep that differ only in a tell barely on screen are the reason for e09. A mashed run of one arm landing near-identical blows is the pumping-hand barrage image, so the run must visibly differ: different paths (a line, an outward arc, an inward arc), the free arm taking a bolt now and then, and an irregular order, never a regular left-right pump. The rival's headroom problem (the bodies overlap) is the same fix.
