@@ -1143,3 +1143,61 @@ Orb picked rumble on **every landed blow, closes, launches and landings, buildin
 - **Settings screen:** the rows appear only for a player whose device can rumble (`hub.rumble_target(slot).kind` is `pad` or `touch`; a keyboard has none and the rows are hidden, so there is never a setting that does nothing), grouped under Controls as "Rumble" and "Rumble strength". Changing a row sends a short test pulse (the host's call, through a signal `rumble_test(slot)`), so the player feels the new strength at once.
 - **What the host does:** reads the player's `rumble` and `rumble_strength` from `hud.opts` (a new accessor `UiHud.rumble_for(slot) -> {mode, strength}`), asks `hub.rumble_target(slot)` each time it pulses (a pad can join or be lost), maps the sim's events to pulses (Controls' section 6 table: a tick for the attacker, a thump for the defender, a strong pulse for closes, launches and landings, medium for buildings, a continuous rumble for a beam struggle) and merges pulses nearer than 4 ticks. "Cannot rumble" is off with no error.
 - **Cost:** S. `options.json` rows and words (Tools' schema for `default_web` first), the accessor and signal, the Settings rows with their hide rule, tests (options default and clamp per platform, the rows' presence by device, the accessor, the test pulse), docs. Build it when Controls' `hub.rumble_target` has landed.
+
+
+## 48. Plan, nothing built: three strengths on three buttons (2026-10-06)
+
+Source: `docs/design/brawl-second-pass.md` sections 2 to 12 (972e598). Orb moved the martial face buttons to **X light, Y medium, B heavy**; **one press is one attack**; the signature moves to **RT + B** (a hold: art at 24 ticks, signature at 48, ultimate 45 more); a tapped A is a shove, a mashed A a clinch, a held A a tackle. The live build still has B as the signature until Encounter's slice C2a, so **nothing here is built, and `stances.json` words and `_works` stay as they are** until the EP briefs C2a. Two things already built carry over unchanged: the grey press mark (section 47: `empty` and `refused` still mark the pressed button) and the 3-tick pair read is Controls' and Encounter's, not the HUD's.
+
+**One switch, so C2a flips a boolean.** Build the whole change behind a flag, `features.json` `three_strengths` (default false), exactly like the `_live` flags: with it off the HUD describes the build as it is today. Every word that changes is chosen by the flag, so nothing a player reads is wrong at any commit. The words below are data (Narrative edits them), listed in section "Words".
+
+### What changes, by surface
+
+| Surface | Today | With three strengths | Size |
+| :--- | :--- | :--- | :--- |
+| **Legend** (desktop and pad) | Light, Heavy, Context, Signature, then the stance rows and Specials | Martial: **Light** (X), **Medium** (Y), **Heavy** (B) and A's three readings (**Shove**, tap; **Clinch**, mash; **Tackle**, hold). The Signature row becomes the chord **RT + B (hold)**. The stance cells come from `stances.json` (martial `_live`) as built; the greyed "not yet" cells follow `_works`, which Encounter's slice rewrites (A's three readings arrive in C2b and C4) | S |
+| **Full touch** | LIGHT, HEAVY, SIGN, CONTEXT | LIGHT, **MEDIUM**, **HEAVY**, CONTEXT; the signature is POWER held with HEAVY (the same RT + B chord), shown on the POWER button's armed state as today | S |
+| **Remap and Settings** | Action rows "Light, Heavy, Signature, Context" | Row words by the flag: "Light (X)", "Medium (Y)", "Heavy (B)", "Context (A): shove, clinch, tackle"; the signature appears as the stance table's RT + B | S (data) |
+| **How to play** | Controls page "Signature (45 Charge)"; stances page table | The controls page reads the three strengths and A's three readings and says "Hold RT and B for your signature"; the stances table's charging B is "Signature (hold)" and martial B "Heavy" (cells, data) | S (data) |
+| **The plate** | The SIGNATURE chip and the weight mark (light or heavy) | The chip stays (the signature still exists, funded and held on RT + B); the **weight mark gains a third value**: light, medium, heavy | S |
+| **Prompts** | Weight chip on the stance row | Same, three values | S (with the plate) |
+
+### The wind-up and charge cue on Y and B
+
+A tap on Y or B starts a wind-up on the press (12 and 28 ticks); a hold keeps winding and charges (Y full at 24, B at 44); B's wind-up is armoured. The player has to see **what the press is doing**, since a heavy that "does nothing" for half a second reads as a fault.
+
+- **What the HUD needs from the sim** (a new event, for Encounter): `windup {actor, cell: "y"|"b", kind: "start"|"full"|"end", dur, result}` where `dur` is the wind-up in ticks, `full` fires at the charge's full flash, and `end` says `landed`, `released`, `lost` (a medium or a shove ended it), `whiff` or `fired`. A cue is cheaper than the HUD reading `heavyHeld` and guessing, and it carries the armour. The hub keeps `m.charge_cell`, `m.charge_t`, `m.charge_dur`, `m.charge_full` and `m.charge_armoured`.
+- **The cue:** a **ring that fills round the pressed button's glyph** in the legend (and round the button on Full touch) over the wind-up, then holds, and **flashes once at full** (the flash Animation draws on the body is the main cue; the ring is the readable twin). B's ring is **double-banded** (an outer thin ring) for the armour: a shape, not a colour. The legend is held up for the duration (like the press mark), so it is there when the player looks. Quick and quiet: Orb's rule of cool answers, a flash of 4 of 10.
+- **A second, optional cue on the fighter:** a small charge arc by the crown (the beat ring's cousin), option `charge_ring`, **off by default**, for players who watch the fighter and not the legend. Same data.
+- **Under reduced motion** the ring is steps (quarters) and the flash a steady full ring; nothing animates but the quarters.
+- **A failed or lost charge** shows the existing grey mark (`lapsed` ring, or `refused`) on that button; a **whiff** shows the ring emptying and a dash.
+- **Size:** M (event contract, model fields, legend ring, Full touch ring, reduced motion, the optional crown arc, tests, stills).
+
+### Simple: one button by hold length
+
+Simple's single Attack button is a light under 12 ticks, a medium from 12 and a heavy from 28 (the longer the hold, the heavier the blow; one blow to a press). Today its ring fills over 12 ticks ("becomes a heavy"). The plan:
+
+- **The ring has two bands with a notch at each threshold** (12 and 28 ticks), filled as the finger stays down; the notch it has passed is lit. A shape cue (notches) and no colour reliance.
+- **The host gives ticks, not a fraction:** `touch_state.attack.hold_ticks` (Controls; today `hold` is 0 to 1 over 12). The HUD keeps the old key working until it arrives.
+- **The legend row** for Simple pad reads "Attack (hold: stronger)" in place of "Light (hold: heavy)"; Simple has no pair, signature or charge chord, the director picks those (section 47 and `brawl-second-pass.md` 2, 6).
+- **Size:** S.
+
+### The two settings (from Controls)
+
+- **Latched charge:** a tap starts the wind-up and the next press lets it go (for players who cannot hold). **Charges off:** every press is a tap.
+- **In Settings** as two switches under Controls, per player (`latched_charge`, `latched_charge_p2`, `charges_off`, `charges_off_p2`), off by default, shown for any device; words in `options.json` ("Latched charge: tap to start a charge, tap again to let it go" and "Charges off: every press is a tap"); the HUD hands them to the host through the existing options accessor and Controls' setters. **The cue adapts:** with latched charge the ring shows "held" until the release press, with a dot-and-ring mark when it is waiting; with charges off the ring never shows a charge and the legend drops the "(hold)" words.
+- **Size:** S (rows, words, the cue adapting, tests).
+
+### Words (data; for Narrative to edit)
+
+Light, Medium, Heavy; Shove, Clinch, Tackle; "Signature (hold)"; Simple's "Attack (hold: stronger)"; the remap rows above; the two setting labels and helps; the controls page lines. All keyed so the old words remain for the flag off.
+
+### Build order and risks
+
+1. **With C2a** (the taps and the flurries): the flag, the legend, Full touch words, Remap and How to play words, the plate's third weight value (S, data and a little code). Flip `three_strengths` and `martial._live` with Encounter's slice.
+2. **With C2a or C2b:** the wind-up cue (M) when Encounter emits `windup`; Simple's two-band ring (S) when Controls gives `hold_ticks`.
+3. **With C2b:** the two settings (S) when Controls' setters exist; A's three readings in the legend and `_works`.
+4. **With C5:** the signature's hold ladder cue on RT + B (the two flashes at 24 and 48 ticks), the same ring on the B glyph under RT. UI: the two flashes, as the page lists.
+- **Risk:** the action ids stay `light`, `heavy`, `context`, `signature` (the sim, Controls and the remap data use them), so a row whose id says `signature` is the heavy in martial and the signature under RT. All words are by the flag and the stance, never by the id. Tests assert it.
+- **Risk:** the live-build hold: until C2a the live build's B is the signature, so a flag flipped early lies. The flag is Encounter's slice's to flip.
+- **Open question for the EP:** is the optional crown arc wanted at all (it adds a layer the beat ring already has the shape of)? I recommend building the legend and touch rings first and judging after a playtest.

@@ -4726,18 +4726,31 @@ func _press_mark_rules() -> void:
 	lay.touch_ui = true
 	lay.touch_full = true
 	lay.compute(Vector2(2400, 1080), false)
-	var layer := Control.new()
+	# Drawn through a real draw pass (a widget may only draw inside its node's _draw): the same layer, three passes.
+	var layer := UiLayer.new()
 	layer.size = Vector2(2400, 1080)
 	root.add_child(layer)
-	UiTouchControls.draw(layer, lay, lay.s, {}, 0.0, false, -1, {"dim": ["context", "light"], "ack": {"name": "context", "kind": "empty", "a": 0.8}})
-	UiTouchControls.draw(layer, lay, lay.s, {}, 0.0, false, -1, {"dim": [], "ack": {"name": "signature", "kind": "refused", "a": 0.5}})
-	_ok(true, "press marks: Full touch draws greyed buttons and every mark without error")
-	UiText.tracing = true
-	UiText.trace = []
-	UiTouchControls.draw(layer, lay, lay.s, {}, 0.0, false, -1, {"dim": ["context"], "ack": {}})
-	UiText.tracing = false
-	_ok(UiText.trace.has("NOT YET") and not UiText.trace.has(UiData.t("prompt.full_context")), "press marks: a greyed Full touch button reads NOT YET in place of its word")
-	UiText.trace = []
+	var extras: Array = [{"dim": ["context", "light"], "ack": {"name": "context", "kind": "empty", "a": 0.8}}, {"dim": [], "ack": {"name": "signature", "kind": "refused", "a": 0.5}}, {"dim": ["context"], "ack": {}}]
+	var pass_i := {"i": 0, "drawn": 0}
+	layer.painter = func(ci: CanvasItem) -> void:
+		UiTouchControls.draw(ci, lay, lay.s, {}, 0.0, false, -1, extras[int(pass_i["i"])])
+		pass_i["drawn"] += 1
+	var traced: Array = []
+	for i in range(3):
+		pass_i["i"] = i
+		if i == 2:
+			UiText.tracing = true
+			UiText.trace = []
+		layer.sig = i + 1
+		layer.queue_redraw()
+		await process_frame
+		await process_frame
+		if i == 2:
+			UiText.tracing = false
+			traced = UiText.trace.duplicate()
+			UiText.trace = []
+	_ok(int(pass_i["drawn"]) >= 3, "press marks: Full touch draws greyed buttons and every mark without error (%d passes)" % int(pass_i["drawn"]))
+	_ok(traced.has("NOT YET") and not traced.has(UiData.t("prompt.full_context")), "press marks: a greyed Full touch button reads NOT YET in place of its word")
 	layer.queue_free()
 	hud.queue_free()
 	await process_frame
