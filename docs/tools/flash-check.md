@@ -77,6 +77,20 @@ node tools/flash/pixel-selftest.mjs                                           # 
 
 The same table with the register: in every clip the register in the web build counted the same flashes as the headless run at every tick (cross-check below), and each clip's register worst is at or under the cap (3, or 1 in reduced mode). The pixels exceed what the register counts because most of what changes the screen is not a register source.
 
+**The five new seeds of the AI-match set (1, 3, 5, 38, 39), full length, against the gate** (2026-10-06, HEAD 68a9663f plus the collapse staging; the register in the web build agrees with the headless run at every tick in all ten):
+
+| Seed | Worst second, general flashes: normal / reduced | Starts at tick (normal) | Result |
+| :-- | :-- | :-- | :-- |
+| 1 | **4** / 3 | 2138 | **FAIL normal (over the standard)**; reduced over our gate |
+| 3 | 2.5 / 2.5 | 3441 | passes both |
+| 5 | **4 / 4** | 841 | **FAIL both (over the standard)** |
+| 38 | **3.5** / 2.5 | 2286 | **FAIL normal (over the standard)**; reduced passes |
+| 39 | 3 / 2.5 | 1473 | normal over our gate; reduced passes |
+
+Red is 0 in all ten. Whole-screen dips: ai 3 reduced tick 460 (40% of the frame, mean luminance 0.253 to 0.153) and ai 38 reduced tick 575 (43%, 0.266 to 0.159); one in each clip, so no interval between two.
+
+**The whole required set today** (26 clips: 10 fixed, 16 AI): **11 pass the gate and 15 do not**: nine are over the standard (collapse and ai 12345 in both modes, ai 4, 1 and 38 normal, ai 5 in both) and six more are at 3 (mash normal, clash in both modes, ai 7 normal, ai 1 reduced, ai 39 normal). Only ai seed 3 passes in both modes of the AI set; the reduced mode passes more clips than normal (ai 4, 7, 3, 38, 39 and mash) but not all, and where it does not help (collapse, clash, ai 12345, ai 5) the pixels are the same in both modes.
+
 **Case by case.** Frames are in the run's scratch folders; ticks are the clip's tick numbers (the file `frame-NNNNNN.png` is tick NNNNNN).
 
 1. **collapse, ticks 1352 to 1397 (both modes): 4.5 flashes.** Eleven qualifying changes in 45 ticks, each 110 to 283% of the window limit (21,824 px), alternating every 2 to 10 ticks. The camera flies close past building facades while the blasts go off, so large dark and bright façades and the blast's flash sweep through the same windows. Reduced flashing changes nothing (4.5 both ways). Yesterday's reading called this "exactly 3"; the sliding window and the pooling count it as 4.5.
