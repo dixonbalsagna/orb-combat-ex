@@ -154,3 +154,9 @@ Parked until a Steam build is near (no work started): Steam Deck Verified needs 
 - A long brawl is allowed by design. A player who only presses lights can hold a brawl for 8 to 9 s at a time and most of a match, because nothing ends a brawl but an ender, a launch or someone leaving. Game Design ruled that this is what you asked for ("trade continuous strings of blows without interruption") and added no fatigue or limit. Its own risk note: it can pin a fight in one place, against the planet-wide travel the game is built on. If it feels that way in your hands, the first answer is the AI leaving a brawl it is losing, not a system limit. Say what you feel.
 - Not live yet, coming with Encounter's next slice: a perfect block or a reversal no longer ends the brawl; the blocker gets a riposte that cannot be blocked or dodged.
 - The depth band (fights zigzagging between streets) is not live; only its plumbing is in, switched off.
+
+## The city re-lay that comes with the depth lanes (2026-10-05)
+
+Landing the lane table re-lays the cities (docs/world/lanes-remeasure-plan.md): 186 buildings with towers up to 62 floors, and a starting population of 1,800 where it is 390 today. The share of civilians lost stays near 23 to 25%, so the number a player reads goes from about 99 lost a match to about 488. Two questions for Orb, tied to the open one on how graphic casualties should be:
+1. Should the screen show civilians lost as a count (488 of 1,800), a share (27%), or both?
+2. Is a death toll in the hundreds each match the tone you want for the Protagonist's anguish and the rival's menace? (The meters themselves are shares and read the same.)
