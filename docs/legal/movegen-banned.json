@@ -36,7 +36,11 @@
         "tip": [
           "fist",
           "palm",
-          "heel"
+          "heel",
+          "blade",
+          "plate",
+          "point",
+          "cap"
         ],
         "path": [
           "rise"
@@ -50,7 +54,8 @@
           "spin"
         ]
       },
-      "why": "a rising blow with a leap or a spin, by hand, elbow or knee: the jumping, turning uppercut"
+      "why": "a rising blow with a leap or a spin, by hand, elbow or knee: the jumping, turning uppercut",
+      "appliesTo": "any tip of a hand, elbow or knee on a rise path to the jaw or head: a rising blow bound by this row whatever its tip (Combat's strict reading)"
     },
     {
       "id": "b04",
