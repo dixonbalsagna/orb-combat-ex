@@ -85,8 +85,8 @@ static func _s(f, k: int, v: int) -> void:
 	f.act.dirI[k] = v
 
 
-static func _cue(S: SimState, f, name: String, text: String = ""):
-	SimFx.cue(S, f, name, text, "")
+static func _cue(S: SimState, f, name: String, text: String = "", source: String = ""):
+	SimFx.cue(S, f, name, text, source)
 	return S.out.fx[S.out.fx.size() - 1]
 
 
@@ -98,6 +98,12 @@ static func zipping(f) -> bool:
 ## True on his way out: no strike reaches him there.
 static func untouchable(f) -> bool:
 	return _g(f, PH) == 4
+
+
+## True from the tick the rival ended his ticks in reach under him (a dodge away, a burst) until the zip's next tick,
+## when he leaves by his exit: no strike reaches him in between, as none does on his way out (DirExchange._start).
+static func leaving(S: SimState, f) -> bool:
+	return _g(f, PH) == 3 and _g(f, STATE) != 2 and not _mine(S, f)
 
 
 ## The fighter whose zip is aimed at d and has not arrived yet, or null.
@@ -125,7 +131,7 @@ static func takes(S: SimState, A, kind: String) -> bool:
 	if not on() or kind == "sig":
 		return false
 	if zipping(A):
-		_cue(S, A, "press_ack", "zip").n = S.tick
+		_cue(S, A, "press_ack", "zip", DirBrawl._cell(kind)).n = S.tick
 		return true
 	var Z = aimedAt(S, A)
 	if Z != null:
@@ -143,7 +149,7 @@ static func takes(S: SimState, A, kind: String) -> bool:
 			_s(A, ANS_W, w)
 			_s(A, ANS_AT, pp)
 			_s(A, ANS_MASH, 1 if mash else 0)
-		_cue(S, A, "press_ack", "answer").n = S.tick
+		_cue(S, A, "press_ack", "answer", DirBrawl._cell(kind)).n = S.tick
 		return true
 	if (A.input.stanceMask & LT) == 0:
 		return false
@@ -154,11 +160,11 @@ static func takes(S: SimState, A, kind: String) -> bool:
 		return false   # in reach the same buttons are the step strike and its family; further out, the piloted charge
 	if S.dirS.ex != null or S.game.ko != null or (A.state != "free" and A.state != "charging") or A.stunTicks > 0 or DirBands.pending(A) \
 			or D.hidden or D.state == "launched" or D.state == "down" or D.state == "dropped" or zipping(D) or DirBury.safe(S, D):
-		_cue(S, A, "press_ack", "zip_refused").n = S.tick
+		_cue(S, A, "press_ack", "zip_refused", DirBrawl._cell(kind)).n = S.tick
 		return true
 	var heavy: bool = kind == "heavy"
 	if A.ki < float((c.heavy if heavy else c.strike).ki):
-		_cue(S, A, "press_ack", "zip_no_ki").n = S.tick
+		_cue(S, A, "press_ack", "zip_no_ki", DirBrawl._cell(kind)).n = S.tick
 		return false
 	start(S, A, D, heavy, S.tick - DirBrawl._waited(A))
 	return true

@@ -480,3 +480,19 @@ C2 is the largest brawl slice so far: the second pass's sections 2 and 3, with t
 | **The rows** | Every masher, mirror and mixing-presser row is re-read; the mixing presser's script, which closes with an ender, is replaced by the Y masher and the alternator |
 
 About half of `brawl.gd`'s 1,170 lines change. I would build it as two chains: **C2a,** the tap rule on Y with the heavy flurry, the mix-up and the ender withdrawn, about the size of B1b; then **C2b,** the charges with the armour, the fresh guard, the just release and the shove, about the size of B1c and the zip's answers together. C2a can be committed alone. Orb plays after C2b, since the shove is the charge's answer.
+
+### 9.6 C1 as built (2026-10-06)
+
+C1 is built: `brawl-c1.md` has the rules, the cues, the reads and the rows. Where the build departs from 9.1 to 9.4:
+
+- **The ramp is Controls'.** `nudgeDigital` was never a key. Each stick goes through `SimAim.nudge_ramp`, and `nudgeRampTicks` is the limit on how fast the centre's own speed may change, up and down.
+- **A guard's 0.6 is of his neutral flight speed.** The core's read of his flight speed already carries 0.8 for a fighter in the guard stance, so the brawl reads it with his stance set aside.
+- **The building rule is a look ahead.** A step may not bring the pair's middle within `nudge.clearBh` of a building's box, and a pair already inside a box moves freely. The ground is never tested: the core holds a fighter on it. A slope is climbed inside the cap or not at all.
+- **The AI's nudge is not in its intent,** because a stick there also leans its blows and tilts its launches. `DirBrawl.stick(ex, f)` is what the movement reads.
+- **Two AIs never walk out,** and an AI weighs a player's offer once a brawl. 9.1 had it answer "more when it is behind"; that isn't built.
+- **The double hit's two slides are the core's `knockback` events with no attacker,** so every view that draws a slide draws them. They are not launches and cost no wear.
+- **Both launch fighters have `care` 0.0,** so the nudge by `care` is written and dormant.
+- **The walk-out comes 12 full ticks after the later stick is first read,** never on the twelfth (QA's row).
+- **The even lights-only mirror finishes.** The second pass expected a stalemate. A lead of 2 does appear between two even mashers, so closes still come, about 14 a match, beside about 21 double hits.
+- **A hole from Z1 is closed with it** (`DirZip.leaving`; `brawl-c1.md` section 4).
+- **9.5 is stale.** It sizes the C2 of the page before its three-strength rewrite (972e598), and it is re-cut with C2a.

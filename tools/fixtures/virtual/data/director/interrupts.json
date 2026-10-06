@@ -210,8 +210,8 @@
       "tradeMaxTicks": 120,
       "staggeredAddsRun": false,
       "levelWithin": 1,
-      "momentum": 0.9,
-      "closeGuardTicks": 90
+      "closeGuardTicks": 90,
+      "doubleTicks": 240
     },
     "heavy": {
       "damage": 66,
@@ -243,6 +243,22 @@
     "reversal": {
       "contactTicks": 10,
       "staggerTicks": 20
+    },
+    "nudgeMul": 0.4,
+    "nudgeRampTicks": 8,
+    "nudge": {
+      "guard": 0.6,
+      "clearBh": 0.5
+    },
+    "maxStepBh": 0.3,
+    "carryShare": 0.5,
+    "carryTicks": 20,
+    "partTicks": 12,
+    "partDeg": 45,
+    "double": {
+      "windupTicks": 8,
+      "throwBh": 6,
+      "throwTicks": 24
     }
   },
   "blast": {

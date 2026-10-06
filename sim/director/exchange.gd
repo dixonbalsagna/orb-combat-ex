@@ -181,8 +181,8 @@ static func _start(S: SimState, A, kind: String) -> int:
 		return WAIT   # step 3: a staggered fighter's requests wait
 	if A.state != "free" and A.state != "charging":
 		return WAIT
-	if D.state == "launched" or D.state == "locked" or DirZip.untouchable(D):
-		return WAIT   # (no strike reaches a zipper on his way out)
+	if D.state == "launched" or D.state == "locked" or DirZip.untouchable(D) or DirZip.leaving(S, D):
+		return WAIT   # (no strike reaches a zipper on his way out, or about to leave)
 	if kind == "sig" and A.ki < 45.0 and not SimFighter.sigFree(A):   # the last stand's signature is free
 		if A.ai == null:
 			SimFx.banner(S, "NEED 45 KI", "#9fb4ff", 0.6)
@@ -361,6 +361,7 @@ static func runBeat(S: SimState, ex, b) -> void:
 		"strike":
 			if a.get("brawl", false):
 				DirBrawl.contact(S, ex, b)   # a brawl's blow: it lands, and its line, its string and its close follow
+				DirBrawl.carryOn(ex)   # the strike placed its attacker and stopped him: the pair's drift carries on
 			else:
 				DirMelee.strike(S, ex, A if a.a == "A" else D, A if a.d == "A" else D, DirBrawl.worth(S, ex, b, a.dmg), a.o)   # outside a brawl a blow is worth its form
 		"launch":

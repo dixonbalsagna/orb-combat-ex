@@ -46,7 +46,7 @@
   "levels": {
     "_note": "beamAnswer: control-rules.md section 10 (0.15, 0.35, 0.60). perfectBlockMul: its share of the perfectBlock rates above (0.32, 0.45, 0.55: QA's baseline on 9da6e07, docs/qa/baseline-9da6e07.md, which brings the three levels to 7.67, 13.13 and 18.26 perfect blocks per 100 melee exchanges against bands of 3 to 8, 5 to 15 and 12 to 20; they were 0.35, 0.6 and 0.9). guardRepeat: weight added to its Guard choice while the rival repeats one attack. punish: the chance it attacks in the punish window after it blocked a whole string, and punishHeavy the share of those attacks that are heavies. reversal: [after 2 s of guard with over 25 ki, otherwise]; medium is R4 (50%, 20%). breakGuard: the share of its attacks that are heavies against a rival it has found guarding twice running. riposte: the chance it takes its riposte after a perfect block. burstAtLink: the chain link at which it bursts out (0: never). launchIntent: the chance its heavy is thrown with a direction, to launch (the earned launch's third rule; its stick is its flight path, so this stands for a player's tilt). heldHeavy: the chance it charges a heavy by holding it (the first rule).",
     "easy": {
-      "brawl": {"tapGap": 12, "string": [2, 4], "enderShare": 0.6, "rashHeavy": 1.0, "guardShare": 0.2, "guardTicks": [20, 60], "perfectMul": 0.3, "heavyAfterClose": 0.2},
+      "brawl": {"tapGap": 12, "string": [2, 4], "enderShare": 0.6, "rashHeavy": 1.0, "guardShare": 0.2, "guardTicks": [20, 60], "perfectMul": 0.3, "heavyAfterClose": 0.2, "nudgeShare": 0.35, "walkOut": 0.1},
       "vsShooter": {"guardShare": 0, "enderShare": 0.5, "heavyApproachShare": 0.05},
       "zipShare": 0.08, "zipHeavyShare": 0.2, "zipCounter": 0, "zipDodge": 0, "zipPunish": 0.2, "zipExit": 0,
       "beamAnswer": 0.15,
@@ -77,7 +77,7 @@
       "approachReact": [0.1, 0.05, 0.1]
     },
     "medium": {
-      "brawl": {"tapGap": 8, "string": [3, 5], "enderShare": 0.4, "rashHeavy": 0.3, "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.15, "heavyAfterClose": 0.6},
+      "brawl": {"tapGap": 8, "string": [3, 5], "enderShare": 0.4, "rashHeavy": 0.3, "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.15, "heavyAfterClose": 0.6, "nudgeShare": 0.5, "walkOut": 0.2},
       "vsShooter": {"guardShare": 0, "enderShare": 0.45, "heavyApproachShare": 0.1},
       "zipShare": 0.25, "zipHeavyShare": 0.3, "zipCounter": 0.2, "zipDodge": 0.1, "zipPunish": 0.75, "zipExit": 0.3,
       "beamAnswer": 0.35,
@@ -108,7 +108,7 @@
       "approachReact": [0.2, 0.1, 0.15]
     },
     "hard": {
-      "brawl": {"tapGap": 6, "string": [3, 5], "enderShare": 0.35, "rashHeavy": 0.1, "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.5, "heavyAfterClose": 0.9},
+      "brawl": {"tapGap": 6, "string": [3, 5], "enderShare": 0.35, "rashHeavy": 0.1, "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.5, "heavyAfterClose": 0.9, "nudgeShare": 0.65, "walkOut": 0.3},
       "vsShooter": {"guardShare": 0, "enderShare": 0.3, "heavyApproachShare": 0.3},
       "zipShare": 0.4, "zipHeavyShare": 0.35, "zipCounter": 0.35, "zipDodge": 0.15, "zipPunish": 0.95, "zipExit": 0.6,
       "beamAnswer": 0.6,

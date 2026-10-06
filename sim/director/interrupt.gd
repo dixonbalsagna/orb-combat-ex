@@ -355,6 +355,19 @@ static func tick(S: SimState) -> void:
 	for f in order:
 		if f.input.context and f.stunTicks <= 0 and (f.ai != null or _human(f)):
 			DirBlast.context(S, f)   # outside an exchange: a mine with the energy family held, the context deflect on a held guard
+	# No press is silent (the HUD marks the cell): a cell with no move yet says so. RT with X, Y or A reaches the intent
+	# as `special`, which nothing reads. A with no guard held, outside the energy family, has no reading either.
+	for f in order:
+		if not _human(f):
+			continue
+		var cell: String = ""
+		if f.input.special >= 1 and f.input.special <= 3:
+			cell = EMPTY_CELLS[f.input.special - 1]
+		elif f.input.context and not f.input.guard and f.act.mode != 1:
+			cell = "a"
+		if cell != "":
+			SimFx.cue(S, f, "press_ack", "empty", cell)
+			S.out.fx[S.out.fx.size() - 1].n = S.tick
 	if ex != null:
 		_aiBlocks(S, ex)
 	var taken: bool = false
@@ -370,6 +383,9 @@ static func tick(S: SimState) -> void:
 		var threatened: bool = ex != null and (f == ex.D or S.tick - gi(f, HIT_AT) <= int(data().burst.threatTicks))
 		if _canBurst(S, f) and SimAct.wantsBurst(f, f.input, threatened):
 			taken = burst(S, f)
+
+
+const EMPTY_CELLS: Array = ["x", "y", "a"]   # the cells of `special` 1 to 3: RT with X, Y, A
 
 
 static func _human(f) -> bool:
@@ -461,7 +477,7 @@ static func _canBurst(S: SimState, f) -> bool:
 	var ex = S.dirS.ex
 	if f.ki < float(c.ki) or f.act.burstCool > 0 or f.state == "launched" or (f.state == "down" and not DirBury.canBurst(f)):   # buried, he bursts out once the follow-up's time is over
 		return false
-	return ex == null or (ex.kind != "sig" and not DirExchange.finisherPlanned(ex) and not DirBury.diving(S, f))   # a burst cannot escape a dive on its way
+	return ex == null or (ex.kind != "sig" and not DirExchange.finisherPlanned(ex) and not DirBury.diving(S, f) and not DirBrawl.doubling(ex))   # a burst cannot escape a dive on its way
 
 
 ## f bursts: a shove all round. A rival holding guard absorbs it and f staggers (the bait). Otherwise a rival in
@@ -535,7 +551,7 @@ static func _cost(S: SimState, f) -> float:
 
 
 static func _canReverse(S: SimState, ex, f) -> bool:
-	if ex == null or (f != ex.D and not (DirBrawl.isBrawl(ex) and f == ex.A)) or not DirData.allows(ex, "reversal") or DirBury.diving(S, f):
+	if ex == null or DirBrawl.doubling(ex) or (f != ex.D and not (DirBrawl.isBrawl(ex) and f == ex.A)) or not DirData.allows(ex, "reversal") or DirBury.diving(S, f):
 		return false
 	var c: Dictionary = data().reversal
 	return S.tick - gi(f, BLOCKED) <= int(c.afterBlockTicks) and S.tick >= gi(f, REV_READY) and f.ki >= _cost(S, f)

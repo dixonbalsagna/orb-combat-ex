@@ -71,7 +71,9 @@
           60
         ],
         "perfectMul": 0.3,
-        "heavyAfterClose": 0.2
+        "heavyAfterClose": 0.2,
+        "nudgeShare": 0.2,
+        "walkOut": 0.1
       },
       "vsShooter": {
         "guardShare": 0,
@@ -133,7 +135,9 @@
           60
         ],
         "perfectMul": 0.15,
-        "heavyAfterClose": 0.6
+        "heavyAfterClose": 0.6,
+        "nudgeShare": 0.5,
+        "walkOut": 0.3
       },
       "vsShooter": {
         "guardShare": 0,
@@ -195,7 +199,9 @@
           60
         ],
         "perfectMul": 0.5,
-        "heavyAfterClose": 0.9
+        "heavyAfterClose": 0.9,
+        "nudgeShare": 0.8,
+        "walkOut": 0.5
       },
       "vsShooter": {
         "guardShare": 0,

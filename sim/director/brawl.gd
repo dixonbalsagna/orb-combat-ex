@@ -8,9 +8,13 @@ class_name DirBrawl
 ##  - The run and the close (the spec's section 3): his run goes up one for each light or flurry blow he lands and
 ##    down one for each that lands on him; a heavy on him clears it, and so do runLapseTicks without landing. At a
 ##    run of runToClose his next landed light staggers the rival in place: decisive, at half a set-up. A blow on a
-##    staggered fighter adds nothing to the run. A trade (both landing inside the lapse) cannot pass tradeMaxTicks:
-##    at the limit it breaks for a lead of more than levelWithin, and a level trade is a seeded draw in which the
-##    last closer of this brawl has `momentum` (section 9d); that fighter's next landed blow is the close.
+##    staggered fighter adds nothing to the run. A trade (both landing inside the lapse) that reaches tradeMaxTicks
+##    breaks for a lead of more than levelWithin, then or on the tick one appears, and that fighter's next landed
+##    blow is the close. A trade still level at doubleTicks is the double hit: both land, both are thrown back, and
+##    nobody wins (docs/design/brawl-second-pass.md section 7).
+##  - Control (slice C1, brawl-second-pass.md section 1): the pair has a centre, and both sticks move it, each at
+##    nudgeMul of his free-flight speed. The speed the brawl began with carries on for carryTicks. A building's face
+##    stops it and it slides along. Both sticks held away for partTicks is the walk-out.
 ##  - A heavy winds up windupTicks and lands landTicks later. Held past its wind-up it lands heldLandTicks after the
 ##    release, fully charged at heldFullTicks. Thrown after enderAfter landed blows of his string it is the ender: a
 ##    knock-back, or a launch when a launch is earned (held to full; flow). A lone heavy staggers; held to full with the
@@ -24,7 +28,7 @@ class_name DirBrawl
 ## Clocks: a fighter's taps, his line and the AI's choices count S.tick, which runs through a hit-stop, so a flurry
 ## keeps its tap rate; a blow's wind-up, a reel and a hold count live ticks, as every beat does.
 ## Not in B1: skill strikes and the beat point (B2); the set guard, the lift and the juggle, blows that stop a wind-up
-## (B3); struggles (B4); the stick's damped walk. Flow is neither earned nor lost by a press inside a brawl until B2.
+## (B3); struggles (B4). Flow is neither earned nor lost by a press inside a brawl until B2.
 ## State: the fighter's director integers after the alchemy's. Numbers: data/director/interrupts.json `brawl`, and the
 ## level's `brawl` block in data/director/ai.json.
 
@@ -62,12 +66,25 @@ const LL_AT: int = BASE + 28    # S.tick his last light or flurry blow landed; 0
 const AI_AFTER: int = BASE + 29 # the AI: 1 when a close has landed on it and its answer, a heavy as its stagger ends, is still to weigh
 const TRADE_T0: int = BASE + 30 # on the exchange's attacker, for both: S.tick the running trade began; 0 when none is on
 const TRADE_WIN: int = BASE + 31 # ... and whose next landed blow closes a trade that reached its limit: his slot plus 1; 0 none
-const LAST_CLOSER: int = BASE + 32 # on the exchange's attacker, for both: who made the last close in this brawl, 1 the attacker, 2 the other; 0 nobody yet
+const DBL_AT: int = BASE + 32   # on the exchange's attacker, for both: the live tick the double hit's two blows land; 0 none
 const SAFE_UNTIL: int = BASE + 33 # S.tick until which he cannot be closed on again (closeGuardTicks after he recovers from a close); -1 while that close's stagger lasts
 const RIP_UNTIL: int = BASE + 34 # S.tick until which his next attack press is the riposte of his perfect block (section 9f); 0 none
 const RIP_KIND: int = BASE + 35  # ... 1: the blow he turned was a light; 2: a heavy or an ender, so a heavy riposte separates them
 const AI_RIP: int = BASE + 36    # the AI: 1 while it has its riposte to throw
-const END: int = BASE + 37
+const NUDGE_X: int = BASE + 37   # his stick's nudge after Controls' ramp, in 1/127 units, by axis (SimAim.nudge_ramp keeps it)
+const NUDGE_Y: int = BASE + 38
+const CEN_VX: int = BASE + 39    # on the exchange's attacker, for both: the centre's velocity from the two sticks, in sixteenths of a unit a second
+const CEN_VY: int = BASE + 40
+const CARRY_X: int = BASE + 41   # ... the speed the brawl began with, in the same units
+const CARRY_Y: int = BASE + 42
+const CARRY_N: int = BASE + 43   # ... and the live ticks of it left
+const PART_N: int = BASE + 44    # ... the live ticks running for which both have held away (the walk-out)
+const DBL_N: int = BASE + 45     # ... how many of the double hit's two blows have landed
+const AI_NUDGE: int = BASE + 46  # the AI: the nudge it holds: 0 none, 1 toward the rival, 2 away from him, 3 the +x way, 4 the -x way
+const AI_PART: int = BASE + 47   # the AI: S.tick until which it holds away to walk out; -1: it weighed a walk-out in this brawl and stays; 0: not weighed yet
+const MOVE_X: int = BASE + 48    # on the exchange's attacker, for both: the velocity the pair was given this tick, in sixteenths of a unit a second
+const MOVE_Y: int = BASE + 49
+const END: int = BASE + 50
 const LIGHT: int = 0
 const FLURRY: int = 1
 const HEAVY: int = 2
@@ -134,8 +151,9 @@ static func _free(S: SimState, f) -> bool:
 
 
 ## An event for QA, Animation and VFX with no line in the core: a cue named `name`. The caller sets its other fields.
-static func _ev(S: SimState, f, name: String, text: String = ""):
-	SimFx.cue(S, f, name, text, "")
+## source: for a press_ack, the button's cell (x, y, a or b), which the HUD marks.
+static func _ev(S: SimState, f, name: String, text: String = "", source: String = ""):
+	SimFx.cue(S, f, name, text, source)
 	return S.out.fx[S.out.fx.size() - 1]
 
 
@@ -170,7 +188,27 @@ static func begin(S: SimState, ex, kind: String) -> void:
 		for k in range(BASE, END):
 			f.act.dirI[k] = 0
 	SimAct.clear(ex.D)   # no request waits in a brawl: a press is a blow, or it is spent
-	# Both are held from now: the speed either had as it began is gone (a rival locked while flying would drift out of reach).
+	# The brawl keeps the speed it began with (brawl-second-pass.md section 1): carryShare of the two velocities added,
+	# which is half the closing speed when one of them stood, carries on as the centre's drift and fades over carryTicks.
+	# An attacker who came in by a lunge was carried by the director, so his speed is his own flight speed along his line.
+	var cx: float = 0.0
+	var cy: float = 0.0
+	for f in [ex.A, ex.D]:
+		var fx: float = f.vx
+		var fy: float = f.vy
+		if f == ex.A and (DirExchange.engaging or f.rush != null):
+			var lx: float = SimWrap.sdx(f.x, ex.D.x)
+			var ly: float = ex.D.y - f.y
+			var ll: float = SimDetMath.hypot(lx, ly)
+			var sp: float = _flySpeed(S, f)
+			fx = lx / ll * sp if ll > 0.0 else 0.0
+			fy = ly / ll * sp if ll > 0.0 else 0.0
+		cx += fx
+		cy += fy
+	_s(ex.A, CARRY_X, int(round(cx * float(c.carryShare) * 16.0)))
+	_s(ex.A, CARRY_Y, int(round(cy * float(c.carryShare) * 16.0)))
+	_s(ex.A, CARRY_N, int(c.carryTicks))
+	# Both are held from now, and the pair moves as its centre does (_move).
 	for f in [ex.A, ex.D]:
 		f.vx = 0.0
 		f.vy = 0.0
@@ -249,6 +287,8 @@ static func blowAt(S: SimState, ex, f, kind: int, lead: int, dmg: float, extra: 
 		o2["ignoreStance"] = true
 		o2["noParry"] = true
 		o2["weighed"] = true
+	if bool(extra.get("double", false)):
+		o2["stop"] = float(int(c.hitstop.heavy)) / DirData.TICKS_PER_SEC   # the double hit's two blows hold the clock as a heavy does
 	var args := {"a": role, "d": "D" if role == "A" else "A", "dmg": dmg, "o": o2, "brawl": true, "bk": kind,
 		"style": "heavy" if kind == HEAVY else "speed", "grade": "none", "k": k, "n": k, "closing": false, "charge": 0.0,
 		"hand": "r" if (k % 2) == 1 else "l", "ender": false}
@@ -274,12 +314,17 @@ static func blowAt(S: SimState, ex, f, kind: int, lead: int, dmg: float, extra: 
 
 
 ## The brawl is over, and why: knockback, launch, apart, idle, left, burst, perfect_block, reversal, break, finisher,
-## signature. The event goes out once; the lines stop. A set piece that took it over plays on in the same exchange.
+## signature, walk (both held away), double (the double hit). The event goes out once; the lines stop. A set piece that took it over plays on in the same exchange.
 static func over(S: SimState, ex, why: String) -> void:
 	if not isBrawl(ex) or ex.branch != "":
 		return
 	var said: bool = ex.tag != "ZIP"   # a zip's ticks in reach were never announced as a brawl: nothing ends
 	ex.branch = why
+	if why != "walk":
+		for f in [ex.A, ex.D]:
+			if f.state == "locked":
+				f.vx = 0.0   # the pair's drift ends with the brawl; two who walk out keep theirs
+				f.vy = 0.0
 	if said:
 		var e = _ev(S, ex.A, "brawl_end", why)
 		e.n = ex.n
@@ -303,7 +348,7 @@ static func end(S: SimState, ex, why: String) -> void:
 		b.done = true
 	var slide = ex.A.rush   # the exchange's end drops its attacker's move: a knock-back's slide is kept, whoever was sent
 	DirExchange.endEx(S, ex)
-	if slide != null and slide.tgt == null and (why == "knockback" or why == "launch"):
+	if slide != null and slide.tgt == null and (why == "knockback" or why == "launch" or why == "double"):
 		ex.A.rush = slide
 
 
@@ -491,14 +536,18 @@ static func takes(S: SimState, f, kind: String) -> bool:
 	var ex = S.dirS.ex
 	if ex.branch != "" or ex.cancel or _setPiece(ex):
 		return true   # a set piece is playing: the press is spent
+	if _g(ex.A, DBL_AT) > 0:
+		var da = _ev(S, f, "press_ack", "double", _cell(kind))   # the double hit is on its way: a press is spent
+		da.n = S.tick
+		return true
 	if quiet(ex) and f == ex.A:
-		var za = _ev(S, f, "press_ack", "zip")   # a zipper in reach: his one blow is on its way, and a press is spent
+		var za = _ev(S, f, "press_ack", "zip", _cell(kind))   # a zipper in reach: his one blow is on its way, and a press is spent
 		za.n = S.tick
 		return true
 	if kind == "sig":
 		# The signature is its own exchange: the brawl gives way when it can start, and the request then starts it.
 		if not _free(S, f) or (not SimFighter.sigFree(f) and (f.ki < 45.0 or S.T < f.sigReadyT)):
-			var a = _ev(S, f, "press_ack", "refused")
+			var a = _ev(S, f, "press_ack", "refused", "b")
 			a.n = S.tick
 			return true
 		end(S, ex, "signature")
@@ -506,7 +555,7 @@ static func takes(S: SimState, f, kind: String) -> bool:
 	if f.act.mode == 1:
 		# B1 is the martial stance. A press with the energy family held is not a brawl blow, as it was no blow inside an
 		# exchange: it is spent, and says so. What the energy stance does in reach comes with the stances (B6).
-		var en = _ev(S, f, "press_ack", "energy")
+		var en = _ev(S, f, "press_ack", "energy", _cell(kind))
 		en.n = S.tick
 		return true
 	press(S, f, SimAct.HEAVY if kind == "heavy" else SimAct.LIGHT)
@@ -530,7 +579,7 @@ static func press(S: SimState, f, weight: int) -> void:
 	if not _free(S, f):
 		_s(f, HELD_P, weight + 1)
 		_s(f, HELD_AT, p)
-		var a = _ev(S, f, "press_ack", "held")
+		var a = _ev(S, f, "press_ack", "held", "y" if weight == SimAct.HEAVY else "x")
 		a.n = p
 		return
 	_throw(S, f, weight, p, false, false)
@@ -724,9 +773,9 @@ static func _tradeReset(ex) -> void:
 ## Once a live tick: a run lapses runLapseTicks after his last landed blow. A trade is on while both have landed a
 ## light or a flurry blow inside that time; it cannot pass tradeMaxTicks without a close. At the limit it breaks, on
 ## the first live tick at or after it (a hit-stop holds the sim, and so the break): a lead of more than levelWithin
-## takes the close, and runs within it are a level trade, settled by a seeded draw in which the fighter who made the
-## last close in this brawl has `momentum`; when nobody has closed yet the odds are even (melee-press-feel.md section
-## 9d, ruling 3). His next landed blow is the close.
+## takes the close, at the limit or on the tick one appears after it, and his next landed blow is the close. Runs
+## within levelWithin are a level trade, and it goes on. Still level at doubleTicks, it is the double hit
+## (brawl-second-pass.md section 7). The seeded draw and its momentum are withdrawn.
 static func _tradeTick(S: SimState, ex) -> void:
 	var fl: Dictionary = cfg().flurry
 	var lapse: int = int(fl.runLapseTicks)
@@ -744,30 +793,24 @@ static func _tradeTick(S: SimState, ex) -> void:
 		_tradeReset(ex)
 		_s(ex.A, TRADE_T0, S.tick)
 		return
-	if _g(ex.A, TRADE_WIN) != 0 or S.tick - _g(ex.A, TRADE_T0) < int(fl.tradeMaxTicks):
+	var t: int = S.tick - _g(ex.A, TRADE_T0)
+	if _g(ex.A, TRADE_WIN) != 0 or _g(ex.A, DBL_AT) != 0 or t < int(fl.tradeMaxTicks):
 		return
-	var w: int = 0
-	var last: int = _g(ex.A, LAST_CLOSER)
-	var how: String = "lead"
-	if absi(_g(ex.A, RUN) - _g(ex.D, RUN)) > int(fl.levelWithin):
-		w = 1 if _g(ex.A, RUN) > _g(ex.D, RUN) else 2
-	else:
-		how = "draw"
-		var pA: float = 0.5 if last == 0 else (float(fl.momentum) if last == 1 else 1.0 - float(fl.momentum))
-		w = 1 if SimRng.keyed(int(S.game.seed), "brawl.trade", S.dirS.exN * 4096 + (_g(ex.A, TRADE_T0) & 4095)) < pA else 2
+	if absi(_g(ex.A, RUN) - _g(ex.D, RUN)) <= int(fl.levelWithin):
+		if t >= int(fl.doubleTicks) and not quiet(ex) and ex.A.stunTicks <= 0 and ex.D.stunTicks <= 0 and ex.A.rush == null and ex.D.rush == null:
+			_double(S, ex)
+		return
+	var w: int = 1 if _g(ex.A, RUN) > _g(ex.D, RUN) else 2
 	_s(ex.A, TRADE_WIN, w)
 	var who = ex.A if w == 1 else ex.D
-	var e = _ev(S, who, "trade_break")
+	var e = _ev(S, who, "trade_break", "lead")
 	e.target = float(S.fighters.find(ex.D if w == 1 else ex.A))
-	e.n = S.tick - _g(ex.A, TRADE_T0)
-	# For QA: the limit; the two runs at the break, his and the rival's; how it was settled (lead or draw); and who made
-	# the last close in this brawl (0 nobody yet, 1 he did, 2 the rival did: a draw with 2 is momentum changing hands).
+	e.n = t
+	# For QA: the limit; and the two runs at the break, his and the rival's. A break is always for a lead now.
 	e.amount = float(int(fl.tradeMaxTicks))
 	e.x = float(_g(who, RUN))
 	e.y = float(_g(ex.D if w == 1 else ex.A, RUN))
-	e.text = how
-	e.k = 0.0 if last == 0 else (1.0 if last == w else 2.0)
-	SimEvents.feed(S, "THE TRADE BREAKS", who.name + "'s next blow that lands closes it, after " + str(S.tick - _g(ex.A, TRADE_T0)) + " ticks")
+	SimEvents.feed(S, "THE TRADE BREAKS", who.name + "'s next blow that lands closes it, after " + str(t) + " ticks")
 
 
 # ---------------------------------------------------------------- a blow lands
@@ -784,7 +827,7 @@ static func contact(S: SimState, ex, b) -> void:
 	_s(f, LAND_AT, S.tick)
 	if kind == HEAVY:
 		_s(f, FREE_AT, S.tick + int(c.heavy.recover))   # his line is free this long after a heavy that lands (its follow-through is animation)
-	if ex.branch != "" or f.stunTicks > 0 or f.state != "locked" or o.state != "locked":
+	if ex.branch != "" or (f.stunTicks > 0 and not bool(a.get("double", false))) or f.state != "locked" or o.state != "locked":
 		if kind == HEAVY:
 			_s(f, FREE_AT, S.tick + int(c.heavy.recoverWhiff))   # a heavy that met nothing: the punish
 		return   # he was staggered, or one of them was sent off, before it landed: the blow is lost
@@ -815,6 +858,14 @@ static func contact(S: SimState, ex, b) -> void:
 	f.ambush = false   # an ambush is its first blow
 	if S.dirS.ex != ex or ex.cancel or ex.branch != "" or S.game.ko != null:
 		return   # a perfect block took the exchange over
+	if bool(a.get("double", false)):
+		# One of the double hit's two blows: no run, no reel, no close. When both have landed they are thrown apart.
+		_s(ex.A, DBL_N, _g(ex.A, DBL_N) + 1)
+		if _setPiece(ex):
+			over(S, ex, "break")
+		elif _g(ex.A, DBL_N) >= 2:
+			_thrownApart(S, ex)
+		return
 	if bool(a.o.get("turned", false)):
 		if bool(a.get("zip", false)):
 			DirZip.onBlow(S, ex, f, o, a, 2)   # a zip's blow turned: he is countered
@@ -878,7 +929,6 @@ static func contact(S: SimState, ex, b) -> void:
 	_s(f, RUN, 0)
 	_s(o, RUN, 0)
 	_tradeReset(ex)
-	_s(ex.A, LAST_CLOSER, 1 if f == ex.A else 2)   # the momentum of a level trade is his
 	_s(o, SAFE_UNTIL, -1)   # no second close on him until closeGuardTicks after he recovers from this one
 	if o.ai != null:
 		_s(o, AI_AFTER, 1)   # its answer to being closed on: a heavy as its stagger ends, at its level's rate
@@ -940,9 +990,307 @@ static func _drop(S: SimState, ex, f) -> void:
 	_strEnd(f)
 
 
+# ---------------------------------------------------------------- control: the centre, the walk-out, the double hit (slice C1)
+
+## His free-flight speed in the neutral stance, in units a second. The core's read carries the stance he holds, and a
+## guard's slowing of the nudge is the brawl's own number (nudge.guard), so his stance is set aside for the read.
+static func _flySpeed(S: SimState, f) -> float:
+	var st: float = f.stance
+	f.stance = 0.0
+	var sp: float = SimFighter.flightSpeed(S, f, false)
+	f.stance = st
+	return sp
+
+
+## The point midway between the two.
+static func _mid(ex) -> PackedFloat64Array:
+	return PackedFloat64Array([SimWrap.wrap(ex.A.x + SimWrap.sdx(ex.A.x, ex.D.x) * 0.5), (ex.A.y + ex.D.y) * 0.5])
+
+
+## For Camera, Animation and UI: the brawl's centre. x, y: the point midway between the two. vx, vy: the speed the pair
+## moves at on the next tick, in units a second. part: the live ticks running for which both have held away (the
+## walk-out comes at partTicks). double: the live ticks until a double hit's two blows land, or -1 when none is on its
+## way. Empty when ex is not a running brawl.
+static func centre(S: SimState, ex) -> Dictionary:
+	if not isBrawl(ex) or ex.branch != "":
+		return {}
+	var m: PackedFloat64Array = _mid(ex)
+	var keep: float = SimFighter.lockedKeep(SimConst.DT)
+	var dbl: int = _g(ex.A, DBL_AT)
+	return {"x": m[0], "y": m[1], "vx": (ex.A.vx + ex.D.vx) * 0.5 * keep, "vy": (ex.A.vy + ex.D.vy) * 0.5 * keep,
+		"part": _g(ex.A, PART_N), "double": (maxi(0, dbl - _now(S)) if dbl > 0 else -1)}
+
+
+## True while a double hit's two blows are on their way: nothing either fighter presses counts until they land.
+static func doubling(ex) -> bool:
+	return isBrawl(ex) and ex.branch == "" and _g(ex.A, DBL_AT) > 0
+
+
+## The button's cell for a press_ack: x a light, y a heavy, b a signature.
+static func _cell(kind: String) -> String:
+	return "b" if kind == "sig" else ("y" if kind == "heavy" else "x")
+
+
+## True when the pair's middle at (x, y) is inside a standing building's box. The ground is never the answer here: the
+## core holds a fighter on it, so a brawl slides along the ground and up a ridge by itself.
+static func _walled(S: SimState, x: float, y: float) -> bool:
+	var yy: float = maxf(y + 0.5 * DirInterrupt.BH, WorldTerrain.groundY(S, x) + 0.01)
+	return WorldStructures.blockedAt(S, x, yy, 0.0, 0.0)
+
+
+## The brawl's movement, once a live tick (brawl-second-pass.md section 1). Each stick goes through Controls' ramp
+## and moves the centre at nudgeMul of his own free-flight speed, less while he guards; a staggered fighter has no
+## stick. The two add up, so two who agree go twice as fast and two who oppose cancel. The centre's own speed follows
+## the sticks by at most a full nudge over nudgeRampTicks, up and down. The speed the brawl began with is added,
+## fading over carryTicks. The whole is never more than maxStepBh in a tick. A building's face stops it, and the part
+## of the step along the face carries on. The core moves a locked fighter by his own velocity on its next step, after
+## its damping (SimFighter.lockedKeep): so both are given the centre's velocity over what the damping keeps.
+static func _move(S: SimState, ex) -> void:
+	var c: Dictionary = cfg()
+	var A = ex.A
+	var D = ex.D
+	var dt: float = SimConst.DT
+	var live: bool = not quiet(ex) and _g(A, DBL_AT) == 0
+	var tx: float = 0.0
+	var ty: float = 0.0
+	var top: float = 0.0
+	for f in [A, D]:
+		var rx: int = 0
+		var ry: int = 0
+		if live and f.stunTicks <= 0:
+			var st: PackedFloat64Array = stick(ex, f)
+			rx = SimAim.nudge_units(st[0])
+			ry = SimAim.nudge_units(st[1])
+		var nx: int = SimAim.nudge_ramp(_g(f, NUDGE_X), rx)
+		var ny: int = SimAim.nudge_ramp(_g(f, NUDGE_Y), ry)
+		_s(f, NUDGE_X, nx)
+		_s(f, NUDGE_Y, ny)
+		var sp: float = float(c.nudgeMul) * _flySpeed(S, f)
+		top = maxf(top, sp)
+		var ux: float = float(nx) / 127.0
+		var uy: float = float(ny) / 127.0
+		var ul: float = SimDetMath.hypot(ux, uy)
+		if ul > 1.0:
+			ux /= ul
+			uy /= ul
+		if f.stance == 1.0 and _g(f, LINE) == 0:
+			sp *= float(c.nudge.guard)   # he guards
+		tx += ux * sp
+		ty += uy * sp
+	var acc: float = top / maxf(1.0, float(int(c.nudgeRampTicks)))
+	var vx: float = float(_g(A, CEN_VX)) / 16.0
+	var vy: float = float(_g(A, CEN_VY)) / 16.0
+	vx += clampf(tx - vx, -acc, acc)
+	vy += clampf(ty - vy, -acc, acc)
+	var wx: float = vx
+	var wy: float = vy
+	var cn: int = _g(A, CARRY_N)
+	if cn > 0:
+		var share: float = float(cn) / maxf(1.0, float(int(c.carryTicks)))
+		wx += float(_g(A, CARRY_X)) / 16.0 * share
+		wy += float(_g(A, CARRY_Y)) / 16.0 * share
+		_s(A, CARRY_N, cn - 1)
+	var cap: float = float(c.maxStepBh) * DirInterrupt.BH / dt
+	var wl: float = SimDetMath.hypot(wx, wy)
+	if wl > cap:
+		wx *= cap / wl
+		wy *= cap / wl
+	if A.rush != null or D.rush != null:
+		wx = 0.0   # a step in is still carrying one of them: the pair moves once he has arrived
+		wy = 0.0
+	elif wx != 0.0 or wy != 0.0:
+		# A step may not bring the pair's middle within nudge.clearBh of a face, looking along the step. A pair already
+		# inside a building's box moves freely, so it can come out. Nothing here damages a building.
+		var m: PackedFloat64Array = _mid(ex)
+		var cl: float = float(c.nudge.clearBh) * DirInterrupt.BH
+		var sl: float = SimDetMath.hypot(wx, wy)
+		if not _walled(S, m[0], m[1]) and _walled(S, SimWrap.wrap(m[0] + wx * dt + wx / sl * cl), m[1] + wy * dt + wy / sl * cl):
+			var okx: bool = wx != 0.0 and not _walled(S, SimWrap.wrap(m[0] + wx * dt + SimMathx.jsign(wx) * cl), m[1])
+			var oky: bool = wy != 0.0 and not _walled(S, m[0], m[1] + wy * dt + SimMathx.jsign(wy) * cl)
+			if okx and (not oky or absf(wx) >= absf(wy)):
+				wy = 0.0
+				vy = 0.0
+			elif oky:
+				wx = 0.0
+				vx = 0.0
+			else:
+				wx = 0.0
+				wy = 0.0
+				vx = 0.0
+				vy = 0.0
+	# On a slope the ground lifts a fighter who walks into it. The whole step, the lift included, keeps to the cap: the
+	# step across is halved until it does, and a face too steep for that stops it (a nudge upward goes over).
+	if wx != 0.0:
+		var fit: bool = false
+		for _k in range(5):
+			var lift: float = 0.0
+			for f in [A, D]:
+				lift = maxf(lift, WorldTerrain.groundY(S, SimWrap.wrap(f.x + wx * dt)) - (f.y + wy * dt))
+			if lift <= 0.0 or SimDetMath.hypot(wx * dt, wy * dt + lift) <= cap * dt:
+				fit = true
+				break
+			wx *= 0.5
+		if not fit:
+			wx = 0.0
+	_s(A, CEN_VX, int(round(vx * 16.0)))
+	_s(A, CEN_VY, int(round(vy * 16.0)))
+	_s(A, MOVE_X, int(round(wx * 16.0)))
+	_s(A, MOVE_Y, int(round(wy * 16.0)))
+	carryOn(ex)
+
+
+## Both fighters are given the pair's velocity, over what the core's damping keeps. Once a tick from _move, and again
+## after each blow (DirExchange.runBeat): a strike places its attacker and stops him, and the pair's drift carries on.
+static func carryOn(ex) -> void:
+	if not isBrawl(ex) or ex.branch != "" or ex.A.state != "locked" or ex.D.state != "locked":
+		return
+	var keep: float = SimFighter.lockedKeep(SimConst.DT)
+	for f in [ex.A, ex.D]:
+		f.vx = float(_g(ex.A, MOVE_X)) / 16.0 / keep
+		f.vy = float(_g(ex.A, MOVE_Y)) / 16.0 / keep
+
+
+## True on a tick both hold away (brawl-second-pass.md section 1): each stick within partDeg of straight away from
+## the rival, with no blow of his on its way or kept, no attack button down, and neither reeling nor staggered. A
+## guard doesn't stop it: backing off behind a guard is the ordinary way to part.
+static func _parting(S: SimState, ex) -> bool:
+	for f in [ex.A, ex.D]:
+		var o = ex.D if f == ex.A else ex.A
+		var i: SimIntent = f.input
+		if f.stunTicks > 0 or _g(f, LINE) != 0 or _g(f, HELD_P) != 0 or _now(S) < _g(f, REEL_AT):
+			return false
+		if i.light or i.heavy or i.lightHeld or i.heavyHeld:
+			return false
+		if not _away(ex, f, o):
+			return false
+	return true
+
+
+## The stick the brawl's movement reads from f. A player's is his own. The AI's is the nudge it holds: it is kept out
+## of its intent, where a stick also leans its blows and tilts its launches, so a nudge moves the centre and nothing else.
+static func stick(ex, f) -> PackedFloat64Array:
+	if f.ai == null:
+		return PackedFloat64Array([f.input.mx, f.input.my])
+	var o = ex.D if f == ex.A else ex.A
+	var side: float = 1.0 if SimWrap.sdx(f.x, o.x) >= 0.0 else -1.0   # toward the rival
+	if _g(f, AI_PART) > 0:
+		return PackedFloat64Array([-side, 0.0])
+	var n: int = _g(f, AI_NUDGE)
+	return PackedFloat64Array([side if n == 1 else (-side if n == 2 else (1.0 if n == 3 else (-1.0 if n == 4 else 0.0))), 0.0])
+
+
+## True when f offers to part from the rival o. A player: his stick past the dead zone, within partDeg of straight
+## away. The AI: only when it has chosen to walk out (_aiPart). The ground it gives as it guards moves the centre and
+## is no offer, or two AIs that guarded together would part by accident.
+static func _away(ex, f, o) -> bool:
+	if f.ai != null:
+		return _g(f, AI_PART) > 0
+	if SimDetMath.hypot(f.input.mx, f.input.my) <= SimAct.awayDead:
+		return false
+	return SimAim.angle_off_away_deg(f.input.mx, f.input.my, 1 if SimWrap.sdx(o.x, f.x) >= 0.0 else -1) <= int(cfg().partDeg)
+
+
+## The double hit (brawl-second-pass.md section 7): a trade still level at doubleTicks. Both lines are cleared and
+## each throws one blow, worth a skill strike, that can't be blocked, turned or dodged. The two land on the same tick,
+## double.windupTicks from now. The cue goes out now, ahead of the contact, and the mood takes its units on this tick:
+## so from here no press, dodge, burst or reversal of either fighter counts until they land (doubling).
+static func _double(S: SimState, ex) -> void:
+	var c: Dictionary = cfg()
+	var lead: int = int(c.double.windupTicks)
+	var dmg: float = float(c.light.damage) * float(c.damageMul) * float(c.skillMul)
+	var held: int = S.tick - _g(ex.A, TRADE_T0)
+	for f in [ex.A, ex.D]:
+		_drop(S, ex, f)
+		_s(f, REEL_AT, 0)
+		_s(f, RUN, 0)
+		_s(f, RIP_UNTIL, 0)
+	_tradeReset(ex)
+	var was: bool = _inTick
+	_inTick = true
+	for f in [ex.A, ex.D]:
+		blowAt(S, ex, f, LIGHT, lead, dmg, {"double": true, "sure": true, "style": "tech"})
+	_inTick = was
+	_s(ex.A, DBL_AT, _now(S) + lead)
+	_s(ex.A, DBL_N, 0)
+	_s(ex.A, PART_N, 0)
+	var m: PackedFloat64Array = _mid(ex)
+	var e = _ev(S, ex.A, "double_hit", "both")
+	e.target = float(S.fighters.find(ex.D))
+	e.n = S.tick + lead
+	e.amount = float(lead)
+	e.dur = float(held)
+	e.x = m[0]
+	e.y = m[1]
+	e.k = 3.0   # who is hit, by bits: 1 the cue's fighter, 2 its target. Both, always.
+	SimEvents.feed(S, "DOUBLE HIT", ex.A.name + " and " + ex.D.name + " land together after " + str(held) + " ticks of a level trade")
+
+
+## The double hit has landed: both are thrown back double.throwBh from the centre, opposite ways, over
+## double.throwTicks, each upright (a slide on the ground, a drift in the air). Nobody won a decisive exchange, and
+## the throw costs no wear of its own. The brawl ends.
+static func _thrownApart(S: SimState, ex) -> void:
+	var c: Dictionary = cfg()
+	var m: PackedFloat64Array = _mid(ex)
+	var dist: float = float(c.double.throwBh) * DirInterrupt.BH
+	var ticks: int = int(c.double.throwTicks)
+	var within: float = float(DirLaunch.data().knockBack.groundWithinBh) * DirInterrupt.BH
+	var sA: float = 1.0 if SimWrap.sdx(ex.D.x, ex.A.x) >= 0.0 else -1.0   # the attacker's side of the rival
+	var held: int = int(ceil(maxf(0.0, S.dirS.stop) * DirData.TICKS_PER_SEC))   # the blow's hit-stop holds the slide's start
+	_s(ex.A, DBL_AT, 0)
+	for f in [ex.A, ex.D]:
+		var r := SimState.Rush.new()
+		r.px = SimWrap.wrap(m[0] + (sA if f == ex.A else -sA) * dist)
+		var g: float = WorldTerrain.groundY(S, r.px)
+		var ground: bool = f.y - WorldTerrain.groundY(S, f.x) <= within and not WorldTerrain.seaAt(S, r.px)
+		r.py = g if ground else maxf(f.y, g)
+		r.end = S.T + float(ticks) * SimConst.DT
+		f.rush = r
+		f.vx = 0.0
+		f.vy = 0.0
+		SimFx.knockback(S, f, null, "slideShort" if ground else "drift", absf(SimWrap.sdx(f.x, r.px)), S.tick + ticks + held)
+	end(S, ex, "double")
+
+
+## The AI's nudge for the choice it has just made (attack: a string or a heavy; otherwise a guard). At its level's
+## nudgeShare it holds one until its next choice. A fighter who cares for people, or feeds on them (his `care`), takes
+## the brawl away from the more peopled side, or toward it. Otherwise it presses forward as it attacks and gives
+## ground as it guards.
+static func _aiNudge(S: SimState, ex, f, attack: bool) -> void:
+	var bl: Dictionary = DirAI.lv().get("brawl", {})
+	if SimRng.keyed(int(S.game.seed), "brawl.nudge", S.tick * 2 + (0 if f == ex.A else 1)) >= float(bl.get("nudgeShare", 0.0)):
+		_s(f, AI_NUDGE, 0)
+		return
+	if f.care != 0.0:
+		var r: float = DirLaunch.CARE_R
+		var right: float = WorldStructures.popNear(S, SimWrap.wrap(f.x + r), r)
+		var left: float = WorldStructures.popNear(S, SimWrap.wrap(f.x - r), r)
+		if right != left:
+			var people: int = 3 if right > left else 4
+			_s(f, AI_NUDGE, people if f.care < 0.0 else 7 - people)
+			return
+	_s(f, AI_NUDGE, 1 if attack else 2)
+
+
+## The AI's walk-out. The first time in a brawl that the rival offers to part, it weighs once, at its level's walkOut,
+## whether to hold away too and let the brawl go. Returns true while it is walking out: it presses nothing then, until
+## the brawl ends, the rival's stick comes back, or twice partTicks have gone. After that it stays for this brawl, so
+## a rival can't draw again by moving his stick.
+static func _aiPart(S: SimState, ex, f, o, bl: Dictionary) -> bool:
+	var p: int = _g(f, AI_PART)
+	var offered: bool = o.stunTicks <= 0 and _away(ex, o, f)
+	if p == 0 and offered and _g(f, LINE) == 0:   # it weighs when it has no blow of its own on the way
+		var yes: bool = SimRng.keyed(int(S.game.seed), "brawl.walk", S.tick * 2 + (0 if f == ex.A else 1)) < float(bl.get("walkOut", 0.0))
+		p = S.tick + 2 * int(cfg().partTicks) if yes else -1
+	elif p > 0 and (S.tick > p or not offered):
+		p = -1   # it didn't come off: back to the fight
+	_s(f, AI_PART, p)
+	return p > 0
+
+
 # ---------------------------------------------------------------- once a live tick
 
-## Before the exchange's beats (DirExchange.dirUpdate): what ends the brawl, held heavies, held presses, the magnet.
+## Before the exchange's beats (DirExchange.dirUpdate): what ends the brawl, held heavies, held presses, the trade,
+## the walk-out, the centre's movement and the attraction.
 static func tick(S: SimState, ex) -> void:
 	if not isBrawl(ex) or ex.branch != "":
 		return
@@ -979,7 +1327,7 @@ static func tick(S: SimState, ex) -> void:
 		if hp != 0:
 			if S.tick - _g(f, HELD_AT) > int(c.heldPressTicks):
 				_s(f, HELD_P, 0)
-				var a = _ev(S, f, "press_ack", "lapsed")
+				var a = _ev(S, f, "press_ack", "lapsed", "y" if hp - 1 == SimAct.HEAVY else "x")
 				a.n = _g(f, HELD_AT)
 			elif _free(S, f):
 				_throw(S, f, hp - 1, _g(f, HELD_AT), false, false)
@@ -988,7 +1336,22 @@ static func tick(S: SimState, ex) -> void:
 			_strEnd(f)
 	_inTick = false
 	_tradeTick(S, ex)
-	# The magnet: they are held at striking distance, at one height. Past breakBh it lets go.
+	if S.dirS.ex != ex or ex.branch != "":
+		return
+	if _g(ex.A, DBL_AT) > 0 and now > _g(ex.A, DBL_AT) + 2:
+		_thrownApart(S, ex)   # one of the two blows was lost on its way: they are thrown apart all the same
+		return
+	# The walk-out: both hold away for partTicks full ticks running, and the brawl lets go, free. It ends partTicks
+	# after the tick the later stick was first read, never sooner.
+	if not quiet(ex) and _g(ex.A, DBL_AT) == 0 and ex.t > SimConst.DT * 1.5 and _parting(S, ex):
+		_s(ex.A, PART_N, _g(ex.A, PART_N) + 1)
+		if _g(ex.A, PART_N) > int(c.partTicks):
+			end(S, ex, "walk")
+			return
+	else:
+		_s(ex.A, PART_N, 0)
+	_move(S, ex)
+	# The attraction: the pair's gap is held at striking distance, at one height. Past breakBh it lets go.
 	var d: float = SimWrap.sdx(ex.A.x, ex.D.x)
 	if DirBands.dist(ex.A, ex.D) > float(c.breakBh) * DirInterrupt.BH:
 		end(S, ex, "apart")
@@ -1001,7 +1364,12 @@ static func tick(S: SimState, ex) -> void:
 			ex.A.x = SimWrap.wrap(ex.A.x + SimMathx.jsign(d) * px)
 			ex.D.x = SimWrap.wrap(ex.D.x - SimMathx.jsign(d) * px)
 		var dy: float = ex.D.y - ex.A.y
-		if absf(dy) > 1.0:
+		var hi = ex.D if dy > 0.0 else ex.A
+		if absf(dy) > 1.0 and hi.y <= WorldTerrain.groundY(S, hi.x) + 0.5:
+			# The higher one stands on the ground and can't come down (a slope the pair is on): the other comes up to him.
+			var lo = ex.A if dy > 0.0 else ex.D
+			lo.y = minf(hi.y, lo.y + float(c.maxStepBh) * DirInterrupt.BH)
+		elif absf(dy) > 1.0:
 			var py: float = minf(absf(dy) * 0.5, pull)
 			ex.A.y = maxf(WorldTerrain.groundY(S, ex.A.x), ex.A.y + SimMathx.jsign(dy) * py)
 			ex.D.y = maxf(WorldTerrain.groundY(S, ex.D.x), ex.D.y - SimMathx.jsign(dy) * py)
@@ -1064,8 +1432,12 @@ static func aiInput(S: SimState, f) -> void:
 		if f == ex.D:
 			DirZip.aiReach(S, ex, f, i)   # the rival of a zipper in reach: its guard, its answer, its punish
 		return   # a zipper in reach: his one blow is on its way
+	if _g(ex.A, DBL_AT) > 0:
+		return   # the double hit is on its way: nothing it presses counts
 	if _now(S) < _g(f, AI_HOLD):
 		i.heavyHeld = true
+	if _aiPart(S, ex, f, o, bl):
+		return   # it holds away with the rival, to walk out
 	# Its riposte (section 9f): after its perfect block, its next press inside the window. Against a turned heavy or
 	# ender a heavy riposte is an ender, so it takes the ender's share; otherwise it is a light, and the brawl goes on.
 	if _g(f, AI_RIP) == 1:
@@ -1109,6 +1481,7 @@ static func aiInput(S: SimState, f) -> void:
 		_s(f, AI_GUARD, S.tick + int(bl.get("guardMaxTicks", 28)))
 		_s(f, AI_LEFT, -1)
 		_s(f, AI_CLOSE, 0)
+		_aiNudge(S, ex, f, false)
 	if S.tick < _g(f, AI_GUARD):
 		# Its own string goes into a gap: when he has thrown nothing for attackIntoGap ticks, the guard comes down.
 		var into: int = int(bl.get("attackIntoGap", 0))
@@ -1153,12 +1526,14 @@ static func aiInput(S: SimState, f) -> void:
 		_s(f, AI_LEFT, -1)   # after a guard it must attack
 		i.guard = true
 		f.ai.st = 1.0
+		_aiNudge(S, ex, f, false)
 		return
 	var n: Array = bl.get("string", [3, 5])
 	_s(f, AI_LEFT, int(S.rng.range_(float(n[0]), float(n[1]) + 0.999)) - 1)
 	_s(f, AI_CLOSE, 1)
 	_s(f, AI_NEXT, S.tick + gap)
 	i.light = true
+	_aiNudge(S, ex, f, true)
 
 
 ## Its heavy: tapped, or (hold) held to the full charge at its level's rate.

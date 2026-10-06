@@ -16,6 +16,7 @@ extends SceneTree
 ##  - over the whole match: exchanges a minute and blows an exchange, as slice B0 measured them.
 ## godot --headless --path . --script res://sim/director/tools/brawl_probe.gd -- <matches> <baseSeed> [--level=medium]
 ##   [--gap=8] [--clock=real|live] [--rival=ai|dummy] [--me=player|ai] [--max=900] [--forms=1] [--mix=1]
+##   [--stick=none|toward|away] (slice C1: the stick the scripted presser holds inside a brawl)
 ## --mix=1: the mixing presser (melee-press-feel.md section 9f): once two blows of his string have landed he closes
 ## about half his strings with an ender, a tapped heavy. The brawl's length and share bands are read on him.
 ## Nothing running follows section 2b's list: a tick with a shot in the air, a rush on its way or a staggered fighter
@@ -35,6 +36,7 @@ func _init() -> void:
 	var forms := true
 	var meAi := false
 	var mix := false
+	var stick := "none"
 	for a in args:
 		if a.begins_with("--level="):
 			level = a.substr(8)
@@ -50,11 +52,27 @@ func _init() -> void:
 			meAi = a.substr(5) == "ai"
 		if a.begins_with("--forms="):
 			forms = a.substr(8) != "0"
+		if a.begins_with("--stick="):
+			stick = a.substr(8)
 		if a.begins_with("--mix="):
 			mix = a.substr(6) != "0"
 	var dai = load("res://sim/director/ai.gd")
 	dai.set("level", level)
 	var brawlCls = load("res://sim/director/brawl.gd") if ResourceLoader.exists("res://sim/director/brawl.gd") else null
+	# Slice C1: the centre, the walk-out and the double hit.
+	var dbl := 0             # double hits
+	var dblPer: Array = []   # ... by match
+	var cenTicks := 0        # live ticks of an announced brawl
+	var cenMoved := 0        # ... on which its centre moved
+	var cenInside := 0       # ... on which the pair's middle was inside a building's box (it moves freely there)
+	var stepMax := 0.0       # the largest step of the pair's middle in a tick, in units, with neither on a rush
+	var overCap := 0         # ... and the ticks on which it was over 0.3 bh
+	var driftMax := 0.0      # the largest step the director gave the pair in a tick, in units (the cap is brawl.maxStepBh)
+	var drift: Array = []    # for each brawl, how far its centre travelled, in tenths of a body height
+	var tradeMax := 0        # the oldest level trade seen with no double hit on its way, in ticks
+	var stickTicks := [0, 0] # live brawl ticks on which each slot held a stick
+	var LEVEL_AT := [120, 150, 180, 210]
+	var levelAt := [0, 0, 0, 0]   # trades with no lead that reached each of those ages; one that reaches flurry.doubleTicks is a double hit
 	var live := 0
 	var exTicks := 0
 	var idle := 0
@@ -114,6 +132,12 @@ func _init() -> void:
 		var decided := false   # this string's coin was tossed
 		var wantEnder := false
 		var mute := 0          # ticks he doesn't tap after pressing his ender, so the heavy isn't replaced by a held light
+		var dblM := 0
+		var cenAge := 0
+		var cpx := 0.0
+		var cpy := 0.0
+		var driftNow := 0.0
+		var tradeAge := 0
 		while S.T < maxT and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
 			ticks += 1
 			if realClock and ticks % gap == 0:
@@ -124,6 +148,8 @@ func _init() -> void:
 			it.mx = signf(dx) if absf(dx) > 110.0 else 0.0
 			it.my = signf(dy) if absf(dy) > 40.0 else 0.0
 			it.dash = absf(dx) > 700.0
+			if stick != "none" and brawlCls != null and S.dirS.ex != null and S.dirS.ex.tpl == "brawl":
+				it.mx = signf(dx) if stick == "toward" else -signf(dx)
 			if mix and brawlCls != null and S.dirS.ex != null and S.dirS.ex.tpl == "brawl":
 				if me.act.dirI[brawlCls.STR_ON] != 1:
 					decided = false
@@ -193,6 +219,9 @@ func _init() -> void:
 						ripH += 1
 					else:
 						ripL += 1
+				if e.kind == "double_hit":
+					dbl += 1
+					dblM += 1
 				if e.kind == "trade":
 					trades += 1
 				if e.kind == "trade_break":
@@ -247,6 +276,41 @@ func _init() -> void:
 				pending = true
 			if inB:
 				brawlLive += 1
+			var cen: Dictionary = brawlCls.centre(S, S.dirS.ex) if (brawlCls != null and S.dirS.ex != null and brawlCls.has_method("centre")) else {}
+			if not cen.is_empty() and not brawlCls.quiet(S.dirS.ex):
+				cenTicks += 1
+				cenAge += 1
+				if cenAge > 4 and me.rush == null and ai.rush == null:   # a rush is one fighter's own move (a step in, a crossing), not the pair's drift
+					var stp: float = sqrt(pow(SimWrap.sdx(cpx, float(cen.x)), 2.0) + pow(float(cen.y) - cpy, 2.0))
+					stepMax = maxf(stepMax, stp)
+					if stp > 22.6:
+						overCap += 1   # the pair's middle moved more than 0.3 bh: a strike placed its attacker (the drift itself is capped)
+					driftNow += stp
+					if stp > 0.05:
+						cenMoved += 1
+				driftMax = maxf(driftMax, sqrt(pow(float(cen.vx), 2.0) + pow(float(cen.vy), 2.0)) / 60.0)
+				cpx = float(cen.x)
+				cpy = float(cen.y)
+				if brawlCls._walled(S, cpx, cpy):
+					cenInside += 1
+				for k in range(2):
+					var stk: PackedFloat64Array = brawlCls.stick(S.dirS.ex, S.fighters[k])   # a player's own stick; the AI's nudge
+					if absf(stk[0]) + absf(stk[1]) > 0.3:
+						stickTicks[k] += 1
+				var xa = S.dirS.ex.A
+				if xa.act.dirI[brawlCls.TRADE_T0] > 0 and xa.act.dirI[brawlCls.TRADE_WIN] == 0 and xa.act.dirI[brawlCls.DBL_AT] == 0:
+					var age: int = S.tick - xa.act.dirI[brawlCls.TRADE_T0]
+					tradeMax = maxi(tradeMax, age)
+					for li in range(LEVEL_AT.size()):
+						if tradeAge < int(LEVEL_AT[li]) and age >= int(LEVEL_AT[li]):
+							levelAt[li] += 1   # a trade with no lead reached this age (from tradeMaxTicks on, no close is pending)
+					tradeAge = age
+				else:
+					tradeAge = 0
+			elif cenAge > 0:
+				drift.append(int(round(driftNow / 7.5)))
+				cenAge = 0
+				driftNow = 0.0
 			if S.dirS.ex != null:
 				exTicks += 1
 				if exWas == null:
@@ -265,6 +329,7 @@ func _init() -> void:
 						idleStun += 1
 		live += lt
 		secs += S.T
+		dblPer.append(dblM)
 		if S.game.ko != null and S.game.ko == ai:
 			wins += 1
 		SimCore.dispose(S)
@@ -273,6 +338,12 @@ func _init() -> void:
 	latReal.sort()
 	lens.sort()
 	perBrawl.sort()
+	drift.sort()
+	dblPer.sort()
+	var withDbl := 0
+	for v in dblPer:
+		if int(v) > 0:
+			withDbl += 1
 	var in4 := 0
 	for v in latReal:
 		if int(v) <= 4:
@@ -294,7 +365,11 @@ func _init() -> void:
 		"trades": trades, "blowsInBrawls": allBlows, "closes": closes, "guardBreaks": breaks,
 		"perfectBlocksInBrawl": pbN, "reversalsInBrawl": rvN, "ripostes": {"light": ripL, "heavy": ripH}, "tradeBreaks": tradeBreaks, "breakLateMax": breakLate, "breakToCloseMax": breakToClose, "breaksWithNoClose": breaksEnded,
 		"knockbackToNextSec": {"n": kbGaps.size(), "median": snappedf(float(_q(kbGaps, 0.5)) / 60.0, 0.01), "p90": snappedf(float(_q(kbGaps, 0.9)) / 60.0, 0.01)}, "answerHeavies": answers, "answerHeaviesLanded": answersLanded,
-		"pressesThrownIn10Share": snappedf(float(thrown10) / float(maxi(1, taps)), 0.001), "pressStates": states}))
+		"pressesThrownIn10Share": snappedf(float(thrown10) / float(maxi(1, taps)), 0.001), "pressStates": states,
+		"stick": stick, "doubleHits": dbl, "doubleHitsPerMatch": snappedf(float(dbl) / float(n), 0.01), "matchesWithDoubleShare": snappedf(float(withDbl) / float(n), 0.001), "doubleHitsMaxInMatch": (int(dblPer[dblPer.size() - 1]) if not dblPer.is_empty() else 0),
+		"walkOuts": int(ends.get("walk", 0)), "levelTradeMaxTicks": tradeMax, "levelTradesReaching": {"ticks": LEVEL_AT, "trades": levelAt},
+		"centre": {"ticks": cenTicks, "movedShare": snappedf(float(cenMoved) / float(maxi(1, cenTicks)), 0.001), "insideBuildingShare": snappedf(float(cenInside) / float(maxi(1, cenTicks)), 0.001), "driftStepMaxBh": snappedf(driftMax / 75.0, 0.001), "stepMaxBh": snappedf(stepMax / 75.0, 0.001), "ticksOverCap": overCap,
+			"driftMedianBh": float(_q(drift, 0.5)) / 10.0, "driftP90Bh": float(_q(drift, 0.9)) / 10.0, "stickShare": [snappedf(float(stickTicks[0]) / float(maxi(1, cenTicks)), 0.001), snappedf(float(stickTicks[1]) / float(maxi(1, cenTicks)), 0.001)]}}))
 	quit()
 
 

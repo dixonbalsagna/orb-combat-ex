@@ -1463,7 +1463,16 @@
         "perfectBlock",
         "riposteTicks",
         "riposteReelTicks",
-        "reversal"
+        "reversal",
+        "nudgeMul",
+        "nudgeRampTicks",
+        "nudge",
+        "maxStepBh",
+        "carryShare",
+        "carryTicks",
+        "partTicks",
+        "partDeg",
+        "double"
       ],
       "properties": {
         "enabled": {
@@ -1583,8 +1592,8 @@
             "tradeMaxTicks",
             "staggeredAddsRun",
             "levelWithin",
-            "momentum",
-            "closeGuardTicks"
+            "closeGuardTicks",
+            "doubleTicks"
           ],
           "properties": {
             "minGap": {
@@ -1660,16 +1669,15 @@
               "minimum": 0,
               "description": "Runs within this many blows of each other are a level trade, settled by the momentum."
             },
-            "momentum": {
-              "type": "number",
-              "minimum": 0.5,
-              "maximum": 1,
-              "description": "The chance, in a level trade, that the fighter who made the last close in this brawl makes this one (0.5 is even; 1 is always)."
-            },
             "closeGuardTicks": {
               "type": "integer",
               "minimum": 0,
               "description": "Ticks the AI keeps its guard up after a close (a later addition from Encounter)."
+            },
+            "doubleTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks within which a flurry may end in the double."
             }
           },
           "additionalProperties": false,
@@ -1878,6 +1886,98 @@
             }
           },
           "description": "A reversal inside a brawl (melee-press-feel.md section 9f).",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "nudgeMul": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "A stick's share of his free-flight speed in a brawl."
+        },
+        "nudgeRampTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks the nudge takes to rise to full."
+        },
+        "nudge": {
+          "type": "object",
+          "required": [
+            "guard",
+            "clearBh"
+          ],
+          "properties": {
+            "guard": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The nudge's share while a guard is up."
+            },
+            "clearBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The clearance, in body heights, the nudge keeps from the rival."
+            }
+          },
+          "description": "Limits on the nudge.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "maxStepBh": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The most a step moves him, in body heights."
+        },
+        "carryShare": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The share of a blow's motion that carries on after it."
+        },
+        "carryTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks the carry lasts."
+        },
+        "partTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks the fighters take to part."
+        },
+        "partDeg": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 180,
+          "description": "The angle, in degrees, at which they part."
+        },
+        "double": {
+          "type": "object",
+          "required": [
+            "windupTicks",
+            "throwBh",
+            "throwTicks"
+          ],
+          "properties": {
+            "windupTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The double's wind-up, in ticks."
+            },
+            "throwBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How far the double throws the rival, in body heights."
+            },
+            "throwTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks the throw takes."
+            }
+          },
+          "description": "The double (a flurry's two-handed finish).",
           "additionalProperties": false,
           "patternProperties": {
             "^_": true
