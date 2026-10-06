@@ -58,10 +58,10 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 - **When.** From the first tick of the rival's medium or heavy wind-up, through any charge, until that blow lands, misses or is lost. Also while the rival coils a tackle in reach, or holds for a signature.
 - **Who.** The other fighter, while he has no blow of his own on its way and no attack button held. His guard may be up.
-- **What his stick does.** It moves him alone, in any direction, and the rival isn't drawn along. He opens 1 bh in 12 ticks: 5 bh a second, times his own speed. Behind a guard it is 0.6 of that. It answers within 2 ticks, as the nudge does.
-- **What the rival's stick does.** It moves the rival alone, at 0.6 of that rate. So a fighter can walk a wound blow after a rival who backs off, and the gap still opens, slowly.
+- **What his stick does.** Held within 45 degrees of straight away from the rival, it backs him straight off along the line between them, and the rival isn't drawn along. Any other lean is the nudge, as always. He opens 1 bh in 12 ticks: 5 bh a second, the same for every fighter. Behind a guard it is 0.6 of that. It answers within 2 ticks, as the nudge does.
+- **What the rival's stick does.** It still nudges the centre, so he can aim his blow with it. Only its part toward the giver follows him, at 0.6 of the giver's rate. So a fighter can walk a wound blow after a rival who backs off, and the gap still opens, slowly.
 - **A leash.** He opens no more than 2.4 bh past striking distance. That is what a light can close in its 4 ticks, and it is well inside the 4.5 bh where a brawl lets go. Giving ground never ends a brawl.
-- **A wound blow has a reach,** read as it lands: striking distance and 0.5 bh more for a medium, 1 bh more for a heavy, and 1 to 1.5 bh more for a charged heavy as it fills. Out of reach it misses, and he is open for 20 ticks (§3).
+- **A wound blow has a reach,** read as it lands: striking distance and 0.5 bh more for a medium, 1 bh more for a heavy, and 1 to 1.5 bh more for a charged heavy as it fills. Out of reach it misses, and he is open for 20 ticks (§3). At the very edge it misses too: a tie goes to the fighter who gave ground. Open means he can't guard, dodge, give ground or strike for those ticks, so a medium does punish it.
 - **Afterwards** the brawl takes hold again. A press by either closes the gap as part of the blow, which lands 2 ticks later for each bh, and never more than 4 later. He is drawn closing on every one of those ticks, and never moves more than 0.6 bh in one. A light from further than 2.4 bh, which only happens when the two have come apart some other way, is thrown, closes what it can, and misses if it is still out of reach. So a medium punishes a missed heavy: 16 ticks against the 20 he is open.
 
 | The rival's blow | If the rival stands still | If the rival holds toward him |
@@ -71,6 +71,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 | A full charged heavy, 48 ticks or more | He is out | It lands if it is let go at the flash. Held on, it misses: the gap passes its reach about 45 ticks after he starts to back off |
 
 - **It isn't the one-sided walk-out.** It exists only while the rival has committed to a slow blow. It can't leave the brawl, the rival can follow, and backing off behind a guard is too slow to get out. To leave alone he still pays.
+- **Four of these are Encounter's decisions from the build, and all are confirmed:** the flat rate, the edge, the straight line and what open means. With a fighter's own speed in the rate, the two hard rows can't both hold: a slower fighter isn't out from tick 16, and a faster one gets out when followed. With any direction allowed, aiming a blast or a charge walked the attacker off his own target.
 - **The AI** gives ground against 0.05, 0.2 and 0.4 of the wound blows it sees, by level. It follows a player who gives ground at 0.3, 0.6 and 0.9. Without the first, a heavy would always land on it. Without the second, a new player's heavies would miss it for nothing.
 
 **Everything he has while the rival winds up or charges:**
@@ -117,7 +118,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 **What it gives the game.** Position is the player's job under pillar 2, and now he has it inside a brawl. The Protagonist's AI nudges a brawl away from a town, and the rival's nudges it toward one. It reads each fighter's `care` for that: 0.8 for the Protagonist and −0.5 for the rival (`launch-pair-plan.md` §1). Both are 0.0 in the data today, so neither AI leans anywhere. A charged heavy can be walked into place before it is let go.
 
-**Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.partTicks` 12 and `brawl.partDeg` 45, `brawl.nudge.guard` 0.6, `brawl.maxStepBh` 0.3, and for digital input `brawl.nudgeDigital` 0.4 to 1.0 over 12 ticks. New: `brawl.nudge.stagger` 0.5, `brawl.nudge.held` 0.5, and `give` (5 bh a second, guard 0.6, follow 0.6, at most 2.4 bh past striking distance, reach 0.5, 1 and 1 to 1.5 bh past striking distance, closing 2 ticks a bh up to 4, and the AI's shares).
+**Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.partTicks` 12 and `brawl.partDeg` 45, `brawl.nudge.guard` 0.6, `brawl.maxStepBh` 0.3, and for digital input `brawl.nudgeDigital` 0.4 to 1.0 over 12 ticks. New: `brawl.nudge.stagger` 0.5, `brawl.nudge.held` 0.5, and `give` (5 bh a second for every fighter, the edge 0.033 bh, guard 0.6, follow 0.6, at most 2.4 bh past striking distance, reach 0.5, 1 and 1 to 1.5 bh past striking distance, closing 2 ticks a bh up to 4, and the AI's shares).
 
 ## 2. Three strengths on three buttons
 
@@ -236,6 +237,7 @@ The core carries a third weight, the medium (Simulation's proposal, which the EP
 - **A broken arm leaves the medium alone.** It makes his lights sharper and his heavies weaker, and the medium is the strength in between.
 - **40 units** puts a flat-out Y flurry at 200 a second, between the X flurry's 130 and the B flurry's 257, and under the decay's 300. So no one button mashed alone raises the mood: a trade does, and a close, and a knock-back.
 - The launcher and the charged heavy are heavies for all six. The riposte's and the reversal's blows are mediums for all six, and their staggers are their own rules.
+- **For the style label's attack count a medium counts with the lights** (the EP's provisional ruling, confirmed). It is quick, cheap and mashable, and the label's heavy should mean the 28-tick blow and the charges. The label wants a third count when style is next read.
 - **A point-blank energy shot goes through the blast's own hit, with no exchange passed** (Simulation's free route, confirmed). On a guard it takes the blocked shot's rule. Unblocked, its wear spreads as a shot's does, and it can't cripple. Its mood units are a light's for a bolt and a medium's for the blast.
 - **A blow that names its region** is wanted now, in the same core change: one option on the core's hit, which a blocked blow ignores. The double hit uses it at once, for the head (§7). The wrench and the vicious blows need it next (§3, §4).
 
@@ -304,22 +306,56 @@ The press throws the light, as always. **The burst starts when the hold is certa
 
 **The launcher: a heavy on a staggered rival.** New, for Orb's third test: "can I reliably launch my opponent?" Until now a launch came from a full charged heavy, which takes 48 ticks and has no set-up that makes it sure. So a player couldn't launch on purpose.
 
-- **The rule.** A tap of B while the rival is staggered is the launcher. It counts for any stagger of 12 ticks or more: a flurry's close, a landed heavy, a broken guard, a perfect block, a punished taunt. A shove's 8 ticks don't count.
+- **The rule.** A tap of B while the rival is staggered by an opening is the launcher. The openings are the staggers a fighter earns: a flurry's close, a broken guard, a perfect block, a zip's tech counter and a punished taunt. A landed heavy's stagger isn't one, and a shove's isn't.
 - **It always lands.** Its wind-up is halved to 14 ticks, as on the beat (§9), and the stagger holds until it lands.
-- **It launches.** The stick nudges the launch and the director stages it, as for every launch. It is worth 3 brawl lights, which is half a heavy for half the wind-up, and it costs a heavy's 5 ki. The launch's landing is the rest of its worth.
-- **A B pressed early is kept.** Pressed in the 10 ticks before the stagger begins, it is held and thrown as the launcher, by §2's rule for a held press. So "X, then B" rolled off the closing blow works, and so does a B pressed on seeing the stagger.
+- **It always sends him, and it launches when the launcher is ready.** When it launches, the stick nudges the launch and the director stages it, as for every launch. After any launch of a fighter, the launcher rests on him for 40 s of fight time. In that time the same B still always lands, and knocks him back as the old ender did. It is worth 3 brawl lights either way, which is half a heavy for half the wind-up, and it costs a heavy's 5 ki. The launch's landing is the rest of its worth.
+- **A B pressed early is kept.** Pressed in the 10 ticks before the stagger begins, it is held and thrown as the launcher, by §2's rule for a held press. So "X, then B" rolled off the closing blow works, and so does a B pressed on seeing the stagger. A kept B goes before any X pressed after it, so mashing on doesn't lose it (Encounter's decision, confirmed).
 - **A held B loses the guarantee.** The stagger holds for the 14 ticks only. Held past that, it is a charged heavy like any other.
 - **The staggered fighter keeps half his nudge** (§1), so he has a say in where he is launched from. Nothing gets him out: a stagger takes his buttons, as it does today.
-- **So the B flurry's second blow launches** when the first lands clean: the hammer, and then the launch.
-- **The stagger has a ping, and both players hear it** (the EP's ruling). Local play shares its speakers, so the cue can't be private. It tells the defender that he is open as much as it tells the attacker to press B.
+- **A landed heavy doesn't open it.** My first rule let it, and then every heavy that landed was a launch 14 ticks later, for the AI as much as for a B masher.
+- **The opening has a ping, and both players hear it** (the EP's ruling). It sounds only when a launch is ready, so no ping means a knock-back. Local play shares its speakers, so the cue can't be private. It tells the defender that he is open as much as it tells the attacker to press B.
 
 **The route to teach:** mash X until he staggers, then B, and aim with the stick. On Simple, B is the Y button (§2). The game says when, because the close has its own cue.
 
 **The other launches stand,** and each is a step up in skill: the full charged heavy, which is the read and is worth 8 to 10; the lift and then a heavy, since a heavy that lands on a lifted rival launches him (C6a); and a charged heavy at a flow of 3 (C3).
 
-**The AI** throws the launcher after 0.15, 0.35 and 0.6 of the staggers it causes, by level. That replaces `heavyAfterClose` (0.2, 0.6 and 0.9), so that a player isn't launched twice as often as today.
+**The AI** throws the launcher after 0.15, 0.35 and 0.6 of the openings it causes, by level. Inside a brawl its heavy at a guard has a share of its own, 0.06, 0.1 and 0.18, since a broken guard is an opening (Encounter's decision, confirmed). That replaces `heavyAfterClose` (0.2, 0.6 and 0.9), so that a player isn't launched twice as often as today.
 
 **The riposte and the reversal** threw the old heavy. Both are mediums in worth now, with their staggers as built, and neither separates (confirmed). The launcher is what separates: a perfect block staggers for 20 ticks, so a B pressed in it launches.
+
+**What the first build measured, and what changes** (Encounter's scratch build of C2a and C2t, four matches a row at medium, not yet tuned).
+
+| Measured | Figure | The band |
+| :--- | :--- | :--- |
+| Windows the route's player used, and launched from | 61 of 61 | Every one (a hard test). It holds |
+| Launches a match by the route's player | 16 | 4 to 10 |
+| Launches a match on him | 12 | 4 to 8 |
+| Brawls that end in his launch | 51% | See below |
+| The AI against itself, mean match | 554 s, against 394 s on main | A median of 400 to 450 s, and never outside 5:00 to 8:00 |
+| Blows that move their attacker over 0.6 bh in a tick | 0 of about 7,000, against 23 on main | None (a hard test). It holds |
+
+Reliable had become constant. Two things in my rule caused it, and both change now. Neither is a number to tune.
+
+1. **Too many staggers opened it.** Every stagger of 12 ticks or more did, so every landed heavy was a launch 14 ticks later. Now only an opening does (above): the staggers a fighter earns.
+2. **Nothing spaced the launches.** Now the launcher rests for 40 s on a fighter who has been launched, and in that time the same B knocks him back (above). A knock-back is what ended most brawls before this chain, so the pace returns to one that is known. The route still works every time: he staggers, B, and the rival is sent.
+
+**The levers for Encounter, in order,** once those two are in:
+
+| Order | Lever | First value | Its range | What it moves |
+| ---: | :--- | :--- | :--- | :--- |
+| 1 | The rest, `launcher.restS` | 40 s | 25 to 60 | Launches a match, by both fighters, and the match's length with them |
+| 2 | The AI's share of the openings it uses, `launcherShare` | 0.15, 0.35, 0.6 | 0.1 to 0.5 at medium | Launches on a player |
+| 3 | The launcher's flight, `launcher.flightMul` | 1.0 | Down to 0.6 | The match's length and the collateral, if both are still over with the launches in band. A shorter flight reaches fewer buildings. The full charged heavy and the signatures keep the long flight |
+| 4 | The launcher's price | 5 ki | Up to 15 | The last one: only if a player on the route alone still sits at the top of his band |
+
+- **Not levers:** how often a masher earns a close, which is the brawl's own texture and is banded elsewhere; and the bands' widths.
+- **The bands to tune to,** at medium:
+  - launches a match by the route's player 4 to 10, and on him 4 to 8;
+  - the AI against itself, 6 to 12 launches a match in all;
+  - the route sends him, by a launch or a knock-back, in 50 to 75% of the brawls it is tried in, and launches in 10 to 25% of them;
+  - a first launch inside 30 s of the first brawl in at least 80% of matches, since the launcher is ready at the start;
+  - the match's median at 400 to 450 s for the AI against itself, and never outside 5:00 to 8:00, which is Orb's five minutes or more and acceptance test W3;
+  - the collateral rows as they stand. Launches drive them, so they are read after the launches are in band, and lever 3 is theirs.
 
 **One map for the stick, wherever it aims a blow in reach.** Combat assumed it (`docs/combat/pending/movegen/c2t-content.md`), and it is confirmed.
 
@@ -336,12 +372,13 @@ The press throws the light, as always. **The burst starts when the hold is certa
 - **The send is the stick's, and the piece follows it where one fits.** While stand-ins are on B, few of them read at 14 ticks. A launcher still goes where the stick says when its piece doesn't match. That is a fault in the look and not in the rule, so it doesn't fail Orb's test.
 - A wrench uses only the down and away rows, and only on a battered limb.
 - The data key is Combat's `launcher.aim`.
+- **As built in the first chain:** up and toward pick among the launch planner's candidates that way. Away has no candidate yet and falls to the planner's pick; the turning send is wanted by C2b. Down on the ground falls to the planner's pick for good, since there is nothing under him.
 
 **He can nudge the brawl while he winds or charges** (§1).
 
 **A failed option hurts 3 of 10** (Orb, questionnaire 19). A whiffed heavy leaves him open for 20 ticks. The rule for every flashy option: failing never leaves him open for more than 20 ticks, and never adds damage of its own.
 
-**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.07; reel 2; run 0.5 a blow; open 8); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (a stagger of at least 12, wind-up 14, worth 3, ki 5, held press 10, and the AI's shares 0.15, 0.35 and 0.6).
+**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.07; reel 2; run 0.5 a blow; open 8); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (the openings, wind-up 14, worth 3, ki 5, held press 10, rest 40 s, flight ×1.0, and the AI's shares 0.15, 0.35 and 0.6).
 
 ## 4. A: the shove, the clinch and the tackle
 
@@ -523,7 +560,7 @@ They still read right with B as the heavy: each pair does what its two buttons m
 | **B tapped** | A heavy, 28 ticks after the press, armoured against lights. It staggers him in place | 5 |
 | **B mashed** | The heavy flurry: about 2 hammer blows a second | 5 a blow |
 | **B held** | A charged heavy: full at 44 ticks, worth 8 to 10, armoured, a knock-back, and a launch or a lift at full | 8 |
-| **B tapped on a staggered rival** | The launcher: it always lands, and it launches (§3) | 5 |
+| **B tapped in an opening** | The launcher: it always lands and sends him, and it launches when it is ready (§3) | 5 |
 | **X, Y and B in any order** | The mix-up: each press its own blow at its own pace | As above |
 | **X, Y or B on the beat** | A skill strike: worth 4, 6 or 9 (§9) | 0, 2 or 5 |
 | **A tapped** | The shove, after 12 ticks. Out of reach: a pick-up, a civilian, or the taunt | 0 |
@@ -592,7 +629,7 @@ C1 is unchanged and is being built. After it, the buttons come in two halves, so
 - **C2a and C2t are built as one chain, in two steps** (Encounter's cut, `docs/director/brawl-plan.md` §10, which the EP accepted). C2a alone has nothing that separates the fighters, so its pacing rows would mean nothing.
 - **Encounter's nine defaults for that chain are ruled,** each in its own place: §1 (a light from too far), §2 (what ends a medium's wind-up, a hold before the charges, the lunges, the close), §3 (the riposte and the reversal), §5b (energy held) and §9 (the zip's counters and the zip heavy's worth). All nine are confirmed. Two came with a change of mine: the leash is shorter, and a held energy press is its tap.
 - **The heavy's charge comes forward into that chain, cut small.** Orb's second question is about an opponent charging up, and he will hold B himself and expect a charge. With wind-ups of 12 and 28 ticks only, the answer would be half honest.
-  - **In:** a B still down at 32 ticks keeps charging. It is full at 44, with its flash. It goes 4 ticks after he lets go, and by itself at 70. It is armoured as its wind-up is. It is worth 8, rising to 10, for 8 ki. A clean hit knocks back, and at full it launches, aimed as the launcher is, with the planner's pick when there is no stick. Its reach grows to 1.5 bh past striking distance. A miss leaves him open for 20 ticks. The AI charges 0.15, 0.3 and 0.45 of its heavies by level, and lets go within 8 ticks of the flash.
+  - **In:** a B still down at 32 ticks keeps charging. It is full at 44, with its flash. It goes 4 ticks after he lets go, and by itself at 70. It is armoured as its wind-up is. It is worth 8, rising to 10, for 8 ki: 5 at the press and 3 at tick 32 (Encounter's decision, confirmed). Without the 3 it goes at 32 as a tap. A clean hit knocks back, and at full it launches, aimed as the launcher is, with the planner's pick when there is no stick. Its reach grows to 1.5 bh past striking distance. A miss leaves him open for 20 ticks. The AI charges 0.15, 0.3 and 0.45 of its heavies by level, and lets go within 8 ticks of the flash.
   - **Out, and still C2b's:** the charged medium, the just release, the fresh and the set guard, the wrench, the shove, and the lift with no stick. On a guard a charged heavy is blocked as a tapped heavy is. A held Y goes by itself at 16 ticks, at a tap's strength.
 - **Animation's earlier sizes** (`docs/animation/brawl-second-pass-view.md`) were for two strengths. The new tier of heavy blows is the largest new item, and it needs sizing again.
 
@@ -630,7 +667,8 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | A dead stick in a brawl | Not a row | **New (a hard test):** on no live tick of a brawl does a fighter's stick do nothing, unless he is knocked back, launched, lifted, thrown, carried, buried or in a staged moment |
 | A held stick against the medium AI | Not a row | **New:** it moves the brawl at least 0.7 as far as against a rival who holds none. The AI holds against a player's stick on under 25% of the ticks he holds it |
 | Giving ground | Not a row | **New.** Hard tests: while the rival winds up or charges, a fighter with his hands down moves within 2 ticks of his stick; started by tick 16, he is out of a tapped heavy that isn't followed, every time; followed from its first tick, never. Bands: the medium AI winds up or charges a medium or a heavy 4 to 10 times in a minute of brawl; a player's heavies miss the medium AI by its giving ground 10 to 25% of the time |
-| The launcher | Not a row | **New.** A hard test: a B pressed in a stagger of 12 ticks or more lands and launches, every time. Bands for the scripted route (X every 8 ticks, and B on the stagger): a launch in 50 to 75% of the brawls it is tried in against medium, 70 to 90% against easy and 30 to 55% against hard; a first launch inside 30 s of the first brawl in at least 80% of matches at medium. Launches a match at medium: 4 to 10 by the route's player, and 4 to 8 on him |
+| The launcher | Not a row | **New.** A hard test: a B pressed in an opening lands and sends him, every time, and launches every time the launcher is ready. Bands for the scripted route (X every 8 ticks, and B on the stagger) against medium: it sends him in 50 to 75% of the brawls it is tried in, and launches in 10 to 25% of them; a first launch inside 30 s of the first brawl in at least 80% of matches. Launches a match at medium: 4 to 10 by the route's player, 4 to 8 on him, and 6 to 12 in all for the AI against itself. The first build read 16 and 12 (§3) |
+| The match's length, the AI against itself | A median near 415 s | **Held:** a median of 400 to 450 s, and never outside 5:00 to 8:00. The first build's mean was 554 s, against 394 s on main for the same seeds, because launches had replaced knock-backs (§3). The collateral rows stand, and are read once the launches are in band |
 | Energy in reach | Not a row | **New.** Hard tests: a point-blank bolt lands 2 ticks after its press; a clean blast knocks back 4 bh; no more than three full flashes in any second. Bands: 5 to 15% of the medium AI's brawl blows are energy; a blocked point-blank bolt reaches the core once the arms are at their cap. The bolt-only and mixed blaster rows are read again |
 | Perfect blocks | 1 to 4 a minute at medium, 0.5 to 2 at easy, 2 to 5.5 at hard. Per 100 blows it fell from 2.47 to 1.42 as blows a minute rose from 100 to 168 | **The band is by the minute, and it stands** at all three levels. It is what a player meets, and it doesn't move with the mix of blows. **Per 100 blows is reported by strength,** and held as bands after the first three-strength baseline. At medium: lights 0.5 to 1.5, mediums 2 to 6, heavies 6 to 15. The total per 100 blows is retired as a band. If the AI's perfect block is a chance for each blow today, it should be rated by strength or by time, so that a faster brawl doesn't buy more of them |
 | A shot on the way out drops a zipper | A drop row | **A rule and a hard test, with no band.** A real bolt can't reach him: his way out is 3 to 10 ticks and a bolt needs 6 to leave (QA). The test by an injected shot stands. In play it is a rare event: a shot already in flight when he leaves, or a mine on his line. Its count is reported, and none is in order. Nothing replaces it: a shooter's answers to a zip are on the way in and at point-blank, where they already are (`melee-press-feel.md` §2c). Encounter confirms it is barely reachable as built: only a shot already in the air does it, and a drop lands only within about 1 bh of the ground. The ruling stands, and the rule stays for mines |
@@ -661,7 +699,7 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1. Can I move my character around during active combat?** | Yes, in every state but a knock-back and its kind. The stick moves the brawl while he strikes, mashes, winds up, charges, guards and reels. A stagger and a clinch now keep half | §1, the state table | C1. The stagger's half is in C2t, and the clinch's in C4b | He holds a direction while mashing and the fight drifts that way at once. The AI doesn't hold it still | No live tick of a brawl with a dead stick outside the exception (a hard test). A held stick against the medium AI moves the brawl at least 0.7 as far as against no stick |
 | **2. Can I move my character when the opponent is charging up an attack?** | Yes, and alone. He gives ground: his stick moves him and not the rival. He is out of a tapped heavy if he starts by tick 16 and the rival doesn't walk it after him | §1, giving ground | C2t, against wind-ups and the heavy's charge (§10) | The AI winds up a heavy, he pulls the stick away, and the blow cuts air in front of him. Then his medium punishes it | He moves within 2 ticks of his stick (a hard test). Out of an unfollowed tapped heavy from tick 16 every time, and never when followed. The medium AI winds up 4 to 10 times in a minute of brawl |
-| **3. Can I reliably launch my opponent?** | Yes. A tap of B on a staggered rival always lands and launches him. The route is: mash X until he staggers, then B, and aim with the stick | §3, the launcher | C2t | The same three inputs launch him again and again, and the stick decides where he goes | From a stagger, every time (a hard test). The scripted route launches in 50 to 75% of the brawls it is tried in against medium. A first launch inside 30 s of the first brawl in at least 80% of matches |
+| **3. Can I reliably launch my opponent?** | Yes. A tap of B on a rival staggered by a close always lands and sends him, and it launches whenever the launcher is ready, which the ping says. It is ready at the start, and again 40 s after his last launch. The route is: mash X until he staggers, then B, and aim with the stick | §3, the launcher | C2t | The same three inputs send him every time and launch him whenever the ping sounds, and the stick decides where he goes | From an opening, every time the launcher is ready (a hard test). The scripted route sends him in 50 to 75% of the brawls it is tried in against medium, and launches in 10 to 25%. A first launch inside 30 s of the first brawl in at least 80% of matches |
 | **4. Do energy attacks look cool as part of close-range combos?** | They can now be part of one. With RB held in reach, X is a point-blank bolt and Y is the blast, which knocks him back 4 bh. They chain into and out of blows with no gap | §5b | C2t | Punches, a palm shot that lights both fighters, the blast that carries him off, and bolts chasing him as he slides | The bolt lands 2 ticks after its press, and a clean blast knocks back 4 bh (hard tests). No more than three full flashes in a second (a hard test). "Cool" is Orb's to judge, against §5b's list |
 
 **The build that can pass all four is C1, C2a and C2t.** Without C2t, the first question passes on C1 alone. The second is half there on C2a: he can nudge, and stop a heavy with a medium, but he can't get out of its way alone. The third and fourth fail: no launch can be made on purpose, and an energy press in reach does nothing. The heavy's charge is in that chain too, cut small (§10), so that the second question is answered against a held charge and not only a wind-up.
