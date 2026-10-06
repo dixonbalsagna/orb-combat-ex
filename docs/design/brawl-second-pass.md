@@ -2,20 +2,20 @@
 
 Owner: Game Design. Date: 2026-10-06. Orb played the live brawl on the evening of 2026-10-05 and answered questionnaire 19 (`docs/ep/vision.md`, last section): "It feels closer to where I want it to be", with changes. This page turns those changes into rules.
 
-**It revises `melee-press-feel.md`.** Where the two disagree, this page is the newer rule. §9 lists what stands and what changes, section by section. **Every number is a starting value,** none has been run in the sim, and Legal screens the new moves after this.
+**It revises `melee-press-feel.md`.** Where the two disagree, this page is the newer rule. Orb's answers to its five questions are folded in (§12), with Controls' input design, Legal's screen and Animation's sizes. §9 lists what stands and what changes, section by section. **Every number is a starting value,** none has been run in the sim, and Legal screens the new moves after this.
 
 ## 0. What changes, at a glance
 
 | Orb said | The rule now | Where |
 | :--- | :--- | :--- |
-| "players should always feel like they are able to control their character"; the attraction "was too strong" | The stick moves the brawl. Each fighter nudges the centre the two are drawn to, and a fighter can walk out when nothing is landing on him | §1 |
+| "players should always feel like they are able to control their character"; the attraction "was too strong" | The stick moves the brawl. Each fighter nudges the centre the two are drawn to, and when both hold away from each other they walk out | §1 |
 | "The flurry should be across all attacks, not just light"; alternating X and Y is "a rapid attack mixup" | A tap of X, Y or B is a blow at once, and mashing any of them, or any mix of them, is a flurry | §2 |
 | "holding a button should charge up an attack" | A held X is a charged light: quick, modest, no knock-back. A held Y is a charged heavy: slow, armoured, and it knocks back or launches | §3 |
 | "Y just feels really underpowered... an opponent flurrying on me should get punished" | A charging Y can't be stopped by a flurry. It lands for up to 10 brawl lights | §3 |
 | A: a tap is a shove, a mash is a clinch into a trip and a throw, a hold is a tackle | Ruled as Orb sketched it | §4 |
-| "B needs a recast and its own unique moveset" | B is his Charge at close range: a burst on a tap, a Charge flurry on a mash. A signature needs a held B, and it plays live | §5 |
+| "B needs a recast and its own unique moveset" | B becomes a third kind of blow beside light and heavy, which Orb is picking from a pitch. No signature starts on a tap, and signatures play live | §5, `pitch-third-blow.md` |
 | Two-button power attacks on adjacent buttons | X+Y the lift, X+A the slip, Y+B the breaker, A+B the seize | §6 |
-| An even mash: "both thrown back, nobody wins" | At the trade's limit a level trade throws both back. The seeded draw and its momentum are gone | §7 |
+| An even mash: "both thrown back, nobody wins", and both take a hit | A trade still level after 4 s ends in a double hit: both land, both fly apart, with a close-up. The seeded draw and its momentum are gone | §7 |
 
 ## 1. Control comes first: the stick moves the brawl
 
@@ -30,7 +30,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 | One fighter holds a direction, the other holds none | The centre moves that way at 0.4 of his free-flight speed, and both fighters go with it |
 | Both hold the same direction | It moves at 0.8 of free-flight speed. Two players who agree can fly a brawl across the sky |
 | They hold opposite directions | The two cancel, by how far each stick is pushed. It is a tug of war |
-| Both hold away from each other | The brawl lets go after 12 ticks |
+| Both hold away from each other | **They walk out.** The brawl lets go after 12 ticks, at no cost to either (Orb) |
 
 - **It answers at once, and it is a rate.** The centre starts to move within 2 ticks of a stick. A stick moves it by how far it is pushed, and reaches its speed in 8 ticks. A keyboard or a D-pad is all or nothing, so for them the nudge ramps from 0.4 of its rate to all of it over 12 ticks of holding: a tap is a small nudge (Controls, `docs/controls/q19-input.md`).
 - **It moves smoothly.** The centre never moves more than 0.3 bh in one tick, whatever the two sticks add up to. Animation needs that for the drift to read (`docs/animation/brawl-second-pass-view.md`), and it is fed the pair's velocity while it drifts.
@@ -39,9 +39,11 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 - **The stick still leans the blow** (`melee-press-feel.md` §13). So holding toward the rival drives him back with elbows and knees, holding away gives ground with kicks, and up and down climb or sink with rising and dropping blows. One stick does both jobs.
 - **Every press is still a blow.** Nothing here delays or drops a press.
 
-**Walking out.** A fighter who holds his stick away from the rival, throws nothing, and has no blow land on him for 24 ticks is let go, at no cost in ki. A blow that lands on him starts the 24 again. So he can always leave a brawl nobody is winning, and he can't walk out of a beating: for that he has the dodge, the burst and the zip away.
+**Walking out takes both of them.** Orb: "if both players move their sticks in the opposite direction they should be able to walk out." When each holds his stick away from the other, within 45 degrees of straight away, for 12 ticks, the brawl lets go. It is free, and there is nothing to wait for after it. A blow thrown by either in those 12 ticks starts them again.
 
-**Walking out and the escape are two things, and they don't collide.** Walking out is the stick away with no boost: slow, free, and only when nothing is landing on him. The escape is the boost held with the stick away: at once, at the dodge-cancel's price, as built. The nudge reads the stick alone, and the escape needs the boost.
+**My one-sided walk-out is withdrawn.** I had a fighter let go after 24 ticks of holding away with nothing landing on him. Orb's answer asks for both sticks, and I can't square the two: mine let one player end a brawl that the other wanted. One fighter alone still moves the brawl his way, at 0.4 of his speed with the rival drawn along. To leave alone he pays: the escape, a dodge, a zip away or a burst.
+
+**Walking out and the escape don't collide.** Walking out is both sticks away with no boost. The escape is one fighter's boost held with his stick away: at once, at the dodge-cancel's price, as built. The nudge reads the stick alone, and the escape needs the boost.
 
 **When the stick does nothing.** Only in these: a knock-back, a launch, a lift, being held in a clinch, being buried, and a set piece.
 
@@ -54,7 +56,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 **What it gives the game.** Position is the player's job under pillar 2, and now he has it inside a brawl. The Protagonist's AI nudges a brawl away from a town, and the rival's nudges it toward one. A charged Y can be walked into place before it is let go.
 
-**Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.walkOutTicks` 24, `brawl.partTicks` 12, `brawl.nudge.guard` 0.6, `brawl.maxStepBh` 0.3, and for digital input `brawl.nudgeDigital` 0.4 to 1.0 over 12 ticks.
+**Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.partTicks` 12 and `brawl.partDeg` 45, `brawl.nudge.guard` 0.6, `brawl.maxStepBh` 0.3, and for digital input `brawl.nudgeDigital` 0.4 to 1.0 over 12 ticks.
 
 ## 2. A flurry on every button
 
@@ -64,7 +66,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 | | X: a light | Y: a quick heavy | B: a Charge burst (§5) |
 | :--- | ---: | ---: | ---: |
-| Press to contact | At once: the blow goes on the press | 6 ticks, or 2 ticks after he lets go if that is later | 4 ticks, or 2 ticks after he lets go if that is later |
+| Press to contact | 2 ticks | 6 ticks | 4 ticks |
 | Fastest in a flurry | One every 6 ticks | One every 12 ticks | One every 8 ticks |
 | Worth, in brawl lights for each tick since his last blow | 0.10 | 0.167 | 0.15 |
 | So a blow at its fastest is worth | 0.6 | 2.0 | 1.2 |
@@ -73,9 +75,11 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 | Reach | Striking distance | Striking distance | 5 bh, in a short cone |
 | On a guard | Chips | Chips double, and tires the guard twice as fast | Chips, and pushes the blocker 0.5 bh |
 
-- **No tap is ever delayed to see whether it is a hold** (Controls' finding, and its option A). The two cases:
-  - **X goes on the press, always.** Its blow lands before any hold can be read, so a held X is the charge of his next blow (§3).
-  - **Y, B and A start their motion on the press and decide when he lets go.** Let go before the hold point, it is the quick move, landing at its usual time or 2 ticks after the release, whichever is later. Still held at the hold point, it is the charge, and no quick move is thrown. The hold points are Controls' own: 16 ticks for Y and 18 for A, and 12 for B.
+- **A quick move always lands at its own time, however long the button is held.** This is one rule for X, Y, B and A, and it replaces "decide when he lets go", which I had for Y, B and A. Controls measured that rule's cost: a quick heavy from a tap of 5 to 8 ticks landed at 7 to 10, so its speed depended on the length of the tap. Taps run 3 to 6 ticks on a pad, 4 to 8 on a keyboard and 5 to 12 on touch, so touch was hit most. Every press is a blow, and control comes first:
+  - the press throws the button's quick move, on time, always;
+  - **a button still held at its hold point charges the move that follows.** So a charged heavy comes after a quick heavy, as a charged light comes after a light, and a tackle comes after a shove;
+  - the hold points are Controls' own: 8 ticks for X, 16 for Y, 18 for A, and 12 for B. They can be longer on touch;
+  - **for QA:** the share of taps that are held past the hold point and start a charge the player didn't mean, by device. Under 5% on each. The lever is the hold points by device.
 - **Damage a second is level within a button,** as it is for lights today: a faster tap is a weaker blow. Between buttons it isn't level. Y hits two thirds harder a second than X, and it is paid for in ki.
 - **Mashing Y is a rapid pattern too:** up to five quick heavies a second. A full bar of ki pays for 33 of them, which is about 7 s of nothing but Y. An empty bar is 2 s of exhaustion, and no ki for a dodge, a zip or a burst.
 - **Alternating is the mix-up.** Each tap throws its own button's blow, up to ten a second. It lands more blows than Y alone, so it builds a run faster. It hits harder than X alone. It spends ki at whatever rate the Y and B taps come.
@@ -92,13 +96,13 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 | | **Held X: the charged light** | **Held Y: the charged heavy** |
 | :--- | :--- | :--- |
-| How it starts | The light is thrown on the press, as always. Still held 8 ticks after the press, he winds up the charged light: it is the charge of his next blow. So every charged light follows an ordinary one | His heavy's motion starts on the press. Still held at 16 ticks, it is a charge, and no quick heavy is thrown. Let go before that, it is the quick heavy (§2) |
+| How it starts | The light is thrown on the press, as always. Still held 8 ticks after the press, he winds up the charged light: it is the charge of his next blow | The quick heavy is thrown on the press, as always, and lands at 6 ticks. Still held at 16 ticks, he is charging the heavy that follows it |
 | Charged at | 8 ticks | 16 ticks |
 | Full at | 14 ticks | 40 ticks |
 | Lands | 4 ticks after he lets go | 8 ticks after he lets go |
 | Worth, in brawl lights | 1.5, rising to 2 at full | 6, rising to 10 at full |
 | Ki | None | 4 |
-| While he charges | **No armour.** Any blow that lands on him ends the charge | **Armoured against every flurry blow and light.** He takes their damage, he doesn't reel, and they add nothing to the rival's run |
+| While he charges | **No armour.** Any blow that lands on him ends the charge | **Armoured, in two steps** (the EP's ruling; Orb deferred). From its first tick, lights and light flurry blows don't interrupt it, and he takes half their damage. Quick heavies and heavy flurry blows interrupt it until it is half charged, at 20 ticks, and from then on they don't either, though he takes them in full. A blow that meets the armour adds nothing to the rival's run |
 | A clean hit | The rival reels for 10 ticks. **No knock-back** | **A knock-back.** At a full charge, a launch that the stick nudges and the director stages, or a lift of 45 ticks with no stick |
 | On a guard | Chips | A guard raised in the last 30 ticks blocks it, with a quarter of the damage through. **A set guard breaks:** he staggers for 20 ticks and half the damage goes through |
 | A perfect block | Turns it | Turns it: he staggers for 20 ticks, and the riposte follows |
@@ -107,13 +111,15 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 | The answer | What happens |
 | :--- | :--- |
-| **A shove** (a tap of A, §4) | The charge is lost and he staggers for 8 ticks |
+| **A shove** (a tap of A, §4) | The charge is lost and he staggers for 8 ticks. Always |
+| A quick heavy or a heavy flurry blow, before the half charge at 20 ticks | The charge is lost and he reels for 6 ticks |
+| A charged blow, a charged light included | The charge is lost. Always. So the charged light has a job: it is the quick answer to a charging heavy |
 | A clinch or a tackle | He is grabbed out of it |
 | A fresh guard, or a perfect block | As in the table above. This is "blocking correctly" |
 | Getting out of its reach: a dodge, a slip, a zip away | It whiffs, and he is open for 20 ticks |
 | A charged Y of his own, a power attack or a signature | Two heavy commitments meet (`melee-press-feel.md` §11) |
 
-**So against a flurry:** a fighter who keeps flurrying into a full charge takes it. Over the 48 ticks it needs, an X flurry does about 5 brawl lights to him and a Y flurry about 8, and then 10 come back with a launch. The flurrier has to stop and answer.
+**So against a flurry:** a fighter who keeps tapping X into a full charge takes it. Over the 48 ticks it needs, his X flurry does about 2.4 brawl lights through the armour, and then 10 come back with a launch. A Y flurry is different: its first blow lands inside 12 ticks, before the half charge, and ends the charge. So against a rival who is mashing Y, a charge has to start in a gap, or behind the quick heavy that opens it, whose 6-tick reel is its cover. The first playtest of the slice decides whether this holds.
 
 **This replaces "three clean blows stop a heavy's wind-up"** (`melee-press-feel.md` §7), which was never built and says the opposite of what Orb asks.
 
@@ -123,7 +129,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 **A failed charge hurts 3 of 10** (Orb, questionnaire 19). A whiffed charged heavy leaves him open for 20 ticks, where it was 30. The rule for every flashy option: failing never leaves him open for more than 20 ticks, and never adds damage of its own.
 
-**Data:** `charge.x` (start 8, full 14, land 4, worth 1.5 to 2, reel 10), `charge.y` (charged 16, full 40, land 8, worth 6 to 10, ki 4, max hold 70, whiff 20), `charge.justTicks` 4, `guard.freshTicks` 30.
+**Data:** `charge.x` (start 8, full 14, land 4, worth 1.5 to 2, reel 10), `charge.y` (charged 16, half 20, full 40, light damage taken 0.5, land 8, worth 6 to 10, ki 4, max hold 70, whiff 20), `charge.justTicks` 4, `guard.freshTicks` 30.
 
 ## 4. A: the shove, the clinch and the tackle
 
@@ -132,7 +138,7 @@ Orb's sketch, ruled as given. A is how a fighter takes hold of the other's body.
 | | **A tapped: the shove** | **A mashed: the clinch** | **A held: the tackle** |
 | :--- | :--- | :--- | :--- |
 | What it is | Both hands, no damage. The rival goes back 3 bh and the brawl lets go | He takes hold, turns the rival over in the air, and throws him | He coils, and then shoots at the rival and carries him into whatever is on the line |
-| Timing | 8 ticks of wind-up | A second tap inside the shove's wind-up turns it into the reach for a clinch: 10 ticks. In the clinch, two more taps are **the trip** and two more are **the throw.** It lasts 45 ticks at most | Held 18 ticks to charge, and full at 36. He travels at a zip's speed, under Legal's floor |
+| Timing | 8 ticks of wind-up | A second tap inside the shove's wind-up turns it into the reach for a clinch: 10 ticks. In the clinch, two more taps are **the trip** and two more are **the throw.** It lasts 45 ticks at most | The shove goes first, at 8 ticks. Still held at 18 ticks, he coils for the tackle, which is full at 36. He travels at a zip's speed, under Legal's floor |
 | Range | In reach | In reach | 6 bh at the shortest charge, 12.5 bh at full |
 | Worth | Nothing | The trip is worth 2 brawl lights, and the rival can't guard for 20 ticks after it. The throw is a knock-back of 8 bh | The rival takes the impact as a landing at that speed. **The tackler takes nothing** |
 | Where it ends | | The stick nudges the throw and the director stages it. Thrown through the shell of a damaged building, he finishes it (Orb, questionnaire 19) | He carries the rival 6 to 16 bh along the line to the first surface: the ground, a ridge, a building. **Both end in the crater.** At a full charge the rival is buried, which gives a free follow-up. With nothing on the line, he throws him off |
@@ -142,7 +148,7 @@ Orb's sketch, ruled as given. A is how a fighter takes hold of the other's body.
 | Limit | One shove in 45 ticks | The grab lockout: 90 ticks, shared with every grab | The grab lockout |
 
 - **The clinch is how a flying fighter takes control,** as Orb put it: no ground is needed. The trip turns the rival over, and the throw sends him.
-- **How A is read** (with Controls): the shove's 8-tick wind-up starts on the press. A second tap inside it is the clinch's reach, two more taps in the clinch are the trip, and two more are the throw: the counts are 2, 4 and 6. Let go before 18 ticks with no second tap, it is the shove, which goes at 8 ticks or as he lets go, whichever is later. Still held at 18, it is the tackle's charge and no shove is thrown.
+- **How A is read** (with Controls): the shove's 8-tick wind-up starts on the press, and the shove goes at 8 ticks whatever the hold. A second tap inside the wind-up is the clinch's reach in its place, two more taps in the clinch are the trip, and two more are the throw: the counts are 2, 4 and 6. Still held at 18 ticks, he coils for the tackle. So from inside a brawl a tackle is a shove and then a tackle on the rival as he recovers, and from the mid band the shove meets nothing and the tackle is the approach. The shove's lockout doesn't hold the tackle back.
 - **No grab spam** stands (`melee-press-feel.md` §10). The clinch, the tackle, the zip tackle, the dive grab and the seize (§6) share the one lockout, and a thrown fighter can't be grabbed for 120 ticks.
 - **The taunt is a gamble** (Orb picked it). Out of reach, a tap of A taunts for 45 ticks. Finished, it gives his meter its taunt gain and 10 ki. Hit before it finishes, he gets nothing and staggers for 12 ticks. That is a 3 of 10: a real loss, and a small one.
 - The feedback that "the context button didn't seem to do anything" is this: in the live brawl A has no reading in reach.
@@ -150,6 +156,8 @@ Orb's sketch, ruled as given. A is how a fighter takes hold of the other's body.
 **Data:** `shove` (wind-up 8, push 3 bh, stagger on a charge 8, lockout 45), `clinch` (reach 10, trip at 2 taps, throw at 4, max 45, trip worth 2, no-guard 20, throw 8 bh, tech 8), `tackle` (charge 18 to 36, range 6 to 12.5 bh, carry 6 to 16 bh, ki 10, whiff 20), `taunt.ki` 10.
 
 ## 5. B: recast as his Charge at close range
+
+> **This section is being replaced.** Orb answered question 3: "I like the body blows suggestion, but it should read more as a new axis to the 'light / heavy' paradigm, I'm thinking 'vicious' or something similar... please pitch some more alternatives." So in the martial arts stance B becomes a third kind of blow beside the light and the heavy, and signatures leave the single button. The pitch is `pitch-third-blow.md`: four options, with vicious recommended. Until Orb picks, slice C5 waits, and the B column of §2 and the B rows of §8 are placeholders. What stands from this section whatever is picked: no signature starts on a tap, signatures play live, and a beam is held and aimed by the player. The Charge burst, the Charge blast and the Charge flurry move to the energy arts stance's B.
 
 **Orb:** "just hitting B and getting locked into what feels like a beam-attack cutscene doesn't feel right, B needs a recast and its own unique moveset."
 
@@ -172,7 +180,7 @@ Until now a tap of B was a 25-ki signature, and in the martial arts stance it fi
   - A beam lasts while B is held, up to its tier's length, and it ends when he lets go. Ki is spent by the second as it fires, and not all at the press.
   - The stick nudges its aim, as it nudges a launch.
   - A melee art is a string that the player drives: the art runs for as long as he keeps pressing, each press is its next blow, and he can stop.
-- **B is read as Y is:** its motion starts on the press, a release before 12 ticks is the Charge burst, and a hold past 12 is the ladder above with no burst thrown first. So no Charge is spent on a burst before a signature.
+- **B is read as every button is:** its quick move goes on the press, and a hold past 12 ticks charges what follows.
 - **While he charges B:** a blow that lands before the first flash ends the charge. From the first flash he is committed, and armoured against lights and flurry blows.
 - **In the energy arts stance** nothing changes for X and Y. Its B follows the same ladder: a tap is a quick ki shot, and a hold is the beam.
 - **Until a fighter's martial art is authored,** a held B in the martial arts stance fires the beam by these rules: charged, live, and held by the player. That is the stopgap that was there before, without the cut scene.
@@ -198,7 +206,11 @@ Each pair does what its two buttons mean together. X is quick, Y is strong, A is
   - the director reads it from the press edges it already gets, by cell: X+Y, Y+B, B+A and A+X. There is no new bit in the intent;
   - **the window is 3 ticks** (`read.pairWindow`), doubled with the assist setting;
   - **both buttons must be fresh:** neither was pressed in the 8 ticks before (`read.pairFresh`). So a two-finger mash never throws a pair by accident, and a pair after a flurry costs an 8-tick wait;
-  - **the first press is never delayed.** It is its own blow on its own tick. When the partner arrives inside the window, the director replaces that blow if it hasn't landed. A light that has already landed stays landed, and the pair follows it;
+  - **the first press is never delayed.** It is its own move on its own tick. What happens to it when the partner arrives inside the window depends on what it was:
+    - **a light pressed first is kept.** It lands 2 ticks after its press, so it is a real blow: its damage stands and it counts toward the run. The pair is thrown from the partner's press;
+    - **any other first press (Y, A or B) is replaced.** It is far from landing, and its motion becomes the pair's;
+    - **an X that arrives as the partner completes the pair,** and is never thrown as its own light;
+  - **a kept light isn't too much for the prices.** It adds one brawl light at most, and only when X came first by a tick or more. The lift is worth 3 for 10 ki and the slip lands a light of its own for 5, so the prices stand;
   - a pair is one press in the log;
   - **the ki price is the second guard** against a power attack thrown by accident, as Controls asked: 10, 5, 20 and 20;
   - **yes to the four one-key pair actions,** remappable, for keyboards and for one-handed play;
@@ -212,12 +224,33 @@ Each pair does what its two buttons mean together. X is quick, Y is strong, A is
 
 ## 7. The even mash, and the rest of questionnaire 19
 
-**An even mash ends with both thrown back, and nobody wins** (Orb). At the trade's limit of 120 ticks:
-- **a lead of 2 or more in the runs still takes the close.** The faster masher wins the trade, as now;
-- **runs within 1 of each other are a level trade, and both fighters are thrown back 4 bh from the centre.** No damage, no stagger, and nobody has won a decisive exchange. The brawl ends, and each is free as his slide ends;
-- **the seeded draw and its momentum are withdrawn** (`flurry.momentum`, `melee-press-feel.md` §9d).
+**An even mash ends with a double hit: both land, both are thrown back, and nobody wins.** Orb, in questionnaire 19 and then on this page's question 5: "double knockbacks should be slightly uncommon, but exciting developments when they happen. Potential for dynamic closeup PiP of, for instance, both characters punching each in the face, sending each flying in opposite directions."
 
-**What it does to the mirror.** Two even lights-only mashers now never win an exchange from each other, so that mirror doesn't finish. That is the rule working: an even mash is a stalemate, and winning takes something better than mashing evenly. QA's rows change with it (§11).
+| | The rule |
+| :--- | :--- |
+| **A lead in the trade** | At the trade's limit of 120 ticks, a lead of 2 or more in the runs takes the close, as now. After the limit, a lead of 2 takes it as soon as it appears |
+| **A level trade** | Runs within 1 of each other at 120 ticks. The trade goes on |
+| **The double hit** | A trade that is still level at **240 ticks,** which is 4 s of unbroken even trading. Both throw one blow at the same instant, and both land |
+| **Its worth** | **4 brawl lights to each,** on the head. That is a skill strike's worth |
+| **What follows** | Both are thrown back 6 bh from the centre, in opposite directions. Nobody has won a decisive exchange. The brawl ends, and each is free as his slide ends |
+| **The mood** | The clash's 480 units |
+
+- **Why 240 ticks.** With the limit alone, every even mash would end this way every 2 s, and it would be the default. A median brawl is about 3 s and the 90th percentile about 10 s, so a trade that stays level for 4 s is the slightly uncommon thing Orb asked for.
+- **The band:** 0.5 to 2 double hits a match in AI matches, at least one in 40 to 70% of matches, and never more than 4 in one. The lever is the 240.
+- **The seeded draw and its momentum are withdrawn** (`flurry.momentum`, `melee-press-feel.md` §9d).
+
+**The staged moment.** It plays live, with no pause, and it is the one place in an ordinary brawl that goes past 4 of 10.
+
+| Who | What it needs |
+| :--- | :--- |
+| **Encounter** | It knows 8 ticks ahead: at 240 ticks both throw, and contact is 8 ticks later. It sends a cue with that tick, so the others can be ready |
+| **Camera** | A picture-in-picture close-up of the two faces and fists, for about 40 ticks: it opens 6 ticks before the contact and closes as they part. The main view carries on beneath it. The split rig already draws a second pane |
+| **Animation** | Two poses a fighter: his own straight blow to the face, in his own hands (a palm heel for the Protagonist, a fist for the rival), and taking one. The slide that follows exists |
+| **VFX** | Sparks at the point of contact, and dust on the slides. Inside Legal's k04: no ring of rubble, cracks or lightning, and no flash over the whole body |
+| **Audio and haptics** | A beat of quiet before it, then one hit. A strong pulse to both players |
+| **UI** | The frame of the inset |
+
+**What it does to the mirror.** Two even lights-only mashers still never win an exchange from each other, so that mirror doesn't finish. They now wear each other down by double hits, and still nobody is opened for a finisher. That is the rule working: an even mash is a stalemate, and winning takes something better than mashing evenly. QA's rows change with it (§11).
 
 | Orb's answer | The rule |
 | :--- | :--- |
@@ -249,9 +282,9 @@ Each pair does what its two buttons mean together. X is quick, Y is strong, A is
 | **A tapped** | The shove. Out of reach: a pick-up, a civilian, or the taunt | 0 |
 | **A mashed** | The clinch, the trip, and the throw | 0 |
 | **A held** | The tackle, charged from 18 ticks, into a crater | 10 |
-| **B tapped** | A Charge burst, with a reach of 5 bh | 4 |
-| **B mashed** | The Charge flurry, and the third part of a mix-up | 4 a blow |
-| **B held** | A Charge blast at 12 ticks, his art at 24, his signature at 48, all live | 12, 25 or 45 |
+| **B tapped** | The third kind of blow, as Orb picks it (`pitch-third-blow.md`) | |
+| **B mashed** | Its flurry, and the third part of a mix-up | |
+| **B held** | Its charge. Signatures are no longer here: the pitch puts the defining one on RT + B | |
 | **X+Y** | The lift | 10 |
 | **X+A** | The slip | 5 |
 | **Y+B** | The breaker | 20 |
@@ -300,6 +333,8 @@ This is the EP's order (2026-10-06), with Animation's sizes (`docs/animation/bra
 | 7 | **Z2** | The zip away, the chase of a launch, the signature zip | | As planned |
 | 8 | **H1** | The fire-on-the-move hybrid, LT + RB | | The hybrid's cells and its tell |
 
+**The double hit's close-up can follow C1.** C1 ships the rule: the level trade, the two blows and the two slides. The picture-in-picture, its two poses a fighter and its sparks (§7) come when Camera, Animation and VFX have them, and the rule doesn't wait.
+
 **Does anything depend on the clinch existing before B? No.** The recast of B needs nothing from A. The seize is the only pair that needs the clinch's paired poses, and it is built with them.
 
 **The shove rides with C2** (the EP's ruling, 2026-10-06). It is the designed answer to a charged Y (§3). A charge that is armoured from its first tick, with its answer three slices away, would make Orb's first playtest of C2 misleading. It is small for Animation, and it gives A something to do in a brawl, which the second player reported as missing. The tackle stays in C4a.
@@ -317,7 +352,8 @@ This is the EP's order (2026-10-06), with Animation's sizes (`docs/animation/bra
 | The even lights-only mirror finishes | At least 95% | **Retired.** It is a stalemate by rule (§7). It is reported, with how it ends |
 | An uneven mirror: 8 ticks against 10 | Not a row | **New:** it finishes at least 95% of the time, and the faster tapper wins at least 80%. Brink to KO at 25 to 50 s is read here |
 | Level trades that change who has the momentum; wins from the first slot | 5 to 15%; 40 to 60% | **Retired** with the draw |
-| Level trades that end in a double throw-back | Not a row | **New:** all of them (a hard test) |
+| Double hits a match | Not a row | **New:** 0.5 to 2 in AI matches; at least one in 40 to 70% of matches; never more than 4. Every trade still level at 240 ticks ends in one (a hard test) |
+| Taps that start a charge the player didn't mean, by device | Not a row | **New:** under 5% on a pad, a keyboard and touch |
 | The masher against the medium AI | 35 to 50%, tapping X every 8 ticks | Kept for the X masher. **New, reported:** the Y masher and the alternator, each against medium. I expect the Y masher lower, since he runs out of ki, and the alternator a little higher |
 | Presses of a scripted two-finger masher that read as a pair | Not a row | **New:** under 5% |
 | A full charged Y thrown into a flurry lands | Not a row | **New:** at least 80% when the flurrier keeps flurrying; and a shove ends a charge at least 90% of the times it is tried in reach |
@@ -328,14 +364,16 @@ This is the EP's order (2026-10-06), with Animation's sizes (`docs/animation/bra
 | The time a failed option leaves him open | Not a row | **New:** at most 20 ticks (a hard test) |
 | Ki spent a minute, by what it bought | Reported for zips only | **New, reported:** flurry blows, charges, power attacks, zips, signatures |
 
-## 12. Five questions for Orb
+## 12. Orb's answers to the five questions (2026-10-06)
 
-Each is one choice. The first answer is what this page assumes.
+| # | The question | Orb's answer | Where |
+| ---: | :--- | :--- | :--- |
+| 1 | Walking out of a brawl | "if both players move their sticks in the opposite direction they should be able to walk out." It takes both, and my one-sided walk-out is withdrawn | §1 |
+| 2 | What ends a string | A held Y ends it, and X+Y is the lift. As the page had it | §3, §6 |
+| 3 | B | A third kind of blow, a new axis beside light and heavy: "vicious or something similar". More alternatives are asked for | `pitch-third-blow.md`; §5 waits |
+| 4 | The charged Y's armour | Deferred to the EP, who ruled it in two steps | §3 |
+| 5 | The even mash | Both take a hit. It should be "slightly uncommon", and exciting, with a close-up | §7 |
+| | The cross-pad pairs | Confirmed: none. Y+A and X+B stay empty | §6 |
 
-1. **Walking out of a brawl:** free when no blow is landing on you, or always at the price of a dodge or a zip?
-2. **What ends a string,** now that a tapped Y is a flurry blow: a held Y, with X+Y as the lift; or X+Y as the ender, with the lift on a full charge only?
-3. **B:** ki blows on a tap and signatures only on a held B, played live; or B as a second family of body blows, with signatures moved to a pair?
-4. **A charging Y against a flurry:** armoured from the first tick; or armoured only once it is half charged, so a quick enough flurry can still stop it early?
-5. **The double throw-back of an even mash:** no damage to either; or both take a hit?
+**Still open:** which axis B takes, which is the one choice in the pitch.
 
-The EP has one more to confirm with Orb, and it isn't mine: that the "Y+X" in Orb's list of cross-pad pairs meant Y+A.
