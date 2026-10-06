@@ -77,7 +77,13 @@
         "guardShare": 0,
         "enderShare": 0.5,
         "heavyApproachShare": 0.2
-      }
+      },
+      "zipShare": 0.1,
+      "zipHeavyShare": 0.1,
+      "zipCounter": 0.2,
+      "zipDodge": 0.2,
+      "zipExit": 0.2,
+      "zipPunish": 0.2
     },
     "medium": {
       "beamAnswer": 0.35,
@@ -133,7 +139,13 @@
         "guardShare": 0,
         "enderShare": 0.2,
         "heavyApproachShare": 0.6
-      }
+      },
+      "zipShare": 0.3,
+      "zipHeavyShare": 0.2,
+      "zipCounter": 0.5,
+      "zipDodge": 0.4,
+      "zipExit": 0.5,
+      "zipPunish": 0.5
     },
     "hard": {
       "beamAnswer": 0.6,
@@ -189,7 +201,13 @@
         "guardShare": 0,
         "enderShare": 0.1,
         "heavyApproachShare": 0.9
-      }
+      },
+      "zipShare": 0.5,
+      "zipHeavyShare": 0.4,
+      "zipCounter": 0.8,
+      "zipDodge": 0.7,
+      "zipExit": 0.8,
+      "zipPunish": 0.8
     }
   },
   "beamLook": {

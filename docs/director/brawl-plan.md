@@ -343,3 +343,140 @@ This section was written before the brawl existed. The brawl is in (B1, B1b, B1c
 - 7.7: the kept bands are the ones in force after section 9f: the masher 35 to 50%, the mixing presser's brawls, bolt-only 20 to 40%, the mixed blaster 30 to 50%, the medians 360 to 480 s. New for the zip: the AI's share of fight time in a brawl at 30% or more.
 - 7.8: Simulation's, World's and Animation's rows are answered above. Still open: Tools' schema for the `zip` block and the AI's four keys; QA's zipper, counter and puncher scripts; VFX's streak and ring; Camera's use of `zip_end`.
 - 7.9: the order stands. Z1 is the zip strike and the zip heavy; Z2 the zip away, which is also the AI's way out of a brawl it is losing (the last brawl slice).
+
+### 7.11 Z1 as built (2026-10-05)
+
+Z1 is built: `zip-z1.md` has the rules, the cues, the read and the rows. Where the build departs from 7.1 to 7.10:
+
+- **It is an exchange in reach after all.** 7.2 said the zip is "not an exchange with a beat list". The tell and the way in run with no exchange, but the ticks in reach run on the brawl's lines with no brawl announced (`DirBrawl.beginQuiet`). That gave the guard, the perfect block and its riposte, the catch, the damage and the strike beat Animation reads for nothing, and a caught or countered zipper is already in the brawl that starts.
+- **The outrun** is measured from where the zip began: the rival more than 12.5 bh from that point before the arrival. The rush itself always arrives.
+- **The bow** is `zip.bowBh` at the middle of the way out, and a way out passes the rival when its straight line comes within 1.5 bh of him at any angle.
+- **The rival's answers are pressed where he stands** and kept for the arrival. The heavy counter is timed by the end of its wind-up. A heavy held and let go on the arrival isn't modelled before he arrives.
+- **The AI has six keys a level,** not four: `zipPunish` and `zipExit` were added. It doesn't zip at a rival who is pressing.
+- **Medium's `brawl.rashHeavy`** went from 0.33 to 0.3, for the masher's band on Simulation's retune (07f5652).
+- **The order from here** is the second pass's (`docs/design/brawl-second-pass.md` section 10, after Orb's play notes): C1, control and the even mash (section 9 below); C2; Orb plays; C3, which is the skill strike as cut in section 8; C5; C4a and C6a; C4b; then Z2 (the zip away, the AI leaving a brawl it is losing, the chase of a launch, the rushed zip heavy, the signature zip, piloted charges) and H1.
+
+## 8. B2, the skill strike: the cut (2026-10-05)
+
+Spec: `docs/design/melee-press-feel.md` section 4, and the four deliverables in section 9d. Nothing here is built.
+
+**On hold** (the EP, after Orb's play notes). It is C3 in the second pass's order, after C1 and C2 and after Orb has played them, and it is widened there to Y on the beat (`docs/design/brawl-second-pass.md` section 9). The cut below is as the EP accepted it, with Game Design's and Controls' rulings. Three things in it are stale and are re-cut with C3: "a heavy after two landed blows is the ender" is withdrawn, so "an ender at flow 3 launches" needs a new home; the banded row's masher is the X masher of the second pass; and the tapped Y is a quick heavy by then.
+
+### 8.1 What B2 includes
+
+| Thing | Rule | Number (data, the `brawl` block) |
+| :--- | :--- | :--- |
+| **The beat point** | Every light or skill strike of his that lands sets it: 24 ticks after contact, on `S.tick`, as his taps are counted. A reel doesn't move it. Every piece is 24 until Combat's rows carry their own | `skill.beatTicks` |
+| **On the beat** | A press within 4 ticks of it, either side, inclusive. The grade is taken at the press's own tick (`S.tick` less `waited`), so a press in the window is on the beat even when a reel holds the blow. The window is Controls': 5 on touch, doubled by the accessibility factor, and its centre moves by the player's device offset | Controls' `read.beatHalf`, `touchBeatHalf` |
+| **Perfect and good** | Perfect is within 2 ticks of the beat point, good is at 3 to 4. Perfect counts toward the perfect streak. The damage is the same | Controls' `read.blurBeatHalf` |
+| **The skill strike** | Contact 6 ticks after the press. Worth 4 brawl lights. It reels the rival 8 ticks, clears his run and adds 1 to the flow. Hit-stop 4 | `skill.contactTicks`, `skillMul` (existing), `skill.reelTicks`, `skill.flow`, `hitstop.skill` |
+| **A shared beat** | A skill strike and a flurry blow that land within 2 ticks: the skill strike wins and the flurry blow is voided | `tradeTicks` (existing) |
+| **Early** | A press between his contact and the window is a flurry blow at once, and a missed beat: the flow goes to 0. So a masher never holds flow | |
+| **Late** | A press after the window is a plain light. It adds 1 to his run, doesn't clear the rival's and doesn't touch the flow. The rhythm starts from it | |
+| **The flow** | Earned and lost in a brawl from here. It is lost by an early press, or by 90 ticks with no press. Letting a beat pass is not a miss. An ender at flow 3 launches | The flow's own data |
+| **Skill strikes that exist in worth already** | The riposte's light, the zip's tech counter and the zip strike become skill strikes in kind: the 8-tick reel, the 4-tick hit-stop, the tech look | |
+| **The AI** | It puts a share of its lights on the beat. That share is the first lever for the masher's band, ahead of the tap gap and the reversals | Each level's `timedPress`, starting at 0.15, 0.45 and 0.8 |
+
+Not in B2: the juggle and the lift (B3); the set light, the parry and the stuff (the stances); the section 9c answers.
+
+### 8.2 Cues, fields and reads
+
+- The `blow` cue gains the text `skill`. Its strike beat carries `bk` 3, `style` `tech`, `grade` `perfect` or `good` (Controls' split), and `beat`: the ticks from its contact to its beat point.
+- A new cue `beat`, sent as a light or a skill strike lands: `actor`, and `n` the beat point's `S.tick`. It is the mark for the limb's set, the glint, the tick sound and the optional ring.
+- `DirBrawl.beatAt(S, f)` returns his beat point. A second read gives the window's two ends.
+- `press_ack` gains `early` and `late`.
+
+**Animation's two questions.**
+- **The clock.** The beat point is on `S.tick`, because the player's rhythm and Controls' grade are. So the strike beat's `beat` field is in `S.tick`s, and the `beat` cue's `n` is the beat point as an absolute `S.tick`. The body should key on that tick and not count live ticks from the contact: its own hit-stop is inside the 24, and so is every freeze the rival's blows add, which nobody knows at the contact.
+- **What the beat point is on the body** (Game Design's ruling, section 4). The limb is pinned at the contact pose until 10 ticks before the beat point, returns over exactly the last 10 ticks and sets on the beat with the glint. A press in the last 4 ticks of the return throws the skill strike out of the return. After the window the limb stays set. To the sim the beat point is only a tick: his line is free from the contact on, so an early press cuts whatever the limb is doing.
+
+### 8.3 What it needs from others
+
+| Who | What |
+| :--- | :--- |
+| **Controls** | Answered (`docs/controls/skill-strike-input.md`): the window and the split above; a press inside a hit-stop is graded at its own tick, which is live; no change to the intent. One limit: two light presses inside one long freeze (4 to 9 ticks) merge into one. If a timed presser's second press goes missing in the probe, Controls fixes it in the layout. A Simple layout's tap is 3 to 6 ticks late, and the offset and the assist absorb it |
+| **Combat** | A beat of 20 to 28 by the piece, when its rows carry one |
+| **Animation** | The tech pose on the contact tick in a brawl, and the limb's set at the beat point, from the `beat` cue |
+| **VFX, Audio** | The glint at the beat point, the hard diamond contact mark, the wire echoes; the tick at the beat point |
+| **UI** | The beat ring option, off by default, reading `beatAt` for both fighters |
+| **QA** | Its timed script reading `DirBrawl.beatAt` |
+| **Simulation** | `mood.json` `impulses.skillStrike` 50 (Game Design's value), in B2's commit by the EP's grant |
+| **Tools** | The `skill` block and `hitstop.skill` |
+
+### 8.4 What it is measured on
+
+- **The banded row:** a timed presser against the same presser mashing at an 8-tick gap wins 62 to 82%.
+- **Reported beside it:** each of them against the medium AI. The timed presser's target there is 70 to 90%, and it is expected to read over until the parry exists.
+- Skill press to contact: 6 ticks, 95% inside 8. The share of a timed presser's presses graded on the beat while a masher is hitting him.
+- The masher's three bands; the mixing presser's brawls; the medians on both arms; the mood.
+- With flow earned in a brawl: the launch share of the exchanges that separate (25 to 40%), and of brawl endings that separate, knock-backs 60 to 75% and launches 25 to 40%.
+
+## 9. C1, control and the even mash: the cut (2026-10-05)
+
+Spec: `docs/design/brawl-second-pass.md` sections 1 and 7, with Controls' `docs/controls/q19-input.md` and Animation's `docs/animation/brawl-second-pass-view.md`. Nothing here is built, and it isn't started until Z1 is committed.
+
+### 9.1 What C1 includes
+
+| Thing | Rule | Number (data, the `brawl` block) |
+| :--- | :--- | :--- |
+| **The centre** | The point midway between the two. Each live tick it moves by the two sticks added together, and both fighters move with it | |
+| **A stick's rate** | His stick, by how far it is pushed, × 0.4 of his own free-flight speed. Two who agree add up to 0.8, and two who oppose cancel | `nudgeMul` |
+| **It ramps** | From the tick a direction is first held, to full over 8 ticks. A stick at full deflection from its first tick, which is a keyboard or a D-pad, starts at 0.4 of its rate and reaches all of it over 12 | `nudgeRampTicks`, `nudgeDigital` |
+| **It is capped** | The centre never moves more than 0.3 bh in a tick | `maxStepBh` |
+| **By his state** | Striking, charging or reeling from a light: full. Guarding: 0.6. Staggered: none, since the core has cleared his stick | `nudge.guard` |
+| **The carried speed** | The centre starts with the mean of the two velocities as they meet, which is half the closing speed when one of them stood. It fades to nothing over 20 ticks | `carryShare`, `carryTicks` |
+| **The attraction** | As now, on the pair's gap only: each is held at striking distance from the centre and at one height. It no longer has a point to pin them to, because the centre moves | `pullBhPerSec` (existing) |
+| **The ground and buildings** | The centre slides along the ground and stops at a building's face. My default; a brawl that breaks through a wall is a set piece for later | |
+| **Walking out** | Both sticks away from the rival, within 45 degrees of straight away, for 12 ticks running. The brawl ends `walk`: free, nobody decisive, no wait after it. A blow thrown by either starts the count again. A boost held with the stick away is still the escape, at its price | `partTicks`, `partDeg` |
+| **A lead in the trade** | At 120 ticks a lead of 2 takes the close, as now. After that a lead of 2 takes it on the tick it appears | `flurry.tradeMaxTicks`, `levelWithin` (existing) |
+| **The double hit** | A trade still level at 240 ticks. Both lines are cleared and each throws one blow, landing 8 ticks later on the same tick. Each takes 4 brawl lights to the head. Both are thrown back 6 bh from the centre, opposite ways. Nobody is decisive. The brawl ends `double` | `flurry.doubleTicks`, `double.windupTicks`, `skillMul` (existing), `double.throwBh` |
+| **Withdrawn** | The seeded draw, `flurry.momentum` and the last closer's slot | |
+| **The AI** | It holds a nudge at a share of its ticks in a brawl: the Protagonist away from people and the rival toward them, by the launch planner's own personality term. It answers a rival's away stick with its own at a share, more when it is behind | Each level's `nudgeShare` and `walkOut` |
+
+Not in C1: the picture-in-picture and the two poses of the double hit (the rule doesn't wait for them); anything on Y, A or B.
+
+### 9.2 Cues and reads
+
+- `brawl_end` gains the texts `walk` and `double`.
+- A new cue `double_hit`, sent as the two blows are thrown: `n` the tick they land, `x` and `y` the centre. It is 8 ticks ahead, for Camera, Audio and VFX. The two strike beats carry `double` true.
+- `trade_break` keeps the text `lead` and loses `draw` and its `k`.
+- `DirBrawl.centre(S, ex)` returns the centre's `x`, `y`, `vx` and `vy`, and the ticks both have held away (0 to 12), for Camera, Animation and UI.
+- The fighters' own `vx` and `vy` are the drift (9.3), so anything that already reads a fighter's velocity sees it.
+
+### 9.3 Where the movement sits, and what C1 needs
+
+**The movement can sit in the director.** The core already steps a locked fighter by his own velocity, with a damping (`sim/core/fighter.gd`, the `locked` branch), and the brawl's attraction already writes both positions. C1 sets both fighters' `vx` and `vy` to the centre's velocity each live tick and lets the core move them.
+
+| Who | What |
+| :--- | :--- |
+| **Simulation** | 1. The free-flight speed as one read (it is a formula inside `stepFighter`: the fighter's speed, his tier, his legs, his stance), so the 0.4 is of the number the core flies him at. A refactor with no change to the goldens. 2. Its yes to the director setting a locked fighter's `vx` and `vy` each tick, and whether the locked branch's damping should stand: it takes about 6% off each tick's step. 3. How the director asks for the clash's mood impulse (480) on a double hit: the director makes no mood calls today |
+| **Controls** | One question. The intent doesn't say which device a stick is, and a pad pushed to its edge reads the same as a key. So the digital ramp would be applied to any stick at full deflection from its first tick. If that is wrong, the pure helper Controls offered (`q19-input.md`) is the fix |
+| **Animation** | Nothing to author, by its own page. It reads the fighters' `vx` and `vy`, which are the drift. Its test of a tug of war decides whether a blow's reach is read again on its contact tick. The double hit plays with two existing straight blows until its poses exist |
+| **Camera** | A pair whose centre moves at up to 0.3 bh a tick and can cross the seam; `DirBrawl.centre` for the frame; `double_hit` 8 ticks ahead for the inset, when it has one |
+| **QA** | The rows of the second pass's section 11 that C1 owns: the centre moves within 2 ticks of a stick (a hard test); bh a second for a held stick against none; double hits a match; every trade level at 240 ticks ends in one (a hard test); the even lights-only mirror retired and the 8-against-10 mirror added |
+| **Tools** | The keys above, and `flurry.momentum` removed |
+| **Game Design** | The building default above. Whether a walk-out's 12 ticks count while one of them is guarding |
+
+### 9.4 Its size and its risks
+
+- **Size:** the attraction's block in `tick`, the carry in `begin`, `_tradeTick` rewritten, a double-hit path (two blows by `blowAt`, their contact, the two slides, the end), the AI's nudge and walk-out, and the probe's rows. About 250 lines in `brawl.gd` and one chain.
+- **The masher's bands will move.** A level trade against the medium AI was settled by a draw at 120 ticks. Now it runs to 240 and costs both of them 4 lights. The masher's three rows and the match's length are re-read, with the AI's tap gap as the first lever.
+- **Zips into a moving brawl.** A zip's end point follows the rival already. A caught zipper joins a brawl whose centre has a velocity; the carry is taken from the two as they are then.
+
+### 9.5 How large C2 is in my code
+
+C2 is the largest brawl slice so far: the second pass's sections 2 and 3, with the shove from section 4.
+
+| Part | What it touches |
+| :--- | :--- |
+| **One tap-and-hold rule** | `takes`, `press` and `_throw`: every press throws its button's quick move on time, and a button still held at its hold point charges the move that follows. The 26-tick heavy, its wind-up and `_hold` go |
+| **A flurry on Y, and the mix-up** | `_throw`, `_flurryMul` and `contact`: the gap, rate, contact, ki, reel and guard chip by button; a quick heavy adds to the run. `_piece` and the repeat rules across both buttons (Legal) |
+| **The ender is withdrawn** | `_piece`, `contact`, `_heavyLanded`, the launch gate's ender, `enderShare`, and B1c's heavy riposte, which is "a heavy or an ender" today |
+| **The charges** | Two new line states. The armour in two steps, in `contact`, on the fighter being hit. What ends a charge. The whiff. The just release. The launch at a full charge |
+| **The fresh guard** | `interrupt.gd`: a guard raised in the last 30 ticks against a set one, for the charged heavy only |
+| **The shove** | A new reading of A in reach, beside the reversal's A with guard held: an 8-tick wind-up, 3 bh, the brawl lets go, a charge ended with a stagger, the lockout |
+| **The AI** | `aiInput` and `_aiHeavy` rewritten: the Y flurry, the mix-up, a charge into a gap, the shove against a charge. `rashHeavy`, `enderShare` and the closing heavy go |
+| **The zip** | The heavy counter is timed by the end of a wind-up that no longer exists, and a zip heavy is worth "a brawl heavy". Both need Game Design's line |
+| **The rows** | Every masher, mirror and mixing-presser row is re-read; the mixing presser's script, which closes with an ender, is replaced by the Y masher and the alternator |
+
+About half of `brawl.gd`'s 1,170 lines change. I would build it as two chains: **C2a,** the tap rule on Y with the heavy flurry, the mix-up and the ender withdrawn, about the size of B1b; then **C2b,** the charges with the armour, the fresh guard, the just release and the shove, about the size of B1c and the zip's answers together. C2a can be committed alone. Orb plays after C2b, since the shove is the charge's answer.

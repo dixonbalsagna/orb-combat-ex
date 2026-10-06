@@ -45,6 +45,9 @@ static func aiInput(S: SimState, f) -> void:
 	if DirBrawl.inBrawl(S, f):
 		DirBrawl.aiInput(S, f)   # in a brawl it chooses at its beats, not on the stance timer
 		return
+	if DirZip.zipping(f):
+		DirZip.aiZipping(S, f, i)   # its own zip: LT stays down, and the stick is its exit
+		return
 	var d: float = SimWrap.sdx(f.x, o.x)
 	var dist: float = absf(d)
 	# Since S2 the AI reads its wounds, not an HP bar: 1 fresh, 0 on the brink (SimWounds.vitality).
@@ -104,6 +107,16 @@ static func aiInput(S: SimState, f) -> void:
 	elif ans == DirBands.R_LIGHT:
 		i.light = true
 	elif ans == DirBands.R_HEAVY:
+		i.heavy = true
+	# A zip is coming (DirZip): the answer the AI drew when it saw the tell.
+	var za: int = DirZip.aiAnswer(S, f, o) if f.state == "free" else 0
+	if za == 1:
+		a.st = 1.0
+	elif za == 2:
+		a.st = 2.0
+	elif za == 3:
+		i.light = true
+	elif za == 4:
 		i.heavy = true
 	var st: float = a.st
 	# The held states for the chosen stance: Guard holds guard; Dodge re-taps the dodge before its window lapses; Escape
@@ -230,6 +243,9 @@ static func aiInput(S: SimState, f) -> void:
 				i.heavy = true
 				i.light = false
 				i.mode = 0
+			# In the mid band it zips at its level's rate (DirZip.aiUse): LT with X or Y, as a player presses it.
+			if not vsHeavy and (i.light or i.heavy) and DirBands.band(f, o) == DirBands.MID and not DirBands.taunting(o):
+				DirZip.aiUse(S, f, o, i)
 			if not vsHeavy and (i.light or i.heavy) and DirBlast.minesOn() and DirBands.band(f, o) == DirBands.FAR and f.ki >= float(skill().get("mineMinKi", 40.0)) and S.rng.next() < float(lv().get("mineShare", 0.0)):
 				i.light = false
 				i.heavy = false

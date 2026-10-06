@@ -259,7 +259,7 @@ func _init() -> void:
 					idle += 1
 					if not S.shots.is_empty():
 						idleShots += 1
-					elif ai.rush != null or me.rush != null:
+					elif ai.rush != null or me.rush != null or DirZip.zipping(ai) or DirZip.zipping(me):   # a zip, from its tell, is an attack on its way
 						idleRush += 1
 					elif ai.stunTicks > 0 or me.stunTicks > 0:
 						idleStun += 1

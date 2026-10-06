@@ -328,5 +328,79 @@
     "blast": {
       "damage": 44
     }
+  },
+  "zip": {
+    "enabled": true,
+    "band": {
+      "minBh": 3,
+      "maxBh": 12.5
+    },
+    "strike": {
+      "ki": 20,
+      "tellTicks": 6,
+      "inTicks": [
+        6,
+        8
+      ],
+      "reachBefore": 4,
+      "reachAfter": 6,
+      "outTicks": 10,
+      "heldTicks": 12,
+      "heldReachBefore": 8
+    },
+    "heavy": {
+      "ki": 30,
+      "tellTicks": 10,
+      "inTicks": [
+        8,
+        10
+      ],
+      "reachBefore": 12,
+      "reachAfter": 10,
+      "outTicks": 12,
+      "heldTicks": 20
+    },
+    "floor": {
+      "minTicks": 4,
+      "bhPerTick": 3
+    },
+    "out": {
+      "freeBh": 8,
+      "bhPerTick": 2,
+      "maxTicks": 20
+    },
+    "exit": {
+      "awayBh": 6,
+      "capBh": 12.5,
+      "slideDeg": 15,
+      "probes": 24,
+      "clearBh": 1
+    },
+    "towardDeg": 45,
+    "awayDeg": 45,
+    "bowBh": 2,
+    "exitSteps": 16,
+    "knockdownTicks": 24,
+    "mul": {
+      "speed": 1,
+      "tech": 1.25,
+      "held": 1.25
+    },
+    "reel": {
+      "speed": 4,
+      "tech": 8,
+      "held": 12
+    },
+    "stagger": {
+      "speed": 12,
+      "tech": 20
+    },
+    "counter": {
+      "techBefore": 4,
+      "heavyBefore": 6,
+      "staggerTicks": 12,
+      "mul": 1.25
+    },
+    "dodgeConvertTicks": 8
   }
 }

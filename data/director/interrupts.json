@@ -342,5 +342,80 @@
       "contactTicks": 10,
       "staggerTicks": 20
     }
+  },
+  "zip": {
+    "enabled": true,
+    "band": {
+      "minBh": 3,
+      "maxBh": 12.5
+    },
+    "strike": {
+      "ki": 20,
+      "tellTicks": 6,
+      "inTicks": [
+        6,
+        8
+      ],
+      "reachBefore": 4,
+      "reachAfter": 6,
+      "outTicks": 10,
+      "heldTicks": 12,
+      "heldReachBefore": 8
+    },
+    "heavy": {
+      "ki": 30,
+      "tellTicks": 10,
+      "inTicks": [
+        8,
+        10
+      ],
+      "reachBefore": 12,
+      "reachAfter": 10,
+      "outTicks": 12,
+      "heldTicks": 20
+    },
+    "floor": {
+      "minTicks": 4,
+      "bhPerTick": 3
+    },
+    "out": {
+      "freeBh": 8,
+      "bhPerTick": 2,
+      "maxTicks": 20
+    },
+    "exit": {
+      "awayBh": 6,
+      "capBh": 12.5,
+      "slideDeg": 15,
+      "probes": 24,
+      "clearBh": 1
+    },
+    "towardDeg": 45,
+    "awayDeg": 45,
+    "bowBh": 2,
+    "exitSteps": 16,
+    "knockdownTicks": 24,
+    "mul": {
+      "speed": 1,
+      "tech": 1.25,
+      "held": 1.25
+    },
+    "reel": {
+      "speed": 4,
+      "tech": 8,
+      "held": 12
+    },
+    "stagger": {
+      "speed": 12,
+      "tech": 20
+    },
+    "counter": {
+      "techBefore": 4,
+      "heavyBefore": 6,
+      "staggerTicks": 12,
+      "mul": 1.25
+    },
+    "dodgeConvertTicks": 8,
+    "_note": "The zip, slice Z1 (sim/director/zip.gd; docs/design/melee-press-feel.md section 2c). LT with X (strike) or Y (heavy) in band: ki paid at the press; tellTicks of tell; inTicks (the range by distance) on the way in; reachBefore ticks in reach before his blow and reachAfter after it; outTicks on the way out, plus 1 for each out.bhPerTick body heights of path past out.freeBh, out.maxTicks at most. heldTicks: the button kept down this long past the tell is the held reading (a zip strike is then in reach heldReachBefore ticks before its blow). floor: no way in or out is under max(minTicks, the distance in bh over bhPerTick, rounded up) (Legal RL-076). exit: awayBh more with the stick straight away, capBh at most from the rival; a blocked point slides slideDeg at a time, probes at most, to a point clear by clearBh. bowBh: the bow of a way out that passes the rival (over him; under him with the stick down and room beneath) or clears the ground. towardDeg, awayDeg, exitSteps: Game Design's stick rules. mul, reel (a zip strike) and stagger (a zip heavy) by reading. counter: a tech strike pressed from techBefore ticks before the arrival, or a heavy landing from heavyBefore ticks before it, until his blow lands, cancels the blow; a tech counter staggers him staggerTicks and is worth a skill strike times mul. knockdownTicks: the drop when a shot hits him on the way out. dodgeConvertTicks: a face press this soon after LT's press takes the dodge back."
   }
 }

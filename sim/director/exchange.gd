@@ -46,6 +46,8 @@ static func requestAttack(S: SimState, A, kind: String) -> void:
 	DirAlchemy.log(S, A, KIND.find(kind), A.act.mode)   # the press log (read-only for now)
 	if DirBrawl.takes(S, A, kind):
 		return   # a brawl is on and he is in it: the press is a blow on his own line, never a request
+	if DirZip.takes(S, A, kind):
+		return   # a zip: its start with LT held in the mid band, a zipper's own press, or his rival's answer where he stands
 	if not A.act.v2:
 		_start(S, A, kind)
 		return
@@ -73,6 +75,32 @@ static var planDefStance: int = -1   # ... and the stance a buried defender is r
 static var planMeet: bool = false   # ... and whether it is the meeting after an answered taunt: the rival is pressing too
 static var planMeetEdge: float = 0.0   # ... and the edge of a rival met while he held a heavy charge (off the attacker's clash chance)
 static var planCharge: bool = false   # ... and whether the approach was a held charge: it keeps its template (DirBrawl.starts)
+
+
+## A zip's arrival (DirZip): the exchange its ticks in reach run in. It is made as _start makes one, with no approach,
+## no cooldown and no template; the zip fills it (DirBrawl.beginQuiet). A zipper has no guard in reach.
+static func startZip(S: SimState, A, D, kind: String):
+	var ex := newEx(A, D, kind)
+	A.exT = S.T
+	D.exT = S.T
+	ex.sA = 0.0
+	ex.sD = D.stance
+	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
+	D.face = -A.face
+	var dState: String = D.state
+	A.state = "locked"
+	D.state = "locked"
+	D.dPrev = dState
+	S.dirS.ex = ex
+	S.dirS.exN += 1; ex.n = S.dirS.exN
+	SimWounds.onExchangeStart(S, ex)
+	DirAlchemy.markFlow(A)
+	DirAlchemy.markFlow(D)
+	for s in range(S.fighters.size()):
+		if S.fighters[s].brink:
+			ex.startBrink |= 1 << s
+	DirInterrupt.onStart(S, ex, KIND.find(kind), A.act.mode, 0)
+	return ex
 
 
 ## Starts a queued request the director can take. When both fighters have one waiting, the fighter who did not start
@@ -153,8 +181,8 @@ static func _start(S: SimState, A, kind: String) -> int:
 		return WAIT   # step 3: a staggered fighter's requests wait
 	if A.state != "free" and A.state != "charging":
 		return WAIT
-	if D.state == "launched" or D.state == "locked":
-		return WAIT
+	if D.state == "launched" or D.state == "locked" or DirZip.untouchable(D):
+		return WAIT   # (no strike reaches a zipper on his way out)
 	if kind == "sig" and A.ki < 45.0 and not SimFighter.sigFree(A):   # the last stand's signature is free
 		if A.ai == null:
 			SimFx.banner(S, "NEED 45 KI", "#9fb4ff", 0.6)
@@ -543,6 +571,7 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	if S.dirS.cool > 0.0:
 		S.dirS.cool -= dt
 	DirBands.tick(S)   # the approach before an exchange: it counts down, and the exchange starts at its end
+	DirZip.tick(S)   # a zip's phases: the tell, the way in, the ticks in reach, the way out
 	DirAlchemy.tick(S)   # the flow count lapses
 	DirBlast.tick(S)   # blasts winding up leave; the AI weighs a perfect block against a shot about to arrive
 	DirBury.tick(S)   # a burial starts and ends

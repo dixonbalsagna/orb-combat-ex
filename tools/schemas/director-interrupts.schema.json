@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/director-interrupts",
   "title": "director.interrupts/1",
-  "description": "data/director/interrupts.json: control-scheme step 3 (ADR 0008; control-rules.md sections 1, 2 and 6): the costs, cooldowns and windows of what a fighter does inside an exchange, read by sim/director/interrupt.gd (DirInterrupt). Ticks are sim ticks (60 a second); ki is out of 100. Version field: schema. Policy: closed except keys starting with an underscore; every key required except the window classes (a class not listed has no window). Orders (a brawl flurry's minGap at most its maxGap its mul gaps strictly increasing, its runLapseTicks below its tradeMaxTicks, and a heavy's heldFullTicks at most its heldMaxTicks (brawl-order); a walk's minTicks at most its maxTicks; the split's width and power shares at most 1, a warning; kiPatient at most ki; the stale maximums are at least one repeat's step; a one-armed blocker keeps a window; light at most heavy; a window not longer than its wind-up, a warning) are checked by tools/lib/xref-fight.js (interrupts-*).",
+  "description": "data/director/interrupts.json: control-scheme step 3 (ADR 0008; control-rules.md sections 1, 2 and 6): the costs, cooldowns and windows of what a fighter does inside an exchange, read by sim/director/interrupt.gd (DirInterrupt). Ticks are sim ticks (60 a second); ki is out of 100. Version field: schema. Policy: closed except keys starting with an underscore; every key required except the window classes (a class not listed has no window). Orders (a zip's band.minBh below maxBh, each inTicks lo at most hi, exit.capBh at most band.maxBh and towardDeg + awayDeg at most 180 (zip-order), and floor.minTicks at least 4 by Legal's RL-076 (zip-floor); a brawl flurry's minGap at most its maxGap its mul gaps strictly increasing, its runLapseTicks below its tradeMaxTicks, and a heavy's heldFullTicks at most its heldMaxTicks (brawl-order); a walk's minTicks at most its maxTicks; the split's width and power shares at most 1, a warning; kiPatient at most ki; the stale maximums are at least one repeat's step; a one-armed blocker keeps a window; light at most heavy; a window not longer than its wind-up, a warning) are checked by tools/lib/xref-fight.js (interrupts-*).",
   "type": "object",
   "required": [
     "schema",
@@ -19,7 +19,8 @@
     "buried",
     "beamPlays",
     "pace",
-    "brawl"
+    "brawl",
+    "zip"
   ],
   "properties": {
     "schema": {
@@ -1884,6 +1885,437 @@
         }
       },
       "description": "The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "zip": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "band",
+        "strike",
+        "heavy",
+        "floor",
+        "out",
+        "exit",
+        "towardDeg",
+        "awayDeg",
+        "bowBh",
+        "exitSteps",
+        "knockdownTicks",
+        "mul",
+        "reel",
+        "stagger",
+        "counter",
+        "dodgeConvertTicks"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "false: no zip move."
+        },
+        "band": {
+          "type": "object",
+          "required": [
+            "minBh",
+            "maxBh"
+          ],
+          "properties": {
+            "minBh": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The nearest separation, in body heights, a zip can start from."
+            },
+            "maxBh": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The farthest separation a zip can start from."
+            }
+          },
+          "description": "The separations a zip works from; minBh below maxBh (zip-order).",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "strike": {
+          "type": "object",
+          "required": [
+            "ki",
+            "tellTicks",
+            "inTicks",
+            "reachBefore",
+            "reachAfter",
+            "outTicks",
+            "heldTicks",
+            "heldReachBefore"
+          ],
+          "properties": {
+            "ki": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The ki the zip strike costs."
+            },
+            "tellTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The tell before the dash."
+            },
+            "inTicks": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": "The way in, in ticks: [lo, hi], lo at most hi (zip-order)."
+            },
+            "reachBefore": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks in reach before the blow lands."
+            },
+            "reachAfter": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks in reach after the blow lands."
+            },
+            "outTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The way out, in ticks."
+            },
+            "heldTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The longest the strike can be held."
+            },
+            "heldReachBefore": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks in reach before a held strike lands."
+            }
+          },
+          "description": "The zip strike (the light blow at the end of a zip).",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "heavy": {
+          "type": "object",
+          "required": [
+            "ki",
+            "tellTicks",
+            "inTicks",
+            "reachBefore",
+            "reachAfter",
+            "outTicks",
+            "heldTicks"
+          ],
+          "properties": {
+            "ki": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The ki the zip heavy costs."
+            },
+            "tellTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The tell before the dash."
+            },
+            "inTicks": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": "The way in, in ticks: [lo, hi], lo at most hi (zip-order)."
+            },
+            "reachBefore": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks in reach before the blow lands."
+            },
+            "reachAfter": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks in reach after the blow lands."
+            },
+            "outTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The way out, in ticks."
+            },
+            "heldTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The longest the heavy can be held."
+            }
+          },
+          "description": "The zip heavy.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "floor": {
+          "type": "object",
+          "required": [
+            "minTicks",
+            "bhPerTick"
+          ],
+          "properties": {
+            "minTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The least ticks a zip's way in and way out each take (Legal, RL-076: at least 4; rule zip-floor)."
+            },
+            "bhPerTick": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The most body heights a zip covers in one tick."
+            }
+          },
+          "description": "The floor on a zip's travel ticks (no blink step).",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "out": {
+          "type": "object",
+          "required": [
+            "freeBh",
+            "bhPerTick",
+            "maxTicks"
+          ],
+          "properties": {
+            "freeBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The distance the way out covers at no cost."
+            },
+            "bhPerTick": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Body heights a tick on the way out."
+            },
+            "maxTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The longest the way out can take."
+            }
+          },
+          "description": "The way out.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "exit": {
+          "type": "object",
+          "required": [
+            "awayBh",
+            "capBh",
+            "slideDeg",
+            "probes",
+            "clearBh"
+          ],
+          "properties": {
+            "awayBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How far the exit goes away."
+            },
+            "capBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The farthest an exit may end (at most band.maxBh; zip-order)."
+            },
+            "slideDeg": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 180,
+              "description": "The slide of an exit along a surface, in degrees."
+            },
+            "probes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64,
+              "description": "How many places the exit probes for a clear one."
+            },
+            "clearBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The clear space an exit needs."
+            }
+          },
+          "description": "Where a zip leaves to.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "towardDeg": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 180,
+          "description": "The angle of a zip toward the rival, in degrees."
+        },
+        "awayDeg": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 180,
+          "description": "The angle of a zip away, in degrees; towardDeg + awayDeg at most 180 (zip-order)."
+        },
+        "bowBh": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The height, in body heights, of the bow a way out takes over or round the rival (Game Design: zip.bowBh)."
+        },
+        "exitSteps": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many steps an exit is searched in."
+        },
+        "knockdownTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The ticks a zip knockdown lasts."
+        },
+        "mul": {
+          "type": "object",
+          "required": [
+            "speed",
+            "tech",
+            "held"
+          ],
+          "properties": {
+            "speed": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The damage multiplier of a speed zip."
+            },
+            "tech": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The multiplier of a tech zip."
+            },
+            "held": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The multiplier of a held zip."
+            }
+          },
+          "description": "The worth of a zip blow by its form.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "reel": {
+          "type": "object",
+          "required": [
+            "speed",
+            "tech",
+            "held"
+          ],
+          "properties": {
+            "speed": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Ticks the rival reels from a speed zip."
+            },
+            "tech": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Ticks from a tech zip."
+            },
+            "held": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Ticks from a held zip."
+            }
+          },
+          "description": "The reel a zip blow gives, by its form.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "stagger": {
+          "type": "object",
+          "required": [
+            "speed",
+            "tech"
+          ],
+          "properties": {
+            "speed": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Ticks of stagger a speed zip gives."
+            },
+            "tech": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Ticks of stagger a tech zip gives."
+            }
+          },
+          "description": "The stagger a zip close gives, by its form.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "counter": {
+          "type": "object",
+          "required": [
+            "techBefore",
+            "heavyBefore",
+            "staggerTicks",
+            "mul"
+          ],
+          "properties": {
+            "techBefore": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many ticks before the rival's blow a tech counter can be pressed."
+            },
+            "heavyBefore": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many ticks before the rival's blow a heavy counter can be pressed."
+            },
+            "staggerTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The stagger a counter gives."
+            },
+            "mul": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The multiplier of a counter."
+            }
+          },
+          "description": "A zip as a counter.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "dodgeConvertTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many ticks a dodge may turn into a zip."
+        }
+      },
+      "description": "The zip as a move in the brawl's reach (Encounter's zip slice).",
       "additionalProperties": false,
       "patternProperties": {
         "^_": true

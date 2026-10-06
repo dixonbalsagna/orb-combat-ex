@@ -149,7 +149,13 @@
             "mineShare",
             "timedPress",
             "brawl",
-            "vsShooter"
+            "vsShooter",
+            "zipShare",
+            "zipHeavyShare",
+            "zipCounter",
+            "zipDodge",
+            "zipExit",
+            "zipPunish"
           ],
           "properties": {
             "beamAnswer": {
@@ -421,6 +427,42 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "zipShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance the AI zips in from the band."
+            },
+            "zipHeavyShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance a zip it makes is the heavy."
+            },
+            "zipCounter": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance it counters with a zip."
+            },
+            "zipDodge": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance it turns a dodge into a zip."
+            },
+            "zipExit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its zips that pick an exit other than back."
+            },
+            "zipPunish": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share at which it presses a light on a zipper in reach once his blow has resolved."
             }
           },
           "additionalProperties": false,
@@ -458,7 +500,13 @@
             "mineShare",
             "timedPress",
             "brawl",
-            "vsShooter"
+            "vsShooter",
+            "zipShare",
+            "zipHeavyShare",
+            "zipCounter",
+            "zipDodge",
+            "zipExit",
+            "zipPunish"
           ],
           "properties": {
             "beamAnswer": {
@@ -730,6 +778,42 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "zipShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance the AI zips in from the band."
+            },
+            "zipHeavyShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance a zip it makes is the heavy."
+            },
+            "zipCounter": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance it counters with a zip."
+            },
+            "zipDodge": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance it turns a dodge into a zip."
+            },
+            "zipExit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its zips that pick an exit other than back."
+            },
+            "zipPunish": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share at which it presses a light on a zipper in reach once his blow has resolved."
             }
           },
           "additionalProperties": false,
@@ -767,7 +851,13 @@
             "mineShare",
             "timedPress",
             "brawl",
-            "vsShooter"
+            "vsShooter",
+            "zipShare",
+            "zipHeavyShare",
+            "zipCounter",
+            "zipDodge",
+            "zipExit",
+            "zipPunish"
           ],
           "properties": {
             "beamAnswer": {
@@ -1039,6 +1129,42 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "zipShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance the AI zips in from the band."
+            },
+            "zipHeavyShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance a zip it makes is the heavy."
+            },
+            "zipCounter": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance it counters with a zip."
+            },
+            "zipDodge": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The chance it turns a dodge into a zip."
+            },
+            "zipExit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its zips that pick an exit other than back."
+            },
+            "zipPunish": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share at which it presses a light on a zipper in reach once his blow has resolved."
             }
           },
           "additionalProperties": false,

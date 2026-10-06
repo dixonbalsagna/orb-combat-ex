@@ -421,6 +421,14 @@ static func hit(S: SimState, sh, f) -> bool:
 			DirBands.drop(S, f, "a " + sh.kind + " stopped his charge")
 			SimFx.cue(S, f, "charge_stopped", "", "")
 			outcome = "stop"
+	# A zipper (DirZip.shot): on the way in a zip strike is stopped and a zip heavy shrugs off a weak shot; on the way
+	# out a shot drops him.
+	var zo: String = DirZip.shot(S, f, sh)
+	if zo == "shrug":
+		dmg *= float(c.charge.shrugMul)
+		outcome = "shrug"
+	elif zo == "stop":
+		outcome = "stop"
 	var brink0: bool = f.brink
 	SimDamage.hit(S, null, by, f, dmg, {"kind": "blast", "shot": sh.power, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 3.0 if sh.power < 2.0 else 7.0})
 	SimFx.shotHit(S, sh, f, outcome)

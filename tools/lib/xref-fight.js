@@ -742,6 +742,14 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       if (typeof bl2.spray.missShare === 'number' && bl2.spray.missShare > 1) err(IT, '/blast/spray/missShare', 'blast-spray', `missShare ${bl2.spray.missShare} is above 1; it is a share of the sprayed bolts`, 'warning');
     }
     if (isObj(itr.pace) && isObj(itr.pace.cooldown) && typeof itr.pace.cooldown.min === 'number' && typeof itr.pace.cooldown.max === 'number' && itr.pace.cooldown.min > itr.pace.cooldown.max) err(IT, '/pace/cooldown/min', 'pace-order', `cooldown min ${itr.pace.cooldown.min} is above max ${itr.pace.cooldown.max}`);
+    const zp = itr.zip;
+    if (isObj(zp)) {
+      if (isObj(zp.band) && typeof zp.band.minBh === 'number' && typeof zp.band.maxBh === 'number' && zp.band.minBh >= zp.band.maxBh) err(IT, '/zip/band/minBh', 'zip-order', `band minBh ${zp.band.minBh} is not below maxBh ${zp.band.maxBh}`);
+      for (const w of ['strike', 'heavy']) if (isObj(zp[w]) && Array.isArray(zp[w].inTicks) && zp[w].inTicks.length === 2 && typeof zp[w].inTicks[0] === 'number' && typeof zp[w].inTicks[1] === 'number' && zp[w].inTicks[0] > zp[w].inTicks[1]) err(IT, `/zip/${w}/inTicks`, 'zip-order', `${w} inTicks [${zp[w].inTicks[0]}, ${zp[w].inTicks[1]}] runs high to low`);
+      if (isObj(zp.exit) && isObj(zp.band) && typeof zp.exit.capBh === 'number' && typeof zp.band.maxBh === 'number' && zp.exit.capBh > zp.band.maxBh) err(IT, '/zip/exit/capBh', 'zip-order', `exit capBh ${zp.exit.capBh} is above band maxBh ${zp.band.maxBh}`);
+      if (typeof zp.towardDeg === 'number' && typeof zp.awayDeg === 'number' && zp.towardDeg + zp.awayDeg > 180) err(IT, '/zip/awayDeg', 'zip-order', `towardDeg ${zp.towardDeg} + awayDeg ${zp.awayDeg} is above 180`);
+      if (isObj(zp.floor) && typeof zp.floor.minTicks === 'number' && zp.floor.minTicks < 4) err(IT, '/zip/floor/minTicks', 'zip-floor', `floor minTicks ${zp.floor.minTicks} is below 4: Legal's RL-076 requires a zip's way in and way out each to last at least 4 ticks (a shorter one is a blink step)`);
+    }
     const brl = itr.brawl;
     if (isObj(brl)) {
       if (isObj(brl.flurry)) {

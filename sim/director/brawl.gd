@@ -196,22 +196,102 @@ static func begin(S: SimState, ex, kind: String) -> void:
 		SimFx.rush(S, ex.A, ex.D, S.tick + mini(lead, int(c.stepInTicks)))
 
 
+## True while ex is a zip's ticks in reach: the brawl's lines with no brawl announced (DirZip).
+static func quiet(ex) -> bool:
+	return isBrawl(ex) and ex.tag == "ZIP" and ex.branch == ""
+
+
+## A zip's ticks in reach begin (DirZip._arrive, on the exchange DirExchange.startZip made): both fighters have a
+## line, as in a brawl, and no brawl is announced. ex.tag is "ZIP" until the zipper is caught or countered.
+static func beginQuiet(S: SimState, ex) -> void:
+	ex.tpl = TPL
+	ex.branch = ""
+	ex.tag = "ZIP"
+	ex.loser = -1
+	for f in [ex.A, ex.D]:
+		_size(f)
+		for k in range(BASE, END):
+			f.act.dirI[k] = 0
+		SimAct.clear(f)
+		f.vx = 0.0
+		f.vy = 0.0
+		_s(f, LAST_AT, S.tick)
+
+
+## The zipper was caught or countered (DirZip): the brawl is announced now, with `starter` as the fighter who began it.
+static func announce(S: SimState, ex, starter, why: String) -> void:
+	ex.tag = "BRAWL"
+	var e = _ev(S, starter, "brawl_start", why)
+	e.target = float(S.fighters.find(ex.D if starter == ex.A else ex.A))
+	e.n = ex.n
+	e.amount = DirBands.dist(ex.A, ex.D)
+	SimEvents.feed(S, "BRAWL", ex.A.name + " and " + ex.D.name + " in reach: every press is a blow")
+
+
+## A blow put on f's line by rule and not by a press (a zip's blow; the heavy a rival pressed before the zipper
+## arrived): it lands `lead` live ticks from now, worth dmg. extra's keys go on the beat (zip, style, counter, sure,
+## ender). A sure blow can't be blocked.
+static func blowAt(S: SimState, ex, f, kind: int, lead: int, dmg: float, extra: Dictionary) -> void:
+	var c: Dictionary = cfg()
+	var o = ex.D if f == ex.A else ex.A
+	var role: String = "A" if f == ex.A else "D"
+	var weight: int = SimAct.HEAVY if kind == HEAVY else SimAct.LIGHT
+	DirInterrupt.si(f, DirInterrupt.PHRASE_P, weight)
+	if _g(f, STR_ON) == 0:
+		_s(f, STR_ON, 1)
+		_s(f, STR_K, 0)
+		_s(f, STRING_N, 0)
+		DirInterrupt.si(f, DirInterrupt.LANDED, 0)
+	var k: int = _g(f, STR_K) + 1
+	_s(f, STR_K, k)
+	var o2 := {"class": "heavy" if kind == HEAVY else "blow", "stop": float(int(c.hitstop.heavy if kind == HEAVY else c.hitstop.light)) / DirData.TICKS_PER_SEC, "big": kind == HEAVY, "kb": float(c.recoil)}
+	if bool(extra.get("sure", false)):
+		o2["ignoreStance"] = true
+		o2["noParry"] = true
+		o2["weighed"] = true
+	var args := {"a": role, "d": "D" if role == "A" else "A", "dmg": dmg, "o": o2, "brawl": true, "bk": kind,
+		"style": "heavy" if kind == HEAVY else "speed", "grade": "none", "k": k, "n": k, "closing": false, "charge": 0.0,
+		"hand": "r" if (k % 2) == 1 else "l", "ender": false}
+	for key in extra:
+		args[key] = extra[key]
+	var piece: String = _piece(S, f, weight, false, bool(args.ender))
+	if piece != "":
+		args["piece"] = piece
+	DirExchange.schedule(ex, ex.t + (float(lead + (0 if _inTick else 1)) - 0.25) / DirData.TICKS_PER_SEC, "strike", args)
+	_s(f, LINE, 1)
+	_s(f, KIND, kind)
+	_s(f, CONTACT, _now(S) + lead)
+	_s(f, HOLD_AT, 0)
+	_s(f, FREE_AT, S.tick + (1 << 20) if kind == HEAVY else S.tick + lead + 1)
+	_s(f, LAND_AT, S.tick)
+	_s(f, HELD_P, 0)
+	_s(f, BLOWS, _g(f, BLOWS) + 1)
+	var e = _ev(S, f, "blow", KINDS[kind])
+	e.target = float(S.fighters.find(o))
+	e.n = S.tick + lead
+	e.amount = float(S.tick)
+	e.dur = float(lead)
+
+
 ## The brawl is over, and why: knockback, launch, apart, idle, left, burst, perfect_block, reversal, break, finisher,
 ## signature. The event goes out once; the lines stop. A set piece that took it over plays on in the same exchange.
 static func over(S: SimState, ex, why: String) -> void:
 	if not isBrawl(ex) or ex.branch != "":
 		return
+	var said: bool = ex.tag != "ZIP"   # a zip's ticks in reach were never announced as a brawl: nothing ends
 	ex.branch = why
-	var e = _ev(S, ex.A, "brawl_end", why)
-	e.n = ex.n
-	e.amount = float(int(round(ex.t * DirData.TICKS_PER_SEC)))
-	e.x = float(_g(ex.A, BLOWS))
-	e.y = float(_g(ex.D, BLOWS))
+	if said:
+		var e = _ev(S, ex.A, "brawl_end", why)
+		e.n = ex.n
+		e.amount = float(int(round(ex.t * DirData.TICKS_PER_SEC)))
+		e.x = float(_g(ex.A, BLOWS))
+		e.y = float(_g(ex.D, BLOWS))
 	for f in [ex.A, ex.D]:
 		_s(f, LINE, 0)
 		_s(f, HELD_P, 0)
 		_strEnd(f)
-	SimEvents.feed(S, "BRAWL ENDS", why + ": " + str(_g(ex.A, BLOWS)) + " and " + str(_g(ex.D, BLOWS)) + " blows in " + str(int(e.amount)) + " ticks")
+	if said:
+		SimEvents.feed(S, "BRAWL ENDS", why + ": " + str(_g(ex.A, BLOWS)) + " and " + str(_g(ex.D, BLOWS)) + " blows in " + str(int(round(ex.t * DirData.TICKS_PER_SEC))) + " ticks")
 
 
 ## ... and the exchange ends with it, now.
@@ -411,6 +491,10 @@ static func takes(S: SimState, f, kind: String) -> bool:
 	var ex = S.dirS.ex
 	if ex.branch != "" or ex.cancel or _setPiece(ex):
 		return true   # a set piece is playing: the press is spent
+	if quiet(ex) and f == ex.A:
+		var za = _ev(S, f, "press_ack", "zip")   # a zipper in reach: his one blow is on its way, and a press is spent
+		za.n = S.tick
+		return true
 	if kind == "sig":
 		# The signature is its own exchange: the brawl gives way when it can start, and the request then starts it.
 		if not _free(S, f) or (not SimFighter.sigFree(f) and (f.ki < 45.0 or S.T < f.sigReadyT)):
@@ -529,6 +613,8 @@ static func _throw(S: SimState, f, weight: int, p: int, paid: bool, arrived: boo
 		var rp = _ev(S, f, "riposte", "heavy" if kind == HEAVY else "light")
 		rp.target = float(S.fighters.find(o))
 		rp.n = S.tick + lead
+	if quiet(ex) and f == ex.D:
+		DirZip.markAnswer(S, ex, f, kind, p, args)
 	var piece: String = _piece(S, f, weight, ((pp >> 2) & 3) == 2, ender)
 	if piece != "":
 		args["piece"] = piece
@@ -711,7 +797,7 @@ static func contact(S: SimState, ex, b) -> void:
 		SimEvents.feed(S, "OUT OF REACH", f.name + "'s blow meets nothing")
 		return
 	ex.kind = "heavy" if kind == HEAVY else "light"   # the core reads the exchange's kind as the blow's weight
-	ex.sA = ex.A.stance
+	ex.sA = 0.0 if quiet(ex) else ex.A.stance   # a zipper has no guard in reach
 	ex.sD = ex.D.stance
 	if o.stance == 1.0 and _g(o, LINE) != 0:
 		# A fighter with a blow of his own on its way is not guarding, whatever he holds.
@@ -719,6 +805,8 @@ static func contact(S: SimState, ex, b) -> void:
 			ex.sA = 0.0
 		else:
 			ex.sD = 0.0
+	if bool(a.get("zip", false)):
+		DirZip.beforeBlow(S, ex, f, a)
 	var landed0: int = DirInterrupt.gi(f, DirInterrupt.LANDED)
 	var was: bool = _inTick
 	_inTick = true   # the exchange's clock has stepped this tick: a blow scheduled from inside this beat (a reversal's heavy) counts from here
@@ -728,7 +816,21 @@ static func contact(S: SimState, ex, b) -> void:
 	if S.dirS.ex != ex or ex.cancel or ex.branch != "" or S.game.ko != null:
 		return   # a perfect block took the exchange over
 	if bool(a.o.get("turned", false)):
+		if bool(a.get("zip", false)):
+			DirZip.onBlow(S, ex, f, o, a, 2)   # a zip's blow turned: he is countered
 		return   # a perfect block turned it (section 9f): he staggers in place and the brawl goes on
+	if bool(a.get("zip", false)):
+		# A zip's one blow: its reading's reel or stagger, and the exit is read (DirZip.onBlow). No run, no close.
+		var hit: bool = DirInterrupt.gi(f, DirInterrupt.LANDED) != landed0
+		if hit:
+			_s(f, STRING_N, _g(f, STRING_N) + 1)
+		if not _setPiece(ex):
+			DirZip.onBlow(S, ex, f, o, a, 1 if hit else 0)
+		else:
+			over(S, ex, "break")
+		return
+	if quiet(ex) and f == ex.D and DirInterrupt.gi(f, DirInterrupt.LANDED) != landed0:
+		DirZip.onHit(S, ex, o, f, a)   # a blow landed on a zipper in reach: he is caught, or countered
 	if _setPiece(ex):
 		over(S, ex, "break")   # the blow broke a limb: the break launch plays in this exchange
 		return
@@ -958,6 +1060,10 @@ static func aiInput(S: SimState, f) -> void:
 	f.ai.st = 0.0
 	if ex.branch != "" or ex.cancel or f.stunTicks > 0:
 		return
+	if quiet(ex):
+		if f == ex.D:
+			DirZip.aiReach(S, ex, f, i)   # the rival of a zipper in reach: its guard, its answer, its punish
+		return   # a zipper in reach: his one blow is on its way
 	if _now(S) < _g(f, AI_HOLD):
 		i.heavyHeld = true
 	# Its riposte (section 9f): after its perfect block, its next press inside the window. Against a turned heavy or

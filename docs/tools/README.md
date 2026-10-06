@@ -105,6 +105,8 @@ Every finding names the file, the line, the JSON pointer and the rule, for examp
 | `alchemy-flow` | data/director/alchemy.json flow: launchAt is at most showcaseAt (an error); enderAfter, launchAt and showcaseAt above max are warnings (the flow never reaches them); blur.fullEnderFlow above flow.max is a warning |
 | `pace-order`, `stance-repick` | data/director/interrupts.json pace: cooldown.min is at most max. data/director/ai.json stance: repick's first number is at most its second |
 | `brawl-order`, `ai-brawl` | data/director/interrupts.json brawl: flurry.minGap is at most maxGap, the mul table's gaps strictly increase, and heavy.heldFullTicks is at most heldMaxTicks. data/director/ai.json brawl: string and guardTicks run low to high |
+| `zip-order` | data/director/interrupts.json zip: band.minBh is below maxBh; each inTicks runs low to high; exit.capBh is at most band.maxBh; towardDeg + awayDeg is at most 180 |
+| `zip-floor` | data/director/interrupts.json zip: floor.minTicks is at least 4 (Legal RL-076: a zip's way in and way out each last at least 4 ticks, so it is never a blink step) |
 | `metalref-bar` | audio/data/metal_ref.json: a hook note and every brass bar is a bar of the file (an error; bars count from 0); a hook note on a bar that is not a hook bar, or running past its 4-beat bar, is a warning |
 | `loops-order` | audio/music/loops.json: a loop ends after it starts (an error); its length matches its bars at the tempo and sample rate within 0.5% (a warning) |
 | `timing-read` | data/input/timing.json `read` (the press reader): rhythmNeed is at most rhythmOf; mashPresses, mixShort and rhythmOf are at most logSize; mashGap is at most mashClear and mashClear at most staleTicks |

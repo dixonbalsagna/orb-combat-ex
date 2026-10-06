@@ -48,6 +48,7 @@
     "easy": {
       "brawl": {"tapGap": 12, "string": [2, 4], "enderShare": 0.6, "rashHeavy": 1.0, "guardShare": 0.2, "guardTicks": [20, 60], "perfectMul": 0.3, "heavyAfterClose": 0.2},
       "vsShooter": {"guardShare": 0, "enderShare": 0.5, "heavyApproachShare": 0.05},
+      "zipShare": 0.08, "zipHeavyShare": 0.2, "zipCounter": 0, "zipDodge": 0, "zipPunish": 0.2, "zipExit": 0,
       "beamAnswer": 0.15,
       "perfectBlockMul": 0.32,
       "guardRepeat": 2,
@@ -76,8 +77,9 @@
       "approachReact": [0.1, 0.05, 0.1]
     },
     "medium": {
-      "brawl": {"tapGap": 8, "string": [3, 5], "enderShare": 0.4, "rashHeavy": 0.33, "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.15, "heavyAfterClose": 0.6},
+      "brawl": {"tapGap": 8, "string": [3, 5], "enderShare": 0.4, "rashHeavy": 0.3, "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.15, "heavyAfterClose": 0.6},
       "vsShooter": {"guardShare": 0, "enderShare": 0.45, "heavyApproachShare": 0.1},
+      "zipShare": 0.25, "zipHeavyShare": 0.3, "zipCounter": 0.2, "zipDodge": 0.1, "zipPunish": 0.75, "zipExit": 0.3,
       "beamAnswer": 0.35,
       "perfectBlockMul": 0.45,
       "guardRepeat": 6.5,
@@ -108,6 +110,7 @@
     "hard": {
       "brawl": {"tapGap": 6, "string": [3, 5], "enderShare": 0.35, "rashHeavy": 0.1, "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.5, "heavyAfterClose": 0.9},
       "vsShooter": {"guardShare": 0, "enderShare": 0.3, "heavyApproachShare": 0.3},
+      "zipShare": 0.4, "zipHeavyShare": 0.35, "zipCounter": 0.35, "zipDodge": 0.15, "zipPunish": 0.95, "zipExit": 0.6,
       "beamAnswer": 0.6,
       "perfectBlockMul": 0.55,
       "guardRepeat": 20,
