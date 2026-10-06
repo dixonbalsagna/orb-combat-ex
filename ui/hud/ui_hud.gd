@@ -172,6 +172,8 @@ var _notice_held := false
 var _notice_focus := -1
 var _notice_gate := false             # the session's gate (opaque, only its own buttons dismiss it), not the notice read again from Settings
 var _notice_allow_settings := false   # the gate opens Settings over itself
+var _notice_scroll := 0.0              # the card's text scrolled up by this many pixels, on a screen too short to show it all
+var _notice_drag := false              # a finger or the mouse is dragging the text
 var _l_gate_back: UiLayer
 var _notice_pending: Array = []        # a How to play card asked for while the notice was up: [first_run, page], opened when it closes
 var _l_notice: UiLayer
@@ -347,7 +349,7 @@ func setup(ids: Array, names: Array) -> void:
 	hub.setup_fighters(ids, names)
 	_last_size = Vector2.ZERO
 	_relayout()
-	if notice_auto_allowed(DisplayServer.get_name(), notice_args_text()):
+	if notice_auto_allowed(DisplayServer.get_name(), notice_args_text(), bypass_allowed()):
 		notice_seen_session = true
 		show_photo_notice(true)
 
@@ -1031,19 +1033,55 @@ static func notice_args_text() -> String:
 	return hay
 
 
-## Whether this run is one that must not stop for the gate: a bench, a frame-limited run, a scripted shot, the frame analyser's capture hook (flashcap), Animation's study routes
-## (study), or `nonotice` (a command line, or the page's query).
-static func notice_skipped_by_args(hay: String = "") -> bool:
-	for w in ["bench", "frames", "shot", "nonotice", "flashcap", "study"]:
-		if hay.contains(w):
+## The words that start a run with no gate: a bench, a frame-limited run, a scripted shot, the frame analyser's capture hook (flashcap), Animation's study routes (study), and `nonotice`.
+const BYPASS_WORDS: Array = ["bench", "frames", "shot", "nonotice", "flashcap", "study"]
+
+
+## The parameter NAMES in a command line or a query string: "--frames=20 ?a=1&study" gives ["frames", "a", "study"]. Whole names only, so a name that merely contains a word
+## (utm_content=screenshot, a path with "frames") is not that word.
+static func arg_names(hay: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	for tok in hay.replace("?", " ").replace("&", " ").replace("#", " ").split(" ", false):
+		var name: String = tok.lstrip("-")
+		var eq: int = name.find("=")
+		if eq >= 0:
+			name = name.substr(0, eq)
+		if name != "":
+			out.append(name.to_lower())
+	return out
+
+
+## Whether a page served from this host may skip the gate: only our own tools' hosts (localhost, 127.0.0.1, [::1] or a file URL). On any other host nothing in a link skips it.
+static func page_is_local(hostname: String, protocol: String) -> bool:
+	var h: String = hostname.to_lower()
+	return protocol.to_lower() == "file:" or h == "localhost" or h == "127.0.0.1" or h == "[::1]" or h == "::1"
+
+
+## Whether the bypass words are honoured in this run: always off the web (a desktop command line is ours), and on the web only on a local host. The capture hook and the study routes
+## in render/core/main.gd ask this too, so that on a public page they never start without the gate.
+static func bypass_allowed() -> bool:
+	if not OS.has_feature("web"):
+		return true
+	var hp = JavaScriptBridge.eval("location.hostname + '|' + location.protocol", true)
+	var parts: PackedStringArray = str(hp).split("|")
+	return parts.size() == 2 and page_is_local(parts[0], parts[1])
+
+
+## Whether this run is one that must not stop for the gate: a bench, a frame-limited run, a scripted shot, the capture hook, a study route, or `nonotice`, named as whole parameters on
+## the command line or in the page's query, and (`local`) only where the bypass is allowed: a public page's link never skips it.
+static func notice_skipped_by_args(hay: String = "", local: bool = true) -> bool:
+	if not local:
+		return false
+	for n in arg_names(hay):
+		if BYPASS_WORDS.has(n):
 			return true
 	return false
 
 
 ## Whether setup() raises the gate now: once per session (nothing is remembered across sessions), never in a headless run (a test, a QA batch), never in a run that must not stop
 ## (see above), and not when the demo turned it off.
-static func notice_auto_allowed(display_name: String, hay: String) -> bool:
-	return notice_auto and not notice_seen_session and display_name != "headless" and not notice_skipped_by_args(hay)
+static func notice_auto_allowed(display_name: String, hay: String, local: bool = true) -> bool:
+	return notice_auto and not notice_seen_session and display_name != "headless" and not notice_skipped_by_args(hay, local)
 
 
 ## Show the notice. `gate` true is the session's gate: opaque, no timeout, only its own two buttons dismiss it, the fight is held through the How to play card's signals; false is the
@@ -1054,6 +1092,8 @@ func show_photo_notice(gate: bool = false) -> void:
 	_notice_open = true
 	_notice_gate = gate
 	_notice_focus = -1 if gate else 0   # the gate starts with no button focused: a stray Enter or A only focuses the first button, it never starts the game
+	_notice_scroll = 0.0
+	_notice_drag = false
 	if not (_howto_open or _fb_open or _set_open or _pm_open):
 		_notice_held = true
 		howto_opened.emit(false)
@@ -1102,7 +1142,18 @@ func notice_focus() -> int:
 
 
 func notice_plan() -> Dictionary:
-	return UiNotice.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _notice_focus, "gate": _notice_gate})
+	return UiNotice.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _notice_focus, "gate": _notice_gate, "scroll": _notice_scroll, "safe": layout.safe})
+
+
+## Scroll the notice's text by `dy` pixels (a wheel, a drag, a page key); nothing happens when it all fits. Never dismisses anything.
+func notice_scroll_by(dy: float) -> void:
+	if not _notice_open:
+		return
+	var p: Dictionary = notice_plan()
+	var to: float = clampf(_notice_scroll + dy, 0.0, float(p["max_scroll"]))
+	if to != _notice_scroll:
+		_notice_scroll = to
+		_l_notice.invalidate()
 
 
 func _paint_notice(ci: CanvasItem) -> void:
@@ -1120,6 +1171,11 @@ func notice_action(act: String) -> void:
 	if not _notice_open:
 		return
 	var count: int = UiNotice.ids(_notice_gate).size()
+	if (act == "up" or act == "down") and bool(notice_plan()["can_scroll"]):
+		# Up and Down read the text when it scrolls; Left and Right still move between the buttons.
+		var p: Dictionary = notice_plan()
+		notice_scroll_by((-1.0 if act == "up" else 1.0) * float(p["lh_b"]) * 2.0)
+		return
 	match act:
 		"left", "up":
 			_notice_focus = UiNotice.moved(_notice_focus, -1, count)
@@ -1150,10 +1206,22 @@ func _notice_input(event: InputEvent) -> void:
 					notice_action("accept")
 				KEY_ESCAPE, KEY_P:
 					notice_action("back")   # the gate ignores it
-				KEY_LEFT, KEY_UP, KEY_A, KEY_W:
+				KEY_UP, KEY_W:
+					notice_action("up")
+				KEY_DOWN, KEY_S:
+					notice_action("down")
+				KEY_LEFT, KEY_A:
 					notice_action("left")
-				KEY_RIGHT, KEY_DOWN, KEY_D, KEY_S, KEY_TAB:
+				KEY_RIGHT, KEY_D, KEY_TAB:
 					notice_action("right")
+				KEY_PAGEUP:
+					notice_scroll_by(-float((notice_plan()["view"] as Rect2).size.y))
+				KEY_PAGEDOWN:
+					notice_scroll_by(float((notice_plan()["view"] as Rect2).size.y))
+				KEY_HOME:
+					notice_scroll_by(-1e9)
+				KEY_END:
+					notice_scroll_by(1e9)
 	elif event is InputEventJoypadButton:
 		if event.pressed:
 			match event.button_index:
@@ -1166,13 +1234,24 @@ func _notice_input(event: InputEvent) -> void:
 				JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_DPAD_DOWN:
 					notice_action("right")
 	elif event is InputEventMouseButton:
-		# A tap arrives as a mouse click too; one tap, one action. A click outside the buttons does nothing.
-		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			var id: String = UiNotice.hit(notice_plan(), event.position)
-			if id == "settings":
-				hide_photo_notice(true)
-			elif id == "start" or id == "close":
-				hide_photo_notice(false)
+		# A tap arrives as a mouse click too; one tap, one action. A click outside the buttons does nothing (a press on the text starts a drag that scrolls it).
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			if event.pressed:
+				notice_scroll_by((-1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0) * float(notice_plan()["lh_b"]) * 3.0)
+		elif event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				var np: Dictionary = notice_plan()
+				var id: String = UiNotice.hit(np, event.position)
+				_notice_drag = id == "" and (np["card"] as Rect2).has_point(event.position)
+				if id == "settings":
+					hide_photo_notice(true)
+				elif id == "start" or id == "close":
+					hide_photo_notice(false)
+			else:
+				_notice_drag = false
+	elif event is InputEventMouseMotion:
+		if _notice_drag:
+			notice_scroll_by(-event.relative.y)
 	get_viewport().set_input_as_handled()
 
 

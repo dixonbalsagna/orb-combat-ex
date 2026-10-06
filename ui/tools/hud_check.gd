@@ -54,6 +54,8 @@ func _run() -> void:
 	await _rename_rules()
 	await _press_mark_rules()
 	await _notice_rules()
+	await _gate_short_rules()
+	_gate_bypass_rules()
 	await _three_strength_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
@@ -5084,6 +5086,134 @@ func _reduce_flashing_rules() -> void:
 
 ## Legal's text (RL-119), word for word: what the gate says and what the README says.
 const GATE_TEXT := "This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them. The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes. No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version."
+
+
+## What may skip the gate (docs/ui/hud-spec.md section 51): whole parameter names only, and on the web only from a local host.
+func _gate_bypass_rules() -> void:
+	var was_seen: bool = UiHud.notice_seen_session
+	var was_auto: bool = UiHud.notice_auto
+	UiHud.notice_seen_session = false
+	UiHud.notice_auto = true
+	# A name that only CONTAINS a bypass word is not that word, on any host.
+	var subs: Array = ["?utm_content=screenshot", "?utm_source=benchmark", "?preview=studyhall", "?x=nonotice_please", "?q=frames-per-second", "?a=1&b=shotgun", "?flashcapture=1", "/play/study/?z=1"]
+	var sub_bad := PackedStringArray()
+	for q in subs:
+		for local in [true, false]:
+			if not UiHud.notice_auto_allowed("Windows", q, local):
+				sub_bad.append("%s local=%s" % [q, str(local)])
+	_ok(sub_bad.is_empty(), "gate bypass: a link that only contains a bypass word (utm_content=screenshot, benchmark, studyhall...) never skips it %s" % str(sub_bad))
+	# A whole parameter name on a host that is not ours (the public page) never skips it, including study and flashcap.
+	var names: Array = ["?nonotice", "?nonotice=1", "?study=1", "?study=zip", "?flashcap=1", "?bench", "?frames=20", "?shot=x.png", "?a=1&nonotice&b=2", "?NoNotice=1"]
+	var pub_bad := PackedStringArray()
+	var loc_bad := PackedStringArray()
+	for q in names:
+		if not UiHud.notice_auto_allowed("Windows", q, false):
+			pub_bad.append(q)
+		if UiHud.notice_auto_allowed("Windows", q, true):
+			loc_bad.append(q)
+	_ok(pub_bad.is_empty(), "gate bypass: each bypass name as a whole parameter on a non-local host still raises the gate %s" % str(pub_bad))
+	_ok(loc_bad.is_empty(), "gate bypass: and on a local host each one skips it %s" % str(loc_bad))
+	# A desktop command line keeps working as it did, by whole names.
+	_ok(not UiHud.notice_auto_allowed("Windows", "--headless --path . -- --nonotice") and not UiHud.notice_auto_allowed("Windows", "godot --bench --frames=300") and not UiHud.notice_auto_allowed("Windows", "--shot=a.png") and UiHud.notice_auto_allowed("Windows", "--path C:/frames/study/shot"), "gate bypass: a desktop command line skips by whole argument names, and a path that contains a word does not")
+	_ok(UiHud.arg_names("?a=1&Study=zip#x --frames=20 -nonotice") == PackedStringArray(["a", "study", "x", "frames", "nonotice"]), "gate bypass: parameter names are read whole, from a query or a command line %s" % str(UiHud.arg_names("?a=1&Study=zip#x --frames=20 -nonotice")))
+	# Which pages are ours.
+	var local_ok: bool = UiHud.page_is_local("localhost", "http:") and UiHud.page_is_local("127.0.0.1", "http:") and UiHud.page_is_local("[::1]", "http:") and UiHud.page_is_local("", "file:") and UiHud.page_is_local("LocalHost", "https:")
+	var public_ok: bool = not UiHud.page_is_local("example.com", "https:") and not UiHud.page_is_local("localhost.example.com", "https:") and not UiHud.page_is_local("evil-localhost", "https:") and not UiHud.page_is_local("127.0.0.1.example.com", "https:") and not UiHud.page_is_local("itch.io", "https:") and not UiHud.page_is_local("", "https:")
+	_ok(local_ok and public_ok, "gate bypass: localhost, 127.0.0.1, [::1] and a file URL are local; no other host is, whatever its name looks like")
+	_ok(UiHud.bypass_allowed(), "gate bypass: off the web (this run) the bypass stays allowed, so every tool and test keeps working")
+	UiHud.notice_seen_session = was_seen
+	UiHud.notice_auto = was_auto
+
+
+## The gate on short screens (a phone's landscape with the browser's bars): the card fits, the two buttons are always on screen and 48 dp, and the text either all shows or
+## scrolls inside the card with a cue, checked through a real draw pass.
+func _gate_short_rules() -> void:
+	var cases: Array = [[Vector2(664, 270), 1.0], [Vector2(750, 330), 1.0], [Vector2(568, 320), 1.0], [Vector2(480, 240), 1.0], [Vector2(844, 340), 1.0], [Vector2(667, 320), 1.0],
+		[Vector2(1992, 810), 3.0], [Vector2(2250, 990), 3.0], [Vector2(1704, 960), 3.0], [Vector2(320, 568), 1.0], [Vector2(390, 664), 1.0], [Vector2(1170, 2000), 3.0]]
+	var bad := PackedStringArray()
+	for cs in cases:
+		var vp: Vector2 = cs[0]
+		var dpv: float = cs[1]
+		var lay := UiLayout.new()
+		lay.dp = dpv
+		lay.compute(vp, false)
+		for gate in [true, false]:
+			var p: Dictionary = UiNotice.plan(vp, lay.s, dpv, true, {"focus": -1, "gate": gate, "safe": lay.safe})
+			var card: Rect2 = p["card"]
+			var view: Rect2 = p["view"]
+			var ok: bool = bool(p["fits"]) and Rect2(Vector2.ZERO, vp).encloses(card) and int(p["fs_body"]) >= int(UiLook.text_floor)
+			for it in p["items"]:
+				var r: Rect2 = it["rect"]
+				ok = ok and r.size.y >= float(p["tm"]) - 0.01 and Rect2(Vector2.ZERO, vp).encloses(r) and card.encloses(r) and not r.intersects(view)
+			# The whole text is reachable: it fits, or the scroll range covers what is below the view.
+			ok = ok and (float(p["text_h"]) <= view.size.y + 0.5 or (bool(p["can_scroll"]) and absf(float(p["max_scroll"]) - (float(p["text_h"]) - view.size.y)) < 0.5 and view.size.y >= float(p["lh_b"]) * 2.0))
+			if not ok:
+				bad.append("%s dp %.0f gate=%s" % [str(vp), dpv, str(gate)])
+	_ok(bad.is_empty(), "gate short: at %d phone sizes (landscape with bars, tight, portrait) the card is on screen, both buttons are 48 dp and clear of the text, and all of the text is reachable (%d bad %s)" % [cases.size(), bad.size(), str(bad.slice(0, 4))])
+	# Through a real draw pass, at the three sizes the EP named.
+	for cs in [[Vector2(664, 270), 1.0], [Vector2(750, 330), 1.0], [Vector2(568, 320), 1.0], [Vector2(1992, 810), 3.0]]:
+		var vp2: Vector2 = cs[0]
+		root.size = Vector2i(int(vp2.x), int(vp2.y))
+		var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+		hud.size = vp2
+		root.add_child(hud)
+		await process_frame
+		hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+		hud.set_density(float(cs[1]))
+		hud.set_option("touch_ui", true)
+		hud.show_photo_notice(true)
+		hud.advance(1.0 / 60.0)
+		await process_frame
+		var tag := "%dx%d dp %.0f" % [int(vp2.x), int(vp2.y), float(cs[1])]
+		var np: Dictionary = hud.notice_plan()
+		_ok(hud._l_notice.sig != null and hud._l_notice.redraws > 0, "gate short %s: the card is drawn" % tag)
+		UiText.tracing = true
+		UiText.trace = []
+		hud._l_notice.invalidate()
+		hud.advance(1.0 / 60.0)
+		await process_frame
+		UiText.tracing = false
+		var seen: Array = UiText.trace.duplicate()
+		UiText.trace = []
+		_ok(seen.has("I understand, start") and seen.has("Open Settings") and " ".join(PackedStringArray(seen)).contains("This game contains"), "gate short %s: the heading and both buttons are drawn (%s)" % [tag, str(seen.slice(0, 3))])
+		var start_rect: Rect2 = Rect2()
+		for it in np["items"]:
+			if it["id"] == "start":
+				start_rect = it["rect"]
+		_ok(Rect2(Vector2.ZERO, hud.layout.vp).encloses(start_rect) and start_rect.size.y >= 48.0 * hud.dp - 0.01, "gate short %s: I understand, start is on screen and 48 dp (%s in %s, dp %.1f, layout vp %s)" % [tag, str(start_rect), str(vp2), hud.dp, str(hud.layout.vp)])
+		if bool(np["can_scroll"]):
+			_ok(seen.has("Scroll for more"), "gate short %s: the text scrolls, and the card says so" % tag)
+			# Scroll to the end by the wheel, a drag and the keys: the last line comes fully into the view, and nothing dismissed the gate.
+			var w := InputEventMouseButton.new()
+			w.button_index = MOUSE_BUTTON_WHEEL_DOWN
+			w.pressed = true
+			w.position = (np["card"] as Rect2).get_center()
+			for i in range(40):
+				hud._unhandled_input(w)
+			var np2: Dictionary = hud.notice_plan()
+			var last: Dictionary = (np2["lines"] as Array).back()
+			var last_bottom: float = (np2["view"] as Rect2).position.y + float(last["y"]) + float(last["h"]) - float(np2["scroll"])
+			_ok(float(np2["scroll"]) == float(np2["max_scroll"]) and last_bottom <= (np2["view"] as Rect2).end.y + 0.5, "gate short %s: the wheel reaches the last line of the notice" % tag)
+			hud.notice_scroll_by(-1e9)
+			var press := InputEventMouseButton.new()
+			press.button_index = MOUSE_BUTTON_LEFT
+			press.pressed = true
+			press.position = (np2["view"] as Rect2).get_center()
+			hud._unhandled_input(press)
+			var mv := InputEventMouseMotion.new()
+			mv.relative = Vector2(0, -30)
+			mv.position = press.position
+			hud._unhandled_input(mv)
+			var dragged: float = float(hud.notice_plan()["scroll"])
+			press.pressed = false
+			hud._unhandled_input(press)
+			hud.notice_action("down")
+			_ok(dragged > 0.0 and float(hud.notice_plan()["scroll"]) > dragged and hud.is_notice_open() and hud.is_notice_gate(), "gate short %s: a drag and the Down key scroll the text, and the gate stays up" % tag)
+		else:
+			_ok(true, "gate short %s: it all fits without scrolling" % tag)
+		hud.queue_free()
+		await process_frame
+	root.size = Vector2i(1280, 720)
 
 
 func _notice_rules() -> void:
