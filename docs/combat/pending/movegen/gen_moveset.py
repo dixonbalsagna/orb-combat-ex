@@ -23,7 +23,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 5
+VERSION = 6
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 
@@ -139,6 +139,27 @@ def sequence_breaks(g, seq, airborne=True):
         elif r["kind"] == "steps":
             if any(s not in r["drawn"] for b in seq for s in b.get("step", [])):
                 out.append(r["id"])
+    return sorted(set(out))
+
+
+def string_breaks(parts, blows, airborne=True):
+    """Legal's rules on a whole string, whatever mix of buttons made it (flurry f02): the sequence rules, and for a run of
+    energy pieces the rows that ask a flurry to vary its piece (e06). A blow is a strike's parts or an energy move's."""
+    g, lg = parts["strike"], parts.get("legal", {})
+    strikes = [b for b in blows if "limb" in b]
+    out = sequence_breaks(g, [{k: v for k, v in b.items() if k != "button"} for b in strikes], airborne)
+    if any(b in out for r in lg.get("flurry", []) if r.get("kind") == "string" for b in r["uses"]):
+        out += [r["id"] for r in lg.get("flurry", []) if r.get("kind") == "string" and any(b in out for b in r["uses"])]
+    for r in lg.get("energy", []):
+        st = r.get("string")
+        if not st:
+            continue
+        run = 0
+        for i, b in enumerate(blows):
+            same = i > 0 and "hand" in b and "hand" in blows[i - 1] and all(b.get(k) == blows[i - 1].get(k) for k in st["same"])
+            run = run + 1 if same else 1
+            if run > st["max"]:
+                out.append(r["id"]); break
     return sorted(set(out))
 
 
@@ -647,6 +668,10 @@ def legal_findings(docs, parts, identity):
             hit = set(parts.get("grab", {}).get("holdPoints", [])) & set(r["never"])
             if hit:
                 bad.append("%s: a grab may hold the %s" % (r["id"], ", ".join(sorted(hit))))
+            if "grab" in r:
+                mine = parts.get("grab", {}).get("kinds", {}).get(r["grab"])
+                if mine is None or not set(mine) <= set(r["allowed"]):
+                    bad.append("%s: the %s may hold only the %s" % (r["id"], r["grab"], ", ".join(r["allowed"])))
     lf = os.path.join(ROOT, "docs", "legal", "movegen-banned.json")
     if os.path.exists(lf):   # nothing of Legal's is dropped or loosened in the copy the generator reads
         theirs = load(lf)
@@ -679,6 +704,16 @@ def legal_findings(docs, parts, identity):
             br = sequence_breaks(g, seq + seq[:2])
             if br:
                 bad.append("blur pattern %s (%s) breaks %s" % (name, os.path.relpath(rp, ROOT).replace(os.sep, "/"), ", ".join(br)))
+    return bad
+
+
+def data_findings(parts):
+    """Rows of the hand-kept tables that say the same thing twice: a repeated row is counted twice among a cell's candidates."""
+    bad = []
+    for kind, k in sorted(parts.get("travel", {}).get("kinds", {}).items()):
+        rows = [json.dumps(mv, sort_keys=True) for mv in k["moves"]]
+        if len(rows) != len(set(rows)):
+            bad.append("parts.json travel.kinds.%s lists a move twice" % kind)
     return bad
 
 
@@ -737,13 +772,13 @@ def sheet(out, parts, cells, notes):
         L.append("| %s | %s | %s | %s |" % (cd["id"], what, ask, ", ".join(cd["rows"])))
     L.append("")
     lgl = parts.get("legal", {})
-    L.append("**Legal's other rows** (RL-076, RL-081 to RL-086; `docs/legal/stances-and-gestures-screen.md`). The strike rows above judge strike pieces only; an energy piece is judged by the energy rows, so a lit fist is allowed where its light sits on the plate and knuckle edges and never as a ball at the hand (e01, not b09).")
+    L.append("**Legal's other rows** (RL-076, RL-081 to RL-087, RL-098 to RL-101; `docs/legal/stances-and-gestures-screen.md`). The strike rows above judge strike pieces only; an energy piece is judged by the energy rows, so a lit fist is allowed where its light sits on the plate and knuckle edges and never as a ball at the hand (e01, not b09).")
     L.append("")
     L.append("| Group | Rows | The generator refuses a match | Conditions for the owner |")
     L.append("| :--- | :--- | :--- | :--- |")
-    for group in ("motion", "energy", "grabs", "held", "stacking"):
+    for group in [k for k, v in lgl.items() if isinstance(v, list)]:
         rows = lgl.get(group, [])
-        auto = [r["id"] for r in rows if r.get("kind") in ("travel", "move", "hand", "holdPoints")]
+        auto = [r["id"] for r in rows if r.get("kind") in ("travel", "move", "hand", "holdPoints", "string")]
         rest = [r["id"] for r in rows if r["id"] not in auto]
         owner = sorted(set(r.get("owner", "") for r in rows if r["id"] in rest))
         L.append("| %s | %s to %s | %s | %s%s |" % (group, rows[0]["id"], rows[-1]["id"], ", ".join(auto) or "-", ", ".join(rest) or "-", (" (" + "; ".join(o for o in owner if o) + ")") if rest else ""))
@@ -916,6 +951,17 @@ def self_test(parts, identity):
     expect("a charged shot that is lobbed is refused (e04)", group_hits(parts_, {"hand": "open_palm", "release": "lob", "body": "planted", "delivery": "charged"}, "energy"), ["e04"])
     expect("a far-side zip that leaves on a fade is refused (m04)", group_hits(parts_, {"kind": "zip", "direction": "far_side", "exit": "fade"}, "travel"), ["m04"])
     expect("a far-side zip that leaves round him passes", group_hits(parts_, {"kind": "zip", "direction": "far_side", "exit": "pivot"}, "travel"), [])
+    expect("a B blast from the lit fist is refused: one open or blade hand (e06)", group_hits(parts_, {"hand": "fist_glow", "release": "thrust", "body": "planted", "delivery": "blast"}, "energy"), ["e06"])
+    expect("a B blast from the blade hand passes", group_hits(parts_, {"hand": "blade_hand", "release": "thrust", "body": "planted", "delivery": "blast"}, "energy"), [])
+    bolt = {"hand": "blade_hand", "release": "thrust", "body": "planted", "delivery": "flurry"}
+    expect("an energy flurry that repeats its piece is refused (e06)", string_breaks(parts_, [bolt, dict(bolt)]), ["e06"])
+    expect("an energy flurry that varies its piece passes", string_breaks(parts_, [bolt, dict(bolt, release="flick"), dict(bolt, hand="open_palm")]), [])
+    row = {"direction": "far_side", "entries": ["dash"], "exit": "pivot"}
+    expect("a travel move listed twice is found", data_findings({"travel": {"kinds": {"zip": {"moves": [row, dict(row)]}}}}), ["parts.json travel.kinds.zip lists a move twice"])
+    gx = {"limb": "hand", "tip": "fist", "path": "line", "target": "gut", "weight": "light", "button": "x"}
+    gy = {"limb": "foot", "tip": "ball", "path": "line", "target": "gut", "weight": "heavy", "button": "y"}
+    expect("two gut blows running break the rule across buttons: X then Y (f02, s02)", string_breaks(parts_, [gx, gy]), ["f02", "s02"])
+    expect("a mixed X and Y string that rotates its targets passes", string_breaks(parts_, [gx, dict(gy, target="chest"), dict(gx, target="head", path="arc_in")]), [])
     jab = {"limb": "hand", "tip": "blade", "path": "line", "target": "head", "step": ["in", "hold"]}
     gut = {"limb": "hand", "tip": "fist", "path": "line", "target": "gut", "step": ["in", "hold"]}
     spin = {"limb": "foot", "tip": "heel", "path": "spin", "target": "chest", "step": ["around", "out"]}
@@ -944,6 +990,12 @@ def main():
     for name, text in files.items():
         assert name.endswith(".md") or json.loads(text)
     fresh = legal_findings(out, parts, identity)
+    data = data_findings(parts)
+    if data:
+        print("parts.json: %d PROBLEM" % len(data))
+        for b in data:
+            print("  " + b)
+        sys.exit(1)
     if "--check" in sys.argv:
         stale = [n for n, t in files.items() if not os.path.exists(os.path.join(HERE, n)) or raw(os.path.join(HERE, n)).decode("utf-8") != t]
         on_disk = {who: load(os.path.join(HERE, "moveset.%s.json" % who)) for who in out if os.path.exists(os.path.join(HERE, "moveset.%s.json" % who))}

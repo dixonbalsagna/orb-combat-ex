@@ -11,10 +11,11 @@ Owner: Combat and Choreography. Date: 2026-10-05. Status: parked. Nothing here i
 | `gen_moveset.py` | the reference generator: standard library only, no state, no clock | a script under `tools/`, Tools' to hold |
 | `moveset.rival.json`, `moveset.protagonist.json` | **generated:** 100 moves each over the five stances | `data/combat/movesets/<fighter>.json` |
 | `review-sheet.md` | **generated:** every move on one row, by stance, with Legal's conditions and what each stance needs | stays in docs |
+| `second-pass-plan.md` | a plan, not built: what the brawl's second pass (`docs/design/brawl-second-pass.md`) needs from parts, identity and cells, in the EP's build order, with sizes | stays in docs |
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, or on any match with Legal's rows. It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 26 cases.
+- **To prove the refusals:** `--self-test`, 33 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -75,7 +76,7 @@ By team. The sheet lists the same under each stance, cell by cell, and `cells.js
 
 ## 4. Legal
 
-`parts.json` holds Legal's file whole (`docs/legal/movegen-banned.json`, through RL-086), and `--check` fails if any row there is missing from it or differs.
+`parts.json` holds Legal's file whole (`docs/legal/movegen-banned.json`, through RL-101), and `--check` fails if any row there is missing from it or differs. The merge takes every group of rows in Legal's file, whatever its name, so a new group no longer needs a change here.
 
 | Rows | Judge | What the generator does |
 | :--- | :--- | :--- |
@@ -85,7 +86,17 @@ By team. The sheet lists the same under each stance, cell by cell, and `cells.js
 | Grabs, g01 to g03 | grabs | no grab is generated; the hold points a grab may use are listed and checked (g01) |
 | Held, h01 to h03 with `heldScope` (RL-087), and stacking, k01 and k02 | any pose held 12 ticks or more, by its class (the pair test on every held pose; the emitter test on charges, tells, signatures, energy poses and a held heavy's hold); every tick of a tell or a charge | not checkable from parts: conditions H1 and K1 on every signature frame and held action, for Animation's lint and VFX. `heldScope` is copied whole into `parts.json` `legal`, and `--check` compares it |
 
-- **What the new rows refuse today: nothing.** Legal reworded e05 on 2026-10-06: a volley is one motion of one hand or arm (a sweep, a flick or a single thrust), never both palms pumping in turn or one hand pumping repeatedly. So a volley on a single thrust is allowed again, and the generator refuses a pumped volley or one from two hands, neither of which the grammar can produce.
+**RL-098 to RL-101, for the brawl's second pass** (`docs/legal/brawl-screen.md`). None of these moves is generated yet, so the new rows refuse nothing today. The plan for them is `second-pass-plan.md`.
+
+| Rows | What the generator does |
+| :--- | :--- |
+| Flurry, f01 to f03 (a new group) | **f02 is checked:** `string_breaks` judges s01 and s02 on a whole string, whatever mix of buttons made it. f01 (the blur) and f03 (voice) are conditions for VFX and Audio |
+| Energy, e06 and e07 | **e06 is checked:** a burst, a blast or a flurry on B is refused from any hand that is not one open or blade hand at the shoulder or lower, and a string is refused if it throws the same hand, release and body twice running. e07 (a steered beam) is how it is drawn |
+| Grabs, g04 and g05 | **checked:** the hold points of a tackle (waist, shoulders) and of a clinch (collar, elbow, waist) are listed in `grab.kinds` and compared with the rows |
+| Motion, m09 to m11; held, h04; stacking, k03 and k04 | conditions for their owners: how a zip chain, a chase, a slip, a charge pose and a flash are drawn and timed |
+
+- **A fault of mine, fixed.** My merge script wrote the far-side zip's pivot row again at each re-merge, so `parts.json` at `a9df651` listed it three times. No move was ever picked differently for it: only the candidate counts of the manoeuvre cells were too high (the rival's X showed 252 and has 214). The script now drops a repeated row, and the generator refuses to run on a table that lists a move twice.
+- **What the RL-081 to RL-087 rows refuse today: nothing.** Legal reworded e05 on 2026-10-06: a volley is one motion of one hand or arm (a sweep, a flick or a single thrust), never both palms pumping in turn or one hand pumping repeatedly. So a volley on a single thrust is allowed again, and the generator refuses a pumped volley or one from two hands, neither of which the grammar can produce.
 - **One change to my own grammar,** to fit m04: a zip to the far side leaves on a pivot round the rival or an arc dive over him. It had left on a lane step.
 - **Counts:** still 100 moves a fighter. No cell lost a move.
 - **Still needs Legal's eye when drawn** (Legal's own list): the short beam and its braced pose; each fighter's counter and terrain art when designed; the specials when designed.
@@ -128,6 +139,7 @@ What changed since the keys I gave for the martial stance. A filter is as before
 - `cells.json`: a frame or context cell may have `asks`, a list of condition ids.
 - A moveset's travel and table cells have `refused`: for travel `{move: {kind, direction, exit}, rows}`; for a table `{move: {delivery, release}, rows, candidates}`. Frame and context cells carry `asks`.
 - `parts.json` `legal` may also hold a block that is not rows, copied from Legal's file as it stands (`heldScope`: `classes`, `pairTest`, `emitterTest`).
+- Added with RL-098 to RL-101: `parts.json` `legal` takes any group of rows Legal adds (`flurry` is the first new one); a row's `kind` may be `string` (`uses`: the sequence rules it widens, `ignores`); a `holdPoints` row may name a `grab` and its `allowed` points, matched against `grab.kinds`; a `move` row may carry `string` (`same`, `max`).
 - Cross-checks: every energy hand a fighter lists is in `shot.hands`; every row of Legal's file is in `parts.json` with the same rule and why; no hold point is one of g01's.
 
 **`combat-moveset-lock.schema.json`** (`combat.moveset.lock/1`): `fighters`, a fighter to a cell id to a list of `[id, [limb, tip, path, target, weight], key set id or null]`.

@@ -1068,20 +1068,6 @@
       "entries": [
        "dash"
       ],
-      "exit": "pivot"
-     },
-     {
-      "direction": "far_side",
-      "entries": [
-       "dash"
-      ],
-      "exit": "pivot"
-     },
-     {
-      "direction": "far_side",
-      "entries": [
-       "dash"
-      ],
       "exit": "arc_dive"
      }
     ]
@@ -1477,6 +1463,28 @@
     "owner": "Animation and VFX",
     "rule": "outcome marks (counter bar, closing ring, brackets, guard fragments) carry no text or numbers, never sit on the eyes or face, and are never a full-screen or body-wide gold, white or red flash",
     "why": "no readout or scanner look, no mark 7"
+   },
+   {
+    "id": "m09",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "in a zip chain each hop meets m01 to m08 on its own: the strike pose is held at least 4 ticks at contact with the body drawn, the ghosts on screen across the whole chain are at most 5, no ghost is left behind or placed round the target, and there is no camera cut or flash between hops",
+    "why": "the flicker-teleport barrage"
+   },
+   {
+    "id": "m10",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "a zip at a launched rival follows his drawn body along a continuous path; it never snaps to where he will land",
+    "why": "no vanish step (m01)"
+   },
+   {
+    "id": "m11",
+    "kind": "numbers",
+    "owner": "Simulation and Animation",
+    "check": "a slip or a step behind the rival is drawn travel of at least 4 ticks",
+    "rule": "a slip or a step that goes behind the rival is drawn travel of at least 4 ticks with the rival in view (m04)",
+    "why": "the appear-behind-you beat"
    }
   ],
   "energy": [
@@ -1569,6 +1577,58 @@
     },
     "rule": "a volley is one motion of one hand or arm (a sweep, a flick or a single thrust) that releases the fan; never both palms pumping forward in turn or one hand pumping repeatedly, and no repeated shouted syllable across it (s03)",
     "why": "the shouted barrage"
+   },
+   {
+    "id": "e06",
+    "kind": "move",
+    "if": {
+     "delivery": [
+      "burst",
+      "blast",
+      "flurry"
+     ]
+    },
+    "then": {
+     "release": [
+      "thrust",
+      "flick",
+      "sweep",
+      "drop",
+      "lob"
+     ]
+    },
+    "hand": {
+     "need": {
+      "hands": [
+       1
+      ],
+      "shape": [
+       "open",
+       "blade"
+      ],
+      "height": [
+       "shoulder",
+       "below"
+      ]
+     }
+    },
+    "string": {
+     "same": [
+      "hand",
+      "release",
+      "body"
+     ],
+     "max": 1
+    },
+    "rule": "a burst, a blast and a ki-style flurry (B) are thrown by one open or blade hand at shoulder height or lower; a flurry varies the piece (hand state, release, body) and never pumps the same hand repeatedly or both palms in turn; a point-blank blast shows its flash as a thin edge or short cone at the hand, never a ball",
+    "why": "the shouted two-palm barrage and the held sphere"
+   },
+   {
+    "id": "e07",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "a beam held and steered by the player stays a plain straight line; steering moves the aim or the origin only, never twists, spirals or whips the beam, and the firing pose does not change while it is held",
+    "why": "the drilling and whipping beams"
    }
   ],
   "grabs": [
@@ -1597,6 +1657,41 @@
     "owner": "Animation",
     "rule": "a lift or carry is drawn whole: the carried fighter's body is in view and never hidden by a zip or a cut; a throw is a launch (the planner), not a vanish",
     "why": "no vanish step (m01)"
+   },
+   {
+    "id": "g04",
+    "kind": "holdPoints",
+    "grab": "tackle",
+    "allowed": [
+     "waist",
+     "shoulder"
+    ],
+    "never": [
+     "throat",
+     "hair",
+     "tail",
+     "face"
+    ],
+    "rule": "a tackle takes the body at the waist or shoulders; the carry is drawn travel (m01 to m04 apply: at least 4 ticks, the carried body in view every tick, 3 bh a tick at most); the arrival crater is local, with debris falling and no rising ring of rubble, no lightning and no aura; a buried rival is shown partly in the ground, never hidden",
+    "why": "no vanish; the rubble-ring bundle (mark 4)"
+   },
+   {
+    "id": "g05",
+    "kind": "holdPoints",
+    "grab": "clinch",
+    "allowed": [
+     "collar",
+     "elbow",
+     "waist"
+    ],
+    "never": [
+     "throat",
+     "hair",
+     "tail",
+     "face"
+    ],
+    "rule": "a clinch is a collar-and-elbow or waist hold; the trip and the throw never lift by the throat, hair or a tail, and the two fighters' hands are never locked or laced together; no sparks or glow at the hands in the clinch",
+    "why": "g01 and g02 applied to the clinch"
    }
   ],
   "held": [
@@ -1620,6 +1715,13 @@
     "owner": "Animation (a lint on poses held 12 ticks or more)",
     "rule": "a signature's tell is its own stance, never a crouch with fists clenched at the sides, and carries no scream",
     "why": "stacking marks 1 and 2"
+   },
+   {
+    "id": "h04",
+    "kind": "drawn",
+    "owner": "Animation (a lint on poses held 12 ticks or more)",
+    "rule": "held-lint classes for the new holds: a held X, Y or B charge pose and the tackle's coil are class charge; the seize, breaker, lift and slip tells are class tell; the clinch hold is class hold; the 45-tick taunt is class gesture; an open-hand chamber in a charged melee blow keeps the wrist at x 9 or more (not drawn to the hip), a closed-fist chamber at the hip is allowed",
+    "why": "so the lint reaches the new poses"
    }
   ],
   "stacking": [
@@ -1636,6 +1738,50 @@
     "owner": "VFX, Animation and Audio",
     "rule": "a stance tell's aura is a thin outline or short scattered streaks in the lane colour; a manoeuvre trail is thin and in the lane colour; a defensive rim of light sits on the guarding side only",
     "why": "stance tells"
+   },
+   {
+    "id": "k03",
+    "kind": "drawn",
+    "owner": "VFX, Animation and Audio",
+    "rule": "a charge flash (a tier mark at 12, 14, 24, 40 or 48 ticks, or a 'full flash') is a thin ring or edge flash on the charging hand, forearm or plate, in the lane colour, 4 ticks or fewer, never body-wide, never gold, white or red, never with a shouted name; a held B shows at most two of the seven marks at any tick through its 48 ticks, and no scream at any tier",
+    "why": "marks 3, 7 and 2 across a long held charge"
+   },
+   {
+    "id": "k04",
+    "kind": "drawn",
+    "owner": "VFX, Animation and Audio",
+    "rule": "a mutual throw-back, a spark-lock between two heavy commitments, a power-attack tell and a taunt's finish show no rubble ring with cracks and wind, no lightning on bodies, no body-wide aura and no gold, white or red flash; sparks sit at the contact point only",
+    "why": "marks 4, 5, 3 and 7"
+   }
+  ],
+  "flurry": [
+   {
+    "id": "f01",
+    "kind": "drawn",
+    "owner": "VFX, Audio and the director",
+    "rule": "a flurry's blur is a smear along the striking limb's real path: at most 2 ghosts of that limb per blow, never extra arms, legs or fists drawn at the same time, never a fan of limbs round the target",
+    "why": "the many-armed barrage blur (applies to X, Y, B and any mix)"
+   },
+   {
+    "id": "f02",
+    "kind": "string",
+    "uses": [
+     "s01",
+     "s02"
+    ],
+    "ignores": [
+     "button",
+     "weight"
+    ],
+    "rule": "targets and pieces rotate across the whole string, whatever mix of X, Y and B made it: s01 and s02 count the string, not the button (no more than 2 blows in a row to the same target, never two gut blows running, no more than 3 of the same limb, tip and path)",
+    "why": "a mixed flurry must not slip past the repeat rules by changing button"
+   },
+   {
+    "id": "f03",
+    "kind": "drawn",
+    "owner": "VFX, Audio and the director",
+    "rule": "vocal sounds in a flurry: no repeated shouted syllable across it, no shouted word, and at most one grunt for every two blows, varied",
+    "why": "the chanted barrage (s03) at up to 10 blows a second"
    }
   ],
   "heldScope": {
@@ -1683,14 +1829,26 @@
   }
  },
  "grab": {
-  "_about": "Where a grab may take hold (Legal g01). No grab is generated yet: the context cells list today's",
+  "_about": "Where a grab may take hold (Legal g01, g04, g05). No grab is generated yet: the context cells list today's",
   "holdPoints": [
    "collar",
    "shoulder",
    "upper_arm",
+   "elbow",
    "body",
    "waist",
    "ankle"
-  ]
+  ],
+  "kinds": {
+   "tackle": [
+    "waist",
+    "shoulder"
+   ],
+   "clinch": [
+    "collar",
+    "elbow",
+    "waist"
+   ]
+  }
  }
 }
