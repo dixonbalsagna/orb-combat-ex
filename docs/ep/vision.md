@@ -789,3 +789,34 @@ The EP reads this as Orb going ahead with three strengths (X light, Y medium, B 
 > I'm making a push to finish the work I took on.  I'm certain I'll hand that off today.
 
 Standing from this: vicious lives inside the clinch (confirmed). The EP's call on B, given to it by Orb: the new super-heavy tier is built (16 key sets first), with today's heavies as stand-ins until it is posed. Orb's four questions are the acceptance test for the next playable build. "The work I took on" is the voice lab's taunt and quote lists.
+
+## A friend's feedback from the mobile build, and Orb's stance on it (2026-10-06)
+
+Orb passed on a friend's notes from playing on a phone (Safari, landscape), with a screenshot. The friend's notes, as Orb pasted them:
+
+> Oh wow the models are so detailed now, looks really good
+> It would be nice if the player and cpu were more visually distinct and the colors tied back to the HUD elements
+> Still hard to tell which one I'm controlling when the game starts
+> Also I wonder if the HUDs should swap position when the player is on the right VS the left, so it's always showing it above the player
+> I think it could help the user know where to focus if it's moving fast
+> Also do you want to force people to use landscape or portrait, or support both? Right now it supports both but if you want a more consistent/predictable experience you could limit it to landscape
+> I saw you have the controls only on the right side, I think it's fine if it's on right and left even if the player is only one one side. If you're holding the phone landscape you have thumbs on each side.
+> I wonder if there's a way to make the controls more immediate, like with fighting games you press the kick button and see the player kick immediately. They feel a little disconnected right now, like I'm queuing-up moves instead of seeing them execute immediately. OR if you are queuing-up moves, they could rise up as a list of incoming moves and then cross off and erase when they are executed
+> At least something immediate when you press the button, whether it's seeing the player react immediately or seeing the move being added to the queue
+> Hmm landscape is kind bad because of Safari's chrome
+> Haven't figured out how to lay a mine
+> When I move around with the joystick (which I just figured out you can do), sometimes the player flies back to the enemy
+> I got to some buildings and city area, that was cool
+
+Orb's own words on it:
+
+> he mentions changing the game's color pallette, I'm not so sure about this, I would like some accessibility options for colorblind, but changing the feel of the game with stylistic color changes doesn't sound like my vision for the game. I do want the sky to be dynamic and color changing though.
+>
+> again all the feedback is welcome, I acknowledged his concerns about the movement, I understand we're working on a combat overhaul that should at least mostly address these control issues. I havent tried mobile support at all myself so I'm taking his word for the issues facing chrome.
+
+Standing from this: no stylistic palette change; colour-blind accessibility options are wanted; the sky should be dynamic and change colour. Telling the player's fighter apart and tying it to the HUD is to be solved inside the existing look.
+
+Orb's answers to the EP's three questions on it (2026-10-06):
+- What should drive the sky's colour changes: "Where you are on the planet", "The fight's mood and damage", "Time passing" (not the match's acts).
+- Should the fighter panels swap sides: "It was pretty intuitive for me, but again I wasn't looking at it on mobile. lets find a compromise, perhaps in UI options in the settings menu"
+- On phones: "Landscape only".
