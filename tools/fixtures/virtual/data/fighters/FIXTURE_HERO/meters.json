@@ -1,6 +1,6 @@
 {
   "schema": "meters/1",
-  "_about": "Validator fixture, not game data: a copy of the real KAI file, in the D1a shape.",
+  "_about": "Validator fixture, not game data: a copy of the real Protagonist file, in the D1a shape.",
   "meters": {
     "anguish": {
       "range": [

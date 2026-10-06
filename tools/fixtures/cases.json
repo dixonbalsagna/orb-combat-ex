@@ -152,13 +152,13 @@
         {
           "file": "data/combat/finishers.json",
           "set": {
-            "/select/byFighter/KAI": "missing_finisher"
+            "/select/byFighter/PROTAGONIST": "missing_finisher"
           }
         }
       ],
       "expect": {
         "rule": "xref:finisher-key",
-        "pointer": "/select/byFighter/KAI"
+        "pointer": "/select/byFighter/PROTAGONIST"
       }
     },
     {
@@ -1395,13 +1395,13 @@
         {
           "file": "audio/data/cues.json",
           "set": {
-            "/fighters/KAI": "ghost"
+            "/fighters/PROTAGONIST": "ghost"
           }
         }
       ],
       "expect": {
         "rule": "xref:voice",
-        "pointer": "/fighters/KAI"
+        "pointer": "/fighters/PROTAGONIST"
       }
     },
     {
@@ -1953,13 +1953,13 @@
         {
           "file": "ui/data/readout_profiles.json",
           "set": {
-            "/aliases/kai/base": "ghost"
+            "/aliases/rival/base": "ghost"
           }
         }
       ],
       "expect": {
         "rule": "xref:profile",
-        "pointer": "/aliases/kai/base"
+        "pointer": "/aliases/rival/base"
       }
     },
     {
@@ -10232,7 +10232,7 @@
         {
           "file": "ui/data/faces.json",
           "set": {
-            "/fighters/kai": {
+            "/fighters/rival": {
               "neutral": {
                 "art": ""
               }
@@ -11851,7 +11851,7 @@
           "file": "data/narrative/combat_barks.json",
           "set": {
             "/last_stand/lines/TEST": {
-              "id": "last.kai.1",
+              "id": "last.prot.1",
               "text": "Dup"
             }
           }
@@ -14029,7 +14029,7 @@
           "file": "data/anim/ragdoll_motion.json",
           "set": {
             "/fighters": {
-              "KAI": "P"
+              "PROTAGONIST": "P"
             }
           }
         }
@@ -14062,13 +14062,13 @@
         {
           "file": "data/anim/ragdoll_motion.json",
           "set": {
-            "/fighters/KAI": "Z"
+            "/fighters/PROTAGONIST": "Z"
           }
         }
       ],
       "expect": {
         "rule": "xref:ragdoll-motion-shape",
-        "pointer": "/fighters/KAI"
+        "pointer": "/fighters/PROTAGONIST"
       }
     },
     {
@@ -41143,7 +41143,7 @@
                 "guard_raise": 3,
                 "head_pitch": -3
               },
-              "replaces": "VORR"
+              "replaces": "RIVAL"
             }
           }
         }

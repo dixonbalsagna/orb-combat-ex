@@ -1,6 +1,6 @@
 {
   "schema": "meters/1",
-  "_about": "Validator fixture, not game data: a copy of the real VORR file, in the D1a shape.",
+  "_about": "Validator fixture, not game data: a copy of the real Rival file, in the D1a shape.",
   "meters": {
     "menace": {
       "range": [

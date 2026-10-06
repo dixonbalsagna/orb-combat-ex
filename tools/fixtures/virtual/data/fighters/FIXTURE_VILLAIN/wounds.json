@@ -1,6 +1,6 @@
 {
   "schema": "wounds/1",
-  "_about": "Validator fixture, not game data: a copy of the real VORR file, in the pitch A shape (regions with spill, cripple, no brinkLimbs).",
+  "_about": "Validator fixture, not game data: a copy of the real Rival file, in the pitch A shape (regions with spill, cripple, no brinkLimbs).",
   "regions": {
     "head": {
       "brink": false,

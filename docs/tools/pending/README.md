@@ -72,7 +72,7 @@ Schema for `data/anim/targets.json` (`anim.targets/1`; `docs/animation/joint-lim
 
 Schemas for `data/anim/agency.json` (`anim.agency/1`; `docs/animation/pose-pipeline.md` section 9.22) and `data/anim/target_poles.json` (`anim.target_poles/1`; kept separate from `targets.json`). The data is on HEAD already, so the validator only warns "no schema" until this runs. Run once from the repo root, after Encounter's slice 4 is committed (the tree's tools files carry its edits): `node docs/tools/pending/apply-anim-agency.cjs`. It does **not** edit `data/`. It adds `anim-agency.schema.json` (closed; `knockback` needs the four kinds slideShort, slideLong, drift and bump, each {hold, weight 0 to 1, in, out}; `embed` {seq, weight}; `taunt` {seq, weight, cut_kinds}; `charge` light and heavy (with max_ticks) and feint (with ticks)) and `anim-target-poles.schema.json` (pose id to at least one of `pole_hand_r`, `pole_hand_l`, `pole_foot_r`, `pole_foot_l`, each [x, y, z]), the map entries, 43 cases and three rules: `agency-pose` (every held pose is in `poses.json` or a wave's poses file), `agency-seq` (every sequence is in a wave's sequences file) and `poles-pose` (every pole pose is in a pose file). The live data passes all three. Re-runnable.
 
-`hotfix/xref-fight.js` is a one-line fix for HEAD: `targets-limb` becomes a warning (it is already one in the tree's uncommitted copy). On HEAD as it is, the self-test fails one case (`anim-wave-keysets-limb-not-a-socket-limb`) because Animation's `targets.json` now retargets `foot_r` in `w1.jab.contact`, which that synthetic key set uses as its contact pose; CI's data job runs the self-test. The copy equals HEAD's `tools/lib/xref-fight.js` with only that change.
+`hotfix/xref-fight.js` was a one-line fix for HEAD (`targets-limb` as a warning); HEAD has had it for a long time and the folder is gone (2026-10-06).
 
 ## `apply-anim-flight.cjs`: Animation's flight lead
 
@@ -218,37 +218,23 @@ Run once, in the commit that lands the slice's data: `node docs/tools/pending/ap
 
 Run once, in the commit that lands Animation's zip build (after `apply-anim-zip2.cjs`, applied, and Encounter's zip commit): `node docs/tools/pending/apply-anim-zip-under.cjs`. It does **not** edit `data/`. `data/anim/zip.json` `pass` gains an optional third key `under` (an entry name: the same shape and the same `zip-entry` cross-check as `over` and `round`); `over` and `round` stay required. `zip.json` also gains an optional closed top-level `pass_depth` {z (number, 0 to 60), ticks (integer, 1 to 8)}, both required inside it (how far toward the camera the zipper's drawn root comes during a pass; render-only). **Animation's zip view keys, as `data/anim/zip.json` stood in the tree on 2026-10-06 (the shape may still move):** an optional closed `ends` (each of done, stopped, outrun, countered, caught, shot, down optional, each {blend (integer 0 to 12; required), overcommit (boolean)}), an optional closed `arrival` {settle (0 to 1; required)} and an optional closed `dropped` {land_w (0 to 1), tech (the sim's word on drop_end to a pose or sequence id)}, both required inside it; new rule `zip-dropped`: every `tech` value is a pose or a sequence of `data/anim`. The earlier case that used `under` as an unknown key now uses `beneath`; 58 cases, each setting its own whole block. Re-runnable. Tested on a clean `git archive HEAD` (3e14ae5): with the tree's `zip.json` dropped in: 5 errors before, then 0 errors and 0 warnings, self-test passes (4783 of 4783), a second run changes nothing, and running the committed version first and then this one gives the same.
 
-## Which script goes with which commit
+## The state of every script (2026-10-06, HEAD 53d13b55)
 
-State as of the tree at 648c637 (2026-10-04). **Applied** means the script's keys, rules and cases are in the tree and its commit is made; a script marked applied has nothing left to run and can be deleted. **Do not re-run** `apply-2b`, `apply-m1b`, `apply-contact`, `apply-launch`, `apply-biomes-contact`, `apply-uppercut`, `apply-anim-agency` and `apply-recipes`: they are older than later changes and would overwrite them (checked by running each on a clean export of HEAD). The other applied scripts change nothing on a second run.
+Checked by running each script on a clean export of HEAD: **applied** means a run changes nothing, or changes only what a later script has since changed (so a re-run would undo that); **parked** means its data has not landed. The sections above are the record of what each script does; a script can be deleted once its section is no longer needed.
 
-| Script | State | Goes in the commit of | Needs |
-| :--- | :--- | :--- | :--- |
-| `apply-2b`, `apply-m1b`, `apply-contact`, `apply-launch`, `apply-biomes-contact`, `apply-uppercut`, `apply-laststand`, `apply-slice3`, `apply-targets`, `apply-anim-agency`, `apply-anim-flight`, `apply-protag`, `apply-shots`, `apply-fighters-more`, `apply-pairlive` | applied | (earlier slices) | done |
-| `apply-recipes`, `apply-beamplay`, `apply-slice9`, `apply-slice10`, `apply-pieces`, `apply-slice11`, `apply-slice13`, `apply-slice14` | applied | Combat's alchemist recipes and pieces; Encounter's slices 8 to 14 | done |
-| `apply-brawl0` | applied (4bc5ff1) | Encounter's slice B0 | done |
-| `apply-stages` | applied (bca8f34) | World's staged destruction | done |
-| `apply-anim-zip2`, `apply-anim-gestures` | applied (df4869c) | Animation's zip entries, the push style and the ten gestures | done |
-| `apply-split-keys` | parked | Combat's re-key at Simulation's split (`finishers.json`, `styles.json`, the roster ids) | the roster ids upper case |
-| `apply-brawl1` | parked (follows melee-press-feel.md section 3 as of 2026-10-05; Encounter is rebuilding B1) | Encounter's slice B1 data (`interrupts.json` `brawl`, `ai.json`) | its data |
-| `apply-brawl-recipes` | parked, updated for three strengths | Combat's `recipes.brawl.json` as `data/combat/recipes.json` (the slice C2a) | its data |
-| `apply-intro2` | applied (208c6c7) | Simulation's `data/fight/intro.json` (`fight.intro/2`); after `apply-stages` (applied) | its data |
-| `apply-ui-stances` | applied (014c56a) | UI's stances badge | done |
-| `apply-howto-notes` | parked | UI's move of the stances lines into notes | UI's `howto.json` change |
-| `apply-brawl-9d` | parked | Encounter's follow-up brawl slice data (`interrupts.json`, `ai.json`) | its data |
-| `apply-wear-mood` | parked | Simulation's wear-and-mood slice (`wounds.json` `block`, `mood.json` impulses) | its data |
-| `apply-ui-fighter-names` | parked | UI's display-name switch (`ui/data/fighter_names.json`) | the file |
-| `apply-intro-default` | parked | Simulation's default-facts slice (`data/fight/intro.json` `defaultFacts`) | its data |
-| `apply-wear-shots` | parked | Simulation's blocked-shots slice (`wounds.json` `block.shotArm*`) | its data |
-| `apply-brawl-1c` | parked | Encounter's perfect-block and reversal slice (`interrupts.json`, `launch.json`) | its data |
-| `apply-anim-riposte` | parked | Animation's riposte build (`press_styles.json` `riposte`) | its data |
-| `apply-ladder-rates` | parked | Simulation's retune (`ladder.json` `takenPerDamage`, `dealtPerDamage`) | its data |
-| `apply-zip1` | parked | Encounter's zip slice (`interrupts.json` `zip`, `ai.json` zip shares) | its data |
-| `apply-anim-zip-under` | parked | Animation's zip build (`zip.json` `pass.under`), after Encounter's zip commit | its data |
-| `apply-movegen` (and `xref-movegen.js`) | parked, follows generator version 5 | Combat's landing of parts, identity, cells, the movesets and `lock.json` | the files |
-| (launch pair finishers and templates) | held | Combat's go-live of `launch-pair.json` finishers, `templates.agency.json` and `templates.brawl.json` | their live form |
+**Applied, and a re-run changes nothing (safe to leave or to delete):** `apply-anim-flight`, `apply-anim-gestures`, `apply-anim-riposte`, `apply-anim-zip-under` (with Animation's zip view, 46aac325), `apply-beamplay`, `apply-brawl-1c`, `apply-brawl0`, `apply-fighters-more`, `apply-intro-default`, `apply-intro2`, `apply-ladder-rates`, `apply-laststand`, `apply-pairlive`, `apply-pieces`, `apply-protag`, `apply-shots`, `apply-slice3`, `apply-slice9`, `apply-slice10`, `apply-slice11`, `apply-slice13`, `apply-slice14`, `apply-split-keys` (the fighter rename window, bf71a834), `apply-stages`, `apply-targets`, `apply-ui-fighter-names`, `apply-ui-stances`, `apply-wear-shots`, `apply-zip1` (with Encounter's zip slice, 02ec29e).
 
-The scripts are independent of each other and of the order (tested mixed; `apply-intro2` and `apply-stages` both edit `cases.json`, so run them one after the other). Each adds its own cases, so a run on a tree that already has its keys changes nothing.
+**Applied, but DO NOT RE-RUN** (a later change to the same schema or cases would be overwritten): `apply-2b`, `apply-anim-agency`, `apply-anim-zip2` (its `under` case was changed to `beneath` by `apply-anim-zip-under`), `apply-biomes-contact`, `apply-brawl-9d`, `apply-brawl1`, `apply-contact` (it also rewrites data), `apply-howto-notes` (UI has added note names since), `apply-launch`, `apply-m1b`, `apply-recipes`, `apply-uppercut`, `apply-wear-mood`.
+
+**Parked, to run in the commit that lands the data:**
+
+| Script | Goes in the commit of | Needs |
+| :--- | :--- | :--- |
+| `apply-brawl-recipes` | Combat's `recipes.brawl.json` as `data/combat/recipes.json` (the slice C2a) | its data |
+| `apply-movegen` (and `xref-movegen.js`, copied by it) | Combat's landing of parts, identity, cells, the movesets and `lock.json` (generator version 9) | the files |
+| (launch pair finishers and templates) | Combat's go-live of `launch-pair.json` finishers, `templates.agency.json` and `templates.brawl.json` (the EP's hold) | their live form |
+
+The two parked scripts are independent of each other and of the order (tested together). Each adds its own cases, so a run on a tree that already has its keys changes nothing. `docs/tools/pending/hotfix/` (a stale copy of `xref-fight.js` from 2026-10-02) was removed: it was only a one-line fix that HEAD has had for a long time, and copying it back would undo most of the cross-reference rules.
 
 ## For later (the three strengths): listed, not written
 
