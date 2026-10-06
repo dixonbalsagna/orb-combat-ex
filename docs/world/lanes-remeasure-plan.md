@@ -93,3 +93,20 @@ Population at the start goes from 390 to 1,800 under the re-lay; shares stay (22
 ## 7. `building_fall.landmark`
 
 HEAD has no `landmark` field at all: `FxEvent` has none, `SimFx.buildingFall` does not set it, and `mood.gd:374` reads `e.get("landmark") == true`, which is null and so false (dormant, as Game Design wrote it). The float existed only in the unlanded D1 patch and is fixed there (bool). **Nothing to land now:** the fix has no effect on HEAD and no golden moves; adding an unused `landmark: bool` to `FxEvent` and `buildingFall` ahead of D1 would also move no golden (the field is not in `FX_FIELDS`) but changes nothing either, so it lands with the window, in the patch.
+
+## 8. Game Design's what-if: a punch does not pancake a tall tower at low tiers (scratch, 100 matches, 2026-10-05)
+
+Base for every row: L1 with D1 with the two rulings (population references scaled by pop0 / 390; a damaged floor counts for stage 2), i.e. the set that goes into the window. Tower hits are brunts and shots on buildings of 5 floors or more; collapse is the tower falling whole.
+
+**The rule as ruled has no effect.** Pancake of a tower of 8 floors or more only when the launcher is tier 3 or 4 or the cut is in the bottom two floors (6 lines in `WorldBrunt.pancake`, the one function the brunt and the shot paths share): the numbers are identical to the base to the last digit. Tower hits by tier (40 matches, a match): **tier 2 0.16, tier 3 0.34, tier 4 0.78**, so 93% of them are at tier 3 or 4, where the rule lets the tower come down as today; and pancakes are 0.03 a match whatever the rule. Collapses of towers are 0.38 a match, **0.23 of them in towers of 5 to 7 floors** (under the rule's 8) and 0.15 in taller ones, almost all at tiers 3 and 4.
+
+**What does the collapsing is the core wear, not the pancake.** A floors hit also wears the building's core hit points by `CORE_SHARE` 0.25 of its damage (about 750 for a brunt at tier 3); a tower of 5 to 7 floors has 565 to 790 hit points, so one hit levels it whatever the floors did. A cap on how much of the core one floors hit may take does it:
+
+| Setting | Collapse share of tower hits | Cut floors standing at the KO (cut or damaged) | Cut-floor events a match (n above 0) | Front row | All rows | Shells (all) | Tier 4 a minute | Civilians |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| The window's set (no what-if) | 33% (0.38 of 1.15) | 0.17 (0.30) | 0.63 | 41.5% | 32.9% | 11.2% | 7.14% | 26.9% |
+| The tier rule on pancakes | 33% (no change) | 0.17 (0.30) | 0.63 | 41.5% | 32.9% | 11.2% | 7.14% | 26.9% |
+| **Core cap: one floors hit takes at most 0.5 of the core** | **11%** (0.13) | **0.32 (0.47)** | 0.63 | 40.7% | 32.3% | 11.8% | 6.97% | 26.8% |
+| Core cap 0.35 | 7% (0.08) | 0.37 (0.52) | 0.63 | 41.1% | 32.7% | 12.0% | 7.07% | 27.1% |
+
+**Reading.** The target (whole collapses falling from 44% toward 8 to 20% of tower hits) is met by the **core cap 0.5**: 33% to 11% on this base (44% on L1 with D1 alone, before the references are scaled); the cut floors that stand at the KO double (0.17 to 0.32); front row 40.7% (inside the 40 to 48 target and the 25 to 50 band; it does not fall, because a tower that survives its cut still goes at the next blast), all rows 32.3, shells 11.8, tier 4 6.97 a minute (floor 6), civilians flat. Cut floors a match are more than one with the references scaled: floor hits (punch, crack, dent) 1.14 a match, punches 0.93, of which 0.63 are cut-floor stage events; the damaged-floor reading adds the cracks. **Cost:** the cap is two lines (`brunt.gd` `applyFloors` and `blast.gd` `_floors`: `b.hp -= minf(CORE_SHARE * oc.dmg, coreCap * b.maxhp)`) and one number; I would put the number in `data/biomes/stages.json` (`coreCapShare`, 0.5; 0 or 1 is off, one more key for Tools) with a loader line. **It can ride in the window** (it moves the goldens, and the window regenerates them anyway) with its own `stagecheck.gd` case (a tower of 5 floors hit by a tier-3 brunt survives its first cut at 50% of its hit points). The tier rule on pancakes is not worth its 6 lines: it changes nothing at the tiers where towers are hit.
