@@ -233,6 +233,10 @@ Each press style has its own after-image and contact look (Orb's reference docs/
 
 The tell (a ground line, the heavy's ring), the travel per reading (speed ghosts and bands, tech wire echoes popping off, heavy stretched ghosts and a wide band), the way out in any direction, a counter, a caught mark and guard broken. First build behind the press styles' flag, against Encounter's B0 lunge cue plus the fields listed. `render/vfx/zip.gd`; docs/vfx/zip.md (the cue, the quads, reduced motion, Legal's four flags); `effects_check.gd` `_zip()`.
 
+### The zip on its own cues (2026-10-06)
+
+Encounter's Z1 cues (`zip_light`, `zip_heavy`, `zip_out`, `zip_end`) drive the zip: the clock is `DirZip.read`, the tell follows the ground to the real arrival point, the strike and heavy have their own blow marks, and countered, caught, shot and down each have a look; two ghosts (Legal f01). The riposte's sure line, brackets and reversal echo are drawn from the `riposte` cue. `render/vfx/zip.gd`, `shots_view.gd`, `press.gd`; docs/vfx/zip.md ("On the zip's own cues"), riposte-plan.md ("Built"); `effects_check.gd` `_zip_real()` and `_riposte()`.
+
 ### Building stages (plan, 2026-10-05)
 
 A note only: what VFX will draw for World's `building_stage` event (glass shower at windows out, a cladding shed and dust skirt for a part gone, a bigger shed and a plume for a shell, nothing new for rubble) and an ambient shell plume read from the stage query, so a seek or late join still looks wrecked. Not built until World's slice is committed. docs/vfx/building-stages-plan.md.

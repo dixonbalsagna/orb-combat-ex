@@ -252,6 +252,9 @@ func on_events(S: SimState, events: Array, reduced: bool) -> void:
 	for e in events:
 		match String(e.type):
 			"cue":
+				if String(e.kind) == "riposte":
+					_riposte(S, e)
+					continue
 				if String(e.kind) == "tell_heavy":
 					var slot: int = int(e.actor)
 					if slot < 0 or slot > 1 or slot >= S.fighters.size():
@@ -273,6 +276,56 @@ func on_events(S: SimState, events: Array, reduced: bool) -> void:
 					continue
 				fly[v] = minf(float(e.dur) * 60.0, p("fly_max"))
 				made["fly"] = int(made.get("fly", 0)) + 1
+
+
+## The blocker's riposte (Encounter's B1c: cue `riposte`, actor the blocker, target the rival, text light or heavy, n the contact tick, absolute). Its beat is in the exchange from the press to the
+## contact and may carry `sure` (it cannot be blocked or dodged) and `reversal` (it came out of a sidestep). A sure blow is marked by a thin committed line along the limb's path for the last 6
+## ticks before the contact (and brackets on the target at the contact, in `_blow`); a reversal leaves one wire echo on the line of the sidestep. docs/vfx/riposte-plan.md.
+func _riposte(S: SimState, e) -> void:
+	var slot: int = int(e.actor)
+	var vic: int = int(VfxHub._g(e, "target", 1 - slot))
+	if slot < 0 or slot > 1 or slot >= S.fighters.size() or vic < 0 or vic >= S.fighters.size() or vic == slot:
+		return
+	var sure: bool = false
+	var rev: bool = false
+	var ex = S.dirS.ex
+	if ex != null:
+		for b in ex.beats:
+			if b.args != null and bool(b.args.get("riposte", false)):
+				sure = sure or bool(b.args.get("sure", false))
+				rev = rev or bool(b.args.get("reversal", false))
+	var fa = S.fighters[slot]
+	var fv = S.fighters[vic]
+	var dir: float = 1.0 if SimWrap.sdx(fa.x, fv.x) >= 0.0 else -1.0
+	var reach: float = minf(absf(SimWrap.sdx(fa.x, fv.x)) - 10.0, 200.0)
+	if sure:
+		var x := Fx.new()
+		x.style = "sureline"
+		x.slot = slot
+		x.vic = vic
+		x.dir = dir
+		x.ax = fa.x
+		x.ay = fa.y
+		x.cx = dir * maxf(reach, 14.0)
+		x.cy = region_y("core") + (fv.y - fa.y)
+		x.col = lane_of(S, slot)
+		x.life = 6.0
+		x.age = -maxf(float(VfxHub._g(e, "n", S.tick)) - float(S.tick) - 6.0, 0.0)
+		fx.append(x)
+		made["sureline"] = int(made.get("sureline", 0)) + 1
+	if rev:
+		var o: Vector2 = back(S, slot, 6)
+		var r := Fx.new()
+		r.style = "revecho"
+		r.slot = slot
+		r.vic = vic
+		r.dir = dir
+		r.ax = o.x
+		r.ay = o.y
+		r.col = lane_of(S, slot)
+		r.life = 3.0
+		fx.append(r)
+		made["revecho"] = int(made.get("revecho", 0)) + 1
 
 
 func _dir_to(S: SimState, slot: int) -> float:
@@ -330,6 +383,20 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 			x.col = lane_of(S, vic)
 			x.life = p("block_life")
 	_take_real(S, x, att, style)
+	if bool(ba.get("sure", false)) and style != "block":
+		var br := Fx.new()
+		br.style = "brackets"
+		br.slot = att
+		br.vic = vic
+		br.dir = x.dir
+		br.ax = x.ax
+		br.ay = x.ay
+		br.cx = x.cx
+		br.cy = x.cy
+		br.col = x.col
+		br.life = 6.0
+		fx.append(br)
+		made["brackets"] = int(made.get("brackets", 0)) + 1
 	if bool(ba.get("ender", false)) and style == "heavy":
 		fly[vic] = maxf(float(fly[vic]), p("fly_max"))
 	fx.append(x)

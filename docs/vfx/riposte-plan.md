@@ -34,3 +34,7 @@ Reduced motion: the line and the brackets stay (they are short and still); the r
 - Animation: `press.sure`, `press.riposte`, `riposte.ticks_to_contact`, and `press_path` at the riposte's start (the committed line follows the real limb); the reversal's previous poses (`press_pose`) if the echo should be a real pose.
 - Encounter: `sure` on the strike beat (read from the beat the way `style` is, `VfxPress.beat_args`), and the `riposte` cue (kind, contact tick).
 - Tests when built: a sure blow draws the line and the brackets and nothing at a non-sure riposte; the marks are gone in 6 ticks; the reversal's echo trails the body; the counts above.
+
+## Built (2026-10-06)
+
+Cue `riposte` (actor the blocker, target the rival, text light or heavy, `n` the contact tick) with the riposte beat read from `S.dirS.ex.beats` (`args.riposte`, `sure`, `reversal`). A sure riposte starts a thin committed line (style `sureline`) that waits and draws only in the last 6 ticks before the contact; on the blow itself (`_blow`) a sure beat adds the four `brackets`; a reversal adds one wire `revecho` at where he stood 6 ticks ago (dropped in reduced motion). A riposte that is not sure adds nothing. `render/vfx/press.gd` `_riposte`, `render/vfx/shots_view.gd` `_press` arms; `effects_check.gd` `_riposte()` (the line waits, 1 quad then, 22 at the contact with the blow's own look, gone in its ticks; a non-sure riposte adds nothing; the reversal echo 5 quads). Not yet drawn from a live fight: no web still.

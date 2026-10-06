@@ -20,8 +20,8 @@ extends RefCounted
 ## `lunge_guard_broken`. Presentation only: it reads cues and fighters, draws no random number.
 
 const DEFAULTS: Dictionary = {
-	"zip": {"ghosts": 5.0, "echoes": 3.0, "echo_pop": 2.5, "hold": 14.0, "hold_max": 60.0, "tell_alpha": 0.55, "band_w": 16.0, "band_w2": 10.0, "wide_w": 24.0,
-		"counter_life": 12.0, "caught_life": 22.0, "gbreak_life": 14.0, "alpha": 0.9, "ground_line_w": 1.6, "min_gap": 6.0,
+	"zip": {"ghosts": 2.0, "echoes": 3.0, "echo_pop": 2.5, "hold": 14.0, "hold_max": 60.0, "tell_alpha": 0.8, "band_w": 16.0, "band_w2": 10.0, "wide_w": 24.0,
+		"counter_life": 12.0, "caught_life": 22.0, "gbreak_life": 14.0, "alpha": 0.9, "ground_line_w": 2.2, "min_gap": 6.0,
 		"ghost_gap": 16.0, "ghost_alpha": 0.35, "ring_ticks": 10.0, "mark_h": 54.0, "mark_r": 26.0, "min_travel": 4.0, "bh_per_tick": 3.0},
 }
 
@@ -31,6 +31,9 @@ class Zip:
 	var style: String = "speed"     # speed, tech or heavy
 	var heavy_kind: bool = false    # the cue was lunge_heavy or charge_heavy
 	var one_way: bool = false       # a charge: a one-way flight, there is no strike hold and no way out
+	var real: bool = false          # the director's own zip (zip_light, zip_heavy): its phases come from DirZip.read, the truth, each tick
+	var zip_heavy: bool = false     # the zip heavy (LT and Y), not the zip strike (LT and X)
+	var phase: String = ""         # a real zip's phase now: tell, in, reach, out
 	var age: float = 0.0
 	var wind: float = 6.0
 	var mv: float = 6.0
@@ -161,7 +164,12 @@ func step(S: SimState, frozen: bool) -> void:
 	var i: int = 0
 	while i < zips.size():
 		var z: Zip = zips[i]
-		z.age += 1.0
+		if z.real:
+			if not _read_into(S, z):
+				zips.remove_at(i)
+				continue
+		else:
+			z.age += 1.0
 		if z.age >= z.t2() and not z.have_a and z.slot < S.fighters.size():
 			z.have_a = true
 			z.ax = S.fighters[z.slot].x
@@ -190,6 +198,12 @@ func on_events(S: SimState, events: Array, _reduced: bool) -> void:
 				_start(S, e, kind)
 			"lunge_counter", "lunge_caught", "lunge_guard_broken":
 				_outcome(S, e, kind)
+			"zip_light", "zip_heavy":
+				_start_real(S, e, kind)
+			"zip_out":
+				_zip_blow(S, e)
+			"zip_end":
+				_zip_end(S, e)
 
 
 func _start(S: SimState, e, kind: String) -> void:
@@ -251,18 +265,143 @@ func _start(S: SimState, e, kind: String) -> void:
 	made["zip"] = int(made.get("zip", 0)) + 1
 
 
+## A zip of the director's own (Encounter's Z1, docs/director/zip-z1.md): zip_light or zip_heavy as the tell starts, with `target`, `amount` the tell's ticks and `n` the way in. From here its
+## phases are read, not counted: DirZip.read(S, f) (read only) says the phase (tell, in, reach, out), the ticks into it, the reading and the planned ticks; it is empty when the zip is over.
+func _start_real(S: SimState, e, kind: String) -> void:
+	var slot: int = int(e.actor)
+	var tgt: int = int(VfxHub._g(e, "target", 1 - slot))
+	if slot < 0 or slot > 1 or slot >= S.fighters.size() or tgt < 0 or tgt >= S.fighters.size() or tgt == slot:
+		return
+	var f = S.fighters[slot]
+	var ft = S.fighters[tgt]
+	var z := Zip.new()
+	z.real = true
+	z.slot = slot
+	z.target = tgt
+	z.zip_heavy = kind == "zip_heavy"
+	z.heavy_kind = z.zip_heavy
+	z.style = "heavy" if z.zip_heavy else "speed"
+	z.wind = maxf(float(VfxHub._g(e, "amount", 6.0)), 1.0)
+	z.mv = maxf(float(VfxHub._g(e, "n", 6.0)), 1.0)
+	z.hold = maxf(float(VfxHub._g(e, "x", 4.0)) + float(VfxHub._g(e, "y", 6.0)), 1.0)
+	z.out = maxf(z.mv, 1.0)
+	z.ox = f.x
+	z.oy = f.y
+	var side: float = 1.0 if SimWrap.sdx(f.x, ft.x) >= 0.0 else -1.0
+	var ct: Dictionary = DirData.contact()
+	z.px = SimWrap.wrap(ft.x - side * maxf(float(ct.get("offset", 45.0)), float(ct.get("minSeparation", 45.0))))   # where the rush ends (DirZip._arrive's offset)
+	z.py = ft.y
+	z.ex = f.x
+	z.ey = f.y
+	z.col = VfxPress.lane_of(S, slot)
+	for k in range(zips.size() - 1, -1, -1):
+		if zips[k].slot == slot:
+			zips.remove_at(k)
+	zips.append(z)
+	_read_into(S, z)
+	made["zip"] = int(made.get("zip", 0)) + 1
+	made[kind] = int(made.get(kind, 0)) + 1
+
+
+## Takes the real zip's state from the director's read: false when the zip is over (nothing to draw). The age is the tick count along tell, way in, reach and way out, so the
+## drawing treats it like any other zip.
+func _read_into(S: SimState, z: Zip) -> bool:
+	var r: Dictionary = DirZip.read(S, S.fighters[z.slot])
+	if r.is_empty():
+		return false
+	z.wind = maxf(float(r["tell"]), 1.0)
+	z.mv = maxf(float(r["in"]), 1.0)
+	z.hold = maxf(float(r["hd"]), 1.0)
+	z.out = maxf(float(r["out"]), 1.0)
+	z.style = String(r["reading"])
+	z.phase = String(r["phase"])
+	var n: float = float(r["n"])
+	match z.phase:
+		"tell":
+			z.age = n
+		"in":
+			z.age = z.wind + n
+		"reach":
+			z.age = z.wind + z.mv + n
+			if not z.have_a:
+				z.have_a = true
+				z.ax = S.fighters[z.slot].x
+				z.ay = S.fighters[z.slot].y
+		_:
+			z.age = z.wind + z.mv + z.hold + n
+			if not z.have_a:
+				z.have_a = true
+	return true
+
+
+## His blow lands (zip_out: text the exit kind, k the reading): a mark at the contact that is a strike's or a heavy's own. The press styles draw the blow's look from its damage event;
+## this one is the zip's: a hard bar across the line of his approach for the zip strike, two bars for the zip heavy.
+func _zip_blow(S: SimState, e) -> void:
+	var slot: int = int(e.actor)
+	var tgt: int = int(VfxHub._g(e, "target", 1 - slot))
+	if slot < 0 or slot > 1 or slot >= S.fighters.size() or tgt < 0 or tgt >= S.fighters.size() or tgt == slot:
+		return
+	var z: Zip = of(slot)
+	var f = S.fighters[slot]
+	var ft = S.fighters[tgt]
+	var m := Mark.new()
+	m.kind = "zipblow"
+	m.slot = slot
+	var rd: Dictionary = DirZip.read(S, f)
+	m.style = "heavy" if (String(rd.get("btn", "")) == "y" or (rd.is_empty() and z != null and z.zip_heavy)) else "strike"
+	var side: float = 1.0 if SimWrap.sdx(f.x, ft.x) >= 0.0 else -1.0
+	m.x = SimWrap.wrap(ft.x - side * 14.0)
+	m.y = ft.y + 32.0
+	m.dx = side
+	m.dy = 0.0
+	m.life = 8.0
+	m.col = VfxPress.lane_of(S, slot)
+	m.col2 = m.col.lightened(0.2)
+	marks.append(m)
+	made["zipblow"] = int(made.get("zipblow", 0)) + 1
+
+
+## The zip is over (zip_end, `text` why, `actor` the zipper, `target` the rival): countered, caught, shot (stopped on the way in), down (dropped on the way out) get their mark where the zipper
+## is; done, outrun and stopped by the rules need none.
+func _zip_end(S: SimState, e) -> void:
+	var slot: int = int(e.actor)
+	if slot < 0 or slot > 1 or slot >= S.fighters.size():
+		return
+	var why: String = String(e.text)
+	var tgt: int = int(VfxHub._g(e, "target", 1 - slot))
+	if tgt < 0 or tgt >= S.fighters.size() or tgt == slot:
+		tgt = 1 - slot
+	var z: Zip = of(slot)
+	var style: String = "heavy" if (z != null and z.style == "heavy") else "tech"
+	match why:
+		"countered":
+			_mark(S, tgt, slot, "lunge_counter", style)
+		"caught":
+			_mark(S, tgt, slot, "lunge_caught", style)
+		"shot", "stopped":
+			_mark(S, tgt, slot, "zip_shot", style)
+		"down":
+			_mark(S, tgt, slot, "zip_down", style)
+	made["end_" + why] = int(made.get("end_" + why, 0)) + 1
+	if z != null:
+		zips.erase(z)
+
+
 ## The outcomes. lunge_counter: actor = the fighter who countered, target = the zipper (he is stopped where he is); lunge_caught: actor = the fighter who caught him,
 ## target = the zipper; lunge_guard_broken: actor = the fighter whose guard broke, target = the zipper. An optional `style` (tech or heavy) names the counter's look.
 func _outcome(S: SimState, e, kind: String) -> void:
-	var who: int = int(e.actor)
-	var zs: int = int(VfxHub._g(e, "target", 1 - who))
+	_mark(S, int(e.actor), int(VfxHub._g(e, "target", 1 - int(e.actor))), kind, String(VfxHub._g(e, "style", "tech")))
+
+
+## One outcome mark: who (the fighter who countered, caught, shot or broke the guard) and zs (the zipper), the kind of cue, and the counter's look.
+func _mark(S: SimState, who: int, zs: int, kind: String, style: String) -> void:
 	if who < 0 or who > 1 or zs < 0 or zs > 1 or who >= S.fighters.size() or zs >= S.fighters.size():
 		return
 	var zf = S.fighters[zs]
 	var wf = S.fighters[who]
 	var m := Mark.new()
 	m.slot = who
-	m.style = String(VfxHub._g(e, "style", "tech"))
+	m.style = style
 	if not ["tech", "heavy"].has(m.style):
 		m.style = "tech"
 	var z: Zip = of(zs)
@@ -294,6 +433,21 @@ func _outcome(S: SimState, e, kind: String) -> void:
 			m.col = VfxPress.lane_of(S, who)
 			if z != null:
 				z.stopped = true
+		"zip_shot":
+			m.kind = "shot"
+			m.x = zf.x
+			m.y = zf.y + 30.0
+			m.life = 10.0
+			m.col = VfxPress.lane_of(S, who)
+			if z != null:
+				z.stopped = true
+		"zip_down":
+			m.kind = "down"
+			m.slot = zs
+			m.x = zf.x
+			m.y = zf.y + 4.0
+			m.life = 14.0
+			m.col = VfxPress.lane_of(S, who)
 		_:
 			m.kind = "gbreak"
 			m.x = wf.x

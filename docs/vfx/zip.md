@@ -76,3 +76,26 @@ Applied 2026-10-05, the flag still off:
 The real cue is `lunge_light`, `lunge_heavy`, `charge_light` or `charge_heavy` with `actor`, `target`, `text` (`lunge` or `charge`), `amount` (the wind-up's ticks, 0 for a charge) and `n` (the move's ticks). It carries no reading, hold, way-out ticks or exit point yet, so the defaults stand: a heavy cue is heavy, a light one reads the press log or Animation's blow, `hold` is 14, `out` is `n`, and he returns to where he started. A `charge_*` cue is a one-way flight: its tell and travel draw, with no strike hold and no way out. In three headless AI matches (seeds 4, 12345, 7; 5,400 ticks each) the director sent 20 lunge and 16 charge cues; each one's tell (the ground line and its tick) drew on the tick it started (`effects_check.gd` `_real()`).
 
 Today's cue is the old mid-band lunge, not the LT zip, so its move is 3 to 20 ticks and `VfxZip.violations` counts the short ones (34 of the 36 cues): that is the count Legal's travel minimum (m02) will want at zero when the zip's cue replaces it.
+
+## On the zip's own cues (Encounter's Z1, 2026-10-06)
+
+The zip is live in the sim (docs/director/zip-z1.md), so the staged cue is replaced by the real ones and the zip's phases are **read**, not counted: `DirZip.read(S, f)` (read only: phase `tell`, `in`, `reach`, `out`, the ticks into it, the reading, the planned ticks; empty when the zip is over) sets each real zip's clock every tick, so what is drawn is the sim's truth even through a pause or a seek.
+
+| Cue | What VFX does |
+| :-- | :-- |
+| `zip_light`, `zip_heavy` (`x`, `y` the ticks in reach) | Starts a real zip. The tell is a thin ground line to the arrival point (`DirData.contact()` offset, the same point the rush ends at), drawn along the terrain so a dune between never hides it, and a tick at its end; the heavy adds its hollow ring in the last 10 ticks of the tell. |
+| (the way in) | The reading's own look: speed ghosts (two, behind the body, lane tint at 0.35 or less) and a band, tech wire echoes strung from the start to the body, heavy a wide band. At least 4 drawn ticks (RL-076, m02). |
+| `zip_out` (text `home`, `far`, `point`; `x`, `y`; `n`; `amount`, `dur`, `k`) | The blow's mark at the contact, which differs for the two: a zip strike is one hard bar across the line of his approach, a zip heavy two bars side by side (the press look of the blow itself comes from the `damage` event as for any blow). The way out is drawn from `DirZip.read`'s out phase as its own leg: the echoes restart at the arrival and follow the bowed path, so a far-side exit reads as a drawn travel, not a vanish. |
+| `zip_end` `countered` | The counter mark where he is stopped (the press diamond or double ring and a bar below the face). |
+| `zip_end` `caught` | The caught ring closing and two brackets. |
+| `zip_end` `shot`, `stopped` | A shot-down mark: four short hard spokes and a ring at the waist, the zip's travel cut that tick. |
+| `zip_end` `down` | A flat ring on the ground under him, widening over 14 ticks (the dropped fall is Animation's). |
+| `zip_end` `done`, `outrun` | Nothing: the zip simply ends. |
+
+Legal f01 is now applied: `ghosts` is 2 (at most 2 ghosts of a limb, at most 4 drawn in all at any instant counting both fighters' zips), reduced motion draws 1. The press styles' tech echoes are still three per blow (the zip's own ghosts are 2), which is the one place f01's "2 ghosts of a limb" is a reading to confirm with Legal: the three tech echoes are one limb's after-image, each popping off in 2.5 ticks, never more than two alive at once on the zip.
+
+Cost on top of the old zip: a real zip draws at most 24 quads (tell 13 on a long gap because the line follows the ground, way in 12, way out 19 to 20, a blow mark 1 to 2, an end mark 1 to 5), in the shots view's one draw. Headless, native, on a machine loaded by other sessions, `hub.consume` averaged 0.97 ms a tick while a zip and its blow played (it runs the whole hub, the blow's press look and debris among it; 0.08 idle) and `view.update` 35 us against 11 us idle. Not measured on the web build under throttle: the zip adds no draw call and no new pool, so the web cost is the 24 quads' fill plus that consume.
+
+Stills (web build, headless Chrome, scratch stage hooks that start a real `DirZip`): `img/zr-strike-tell.jpg`, `zr-strike-in.jpg`, `zr-strike-blow.jpg`, `zr-strike-out.jpg`, `zr-heavy-blow.jpg`, `zr-counter.jpg`, `zr-caught.jpg`, `zr-shot.jpg`, `zr-down.jpg`. The tall pale oval round the zipper in several of them is the press look's limb ring, drawn since the press styles went on by default, not the zip's.
+
+Known weak spots (Z1): the ghosts are still stand-in figures until Animation's previous poses replace them; the shot and down marks are drawn in the rival's lane colour, which is pale against sand; the `down` mark is faint on a ground the dune covers.

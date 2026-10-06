@@ -97,6 +97,10 @@ Quads only, in the shots view's one draw: speed 7, tech 17 falling to 1 as the e
 
 Quads only, in the shots view's one draw: a tell 2 to 3, speed travel about 27, tech about 21 falling to 6 as the echoes pop off, heavy travel about 26, an outcome mark 2 to 5. No debris. One zip at most about 27 plus its strike marks. Not measured: the web build under load and an old laptop.
 
+
+## The zip on its own cues (2026-10-06)
+
+Quads only, in the shots view's one draw: a real zip draws at most 24 quads (tell 13 on a long gap, way in 12, way out 19 to 20, a blow mark 1 to 2, an end mark 1 to 5), two ghosts a zip (Legal f01). A sure riposte adds 1 (the line, in its last 6 ticks) then 4 (the brackets), a reversal 5. No debris, no draw call. Measured headless (native, on a loaded machine): `hub.consume` 0.97 ms a tick while a zip and its blow play against 0.08 idle, `view.update` 35 against 11 us. Not measured: the web build under throttle and an old laptop.
 ## Building stages (2026-10-05)
 
 Debris pool only, no quads and no new draw call. One event at full strength: a 0 to 1 about 15 bits, a 2 to 3 about 25, a 0 to 3 about 40 (quality low 14, reduced motion 20). A tick's stage events are budgeted at 300 bits (a token chip and puff each past it, none past 1.6 times): 69 events in one tick spawned 368 bits. A real 16,000-tick match sent 68 events, busiest tick 56, and the pool stayed within its 460. The shell plume: at most 12 puffs alive. Not measured: the web build under load and an old laptop.

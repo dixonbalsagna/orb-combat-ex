@@ -334,6 +334,8 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 		var rx: float = SimWrap.sdx(cam_x, e.ax)
 		if absf(rx) > half_w + 6.0 * bh:
 			continue
+		if e.age < 0.0:
+			continue                              # a committed line waits for its last 6 ticks
 		var st: float = maxf(e.age - (1.0 - a), 0.0)
 		var u: float = clampf(st / e.life, 0.0, 1.0)
 		var d: float = e.dir
@@ -354,6 +356,26 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 		var start: Vector2 = pts[0]
 		pr.shown += 1
 		match e.style:
+			"sureline":
+				# A sure blow (it cannot be blocked or dodged): the limb's committed path, a thin hard line, in his lane colour, in the last 6 ticks before the contact.
+				var sl: Color = e.col
+				sl.a = al * 0.9 * (1.0 - 0.5 * u)
+				n = _line(n, pts[0], pts[pts.size() - 1], maxf(1.6, minpx * 1.4), zf, sl)
+			"brackets":
+				# ... and four short corner ticks closing on the target's chest (18 units out to 10), hollow, lane colour: nothing to block, nothing to dodge.
+				var bkc: Color = e.col
+				bkc.a = al * (1.0 - u)
+				var rb: float = lerpf(18.0, 10.0, u)
+				for k in range(4):
+					var cs := Vector2(1.0 if k % 2 == 0 else -1.0, 1.0 if k < 2 else -1.0)
+					var cdir := Vector2(cs.x, cs.y).normalized()
+					n = _put(n, contact + Vector2(cs.x * rb, cs.y * rb * 0.9), cdir, 9.0, 3.0, zf, bkc, 0.5, 0.5, SHAPE_STREAK)
+			"revecho":
+				# The sidestep out of a block: one wire echo of him where he was, popping off over 3 ticks; it trails him and never stands ahead.
+				if not red:
+					var rc: Color = e.col.darkened(0.3)
+					rc.a = al * (1.0 - u)
+					n = _figure(n, feet, d, 4.0, feet + Vector2(d * 20.0, 50.0), rc, true, zb + 0.2, minpx)
 			"glint":
 				# The beat's glint (the option UI's beat ring goes with): a small hard ring and a short streak on the striking limb's tip at the contact tick.
 				var gr: float = lerpf(4.0, VfxPress.p("glint_r"), u)
@@ -558,7 +580,15 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 			tc.a = al * VfxZip.p("tell_alpha") * (0.35 + 0.65 * k)
 			var go: float = WorldTerrain.groundY(S, z.ox) + 3.0
 			var gp: float = WorldTerrain.groundY(S, z.px) + 3.0
-			n = _line(n, Vector2(o.x, go), Vector2(pt.x, gp), maxf(VfxZip.p("ground_line_w"), minpx * 1.2), zb, tc)
+			var tw: float = maxf(VfxZip.p("ground_line_w"), minpx * 1.2)
+			var nseg: int = clampi(int(ceil(absf(pt.x - o.x) / 24.0)), 1, 24)      # it follows the ground, so a dune between them never hides it
+			var tp: Vector2 = Vector2(o.x, go)
+			for sg in range(1, nseg + 1):
+				var kx: float = float(sg) / float(nseg)
+				var sx: float = lerpf(o.x, pt.x, kx)
+				var tq := Vector2(sx, WorldTerrain.groundY(S, SimWrap.wrap(cam_x + sx)) + 3.0)
+				n = _line(n, tp, tq, tw, zb, tc)
+				tp = tq
 			n = _line(n, Vector2(pt.x, gp), Vector2(pt.x, gp + 12.0), maxf(VfxZip.p("ground_line_w"), minpx * 1.2), zb, tc)
 			var rem: float = z.t1() - age
 			if z.style == "heavy" and rem <= VfxZip.p("ring_ticks"):
@@ -602,7 +632,7 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 		# Speed and heavy: a smear of up to 5 ghosts on the body's real recent path, each overlapping the next by about a third, one flat lane-colour tint at 0.35 or
 		# less and fainter the older. Nothing is drawn where he has not been; a stationary body has no ghosts.
 		var heavy: bool = style == "heavy"
-		var ng: int = 2 if red else mini(int(VfxZip.p("ghosts")), 5)
+		var ng: int = 1 if red else mini(int(VfxZip.p("ghosts")), 5)
 		var trail: Array = VfxZip.trail_points(pr.hist[z.slot], VfxZip.p("ghost_gap"), ng)
 		var oldest: Vector2 = cur
 		for g in range(trail.size()):
@@ -659,6 +689,34 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 				n = _put(n, c, Vector2(1.0, 0.0), cr * 2.0, cr * 2.0, zm, cc, minf(0.5, 3.0 / cr), 0.0, SHAPE_RING)
 				for sg in [-1.0, 1.0]:
 					n = _put(n, c + pv * (sg * (cr + 6.0)), dv, 20.0, 4.0, zm, cc, 0.5, 0.5, SHAPE_STREAK)
+			"zipblow":
+				# The zip's blow lands: a hard bar across the line of his approach (a zip strike), two bars side by side (a zip heavy), low on the body, in his lane colour.
+				var zk: Color = m.col
+				zk.a = al * (1.0 - u)
+				var zlen: float = 60.0 if m.style == "heavy" else 54.0
+				var zdir := Vector2(m.dx, 0.0)
+				var zperp := Vector2(0.0, 1.0)
+				if m.style == "heavy":
+					n = _put(n, c - zdir * 6.0, zperp, zlen, 6.0 * 2.0, zm, zk, 0.5, 0.5, SHAPE_STREAK)
+					n = _put(n, c + zdir * 6.0, zperp, zlen * 0.8, 4.0 * 2.0, zm, zk, 0.5, 0.5, SHAPE_STREAK)
+				else:
+					n = _put(n, c, zperp, zlen, 4.0 * 2.0, zm, zk, 0.5, 0.5, SHAPE_STREAK)
+			"shot":
+				# The zipper is shot down out of his zip: four short hard spokes and a ring, low on the body.
+				var sk: Color = m.col
+				sk.a = al * (1.0 - u)
+				for k in range(4):
+					var sang: float = float(k) * PI * 0.5 + PI * 0.25
+					var sd := Vector2(cos(sang), sin(sang))
+					n = _put(n, c + sd * (10.0 + 14.0 * u), sd, 14.0, 4.0, zm, sk, 0.5, 0.5, SHAPE_STREAK)
+				var sr: float = lerpf(8.0, 22.0, u)
+				n = _put(n, c, Vector2(1.0, 0.0), sr * 2.0, sr * 2.0, zm + 0.1, sk, minf(0.5, 3.0 / sr), 0.0, SHAPE_RING)
+			"down":
+				# He is down after a shot on the way out: a flat ring on the ground under him, widening.
+				var dk: Color = m.col
+				dk.a = al * 0.8 * (1.0 - u)
+				var dr: float = lerpf(10.0, 44.0, 1.0 - pow(1.0 - u, 2.0))
+				n = _put(n, c, Vector2(1.0, 0.0), dr * 2.0, dr * 2.0 * 0.28, zm, dk, minf(0.5, 3.0 / dr), 0.0, SHAPE_RING)
 			"gbreak":
 				# The shield line breaks into fragments that fly out, with a small flash ring (low on the body, in the lane colour).
 				var gk: Color = m.col

@@ -198,6 +198,8 @@ func _run() -> void:
 	_glare()
 	_press()
 	_zip()
+	_zip_real()
+	_riposte()
 	_press_load()
 	_real()
 	_stages()
@@ -3080,9 +3082,9 @@ func _zip() -> void:
 	_check(z3.style == "tech" and z3.has_exit and absf(z3.ey - (g + 120.0)) < 0.1 and z3.hold == 16.0 and z3.out == 6.0, "the cue's own reading, exit point, strike ticks and way-out ticks are read")
 	# The tell: a line along the ground toward the arrival point; the heavy adds its ring.
 	var q_tell: int = quads.call(h1)
-	_check(q_tell == 2, "the tell is a ground line and a tick at its end (%d quads)" % q_tell)
+	_check(q_tell >= 2 and q_tell <= 26, "the tell is a ground line that follows the ground, and a tick at its end (%d quads)" % q_tell)
 	var q_tell_h: int = quads.call(h2)
-	_check(q_tell_h == 2, "the heavy's ring waits for the last 10 ticks of the wind-up (%d quads at its start)" % q_tell_h)
+	_check(q_tell_h >= 2 and q_tell_h <= 26, "the heavy's ring waits for the last 10 ticks of the wind-up (%d quads at its start)" % q_tell_h)
 	# The travel in, speed: stacked ghosts along the real path and two bands.
 	for k in range(6):
 		_tick(S, h1, [])
@@ -3090,7 +3092,7 @@ func _zip() -> void:
 	var to_a := Vector2(260.0, 0.0)
 	var q_speed: int = fly.call(h1, from_a, to_a, 10, 7)
 	var z1b: VfxZip.Zip = h1.zip.of(0)
-	_check(z1b != null and q_speed >= 20, "speed travel: ghosts and two bands along the path (%d quads)" % q_speed)
+	_check(z1b != null and q_speed >= 9, "speed travel: ghosts and two bands along the path (%d quads)" % q_speed)
 	# Every travel effect is drawn between points: the same zip straight up draws the same, along the vertical.
 	var hv: VfxHub = fresh.call()
 	_tick(S, hv, [lunge.call(0, "lunge_light", "mash", 4, 10, {})])
@@ -3100,9 +3102,9 @@ func _zip() -> void:
 	var vertical_band: bool = false
 	for q in range(view.count):
 		var o: int = q * VfxShotsView.STRIDE
-		if view._buf[o + 18] == 0.0 and absf(view._buf[o + 4]) > 3.0 * absf(view._buf[o]) and absf(view._buf[o + 4]) > 40.0:
+		if view._buf[o + 18] == 0.0 and absf(view._buf[o + 4]) > 3.0 * absf(view._buf[o]) and absf(view._buf[o + 4]) > 20.0:
 			vertical_band = true
-	_check(q_vert >= 20 and vertical_band, "straight up draws a vertical band along the path (%d quads)" % q_vert)
+	_check(q_vert >= 9 and vertical_band, "straight up draws a vertical band along the path (%d quads)" % q_vert)
 	var hd: VfxHub = fresh.call()
 	_tick(S, hd, [lunge.call(0, "lunge_light", "mash", 4, 10, {})])
 	for k in range(4):
@@ -3111,20 +3113,20 @@ func _zip() -> void:
 	var diag_band: bool = false
 	for q in range(view.count):
 		var o2: int = q * VfxShotsView.STRIDE
-		if view._buf[o2 + 18] == 0.0 and absf(view._buf[o2]) > 40.0 and absf(view._buf[o2 + 4]) > 40.0:
+		if view._buf[o2 + 18] == 0.0 and absf(view._buf[o2]) > 12.0 and absf(view._buf[o2 + 4]) > 12.0:
 			diag_band = true
-	_check(q_diag >= 20 and diag_band, "a diagonal draws a slanted band (%d quads)" % q_diag)
+	_check(q_diag >= 9 and diag_band, "a diagonal draws a slanted band (%d quads)" % q_diag)
 	# Heavy: stretched ghosts and a wide band; it leaves as a speed zip.
 	var hh: VfxHub = fresh.call()
 	_tick(S, hh, [lunge.call(0, "lunge_heavy", "", 4, 10, {"hold": 6.0, "out": 10.0})])
 	for k in range(4):
 		_tick(S, hh, [])
 	var q_heavy: int = fly.call(hh, Vector2(0.0, 0.0), Vector2(260.0, 0.0), 10, 7)
-	_check(q_heavy >= 20, "heavy travel: stacked ghosts and one wide band (%d quads)" % q_heavy)
+	_check(q_heavy >= 9, "heavy travel: stacked ghosts and one wide band (%d quads)" % q_heavy)
 	for k in range(9):
 		_tick(S, hh, [])
 	var q_hout: int = fly.call(hh, Vector2(260.0, 0.0), Vector2(0.0, 0.0), 10, 5)
-	_check(hh.zip.of(0) != null and q_hout >= 20, "and it leaves as a speed zip along the way out (%d quads)" % q_hout)
+	_check(hh.zip.of(0) != null and q_hout >= 9, "and it leaves as a speed zip along the way out (%d quads)" % q_hout)
 	# Tech (Legal RL-076, m01 to m04): the body travels, drawn, at least 4 ticks each way; the wire echoes trail behind it and pop off back to front.
 	_check(VfxZip.min_ticks(1.0) == 4 and VfxZip.min_ticks(9.0) == 4 and VfxZip.min_ticks(12.5) == 5 and VfxZip.min_ticks(30.0) == 10, "the travel minimum is max(4, ceil(distance in body heights / 3)) ticks (4, 4, 5, 10)")
 	var hshort: VfxHub = fresh.call()
@@ -3204,7 +3206,7 @@ func _zip() -> void:
 	for k in range(10):
 		_tick(S, hrg, [])
 	var q_late: int = quads.call(hrg)
-	_check(q_early == 2 and q_late == 3, "the heavy's ring shows only in the last 10 ticks of the wind-up (%d quads early, %d late)" % [q_early, q_late])
+	_check(q_early >= 2 and q_late == q_early + 1, "the heavy's ring shows only in the last 10 ticks of the wind-up (%d quads early, %d late)" % [q_early, q_late])
 	# The outcomes.
 	var hc: VfxHub = fresh.call()
 	_tick(S, hc, [lunge.call(0, "lunge_light", "mash", 4, 6, {})])
@@ -3595,6 +3597,169 @@ func _press_load() -> void:
 			left += 1
 	_check(left == 0, "and none is left 10 ticks after the blow (gone within 8)")
 	print("    " + "\n    ".join(summary))
+	view.queue_free()
+	SimCore.dispose(S)
+
+
+## The zip on the director's own cues (Encounter's Z1: zip_light, zip_heavy, zip_out, zip_end; DirZip.read): a real zip played in the sim, then the end reasons.
+func _zip_real() -> void:
+	print("zip on real cues")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var summary: Array = []
+	for kind in ["strike", "heavy"]:
+		var h := VfxHub.new()
+		h.press_enabled = true
+		h.reset(S, 6)
+		var A = S.fighters[0]
+		var D = S.fighters[1]
+		A.ai = null
+		D.ai = null
+		A.x = plains
+		A.y = g
+		D.x = SimWrap.wrap(plains + 6.0 * VfxLook.BH)
+		D.y = g
+		A.ki = 100.0
+		for k in range(4):
+			SimCore.step(S)
+			h.consume(S, S.out.fx.duplicate())
+			S.out.fx.clear()
+		DirZip.start(S, A, D, kind == "heavy", S.tick)
+		var phases := {}
+		var max_q: int = 0
+		var tell_q: int = -1
+		var in_q: int = 0
+		var out_q: int = 0
+		var blow_q: int = 0
+		for t in range(160):
+			SimCore.step(S)
+			var evs: Array = S.out.fx.duplicate()
+			h.consume(S, evs)
+			S.out.fx.clear()
+			var z: VfxZip.Zip = h.zip.of(0)
+			view.update(h, host, 1.0, plains + 200.0, 1.0, 1500.0)
+			max_q = maxi(max_q, view.count)
+			if z != null:
+				phases[z.phase] = true
+				if z.phase == "tell" and tell_q < 0:
+					tell_q = view.count
+				if z.phase == "in" and z.age > z.wind + 2.0:
+					in_q = maxi(in_q, view.count)
+				if z.phase == "out":
+					out_q = maxi(out_q, view.count)
+			for m in h.zip.marks:
+				if m.kind == "zipblow":
+					blow_q = maxi(blow_q, view.count)
+		summary.append("%s: phases %s, quads: tell %d, way in %d, way out %d, at the blow %d, most %d" % [kind, str(phases.keys()), tell_q, in_q, out_q, blow_q, max_q])
+		_check(phases.has("tell") and phases.has("in") and phases.has("reach") and phases.has("out"), "a real zip %s goes through tell, way in, reach and way out (%s)" % [kind, str(phases.keys())])
+		_check(int(h.zip.made.get("zip_light" if kind == "strike" else "zip_heavy", 0)) == 1 and int(h.zip.made.get("zipblow", 0)) == 1 and int(h.zip.made.get("end_done", 0)) == 1, "the cues arrive once each: start, the blow's mark and zip_end done")
+		_check(tell_q >= 2 and in_q >= 5 and out_q >= 5 and max_q <= 120, "it draws a tell (%d quads), a trail on the way in (%d) and out (%d), never more than %d of 380" % [tell_q, in_q, out_q, max_q])
+		_check(h.zip.violations.is_empty() and h.zip.zips.is_empty(), "it breaks no travel floor (%s) and is gone when it ends" % str(h.zip.violations))
+	print("    " + "\n    ".join(summary))
+	# The end reasons, from synthetic cues of the real shape: each gets its own mark, never a flash.
+	var hh := VfxHub.new()
+	hh.press_enabled = true
+	hh.reset(S, 6)
+	S.fighters[0].x = plains
+	S.fighters[0].y = g
+	S.fighters[1].x = SimWrap.wrap(plains + 120.0)
+	S.fighters[1].y = g
+	for why in ["countered", "caught", "shot", "down", "done", "outrun", "stopped"]:
+		var h2 := VfxHub.new()
+		h2.press_enabled = true
+		h2.reset(S, 6)
+		_tick(S, h2, [VfxMock.ev("cue", {"actor": 0, "kind": "zip_light", "text": "zip", "source": "", "target": 1, "amount": 6.0, "n": 6.0, "x": 4.0, "y": 6.0})])
+		_tick(S, h2, [VfxMock.ev("cue", {"actor": 0, "kind": "zip_end", "text": why, "source": "", "target": 1})])
+		var kinds: Array = h2.zip.marks.map(func(m): return m.kind)
+		var want: String = {"countered": "counter", "caught": "caught", "shot": "shot", "down": "down", "stopped": "shot"}.get(why, "")
+		_check((want == "" and kinds.is_empty()) or kinds == [want], "zip_end %s: %s" % [why, "no mark" if want == "" else "the %s mark" % want])
+		view.update(h2, host, 1.0, plains + 60.0, 1.0, 1500.0)
+		_check((want == "" and view.count == 0) or (want != "" and view.count >= 1), "zip_end %s draws %d quads" % [why, view.count])
+	for lbl in ["strike", "heavy"]:
+		var h3 := VfxHub.new()
+		h3.press_enabled = true
+		h3.reset(S, 6)
+		_tick(S, h3, [VfxMock.ev("cue", {"actor": 0, "kind": "zip_heavy" if lbl == "heavy" else "zip_light", "text": "zip", "source": "", "target": 1, "amount": 6.0, "n": 6.0, "x": 4.0, "y": 6.0}), VfxMock.ev("cue", {"actor": 0, "kind": "zip_out", "text": "home", "source": "", "target": 1, "x": plains, "y": g, "n": 10.0, "amount": 4.0, "dur": 6.0, "k": 0.0})])
+		view.update(h3, host, 1.0, plains + 60.0, 1.0, 1500.0)
+		_check(h3.zip.marks.size() == 1 and h3.zip.marks[0].style == lbl and view.count >= (5 if lbl == "heavy" else 3), "the %s's blow mark: %d quads (%s)" % [lbl, view.count, "two bars, and the tell" if lbl == "heavy" else "one bar, and the tell"])
+	view.queue_free()
+	SimCore.dispose(S)
+
+
+## The riposte's marks (Encounter's B1c, docs/vfx/riposte-plan.md): a sure blow gets a committed line in its last 6 ticks and brackets on the target at the contact; a reversal gets one echo.
+func _riposte() -> void:
+	print("riposte")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	S.fighters[0].x = plains
+	S.fighters[0].y = g
+	S.fighters[1].x = SimWrap.wrap(plains + 90.0)
+	S.fighters[1].y = g
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var mk_ex := func(sure: bool, rev: bool):
+		var ex := SimState.Exchange.new()
+		ex.A = S.fighters[0]
+		ex.D = S.fighters[1]
+		var b := SimState.Beat.new()
+		b.op = "strike"
+		b.done = true
+		b.t = 0.0
+		b.args = {"a": "A", "d": "D", "style": "tech", "grade": "perfect", "riposte": true, "sure": sure, "reversal": rev, "dmg": 10.0, "o": {}}
+		ex.beats = [b]
+		return ex
+	var cue := func(): return VfxMock.ev("cue", {"actor": 0, "kind": "riposte", "text": "light", "source": "", "target": 1, "n": float(S.tick + 12)})
+	var hit := VfxMock.ev("damage", {"x": S.fighters[1].x, "y": g + 90.0, "z": 0.0, "amount": 6.0, "col": "#ffffff", "victim": 1, "attacker": 0, "region": "core", "kind": "light", "number": true})
+	# A sure riposte.
+	var h := VfxHub.new()
+	h.press_enabled = true
+	h.reset(S, 6)
+	S.dirS.ex = mk_ex.call(true, false)
+	_tick(S, h, [cue.call()])
+	_check(int(h.press.made.get("sureline", 0)) == 1 and not h.press.made.has("revecho"), "a sure riposte starts a committed line, and no echo")
+	view.update(h, host, 1.0, plains + 45.0, 1.0, 1500.0)
+	_check(view.count == 0, "it waits: nothing is drawn until the last 6 ticks (%d quads now)" % view.count)
+	for k in range(7):
+		_tick(S, h, [])
+	view.update(h, host, 1.0, plains + 45.0, 1.0, 1500.0)
+	var q_line: int = view.count
+	_check(q_line == 1, "in the last 6 ticks before the contact the line is drawn: one thin hard line (%d quads)" % q_line)
+	_tick(S, h, [hit])
+	view.update(h, host, 1.0, plains + 45.0, 1.0, 1500.0)
+	_check(int(h.press.made.get("brackets", 0)) == 1 and view.count >= 5, "at the contact: four brackets on the target, with the blow's own look (%d quads)" % view.count)
+	for k in range(14):
+		_tick(S, h, [])
+	view.update(h, host, 1.0, plains + 45.0, 1.0, 1500.0)
+	_check(view.count == 0, "and everything is gone in its ticks")
+	# A riposte that is not sure: the blow's own look and nothing more.
+	var h2 := VfxHub.new()
+	h2.press_enabled = true
+	h2.reset(S, 6)
+	S.dirS.ex = mk_ex.call(false, false)
+	_tick(S, h2, [cue.call()])
+	_tick(S, h2, [hit])
+	_check(not h2.press.made.has("sureline") and not h2.press.made.has("brackets"), "a riposte that is not sure adds no mark")
+	# A reversal: one echo.
+	var h3 := VfxHub.new()
+	h3.press_enabled = true
+	h3.reset(S, 6)
+	S.dirS.ex = mk_ex.call(false, true)
+	for k in range(8):
+		_tick(S, h3, [])
+	_tick(S, h3, [cue.call()])
+	view.update(h3, host, 1.0, plains + 45.0, 1.0, 1500.0)
+	_check(int(h3.press.made.get("revecho", 0)) == 1 and view.count == 5, "a reversal leaves one wire echo of the sidestep (%d quads)" % view.count)
+	S.dirS.ex = null
 	view.queue_free()
 	SimCore.dispose(S)
 
