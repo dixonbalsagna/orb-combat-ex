@@ -2759,7 +2759,7 @@ func _glare() -> void:
 	var cue := func(slot: int, name: String): return VfxMock.ev("cue", {"actor": slot, "kind": name, "text": "", "source": ""})
 	var sig := func(slot: int): return VfxMock.ev("attack", {"actor": slot, "target": 1 - slot, "kind": "sig", "defStance": "defend", "template": "", "ambush": false})
 	_check(VfxLook.GLARE_DEFAULT and VfxHub.new().glare_enabled, "on by default")
-	_check(String(f1.name) == "VORR" and VfxGlare.is_wearer(S, 1) and not VfxGlare.is_wearer(S, 0), "the wearer is the rival's slot (the Anti-hero replaces VORR), not the Protagonist")
+	_check(["VORR", "RIVAL"].has(String(f1.name)) and VfxGlare.is_wearer(S, 1) and not VfxGlare.is_wearer(S, 0), "the wearer is the rival's slot (the Anti-hero replaces VORR), not the Protagonist")
 	# The colours: pale violet, never white, and violet still at a small size and in greyscale.
 	for k in ["lens", "wedge", "halo"]:
 		var c: Color = VfxGlare.col(k)

@@ -20,7 +20,7 @@ const DEFAULTS: Dictionary = {
 	"glare": {"attack": 3.0, "hold": 16.0, "hold_glint": 8.0, "release": 6.0, "cooldown": 200.0, "hold_max": 24.0, "rocks_max": 0.25,
 		"w": 10.0, "h": 4.8, "up": 1.0, "fwd": 4.0, "alpha": 0.96, "glint_fill": 0.45},
 }
-const WEARERS: Array = ["VORR", "antihero", "rival"]   # roster ids and names: the Anti-hero replaces VORR, and the roster may rename him
+const WEARERS: Array = ["VORR", "RIVAL", "antihero", "rival"]   # roster ids and names: the Anti-hero replaces VORR, and the roster may rename him
 const CUES_FULL: Array = ["taunt_start", "chin_plant", "pride_threshold", "seal_break", "glare"]
 
 class State:

@@ -21,7 +21,7 @@ const DEFAULTS: Dictionary = {
 		"dome": 5.0, "settle": 4.0, "settle_from": 0.4, "settle_to": 1.6, "chunk_min": 10.0, "chunk_max": 22.0},
 }
 
-static var POWERUP_OFF: Array = []      # names of fighters whose gather has a scream or a fists-at-sides crouch: no power-up blast for them (nobody now)
+static var POWERUP_OFF: Array = []      # roster ids of fighters whose gather has a scream or a fists-at-sides crouch: no power-up blast for them (nobody now)
 const BREAK_SLACK: float = 3.0     # ticks before the break that still count as its snap (the host's clock and the sim's frozen break tick differ by a few)
 const AIR_H: float = 140.0         # the sim's own ground-level limit for a power-up crater (fighter.gd tierUp)
 
@@ -71,7 +71,7 @@ static func mult_for(tier: int) -> float:
 
 
 static func powerup_off(f) -> bool:
-	return POWERUP_OFF.has(String(f.name))
+	return POWERUP_OFF.has(String(f.id))
 
 
 ## A `crater` event (x, y, r, depth, rim, energy, cause, owner, special). debris: the shared pool; now: the effects clock. powerup_ok:
