@@ -140,6 +140,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-118 | The double hit's mark and VFX's br-* stills: wind-up rings, burst smear, flurry under the ghost counter, whiff | VFX | Low | Pass: two cracks and two hollow rings stand under k04 as contact-point marks; the faint tall oval round the Protagonist in the burst is a thin outline (k02), one mark | Closed |
 | RL-119 | The game fails its own flash check in some scenes; notice wording; the public page; margin and AI-match seeds | EP, Tools, Camera, VFX | High | Notice replaced (line 2 no longer implies Reduced motion helps); the page goes behind a click-through gate today and down if fixes slip a week or before any promotion; gate 2.5 not 3, AI seeds and CI added | Open until Tools' clips pass at 2.5 or below |
 | RL-120 | The analyser's bounded memory; the gate across sensitivity runs; the notice must stay true | Tools, EP | Medium | One-second memory accepted as primary with a stricter cross-check reported; gate: primary at most 2.5, no sensitivity run above 3; notice reworded to 'at or near the limit' if nothing exceeds 3, gate card stays until the set passes | Open |
+| RL-121 | Holding notice for the offline page and the conditions for the build to return | EP, Tools | Medium | Approved with three edits (no promises, 'at or near the limit', noindex and no card); return list extended | Open |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
