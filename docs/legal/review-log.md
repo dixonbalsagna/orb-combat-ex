@@ -117,6 +117,10 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-095 | Capsule art and trailer plan; Suno track in a trailer | Marketing, Art, Audio | Medium | CLEAR with conditions: logo look-alike screen, stacking rule per frame, no placeholder names; Suno track allowed on paid plan with originals kept, disclosure, no Content ID | Open |
 | RL-096 | Never-use words moved to one Legal file (never-use-words.md); capture hold stays until names are neutral | Marketing | Low | Clear | Open until UI switch is live |
 | RL-097 | Live site check and capture hold (go-to-market.md section 11) | EP, UI, Tools | Medium | Private capture may start; publishing held for title and copy edits; landing line true; privacy line FALSE today (feedback target is none); Godot and Open Sans notices missing from About | Open until the privacy line and notices are fixed |
+| RL-098 | Brawl second pass: A readings (shove, clinch, tackle) (brawl-screen.md) | Game Design | Medium | Shove and clinch clear (P1, g01 to g05); tackle conditional and must be seen drawn (coil, carry, crater) | Open |
+| RL-099 | Brawl second pass: B recast (burst, ki flurry, blast, art, signature, held steered beam) | Game Design | Medium | Conditional: one open or blade hand, flurry varied, thin lane-colour flashes (k03), straight steered beam (e07); tell poses seen drawn | Open |
+| RL-100 | Charged X and Y; four power attacks; names | Game Design | Medium | Conditional: chamber and flash rules; breaker lit plate edges only, seize no glow in a hold; names clear | Open |
+| RL-101 | Even mash, gamble taunt, zip chase and chains, LT+RB hybrid; heavy and mixed flurry | Game Design | Medium | Clear or conditional (m09 to m11, f01 to f03); hybrid tell seen drawn first | Open |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
