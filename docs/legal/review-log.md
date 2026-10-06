@@ -138,6 +138,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-116 | Frame analyser's reading (area is 25% of the 341 x 256 field; red formula to be named); public wording; a planted heave's half step (h08) | Tools, Encounter, Animation | Medium | Area recount at a quarter; red variant labelled conservative; wording approved with limits; heave may slide up to 22 units, feet grounded | Open until Tools recounts |
 | RL-117 | In-game flash notice wording and the Reduce flashing default | UI | Low | Line 2 approved; line 3 reworded (own automated tool, not an independent analyser); default-on is a recommendation, not a condition; camera dip and flyby must still be fixed | Open until Camera fixes |
 | RL-118 | The double hit's mark and VFX's br-* stills: wind-up rings, burst smear, flurry under the ghost counter, whiff | VFX | Low | Pass: two cracks and two hollow rings stand under k04 as contact-point marks; the faint tall oval round the Protagonist in the burst is a thin outline (k02), one mark | Closed |
+| RL-119 | The game fails its own flash check in some scenes; notice wording; the public page; margin and AI-match seeds | EP, Tools, Camera, VFX | High | Notice replaced (line 2 no longer implies Reduced motion helps); the page goes behind a click-through gate today and down if fixes slip a week or before any promotion; gate 2.5 not 3, AI seeds and CI added | Open until Tools' clips pass at 2.5 or below |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
