@@ -237,6 +237,10 @@ The tell (a ground line, the heavy's ring), the travel per reading (speed ghosts
 
 Encounter's Z1 cues (`zip_light`, `zip_heavy`, `zip_out`, `zip_end`) drive the zip: the clock is `DirZip.read`, the tell follows the ground to the real arrival point, the strike and heavy have their own blow marks, and countered, caught, shot and down each have a look; two ghosts (Legal f01). The riposte's sure line, brackets and reversal echo are drawn from the `riposte` cue. `render/vfx/zip.gd`, `shots_view.gd`, `press.gd`; docs/vfx/zip.md ("On the zip's own cues"), riposte-plan.md ("Built"); `effects_check.gd` `_zip_real()` and `_riposte()`.
 
+### Energy arts in reach and the launcher's marks (2026-10-06)
+
+The point-blank bolt and the blast (RB held in reach), drawn ahead of the sim from assumed cues `energy_reach` and `energy_land`: a lit palm, the gather, a crack, a hollow ring, a rationed flash, the rim on both bodies, the spill and its scorch, the blast's carry; "B now" chevrons on a long stagger and the launch's send-off. The flash limit counts across both fighters and the block's flash (Legal's k05). `render/vfx/reach.gd`, `shots_view.gd` `_reach`; docs/vfx/reach.md (cues, the counter's guarantees and gaps, the recording); `effects_check.gd` `_reach()`.
+
 ### Building stages (plan, 2026-10-05)
 
 A note only: what VFX will draw for World's `building_stage` event (glass shower at windows out, a cladding shed and dust skirt for a part gone, a bigger shed and a plume for a shell, nothing new for rubble) and an ambient shell plume read from the stage query, so a seek or late join still looks wrecked. Not built until World's slice is committed. docs/vfx/building-stages-plan.md.

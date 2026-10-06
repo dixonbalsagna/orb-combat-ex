@@ -200,6 +200,7 @@ func _run() -> void:
 	_zip()
 	_zip_real()
 	_riposte()
+	_reach()
 	_press_load()
 	_real()
 	_stages()
@@ -3760,6 +3761,136 @@ func _riposte() -> void:
 	view.update(h3, host, 1.0, plains + 45.0, 1.0, 1500.0)
 	_check(int(h3.press.made.get("revecho", 0)) == 1 and view.count == 5, "a reversal leaves one wire echo of the sidestep (%d quads)" % view.count)
 	S.dirS.ex = null
+	view.queue_free()
+	SimCore.dispose(S)
+
+
+## Energy arts in reach (brawl-second-pass.md §5b) and the launcher's marks (§3): the bolt's lit palm and landing, the blast's gather and carry, the flash limit across a mash, reduced motion,
+## the scorch, B now on a long stagger and the launch's send-off.
+func _reach() -> void:
+	print("energy in reach")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	S.fighters[0].x = plains
+	S.fighters[0].y = g
+	S.fighters[1].x = SimWrap.wrap(plains + 60.0)
+	S.fighters[1].y = g
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var rc := func(slot: int, text: String, windup: float): return VfxMock.ev("cue", {"actor": slot, "kind": "energy_reach", "text": text, "source": "", "target": 1 - slot, "amount": windup, "n": float(S.tick) + windup})
+	var ld := func(slot: int, text: String, why: String, lx: float, ly: float): return VfxMock.ev("cue", {"actor": slot, "kind": "energy_land", "text": text, "source": why, "target": 1 - slot, "x": lx, "y": ly})
+	var quads := func(h: VfxHub) -> int:
+		view.update(h, host, 1.0, plains + 30.0, 1.0, 1500.0)
+		return view.count
+	# A bolt: the palm comes up with the blow (a hollow ring and two streaks, no disc), then the landing, the rim on both, the spill; all gone in their lives.
+	var h := VfxHub.new()
+	h.press_enabled = true
+	h.reset(S, 6)
+	_tick(S, h, [rc.call(0, "bolt", 2.0)])
+	var q_lit: int = quads.call(h)
+	_check(int(h.inreach.made.get("lit", 0)) == 1 and q_lit == 4, "a bolt lights the palm with the blow: a ring with its darker edge and two streaks (%d quads)" % q_lit)
+	_tick(S, h, [ld.call(0, "bolt", "hit", 1.0, 0.0)])
+	var q_land: int = quads.call(h)
+	_check(int(h.inreach.made.get("land", 0)) == 1 and int(h.inreach.made.get("rim", 0)) == 2 and int(h.inreach.made.get("spill", 0)) == 1 and not h.inreach.fx.any(func(f): return f.style == "lit"), "the contact ends the lit palm and starts the crack, the rim on both and the spill")
+	_check(q_land >= 8 and q_land <= 12 and int(h.inreach.made.get("full_flash", 0)) == 1, "the first landing gets the full flash: crack 4 (a core and a glow each), ring, flash, rim 2 (%d quads; the spill streaks grow from nothing)" % q_land)
+	for k in range(4):
+		_tick(S, h, [])
+	var q_after: int = quads.call(h)
+	_check(q_after >= 1 and q_after <= 12, "after 4 ticks the flash and the rim are gone, the crack, ring and spill remain (%d quads)" % q_after)
+	for k in range(14):
+		_tick(S, h, [])
+	_check(quads.call(h) == 0, "everything is gone in its ticks")
+	# The blast: nothing for the first 2 of its 12 ticks, then a thin ring closing and three converging streaks; the landing carries him and smokes after.
+	var hb := VfxHub.new()
+	hb.press_enabled = true
+	hb.reset(S, 6)
+	_tick(S, hb, [rc.call(0, "blast", 12.0)])
+	_check(quads.call(hb) == 0, "the blast's gather waits for the last 10 ticks of its wind-up")
+	for k in range(4):
+		_tick(S, hb, [])
+	var q_gather: int = quads.call(hb)
+	_check(q_gather == 5, "then a closing ring with its edge and three streaks, never a disc (%d quads)" % q_gather)
+	var lean := Vector2(0.6, -0.8).normalized()
+	_tick(S, hb, [ld.call(0, "blast", "hit", lean.x, lean.y)])
+	_check(int(hb.inreach.made.get("carry", 0)) == 1 and hb.inreach.smoke_jobs.size() == 1 and int(hb.inreach.made.get("scorch", 0)) == 1, "a clean blast carries him, smokes after, and scorches where its line meets the ground")
+	var q_blast: int = quads.call(hb)
+	_check(q_blast >= 8 and q_blast <= 22, "the blast's landing: crack, ring, flash, rim, a cone of 5 streaks, the scorch (%d quads)" % q_blast)
+	for k in range(22):
+		_tick(S, hb, [])
+	_check(hb.inreach.fx.size() == 1 and hb.inreach.fx[0].style == "scorch", "only the drawn scorch outlives it")
+	# A blast that lands on a guard is a shot on the arms: no carry, no spill.
+	var hg := VfxHub.new()
+	hg.press_enabled = true
+	hg.reset(S, 6)
+	_tick(S, hg, [ld.call(0, "blast", "guard", 1.0, 0.0)])
+	_check(not hg.inreach.made.has("carry") and not hg.inreach.made.has("spill"), "on a guard it is a shot: nothing is carried and nothing spills")
+	# The flash limit: a bolt a tick-count apart from each fighter for 3 seconds never gets more than 3 full flashes in any second.
+	var hm := VfxHub.new()
+	hm.press_enabled = true
+	hm.reset(S, 6)
+	var most: int = 0
+	for t in range(180):
+		var evs: Array = []
+		if t % 6 == 0:
+			var who: int = (t / 6) % 2
+			evs.append(rc.call(who, "bolt", 2.0))
+			evs.append(ld.call(who, "bolt", "hit", 1.0 if who == 0 else -1.0, 0.0))
+		_tick(S, hm, evs)
+		most = maxi(most, quads.call(hm))
+	var worst: int = 0
+	for ft in hm.inreach.full_ticks:
+		var inside: int = 0
+		for ft2 in hm.inreach.full_ticks:
+			if ft2 >= ft and ft2 < ft + 60:
+				inside += 1
+		worst = maxi(worst, inside)
+	_check(int(hm.inreach.made.get("land", 0)) == 30 and worst <= 3 and int(hm.inreach.made.get("full_flash", 0)) >= 6, "30 bolts mashed from both fighters: 30 landings, %d full flashes, never more than %d in a second (the limit is 3)" % [int(hm.inreach.made.get("full_flash", 0)), worst])
+	_check(most <= 60, "a mash never draws more than %d quads at once" % most)
+	# The screen's flash count (Legal's k05) includes the block's flash: two block flashes in the last second leave room for one full flash and no more.
+	var hk := VfxHub.new()
+	hk.press_enabled = true
+	hk.reset(S, 6)
+	hk.inreach.note_flash(S.tick)
+	hk.inreach.note_flash(S.tick)
+	var allowed: int = 0
+	for t in range(70):
+		_tick(S, hk, [])
+		if hk.inreach.allow_full(S):
+			allowed += 1
+	_check(allowed == 2 and hk.inreach.flashes_in_second(S.tick) <= 3, "with two block flashes already on the screen, %d full flashes were allowed in the next 70 ticks and never a fourth in any second" % allowed)
+	# Reduced motion: no full flash at all, the rim dimmer, one spill streak; nothing else removed.
+	var hr := VfxHub.new()
+	hr.press_enabled = true
+	hr.reduced_motion = true
+	hr.reset(S, 6)
+	hr.reduced_motion = true
+	_tick(S, hr, [ld.call(0, "bolt", "hit", 1.0, 0.0)])
+	var q_red: int = quads.call(hr)
+	_check(not hr.inreach.made.has("full_flash") and int(hr.inreach.made.get("land", 0)) == 1 and q_red >= 1 and q_red < q_land, "reduced motion: no full flash and fewer quads (%d against %d)" % [q_red, q_land])
+	# B now: a stagger of 12 ticks or more shows two rising chevrons; a shove's 8 shows nothing; the launch ends the mark and gives its send-off.
+	var hs := VfxHub.new()
+	hs.press_enabled = true
+	hs.reset(S, 6)
+	_tick(S, hs, [VfxMock.ev("cue", {"actor": 1, "kind": "stagger", "text": "shove", "source": "", "target": 0, "n": 8.0})])
+	_check(not hs.inreach.made.has("stagger"), "a stagger of 8 ticks is not a launcher's cue")
+	_tick(S, hs, [VfxMock.ev("cue", {"actor": 1, "kind": "stagger", "text": "flurry", "source": "", "target": 0, "n": 14.0})])
+	_check(int(hs.inreach.made.get("stagger", 0)) == 1, "a stagger of 14 gets the mark")
+	var q_st: int = 0
+	for k in range(8):
+		_tick(S, hs, [])
+		q_st = maxi(q_st, quads.call(hs))
+	_check(q_st == 8, "B now is two chevrons, each of two lines with a light edge under it (%d quads)" % q_st)
+	_tick(S, hs, [VfxMock.ev("launch", {"actor": 1, "target": 0, "amount": 1.0, "face": 1.0, "ux": 0.6, "uy": 0.8})])
+	_check(not hs.inreach.fx.any(func(f): return f.style == "stagger") and int(hs.inreach.made.get("send", 0)) == 1, "the launch ends the mark and sends him off")
+	var q_send: int = quads.call(hs)
+	_check(q_send >= 4 and q_send <= 14, "the send-off: a flat ring, three lifting streaks and a trail (%d quads)" % q_send)
+	for k in range(16):
+		_tick(S, hs, [])
+	_check(quads.call(hs) == 0, "and it is gone in its ticks")
 	view.queue_free()
 	SimCore.dispose(S)
 

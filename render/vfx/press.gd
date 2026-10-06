@@ -72,6 +72,7 @@ var wind: Array = [Wind.new(), Wind.new()]
 var fly: Array = [0.0, 0.0]         # ticks of flight left per slot (a heavy ender's target)
 var hist: Array = [[], []]          # per slot: Vector2 (world x, y) of the last ticks, newest last
 var made: Dictionary = {}           # counters by style, for the tests
+var flash_sink = null               # the screen's flash counter (VfxReach.note_flash): a block's flash is one of the flashes Legal's k05 counts
 var shown: int = 0                  # effects drawn last frame (the tests)
 var beat_glint: bool = false        # the beat option (UI's ring for every blow, the rival's too): a glint on the striking limb at the beat. hub.beat_glint_enabled sets it
 var clock: int = 0
@@ -382,6 +383,8 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 			x.cy = region_y("core")
 			x.col = lane_of(S, vic)
 			x.life = p("block_life")
+	if style == "block" and flash_sink != null:
+		flash_sink.note_flash(S.tick)
 	_take_real(S, x, att, style)
 	if bool(ba.get("sure", false)) and style != "block":
 		var br := Fx.new()

@@ -101,6 +101,10 @@ Quads only, in the shots view's one draw: a tell 2 to 3, speed travel about 27, 
 ## The zip on its own cues (2026-10-06)
 
 Quads only, in the shots view's one draw: a real zip draws at most 24 quads (tell 13 on a long gap, way in 12, way out 19 to 20, a blow mark 1 to 2, an end mark 1 to 5), two ghosts a zip (Legal f01). A sure riposte adds 1 (the line, in its last 6 ticks) then 4 (the brackets), a reversal 5. No debris, no draw call. Measured headless (native, on a loaded machine): `hub.consume` 0.97 ms a tick while a zip and its blow play against 0.08 idle, `view.update` 35 against 11 us. Not measured: the web build under throttle and an old laptop.
+## Energy arts in reach (2026-10-06)
+
+Quads only, in the shots view's one draw: a bolt 4 (lit) then 8 (landing) and 2 spill streaks, a blast 5 (gather) then 8, a cone of 5, a scorch 1 (150 ticks, at most 6) and a carry of 5, B now 8, the send-off about 11. The busiest mash tick (both fighters mashing bolts with their press looks) drew 22 of 380. About 8 smoke puffs per blast from the debris pool. Full flashes: one in 20 ticks and never more than 3 in 60 across the screen as this hub knows it, none in reduced motion. Not measured: the web build under throttle and an old laptop.
+
 ## Building stages (2026-10-05)
 
 Debris pool only, no quads and no new draw call. One event at full strength: a 0 to 1 about 15 bits, a 2 to 3 about 25, a 0 to 3 about 40 (quality low 14, reduced motion 20). A tick's stage events are budgeted at 300 bits (a token chip and puff each past it, none past 1.6 times): 69 events in one tick spawned 368 bits. A real 16,000-tick match sent 68 events, busiest tick 56, and the pool stayed within its 460. The shell plume: at most 12 puffs alive. Not measured: the web build under load and an old laptop.

@@ -74,6 +74,7 @@ var stages_enabled: bool = VfxLook.STAGES_DEFAULT   # building stages (stages.gd
 var stages := VfxStages.new()
 var press := VfxPress.new()
 var beat_glint_enabled: bool = false          # the beat option (UI's beat ring for every blow, the rival's too): a glint on the striking limb at the beat (press.gd)
+var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
 var explosions_enabled: bool = VfxLook.EXPLOSIONS_DEFAULT   # the blasts erupt in flame, sparks, smoke and a smouldering scorch; a knocked-loose shot tumbles and smokes (explode.gd)
 var earth_enabled: bool = VfxLook.EARTH_DEFAULT   # material chunks for `debris`, cel flames for `fire`, and the ground-contact events (docs/vfx/earth-plan.md)
@@ -130,6 +131,8 @@ func reset(S: SimState, p_seed: int) -> void:
 	press.reset()
 	stages.reset()
 	zip.reset()
+	inreach.reset()
+	press.flash_sink = inreach
 	earth.debris = debris
 	earth.reset()
 	water.debris = debris
@@ -271,6 +274,10 @@ func _consume(S: SimState, events: Array) -> void:
 		press.on_events(S, events, reduced_motion)
 		zip.step(S, frozen)
 		zip.on_events(S, events, reduced_motion)
+		debris.quality = quality
+		debris.reduced = reduced_motion
+		inreach.step(S, frozen, debris, press)
+		inreach.on_events(S, events, reduced_motion, debris, press)
 	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled or stages_enabled:
 		debris.quality = quality
 		debris.reduced = reduced_motion
