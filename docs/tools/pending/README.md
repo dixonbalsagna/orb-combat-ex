@@ -230,6 +230,10 @@ Run once, in the commit that lands Animation's data (waves `rival7` and `protag1
 
 Run once, in the commit that lands Animation's data: `node docs/tools/pending/apply-anim-keyset-release.cjs` (after `apply-anim-superheavy.cjs`, applied). It does **not** edit `data/`. `anim-wave-keysets.schema.json` gains the optional `hold_t` (integer 0 to 12: ticks the contact key is held) and `ci_end` (integer 0 to 30: ticks after the contact by which the solve releases the limb to the follow key). The new parked waves `protag11` and `rival8` (energy blows in reach) validate under the existing wave schemas and need nothing more. 15 cases, each setting its own values. Re-runnable. Tested on a clean `git archive HEAD` with the tree's `data/anim` files dropped in: 8 errors before, then 0 errors and 0 warnings, self-test passes (4866 of 4866), a second run changes nothing.
 
+## `apply-input-c2a.cjs`: Controls' C2a (`data/input/timing.json` `read`)
+
+Run once, in Controls' commit (held until Encounter's C2a): `node docs/tools/pending/apply-input-c2a.cjs`. It does **not** edit `data/`. Written from `docs/controls/c2a-schema.patch` and `c2a-tools.patch` to the usual standard. `read` gains `burstStart` (integer, at least 1, no upper limit: Game Design is still ruling between 4, 8 and more), `windupMedium`, `windupHeavy`, `windupContext` (at least 1), `windupGrace` (0 to 20), `pairWindow` (0 to 6), `pairFresh` (0 or more), `flurryGapX`, `flurryGapY`, `flurryGapB` (at least 1), `flurryNeedSlow` (at least 2), `mixupSwitches` (at least 1), `simpleMediumStart` and `simpleHeavyStart` (at least 1); it loses `holdLight`, `holdHeavy`, `holdSig`, `holdSigCharging` and `holdContext` (naming one is an unknown key, and five cases say so). Rules (`timing-read`, in `xref-input.js`): `simpleMediumStart` at most `simpleHeavyStart` (replaces the retired holdSig check); `windupMedium` below `windupHeavy`; `pairWindow` at most `pairFresh`; a wind-up plus the grace (the decision point) at most `staleTicks`, for the medium, the heavy and the context action; each flurry gap at most `staleTicks`; `flurryNeedSlow` at most `logSize`; `mixupSwitches` below `logSize`. The virtual `timing.json` and the seven earlier hold cases follow; 81 new cases, each setting its own values. Re-runnable. Tested on a clean `git archive HEAD` with Controls' `timing.json` from the tree dropped in: 14 errors before, then 0 errors and 0 warnings, self-test passes (4940 of 4940), a second run changes nothing.
+
 ## The state of every script (2026-10-06, HEAD 53d13b55)
 
 Checked by running each script on a clean export of HEAD: **applied** means a run changes nothing, or changes only what a later script has since changed (so a re-run would undo that); **parked** means its data has not landed. The sections above are the record of what each script does; a script can be deleted once its section is no longer needed.
@@ -244,6 +248,7 @@ Checked by running each script on a clean export of HEAD: **applied** means a ru
 | :--- | :--- | :--- |
 | `apply-brawl-recipes` | Combat's `recipes.brawl.json` as `data/combat/recipes.json` (the slice C2a) | its data |
 | `apply-anim-keyset-release` | Animation's next commit (`rival7.keysets.json` `hold_t`, `ci_end`) | its data |
+| `apply-input-c2a` | Controls' C2a commit (held until Encounter's C2a): `timing.json` `read` | its data |
 | `apply-anim-superheavy` | Animation's super-heavy commit (waves `rival7` and `protag10`, `medium_wind.json`) | its data |
 | `apply-brawl-c1` | Encounter's control slice C1 (`interrupts.json` `brawl`, `ai.json` brawl) | its data |
 | `apply-movegen` (and `xref-movegen.js`, copied by it) | Combat's landing of parts, identity, cells, the movesets and `lock.json` (generator version 9) | the files |
