@@ -116,13 +116,32 @@ check('the same swing from just below 0.80 fails (darker state under it)', !run(
   const r = run(fr);
   check('a slow ramp up and down (30 frames each) is a pass', r.pass && r.general.flashes <= 1, JSON.stringify(r.general));
 }
-check('a still image has no flashes', run([frame(GREY, GREY), frame(GREY, GREY), frame(GREY, GREY)]).general.flashes === 0);
+check('a still image has no flashes', run(new Array(90).fill(0).map(() => frame(GREY, GREY))).general.flashes === 0);
+check('a clip no longer than the warm-up is refused (a second of memory, nothing counted in it)', (() => { try { run(new Array(60).fill(0).map(() => frame(GREY, GREY))); return false; } catch (e) { return /warm-up/.test(e.message); } })());
 check('the flashes are counted in any one second, not over the whole clip: 3 a second for 10 seconds is within the standard', run(strobe(BLACK, WHITE, 10, 10)).passStandard);
 {
   // 3 flashes in the first second then a pause then 3 more in the next: a window of one second never holds more than 3
   const fr = [];
   for (let i = 0; i < 240; i++) fr.push(i < 60 ? [frame(BLACK, BLACK), frame(WHITE, WHITE)][Math.floor(i / 10) % 2] : i < 120 ? frame(BLACK, BLACK) : i < 180 ? [frame(BLACK, BLACK), frame(WHITE, WHITE)][Math.floor((i - 120) / 10) % 2] : frame(BLACK, BLACK));
   check('two bursts of 3 flashes a second apart are within the standard', run(fr).passStandard);
+}
+
+// ---- the result does not depend on where the clip starts (a pixel's change has a memory of one second and no more)
+{
+  // a slow decay of 200 frames, then 5-frame strobing: history the old "last extreme" reading carried for ever
+  const mk = (n) => { const o = []; for (let i = 0; i < n; i++) { const v = i < 200 ? Math.round(230 - i * 0.9) : (Math.floor((i - 200) / 5) % 2 ? 190 : 90); o.push(frame([v, v, v], [v, v, v])); } return o; };
+  const all = mk(320);
+  const worstFrom = (s) => run(all.slice(s)).general.flashes;
+  check('the worst second is the same whether the clip starts at frame 0, 70, 130 or 190 (the strobe is after all of them)', worstFrom(0) === worstFrom(70) && worstFrom(70) === worstFrom(130) && worstFrom(130) === worstFrom(190), JSON.stringify([worstFrom(0), worstFrom(70), worstFrom(130), worstFrom(190)]));
+  // the same signal with a random offset into a long varied clip
+  let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  const varied = []; let v = 120;
+  for (let i = 0; i < 400; i++) { v = Math.max(0, Math.min(255, v + (i % 97 < 8 ? (rnd() - 0.5) * 140 : (rnd() - 0.5) * 4))); const g = Math.round(v); varied.push(frame([g, g, g], [g, g, g])); }
+  const base = run(varied).general.events.filter((e) => e.tick > 200).map((e) => e.tick + ':' + e.sign).join(' ');
+  const cut = run(varied.slice(100)).general.events.filter((e) => e.tick + 100 > 200).map((e) => (e.tick + 100) + ':' + e.sign).join(' ');
+  check('the changes counted after frame 200 are the same events whether the clip starts at frame 0 or at frame 100', base === cut, base + ' | ' + cut);
+  const lv = run(strobe(BLACK, WHITE, 3, 4)).general;
+  check('the report carries the counts with the area threshold 15% lower and higher, and how many changes of the worst second are within 15% of the threshold', typeof lv.flashesIfThresholdLower === 'number' && typeof lv.flashesIfThresholdHigher === 'number' && typeof lv.marginal === 'number' && lv.worstSecond.length > 0);
 }
 
 // ---- the red flash
@@ -140,13 +159,13 @@ check('the red flash is subject to the same area window: a 2.4% corner of it pas
 {
   // a whole-frame dip 0.8 -> 0.3 in one frame and back over 4, three times, 20 frames apart: three dips, shortest gap 20 frames
   const fr = [];
-  for (let i = 0; i < 100; i++) { const t = i % 20; const v = t === 5 ? 90 : t === 6 ? 130 : t === 7 ? 170 : t === 8 ? 210 : 235; const l = i >= 5 && i < 65 ? v : 235; fr.push(frame([l, l, l], [l, l, l])); }
+  for (let i = 0; i < 200; i++) { const t = (i - 65) % 20; const v = t === 0 ? 90 : t === 1 ? 130 : t === 2 ? 170 : t === 3 ? 210 : 235; const l = i >= 65 && i < 125 ? v : 235; fr.push(frame([l, l, l], [l, l, l])); }
   const r = run(fr);
-  check('whole-screen dips are listed with their frame, depth and the gap between them', r.dips.list.length === 3 && r.dips.shortestGapFrames === 20 && r.dips.list[0].tick === 6 && r.dips.list[0].drop > 0.3, JSON.stringify(r.dips));
+  check('whole-screen dips are listed with their frame, depth and the gap between them', r.dips.list.length === 3 && r.dips.shortestGapFrames === 20 && r.dips.list[0].tick === 66 && r.dips.list[0].drop > 0.3, JSON.stringify(r.dips));
 }
 
 // ---- the parameters are real parameters
-check('the frame rate is a parameter: the same 180 frames read as 120 a second hold 6 flashes in a second and fail', run(strobe(BLACK, WHITE, 10, 3), { fps: 120 }).general.flashes === 6);
+check('the frame rate is a parameter: the same 180 frames read as 120 a second hold 6 flashes in a second and fail', run(strobe(BLACK, WHITE, 10, 5), { fps: 120 }).general.flashes === 6);
 check('a larger share of the window lets the 4.3% corner through (300 of 768 px is 39%, so 50% passes it)', run(strobe(BLACK, WHITE, 3, 2, [0, 0, 0.2, 0.2]), { areaShare: 0.5 }).pass);
 check('a fade over 4 frames is pooled into one change: black to white over 4 frames and back, twice a second, over the whole frame, is 2 flashes a second', run((() => { const o = []; for (let i = 0; i < 120; i++) { const t = (i % 30); const v = t < 4 ? [0, 85, 170, 255][t] : t < 15 ? 255 : t < 19 ? [170, 85, 0, 0][t - 15] : 0; o.push(frame([v, v, v], [v, v, v])); } return o; })()).general.flashes === 2);
 
