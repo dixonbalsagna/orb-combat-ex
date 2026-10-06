@@ -129,7 +129,7 @@ Orb removed hiding from the base game and kept it for a future stealth-specialis
 | **Flashes** | Found and Searching stay. Primed, the ambush window, is held for the future fighter. Art: please drop Primed from the base set. |
 
 **Recovery without hiding.** This replaces the old hidden fade (battered fading 3 per second while hidden). Without a replacement, battered regions would stay battered for the rest of a 6-to-8-minute fight, and comebacks would come only from Rally.
-- **Second breath.** After **4 s** with no exchange involving that fighter, a battered region fades 1 wear per second, down to 59, where it becomes bruised. It is for a break in the action: the 4 s start again on anything that hits him, landed or blocked, blow or shot, and on any attack of his own (`melee-press-feel.md` §9g).
+- **Second breath.** After **4 s** with no exchange involving that fighter, a battered region fades 1 wear per second, down to 59, where it becomes bruised. It is for a break in the action: the 4 s start again on anything that hits him, landed or blocked, blow or shot, and on any attack of his own, an approach that never lands included (`melee-press-feel.md` §9g).
 - It shows through the posture channel (a visible breath) and needs no UI.
 - The opponent denies it simply by attacking, since every attack closes the gap. Breaking lock through ESCAPE, or a long break launch, is how a fighter earns it.
 - Broken regions still mend only through Rally.
@@ -580,7 +580,7 @@ Heat stages, Humbled bursts and boil-overs are power states with no cinematic. T
 
 **How it sits with the acts** (§9). The act index becomes `1 + the larger of (form steps, wound beats) + region breaks`, capped at 4.
 - *Form steps* are the most ladder steps any one fighter has taken, from 0 to 3.
-- *Wound beats* are the three in §9, from 0 to 3.
+- *Wound beats* are the three in §9, from 0 to 3. **From the brawl retune** the core becoming battered may stop being one, so that the wound track gives two acts and the fourth comes with the third form or a region break (`melee-press-feel.md` §9g). It applies if Simulation's what-if reads act 4 at 270 to 345 s and before the first brink in 80% of matches.
 - Taking the larger track, not the sum, lands the acts with the transformations: act 2 at about 1:30, act 3 at about 3:15 and act 4 at about 5:00. The wound track keeps the acts moving if nobody transforms. The act timing targets in §9 are unchanged.
 
 **Knock-on.** Slower tiers mean less damage and less collateral early. QA re-baselines after the change: k for length, civilians lost (if the mean falls under 25%, the re-base to 15 to 40% in `balance-targets.md` §4b applies), and the per-tier structure bands in §15 there.
