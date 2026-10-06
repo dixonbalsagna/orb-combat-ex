@@ -32,6 +32,9 @@ uniform float rubble_tint_h = 20.0;
 uniform float snow_from = 560.0;
 uniform float snow_full = 900.0;
 uniform float z_front = 140.0;   // RenderLook.Z_TERRAIN_FRONT: the top brightens from the back of the band to here
+uniform vec2 char_fresh = vec2(0.04, 0.2);   // RenderLook.CHAR_FRESH: a groove warmer than y is not charred yet; the char comes in as its heat falls to x
+uniform float char_gain = 1.0;               // 1; under reduced flashing RenderLook.CHAR_CALM
+uniform float heat_gain = 1.0;               // 1; under reduced flashing RenderLook.HEAT_CALM
 uniform float fog_near = 700.0;
 uniform float fog_far = 12000.0;
 
@@ -115,13 +118,17 @@ void fragment() {
 		float n = fract(sin(dot(floor(q), vec2(41.3, 289.1))) * 43758.5453);
 		c = mix(c, rubble.rgb * (0.8 + 0.4 * n), clamp(v_rubble / rubble_tint_h, 0.0, 1.0) * 0.9);
 	}
-	c = mix(c, char_col.rgb, clamp(v_scorch * 1.1, 0.0, 0.92));
+	// A groove chars as it cools: under a fresh glow the ground keeps its own colour, so a beam's burn does not turn a
+	// broad strip of ground dark in one tick.
+	float fresh = smoothstep(char_fresh.x, char_fresh.y, v_heat);
+	c = mix(c, char_col.rgb, clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh));
 	c = flat_shade(c, NORMAL, 0.55) * mix(1.2, 0.95, v_back);
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
 	c = mix(c, cue.rgb, cue.a);
 	float hh = clamp(v_heat, 0.0, 1.6);
 	vec3 glow = mix(heat_lo.rgb, heat_hi.rgb, clamp(hh - 0.6, 0.0, 1.0));
-	c = mix(c, glow, clamp(hh, 0.0, 1.0) * 0.85) + glow * max(0.0, hh - 1.0) * 0.6;
+	// The glow's tint comes in gently at low heat (a weak beam's groove is a faint red, not a dark one, at first).
+	c = mix(c, glow, smoothstep(0.2, 1.0, hh) * 0.85 * heat_gain) + glow * max(0.0, hh - 1.0) * 0.6 * heat_gain * heat_gain;
 	// Aerial perspective: hazing toward the horizon, the ground takes the sky's colour in its own direction.
 	float fog = ground_fog(elevation(v_view), -v_wz, fog_near, fog_far);
 	ALBEDO = mix(c, sky_color(elevation(v_view)), fog);

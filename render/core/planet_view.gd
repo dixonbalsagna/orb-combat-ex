@@ -505,6 +505,9 @@ func _mm_child(parent: Node3D, n: String, mm: MultiMesh, mat: Material = null) -
 	parent.add_child(mi)
 
 
+var _calm: bool = false              # the grooves are drawn calm (set_calm)
+
+
 func _make_materials() -> void:
 	_terrain_mat = ShaderMaterial.new()
 	_terrain_mat.shader = TERRAIN_SHADER
@@ -550,6 +553,7 @@ func _make_materials() -> void:
 	_terrain_mat.set_shader_parameter("char_col", RenderLook.col(RenderLook.CHAR))
 	_terrain_mat.set_shader_parameter("heat_lo", RenderLook.col(RenderLook.HEAT_LO))
 	_terrain_mat.set_shader_parameter("heat_hi", RenderLook.col(RenderLook.HEAT_HI))
+	_terrain_mat.set_shader_parameter("char_fresh", RenderLook.CHAR_FRESH)
 	_terrain_mat.set_shader_parameter("z_front", RenderLook.Z_TERRAIN_FRONT)
 	_terrain_mat.set_shader_parameter("snow", RenderLook.col(RenderLook.SNOW))
 	_terrain_mat.set_shader_parameter("snow_from", RenderLook.SNOW_FROM)
@@ -608,6 +612,15 @@ func set_lane_cues(cues: Array) -> void:
 
 
 ## The camera's world position this frame, for the foreground rule in the ground and water shaders.
+## The grooves' calm form, under reduced flashing or reduced motion (PaneWorld.flash_calm): a fainter glow and char.
+func set_calm(on: bool) -> void:
+	if _terrain_mat == null or on == _calm:
+		return
+	_calm = on
+	_terrain_mat.set_shader_parameter("heat_gain", RenderLook.HEAT_CALM if on else 1.0)
+	_terrain_mat.set_shader_parameter("char_gain", RenderLook.CHAR_CALM if on else 1.0)
+
+
 func set_camera(p: Vector3) -> void:
 	if _terrain_mat == null:
 		return

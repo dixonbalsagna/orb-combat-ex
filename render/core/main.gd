@@ -473,6 +473,7 @@ func frame(delta: float) -> void:
 	PaneWorld.pan_haze_on = (RenderLook.PAN_HAZE_DEFAULT or args.has("panhaze")) and not args.has("nopanhaze")   # the buildings' haze while the camera travels fast
 	PaneWorld.sky_react_on = args.has("skyreact")   # the clouds parting at tier 3 and 4: off unless asked for (QA's GB-002)
 	PaneWorld.sky_calm = host.vfx.reduced_motion
+	PaneWorld.flash_calm = host.vfx.reduced_motion or host.vfx.reduced_flashing   # the register's reduced mode: the grooves glow and char faintly
 	var n: int = host.advance(delta, vp.x, vp.y)
 	if args.has("flash-soak") and frames % 40 == 0 and not FlashSet.ids().is_empty():
 		var ids: Array = FlashSet.ids()

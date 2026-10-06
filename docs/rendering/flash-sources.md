@@ -28,12 +28,12 @@ Owner: Rendering and Technical Art. 2026-10-06. Legal's condition for the public
 | A cue's hand spark and ring | `fighter_view.gd` | A small spark at the hand; a hollow ring | No: small or hollow, not a flash | |
 | The placeholder aura, speed streaks and charge orb | `fighter_view.gd` | The old look in place of head flashes (F7 off) | No: a debug view, not in normal play | |
 | Sparks, debris, dust, splashes, ripples, shock rings, after-images | `particle_view.gd`, `impact_fx.gd` | Points a few pixels across, hollow rings, thin outlines | No: not a flash | |
-| A fresh groove's glow | `impact_fx.gd`, the ground shader | A line of glow that fades over about 1.6 s | No: one slow fade along a line | |
+| **A fresh groove's glow and char** | `impact_fx.gd` (the heat), `terrain.gdshader` | A beam's burn: a glow along the groove that cools over seconds, and the dark char it leaves | No ask: it is the ground, not an effect. The char comes in as the groove cools (two to three seconds), where it used to turn a broad strip dark in one tick | Under reduced flashing the glow is drawn at 30% and the char at 35%, so a camera moving over a groove changes little |
 | Windows going out, a building's damage stage | `building.gdshader` | A step in a building's look, once | No: one change, never repeated | |
 | The sky's reaction to tier 3 and 4 | `sky.gdshader` | Off by default | No: off | |
 | The old HUD's banner and floating words | `hud.gd` | Text, in the F2 debug view | No: a debug view | |
 
-Not Rendering's, though they are drawn near these: the glare on the rival's glasses (VFX's `glare.gd`), every ring and burst in `render/vfx`. The divider's slam flash is UI's to draw and Camera's to time; only the ask goes through the host.
+Not Rendering's, though they are drawn near these: the glare on the rival's glasses (VFX's `glare.gd`), every ring and burst in `render/vfx`, and Camera's three sources, which ask the register themselves with their area and step: `cut_dip` (a camera cut's brief dip), `cut_in_panel` (the inset panel) and `transform_cut` (a transformation's two cuts, the whole frame). `SimHost.ask_flash(source, colour, area_px, step)` passes the area and step through for any caller. The divider's slam flash is UI's to draw and Camera's to time; only the ask goes through the host.
 
 ## What it does in play
 
@@ -70,6 +70,7 @@ A hit granted (left) and a hit refused (right), on the web build: ![hits](img/fl
 - **A perfect block's guard flash (not low):** it may take the second's one slot, with VFX's big events. Refused, the arc's lines flash without the fill.
 - **A beam and a beam clash:** always calm, and they do not ask, so the one slot is left to others. A beam is a thin line with a faint glow; a clash has no flare.
 - **The divider's slam flash:** UI draws none and does not ask.
+- **A groove's glow and char:** the glow at 30% of its strength with no brightening past its colour, the char at 35%.
 - **The pan haze** does not follow the setting: it is off unless switched on.
 - **Nothing of Rendering's reads the option itself.** Each source asks the register, so there is one rule and one log.
 
@@ -135,9 +136,29 @@ It was the crater's shock ring, drawn as a band a third of its radius thick; VFX
 
 - **The clips are from before VFX's and Camera's changes.** Tools reads the combined tree; these numbers are this batch alone.
 - **The counts sit on the threshold.** Many counted changes are 100 to 115% of the area threshold, so half a flash either way is noise; a fall from 4.5 to 2.5 is not.
-- **The groove's glow.** A beam's burn lights a broad band of ground and then leaves it dark, and a camera moving over it is counted. It is the clash's remaining reading, and it was not changed. Calming it under reduced flashing is the next thing to try.
+- **The groove's glow and char** were the clash's remaining reading; see "The groove" below.
 - **The haze sees travel along the ground only, and buildings only.** A camera climbing or zooming past a tower, and a rush through a forest, are not covered. Its own coming and going is a change of its own.
 - **The areas and steps given to the register are estimates** of what changes by a tenth of full luminance, not measurements.
+
+## The groove (2026-10-06, evening)
+
+A beam's burn used to do two things the analyser counts: turn a broad strip of ground dark in one tick, and leave a bright glow beside a dark char for a moving camera to sweep over.
+
+- **The char comes in as the groove cools.** While a groove is hot the ground under its glow keeps its own colour; the char eases in over two to three seconds as the heat falls (`RenderLook.CHAR_FRESH`, on the heat `ImpactFx` already keeps, so nothing new is uploaded). A weak beam's groove starts as a faint red tint, where it was a dark red band at once.
+- **Under reduced flashing the groove is calm:** the glow at 30% and the char at 35% (`HEAT_CALM`, `CHAR_CALM`). Scorch marks are fainter for a player with the setting on.
+
+Before and after, on exports of 1172a4e8 (today's tree, with VFX's register and Camera's governor), read with that commit's analyser. The second figure is the reading with the area threshold 15% lower.
+
+| Clip | Before | After |
+| :-- | :-- | :-- |
+| clash, normal | 1.5 (2) | 2 (2.5) |
+| clash, reduced | **3** (3) | 2 (2) |
+| signature, normal | 2.5 (3) | 2.5 (2.5) |
+| signature, reduced | 2.5 (2.5) | 1 (1) |
+
+Every clip is at or under the gate of 2.5 after, and none reads over 3 with the lower threshold. Clash in normal mode moved from 1.5 to 2: the char's darkening no longer lands on the tick of the camera's reframe, and one change at 118% of the threshold now stands apart where it merged before. The two-second-memory reading was not run.
+
+What it costs the look: the mark of a beam appears late. The ground glows, then darkens over a few seconds, where the black scar used to be there the moment the beam passed. Top row: tick 108, before and after. Middle: tick 170, before and after. Bottom: tick 330 after, when the char is in; and the reduced form at tick 108. ![groove](img/flash-groove.png)
 
 ## The capture hook for Tools' frame analyser
 

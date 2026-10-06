@@ -44,6 +44,7 @@ var _cue_t: float = -1.0
 static var clouds_on: bool = true          # the sky's clouds (main's --noclouds)
 static var sky_calm: bool = false          # reduced motion: the clouds stand still and nothing parts (main sets it)
 static var sky_react_on: bool = false      # the clouds part for a fighter at tier 3 or more: off unless asked for (main's --skyreact; QA's GB-002)
+static var flash_calm: bool = false        # reduced flashing or reduced motion: the grooves' glow and char are drawn calm (main sets it)
 static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
 var pan_haze: float = 0.0                  # 0 to 1, this frame
 var _pan_x: float = NAN                    # the camera's x and the time at the last frame seen
@@ -110,6 +111,7 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	cam_rig.frame(cam.y, cam.z, jitter, vp.y, pitch)
 	_pan_haze(host, a, cam_x, vp)
 	planet.set_camera(cam_rig.position)
+	planet.set_calm(flash_calm)
 	_view_cues(cam, vp)
 	if source == null and host.vfx.enabled and host.vfx.react_enabled:
 		planet.blow_windows(S, host.vfx.react.blowouts)   # the facades' windows go out with VFX's glass

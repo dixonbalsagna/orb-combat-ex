@@ -141,6 +141,14 @@ const EJECTA := "#9a8a70"                # rims and aprons, dusty
 const CRACKED := "#2b2a2c"               # cracked pavement (S.crack), its crack lines
 const CHAR := "#1d1715"                  # scorched ground at full burn
 const HEAT_LO := "#c2381c"               # a cooling groove
+## A groove chars as it cools (terrain.gdshader): while its heat (ImpactFx.heat, 1/e in 1.6 s) is above CHAR_FRESH.y
+## the ground under the glow keeps its own colour, and the char comes in as the heat falls to CHAR_FRESH.x: from
+## about 1.4 to 4 s after a weak beam, 3.3 to 6 s after the strongest. The burn used to turn a broad strip of ground
+## dark in one tick. Under reduced flashing (or reduced motion) the glow is drawn at HEAT_CALM of its strength and the
+## char at CHAR_CALM, so a camera moving over a groove changes little.
+const CHAR_FRESH := Vector2(0.04, 0.2)
+const HEAT_CALM: float = 0.3
+const CHAR_CALM: float = 0.35
 const HEAT_HI := "#ffd27a"               # a fresh groove from a strong beam
 ## Ground field widths across the band's depth (render/core/ground_field.gd). Bowls and grooves take their sizes from
 ## the sim (each crater record's r, depth and rim; the scorch constants in WorldCrater); only these are the renderer's.
