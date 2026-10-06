@@ -1,0 +1,78 @@
+{
+ "wave": "rival7",
+ "strikes": [
+  {
+   "id": "ru.su_ram",
+   "combat": "strike.su_ram",
+   "name": "su_ram",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 95,
+   "band": "long",
+   "ticks": {
+    "load": 18,
+    "follow": 8,
+    "recover": 12
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A long low lunge, the whole body behind one straight fist.",
+   "orig": "PROVISIONAL: a long low lunge, the whole body behind one straight fist",
+   "poses": [
+    "ru.su_ram.chamber",
+    "ru.su_ram.contact",
+    "ru.su_ram.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "ru.su_heel",
+   "combat": "strike.su_heel",
+   "name": "su_heel",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 48,
+   "reach": 75,
+   "band": "mid",
+   "ticks": {
+    "load": 18,
+    "follow": 8,
+    "recover": 12
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. The leg raised high, the heel dropped from above onto the chest, the body folding over it.",
+   "orig": "PROVISIONAL: the leg raised high, the heel dropped from above onto the chest, the body folding over it",
+   "poses": [
+    "ru.su_heel.chamber",
+    "ru.su_heel.contact",
+    "ru.su_heel.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "heel",
+   "path": "drop",
+   "flags": []
+  }
+ ],
+ "skipped": []
+}

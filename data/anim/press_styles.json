@@ -11,6 +11,30 @@
  "riposte": {"windup": {"light": 2, "heavy": 3}, "fade": 4, "style": {"light": "tech", "heavy": "heavy"}, "grade": "perfect"},
  "squash_pose": {"default": "brace", "by_fighter": {"protagonist": "pn.hold.brace_load", "antihero": "pe.plant_coil.arrive"}, "bones": ["pelvis", "spine_1", "thigh_l", "shin_l", "foot_l", "thigh_r", "shin_r", "foot_r"]},
  "styles": {
+  "_burst": "PROVISIONAL (the flurry look study): X held, a burst of low-damage blows that starts near one every 3 ticks and slows on a curve. The speed row plus gap_amp: a blow is narrower the closer it is to the last (its pose is mixed toward the guard it came from by 1 - amp, amp from 0.5 at a 4-tick gap to 1 at 11), so the burst of Combat and Legal (gaps 4 4 5 6 8 11 15) grows as it slows, so a tight burst reads as short quick jabs that grow as it slows, not as a stutter of full blows. Live matches never name this style, so the live speed row and every ordinary mash are unchanged.",
+  "burst": {
+   "prof": {"solve_hz": 60, "snap_ticks": 0, "load_ease": 1.4, "load_ticks": {"light": 2, "heavy": 2}, "hold_ticks": 0, "follow_ticks": 4, "recover_ticks": 7, "overshoot": 0.22, "lag": 0.9},
+   "alternate": true, "carry": true, "carry_ticks": 5, "gap_amp": {"from": 4, "to": 11, "min": 0.5},
+   "squash": 0.0, "lean_back": 0.0, "back": 0.0,
+   "stretch": {"spine": 0.0, "rise": 0.0, "lead": 0.0, "ticks": 3, "smear_ticks": 0},
+   "twist": 0.16, "twist_ticks": 7, "ghosts": 2
+  },
+  "_medium": "PROVISIONAL (the flurry look study, docs/animation/flurry-study.md): Y, the middle strength. Today's heavy pieces and looks at a blow about every 14 ticks: a wind-up of 8, a partial squash and stretch, a smear frame, two ghosts, the carry blend between blows.",
+  "medium": {
+   "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.6, "load_ticks": {"light": 8, "heavy": 8}, "hold_ticks": 3, "follow_ticks": 5, "recover_ticks": 5, "overshoot": 0.08, "lag": 0.45},
+   "alternate": true, "carry": true, "carry_ticks": 4,
+   "squash": 0.55, "lean_back": 0.10, "back": 1.4,
+   "stretch": {"spine": 0.10, "rise": 1.0, "lead": 2.0, "ticks": 3, "smear_ticks": 1},
+   "twist": 0.06, "twist_ticks": 6, "ghosts": 2
+  },
+  "_super": "PROVISIONAL (the flurry look study): B, the top strength. A whole-body blow that reads as far bigger than a medium at a glance: a wind-up of 18 that starts on the press, the full squash, a long lean back and step back, a big stretch with a lead of 9 units and two smear frames, an 8-tick hold, two ghosts (Legal f01: at most 2 ghosts of a limb at any instant).",
+  "super": {
+   "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.0, "load_ticks": {"light": 18, "heavy": 18}, "hold_ticks": 8, "follow_ticks": 8, "recover_ticks": 8, "overshoot": 0.12, "lag": 0.45},
+   "alternate": false, "carry": true, "carry_ticks": 6,
+   "squash": 1.0, "lean_back": 0.34, "back": 5.0,
+   "stretch": {"spine": 0.34, "rise": 3.0, "lead": 9.0, "ticks": 5, "smear_ticks": 2},
+   "twist": 0.0, "twist_ticks": 6, "ghosts": 2
+  },
   "tech": {
    "prof": {"solve_hz": 60, "snap_ticks": 0, "load_ease": 3.0, "load_ticks": {"light": 6, "heavy": 6}, "hold_ticks": 10, "follow_ticks": 4, "recover_ticks": 6, "overshoot": 0.0, "lag": 0.1},
    "alternate": false, "carry": false, "carry_ticks": 0,

@@ -1,0 +1,84 @@
+{
+ "wave": "protag10",
+ "strikes": [
+  {
+   "id": "pu.su_drive",
+   "combat": "strike.su_drive",
+   "name": "su_drive",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": "hand_l",
+   "offset": 50,
+   "reach": 92,
+   "band": "mid",
+   "ticks": {
+    "load": 18,
+    "follow": 8,
+    "recover": 12
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 2
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "no_held_raise",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. He rises tall with one palm at his shoulder, the other hand up in guard, then comes down with his whole weight and the palm falls onto the chest.",
+   "orig": "PROVISIONAL: he rises tall with one palm at his shoulder and the other hand up in guard, then comes down with his whole weight and the palm falls onto the chest",
+   "poses": [
+    "pu.su_drive.chamber",
+    "pu.su_drive.contact",
+    "pu.su_drive.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "pu.su_turn",
+   "combat": "strike.su_turn",
+   "name": "su_turn",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 108,
+   "band": "long",
+   "ticks": {
+    "load": 18,
+    "follow": 8,
+    "recover": 12
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw"
+   ],
+   "look": "PROVISIONAL. A full turn of the body, one blade hand swung out at the end of it, the rear foot trailing.",
+   "orig": "PROVISIONAL: a full turn of the body, one blade hand swung out at the end of it, the rear foot trailing off the ground",
+   "poses": [
+    "pu.su_turn.chamber",
+    "pu.su_turn.contact",
+    "pu.su_turn.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "blade",
+   "path": "spin",
+   "flags": []
+  }
+ ],
+ "skipped": []
+}

@@ -583,6 +583,33 @@
               "type": "integer",
               "minimum": 0,
               "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            },
+            "gap_amp": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "min"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
             }
           },
           "additionalProperties": false,
@@ -775,6 +802,33 @@
               "type": "integer",
               "minimum": 0,
               "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            },
+            "gap_amp": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "min"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
             }
           },
           "additionalProperties": false,
@@ -967,6 +1021,33 @@
               "type": "integer",
               "minimum": 0,
               "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            },
+            "gap_amp": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "min"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
             }
           },
           "additionalProperties": false,
@@ -1159,12 +1240,699 @@
               "type": "integer",
               "minimum": 0,
               "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            },
+            "gap_amp": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "min"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
             }
           },
           "additionalProperties": false,
           "patternProperties": {
             "^_": true
           }
+        },
+        "burst": {
+          "type": "object",
+          "required": [
+            "prof",
+            "alternate",
+            "carry",
+            "carry_ticks",
+            "squash",
+            "lean_back",
+            "back",
+            "stretch",
+            "twist",
+            "twist_ticks",
+            "ghosts"
+          ],
+          "properties": {
+            "prof": {
+              "type": "object",
+              "required": [
+                "solve_hz",
+                "snap_ticks",
+                "load_ease",
+                "load_ticks",
+                "hold_ticks",
+                "follow_ticks",
+                "recover_ticks",
+                "overshoot",
+                "lag"
+              ],
+              "properties": {
+                "solve_hz": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 120,
+                  "description": "The in-betweener's solve rate."
+                },
+                "snap_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of snap."
+                },
+                "load_ease": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "The wind-up's ease exponent."
+                },
+                "load_ticks": {
+                  "type": "object",
+                  "required": [
+                    "light",
+                    "heavy"
+                  ],
+                  "properties": {
+                    "light": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "heavy": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "description": "The wind-up's length by the blow's weight.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "hold_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The contact key is held this long before the follow-through starts (new in this file)."
+                },
+                "follow_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The follow-through."
+                },
+                "recover_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The return."
+                },
+                "overshoot": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far past the pose the limb swings."
+                },
+                "lag": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The loose body's lag."
+                }
+              },
+              "description": "Overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new).",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "alternate": {
+              "type": "boolean",
+              "description": "The striking limb alternates blow to blow."
+            },
+            "carry": {
+              "type": "boolean",
+              "description": "A blow that starts in the last one's follow or recover blends out of that pose instead of the guard."
+            },
+            "carry_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The blend's length when carry is on."
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How much of the squash pose's legs, pelvis and spine the wind-up takes (scaled by the blow's weight)."
+            },
+            "lean_back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Extra spine lean back at full squash, radians."
+            },
+            "back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The body drawn this far back at full squash, model units."
+            },
+            "stretch": {
+              "type": "object",
+              "required": [
+                "spine",
+                "rise",
+                "lead",
+                "ticks",
+                "smear_ticks"
+              ],
+              "properties": {
+                "spine": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Spine extension, radians."
+                },
+                "rise": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Hips up, model units."
+                },
+                "lead": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The body drawn this far ahead, model units."
+                },
+                "ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks to settle after contact."
+                },
+                "smear_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The ticks before contact that count as the smear frame."
+                }
+              },
+              "description": "The release.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "twist": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The loose body's spine yaw toward the striking side, radians."
+            },
+            "twist_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The twist's length."
+            },
+            "ghosts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            },
+            "gap_amp": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "min"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "PROVISIONAL (the flurry look study): X held, a burst. The speed row plus gap_amp: a blow thrown within 6 ticks of the last is narrower the closer it is. A beat names it as its `style`."
+        },
+        "medium": {
+          "type": "object",
+          "required": [
+            "prof",
+            "alternate",
+            "carry",
+            "carry_ticks",
+            "squash",
+            "lean_back",
+            "back",
+            "stretch",
+            "twist",
+            "twist_ticks",
+            "ghosts"
+          ],
+          "properties": {
+            "prof": {
+              "type": "object",
+              "required": [
+                "solve_hz",
+                "snap_ticks",
+                "load_ease",
+                "load_ticks",
+                "hold_ticks",
+                "follow_ticks",
+                "recover_ticks",
+                "overshoot",
+                "lag"
+              ],
+              "properties": {
+                "solve_hz": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 120,
+                  "description": "The in-betweener's solve rate."
+                },
+                "snap_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of snap."
+                },
+                "load_ease": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "The wind-up's ease exponent."
+                },
+                "load_ticks": {
+                  "type": "object",
+                  "required": [
+                    "light",
+                    "heavy"
+                  ],
+                  "properties": {
+                    "light": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "heavy": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "description": "The wind-up's length by the blow's weight.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "hold_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The contact key is held this long before the follow-through starts (new in this file)."
+                },
+                "follow_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The follow-through."
+                },
+                "recover_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The return."
+                },
+                "overshoot": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far past the pose the limb swings."
+                },
+                "lag": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The loose body's lag."
+                }
+              },
+              "description": "Overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new).",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "alternate": {
+              "type": "boolean",
+              "description": "The striking limb alternates blow to blow."
+            },
+            "carry": {
+              "type": "boolean",
+              "description": "A blow that starts in the last one's follow or recover blends out of that pose instead of the guard."
+            },
+            "carry_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The blend's length when carry is on."
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How much of the squash pose's legs, pelvis and spine the wind-up takes (scaled by the blow's weight)."
+            },
+            "lean_back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Extra spine lean back at full squash, radians."
+            },
+            "back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The body drawn this far back at full squash, model units."
+            },
+            "stretch": {
+              "type": "object",
+              "required": [
+                "spine",
+                "rise",
+                "lead",
+                "ticks",
+                "smear_ticks"
+              ],
+              "properties": {
+                "spine": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Spine extension, radians."
+                },
+                "rise": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Hips up, model units."
+                },
+                "lead": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The body drawn this far ahead, model units."
+                },
+                "ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks to settle after contact."
+                },
+                "smear_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The ticks before contact that count as the smear frame."
+                }
+              },
+              "description": "The release.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "twist": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The loose body's spine yaw toward the striking side, radians."
+            },
+            "twist_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The twist's length."
+            },
+            "ghosts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            },
+            "gap_amp": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "min"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "PROVISIONAL (the flurry look study): the middle strength, Y. Today's heavy pieces and looks at a blow about every 14 ticks. A beat names it as its `style`."
+        },
+        "super": {
+          "type": "object",
+          "required": [
+            "prof",
+            "alternate",
+            "carry",
+            "carry_ticks",
+            "squash",
+            "lean_back",
+            "back",
+            "stretch",
+            "twist",
+            "twist_ticks",
+            "ghosts"
+          ],
+          "properties": {
+            "prof": {
+              "type": "object",
+              "required": [
+                "solve_hz",
+                "snap_ticks",
+                "load_ease",
+                "load_ticks",
+                "hold_ticks",
+                "follow_ticks",
+                "recover_ticks",
+                "overshoot",
+                "lag"
+              ],
+              "properties": {
+                "solve_hz": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 120,
+                  "description": "The in-betweener's solve rate."
+                },
+                "snap_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of snap."
+                },
+                "load_ease": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "The wind-up's ease exponent."
+                },
+                "load_ticks": {
+                  "type": "object",
+                  "required": [
+                    "light",
+                    "heavy"
+                  ],
+                  "properties": {
+                    "light": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "heavy": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "description": "The wind-up's length by the blow's weight.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "hold_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The contact key is held this long before the follow-through starts (new in this file)."
+                },
+                "follow_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The follow-through."
+                },
+                "recover_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The return."
+                },
+                "overshoot": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far past the pose the limb swings."
+                },
+                "lag": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The loose body's lag."
+                }
+              },
+              "description": "Overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new).",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "alternate": {
+              "type": "boolean",
+              "description": "The striking limb alternates blow to blow."
+            },
+            "carry": {
+              "type": "boolean",
+              "description": "A blow that starts in the last one's follow or recover blends out of that pose instead of the guard."
+            },
+            "carry_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The blend's length when carry is on."
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How much of the squash pose's legs, pelvis and spine the wind-up takes (scaled by the blow's weight)."
+            },
+            "lean_back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Extra spine lean back at full squash, radians."
+            },
+            "back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The body drawn this far back at full squash, model units."
+            },
+            "stretch": {
+              "type": "object",
+              "required": [
+                "spine",
+                "rise",
+                "lead",
+                "ticks",
+                "smear_ticks"
+              ],
+              "properties": {
+                "spine": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Spine extension, radians."
+                },
+                "rise": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Hips up, model units."
+                },
+                "lead": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The body drawn this far ahead, model units."
+                },
+                "ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks to settle after contact."
+                },
+                "smear_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The ticks before contact that count as the smear frame."
+                }
+              },
+              "description": "The release.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "twist": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The loose body's spine yaw toward the striking side, radians."
+            },
+            "twist_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The twist's length."
+            },
+            "ghosts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            },
+            "gap_amp": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "min"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "PROVISIONAL (the flurry look study): the top strength, B. A whole-body blow that reads as far bigger than a medium. A beat names it as its `style`."
         }
       },
       "additionalProperties": false,

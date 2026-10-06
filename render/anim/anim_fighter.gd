@@ -1680,6 +1680,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	var best: int = -1
 	var best_start: float = -1.0e9
 	var lens: Array = []
+	var gaps: Array = []   # the ticks from the last blow's contact to each blow's own (a style row may narrow a blow thrown tight on the last: gap_amp)
 	var profs: Array = []
 	var psts: Array = []
 	var prev_tc: float = -1.0e9
@@ -1705,6 +1706,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		var bw: float = _blow_weight(strikes[n][2])
 		var lnom: float = float(sp.get("load_ticks", {}).get("heavy" if strikes[n][3] == "heavy" else "light", 12)) * DT * (0.75 + 0.35 * bw)
 		var gap: float = tc - prev_tc
+		gaps.append(gap / DT)
 		var L: float = clampf(minf(lnom, gap - 0.5 * Fn), Sn_ + 2.0 * DT, lnom)
 		lens.append(L)
 		var start: float = tc - L
@@ -1829,6 +1831,11 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		hips = pf.hips.lerp(_base_hips, w4)
 		curl = pf.curl.lerp(_base_curl, w4)
 		hw = 1.0 - w4
+	var gamp: float = _gap_amp(prow, float(gaps[best]))
+	if gamp < 0.999 and _base.size() == AnimRig.N:
+		AnimPose.mix(q, _base, 1.0 - gamp)   # a burst: the closer the blows, the shorter each one (the pose stays nearer the guard it came from)
+		hips = hips.lerp(_base_hips, 1.0 - gamp)
+		curl = curl.lerp(_base_curl, 1.0 - gamp)
 	if pstyle != "":
 		_press_body(prow, pstyle, ul, dtc, Sn, H, F, bw3, ks, side, blow_id, best, tc2, T)
 		if not press.is_empty():
@@ -2031,9 +2038,22 @@ func _press_style(S: SimState, f, ex, sk: Array) -> String:
 ## The style's timing over the part's, then what the beat tells (B0's fields, data/anim/press_styles.json `beat`): a tech blow's grade sets its held beat (a perfect press holds the full
 ## beat, a good one less, an off one least); the closing blow of a string and a string's ender hold their follow-through at least that long (the blow that ends it lands and stays);
 ## a held heavy winds up for its whole time and a tapped one for less.
+func _gap_amp(row: Dictionary, gap_ticks: float) -> float:
+	var ga = row.get("gap_amp")
+	if not (ga is Dictionary):
+		return 1.0
+	var g0: float = float(ga.get("from", 3.0))
+	var g1: float = float(ga.get("to", 6.0))
+	return lerpf(float(ga.get("min", 0.6)), 1.0, clampf((gap_ticks - g0) / maxf(g1 - g0, 0.001), 0.0, 1.0))
+
+
 func _press_prof(sp: Dictionary, style: String, args: Dictionary = {}) -> Dictionary:
 	var out: Dictionary = sp.duplicate()
 	out.merge(AnimData.press.get("styles", {}).get(style, {}).get("prof", {}), true)
+	if args.has("windup"):
+		# a held blow winds up for as long as it was held (the sim's or the study's count, in ticks): the whole window is the wind-up
+		var wu: int = clampi(int(args.windup), 1, 120)
+		out["load_ticks"] = {"light": wu, "heavy": wu}
 	var B: Dictionary = AnimData.press.get("beat", {})
 	if B.is_empty():
 		return out

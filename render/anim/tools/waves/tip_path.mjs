@@ -80,6 +80,11 @@ export const TIP_PATH = {
   'pr.jab': { tip: 'blade', path: 'line' },
   'pr.palm_heel': { tip: 'palm', path: 'line' },
   'pr.twin_spear': { tip: 'palm', path: 'line' },
+  // PROVISIONAL super-heavy pieces of the brawl look study (docs/animation/flurry-study.md)
+  su_drive: { tip: 'palm', path: 'drop' },
+  su_turn: { tip: 'blade', path: 'spin' },
+  su_ram: { tip: 'fist', path: 'line' },
+  su_heel: { tip: 'heel', path: 'drop' },
 };
 export function tipPath(prefix, name) {
   return TIP_PATH[prefix + '.' + name] || TIP_PATH[name];

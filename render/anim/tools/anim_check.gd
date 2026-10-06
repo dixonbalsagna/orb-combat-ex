@@ -588,6 +588,247 @@ func _test_riposte() -> void:
 	print("riposte: %s; the block fades out over the data's ticks, press.sure and press.riposte exposed, the stagger fitted to n (20 and 40) for both builds, one tick a frame against two within %s" % [", ".join(summary.slice(0, 3)), str(RD_FRAME_TOL)])
 
 
+## The flurry look study's three strengths (docs/animation/flurry-study.md): X light (speed), Y medium, B super, and the burst's gap rule. `contacts` are ticks; `extra` is merged into every beat (windup).
+func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contacts: Array, extra: Dictionary = {}, kind: String = "light") -> Dictionary:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "KAI" if who == "protagonist" else "VORR"
+	f1.id = "VORR" if who == "protagonist" else "KAI"
+	RenderAnim._fighters.clear()
+	var key: String = String(AnimData.ensure_fighter(String(f0.id)))
+	AnimData.ensure_fighter(String(f1.id))
+	for nm in ["su_drive", "su_turn", "su_ram", "su_heel"]:
+		var kid: String = ("pu." if who == "protagonist" else "ru.") + nm
+		if AnimData.keysets.has(kid):
+			AnimData.pair_lists[key].by_name[nm] = kid
+	for pre in ["pm.", "rm."]:
+		for nm2 in ["palm_rise", "back_chop", "fist_chop", "palm_heave", "gut_rise", "fist_sweep", "arm_chop", "plate_drop"]:
+			if AnimData.keysets.has(pre + nm2):
+				AnimData.pair_lists[key].by_name[pre + nm2] = pre + nm2
+	f0.x = 500.0
+	f1.x = 560.0
+	for f in [f0, f1]:
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+	var ex := DirExchange.newEx(f0, f1, kind)
+	ex.n = 970
+	ex.tag = "TIER"
+	for i in range(contacts.size()):
+		var bargs := {"a": "A", "dmg": 20.0 if kind == "light" else 60.0, "piece": "strike." + String(pieces[i % pieces.size()]), "style": style, "o": {"big": kind == "heavy"}}
+		bargs.merge(extra, true)
+		DirExchange.schedule(ex, float(contacts[i]) / 60.0, "strike", bargs)
+	S.dirS.ex = ex
+	var res := {"reach": [], "nan": 0, "screen": 0, "ghosts": 0, "squash": 0.0, "lead": 0.0, "load_first": [], "load_run": 0, "err": 0.0, "frames": 0, "parts": [], "exc": [], "sides": []}
+	var hi_run: int = 0
+	var hi_max: int = 0
+	var dev_sum: float = 0.0
+	var dev_n: int = 0
+	var arm_idx: Array = []
+	for bn in ["upper_arm_r", "forearm_r", "upper_arm_l", "forearm_l"]:
+		arm_idx.append(AnimRig.index[bn])
+	var hxr: Array = []   # the forward reach of each hand on every tick, from the pelvis (to find how far the striking hand draws back between contacts)
+	var hxl: Array = []
+	var limbs: Array = []
+	var cset: Dictionary = {}
+	for c in contacts:
+		cset[int(c)] = true
+	var run: int = 0
+	var seen_first: Dictionary = {}
+	for k in range(int(contacts[contacts.size() - 1]) + 50):
+		S.tick = 1000 + k
+		S.T = 200.0 + float(k) / 60.0
+		ex.t = float(k) / 60.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		var af0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(af0.q[i].x) or is_nan(af0.q[i].w):
+				res.nan += 1
+		res.screen += AnimJoints.violations(af0.q, af0._rd.shape_key).size()
+		if not af0.press.is_empty():
+			res.ghosts = maxi(int(res.ghosts), int(af0.press.ghosts))
+			res.squash = maxf(float(res.squash), float(af0.press.squash))
+			res.lead = maxf(float(res.lead), absf(float(af0.press.dx)))
+			var bl: int = int(af0.press.blow)
+			if String(af0.press.phase) == "load":
+				run += 1
+				if not seen_first.has(bl):
+					seen_first[bl] = true
+					res.load_first.append(int(af0.press.ticks_to_contact))
+			else:
+				if run > int(res.load_run):
+					res.load_run = run
+				run = 0
+			if cset.has(k):
+				# on the blow's own contact tick (a tight burst never shows the "contact" phase: the next blow's window has opened)
+				res.parts.append(af0._part)
+				res.sides.append(bool(af0.press.side))
+				limbs.append(String(af0.press.limb))
+		if k >= int(contacts[0]) - 2 and k <= int(contacts[contacts.size() - 1]) + 2 and af0._base.size() == AnimRig.N:
+			var dv: float = 0.0
+			for ai in arm_idx:
+				dv += af0.q[ai].angle_to(af0._base[ai])
+			dev_sum += dv
+			dev_n += 1
+		var topy: float = maxf(maxf(af0.socket("hand_r").y, af0.socket("hand_l").y), maxf(af0.socket("foot_r").y, af0.socket("foot_l").y))
+		if topy > 80.0 and not cset.has(k):
+			hi_run += 1
+			hi_max = maxi(hi_max, hi_run)
+		else:
+			hi_run = 0
+		hxr.append(af0.socket("hand_r").x - af0.socket("pelvis").x)
+		hxl.append(af0.socket("hand_l").x - af0.socket("pelvis").x)
+		res.err = float(af0.debug.get("contact_err_max", 0.0))
+		res.frames = int(af0.debug.get("contact_frames", 0))
+	# the excursion of each blow: how much farther the hand is at its contact than at its deepest point since the last one
+	for i in range(1, contacts.size()):
+		var arr: Array = hxl if (i < limbs.size() and String(limbs[i]).ends_with("l")) else hxr
+		var lo: float = 1.0e9
+		for k2 in range(int(contacts[i - 1]) + 2, int(contacts[i])):
+			lo = minf(lo, float(arr[k2]))
+		res.exc.append(float(arr[mini(int(contacts[i]) + 1, arr.size() - 1)]) - lo)
+	if run > int(res.load_run):
+		res.load_run = run
+	res["hi_max"] = hi_max
+	res["dev"] = dev_sum / maxf(1.0, float(dev_n))
+	return res
+
+
+## Legal h05 on a chamber pose (a wind-up of 12 ticks or more is a held pose): the loaded limb at shoulder height or lower (a leg may be chambered), never a hand at a hip, never both hands together
+## (shoulder width, 20, apart at least), no limb above 80, no crossed forearms. Reads the pose's authored targets.
+func _h05_chamber(pid: String) -> Array:
+	var out: Array = []
+	if not AnimData.raw.has(pid):
+		return ["no pose " + pid]
+	var d: Dictionary = AnimData.raw[pid]
+	var hr = d.get("hand_r")
+	var hl = d.get("hand_l")
+	for hv in [["right", hr], ["left", hl]]:
+		var h = hv[1]
+		if h != null and float(h[0]) <= 14.0 and float(h[1]) >= 24.0 and float(h[1]) <= 44.0:
+			out.append("the %s hand is at a hip" % hv[0])
+	if hr != null and hl != null:
+		var dd: float = Vector3(float(hr[0]) - float(hl[0]), float(hr[1]) - float(hl[1]), float(hr[2]) - float(hl[2])).length()
+		if dd < 20.0:
+			out.append("both hands together (%.0f apart)" % dd)
+		if float(hr[2]) < -2.0 and float(hl[2]) > 2.0:
+			out.append("the forearms are crossed")
+	for k in ["hand_r", "hand_l", "foot_r", "foot_l"]:
+		var v = d.get(k)
+		if v != null and float(v[1]) > 80.0:
+			out.append("%s is above 80 (%.0f)" % [k, float(v[1])])
+	return out
+
+
+func _test_flurry_tiers() -> void:
+	AnimData.load_every_wave()
+	var P: Dictionary = AnimData.press.get("styles", {})
+	_expect(P.has("medium") and P.has("super") and P.has("speed"), "flurry tiers: press_styles.json needs the speed, medium and super rows")
+	var sp: Dictionary = P.get("speed", {})
+	var bu: Dictionary = P.get("burst", {})
+	var md: Dictionary = P.get("medium", {})
+	var su: Dictionary = P.get("super", {})
+	# the three strengths are ordered in the data: the lead, the squash, the ghosts and the wind-up grow from X to Y to B
+	_expect(float(su.stretch.lead) > float(md.stretch.lead) and float(md.stretch.lead) > float(sp.stretch.lead), "flurry tiers: the stretch lead is not ordered X < Y < B")
+	_expect(float(su.squash) > float(md.squash) and float(md.squash) > float(sp.squash), "flurry tiers: the squash is not ordered X < Y < B")
+	_expect(int(su.ghosts) <= 2 and int(md.ghosts) <= 2 and int(bu.ghosts) <= 2, "flurry tiers: a new row has more than 2 ghosts of a limb (Legal f01: at most 2 at any instant)")
+	_expect(int(su.prof.load_ticks.heavy) > int(md.prof.load_ticks.heavy) and int(md.prof.load_ticks.heavy) > int(sp.prof.load_ticks.heavy), "flurry tiers: the wind-up is not ordered X < Y < B")
+	# the gap rule: monotone, the data's floor at its `from`, 1 from its `to`, and a mash at 6 ticks or more is today's
+	var ga: Dictionary = bu.get("gap_amp", {})
+	_expect(not ga.is_empty() and float(ga.to) <= 12.0 and not sp.has("gap_amp"), "flurry tiers: the burst row has no gap_amp, or the live speed row carries one (an ordinary mash must not be narrowed)")
+	var fi: AnimFighter = AnimFighter.new(0)
+	var prev: float = 0.0
+	var mono: bool = true
+	for g in [2.0, 4.0, 5.0, 6.0, 8.0, 11.0, 15.0]:
+		var a: float = fi._gap_amp(bu, g)
+		mono = mono and a >= prev - 0.0001
+		prev = a
+	_expect(mono and absf(fi._gap_amp(bu, float(ga.get("from", 3))) - float(ga.get("min", 0.55))) < 0.001 and fi._gap_amp(bu, float(ga.get("to", 11))) > 0.999 and fi._gap_amp(bu, 5.0) < 0.999, "flurry tiers: the gap rule is not monotone, or does not run from its floor to 1")
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	var summary: Array = []
+	for who in ["protagonist", "antihero"]:
+		var tag: String = "flurry tiers %s" % who
+		# the held-X burst: one blow every 3 ticks slowing to one every 10 (gaps 3 3 3 4 4 5 6 7 8 10), straight blows
+		var bc: Array = [30, 34, 38, 43, 49, 57, 68, 83]   # gaps 4 4 5 6 8 11 15: three under 6 in a row at the opening (Legal f04)
+		var run6: int = 0
+		var max6: int = 0
+		for i in range(1, bc.size()):
+			run6 = run6 + 1 if int(bc[i]) - int(bc[i - 1]) < 6 else 0
+			max6 = maxi(max6, run6)
+		_expect(max6 <= 3, "%s: the burst runs %d blows in a row under 6 ticks apart (f04 allows 3)" % [tag, max6])
+		var burst: Dictionary = _tier_scene(S, who, "burst", ["cross", "pm.palm_rise" if who == "protagonist" else "rm.gut_rise", "pm.back_chop" if who == "protagonist" else "rm.fist_sweep", "palm_heel", "spear_hand", "pm.fist_chop" if who == "protagonist" else "rm.arm_chop", "pm.palm_heave" if who == "protagonist" else "rm.plate_drop", "jab"], bc)
+		_expect(int(burst.nan) == 0 and int(burst.screen) == 0 and int(burst.frames) == bc.size(), "%s: the burst has %d NaN, %d joint violations on screen, %d of %d contacts" % [tag, int(burst.nan), int(burst.screen), int(burst.frames), bc.size()])
+		var sides: Array = burst.sides
+		var alt: bool = sides.size() == bc.size()
+		for i in range(1, sides.size()):
+			alt = alt and sides[i] != sides[i - 1]
+		_expect(alt, "%s: the burst's hands do not alternate (%s; f05)" % [tag, str(sides)])
+		# the narrowing: the same straight blow drawn back farther when it is thrown slower (a controlled pair of scenes; the pieces of the real burst differ in how far they draw back)
+		var tight: Dictionary = _tier_scene(S, who, "burst", ["cross", "palm_heel", "spear_hand"], [30, 34, 38, 43])
+		var plain: Dictionary = _tier_scene(S, who, "speed", ["cross", "palm_heel", "spear_hand"], [30, 34, 38, 43])
+		var slow: Dictionary = _tier_scene(S, who, "burst", ["cross", "palm_heel", "spear_hand"], [30, 45, 60, 75])
+		var slow_plain: Dictionary = _tier_scene(S, who, "speed", ["cross", "palm_heel", "spear_hand"], [30, 45, 60, 75])
+		var early: float = float(tight.dev)
+		var late: float = float(slow.dev)
+		# the same blows at the same tight gaps carry the arms less far from their guard in the burst than in a plain mash, and a slow burst is not narrowed at all
+		_expect(float(tight.dev) < 0.93 * float(plain.dev) and absf(float(slow.dev) - float(slow_plain.dev)) < 0.02 * maxf(0.1, float(slow_plain.dev)), "%s: the burst's narrowing: tight %.3f against a plain mash %.3f, slow %.3f against %.3f (arm distance from guard, rad)" % [tag, float(tight.dev), float(plain.dev), float(slow.dev), float(slow_plain.dev)])
+		# a mash at 6 ticks is today's: no narrowing
+		var mash: Dictionary = _tier_scene(S, who, "speed", ["cross"], [30, 36, 42, 48, 54, 60])
+		var mm: Array = mash.exc
+		_expect(float(mm[mm.size() - 1]) > late - 5.0 and int(mash.screen) == 0, "%s: a 6-tick mash draws back %.1f against the slow burst's %.1f (it must not be narrowed)" % [tag, float(mm[mm.size() - 1]), late])
+		# Y mash, medium, every 14 ticks; B mash, super, every 28, on the provisional pieces
+		var ym: Dictionary = _tier_scene(S, who, "medium", ["double_palm", "roundhouse", "cross_arm_ram", "spinning_heel"], [34, 48, 62, 76], {}, "heavy")
+		var bm: Dictionary = _tier_scene(S, who, "super", ["su_drive", "su_turn"] if who == "protagonist" else ["su_ram", "su_heel"], [44, 72, 100, 128], {}, "heavy")
+		for sc in [["Y mash", ym, 4], ["B mash", bm, 4]]:
+			var r: Dictionary = sc[1]
+			_expect(int(r.nan) == 0 and int(r.screen) == 0 and int(r.frames) == int(sc[2]), "%s: %s has %d NaN, %d joint violations on screen, %d of %d contacts" % [tag, sc[0], int(r.nan), int(r.screen), int(r.frames), int(sc[2])])
+			_expect(float(r.err) < 0.25, "%s: %s contact pose is %.3f rad from the key" % [tag, sc[0], float(r.err)])
+		_expect(String(bm.parts[0]).begins_with("pu.su_") or String(bm.parts[0]).begins_with("ru.su_"), "%s: the B mash played %s, not the provisional pieces" % [tag, str(bm.parts)])
+		# the three read apart by size: the super reaches and leads farther than the medium, the medium farther than the light, and each wind-up starts where the data says
+		var mx_b: float = 0.0
+		var mx_y: float = 0.0
+		for v in bm.reach:
+			mx_b = maxf(mx_b, float(v))
+		for v in ym.reach:
+			mx_y = maxf(mx_y, float(v))
+		_expect(float(bm.lead) > float(ym.lead) and float(ym.lead) >= float(mash.lead) and int(bm.ghosts) >= int(ym.ghosts), "%s: lead %.1f, %.1f, %.1f and ghosts %d, %d are not ordered B > Y >= X" % [tag, float(bm.lead), float(ym.lead), float(mash.lead), int(bm.ghosts), int(ym.ghosts)])
+		_expect(int(bm.load_first[1]) >= 16 and int(ym.load_first[1]) >= 6 and int(ym.load_first[1]) < int(bm.load_first[1]), "%s: the wind-ups start %d (B) and %d (Y) ticks before contact (B from the press, 16 or more)" % [tag, int(bm.load_first[1]), int(ym.load_first[1])])
+		# held: the wind-up keeps coiling for the whole hold, the blow goes on release
+		var yh: Dictionary = _tier_scene(S, who, "medium", ["roundhouse"], [66], {"windup": 42}, "heavy")
+		var bh: Dictionary = _tier_scene(S, who, "super", ["su_drive" if who == "protagonist" else "su_ram"], [86], {"windup": 62}, "heavy")
+		# Legal h05 on every wind-up of 12 ticks or more: a limb above 80 only in the last 6 ticks (the super pieces, the two holds), the chambers at shoulder height or lower and never at a hip
+		_expect(int(bm.hi_max) <= 6 and int(bh.hi_max) <= 6 and int(yh.hi_max) <= 6, "%s: a limb stays above 80 for %d, %d and %d ticks before a contact (h05 allows the last 6)" % [tag, int(bm.hi_max), int(bh.hi_max), int(yh.hi_max)])
+		for cid in (["pu.su_drive", "pu.su_turn"] if who == "protagonist" else ["ru.su_ram", "ru.su_heel"]):
+			var iss: Array = _h05_chamber(cid + ".chamber")
+			_expect(iss.is_empty(), "%s: %s breaks h05 as drawn (%s)" % [tag, cid, ", ".join(iss)])
+		_expect(int(yh.load_run) >= 38 and int(bh.load_run) >= 56 and int(yh.screen) == 0 and int(bh.screen) == 0 and int(yh.nan) + int(bh.nan) == 0, "%s: held Y coils %d ticks (want 38 or more), held B %d (56 or more), violations %d and %d" % [tag, int(yh.load_run), int(bh.load_run), int(yh.screen), int(bh.screen)])
+		summary.append("%s: the burst at gaps 4 4 5 carries the arms %.2f rad from guard against a plain mash's %.2f (a slow burst is not narrowed), super lead %.0f against medium %.0f" % [who, early, float(plain.dev), float(bm.lead), float(ym.lead)])
+	# informational, for Legal (h05 on a 28-tick wind-up): how long a limb stays above 80 and what the chamber breaks, for the three stand-ins Legal asked to see drawn
+	for who2 in ["protagonist", "antihero"]:
+		var gl: Array = []
+		for gp in ["double_palm", "cross_arm_ram", "double_hammer"]:
+			var gr: Dictionary = _tier_scene(S, who2, "super", [gp], [70], {"windup": 28}, "heavy")
+			gl.append("%s %d ticks above 80 (%s)" % [gp, int(gr.hi_max), ", ".join(_h05_chamber(("pr." if who2 == "protagonist" else "w1.") + gp + ".chamber"))])
+		print("flurry tiers, 28-tick gathers (%s): %s" % [who2, "; ".join(gl)])
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	S.dirS.ex = null
+	print("flurry tiers: %s; held Y and B coil for the whole hold; the tiers are ordered X < Y < B in the data and on the body" % " | ".join(summary))
+
+
 func _test_press_styles() -> void:
 	_expect(_press_default, "press styles: the flag must be ON by default (brawl B1 stamps every beat; --no-press-styles is the before)")
 	_expect(not AnimData.press.is_empty() and AnimData.press.get("styles", {}).has("tech") and AnimData.press.styles.has("speed") and AnimData.press.styles.has("heavy"), "press styles: data/anim/press_styles.json did not load")
@@ -2215,6 +2456,7 @@ func _run() -> void:
 	_test_flight_lead()
 	_test_pair_live()
 	_test_press_styles()
+	_test_flurry_tiers()
 	_test_riposte()
 	_test_hand_tips()
 	_test_zip()

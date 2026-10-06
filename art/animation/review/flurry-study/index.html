@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flurry look study</title>
+<style>
+  :root { --bg: #14161f; --fg: #e6e8ef; --muted: #9aa0b4; --card: #1d2030; --line: #2c3046; --acc: #7fb0ff; }
+  @media (prefers-color-scheme: light) { :root { --bg: #f4f5f8; --fg: #1b1e2b; --muted: #5a6075; --card: #ffffff; --line: #d8dbe6; --acc: #2457c5; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 36px 0 6px; }
+  p, li { color: var(--fg); }
+  .muted { color: var(--muted); font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 10px; margin: 14px 0; }
+  .card img { max-width: 100%; height: auto; display: block; border-radius: 6px; }
+  .cols { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin: 0 2px 4px; }
+  a { color: var(--acc); }
+  code { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Flurry look study</h1>
+  <p class="muted">View only, provisional, 2026-10-06. The real animation solver playing the three strengths on the two launch fighters (the Protagonist in blue, the rival in purple) against a dummy, captured from the web build in headless Chrome one tick at a time. Each clip plays at about half speed, the Protagonist on the left and the rival on the right. No hit sparks, ghosts or speed lines: those are VFX's, and are not in this study.</p>
+
+  <h2>X light</h2>
+  <div class="card"><div class="cols"><span>Protagonist</span><span>Rival</span></div>
+    <img src="xmash.gif" alt="X mash: a light about every 6 ticks"><p class="muted">X mash: a light about every 6 ticks, as today.</p></div>
+  <div class="card"><div class="cols"><span>Protagonist</span><span>Rival</span></div>
+    <img src="xhold.gif" alt="X held: a burst slowing from one blow every 3 ticks to one every 10"><p class="muted">X held: a burst of eight, gaps 4, 4, 5, 6, 8, 11, 15 ticks (Combat's and Legal's), drawn from different pieces with the hands alternating; the closer the blows, the shorter each one, so it reads as quick jabs that grow as it slows, not as a stutter. This clip is near real time (about 0.8 of it). <a href="stills-xhold.png">Frame strip</a>, and <a href="legal-burst-opening.png">its opening three blows tick by tick</a>.</p></div>
+
+  <h2>Y medium</h2>
+  <div class="card"><div class="cols"><span>Protagonist</span><span>Rival</span></div>
+    <img src="ymash.gif" alt="Y mash: a medium about every 14 ticks"><p class="muted">Y mash: today's heavy pieces and looks, about every 14 ticks. <a href="stills-ymash.png">Frame strip</a>.</p></div>
+  <div class="card"><div class="cols"><span>Protagonist</span><span>Rival</span></div>
+    <img src="yhold.gif" alt="Y held: the coil deepens for 40 ticks"><p class="muted">Y held: the wind-up keeps coiling for 40 ticks and the blow goes on release. <a href="stills-yhold.png">Frame strip</a>.</p></div>
+
+  <h2>B super-heavy (provisional pieces)</h2>
+  <div class="card"><div class="cols"><span>Protagonist</span><span>Rival</span></div>
+    <img src="bmash.gif" alt="B mash: a super-heavy about every 28 ticks"><p class="muted">B mash: a whole-body blow about every 28 ticks, the wind-up starting on the press. Two <b>new, provisional</b> pieces each, redrawn to Legal's screen (the Protagonist: a fall, one palm at the shoulder and the body coming down on it, and a full turn with a blade hand; the rival: a heave, a long low lunge with one fist drawn back at the shoulder, and a raised-leg heel drop). <a href="stills-bmash.png">Frame strip</a>.</p></div>
+  <div class="card"><div class="cols"><span>Protagonist</span><span>Rival</span></div>
+    <img src="bmash2.gif" alt="B mash on today's heavy pieces at the super style"><p class="muted">The same B mash on today's heavy pieces at the super style: no new poses at all. <a href="stills-bmash2.png">Frame strip</a>.</p></div>
+  <div class="card"><div class="cols"><span>Protagonist</span><span>Rival</span></div>
+    <img src="bhold.gif" alt="B held: the coil deepens for 60 ticks"><p class="muted">B held: the wind-up keeps coiling for 60 ticks and the blow goes on release. <a href="stills-bhold.png">Frame strip</a>.</p></div>
+
+  <h2>For Legal</h2>
+  <div class="card"><img src="gather.gif" alt="28-tick gathers: double palm, crossed-arm ram, double hammer"><p class="muted">The three 28-tick gathers Legal asked to see (a double palm, a crossed-arm ram, a double hammer), Protagonist left and rival right. <a href="legal-gathers-28.png">Frame strip</a>. Also: <a href="legal-heave-and-fall.png">the heave and the fall, wind-up and fall</a>, and <a href="legal-burst-opening.png">the burst's opening three blows</a>.</p></div>
+
+  <h2>The three strengths in silhouette, at fight distance</h2>
+  <div class="card"><img src="silhouettes.png" alt="X, Y and B at contact in flat silhouette"><p class="muted">Rows: X light, Y medium, B super-heavy, each at its contact tick for the Protagonist (left three) and the rival (right three). The attacker is the dark shape. The camera is the fight-distance one.</p></div>
+
+  <p class="muted">Numbers and what is provisional: <code>docs/animation/flurry-study.md</code>. Every new move here is listed there for Legal's screen.</p>
+</main>
+</body>
+</html>
