@@ -226,6 +226,10 @@ Run once, in the commit that lands the slice's data (after `apply-brawl-1c.cjs`,
 
 Run once, in the commit that lands Animation's data (waves `rival7` and `protag10` with the new key set fields, and `data/anim/medium_wind.json`): `node docs/tools/pending/apply-anim-superheavy.cjs`. It does **not** edit `data/`. `anim-wave-keysets.schema.json`: three optional key set keys, `tell_at` (0.05 to 1), `squash_w` (0 to 1) and `drive` (an id of Combat's six heavy drives: `step_through`, `turn`, `unwind`, `heave`, `fall`, `full_turn`; their words are stepping, turning, unwinding, heaving, falling and spinning). New schema `anim-medium-wind.schema.json` (`anim.mediumwind/1`, from Animation's draft: rule ids w1 to w8, `sets`, `held_only`) and its `map.json` entry beside `press_styles.json`. New rules: `medium-wind-set` (every key of `sets` and every `held_only` entry is a key set of a wave or of `keysets.json`; every value of `sets` is a key of `rules`; a key set is not in both) and `keyset-drive` (a key set's `drive` is the drive Combat's grammar gives its `path`, from `data/combat/parts.json` `strike.heavy.drive`; **inert until the movegen files land**, and so not in the self-test: I checked it by hand with the movegen draft as `parts.json`, where the sixteen pass and a wrong drive is refused). 50 cases, each setting its own values. Re-runnable. Tested on a clean `git archive HEAD` with Animation's data files from the tree dropped in: 48 errors and 1 warning before, then 0 errors and 0 warnings, self-test passes (4845 of 4845), a second run changes nothing.
 
+## `apply-anim-keyset-release.cjs`: two more key set keys (Legal's nudges on the heavy tier)
+
+Run once, in the commit that lands Animation's data: `node docs/tools/pending/apply-anim-keyset-release.cjs` (after `apply-anim-superheavy.cjs`, applied). It does **not** edit `data/`. `anim-wave-keysets.schema.json` gains the optional `hold_t` (integer 0 to 12: ticks the contact key is held) and `ci_end` (integer 0 to 30: ticks after the contact by which the solve releases the limb to the follow key). The new parked waves `protag11` and `rival8` (energy blows in reach) validate under the existing wave schemas and need nothing more. 15 cases, each setting its own values. Re-runnable. Tested on a clean `git archive HEAD` with the tree's `data/anim` files dropped in: 8 errors before, then 0 errors and 0 warnings, self-test passes (4866 of 4866), a second run changes nothing.
+
 ## The state of every script (2026-10-06, HEAD 53d13b55)
 
 Checked by running each script on a clean export of HEAD: **applied** means a run changes nothing, or changes only what a later script has since changed (so a re-run would undo that); **parked** means its data has not landed. The sections above are the record of what each script does; a script can be deleted once its section is no longer needed.
@@ -239,6 +243,7 @@ Checked by running each script on a clean export of HEAD: **applied** means a ru
 | Script | Goes in the commit of | Needs |
 | :--- | :--- | :--- |
 | `apply-brawl-recipes` | Combat's `recipes.brawl.json` as `data/combat/recipes.json` (the slice C2a) | its data |
+| `apply-anim-keyset-release` | Animation's next commit (`rival7.keysets.json` `hold_t`, `ci_end`) | its data |
 | `apply-anim-superheavy` | Animation's super-heavy commit (waves `rival7` and `protag10`, `medium_wind.json`) | its data |
 | `apply-brawl-c1` | Encounter's control slice C1 (`interrupts.json` `brawl`, `ai.json` brawl) | its data |
 | `apply-movegen` (and `xref-movegen.js`, copied by it) | Combat's landing of parts, identity, cells, the movesets and `lock.json` (generator version 9) | the files |
