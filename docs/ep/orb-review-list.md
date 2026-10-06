@@ -160,3 +160,18 @@ Parked until a Steam build is near (no work started): Steam Deck Verified needs 
 Landing the lane table re-lays the cities (docs/world/lanes-remeasure-plan.md): 186 buildings with towers up to 62 floors, and a starting population of 1,800 where it is 390 today. The share of civilians lost stays near 23 to 25%, so the number a player reads goes from about 99 lost a match to about 488. Two questions for Orb, tied to the open one on how graphic casualties should be:
 1. Should the screen show civilians lost as a count (488 of 1,800), a share (27%), or both?
 2. Is a death toll in the hundreds each match the tone you want for the Protagonist's anguish and the rival's menace? (The meters themselves are shares and read the same.)
+
+## Where the build stands (end of 2026-10-05; live at 07f5652, CI green)
+
+Live on the play page:
+- The brawl: every press a blow; an even mash no longer snowballs; a close cannot repeat on a fighter for a second and a half; a perfect block or a reversal resolves inside the brawl and gives a riposte that cannot be blocked or dodged. Press styles (the speed smear, the tech pose, the heavy's squash) are on by default; Shift+F7 turns them off for comparison.
+- Balance after two retunes (Simulation's read at 100 matches an arm; QA's larger baseline follows the zip): KAI 51.5%, median match about 410 to 450 s, arms 54% of limb breaks, the mood and the acts in band, bolt-only 25 and the mixed blaster 35 of 100 against the medium AI.
+- Staged buildings with their looks and effects; composed intros with a gesture and no repeats inside a session; the five-stance HUD; PROTAGONIST and RIVAL on screen; About and licence pages with the AI statement.
+
+Known and not fixed yet:
+- Timing is not rewarded in a brawl: a timed tapper loses to a masher (0 of 40 in QA's baseline). The skill strike (press as the limb snaps home) is the slice after the zip.
+- The AI against itself brawls for about 2.8 s at a time and a quarter of the fight; the zip is expected to lift that.
+
+Built in scratch, landing next: the zip's first slice (zip strike and zip heavy, all four exits, counters on arrival). Then the skill strike, the zip away, the fighter rename, and the depth lanes switched off.
+
+One mistake to know about: on the evening of 2026-10-05 the EP pushed a docs commit that carried the in-brawl riposte slice to the live page about an hour before its retune was ready, so for that hour the live build had the arms, the mood and the acts out of band. The retune (07f5652) closed it.
