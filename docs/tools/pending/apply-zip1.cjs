@@ -12,11 +12,12 @@
 //   counter {techBefore, heavyBefore, staggerTicks, mul}; dodgeConvertTicks
 // Types: ticks (and tellTicks, outTicks, heldTicks, the reel and stagger lengths, techBefore, heavyBefore, exitSteps) are integers of at least 1;
 // inTicks is a pair [lo, hi] of such integers; ki, Bh, reach and bhPerTick numbers are 0 or more (band.minBh and band.maxBh above 0); mul numbers
-// are above 0; degrees are above 0 and at most 180; probes is an integer 1 to 64. The reachBefore, reachAfter and heldReachBefore values are numbers
-// of 0 or more (so a tick count or a body-height count both fit).
+// are above 0; degrees are above 0 and at most 180; probes is an integer 1 to 64. The reachBefore, reachAfter and heldReachBefore values are ticks
+// (the ticks in reach before and after the blow): integers of 0 or more.
 // Rules (zip-order): band.minBh below maxBh; each inTicks lo at most hi; exit.capBh at most band.maxBh; towardDeg + awayDeg at most 180. Rule
 // zip-floor: floor.minTicks at least 4 (Legal, RL-076: a zip's way in and out each last at least 4 ticks, no blink step).
-// data/director/ai.json, each level: zipShare, zipHeavyShare, zipCounter and zipDodge (shares 0 to 1), required.
+// data/director/ai.json, each level: zipShare, zipHeavyShare, zipCounter, zipDodge and zipExit (shares 0 to 1; zipExit: the share of its zips
+// that pick an exit other than back), required.
 // The fixtures get the block and the keys; every case sets its own whole block. Re-runnable (a second run changes nothing).
 const fs = require('fs');
 const rj = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -25,6 +26,7 @@ const closed = { additionalProperties: false, patternProperties: { '^_': true } 
 const obj = (props, opts = {}) => Object.assign({ type: 'object', required: opts.required === undefined ? Object.keys(props) : opts.required, properties: props }, opts.description ? { description: opts.description } : {}, closed);
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const ticks = (d) => ({ type: 'integer', minimum: 1, description: d });
+const ticks0 = (d) => ({ type: 'integer', minimum: 0, description: d });
 const num0 = (d) => ({ type: 'number', minimum: 0, description: d });
 const pos = (d) => ({ type: 'number', exclusiveMinimum: 0, description: d });
 const deg = (d) => ({ type: 'number', exclusiveMinimum: 0, maximum: 180, description: d });
@@ -50,9 +52,9 @@ const VALID = {
   counter: { techBefore: 4, heavyBefore: 6, staggerTicks: 12, mul: 1.25 },
   dodgeConvertTicks: 8,
 };
-const VALID_AI = { zipShare: 0.3, zipHeavyShare: 0.2, zipCounter: 0.5, zipDodge: 0.4 };
+const VALID_AI = { zipShare: 0.3, zipHeavyShare: 0.2, zipCounter: 0.5, zipDodge: 0.4, zipExit: 0.5 };
 const AI_KEYS = Object.keys(VALID_AI);
-const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2, zipDodge: 0.2 }, medium: { zipShare: 0.3, zipHeavyShare: 0.2, zipCounter: 0.5, zipDodge: 0.4 }, hard: { zipShare: 0.5, zipHeavyShare: 0.4, zipCounter: 0.8, zipDodge: 0.7 } };
+const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2, zipDodge: 0.2, zipExit: 0.2 }, medium: { zipShare: 0.3, zipHeavyShare: 0.2, zipCounter: 0.5, zipDodge: 0.4, zipExit: 0.5 }, hard: { zipShare: 0.5, zipHeavyShare: 0.4, zipCounter: 0.8, zipDodge: 0.7, zipExit: 0.8 } };
 
 // =============================== interrupts schema ===============================
 {
@@ -66,18 +68,18 @@ const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2
         ki: num0('The ki the zip strike costs.'),
         tellTicks: ticks('The tell before the dash.'),
         inTicks: pair('The way in, in ticks: [lo, hi], lo at most hi (zip-order).'),
-        reachBefore: num0('How near the blow reaches before it lands.'),
-        reachAfter: num0('How far past the rival the blow reaches after it lands.'),
+        reachBefore: ticks0('Ticks in reach before the blow lands.'),
+        reachAfter: ticks0('Ticks in reach after the blow lands.'),
         outTicks: ticks('The way out, in ticks.'),
         heldTicks: ticks('The longest the strike can be held.'),
-        heldReachBefore: num0('The reach before landing of a held strike.'),
+        heldReachBefore: ticks0('Ticks in reach before a held strike lands.'),
       }, { description: 'The zip strike (the light blow at the end of a zip).' }),
       heavy: obj({
         ki: num0('The ki the zip heavy costs.'),
         tellTicks: ticks('The tell before the dash.'),
         inTicks: pair('The way in, in ticks: [lo, hi], lo at most hi (zip-order).'),
-        reachBefore: num0('How near the blow reaches before it lands.'),
-        reachAfter: num0('How far past the rival the blow reaches after it lands.'),
+        reachBefore: ticks0('Ticks in reach before the blow lands.'),
+        reachAfter: ticks0('Ticks in reach after the blow lands.'),
         outTicks: ticks('The way out, in ticks.'),
         heldTicks: ticks('The longest the heavy can be held.'),
       }, { description: 'The zip heavy.' }),
@@ -112,6 +114,19 @@ const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2
   }
 }
 
+// ---- schema upgrade: a first version of this script took the reach values as any number of 0 or more ----
+{
+  const f = 'tools/schemas/director-interrupts.schema.json';
+  const s = rj(f);
+  let changed = false;
+  for (const [w, keys] of [['strike', ['reachBefore', 'reachAfter', 'heldReachBefore']], ['heavy', ['reachBefore', 'reachAfter']]]) {
+    const p = s.properties.zip && s.properties.zip.properties[w];
+    if (!p) continue;
+    for (const k of keys) if (p.properties[k] && p.properties[k].type === 'number') { p.properties[k] = ticks0(p.properties[k].description.replace(/^How near the blow reaches before it lands\.$/, 'Ticks in reach before the blow lands.').replace(/^How far past the rival the blow reaches after it lands\.$/, 'Ticks in reach after the blow lands.').replace(/^The reach before landing of a held strike\.$/, 'Ticks in reach before a held strike lands.')); changed = true; }
+  }
+  if (changed) wj(f, s);
+}
+
 // =============================== ai schema ===============================
 {
   const f = 'tools/schemas/director-ai.schema.json';
@@ -119,7 +134,7 @@ const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2
   let changed = false;
   for (const name of ['easy', 'medium', 'hard']) {
     const L = s.properties.levels.properties[name];
-    for (const [k, d] of [['zipShare', 'The chance the AI zips in from the band.'], ['zipHeavyShare', 'The chance a zip it makes is the heavy.'], ['zipCounter', 'The chance it counters with a zip.'], ['zipDodge', 'The chance it turns a dodge into a zip.']]) {
+    for (const [k, d] of [['zipShare', 'The chance the AI zips in from the band.'], ['zipHeavyShare', 'The chance a zip it makes is the heavy.'], ['zipCounter', 'The chance it counters with a zip.'], ['zipDodge', 'The chance it turns a dodge into a zip.'], ['zipExit', 'The share of its zips that pick an exit other than back.']]) {
       if (!L.properties[k]) { L.properties[k] = share(d); changed = true; }
       if (!L.required.includes(k)) { L.required.push(k); changed = true; }
     }
@@ -214,12 +229,16 @@ const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2
       zp(w + '-in-ticks-equal-ok', (o) => { o[w].inTicks = [8, 8]; }, null),
       zp(w + '-reach-before-negative', (o) => { o[w].reachBefore = -1; }, { rule: 'minimum', pointer: Z + w + '/reachBefore' }),
       zp(w + '-reach-after-negative', (o) => { o[w].reachAfter = -1; }, { rule: 'minimum', pointer: Z + w + '/reachAfter' }),
-      zp(w + '-reach-fraction-ok', (o) => { o[w].reachBefore = 4.5; o[w].reachAfter = 6.25; }, null),
+      zp(w + '-reach-before-integer', (o) => { o[w].reachBefore = 4.5; }, { rule: 'type', pointer: Z + w + '/reachBefore' }),
+      zp(w + '-reach-after-integer', (o) => { o[w].reachAfter = 6.25; }, { rule: 'type', pointer: Z + w + '/reachAfter' }),
+      zp(w + '-reach-zero-ok', (o) => { o[w].reachBefore = 0; o[w].reachAfter = 0; }, null),
       zp(w + '-out-zero', (o) => { o[w].outTicks = 0; }, { rule: 'minimum', pointer: Z + w + '/outTicks' }),
       zp(w + '-held-zero', (o) => { o[w].heldTicks = 0; }, { rule: 'minimum', pointer: Z + w + '/heldTicks' }),
     ]),
     zp('strike-held-reach-required', (o) => { delete o.strike.heldReachBefore; }, { rule: 'required', pointer: Z + 'strike' }),
     zp('strike-held-reach-negative', (o) => { o.strike.heldReachBefore = -1; }, { rule: 'minimum', pointer: Z + 'strike/heldReachBefore' }),
+    zp('strike-held-reach-integer', (o) => { o.strike.heldReachBefore = 8.5; }, { rule: 'type', pointer: Z + 'strike/heldReachBefore' }),
+    zp('strike-held-reach-zero-ok', (o) => { o.strike.heldReachBefore = 0; }, null),
     zp('heavy-has-no-held-reach', (o) => { o.heavy.heldReachBefore = 8; }, { rule: 'additionalProperties', pointer: Z + 'heavy/heldReachBefore' }),
     // floor, out, exit
     zp('floor-min-ticks-three', (o) => { o.floor.minTicks = 3; }, { rule: 'xref:zip-floor', pointer: Z + 'floor/minTicks' }),
@@ -295,6 +314,8 @@ const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2
     ]),
     { id: 'director-ai-zip-easy-and-hard-required', schema: 'director-ai.schema.json', mutate: [{ file: AI, del: ['/levels/easy/zipShare', '/levels/hard/zipDodge'] }], expect: { rule: 'required', pointer: '/levels/easy' } },
   ];
+  // the cases of a first version of this script that took the reach values as any number
+  c.cases = c.cases.filter((y) => !/^director-interrupts-zip-(strike|heavy)-reach-fraction-ok$/.test(y.id));
   let n = 0;
   for (const k of add) {
     const i = c.cases.findIndex((y) => y.id === k.id);
