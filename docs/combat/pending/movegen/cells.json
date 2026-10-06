@@ -399,6 +399,11 @@
        }
       ],
       "min": 2
+     },
+     {
+      "name": "launch",
+      "min": 6,
+      "form": "launch"
      }
     ],
     "_quotas": "two for each way a charged heavy can send the rival (the two that send up are also the lift), then two for each lean of the stick, so a flurry of four held on one lean still shows four blows",
@@ -668,7 +673,93 @@
       "who": "VFX",
       "what": "each fighter's bolt in his own family; no ball in the palm"
      }
-    ]
+    ],
+    "presses": {
+     "reach": {
+      "kind": "table",
+      "block": "reach",
+      "delivery": [
+       "point_blank"
+      ],
+      "count": 4,
+      "statusCap": "derived",
+      "asks": [
+       "E1",
+       "R1"
+      ],
+      "distinct": [
+       "hand",
+       "release"
+      ],
+      "_distinct": "Legal's e06 counts a piece by its hand state, release and body, so two bolts of one hand and release are one piece to it, whatever place they are set on. The four differ in hand or release, so that a mash always has one it may throw",
+      "what": "the point-blank bolt: with RB held in reach, a bolt fired with the hand on him. It takes a light's place in a string; mashed, the piece changes every blow",
+      "quotas": [
+       {
+        "name": "thrust",
+        "min": 2,
+        "filter": {
+         "release": [
+          "thrust"
+         ]
+        }
+       },
+       {
+        "name": "flick",
+        "min": 1,
+        "filter": {
+         "release": [
+          "flick"
+         ]
+        }
+       },
+       {
+        "name": "sweep",
+        "min": 1,
+        "filter": {
+         "release": [
+          "sweep"
+         ]
+        }
+       },
+       {
+        "name": "chest",
+        "min": 2,
+        "filter": {
+         "target": [
+          "chest"
+         ]
+        }
+       },
+       {
+        "name": "gut",
+        "min": 2,
+        "filter": {
+         "target": [
+          "gut"
+         ]
+        }
+       }
+      ],
+      "needs": [
+       {
+        "who": "Animation",
+        "what": "the bolt press with the hand on him, fitted to 2 ticks; a flick and a sweep at the contact, or the swat and the spray press named for them"
+       },
+       {
+        "who": "VFX",
+        "what": "the lit hand, the shot at the contact, the rim on both bodies, the spill past him, and the cap on full flashes when it is mashed"
+       },
+       {
+        "who": "Encounter",
+        "what": "RB held in reach: X as a light that is a shot; the pick that never throws the same piece twice running"
+       },
+       {
+        "who": "Audio",
+        "what": "a crack for the shot against the thud of a fist"
+       }
+      ]
+     }
+    }
    },
    "y": {
     "kind": "table",
@@ -729,7 +820,59 @@
       "who": "VFX",
       "what": "the short beam and the split, in each fighter's family"
      }
-    ]
+    ],
+    "presses": {
+     "reach": {
+      "kind": "table",
+      "block": "reach",
+      "delivery": [
+       "blast"
+      ],
+      "count": 2,
+      "statusCap": "derived",
+      "asks": [
+       "E1",
+       "R1",
+       "H1",
+       "K1"
+      ],
+      "what": "the blast: with RB held in reach, the heavy shot let go against his body after a medium's wind-up. It knocks him back along the stick's lean and ends the brawl",
+      "quotas": [
+       {
+        "name": "chest",
+        "min": 1,
+        "filter": {
+         "target": [
+          "chest"
+         ]
+        }
+       },
+       {
+        "name": "gut",
+        "min": 1,
+        "filter": {
+         "target": [
+          "gut"
+         ]
+        }
+       }
+      ],
+      "needs": [
+       {
+        "who": "Animation",
+        "what": "the charged shot's poses on a 12-tick wind-up, the hand set on him as it goes"
+       },
+       {
+        "who": "VFX",
+        "what": "the gather at the palm as a thin ring or edge, the cone past him, and his chest trailing the shot's colour as he leaves"
+       },
+       {
+        "who": "Encounter",
+        "what": "RB held in reach: Y as a medium that is a shot, with its knock-back along the stick's lean"
+       }
+      ]
+     }
+    }
    },
    "a": {
     "kind": "context",

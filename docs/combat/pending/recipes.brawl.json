@@ -1,7 +1,7 @@
 {
  "schema": "combat.recipes/1",
  "_target": "data/combat/recipes.json",
- "_changes": "PARKED for Encounter's brawl (docs/director/brawl-plan.md), built on the live file and still the live file plus what is listed here. From the first version: `beat` (the beat point by path), on every `pieces` row a `path`, with `sends` on the heavies, and two pools for each fighter (brawl.flurry, brawl.skill). For three strengths (docs/design/brawl-second-pass.md, slice C2a): `brawl` now maps each press of X, Y and B to a pool; four more pools for each fighter (brawl.medium, brawl.medium.held, brawl.heavy, and brawl.lift re-read as the rising mediums); the `burst` block with three pools (burst.fast, burst.mid, burst.slow) and a sample for each lean; the `fallback` block; and pieces rows for the strikes of Animation's later packs (rival4, protag7) that the new pools name, with those packs named in `_status`; one path re-read from Animation (the crossed-arm ram travels a line). Gone: brawl.break and the ender, with their rules. Nothing that is live is changed. Drop _target and _changes when it lands",
+ "_changes": "PARKED for Encounter's brawl (docs/director/brawl-plan.md), built on the live file and still the live file plus what is listed here. From the first version: `beat` (the beat point by path), on every `pieces` row a `path`, with `sends` on the heavies, and two pools for each fighter (brawl.flurry, brawl.skill). For three strengths (docs/design/brawl-second-pass.md, slice C2a): `brawl` now maps each press of X, Y and B to a pool; four more pools for each fighter (brawl.medium, brawl.medium.held, brawl.heavy, and brawl.lift re-read as the rising mediums); the `burst` block with three pools (burst.fast, burst.mid, burst.slow) and a sample for each lean; the `fallback` block; for slice C2t the `launcher` block with its pool (brawl.launcher) and the `reach` block; and pieces rows for the strikes of Animation's later packs (rival4, protag7) that the new pools name, with those packs named in `_status`; one path re-read from Animation (the crossed-arm ram travels a line). Gone: brawl.break and the ender, with their rules. Nothing that is live is changed. Drop _target and _changes when it lands",
  "_about": "PARKED: ready to become data/combat/recipes.json as it stands (drop _target), but not moved. The pieces each of Game Design's recipes calls (docs/design/agency-pass.md section 2), per fighter. Fighter keys are the neutral working ids (protagonist, rival) until Orb names the pair. The rules and numbers quoted are Game Design's; the director's own numbers (the window, the flow's thresholds, the multipliers) belong in Encounter's data/director/alchemy.json. Checked against HEAD 45a95b9: every posed id is a strike of a wave manifest, and every blur step fills for both fighters.",
  "_status": {
   "live": "plays in live matches today. Nothing in these pools does yet: KAI and VORR still draw on the placeholder key sets, and go-live step 1 is a flag, off",
@@ -302,7 +302,7 @@
   "default": 24
  },
  "brawl": {
-  "_about": "Which pool each press in the martial arts stance draws on, for three strengths (docs/design/brawl-second-pass.md section 8): X a light, Y a medium, B a heavy. One press is one attack: the pool is the button's, and the press changes only how it is thrown. X: light (tapped), lightToward (tapped with the stick toward the rival), flurry (mashed), skill (on the beat), juggle; a held X is the `burst` block. Y: medium (tapped, mashed and on the beat) is the mediums that read on a 12-tick wind-up; mediumHeld (a held Y, slice C2b) is every medium, the ones that need a long wind-up included. B: heavy (tapped, mashed and on the beat) and heavyHeld (slice C2b). No piece of the heavy tier is posed, so brawl.heavy holds STAND-INS: his posed pieces that only read on a long wind-up, played on B's. The tier's own pieces (docs/combat/pending/movegen) replace them as they are drawn. lift is the pair X+Y (slice C6a). The pools for Y and B come from the generated movesets, so they keep to each fighter's identity: the rival's have no palm and no blade hand. When a pool has nothing it may throw, `fallback` says what is thrown",
+  "_about": "Which pool each press in the martial arts stance draws on, for three strengths (docs/design/brawl-second-pass.md section 8): X a light, Y a medium, B a heavy. One press is one attack: the pool is the button's, and the press changes only how it is thrown. X: light (tapped), lightToward (tapped with the stick toward the rival), flurry (mashed), skill (on the beat), juggle; a held X is the `burst` block. Y: medium (tapped, mashed and on the beat) is the mediums that read on a 12-tick wind-up; mediumHeld (a held Y, slice C2b) is every medium, the ones that need a long wind-up included. B: heavy (tapped, mashed and on the beat) and heavyHeld (slice C2b). No piece of the heavy tier is posed, so brawl.heavy holds STAND-INS: his posed pieces that only read on a long wind-up, played on B's. The tier's own pieces (docs/combat/pending/movegen) replace them as they are drawn. lift is the pair X+Y (slice C6a). The pools for Y and B come from the generated movesets, so they keep to each fighter's identity: the rival's have no palm and no blade hand. When a pool has nothing it may throw, `fallback` says what is thrown. launcher is a tap of B on a staggered rival (section 3 of the design page): see the `launcher` block. With RB held in reach, X and Y are the energy pieces of the `reach` block, which are not strikes and have no pool",
   "light": "combo.link",
   "lightToward": "blur.toward",
   "flurry": "brawl.flurry",
@@ -312,7 +312,8 @@
   "mediumHeld": "brawl.medium.held",
   "heavy": "brawl.heavy",
   "heavyHeld": "brawl.heavy",
-  "lift": "brawl.lift"
+  "lift": "brawl.lift",
+  "launcher": "brawl.launcher"
  },
  "burst": {
   "_about": "A held X: eight lights that slow on a curve (docs/design/brawl-second-pass.md section 3). The first is the light the press threw. Each later blow comes from the pool of the gap before it: fast for a gap of 5 ticks or fewer (hands only, on a path with no raise and no turn), mid for 6 to 8 (an elbow or a knee fits), slow for 9 or more (any light). The gaps are Game Design's and live in the director's data; slots names their classes in order. rules are what keep a 4-tick gap from reading as a stutter, judged on the pieces table (limb, path, target) together with Legal's string rules. Every light a tap can throw can open a whole burst under them (gen_moveset.py --check tests it). close is the path each fighter's eighth blow takes when the rules leave him one. samples are one whole burst for each lean of the stick, for Animation's study and for the director to play as they are",
@@ -522,6 +523,192 @@
      "pool": 18
     },
     "runsDry": []
+   }
+  }
+ },
+ "launcher": {
+  "_about": "A tap of B on a staggered rival: it always lands and launches (docs/design/brawl-second-pass.md section 3, slice C2t). The stick nudges the launch and the director stages it; this is only the blow that starts it, picked by where it sends. aim: the stick's lean to the send wanted; with no stick, any. bySend: the pool's pieces by where each sends (its path). Until the heavy tier is posed these are STAND-INS: first his heavy stand-ins that read on half the wind-up (a spin or a leap does not), then his posed mediums that land on the trunk or the head, which were the launching blows before the three strengths. A medium that one of his own never rows would bar as a heavy is left out (the Protagonist never brings one down on a head). The tier's own launchers replace them: every send has at least one (docs/combat/pending/movegen/review-sheet.md)",
+  "aim": {
+   "up": "up",
+   "down": "down",
+   "toward": "across",
+   "away": "turned"
+  },
+  "bySend": {
+   "rival": {
+    "up": [
+     "strike.uppercut",
+     "strike.rising_knee",
+     "strike.fist_rise"
+    ],
+    "down": [
+     "strike.double_hammer",
+     "strike.dropping_elbow",
+     "strike.stomp",
+     "strike.hammer"
+    ],
+    "across": [
+     "strike.cross_arm_ram",
+     "strike.driving_knee",
+     "strike.headbutt"
+    ],
+    "turned": [
+     "strike.roundhouse"
+    ]
+   },
+   "protagonist": {
+    "up": [
+     "strike.rising_palm",
+     "strike.rising_knee",
+     "strike.uppercut"
+    ],
+    "down": [
+     "strike.axe_kick",
+     "strike.stomp"
+    ],
+    "across": [
+     "strike.double_palm",
+     "strike.cross_arm_ram",
+     "strike.palm_push"
+    ],
+    "turned": [
+     "strike.haymaker",
+     "strike.crescent_kick",
+     "strike.body_hook"
+    ]
+   }
+  }
+ },
+ "reach": {
+  "_about": "Energy in reach (docs/design/brawl-second-pass.md section 5b, slice C2t): with RB held in a brawl, X is the point-blank bolt and Y the blast. pieces are the generated moves (docs/combat/pending/movegen): an energy hand, how it is let go, the place it is set on, and the path it has in a string (a thrust is a line, a flick an outward arc, a sweep an inward arc). set is the posed press or shot it is played on, when there is one. They count as blows in Legal's string rules. rule: Legal's e06 counts a piece by its hand and release, so a mash never throws the same hand and release twice running; the four bolts differ in one or the other, and one may always follow",
+  "rule": {
+   "id": "e06",
+   "same": [
+    "hand",
+    "release"
+   ],
+   "max": 1
+  },
+  "pieces": {
+   "rival": {
+    "bolt": [
+     {
+      "id": "mv.rival.energy.x.reach.01",
+      "hand": "blade_hand",
+      "release": "thrust",
+      "target": "gut",
+      "path": "line",
+      "set": "rw.bolt",
+      "status": "derived"
+     },
+     {
+      "id": "mv.rival.energy.x.reach.02",
+      "hand": "open_palm",
+      "release": "thrust",
+      "target": "chest",
+      "path": "line",
+      "set": "rw.bolt",
+      "status": "derived"
+     },
+     {
+      "id": "mv.rival.energy.x.reach.03",
+      "hand": "blade_hand",
+      "release": "flick",
+      "target": "gut",
+      "path": "arc_out",
+      "set": null,
+      "status": "waiting"
+     },
+     {
+      "id": "mv.rival.energy.x.reach.04",
+      "hand": "blade_hand",
+      "release": "sweep",
+      "target": "chest",
+      "path": "arc_in",
+      "set": null,
+      "status": "waiting"
+     }
+    ],
+    "blast": [
+     {
+      "id": "mv.rival.energy.y.reach.01",
+      "hand": "blade_hand",
+      "release": "thrust",
+      "target": "chest",
+      "path": "line",
+      "set": "rw.charged_brace",
+      "status": "derived"
+     },
+     {
+      "id": "mv.rival.energy.y.reach.02",
+      "hand": "blade_hand",
+      "release": "thrust",
+      "target": "gut",
+      "path": "line",
+      "set": "rw.charged_brace",
+      "status": "derived"
+     }
+    ]
+   },
+   "protagonist": {
+    "bolt": [
+     {
+      "id": "mv.protagonist.energy.x.reach.01",
+      "hand": "palm_thrust",
+      "release": "thrust",
+      "target": "chest",
+      "path": "line",
+      "set": "pg.bolt",
+      "status": "derived"
+     },
+     {
+      "id": "mv.protagonist.energy.x.reach.02",
+      "hand": "flat_palm",
+      "release": "thrust",
+      "target": "gut",
+      "path": "line",
+      "set": "pg.bolt",
+      "status": "derived"
+     },
+     {
+      "id": "mv.protagonist.energy.x.reach.03",
+      "hand": "palm_thrust",
+      "release": "flick",
+      "target": "chest",
+      "path": "arc_out",
+      "set": null,
+      "status": "waiting"
+     },
+     {
+      "id": "mv.protagonist.energy.x.reach.04",
+      "hand": "flat_palm",
+      "release": "sweep",
+      "target": "gut",
+      "path": "arc_in",
+      "set": null,
+      "status": "waiting"
+     }
+    ],
+    "blast": [
+     {
+      "id": "mv.protagonist.energy.y.reach.01",
+      "hand": "palm_thrust",
+      "release": "thrust",
+      "target": "chest",
+      "path": "line",
+      "set": "pg.charged",
+      "status": "derived"
+     },
+     {
+      "id": "mv.protagonist.energy.y.reach.02",
+      "hand": "palm_thrust",
+      "release": "thrust",
+      "target": "gut",
+      "path": "line",
+      "set": "pg.charged",
+      "status": "derived"
+     }
+    ]
    }
   }
  },
@@ -1815,6 +2002,52 @@
      "id": "strike.knee_hook",
      "status": "posed"
     }
+   ],
+   "brawl.launcher": [
+    {
+     "id": "strike.double_hammer",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross_arm_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.uppercut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.fist_rise",
+     "status": "posed"
+    },
+    {
+     "id": "strike.dropping_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.stomp",
+     "status": "posed"
+    },
+    {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.headbutt",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer",
+     "status": "posed"
+    },
+    {
+     "id": "strike.roundhouse",
+     "status": "posed"
+    }
    ]
   },
   "protagonist": {
@@ -2647,6 +2880,52 @@
     },
     {
      "id": "strike.palm_heave",
+     "status": "posed"
+    }
+   ],
+   "brawl.launcher": [
+    {
+     "id": "strike.double_palm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross_arm_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_palm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.uppercut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.axe_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.stomp",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_push",
+     "status": "posed"
+    },
+    {
+     "id": "strike.haymaker",
+     "status": "posed"
+    },
+    {
+     "id": "strike.crescent_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.body_hook",
      "status": "posed"
     }
    ]

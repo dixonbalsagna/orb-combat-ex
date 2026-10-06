@@ -188,7 +188,7 @@ Legal passed all 41 rows with conditions (`docs/legal/three-strengths-screen.md`
 - L8 on the stepping blade hand to the jaw: a strike, never a grip. It was there already.
 - B1, on every stand-in: a held pose on the longer wind-up. A double hammer or a double palm keeps its hands shoulder width apart and at or below the shoulder, with a raise overhead only in the last 6 ticks, **or it is dropped as a stand-in;** a crossed-arm ram crosses only for the strike; a spin is one turn in place.
 
-**For Legal, one thing:** b03's `tip` list still names only fist, palm and heel. By the letter it cannot match an elbow or a knee. I read it the strict way; adding their tips to the row would make the file say it.
+**b03's tips:** the row first named elbows and knees without their tips; Legal has since listed every tip in it (`209272b2`), so the file says what I read. Legal has also seen a heave and a fall drawn and passed them (RL-106).
 
 ## 9. The pools by button, for Encounter
 

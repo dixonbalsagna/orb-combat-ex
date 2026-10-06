@@ -230,8 +230,35 @@
        ]
       },
       "set": "rw.bolt"
+     },
+     {
+      "when": {
+       "delivery": [
+        "point_blank"
+       ],
+       "release": [
+        "thrust"
+       ]
+      },
+      "set": "rw.bolt"
+     },
+     {
+      "when": {
+       "delivery": [
+        "blast"
+       ]
+      },
+      "set": "rw.charged_brace"
      }
-    ]
+    ],
+    "reach": {
+     "hands": {
+      "blade_hand": 3,
+      "open_palm": 1,
+      "fist_glow": 2.5
+     },
+     "_hands": "his lights are blade hands, so his point-blank bolt is a blade hand driven in on a line. His own blast would be the lit fist, the plate behind it: Legal's e06 asks an open or a blade hand for a blast, so the generator refuses it and it is a question for Legal"
+    }
    },
    "specials": {
     "_about": "His three specials (docs/combat/pending/wave7-first-kit.md). Which sits on X, Y and A is Combat's guess until Game Design rules",
@@ -294,7 +321,8 @@
    "manner": {
     "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
     "heavy": "A show-off. He lets the rival see it coming: the tell is held open to view with the chin up, the blow travels in the straightest line that drive allows, and he leaves the limb out for a beat after it lands, 12 ticks or fewer. The limb stays drawn back through the tell: never arms spread as an invitation, never a beckon, and no taunt is part of a blow (Legal's h07). Never a second motion on the same wind-up",
-    "burst": "A show of speed: blade hands that flick out and back with the elbow high, then a straight he leaves out for a beat"
+    "burst": "A show of speed: blade hands that flick out and back with the elbow high, then a straight he leaves out for a beat",
+    "reach": "A show of it, in straight lines: a blade hand driven in with the forearm plate behind it, the light running down the plate's edge and off the fingertips as it lands. His blast is braced the same way and let go along the forearm"
    },
    "pinned": {
     "martial.b": [
@@ -527,8 +555,35 @@
        ]
       },
       "set": "pg.bolt"
+     },
+     {
+      "when": {
+       "delivery": [
+        "point_blank"
+       ],
+       "release": [
+        "thrust"
+       ]
+      },
+      "set": "pg.bolt"
+     },
+     {
+      "when": {
+       "delivery": [
+        "blast"
+       ]
+      },
+      "set": "pg.charged"
      }
-    ]
+    ],
+    "reach": {
+     "hands": {
+      "palm_thrust": 3,
+      "flat_palm": 2,
+      "ring_hand": 1
+     },
+     "_hands": "he fires from the heel of the palm (Game Design)"
+    }
    },
    "specials": {
     "_about": "PLACEHOLDERS. His specials are not designed: these three frames are Combat's first offer, for Game Design and Orb, so that his charging row is not empty on the sheet",
@@ -621,7 +676,8 @@
    "manner": {
     "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
     "heavy": "Pointed, not cruel. One line to one point: the tell is compact and close to the body, the turn does the work, the blow stops at the target and he is back in his guard at once. No flourish before it and none after",
-    "burst": "A run of open hands that each find a different point: the wrist, the ribs, the collar, the jaw. It ends on an arc"
+    "burst": "A run of open hands that each find a different point: the wrist, the ribs, the collar, the jaw. It ends on an arc",
+    "reach": "Pointed, not cruel: the heel of the palm set on one point, the chest or the ribs, and the shot let go as a short cone that moves him. It is placed, never swung, and never at the face"
    },
    "pinned": {
     "martial.b": [

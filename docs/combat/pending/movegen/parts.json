@@ -229,7 +229,7 @@
    "heavy": "medium"
   },
   "_animWeight": "Animation's manifests still say light and heavy. Its heavy rows are today's heavy strikes, which are the mediums now. No row of Animation's is a heavy of the new tier; a posed piece that only reads on a long wind-up may stand in for one (`heavy.standIn`)",
-  "legalTips": "a row's tip list binds the limbs that can have those tips. Legal's b03 lists the tips of a hand and, since bb6fc1e, the limbs hand, elbow and knee. An elbow or a knee has tips of its own, so the row binds them whatever their tip. Stricter than the letter; Legal may add the tips",
+  "legalTips": "a row's tip list binds the limbs that can have those tips: a limb the row names, none of whose tips it lists, is bound whatever its tip. It was written for b03, which named elbows and knees before it named their tips; Legal's row lists every tip itself now (209272b2), so the rule is a net for the next such row",
   "sends": {
    "line": "across",
    "arc_in": "turned",
@@ -415,11 +415,26 @@
       "rise"
      ]
     }
+   },
+   {
+    "form": "launch",
+    "when": {
+     "weight": [
+      "heavy"
+     ],
+     "target": [
+      "head",
+      "jaw",
+      "chest",
+      "gut"
+     ]
+    },
+    "reads": "half"
    }
   ],
-  "_forms": "the forms a move can take, by rule, and the press that asks for each (`readings` below). light: a tapped X. flurry: a mashed X. burst: a blow that fits inside the held-X burst (`burst` below). skill and juggle: X on the beat. quick: a tapped or mashed Y or B, and Y or B on the beat; a medium is quick only if it reads on a 12-tick wind-up (`windup` below). charged: a held Y or B. lift: an upward blow, for the pair X+Y and for a full charged heavy with no stick. ender and break are gone with their rules: a string no longer ends by itself, and every heavy breaks a set guard. arms is the number of arms the posed strike it starts from uses; a generated shape uses one",
+  "_forms": "the forms a move can take, by rule, and the press that asks for each (`readings` below). light: a tapped X. flurry: a mashed X. burst: a blow that fits inside the held-X burst (`burst` below). skill and juggle: X on the beat. quick: a tapped or mashed Y or B, and Y or B on the beat; a medium is quick only if it reads on a 12-tick wind-up (`windup` below). charged: a held Y or B. lift: an upward blow, for the pair X+Y and for a full charged heavy with no stick. ender and break are gone with their rules: a string no longer ends by itself, and every heavy breaks a set guard. arms is the number of arms the posed strike it starts from uses; a generated shape uses one. launch: a tap of B on a staggered rival, the launcher: a heavy that reads on half the wind-up and lands on the trunk or the head, so that it is the whole body it sends. A heavy to an arm or a leg is not a launcher: it is what the wrench is thrown with",
   "windup": {
-   "_about": "What a medium needs to be thrown on Y's 12-tick wind-up, where today's heavy strikes had 26. The first rule that matches a medium is its rule. reads quick: it is thrown on a tap, in the Y flurry and on the beat, with the change given. reads charged: it only reads on a long wind-up, so it is flagged and not forced: it is thrown on a held Y only, and it may stand in for a heavy on B. The 12 is Game Design's and lives in Encounter's data; no tick is written here",
+   "_about": "What a blow needs to be thrown on a wind-up shorter than it was made for. The first rule that matches is the blow's rule. `medium`: Y's 12-tick wind-up, where today's heavy strikes had 26. reads quick: thrown on a tap, in the Y flurry and on the beat, with the change given. reads charged: it only reads on a long wind-up, so it is flagged and not forced: it is thrown on a held Y only, and it may stand in for a heavy on B. `heavy`: half of B's wind-up, 14 ticks, which is the launcher on a staggered rival and, later, a heavy on the beat. reads half: it can be thrown there. reads full: it needs the whole wind-up. The ticks are Game Design's and live in Encounter's data; no tick is written here",
    "medium": [
     {
      "id": "w1",
@@ -506,7 +521,35 @@
      "change": "no dip first: he rises from where he is. It no longer lifts by itself: the lift is the pair X+Y"
     }
    ],
-   "all": "a medium does not knock back, charged or not: `sends` on a medium is only the way the reel leans"
+   "all": "a medium does not knock back, charged or not: `sends` on a medium is only the way the reel leans",
+   "heavy": [
+    {
+     "id": "h1",
+     "when": {
+      "flags": [
+       "leap"
+      ]
+     },
+     "reads": "full",
+     "why": "both feet leave together: the gather is the wind-up, and half of it is a hop"
+    },
+    {
+     "id": "h2",
+     "when": {
+      "path": [
+       "spin"
+      ]
+     },
+     "reads": "full",
+     "why": "a whole turn of the whole body does not fit half the wind-up: it would land before he is round"
+    },
+    {
+     "id": "h3",
+     "when": {},
+     "reads": "half",
+     "change": "the tell is cut to its last third: he is already loaded as the stagger begins, and the drive is whole"
+    }
+   ]
   },
   "heavy": {
    "_about": "The third strength, on B: a whole-body blow. It is a strike shape with a drive: what the whole body does behind the limb. The path decides the drive. tips are the surfaces that can carry the weight, with the paths each travels at this weight; the places come from `targets`. No head: a headbutt is one of the vicious blows, which wait. Each drive has a tell (the wind-up as it is seen, held in plain sight for most of 28 ticks) and an end (where it leaves the body, which is where the flurry's next blow starts). flags are pose flags a drive brings to a new heavy, so that Legal's rows can judge it by machine: a whole turn is a spin",
@@ -678,8 +721,8 @@
      "what": "he sinks deep, and both legs drive the blow up through the target. His feet keep their place: it is not a leap",
      "tell": "sunk under the rival's guard with the striking limb loaded below the target, the back straight",
      "end": "stood up to his full height, the striking limb high",
-     "legal": "a lunge-low stance, the other hand up in guard; never both fists clenched at the sides in a crouch; no scream, no aura, no ground cracking; no leap",
-     "seen": true
+     "legal": "a lunge-low stance, the other hand up in guard; never both fists clenched at the sides in a crouch; no scream, no aura, no ground cracking; no leap. Legal has seen one drawn in Animation's study and passed it (RL-106)",
+     "seen": false
     },
     "drop": {
      "id": "fall",
@@ -695,8 +738,8 @@
      "what": "he rises over the target and comes down on it with his whole weight",
      "tell": "risen above the rival with the striking limb carried at shoulder height; it lifts only as he starts down",
      "end": "sunk below where he began, the striking limb low",
-     "legal": "the rise is the body straightening or stepping up, never a leap; the limb at shoulder height until he starts down; one arm",
-     "seen": true
+     "legal": "the rise is the body straightening or stepping up, never a leap; the limb at shoulder height until he starts down; one arm. Legal has seen one drawn in Animation's study and passed it (RL-106)",
+     "seen": false
     },
     "spin": {
      "id": "full_turn",
@@ -733,7 +776,17 @@
     "foot.sole": "sole"
    },
    "_words": "a heavy's plain name is its drive's word, its tip's word and its place: a stepping fist to the chest, a falling heel to the chest. Animation reads these",
-   "standIn": "a posed medium whose wind-up rule reads charged covers the heavy of the same shape at the level stand_in: it can play on B at 28 ticks today, as a derived move, until the tier's own poses exist"
+   "standIn": "a posed medium whose wind-up rule reads charged covers the heavy of the same shape at the level stand_in: it can play on B at 28 ticks today, as a derived move, until the tier's own poses exist",
+   "launcher": {
+    "_about": "The launcher (docs/design/brawl-second-pass.md section 3): a tap of B on a staggered rival always lands and launches. Which heavy is thrown is picked by where it sends, from the stick's lean. The stick nudges and the director stages the launch itself; this is only the blow that starts it",
+    "aim": {
+     "up": "up",
+     "down": "down",
+     "toward": "across",
+     "away": "turned"
+    },
+    "_aim": "the stick's lean to the send wanted: up lifts him, down drives him under, toward drives him back along the line, away turns him past the attacker. With no stick, any launcher"
+   }
   },
   "burst": {
    "_about": "The burst: a held X throws eight lights that slow on a curve (docs/design/brawl-second-pass.md section 3). The first is the light the press threw. Each later blow is drawn from the X cell by the class of the gap before it, under the string rules and the rules below, which are what keep a 4-tick gap from reading as a stutter. The gaps are Game Design's and live in Encounter's data: the classes name them, and no tick is written on a move",
@@ -883,7 +936,11 @@
      "tip": [
       "fist",
       "palm",
-      "heel"
+      "heel",
+      "blade",
+      "plate",
+      "point",
+      "cap"
      ],
      "path": [
       "rise"
@@ -897,7 +954,8 @@
       "spin"
      ]
     },
-    "why": "a rising blow with a leap or a spin, by hand, elbow or knee: the jumping, turning uppercut"
+    "why": "a rising blow with a leap or a spin, by hand, elbow or knee: the jumping, turning uppercut",
+    "appliesTo": "any tip of a hand, elbow or knee on a rise path to the jaw or head: a rising blow bound by this row whatever its tip (Combat's strict reading)"
    },
    {
     "id": "b04",
@@ -1550,7 +1608,7 @@
      "b03"
     ],
     "from": "Legal's screen of the three strengths",
-    "ask": "a heaving heavy: a lunge-low stance with the striking limb loaded and the other hand up in guard; never both fists clenched at the sides in a crouch; no scream, no aura, no ground cracking; the feet keep their place. It is seen drawn before it goes live"
+    "ask": "a heaving heavy: a lunge-low stance with the striking limb loaded and the other hand up in guard; never both fists clenched at the sides in a crouch; no scream, no aura, no ground cracking; the feet keep their place"
    },
    {
     "id": "D5",
@@ -1568,7 +1626,7 @@
      "b09"
     ],
     "from": "Legal's screen of the three strengths",
-    "ask": "a falling heavy: the rise is the body straightening or stepping up, never a leap; the limb stays at shoulder height until he starts down; one arm only, never both palms or both fists. It is seen drawn before it goes live"
+    "ask": "a falling heavy: the rise is the body straightening or stepping up, never a leap; the limb stays at shoulder height until he starts down; one arm only, never both palms or both fists"
    },
    {
     "id": "B1",
@@ -1580,6 +1638,21 @@
     ],
     "from": "Legal's screen of the three strengths",
     "ask": "a stand-in on B's 28 ticks: a held pose, judged on the longer wind-up. A double hammer or a double palm keeps its hands at least shoulder width apart and at or below shoulder height, with a raise overhead only in the last 6 ticks, or it is dropped as a stand-in. A crossed-arm ram crosses only for the strike. A spin is a single turn in place. A drop kick's gather is not a crouch with fists clenched at the sides"
+   },
+   {
+    "id": "R1",
+    "stance": "energy",
+    "rows": [
+     "e01",
+     "e02",
+     "e03",
+     "e06",
+     "k03",
+     "f01",
+     "f03"
+    ],
+    "from": "Combat, proposed: not yet Legal's",
+    "ask": "an energy blow in reach: one open or blade hand at shoulder height or lower; the hand is lit as a thin edge before it lands, never a ball; the shot goes off at the contact as a thin edge or a short cone; each body takes a rim of its colour on the near side, never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash; the blast's 12-tick wind-up is a held pose, its gather a thin ring or edge at the palm"
    }
   ],
   "_conditions": "Legal's conditions from its screen of the sheet (docs/legal/movegen-screen.md section 1), for Animation: the sheet's Legal column lists the ids that apply to a row. They bite when a move is held or strung"
@@ -1919,6 +1992,60 @@
    }
   }
  },
+ "reach": {
+  "_about": "Energy in reach (docs/design/brawl-second-pass.md section 5b): with RB held in a brawl, X is the point-blank bolt and Y the blast. A piece is an energy hand of the fighter's own, how it is let go, and the place it is set on: a blow and a shot at once. It takes a light's or a medium's place in a string, so it has a path (by its release) and a place, and Legal's string rules count it with the blows. No piece is aimed at the head. The body is the brawl's own, leaned by the stick",
+  "release": [
+   "thrust",
+   "flick",
+   "sweep"
+  ],
+  "body": [
+   "in_reach"
+  ],
+  "targets": [
+   "chest",
+   "gut"
+  ],
+  "path": {
+   "thrust": "line",
+   "flick": "arc_out",
+   "sweep": "arc_in"
+  },
+  "_path": "thrust: the hand is driven in and the shot leaves along the arm. flick: the back of the hand snaps out and the shot leaves off it. sweep: the hand is drawn across him and the shot leaves along the sweep",
+  "rules": [
+   {
+    "if": {
+     "delivery": [
+      "blast"
+     ]
+    },
+    "then": {
+     "release": [
+      "thrust"
+     ]
+    },
+    "why": "the blast is braced and let go on a straight line"
+   }
+  ],
+  "forms": [
+   {
+    "form": "bolt",
+    "when": {
+     "delivery": [
+      "point_blank"
+     ]
+    }
+   },
+   {
+    "form": "blast",
+    "when": {
+     "delivery": [
+      "blast"
+     ]
+    }
+   }
+  ]
+ },
  "readings": {
   "_about": "Which form each press of a strike button asks for (docs/design/brawl-second-pass.md section 8). One press is one attack: a button's pool is one list, and the press picks the form. The held X is not a form: it is a string of eight from the same pool (`strike.burst`, and the cell's `presses.hold`)",
   "martial": {
@@ -1938,7 +2065,18 @@
     "tap": "quick",
     "mash": "quick",
     "hold": "charged",
-    "beat": "quick"
+    "beat": "quick",
+    "staggered": "launch"
+   }
+  },
+  "energy": {
+   "_about": "in reach, with RB held (section 5b)",
+   "x": {
+    "tap": "bolt",
+    "mash": "bolt"
+   },
+   "y": {
+    "tap": "blast"
    }
   }
  },
@@ -2139,7 +2277,8 @@
      "delivery": [
       "burst",
       "blast",
-      "flurry"
+      "flurry",
+      "point_blank"
      ]
     },
     "then": {
@@ -2330,8 +2469,8 @@
     "id": "k03",
     "kind": "drawn",
     "owner": "VFX, Animation and Audio",
-    "rule": "a charge flash (a tier mark at 12, 14, 24, 40 or 48 ticks, or a 'full flash') is a thin ring or edge flash on the charging hand, forearm or plate, in the lane colour, 4 ticks or fewer, never body-wide, never gold, white or red, never with a shouted name; a held B shows at most two of the seven marks at any tick through its 48 ticks, and no scream at any tier",
-    "why": "marks 3, 7 and 2 across a long held charge"
+    "rule": "a charge flash or ring (a tier mark at 16 or 24 ticks for a medium, 32 or 44 for a heavy, a full-charge flash, or the wind-up ring) is a thin ring or edge flash on the charging hand, forearm or plate, in the lane colour, 4 ticks or fewer, never body-wide, never gold, white or red, never with a shouted name; a wind-up ring is hollow, thin, lane-coloured and shrinks onto the limb (m07); a held charge shows at most two of the seven marks at any tick, and no scream at any tier. Tick counts are the design's and may change: the conditions, not the numbers, are the rule",
+    "why": "marks 3, 7 and 2 across a held charge; restated to the three-strength spec"
    },
    {
     "id": "k04",
@@ -2346,7 +2485,7 @@
     "id": "f01",
     "kind": "drawn",
     "owner": "VFX, Audio and the director",
-    "rule": "a flurry's or burst's blur follows each striking limb's real path: at any instant at most 2 ghosts of any limb and at most 4 limb-ghosts on screen in all; never extra arms, legs or fists drawn at once, never a fan of limbs round the target. This replaces the 'two ghosts per blow' wording, which does not hold at 15 blows a second",
+    "rule": "a flurry's or burst's blur follows each striking limb's real path: at any instant at most 2 ghosts of any limb and at most 4 limb-ghosts on screen in all; never extra arms, legs or fists drawn at once, never a fan of limbs round the target. This replaces the 'two ghosts per blow' wording, which does not hold at 15 blows a second. The numbers are ceilings on what is alive at one instant, not counts that must be drawn: fewer is always fine, reduced motion draws fewer, and a tech blow's 3 wire echoes that pop off in turn with never more than 2 alive at once meet it. Body ghosts of a zip fall under m05 (at most 5)",
     "why": "the many-armed barrage blur, by instant rather than by blow"
    },
    {

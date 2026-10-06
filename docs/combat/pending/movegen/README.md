@@ -9,14 +9,15 @@ Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here i
 | `cells.json` | Game Design's matrix, all five stances: what each button holds, its count, quotas, readings and what it needs from others; the seed | `data/combat/cells.json` |
 | `lock.json` | **generated:** every strike move's id and shape, so an id never changes shape | `data/combat/movesets/lock.json` |
 | `gen_moveset.py` | the reference generator: standard library only, no state, no clock | a script under `tools/`, Tools' to hold |
-| `moveset.rival.json`, `moveset.protagonist.json` | **generated:** 120 rows each over the five stances | `data/combat/movesets/<fighter>.json` |
+| `moveset.rival.json`, `moveset.protagonist.json` | **generated:** 126 rows each over the five stances | `data/combat/movesets/<fighter>.json` |
 | `review-sheet.md` | **generated:** every move on one row, by stance, with Legal's conditions and what each stance needs | stays in docs |
 | `three-strengths.md` | the note for the slice C2a: the mediums on 12 ticks, the heavy tier, the burst, the string check, and what Animation, Tools and Legal need | stays in docs |
+| `c2t-content.md` | the note for the slice C2t: the launcher, energy in reach, a plan for vicious, and the lists for Animation, VFX, Legal, Tools and Encounter | stays in docs |
 | `second-pass-plan.md` | a plan, not built: what the brawl's second pass (`docs/design/brawl-second-pass.md`) needs from parts, identity and cells, in the EP's build order, with sizes | stays in docs |
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, on any match with Legal's rows, or when a string runs out of blows (a strike button left with fewer than 3 pieces after some two blows, or a light that cannot open a burst). It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 58 cases.
+- **To prove the refusals:** `--self-test`, 68 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -32,6 +33,7 @@ Orb moved the martial face buttons to three strengths: X light, Y medium, B heav
 | B | a new tier of 10 heavies: whole-body blows, each a shape and a drive | 10: 0, 0, 10 | 10: 0, 0, 10 |
 | B, stand-ins | posed pieces that can play on B until the tier is drawn; not locked | 5: 0, 5, 0 | 5: 0, 5, 0 |
 
+- **For the slice C2t** (`c2t-content.md`): a heavy that reads on half of B's wind-up and lands on the trunk or the head carries the form `launch` (rival 10, Protagonist 7), and each fighter has 6 energy pieces in reach, 4 point-blank bolts and 2 blasts, in the cells `energy.x.reach` and `energy.y.reach`. Rows are 126 a fighter: rival 74 posed, 25 derived, 27 waiting; Protagonist 69, 30, 27.
 - No id changed and no strike changed shape. The lock's 34 heavy rows were re-tagged as medium.
 - The signature frame that sat on the martial B is the charging stance's B (RT + B) now.
 - Sections 1 and 2 below were written before this: where they say heavy for the martial Y, read medium.
@@ -76,7 +78,7 @@ Game Design's matrix (`docs/design/melee-press-feel.md` section 10): X quick, Y 
 - **The Protagonist's three specials are placeholders** (a turning step, three curving shots, a turn aside). They are Combat's first offer so that his charging row is not empty, and they are marked so in the data and on the sheet.
 - **Which of the rival's specials sits on which button is my guess:** the cutting step on X, the barrage volley on Y, the grip and drag on A.
 
-**All five stances:** 120 rows for the rival (74 posed, 21 derived, 25 waiting) and 120 for the Protagonist (69, 26, 25). The 25 waiting are the 10 new heavies, the 14 special looks and the short beam.
+**All five stances:** 126 rows a fighter: the rival 74 posed, 25 derived, 27 waiting; the Protagonist 69, 30, 27. The 27 waiting are the 10 new heavies, the 14 special looks, the short beam and two new releases of the point-blank bolt.
 
 "Posed" here means the poses exist. Most of what these four stances lack is not a pose but the action itself, which is the next section.
 

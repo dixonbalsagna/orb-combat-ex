@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 9
+VERSION = 10
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -275,12 +275,13 @@ def entries_of(idn):
 
 
 def windup_of(g, m, arms, flags=()):
-    """The wind-up rule of a medium (parts.json strike.windup): the first that matches. None for any other weight."""
-    if m.get("weight") != "medium":
+    """The wind-up rule of a medium or a heavy (parts.json strike.windup): the first that matches. A medium's says how it reads on Y's wind-up; a heavy's, on half of
+    B's (the launcher). None for a light."""
+    if m.get("weight") not in ("medium", "heavy"):
         return None
     probe = dict(m)
     probe["arms"] = arms
-    for r in g.get("windup", {}).get("medium", []):
+    for r in g.get("windup", {}).get(m["weight"], []):
         when = dict(r["when"])
         fl = when.pop("flags", None)
         if fl is not None and not any(f in flags for f in fl):
@@ -536,9 +537,12 @@ def travel_cell(ctx, who, cid, cell, done):
 def table_cell(ctx, who, cid, cell):
     parts, idn, seed = ctx["parts"], ctx["idn"], ctx["seed"]
     blk, en = parts[cell["block"]], idn["energy"]
+    hands = en.get(cell["block"], {}).get("hands", en["hands"])   # a block may have its own weights for his hands (energy in reach)
     cand, refused = [], []
-    for hand, release, body, delivery in itertools.product(sorted(en["hands"]), blk["release"], blk["body"], cell["delivery"]):
+    for hand, release, body, delivery, target in itertools.product(sorted(hands), blk["release"], blk["body"], cell["delivery"], blk.get("targets", [None])):
         m = {"hand": hand, "release": release, "body": body, "delivery": delivery}
+        if target:   # a piece set on a place is a blow as well as a shot: it has a path, by its release
+            m.update({"target": target, "limb": "hand", "path": blk["path"][release]})
         if delivery == "split" and not en.get("split"):
             continue
         if any(match(r["if"], m) and not match(r["then"], m) for r in blk["rules"]):
@@ -550,7 +554,7 @@ def table_cell(ctx, who, cid, cell):
         if hits:
             refused.append({"move": dict(m, _forms=None), "rows": hits})
             continue
-        m["_w"] = en["hands"][hand] * en["release"].get(release, 1) * jitter(seed, who, cid, hand, release, body, delivery)
+        m["_w"] = hands[hand] * en["release"].get(release, 1) * jitter(seed, who, cid, hand, release, body, delivery, *([target] if target else []))
         m["_set"] = next((p["set"] for p in en["posed"] if match(p["when"], m)), None)
         if m["_set"]:
             m["_w"] *= 1.6 if hand in en["posedHands"] else 1.2
@@ -558,23 +562,31 @@ def table_cell(ctx, who, cid, cell):
     valid = len(cand)
     def penalty(p, m):
         w = 1.0
-        for k, f in (("hand", 0.6), ("release", 0.6), ("body", 0.7), ("delivery", 0.8)):
-            if p[k] == m[k]:
+        for k, f in (("hand", 0.6), ("release", 0.6), ("body", 0.7), ("delivery", 0.8), ("target", 0.6)):
+            if k in p and p[k] == m.get(k):
                 w *= f
+        if cell.get("distinct") and all(p[k] == m[k] for k in cell["distinct"]):
+            w *= 1e-9   # a cell whose pieces must differ in these parts: Legal's e06 counts two bolts of one hand and release as one piece
         return w
     picked = greedy(cand, cell["count"], [q for q in cell.get("quotas", []) if not ("filter" in q and q["filter"].get("delivery") == ["split"] and not en.get("split"))], penalty)
     moves = []
     for i, m in enumerate(picked):
         hand_set = en["posedHands"].get(m["hand"])
         keys = {"set": m["_set"], "hand": hand_set}
-        moves.append({"id": "mv.%s.%s.%02d" % (who, cid, i + 1), "hand": m["hand"], "release": m["release"], "body": m["body"], "delivery": m["delivery"], "forms": m["_forms"],
-                      "keys": keys, "status": "posed" if (m["_set"] and hand_set) else "derived" if m["_set"] else "waiting", "asks": ["E1"], "review": "new"})
+        status = "posed" if (m["_set"] and hand_set) else "derived" if m["_set"] else "waiting"
+        if status == "posed" and cell.get("statusCap"):
+            status = cell["statusCap"]   # posed pieces used a new way
+        mv = {"id": "mv.%s.%s.%02d" % (who, cid, i + 1), "hand": m["hand"], "release": m["release"], "body": m["body"], "delivery": m["delivery"], "forms": m["_forms"],
+              "keys": keys, "status": status, "asks": list(cell.get("asks", ["E1"])), "review": "new"}
+        if "target" in m:
+            mv.update({"target": m["target"], "limb": m["limb"], "path": m["path"]})
+        moves.append(mv)
     met = {q["name"]: sum(1 for p in picked if quota_ok(q, p)) for q in cell.get("quotas", [])}
     by = {}
     for r in refused:   # one line a shape of refusal, not one a candidate
         k = (r["move"]["delivery"], r["move"]["release"], tuple(r["rows"]))
-        by[k] = by.get(k, 0) + 1
-    refused = [{"move": {"delivery": k[0], "release": k[1]}, "rows": list(k[2]), "candidates": n} for k, n in sorted(by.items())]
+        by.setdefault(k, []).append(r["move"]["hand"])
+    refused = [{"move": {"delivery": k[0], "release": k[1]}, "rows": list(k[2]), "candidates": len(v), "hands": sorted(set(v))} for k, v in sorted(by.items())]
     return {"kind": "table", "valid": valid, "refused": refused, "quotas": met, "moves": moves}
 
 
@@ -993,11 +1005,20 @@ def string_report(docs, parts, cells):
                 pools[btn] = [slim(m, btn) for m in cell["moves"] if btn != "y" or "quick" in m["forms"]]
                 keep = set(m["id"] for m in cell["moves"] if m["status"] != "waiting")
                 today[btn] = [m for m in pools[btn] if m["id"] in keep] + [slim(m, btn) for m in c.get("martial.%s.standin" % btn, {}).get("moves", [])]
+        rx = c.get("energy.x.reach")
+        if rx:   # energy in reach: a point-blank bolt takes a light's place in a string
+            pools["rx"] = [{"id": m["id"], "limb": "hand", "tip": parts["shot"]["hands"][m["hand"]]["shape"], "path": m["path"], "target": m["target"], "weight": "light", "arms": 1,
+                            "step": [], "hand": m["hand"], "release": m["release"], "body": m["body"], "button": "rx"} for m in rx["moves"]]
+            today["rx"] = [m for m, src in zip(pools["rx"], rx["moves"]) if src["status"] != "waiting"]
         counts, blind = after_two(parts, pools)
         counts_today, _ = after_two(parts, today)
         rep[who] = {"mix": {b: {"pool": len(pools[b]), "fewest": min(counts[b]), "median": sorted(counts[b])[len(counts[b]) // 2],
                                 "today": len(today[b]), "todayFewest": min(counts_today[b]) if counts_today[b] else 0} for b in pools},
                     "blind": blind}
+        if "martial.b" in c and c["martial.b"]["kind"] == "strikes":
+            sends = list(parts["strike"]["heavy"].get("launcher", {}).get("aim", {}).values())
+            rep[who]["launch"] = {"tier": {sd: [m["id"].rsplit(".", 1)[1] for m in c["martial.b"]["moves"] if "launch" in m["forms"] and m["sends"] == sd] for sd in sends},
+                                  "standIns": {sd: [m["keys"]["set"] for m in c.get("martial.b.standin", {}).get("moves", []) if "launch" in m["forms"] and m["sends"] == sd] for sd in sends}}
         if hold and c.get("martial.x", {}).get("kind") == "strikes":
             pool = [slim(m, "x") for m in c["martial.x"]["moves"] if m["status"] != "waiting"]
             opens = [n for n in pool if burst_fill(parts, pool, hold["slots"], [n]) is not None]
@@ -1010,8 +1031,12 @@ def string_findings(rep):
     bad = []
     for who, r in sorted(rep.items()):
         for b, v in r["mix"].items():
-            if v["fewest"] < FLOOR:
-                bad.append("%s: after some two blows only %d of his %d on %s may follow; the floor is %d" % (who, v["fewest"], v["pool"], b.upper(), FLOOR))
+            floor = 1 if b == "rx" else FLOOR   # four point-blank bolts: one must always be left to throw
+            if v["fewest"] < floor:
+                bad.append("%s: after some two blows only %d of his %d on %s may follow; the floor is %d" % (who, v["fewest"], v["pool"], b.upper(), floor))
+        for sd, ids in sorted(r.get("launch", {}).get("tier", {}).items()):
+            if not ids:
+                bad.append("%s: no heavy of his tier is a launcher that sends %s" % (who, sd))
         bu = r.get("burst")
         if bu and bu["openers"] < bu["lights"]:
             bad.append("%s: %d of his %d lights cannot open a whole burst" % (who, bu["lights"] - bu["openers"], bu["lights"]))
@@ -1020,7 +1045,7 @@ def string_findings(rep):
 
 # ---------------------------------------------------------------- the sheet
 
-WORDS = {"stand_in": "stands in, played at B's wind-up", "step_through": "step through", "full_turn": "full turn","martial": "martial arts", "energy": "energy arts", "arc_in": "arc in", "arc_out": "arc out", "hand_state": "hand state", "re_aim": "re-aim", "hand_state_re_aim": "hand state and re-aim", "re_aim_edge": "re-aim at the edge",
+WORDS = {"fist_glow": "lit fist", "point_blank": "point-blank bolt", "in_reach": "in reach", "stand_in": "stands in, played at B's wind-up", "step_through": "step through", "full_turn": "full turn","martial": "martial arts", "energy": "energy arts", "arc_in": "arc in", "arc_out": "arc out", "hand_state": "hand state", "re_aim": "re-aim", "hand_state_re_aim": "hand state and re-aim", "re_aim_edge": "re-aim at the edge",
          "hand_state_re_aim_edge": "hand state and re-aim at the edge", "zip_away": "zip away", "far_side": "far side", "arc_dive": "arc dive", "kiting_turn": "kiting turn", "short_beam": "short beam"}
 
 
@@ -1199,6 +1224,16 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
                         L.append("| %s | %s%s | %s | %s | %s | %s | %s | %d | %s | %s%s | %s |" % (m["id"].rsplit(".", 1)[1], note, m["limb"], m["tip"], w(m["path"]), m["target"], ", ".join(m["forms"]), m["sends"], m["beat"],
                                                                                                 key_text(m["keys"]), m["status"], "", legal_text(m)))
                     L.append("")
+                    if wts == ["heavy"] and rep and "launch" in rep.get(who, {}):
+                        if cell.get("temporary"):
+                            got = rep[who]["launch"]["standIns"]
+                            L.append("**Launchers among these** (they read on half the wind-up): " + ("; ".join("%s: %s" % (sd, ", ".join("`%s`" % x for x in ids)) for sd, ids in got.items() if ids) or "none") + ". A spin or a leap needs the whole wind-up.")
+                        else:
+                            got = rep[who]["launch"]["tier"]
+                            rest = [m["id"].rsplit(".", 1)[1] for m in c["moves"] if "launch" not in m["forms"]]
+                            L.append("**The launcher** (a tap of B on a staggered rival, on half the wind-up), by where it sends: " + "; ".join("%s: %s" % (sd, ", ".join(ids) or "none") for sd, ids in got.items()) + "."
+                                     + ((" Not launchers: " + ", ".join(rest) + " (a spin needs the whole wind-up; a blow to an arm or a leg is the wrench's).") if rest else ""))
+                        L.append("")
                     if c["refused"]:
                         L.append("Refused by Legal's rows, so never offered: " + "; ".join("%s (%s)" % (" ".join(w(x) for x in r["shape"]), ", ".join(r["rows"])) for r in c["refused"]) + ".")
                         L.append("")
@@ -1221,13 +1256,15 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
                     L.append("")
                 elif c["kind"] == "table":
                     if c.get("refused"):
-                        L.append("Refused by Legal's rows, so never offered: " + "; ".join("a %s on a %s (%s; %d candidates)" % (w(r["move"]["delivery"]), r["move"]["release"], ", ".join(r["rows"]), r["candidates"]) for r in c["refused"]) + ".")
+                        L.append("Refused by Legal's rows, so never offered: " + "; ".join("a %s on a %s (%s; %d candidates%s)" % (w(r["move"]["delivery"]), r["move"]["release"], ", ".join(r["rows"]), r["candidates"], (": " + ", ".join(w(h) for h in r["hands"])) if r.get("hands") else "") for r in c["refused"]) + ".")
                         L.append("")
-                    L.append("| # | Hand | Release | Body | Delivery | Readings | Keys | Status | Legal |")
+                    placed = any("target" in m for m in c["moves"])
+                    L.append("| # | Hand | Release | %s | Delivery | Readings | Keys | Status | Legal |" % ("Set on, and its path" if placed else "Body"))
                     L.append("| ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
                     for m in c["moves"]:
                         ks = ", ".join("`%s`" % x for x in (m["keys"]["set"], m["keys"]["hand"]) if x) or "new poses"
-                        L.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (m["id"].rsplit(".", 1)[1], w(m["hand"]), m["release"], w(m["body"]), w(m["delivery"]), ", ".join(m["forms"]), ks, m["status"], legal_text(m)))
+                        L.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (m["id"].rsplit(".", 1)[1], w(m["hand"]), m["release"], ("the %s, %s" % (m["target"], w(m["path"]))) if placed else w(m["body"]),
+                                                                           w(m["delivery"]), ", ".join(m["forms"]), ks, m["status"], legal_text(m)))
                     L.append("")
                 elif c["kind"] == "special":
                     cols = list(c["moves"][0]["look"].keys())
@@ -1256,6 +1293,8 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
         L.append("| :--- | " + " | ".join("---:" for _ in names) + " |")
         for b, label in (("x", "Lights that may follow, of the pool: fewest, median"), ("y", "Quick mediums that may follow: fewest, median"), ("b", "Heavies that may follow: fewest, median")):
             L.append("| %s | %s |" % (label, " | ".join("%d and %d of %d" % (rep[n]["mix"][b]["fewest"], rep[n]["mix"][b]["median"], rep[n]["mix"][b]["pool"]) for n in names)))
+        if all("rx" in rep[n]["mix"] for n in names):
+            L.append("| Point-blank bolts that may follow (energy in reach): fewest, median | %s |" % " | ".join("%d and %d of %d" % (rep[n]["mix"]["rx"]["fewest"], rep[n]["mix"]["rx"]["median"], rep[n]["mix"]["rx"]["pool"]) for n in names))
         L.append("| Two blows drawn blind that break a rule | %s |" % " | ".join("%.1f%%" % rep[n]["blind"] for n in names))
         L.append("| **On what is posed today:** heavies that can play (the stand-ins), and the fewest that may follow | %s |" % " | ".join("%d, fewest %d" % (rep[n]["mix"]["b"]["today"], rep[n]["mix"]["b"]["todayFewest"]) for n in names))
         if all("burst" in rep[n] for n in names):
@@ -1297,6 +1336,35 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
     L.append("")
     L.append("**Not in this list:** the vicious blows, which wait on Orb; the charge flashes and the heavy's armour cue, which are VFX's; how the ground answers a heavy, which is VFX's and World's.")
     L.append("")
+    if all("energy.x.reach" in out[n]["cells"] for n in names):
+        L.append("## New looks for Legal: the launcher and energy in reach (slice C2t)")
+        L.append("")
+        L.append("Not screened. R1 in the table at the top is Combat's proposal. The energy rows are applied by machine: a blast, and a point-blank bolt read as the row's burst, must leave one open or blade hand (e06).")
+        L.append("")
+        L.append("| # | Look | Whose | What is new | Rows and conditions that bear | State |")
+        L.append("| ---: | :--- | :--- | :--- | :--- | :--- |")
+        k_ = 0
+        for who in names:
+            for cid, label in (("energy.x.reach", "point-blank bolt"), ("energy.y.reach", "blast")):
+                for m in out[who]["cells"][cid]["moves"]:
+                    k_ += 1
+                    L.append("| %d | A %s: %s, on a %s, set on the %s (`%s`) | %s | an energy hand he has, let go with the hand on the rival; %s | %s; e01, e02, e06 | %s |" % (
+                        k_, label, w(m["hand"]), m["release"], m["target"], m["id"].split(".", 2)[2], nm(who), "its body is the posed `%s`, fitted to the contact" % m["keys"]["set"] if m["keys"]["set"] else "its release at the contact is new",
+                        ", ".join(m["asks"]), "not drawn" if m["status"] == "waiting" else "the pose exists; the contact and the shot are not drawn"))
+                refused = out[who]["cells"][cid].get("refused", [])
+                hands_ = sorted(set(h for r in refused for h in r.get("hands", [])))
+                if hands_:
+                    k_ += 1
+                    L.append("| %d | **A question:** a %s from his %s | %s | refused by machine today. %s | %s | not generated |" % (
+                        k_, label, " or ".join(w(h) for h in hands_), nm(who),
+                        "His own look is the lit fist with the plate behind it, the light on the plate and knuckle edges as e01 cleared it. Is e06 meant for an energy blow in reach, or may his be thrown that way?" if "fist_glow" in hands_ else "",
+                        ", ".join(sorted(set(x for r in refused for x in r["rows"])))))
+        for who in names:
+            k_ += 1
+            L.append("| %d | How the %s lets one go | %s | %s | R1 | not drawn |" % (k_, nm(who), nm(who), identity["fighters"][who].get("manner", {}).get("reach", "") if identity else ""))
+        k_ += 1
+        L.append("| %d | The launcher | both | no new shape: a heavy thrown on half of B's wind-up at a staggered rival. Its tell is cut to its last third, and the drive is whole. A spin or a leap is never thrown this way | W1, and the drive's own (D1 to D5) | the tier is not drawn; the stand-ins that read are posed |" % k_)
+        L.append("")
     L.append("## For Legal's person screen")
     L.append("")
     L.append("Legal's banned rows and sequence rules are applied to every strike on this sheet: the martial cells, the checks, the pushes, and the blow of every zip, step and charge. They cannot judge what follows, which is new vocabulary or a set piece (`docs/legal/movegen-screen.md` section 3).")
@@ -1366,7 +1434,9 @@ def self_test(parts, identity):
     expect("a light loaded at a hip is not h05's", [banned_hit(r, dict(med, weight="light"), ["light"], 1, {"has": ["hip_chamber"], "not": []}) for r in h05], [None])
     elb = {"limb": "elbow", "tip": "point", "path": "rise", "target": "jaw", "weight": "heavy"}
     expect("a rising elbow to the jaw that leaps is refused: b03 binds an elbow whatever its tip", [r["id"] for r in g["banned"] if banned_hit(r, elb, ["quick", "charged"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03"])
-    expect("a rising blade hand is still outside b03: the row lists a hand's tips", [r["id"] for r in g["banned"] if banned_hit(r, dict(elb, limb="hand", tip="blade"), ["quick"], 1, {"has": ["leap"], "not": []}) == "match"], [])
+    expect("a rising blade hand that leaps is refused too: Legal's row names every tip of a hand, elbow or knee (b03)", [r["id"] for r in g["banned"] if banned_hit(r, dict(elb, limb="hand", tip="blade"), ["quick"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03"])
+    foreign = {"id": "t", "match": {"limb": ["hand", "elbow"], "tip": ["fist"], "flags": ["leap"]}}
+    expect("a tip list binds only the limbs that can have those tips: an elbow is bound whatever its tip, a blade hand is not", [banned_hit(foreign, dict(elb, limb=lb, tip=tp), ["quick"], 1, {"has": ["leap"], "not": []}) for lb, tp in (("elbow", "point"), ("hand", "blade"), ("hand", "fist"))], ["match", None, "match"])
     expect("a rising elbow carries the rising blow's condition (L1)", [c["id"] for c in g["conditions"] if "when" in c and match(c["when"], dict(elb, arms=1))], ["L1", "L6", "W1", "D4"])
     expect("a light is not judged by them (b12)", [r["id"] for r in g["banned"] if banned_hit(r, dict(med, weight="light"), ["light"], 1, {"has": ["hip_chamber"], "not": []}) == "match"], [])
     line = {"limb": "hand", "tip": "fist", "path": "line", "target": "chest", "weight": "medium"}
@@ -1375,6 +1445,17 @@ def self_test(parts, identity):
     expect("a two-arm medium is held only", forms_of(g, line, 2), ["charged"])
     expect("a medium that leaps is held only", forms_of(g, dict(line, limb="foot", tip="sole"), 0, ["leap"]), ["charged"])
     expect("a light takes no wind-up rule", windup_of(g, dict(line, weight="light"), 1), None)
+    hvy = {"limb": "hand", "tip": "fist", "path": "line", "target": "chest", "weight": "heavy"}
+    expect("a stepping heavy to the chest is a launcher: it reads on half the wind-up", "launch" in forms_of(g, hvy, 1), True)
+    expect("a spinning heavy needs the whole wind-up: not a launcher", (windup_of(g, dict(hvy, path="spin"), 1)["reads"], "launch" in forms_of(g, dict(hvy, path="spin"), 1)), ("full", False))
+    expect("a heavy that leaps is not a launcher", "launch" in forms_of(g, dict(hvy, limb="foot", tip="sole"), 0, ["leap"]), False)
+    expect("a heavy to an arm is not a launcher: it is the wrench's", "launch" in forms_of(g, dict(hvy, path="drop", target="arm"), 1), False)
+    expect("a blast in reach from the lit fist is refused (e06)", group_hits(parts_, {"hand": "fist_glow", "release": "thrust", "body": "in_reach", "delivery": "blast", "target": "chest"}, "energy"), ["e06"])
+    expect("a point-blank bolt from the lit fist is refused: it is read as the row's burst (e06)", group_hits(parts_, {"hand": "fist_glow", "release": "thrust", "body": "in_reach", "delivery": "point_blank", "target": "chest"}, "energy"), ["e06"])
+    expect("a point-blank bolt from the blade hand passes", group_hits(parts_, {"hand": "blade_hand", "release": "thrust", "body": "in_reach", "delivery": "point_blank", "target": "chest"}, "energy"), [])
+    pb = {"id": "r1", "limb": "hand", "tip": "blade", "path": "line", "target": "chest", "hand": "blade_hand", "release": "thrust", "body": "in_reach"}
+    expect("the same point-blank bolt twice running is refused, even at another place (e06)", string_breaks(parts_, [pb, dict(pb, id="r2", target="gut")]), ["e06"])
+    expect("a point-blank bolt counts as a blow: a third running to the chest (f02, s02)", string_breaks(parts_, [dict(hvy, id="a"), dict(hvy, id="b", tip="plate", path="arc_in"), pb]), ["f02", "s02"])
     hv = [m for m in shapes(g) if m["weight"] == "heavy"]
     expect("the heavy tier has no headbutt, no blow to a shin and no rising hand to the jaw or head",
            [m for m in hv if m["limb"] == "head" or m["target"] == "shins" or (m["limb"] == "hand" and m["path"] == "rise" and m["target"] in ("jaw", "head"))], [])
