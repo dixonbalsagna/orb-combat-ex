@@ -1,7 +1,7 @@
 // Origin: the search that picks the colour-vision presets' lane colours (deterministic: a fixed grid, no randomness).
 // Written by the Art Director session (Claude, claude-sonnet-5-5), 2026-10-06. Human direction: Orb, via the EP.
 import { dE00, simulate, fromHsl, hsl, lchOf, toOklab, toLab } from '../sky/colour.mjs';
-import { CUES, DEFAULT_LANES, skySamples } from './cues.mjs';
+import { CUES, cuesFor, DEFAULT_LANES, skySamples } from './cues.mjs';
 
 const SK = skySamples(), SKY = SK.map(s => s.hex), SKY_HL = SK.filter(s => s.band === 'horizon' || s.band === 'lower').map(s => s.hex), CUE = Object.values(CUES);
 // Legal's hue families for the auras (docs/legal/rule-of-cool-screen.md): the Protagonist cool (green to blue), the Anti-hero violet (hue 260 to 320); never white, red, orange, gold or yellow
@@ -10,7 +10,7 @@ export const FAMILY = { protagonist: { h: [150, 250], l: [26, 88], s: [45, 100] 
 export function scoreOne(hexc, kind) {
   const x = simulate(hexc, kind);
   let dCue = 99, dSky = 99, dHL = 99, wc = '', ws = '';
-  for (const [n, c] of Object.entries(CUES)) { const d = dE00(x, simulate(c, kind)); if (d < dCue) { dCue = d; wc = n; } }
+  for (const [n, c] of Object.entries(cuesFor(kind))) { const d = dE00(x, simulate(c, kind)); if (d < dCue) { dCue = d; wc = n; } }
   for (const s of SKY) { const d = dE00(x, simulate(s, kind)); if (d < dSky) { dSky = d; ws = s; } }
   for (const s of SKY_HL) { const d = dE00(x, simulate(s, kind)); if (d < dHL) dHL = d; }
   return { dCue, dSky, dHL, wc, ws, x };

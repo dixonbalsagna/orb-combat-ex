@@ -71,24 +71,24 @@
     "protan": {
       "protagonist": {
         "col": "#3d8fdc",
-        "aura": "#46b9b9"
+        "aura": "#30a6a6"
       },
       "rival": {
         "col": "#a52a2a",
         "aura": "#6b0bcb"
       },
-      "chosen_by": "the strongest pair (the nearest-to-default pair was more than 3 dE weaker at its weakest)",
+      "chosen_by": "the first round's pair with the Protagonist's aura darkened a little (#46b9b9 to #30a6a6): it sat 13 from UI's neutral \"fresh\" mark, now 18.5",
       "measured_dE00_under_this_vision": {
-        "between_the_two": 39.6,
+        "between_the_two": 34.9,
         "protagonist": {
-          "to_wound_and_guard_marks": 14.6,
+          "to_wound_and_guard_marks": 18.5,
           "nearest_mark": "wound fresh",
-          "to_sky_near_the_fighters": 15.8,
-          "to_any_sky_band": 15.8
+          "to_sky_near_the_fighters": 14.1,
+          "to_any_sky_band": 14.1
         },
         "rival": {
-          "to_wound_and_guard_marks": 27.2,
-          "nearest_mark": "wound broken",
+          "to_wound_and_guard_marks": 32.6,
+          "nearest_mark": "guard",
           "to_sky_near_the_fighters": 14,
           "to_any_sky_band": 7.7
         }
@@ -103,14 +103,14 @@
         "col": "#a52a2a",
         "aura": "#5b0bcb"
       },
-      "chosen_by": "the pair nearest the default that clears the floors (cue 16, sky 12, between 24, lightness gap 24)",
+      "chosen_by": "unchanged: it clears UI's marks (18.3 and 32.3)",
       "measured_dE00_under_this_vision": {
         "between_the_two": 36.8,
         "protagonist": {
-          "to_wound_and_guard_marks": 16.5,
+          "to_wound_and_guard_marks": 18.3,
           "nearest_mark": "wound fresh",
-          "to_sky_near_the_fighters": 20.3,
-          "to_any_sky_band": 20.3
+          "to_sky_near_the_fighters": 16.1,
+          "to_any_sky_band": 16.1
         },
         "rival": {
           "to_wound_and_guard_marks": 32.3,
@@ -123,33 +123,217 @@
     "tritan": {
       "protagonist": {
         "col": "#3d8fdc",
-        "aura": "#b7aaf8"
+        "aura": "#9c90d5"
       },
       "rival": {
         "col": "#a52a2a",
-        "aura": "#7243d0"
+        "aura": "#6b0bcb"
       },
-      "chosen_by": "the pair nearest the default that clears the floors (cue 20, sky 16, between 28, lightness gap 28)",
+      "chosen_by": "a revised pair (was #b7aaf8 and #7243d0): the first Protagonist aura sat 13.5 from UI's neutral \"fresh\" mark, now 20.4",
       "measured_dE00_under_this_vision": {
-        "between_the_two": 28.5,
+        "between_the_two": 30.9,
         "protagonist": {
-          "to_wound_and_guard_marks": 20.1,
-          "nearest_mark": "guard",
-          "to_sky_near_the_fighters": 17.9,
-          "to_any_sky_band": 17.9
+          "to_wound_and_guard_marks": 20.4,
+          "nearest_mark": "wound fresh",
+          "to_sky_near_the_fighters": 18.9,
+          "to_any_sky_band": 18.9
         },
         "rival": {
-          "to_wound_and_guard_marks": 33.9,
-          "nearest_mark": "guard",
-          "to_sky_near_the_fighters": 17.8,
-          "to_any_sky_band": 12.8
+          "to_wound_and_guard_marks": 35.3,
+          "nearest_mark": "wound battered",
+          "to_sky_near_the_fighters": 15.4,
+          "to_any_sky_band": 10.8
         }
       }
     }
   },
+  "_non_colour_marks": {
+    "protagonist": {
+      "glyph": "ring",
+      "body_decal": {
+        "where": "the near shoulder plate",
+        "shape": "a ring: outer radius 3.9 body units, stroke 1.6, hollow",
+        "ink": "the gear light colour (#c4ece6) on the dark plate"
+      },
+      "aura_pattern": "solid ring",
+      "hud_chip": "a circle",
+      "strip_marker": "a circle"
+    },
+    "rival": {
+      "glyph": "slash",
+      "body_decal": {
+        "where": "across the near upper arm",
+        "shape": "one diagonal bar from low-left to high-right: 9 body units long, 2.4 wide",
+        "ink": "the accent light colour (#d9c4f8) on the dark sleeve"
+      },
+      "aura_pattern": "broken ring: dashes 6 px long with 4 px gaps along the outline (a diagonal stripe mask)",
+      "hud_chip": "a diamond",
+      "strip_marker": "a diamond"
+    },
+    "rule": "A new fighter gets a glyph from a different family to every existing one (a ring, a slash, then for example a chevron, a bar, a cross of dots), used in the same five places; never a letter or a number."
+  },
+  "_biome_patterns": {
+    "note": "A pattern per biome on the planet strip (colour only today), 12 by 12 tiles; ink is the base colour moved 0.2 in OKLab lightness away from the middle. Sheet: art/concepts/colour-vision/biome-patterns.svg.",
+    "ocean": {
+      "pattern": "waves",
+      "tile_px": 12,
+      "mode": "stroke",
+      "stroke_px": 1.4,
+      "path": "M0 4 Q3 1 6 4 T12 4 M0 10 Q3 7 6 10 T12 10",
+      "circles": null,
+      "base": "#2a6b98",
+      "ink": "#68a8d8"
+    },
+    "plains": {
+      "pattern": "grass ticks",
+      "tile_px": 12,
+      "mode": "stroke",
+      "stroke_px": 1.4,
+      "path": "M2 10 V6 M6 8 V4 M10 11 V7",
+      "circles": null,
+      "base": "#5f9140",
+      "ink": "#275600"
+    },
+    "city": {
+      "pattern": "grid of squares",
+      "tile_px": 12,
+      "mode": "stroke",
+      "stroke_px": 1.2,
+      "path": "M1.5 1.5 h4 v4 h-4 z M7.5 1.5 h4 v4 h-4 z M1.5 7.5 h4 v4 h-4 z M7.5 7.5 h4 v4 h-4 z",
+      "circles": null,
+      "base": "#6c7079",
+      "ink": "#a8acb6"
+    },
+    "village": {
+      "pattern": "roofs",
+      "tile_px": 12,
+      "mode": "fill",
+      "stroke_px": null,
+      "path": "M0 12 L3 6 L6 12 Z M6 6 L9 0 L12 6 Z",
+      "circles": null,
+      "base": "#7c8e4b",
+      "ink": "#44540b"
+    },
+    "forest": {
+      "pattern": "round crowns",
+      "tile_px": 12,
+      "mode": "fill",
+      "stroke_px": null,
+      "path": null,
+      "circles": [
+        [
+          3,
+          3,
+          1.9
+        ],
+        [
+          9,
+          3,
+          1.9
+        ],
+        [
+          6,
+          9,
+          1.9
+        ]
+      ],
+      "base": "#2e6a35",
+      "ink": "#6aa76e"
+    },
+    "desert": {
+      "pattern": "stipple",
+      "tile_px": 12,
+      "mode": "fill",
+      "stroke_px": null,
+      "path": null,
+      "circles": [
+        [
+          2,
+          2,
+          0.8
+        ],
+        [
+          7,
+          4,
+          0.8
+        ],
+        [
+          11,
+          1,
+          0.8
+        ],
+        [
+          4,
+          8,
+          0.8
+        ],
+        [
+          9,
+          10,
+          0.8
+        ]
+      ],
+      "base": "#cfa85c",
+      "ink": "#906b17"
+    },
+    "mountains": {
+      "pattern": "peaks",
+      "tile_px": 12,
+      "mode": "stroke",
+      "stroke_px": 1.4,
+      "path": "M0 11 L3 4 L6 11 L9 4 L12 11",
+      "circles": null,
+      "base": "#7e766a",
+      "ink": "#463e34"
+    }
+  },
+  "_ui_wound_sets": {
+    "fresh": "#dfe6f0",
+    "confirmed": "UI's stage sets are confirmed: every pair is 20 or more apart under its own vision (Art's check: protan 26.1, deutan 20.9, tritan 22.0; UI reported 26.1, 19.9, 22.0)",
+    "per_preset": {
+      "protan": {
+        "stage_set": {
+          "wound fresh": "#dfe6f0",
+          "wound bruised": "#f2e6a0",
+          "wound battered": "#c8102e",
+          "wound broken": "#b8860b"
+        },
+        "weakest_pair_dE00": 26.1,
+        "weakest_pair": "wound bruised / wound broken",
+        "internal_vs_fresh_dE00": 3.7
+      },
+      "deutan": {
+        "stage_set": {
+          "wound fresh": "#dfe6f0",
+          "wound bruised": "#f0e442",
+          "wound battered": "#c8102e",
+          "wound broken": "#ff5c8a"
+        },
+        "weakest_pair_dE00": 20.9,
+        "weakest_pair": "wound battered / wound broken",
+        "internal_vs_fresh_dE00": 6.2
+      },
+      "tritan": {
+        "stage_set": {
+          "wound fresh": "#dfe6f0",
+          "wound bruised": "#f0e442",
+          "wound battered": "#cc79a7",
+          "wound broken": "#c8102e"
+        },
+        "weakest_pair_dE00": 22,
+        "weakest_pair": "wound fresh / wound bruised",
+        "internal_vs_fresh_dE00": 14.3
+      }
+    }
+  },
+  "_guard_cue": {
+    "colour": "#5aaaff",
+    "stays_in_every_preset": true,
+    "why": "the defensive stance colour is not remapped by any preset, and every preset aura is at least 19 from it under its own vision (CIEDE2000)"
+  },
   "cue_set": {
     "wound_and_guard_marks": {
-      "wound fresh": "#8fd6ff",
+      "wound fresh": "#dfe6f0",
       "wound bruised": "#f2e6a0",
       "wound battered": "#ffb454",
       "wound broken": "#ff5c8a",

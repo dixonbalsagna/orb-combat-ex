@@ -5,7 +5,7 @@
   "fighter_alias": { "anti_hero": "rival" },
   "presets": {
     "protan": {
-      "lanes": { "protagonist": "#46b9b9", "rival": "#6b0bcb" },
+      "lanes": { "protagonist": "#30a6a6", "rival": "#6b0bcb" },
       "map": { "STAGE_BRUISED": "#f2e6a0", "STAGE_BATTERED": "#c8102e", "STAGE_BROKEN": "#b8860b" }
     },
     "deutan": {
@@ -13,7 +13,7 @@
       "map": { "STAGE_BRUISED": "#f0e442", "STAGE_BATTERED": "#c8102e", "STAGE_BROKEN": "#ff5c8a" }
     },
     "tritan": {
-      "lanes": { "protagonist": "#b7aaf8", "rival": "#7243d0" },
+      "lanes": { "protagonist": "#9c90d5", "rival": "#6b0bcb" },
       "map": { "STAGE_BRUISED": "#f0e442", "STAGE_BATTERED": "#cc79a7", "STAGE_BROKEN": "#c8102e" }
     }
   }

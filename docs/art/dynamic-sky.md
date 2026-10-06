@@ -44,3 +44,30 @@ The aura colours are `#8fd6ff` (Protagonist) and `#9a80d8` (rival), drawn with a
 
 ## What Rendering needs
 `data/art/sky.json` (the keys as data, the blend paths, the start, the drift, the rate limits and the mood numbers), `keys.mjs` (the blend and `slewStep` as working reference code: GDScript is a port), and `sky-stills.svg` (the two fighters over each key and the mood extremes). **Legal:** the horizon ember glow (slow, never a flash; the red-flash test is about saturated red changing fast, and this changes over 50 s) and ruin's slow darkening, against their earlier screen that nothing in the sky's reaction darkens or flashes.
+
+## 6. The world takes the key (2026-10-07)
+Rendering's still (`docs/rendering/img/sky-keys.png`) showed what the first direction missed: only the sky's bands changed, so at the night key a daylit ground and daylit buildings stood under a black sky. That is not wanted. **Sheets:** `art/concepts/sky/world-light.svg` (the world at every key, as built against directed), `world-light-numbers.svg` (the tints, the checks, the rate). **Data:** `data/art/sky.json` `_world_light`.
+
+**How:** inside the existing look (flat colours with a keyline, no new shading model), a multiply tint per layer, in linear light, and for the night a small additive lift so the dark ground is cool, not brown. Layers: ground, buildings, trees, water, civilians, bodies. The tints blend with the same phase, hold and smoothstep as the sky. A multiply (with the small night lift) is enough: no light direction, no per-pixel emissive.
+
+| Key | ground (mul R G B) | bodies (mul) | windows lit |
+|---|---|---|---|
+| noon | 1 1 1 | 1 1 1 | 10% |
+| golden | 1.0 0.84 0.62 (warms the sand) | 1.0 0.92 0.8 | 18% |
+| sunset | 0.95 0.74 0.58 | 0.98 0.86 0.76 | 30% (as built) |
+| night | 0.07 0.10 0.22, lift 0 0.006 0.034 | 0.5 0.58 0.82, lift 0 0.008 0.03 | 62% |
+| dawn | 0.58 0.52 0.62 | 0.84 0.8 0.88 | 40% |
+
+The other layers are in the data. **The bodies dim about half as much as the ground** (a luminance factor of 0.55 against 0.11 at night); **the aura rings, the lane colours, the lit windows' colour, the HUD, flashes, particles and the keyline never dim.** Windows come on with the dark (the lit share rises with the same phase, so they come on a few at a time).
+**The one change to the start of a match:** the sunset world takes a gentle warm tint (about a fifth darker, a little more red than blue) so the first screen is lit as an evening; Orb should see it once. A strength knob that scales every tint toward 1 keeps the start exactly as it was if he prefers.
+**The mood on the world:** frenzy dims the ground, buildings and trees a little (0.94 0.90 0.90); ruin takes the ground to 0.80 0.74 0.70, buildings 0.82 0.76 0.72, water 0.85 0.82 0.80 (soot); the bodies are never touched, so a fighter stays readable in a wrecked world. A burning town gives the ground, buildings and trees within 1800 body units a warm multiply (1.0 0.86 0.68), up to 35% at glow 1, falling off linearly.
+**Readable:** at every key and mood, the bodies stay at CIEDE2000 **15.1 or more** (the game's body colours against the tinted ground: Protagonist #3d8fdc, rival #a52a2a) and the auras **20.8 or more**, which is no worse than today's noon (the game unchanged there).
+**The rate:** the same hard limit, with the world in it: no sky band and no world layer changes in relative luminance faster than **0.035 a second** (place and time; 0.05 with the mood), the screen's mean (the sky weighted 0.45, each layer by its share of the screen) no faster than **0.015** (0.02 with the mood). The shown phase follows the target through `slewAll` (`world.mjs`). Measured: a lap at the limit takes **48 s** (the world adds none: the sky's horizon band is the slowest part), and the stress test never moved the screen mean by more than **0.0150** or any band or layer by more than **0.0350** in any second.
+
+## 7. The mood's amounts are data
+`data/art/sky.json` `mood._amounts` holds every amount as a number (frenzy, ruin, glow: which band mixes toward which colour by how much, the stars' thinning, the glow's reach per key), written from `keys.mjs` `MOOD_AMOUNTS`, so Rendering reads numbers and copies nothing. The prose strings stay as the explanation. (Tools: `_amounts` is an underscore key today, which the schema passes; promote it to a proper property when you next touch the schema.)
+
+## 8. The town glow, and what "burning" should mean
+**Sheet:** `art/concepts/sky/sky-glow.svg`. **Data:** `_town_glow` and `_burning`.
+- **Larger and higher, not left as a far-off cue.** It was a third of the horizon band tall, which a town's own buildings hide from inside it. Now about **0.30 of the screen wide** (gaussian) rising to **0.55 half screens** above the horizon; the horizon band takes 45% ember, the lower 22% and the upper 8% at its centre (the last two scaled by the key's `glow_reach`: none at noon, half at golden, full from the sunset on, because ember mixed into noon's blue turns it slate, near the rival's violet). A far town is the same glow smaller by distance (down to 0.12 of the screen). From inside a town the towers can still hide it, so the town also takes **firelight** (above), and smoke and ash are VFX columns, not the sky.
+- **It should die down.** There is no burning state in the sim today, so the glow follows damage and never falls. What the picture needs: a building **burns** when it reaches damage stage 2 or worse from **energy** (a beam, an explosion, a mine), not a plain blow. Its **fire** goes from 0 to 1 over 10 s, holds while it burns (60 s at most, and 90 s after the last energy damage to it), then falls to 0 over 30 s. A town glows by the **share of its buildings on fire** (half of them is a full glow); the glow eases at the mood rate (at least 50 s), so it lags the fire by design. When the fire is out the town stays wrecked: ruin keeps its smoke tint and the glow is gone. World and Simulation own the state; this is what it should mean.

@@ -8,7 +8,8 @@ import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { luminance, contrast, dE00, toLab } from './colour.mjs';
-import { KEYS, BANDS, START, BLEND, WEIGHTS, BUDGET, skyAt, moodSky, meanLum, lumsAt, slewStep, EMBER, SMOKE, ASH, DEEP } from './keys.mjs';
+import { KEYS, BANDS, START, BLEND, WEIGHTS, BUDGET, skyAt, moodSky, meanLum, lumsAt, slewStep, EMBER, SMOKE, ASH, DEEP, MOOD_AMOUNTS, GLOW_REACH } from './keys.mjs';
+import { WORLD, WORLD_MOOD, WINDOWS, LAYERS, NEVER_DIMMED, SCREEN_W, BASE_LUM, lumsAll, slewAll, checks } from './world.mjs';
 import { text, rect, paras, header, BG, F, still, skyPanel, SIM_DEFS } from './draw.mjs';
 
 const OUT = dirname(fileURLToPath(import.meta.url)), ROOT = join(OUT, '..', '..', '..');
@@ -37,8 +38,16 @@ function stress() {
 const ST = stress();
 function lapMin(P, A) { let wp = [99], wa = [99]; for (let i = 0; i < 4000; i++) { const ph = i / 4000, b = skyAt(ph).bands; for (const bd of BANDS) { const dp = dE00(P, b[bd]), da = dE00(A, b[bd]); if (dp < wp[0]) wp = [dp, ph, bd]; if (da < wa[0]) wa = [da, ph, bd]; } } return { P: wp, A: wa }; }
 const LAP = lapMin(AURA.P, AURA.A);
+function worldNumbers() {
+  let q = 0, t = 0, tr = 0; const dt = 1 / 30; while (tr < 1 && t < 2000) { const n = slewAll(q, (q + 0.3) % 1, dt); let dd = n - q; if (dd < -0.5) dd += 1; tr += dd; q = n; t += dt; }
+  let p = START.phase, tt = 0, tgt = START.phase; const d2 = 1 / 60, h = [];
+  for (let i = 0; i < 60 * 180; i++) { tt += d2; const dir = (Math.floor(tt / 3) % 2 === 0) ? 1 : -1; tgt = (tgt + dir * 0.25 * d2 + 1) % 1; p = slewAll(p, tgt, d2); const l = lumsAll(p); h.push([l.mean, ...Object.values(l.parts)]); }
+  let wm = 0, wp = 0; for (let i = 60; i < h.length; i++) { wm = Math.max(wm, Math.abs(h[i][0] - h[i - 60][0])); for (let j = 1; j < h[i].length; j++) wp = Math.max(wp, Math.abs(h[i][j] - h[i - 60][j])); }
+  return { lap_seconds: Math.round(t), stress_mean: +wm.toFixed(4), stress_part: +wp.toFixed(4) };
+}
+const WN = worldNumbers(), WC = checks();
 const mlabel = m => Object.keys(m).length ? Object.entries(m).map(([k, v]) => `${k} ${v}`).join(' + ') : 'calm';
-function moodMin(P, A) { let wp = [99], wa = [99]; for (const k of KEYS) for (const m of [{}, { frenzy: 1 }, { ruin: 1 }, { frenzy: 1, ruin: 1 }, { glow: 1 }, { frenzy: 1, ruin: 1, glow: 1 }, { ruin: 0.5 }, { frenzy: 0.5, glow: 0.5 }]) { const b = moodSky(k.bands, m); for (const bd of BANDS) { const dp = dE00(P, b[bd]), da = dE00(A, b[bd]); if (dp < wp[0]) wp = [dp, k.id, bd, mlabel(m)]; if (da < wa[0]) wa = [da, k.id, bd, mlabel(m)]; } } return { P: wp, A: wa }; }
+function moodMin(P, A) { let wp = [99], wa = [99]; for (const k of KEYS) for (const m of [{}, { frenzy: 1 }, { ruin: 1 }, { frenzy: 1, ruin: 1 }, { glow: 1 }, { frenzy: 1, ruin: 1, glow: 1 }, { ruin: 0.5 }, { frenzy: 0.5, glow: 0.5 }]) { const b = moodSky(k.bands, { ...m, reach: k.glow_reach }); for (const bd of BANDS) { const dp = dE00(P, b[bd]), da = dE00(A, b[bd]); if (dp < wp[0]) wp = [dp, k.id, bd, mlabel(m)]; if (da < wa[0]) wa = [da, k.id, bd, mlabel(m)]; } } return { P: wp, A: wa }; }
 const MOOD = moodMin(AURA.P, AURA.A);
 
 // ---------------------------------------------------------------------------------------------------------- the data
@@ -58,6 +67,7 @@ function writeData() {
     place: { cycles_per_lap: 1, phase_of: 'fract(start.phase + (camera_x - spawn_x) / lap_length)', per_pane: true, note: 'Flying once round the planet runs the whole cycle: noon, golden, sunset, night, dawn, noon. In split view each pane uses its own camera\'s place; the time drift and the mood are shared.' },
     time: { cycles_per_minute: DRIFT, cycle_minutes: 1 / DRIFT, note: 'Added to the place phase. A match that stays in one place goes from the sunset towards night over about 20 minutes; minute 8 is about 0.1 of a cycle on.' },
     rate_limit: {
+      _with_the_world: 'the rate limit now includes the world\'s layers: see _world_light.rate',
       unit: 'relative luminance (WCAG: 0 black to 1 white) per second',
       total: BUDGET.total, place_and_time: BUDGET.place, mood: BUDGET.mood,
       how: 'The shown phase follows the target phase through slewStep (art/concepts/sky/keys.mjs): each frame it moves as far as it can without any band changing faster than place_and_time.band or the weighted mean faster than place_and_time.mean. Mood drivers ease at the rates in mood.min_seconds_0_to_1.',
@@ -71,9 +81,36 @@ function writeData() {
       colours: { ember: EMBER, smoke: SMOKE, ash: ASH, deep: DEEP },
       frenzy: 'top toward deep by 18%, upper toward the top by 25%, lower toward deep by 10%, horizon toward ember by 10%',
       ruin: 'horizon and lower toward smoke by 60%, upper by 40%, the top toward ash by 25%; stars thin to 30% at 1',
-      glow: 'the horizon band toward ember by 35% in a wide low glow over the burning town (about 0.22 of the screen wide and a third of the horizon band tall); nothing above the lower band',
+      _amounts: { ...MOOD_AMOUNTS, glow_reach_by_key: GLOW_REACH, note: 'Every mood amount as a number (keys.mjs MOOD_AMOUNTS writes this; Rendering reads it and copies nothing). Each entry mixes the band toward `to` (a colour in mood.colours, or the top band after frenzy) by amount times the driver 0 to 1; glow lower and upper amounts are scaled by the key\'s glow_reach and by the place blend, so the glow stays low at noon.' },
+      glow: 'a town\'s glow: the horizon band toward ember by 45%, the lower band by 22% and the upper by 8% (the last two scaled by the key\'s glow_reach: none at noon), in a glow about 0.30 of the screen wide that rises to 0.55 half screens above the horizon, so it shows above a town\'s rooflines (see _town_glow)',
       order: 'frenzy, then ruin, then glow, each applied to the key\'s bands',
       never: ['nothing fast: every driver is rate limited as above', 'no pulsing, flicker or beat-sync, no reaction to a single hit (that is the VFX flashes\' job)', 'never white, never a lightning flash', 'never grey toward violet: ruin darkens and warms (smoke) instead of greying']
+    },
+    _town_glow: {
+      note: 'Direction for the town glow (Art, 2026-10-07): larger and higher, not a far-off speck, and with firelight on the town itself. Rendering reads the sizes here.',
+      width_screens: 0.30, height_half_screens: 0.55, across: 'gaussian, sigma 0.14 of the screen width', up: 'linear from full at the horizon to nothing at height_half_screens',
+      why: 'the first glow was a third of the horizon band tall, which a town\'s own buildings hide from inside it; this one reaches above the rooflines and is seen over them from the ground. A far-off town is the same glow smaller by distance: width times (1 - distance / 12000) down to 0.12 of the screen.',
+      firelight: WORLD_MOOD.firelight,
+      smoke_and_ash: 'a VFX column of smoke above the town (low contrast, never brighter than the sky behind it); not the sky shader',
+    },
+    _burning: {
+      note: 'What a burning town should mean (for World and Simulation; Art only says what the picture needs). There is no burning state in the sim today, so the glow follows damage and never dies down.',
+      a_building_burns_when: 'it reaches damage stage 2 or worse from energy (a beam, an explosion or a mine), not from a plain blow',
+      fire_value: { rise_s: 10, burn_s_max: 60, fall_s: 30, from_last_energy_hit: 90, note: 'a building\'s fire goes 0 to 1 over 10 s, holds while it burns (60 s at most, 90 s after the last energy damage to it), then falls to 0 over 30 s: it burns out' },
+      a_town_glows: 'by the share of its buildings with fire: half the town on fire is a full glow (1), none is 0; the glow then rises and falls at the mood rate (min_seconds_0_to_1.glow), so it lags the fire by design',
+      after: 'when the fire is out the town stays wrecked: ruin keeps its smoke tint (ruin never falls), the glow is gone',
+    },
+    _world_light: {
+      note: 'The world\'s light per key (Art, 2026-10-07). The sky changed alone, so at night a daylit ground and daylit buildings stood under a dark sky. This tints the world with the sky. Inside the existing look: flat colours with a keyline, no new shading model.',
+      how: 'Per layer a multiplier mul (RGB, in linear light, 1 = unchanged) and a small additive lift add (linear light, night only): colour = authored colour times mul, plus add. Blend with the same phase, hold and smoothstep as the sky, the multipliers and the lift mixed linearly. Then the mood multiplies on top (mood below).',
+      layers: LAYERS, never_dimmed: NEVER_DIMMED,
+      keys: Object.fromEntries(Object.entries(WORLD).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).map(([L, t]) => [L, { mul: t.mul, add: t.add }]))])),
+      windows: WINDOWS,
+      mood: WORLD_MOOD,
+      screen_weights: SCREEN_W,
+      base_luminance: Object.fromEntries(Object.entries(BASE_LUM).map(([k, v]) => [k, +v.toFixed(3)])),
+      rate: { rule: 'the same hard limit as the sky, extended to the world: no band and no world layer changes in relative luminance faster than 0.035 a second (place and time), and the SCREEN\'S mean (the sky weighted 0.45, each layer by screen_weights) no faster than 0.015; with the mood, 0.05 and 0.02 in all. The shown phase follows the target through slewAll (art/concepts/sky/world.mjs), the same slew as the sky with the layers in it.', measured: { seconds_for_one_lap_at_the_limit: WN.lap_seconds, stress_test_worst_1s_screen_mean: WN.stress_mean, stress_test_worst_1s_any_band_or_layer: WN.stress_part } },
+      readability: { rule: 'the fighters\' bodies stay at CIEDE2000 of 15 or more from the tinted ground at every key and mood (as at noon today, which is 15.1), and the auras at 20 or more (20.8 at noon today); the bodies dim less than the ground (about 0.5 of the ground\'s darkening at night); the auras and lane colours do not dim', measured: { worst_body_vs_ground: { dE00: +WC.worst_body_vs_ground[0].toFixed(1), fighter: WC.worst_body_vs_ground[1], biome: WC.worst_body_vs_ground[2], mood: WC.worst_body_vs_ground[3] }, worst_aura_vs_ground: { dE00: +WC.worst_aura_vs_ground[0].toFixed(1), fighter: WC.worst_aura_vs_ground[1], biome: WC.worst_aura_vs_ground[2], mood: WC.worst_aura_vs_ground[3] } } },
     },
     readability: {
       lane_colours: AURA, rule: 'The two aura colours stay at CIEDE2000 of 24 or more from every key\'s four bands, 20 or more at every blended place, and 24 or more at every mood extreme; the aura is always drawn with a dark keyline (#0a0d14) so it also reads where a bright horizon (L 0.5 to 0.8) would match it.',
@@ -131,7 +168,7 @@ function moodSheet() {
   KEYS.forEach((k, r) => {
     const y0 = 124 + r * 168;
     b += text(24, y0 + 14, `${k.id[0].toUpperCase() + k.id.slice(1)}`, { size: 14, weight: 700 });
-    cols.forEach(([lab, m], c) => { const x = 24 + c * 354, bands = moodSky(k.bands, m); b += skyPanel(x, y0 + 22, 342, 134, bands, { stars: k.stars * (1 - 0.7 * (m.ruin ?? 0)), glow: m.glow, glowAt: 0.55 }) + (r === 0 ? text(x + 4, 118, lab, { size: 12, weight: 600 }) : ''); });
+    cols.forEach(([lab, m], c) => { const x = 24 + c * 354, bands = moodSky(k.bands, { ...m, reach: k.glow_reach }); b += skyPanel(x, y0 + 22, 342, 134, bands, { stars: k.stars * (1 - 0.7 * (m.ruin ?? 0)), glow: m.glow, glowAt: 0.55 }) + (r === 0 ? text(x + 4, 118, lab, { size: 12, weight: 600 }) : ''); });
   });
   const y = 124 + 5 * 168 + 10;
   b += text(24, y, 'What each driver does, and the rates (the fastest each may go from 0 to 1)', { size: 15, weight: 700 });
@@ -153,10 +190,10 @@ function stillsSheet() {
   const W = 1800, H = 1330, cw = 436, ch = 290;
   let b = rect(0, 0, W, H, '#dcd8e6') + header('The dynamic sky: the two fighters over each key', 'The Protagonist (aura #8fd6ff) and the rival (aura #9a80d8) in the approved looks, with the aura as a thin ring and a dark keyline, over each key, and over the mood extremes. The aura ring is an assumption for this still; Rendering\'s own aura is the truth. Working labels.', W);
   const list = [...KEYS.map(k => [k.id[0].toUpperCase() + k.id.slice(1), k.bands, k.stars, {}]),
-    ['Sunset, frenzied and wrecked', moodSky(KEYS[2].bands, { frenzy: 1, ruin: 1 }), 0.1, {}],
-    ['Dusk with a burning town', moodSky(skyAt(0.44).bands, { glow: 1, frenzy: 0.5 }), 0.4, { glow: 1, glowAt: 0.8 }],
-    ['Noon, wrecked', moodSky(KEYS[0].bands, { ruin: 1 }), 0, {}],
-    ['Night, frenzied', moodSky(KEYS[3].bands, { frenzy: 1 }), 1, {}]];
+    ['Sunset, frenzied and wrecked', moodSky(KEYS[2].bands, { frenzy: 1, ruin: 1, reach: 1 }), 0.1, {}],
+    ['Dusk with a burning town', moodSky(skyAt(0.44).bands, { glow: 1, frenzy: 0.5, reach: 1 }), 0.4, { glow: 1, glowAt: 0.8 }],
+    ['Noon, wrecked', moodSky(KEYS[0].bands, { ruin: 1, reach: 0 }), 0, {}],
+    ['Night, frenzied', moodSky(KEYS[3].bands, { frenzy: 1, reach: 1 }), 1, {}]];
   list.forEach(([name, bands, stars, o], i) => {
     const x = 24 + (i % 4) * (cw + 6), y = 124 + Math.floor(i / 4) * (ch + 56);
     b += still(x, y, cw, ch, bands, AURA.P, AURA.A, { stars, glow: o.glow, glowAt: o.glowAt }) + text(x + 4, y + ch + 18, name, { size: 12.5, weight: 700 });

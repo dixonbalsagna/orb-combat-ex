@@ -8,11 +8,11 @@ import { mixOklab, luminance, lchOf, labOf, lumFromLab, fromOklab } from './colo
 export const BANDS = ['horizon', 'lower', 'upper', 'top'];
 // the keys, in order round the planet: where on a lap (0 to 1) each stands, and how long it holds before the blend begins
 export const KEYS = [
-  { id: 'noon', phase: 0.00, hold: 0.04, note: 'high day: a deep blue sky with a warm cream haze at the horizon (not a pale blue, which would swallow the Protagonist\'s aura)', bands: { top: '#14307a', upper: '#005999', lower: '#0084c5', horizon: '#e8e2c8' }, stars: 0 },
-  { id: 'golden', phase: 0.18, hold: 0.03, note: 'late afternoon: the blue climbs, amber comes up from the horizon', bands: { top: '#1a2f6e', upper: '#0066a8', lower: '#e0a468', horizon: '#f8dba0' }, stars: 0 },
-  { id: 'sunset', phase: 0.32, hold: 0.03, note: 'THE CURRENT LOOK (render/core/look.gd SKY): indigo, violet, coral, peach. A match starts here', bands: { top: '#111a3e', upper: '#4b4483', lower: '#d9776b', horizon: '#f4b87a' }, stars: 0.15 },
-  { id: 'night', phase: 0.58, hold: 0.06, note: 'night: blue-black, a cold blue rim; no violet, so the rival\'s violet is never swallowed', bands: { top: '#05081a', upper: '#0a1636', lower: '#12294f', horizon: '#243e66' }, stars: 1 },
-  { id: 'dawn', phase: 0.84, hold: 0.03, note: 'dawn: teal into rose into apricot, cooler and greener than the sunset so the two are not mistaken', bands: { top: '#16264e', upper: '#00618b', lower: '#d98f86', horizon: '#f6c9a0' }, stars: 0.3 },
+  { id: 'noon', glow_reach: 0, phase: 0.00, hold: 0.04, note: 'high day: a deep blue sky with a warm cream haze at the horizon (not a pale blue, which would swallow the Protagonist\'s aura)', bands: { top: '#14307a', upper: '#005999', lower: '#0084c5', horizon: '#e8e2c8' }, stars: 0 },
+  { id: 'golden', glow_reach: 0.5, phase: 0.18, hold: 0.03, note: 'late afternoon: the blue climbs, amber comes up from the horizon', bands: { top: '#1a2f6e', upper: '#0066a8', lower: '#e0a468', horizon: '#f8dba0' }, stars: 0 },
+  { id: 'sunset', glow_reach: 1, phase: 0.32, hold: 0.03, note: 'THE CURRENT LOOK (render/core/look.gd SKY): indigo, violet, coral, peach. A match starts here', bands: { top: '#111a3e', upper: '#4b4483', lower: '#d9776b', horizon: '#f4b87a' }, stars: 0.15 },
+  { id: 'night', glow_reach: 1, phase: 0.58, hold: 0.06, note: 'night: blue-black, a cold blue rim; no violet, so the rival\'s violet is never swallowed', bands: { top: '#05081a', upper: '#0a1636', lower: '#12294f', horizon: '#243e66' }, stars: 1 },
+  { id: 'dawn', glow_reach: 1, phase: 0.84, hold: 0.03, note: 'dawn: teal into rose into apricot, cooler and greener than the sunset so the two are not mistaken', bands: { top: '#16264e', upper: '#00618b', lower: '#d98f86', horizon: '#f6c9a0' }, stars: 0.3 },
 ];
 export const START = { key: 'sunset', phase: 0.32 };
 
@@ -57,23 +57,27 @@ export { lchOf };
 
 // ---------------------------------------------------------------------------------------------------------- the fight's mood and the world's damage
 export const EMBER = '#d9603c', SMOKE = '#2e221c', ASH = '#2b2724', DEEP = '#05060f';
-// frenzy f and ruin r in 0 to 1 (both already eased by the caller); glow g in 0 to 1 is a burning town's strength for the band's own glow (the glow's width is Rendering's)
-export function moodSky(bands, { frenzy = 0, ruin = 0, glow = 0 } = {}) {
-  const f = frenzy, r = ruin, out = { ...bands };
-  // frenzy: the top, upper and lower bands deepen, the horizon takes a little ember
-  out.top = mixOklab(out.top, DEEP, 0.18 * f);
-  out.upper = mixOklab(out.upper, out.top, 0.25 * f);
-  out.lower = mixOklab(out.lower, DEEP, 0.10 * f);
-  out.horizon = mixOklab(out.horizon, EMBER, 0.10 * f);
-  // ruin: smoke. Each band is mixed toward a dark brown smoke (so a ruined sky darkens and warms, and never greys toward the rival's violet), the top toward ash, the stars thinning
-  out.horizon = mixOklab(out.horizon, SMOKE, 0.60 * r);
-  out.lower = mixOklab(out.lower, SMOKE, 0.60 * r);
-  out.upper = mixOklab(out.upper, SMOKE, 0.40 * r);
-  out.top = mixOklab(out.top, ASH, 0.25 * r);
-  // a burning town: ember at the horizon band only
-  out.horizon = mixOklab(out.horizon, EMBER, 0.35 * glow);
+export const MOOD_COLOURS = { ember: EMBER, smoke: SMOKE, ash: ASH, deep: DEEP };
+// every amount the mood uses, as data (data/art/sky.json mood._amounts is written from this, so Rendering reads numbers and nothing is kept in step by hand).
+// Each entry mixes the band toward `to` (a mood colour, or 'top' for the top band after frenzy has deepened it) by amount times the driver (0 to 1).
+// The glow is a town's: its horizon amount is the strongest, and the lower and upper amounts (how high it reaches) are scaled by the key's glow_reach, so at noon it stays low.
+export const MOOD_AMOUNTS = {
+  order: ['frenzy', 'ruin', 'glow'],
+  frenzy: { top: { to: 'deep', amount: 0.18 }, upper: { to: 'top', amount: 0.25 }, lower: { to: 'deep', amount: 0.10 }, horizon: { to: 'ember', amount: 0.10 } },
+  ruin: { horizon: { to: 'smoke', amount: 0.60 }, lower: { to: 'smoke', amount: 0.60 }, upper: { to: 'smoke', amount: 0.40 }, top: { to: 'ash', amount: 0.25 }, stars_at_full: 0.30 },
+  glow: { horizon: { to: 'ember', amount: 0.45 }, lower: { to: 'ember', amount: 0.22, scaled_by_key_reach: true }, upper: { to: 'ember', amount: 0.08, scaled_by_key_reach: true } },
+};
+export const GLOW_REACH = { noon: 0, golden: 0.5, sunset: 1, night: 1, dawn: 1 };
+const mixTo = (c, to, amount, out) => mixOklab(c, to === 'top' ? out.top : MOOD_COLOURS[to], amount);
+// frenzy f, ruin r and glow g in 0 to 1 (already eased by the caller); reach is the key's glow_reach (0 to 1, from GLOW_REACH, blended with the place)
+export function moodSky(bands, { frenzy = 0, ruin = 0, glow = 0, reach = 1 } = {}) {
+  const out = { ...bands };
+  for (const [band, { to, amount }] of Object.entries(MOOD_AMOUNTS.frenzy)) out[band] = mixTo(out[band], to, amount * frenzy, out);
+  for (const [band, v] of Object.entries(MOOD_AMOUNTS.ruin)) if (band !== 'stars_at_full') out[band] = mixTo(out[band], v.to, v.amount * ruin, out);
+  for (const [band, v] of Object.entries(MOOD_AMOUNTS.glow)) out[band] = mixTo(out[band], v.to, v.amount * glow * (v.scaled_by_key_reach ? reach : 1), out);
   return out;
 }
+export const starsAfterRuin = (stars, ruin) => stars * (1 - (1 - MOOD_AMOUNTS.ruin.stars_at_full) * ruin);
 
 // ---------------------------------------------------------------------------------------------------------- the rate limit (nothing fast)
 export const BUDGET = { place: { mean: 0.015, band: 0.035 }, mood: { mean: 0.005, band: 0.015 }, total: { mean: 0.02, band: 0.05 } };

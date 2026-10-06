@@ -144,6 +144,7 @@
     "note": "Added to the place phase. A match that stays in one place goes from the sunset towards night over about 20 minutes; minute 8 is about 0.1 of a cycle on."
   },
   "rate_limit": {
+    "_with_the_world": "the rate limit now includes the world's layers: see _world_light.rate",
     "unit": "relative luminance (WCAG: 0 black to 1 white) per second",
     "total": {
       "mean": 0.02,
@@ -191,7 +192,75 @@
     },
     "frenzy": "top toward deep by 18%, upper toward the top by 25%, lower toward deep by 10%, horizon toward ember by 10%",
     "ruin": "horizon and lower toward smoke by 60%, upper by 40%, the top toward ash by 25%; stars thin to 30% at 1",
-    "glow": "the horizon band toward ember by 35% in a wide low glow over the burning town (about 0.22 of the screen wide and a third of the horizon band tall); nothing above the lower band",
+    "_amounts": {
+      "order": [
+        "frenzy",
+        "ruin",
+        "glow"
+      ],
+      "frenzy": {
+        "top": {
+          "to": "deep",
+          "amount": 0.18
+        },
+        "upper": {
+          "to": "top",
+          "amount": 0.25
+        },
+        "lower": {
+          "to": "deep",
+          "amount": 0.1
+        },
+        "horizon": {
+          "to": "ember",
+          "amount": 0.1
+        }
+      },
+      "ruin": {
+        "horizon": {
+          "to": "smoke",
+          "amount": 0.6
+        },
+        "lower": {
+          "to": "smoke",
+          "amount": 0.6
+        },
+        "upper": {
+          "to": "smoke",
+          "amount": 0.4
+        },
+        "top": {
+          "to": "ash",
+          "amount": 0.25
+        },
+        "stars_at_full": 0.3
+      },
+      "glow": {
+        "horizon": {
+          "to": "ember",
+          "amount": 0.45
+        },
+        "lower": {
+          "to": "ember",
+          "amount": 0.22,
+          "scaled_by_key_reach": true
+        },
+        "upper": {
+          "to": "ember",
+          "amount": 0.08,
+          "scaled_by_key_reach": true
+        }
+      },
+      "glow_reach_by_key": {
+        "noon": 0,
+        "golden": 0.5,
+        "sunset": 1,
+        "night": 1,
+        "dawn": 1
+      },
+      "note": "Every mood amount as a number (keys.mjs MOOD_AMOUNTS writes this; Rendering reads it and copies nothing). Each entry mixes the band toward `to` (a colour in mood.colours, or the top band after frenzy) by amount times the driver 0 to 1; glow lower and upper amounts are scaled by the key's glow_reach and by the place blend, so the glow stays low at noon."
+    },
+    "glow": "a town's glow: the horizon band toward ember by 45%, the lower band by 22% and the upper by 8% (the last two scaled by the key's glow_reach: none at noon), in a glow about 0.30 of the screen wide that rises to 0.55 half screens above the horizon, so it shows above a town's rooflines (see _town_glow)",
     "order": "frenzy, then ruin, then glow, each applied to the key's bands",
     "never": [
       "nothing fast: every driver is rate limited as above",
@@ -199,6 +268,569 @@
       "never white, never a lightning flash",
       "never grey toward violet: ruin darkens and warms (smoke) instead of greying"
     ]
+  },
+  "_town_glow": {
+    "note": "Direction for the town glow (Art, 2026-10-07): larger and higher, not a far-off speck, and with firelight on the town itself. Rendering reads the sizes here.",
+    "width_screens": 0.3,
+    "height_half_screens": 0.55,
+    "across": "gaussian, sigma 0.14 of the screen width",
+    "up": "linear from full at the horizon to nothing at height_half_screens",
+    "why": "the first glow was a third of the horizon band tall, which a town's own buildings hide from inside it; this one reaches above the rooflines and is seen over them from the ground. A far-off town is the same glow smaller by distance: width times (1 - distance / 12000) down to 0.12 of the screen.",
+    "firelight": {
+      "multiply": [
+        1,
+        0.86,
+        0.68
+      ],
+      "strength": 0.35,
+      "radius": 1800,
+      "applies_to": [
+        "ground",
+        "buildings",
+        "trees"
+      ]
+    },
+    "smoke_and_ash": "a VFX column of smoke above the town (low contrast, never brighter than the sky behind it); not the sky shader"
+  },
+  "_burning": {
+    "note": "What a burning town should mean (for World and Simulation; Art only says what the picture needs). There is no burning state in the sim today, so the glow follows damage and never dies down.",
+    "a_building_burns_when": "it reaches damage stage 2 or worse from energy (a beam, an explosion or a mine), not from a plain blow",
+    "fire_value": {
+      "rise_s": 10,
+      "burn_s_max": 60,
+      "fall_s": 30,
+      "from_last_energy_hit": 90,
+      "note": "a building's fire goes 0 to 1 over 10 s, holds while it burns (60 s at most, 90 s after the last energy damage to it), then falls to 0 over 30 s: it burns out"
+    },
+    "a_town_glows": "by the share of its buildings with fire: half the town on fire is a full glow (1), none is 0; the glow then rises and falls at the mood rate (min_seconds_0_to_1.glow), so it lags the fire by design",
+    "after": "when the fire is out the town stays wrecked: ruin keeps its smoke tint (ruin never falls), the glow is gone"
+  },
+  "_world_light": {
+    "note": "The world's light per key (Art, 2026-10-07). The sky changed alone, so at night a daylit ground and daylit buildings stood under a dark sky. This tints the world with the sky. Inside the existing look: flat colours with a keyline, no new shading model.",
+    "how": "Per layer a multiplier mul (RGB, in linear light, 1 = unchanged) and a small additive lift add (linear light, night only): colour = authored colour times mul, plus add. Blend with the same phase, hold and smoothstep as the sky, the multipliers and the lift mixed linearly. Then the mood multiplies on top (mood below).",
+    "layers": [
+      "ground",
+      "buildings",
+      "trees",
+      "water",
+      "civilians",
+      "bodies"
+    ],
+    "never_dimmed": [
+      "aura rings",
+      "lane colours",
+      "lit windows",
+      "the HUD",
+      "flashes and particles",
+      "the keyline (#0a0d14)"
+    ],
+    "keys": {
+      "noon": {
+        "ground": {
+          "mul": [
+            1,
+            1,
+            1
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "buildings": {
+          "mul": [
+            1,
+            1,
+            1
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "trees": {
+          "mul": [
+            1,
+            1,
+            1
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "water": {
+          "mul": [
+            1,
+            1,
+            1
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "civilians": {
+          "mul": [
+            1,
+            1,
+            1
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "bodies": {
+          "mul": [
+            1,
+            1,
+            1
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "golden": {
+        "ground": {
+          "mul": [
+            1,
+            0.84,
+            0.62
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "buildings": {
+          "mul": [
+            1,
+            0.86,
+            0.68
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "trees": {
+          "mul": [
+            0.96,
+            0.9,
+            0.7
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "water": {
+          "mul": [
+            0.86,
+            0.9,
+            0.96
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "civilians": {
+          "mul": [
+            1,
+            0.9,
+            0.76
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "bodies": {
+          "mul": [
+            1,
+            0.92,
+            0.8
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "sunset": {
+        "ground": {
+          "mul": [
+            0.95,
+            0.74,
+            0.58
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "buildings": {
+          "mul": [
+            0.96,
+            0.78,
+            0.64
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "trees": {
+          "mul": [
+            0.9,
+            0.78,
+            0.62
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "water": {
+          "mul": [
+            0.78,
+            0.78,
+            0.88
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "civilians": {
+          "mul": [
+            0.98,
+            0.84,
+            0.72
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "bodies": {
+          "mul": [
+            0.98,
+            0.86,
+            0.76
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "night": {
+        "ground": {
+          "mul": [
+            0.07,
+            0.1,
+            0.22
+          ],
+          "add": [
+            0,
+            0.006,
+            0.034
+          ]
+        },
+        "buildings": {
+          "mul": [
+            0.09,
+            0.12,
+            0.24
+          ],
+          "add": [
+            0,
+            0.006,
+            0.03
+          ]
+        },
+        "trees": {
+          "mul": [
+            0.06,
+            0.09,
+            0.19
+          ],
+          "add": [
+            0,
+            0.004,
+            0.022
+          ]
+        },
+        "water": {
+          "mul": [
+            0.05,
+            0.1,
+            0.26
+          ],
+          "add": [
+            0,
+            0.006,
+            0.034
+          ]
+        },
+        "civilians": {
+          "mul": [
+            0.45,
+            0.52,
+            0.78
+          ],
+          "add": [
+            0,
+            0.006,
+            0.03
+          ]
+        },
+        "bodies": {
+          "mul": [
+            0.5,
+            0.58,
+            0.82
+          ],
+          "add": [
+            0,
+            0.008,
+            0.03
+          ]
+        }
+      },
+      "dawn": {
+        "ground": {
+          "mul": [
+            0.58,
+            0.52,
+            0.62
+          ],
+          "add": [
+            0,
+            0.002,
+            0.008
+          ]
+        },
+        "buildings": {
+          "mul": [
+            0.62,
+            0.56,
+            0.66
+          ],
+          "add": [
+            0,
+            0.002,
+            0.008
+          ]
+        },
+        "trees": {
+          "mul": [
+            0.5,
+            0.52,
+            0.58
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "water": {
+          "mul": [
+            0.5,
+            0.58,
+            0.72
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "civilians": {
+          "mul": [
+            0.82,
+            0.78,
+            0.86
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        },
+        "bodies": {
+          "mul": [
+            0.84,
+            0.8,
+            0.88
+          ],
+          "add": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "windows": {
+      "lit_share": {
+        "noon": 0.1,
+        "golden": 0.18,
+        "sunset": 0.3,
+        "night": 0.62,
+        "dawn": 0.4
+      },
+      "lit_colour": "#f3cf86",
+      "glass": "#2c3550",
+      "glass_night": "#1a2038",
+      "note": "the share rises and falls with the same phase, so windows come on a few at a time (a window is a few pixels and the share changes over tens of seconds)"
+    },
+    "mood": {
+      "frenzy": {
+        "ground": [
+          0.94,
+          0.9,
+          0.9
+        ],
+        "buildings": [
+          0.94,
+          0.9,
+          0.9
+        ],
+        "trees": [
+          0.94,
+          0.9,
+          0.9
+        ],
+        "water": [
+          0.94,
+          0.94,
+          0.94
+        ],
+        "civilians": [
+          1,
+          1,
+          1
+        ],
+        "bodies": [
+          1,
+          1,
+          1
+        ]
+      },
+      "ruin": {
+        "ground": [
+          0.8,
+          0.74,
+          0.7
+        ],
+        "buildings": [
+          0.82,
+          0.76,
+          0.72
+        ],
+        "trees": [
+          0.76,
+          0.7,
+          0.66
+        ],
+        "water": [
+          0.85,
+          0.82,
+          0.8
+        ],
+        "civilians": [
+          1,
+          1,
+          1
+        ],
+        "bodies": [
+          1,
+          1,
+          1
+        ]
+      },
+      "firelight": {
+        "multiply": [
+          1,
+          0.86,
+          0.68
+        ],
+        "strength": 0.35,
+        "radius": 1800,
+        "applies_to": [
+          "ground",
+          "buildings",
+          "trees"
+        ]
+      }
+    },
+    "screen_weights": {
+      "sky": 0.45,
+      "ground": 0.3,
+      "buildings": 0.1,
+      "trees": 0.02,
+      "water": 0.08,
+      "civilians": 0.01,
+      "bodies": 0.04
+    },
+    "base_luminance": {
+      "ground": 0.225,
+      "buildings": 0.139,
+      "trees": 0.084,
+      "water": 0.145,
+      "civilians": 0.3,
+      "bodies": 0.178
+    },
+    "rate": {
+      "rule": "the same hard limit as the sky, extended to the world: no band and no world layer changes in relative luminance faster than 0.035 a second (place and time), and the SCREEN'S mean (the sky weighted 0.45, each layer by screen_weights) no faster than 0.015; with the mood, 0.05 and 0.02 in all. The shown phase follows the target through slewAll (art/concepts/sky/world.mjs), the same slew as the sky with the layers in it.",
+      "measured": {
+        "seconds_for_one_lap_at_the_limit": 48,
+        "stress_test_worst_1s_screen_mean": 0.015,
+        "stress_test_worst_1s_any_band_or_layer": 0.035
+      }
+    },
+    "readability": {
+      "rule": "the fighters' bodies stay at CIEDE2000 of 15 or more from the tinted ground at every key and mood (as at noon today, which is 15.1), and the auras at 20 or more (20.8 at noon today); the bodies dim less than the ground (about 0.5 of the ground's darkening at night); the auras and lane colours do not dim",
+      "measured": {
+        "worst_body_vs_ground": {
+          "dE00": 15.1,
+          "fighter": "protagonist",
+          "biome": "ocean",
+          "mood": "calm"
+        },
+        "worst_aura_vs_ground": {
+          "dE00": 20.8,
+          "fighter": "rival",
+          "biome": "city",
+          "mood": "calm"
+        }
+      }
+    }
   },
   "readability": {
     "lane_colours": {
@@ -209,7 +841,7 @@
     "measured": {
       "at_keys_and_mood_extremes_min_dE00": {
         "protagonist": 24.6,
-        "rival": 25.1
+        "rival": 24.7
       },
       "round_the_lap_min_dE00": {
         "protagonist": 20.3,

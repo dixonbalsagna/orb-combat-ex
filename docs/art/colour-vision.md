@@ -8,17 +8,27 @@ Owner: Art Director. 2026-10-06. Direction on paper; UI owns the setting and the
 Simulated vision: Machado, Oliveira and Fernandes (2009), severity 1.0, applied in linear RGB (the SVG filters on the sheet use the same matrices). Distance: CIEDE2000 (dE). 20 or more reads as clearly different, 25 or more as clearly different at a glance. The cues the lanes must stay apart from: the wound stages (fresh `#8fd6ff`, bruised `#f2e6a0`, battered `#ffb454`, broken `#ff5c8a`, internal `#bfeeff`) and the guard (the defensive stance colour `#5aaaff`), from `ui/core/ui_look.gd`; and the sky (every band of every key and mood extreme in `data/art/sky.json`). The HUD chips (charge, hidden, warn and the other stance colours) are shape-coded UI; they are in the data for UI to check.
 
 ## The presets (the auras; the body colour pair is 48 or more apart under every vision, so it stays)
+Revised 2026-10-07: UI made "fresh" the neutral `#dfe6f0` and chose its own wound-stage sets per preset (`ui/data/colour_vision.json`); the search now checks each lane against **UI's actual marks**, and two Protagonist auras and one rival aura moved because they sat too close to the new neutral.
+
 | Preset | Protagonist aura | Rival aura | between the two | Protagonist to marks / sky | Rival to marks / sky |
 |---|---|---|---|---|---|
-| default | `#8fd6ff` | `#9a80d8` | 28.5 (deutan 17.4, protan 20.6) | 0 (the same as "fresh") / 24.6 | 23.4 / 25.2 |
-| **protan** | `#46b9b9` | `#6b0bcb` | 39.6 | 14.6 / 15.8 | 27.2 / 14.0 |
-| **deutan** | `#35b6ab` | `#5b0bcb` | 36.8 | 16.5 / 20.3 | 32.3 / 12.3 |
-| **tritan** | `#b7aaf8` | `#7243d0` | 28.5 | 20.1 / 17.9 | 33.9 / 17.8 |
+| default | `#8fd6ff` | `#9a80d8` | 28.5 (deutan 17.4, protan 20.6) | 9.2 ("internal") / 24.6 | 23.4 / 25.2 |
+| **protan** | `#30a6a6` (was `#46b9b9`) | `#6b0bcb` | 34.9 | 18.5 / 14.1 | 32.6 / 14.0 |
+| **deutan** | `#35b6ab` | `#5b0bcb` | 36.8 | 18.3 / 16.1 | 32.3 / 12.3 |
+| **tritan** | `#9c90d5` (was `#b7aaf8`) | `#6b0bcb` (was `#7243d0`) | 30.9 | 20.4 / 18.9 | 35.3 / 15.4 |
 
-(Numbers are CIEDE2000 under that vision; the default row is as seen with typical vision except where noted.) Each aura stays in its fighter's hue family (the Protagonist cool, the rival violet, hue 260 to 320, never white, red, orange, gold or yellow); the pair is split mostly by **lightness**, which every kind of colour blindness still sees. The search (a fixed grid, no randomness) takes the pair nearest the default that clears its floors, or the strongest pair if that is more than 3 dE stronger at its weakest. The sheet shows, for each preset, the swatches as designed and as seen, the marks as seen, the numbers, and the two fighters over a sunset, a noon and a night through the simulation, default against preset.
+**UI must set its `lanes` to these values:** protan protagonist `#30a6a6`; tritan protagonist `#9c90d5` and rival `#6b0bcb` (Tools' cross-check flags the mismatch until it does).
+
+(Numbers are CIEDE2000 under that vision; the default row is as seen with typical vision.) Each aura stays in its fighter's hue family (the Protagonist cool, the rival violet, hue 260 to 320, never white, red, orange, gold or yellow); the pair is split mostly by **lightness**, which every kind of colour blindness still sees. The search (a fixed grid, no randomness) found the first round's pairs; the two revisions are the nearest passing colours to them. The sheet shows, for each preset, the swatches as designed and as seen, the marks as seen, the numbers, and the two fighters over a sunset, a noon and a night through the simulation, default against preset.
+
+## UI's choices, confirmed (2026-10-07)
+- **The guard cue `#5aaaff` stays in every preset.** No preset remaps it, and every preset aura is at least 19 from it under its own vision.
+- **UI's wound-stage sets are confirmed.** Every pair in each set is 20 or more apart under its own vision (Art's check: protan 26.1, deutan 20.9, tritan 22.0; UI reported 26.1, 19.9, 22.0). UI's "default cues 3.7, 6.2 and 14.3" are the distance between "fresh" and "internal" (`#bfeeff`): still near-identical under the simulations. **Give "internal" a shape (a double ring), not a hue.**
+- **A non-colour mark per fighter** (never colour alone): a **ring** for the Protagonist and a **slash** for the rival, used on the body (a decal on the near shoulder plate and on the upper arm), the aura (solid against broken), the HUD chip (circle and diamond) and the planet strip's marker. Sheet: `art/concepts/colour-vision/fighter-marks.svg`; data: `_non_colour_marks`. A future fighter takes a glyph from a different family.
+- **A pattern per biome** on the planet strip (colour only today): waves (ocean), grass ticks (plains), a grid of squares (city), roofs (village), round crowns (forest), a stipple (desert), peaks (mountains), on a 12 by 12 tile in an ink moved 0.2 of the lightness scale away from the colour, so it reads in colour and in grey, through every vision. Sheet: `art/concepts/colour-vision/biome-patterns.svg`; data: `_biome_patterns`.
 
 ## Honest limits
-The wound marks and the guard are pale and cool, so a lane colour that is also cool lands near them for some viewers: under protan vision the best any lane in its own hue family reaches is about 14 from the marks and the sky. Two things carry the rest. The **dark keyline** (`#0a0d14`) round every aura reads on any sky for every viewer, and the **shapes** (the wound stages differ by shape as well as tint, `docs/design/damage-model.md`; the fighters differ in silhouette). **One standing conflict is independent of colour vision:** the Protagonist's aura `#8fd6ff` is exactly the "fresh" wound colour `#8fd6ff`, and "fresh" and "internal" (`#bfeeff`) differ only by lightness. UI should give the wound marks their own neutral (the crown's `#dfe6f0` role colour, or a shape) so a pale blue means one thing; that is UI's call.
+The wound marks and the guard are pale and cool, so a lane colour that is also cool lands near them for some viewers: under protan vision the best any lane in its own hue family reaches is about 14 to 18 from the marks and the sky. Two things carry the rest: the **dark keyline** (`#0a0d14`) round every aura, which reads on any sky for every viewer, and the **shapes** (the wound stages by shape as well as tint, `docs/design/damage-model.md`; the fighters' silhouettes and now the marks above).
 
 ## The rule for future fighters
 1. Give every fighter a lane colour and an aura colour in a hue family agreed with Legal.
