@@ -16,6 +16,8 @@ var _tracked: Array = []      # other materials whose shader includes bend.gdsha
 var _bend: float = 0.0
 var _dist: float = 3000.0
 var _sky: Dictionary = {}     # sky uniforms the tracked (fogging) materials share
+var _haze: float = 0.0        # this pane's pan haze (pane_world.gd), for the tracked materials that take it
+var _haze_ground := Color.BLACK
 
 
 ## This pane's opaque flat material. shade 0 is fully flat (no fake light).
@@ -102,6 +104,8 @@ func track(m: ShaderMaterial) -> void:
 	_tracked.append(m)
 	m.set_shader_parameter("bend", _bend)
 	m.set_shader_parameter("cam_dist", _dist)
+	m.set_shader_parameter("pan_haze", _haze)
+	m.set_shader_parameter("pan_ground", _haze_ground)
 	for k in _sky:
 		m.set_shader_parameter(k, _sky[k])
 
@@ -137,6 +141,19 @@ func set_sky(name: String, v) -> void:
 	_sky[name] = v
 	for m in _tracked:
 		m.set_shader_parameter(name, v)
+
+
+## This pane's pan haze, 0 to 1 (PaneWorld.pan_haze), and the ground's colour under its camera, for the tracked
+## materials (building.gdshader reads them). The colour is only sent while there is a haze to use it.
+func set_haze(v: float, ground: Color) -> void:
+	if v != _haze:
+		_haze = v
+		for m in _tracked:
+			m.set_shader_parameter("pan_haze", v)
+	if v > 0.0 and ground != _haze_ground:
+		_haze_ground = ground
+		for m in _tracked:
+			m.set_shader_parameter("pan_ground", ground)
 
 
 static func set_glow(m: ShaderMaterial, c: Color, alpha: float) -> void:

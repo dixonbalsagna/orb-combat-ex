@@ -174,13 +174,36 @@ func intro_running() -> bool:
 	return "intro" in S and S.intro != null and int(S.intro.left) > 0
 
 
-## Ask VFX's shared flash register whether a full flash of Rendering's may be drawn now (it takes a slot of the
-## second's three if so). col: the flash's colour (a red one is never granted). Which sources are low priority (at
-## most two of the three slots, none under reduced flashing) is the register's own list: the body's white, a head
+## Ask VFX's shared flash register whether a full flash of Rendering's may be drawn now (it takes its weight of the
+## second's budget if so). col: the flash's colour (a red one is never granted). area_px: what it covers, in pixels at
+## 1024 by 768 (flash_px, beam_px); step: its luminance change (RenderLook.FLASH_STEP). The register weighs it by the
+## area and counts none under a tenth of a step; without them it is weighed by its source. Which sources are low
+## priority (a share of the budget, none under reduced flashing) is the register's own list: the body's white, a head
 ## flash and a cue's flare are; a perfect block's guard flash, a beam and a clash are not. Every ask and every refusal
 ## is in the register's log. The caller draws its fallback when this is false.
-func ask_flash(source: String, col: Color = Color.WHITE) -> bool:
-	return vfx.flashes.ask(source, col, S.tick)
+func ask_flash(source: String, col: Color = Color.WHITE, area_px: float = -1.0, step: float = -1.0) -> bool:
+	return vfx.flashes.ask(source, col, S.tick, area_px, step)
+
+
+## An area in world units on the fighters' plane as pixels at 1024 by 768, at the camera's scale the register was
+## last given (VfxHub.px_per_unit, which main sets every frame).
+func flash_px(area_units: float) -> float:
+	return area_units * vfx.flashes.ppu * vfx.flashes.ppu
+
+
+## What a beam of length len and width w (world units; the sim's b.w) covers in one of the standard's windows: its body
+## layer's width, along as much of its length as a window holds.
+func beam_px(len: float, w: float) -> float:
+	var ppu: float = vfx.flashes.ppu
+	return minf(len * ppu, RenderLook.FLASH_WINDOW_DIAG) * w * float(BeamView.LAYERS[1][0]) * ppu
+
+
+## A clash's flare and its two beams, each reaching half way between the fighters.
+func clash_px(c) -> float:
+	var ppu: float = vfx.flashes.ppu
+	var half: float = 0.5 * absf(SimWrap.sdx(c.A.x, c.D.x))
+	var r: float = (RenderLook.FLASH_CLASH_R + 20.0 / maxf(ppu, 0.01)) * RenderLook.FLASH_GLOW_R
+	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0) + beam_px(half, 26.0 + c.D.tier * 8.0)
 
 
 ## Whether a beam's bright form (its white core, at full strength) was granted. One the host has not seen in a tick
@@ -189,16 +212,17 @@ func beam_flash(b) -> bool:
 	return bool(_beam_ok.get(b.get_instance_id(), true))
 
 
-## A beam that appeared this tick asks once, for every pane; a clash asks once as it starts.
+## A beam that appeared this tick asks once, for every pane; a clash asks once as it starts. Under reduced flashing
+## (or reduced motion) neither asks: every beam and clash is drawn calm, and the second's one slot is left to others.
 func _ask_beams() -> void:
 	var live: Dictionary = {}
 	for b in S.beams:
 		var id: int = b.get_instance_id()
-		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else ask_flash("beam", RenderLook.col(b.col))
+		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w), RenderLook.FLASH_STEP.beam))
 	_beam_ok = live
 	var on: bool = S.game.clash != null
 	if on and not _clash_on:
-		clash_flash = ask_flash("beam_clash")
+		clash_flash = not vfx.flashes.reduced and ask_flash("beam_clash", Color.WHITE, clash_px(S.game.clash), RenderLook.FLASH_STEP.beam_clash)
 	_clash_on = on
 
 
@@ -208,7 +232,7 @@ func _ask_hits() -> void:
 		var ht: float = S.fighters[i].hurtT
 		if not is_equal_approx(ht, _hit_T[i]) or is_nan(_hit_T[i]):
 			_hit_T[i] = ht
-			if ht <= S.T and S.T - ht < RenderLook.HIT_FLASH_S and ask_flash("body_hit"):
+			if ht <= S.T and S.T - ht < RenderLook.HIT_FLASH_S and ask_flash("body_hit", Color.WHITE, flash_px(RenderLook.FLASH_BODY_AREA * FighterView.HEIGHT * FighterView.HEIGHT), RenderLook.FLASH_STEP.body_hit):
 				hit_flash_T[i] = ht
 
 

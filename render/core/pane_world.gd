@@ -44,6 +44,11 @@ var _cue_t: float = -1.0
 static var clouds_on: bool = true          # the sky's clouds (main's --noclouds)
 static var sky_calm: bool = false          # reduced motion: the clouds stand still and nothing parts (main sets it)
 static var sky_react_on: bool = false      # the clouds part for a fighter at tier 3 or more: off unless asked for (main's --skyreact; QA's GB-002)
+static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
+var pan_haze: float = 0.0                  # 0 to 1, this frame
+var _pan_x: float = NAN                    # the camera's x and the time at the last frame seen
+var _pan_t: float = NAN
+var _pan_ground := Color.BLACK             # the ground's colour under the camera, eased (what a hazed wall melts toward below the horizon)
 var _react := PackedFloat32Array()         # per fighter: the sky's reaction to him, 0 to 1 (tier 3 half, tier 4 full)
 var _react_t: float = -1.0
 var _sky_mat: ShaderMaterial
@@ -103,6 +108,7 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	view_cam_x = cam_x
 	cam_rig.frame(cam.y, cam.z, jitter, vp.y, pitch)
+	_pan_haze(host, a, cam_x, vp)
 	planet.set_camera(cam_rig.position)
 	_view_cues(cam, vp)
 	if source == null and host.vfx.enabled and host.vfx.react_enabled:
@@ -128,6 +134,30 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	vfx_layer.update(host, a, cam_x, cam.z, vp.x)
 	beams.update(S, cam_x, cam.z, host)
 	particles.update(host.fxv, host.impact, cam_x, cam.z, cam_rig.half_width(vp.x, RenderLook.Z_PARTICLES), fighter_views)
+
+
+## The pan haze (RenderLook.PAN_HAZE_*; docs/rendering/flash-sources.md): how fast this pane's camera travels along the
+## ground, in screen widths a second of match time, eased in quickly and out slowly, for building.gdshader. A facade
+## that sweeps past flips its window grid and its edge against the sky many times a second; hazed, it does not.
+## Presentation only: it reads the camera this pane was given and writes a shader parameter.
+func _pan_haze(host: SimHost, a: float, cam_x: float, vp: Vector2) -> void:
+	var t: float = (float(host.ticks) + a) * SimConst.DT
+	var dt: float = t - _pan_t
+	var ground: Color = RenderLook.col(RenderLook.BIOME[WorldBiomes.biomeAt(SimWrap.wrap(cam_x))])
+	if is_nan(_pan_x) or dt < 0.0 or dt > 0.5:
+		pan_haze = 0.0   # a new match, or a seek
+		_pan_ground = ground
+	elif dt > 0.0:
+		_pan_ground = _pan_ground.lerp(ground, clampf(dt / RenderLook.PAN_HAZE_OUT_S, 0.0, 1.0))
+		var speed: float = absf(SimWrap.sdx(_pan_x, cam_x)) / maxf(2.0 * cam_rig.half_width(vp.x), 1.0) / dt
+		if speed < RenderLook.PAN_HAZE_CUT:
+			var want: float = smoothstep(RenderLook.PAN_HAZE_FROM, RenderLook.PAN_HAZE_FULL, speed) if pan_haze_on else 0.0
+			pan_haze = move_toward(pan_haze, want, dt / (RenderLook.PAN_HAZE_IN_S if want > pan_haze else RenderLook.PAN_HAZE_OUT_S))
+	else:
+		return   # the same instant again (a frozen tick): nothing moves
+	_pan_x = cam_x
+	_pan_t = t
+	mats.set_haze(pan_haze, _pan_ground)
 
 
 ## Keep the fighters in view behind buildings, by this pane's method. Either way a building counts as in front of a

@@ -151,6 +151,7 @@ func _ready() -> void:
 	ui_hud.anchor_fn = _hud_anchor
 	ui_hud.strip_fn = _hud_strip
 	ui_hud.split_fn = _split_record
+	ui_hud.flash_fn = _hud_flash
 	ui_hud.howto_opened.connect(_on_howto_opened)
 	ui_hud.howto_closed.connect(_on_howto_closed)
 	ui_hud.feedback_opened.connect(func(_context): _hold_for_overlay())
@@ -189,6 +190,8 @@ func _ready() -> void:
 	_on_option_changed("pad_preset_p2", ui_hud.opts["pad_preset_p2"])
 	_on_option_changed("energy_style", ui_hud.opts.get("energy_style", "hold"))
 	_on_option_changed("energy_style_p2", ui_hud.opts.get("energy_style_p2", "hold"))
+	for key in CHARGE_OPTIONS:
+		_on_option_changed(key, ui_hud.opts.get(key, false))
 	_touch_last = bool(ui_hud.opts["touch_ui"])
 	ui_hud.touch_state_fn = host.touch.display_state
 	host.drained.connect(_on_drained)
@@ -336,7 +339,7 @@ func _on_flashes_due(events: Array) -> void:
 func _flash_pulses(wanted: int, col: Color) -> int:
 	var n: int = 0
 	for k in range(wanted):
-		if host.ask_flash("head_flash", col):
+		if host.ask_flash("head_flash", col, host.flash_px(PI * RenderLook.FLASH_HEAD_R * RenderLook.FLASH_HEAD_R), RenderLook.FLASH_STEP.head_flash):
 			n += 1
 	return n
 
@@ -394,7 +397,8 @@ func _cue_events(events: Array) -> void:
 		if float(pose.get("flare", 0.0)) > 0.0:
 			for i in range(mini(2, fighter_views.size())):
 				if who < 0 or i == who:
-					flare_ok[i] = host.ask_flash("cue_flare", fighter_views[i]._aura_col)
+					var fr: float = RenderLook.FLASH_CUE_R * RenderLook.FLASH_GLOW_R
+					flare_ok[i] = host.ask_flash("cue_flare", fighter_views[i]._aura_col, host.flash_px(PI * fr * fr), minf(1.0, float(pose.flare)) * float(RenderLook.FLASH_STEP.cue_flare))
 		for pw in all_panes():
 			var views: Array = pw.fighter_views
 			for i in range(views.size()):
@@ -410,7 +414,7 @@ func _guard_events(events: Array) -> void:
 		if e.type == "parry":
 			var who: int = int(e.actor)
 			# The arc's flash asks the register once, for every pane; refused, its lines flash and its fill does not.
-			var full: bool = who >= 0 and who < fighter_views.size() and host.ask_flash("guard_flash", fighter_views[who]._aura_col)
+			var full: bool = who >= 0 and who < fighter_views.size() and host.ask_flash("guard_flash", fighter_views[who]._aura_col, host.flash_px(RenderLook.GUARD_SIZE.x * RenderLook.GUARD_SIZE.y * RenderLook.FLASH_GUARD_FILL), RenderLook.FLASH_STEP.guard_flash)
 			for pw in all_panes():
 				if who >= 0 and who < pw.fighter_views.size():
 					pw.fighter_views[who].guard_flash(host.S.T, full)
@@ -423,7 +427,7 @@ func _flash_events(events: Array) -> void:
 			"found":
 				fire_flash(int(e.actor), "found")
 			"damage":
-				if e.kind == "heavy" and e.victim >= 0.0:
+				if (e.kind == "heavy" or e.mode == "brawl_heavy") and e.victim >= 0.0:   # a heavy blow, or a hit of another kind with a heavy's weight; a medium does not
 					fire_flash(int(e.victim), "hurt")
 			"region_broken":
 				fire_flash(int(e.actor), "hurt")
@@ -453,6 +457,7 @@ func frame(delta: float) -> void:
 	_sync_split_options()
 	host.vfx.note_frame(delta)
 	host.vfx.reduced_motion = bool(ui_hud.opts.get("reduced_motion", false))
+	host.vfx.reduced_flashing = bool(ui_hud.opts.get("reduce_flashing", false))   # UI's Reduce flashing: the register's reduced mode
 	if not manual:
 		RenderAnim.reduced_motion = host.vfx.reduced_motion   # Animation's ragdoll honours it (a tool sets its own)
 	# The reduced versions (docs/design/rule-of-cool.md rule 6) follow VFX's quality: at its lowest, battle damage is a
@@ -465,6 +470,7 @@ func frame(delta: float) -> void:
 	FighterView.guard_reduced = low
 	ParticleView.after_on = not low
 	PaneWorld.clouds_on = not args.has("noclouds")
+	PaneWorld.pan_haze_on = (RenderLook.PAN_HAZE_DEFAULT or args.has("panhaze")) and not args.has("nopanhaze")   # the buildings' haze while the camera travels fast
 	PaneWorld.sky_react_on = args.has("skyreact")   # the clouds parting at tier 3 and 4: off unless asked for (QA's GB-002)
 	PaneWorld.sky_calm = host.vfx.reduced_motion
 	var n: int = host.advance(delta, vp.x, vp.y)
@@ -498,6 +504,7 @@ func render_view(a: float) -> void:
 		if "pitch_deg" in split_rig:
 			split_rig.pitch_deg = cam_pitch
 		split_frame = split_rig.frame(a)
+		var zmax: float = 0.0
 		# Camera's frame may carry the pitch and each pane's cut-away request; until it does, the debug pitch, and in a
 		# split each pane opens the buildings in front of its own fighter only.
 		var fp = split_frame.get("pitch")
@@ -510,6 +517,7 @@ func render_view(a: float) -> void:
 				panes[i].occlusion = occlusion
 				panes[i].cutaway = cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {})
 				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch)
+				zmax = maxf(zmax, float(split_frame.cam_z[i]))
 		if inset != null and compositor.has_method("inset_view"):
 			var iv: Dictionary = compositor.inset_view(a)
 			if not iv.is_empty():
@@ -517,12 +525,14 @@ func render_view(a: float) -> void:
 				inset.cutaway = iv.get("cutaway", {})
 				inset.render(host, a, float(iv["cam_x"]), Vector3(0.0, float(iv["cam_y"]), float(iv["cam_z"])), iv.get("jitter", Vector2.ZERO), float(iv.get("pitch", pitch)))
 		compositor.present(split_frame)
+		_flash_scale(zmax)
 	else:
 		split_frame = null
 		var vh: float = maxf(get_viewport().get_visible_rect().size.y, 1.0)
 		pane.occlusion = occlusion
 		pane.cutaway = {}
 		pane.render(host, a, host.camera_x(a), host.camera(a), PaneShake.capped(host.jitter, vh, _shake()), cam_pitch)
+		_flash_scale(host.camera(a).z)
 	view_cam_x = pane.view_cam_x
 	host.impact.heat_changed = false
 	UiSimBridge.patch(ui_hud, S, host.hub)   # the hub is read for the armed stance's badge (UI's bridge writes nothing to it)
@@ -647,7 +657,8 @@ func _sync_split_options() -> void:
 ## UI's options the host owns: the pad and touch layouts go to Controls' input hub (a pad's takes effect on its next
 ## input). Each slot has its own pad layout: pad_preset is slot 0's, pad_preset_p2 slot 1's. They are set a slot at a
 ## time and never through the hub's default for both: changing between the two when a second player joins would drop
-## the first player's pad layout, and what they hold with it.
+## the first player's pad layout, and what they hold with it. The two charge settings of the three strengths go to the
+## hub the same way, for the player who set them.
 func _on_option_changed(key: String, value) -> void:
 	if key == "pad_preset":
 		host.hub.set_pad_preset(str(value), 0)
@@ -659,6 +670,10 @@ func _on_option_changed(key: String, value) -> void:
 		host.hub.set_mode_style(str(value), 0)
 	elif key == "energy_style_p2":
 		host.hub.set_mode_style(str(value), 1)
+	elif CHARGE_OPTIONS.has(key):   # three strengths: Latched charge and Charges off, per player (docs/controls/windup-read.md)
+		var fn: String = "set_latch_charge" if key.begins_with("latch_charge") else "set_charges_off"
+		if host.hub.has_method(fn):   # Controls' two functions are not in the hub yet; the guard goes when they land
+			host.hub.call(fn, bool(value), 1 if key.ends_with("_p2") else 0)
 
 
 ## The Remap screen changed a player's layout (UI's remap_slot_changed: the layout, its rows and whose it is). UI has
@@ -673,6 +688,21 @@ func _shake() -> float:
 	var o: Dictionary = ui_hud.opts
 	var pref: float = clampf(float(o.get("camera_shake", CamParams.SHAKE_PREF_DEFAULT)), 0.0, 10.0)
 	return pref / 10.0 * CamParams.SHAKE_PREF_TOP * (0.25 if bool(o.get("reduced_motion", false)) else 1.0)
+
+
+## The camera's scale for the flash register's weights (VfxHub.px_per_unit): pixels per world unit on the fighters'
+## plane as they would be at 1024 by 768, which is 768 over the visible world height there. zoom is a pane's own
+## pixels per world unit; in a split it is the closer pane's, where a flash covers the most.
+func _flash_scale(zoom: float) -> void:
+	host.vfx.px_per_unit = 768.0 * zoom / maxf(get_viewport().get_visible_rect().size.y, 1.0)
+
+
+## The share of a HUD flash the shared flash register allows (UiHud.flash_fn): all of it or none. UI draws the split
+## divider's slam flash and asks once as a slam begins, kind `divider_slam`; it is asked from the frame, so after
+## every flash of the tick's own (docs/rendering/flash-sources.md). The strength and the area are UI's to pass and are
+## not used: the register counts flashes, it does not measure them.
+func _hud_flash(kind: String, _strength: float, _area: float) -> float:
+	return 1.0 if host.ask_flash(kind, UiLook.col(UiLook.INK)) else 0.0
 
 
 ## UI's split record (UiHud.split_fn): the rig's, while a compositor draws the panes; empty for one view.
@@ -992,8 +1022,10 @@ func _notification(what: int) -> void:
 		host.release_all()
 
 
+## UI's options for Controls' two charge settings: slot 0's, and with _p2 slot 1's.
+const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
 ## The options a web page's URL may set (parse_args): off unless the URL names them.
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

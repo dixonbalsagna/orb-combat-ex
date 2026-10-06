@@ -37,6 +37,7 @@ render_mode unshaded, cull_disabled;
 
 #include "res://render/shaders/color.gdshaderinc"
 #include "res://render/shaders/bend.gdshaderinc"
+#include "res://render/shaders/skycol.gdshaderinc"
 
 uniform sampler2D stub_tex : filter_nearest, repeat_disable;
 uniform sampler2D cut_tex : filter_nearest, repeat_disable;
@@ -57,6 +58,9 @@ uniform float dmg_rag = 0.34;
 uniform float dmg_panels = 0.2;
 uniform vec4 dmg_frame : source_color = vec4(0.29, 0.29, 0.31, 1.0);
 uniform float roof_over = 1.2;
+uniform float pan_haze = 0.0;        // 0 to 1: this pane's camera is travelling fast (PaneWorld.pan_haze); the wall loses its panes and marks and melts toward the sky behind it
+uniform float pan_mix = 0.7;         // RenderLook.PAN_HAZE_MIX: how far it melts at full haze
+uniform vec4 pan_ground : source_color = vec4(0.37, 0.57, 0.25, 1.0);   // the ground's colour under this pane's camera: what is behind a wall below the horizon line
 uniform float ref_cull = 0.0;        // 1: leave the back faces to the rasterizer (tools/cull_check.gd's reference picture)
 
 varying flat vec4 v_cut;      // x, y, z: the mask's three parts; w: floor height
@@ -69,6 +73,7 @@ varying flat vec3 v_dmg;      // x: World's damage stage, 0 to 3; y: the top as 
 varying flat vec4 v_hole0;    // each hole's two ends on this pane's screen, in pixels (xy: the chest, zw: the other end)
 varying flat vec4 v_hole1;
 varying float v_wy;
+varying vec3 v_view;          // from the camera, in world axes, for the sky's colour behind (the pan haze)
 
 // A world point on this pane's screen, in FRAGCOORD's pixels.
 vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
@@ -96,7 +101,9 @@ void vertex() {
 	v_winb = vec3(wb.x, wb.y, float(INSTANCE_ID) + (zface ? 0.0 : 0.5));
 	v_face = vec4(zface ? VERTEX.x * sx : VERTEX.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(NORMAL.y) < 0.5 ? 1.0 : 0.0), VERTEX.x * sx);
 	v_dmg = vec3(wb.z, min(top, COLOR.a < 0.5 ? stub - 1.0 : stub), sx);
-	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(mat4(1.0), w.xyz));
+	vec4 bw = bent_world(mat4(1.0), w.xyz);
+	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
+	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
 	if (c.w <= 0.0 && wb.z < 1.5 && ref_cull < 0.5) {
 		// Nothing to cut: cull this face if it looks away from the camera, as cull_back would. Every corner of a face
 		// must decide the same, or a face thrown away at some corners only is drawn stretched to the screen's corner
@@ -245,6 +252,14 @@ void fragment() {
 			}
 			col = inside.rgb;
 		}
+	}
+	if (pan_haze > 0.001) {
+		// A fast pan: the plain wall in place of its panes, soot and cracks, then toward what is behind it: the sky's
+		// colour in this direction above the horizon line, the ground's below it.
+		vec3 plain = FRONT_FACING ? flat_shade(COLOR.rgb, NORMAL, 0.35) : inside.rgb;
+		float q = elevation(v_view);
+		vec3 behind = mix(pan_ground.rgb, sky_color(q), smoothstep(-0.03, 0.03, (q - horizon) / sky_tan));
+		col = mix(mix(col, plain, pan_haze), behind, pan_haze * pan_mix);
 	}
 	ALBEDO = col;
 }

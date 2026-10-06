@@ -340,9 +340,45 @@ const SLIDE_CROUCH: float = 6.0          # and crouches this much
 const HIDDEN_ALPHA: float = 0.22
 const HIT_FLASH_S: float = 0.12
 ## A hit the shared flash register refuses the white body for: the outline lights in this colour for HIT_FLASH_S (a
-## thin line, not a flash). A beam it refuses: no white core, the rest at BEAM_SOFT of its strength.
+## thin line, not a flash). A beam it refuses, and every beam under reduced flashing, is drawn calm: a thin line in the
+## beam's own colour in place of the white core (BEAM_LINE of the core's width), and the glow about it at BEAM_SOFT of
+## its strength, which adds less than a tenth of full luminance.
 const HIT_EDGE := "#e8ecf2"
-const BEAM_SOFT: float = 0.45
+const BEAM_SOFT: float = 0.18
+const BEAM_LINE: float = 0.3
+## What Rendering's flashes cover, for the flash register's weights (VfxFlashRegistry weighs a flash by its area against
+## a quarter of the standard's 341 by 256 window, and counts none whose luminance step is under a tenth). Sizes are in
+## world units on the fighters' plane (SimHost.flash_px turns them into pixels at the camera's scale). Each is an
+## estimate of the part that changes by a tenth of full luminance, and FLASH_STEP of that change against what is behind.
+const FLASH_BODY_AREA: float = 0.27     # a body's silhouette, as a share of FighterView.HEIGHT squared
+const FLASH_HEAD_R: float = 17.0        # a head flash's shapes, as a disc of this radius
+const FLASH_GUARD_FILL: float = 0.55    # the guard arc's fill, as a share of GUARD_SIZE's rectangle
+const FLASH_GLOW_R: float = 0.7         # the share of a soft glow's radius bright enough to count
+const FLASH_CUE_R: float = 70.0         # a cue flare's largest radius (fighter_view.gd)
+const FLASH_CLASH_R: float = 70.0       # a clash flare's radius, before the 20 pixels it adds (beam_view.gd)
+const FLASH_WINDOW_DIAG: float = 426.0  # px: the longest strip one 341 by 256 window holds, so a beam's length counts up to this
+const FLASH_STEP: Dictionary = {"body_hit": 0.7, "head_flash": 0.5, "guard_flash": 0.25, "cue_flare": 0.5, "beam": 0.6, "beam_clash": 0.7}
+## A beam comes and goes once (docs/rendering/flash-sources.md): its strength rises over BEAM_RISE_S, holds, and falls
+## to nothing at its end. Its three layers' edges, outer glow to core, as the glow shader's falloff: the higher, the
+## softer the edge (a hard edge flips whole strips of pixels when the camera moves).
+const BEAM_RISE_S: float = 0.1
+const BEAM_EDGE: Array = [2.6, 1.8, 0.9]
+## A clash's flare and its two beams rise over CLASH_RISE_S and fall over the clash's last CLASH_FALL_S.
+const CLASH_RISE_S: float = 0.15
+const CLASH_FALL_S: float = 0.25
+## The pan haze: while a pane's camera travels along the ground faster than PAN_HAZE_FROM screen widths a second, the
+## buildings lose their windows and marks and melt toward the sky behind them, complete at PAN_HAZE_FULL, as far as
+## PAN_HAZE_MIX. It comes in over PAN_HAZE_IN_S and clears over PAN_HAZE_OUT_S. A facade's window grid and its edge
+## against the sky flip a great many pixels a tick when they sweep past; a jump of more than PAN_HAZE_CUT widths a
+## second is a cut, not travel. It ships off (PAN_HAZE_DEFAULT): it is a large change to how a town looks in a rush,
+## and Orb's to decide. --panhaze turns it on and --nopanhaze off, whichever the default is.
+const PAN_HAZE_DEFAULT: bool = false
+const PAN_HAZE_FROM: float = 0.35
+const PAN_HAZE_FULL: float = 0.9
+const PAN_HAZE_MIX: float = 0.7
+const PAN_HAZE_IN_S: float = 0.1
+const PAN_HAZE_OUT_S: float = 0.6
+const PAN_HAZE_CUT: float = 20.0
 
 static var _colors: Dictionary = {}
 

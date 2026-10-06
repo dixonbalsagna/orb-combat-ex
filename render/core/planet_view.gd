@@ -919,6 +919,7 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("dmg_panels", RenderLook.DMG_PANELS)
 	m.set_shader_parameter("dmg_frame", RenderLook.col(RenderLook.DMG_FRAME))
 	m.set_shader_parameter("roof_over", RenderLook.ROOF_OVER)
+	m.set_shader_parameter("pan_mix", RenderLook.PAN_HAZE_MIX)
 	mats.track(m)
 	return m
 
