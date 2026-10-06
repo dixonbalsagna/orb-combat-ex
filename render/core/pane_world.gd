@@ -48,6 +48,8 @@ static var flash_calm: bool = false        # reduced flashing or reduced motion:
 static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
 var pan_haze: float = 0.0                  # 0 to 1, this frame
 var _sky_glows: int = 0                    # the town glows handed to the sky last frame
+var _glow_seen: Dictionary = {}            # a town's index -> how far its glow has come into this pane's view, 0 to 1 (it comes in over SKY_GLOW_IN_S)
+var _glow_t: float = NAN
 var _pan_x: float = NAN                    # the camera's x and the time at the last frame seen
 var _pan_t: float = NAN
 var _pan_ground := Color.BLACK             # the ground's colour under the camera, eased (what a hazed wall melts toward below the horizon)
@@ -76,6 +78,13 @@ func _init() -> void:
 func build(S: SimState) -> void:
 	planet.source = source.planet if source != null else null
 	planet.build(S)
+	build_fighters(S)
+	vfx_layer.build(S)
+
+
+## The fighters' views, built from the sim's fighters: for a new match, and again when their lane colours change (a
+## colour-blind preset: a view's colours are made when it is built).
+func build_fighters(S: SimState) -> void:
 	for v in fighter_views:
 		fighters_root.remove_child(v)
 		v.free()
@@ -100,7 +109,6 @@ func build(S: SimState) -> void:
 			sh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			fighters_root.add_child(sh)
 			shadows.append(sh)
-	vfx_layer.build(S)
 
 
 ## Draw one frame from a camera: its wrapped world x (float64), cam.y and cam.z (the reference camera's height and
@@ -151,14 +159,22 @@ func _sky_drive(host: SimHost, a: float, cam_x: float) -> void:
 			_sky_mat.set_shader_parameter(SkyDrive.UNIFORMS[bi], out.cols[bi])
 			mats.set_sky(SkyDrive.UNIFORMS[bi], out.cols[bi])
 		_sky_mat.set_shader_parameter("star_low", out.star_low)
+	# A town's glow comes into view over at least SKY_GLOW_IN_S, however fast the camera brings the town onto the
+	# screen, and leaves the same way; a pane that was not being drawn starts from what is in front of it.
+	var now: float = (float(host.ticks) + a) * SimConst.DT
+	var gdt: float = now - _glow_t
+	var snap: bool = is_nan(gdt) or gdt < 0.0 or gdt > 0.5
+	_glow_t = now
 	var glows: Array = [Vector4(0.0, 0.0, -1.0, 0.0), Vector4(0.0, 0.0, -1.0, 0.0)]
 	var n: int = 0
-	for tw in host.sky.towns:
-		if float(tw.glow) <= 0.004 or n >= 2:
-			continue
+	for ti in range(host.sky.towns.size()):
+		var tw: Dictionary = host.sky.towns[ti]
 		var at := Vector3(SimWrap.sdx(cam_x, float(tw.x)), 0.0, 0.0)
-		var w: float = float(tw.glow) * _on_screen(at)
-		if w > 0.0:
+		var on: float = _on_screen(at) if float(tw.glow) > 0.004 else 0.0
+		var seen: float = on if snap else move_toward(float(_glow_seen.get(ti, 0.0)), on, gdt / RenderLook.SKY_GLOW_IN_S)
+		_glow_seen[ti] = seen
+		var w: float = float(tw.glow) * minf(seen, on)   # never more than is on the screen now
+		if w > 0.0 and n < 2:
 			var d: Vector3 = (at - cam_rig.position).normalized()
 			glows[n] = Vector4(d.x, d.y, d.z, w)
 			n += 1

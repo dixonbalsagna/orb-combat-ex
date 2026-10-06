@@ -17,8 +17,8 @@ Owner: Rendering and Technical Art. 2026-10-06. Legal's condition for the public
 
 | Source | Where | What it is | Under the register | When refused |
 | :-- | :-- | :-- | :-- | :-- |
-| **A hit's white body** | `fighter_view.gd` (through Animation's `anim_body.set_look`), 0.12 s | The whole body goes white. At a mash's 5 to 10 hits a second it was the largest strobe risk in the game | **Yes**, `body_hit` (low). The host asks once for each new hit (`SimHost._ask_hits`) | **The outline lights** pale for the same 0.12 s (`RenderLook.HIT_EDGE`). It is a line a pixel or two wide, not a flash. The hit still lands; its sparks, the flinch and the damage marks are as before |
-| The same on the placeholder parts | `fighter_view.gd` (`solid`) | The box figure's parts go white with the body (the old look, `--noanim`) | **Yes**, the same grant | They keep their colour |
+| **A hit's tint on the body** | `fighter_view.gd`, `fighter_body.gdshader` (`hit_mix`), 0.12 s | The body takes a strong light tint of its own colours, 60% of the way to white, with the outline lit. It went pure white before Legal's RL-122 | **Yes**, `body_hit` (low). The host asks once for each new hit (`SimHost._ask_hits`), and only while Legal's ceilings allow: one body at most 3 times in a second, the two together at most 4 | **The outline alone lights** pale for the same 0.12 s (`RenderLook.HIT_EDGE`). It is a line a pixel or two wide, not a flash. The hit still lands; its sparks, the flinch and the damage marks are as before |
+| The same on the placeholder parts | `fighter_view.gd` (`solid`) | The box figure's parts take the same tint (the old look, `--noanim`) | **Yes**, the same grant | They keep their colour |
 | **A perfect block's guard flash** | `fighter_view.gd`, `guard.gdshader`, 0.3 s | The guard arc's line thickens, a second line leaves it, and its fill deepens | **Yes**, `guard_flash` (not low: it may take the slot kept for big events), once for each block | The two lines still flash; the fill does not deepen (`flash_fill` 0). Lines are not a flash |
 | **Head flashes** | `flash_view.gd` | Small shapes at the head that swell two or three times in under a second | **Yes**, `head_flash` (low). Each swell asks as the flash starts, so a three-swell flash plays as many swells as were granted | With none granted the flash still shows once, calm: it fades in, holds and fades, with no swell, sweep or jitter (the reduced-motion form). The player still gets what it says |
 | **A cue's flare** | `fighter_view.gd` (`flare`) | A soft glow at the chest, up to a body and a half across, on four of Combat's cue poses | **Yes**, `cue_flare` (low), once for each fighter the cue plays on | No flare. The pose, the hand spark and the ring still play |
@@ -43,13 +43,13 @@ Not Rendering's, though they are drawn near these: the glare on the rival's glas
 
 | Seed | Body white: granted, refused | Head flash pulses | Guard flash | Beams |
 | :-- | :-- | :-- | :-- | :-- |
-| 12345 | 147, 104 | 9, 9 | 1, 1 | 3, 1 |
-| 4 | 172, 119 | 11, 7 | 1, 5 | 1, 0 |
-| 7 | 142, 97 | 15, 7 | 1, 4 | 2, 0 |
+| 12345 | 119, 30 | 13, 5 | 1, 1 | 3, 1 |
+| 4 | 142, 20 | 13, 5 | 2, 4 | 1, 0 |
+| 7 | 111, 26 | 17, 5 | 2, 3 | 2, 0 |
 
-- **A body's white is granted more often than under the count rule** (about three hits in five, where it was one in five), because at the camera's usual distance one body is about 0.15 of the area that makes a flash. Close up it weighs more and is refused more.
-- **A mash:** one fighter hit every 6 ticks for 4 seconds, 40 hits. The body whitens 5 times, at most twice in a second, and the outline is lit for the rest.
-- **The same with UI's Reduce flashing on:** the body never whitens, and the reduced limits hold.
+- **A body's tint is held lower than the register alone would hold it** (Legal's RL-122, as comfort and margin: two bodies and their effects share one window in a close brawl): one body at most 3 times in a second, the two together at most 4, and a light tint in place of pure white.
+- **A close brawl:** both fighters hit every 6 ticks for 4 seconds, 80 hits. A body is tinted at most twice in a second and the two together at most 3 times; 9 tints in all, and every hit lights the outline.
+- **The same with UI's Reduce flashing on:** neither body is tinted, and the reduced limits hold.
 - **The camera's scale** reaches the register every frame.
 - **Weights at the close framing** (1.3 px a world unit): a body's white 0.17, a head flash 0.07, a guard flash 0.19, a tier 4 beam 1; the same tier 1 beam seen from far weighs 0.25.
 - **The weighted rule through the host's ask:** the low class takes 1.5 and no more; a perfect block's guard flash takes what the low class may not; a full flash over the budget is refused; a step under a tenth costs nothing; six small flashes and no seventh; three of half weight and no fourth; a red flare refused.
@@ -60,13 +60,15 @@ Not Rendering's, though they are drawn near these: the glare on the rival's glas
 - **A beam and a clash:** each strength curve has one rise and one fall. A new beam asks with its own weight and is granted; under UI's Reduce flashing it does not ask and is calm.
 - **The pan haze:** off unless switched on; then none at a fifth of a screen width a second, full within 6 ticks of two a second, unmoved by a cut, cleared in one fall.
 
+In the table a hit past Legal's ceilings does not ask, so it is in neither column. A granted hit before (left, pure white) and now (right, a light tint with the outline lit), on the web build: ![tint](img/flash-hit-tint.png)
+
 A hit granted (left) and a hit refused (right), on the web build: ![hits](img/flash-hit-granted-refused.png)
 
 ## UI's Reduce flashing setting
 
 `main.frame` gives UI's `reduce_flashing` option to `host.vfx.reduced_flashing` every frame, beside reduced motion. Either one puts the register in its reduced mode: a budget of 1.0 by weight in a second on the whole screen (one full flash), and nothing for a low source. For Rendering's sources that means:
 
-- **A hit's white body, head flashes, a cue's flare (low):** never granted. The outline lights on every hit, a head flash shows once in its calm form, a cue has no flare.
+- **A hit's tint on the body, head flashes, a cue's flare (low):** never granted. The outline lights on every hit, a head flash shows once in its calm form, a cue has no flare.
 - **A perfect block's guard flash (not low):** it may take the second's one slot, with VFX's big events. Refused, the arc's lines flash without the fill.
 - **A beam and a beam clash:** always calm, and they do not ask, so the one slot is left to others. A beam is a thin line with a faint glow; a clash has no flare.
 - **The divider's slam flash:** UI draws none and does not ask.

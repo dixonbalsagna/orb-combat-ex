@@ -15,6 +15,7 @@ extends SceneTree
 ##   slammed on and off as well, and with a driver that jumps, none by more than 0.05 and their weighted mean by no
 ##   more than 0.02;
 ## - the mood eases over Art's least durations, and with reduced motion the drift and the mood hold;
+## - a town's glow comes into a pane's view over at least a second, however fast the camera arrives (Legal's RL-122);
 ## - the switches (--staticsky, --sky, --skymood), and what a pane's sky costs a frame.
 ## The pictures (with a window only): with the reaction on, the clouds part and that is all the sky does (it once
 ## paled the sky in a tall opening down to the horizon, which read as a pale pillar from a high camera and hung in the
@@ -34,6 +35,8 @@ var out: String = ""
 var seed: int = 4
 var main: Node
 var fails: int = 0
+var asked: int = 0     # checks asked so far: a script error inside a section skips the rest of it, and must not pass
+const ASKED_HEADLESS: int = 32
 
 
 func _initialize() -> void:
@@ -54,6 +57,7 @@ func _initialize() -> void:
 
 func _expect(ok: bool, what: String) -> void:
 	print("%s %s" % ["ok   " if ok else "FAIL ", what])
+	asked += 1
 	if not ok:
 		fails += 1
 
@@ -80,6 +84,8 @@ func _run() -> void:
 		PaneWorld.sky_react_on = true
 		await _pictures(S, vp)
 		PaneWorld.sky_react_on = false
+	if asked < ASKED_HEADLESS:
+		_expect(false, "only %d of the %d headless checks were reached: a section stopped early (a script error above)" % [asked, ASKED_HEADLESS])
 	print("sky check %s" % ("passed" if fails == 0 else "FAILED (%d)" % fails))
 	quit(0 if fails == 0 else 1)
 
@@ -230,6 +236,31 @@ func _dynamic(S: SimState) -> void:
 	sky.hold_phase = NAN
 	var names: bool = main.URL_ARGS.has("staticsky") and main.URL_ARGS.has("sky") and main.URL_ARGS.has("skymood")
 	_expect(t_still == SkyDrive.start_phase and o_hold.cols == SkyDrive.keys[3].cols and names, "--staticsky keeps the sunset everywhere, --sky holds a key (night's colours at the spawn), and the web page's URL may name them")
+	# A town's glow comes into view over at least a second, however fast the camera brings the town in (Legal's RL-122).
+	if not sky.towns.is_empty():
+		var pw: PaneWorld = main.pane
+		var tw: Dictionary = sky.towns[0]
+		tw.glow = 1.0
+		var camv := Vector3(0.0, 600.0, 0.25)
+		var seen_w: Array = []
+		var cx: float = SimWrap.wrap(float(tw.x) - 0.05 * W)
+		host.ticks += 600   # a new stretch of time for this pane: it starts from what is in front of it (the town is far off)
+		for i in range(150):
+			if i < 12:   # the camera arrives at a quarter of a lap a second, then stands on the town
+				cx = SimWrap.wrap(cx + 0.05 * W / 12.0)
+			pw.render(host, float(i), cx, camv, Vector2.ZERO)
+			var g = pw._sky_mat.get_shader_parameter("sky_glow")   # not set until a glow is first handed over
+			seen_w.append(maxf(float(g[0].w), float(g[1].w)) if g is Array else 0.0)
+		var jump: float = 0.0
+		for i in range(1, seen_w.size()):
+			jump = maxf(jump, float(seen_w[i]) - float(seen_w[i - 1]))
+		var full_at: int = -1
+		for i in range(seen_w.size()):
+			if full_at < 0 and float(seen_w[i]) >= 0.999:
+				full_at = i
+		_expect(jump <= 1.0 / 60.0 + 1e-6 and full_at >= 60 and seen_w[149] >= 0.999 and seen_w[11] < 0.25, "a town's glow comes into view over at least a second, whatever the camera's speed: it rises by at most %.4f a tick (a sixtieth is %.4f), is %.2f when the camera arrives after 12 ticks and full after %d" % [jump, 1.0 / 60.0, seen_w[11], full_at])
+		tw.glow = 0.0
+		host.ticks -= 600
 	# What a pane's sky costs a frame, while it is moving (the dearest case).
 	st = {}
 	x = sky.spawn_x

@@ -50,6 +50,7 @@ const INTRO_AVOID: int = 5      # Narrative's rule: the last five scenarios a pa
 var hit_flash_T: Array = [-INF, -INF]   # per slot: the hurtT of the last hit whose white body the register granted
 var clash_flash: bool = true         # the running beam clash's flare was granted
 var _hit_T: Array = [NAN, NAN]       # per slot: the hurtT last asked for
+var _hit_grants: Array = [[], []]    # per slot: the ticks of the body tints granted in the last second (Legal's ceilings)
 var _beam_ok: Dictionary = {}        # a live beam's instance id -> whether its bright form was granted
 var _clash_on: bool = false
 
@@ -71,6 +72,7 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 	sky.reset(S)
 	hit_flash_T = [-INF, -INF]
 	_hit_T = [NAN, NAN]
+	_hit_grants = [[], []]
 	_beam_ok.clear()
 	clash_flash = true
 	_clash_on = false
@@ -228,14 +230,26 @@ func _ask_beams() -> void:
 	_clash_on = on
 
 
-## A hit that landed this tick asks once for the body's white flash (FighterView draws an outline when refused).
+## A hit that landed this tick asks once for the body's tint (FighterView lights the outline alone when refused).
+## Beside the register's budget, Legal's ceilings (RL-122): one body is tinted at most RenderLook.HIT_TINT_BODY times
+## in a second and the two together at most HIT_TINT_ALL. A hit past a ceiling does not ask.
 func _ask_hits() -> void:
 	for i in range(mini(2, S.fighters.size())):
 		var ht: float = S.fighters[i].hurtT
 		if not is_equal_approx(ht, _hit_T[i]) or is_nan(_hit_T[i]):
 			_hit_T[i] = ht
-			if ht <= S.T and S.T - ht < RenderLook.HIT_FLASH_S and ask_flash("body_hit", Color.WHITE, flash_px(RenderLook.FLASH_BODY_AREA * FighterView.HEIGHT * FighterView.HEIGHT), RenderLook.FLASH_STEP.body_hit):
+			if not (ht <= S.T and S.T - ht < RenderLook.HIT_FLASH_S):
+				continue
+			var all: int = 0
+			for g in _hit_grants:
+				while not g.is_empty() and int(g[0]) <= ticks - 60:
+					g.pop_front()
+				all += g.size()
+			if _hit_grants[i].size() >= RenderLook.HIT_TINT_BODY or all >= RenderLook.HIT_TINT_ALL:
+				continue
+			if ask_flash("body_hit", Color.WHITE, flash_px(RenderLook.FLASH_BODY_AREA * FighterView.HEIGHT * FighterView.HEIGHT), RenderLook.FLASH_STEP.body_hit):
 				hit_flash_T[i] = ht
+				_hit_grants[i].append(ticks)
 
 
 ## Whether fighter i has yet to start his fall in the running intro. The sim holds him high above his start spot

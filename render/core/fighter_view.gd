@@ -404,11 +404,11 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 		pivot.position.y = PIVOT_Y
 	var punch: bool = f.state == "locked" or f.beamCharge != null
 	var front: Vector2 = Vector2(30, 12) if punch else Vector2(22, 0)
-	# A hit just landed: the body goes white if the shared flash register granted it (at most a few a second across
-	# the screen), and otherwise the outline lights, which is a thin line and not a flash.
+	# A hit just landed: the outline lights, a thin line and not a flash. If the host granted it (the shared flash
+	# register's budget and Legal's ceilings: SimHost._ask_hits) the body also takes a light tint of its own colours.
 	var hit: bool = T - f.hurtT < RenderLook.HIT_FLASH_S and T >= f.hurtT
 	var flash: bool = hit and is_equal_approx(f.hurtT, hit_white_T)
-	var edge: bool = hit and not flash
+	var edge: bool = hit
 	if edge != _edge and anim_body != null:
 		_edge = edge
 		var hull := (anim_body.mi.material_override as ShaderMaterial).next_pass as ShaderMaterial
@@ -419,7 +419,9 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 		if af.version != anim_body.applied_version:
 			anim_body.applied_version = af.version
 			anim_body.apply(af.q, af.hips, af.curl, af.root_off)
-		anim_body.set_look(1.0 if flash else 0.0, f.hidden)
+		anim_body.set_look(0.0, f.hidden)   # the tint is this file's (hit_mix below), not the body's blow-out to white
+		if flash != _flash:
+			(anim_body.mi.material_override as ShaderMaterial).set_shader_parameter("hit_mix", RenderLook.HIT_TINT if flash else 0.0)
 		_damage(f, dt)
 		var off := Vector3(0.0, -PIVOT_Y, 0.0)
 		head.position = af.head_center() + off
@@ -429,7 +431,7 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 		_faded = f.hidden
 		_flash = flash
 		for p in solid:
-			var c: Color = Color.WHITE if (flash and p[2]) else p[1]
+			var c: Color = (p[1] as Color).lerp(Color.WHITE, RenderLook.HIT_TINT) if (flash and p[2]) else p[1]
 			p[3].set_shader_parameter("albedo", c)
 			p[4].set_shader_parameter("albedo", Color(c, RenderLook.HIDDEN_ALPHA))
 			p[0].material_override = p[4] if _faded else p[3]

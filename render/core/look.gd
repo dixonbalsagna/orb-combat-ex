@@ -217,6 +217,7 @@ const SKY_STEP_PHASE: float = 5.0e-5     # a pane's sky is not worked out again 
 const SKY_TOWN_GAP: float = 2400.0 * WS  # buildings further apart than this along the ground are two towns
 const SKY_TOWN_SCAN_S: float = 0.5       # how often the towns' damage is read
 const SKY_GLOW_FULL: float = 0.5         # a town with this share of its buildings cracked or worse glows fully
+const SKY_GLOW_IN_S: float = 1.0         # a town's glow comes into a pane's view over at least this long, however fast the camera brings the town in (Legal's RL-122)
 const SKY_GLOW_MIX: float = 0.35         # how far a full glow takes the horizon toward ember (Art)
 const SKY_GLOW_SHAPE := Vector3(0.39, 0.015, 0.04)   # the glow: half its width in half screen heights (0.22 of a 16 by 9 screen across); it rises over y above the horizon line, is full to z, and is gone at the top of the horizon band
 
@@ -366,6 +367,12 @@ const HIT_FLASH_S: float = 0.12
 ## beam's own colour in place of the white core (BEAM_LINE of the core's width), and the glow about it at BEAM_SOFT of
 ## its strength, which adds less than a tenth of full luminance.
 const HIT_EDGE := "#e8ecf2"
+## A granted hit (Legal's RL-122): the body takes a strong light tint of its own colours, HIT_TINT of the way to white,
+## with the outline lit, where it went pure white. One body is tinted at most HIT_TINT_BODY times in a second and
+## the two together at most HIT_TINT_ALL, beside the register's own budget; the hits past that light the outline.
+const HIT_TINT: float = 0.6
+const HIT_TINT_BODY: int = 3
+const HIT_TINT_ALL: int = 4
 const BEAM_SOFT: float = 0.18
 const BEAM_LINE: float = 0.3
 ## What Rendering's flashes cover, for the flash register's weights (VfxFlashRegistry weighs a flash by its area against
@@ -405,8 +412,33 @@ const PAN_HAZE_CUT: float = 20.0
 static var _colors: Dictionary = {}
 
 
+## The colour-blind presets (UI's `colour_vision` option; Art's data/art/colour-vision.json): a preset gives each
+## fighter another lane colour, and everything Rendering draws in a fighter's aura colour takes it (the aura, the
+## body's accent, his beams, after-images, cue flare, guard arc and lane cue), because all of it asks col() for the
+## sim's aura string. raw: the sim's aura strings, by slot; cols: UI's lane colours for them (UiHud.lane_colors).
+## With the option off the two are the same colours, nothing is remapped, and col() is exactly as it was. Returns
+## whether the mapping changed (the fighters' views are then built again: main._on_lane_colors).
+static var _lanes: Dictionary = {}
+
+
+static func set_lanes(raw: Array, cols: Array) -> bool:
+	var next: Dictionary = {}
+	for i in range(mini(raw.size(), cols.size())):
+		var hex: String = str(raw[i])
+		if hex != "" and not (cols[i] as Color).is_equal_approx(Color.html(hex)):
+			next[hex] = cols[i]
+	if next == _lanes:
+		return false
+	_lanes = next
+	return true
+
+
 ## A CSS hex colour ("#fff", "#3d8fdc") as a Color, cached: the sim's colours are strings.
 static func col(hex: String) -> Color:
+	if not _lanes.is_empty():
+		var lane = _lanes.get(hex)
+		if lane != null:
+			return lane
 	var c = _colors.get(hex)
 	if c == null:
 		c = Color.html(hex)

@@ -6,10 +6,11 @@ extends SceneTree
 ## weight (3); nothing red. Through the real main scene:
 ## - three AI matches of 3,600 ticks, in Camera's split screen as the game runs it: those four limits hold in every
 ##   second of the register's log, Rendering's, VFX's and the split divider's slam flash together;
-## - a mash: one fighter is hit every 6 ticks for 4 seconds (the tool sets the hit's time on its own match). The
-##   body whitens no more often than its weight allows, the other hits light the outline, and the limits hold;
-## - the same mash with UI's Reduce flashing option on (main passes it to the register every frame): the body never
-##   whitens, and the reduced limits hold;
+## - a close brawl: both fighters are hit every 6 ticks for 4 seconds (the tool sets the hits' times on its own
+##   match). A body takes the hit's tint at most 3 times in a second and the two together at most 4 (Legal's RL-122),
+##   the tint is a light one and not pure white, every hit lights the outline, and the limits hold;
+## - the same with UI's Reduce flashing option on (main passes it to the register every frame): no body is tinted,
+##   and the reduced limits hold;
 ## - the camera's scale reaches the register every frame, and Rendering's sources are weighed by what they cover;
 ## - the weighted rule through the host's ask: the low class's share, a guard flash taking what the low class may
 ##   not, the budget, a step too small to count, the two count ceilings, red refused;
@@ -167,36 +168,44 @@ func _run() -> void:
 		print("     Rendering's, granted and refused: %s" % "; ".join(mine))
 		print("     the divider's slam flash (UI's): %d slams, %d granted and %d refused" % [slams, int(sm.granted_by.get("divider_slam", 0)), int(sm.refused_by.get("divider_slam", 0))])
 	view.detach()   # one view for the rest, as after F9 (the panes stay in the compositor's viewports, so it stays in the tree)
-	# 2 and 3. A mash on fighter 1, then the same under reduced flashing.
+	# 2 and 3. A close brawl: both fighters are hit every 6 ticks, three ticks apart, for 4 seconds; then the same
+	# under reduced flashing. Legal's ceilings (RL-122): a body is tinted at most 3 times in a second, the two together
+	# at most 4, and the tint is not pure white.
 	for reduced in [false, true]:
 		main.start_match(4, {"p1": true, "p2": true}, {"intro": "skip"})
 		main.ui_hud.set_option("reduce_flashing", reduced)   # UI's option: main gives it to the register every frame
 		var S: SimState = host.S
-		var v: FighterView = main.pane.fighter_views[1]
-		var white_at: Array = []     # the ticks the body turned white
-		var edges: int = 0           # frames the outline was lit instead
+		var views: Array = [main.pane.fighter_views[0], main.pane.fighter_views[1]]
+		var tint_at: Array = [[], []]   # per body: the ticks it took the tint
+		var both_at: Array = []
+		var edges: int = 0              # frames an outline was lit
 		var hits: int = 0
-		var was: bool = false
+		var was: Array = [false, false]
+		var mix: float = 0.0
 		for k in range(240):
-			if k % 6 == 0:
-				S.fighters[1].hurtT = S.T   # the tool's own match: a hit lands now
-				hits += 1
+			for i in range(2):
+				if (k + 3 * i) % 6 == 0:
+					S.fighters[i].hurtT = S.T   # the tool's own match: a hit lands now
+					hits += 1
 			main.frame(1.0 / 60.0)
-			if v._flash and not was:
-				white_at.append(host.ticks)
-			was = v._flash
-			if v._edge:
-				edges += 1
+			for i in range(2):
+				var v: FighterView = views[i]
+				if v._flash and not was[i]:
+					tint_at[i].append(host.ticks)
+					both_at.append(host.ticks)
+				was[i] = v._flash
+				if v._edge:
+					edges += 1
+				if v.anim_body != null:
+					var hm = (v.anim_body.mi.material_override as ShaderMaterial).get_shader_parameter("hit_mix")
+					mix = maxf(mix, float(hm) if hm != null else 0.0)
 		main.ui_hud.set_option("reduce_flashing", false)
 		var w2: Array = _worst_window(host.vfx.flashes.log_rows())
 		if reduced:
-			_expect(white_at.is_empty() and edges > 0 and _within(w2, true), "UI's Reduce flashing on, %d hits in 4 seconds: the body never whitens, the outline lights (%d frames), and the reduced limits hold (weights %.2f, %d flashes in the worst second)" % [hits, edges, w2[0], w2[3]])
+			_expect(tint_at[0].is_empty() and tint_at[1].is_empty() and edges > 0 and _within(w2, true), "UI's Reduce flashing on, %d hits in 4 seconds on two bodies: neither is tinted, the outlines light (%d frames), and the reduced limits hold (weights %.2f, %d flashes in the worst second)" % [hits, edges, w2[0], w2[3]])
 		else:
-			# A body's white is weighed by its size on the screen: it may whiten as often as the low class's share and the count ceiling allow.
-			var wb: float = host.vfx.flashes.weight_of("body_hit", host.flash_px(RenderLook.FLASH_BODY_AREA * FighterView.HEIGHT * FighterView.HEIGHT))
-			var may: int = mini(VfxFlashRegistry.RATE_CAP, int(floor(VfxFlashRegistry.LOW_BUDGET / maxf(wb, 0.001) + 0.001)))
-			_expect(_worst(white_at) <= may and white_at.size() > 0 and white_at.size() < hits, "a mash, %d hits in 4 seconds: the body whitens %d times, never more than its weight allows in a second (%d of %d at weight %.2f)" % [hits, white_at.size(), _worst(white_at), may, wb])
-			_expect(edges > 0 and _within(w2, false), "... the other hits light the outline (%d frames), and the limits hold (weights %.2f, %d flashes in the worst second)" % [edges, w2[0], w2[3]])
+			_expect(_worst(tint_at[0]) <= RenderLook.HIT_TINT_BODY and _worst(tint_at[1]) <= RenderLook.HIT_TINT_BODY and _worst(both_at) <= RenderLook.HIT_TINT_ALL and not both_at.is_empty() and both_at.size() < hits, "a close brawl, %d hits in 4 seconds on two bodies: a body is tinted at most 3 times in a second (%d and %d) and the two together at most 4 (%d); %d tints in all" % [hits, _worst(tint_at[0]), _worst(tint_at[1]), _worst(both_at), both_at.size()])
+			_expect(edges > 0 and _within(w2, false) and (mix == 0.0 or is_equal_approx(mix, RenderLook.HIT_TINT)) and RenderLook.HIT_TINT < 1.0, "... every hit lights the outline (%d frames), a granted one tints the body %.0f%% of the way to white and no further, and the register's limits hold (weights %.2f, %d flashes in the worst second)" % [edges, 100.0 * RenderLook.HIT_TINT, w2[0], w2[3]])
 	# 4. The rule for Rendering's sources, on a fresh register.
 	main.start_match(4, {"p1": true, "p2": true}, {"intro": "skip"})
 	main.frame(1.0 / 60.0)

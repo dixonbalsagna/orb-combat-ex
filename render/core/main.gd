@@ -78,6 +78,7 @@ var host: SimHost
 var started: bool = false
 var manual: bool = false          # tools call frame() or render_view() themselves
 var fighter_views: Array = []
+var _insets_vp := Vector2.ZERO       # the view's size when the safe-area insets were last read
 var view_cam_x: float = 0.0       # the interpolated camera's wrapped world x this frame
 var args: Dictionary = {}
 var frames: int = 0
@@ -160,9 +161,7 @@ func _ready() -> void:
 	ui_hud.settings_opened.connect(_hold_for_overlay)
 	ui_hud.settings_closed.connect(_release_overlay)
 	# The panel cut-in's border takes each fighter's lane colour from UI (it fires at the HUD's first advance).
-	ui_hud.lane_colors_changed.connect(func(a: Color, b: Color):
-		if split_view != null:
-			split_view.set_panel_colors(a, b))
+	ui_hud.lane_colors_changed.connect(_on_lane_colors)
 	# The pause menu's "hand player two back to the AI" entry.
 	ui_hud.player_two_leave_requested.connect(_on_player_two_leave)
 	ui_hud.form_prompt_shown.connect(_on_form_prompt)
@@ -456,6 +455,7 @@ func frame(delta: float) -> void:
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	var t0: int = Time.get_ticks_usec()
 	_sync_split_options()
+	_sync_insets(vp)
 	host.vfx.note_frame(delta)
 	host.vfx.reduced_motion = bool(ui_hud.opts.get("reduced_motion", false))
 	host.vfx.reduced_flashing = bool(ui_hud.opts.get("reduce_flashing", false))   # UI's Reduce flashing: the register's reduced mode
@@ -713,6 +713,64 @@ func _sky_args() -> void:
 		var parts: PackedStringArray = str(args.skymood).split(",")
 		if parts.size() == 3:
 			host.sky.hold_mood = [clampf(parts[0].to_float(), 0.0, 1.0), clampf(parts[1].to_float(), 0.0, 1.0), clampf(parts[2].to_float(), 0.0, 1.0)]
+
+
+## UI's lane colours changed (at a match's first frame, and when the colour-blind preset changes). Camera's panel
+## strip takes them for its borders. With a preset on they differ from the sim's aura colours: RenderLook then gives
+## the preset's colour wherever a fighter's aura colour is asked for, and the fighters' views are built again in it.
+## With the preset off nothing is remapped and nothing is rebuilt.
+func _on_lane_colors(a: Color, b: Color) -> void:
+	if split_view != null:
+		split_view.set_panel_colors(a, b)
+	var S: SimState = host.S
+	if S.fighters.size() < 2 or not RenderLook.set_lanes([S.fighters[0].aura, S.fighters[1].aura], [a, b]):
+		return
+	for p in all_panes():
+		p.build_fighters(S)
+		for v in p.fighter_views:
+			v.flashes_on = flashes_on
+	for i in range(fighter_views.size()):
+		_setup_flash(fighter_views[i], i)
+
+
+## The safe area's insets for UI's layout (UiHud.insets: left, top, right, bottom, in the viewport's pixels): what a
+## phone's notch, rounded corners and home bar take from the screen's edges. Read when the view's size changes and
+## about once a second (turning the phone changes them). On the web it is what CSS says (env(safe-area-inset-*),
+## which is zero unless the page is laid out edge to edge with viewport-fit=cover); in a phone build, the display's
+## safe area. A desktop has none.
+func _sync_insets(vp: Vector2) -> void:
+	if vp == _insets_vp and frames % 60 != 0:
+		return
+	_insets_vp = vp
+	var v := Vector4.ZERO
+	if OS.has_feature("web"):
+		v = insets_css(str(JavaScriptBridge.eval(INSETS_JS, true)), vp.x)
+	elif OS.has_feature("mobile"):
+		v = insets_rect(Rect2(DisplayServer.get_display_safe_area()), Rect2(Vector2(DisplayServer.window_get_position()), Vector2(DisplayServer.window_get_size())), vp.x)
+	if v != ui_hud.insets:
+		ui_hud.insets = v
+
+
+## The four safe-area insets as the page's CSS has them, with the page's width: "left,top,right,bottom,width" in CSS
+## pixels.
+const INSETS_JS: String = "(() => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)'; document.body.appendChild(d); const s = getComputedStyle(d); const r = [s.paddingLeft, s.paddingTop, s.paddingRight, s.paddingBottom].map((v) => parseFloat(v) || 0); d.remove(); r.push(window.innerWidth || 0); return r.join(','); })()"
+
+
+## CSS's insets ("left,top,right,bottom,width" in CSS pixels) in the viewport's pixels, for a viewport vp_w wide.
+static func insets_css(text: String, vp_w: float) -> Vector4:
+	var p: PackedStringArray = text.split(",")
+	if p.size() != 5 or p[4].to_float() <= 0.0:
+		return Vector4.ZERO
+	var k: float = vp_w / p[4].to_float()
+	return Vector4(maxf(p[0].to_float(), 0.0), maxf(p[1].to_float(), 0.0), maxf(p[2].to_float(), 0.0), maxf(p[3].to_float(), 0.0)) * k
+
+
+## A display's safe rectangle against the window's (both in screen pixels) as insets in the viewport's pixels.
+static func insets_rect(safe: Rect2, win: Rect2, vp_w: float) -> Vector4:
+	if win.size.x <= 0.0 or safe.size.x <= 0.0:
+		return Vector4.ZERO
+	var k: float = vp_w / win.size.x
+	return Vector4(maxf(safe.position.x - win.position.x, 0.0), maxf(safe.position.y - win.position.y, 0.0), maxf(win.end.x - safe.end.x, 0.0), maxf(win.end.y - safe.end.y, 0.0)) * k
 
 
 ## The camera's scale for the flash register's weights (VfxHub.px_per_unit): pixels per world unit on the fighters'

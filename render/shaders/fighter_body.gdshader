@@ -20,6 +20,7 @@ render_mode unshaded, cull_back;
 
 uniform vec4 albedo : source_color = vec4(1.0);
 uniform float shade : hint_range(0.0, 1.0) = 0.35;
+uniform float hit_mix = 0.0;          // a hit that was granted its flash: the body's own colours this far toward white (RenderLook.HIT_TINT), a light tint and not pure white
 uniform vec4 damage = vec4(0.0);      // per region (head, core, arms, legs): 0 fresh, 1 bruised, 2 battered, 3 broken, eased
 uniform int bone_region[32];          // each bone's region: 0 head, 1 core, 2 arms, 3 legs
 // Plain values, like the mesh's vertex colours (the palette's own numbers): no colour-space hint.
@@ -104,5 +105,5 @@ void fragment() {
 			}
 		}
 	}
-	ALBEDO = flat_shade(albedo.rgb * c, n, shade);
+	ALBEDO = mix(flat_shade(albedo.rgb * c, n, shade), vec3(1.0), hit_mix);
 }

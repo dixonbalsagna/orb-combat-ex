@@ -10,7 +10,7 @@ The sky keeps its four bands (top, upper, lower, horizon) and its clouds and sta
 - **By time.** A drift of 0.0125 of a cycle a minute is added to the place.
 - **By the fight.** Frenzy deepens the bands and warms the horizon. Ruin takes the bands toward dark brown smoke and thins the stars. A wrecked town on the screen gives the horizon above it a low ember glow.
 
-The ground, the buildings and the fighters are lit as they always were: at the night key a daylit ground stands under a dark sky. Art's direction changes the sky's colours and nothing else, and this follows it; whether the world should dim at night is Art's to say.
+The ground, the buildings and the fighters are lit as they always were: at the night key a daylit ground stands under a dark sky. That is not wanted (Art, 2026-10-06): Art is directing the world's light for each key, and it will be one multiply tint for each layer from the same driver under the same limiter, built when Art's values arrive.
 
 ## What it reads from the sim
 
@@ -39,6 +39,8 @@ Art's limit: no band's luminance changes faster than 0.05 a second and the four 
 
 A new match, a pane that was not drawn for half a second, and a debug hold start from the sky of their place at once: nobody was looking at the old one.
 
+**A town's glow comes into a pane's view over at least a second** (Legal's RL-122), however fast the camera brings the town onto the screen, and leaves the same way: each pane eases how much of each town's glow it shows. **Nothing in the sky reacts to a hit or to the beat.**
+
 ## Checked
 
 `render/tools/sky_check.gd` (headless), on an export of ccaf474b with this change and Art's `sky.json`:
@@ -50,6 +52,7 @@ A new match, a pane that was not drawn for half a second, and a debug hold start
 - **The stress drive** (the camera flying a quarter of a lap a second and turning back every 3 seconds, for 3 minutes): the place alone changes no band by more than 0.0350 in any second and the mean by no more than 0.0148, which are Art's own figures. With the mood and the damage slammed on and off as well, and a driver that jumps: 0.0500 and 0.0188.
 - **The mood's durations:** asked for all at once, frenzy is full after 30.0 s, ruin after 120.0 s, a town's glow after 50.0 s.
 - **Reduced motion:** the drift and the mood hold; the place blend stays (Art's rule).
+- **A town's glow under a fast pan:** with the camera arriving at a quarter of a lap a second, the glow handed to the shader rises by at most a sixtieth a tick; it is 0.10 when the camera arrives after 12 ticks and full after 65.
 
 **On the web build the first 300 ticks of a match are the same to the pixel** as the build before (frames 1, 60, 150 and 300 of the mash clip, captured with Tools' driver: 0 pixels differ).
 
@@ -78,5 +81,5 @@ Without `data/art/sky.json` the sky is the sunset and stands still.
 ## Limits
 
 - **Tools' analyser has not read it.** A long clip flying a lap at full speed is wanted, to show the sky is never counted; it needs a new scenario in both stagings (Tools' and the capture hook's), added together.
-- **The glow follows the camera.** As the camera pans, the glow slides across the horizon with the town. It is small and soft, but it is not under the band limit, which is about the bands' colours.
+- **The glow follows the camera.** As the camera pans, the glow slides across the horizon with the town. It is small and soft, but it is not under the band limit, which is about the bands' colours. Tools' required clips are captured with the sky on, so the analyser sees it (Legal's RL-122).
 - **The clouds are lit by the bands** and follow them; nothing else in the world does.
