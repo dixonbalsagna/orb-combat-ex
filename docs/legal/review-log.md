@@ -121,6 +121,9 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-099 | Brawl second pass: B recast (burst, ki flurry, blast, art, signature, held steered beam) | Game Design | Medium | Conditional: one open or blade hand, flurry varied, thin lane-colour flashes (k03), straight steered beam (e07); tell poses seen drawn | Open |
 | RL-100 | Charged X and Y; four power attacks; names | Game Design | Medium | Conditional: chamber and flash rules; breaker lit plate edges only, seize no glow in a hold; names clear | Open |
 | RL-101 | Even mash, gamble taunt, zip chase and chains, LT+RB hybrid; heavy and mixed flurry | Game Design | Medium | Clear or conditional (m09 to m11, f01 to f03); hybrid tell seen drawn first | Open |
+| RL-102 | Three-strength movesets: six drives and 20 heavies (three-strengths-screen.md) | Combat | Medium | PASS for four drives and the 20 heavies; the heave and fall drives pass but must be seen drawn first | Open until drawn |
+| RL-103 | Stand-ins on a 28-tick wind-up, the mediums on 12 ticks, the manner rows | Combat, Animation | Medium | PASS WITH CONDITIONS (W1 adopted as h05): double hammer, double palm and the ram stand-ins need their gather re-judged | Open |
+| RL-104 | The burst (held X) and f01 restated; W1 and U1 adopted; b02, b03, b12 clarified | Combat, Animation | Medium | f01 by instant, new f04 and f05; elbow and knee added to b03; ru.su_ram and pu.su_drive confirmed as redraws | Open |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 

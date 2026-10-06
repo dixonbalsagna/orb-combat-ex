@@ -22,13 +22,16 @@
           "drawn_to_hip_then_thrust"
         ]
       },
-      "why": "hands cupped at a hip, or drawn back to one hip and thrust: the franchise's best-known wind-up. Applies to every weight and every form, including held heavies"
+      "why": "hands cupped at a hip, or drawn back to one hip and thrust: the franchise's best-known wind-up. Applies to every weight and every form, including held heavies",
+      "appliesTo": "open or clawed hands (a closed fist chambered at the hip is a punch chamber and passes b02; h05 still holds a 12-tick wind-up to the shoulder)"
     },
     {
       "id": "b03",
       "match": {
         "limb": [
-          "hand"
+          "hand",
+          "elbow",
+          "knee"
         ],
         "tip": [
           "fist",
@@ -47,7 +50,7 @@
           "spin"
         ]
       },
-      "why": "a rising blow with a leap or a spin: the jumping, turning uppercut"
+      "why": "a rising blow with a leap or a spin, by hand, elbow or knee: the jumping, turning uppercut"
     },
     {
       "id": "b04",
@@ -177,17 +180,19 @@
       "id": "b12",
       "match": {
         "weight": [
+          "medium",
           "heavy"
         ],
         "form": [
-          "held"
+          "held",
+          "charged"
         ],
         "flags": [
           "hip_chamber",
           "two_hand_chamber"
         ]
       },
-      "why": "a held heavy is charged with one arm drawn back at shoulder height, never at a hip and never with both hands together"
+      "why": "a held or charged medium or heavy is loaded with one arm drawn back at shoulder height, never at a hip and never with both hands together; the new words medium and charged loosen nothing"
     },
     {
       "id": "b13",
@@ -379,6 +384,21 @@
       "id": "h04",
       "rule": "held-lint classes for the new holds: a held X, Y or B charge pose and the tackle's coil are class charge; the seize, breaker, lift and slip tells are class tell; the clinch hold is class hold; the 45-tick taunt is class gesture; an open-hand chamber in a charged melee blow keeps the wrist at x 9 or more (not drawn to the hip), a closed-fist chamber at the hip is allowed",
       "why": "so the lint reaches the new poses"
+    },
+    {
+      "id": "h05",
+      "rule": "a medium or heavy wind-up of 12 ticks or more is a held pose of class charge and is judged at every tick by h01 to h04: the loaded limb at shoulder height or lower (a leg may be chambered), never at a hip for any hand state, never both hands together, no limb held above 80 except in the last 6 ticks before contact, no held crossed forearms, no light and no aura; both-hand blows (a double palm or hammer) keep the hands at least shoulder width apart; a stand-in played on a longer wind-up than it was posed for is judged on the longer one (W1)",
+      "why": "W1 adopted; a long visible wind-up is a held pose"
+    },
+    {
+      "id": "h06",
+      "rule": "a deep sink (the heaving drive) is a lunge-low stance with the striking limb loaded and the other hand up in guard; never both fists clenched at the sides in a crouch, and never with a scream, an aura or ground cracking; the falling drive's rise is the body straightening or stepping up, never a leap (the drop kick excepted, as cleared), and the limb stays at shoulder height until he starts down",
+      "why": "mark 1 over a held sink; the leap and the held raise"
+    },
+    {
+      "id": "h07",
+      "rule": "a manner (the rival's show-off, the Protagonist's pointed) is a way of throwing, not a gesture: the rival's open tell keeps the limb drawn back (never arms spread as an invitation, never a beckon), and his limb left out after landing lasts 12 ticks or fewer; no taunt pose is part of a blow",
+      "why": "h02 and the taunt rules"
     }
   ],
   "stacking": [
@@ -449,8 +469,8 @@
   "flurry": [
     {
       "id": "f01",
-      "rule": "a flurry's blur is a smear along the striking limb's real path: at most 2 ghosts of that limb per blow, never extra arms, legs or fists drawn at the same time, never a fan of limbs round the target",
-      "why": "the many-armed barrage blur (applies to X, Y, B and any mix)"
+      "rule": "a flurry's or burst's blur follows each striking limb's real path: at any instant at most 2 ghosts of any limb and at most 4 limb-ghosts on screen in all; never extra arms, legs or fists drawn at once, never a fan of limbs round the target. This replaces the 'two ghosts per blow' wording, which does not hold at 15 blows a second",
+      "why": "the many-armed barrage blur, by instant rather than by blow"
     },
     {
       "id": "f02",
@@ -461,6 +481,16 @@
       "id": "f03",
       "rule": "vocal sounds in a flurry: no repeated shouted syllable across it, no shouted word, and at most one grunt for every two blows, varied",
       "why": "the chanted barrage (s03) at up to 10 blows a second"
+    },
+    {
+      "id": "f04",
+      "rule": "a gap of under 6 ticks between blows never runs for more than 3 blows in a row, and only inside the opening of a burst; blows then slow (a held X's 4, 4, 5, 6, 8, 11, 15 gaps are within this)",
+      "why": "the fastest barrage rate is allowed only as a short opening, not a sustained storm"
+    },
+    {
+      "id": "f05",
+      "rule": "a burst (held X, eight lights) never repeats the last blow's limb, tip, path or place; no more than 2 blows in a row on one path; no piece twice in one burst; the hands alternate; the sound is one breath for the eight, never a syllable for each; no slow-motion close-up or camera cut on the burst",
+      "why": "U1 as a row"
     }
   ]
 }
