@@ -29,17 +29,19 @@ const LIMBS = ['hand', 'foot', 'elbow', 'knee', 'shoulder', 'head'];
 const PATHS = ['line', 'arc_in', 'arc_out', 'rise', 'drop', 'spin'];
 const SENDS = ['across', 'up', 'down', 'turned'];
 const STEPS = ['in', 'hold', 'around', 'out'];
-const WEIGHTS = ['light', 'heavy'];
+const WEIGHTS = ['light', 'medium', 'heavy'];
 const GROUND = ['ok', 'plant', 'only', 'no'];
-const LEVELS = ['posed', 'hand_state', 're_aim', 're_aim_edge', 'hand_state_re_aim', 'hand_state_re_aim_edge', 'new'];
+const LEVELS = ['posed', 'hand_state', 're_aim', 're_aim_edge', 'hand_state_re_aim', 'hand_state_re_aim_edge', 'stand_in', 'new'];
 const STATUS = ['posed', 'derived', 'waiting'];
-const REVIEW = ['new', 'accepted', 'change', 'rejected', 'locked'];
-const KINDS = ['strikes', 'context', 'frame', 'travel', 'table', 'special'];
+const CLASSES = ['open', 'fast', 'mid', 'slow'];
+const REVIEW = ['new', 'accepted', 'change', 'rejected', 'locked', 'stand-in'];
+const KINDS = ['strikes', 'context', 'frame', 'travel', 'table', 'special', 'string'];
+const CELLID = '^[a-z][a-z0-9_]*\\.[xyab](\\.[a-z0-9_]+)?$';
 const name = { type: 'string', pattern: '^[a-z][a-z0-9_]*$' };
 const label = { type: 'string', minLength: 1 };
 const strikeId = { type: 'string', pattern: '^strike\\.[a-z0-9_]+$' };
 const condId = { type: 'string', pattern: '^[A-Z][0-9]+$' };
-const moveId = { type: 'string', pattern: '^mv\\.[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*\\.[xyab]\\.[0-9]{2}$' };
+const moveId = { type: 'string', pattern: '^mv\\.[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*\\.[xyab](\\.[a-z0-9_]+)?\\.[0-9]{2}$' };
 const keySet = { type: 'string', pattern: '^[a-z0-9_.~]+$' };
 const wave = { type: 'string', pattern: '^[a-z]+[0-9]+$' };
 const why = { type: 'string', minLength: 1 };
@@ -48,7 +50,7 @@ const nameArr = (d) => ({ type: 'array', minItems: 1, uniqueItems: true, items: 
 const labelArr = (d) => ({ type: 'array', minItems: 1, uniqueItems: true, items: label, description: d });
 const nullable = (s) => ({ anyOf: [s, { type: 'null' }] });
 const tableOf = (inner, d, min = 1) => Object.assign({ type: 'object', propertyNames: { pattern: '^(_.*|[a-z][a-z0-9_]*)$' }, additionalProperties: inner, patternProperties: { '^_': true }, description: d }, min ? { minProperties: min } : {});
-const labelTable = (inner, d) => ({ type: 'object', propertyNames: { pattern: '^(_.*|[a-z][a-z0-9_ ]*)$' }, additionalProperties: inner, patternProperties: { '^_': true }, description: d });
+const labelTable = (inner, d) => ({ type: 'object', propertyNames: { pattern: '^(_.*|[a-z][^\n]*)$' }, additionalProperties: inner, patternProperties: { '^_': true }, description: d });
 const tipTable = (inner, d) => ({ type: 'object', propertyNames: { pattern: '^(_.*|[a-z]+\\.[a-z0-9_]+)$' }, additionalProperties: inner, patternProperties: { '^_': true }, description: d });
 const numTable = (d) => tableOf({ type: 'number', minimum: 0 }, d);
 
@@ -91,7 +93,15 @@ const legalRow = Object.assign({
   required: ['id', 'kind', 'rule', 'why'],
   properties: {
     id: { type: 'string', pattern: '^[a-z][0-9]+$' },
-    kind: { enum: ['drawn', 'numbers', 'travel', 'move', 'hand', 'holdPoints'] },
+    kind: { enum: ['drawn', 'numbers', 'travel', 'move', 'hand', 'holdPoints', 'string', 'slots', 'burst', 'shape'] },
+    uses: nameArr('Rule ids a row widens or is made of.'),
+    ignores: nameArr('What the rule ignores.'),
+    class: name,
+    maxRun: { type: 'integer', minimum: 1 },
+    match: filterRef,
+    grab: name,
+    allowed: nameArr('The hold points a kind of grab may use.'),
+    string: obj({ same: nameArr('The parts that must differ run to run.'), max: { type: 'integer', minimum: 1 } }, { description: 'A move row\'s string rule.' }),
     owner: why,
     check: why,
     if: filterRef,
@@ -108,9 +118,29 @@ const legalRow = Object.assign({
     { if: { properties: { kind: { const: 'holdPoints' } } }, then: { required: ['never'] } },
     { if: { properties: { kind: { const: 'numbers' } } }, then: { required: ['owner', 'check'] } },
     { if: { properties: { kind: { const: 'drawn' } } }, then: { required: ['owner'] } },
+    { if: { properties: { kind: { enum: ['string', 'burst'] } } }, then: { required: ['uses'] } },
+    { if: { properties: { kind: { const: 'slots' } } }, then: { required: ['class', 'maxRun'] } },
+    { if: { properties: { kind: { const: 'shape' } } }, then: { required: ['match'] } },
   ],
 }, closed);
 const shotRule = Object.assign({ type: 'object', required: ['if', 'then'], properties: { if: filterRef, then: filterRef, why } }, closed);
+const seqRow = Object.assign({
+      type: 'object',
+      required: ['id', 'kind', 'rule'],
+      properties: {
+        id: name,
+        kind: { enum: ['run', 'after', 'steps', 'audio', 'once'] },
+        same: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string', pattern: '^[a-z]+$' }, description: 'run: the parts that must be shared.' },
+        max: { type: 'integer', minimum: 1, description: 'run: at most this many in a row.' },
+        tighter: { type: 'array', items: obj({ when: filterRef, max: { type: 'integer', minimum: 1 } }), description: 'run: a smaller max where a filter holds.' },
+        after: filterRef,
+        never: { type: 'array', minItems: 1, items: filterRef, description: 'after: what may never follow.' },
+        state: name,
+        drawn: { type: 'array', minItems: 1, uniqueItems: true, items: { enum: STEPS } },
+        rule: why,
+        why,
+      },
+    }, closed);
 const strikeBlock = obj({
   tips: tableOf(tableOf({ type: 'array', minItems: 1, uniqueItems: true, items: { enum: PATHS } }, 'tip to the paths it can travel'), 'limb to tip to the paths that tip can travel'),
   targets: tableOf(tableOf({ type: 'array', minItems: 1, uniqueItems: true, items: name }, 'path to targets'), 'limb to path to the places it can land'),
@@ -126,10 +156,38 @@ const strikeBlock = obj({
     items: Object.assign({
       type: 'object',
       required: ['form'],
-      properties: { form: name, when: filterRef, any: { type: 'array', minItems: 1, items: filterRef }, unless: name },
+      properties: { form: name, when: filterRef, any: { type: 'array', minItems: 1, items: filterRef }, unless: name, reads: { enum: ['quick', 'charged'], description: 'The form applies only to a move whose wind-up rule reads this (parts.json strike.windup).' } },
       anyOf: [{ required: ['when'] }, { required: ['any'] }],
     }, closed),
   },
+  weights: nameArr('The weights a strike has (light, medium, heavy).'),
+  animWeight: tableOf({ enum: WEIGHTS }, 'The weight Animation read a posed strike at, to the weight it has now (a heavy of the old rows is a medium).'),
+  legalTips: why,
+  windup: obj({
+    medium: { type: 'array', minItems: 1, items: obj({ id: name, when: filterRef, reads: { enum: ['quick', 'charged'] }, change: why, why }, { required: ['id', 'when', 'reads'] }), description: 'What a medium needs on Y\'s 12-tick wind-up: the first rule that matches is its rule.' },
+    all: why,
+  }, { required: ['medium'], description: 'Wind-up rules for the mediums.' }),
+  heavy: obj({
+    tips: tableOf(tableOf({ type: 'array', minItems: 1, uniqueItems: true, items: { enum: PATHS } }, 'tip to paths'), 'limb to tip to the paths a heavy may take'),
+    never: { type: 'array', items: obj({ shape: filterRef, why }), description: 'Shapes the heavy tier never has.' },
+    drive: tableOf(obj({
+      id: name,
+      word: why,
+      flags: { type: 'array', uniqueItems: true, items: name },
+      bears: nameArr('Legal rows the drive bears on.'),
+      what: why,
+      tell: why,
+      end: why,
+      legal: why,
+      seen: { type: 'boolean', description: 'Whether the drive has been seen drawn.' },
+    }, { required: ['id', 'word', 'bears', 'what', 'tell', 'end', 'seen'] }), 'a path to the whole-body drive a heavy takes on it'),
+    words: { type: 'object', propertyNames: { pattern: '^(_.*|[a-z]+\\.[a-z0-9_]+)$' }, additionalProperties: why, patternProperties: { '^_': true }, description: 'limb.tip to the words that name it.' },
+    standIn: why,
+  }, { required: ['tips', 'never', 'drive'], description: 'The heavy tier (docs/combat/pending/movegen/three-strengths.md section 3).' }),
+  burst: obj({
+    classes: tableOf(obj({ gap: why, when: filterRef, why }), 'a class of gap (open, fast, mid, slow) to the shapes that may fill it'),
+    noStutter: { type: 'array', minItems: 1, items: seqRow, description: 'The rules that keep a short gap from reading as a stutter.' },
+  }, { description: 'The held X: eight lights that slow on a curve.' }),
   swap: { type: 'array', minItems: 1, uniqueItems: true, items: name, description: 'Hand tips one key set can show by a hand-state swap.' },
   tagTips: tableOf({ type: 'array', minItems: 1, uniqueItems: true, items: name }, 'a Legal tag to the hand tips a swap may show'),
   reaim: obj({ source: why, levels: obj({ ok: name, edge: name }) }, { description: 'Where the contact solve\'s reach comes from (Animation\'s tips.json) and the level name for a re-aim and for one at the edge.' }),
@@ -137,28 +195,12 @@ const strikeBlock = obj({
   banned: {
     type: 'array',
     description: 'Legal\'s shape rows: never generated, for every fighter. A row matches when every field it names matches (`match`, or the older `shape`).',
-    items: Object.assign({ type: 'object', required: ['why'], properties: { id: name, match: filterRef, shape: filterRef, why }, anyOf: [{ required: ['match'] }, { required: ['shape'] }] }, closed),
+    items: Object.assign({ type: 'object', required: ['why'], properties: { id: name, match: filterRef, shape: filterRef, why, appliesTo: why }, anyOf: [{ required: ['match'] }, { required: ['shape'] }] }, closed),
   },
   bannedSequences: {
     type: 'array',
     description: 'Legal\'s sequence rules, in a form a program can check: run, after, steps or audio.',
-    items: Object.assign({
-      type: 'object',
-      required: ['id', 'kind', 'rule', 'why'],
-      properties: {
-        id: name,
-        kind: { enum: ['run', 'after', 'steps', 'audio'] },
-        same: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string', pattern: '^[a-z]+$' }, description: 'run: the parts that must be shared.' },
-        max: { type: 'integer', minimum: 1, description: 'run: at most this many in a row.' },
-        tighter: { type: 'array', items: obj({ when: filterRef, max: { type: 'integer', minimum: 1 } }), description: 'run: a smaller max where a filter holds.' },
-        after: filterRef,
-        never: { type: 'array', minItems: 1, items: filterRef, description: 'after: what may never follow.' },
-        state: name,
-        drawn: { type: 'array', minItems: 1, uniqueItems: true, items: { enum: STEPS } },
-        rule: why,
-        why,
-      },
-    }, closed),
+    items: seqRow,
   },
   flags: Object.assign({
     type: 'object',
@@ -177,11 +219,11 @@ const strikeBlock = obj({
     items: Object.assign({
       type: 'object',
       required: ['id', 'ask', 'rows'],
-      properties: { id: condId, when: filterRef, stance: name, ask: why, rows: { type: 'array', minItems: 1, uniqueItems: true, items: name } },
+      properties: { id: condId, when: filterRef, stance: name, from: why, ask: why, rows: { type: 'array', minItems: 1, uniqueItems: true, items: name } },
       anyOf: [{ required: ['when'] }, { required: ['stance'] }],
     }, closed),
   },
-}, { required: ['tips', 'targets', 'lightNever', 'sends', 'links', 'step', 'beat', 'forms', 'swap', 'tagTips', 'reaim', 'banned'] });
+}, { required: ['tips', 'targets', 'lightNever', 'sends', 'links', 'step', 'beat', 'forms', 'swap', 'tagTips', 'reaim', 'banned', 'weights', 'windup', 'heavy', 'burst'] });
 const travelMoveRow = obj({ direction: name, entries: nameArr('Entry names (entrymap rows) it may open with.'), exit: nullable(name) });
 const partsSchema = withDefs({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -204,7 +246,7 @@ const partsSchema = withDefs({
       forms: { type: 'array', minItems: 1, items: obj({ form: name, when: filterRef }) },
       hands: tableOf(obj({ shape: name, light: name, hands: { type: 'integer', minimum: 1 }, height: name }), 'a hand to its shape, where the light sits, how many hands and the height'),
     }),
-    readings: tableOf(tableOf(nameArr('forms'), 'a reading to its forms'), 'a stance to its readings'),
+    readings: tableOf(tableOf({ anyOf: [nameArr('forms'), tableOf(label, 'a press (tap, mash, hold, beat) to the form it asks for')] }, 'a reading (or a button) to its forms (or its presses)'), 'a stance to its readings'),
     legal: Object.assign({
       type: 'object',
       required: ['applies', 'motion', 'energy', 'grabs', 'held', 'stacking'],
@@ -217,8 +259,8 @@ const partsSchema = withDefs({
         stacking: { type: 'array', items: legalRow },
         heldScope: { type: 'object', description: 'Legal\'s scope for the held-pose lint, copied from docs/legal/movegen-banned.json as it stands (not rows; an open object).' },
       },
-    }, closed),
-    grab: obj({ holdPoints: nameArr('The places a grab may hold.') }),
+    }, { additionalProperties: { type: 'array', items: legalRow }, patternProperties: { '^_': true } }),
+    grab: obj({ holdPoints: nameArr('The places a grab may hold.'), kinds: tableOf(nameArr('hold points'), 'a kind of grab (tackle, clinch) to the points it may hold') }, { required: ['holdPoints'] }),
   },
   additionalProperties: false,
   patternProperties: { '^_': true },
@@ -243,8 +285,8 @@ const identitySchema = withDefs({
         waves: { type: 'array', minItems: 1, uniqueItems: true, items: wave, description: 'Animation\'s manifests that hold his posed strikes, in the order their rows replace each other.' },
         entryWaves: { type: 'array', minItems: 1, uniqueItems: true, items: wave, description: 'Animation\'s entry maps his travel moves come from.' },
         weights: obj({ limb: numTable('limb to weight'), path: numTable('path to weight'), tip: tipTable({ type: 'number', minimum: 0 }, 'limb.tip to weight'), entry: numTable('entry name to weight') }, { required: ['limb', 'path', 'tip'] }),
-        weightsBy: { type: 'array', items: obj({ when: filterRef, tip: tipTable({ type: 'number', minimum: 0 }, 'limb.tip to the weight that replaces the plain one') }), description: 'Weights that replace the plain ones for shapes the filter matches.' },
-        never: { type: 'array', items: obj({ shape: filterRef, why }), description: 'Shapes he never has.' },
+        weightsBy: { type: 'array', items: obj({ when: filterRef, tip: tipTable({ type: 'number', minimum: 0 }, 'limb.tip to the weight that replaces the plain one'), target: numTable('target to the weight that replaces the plain one'), path: numTable('path to the weight that replaces the plain one'), limb: numTable('limb to the weight that replaces the plain one') }, { required: ['when'] }), description: 'Weights that replace the plain ones for shapes the filter matches.' },
+        never: { type: 'array', items: obj({ id: name, shape: filterRef, why }, { required: ['shape', 'why'] }), description: 'Shapes he never has.' },
         tipOf: { type: 'object', propertyNames: { pattern: '^(_.*|strike\\.[a-z0-9_]+)$' }, additionalProperties: name, patternProperties: { '^_': true }, description: 'Strike id to a tip: his own reading of a shared strike.' },
         tipFlags: tipTable({ type: 'array', minItems: 1, uniqueItems: true, items: name }, 'How he shows a tip, as pose flags (limb.tip to flags), for Legal\'s rows.'),
         reuse: obj({
@@ -254,6 +296,7 @@ const identitySchema = withDefs({
           re_aim_edge: { type: 'number', minimum: 1 },
           hand_state_re_aim: { type: 'number', minimum: 1 },
           hand_state_re_aim_edge: { type: 'number', minimum: 1 },
+          stand_in: { type: 'number', minimum: 1 },
         }, { required: ['posed', 'hand_state', 're_aim', 'hand_state_re_aim'], description: 'How strongly a shape that is posed, or one swap or re-aim from it, is preferred (1 or more).' }),
         energy: obj({
           hands: numTable('an energy hand of parts.json shot.hands to its weight'),
@@ -263,6 +306,9 @@ const identitySchema = withDefs({
           posed: { type: 'array', items: obj({ when: filterRef, set: why }), description: 'Shots that have a posed key set: the set of the first row whose filter matches.' },
         }, { required: ['hands', 'release'] }),
         specials: obj({ x: special, y: special, a: special }, { required: [] }),
+        manner: obj({ heavy: why, burst: why }, { required: [], description: 'How he throws, in words, for Animation and Legal. Not read by the generator.' }),
+        pinned: { type: 'object', propertyNames: { pattern: '^(_.*|' + CELLID.slice(1, -1) + ')$' }, additionalProperties: { type: 'array', items: { type: 'array', minItems: 5, maxItems: 5, prefixItems: [{ enum: LIMBS }, name, { enum: PATHS }, name, { enum: WEIGHTS }] }, description: 'Shapes a cell must hold: [limb, tip, path, target, weight].' }, patternProperties: { '^_': true }, description: 'A cell to the shapes pinned in it for this fighter.' },
+        burst: obj({ close: obj({ path: { type: 'array', minItems: 1, uniqueItems: true, items: { enum: PATHS } } }, { description: 'What his burst\'s eighth blow is, when the rules allow.' }) }, { description: 'How his held X closes.' }),
       }, { required: ['waves', 'weights', 'weightsBy', 'never', 'tipOf', 'reuse'] }),
       patternProperties: { '^_': true },
     },
@@ -286,9 +332,20 @@ const slot = obj({
   ticks: { type: 'integer', minimum: 1 },
   count: { type: 'integer', minimum: 1 },
   from: { type: 'string', minLength: 1 },
+  to: { type: 'string', minLength: 1 },
   order: label,
   by: label,
 }, { required: ['slot'] });
+const standIn = obj({
+  kind: { const: 'strikes' },
+  temporary: { type: 'boolean' },
+  only: name,
+  asks,
+  without: { type: 'object', propertyNames: { pattern: '^(_.*|[a-z][a-z0-9_]*)$' }, additionalProperties: { type: 'array', minItems: 1, items: strikeId }, patternProperties: { '^_': true }, description: 'A fighter to the posed strikes left out of his stand-ins.' },
+  what: why,
+  filter: filterRef,
+  count: { type: 'integer', minimum: 1 },
+}, { required: ['kind', 'temporary', 'only', 'what', 'filter', 'count'], description: 'Stand-ins for B until the tier is posed: temporary, never locked.' });
 const quota = Object.assign({
   type: 'object',
   required: ['name', 'min'],
@@ -338,12 +395,20 @@ const cellsSchema = withDefs({
   additionalProperties: false,
   patternProperties: { '^_': true },
 }, {
+  standIn,
   cell: Object.assign({
     type: 'object',
     required: ['kind', 'what'],
     properties: {
       kind: { enum: KINDS },
       what: why,
+      spread: tableOf({ type: 'number', exclusiveMinimum: 0, maximum: 1 }, 'a part (look, path, target, tip, shape) to how hard a pick marks down what shares it, in this cell'),
+      weights: nameArr('Weights this cell may hold (a defensive blow may be a light or a medium).'),
+      notLevels: nameArr('Key levels this cell does not take (a stand-in is not one of the tier).'),
+      presses: tableOf({ $ref: '#/$defs/cell' }, 'a press (hold) to the sub-cell it plays'),
+      standIn: { $ref: '#/$defs/standIn' },
+      from: { type: 'string', pattern: CELLID, description: 'A string cell: the cell its blows come from.' },
+      leans: { type: 'array', minItems: 1, items: Object.assign({ type: 'object', required: ['name'], properties: { name: name, filter: filterRef, any: { type: 'array', minItems: 1, items: filterRef } } }, closed), description: 'A string cell: a lean of the stick to the filter its string draws on.' },
       needs,
       asks,
       filter: filterRef,
@@ -353,8 +418,8 @@ const cellsSchema = withDefs({
       as: name,
       anyWeight: { type: 'boolean' },
       notFlags: { type: 'array', minItems: 1, uniqueItems: true, items: name },
-      readings: { anyOf: [nameArr('The forms a cell is read in.'), tableOf(why, 'a reading to a sentence')] },
-      blows: { type: 'string', pattern: '^[a-z][a-z0-9_]*\\.[xyab]$', description: 'The cell whose blows this travel cell strikes with.' },
+      readings: { anyOf: [nameArr('The forms a cell is read in.'), labelTable(why, 'a reading to a sentence')] },
+      blows: { type: 'string', pattern: CELLID, description: 'The cell whose blows this travel cell strikes with.' },
       kinds: nameArr('The kinds of travel (parts.json travel.kinds) this cell holds.'),
       block: name,
       delivery: nameArr('The deliveries (shot kinds) this cell holds.'),
@@ -362,7 +427,7 @@ const cellsSchema = withDefs({
       pressed: labelArr('The actions of a press.'),
       held: labelArr('The actions of a hold.'),
       actions: labelArr('The actions of a context cell.'),
-      slots: { type: 'array', minItems: 1, items: slot },
+      slots: { type: 'array', minItems: 1 },
       legal: why,
     },
     allOf: [
@@ -371,7 +436,8 @@ const cellsSchema = withDefs({
       { if: { properties: { kind: { const: 'table' } } }, then: { required: ['block', 'delivery', 'count', 'quotas'] } },
       { if: { properties: { kind: { const: 'special' } } }, then: { required: ['slot', 'count', 'readings'] } },
       { if: { properties: { kind: { const: 'context' } } }, then: { required: ['pressed', 'held'] } },
-      { if: { properties: { kind: { const: 'frame' } } }, then: { required: ['slots'] } },
+      { if: { properties: { kind: { const: 'frame' } } }, then: { required: ['slots'], properties: { slots: { items: slot } } } },
+      { if: { properties: { kind: { const: 'string' } } }, then: { required: ['from', 'slots', 'leans'], properties: { slots: { items: { enum: CLASSES } } } } },
     ],
   }, closed),
 });
@@ -407,7 +473,11 @@ const strikeMove = obj({
   asks,
   review: { enum: REVIEW },
   as: name,
+  wind: name,
+  drive: name,
+  name: why,
 }, { required: ['id', 'limb', 'tip', 'path', 'target', 'weight', 'arms', 'forms', 'step', 'sends', 'links', 'beat', 'keys', 'ground', 'status', 'flags', 'legal', 'asks', 'review'] });
+const stringMove = obj({ id: moveId, lean: name, blows: { type: 'array', minItems: 1, items: moveId }, slots: { type: 'array', minItems: 1, items: { enum: CLASSES } }, status: { enum: STATUS }, asks, review: { enum: REVIEW } });
 const entryRef = obj({ id: { type: 'string', pattern: '^entry\\.[a-z0-9_]+$' }, set: keySet });
 const travelMove = obj({
   id: moveId,
@@ -453,7 +523,7 @@ const movesetSchema = withDefs({
     cells: {
       type: 'object',
       minProperties: 1,
-      propertyNames: { pattern: '^(_.*|[a-z][a-z0-9_]*\\.[xyab])$' },
+      propertyNames: { pattern: '^(_.*|' + CELLID.slice(1, -1) + ')$' },
       additionalProperties: { $ref: '#/$defs/cell' },
       patternProperties: { '^_': true },
     },
@@ -468,6 +538,8 @@ const movesetSchema = withDefs({
       kind: { enum: KINDS },
       valid: { type: 'integer', minimum: 0, description: 'How many shapes were candidates.' },
       refused: { type: 'array', description: 'Candidates Legal\'s rows refused.' },
+      from: { type: 'string', pattern: CELLID },
+      temporary: { type: 'boolean', description: 'A stand-in cell: never locked; it goes as the tier\'s own poses arrive.' },
       quotas: labelTable({ type: 'integer', minimum: 0 }, 'quota name to how many moves meet it'),
       moves: { type: 'array', minItems: 1 },
       special: { type: 'string', pattern: '^special\\.[a-z0-9_]+$' },
@@ -476,11 +548,12 @@ const movesetSchema = withDefs({
       pressed: labelArr('The actions of a press.'),
       held: labelArr('The actions of a hold.'),
       slots: { type: 'array', minItems: 1, items: slot },
-      readings: tableOf(why, 'a reading to a sentence'),
+      readings: labelTable(why, 'a reading to a sentence'),
       asks,
     },
     allOf: [
       { if: { properties: { kind: { const: 'strikes' } } }, then: { required: ['valid', 'refused', 'quotas', 'moves'], properties: { moves: { items: strikeMove } } } },
+      { if: { properties: { kind: { const: 'string' } } }, then: { required: ['from', 'valid', 'quotas', 'moves'], properties: { moves: { items: stringMove } } } },
       { if: { properties: { kind: { const: 'travel' } } }, then: { required: ['valid', 'refused', 'quotas', 'moves'], properties: { moves: { items: travelMove }, refused: { items: refusedTravel } } } },
       { if: { properties: { kind: { const: 'table' } } }, then: { required: ['valid', 'refused', 'quotas', 'moves'], properties: { moves: { items: tableMove }, refused: { items: refusedTable } } } },
       { if: { properties: { kind: { const: 'special' } } }, then: { required: ['special', 'what', 'state', 'valid', 'quotas', 'moves'], properties: { moves: { items: specialMove } } } },
@@ -501,7 +574,7 @@ const lockSchema = {
   required: ['schema', 'fighters'],
   properties: {
     schema: { const: 'combat.moveset.lock/1' },
-    fighters: tableOf({ type: 'object', propertyNames: { pattern: '^(_.*|[a-z][a-z0-9_]*\\.[xyab])$' }, additionalProperties: { type: 'array', items: lockRow }, patternProperties: { '^_': true } }, 'a fighter to its locked cells'),
+    fighters: tableOf({ type: 'object', propertyNames: { pattern: '^(_.*|' + CELLID.slice(1, -1) + ')$' }, additionalProperties: { type: 'array', items: lockRow }, patternProperties: { '^_': true } }, 'a fighter to its locked cells'),
   },
   additionalProperties: false,
   patternProperties: { '^_': true },
@@ -580,7 +653,7 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
   const TC = '/cells/trial.x';
   const TL = '/fighters/' + fid + '/trial.x';
   const P0 = TC + '/moves/0';
-  const tplMove = { strikes: live.cells['martial.x'].moves[0], travel: live.cells['manoeuvre.x'].moves[0], table: live.cells['energy.x'].moves[0], special: live.cells['charging.x'].moves[0] };
+  const tplMove = { medium: live.cells['martial.y'].moves[0], heavy: live.cells['martial.b'].moves[0], string: live.cells['martial.x.hold'].moves[0], standin: live.cells['martial.b.standin'].moves[0], strikes: live.cells['martial.x'].moves[0], travel: live.cells['manoeuvre.x'].moves[0], table: live.cells['energy.x'].moves[0], special: live.cells['charging.x'].moves[0] };
   const lockRow = (m) => [m.id, [m.limb, m.tip, m.path, m.target, m.weight], m.keys && m.keys.level === 'posed' && typeof m.keys.set === 'string' ? m.keys.set : null];
   // a condition and a banned row of the case's own (a shape that matches nothing)
   const ownCond = () => [{ file: P, set: { '/strike/banned/-': { id: 'b98', match: { limb: ['hand'], tip: ['none_such'] }, why: 'a' }, '/strike/conditions/-': { id: 'Z9', stance: 'any', rows: ['b98'], ask: 'a' } } }];
@@ -588,14 +661,20 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
   const trialMut = (kind, f = {}) => {
     const base = clone(tplMove[kind] || {});
     let moves = [clone(base)];
-    if (moves[0].id) moves[0].id = `mv.${fid}.trial.x.01`;
+    if (moves[0].id) moves[0].id = kind === 'string' ? `mv.${fid}.trial.x.hold.01` : kind === 'standin' ? `mv.${fid}.trial.b.standin.01` : `mv.${fid}.trial.x.01`;
     if (f.moves) moves = f.moves(moves);
     if (f.move) f.move(moves[0]);
     let def;
     let cell;
-    if (kind === 'strikes') {
-      def = { kind, what: 'a', filter: { weight: [base.weight] }, count: moves.length, readings: base.forms, quotas: [] };
-      cell = { kind, valid: 1, refused: [], quotas: {}, moves };
+    if (kind === 'strikes' || kind === 'medium' || kind === 'heavy') {
+      def = { kind: 'strikes', what: 'a', filter: { weight: [base.weight] }, count: moves.length, readings: base.forms, quotas: [] };
+      cell = { kind: 'strikes', valid: 1, refused: [], quotas: {}, moves };
+    } else if (kind === 'string') {
+      def = { kind: 'string', what: 'a', from: 'martial.x', slots: clone(base.slots), leans: [{ name: base.lean, filter: { weight: ['light'] } }] };
+      cell = { kind: 'string', from: 'martial.x', valid: 1, quotas: {}, moves };
+    } else if (kind === 'standin') {
+      def = { kind: 'strikes', temporary: true, only: 'stand_in', what: 'a', filter: { weight: [tplMove.heavy.weight] }, count: 2 };
+      cell = { kind: 'strikes', valid: 1, refused: [], quotas: {}, temporary: true, moves };
     } else if (kind === 'travel') {
       def = { kind, what: 'a', blows: 'martial.x', kinds: [base.kind], count: moves.length, readings: base.forms, quotas: [] };
       cell = { kind, valid: 1, refused: [], quotas: {}, moves };
@@ -614,8 +693,12 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     }
     if (f.def) f.def(def);
     if (f.cell) f.cell(cell);
-    const muts = [{ file: M, set: { [TC]: cell } }, { file: C, set: { [TRIAL]: { held: 0, x: def } } }];
-    if (kind === 'strikes') {
+    const muts = kind === 'string'
+      ? [{ file: M, set: { [TC + '.hold']: cell } }, { file: C, set: { [TRIAL]: { held: 0, x: { kind: 'strikes', what: 'a', filter: { weight: ['light'] }, count: 1, quotas: [], presses: { hold: def } } } } }]
+      : kind === 'standin'
+        ? [{ file: M, set: { '/cells/trial.b.standin': cell } }, { file: C, set: { [TRIAL]: { held: 0, b: { kind: 'strikes', what: 'a', filter: { weight: [tplMove.heavy.weight] }, count: 1, quotas: [], standIn: def } } } }]
+        : [{ file: M, set: { [TC]: cell } }, { file: C, set: { [TRIAL]: { held: 0, x: def } } }];
+    if (kind === 'strikes' || kind === 'medium' || kind === 'heavy') {
       const rows = moves.map(lockRow);
       if (f.lock) f.lock(rows);
       muts.push({ file: L, set: { [TL]: rows } });
@@ -626,6 +709,16 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
   const mt = (n, kind, f, expect) => ({ id: 'combat-moveset-' + n, schema: 'combat-moveset.schema.json', mutate: trialMut(kind, f), expect });
   const sk = (n, tweak, expect) => mt(n, 'strikes', { move: tweak }, expect);
   const handRow = { shape: 'open', light: 'hand_edge', hands: 1, height: 'shoulder' };
+  // the three strengths' cells: a strikes cell of a trial stance that holds a press (a string) or the stand-ins, each case with its own values
+  const TP = '/stances/trial/x/';
+  const TB = '/stances/trial/b/';
+  const standFrom = tplMove.standin.keys.from;
+  const SC = (extra) => Object.assign({ kind: 'strikes', what: 'a', filter: { weight: ['light'] }, count: 3, quotas: [] }, extra);
+  const HOLD = (extra) => Object.assign({ kind: 'string', what: 'a', from: 'martial.x', slots: ['open', 'fast', 'mid', 'slow'], leans: [{ name: 'toward', filter: { limb: ['elbow'] } }, { name: 'down', any: [{ path: ['drop'] }, { target: ['legs'] }] }], asks: [], needs: [{ who: 'Animation', what: 'a' }] }, extra);
+  const SI = (extra) => Object.assign({ kind: 'strikes', temporary: true, only: 'stand_in', what: 'a', filter: { weight: ['heavy'] }, count: 2, asks: [], without: { [fid]: [standFrom] } }, extra);
+  const cc = (n, tweak, expect) => { const h = HOLD({}); tweak(h); return { id: 'combat-cells-' + n, schema: 'combat-cells.schema.json', mutate: [{ file: C, set: { '/stances/trial': { held: 0, x: SC({ presses: { hold: h } }) } } }], expect }; };
+  const si = (n, tweak, expect) => { const s = SI({}); tweak(s); return { id: 'combat-cells-' + n, schema: 'combat-cells.schema.json', mutate: [{ file: C, set: { '/stances/trial': { held: 0, b: SC({ standIn: s }) } } }], expect }; };
+  const cl = (n, extra, expect) => ({ id: 'combat-cells-' + n, schema: 'combat-cells.schema.json', mutate: [{ file: C, set: { '/stances/trial': { held: 0, x: SC(extra) } } }], expect });
   const add = [
     // ---- parts ----
     pa('live-valid', { set: { '/schema': 'combat.parts/1' } }, null),
@@ -653,7 +746,7 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     pa('light-never-any-ok', { set: { [ST + 'lightNever']: [{ any: [{ path: ['spin'] }, { limb: ['head'] }] }] } }, null),
     pa('forms-key-required', { set: { [ST + 'forms']: [{ when: { weight: ['light'] } }] } }, { rule: 'required', pointer: ST + 'forms/0' }),
     pa('forms-needs-a-rule', { set: { [ST + 'forms']: [{ form: 'light' }] } }, { rule: 'anyOf', pointer: ST + 'forms/0' }),
-    pa('forms-duplicate', { set: { [ST + 'forms']: [{ form: 'light', when: { weight: ['light'] } }, { form: 'light', when: { weight: ['heavy'] } }] } }, { rule: 'xref:parts-grammar', pointer: ST + 'forms/1/form' }),
+    pa('forms-duplicate', { set: { [ST + 'forms']: [{ form: 'light', when: { weight: ['light'] } }, { form: 'light', when: { weight: ['light'] } }] } }, { rule: 'xref:parts-grammar', pointer: ST + 'forms/1/form' }),
     pa('forms-unless-later', { set: { [ST + 'forms']: [{ form: 'light', when: { weight: ['light'] }, unless: 'break' }, { form: 'break', when: { weight: ['heavy'] } }] } }, { rule: 'xref:parts-grammar', pointer: ST + 'forms/0/unless' }),
     pa('swap-not-a-hand-tip', { set: { [ST + 'swap']: ['fist', 'ball'] } }, { rule: 'xref:parts-grammar', pointer: ST + 'swap/1' }),
     pa('tag-tip-not-a-hand-tip', { set: { [ST + 'tagTips']: { hands_open_or_claw: ['palm', 'ball'] } } }, { rule: 'xref:parts-grammar', pointer: ST + 'tagTips/hands_open_or_claw/1' }),
@@ -667,7 +760,7 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     pa('condition-id-twice', { set: { [ST + 'conditions']: [{ id: 'L1', when: { limb: ['hand'] }, rows: ['b01'], ask: 'a' }, { id: 'L1', when: { limb: ['foot'] }, rows: ['b01'], ask: 'b' }] } }, { rule: 'xref:parts-grammar', pointer: ST + 'conditions/1/id' }),
     pa('rule-id-twice', { set: { [ST + 'banned']: [{ id: 'b01', match: { limb: ['head'] }, why: 'a' }, { id: 'b01', match: { limb: ['knee'] }, why: 'b' }] } }, { rule: 'xref:parts-grammar', pointer: ST + 'banned/1/id' }),
     pa('banned-sequence-kind-enum', { set: { [ST + 'bannedSequences']: [{ id: 's01', kind: 'dance', rule: 'a', why: 'b' }] } }, { rule: 'enum', pointer: ST + 'bannedSequences/0/kind' }),
-    pa('banned-sequence-key-required', { set: { [ST + 'bannedSequences']: [{ id: 's01', kind: 'run', rule: 'a' }] } }, { rule: 'required', pointer: ST + 'bannedSequences/0' }),
+    pa('banned-sequence-key-required', { set: { [ST + 'bannedSequences']: [{ id: 's01', kind: 'run', why: 'a' }] } }, { rule: 'required', pointer: ST + 'bannedSequences/0' }),
     pa('banned-sequence-max-zero', { set: { [ST + 'bannedSequences']: [{ id: 's01', kind: 'run', max: 0, rule: 'a', why: 'b' }] } }, { rule: 'minimum', pointer: ST + 'bannedSequences/0/max' }),
     pa('banned-flag-unknown-warns', { set: { [ST + 'flags']: { fromAnimation: ['claw'] }, [ST + 'banned']: [{ id: 'b01', match: { flags: ['claw', 'levitate'] }, why: 'a' }] } }, { rule: 'xref:parts-grammar', pointer: ST + 'banned/0/match/flags/1' }),
     pa('banned-ok', { set: { [ST + 'banned/-']: { id: 'b98', match: { limb: ['hand'], tip: ['none_such'] }, why: 'a' } } }, null),
@@ -694,12 +787,12 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     pa('shot-hand-ok', { set: { [SH + 'hands/open_palm']: handRow } }, null),
     pa('shot-hand-count-zero', { set: { [SH + 'hands/open_palm']: Object.assign({}, handRow, { hands: 0 }) } }, { rule: 'minimum', pointer: SH + 'hands/open_palm/hands' }),
     pa('shot-hand-name-shape', { set: { [SH + 'hands/Open Palm']: handRow } }, { rule: 'propertyNames', pointer: SH + 'hands/Open Palm' }),
-    pa('readings-form-shape', { set: { '/readings/martial/speed': ['Quick'] } }, { rule: 'pattern', pointer: '/readings/martial/speed/0' }),
+    pa('readings-form-shape', { set: { '/readings/martial/speed': ['Quick'] } }, { rule: 'anyOf', pointer: '/readings/martial/speed' }),
     pa('readings-stance-unknown-warns', { set: { '/readings/nowhere': { speed: ['light'] } } }, { rule: 'xref:parts-grammar', pointer: '/readings/nowhere' }),
     pa('legal-key-required', { del: [LG + 'stacking'] }, { rule: 'required', pointer: '/legal' }),
     pa('legal-held-scope-open-object-ok', { set: { [LG + 'heldScope']: { _about: 'a', anything: { goes: ['here'] } } } }, null),
     pa('legal-held-scope-type', { set: { [LG + 'heldScope']: [] } }, { rule: 'type', pointer: LG + 'heldScope' }),
-    pa('legal-unknown-group',{ set: { [LG + 'extra']: [] } }, { rule: 'additionalProperties', pointer: LG + 'extra' }),
+    pa('legal-unknown-group-is-not-rows', { set: { [LG + 'extra']: 'a note' } }, { rule: 'type', pointer: LG + 'extra' }),
     pa('legal-row-kind-enum', { set: { [LG + 'motion']: [{ id: 'm01', kind: 'dance', rule: 'a', why: 'b' }] } }, { rule: 'enum', pointer: LG + 'motion/0/kind' }),
     pa('legal-row-key-required', { set: { [LG + 'motion']: [{ id: 'm01', kind: 'drawn', owner: 'Animation', rule: 'a' }] } }, { rule: 'required', pointer: LG + 'motion/0' }),
     pa('legal-row-id-shape', { set: { [LG + 'motion']: [{ id: 'motion1', kind: 'drawn', owner: 'Animation', rule: 'a', why: 'b' }] } }, { rule: 'pattern', pointer: LG + 'motion/0/id' }),
@@ -720,6 +813,54 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     pa('grab-hold-points-empty', { set: { '/grab/holdPoints': [] } }, { rule: 'minItems', pointer: '/grab/holdPoints' }),
     pa('grab-hold-point-is-never', { set: { '/grab/holdPoints': ['collar', 'throat'], [LG + 'grabs']: [{ id: 'g01', kind: 'holdPoints', never: ['throat', 'hair'], rule: 'a', why: 'b' }, { id: 'g02', kind: 'drawn', owner: 'A', rule: 'a', why: 'b' }, { id: 'g03', kind: 'drawn', owner: 'A', rule: 'a', why: 'b' }] } }, { rule: 'xref:parts-legal', pointer: '/grab/holdPoints/1' }),
     pa('grab-hold-points-clear-of-never-ok', { set: { '/grab/holdPoints': ['collar', 'waist'], [LG + 'grabs']: [{ id: 'g01', kind: 'holdPoints', never: ['throat', 'hair'], rule: 'a', why: 'b' }, { id: 'g02', kind: 'drawn', owner: 'A', rule: 'a', why: 'b' }, { id: 'g03', kind: 'drawn', owner: 'A', rule: 'a', why: 'b' }] } }, null),
+    // ---- parts: the three strengths ----
+    pa('weights-required', { del: [ST + 'weights'] }, { rule: 'required', pointer: '/strike' }),
+    pa('weights-item-shape', { set: { [ST + 'weights']: ['Light'] } }, { rule: 'pattern', pointer: ST + 'weights/0' }),
+    pa('weights-empty', { set: { [ST + 'weights']: [] } }, { rule: 'minItems', pointer: ST + 'weights' }),
+    pa('anim-weight-enum', { set: { [ST + 'animWeight']: { light: 'average' } } }, { rule: 'enum', pointer: ST + 'animWeight/light' }),
+    pa('windup-required', { del: [ST + 'windup'] }, { rule: 'required', pointer: '/strike' }),
+    pa('windup-medium-required', { set: { [ST + 'windup']: {} } }, { rule: 'required', pointer: ST + 'windup' }),
+    pa('windup-rule-key-required', { set: { [ST + 'windup/medium']: [{ id: 'w1', when: { path: ['line'] } }] } }, { rule: 'required', pointer: ST + 'windup/medium/0' }),
+    pa('windup-rule-reads-enum', { set: { [ST + 'windup/medium']: [{ id: 'w1', when: { path: ['line'] }, reads: 'slow' }] } }, { rule: 'enum', pointer: ST + 'windup/medium/0/reads' }),
+    pa('windup-rule-unknown-key', { set: { [ST + 'windup/medium']: [{ id: 'w1', when: { path: ['line'] }, reads: 'quick', mood: 1 }] } }, { rule: 'additionalProperties', pointer: ST + 'windup/medium/0/mood' }),
+    pa('windup-rule-id-twice', { set: { [ST + 'windup/medium']: [{ id: 'w1', when: { path: ['line'] }, reads: 'quick' }, { id: 'w1', when: { path: ['rise'] }, reads: 'quick' }] } }, { rule: 'xref:parts-windup', pointer: ST + 'windup/medium/1/id' }),
+    pa('windup-rule-last-ok', { set: { [ST + 'windup/medium/-']: { id: 'w99', when: { limb: ['head'] }, reads: 'quick', change: 'a note', why: 'a note' } } }, null),
+    pa('heavy-required', { del: [ST + 'heavy'] }, { rule: 'required', pointer: '/strike' }),
+    pa('heavy-key-required', { set: { [ST + 'heavy']: { tips: {}, never: [] } } }, { rule: 'required', pointer: ST + 'heavy' }),
+    pa('heavy-tip-path-enum', { set: { [ST + 'heavy/tips/hand/fist']: ['zigzag'] } }, { rule: 'enum', pointer: ST + 'heavy/tips/hand/fist/0' }),
+    pa('heavy-tip-not-in-the-grammar', { set: { [ST + 'heavy/tips/hand/claw']: ['line'] } }, { rule: 'xref:parts-heavy', pointer: ST + 'heavy/tips/hand/claw' }),
+    pa('heavy-never-key-required', { set: { [ST + 'heavy/never']: [{ shape: { limb: ['foot'] } }] } }, { rule: 'required', pointer: ST + 'heavy/never/0' }),
+    pa('heavy-never-ok', { set: { [ST + 'heavy/never/-']: { shape: { limb: ['head'] }, why: 'a ruling' } } }, null),
+    pa('heavy-drive-key-required', { set: { [ST + 'heavy/drive/line']: { id: 'a_drive', word: 'a', flags: [], bears: [], what: 'a', tell: 'a', end: 'a' } } }, { rule: 'required', pointer: ST + 'heavy/drive/line' }),
+    pa('heavy-drive-unknown-key', { set: { [ST + 'heavy/drive/line']: { id: 'a_drive', word: 'a', flags: [], bears: [], what: 'a', tell: 'a', end: 'a', seen: false, mood: 1 } } }, { rule: 'additionalProperties', pointer: ST + 'heavy/drive/line/mood' }),
+    pa('heavy-drive-bears-no-rule', { set: { [ST + 'heavy/drive/line']: { id: 'a_drive', word: 'a', flags: [], bears: ['b99'], what: 'a', tell: 'a', end: 'a', seen: false } } }, { rule: 'xref:parts-heavy', pointer: ST + 'heavy/drive/line/bears/0' }),
+    pa('heavy-drive-id-twice', { set: { [ST + 'heavy/drive/line']: { id: 'twice', word: 'a', flags: [], bears: [], what: 'a', tell: 'a', end: 'a', seen: false }, [ST + 'heavy/drive/rise']: { id: 'twice', word: 'a', flags: [], bears: [], what: 'a', tell: 'a', end: 'a', seen: false } } }, { rule: 'xref:parts-heavy', pointer: ST + 'heavy/drive/rise/id' }),
+    pa('heavy-drive-seen-type', { set: { [ST + 'heavy/drive/line']: { id: 'a_drive', word: 'a', flags: [], bears: [], what: 'a', tell: 'a', end: 'a', seen: 'yes' } } }, { rule: 'type', pointer: ST + 'heavy/drive/line/seen' }),
+    pa('heavy-words-key-shape', { set: { [ST + 'heavy/words']: { fist: 'a fist' } } }, { rule: 'propertyNames', pointer: ST + 'heavy/words/fist' }),
+    pa('heavy-words-tip-unknown', { set: { [ST + 'heavy/words/hand.claw']: 'a claw' } }, { rule: 'xref:parts-heavy', pointer: ST + 'heavy/words/hand.claw' }),
+    pa('burst-required', { del: [ST + 'burst'] }, { rule: 'required', pointer: '/strike' }),
+    pa('burst-class-key-required', { set: { [ST + 'burst/classes/fast']: { gap: '5 ticks or fewer', when: {} } } }, { rule: 'required', pointer: ST + 'burst/classes/fast' }),
+    pa('burst-no-stutter-key-required', { set: { [ST + 'burst/noStutter']: [{ id: 'u1', kind: 'run' }] } }, { rule: 'required', pointer: ST + 'burst/noStutter/0' }),
+    pa('burst-no-stutter-once-ok', { set: { [ST + 'burst/noStutter/-']: { id: 'u98', kind: 'once', rule: 'no piece twice in one burst' } } }, null),
+    pa('forms-reads-enum', { set: { [ST + 'forms/-']: { form: 'quick', when: { weight: ['medium'] }, reads: 'slow' } } }, { rule: 'enum', pointer: ST + 'forms/' + rj(P).strike.forms.length + '/reads' }),
+    pa('forms-same-name-for-another-weight-ok', { set: { [ST + 'forms/-']: { form: 'quick', when: { weight: ['heavy'], limb: ['tail'] } } } }, null),
+    pa('banned-applies-to-ok', { set: { [ST + 'banned/-']: { id: 'b97', match: { limb: ['hand'], tip: ['none_such'] }, why: 'a', appliesTo: 'open or clawed hands' } } }, null),
+    pa('condition-from-ok', { set: { [ST + 'banned/-']: { id: 'b96', match: { limb: ['hand'], tip: ['none_such'] }, why: 'a' }, [ST + 'conditions/-']: { id: 'T3', stance: 'any', rows: ['b96'], from: 'Legal\'s screen', ask: 'a' } } }, null),
+    pa('readings-presses-ok', { set: { '/readings/martial/z': { tap: 'light', mash: 'flurry', hold: 'the burst', beat: 'skill' } } }, null),
+    pa('readings-presses-type', { set: { '/readings/martial/x': 5 } }, { rule: 'anyOf', pointer: '/readings/martial/x' }),
+    pa('legal-new-group-ok', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'drawn', owner: 'A', rule: 'a', why: 'b' }] } }, null),
+    pa('legal-string-row-needs-uses', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'string', rule: 'a', why: 'b' }] } }, { rule: 'required', pointer: LG + 'extra_rows/0' }),
+    pa('legal-string-row-ok', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'string', uses: ['s01'], ignores: ['button'], rule: 'a', why: 'b' }] } }, null),
+    pa('legal-slots-row-needs-class', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'slots', rule: 'a', why: 'b' }] } }, { rule: 'required', pointer: LG + 'extra_rows/0' }),
+    pa('legal-slots-row-ok', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'slots', class: 'fast', maxRun: 3, rule: 'a', why: 'b' }] } }, null),
+    pa('legal-slots-max-run-zero', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'slots', class: 'fast', maxRun: 0, rule: 'a', why: 'b' }] } }, { rule: 'minimum', pointer: LG + 'extra_rows/0/maxRun' }),
+    pa('legal-burst-row-needs-uses', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'burst', rule: 'a', why: 'b' }] } }, { rule: 'required', pointer: LG + 'extra_rows/0' }),
+    pa('legal-shape-row-needs-match', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'shape', rule: 'a', why: 'b' }] } }, { rule: 'required', pointer: LG + 'extra_rows/0' }),
+    pa('legal-shape-row-ok', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'shape', match: { weight: ['medium'], flags: ['hip_chamber'] }, rule: 'a', why: 'b' }] } }, null),
+    pa('legal-hold-points-row-grab-ok', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'holdPoints', grab: 'tackle', allowed: ['waist'], never: ['throat'], rule: 'a', why: 'b' }] } }, null),
+    pa('legal-move-row-string-ok', { set: { [LG + 'extra_rows']: [{ id: 'x01', kind: 'move', if: { delivery: ['volley'] }, then: { release: ['thrust', 'flick', 'sweep', 'drop', 'lob'] }, string: { same: ['hand'], max: 1 }, rule: 'a', why: 'b' }] } }, null),
+    pa('grab-kinds-ok', { set: { '/grab/kinds/test_kind': ['collar'] } }, null),
+    pa('grab-kinds-point-shape', { set: { '/grab/kinds/test_kind': ['Collar'] } }, { rule: 'pattern', pointer: '/grab/kinds/test_kind/0' }),
     // ---- identity ----
     id('live-valid', { set: { '/schema': 'combat.identity/1' } }, null),
     id('key-required', { del: ['/rejected'] }, { rule: 'required', pointer: '' }),
@@ -741,7 +882,7 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     id('weight-tip-without-limb', { set: { [F + 'weights/tip/fist']: 1 } }, { rule: 'xref:identity-ref', pointer: F + 'weights/tip/fist' }),
     id('weight-entry-negative', { set: { [F + 'weights/entry']: { dash: -1 } } }, { rule: 'minimum', pointer: F + 'weights/entry/dash' }),
     id('weight-entry-unknown', { set: { [F + 'weights/entry']: { teleport: 1 } } }, { rule: 'xref:identity-ref', pointer: F + 'weights/entry/teleport' }),
-    id('weights-by-key-required', { set: { [F + 'weightsBy']: [{ when: { weight: ['light'] } }] } }, { rule: 'required', pointer: F + 'weightsBy/0' }),
+    id('weights-by-key-required', { set: { [F + 'weightsBy']: [{ tip: { 'hand.fist': 1 } }] } }, { rule: 'required', pointer: F + 'weightsBy/0' }),
     id('weights-by-tip-unknown', { set: { [F + 'weightsBy']: [{ when: { weight: ['light'] }, tip: { 'hand.claw': 2 } }] } }, { rule: 'xref:identity-ref', pointer: F + 'weightsBy/0/tip/hand.claw' }),
     id('never-key-required', { set: { [F + 'never']: [{ shape: { limb: ['head'] } }] } }, { rule: 'required', pointer: F + 'never/0' }),
     id('never-ok', { set: { [F + 'never']: [{ shape: { limb: ['head'] }, why: 'a ruling' }] } }, null),
@@ -765,6 +906,26 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     id('special-button-unknown', { set: { [F + 'specials']: { z: { id: 'special.cut', what: 'a cut', status: 'designed', parts: { level: ['up'] } } } } }, { rule: 'additionalProperties', pointer: F + 'specials/z' }),
     id('special-parts-empty-list', { set: { [F + 'specials']: { x: { id: 'special.cut', what: 'a cut', status: 'designed', parts: { level: [] } } } } }, { rule: 'minItems', pointer: F + 'specials/x/parts/level' }),
     id('special-ok', { set: { [F + 'specials/x/status']: 'designed, not posed' } }, null),
+    id('weights-by-target-ok', { set: { [F + 'weightsBy/-']: { when: { weight: ['light'] }, target: { head: 1.5 }, path: { line: 2 }, limb: { hand: 1.2 }, _why: 'a note' } } }, null),
+    id('weights-by-path-unknown', { set: { [F + 'weightsBy/-']: { when: { weight: ['light'] }, path: { zigzag: 2 } } } }, { rule: 'xref:identity-ref', pointer: F + 'weightsBy/' + ident.weightsBy.length + '/path/zigzag' }),
+    id('weights-by-limb-unknown', { set: { [F + 'weightsBy/-']: { when: { weight: ['light'] }, limb: { tail: 2 } } } }, { rule: 'xref:identity-ref', pointer: F + 'weightsBy/' + ident.weightsBy.length + '/limb/tail' }),
+    id('weights-by-target-negative', { set: { [F + 'weightsBy/-']: { when: { weight: ['light'] }, target: { head: -1 } } } }, { rule: 'minimum', pointer: F + 'weightsBy/' + ident.weightsBy.length + '/target/head' }),
+    id('pinned-ok', { set: { [F + 'pinned']: { 'martial.b': [['hand', 'blade', 'line', 'head', 'light']] } } }, null),
+    id('pinned-cell-unknown', { set: { [F + 'pinned']: { 'martial.q': [['hand', 'blade', 'line', 'head', 'light']] } } }, { rule: 'xref:identity-ref', pointer: F + 'pinned/martial.q' }),
+    id('pinned-cell-id-shape', { set: { [F + 'pinned']: { martial: [['hand', 'blade', 'line', 'head', 'light']] } } }, { rule: 'propertyNames', pointer: F + 'pinned/martial' }),
+    id('pinned-shape-invalid', { set: { [F + 'pinned']: { 'martial.b': [['hand', 'claw', 'line', 'head', 'light']] } } }, { rule: 'xref:identity-ref', pointer: F + 'pinned/martial.b/0' }),
+    id('pinned-row-short', { set: { [F + 'pinned']: { 'martial.b': [['hand', 'blade', 'line', 'head']] } } }, { rule: 'minItems', pointer: F + 'pinned/martial.b/0' }),
+    id('pinned-weight-enum', { set: { [F + 'pinned']: { 'martial.b': [['hand', 'blade', 'line', 'head', 'average']] } } }, { rule: 'enum', pointer: F + 'pinned/martial.b/0/4' }),
+    id('burst-close-ok', { set: { [F + 'burst']: { close: { path: ['line'] }, _close: 'a note' } } }, null),
+    id('burst-close-path-enum', { set: { [F + 'burst']: { close: { path: ['zigzag'] } } } }, { rule: 'enum', pointer: F + 'burst/close/path/0' }),
+    id('burst-close-path-empty', { set: { [F + 'burst']: { close: { path: [] } } } }, { rule: 'minItems', pointer: F + 'burst/close/path' }),
+    id('burst-unknown-key', { set: { [F + 'burst']: { close: { path: ['line'] }, mood: 1 } } }, { rule: 'additionalProperties', pointer: F + 'burst/mood' }),
+    id('manner-ok', { set: { [F + 'manner']: { heavy: 'a show-off', burst: 'a show of speed', _about: 'a note' } } }, null),
+    id('manner-unknown-key', { set: { [F + 'manner']: { heavy: 'a', mood: 'b' } } }, { rule: 'additionalProperties', pointer: F + 'manner/mood' }),
+    id('manner-type', { set: { [F + 'manner/heavy']: 5 } }, { rule: 'type', pointer: F + 'manner/heavy' }),
+    id('reuse-stand-in-ok', { set: { [F + 'reuse/stand_in']: 1 } }, null),
+    id('reuse-stand-in-below-one', { set: { [F + 'reuse/stand_in']: 0.5 } }, { rule: 'minimum', pointer: F + 'reuse/stand_in' }),
+    id('never-id-ok', { set: { [F + 'never/-']: { id: 'pointed', shape: { limb: ['head'], tip: ['none_such'] }, why: 'a ruling' } } }, null),
     id('rejected-key-required', { set: { '/rejected': [{ fighter: fid, why: 'a review' }] } }, { rule: 'required', pointer: '/rejected/0' }),
     id('rejected-fighter-unknown', { set: { '/rejected': [{ fighter: 'nobody', shape: SHAPE, why: 'a review' }] } }, { rule: 'xref:identity-ref', pointer: '/rejected/0/fighter' }),
     id('rejected-ok', { set: { '/rejected': [{ fighter: fid, shape: SHAPE, why: 'a review' }] } }, null),
@@ -818,6 +979,39 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     ce('quota-name-twice', { set: { '/stances/martial/x': { kind: 'strikes', what: 'a', filter: { weight: ['light'] }, count: 3, quotas: [{ name: 'a', min: 1, filter: { weight: ['light'] } }, { name: 'a', min: 1, filter: { weight: ['heavy'] } }] } } }, { rule: 'xref:cells-quota', pointer: '/stances/martial/x/quotas/1/name' }),
     ce('quota-larger-than-cell', { set: { '/stances/martial/x': { kind: 'strikes', what: 'a', filter: { weight: ['light'] }, count: 3, quotas: [{ name: 'a', min: 99, filter: { weight: ['light'] } }] } } }, { rule: 'xref:cells-quota', pointer: '/stances/martial/x/quotas/0/min' }),
     ce('quota-form-unknown', { set: { '/stances/martial/x': { kind: 'strikes', what: 'a', filter: { weight: ['light'] }, count: 3, quotas: [{ name: 'a', min: 1, form: 'dance' }] } } }, { rule: 'xref:cells-quota', pointer: '/stances/martial/x/quotas/0/form' }),
+    // ---- cells: the three strengths ----
+    { id: 'combat-cells-presses-hold-ok', schema: 'combat-cells.schema.json', mutate: [{ file: C, set: { '/stances/trial': { held: 0, x: SC({ presses: { hold: HOLD({}) } }) } } }], expect: null },
+    cc('presses-hold-key-required', (h) => { delete h.from; }, { rule: 'required', pointer: TP + 'presses/hold' }),
+    cc('presses-hold-slots-required', (h) => { delete h.slots; }, { rule: 'required', pointer: TP + 'presses/hold' }),
+    cc('presses-hold-leans-required', (h) => { delete h.leans; }, { rule: 'required', pointer: TP + 'presses/hold' }),
+    cc('presses-hold-slot-class-enum', (h) => { h.slots[1] = 'quick'; }, { rule: 'enum', pointer: TP + 'presses/hold/slots/1' }),
+    cc('presses-hold-from-shape', (h) => { h.from = 'martial'; }, { rule: 'pattern', pointer: TP + 'presses/hold/from' }),
+    cc('presses-hold-from-is-no-strikes-cell', (h) => { h.from = 'manoeuvre.a'; }, { rule: 'xref:cells-quota', pointer: TP + 'presses/hold/from' }),
+    cc('presses-hold-from-is-no-cell', (h) => { h.from = 'martial.q'; }, { rule: 'xref:cells-quota', pointer: TP + 'presses/hold/from' }),
+    cc('presses-hold-lean-twice', (h) => { h.leans.push(clone(h.leans[0])); }, { rule: 'xref:cells-quota', pointer: TP + 'presses/hold/leans/2/name' }),
+    cc('presses-hold-lean-key-required', (h) => { delete h.leans[0].name; }, { rule: 'required', pointer: TP + 'presses/hold/leans/0' }),
+    cc('presses-hold-lean-unknown-key', (h) => { h.leans[0].mood = 1; }, { rule: 'additionalProperties', pointer: TP + 'presses/hold/leans/0/mood' }),
+    cc('presses-hold-asks-unknown-condition', (h) => { h.asks = ['Q99']; }, { rule: 'xref:cells-asks', pointer: TP + 'presses/hold/asks/0' }),
+    { id: 'combat-cells-stand-in-ok', schema: 'combat-cells.schema.json', mutate: [{ file: C, set: { '/stances/trial': { held: 0, b: SC({ standIn: SI({}) }) } } }], expect: null },
+    si('stand-in-key-required', (s) => { delete s.only; }, { rule: 'required', pointer: TB + 'standIn' }),
+    si('stand-in-unknown-key', (s) => { s.mood = 1; }, { rule: 'additionalProperties', pointer: TB + 'standIn/mood' }),
+    si('stand-in-temporary-type', (s) => { s.temporary = 'yes'; }, { rule: 'type', pointer: TB + 'standIn/temporary' }),
+    si('stand-in-count-zero', (s) => { s.count = 0; }, { rule: 'minimum', pointer: TB + 'standIn/count' }),
+    si('stand-in-kind-const', (s) => { s.kind = 'string'; }, { rule: 'const', pointer: TB + 'standIn/kind' }),
+    si('stand-in-without-fighter-unknown', (s) => { s.without = { nobody: [standFrom] }; }, { rule: 'xref:cells-quota', pointer: TB + 'standIn/without/nobody' }),
+    si('stand-in-without-strike-unknown', (s) => { s.without = { [fid]: ['strike.nowhere'] }; }, { rule: 'xref:cells-quota', pointer: TB + 'standIn/without/' + fid + '/0' }),
+    si('stand-in-without-strike-shape', (s) => { s.without = { [fid]: ['jab'] }; }, { rule: 'pattern', pointer: TB + 'standIn/without/' + fid + '/0' }),
+    si('stand-in-without-empty', (s) => { s.without = { [fid]: [] }; }, { rule: 'minItems', pointer: TB + 'standIn/without/' + fid }),
+    si('stand-in-asks-unknown-condition', (s) => { s.asks = ['Q99']; }, { rule: 'xref:cells-asks', pointer: TB + 'standIn/asks/0' }),
+    cl('spread-look-ok', { spread: { look: 0.15 } }, null),
+    cl('spread-look-above-one', { spread: { look: 1.5 } }, { rule: 'maximum', pointer: TP + 'spread/look' }),
+    cl('spread-look-zero', { spread: { look: 0 } }, { rule: 'exclusiveMinimum', pointer: TP + 'spread/look' }),
+    cl('not-levels-ok', { notLevels: ['stand_in'] }, null),
+    cl('not-levels-empty', { notLevels: [] }, { rule: 'minItems', pointer: TP + 'notLevels' }),
+    cl('weights-ok', { weights: ['light', 'medium'] }, null),
+    cl('weights-type', { weights: 'light' }, { rule: 'type', pointer: TP + 'weights' }),
+    { id: 'combat-cells-frame-slot-to-ok', schema: 'combat-cells.schema.json', mutate: [{ file: C, set: { '/stances/trial': { held: 0, b: { kind: 'frame', what: 'a', slots: [{ slot: 'tell', to: 'the first flash' }, { slot: 'his art', from: 'a string the player drives' }], readings: { 'held on, in acts 3 and 4': 'his ultimate' } } } } }], expect: null },
+    { id: 'combat-cells-frame-reading-key-shape', schema: 'combat-cells.schema.json', mutate: [{ file: C, set: { '/stances/trial': { held: 0, b: { kind: 'frame', what: 'a', slots: [{ slot: 'tell' }], readings: { 'Held': 'x' } } } } }], expect: { rule: 'anyOf', pointer: '/stances/trial/b/readings' } },
     // ---- moveset ----
     // The cells that need a moveset to agree with cells.json, parts.json and the lock are tried in a cell of their own: a stance `trial` in
     // cells.json, a cell `trial.x` in the moveset and (for a strikes cell) its rows in the lock, all set by the case. The moves are copies of a
@@ -856,7 +1050,7 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     sk('move-id-shape', (m) => { m.id = 'move 1'; }, { rule: 'pattern', pointer: P0 + '/id' }),
     sk('move-id-out-of-order', (m) => { m.id = `mv.${fid}.trial.x.07`; }, { rule: 'xref:moveset-cell', pointer: P0 + '/id' }),
     sk('move-limb-enum', (m) => { m.limb = 'tail'; }, { rule: 'enum', pointer: P0 + '/limb' }),
-    sk('move-weight-enum', (m) => { m.weight = 'medium'; }, { rule: 'enum', pointer: P0 + '/weight' }),
+    sk('move-weight-enum', (m) => { m.weight = 'average'; }, { rule: 'enum', pointer: P0 + '/weight' }),
     sk('move-beat-range', (m) => { m.beat = 30; }, { rule: 'maximum', pointer: P0 + '/beat' }),
     sk('move-status-enum', (m) => { m.status = 'done'; }, { rule: 'enum', pointer: P0 + '/status' }),
     sk('move-review-enum', (m) => { m.review = 'maybe'; }, { rule: 'enum', pointer: P0 + '/review' }),
@@ -928,6 +1122,36 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     mt('special-move-look-shape', 'special', { move: (m) => { m.look = { Level: 'up' }; } }, { rule: 'propertyNames', pointer: P0 + '/look/Level' }),
     mt('special-move-look-part-unknown', 'special', { move: (m) => { m.look = { colour: 'red' }; } }, { rule: 'xref:moveset-special', pointer: P0 + '/look/colour' }),
     mt('special-cell-id-shape', 'special', { cell: (c) => { c.special = 'cut'; } }, { rule: 'pattern', pointer: TC + '/special' }),
+    // the three strengths: a medium, a heavy, a string (the burst) and the stand-ins
+    mt('medium-ok', 'medium', {}, null),
+    mt('medium-wind-not-derived', 'medium', { move: (m) => { m.wind = m.wind === 'w5' ? 'w6' : 'w5'; } }, { rule: 'xref:moveset-derived', pointer: P0 + '/wind' }),
+    mt('medium-wind-shape', 'medium', { move: (m) => { m.wind = 'W 8'; } }, { rule: 'pattern', pointer: P0 + '/wind' }),
+    mt('medium-weight-in-a-light-cell', 'medium', { def: (d) => { d.filter.weight = ['light']; } }, { rule: 'xref:moveset-cell', pointer: P0 }),
+    mt('heavy-ok', 'heavy', {}, null),
+    mt('heavy-drive-not-derived', 'heavy', { move: (m) => { m.drive = 'a_wrong_drive'; } }, { rule: 'xref:moveset-derived', pointer: P0 + '/drive' }),
+    mt('heavy-drive-shape', 'heavy', { move: (m) => { m.drive = 'Full Turn'; } }, { rule: 'pattern', pointer: P0 + '/drive' }),
+    mt('heavy-name-empty', 'heavy', { move: (m) => { m.name = ''; } }, { rule: 'minLength', pointer: P0 + '/name' }),
+    mt('heavy-tip-cannot-travel-as-a-heavy', 'heavy', { move: (m) => { m.tip = 'ball'; m.limb = 'hand'; } }, { rule: 'xref:moveset-shape', pointer: P0 }),
+    mt('heavy-new-with-a-key-set', 'heavy', { move: (m) => { m.keys = { level: 'new', set: 'w1.jab' }; } }, { rule: 'xref:moveset-keys', pointer: P0 + '/keys' }),
+    mt('string-ok', 'string', {}, null),
+    mt('string-key-required', 'string', { cell: (c) => { delete c.from; } }, { rule: 'required', pointer: '/cells/trial.x.hold' }),
+    mt('string-moves-key-required', 'string', { move: (m) => { delete m.lean; } }, { rule: 'required', pointer: '/cells/trial.x.hold/moves/0' }),
+    mt('string-move-unknown-key', 'string', { move: (m) => { m.mood = 1; } }, { rule: 'additionalProperties', pointer: '/cells/trial.x.hold/moves/0/mood' }),
+    mt('string-from-is-no-cell', 'string', { cell: (c) => { c.from = 'martial.q'; } }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.x.hold/from' }),
+    mt('string-blow-is-no-move', 'string', { move: (m) => { m.blows[1] = `mv.${fid}.martial.x.99`; } }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.x.hold/moves/0/blows/1' }),
+    mt('string-blow-id-shape', 'string', { move: (m) => { m.blows[0] = 'blow one'; } }, { rule: 'pattern', pointer: '/cells/trial.x.hold/moves/0/blows/0' }),
+    mt('string-blow-twice', 'string', { move: (m) => { m.blows[1] = m.blows[0]; } }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.x.hold/moves/0/blows' }),
+    mt('string-blows-fewer-than-slots', 'string', { move: (m) => { m.blows.pop(); } }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.x.hold/moves/0/blows' }),
+    mt('string-slots-differ-from-cells', 'string', { move: (m) => { m.slots = m.slots.slice().reverse(); } }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.x.hold/moves/0/slots' }),
+    mt('string-slot-class-enum', 'string', { move: (m) => { m.slots[1] = 'quick'; } }, { rule: 'enum', pointer: '/cells/trial.x.hold/moves/0/slots/1' }),
+    mt('string-lean-unknown', 'string', { move: (m) => { m.lean = 'sideways'; } }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.x.hold/moves/0/lean' }),
+    mt('stand-in-ok', 'standin', {}, null),
+    mt('stand-in-review-enum', 'standin', { move: (m) => { m.review = 'standin'; } }, { rule: 'enum', pointer: '/cells/trial.b.standin/moves/0/review' }),
+    mt('stand-in-level-enum', 'standin', { move: (m) => { m.keys.level = 'stand-in'; } }, { rule: 'enum', pointer: '/cells/trial.b.standin/moves/0/keys/level' }),
+    mt('stand-in-more-than-the-cell-allows', 'standin', { def: (d) => { d.count = 1; }, moves: (ms) => [ms[0], Object.assign(clone(ms[0]), { id: `mv.${fid}.trial.b.standin.02` })] }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.b.standin/moves' }),
+    mt('stand-in-not-marked-temporary', 'standin', { cell: (c) => { c.temporary = false; } }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.b.standin/temporary' }),
+    mt('stand-in-temporary-type', 'standin', { cell: (c) => { c.temporary = 'yes'; } }, { rule: 'type', pointer: '/cells/trial.b.standin/temporary' }),
+    mt('stand-in-built-on-a-strike-the-cell-leaves-out', 'standin', { def: (d) => { d.without = { [fid]: [tplMove.standin.keys.from] }; } }, { rule: 'xref:moveset-cell', pointer: '/cells/trial.b.standin/moves/0/keys/from' }),
     // ---- lock ----
     lk('live-valid', { set: { '/schema': 'combat.moveset.lock/1' } }, null),
     lk('key-required', { del: ['/fighters'] }, { rule: 'required', pointer: '' }),
@@ -942,6 +1166,9 @@ for (const [file, s] of [['combat-parts', partsSchema], ['combat-identity', iden
     { id: 'combat-moveset-lock-row-key-set-null-ok', schema: 'combat-moveset-lock.schema.json', mutate: trialMut('strikes', { move: (m) => { m.keys = { level: 'new' }; m.status = 'waiting'; } }), expect: null },
     lk('fighter-without-a-moveset', { set: { '/fighters/nobody': { 'martial.x': [] } } }, { rule: 'xref:lock-ref', pointer: '/fighters/nobody' }),
     lk('locked-move-is-no-move', { set: { ['/fighters/' + fid]: { 'martial.x': [[`mv.${fid}.martial.x.99`, ['hand', 'blade', 'line', 'head', 'light'], null]] } } }, { rule: 'xref:lock-ref', pointer: '/fighters/' + fid + '/martial.x/0' }),
+    lk('third-part-cell-id-ok', { set: { ['/fighters/' + fid + '/martial.b.standin']: [] } }, null),
+    lk('third-part-cell-id-shape', { set: { ['/fighters/' + fid + '/martial.b.Stand In']: [] } }, { rule: 'propertyNames', pointer: '/fighters/' + fid + '/martial.b.Stand In' }),
+    lk('weight-enum', { set: { ['/fighters/' + fid]: { 'martial.y': [[`mv.${fid}.martial.y.01`, ['hand', 'palm', 'rise', 'jaw', 'average'], null]] } } }, { rule: 'enum', pointer: '/fighters/' + fid + '/martial.y/0/1/4' }),
     lk('locked-cell-is-no-strike-cell', { set: { ['/fighters/' + fid]: { 'boxing.x': [] } } }, { rule: 'xref:lock-ref', pointer: '/fighters/' + fid + '/boxing.x' }),
   ];
   let n = 0;

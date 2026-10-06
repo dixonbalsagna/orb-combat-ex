@@ -96,6 +96,8 @@
     "latchTicks": 12,
     "snapMax": 1,
     "dwellTicks": 3,
-    "exitWindow": 12
+    "exitWindow": 12,
+    "nudgeStart": 0.4,
+    "nudgeTicks": 12
   }
 }

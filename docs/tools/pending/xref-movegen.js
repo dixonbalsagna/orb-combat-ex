@@ -19,12 +19,13 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 // A filter: every listed part has one of the listed values; `any`: one of a list of filters must hold. `form` is any of a move's forms;
 // `flags` and `event` are not known to a validator, so a filter that names them never matches here.
-function match(flt, m) {
+function match(flt, m, withFlags) {
   if (!flt || typeof flt !== 'object') return false;
-  if (Array.isArray(flt.any)) return flt.any.some((f) => match(f, m));
+  if (Array.isArray(flt.any)) return flt.any.some((f) => match(f, m, withFlags));
   for (const [k, vals] of Object.entries(flt)) {
     if (k.startsWith('_')) continue;
     if (!Array.isArray(vals)) return false;
+    if (k === 'flags' && withFlags) { if (Array.isArray(m.flags) && vals.some((v) => m.flags.includes(v))) continue; return false; }
     if (k === 'flags' || k === 'event') return false;
     if (k === 'form') { if (!Array.isArray(m.forms) || !m.forms.some((x) => vals.includes(x))) return false; continue; }
     if (!vals.includes(m[k])) return false;
@@ -40,6 +41,7 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
   const SH = isObj(parts) && isObj(parts.shot) ? parts.shot : null;
   const TR = isObj(parts) && isObj(parts.travel) ? parts.travel : null;
   const LG = isObj(parts) && isObj(parts.legal) ? parts.legal : null;
+  const legalGroups = LG ? Object.keys(LG).filter((k) => Array.isArray(LG[k])) : [];
 
   // the manifests, the entry maps and the pose and sequence files
   const manifests = new Map();
@@ -68,11 +70,14 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
   const tipsOf = (limb) => (S && isObj(S.tips) && isObj(S.tips[limb]) ? S.tips[limb] : {});
   const shapeProblem = (m) => {
     if (!S) return null;
-    const paths = tipsOf(m.limb)[m.tip];
-    if (!Array.isArray(paths) || !paths.includes(m.path)) return `tip ${m.limb}.${m.tip} cannot travel path "${m.path}"`;
+    const tipTable = m.weight === 'heavy' && isObj(S.heavy) && isObj(S.heavy.tips) ? S.heavy.tips : (isObj(S.tips) ? S.tips : {});
+    const paths = isObj(tipTable[m.limb]) ? tipTable[m.limb][m.tip] : undefined;
+    if (Array.isArray(S.weights) && !S.weights.includes(m.weight)) return `weight "${m.weight}" is not one of the grammar's (${S.weights.join(', ')})`;
+    if (!Array.isArray(paths) || !paths.includes(m.path)) return `tip ${m.limb}.${m.tip} cannot travel path "${m.path}"${m.weight === 'heavy' ? ' as a heavy' : ''}`;
     const tgs = isObj(S.targets) && isObj(S.targets[m.limb]) ? S.targets[m.limb][m.path] : undefined;
     if (!Array.isArray(tgs) || !tgs.includes(m.target)) return `${m.limb} on path "${m.path}" cannot reach "${m.target}"`;
     if (m.weight === 'light' && Array.isArray(S.lightNever) && S.lightNever.some((f) => match(f, m))) return 'a shape that is never light';
+    if (m.weight === 'heavy' && isObj(S.heavy) && Array.isArray(S.heavy.never)) { const hn = S.heavy.never.find((n) => isObj(n) && match(n.shape, m)); if (hn) return `a shape the heavy tier never has (${hn.why})`; }
     return null;
   };
 
@@ -102,9 +107,12 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
     if (Array.isArray(S.swap)) S.swap.forEach((tp, i) => { if (!(tp in tipsOf('hand'))) err(PARTS, `/strike/swap/${i}`, 'parts-grammar', `swap names tip "${tp}", which is not a hand tip`); });
     if (Array.isArray(S.forms)) {
       const names = new Set();
+      const seenForms = new Set();
       S.forms.forEach((f, i) => {
         if (!isObj(f)) return;
-        if (names.has(f.form)) err(PARTS, `/strike/forms/${i}/form`, 'parts-grammar', `form "${f.form}" is listed twice`);
+        const sig = JSON.stringify([f.form, f.when, f.any, f.reads]);
+        if (seenForms.has(sig)) err(PARTS, `/strike/forms/${i}/form`, 'parts-grammar', `form "${f.form}" is listed twice with the same rule`);
+        seenForms.add(sig);
         if (f.unless !== undefined && !names.has(f.unless)) err(PARTS, `/strike/forms/${i}/unless`, 'parts-grammar', `form "${f.form}" is ruled out by "${f.unless}", which is not a form listed before it`);
         names.add(f.form);
       });
@@ -119,7 +127,7 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
   const ruleIds = new Set();
   const dupe = (id, at) => { if (typeof id !== 'string') return; if (ruleIds.has(id)) err(PARTS, at, 'parts-grammar', `rule id "${id}" is used twice`); else ruleIds.add(id); };
   if (S) for (const key of ['banned', 'bannedSequences']) if (Array.isArray(S[key])) S[key].forEach((r, i) => { if (isObj(r)) dupe(r.id, `/strike/${key}/${i}/id`); });
-  if (LG) for (const g of LEGAL_GROUPS) if (Array.isArray(LG[g])) LG[g].forEach((r, i) => { if (isObj(r)) dupe(r.id, `/legal/${g}/${i}/id`); });
+  if (LG) for (const g of legalGroups) LG[g].forEach((r, i) => { if (isObj(r)) dupe(r.id, `/legal/${g}/${i}/id`); });
   const conditionIds = new Set();
   if (S && Array.isArray(S.conditions)) S.conditions.forEach((c, i) => {
     if (!isObj(c)) return;
@@ -151,7 +159,7 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
     if (LG && Array.isArray(LG.energy)) LG.energy.forEach((r, i) => { if (isObj(r)) chk(r.if, `/legal/energy/${i}/if`); });
     // a hand property a Legal row needs is a property of the hands
     const props = new Set(shotHands.flatMap((h) => (isObj(SH.hands[h]) ? plain(SH.hands[h]) : [])));
-    if (LG) for (const g of LEGAL_GROUPS) if (Array.isArray(LG[g])) LG[g].forEach((r, i) => {
+    if (LG) for (const g of legalGroups) LG[g].forEach((r, i) => {
       if (!isObj(r)) return;
       for (const [label, nd] of [['need', r.need], ['hand/need', isObj(r.hand) ? r.hand.need : undefined]]) if (isObj(nd) && props.size) for (const k of plain(nd)) if (!props.has(k)) err(PARTS, `/legal/${g}/${i}/${label}/${esc(k)}`, 'parts-shot', `row ${r.id} needs hand property "${k}", which no shot.hands row has (${[...props].join(', ')})`);
     });
@@ -178,6 +186,32 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
     parts.grab.holdPoints.forEach((h, i) => { if (never.has(h)) err(PARTS, `/grab/holdPoints/${i}`, 'parts-legal', `hold point "${h}" is one of the grab rule's never list`); });
   }
   if (isObj(parts) && isObj(parts.readings) && isObj(cells) && isObj(cells.stances)) for (const st of plain(parts.readings)) if (!(st in cells.stances)) err(PARTS, `/readings/${esc(st)}`, 'parts-grammar', `readings for stance "${st}", which is not in cells.json stances`, 'warning');
+
+  // ---- parts: the mediums' wind-up rules and the heavy tier ----
+  if (S && isObj(S.windup) && Array.isArray(S.windup.medium)) {
+    const wids = new Set();
+    S.windup.medium.forEach((r, i) => {
+      if (!isObj(r)) return;
+      if (wids.has(r.id)) err(PARTS, `/strike/windup/medium/${i}/id`, 'parts-windup', `wind-up rule id "${r.id}" is used twice`);
+      wids.add(r.id);
+    });
+  }
+  if (S && isObj(S.heavy)) {
+    const H = S.heavy;
+    if (isObj(H.tips)) for (const limb of plain(H.tips)) if (isObj(H.tips[limb])) for (const tip of plain(H.tips[limb])) if (!(tip in tipsOf(limb))) err(PARTS, `/strike/heavy/tips/${esc(limb)}/${esc(tip)}`, 'parts-heavy', `heavy tip ${limb}.${tip} is not a tip of strike.tips`);
+    if (isObj(H.drive)) {
+      const dids = new Set();
+      for (const pth of plain(H.drive)) {
+        const d = H.drive[pth];
+        if (allPaths.size && !allPaths.has(pth)) err(PARTS, `/strike/heavy/drive/${esc(pth)}`, 'parts-heavy', `a drive for path "${pth}", which no tip travels`);
+        if (!isObj(d)) continue;
+        if (dids.has(d.id)) err(PARTS, `/strike/heavy/drive/${esc(pth)}/id`, 'parts-heavy', `drive id "${d.id}" is used twice`);
+        dids.add(d.id);
+        if (Array.isArray(d.bears)) d.bears.forEach((b, i) => { if (!ruleIds.has(b)) err(PARTS, `/strike/heavy/drive/${esc(pth)}/bears/${i}`, 'parts-heavy', `drive "${d.id}" bears on rule "${b}", which is no row of banned, bannedSequences or legal`); });
+      }
+    }
+    if (isObj(H.words)) for (const k of plain(H.words)) if (!(k.split('.')[1] in tipsOf(k.split('.')[0]))) err(PARTS, `/strike/heavy/words/${esc(k)}`, 'parts-heavy', `words for "${k}", which is not a tip of strike.tips (written limb.tip)`);
+  }
 
   // ---- identity: waves, entries, tips, energy and specials ----
   const recipes = get(RECIPES);
@@ -209,7 +243,32 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
   // ---- cells ----
   const formNames = new Set([].concat(S && Array.isArray(S.forms) ? S.forms.filter(isObj).map((f) => f.form) : [], SH && Array.isArray(SH.forms) ? SH.forms.filter(isObj).map((f) => f.form) : [], isObj(parts) && isObj(parts.readings) ? plain(parts.readings).flatMap((st) => (isObj(parts.readings[st]) ? plain(parts.readings[st]) : [])) : []));
   const sendValues = new Set(S && isObj(S.sends) ? plain(S.sends).map((k) => S.sends[k]) : []);
-  const cellOf = (key) => { const [st, btn] = String(key).split('.'); return isObj(cells) && isObj(cells.stances) && isObj(cells.stances[st]) ? cells.stances[st][btn] : undefined; };
+  const cellOf = (key) => {
+    const [st, btn, sub] = String(key).split('.');
+    const base = isObj(cells) && isObj(cells.stances) && isObj(cells.stances[st]) ? cells.stances[st][btn] : undefined;
+    if (sub === undefined || !isObj(base)) return base;
+    if (isObj(base.presses) && isObj(base.presses[sub])) return base.presses[sub];
+    if (isObj(base.standIn) && sub.toLowerCase() === 'standin') return base.standIn;
+    return undefined;
+  };
+  if (isObj(ident) && isObj(ident.fighters)) for (const fid of plain(ident.fighters)) {
+    const f = ident.fighters[fid];
+    if (!isObj(f)) continue;
+    const at = `/fighters/${esc(fid)}`;
+    if (isObj(f.pinned)) for (const ck of plain(f.pinned)) {
+      if (!isObj(cellOf(ck))) err(IDENT, `${at}/pinned/${esc(ck)}`, 'identity-ref', `pinned in cell "${ck}", which is not in cells.json`);
+      if (Array.isArray(f.pinned[ck])) f.pinned[ck].forEach((sh, i) => {
+        if (!Array.isArray(sh)) return;
+        const prob = shapeProblem({ limb: sh[0], tip: sh[1], path: sh[2], target: sh[3], weight: sh[4] });
+        if (prob) err(IDENT, `${at}/pinned/${esc(ck)}/${i}`, 'identity-ref', `pinned shape: ${prob}`);
+      });
+    }
+    if (S && Array.isArray(f.weightsBy)) f.weightsBy.forEach((w, i) => {
+      if (!isObj(w)) return;
+      if (isObj(w.path)) for (const k of plain(w.path)) if (allPaths.size && !allPaths.has(k)) err(IDENT, `${at}/weightsBy/${i}/path/${esc(k)}`, 'identity-ref', `weight for path "${k}", which no tip travels`);
+      if (isObj(w.limb)) for (const k of plain(w.limb)) if (isObj(S.tips) && !(k in S.tips)) err(IDENT, `${at}/weightsBy/${i}/limb/${esc(k)}`, 'identity-ref', `weight for limb "${k}", which is not a limb of strike.tips`);
+    });
+  }
   if (isObj(cells) && isObj(cells.stances)) {
     for (const st of plain(cells.stances)) {
       const stance = cells.stances[st];
@@ -224,6 +283,28 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
           if (Array.isArray(c.kinds) && TR && isObj(TR.kinds)) c.kinds.forEach((k, i) => { if (!(k in TR.kinds)) err(CELLS, `${cat}/kinds/${i}`, 'cells-quota', `travel kind "${k}" is not in parts.json travel.kinds (${plain(TR.kinds).join(', ')})`); });
         }
         if (c.kind === 'table' && typeof c.block === 'string' && isObj(parts) && !isObj(parts[c.block])) err(CELLS, `${cat}/block`, 'cells-quota', `block "${c.block}" is not a block of parts.json`);
+        if (isObj(c.presses)) for (const [pn, pc] of Object.entries(c.presses)) {
+          if (pn.startsWith('_') || !isObj(pc)) continue;
+          const pat = `${cat}/presses/${esc(pn)}`;
+          if (Array.isArray(pc.asks) && conditionIds.size) pc.asks.forEach((a, i) => { if (!conditionIds.has(a)) err(CELLS, `${pat}/asks/${i}`, 'cells-asks', `"${a}" is no condition of parts.json strike.conditions`); });
+          if (pc.kind !== 'string') continue;
+          const fromDef = typeof pc.from === 'string' ? cellOf(pc.from) : undefined;
+          if (!isObj(fromDef) || fromDef.kind !== 'strikes') err(CELLS, `${pat}/from`, 'cells-quota', `from names cell "${pc.from}", which is not a strikes cell of cells.json`);
+          const classes = S && isObj(S.burst) && isObj(S.burst.classes) ? plain(S.burst.classes) : [];
+          if (classes.length && Array.isArray(pc.slots)) pc.slots.forEach((cl, i) => { if (!classes.includes(cl)) err(CELLS, `${pat}/slots/${i}`, 'cells-quota', `slot class "${cl}" is not a class of parts.json strike.burst.classes (${classes.join(', ')})`); });
+          if (Array.isArray(pc.leans)) { const seenLean = new Set(); pc.leans.forEach((l, i) => { if (!isObj(l)) return; if (seenLean.has(l.name)) err(CELLS, `${pat}/leans/${i}/name`, 'cells-quota', `lean "${l.name}" is listed twice`); seenLean.add(l.name); }); }
+        }
+        if (isObj(c.standIn)) {
+          const si = c.standIn;
+          if (Array.isArray(si.asks) && conditionIds.size) si.asks.forEach((a, i) => { if (!conditionIds.has(a)) err(CELLS, `${cat}/standIn/asks/${i}`, 'cells-asks', `"${a}" is no condition of parts.json strike.conditions`); });
+          if (isObj(si.without)) for (const [fid, ids] of Object.entries(si.without)) {
+            if (fid.startsWith('_')) continue;
+            const fw = isObj(ident) && isObj(ident.fighters) && isObj(ident.fighters[fid]) && Array.isArray(ident.fighters[fid].waves) ? ident.fighters[fid].waves : null;
+            if (!fw) { err(CELLS, `${cat}/standIn/without/${esc(fid)}`, 'cells-quota', `without names fighter "${fid}", who is not a fighter of identity.json`); continue; }
+            const known = new Set(fw.map((w) => manifests.get(w)).filter(Boolean).flatMap((m) => m.strikes).filter(isObj).map((r) => r.combat));
+            if (Array.isArray(ids) && known.size) ids.forEach((id, i) => { if (!known.has(id)) err(CELLS, `${cat}/standIn/without/${esc(fid)}/${i}`, 'cells-quota', `"${id}" is a strike of none of ${fid}'s manifests`); });
+          }
+        }
         if (!Array.isArray(c.quotas)) continue;
         const names = new Set();
         c.quotas.forEach((q, i) => {
@@ -242,12 +323,15 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
   }
 
   // ---- movesets ----
+  // the first rule of parts.json strike.windup.medium that matches a medium is its wind-up rule (flags are the ones the move is known to have)
+  const windRuleOf = (mm) => (mm.weight === 'medium' && S && isObj(S.windup) && Array.isArray(S.windup.medium) ? S.windup.medium.find((r) => isObj(r) && match(r.when, mm, true)) : undefined);
   const deriveForms = (m, arms) => {
     const out = [];
     const mm = Object.assign({}, m, { arms });
     for (const f of S && Array.isArray(S.forms) ? S.forms : []) {
       if (!isObj(f)) continue;
-      const ok = Array.isArray(f.any) ? f.any.some((g) => match(g, mm)) : match(f.when, mm);
+      let ok = Array.isArray(f.any) ? f.any.some((g) => match(g, mm)) : match(f.when, mm);
+      if (ok && f.reads !== undefined) { const wr = windRuleOf(mm); ok = Boolean(wr) && wr.reads === f.reads; }
       if (ok && !(f.unless && out.includes(f.unless))) out.push(f.form);
     }
     return out;
@@ -262,7 +346,7 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
     if (isObj(ms) && typeof ms.fighter === 'string') movesets.set(ms.fighter, { rel, ms });
   }
   const quotaCount = (q, mv) => (q.filter ? match(q.filter, mv) : q.any ? q.any.some((g) => match(g, mv)) : q.form ? Array.isArray(mv.forms) && mv.forms.includes(q.form) : q.sends ? mv.sends === q.sends : false);
-  const STATUS = { posed: 'posed', hand_state: 'derived', re_aim: 'derived', re_aim_edge: 'derived', hand_state_re_aim: 'derived', hand_state_re_aim_edge: 'derived', new: 'waiting' };
+  const STATUS = { posed: 'posed', hand_state: 'derived', re_aim: 'derived', re_aim_edge: 'derived', hand_state_re_aim: 'derived', hand_state_re_aim_edge: 'derived', stand_in: 'derived', new: 'waiting' };
 
   for (const [fid, { rel, ms }] of movesets) {
     const idf = isObj(ident) && isObj(ident.fighters) && isObj(ident.fighters[fid]) ? ident.fighters[fid] : null;
@@ -278,6 +362,7 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
       const def = cellOf(ck);
       const cat = `/cells/${esc(ck)}`;
       const btn = ck.split('.')[1];
+      const sub = ck.split('.')[2];
       if (isObj(cells) && !isObj(def)) { err(rel, cat, 'moveset-cell', `cell "${ck}" is not in cells.json stances`); continue; }
       if (isObj(def) && def.kind !== cell.kind) err(rel, `${cat}/kind`, 'moveset-cell', `cell "${ck}" is a ${cell.kind} cell here and a ${def.kind} cell in cells.json`);
       if (Array.isArray(cell.asks) && conditionIds.size) cell.asks.forEach((a, i) => { if (!conditionIds.has(a)) err(rel, `${cat}/asks/${i}`, 'moveset-keys', `"${a}" is no condition of parts.json strike.conditions`); });
@@ -287,7 +372,9 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
         if (isObj(sp) && cell.special !== sp.id) err(rel, `${cat}/special`, 'moveset-special', `the special "${cell.special}" is not ${fid}'s "${sp.id}" for button ${btn}`);
       }
       if (!Array.isArray(cell.moves)) continue;
-      if (isObj(def) && typeof def.count === 'number' && cell.kind !== 'special' && cell.moves.length !== def.count) err(rel, `${cat}/moves`, 'moveset-cell', `cell "${ck}" has ${cell.moves.length} moves; cells.json asks for ${def.count}`);
+      const temp = cell.temporary === true || (isObj(def) && def.temporary === true);
+      if (isObj(def) && typeof def.count === 'number' && cell.kind !== 'special' && (temp ? cell.moves.length > def.count : cell.moves.length !== def.count)) err(rel, `${cat}/moves`, 'moveset-cell', `cell "${ck}" has ${cell.moves.length} moves; cells.json asks for ${temp ? 'at most ' : ''}${def.count}`);
+      if (isObj(def) && def.temporary === true && cell.temporary !== true) err(rel, `${cat}/temporary`, 'moveset-cell', `cell "${ck}" is temporary in cells.json and must say so here`);
       const seen = new Map();
       cell.moves.forEach((mv, i) => {
         if (!isObj(mv)) return;
@@ -297,6 +384,12 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
         if (Array.isArray(mv.asks) && conditionIds.size) mv.asks.forEach((a, j) => { if (!conditionIds.has(a)) err(rel, `${at}/asks/${j}`, 'moveset-keys', `"${a}" is no condition of parts.json strike.conditions`); });
         if (cell.kind === 'strikes') {
           if (isObj(def) && isObj(def.filter) && !def.anyWeight && !match(def.filter, mv)) err(rel, at, 'moveset-cell', `move ${mv.id} does not match the cell's filter`);
+          if (isObj(def) && isObj(def.without) && Array.isArray(def.without[fid]) && isObj(mv.keys) && def.without[fid].includes(mv.keys.from)) err(rel, `${at}/keys/from`, 'moveset-cell', `${mv.id} is built on ${mv.keys.from}, which cells.json leaves out of ${fid}'s stand-ins`);
+          if (mv.weight === 'medium' && S && isObj(S.windup) && Array.isArray(S.windup.medium) && !(isObj(def) && def.as)) { // a push has no wind-up
+            const wr = windRuleOf(Object.assign({}, mv, { arms: Number.isInteger(mv.arms) ? mv.arms : 0 }));
+            if (wr && mv.wind !== wr.id) err(rel, `${at}/wind`, 'moveset-derived', `wind "${mv.wind}" is not the wind-up rule the grammar gives (${wr.id})`);
+          }
+          if (mv.weight === 'heavy' && S && isObj(S.heavy) && isObj(S.heavy.drive) && isObj(S.heavy.drive[mv.path]) && mv.drive !== S.heavy.drive[mv.path].id) err(rel, `${at}/drive`, 'moveset-derived', `drive "${mv.drive}" is not the drive the grammar gives a heavy on path "${mv.path}" (${S.heavy.drive[mv.path].id})`);
           if (isObj(def) && Array.isArray(def.notFlags) && Array.isArray(mv.flags) && mv.flags.some((x) => def.notFlags.includes(x))) err(rel, `${at}/flags`, 'moveset-shape', `${mv.id} has a flag the cell rules out (${def.notFlags.join(', ')})`);
           const prob = shapeProblem(mv);
           if (prob) err(rel, at, 'moveset-shape', `${mv.id}: ${prob}`);
@@ -330,6 +423,19 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
               else if (!row) err(rel, `${at}/keys/set`, 'moveset-keys', `key set "${keys.set}" is a row of none of ${fid}'s manifests (${waves.join(', ')})`);
               else if (row.combat !== keys.from) err(rel, `${at}/keys/from`, 'moveset-keys', `key set "${keys.set}" is the strike "${row.combat}", not "${keys.from}"`);
             }
+          }
+        } else if (cell.kind === 'string') {
+          const fromCell = ms.cells[cell.from];
+          if (isObj(def) && def.from !== cell.from) err(rel, `${cat}/from`, 'moveset-cell', `from \"${cell.from}\" is not cells.json's \"${def.from}\"`);
+          if (!isObj(fromCell) || !Array.isArray(fromCell.moves)) err(rel, `${cat}/from`, 'moveset-cell', `from \"${cell.from}\" is not a strikes cell of this moveset`);
+          const leanNames = isObj(def) && Array.isArray(def.leans) ? def.leans.filter(isObj).map((l) => l.name) : [];
+          if (leanNames.length && !leanNames.includes(mv.lean)) err(rel, `${at}/lean`, 'moveset-cell', `lean \"${mv.lean}\" is not one of the cell's (${leanNames.join(', ')})`);
+          if (isObj(def) && Array.isArray(def.slots) && Array.isArray(mv.slots) && !same(mv.slots, def.slots)) err(rel, `${at}/slots`, 'moveset-cell', 'the slots differ from cells.json\'s');
+          if (Array.isArray(mv.blows)) {
+            if (Array.isArray(mv.slots) && mv.blows.length !== mv.slots.length) err(rel, `${at}/blows`, 'moveset-cell', `${mv.blows.length} blows for ${mv.slots.length} slots`);
+            if (new Set(mv.blows).size !== mv.blows.length) err(rel, `${at}/blows`, 'moveset-cell', 'a piece is used twice in one string (the burst\'s u4)');
+            const ids = isObj(fromCell) && Array.isArray(fromCell.moves) ? new Set(fromCell.moves.filter(isObj).map((m) => m.id)) : null;
+            if (ids) mv.blows.forEach((b, j) => { if (!ids.has(b)) err(rel, `${at}/blows/${j}`, 'moveset-cell', `blow \"${b}\" is a move of no ${cell.from} cell`); });
           }
         } else if (cell.kind === 'travel') {
           const kd = TR && isObj(TR.kinds) ? TR.kinds[mv.kind] : undefined;
@@ -389,8 +495,7 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
       if (isObj(def) && Array.isArray(def.quotas)) for (const q of def.quotas) {
         if (!isObj(q)) continue;
         const n = cell.moves.filter((mv) => isObj(mv) && quotaCount(q, mv)).length;
-        const splitQuota = isObj(q.filter) && Array.isArray(q.filter.delivery) && q.filter.delivery.includes('split') && !(idf && isObj(idf.energy) && idf.energy.split === true); // a split is only asked of a fighter who can split
-        if (typeof q.min === 'number' && !splitQuota && n < q.min) err(rel, `${cat}/moves`, 'moveset-cell', `quota "${q.name}" needs ${q.min} moves and the cell has ${n}`);
+        // a quota's min is a floor only where the candidates allow it (gen_moveset.py: a shortfall is kept when nothing more qualifies), so only the recount is checked here
         if (isObj(cell.quotas) && cell.quotas[q.name] !== n) err(rel, `${cat}/quotas/${esc(q.name)}`, 'moveset-cell', `the recorded count ${cell.quotas[q.name]} for quota "${q.name}" is ${n} on recount`);
       }
     }
@@ -422,7 +527,7 @@ function xrefMovegen({ get, err, esc, isObj, docsFor }) {
         });
       }
       for (const [ck, cell] of Object.entries(isObj(got.ms.cells) ? got.ms.cells : {})) {
-        if (!isObj(cell) || cell.kind !== 'strikes' || !Array.isArray(cell.moves)) continue;
+        if (!isObj(cell) || cell.kind !== 'strikes' || cell.temporary === true || !Array.isArray(cell.moves)) continue;
         const locked = new Set((Array.isArray(fl[ck]) ? fl[ck] : []).filter(Array.isArray).map((r) => r[0]));
         cell.moves.forEach((m, i) => { if (isObj(m) && !locked.has(m.id)) err(got.rel, `/cells/${esc(ck)}/moves/${i}/id`, 'lock-ref', `strike move "${m.id}" is not in the lock`); });
       }

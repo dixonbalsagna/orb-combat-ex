@@ -102416,6 +102416,2550 @@
         "rule": "required",
         "pointer": "/levels/easy"
       }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-with-gap-amp-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "extra": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/burst/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-carry-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": "yes",
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/carry"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/gap_amp"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.5,
+                "extra": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/burst/gap_amp/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-from-below-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 0.5,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/gap_amp/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-from-above-thirty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 31,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/gap_amp/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-to-below-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 0.5,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/gap_amp/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-to-above-sixty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 61,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/gap_amp/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-min-below",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.05
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/gap_amp/min"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-min-above-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 1.1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/gap_amp/min"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": "tight"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/gap_amp"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-gap-amp-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 1,
+                "to": 60,
+                "min": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-burst-optional",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles/burst"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-with-gap-amp-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/medium"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "extra": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/medium/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-carry-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": "yes",
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/medium/carry"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/medium/gap_amp"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.5,
+                "extra": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/medium/gap_amp/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-from-below-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 0.5,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/medium/gap_amp/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-from-above-thirty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 31,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/medium/gap_amp/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-to-below-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 0.5,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/medium/gap_amp/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-to-above-sixty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 61,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/medium/gap_amp/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-min-below",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.05
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/medium/gap_amp/min"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-min-above-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 1.1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/medium/gap_amp/min"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": "tight"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/medium/gap_amp"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-gap-amp-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 1,
+                "to": 60,
+                "min": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-medium-optional",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles/medium"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-super-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-super-with-gap-amp-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-super-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/super"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "extra": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/super/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-carry-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": "yes",
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/super/carry"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-key-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/super/gap_amp"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.5,
+                "extra": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/super/gap_amp/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-from-below-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 0.5,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/super/gap_amp/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-from-above-thirty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 31,
+                "to": 11,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/super/gap_amp/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-to-below-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 0.5,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/super/gap_amp/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-to-above-sixty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 61,
+                "min": 0.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/super/gap_amp/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-min-below",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 0.05
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/super/gap_amp/min"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-min-above-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 4,
+                "to": 11,
+                "min": 1.1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/super/gap_amp/min"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": "tight"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/super/gap_amp"
+      }
+    },
+    {
+      "id": "anim-press-styles-flurry-super-gap-amp-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "gap_amp": {
+                "from": 1,
+                "to": 60,
+                "min": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-super-optional",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/styles/super"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-flurry-unknown-style",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/wild": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/wild"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-valid",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStart": 0.4,
+            "/aim/nudgeTicks": 12
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-nudge-optional",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "del": [
+            "/aim/nudgeStart",
+            "/aim/nudgeTicks"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-nudge-start-only-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStart": 0.4
+          },
+          "del": [
+            "/aim/nudgeTicks"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-nudge-ticks-only-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeTicks": 12
+          },
+          "del": [
+            "/aim/nudgeStart"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-nudge-start-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStart": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/aim/nudgeStart"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-start-negative",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStart": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/aim/nudgeStart"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-start-above-one",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStart": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/aim/nudgeStart"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-start-one-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStart": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-nudge-start-small-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStart": 0.01
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-nudge-start-type",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStart": "a share"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/aim/nudgeStart"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-ticks-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeTicks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/aim/nudgeTicks"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-ticks-above-sixty",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeTicks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/aim/nudgeTicks"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-ticks-integer",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeTicks": 12.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/aim/nudgeTicks"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-ticks-type",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeTicks": "twelve"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/aim/nudgeTicks"
+      }
+    },
+    {
+      "id": "input-timing-aim-nudge-ticks-edges-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeTicks": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-nudge-ticks-sixty-ok",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeTicks": 60
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "input-timing-aim-nudge-unknown-key",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/aim/nudgeStop": 0.4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/aim/nudgeStop"
+      }
     }
   ],
   "text": [
