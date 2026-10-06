@@ -390,6 +390,8 @@ Not chosen: anything under NC or ND; any "royalty-free" track without an open li
 
 ## 9. What I need from the sim
 
+> **Added 2026-10-06:** the brawl's three strengths, the launcher, the wind-up and charge ticks and the point-blank energy arts need further events and cues; see `brawl-cues.md`.
+
 Today the fx stream (`fx-events.md`) gives me `damage`, `crater`, `spark`, `ring`, `debris`, `dust`, `splash`, `fire`, `after`, `charge`, `scorch`, `beamSplash`, `banner`, `shake` and `tick`. That is enough for the prototype (hits and craters), but a `damage` event does not say who hit whom, so the prototype guesses the victim as the fighter nearest the hit, which only works in a 1v1. The beam has no start or end event (only `scorch` samples and a banner). I need these, in the fx stream, as names and rough fields (all read-only for me):
 
 | Group | Events |
