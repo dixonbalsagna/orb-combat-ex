@@ -343,7 +343,7 @@
       "palm",
       "rise",
       "jaw",
-      "heavy"
+      "medium"
      ],
      "pr.rising_palm"
     ],
@@ -354,7 +354,7 @@
       "cap",
       "rise",
       "gut",
-      "heavy"
+      "medium"
      ],
      "pr.rising_knee"
     ],
@@ -365,7 +365,7 @@
       "fist",
       "rise",
       "jaw",
-      "heavy"
+      "medium"
      ],
      "pr.uppercut"
     ],
@@ -376,7 +376,7 @@
       "blade",
       "drop",
       "head",
-      "heavy"
+      "medium"
      ],
      "pr.overhand"
     ],
@@ -387,7 +387,7 @@
       "heel",
       "drop",
       "chest",
-      "heavy"
+      "medium"
      ],
      "pr.axe_kick"
     ],
@@ -398,7 +398,7 @@
       "sole",
       "drop",
       "gut",
-      "heavy"
+      "medium"
      ],
      "pr.stomp"
     ],
@@ -409,7 +409,7 @@
       "palm",
       "line",
       "chest",
-      "heavy"
+      "medium"
      ],
      "pr.palm_push"
     ],
@@ -420,7 +420,7 @@
       "palm",
       "line",
       "arm",
-      "heavy"
+      "medium"
      ],
      null
     ],
@@ -431,7 +431,7 @@
       "sole",
       "line",
       "chest",
-      "heavy"
+      "medium"
      ],
      "pr.drop_kick"
     ],
@@ -442,7 +442,7 @@
       "blade",
       "arc_in",
       "head",
-      "heavy"
+      "medium"
      ],
      "pr.haymaker"
     ],
@@ -453,7 +453,7 @@
       "edge",
       "arc_out",
       "chest",
-      "heavy"
+      "medium"
      ],
      "pr.crescent_kick"
     ],
@@ -464,7 +464,7 @@
       "blade",
       "arc_in",
       "gut",
-      "heavy"
+      "medium"
      ],
      "ph.body_hook"
     ],
@@ -475,7 +475,7 @@
       "plate",
       "line",
       "chest",
-      "heavy"
+      "medium"
      ],
      "pr.cross_arm_ram"
     ],
@@ -486,7 +486,7 @@
       "heel",
       "spin",
       "gut",
-      "heavy"
+      "medium"
      ],
      "pr.spinning_back_kick"
     ],
@@ -497,7 +497,7 @@
       "edge",
       "arc_out",
       "gut",
-      "heavy"
+      "medium"
      ],
      null
     ],
@@ -508,9 +508,121 @@
       "heel",
       "spin",
       "chest",
-      "heavy"
+      "medium"
      ],
      "pr.spinning_heel"
+    ]
+   ],
+   "martial.b": [
+    [
+     "mv.protagonist.martial.b.01",
+     [
+      "hand",
+      "blade",
+      "spin",
+      "chest",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.02",
+     [
+      "hand",
+      "palm",
+      "drop",
+      "chest",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.03",
+     [
+      "foot",
+      "edge",
+      "line",
+      "gut",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.04",
+     [
+      "hand",
+      "blade",
+      "line",
+      "jaw",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.05",
+     [
+      "foot",
+      "edge",
+      "arc_out",
+      "gut",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.06",
+     [
+      "hand",
+      "palm",
+      "rise",
+      "chest",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.07",
+     [
+      "foot",
+      "ball",
+      "rise",
+      "gut",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.08",
+     [
+      "hand",
+      "heel",
+      "drop",
+      "arm",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.09",
+     [
+      "knee",
+      "cap",
+      "arc_in",
+      "legs",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.10",
+     [
+      "elbow",
+      "point",
+      "arc_in",
+      "jaw",
+      "heavy"
+     ],
+     null
     ]
    ],
    "defensive.x": [
@@ -633,7 +745,7 @@
       "plate",
       "line",
       "chest",
-      "heavy"
+      "medium"
      ],
      "pr.cross_arm_ram"
     ],
@@ -991,7 +1103,7 @@
       "fist",
       "rise",
       "jaw",
-      "heavy"
+      "medium"
      ],
      "w1.uppercut"
     ],
@@ -1002,7 +1114,7 @@
       "cap",
       "rise",
       "gut",
-      "heavy"
+      "medium"
      ],
      "w1.rising_knee"
     ],
@@ -1013,7 +1125,7 @@
       "fist",
       "rise",
       "chest",
-      "heavy"
+      "medium"
      ],
      "rm.fist_rise"
     ],
@@ -1024,7 +1136,7 @@
       "plate",
       "drop",
       "head",
-      "heavy"
+      "medium"
      ],
      "w1.double_hammer"
     ],
@@ -1035,7 +1147,7 @@
       "point",
       "drop",
       "chest",
-      "heavy"
+      "medium"
      ],
      "w1.dropping_elbow"
     ],
@@ -1046,7 +1158,7 @@
       "sole",
       "drop",
       "gut",
-      "heavy"
+      "medium"
      ],
      "w1.stomp"
     ],
@@ -1057,7 +1169,7 @@
       "fist",
       "line",
       "chest",
-      "heavy"
+      "medium"
      ],
      null
     ],
@@ -1068,7 +1180,7 @@
       "cap",
       "line",
       "gut",
-      "heavy"
+      "medium"
      ],
      "w1.driving_knee"
     ],
@@ -1079,7 +1191,7 @@
       "brow",
       "line",
       "jaw",
-      "heavy"
+      "medium"
      ],
      "w1.headbutt"
     ],
@@ -1090,7 +1202,7 @@
       "fist",
       "arc_in",
       "head",
-      "heavy"
+      "medium"
      ],
      null
     ],
@@ -1101,7 +1213,7 @@
       "point",
       "spin",
       "jaw",
-      "heavy"
+      "medium"
      ],
      "w1.spinning_elbow"
     ],
@@ -1112,7 +1224,7 @@
       "plate",
       "line",
       "chest",
-      "heavy"
+      "medium"
      ],
      "w1.cross_arm_ram"
     ],
@@ -1123,7 +1235,7 @@
       "sole",
       "line",
       "chest",
-      "heavy"
+      "medium"
      ],
      "w1.drop_kick"
     ],
@@ -1134,7 +1246,7 @@
       "fist",
       "drop",
       "head",
-      "heavy"
+      "medium"
      ],
      "w1.hammer"
     ],
@@ -1145,7 +1257,7 @@
       "heel",
       "arc_out",
       "arm",
-      "heavy"
+      "medium"
      ],
      "rm.heel_backhand"
     ],
@@ -1156,9 +1268,121 @@
       "instep",
       "arc_in",
       "chest",
-      "heavy"
+      "medium"
      ],
      "w1.roundhouse"
+    ]
+   ],
+   "martial.b": [
+    [
+     "mv.rival.martial.b.01",
+     [
+      "hand",
+      "fist",
+      "line",
+      "chest",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.02",
+     [
+      "foot",
+      "heel",
+      "drop",
+      "chest",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.03",
+     [
+      "knee",
+      "cap",
+      "line",
+      "gut",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.04",
+     [
+      "hand",
+      "plate",
+      "arc_in",
+      "head",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.05",
+     [
+      "hand",
+      "fist",
+      "arc_in",
+      "jaw",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.06",
+     [
+      "elbow",
+      "point",
+      "rise",
+      "jaw",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.07",
+     [
+      "hand",
+      "fist",
+      "rise",
+      "gut",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.08",
+     [
+      "hand",
+      "heel",
+      "drop",
+      "head",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.09",
+     [
+      "foot",
+      "edge",
+      "line",
+      "chest",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.rival.martial.b.10",
+     [
+      "hand",
+      "plate",
+      "drop",
+      "chest",
+      "heavy"
+     ],
+     null
     ]
    ],
    "defensive.x": [
@@ -1270,7 +1494,7 @@
       "plate",
       "line",
       "chest",
-      "heavy"
+      "medium"
      ],
      "w1.cross_arm_ram"
     ],

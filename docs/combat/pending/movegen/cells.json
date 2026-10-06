@@ -1,7 +1,7 @@
 {
  "schema": "combat.cells/1",
  "_target": "data/combat/cells.json",
- "_about": "PARKED. What each face button holds in each stance (Game Design's matrix, docs/design/melee-press-feel.md sections 10, 11 and 13): X quick, Y strong, A the stance's context action (a press and a hold), B its signature. X, Y and B each read three ways: speed, tech, heavy. A filter is part values that must all hold; any is a list of filters of which one must. needs lists what a cell asks of others before it can play",
+ "_about": "PARKED. What each face button holds in each stance. The martial arts stance follows docs/design/brawl-second-pass.md (three strengths: X light, Y medium, B heavy; A the body; the signature on RT + B). The other stances follow docs/design/melee-press-feel.md sections 10, 11 and 13 until their slices. A filter is part values that must all hold; any is a list of filters of which one must. presses holds what one press of a button asks for when it is not a form of the button's own pool. needs lists what a cell asks of others before it can play",
  "seed": 20261004,
  "spread": {
   "path": 0.55,
@@ -15,7 +15,7 @@
    "held": 0,
    "x": {
     "kind": "strikes",
-    "what": "light strikes: the light, the flurry blow, the skill strike, the juggle strike",
+    "what": "light strikes: the light (tapped), the flurry blow (mashed), the burst (held), the skill strike and the juggle strike (on the beat)",
     "filter": {
      "weight": [
       "light"
@@ -103,14 +103,114 @@
       "form": "skill"
      }
     ],
-    "_quotas": "filled in this order before the cell is filled freely. The first five are the stick's leans (a weight of 3 at run time, not a filter). The last two keep both readings deep: a juggle is up to 5 skill strikes (Orb)"
+    "_quotas": "filled in this order before the cell is filled freely. The first five are the stick's leans (a weight of 3 at run time, not a filter). The last two keep both readings deep: a juggle is up to 5 skill strikes (Orb)",
+    "presses": {
+     "hold": {
+      "kind": "string",
+      "what": "the burst: eight lights on a held X, slowing on a curve. One string for each lean of the stick; the director plays one whole when its first blow is the light the press threw, or composes one by the same rules (parts.json strike.burst)",
+      "from": "martial.x",
+      "slots": [
+       "open",
+       "fast",
+       "fast",
+       "fast",
+       "mid",
+       "mid",
+       "slow",
+       "slow"
+      ],
+      "leans": [
+       {
+        "name": "toward",
+        "filter": {
+         "limb": [
+          "elbow",
+          "knee",
+          "shoulder",
+          "head"
+         ]
+        }
+       },
+       {
+        "name": "away",
+        "filter": {
+         "limb": [
+          "foot"
+         ]
+        }
+       },
+       {
+        "name": "none",
+        "filter": {
+         "limb": [
+          "hand"
+         ],
+         "path": [
+          "line",
+          "arc_in",
+          "arc_out"
+         ]
+        }
+       },
+       {
+        "name": "down",
+        "any": [
+         {
+          "path": [
+           "drop"
+          ]
+         },
+         {
+          "target": [
+           "legs",
+           "shins"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "up",
+        "any": [
+         {
+          "path": [
+           "rise"
+          ]
+         },
+         {
+          "target": [
+           "head",
+           "jaw"
+          ]
+         }
+        ]
+       }
+      ],
+      "asks": [
+       "U1"
+      ],
+      "needs": [
+       {
+        "who": "Animation",
+        "what": "the burst at its gaps: the first three blows land 4, 4 and 5 ticks apart, inside the 5 ticks of the carry between blows"
+       },
+       {
+        "who": "Encounter",
+        "what": "the burst as a move of eight; the pick of each blow by its gap's class"
+       },
+       {
+        "who": "Audio",
+        "what": "one breath of sound for the eight"
+       }
+      ]
+     }
+    }
    },
    "y": {
     "kind": "strikes",
-    "what": "heavy strikes: the guard breaker, the lift, the ender; a fully held lone heavy may launch (Orb)",
+    "what": "medium strikes, which were the heavy strikes: the medium (tapped), the medium flurry (mashed), the charged medium (held), the medium skill strike (on the beat)",
     "filter": {
      "weight": [
-      "heavy"
+      "medium"
      ]
     },
     "count": 16,
@@ -136,16 +236,12 @@
       "sends": "turned"
      },
      {
-      "name": "lift",
-      "min": 4,
-      "form": "lift"
-     },
-     {
-      "name": "break",
-      "min": 4,
-      "form": "break"
+      "name": "quick",
+      "min": 12,
+      "form": "quick"
      }
-    ]
+    ],
+    "_quotas": "the first four are how the cell was filled when these were the heavies, by where each sends; a medium no longer knocks back. quick is the count that read on a 12-tick wind-up: the rest are thrown on a held Y only"
    },
    "a": {
     "kind": "context",
@@ -177,39 +273,143 @@
     ]
    },
    "b": {
-    "kind": "frame",
-    "what": "his defining signature, a melee art. The kinds are proposed and not final, so the frame is generic and nothing is hand-picked",
-    "slots": [
+    "kind": "strikes",
+    "what": "heavy strikes, a new tier of whole-body blows: the heavy (tapped), the heavy flurry (mashed), the charged heavy with its knock-back, launch or lift (held), the heavy skill strike (on the beat)",
+    "filter": {
+     "weight": [
+      "heavy"
+     ]
+    },
+    "count": 10,
+    "spread": {
+     "look": 0.15
+    },
+    "notLevels": [
+     "stand_in"
+    ],
+    "_notLevels": "the tier is new looks: a shape that one of his posed pieces can stand in for is not one of the ten. It is in the stand-in cell",
+    "_spread": "each heavy is seen whole, so the same limb, tip and path at another place is marked down hard: no two of the ten are one blow aimed twice",
+    "standIn": {
+     "kind": "strikes",
+     "temporary": true,
+     "only": "stand_in",
+     "what": "stand-ins for B until the tier is posed: his posed mediums that only read on a long wind-up, played at B's wind-up. Not locked: they go as the tier's own poses arrive",
+     "filter": {
+      "weight": [
+       "heavy"
+      ]
+     },
+     "count": 12
+    },
+    "quotas": [
      {
-      "slot": "tell",
-      "ticks": 30
+      "name": "across",
+      "min": 2,
+      "sends": "across"
      },
      {
-      "slot": "open",
-      "from": "a lunge from the mid band; nothing in reach"
+      "name": "turned",
+      "min": 2,
+      "sends": "turned"
      },
      {
-      "slot": "rush",
-      "count": 4,
-      "from": "x",
-      "order": "links"
+      "name": "up",
+      "min": 2,
+      "sends": "up"
      },
      {
-      "slot": "launcher",
-      "count": 1,
-      "from": "y",
-      "by": "sends"
+      "name": "down",
+      "min": 2,
+      "sends": "down"
+     },
+     {
+      "name": "lean toward",
+      "filter": {
+       "limb": [
+        "elbow",
+        "knee",
+        "shoulder",
+        "head"
+       ]
+      },
+      "min": 2
+     },
+     {
+      "name": "lean away",
+      "filter": {
+       "limb": [
+        "foot"
+       ]
+      },
+      "min": 2
+     },
+     {
+      "name": "lean none",
+      "filter": {
+       "limb": [
+        "hand"
+       ],
+       "path": [
+        "line",
+        "arc_in",
+        "arc_out"
+       ]
+      },
+      "min": 2
+     },
+     {
+      "name": "lean down",
+      "any": [
+       {
+        "path": [
+         "drop"
+        ]
+       },
+       {
+        "target": [
+         "legs",
+         "shins"
+        ]
+       }
+      ],
+      "min": 2
+     },
+     {
+      "name": "lean up",
+      "any": [
+       {
+        "path": [
+         "rise"
+        ]
+       },
+       {
+        "target": [
+         "head",
+         "jaw"
+        ]
+       }
+      ],
+      "min": 2
      }
     ],
-    "readings": {
-     "speed": "the quick form",
-     "tech": "the quick form on his beat, closing a string",
-     "heavy": "the held form"
-    },
-    "legal": "a person screens the frame and its hand-picked piece (docs/legal/movegen-screen.md section 3)",
-    "asks": [
-     "H1",
-     "K1"
+    "_quotas": "two for each way a charged heavy can send the rival (the two that send up are also the lift), then two for each lean of the stick, so a flurry of four held on one lean still shows four blows",
+    "needs": [
+     {
+      "who": "Animation",
+      "what": "every heavy that is waiting: a wind-up held in plain sight, the blow and its end; and the stand-ins played at 28 ticks"
+     },
+     {
+      "who": "Encounter",
+      "what": "B as a strike button: the 28-tick wind-up and its armour, the flurry, the pick by lean and by links"
+     },
+     {
+      "who": "Legal",
+      "what": "the tier seen drawn: each drive's tell, and each heavy (condition W1)"
+     },
+     {
+      "who": "VFX and World",
+      "what": "how the ground answers a heavy that lands"
+     }
     ]
    }
   },
@@ -750,7 +950,12 @@
       "who": "Animation",
       "what": "a pushed fighter's slide back is posed (s3.shoved); the push itself reuses strike key sets with no impact snap"
      }
-    ]
+    ],
+    "weights": [
+     "light",
+     "medium"
+    ],
+    "_weights": "a push is never a heavy of the new tier"
    },
    "a": {
     "kind": "context",
@@ -874,21 +1079,33 @@
    },
    "b": {
     "kind": "frame",
-    "what": "his release; in acts 3 and 4, held to full, his ultimate (75 ki)",
+    "what": "his defining signature, on RT + B and held (docs/design/brawl-second-pass.md section 5): his art at the first flash, his signature at the second, and in acts 3 and 4 his ultimate. The martial arts B is a strike button now, so the melee art that sat there is this frame's art",
     "slots": [
      {
       "slot": "tell",
-      "ticks": 45
+      "to": "the first flash"
      },
      {
-      "slot": "the release",
-      "from": "what he has gathered"
+      "slot": "his art",
+      "from": "a string the player drives from martial.x by its links, each press its next blow, three to eight, closed by one of martial.b by where it sends"
+     },
+     {
+      "slot": "tell",
+      "to": "the second flash"
+     },
+     {
+      "slot": "his signature",
+      "from": "his own when it is authored; until then the beam, held and aimed by the player"
+     },
+     {
+      "slot": "the ultimate",
+      "from": "what he has gathered, in acts 3 and 4"
      }
     ],
     "readings": {
-     "speed": "the release",
-     "tech": "on the mark",
-     "heavy": "held to full: the ultimate"
+     "held to the first flash": "his art",
+     "held to the second": "his signature",
+     "held on, in acts 3 and 4": "his ultimate"
     },
     "legal": "a person screens it: the charge pose and the release are where the stacking rule bites",
     "asks": [

@@ -218,6 +218,24 @@
    }
   ],
   "_lightNever": "a shape matching one of these is never light",
+  "weights": [
+   "light",
+   "medium",
+   "heavy"
+  ],
+  "_weights": "The three strengths (docs/design/brawl-second-pass.md section 2): X throws a light, Y a medium, B a heavy. A light and a medium are shapes of the grammar above. A heavy is a shape of the `heavy` block below: a whole-body blow, new",
+  "animWeight": {
+   "light": "light",
+   "heavy": "medium"
+  },
+  "_animWeight": "Animation's manifests still say light and heavy. Its heavy rows are today's heavy strikes, which are the mediums now. No row of Animation's is a heavy of the new tier; a posed piece that only reads on a long wind-up may stand in for one (`heavy.standIn`)",
+  "legalWeight": {
+   "medium": "heavy"
+  },
+  "legalForm": {
+   "charged": "held"
+  },
+  "_legalWeight": "Legal's shape rows were written when there were two weights and the charged blow was called held. Until Legal reads them again, a row that names heavy is applied to a medium and to a heavy, and a row that names held is applied to the form charged. Nothing of Legal's is loosened by the new names",
   "sends": {
    "line": "across",
    "arc_in": "turned",
@@ -326,6 +344,29 @@
     }
    },
    {
+    "form": "burst",
+    "when": {
+     "weight": [
+      "light"
+     ],
+     "limb": [
+      "hand",
+      "elbow",
+      "knee"
+     ],
+     "path": [
+      "line",
+      "arc_in",
+      "arc_out",
+      "rise"
+     ],
+     "arms": [
+      0,
+      1
+     ]
+    }
+   },
+   {
     "form": "skill",
     "when": {
      "weight": [
@@ -344,7 +385,16 @@
     "unless": "flurry"
    },
    {
-    "form": "heavy",
+    "form": "quick",
+    "when": {
+     "weight": [
+      "medium"
+     ]
+    },
+    "reads": "quick"
+   },
+   {
+    "form": "quick",
     "when": {
      "weight": [
       "heavy"
@@ -352,17 +402,10 @@
     }
    },
    {
-    "form": "held",
+    "form": "charged",
     "when": {
      "weight": [
-      "heavy"
-     ]
-    }
-   },
-   {
-    "form": "ender",
-    "when": {
-     "weight": [
+      "medium",
       "heavy"
      ]
     }
@@ -371,52 +414,401 @@
     "form": "lift",
     "when": {
      "weight": [
+      "medium",
       "heavy"
      ],
-     "target": [
-      "jaw",
-      "gut"
-     ],
      "path": [
-      "line",
-      "arc_in",
-      "arc_out",
-      "rise",
-      "spin"
+      "rise"
      ]
     }
-   },
-   {
-    "form": "break",
-    "any": [
-     {
-      "weight": [
-       "heavy"
+   }
+  ],
+  "_forms": "the forms a move can take, by rule, and the press that asks for each (`readings` below). light: a tapped X. flurry: a mashed X. burst: a blow that fits inside the held-X burst (`burst` below). skill and juggle: X on the beat. quick: a tapped or mashed Y or B, and Y or B on the beat; a medium is quick only if it reads on a 12-tick wind-up (`windup` below). charged: a held Y or B. lift: an upward blow, for the pair X+Y and for a full charged heavy with no stick. ender and break are gone with their rules: a string no longer ends by itself, and every heavy breaks a set guard. arms is the number of arms the posed strike it starts from uses; a generated shape uses one",
+  "windup": {
+   "_about": "What a medium needs to be thrown on Y's 12-tick wind-up, where today's heavy strikes had 26. The first rule that matches a medium is its rule. reads quick: it is thrown on a tap, in the Y flurry and on the beat, with the change given. reads charged: it only reads on a long wind-up, so it is flagged and not forced: it is thrown on a held Y only, and it may stand in for a heavy on B. The 12 is Game Design's and lives in Encounter's data; no tick is written here",
+   "medium": [
+    {
+     "id": "w1",
+     "when": {
+      "flags": [
+       "leap"
+      ]
+     },
+     "reads": "charged",
+     "why": "both feet leave together: the gather is the wind-up, and at 12 ticks it is a hop"
+    },
+    {
+     "id": "w2",
+     "when": {
+      "path": [
+       "spin"
+      ]
+     },
+     "reads": "charged",
+     "why": "a whole turn comes before the contact: at 12 ticks the turn is all there is to see, and in a flurry s04 bars it after any spin"
+    },
+    {
+     "id": "w3",
+     "when": {
+      "arms": [
+       2
+      ]
+     },
+     "reads": "charged",
+     "why": "both arms gather first, so no arm is left to start the flurry's next blow"
+    },
+    {
+     "id": "w4",
+     "when": {
+      "path": [
+       "drop"
       ],
+      "limb": [
+       "foot"
+      ]
+     },
+     "reads": "quick",
+     "change": "the knee lifts on the press and the leg falls from hip height: a chop of the leg, not the full swing overhead"
+    },
+    {
+     "id": "w5",
+     "when": {
       "path": [
        "drop"
       ]
      },
-     {
-      "weight": [
-       "heavy"
-      ],
-      "limb": [
-       "shoulder"
+     "reads": "quick",
+     "change": "no raise of its own: the arm starts at shoulder height, where the guard or the last blow left it, and the body drops under it"
+    },
+    {
+     "id": "w6",
+     "when": {
+      "path": [
+       "line"
       ]
      },
-     {
-      "weight": [
-       "heavy"
+     "reads": "quick",
+     "change": "the step in is a half step: the body leans into the blow and does not travel"
+    },
+    {
+     "id": "w7",
+     "when": {
+      "path": [
+       "arc_in",
+       "arc_out"
+      ]
+     },
+     "reads": "quick",
+     "change": "the hips start to turn on the press and the chamber is cut to a third: a flatter, tighter arc"
+    },
+    {
+     "id": "w8",
+     "when": {
+      "path": [
+       "rise"
+      ]
+     },
+     "reads": "quick",
+     "change": "no dip first: he rises from where he is. It no longer lifts by itself: the lift is the pair X+Y"
+    }
+   ],
+   "all": "a medium does not knock back, charged or not: `sends` on a medium is only the way the reel leans"
+  },
+  "heavy": {
+   "_about": "The third strength, on B: a whole-body blow. It is a strike shape with a drive: what the whole body does behind the limb. The path decides the drive. tips are the surfaces that can carry the weight, with the paths each travels at this weight; the places come from `targets`. No head: a headbutt is one of the vicious blows, which wait. Each drive has a tell (the wind-up as it is seen, held in plain sight for most of 28 ticks) and an end (where it leaves the body, which is where the flurry's next blow starts). flags are pose flags a drive brings to a new heavy, so that Legal's rows can judge it by machine: a whole turn is a spin",
+   "tips": {
+    "hand": {
+     "fist": [
+      "line",
+      "arc_in",
+      "arc_out",
+      "rise",
+      "drop",
+      "spin"
+     ],
+     "plate": [
+      "arc_in",
+      "drop"
+     ],
+     "heel": [
+      "drop",
+      "arc_out",
+      "spin"
+     ],
+     "blade": [
+      "line",
+      "arc_in",
+      "arc_out",
+      "drop",
+      "spin"
+     ],
+     "palm": [
+      "line",
+      "rise",
+      "drop"
+     ]
+    },
+    "elbow": {
+     "point": [
+      "arc_in",
+      "rise",
+      "drop",
+      "spin"
+     ],
+     "plate": [
+      "line"
+     ]
+    },
+    "shoulder": {
+     "plate": [
+      "line"
+     ]
+    },
+    "knee": {
+     "cap": [
+      "rise",
+      "line",
+      "arc_in"
+     ]
+    },
+    "foot": {
+     "ball": [
+      "line",
+      "rise"
+     ],
+     "heel": [
+      "line",
+      "drop",
+      "spin",
+      "arc_out"
+     ],
+     "instep": [
+      "arc_in"
+     ],
+     "edge": [
+      "line",
+      "arc_out"
+     ],
+     "sole": [
+      "line",
+      "drop"
+     ]
+    }
+   },
+   "never": [
+    {
+     "shape": {
+      "limb": [
+       "foot"
+      ],
+      "target": [
+       "shins"
+      ]
+     },
+     "why": "a whole-body blow to a shin is a trip, and trips belong to the clinch"
+    },
+    {
+     "shape": {
+      "limb": [
+       "hand"
+      ],
+      "path": [
+       "rise"
+      ],
+      "target": [
+       "jaw",
+       "head"
+      ]
+     },
+     "why": "the biggest rising hand to the jaw is where a leap creeps in (Legal's b03). At this weight a rising hand goes to the gut or the chest, and the jaw is an elbow's"
+    }
+   ],
+   "drive": {
+    "line": {
+     "id": "step_through",
+     "word": "stepping",
+     "flags": [],
+     "bears": [
+      "b02",
+      "b08",
+      "b12"
+     ],
+     "what": "a full pace behind the blow: the whole body travels with it and arrives as it lands",
+     "tell": "the striking side drawn back at shoulder height, the other shoulder pointed at the rival, the weight held on the rear leg",
+     "end": "a pace past his mark, the striking side forward"
+    },
+    "arc_in": {
+     "id": "turn",
+     "word": "turning",
+     "flags": [],
+     "bears": [
+      "b12"
+     ],
+     "what": "hips and shoulders wind away from the rival and unwind through the target: half a turn, never more",
+     "tell": "his back half turned to the rival, the striking limb carried behind the body at shoulder height",
+     "end": "turned through, the striking limb across his own centre"
+    },
+    "arc_out": {
+     "id": "unwind",
+     "word": "unwinding",
+     "flags": [],
+     "bears": [
+      "b12"
+     ],
+     "what": "he shows the rival his far side and the blow comes back out the way it wound: a backhand of the whole body",
+     "tell": "the striking limb crossed over his own centre, the chin over the lead shoulder",
+     "end": "opened out, the striking limb wide"
+    },
+    "rise": {
+     "id": "heave",
+     "word": "heaving",
+     "flags": [],
+     "bears": [
+      "b03",
+      "s05"
+     ],
+     "what": "he sinks deep, and both legs drive the blow up through the target. His feet keep their place: it is not a leap",
+     "tell": "sunk under the rival's guard with the striking limb loaded below the target, the back straight",
+     "end": "stood up to his full height, the striking limb high"
+    },
+    "drop": {
+     "id": "fall",
+     "word": "falling",
+     "flags": [],
+     "bears": [
+      "b05",
+      "b09",
+      "b12"
+     ],
+     "what": "he rises over the target and comes down on it with his whole weight",
+     "tell": "risen above the rival with the striking limb carried at shoulder height; it lifts only as he starts down",
+     "end": "sunk below where he began, the striking limb low"
+    },
+    "spin": {
+     "id": "full_turn",
+     "word": "spinning",
+     "flags": [
+      "spin"
+     ],
+     "bears": [
+      "b04",
+      "s04"
+     ],
+     "what": "one whole turn in place, wound up in plain sight; never two, never travelling",
+     "tell": "the shoulders turned away and the head already looking back over them",
+     "end": "facing the rival again, a quarter turn past"
+    }
+   },
+   "words": {
+    "hand.fist": "fist",
+    "hand.plate": "forearm plate",
+    "hand.heel": "hammer fist",
+    "hand.blade": "blade hand",
+    "hand.palm": "palm",
+    "elbow.point": "elbow",
+    "elbow.plate": "crossed forearms",
+    "shoulder.plate": "shoulder",
+    "knee.cap": "knee",
+    "foot.ball": "ball of the foot",
+    "foot.heel": "heel",
+    "foot.instep": "instep",
+    "foot.edge": "edge of the foot",
+    "foot.sole": "sole"
+   },
+   "_words": "a heavy's plain name is its drive's word, its tip's word and its place: a stepping fist to the chest, a falling heel to the chest. Animation reads these",
+   "standIn": "a posed medium whose wind-up rule reads charged covers the heavy of the same shape at the level stand_in: it can play on B at 28 ticks today, as a derived move, until the tier's own poses exist"
+  },
+  "burst": {
+   "_about": "The burst: a held X throws eight lights that slow on a curve (docs/design/brawl-second-pass.md section 3). The first is the light the press threw. Each later blow is drawn from the X cell by the class of the gap before it, under the string rules and the rules below, which are what keep a 4-tick gap from reading as a stutter. The gaps are Game Design's and live in Encounter's data: the classes name them, and no tick is written on a move",
+   "classes": {
+    "open": {
+     "gap": "the press",
+     "when": {},
+     "why": "whatever light the tap would have thrown"
+    },
+    "fast": {
+     "gap": "5 ticks or fewer",
+     "when": {
+      "limb": [
+       "hand"
+      ],
+      "path": [
+       "line",
+       "arc_in",
+       "arc_out",
+       "rise"
       ],
       "arms": [
-       2
+       0,
+       1
       ]
-     }
-    ]
-   }
-  ],
-  "_forms": "the forms a move can take, by rule (docs/design/melee-press-feel.md section 13). arms is the number of arms the posed strike it starts from uses; a generated shape uses one",
+     },
+     "why": "only a hand gets out and back inside 5 ticks, and only on a path with no raise and no turn. The hands alternate, which Animation's speed look already does"
+    },
+    "mid": {
+     "gap": "6 to 8 ticks",
+     "when": {
+      "limb": [
+       "hand",
+       "elbow",
+       "knee"
+      ],
+      "path": [
+       "line",
+       "arc_in",
+       "arc_out",
+       "rise"
+      ],
+      "arms": [
+       0,
+       1
+      ]
+     },
+     "why": "an elbow or a knee fits once the gap opens"
+    },
+    "slow": {
+     "gap": "9 ticks or more",
+     "when": {},
+     "why": "any light: the last two may be kicks or dropping blows, and the eighth is the close when nothing has answered"
+    }
+   },
+   "noStutter": [
+    {
+     "id": "u1",
+     "kind": "run",
+     "same": [
+      "limb",
+      "tip",
+      "path"
+     ],
+     "max": 1,
+     "rule": "never the same limb, tip and path twice running: the same blow thrown again 4 ticks later is a stutter"
+    },
+    {
+     "id": "u2",
+     "kind": "run",
+     "same": [
+      "target"
+     ],
+     "max": 1,
+     "rule": "never the same place twice running: the sparks would stack on one point"
+    },
+    {
+     "id": "u3",
+     "kind": "run",
+     "same": [
+      "path"
+     ],
+     "max": 2,
+     "rule": "no more than two blows running on one path: three straights read as one blow played three times"
+    },
+    {
+     "id": "u4",
+     "kind": "once",
+     "rule": "no piece twice in one burst"
+    }
+   ]
+  },
   "swap": [
    "fist",
    "blade",
@@ -917,6 +1309,7 @@
     "id": "L6",
     "when": {
      "weight": [
+      "medium",
       "heavy"
      ]
     },
@@ -925,7 +1318,7 @@
      "b09",
      "b12"
     ],
-    "ask": "held: charged with one arm drawn back at shoulder height; never at a hip, never both hands together, no light"
+    "ask": "held: a charged medium or heavy is charged with one arm drawn back at shoulder height; never at a hip, never both hands together, no light"
    },
    {
     "id": "L7",
@@ -1030,6 +1423,41 @@
      "h02",
      "h03"
     ]
+   },
+   {
+    "id": "W1",
+    "when": {
+     "weight": [
+      "heavy"
+     ]
+    },
+    "rows": [
+     "b02",
+     "b09",
+     "b12",
+     "h01",
+     "h02",
+     "h03",
+     "h04",
+     "k03",
+     "f01"
+    ],
+    "from": "Combat, proposed: not yet Legal's",
+    "ask": "a heavy: its wind-up is in plain sight for most of 28 ticks, so it is judged as a held pose: the limb drawn back at shoulder height or the leg chambered, never at a hip, never both hands together, never a limb held raised overhead, no light and no aura; the flash of its charge is a thin ring or edge; thrown in a flurry, the smear follows the one striking limb"
+   },
+   {
+    "id": "U1",
+    "stance": "martial",
+    "rows": [
+     "s01",
+     "s02",
+     "s03",
+     "f01",
+     "f02",
+     "f03"
+    ],
+    "from": "Combat, proposed: not yet Legal's",
+    "ask": "the burst: eight lights on a held X, its first three gaps faster than a mashed flurry; the smear follows the one striking limb with at most two ghosts, never extra limbs; no blow repeats the last one's place or shape; one breath of sound for the eight, never a syllable for each"
    }
   ],
   "_conditions": "Legal's conditions from its screen of the sheet (docs/legal/movegen-screen.md section 1), for Animation: the sheet's Legal column lists the ids that apply to a row. They bite when a move is held or strung"
@@ -1370,22 +1798,26 @@
   }
  },
  "readings": {
-  "_about": "Game Design's three readings on X, Y and B (docs/design/melee-press-feel.md section 10): speed (tapped, mashed), tech (on the mark), heavy (held). In the martial arts stance a move's forms say which readings it can take; in a cell where every move takes all three the cell says so",
+  "_about": "Which form each press of a strike button asks for (docs/design/brawl-second-pass.md section 8). One press is one attack: a button's pool is one list, and the press picks the form. The held X is not a form: it is a string of eight from the same pool (`strike.burst`, and the cell's `presses.hold`)",
   "martial": {
-   "speed": [
-    "light",
-    "flurry",
-    "heavy"
-   ],
-   "tech": [
-    "skill",
-    "juggle",
-    "heavy"
-   ],
-   "heavy": [
-    "light",
-    "held"
-   ]
+   "x": {
+    "tap": "light",
+    "mash": "flurry",
+    "hold": "the burst",
+    "beat": "skill"
+   },
+   "y": {
+    "tap": "quick",
+    "mash": "quick",
+    "hold": "charged",
+    "beat": "quick"
+   },
+   "b": {
+    "tap": "quick",
+    "mash": "quick",
+    "hold": "charged",
+    "beat": "quick"
+   }
   }
  },
  "legal": {

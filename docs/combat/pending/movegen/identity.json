@@ -71,20 +71,46 @@
     {
      "when": {
       "weight": [
-       "heavy"
+       "medium"
       ]
      },
      "tip": {
       "hand.fist": 3,
       "hand.heel": 1.5
      },
-     "_why": "Orb: fists on his heavies"
+     "_why": "Orb: fists on what were his heavies, the mediums now"
+    },
+    {
+     "when": {
+      "weight": [
+       "heavy"
+      ]
+     },
+     "tip": {
+      "hand.fist": 3,
+      "hand.heel": 2,
+      "hand.plate": 3,
+      "elbow.plate": 2,
+      "shoulder.plate": 2.5,
+      "foot.heel": 1.5,
+      "foot.sole": 1.5
+     },
+     "target": {
+      "head": 1.5,
+      "jaw": 1.5,
+      "chest": 1.3,
+      "gut": 1,
+      "arm": 0.4,
+      "legs": 0.5
+     },
+     "_why": "a show-off: fists, plates and his shoulder, on lines and from above, at the head and chest where it is seen"
     }
    ],
    "never": [
     {
      "shape": {
       "weight": [
+       "medium",
        "heavy"
       ],
       "limb": [
@@ -94,7 +120,7 @@
        "blade"
       ]
      },
-     "why": "Orb: a closed fist on his heavies and his enders; a plate may lead"
+     "why": "Orb: a closed fist on what were his heavies and his enders, the mediums now, and on the new heavies; a plate may lead"
     },
     {
      "shape": {
@@ -126,7 +152,8 @@
     "re_aim": 6,
     "re_aim_edge": 2.5,
     "hand_state_re_aim": 4,
-    "hand_state_re_aim_edge": 2
+    "hand_state_re_aim_edge": 2,
+    "stand_in": 1
    },
    "tipFlags": {
     "hand.palm": [
@@ -263,6 +290,38 @@
       ]
      }
     }
+   },
+   "manner": {
+    "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
+    "heavy": "A show-off. He lets the rival see it coming: the tell is held open to view with the chin up, the blow travels in the straightest line that drive allows, and he leaves the limb out for a beat after it lands. Never a second motion on the same wind-up",
+    "burst": "A show of speed: blade hands that flick out and back with the elbow high, then a straight he leaves out for a beat"
+   },
+   "pinned": {
+    "martial.b": [
+     [
+      "hand",
+      "fist",
+      "line",
+      "chest",
+      "heavy"
+     ],
+     [
+      "foot",
+      "heel",
+      "drop",
+      "chest",
+      "heavy"
+     ]
+    ]
+   },
+   "_pinned": "shapes a cell takes first, before its quotas. Here: the two heavies Animation is already studying on provisional poses (data/anim/waves/rival7: su_ram, a long low lunge behind one straight fist; su_heel, a heel brought down on the chest)",
+   "burst": {
+    "close": {
+     "path": [
+      "line"
+     ]
+    },
+    "_close": "what his burst's eighth blow is, when the rules allow: a straight"
    }
   },
   "protagonist": {
@@ -318,7 +377,32 @@
      "rooted": 1
     }
    },
-   "weightsBy": [],
+   "weightsBy": [
+    {
+     "when": {
+      "weight": [
+       "heavy"
+      ]
+     },
+     "tip": {
+      "hand.palm": 3,
+      "hand.blade": 3,
+      "hand.heel": 1.5,
+      "hand.fist": 0.4,
+      "foot.edge": 2.5,
+      "foot.heel": 2
+     },
+     "target": {
+      "chest": 1.6,
+      "gut": 1.5,
+      "jaw": 1.2,
+      "arm": 1.0,
+      "legs": 0.8,
+      "head": 0.5
+     },
+     "_why": "pointed, not cruel: open hands and the heel, turned through one point of the body or a limb; the head is the last place he goes"
+    }
+   ],
    "never": [
     {
      "shape": {
@@ -347,6 +431,21 @@
       ]
      },
      "why": "his straight lights are open hands"
+    },
+    {
+     "id": "pointed",
+     "shape": {
+      "weight": [
+       "heavy"
+      ],
+      "path": [
+       "drop"
+      ],
+      "target": [
+       "head"
+      ]
+     },
+     "why": "pointed, not cruel: he never brings his whole weight down on a head"
     }
    ],
    "tipOf": {
@@ -360,7 +459,8 @@
     "re_aim": 6,
     "re_aim_edge": 2.5,
     "hand_state_re_aim": 4,
-    "hand_state_re_aim_edge": 2
+    "hand_state_re_aim_edge": 2,
+    "stand_in": 1
    },
    "tipFlags": {},
    "entryWaves": [
@@ -517,6 +617,39 @@
       ]
      }
     }
+   },
+   "manner": {
+    "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
+    "heavy": "Pointed, not cruel. One line to one point: the tell is compact and close to the body, the turn does the work, the blow stops at the target and he is back in his guard at once. No flourish before it and none after",
+    "burst": "A run of open hands that each find a different point: the wrist, the ribs, the collar, the jaw. It ends on an arc"
+   },
+   "pinned": {
+    "martial.b": [
+     [
+      "hand",
+      "blade",
+      "spin",
+      "chest",
+      "heavy"
+     ],
+     [
+      "hand",
+      "palm",
+      "drop",
+      "chest",
+      "heavy"
+     ]
+    ]
+   },
+   "_pinned": "shapes a cell takes first, before its quotas. Here: the two heavies Animation is already studying on provisional poses (data/anim/waves/protag10: su_turn, a whole turn into a blade hand; su_drive, a palm driven down and forward. Animation's su_drive uses both palms from overhead: this tier's is one arm)",
+   "burst": {
+    "close": {
+     "path": [
+      "arc_in",
+      "arc_out"
+     ]
+    },
+    "_close": "what his burst's eighth blow is, when the rules allow: an arc"
    }
   }
  },

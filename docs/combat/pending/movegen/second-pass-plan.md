@@ -1,5 +1,7 @@
 # The brawl's second pass: what the generator must produce
 
+> **Superseded in part (2026-10-06).** This plan was written for two strengths. Orb then moved the buttons to three (X light, Y medium, B heavy), and `three-strengths.md` is the newer page for X, Y and B. **Withdrawn here:** the quick heavy on a tapped Y, the charged light, and all of section 5 (B as Charge at close range). **Still the plan:** the cell addressing (section 1; `presses` is built for the held X), the shove, the tackle, the lift, the slip, the breaker, and the `pair` kind of part.
+
 Owner: Combat and Choreography. Status: a plan, parked; nothing here is built. Written against HEAD `51bb701`.
 Answers `docs/design/brawl-second-pass.md` (the rules, section 8 for the inputs, section 10 for the order), `docs/animation/brawl-second-pass-view.md` (the body's side) and `docs/legal/brawl-screen.md` (RL-098 to RL-101, merged into `parts.json`).
 

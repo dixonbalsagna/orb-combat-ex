@@ -1,6 +1,6 @@
 # Generated movesets: the five stances, both fighters
 
-Owner: Combat and Choreography. Date: 2026-10-05. Status: parked. Nothing here is loaded or hashed, and nothing in the tree is edited. Design: `../../moveset-generator.md`. Built on HEAD `d309a54`, on Animation's real data and with Legal's rows merged.
+Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here is loaded or hashed, and nothing in the tree is edited. Design: `../../moveset-generator.md`. Built on Animation's real data and with Legal's rows merged; the martial arts stance was regenerated for three strengths on HEAD `972e598` (section 0, and `three-strengths.md`).
 
 | File | What it is | Becomes |
 | :--- | :--- | :--- |
@@ -9,15 +9,33 @@ Owner: Combat and Choreography. Date: 2026-10-05. Status: parked. Nothing here i
 | `cells.json` | Game Design's matrix, all five stances: what each button holds, its count, quotas, readings and what it needs from others; the seed | `data/combat/cells.json` |
 | `lock.json` | **generated:** every strike move's id and shape, so an id never changes shape | `data/combat/movesets/lock.json` |
 | `gen_moveset.py` | the reference generator: standard library only, no state, no clock | a script under `tools/`, Tools' to hold |
-| `moveset.rival.json`, `moveset.protagonist.json` | **generated:** 100 moves each over the five stances | `data/combat/movesets/<fighter>.json` |
+| `moveset.rival.json`, `moveset.protagonist.json` | **generated:** 120 and 121 rows over the five stances | `data/combat/movesets/<fighter>.json` |
 | `review-sheet.md` | **generated:** every move on one row, by stance, with Legal's conditions and what each stance needs | stays in docs |
+| `three-strengths.md` | the note for the slice C2a: the mediums on 12 ticks, the heavy tier, the burst, the string check, and what Animation, Tools and Legal need | stays in docs |
 | `second-pass-plan.md` | a plan, not built: what the brawl's second pass (`docs/design/brawl-second-pass.md`) needs from parts, identity and cells, in the EP's build order, with sizes | stays in docs |
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
-- **To check:** add `--check`: exit 1 when the files are not what the inputs give, or on any match with Legal's rows. It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 33 cases.
+- **To check:** add `--check`: exit 1 when the files are not what the inputs give, on any match with Legal's rows, or when a string runs out of blows (a strike button left with fewer than 3 pieces after some two blows, or a light that cannot open a burst). It passes now, and a second run changes nothing.
+- **To prove the refusals:** `--self-test`, 53 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
+
+## 0. Three strengths (2026-10-06, for the slice C2a)
+
+Orb moved the martial face buttons to three strengths: X light, Y medium, B heavy, and a burst on a held X (`docs/design/brawl-second-pass.md`). The note is `three-strengths.md`; in short:
+
+| Cell | What it holds now | The rival: rows, posed, derived, waiting | The Protagonist |
+| :--- | :--- | :--- | :--- |
+| X | the same 30 lights | 30: 27, 3, 0 | 30: 24, 6, 0 |
+| X held | the burst: 5 strings of 8 lights, one for each lean | 5: 1, 4, 0 | 5: 0, 5, 0 |
+| Y | the same 16 strikes, re-tagged as mediums; 12 and 11 read on a 12-tick wind-up, the rest are flagged for a held Y | 16: 14, 2, 0 | 16: 14, 2, 0 |
+| B | a new tier of 10 heavies: whole-body blows, each a shape and a drive | 10: 0, 0, 10 | 10: 0, 0, 10 |
+| B, stand-ins | posed pieces that can play on B until the tier is drawn; not locked | 5: 0, 5, 0 | 6: 0, 6, 0 |
+
+- No id changed and no strike changed shape. The lock's 34 heavy rows were re-tagged as medium.
+- The signature frame that sat on the martial B is the charging stance's B (RT + B) now.
+- Sections 1 and 2 below were written before this: where they say heavy for the martial Y, read medium.
+- `second-pass-plan.md` was written for two strengths. Its B section, the charged light and the quick heavy are withdrawn; the cell addressing, the pairs, the tackle and the `pair` kind stand.
 
 ## 1. The martial arts stance, regenerated on Animation's data
 
@@ -52,13 +70,13 @@ Game Design's matrix (`docs/design/melee-press-feel.md` section 10): X quick, Y 
 | **Charging** | X, Y, A: his three specials | each special is a frame of his own; the generator makes its looks | 14 looks, all waiting | 14 looks, all waiting |
 
 - **Every A cell is a list, not generated:** the pressed and held actions of the matrix.
-- **Every B cell is a generic frame** with its three readings. The kinds are not final, and the defensive and manoeuvre signatures will differ for each fighter (Orb), so nothing is hand-picked.
+- **Every B cell but the martial one is a generic frame** with its readings (the martial B is a strike cell since the three strengths). The kinds are not final, and the defensive and manoeuvre signatures will differ for each fighter (Orb), so nothing is hand-picked.
 - **Quotas:** each zip direction and each step direction appears; the energy cells hold moves for all three readings; the checks cover the high and the mid line and include 2 by elbow or knee. All are met.
 - **Identity shows without new rules.** The rival's zips go in on a dash and land plates and lines; the Protagonist's go in on a spiral or an arc dive and land arcs. The rival pushes with the shoulder, the forearms and the boot, since he has no palm strike; the Protagonist pushes with palms.
 - **The Protagonist's three specials are placeholders** (a turning step, three curving shots, a turn aside). They are Combat's first offer so that his charging row is not empty, and they are marked so in the data and on the sheet.
 - **Which of the rival's specials sits on which button is my guess:** the cutting step on X, the barrage volley on Y, the grip and drag on A.
 
-**All five stances:** 100 moves a fighter. The rival: 73 posed, 12 derived, 15 waiting. The Protagonist: 69, 16, 15. The 15 waiting are the 14 special looks and the short beam.
+**All five stances:** 120 rows for the rival (74 posed, 21 derived, 25 waiting) and 121 for the Protagonist (69, 27, 25). The 25 waiting are the 10 new heavies, the 14 special looks and the short beam.
 
 "Posed" here means the poses exist. Most of what these four stances lack is not a pose but the action itself, which is the next section.
 
@@ -139,6 +157,7 @@ What changed since the keys I gave for the martial stance. A filter is as before
 - `cells.json`: a frame or context cell may have `asks`, a list of condition ids.
 - A moveset's travel and table cells have `refused`: for travel `{move: {kind, direction, exit}, rows}`; for a table `{move: {delivery, release}, rows, candidates}`. Frame and context cells carry `asks`.
 - `parts.json` `legal` may also hold a block that is not rows, copied from Legal's file as it stands (`heldScope`: `classes`, `pairTest`, `emitterTest`).
+- Added with the three strengths (the full list is in `three-strengths.md` section 7): a weight may be `medium`; `parts.json` `strike` gains `weights`, `animWeight`, `legalWeight`, `legalForm`, `windup`, `heavy` and `burst`; a cell may hold `presses` and `standIn`, and may be of the kind `string`; a medium move has `wind`, a heavy has `drive` and `name`; an id may have a third part (`mv.rival.martial.x.hold.01`).
 - Added with RL-098 to RL-101: `parts.json` `legal` takes any group of rows Legal adds (`flurry` is the first new one); a row's `kind` may be `string` (`uses`: the sequence rules it widens, `ignores`); a `holdPoints` row may name a `grab` and its `allowed` points, matched against `grab.kinds`; a `move` row may carry `string` (`same`, `max`).
 - Cross-checks: every energy hand a fighter lists is in `shot.hands`; every row of Legal's file is in `parts.json` with the same rule and why; no hold point is one of g01's.
 
