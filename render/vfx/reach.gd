@@ -41,6 +41,10 @@ class Fx:
 	var big: bool = false           # this landing got the full flash
 	var guard: bool = false         # it met a guard: a shot on arms, smaller
 	var small: bool = false         # reduced motion
+	var kind: String = ""           # a whiff's cause (gave_ground, reach, dodge); a wind-up's cell
+	var k: int = 0                  # how a wind-up ended: 2 stopped by a blow, 3 lost
+	var strong: bool = false        # a heavy's wind-up (B): the long ring and the committed line
+	var fired: bool = false         # a double hit's dust has been thrown
 
 var fx: Array = []
 var made: Dictionary = {}
@@ -84,8 +88,8 @@ func reset() -> void:
 
 ## The flash limit (§5b point 8 and Legal's k05): true when a full flash may be drawn on this tick, and then it takes the slot. Two rules: at least `flash_every` ticks since the
 ## last one across both fighters (the design's pace), and the screen's register (three a second across every effect, fewer for low-priority sources, none in reduced motion).
-func allow_full(S: SimState, col: Color = Color.WHITE) -> bool:
-	if S.tick - last_full < int(p("flash_every")):
+func allow_full(S: SimState, col: Color = Color.WHITE, pace: bool = true) -> bool:
+	if pace and S.tick - last_full < int(p("flash_every")):
 		return false
 	if registry != null and not registry.ask("energy", col, S.tick):
 		return false
@@ -102,6 +106,9 @@ func step(S: SimState, frozen: bool, debris, press: VfxPress) -> void:
 		var e: Fx = fx[i]
 		if not frozen:
 			e.age += 1.0
+		if e.style == "double" and e.age >= 0.0 and not e.fired:
+			e.fired = true
+			_double_dust(S, e, debris)
 		if e.age >= e.life:
 			fx.remove_at(i)
 		else:
@@ -133,8 +140,16 @@ func on_events(S: SimState, events: Array, reduced: bool, debris, press: VfxPres
 					_reach(S, e, reduced)
 				"energy_land":
 					_land(S, e, reduced, debris)
-				"stagger":
-					_stagger(S, e)
+				"windup":
+					_windup(S, e, reduced)
+				"launcher_open":
+					_launcher_open(S, e)
+				"launcher_close":
+					_launcher_close(S, e)
+				"double_hit":
+					_double(S, e, reduced)
+				"miss":
+					_miss(S, e, reduced, debris)
 
 
 func _pair(S: SimState, e) -> Vector2i:
@@ -208,7 +223,9 @@ func _land(S: SimState, e, reduced: bool, debris) -> void:
 		l.guard = guard
 		l.small = reduced
 		l.life = p("land_life")
-		l.big = (not reduced) and (not guard or blast) and allow_full(S, col.lightened(0.3))
+		# Encounter's `k` on the cue is 1 on the one blow in 20 ticks that may take the full flash; the register still decides. Without it, the 1-in-20 pace is ours.
+		var kk: float = float(VfxHub._g(e, "k", -1.0))
+		l.big = (not reduced) and (not guard or blast) and (kk < 0.0 or kk >= 1.0) and allow_full(S, col.lightened(0.3), kk < 0.0)
 		fx.append(l)
 		made["land"] = int(made.get("land", 0)) + 1
 		if l.big:
@@ -287,14 +304,12 @@ func _scorch(S: SimState, sp: Fx, blast: bool, reduced: bool) -> void:
 			return
 
 
-## A stagger long enough to be launched from (the launcher takes any stagger of `stagger_min` ticks or more; a shove's 8 do not): two rising chevrons for as long as it lasts.
-func _stagger(S: SimState, e) -> void:
-	var vic: int = int(e.actor)
-	var slot: int = int(VfxHub._g(e, "target", 1 - vic))
-	if vic < 0 or vic > 1 or vic >= S.fighters.size() or slot < 0 or slot > 1 or slot == vic:
-		return
-	var n: float = float(VfxHub._g(e, "n", 0.0))
-	if n < p("stagger_min"):
+## "B now": Encounter's cue `launcher_open` (actor the fighter who may launch, target the staggered one, n the tick the stagger ends (absolute), text the stagger's kind) puts a rising
+## chevron on each side of the staggered fighter in the launcher's colour until `launcher_close`, or until the stagger ends.
+func _launcher_open(S: SimState, e) -> void:
+	var slot: int = int(e.actor)
+	var vic: int = int(VfxHub._g(e, "target", 1 - slot))
+	if slot < 0 or slot > 1 or slot >= S.fighters.size() or vic < 0 or vic > 1 or vic >= S.fighters.size() or vic == slot:
 		return
 	for k in range(fx.size() - 1, -1, -1):
 		if fx[k].style == "stagger" and fx[k].vic == vic:
@@ -303,10 +318,148 @@ func _stagger(S: SimState, e) -> void:
 	o.style = "stagger"
 	o.slot = slot
 	o.vic = vic
+	o.kind = String(e.text)
 	o.col = VfxPress.lane_of(S, slot)
-	o.life = n
+	o.life = maxf(float(VfxHub._g(e, "n", float(S.tick) + 20.0)) - float(S.tick), 1.0)
 	fx.append(o)
 	made["stagger"] = int(made.get("stagger", 0)) + 1
+
+
+func _launcher_close(S: SimState, e) -> void:
+	var vic: int = int(VfxHub._g(e, "target", -1))
+	var slot: int = int(e.actor)
+	for k in range(fx.size() - 1, -1, -1):
+		if fx[k].style == "stagger" and (fx[k].vic == vic or (vic < 0 and fx[k].slot == slot)):
+			fx.remove_at(k)
+	made["launcher_close"] = int(made.get("launcher_close", 0)) + 1
+
+
+## A medium's or a heavy's wind-up (cue `windup`, text start: actor, target, source the cell, dur the seconds, n the landing tick, absolute; text end: k 1 thrown, 2 stopped by a blow,
+## 3 lost, 4 a miss). A ring on the lead hand closes over the last 10 ticks of a medium's 12 (Y), and over a heavy's whole 28 (B) with the limb's committed line in its last 6: hollow, thin,
+## shrinking, lane colour (Legal k01 and k03: one mark, nothing on the body; the heavy's armour is not drawn). It is not a flash and asks nothing. Thrown or a miss: the blow's own looks
+## take over; stopped: four fragments fly off the ring; lost: the ring fades. docs/vfx/brawl-three-strength-plan.md section 1.
+func _windup(S: SimState, e, reduced: bool) -> void:
+	if String(e.text) == "end":
+		_windup_end(S, e)
+		return
+	var pr: Vector2i = _pair(S, e)
+	if pr.x < 0:
+		return
+	var slot: int = pr.x
+	for k in range(fx.size() - 1, -1, -1):
+		if fx[k].slot == slot and (fx[k].style == "windup" or fx[k].style == "windup_end"):
+			fx.remove_at(k)
+	var f = S.fighters[slot]
+	var o := Fx.new()
+	o.style = "windup"
+	o.slot = slot
+	o.vic = pr.y
+	o.dir = 1.0 if SimWrap.sdx(f.x, S.fighters[pr.y].x) >= 0.0 else -1.0
+	o.kind = String(VfxHub._g(e, "source", ""))
+	o.col = VfxPress.lane_of(S, slot)
+	o.small = reduced
+	var land: float = float(VfxHub._g(e, "n", -1.0))
+	var ticks: float = float(VfxHub._g(e, "dur", 0.0)) * 60.0
+	if ticks < 1.0 and land > 0.0:
+		ticks = maxf(land - float(S.tick), 1.0)
+	o.life = maxf(ticks, 2.0)
+	o.strong = o.life >= 20.0
+	if land > 0.0:
+		o.age = clampf(o.life - maxf(land - float(S.tick), 0.0), 0.0, o.life - 1.0)
+	fx.append(o)
+	var mk: String = "windup_b" if o.strong else "windup_y"
+	made[mk] = int(made.get(mk, 0)) + 1
+
+
+func _windup_end(S: SimState, e) -> void:
+	var slot: int = int(e.actor)
+	var kk: int = int(float(VfxHub._g(e, "k", 1.0)))
+	for i in range(fx.size() - 1, -1, -1):
+		var w: Fx = fx[i]
+		if w.slot == slot and w.style == "windup":
+			fx.remove_at(i)
+			if kk == 2 or kk == 3:
+				var o := Fx.new()
+				o.style = "windup_end"
+				o.slot = slot
+				o.vic = w.vic
+				o.dir = w.dir
+				o.col = w.col
+				o.k = kk
+				o.small = w.small
+				o.life = 6.0 if kk == 2 else 4.0
+				fx.append(o)
+			var mk: String = "windup_end_%d" % kk
+			made[mk] = int(made.get(mk, 0)) + 1
+			return
+
+
+## The double hit (cue `double_hit`, 8 ticks ahead: actor and target the two slots, n the landing tick, absolute): at the landing two contact looks at the same instant, mirrored, one on
+## each face line: a crossed crack, sparks and a hollow ring each, in each fighter's own colour, and one small flash for the pair if the register grants it (`double_hit`, a big moment);
+## then dust along the ground under each as they are thrown apart. Legal's k04: sparks at the contact only, no rubble ring with cracks and wind, no lightning, no body-wide aura, no gold,
+## white or red.
+func _double(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair(S, e)
+	if pr.x < 0:
+		return
+	var o := Fx.new()
+	o.style = "double"
+	o.slot = pr.x
+	o.vic = pr.y
+	o.dir = 1.0 if SimWrap.sdx(S.fighters[pr.x].x, S.fighters[pr.y].x) >= 0.0 else -1.0
+	o.col = VfxPress.lane_of(S, pr.x)
+	o.small = reduced
+	o.life = 12.0
+	var land: float = float(VfxHub._g(e, "n", float(S.tick) + 8.0))
+	o.age = -maxf(land - float(S.tick), 0.0)
+	o.big = (not reduced) and registry != null and registry.ask("double_hit", o.col.lightened(0.3), S.tick)
+	fx.append(o)
+	made["double"] = int(made.get("double", 0)) + 1
+
+
+## A whiff (cue `miss`: actor the one who missed, target the rival, text gave_ground, reach or dodge): the blow's arc cuts the air and ends in nothing, a thin line in his colour for 8
+## ticks, and a little dust at the feet of whoever moved (the rival who gave ground or slipped, or the attacker whose blow fell short). A wound blow that misses leaves him open for 20
+## ticks; this is only the picture of it.
+func _miss(S: SimState, e, reduced: bool, debris) -> void:
+	var pr: Vector2i = _pair(S, e)
+	if pr.x < 0:
+		return
+	var f = S.fighters[pr.x]
+	var o := Fx.new()
+	o.style = "whiff"
+	o.slot = pr.x
+	o.vic = pr.y
+	o.dir = 1.0 if SimWrap.sdx(f.x, S.fighters[pr.y].x) >= 0.0 else -1.0
+	o.kind = String(e.text)
+	o.x = f.x
+	o.y = f.y
+	o.lean = Vector2(36.0 if o.kind == "reach" else clampf(absf(SimWrap.sdx(f.x, S.fighters[pr.y].x)) - 8.0, 20.0, 80.0), 0.0)   # how far the empty arc reaches
+	o.col = VfxPress.lane_of(S, pr.x)
+	o.small = reduced
+	o.life = 8.0
+	fx.append(o)
+	made["whiff"] = int(made.get("whiff", 0)) + 1
+	var mk: String = "whiff_" + o.kind
+	made[mk] = int(made.get(mk, 0)) + 1
+	if debris != null and int(debris.quality) > 0:
+		var mover = S.fighters[pr.y] if o.kind != "reach" else f
+		var away: float = o.dir if o.kind != "reach" else -o.dir
+		var puffs: int = 1 if reduced else 3
+		for k in range(puffs):
+			debris.dust_puff(VfxPalette.biome_key(mover.x), mover.x + away * (6.0 + 8.0 * float(k)), mover.y + 4.0, 0.0, away * (30.0 + 20.0 * float(k)), 18.0, 14.0, 34.0, 0.5, 0)
+		made["whiff_dust"] = int(made.get("whiff_dust", 0)) + puffs
+
+
+## The dust a double hit throws, at the landing: along the ground under each fighter, away from the other.
+func _double_dust(S: SimState, e: Fx, debris) -> void:
+	if debris == null or int(debris.quality) <= 0:
+		return
+	for who in [e.slot, e.vic]:
+		var f = S.fighters[int(who)]
+		var away: float = e.dir if int(who) == e.vic else -e.dir       # the first is thrown against dir, the second along it
+		for k in range(2 if e.small else 4):
+			debris.dust_puff(VfxPalette.biome_key(f.x), f.x - away * (4.0 + 7.0 * float(k)), f.y + 4.0, 0.0, away * (50.0 + 24.0 * float(k)), 16.0, 20.0, 52.0, 0.55, 0)
+	made["double_dust"] = int(made.get("double_dust", 0)) + 1
 
 
 ## The launch's send-off. The staggered mark is over the moment he is launched.

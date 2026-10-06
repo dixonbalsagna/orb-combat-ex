@@ -54,3 +54,21 @@ Quads in the shots view's one draw. Worst instant: both fighters mid-flurry, one
 ## Tests when built
 
 A flurry never has more than 2 ghosts of a limb or 4 in all (asserted across a 10-blows-a-second run with both fighters); the burst's ghost count falls with its gaps and never repeats a path; a wind-up and a charge never show more than two of the seven marks in any tick of 70; the flash lasts 4 ticks or fewer; the double hit draws no ring, crack or flash over a body; hash_check and both determinism runs unchanged.
+
+## Built (2026-10-06): Encounter's final cue names, ahead of the sim
+
+`render/vfx/reach.gd` (state and cues), `shots_view.gd` `_reach` and `_press` (drawing), `press.gd` (the counter); `effects_check.gd` `_brawl()`; stills `img/br-*.jpg`.
+
+| Piece | Cue it hangs on | What is drawn |
+| :-- | :-- | :-- |
+| Wind-up rings, Y and B | cue `windup` text `start` (actor, target, `source` the cell, `dur` seconds, `n` the landing tick) and text `end` (`k` 1 thrown, 2 stopped by a blow, 3 lost, 4 a miss) | A ring with a darker edge on the lead hand: a medium's closes over the last 10 of its 12 ticks, a heavy's (28 ticks, told by `dur` of 20 ticks or more) over its whole time with the limb's committed line to the rival in its last 6. Stopped: four fragments; lost: the ring fades; thrown or a miss: gone, and the blow's own looks take over. Not a flash; nothing on the body (the armour is not drawn) |
+| The limb-ghost counter (f01) | every blow's `damage` event | `VfxPress._grant_ghosts()`, each tick: a speed blow's smear is one limb-ghost, a tech blow's echoes one each while alive; the newest are granted first, at most 2 of any limb (slot and hand) and 4 in all, so in a flurry the two newest smears of a limb draw and older ones fade without theirs. `ghost_peak`, `ghost_peak_limb` and `ghost_refused` expose it. A 2-second mash from both fighters peaked at 3 in all and 2 of a limb, with 5 smears withheld |
+| The burst's thinning smear (f04) and alternating hands (f05) | beat arg `burst` (the blow's number, 1 to 8) with `hand` | The smear keeps 2, 2, 2, 1, 1, 1, 0, 0 of its parts (the contact ring always stays), and if a burst blow's hand equals the last one's it is flipped, so no limb repeats. Assumed: `burst` on the beat args; without it a blow is an ordinary flurry blow under the counter |
+| The double hit (k04) | cue `double_hit`, 8 ticks ahead (actor, target, `n` the landing tick) | At the landing, a crossed crack, sparks and a hollow ring on each face line in each fighter's own colour, one small flash for the pair if the register grants `double_hit`, and dust along the ground under each as they are thrown apart (the debris pool's). No rubble ring, cracks in the ground, lightning, aura, gold, white or red |
+| The whiff | cue `miss` (actor the one who missed, target, text `gave_ground`, `reach` or `dodge`) | The blow's arc cuts the air and ends in nothing: a dark core on a light edge, drawn out over 3 ticks, gone in 8, and a little dust at the feet of whoever moved |
+| B now | cues `launcher_open` (actor the launcher, target the staggered, `n` the tick the stagger ends, text the kind) and `launcher_close` | A chevron on each side of the staggered fighter until the close or the stagger's end. No longer on any stagger of 12 ticks or more |
+| The full flash on energy | cue `energy_land` `k` | `k` 1 marks the one blow in 20 ticks that may take the full flash (the register still decides); with no `k` the 1-in-20 pace is ours |
+
+The full-charge flash and `charge_full` wait for C2b.
+
+**A correction to what I told Legal.** I said the tech blow's three echoes never had more than two alive at once. That was wrong for a perfect blow: all three were drawn for its first 2.5 ticks. A perfect timed blow now draws two echoes (the counter and a clamp in `_press`), so the claim is true and RL-106's "as built" holds as of this change. Orb's reference showed three; this is Legal's ceiling, and I have told the Executive Producer.

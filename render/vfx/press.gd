@@ -53,6 +53,11 @@ class Fx:
 	var col2: Color = Color.WHITE
 	var small: bool = false         # reduced motion or a low-quality tick: the short form
 	var noflash: bool = false       # the flash register refused this block's flash: the shield line only
+	var burst_n: int = 0            # the blow's number in a held X's burst (1 to 8), 0 when it is not one (the beat's `burst`)
+	var gscale: float = 1.0         # the share of its smear a burst blow keeps (f04: the picture slows down with the gaps)
+	var ghost_ok: bool = true       # the limb-ghost counter allows this blow's smear or echoes (f01)
+	var limb: int = 0               # slot * 2 + hand: the limb whose ghosts these are
+	var gunits: int = 0             # the limb-ghosts it holds this tick (1 for a smear, the echoes alive for a tech blow)
 	var real: bool = false          # Animation's hand-off was used: ja and jb are real poses, path the real fist path
 	var ghosts: int = 0             # how many after-images Animation asks for (press.ghosts), 0: ours
 	var ja: PackedVector2Array = PackedVector2Array()   # the old pose's joints (JOINTS order), offsets from its anchor, x turned to the world
@@ -77,6 +82,14 @@ var flash_sink = null               # the screen's flash register (VfxFlashRegis
 var shown: int = 0                  # effects drawn last frame (the tests)
 var beat_glint: bool = false        # the beat option (UI's ring for every blow, the rival's too): a glint on the striking limb at the beat. hub.beat_glint_enabled sets it
 var clock: int = 0
+var ghost_peak: int = 0             # the most limb-ghosts alive at any instant (all limbs), for the tests and Legal's f01: at most 4
+var ghost_peak_limb: int = 0        # ... and the most of any one limb: at most 2
+var ghost_refused: int = 0          # blows whose smear or echoes the counter withheld
+var _last_burst_hand: Array = [-1, -1]   # per slot: the hand of the last burst blow (f05: the hands alternate)
+
+const LIMB_MAX: int = 2             # f01 (movegen-banned.json): at most 2 ghosts of any limb at any instant ...
+const GHOST_MAX: int = 4            # ... and at most 4 limb-ghosts on screen in all
+const BURST_GHOSTS: Array = [2, 2, 2, 1, 1, 1, 0, 0]   # f04: the smear thins from the fourth blow on: blows 7 and 8 are single clean strikes with a ring
 
 static var _data: Dictionary = {}
 static var _loaded: bool = false
@@ -108,6 +121,10 @@ func reset() -> void:
 	hist = [[], []]
 	made = {}
 	clock = 0
+	ghost_peak = 0
+	ghost_peak_limb = 0
+	ghost_refused = 0
+	_last_burst_hand = [-1, -1]
 	warm()
 
 
@@ -219,6 +236,7 @@ func step(S: SimState, frozen: bool) -> void:
 	if frozen:
 		return
 	clock += 1
+	_grant_ghosts()
 	for s in range(mini(2, S.fighters.size())):
 		var h: Array = hist[s]
 		h.append(Vector2(S.fighters[s].x, S.fighters[s].y))
@@ -240,6 +258,41 @@ func step(S: SimState, frozen: bool) -> void:
 				w.on = false
 		if float(fly[s]) > 0.0:
 			fly[s] = float(fly[s]) - 1.0
+
+
+## The per-instant limb-ghost counter (Legal's f01: at most 2 ghosts of any limb at any instant and at most 4 limb-ghosts on screen in all). A speed blow's smear is one limb-ghost; a
+## tech blow's echoes are one each while they are alive (at most 2 of them: the third echo of a perfect blow is not drawn); the newest blows are granted first, so in a flurry the two
+## newest smears of a limb are drawn and the older ones fade without theirs (their contact rings stay). Heavy blows' ghosts and the zip's are body ghosts under m05 (at most 5), not counted here.
+func _grant_ghosts() -> void:
+	var used: Dictionary = {}
+	var total: int = 0
+	var peak_limb: int = 0
+	for i in range(fx.size() - 1, -1, -1):
+		var e: Fx = fx[i]
+		var units: int = 0
+		if e.style == "speed" and e.gscale > 0.0:
+			units = 1
+		elif e.style == "tech":
+			var ne: int = mini(e.ghosts if e.ghosts > 0 else 3, 2)
+			for g in range(ne):
+				if e.age < 2.5 + float(g) * p("echo_pop"):
+					units += 1
+		e.gunits = units
+		if units == 0:
+			continue
+		var u: int = int(used.get(e.limb, 0))
+		if u + units > LIMB_MAX or total + units > GHOST_MAX:
+			if e.ghost_ok:
+				ghost_refused += 1
+			e.ghost_ok = false
+			e.gunits = 0
+		else:
+			e.ghost_ok = true
+			used[e.limb] = u + units
+			total += units
+			peak_limb = maxi(peak_limb, u + units)
+	ghost_peak = maxi(ghost_peak, total)
+	ghost_peak_limb = maxi(ghost_peak_limb, peak_limb)
 
 
 ## The position of a slot `k` ticks ago (the old pose's stand-in), or the newest if the history is shorter.
@@ -361,6 +414,15 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 	x.lunge = p("echo_back")
 	var ba: Dictionary = beat_args(S, att)
 	x.hand = (1 if String(ba.get("hand", "r")) == "l" else 0) if ba.has("hand") else (int(made.get("speed", 0)) % 2 if style == "speed" else 0)
+	var bn: int = int(ba.get("burst", 0)) if ba.has("burst") else 0
+	x.burst_n = clampi(bn, 0, 8)
+	if x.burst_n > 0:
+		# A held X's burst (f04 and f05): the smear thins with the gaps, and the hands alternate, so no limb's path repeats.
+		if x.burst_n > 1 and int(_last_burst_hand[att]) == x.hand:
+			x.hand = 1 - x.hand
+		_last_burst_hand[att] = x.hand
+		x.gscale = float(BURST_GHOSTS[x.burst_n - 1]) / 2.0
+	x.limb = att * 2 + x.hand
 	x.ghosts = 3 if String(ba.get("grade", "")) == "perfect" else (2 if ba.has("grade") else 0)
 	made["beat"] = int(made.get("beat", 0)) + (1 if ba.has("style") else 0)
 	x.col = lane_of(S, att)

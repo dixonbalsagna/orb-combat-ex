@@ -202,6 +202,7 @@ func _run() -> void:
 	_riposte()
 	_reach()
 	_flashes()
+	_brawl()
 	_press_load()
 	_real()
 	_stages()
@@ -2930,14 +2931,14 @@ func _press() -> void:
 	for k in range(14):
 		_tick(S, hs, [])
 	_check(hs.press.fx.is_empty() and quads_at.call(hs) == 0, "and it is gone in its 8 ticks")
-	# Tech: three wireframe echoes that pop off one at a time, back to front, a speed line and a hard diamond.
+	# Tech: two wireframe echoes (f01) that pop off one at a time, back to front, a speed line and a hard diamond.
 	var ht: VfxHub = fresh.call()
 	_tick(S, ht, [hit.call(1, "light", "timed")])
 	var counts: Array = [quads_at.call(ht)]
 	for k in range(8):
 		_tick(S, ht, [])
 		counts.append(quads_at.call(ht))
-	_check(int(ht.press.made.get("tech", 0)) == 1 and counts[0] >= 15 and counts[0] > counts[3] and counts[3] > counts[6] and counts[6] > counts[8] - 1, "timed: three echoes, a line and a diamond, popping off from the back (quads by tick %s)" % str(counts))
+	_check(int(ht.press.made.get("tech", 0)) == 1 and counts[0] >= 11 and counts[0] > counts[3] and counts[3] > counts[6] and counts[6] > counts[8] - 1, "timed: two echoes (Legal f01: never more than 2 of a limb alive; a perfect blow's third is not drawn), a line and a diamond, popping off from the back (quads by tick %s)" % str(counts))
 	_check(ht.press.fx.size() == 1 and ht.press.fx[0].dir < 0.0, "the rival's blow runs the other way (toward the left)")
 	# Heavy: the wind-up ring shrinks; the release has ghosts, a crescent and a double ring.
 	var hh: VfxHub = fresh.call()
@@ -2986,7 +2987,7 @@ func _press() -> void:
 	_check(xa != null and xa.style == "tech" and xa.real and xa.ja.size() == 16 and xa.jb.size() == 16 and xa.ghosts == 3, "with the hand-off the style is Animation's (tech, over a light blow's own read), the pose pair is real (%d joints) and it asks for 3 ghosts" % (xa.ja.size() if xa != null else 0))
 	_check(xa != null and xa.path.size() == 7 and absf(xa.cx - xa.path[6].x) < 0.01 and xa.cx > 20.0, "the fist's path is Animation's (%d points) and the contact is where the tip ends (%.0f)" % [xa.path.size() if xa != null else 0, xa.cx if xa != null else 0.0])
 	var q_real: int = quads_at.call(ha)
-	_check(q_real >= 36, "real echoes are whole bodies: %d quads at the blow" % q_real)
+	_check(q_real >= 24, "real echoes are whole bodies: %d quads at the blow (two echoes)" % q_real)
 	_check(xa != null and absf(xa.old_dx) < 60.0, "the old pose's anchor comes from the position history (%.1f units back)" % (xa.old_dx if xa != null else 0.0))
 	# A speed blow follows the real path (the blur runs along its points) and keeps its small count.
 	fa_f.press = {"style": "speed", "phase": "contact", "ghosts": 2, "ticks_to_contact": 0}
@@ -3885,14 +3886,12 @@ func _reach() -> void:
 	_tick(S, hr, [ld.call(0, "bolt", "hit", 1.0, 0.0)])
 	var q_red: int = quads.call(hr)
 	_check(not hr.inreach.made.has("full_flash") and int(hr.inreach.made.get("land", 0)) == 1 and q_red >= 1 and q_red < q_land, "reduced motion: no full flash and fewer quads (%d against %d)" % [q_red, q_land])
-	# B now: a stagger of 12 ticks or more shows two rising chevrons; a shove's 8 shows nothing; the launch ends the mark and gives its send-off.
+	# B now: Encounter's launcher_open shows two rising chevrons until the launch, which ends the mark and gives its send-off.
 	var hs := VfxHub.new()
 	hs.press_enabled = true
 	hs.reset(S, 6)
-	_tick(S, hs, [VfxMock.ev("cue", {"actor": 1, "kind": "stagger", "text": "shove", "source": "", "target": 0, "n": 8.0})])
-	_check(not hs.inreach.made.has("stagger"), "a stagger of 8 ticks is not a launcher's cue")
-	_tick(S, hs, [VfxMock.ev("cue", {"actor": 1, "kind": "stagger", "text": "flurry", "source": "", "target": 0, "n": 14.0})])
-	_check(int(hs.inreach.made.get("stagger", 0)) == 1, "a stagger of 14 gets the mark")
+	_tick(S, hs, [VfxMock.ev("cue", {"actor": 0, "kind": "launcher_open", "text": "flurry", "source": "", "target": 1, "n": float(S.tick) + 14.0})])
+	_check(int(hs.inreach.made.get("stagger", 0)) == 1, "launcher_open gets the mark")
 	var q_st: int = 0
 	for k in range(8):
 		_tick(S, hs, [])
@@ -4060,6 +4059,182 @@ func _flashes() -> void:
 	var sr: Dictionary = hr.flashes.summary()
 	_check(int(sr["worst_second"]) <= 1 and not hr.flashes.granted_by.has("energy") and not hr.flashes.granted_by.has("shot_hit"), "reduced flashing: at most %d a second and no energy or hit-ring flash (granted %s)" % [int(sr["worst_second"]), str(hr.flashes.granted_by)])
 	SimCore.dispose(S2)
+
+
+## The three-strength brawl's looks (docs/vfx/brawl-three-strength-plan.md, built 2026-10-06): the wind-up rings on Y and B, the per-instant limb-ghost counter (Legal's f01), the burst's thinning
+## smear and alternating hands (f04, f05), the double hit (k04), the whiff, and "B now" on Encounter's launcher_open and launcher_close.
+func _brawl() -> void:
+	print("the three-strength brawl")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	S.fighters[0].x = plains
+	S.fighters[0].y = g
+	S.fighters[1].x = SimWrap.wrap(plains + 70.0)
+	S.fighters[1].y = g
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var quads := func(h: VfxHub) -> int:
+		view.update(h, host, 1.0, plains + 35.0, 1.0, 1500.0)
+		return view.count
+	var wu := func(text: String, slot: int, dur: float, k: float): return VfxMock.ev("cue", {"actor": slot, "kind": "windup", "text": text, "source": "y", "target": 1 - slot, "dur": dur, "n": float(S.tick) + dur * 60.0, "k": k})
+	# The medium's wind-up (Y, 12 ticks): nothing for its first 2 ticks, then a thin ring with its edge closing onto the hand over the last 10.
+	var h := VfxHub.new()
+	h.press_enabled = true
+	h.reset(S, 6)
+	_tick(S, h, [wu.call("start", 0, 0.2, 0.0)])
+	_check(int(h.inreach.made.get("windup_y", 0)) == 1 and quads.call(h) == 0, "a medium's wind-up waits for its last 10 ticks (%d quads at once)" % quads.call(h))
+	for k in range(4):
+		_tick(S, h, [])
+	_check(quads.call(h) == 2, "then a ring and its edge close on the hand (%d quads)" % quads.call(h))
+	_tick(S, h, [wu.call("end", 0, 0.0, 2.0)])
+	_check(int(h.inreach.made.get("windup_end_2", 0)) == 1 and quads.call(h) == 4, "stopped by a blow: the ring breaks into four fragments (%d quads)" % quads.call(h))
+	for k in range(8):
+		_tick(S, h, [])
+	_check(quads.call(h) == 0, "and they are gone in their ticks")
+	# The heavy's wind-up (B, 28 ticks): the ring is there from the press, and the limb's committed line joins it in the last 6 ticks.
+	var hb := VfxHub.new()
+	hb.press_enabled = true
+	hb.reset(S, 6)
+	_tick(S, hb, [wu.call("start", 0, 28.0 / 60.0, 0.0)])
+	_check(int(hb.inreach.made.get("windup_b", 0)) == 1 and quads.call(hb) == 2, "a heavy's wind-up shows its ring from the press (%d quads)" % quads.call(hb))
+	for k in range(14):
+		_tick(S, hb, [])
+	var q_mid: int = quads.call(hb)
+	for k in range(10):
+		_tick(S, hb, [])
+	var q_end: int = quads.call(hb)
+	_check(q_mid == 2 and q_end == 3, "the committed line joins it in the last 6 ticks (%d quads at the middle, %d near the landing)" % [q_mid, q_end])
+	_tick(S, hb, [wu.call("end", 0, 0.0, 3.0)])
+	_check(quads.call(hb) == 1, "lost: the ring fades (%d quad)" % quads.call(hb))
+	_tick(S, hb, [wu.call("start", 0, 28.0 / 60.0, 0.0)])
+	_tick(S, hb, [wu.call("end", 0, 0.0, 1.0)])
+	_check(quads.call(hb) == 0, "thrown: the ring is gone and the blow's own looks take over")
+	# The burst (held X, eight blows): the smear keeps 2, 2, 2, 1, 1, 1, 0, 0 of its parts and the hands alternate (f04, f05).
+	var hu := VfxHub.new()
+	hu.press_enabled = true
+	hu.reset(S, 6)
+	var mk_ex := func(n: int, hand: String, role: String):
+		var ex := SimState.Exchange.new()
+		ex.A = S.fighters[0]
+		ex.D = S.fighters[1]
+		var b := SimState.Beat.new()
+		b.op = "strike"
+		b.done = true
+		b.t = 0.0
+		b.args = {"a": role, "d": "D" if role == "A" else "A", "style": "speed", "grade": "none", "burst": n, "hand": hand, "dmg": 2.0, "o": {}}
+		ex.beats = [b]
+		return ex
+	var hit := func(att: int): return VfxMock.ev("damage", {"x": S.fighters[1 - att].x, "y": g + 50.0, "z": 0.0, "amount": 2.0, "col": "#ffffff", "victim": 1 - att, "attacker": att, "region": "core", "kind": "light", "number": true})
+	var scales: Array = []
+	var hands: Array = []
+	for n_i in range(1, 9):
+		S.dirS.ex = mk_ex.call(n_i, "r", "A")
+		_tick(S, hu, [hit.call(0)])
+		var last = hu.press.fx[hu.press.fx.size() - 1]
+		scales.append(last.gscale)
+		hands.append(last.hand)
+		for k in range(4):
+			_tick(S, hu, [])
+	_check(scales == [1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.0, 0.0], "the burst's smear thins with its gaps: %s" % str(scales))
+	var alt: bool = true
+	for i in range(1, hands.size()):
+		if hands[i] == hands[i - 1]:
+			alt = false
+	_check(alt, "the hands alternate through the burst, though every beat asked for the right (%s)" % str(hands))
+	S.dirS.ex = null
+	# f01: two fighters flurrying at 10 blows a second each for 2 seconds: never more than 2 ghosts of a limb or 4 in all.
+	var hf := VfxHub.new()
+	hf.press_enabled = true
+	hf.reset(S, 6)
+	for t in range(120):
+		var evs: Array = []
+		if t % 6 == 0:
+			var att: int = (t / 6) % 2
+			S.dirS.ex = mk_ex.call(0, "l" if (t / 12) % 2 == 0 else "r", "A" if att == 0 else "D")
+			evs.append(hit.call(att))
+		if t % 6 == 3:
+			S.dirS.ex = mk_ex.call(0, "r", "A")
+			evs.append(hit.call(0))
+		_tick(S, hf, evs)
+	S.dirS.ex = null
+	_check(hf.press.ghost_peak <= 4 and hf.press.ghost_peak_limb <= 2 and hf.press.ghost_refused > 0, "a mash from both fighters: most limb-ghosts at once %d (4 at most), most of one limb %d (2 at most), %d smears withheld (f01)" % [hf.press.ghost_peak, hf.press.ghost_peak_limb, hf.press.ghost_refused])
+	# A perfect tech blow draws two echoes at most (the third was drawn for its first 2 ticks before).
+	var hq := VfxHub.new()
+	hq.press_enabled = true
+	hq.reset(S, 6)
+	var tex := SimState.Exchange.new()
+	tex.A = S.fighters[0]
+	tex.D = S.fighters[1]
+	var tb := SimState.Beat.new()
+	tb.op = "strike"
+	tb.done = true
+	tb.t = 0.0
+	tb.args = {"a": "A", "d": "D", "style": "tech", "grade": "perfect", "dmg": 5.0, "o": {}}
+	tex.beats = [tb]
+	S.dirS.ex = tex
+	_tick(S, hq, [hit.call(0)])
+	hq.press.step(S, false)
+	_check(hq.press.fx[hq.press.fx.size() - 1].gunits <= 2 and hq.press.ghost_peak <= 2, "a perfect timed blow holds 2 echoes at most at any instant (%d)" % hq.press.fx[hq.press.fx.size() - 1].gunits)
+	S.dirS.ex = null
+	# The double hit: nothing until the landing (cue 8 ticks ahead), then a mirrored look on each face line, a small flash if the register grants it, and dust; gone in 12 ticks.
+	var hd := VfxHub.new()
+	hd.press_enabled = true
+	hd.reset(S, 6)
+	_tick(S, hd, [VfxMock.ev("cue", {"actor": 0, "kind": "double_hit", "text": "", "source": "", "target": 1, "n": float(S.tick) + 8.0})])
+	var q_early: int = 0
+	for k in range(6):
+		_tick(S, hd, [])
+		q_early = maxi(q_early, quads.call(hd))
+	_check(q_early == 0, "the double hit shows nothing before its landing (%d quads)" % q_early)
+	for k in range(3):
+		_tick(S, hd, [])
+	var q_land: int = quads.call(hd)
+	_check(q_land >= 14 and q_land <= 24 and int(hd.flashes.granted_by.get("double_hit", 0)) == 1 and int(hd.inreach.made.get("double_dust", 0)) == 1, "at the landing a crack, ring and sparks on each face line, one small flash and dust (%d quads)" % q_land)
+	for k in range(14):
+		_tick(S, hd, [])
+	_check(quads.call(hd) == 0, "and the double hit is gone in its ticks")
+	# A whiff.
+	var hw := VfxHub.new()
+	hw.press_enabled = true
+	hw.reset(S, 6)
+	for cause in ["gave_ground", "reach", "dodge"]:
+		hw.inreach.fx.clear()
+		_tick(S, hw, [VfxMock.ev("cue", {"actor": 0, "kind": "miss", "text": cause, "source": "", "target": 1})])
+	_check(int(hw.inreach.made.get("whiff", 0)) == 3 and int(hw.inreach.made.get("whiff_gave_ground", 0)) == 1 and int(hw.inreach.made.get("whiff_dodge", 0)) == 1 and int(hw.inreach.made.get("whiff_reach", 0)) == 1, "a miss draws its whiff for each cause")
+	for k in range(3):
+		_tick(S, hw, [])
+	var q_w: int = quads.call(hw)
+	_check(q_w == 12, "the empty arc is 6 pieces, each a dark core on a light edge (%d quads)" % q_w)
+	for k in range(10):
+		_tick(S, hw, [])
+	_check(quads.call(hw) == 0, "and it is gone in 8 ticks")
+	# B now on Encounter's cues.
+	var hl := VfxHub.new()
+	hl.press_enabled = true
+	hl.reset(S, 6)
+	_tick(S, hl, [VfxMock.ev("cue", {"actor": 0, "kind": "launcher_open", "text": "flurry", "source": "", "target": 1, "n": float(S.tick) + 14.0})])
+	var q_b: int = 0
+	for k in range(6):
+		_tick(S, hl, [])
+		q_b = maxi(q_b, quads.call(hl))
+	_check(int(hl.inreach.made.get("stagger", 0)) == 1 and q_b == 8, "launcher_open: B now is two chevrons, each of two lines with a light edge under it (%d quads)" % q_b)
+	_tick(S, hl, [VfxMock.ev("cue", {"actor": 0, "kind": "launcher_close", "text": "", "source": "", "target": 1})])
+	_check(quads.call(hl) == 0, "launcher_close takes them away")
+	# energy_land's k: the cue says which blow may take the full flash.
+	var he := VfxHub.new()
+	he.press_enabled = true
+	he.reset(S, 6)
+	var land_k := func(kk: float): return VfxMock.ev("cue", {"actor": 0, "kind": "energy_land", "text": "bolt", "source": "hit", "target": 1, "x": 1.0, "y": 0.0, "k": kk})
+	_tick(S, he, [land_k.call(0.0)])
+	var no_flash: bool = not he.inreach.made.has("full_flash")
+	_tick(S, he, [land_k.call(1.0)])
+	_check(no_flash and int(he.inreach.made.get("full_flash", 0)) == 1, "energy_land with k 0 gets no full flash, with k 1 it may (the register decides)")
+	view.queue_free()
+	SimCore.dispose(S)
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:

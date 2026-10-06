@@ -391,8 +391,8 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				var fade: float = 1.0 - u
 				var bc: Color = e.col.darkened(0.15)
 				bc.a = al * 0.55 * fade
-				if not red:
-					var nd: int = 6 if e.real else 5
+				if not red and e.ghost_ok and e.gscale > 0.0:
+					var nd: int = int(ceil(float(6 if e.real else 5) * e.gscale))
 					for k in range(nd):
 						var f: float = float(k + 1) / float(nd)
 						var fi: float = f * float(pts.size() - 1)
@@ -401,7 +401,7 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 						n = _put(n, pc, Vector2(1.0, 0.0), 18.0 + 14.0 * f, 18.0 + 14.0 * f, zb, bc, 1.0, 0.0, SHAPE_DISC)
 				var sc: Color = e.col.darkened(0.15)
 				sc.a = al * 0.45 * fade
-				for k in range(pts.size() - 1):
+				for k in range(pts.size() - 1 if (e.ghost_ok and e.gscale > 0.0) else 0):
 					var seg: Vector2 = pts[k + 1] - pts[k]
 					if seg.length() > 0.5:
 						n = _put(n, (pts[k] + pts[k + 1]) * 0.5, seg.normalized(), seg.length() * 1.1, VfxPress.p("speed_w") * 2.0, zb - 0.2, sc, 0.9, 0.5, SHAPE_STREAK)
@@ -413,7 +413,7 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				# Echoes between the old pose and the strike (real earlier poses when we have them), popping off one at a time from the back to the front;
 				# a thin straight speed line; a hard diamond.
 				var pop: float = VfxPress.p("echo_pop")
-				var ne: int = e.ghosts if e.ghosts > 0 else 3
+				var ne: int = mini(e.ghosts if e.ghosts > 0 else 3, 2) if e.ghost_ok else 0      # f01: at most 2 echoes of a limb alive, and the counter's say
 				for g in range(ne):
 					if red and g != ne - 1:
 						continue
@@ -714,6 +714,113 @@ func _reach(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 					if not red:
 						for off2 in [-12.0, 0.0, 12.0]:
 							n = _put(n, Vector2(sx2 + off2, e.y + 12.0 + 22.0 * u), Vector2(0.0, 1.0), 22.0 * (1.0 - u * 0.5), 3.0, tz, qcol, 0.5, 0.5, SHAPE_STREAK)
+			"windup", "windup_end":
+				# A medium's or a heavy's wind-up: a thin ring closing onto the lead hand (the heavy's over its whole 28 ticks, with the limb's committed line in the last 6); stopped by a blow it
+				# breaks into four fragments, lost it fades. Hollow, lane colour, shrinking only; nothing on the body (the heavy's armour is not drawn).
+				var wx: float = SimWrap.sdx(cam_x, host.fighter_x(e.slot, a))
+				if absf(wx) > half_w + 6.0 * bh:
+					continue
+				var wy: float = host.fighter_pose(e.slot, a).y
+				var wz: float = host.fighter_z(e.slot, a) + Z_FX + 22.0
+				var wpalm: Vector2 = _palm(S, e.slot, e.dir, wx, wy)
+				rc.shown += 1
+				if e.style == "windup":
+					var wrem: float = e.life - st
+					var wk: float = 0.0
+					var wr: float = 0.0
+					if e.strong:
+						wk = clampf(st / e.life, 0.0, 1.0)
+						wr = lerpf(30.0, 8.0, wk)
+					else:
+						if wrem > VfxReach.p("gather_ticks"):
+							continue
+						wk = 1.0 - wrem / VfxReach.p("gather_ticks")
+						wr = lerpf(24.0, 8.0, wk)
+					var wc: Color = e.col
+					wc.a = al * (0.3 + 0.6 * wk)
+					n = _put(n, wpalm, Vector2(1.0, 0.0), wr * 2.0, wr * 2.0, wz, wc, minf(0.5, (1.6 if e.strong else 2.2) / wr), 0.0, SHAPE_RING)
+					var wed: Color = e.col.darkened(0.4)
+					wed.a = wc.a * 0.8
+					n = _put(n, wpalm, Vector2(1.0, 0.0), wr * 2.0 + 4.0, wr * 2.0 + 4.0, wz - 0.1, wed, minf(0.5, 2.0 / (wr + 2.0)), 0.0, SHAPE_RING)
+					if e.strong and wrem <= 6.0:
+						var tgt := Vector2(SimWrap.sdx(cam_x, host.fighter_x(e.vic, a)) - e.dir * 14.0, host.fighter_pose(e.vic, a).y + 50.0)
+						var ln: Color = e.col.darkened(0.3)
+						ln.a = al * 0.9 * (1.0 - 0.5 * (1.0 - wrem / 6.0))
+						n = _line(n, wpalm, tgt, maxf(1.6, minpx * 1.4), wz, ln)
+				else:
+					var wend: Color = e.col.darkened(0.2)
+					wend.a = al * (1.0 - u)
+					if e.k == 2:
+						for fk in range(4):
+							var fa: float = PI * 0.25 + float(fk) * PI * 0.5
+							var fdv := Vector2(cos(fa), sin(fa))
+							n = _put(n, wpalm + fdv * (8.0 + 16.0 * u), fdv, 9.0, 3.0, wz, wend, 0.5, 0.5, SHAPE_STREAK)
+					else:
+						n = _put(n, wpalm, Vector2(1.0, 0.0), 16.0, 16.0, wz, wend, minf(0.5, 2.0 / 8.0), 0.0, SHAPE_RING)
+			"double":
+				# The double hit: both blows land at the same instant. Each side gets a crossed crack, sparks and a hollow ring at the other's face line in the blow's own colour; one small flash for
+				# the pair if the register granted it. Nothing red, white or gold; no rubble ring (k04). The dust along the ground is the debris pool's (reach.gd, at the landing).
+				if e.age < 0.0:
+					continue
+				var xa: float = SimWrap.sdx(cam_x, host.fighter_x(e.slot, a))
+				var xd: float = SimWrap.sdx(cam_x, host.fighter_x(e.vic, a))
+				if absf(xa) > half_w + 6.0 * bh:
+					continue
+				var ya: float = host.fighter_pose(e.slot, a).y + 50.0
+				var yd: float = host.fighter_pose(e.vic, a).y + 50.0
+				var dz: float = host.fighter_z(e.vic, a) + Z_FX + 22.0
+				rc.shown += 1
+				for side in range(2):
+					var cpt := Vector2(xd - e.dir * 14.0, yd) if side == 0 else Vector2(xa + e.dir * 14.0, ya)
+					var sdir: float = -e.dir if side == 0 else e.dir        # sparks fly back toward whoever struck
+					var lane: Color = e.col if side == 0 else VfxPress.lane_of(S, e.vic)
+					var dglow: Color = lane.lightened(0.45)
+					dglow.a = al * 0.75 * (1.0 - u * u)
+					var dcore: Color = lane.darkened(0.5)
+					dcore.a = al * (1.0 - u * u)
+					for sg in [1.0, -1.0]:
+						n = _put(n, cpt, Vector2(0.707, 0.707 * sg), 30.0, 7.0, dz - 0.05, dglow, 0.5, 0.5, SHAPE_STREAK)
+						n = _put(n, cpt, Vector2(0.707, 0.707 * sg), 30.0, 3.0, dz, dcore, 0.5, 0.5, SHAPE_STREAK)
+					var dr: float = lerpf(6.0, 22.0, 1.0 - pow(1.0 - u, 2.0))
+					var dring: Color = lane.darkened(0.15)
+					dring.a = al * (1.0 - u)
+					n = _put(n, cpt, Vector2(1.0, 0.0), dr * 2.0, dr * 2.0, dz + 0.1, dring, minf(0.5, 2.6 / dr), 0.0, SHAPE_RING)
+					if not red:
+						var dsp: Color = lane.lightened(0.3)
+						dsp.a = al * (1.0 - u)
+						for si in range(3):
+							var sa: float = float(si - 1) * 0.8
+							var sv := Vector2(sdir * cos(sa), sin(sa))
+							n = _put(n, cpt + sv * (8.0 + 14.0 * u), sv, 9.0, 3.0, dz + 0.2, dsp, 0.5, 0.5, SHAPE_STREAK)
+				if e.big and st < VfxReach.p("flash_life"):
+					var dk: float = st / VfxReach.p("flash_life")
+					var dmid := Vector2((xa + xd) * 0.5, (ya + yd) * 0.5)
+					var dfc: Color = e.col.lightened(0.3)
+					dfc.a = al * 0.42 * (1.0 - dk)
+					n = _put(n, dmid, Vector2(1.0, 0.0), 44.0 * (1.0 - 0.4 * dk), 44.0 * (1.0 - 0.4 * dk), dz - 0.4, dfc, 1.0, 0.0, SHAPE_DISC)
+			"whiff":
+				# A missed blow: its arc cuts the air and ends in nothing, a thin line that draws out over 3 ticks and fades.
+				var qx: float = SimWrap.sdx(cam_x, e.x)
+				if absf(qx) > half_w + 6.0 * bh:
+					continue
+				var qz: float = host.fighter_z(e.slot, a) + Z_FX + 14.0
+				var q0 := Vector2(qx + e.dir * 18.0, e.y + 46.0)
+				var q2 := Vector2(qx + e.dir * (18.0 + e.lean.x), e.y + 56.0)
+				var q1 := Vector2((q0.x + q2.x) * 0.5, e.y + 76.0)
+				var qprog: float = clampf(st / 3.0, 0.0, 1.0)
+				var qsegs: int = 3 if red else 6
+				var qcol: Color = e.col.darkened(0.45)
+				qcol.a = al * (1.0 - u)
+				var qglow: Color = e.col.lightened(0.45)
+				qglow.a = al * 0.7 * (1.0 - u)
+				var qprev: Vector2 = q0
+				rc.shown += 1
+				for qi in range(1, qsegs + 1):
+					var qt: float = float(qi) / float(qsegs) * qprog
+					var qp: Vector2 = (1.0 - qt) * (1.0 - qt) * q0 + 2.0 * (1.0 - qt) * qt * q1 + qt * qt * q2
+					n = _line(n, qprev, qp, lerpf(7.0, 2.4, float(qi) / float(qsegs)), qz - 0.05, qglow)
+					n = _line(n, qprev, qp, lerpf(3.4, 1.2, float(qi) / float(qsegs)), qz, qcol)
+					qprev = qp
 			"stagger":
 				# B now, without a word: a chevron rising on each side of the staggered fighter, half a beat apart, in the attacker's colour, for as long as the stagger lasts.
 				var vx: float = SimWrap.sdx(cam_x, host.fighter_x(e.vic, a))

@@ -245,6 +245,10 @@ The point-blank bolt and the blast (RB held in reach), drawn ahead of the sim fr
 
 One register in the hub (`hub.flashes`, `flash_registry.gd`) that every full flash asks before it draws: three a second across the screen, two of them for the low-priority kinds, one a second and none of those in reduced flashing, nothing red; the energy landing, the block, shot-hit and mine rings, the flame burst, the transformation's break flash (through `transform.gd`, not the held view) and a guard break's ring are under it; the wear flicker, the mine fuse blink and the beam head's pulse were re-timed; Rendering's body hit flash, head flashes, guard arc flash and beam clash are not yet. A per-ask log for Tools and UI. docs/vfx/flash-registry.md (the table of every source, what Reduced motion does and does not do); `effects_check.gd` `_flashes()`.
 
+### The three-strength brawl's looks (2026-10-06)
+
+Ahead of the sim, from Encounter's final cue names: the wind-up rings on Y and B (`windup`), the per-instant limb-ghost counter for Legal's f01 (two of a limb, four in all; a perfect tech blow now draws two echoes, not three), the burst's thinning smear and alternating hands (beat arg `burst`), the double hit's mark (`double_hit`, k04), a whiff (`miss`), and "B now" on `launcher_open` and `launcher_close`. docs/vfx/brawl-three-strength-plan.md ("Built"); `effects_check.gd` `_brawl()`; stills `img/br-*.jpg`.
+
 ### Building stages (plan, 2026-10-05)
 
 A note only: what VFX will draw for World's `building_stage` event (glass shower at windows out, a cladding shed and dust skirt for a part gone, a bigger shed and a plume for a shell, nothing new for rubble) and an ambient shell plume read from the stage query, so a seek or late join still looks wrecked. Not built until World's slice is committed. docs/vfx/building-stages-plan.md.
