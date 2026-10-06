@@ -134,6 +134,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-112 | The six nudges (super-heavy) with numbers and new sheets | Animation | Low | Closed: all six pass | Closed |
 | RL-113 | Energy in reach drawn: 12 pieces and two mashed runs; e09 added | Animation, VFX | Medium | 11 of 12 pieces pass; rk.bolt_sweep and both mashed runs nudge (varied on screen, hand below the collar, heads apart); light, cone, rim and flash still to be seen | Open |
 | RL-114 | rk.bolt_sweep, pk.run, rk.run and the ball heave watch closed; the held-X burst set pose ruled | Animation | Low | Closed: all pass; set pose passes with elbows bent and hands in front of the shoulders, never straight arms wide or at the hip | Closed; light, cone, rim and flash analysis still to be seen |
+| RL-115 | Energy in reach: light and flash recording drawn; shared flash registry; photosensitivity evidence (photosensitivity-note.md) | VFX | Medium | Visuals pass; k05 met in the recording (9 full flashes in 3 s, max change 0.052); registry required before Stage 1b, not the private playtest; WCAG 2.3.1 check plus setting and notice for the web build, Harding-style report for a store | Open until registry and checks exist |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 

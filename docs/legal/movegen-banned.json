@@ -444,7 +444,7 @@
     },
     {
       "id": "k05",
-      "rule": "full flashes are counted over the whole screen, every effect and both fighters together: at most three in any one second, each small (a thin edge or short cone), none red, and a reduced-motion setting halves the rate; the cap is checked by a flash analysis of a recorded mashed sequence on the real build",
+      "rule": "full flashes are counted over the whole screen, every effect and both fighters together: at most three in any one second, each small (a thin edge or short cone), none red, and a reduced-motion setting halves the rate; the cap is checked by a flash analysis of a recorded mashed sequence on the real build; a shared flash registry counts every full flash from every effect (energy, explosions, signatures, transformations, hit rings, beam clashes) against the cap, which is a condition before the first public release of the web build; the evidence needed is in photosensitivity-note.md",
       "why": "photosensitivity; Combat's one in 20 ticks is the same 3 a second"
     }
   ],
