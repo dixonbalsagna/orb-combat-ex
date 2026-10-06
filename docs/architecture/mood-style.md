@@ -286,6 +286,10 @@ A blow feeds the mood by what kind of blow it was (Game Design, `docs/design/mel
 
 `impulses.brawlLight` 13, `rates.decay` 5, and `actBeats.oncePerMatch` is a limb battered and the core bruised: the core becoming battered no longer raises the act. The reasons and the readings are in `brawl-wear-and-mood.md` section 6.
 
+## 8h. The double hit (2026-10-06)
+
+The director's cue `double_hit` (an even trade ending with both blows landing) adds `impulses.clash`, to no one fighter, on the tick the cue is sent (`zip-core.md` section 4).
+
 ## 9. Open points
 
 - **Taunts and transformations** have no sim events yet. Their impulses are in the data and dormant until `taunt` (Encounter or Narrative) and `form_change` (F1) exist.

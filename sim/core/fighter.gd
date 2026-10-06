@@ -342,6 +342,41 @@ static func formBreak(S: SimState, f) -> void:
 	DirExchange.formBreak(S, f)   # the rival in reach is pushed back at the break
 
 
+## The speed f flies at in free flight now, in units a second: his own speed and tier, his legs, his stance, the dash
+## (dash: he holds it; far from the rival it is the traversal dash) and the sea. The free branch of stepFighter steers his
+## velocity toward the stick times this (the vertical toward 0.85 of it). One read for the director and the view.
+static func flightSpeed(S: SimState, f, dash: bool) -> float:
+	var sp: float = 430.0 * f.spd * (1.0 + f.ld.speed * (f.tier - 1.0))
+	if SimWounds.battered(f, SimWounds.LEGS):
+		sp *= f.wd.legsSpeed
+	if f.stance == 2.0:
+		sp *= 1.25
+	if f.stance == 3.0:
+		sp *= 1.35
+	if f.stance == 1.0:
+		sp *= 0.8
+	if dash:
+		sp *= 2.4
+		# Traversal: flat out and far from the opponent, the dash is TRAV_FREE times faster (a lap of the planet in about
+		# 15 s); close in, it is the melee dash it always was.
+		var sep: float = absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x))
+		sp *= 1.0 + (SimConst.TRAV_FREE - 1.0) * SimMathx.jclamp((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
+	if f.y < 0.0 and WorldTerrain.seaAt(S, f.x):
+		sp *= 0.55
+	return sp
+
+
+## A locked fighter's speed dies away: over a second he keeps LOCKED_DAMP of it.
+const LOCKED_DAMP: float = 0.03
+
+
+## The share of his speed a locked fighter keeps over one step of dt seconds: about 0.943 a tick. The locked step damps
+## first and moves after, and the director's update runs after the fighters' step. So a velocity the director sets on a
+## locked fighter on one tick moves him on the next, by this share of it. Divide by it for the full step.
+static func lockedKeep(dt: float) -> float:
+	return SimDetMath.pow(LOCKED_DAMP, dt)
+
+
 static func stepFighter(S: SimState, f, dt: float) -> void:
 	var o = SimRoster.opp(S, f)
 	if f.state != "launched":
@@ -407,23 +442,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 			if f.hidden:
 				SimHiding.regainLock(S, f)   # charging gives him away: the lock comes back announced (found, and no new break for a while)
 		else:
-			var sp: float = 430.0 * f.spd * (1.0 + f.ld.speed * (f.tier - 1.0))
-			if SimWounds.battered(f, SimWounds.LEGS):
-				sp *= f.wd.legsSpeed
-			if f.stance == 2.0:
-				sp *= 1.25
-			if f.stance == 3.0:
-				sp *= 1.35
-			if f.stance == 1.0:
-				sp *= 0.8
-			if i.dash:
-				sp *= 2.4
-				# Traversal: flat out and far from the opponent, the dash is TRAV_FREE times faster (a lap of the planet in about
-				# 15 s); close in, it is the melee dash it always was.
-				var sep: float = absf(SimWrap.sdx(f.x, o.x))
-				sp *= 1.0 + (SimConst.TRAV_FREE - 1.0) * SimMathx.jclamp((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
-			if f.y < 0.0 and WorldTerrain.seaAt(S, f.x):
-				sp *= 0.55
+			var sp: float = flightSpeed(S, f, i.dash)
 			var k: float = 1.0 - SimDetMath.pow(0.0008, dt)
 			f.vx += (i.mx * sp - f.vx) * k
 			f.vy += (i.my * sp * 0.85 - f.vy) * k
@@ -478,8 +497,9 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		if f.dropT <= 0:
 			dropEnd(S, f, "end")
 	elif f.state == "locked":
-		f.vx *= SimDetMath.pow(0.03, dt)
-		f.vy *= SimDetMath.pow(0.03, dt)
+		var keep: float = lockedKeep(dt)
+		f.vx *= keep
+		f.vy *= keep
 		f.x = SimWrap.wrap(f.x + f.vx * dt)
 		f.y = SimMathx.jmax(WorldTerrain.groundY(S, f.x), f.y + f.vy * dt)
 	if S.depthOn:

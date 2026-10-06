@@ -59,6 +59,7 @@ func _init() -> void:
 	check("a bowed rush", _rushArc())
 	check("a drop", _drop())
 	check("the mood by a blow's form", _moodForms())
+	check("the free-flight speed and the locked damping, as reads", _flightReads())
 	check("depth in the core", _depth())
 	check("the intro phase", _intro())
 	check("composed intros", _introComposed())
@@ -2470,6 +2471,58 @@ func _blockedShots() -> String:
 	return ""
 
 
+## Two reads for the director (Encounter's control slice). SimFighter.flightSpeed is what a free fighter's step steers
+## toward: from rest with the stick held, one step's velocity is the stick times it times the step's easing, by tier,
+## stance, battered legs, the dash near and far, and the sea. SimFighter.lockedKeep(dt) is the share of his speed a locked
+## fighter keeps over a step: he moves by that share of what he had, and keeps it.
+func _flightReads() -> String:
+	var dt: float = SimConst.DT
+	var ease: float = 1.0 - SimDetMath.pow(0.0008, dt)
+	var seen := {}
+	for c in [[1.0, 0.0, false, false, 600.0], [3.0, 1.0, false, false, 600.0], [2.0, 2.0, true, false, 600.0], [1.0, 3.0, false, true, 600.0], [4.0, 0.0, false, true, 6000.0]]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+		var f = S.fighters[0]
+		var o = S.fighters[1]
+		f.y = WorldTerrain.groundY(S, f.x) + 900.0
+		o.x = SimWrap.wrap(f.x + c[4])
+		f.tier = c[0]
+		f.stance = c[1]
+		if c[2]:
+			f.wear[SimWounds.LEGS] = f.wd.stageAt[1] + 6000
+			SimWounds.updateStages(S, f)
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+		f.input.mx = 1.0
+		f.input.my = 0.0
+		f.input.dash = c[3]
+		f.input.charge = false
+		var want: float = SimFighter.flightSpeed(S, f, c[3])
+		seen[want] = true
+		SimFighter.stepFighter(S, f, dt)
+		if want <= 0.0 or absf(f.vx - want * ease) > 0.000000001 * want:
+			return "tier %s, stance %s, dash %s: one step from rest gave a speed of %s, and flightSpeed says %s" % [str(c[0]), str(c[1]), str(c[3]), str(f.vx / ease), str(want)]
+		SimCore.dispose(S)
+	if seen.size() < 5:
+		return "flightSpeed gave the same speed for different tiers, stances and dashes"
+	var L := SimCore.createSim()
+	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"intro": false})
+	var g = L.fighters[0]
+	g.y = WorldTerrain.groundY(L, g.x) + 900.0
+	g.state = "locked"
+	g.vx = 300.0
+	g.vy = -120.0
+	var x0: float = g.x
+	var y0: float = g.y
+	var keep: float = SimFighter.lockedKeep(dt)
+	SimFighter.stepFighter(L, g, dt)
+	if keep <= 0.9 or keep >= 1.0 or g.vx != 300.0 * keep or g.vy != -120.0 * keep or absf(SimWrap.sdx(x0, g.x) - 300.0 * keep * dt) > 0.000000001 or absf(g.y - y0 - (-120.0 * keep * dt)) > 0.000000001:
+		return "a locked fighter kept %s of his speed in a step and lockedKeep says %s" % [str(g.vx / 300.0), str(keep)]
+	SimCore.dispose(L)
+	return ""
+
+
 ## The mood by a blow's form (melee-press-feel.md section 9d, ruling 2): each kind of blow adds its own impulse, read from
 ## this tick's events; a strike of a planned exchange outside a brawl is still strike or heavyStrike; the AGGRESSIVE
 ## multiplier applies to who did it.
@@ -2519,6 +2572,9 @@ func _moodForms() -> String:
 			var got: int = gain.call(c[1])
 			if got != I[c[0]][col]:
 				return "%s%s added %d to the mood, the data says %d" % [c[0], " (AGGRESSIVE)" if aggressive else "", got, I[c[0]][col]]
+		# the director's double hit is the clash's units, whoever sends it and whatever his stance
+		if gain.call(func(): cue.call("double_hit", "")) != I.clash[0]:
+			return "the double hit's cue did not add the clash's %d" % I.clash[0]
 		# a lone heavy's stagger is not a flurry's close, and a blow with no number is nothing
 		if gain.call(func(): cue.call("stagger", "heavy")) != 0 or gain.call(func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", false, "brawl")) != 0:
 			return "a heavy's stagger or an unnumbered blow fed the mood"

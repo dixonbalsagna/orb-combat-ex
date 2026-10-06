@@ -56,3 +56,20 @@ Game Design's knock-down for a zipper shot on his way out (`docs/design/melee-pr
 
 - **Neutral.** One golden regeneration: every light digest and tick count is identical on the nine matches and the two replays. Full-state checkpoints and tick-0 states move, by the new hashed fields.
 - **Checks** (`sim/core/tools/parity.gd`): "a bowed rush" plays five rushes beside a straight twin (level both ways, a climb, across the seam, at a fighter) and compares every tick with the formula, the arrival, the sign, the ground's hold, the hash, and `rushAt` at `rushU`. "A drop" plays a fall that ends in the air and one that reaches the ground, with a stick held and a hit-stop in the middle, and checks the path, the events, that nothing is hurt or dug, the early end and the refusals.
+
+## 4. Three reads for the director's control slice (2026-10-06)
+
+Small pieces for Encounter's control slice (C1). None changes a match: the goldens were not regenerated.
+
+| Read | What it is |
+| :--- | :--- |
+| `SimFighter.flightSpeed(S, f, dash)` | The speed a free fighter flies at now, in units a second: his own speed and tier, his legs, his stance, the dash (near the rival, or the traversal dash far from him) and the sea. The free branch of his step steers his velocity toward the stick times this, and the vertical toward 0.85 of it. It is the same arithmetic the step had inside it |
+| `SimFighter.LOCKED_DAMP`, `SimFighter.lockedKeep(dt)` | A locked fighter keeps `LOCKED_DAMP` (0.03) of his speed over a second, so `lockedKeep(dt)` of it over a step: about 0.943 a tick |
+| The cue `double_hit` | The mood adds `impulses.clash` (480) when the director sends it, to no one fighter |
+
+**Setting a locked fighter's velocity.** The director may set `vx` and `vy` on a locked fighter every tick; nothing in the core writes them but the damping. The locked step damps first and moves after, and the director's update runs after the fighters' step. So a velocity set on tick t moves him on tick t + 1, by `lockedKeep(dt)` of it. Divide by `lockedKeep(dt)` for the full step.
+
+**The double hit and the mood.** The director sends the cue a few ticks before the two blows land (its `n` is the landing tick). The mood takes the impulse at the cue, not at the landing: it reads only the events of the tick it is on and keeps no memory of what is to come. Taking it at the landing would need a hashed field for the pending impulse; eight ticks is far inside the 180 ticks a mood band takes to change. If a double hit can be called off between its cue and its landing, the director should send the cue only once it is certain.
+
+**Check** (`parity.gd`): "the free-flight speed and the locked damping, as reads", and a case for the cue in "the mood by a blow's form".
+

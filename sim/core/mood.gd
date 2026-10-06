@@ -352,6 +352,11 @@ static func tick(S: SimState) -> void:
 					add += _imp(fs, "flurryClose", int(e.target))
 				elif e.kind == "guard_break":
 					add += _imp(fs, "guardBreak", int(e.target))
+				elif e.kind == "double_hit":
+					# an even trade ends with both landing and nobody winning (docs/design/brawl-second-pass.md): the clash's
+					# units, to no one fighter. Taken when the director sends the cue, which is a few ticks before the blows
+					# land: the mood keeps no memory of what is still to come.
+					add += _imp(fs, "clash", -1)
 			"knockback":
 				add += _imp(fs, "knockback", int(e.attacker))
 			"parry":
