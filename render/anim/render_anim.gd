@@ -28,6 +28,7 @@ static var last_stand_poses: bool = true   # the last stand's body cue (docs 9.2
 static var pair_live: bool = true           # the launch pair play their own waves live (strikes, entries, blast presses, taunts: docs/animation/pair-live.md); --no-pair-live switches it off (the before)
 static var hand_tips: bool = true             # a blow shows the hand state of its tip (data/anim/tips.json: the rival's heavies close to a fist); --no-hand-tips switches it off
 static var intro_gestures: bool = true         # the sim's intro_gesture events play the fighter's own motion for the intent (docs/animation/intro-gestures.md); inert until the composer sends them; --no-intro-gestures switches it off
+static var medium_wind: bool = true          # Combat's eight rules for a medium on Y's 12-tick wind-up (data/anim/medium_wind.json): a flatter chamber, a half step; false is the before (tools)
 static var press_styles: bool = true         # the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md); ON by default since 2026-10-08 (brawl B1 stamps every blow's beat); --no-press-styles switches it off (the before), Shift+F7 flips it with VFX's looks
 static var flight_lead: bool = true         # a fast launched body flies head first (docs 9.23); --no-flight-lead switches it off (the before)
 static var agency_poses: bool = true       # the agency slice's events (knockback, embed, the far taunt, the charges) play their poses (docs 9.22); --no-agency-poses switches them off

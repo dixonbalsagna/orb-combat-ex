@@ -264,6 +264,9 @@ for (const row of combat.strikes) {
   const ks = { limb: L, target: sp.target || row.target, weight: row.weight };
   if (two) ks.limb2 = sp.limb2 || opposite(L);
   if (sp.step_max !== undefined) ks.step_max = sp.step_max;
+  if (sp.tell_at !== undefined) ks.tell_at = sp.tell_at;       // the super-heavy tier: how far into the wind-up the chamber is reached (the tell stays in plain sight after that)
+  if (sp.squash_w !== undefined) ks.squash_w = sp.squash_w;    // and how much of the style's squash this piece takes (0: its tell is only its chamber)
+  if (sp.drive !== undefined) ks.drive = sp.drive;             // the drive (Combat's step_through, turn, unwind, heave, fall, full_turn)
   ks._combat = row.id;
   ks._wave = wave;
   const parts = { chamber: ch, contact: ct, follow: fo };

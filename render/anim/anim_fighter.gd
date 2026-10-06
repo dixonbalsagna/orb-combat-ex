@@ -247,6 +247,7 @@ var _ci_target: String = "chest"
 var _ci_side: bool = false
 var _ci_limb2: String = ""             # a second striking limb of a two-limb blow (a key set's limb2), or ""
 var _ci_step: float = -1.0              # the key set's own step-in limit (model units), or -1 for the limb's default in sockets.json
+var _ci_step_k: float = 1.0                # the share of that step a medium on 12 ticks takes (Combat's w6: a half step)
 var _ci_opp = null
 var _ci_tc: float = 0.0
 var _ci_dmg: float = 0.0
@@ -1818,6 +1819,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	if RenderAnim.force_keyset != "" and AnimData.keysets.has(RenderAnim.force_keyset):
 		ksid = RenderAnim.force_keyset
 	var ks: Dictionary = AnimData.keysets[ksid]
+	var mrule: Dictionary = _medium_rule(pstyle, ksid, bargs)   # Combat's rule for a medium on 12 ticks (w4 to w8), {} for any other blow
 	# a broken arm does not strike and a broken leg does not kick: the blow uses the other limb (the sim keeps no side)
 	var lb: String = String(ks.get("limb", "hand_r"))
 	if lb.begins_with("hand") and _arm_broken:
@@ -1859,7 +1861,10 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		var u: float = clampf((tq2 - (tc2 - L2)) / maxf(L2 - Sn, DT), 0.0, 1.0)
 		ul = u
 		hw = smoothstep(0.0, 0.7, u)
+		u = clampf(u / maxf(0.05, float(ks.get("tell_at", 1.0))), 0.0, 1.0)   # a super-heavy's tell (data `tell_at`): the chamber is reached this far into the wind-up and held in plain sight to the blow
 		u = pow(u, float(prof.get("load_ease", 2.0)))
+		if mrule.has("u_cap"):
+			u = minf(u, float(mrule.u_cap))   # a medium on 12 ticks: the chamber is cut (a flatter wind-up)
 		_mix_pose(pc, u)
 		if pstyle != "" and bool(prow.get("carry", false)):
 			_press_carry(prow, blow_id, tq2 - (tc2 - L2))
@@ -1933,6 +1938,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		_ci_w = cw
 		_ci_limb = String(ks.get("limb", "hand_r"))
 		_ci_step = float(ks.get("step_max", -1.0))
+		_ci_step_k = float(mrule.get("step", 1.0))
 		_ci_limb2 = String(ks.get("limb2", ""))
 		_ci_target = String(ks.get("target", "chest")) if RenderAnim.force_target == "" else RenderAnim.force_target
 		_ci_side = side
@@ -2165,6 +2171,17 @@ func _press_slerp(i: int, to: Quaternion, w: float) -> void:
 		q[i] = qa.slerp(to, w)
 
 
+## Combat's rule for a medium thrown on Y's 12-tick wind-up (data/anim/medium_wind.json): the rule's numbers for this key set, or {} when the blow is not a medium, plays a long wind-up (a held Y, 15 ticks or more:
+## the full coil) or the key set has no rule (a held-only one, or not a medium).
+func _medium_rule(pstyle: String, ksid: String, bargs: Dictionary) -> Dictionary:
+	if pstyle != "medium" or not RenderAnim.medium_wind or int(bargs.get("windup", 0)) > 14:
+		return {}
+	var w: String = String(AnimData.medium_wind.get("sets", {}).get(ksid, ""))
+	if w == "":
+		return {}
+	return AnimData.medium_wind.get("rules", {}).get(w, {})
+
+
 ## The body of a styled blow on top of its key poses, all inside the joints' range (the squash is a blend of two valid poses, the
 ## stretch and the twist are a few hundredths of a radian on the spine, which has no limit of its own, and the limb pass
 ## runs after): the wind-up squashes (legs, pelvis and spine toward the squash pose, a lean back), the release stretches (the spine
@@ -2177,7 +2194,7 @@ func _press_body(row: Dictionary, style: String, ul: float, dtc: float, sn: floa
 	var sq: float = float(row.get("squash", 0.0))
 	if sq > 0.0:
 		s = smoothstep(0.0, 0.85, ul) * (1.0 - smoothstep(-3.0 * DT, 0.0, dtc))   # gone on the contact tick: the key pose is the blow
-		s *= sq * wsc
+		s *= sq * wsc * float(ks.get("squash_w", 1.0))   # a key set may carry its own squash (data `squash_w`): the drive's tell is drawn in its chamber, not a crouch
 		if s > 0.001:
 			var sp: Dictionary = AnimData.press.get("squash_pose", {})
 			var pid: String = String(sp.get("by_fighter", {}).get(pair_key, sp.get("default", "brace")))
@@ -2392,7 +2409,7 @@ func _contact_one(S: SimState, f, base_limb: String, second: bool) -> void:
 	var zs: float = (1.0 if sfx == "r" else -1.0) if sided else 0.0
 	var end_len: float = float(sk.get("end_len", 6.0))
 	var lunge_max: float = float(sk.get("lunge_max", 8.0))
-	var step_max: float = float(sk.get("step_max", 10.0)) if _ci_step < 0.0 else _ci_step
+	var step_max: float = (float(sk.get("step_max", 10.0)) if _ci_step < 0.0 else _ci_step) * _ci_step_k
 	var dx: float = SimWrap.sdx(f.x, opp.x)
 	var rp: Vector3 = oaf._region_point(_ci_target)
 	var mx: float = (dx + oaf.vface * rp.x) * vface

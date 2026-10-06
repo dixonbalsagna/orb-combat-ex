@@ -13,9 +13,9 @@
    "reach": 92,
    "band": "mid",
    "ticks": {
-    "load": 18,
+    "load": 28,
     "follow": 8,
-    "recover": 12
+    "recover": 14
    },
    "ground": "ok",
    "uses": {
@@ -53,9 +53,9 @@
    "reach": 108,
    "band": "long",
    "ticks": {
-    "load": 18,
+    "load": 28,
     "follow": 8,
-    "recover": 12
+    "recover": 14
    },
    "ground": "ok",
    "uses": {
@@ -77,6 +77,232 @@
    "_family": null,
    "tip": "blade",
    "path": "spin",
+   "flags": []
+  },
+  {
+   "id": "pu.su_edge_step",
+   "combat": "strike.su_edge_step",
+   "name": "su_edge_step",
+   "weight": "heavy",
+   "target": "gut",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 90,
+   "band": "mid",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A stepping kick with the edge of the foot: compact, hands up, the whole body carried a pace behind one straight leg to the gut.",
+   "orig": "PROVISIONAL: a stepping kick with the edge of the foot: the leg chambered close, hands up, the body carried a pace behind one straight leg into the gut",
+   "poses": [
+    "pu.su_edge_step.chamber",
+    "pu.su_edge_step.contact",
+    "pu.su_edge_step.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "edge",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "pu.su_blade_jaw",
+   "combat": "strike.su_blade_jaw",
+   "name": "su_blade_jaw",
+   "weight": "heavy",
+   "target": "jaw",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 108,
+   "band": "mid",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw"
+   ],
+   "look": "PROVISIONAL. A stepping blade hand: the striking side drawn back close to him, then one straight line to the jaw as the body steps through; a strike, never a grip.",
+   "orig": "PROVISIONAL: a stepping blade hand: the striking side drawn back close to him, then one straight line to the jaw as the body steps through; the lead hand open",
+   "poses": [
+    "pu.su_blade_jaw.chamber",
+    "pu.su_blade_jaw.contact",
+    "pu.su_blade_jaw.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "blade",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "pu.su_edge_unwind",
+   "combat": "strike.su_edge_unwind",
+   "name": "su_edge_unwind",
+   "weight": "heavy",
+   "target": "gut",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 50,
+   "reach": 86,
+   "band": "mid",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. An unwinding kick with the edge of the foot: the leg crossed over his own centre, the chin over his shoulder, the body opening out as the foot comes back through the gut.",
+   "orig": "PROVISIONAL: an unwinding kick with the edge of the foot: the leg crossed over his own centre with the chin over his shoulder, the body opening out as the foot comes back through the gut",
+   "poses": [
+    "pu.su_edge_unwind.chamber",
+    "pu.su_edge_unwind.contact",
+    "pu.su_edge_unwind.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "edge",
+   "path": "arc_out",
+   "flags": []
+  },
+  {
+   "id": "pu.su_palm_heave",
+   "combat": "strike.su_palm_heave",
+   "name": "su_palm_heave",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 108,
+   "band": "long",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "no_leap"
+   ],
+   "look": "PROVISIONAL. A heaving palm: sunk deep with the palm loaded low and the other hand up, both legs drive it up into the chest; no leap, the arm lowers at once.",
+   "orig": "PROVISIONAL: a heaving palm: sunk deep with the palm loaded low in front and the other hand up in guard, both legs drive it up into the chest; his feet keep their place",
+   "poses": [
+    "pu.su_palm_heave.chamber",
+    "pu.su_palm_heave.contact",
+    "pu.su_palm_heave.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "pu.su_ball_heave",
+   "combat": "strike.su_ball_heave",
+   "name": "su_ball_heave",
+   "weight": "heavy",
+   "target": "gut",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 90,
+   "band": "mid",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [
+    "no_leap"
+   ],
+   "look": "PROVISIONAL. A heaving kick with the ball of the foot: sunk deep on the standing leg, the legs drive him up and the foot up into the gut; the standing foot keeps its place.",
+   "orig": "PROVISIONAL: a heaving kick with the ball of the foot: sunk deep on the standing leg, both legs drive him up and the foot up into the gut; the standing foot keeps its place",
+   "poses": [
+    "pu.su_ball_heave.chamber",
+    "pu.su_ball_heave.contact",
+    "pu.su_ball_heave.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "ball",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "pu.su_hammer_arm",
+   "combat": "strike.su_hammer_arm",
+   "name": "su_hammer_arm",
+   "weight": "heavy",
+   "target": "arm_r",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 56,
+   "reach": 95,
+   "band": "long",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "no_clasp",
+    "no_held_raise"
+   ],
+   "look": "PROVISIONAL. A falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once.",
+   "orig": "PROVISIONAL: a falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once",
+   "poses": [
+    "pu.su_hammer_arm.chamber",
+    "pu.su_hammer_arm.contact",
+    "pu.su_hammer_arm.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "heel",
+   "path": "drop",
    "flags": []
   }
  ],

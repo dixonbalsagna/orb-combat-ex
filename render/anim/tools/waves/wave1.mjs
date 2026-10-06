@@ -26,10 +26,11 @@ export const strikes = {
       follow: { hand_r: [38, 46, 8] } },
     orig: 'a low blade-hand thrust from the crouch into the gut, the spine and the arm one long diagonal' },
   uppercut: { from: 'upper', kind: 'hand', legal: ['no_leap', 'no_held_raise'],
+    chamber: { hand_r: [18, 46, 12] },   // h05 on a 12-tick wind-up (Combat's w8, no dip first): the loaded hand in front of the belt, never at the hip (x 14 or less, height 24 to 44)
     over: { all: { hands: { r: 'fist', l: 'open' } }, follow: { hand_r: [34, 72, 8] } },
     alt: { label: 'upright and open-chested', contact: { lean: 4, hips: [16, -2, 0], spine: { lean: -10, twist: 20 }, head: { pitch: -14 }, hand_r: [50, 84, 8] } },
     orig: 'a closed fist rising under the chin, the rise in the hip and shoulder, the feet planted, the other arm low across the body' },
-  hammer: { kind: 'hand', chamber: { lean: -6, hips: [-3, -2, 0], spine: { lean: -10, twist: -8 }, head: { pitch: -8 }, hand_r: [4, 92, 9], pole_hand_r: [-8, 2, 8] },
+  hammer: { kind: 'hand', chamber: { lean: -6, hips: [-3, -2, 0], spine: { lean: -10, twist: -8 }, head: { pitch: -8 }, hand_r: [4, 78, 9], pole_hand_r: [-8, 2, 8] },   // h05, w5: the arm starts at shoulder height (was 92) and the body drops under it
     contact: { family: 'upright_lunge', lean: 26, hips: [16, -5, 0], spine: { lean: 16, twist: 14 }, head: { pitch: 20, yaw: 2 },
       hand_r: [42, 74, 6], pole_hand_r: [-6, 12, 8], hand_l: [16, 56, -8], ...LUNGE, hands: { r: 'fist', l: 'open' } },
     orig: 'the fist brought straight down from above the head like a dropped blade, the body folding over it' },
@@ -58,7 +59,7 @@ export const strikes = {
       hand_r: [26, 66, 12], pole_hand_r: [6, 2, 10], hand_l: [-8, 58, -14], foot_r: [-6, 2.5, 9], foot_l: [10, 2.5, -7], ...OPEN },
     orig: 'one turn with his back shown, the elbow whipping through level at the end of it' },
   dropping_elbow: { kind: 'elbow', target: 'chest', step_max: 16,
-    chamber: { hand_r: [8, 84, 8], pole_hand_r: [-4, 16, 6], lean: 6, hips: [-2, -2, 0], spine: { lean: -4, twist: -16 } },
+    chamber: { hand_r: [8, 78, 8], pole_hand_r: [-4, 16, 6], lean: 6, hips: [-2, -2, 0], spine: { lean: -4, twist: -16 } },
     contact: { family: 'upright_lunge', lean: 18, hips: [6, -8, 0], spine: { lean: 12, twist: 20 }, head: { pitch: 16 },
       hand_r: [18, 64, 6], pole_hand_r: [12, -6, 4], hand_l: [32, 60, -10], foot_r: [-8, 2.5, 9], foot_l: [12, 2.5, -7], ...OPEN },
     orig: 'the point of the elbow dropped onto the chest from above, the other hand pinning the rival guard down' },

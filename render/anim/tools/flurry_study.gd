@@ -53,6 +53,7 @@ var sil: bool = false
 var far: bool = false
 var near: bool = false          # RL-105: a close view, the dummy drawn `offset` units farther away (render only), so one contact frame reads
 var offset: float = 0.0
+var tier_names: Array = []      # the super-heavy tier's stills: `window.__tier = "su_knee,su_plate"` (or --tier=...) names the pieces; one blow every 80 ticks on a 28-tick wind-up, each fighter's own
 var cap: bool = false
 var only: String = ""
 var scn_i: int = 0
@@ -84,12 +85,19 @@ func _ready() -> void:
 			far = true
 		elif a.begins_with("--only="):
 			only = a.substr(7)
+		elif a.begins_with("--tier="):
+			tier_names = a.substr(7).split(",")
+			only = "tier"
 	if OS.has_feature("web"):
 		cap = float(_js("window.__cap || 0", 0.0)) > 0.0
 		sil = sil or float(_js("window.__sil || 0", 0.0)) > 0.0
 		far = far or float(_js("window.__far || 0", 0.0)) > 0.0
 		near = float(_js("window.__near || 0", 0.0)) > 0.0
 		offset = float(_js("window.__offset || 0", 0.0))
+		var tn = _js("window.__tier || ''", "")
+		if String(tn) != "":
+			tier_names = String(tn).split(",")
+			only = "tier"
 		var o = _js("window.__only || ''", "")
 		if String(o) != "":
 			only = String(o)
@@ -168,8 +176,25 @@ func _build_view() -> void:
 	cl.add_child(label)
 
 
+func _tier_pieces() -> Array:
+	var pre: String = "pu." if fighter == "protagonist" else "ru."
+	var out: Array = []
+	for nm in tier_names:
+		if AnimData.keysets.has(pre + String(nm)):
+			out.append(String(nm))
+	return out
+
+
 func _scenarios() -> Array:
 	var out: Array = []
+	if only == "tier":
+		var pcs: Array = _tier_pieces()
+		var cs: Array = []
+		for i in range(pcs.size()):
+			cs.append(44 + 80 * i)
+		if cs.is_empty():
+			cs = [44]
+		return [{"id": "tier", "label": "the super-heavy tier, one blow every 80 ticks on a 28-tick wind-up", "style": "super", "kind": "heavy", "dmg": 90.0, "contacts": cs, "windup": 28, "post": 60, "pieces": pcs}]
 	for s in SCENARIOS:
 		if only == "" or only == String(s.id):
 			out.append(s)
@@ -184,10 +209,10 @@ func _start_scenario() -> void:
 	AnimData.ensure_fighter("RIVAL" if fighter == "protagonist" else "PROTAGONIST")
 	# the parked super pieces are named for this scene only (a live match never resolves them)
 	var by: Dictionary = AnimData.pair_lists[key].by_name
-	for nm in ["su_drive", "su_turn", "su_ram", "su_heel"]:
-		var kid: String = ("pu." if fighter == "protagonist" else "ru.") + nm
-		if AnimData.keysets.has(kid):
-			by[nm] = kid
+	var su_pre: String = "pu.su_" if fighter == "protagonist" else "ru.su_"
+	for kid in AnimData.keysets:
+		if String(kid).begins_with(su_pre):
+			by[String(kid).substr(3)] = String(kid)
 	# the parked lights the burst draws on (a rise, an arc, a drop), named by their wave prefix (pm. the Protagonist, rm. the rival)
 	for pre in ["pm.", "rm."]:
 		for nm2 in ["palm_rise", "back_chop", "fist_chop", "palm_heave", "gut_rise", "fist_sweep", "arm_chop", "plate_drop"]:
@@ -207,13 +232,15 @@ func _start_scenario() -> void:
 	ex.n = 940 + scn_i
 	ex.tag = "STUDY"
 	var contacts: Array = sc.contacts
-	var plist: Array = pcs.get(String(sc.get("set", "")), [])
+	var plist: Array = sc.pieces if sc.has("pieces") else pcs.get(String(sc.get("set", "")), [])
 	sent = []
 	for i in range(contacts.size()):
-		var piece: String = String(pcs[sc.hold]) if sc.has("hold") else String(plist[i % plist.size()])
+		var piece: String = String(pcs[sc.hold]) if sc.has("hold") else String(plist[i % maxi(1, plist.size())]) if not plist.is_empty() else "cross"
 		var bargs := {"a": "A", "dmg": float(sc.dmg), "piece": "strike." + piece, "style": String(sc.style), "o": {"big": String(sc.kind) == "heavy"}}
 		if sc.has("windup"):
 			bargs["windup"] = int(sc.windup)
+		if String(sc.id) == "tier":
+			bargs["hand"] = "r"   # the tier's stills are all the drawn side (the director's own pick may mirror a piece)
 		DirExchange.schedule(ex, float(contacts[i]) * DT, "strike", bargs)
 		sent.append(false)
 	S.dirS.ex = ex

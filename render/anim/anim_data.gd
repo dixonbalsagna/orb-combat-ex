@@ -16,6 +16,7 @@ static var default_profile: String = "snappy"
 static var by_part: Dictionary = {}          # part kind (light, heavy, chain, rush, launch, power) -> profile name
 static var zip: Dictionary = {}             # data/anim/zip.json: the body of the LT zip (phases, poses, the look of each reading; used only with RenderAnim.press_styles)
 static var tips: Dictionary = {}            # data/anim/tips.json: the striking surface of a blow (the hand closes to a fist or opens to a blade), the re-aim table
+static var medium_wind: Dictionary = {}    # data/anim/medium_wind.json: Combat's eight rules for a medium on a 12-tick wind-up, by key set (used only with RenderAnim.press_styles and RenderAnim.medium_wind)
 static var press: Dictionary = {}           # data/anim/press_styles.json: how the three press styles move the body through a strike (used only with RenderAnim.press_styles)
 static var bone_lag := PackedFloat32Array()
 static var cue_poses: Dictionary = {}   # cue kind -> pose id
@@ -128,6 +129,7 @@ static func load_all() -> void:
 	default_profile = String(prj.get("default", "snappy"))
 	by_part = prj.get("by_part", {})
 	press = _read("press_styles.json")
+	medium_wind = _read("medium_wind.json")
 	tips = _read("tips.json")
 	zip = _read("zip.json")
 	bone_lag.resize(AnimRig.N)

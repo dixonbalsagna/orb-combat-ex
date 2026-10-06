@@ -13,9 +13,9 @@
    "reach": 95,
    "band": "long",
    "ticks": {
-    "load": 18,
+    "load": 28,
     "follow": 8,
-    "recover": 12
+    "recover": 14
    },
    "ground": "ok",
    "uses": {
@@ -49,9 +49,9 @@
    "reach": 75,
    "band": "mid",
    "ticks": {
-    "load": 18,
+    "load": 28,
     "follow": 8,
-    "recover": 12
+    "recover": 14
    },
    "ground": "plant",
    "uses": {
@@ -65,6 +65,229 @@
     "ru.su_heel.chamber",
     "ru.su_heel.contact",
     "ru.su_heel.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "heel",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "ru.su_knee",
+   "combat": "strike.su_knee",
+   "name": "su_knee",
+   "weight": "heavy",
+   "target": "gut",
+   "limb": "knee_r",
+   "limb2": null,
+   "offset": 28,
+   "reach": 59,
+   "band": "close",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A stepping knee: the striking side drawn back, the whole body travels a pace and the knee arrives in the gut as the foot lands.",
+   "orig": "PROVISIONAL: a stepping knee, the striking side drawn back at shoulder height and the other hand open toward the rival, the body carried a full pace behind the knee",
+   "poses": [
+    "ru.su_knee.chamber",
+    "ru.su_knee.contact",
+    "ru.su_knee.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "cap",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "ru.su_plate",
+   "combat": "strike.su_plate",
+   "name": "su_plate",
+   "weight": "heavy",
+   "target": "head",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 108,
+   "band": "long",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw"
+   ],
+   "look": "PROVISIONAL. A turning forearm: his back half turned with the forearm carried behind, then the hips and shoulders unwind through the head.",
+   "orig": "PROVISIONAL: a turning forearm: his back half turned with the plated forearm carried behind at shoulder height, the hips and shoulders unwinding through the head, the forearm ending across his own centre",
+   "poses": [
+    "ru.su_plate.chamber",
+    "ru.su_plate.contact",
+    "ru.su_plate.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "plate",
+   "path": "arc_in",
+   "flags": []
+  },
+  {
+   "id": "ru.su_hook",
+   "combat": "strike.su_hook",
+   "name": "su_hook",
+   "weight": "heavy",
+   "target": "jaw",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 95,
+   "band": "long",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A turning fist: the shoulders wound away in a low stance, then unwound through the jaw.",
+   "orig": "PROVISIONAL: a turning fist from a low stance, the shoulders wound away with the fist behind him, unwound through the jaw and ending across his own centre",
+   "poses": [
+    "ru.su_hook.chamber",
+    "ru.su_hook.contact",
+    "ru.su_hook.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "arc_in",
+   "flags": []
+  },
+  {
+   "id": "ru.su_elbow_heave",
+   "combat": "strike.su_elbow_heave",
+   "name": "su_elbow_heave",
+   "weight": "heavy",
+   "target": "jaw",
+   "limb": "elbow_r",
+   "limb2": null,
+   "offset": 38,
+   "reach": 70,
+   "band": "close",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A heaving elbow: sunk deep with the elbow loaded low, the other hand up; the legs drive him tall and the elbow up the centre line; his feet keep their place.",
+   "orig": "PROVISIONAL: a heaving elbow: sunk deep with the elbow loaded low and the other hand up in guard, both legs drive him tall with the elbow up the centre line; his feet keep their place",
+   "poses": [
+    "ru.su_elbow_heave.chamber",
+    "ru.su_elbow_heave.contact",
+    "ru.su_elbow_heave.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "point",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "ru.su_fist_heave",
+   "combat": "strike.su_fist_heave",
+   "name": "su_fist_heave",
+   "weight": "heavy",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 108,
+   "band": "long",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "no_leap"
+   ],
+   "look": "PROVISIONAL. A heaving fist: sunk deep with the fist low in front, the legs drive it up into the gut; his feet keep their place.",
+   "orig": "PROVISIONAL: a heaving fist: sunk deep with the fist low in front of him, both legs drive the fist up into the gut; his feet keep their place",
+   "poses": [
+    "ru.su_fist_heave.chamber",
+    "ru.su_fist_heave.contact",
+    "ru.su_fist_heave.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "ru.su_hammer",
+   "combat": "strike.su_hammer",
+   "name": "su_hammer",
+   "weight": "heavy",
+   "target": "head",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 56,
+   "reach": 95,
+   "band": "long",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "no_clasp",
+    "no_held_raise"
+   ],
+   "look": "PROVISIONAL. A falling hammer fist: risen tall with the fist at his shoulder, then the whole body comes down and the fist falls on the head.",
+   "orig": "PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head",
+   "poses": [
+    "ru.su_hammer.chamber",
+    "ru.su_hammer.contact",
+    "ru.su_hammer.follow"
    ],
    "alt": null,
    "_genericAb": false,

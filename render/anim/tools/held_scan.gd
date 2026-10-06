@@ -31,7 +31,7 @@ func _run() -> void:
 	var classes: Dictionary = r.classes
 	var fails: Array = r.fails
 	var nums: Array = r.numbers
-	print("held-pose lint (h01 to h03, scope RL-087%s): %d poses held 12 ticks or more %s, %d fail" % ["" if scope_ok else ", the scope was NOT found in docs/legal/movegen-banned.json", ids.size(), classes, fails.size()])
+	print("held-pose lint (h01 to h03, h05 and f01; scope RL-087%s): %d poses held 12 ticks or more %s, %d fail" % ["" if scope_ok else ", the scope was NOT found in docs/legal/movegen-banned.json", ids.size(), classes, fails.size()])
 	for f in fails:
 		print("  %-34s [%s] %s   [%s]" % [f.pose, f.class, "; ".join(f.why), "; ".join((f.sources as Array).slice(0, 2))])
 	for n in nums:

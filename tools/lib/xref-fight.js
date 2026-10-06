@@ -1345,6 +1345,37 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     }
   }
 
+  // ---- anim super-heavy: the mediums on 12 ticks name key sets that exist; a key set's drive is its path's ----
+  {
+    const setIds = new Set();
+    const keysetFiles = docsFor(/^data\/anim\/waves\/[^/]+\.keysets\.json$/);
+    for (const rel of keysetFiles) { const d = get(rel); if (isObj(d) && isObj(d.keysets)) for (const k of Object.keys(d.keysets)) setIds.add(k); }
+    const mainKs = get('data/anim/keysets.json');
+    if (isObj(mainKs) && isObj(mainKs.keysets)) for (const k of Object.keys(mainKs.keysets)) setIds.add(k);
+    const MW = 'data/anim/medium_wind.json';
+    const mw = get(MW);
+    if (isObj(mw) && setIds.size) {
+      const ruleKeys = isObj(mw.rules) ? Object.keys(mw.rules).filter((k) => !k.startsWith('_')) : [];
+      const held = new Set(Array.isArray(mw.held_only) ? mw.held_only : []);
+      if (isObj(mw.sets)) for (const [id, rule] of Object.entries(mw.sets)) {
+        if (id.startsWith('_')) continue;
+        if (!setIds.has(id)) err(MW, `/sets/${esc(id)}`, 'medium-wind-set', `"${id}" is a key set of no wave`);
+        if (typeof rule === 'string' && ruleKeys.length && !ruleKeys.includes(rule)) err(MW, `/sets/${esc(id)}`, 'medium-wind-set', `"${id}" follows rule "${rule}", which is not a key of rules (${ruleKeys.join(', ')})`);
+        if (held.has(id)) err(MW, `/sets/${esc(id)}`, 'medium-wind-set', `"${id}" is in sets and in held_only: a key set is one or the other`);
+      }
+      if (Array.isArray(mw.held_only)) mw.held_only.forEach((id, i) => { if (typeof id === 'string' && !setIds.has(id)) err(MW, `/held_only/${i}`, 'medium-wind-set', `"${id}" is a key set of no wave`); });
+    }
+    const parts = get('data/combat/parts.json');
+    const drives = isObj(parts) && isObj(parts.strike) && isObj(parts.strike.heavy) && isObj(parts.strike.heavy.drive) ? parts.strike.heavy.drive : null;
+    if (drives) for (const rel of keysetFiles) {
+      const d = get(rel);
+      if (!isObj(d) || !isObj(d.keysets)) continue;
+      for (const [id, ks] of Object.entries(d.keysets)) {
+        if (!isObj(ks) || typeof ks.drive !== 'string' || typeof ks.path !== 'string' || !isObj(drives[ks.path])) continue;
+        if (drives[ks.path].id !== ks.drive) err(rel, `/keysets/${esc(id)}/drive`, 'keyset-drive', `key set "${id}" has drive "${ks.drive}", but Combat's grammar gives a heavy on path "${ks.path}" the drive "${drives[ks.path].id}"`);
+      }
+    }
+  }
   // ---- anim press styles: the squash poses exist, the fighters and bones are real, a carry has a length ----
   const pst = get('data/anim/press_styles.json');
   if (isObj(pst)) {

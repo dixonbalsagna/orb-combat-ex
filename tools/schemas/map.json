@@ -272,6 +272,10 @@
       "schema": "anim-press-styles.schema.json"
     },
     {
+      "match": "data/anim/medium_wind.json",
+      "schema": "anim-medium-wind.schema.json"
+    },
+    {
       "match": "data/anim/tips.json",
       "schema": "anim-tips.schema.json"
     },

@@ -106120,6 +106120,1209 @@
         "rule": "xref:finisher-fighter",
         "pointer": "/select/byFighter/NOBODY"
       }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-tell-at-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": 0.5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-tell-at-one-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-tell-at-min-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": 0.05
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-tell-at-below-min",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": 0.04
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keysets/pu.su_drive/tell_at"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-tell-at-zero",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keysets/pu.su_drive/tell_at"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-tell-at-above-one",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keysets/pu.su_drive/tell_at"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-tell-at-type",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": "half"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keysets/pu.su_drive/tell_at"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-squash-w-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/squash_w": 0.3
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-squash-w-zero-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/squash_w": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-squash-w-one-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/squash_w": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-squash-w-negative",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/squash_w": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keysets/pu.su_drive/squash_w"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-squash-w-above-one",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/squash_w": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keysets/pu.su_drive/squash_w"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-squash-w-type",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/squash_w": "none"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keysets/pu.su_drive/squash_w"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-drive-step-through-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/drive": "step_through"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-drive-turn-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/drive": "turn"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-drive-unwind-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/drive": "unwind"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-drive-heave-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/drive": "heave"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-drive-fall-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/drive": "fall"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-drive-full-turn-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/drive": "full_turn"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-drive-enum",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/drive": "stepping"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/keysets/pu.su_drive/drive"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-drive-type",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/drive": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/keysets/pu.su_drive/drive"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-all-three-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": 0.5,
+            "/keysets/pu.su_drive/squash_w": 0,
+            "/keysets/pu.su_drive/drive": "fall"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-superheavy-unknown-key-still-refused",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_by": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/keysets/pu.su_drive/tell_by"
+      }
+    },
+    {
+      "id": "anim-medium-wind-valid",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-medium-wind-empty-sets-ok",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {},
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-medium-wind-key-required-rules",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          },
+          "del": [
+            "/rules"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-medium-wind-key-required-sets",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          },
+          "del": [
+            "/sets"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-medium-wind-key-required-held-only",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            }
+          },
+          "del": [
+            "/held_only"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-medium-wind-unknown-key",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ],
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-medium-wind-underscore-key-ok",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ],
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-medium-wind-rule-id-outside-w1-to-w8",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {},
+              "w9": {
+                "step": 0.5
+              }
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/rules/w9"
+      }
+    },
+    {
+      "id": "anim-medium-wind-rule-unknown-key",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg",
+                "mood": 1
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/rules/w4/mood"
+      }
+    },
+    {
+      "id": "anim-medium-wind-rule-u-cap-above-one",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 1.5,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/rules/w4/u_cap"
+      }
+    },
+    {
+      "id": "anim-medium-wind-rule-u-cap-negative",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": -0.1,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rules/w4/u_cap"
+      }
+    },
+    {
+      "id": "anim-medium-wind-rule-step-above-one",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 1.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/rules/w6/step"
+      }
+    },
+    {
+      "id": "anim-medium-wind-rule-step-type",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": "half"
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rules/w6/step"
+      }
+    },
+    {
+      "id": "anim-medium-wind-rule-why-type",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": 5
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rules/w4/why"
+      }
+    },
+    {
+      "id": "anim-medium-wind-rule-empty-ok",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {},
+              "w5": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-medium-wind-set-rule-outside-w1-to-w8",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w9",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/sets/pr.axe_kick"
+      }
+    },
+    {
+      "id": "anim-medium-wind-set-rule-type",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": 4,
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sets/pr.axe_kick"
+      }
+    },
+    {
+      "id": "anim-medium-wind-set-id-shape",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6",
+              "Axe Kick": "w4"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/sets/Axe Kick"
+      }
+    },
+    {
+      "id": "anim-medium-wind-set-is-a-key-set-of-no-wave",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6",
+              "pr.nowhere": "w4"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:medium-wind-set",
+        "pointer": "/sets/pr.nowhere"
+      }
+    },
+    {
+      "id": "anim-medium-wind-set-rule-is-not-a-key-of-rules",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w7",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:medium-wind-set",
+        "pointer": "/sets/pr.axe_kick"
+      }
+    },
+    {
+      "id": "anim-medium-wind-set-also-held-only",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand",
+              "pr.hook"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:medium-wind-set",
+        "pointer": "/sets/pr.hook"
+      }
+    },
+    {
+      "id": "anim-medium-wind-held-only-is-a-key-set-of-no-wave",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.nowhere"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:medium-wind-set",
+        "pointer": "/held_only/0"
+      }
+    },
+    {
+      "id": "anim-medium-wind-held-only-duplicate",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand",
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/held_only/1"
+      }
+    },
+    {
+      "id": "anim-medium-wind-held-only-type",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": "pr.overhand"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held_only"
+      }
+    },
+    {
+      "id": "anim-medium-wind-held-only-id-shape",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "Over Hand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/held_only/0"
+      }
+    },
+    {
+      "id": "anim-medium-wind-held-only-empty-ok",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/1",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": []
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-medium-wind-schema-version",
+      "schema": "anim-medium-wind.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/medium_wind.json",
+          "set": {
+            "/schema": "anim.mediumwind/2",
+            "/rules": {
+              "w4": {
+                "u_cap": 0.55,
+                "why": "a chop of the leg"
+              },
+              "w6": {
+                "step": 0.5
+              },
+              "w1": {}
+            },
+            "/sets": {
+              "pr.axe_kick": "w4",
+              "pr.hook": "w6"
+            },
+            "/held_only": [
+              "pr.overhand"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
     }
   ],
   "text": [

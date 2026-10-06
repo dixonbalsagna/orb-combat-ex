@@ -1,0 +1,34 @@
+diff --git a/tools/schemas/anim-wave-keysets.schema.json b/tools/schemas/anim-wave-keysets.schema.json
+index 3098d16..3ed0dba 100644
+--- a/tools/schemas/anim-wave-keysets.schema.json
++++ b/tools/schemas/anim-wave-keysets.schema.json
+@@ -83,6 +83,29 @@
+             "exclusiveMinimum": 0,
+             "description": "How far (model units) the whole body may step to reach the target, overriding the limb's step_max in sockets.json."
+           },
++          "tell_at": {
++            "type": "number",
++            "minimum": 0.05,
++            "maximum": 1,
++            "description": "A super-heavy piece's tell: how far into the wind-up (0 to 1) the chamber is reached; it is then held in plain sight to the blow. 1 (the default) is the old linear ramp."
++          },
++          "squash_w": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1,
++            "description": "How much of the press style's squash this piece takes (0 to 1, default 1): 0 draws its tell in its chamber alone."
++          },
++          "drive": {
++            "enum": [
++              "step_through",
++              "turn",
++              "unwind",
++              "heave",
++              "fall",
++              "full_turn"
++            ],
++            "description": "A super-heavy piece's drive: what the whole body does behind the limb (Combat's strike.heavy.drive)."
++          },
+           "limb2": {
+             "enum": [
+               "hand_r",

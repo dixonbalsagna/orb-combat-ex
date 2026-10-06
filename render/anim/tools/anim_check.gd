@@ -597,10 +597,10 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 	RenderAnim._fighters.clear()
 	var key: String = String(AnimData.ensure_fighter(String(f0.id)))
 	AnimData.ensure_fighter(String(f1.id))
-	for nm in ["su_drive", "su_turn", "su_ram", "su_heel"]:
-		var kid: String = ("pu." if who == "protagonist" else "ru.") + nm
-		if AnimData.keysets.has(kid):
-			AnimData.pair_lists[key].by_name[nm] = kid
+	var su_pre: String = "pu.su_" if who == "protagonist" else "ru.su_"   # the super-heavy tier is parked (no fighter's wave list names it): every piece of it is findable by name
+	for kid in AnimData.keysets:
+		if String(kid).begins_with(su_pre):
+			AnimData.pair_lists[key].by_name[String(kid).substr(3)] = String(kid)
 	for pre in ["pm.", "rm."]:
 		for nm2 in ["palm_rise", "back_chop", "fist_chop", "palm_heave", "gut_rise", "fist_sweep", "arm_chop", "plate_drop"]:
 			if AnimData.keysets.has(pre + nm2):
@@ -694,6 +694,14 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 			hi_max = maxi(hi_max, hi_run)
 		else:
 			hi_run = 0
+		if k >= int(contacts[0]) - 34 and k <= int(contacts[0]) and (k - int(contacts[0])) % 4 == 0:
+			var pv: Vector3 = af0.socket("pelvis")
+			var tr := {"dt": k - int(contacts[0]), "ph": String(af0.press.get("phase", "")), "ks": af0._part, "px": af0.socket("pelvis").x, "tw": absf(af0.socket("upper_arm_r").x - af0.socket("upper_arm_l").x)}
+			for sn in ["hand_r", "foot_r", "foot_l"]:
+				tr[sn] = (af0.socket(sn) - pv).snapped(Vector3(0.1, 0.1, 0.1))
+			if not res.has("trace"):
+				res["trace"] = []
+			res["trace"].append(tr)
 		hxr.append(af0.socket("hand_r").x - af0.socket("pelvis").x)
 		hxl.append(af0.socket("hand_l").x - af0.socket("pelvis").x)
 		res.err = float(af0.debug.get("contact_err_max", 0.0))
@@ -1033,6 +1041,163 @@ func _test_flurry_tiers() -> void:
 	RenderAnim.press_styles = styles_was
 	S.dirS.ex = null
 	print("flurry tiers: %s; held Y and B coil for the whole hold; the tiers are ordered X < Y < B in the data and on the body" % " | ".join(summary))
+
+
+## Legal's h05 on the real wind-up (RL-105; the held lint judges the chamber pose, this the path to it): every medium (on 12 ticks) and every piece of the super-heavy tier (on 28) of both fighters
+## keeps every limb at 80 or lower until the last 6 ticks before the contact, with every contact solved, no NaN and nothing past a joint limit on screen. The flagged mediums are judged on 28.
+func _test_windups() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	var wu: Dictionary = AnimHeldLint.windups()
+	var worst: String = ""
+	var judged: int = 0
+	for who in ["protagonist", "antihero"]:
+		var pre: String = "pr." if who == "protagonist" else "w1."
+		var spre: String = "pu." if who == "protagonist" else "ru."
+		var names: Array = []
+		for cid in wu:
+			var sid: String = String(wu[cid].strike)
+			if sid.begins_with(pre) or sid.begins_with(spre):
+				var held_only: bool = ["double_hammer", "double_palm", "cross_arm_ram", "drop_kick", "spinning_elbow", "spinning_back_kick", "spinning_heel"].has(sid.substr(3))   # Combat's w1 to w3: held-Y only, judged on the long wind-up
+				names.append([sid.substr(3), bool(wu[cid].super) or held_only])
+		names.sort()
+		for nm in names:
+			var sup: bool = bool(nm[1])
+			var r: Dictionary = _tier_scene(S, who, "super" if sup else "medium", [String(nm[0])], [64], {"windup": 28 if sup else 12}, "heavy")
+			judged += 1
+			if int(r.hi_early) > 0 or int(r.nan) > 0 or int(r.screen) > 0 or int(r.frames) != 1 or float(r.err) >= 0.25:
+				worst += "%s %s (%d ticks above 80 before the last 6, %d NaN, %d on screen, %d of 1 contacts, error %.3f); " % [who, String(nm[0]), int(r.hi_early), int(r.nan), int(r.screen), int(r.frames), float(r.err)]
+	_expect(worst == "", "windups (h05): %s" % worst)
+	_expect(judged >= 40, "windups: only %d wind-ups were judged" % judged)
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	S.dirS.ex = null
+	print("windups: %d medium and heavy wind-ups judged on the real solve: no limb above 80 before the last 6 ticks, every contact solved" % judged)
+
+
+## The super-heavy tier's drives (docs/combat/pending/movegen/three-strengths.md section 3, Legal D1 to D5), read off the three key poses of every piece: where the body is at the tell and where it ends, so a flurry's next
+## blow starts where the last stopped. step_through: a full pace behind the blow; turn: half a turn, never more, wound away and unwound through; unwind: one limb crossed over his centre in the tell, out the other side at the
+## blow; heave: sunk deep, then stood tall, the feet keeping their place; fall: risen at the tell with the limb at shoulder height or lower, sunk lower at the blow; full_turn: one turn, wound away, a quarter past.
+func _test_tier_drives() -> void:
+	AnimData.load_every_wave()
+	var judged: int = 0
+	var bad: Array = []
+	for kid in AnimData.keysets:
+		var ks: Dictionary = AnimData.keysets[kid]
+		if not (String(kid).begins_with("ru.su_") or String(kid).begins_with("pu.su_")):
+			continue
+		var drive: String = String(ks.get("drive", ""))
+		var ch: Dictionary = AnimData.raw.get(String(kid) + ".chamber", {})
+		var ct: Dictionary = AnimData.raw.get(String(kid) + ".contact", {})
+		var fo: Dictionary = AnimData.raw.get(String(kid) + ".follow", {})
+		if drive == "" or ch.is_empty() or ct.is_empty() or fo.is_empty():
+			bad.append("%s has no drive or a missing key pose" % kid)
+			continue
+		judged += 1
+		var limb: String = String(ks.get("limb", "hand_r"))
+		var lk: String = limb.replace("elbow", "hand").replace("knee", "foot").replace("shoulder", "hand")
+		var twc: float = float(ch.get("hip_twist", 0.0)) + float(ch.get("spine", {}).get("twist", 0.0))
+		var twk: float = float(ct.get("hip_twist", 0.0)) + float(ct.get("spine", {}).get("twist", 0.0))
+		var twf: float = float(fo.get("hip_twist", 0.0)) + float(fo.get("spine", {}).get("twist", 0.0))
+		var hc: float = float(ch.get("hips", [0, 0, 0])[1])
+		var hk: float = float(ct.get("hips", [0, 0, 0])[1])
+		var hf: float = float(fo.get("hips", [0, 0, 0])[1])
+		match drive:
+			"step_through":
+				if float(fo.hips[0]) - float(ch.hips[0]) < 25.0:
+					bad.append("%s: a stepping heavy carries the body %.0f (a full pace is 25 or more)" % [kid, float(fo.hips[0]) - float(ch.hips[0])])
+			"turn":
+				if not (twc <= -50.0 and twk >= 40.0 and absf(twk - twc) <= 190.0 and absf(twk) < 100.0):
+					bad.append("%s: a turning heavy winds %.0f and unwinds %.0f (half a turn, never more)" % [kid, twc, twk])
+			"unwind":
+				var zc: float = float(ch.get(lk, [0, 0, 0])[2])
+				var zk: float = float(ct.get(lk, [0, 0, 0])[2])
+				if not (zc < -2.0 and zk > 2.0):
+					bad.append("%s: an unwinding heavy's limb is at z %.0f in the tell and %.0f at the blow (it crosses his centre, then goes out)" % [kid, zc, zk])
+				var other: String = "hand_l" if lk.begins_with("hand") else "hand_r"
+				if lk.begins_with("hand") and float(ch.get("hand_l", [0, 0, -8])[2]) > 2.0:
+					bad.append("%s: both arms cross his centre in the tell" % kid)
+			"heave":
+				if not (hc <= -16.0 and hf >= hc + 16.0):
+					bad.append("%s: a heaving heavy sinks to %.0f and stands to %.0f (sunk deep, then 16 or more taller)" % [kid, hc, hf])
+				for fk in ["foot_r", "foot_l"]:
+					if fk != limb and absf(float(ch[fk][0]) - float(ct[fk][0])) > 4.0 and float(ch[fk][1]) <= 3.0:
+						bad.append("%s: %s moves %.0f between the tell and the blow (a heave keeps its feet in place)" % [kid, fk, float(ch[fk][0]) - float(ct[fk][0])])
+			"fall":
+				var ly: float = float(ch.get(lk, [0, 0, 0])[1])
+				if not (hc >= 2.0 and hk <= hc - 8.0 and ly <= 70.0):
+					bad.append("%s: a falling heavy is at %.0f in the tell (limb %.0f high) and %.0f at the blow (risen, the limb at shoulder height, then sunk 8 or more)" % [kid, hc, ly, hk])
+			"full_turn":
+				if not (twc <= -60.0 and twk >= 50.0 and twf >= 20.0 and twf <= 60.0):
+					bad.append("%s: a full turn winds %.0f, unwinds %.0f and ends %.0f (a quarter past the rival)" % [kid, twc, twk, twf])
+			_:
+				bad.append("%s: unknown drive %s" % [kid, drive])
+		# the chamber is a tell in plain sight: the loaded limb at shoulder height or lower, never both hands together (the held lint also judges it)
+		var hr = ch.get("hand_r")
+		var hl = ch.get("hand_l")
+		if hr != null and hl != null and Vector3(float(hr[0]) - float(hl[0]), float(hr[1]) - float(hl[1]), float(hr[2]) - float(hl[2])).length() < 10.0:
+			bad.append("%s: both hands together in the tell" % kid)
+	_expect(bad.is_empty(), "tier drives: %s" % "; ".join(bad))
+	_expect(judged >= 16, "tier drives: only %d pieces of the tier were found (16 are the first set)" % judged)
+	print("tier drives: %d pieces of the super-heavy tier read as their drive (a pace, half a turn, one limb crossing, sunk then tall, risen then sunk, one turn)" % judged)
+
+
+## Combat's eight rules for a medium on Y's 12-tick wind-up (data/anim/medium_wind.json, docs/animation/super-heavy.md): the data covers the mediums, the held-only ones are named, and the rules do what they say:
+## w7 (an arc) and w8 (a rise) reach less of their chamber 6 ticks before the contact, w6 (a line) travels about half as far, w4 (a dropping kick) lifts its leg less; nothing else changes with the flag off.
+func _test_medium_wind() -> void:
+	AnimData.load_every_wave()
+	var mw: Dictionary = AnimData.medium_wind
+	_expect(mw.get("sets", {}).size() >= 20 and mw.get("held_only", []).size() >= 8 and mw.get("rules", {}).has("w7"), "medium wind: data/anim/medium_wind.json did not load or is thin (%d sets)" % mw.get("sets", {}).size())
+	for sid in mw.get("sets", {}):
+		_expect(AnimData.keysets.has(String(sid)), "medium wind: %s is not a key set" % sid)
+	for sid in mw.get("held_only", []):
+		_expect(AnimData.keysets.has(String(sid)) and not mw.sets.has(String(sid)), "medium wind: %s is held-only but is not a key set, or also has a rule" % sid)
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	var seen: Array = []
+	for pc in [["roundhouse", "w7", "tw"], ["uppercut", "w8", "hand_r"], ["driving_knee", "w6", "px"], ["stomp", "w4", "foot_r"]]:
+		var ys: Array = []
+		for on in [true, false]:
+			RenderAnim.medium_wind = on
+			var r: Dictionary = _tier_scene(S, "antihero", "medium", [String(pc[0])], [40], {"hand": "r"}, "heavy")
+			var rowt: Dictionary = {}
+			for tr in r.get("trace", []):
+				if int(tr.dt) == -4 or int(tr.dt) == 0 or int(tr.dt) == -28:
+					rowt[int(tr.dt)] = tr
+			if not rowt.has(-4) or not rowt.has(0):
+				ys.append(0.0)
+			elif String(pc[2]) == "px":
+				ys.append(float(rowt[0].px) - float(rowt[-28].px) if rowt.has(-28) else float(rowt[0].px))
+			elif String(pc[2]) == "tw":
+				ys.append(float(rowt[-4].tw))   # the shoulders turned: a flatter wind-up turns less
+			else:
+				ys.append(float(rowt[-4][String(pc[2])].y))
+		RenderAnim.medium_wind = true
+		seen.append("%s %s %.1f with, %.1f without" % [pc[0], pc[1], float(ys[0]), float(ys[1])])
+		if String(pc[2]) == "px":
+			_expect(float(ys[0]) < float(ys[1]) - 0.5, "medium wind: %s (%s) travels %.1f with the rule against %.1f without (a half step)" % [pc[0], pc[1], float(ys[0]), float(ys[1])])
+		elif String(pc[1]) == "w4":
+			_expect(float(ys[0]) <= float(ys[1]) + 0.01, "medium wind: %s (%s) lifts its foot to %.1f with the rule against %.1f without (never higher)" % [pc[0], pc[1], float(ys[0]), float(ys[1])])
+		else:
+			_expect(float(ys[0]) < float(ys[1]) - 0.5, "medium wind: %s (%s) reaches %.1f (height, or the shoulders' turn) 4 ticks out with the rule against %.1f without (a flatter wind-up)" % [pc[0], pc[1], float(ys[0]), float(ys[1])])
+	RenderAnim.medium_wind = true
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	S.dirS.ex = null
+	print("medium wind: %d mediums on a rule, %d held-only; %s" % [mw.sets.size(), mw.held_only.size(), "; ".join(seen)])
 
 
 func _test_press_styles() -> void:
@@ -2665,6 +2830,9 @@ func _run() -> void:
 	_test_pair_live()
 	_test_press_styles()
 	_test_flurry_tiers()
+	_test_windups()
+	_test_tier_drives()
+	_test_medium_wind()
 	_test_zip_view()
 	_test_riposte()
 	_test_hand_tips()

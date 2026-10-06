@@ -85,6 +85,19 @@ export const TIP_PATH = {
   su_turn: { tip: 'blade', path: 'spin' },
   su_ram: { tip: 'fist', path: 'line' },
   su_heel: { tip: 'heel', path: 'drop' },
+  // the rest of the tier's first sixteen (Combat's three-strengths.md section 3: the rival 03 to 08, the Protagonist 03 to 08)
+  su_knee: { tip: 'cap', path: 'line' },
+  su_plate: { tip: 'plate', path: 'arc_in' },
+  su_hook: { tip: 'fist', path: 'arc_in' },
+  su_elbow_heave: { tip: 'point', path: 'rise' },
+  su_fist_heave: { tip: 'fist', path: 'rise' },
+  su_hammer: { tip: 'heel', path: 'drop' },
+  su_edge_step: { tip: 'edge', path: 'line' },
+  su_blade_jaw: { tip: 'blade', path: 'line' },
+  su_edge_unwind: { tip: 'edge', path: 'arc_out' },
+  su_palm_heave: { tip: 'palm', path: 'rise' },
+  su_ball_heave: { tip: 'ball', path: 'rise' },
+  su_hammer_arm: { tip: 'heel', path: 'drop' },
 };
 export function tipPath(prefix, name) {
   return TIP_PATH[prefix + '.' + name] || TIP_PATH[name];

@@ -12,6 +12,9 @@ extends RefCounted
 ## A pose's class (a pose that matches no family is reported "unclassed" and fails, so a new family has to be given a class on purpose): a `_legal.class`-style mark where a pose has one (none do yet: it would need a schema key), else the family of the sequence or pose by name (CLASS_RULES below, from the scope's
 ## `classes`: rest, gesture, charge, tell, signature, energy, hold); an unmarked pose is rest. What counts as held: a sequence or entry phase of 12 ticks or more; a pair_live role's pose held that
 ## long, the charge and full poses of a charged shot, a gesture's pose; and every pose named `.hold.`, `ready_`, a stance or a stance cue (their length is the sim's).
+## h05 (RL-105, the three strengths): the chamber of every medium and heavy strike of every wave (a wind-up of 12 ticks or more is a held pose, class "windup": the pair, emitter and arms-wide tests, and h05's own:
+## no limb above 80, the loaded hand never at a hip for any hand state (a closed fist too), a both-hand blow's hands at least 20 apart, never crossed forearms). f01 by instant: `press_styles.json` rows used in a
+## flurry draw at most 2 ghosts of a limb, and no row more than 3 (a wire echo that pops off in turn).
 ## The scope's thresholds are Legal's, written in its file as prose (RL-087); they are constants here, named for the rule they come from. The file is read for the scope's presence and its class list.
 ##   godot --headless --path . -s res://render/anim/tools/held_scan.gd -- [--md=docs/animation/held-lint.md] [--json=out.json] [--strict] [--list]
 const DT := 1.0 / 60.0
@@ -24,6 +27,12 @@ const HAND_TOP := 82.0            # emitter test: any hand above this (80 and a 
 const ARM_STRAIGHT := 25.0        # h02: elbows within this many degrees of straight
 const ARM_WIDE := 32.0            # h02: both hands this far out to opposite sides
 const SHRUG_BEND := 40.0          # h02: a bend this much or more is a shrug, not arms wide
+const WIND_TOP := 80.0            # h05: no limb above this before the last 6 ticks of a wind-up; a chamber above it is judged on the real wind-up (anim_check), the lint lists it
+const WIND_APART := 20.0          # h05: a both-hand blow keeps its hands at least this far apart (shoulder width)
+const WIND_TICKS := 12.0          # h05: a wind-up this long or longer is a held pose (a medium's is 12, a heavy's 28)
+const GHOST_FLURRY := 2           # f01: a flurry or burst style draws at most this many ghosts of a limb at any instant
+const GHOST_ECHO := 3             # f01: a single blow's wire echoes may be this many if they pop off in turn (never more than 2 alive: VFX)
+const FLURRY_STYLES := ["speed", "burst", "medium", "super"]
 ## the scope's classes by the family of the pose or sequence (prefix of its id); the first match wins. Poses that match none are rest.
 const CLASS_RULES := [
 	["rs.hold.sig_tell", "tell"], ["ps.hold.sig_tell", "tell"], ["rs.tell.", "tell"], ["ps.tell.", "tell"],
@@ -47,6 +56,45 @@ static func _held(held: Dictionary, pose: String, ticks: float, source: String) 
 	if not (e.sources as Array).has(source):
 		(e.sources as Array).append(source)
 	held[pose] = e
+
+
+## The chambers of the medium and heavy strikes of every wave on disk (res://data/anim/waves/*.manifest.json): chamber pose id -> {strike, limb, arms, weight}.
+static func windups() -> Dictionary:
+	var out: Dictionary = {}
+	var da := DirAccess.open("res://data/anim/waves")
+	if da == null:
+		return out
+	var files: Array = Array(da.get_files())
+	files.sort()
+	for fn in files:
+		if not String(fn).ends_with(".manifest.json"):
+			continue
+		var m = JSON.parse_string(FileAccess.get_file_as_string("res://data/anim/waves/" + String(fn)))
+		if not (m is Dictionary):
+			continue
+		for st in m.get("strikes", []):
+			if String(st.get("weight", "")) != "heavy" or String(st.get("name", "")).begins_with("tail"):
+				continue
+			var ch: String = ""
+			for pid in st.get("poses", []):
+				if String(pid).ends_with(".chamber"):
+					ch = String(pid)
+			if ch != "" and AnimData.raw.has(ch):
+				out[ch] = {"strike": String(st.id), "limb": String(st.get("limb", "")), "arms": int(st.get("uses", {}).get("arms", 1)), "super": String(st.id).contains(".su_")}
+	return out
+
+
+## f01 by instant, on the press styles: a flurry's style draws at most GHOST_FLURRY ghosts of a limb, no style more than GHOST_ECHO. Returns fail rows like scan()'s.
+static func ghost_fails() -> Array:
+	var out: Array = []
+	for k in AnimData.press.get("styles", {}):
+		if String(k).begins_with("_"):
+			continue
+		var g: int = int(AnimData.press.styles[k].get("ghosts", 0))
+		var cap: int = GHOST_FLURRY if FLURRY_STYLES.has(String(k)) else GHOST_ECHO
+		if g > cap:
+			out.append({"pose": "press_styles." + String(k), "class": "f01", "why": ["f01: %d ghosts of a limb (at most %d at any instant)" % [g, cap]], "sources": ["data/anim/press_styles.json"], "ticks": 0.0})
+	return out
 
 
 static func _class_of(pid: String) -> String:
@@ -111,13 +159,17 @@ static func scan() -> Dictionary:
 		var s: String = String(id)
 		if s.contains(".hold.") or s.contains(".ready_") or s.begins_with("stance."):
 			_held(held, s, 999.0, "named held (duration by the event or the match)")
+	var wind: Dictionary = windups()
+	for wid in wind:
+		_held(held, wid, 28.0 if bool(wind[wid].super) else 12.0, "%s (a wind-up of %s ticks or more)" % [String(wind[wid].strike), "28" if bool(wind[wid].super) else "12"])
 	var fails: Array = []
+	var late: Array = []
 	var ids: Array = held.keys()
 	ids.sort()
 	var classes: Dictionary = {}
 	for pid in ids:
 		var d: Dictionary = AnimData.raw[pid]
-		var cls: String = _class_of(pid)
+		var cls: String = "windup" if wind.has(pid) else _class_of(pid)
 		classes[cls] = int(classes.get(cls, 0)) + 1
 		var hr = d.get("hand_r")
 		var hl = d.get("hand_l")
@@ -135,6 +187,23 @@ static func scan() -> Dictionary:
 					why.append("pair: both hands in the hip zone and %.1f apart" % dist)
 				if dist <= PAIR_WRISTS and float(hr[0]) >= 16.0 and float(hl[0]) >= 16.0:
 					why.append("pair: both wrists forward and %.1f apart" % dist)
+		if cls == "windup":
+			var wm: Dictionary = wind[pid]
+			for k4 in ["hand_r", "hand_l", "foot_r", "foot_l"]:
+				var v4 = d.get(k4)
+				if v4 != null and float(v4[1]) > WIND_TOP:
+					late.append("%s (%s %.0f)" % [pid, k4, float(v4[1])])   # raised late, judged on the real wind-up by anim_check's `_test_windups` (no more than 6 ticks above 80)
+			var lm: String = String(wm.limb)
+			if lm.begins_with("hand") or lm.begins_with("elbow") or lm.begins_with("shoulder"):
+				var lh = hr if lm.ends_with("_r") else hl
+				if _in_hip(lh):
+					why.append("h05: the loaded hand is at a hip (x %.0f, height %.0f), whatever its state" % [float(lh[0]), float(lh[1])])
+			if hr != null and hl != null:
+				var dw: float = Vector3(float(hr[0]) - float(hl[0]), float(hr[1]) - float(hl[1]), float(hr[2]) - float(hl[2])).length()
+				if int(wm.arms) >= 2 and dw < WIND_APART:
+					why.append("h05: a both-hand blow's hands are %.1f apart (shoulder width, %.0f, or more)" % [dw, WIND_APART])
+				if float(hr[2]) < -2.0 and float(hl[2]) > 2.0:
+					why.append("h05: the forearms are crossed in the wind-up")
 		if cls in ["charge", "tell", "signature", "energy", "hold"]:
 			var emit = hr
 			var emit_side: String = "r"
@@ -161,8 +230,17 @@ static func scan() -> Dictionary:
 				why.append("h03: a crouch with both fists at the sides")
 		if not why.is_empty():
 			fails.append({"pose": pid, "class": cls, "why": why, "sources": held[pid].sources, "ticks": held[pid].ticks})
+	fails.append_array(ghost_fails())
 	# the numbers Legal asked for
 	var nums: Array = []
+	var nsup: int = 0
+	for wid in wind:
+		if bool(wind[wid].super):
+			nsup += 1
+	late.sort()
+	if not late.is_empty():
+		nums.append("h05: %d chambers reach above 80, so the raise must come in the last 6 ticks (checked on the real wind-up): %s" % [late.size(), ", ".join(late)])
+	nums.append("h05: %d wind-up chambers judged (%d of the super-heavy tier, %d of mediums)" % [wind.size(), nsup, wind.size() - nsup])
 	if AnimData.raw.has("rv.hold.fin_held"):
 		var a = AnimData.raw["rv.hold.fin_held"]
 		nums.append("rv.hold.fin_held: the hands are %.1f apart (right %s, left %s; the zone test needs over 10)" % [Vector3(float(a.hand_r[0]) - float(a.hand_l[0]), float(a.hand_r[1]) - float(a.hand_l[1]), float(a.hand_r[2]) - float(a.hand_l[2])).length(), a.hand_r, a.hand_l])
