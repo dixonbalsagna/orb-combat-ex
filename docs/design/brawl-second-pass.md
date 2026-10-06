@@ -41,9 +41,18 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 **Walking out takes both of them.** Orb: "if both players move their sticks in the opposite direction they should be able to walk out." When each holds his stick away from the other, within 45 degrees of straight away, for 12 ticks, the brawl lets go. It is free, and there is nothing to wait for after it. A blow thrown by either in those 12 ticks starts them again.
 
+**The 12 ticks count while either of them guards.** Backing off behind a guard is the ordinary way to part, and a guard isn't an attack. They don't count while either has a blow on its way or an attack button held, or while either is reeling or staggered, when the core has cleared his stick anyway.
+
 **My one-sided walk-out is withdrawn.** I had a fighter let go after 24 ticks of holding away with nothing landing on him. Orb's answer asks for both sticks, and I can't square the two: mine let one player end a brawl that the other wanted. One fighter alone still moves the brawl his way, at 0.4 of his speed with the rival drawn along. To leave alone he pays: the escape, a dodge, a zip away or a burst.
 
 **Walking out and the escape don't collide.** Walking out is both sticks away with no boost. The escape is one fighter's boost held with his stick away: at once, at the dodge-cancel's price, as built. The nudge reads the stick alone, and the escape needs the boost.
+
+**The centre and what is in its way** (ruled for C1).
+- **A building's face stops it,** as Encounter has it. The centre doesn't pass through a building, whole, shell or rubble.
+- **It isn't a dead stop.** The part of the nudge that runs along the face carries on, so the brawl slides along a wall, and a nudge upward takes it over the roof. Flight goes over anything, so nobody is cornered (pillar 1).
+- **A drifting brawl never damages a building.** Orb's answer is that a building is scenery unless the rival is thrown through its shell. Only a throw, a tackle, a launch or a blast does that.
+- **Being pushed against a face gives no bonus.** There is no pin and no wall hit in a brawl.
+- The ground and a ridge stop the centre in the same way, and the two fight on along it.
 
 **When the stick does nothing.** Only in these: a knock-back, a launch, a lift, being held in a clinch, being buried, and a set piece.
 
@@ -59,6 +68,8 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 **Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.partTicks` 12 and `brawl.partDeg` 45, `brawl.nudge.guard` 0.6, `brawl.maxStepBh` 0.3, and for digital input `brawl.nudgeDigital` 0.4 to 1.0 over 12 ticks.
 
 ## 2. A flurry on every button
+
+> **Waiting on Orb** (2026-10-05, late): "I don't like the idea of one button press equalling two attacks... Proposal X=light, Y=med, B=heavy." **One press is one attack,** so the rule below that a quick move goes on the press and a hold then charges the move that follows is withdrawn, for X, Y, B and A alike. §2, §3 and §5 are not rewritten until Orb picks among the EP's options for three strengths. §1 and §7 don't depend on it, and slice C1 goes ahead.
 
 **Orb:** "The flurry should be across all attacks, not just light. light mashing, heavy mashing should both have the rapid attack pattern... mashing X and Y alternating should give you a rapid attack mixup made up of heavy and light attacks."
 
