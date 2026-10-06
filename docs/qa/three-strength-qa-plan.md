@@ -204,3 +204,29 @@ Reads added: `windup` (start, end with `k`), `miss` (`gave_ground`, `reach`, `do
 - The AI's own stick on a tick (`DirBrawl.stick(ex, f)` exists): "the AI holds against a player's stick on under 25% of the ticks" needs a script that reads it every tick; it is one more counter in `drift=` and I have not built it. Say if it should go in.
 - A blow's wound region and strength on the damage event (Simulation's): not needed by these rows.
 - The mood and the `care` before-and-after: unchanged from section H5.
+
+
+## J. The heavy's hold, the leash, the signature tell and the closing rule (2026-10-06; `brawl-second-pass.md` at 57abfec9, and the EP's answers)
+
+**Built now:**
+- `c1.aihold` (point, under 25%): the medium AI holds its own stick against a player's held stick on under 25% of the ticks he holds it. It reads `DirBrawl.stick(ex, f)` for the AI (its nudge, kept out of its intent) on every tick of the `c1-drift-ai` window and counts those whose x opposes the player's stick.
+- `closing.d` (hard from C2t, PENDING before): a blow lands d ticks later than its own time, d from 0 to 4. The `windup` start cue gives the wind-up (`dur`) and the landing tick (`n`); the harness logs `[dur, n minus the press tick, the gap in bh]` for up to 400 presses (the alternator `str-alt` presses every strength from every gap). The exact formula (d the smaller of 4 and twice the gap in bh rounded up, a light at 2 + d, a medium 12 + d, a heavy 28 + d, the launcher 14 + d) is checked once Encounter confirms which gap it means; the samples are in the row's note for that.
+- `closing.step` (hard: no blow moves its attacker more than 0.6 bh in a tick): counted on every `blow` cue as the attacker's step on that tick. On 53d13b55, with no closing rule, a 1-match smoke saw 1 of 70 blows move its attacker 1.07 bh, so the row is INFO (reported) until a build has the wind-up cue, and a hard test from C2t on.
+
+**On paper (the heavy's hold; Encounter's cue names `charge_full` and `charge_release`, no scripts yet):**
+
+| Row | Band | Kind | How |
+| :--- | :--- | :--- | :--- |
+| B still down at 32 keeps charging; full at 44 live ticks after the press (`charge_full`) | 44 | hard | a `charger` script: `masher:btn=B:gap=90:tap=60` holds B for 60 ticks; the `charge_full` live tick less the wind-up start |
+| the blow goes 4 ticks after release; by itself at 70 | 4; at most 70 | hard | hold 50 (release) and hold 80 (auto) pairs; the `windup` end `k` 1 tick against `charge_release` |
+| armoured while he winds or charges: a light never ends it and does half; a medium ends it only in its first 20 ticks | exact | hard | a rival who mashes X, then Y, into a charging B: the `windup` end `k` (2 stopped by a blow) by the rival's strength and the tick |
+| a clean hit knocks back; at a full charge it launches, every time, aimed by the stick | every time | hard | a charger against a rival who never moves; a `launch` event for each full release with `ux` of the stick's sign; the knock-back otherwise |
+| a miss leaves him open 20 ticks | at most 20 | hard (it is the failed-option row) | the `miss` cue's `n` after a charge released out of reach |
+| the AI charges 0.15, 0.3 and 0.45 of its heavies (easy, medium, hard) and lets go within 8 ticks of the flash | shares | point, reported | `windup` start counts by `dur`, and the release tick less the `charge_full` tick for the AI |
+| a fighter who gives ground against a charge | out of a full charge | hard | the `giver` against the charger: he is out if he starts in time; the gap passes its reach about 45 ticks after he starts to back off when followed (reported) |
+
+**On paper (giving ground):**
+- **The leash is 2.4 bh past striking distance, so a light always reaches a fighter who only gave ground** (hard): the `giver` pairs log the largest gap, in bh, over the give window; the row needs the build's leash number and the striking distance (both data keys under `brawl.give`, not there yet), and the light's reach test: after the window, a light pressed by the rival lands (no `miss` cue on it).
+- **He may give ground during a signature's tell in reach** (movement only; it does not change the beam's outcome): a `giver` against a rival holding RT + B (a `sig` edge with `stanceMask` 4): his first step within 2 ticks (hard); the beam's outcome (`clash`, `guard`, `dodge`, `hit`) is read as before and is reported by whether he gave ground.
+
+**Contact rows** (press to contact by button) now read the closing rule: X at 2 + d, Y at 12 + d, B at 28 + d, the launcher at 14 + d, d from 0 to 4; the old "never past 16, 32" bounds are the same thing at d at most 4.

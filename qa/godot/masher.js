@@ -197,6 +197,8 @@ function c1Rows(r, results) {
     const what = 'A held stick against the medium AI moves the brawl at least 0.7 as far as against a rival who holds no stick (the AI holds against it on under 25% of the ticks: that read needs the AIs stick on a cue)';
     if (!has || !d.n || !(r0 > 0)) { rows.push({ id: 'c1.aistick', ref: '§11 second pass', what, status: 'PENDING', value: 'the build has no C1, or no drift was measured on one of the two runs', band: 'at least 0.7', note: `${r.n} matches` }); return rows; }
     const ratio = d.rateBhPerSec / r0;
+    const ao = d.aiStickTicks ? d.aiOpposeTicks / d.aiStickTicks : null;
+    rows.push({ id: 'c1.aihold', ref: '§11 second pass', what: 'The medium AI holds its own stick against a player\'s held stick on under 25% of the ticks he holds it (DirBrawl.stick)', status: ao === null ? 'PENDING' : (ao < 0.25 ? 'PASS' : 'FAIL'), value: ao === null ? 'the build has no DirBrawl.stick read' : `${(100 * ao).toFixed(1)}% (${d.aiOpposeTicks} of ${d.aiStickTicks} ticks)`, band: 'under 25%', note: `${d.n} drifts against the AI` });
     rows.push({ id: 'c1.aistick', ref: '§11 second pass', what, status: ratio >= 0.7 ? 'PASS' : 'FAIL', value: `${ratio.toFixed(2)} (${d.rateBhPerSec} bh a second against the medium AI, ${r0} against a rival with no stick)`, band: 'at least 0.7', note: `${d.n} drifts against the AI and ${ref.brawl.drift.n} against the script; point estimates` });
     return rows;
   }
@@ -244,6 +246,11 @@ function c2Rows(r, results) {
     const ok = m >= 0.5 && m <= 2 && withOne / n >= 0.35 && withOne / n <= 0.65;
     rows.push({ id: 'double.presser.' + (lights ? 'lights' : 'mix'), ref: '§7 second pass', what, status: (b.doubleHits || 0) === 0 && !(b.ends || {}).double ? 'PENDING' : (ok ? 'PASS' : 'FAIL'), value: `${m.toFixed(2)} a match; ${pct(withOne / n)} of matches (${withOne} of ${n}); ${b.doubleHits} double hits`, band: '0.5 to 2; 35 to 65%', note: `${n} matches; measured on C1 at 0.3 and 0.2, tuned on C2a by the AI's digIn; the trade length on the cue is the double.trade240 row` });
     return rows;
+  }
+  if (r.pair === 'str-alt') {   // the closing rule rows ride on the alternator: every strength is pressed, from every gap
+    const cl = b.closing || {}, sm = cl.samples || [], bad = sm.filter(x => x[1] - x[0] < 0 || x[1] - x[0] > 4);
+    rows.push({ id: 'closing.d', ref: '§1 second pass', what: 'A blow lands d ticks later than its own time, d from 0 to 4 (2 ticks a bh of gap, at most 4): the cue\'s landing tick less the press tick, less the wind-up (hard test; the exact formula is checked when the gap\'s definition is confirmed)', status: !has3 || !sm.length ? 'PENDING' : (bad.length ? 'FAIL' : 'PASS'), value: !sm.length ? 'the build has no windup cue' : `${bad.length} of ${sm.length} outside 0 to 4; the largest d ${Math.max(...sm.map(x => x[1] - x[0]))}`, band: '0 to 4 ticks', note: `samples [wind-up, ticks to landing, gap bh]: ${JSON.stringify(sm.slice(0, 6))}` });
+    rows.push({ id: 'closing.step', ref: '§1 second pass', what: 'No blow moves its attacker more than 0.6 bh in a tick (hard test from C2t; reported before it)', status: cl.blowMoveN ? (has3 ? (cl.blowMoveOver > 0 ? 'FAIL' : 'PASS') : 'INFO') : 'PENDING', value: cl.blowMoveN ? `${cl.blowMoveOver} of ${cl.blowMoveN} blows moved their attacker over 0.6 bh in the tick; the most ${cl.blowMoveMaxBh} bh` : 'no blow cue', band: 'at most 0.6 bh a tick', note: `${r.n} matches` });
   }
   if (/^str-/.test(r.pair)) {
     const label = { 'str-y': 'a Y masher (a medium every 12 ticks)', 'str-b': 'a B masher (a heavy every 30 ticks)', 'str-alt': 'the alternator (X, Y, B in turn, a press every 12 ticks)', 'str-holdx': 'the player who only holds X (60 ticks down, 8 up)', 'str-x10b': 'the 10-tick tapper with B (X X B)' }[r.pair];
