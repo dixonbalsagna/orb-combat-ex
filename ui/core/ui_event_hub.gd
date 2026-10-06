@@ -427,7 +427,7 @@ func consume(e) -> void:
 			if cn >= 2:
 				banner = {"text": UiData.fmt("state.chain", {"n": cn}), "col": UiLook.WARN, "dur": 1.2, "age": 0.0}
 		"banner":
-			if move_names.has(str(d.get("text", "")).strip_edges().to_upper()):
+			if move_names.has(UiData.display_text(str(d.get("text", ""))).strip_edges().to_upper()):   # the sim's banner is the move's key from the rename on: compare the words a player reads
 				stats["banners_move_name"] += 1   # a move's name is shouted by the fighter, not carded
 				return
 			banner = {"text": UiData.banner(str(d.get("text", ""))).to_upper(), "col": str(d.get("col", UiLook.INK)), "dur": float(d.get("dur", 1.4)), "age": 0.0}

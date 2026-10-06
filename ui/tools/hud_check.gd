@@ -415,7 +415,7 @@ func _bridge() -> void:
 	events = int(hud.hub.stats["events"])
 	var m0: UiFighterModel = hud.hub.model(0)
 	_ok(m0.name == "PROTAGONIST" and m0.tier >= 1 and m0.charge >= 0.0, "bridge: reads name, tier and charge from the sim")
-	var sig_name0: String = str(host.S.fighters[0].sigName).strip_edges().to_upper()
+	var sig_name0: String = UiData.display_text(str(host.S.fighters[0].sigName)).strip_edges().to_upper()   # the move's name, or from the rename on its key read as the name
 	_ok(sig_name0 != "" and hud.hub.move_names.has(sig_name0), "bridge: the fighters' signature names are known to the hub (a banner that is only a move name is dropped)")
 	_ok(hud.hub.toll["pop0"] > 0, "bridge: reads the world counters")
 	var sd: Dictionary = UiSimBridge.strip_data(host.S, host.cam.x, 2000.0)
@@ -4521,20 +4521,24 @@ func _rename_rules() -> void:
 	# The readout profiles: a stand-in keeps reading as it does today (its meter is the sim's anguish), the real Protagonist's profile is not borrowed.
 	_ok(UiSimBridge.profile_id("PROTAGONIST") == "stand_in_protagonist" and UiSimBridge.profile_id("RIVAL") == "rival" and UiSimBridge.profile_id("KAI") == "kai" and UiSimBridge.profile_id("VORR") == "vorr" and UiSimBridge.profile_id("EMPRESS") == "empress", "rename: the bridge maps the roster id to a readout profile (the stand-in Protagonist to its alias, the others by id)")
 	_ok(str(UiData.profile("stand_in_protagonist")["ego"]) == "anguish" and str(UiData.profile("rival")["ego"]) == "menace" and str(UiData.profile("kai")["ego"]) == "anguish" and str(UiData.profile("vorr")["ego"]) == "menace" and str(UiData.profile("protagonist")["ego"]) != "anguish", "rename: the stand-ins' aliases read anguish and menace as today; the real Protagonist profile is a different one")
-	# A sim as it will be after the window: fighters carry the new ids and no name, title or signature name (only the signature's key).
+	# The sim as it is, and as it will be after the window: fighters carry the new ids, the name is the id, there is no title and the signature's name is its key.
+	# Whichever the sim is today, the check expects by whether it is already renamed; the staged run renames a sim that is not.
 	for staged in [false, true]:
 		var host := SimHost.new()
 		host.new_match(5)
-		if staged:
+		var renamed: bool = str(host.S.fighters[0].id) == "PROTAGONIST"
+		if staged and not renamed:
 			for f in host.S.fighters:
 				var rid: String = "PROTAGONIST" if f.id == "KAI" else "RIVAL"
 				f.id = rid
-				f.name = ""
-				f.title = ""
+				f.name = rid
+				if "title" in f:
+					f.title = ""   # the field is gone after the window
 				f.sigName = rid + ".SIG"
-		var tag := "rename (%s sim)" % ("staged: new ids, no name, title or signature name" if staged else "today's")
+		var after: bool = staged or renamed
+		var tag := "rename (%s sim)" % ("staged: new ids, name the id, no title, the signature's key" if staged else ("already renamed" if renamed else "today's"))
 		var fl: Array = UiSimBridge.fighters(host.S)
-		_ok((fl[0] as Array) == (["stand_in_protagonist", "rival"] if staged else ["kai", "vorr"]) and (fl[1] as Array) == (["PROTAGONIST", "RIVAL"] if staged else ["KAI", "VORR"]), "%s: the bridge reads ids and names from the roster id (%s)" % [tag, str(fl)])
+		_ok((fl[0] as Array) == (["stand_in_protagonist", "rival"] if after else ["kai", "vorr"]) and (fl[1] as Array) == (["PROTAGONIST", "RIVAL"] if after else ["KAI", "VORR"]), "%s: the bridge reads ids and names from the roster id (%s)" % [tag, str(fl)])
 		root.size = Vector2i(1280, 720)
 		var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 		hud.size = Vector2(1280, 720)
@@ -4548,8 +4552,14 @@ func _rename_rules() -> void:
 		_ok(hud.hub.move_names.has("KEEPER'S LANCE") and hud.hub.move_names.has("THE BARRAGE"), "%s: the signature names are known as names (a banner that is only a move name is dropped)" % tag)
 		UiText.trace = []
 		UiText.tracing = true
+		var dropped0: int = int(hud.hub.stats.get("banners_move_name", 0))
 		hud.consume({"type": "banner", "text": "PROTAGONIST.SIG", "col": "#ffffff", "dur": 1.4})
 		_ok(hud.hub.banner.is_empty(), "%s: a banner that is only the signature's key is dropped like its name" % tag)
+		# The signature's banner shows neither as the raw key nor twice: the key, the key again and the move's name are each dropped, none is carded.
+		hud.consume({"type": "banner", "text": "PROTAGONIST.SIG", "col": "#ffffff", "dur": 1.4})
+		hud.consume({"type": "banner", "text": "Keeper's Lance", "col": "#ffffff", "dur": 1.4})
+		hud.consume({"type": "banner", "text": "RIVAL.SIG", "col": "#ffffff", "dur": 1.4})
+		_ok(hud.hub.banner.is_empty() and int(hud.hub.stats.get("banners_move_name", 0)) - dropped0 == 4, "%s: the signature's banner is dropped whether it arrives as the key or as the name (4 of 4 dropped, none carded, none twice)" % tag)
 		hud.consume({"type": "banner", "text": "RIVAL POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
 		_ok(str(hud.hub.banner.get("text", "")) == "RIVAL POWERS UP  TIER 2", "%s: the sim's banner names the fighter by its display name, in capitals" % tag)
 		hud.consume({"type": "banner", "text": "PROTAGONIST.SIG scores", "col": "#ffffff", "dur": 1.4})
