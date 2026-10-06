@@ -40,6 +40,10 @@ class Pl:
 	var last_press_tick: int = -1000   # the S.tick of the last press (the clock a tapping player's real rate counts)
 	var brawl_prev_c: int = -1         # the last beatAt read, to see a new blow go on its way
 	var brawl_off: int = 0
+	var zip_mask: int = 0          # the stance mask the zipper holds this tick (8: LT, the manoeuvre stance)
+	var zip_phase: int = 0         # 0 free, 1 LT down, 2 the face press made and LT kept down
+	var zip_t0: int = 0
+	var zip_next: int = 0          # the S.tick before which he does not zip again (the price is 20 ki)
 	var brawl_done: bool = true
 	var hold_until: int = -1
 	var hold_kind: int = 0
@@ -190,6 +194,35 @@ class Pl:
 				return true
 		return false
 
+	## A player who only zip strikes (the zip, melee-press-feel.md section 2c; intent version 4): in the mid band, free and with the ki, he presses LT
+	## (the manoeuvre stance, mask bit 8) and, a tick later, a light with LT kept down; he keeps LT down through the zip, lets it go when a brawl
+	## starts or after 70 ticks, and waits 120 ticks before the next. Inside an exchange or a brawl he taps lights like the masher, so a zip that
+	## ends in a catch or a counter plays on. On a build with no zip the LT press is a dodge and the light an attack, which is what it would be.
+	func _zipper(S, slot: int) -> int:
+		var f = S.fighters[slot]
+		var o = S.fighters[1 - slot]
+		var dist: float = absf(SimWrap.sdx(f.x, o.x)) / 75.0
+		var in_b: bool = brawl != null and bool(brawl.call("inBrawl", S, f))
+		if zip_phase == 0:
+			zip_mask = 0
+			if S.dirS.ex != null:
+				return 0 if S.tick - last_press_tick >= int(P.get("gap", "8")) else -1
+			if f.state == "free" and f.ki >= 20.0 and dist >= 4.0 and dist <= 12.0 and S.tick >= zip_next:
+				zip_phase = 1
+				zip_t0 = S.tick
+				zip_mask = 8
+			return -1
+		if zip_phase == 1:
+			zip_phase = 2
+			zip_mask = 8
+			return 0
+		zip_mask = 8
+		if in_b or S.tick - zip_t0 > 70:
+			zip_phase = 0
+			zip_mask = 0
+			zip_next = S.tick + 120
+		return -1
+
 	## The tapper inside a brawl. The beat list holds a light's blow for 2 ticks only, so the old oracle never sees it (the script went blind). The
 	## director's own read is DirBrawl.beatAt(S, f): the S.tick of his blow on its way (B2: its beat point), or -1. A rhythm player throws one blow
 	## at a time, never a flurry (taps slower than 12 ticks are not one): a new blow goes on its way, the next press is planned at its read tick plus
@@ -252,6 +285,8 @@ class Pl:
 				elif lt >= hold_until and lt >= rest_until:
 					hold_kind = 1 if String(P.get("kind", "H")) == "H" else 0
 					return hold_kind
+			"zipper":
+				return _zipper(S, slot)
 			"tapper":
 				if S.dirS.ex != seen_ex:
 					seen_ex = S.dirS.ex
@@ -390,7 +425,7 @@ func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
 
 ## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
 func _gblank() -> Dictionary:
-	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
 
 
 ## An event field as an int, 0 when the build's event has no such field.
@@ -417,7 +452,7 @@ func _greport(g: Dictionary) -> Dictionary:
 		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
 		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades,
 		"exactTradeFields": g.exact > 0 and g.exact == g.tradeBreaks, "levelTrades": g.drawsAfterClose, "levelChanges": g.drawChanges, "levelChangeShare": snappedf(float(g.drawChanges) / maxf(1.0, float(g.drawsAfterClose)), 0.001),
-		"firstSlotSeq": g.firstSlotSeq, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
+		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
@@ -476,6 +511,12 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 			if p.forms and S.fighters[slot].act.formReady:
 				it.transform = true
 			var k: int = p.decide(S, slot, lt)
+			if p.kind == "zipper":
+				it.stanceMask = p.zip_mask
+				if p.zip_phase == 0 and S.dirS.ex == null:   # fly in to the mid band
+					var zdx: float = SimWrap.sdx(S.fighters[slot].x, S.fighters[1 - slot].x)
+					it.mx = signf(zdx) if absf(zdx) > 12.0 * 75.0 else 0.0
+					it.dash = absf(zdx) > 40.0 * 75.0
 			if k >= 0:
 				if k == 1:
 					it.heavy = true
@@ -537,6 +578,11 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 						g.perfectBlocks += 1
 					elif ck == "guard_break":
 						g.guardBreaks += 1
+					elif ck == "zip_light" or ck == "zip_heavy":
+						g.zips += 1
+					elif ck == "zip_end":
+						var zt: String = str(e.get("text"))
+						g.zipEnds[zt] = int(g.zipEnds.get(zt, 0)) + 1
 					elif ck == "trade_break":
 						g.tradeBreaks += 1
 						# the break comes on the first live tick at or after the limit (a hit-stop holds the sim), so lateness is counted and a break before the limit is the fault

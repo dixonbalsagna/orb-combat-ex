@@ -81,6 +81,21 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		"bad": "", "koAt": -1.0, "winner": -1, "maxTier": [1, 1], "lowSec": 0.0, "lowCas": 0.0, "casByTier": [0.0, 0.0, 0.0, 0.0, 0.0],
 		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "fronts": 0}
 	var prev_x: Array = [fs[0].x, fs[1].x]
+	# the zip (docs/design/melee-press-feel.md section 2c; docs/director/brawl-plan.md section 7.4): one record a zip, from the zip_light or zip_heavy cue to its zip_end;
+	# the build may not have it yet, and then the list stays empty
+	var prev_ki: Array = [fs[0].ki, fs[1].ki]
+	var zopen := {}                    # the zipper's index -> its open zip's index in rec.zips
+	var wsb = load("res://sim/world/structures.gd")
+	var can_block: bool = false
+	if wsb != null:
+		for mth in wsb.get_script_method_list():
+			if String(mth.name) == "blockedAt":
+				can_block = true
+	rec["zips"] = []
+	rec["kiSpent"] = [0.0, 0.0]
+	rec["drops"] = {"start": 0, "land": 0, "end": 0}
+	rec["zipBrawlViol"] = 0
+	rec["zipBrawlTexts"] = {}
 	var was_launched: Array = [false, false]
 	var ended: Array = [false, false]   # a flight ended this tick: its open launch takes the class of the contact if no event named one
 	var new_fl: Array = []   # launch events of this tick
@@ -314,6 +329,47 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 					rec.brawl.staggers[sk] = int(rec.brawl.staggers.get(sk, 0)) + 1
 				elif cq == "trade_break":
 					rec.brawl.tradeBreaks += 1
+				if cq == "zip_light" or cq == "zip_heavy":
+					var za: int = int(e.actor)
+					if za >= 0 and za < 2:
+						var zr = fs[1 - za]
+						var dxz: float = SimWrap.sdx(fs[za].x, zr.x)
+						var dyz: float = zr.y - fs[za].y
+						rec.zips.append({"a": za, "t": S.tick, "kind": "light" if cq == "zip_light" else "heavy", "tell": int(_ei(e, "amount")), "in": int(_ei(e, "n")), "dur": int(_ei(e, "dur")),
+							"d0": snappedf(sqrt(dxz * dxz + dyz * dyz) / 75.0, 0.01), "price": snappedf(float(prev_ki[za]) - float(fs[za].ki), 0.01),
+							"dmg": 0.0, "guard": 0, "out": "", "outN": -1, "exitBh": -1.0, "wayBh": -1.0, "inside": false, "end": "", "endTicks": -1})
+						zopen[za] = rec.zips.size() - 1
+				elif cq == "zip_out":
+					var zo: int = int(e.actor)
+					if zopen.has(zo):
+						var zz = rec.zips[zopen[zo]]
+						zz.out = str(e.get("text"))
+						zz.outN = int(_ei(e, "n"))
+						var ex_x: float = float(e.get("x"))
+						var ex_y: float = float(e.get("y"))
+						var zrv = fs[1 - zo]
+						var edx: float = SimWrap.sdx(zrv.x, ex_x)
+						var edy: float = ex_y - zrv.y
+						zz.exitBh = snappedf(sqrt(edx * edx + edy * edy) / 75.0, 0.01)
+						var wdx: float = SimWrap.sdx(fs[zo].x, ex_x)
+						var wdy: float = ex_y - fs[zo].y
+						zz.wayBh = snappedf(sqrt(wdx * wdx + wdy * wdy) / 75.0, 0.01)
+						if can_block:
+							zz.inside = bool(wsb.call("blockedAt", S, ex_x, ex_y, 0.0, 0.0))   # inside the ground or a building (no margin)
+				elif cq == "zip_end":
+					var ze: int = int(e.actor)
+					if zopen.has(ze):
+						var zq = rec.zips[zopen[ze]]
+						zq.end = str(e.get("text"))
+						zq.endTicks = S.tick - int(zq.t)
+						zopen.erase(ze)
+				elif cq == "brawl_start":
+					var bst: String = str(e.get("text"))
+					rec.zipBrawlTexts[bst] = int(rec.zipBrawlTexts.get(bst, 0)) + 1
+					if (zopen.has(int(e.actor)) or zopen.has(int(e.target))) and bst != "caught" and bst != "countered":
+						rec.zipBrawlViol += 1   # a zip never starts an exchange unless the zipper is caught or countered
+				elif cq == "drop_start" or cq == "drop_land" or cq == "drop_end":
+					rec.drops[cq.substr(5)] = int(rec.drops.get(cq.substr(5), 0)) + 1
 			# reach (Encounter's contact slice): every damaging strike of a light or heavy melee exchange (a light, a heavy or a guarded hit; signatures and their guarded hits are beams, not strikes) is measured from the attacker to the victim at the damage event: the horizontal distance must stay within 68 units, and a height difference beyond 68 is allowed only on sloped ground
 			var rex = S.dirS.ex
 			if e.type == "damage" and e.number and e.amount > 0.0 and rex != null and str(rex.tag).begins_with("BURIED") and (str(rex.kind) == "light" or str(rex.kind) == "heavy"):
@@ -342,6 +398,12 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 				rec.heavyLanded[int(e.attacker)] += 1
 			elif e.type == "decisive" and str(e.get("kind")) == "clash" and int(e.winner) >= 0 and int(e.winner) < 2:
 				rec.heavyClashWins[int(e.winner)] += 1
+			if e.type == "damage" and e.number and e.amount > 0.0 and zopen.has(int(e.attacker)):
+				var zdm = rec.zips[zopen[int(e.attacker)]]
+				if str(e.get("kind")) == "guard":
+					zdm.guard += 1   # a blocked zip blow
+				else:
+					zdm.dmg += e.amount
 			if e.type == "damage" and e.region != "":
 				rec.dmgByRegion[e.region] = rec.dmgByRegion.get(e.region, 0.0) + e.amount
 				if int(e.victim) >= 0 and int(e.victim) < 2:
@@ -397,6 +459,11 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			new_fl[new_fl.size() - 1].pl = true   # the planner launch: its LAUNCH line is in the same tick as its launch event (the last one if a scripted launch follows in the tick)
 		new_fl.clear()
 		S.out.feed.clear()
+		for zi in range(2):
+			var dkz: float = float(prev_ki[zi]) - float(fs[zi].ki)
+			if dkz > 0.0:
+				rec.kiSpent[zi] += dkz   # ki spent, a tick at a time (the regeneration in the same tick hides a little of it)
+			prev_ki[zi] = fs[zi].ki
 		if rec.bad != "":
 			break
 	rec.ticks = ticks
@@ -504,6 +571,12 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 
 
 ## The first contact of the oldest open launch of victim v (balance-targets 18): one class per launch.
+## An event field as an int, 0 when the build's event has no such field.
+func _ei(e, k: String) -> int:
+	var v = e.get(k)
+	return int(v) if v != null else 0
+
+
 func _land(open_fl: Array, v: int, cls: String) -> void:
 	for fl in open_fl:
 		if fl.v == v and fl.cls == "":

@@ -13,7 +13,9 @@ extends SceneTree
 ## the fighters spend there), as the mean over all counted time, and the median and 90th percentile across matches, for two setups:
 ##   ai: the AI against the AI (default arm), and press: a pressing script (flies at the rival, a light every `gap` live ticks, takes his forms)
 ##   against the medium AI (the same player as sim/director/tools/brawl_probe.gd, with the `waited` field).
-##   godot --headless --path . --script res://qa/godot/downtime.gd -- <matches> <baseSeed> [--setup=ai|press|both] [--level=medium] [--gap=8]
+##   godot --headless --path . --script res://qa/godot/downtime.gd -- <matches> <baseSeed> [--setup=ai|press|both] [--level=medium] [--gap=8] [--mix=1]
+## --mix=1 is the mixing presser (melee-press-feel.md section 9f, as Encounter's brawl probe has it): once two blows of his string have landed he closes about half his
+## strings with an ender, a tapped heavy. The brawl's length and share are read on him: the median and 90th percentile of a brawl (at most 20 s), and the share of fight time in a brawl.
 ## Read-only with respect to sim/.
 
 
@@ -23,6 +25,7 @@ func _init() -> void:
 	var setup := "both"
 	var level := "medium"
 	var gap := 8
+	var mix := false
 	for a in args:
 		if a.begins_with("--setup="):
 			setup = a.substr(8)
@@ -30,6 +33,8 @@ func _init() -> void:
 			level = a.substr(8)
 		elif a.begins_with("--gap="):
 			gap = int(a.substr(6))
+		elif a.begins_with("--mix="):
+			mix = a.substr(6) != "0"
 		else:
 			pos.append(a)
 	var n: int = int(pos[0]) if pos.size() > 0 else 10
@@ -37,9 +42,9 @@ func _init() -> void:
 	SimInputData.load_and_apply()
 	var dai = load("res://sim/director/ai.gd")
 	dai.set("level", level)
-	var out := {"downtime": true, "n": n, "level": level, "gap": gap}
+	var out := {"downtime": true, "n": n, "level": level, "gap": gap, "mix": mix}
 	for s in (["ai", "press"] if setup == "both" else [setup]):
-		out[s] = _run(s, n, base, gap)
+		out[s] = _run(s, n, base, gap, mix)
 	print(JSON.stringify(out))
 	quit()
 
@@ -60,12 +65,15 @@ func _running(S: SimState) -> bool:
 	return false
 
 
-func _run(setup: String, n: int, base: int, gap: int) -> Dictionary:
+func _run(setup: String, n: int, base: int, gap: int, mix: bool = false) -> Dictionary:
 	var perMatch: Array = []        # [total idle s a minute, close-band idle s a minute] for each match
 	var tot_ticks := 0
 	var idle_ticks := 0
 	var close_ticks := 0
 	var close_idle := 0
+	var brawl_ticks := 0
+	var lens: Array = []                 # live ticks of every brawl that ended (the brawl_end cue)
+	var brawl_cls = load("res://sim/director/brawl.gd") if ResourceLoader.exists("res://sim/director/brawl.gd") else null
 	for m in range(n):
 		var S := SimCore.createSim()
 		if setup == "press":
@@ -82,6 +90,10 @@ func _run(setup: String, n: int, base: int, gap: int) -> Dictionary:
 		var ti := 0
 		var tc := 0
 		var tci := 0
+		var decided := false             # the mixing presser: this string's ender is decided
+		var want_ender := false
+		var str_k := 0
+		var mute := 0
 		var wall0: int = Time.get_ticks_msec()
 		while S.T < 900.0 and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
 			ticks += 1
@@ -95,13 +107,34 @@ func _run(setup: String, n: int, base: int, gap: int) -> Dictionary:
 				it.mx = signf(dx) if absf(dx) > 110.0 else 0.0
 				it.my = signf(dy) if absf(dy) > 40.0 else 0.0
 				it.dash = absf(dx) > 700.0
-				it.light = pending
-				it.lightHeld = pending
+				if mix and brawl_cls != null and S.dirS.ex != null and S.dirS.ex.tpl == "brawl":
+					if me.act.dirI[brawl_cls.STR_ON] != 1:
+						decided = false
+						want_ender = false
+					elif not decided and me.act.dirI[brawl_cls.STRING_N] >= 2:
+						decided = true
+						str_k += 1
+						want_ender = SimRng.keyed(base + m, "probe.mix", str_k) < 0.5
+				else:
+					decided = false
+					want_ender = false
+				if mute > 0:
+					mute -= 1
+					pending = false
+				it.light = pending and not want_ender
+				it.lightHeld = pending and not want_ender
+				if pending and want_ender:
+					it.heavy = true   # a tapped heavy: after two landed blows it is the ender
+					want_ender = false
+					mute = 40
 				it.waited = mini(15, carry) if pending else 0
 				if me.act.formReady:
 					it.transform = true
 				ins = [it, null]
 			var stepped: bool = SimCore.step(S, ins) if ins != null else SimCore.step(S)
+			for e in S.out.fx:
+				if e.type == "cue" and str(e.get("kind")) == "brawl_end":
+					lens.append(int(e.get("amount")))
 			S.out.fx.clear()
 			S.out.feed.clear()
 			if not stepped:
@@ -118,6 +151,8 @@ func _run(setup: String, n: int, base: int, gap: int) -> Dictionary:
 			if S.game.ko != null or me.state == "intro" or ai.state == "intro" or me.state == "waiting" or ai.state == "waiting":
 				continue
 			t += 1
+			if S.dirS.ex != null and S.dirS.ex.tpl == "brawl":
+				brawl_ticks += 1
 			var close: bool = DirBands.band(me, ai) == DirBands.CLOSE
 			var run: bool = _running(S)
 			if close:
@@ -133,6 +168,7 @@ func _run(setup: String, n: int, base: int, gap: int) -> Dictionary:
 		idle_ticks += ti
 		close_ticks += tc
 		close_idle += tci
+	lens.sort()
 	var a_all: Array = []
 	var a_close: Array = []
 	for p in perMatch:
@@ -147,7 +183,9 @@ func _run(setup: String, n: int, base: int, gap: int) -> Dictionary:
 		"closeBandShareOfTime": snappedf(float(close_ticks) / float(maxi(1, tot_ticks)), 0.001),
 		"closeBandNothingRunningPerMin": snappedf(60.0 * float(close_idle) / float(maxi(1, tot_ticks)), 0.1),
 		"closeBandMedian": snappedf(_q(a_close, 0.5), 0.1), "closeBandP90": snappedf(_q(a_close, 0.9), 0.1),
-		"closeBandIdleShareOfCloseTime": snappedf(float(close_idle) / float(maxi(1, close_ticks)), 0.001)}
+		"closeBandIdleShareOfCloseTime": snappedf(float(close_idle) / float(maxi(1, close_ticks)), 0.001),
+		"brawls": lens.size(), "brawlShare": snappedf(float(brawl_ticks) / float(maxi(1, tot_ticks)), 0.001),
+		"brawlMedianSec": snappedf(_q(lens, 0.5) / 60.0, 0.01), "brawlP90Sec": snappedf(_q(lens, 0.9) / 60.0, 0.01)}
 
 
 func _q(a: Array, q: float) -> float:

@@ -53,7 +53,7 @@ function runPair(tag, a, b, n, base) {
       const line = out.split(String.fromCharCode(10)).find(l => l.startsWith('{') && l.includes('"players"'));
       if (code !== 0 || !line) return reject(new Error('players.gd failed for ' + tag + ' (exit ' + code + ')' + String.fromCharCode(10) + out.slice(0, 1200)));
       const r = JSON.parse(line);
-      resolve({ pair: tag, n: r.n, aWins: r.aWins, bWins: r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, strings: r.stats[0].blurStrings, locked: r.stats[0].blurLocked });
+      resolve({ pair: tag, zips: (r.brawl || {}).zips, zipEnds: (r.brawl || {}).zipEnds, n: r.n, aWins: r.aWins, bWins: r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, strings: r.stats[0].blurStrings, locked: r.stats[0].blurLocked });
     });
   });
 }
@@ -76,6 +76,7 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
     runPair('bolt-medium', 'masher:energy=1:forms=1', 'ai:level=medium', Math.min(n, 100), base),
     runPair('blast-rush', 'tapper:idle=14:acc=80:win=4:mix=LLLH' + E, 'tapper:acc=80:win=4:mix=LLH' + R, Math.min(n, 40), base),
     runPair('blast-rush-slow', 'tapper:acc=80:win=4:mix=LLH' + E, 'tapper:acc=80:win=4:mix=LLH' + R, Math.min(n, 40), base),
+    runPair('zip-medium', 'zipper:forms=1', 'ai:level=medium', Math.min(n, 100), base),
     runPair('blast-medium', 'tapper:idle=14:acc=80:win=4:mix=LLLH' + E, 'ai:level=medium', Math.min(n, 100), base),
     runPair('blast-slow-medium', 'tapper:acc=80:win=4:mix=LLH' + E, 'ai:level=medium', Math.min(n, 100), base),
   ]);
@@ -149,6 +150,7 @@ function masherRows(results) {
     else if (r.pair === 'bolt-medium') rows.push({ id: 'masher.bolt.medium', ref: '§6 masher', what: 'A bolt-only player wins against the medium AI (agency pass 16: 20 to 40%)', status: dec ? (r.aWins / dec >= 0.20 && r.aWins / dec <= 0.40 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec})` : 'no decided matches', band: '20 to 40%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
     else if (r.pair === 'blast-rush-slow') rows.push({ id: 'masher.blast.rushslow', ref: '§6 masher', what: 'The slow blaster (L L and a tapped H, one press every 24 ticks) against a rush-heavy timed script: at least 95% of matches finish before the cap (slice 12 is meant to fix this; 40 to 60% for the win share)', status: dec ? (r.aWins / dec >= 0.40 && r.aWins / dec <= 0.60 && dec / r.n >= 0.95 ? 'PASS' : 'FAIL') : 'FAIL', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec}); ${(100 * dec / r.n).toFixed(0)}% finished` : 'no decided matches', band: '40 to 60%, finish at least 95%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
     else if (r.pair === 'blast-rush') rows.push({ id: 'masher.blast.rush', ref: '§6 masher', what: 'A blast-heavy timed script (a bolt about every 14 ticks) against a rush-heavy timed script (agency pass 15.6: 40 to 60%, and at least 95% of matches finish)', status: dec ? (r.aWins / dec >= 0.40 && r.aWins / dec <= 0.60 && dec / r.n >= 0.95 ? 'PASS' : 'FAIL') : 'FAIL', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec}); ${(100 * dec / r.n).toFixed(0)}% finished` : 'no decided matches', band: '40 to 60%, finish at least 95%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
+    else if (r.pair === 'zip-medium') rows.push({ id: 'masher.zip.medium', ref: '§2c', what: 'A player who only zip strikes (LT then a light, in the mid band) against the medium AI (reported)', status: r.zips ? 'INFO' : 'PENDING', value: r.zips ? `${dec ? (100 * r.aWins / dec).toFixed(1) : '-'}% (${r.aWins} of ${dec}); ${r.zips} zips in ${r.n} matches, ends ${JSON.stringify(r.zipEnds)}` : 'the build has no zip: no zip_light cue in these matches', band: 'reported', note: `${r.n} matches, ${r.timeouts} ran to the cap` });
     else if (r.pair === 'blast-slow-medium') rows.push({ id: 'masher.blast.slowmedium', ref: '§6 masher', what: 'The slow blaster (L L and a tapped H, one press every 24 ticks) wins against the medium AI (reported; the band of the mixed blaster, 30 to 50%, is the reference)', status: 'INFO', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec})` : 'no decided matches', band: '(25 to 45%)', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
     else if (r.pair === 'blast-medium') rows.push({ id: 'masher.blast.medium', ref: '§6 masher', what: 'A mixed blaster (a bolt about every 14 ticks, a tapped heavy now and then) wins against the medium AI (agency pass section 22: 30 to 50%)', status: dec ? (r.aWins / dec >= 0.30 && r.aWins / dec <= 0.50 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec})` : 'no decided matches', band: '30 to 50%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
   }

@@ -147,6 +147,31 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const full = evaluate({ default: Array.from({ length: 40 }, () => er({ launch: 30, knockback: 25, continue: 45 })) }), id2 = k => full.find(r => r.id === k);
     assert.strictEqual(id2('10.end.launch').status, 'PASS'); assert.strictEqual(id2('10.end.knockback').status, 'PASS'); assert.strictEqual(id2('10.end.continue').status, 'PASS');
   });
+  await t('zip rows: PENDING without zip records; a good set judges clean 35 to 55, countered, caught, ki share, price, travel, exits, no brawl without a catch; a bad set fails the hard tests', async () => {
+    const none = evaluate({ default: [rec()] });
+    assert.strictEqual(none.find(r => r.id === 'zip').status, 'PENDING');
+    // 60 matches of 2 zips each: 120 zips, 55 clean, 18 countered (15%), 30 caught (25%), the rest done without damage
+    const zipOf = (i, end, dmg, over = {}) => ({ a: 0, t: 100 + i, kind: i % 3 === 0 ? 'heavy' : 'light', tell: i % 3 === 0 ? 10 : 6, in: 8, dur: i % 3 === 0 ? 53 : 33, d0: 8, price: i % 3 === 0 ? 30 : 20, dmg, guard: 0, out: 'home', outN: 10, exitBh: 8, wayBh: 8, inside: false, end, endTicks: 40, ...over });
+    const ends = [];
+    for (let i = 0; i < 120; i++) ends.push(i < 55 ? ['done', 30] : i < 73 ? ['countered', 0] : i < 103 ? ['caught', 0] : ['done', 0]);
+    const mkRec = (j, over) => rec({ seed: j, koAt: 300, kiSpent: [1500, 1500], zips: [0, 1].map(k => { const [e, d] = ends[j * 2 + k]; return zipOf(j * 2 + k, e, d, over || {}); }), zipBrawlViol: 0, drops: { start: 1, land: 1, end: 1 } });
+    const good = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkRec(j)) }), g = k => good.find(r => r.id === k);
+    for (const k of ['zip.clean', 'zip.countered', 'zip.caught', 'zip.kiShare', 'zip.price', 'zip.table', 'zip.travel', 'zip.brawl']) assert.strictEqual(g(k).status, 'PASS', k + ' ' + g(k).value);
+    assert.strictEqual(g('zip.exit').status, 'PENDING', 'only home exits: nothing to check yet');
+    const bad = evaluate({ default: Array.from({ length: 60 }, (_, j) => ({ ...mkRec(j, { price: 25, in: 2, out: 'far', exitBh: 14, inside: true }), zipBrawlViol: 1 })) }), b = k => bad.find(r => r.id === k);
+    for (const k of ['zip.price', 'zip.travel', 'zip.exit', 'zip.brawl']) assert.strictEqual(b(k).status, 'FAIL', k);
+    // few zips: the rates wait for 40
+    const few = evaluate({ default: Array.from({ length: 5 }, (_, j) => mkRec(j)) });
+    assert.strictEqual(few.find(r => r.id === 'zip.clean').status, 'PENDING');
+  });
+  await t('perfect blocks a minute: easy 0.5 to 2, hard 2 to 5.5 from the level runs; the per-exchange row is reported only', async () => {
+    const { levelRows } = require('./bands');
+    const mk = pb => Array.from({ length: 10 }, () => rec({ koAt: 300, melee: { 'TRADE BLOWS': 20 }, cues: { perfect_block: pb }, brawl: { blows: { light: 500 } } }));
+    const rows = levelRows({ easy: mk(15), hard: mk(15) }), id = k => rows.find(r => r.id === k);
+    assert.strictEqual(id('7.pb.perMin.easy').status, 'FAIL');   // 150 over 50 minutes: 3 a minute is over easy's 2
+    assert.strictEqual(id('7.pb.perMin.hard').status, 'PASS');   // and inside hard's 2 to 5.5
+    assert.strictEqual(id('7.pb.easy').status, 'INFO');
+  });
   console.log(`godot qa selftest: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

@@ -328,7 +328,11 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     if (D.every(r => r.cues) && sum(D.map(r => r.cues.perfect_block || 0)) > 0) R.info('7.parry', '§7', 'Parries per 100 melee exchanges', 'retired', 'the parry window was replaced by the perfect block in step 3 (ADR 0008); the perfect-block rows below carry the band. Measured parries: ' + (sum(D.map(r => sum(r.parries))) / m * 100).toFixed(2));
     else R.point('7.parry', '§7', 'Parries per 100 melee exchanges', { v: sum(D.map(r => sum(r.parries))) / m * 100, lo: 5, hi: 15 });
     // control-rules 6 / moveset-rules 11: perfect blocks per 100 melee exchanges by AI level (the main run is the data's level, medium)
-    if (D.every(r => r.cues)) R.point('7.pb.medium', '§7', 'Perfect blocks per 100 melee exchanges, medium AI (5 to 15)', { v: sum(D.map(r => r.cues.perfect_block || 0)) / m * 100, lo: 5, hi: 15, unit: 'num' });
+    if (D.every(r => r.cues)) {
+      const pbn = sum(D.map(r => r.cues.perfect_block || 0)), mins = sum(D.map(r => r.koAt)) / 60;
+      R.point('7.pb.perMin.medium', '§7', 'Perfect blocks a minute, medium AI (1 to 4; Game Design, melee-press-feel 9f)', { v: pbn / mins, lo: 1, hi: 4, unit: 'num' });
+      R.info('7.pb.medium', '§7', 'Perfect blocks per 100 melee exchanges, medium AI (the old basis, reported; 5 to 15 before the brawl)', (pbn / m * 100).toFixed(2), 'a brawl is one exchange of many blows; the rows above and below read it a minute and per 100 blows');
+    }
     // ---- the rows counted per exchange, re-based for a brawl (docs/qa/brawl-rebase.md): one brawl is one exchange of many blows, so the per-exchange rows above read against a different unit.
     // The per-exchange rows stay as they are (for the comparison with every earlier baseline); these are reported beside them, with the proposed bases, until Game Design confirms the bands.
     if (D.every(r => r.brawl && r.cues)) {
@@ -345,6 +349,7 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
         if (tot) R.info('10.brawl.ends', '§10 brawl', 'How brawls end, as shares of brawls (the basis for "knock-backs" and "continues": a brawl continues until it ends; the 25 to 35% and 40 to 50% bands read against launch decisions)', Object.entries(ends).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${(v / tot * 100).toFixed(1)}%`).join(', '), `${tot} brawl endings`);
       }
     }
+    zipBlock(R, D, wl, sum);
     R.point('7.chain', '§7', 'Chains per 100 melee exchanges (10 to 30, agency pass 14; strings now come from the presses)', { v: sum(D.map(r => r.chains.length)) / m * 100, lo: 10, hi: 30 });
     const slip = sum(D.map(r => r.melee['PURSUIT — TARGET SLIPS AWAY'] || 0)), caught = sum(D.map(r => r.melee['PURSUIT — CAUGHT'] || 0));
     R.rate('7.slip', '§7', 'Pursuit slip rate (escape gamble)', { v: slip / (slip + caught), ci: wl(slip, slip + caught), lo: 0.35, hi: 0.65 });
@@ -524,11 +529,53 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
 }
 
 // Perfect blocks per 100 melee exchanges at the easy and hard AI levels (control-rules 6: easy 3 to 8, hard 12 to 20), from default-arm records played at that level.
+
+// ---- the zip (melee-press-feel.md section 2c; docs/director/brawl-plan.md section 7.7). One record a zip in rec.zips (records.gd, from the zip_light and zip_heavy cues to zip_end).
+// The table's numbers are the spec's (a zip strike 20 ki, a tell of 6 and a whole zip of 32 to 34 ticks; a zip heavy 30 ki, 10 and 52 to 54). PENDING while the build has no zip.
+const ZIP = { light: { price: 20, tell: 6, whole: [32, 34] }, heavy: { price: 30, tell: 10, whole: [52, 54] } };
+function zipBlock(R, D, wl, sum) {
+  const zips = D.flatMap(r => (r.zips || []).map(z => ({ ...z, seed: r.seed })));
+  const mins = sum(D.map(r => r.koAt)) / 60;
+  if (!zips.length) { R.pending('zip', '§2c', 'The zip rows: lands clean, countered, caught, ki share, the price and travel tests, the exit rules, no brawl without a catch or a counter', 'the build has no zip (no zip_light or zip_heavy cue in these records)'); return; }
+  const n = zips.length, enough = n >= 40;
+  const kindOf = z => ZIP[z.kind] || ZIP.light;
+  const clean = zips.filter(z => z.dmg > 0).length, countered = zips.filter(z => z.end === 'countered').length, caught = zips.filter(z => z.end === 'caught').length;
+  const guard = zips.filter(z => z.guard > 0 && z.dmg === 0).length, dodged = zips.filter(z => z.end === 'done' && z.dmg === 0 && z.guard === 0).length;
+  const shot = zips.filter(z => z.end === 'shot' || z.end === 'stopped').length, outrun = zips.filter(z => z.end === 'outrun').length, down = zips.filter(z => z.end === 'down').length;
+  const pct = k => (100 * k / n).toFixed(1) + '%';
+  R.info('zip.perMin', '§2c', 'Zips a minute, and by kind', `${(n / mins).toFixed(2)} a minute (${zips.filter(z => z.kind === 'light').length} strikes, ${zips.filter(z => z.kind === 'heavy').length} heavies over ${n})`, `${D.length} matches`);
+  const rate = (id, what, k, lo, hi) => (enough ? R.rate(id, '§2c', what, { v: k / n, ci: wl(k, n), lo, hi }) : R.pending(id, '§2c', what, `${n} zips so far (at least 40 are needed): ${k} of them`));
+  rate('zip.clean', 'Zips whose blow lands clean, against an opponent who answers (35 to 55%)', clean, 0.35, 0.55);
+  rate('zip.countered', 'Zips countered by a tech or heavy strike (10 to 25%)', countered, 0.10, 0.25);
+  rate('zip.caught', 'Zips that end with the zipper caught (20 to 35%)', caught, 0.20, 0.35);
+  const spent = sum(D.map(r => (r.kiSpent || [0, 0])[0] + (r.kiSpent || [0, 0])[1])), zipKi = sum(zips.map(z => kindOf(z).price));
+  if (spent > 0) R.point('zip.kiShare', '§2c', 'Ki spent on zips, as a share of all ki spent (at most 25%)', { v: zipKi / spent, hi: 0.25, unit: 'pct' });
+  R.info('zip.reported', '§2c', 'Zips reported: blocked, dodged (a zip that completed and did no damage), stopped by a shot, outrun, knocked down, and every end', `blocked ${pct(guard)}, dodged ${pct(dodged)}, stopped by a shot ${pct(shot)}, outrun ${pct(outrun)}, down ${pct(down)}; ends ${JSON.stringify(zips.reduce((a, z) => { a[z.end || 'open'] = (a[z.end || 'open'] || 0) + 1; return a; }, {}))}`, `${n} zips in ${D.length} matches`);
+  // hard tests
+  const badPrice = zips.filter(z => Math.abs(z.price - kindOf(z).price) > 0.5);
+  R.add({ id: 'zip.price', ref: '§2c', what: 'A zip costs exactly the table ki, paid at the press (hard test)', status: badPrice.length ? 'FAIL' : 'PASS', value: badPrice.length ? `${badPrice.length} of ${n} off the table, first: ${badPrice[0].kind} paid ${badPrice[0].price}, seed ${badPrice[0].seed}` : `${n} of ${n} on the table`, band: 'strike 20, heavy 30 (within 0.5, the regeneration of one tick)', note: 'read as the ki the zipper held the tick before the cue less the ki after it' });
+  const badTell = zips.filter(z => z.tell !== kindOf(z).tell || z.dur < kindOf(z).whole[0] || z.dur > kindOf(z).whole[1] + 12);
+  R.add({ id: 'zip.table', ref: '§2c', what: 'A zip tell is the table ticks and its whole length is in the table range for the default exit (hard test; the ticks in reach need a field of their own)', status: badTell.length ? 'FAIL' : 'PASS', value: badTell.length ? `${badTell.length} of ${n} off the table, first: ${badTell[0].kind} tell ${badTell[0].tell}, whole ${badTell[0].dur}, seed ${badTell[0].seed}` : `${n} of ${n} on the table`, band: 'strike tell 6, whole 32 to 34; heavy tell 10, whole 52 to 54 (up to 12 more for a longer exit)', note: 'the ticks in reach before and after the blow are not on the cues: Encounter to add them (reach_in, reach_out) and this row reads them exactly' });
+  const floor = d => Math.max(4, Math.ceil(d / 3));
+  const badTravel = zips.filter(z => (z.in > 0 && z.in < floor(z.d0)) || (z.outN >= 0 && z.outN < floor(z.wayBh)));
+  R.add({ id: 'zip.travel', ref: '§2c', what: 'Travel is never under the floor, each way: at least max(4, ceil(distance in bh / 3)) ticks (Legal RL-076, a hard test)', status: badTravel.length ? 'FAIL' : 'PASS', value: badTravel.length ? `${badTravel.length} of ${n} under the floor, first: way in ${badTravel[0].in} ticks over ${badTravel[0].d0} bh, way out ${badTravel[0].outN} over ${badTravel[0].wayBh} bh, seed ${badTravel[0].seed}` : `${n} of ${n} at or over the floor`, band: 'at least max(4, ceil(bh / 3)) ticks', note: 'the way in is the cue n over the start distance; the way out is zip_out n over the path from the zipper to the exit point' });
+  const out = zips.filter(z => z.out !== '' && z.out !== 'home');
+  const badExit = out.filter(z => z.exitBh > 12.5 + 0.01 || z.inside);
+  R.add({ id: 'zip.exit', ref: '§2c', what: 'No stick exit over 12.5 bh from the rival or inside the ground or a building; the home exit is exempt (hard test)', status: badExit.length ? 'FAIL' : (out.length ? 'PASS' : 'PENDING'), value: badExit.length ? `${badExit.length} of ${out.length} bad, first: ${badExit[0].out} exit ${badExit[0].exitBh} bh, inside ${badExit[0].inside}, seed ${badExit[0].seed}` : (out.length ? `${out.length} exits checked (${zips.length - out.length} home)` : 'no zip left by a stick exit yet'), band: 'at most 12.5 bh, never inside', note: 'inside is World blockedAt at the exit point with no margin' });
+  const viol = sum(D.map(r => r.zipBrawlViol || 0));
+  R.add({ id: 'zip.brawl', ref: '§2c', what: 'No brawl is announced during a zip unless the zipper is caught or countered (hard test)', status: viol ? 'FAIL' : 'PASS', value: viol ? `${viol} brawl_start cues during a zip with another text` : `0 over ${n} zips`, band: 'never', note: 'a brawl_start while the zip is open whose text is not caught or countered' });
+  const dr = { start: sum(D.map(r => (r.drops || {}).start || 0)), land: sum(D.map(r => (r.drops || {}).land || 0)), end: sum(D.map(r => (r.drops || {}).end || 0)) };
+  R.info('zip.drops', '§2c', 'The dropped state: drop_start, drop_land and drop_end (reported; every start should land and end, apart from a KO in the air)', `${dr.start} starts, ${dr.land} lands, ${dr.end} ends`, `${D.length} matches`);
+}
+
 function levelRows(byLevel) {
-  const BAND = { easy: [3, 8], hard: [12, 20] }, rows = [];
+  const MIN = { easy: [0.5, 2], hard: [2, 5.5] }, OLD = { easy: [3, 8], hard: [12, 20] }, rows = [];
   for (const [level, recs] of Object.entries(byLevel)) {
-    const m = recs.reduce((a, r) => a + Object.values(r.melee).reduce((x, y) => x + y, 0), 0), pb = recs.reduce((a, r) => a + ((r.cues || {}).perfect_block || 0), 0), [lo, hi] = BAND[level], v = m ? pb / m * 100 : NaN;
-    rows.push({ id: '7.pb.' + level, ref: '§7', what: `Perfect blocks per 100 melee exchanges, ${level} AI (${lo} to ${hi})`, status: Number.isFinite(v) ? (v >= lo && v <= hi ? 'PASS' : 'FAIL') : 'PENDING', value: Number.isFinite(v) ? v.toFixed(2) : 'no data', band: `${lo} to ${hi}`, note: `${recs.length} default-arm matches at ${level}; point estimate` });
+    const m = recs.reduce((a, r) => a + Object.values(r.melee).reduce((x, y) => x + y, 0), 0), pb = recs.reduce((a, r) => a + ((r.cues || {}).perfect_block || 0), 0);
+    const mins = recs.reduce((a, r) => a + r.koAt, 0) / 60, blows = recs.reduce((a, r) => a + Object.values((r.brawl || {}).blows || {}).reduce((x, y) => x + y, 0), 0);
+    const [lo, hi] = MIN[level], v = mins ? pb / mins : NaN, old = m ? pb / m * 100 : NaN, perBlow = blows ? pb / blows * 100 : NaN;
+    rows.push({ id: '7.pb.perMin.' + level, ref: '§7', what: `Perfect blocks a minute, ${level} AI (${lo} to ${hi}; Game Design, melee-press-feel 9f)`, status: Number.isFinite(v) ? (v >= lo && v <= hi ? 'PASS' : 'FAIL') : 'PENDING', value: Number.isFinite(v) ? v.toFixed(2) : 'no data', band: `${lo} to ${hi}`, note: `${recs.length} default-arm matches at ${level}; point estimate; per 100 blows ${Number.isFinite(perBlow) ? perBlow.toFixed(2) : '-'}` });
+    rows.push({ id: '7.pb.' + level, ref: '§7', what: `Perfect blocks per 100 melee exchanges, ${level} AI (the old basis, reported; ${OLD[level][0]} to ${OLD[level][1]} before the brawl)`, status: 'INFO', value: Number.isFinite(old) ? old.toFixed(2) : 'no data', band: '', note: `${recs.length} default-arm matches at ${level}` });
   }
   return rows;
 }
