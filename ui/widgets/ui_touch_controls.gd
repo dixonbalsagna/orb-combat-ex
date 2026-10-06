@@ -58,13 +58,14 @@ static func sig(lay: UiLayout, state: Dictionary, intro_a: float, transform_avai
 		var b: Vector2 = st.get("base", Vector2.ZERO)
 		var t: Vector2 = st.get("thumb", Vector2.ZERO)
 		sk = [int(b.x * 0.5), int(b.y * 0.5), int(t.x * 0.5), int(t.y * 0.5), bool(st.get("sprint", false))]
-	return [int(lay.vp.x), int(lay.vp.y), int(lay.dp * 100.0), lay.left_handed, lay.touch_full, bits, int(float((state.get("attack", {}) as Dictionary).get("hold", 0.0)) * HOLD_TICKS), sk, int(intro_a * 10.0), transform_avail, pulse_step, extra_key(extra)]
+	return [int(lay.vp.x), int(lay.vp.y), int(lay.dp * 100.0), lay.left_handed, lay.touch_full, bits, int(float((state.get("attack", {}) as Dictionary).get("hold", 0.0)) * HOLD_TICKS), int(float((state.get("attack", {}) as Dictionary).get("hold_ticks", 0.0))), int((state.get("attack", {}) as Dictionary).get("tier", 0)), sk, int(intro_a * 10.0), transform_avail, pulse_step, extra_key(extra)]
 
 
 ## The redraw key for what the HUD adds to the Full buttons: the greyed ones and the press mark in quarters of its life.
 static func extra_key(extra: Dictionary) -> Array:
 	var ack: Dictionary = extra.get("ack", {})
-	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0)]
+	var chg: Dictionary = extra.get("charge", {})
+	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0), str(chg.get("name", "")), int(float(chg.get("frac", 0.0)) * 8.0), (extra.get("lit", []) as Array).duplicate()]
 
 
 ## `pulse_step` is -1 for no pulse, else 0 to 7 round the cycle (the HUD steps it eight times a cycle while a form is ready and the fighter is free); under
@@ -120,7 +121,9 @@ static func draw(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, int
 			"attack":
 				UiIcons.star4(ci, p, r * 1.05, icol)
 				var hold: float = clampf(float(bs.get("hold", 0.0)), 0.0, 1.0)
-				if down and hold > 0.0:
+				if UiStance.three() and bs.has("hold_ticks"):
+					_draw_attack_ring(ci, p, r, bs, down)   # one button, three strengths: the ring has a notch at each threshold
+				elif down and hold > 0.0:
 					ci.draw_arc(p, r * 1.14, -PI * 0.5, -PI * 0.5 + TAU * hold, 40, Color(UiLook.col(UiLook.WARN)), maxf(3.0, r * 0.1), true)
 			"guard":
 				UiIcons.stance5(ci, 1, p, r * 1.0, dark if down else UiStance.col(1))
@@ -167,6 +170,33 @@ static func draw(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, int
 	UiText.no_outline = false
 
 
+## Simple under three strengths (Controls' display_state attack: hold_ticks, tier, medium_at, heavy_at, swipe): the ring fills over the hold to the heavy threshold (to the medium one
+## when the heavy is a swipe up, `swipe`), with a notch at the medium and at the heavy threshold; the tier reached is lit (a thicker ring). A shape cue, no colour reliance.
+static func _draw_attack_ring(ci: CanvasItem, p: Vector2, r: float, bs: Dictionary, down: bool) -> void:
+	var med: float = maxf(float(bs.get("medium_at", 12)), 1.0)
+	var hv: float = maxf(float(bs.get("heavy_at", 28)), med + 1.0)
+	var swipe: bool = bool(bs.get("swipe", false))
+	var span: float = med if swipe else hv
+	var ht: float = float(bs.get("hold_ticks", 0.0))
+	var tier: int = int(bs.get("tier", 0))
+	var rr: float = r * 1.14
+	var warn := Color(UiLook.col(UiLook.WARN))
+	var ink := Color(UiLook.col(UiLook.INK))
+	if down:
+		ci.draw_arc(p, rr, 0.0, TAU, 40, Color(ink, 0.2), maxf(2.0, r * 0.06), true)
+		var f: float = clampf(ht / span, 0.0, 1.0)
+		if f > 0.0:
+			ci.draw_arc(p, rr, -PI * 0.5, -PI * 0.5 + TAU * f, 40, warn, maxf(3.0, r * (0.1 + 0.05 * float(mini(tier, 2)))), true)
+	# the notches: at the medium threshold, and at the heavy one (the end of the ring) unless the heavy is a swipe
+	var marks: Array = [med / span]
+	if not swipe:
+		marks.append(1.0)
+	for mk in marks:
+		var ang: float = -PI * 0.5 + TAU * minf(float(mk), 0.999)
+		var d := Vector2.from_angle(ang)
+		ci.draw_line(p + d * rr * 0.9, p + d * rr * 1.2, Color(ink, 0.9 if down else 0.45), maxf(2.0, r * 0.07), true)
+
+
 ## The ready Transform button's pulse: a ring that swells off the button's edge and fades (a steady thick ring when `step` is 8, reduced motion).
 static func _form_pulse(ci: CanvasItem, c: Vector2, r: float, line: float, step: int) -> void:
 	var ink := Color(UiLook.col(UiLook.CHARGE_READY))
@@ -200,6 +230,10 @@ static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionar
 			if pulse_step >= 0:
 				_form_pulse(ci, p, r, line, pulse_step)
 		var word: String = UiData.t("prompt." + n) if (n == "power" or n == "guard") else UiData.t("prompt.full_" + n)
+		if UiStance.three() and n == "heavy":
+			word = UiData.t("prompt.three_full_heavy")        # the three strengths: Y is the medium and B the heavy (the ids stay)
+		elif UiStance.three() and n == "signature":
+			word = UiData.t("prompt.three_full_signature")
 		var stance_word: String = UiStance.touch_word(n)   # a stance button is named for its stance once the stance is live
 		if stance_word != "":
 			word = stance_word
@@ -219,6 +253,11 @@ static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionar
 		while fs > int(UiLook.text_floor) and UiText.width(word, fs) > r * 1.7:
 			fs -= 1
 		UiText.draw(ci, word, Vector2(p.x, p.y + UiText.ascent(fs) - UiText.height(fs) * 0.5), fs, Color(dark if down else ink, dim), 0)
+		var chg: Dictionary = extra.get("charge", {})
+		if not chg.is_empty() and str(chg.get("name", "")) == n:
+			UiHints.draw_charge(ci, p, r * 1.1, float(chg["frac"]), bool(chg.get("armoured", false)), 1.0)
+		if (extra.get("lit", []) as Array).has(n):
+			UiHints.draw_lit(ci, p, r * 0.95, 1.0)
 		# The press that did nothing: a short grey mark on the button (a shape: cross, dash, dot or ring).
 		var ack: Dictionary = extra.get("ack", {})
 		if not ack.is_empty() and str(ack.get("name", "")) == n and float(ack.get("a", 0.0)) > 0.0:

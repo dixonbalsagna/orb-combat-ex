@@ -31,6 +31,10 @@ static func data() -> Dictionary:
 
 ## The screen's rows in order: {kind, key, label, help, enabled, ...}. A section is a heading row then its items. `needs` is a feature
 ## flag; without it the row is listed but disabled. An id with no option in options.json is skipped.
+## Options whose rows are listed only once their feature flag is on (features.json): the three-strength charge settings, and Reduce flashing until Legal approves its words.
+const HIDE_UNTIL := {"latch_charge": "three_strengths", "latch_charge_p2": "three_strengths", "charges_off": "three_strengths", "charges_off_p2": "three_strengths", "reduce_flashing": "reduce_flashing"}
+
+
 static func rows() -> Array:
 	var d: Dictionary = data()
 	var od: Dictionary = UiData.options()
@@ -48,8 +52,10 @@ static func rows() -> Array:
 				continue
 			var key: String = str(it)
 			var o: Dictionary = od.get(key, {})
-			if o.is_empty() or ((key == "pad_preset_p2" or key == "energy_style_p2") and not two_humans):
+			if o.is_empty() or ((key == "pad_preset_p2" or key == "energy_style_p2" or key == "latch_charge_p2" or key == "charges_off_p2") and not two_humans):
 				continue
+			if HIDE_UNTIL.has(key) and not UiData.feature(str(HIDE_UNTIL[key])):
+				continue   # a row for something that is not live yet is not listed
 			var kind: String = TOGGLE if o["default"] is bool else (SLIDER if o.has("min") else CHOICE)
 			var need2: String = str(needs.get(key, ""))
 			out.append({"kind": kind, "key": key, "label": str(o.get("label", key)), "help": str(o.get("help", "")), "enabled": need2 == "" or UiData.feature(need2), "o": o})

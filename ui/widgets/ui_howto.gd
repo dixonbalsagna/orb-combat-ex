@@ -173,6 +173,8 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 		var y: float = body.position.y + float(heights[col])
 		var rec: Dictionary = {"item": it, "col": col, "fs": fs_body, "fs_small": fs_small}
 		var text: String = str(it.get("text", ""))
+		if it.has("action") and UiStance.three() and ["heavy", "signature"].has(str(it["action"])):
+			text = UiData.t("prompt.three_howto_" + str(it["action"]))   # Y is the medium and B the heavy; the signature is the power button held with B
 		if it.has("action") and UiHints.HOLD_STANCES.has(str(it["action"])):
 			var hw: String = UiStance.howto_word(int(UiHints.HOLD_STANCES[str(it["action"])]))   # the stance button's row, named for its stance once the stance is live
 			if hw != "":

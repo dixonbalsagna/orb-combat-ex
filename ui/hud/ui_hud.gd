@@ -44,6 +44,11 @@ var strip_fn: Callable = Callable()    # () -> Dictionary for UiStrip
 var split_fn: Callable = Callable()    # () -> Dictionary: Camera's split record (see UiSplit); empty or invalid = one camera
 var opts: Dictionary = {
 	"silhouette": false,       # the body figure beside each plate: off by default; the host turns it on in training and as the accessibility default
+	"reduce_flashing": false,  # fewer and gentler flashes (VFX's register; the divider's slam flash); a row in Settings once the feature flag is on
+	"latch_charge": false,     # three strengths: a tap starts a charge and the next press lets it go (per player; the host passes them to Controls' hub)
+	"latch_charge_p2": false,
+	"charges_off": false,      # three strengths: every press is a tap
+	"charges_off_p2": false,
 	"reduced_motion": false,   # no flicker, shimmer, shrinking rings or slide-ins; every cue still has a shape
 	"captions": true,          # bracketed gesture tags on barks
 	"thickness": 1.0,          # crown arc thickness multiplier (an accessibility option)
@@ -167,6 +172,11 @@ var _notice_held := false
 var _notice_focus := 0
 var _notice_pending: Array = []        # a How to play card asked for while the notice was up: [first_run, page], opened when it closes
 var _l_notice: UiLayer
+## The register's answer for the split divider's slam flash (UI draws it; Camera supplies the `slam` amount): the host sets `flash_fn(kind, strength, area) -> 0..1`, the share of the
+## flash it allows (VFX's flash register); UI asks once as a slam begins. Under Reduce flashing or Reduced motion the divider does not flash at all.
+var flash_fn: Callable
+var _slam_prev := 0.0
+var _slam_scale_v := 1.0
 var _howto_page := 0
 var _howto_scroll := 0                # the third-party licences page: the first visible line
 var _howto_scroll_f := 0.0            # ... and the fractional part while a finger or the wheel drags
@@ -1054,10 +1064,11 @@ func hide_photo_notice(open_settings: bool = false) -> void:
 	var pending: Array = _notice_pending
 	_notice_pending = []
 	if open_settings:
+		var fk: String = "reduce_flashing" if UiData.feature("reduce_flashing") else "reduced_motion"
 		if _set_open:
-			_settings_focus_key("reduced_motion")
+			_settings_focus_key(fk)
 		else:
-			show_settings("reduced_motion")
+			show_settings(fk)
 	elif not pending.is_empty():
 		show_howto(bool(pending[0]), int(pending[1]))
 
@@ -1787,6 +1798,8 @@ func _rm_action_word(id: String) -> String:
 	var sw: Dictionary = UiStance.remap_words(a)   # a stance button is named for its stance once the stance is live
 	if sw.has("label"):
 		return str(sw["label"])
+	if UiStance.three() and ["heavy", "signature"].has(a):
+		return UiData.t("prompt.three_remap_" + a)   # Y reads Medium and B reads Heavy (the action ids stay)
 	return str((_rm_words().get("actions", {}) as Dictionary).get(a, a))
 
 
@@ -2594,7 +2607,7 @@ func _you_alpha(m: UiFighterModel) -> float:
 ## What the HUD adds to the Full touch buttons for the first human: the buttons with no move in the stance held now ("dim", greyed and marked not yet) and the press
 ## that did nothing ("ack": {name, kind, a}), both from the fighter's model. Empty on any other layout.
 func _touch_extra() -> Dictionary:
-	var out := {"dim": [], "ack": {}}
+	var out := {"dim": [], "ack": {}, "lit": []}
 	if not layout.touch_full:
 		return out
 	for m in hub.models:
@@ -2603,6 +2616,13 @@ func _touch_extra() -> Dictionary:
 		for aid in UiHints.FACE_CELLS:
 			if not UiStance.cell_works(m.stance_kind, str(UiHints.FACE_CELLS[aid])):
 				(out["dim"] as Array).append(aid)
+		var cf: float = UiHints.charge_frac(m, bool(opts["reduced_motion"]))
+		if cf >= 0.0:
+			for aid3 in UiHints.FACE_CELLS:
+				if str(UiHints.FACE_CELLS[aid3]) == m.charge_cell:
+					out["charge"] = {"name": aid3, "frac": cf, "armoured": m.charge_cell == "b"}
+		if m.launcher_open:
+			(out["lit"] as Array).append("signature")   # the launch window is on B
 		var a: float = UiHints.ack_alpha(m, bool(opts["reduced_motion"]))
 		if a > 0.0:
 			for aid2 in UiHints.FACE_CELLS:
@@ -2875,12 +2895,30 @@ func _paint_chip(ci: CanvasItem, slot: int) -> void:
 				UiSplit.draw_chip(ci as Control, hub, slot, ch["dir"], _chip_text[slot], layout.s, _o())
 
 
+## The share of the divider's slam flash allowed now: asked of the register once, as the slam begins; none under Reduce flashing or Reduced motion.
+func _slam_scale(slam: float) -> float:
+	if bool(opts["reduce_flashing"]) or bool(opts["reduced_motion"]):
+		_slam_prev = slam
+		return 0.0
+	if slam > 0.5 and _slam_prev <= 0.5:
+		_slam_scale_v = clampf(float(flash_fn.call("divider_slam", slam, 0.02)), 0.0, 1.0) if flash_fn.is_valid() else 1.0
+	elif slam < 0.1:
+		_slam_scale_v = 1.0
+	_slam_prev = slam
+	return _slam_scale_v
+
+
 ## The divider's two bars (a dark edge under a light line): transform only, no draw commands. Updated when its rounded
 ## geometry changes.
 func _update_divider() -> void:
 	var geo: Dictionary = {}
 	if UiSplit.divider_visible(layout, _split, layout.s) and _lb < 0.5:
 		geo = UiSplit.divider_geometry(layout, _split, layout.s)
+		var sl0: float = float(geo["slam"]) if not geo.is_empty() else 0.0
+		var sc: float = _slam_scale(sl0)
+		if not geo.is_empty() and sc < 1.0:
+			geo["slam"] = sl0 * sc
+			geo["w"] = maxf(2.0, 2.0 * layout.s) * (1.0 + 1.5 * float(geo["slam"]))
 	var key: Array = UiSplit.divider_key(geo)
 	if key == _div_key:
 		return

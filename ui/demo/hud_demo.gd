@@ -4,7 +4,7 @@ extends Control
 ##
 ## Run:  godot --path . res://ui/demo/hud_demo.tscn
 ## Options after "--": --scenario=hero_vs_proud|empress_vs_cyborg|placeholders|stress|controls   --shot=file.png (save a frame)
-##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --ko --feedback[=copied|review]
+##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --three --charge=CELL[:FRACTION] --launcher --rf --ko --feedback[=copied|review]
 ## Keys: Tab scenario | Space pause | R restart | S silhouette | F4 feed | C captions | M reduced motion | K crown always on | B brink ring | T arc thickness
 ##       Z clear zones | L region label | V viewport size | +/- fighter size | H hide this legend
 
@@ -30,7 +30,11 @@ var ring_always := true        # the ring map shows even with one camera
 
 func _ready() -> void:
 	args = _parse_args()
-	UiHud.notice_auto = args.has("notice")   # the demo shows the photosensitivity notice only when asked (--notice)
+	UiHud.notice_auto = args.has("notice")
+	if args.has("three"):
+		UiData.set_feature("three_strengths", true)   # the three-strength HUD (--three)
+	if args.has("rf"):
+		UiData.set_feature("reduce_flashing", true)   # the demo shows the photosensitivity notice only when asked (--notice)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud = preload("res://ui/hud/ui_hud.tscn").instantiate()
@@ -81,7 +85,7 @@ func _ready() -> void:
 		# A mock of the host's touch state, for the screenshots: --touch=press shows the buttons held and a stick drag, --touch=ready the idle layout.
 		var tstate := {"attack": {"down": false, "hold": 0.0}, "guard": {"down": false}, "power": {"down": false}, "stick": {"active": false}}
 		if str(args["touch"]) == "press":
-			tstate = {"attack": {"down": true, "hold": 0.6}, "guard": {"down": false}, "power": {"down": true}, "stick": {"active": true, "base": Vector2(size.x * 0.2, size.y * 0.72), "thumb": Vector2(size.x * 0.2 + 90.0, size.y * 0.72 - 40.0), "sprint": false}}
+			tstate = {"attack": {"down": true, "hold": 0.6, "hold_ticks": 20, "tier": 1, "medium_at": 12, "heavy_at": 28, "swipe": false}, "guard": {"down": false}, "power": {"down": true}, "stick": {"active": true, "base": Vector2(size.x * 0.2, size.y * 0.72), "thumb": Vector2(size.x * 0.2 + 90.0, size.y * 0.72 - 40.0), "sprint": false}}
 		if args.has("full"):
 			tstate["full"] = {"light": {"down": str(args["touch"]) == "press"}, "guard": {"down": str(args["touch"]) == "press"}}
 			if args.has("armed"):
@@ -104,6 +108,12 @@ func _ready() -> void:
 		# The held stance buttons, faked (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8): --mask=N for the first fighter, --rmask=N for the rival.
 		hud.hub.patch(0, {"stance_mask": int(args.get("mask", "0"))})
 		hud.hub.patch(1, {"stance_mask": int(args.get("rmask", "0"))})
+	if args.has("charge"):
+		# A wind-up in view for a still: --charge=CELL[:FRACTION] (y or b; the ring is held at that fraction of its length).
+		var cp: PackedStringArray = str(args["charge"]).split(":")
+		hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": cp[0], "dur": 28.0 if cp[0] == "b" else 12.0})
+	if args.has("launcher"):
+		hud.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1, "n": 999})
 	if args.has("ack"):
 		# A press that did nothing, held in view for a still: --ack=KIND[:CELL] (refused, energy, held, lapsed or empty; the cell x, y, a or b) on the first fighter.
 		var ap: PackedStringArray = str(args["ack"]).split(":")
@@ -219,6 +229,11 @@ func _split_fn() -> Dictionary:
 
 
 func _process(delta: float) -> void:
+	if args.has("charge"):
+		var m0: UiFighterModel = hud.hub.model(0)
+		var cpp: PackedStringArray = str(args["charge"]).split(":")
+		m0.charge_on = true
+		m0.charge_t = m0.charge_dur * (float(cpp[1]) if cpp.size() > 1 else 0.6)   # hold the ring where it is
 	if args.has("ack"):
 		hud.hub.model(0).press_ack_t = 0.08   # the mark lasts half a second: hold it in view
 	split_sep = move_toward(split_sep, 1.0 if split_on else 0.0, delta / 0.45)

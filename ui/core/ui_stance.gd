@@ -58,6 +58,28 @@ static func live(kind: int) -> bool:
 	return bool(row.get("live", row.get("_live", false)))
 
 
+## Whether the three-strength layout is on (features.json `three_strengths`): X light, Y medium, B heavy, and the signature on the power button held with B.
+static func three() -> bool:
+	return UiData.feature("three_strengths")
+
+
+## The word for a martial face button's action under the three strengths: the action ids stay light, heavy, context and signature (the sim, Controls and the
+## remap data use them), so a row whose id says `signature` reads Heavy and `heavy` reads Medium. "" when the flag is off or the action is not one of the four.
+static func three_word(action: String) -> String:
+	if not three():
+		return ""
+	match action:
+		"light":
+			return UiData.t("prompt.three_light")
+		"heavy":
+			return UiData.t("prompt.three_medium")
+		"signature":
+			return UiData.t("prompt.three_heavy")
+		"context":
+			return UiData.t("prompt.three_context")
+	return ""
+
+
 ## Whether a face button (x, y, a or b) has a move in the stance on the live build: once the stance is live every cell does; until then the cells that do nothing
 ## are listed in stances.json `_works` (false for them; the rest default to true). The martial A, the charging stance's X, Y and A (the sim never reads `special`) and
 ## the manoeuvre stance's A do nothing today; RT plus B is the plain signature, A with guard held the deflect and A in the energy stance a mine, so those are not listed.

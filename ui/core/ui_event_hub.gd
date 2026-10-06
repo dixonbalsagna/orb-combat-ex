@@ -390,8 +390,15 @@ func consume(e) -> void:
 			_on_press_ack(m, d)
 		"cue":
 			# The brawl's acknowledgements arrive as a cue named press_ack: its text is the kind and its source the face button (x, y, a or b), when it says.
-			if str(d.get("kind", "")) == "press_ack":
+			var ck: String = str(d.get("kind", ""))
+			if ck == "press_ack":
 				_on_press_ack(m, {"kind": str(d.get("text", "")), "cell": str(d.get("source", ""))})
+			elif ck == "windup":
+				_on_windup(m, d)
+			elif ck == "launcher_open" and m != null:
+				m.launcher_open = true
+			elif ck == "launcher_close" and m != null:
+				m.launcher_open = false
 		"weight_set":
 			if m != null:
 				_set_weight(m, _weight_name(d.get("weight", "light")))
@@ -645,6 +652,8 @@ func _on_press_ack(m: UiFighterModel, d: Dictionary) -> void:
 	match str(d.get("kind", "")):
 		"weight_light":
 			_set_weight(m, "light")
+		"weight_medium":
+			_set_weight(m, "medium")
 		"weight_heavy":
 			_set_weight(m, "heavy")
 		"weight_fallback":
@@ -673,8 +682,36 @@ func _on_press_ack(m: UiFighterModel, d: Dictionary) -> void:
 
 static func _weight_name(v) -> String:
 	if v is String:
-		return "heavy" if str(v).to_lower() == "heavy" else "light"
-	return "heavy" if int(v) >= 1 else "light"
+		var w: String = str(v).to_lower()
+		return w if ["light", "medium", "heavy"].has(w) else "light"
+	return "heavy" if int(v) >= 2 else ("medium" if int(v) == 1 and UiStance.three() else ("heavy" if int(v) >= 1 else "light"))
+
+
+## The director's wind-up of a medium (Y) or a heavy (B): `text` start (`source` the face button, `dur` its length: ticks if over 3, else seconds; `n` the landing tick)
+## or end (`k` the result: 1 thrown, 2 stopped by a blow, 3 lost, 4 a miss). The ring fills over the wind-up; a stopped, lost or missed one leaves the grey mark.
+func _on_windup(m: UiFighterModel, d: Dictionary) -> void:
+	if m == null:
+		return
+	var cell: String = str(d.get("source", "")).to_lower()
+	match str(d.get("text", "")):
+		"start":
+			if not ["x", "y", "a", "b"].has(cell):
+				return
+			m.charge_cell = cell
+			m.charge_t = 0.0
+			var dur: float = float(d.get("dur", 0.0))
+			m.charge_dur = dur / 60.0 if dur > 3.0 else dur
+			if m.charge_dur <= 0.0:
+				m.charge_dur = 28.0 / 60.0 if cell == "b" else 12.0 / 60.0
+			m.charge_on = true
+		"end":
+			var res: int = int(d.get("k", 0))
+			var c2: String = cell if ["x", "y", "a", "b"].has(cell) else m.charge_cell
+			m.charge_on = false
+			if res >= 2 and ["x", "y", "a", "b"].has(c2):
+				m.press_ack_kind = {2: "refused", 3: "lapsed", 4: "empty"}.get(res, "lapsed")
+				m.press_ack_cell = c2
+				m.press_ack_t = 0.0
 
 
 func _set_weight(m: UiFighterModel, w: String) -> void:

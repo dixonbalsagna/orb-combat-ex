@@ -49,6 +49,8 @@ static func legend_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: f
 	var pop: float = clampf((3.0 - m.stance_kind_t) / 0.5, 0.0, 1.0)
 	if POP_ACKS.has(m.press_ack_kind):
 		pop = maxf(pop, clampf((ACK_POP - m.press_ack_t) / 0.3, 0.0, 1.0))
+	if m.charge_on or m.launcher_open:
+		pop = 1.0   # a wind-up on Y or B, or the launch window on B: the legend is up while it lasts
 	return maxf(base, pop)
 
 
@@ -57,6 +59,39 @@ static func legend_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: f
 const ACK_SECONDS := 0.5
 const ACK_POP := 1.3
 const POP_ACKS: Array = ["refused", "energy", "empty"]
+
+
+## How far the wind-up has come, 0 to 1 (a quarter at a time under reduced motion), or -1 when none is running.
+static func charge_frac(m: UiFighterModel, reduced: bool) -> float:
+	if not m.charge_on or m.charge_dur <= 0.0:
+		return -1.0
+	var f: float = clampf(m.charge_t / m.charge_dur, 0.0, 1.0)
+	return floorf(f * 4.0 + 0.001) / 4.0 if reduced else f
+
+
+## A wind-up ring round a button's glyph: a faint full track and an arc that fills clockwise from the top; B's (the armoured heavy) has a second, thin outer ring, a shape and not a colour.
+static func draw_charge(ci: CanvasItem, c: Vector2, r: float, frac: float, armoured: bool, alpha: float) -> void:
+	if alpha <= 0.01 or frac < 0.0:
+		return
+	var ink := Color(UiLook.col(UiLook.INK))
+	var w: float = maxf(2.5, r * 0.2)
+	ci.draw_arc(c, r, 0.0, TAU, 28, Color(ink, 0.25 * alpha), w, true)
+	if frac > 0.0:
+		ci.draw_arc(c, r, -PI * 0.5, -PI * 0.5 + TAU * frac, 28, Color(ink, alpha), w, true)
+	if armoured:
+		ci.draw_arc(c, r * 1.3, 0.0, TAU, 32, Color(ink, 0.7 * alpha), maxf(1.5, w * 0.45), true)
+
+
+## The launch window on B: a bright ring round the glyph with four short ticks (a shape, not only a colour).
+static func draw_lit(ci: CanvasItem, c: Vector2, r: float, alpha: float) -> void:
+	if alpha <= 0.01:
+		return
+	var warn := Color(UiLook.col(UiLook.WARN))
+	var w: float = maxf(3.0, r * 0.28)
+	ci.draw_arc(c, r * 1.1, 0.0, TAU, 28, Color(warn, alpha), w, true)
+	for i in range(4):
+		var d := Vector2.from_angle(float(i) * PI * 0.5 + PI * 0.25)
+		ci.draw_line(c + d * r * 1.45, c + d * r * 1.85, Color(warn, alpha), maxf(2.0, w * 0.6), true)
 
 
 ## How strong the press mark is now, 0 to 1: a quick fade (Orb: cool answers, flash 4 of 10, subtle); under reduced motion a static mark for the same time.
@@ -159,6 +194,15 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 			if cell != "" and UiStance.live(m.stance_kind):
 				label = cell   # what this face button does in the stance held now (only for a stance whose names are true on the live build)
 			dim = not UiStance.cell_works(m.stance_kind, str(FACE_CELLS[aid]))   # a button with no move in the stance held now reads as not yet, greyed
+			if UiStance.three() and not UiStance.live(m.stance_kind):
+				# The three strengths: the action ids are the same, the words are Light, Medium, Heavy (and under the power button, the signature held with B).
+				var tw: String = UiStance.three_word(aid)
+				if tw != "":
+					label = tw
+				if m.stance_kind == UiStance.CHARGING and aid == "signature":
+					label = UiData.t("prompt.three_sig_chord")
+		elif UiStance.three() and r.has("action") and aid == "light":
+			label = UiData.t("prompt.three_attack")   # Simple: one button, light or medium by how long it is held
 		elif by_stance and r.has("action") and HOLD_STANCES.has(aid):
 			var kind: int = int(HOLD_STANCES[aid])
 			if UiStance.live(kind):
@@ -173,6 +217,25 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 				continue
 			dim = true   # the Specials row stays until the charging stance is live, and its moves do not exist yet
 		out.append({"acts": acts, "label": label, "held": held, "dim": dim, "note": UiData.t("prompt.not_yet") if dim else "", "cell": row_cell})
+	if UiStance.three():
+		if by_stance and m.stance_kind != UiStance.CHARGING:
+			# The signature is on the power button held with B: a chord row after the heavy row.
+			var at: int = out.size()
+			for i in range(out.size()):
+				if str((out[i]["acts"] as Array)[0]) == "signature":
+					at = i + 1
+					break
+			out.insert(at, {"acts": ["power", "signature"], "label": UiData.t("prompt.three_sig_chord"), "held": false, "dim": false, "note": "", "cell": ""})
+		elif not by_stance and UiGlyphs.bound(scheme, "heavy", m.slot):
+			var has_heavy := false
+			var li := -1
+			for i in range(out.size()):
+				if str((out[i]["acts"] as Array)[0]) == "heavy":
+					has_heavy = true
+				if str((out[i]["acts"] as Array)[0]) == "light":
+					li = i
+			if not has_heavy and li >= 0:
+				out.insert(li + 1, {"acts": ["heavy"], "label": UiData.t("prompt.three_heavy"), "held": false, "dim": false, "note": "", "cell": "y"})   # Simple: Y is labelled Heavy
 	return out
 
 
@@ -246,7 +309,9 @@ static func _widest_label(placed: Array, fs: int) -> float:
 
 static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false) -> Array:
 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
-	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step]
+	var cf: float = charge_frac(m, reduced)
+	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
+		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", m.launcher_open, UiStance.three()]
 
 
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:
@@ -284,6 +349,12 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 		if ack_a > 0.0 and str(r.get("cell", "")) == m.press_ack_cell and m.press_ack_kind != "":
 			var gx: float = rect.position.x + float(p["pad"]) + shift
 			draw_ack(ci, m.press_ack_kind, Vector2(gx + gh * 0.5, float(r["y"])), gh * 0.5, ack_a * alpha)
+		if str(r.get("cell", "")) != "":
+			var gc := Vector2(rect.position.x + float(p["pad"]) + shift + gh * 0.5, float(r["y"]))
+			if m.charge_on and str(r["cell"]) == m.charge_cell:
+				draw_charge(ci, gc, gh * 0.62, charge_frac(m, bool(o.get("reduced_motion", false))), m.charge_cell == "b", alpha)
+			if m.launcher_open and str(r["cell"]) == "b":
+				draw_lit(ci, gc, gh * 0.52, alpha)
 	UiText.no_outline = false
 
 

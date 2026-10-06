@@ -54,6 +54,7 @@ func _run() -> void:
 	await _rename_rules()
 	await _press_mark_rules()
 	await _notice_rules()
+	await _three_strength_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
 	await _armed_touch_rules()
@@ -4742,6 +4743,238 @@ func _press_mark_rules() -> void:
 	_ok(int(pass_i["drawn"]) >= 3, "press marks: Full touch draws greyed buttons and every mark without error (%d passes)" % int(pass_i["drawn"]))
 	_ok(traced.has("NOT YET") and not traced.has(UiData.t("prompt.full_context")), "press marks: a greyed Full touch button reads NOT YET in place of its word")
 	layer.queue_free()
+	hud.queue_free()
+	await process_frame
+
+
+# --- Three strengths on three buttons, behind features.json `three_strengths` (docs/ui/hud-spec.md sections 48 and 50) ---------------------------------
+
+func _three_strength_rules() -> void:
+	# The flag is off today: nothing changes.
+	_ok(not UiStance.three() and UiStance.three_word("heavy") == "" and not UiData.feature("reduce_flashing"), "three strengths: the flags are off today and change nothing")
+	var m := UiFighterModel.new()
+	m.setup(0, "protagonist", "ONE")
+	m.ai = false
+	var labels_of := func(kind: int, preset: String) -> Dictionary:
+		m.stance_kind = kind
+		var out := {}
+		for r in UiHints.rows(m, preset, "hold"):
+			var key: String = ",".join(PackedStringArray(r["acts"]))
+			out[key] = [str(r["label"]), bool(r.get("dim", false))]
+		return out
+	var before: Dictionary = labels_of.call(0, "arena")
+	UiData.set_feature("three_strengths", true)
+	_ok(UiStance.three() and UiStance.three_word("light") == "Light" and UiStance.three_word("heavy") == "Medium" and UiStance.three_word("signature") == "Heavy" and UiStance.three_word("context") == "Context" and UiStance.three_word("mode") == "", "three strengths: Y reads Medium and B reads Heavy (the action ids stay)")
+	var bad := PackedStringArray()
+	for preset in ["arena", "kb-solo", "kb-shared-p1"]:
+		var mart: Dictionary = labels_of.call(0, preset)
+		var chrg: Dictionary = labels_of.call(3, preset)
+		var enrg: Dictionary = labels_of.call(2, preset)
+		if mart.get("light") != ["Light", false] or mart.get("heavy") != ["Medium", false] or mart.get("signature") != ["Heavy", false] or mart.get("context") != ["Context", true]:
+			bad.append("%s martial %s" % [preset, str(mart)])
+		if not mart.has("power,signature") or mart["power,signature"] != ["Signature (hold)", false]:
+			bad.append("%s chord row %s" % [preset, str(mart.keys())])
+		if chrg.get("light") != ["Light", true] or chrg.get("heavy") != ["Medium", true] or chrg.get("context") != ["Context", true] or chrg.get("signature") != ["Signature (hold)", false] or chrg.has("power,signature"):
+			bad.append("%s charging %s" % [preset, str(chrg)])
+		if enrg.get("signature") == null or str(enrg["signature"][0]) != "Beam" or str(enrg["light"][0]) != "Bolts":
+			bad.append("%s energy %s" % [preset, str(enrg)])
+	_ok(bad.is_empty(), "three strengths: the legend on Arena, the solo keyboard and the shared keyboard reads Light, Medium, Heavy, with Context greyed (martial), a Signature (hold) chord row, and under the power button Light, Medium and Context greyed with B as the signature; the energy stance keeps its own words %s" % str(bad.slice(0, 2)))
+	var simple: Dictionary = labels_of.call(0, "simple-pad")
+	_ok(simple.get("light") != null and str(simple["light"][0]) == "Attack (hold: stronger)" and not simple.has("power,signature"), "three strengths: Simple's one button reads Attack (hold: stronger) and has no chord row")
+	# Full touch words, the How to play and Remap words, the weight mark's third value.
+	var lay := UiLayout.new()
+	lay.dp = 2.6
+	lay.touch_ui = true
+	lay.touch_full = true
+	lay.compute(Vector2(2400, 1080), false)
+	var layer := UiLayer.new()
+	layer.size = Vector2(2400, 1080)
+	root.add_child(layer)
+	var scene := {"extra": {}, "state": {}, "n": 0, "lay": lay}
+	layer.painter = func(ci: CanvasItem) -> void:
+		UiTouchControls.draw(ci, scene["lay"], (scene["lay"] as UiLayout).s, scene["state"], 0.0, false, -1, scene["extra"])
+		scene["n"] += 1
+	UiText.tracing = true
+	UiText.trace = []
+	layer.sig = 1
+	layer.queue_redraw()
+	await process_frame
+	await process_frame
+	UiText.tracing = false
+	var tr: Array = UiText.trace.duplicate()
+	UiText.trace = []
+	_ok(tr.has("MEDIUM") and tr.has("HEAVY") and tr.has("LIGHT") and tr.has("CONTEXT") and not tr.has("SIGN"), "three strengths: Full touch's buttons read LIGHT, MEDIUM, HEAVY and CONTEXT (no SIGN)")
+	var howto_text := ""
+	var hp: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "kbd", 0)
+	for rec in hp["items"]:
+		if str(rec["kind"]) == "action":
+			howto_text += " | " + " ".join(PackedStringArray(rec["lines"]))
+	_ok(howto_text.contains("Medium") and howto_text.contains("Heavy (hold the power button with it for your signature, 45 Charge)") and not howto_text.contains("Signature (45 Charge)"), "three strengths: the controls page names Medium and Heavy and says where the signature is")
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	_ok(hud._rm_action_word("heavy") == "Medium" and hud._rm_action_word("signature") == "Heavy" and hud._rm_action_word("light") != "", "three strengths: Remap names Medium and Heavy")
+	hud.consume({"type": "press_ack", "actor": 0, "kind": "weight_medium"})
+	_ok(hud.hub.model(0).weight == "medium" and UiData.t("state.weight_medium") == "MEDIUM", "three strengths: the weight mark has a third value, MEDIUM")
+	hud.consume({"type": "press_ack", "actor": 0, "kind": "weight_heavy"})
+	_ok(hud.hub.model(0).weight == "heavy", "three strengths: and still HEAVY")
+	# The wind-up cue: it fills over 12 ticks on Y and 28 on B (B armoured); a thrown one just ends; a stopped, lost or missed one leaves the grey mark; a missing end clears itself.
+	var m0: UiFighterModel = hud.hub.model(0)
+	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "y", "dur": 12.0, "n": 100})
+	var f0: float = UiHints.charge_frac(m0, false)
+	m0.charge_t = 0.1
+	var f1: float = UiHints.charge_frac(m0, false)
+	var fr: float = UiHints.charge_frac(m0, true)
+	_ok(m0.charge_on and m0.charge_cell == "y" and absf(m0.charge_dur - 0.2) < 0.001 and f0 == 0.0 and f1 > 0.45 and f1 < 0.55 and fr == 0.5, "three strengths: the wind-up cue on Y fills the ring over 12 ticks (a quarter at a time under reduced motion)")
+	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "end", "source": "y", "k": 1})
+	_ok(not m0.charge_on and m0.press_ack_kind != "refused", "three strengths: a thrown wind-up just ends")
+	var ends_ok := true
+	for pair in [[2, "refused"], [3, "lapsed"], [4, "empty"]]:
+		hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "b", "dur": 28.0})
+		var armoured_dur: float = m0.charge_dur
+		hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "end", "source": "b", "k": pair[0]})
+		ends_ok = ends_ok and not m0.charge_on and m0.press_ack_kind == pair[1] and m0.press_ack_cell == "b" and absf(armoured_dur - 28.0 / 60.0) < 0.001
+	_ok(ends_ok, "three strengths: a wind-up stopped by a blow, lost or missed leaves the grey cross, ring or dash on B; B's lasts 28 ticks")
+	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "y", "dur": 0.2})
+	_ok(absf(m0.charge_dur - 0.2) < 0.001, "three strengths: a wind-up length in seconds is read as seconds")
+	m0.charge_t = 5.0
+	hud.advance(0.1)
+	_ok(not m0.charge_on, "three strengths: a wind-up whose end never came clears itself")
+	# The launcher: B's glyph is lit while the window is open.
+	hud.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1, "n": 200})
+	var lit_open: bool = m0.launcher_open
+	var sig_open: Array = UiHints.sig(m0, 1.0, "arena")
+	var la: float = UiHints.legend_alpha(m0, "auto", false, 60.0)
+	hud.consume({"type": "cue", "actor": 0, "kind": "launcher_close"})
+	var sig_closed: Array = UiHints.sig(m0, 1.0, "arena")
+	_ok(lit_open and not m0.launcher_open and sig_open != sig_closed and la == 1.0, "three strengths: launcher_open lights B (and raises the legend), launcher_close puts it out, and the layer redraws for it")
+	# Full touch: the wind-up ring and the lit button come from the first human's model.
+	hud.set_option("touch_ui", true)
+	hud.set_option("touch_preset", "touch-full")
+	hud.set_density(2.0)
+	hud.size = Vector2(2400, 1080)
+	hud.advance(1.0 / 60.0)
+	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "b", "dur": 28.0})
+	hud.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1, "n": 200})
+	var ex: Dictionary = hud._touch_extra()
+	var k0: Array = UiTouchControls.extra_key(ex)
+	m0.charge_t = 0.2
+	var k1: Array = UiTouchControls.extra_key(hud._touch_extra())
+	_ok(str(ex["charge"]["name"]) == "signature" and bool(ex["charge"]["armoured"]) and (ex["lit"] as Array).has("signature") and k0 != k1, "three strengths: on Full touch the wind-up ring sits on the heavy button (armoured) and the launch window lights it, and the layer redraws as it fills")
+	scene["extra"] = ex
+	UiText.tracing = false
+	layer.sig = 2
+	layer.queue_redraw()
+	await process_frame
+	await process_frame
+	scene["state"] = {"attack": {"down": true, "hold": 0.5, "hold_ticks": 20, "tier": 1, "medium_at": 12, "heavy_at": 28, "swipe": false}}
+	scene["extra"] = {}
+	var lay2 := UiLayout.new()
+	lay2.dp = 2.6
+	lay2.touch_ui = true
+	lay2.compute(Vector2(2400, 1080), false)
+	scene["lay"] = lay2
+	layer.sig = 3
+	layer.queue_redraw()
+	await process_frame
+	await process_frame
+	scene["state"] = {"attack": {"down": true, "hold": 0.5, "hold_ticks": 8, "tier": 0, "medium_at": 12, "heavy_at": 28, "swipe": true}}
+	layer.sig = 4
+	layer.queue_redraw()
+	await process_frame
+	await process_frame
+	var s_a: Array = UiTouchControls.sig(lay2, {"attack": {"down": true, "hold_ticks": 8, "tier": 0}}, 0.0, false)
+	var s_b: Array = UiTouchControls.sig(lay2, {"attack": {"down": true, "hold_ticks": 20, "tier": 1}}, 0.0, false)
+	_ok(int(scene["n"]) >= 4 and s_a != s_b, "three strengths: Simple's Attack ring draws with notches at the medium and heavy thresholds (and for a swipe heavy), and redraws as the hold passes them")
+	# Settings: the charge settings show with the flag, per player.
+	hud.set_option("touch_ui", false)
+	var keys_on := PackedStringArray()
+	UiSettings.two_humans = false
+	for r in UiSettings.rows():
+		keys_on.append(str(r["key"]))
+	var has_latch: bool = keys_on.has("latch_charge") and keys_on.has("charges_off") and not keys_on.has("latch_charge_p2") and not keys_on.has("reduce_flashing")
+	UiSettings.two_humans = true
+	var keys2 := PackedStringArray()
+	for r in UiSettings.rows():
+		keys2.append(str(r["key"]))
+	UiSettings.two_humans = false
+	_ok(has_latch and keys2.has("latch_charge_p2") and keys2.has("charges_off_p2") and not bool(UiData.options()["latch_charge"]["default"]) and not bool(UiData.options()["charges_off"]["default"]), "three strengths: Settings lists Latched charge and Charges off (player two's only when two people play), off by default")
+	hud.set_option("latch_charge", true)
+	hud.set_option("charges_off", true)
+	_ok(bool(hud.opts["latch_charge"]) and bool(hud.opts["charges_off"]), "three strengths: the two settings are options the host reads")
+	hud.set_option("latch_charge", false)
+	hud.set_option("charges_off", false)
+	UiData.set_feature("three_strengths", null)
+	var keys_off := PackedStringArray()
+	for r in UiSettings.rows():
+		keys_off.append(str(r["key"]))
+	_ok(not keys_off.has("latch_charge") and not keys_off.has("charges_off") and labels_of.call(0, "arena") == before, "three strengths: with the flag off the rows are gone and the legend is as it was")
+	layer.queue_free()
+	hud.queue_free()
+	await process_frame
+	await _reduce_flashing_rules()
+
+
+# --- Reduce flashing: the row, the notice's line, the divider's slam flash (docs/ui/hud-spec.md section 50) ---------------------------------------
+
+func _reduce_flashing_rules() -> void:
+	var keys := PackedStringArray()
+	for r in UiSettings.rows():
+		keys.append(str(r["key"]))
+	_ok(not keys.has("reduce_flashing"), "reduce flashing: with its flag off there is no row")
+	UiData.set_feature("reduce_flashing", true)
+	var rws: Array = UiSettings.rows()
+	var ri := -1
+	var rm := -1
+	for i in range(rws.size()):
+		if str(rws[i]["key"]) == "reduce_flashing":
+			ri = i
+		if str(rws[i]["key"]) == "reduced_motion":
+			rm = i
+	_ok(ri == rm + 1 and not bool(UiData.options()["reduce_flashing"]["default"]) and str(rws[ri]["label"]) == "Reduce flashing", "reduce flashing: with its flag on Settings lists Reduce flashing right after Reduced motion, off by default")
+	var l: PackedStringArray = UiNotice.lines()
+	_ok(l[1].contains("Reduce flashing") and l[1].contains("Reduced motion") and l[1].contains("some of them, not all") and l[0] == "This game contains flashing effects." and not " ".join(l).to_lower().contains(" safe"), "reduce flashing: the notice's second line names both settings and still claims no more (words for Legal to approve)")
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.show_photo_notice()
+	hud.notice_action("right")
+	hud.notice_action("accept")
+	var rws2: Array = UiSettings.rows()
+	var fk := ""
+	if hud.settings_focus() >= 0 and hud.settings_focus() < rws2.size():
+		fk = str(rws2[hud.settings_focus()]["key"])
+	_ok(hud.is_settings_open() and fk == "reduce_flashing", "reduce flashing: OPEN SETTINGS lands on the Reduce flashing row once it exists (%s)" % fk)
+	hud.hide_settings()
+	UiData.set_feature("reduce_flashing", null)
+	# The divider's slam flash: asked of the register once as it begins; under Reduce flashing or Reduced motion it does not flash.
+	var asked := {"n": 0, "kind": ""}
+	hud.flash_fn = func(kind: String, strength: float, area: float) -> float:
+		asked["n"] += 1
+		asked["kind"] = kind
+		return 0.5
+	var s0: float = hud._slam_scale(0.0)
+	var s1: float = hud._slam_scale(0.9)
+	var s2: float = hud._slam_scale(0.8)
+	var s3: float = hud._slam_scale(0.05)
+	var s4: float = hud._slam_scale(0.9)
+	_ok(s0 == 1.0 and s1 == 0.5 and s2 == 0.5 and s3 == 1.0 and s4 == 0.5 and int(asked["n"]) == 2 and asked["kind"] == "divider_slam", "reduce flashing: the divider's slam flash is asked of the register once as it begins, and scaled by its answer (asked %d times)" % int(asked["n"]))
+	hud.set_option("reduce_flashing", true)
+	_ok(hud._slam_scale(0.9) == 0.0 and hud._slam_scale(0.0) == 0.0, "reduce flashing: under Reduce flashing the divider does not flash")
+	hud.set_option("reduce_flashing", false)
+	hud.set_option("reduced_motion", true)
+	_ok(hud._slam_scale(0.9) == 0.0, "reduce flashing: nor under Reduced motion")
+	hud.set_option("reduced_motion", false)
+	hud.flash_fn = Callable()
+	hud._slam_scale(0.0)
+	_ok(hud._slam_scale(0.9) == 1.0, "reduce flashing: with no register (flash_fn unset) the flash is as it was")
 	hud.queue_free()
 	await process_frame
 
