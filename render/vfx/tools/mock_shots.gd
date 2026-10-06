@@ -265,7 +265,7 @@ func _play_implode() -> void:
 func _play_embers() -> void:
 	main.host.vfx.embers_enabled = true
 	var c: float = SimWrap.wrap(2250.0 * SimConst.PS)
-	for v in ["GLASS TRENCH", "FIRESTORM", "HORIZON CLEAVE", "MERIDIAN SCAR"]:
+	for v in ["GLASS TRENCH", "FIRESTORM", "HORIZON CLEAVE", "FIELD SCAR"]:
 		var S: SimState = _fresh()
 		_park(S, c - 400.0)
 		S.fighters[0].x = SimWrap.wrap(c - 1200.0)

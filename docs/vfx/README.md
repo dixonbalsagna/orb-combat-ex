@@ -244,3 +244,7 @@ World's `building_stage` event drawn: the union of the steps a jump crosses (gla
 ### The intro's thin vertical line (2026-10-05)
 
 A thin pale vertical line stood 90 to 320 px beside each falling fighter in the played intro, from the sky down to the ground. It was a **wind mark** (`trail_state.gd`): marks are lens-shaped dashes fixed in the world for a camera that flies past, spawned 0.7 to 5 body heights to the side of the flight and up to 30 body heights long; the intro's scripted drop (fighter state `intro`) does not fly the camera past, so each mark stood beside the faller as a pole. They are no longer made while a fighter is in the intro state (the random draws are still made, so the stream does not change); the fall's ribbon and the landing are unchanged. `effects_check.gd` `_intro_marks()` fails before (10 marks at once in seeds 1 and 12) and passes after (0); still `img/intro-fall-no-line.jpg` (seed 1, the double drop).
+
+### Press looks as the default, and the riposte plan (2026-10-07)
+
+Load check for turning the press looks on by default (`effects_check.gd` `_press_load()`): six blows a second from each fighter in every reading peak at 14 to 102 quads of 380 (estimates and Animation's real poses), reduced motion 12 to 22, at most 4 effects at once; the filled heavy ghosts stay at 3 to 5, 0.26 opacity, gone within 8 ticks. A plan for the riposte's sure-blow marks is in docs/vfx/riposte-plan.md (no build). Stale name: the scorch variant is FIELD SCAR in the checks.

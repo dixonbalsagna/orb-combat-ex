@@ -421,7 +421,7 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				# The release: stacked body ghosts behind him, a filled crescent along the fist's path, and a double contact ring.
 				var gl: float = VfxPress.p("ghost_life")
 				var gf: float = 1.0 - clampf(st / gl, 0.0, 1.0)
-				if not red:
+				if not red and gf > 0.0:
 					var ng: int = mini(e.ghosts if e.ghosts > 0 else 3, 5)
 					for k in range(ng):
 						var fr2: float = float(k + 1) / float(ng + 1)

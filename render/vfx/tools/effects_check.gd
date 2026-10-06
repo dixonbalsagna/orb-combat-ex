@@ -60,7 +60,7 @@ func _run() -> void:
 	_check(h2.crack_sets.size() == S.craters.size() - 2 and h2.debris.jobs.is_empty(), "sets rebuilt long after their records have no vents")
 	# Embers by variant.
 	print("embers")
-	for v in ["GLASS TRENCH", "FIRESTORM", "HORIZON CLEAVE", "MERIDIAN SCAR"]:
+	for v in ["GLASS TRENCH", "FIRESTORM", "HORIZON CLEAVE", "FIELD SCAR"]:
 		var before: int = h.debris.spawned
 		var e := VfxMock.ev("scorch", {"x": x, "y": 50.0, "w": 100.0, "power": 3.0, "variant": v, "owner": 0})
 		_tick(S, h, [e])
@@ -68,7 +68,7 @@ func _run() -> void:
 	# The pool cap under a flood.
 	print("pool")
 	for k in range(400):
-		var e := VfxMock.ev("scorch", {"x": x, "y": 50.0, "w": 100.0, "power": 4.5, "variant": "MERIDIAN SCAR", "owner": 0})
+		var e := VfxMock.ev("scorch", {"x": x, "y": 50.0, "w": 100.0, "power": 4.5, "variant": "FIELD SCAR", "owner": 0})
 		_tick(S, h, [e, e, e])
 	_check(h.debris.bits.size() <= VfxLook.DEBRIS_CAP, "the debris pool stays within %d (%d)" % [VfxLook.DEBRIS_CAP, h.debris.bits.size()])
 	# B2's floor events (docs/architecture/fx-events.md): a punch on a skyscraper, a crack, a dent, a pancake.
@@ -198,6 +198,7 @@ func _run() -> void:
 	_glare()
 	_press()
 	_zip()
+	_press_load()
 	_real()
 	_stages()
 	_real_stages()
@@ -3517,6 +3518,85 @@ func _intro_marks() -> void:
 		SimCore.dispose(S)
 	_check(seen_fall > 0 and fall_ticks > 0, "the played intro falls (%d falls seen, %d fighter-ticks in the intro state)" % [seen_fall, fall_ticks])
 	_check(worst == 0, "no wind mark stands beside a fighter in the intro's fall (most seen at once: %d)" % worst)
+
+
+## The press looks as the default (Orb's three readings on every real blow): the load of six blows a second from each fighter in every reading, with and without Animation's real
+## poses, in reduced motion, and Legal's limits on the filled ghosts.
+func _press_load() -> void:
+	print("press looks under load")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.x = plains
+	f0.y = g
+	f1.x = SimWrap.wrap(plains + 90.0)
+	f1.y = g
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var hit := func(att: int, kind: String, style: String): return VfxMock.ev("damage", {"x": S.fighters[1 - att].x, "y": g + 90.0, "z": 0.0, "amount": 6.0, "col": "#ffffff", "victim": 1 - att, "attacker": att, "region": "core", "kind": kind, "number": true, "style": style})
+	var fa := FakeAnim.new()
+	fa.fill(f0)
+	var summary: Array = []
+	for real in [false, true]:
+		VfxPress.anim_hook = (func(_S, slot): return fa) if real else Callable()
+		for mode in ["speed", "tech", "heavy", "mixed", "reduced"]:
+			var h := VfxHub.new()
+			h.press_enabled = true
+			h.reduced_motion = mode == "reduced"
+			h.reset(S, 6)
+			var max_q: int = 0
+			var max_fx: int = 0
+			var blows: int = 0
+			var styles := ["speed", "tech", "heavy"]
+			for t in range(600):
+				var evs: Array = []
+				if t % 10 == 0 or t % 10 == 5:
+					var att: int = 0 if t % 10 == 0 else 1
+					var st: String = mode if mode in styles else styles[(t / 5) % 3]
+					fa.press = {"style": st, "phase": "contact", "ghosts": 3, "ticks_to_contact": 0}
+					evs.append(hit.call(att, "heavy" if st == "heavy" else "light", st))
+					blows += 1
+				_tick(S, h, evs)
+				view.update(h, host, 1.0, plains + 45.0, 1.0, 1500.0)
+				max_q = maxi(max_q, view.count)
+				max_fx = maxi(max_fx, h.press.fx.size())
+			summary.append("%s %s: %d blows in 10 s, at most %d quads and %d effects at once" % ["real poses" if real else "estimates", mode, blows, max_q, max_fx])
+			_check(blows == 120 and max_q <= 260 and max_fx <= 24, "six blows a second from each fighter, all %s, %s: at most %d quads (of 380) and %d effects at once" % [mode, "with Animation's poses" if real else "estimated", max_q, max_fx])
+	VfxPress.anim_hook = Callable()
+	# Legal's limits on the filled heavy ghosts: at most 5, flat lane tint, 0.35 opacity at most, gone within 8 ticks.
+	var hg := VfxHub.new()
+	hg.press_enabled = true
+	hg.reset(S, 6)
+	for k in range(6):
+		_tick(S, hg, [])
+	_tick(S, hg, [hit.call(0, "heavy", "heavy")])
+	_tick(S, hg, [])
+	var worst_a: float = 0.0
+	var filled: int = 0
+	view.update(hg, host, 1.0, plains + 45.0, 1.0, 1500.0)
+	for q in range(view.count):
+		var o: int = q * VfxShotsView.STRIDE
+		if view._buf[o + 18] == 1.0 and view._buf[o + 16] >= 0.99 and view._buf[o + 17] == 0.0:
+			filled += 1
+			worst_a = maxf(worst_a, view._buf[o + 15])
+	_check(filled >= 1 and filled <= 5 and worst_a <= 0.351, "the filled heavy ghosts: %d (at most 5), the most opaque %.2f (0.35 at most)" % [filled, worst_a])
+	for k in range(9):
+		_tick(S, hg, [])
+	view.update(hg, host, 1.0, plains + 45.0, 1.0, 1500.0)
+	var left: int = 0
+	for q in range(view.count):
+		var o2: int = q * VfxShotsView.STRIDE
+		if view._buf[o2 + 18] == 1.0 and view._buf[o2 + 16] >= 0.99 and view._buf[o2 + 17] == 0.0:
+			left += 1
+	_check(left == 0, "and none is left 10 ticks after the blow (gone within 8)")
+	print("    " + "\n    ".join(summary))
+	view.queue_free()
+	SimCore.dispose(S)
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:
