@@ -14,6 +14,8 @@ The rename: roster id `KAI` becomes `PROTAGONIST` and `VORR` becomes `RIVAL`. Or
 
 ## 2. Should the displayed names come from a strings file? Yes
 
+**Revised on 2026-10-05: see section 9.** The strings file is now a display file the sim never reads, and the title and the signature's name go there too. What follows is the first plan, kept for the reasoning.
+
 Today a fighter's `name`, `title` and `sigName` sit in his own `fighter.json`, so Orb's names would be a two-file edit that grows with the roster.
 
 **One file: `data/fighters/names.json`,** read by `FighterData`:
@@ -116,7 +118,7 @@ Counts are files that name `KAI` or `VORR` as a word: sim 6, data 11, qa 12, ren
 1. **Simulation, step A (ids only).** The folders, `roster.json`, the two `id` fields, `golden_recipes.gd`, `parity.gd`, `batch.gd`. The displayed names stay as they are.
 2. **The keys that follow the ids, in the same working tree,** each owner in turn or by the EP's grant: Combat's two files and the frozen copy; Encounter's `alchemy.json`; Tools' parked script and fixtures; Animation's three data files and `anim_data.gd`; Rendering's and VFX's two tables; UI's bridge and profiles; Narrative's and Audio's keys; QA's scripts.
 3. **Gate A.** Section 5's first proof. Everything must pass here before any name moves.
-4. **Simulation, step B (names as data).** `names.json`, the loader, the three strings out of the two `fighter.json` files. With the placeholder text the EP chose.
+4. **Simulation, step B (the words leave the sim).** As section 9 now has it: the three strings out of the two `fighter.json` files, `f.name` the id, `f.sigName` a key, `f.title` gone; the display file and the display layer's three changes land in the same tree (UI, Rendering, Tools, Narrative).
 5. **Gate B, then the one regeneration and the full gates:** `npm test` 5 of 5, parity, determinism, the loader check, the validator and its self-test, `anim_check`, the HUD check, QA's self-test.
 
 Steps 1 and 2 cannot be committed apart: between them the director finds no finisher or style for the new ids.
@@ -153,6 +155,8 @@ So with the old text kept, the whole window is proven by "light digests and tick
 5. **Not this window, but mine:** a stun ends the stance mask and the two new held levels, as it ends `lightHeld` and `heavyHeld` (three lines in `SimWounds.gateIntent`). It rides in my next window, not as its own regeneration.
 
 ## 8. The checklist: every owner's lines
+
+**Re-read on e5c668d (2026-10-05): the rows added since are in section 8b, and the names rows change as section 9 says.**
 
 Line numbers are as of 208c6c7 (re-read on 2026-10-06 after intent version 4, World's stages, Animation's gesture wave and the dynamic intros; what that added is listed under the table). "Key" means a lookup key; "text" means a comment, a label or a message. A row is done when the file no longer names `KAI`, `VORR`, `kai` or `vorr` as a fighter's key, or the row says it stays.
 
@@ -219,3 +223,73 @@ Line numbers are as of 208c6c7 (re-read on 2026-10-06 after intent version 4, Wo
 - **QA has uncommitted edits** in `qa/godot/bands.js` and `records.gd`; its rows above are unchanged, but the line numbers there will move.
 
 **Two lookups by name were found while listing:** UI's bridge and Audio's babble. Both work tonight only because the name and the id are the same word. With the names changed in this window, both fail visibly if missed, which is the point of ruling 1.
+
+## 8b. Re-read on e5c668d (2026-10-05)
+
+Since 208c6c7: UI draws `PROTAGONIST` and `RIVAL` through `ui/data/fighter_names.json`; the titles and signature names changed (`Martial Artist`, `Keeper's Lance`, `Challenger`, `The Barrage`); the plains beam variant is `FIELD SCAR`; the brawl, the blocked-shot wear and the composed intros landed. Line numbers in section 8 have moved in most files; the files and the changes stand.
+
+**Lookups by a fighter's name, all to move to `f.id` in the window.** Section 8 listed two. There are eight. They work today only because the sim's name is still `KAI` and `VORR`.
+
+| Owner | File and line | What it does by name |
+| :--- | :--- | :--- |
+| **Rendering** | `render/core/fighter_view.gd` line 199 | Finds the outfit's damage marks: `DAMAGE_OUTFIT.get(f.name)` |
+| Rendering | `render/core/fighter_view.gd` line 197 | Seeds the damage marks from the name's hash. With the id the marks change once, by design |
+| Rendering | `render/core/hud.gd` line 155 | `UiData.display_name(f.name)`. And line 165 draws `f.title`, which leaves the sim (section 9) |
+| **VFX** | `render/vfx/blast.gd` line 74 | `POWERUP_OFF.has(f.name)` |
+| **Audio** | `audio/audio_cues.gd` lines 76 and 147 | The voice: `cfg.fighters.get(f.name)` |
+| Audio | `audio/audio_babble.gd` line 87 | The voice, as listed before |
+| **UI** | `ui/core/ui_sim_bridge.gd` line 18 | The readout profile id, as listed before. Lines 28 and 29 read `f.sigName` for the hub's move-name test: that keeps working with a key (section 9) |
+| UI | `ui/data/fighter_names.json`; `ui/core/ui_data.gd` `display_name` and `display_text` | The table is keyed by the sim's name in lower case, and the two functions look names up in it. Keys become roster ids |
+
+**Other new rows.**
+
+| Owner | File | Change |
+| :--- | :--- | :--- |
+| **Animation** | `render/anim/anim_held_lint.gd` lines 71, 72 | `AnimData.ensure_fighter("KAI")` and `("VORR")`: the roster's ids |
+| **Tools** | `tools/fixtures/cases.json` (the cases on `ui/data/fighter_names.json`, from line 73318); `docs/ui/ui-fighter-names.schema.json` | Follow the display file's new keys and shape (section 9) |
+| **Narrative** | `data/narrative/combat_barks.json` | 11 lines name a fighter now (it was 4 keys): the per-fighter keys become roster ids; line ids stay |
+| **QA** | `qa/godot/bands.js` | 4 lines; as section 8 has it. `players.gd`, `masher.js` and `records.gd` name no fighter |
+| **Simulation** | `sim/core/tools/parity.gd` (53 lines now), `golden_recipes.gd` (6) | As section 8 has it |
+
+**Already right:** Rendering's intro memory (`render/core/sim_host.gd`) keys a pair by roster ids. Encounter's brawl data, the shot data, the intro data and World's stages name no fighter.
+
+## 9. The names step, revised: no word Orb will edit stays in the sim (the EP, 2026-10-05)
+
+**Ruled.** The sim's name becomes the roster id and leaves `fighter.json`. The title and the signature's name go the same way. The goal: Orb's names, when they come, are an edit to one display file, with no golden regeneration and no replay made stale.
+
+**Does the sim need the words? No.** Checked on e5c668d:
+
+| Word | Where the sim uses it | Needed for a rule? |
+| :--- | :--- | :--- |
+| `name` | About 80 feed lines; the setup's `names` labels that tell a mirror arm's two copies apart | No. Nothing draws, measures or compares it |
+| `title` | Copied onto the fighter and hashed. The sim never reads it; Rendering's HUD draws it | No |
+| `sigName` | One banner (`beam.gd`), three feed lines (`beam.gd`, `beamplay.gd`) and the signature exchange's tag (`data.gd`, through `templates.json` `tagFormat`) | No. The tags the rules compare are the melee ones; none reads a signature's tag |
+
+**What the sim carries instead: ids and keys.**
+
+- `f.name` is the roster id (`PROTAGONIST`), or the setup's label for a mirror arm (`PROTAGONIST-A`).
+- `f.sigName` is a key the roster loader builds from the id: `PROTAGONIST.SIG`. It is not read from data. The banner, the three feed lines and the tag keep their code and print the key.
+- `f.title` is removed: the field, its place in the fighter hash, and its place in the goldens' character keys.
+- `fighter.json` `identity` loses the three strings and keeps `role` and the colours.
+
+**The display file** holds the three words for each roster id, in one place, with one schema:
+
+```json
+{ "PROTAGONIST": {"name": "PROTAGONIST", "title": "Martial Artist", "sigName": "Keeper's Lance"},
+  "RIVAL":       {"name": "RIVAL", "title": "Challenger", "sigName": "The Barrage"} }
+```
+
+- **First choice: `data/fighters/names.json`,** beside the roster. Narrative owns the text, UI's display layer is its only reader, and the sim never opens it, so it is in no sim hash and no replay header.
+- **Second choice:** UI's `ui/data/fighter_names.json` gains `title` and `sigName`. No file moves.
+
+**The display layer** (UI's `ui_data.gd`; every drawer of the sim's text already goes through it):
+
+- `display_name(id)`: as today, keyed by the id.
+- `display_title(id)`: new. Rendering's HUD line reads it in place of `f.title`.
+- `display_text(text)`: also turns the key `PROTAGONIST.SIG` into the signature's name. It matches the key before the bare id, because the id is inside the key, and without regard to case, because the banner's key is in upper case as the name was. The banner is put in upper case where it is drawn, not by the sim.
+- The hub's move-name test (a banner that is only a move's name is dropped) compares the banner with `f.sigName` before any display: key against key. It needs no change.
+- A tool that reads the feed as text sees ids and keys, which do not change when Orb's names do.
+
+**Goldens.** One regeneration, in the rename window. After it, against step A: tick counts identical; full-state checkpoints move (the title leaves the hash); light digests move (the feed and the banner print ids and keys). From then on a change to any displayed word touches no golden, no replay and no data hash.
+
+**Order.** Step A and its gate as in section 4. Then this step, with UI's, Rendering's, Tools' and Narrative's lines in the same working tree: between the sim's change and UI's, a player would read `PROTAGONIST.SIG` on a banner.
