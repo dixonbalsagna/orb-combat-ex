@@ -91,5 +91,25 @@ func _init() -> void:
 	h8.hp = h8.maxhp * 0.05
 	WorldStructures.damageArea(S8, h8.x, WorldStructures.baseY(S8, h8) + 50.0, 400.0, 1.0e6, S8.fighters[0])
 	ok(not h8.alive, "a building already under the share is finished by one blast")
+	# the float edge: a building left a hair above the cap (the last bit of what the first blast left) is finished by the next blast
+	var S9 := fresh()
+	var h9 = pick(S9, "house")
+	h9.hp = lf * h9.maxhp * (1.0 + 1.0e-12)
+	WorldStructures.damageArea(S9, h9.x, WorldStructures.baseY(S9, h9) + 50.0, 400.0, 1.0e6, S9.fighters[0])
+	ok(not h9.alive, "a house a hair above the cap (hp %s of cap %s) is finished by the next blast" % [str(h9.hp), str(lf * h9.maxhp)])
+	# and across many first blasts: the second one always finishes what the first left
+	var stuck: int = 0
+	for sd in range(1, 41):
+		var Sx := fresh()
+		for b in Sx.buildings:
+			if b.alive and b.kind == "house" and WorldStructures.dz(b) <= WorldStructures.Z_REACH:
+				b.maxhp = b.maxhp * (1.0 + float(sd) * 0.0137)   # a different hit-point value for each trial, so the rounding differs
+				b.hp = b.maxhp
+				WorldStructures.damageArea(Sx, b.x, WorldStructures.baseY(Sx, b) + 50.0, 400.0, 1.0e6, Sx.fighters[0])
+				WorldStructures.damageArea(Sx, b.x, WorldStructures.baseY(Sx, b) + 50.0, 400.0, 1.0e6, Sx.fighters[0])
+				if b.alive:
+					stuck += 1
+				break
+	ok(stuck == 0, "40 houses of different hit points: the second blast finishes every one the first left (%d left standing)" % stuck)
 	print("STAGE: %d check(s) failed" % fails)
 	quit()

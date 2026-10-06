@@ -110,6 +110,40 @@ static func leaveFrac() -> float:
 	return _leave
 
 
+## Is the point (x, y) at depth z inside the ground or a standing building, or within `margin` of either? (The zip's exit point: margin 1 body height,
+## BH.) The ground is the wrapped heightfield's height at x (heaps, craters and the rubble of a fallen building included); a building blocks inside its box
+## widened by the margin, from its ground to its standing height now (curH: a damaged building or a shell is lower), when its nearest face is within
+## Z_REACH in depth of z (the reach of every blast). A skyscraper's cleared floors are open where the whole margin fits in the gap (the cleared run's
+## height, clear of the walls by the margin). Water does not block. Pure: no draw, no state, no event; nothing calls it yet but the zip's checks.
+static func blockedAt(S: SimState, x: float, y: float, z: float = 0.0, margin: float = 75.0) -> bool:
+	if y - margin < WorldTerrain.groundY(S, x, z):
+		return true
+	for bi in near(S, x, margin):
+		var b = S.buildings[bi]
+		if not b.alive:
+			continue
+		var dx: float = absf(SimWrap.sdx(x, b.x))
+		if dx > b.w * 0.5 + margin or maxf(0.0, absf(z - b.z) - b.d * 0.5) > Z_REACH:
+			continue
+		var gy: float = baseY(S, b)
+		if y < gy - margin or y > gy + curH(b) + margin:
+			continue
+		if b.floors >= WorldBrunt.FLOORS_MIN and b.fmask != (1 << b.floors) - 1 and dx <= b.w * 0.5 - margin:
+			var fh: float = WorldBrunt.floorH(b)
+			var k: int = clampi(int(floor((y - gy) / fh)), 0, b.floors - 1)
+			if not WorldBrunt.isStanding(b, k):
+				var lo: int = k
+				while lo > 0 and not WorldBrunt.isStanding(b, lo - 1):
+					lo -= 1
+				var hi: int = k
+				while hi < b.floors - 1 and not WorldBrunt.isStanding(b, hi + 1):
+					hi += 1
+				if y - margin >= gy + float(lo) * fh and y + margin <= gy + float(hi + 1) * fh:
+					continue   # inside a cleared run of floors with the whole margin in the gap: open
+		return true
+	return false
+
+
 ## Send building_stage when the building's stage is no longer s0 (taken before the damage). n: the floors lost in the step.
 static func stageEmit(S: SimState, b, s0: int, cause, cx: float, n: int = 0) -> void:
 	var s1: int = stage(b)
@@ -367,7 +401,7 @@ static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, c
 			kp = RING_KEEP
 		var dd: float = dmg * (1.0 - SimMathx.jclamp(d / r, 0.0, 1.0) * 0.7)
 		var lv: float = leaveFrac()
-		if not beam and lv > 0.0 and b.hp > lv * b.maxhp:   # a blast cannot finish a standing building (stages.json leaveFrac): it leaves it at that share and the next blast takes it
+		if not beam and lv > 0.0 and b.hp > lv * b.maxhp * 1.0001:   # a blast cannot finish a standing building (stages.json leaveFrac): it leaves it at that share and the next blast takes it (the factor: what the first blast left can sit a rounding bit above the cap, and the second must still finish it)
 			dd = minf(dd, b.hp - lv * b.maxhp)
 		damageBuilding(S, b, dd, cause, "implode", x, evt, false, kp)
 		if S.world.structuresLost > lost0:
