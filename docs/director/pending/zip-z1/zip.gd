@@ -252,7 +252,7 @@ static func tick(S: SimState) -> void:
 		var ph: int = _g(f, PH)
 		if ph == 0:
 			continue
-		_feed(f)
+		_ringPush(f)
 		if ph == 1:
 			_tell(S, f)
 		elif ph == 2:
@@ -264,7 +264,7 @@ static func tick(S: SimState) -> void:
 
 
 ## The stick, once a live tick, into the exit's ring (SimAim: the direction held for 3 of the last 12 ticks wins).
-static func _feed(f) -> void:
+static func _ringPush(f) -> void:
 	var ring: Array = []
 	ring.resize(RING_N)
 	for i in range(RING_N):
