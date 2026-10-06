@@ -456,7 +456,19 @@ The rows for the zip away wait for the second slice.
 | **How the beat is shown** | On the body: at the beat point the striking limb **sets** with a glint, and a short tick sounds. The piece's rhythm is the cue. **A beat ring** is an option in settings, off by default: a ring on the rival that closes on the beat point (Orb, questionnaire 17). With it on, the rival's own beat points are ringed too, so his blows can be timed against (questionnaire 18) |
 | **The look** (Orb) | The strike pose lands on the contact tick with no pose in between, sharp wire echoes trail the body, and the contact mark is the hard diamond (§10). It is distinct from the flurry's smear |
 
-The existing bands hold: timed against the same style untimed at 62 to 82%.
+**Ruled for the skill strike's slice (B2).** Encounter has cut it to this section and to the four points of §9d. Its three defaults stand.
+
+| The question | The ruling |
+| :--- | :--- |
+| Is an early press a missed beat? | **Yes.** Any X pressed between his contact and the window is a flurry blow, and it takes the flow to 0. So a masher never holds flow |
+| Does a late press clear anything? | **No.** It is a plain light. It adds 1 to his run like any light, it doesn't clear the rival's run, and it doesn't touch the flow. Letting a beat pass isn't a miss: he may have guarded, or wound up a heavy. The flow is lost only by an early press, or by 90 ticks with no press at all, as before |
+| Does the AI's timing share get a band of its own? | **No.** The masher's band is the check: 35 to 50% against the medium AI. The share of its lights that each level times is the first lever for that band from now on, ahead of its tap gap and its reversals. It starts from the values it has (0.15, 0.45 and 0.8), and stays in that order |
+
+**How the timing band is read.** Both ways:
+- **head to head, which is the banded row:** a timed presser against the same presser mashing at an 8-tick gap wins 62 to 82%;
+- **each against the medium AI, reported beside it.** The masher's band is his own. The timed presser's target against medium is 70 to 90% (§9c), and it is expected to read over that until the AI's answers to a timed string are switched on, which needs the parry.
+
+**The mood.** A skill strike gives the mood 50 units, and not the 90 of §9d. Simulation's retune put the mood in band with a brawl light at 13, and a skill strike is worth four brawl lights. At 50 a timed player and a masher feed the mood about equally, so this slice doesn't undo that retune. Data: `impulses.skillStrike` 50.
 
 ## 5. Heavy: the guard breaker and the juggle starter
 
@@ -771,7 +783,7 @@ The mood adds 1.5 points for every strike, and strikes now come six a second. So
 | :--- | ---: | :--- |
 | A light or a flurry blow lands in a brawl | 20 | A third of a point. A full mash is about 2 to 3 points a second, under the decay of 3 |
 | The same, blocked | 0 | |
-| A skill strike lands (from B2) | 90 | The old strike's |
+| A skill strike lands (from B2) | 50. It was 90 until the retune put a brawl light at 13 (§4) | Four brawl lights' worth |
 | A heavy or an ender lands in a brawl | 120 | |
 | A flurry's close | 180 | The old chain link's. It is the mash's earned beat |
 | A guard is broken | 240 | The old parry's |
