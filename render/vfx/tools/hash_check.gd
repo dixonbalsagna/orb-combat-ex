@@ -24,7 +24,7 @@ var max_ticks: int = 3600
 var negative: bool = false
 var main: Node
 var flash_by: Dictionary = {}    # source -> [granted, refused] over every run
-var stats: Dictionary = {"max_k": 0.0, "marks": 0, "ribbons": 0, "ticks": 0, "crack_builds": 0, "crack_ms": 0.0, "debris": 0, "forms": 0, "water": 0, "react": 0, "earth": 0, "rocks": 0, "blast": 0, "rings": 0, "shots": 0, "shots_fired": 0, "shot_events": 0, "flash_granted": 0, "flash_refused": 0, "flash_worst": 0}
+var stats: Dictionary = {"max_k": 0.0, "marks": 0, "ribbons": 0, "ticks": 0, "crack_builds": 0, "crack_ms": 0.0, "debris": 0, "forms": 0, "water": 0, "react": 0, "earth": 0, "rocks": 0, "blast": 0, "rings": 0, "shots": 0, "shots_fired": 0, "shot_events": 0, "flash_granted": 0, "flash_refused": 0, "flash_worst": 0, "flash_weight": 0.0}
 
 
 func _initialize() -> void:
@@ -86,9 +86,9 @@ func _run() -> void:
 	print("effects ran: max trail strength %.2f, %d marks spawned, %d ribbon segments drawn in %d ticks%s" % [stats["max_k"], stats["marks"], stats["ribbons"], stats["ticks"], "" if ran else "   (NOT ENOUGH: the check proves nothing)"])
 	print("crack sets built: %d meshes in %.1f ms; %d debris bits spawned from the sim's own building_fall events" % [stats["crack_builds"], stats["crack_ms"], stats["debris"]])
 	print("water effects fired %d times, transformations started %d (real events from the sim), %d rubble, standing-crack and window effects, %d chunks, flames and contact effects, up to %d levitating rocks drawn at once, %d craters amplified by tier, %d pressure rings, %d shots fired (up to %d drawn at once), %d shot hits, trades and ends seen" % [stats["water"], stats["forms"], stats["react"], stats["earth"], stats["rocks"], stats["blast"], stats["rings"], stats["shots_fired"], stats["shots"], stats["shot_events"]])
-	print("flash register in the real matches: %d full flashes granted, %d refused, never more than %d in any second (over each whole run, counted as the register ran)" % [stats["flash_granted"], stats["flash_refused"], stats["flash_worst"]])
+	print("flash register in the real matches: %d full flashes granted, %d refused, never more than %d in any second and a weight of %.2f in any second (2.5 at most), over each whole run as the register ran" % [stats["flash_granted"], stats["flash_refused"], stats["flash_worst"], stats["flash_weight"]])
 	print("   by source (granted, refused): %s" % str(flash_by))
-	ok = ok and ran and stats["flash_worst"] <= 3
+	ok = ok and ran and stats["flash_worst"] <= 6 and stats["flash_weight"] <= 2.5001
 	print("\nhash check passed" if ok else "\nhash check FAILED")
 	quit(0 if ok else 1)
 
@@ -158,6 +158,7 @@ func _rendered(seed: int, last: int, dt_of: Callable, reduced: bool = false) -> 
 	stats["flash_granted"] += int(fsum["granted"])
 	stats["flash_refused"] += int(fsum["refused"])
 	stats["flash_worst"] = maxi(stats["flash_worst"], int(fsum["worst_running"]))
+	stats["flash_weight"] = maxf(stats["flash_weight"], float(fsum["worst_weight_running"]))
 	for k in fsum["granted_by"].keys():
 		flash_by[k] = [int(flash_by.get(k, [0, 0])[0]) + int(fsum["granted_by"][k]), int(flash_by.get(k, [0, 0])[1])]
 	for k in fsum["refused_by"].keys():

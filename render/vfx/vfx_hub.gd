@@ -75,6 +75,7 @@ var stages := VfxStages.new()
 var press := VfxPress.new()
 var beat_glint_enabled: bool = false          # the beat option (UI's beat ring for every blow, the rival's too): a glint on the striking limb at the beat (press.gd)
 var flashes := VfxFlashRegistry.new()          # the shared flash register: every full flash asks it (flash_registry.gd, docs/vfx/flash-registry.md)
+var px_per_unit: float = 1.3                    # pixels per world unit at 1024 by 768 on the fighters' plane (the host sets it from the camera): the size of a flash for the register's weights
 var reduced_flashing: bool = false              # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
@@ -200,6 +201,7 @@ func consume(S: SimState, events: Array) -> void:
 func _consume(S: SimState, events: Array) -> void:
 	if not enabled:
 		return
+	flashes.ppu = px_per_unit
 	flashes.begin_tick(reduced_motion or reduced_flashing)
 	var dt: float = SimConst.DT
 	var frozen: bool = true
@@ -220,7 +222,7 @@ func _consume(S: SimState, events: Array) -> void:
 			if tb >= 0.0 and tb < VfxTransform.p("break", "flash_ticks"):
 				if not f.flash_asked:
 					f.flash_asked = true
-					f.flash_ok = flashes.ask("transform", VfxPress.lane_of(S, f.slot), S.tick)
+					f.flash_ok = flashes.ask("transform", VfxPress.lane_of(S, f.slot), S.tick, VfxFlashRegistry.disc_px(VfxTransform.p("break", "flash_radius_bh") * VfxLook.BH, flashes.ppu), 0.2)
 				if not f.flash_ok:
 					gate = 0.0
 		VfxTransform.flash_scale = gate
@@ -243,7 +245,7 @@ func _consume(S: SimState, events: Array) -> void:
 			if e.type == "launch":
 				_speed_launch(S, e)
 		for e in events:
-			if e.type == "damage" and e.kind == "heavy" and e.number:
+			if e.type == "damage" and (e.kind == "heavy" or e.kind == "medium") and e.number:
 				_speed_heavy(S, e)
 	debris.now = fx_now(S)
 	earth.entrance_now = false

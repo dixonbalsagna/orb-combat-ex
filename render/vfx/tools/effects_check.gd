@@ -2938,7 +2938,7 @@ func _press() -> void:
 	for k in range(8):
 		_tick(S, ht, [])
 		counts.append(quads_at.call(ht))
-	_check(int(ht.press.made.get("tech", 0)) == 1 and counts[0] >= 11 and counts[0] > counts[3] and counts[3] > counts[6] and counts[6] > counts[8] - 1, "timed: two echoes (Legal f01: never more than 2 of a limb alive; a perfect blow's third is not drawn), a line and a diamond, popping off from the back (quads by tick %s)" % str(counts))
+	_check(int(ht.press.made.get("tech", 0)) == 1 and counts[0] >= 11 and counts[3] >= 11 and counts[3] > counts[6] and counts[6] > counts[8] - 1, "timed: two echoes (Legal f01: never more than 2 of a limb alive; a perfect blow's third is not drawn), a line and a diamond, popping off from the back (quads by tick %s)" % str(counts))
 	_check(ht.press.fx.size() == 1 and ht.press.fx[0].dir < 0.0, "the rival's blow runs the other way (toward the left)")
 	# Heavy: the wind-up ring shrinks; the release has ghosts, a crescent and a double ring.
 	var hh: VfxHub = fresh.call()
@@ -3876,7 +3876,7 @@ func _reach() -> void:
 		_tick(S, hk, [])
 		if hk.inreach.allow_full(S, Color(0.6, 0.8, 0.95)):
 			allowed += 1
-	_check(allowed == 2 and hk.flashes.worst_from_log() <= 3, "with an explosion's flash already on the screen, %d full energy flashes were allowed in the next 70 ticks and never a fourth in any second" % allowed)
+	_check(allowed == 4 and hk.flashes.worst_weight_from_log() <= 2.5001, "with an explosion's flash already on the screen, the energy flash (0.15) still fits every 20 ticks: %d in the next 70, the weight never above 2.5 in a second" % allowed)
 	# Reduced motion: no full flash at all, the rim dimmer, one spill streak; nothing else removed.
 	var hr := VfxHub.new()
 	hr.press_enabled = true
@@ -3918,18 +3918,28 @@ func _flashes() -> void:
 	for k in range(5):
 		R.begin_tick(false)
 		got.append(R.ask("explosion", Color(1.0, 0.62, 0.2)))
-	_check(got == [true, true, true, false, false], "three flashes in a second and no fourth (%s)" % str(got))
+	_check(got == [true, true, false, false, false], "weights summing to 2.5 at most in a second: two whole flashes and no third (%s)" % str(got))
 	for k in range(60):
 		R.begin_tick(false)
 	_check(R.ask("explosion", Color(1.0, 0.62, 0.2)), "the window slides: a second later a flash is granted again")
 	R.reset()
 	R.begin_tick(false)
-	var lows: Array = [R.ask("energy"), R.ask("block"), R.ask("shot_hit"), R.ask("transform")]
-	_check(lows == [true, true, false, true], "low-priority sources get two of the three, and the big event still gets its slot (%s)" % str(lows))
+	var lows: Array = [R.ask("energy"), R.ask("block"), R.ask("shot_hit"), R.ask("shot_hit"), R.ask("shot_hit"), R.ask("shot_hit"), R.ask("explosion", Color(1.0, 0.62, 0.2))]
+	_check(lows == [true, true, true, true, true, false, true], "the low-priority class takes at most 1.5 of the 2.5, and the big event still gets its slot (%s)" % str(lows))
 	R.reset()
 	R.begin_tick(false)
 	var rl: Array = [R.ask("body_hit"), R.ask("head_flash"), R.ask("guard_flash"), R.ask("cue_flare"), R.ask("beam")]
-	_check(rl == [true, true, true, false, false], "Rendering's body hit, head flash and cue flare are low-priority sources, a perfect block's guard flash is not and may take the third slot, and a fourth flash is refused (%s)" % str(rl))
+	_check(rl == [true, true, true, true, true], "Rendering's small flashes are weighted by their source (0.17, 0.07, 0.2, 0.4 and a beam's 1.0 sum to 1.84), and all five are granted (%s)" % str(rl))
+	var bh_run: Array = []
+	R.reset()
+	for k in range(8):
+		R.begin_tick(false)
+		bh_run.append(R.ask("body_hit"))
+	_check(bh_run == [true, true, true, true, true, true, false, false] and R.refused_by.get("body_hit", 0) == 2, "a mash of body hits: six in a second and then the rate ceiling (%s)" % str(bh_run))
+	R.reset()
+	R.begin_tick(false)
+	var sized: Array = [R.ask("explosion", Color(1.0, 0.62, 0.2), -1, 4000.0, 0.3), R.ask("explosion", Color(1.0, 0.62, 0.2), -1, 40000.0, 0.3), R.ask("energy", Color.WHITE, -1, 30000.0, 0.05)]
+	_check(sized == [true, true, true] and absf(R.sum_in_window() - 1.1835) < 0.01 and R.log[2]["why"] == "below_step" and R.log[2]["weight"] == 0.0 and not R.granted_by.has("energy"), "a flash is weighted by its area (4,000 px is 0.18, 40,000 px is 1), and a step under 0.10 costs nothing and is not counted as a flash (sum %.2f)" % R.sum_in_window())
 	_check(not VfxFlashRegistry.is_red(Color("#9a80d8")) and not VfxFlashRegistry.is_red(Color("#8fd6ff")) and VfxFlashRegistry.is_red(Color("#d02020")), "the red test refuses a saturated red and passes both fighters' aura colours")
 	R.reset()
 	R.begin_tick(false)
@@ -3937,7 +3947,7 @@ func _flashes() -> void:
 	R.reset()
 	R.begin_tick(true)
 	var red_set: Array = [R.ask("energy"), R.ask("explosion", Color(1.0, 0.62, 0.2)), R.ask("transform")]
-	_check(red_set == [false, true, false], "reduced flashing: one a second, and none for the low-priority sources (%s)" % str(red_set))
+	_check(red_set == [false, true, false], "reduced flashing: a budget of 1.0, and none for the low-priority sources (%s)" % str(red_set))
 	R.reset()
 	R.note("body_hit")
 	R.begin_tick(false)
@@ -3968,24 +3978,24 @@ func _flashes() -> void:
 		_tick(S2, hb, [guard.call()])
 	var nof: int = hb.press.fx.filter(func(f): return f.style == "block" and f.noflash).size()
 	var fl: int = hb.press.fx.filter(func(f): return f.style == "block" and not f.noflash).size()
-	_check(fl == 2 and nof == 3, "block: five blocks in a few ticks, two flashes (the low-priority share) and three shield lines without one (%d, %d)" % [fl, nof])
+	_check(fl == 5 and nof == 0, "block: five blocks in a few ticks, each a small ring (0.05): all five flash (%d, %d)" % [fl, nof])
 	# Shot hits and mines: the flash ring asks, the ring that goes with it does not.
 	var hs := VfxHub.new()
 	hs.explosions_enabled = false
 	hs.reset(S2, 6)
 	var shot_hit := func(): return VfxMock.ev("shot_hit", {"actor": 0, "victim": 1, "kind": "bolt", "id": 1, "x": S2.fighters[1].x, "y": g + 60.0, "z": 0.0, "amount": 9.0, "outcome": "hit", "link": 0})
-	for k in range(5):
+	for k in range(8):
 		hs.shots.fx.clear()
 		_tick(S2, hs, [shot_hit.call()])
-	_check(int(hs.flashes.granted_by.get("shot_hit", 0)) == 2 and int(hs.flashes.refused_by.get("shot_hit", 0)) == 3, "shot hits: five in a row get two flash rings (granted %d, refused %d)" % [int(hs.flashes.granted_by.get("shot_hit", 0)), int(hs.flashes.refused_by.get("shot_hit", 0))])
+	_check(int(hs.flashes.granted_by.get("shot_hit", 0)) == 6 and int(hs.flashes.refused_by.get("shot_hit", 0)) == 2, "shot hits: eight in a row, each a flash of about 0.16 of the threshold: the rate ceiling of six leaves two without a flash ring (granted %d, refused %d)" % [int(hs.flashes.granted_by.get("shot_hit", 0)), int(hs.flashes.refused_by.get("shot_hit", 0))])
 	var rings_only: bool = hs.shots.fx.any(func(f): return f.kind == "ring") and not hs.shots.fx.any(func(f): return f.kind == "flash")
 	_check(rings_only, "a refused hit still draws its ring, and no flash")
 	# Explosions: a flame burst asks; refused, it is sparks and smoke (the explosion counter still counts the event).
 	var he := VfxHub.new()
 	he.reset(S2, 6)
-	for k in range(6):
+	for k in range(12):
 		_tick(S2, he, [shot_hit.call()])
-	_check(int(he.flashes.granted_by.get("explosion", 0)) >= 1 and int(he.flashes.refused_by.get("explosion", 0)) >= 1 and he.flashes.worst_from_log() <= 3, "explosions: six hits in a few ticks, %d bursts and %d downgraded to sparks" % [int(he.flashes.granted_by.get("explosion", 0)), int(he.flashes.refused_by.get("explosion", 0))])
+	_check(int(he.flashes.granted_by.get("explosion", 0)) >= 1 and int(he.flashes.refused_by.get("explosion", 0)) >= 1 and he.flashes.worst_weight_from_log() <= 2.5001, "explosions: twelve hits in a few ticks, %d bursts and %d downgraded to sparks" % [int(he.flashes.granted_by.get("explosion", 0)), int(he.flashes.refused_by.get("explosion", 0))])
 	# Transformation: the break's flash asks once; refused, transform_view's p() gives it no alpha.
 	var ht := VfxHub.new()
 	ht.reset(S2, 6)
@@ -4021,10 +4031,10 @@ func _flashes() -> void:
 	var hz := VfxHub.new()
 	hz.press_enabled = true
 	hz.reset(S2, 6)
-	for k in range(4):
+	for k in range(8):
 		_tick(S2, hz, [VfxMock.ev("cue", {"actor": 1, "kind": "lunge_guard_broken", "text": "", "source": "", "target": 0})])
 	var nz: int = hz.zip.marks.filter(func(m): return m.kind == "gbreak" and m.noflash).size()
-	_check(nz == 2, "guard break: four in a few ticks, two flash rings withheld (%d)" % nz)
+	_check(nz == 2, "guard break: eight in a few ticks, each a small ring: the rate ceiling of six leaves two without their flash (%d)" % nz)
 	# The worst second: every family at once on one screen. Never more than three flashes granted, the rest drawn without the flash.
 	var hw := VfxHub.new()
 	hw.press_enabled = true
@@ -4041,9 +4051,9 @@ func _flashes() -> void:
 			evs.append(VfxMock.ev("cue", {"actor": 1, "kind": "lunge_guard_broken", "text": "", "source": "", "target": 0}))
 		_tick(S2, hw, evs)
 	var sm: Dictionary = hw.flashes.summary()
-	_check(int(sm["worst_second"]) <= 3 and int(sm["refused"]) > 0 and int(sm["granted"]) > 0, "every family at once for 2 seconds: granted %d, refused %d, never more than %d in a second" % [int(sm["granted"]), int(sm["refused"]), int(sm["worst_second"])])
+	_check(float(sm["worst_weight"]) <= 2.5001 and int(sm["worst_second"]) <= 6 and int(sm["granted"]) > 0, "every family at once for 2 seconds: granted %d, refused %d, never more than %d flashes and a weight of %.2f in a second (2.5 at most)" % [int(sm["granted"]), int(sm["refused"]), int(sm["worst_second"]), float(sm["worst_weight"])])
 	var rows: Array = hw.flashes.log_rows()
-	_check(rows.size() == int(sm["granted"]) + int(sm["refused"]) and rows[0].size() == 6, "the log has a row for every ask (%d rows)" % rows.size())
+	_check(rows.size() == int(sm["granted"]) + int(sm["refused"]) and rows[0].size() == 8, "the log has a row for every ask, with its weight and the running sum (%d rows)" % rows.size())
 	# Reduced flashing through the hub: one a second at most, none of the low-priority kind.
 	var hr := VfxHub.new()
 	hr.press_enabled = true
@@ -4057,7 +4067,7 @@ func _flashes() -> void:
 			evs2.append(shot_hit.call())
 		_tick(S2, hr, evs2)
 	var sr: Dictionary = hr.flashes.summary()
-	_check(int(sr["worst_second"]) <= 1 and not hr.flashes.granted_by.has("energy") and not hr.flashes.granted_by.has("shot_hit"), "reduced flashing: at most %d a second and no energy or hit-ring flash (granted %s)" % [int(sr["worst_second"]), str(hr.flashes.granted_by)])
+	_check(float(sr["worst_weight"]) <= 1.0001 and not hr.flashes.granted_by.has("energy") and not hr.flashes.granted_by.has("shot_hit"), "reduced flashing: a weight of at most %.2f a second (1.0), a rate of 3 and no energy or hit-ring flash (granted %s)" % [float(sr["worst_weight"]), str(hr.flashes.granted_by)])
 	SimCore.dispose(S2)
 
 
@@ -4080,7 +4090,7 @@ func _brawl() -> void:
 	var quads := func(h: VfxHub) -> int:
 		view.update(h, host, 1.0, plains + 35.0, 1.0, 1500.0)
 		return view.count
-	var wu := func(text: String, slot: int, dur: float, k: float): return VfxMock.ev("cue", {"actor": slot, "kind": "windup", "text": text, "source": "y", "target": 1 - slot, "dur": dur, "n": float(S.tick) + dur * 60.0, "k": k})
+	var wu := func(text: String, slot: int, dur: float, k: float): return VfxMock.ev("cue", {"actor": slot, "kind": "windup", "text": text, "source": "b" if dur > 0.3 else "y", "target": 1 - slot, "n": float(S.tick) + dur * 60.0, "k": k})
 	# The medium's wind-up (Y, 12 ticks): nothing for its first 2 ticks, then a thin ring with its edge closing onto the hand over the last 10.
 	var h := VfxHub.new()
 	h.press_enabled = true
@@ -4108,6 +4118,25 @@ func _brawl() -> void:
 		_tick(S, hb, [])
 	var q_end: int = quads.call(hb)
 	_check(q_mid == 2 and q_end == 3, "the committed line joins it in the last 6 ticks (%d quads at the middle, %d near the landing)" % [q_mid, q_end])
+	for k in range(14):
+		_tick(S, hb, [])
+	_check(quads.call(hb) == 2 and hb.inreach.fx.any(func(f): return f.style == "windup"), "a heavy held past its 28 ticks keeps its ring, small and steady, with no committed line (%d quads)" % quads.call(hb))
+	_tick(S, hb, [VfxMock.ev("cue", {"actor": 0, "kind": "charge_full", "text": "", "source": "b", "target": 1})])
+	var q_cf: int = quads.call(hb)
+	_check(int(hb.inreach.made.get("charge_flash", 0)) == 1 and q_cf == 7 and int(hb.flashes.granted_by.get("charge_full", 0)) == 1, "charge_full: one thin ring and its edge leave the hand with three short ticks, through the register (%d quads with the held ring)" % q_cf)
+	for k in range(5):
+		_tick(S, hb, [])
+	_check(quads.call(hb) == 2, "and the flash is gone in 4 ticks, the held ring stays")
+	# With the second's slots taken the full-charge flash is refused and the held ring simply goes on.
+	var hbr := VfxHub.new()
+	hbr.press_enabled = true
+	hbr.reset(S, 6)
+	hbr.flashes.note("explosion")
+	hbr.flashes.note("explosion")
+	hbr.flashes.note("explosion")
+	_tick(S, hbr, [wu.call("start", 0, 28.0 / 60.0, 0.0)])
+	_tick(S, hbr, [VfxMock.ev("cue", {"actor": 0, "kind": "charge_full", "text": "", "source": "b", "target": 1})])
+	_check(not hbr.inreach.made.has("charge_flash") and int(hbr.flashes.refused_by.get("charge_full", 0)) == 1, "charge_full refused by the register draws no flash")
 	_tick(S, hb, [wu.call("end", 0, 0.0, 3.0)])
 	_check(quads.call(hb) == 1, "lost: the ring fades (%d quad)" % quads.call(hb))
 	_tick(S, hb, [wu.call("start", 0, 28.0 / 60.0, 0.0)])
@@ -4178,7 +4207,17 @@ func _brawl() -> void:
 	S.dirS.ex = tex
 	_tick(S, hq, [hit.call(0)])
 	hq.press.step(S, false)
-	_check(hq.press.fx[hq.press.fx.size() - 1].gunits <= 2 and hq.press.ghost_peak <= 2, "a perfect timed blow holds 2 echoes at most at any instant (%d)" % hq.press.fx[hq.press.fx.size() - 1].gunits)
+	var seen: Dictionary = {}
+	var alive_max: int = 0
+	for age in range(10):
+		var alive: int = 0
+		for gi in range(3):
+			var ew: Vector2 = VfxPress.echo_window(gi)
+			if float(age) >= ew.x and float(age) < ew.y:
+				alive += 1
+				seen[gi] = true
+		alive_max = maxi(alive_max, alive)
+	_check(alive_max <= 2 and seen.size() == 3 and hq.press.fx[hq.press.fx.size() - 1].gunits <= 2 and hq.press.ghost_peak <= 2, "a perfect timed blow shows its three echoes in sequence (the third as the first pops) and never more than 2 alive at once (most %d, %d seen)" % [alive_max, seen.size()])
 	S.dirS.ex = null
 	# The double hit: nothing until the landing (cue 8 ticks ahead), then a mirrored look on each face line, a small flash if the register grants it, and dust; gone in 12 ticks.
 	var hd := VfxHub.new()

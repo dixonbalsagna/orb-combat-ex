@@ -188,7 +188,7 @@ static func lane_of(S: SimState, slot: int) -> Color:
 ## A hit's flash ring: only if the screen's flash register grants it (the ring that goes with it is not a flash and always draws).
 func _flash(S: SimState, source: String, x: float, y: float, z: float, size: float, life: float, col: Color) -> void:
 	# The ring that goes with a flame burst granted this very tick is part of that flash, not a second one.
-	if flashes != null and _burst_tick != S.tick and not flashes.ask(source, col, S.tick):
+	if flashes != null and _burst_tick != S.tick and not flashes.ask(source, col, S.tick, VfxFlashRegistry.disc_px(size * 0.5, flashes.ppu), 0.2):
 		return
 	_add("flash", x, y, z, size, life, col)
 
@@ -196,7 +196,7 @@ func _flash(S: SimState, source: String, x: float, y: float, z: float, size: flo
 ## A flame burst is a full flash and asks the register; refused, it is sparks and smoke only (VfxExplode's "spark" mode).
 func _explode(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: float, surface: String, mode: String = "burst") -> int:
 	if mode == "burst" and flashes != null:
-		if flashes.ask("explosion", Color(1.0, 0.62, 0.2), S.tick):
+		if flashes.ask("explosion", Color(1.0, 0.62, 0.2), S.tick, VfxFlashRegistry.disc_px(radius * 0.7, flashes.ppu), 0.3):
 			_burst_tick = S.tick
 		else:
 			mode = "spark"

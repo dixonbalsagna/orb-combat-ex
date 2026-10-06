@@ -2,20 +2,58 @@
 
 Owner: VFX Director. Legal's condition before the first public release of the web build (docs/legal/photosensitivity-note.md, RL-115; WCAG 2.2 criterion 2.3.1, "three flashes or below threshold"). `render/vfx/flash_registry.gd` (`VfxFlashRegistry`), held by the hub as `hub.flashes`. Presentation only: it reads nothing from the sim, draws no random number, and the gameplay hash is untouched.
 
-## The rule
+## The rule (weighted by size, 2026-10-06)
 
-- **At most 3 granted flashes in any 60 ticks** (a second) across the whole screen: both fighters and every effect that asks.
-- **Priority.** Low-priority sources (`energy`, `block`, `shot_hit`, `mine`, `zip_break`, and Rendering's `body_hit`, `head_flash` and `cue_flare`: the things a fight makes many of) get at most 2 of the 3, so one slot is always left for the big events (`explosion`, `transform`, `beam`, `beam_clash`) and for a perfect block's `guard_flash`, which is not low (a skill moment the player earned, about 2.4 a minute at medium: the EP's ruling).
-- **Reduced flashing** (`hub.reduced_flashing`, or reduced motion): the cap is **1 a second** and the low-priority sources get none. This is "halves it or better".
-- **Nothing red.** A flash whose colour is saturated red (`r > 0.55`, `g` and `b` under 0.45 `r`) is refused whatever the count; the lane colours (cyan, violet) and the flame's orange are not red.
-- **The clock** is the hub's own tick count (one per `consume()`, frozen ticks included), so a hit-stop does not stop the second.
-- A refused flash is **not drawn in its flash form**; the source draws what is left (the table says what).
+The first version counted requests (three a second). Tools' frame analyser showed the standard counts something else: a flash counts only when the pixels that changed by 0.10 of relative luminance cover 25% of a 341 by 256 window, **21,824 px at 1024 by 768, 2.8% of the frame**. So a flash is now asked for with its **area** and its **step**, and the budget is a sum of weights.
 
-`ask(source, colour, tick) -> bool` is the one call a source makes before it draws. `note(source, tick)` counts a flash another system draws and cannot be refused yet. Both write the log.
+`ask(source, colour, tick, area_px = -1, step = -1) -> bool`
+
+- **Weight** `w = min(1, area_px / 21,824)`. With no area, the source's default weight stands (`VfxFlashRegistry.DEFAULT_WEIGHT`: 1 for a big event and for any unknown source; below for a small one). So Rendering's and UI's existing calls keep working.
+- **Step.** A luminance step under 0.10 costs nothing and is not a flash: it is logged as `below_step` with weight 0 and not counted.
+- **Budget**, in any 60 ticks across the whole screen: the sum of granted weights at most **2.5** (Legal's gate; **1.0** under reduced flashing or reduced motion).
+- **Low-priority class** (energy, block, shot hits, mines, a guard break's ring, Rendering's body hit, head flash and cue flare, UI's divider slam): at most **1.5** of it, none when reduced, so a weight-1 explosion always fits. (The EP's brief said 2 of the 2.5; that leaves 0.5, and a big event of weight 1 could then never be granted, so it is 1.5 here.)
+- **Count ceilings stay:** at most 3 granted flashes of weight 0.5 or more in a second (1 when reduced), and at most 6 flashes of any weight (3 when reduced). `guard_flash` is not low (a skill moment: the EP's ruling).
+- **Nothing red** is ever granted. A refused flash is not drawn in its flash form; the table says what is left.
+- **The clock** is the hub's own tick count (frozen ticks included).
+
+**What the weights are, at the close framing (about 1.3 px a world unit)**
+
+| Source | Area (px²) | Weight |
+| :-- | ---: | ---: |
+| Energy landing disc (38 to 56 units) | 1,900 to 4,000 | 0.09 to 0.18 |
+| Block flash rings (hollow) | about 700 | 0.03 |
+| Shot-hit flash disc (45 to 130 units across) | 2,700 to 22,000 | 0.12 to 1 |
+| Body hit white (one body about 40 by 90 px) | 3,600 | 0.17 |
+| Head flash | under 1,500 | 0.07 |
+| Guard flash | | 0.2 |
+| Guard break ring | about 900 | 0.04 |
+| Double hit's disc, a charge's thin ring | 2,500 and 600 | 0.12 and 0.03 |
+| Explosion flame burst (a blast radius of 40 to 200 units) | 3,000 to 80,000 | 0.14 to 1 |
+| Transformation break flash (1.7 bh across) | about 80,000 | 1 |
+| Beam white core, beam clash flare | Rendering's | 1 (default) |
+| Camera's dip, a panel | the whole frame | 1 each (they must ask) |
+
+**The host call.** Sizes need the camera's scale. The hub has `px_per_unit` (pixels per world unit at 1024 by 768 on the fighters' plane; default 1.3, the close framing). The host should set it every frame from the camera: `host.vfx.px_per_unit = 768.0 / (the visible world height at the fighters' plane)`. Until it does, every area uses 1.3, which over-weights a flash in a wide shot and under-weights it in a close-up.
+
+**The honest limit.** This makes the register limit something closer to what the analyser measures, but it cannot see scenery sweeping past a moving camera, a panel wiping open, or a whole-screen dip unless the system that makes it asks for it. Camera's dip and panel and Rendering's beam have to ask with an area and a step. The analyser on the required clips stays the test.
+
+**What it did to play** (hash_check, seeds 12345, 4 and 7, six VFX runs each: the by-source line, granted/refused, before the weights and after):
+
+| Source | Before | After |
+| :-- | ---: | ---: |
+| body_hit | 730 / 2,966 | 1,780 / 1,916 |
+| block | 145 / 455 | 310 / 290 |
+| head_flash | 50 / 466 | 280 / 236 |
+| guard_flash | 47 / 1 | 32 / 16 |
+| explosion | 118 / 56 | 138 / 36 |
+| shot_hit | 5 / 37 | 5 / 22 |
+| beam, transform, cue_flare, beam_clash | 35/1, 70/2, 10/2, 12/0 | 35/1, 70/2, 10/2, 12/0 |
+
+The body's white on a hit is granted 48% of the time (it was 20%), blocks 52% (24%) and head flashes 54% (10%); explosions are granted a little more often, and the worst second in the real matches reads a weight of 2.48 (budget 2.5) and at most 6 flashes. A mash's body white is still refused about half the time: the ceiling of six flashes a second, the 1.5 low-priority share and the hit rate of the AI are what bind.
 
 ## The log, for Tools and for UI
 
-`hub.flashes.log` has a row for every ask: `{now, tick, source, granted, why, in_window}`, newest last, the last 2,400 asks. `log_rows()` returns them as arrays `[now, tick, source, granted, why, in_window]` for a script. `why` is `ok`, `cap`, `low_priority`, `reduced`, `red` or `unregulated`. `summary()` gives `granted`, `refused`, `worst_second` (counted from the log), `worst_running` (the running figure over the whole run), the counts by source and the cap in force. The log is per match and is cleared by `hub.reset`. Tools can run the WCAG 2.3.1 check over recordings and read this log beside it: the log says what the effects asked for, the check says what the pixels did.
+`hub.flashes.log` has a row for every ask: `{now, tick, source, granted, why, in_window, weight, sum}` (weight the flash's weight, sum the running sum of weights in the window after it), newest last, the last 2,400 asks. `log_rows()` returns them as arrays `[now, tick, source, granted, why, in_window, weight, sum]` for a script. `why` is `ok`, `budget`, `cap`, `low_priority`, `reduced`, `red`, `below_step` or `unregulated`. `summary()` gives `granted`, `refused`, `worst_second` (counted from the log), `worst_running` (the running figure over the whole run), the counts by source and the cap in force. The log is per match and is cleared by `hub.reset`. Tools can run the WCAG 2.3.1 check over recordings and read this log beside it: the log says what the effects asked for, the check says what the pixels did.
 
 **What a "reduced flashing" setting would switch** (UI: `host.vfx.reduced_flashing = true`): the register's cap from 3 to 1 a second and the low-priority flashes (energy landings, block, shot-hit and mine rings, guard-break rings) off, with the explosion's flame burst and the transformation's break flash down to one a second between them. It does **not** touch anything Rendering draws (below) until Rendering asks the register. If UI offers it, it should also switch Rendering's hit flash and head flashes when those ask.
 
@@ -50,6 +88,24 @@ It does **not** remove: Rendering's white **body hit flash** (the whole body goe
 | Guard arc flash on a perfect block | **Rendering** `fighter_view.gd` | the guard arc flares | **No.** Needs Rendering | |
 | Signature beams, beam clash flare | **Rendering** `beam_view.gd` | additive cylinders with a white core; a flare at a clash | **No.** Needs Rendering | |
 | Impact sparks and scorch | **Rendering** (`impact`) | sparks | **No**, not surveyed beyond the name | |
+
+## What the pixel analyser found in VFX's drawing (2026-10-06)
+
+Tools' frame analyser (docs/tools/flash-check.md) plays the real web build in headless Chrome at 1024 by 768 and counts opposing luminance changes of 0.10 or more over a quarter of a 341 by 256 window. Rendering switched layers off to attribute: two of the failures were VFX's, and neither was a flash the register could count.
+
+1. **The broad grey band (AI seeds 4 and 12345).** A crater's shock ring (`blast.gd` `_ring`, a flat ring on the ground) scales with the crater: at tier 3 or 4 it is over a thousand units across, and the ground-ring shape drew a band 32% of its radius thick at 0.9 alpha in light dust colour, a pale band across a quarter of the screen that rose and fell in half a second. With VFX off the band is gone (Rendering). Fix, in `shard_view.gd` and `shard.gdshader` (nothing on the held files): a flat ring's band is at most about 70 units thick (`ring_w = 35 / radius`, 0.02 to 0.16) and it is fainter the wider it is (`alpha *= 500 / width`, not below 0.12), so a big ring's step stays under 0.10. Cost to the look: a small ring (under 500 units across) is as it was; a big crater's ring is a thin pale line, not a band.
+2. **The transformation's whole-screen dim (AI seed 12345 around ticks 582 to 612).** `transform_view.gd` draws "the light around him dims" as a soft dark disc of 6 bh radius (about 1,170 px across) at `dim_alpha` 0.32 through the gather and takes it away within 4 ticks of the break: a whole-screen pair of opposing changes. The change is in the data VfxTransform reads, not in the held view: `dim_alpha` 0.32 to 0.16 (`data/vfx/transform.json` and the default in `transform.gd`), which puts its step under 0.10 against a mid-tone background. Cost to the look: the gather's dimming is half as dark. (Reduced motion already halves it again.)
+
+**Results**, Tools' `check-clip.mjs` on a web export of HEAD 8d4e6ee3 plus VFX's change, normal and reduced, gate 2.5:
+
+| Clip | Before | After |
+| :-- | :-- | :-- |
+| ai-12345 normal | 4.5 (tick 3290: a shot-hit flash, an explosion and the band) | **2.5** |
+| ai-12345 reduced | 4.5 (Tools' table) | **2.0** |
+| ai-4 normal | 3.5 (Tools' table; Rendering reproduced it) | **2.5** |
+| ai-4 reduced | 2 (Tools' table) | **1.5**, one whole-screen dip at tick 620 (45% of the frame, mean luminance 0.256 to 0.156), not traced |
+
+The largest single window in these clips still reads 400% of the limit (a camera or scenery change the count does not weigh), so a pass is at the gate, with no margin.
 
 ## What I could and could not do about the held files
 

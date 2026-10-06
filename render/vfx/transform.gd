@@ -14,7 +14,7 @@ extends RefCounted
 ## "vfx.xform" derived from the match seed.
 
 const DEFAULTS: Dictionary = {
-	"gather": {"motes": 40, "dust_motes": 14, "loops_full": 2.0, "loops_short": 1.0, "loops_live": 1.0, "radius_bh": 2.6, "len_bh": 0.55, "width_bh": 0.05, "alpha": 0.85, "dim_radius_bh": 6.0, "dim_alpha": 0.32, "aura_shrink": 0.12},
+	"gather": {"motes": 40, "dust_motes": 14, "loops_full": 2.0, "loops_short": 1.0, "loops_live": 1.0, "radius_bh": 2.6, "len_bh": 0.55, "width_bh": 0.05, "alpha": 0.85, "dim_radius_bh": 6.0, "dim_alpha": 0.16, "aura_shrink": 0.12},
 	"break": {"ring_r0_bh": 0.7, "ring_r1_bh": 4.2, "ring_ticks": 14, "ring_thick": 0.045, "ring_alpha": 0.95, "flash_radius_bh": 1.7, "flash_alpha": 0.5, "flash_ticks": 5, "aura_alpha": 0.9},
 	"settle": {"aura_alpha": 0.6, "ease_ticks": 10, "fade_ticks": 24},
 }

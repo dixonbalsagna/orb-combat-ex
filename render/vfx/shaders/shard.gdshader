@@ -112,7 +112,7 @@ void fragment() {
 		float r = length(p);
 		float w = 0.05 + 0.04 * (1.0 - COLOR.a);
 		if (v_custom.z > 2.5) {
-			w = 0.16;   // a ring lying on the ground (an entrance landing): a band, so it still reads when it is flattened to a sliver
+			w = (sd > 0.0) ? sd : 0.16;   // a ring lying on the ground: a band, so it still reads when it is flattened to a sliver; the view gives a big ring a thinner band in sd (a crater's shock ring)
 		}
 		a = edge(abs(r - (1.0 - w)) - w, aa);
 		base = mix(base, rim_steel.rgb, 0.5);

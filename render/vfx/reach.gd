@@ -23,7 +23,7 @@ const DEFAULTS: Dictionary = {
 	"reach": {"flash_every": 20.0, "gather_ticks": 10.0, "gather_r": 30.0, "palm_x": 26.0, "palm_y": 50.0,
 		"rim_life": 3.0, "rim_alpha": 0.6, "flash_life": 3.0, "land_life": 9.0,
 		"spill_bolt_bh": 2.5, "spill_blast_bh": 6.0, "spill_life": 8.0, "scorch_life": 150.0, "scorch_max": 6.0,
-		"carry_life": 10.0, "smoke_every": 3.0, "smoke_ticks": 24.0, "stagger_min": 12.0, "chev_period": 12.0, "send_life": 12.0, "alpha": 0.9},
+		"carry_life": 10.0, "smoke_every": 3.0, "smoke_ticks": 24.0, "stagger_min": 12.0, "heavy_ticks": 28.0, "chev_period": 12.0, "send_life": 12.0, "alpha": 0.9},
 }
 
 class Fx:
@@ -88,10 +88,10 @@ func reset() -> void:
 
 ## The flash limit (§5b point 8 and Legal's k05): true when a full flash may be drawn on this tick, and then it takes the slot. Two rules: at least `flash_every` ticks since the
 ## last one across both fighters (the design's pace), and the screen's register (three a second across every effect, fewer for low-priority sources, none in reduced motion).
-func allow_full(S: SimState, col: Color = Color.WHITE, pace: bool = true) -> bool:
+func allow_full(S: SimState, col: Color = Color.WHITE, pace: bool = true, radius: float = 19.0) -> bool:
 	if pace and S.tick - last_full < int(p("flash_every")):
 		return false
-	if registry != null and not registry.ask("energy", col, S.tick):
+	if registry != null and not registry.ask("energy", col, S.tick, VfxFlashRegistry.disc_px(radius, registry.ppu), 0.2):
 		return false
 	last_full = S.tick
 	full_ticks.append(S.tick)
@@ -142,6 +142,8 @@ func on_events(S: SimState, events: Array, reduced: bool, debris, press: VfxPres
 					_land(S, e, reduced, debris)
 				"windup":
 					_windup(S, e, reduced)
+				"charge_full":
+					_charge_full(S, e, reduced)
 				"launcher_open":
 					_launcher_open(S, e)
 				"launcher_close":
@@ -225,7 +227,7 @@ func _land(S: SimState, e, reduced: bool, debris) -> void:
 		l.life = p("land_life")
 		# Encounter's `k` on the cue is 1 on the one blow in 20 ticks that may take the full flash; the register still decides. Without it, the 1-in-20 pace is ours.
 		var kk: float = float(VfxHub._g(e, "k", -1.0))
-		l.big = (not reduced) and (not guard or blast) and (kk < 0.0 or kk >= 1.0) and allow_full(S, col.lightened(0.3), kk < 0.0)
+		l.big = (not reduced) and (not guard or blast) and (kk < 0.0 or kk >= 1.0) and allow_full(S, col.lightened(0.3), kk < 0.0, 28.0 if blast else 19.0)
 		fx.append(l)
 		made["land"] = int(made.get("land", 0)) + 1
 		if l.big:
@@ -358,14 +360,18 @@ func _windup(S: SimState, e, reduced: bool) -> void:
 	o.kind = String(VfxHub._g(e, "source", ""))
 	o.col = VfxPress.lane_of(S, slot)
 	o.small = reduced
+	# Y from B by the cell (`source`), never by `dur` (its unit is not settled); the length is the landing tick (`n`, absolute) minus now, which needs no unit.
 	var land: float = float(VfxHub._g(e, "n", -1.0))
-	var ticks: float = float(VfxHub._g(e, "dur", 0.0)) * 60.0
-	if ticks < 1.0 and land > 0.0:
-		ticks = maxf(land - float(S.tick), 1.0)
-	o.life = maxf(ticks, 2.0)
-	o.strong = o.life >= 20.0
-	if land > 0.0:
-		o.age = clampf(o.life - maxf(land - float(S.tick), 0.0), 0.0, o.life - 1.0)
+	var remaining: float = maxf(land - float(S.tick), 0.0) if land > 0.0 else -1.0
+	var src: String = o.kind.to_lower()
+	o.strong = src == "b" or src.begins_with("b_") or src.find("heavy") >= 0 or (src == "" and remaining >= 20.0)
+	if o.strong:
+		# The heavy's ring is there from the press and holds, small and steady, for as long as the charge is held, until the `windup` end cue: so it does not expire.
+		o.life = 300.0
+		if remaining >= 0.0:
+			o.age = clampf(p("heavy_ticks") - remaining, 0.0, p("heavy_ticks"))
+	else:
+		o.life = maxf(remaining, 2.0)
 	fx.append(o)
 	var mk: String = "windup_b" if o.strong else "windup_y"
 	made[mk] = int(made.get(mk, 0)) + 1
@@ -394,6 +400,32 @@ func _windup_end(S: SimState, e) -> void:
 			return
 
 
+## The heavy's charge is full (cue `charge_full`: actor, the cell b): one thin ring leaves the charging hand, 8 units out to 24 over 4 ticks, with three short ticks beside it, in his lane colour:
+## a thin edge flash on the hand, never a ball, never body-wide, never gold, white or red (Legal's k03). It asks the register as `charge_full` (a skill moment: not a low source); refused, the held
+## ring simply goes on. Reduced motion: the ring stands at 14 units for its 4 ticks and does not widen. The ring that holds from the press is not a flash and asks nothing.
+func _charge_full(S: SimState, e, reduced: bool) -> void:
+	var slot: int = int(e.actor)
+	if slot < 0 or slot > 1 or slot >= S.fighters.size():
+		return
+	var other: int = int(VfxHub._g(e, "target", 1 - slot))
+	if other < 0 or other > 1 or other == slot:
+		other = 1 - slot
+	var f = S.fighters[slot]
+	var o := Fx.new()
+	o.style = "chargeflash"
+	o.slot = slot
+	o.vic = other
+	o.dir = 1.0 if SimWrap.sdx(f.x, S.fighters[other].x) >= 0.0 else -1.0
+	o.col = VfxPress.lane_of(S, slot)
+	o.small = reduced
+	o.life = 4.0
+	o.big = registry == null or registry.ask("charge_full", o.col.lightened(0.3), S.tick, VfxFlashRegistry.ring_px(24.0, 2.2, registry.ppu), 0.15)
+	fx.append(o)
+	made["charge_full"] = int(made.get("charge_full", 0)) + 1
+	if o.big:
+		made["charge_flash"] = int(made.get("charge_flash", 0)) + 1
+
+
 ## The double hit (cue `double_hit`, 8 ticks ahead: actor and target the two slots, n the landing tick, absolute): at the landing two contact looks at the same instant, mirrored, one on
 ## each face line: a crossed crack, sparks and a hollow ring each, in each fighter's own colour, and one small flash for the pair if the register grants it (`double_hit`, a big moment);
 ## then dust along the ground under each as they are thrown apart. Legal's k04: sparks at the contact only, no rubble ring with cracks and wind, no lightning, no body-wide aura, no gold,
@@ -412,7 +444,7 @@ func _double(S: SimState, e, reduced: bool) -> void:
 	o.life = 12.0
 	var land: float = float(VfxHub._g(e, "n", float(S.tick) + 8.0))
 	o.age = -maxf(land - float(S.tick), 0.0)
-	o.big = (not reduced) and registry != null and registry.ask("double_hit", o.col.lightened(0.3), S.tick)
+	o.big = (not reduced) and registry != null and registry.ask("double_hit", o.col.lightened(0.3), S.tick, VfxFlashRegistry.disc_px(22.0, registry.ppu), 0.2)
 	fx.append(o)
 	made["double"] = int(made.get("double", 0)) + 1
 

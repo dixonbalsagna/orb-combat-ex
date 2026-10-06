@@ -413,11 +413,12 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				# Echoes between the old pose and the strike (real earlier poses when we have them), popping off one at a time from the back to the front;
 				# a thin straight speed line; a hard diamond.
 				var pop: float = VfxPress.p("echo_pop")
-				var ne: int = mini(e.ghosts if e.ghosts > 0 else 3, 2) if e.ghost_ok else 0      # f01: at most 2 echoes of a limb alive, and the counter's say
+				var ne: int = mini(e.ghosts if e.ghosts > 0 else 3, 3) if e.ghost_ok else 0      # f01: at most 2 echoes of a limb alive at once (the third comes as the first pops), and the counter's say
 				for g in range(ne):
-					if red and g != ne - 1:
+					if red and g != mini(ne - 1, 1):
 						continue
-					if st >= 2.5 + float(g) * pop:
+					var ew: Vector2 = VfxPress.echo_window(g)
+					if st >= ew.y or st < ew.x:
 						continue
 					var fr: float = float(g + 1) / float(ne + 1)
 					var ec: Color = e.col.darkened(0.3)
@@ -725,11 +726,13 @@ func _reach(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				var wpalm: Vector2 = _palm(S, e.slot, e.dir, wx, wy)
 				rc.shown += 1
 				if e.style == "windup":
-					var wrem: float = e.life - st
+					var wbt: float = VfxReach.p("heavy_ticks")
+					var wrem: float = (wbt - st) if e.strong else (e.life - st)
 					var wk: float = 0.0
 					var wr: float = 0.0
 					if e.strong:
-						wk = clampf(st / e.life, 0.0, 1.0)
+						# Closes over the heavy's 28 ticks, then holds small and steady for as long as the charge is held.
+						wk = clampf(st / wbt, 0.0, 1.0)
 						wr = lerpf(30.0, 8.0, wk)
 					else:
 						if wrem > VfxReach.p("gather_ticks"):
@@ -742,7 +745,7 @@ func _reach(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 					var wed: Color = e.col.darkened(0.4)
 					wed.a = wc.a * 0.8
 					n = _put(n, wpalm, Vector2(1.0, 0.0), wr * 2.0 + 4.0, wr * 2.0 + 4.0, wz - 0.1, wed, minf(0.5, 2.0 / (wr + 2.0)), 0.0, SHAPE_RING)
-					if e.strong and wrem <= 6.0:
+					if e.strong and wrem > 0.0 and wrem <= 6.0:
 						var tgt := Vector2(SimWrap.sdx(cam_x, host.fighter_x(e.vic, a)) - e.dir * 14.0, host.fighter_pose(e.vic, a).y + 50.0)
 						var ln: Color = e.col.darkened(0.3)
 						ln.a = al * 0.9 * (1.0 - 0.5 * (1.0 - wrem / 6.0))
@@ -757,6 +760,29 @@ func _reach(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 							n = _put(n, wpalm + fdv * (8.0 + 16.0 * u), fdv, 9.0, 3.0, wz, wend, 0.5, 0.5, SHAPE_STREAK)
 					else:
 						n = _put(n, wpalm, Vector2(1.0, 0.0), 16.0, 16.0, wz, wend, minf(0.5, 2.0 / 8.0), 0.0, SHAPE_RING)
+			"chargeflash":
+				# The heavy's charge is full: one thin ring leaves the hand over 4 ticks, with three short ticks beside it. A thin edge flash on the hand (k03), asked of the register.
+				if not e.big:
+					continue
+				var cx0: float = SimWrap.sdx(cam_x, host.fighter_x(e.slot, a))
+				if absf(cx0) > half_w + 6.0 * bh:
+					continue
+				var cy0: float = host.fighter_pose(e.slot, a).y
+				var cz0: float = host.fighter_z(e.slot, a) + Z_FX + 22.0
+				var cpalm: Vector2 = _palm(S, e.slot, e.dir, cx0, cy0)
+				var cr: float = 14.0 if e.small else lerpf(8.0, 24.0, 1.0 - pow(1.0 - u, 2.0))
+				var cc0: Color = e.col.lightened(0.15)
+				cc0.a = al * (1.0 - u)
+				rc.shown += 1
+				n = _put(n, cpalm, Vector2(1.0, 0.0), cr * 2.0, cr * 2.0, cz0, cc0, minf(0.5, 2.2 / cr), 0.0, SHAPE_RING)
+				var ced: Color = e.col.darkened(0.4)
+				ced.a = cc0.a * 0.8
+				n = _put(n, cpalm, Vector2(1.0, 0.0), cr * 2.0 + 4.0, cr * 2.0 + 4.0, cz0 - 0.1, ced, minf(0.5, 2.0 / (cr + 2.0)), 0.0, SHAPE_RING)
+				if not e.small:
+					for ci in range(3):
+						var ca: float = float(ci - 1) * 0.7
+						var cv := Vector2(e.dir * cos(ca), sin(ca))
+						n = _put(n, cpalm + cv * (cr + 6.0), cv, 7.0, 3.0, cz0, cc0, 0.5, 0.5, SHAPE_STREAK)
 			"double":
 				# The double hit: both blows land at the same instant. Each side gets a crossed crack, sparks and a hollow ring at the other's face line in the blow's own colour; one small flash for
 				# the pair if the register granted it. Nothing red, white or gold; no rubble ring (k04). The dust along the ground is the debris pool's (reach.gd, at the landing).

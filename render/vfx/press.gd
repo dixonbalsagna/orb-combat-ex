@@ -158,12 +158,16 @@ static func style_of(S: SimState, e, attacker: int) -> String:
 		forced = "heavy"
 	if kind == "guard":
 		return "block"
-	if kind != "light" and kind != "heavy":
+	if kind != "light" and kind != "medium" and kind != "heavy":
 		return ""
 	if STYLES.has(forced) and forced != "block":
 		return forced
 	if kind == "heavy":
 		return "heavy"
+	if kind == "medium":
+		# The three strengths (brawl-second-pass.md): a medium (Y) is today's heavy strike. The beat's own style decides, else the heavy look it had.
+		var mst: String = String(beat_args(S, attacker).get("style", ""))
+		return mst if (STYLES.has(mst) and mst != "block") else "heavy"
 	# The director's own word on this blow (its strike beat's `style`).
 	var bst: String = String(beat_args(S, attacker).get("style", ""))
 	if STYLES.has(bst) and bst != "block":
@@ -260,8 +264,15 @@ func step(S: SimState, frozen: bool) -> void:
 			fly[s] = float(fly[s]) - 1.0
 
 
+## An echo's window, in ticks since the blow: the back echoes pop one at a time (each lives `echo_pop` ticks longer than the one behind it), and the third echo of a perfect blow appears as the
+## first pops, so its three are seen in sequence and never more than two are alive at any instant (Legal's f01 is a ceiling on echoes alive, not on echoes drawn over the blow).
+static func echo_window(g: int) -> Vector2:
+	var pop: float = p("echo_pop")
+	return Vector2(maxf(float(g - 1), 0.0) * pop, 2.5 + float(g) * pop)
+
+
 ## The per-instant limb-ghost counter (Legal's f01: at most 2 ghosts of any limb at any instant and at most 4 limb-ghosts on screen in all). A speed blow's smear is one limb-ghost; a
-## tech blow's echoes are one each while they are alive (at most 2 of them: the third echo of a perfect blow is not drawn); the newest blows are granted first, so in a flurry the two
+## tech blow's echoes are one each while they are alive (never more than 2 at once: the third echo of a perfect blow comes as the first pops); the newest blows are granted first, so in a flurry the two
 ## newest smears of a limb are drawn and the older ones fade without theirs (their contact rings stay). Heavy blows' ghosts and the zip's are body ghosts under m05 (at most 5), not counted here.
 func _grant_ghosts() -> void:
 	var used: Dictionary = {}
@@ -273,9 +284,10 @@ func _grant_ghosts() -> void:
 		if e.style == "speed" and e.gscale > 0.0:
 			units = 1
 		elif e.style == "tech":
-			var ne: int = mini(e.ghosts if e.ghosts > 0 else 3, 2)
+			var ne: int = mini(e.ghosts if e.ghosts > 0 else 3, 3)
 			for g in range(ne):
-				if e.age < 2.5 + float(g) * p("echo_pop"):
+				var w: Vector2 = echo_window(g)
+				if e.age >= w.x and e.age < w.y:
 					units += 1
 		e.gunits = units
 		if units == 0:
@@ -447,7 +459,7 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 			x.col = lane_of(S, vic)
 			x.life = p("block_life")
 	if style == "block" and flash_sink != null:
-		x.noflash = not flash_sink.ask("block", x.col2, S.tick)
+		x.noflash = not flash_sink.ask("block", x.col2, S.tick, VfxFlashRegistry.ring_px(20.0, 3.0, flash_sink.ppu), 0.15)
 	_take_real(S, x, att, style)
 	if bool(ba.get("sure", false)) and style != "block":
 		var br := Fx.new()

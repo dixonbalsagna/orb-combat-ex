@@ -452,7 +452,7 @@ func _mark(S: SimState, who: int, zs: int, kind: String, style: String) -> void:
 			m.col = VfxPress.lane_of(S, who)
 		_:
 			m.kind = "gbreak"
-			m.noflash = flashes != null and not flashes.ask("zip_break", VfxPress.lane_of(S, who), S.tick)
+			m.noflash = flashes != null and not flashes.ask("zip_break", VfxPress.lane_of(S, who), S.tick, VfxFlashRegistry.ring_px(22.0, 4.0, flashes.ppu), 0.15)
 			m.x = wf.x
 			m.y = wf.y + 34.0
 			m.life = p("gbreak_life")

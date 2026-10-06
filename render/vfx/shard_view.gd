@@ -6,6 +6,7 @@ extends MultiMeshInstance3D
 
 const CAP := VfxLook.DEBRIS_CAP + 8
 const STRIDE := 20
+const RING_FADE_REF := 500.0     # a flat ring wider than this (world units across) is fainter in proportion, so a crater's shock ring never becomes a broad band
 
 var _buf := PackedFloat32Array()
 var count: int = 0
@@ -70,6 +71,7 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 			var c: Color = b.col
 			var sx: float = maxf(b.sx, minpx)
 			var sy: float = maxf(b.sy, minpx * 0.5)
+			var ring_w: float = 0.16
 			match b.kind:
 				VfxDebris.PUFF:
 					c.a = 0.82 * (1.0 - smoothstep(0.5, 1.0, f)) * minf(1.0, b.age / 0.06)
@@ -86,6 +88,10 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 					sy = sx * (0.22 if b.mode == 3 else 1.0)
 					if b.mode == 3:
 						c.a = 0.9 * (1.0 - f)
+						# A big flat ring (a crater's shock ring at tier 3 or 4 is a thousand units across) would be a broad pale band over a quarter of the screen, a flash by the standard's
+						# area test (Tools' frame analyser, docs/vfx/flash-registry.md): its band is at most about 70 units thick and it is fainter the wider it is, so its step stays under 0.10.
+						c.a *= clampf(RING_FADE_REF / maxf(sx, 1.0), 0.12, 1.0)
+						ring_w = clampf(35.0 / maxf(sx * 0.5, 1.0), 0.02, 0.16)
 				_:
 					c.a = 1.0 - smoothstep(0.7, 1.0, f)
 					shards += 1
@@ -112,7 +118,7 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 					c = VfxPalette.ember("char")
 					mode = 1.0
 				c.a = 1.0 - smoothstep(0.85, 1.0, f)
-			_put(n, Vector2(vx, cy_v), rot_v, sx, sy, b.z, c, float(b.kind), b.seed, mode)
+			_put(n, Vector2(vx, cy_v), rot_v, sx, sy, b.z, c, float(b.kind), ring_w if (b.kind == VfxDebris.RING and b.mode == 3) else b.seed, mode)
 			n += 1
 	count = n
 	multimesh.visible_instance_count = n
