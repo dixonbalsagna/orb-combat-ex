@@ -5,7 +5,7 @@ Owner: VFX Director. Legal's condition before the first public release of the we
 ## The rule
 
 - **At most 3 granted flashes in any 60 ticks** (a second) across the whole screen: both fighters and every effect that asks.
-- **Priority.** Low-priority sources (`energy`, `block`, `shot_hit`, `mine`, `zip_break`: the things a fight makes many of) get at most 2 of the 3, so one slot is always left for the big events (`explosion`, `transform`).
+- **Priority.** Low-priority sources (`energy`, `block`, `shot_hit`, `mine`, `zip_break`, and Rendering's `body_hit`, `head_flash` and `cue_flare`: the things a fight makes many of) get at most 2 of the 3, so one slot is always left for the big events (`explosion`, `transform`, `beam`, `beam_clash`) and for a perfect block's `guard_flash`, which is not low (a skill moment the player earned, about 2.4 a minute at medium: the EP's ruling).
 - **Reduced flashing** (`hub.reduced_flashing`, or reduced motion): the cap is **1 a second** and the low-priority sources get none. This is "halves it or better".
 - **Nothing red.** A flash whose colour is saturated red (`r > 0.55`, `g` and `b` under 0.45 `r`) is refused whatever the count; the lane colours (cyan, violet) and the flame's orange are not red.
 - **The clock** is the hub's own tick count (one per `consume()`, frozen ticks included), so a hit-stop does not stop the second.
@@ -44,7 +44,7 @@ It does **not** remove: Rendering's white **body hit flash** (the whole body goe
 | Press contact rings, diamond, crescent, speed blur | VFX `press.gd` | hollow, thin or low-alpha marks | **No: not a flash** (small and hollow; no luminance step of the standard's size) | n/a |
 | Energy crack, ring, rim, spill, carry; B now chevrons; send-off | VFX `reach.gd` | thin lines and hollow rings | **No: not a flash** | n/a |
 | Pressure rings, power-up shock ring, crack sets, dust, shards, glass, a building collapse | VFX | rings, lines, matter | **No: not a flash.** A collapse in VFX is dust, shards and glass; no bright pop | n/a |
-| Glare on the rival's glasses | VFX `glare.gd` | a lens edge light, on for its hold | **No** (steady for its hold); listed because reduced motion makes its ramp a hard on/off | n/a |
+| Glare on the rival's glasses | VFX `glare.gd` | a lens wedge of 10 by 4.8 units in pale violet, a 3-tick attack and a hold of at most 24 ticks | **No, and deliberately not asked.** The cooldown is the guarantee: a wearer's glares are at least 200 ticks (3.3 seconds) apart, so at most 0.3 on-off cycles a second a wearer, on an area far under the standard's; only a seal-break cue ignores the cooldown. Reduced motion makes the ramp a hard on/off, still once per cooldown at most (the EP agreed, 2026-10-06) | n/a |
 | **Body hit flash** | **Rendering** `fighter_view.gd`, `anim_body.gd` (`HIT_FLASH_S` 0.12 s) | the **whole body white** on every hit | **No.** Needs Rendering. At a mash's 5 to 10 hits a second this is the largest strobe risk in the game | see "Needs" |
 | Head flashes | **Rendering** `flash_view.gd` | 2 or 3 icon pulses at the head | **No.** Needs Rendering | one pulse in reduced motion (Rendering's) |
 | Guard arc flash on a perfect block | **Rendering** `fighter_view.gd` | the guard arc flares | **No.** Needs Rendering | |

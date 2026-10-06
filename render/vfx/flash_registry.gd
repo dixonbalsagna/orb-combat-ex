@@ -19,8 +19,8 @@ const CAP: int = 3
 const CAP_REDUCED: int = 1
 const LOW_CAP: int = 2
 const LOG_MAX: int = 2400
-## The sources that leave a slot free: everything a fight makes many of.
-const LOW: Array = ["energy", "block", "shot_hit", "mine", "zip_break"]
+## The sources that leave a slot free: everything a fight makes many of (VFX's, and Rendering's body hit, head flash and cue flare: docs/rendering/flash-sources.md). A perfect block's guard flash is NOT low: a skill moment the player earned, it may take the third slot (the EP's ruling, 2026-10-06).
+const LOW: Array = ["energy", "block", "shot_hit", "mine", "zip_break", "body_hit", "head_flash", "cue_flare"]
 
 var reduced: bool = false           # reduced motion or the reduced-flashing setting: set by the hub every tick
 var now: int = 0                    # the clock, in ticks

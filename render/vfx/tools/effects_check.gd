@@ -3929,6 +3929,11 @@ func _flashes() -> void:
 	_check(lows == [true, true, false, true], "low-priority sources get two of the three, and the big event still gets its slot (%s)" % str(lows))
 	R.reset()
 	R.begin_tick(false)
+	var rl: Array = [R.ask("body_hit"), R.ask("head_flash"), R.ask("guard_flash"), R.ask("cue_flare"), R.ask("beam")]
+	_check(rl == [true, true, true, false, false], "Rendering's body hit, head flash and cue flare are low-priority sources, a perfect block's guard flash is not and may take the third slot, and a fourth flash is refused (%s)" % str(rl))
+	_check(not VfxFlashRegistry.is_red(Color("#9a80d8")) and not VfxFlashRegistry.is_red(Color("#8fd6ff")) and VfxFlashRegistry.is_red(Color("#d02020")), "the red test refuses a saturated red and passes both fighters' aura colours")
+	R.reset()
+	R.begin_tick(false)
 	_check(not R.ask("explosion", Color(1.0, 0.1, 0.1)) and R.refused_by.get("explosion", 0) == 1 and R.log[R.log.size() - 1]["why"] == "red", "a red flash is never granted, and the log says why")
 	R.reset()
 	R.begin_tick(true)
