@@ -68,8 +68,8 @@ static func _in_hip(t) -> bool:
 ## The scan: {ok (the scope was found), held (the count), classes, fails: [{pose, class, why, sources, ticks}], numbers: [text]}. Needs the data loaded (load_all with waves, or load_every_wave).
 static func scan() -> Dictionary:
 	AnimData.load_every_wave()
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("protagonist")   # the fighters.json keys, which resolve whatever the roster ids are called
+	AnimData.ensure_fighter("antihero")
 	var ban = JSON.parse_string(FileAccess.get_file_as_string("res://docs/legal/movegen-banned.json"))
 	var scope: Dictionary = ban.get("heldScope", {}) if ban is Dictionary else {}
 	var scope_ok: bool = scope.has("classes") and scope.has("pairTest") and scope.has("emitterTest") and scope.has("armsWideTest")

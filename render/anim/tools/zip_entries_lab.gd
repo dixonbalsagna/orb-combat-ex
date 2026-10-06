@@ -5,7 +5,7 @@ extends SceneTree
 ## ticks (rad) and the bone it was.
 ##   godot --no-window --path . -s res://render/anim/tools/zip_entries_lab.gd -- --fighter=protagonist --ticks=6 --out=a.rgb [--measure]
 const DT := 1.0 / 60.0
-const FIGHTERS := {"protagonist": "KAI", "antihero": "VORR"}
+const FIGHTERS := {"protagonist": "PROTAGONIST", "antihero": "RIVAL"}
 var fighter: String = "protagonist"
 var ticks: int = 6
 var out: String = "zip_entries.rgb"

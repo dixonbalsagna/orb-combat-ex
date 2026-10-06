@@ -6,7 +6,7 @@ extends SceneTree
 ##   godot --no-window --path . -s res://render/anim/tools/gesture_lab.gd -- --fighter=protagonist --out=a.rgb [--intent=claim] [--size=300x200] [--step=2] [--idle=...] [--measure]
 const DT := 1.0 / 60.0
 const INTENTS := ["acknowledge", "appraise", "dismiss", "defer", "brace", "ease", "claim", "check", "soften", "harden"]
-const FIGHTERS := {"protagonist": "KAI", "antihero": "VORR"}
+const FIGHTERS := {"protagonist": "PROTAGONIST", "antihero": "RIVAL"}
 const PRE := 14
 const POST := 14
 var fighter: String = "protagonist"
@@ -49,7 +49,7 @@ func _play(S: SimState, intent: String, with_gesture: bool, dur_ticks: int) -> A
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
 	f0.id = FIGHTERS[fighter]
-	f1.id = "VORR" if fighter == "protagonist" else "KAI"
+	f1.id = "RIVAL" if fighter == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	S.dirS.ex = null
 	f0.x = 500.0
@@ -87,7 +87,7 @@ func _run() -> void:
 	await process_frame
 	AnimData.load_all()
 	AnimData.ensure_fighter(String(FIGHTERS[fighter]))
-	AnimData.ensure_fighter("VORR" if fighter == "protagonist" else "KAI")
+	AnimData.ensure_fighter("RIVAL" if fighter == "protagonist" else "PROTAGONIST")
 	main.start_match(4, {"p1": false, "p2": false})
 	for i in range(10):
 		main.frame(DT)
