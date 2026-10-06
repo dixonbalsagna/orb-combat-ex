@@ -89430,60 +89430,6 @@
       }
     },
     {
-      "id": "fighter-identity-name-optional-ok",
-      "schema": "fighter.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/fighter.json",
-          "del": [
-            "/identity/name"
-          ]
-        }
-      ],
-      "expect": null
-    },
-    {
-      "id": "fighter-identity-title-optional-ok",
-      "schema": "fighter.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/fighter.json",
-          "del": [
-            "/identity/title"
-          ]
-        }
-      ],
-      "expect": null
-    },
-    {
-      "id": "fighter-identity-sig-name-optional-ok",
-      "schema": "fighter.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/fighter.json",
-          "del": [
-            "/identity/sigName"
-          ]
-        }
-      ],
-      "expect": null
-    },
-    {
-      "id": "fighter-identity-all-three-words-optional-ok",
-      "schema": "fighter.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/fighter.json",
-          "del": [
-            "/identity/name",
-            "/identity/title",
-            "/identity/sigName"
-          ]
-        }
-      ],
-      "expect": null
-    },
-    {
       "id": "fighter-identity-role-still-required",
       "schema": "fighter.schema.json",
       "mutate": [
@@ -89514,51 +89460,6 @@
         "rule": "required",
         "pointer": "/identity"
       }
-    },
-    {
-      "id": "fighter-identity-name-empty-still-refused",
-      "schema": "fighter.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/fighter.json",
-          "set": {
-            "/identity/name": ""
-          }
-        }
-      ],
-      "expect": {
-        "rule": "minLength",
-        "pointer": "/identity/name"
-      }
-    },
-    {
-      "id": "fighter-identity-title-type-still-refused",
-      "schema": "fighter.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/fighter.json",
-          "set": {
-            "/identity/title": 5
-          }
-        }
-      ],
-      "expect": {
-        "rule": "type",
-        "pointer": "/identity/title"
-      }
-    },
-    {
-      "id": "fighter-identity-sig-name-given-ok",
-      "schema": "fighter.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/fighter.json",
-          "set": {
-            "/identity/sigName": "A Beam"
-          }
-        }
-      ],
-      "expect": null
     },
     {
       "id": "ui-fighter-names-row-record-ok",
@@ -106025,6 +105926,200 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "fighter-identity-name-forbidden",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "set": {
+            "/identity/name": "A Word"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/identity/name"
+      }
+    },
+    {
+      "id": "fighter-identity-title-forbidden",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "set": {
+            "/identity/title": "A Word"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/identity/title"
+      }
+    },
+    {
+      "id": "fighter-identity-sigName-forbidden",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "set": {
+            "/identity/sigName": "A Word"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/identity/sigName"
+      }
+    },
+    {
+      "id": "fighter-identity-without-the-three-words-ok",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "set": {
+            "/identity/role": "hero"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-finishers-shapes-rival-required",
+      "schema": "combat-finishers.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/finishers.json",
+          "del": [
+            "/shapes/rival"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/shapes"
+      }
+    },
+    {
+      "id": "combat-finishers-shapes-antihero-retired",
+      "schema": "combat-finishers.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/finishers.json",
+          "set": {
+            "/shapes/antihero": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/shapes/antihero"
+      }
+    },
+    {
+      "id": "combat-finishers-shapes-protagonist-required",
+      "schema": "combat-finishers.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/finishers.json",
+          "del": [
+            "/shapes/protagonist"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/shapes"
+      }
+    },
+    {
+      "id": "combat-finishers-fighter-under-fixture-roster-skipped",
+      "schema": "combat-finishers.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/finishers.json",
+          "set": {
+            "/finishers/2/fighter": "NOBODY"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-finishers-fighter-not-in-roster",
+      "schema": "combat-finishers.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/roster.json",
+          "set": {
+            "/0": "ROSTERED_A",
+            "/1": "ROSTERED_B"
+          }
+        },
+        {
+          "file": "data/combat/finishers.json",
+          "set": {
+            "/finishers/2/fighter": "NOBODY"
+          }
+        }
+      ],
+      "expect": {
+        "file": "data/combat/finishers.json",
+        "rule": "xref:finisher-fighter",
+        "pointer": "/finishers/2/fighter"
+      }
+    },
+    {
+      "id": "combat-finishers-fighter-lowercase-not-in-roster",
+      "schema": "combat-finishers.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/roster.json",
+          "set": {
+            "/0": "ROSTERED_A",
+            "/1": "ROSTERED_B"
+          }
+        },
+        {
+          "file": "data/combat/finishers.json",
+          "set": {
+            "/finishers/2/fighter": "rostered_a"
+          }
+        }
+      ],
+      "expect": {
+        "file": "data/combat/finishers.json",
+        "rule": "xref:finisher-fighter",
+        "pointer": "/finishers/2/fighter"
+      }
+    },
+    {
+      "id": "combat-finishers-select-key-not-in-roster",
+      "schema": "combat-finishers.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/roster.json",
+          "set": {
+            "/0": "ROSTERED_A",
+            "/1": "ROSTERED_B"
+          }
+        },
+        {
+          "file": "data/combat/finishers.json",
+          "set": {
+            "/select/byFighter/NOBODY": "generic"
+          }
+        }
+      ],
+      "expect": {
+        "file": "data/combat/finishers.json",
+        "rule": "xref:finisher-fighter",
+        "pointer": "/select/byFighter/NOBODY"
+      }
     }
   ],
   "text": [

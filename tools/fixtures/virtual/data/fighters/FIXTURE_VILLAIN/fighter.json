@@ -3,10 +3,7 @@
   "schema": "fighter/1",
   "id": "FIXTURE_VILLAIN",
   "identity": {
-    "name": "Fixture Villain",
-    "title": "Test Fixture",
     "role": "villain",
-    "sigName": "Fixture Lance",
     "col": "#8a3b3b",
     "aura": "#d99694",
     "hair": "#5b3a8a"

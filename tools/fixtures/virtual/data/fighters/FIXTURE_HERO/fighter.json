@@ -3,10 +3,7 @@
   "schema": "fighter/1",
   "id": "FIXTURE_HERO",
   "identity": {
-    "name": "Fixture Hero",
-    "title": "Test Fixture",
     "role": "hero",
-    "sigName": "Fixture Beam",
     "col": "#4a6fa5",
     "aura": "#9fc5e8",
     "hair": "#2fbfa0"

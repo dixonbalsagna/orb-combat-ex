@@ -8,7 +8,6 @@ static func createFighter(def: Dictionary, x: float, keys: String, ai: bool) -> 
 	var f := SimState.Fighter.new()
 	f.id = def.id
 	f.name = def.name
-	f.title = def.title
 	f.role = def.role
 	f.col = def.col
 	f.aura = def.aura

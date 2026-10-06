@@ -134,6 +134,12 @@ function xref(docs, root = repoRoot) {
       for (const [fighter, target] of Object.entries(fin.select.byFighter || {})) {
         if (!finIds.has(target)) err(FIN, `/select/byFighter/${esc(fighter)}`, 'finisher-key', `fighter ${fighter} selects finisher "${target}", which does not exist`);
       }
+      const rosterFin = get(ROSTER);
+      const rosterFinIds = Array.isArray(rosterFin) ? rosterFin : isObj(rosterFin) && Array.isArray(rosterFin.order) ? rosterFin.order : null;
+      // the self-test runs against the validator's own fixture roster (FIXTURE_HERO and the like), which no live finisher names: skip it
+      const rosterFinLive = Array.isArray(rosterFinIds) && !rosterFinIds.every((x) => typeof x === 'string' && x.startsWith('FIXTURE_'));
+      if (rosterFinLive) for (const fighter of Object.keys(fin.select.byFighter || {})) if (!fighter.startsWith('_') && !rosterFinIds.includes(fighter)) err(FIN, `/select/byFighter/${esc(fighter)}`, 'finisher-fighter', `select.byFighter names "${fighter}", who is not in the roster (${rosterFinIds.join(', ')})`);
+      if (rosterFinLive) fin.finishers.forEach((fr, i) => { if (isObj(fr) && typeof fr.fighter === 'string' && fr.fighter !== '*' && !rosterFinIds.includes(fr.fighter)) err(FIN, `/finishers/${i}/fighter`, 'finisher-fighter', `finisher "${fr.id}" is for "${fr.fighter}", who is not in the roster (${rosterFinIds.join(', ')})`); });
       if (fin.select.fallback !== undefined && !finIds.has(fin.select.fallback)) err(FIN, '/select/fallback', 'finisher-key', `fallback finisher "${fin.select.fallback}" does not exist`);
     }
     fin.finishers.forEach((f, i) => {

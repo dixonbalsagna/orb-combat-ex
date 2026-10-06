@@ -348,7 +348,7 @@
       "type": "object",
       "required": [
         "protagonist",
-        "antihero",
+        "rival",
         "empress",
         "cyborg"
       ],
@@ -356,7 +356,7 @@
         "protagonist": {
           "$ref": "#/$defs/shape"
         },
-        "antihero": {
+        "rival": {
           "$ref": "#/$defs/shape"
         },
         "empress": {

@@ -415,7 +415,6 @@ class FxEvent:
 
 class Fighter:
 	var name: String = ""
-	var title: String = ""
 	var role: String = ""
 	var col: String = ""
 	var aura: String = ""

@@ -249,6 +249,11 @@ static func _canon(h: SimHash.Hasher, v) -> void:
 			h.text("z")
 
 
+## What follows a roster id to make the key of his signature's name (f.sigName: PROTAGONIST.SIG). The banner, the feed and
+## the signature exchange's tag print the key; the display layer puts the words in.
+const SIG_KEY: String = ".SIG"
+
+
 ## fighter.json -> the createFighter Dictionary.
 static func _fighter(id: String, j: Dictionary) -> Dictionary:
 	var where: String = id + "/fighter.json"
@@ -259,9 +264,14 @@ static func _fighter(id: String, j: Dictionary) -> Dictionary:
 	var rule: String = String(j.get("rally", {}).get("rule", ""))
 	if not RALLY_RULES.has(rule):
 		_err(where + ": unknown Rally rule '" + rule + "'")
-	var d := {"id": id, "name": String(idn.get("name", id)), "title": String(idn.get("title", "")), "role": String(idn.get("role", "")),
+	# No displayed word is read here: his name in the sim is his id, and his signature's is a key (SIG_KEY) that the
+	# display layer turns into words (ui/data/fighter_names.json). So Orb's names never touch a hash or a golden.
+	for word in ["name", "title", "sigName"]:
+		if idn.has(word):
+			_err(where + ": identity." + word + " is not read: displayed words live in ui/data/fighter_names.json")
+	var d := {"id": id, "name": id, "role": String(idn.get("role", "")),
 		"col": String(idn.get("col", "#ffffff")), "aura": String(idn.get("aura", "#ffffff")), "hair": String(idn.get("hair", "#000000")),
-		"sigName": String(idn.get("sigName", "")), "care": float(st.get("care", 0.0)), "dmgMul": float(st.get("dmgMul", 1.0)),
+		"sigName": id + SIG_KEY, "care": float(st.get("care", 0.0)), "dmgMul": float(st.get("dmgMul", 1.0)),
 		"spd": float(st.get("spd", 1.0)), "maxhp": float(st.get("maxhp", 1.0)), "canHide": bool(j.get("kit", {}).get("canHide", false)),
 		"rally": "" if rule == "none" else rule, "finisher": String(j.get("finishers", {}).get("base", "")),
 		"sigCooldown": float(j.get("sigCooldown", 0.0))}

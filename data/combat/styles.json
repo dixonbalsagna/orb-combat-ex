@@ -24,10 +24,8 @@
     "distance": { "volleyOpener": 1200, "volleyOpenerTrait": 700, "pursuitFlight": 2500 },
     "traits": {
       "_note": "per fighter; moves to the roster data (D1) when it lands. Placeholders now, archetypes later.",
-      "KAI": ["blink", "aerial"],
-      "VORR": ["volley", "brawler"],
       "protagonist": ["blink", "aerial"],
-      "antihero": ["volley", "aerial"],
+      "rival": ["volley", "aerial"],
       "empress": ["volley", "aerial"],
       "cyborg": ["brawler", "blink"],
       "_held": "The blink trait has no effect while teleporting is on hold (the blink_clash style has weight 0)."
@@ -65,7 +63,7 @@
     },
     "finishers": {
       "_rule": "each finisher's kind lives on the finisher (finishers.json 'kind': launch, melee or beam). Encounter adds it to finisher_start, and Rendering shows finisher_tell_<kind> with the finisher_open cue, so the fighter on the brink can read it (spec-wounds.md section 1: DEFENSIVE against launch, EVASIVE against melee, AGGRESSIVE with 40 ki or more against beam)",
-      "futureKinds": { "protagonist": "beam", "antihero": "melee", "empress": "beam", "cyborg": "melee" },
+      "futureKinds": { "protagonist": "beam", "rival": "melee", "empress": "beam", "cyborg": "melee" },
       "cues": { "launch": "finisher_tell_launch", "melee": "finisher_tell_melee", "beam": "finisher_tell_beam" }
     },
     "struggle": {

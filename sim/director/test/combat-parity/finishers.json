@@ -3,8 +3,8 @@
   "_about": "Finisher templates as data (Combat). A finisher replaces the rest of a decisive exchange when the loser is on the brink (spec-wounds.md section 1; exchange.gd startFinisher). Roles are W (the winner, who performs it) and L (the loser on the brink); the loader maps them to 'A'/'D' exactly as startFinisher does. Beat times are relative to the finisher's start (t0 = ex.t when startFinisher runs). 'generic.placeholder' reproduces today's placeholder set piece bit for bit (profile 'parity'); the authored finishers use integer ticks (60 per second). Contract and verification: docs/combat/data-fields.md section 10 and docs/combat/s3b-loader-note.md.",
   "profile": "parity",
   "select": {
-    "_rule": "parity profile: always 'generic.placeholder'. authored profile: the winner's own finisher by fighter name (e.g. 'KAI'), else 'generic'. Later: by fighter and form tier (damage-model.md section 5).",
-    "byFighter": { "KAI": "kai", "VORR": "vorr" },
+    "_rule": "parity profile: always 'generic.placeholder'. authored profile: the winner's own finisher by fighter name (e.g. 'PROTAGONIST'), else 'generic'. Later: by fighter and form tier (damage-model.md section 5).",
+    "byFighter": { "PROTAGONIST": "protagonist", "RIVAL": "rival" },
     "fallback": "generic"
   },
 
@@ -97,8 +97,8 @@
     },
 
     {
-      "id": "kai",
-      "fighter": "KAI",
+      "id": "protagonist",
+      "fighter": "PROTAGONIST",
       "profile": "authored",
       "name": { "text": "Skyward Lance", "placeholder": true, "source": "docs/narrative/finishers.md" },
       "barks": { "bark_landed": "finisher_landed", "bark_survived": "finisher_survived", "_note": "line-system trigger ids (docs/narrative/line-system.md section 13): bark_landed fires at the last_look cue, bark_survived at the holds_on cue" },
@@ -136,8 +136,8 @@
     },
 
     {
-      "id": "vorr",
-      "fighter": "VORR",
+      "id": "rival",
+      "fighter": "RIVAL",
       "profile": "authored",
       "name": { "text": "The Display", "placeholder": true, "source": "docs/narrative/finishers.md" },
       "barks": { "bark_landed": "finisher_landed", "bark_survived": "finisher_survived", "_note": "line-system trigger ids (docs/narrative/line-system.md section 13): bark_landed fires at the last_look cue, bark_survived at the holds_on cue" },
@@ -185,7 +185,7 @@
       "generative": ["teleport angles from terrain and the loser's position", "strike shapes from his vocabulary", "blast path from the signature layers (skyward by default; into the proving ground after the fold, spec-wounds.md section 7)"],
       "formVariants": "one per transformation stage (6 or more); later stages add flurry steps and blast scale"
     },
-    "antihero": {
+    "rival": {
       "placeholderName": "The Verdict",
       "kind": "finish by hand",
       "fixed": ["energy barrage until the loser submits (volley count scales with Pride)", "closes in", "contest", "landed: a brutal hand finisher, no beam"],

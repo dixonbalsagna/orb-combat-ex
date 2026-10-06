@@ -419,7 +419,7 @@ func _actState() -> String:
 	SimCore.dispose(S)
 	# ... and off, from a copy of the data: the tier rises by itself
 	var dir := "user://i2a_gate/"
-	for id in ["KAI", "VORR"]:
+	for id in ["PROTAGONIST", "RIVAL"]:
 		DirAccess.make_dir_recursive_absolute(dir + id)
 		for fname in ["fighter.json", "wounds.json", "meters.json", "ladder.json"]:
 			var text: String = FileAccess.get_file_as_string(FighterData.ROOT + id + "/" + fname)
@@ -431,7 +431,7 @@ func _actState() -> String:
 			fw.store_string(text)
 			fw.close()
 	var rf := FileAccess.open(dir + "roster.json", FileAccess.WRITE)
-	rf.store_string("[\"KAI\", \"VORR\"]")
+	rf.store_string("[\"PROTAGONIST\", \"RIVAL\"]")
 	rf.close()
 	FighterData.quiet = true
 	FighterData.loadFrom(dir)
@@ -2807,7 +2807,7 @@ func _replayModule() -> String:
 	var rp2: Dictionary = rec2.finish()
 	SimCore.dispose(S2)
 	r = SimReplay.play(JSON.parse_string(JSON.stringify(rp2)))
-	if not r.ok or rp2.setup.get("names", []) != ["KAI-A", "KAI-B"]:
+	if not r.ok or rp2.setup.get("names", []) != ["PROTAGONIST-A", "PROTAGONIST-B"]:
 		return "setup replay: %s at tick %d" % [r.reason, r.firstBadTick]
 	# I2a: two v2 slots, their stance following the scripted held fields, record and play back from the header alone.
 	var src3: Dictionary = SimGolden.scriptedReplay(17, 900, true, [])
@@ -2836,19 +2836,19 @@ func _replayModule() -> String:
 func _roster(g: Dictionary) -> String:
 	if not FighterData.errors().is_empty():
 		return "data/fighters: " + "; ".join(FighterData.errors())
-	if FighterData.order() != ["KAI", "VORR"]:
+	if FighterData.order() != ["PROTAGONIST", "RIVAL"]:
 		return "roster order " + str(FighterData.order())
 	if FighterData.dataHash() != g.get("rosterHash", ""):
 		return "the roster data hash differs (data/fighters/ changed): %s vs golden %s; regenerate the goldens if the edit is meant" % [FighterData.dataHash(), g.get("rosterHash", "")]
 	return ""
 
 
-## D1a negative controls: fixtures made from KAI's real files with one fault each (edits keyed to the key name, not its
+## D1a negative controls: fixtures made from PROTAGONIST's real files with one fault each (edits keyed to the key name, not its
 ## value, so a retune does not break them; the old value stays behind as a "_was" note), in user://, must each be rejected with
 ## the right message; a changed _note must not change the data hash, and a changed number must. Reloads data/fighters/
 ## at the end.
 func _rosterRejects() -> String:
-	var src: String = FighterData.ROOT + "KAI/"
+	var src: String = FighterData.ROOT + "PROTAGONIST/"
 	var base := {"fighter.json": FileAccess.get_file_as_string(src + "fighter.json"), "wounds.json": FileAccess.get_file_as_string(src + "wounds.json"),
 		"meters.json": FileAccess.get_file_as_string(src + "meters.json"), "ladder.json": FileAccess.get_file_as_string(src + "ladder.json")}
 	var h0: String = FighterData.dataHash()
@@ -2868,9 +2868,9 @@ func _rosterRejects() -> String:
 	FighterData.quiet = true
 	for c in cases:
 		var dir: String = "user://d1a_fixtures/%s/" % c[0]
-		DirAccess.make_dir_recursive_absolute(dir + "KAI")
+		DirAccess.make_dir_recursive_absolute(dir + "PROTAGONIST")
 		var ros := FileAccess.open(dir + "roster.json", FileAccess.WRITE)
-		ros.store_string("[\"KAI\", \"KAI\"]" if c[0] == "dup" else "[\"KAI\"]")
+		ros.store_string("[\"PROTAGONIST\", \"PROTAGONIST\"]" if c[0] == "dup" else "[\"PROTAGONIST\"]")
 		ros.close()
 		for fname in base:
 			var text: String = base[fname]
@@ -2880,7 +2880,7 @@ func _rosterRejects() -> String:
 				text = text.replace(c[2], c[3])
 			if c[0] == "note" and fname == "wounds.json":
 				text = text.replace("\"_about\": \"", "\"_about\": \"(edited note) ")
-			var fw := FileAccess.open(dir + "KAI/" + fname, FileAccess.WRITE)
+			var fw := FileAccess.open(dir + "PROTAGONIST/" + fname, FileAccess.WRITE)
 			fw.store_string(text)
 			fw.close()
 		FighterData.loadFrom(dir)
@@ -2895,35 +2895,35 @@ func _rosterRejects() -> String:
 		FighterData.loadFrom()
 		return err
 	var numberBlind: bool = hashes.note == hashes.number
-	# The note fixture is KAI alone, so compare it with KAI alone unedited: the dup-free base is the "number" case minus the edit.
+	# The note fixture is PROTAGONIST alone, so compare it with PROTAGONIST alone unedited: the dup-free base is the "number" case minus the edit.
 	var plain := "user://d1a_fixtures/plain/"
-	DirAccess.make_dir_recursive_absolute(plain + "KAI")
+	DirAccess.make_dir_recursive_absolute(plain + "PROTAGONIST")
 	var rp := FileAccess.open(plain + "roster.json", FileAccess.WRITE)
-	rp.store_string("[\"KAI\"]")
+	rp.store_string("[\"PROTAGONIST\"]")
 	rp.close()
 	for fname in base:
-		var fp := FileAccess.open(plain + "KAI/" + fname, FileAccess.WRITE)
+		var fp := FileAccess.open(plain + "PROTAGONIST/" + fname, FileAccess.WRITE)
 		fp.store_string(base[fname])
 		fp.close()
 	FighterData.loadFrom(plain)
 	var hPlain: String = FighterData.dataHash()
-	# A third fighter from data alone (the stage-5 modding test in miniature): KAI's files copied as TEST, no code change.
+	# A third fighter from data alone (the stage-5 modding test in miniature): PROTAGONIST's files copied as TEST, no code change.
 	var third := "user://d1a_fixtures/third/"
-	for id in ["KAI", "TEST"]:
+	for id in ["PROTAGONIST", "TEST"]:
 		DirAccess.make_dir_recursive_absolute(third + id)
 		for fname in base:
 			var ft := FileAccess.open(third + id + "/" + fname, FileAccess.WRITE)
-			ft.store_string(base[fname].replace("\"KAI\"", "\"TEST\"") if id == "TEST" else base[fname])
+			ft.store_string(base[fname].replace("\"PROTAGONIST\"", "\"TEST\"") if id == "TEST" else base[fname])
 			ft.close()
 	var rt := FileAccess.open(third + "roster.json", FileAccess.WRITE)
-	rt.store_string("[\"KAI\", \"TEST\"]")
+	rt.store_string("[\"PROTAGONIST\", \"TEST\"]")
 	rt.close()
 	FighterData.loadFrom(third)
 	var thirdErr: String = "; ".join(FighterData.errors())
 	var played: String = ""
 	if thirdErr == "":
 		var S := SimCore.createSim()
-		SimCore.newMatch(S, 5, {}, {"slots": ["TEST", "KAI"]})
+		SimCore.newMatch(S, 5, {}, {"slots": ["TEST", "PROTAGONIST"]})
 		for t in range(1200):
 			SimCore.step(S)
 			S.out.fx.clear()
@@ -2967,39 +2967,39 @@ func _fightData(g: Dictionary) -> String:
 ## (ladder and guard edits in both fighters' files) and runs a forced probe: a fresh match, the state that number needs,
 ## one call into the code that reads it, and the values that call produced. The probe's result with the edited data must
 ## differ from its result with the real data. No probe plays a match, so a changed opening cannot break a row (the old
-## check played seeds and needed new ones after B2 and after the terrain fixes). The end-to-end row is forced as well: VORR,
-## with menace set, attacks KAI through the director, and what KAI took must differ (it played seeds until they needed
+## check played seeds and needed new ones after B2 and after the terrain fixes). The end-to-end row is forced as well: RIVAL,
+## with menace set, attacks PROTAGONIST through the director, and what PROTAGONIST took must differ (it played seeds until they needed
 ## replacing three times). composure.below is left out: it only matters while composure's cap is not 0.
 const WIRED: Array = [
-	["KAI/meters.json", ["meters", "anguish", "effects", 0, "perPoint"], 0.2, "kaiTick"],
-	["KAI/meters.json", ["meters", "anguish", "effects", 0, "cap"], 0.05, "kaiTick"],
-	["KAI/meters.json", ["meters", "anguish", "effects", 1, "cap"], 0.3, "kaiHit"],
-	["KAI/meters.json", ["meters", "anguish", "effects", 2, "cap"], 2.0, "kaiHit"],
-	["KAI/meters.json", ["meters", "anguish", "decay", "rate"], 3.0, "kaiTick"],
-	["KAI/meters.json", ["meters", "anguish", "sources", 0, "amount"], 5.0, "feedSelf"],
-	["KAI/meters.json", ["meters", "anguish", "sources", 1, "amount"], 5.0, "feedOther"],
-	["VORR/meters.json", ["meters", "menace", "effects", 0, "perPoint"], 0.3, "vorrTick"],
-	["VORR/meters.json", ["meters", "menace", "effects", 0, "cap"], 0.01, "vorrTick"],
-	["VORR/meters.json", ["meters", "menace", "effects", 1, "cap"], 1.0, "vorrHit"],
-	["VORR/meters.json", ["meters", "menace", "effects", 2, "perPoint"], 50.0, "beam"],
-	["VORR/meters.json", ["meters", "menace", "decay", "rate"], 3.0, "vorrTick"],
-	["VORR/meters.json", ["meters", "menace", "decay", "delayTicks"], 30, "vorrQuiet"],
-	["VORR/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "feedOther"],
-	["VORR/meters.json", ["meters", "menace", "sources", 1, "amount"], 5.0, "evac"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["fillPerSec"], 2.0, "ladderTick"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["thresholds"], [10.0, 50.0, 75.0], "ladderTick"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["chargePerSec"], 7.0, "chargeTick"],
-	["KAI/ladder.json", ["takenPerDamage"], 0.5, "powerHit"],
-	["VORR/ladder.json", ["dealtPerDamage"], 0.5, "powerHit"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["tiers", "speed"], 0.5, "speed"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["tiers", "damage"], 0.5, "tierHit"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["tiers", "launch"], 0.8, "launch"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["powerUp", "areaR"], 600.0, "powerUp"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["powerUp", "areaRPerTier"], 300.0, "powerUp"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["powerUp", "areaDmg"], 900.0, "powerUp"],
-	[["KAI/ladder.json", "VORR/ladder.json"], ["powerUp", "areaDmgPerTier"], 900.0, "powerUp"],
-	[["KAI/wounds.json", "VORR/wounds.json"], ["guardWearSplit"], {"arms": 0.75, "legs": 0.25}, "guard"],
-	["VORR/meters.json", ["meters", "menace", "effects", 1, "cap"], 1.0, "vorrExchange"],   # end to end, forced: through the director
+	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 0, "perPoint"], 0.2, "kaiTick"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 0, "cap"], 0.05, "kaiTick"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 1, "cap"], 0.3, "kaiHit"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 2, "cap"], 2.0, "kaiHit"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "decay", "rate"], 3.0, "kaiTick"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "amount"], 5.0, "feedSelf"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 1, "amount"], 5.0, "feedOther"],
+	["RIVAL/meters.json", ["meters", "menace", "effects", 0, "perPoint"], 0.3, "vorrTick"],
+	["RIVAL/meters.json", ["meters", "menace", "effects", 0, "cap"], 0.01, "vorrTick"],
+	["RIVAL/meters.json", ["meters", "menace", "effects", 1, "cap"], 1.0, "vorrHit"],
+	["RIVAL/meters.json", ["meters", "menace", "effects", 2, "perPoint"], 50.0, "beam"],
+	["RIVAL/meters.json", ["meters", "menace", "decay", "rate"], 3.0, "vorrTick"],
+	["RIVAL/meters.json", ["meters", "menace", "decay", "delayTicks"], 30, "vorrQuiet"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "feedOther"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 1, "amount"], 5.0, "evac"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["fillPerSec"], 2.0, "ladderTick"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["thresholds"], [10.0, 50.0, 75.0], "ladderTick"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["chargePerSec"], 7.0, "chargeTick"],
+	["PROTAGONIST/ladder.json", ["takenPerDamage"], 0.5, "powerHit"],
+	["RIVAL/ladder.json", ["dealtPerDamage"], 0.5, "powerHit"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["tiers", "speed"], 0.5, "speed"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["tiers", "damage"], 0.5, "tierHit"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["tiers", "launch"], 0.8, "launch"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["powerUp", "areaR"], 600.0, "powerUp"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["powerUp", "areaRPerTier"], 300.0, "powerUp"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["powerUp", "areaDmg"], 900.0, "powerUp"],
+	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["powerUp", "areaDmgPerTier"], 900.0, "powerUp"],
+	[["PROTAGONIST/wounds.json", "RIVAL/wounds.json"], ["guardWearSplit"], {"arms": 0.75, "legs": 0.25}, "guard"],
+	["RIVAL/meters.json", ["meters", "menace", "effects", 1, "cap"], 1.0, "vorrExchange"],   # end to end, forced: through the director
 ]
 
 
@@ -3019,10 +3019,10 @@ func _wiredNumbers() -> String:
 	for i in range(WIRED.size()):
 		var c: Array = WIRED[i]
 		var dir: String = "user://d1b_wired/%d/" % i
-		for id in ["KAI", "VORR"]:
+		for id in ["PROTAGONIST", "RIVAL"]:
 			DirAccess.make_dir_recursive_absolute(dir + id)
 		var rf := FileAccess.open(dir + "roster.json", FileAccess.WRITE)
-		rf.store_string("[\"KAI\", \"VORR\"]")
+		rf.store_string("[\"PROTAGONIST\", \"RIVAL\"]")
 		rf.close()
 		var targets: Array = c[0] if c[0] is Array else [c[0]]
 		for key in files:
@@ -3094,10 +3094,10 @@ func _wiredProbe(kind: String) -> String:
 		"beam":         # menace's beam power
 			vorr.menace = 50.0
 			out = [DirBeam._clashScore(S, vorr)]
-		"feedSelf", "feedOther":   # the casualty sources: caused by KAI, or by VORR
+		"feedSelf", "feedOther":   # the casualty sources: caused by PROTAGONIST, or by RIVAL
 			WorldCollateral._feed(S, 10.0, kai if kind == "feedSelf" else vorr)
 			out = [kai.anguish, vorr.menace]
-		"evac":         # the evacuee source: VORR's blows empty buildings until someone flees
+		"evac":         # the evacuee source: RIVAL's blows empty buildings until someone flees
 			for b in S.buildings:
 				if b.alive and b.popAlive > 0.0:
 					WorldCollateral.kill(S, b.idx, b.popAlive, vorr, 0.0, b.x)
@@ -3107,7 +3107,7 @@ func _wiredProbe(kind: String) -> String:
 				out = ["!no evacuees"]
 			else:
 				out = [vorr.menace, S.world.evacuated]
-		"vorrExchange":   # end to end, forced: VORR, with menace, attacks KAI through the director; what KAI took
+		"vorrExchange":   # end to end, forced: RIVAL, with menace, attacks PROTAGONIST through the director; what PROTAGONIST took
 			kai.ai = null
 			vorr.ai = null
 			var hp0: float = kai.hp
@@ -3125,10 +3125,10 @@ func _wiredProbe(kind: String) -> String:
 				if kai.hp != hp0 and S.dirS.ex == null:
 					break
 			if kai.hp == hp0:
-				out = ["!VORR's attack never hurt KAI (%d requests)" % asked]
+				out = ["!RIVAL's attack never hurt PROTAGONIST (%d requests)" % asked]
 			else:
 				out = [kai.hp, kai.wear[0], kai.wear[1], kai.wear[2], kai.wear[3]]
-		"powerHit":     # the ladder's two power rates: VORR hits KAI, and each one's power rises by his own file's rate
+		"powerHit":     # the ladder's two power rates: RIVAL hits PROTAGONIST, and each one's power rises by his own file's rate
 			kai.power = 10.0
 			vorr.power = 10.0
 			SimDamage.hit(S, null, vorr, kai, 50.0, {"ignoreStance": true})

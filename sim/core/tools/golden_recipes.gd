@@ -18,8 +18,8 @@ const MATCHES: Array = [["default", 1], ["swap", 1], ["mirror-villain", 1], ["mi
 const CAP: int = 18000
 ## Everything that comes from a fighter's definition, so an arm moves the whole fighter. D1a fix: the meters (hasAnguish,
 ## hasMenace, from da5fb09), the kit, the Rally rule, the wound data and the finisher key used to stay with the slot, so a
-## swapped "VORR" kept KAI's anguish. The parity gate's "arm setups" check holds applyArm equal to newMatch's setup.
-const CHAR_KEYS: Array = ["id", "name", "title", "role", "col", "aura", "hair", "care", "dmgMul", "spd", "maxhp", "sigName",
+## swapped "RIVAL" kept PROTAGONIST's anguish. The parity gate's "arm setups" check holds applyArm equal to newMatch's setup.
+const CHAR_KEYS: Array = ["id", "name", "role", "col", "aura", "hair", "care", "dmgMul", "spd", "maxhp", "sigName",
 	"canHide", "rally", "hasAnguish", "hasMenace", "wd", "finisher", "md", "ld", "sigCooldown"]
 const INTENT: Array = ["mx", "my", "guard", "guardPress", "dodge", "sprint", "power", "powerPress", "powerTap", "mode", "light", "heavy", "sig", "upgrade", "special", "context", "transform", "dash", "charge", "stance"]
 
@@ -419,13 +419,13 @@ static func armSetup(arm: String) -> Dictionary:
 	var base_arm: String = arm.trim_suffix("-flip")
 	var su := {}
 	if base_arm == "swap":
-		su.slots = ["VORR", "KAI"]
+		su.slots = ["RIVAL", "PROTAGONIST"]
 	elif base_arm == "mirror-villain":
-		su.slots = ["VORR", "VORR"]
-		su.names = ["VORR-A", "VORR-B"]
+		su.slots = ["RIVAL", "RIVAL"]
+		su.names = ["RIVAL-A", "RIVAL-B"]
 	elif base_arm == "mirror-hero":
-		su.slots = ["KAI", "KAI"]
-		su.names = ["KAI-A", "KAI-B"]
+		su.slots = ["PROTAGONIST", "PROTAGONIST"]
+		su.names = ["PROTAGONIST-A", "PROTAGONIST-B"]
 	if arm.ends_with("-flip"):
 		su.flip = true
 	return su

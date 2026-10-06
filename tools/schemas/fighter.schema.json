@@ -30,24 +30,9 @@
         "hair"
       ],
       "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Optional for now: a display word that moves to ui/data/fighter_names.json at the fighter rename (docs/architecture/pending/fighter-split.md); forbidden after the window."
-        },
-        "title": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Optional for now: a display word that moves to ui/data/fighter_names.json at the fighter rename (docs/architecture/pending/fighter-split.md); forbidden after the window."
-        },
         "role": {
           "type": "string",
           "pattern": "^[a-z][a-z_]*$"
-        },
-        "sigName": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Optional for now: a display word that moves to ui/data/fighter_names.json at the fighter rename (docs/architecture/pending/fighter-split.md); forbidden after the window."
         },
         "col": {
           "$ref": "#/$defs/hex"

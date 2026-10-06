@@ -115,7 +115,7 @@ func run_match(seed: int, arm: String) -> Dictionary:
 	var slot := {}
 	for i in range(2):
 		slot[fs[i].name] = i
-	var rec := {"seed": seed, "names": [fs[0].name, fs[1].name], "attacks": {"light": 0, "heavy": 0, "sig": 0}, "ambush": 0, "launches": {}, "melee": {},
+	var rec := {"seed": seed, "names": [fs[0].name, fs[1].name], "ids": [fs[0].id, fs[1].id], "attacks": {"light": 0, "heavy": 0, "sig": 0}, "ambush": 0, "launches": {}, "melee": {},
 		"beams": [], "parries": [0, 0], "chains": [], "hides": [0, 0], "found": 0, "seam": 0, "maxMove": 0.0, "bad": "", "koAt": -1.0, "winner": -1,
 		"breaks": 0, "firstBrink": -1.0, "firstBroken": "", "wearIn": [0.0, 0.0, 0.0, 0.0],
 		"rallies": 0, "rallyTwice": 0, "rallyKinds": {}, "batteredIn": 0.0, "breathWear": 0.0, "limbBreaks": 0, "limbRegions": {}, "lastBrink": [-1.0, -1.0], "firstBrinkF": [-1.0, -1.0], "postBrink": -1.0, "postFirstBrink": -1.0, "contests": 0, "survived": 0,
@@ -299,7 +299,7 @@ static func _wilson(k: int, n: int) -> Array:
 
 func aggregate(recs: Array) -> Dictionary:
 	var n: int = recs.size()
-	var a := {"n": n, "names": recs[0].names, "slotWins": [0, 0], "timeouts": 0, "launches": {}, "melee": {}, "beamsByBiome": {}, "beamOutcomes": {},
+	var a := {"n": n, "names": recs[0].names, "ids": recs[0].ids, "slotWins": [0, 0], "timeouts": 0, "launches": {}, "melee": {}, "beamsByBiome": {}, "beamOutcomes": {},
 		"attacks": {"light": 0, "heavy": 0, "sig": 0}}
 	var lens: Array = []
 	var civ: Array = []

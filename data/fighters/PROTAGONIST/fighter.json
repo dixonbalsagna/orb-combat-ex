@@ -1,15 +1,16 @@
 {
   "schema": "fighter/1",
   "_about": "D1a (docs/architecture/d1-roster-data.md section 3): identity, base stats, kit, the Rally rule and the finisher keys of one fighter, loaded by sim/core/fighter_data.gd into Fighter fields. Identity text is Narrative's (docs/narrative/identity.md); colours are Art's placeholders. finishers.base is the finisher template id in data/combat/finishers.json (form tiers come with F1). The id is the stable roster id (Fighter.id) and equals the folder name. Keys starting with '_' are comments: the canonical data hash skips them.",
-  "id": "VORR",
+  "id": "PROTAGONIST",
+  "_identity": "no words here: a fighter's displayed name, title and signature name are in ui/data/fighter_names.json, keyed by this id, and the sim never reads them (docs/architecture/pending/fighter-split.md section 9). In the sim his name is his id and his signature is the key <ID>.SIG",
   "identity": {
-    "name": "VORR", "title": "Challenger", "role": "villain", "sigName": "The Barrage",
-    "col": "#a52a2a", "aura": "#9a80d8", "hair": "#181818"
+    "role": "hero",
+    "col": "#3d8fdc", "aura": "#8fd6ff", "hair": "#22c7a9"
   },
-  "stats": { "care": 0.0, "dmgMul": 1.02, "spd": 0.95, "maxhp": 1600.0 },
+  "stats": { "care": 0.0, "dmgMul": 0.95, "spd": 1.0, "maxhp": 1600.0 },
   "kit": { "canHide": false },
   "rally": { "rule": "second_wind", "_note": "the prototype fighters' placeholder rule (wounds-plan.md S4)" },
-  "finishers": { "base": "vorr" },
+  "finishers": { "base": "protagonist" },
   "sigCooldown": 120,
   "_sigCooldown": "seconds before this fighter's signature can fire again (questionnaire 5: 2 to 4 signatures a match, each an event)"
 }

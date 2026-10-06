@@ -43,6 +43,7 @@ Every finding names the file, the line, the JSON pointer and the rule, for examp
 | Rule | Checks |
 | :--- | :--- |
 | `finisher-key`, `finisher-id` | `select.byFighter` and `fallback` name real finishers; finisher ids are unique; a fighter's `finishers.*` keys exist (a finisher owned by another fighter is a warning) |
+| `finisher-fighter` | data/combat/finishers.json: a finisher's `fighter` is `*` or an id of data/fighters/roster.json, and every key of select.byFighter is a roster id |
 | `cue` | every `cue` beat in templates and authored finishers uses a cue in `finishers.json` `cues` |
 | `selector-branch`, `template-id`, `branch-id` | selectors point at branches of their own template; ids are unique |
 | `flash-audio`, `flash-rank`, `flash-held`, `flash-id` | every active flash in `data/art/flashes.json` has an audio cue and a rank in `cues.json`; every audio cue is an art flash; held flashes are marked held; legal rules name real flashes |

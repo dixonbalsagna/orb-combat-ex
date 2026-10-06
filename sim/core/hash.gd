@@ -3,7 +3,7 @@ class_name SimHash
 ## tags, so a GDScript state and a JS state hash identically exactly when they are identical bit for bit.
 
 const MASK: int = 0xFFFFFFFF
-const FIGHTER: Array = ["name", "title", "role", "col", "aura", "hair", "care", "dmgMul", "spd", "maxhp", "sigName", "hp", "x", "y", "vx", "vy", "face", "ki", "power", "tier", "stance", "state", "stateT",
+const FIGHTER: Array = ["name", "role", "col", "aura", "hair", "care", "dmgMul", "spd", "maxhp", "sigName", "hp", "x", "y", "vx", "vy", "face", "ki", "power", "tier", "stance", "state", "stateT",
 	"hidden", "hideT", "hiddenFor", "menace", "anguish", "ambush", "rot", "spin", "bounces", "lastAtkT", "hurtT", "keys", "beamCharge", "wet", "ambushUntil", "dPrev",
 	"menaceSeen", "menaceQuiet", "casSeen", "hasAnguish", "hasMenace", "launchT", "slide", "slideX0", "slideD", "slideE", "slideDmg", "slideAcc", "slideEvt", "launchSpecial", "hopped", "aimB", "aimX0", "aimZ0", "aimZ1", "aimD", "chainEvt", "z", "zT", "zWay", "jContacts", "jT", "jV0", "tumbleT", "contactT", "launchN", "jLips", "lastStandUsed", "lastStandLeft", "embedT", "embedCool", "slideFeet",
 	"canHide", "lockBackT", "exT", "dropT", "breathT"]
