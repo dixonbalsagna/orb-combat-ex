@@ -57,6 +57,7 @@ var split_frame: SplitFrame = null  # this frame's, while a compositor is attach
 ## once per displayed frame after drawing the panes, and its pane_jitter(i) (if it has one) for a pane's shake.
 ## Attaching one resets the rig to the current state; without one the rig costs nothing (about 0.05 ms a tick).
 var split_view: SplitView = null   # Camera's compositor in the game (null in the tools)
+var flashcap: FlashCapture = null     # Tools' capture hook (--flashcap, on the web ?flashcap=1): the game is stepped from the page; null in normal play
 var cam_pitch: float = 0.0          # the cameras' pitch in degrees (Alt+F9), unless the rig's frame carries its own
 var occlusion: int = PaneWorld.OCCL_HOLE   # every pane's occlusion method (Ctrl+F9)
 var inset: PaneWorld = null         # Camera's inset pane (make_inset), or null
@@ -104,6 +105,8 @@ const FLASH_KEYS: Array = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_
 
 func _ready() -> void:
 	args = parse_args()
+	if args.has("flashcap") and not manual:
+		UiHud.notice_auto = false   # a capture run starts on the scene, as a bench does: no notice, no card (below)
 	# A debug route to Animation's study scenes: never taken unless the argument is there (_study_scene), and only by
 	# the game's own main scene. A tool's main is not the game (a study scene drives a main of its own, and would be
 	# sent round again).
@@ -207,7 +210,11 @@ func _ready() -> void:
 		_sync_split_options()
 		if not args.has("nosplit"):
 			split_view.attach(self)
-	if not manual and not args.has("bench") and not args.has("frames") and not args.has("shot") and not ui_hud.howto_seen():
+	# Tools' capture hook (--flashcap, on the web /play/?flashcap=1): the game is stepped a tick at a time from the
+	# page, for the frame analyser. Never in normal play, and never under a tool's own main.
+	if args.has("flashcap") and not manual and OS.has_feature("web") and get_parent() == get_tree().root:
+		flashcap = FlashCapture.new(self)
+	if not manual and not args.has("bench") and not args.has("frames") and not args.has("shot") and flashcap == null and not ui_hud.howto_seen():
 		ui_hud.show_howto(true)     # the first run's How to play card (docs/ui/hud-spec.md section 17)
 	if args.has("bench") or args.has("novsync"):
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -256,7 +263,7 @@ func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 ## anything, so its matches are the ones its own reference sim plays. (--intro once asked for the intro; it is
 ## accepted and does nothing.)
 func _match_setup(seed: int = 0) -> Dictionary:
-	if manual or args.has("nointro") or args.has("bench"):
+	if manual or args.has("nointro") or args.has("bench") or args.has("flashcap"):
 		return {}
 	return {"intro": host.intro_record(seed)}
 
@@ -433,7 +440,9 @@ func _flash_events(events: Array) -> void:
 
 
 func _process(delta: float) -> void:
-	if not manual:
+	if flashcap != null:
+		flashcap.poll()   # the capture hook steps the game itself, a tick at a time (render/tools/flash_capture.gd)
+	elif not manual:
 		frame(delta)
 
 
@@ -984,7 +993,7 @@ func _notification(what: int) -> void:
 
 
 ## The options a web page's URL may set (parse_args): off unless the URL names them.
-const URL_ARGS: Array = ["nointro", "skyreact", "study"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
@@ -1014,8 +1023,8 @@ static func parse_args() -> Dictionary:
 			out[kv[0]] = kv[1] if kv.size() > 1 else "1"
 	# On the web the page's own URL can set the options named in URL_ARGS (the page passes the game no arguments):
 	# /play/?nointro=1 starts without the intro, /play/?skyreact=1 lets the clouds part at tier 3 and 4, /play/?study=1
-	# opens Animation's study scene in place of the game (_study_scene). A value of 0, or none of these keys, changes
-	# nothing.
+	# opens Animation's study scene in place of the game (_study_scene), /play/?flashcap=1 offers Tools' capture hook
+	# (FlashCapture). A value of 0, or none of these keys, changes nothing.
 	if OS.has_feature("web"):
 		for pair in str(JavaScriptBridge.eval("location.search", true)).trim_prefix("?").split("&", false):
 			var kv: PackedStringArray = pair.split("=", true, 1)

@@ -44,11 +44,8 @@ var _skip_intro: int = 0        # skip_intro(): 0 not asked, 1 for the next pre-
 var setup_used: Dictionary = {} # the whole setup the last match started from (the hub's keys, then the caller's): a match input like the seed, so a reference sim or a replay starts from the same one
 var _intro_mem: Dictionary = {} # the session's intro memory: a pair of roster ids -> {seed, n, avoid} (intro_record). Never saved, and never in the sim
 const INTRO_AVOID: int = 5      # Narrative's rule: the last five scenarios a pair opened with
-## Rendering's flashes under VFX's shared flash register (hub.flashes; docs/rendering/flash-sources.md). These are the
-## sources a fight makes many of: they leave a slot of the second's three for the big events, and get none under
-## reduced flashing. The register's own LOW list should name them; until it does, ask_flash keeps the rule itself.
-const FLASH_LOW: Array = ["head_flash", "guard_flash", "cue_flare", "body_hit"]
-var flash_refused: Dictionary = {}   # a low source's refusals the host made itself (the register does not list it yet)
+## Rendering's flashes under VFX's shared flash register (hub.flashes; docs/rendering/flash-sources.md): what the
+## register granted, for the views.
 var hit_flash_T: Array = [-INF, -INF]   # per slot: the hurtT of the last hit whose white body the register granted
 var clash_flash: bool = true         # the running beam clash's flare was granted
 var _hit_T: Array = [NAN, NAN]       # per slot: the hurtT last asked for
@@ -70,7 +67,6 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 	_skip_intro = 0
 	setup_used = su.duplicate(true)
 	SimCore.newMatch(S, seed, ai, su)
-	flash_refused.clear()
 	hit_flash_T = [-INF, -INF]
 	_hit_T = [NAN, NAN]
 	_beam_ok.clear()
@@ -179,16 +175,12 @@ func intro_running() -> bool:
 
 
 ## Ask VFX's shared flash register whether a full flash of Rendering's may be drawn now (it takes a slot of the
-## second's three if so). col: the flash's colour (a red one is never granted). A source in FLASH_LOW is low priority:
-## the register's rule for those (at most two of the three, none under reduced flashing) is applied here while the
-## register does not list the source itself. The caller draws its fallback when this is false.
+## second's three if so). col: the flash's colour (a red one is never granted). Which sources are low priority (at
+## most two of the three slots, none under reduced flashing) is the register's own list: the body's white, a head
+## flash and a cue's flare are; a perfect block's guard flash, a beam and a clash are not. Every ask and every refusal
+## is in the register's log. The caller draws its fallback when this is false.
 func ask_flash(source: String, col: Color = Color.WHITE) -> bool:
-	var reg: VfxFlashRegistry = vfx.flashes
-	if FLASH_LOW.has(source) and not VfxFlashRegistry.LOW.has(source):
-		if reg.reduced or reg.in_window() >= VfxFlashRegistry.LOW_CAP:
-			flash_refused[source] = int(flash_refused.get(source, 0)) + 1
-			return false
-	return reg.ask(source, col, S.tick)
+	return vfx.flashes.ask(source, col, S.tick)
 
 
 ## Whether a beam's bright form (its white core, at full strength) was granted. One the host has not seen in a tick

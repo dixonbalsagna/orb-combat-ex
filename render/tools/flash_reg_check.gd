@@ -8,7 +8,8 @@ extends SceneTree
 ##   body whitens at most twice in any second, every other hit lights the outline instead, and the screen's count
 ##   still never passes 3;
 ## - the same mash under reduced flashing: the body never whitens;
-## - the rule for Rendering's low sources (two of the three slots; a big event still gets the third), red refused;
+## - the rule for Rendering's sources (the low ones get two of the three slots; a perfect block's guard flash may
+##   take the third), red refused;
 ## - a head flash's pulses: each swell asks; with none granted it shows once, calm.
 ##   godot --headless --path . --script res://render/tools/flash_reg_check.gd -- [--seeds=12345,4,7] [--ticks=3600]
 
@@ -68,7 +69,7 @@ func _run() -> void:
 		var sm: Dictionary = reg.summary()
 		var mine: Array = []
 		for src in ["body_hit", "head_flash", "guard_flash", "cue_flare", "beam", "beam_clash"]:
-			mine.append("%s %d and %d" % [src, int(sm.granted_by.get(src, 0)), int(sm.refused_by.get(src, 0)) + int(host.flash_refused.get(src, 0))])
+			mine.append("%s %d and %d" % [src, int(sm.granted_by.get(src, 0)), int(sm.refused_by.get(src, 0))])
 		_expect(worst <= 3 and int(sm.worst_running) <= 3 and int(sm.worst_second) <= 3, "seed %d, %d ticks: never more than 3 flashes in a second (worst %d); %d granted, %d refused by the register" % [seed, host.ticks, int(sm.worst_running), int(sm.granted), int(sm.refused)])
 		print("     Rendering's, granted and refused: %s" % "; ".join(mine))
 	# 2 and 3. A mash on fighter 1, then the same under reduced flashing.
@@ -99,21 +100,22 @@ func _run() -> void:
 		else:
 			_expect(_worst(white_at) <= 2 and white_at.size() > 0 and white_at.size() < hits, "a mash, %d hits in 4 seconds: the body whitens %d times, never more than twice in a second (%d)" % [hits, white_at.size(), _worst(white_at)])
 			_expect(edges > 0 and worst2 <= 3, "... the other hits light the outline (%d frames), and the screen never passes 3 flashes in a second (%d)" % [edges, worst2])
-	# 4. The rule for Rendering's low sources, on a fresh register.
+	# 4. The rule for Rendering's sources, on a fresh register.
 	main.start_match(4, {"p1": true, "p2": true}, {"intro": "skip"})
 	main.frame(1.0 / 60.0)
 	var a: bool = host.ask_flash("body_hit")
-	var b: bool = host.ask_flash("guard_flash", Color(0.4, 0.8, 1.0))
+	var b: bool = host.ask_flash("head_flash", Color(0.4, 0.8, 1.0))
 	var c: bool = host.ask_flash("body_hit")
-	var d: bool = host.ask_flash("beam", Color(0.4, 0.8, 1.0))
+	var d: bool = host.ask_flash("guard_flash", Color(0.4, 0.8, 1.0))
 	var e: bool = host.ask_flash("beam", Color(0.4, 0.8, 1.0))
-	_expect(a and b and not c and d and not e, "two low flashes are granted, a third is refused, a beam still gets the last slot, and a fourth flash is refused (%s %s %s %s %s)" % [a, b, c, d, e])
+	_expect(a and b and not c and d and not e, "two low flashes are granted, a third is refused, a perfect block's guard flash still gets the last slot, and a fourth flash is refused (%s %s %s %s %s)" % [a, b, c, d, e])
 	for k in range(61):
 		main.frame(1.0 / 60.0)
 	_expect(not host.ask_flash("cue_flare", Color(1.0, 0.2, 0.15)) and host.ask_flash("cue_flare", Color(0.4, 0.8, 1.0)), "a second on, a red flare is refused and a cyan one is granted")
-	for src in SimHost.FLASH_LOW:
-		if not VfxFlashRegistry.LOW.has(src):
-			print("     note: the register's LOW list does not name %s yet; the host keeps the low rule for it" % src)
+	var low_ok: bool = true
+	for src in ["body_hit", "head_flash", "cue_flare"]:
+		low_ok = low_ok and VfxFlashRegistry.LOW.has(src)
+	_expect(low_ok and not VfxFlashRegistry.LOW.has("guard_flash") and not VfxFlashRegistry.LOW.has("beam"), "the register lists the body's white, head flashes and cue flares as low, and not the guard flash or a beam")
 	# 5. A head flash's pulses.
 	var fv: FlashView = main.pane.fighter_views[0].flash_view
 	var asked: Array = []
