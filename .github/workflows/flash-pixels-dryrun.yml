@@ -1,0 +1,77 @@
+# A manual measurement, not a check: how fast the pixel half of the photosensitivity check runs on a real GitHub runner (docs/tools/flash-check.md, "Can the pixel half run on a
+# GitHub runner?"). It exports the web build, plays ONE scenario for a few hundred ticks in headless Chrome with software rendering (a runner has no GPU), and reports frames a
+# second for the capture and for the analysis in the job summary. Nothing here gates anything and nothing deploys. Run it by hand once the file is on the default branch:
+#   gh workflow run flash-pixels-dryrun.yml -f scenario=collapse -f ticks=300
+# Free GitHub-hosted runner only; the pinned actions are the ones ci.yml uses.
+
+name: Flash pixels dry run
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'mash, clash, signature, transform, collapse or ai'
+        required: false
+        default: 'collapse'
+      seed:
+        description: 'seed'
+        required: false
+        default: '12345'
+      ticks:
+        description: 'ticks to capture (frames; the full clips are 1500 to 3600)'
+        required: false
+        default: '300'
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    name: Capture and analysis speed on a runner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - uses: ./.github/actions/setup-godot
+        with:
+          web-templates: 'true'
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Write build_info.json
+        run: node tools/write-build-info.mjs --commit "${GITHUB_SHA}"
+      - name: Export Web (Compatibility, single-threaded)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/web"
+          "$GODOT" --headless --path . --export-release "Web" "${RUNNER_TEMP}/web/index.html"
+      - name: Capture (software rendering) and analyse
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+          SEED: ${{ inputs.seed }}
+          TICKS: ${{ inputs.ticks }}
+        run: |
+          {
+            echo '### Pixel half on a GitHub runner'
+            echo
+            echo "runner: $(nproc) vCPUs, $(free -g | awk '/Mem:/{print $2}') GB; $(google-chrome --version)"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          start=$(date +%s)
+          node tools/flash/capture-web.mjs --dir "${RUNNER_TEMP}/web" --path "/index.html?flashcap=1" --scenario "$SCENARIO" --seed "$SEED" --ticks "$TICKS" --width 1024 --height 768 --software --timeout 6000 --out "${RUNNER_TEMP}/clip" | tee "${RUNNER_TEMP}/capture.txt"
+          cap=$(( $(date +%s) - start ))
+          start=$(date +%s)
+          node tools/flash/analyse-frames.js "${RUNNER_TEMP}/clip" --scale 1 | tee "${RUNNER_TEMP}/analyse.txt" || true
+          ana=$(( $(date +%s) - start ))
+          {
+            echo "- capture: ${TICKS} frames in ${cap} s total (the capture line below has the frames a second without the start-up)"
+            echo "- analysis: ${TICKS} frames at 1024x768 in ${ana} s"
+            echo
+            echo '```'
+            grep "capture-web" "${RUNNER_TEMP}/capture.txt"
+            cat "${RUNNER_TEMP}/analyse.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

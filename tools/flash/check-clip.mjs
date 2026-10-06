@@ -2,7 +2,8 @@
 // headless Chrome, analyses them at the standard's reference size against the gate (2.5 flashes in any second, Legal's RL-119), keeps the frames of the worst second and of every dip,
 // and prints the verdict. Zero cost, one Godot process (the export), headless only.
 //
-//   node tools/flash/check-clip.mjs --clip collapse-normal[,collapse-reduced] [--out <folder>] [--head] [--site <built site dir>] [--godot <exe>] [--jobs 2]
+//   node tools/flash/check-clip.mjs --clip collapse-normal[,collapse-reduced] [--out <folder>] [--head] [--site <built site dir>] [--godot <exe>] [--jobs 2] [--software] [--ticks N]
+//   --software: software rendering (no GPU, as on a CI runner); --ticks N: only the first N ticks (a speed measurement; the verdict covers only those)
 //
 // Clip ids: mash, clash, signature, transform, collapse, ai-<seed> (and ai-<A>-<B>-<seed> for another pairing), each with -normal or -reduced (tools/flash/sources.json has the list).
 // "Fixed" means this prints no failure for the clip in BOTH modes. Cost on a 16-thread PC with a GPU: the export about 40 s (with the import), then a 1,500-tick clip about 5 minutes
@@ -54,7 +55,7 @@ if (!site) {
   site = join(OUT, 'site');
 }
 console.log(`[check-clip] capturing and analysing ${CLIP} (${secs()})`);
-const child = spawn(process.execPath, [join(here, 'run-pixels.mjs'), '--dir', site, '--path', '/index.html?flashcap=1', '--out', join(OUT, 'clips'), '--clip', CLIP, '--jobs', opt('--jobs', '2'), '--keep-ranges'], { stdio: 'inherit', env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
+const child = spawn(process.execPath, [join(here, 'run-pixels.mjs'), '--dir', site, '--path', '/index.html?flashcap=1', '--out', join(OUT, 'clips'), '--clip', CLIP, '--jobs', opt('--jobs', '2'), '--keep-ranges', ...(argv.includes('--software') ? ['--software'] : []), ...(opt('--ticks') ? ['--ticks', opt('--ticks')] : [])], { stdio: 'inherit', env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
 child.on('close', (code) => {
   console.log(`\n[check-clip] done in ${secs()}. Frames of the worst second and of every dip are in ${join(OUT, 'clips')}/<clip>/ (kept-ranges.json lists the ticks; frame-NNNNNN.png is tick NNNNNN).`);
   if (!argv.includes('--head') && !opt('--site')) console.log(`[check-clip] the export is in ${site} (delete it when you are done)`);
