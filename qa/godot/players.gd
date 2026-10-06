@@ -244,6 +244,11 @@ class Pl:
 						hold_kind = 1 if String(P.get("kind", "H")) == "H" else 0
 						pending_rel = -1
 						return hold_kind
+					# inside a brawl there is no flash to release on (the heavy's flash is B2/B3's), so the timed hold plays as a plain one rather than going blind
+					if brawl != null and bool(brawl.call("inBrawl", S, S.fighters[slot])) and plan.is_empty() and lt >= hold_until and lt >= rest_until:
+						hold_kind = 1 if String(P.get("kind", "H")) == "H" else 0
+						pending_rel = -1
+						return hold_kind
 				elif lt >= hold_until and lt >= rest_until:
 					hold_kind = 1 if String(P.get("kind", "H")) == "H" else 0
 					return hold_kind
@@ -385,7 +390,7 @@ func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
 
 ## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
 func _gblank() -> Dictionary:
-	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
 
 
 ## An event field as an int, 0 when the build's event has no such field.
@@ -412,7 +417,7 @@ func _greport(g: Dictionary) -> Dictionary:
 		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
 		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades,
 		"exactTradeFields": g.exact > 0 and g.exact == g.tradeBreaks, "levelTrades": g.drawsAfterClose, "levelChanges": g.drawChanges, "levelChangeShare": snappedf(float(g.drawChanges) / maxf(1.0, float(g.drawsAfterClose)), 0.001),
-		"breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
+		"firstSlotSeq": g.firstSlotSeq, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
@@ -505,7 +510,7 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 					p.carry_ticks = (p.carry_ticks + 1) if carried[slot] else 1
 		# the brawl's events (docs/director/brawl-b1.md section 4), counted for Game Design's rows
 		if not g.is_empty():
-			if tb_tick >= 0 and S.tick - tb_tick > 24:
+			if tb_tick >= 0 and S.tick - tb_tick > 28:   # 24 ticks, and 4 for a hit-stop (a pressing probe read 25 once)
 				g.late += 1
 				tb_tick = -2
 			for e in S.out.fx:
@@ -669,6 +674,11 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 			g.decided += 1
 			if 1 - S.fighters.find(S.game.ko) == 0:   # the winner took the first slot (slot 0)
 				g.slot0Wins += 1
+				g.firstSlotSeq.append(1)
+			else:
+				g.firstSlotSeq.append(0)
+		else:
+			g.firstSlotSeq.append(-1)   # no winner (a timeout)
 	SimCore.dispose(S)
 	return {"winner": winner, "t": t, "brink": brink, "wall": walled}
 

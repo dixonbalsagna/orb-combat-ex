@@ -3,6 +3,7 @@
 // at 40 matches the 95% interval is about 30 points wide (the medium row read 60% at 40 matches and 43% at 200), so the default is 100 and a row near a band edge needs more (--masher=N).
 const { spawn } = require('child_process');
 const { godot, guard, ROOT } = require('./godot');
+const MIRROR_N = parseInt(process.env.QA_MIRROR_N || '200', 10);   // matches a mirror plays (the first-slot row is read on 200)
 
 function runLevel(level, n, base, forms = false, gap = 8) {
   const g = godot();
@@ -64,10 +65,10 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   // Game Design's ruling 4 (melee-press-feel.md 9d): the masher taps on S.tick; the banded row is the 8-tick script, 6 and 10 are reported beside it.
   const gaps = await Promise.all([6, 10].map(g => runLevel('medium', n, base, true, g)));
   // The lights-only mirror, twice: the first counts live ticks (as every earlier baseline did), the second counts S.tick (the real tap rate); then a 6-tick against a 12-tick tapper (closes a minute).
-  const mirror = await runMirror(Math.min(n, 60), base);   // the mirror's matches are the slow ones (a stalemate runs to the cap), so it gets fewer
+  const mirror = await runMirror(MIRROR_N, base);   // the mirror's matches are the slow ones (a stalemate runs to the cap), so it gets fewer
   const mirrors = await Promise.all([
-    runMirror(Math.min(n, 60), base, 'masher:forms=1:clock=tick', null, 'tick'),
-    runMirror(Math.min(n, 60), base, 'masher:forms=1:clock=tick:gap=6', 'masher:forms=1:clock=tick:gap=12', 'fast-slow'),
+    runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick', null, 'tick'),
+    runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick:gap=6', 'masher:forms=1:clock=tick:gap=12', 'fast-slow'),
   ]);
   const E = ':energy=1:forms=1:stick=1', R = ':forms=1:stick=1';
   const pairs = await Promise.all([
@@ -97,7 +98,7 @@ const BANDS = { easy: [0.60, 1, 'at least 60%'], medium: [0.35, 0.50, '35 to 50%
 
 // The lights-only mirror's rows (agency pass 13 and 23; melee-press-feel.md sections 3, 9 and 9d), for each variant: 'live' counts live ticks (every earlier baseline), 'tick' counts S.tick
 // (the real tap rate; the brawl's flurry counts it), 'fast-slow' is a 6-tick tapper against a 12-tick tapper (reported).
-const LATE_OK = 12;   // ticks a trade's break may come after its limit: a hit-stop holds the sim (to be set from Encounter's measure)
+const LATE_OK = 4;   // ticks a trade's break may come after its limit: a hit-stop holds the sim (Encounter measured at most 2)
 
 function mirrorRows(m) {
   const b = m.brawl || {}, sfx = m.tag === 'live' ? '' : '.' + m.tag, lab = m.tag === 'live' ? '' : ` (${m.tag === 'tick' ? 'taps on S.tick' : 'a 6-tick tapper against a 12-tick tapper'})`;
@@ -109,12 +110,13 @@ function mirrorRows(m) {
     return rows;
   }
   rows.push({ id: 'masher.mirror' + sfx, ref: '§6 masher', what: 'Two lights-only players (mashers who take their forms) finish the match before the cap' + lab, status: m.finished / m.n >= 0.95 ? 'PASS' : 'FAIL', value: `${pct(m.finished / m.n)} (${m.finished} of ${m.n}; ${m.timeouts} ran to the cap)`, band: 'at least 95%', note: `median ${m.medianSec} s; point estimate` });
-  if (m.brink >= 0) rows.push({ id: 'masher.brink' + sfx, ref: '§6 masher', what: 'Lights-only mirror: brink to KO, median (30 to 55 s, re-based at agency pass section 23)' + lab, status: m.brink >= 30 && m.brink <= 55 ? 'PASS' : 'FAIL', value: m.brink.toFixed(1) + ' s', band: '30 to 55 s', note: `${m.finished} matches that ended in a KO; the overall band stays 45 to 90 s` });
+  if (m.brink >= 0) rows.push({ id: 'masher.brink' + sfx, ref: '§6 masher', what: 'Lights-only mirror: brink to KO, median (25 to 50 s, re-based at melee-press-feel 9e)' + lab, status: m.brink >= 25 && m.brink <= 50 ? 'PASS' : 'FAIL', value: m.brink.toFixed(1) + ' s', band: '25 to 50 s', note: `${m.finished} matches that ended in a KO; the overall band stays 45 to 90 s` });
   if (b.closes !== undefined) {
     const one = b.closesWhileOneOnBrink || 0;
-    rows.push({ id: 'masher.brinkcloses' + sfx, ref: '§9d', what: 'Lights-only mirror: share of closes made by the fighter on the brink, while only one of them is on it (10 to 40%)' + lab, status: one >= 20 ? (b.brinkCloseShare >= 0.10 && b.brinkCloseShare <= 0.40 ? 'PASS' : 'FAIL') : 'PENDING', value: one ? `${pct(b.brinkCloseShare)} (${b.closesByBrinkFighter} of ${one} closes)` : 'no close with one fighter on the brink', band: '10 to 40%', note: `${b.closes} closes in ${m.n} matches; PENDING under 20 closes in the count` });
-    const dec = b.decided || 0;
-    rows.push({ id: 'masher.firstslot' + sfx, ref: '§9d', what: 'Lights-only mirror: matches won from the first slot (40 to 60%)' + lab, status: dec >= 20 ? (b.firstSlotShare >= 0.40 && b.firstSlotShare <= 0.60 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${pct(b.firstSlotShare)} (${b.firstSlotWins} of ${dec})` : 'no decided match', band: '40 to 60%', note: `point estimate; the interval at ${dec} matches is about +-${dec ? Math.round(98 / Math.sqrt(dec)) : '-'} points` });
+    rows.push({ id: 'masher.brinkcloses' + sfx, ref: '§9e', what: 'Lights-only mirror: share of closes made by the fighter on the brink, while only one of them is on it (reported, not banded: melee-press-feel 9e)' + lab, status: 'INFO', value: one ? `${pct(b.brinkCloseShare)} (${b.closesByBrinkFighter} of ${one} closes)` : 'no close with one fighter on the brink', band: 'reported', note: `${b.closes} closes in ${m.n} matches` });
+    const dec = b.decided || 0, seq = b.firstSlotSeq || [];
+    const part = (a, z) => { const x = seq.slice(a, z).filter(v => v >= 0); return x.length ? `${(100 * x.filter(v => v === 1).length / x.length).toFixed(0)}% of ${x.length}` : '-'; };
+    rows.push({ id: 'masher.firstslot' + sfx, ref: '§9e', what: 'Lights-only mirror: matches won from the first slot (40 to 60%, read on 200 matches)' + lab, status: dec >= 100 ? (b.firstSlotShare >= 0.40 && b.firstSlotShare <= 0.60 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${pct(b.firstSlotShare)} (${b.firstSlotWins} of ${dec}); first 60 seeds ${part(0, 60)}, the next 140 ${part(60, 200)}` : 'no decided match', band: '40 to 60%', note: `point estimate; the interval at ${dec} matches is about +-${dec ? Math.round(98 / Math.sqrt(dec)) : '-'} points; the split is Encounter's (35% on the first 60 seeds, 67% on the other 140): a slot effect that moves with the seed range is the thing to look at; PENDING under 100 decided matches` });
     if (b.exactTradeFields) {
       // exact (Encounter's trade_break fields): level trades are the breaks settled by the draw after a first close; a break changed hands when the draw went against the last closer (text draw, k 2)
       rows.push({ id: 'masher.momentum' + sfx, ref: '§9d', what: 'An even mash: level trades that change who has the momentum (5 to 15%)' + lab, status: b.levelTrades >= 20 ? (b.levelChangeShare >= 0.05 && b.levelChangeShare <= 0.15 ? 'PASS' : 'FAIL') : 'PENDING', value: b.levelTrades ? `${pct(b.levelChangeShare)} (${b.levelChanges} of ${b.levelTrades} level trades; ${b.breaksByLead} breaks went to a lead of 2)` : 'no level trade after a close', band: '5 to 15%', note: 'exact: the draw breaks after a first close (trade_break text draw, k 1 or 2); PENDING under 20 of them' });
@@ -123,7 +125,7 @@ function mirrorRows(m) {
     }
     const slack = LATE_OK;
     rows.push({ id: 'masher.tradelimit' + sfx, ref: '§9d', what: 'A trade breaks on the tick of its limit: never before it, and no later than a hit-stop explains (hard test)' + lab, status: b.tradeBreaks ? (b.breaksEarly === 0 && b.breakLateMax <= slack ? 'PASS' : 'FAIL') : 'PENDING', value: b.tradeBreaks ? `${b.breaksEarly} early; lateness in ticks: ${b.tradeBreaks - b.breaksEarly} breaks, 95th percentile ${b.breakLateP95}, longest ${b.breakLateMax} (limit ${b.tradeLimit}; allowed ${slack})` : 'no trade broke', band: `never early, at most ${slack} ticks late`, note: 'the break comes on the first live tick at or after the limit, so a hit-stop makes it late; Encounter is measuring how late it can be, and LATE_OK in masher.js is the allowance until it says' });
-    rows.push({ id: 'masher.breakclose' + sfx, ref: '§9d', what: 'From a trade break to its close, or to the brawl end: at most 24 ticks (hard test)' + lab, status: b.tradeBreaks ? (b.breakToCloseLate === 0 ? 'PASS' : 'FAIL') : 'PENDING', value: b.tradeBreaks ? `${b.breakToCloseLate} of ${b.tradeBreaks} breaks took longer` : 'no trade broke', band: '0 over 24 ticks', note: 'counted on S.tick from the trade_break event to the next flurry close or brawl_end' });
+    rows.push({ id: 'masher.breakclose' + sfx, ref: '§9d', what: 'From a trade break to its close, or to the brawl end: at most 24 ticks, and 4 more for a hit-stop (hard test)' + lab, status: b.tradeBreaks ? (b.breakToCloseLate === 0 ? 'PASS' : 'FAIL') : 'PENDING', value: b.tradeBreaks ? `${b.breakToCloseLate} of ${b.tradeBreaks} breaks took longer` : 'no trade broke', band: '0 over 28 ticks', note: 'counted on S.tick from the trade_break event to the next flurry close or brawl_end' });
     rows.push({ id: 'masher.closes' + sfx, ref: '§9d', what: 'Lights-only mirror: brawls, blows and closes (reported)' + lab, status: 'INFO', value: `${b.brawlsPerMin} brawls a minute, ${b.closesPerMin} closes a minute, ${b.heavyStaggers} heavy staggers; blows ${JSON.stringify(b.blows)}; ends ${JSON.stringify(b.ends)}`, band: 'reported', note: `${m.n} matches` });
   }
   return rows;
