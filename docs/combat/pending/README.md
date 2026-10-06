@@ -108,7 +108,7 @@ One page for Orb: what each of the six waves adds in plain words, its new-pose c
 
 ## The alchemist's recipes, the traded-blows set piece and the charges (parked; the rules are Game Design's)
 
-`brawl-prep.md`, `recipes.brawl.json` and `channel.rival.json`: Combat's data for Encounter's brawl (`docs/director/brawl-plan.md`). The next version of the live recipes (a path on every piece, the beat point by path, a `brawl` block and four pools: flurry, skill, lift, break) and On the Chin's beats with the `chin_plant` cue. Slice B1 runs on the live file unchanged. Not moved.
+`brawl-prep.md`, `recipes.brawl.json` and `channel.rival.json`: Combat's data for Encounter's brawl (`docs/director/brawl-plan.md`). The next version of the live recipes (a path on every piece, the beat point by path, and for three strengths a `brawl` block that maps each press of X, Y and B to a pool, the mediums, the heavies as stand-ins, the `burst` block and a stated `fallback`: `movegen/three-strengths.md` section 9) and On the Chin's beats with the `chin_plant` cue. Slice B1 runs on the live file unchanged. Not moved.
 
 `recipes.slice11.json` (**landed** at `5493345`, kept as the record): the next version of the live `data/combat/recipes.json`, for Encounter's slice 11 (`../alchemist-recipes.md` section 6): a `pieces` block with each pool strike's limb and target, two more blur patterns (reap, breach) with `patternGates`, and the blur's two forms as Game Design ruled them. Not moved.
 

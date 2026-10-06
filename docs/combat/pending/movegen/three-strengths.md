@@ -3,7 +3,9 @@
 Owner: Combat and Choreography. Date: 2026-10-06. Status: parked, for the slice C2a. Nothing here is loaded or hashed.
 Answers `docs/design/brawl-second-pass.md` as rewritten for three strengths (`972e598`), sections 2, 3 and 8, and Orb's words in `docs/ep/vision.md` (last section).
 
-The generator is version 7. `--check` passes (files, Legal's rows, strings) and `--self-test` passes 53 cases. Every row below is in `review-sheet.md`, which is generated.
+The generator is version 8. `--check` passes (files, Legal's rows, strings) and `--self-test` passes 58 cases. Every row below is in `review-sheet.md`, which is generated.
+
+**Since this note was first written:** Legal passed all 41 rows with conditions, and the pools by button are in `../recipes.brawl.json`. Sections 8 and 9 have both.
 
 ## 1. What changed, in one table
 
@@ -155,9 +157,70 @@ The floor is 3 for each button. Each burst string is checked too: Legal's rules 
 **Legal**
 - The list is the section "New looks for Legal: three strengths" of `review-sheet.md`: 41 rows. Six drives, 20 heavies, 11 stand-ins on a longer wind-up, the burst, the mediums on 12 ticks, and how each fighter throws a heavy.
 - **Rows written for two weights.** b12 names `heavy` and `held`. I apply it to mediums and heavies, and to the form `charged`, so nothing is loosened by the new words. Legal to confirm, or to re-word the rows.
-- **Two conditions are mine, proposed:** W1 (a heavy's wind-up is judged as a held pose) and U1 (the burst).
+- **Two conditions were mine, proposed:** W1 (a heavy's wind-up is judged as a held pose) and U1 (the burst). Legal adopted both (section 8).
 - **To look at first:** the falling drive (the limb must not be held raised), the heaving elbow to the jaw (b03 names hands only), and the stepping blade hand to the jaw.
 
 **Encounter**
 - The stand-in fallback (section 4), and the count for s01 at run time, as before.
-- The pools by button in `../recipes.brawl.json` are not done here.
+- The pools by button are in `../recipes.brawl.json` (section 9).
+
+## 8. Legal's screen, carried in
+
+Legal passed all 41 rows with conditions (`docs/legal/three-strengths-screen.md`, `bb6fc1e`). Its file is merged again, and no row of mine stopped passing.
+
+| Legal's row | What it is | What the generator does |
+| :--- | :--- | :--- |
+| b12, reworded | names medium and heavy, held and charged | read as written; my alias for the old words is removed |
+| b03, widened | a rising blow with a leap or a spin, now by hand, elbow or knee | **refuses a match.** The row still lists only a hand's tips, so I read it as binding an elbow or a knee whatever its tip. Stricter than the letter |
+| h05 (my W1, adopted) | a wind-up of 12 ticks or more is a held pose: never at a hip for any hand state, never both hands together, no limb held raised | **refuses** a medium or a heavy whose key set carries one of those flags; the rest is the condition W1, now on every medium and heavy |
+| h06 | the heaving drive's sink and the falling drive's rise | the conditions D4 and D5; both drives are **seen drawn first** |
+| h07 | a manner is a way of throwing, not a gesture | in the rival's manner: the limb stays drawn back, and he leaves it out 12 ticks or fewer |
+| f01, restated | ghosts by instant: at most 2 of any limb and 4 in all | a condition for VFX, in U1 |
+| f04 | a gap under 6 ticks runs for 3 blows at most, in a burst's opening only | **checked:** no burst has more than three fast slots running |
+| f05 (my U1, adopted) | the burst's rules | **checked:** the burst's four rules are the row's |
+
+**Conditions on the rows, now in the sheet's Legal column:**
+- D1, a stepping heavy: the lead hand open or in guard, never a pointing finger.
+- D2, a turning heavy: half a turn, never more.
+- D3, an unwinding heavy: one arm crosses his centre, never both.
+- D4, a heaving heavy, and D5, a falling heavy: as h06. D5 also says one arm only, which is Legal's note on the Protagonist's falling palm.
+- L1 now sits on every rising blow by hand, elbow or knee: no leap, no turn, the limb lowers at once. That covers the heaving palm, the heaving fist and the heaving elbow.
+- L8 on the stepping blade hand to the jaw: a strike, never a grip. It was there already.
+- B1, on every stand-in: a held pose on the longer wind-up. A double hammer or a double palm keeps its hands shoulder width apart and at or below the shoulder, with a raise overhead only in the last 6 ticks, **or it is dropped as a stand-in;** a crossed-arm ram crosses only for the strike; a spin is one turn in place.
+
+**For Legal, one thing:** b03's `tip` list still names only fist, palm and heel. By the letter it cannot match an elbow or a knee. I read it the strict way; adding their tips to the row would make the file say it.
+
+## 9. The pools by button, for Encounter
+
+In `../recipes.brawl.json`, which is still the live recipes plus what is parked. The pools for Y and B come from the generated movesets, so they keep to each fighter's identity.
+
+| Press | `brawl` key | Pool | Rival | Protagonist |
+| :--- | :--- | :--- | ---: | ---: |
+| X tapped; with the stick toward | `light`, `lightToward` | `combo.link`, `blur.toward` (live) | 18, 4 | 20, 4 |
+| X mashed; on the beat | `flurry`; `skill`, `juggle` | `brawl.flurry`; `brawl.skill` | 9; 9 | 10; 10 |
+| Y tapped, mashed, on the beat | `medium` | `brawl.medium`: the mediums that read on 12 ticks | 10 | 10 |
+| Y held (C2b) | `mediumHeld` | `brawl.medium.held`: every medium | 14 | 14 |
+| B tapped, mashed, on the beat, held | `heavy`, `heavyHeld` | `brawl.heavy`: **the stand-ins** | 5 | 6 |
+| X+Y (C6a) | `lift` | `brawl.lift`: the rising mediums | 3 | 3 |
+| X held | the `burst` block | `burst.fast`, `burst.mid`, `burst.slow` | 8, 13, 27 | 8, 12, 24 |
+
+- The counts are posed strikes only. A derived move (a posed key set with another hand or aim) has no strike id of its own, so 2 mediums and 3 or 6 lights a fighter are not in these pools.
+- 21 pieces rows are added for the strikes of Animation's later packs (`rival4`, `protag7`). One path was re-read from Animation: the crossed-arm ram travels a line.
+- `brawl.break` and the ender are gone with their rules.
+- **The burst:** `slots`, the pool for each class of gap, four `rules`, each fighter's `close`, and one sample for each lean. On the pieces table a row has no tip, so its first rule is "never the same limb on the same path twice running", which is stricter than f05. Every light a tap can throw can open a whole burst (16 for the rival, 20 for the Protagonist), and `--check` tests that and every sample.
+
+**The fallback, stated in the file.** No press is silent. Three steps, in order:
+1. `pool`: a piece of the press's pool, not one of his last two, inside Legal's string rules.
+2. `repeat`: one of his last two again, the older first, when Legal's rules allow it. This is the EP's default.
+3. `lower`: a piece of the pool one strength down, on this button's wind-up and at its worth. A medium for a heavy.
+
+Legal's rules are never dropped.
+
+**Where B runs dry on stand-ins:**
+- **The rival never does.** After any two blows at least one of his five may follow.
+- **The Protagonist does in 13 of 1,200 histories,** and in 3 mashed-B strings: after a double palm, a drop kick or a crossed-arm ram, then the spinning heel. Both blows are to the chest, so a third to the chest is barred (s02), and his other stand-ins are spins, which can't follow a spin (s04).
+- **Repeating does not save any of them:** the repeat would be that third blow to the chest or that second spin. So in these the press takes step 3 and throws a medium on B's wind-up. Step 2 is in the file, and today it is never the step that is reached.
+- Taking the spinning heel out of the Protagonist's stand-ins would leave five that never run dry. It is in, since the fallback covers it.
+- This goes when the tier's ten are posed: after any two blows at least 4 of the rival's and 5 of the Protagonist's may follow.
+
+**For Tools,** beyond section 7: in `combat.recipes/1`, `brawl` gains the keys `medium`, `mediumHeld` and `heavyHeld` and loses `ender` and `break`; two new blocks, `burst` (`slots`, `pools`, `rules`, `close`, `samples`) and `fallback` (`steps`, `lower`, `heavyOnStandIns`); pool names may have three parts (`brawl.medium.held`).

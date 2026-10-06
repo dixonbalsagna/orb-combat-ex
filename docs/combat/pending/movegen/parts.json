@@ -229,13 +229,7 @@
    "heavy": "medium"
   },
   "_animWeight": "Animation's manifests still say light and heavy. Its heavy rows are today's heavy strikes, which are the mediums now. No row of Animation's is a heavy of the new tier; a posed piece that only reads on a long wind-up may stand in for one (`heavy.standIn`)",
-  "legalWeight": {
-   "medium": "heavy"
-  },
-  "legalForm": {
-   "charged": "held"
-  },
-  "_legalWeight": "Legal's shape rows were written when there were two weights and the charged blow was called held. Until Legal reads them again, a row that names heavy is applied to a medium and to a heavy, and a row that names held is applied to the form charged. Nothing of Legal's is loosened by the new names",
+  "legalTips": "a row's tip list binds the limbs that can have those tips. Legal's b03 lists the tips of a hand and, since bb6fc1e, the limbs hand, elbow and knee. An elbow or a knee has tips of its own, so the row binds them whatever their tip. Stricter than the letter; Legal may add the tips",
   "sends": {
    "line": "across",
    "arc_in": "turned",
@@ -631,33 +625,45 @@
      "bears": [
       "b02",
       "b08",
-      "b12"
+      "b10",
+      "b12",
+      "h05"
      ],
      "what": "a full pace behind the blow: the whole body travels with it and arrives as it lands",
      "tell": "the striking side drawn back at shoulder height, the other shoulder pointed at the rival, the weight held on the rear leg",
-     "end": "a pace past his mark, the striking side forward"
+     "end": "a pace past his mark, the striking side forward",
+     "legal": "the lead hand is open or in guard, never a pointing finger; the blow never passes through the body",
+     "seen": false
     },
     "arc_in": {
      "id": "turn",
      "word": "turning",
      "flags": [],
      "bears": [
-      "b12"
+      "b04",
+      "b12",
+      "h05"
      ],
      "what": "hips and shoulders wind away from the rival and unwind through the target: half a turn, never more",
      "tell": "his back half turned to the rival, the striking limb carried behind the body at shoulder height",
-     "end": "turned through, the striking limb across his own centre"
+     "end": "turned through, the striking limb across his own centre",
+     "legal": "half a turn, never more",
+     "seen": false
     },
     "arc_out": {
      "id": "unwind",
      "word": "unwinding",
      "flags": [],
      "bears": [
-      "b12"
+      "b12",
+      "h02",
+      "h05"
      ],
      "what": "he shows the rival his far side and the blow comes back out the way it wound: a backhand of the whole body",
      "tell": "the striking limb crossed over his own centre, the chin over the lead shoulder",
-     "end": "opened out, the striking limb wide"
+     "end": "opened out, the striking limb wide",
+     "legal": "one arm crosses his centre, never both forearms",
+     "seen": false
     },
     "rise": {
      "id": "heave",
@@ -665,11 +671,15 @@
      "flags": [],
      "bears": [
       "b03",
-      "s05"
+      "s05",
+      "h05",
+      "h06"
      ],
      "what": "he sinks deep, and both legs drive the blow up through the target. His feet keep their place: it is not a leap",
      "tell": "sunk under the rival's guard with the striking limb loaded below the target, the back straight",
-     "end": "stood up to his full height, the striking limb high"
+     "end": "stood up to his full height, the striking limb high",
+     "legal": "a lunge-low stance, the other hand up in guard; never both fists clenched at the sides in a crouch; no scream, no aura, no ground cracking; no leap",
+     "seen": true
     },
     "drop": {
      "id": "fall",
@@ -678,11 +688,15 @@
      "bears": [
       "b05",
       "b09",
-      "b12"
+      "b12",
+      "h05",
+      "h06"
      ],
      "what": "he rises over the target and comes down on it with his whole weight",
      "tell": "risen above the rival with the striking limb carried at shoulder height; it lifts only as he starts down",
-     "end": "sunk below where he began, the striking limb low"
+     "end": "sunk below where he began, the striking limb low",
+     "legal": "the rise is the body straightening or stepping up, never a leap; the limb at shoulder height until he starts down; one arm",
+     "seen": true
     },
     "spin": {
      "id": "full_turn",
@@ -692,11 +706,14 @@
      ],
      "bears": [
       "b04",
-      "s04"
+      "s04",
+      "h05"
      ],
      "what": "one whole turn in place, wound up in plain sight; never two, never travelling",
      "tell": "the shoulders turned away and the head already looking back over them",
-     "end": "facing the rival again, a quarter turn past"
+     "end": "facing the rival again, a quarter turn past",
+     "legal": "one turn, in place, never travelling",
+     "seen": false
     }
    },
    "words": {
@@ -852,13 +869,16 @@
       "drawn_to_hip_then_thrust"
      ]
     },
-    "why": "hands cupped at a hip, or drawn back to one hip and thrust: the franchise's best-known wind-up. Applies to every weight and every form, including held heavies"
+    "why": "hands cupped at a hip, or drawn back to one hip and thrust: the franchise's best-known wind-up. Applies to every weight and every form, including held heavies",
+    "appliesTo": "open or clawed hands (a closed fist chambered at the hip is a punch chamber and passes b02; h05 still holds a 12-tick wind-up to the shoulder)"
    },
    {
     "id": "b03",
     "match": {
      "limb": [
-      "hand"
+      "hand",
+      "elbow",
+      "knee"
      ],
      "tip": [
       "fist",
@@ -877,7 +897,7 @@
       "spin"
      ]
     },
-    "why": "a rising blow with a leap or a spin: the jumping, turning uppercut"
+    "why": "a rising blow with a leap or a spin, by hand, elbow or knee: the jumping, turning uppercut"
    },
    {
     "id": "b04",
@@ -1007,17 +1027,19 @@
     "id": "b12",
     "match": {
      "weight": [
+      "medium",
       "heavy"
      ],
      "form": [
-      "held"
+      "held",
+      "charged"
      ],
      "flags": [
       "hip_chamber",
       "two_hand_chamber"
      ]
     },
-    "why": "a held heavy is charged with one arm drawn back at shoulder height, never at a hip and never with both hands together"
+    "why": "a held or charged medium or heavy is loaded with one arm drawn back at shoulder height, never at a hip and never with both hands together; the new words medium and charged loosen nothing"
    },
    {
     "id": "b13",
@@ -1220,7 +1242,9 @@
     "id": "L1",
     "when": {
      "limb": [
-      "hand"
+      "hand",
+      "elbow",
+      "knee"
      ],
      "path": [
       "rise"
@@ -1231,7 +1255,7 @@
      "b09",
      "s05"
     ],
-    "ask": "a rising blow: feet stay down, no turn, the arm lowers at once, no glow; never strung into another rising blow in the air"
+    "ask": "a rising blow, by hand, elbow or knee: feet stay down, no turn, the limb lowers at once, no glow; never strung into another rising blow in the air"
    },
    {
     "id": "L2",
@@ -1428,10 +1452,12 @@
     "id": "W1",
     "when": {
      "weight": [
+      "medium",
       "heavy"
      ]
     },
     "rows": [
+     "h05",
      "b02",
      "b09",
      "b12",
@@ -1439,25 +1465,121 @@
      "h02",
      "h03",
      "h04",
-     "k03",
-     "f01"
+     "k03"
     ],
-    "from": "Combat, proposed: not yet Legal's",
-    "ask": "a heavy: its wind-up is in plain sight for most of 28 ticks, so it is judged as a held pose: the limb drawn back at shoulder height or the leg chambered, never at a hip, never both hands together, never a limb held raised overhead, no light and no aura; the flash of its charge is a thin ring or edge; thrown in a flurry, the smear follows the one striking limb"
+    "from": "Legal's h05 (Combat's W1, adopted)",
+    "ask": "a wind-up of 12 ticks or more, which is every medium and every heavy: a held pose, judged at every tick: the loaded limb at shoulder height or lower (a leg may be chambered), never at a hip for any hand state, never both hands together, no limb above 80 except in the last 6 ticks before contact, no held crossed forearms, no light and no aura; a both-hand blow keeps its hands at least shoulder width apart"
    },
    {
     "id": "U1",
     "stance": "martial",
     "rows": [
+     "f05",
+     "f01",
+     "f04",
      "s01",
      "s02",
      "s03",
-     "f01",
      "f02",
      "f03"
     ],
-    "from": "Combat, proposed: not yet Legal's",
-    "ask": "the burst: eight lights on a held X, its first three gaps faster than a mashed flurry; the smear follows the one striking limb with at most two ghosts, never extra limbs; no blow repeats the last one's place or shape; one breath of sound for the eight, never a syllable for each"
+    "from": "Legal's f05 (Combat's U1, adopted)",
+    "ask": "the burst: it never repeats the last blow's limb, tip and path, or its place; no more than two blows running on one path; no piece twice; the hands alternate; at any instant at most 2 ghosts of any limb and 4 limb-ghosts in all; a gap under 6 ticks runs for 3 blows at most, in its opening only; one breath of sound for the eight; no slow-motion close-up or camera cut on it. Its opening three blows are seen drawn first"
+   },
+   {
+    "id": "D1",
+    "when": {
+     "weight": [
+      "heavy"
+     ],
+     "path": [
+      "line"
+     ]
+    },
+    "rows": [
+     "b08",
+     "b10"
+    ],
+    "from": "Legal's screen of the three strengths",
+    "ask": "a stepping heavy: the lead hand is open or in guard, never a pointing finger; the blow never passes through the body"
+   },
+   {
+    "id": "D2",
+    "when": {
+     "weight": [
+      "heavy"
+     ],
+     "path": [
+      "arc_in"
+     ]
+    },
+    "rows": [
+     "b04"
+    ],
+    "from": "Legal's screen of the three strengths",
+    "ask": "a turning heavy: half a turn, never more"
+   },
+   {
+    "id": "D3",
+    "when": {
+     "weight": [
+      "heavy"
+     ],
+     "path": [
+      "arc_out"
+     ]
+    },
+    "rows": [
+     "h02"
+    ],
+    "from": "Legal's screen of the three strengths",
+    "ask": "an unwinding heavy: one arm crosses his centre, never both forearms"
+   },
+   {
+    "id": "D4",
+    "when": {
+     "weight": [
+      "heavy"
+     ],
+     "path": [
+      "rise"
+     ]
+    },
+    "rows": [
+     "h06",
+     "b03"
+    ],
+    "from": "Legal's screen of the three strengths",
+    "ask": "a heaving heavy: a lunge-low stance with the striking limb loaded and the other hand up in guard; never both fists clenched at the sides in a crouch; no scream, no aura, no ground cracking; the feet keep their place. It is seen drawn before it goes live"
+   },
+   {
+    "id": "D5",
+    "when": {
+     "weight": [
+      "heavy"
+     ],
+     "path": [
+      "drop"
+     ]
+    },
+    "rows": [
+     "h06",
+     "b05",
+     "b09"
+    ],
+    "from": "Legal's screen of the three strengths",
+    "ask": "a falling heavy: the rise is the body straightening or stepping up, never a leap; the limb stays at shoulder height until he starts down; one arm only, never both palms or both fists. It is seen drawn before it goes live"
+   },
+   {
+    "id": "B1",
+    "stance": "martial",
+    "rows": [
+     "h05",
+     "h02",
+     "s04"
+    ],
+    "from": "Legal's screen of the three strengths",
+    "ask": "a stand-in on B's 28 ticks: a held pose, judged on the longer wind-up. A double hammer or a double palm keeps its hands at least shoulder width apart and at or below shoulder height, with a raise overhead only in the last 6 ticks, or it is dropped as a stand-in. A crossed-arm ram crosses only for the strike. A spin is a single turn in place. A drop kick's gather is not a crouch with fists clenched at the sides"
    }
   ],
   "_conditions": "Legal's conditions from its screen of the sheet (docs/legal/movegen-screen.md section 1), for Animation: the sheet's Legal column lists the ids that apply to a row. They bite when a move is held or strung"
@@ -2154,6 +2276,39 @@
     "owner": "Animation (a lint on poses held 12 ticks or more)",
     "rule": "held-lint classes for the new holds: a held X, Y or B charge pose and the tackle's coil are class charge; the seize, breaker, lift and slip tells are class tell; the clinch hold is class hold; the 45-tick taunt is class gesture; an open-hand chamber in a charged melee blow keeps the wrist at x 9 or more (not drawn to the hip), a closed-fist chamber at the hip is allowed",
     "why": "so the lint reaches the new poses"
+   },
+   {
+    "id": "h05",
+    "kind": "shape",
+    "match": {
+     "weight": [
+      "medium",
+      "heavy"
+     ],
+     "flags": [
+      "hip_chamber",
+      "two_hand_chamber",
+      "held_raise_overhead",
+      "cupped_at_hip",
+      "drawn_to_hip_then_thrust"
+     ]
+    },
+    "rule": "a medium or heavy wind-up of 12 ticks or more is a held pose of class charge and is judged at every tick by h01 to h04: the loaded limb at shoulder height or lower (a leg may be chambered), never at a hip for any hand state, never both hands together, no limb held above 80 except in the last 6 ticks before contact, no held crossed forearms, no light and no aura; both-hand blows (a double palm or hammer) keep the hands at least shoulder width apart; a stand-in played on a longer wind-up than it was posed for is judged on the longer one (W1)",
+    "why": "W1 adopted; a long visible wind-up is a held pose"
+   },
+   {
+    "id": "h06",
+    "kind": "drawn",
+    "owner": "Animation (a lint on poses held 12 ticks or more)",
+    "rule": "a deep sink (the heaving drive) is a lunge-low stance with the striking limb loaded and the other hand up in guard; never both fists clenched at the sides in a crouch, and never with a scream, an aura or ground cracking; the falling drive's rise is the body straightening or stepping up, never a leap (the drop kick excepted, as cleared), and the limb stays at shoulder height until he starts down",
+    "why": "mark 1 over a held sink; the leap and the held raise"
+   },
+   {
+    "id": "h07",
+    "kind": "drawn",
+    "owner": "Animation (a lint on poses held 12 ticks or more)",
+    "rule": "a manner (the rival's show-off, the Protagonist's pointed) is a way of throwing, not a gesture: the rival's open tell keeps the limb drawn back (never arms spread as an invitation, never a beckon), and his limb left out after landing lasts 12 ticks or fewer; no taunt pose is part of a blow",
+    "why": "h02 and the taunt rules"
    }
   ],
   "stacking": [
@@ -2191,8 +2346,8 @@
     "id": "f01",
     "kind": "drawn",
     "owner": "VFX, Audio and the director",
-    "rule": "a flurry's blur is a smear along the striking limb's real path: at most 2 ghosts of that limb per blow, never extra arms, legs or fists drawn at the same time, never a fan of limbs round the target",
-    "why": "the many-armed barrage blur (applies to X, Y, B and any mix)"
+    "rule": "a flurry's or burst's blur follows each striking limb's real path: at any instant at most 2 ghosts of any limb and at most 4 limb-ghosts on screen in all; never extra arms, legs or fists drawn at once, never a fan of limbs round the target. This replaces the 'two ghosts per blow' wording, which does not hold at 15 blows a second",
+    "why": "the many-armed barrage blur, by instant rather than by blow"
    },
    {
     "id": "f02",
@@ -2214,6 +2369,26 @@
     "owner": "VFX, Audio and the director",
     "rule": "vocal sounds in a flurry: no repeated shouted syllable across it, no shouted word, and at most one grunt for every two blows, varied",
     "why": "the chanted barrage (s03) at up to 10 blows a second"
+   },
+   {
+    "id": "f04",
+    "kind": "slots",
+    "class": "fast",
+    "maxRun": 3,
+    "rule": "a gap of under 6 ticks between blows never runs for more than 3 blows in a row, and only inside the opening of a burst; blows then slow (a held X's 4, 4, 5, 6, 8, 11, 15 gaps are within this)",
+    "why": "the fastest barrage rate is allowed only as a short opening, not a sustained storm"
+   },
+   {
+    "id": "f05",
+    "kind": "burst",
+    "uses": [
+     "u1",
+     "u2",
+     "u3",
+     "u4"
+    ],
+    "rule": "a burst (held X, eight lights) never repeats the last blow's limb, tip, path or place; no more than 2 blows in a row on one path; no piece twice in one burst; the hands alternate; the sound is one breath for the eight, never a syllable for each; no slow-motion close-up or camera cut on the burst",
+    "why": "U1 as a row"
    }
   ],
   "heldScope": {

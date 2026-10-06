@@ -293,6 +293,9 @@
      "kind": "strikes",
      "temporary": true,
      "only": "stand_in",
+     "asks": [
+      "B1"
+     ],
      "what": "stand-ins for B until the tier is posed: his posed mediums that only read on a long wind-up, played at B's wind-up. Not locked: they go as the tier's own poses arrive",
      "filter": {
       "weight": [

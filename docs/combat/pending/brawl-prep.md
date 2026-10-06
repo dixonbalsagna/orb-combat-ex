@@ -47,6 +47,10 @@ All of it is added to `recipes.json`. One thing that exists changes: **two blur 
 - The rival's four tail strikes are in the pools as waiting, as before.
 - When the generated cells land, these pools are written by the generator from martial X and Y, and the names stay.
 
+## 2b. Three strengths (2026-10-06): this section's `brawl` block is replaced
+
+Orb moved the buttons to X light, Y medium, B heavy (`docs/design/brawl-second-pass.md`). In `recipes.brawl.json` the `brawl` block now maps each press to a pool, `brawl.break` and the ender are gone, and there are new pools for the mediums, the heavies (stand-ins, until the heavy tier is posed) and the burst, with a stated `fallback`. The table, the counts and where B runs dry are in `movegen/three-strengths.md` section 9. Where section 2 above says heavy, lift, break or ender, that page is the newer rule.
+
 ## 3. On the Chin's entry beat
 
 `channel.rival.json`: the rival's held context action, as beats. Its target is a new `data/combat/channels.json`.

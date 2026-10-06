@@ -16,7 +16,7 @@ Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here i
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, on any match with Legal's rows, or when a string runs out of blows (a strike button left with fewer than 3 pieces after some two blows, or a light that cannot open a burst). It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 53 cases.
+- **To prove the refusals:** `--self-test`, 58 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -94,7 +94,7 @@ By team. The sheet lists the same under each stance, cell by cell, and `cells.js
 
 ## 4. Legal
 
-`parts.json` holds Legal's file whole (`docs/legal/movegen-banned.json`, through RL-101), and `--check` fails if any row there is missing from it or differs. The merge takes every group of rows in Legal's file, whatever its name, so a new group no longer needs a change here.
+`parts.json` holds Legal's file whole (`docs/legal/movegen-banned.json`, through its screen of the three strengths, `bb6fc1e`), and `--check` fails if any row there is missing from it or differs. The merge takes every group of rows in Legal's file, whatever its name, so a new group no longer needs a change here.
 
 | Rows | Judge | What the generator does |
 | :--- | :--- | :--- |
@@ -103,6 +103,8 @@ By team. The sheet lists the same under each stance, cell by cell, and `cells.js
 | Motion, m01 to m08 | zips and their marks | refuses a far-side zip that does not leave over the rival or round him (m04); the rest are how a zip is drawn and timed: conditions for Animation, VFX and Simulation |
 | Grabs, g01 to g03 | grabs | no grab is generated; the hold points a grab may use are listed and checked (g01) |
 | Held, h01 to h03 with `heldScope` (RL-087), and stacking, k01 and k02 | any pose held 12 ticks or more, by its class (the pair test on every held pose; the emitter test on charges, tells, signatures, energy poses and a held heavy's hold); every tick of a tell or a charge | not checkable from parts: conditions H1 and K1 on every signature frame and held action, for Animation's lint and VFX. `heldScope` is copied whole into `parts.json` `legal`, and `--check` compares it |
+
+**The screen of the three strengths** (`docs/legal/three-strengths-screen.md`): all 41 of Combat's rows passed with conditions. b03 and b12 changed, h05 to h07, f04 and f05 are new, and f01 is restated. What the generator does with each, and the conditions carried into the sheet (W1, U1, D1 to D5, B1), are in `three-strengths.md` section 8. `--check` also tests the pools by button in `../recipes.brawl.json` (the burst's pools, its samples, and that every pool named exists).
 
 **RL-098 to RL-101, for the brawl's second pass** (`docs/legal/brawl-screen.md`). None of these moves is generated yet, so the new rows refuse nothing today. The plan for them is `second-pass-plan.md`.
 

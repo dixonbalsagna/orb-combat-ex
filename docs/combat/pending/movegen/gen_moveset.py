@@ -27,9 +27,10 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 7
+VERSION = 8
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
+TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
 ALIAS = {"weight": {}, "form": {}}   # Legal's older words for a weight and a form (parts.json strike.legalWeight, legalForm); set when the parts are read
 FLOOR = 3   # after any two blows of a mixed string, each strike button must still have this many pieces it may throw
 
@@ -107,8 +108,12 @@ def banned_hit(row, m, forms, arms, flags):
         elif k == "arms":
             if arms not in vals:
                 return None
-        elif k == "weight":   # a row written for two weights: its heavy is a medium or a heavy now
+        elif k == "weight":   # an alias, if the parts give one (none since Legal's b12 names medium and charged itself)
             if m.get(k) not in vals and ALIAS["weight"].get(m.get(k)) not in vals:
+                return None
+        elif k == "tip":   # a tip list binds the limbs that can have those tips (strike.legalTips): b03 lists a hand's, and binds an elbow or a knee whatever its tip
+            mine = TIPS_OF.get(m.get("limb"))
+            if m.get(k) not in vals and (mine is None or any(v in mine for v in vals)):
                 return None
         elif m.get(k) not in vals:
             return None
@@ -119,6 +124,11 @@ def banned_hit(row, m, forms, arms, flags):
     if all(f in flags["not"] for f in mt["flags"]):
         return None
     return "ask"
+
+
+def shape_rows(parts):
+    """Every row that judges one strike by its parts and flags: Legal's shape rows, and the rows of its other groups that the merge gave a shape (h05)."""
+    return parts["strike"]["banned"] + [r for rows in parts.get("legal", {}).values() if isinstance(rows, list) for r in rows if r.get("kind") == "shape"]
 
 
 def flags_of(g, idn, m, source):
@@ -377,7 +387,7 @@ def strike_cell(ctx, who, cid, cell):
         m["_forms"] = list(cell["readings"]) if "readings" in cell else m["_strike_forms"]
         if any(f in m["_flags"]["has"] for f in cell.get("notFlags", [])):
             continue   # a cell can turn away key sets that show a flag (a push is never a leap)
-        hits =[(r["id"], banned_hit(r, m, m["_strike_forms"], m["_arms"], m["_flags"])) for r in g["banned"]]
+        hits =[(r["id"], banned_hit(r, m, m["_strike_forms"], m["_arms"], m["_flags"])) for r in shape_rows(parts)]
         if any(h == "match" for _, h in hits):
             refused.append({"shape": list(fp(m)), "rows": [i for i, h in hits if h == "match"]})
             continue
@@ -435,6 +445,7 @@ def strike_cell(ctx, who, cid, cell):
         asks = [cd["id"] for cd in g["conditions"] if "when" in cd and match(cd["when"], probe)]
         if cell.get("as") == "push":
             asks = ["P1"] + [a for a in asks if a in ("L2", "L7")]
+        asks += [a for a in cell.get("asks", []) if a not in asks]
         if c is None:
             keys = {"level": "new"}
         else:
@@ -663,6 +674,10 @@ def build():
     parts = load(os.path.join(HERE, "parts.json"))
     identity = load(os.path.join(HERE, "identity.json"))
     cells = load(os.path.join(HERE, "cells.json"))
+    TIPS_OF.clear()
+    for table in (parts["strike"]["tips"], parts["strike"].get("heavy", {}).get("tips", {})):
+        for limb, tips in table.items():
+            TIPS_OF.setdefault(limb, set()).update(tips)
     ALIAS["weight"] = dict(parts["strike"].get("legalWeight", {}))
     ALIAS["form"] = dict(parts["strike"].get("legalForm", {}))
     tips = load(anim("tips.json")) if os.path.exists(anim("tips.json")) else {}
@@ -787,7 +802,7 @@ def legal_findings(docs, parts, identity):
                 blows = [m] if c["kind"] == "strikes" else [dict(m["blow"], forms=["light"], arms=1, flags=m["flags"], id=m["id"])] if c["kind"] == "travel" else []
                 for b in blows:
                     forms = forms_of(g, b, b.get("arms", 1), b.get("flags", []))
-                    for r in g["banned"]:
+                    for r in shape_rows(parts):
                         if banned_hit(r, b, forms, b.get("arms", 1), {"has": b.get("flags", []), "not": []}) == "match":
                             bad.append("%s: %s matches %s" % (who, m["id"], r["id"]))
                     if any(match(n["shape"], b) for n in idn["never"]):
@@ -815,6 +830,14 @@ def legal_findings(docs, parts, identity):
                         continue
                     br = run_breaks(bu["noStutter"], seq) + sorted(set(x for i in range(len(seq)) for x in string_breaks(parts, seq[max(0, i - 2):i + 1])))
                     br += ["class %s" % cl for n, cl in zip(seq, m["slots"]) if not match(bu["classes"][cl]["when"], n)]
+                    for r in parts.get("legal", {}).get("flurry", []):   # Legal's f04: the fastest gaps run for a few blows only
+                        if r.get("kind") == "slots":
+                            run = longest = 0
+                            for cl in m["slots"]:
+                                run = run + 1 if cl == r["class"] else 0
+                                longest = max(longest, run)
+                            if longest > r["maxRun"]:
+                                br.append(r["id"])
                     if br:
                         bad.append("%s: %s breaks %s" % (who, m["id"], ", ".join(br)))
     lg = parts.get("legal", {})
@@ -864,6 +887,56 @@ def legal_findings(docs, parts, identity):
             br = sequence_breaks(g, seq + seq[:2])
             if br:
                 bad.append("blur pattern %s (%s) breaks %s" % (name, os.path.relpath(rp, ROOT).replace(os.sep, "/"), ", ".join(br)))
+    return bad
+
+
+def recipes_findings(parts):
+    """The parked recipes' pools by button (../recipes.brawl.json, or --recipes PATH), when the file has them: every pool that `brawl`, `burst` and `fallback` name
+    exists for every fighter; every light a tap can throw can open a whole burst from the burst's pools, under its rules and Legal's string rules; each sample is one.
+    Judged on the pieces table: limb, path and target. s01 names the tip, which a pieces row does not have, so it is judged on limb and path, which is stricter."""
+    rp = recipes_path()
+    rec = load(rp) if os.path.exists(rp) else {}
+    bu = rec.get("burst")
+    if not bu:
+        return []
+    g, bad = parts["strike"], []
+    legal = {"bannedSequences": [dict(r, same=["limb", "path"]) if r["id"] == "s01" else r for r in g["bannedSequences"]]}
+    rules = [dict(r, kind="once" if r.get("once") else "run") for r in bu["rules"]]
+    named = sorted(set([v for k, v in rec.get("brawl", {}).items() if not k.startswith("_")] + list(bu["pools"].values()) + list(rec.get("fallback", {}).get("lower", {}).values())))
+    for who, pools in sorted(rec["pools"].items()):
+        missing = [n for n in named if n not in pools]
+        if missing:
+            bad.append("recipes: %s has no pool %s" % (who, ", ".join(missing)))
+            continue
+        def rows(name):
+            out = []
+            for e in pools[name]:
+                r = rec["pieces"][e["id"]]
+                if e["status"] != "waiting":
+                    out.append({"id": e["id"], "limb": r["limb"], "path": r["path"], "target": "arm" if r["target"].startswith("arm") else r["target"], "step": []})
+            return out
+        by = {cl: rows(pn) for cl, pn in bu["pools"].items()}
+        def ok(seq):
+            return not run_breaks(rules, seq) and not any(sequence_breaks(legal, seq[max(0, i - 2):i + 1]) for i in range(len(seq)))
+        def fill(seq):
+            if len(seq) == len(bu["slots"]):
+                return seq
+            for n in by[bu["slots"][len(seq)]]:
+                if not run_breaks(rules, seq + [n]) and not sequence_breaks(legal, seq[-2:] + [n]):
+                    got = fill(seq + [n])
+                    if got:
+                        return got
+            return None
+        openers = {r["id"]: r for k in ("light", "lightToward", "flurry", "skill") if k in rec.get("brawl", {}) for r in rows(rec["brawl"][k])}
+        cant = [i for i, r in sorted(openers.items()) if fill([r]) is None]
+        if cant:
+            bad.append("recipes: %s cannot open a whole burst with %s" % (who, ", ".join(cant)))
+        every = {r["id"]: r for cl in by for r in by[cl]}
+        every.update(openers)
+        for lean, ids in sorted(bu.get("samples", {}).get(who, {}).items()):
+            seq = [every.get(i) for i in ids]
+            if None in seq or len(seq) != len(bu["slots"]) or any(n["id"] not in [x["id"] for x in by[cl]] for n, cl in list(zip(seq, bu["slots"]))[1:]) or not ok(seq):
+                bad.append("recipes: %s's burst sample for the lean %s is not a whole burst under the rules" % (who, lean))
     return bad
 
 
@@ -1008,13 +1081,13 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
         L.append("| %s | %s | %s | %s |" % (cd["id"], what, ask, ", ".join(cd["rows"])))
     L.append("")
     lgl = parts.get("legal", {})
-    L.append("**Legal's other rows** (RL-076, RL-081 to RL-087, RL-098 to RL-101; `docs/legal/stances-and-gestures-screen.md`). The strike rows above judge strike pieces only; an energy piece is judged by the energy rows, so a lit fist is allowed where its light sits on the plate and knuckle edges and never as a ball at the hand (e01, not b09).")
+    L.append("**Legal's other rows** (RL-076, RL-081 to RL-087, RL-098 to RL-101, and the screen of the three strengths; `docs/legal/stances-and-gestures-screen.md`). The strike rows above judge strike pieces only; an energy piece is judged by the energy rows, so a lit fist is allowed where its light sits on the plate and knuckle edges and never as a ball at the hand (e01, not b09).")
     L.append("")
     L.append("| Group | Rows | The generator refuses a match | Conditions for the owner |")
     L.append("| :--- | :--- | :--- | :--- |")
     for group in [k for k, v in lgl.items() if isinstance(v, list)]:
         rows = lgl.get(group, [])
-        auto = [r["id"] for r in rows if r.get("kind") in ("travel", "move", "hand", "holdPoints", "string")]
+        auto = [r["id"] for r in rows if r.get("kind") in ("travel", "move", "hand", "holdPoints", "string", "shape", "slots", "burst")]
         rest = [r["id"] for r in rows if r["id"] not in auto]
         owner = sorted(set(r.get("owner", "") for r in rows if r["id"] in rest))
         L.append("| %s | %s to %s | %s | %s%s |" % (group, rows[0]["id"], rows[-1]["id"], ", ".join(auto) or "-", ", ".join(rest) or "-", (" (" + "; ".join(o for o in owner if o) + ")") if rest else ""))
@@ -1077,10 +1150,10 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
             if wts == ["heavy"] and not cell.get("temporary"):
                 L.append("**The drives.** A heavy is a strike shape and a drive: what the whole body does behind the limb. Its path decides the drive (`parts.json` `strike.heavy`).")
                 L.append("")
-                L.append("| Path | Drive | What the body does | The tell, in plain sight for most of the wind-up | Where it ends | Legal's rows that bear |")
-                L.append("| :--- | :--- | :--- | :--- | :--- | :--- |")
+                L.append("| Path | Drive | What the body does | The tell, in plain sight for most of the wind-up | Where it ends | Legal's condition | Legal's rows that bear |")
+                L.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
                 for path, d in g["heavy"]["drive"].items():
-                    L.append("| %s | %s (`%s`) | %s | %s | %s | %s |" % (w(path), d["word"], d["id"], d["what"], d["tell"], d["end"], ", ".join(d["bears"])))
+                    L.append("| %s | %s (`%s`) | %s | %s | %s | %s%s | %s |" % (w(path), d["word"], d["id"], d["what"], d["tell"], d["end"], d.get("legal", "-"), ". **Seen drawn first**" if d.get("seen") else "", ", ".join(d["bears"])))
                 L.append("")
                 if identity:
                     for who in names:
@@ -1192,32 +1265,33 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
         L.append("")
     L.append("## New looks for Legal: three strengths")
     L.append("")
-    L.append("What the three strengths add that Legal has not seen. Nothing here is drawn. The conditions W1 and U1 in the table at the top are Combat's proposals, not Legal's.")
+    L.append("What the three strengths added. **Legal passed all of these rows with conditions** (`docs/legal/three-strengths-screen.md`): W1 is its h05 and U1 its f05, and its conditions on the drives and the stand-ins are D1 to D5 and B1 in the table at the top. Nothing here is drawn, and the last column says what Legal sees drawn before it goes live.")
     L.append("")
-    L.append("| # | Look | Whose | What is new | Rows and conditions that bear | State |")
+    L.append("| # | Look | Whose | What is new | Rows and conditions that bear | Legal's verdict |")
     L.append("| ---: | :--- | :--- | :--- | :--- | :--- |")
     n_ = 0
     for path, d in g["heavy"]["drive"].items():
         n_ += 1
-        L.append("| %d | The drive `%s`: %s blow | both | %s. Its tell: %s | %s, W1 | not drawn |" % (n_, d["id"], an(d["word"]), d["what"], d["tell"], ", ".join(d["bears"])))
+        L.append("| %d | The drive `%s`: %s blow | both | %s. Its tell: %s | %s, W1 | %s |" % (n_, d["id"], an(d["word"]), d["what"], d["tell"], ", ".join(d["bears"]), "passes; seen drawn first" if d.get("seen") else "passes"))
     for who in names:
         for m in out[who]["cells"].get("martial.b", {}).get("moves", []):
             n_ += 1
-            L.append("| %d | %s (`%s`) | %s | a heavy: %s %s on %s path, with the drive `%s` | %s | %s |" % (n_, m["name"], m["id"].split(".", 2)[2], nm(who), m["limb"], m["tip"], an(w(m["path"])), m["drive"], ", ".join(m["asks"]), "not drawn" if m["status"] == "waiting" else m["status"]))
+            L.append("| %d | %s (`%s`) | %s | a heavy: %s %s on %s path, with the drive `%s` | %s | %s |" % (n_, m["name"], m["id"].split(".", 2)[2], nm(who), m["limb"], m["tip"], an(w(m["path"])), m["drive"], ", ".join(m["asks"]), "passes; seen drawn first" if g["heavy"]["drive"][m["path"]].get("seen") else "passes"))
     for who in names:
         for m in out[who]["cells"].get("martial.b.standin", {}).get("moves", []):
             n_ += 1
-            L.append("| %d | `%s` as a stand-in on B | %s | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | %s%s | posed; the longer wind-up is not drawn |" % (n_, m["keys"]["set"], nm(who), ", ".join(m["asks"]), ("; carries " + ", ".join(t.replace("_", " ") for t in m["legal"])) if m["legal"] else ""))
+            L.append("| %d | `%s` as a stand-in on B | %s | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | %s%s | %s |" % (n_, m["keys"]["set"], nm(who), ", ".join(m["asks"]), ("; carries " + ", ".join(t.replace("_", " ") for t in m["legal"])) if m["legal"] else "",
+                                                                                   "passes with B1; its gather on 28 ticks is seen drawn first" if m["arms"] == 2 else "passes with B1"))
     hold = cells["stances"].get("martial", {}).get("x", {}).get("presses", {}).get("hold")
     if hold:
         n_ += 1
-        L.append("| %d | The burst (a held X) | both | eight lights in under a second; its first three gaps are shorter than a mashed flurry's fastest. Every blow is a posed light; what is new is the pace, and the rules that keep it from stuttering: %s | U1; s01, s02, s03, f01 to f03 | the lights are posed; the burst is not drawn |" % (n_, "; ".join(r["rule"].split(":")[0] for r in g["burst"]["noStutter"])))
+        L.append("| %d | The burst (a held X) | both | eight lights in under a second; its first three gaps are shorter than a mashed flurry's fastest. Every blow is a posed light; what is new is the pace, and the rules that keep it from stuttering: %s | U1; f01 to f05; s01, s02, s03 | passes with U1; its opening three blows are seen drawn first |" % (n_, "; ".join(r["rule"].split(":")[0] for r in g["burst"]["noStutter"])))
     n_ += 1
-    L.append("| %d | The mediums on a 12-tick wind-up | both | no new shape: the strikes that were the heavies, thrown on a wind-up of 12 ticks where they had 26, and up to five a second in a flurry. The ones that do not fit are flagged and keep a long wind-up | f01 to f03 for the flurry; L6 for the charged ones | posed; the shorter wind-up is not drawn |" % n_)
+    L.append("| %d | The mediums on a 12-tick wind-up | both | no new shape: the strikes that were the heavies, thrown on a wind-up of 12 ticks where they had 26, and up to five a second in a flurry. The ones that do not fit are flagged and keep a long wind-up | W1; f01 to f04 for the flurry; L6 for the charged ones | passes |" % n_)
     if identity:
         for who in names:
             n_ += 1
-            L.append("| %d | How the %s throws a heavy | %s | %s | W1, H1, K1 | not drawn |" % (n_, nm(who), nm(who), identity["fighters"][who].get("manner", {}).get("heavy", "")))
+            L.append("| %d | How the %s throws a heavy | %s | %s | W1, H1, K1%s | %s |" % (n_, nm(who), nm(who), identity["fighters"][who].get("manner", {}).get("heavy", ""), ", h07" if who == "rival" else "", "passes with h07" if who == "rival" else "passes"))
     L.append("")
     L.append("**Not in this list:** the vicious blows, which wait on Orb; the charge flashes and the heavy's armour cue, which are VFX's; how the ground answers a heavy, which is VFX's and World's.")
     L.append("")
@@ -1285,6 +1359,13 @@ def self_test(parts, identity):
     med = {"limb": "hand", "tip": "fist", "path": "drop", "target": "head", "weight": "medium"}
     expect("a charged medium chambered at a hip is refused by the rows written for a held heavy (b02, b12)",
            [r["id"] for r in g["banned"] if banned_hit(r, med, ["quick", "charged"], 1, {"has": ["hip_chamber", "cupped_at_hip"], "not": []}) == "match"], ["b02", "b12"])
+    h05 = [r for r in shape_rows(parts_) if r["id"] == "h05"]
+    expect("a tapped medium loaded at a hip is refused: a 12-tick wind-up is a held pose (h05)", [banned_hit(r, med, ["quick", "charged"], 1, {"has": ["hip_chamber"], "not": []}) for r in h05], ["match"])
+    expect("a light loaded at a hip is not h05's", [banned_hit(r, dict(med, weight="light"), ["light"], 1, {"has": ["hip_chamber"], "not": []}) for r in h05], [None])
+    elb = {"limb": "elbow", "tip": "point", "path": "rise", "target": "jaw", "weight": "heavy"}
+    expect("a rising elbow to the jaw that leaps is refused: b03 binds an elbow whatever its tip", [r["id"] for r in g["banned"] if banned_hit(r, elb, ["quick", "charged"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03"])
+    expect("a rising blade hand is still outside b03: the row lists a hand's tips", [r["id"] for r in g["banned"] if banned_hit(r, dict(elb, limb="hand", tip="blade"), ["quick"], 1, {"has": ["leap"], "not": []}) == "match"], [])
+    expect("a rising elbow carries the rising blow's condition (L1)", [c["id"] for c in g["conditions"] if "when" in c and match(c["when"], dict(elb, arms=1))], ["L1", "L6", "W1", "D4"])
     expect("a light is not judged by them (b12)", [r["id"] for r in g["banned"] if banned_hit(r, dict(med, weight="light"), ["light"], 1, {"has": ["hip_chamber"], "not": []}) == "match"], [])
     line = {"limb": "hand", "tip": "fist", "path": "line", "target": "chest", "weight": "medium"}
     expect("a straight medium reads on Y's wind-up", (windup_of(g, line, 1)["reads"], forms_of(g, line, 1)), ("quick", ["quick", "charged"]))
@@ -1338,7 +1419,7 @@ def main():
         print("self-test " + ("passed" if ok else "FAILED"))
         sys.exit(0 if ok else 1)
     rep = string_report(out, parts, cells)
-    dead = string_findings(rep)
+    dead = string_findings(rep) + recipes_findings(parts)
     files = {"moveset.%s.json" % who: dump(doc) for who, doc in out.items()}
     files["lock.json"] = lock_text(out)
     files["review-sheet.md"] = sheet(out, parts, cells, notes, rep, identity)
