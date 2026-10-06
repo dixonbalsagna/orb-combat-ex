@@ -47,3 +47,49 @@ Owner: World and Environment. Status: scratch only, 2026-10-05, measured on HEAD
 3. Re-measure on the default arm, 160 matches: front row, all rows, civilians, tier rates, shells, cut floors, shots on buildings, length, C1 (the table of section 2 is the baseline); and the light digests with `settlements.json` `enabled` false equal to HEAD's (the switch works).
 4. Tell QA the row-1 denominator, the absolute-people factor and the new baseline; Simulation the shot-hit rate and the reach question; Encounter the blocked share for the zip; Game Design `landmarkFall`.
 5. L3 on (`depthOn`) is a later window with its own measures (collisions, the brunt flights, the zip's depth); the probe set exists (`probe_collide.gd`).
+
+## 5. Cut floors under the re-lay: why they fall, and the smallest change (scratch on HEAD b6a7e47, 2026-10-05)
+
+**The figure and what it measures.** "Cut floors a match 1.1 to 0.1" counts towers still **standing** with a cut floor at the KO. What Rendering and VFX see are the events. Measured (40 to 60 matches, HEAD against L1 with D1): floors punched out 1.98 to **0.78** a match (floor hits including cracks and dents 2.33 to 1.08), stage events into stage 2 or more caused by a floor cut 1.37 to **0.35**, towers with a cut floor still standing at the KO 1.08 to 0.15, towers with a damaged floor 0.23 to 0.23. So the cut-floor look does still happen, about once a match, and rarely survives to the end.
+
+**Why.** (1) **Fewer hits on towers:** a tower hit by a brunt or a shot 2.34 to 1.08 a match. BUILDING SMASH plans go 1.65 to 1.30 a match, towers are 48% of the buildings instead of 70% (89 against 137), and a smash that lands on a house ends the chain sooner (a guess; the chain length was not measured). (2) **More whole collapses:** of the tower hits, collapse (the tower falls whole) 8% to 44% (0.18 to 0.48 a match): the mid-rise towers of D1 stand at about 12 floors (6 to 22), short enough that a punch pancakes them to the ground; the tall ones (downtown, up to 62 floors) are few and are not in the planner's reach as often. (3) **The planner reads people as a count:** with 4.6 times the people every place reads "populated" and the hero's care term and the lure saturate (section 6); scaling those references brings the smashes back 1.30 to 1.50 a match and the cut events 0.35 to 0.63.
+
+**What I tried, each against L1 with D1 alone** (events into stage 2 or more from a floor cut a match; towers cut or damaged at the KO; front row, all rows, civilians, tier 4 a minute at 100 matches):
+
+| Change | Cut events | Alive towers cut or damaged at the KO | Front row / all / civilians / tier 4 |
+| :--- | ---: | ---: | :--- |
+| L1 with D1 alone | 0.35 | 0.38 | 39.7 / 31.5 / 25.4 / 7.21 |
+| Data: suburbs 0.28 to 0.14 of Bellgate, mid-rise 0.28 to 0.42 | 0.53 | 0.72 | 40.4 / 31.4 / 25.9 / 6.88 |
+| Code, `CORE_SHARE` 0.25 to 0.15 (towers keep cut floors longer) | 0.40 | 0.40 | 39.1 / 31.0 / 25.2 / 7.04 |
+| Code, `CORE_SHARE` 0.10 | 0.33 | 0.37 | 38.7 / 30.7 / 25.2 / 6.97 |
+| Code, a damaged floor (`fdmg`) also puts a tower in stage 2 | 0.35 plus the cracks (about 0.2 to 0.3) | 0.38 | 39.7 / 31.5 / 25.4 / 7.21 (no change to damage) |
+| **Population references scaled by pop0 / 390** (`POP_NEAR_REF`, `BRUNT_POP_REF`, brunt candidate cap) | **0.63** | 0.30 | 41.5 / 32.9 / 26.9 / 7.14 |
+
+**Proposal, the smallest set that gets about once a match or more: (a) scale the population references with the population (section 6; it is needed for the people count anyway) and (b) let a damaged floor of a tower (`fdmg` above 0) count for stage 2 as a cut one does** (3 lines in `WorldStructures.stage`, the same `cutFloorsStage` key). That is about 0.63 plus 0.2 to 0.3 a match, near one, and costs the stage numbers nothing: front row 41.5%, all rows 32.9%, tier 4 7.14% a minute, shells unchanged. `CORE_SHARE` and the district shares do not bring it back (the first lowers it and the damage with it; the second buys 0.2 for a Game Design layout). To go further than one a match the lever is the BUILDING SMASH baseline in the planner (Encounter's data), not the world.
+
+## 6. Every consumer of a civilian count against a share (HEAD b6a7e47)
+
+Population at the start goes from 390 to 1,800 under the re-lay; shares stay (22.9% to 25.4% lost), people lost per match 99 to 488. Each consumer, with whether it should scale. **Scale with pop0** means read it as a share of the starting population (at 390 the number is today's, so the frozen JS core's parity at today's scale is unchanged); **stay** means a count that is right as it is.
+
+| Where | What it reads | Today | Ruling to ask for |
+| :--- | :--- | :--- | :--- |
+| `sim/world/collateral.gd:108, 119, 134` | the window budget, the ceiling and the set-piece allowance, `BUDGET` / `CEILING` / `EVENT_ALLOW` times `pop0` | shares already | stay (scales by itself) |
+| `collateral.gd:210, 225` (`POP_REF` 425 over `pop0`) | the menace of an evacuee and the meters' feed per casualty (VORR's menace, KAI's anguish: `data/fighters/*/meters.json`) | normalised to 425 | stay: a casualty is worth 1 / 4.6 of what it was, so the meters read the same share |
+| `collateral.gd:172, 257` | shelter cap and the district flight against the building's own `pop` | relative | stay |
+| `sim/world/structures.gd:267`, `brunt.gd:95, 198` | deaths as a share of a building's `pop`; people on a floor | relative | stay |
+| `sim/world/structures.gd:10, 439-445` `POP_NEAR_REF` (35 people) and `popNear` | "populated" reads 1 at 35 living civilians within the radius | absolute | **scale with pop0** (35 x pop0 / 390). Users: `sim/director/launch.gd:171, 198` (the planner's care term), `sim/director/location.gd:129, 135, 153` (the lure's population histogram, `LURE_START` 0.2), `sim/director/ai` lure through `popNear` |
+| `sim/director/launch.gd:47` `BRUNT_POP_REF` (8) and `sim/world/brunt.gd:275` (`minf(popAlive, 8.0)`) | the occupancy term of BUILDING SMASH scoring and of the brunt candidate score saturate at 8 people a building ("at today's scale a building holds one to five") | absolute | **scale with pop0** (a building holds 9.7 on average under D1, 2.0 today) |
+| `sim/core/mood.gd:385-386`, `data/fight/mood.json:34-36` | casualties as `perPerson 30 x popRef 425 x casualties / pop0` mood points | a share | stay |
+| `sim/core/fighter.gd:383, 388` | `casSeen`: has the casualty count risen (the menace meter at its cap) | compares counts, no scale | stay |
+| `sim/core/damage.gd:113` (and the JS twin) | the KO feed line "Casualties N" | an absolute count shown | **ruling (Game Design, Legal):** the displayed count moves 4.6 times (99 to 488); show a share, or scale to a reference population |
+| `render/core/hud.gd:46`, `ui/core/ui_sim_bridge.gd:58`, `ui/core/ui_event_hub.gd:80, 123, 440`, `ui/data/terms.json:71` | "CIVILIANS LOST n / pop0" | an absolute count shown | same ruling: presentation of a count 4.6 times larger; bears on the age rating (Legal), not on play |
+| `render/core/planet_view.gd:266, 292`, `render/core/crowd_flight.gd` | the figures drawn per building (`popAlive` against the figure capacity) and the runners of a flight | a count capped by the figure budget | **Rendering:** at 4.6 times the people every building is over its figure capacity: draw one figure per N people (N = pop0 / 390) or keep the cap; the flight's runners are capped by the pool |
+| `qa/godot/bands.js:124, 164, 520`, `qa/godot/records.gd:174, 407-408` | the tests: bleed, per-tier split, C1 timeline, civPct | all shares (divided by `pop0`) | stay; re-check any harness number in absolute people |
+| `qa/balance-report.js:125`, the pending C3/slide rows in `bands.js:268` | print `pop0`; casualties per slide as a share | shares | stay |
+| `sim/director/ai.js`, `launch.js` (the frozen JS core) | `popNear` at 70 (scale 1) | parity oracle | stays valid if the scale is `pop0 / 390` (identical at 390) |
+
+**What scaling does (scratch, 100 matches, L1 with D1):** BUILDING SMASH 1.30 to 1.50 a match, cut events 0.35 to 0.63, front row 39.7 to 41.5%, civilians 25.4 to 26.9%, tier 4 7.21 to 7.14% a minute, C1 clean. The people-as-count consumers that must change are three constants of the planner and the candidate score; everything that already divides by `pop0` is unchanged.
+
+## 7. `building_fall.landmark`
+
+HEAD has no `landmark` field at all: `FxEvent` has none, `SimFx.buildingFall` does not set it, and `mood.gd:374` reads `e.get("landmark") == true`, which is null and so false (dormant, as Game Design wrote it). The float existed only in the unlanded D1 patch and is fixed there (bool). **Nothing to land now:** the fix has no effect on HEAD and no golden moves; adding an unused `landmark: bool` to `FxEvent` and `buildingFall` ahead of D1 would also move no golden (the field is not in `FX_FIELDS`) but changes nothing either, so it lands with the window, in the patch.
