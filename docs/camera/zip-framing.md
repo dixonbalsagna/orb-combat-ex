@@ -1,0 +1,91 @@
+# Framing the zip (a plan against Encounter's final cue names; no code until its commit)
+
+Owner: Camera & Cinematography. Date: 2026-10-05. **A note only.** It replaces the guesses in `lunge-framing.md` sections 8 and 9 (the out-and-back hold and the far-side exit) with the real cues. Sources: Encounter's zip slice as the EP described it, `docs/design/melee-press-feel.md` section 2c (the zip), `lunge-framing.md`, `camera-v2.md` section 3 (who the camera follows on a launch), `split-screen.md` sections 21d and 22b.
+
+## 1. The cues, and what the rig reads from each
+
+| Cue | When | Fields the rig uses | What it does |
+| :--- | :--- | :--- | :--- |
+| `zip_light`, `zip_heavy` | The tell starts | `actor`, `target`, `amount` (the tell's ticks), `n` (the way in), `dur` (the whole zip with the default exit) | Starts the hold (section 2). The hold's length until a `zip_end` is `dur` plus a margin, never over 2.2 s. The rival's incoming read is `aimed` from here, with `eta` to the blow (tell + way in) |
+| `zip_out` | The tick the blow lands (6 or 10 ticks before the way out begins) | `text` (`home`, `far`, `point`), `x`, `y` (the exit point), `n` (the out's ticks) | Pre-frames the exit (section 3): the zoom and focus are put where the pair will be, in the 6 to 22 ticks the zipper spends in reach |
+| `zip_end` | Every zip | `text`: `done`, `stopped`, `outrun`, `countered`, `caught`, `shot`, `down` | The return marker. The hold ends 0.4 s after a `done` (the zipper is home or at his exit) and at once for every other text (section 6) |
+| `drop_start`, `drop_land`, `drop_end` | A zipper knocked out of his way out by a shot, 24 ticks | `actor` | The hold ends at `drop_start`; the dropped fighter is framed as any falling fighter (section 5) |
+| `brawl_start` (texts `caught`, `countered`) | The tick a caught or countered zipper starts a brawl | | The hold ends; the brawl's own framing takes over (the pair is in the close band: the one view as now) |
+
+The rig also reads the path itself, as a view-layer read of the sim state and never a write: `DirZip.read(S, f)` (`phase` tell, in, reach, out; `n`, `len`, `exit`, `x`, `y`, `dist_bh`) and, for the arc of a way out that bows over the rival, `SimFighter.rushAt` and `rushU`. At `zip_out` the rig samples the way out at eight points and takes the box of the path: the numbers section 3 needs.
+
+## 2. The hold through a zip out and back (the `home` exit)
+
+The one rule: **the viewer sees both fighters at the cue, at the blow, and the tick the zipper is home, and the camera does not move to chase the zipper.** The zip is a mid-band move (3 to 12.5 body heights, up to 937 units), so the pair is in the one view at the cue and the view that fits them at the cue fits them for the whole zip.
+
+- **Layout:** frozen from the cue to 0.4 s after `zip_end`. A layout change already easing (a split opening or closing at the cue) finishes; no new decision starts. The order of the two fighters (sigma) is not allowed to flip during the hold; if it should have flipped by the end, the ordinary swing runs once, after the hold, and only if the layout is a split.
+- **Zoom (one view):** held at the cue's separation; from `zip_out` held at the larger of that and the exit's (section 3).
+- **Focus (one view):** held near the cue's midpoint, leaning toward the zipper by at most 0.1 of the width.
+- **The zipper's pane (split):** held on his home point; the pane the rival watches is held too, with only the hit push. A zip cannot start in a split at the usual zoom (937 units is under the split line), but a pair at 49 degrees, in depth, or in a layout still closing can be in two panes: section 7.
+- **Orb's note (playtests): "the camera often follows the launched fighter, so after knocking the opponent away I can't tell what my own character is doing."** Three rules, in order:
+  1. A launch that ends inside the widest shared view is not followed at all (`camera-v2.md` section 3, as built): the one view shows both. A zip's blow is a short launch more often than not.
+  2. For a launch that leaves the shared view, when the **zipper is the human's fighter**: the camera stays on him through his way out and for 0.4 s after `zip_end`, his own fighter is on the screen on every tick of it, and the victim is the edge pointer and the ring map (the hybrid's hold shot with the impact cut, which does not start until the zipper is home). The chase of the victim begins after that, not at the blow.
+  3. When the **human is the one launched** by a zip, the chase is as before: he sees himself.
+
+## 3. A far-side exit, and an exit away up to 12.5 body heights
+
+Both are known at `zip_out`, 6 or 10 ticks before the zipper moves, which is the time to get the frame right and the reason the camera reads that cue rather than waiting for the way out.
+
+- **The frame at `zip_out`.** The pair after the exit is the rival and the exit point `(x, y)`; with an arc, also the box of the sampled path. The rig takes the **larger** of the cue's frame and the exit's: the zoom is held at the zoom that fits it (no zoom-out later while the zipper is moving), and the focus eases toward the midpoint of {rival, exit point} over the ticks in reach, at the usual focus filter, so by the time he moves it is already there.
+- **A far-side exit** (`far`): the zipper ends on the rival's other side, 2.5 to the exit's distance. The frame is as above. In one view nothing else is needed. In a split the zipper's pane holds to the blow and then follows him with the ordinary lag bound across (he moves at most 937 units in 12 ticks, about 0.1 of a pane width a tick: well inside the bound); no cut.
+- **An exit away to 12.5 bh** (`point`): the same: the frame includes the exit point from `zip_out`, so a zipper who ends at the edge of the mid band is on the screen as he goes and when he stops. At the zoom floor and at 49 degrees the box of the path decides whether the one view holds both; if it does not, the hold falls back to the zipper's own pane in a split (the rig's ordinary decision, taken at `zip_out` rather than mid-flight).
+- **The arc over the rival** (`Rush.arc`): its height is in the box, so the zipper at the top of his arc is not cropped; the vertical margin is the rig's usual one.
+
+## 4. What is held and what is released, by exit
+
+| Exit | Zoom | Focus | Layout | Hold ends |
+| :--- | :--- | :--- | :--- | :--- |
+| `home` | the cue's | near the cue's midpoint | frozen | `zip_end` `done` + 0.4 s |
+| `far` | the larger of the cue's and the exit's, from `zip_out` | eases to the final midpoint in the reach ticks | frozen | `zip_end` `done` + 0.4 s |
+| `point` (to 12.5 bh) | as `far`, with the path's box | as `far` | frozen | `zip_end` `done` + 0.4 s |
+
+## 5. A dropped fighter
+
+A zipper knocked out of his way out by a shot ("dropped": 24 ticks, `drop_start`, `drop_land`, `drop_end`): `zip_end` comes with the text `shot` (or `down`). The camera does not know where he will fall, so it does not hold:
+- At `drop_start` the hold ends at once and the ordinary follow takes over; he is a fighter falling out of the air in the one view, and the usual zoom rate and the lag bound keep him on the screen. In a split his pane follows him; the other pane is as it was.
+- At `drop_land` the existing ground-contact push (a small impact push on the pane that has him) plays; the 24 ticks end at `drop_end`.
+- If the shot that dropped him was fired by the human's fighter, the shot's own beam shot rules apply and the zip adds nothing.
+
+## 6. When the zip ends early
+
+`zip_end` text `stopped`, `outrun`, `countered`, `caught`, `shot` or `down` ends the hold on that tick, not 0.4 s later: the zipper is not coming home, so nothing is to be held for. Specifically:
+- `outrun` (the rival boosted out of the mid band; the zip ends short with no blow): the camera follows the pair as any separation change (the lag bound and the zoom rate); no cut.
+- `caught` and `countered`: a brawl starts on that tick; the pair is in the close band, the one view as now; the zip's hold must not outlast it (it would keep the zoom at the cue's separation while the brawl is closer).
+- `stopped`, `shot`, `down`: as `outrun` and section 5.
+
+## 7. Split view, and a zipper crossing from one pane to the other
+
+A zip is a mid-band move and a split opens beyond about 2,000 units at 720p, so a zip normally starts in the one view. The cases that reach two panes: a pair at 49 degrees or far apart in depth (the same units look farther), a layout that is closing or opening at the cue, and two humans each in his pane. The rig's rules there:
+
+- **A layout already easing** at the cue finishes its ease (the hold decides nothing new). No frozen half-open divider.
+- **Each pane keeps his own fighter** (the anchors): the zipper's pane is held on his home point, the rival's pane on the rival, and the zipper crossing the divider is seen as moving across his pane from the home side to the exit side until the hold ends; he is on the screen by the exit's frame at `zip_out`, and the pane follows him across for a far-side exit (section 3).
+- **The order flip (sigma).** When the zipper passes the rival's position the order of the two flips; in a split this is a divider swing (the divider turns by half a revolution). That swing is **deferred** until 0.4 s after `zip_end`; if the zip came home it is cancelled (the order did not change); after a far-side exit it runs once, after the zip, with the ordinary swing time. No swing starts inside a zip.
+- **The divider** is not moved by the zipper's passing (the divider follows the pair's separation and the pane order, not a fighter's x in a hold).
+
+## 8. The tests to add to `split_sweep.gd` (against injected cues of the final shape; the cue fields as in section 1)
+
+Each in the one view, at 49 degrees, and (artificial 6,000-unit pair, the exit 750 units) in a split, with the cue withheld as the recorded baseline:
+
+1. `zip home`: no cut; the layout does not change; the zoom moves at most 0.02 (split), 0.04 (one view); the camera moves at most 0.13 of the width; **both fighters are on the screen at the cue, at `zip_out`, at `zip_end` and 0.4 s after**; the zipper is within 5 px of his start at the end; the rival's incoming read is `aimed` from the cue with the right `eta`, inactive after `zip_out`.
+2. `zip far side`: no cut; the frame at `zip_out` holds {rival, exit}: both on the screen on every tick from `zip_out` to 0.4 s after `zip_end`; the zoom moves at most 0.06 and never faster than the rate cap; the camera's jerk (change of velocity relative to the zipper) stays under 0.05 of the width; in a split the zipper's pane makes no cut and moves at most 0.12 of the width a tick.
+3. `zip point 12.5 bh`: the same, with the exit at 937 units.
+4. `zip arc`: the exit's path bows over the rival; the zipper is on the screen on every tick, uncropped at the top of the arc (a vertical margin of at least 0.04 of the height).
+5. `zip dropped` (`zip_end shot`, then `drop_start`, `drop_land`, `drop_end`): the hold ends on `drop_start`; no cut; the dropped fighter is on the screen on every tick of the 24; no layout flip.
+6. `zip outrun`, `zip caught`, `zip countered`: the hold ends on `zip_end`; for `caught` and `countered` the zoom is back to following the pair within the zoom rate, with no cut, on the tick after.
+7. `zip then launch, human zipper` (Orb's note): the zip's blow launches the rival out of the shared view: the zipper is on the screen on every tick from the cue to 0.4 s after `zip_end`; the impact cut does not start before he is home; the victim is in the record's pointer; then the ordinary follow. And the mirror: the human is launched by a zip: the chase is on from the launch.
+8. `zip in a split, crossing`: a layout closing at the cue completes; no divider swing during the zip; a far-side exit produces one swing after `zip_end` + 0.4 s and none for a `home` exit; each pane keeps its own fighter on the screen throughout.
+9. Real matches, when the AI zips: the jolt scan gets a `zip` class (the cue's window); it must be zero over 0.05 of the width, and the count before and after the zip slice is reported next to the rush class.
+
+## 9. What the code needs (when the commit lands)
+
+In `split_rig.gd`: `_read_move_cue` takes `zip_light` and `zip_heavy` as now plus `dur`; new readers for `zip_out` (the exit frame: the box of the sampled path, the held zoom, the focus easing), `zip_end` (the hold's end, by text), and `drop_start`; the swing deferral in the layout step; the human-zipper rule in the launch follow (no chase and no impact cut until the zipper's hold ends). In `camera_params.gd`: the hold's margin and cap (`ZIP_HOLD_MARGIN` 0.6 s, `ZIP_HOLD_MAX` 2.2 s), the path samples (8), the vertical margin for the arc (0.04). No change to `sim/core/view/camera.gd`: nothing here reads or needs more than the intro block.
+
+## 10. Open
+
+- Whether the rig may read `DirZip.read` and `SimFighter.rushAt` directly (they are view-layer reads of sim state, like the rest of the rig's reads). If the EP prefers the sim to put the path in the `zip_out` event (the box: min and max x and y of the way out), the rig reads that and sampling goes.
+- The arc's height cap, so the vertical margin and the 49 degree test can be stated in numbers.
