@@ -204,6 +204,10 @@ Run once, in the commit that lands the slice's data (after `apply-brawl-9d.cjs`,
 
 Run once, in the commit that lands the data: `node docs/tools/pending/apply-anim-riposte.cjs`. It does **not** edit `data/`. `data/anim/press_styles.json` gains an optional closed top-level `riposte` beside `guard`: `windup` {light, heavy} (required; both required; integers 1 to 8), `fade` (required; integer 1 to 12), `style` (optional, closed; `light` and `heavy` each optional, each one of speed, tech, heavy, push) and `grade` (optional; perfect, good, off or none). New rule `pressstyles-riposte`: a riposte style is a key of `styles`. 36 cases, each setting its own whole block. Re-runnable. Tested on a clean `git archive HEAD` with the working tree's `press_styles.json` dropped in: 1 error before, then 0 errors and 0 warnings beyond HEAD's own, self-test passes (4407 of 4407), a second run changes nothing. **One reading to confirm:** I made `style.light` and `style.heavy` each optional (you said both required only for `windup`).
 
+## `apply-ladder-rates.cjs`: Simulation's power-for-damage rates
+
+Run once, in the commit that lands the slice's data: `node docs/tools/pending/apply-ladder-rates.cjs`. It does **not** edit `data/`. `data/fighters/<FIGHTER>/ladder.json` gains two required numbers (0 or more): `takenPerDamage` (power for each point of damage a hit does to the fighter) and `dealtPerDamage` (power for each point his hit does); a `_perDamage` note is allowed. The two fixtures get the keys; 12 cases, each setting its own values. Re-runnable. Tested on a clean `git archive HEAD` (005b53f) with the two keys dropped into both fighters' files: 4 errors before, then 0 errors and 0 warnings, self-test passes (4457 of 4457), a second run changes nothing.
+
 ## Which script goes with which commit
 
 State as of the tree at 648c637 (2026-10-04). **Applied** means the script's keys, rules and cases are in the tree and its commit is made; a script marked applied has nothing left to run and can be deleted. **Do not re-run** `apply-2b`, `apply-m1b`, `apply-contact`, `apply-launch`, `apply-biomes-contact`, `apply-uppercut`, `apply-anim-agency` and `apply-recipes`: they are older than later changes and would overwrite them (checked by running each on a clean export of HEAD). The other applied scripts change nothing on a second run.
@@ -228,6 +232,7 @@ State as of the tree at 648c637 (2026-10-04). **Applied** means the script's key
 | `apply-wear-shots` | parked | Simulation's blocked-shots slice (`wounds.json` `block.shotArm*`) | its data |
 | `apply-brawl-1c` | parked | Encounter's perfect-block and reversal slice (`interrupts.json`, `launch.json`) | its data |
 | `apply-anim-riposte` | parked | Animation's riposte build (`press_styles.json` `riposte`) | its data |
+| `apply-ladder-rates` | parked | Simulation's retune (`ladder.json` `takenPerDamage`, `dealtPerDamage`) | its data |
 | `apply-movegen` (and `xref-movegen.js`) | parked, follows generator version 5 | Combat's landing of parts, identity, cells, the movesets and `lock.json` | the files |
 | (launch pair finishers and templates) | held | Combat's go-live of `launch-pair.json` finishers, `templates.agency.json` and `templates.brawl.json` | their live form |
 
