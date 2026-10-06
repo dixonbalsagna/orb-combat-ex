@@ -40,6 +40,8 @@
   },
   "aliases": {
     "kai": { "base": "default", "ego": "anguish" },
-    "vorr": { "base": "default", "ego": "menace" }
+    "vorr": { "base": "default", "ego": "menace" },
+    "stand_in_protagonist": { "base": "default", "ego": "anguish" },
+    "rival": { "base": "default", "ego": "menace" }
   }
 }

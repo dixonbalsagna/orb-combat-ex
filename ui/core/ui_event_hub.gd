@@ -430,7 +430,7 @@ func consume(e) -> void:
 			if move_names.has(str(d.get("text", "")).strip_edges().to_upper()):
 				stats["banners_move_name"] += 1   # a move's name is shouted by the fighter, not carded
 				return
-			banner = {"text": UiData.banner(str(d.get("text", ""))), "col": str(d.get("col", UiLook.INK)), "dur": float(d.get("dur", 1.4)), "age": 0.0}
+			banner = {"text": UiData.banner(str(d.get("text", ""))).to_upper(), "col": str(d.get("col", UiLook.INK)), "dur": float(d.get("dur", 1.4)), "age": 0.0}
 		"shake":
 			if float(d.get("k", 0.0)) >= UiLook.HAZARD_SHAKE_K:
 				hazard_left = UiLook.HAZARD_HOLD

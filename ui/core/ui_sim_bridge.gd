@@ -8,15 +8,26 @@ class_name UiSimBridge
 
 const ROLE_EGO: Dictionary = {"hero": "anguish", "villain": "menace"}
 
+## Roster ids (lower case) whose readout profile is a stand-in's alias rather than the real profile of the same id. The real Protagonist has a Respect
+## meter, a portrait pack and a rally card the sim does not drive; the stand-in's meter is the sim's anguish. So the stand-in keeps reading as it does
+## today, and the rename changes words only. Drop the row when the real fighter replaces the stand-in (docs/ui/hud-spec.md section 46).
+const STAND_IN_PROFILES: Dictionary = {"protagonist": "stand_in_protagonist"}
 
-## Readout profile ids and names for the current fighters. Placeholder fighters map by name (KAI, VORR); real fighters
-## will carry a readout id in their roster data.
+
+## The readout profile id for a fighter's roster id.
+static func profile_id(roster_id) -> String:
+	var k: String = str(roster_id).to_lower()
+	return str(STAND_IN_PROFILES.get(k, k))
+
+
+## Readout profile ids and names for the current fighters, by roster id (f.id: the sim's name may be a mirror arm's label and, from the rename on,
+## is the id too). The name is the roster id; the HUD looks up the words a player reads (UiData.display_name).
 static func fighters(S) -> Array:
 	var ids: Array = []
 	var names: Array = []
 	for f in S.fighters:
-		ids.append(str(f.name).to_lower())
-		names.append(str(f.name))
+		ids.append(profile_id(f.id))
+		names.append(str(f.id))
 	return [ids, names]
 
 
@@ -26,7 +37,7 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 	for i in range(S.fighters.size()):
 		var f = S.fighters[i]
 		if "sigName" in f:
-			move_names.append(str(f.sigName))
+			move_names.append(UiData.display_text(str(f.sigName)))   # today the move's name; from the rename on its key (PROTAGONIST.SIG), read as the name
 		var tier: int = int(f.tier)
 		var into: float = 0.0
 		if tier < 4:
@@ -39,7 +50,7 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 			for r in range(mini(4, f.wear.size())):
 				wear[["head", "core", "arms", "legs"][r]] = float(f.wear[r]) / 6000.0
 		hud.hub.patch(i, {
-			"name": str(f.name), "ai": f.ai != null, "stance": int(f.stance), "tier": tier, "momentum": into,
+			"name": str(f.id), "ai": f.ai != null, "stance": int(f.stance), "tier": tier, "momentum": into,
 			"charge": float(f.ki), "hidden": bool(f.hidden), "charging": str(f.state) == "charging",
 			"ego": ego, "aura": str(f.aura), "wear": wear,
 			# A form is ready while the sim says so (f.act.formReady, I2a): the prompt does not wait for, or depend on, the transform_ready event.

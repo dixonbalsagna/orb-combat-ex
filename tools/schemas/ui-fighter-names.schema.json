@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/ui-fighter-names",
   "title": "ui fighter display names (schema 1)",
-  "description": "ui/data/fighter_names.json: the name a player sees for each roster id (lower case, as the sim spells it). A fighter with no row shows its own name. `names` maps a roster id (lower case letters, digits and underscores, starting with a letter) to its display name (a non-empty string of at most 24 characters). Version field: schema. Policy: closed except keys starting with an underscore.",
+  "description": "ui/data/fighter_names.json: the name a player sees for each roster id (lower case, as the sim spells it). A fighter with no row shows its own name. `names` maps a roster id (lower case letters, digits and underscores, starting with a letter) to its display name (a non-empty string of at most 24 characters, or a record {name, title, sigName}: name required, the others optional). Version field: schema. Policy: closed except keys starting with an underscore.",
   "type": "object",
   "required": [
     "schema",
@@ -22,13 +22,47 @@
         "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
       },
       "additionalProperties": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 24
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24,
+                "description": "The name a player sees."
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The full title shown under it (optional)."
+              },
+              "sigName": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The name of the fighter's signature (optional)."
+              }
+            },
+            "description": "A fighter's row as a record: the name and, optionally, its title and signature name.",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          }
+        ]
       },
       "patternProperties": {
         "^_": true
-      }
+      },
+      "description": "A roster id (lower case; both spellings of a fighter may have rows during the rename) to its display: a bare name string, or {name, title, sigName} (name required; title and sigName optional strings)."
     }
   },
   "additionalProperties": false,

@@ -51,6 +51,7 @@ func _run() -> void:
 	await _about_rules()
 	await _licences_rules()
 	await _first_run_rules()
+	await _rename_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
 	await _armed_touch_rules()
@@ -4282,7 +4283,7 @@ func _names_in(lines: Array) -> PackedStringArray:
 ## fallback). The words are looked up, so the later rename only changes the keys there. A tracer on UiText.draw collects every drawn line.
 func _display_name_rules() -> void:
 	_ok(UiData.display_name("KAI") == "PROTAGONIST" and UiData.display_name("vorr") == "RIVAL" and UiData.display_name("EMPRESS") == "EMPRESS" and UiData.display_name("") == "", "display names: KAI and VORR (any case) map to PROTAGONIST and RIVAL, any other name stays itself")
-	_ok(UiData.display_text("K.O.  KAI WINS") == "K.O.  PROTAGONIST WINS" and UiData.display_text("VORR POWERS UP  TIER 2") == "RIVAL POWERS UP  TIER 2" and UiData.display_text("Kai! KAIROS vorr's") == "PROTAGONIST! KAIROS RIVAL's" and UiData.display_text("no names here") == "no names here", "display names: names inside a sentence change by whole word only")
+	_ok(UiData.display_text("K.O.  KAI WINS") == "K.O.  PROTAGONIST WINS" and UiData.display_text("VORR POWERS UP  TIER 2") == "RIVAL POWERS UP  TIER 2" and UiData.display_text("KAI! KAIROS VORR's") == "PROTAGONIST! KAIROS RIVAL's" and UiData.display_text("my rival, Kai") == "my rival, Kai" and UiData.display_text("no names here") == "no names here", "display names: names inside a sentence change by whole word and in capitals only (the English word rival and a mixed-case Kai are left alone)")
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	hud.size = Vector2(1280, 720)
@@ -4299,7 +4300,7 @@ func _display_name_rules() -> void:
 	# The match: sim-written banners and feed lines naming the roster names, a bark from each fighter, a KO.
 	hud.consume({"type": "banner", "text": "KAI POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
 	hud.consume({"type": "bark", "speaker": 1, "text": "Not like this.", "priority": 3})
-	hud.consume({"type": "bark", "speaker": 0, "text": "Kai!", "priority": 3})
+	hud.consume({"type": "bark", "speaker": 0, "text": "KAI!", "priority": 3})
 	hud.hub.feed_line(1.0, "VORR goes to ground", "KAI found")
 	hud.set_option("show_feed", true)
 	await _frames(hud, 4)
@@ -4504,6 +4505,76 @@ func _about_rules() -> void:
 	hud.hide_howto()
 	hud.queue_free()
 	await process_frame
+
+
+# --- The fighter rename: every word about a fighter is looked up by roster id (docs/ui/hud-spec.md section 46) -----------------------------
+
+func _rename_rules() -> void:
+	# The words: name, title and signature name by roster id, for both spellings of the id.
+	var ok_words := true
+	for id in ["kai", "KAI", "protagonist", "PROTAGONIST"]:
+		ok_words = ok_words and UiData.display_name(id) == "PROTAGONIST" and UiData.display_title(id) == "Martial Artist" and UiData.display_sig(id) == "Keeper's Lance"
+	for id in ["vorr", "VORR", "rival", "RIVAL"]:
+		ok_words = ok_words and UiData.display_name(id) == "RIVAL" and UiData.display_title(id) == "Challenger" and UiData.display_sig(id) == "The Barrage"
+	_ok(ok_words and UiData.display_title("EMPRESS") == "" and UiData.display_sig("EMPRESS") == "" and UiData.display_name("EMPRESS") == "EMPRESS", "rename: both spellings of each roster id give the same name, title and signature name; a fighter with no row shows its id and has no title")
+	_ok(UiData.display_text("PROTAGONIST.SIG FIRES") == "Keeper's Lance FIRES" and UiData.display_text("rival.sig and RIVAL.SIG") == "The Barrage and The Barrage" and UiData.display_text("KAI.SIG, VORR.SIG") == "Keeper's Lance, The Barrage" and UiData.display_text("PROTAGONIST.SIGNAL RIVAL") == "PROTAGONIST.SIGNAL RIVAL" and UiData.display_text("K.O.  PROTAGONIST WINS") == "K.O.  PROTAGONIST WINS", "rename: the signature's key (<ID>.SIG, any case) reads as the signature's name before the bare id, and a bare id in capitals as the name")
+	# The readout profiles: a stand-in keeps reading as it does today (its meter is the sim's anguish), the real Protagonist's profile is not borrowed.
+	_ok(UiSimBridge.profile_id("PROTAGONIST") == "stand_in_protagonist" and UiSimBridge.profile_id("RIVAL") == "rival" and UiSimBridge.profile_id("KAI") == "kai" and UiSimBridge.profile_id("VORR") == "vorr" and UiSimBridge.profile_id("EMPRESS") == "empress", "rename: the bridge maps the roster id to a readout profile (the stand-in Protagonist to its alias, the others by id)")
+	_ok(str(UiData.profile("stand_in_protagonist")["ego"]) == "anguish" and str(UiData.profile("rival")["ego"]) == "menace" and str(UiData.profile("kai")["ego"]) == "anguish" and str(UiData.profile("vorr")["ego"]) == "menace" and str(UiData.profile("protagonist")["ego"]) != "anguish", "rename: the stand-ins' aliases read anguish and menace as today; the real Protagonist profile is a different one")
+	# A sim as it will be after the window: fighters carry the new ids and no name, title or signature name (only the signature's key).
+	for staged in [false, true]:
+		var host := SimHost.new()
+		host.new_match(5)
+		if staged:
+			for f in host.S.fighters:
+				var rid: String = "PROTAGONIST" if f.id == "KAI" else "RIVAL"
+				f.id = rid
+				f.name = ""
+				f.title = ""
+				f.sigName = rid + ".SIG"
+		var tag := "rename (%s sim)" % ("staged: new ids, no name, title or signature name" if staged else "today's")
+		var fl: Array = UiSimBridge.fighters(host.S)
+		_ok((fl[0] as Array) == (["stand_in_protagonist", "rival"] if staged else ["kai", "vorr"]) and (fl[1] as Array) == (["PROTAGONIST", "RIVAL"] if staged else ["KAI", "VORR"]), "%s: the bridge reads ids and names from the roster id (%s)" % [tag, str(fl)])
+		root.size = Vector2i(1280, 720)
+		var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+		hud.size = Vector2(1280, 720)
+		root.add_child(hud)
+		await process_frame
+		hud.setup(fl[0], fl[1])
+		hud.hub.model(0).ai = false
+		hud.hub.model(1).ai = true
+		UiSimBridge.patch(hud, host.S)
+		_ok(hud.hub.model(0).name == "PROTAGONIST" and hud.hub.model(1).name == "RIVAL" and hud.hub.model(0).ego_name == "anguish" and hud.hub.model(1).ego_name == "menace", "%s: the plates say PROTAGONIST and RIVAL and read anguish and menace" % tag)
+		_ok(hud.hub.move_names.has("KEEPER'S LANCE") and hud.hub.move_names.has("THE BARRAGE"), "%s: the signature names are known as names (a banner that is only a move name is dropped)" % tag)
+		UiText.trace = []
+		UiText.tracing = true
+		hud.consume({"type": "banner", "text": "PROTAGONIST.SIG", "col": "#ffffff", "dur": 1.4})
+		_ok(hud.hub.banner.is_empty(), "%s: a banner that is only the signature's key is dropped like its name" % tag)
+		hud.consume({"type": "banner", "text": "RIVAL POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
+		_ok(str(hud.hub.banner.get("text", "")) == "RIVAL POWERS UP  TIER 2", "%s: the sim's banner names the fighter by its display name, in capitals" % tag)
+		hud.consume({"type": "banner", "text": "PROTAGONIST.SIG scores", "col": "#ffffff", "dur": 1.4})
+		_ok(str(hud.hub.banner.get("text", "")) == "KEEPER'S LANCE SCORES", "%s: a banner with the signature's key reads as its name, in capitals (%s)" % [tag, str(hud.hub.banner.get("text", ""))])
+		hud.hub.feed_line(1.0, "PROTAGONIST.SIG FIRES", "it reaches RIVAL in 30 ticks")
+		hud.set_option("show_feed", true)
+		await _frames(hud, 4)
+		hud.show_pause_menu()
+		await _frames(hud, 3)
+		hud.toggle_pause_menu()
+		UiText.tracing = false
+		var seen: Array = UiText.trace.duplicate()
+		UiText.trace = []
+		var bad := PackedStringArray()
+		var re := RegEx.new()
+		re.compile("(?i)\\b(kai|vorr)\\b|\\.SIG\\b|stand_in|PROTAGONIST\\.|RIVAL\\.")
+		for l in seen:
+			if re.search(str(l)) != null:
+				bad.append(str(l))
+		var feed_ok := false
+		for fe in hud.hub.feed:
+			feed_ok = feed_ok or (str(fe["tag"]) == "Keeper's Lance FIRES" and str(fe["sub"]) == "it reaches RIVAL in 30 ticks")
+		_ok(seen.size() > 30 and bad.is_empty() and seen.has("PROTAGONIST") and seen.has("RIVAL") and feed_ok, "%s: %d lines drawn, none shows KAI, VORR, a raw key or an alias id, and the feed reads the signature's name %s" % [tag, seen.size(), str(bad.slice(0, 3))])
+		hud.queue_free()
+		await process_frame
 
 
 # --- The first run shows the gameplay pages only ---------------------------------------------------------------------------------------

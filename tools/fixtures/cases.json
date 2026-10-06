@@ -184,7 +184,8 @@
         {
           "file": "data/combat/finishers.json",
           "set": {
-            "/finishers/3/id": "kai"
+            "/finishers/2/id": "dup_id",
+            "/finishers/3/id": "dup_id"
           }
         }
       ],
@@ -74668,7 +74669,7 @@
         }
       ],
       "expect": {
-        "rule": "minLength",
+        "rule": "anyOf",
         "pointer": "/names/alpha"
       }
     },
@@ -74688,7 +74689,7 @@
         }
       ],
       "expect": {
-        "rule": "maxLength",
+        "rule": "anyOf",
         "pointer": "/names/alpha"
       }
     },
@@ -74725,7 +74726,7 @@
         }
       ],
       "expect": {
-        "rule": "type",
+        "rule": "anyOf",
         "pointer": "/names/alpha"
       }
     },
@@ -74745,7 +74746,7 @@
         }
       ],
       "expect": {
-        "rule": "type",
+        "rule": "anyOf",
         "pointer": "/names/alpha"
       }
     },
@@ -89426,6 +89427,465 @@
       "expect": {
         "rule": "additionalProperties",
         "pointer": "/blockedPerDamage"
+      }
+    },
+    {
+      "id": "fighter-identity-name-optional-ok",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "del": [
+            "/identity/name"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fighter-identity-title-optional-ok",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "del": [
+            "/identity/title"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fighter-identity-sig-name-optional-ok",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "del": [
+            "/identity/sigName"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fighter-identity-all-three-words-optional-ok",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "del": [
+            "/identity/name",
+            "/identity/title",
+            "/identity/sigName"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fighter-identity-role-still-required",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "del": [
+            "/identity/role"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/identity"
+      }
+    },
+    {
+      "id": "fighter-identity-col-still-required",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "del": [
+            "/identity/col"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/identity"
+      }
+    },
+    {
+      "id": "fighter-identity-name-empty-still-refused",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "set": {
+            "/identity/name": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/identity/name"
+      }
+    },
+    {
+      "id": "fighter-identity-title-type-still-refused",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "set": {
+            "/identity/title": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/identity/title"
+      }
+    },
+    {
+      "id": "fighter-identity-sig-name-given-ok",
+      "schema": "fighter.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/fighter.json",
+          "set": {
+            "/identity/sigName": "A Beam"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-row-record-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "FIRST",
+                "title": "Martial Artist",
+                "sigName": "A Lance"
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-row-record-name-only-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "FIRST"
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-row-record-name-title-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "FIRST",
+                "title": "Martial Artist"
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-row-both-spellings-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "kai": {
+                "name": "FIRST",
+                "title": "Martial Artist",
+                "sigName": "A Lance"
+              },
+              "protagonist": {
+                "name": "FIRST",
+                "title": "Martial Artist",
+                "sigName": "A Lance"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-row-bare-and-record-together-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": {
+                "name": "SECOND",
+                "title": "Challenger"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-row-record-name-required",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "title": "Martial Artist"
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-row-record-name-empty",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": ""
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-row-record-name-too-long",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-row-record-title-empty",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "FIRST",
+                "title": ""
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-row-record-title-type",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "FIRST",
+                "title": 5
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-row-record-sig-name-empty",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "FIRST",
+                "sigName": ""
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-row-record-unknown-key",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "FIRST",
+                "mood": 1
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-row-record-note-key-ok",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": {
+                "name": "FIRST",
+                "_why": "a note"
+              },
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-fighter-names-row-type",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": [
+                "FIRST"
+              ],
+              "beta": "SECOND"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "anyOf",
+        "pointer": "/names/alpha"
+      }
+    },
+    {
+      "id": "ui-fighter-names-row-record-id-upper-case",
+      "schema": "ui-fighter-names.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/fighter_names.json",
+          "set": {
+            "/schema": 1,
+            "/names": {
+              "alpha": "FIRST",
+              "beta": "SECOND",
+              "Alpha": {
+                "name": "FIRST"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/names/Alpha"
       }
     }
   ],

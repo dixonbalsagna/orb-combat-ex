@@ -10,6 +10,9 @@ static var _terms: Dictionary = {}
 static var _profiles: Dictionary = {}
 static var _names: Dictionary = {}          # the roster name or id in upper case -> the name a player sees (the alias rows' `_name`)
 static var _names_re: RegEx = null
+static var _sig_re: RegEx = null
+static var _titles: Dictionary = {}         # the roster id in upper case -> the fighter's title
+static var _sigs: Dictionary = {}           # ... -> the name of its signature move
 static var _names_built := false
 static var _loaded := false
 
@@ -110,26 +113,55 @@ static func _build_names() -> void:
 	ensure()
 	_names_built = true
 	_names = {}
+	_titles = {}
+	_sigs = {}
 	_names_re = null
+	_sig_re = null
 	var tbl: Dictionary = (_read(NAMES_PATH).get("names", {}) as Dictionary)
 	for k in tbl:
-		if str(tbl[k]) != "":
-			_names[str(k).to_upper()] = str(tbl[k])
+		var row = tbl[k]
+		var key: String = str(k).to_upper()
+		if row is Dictionary:
+			if str(row.get("name", "")) != "":
+				_names[key] = str(row["name"])
+			if str(row.get("title", "")) != "":
+				_titles[key] = str(row["title"])
+			if str(row.get("sigName", "")) != "":
+				_sigs[key] = str(row["sigName"])
+		elif str(row) != "":
+			_names[key] = str(row)   # a bare string row is just the name
 	if not _names.is_empty():
+		var alt: String = "|".join(PackedStringArray(_names.keys()))
 		_names_re = RegEx.new()
-		_names_re.compile("(?i)\\b(" + "|".join(PackedStringArray(_names.keys())) + ")\\b")
+		_names_re.compile("\\b(" + alt + ")\\b")   # a bare roster id is in capitals in the sim's text: the English word "rival" is left alone
+		_sig_re = RegEx.new()
+		_sig_re.compile("(?i)\\b(" + alt + ")\\.SIG\\b")   # the signature's key (<ID>.SIG), in any case
 
 
-## The name a player sees for a fighter's roster name or id (KAI, kai): its display name from ui/data/fighter_names.json, or the name itself
-## when there is none. The sim and the data keep the roster ids; only what is drawn changes, so the later
-## rename only changes the keys there.
+## The name a player sees for a fighter's roster id or name (KAI, kai, PROTAGONIST): its display name from ui/data/fighter_names.json, or the name itself
+## when there is none. The sim and the data keep the roster ids; only what is drawn changes, so the rename only changes the keys there.
 static func display_name(name: String) -> String:
 	if not _names_built:
 		_build_names()
 	return str(_names.get(name.to_upper(), name))
 
 
-## `text` with any roster name in it (a banner the sim wrote, a feed line, a caption) as the display name, whole words only.
+## A fighter's title for its roster id ("Martial Artist"), or "" when it has none.
+static func display_title(id: String) -> String:
+	if not _names_built:
+		_build_names()
+	return str(_titles.get(id.to_upper(), ""))
+
+
+## The name of a fighter's signature move for its roster id ("Keeper's Lance"), or "" when it has none.
+static func display_sig(id: String) -> String:
+	if not _names_built:
+		_build_names()
+	return str(_sigs.get(id.to_upper(), ""))
+
+
+## `text` with a roster id in it as what a player reads: a signature key (PROTAGONIST.SIG, any case) as the signature's name (the fighter's own
+## name when it has none), then a bare roster id in capitals (K.O.  KAI WINS) as the fighter's display name; whole words only.
 static func display_text(text: String) -> String:
 	if not _names_built:
 		_build_names()
@@ -137,8 +169,15 @@ static func display_text(text: String) -> String:
 		return text
 	var out: String = ""
 	var at := 0
+	for mt in _sig_re.search_all(text):
+		var id: String = mt.get_string(1).to_upper()
+		out += text.substr(at, mt.get_start() - at) + str(_sigs.get(id, _names.get(id, mt.get_string(1))))
+		at = mt.get_end()
+	text = out + text.substr(at)
+	out = ""
+	at = 0
 	for mt in _names_re.search_all(text):
-		out += text.substr(at, mt.get_start() - at) + str(_names.get(mt.get_string().to_upper(), mt.get_string()))
+		out += text.substr(at, mt.get_start() - at) + str(_names.get(mt.get_string(1), mt.get_string(1)))
 		at = mt.get_end()
 	return out + text.substr(at)
 
