@@ -30,6 +30,7 @@ func _init() -> void:
 	_hybrids()
 	_oneshot()
 	_armed_view()
+	_freeze_release()
 	_levels()
 	_keyboards()
 	_touch(2.75)
@@ -507,6 +508,92 @@ func _armed_view() -> void:
 		b.consumed()
 		same = same and ia == ib
 	ok(same, "armed view: the reads change nothing in the intents")
+
+
+## A level that falls (or rises) during a hit-stop: the host builds an intent every tick, SimCore.step returns false during the
+## freeze and the host does not call consumed(), so what reaches the sim is the state at the first live build, with nothing
+## advanced in between. Checked on the pad, the keyboard and Full touch, for the slow buttons' release (the wind-up's decision).
+func _freeze_release() -> void:
+	var devs: Array = [["arena", "pad:north"], ["kb-solo", "kb:KeyK"], ["touch-full", "heavy"]]
+	for d in devs:
+		var tag: String = str(d[0])
+		var touch: bool = tag == "touch-full"
+		var l: SimLayout = null
+		var t: SimTouch = null
+		if touch:
+			t = SimTouch.new()
+			t.dp = 2.75
+			t.set_preset("touch-full")
+			t.set_stance_oneshot(false)
+		else:
+			l = _mk(tag)
+		# A: pressed live and consumed; released during a 6-build freeze; the first live build reads it released.
+		var i: SimIntent = _fz_press(l, t, d[1], 1)
+		ok(i.heavy and i.heavyHeld, "freeze %s: the press is an edge with its level on the live tick" % tag)
+		_fz_consumed(l, t)
+		var builds: Array = []
+		for k in range(6):
+			if k == 2:
+				_fz_release(l, t, d[1], 1)
+			builds.append(_fz_build(l, t))
+		var live: SimIntent = _fz_build(l, t)
+		ok(not live.heavyHeld and not live.heavy and live.waited == 0, "freeze %s: a release made in the freeze reaches the first live build as a level that is down, no edge, nothing carried" % tag)
+		_fz_consumed(l, t)
+		# B: a tap made wholly inside a freeze: an edge with its level on, carrying how long it waited; the next build it is up.
+		for k in range(6):
+			if k == 1:
+				_fz_press_only(l, t, d[1], 2)
+			if k == 3:
+				_fz_release(l, t, d[1], 2)
+			_fz_build(l, t)
+		var first: SimIntent = _fz_build(l, t)
+		ok(first.heavy and first.heavyHeld and first.waited >= 3, "freeze %s: a tap wholly in the freeze arrives as an edge with its level on, having waited (%d)" % [tag, first.waited])
+		_fz_consumed(l, t)
+		var nxt: SimIntent = _fz_build(l, t)
+		ok(not nxt.heavyHeld and not nxt.heavy, "freeze %s: and the next build it is up" % tag)
+		_fz_consumed(l, t)
+		# C: the smallest case that can still read a tap as a hold: down live, released and pressed again inside ONE freeze.
+		_fz_press(l, t, d[1], 3)
+		_fz_consumed(l, t)
+		for k in range(10):
+			if k == 1:
+				_fz_release(l, t, d[1], 3)
+			if k == 6:
+				_fz_press_only(l, t, d[1], 3)
+			_fz_build(l, t)
+		var dbl: SimIntent = _fz_build(l, t)
+		ok(dbl.heavy and dbl.heavyHeld, "freeze %s: a release and a re-press inside one freeze arrive as an edge with the level still on: the release itself is not visible, only the edge says so (the director must read an edge on a button it saw held as release then press)" % tag)
+		_fz_consumed(l, t)
+
+
+func _fz_press(l: SimLayout, t: SimTouch, c, id: int) -> SimIntent:
+	_fz_press_only(l, t, c, id)
+	return _fz_build(l, t)
+
+
+func _fz_press_only(l: SimLayout, t: SimTouch, c, id: int) -> void:
+	if t != null:
+		t.touch_down(id, 0.0, 0.0, str(c))
+	else:
+		l.press(str(c))
+
+
+func _fz_release(l: SimLayout, t: SimTouch, c, id: int) -> void:
+	if t != null:
+		t.touch_up(id)
+	else:
+		l.release(str(c))
+
+
+func _fz_build(l: SimLayout, t: SimTouch) -> SimIntent:
+	return t.build() if t != null else l.build()
+
+
+func _fz_consumed(l: SimLayout, t: SimTouch) -> void:
+	if t != null:
+		t.consumed()
+	else:
+		l.consumed()
 
 
 func _levels() -> void:

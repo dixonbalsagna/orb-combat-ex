@@ -1,0 +1,22 @@
+diff -ruN a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+--- a/tools/schemas/input-timing.schema.json	2026-10-06 00:34:30.326739000 -0700
++++ b/tools/schemas/input-timing.schema.json	2026-10-06 00:34:30.332245900 -0700
+@@ -221,6 +221,18 @@
+           "minimum": 1,
+           "maximum": 12,
+           "description": "The exit read looks back this many ticks (12; the sample ring holds 12)."
++        },
++        "nudgeStart": {
++          "type": "number",
++          "exclusiveMinimum": 0,
++          "maximum": 1,
++          "description": "The brawl's nudge ramp (SimAim.nudge_ramp): a fresh push of the stick starts at this share of full (0.4)."
++        },
++        "nudgeTicks": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 60,
++          "description": "... and the nudge rises to full over this many ticks (12); letting go is instant."
+         }
+       },
+       "additionalProperties": false,

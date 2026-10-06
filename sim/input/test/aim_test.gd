@@ -28,6 +28,7 @@ func _init() -> void:
 	_sector16()
 	_angles()
 	_ring()
+	_nudge()
 	_determinism()
 	print("aim_test: %d checks, %d failed" % [checks, fails])
 	quit(1 if fails > 0 else 0)
@@ -304,3 +305,64 @@ func _ring() -> void:
 	for v in r1:
 		ints = ints and typeof(v) == TYPE_INT
 	ok(ints, "ring: every slot is an integer (a director can keep and hash it)")
+
+
+func _nudge() -> void:
+	var p: Dictionary = SimAim.params()
+	ok(absf(float(p["nudgeStart"]) - 0.4) < 1e-9 and p["nudgeTicks"] == 12, "nudge: data 0.4 and 12 ticks")
+	ok(SimAim.nudge_units(1.0) == 127 and SimAim.nudge_units(-1.0) == -127 and SimAim.nudge_units(0.0) == 0 and SimAim.nudge_units(64.0 / 127.0) == 64, "nudge: units are the stick's 1/127 steps")
+	# A keyboard (0 to full in one tick) starts at the floor (51 of 127) and rises 7 a tick: full on the 12th tick.
+	var seq: Array = []
+	var prev: int = 0
+	for k in range(14):
+		prev = SimAim.nudge_ramp(prev, 127)
+		seq.append(prev)
+	ok(seq[0] == 51 and seq[1] == 58 and seq[10] == 121 and seq[11] == 127 and seq[13] == 127, "nudge: a full push starts at 51 and reaches 127 on the 12th tick (%s)" % str(seq))
+	for k in range(1, seq.size()):
+		ok(int(seq[k]) >= int(seq[k - 1]), "nudge: the ramp never falls while held (%d)" % k)
+	# Let go is instant, and a new push starts again from the floor.
+	ok(SimAim.nudge_ramp(127, 0) == 0 and SimAim.nudge_ramp(0, 127) == 51, "nudge: letting go is 0 at once, a new push starts at the floor")
+	# The other way: a sign flip is a fresh push.
+	ok(SimAim.nudge_ramp(100, -127) == -51 and SimAim.nudge_ramp(-51, -127) == -58 and SimAim.nudge_ramp(-120, -127) == -127, "nudge: the negative side is the same, a flip restarts at the floor")
+	# An analogue stick moving gradually passes through unchanged: 3 units a tick up to 90.
+	var ok_pass: bool = true
+	prev = 0
+	for k in range(31):
+		var raw: int = mini(90, 3 * (k + 1))
+		var out: int = SimAim.nudge_ramp(prev, raw)
+		# the first ticks are under the floor, so raw; past it the rise (3) is under the step (7), so raw again
+		ok_pass = ok_pass and out == raw
+		prev = out
+	ok(ok_pass, "nudge: a gradual analogue push is passed through unchanged")
+	# An analogue flick to full is eased the same way as a keyboard.
+	prev = SimAim.nudge_ramp(0, 127)
+	prev = SimAim.nudge_ramp(prev, 127)
+	ok(prev == 58, "nudge: a flick to full is eased as a keyboard is (device-agnostic)")
+	# It follows the stick down at once.
+	ok(SimAim.nudge_ramp(127, 60) == 60 and SimAim.nudge_ramp(60, 40) == 40, "nudge: it follows the stick down at once")
+	# A small raw never exceeds itself: below the floor it is raw.
+	ok(SimAim.nudge_ramp(0, 20) == 20 and SimAim.nudge_ramp(20, 20) == 20 and SimAim.nudge_ramp(20, 40) == 27, "nudge: a small push is itself, and a step-limited rise is 7")
+	# The numbers come from data, and an override is honoured.
+	var q: Dictionary = {"nudgeStart": 0.5, "nudgeTicks": 9}
+	ok(SimAim.nudge_ramp(0, 127, q) == 64 and SimAim.nudge_ramp(64, 127, q) == 64 + 7, "nudge: the start and the ticks are data (0.5 and 9 give 64, then +7)")
+	var saved = SimInputData.timing.get("aim", null)
+	SimInputData.timing["aim"] = {"nudgeStart": 0.25, "nudgeTicks": 4}
+	ok(SimAim.nudge_ramp(0, 127) == 32 and SimAim.nudge_ramp(32, 127) == 32 + 24, "nudge: a changed aim block in the data is the helper's (0.25 and 4 give 32, then +24)")
+	if saved == null:
+		SimInputData.timing.erase("aim")
+	else:
+		SimInputData.timing["aim"] = saved
+	# Out of range raw is clamped, an integer in and out, and the same feed gives the same ramp.
+	ok(SimAim.nudge_ramp(0, 500) == 51 and SimAim.nudge_ramp(0, -500) == -51, "nudge: a raw past 127 is clamped")
+	var r1: Array = []
+	var r2: Array = []
+	var a1: int = 0
+	var a2: int = 0
+	for t in range(60):
+		var raw2: int = int(round(sin(float(t) * 0.5) * 127.0))
+		a1 = SimAim.nudge_ramp(a1, raw2)
+		a2 = SimAim.nudge_ramp(a2, raw2)
+		r1.append(a1)
+		r2.append(a2)
+		ok(typeof(a1) == TYPE_INT and absi(a1) <= 127 and absi(a1) <= absi(raw2), "nudge: tick %d is an integer within the stick" % t)
+	ok(r1 == r2, "nudge: the same feed, the same ramp")

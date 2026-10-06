@@ -35,6 +35,8 @@ const DEFAULTS: Dictionary = {
 	"deadZone": 0.35,     # the stick must pass this fraction of full deflection to aim (the move dead zone is 0.2)
 	"latchTicks": 12,     # the latest aim within this many ticks of the launch decision still counts
 	"snapMax": 1,         # the director snaps to a target within this many sectors (1 is 45 degrees)
+	"nudgeStart": 0.4,    # the brawl's nudge ramp: a fresh push starts at this share of full ...
+	"nudgeTicks": 12,     # ... and rises to full over this many ticks
 }
 
 
@@ -44,6 +46,8 @@ static func params() -> Dictionary:
 	p["deadZone"] = SimInputData.tf(["aim", "deadZone"], float(DEFAULTS["deadZone"]))
 	p["latchTicks"] = SimInputData.ti(["aim", "latchTicks"], int(DEFAULTS["latchTicks"]))
 	p["snapMax"] = SimInputData.ti(["aim", "snapMax"], int(DEFAULTS["snapMax"]))
+	p["nudgeStart"] = SimInputData.tf(["aim", "nudgeStart"], float(DEFAULTS["nudgeStart"]))
+	p["nudgeTicks"] = SimInputData.ti(["aim", "nudgeTicks"], int(DEFAULTS["nudgeTicks"]))
 	return p
 
 
@@ -303,3 +307,31 @@ static func read_exit(ring: Array, opts: Dictionary = {}) -> Dictionary:
 		return {"sector": NONE, "x": 0, "y": 0, "count": 0}
 	var n: float = float(counts[best])
 	return {"sector": best, "x": roundi(float(sums[best][0]) / n), "y": roundi(float(sums[best][1]) / n), "count": int(counts[best])}
+
+
+# The brawl's nudge (docs/controls/q19-input.md, "the nudge ramp"): the stick moves the pair's centre as a RATE, and the rate may
+# rise by only so much a tick, so a keyboard or D-pad (0 to full in one tick) starts as a fine nudge and a hold is a strong one.
+# It is a slew limit, not a device test (the intent does not say what the device is): an analogue stick moving gradually passes
+# through unchanged. Integers in the stick's own 1/127 units, so the director can keep `prev` in its hashed integer state.
+
+## The stick axis `x` (-1 to 1) in the nudge's units: whole 1/127 steps, which is what the intent carries after canon.
+static func nudge_units(x: float) -> int:
+	return clampi(roundi(x * 127.0), -127, 127)
+
+
+## One tick of the ramp for one axis: `prev` is the value this returned last tick (0 at rest), `raw` the stick now (both in
+## 1/127 units, signed). Letting go is instant (0); a fresh push, or a push the other way, starts at the floor (`nudgeStart`);
+## the same way it rises by `step` a tick, where step = ceil((127 - start) / nudgeTicks) (7 by default, so full in 11 ticks after
+## the first); and it follows the stick down at once. `p` overrides the data (nudgeStart, nudgeTicks).
+static func nudge_ramp(prev: int, raw: int, p: Dictionary = {}) -> int:
+	if raw == 0:
+		return 0
+	var q: Dictionary = p if not p.is_empty() else params()
+	var start: int = clampi(roundi(float(q.get("nudgeStart", DEFAULTS["nudgeStart"])) * 127.0), 0, 127)
+	var ticks: int = maxi(1, int(q.get("nudgeTicks", DEFAULTS["nudgeTicks"])))
+	var step: int = maxi(1, (127 - start + ticks - 1) / ticks)
+	var a: int = mini(absi(raw), 127)
+	var sgn: int = 1 if raw > 0 else -1
+	if prev == 0 or (prev > 0) != (raw > 0):
+		return sgn * mini(a, start)
+	return sgn * mini(a, absi(prev) + step)
