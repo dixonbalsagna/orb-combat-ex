@@ -256,6 +256,8 @@ static func ensure_fighter(roster_id: String) -> String:
 				if nm.begins_with("tail") or not keysets.has(String(st.id)):
 					continue
 				lst.by_name[nm] = String(st.id)
+				if nm.begins_with("su_") or nm.begins_with("bolt_") or nm.begins_with("blast_"):
+					continue   # the super-heavy tier and the energy-in-reach pieces are named by the director's beat (`piece`), never picked at random: they are findable by name and in no pick list
 				if gated.has(nm):
 					lst.gated.append({"id": String(st.id), "weight": String(gated[nm].weight), "gate": String(gated[nm].gate)})
 				elif String(st.weight) == "heavy":

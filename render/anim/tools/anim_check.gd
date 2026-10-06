@@ -589,6 +589,7 @@ func _test_riposte() -> void:
 
 
 ## The flurry look study's three strengths (docs/animation/flurry-study.md): X light (speed), Y medium, B super, and the burst's gap rule. `contacts` are ticks; `extra` is merged into every beat (windup).
+var _tier_dist: float = 60.0    # how far apart a tier scene stages the two (the closing rule's slack beyond striking distance is added to it)
 var _tier_damage: bool = false   # a tier scene sends the damage event of every blow, so the defender reacts as in the study scene (the heads close on each other in a run)
 
 
@@ -610,7 +611,7 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 			if AnimData.keysets.has(pre + nm2):
 				AnimData.pair_lists[key].by_name[pre + nm2] = pre + nm2
 	f0.x = 500.0
-	f1.x = 560.0
+	f1.x = 500.0 + _tier_dist
 	for f in [f0, f1]:
 		f.y = 0.0
 		f.vx = 0.0
@@ -676,6 +677,15 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 			if hg < float(res.get("hmin", 1.0e9)):
 				res["hmin"] = hg
 				res["hmin_k"] = k - int(contacts[0])
+		if not af0.press.is_empty():
+			var stl: Dictionary = res.get("styles", {})
+			stl[String(af0.press.style)] = true
+			res["styles"] = stl
+		res["hold_max"] = maxf(float(res.get("hold_max", 0.0)), af0.hold_coil)
+		if k >= int(contacts[0]) - 30 and k <= int(contacts[0]) + 4:
+			var fl: Array = res.get("feet", [])
+			fl.append([k - int(contacts[0]), af0.socket("foot_r").y, af0.socket("foot_l").y, af0.socket("pelvis").y])   # [ticks to the contact, the right foot's height, the left's, the pelvis's]
+			res["feet"] = fl
 		if af0.burst_set > 0.5:
 			res["set_ticks"] = int(res.get("set_ticks", 0)) + 1
 			res["set_first"] = mini(int(res.get("set_first", 9999)), k)
@@ -739,6 +749,7 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 		hxr.append(af0.socket("hand_r").x - af0.socket("pelvis").x)
 		hxl.append(af0.socket("hand_l").x - af0.socket("pelvis").x)
 		res.err = float(af0.debug.get("contact_err_max", 0.0))
+		res["gap"] = float(af0.debug.get("gap_max", 0.0))   # how far short of the target the hand ends at the contact, in units
 		res.frames = int(af0.debug.get("contact_frames", 0))
 	# the excursion of each blow: how much farther the hand is at its contact than at its deepest point since the last one
 	for i in range(1, contacts.size()):
@@ -1110,6 +1121,11 @@ func _test_windups() -> void:
 			judged += 1
 			if bool(nm[1]) and String(nm[0]).begins_with("su_"):
 				# the launcher (C2t): the same heavy on a 14-tick wind-up with the tell cut to its last third; the same rules hold
+				# the heavy's held charge (Game Design: B still down at 32 ticks keeps charging, full at 44, by itself at 70): 62 ticks of wind-up, loaded in plain sight, nothing above 80 early, every contact solved
+				var rhd: Dictionary = _tier_scene(S, who, "super", [String(nm[0])], [96], {"windup": 62, "hand": "r"}, "heavy")
+				judged += 1
+				if int(rhd.hi_early) > 0 or int(rhd.nan) > 0 or int(rhd.screen) > 0 or int(rhd.frames) != 1 or float(rhd.err) >= 0.25 or float(rhd.get("hold_max", 0.0)) < 0.6:
+					worst += "%s %s held 62 ticks (%d ticks above 80 early, %d NaN, %d on screen, %d of 1 contacts, error %.3f, loaded to %.2f: it must keep loading, 0.6 or more); " % [who, String(nm[0]), int(rhd.hi_early), int(rhd.nan), int(rhd.screen), int(rhd.frames), float(rhd.err), float(rhd.get("hold_max", 0.0))]
 				var rl: Dictionary = _tier_scene(S, who, "super", [String(nm[0])], [64], {"windup": 14, "hand": "r"}, "heavy")
 				judged += 1
 				if int(rl.hi_early) > 0 or int(rl.nan) > 0 or int(rl.screen) > 0 or int(rl.frames) != 1 or float(rl.err) >= 0.25:
@@ -1200,6 +1216,124 @@ func _test_tier_drives() -> void:
 	print("tier drives: %d pieces of the super-heavy tier read as their drive (a pace, half a turn, one limb crossing, sunk then tall, risen then sunk, one turn)" % judged)
 
 
+## The reach table (docs/animation/cues-c2.md section 2; the closing rule of Encounter's C2t): for every strike key set of the launch pair, how many units beyond its own striking distance (the manifest row's
+## `range.offset`: where the blow is drawn from) the rival may stand and the hand, foot, elbow or knee still ends within 1.5 units of the target at the contact, with the body's own lunge and step: `cover`. Bisected
+## on the real solve (a wind-up of 2 ticks for a light bolt, 4 for a light, 12 for a medium or a blast, 28 for the super-heavy tier), the rival staged at offset + slack. Writes data/anim/reach.json (`--reach=path` on
+## anim_check, or call it from a harness). A planted heave (its step is 22 at most) and a bolt (step 4) come out low; a stepping drive and the generic strikes high.
+func _reach_scan(out_path: String) -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	_tier_damage = false
+	var cover := {}
+	var da := DirAccess.open("res://data/anim/waves")
+	var files: Array = Array(da.get_files())
+	files.sort()
+	for fn in files:
+		if not String(fn).ends_with(".manifest.json"):
+			continue
+		var wn: String = String(fn).trim_suffix(".manifest.json")
+		var who: String = "protagonist" if (wn.begins_with("protag")) else ("antihero" if (wn.begins_with("wave") or wn.begins_with("rival")) else "")
+		if who == "":
+			continue
+		var m = JSON.parse_string(FileAccess.get_file_as_string("res://data/anim/waves/" + String(fn)))
+		for st in m.get("strikes", []):
+			var sid: String = String(st.id)
+			if String(st.get("name", "")).begins_with("tail") or not AnimData.keysets.has(sid):
+				continue
+			var key: String = String(AnimData.ensure_fighter("PROTAGONIST" if who == "protagonist" else "RIVAL"))
+			AnimData.ensure_fighter("RIVAL" if who == "protagonist" else "PROTAGONIST")
+			AnimData.pair_lists[key].by_name[sid] = sid
+			var heavy: bool = String(st.weight) == "heavy"
+			var tier: bool = sid.contains(".su_")
+			var wu: int = 28 if tier else (12 if heavy else (2 if sid.contains(".bolt_") else 4))
+			var style: String = "super" if tier else ("medium" if heavy else "speed")
+			var base: float = float(st.get("offset", 58.0))
+			var lo: int = 0
+			var hi: int = 160
+			while lo < hi:
+				var mid: int = (lo + hi + 1) / 2
+				_tier_dist = base + float(mid)
+				var r: Dictionary = _tier_scene(S, who, style, [sid], [40], {"windup": wu, "hand": "r"}, "heavy" if heavy else "light")
+				if float(r.get("gap", 99.0)) <= 1.5:
+					lo = mid
+				else:
+					hi = mid - 1
+			if lo == 0:
+				_tier_dist = base
+				var r0: Dictionary = _tier_scene(S, who, style, [sid], [40], {"windup": wu, "hand": "r"}, "heavy" if heavy else "light")
+				if float(r0.get("gap", 0.0)) > 1.5:
+					lo = -int(ceil(float(r0.get("gap", 0.0))))   # short even at its own striking distance: how far
+			cover[sid] = lo
+	_tier_dist = 60.0
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	S.dirS.ex = null
+	var keys: Array = cover.keys()
+	keys.sort()
+	var lines: PackedStringArray = []
+	for k2 in keys:
+		lines.append("  %s: %d" % [JSON.stringify(k2), int(cover[k2])])
+	var f := FileAccess.open(out_path, FileAccess.WRITE)
+	f.store_string('{\n "schema": "anim.reach/1",\n "_about": "How many units beyond its own striking distance (the manifest row\'s range.offset) the rival may stand and a strike key set still lands: the hand, foot, elbow or knee ends within 1.5 units of the target at the contact, with the body\'s own lunge and step (render only; a negative number is how far it ends short even at its own striking distance). Measured on the real solve by render/anim/tools/anim_check.gd `_reach_scan` (a wind-up of 2 ticks for a bolt, 4 for a light, 12 for a medium or a blast, 28 for the super-heavy tier), at most 160. Encounter\'s closing rule keeps a blow\'s slack inside this number (docs/animation/cues-c2.md section 2).",\n "cover": {\n' + ",\n".join(lines) + '\n }\n}\n')
+	f.close()
+	print("reach scan: %d key sets, written to %s" % [cover.size(), out_path])
+
+
+## A heave may take one sliding half step (Legal h08): when the closing slack is more than its pose bridges (the rival 30 units farther than its striking distance), the body steps in, up to about 22 units, and
+## the rear foot stays on the ground the whole way, the other foot never leaves the ground (a foot blow's own foot excepted: it is loaded low behind and goes at the blow), there is no leap, and nothing rises before
+## the blow: the stand is the heave's own. Played on all four heaves with a 30-unit slack and a 62-tick hold too.
+func _test_heave_step() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	var bad: Array = []
+	var seen: Array = []
+	for pc in [["antihero", "su_elbow_heave", false], ["antihero", "su_fist_heave", false], ["protagonist", "su_palm_heave", false], ["protagonist", "su_ball_heave", true]]:
+		for wu in [28, 62]:
+			_tier_dist = 60.0 + 30.0
+			var r: Dictionary = _tier_scene(S, pc[0], "super", [String(pc[1])], [96], {"windup": wu, "hand": "r"}, "heavy")
+			_tier_dist = 60.0
+			var fl: Array = r.get("feet", [])
+			var ground: float = 1.0e9
+			for e in fl:
+				if int(e[0]) >= -14 and int(e[0]) <= -4:
+					ground = minf(ground, minf(float(e[1]), float(e[2])))
+			var worst_stand: float = 0.0
+			var worst_strike: float = 0.0
+			var rise: float = 0.0
+			var hy0: float = -1.0e9
+			for e in fl:
+				if int(e[0]) == -14:
+					hy0 = float(e[3])   # the tell is reached by the middle of a 28-tick wind-up: from there to the blow nothing may rise
+				if int(e[0]) >= -14 and int(e[0]) <= -4:
+					worst_stand = maxf(worst_stand, float(e[2]) - ground if bool(pc[2]) else maxf(float(e[1]), float(e[2])) - ground)
+					worst_strike = maxf(worst_strike, float(e[1]) - ground)
+					if hy0 > -1.0e8:
+						rise = maxf(rise, float(e[3]) - hy0)
+			if worst_stand > 4.0 or (bool(pc[2]) and worst_strike > 12.0) or rise > 1.5 or int(r.nan) > 0 or int(r.screen) > 0 or int(r.frames) != 1:
+				bad.append("%s %s on %d ticks with a 30-unit slack: a standing foot is %.1f off the ground, the loaded foot %.1f, the pelvis rises %.1f before the blow (%d of 1 contacts)" % [pc[0], pc[1], wu, worst_stand, worst_strike, rise, int(r.frames)])
+			elif wu == 28:
+				seen.append("%s: feet down to %.1f, pelvis up %.1f, short by %.1f" % [pc[1], worst_stand, rise, float(r.get("gap", 0.0))])
+	_expect(bad.is_empty(), "heave step: %s" % "; ".join(bad))
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	S.dirS.ex = null
+	print("heave step (30-unit slack): %s" % " | ".join(seen))
+
+
 ## The burst's set (Game Design brawl-second-pass section 3; data/anim/press_styles.json burst.set; docs/animation/energy-reach.md section 5): one light at once, then about 10 ticks of a set pose before the stream
 ## at 18, 22, 26, 31, 37, 45 and 56 ticks from the press. Played on the new ticks the set shows between the first light and the stream's first blow and nowhere else; the stream's own gaps (4 to 11) show none.
 func _test_burst_set() -> void:
@@ -1227,6 +1361,117 @@ func _test_burst_set() -> void:
 	RenderAnim.press_styles = styles_was
 	S.dirS.ex = null
 	print("burst set: %s" % " | ".join(seen))
+
+
+## The cues of the next chain (Encounter's brawl-plan.md section 10.3; the sim side does not exist yet, so the cues are made here): launcher_open shows the plain stagger on the target for the ticks it lasts and closes
+## cleanly; miss shows a whiff for its word; windup, energy_reach, energy_land and double_hit are kept for VFX and move nothing; a flurry blow's strength picks its style and the old text is not needed.
+func _test_c2_cues() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "PROTAGONIST"
+	f1.id = "RIVAL"
+	RenderAnim._fighters.clear()
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
+	f0.x = 500.0
+	f1.x = 560.0
+	for f in [f0, f1]:
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+	S.dirS.ex = null
+	var ground_was: bool = RenderAnim.ground_feet
+	var step3_was: bool = RenderAnim.step3_cues
+	RenderAnim.ground_feet = false
+	RenderAnim.step3_cues = true
+	var seen: Array = []
+	var head0: float = 0.0
+	for k in range(60):
+		S.tick = 3000 + k
+		S.T = 300.0 + float(k) / 60.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		if k == 20:
+			head0 = RenderAnim.solve(S, f1).socket("head").y
+			var ce := SimState.FxEvent.new()
+			ce.type = "cue"
+			ce.kind = "launcher_open"
+			ce.actor = 0.0
+			ce.target = 1.0
+			ce.text = "stun"
+			ce.n = float(S.tick + 30)
+			ce.tick = S.tick
+			RenderAnim.consume(S, [ce])
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		var a1: AnimFighter = RenderAnim.solve(S, f1)
+		if k == 20 + 18:
+			_expect(String(a1._seq.get("id", "")) == "lq.open" and String(a0.launcher.get("role", "")) == "actor" and String(a1.launcher.get("role", "")) == "target", "c2 cues: launcher_open did not show the stagger on the target (%s) or mark the launcher (%s)" % [str(a1._seq.get("id", "")), str(a0.launcher)])
+			var drop: float = head0 - a1.socket("head").y
+			_expect(drop >= 8.0, "c2 cues: the launcher's stagger leaves the head only %.1f lower than before (it is doubled over, dazed)" % drop)
+			seen.append("the stagger doubles him over by %.0f" % drop)
+		if k == 20 + 34:
+			_expect(String(a1._seq.get("id", "")) == "", "c2 cues: the stagger still plays after its n")
+		if k == 20 + 24:
+			var cl := SimState.FxEvent.new()
+			cl.type = "cue"
+			cl.kind = "launcher_close"
+			cl.actor = 0.0
+			cl.text = "lapsed"
+			cl.tick = S.tick
+			RenderAnim.consume(S, [cl])
+	_expect(a_is_empty(RenderAnim.solve(S, f1).launcher), "c2 cues: launcher_close did not clear the cue")
+	# a miss for each word: he is carried forward and open
+	for w in ["gave_ground", "reach", "dodge"]:
+		RenderAnim._fighters.clear()
+		AnimData.ensure_fighter("PROTAGONIST")
+		for k in range(40):
+			S.tick = 3100 + k
+			S.T = 310.0 + float(k) / 60.0
+			var te2 := SimState.FxEvent.new()
+			te2.type = "tick"
+			te2.dt = 1.0 / 60.0
+			te2.frozen = false
+			RenderAnim.consume(S, [te2])
+			if k == 10:
+				var me := SimState.FxEvent.new()
+				me.type = "cue"
+				me.kind = "miss"
+				me.actor = 0.0
+				me.text = w
+				me.n = 20.0
+				me.tick = S.tick
+				RenderAnim.consume(S, [me])
+			var m0: AnimFighter = RenderAnim.solve(S, f0)
+			RenderAnim.solve(S, f1)
+			if k == 10 + 12:
+				_expect(String(m0._seq.get("id", "")) == "mi." + w and String(m0.miss_cue.get("text", "")) == w, "c2 cues: miss %s did not show its whiff (%s)" % [w, str(m0._seq.get("id", ""))])
+				seen.append("miss %s plays mi.%s" % [w, w])
+	# a flurry blow's strength picks its style (the text flurry is retired)
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	S = main.host.S
+	for pr in [["light", "speed"], ["medium", "medium"], ["heavy", "super"]]:
+		var r: Dictionary = _tier_scene(S, "protagonist", "", ["cross"], [40], {"flurry": true, "strength": pr[0], "hand": "r"}, "light")
+		_expect(r.get("styles", {}).has(pr[1]), "c2 cues: a flurry blow of strength %s played %s, not %s" % [pr[0], str(r.get("styles", {}).keys()), pr[1]])
+	seen.append("a flurry blow's strength light, medium, heavy plays speed, medium, super")
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.step3_cues = step3_was
+	S.dirS.ex = null
+	print("c2 cues: %s" % "; ".join(seen))
+
+
+func a_is_empty(d: Dictionary) -> bool:
+	return d.is_empty()
 
 
 ## Energy in reach (slice C2t; docs/animation/energy-reach.md; Legal e06, e08, e09): the twelve point-blank pieces read as a blow and a shot at once, and a mashed run reads as varied on screen. A bolt lands below the
@@ -2963,6 +3208,8 @@ func _run() -> void:
 	_test_medium_wind()
 	_test_energy_reach()
 	_test_burst_set()
+	_test_heave_step()
+	_test_c2_cues()
 	_test_zip_view()
 	_test_riposte()
 	_test_hand_tips()

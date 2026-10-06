@@ -17658,7 +17658,8 @@
         {
           "file": "data/anim/sockets.json",
           "set": {
-            "/limbs/hand/lunge_max": 20
+            "/limbs/hand/lunge_max": 20,
+            "/limbs/hand/step_max": 14
           }
         }
       ],
@@ -87925,7 +87926,9 @@
                 "heavy": "speed"
               },
               "grade": "perfect"
-            }
+            },
+            "/strength/light": "burst",
+            "/strength/bolt": "burst"
           },
           "del": [
             "/styles/speed"
@@ -106142,7 +106145,11 @@
           "file": "data/anim/press_styles.json",
           "del": [
             "/styles/medium"
-          ]
+          ],
+          "set": {
+            "/strength/medium": "burst",
+            "/strength/blast": "burst"
+          }
         }
       ],
       "expect": null
@@ -106889,7 +106896,10 @@
           "file": "data/anim/press_styles.json",
           "del": [
             "/styles/super"
-          ]
+          ],
+          "set": {
+            "/strength/heavy": "burst"
+          }
         }
       ],
       "expect": null
@@ -118665,6 +118675,1162 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "anim-press-styles-strength-valid",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "burst",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-strength-another-style-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "heavy": "medium",
+              "bolt": "burst",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-strength-key-required-light",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "burst",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strength"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-key-required-medium",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "heavy": "burst",
+              "bolt": "burst",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strength"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-key-required-heavy",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "bolt": "burst",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strength"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-key-required-bolt",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "heavy": "burst",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strength"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-key-required-blast",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strength"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "burst",
+              "blast": "burst",
+              "extra": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/strength/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-note-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "burst",
+              "blast": "burst",
+              "_why": "a note"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-strength-not-an-object",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": "speed"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/strength"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-value-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": 5,
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "burst",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/strength/light"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-value-shape",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "Speed Style",
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "burst",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/strength/light"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-value-unknown-style",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "nowhere",
+              "blast": "burst"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-strength",
+        "pointer": "/strength/bolt"
+      }
+    },
+    {
+      "id": "anim-press-styles-strength-value-a-note-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/strength": {
+              "light": "burst",
+              "medium": "burst",
+              "heavy": "burst",
+              "bolt": "burst",
+              "blast": "_about"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/strength/blast"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-valid",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-on-super-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-key-required-from",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/hold"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-key-required-to",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/hold"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-key-required-squash",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/hold"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-key-required-lean-back",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/burst/hold"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12,
+              "extra": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/burst/hold/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-note-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12,
+              "_why": "a note"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-from-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": -1,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/hold/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-from-above-max",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 121,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/hold/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-from-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 2.5,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/hold/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-to-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": -1,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/hold/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-to-above-max",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 121,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/hold/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-to-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 2.5,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/hold/to"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-from-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 0,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-to-max-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 120,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-from-equal-to",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 40,
+              "to": 40,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-hold",
+        "pointer": "/styles/burst/hold/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-from-above-to",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 50,
+              "to": 30,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-hold",
+        "pointer": "/styles/burst/hold/from"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-from-just-below-to-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 39,
+              "to": 40,
+              "squash": 0.5,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-squash-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": -0.1,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/hold/squash"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-squash-above-one",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 1.1,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/hold/squash"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-squash-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": "half",
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/hold/squash"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-squash-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-squash-one-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 1,
+              "lean_back": 0.12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-lean-back-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": -0.01
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/burst/hold/lean_back"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-lean-back-above-half",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.51
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/burst/hold/lean_back"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-lean-back-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": "back"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/hold/lean_back"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-lean-back-half-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0.5
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-lean-back-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": {
+              "from": 28,
+              "to": 70,
+              "squash": 0.5,
+              "lean_back": 0
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-not-an-object",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/burst/hold": 12
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/burst/hold"
+      }
+    },
+    {
+      "id": "anim-reach-valid",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/ph.body_hook": 40
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-reach-zero-ok",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/ph.body_hook": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-reach-low-edge-ok",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/ph.body_hook": -200
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-reach-high-edge-ok",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/ph.body_hook": 200
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-reach-below-low-edge",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/ph.body_hook": -201
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/cover/ph.body_hook"
+      }
+    },
+    {
+      "id": "anim-reach-above-high-edge",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/ph.body_hook": 201
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/cover/ph.body_hook"
+      }
+    },
+    {
+      "id": "anim-reach-not-an-integer",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/ph.body_hook": 12.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/cover/ph.body_hook"
+      }
+    },
+    {
+      "id": "anim-reach-value-type",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/ph.body_hook": "far"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/cover/ph.body_hook"
+      }
+    },
+    {
+      "id": "anim-reach-schema-required",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-reach-schema-version",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/schema": "anim.reach/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-reach-cover-required",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "del": [
+            "/cover"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-reach-cover-type",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover": [
+              1,
+              2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/cover"
+      }
+    },
+    {
+      "id": "anim-reach-unknown-key",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-reach-note-ok",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-reach-cover-note-ok",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-reach-key-shape",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/Bad Key": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/cover/Bad Key"
+      }
+    },
+    {
+      "id": "anim-reach-key-without-a-prefix",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/nodot": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/cover/nodot"
+      }
+    },
+    {
+      "id": "anim-reach-key-not-a-key-set",
+      "schema": "anim-reach.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reach.json",
+          "set": {
+            "/cover/zz.nowhere": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:reach-keyset",
+        "pointer": "/cover/zz.nowhere"
+      }
     }
   ],
   "text": [

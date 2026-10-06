@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-reach",
+  "title": "anim.reach/1",
+  "description": "data/anim/reach.json: how many units beyond a strike key set's own striking distance (the manifest row's range.offset) the rival may stand and the blow still lands (a negative number is how far it must be inside). Render only. `cover` is key set id to integer units, -200 to 200. Version field: schema. Policy: closed except keys starting with an underscore. Cross-reference: every key of `cover` is a key set of keysets.json or of a wave's keysets (reach-keyset).",
+  "type": "object",
+  "required": [
+    "schema",
+    "cover"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.reach/1"
+    },
+    "cover": {
+      "type": "object",
+      "description": "Key set id to the units beyond its own striking distance at which the blow still lands.",
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*([.][a-z0-9_]+)+)$"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": -200,
+        "maximum": 200
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

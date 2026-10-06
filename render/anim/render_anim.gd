@@ -305,6 +305,23 @@ static func consume(S: SimState, events: Array) -> void:
 						fighter(S, S.fighters[who]).on_zip_out(String(e.text), float(_ev(e, "x", 0.0)), float(_ev(e, "y", 0.0)), int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue)
 					elif kd == "zip_end":
 						zip_end(S, S.fighters[who], String(e.text))
+					elif kd == "launcher_open":
+						var lt: int = int(_ev(e, "target", -1))   # the staggered fighter shows the stagger; the fighter who may launch (the actor) carries the cue
+						fighter(S, S.fighters[who]).on_launcher_open("actor", String(e.text), int(_ev(e, "n", 0)), S.tick, t_cue)
+						if lt >= 0 and lt < S.fighters.size():
+							fighter(S, S.fighters[lt]).on_launcher_open("target", String(e.text), int(_ev(e, "n", 0)), S.tick, t_cue)
+					elif kd == "launcher_close":
+						for ic in range(S.fighters.size()):
+							fighter(S, S.fighters[ic]).on_launcher_close(String(e.text))
+					elif kd == "windup":
+						fighter(S, S.fighters[who]).on_windup(String(e.text), String(_ev(e, "source", "")), float(_ev(e, "dur", 0.0)), int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue)
+					elif kd == "miss":
+						fighter(S, S.fighters[who]).on_miss(String(e.text), int(_ev(e, "n", 0)), t_cue)
+					elif kd == "double_hit":
+						for idh in range(S.fighters.size()):
+							fighter(S, S.fighters[idh]).on_double_hit(int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue)
+					elif kd == "energy_reach" or kd == "energy_land":
+						fighter(S, S.fighters[who]).on_energy(kd, String(e.text), float(_ev(e, "x", 0.0)), float(_ev(e, "y", 0.0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue)
 					elif String(e.kind) == "riposte":
 						fighter(S, S.fighters[who]).on_riposte(String(e.text), int(_ev(e, "n", 0)), S.tick)
 				for i in range(S.fighters.size()):

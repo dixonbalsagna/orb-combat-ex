@@ -43,7 +43,7 @@ const CLASS_RULES := [
 	["ls.ready_e.", "energy"], ["ls.ready_", "rest"], ["ls.", "rest"], ["rv.", "energy"], ["pn.", "energy"], ["pg.", "energy"], ["en.", "energy"], ["rw.", "energy"], ["pf.", "energy"], ["beam.", "energy"], ["pe.", "energy"],
 	["zp.hold", "hold"],
 	# one-off motion and reaction poses that nothing emits from (knock-backs, the buried fighter, get-ups, intro landings, the stagger and block reactions, the pair's clash, check and grab poses)
-	["ag.", "rest"], ["gc.", "rest"], ["in.", "rest"], ["pp.", "rest"], ["s3.", "rest"], ["zp.", "rest"],
+	["lq.", "rest"], ["mi.", "rest"], ["ag.", "rest"], ["gc.", "rest"], ["in.", "rest"], ["pp.", "rest"], ["s3.", "rest"], ["zp.", "rest"],
 ]
 ## a named gesture where one hand holds or brushes the other hand or wrist: exempt from the pair test (the cuff, the dusting, the close taunt's tap)
 const BRUSH := ["in.cuff.", "rw.taunt_dust_plate.", "rw.taunt_close.", "pg.taunt_close"]

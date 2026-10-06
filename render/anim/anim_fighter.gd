@@ -247,6 +247,12 @@ var _ci_target: String = "chest"
 var _ci_side: bool = false
 var _ci_limb2: String = ""             # a second striking limb of a two-limb blow (a key set's limb2), or ""
 var _ci_step: float = -1.0              # the key set's own step-in limit (model units), or -1 for the limb's default in sockets.json
+var launcher: Dictionary = {}              # the launcher's signal (cue launcher_open): {role: "target" or "actor", n: the tick the stagger ends, text: the stagger's kind, T}; empty once it closes
+var windup_cue: Dictionary = {}            # the last `windup` cue (text start or end): {text, source, dur, n, k, T}: what the sim says this fighter's wind-up is and how it ended
+var miss_cue: Dictionary = {}              # the last `miss` cue: {text, n (the ticks he is open), T}
+var energy_cue: Dictionary = {}            # the last energy_reach or energy_land cue: {kind, text, x, y, k, T}
+var double_cue: Dictionary = {}            # the last double_hit cue: {n (the tick the two blows land), bits (who is hit), T}
+var hold_coil: float = 0.0               # how far a held heavy has loaded beyond its own wind-up (0 to 1; the tools and VFX read it)
 var burst_set: float = 0.0               # how far the burst's set pose is laid over the body this tick (0 to 0.9; VFX and the tools read it)
 var _ci_step_k: float = 1.0                # the share of that step a medium on 12 ticks takes (Combat's w6: a half step)
 var _ci_opp = null
@@ -887,6 +893,52 @@ func on_cue(kind: String, T: float, t_event: float = -1.0) -> void:
 ## The stagger cue's perfect_block and reversal texts (press-styles.md section 12): the fighter who is staggered (the cue's actor) reels in place for `n` ticks, the step 3 stagger fitted to them (every
 ## phase scaled together, so the whole reel takes the sim's ticks: a 24-tick sequence at 20 plays at 0.83, a 16-tick one at 1.25). The old stunTicks watch yields to it. Other staggers (flurry, heavy) are the
 ## stunTicks path, as before.
+## The launcher's signal (Encounter's cue `launcher_open`, brawl-plan.md section 10.3; Animation's signal for B): the staggered fighter shows a stagger that is plain to see for the ticks it lasts (`n` the tick
+## it ends; `tick` now): knocked back, doubled over and dazed with the arms hanging, then coming up (the fit sequence `lq.open`, wave launch1). The fighter who may launch carries the cue for VFX and the tools.
+func on_launcher_open(role: String, text: String, n: int, tick: int, T: float) -> void:
+	launcher = {"role": role, "n": n, "text": text, "T": T}
+	if role != "target" or not AnimData.entries.has("lq.open") or n <= tick:
+		return
+	_seq = {"id": "lq.open", "t0": T, "dur": float(n - tick) * DT, "wt": 0.6 if RenderAnim.reduced_motion else 1.0, "fit": true}
+	_stun_watch = 0
+	debug["launcher_open"] = int(debug.get("launcher_open", 0)) + 1
+
+
+## The close of the window (`launcher_close`, text used or lapsed): the cue is cleared. A stagger that lapsed ends on its own tick (the fit sequence's last phase brings the head up); a launch that used it is
+## the core's own `launch` event.
+func on_launcher_close(text: String) -> void:
+	launcher = {}
+	if text == "used" and String(_seq.get("id", "")) == "lq.open":
+		_seq = {}   # the launch has taken him: the stagger look must not hold the body the tumble starts from
+
+
+## A wind-up the sim names (cue `windup`: text start with `source` the cell, `dur` the ticks, `n` the landing tick; text end with `k` how it ended: 1 thrown, 2 stopped by a blow, 3 lost, 4 a miss). The body
+## already winds up from the blow's beat; the cue is kept for VFX and the tools, and a wind-up that ended stopped (2) or lost (3) lets go of its tell at once (the blow's layers end with the beat).
+func on_windup(text: String, source: String, dur: float, n: int, k: int, T: float) -> void:
+	windup_cue = {"text": text, "source": source, "dur": dur, "n": n, "k": k, "T": T}
+
+
+## A wound blow that met nothing (cue `miss`: text gave_ground, reach or dodge; `n` the ticks he is open): the blow goes through empty air and he is off balance and open for those ticks (a fit sequence of
+## wave miss1: through, open, recover, one for each word).
+func on_miss(text: String, n: int, T: float) -> void:
+	miss_cue = {"text": text, "n": n, "T": T}
+	var id: String = "mi." + text
+	if not AnimData.entries.has(id) or n <= 0:
+		return
+	_seq = {"id": id, "t0": T, "dur": float(maxi(n, 10)) * DT, "wt": 0.6 if RenderAnim.reduced_motion else 1.0, "fit": true}
+	debug["misses"] = int(debug.get("misses", 0)) + 1
+
+
+## The double hit (cue `double_hit`: both fighters throw a straight blow that lands on tick `n`): the blows are ordinary strike beats (`double` true), so the body needs nothing but the record for VFX and Camera.
+func on_double_hit(n: int, bits: int, T: float) -> void:
+	double_cue = {"n": n, "bits": bits, "T": T}
+
+
+## A point-blank bolt or blast (cues `energy_reach` and `energy_land`): kept for VFX (docs/vfx/reach.md); the blow itself is the key set the beat names (pk.* and rk.*).
+func on_energy(kind: String, text: String, x: float, y: float, k: int, T: float) -> void:
+	energy_cue = {"kind": kind, "text": text, "x": x, "y": y, "k": k, "T": T}
+
+
 func on_stagger(text: String, n: int, T: float) -> void:
 	if not RenderAnim.step3_cues or n <= 0:
 		return
@@ -1680,6 +1732,7 @@ func _entry_layer(es: float, dur: float, id: String, T: float, dq: float, wt: fl
 
 func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	burst_set = 0.0
+	hold_coil = 0.0
 	var role: String = "A" if ex.A == f else "D"
 	var t0: float = T - ex.t
 	var strikes: Array = []
@@ -1920,6 +1973,8 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 			press["riposte"] = bool(bargs.get("_rip", false))
 		if prow.has("set"):
 			_burst_set(prow.set, strikes, tc2, T)
+		if prow.has("hold") and dtc < 0.0:
+			_hold_coil(prow.hold, (tq2 - (tc2 - L2)) / DT, L2 / DT, dtc)
 	if RenderAnim.hand_tips:
 		_hand_tip(ks, side, heavy2, strikes[best][2], hw)
 	if RenderAnim.press_styles and bool(bargs.get("check", false)):
@@ -2103,6 +2158,10 @@ func _press_style(S: SimState, f, ex, sk: Array) -> String:
 	var args: Dictionary = sk[2]
 	if rows.has(String(args.get("style", ""))):
 		st = String(args.style)
+	elif bool(args.get("burst", false)) and rows.has("burst"):
+		st = "burst"
+	elif bool(args.get("flurry", false)) and args.has("strength") and AnimData.press.get("strength", {}).has(String(args.strength)) and rows.has(String(AnimData.press.strength[String(args.strength)])):
+		st = String(AnimData.press.strength[String(args.strength)])   # Encounter's flurry blow: the text `flurry` is retired, the beat says its strength (light, medium, heavy, and in C2t bolt and blast)
 	elif String(sk[3]) == "heavy":
 		st = "heavy"
 	elif f.act.dirI.size() >= DirAlchemy.SIZE:
@@ -2169,6 +2228,34 @@ func _press_track(blow_id: int, T: float) -> void:
 
 ## The retract, blended: the new blow's wind-up starts from the pose the last blow was in, not from the guard, so the arm that
 ## struck eases back while the other one comes through.
+## The heavy's held charge (Game Design, brawl-second-pass section 3: B still down at 32 ticks keeps charging, full at 44, by itself at 70; Orb's test "can I move my character when the opponent is charging up an
+## attack?"): a wind-up that runs longer than the style's `hold.from` ticks (the blow's own window is the whole hold) keeps loading: after `from` the body sinks toward the squash pose and leans back a little more
+## every tick up to `to` ticks, whatever the key set's own squash (the tier's pieces draw their tell in the chamber alone). No light: the flash is VFX's. Gone as the blow lands.
+func _hold_coil(row: Dictionary, elapsed: float, span: float, dtc: float) -> void:
+	var from: float = float(row.get("from", 28.0))
+	if span <= from + 2.0 or elapsed <= from:
+		return
+	var k: float = smoothstep(from, float(row.get("to", 70.0)), elapsed) * (1.0 - smoothstep(-3.0 * DT, 0.0, dtc))
+	if k <= 0.001:
+		return
+	var sp: Dictionary = AnimData.press.get("squash_pose", {})
+	var pid: String = String(sp.get("by_fighter", {}).get(pair_key, sp.get("default", "brace")))
+	if not AnimData.pose_exists(pid):
+		return
+	var ix: Dictionary = AnimRig.index
+	var s: float = k * float(row.get("squash", 0.5))
+	var spp: AnimPose = AnimData.pose(pid)
+	for bn in sp.get("bones", []):
+		var bi: int = ix[String(bn)]
+		_press_slerp(bi, spp.q[bi], s)
+	hips.y = minf(hips.y, lerpf(hips.y, spp.hips.y, s))
+	var lean: float = float(row.get("lean_back", 0.12)) * k
+	q[ix["spine_1"]] = q[ix["spine_1"]] * Quaternion(Vector3(0, 0, 1), lean * 0.5)
+	q[ix["spine_2"]] = q[ix["spine_2"]] * Quaternion(Vector3(0, 0, 1), lean * 0.5)
+	q[ix["head"]] = q[ix["head"]] * Quaternion(Vector3(0, 0, 1), -lean * 0.5)
+	hold_coil = k
+
+
 ## The burst's set (Game Design, brawl-second-pass section 3: one light at once, then he sets himself for about 10 ticks before the stream, which is the burst's tell): when the next blow of the exchange is 14 ticks
 ## or more behind a burst blow, the body is mixed toward the fighter's set pose from a few ticks after the blow until a few before the next. `row` is the style's `set` (data/anim/press_styles.json): `pose` by fighter,
 ## `from` (ticks after the blow it comes in), `to_before` (ticks before the next blow it is gone), `in`, `out`, `w`, `min_gap`. Fills `press.set` for VFX and the tools.

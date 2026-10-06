@@ -1,6 +1,8 @@
 {
  "schema": "anim.pressstyles/1",
  "_about": "How the three press styles move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick, only how the body gets there and leaves. Used only with RenderAnim.press_styles (--press-styles, default OFF). Times are 60 Hz ticks. read: how a blow's style is chosen when the beat does not name one (rhythm = tech when the press log reads timed, mash, taps and no read = speed, as VFX reads it; a heavy blow is always heavy; a hold that is not a heavy blow plays the profile it plays today). styles.<id>.prof: overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new: the contact key held that long before the follow-through starts). alternate: the striking limb alternates blow to blow. carry: a blow that starts while the last one is still in its follow or recover blends out of that pose (the retract) instead of out of the guard, over carry_ticks. squash: how much of the squash pose's legs, pelvis and spine the wind-up takes (0 to 1, scaled by the blow's weight), lean_back: extra spine lean back at full squash (rad), back: the body drawn this far back at full squash (model units). stretch: the release. spine: spine extension (rad), rise: hips up (model units), lead: the body drawn this far ahead (model units), ticks: how long it takes to settle after contact, smear_ticks: the ticks before contact that count as the smear frame. twist: the loose body's spine yaw toward the striking side (rad) over twist_ticks. ghosts: how many afterimage copies VFX is asked for (press.ghosts). squash_pose: the pose whose legs, pelvis and spine are the squash (a pose id), bones: which bones it takes.",
+ "strength": {"light": "speed", "medium": "medium", "heavy": "super", "bolt": "speed", "blast": "medium"},
+ "_strength": "A flurry blow of Encounter (its beat has flurry true and a strength: light, medium, heavy, and in C2t bolt and blast; the text flurry is retired) plays the style of its strength. PROVISIONAL with the three strengths' rows: speed is the X flurry, medium and super the Y and B flurries.",
  "enabled": true,
  "read": {"rhythm": "tech", "mash": "speed", "heavy": "heavy", "taps": "speed", "hold": "", "none": "speed"},
  "_beat": "What the beat tells (Encounter's slice B0, docs/director/brawl-b0.md: style, grade, k, n, closing, charge, hand, ender; a chainStrike carries a and d as a strike does). grade: a tech blow's held beat and the after-images asked of VFX by the press grade (perfect, good, off, none). closing: the least a string's closing or ending blow holds its follow-through. charge: a heavy's wind-up is `load_min` of its length when tapped and the whole when held, and its squash follows the blow's weight from `tapped` to `held`. hand (r or l) is the striking side outright, the beat's own over the alternation by k. style comes from the beat, and the press log is read only for a beat that names none.",
@@ -34,7 +36,8 @@
    "alternate": false, "carry": true, "carry_ticks": 6,
    "squash": 1.0, "lean_back": 0.34, "back": 5.0,
    "stretch": {"spine": 0.34, "rise": 3.0, "lead": 9.0, "ticks": 5, "smear_ticks": 2},
-   "twist": 0.0, "twist_ticks": 6, "ghosts": 2
+   "twist": 0.0, "twist_ticks": 6, "ghosts": 2,
+   "hold": {"from": 28, "to": 70, "squash": 0.5, "lean_back": 0.12}
   },
   "tech": {
    "prof": {"solve_hz": 60, "snap_ticks": 0, "load_ease": 3.0, "load_ticks": {"light": 6, "heavy": 6}, "hold_ticks": 10, "follow_ticks": 4, "recover_ticks": 6, "overshoot": 0.0, "lag": 0.1},

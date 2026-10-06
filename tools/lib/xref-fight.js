@@ -13,6 +13,22 @@ const STYLE = 'data/fight/style.json';
 const MEASURES = new Set(['stance0', 'stance1', 'stance2', 'stance3', 'light', 'heavy', 'sig', 'closing', 'opened', 'charge', 'chargeCut', 'sigLanded', 'stanceTotal']);
 
 function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
+  // ---- reach (data/anim/reach.json) ----
+  const reachDoc = get('data/anim/reach.json');
+  if (isObj(reachDoc) && isObj(reachDoc.cover)) {
+    const ksAll = get('data/anim/keysets.json');
+    const setIds = new Set(isObj(ksAll) && isObj(ksAll.keysets) ? Object.keys(ksAll.keysets) : []);
+    for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.keysets\.json$/)) {
+      const wd = get(rel);
+      if (isObj(wd) && isObj(wd.keysets)) for (const k of Object.keys(wd.keysets)) setIds.add(k);
+    }
+    if (setIds.size) {
+      for (const k of Object.keys(reachDoc.cover)) {
+        if (k.startsWith('_')) continue;
+        if (!setIds.has(k)) err('data/anim/reach.json', `/cover/${esc(k)}`, 'reach-keyset', `"${k}" is not a key set of keysets.json or of a wave's keysets`);
+      }
+    }
+  }
   // ---- combat styles ----
   const styles = get(STYLES);
   if (isObj(styles)) {
@@ -1411,6 +1427,16 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       const profG = get('data/anim/profiles.json');
       const bonesG = isObj(profG) && isObj(profG.bone_lag) ? Object.keys(profG.bone_lag) : [];
       if (bonesG.length && Array.isArray(pst.guard.bones)) pst.guard.bones.forEach((bn, i) => { if (typeof bn === 'string' && !(bonesG.includes(bn + '_l') && bonesG.includes(bn + '_r'))) err(PS, `/guard/bones/${i}`, 'pressstyles-bone', `guard bone "${bn}" has no _l and _r pair in profiles.json bone_lag (a guard bone is written without its side)`); });
+    }
+    if (isObj(pst.strength) && isObj(pst.styles)) {
+      for (const [w, sty] of Object.entries(pst.strength)) {
+        if (w.startsWith('_') || typeof sty !== 'string') continue;
+        if (!(sty in pst.styles) || sty.startsWith('_')) err(PS, `/strength/${w}`, 'pressstyles-strength', `strength "${w}" plays style "${sty}", which is not a key of styles (${Object.keys(pst.styles).filter((k) => !k.startsWith('_')).join(', ')})`);
+      }
+    }
+    for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
+      if (sid.startsWith('_') || !isObj(st) || !isObj(st.hold)) continue;
+      if (typeof st.hold.from === 'number' && typeof st.hold.to === 'number' && st.hold.from >= st.hold.to) err(PS, `/styles/${esc(sid)}/hold/from`, 'pressstyles-hold', `hold from ${st.hold.from} must be below to ${st.hold.to}`);
     }
     if (isObj(pst.riposte) && isObj(pst.riposte.style) && isObj(pst.styles)) {
       for (const w of ['light', 'heavy']) {

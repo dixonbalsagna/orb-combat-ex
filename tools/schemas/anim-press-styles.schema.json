@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/anim-press-styles",
   "title": "anim.pressstyles/1",
-  "description": "data/anim/press_styles.json: how the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick. Used only with RenderAnim.press_styles (default off). Times are 60 Hz ticks. read: which style a blow plays when its beat names none, by how the press was read (\"\" for a hold: the profile it plays today). squash_pose: the pose whose legs, pelvis and spine are the squash, by fighter, and the bones it takes. styles: per style, the timing overrides, the flags, the squash, the stretch, the twist and the afterimages. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (a style's set.pose names fighters of fighters.json and real poses (pressstyles-set); a riposte style names a key of styles (pressstyles-riposte); every squash pose is a pose; by_fighter keys are fighters of fighters.json; every bone is in profiles.json bone_lag; carry has a carry_ticks) are checked by tools/lib/xref-fight.js (pressstyles-*).",
+  "description": "data/anim/press_styles.json: how the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick. Used only with RenderAnim.press_styles (default off). Times are 60 Hz ticks. read: which style a blow plays when its beat names none, by how the press was read (\"\" for a hold: the profile it plays today). squash_pose: the pose whose legs, pelvis and spine are the squash, by fighter, and the bones it takes. styles: per style, the timing overrides, the flags, the squash, the stretch, the twist and the afterimages. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every value of `strength` is a key of `styles` (pressstyles-strength); a style's `hold.from` is below its `hold.to` (pressstyles-hold); a style's set.pose names fighters of fighters.json and real poses (pressstyles-set); a riposte style names a key of styles (pressstyles-riposte); every squash pose is a pose; by_fighter keys are fighters of fighters.json; every bone is in profiles.json bone_lag; carry has a carry_ticks) are checked by tools/lib/xref-fight.js (pressstyles-*).",
   "type": "object",
   "required": [
     "schema",
@@ -79,6 +79,48 @@
         }
       },
       "description": "How a blow's style is chosen when its beat does not name one.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "strength": {
+      "type": "object",
+      "required": [
+        "light",
+        "medium",
+        "heavy",
+        "bolt",
+        "blast"
+      ],
+      "description": "Which style each strength word plays (light, medium, heavy, bolt, blast). Every value is a key of `styles` (rule pressstyles-strength).",
+      "properties": {
+        "light": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The style the light strength plays."
+        },
+        "medium": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The style the medium strength plays."
+        },
+        "heavy": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The style the heavy strength plays."
+        },
+        "bolt": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The style the bolt strength plays."
+        },
+        "blast": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The style the blast strength plays."
+        }
+      },
       "additionalProperties": false,
       "patternProperties": {
         "^_": true
@@ -680,6 +722,46 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "hold": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "squash",
+                "lean_back"
+              ],
+              "description": "Optional. A style held through a stretch of its blow: the ticks it is held from and to (from below to: rule pressstyles-hold), how much of the squash it takes and how far the body leans back.",
+              "properties": {
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold begins."
+                },
+                "to": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold ends (above from)."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the squash pose the hold takes."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.5,
+                  "description": "How far the body leans back in the hold."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -963,6 +1045,46 @@
                   "minimum": 0,
                   "maximum": 60,
                   "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "hold": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "squash",
+                "lean_back"
+              ],
+              "description": "Optional. A style held through a stretch of its blow: the ticks it is held from and to (from below to: rule pressstyles-hold), how much of the squash it takes and how far the body leans back.",
+              "properties": {
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold begins."
+                },
+                "to": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold ends (above from)."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the squash pose the hold takes."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.5,
+                  "description": "How far the body leans back in the hold."
                 }
               },
               "additionalProperties": false,
@@ -1258,6 +1380,46 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "hold": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "squash",
+                "lean_back"
+              ],
+              "description": "Optional. A style held through a stretch of its blow: the ticks it is held from and to (from below to: rule pressstyles-hold), how much of the squash it takes and how far the body leans back.",
+              "properties": {
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold begins."
+                },
+                "to": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold ends (above from)."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the squash pose the hold takes."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.5,
+                  "description": "How far the body leans back in the hold."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -1547,6 +1709,46 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "hold": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "squash",
+                "lean_back"
+              ],
+              "description": "Optional. A style held through a stretch of its blow: the ticks it is held from and to (from below to: rule pressstyles-hold), how much of the squash it takes and how far the body leans back.",
+              "properties": {
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold begins."
+                },
+                "to": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold ends (above from)."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the squash pose the hold takes."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.5,
+                  "description": "How far the body leans back in the hold."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -1830,6 +2032,46 @@
                   "minimum": 0,
                   "maximum": 60,
                   "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "hold": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "squash",
+                "lean_back"
+              ],
+              "description": "Optional. A style held through a stretch of its blow: the ticks it is held from and to (from below to: rule pressstyles-hold), how much of the squash it takes and how far the body leans back.",
+              "properties": {
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold begins."
+                },
+                "to": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold ends (above from)."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the squash pose the hold takes."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.5,
+                  "description": "How far the body leans back in the hold."
                 }
               },
               "additionalProperties": false,
@@ -2126,6 +2368,46 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "hold": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "squash",
+                "lean_back"
+              ],
+              "description": "Optional. A style held through a stretch of its blow: the ticks it is held from and to (from below to: rule pressstyles-hold), how much of the squash it takes and how far the body leans back.",
+              "properties": {
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold begins."
+                },
+                "to": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold ends (above from)."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the squash pose the hold takes."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.5,
+                  "description": "How far the body leans back in the hold."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -2410,6 +2692,46 @@
                   "minimum": 0,
                   "maximum": 60,
                   "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "hold": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "squash",
+                "lean_back"
+              ],
+              "description": "Optional. A style held through a stretch of its blow: the ticks it is held from and to (from below to: rule pressstyles-hold), how much of the squash it takes and how far the body leans back.",
+              "properties": {
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold begins."
+                },
+                "to": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold ends (above from)."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the squash pose the hold takes."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.5,
+                  "description": "How far the body leans back in the hold."
                 }
               },
               "additionalProperties": false,

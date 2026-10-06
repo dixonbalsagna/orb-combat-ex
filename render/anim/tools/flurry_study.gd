@@ -38,6 +38,14 @@ const SCENARIOS := [
 	{"id": "gather", "label": "28-tick gathers for Legal: double palm, crossed-arm ram, double hammer (h05)", "style": "super", "set": "gather", "kind": "heavy", "dmg": 90.0, "contacts": [40, 110, 180], "windup": 28, "post": 40},
 	{"id": "bhold", "label": "B held: the coil deepens for 60 ticks, the blow goes on release (PROVISIONAL piece)", "style": "super", "hold": "hold_s", "kind": "heavy", "dmg": 90.0, "contacts": [86], "windup": 62, "post": 56},
 ]
+## The cue scenarios (the next chain's cues, made here: `only` = "cue_launcher", "cue_gave_ground", "cue_reach" or "cue_dodge"): no exchange, one cue sent at tick 10 to the fighter on the left (a miss) or to the fighter
+## on the right as the staggered target of the left one (the launcher's stagger), 90 ticks in all.
+const CUE_SCENARIOS := {
+	"cue_launcher": {"kind": "launcher_open", "actor": 0, "target": 1, "text": "stun", "span": 40, "label": "launcher_open: the staggered fighter (the right one) for 40 ticks"},
+	"cue_gave_ground": {"kind": "miss", "actor": 0, "target": -1, "text": "gave_ground", "span": 20, "label": "miss gave_ground: open for 20 ticks (the left one)"},
+	"cue_reach": {"kind": "miss", "actor": 0, "target": -1, "text": "reach", "span": 20, "label": "miss reach: open for 20 ticks (the left one)"},
+	"cue_dodge": {"kind": "miss", "actor": 0, "target": -1, "text": "dodge", "span": 20, "label": "miss dodge: open for 20 ticks (the left one)"},
+}
 const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
 const PAL_B := {"body": Color("#2a2043"), "legs": Color("#181228"), "arms": Color("#b98462"), "skin": Color("#b98462"), "gear": Color("#cbd3e2"), "accent": Color("#9a80d8"), "hair": Color("#1d1630")}
 var main: Node
@@ -59,6 +67,7 @@ var tier_windup: int = 28
 var tier_first: int = 44
 var tier_hands_pk: Array = []   # the arm of each blow of a tier run (`window.__hands_pk`, `__hands_rk`: "r,r,l,..."): the free arm (l) mirrors the key set (Legal e09: the arm is chosen per throw)
 var tier_hands_rk: Array = []
+var tier_slack: float = 0.0     # units the rival stands beyond the study's distance (`window.__slack`): the closing rule's slack, to see a heave's half step
 var tier_names: Array = []      # the super-heavy tier's stills: `window.__tier = "su_knee,su_plate"` (or --tier=...) names the pieces; one blow every 80 ticks on a 28-tick wind-up, each fighter's own
 var cap: bool = false
 var only: String = ""
@@ -103,6 +112,7 @@ func _ready() -> void:
 		var ts = String(_js("window.__style || ''", ""))
 		if ts != "":
 			tier_style = ts
+		tier_slack = float(_js("window.__slack || 0", 0.0))
 		tier_gap = int(float(_js("window.__gap || 80", 80.0)))
 		tier_windup = int(float(_js("window.__windup || 28", 28.0)))
 		tier_first = int(float(_js("window.__first || 44", 44.0)))
@@ -213,6 +223,9 @@ func _tier_pieces() -> Array:
 
 func _scenarios() -> Array:
 	var out: Array = []
+	if CUE_SCENARIOS.has(only):
+		var cs: Dictionary = CUE_SCENARIOS[only]
+		return [{"id": only, "label": String(cs.label), "style": "speed", "kind": "light", "dmg": 0.0, "contacts": [], "post": 90, "cue": cs}]
 	if only == "tier":
 		var pcs: Array = _tier_pieces()
 		var cs: Array = []
@@ -250,12 +263,21 @@ func _start_scenario() -> void:
 	f1.id = "RIVAL" if fighter == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	f0.x = 500.0
-	f1.x = 500.0 + DIST
+	f1.x = 500.0 + DIST + tier_slack
 	for f in [f0, f1]:
 		f.y = 0.0
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
+	if sc.has("cue"):
+		ex = null
+		S.dirS.ex = null
+		sent = []
+		n_ticks = 90
+		k = 0
+		S.tick = 1000
+		S.T = 200.0
+		return
 	ex = DirExchange.newEx(f0, f1, String(sc.kind))
 	ex.n = 940 + scn_i
 	ex.tag = "STUDY"
@@ -284,12 +306,24 @@ func _step_tick() -> void:
 	var sc: Dictionary = list[scn_i % list.size()]
 	S.tick = 1000 + k
 	S.T = 200.0 + float(k) * DT
-	ex.t = float(k) * DT
+	if ex != null:
+		ex.t = float(k) * DT
 	var te := SimState.FxEvent.new()
 	te.type = "tick"
 	te.dt = DT
 	te.frozen = false
 	RenderAnim.consume(S, [te])
+	if sc.has("cue") and k == 10:
+		var cd: Dictionary = sc.cue
+		var ce := SimState.FxEvent.new()
+		ce.type = "cue"
+		ce.kind = String(cd.kind)
+		ce.actor = float(cd.actor)
+		ce.target = float(cd.target)
+		ce.text = String(cd.text)
+		ce.n = float(S.tick + int(cd.span))
+		ce.tick = S.tick
+		RenderAnim.consume(S, [ce])
 	var contacts: Array = sc.contacts
 	for bi in range(contacts.size()):
 		if not sent[bi] and k >= int(contacts[bi]):
@@ -319,7 +353,7 @@ func _step_tick() -> void:
 			# the attacker is always on the left, in his own colours: the rival's run draws him in the second body (the purple one) and the dummy in the first
 			var bi: int = i if (fighter == "protagonist" or sil) else 1 - i   # (the silhouettes keep the attacker dark in both runs)
 			pivots[bi].scale = Vector3(af.vface, 1.0, 1.0)
-			var wx: float = -DIST * 0.5 if i == 0 else DIST * 0.5 + offset
+			var wx: float = -DIST * 0.5 if i == 0 else DIST * 0.5 + offset + tier_slack
 			pivots[bi].position = Vector3(wx, -43.0, 0.0)
 			bodies[bi].apply(af.q, af.hips, af.curl, af.root_off)
 		var st: String = "%s %s" % [String(FIGHTERS[fighter]), String(sc.label)]

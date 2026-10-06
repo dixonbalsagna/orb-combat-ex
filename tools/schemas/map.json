@@ -192,6 +192,10 @@
       "schema": "anim-keysets.schema.json"
     },
     {
+      "match": "data/anim/reach.json",
+      "schema": "anim-reach.schema.json"
+    },
+    {
       "match": "data/anim/forms.json",
       "schema": "anim-forms.schema.json"
     },
