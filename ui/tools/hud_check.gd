@@ -53,6 +53,7 @@ func _run() -> void:
 	await _first_run_rules()
 	await _rename_rules()
 	await _press_mark_rules()
+	await _notice_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
 	await _armed_touch_rules()
@@ -3860,7 +3861,7 @@ func _settings_rules() -> void:
 	var ridx := -1
 	rws = UiSettings.rows()
 	for i in range(rws.size()):
-		if rws[i]["kind"] == UiSettings.BUTTON:
+		if rws[i]["kind"] == UiSettings.BUTTON and str(rws[i]["action"]) == "remap":
 			ridx = i
 	hud._set_focus = ridx
 	hud.settings_action("accept")
@@ -4741,6 +4742,175 @@ func _press_mark_rules() -> void:
 	_ok(int(pass_i["drawn"]) >= 3, "press marks: Full touch draws greyed buttons and every mark without error (%d passes)" % int(pass_i["drawn"]))
 	_ok(traced.has("NOT YET") and not traced.has(UiData.t("prompt.full_context")), "press marks: a greyed Full touch button reads NOT YET in place of its word")
 	layer.queue_free()
+	hud.queue_free()
+	await process_frame
+
+
+# --- The photosensitivity notice (docs/ui/hud-spec.md section 49) ---------------------------------------------------------------------------
+
+func _notice_rules() -> void:
+	# The words are data and are README.md's sentence, no more: "contains flashing effects", Reduced motion "reduces some, not all", "not yet been tested with an analyser".
+	var readme: String = FileAccess.get_file_as_string("res://README.md")
+	var rd_line := ""
+	for ln in readme.split("\n"):
+		if str(ln).begins_with("**Flashing effects.** "):
+			rd_line = str(ln).trim_prefix("**Flashing effects.** ").strip_edges()
+	var sent: String = UiNotice.sentence()
+	_ok(rd_line != "" and sent == rd_line, "notice: the words are README.md's sentence exactly (%s)" % sent)
+	var lower: String = sent.to_lower()
+	_ok(sent.begins_with("This game contains flashing effects.") and lower.contains("reduced motion") and lower.contains("some of them, not all") and lower.contains("not yet been tested") and not lower.contains(" safe") and not lower.contains("has been tested") and not lower.contains("is tested") and not lower.contains("no flash"), "notice: it claims no more than that (not safe, not tested, not flash-free)")
+	_ok(UiNotice.label("continue") == "CONTINUE" and UiNotice.label("settings") == "OPEN SETTINGS", "notice: the two buttons are CONTINUE and OPEN SETTINGS")
+	# Geometry: fits at the 15 sizes, touch off and on, the buttons are 48 dp targets inside the card.
+	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0], [Vector2(2560, 1600), 2.0], [Vector2(3840, 2160), 1.0],
+		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(1125, 2436), 3.0], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(844, 390), 1.0]]
+	var bad := PackedStringArray()
+	for cs in sizes:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(cs[0], false)
+		for touch in [false, true]:
+			var p: Dictionary = UiNotice.plan(cs[0], lay.s, cs[1], touch, {"focus": 0})
+			var card: Rect2 = p["card"]
+			var ok: bool = bool(p["fits"]) and Rect2(Vector2.ZERO, cs[0]).encloses(card) and (p["items"] as Array).size() == 2 and float(p["fs_body"]) >= UiLook.text_floor - 0.5
+			for it in p["items"]:
+				var r: Rect2 = it["rect"]
+				ok = ok and r.size.y >= float(p["tm"]) - 0.01 and card.encloses(r) and UiNotice.hit(p, r.get_center()) == it["id"]
+			if not ok:
+				bad.append("%s dp %.1f touch=%s" % [str(cs[0]), cs[1], str(touch)])
+	_ok(bad.is_empty(), "notice: at %d sizes, touch off and on, the card is on screen and both buttons are 48 dp targets inside it (%d bad %s)" % [sizes.size(), bad.size(), str(bad.slice(0, 3))])
+	# The flow in the HUD.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.advance(1.0 / 60.0)
+	var sig := {"opened": 0, "closed": 0, "notice": [], "settings": 0}
+	hud.howto_opened.connect(func(_f): sig["opened"] += 1)
+	hud.howto_closed.connect(func(_f): sig["closed"] += 1)
+	hud.notice_closed.connect(func(o): sig["notice"].append(o))
+	hud.settings_opened.connect(func(): sig["settings"] += 1)
+	_ok(not hud.is_notice_open() and not UiHud.notice_auto_allowed("headless", ""), "notice: a headless run never opens it by itself")
+	_ok(UiHud.notice_auto_allowed("Windows", "") and not UiHud.notice_auto_allowed("Windows", "--bench") and not UiHud.notice_auto_allowed("Windows", "?frames=20") and not UiHud.notice_auto_allowed("Windows", "?shot=x") and not UiHud.notice_auto_allowed("Windows", "?nonotice"), "notice: it opens by itself once per session in a normal run, and not in a bench, a frame-limited run, a scripted shot or with nonotice")
+	UiHud.notice_seen_session = true
+	_ok(not UiHud.notice_auto_allowed("Windows", ""), "notice: and not again in the same session")
+	UiHud.notice_seen_session = false
+	var key := func(code: int) -> InputEventKey:
+		var e := InputEventKey.new()
+		e.keycode = code
+		e.physical_keycode = code
+		e.pressed = true
+		return e
+	# A first run's How to play card asked for while the notice is up waits for it.
+	hud.show_photo_notice()
+	hud.show_photo_notice()
+	_ok(hud.is_notice_open() and hud.is_overlay_open() and sig["opened"] == 1 and hud.notice_focus() == 0, "notice: it opens once, holds the fight (the overlay signal fires once) and starts on CONTINUE")
+	hud.show_howto(true)
+	hud.toggle_pause_menu()
+	hud.show_settings()
+	hud.show_feedback("pause")
+	_ok(not hud.is_howto_open() and not hud.is_pause_menu_open() and not hud.is_settings_open() and not hud.is_feedback_open(), "notice: nothing else opens over it (How to play waits, the pause menu, Settings and feedback are refused)")
+	await _frames(hud, 3)
+	var redraws0: int = hud._l_notice.redraws
+	await _frames(hud, 12)
+	_ok(hud._l_notice.redraws == redraws0, "notice: nothing in it moves (no redraw over 12 frames), so it is the same under reduced motion")
+	UiText.tracing = true
+	UiText.trace = []
+	hud._l_notice.invalidate()
+	await _frames(hud, 2)
+	UiText.tracing = false
+	var seen: Array = UiText.trace.duplicate()
+	UiText.trace = []
+	var lines: PackedStringArray = UiNotice.lines()
+	var drawn_ok := seen.has("CONTINUE") and seen.has("OPEN SETTINGS")
+	var joined := " ".join(PackedStringArray(seen))
+	for w in ["flashing", "Reduced", "analyser"]:
+		drawn_ok = drawn_ok and joined.contains(w)
+	_ok(drawn_ok, "notice: the card draws its three lines and both buttons")
+	hud._unhandled_input(key.call(KEY_ENTER))
+	_ok(not hud.is_notice_open() and sig["closed"] == 1 and sig["notice"] == [false] and not hud.is_settings_open() and hud.is_howto_open() and hud.howto_page() == 0 and sig["opened"] == 2, "notice: Enter on CONTINUE closes it and gives the fight back, then the waiting How to play card opens")
+	hud.hide_howto()
+	# Right and Enter: OPEN SETTINGS opens Settings with the Reduced motion row focused.
+	hud.show_photo_notice()
+	hud._unhandled_input(key.call(KEY_RIGHT))
+	var f1: int = hud.notice_focus()
+	hud._unhandled_input(key.call(KEY_LEFT))
+	var f0: int = hud.notice_focus()
+	hud._unhandled_input(key.call(KEY_TAB))
+	hud._unhandled_input(key.call(KEY_ENTER))
+	var rws: Array = UiSettings.rows()
+	var focus_key := ""
+	if hud.settings_focus() >= 0 and hud.settings_focus() < rws.size():
+		focus_key = str(rws[hud.settings_focus()]["key"])
+	_ok(f1 == 1 and f0 == 0 and not hud.is_notice_open() and hud.is_settings_open() and focus_key == "reduced_motion" and sig["notice"].back() == true, "notice: Right, Left and Tab move between the buttons; OPEN SETTINGS opens Settings at the Reduced motion row (%s)" % focus_key)
+	hud.hide_settings()
+	# Esc, the pad and a tap.
+	hud.show_photo_notice()
+	hud._unhandled_input(key.call(KEY_ESCAPE))
+	var esc_ok: bool = not hud.is_notice_open() and sig["notice"].back() == false
+	hud.show_photo_notice()
+	var pad := InputEventJoypadButton.new()
+	pad.button_index = JOY_BUTTON_DPAD_RIGHT
+	pad.pressed = true
+	hud._unhandled_input(pad)
+	var pad_focus: int = hud.notice_focus()
+	var pad_a := InputEventJoypadButton.new()
+	pad_a.button_index = JOY_BUTTON_A
+	pad_a.pressed = true
+	hud._unhandled_input(pad_a)
+	var pad_ok: bool = pad_focus == 1 and not hud.is_notice_open() and hud.is_settings_open()
+	hud.hide_settings()
+	hud.show_photo_notice()
+	var pad_b := InputEventJoypadButton.new()
+	pad_b.button_index = JOY_BUTTON_B
+	pad_b.pressed = true
+	hud._unhandled_input(pad_b)
+	var padb_ok: bool = not hud.is_notice_open() and not hud.is_settings_open()
+	_ok(esc_ok and pad_ok and padb_ok, "notice: Esc and the pad's B continue; the pad's d-pad and A choose OPEN SETTINGS")
+	hud.set_option("touch_ui", true)
+	hud.advance(1.0 / 60.0)
+	var tap := func(pos: Vector2) -> void:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.pressed = true
+		e.position = pos
+		hud._unhandled_input(e)
+	hud.show_photo_notice()
+	var np: Dictionary = hud.notice_plan()
+	tap.call(Vector2(2.0, 2.0))
+	var outside_ok: bool = hud.is_notice_open()
+	tap.call(((np["items"] as Array)[0]["rect"] as Rect2).get_center())
+	var tap_cont: bool = not hud.is_notice_open() and not hud.is_settings_open()
+	hud.show_photo_notice()
+	np = hud.notice_plan()
+	tap.call(((np["items"] as Array)[1]["rect"] as Rect2).get_center())
+	var tap_set: bool = not hud.is_notice_open() and hud.is_settings_open()
+	hud.hide_settings()
+	_ok(outside_ok and tap_cont and tap_set, "notice: on a touch screen a tap on a button chooses it and a tap outside does nothing")
+	hud.set_option("touch_ui", false)
+	# From Settings: a row that shows it again, over Settings, and gives Settings back.
+	var rws2: Array = UiSettings.rows()
+	var ri := -1
+	var rm := -1
+	for i in range(rws2.size()):
+		if str(rws2[i].get("action", "")) == "photo_notice":
+			ri = i
+		if str(rws2[i]["key"]) == "reduced_motion":
+			rm = i
+	_ok(ri >= 0 and rm >= 0 and ri == rm + 1 and str(rws2[ri]["label"]) == "Flashing effects notice", "notice: Settings has a Flashing effects notice row, right after Reduced motion")
+	var opened_before: int = sig["opened"]
+	hud.show_settings()
+	hud._set_focus = ri
+	hud.settings_action("accept")
+	_ok(hud.is_notice_open() and hud.is_settings_open() and sig["opened"] == opened_before, "notice: that row shows it over Settings without a second hold (Settings already holds the fight)")
+	hud._unhandled_input(key.call(KEY_RIGHT))
+	hud._unhandled_input(key.call(KEY_ENTER))
+	var key2 := ""
+	if hud.settings_focus() >= 0 and hud.settings_focus() < rws2.size():
+		key2 = str(rws2[hud.settings_focus()]["key"])
+	_ok(not hud.is_notice_open() and hud.is_settings_open() and key2 == "reduced_motion", "notice: OPEN SETTINGS from there moves the Settings focus to Reduced motion")
+	hud.hide_settings()
 	hud.queue_free()
 	await process_frame
 

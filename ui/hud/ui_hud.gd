@@ -25,6 +25,7 @@ signal feedback_closed()                  # it closed: the host restores the pau
 signal option_changed(key: String, value)   # set_option changed an option's value: the host applies the ones it owns (pad_preset to SimInputHub.pad_preset)
 signal settings_opened                     # the Settings screen opened: the host pauses the sim and releases held keys (as for How to play)
 signal settings_closed                     # it closed: the host restores the pause it found
+signal notice_closed(opened_settings: bool)     # the photosensitivity notice was dismissed (true: its OPEN SETTINGS button, which has then opened Settings at the Reduced motion row)
 signal settings_action_requested(action: String)   # a button on the screen was pressed ("remap"): the host opens what it names
 signal remap_slot_changed(layout_id: String, overrides: Array, slot: int)   # the same, with whose layout it is (0 player one, 1 player two): UI has applied and saved it; the host calls reload_layouts
 signal remap_changed(layout_id: String, overrides: Array)   # the player changed a layout's controls: the host applies the rows (Controls' applier) and saves
@@ -157,6 +158,15 @@ var _l_tele: UiLayer
 var _l_hint: UiLayer
 var _howto_open := false
 var _howto_first := false
+## The photosensitivity notice (docs/ui/hud-spec.md section 49): shown from setup() once per session (never in headless runs, a bench, a scripted shot or the demo unless asked),
+## and from Settings on request. While it is open the fight is held through the same signals as the How to play card.
+static var notice_auto := true
+static var notice_seen_session := false
+var _notice_open := false
+var _notice_held := false
+var _notice_focus := 0
+var _notice_pending: Array = []        # a How to play card asked for while the notice was up: [first_run, page], opened when it closes
+var _l_notice: UiLayer
 var _howto_page := 0
 var _howto_scroll := 0                # the third-party licences page: the first visible line
 var _howto_scroll_f := 0.0            # ... and the fractional part while a finger or the wheel drags
@@ -244,7 +254,8 @@ func _ready() -> void:
 	_l_howto = _layer(_paint_howto)
 	_l_settings = _layer(_paint_settings)
 	_l_remap = _layer(_paint_remap)
-	_l_fb = _layer(_paint_fb)        # last: over everything
+	_l_fb = _layer(_paint_fb)
+	_l_notice = _layer(_paint_notice)   # last: over everything
 	_fb_text = TextEdit.new()        # the free-text box and the report preview are real text controls, placed by the panel's plan
 	_fb_text.visible = false
 	_fb_text.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
@@ -305,7 +316,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb]
+	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_notice]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -322,6 +333,9 @@ func setup(ids: Array, names: Array) -> void:
 	hub.setup_fighters(ids, names)
 	_last_size = Vector2.ZERO
 	_relayout()
+	if notice_auto_allowed(DisplayServer.get_name(), notice_args_text()):
+		notice_seen_session = true
+		show_photo_notice()
 
 
 func consume(e) -> void:
@@ -606,6 +620,7 @@ func _update_layers() -> void:
 	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d|%d|%s" % [_howto_tab, _howto_held(), UiStance.live_bits(), _howto_scroll, _howto_first]) if _howto_open else null)
 
 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
+	_l_notice.update_sig(UiNotice.sig(notice_plan()) if _notice_open else null)
 	_l_settings.update_sig(_settings_sig() if (_set_open and not _rm_open) else null)
 	_l_remap.update_sig(_remap_sig() if _rm_open else null)
 
@@ -741,6 +756,9 @@ func _paint_struggle(ci: CanvasItem) -> void:
 ## is open the HUD takes every key and click (so the fighters do not move behind it): the host should freeze the sim on
 ## howto_opened and unfreeze on howto_closed.
 func show_howto(first_run: bool = false, page: int = 0) -> void:
+	if _notice_open:
+		_notice_pending = [first_run, page]   # the notice comes first; the card opens when it is dismissed
+		return
 	if _howto_open or _fb_open or _set_open:
 		return
 	_howto_open = true
@@ -880,6 +898,9 @@ func _paint_howto(ci: CanvasItem) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _notice_open:
+		_notice_input(event)
+		return
 	if _pm_open and not (_rm_open or _set_open or _fb_open or _howto_open):
 		_pause_input(event)
 		return
@@ -984,12 +1005,139 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+# --- The photosensitivity notice (docs/ui/hud-spec.md section 49) ---------------------------------------------------------------------
+
+## The command line and, on the web, the page's query, as one string.
+static func notice_args_text() -> String:
+	var hay: String = " ".join(OS.get_cmdline_args()) + " " + " ".join(OS.get_cmdline_user_args())
+	if OS.has_feature("web"):
+		var q = JavaScriptBridge.eval("window.location.search", true)
+		hay += " " + str(q)
+	return hay
+
+
+## Whether this run is one that must not stop for a notice: a bench, a frame-limited run, a scripted shot, or `nonotice` (a command line, or the page's query).
+static func notice_skipped_by_args(hay: String = "") -> bool:
+	for w in ["bench", "frames", "shot", "nonotice"]:
+		if hay.contains(w):
+			return true
+	return false
+
+
+## Whether setup() shows the notice now: once per session, never in a headless run (a test, a QA batch), never in a run that must not stop (see above), and not when the demo turned it off.
+static func notice_auto_allowed(display_name: String, hay: String) -> bool:
+	return notice_auto and not notice_seen_session and display_name != "headless" and not notice_skipped_by_args(hay)
+
+
+## Show the notice (a no-op while it is already up). The fight is held through the How to play card's signals when no other overlay holds it already.
+func show_photo_notice() -> void:
+	if _notice_open:
+		return
+	_notice_open = true
+	_notice_focus = 0
+	if not (_howto_open or _fb_open or _set_open or _pm_open):
+		_notice_held = true
+		howto_opened.emit(false)
+	_l_notice.invalidate()
+
+
+## Dismiss it: `open_settings` is the OPEN SETTINGS button (Settings opens at the Reduced motion row, or its focus moves there if Settings is already open).
+func hide_photo_notice(open_settings: bool = false) -> void:
+	if not _notice_open:
+		return
+	_notice_open = false
+	_l_notice.update_sig(null)
+	if _notice_held:
+		_notice_held = false
+		howto_closed.emit(false)
+	notice_closed.emit(open_settings)
+	var pending: Array = _notice_pending
+	_notice_pending = []
+	if open_settings:
+		if _set_open:
+			_settings_focus_key("reduced_motion")
+		else:
+			show_settings("reduced_motion")
+	elif not pending.is_empty():
+		show_howto(bool(pending[0]), int(pending[1]))
+
+
+func is_notice_open() -> bool:
+	return _notice_open
+
+
+func notice_focus() -> int:
+	return _notice_focus
+
+
+func notice_plan() -> Dictionary:
+	return UiNotice.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _notice_focus})
+
+
+func _paint_notice(ci: CanvasItem) -> void:
+	if _notice_open:
+		UiNotice.draw(ci, notice_plan())
+
+
+## One of "left", "right", "accept", "back" (what a key, a pad button or a tap does).
+func notice_action(act: String) -> void:
+	if not _notice_open:
+		return
+	match act:
+		"left", "up":
+			_notice_focus = UiNotice.moved(_notice_focus, -1)
+			_l_notice.invalidate()
+		"right", "down":
+			_notice_focus = UiNotice.moved(_notice_focus, 1)
+			_l_notice.invalidate()
+		"accept":
+			hide_photo_notice(UiNotice.IDS[_notice_focus] == "settings")
+		"back":
+			hide_photo_notice(false)
+
+
+func _notice_input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		if event.pressed and not event.echo:
+			match event.keycode:
+				KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
+					notice_action("accept")
+				KEY_ESCAPE, KEY_P:
+					notice_action("back")
+				KEY_LEFT, KEY_UP, KEY_A, KEY_W:
+					notice_action("left")
+				KEY_RIGHT, KEY_DOWN, KEY_D, KEY_S, KEY_TAB:
+					notice_action("right")
+	elif event is InputEventJoypadButton:
+		if event.pressed:
+			match event.button_index:
+				JOY_BUTTON_A:
+					notice_action("accept")
+				JOY_BUTTON_B, JOY_BUTTON_START:
+					notice_action("back")
+				JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_UP:
+					notice_action("left")
+				JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_DPAD_DOWN:
+					notice_action("right")
+	elif event is InputEventMouseButton:
+		# A tap arrives as a mouse click too; one tap, one action. A click outside the buttons does nothing.
+		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			var id: String = UiNotice.hit(notice_plan(), event.position)
+			if id == "continue":
+				hide_photo_notice(false)
+			elif id == "settings":
+				hide_photo_notice(true)
+	get_viewport().set_input_as_handled()
+
+
 # --- The pause menu (docs/ui/hud-spec.md section 28) ---------------------------------------------------------------------------------
 
 ## Open or close the pause menu: the host's pause key, pause button and Start call this. Opening emits pause_menu_opened (the host freezes the
 ## sim and lets go of held keys); closing it is a Resume. While the menu is open the HUD takes every key, pad button and click, and the
 ## How to play card, Settings and Send feedback open over it and give it back when they close. Does nothing while one of those is open.
 func toggle_pause_menu() -> void:
+	if _notice_open:
+		return
 	if _pm_open:
 		if not (_rm_open or _set_open or _fb_open or _howto_open):
 			_pm_close("resume")
@@ -998,7 +1146,7 @@ func toggle_pause_menu() -> void:
 
 
 func show_pause_menu() -> void:
-	if _pm_open or _howto_open or _fb_open or _set_open:
+	if _pm_open or _howto_open or _fb_open or _set_open or _notice_open:
 		return
 	_pm_open = true
 	_pm_confirm = false
@@ -1244,8 +1392,8 @@ func _paint_join(ci: CanvasItem) -> void:
 ## moves behind it): the host should freeze the sim on settings_opened and restore the pause it found on settings_closed, as for How to
 ## play, and skip its own pad handling while is_settings_open() (see is_overlay_open()). Every change goes through set_option, so
 ## option_changed fires as it always does; the changes are kept for the next run (load_saved_options).
-func show_settings() -> void:
-	if _set_open or _howto_open or _fb_open:
+func show_settings(focus_key: String = "") -> void:
+	if _set_open or _howto_open or _fb_open or _notice_open:
 		return
 	UiSettings.two_humans = _humans() >= 2
 	_set_open = true
@@ -1257,6 +1405,19 @@ func show_settings() -> void:
 	_set_scroll = UiSettings.scroll_to(settings_plan(), _set_focus, 0.0) if _set_focus >= 0 else 0.0
 	_l_settings.invalidate()
 	settings_opened.emit()
+	if focus_key != "":
+		_settings_focus_key(focus_key)
+
+
+## Move the Settings focus to the row of an option (and scroll it into view), when it has one.
+func _settings_focus_key(key: String) -> void:
+	var rws: Array = UiSettings.rows()
+	for i in range(rws.size()):
+		if str(rws[i]["key"]) == key and bool(rws[i]["enabled"]):
+			_set_focus = i
+			_set_scroll = UiSettings.scroll_to(settings_plan(), _set_focus, _set_scroll)
+			_l_settings.invalidate()
+			return
 
 
 func hide_settings() -> void:
@@ -1277,7 +1438,7 @@ func is_settings_open() -> bool:
 
 ## Any of the three overlays (How to play, feedback, Settings) is open: the host leaves keys, pad and touch to the HUD.
 func is_overlay_open() -> bool:
-	return _howto_open or _fb_open or _set_open or _pm_open
+	return _howto_open or _fb_open or _set_open or _pm_open or _notice_open
 
 
 func settings_focus() -> int:
@@ -1344,7 +1505,9 @@ func _settings_accept(i: int) -> void:
 		UiSettings.CHOICE:
 			_settings_step(i, 1)
 		UiSettings.BUTTON:
-			if str(r["action"]) == "remap":
+			if str(r["action"]) == "photo_notice":
+				show_photo_notice()   # over the Settings screen: it gives it back when dismissed
+			elif str(r["action"]) == "remap":
 				show_remap()
 			elif str(r["action"]) == "remap_two":
 				show_remap("", 1)
@@ -2139,7 +2302,7 @@ func _remap_input(event: InputEvent) -> void:
 ## HUD takes every key and click, like the How to play card: the host pauses the sim on feedback_opened and restores the pause it
 ## found on feedback_closed. Nothing is sent anywhere: COPY REPORT puts plain text on the clipboard.
 func show_feedback(context: String = "pause") -> void:
-	if _fb_open or _howto_open or _set_open:
+	if _fb_open or _howto_open or _set_open or _notice_open:
 		return
 	_fb_open = true
 	_fb_context = context
