@@ -60,9 +60,9 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 - **Who.** The other fighter, while he has no blow of his own on its way and no attack button held. His guard may be up.
 - **What his stick does.** It moves him alone, in any direction, and the rival isn't drawn along. He opens 1 bh in 12 ticks: 5 bh a second, times his own speed. Behind a guard it is 0.6 of that. It answers within 2 ticks, as the nudge does.
 - **What the rival's stick does.** It moves the rival alone, at 0.6 of that rate. So a fighter can walk a wound blow after a rival who backs off, and the gap still opens, slowly.
-- **A leash.** The two are never more than 4 bh apart, which is inside the 4.5 bh where a brawl lets go. Giving ground never ends a brawl.
+- **A leash.** He opens no more than 2.4 bh past striking distance. That is what a light can close in its 4 ticks, and it is well inside the 4.5 bh where a brawl lets go. Giving ground never ends a brawl.
 - **A wound blow has a reach,** read as it lands: striking distance and 0.5 bh more for a medium, 1 bh more for a heavy, and 1 to 1.5 bh more for a charged heavy as it fills. Out of reach it misses, and he is open for 20 ticks (§3).
-- **Afterwards** the brawl takes hold again. A press by either closes the gap as part of the blow, which lands 2 ticks later for each bh, and never more than 4 later. He is drawn closing on every one of those ticks, and never moves more than 0.6 bh in one. So a medium punishes a missed heavy: 16 ticks against the 20 he is open.
+- **Afterwards** the brawl takes hold again. A press by either closes the gap as part of the blow, which lands 2 ticks later for each bh, and never more than 4 later. He is drawn closing on every one of those ticks, and never moves more than 0.6 bh in one. A light from further than 2.4 bh, which only happens when the two have come apart some other way, is thrown, closes what it can, and misses if it is still out of reach. So a medium punishes a missed heavy: 16 ticks against the 20 he is open.
 
 | The rival's blow | If the rival stands still | If the rival holds toward him |
 | :--- | :--- | :--- |
@@ -117,7 +117,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 **What it gives the game.** Position is the player's job under pillar 2, and now he has it inside a brawl. The Protagonist's AI nudges a brawl away from a town, and the rival's nudges it toward one. It reads each fighter's `care` for that: 0.8 for the Protagonist and −0.5 for the rival (`launch-pair-plan.md` §1). Both are 0.0 in the data today, so neither AI leans anywhere. A charged heavy can be walked into place before it is let go.
 
-**Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.partTicks` 12 and `brawl.partDeg` 45, `brawl.nudge.guard` 0.6, `brawl.maxStepBh` 0.3, and for digital input `brawl.nudgeDigital` 0.4 to 1.0 over 12 ticks. New: `brawl.nudge.stagger` 0.5, `brawl.nudge.held` 0.5, and `give` (5 bh a second, guard 0.6, follow 0.6, apart at most 4 bh, reach 0.5, 1 and 1 to 1.5 bh past striking distance, closing 2 ticks a bh up to 4, and the AI's shares).
+**Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.partTicks` 12 and `brawl.partDeg` 45, `brawl.nudge.guard` 0.6, `brawl.maxStepBh` 0.3, and for digital input `brawl.nudgeDigital` 0.4 to 1.0 over 12 ticks. New: `brawl.nudge.stagger` 0.5, `brawl.nudge.held` 0.5, and `give` (5 bh a second, guard 0.6, follow 0.6, at most 2.4 bh past striking distance, reach 0.5, 1 and 1 to 1.5 bh past striking distance, closing 2 ticks a bh up to 4, and the AI's shares).
 
 ## 2. Three strengths on three buttons
 
@@ -142,6 +142,17 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 - a shove, a grab, a perfect block and any charged blow always end it (§3, §4);
 - a blow that meets the armour adds nothing to the rival's run.
 
+**A medium's wind-up has no armour, and a light still doesn't end it** (Encounter's default, confirmed).
+- A medium or a heavier blow that lands on him ends it.
+- A light does its full damage and adds 1 to the rival's run. Its reel waits until his own blow has landed.
+- If a light ended it, the Y flurry would beat nothing. The X flurry beats it by the close: a stagger ends any wind-up.
+
+**Out of reach, Y and B are lunges** (confirmed).
+- Y is today's heavy lunge, and it lands as a medium.
+- B is the heavy's lunge on the same travel. Its 28 ticks count from the press, so it lands at 28 ticks or as he arrives, whichever is later.
+- What stops a lunge is what stops its wind-up, with a bolt read as a light, a heavy shot as a medium and a charged shot as a heavy.
+- RT + B is the beam at any range.
+
 ### The three flurries
 
 **Mashing a button is a flurry at that button's pace.** Each press is one blow. A press made while a blow of his is still going is held for up to 10 ticks and thrown as his line frees, as now.
@@ -160,7 +171,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
   - **the X flurry beats the Y flurry.** It lands twice as many blows, so its run climbs faster and it takes the close (`melee-press-feel.md` §3);
   - **the Y flurry beats the B flurry.** A medium lands every 12 ticks, inside the 20 in which a heavy's wind-up can still be stopped;
   - **the B flurry beats the X flurry.** Lights don't stop a heavy, and 6 brawl lights come back for the 1.4 he takes through the armour.
-- **The run and the close don't change.** Every landed flurry blow of any button adds 1 to his run, and a reply takes 1 off. At a run of 4 his next blow staggers the rival in place.
+- **The run and the close don't change.** Every landed flurry blow of any button adds 1 to his run, and a reply takes 1 off. At a run of 4 his next blow staggers the rival in place. That is the next blow of any strength, and the stagger is the close's 12 ticks whatever threw it.
 - **The mix-up is the three in any order.** Each press is its own blow at its own pace, one after another, so a light lands between the slower blows and its reel covers the start of their wind-ups. It also gives the rival no single answer, since each flurry has a different one.
 - **A string doesn't end by itself.** "A heavy after two landed blows is the ender" is withdrawn. A string ends when the player ends it: with a charged heavy, a throw or a power attack, or with the flurry's close.
 - **The looks** are the ones set for speed, on all three. An ordinary exchange of lights is 4 of 10 on flash (Orb, questionnaire 19).
@@ -176,6 +187,7 @@ Controls found two traps in "a tap lands when the wind-up ends, and a hold keeps
 | **The medium's wind-up is 12 ticks, and not 16** | Taps run 3 to 6 ticks on a pad, 4 to 8 on a keyboard and 5 to 12 on touch. At 12 every pad and keyboard tap lands on time, and with the grace no touch tap becomes a charge. A wind-up of 16 for everyone would slow the medium flurry by a quarter to protect one device. The grace is for every device, because the intent doesn't say which device a press came from |
 | **The clock** | The wind-up and the grace count live ticks, which stop in a hit freeze |
 | **No new bit in the intent** | A release has no true tick: one made in a freeze reaches the sim as the freeze ends. Because the wind-up doesn't advance in a freeze either, the release is read at the same point in the wind-up as it was made. So `relWaited`, and the replay break it would need, aren't asked for |
+| **Until a hold has its charge** | A Y still down at its decision point, 16 ticks, goes by itself there at a tap's strength. That lasts until C2b. B's hold is the charge from the first chain on (§10) |
 
 - **For players who can't hold a button:** yes to both of Controls' settings. A latched charge: a tap starts the wind-up and the next press lets it go. And charges off: every press is a tap.
 - **On the Simple layout the hold is the wind-up.** One button carries all three, and its clock starts on the press. The blow is thrown when he lets go, at the weight the hold has reached: under 12 ticks the light, from 12 the medium, and from 28 the heavy. So a medium can land 14 ticks after its press and a heavy 30, much as on the other layouts. Read literally, the first wording made them 24 and 56 (Controls, `docs/controls/windup-read.md`). This is Controls' recommendation with the light kept: a short tap is still a light, thrown on the release as it is today. It is still one blow to a press.
@@ -199,6 +211,7 @@ Controls found two traps in "a tap lands when the wind-up ends, and a hold keeps
   - **The two heavies are told apart by the hold.** A heavy let go from Attack was wound by its hold, and lands 2 ticks after the release. A heavy pressed on Y winds for 28 ticks from the press. Both arrive as B's edge, so the director reads which it is from the held level before the edge.
   - **No tap fires a signature, on any layout.** On Simple it is RT + Y, held to its first flash. If Simple touch can't make that with its thumbs, Controls designs the gesture, and the hold stays as its tell.
   - The pairs, the charged medium, the burst and the energy blows in reach aren't on Simple's buttons. The director throws the pairs and the energy blows, and the hold-to-flurry setting gives the flurry.
+  - **Touch Simple has no Context button:** its fourth slot is Transform. There the director throws the shove, the clinch and the tackle, as it throws the pairs. It is read again with C2b, when the shove exists.
 
 **The bands for press to contact, by button:** X at 2 ticks, with 95% inside 4. Y at 12 ticks, and never past 16. B at 28 ticks, and never past 32. On every button the move starts within 10 ticks of the press, which is the band Encounter already measures.
 
@@ -283,6 +296,8 @@ The press throws the light, as always. **The burst starts when the hold is certa
 **The other launches stand,** and each is a step up in skill: the full charged heavy, which is the read and is worth 8 to 10; the lift and then a heavy, since a heavy that lands on a lifted rival launches him (C6a); and a charged heavy at a flow of 3 (C3).
 
 **The AI** throws the launcher after 0.15, 0.35 and 0.6 of the staggers it causes, by level. That replaces `heavyAfterClose` (0.2, 0.6 and 0.9), so that a player isn't launched twice as often as today.
+
+**The riposte and the reversal** threw the old heavy. Both are mediums in worth now, with their staggers as built, and neither separates (confirmed). The launcher is what separates: a perfect block staggers for 20 ticks, so a B pressed in it launches.
 
 **One map for the stick, wherever it aims a blow in reach.** Combat assumed it (`docs/combat/pending/movegen/c2t-content.md`), and it is confirmed.
 
@@ -371,7 +386,7 @@ New, for Orb's fourth test: "do energy attacks look cool as part of close-range 
 - **The same button keeps firing as he leaves.** After the blast he is 4 bh away, and RB + X is now a bolt in flight. So the string a player finds first is: punches, the blast, bolts after him as he slides, and a zip back in.
 - **The launcher takes no energy.** A blast isn't a heavy, so it doesn't launch a staggered rival.
 - **RB + B is the beam,** as it fires today, until signatures play live (C5). From C5 a beam let go in reach carries him along it and drops him at its end. That is designed with C5.
-- **Held, RB + X and RB + Y do what they do at range** (the volley and the charged shot), fired from where he stands. They are read again with the energy stance's own slice.
+- **Held, each is its tap** (Encounter's default, which replaces my first line here). A held RB + X is one bolt, and a held RB + Y is the blast, let go at its decision point. The volley and the charged shot in reach are read with the energy stance's own slice.
 - **On Simple** the director throws them for the player, as it does the pairs.
 - **It doesn't drop a zipper.** Against a zip, a point-blank bolt is ruled as a light is.
 
@@ -519,7 +534,7 @@ The energy arts stance already fits: a bolt, a heavy shot that charges when held
 | Built or cut | Stands | Changes |
 | :--- | :--- | :--- |
 | **B1 and its repairs** (live) | A light is a blow at once. The run, the close, the close guard, blows on a staggered fighter adding nothing. The brawl's worths and `brawl.damageMul`. The perfect block and the reversal in place, and the riposte | The magnetism (§1). **Y is the medium:** today's heavy strikes, on a 12-tick wind-up where they had 26. **B stops firing the beam** and becomes the heavy, on a new tier of blows. The ender rule goes. The level trade's draw goes (§7). `enderShare` becomes how often the AI ends a string with a charged heavy |
-| **The zip's first slice** | All of it. LT + X is the zip strike and LT + Y the zip heavy, as built | Named again when the stances are re-read: with three strengths LT + Y is a zip medium and LT + B a zip heavy. Not now |
+| **The zip's first slice** | All of it. LT + X is the zip strike and LT + Y the zip heavy, as built | Named again when the stances are re-read: with three strengths LT + Y is a zip medium and LT + B a zip heavy. Not now. **Its counters follow the strengths** (confirmed): an X in the tech window as built; a Y whose wind-up ends in the tech window is the tech counter; a B whose wind-up ends in the heavy window is the heavy counter. A slow blow counters by when it lands, and not by when it is pressed. **The zip heavy keeps the worth it is built at,** on a key of its own, since today's heavy strikes are worth half as mediums |
 | **The skill strike as cut** | All of it for X: the beat point, the 4 ticks either side, the grade at the press, its worth of 4, the cleared run, the flow, the early and late rules, the pinned pose and the 10-tick return as the cue | It widens to all three. The beat follows any landed light, medium, heavy or skill strike. **On the beat, a wind-up is halved:** a medium skill strike lands 6 ticks after the press and is worth 6, for 2 ki; a heavy skill strike lands after 14, is worth 9, and is armoured as a heavy is, for 5 ki. Each adds 1 to the flow and clears the rival's run. "An ender at a flow of 3 launches" becomes "a charged heavy at a flow of 3 launches, at any charge". The showcase is subtle |
 | **Timing on a charged blow** | | Only the just release, on a full charged heavy |
 | **The lift and the juggle** (not built) | The juggle: up to five skill strikes, each worth less | The lift moves to X+Y, and to a full charged heavy with no stick |
@@ -539,9 +554,9 @@ C1 is unchanged and is being built. After it, the buttons come in two halves, so
 | ---: | :--- | :--- | :--- |
 | 1 | **C1** | **Control** (§1) and **the even mash** with its double hit (§7) | As ruled. Being built |
 | 2 | **C2a** | **The taps and the flurries** (§2): Y as a 12-tick medium, B as a 28-tick heavy with its armoured wind-up, the tap rule read at the wind-up's end with its grace, the three flurries, the mix-up. **The burst** on a held X (§3). **B stops firing the beam,** and RT + B fires it as it does today | Combat: today's heavies re-tagged as mediums, and a first set of super-heavy pieces. Animation: the mediums re-timed to 12 ticks, the heavy's wind-up and blow, the burst at its new gaps, with the 10-tick set before its stream. Encounter: wind-ups on live ticks, a flurry for each button, armour, B off the signature. Controls: the hold points become wind-up lengths, with the grace. Legal: the new tier and the burst, seen drawn |
-| 3 | **C2t** | **The test slice,** for Orb's four questions (§13). **Giving ground,** with a wound blow's reach (§1). **The stagger's half nudge** (§1). **The launcher** (§3). **Energy arts in reach:** the point-blank bolt and the blast (§5b) | Encounter: the four rules, and the AI's shares for giving ground, following and the launcher. Simulation: the stick as held, read in a stun. Animation: the heavy at a 14-tick wind-up, and two energy poses a fighter. VFX: §5b's list. Combat: the two energy pieces for each fighter. Legal: the two energy poses and the flash rate, seen drawn. QA: §13's rows |
+| 3 | **C2t** | **The test slice,** for Orb's four questions (§13). **Giving ground,** with a wound blow's reach (§1). **The stagger's half nudge** (§1). **The launcher** (§3). **Energy arts in reach:** the point-blank bolt and the blast (§5b). **The heavy's charge,** cut small (below) | Encounter: the five rules, and the AI's shares for giving ground, following and the launcher. Simulation: the stick as held, read in a stun. Animation: the heavy at a 14-tick wind-up, and two energy poses a fighter. VFX: §5b's list. Combat: the two energy pieces for each fighter. Legal: the two energy poses and the flash rate, seen drawn. QA: §13's rows |
 | | | **Orb plays C1, C2a and C2t** | |
-| 4 | **C2b** | **The holds** on Y and B (§3): the charged medium, the charged heavy with its knock-back, launch and lift, the just release, the fresh and the set guard, the wrench. **The shove** on a tapped A (§4). The two settings: a latched charge, and charges off | Animation: charge poses and their flashes. Encounter: the charges, the guard rules, the AI's shove against a heavy. Controls: the tap on A, and the two settings. Simulation: the crippling blow's trigger. UI: the charge cue |
+| 4 | **C2b** | **The holds** on Y and B (§3): the charged medium, what C2t leaves of the charged heavy (its rules on a guard, and the lift with no stick), the just release, the fresh and the set guard, the wrench. **The shove** on a tapped A (§4). The two settings: a latched charge, and charges off | Animation: charge poses and their flashes. Encounter: the charges, the guard rules, the AI's shove against a heavy. Controls: the tap on A, and the two settings. Simulation: the crippling blow's trigger. UI: the charge cue |
 | 5 | **C3** | **The skill strike** on all three (§9) | As cut, with the halved wind-ups on Y and B |
 | 6 | **C5** | **Signatures on RT + B:** the hold ladder, played live, the beam held and aimed by the player (§5) | Encounter: live staging. Simulation: ki by the second. Camera: no takeover on an art. UI: the two flashes |
 | 7 | **C4a and C6a** | **The tackle** and the taunt's gamble (§4). **The lift, the slip and the breaker** (§6), with the juggle, and a heavy on a lifted rival as a launch (§3) | Controls: the hold on A, and the two-button reads. Camera: the tackle's line |
@@ -552,6 +567,11 @@ C1 is unchanged and is being built. After it, the buttons come in two halves, so
 - **The double hit's close-up can follow C1.** C1 ships the rule, and the picture-in-picture comes when Camera, Animation and VFX have it.
 - **The armour is in C2a, and not with the charges.** It belongs to the heavy's wind-up, and without it the B flurry has nothing over the X flurry.
 - **The heavy tier is built,** by the EP's call, which Orb gave it: 16 key sets first, with today's heavies standing in on B until it is posed.
+- **C2a and C2t are built as one chain, in two steps** (Encounter's cut, `docs/director/brawl-plan.md` §10, which the EP accepted). C2a alone has nothing that separates the fighters, so its pacing rows would mean nothing.
+- **Encounter's nine defaults for that chain are ruled,** each in its own place: §1 (a light from too far), §2 (what ends a medium's wind-up, a hold before the charges, the lunges, the close), §3 (the riposte and the reversal), §5b (energy held) and §9 (the zip's counters and the zip heavy's worth). All nine are confirmed. Two came with a change of mine: the leash is shorter, and a held energy press is its tap.
+- **The heavy's charge comes forward into that chain, cut small.** Orb's second question is about an opponent charging up, and he will hold B himself and expect a charge. With wind-ups of 12 and 28 ticks only, the answer would be half honest.
+  - **In:** a B still down at 32 ticks keeps charging. It is full at 44, with its flash. It goes 4 ticks after he lets go, and by itself at 70. It is armoured as its wind-up is. It is worth 8, rising to 10, for 8 ki. A clean hit knocks back, and at full it launches, aimed as the launcher is, with the planner's pick when there is no stick. Its reach grows to 1.5 bh past striking distance. A miss leaves him open for 20 ticks. The AI charges 0.15, 0.3 and 0.45 of its heavies by level, and lets go within 8 ticks of the flash.
+  - **Out, and still C2b's:** the charged medium, the just release, the fresh and the set guard, the wrench, the shove, and the lift with no stick. On a guard a charged heavy is blocked as a tapped heavy is. A held Y goes by itself at 16 ticks, at a tap's strength.
 - **Animation's earlier sizes** (`docs/animation/brawl-second-pass-view.md`) were for two strengths. The new tier of heavy blows is the largest new item, and it needs sizing again.
 
 **Legal's screen of the first draft** (`docs/legal/brawl-screen.md`, RL-098 to RL-101) avoided nothing. Its rules stand here:
@@ -618,11 +638,11 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | Orb's question | The answer | Where | Slice | What Orb should see | QA's check (§11) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1. Can I move my character around during active combat?** | Yes, in every state but a knock-back and its kind. The stick moves the brawl while he strikes, mashes, winds up, charges, guards and reels. A stagger and a clinch now keep half | §1, the state table | C1. The stagger's half is in C2t, and the clinch's in C4b | He holds a direction while mashing and the fight drifts that way at once. The AI doesn't hold it still | No live tick of a brawl with a dead stick outside the exception (a hard test). A held stick against the medium AI moves the brawl at least 0.7 as far as against no stick |
-| **2. Can I move my character when the opponent is charging up an attack?** | Yes, and alone. He gives ground: his stick moves him and not the rival. He is out of a tapped heavy if he starts by tick 16 and the rival doesn't walk it after him | §1, giving ground | C2t, against wind-ups. Charges arrive in C2b, and the rule is already in | The AI winds up a heavy, he pulls the stick away, and the blow cuts air in front of him. Then his medium punishes it | He moves within 2 ticks of his stick (a hard test). Out of an unfollowed tapped heavy from tick 16 every time, and never when followed. The medium AI winds up 4 to 10 times in a minute of brawl |
+| **2. Can I move my character when the opponent is charging up an attack?** | Yes, and alone. He gives ground: his stick moves him and not the rival. He is out of a tapped heavy if he starts by tick 16 and the rival doesn't walk it after him | §1, giving ground | C2t, against wind-ups and the heavy's charge (§10) | The AI winds up a heavy, he pulls the stick away, and the blow cuts air in front of him. Then his medium punishes it | He moves within 2 ticks of his stick (a hard test). Out of an unfollowed tapped heavy from tick 16 every time, and never when followed. The medium AI winds up 4 to 10 times in a minute of brawl |
 | **3. Can I reliably launch my opponent?** | Yes. A tap of B on a staggered rival always lands and launches him. The route is: mash X until he staggers, then B, and aim with the stick | §3, the launcher | C2t | The same three inputs launch him again and again, and the stick decides where he goes | From a stagger, every time (a hard test). The scripted route launches in 50 to 75% of the brawls it is tried in against medium. A first launch inside 30 s of the first brawl in at least 80% of matches |
 | **4. Do energy attacks look cool as part of close-range combos?** | They can now be part of one. With RB held in reach, X is a point-blank bolt and Y is the blast, which knocks him back 4 bh. They chain into and out of blows with no gap | §5b | C2t | Punches, a palm shot that lights both fighters, the blast that carries him off, and bolts chasing him as he slides | The bolt lands 2 ticks after its press, and a clean blast knocks back 4 bh (hard tests). No more than three full flashes in a second (a hard test). "Cool" is Orb's to judge, against §5b's list |
 
-**The build that can pass all four is C1, C2a and C2t.** Without C2t, the first question passes on C1 alone. The second is half there on C2a: he can nudge, and stop a heavy with a medium, but he can't get out of its way alone. The third and fourth fail: no launch can be made on purpose, and an energy press in reach does nothing.
+**The build that can pass all four is C1, C2a and C2t.** Without C2t, the first question passes on C1 alone. The second is half there on C2a: he can nudge, and stop a heavy with a medium, but he can't get out of its way alone. The third and fourth fail: no launch can be made on purpose, and an energy press in reach does nothing. The heavy's charge is in that chain too, cut small (§10), so that the second question is answered against a held charge and not only a wind-up.
 
 **What could still fail each one on the day,** with its rule in:
 1. An AI that holds its stick against his. It is bound in §11.
