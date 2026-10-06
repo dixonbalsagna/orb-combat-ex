@@ -246,6 +246,11 @@
       "id": "s07",
       "rule": "no string places a piece after a step that is not drawn: no vanish, blink or teleport step",
       "why": "the vanishing-step staging"
+    },
+    {
+      "id": "s08",
+      "rule": "inside a hold, vicious blows run no more than 2 in a row to the same place, and the arm counts as three places (shoulder, elbow, wrist) and the head, core and legs as two each, so four taps on one region alternate places; vicious blows are strikes, never a grip on the throat, hair or tail, and never a clawed hand on the face; the sound rule f03 holds across the taps",
+      "why": "s02 applied to the clinch; Orb's design and the rating question are still open (not cleared by this row)"
     }
   ],
   "motion": [
@@ -333,13 +338,18 @@
     },
     {
       "id": "e06",
-      "rule": "a burst, a blast and a ki-style flurry (B) are thrown by one open or blade hand at shoulder height or lower; a flurry varies the piece (hand state, release, body) and never pumps the same hand repeatedly or both palms in turn; a point-blank blast shows its flash as a thin edge or short cone at the hand, never a ball",
-      "why": "the shouted two-palm barrage and the held sphere"
+      "rule": "a burst, a blast and a ki-style flurry (B), and an energy blow in reach (RB + X or Y), are thrown by one hand at shoulder height or lower: an open hand, a blade hand, or the rival's lit fist with the light on its plate and knuckle edges only (the cleared fist glow), never a ball or glow round the fist; a flurry varies the piece (hand state, release, body) and never pumps the same hand repeatedly or both palms in turn; a point-blank blast shows its flash as a thin edge or short cone at the hand, never a ball; never aimed at the face",
+      "why": "the shouted two-palm barrage and the held sphere; the lit fist was cleared in RL-062 and is not banned by e02 or e06"
     },
     {
       "id": "e07",
       "rule": "a beam held and steered by the player stays a plain straight line; steering moves the aim or the origin only, never twists, spirals or whips the beam, and the firing pose does not change while it is held",
       "why": "the drilling and whipping beams"
+    },
+    {
+      "id": "e08",
+      "rule": "R1 adopted: an energy blow in reach is one open, blade or lit-fist hand at shoulder height or lower, lit as a thin edge before it lands, the shot going off at contact as a thin edge or short cone, each body taking a rim of its colour on the near side and never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash; the blast's 12-tick wind-up is a held pose (h05) with its gather a thin ring or edge at the palm; the blade hand is a flat blade, never a pointed finger or two fingers (e03)",
+      "why": "R1 with the lit fist and the finger rule added"
     }
   ],
   "grabs": [
@@ -426,6 +436,11 @@
       "id": "k04",
       "rule": "a mutual throw-back, a spark-lock between two heavy commitments, a power-attack tell and a taunt's finish show no rubble ring with cracks and wind, no lightning on bodies, no body-wide aura and no gold, white or red flash; sparks sit at the contact point only",
       "why": "marks 4, 5, 3 and 7"
+    },
+    {
+      "id": "k05",
+      "rule": "full flashes are counted over the whole screen, every effect and both fighters together: at most three in any one second, each small (a thin edge or short cone), none red, and a reduced-motion setting halves the rate; the cap is checked by a flash analysis of a recorded mashed sequence on the real build",
+      "why": "photosensitivity; Combat's one in 20 ticks is the same 3 a second"
     }
   ],
   "heldScope": {

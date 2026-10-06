@@ -126,6 +126,10 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-104 | The burst (held X) and f01 restated; W1 and U1 adopted; b02, b03, b12 clarified | Combat, Animation | Medium | f01 by instant, new f04 and f05; elbow and knee added to b03; ru.su_ram and pu.su_drive confirmed as redraws | Open |
 | RL-105 | Flurry study drawn: heave and fall wind-ups, 28-tick gathers (double palm, ram, double hammer), burst opening; b03 tips completed | Animation, Combat | Low | Pass with nudges: double hammer hands to shoulder width; ram's gather one forearm only; larger contact crops asked; ram stays a stand-in | Open until nudges drawn |
 | RL-106 | Heave and fall contact crops seen; f01 ceiling clarified (tech echoes meet it) | Animation, VFX | Low | Closed: pu.su_drive and ru.su_ram pass; double hammer 22 apart and ram wrists 25.9 and 31.0 apart accepted; f01 is a ceiling by instant | Closed |
+| RL-107 | The 16 super-heavy key sets, drawn (super-heavy-screen.md) | Animation | Medium | PASS 10; NUDGE 6 (follow-through arms raised above the head on plate, hook, hammer, elbow heave, blade jaw; hands together on ball heave); no redraw | Open until nudges drawn |
+| RL-108 | Heave kneel read | Animation | Low | No legal reason to ease; grounded rise to chest or gut is an ordinary uppercut | Closed |
+| RL-109 | The launcher and energy in reach (launcher-and-reach-screen.md): 17 rows, R1 adopted as e08, e06 clarified (lit fist allowed) | Combat | Medium | PASS with conditions; launcher no new shape; bolts and blasts need contact and shot seen drawn | Open |
+| RL-110 | Vicious plan (ahead of C4b) and the flash rate | Combat, VFX | Medium | s08 (arm as three places, two per place); k05 (three full flashes a second over the whole screen, flash analysis); rating question still open | Open |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
