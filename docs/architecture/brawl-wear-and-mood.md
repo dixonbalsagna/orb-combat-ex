@@ -138,3 +138,53 @@ Pooled, the arms took 46 of 73 limb breaks, 63%.
 | 3 (power 100) | 273 s | 54% | 32% | 13% | 0% |
 
 The AI spent a median of 0.0 s charging before each step, so `chargePerSec` is not a lever for the acts and was left alone. Nine tenths of the ladder is damage: a hit gives its victim 1% of the damage as power and its attacker 0.6% (two constants in `sim/core/damage.gd`). The brawl's damage scale went from 0.30 to 0.38 in Encounter's slice, which is the likely reason the acts came forward (act 2 began at 78 s before it and at 66 s after; not isolated by a run). The levers that would move the acts are those two rates or the thresholds (30, 65, 100 in `ladder.json`).
+
+## 6. The retune on the riposte build (2026-10-05, on 2b96fdc)
+
+Encounter's slice (a perfect block and a reversal resolve inside the brawl) put more blows on target: 151.6 a minute between the AIs, from 104.5. Three sets of rows went out with it. The arms took 73.2% of limb breaks. Calm read 13.7% and Frenzied 27.9%. The acts began at 64, 148 and 237 s. QA's baseline also read 40.4% of battered wear recovered by the second breath, against a ceiling of 25.
+
+**What changed** (Game Design's rulings in `melee-press-feel.md` sections 9d to 9g and `spec-wounds.md` sections 1c and 8b):
+
+| What | Was | Is | Where |
+| :--- | :--- | :--- | :--- |
+| A landed light's pick of the arms and the legs, in 32 | 11 and 5 | 10 and 6 | `wounds.json` `family.light` |
+| Wear for a point of damage | 350 | 330 | `wounds.json` `wearPerDamage` |
+| The ladder's first threshold | 30 | 35 | `ladder.json` `thresholds` |
+| Power for a point of damage taken, and dealt | 0.01 and 0.006, constants in `damage.gd` | 0.0075 and 0.0045, data | `ladder.json` `takenPerDamage`, `dealtPerDamage` |
+| The mood for a brawl's landed light | 15 | 13 | `mood.json` `impulses.brawlLight` |
+| The mood's decay, units a tick | 4 | 5 | `mood.json` `rates.decay` |
+| The once-a-match wound beats that raise the act | a limb battered, the core bruised, the core battered | the first two | `mood.json` `actBeats.oncePerMatch` |
+| What restarts the second breath's 4 s | an exchange | an exchange, any hit he takes, his own approach | `SimWounds.step`, `f.breathT` |
+
+**The two power rates** are each fighter's own: a hit gives its victim `takenPerDamage` of the damage from the victim's file and its attacker `dealtPerDamage` from the attacker's. Moving them into data at their old values changed no match (parity passed on the goldens untouched).
+
+**The second breath waits for quiet** (`spec-wounds.md` section 1c). Measured before the change, over 12 AI matches: 74% of second-breath time was within 4 s of the fighter being hit or of an attack of his own, and what hit him then was always a shot. Shots never restarted the wait; only an exchange did. So a fighter under fire recovered as if the fight had paused.
+
+- The wait now starts again on any hit he takes (landed or blocked, a blow or a shot), on an exchange he is in, and on his own approach from its tell, whether or not it lands. The last is one line of the director's, by the EP's grant: `sim/director/bands.gd`, in `begin()`.
+- It does **not** start again when he fires a shot or when a hit of his own lands. That was built first, as "any attack of his own", and it took the bolt-only player from 27 wins in 100 to 8 and the mixed blaster from 48 to 15: a player who fires every 8 ticks restarted his own wait for ever. On the same 36 seeds bolt-only read 6 with that clause, 13 without it and 12 on the old rule.
+- State: `f.breathT`, hashed. The wait counts from the later of `f.exT` and `f.breathT`.
+
+**What starts the acts.** With the ladder slowed, the wound track began to lead. Thirty matches read tick by tick, with the three wound beats: act 4 began at a median of 245 s, and its cause was the core becoming battered in 19, a region break in 6 and a form step in 4. The ladder alone was already in band (the leading fighter's power reached 65 at 194 s and 100 at 308 s), so no threshold or rate could have moved act 4. With the core's battered beat out, the wound track gives two acts and the fourth needs a third form step or a region break. The core becoming battered still shows on the body and still feeds the mood.
+
+**Read in the tree,** 100 an arm and 100 seeds a pair:
+
+| | Band | Default | Swap |
+| :--- | :--- | ---: | ---: |
+| Arms' share of limb breaks | 35 to 65% | 60% of 47 | 49% of 45 |
+| Calm, Tense, Frenzied | 20 to 40, 40 to 65, 5 to 20% | 31.0, 60.1, 8.9 | 34.1, 58.5, 7.4 |
+| Acts 2, 3 and 4 begin, median | 90 to 150, 150 to 240, 270 to 345 s | 95, 183, 291 s | 94, 197, 322 s |
+| Act 4 before the first brink | at least 80% of matches | 99% | 99% |
+| Median length | 360 to 480 s | 408.5 s | 449.8 s |
+| Length, 10th and 90th percentile | at least 300, at most 600 s | 316.5 and 540.8 s | 319.1 and 567.8 s |
+| Second breath, share of battered wear recovered | at most 25% | 20.6% | 22.7% |
+| First brink, median; brink to KO, median | | 324 s; 59 s | 377 s; 54 s |
+| KAI's wins of 100 | | 55 | 48 |
+| Bolt-only against the medium AI | 20 to 40 of 100 | 25 | |
+| Mixed blaster against the medium AI | 30 to 50 of 100 | 35 | |
+
+Pooled, the arms took 50 of 92 limb breaks, 54%.
+
+**The mood's levers.** `brawlLight` 10 with decay 5 was in band but left Frenzied at 5 to 6%, on its floor. 13 with 5 centres it. The 240 that a perfect block or a reversal gives was left alone. Mood data does not feed back into the fight.
+
+**Checks** (`parity.gd`): "the second breath waits for quiet" (what restarts the wait and what does not, and the director's line), and two rows in the wired-numbers check for the two rates.
+

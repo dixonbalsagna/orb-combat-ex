@@ -26,8 +26,8 @@
     540000
   ],
   "_stageAt": "bruised 30, battered 60, broken 90 (pinned: sim/director/ai.gd, qa/godot/records.gd)",
-  "wearPerDamage": 350.0,
-  "_wearPerDamage": "350 (QA's combined list on 9da6e07, docs/qa/baseline-9da6e07.md: median length 492 to 469 s, first brink 417 to 387 s). It was 336, k 0.056 x 6000 (QA's +8% on the first agency build, docs/qa/baseline-agency1.md, accepted in agency-pass.md section 13), and 312 before that (QA's Q10 re-tune, docs/qa/retune-q10.md)",
+  "wearPerDamage": 330.0,
+  "_wearPerDamage": "330 (Game Design, 2026-10-05, on the brawl's riposte build: with the second breath waiting for quiet, brinks came sooner and the 10th-percentile length fell to 293 s; at 330 it reads 316 and 319 s, medians 408 and 450 s). It was 350 (QA's combined list on 9da6e07, docs/qa/baseline-9da6e07.md: median length 492 to 469 s, first brink 417 to 387 s). It was 336, k 0.056 x 6000 (QA's +8% on the first agency build, docs/qa/baseline-agency1.md, accepted in agency-pass.md section 13), and 312 before that (QA's Q10 re-tune, docs/qa/retune-q10.md)",
   "act1Damping": 1.0,
   "_act1Damping": "wear x this while the act index is 1 (SimMood.act). Below 1 it slows act 1's wear; above 1 it speeds it, so the first wound beats and act 2 come sooner (QA's M1b tuning: 1.3 with k 0.036, docs/qa/tuning-m1b.md)",
   "overtime": {
@@ -42,15 +42,15 @@
     "breathAfterTicks": 240,
     "hidden": 300,
     "hiddenFloor": 354000,
-    "_note": "per tick: out 0.25/s below 60 out of exchanges; breath 1/s for battered regions after 240 ticks without an exchange, down to hiddenFloor (59; pinned: sim/director/ai.gd); hidden 3/s with the hiding kit"
+    "_note": "per tick: out 0.25/s below 60 out of exchanges; breath 1/s for battered regions after 240 ticks of quiet (no exchange, no hit taken, landed or blocked, and no approach of his own; his own shots do not count: spec-wounds.md section 1c), down to hiddenFloor (59; pinned: sim/director/ai.gd); hidden 3/s with the hiding kit"
   },
   "focusWear": 30.0,
   "family": {
     "light": [
       12.0,
       4.0,
-      11.0,
-      5.0
+      10.0,
+      6.0
     ],
     "heavy": [
       1.0,
@@ -70,7 +70,7 @@
       1.0,
       1.0
     ],
-    "_note": "region pick weights (head, core, arms, legs) by hit family. light: a landed light picks the arms 11 times in 32 and the legs 5 (it was 12 and 4, as 3, 1, 3, 1: a brawl is mostly lights, and the arms took 83% of limb breaks; melee-press-feel.md section 9d). Game Design's next step if the arms are still over 65%: 12, 4, 10, 6"
+    "_note": "region pick weights (head, core, arms, legs) by hit family. light: a landed light picks the arms 10 times in 32 and the legs 6 (it was 11 and 5 until the riposte build, where more blows land and the arms went back to 73% of limb breaks; and 12 and 4 before that, as 3, 1, 3, 1: a brawl is mostly lights, and the arms took 83% of limb breaks; melee-press-feel.md section 9d). Game Design's next step if the arms are still over 65%: 12, 4, 10, 6"
   },
   "guardWearSplit": {
     "arms": 0.7,

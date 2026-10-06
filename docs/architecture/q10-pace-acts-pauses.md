@@ -7,6 +7,7 @@ Owner: Simulation and Engine. Status: plan, docs only (2026-10-01), for my windo
 - **Today:** `sim/core/fighter.gd` adds `9.0 * dt` power while charging. The fill (`fillPerSec`) and the thresholds are already in `data/fighters/<id>/ladder.json`.
 - **Change:** a new key `chargePerSec` in `ladder.json`, read into `LadderDef.charge`, used in place of the 9.0.
 - **Values (Game Design):** `chargePerSec` 0.5, `thresholds` 30, 65 and 100, `fillPerSec` 0.05, for both fighters.
+- **Since 2026-10-05** (`brawl-wear-and-mood.md` section 6): the first threshold is 35; the power a hit gives is data, `takenPerDamage` 0.0075 and `dealtPerDamage` 0.0045 (they were 0.01 and 0.006 in code); the wound track has two once-a-match beats, not three. In AI matches about nine tenths of the ladder comes from damage and none from charging.
 - **Wired-number check:** a forced probe for `chargePerSec` beside the one for `fillPerSec`.
 - **Schema:** `fighter-ladder.schema.json` gains `chargePerSec` (Tools, same commit).
 

@@ -184,7 +184,7 @@ static func step(S: SimState, f) -> void:
 		elif w < wd.stageAt[2] and f.hidden and f.canHide:
 			f.wear[r] = maxi(wd.hiddenFloor, w - wd.fadeHidden)
 			changed = f.wear[r] != w or changed
-		elif w < wd.stageAt[2] and w > wd.hiddenFloor and S.T - f.exT >= wd.breathAfter:
+		elif w < wd.stageAt[2] and w > wd.hiddenFloor and S.T - SimMathx.jmax(f.exT, f.breathT) >= wd.breathAfter:   # the second breath waits for quiet: no exchange, nothing hitting him, no attack of his own (spec-wounds.md section 1c)
 			f.wear[r] = maxi(wd.hiddenFloor, w - wd.fadeBreath)
 			f.breathWear += w - f.wear[r]
 			changed = true

@@ -55,6 +55,7 @@ func _init() -> void:
 	check("the form impulse", _formImpulse())
 	check("blocked blows and the arms", _blockedArms())
 	check("blocked shots and the arms", _blockedShots())
+	check("the second breath waits for quiet", _breathQuiet())
 	check("a bowed rush", _rushArc())
 	check("a drop", _drop())
 	check("the mood by a blow's form", _moodForms())
@@ -2054,6 +2055,85 @@ func _depth() -> String:
 	return ""
 
 
+## The second breath (spec-wounds.md section 1c): a battered region fades once the fighter has had quiet for the wait
+## (fade.breathAfterTicks). The wait starts again on a hit he takes, landed or blocked, and on his own approach from its
+## tell. It does not start again when he fires a shot or when a hit of his own lands: a fighter who only shoots still
+## gets his second breath. (An exchange he is in restarts it too, through f.exT.) Counted in live ticks through the step.
+func _breathQuiet() -> String:
+	var quiet := SimIntent.new()
+	var cases: Array = [["a hit he takes", true], ["a hit he blocks", true], ["a shot he fires", false], ["a hit of his own", false]]
+	for ci in range(cases.size()):
+		var label: String = cases[ci][0]
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+		var f = S.fighters[0]
+		var o = S.fighters[1]
+		var wd = f.wd
+		var wait: int = int(round(wd.breathAfter * 60.0))
+		if wait < 10 or wd.fadeBreath <= 0:
+			return "the wounds data gives a wait of %d ticks and a fade of %d" % [wait, wd.fadeBreath]
+		f.wear[SimWounds.HEAD] = wd.stageAt[1] + 120000
+		SimWounds.updateStages(S, f)
+		f.exT = -100.0
+		f.breathT = -100.0
+		var liveStep := func() -> bool:
+			for k in range(40):
+				S.out.fx.clear()
+				if SimCore.step(S, [quiet, quiet]):
+					return true
+			return false
+		var b0: int = f.breathWear
+		for t in range(5):
+			liveStep.call()
+		if f.breathWear != b0 + 5 * wd.fadeBreath:
+			return label + ": with quiet behind him the region faded %d in 5 ticks" % (f.breathWear - b0)
+		if ci == 0:
+			f.stance = 0.0
+			SimDamage.hit(S, null, o, f, 4.0, {"kind": "blast", "ignoreStance": true, "stop": 0.0})
+		elif ci == 1:
+			f.stance = 1.0
+			SimDamage.hit(S, null, o, f, 4.0, {"kind": "blast", "shot": 1.0, "stop": 0.0})
+		elif ci == 2:
+			var sh = SimShots.fire(S, 0, "bolt", {"ux": -o.face, "uy": 0.0})
+			if sh == null:
+				return "a bolt could not be fired"
+			SimShots.end(S, sh, "life")
+		else:
+			SimDamage.hit(S, null, f, o, 4.0, {"kind": "blast", "ignoreStance": true, "stop": 0.0})
+		f.wear[SimWounds.HEAD] = wd.stageAt[1] + 120000   # (a hit may have worn it: keep it battered and short of broken)
+		for r in [SimWounds.CORE, SimWounds.ARMS, SimWounds.LEGS]:
+			f.wear[r] = 0
+		SimWounds.updateStages(S, f)
+		var b1: int = f.breathWear
+		if cases[ci][1]:
+			for t in range(wait - 2):
+				liveStep.call()
+			if f.breathWear != b1:
+				return label + ": the region faded %d inside the wait" % (f.breathWear - b1)
+			for t in range(6):
+				liveStep.call()
+			if f.breathWear <= b1:
+				return label + ": the region did not fade again after the wait"
+		else:
+			for t in range(5):
+				liveStep.call()
+			if f.breathWear != b1 + 5 * wd.fadeBreath:
+				return label + ": it stopped the fade (%d in 5 ticks); only a hit he takes, an exchange or his approach does" % (f.breathWear - b1)
+		SimCore.dispose(S)
+	# his own approach, from its tell (the director's line in DirBands.begin)
+	var A := SimCore.createSim()
+	SimCore.newMatch(A, 5, {"p1": false, "p2": false}, {"intro": false})
+	for t in range(30):
+		SimCore.step(A, [quiet, quiet])
+	var af = A.fighters[0]
+	af.breathT = -100.0
+	DirBands.begin(A, af, A.fighters[1], SimAct.LIGHT, 0, A.tick)
+	if af.breathT != A.T:
+		return "his own approach did not restart the wait at its tell"
+	SimCore.dispose(A)
+	return ""
+
+
 ## A bowed rush (Rush.arc). With no arc a rush is the straight one it was. With one it leaves from the same place and
 ## arrives at the same point on the same tick, and between them it sits off the straight line by the arc x 4u(1 - u),
 ## square to the line, on the mover's left for an arc above 0 (up when he travels toward +x). It holds across the seam
@@ -2909,6 +2989,8 @@ const WIRED: Array = [
 	[["KAI/ladder.json", "VORR/ladder.json"], ["fillPerSec"], 2.0, "ladderTick"],
 	[["KAI/ladder.json", "VORR/ladder.json"], ["thresholds"], [10.0, 50.0, 75.0], "ladderTick"],
 	[["KAI/ladder.json", "VORR/ladder.json"], ["chargePerSec"], 7.0, "chargeTick"],
+	["KAI/ladder.json", ["takenPerDamage"], 0.5, "powerHit"],
+	["VORR/ladder.json", ["dealtPerDamage"], 0.5, "powerHit"],
 	[["KAI/ladder.json", "VORR/ladder.json"], ["tiers", "speed"], 0.5, "speed"],
 	[["KAI/ladder.json", "VORR/ladder.json"], ["tiers", "damage"], 0.5, "tierHit"],
 	[["KAI/ladder.json", "VORR/ladder.json"], ["tiers", "launch"], 0.8, "launch"],
@@ -3046,6 +3128,11 @@ func _wiredProbe(kind: String) -> String:
 				out = ["!VORR's attack never hurt KAI (%d requests)" % asked]
 			else:
 				out = [kai.hp, kai.wear[0], kai.wear[1], kai.wear[2], kai.wear[3]]
+		"powerHit":     # the ladder's two power rates: VORR hits KAI, and each one's power rises by his own file's rate
+			kai.power = 10.0
+			vorr.power = 10.0
+			SimDamage.hit(S, null, vorr, kai, 50.0, {"ignoreStance": true})
+			out = [kai.power, vorr.power]
 		"chargeTick":   # Q10: the charge rate
 			kai.power = 15.0
 			kai.state = "charging"

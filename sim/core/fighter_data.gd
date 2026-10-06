@@ -94,6 +94,8 @@ class MetersDef:
 class LadderDef:
 	var fill: float = 0.0             # power per second
 	var charge: float = 0.0           # Q10: power per second while charging (chargePerSec)
+	var taken: float = 0.0            # power for each point of damage a hit does to him (takenPerDamage)
+	var dealt: float = 0.0            # power for each point of damage his hit does (dealtPerDamage)
 	var stepKinds: Array = []         # Q10: per threshold, "pausing" or "live" (SimPause): a live step never pauses the fight
 	var thresholds: Array = []        # power at which tiers 2, 3 and 4 begin
 	var manualTierUp: bool = false    # I2a: a threshold makes the fighter ready and the tier waits for the transform
@@ -476,6 +478,11 @@ static func _ladder(id: String, j: Dictionary) -> LadderDef:
 		_err(where + ": chargePerSec must be a number of at least 0")
 	else:
 		l.charge = float(j.get("chargePerSec"))
+	for pk in ["takenPerDamage", "dealtPerDamage"]:
+		if not (j.get(pk) is float or j.get(pk) is int) or float(j.get(pk)) < 0.0:
+			_err(where + ": " + pk + " must be a number of at least 0")
+	l.taken = float(j.get("takenPerDamage", 0.0))
+	l.dealt = float(j.get("dealtPerDamage", 0.0))
 	var sk = j.get("stepKinds", [])
 	if not (sk is Array and sk.size() == 3):
 		_err(where + ": stepKinds needs one entry per threshold")

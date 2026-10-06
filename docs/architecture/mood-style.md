@@ -282,6 +282,10 @@ A transformation's break adds `impulses.form` to the mood (900 units, 15 points;
 
 A blow feeds the mood by what kind of blow it was (Game Design, `docs/design/melee-press-feel.md` section 9d, ruling 2). The `damage` event carries the form in `mode`, and `SimMood.tick` picks the impulse from it. The rules, the new impulses, what was measured and the levers are in `brawl-wear-and-mood.md`.
 
+## 8g. The retune on the riposte build (2026-10-05)
+
+`impulses.brawlLight` 13, `rates.decay` 5, and `actBeats.oncePerMatch` is a limb battered and the core bruised: the core becoming battered no longer raises the act. The reasons and the readings are in `brawl-wear-and-mood.md` section 6.
+
 ## 9. Open points
 
 - **Taunts and transformations** have no sim events yet. Their impulses are in the data and dormant until `taunt` (Encounter or Narrative) and `form_change` (F1) exist.

@@ -89242,6 +89242,191 @@
         "rule": "xref:launch-setup",
         "pointer": "/setup/weight/sneeze"
       }
+    },
+    {
+      "id": "ladder-rates-valid",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/takenPerDamage": 0.0075,
+            "/dealtPerDamage": 0.0045
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ladder-rates-taken-required",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "del": [
+            "/takenPerDamage"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ladder-rates-dealt-required",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "del": [
+            "/dealtPerDamage"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ladder-rates-taken-negative",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/takenPerDamage": -0.001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/takenPerDamage"
+      }
+    },
+    {
+      "id": "ladder-rates-dealt-negative",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/dealtPerDamage": -0.001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/dealtPerDamage"
+      }
+    },
+    {
+      "id": "ladder-rates-taken-type",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/takenPerDamage": "some"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/takenPerDamage"
+      }
+    },
+    {
+      "id": "ladder-rates-dealt-type",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/dealtPerDamage": "0.0045"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/dealtPerDamage"
+      }
+    },
+    {
+      "id": "ladder-rates-taken-zero-ok",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/takenPerDamage": 0,
+            "/dealtPerDamage": 0.0045
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ladder-rates-dealt-zero-ok",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/takenPerDamage": 0.0075,
+            "/dealtPerDamage": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ladder-rates-large-values-ok",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/takenPerDamage": 5,
+            "/dealtPerDamage": 3
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ladder-rates-note-ok",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/takenPerDamage": 0.0075,
+            "/dealtPerDamage": 0.0045,
+            "/_perDamage": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ladder-rates-unknown-key",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "set": {
+            "/takenPerDamage": 0.0075,
+            "/dealtPerDamage": 0.0045,
+            "/blockedPerDamage": 0.001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/blockedPerDamage"
+      }
     }
   ],
   "text": [

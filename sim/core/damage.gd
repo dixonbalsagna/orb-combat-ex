@@ -21,6 +21,8 @@ static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: S
 	# Since S2 hp is a readout only (the HUD bar): it floors at 0, and wounds and finishers decide the match.
 	f.hp = f.hp - amt if SimWounds.HP_ENDS_MATCH else SimMathx.jmax(0.0, f.hp - amt)
 	f.hurtT = S.T
+	if number:   # a hit (a blow or a shot, landed or blocked; not a landing or a collision): his second breath waits again
+		f.breathT = S.T
 	var region: int = SimWounds.pickRegion(S, f, fam) if amt > 0.0 else -1
 	SimFx.damage(S, f, by, amt, SimWounds.REGIONS[region] if region >= 0 else "", kind, col, number, form)
 	if region >= 0:
@@ -77,8 +79,8 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	if dStance == 1.0 and not o.get("ignoreStance", false):
 		D.ki = SimMathx.jmax(0.0, D.ki - dd * 0.08)
 	A.ki = SimMathx.jmin(100.0, A.ki + dd * 0.04)
-	D.power = SimMathx.jmin(100.0, D.power + dd * 0.010)
-	A.power = SimMathx.jmin(100.0, A.power + dd * 0.006)
+	D.power = SimMathx.jmin(100.0, D.power + dd * D.ld.taken)   # ladder.json takenPerDamage, dealtPerDamage: a hit feeds both ladders
+	A.power = SimMathx.jmin(100.0, A.power + dd * A.ld.dealt)
 	SimFx.spark(S, D.x, D.y + 34.0, 18 if o.get("big", false) else 9, "#fff3c0", 600.0, D.z)
 	S.dirS.stop = SimMathx.jmax(S.dirS.stop, jor(o.get("stop", 0.0), 0.05))
 	SimFx.shake(S, jor(o.get("shake", 0.0), 6.0), D.x, D.z)

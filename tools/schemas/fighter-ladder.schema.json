@@ -11,7 +11,9 @@
     "tiers",
     "manualTierUp",
     "chargePerSec",
-    "stepKinds"
+    "stepKinds",
+    "takenPerDamage",
+    "dealtPerDamage"
   ],
   "properties": {
     "schema": {
@@ -141,6 +143,16 @@
         ]
       },
       "description": "One entry per threshold: a pausing step may pause the fight (data/fight/pause.json), a live step never does (Q10)."
+    },
+    "takenPerDamage": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Power for each point of damage a hit does to this fighter."
+    },
+    "dealtPerDamage": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Power for each point of damage this fighter's hit does."
     }
   },
   "additionalProperties": false,

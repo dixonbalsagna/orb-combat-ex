@@ -17,14 +17,14 @@
     "finisherStart": 900,
     "taunt": 180,
     "landmarkFall": 600,
-    "brawlLight": 15,
+    "brawlLight": 13,
     "blocked": 0,
     "skillStrike": 90,
     "brawlHeavy": 120,
     "flurryClose": 180,
     "guardBreak": 240,
     "knockback": 180,
-    "_brawl": "a blow feeds the mood by its form (melee-press-feel.md section 9d, ruling 2). In a brawl: a light or a flurry blow that lands brawlLight (the lever, 15 to 30), a heavy or an ender brawlHeavy, a flurry's close flurryClose, a broken guard guardBreak. Anywhere: a blocked blow blocked, a knock-back knockback, a skill strike skillStrike (from brawl B2). A strike of a planned exchange outside a brawl is still strike or heavyStrike"
+    "_brawl": "a blow feeds the mood by its form (melee-press-feel.md section 9d, ruling 2). brawlLight is 13 and rates.decay 5 since the riposte build (2026-10-05: more blows land; it was 15 and 4). In a brawl: a light or a flurry blow that lands brawlLight (the lever, 15 to 30), a heavy or an ender brawlHeavy, a flurry's close flurryClose, a broken guard guardBreak. Anywhere: a blocked blow blocked, a knock-back knockback, a skill strike skillStrike (from brawl B2). A strike of a planned exchange outside a brawl is still strike or heavyStrike"
   },
   "aggressiveMul": {
     "num": 3,
@@ -37,7 +37,7 @@
   },
   "rates": {
     "bothAggressive": 1,
-    "decay": 4,
+    "decay": 5,
     "bothGuarded": 4,
     "proportional": {
       "on": false,
@@ -58,10 +58,9 @@
     ],
     "oncePerMatch": [
       "limbBattered",
-      "coreBruised",
-      "coreBattered"
+      "coreBruised"
     ],
-    "_note": "Q10 (spec-wounds section 8b): act = 1 + the larger of (form steps, wound beats) + region breaks, capped at act.max. formSteps switches the form track on: the most ladder steps any one fighter has taken. oncePerMatch is the wound track: the first time either fighter reaches each (a limb is the arms or the legs). every lists what adds to the act each time: a region break, either fighter. With formSteps false the act is 1 + every beat.",
+    "_note": "Q10 (spec-wounds section 8b): act = 1 + the larger of (form steps, wound beats) + region breaks, capped at act.max. The core becoming battered was a third once-a-match wound beat until 2026-10-05: with the ladder slowed, three wound beats made act 4 by themselves at about 245 s, so it was taken out (it still shows on the body and feeds the mood). formSteps switches the form track on: the most ladder steps any one fighter has taken. oncePerMatch is the wound track: the first time either fighter reaches each (a limb is the arms or the legs). every lists what adds to the act each time: a region break, either fighter. With formSteps false the act is 1 + every beat.",
     "formSteps": true
   },
   "bands": {

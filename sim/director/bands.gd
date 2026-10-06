@@ -120,6 +120,7 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
 	A.hideT = 0.0
 	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
 	A.rush = null
+	A.breathT = S.T   # an attack of his own, from its tell: his second breath waits again (SimWounds.step; spec-wounds.md section 1c)
 	if wind == 0:
 		_startRush(S, A, D, n)
 	DirInterrupt.si(A, DirInterrupt.TAUNT_AGE, 0)

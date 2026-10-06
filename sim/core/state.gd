@@ -522,6 +522,7 @@ class Fighter:
 	var canHide: bool = false    # S2: the old hiding kit (recovery, ambush) is for a future stealth fighter only
 	var lockBackT: float = -99.0 # S2 lock-break: when the opponent last regained lock on this fighter
 	var exT: float = 0.0         # S2: when this fighter was last in an exchange (second breath counts from here)
+	var breathT: float = 0.0     # ... and when he was last hit, or last attacked, outside one: a hit on him (landed or blocked, a blow or a shot), a shot he fired, a hit of his own. The second breath counts from the later of the two
 
 
 ## A rush toward a fighter ({tgt, off, end}) or toward a point ({px, py, end}).

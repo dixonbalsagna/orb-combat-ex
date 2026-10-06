@@ -41,5 +41,7 @@
     "pausing",
     "pausing",
     "pausing"
-  ]
+  ],
+  "takenPerDamage": 0.0075,
+  "dealtPerDamage": 0.0045
 }
