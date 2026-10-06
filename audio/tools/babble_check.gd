@@ -25,6 +25,7 @@ func _init() -> void:
 	_moods()
 	_gestures()
 	_director_schema()
+	_new_ids()
 	_bank_cost()
 	_sim_untouched()
 	print("\nbabble check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
@@ -189,6 +190,29 @@ func _director_schema() -> void:
 	var P: AudioBabble.Plan = bab.speak_line(s2, 1, line)
 	SimCore.dispose(s2)
 	ok(P != null and P.inner, "speak_line takes Narrative's line object (kind, display.style, mood, cues)")
+	bab.reset(4)
+
+
+## The sim's fighter ids are going from KAI and VORR to PROTAGONIST and RIVAL (docs/architecture/pending/fighter-split.md):
+## the babble finds a fighter's voice by f.id, so it must give the same plan under either spelling.
+func _new_ids() -> void:
+	print("5c. fighters carrying the new ids")
+	var line := {"id": "t.new.1", "text": "Hold on now, I'll be fine in a minute.", "mood": "desperate", "intensity": 2}
+	var digests: Dictionary = {}
+	for spelling in [["KAI", "VORR"], ["PROTAGONIST", "RIVAL"]]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5)
+		S.fighters[0].id = spelling[0]
+		S.fighters[1].id = spelling[1]
+		S.fighters[0].name = spelling[0]
+		S.fighters[1].name = spelling[1]
+		bab.reset(5)
+		var a: AudioBabble.Plan = bab.speak_line(S, 0, line)
+		var b: AudioBabble.Plan = bab.speak_line(S, 1, line)
+		ok(a != null and b != null and a.voice == "protagonist" and b.voice == "anti_hero", "%s and %s get the protagonist and anti-hero voices" % [spelling[0], spelling[1]])
+		digests[spelling[0]] = [a.digest(), b.digest()]
+		SimCore.dispose(S)
+	ok(str(digests["KAI"]) == str(digests["PROTAGONIST"]), "the same plans under either spelling (no audible difference)")
 	bab.reset(4)
 
 

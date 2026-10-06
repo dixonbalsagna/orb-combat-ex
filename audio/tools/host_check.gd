@@ -62,6 +62,26 @@ func _init() -> void:
 				flash_ok = false
 				print("flash cue %s is %.2f s, longer than its flash (%.2f s)" % [c.sound, len_s, float(bank.flashes.flashes[fl].max_s)])
 			n_flash += 1
+	# the same cues under the new fighter ids (PROTAGONIST and RIVAL): the voice and family are found by f.id
+	var base_ids: Array = []
+	for actor in range(fs.fighters.size()):
+		base_ids.append(cue_maker.flash(fs, actor, "found").sound)
+	fs.fighters[0].id = "PROTAGONIST"
+	fs.fighters[1].id = "RIVAL"
+	fs.fighters[0].name = "PROTAGONIST"
+	fs.fighters[1].name = "RIVAL"
+	var same_ids: bool = true
+	for actor in range(fs.fighters.size()):
+		var c2 = cue_maker.flash(fs, actor, "found")
+		same_ids = same_ids and c2 != null and c2.sound == base_ids[actor]
+	var grunts_new: String = _grunt_run(cue_maker, fs)
+	fs.fighters[0].id = "KAI"
+	fs.fighters[1].id = "VORR"
+	var grunts_old: String = _grunt_run(cue_maker, fs)
+	same_ids = same_ids and grunts_old == grunts_new and grunts_new != ""
+	print("grunts through the cue mapper under KAI and VORR, then PROTAGONIST and RIVAL: %s" % ("identical" if grunts_old == grunts_new else "DIFFERENT"))
+	flash_ok = flash_ok and same_ids
+	print("new fighter ids (PROTAGONIST, RIVAL): the flash cues are the same sounds as under KAI and VORR: %s" % ("yes" if same_ids else "NO"))
 	SimCore.dispose(fs)
 	# the pulse numbers must match Art's data/art/flashes.json (copied into flash_cues.json)
 	if FileAccess.file_exists("res://data/art/flashes.json"):
@@ -125,3 +145,22 @@ func _validate(all: Array, bank: AudioBank, cfg: Dictionary) -> String:
 		if c.x < 0.0 or c.x >= SimConst.W:
 			return "x %.1f is outside the planet for %s" % [c.x, c.sound]
 	return ""
+
+
+## Feed 60 damage events through the cue mapper (a fresh audio stream, sim time stepped by hand) and return a digest of
+## the voice cues it makes: the same under either spelling of the fighter ids.
+func _grunt_run(cue_maker, S) -> String:
+	cue_maker.reset(9)
+	var lines := PackedStringArray()
+	for i in range(60):
+		S.T = 5.0 + 2.0 * float(i)
+		var e := SimState.FxEvent.new()
+		e.type = "damage"
+		e.amount = 80.0
+		e.x = S.fighters[1 if i % 2 == 0 else 0].x
+		e.y = S.fighters[1 if i % 2 == 0 else 0].y
+		for c in cue_maker.consume(S, [e]):
+			if c.kind == "voice":
+				lines.append("%d|%s|%d|%.3f" % [i, c.sound, c.variant, c.pitch])
+	return "
+".join(lines).sha256_text() if lines.size() > 0 else ""

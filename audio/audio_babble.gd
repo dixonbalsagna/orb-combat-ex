@@ -84,7 +84,7 @@ func speak_line(S: SimState, actor: int, line: Dictionary, voice: String = "") -
 	if voice == "":
 		if actor < 0 or actor >= S.fighters.size():
 			return null
-		voice = String(cues_cfg.get("fighters", {}).get(S.fighters[actor].name, ""))
+		voice = String(cues_cfg.get("fighters", {}).get(S.fighters[actor].id, ""))
 	var text: String = String(line.get("text", ""))
 	if voice == "" or text == "" or not cfg.voices.has(voice):
 		return null

@@ -73,7 +73,7 @@ func flash(S: SimState, actor: int, flash_id: String) -> Cue:
 	if actor < 0 or actor >= S.fighters.size():
 		return null
 	var f = S.fighters[actor]
-	var fam: String = bank.family_of_voice(String(cfg.fighters.get(f.name, "")))
+	var fam: String = bank.family_of_voice(String(cfg.fighters.get(f.id, "")))
 	var id: String = "flash.%s.%s" % [flash_id, fam]
 	var meta: Dictionary = cfg.flash
 	if fam == "" or not bank.has_sound(id) or not meta.rank.has(flash_id):
@@ -144,7 +144,7 @@ func _grunt(S: SimState, rule: Dictionary, e, out: Array) -> void:
 	if idx < 0:
 		return
 	var f = S.fighters[idx]
-	var voice: String = String(cfg.fighters.get(f.name, ""))
+	var voice: String = String(cfg.fighters.get(f.id, ""))
 	# One shared cooldown per fighter and rule, so the pool does not stack grunts.
 	var key: String = "%d.%s" % [idx, String(rule.get("gesture", "pool"))]
 	if voice == "" or S.T - float(_last_grunt.get(key, -99.0)) < float(rule.cooldown_s):
