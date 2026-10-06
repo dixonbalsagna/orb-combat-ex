@@ -148,3 +148,9 @@ Questions for Orb, the ones that block the most first:
 6. The rest of Marketing's section 14: the $100 Steam fee, weekly hours, Discord or not, free or paid, the four-fighter minimum before a Steam page.
 
 Parked until a Steam build is near (no work started): Steam Deck Verified needs button glyphs that match the pad (Legal, RL-089: the neutral diamond set will probably fail on Deck; a plain lettered A B X Y set for Deck and Xbox-family pads, or Steam Input's own); honest minimum specs need a real old laptop, a phone and a Steam Deck measured; Platform asks to resume its unfinished frame-budget work.
+
+## Brawl: one thing to feel for when playtesting (2026-10-05)
+
+- A long brawl is allowed by design. A player who only presses lights can hold a brawl for 8 to 9 s at a time and most of a match, because nothing ends a brawl but an ender, a launch or someone leaving. Game Design ruled that this is what you asked for ("trade continuous strings of blows without interruption") and added no fatigue or limit. Its own risk note: it can pin a fight in one place, against the planet-wide travel the game is built on. If it feels that way in your hands, the first answer is the AI leaving a brawl it is losing, not a system limit. Say what you feel.
+- Not live yet, coming with Encounter's next slice: a perfect block or a reversal no longer ends the brawl; the blocker gets a riposte that cannot be blocked or dodged.
+- The depth band (fights zigzagging between streets) is not live; only its plumbing is in, switched off.
