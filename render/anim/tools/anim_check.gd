@@ -1334,6 +1334,45 @@ func _test_heave_step() -> void:
 	print("heave step (30-unit slack): %s" % " | ".join(seen))
 
 
+## The body's tint and palette (the dynamic sky's light on the bodies, Art's colour-vision presets): the tint is one multiply colour per body, white by default (no change by a pixel); the lane colour's parts carry a
+## 0 alpha in the mesh and every other vertex 1, which the body shader reads as its tint mask; a hit flash is drawn untinted; a new palette swaps the cached mesh and keeps the bones.
+func _test_body_tint() -> void:
+	var pal := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
+	var b := AnimBody.new()
+	b.build(pal, true)
+	var arr: Array = b.mi.mesh.surface_get_arrays(0)
+	var cols: PackedColorArray = arr[Mesh.ARRAY_COLOR]
+	var lane: int = 0
+	var other: int = 0
+	var bad: int = 0
+	var acc: Color = pal["accent"]
+	for c in cols:
+		if c.a < 0.01:
+			lane += 1
+			if absf(c.r - acc.r) > 0.02 or absf(c.g - acc.g) > 0.02 or absf(c.b - acc.b) > 0.02:
+				bad += 1
+		elif c.a > 0.99:
+			other += 1
+		else:
+			bad += 1
+	_expect(lane > 0 and other > lane and bad == 0, "body tint: the mask is wrong (%d lane vertices, %d others, %d wrong)" % [lane, other, bad])
+	var mat: ShaderMaterial = b.mi.material_override
+	b.set_tint(Color(0.5, 0.55, 0.7))
+	_expect((mat.get_shader_parameter("tint") as Color).is_equal_approx(Color(0.5, 0.55, 0.7)), "body tint: set_tint did not set the uniform")
+	b.set_look(1.0, false)
+	_expect((mat.get_shader_parameter("tint") as Color).is_equal_approx(Color.WHITE), "body tint: a hit flash is tinted")
+	b.set_look(0.0, false)
+	_expect((mat.get_shader_parameter("tint") as Color).is_equal_approx(Color(0.5, 0.55, 0.7)), "body tint: the tint did not come back after the flash")
+	b.set_tint(Color.WHITE)
+	var pal2: Dictionary = pal.duplicate()
+	pal2["accent"] = Color("#e69f00")
+	var mesh1: Mesh = b.mi.mesh
+	b.set_palette(pal2)
+	_expect(b.mi.mesh != mesh1 and b.mi.skin != null, "body tint: set_palette did not swap the mesh")
+	b.free()
+	print("body tint: %d lane-colour vertices left out of the tint, %d tinted; the flash is untinted; a palette swap keeps the skin" % [lane, other])
+
+
 ## The burst's set (Game Design brawl-second-pass section 3; data/anim/press_styles.json burst.set; docs/animation/energy-reach.md section 5): one light at once, then about 10 ticks of a set pose before the stream
 ## at 18, 22, 26, 31, 37, 45 and 56 ticks from the press. Played on the new ticks the set shows between the first light and the stream's first blow and nowhere else; the stream's own gaps (4 to 11) show none.
 func _test_burst_set() -> void:
@@ -3208,6 +3247,7 @@ func _run() -> void:
 	_test_medium_wind()
 	_test_energy_reach()
 	_test_burst_set()
+	_test_body_tint()
 	_test_heave_step()
 	_test_c2_cues()
 	_test_zip_view()

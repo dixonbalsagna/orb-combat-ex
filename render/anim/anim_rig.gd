@@ -182,7 +182,10 @@ static func mesh_for(pal: Dictionary) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for part in parts:
-		_emit(st, part, sub, pal[part[6]])
+		var pc: Color = pal[part[6]]
+		if part[6] == "accent":
+			pc.a = 0.0   # the lane colour's parts (the forearms, the sashes) carry a 0 alpha: the body's tint mask (AnimBody.set_tint), which leaves the lane colour untinted; the body shader ignores the alpha otherwise
+		_emit(st, part, sub, pc)
 	# the outline: smoothed push directions and reach baked into the mesh (Rendering's OutlineBake)
 	m = OutlineBake.bake(st.commit())
 	_meshes[key] = m

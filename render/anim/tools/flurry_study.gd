@@ -67,6 +67,7 @@ var tier_windup: int = 28
 var tier_first: int = 44
 var tier_hands_pk: Array = []   # the arm of each blow of a tier run (`window.__hands_pk`, `__hands_rk`: "r,r,l,..."): the free arm (l) mirrors the key set (Legal e09: the arm is chosen per throw)
 var tier_hands_rk: Array = []
+var body_tint: Color = Color.WHITE   # `window.__tint = "0.5,0.55,0.75"`: the world's light on the bodies (AnimBody.set_tint), to see what it does
 var tier_slack: float = 0.0     # units the rival stands beyond the study's distance (`window.__slack`): the closing rule's slack, to see a heave's half step
 var tier_names: Array = []      # the super-heavy tier's stills: `window.__tier = "su_knee,su_plate"` (or --tier=...) names the pieces; one blow every 80 ticks on a 28-tick wind-up, each fighter's own
 var cap: bool = false
@@ -112,6 +113,11 @@ func _ready() -> void:
 		var ts = String(_js("window.__style || ''", ""))
 		if ts != "":
 			tier_style = ts
+		var tn2 = String(_js("window.__tint || ''", ""))
+		if tn2 != "":
+			var tp: PackedStringArray = tn2.split(",")
+			if tp.size() >= 3:
+				body_tint = Color(float(tp[0]), float(tp[1]), float(tp[2]))
 		tier_slack = float(_js("window.__slack || 0", 0.0))
 		tier_gap = int(float(_js("window.__gap || 80", 80.0)))
 		tier_windup = int(float(_js("window.__windup || 28", 28.0)))
@@ -356,6 +362,7 @@ func _step_tick() -> void:
 			var wx: float = -DIST * 0.5 if i == 0 else DIST * 0.5 + offset + tier_slack
 			pivots[bi].position = Vector3(wx, -43.0, 0.0)
 			bodies[bi].apply(af.q, af.hips, af.curl, af.root_off)
+			bodies[bi].set_tint(body_tint)
 		var st: String = "%s %s" % [String(FIGHTERS[fighter]), String(sc.label)]
 		label.text = st if not sil else String(sc.id)
 		if near and not af0.press.is_empty():

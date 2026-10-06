@@ -11,6 +11,7 @@ var _hull: ShaderMaterial
 var _fingers_l: int
 var _fingers_r: int
 var _flash: float = 0.0
+var _tint: Color = Color.WHITE   # the world's light on the body (see set_tint): white is no change by a pixel
 var applied_version: int = -1   # the AnimFighter solve last written to this body (FighterView skips the bone writes when it has not changed)
 
 ## Palette keys: body, legs, arms, skin, gear, accent, hair (Colors). game true uses the hybrid projection (the game's
@@ -51,8 +52,25 @@ func set_anchor(a: Vector3) -> void:
 	_hull.set_shader_parameter("anchor", a)
 
 
+## The world's light on the body: one multiply colour (white, the default, changes nothing: the shader's `tint`, which is white unless set, multiplies the body's own colour). The lane colour's parts (the forearms
+## and sashes: the palette's `accent`, which FighterView sets to the aura colour or to the colour-vision preset's) carry a 0 alpha in the mesh, and the shader leaves them out of the tint; the outline (the keyline pass),
+## the aura and every glow are other materials and are not tinted; the hit flash is not tinted either (the body is drawn untinted for the ticks it flashes). Rendering sets it each frame from its SkyDrive value.
+func set_tint(c: Color) -> void:
+	if c != _tint:
+		_tint = c
+		if _flash <= 0.0:
+			_mat.set_shader_parameter("tint", c)
+
+
+## A new palette on the same body (the colour-vision preset changing the lane colour, or a new outfit): the cached mesh of that palette, the skin and the bones as they are. FighterView sets the material's `skin`
+## and `gear` from its own palette as it does at build.
+func set_palette(pal: Dictionary) -> void:
+	mi.mesh = AnimRig.mesh_for(pal)
+
+
 ## The hit flash (0 to 1). (Hidden fighters have no translucent variant on the baked body yet: hiding left the base game.)
 func set_look(flash: float, _hidden: bool) -> void:
 	if flash != _flash:
 		_flash = flash
 		_mat.set_shader_parameter("albedo", Color(1, 1, 1) if flash <= 0.0 else Color(8, 8, 8))
+		_mat.set_shader_parameter("tint", _tint if flash <= 0.0 else Color.WHITE)   # a flash is never tinted
