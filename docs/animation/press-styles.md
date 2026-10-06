@@ -145,3 +145,28 @@ Built as planned, with four precisions. **Where:** `anim_fighter.gd` (`_rip_args
 - **What VFX gets:** `AnimFighter.riposte` (`kind` light or heavy, `reversal`, `sure`, `ticks_to_contact`; from the beat, or from the cue alone with `cue: true` before the beat exists) and `press.sure` and `press.riposte` on a styled blow.
 
 **Checks (a fresh HEAD export plus my files, headless):** `anim_check` passes (6268 checks): both riposte kinds (light and heavy) for the perfect block and the reversal on both fighters, the wind-up cut to the data's 2 ticks (a light) and 3 (a heavy) and a negative control (windup 8 fails), the block's fade 1 to 0 and never rising, the blow within 0.2 rad of its contact key, no NaN or joint past a limit, `press.sure` and `press.riposte` set, the stagger fitted at n 20 and 40 with the old watch cleared, reduced motion not shortening it, the flag off (the blow plays plain, the stagger and the exposure still work), and one tick a frame against two equal within the ragdoll test's 1e-7. `joint_scan --strict` and `held_scan --strict` exit 0 (no new pose); render determinism plain and `--intro` pass. GIFs (off on the left, on on the right) in `art/animation/review/press-styles/`: `riposte-`, `riposte_heavy-`, `reversal-` and `riposte_long-` for `protagonist` and `antihero` (eight).
+
+## 13. On by default (2026-10-08)
+
+**The change:** `RenderAnim.press_styles` defaults to `true` (render_anim.gd, one line); `--no-press-styles` is the before and Shift+F7 still flips it. `main.gd` line 127 needs no edit: `host.vfx.press_enabled = RenderAnim.press_styles` reads the flag, so VFX's press looks follow it. `anim_check` now expects the default ON, restores the flag to the run's default after each test that changes it, and gives the seeded-match contact check a limit of 0.1 rad while the styles are on (see below).
+
+**What a real match does with it on** (a fresh HEAD export, six seeds of brawl B1, 32,400 ticks, AI against AI, headless; the same six seeds with it off for the comparison):
+
+| | off | on |
+| :--- | ---: | ---: |
+| NaN rotations | 0 | 0 |
+| joint violations before the final limb pass (A to D stages, all frames) | 12,153 | 10,533 |
+| solve cost a fighter-frame | 453 us | 467 us (+3%) |
+| `main.frame` a frame (the whole view update, four seeds, mean / p95) | 2.05 / 3.15 ms | 2.12 / 3.33 ms (anim and VFX looks both on) |
+| contact frames | 5,026 | 5,026 (every blow still lands on its tick) |
+| worst contact error (pose against the contact key at the contact tick) | 0.003 rad | 0.080 rad, always `spine_1` and `spine_2` |
+
+- **The 0.08 is the style, not a fault:** it is the cap of the mashed blow's spine twist in `press_styles.json`; the hand still reaches the contact point by the contact solve. The seeded-match gate in `anim_check` is therefore 0.1 with the styles on and 0.02 with them off.
+- **Wrong hands:** 226 contact ticks compared the beat's `hand` with the side the body used: 0 mismatches (a broken limb overrides the side by design, and none occurred).
+- **Poses against the ragdoll:** 0 frames of a styled blow while the fighter was launched, down or dropped. 14,334 of the 18,942 styled-blow frames overlap a hit reaction on the same fighter (the brawl's trades): the reaction and the style stack on the spine and the final limb pass keeps both inside the joints (no violation reaches the screen: `joint_scan --strict` exits 0).
+- **Styles chosen from the real beats:** speed 1,481 blows, heavy 321, **tech 15**. The tech look is rarely produced by two AIs (they mash); it is tested in the lab and in `anim_check`, and a person pressing in rhythm is the first real run it gets.
+- **Cost at 30 frames a second:** the CPU side is about 0.07 ms a frame (the solve is once a frame whatever the ticks a frame; the rest is the per-tick style state and VFX's looks), 0.2% of a 33 ms frame. Not measured: VFX's draw cost (the looks add sprites; the web bench would show it) and a real old laptop.
+
+**Checks run with it on** (fresh HEAD export plus my two files): `anim_check` passes (6,268 checks), `coverage_live --strict`, `lead_scan --strict --max=40` (11 feet-first frames, the same as with it off), `joint_scan --strict`, `held_scan --strict`, render determinism plain and `--intro`, VFX's `effects_check` and `hash_check` all pass. Review GIF of a real brawl from the web build in headless Chrome (a scratch export with the flip, a screencast at about 5 frames a second, so the motion is sampled, not smooth): `art/animation/review/press-styles/real-brawl-web.gif`.
+
+**What I could not see:** the screencast rate (software GL in headless Chrome) is too low to judge the timing of a single blow, only that no pose breaks, no limb flips and the two fighters stay in contact; Orb watching a match live with Shift+F7 as the A/B is the real check. **What I would watch first:** the tech look under a real player, and the brawl's trade frames (a styled blow while a reaction plays) at full frame rate.

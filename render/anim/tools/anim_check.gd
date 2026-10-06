@@ -18,6 +18,7 @@ var report_out: String = ""
 var report: Dictionary = {"runs": []}
 var fails: Array = []
 var checks: int = 0
+var _press_default: bool = true   # RenderAnim.press_styles as the run started (the shipped default, unless a flag on the command line changed it): the tests that end by restoring it restore this
 
 
 func _initialize() -> void:
@@ -28,6 +29,8 @@ func _initialize() -> void:
 			max_ticks = int(a.substr(8))
 		elif a.begins_with("--report="):
 			report_out = a.substr(9)
+	RenderAnim.is_enabled()   # reads --press-styles and --no-press-styles
+	_press_default = RenderAnim.press_styles
 	DirData.templatesProfile = "dynamic"
 	var vpn := SubViewport.new()
 	vpn.size = Vector2i(1280, 720)
@@ -333,7 +336,7 @@ func _test_flight_lead() -> void:
 ## The launch pair live (docs/animation/pair-live.md): a roster id plays as its fighter of data/anim/fighters.json (KAI the protagonist, VORR the antihero, the neutral id rival too);
 ## his waves are baked and his pick lists and entries built; in a real match his blows are his own key sets (pr and ph for the protagonist, w1 and rb for the rival); the energy
 ## cues and shots start the sequence or hold of his role; a far taunt is one of his own gestures and is cut like the shared one.
-## The press styles (docs/animation/press-styles.md, RenderAnim.press_styles, default OFF): each style on each launch fighter through a hand-fed
+## The press styles (docs/animation/press-styles.md, RenderAnim.press_styles, default ON): each style on each launch fighter through a hand-fed
 ## exchange. The style layer sits on top of the contact key (a few hundredths of a radian on the spine), a styled blow is never worse
 ## for the joints than the plain one, the contact point is held through a tech blow's beat, VFX's hand-off (press, press_pose, press_path)
 ## is filled, and the flag moves no gameplay hash.
@@ -586,7 +589,7 @@ func _test_riposte() -> void:
 
 
 func _test_press_styles() -> void:
-	_expect(not RenderAnim.press_styles, "press styles: the flag must be OFF by default")
+	_expect(_press_default, "press styles: the flag must be ON by default (brawl B1 stamps every beat; --no-press-styles is the before)")
 	_expect(not AnimData.press.is_empty() and AnimData.press.get("styles", {}).has("tech") and AnimData.press.styles.has("speed") and AnimData.press.styles.has("heavy"), "press styles: data/anim/press_styles.json did not load")
 	var scenes := {
 		"tech": ["light", [[42, "strike.jab", "tech", 26.0], [72, "strike.cross", "tech", 26.0]]],
@@ -622,7 +625,7 @@ func _test_press_styles() -> void:
 				_expect(int(on.get("load_ticks", 99)) <= 2, "%s: the first blow from idle winds up %d ticks ahead (the ruling: 2, press-to-blow wins)" % [tag, int(on.get("load_ticks", 99))])
 			if sc == "heavy":
 				_expect(on.phases.has("smear") and float(on.dx_max) > 1.0, "%s: no smear frame or lunge (%s, dx %.2f)" % [tag, on.phases.keys(), float(on.dx_max)])
-	RenderAnim.press_styles = false
+	RenderAnim.press_styles = _press_default
 	RenderAnim.joint_audit = audit_was
 	RenderAnim.ground_feet = ground_was
 	# a real seeded match: the flag moves no gameplay hash, and the styles come from the press log when the beat names none
@@ -643,7 +646,7 @@ func _test_press_styles() -> void:
 				var pn: Dictionary = RenderAnim.fighter(S2, S2.fighters[i]).debug.get("press_n", {})
 				for kk in pn:
 					counts[kk] = int(counts.get(kk, 0)) + int(pn[kk])
-	RenderAnim.press_styles = false
+	RenderAnim.press_styles = _press_default
 	_expect(hs[false] == hs[true], "press styles: the gameplay hash differs with the flag on")
 	var total: int = 0
 	for kk in counts:
@@ -847,7 +850,7 @@ func _test_zip() -> void:
 			_expect(int(on.smear) == 0 or rd == "heavy", "%s: a smear frame outside the heavy zip" % tag)
 			if rd == "heavy":
 				_expect(int(on.smear) >= 1, "%s: no smear frame on the way in" % tag)
-	RenderAnim.press_styles = false
+	RenderAnim.press_styles = _press_default
 	RenderAnim.ground_feet = ground_was
 	print("  zip: speed, tech and heavy on both fighters play tell, in, reach, out; no joint past its limit on screen; every reading is drawn travelling at least 4 ticks each way, the heavy one smears")
 
@@ -935,7 +938,7 @@ func _test_beat_fields() -> void:
 		_expect(int(closer.hold_ticks) > int(plain.hold_ticks), "%s: the closing blow holds %d ticks against %d for a plain one" % [tag, int(closer.hold_ticks), int(plain.hold_ticks)])
 		var chain: Dictionary = _beat_scene(S, who, [[50, "strike", _bm(base, {"style": "speed", "k": 1, "n": 2, "hand": "r"})], [70, "chainStrike", {"a": "A", "d": "D", "style": "tech", "grade": "perfect", "k": 2, "n": 2, "hand": "l", "closing": true, "charge": 0.0, "ender": false}]])
 		_expect(chain.styles.has("tech") and chain.styles.has("speed"), "%s: a chainStrike's own style was not played (%s)" % [tag, chain.styles.keys()])
-	RenderAnim.press_styles = false
+	RenderAnim.press_styles = _press_default
 	RenderAnim.ground_feet = ground_was
 	print("  beat fields: grade sets a tech blow's hold and after-images, hand the side, charge a heavy's squash, closing the hold, and a chainStrike plays its own style")
 
@@ -1028,7 +1031,7 @@ func _test_tech_consistency() -> void:
 				if d > worst:
 					worst = d
 					where = "%s %s, %d ticks after contact" % [who, mode, i]
-	RenderAnim.press_styles = false
+	RenderAnim.press_styles = _press_default
 	RenderAnim.ground_feet = ground_was
 	_expect(worst < 0.15, "tech consistency: the tech blow's pose differs by %.3f rad between idle, a string and a zip (%s); the limit is 0.15 (the contact solve's small differences)" % [worst, where])
 	print("  tech consistency: the same perfect tech cross from idle, in a string and at the end of a zip: worst difference %.3f rad (%s)" % [worst, where])
@@ -1062,7 +1065,7 @@ func _test_zip_slice() -> void:
 		var push: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"piece": "strike.shoulder_check", "style": "push"})]])
 		var tech: Dictionary = _beat_scene(S, who, [[60, "strike", _bm(base, {"style": "tech", "grade": "perfect"})]])
 		_expect(push.styles.has("push") and int(push.release_ticks) >= 4 and int(tech.release_ticks) <= 1, "%s: a push should drive into its contact with no snap (%d ticks of drive against %d for a tech blow)" % [tag, int(push.release_ticks), int(tech.release_ticks)])
-	RenderAnim.press_styles = false
+	RenderAnim.press_styles = _press_default
 	RenderAnim.ground_feet = ground_was
 	print("  zip slice: an entry plays at zip speed over the way in, a far-side pass over or round, a missing entry falls back, a check holds the guard arm, a push drives with no snap")
 
@@ -2179,7 +2182,9 @@ func _run() -> void:
 						print("    short: seed %d %s" % [seed, nt])
 			_expect(nan == 0, "seed %d %s: %d NaN rotations" % [seed, mode, nan])
 			_expect(frames > 0, "seed %d %s: no blow reached its contact frame (%d part frames)" % [seed, mode, parts])
-			_expect(cerr < 0.02, "seed %d %s: the pose on a contact frame is %.4f rad from the contact key" % [seed, mode, cerr])
+			# the press styles' own body at the contact tick (a mashed blow twists the spine, up to the data's cap of 0.08 rad on spine_1 and spine_2, measured on every real seed) is not an error: the limit is that cap plus a margin
+			var c_lim: float = 0.1 if RenderAnim.press_styles else 0.02
+			_expect(cerr < c_lim, "seed %d %s: the pose on a contact frame is %.4f rad from the contact key (limit %.2f)" % [seed, mode, cerr, c_lim])
 			gl.sort()
 			var gworst: float = gl.back() if gl.size() > 0 else 0.0
 			_expect(ikf > 0 and gl.size() > 0, "seed %d %s: the contact solve never ran (%d IK frames, %d reachable contacts)" % [seed, mode, ikf, gl.size()])
