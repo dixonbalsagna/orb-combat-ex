@@ -1,0 +1,4 @@
+{
+  "_why": "The one switch for what the public site serves. \"offline\": true publishes only the plain notice (tools/site-notice.json), as /, /play/, /bench/, /band/ and 404.html, and copies nothing of the web export. To bring the playable site back, change it to false (one line) and push; CI exports and checks the build either way. Orb's order, 2026-10-06.",
+  "offline": true
+}

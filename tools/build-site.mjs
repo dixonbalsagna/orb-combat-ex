@@ -1,5 +1,7 @@
 // Assembles the GitHub Pages site. Node built-ins only; deterministic (no clock, no random).
-//   node tools/build-site.mjs --web <dir with the Godot web export> --out <site dir> [--commit <sha>] [--band <dir>]
+//   node tools/build-site.mjs --web <dir with the Godot web export> --out <site dir> [--commit <sha>] [--band <dir>] [--config <site.json>]
+// OFFLINE SWITCH: tools/site.json {"offline": true} (Orb's order, 2026-10-06) makes the site the plain notice of tools/site-notice.json and nothing else: /, /play/, /bench/, /band/ and
+// /404.html are that one static page and no game file is copied. The export is still required and checked, so a broken export still fails CI. Set it to false to publish as below.
 // Layout of <site dir>:
 //   index.html               landing page linking to the Godot build
 //   play/                    the Godot web export (index.html, .js, .wasm, .pck, ...)
@@ -15,6 +17,7 @@
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { siteNotice } from './site-notice.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -36,8 +39,27 @@ if (!existsSync(join(webDir, 'index.html')) || !readdirSync(webDir).some((f) => 
   process.exit(1);
 }
 
+const configFile = resolve(opt('--config') || join(import.meta.dirname, 'site.json'));
+const config = JSON.parse(readFileSync(configFile, 'utf8'));
+if (typeof config.offline !== 'boolean') {
+  console.error(`error: ${configFile} needs "offline": true or false`);
+  process.exit(1);
+}
+
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
+
+if (config.offline) {
+  // The notice, and no game: no wasm, pck, script, manifest or icon of the export, and no /bench/ or /band/ build either (the bench runs a match with no gate; the band is playable).
+  const page = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice.json'), 'utf8')));
+  for (const where of ['index.html', 'play/index.html', 'bench/index.html', 'band/index.html', '404.html']) {
+    mkdirSync(join(outDir, where, '..'), { recursive: true });
+    writeFileSync(join(outDir, where), page);
+  }
+  console.log(`site built in ${outDir}: OFFLINE (tools/site.json): the notice at /, /play/, /bench/, /band/ and /404.html, no game files`);
+  process.exit(0);
+}
+
 mkdirSync(join(outDir, 'bench'), { recursive: true });
 cpSync(webDir, join(outDir, 'play'), { recursive: true });
 

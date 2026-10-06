@@ -164,8 +164,15 @@ jobs:
           "$GODOT" --headless --path research/band-proto --import
           mkdir -p "${RUNNER_TEMP}/band"
           "$GODOT" --headless --path research/band-proto --export-release "Web" "${RUNNER_TEMP}/band/index.html"
-      - name: Assemble the site (/, /play/, /bench/, /band/)
+      - name: Assemble the site (/, /play/, /bench/, /band/; the plain notice only while tools/site.json says offline)
         run: node tools/build-site.mjs --web "${RUNNER_TEMP}/web" --out "${RUNNER_TEMP}/site" --commit "${GITHUB_SHA}" --band "${RUNNER_TEMP}/band"
+      # With "offline": true in tools/site.json the output must hold no game: no .wasm, no .pck, no script, only the notice pages. Fails the job if it does.
+      - name: Check the offline site holds no game
+        run: |
+          node tools/check-site-offline.mjs --site "${RUNNER_TEMP}/site"
+          if grep -q '"offline": true' tools/site.json; then
+            if find "${RUNNER_TEMP}/site" \( -name '*.wasm' -o -name '*.pck' \) | grep -q .; then echo "an offline site holds a .wasm or .pck"; exit 1; fi
+          fi
       - name: Upload the Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
