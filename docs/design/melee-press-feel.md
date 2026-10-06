@@ -377,6 +377,24 @@ So for a zipper who came in from the rival's left:
 | Zips away, as a share of all zips | At most 30% |
 | Seconds a minute with nothing running (§2b) | Still at most 12, with zips away in |
 
+#### Ruled for the first zip slice (Z1)
+
+Encounter builds the zip strike and the zip heavy first: one blow a zip, the exit by the stick, and the counters on arrival. The zip away, the rushed zip heavy, the signature zip and piloted charges follow in a second slice. It asked five things. All five of its defaults stand.
+
+| | The question | The ruling |
+| :--- | :--- | :--- |
+| a | What a zip's blow is worth, now that melee is at the brawl's scale | **A zip strike is worth a skill strike:** 4 brawl lights, as a light charge's arrival is (§9b). **A zip heavy is worth a brawl heavy.** Each is times its reading: speed ×1, tech ×1.25, held ×1.25. So a zip's worth moves with `brawl.damageMul`, like every other blow. "A light at ×1.0" in the tables above meant the data's light, and at the brawl's scale that would be 8 damage for 20 ki |
+| b | The tech reading is sometimes known only at the arrival | **There are two ways to earn it.** *By the press that starts the zip,* made inside the rival's tell: he flies in on the floor, his blow is the tech blow, the rival's blow misses, and he leaves on the floor. *By a second press within 4 ticks of his own arrival:* he keeps the way in that he flew, his blow is the tech blow, and he leaves on the floor. That one is a timed strike and not a read, so the rival's blow isn't made to miss |
+| c | The tech counter before the skill strike, the parry and the stuff exist | **A light pressed in the counter's window is the tech strike,** and is worth a skill strike. That isn't only for now: the window is the mark, so a light pressed inside it is a tech reading by definition. **A perfect block counts too,** with its 20-tick stagger and its riposte (§9f) |
+| d | A speed blow that lands on the zipper before his own blow | **The brawl starts on that tick.** His way out is cancelled. His zip blow is thrown as his reel ends, as his first blow of the brawl. It keeps the worth and the reading he paid for, and from then on it can be blocked, traded or stopped like any brawl blow |
+| e | How high the way out bows over the rival | **2 bh.** It goes over him by default. It goes under him when the stick points down and there are 2 bh of clear room beneath him. Data: `zip.bowBh` 2 |
+
+**The rows for Z1** are the four above, unchanged: zip strikes that land clean at 35 to 55% against an opponent who answers, countered at 10 to 25%, caught at 20 to 35%, and zip ki at no more than 25% of all ki spent. B1c doesn't move them. Two are added as reported numbers, with no band until there is a reading:
+- the rest of a zip's outcomes, as shares: blocked, dodged, and stopped by a shot on the way in. The three banded shares don't add up to 100, and these are the remainder;
+- a player who does nothing but zip strike, against the medium AI. It shows whether the zip can carry a fight alone.
+
+The rows for the zip away wait for the second slice.
+
 ## 3. Mash: the faster he taps, the faster the flurry
 
 - **The flurry follows the taps.** The time between blows is the time between taps, held between **6 and 12 ticks.** That is 5 to 10 blows a second. Taps are timed on the sim's tick, which runs through hit-stop, so it is his real tap rate that counts (§9b).
@@ -616,7 +634,7 @@ A brawling fighter lands six lights a second, where the old exchange landed abou
 | A mid-band lunge's blow on arrival | A brawl light or a brawl heavy, by its button. It is the first blow of the brawl |
 | A far charge's blow on arrival | A skill strike's worth for a light charge, and a held heavy's at full for a heavy charge |
 | The check; the step strike | Half a brawl light; ×0.8 of one. The guard strike is worth a set light |
-| The zips (§2c) | The data's own values: a light at 26 and a heavy at 66. They are bought with ki |
+| The zips (§2c) | A zip strike is worth a skill strike, and a zip heavy a brawl heavy, each times its reading (§2c, "Ruled for the first zip slice"). At first this row gave them the data's own values |
 | A heavy shot; a charged shot | A brawl heavy's worth, and ×1.25 of it (§9d). This was "unchanged" at first |
 | Bolts, signatures, throws and landings | Unchanged |
 
