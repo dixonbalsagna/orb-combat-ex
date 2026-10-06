@@ -830,3 +830,11 @@ Asked what was left before the next big update, and with the EP's advice to take
 > go ahead and remove the page for now, make sure to leave a message with short notes about what to expect when it comes back up.
 
 Standing from this: the public site serves no playable build until Orb says it returns. It comes back when the flash check passes on the required set and the gate's faults are fixed, on Orb's word.
+
+## The holding page's wording (Orb, 2026-10-06)
+
+> can you improve the wording on the static WIP page and make it sound a little less dumb? "Planned: a brawl you can move with the stick, and more control of your fighter in general." internally I know what that means, but to someone who just got the link and hasnt played yet it might sound like the developer is an idiot who forgot to let you move your character around during the brawl. like, obviously you and I know we're talking about the shift from an auto-battler style that didn't really work to a more fluid, dynamic combat style more in line with a traditional fighting game. i want some cool-sounding ad copy that really showboats what we're trying to do here: we're doing things procedurally right? dynamic combos and real-time anime brawling? try to make the upcoming features sound like we're really working on my dream game here, and not some slapped together thing where I suddenly went "oh yeah I forgot you need to move around with the stick"
+>
+> pick a handful of cool screenshots and at least one combat gif from our files and put some cool sounding captions under them please!
+
+Standing from this: the holding page sells the vision (procedural, dynamic combos, real-time anime brawling), with screenshots and at least one combat clip; it must not read as a list of basic fixes. Orb's description of the change, for all copy: "the shift from an auto-battler style that didn't really work to a more fluid, dynamic combat style more in line with a traditional fighting game."
