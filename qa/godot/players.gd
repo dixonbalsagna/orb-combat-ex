@@ -23,6 +23,7 @@ extends SceneTree
 ## Add :energy=1 to any scripted player: the energy family is held (RB), so every press is a blast (bolts for a light, a charged shot for a held heavy).
 ## Add :stick=1 to any scripted player: a heavy press (and a hold) is made with the stick up and toward the rival, the way Orb's earned
 ## launch is thrown (agency slice 1: a heavy pressed with a stick direction that lands clean launches); without it a heavy is a plain heavy.
+## Add :off=7 to a masher: its first tap waits a seeded 0 to 7 ticks (the mirror's second player, so two identical scripts do not tie on every press).
 ## Player A takes slot 0 on odd seeds and slot 1 on even ones, so spawn side and slot cancel. Prints one JSON line.
 ## Read-only with respect to sim/: it only calls the sim's public functions.
 
@@ -38,6 +39,7 @@ class Pl:
 	var plan: Array = []           # [{tick, k}] presses planned against the running exchange's blows
 	var last_press: int = -1000
 	var last_press_tick: int = -1000   # the S.tick of the last press (the clock a tapping player's real rate counts)
+	var start_off: int = 0         # off=N: the first tap waits a seeded 0 to N ticks, so two identical mashers do not press on the same ticks (the mirror's tie-break)
 	var brawl_prev_c: int = -1         # the last beatAt read, to see a new blow go on its way
 	var brawl_off: int = 0
 	var zip_mask: int = 0          # the stance mask the zipper holds this tick (8: LT, the manoeuvre stance)
@@ -81,6 +83,7 @@ class Pl:
 		forms = int(P.get("forms", "0")) != 0
 		level = String(P.get("level", ""))
 		half = int(SimPressRead.params()["beatHalf"])
+		start_off = rng.randi_range(0, int(P.get("off", "0"))) if int(P.get("off", "0")) > 0 else 0
 
 	func scripted() -> bool:
 		return kind != "ai"
@@ -255,6 +258,8 @@ class Pl:
 				var gap: int = int(P.get("gap", "8"))
 				# clock=tick: the taps count S.tick, which runs through hit-stop (a player's real tap rate; the brawl's flurry counts it); the default counts live ticks
 				var due: bool = (S.tick - last_press_tick >= gap) if String(P.get("clock", "live")) == "tick" else (lt - last_press >= gap)
+				if S.tick < start_off:
+					due = false
 				if due:
 					return 1 if String(P.get("kind", "L")) == "H" else 0
 			"mix":

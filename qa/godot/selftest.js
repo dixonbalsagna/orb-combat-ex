@@ -151,15 +151,19 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const none = evaluate({ default: [rec()] });
     assert.strictEqual(none.find(r => r.id === 'zip').status, 'PENDING');
     // 60 matches of 2 zips each: 120 zips, 55 clean, 18 countered (15%), 30 caught (25%), the rest done without damage
-    const zipOf = (i, end, dmg, over = {}) => ({ a: 0, t: 100 + i, kind: i % 3 === 0 ? 'heavy' : 'light', tell: i % 3 === 0 ? 10 : 6, in: 8, dur: i % 3 === 0 ? 53 : 33, d0: 8, price: i % 3 === 0 ? 30 : 20, dmg, guard: 0, out: 'home', outN: 10, exitBh: 8, wayBh: 8, inside: false, end, endTicks: 40, ...over });
+    const zipOf = (i, end, dmg, over = {}) => ({ a: 0, t: 100 + i, kind: i % 3 === 0 ? 'heavy' : 'light', tell: i % 3 === 0 ? 10 : 6, in: 8, dur: i % 3 === 0 ? 53 : 33, d0: 8, price: i % 3 === 0 ? 30 : 20, dmg, guard: 0, out: 'home', outN: 10, exitBh: 8, wayBh: 8, inside: false, end, endTicks: 40, rinP: i % 3 === 0 ? 12 : 4, routP: i % 3 === 0 ? 10 : 6, rin: i % 3 === 0 ? 12 : 4, rout: i % 3 === 0 ? 10 : 6, reading: 0, ...over });
     const ends = [];
     for (let i = 0; i < 120; i++) ends.push(i < 55 ? ['done', 30] : i < 73 ? ['countered', 0] : i < 103 ? ['caught', 0] : ['done', 0]);
     const mkRec = (j, over) => rec({ seed: j, koAt: 300, kiSpent: [1500, 1500], zips: [0, 1].map(k => { const [e, d] = ends[j * 2 + k]; return zipOf(j * 2 + k, e, d, over || {}); }), zipBrawlViol: 0, drops: { start: 1, land: 1, end: 1 } });
     const good = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkRec(j)) }), g = k => good.find(r => r.id === k);
-    for (const k of ['zip.clean', 'zip.countered', 'zip.caught', 'zip.kiShare', 'zip.price', 'zip.table', 'zip.travel', 'zip.brawl']) assert.strictEqual(g(k).status, 'PASS', k + ' ' + g(k).value);
+    for (const k of ['zip.clean', 'zip.countered', 'zip.caught', 'zip.kiShare', 'zip.price', 'zip.table', 'zip.reach', 'zip.travel', 'zip.brawl']) assert.strictEqual(g(k).status, 'PASS', k + ' ' + g(k).value);
     assert.strictEqual(g('zip.exit').status, 'PENDING', 'only home exits: nothing to check yet');
     const bad = evaluate({ default: Array.from({ length: 60 }, (_, j) => ({ ...mkRec(j, { price: 25, in: 2, out: 'far', exitBh: 14, inside: true }), zipBrawlViol: 1 })) }), b = k => bad.find(r => r.id === k);
     for (const k of ['zip.price', 'zip.travel', 'zip.exit', 'zip.brawl']) assert.strictEqual(b(k).status, 'FAIL', k);
+    const badReach = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkRec(j, { rin: 9, reading: 1 })) });
+    assert.strictEqual(badReach.find(r => r.id === 'zip.reach').status, 'FAIL', 'a strike in reach 9 ticks before its blow is off the table');
+    const heldOk = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkRec(j, { kind: 'light', tell: 6, dur: 33, price: 20, rinP: 4, routP: 6, rin: 8, rout: 6, reading: 2 })) });
+    assert.strictEqual(heldOk.find(r => r.id === 'zip.reach').status, 'PASS', 'a held strike is in reach 8 ticks before its blow');
     // few zips: the rates wait for 40
     const few = evaluate({ default: Array.from({ length: 5 }, (_, j) => mkRec(j)) });
     assert.strictEqual(few.find(r => r.id === 'zip.clean').status, 'PENDING');

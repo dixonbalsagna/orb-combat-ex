@@ -68,6 +68,7 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   const mirror = await runMirror(MIRROR_N, base);   // the mirror's matches are the slow ones (a stalemate runs to the cap), so it gets fewer
   const mirrors = await Promise.all([
     runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick', null, 'tick'),
+    runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick', 'masher:forms=1:clock=tick:off=7', 'tickoff'),
     runMirror(MIRROR_N, base, 'masher:forms=1:clock=tick:gap=6', 'masher:forms=1:clock=tick:gap=12', 'fast-slow'),
   ]);
   const E = ':energy=1:forms=1:stick=1', R = ':forms=1:stick=1';
@@ -102,7 +103,7 @@ const BANDS = { easy: [0.60, 1, 'at least 60%'], medium: [0.35, 0.50, '35 to 50%
 const LATE_OK = 4;   // ticks a trade's break may come after its limit: a hit-stop holds the sim (Encounter measured at most 2)
 
 function mirrorRows(m) {
-  const b = m.brawl || {}, sfx = m.tag === 'live' ? '' : '.' + m.tag, lab = m.tag === 'live' ? '' : ` (${m.tag === 'tick' ? 'taps on S.tick' : 'a 6-tick tapper against a 12-tick tapper'})`;
+  const b = m.brawl || {}, sfx = m.tag === 'live' ? '' : '.' + m.tag, lab = m.tag === 'live' ? '' : ` (${m.tag === 'tick' ? 'taps on S.tick, both on the same ticks: the exact tie' : m.tag === 'tickoff' ? 'taps on S.tick, the second player starting on a seeded offset of 0 to 7 ticks' : 'a 6-tick tapper against a 12-tick tapper'})`;
   const rows = [];
   const pct = v => (100 * v).toFixed(1) + '%';
   if (m.tag === 'fast-slow') {
@@ -117,7 +118,7 @@ function mirrorRows(m) {
     rows.push({ id: 'masher.brinkcloses' + sfx, ref: '§9e', what: 'Lights-only mirror: share of closes made by the fighter on the brink, while only one of them is on it (reported, not banded: melee-press-feel 9e)' + lab, status: 'INFO', value: one ? `${pct(b.brinkCloseShare)} (${b.closesByBrinkFighter} of ${one} closes)` : 'no close with one fighter on the brink', band: 'reported', note: `${b.closes} closes in ${m.n} matches` });
     const dec = b.decided || 0, seq = b.firstSlotSeq || [];
     const part = (a, z) => { const x = seq.slice(a, z).filter(v => v >= 0); return x.length ? `${(100 * x.filter(v => v === 1).length / x.length).toFixed(0)}% of ${x.length}` : '-'; };
-    rows.push({ id: 'masher.firstslot' + sfx, ref: '§9e', what: 'Lights-only mirror: matches won from the first slot (40 to 60%, read on 200 matches)' + lab, status: dec >= 100 ? (b.firstSlotShare >= 0.40 && b.firstSlotShare <= 0.60 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${pct(b.firstSlotShare)} (${b.firstSlotWins} of ${dec}); first 60 seeds ${part(0, 60)}, the next 140 ${part(60, 200)}` : 'no decided match', band: '40 to 60%', note: `point estimate; the interval at ${dec} matches is about +-${dec ? Math.round(98 / Math.sqrt(dec)) : '-'} points; the split is Encounter's (35% on the first 60 seeds, 67% on the other 140): a slot effect that moves with the seed range is the thing to look at; PENDING under 100 decided matches` });
+    rows.push({ id: 'masher.firstslot' + sfx, ref: '§9e', what: 'Lights-only mirror: matches won from the first slot (40 to 60%, read on 200 matches)' + lab, status: m.tag === 'tick' ? 'INFO' : (dec >= 100 ? (b.firstSlotShare >= 0.40 && b.firstSlotShare <= 0.60 ? 'PASS' : 'FAIL') : 'PENDING'), value: dec ? `${pct(b.firstSlotShare)} (${b.firstSlotWins} of ${dec}); first 60 seeds ${part(0, 60)}, the next 140 ${part(60, 200)}` : 'no decided match', band: m.tag === 'tick' ? 'reported (the exact tie; the banded row is the offset mirror)' : '40 to 60%', note: `point estimate; the interval at ${dec} matches is about +-${dec ? Math.round(98 / Math.sqrt(dec)) : '-'} points; the split is Encounter's (35% on the first 60 seeds, 67% on the other 140): a slot effect that moves with the seed range is the thing to look at; PENDING under 100 decided matches` });
     if (b.exactTradeFields) {
       // exact (Encounter's trade_break fields): level trades are the breaks settled by the draw after a first close; a break changed hands when the draw went against the last closer (text draw, k 2)
       rows.push({ id: 'masher.momentum' + sfx, ref: '§9d', what: 'An even mash: level trades that change who has the momentum (5 to 15%)' + lab, status: b.levelTrades >= 20 ? (b.levelChangeShare >= 0.05 && b.levelChangeShare <= 0.15 ? 'PASS' : 'FAIL') : 'PENDING', value: b.levelTrades ? `${pct(b.levelChangeShare)} (${b.levelChanges} of ${b.levelTrades} level trades; ${b.breaksByLead} breaks went to a lead of 2)` : 'no level trade after a close', band: '5 to 15%', note: 'exact: the draw breaks after a first close (trade_break text draw, k 1 or 2); PENDING under 20 of them' });

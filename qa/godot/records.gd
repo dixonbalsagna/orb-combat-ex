@@ -335,7 +335,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 						var zr = fs[1 - za]
 						var dxz: float = SimWrap.sdx(fs[za].x, zr.x)
 						var dyz: float = zr.y - fs[za].y
-						rec.zips.append({"a": za, "t": S.tick, "kind": "light" if cq == "zip_light" else "heavy", "tell": int(_ei(e, "amount")), "in": int(_ei(e, "n")), "dur": int(_ei(e, "dur")),
+						rec.zips.append({"a": za, "t": S.tick, "kind": "light" if cq == "zip_light" else "heavy", "tell": int(_ei(e, "amount")), "in": int(_ei(e, "n")), "dur": int(_ei(e, "dur")), "rinP": int(_ei(e, "x")), "routP": int(_ei(e, "y")), "rin": -1, "rout": -1, "reading": -1,
 							"d0": snappedf(sqrt(dxz * dxz + dyz * dyz) / 75.0, 0.01), "price": snappedf(float(prev_ki[za]) - float(fs[za].ki), 0.01),
 							"dmg": 0.0, "guard": 0, "out": "", "outN": -1, "exitBh": -1.0, "wayBh": -1.0, "inside": false, "end": "", "endTicks": -1})
 						zopen[za] = rec.zips.size() - 1
@@ -345,6 +345,9 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 						var zz = rec.zips[zopen[zo]]
 						zz.out = str(e.get("text"))
 						zz.outN = int(_ei(e, "n"))
+						zz.rin = int(_ei(e, "amount"))   # zip_out: the ticks in reach before the blow, the ticks he stays after it, the reading (0 speed, 1 tech, 2 held)
+						zz.rout = int(_ei(e, "dur"))
+						zz.reading = int(_ei(e, "k"))
 						var ex_x: float = float(e.get("x"))
 						var ex_y: float = float(e.get("y"))
 						var zrv = fs[1 - zo]
