@@ -52,7 +52,7 @@ func _run() -> void:
 		main.frame(DT)
 	var S: SimState = main.host.S
 	RenderAnim.ground_feet = false
-	AnimRagdoll.shape_of = {"default": String(shapes[0]), "KAI": String(shapes[0]), "VORR": String(shapes[1])}
+	AnimRagdoll.shape_of = {"default": String(shapes[0]), "PROTAGONIST": String(shapes[0]), "RIVAL": String(shapes[1])}
 	RenderAnim._fighters.clear()
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]

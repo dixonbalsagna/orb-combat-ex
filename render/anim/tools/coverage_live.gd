@@ -1,6 +1,6 @@
 extends SceneTree
 ## Live-coverage check (docs/animation/pair-live.md): the launch-pair coverage table (docs/animation/launch-pair-coverage.json) restated for a live match. Only the live loader runs
-## (AnimData.load_all, then ensure_fighter for KAI and VORR: no --waves, no load_every_wave), so a row counts as loaded only when the ids it plays are baked by what a match really
+## (AnimData.load_all, then ensure_fighter for PROTAGONIST and RIVAL: no --waves, no load_every_wave), so a row counts as loaded only when the ids it plays are baked by what a match really
 ## loads. docs/animation/launch-pair-live-status.json then says which of the loaded rows the sim starts today (live), which wait for a trigger it does not send yet (wired), and which
 ## nothing starts yet (baked). Fails with --strict when a row marked live, wired or baked is not loaded.
 ##   godot --headless --path . -s res://render/anim/tools/coverage_live.gd -- [--strict] [--list]
@@ -39,8 +39,8 @@ func _run() -> void:
 	AnimRig.setup()
 	AnimData.load_all()
 	var t0: int = Time.get_ticks_usec()
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	var bake_ms: float = float(Time.get_ticks_usec() - t0) / 1000.0
 	var cov = JSON.parse_string(FileAccess.get_file_as_string("res://docs/animation/launch-pair-coverage.json"))
 	var rules = JSON.parse_string(FileAccess.get_file_as_string("res://docs/animation/launch-pair-live-status.json")).rules

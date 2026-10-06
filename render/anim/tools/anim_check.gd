@@ -333,7 +333,7 @@ func _test_flight_lead() -> void:
 	print("flight lead test: head leads %.2f along the velocity (the sim's own angle %.2f), let go after the launch, a knockback fold stood up to %.0f degrees" % [lead_on, lead_off, tilt_ok])
 	f.state = "free"
 
-## The launch pair live (docs/animation/pair-live.md): a roster id plays as its fighter of data/anim/fighters.json (KAI the protagonist, VORR the antihero, the neutral id rival too);
+## The launch pair live (docs/animation/pair-live.md): a roster id plays as its fighter of data/anim/fighters.json (PROTAGONIST the protagonist, RIVAL the antihero, the neutral id rival too);
 ## his waves are baked and his pick lists and entries built; in a real match his blows are his own key sets (pr and ph for the protagonist, w1 and rb for the rival); the energy
 ## cues and shots start the sequence or hold of his role; a far taunt is one of his own gestures and is cut like the shared one.
 ## The press styles (docs/animation/press-styles.md, RenderAnim.press_styles, default ON): each style on each launch fighter through a hand-fed
@@ -343,8 +343,8 @@ func _test_flight_lead() -> void:
 func _press_scene(S: SimState, who: String, kind: String, beats: Array) -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
-	f0.id = "KAI" if who == "protagonist" else "VORR"
-	f1.id = "VORR" if who == "protagonist" else "KAI"
+	f0.id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
+	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	f0.x = 500.0
 	f1.x = 560.0
@@ -417,8 +417,8 @@ func _press_scene(S: SimState, who: String, kind: String, beats: Array) -> Dicti
 func _rip_scene(S: SimState, who: String, block: String, kind: String, stag_n: int, solve_every: int = 1, reduced: bool = false) -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
-	f0.id = "KAI" if who == "protagonist" else "VORR"
-	f1.id = "VORR" if who == "protagonist" else "KAI"
+	f0.id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
+	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	RenderAnim.reduced_motion = reduced
 	for f in [f0, f1]:
@@ -537,8 +537,8 @@ func _test_riposte() -> void:
 	var styles_was: bool = RenderAnim.press_styles
 	RenderAnim.joint_audit = true
 	RenderAnim.ground_feet = false
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	var summary: Array = []
 	for who in ["protagonist", "antihero"]:
 		for case in [["perfect_block", "light", 20], ["perfect_block", "heavy", 40], ["reversal", "light", 20], ["reversal", "heavy", 40]]:
@@ -592,8 +592,8 @@ func _test_riposte() -> void:
 func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contacts: Array, extra: Dictionary = {}, kind: String = "light") -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
-	f0.id = "KAI" if who == "protagonist" else "VORR"
-	f1.id = "VORR" if who == "protagonist" else "KAI"
+	f0.id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
+	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	var key: String = String(AnimData.ensure_fighter(String(f0.id)))
 	AnimData.ensure_fighter(String(f1.id))
@@ -1051,8 +1051,8 @@ func _test_press_styles() -> void:
 	var ground_was: bool = RenderAnim.ground_feet
 	RenderAnim.joint_audit = true
 	RenderAnim.ground_feet = false
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	for who in ["protagonist", "antihero"]:
 		for sc in scenes:
 			RenderAnim.press_styles = true
@@ -1107,8 +1107,8 @@ func _test_press_styles() -> void:
 func _hand_scene(S: SimState, who: String, piece: String, tip: String, heavy: bool) -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
-	f0.id = "KAI" if who == "protagonist" else "VORR"
-	f1.id = "VORR" if who == "protagonist" else "KAI"
+	f0.id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
+	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	f0.x = 500.0
 	f1.x = 558.0
@@ -1149,8 +1149,8 @@ func _test_hand_tips() -> void:
 	for i in range(10):
 		main.frame(1.0 / 60.0)
 	var S: SimState = main.host.S
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	var untagged: Array = []
 	var n_tagged: int = 0
 	for kid in AnimData.keysets:
@@ -1188,8 +1188,8 @@ func _test_hand_tips() -> void:
 func _zip_scene(S: SimState, who: String, reading: String, off: bool, extra: Dictionary = {}) -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
-	f0.id = "KAI" if who == "protagonist" else "VORR"
-	f1.id = "VORR" if who == "protagonist" else "KAI"
+	f0.id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
+	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	for f in [f0, f1]:
 		f.vx = 0.0
@@ -1277,8 +1277,8 @@ func _test_zip() -> void:
 	for i in range(10):
 		main.frame(1.0 / 60.0)
 	var S: SimState = main.host.S
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	var ground_was: bool = RenderAnim.ground_feet
 	RenderAnim.ground_feet = false
 	for who in ["protagonist", "antihero"]:
@@ -1314,8 +1314,8 @@ func _bm(a: Dictionary, b: Dictionary) -> Dictionary:
 func _beat_scene(S: SimState, who: String, ops: Array) -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
-	f0.id = "KAI" if who == "protagonist" else "VORR"
-	f1.id = "VORR" if who == "protagonist" else "KAI"
+	f0.id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
+	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	f0.x = 500.0
 	f1.x = 560.0
@@ -1364,8 +1364,8 @@ func _test_beat_fields() -> void:
 	for i in range(10):
 		main.frame(1.0 / 60.0)
 	var S: SimState = main.host.S
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	var ground_was: bool = RenderAnim.ground_feet
 	RenderAnim.ground_feet = false
 	RenderAnim.press_styles = true
@@ -1396,8 +1396,8 @@ func _test_beat_fields() -> void:
 func _tech_poses(S: SimState, who: String, mode: String) -> Array:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
-	f0.id = "KAI" if who == "protagonist" else "VORR"
-	f1.id = "VORR" if who == "protagonist" else "KAI"
+	f0.id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
+	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	for f in [f0, f1]:
 		f.y = 0.0
@@ -1459,8 +1459,8 @@ func _test_tech_consistency() -> void:
 	for i in range(10):
 		main.frame(1.0 / 60.0)
 	var S: SimState = main.host.S
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	var ground_was: bool = RenderAnim.ground_feet
 	RenderAnim.ground_feet = false
 	RenderAnim.press_styles = true
@@ -1490,8 +1490,8 @@ func _test_zip_slice() -> void:
 	for i in range(10):
 		main.frame(1.0 / 60.0)
 	var S: SimState = main.host.S
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	var ground_was: bool = RenderAnim.ground_feet
 	RenderAnim.ground_feet = false
 	RenderAnim.press_styles = true
@@ -1523,8 +1523,8 @@ func _test_zip_slice() -> void:
 func _gesture_run(S: SimState, who: String, intent: String, state: String, ticks: int) -> Dictionary:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
-	f0.id = "KAI" if who == "protagonist" else ("VORR" if who == "antihero" else "NOBODY")
-	f1.id = "VORR" if who == "protagonist" else "KAI"
+	f0.id = "PROTAGONIST" if who == "protagonist" else ("RIVAL" if who == "antihero" else "NOBODY")
+	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	S.dirS.ex = null
 	for f in [f0, f1]:
@@ -1575,8 +1575,8 @@ func _test_gestures() -> void:
 	for i in range(10):
 		main.frame(1.0 / 60.0)
 	var S: SimState = main.host.S
-	AnimData.ensure_fighter("KAI")
-	AnimData.ensure_fighter("VORR")
+	AnimData.ensure_fighter("PROTAGONIST")
+	AnimData.ensure_fighter("RIVAL")
 	var ground_was: bool = RenderAnim.ground_feet
 	RenderAnim.ground_feet = false
 	var intents: Array = ["acknowledge", "appraise", "dismiss", "defer", "brace", "ease", "claim", "check", "soften", "harden"]
@@ -1604,9 +1604,11 @@ func _test_gestures() -> void:
 
 func _test_pair_live() -> void:
 	_expect(RenderAnim.pair_live and not AnimData.pair.is_empty(), "pair live test: data/anim/pair_live.json did not load or the live pair is off")
-	_expect(AnimData.fighter_key("KAI") == "protagonist" and AnimData.fighter_key("VORR") == "antihero" and AnimData.fighter_key("rival") == "antihero" and AnimData.fighter_key("Protagonist") == "protagonist" and AnimData.fighter_key("NOBODY") == "", "pair live test: a roster id did not map to its fighter")
-	var kp: String = AnimData.ensure_fighter("KAI")
-	var kr: String = AnimData.ensure_fighter("VORR")
+	_expect(AnimData.fighter_key("PROTAGONIST") == "protagonist" and AnimData.fighter_key("RIVAL") == "antihero" and AnimData.fighter_key("rival") == "antihero" and AnimData.fighter_key("Protagonist") == "protagonist" and AnimData.fighter_key("NOBODY") == "", "pair live test: a roster id did not map to its fighter")
+	_expect(AnimData.fighter_key("KAI") == "" and AnimData.fighter_key("VORR") == "", "pair live test: a placeholder spelling (KAI, VORR) still maps to a fighter after the rename clean-up")
+	_expect(String(AnimRagdoll.shape_of.get("PROTAGONIST", "")) == "P" and String(AnimRagdoll.shape_of.get("RIVAL", "")) == "A" and not AnimRagdoll.shape_of.has("KAI") and not AnimRagdoll.shape_of.has("VORR"), "pair live test: ragdoll_motion.json must key the launch pair by PROTAGONIST and RIVAL (else the rival falls with the Protagonist's shape)")
+	var kp: String = AnimData.ensure_fighter("PROTAGONIST")
+	var kr: String = AnimData.ensure_fighter("RIVAL")
 	var lp: Dictionary = AnimData.pair_lists.get(kp, {})
 	var lr: Dictionary = AnimData.pair_lists.get(kr, {})
 	_expect(kp == "protagonist" and kr == "antihero" and lp.light.size() >= 15 and lp.heavy.size() >= 15 and lr.light.size() >= 12 and lr.heavy.size() >= 15, "pair live test: his pick lists were not built (%d and %d lights, %d and %d heavies)" % [lp.light.size(), lr.light.size(), lp.heavy.size(), lr.heavy.size()])
@@ -1708,7 +1710,7 @@ func _test_pair_live() -> void:
 	af_off.on_blast_cue("blast_windup", 1.0, S, S.fighters[0])
 	RenderAnim.pair_live = was
 	_expect(af_off._seq.is_empty(), "pair live test: with the live pair off a blast cue still started a sequence")
-	print("pair live test: KAI plays as %s (%d lights, %d heavies, %d entries), VORR as %s (%d, %d, %d); %d own picks in 1500 ticks; the energy presses, taunts and swat start his own poses; the pair's waves baked in %.0f ms (%d poses)" % [kp, lp.light.size(), lp.heavy.size(), lp.entries.size(), kr, lr.light.size(), lr.heavy.size(), lr.entries.size(), n_picks, float(AnimData.pair_bake_usec) / 1000.0, AnimData.pair_bake_poses])
+	print("pair live test: PROTAGONIST plays as %s (%d lights, %d heavies, %d entries), RIVAL as %s (%d, %d, %d); %d own picks in 1500 ticks; the energy presses, taunts and swat start his own poses; the pair's waves baked in %.0f ms (%d poses)" % [kp, lp.light.size(), lp.heavy.size(), lp.entries.size(), kr, lr.light.size(), lr.heavy.size(), lr.entries.size(), n_picks, float(AnimData.pair_bake_usec) / 1000.0, AnimData.pair_bake_poses])
 
 
 ## The joint limits (docs/animation/joint-limits.md): no knee or elbow can be bent past its end or the wrong way, from any source.
@@ -2123,7 +2125,7 @@ func _test_defender() -> void:
 	RenderAnim.ragdoll_enabled = true
 	RenderAnim.reduced_motion = false
 	var res: Array = []
-	for rid in ["KAI", "VORR"]:
+	for rid in ["PROTAGONIST", "RIVAL"]:
 		var af := AnimFighter.new(0)
 		af._rd.set_shape(rid)
 		af.on_hit(1.0, "core", true, 0.9, "", Vector2(-1, 0), 1.2, 500)
@@ -2277,13 +2279,13 @@ func _test_win_ko() -> void:
 	S.game.ko = S.fighters[1]
 	var cands: Array = ["win.stand", "win.survey", "emote.victory", "stance.aggressive"]
 	var got: Array = []
-	for pair in [[1.2, "KAI"], [2.5, "KAI"], [6.0, "KAI"], [6.0, "VORR"]]:
+	for pair in [[1.2, "PROTAGONIST"], [2.5, "PROTAGONIST"], [6.0, "PROTAGONIST"], [6.0, "RIVAL"]]:
 		S.game.koT = pair[0]
 		var af := AnimFighter.new(0)
 		af._target_base(S, _stub(S, "free", 0.0, pair[1]), 5.0)
 		got.append(_tq_nearest(af, cands))
 	_expect(got == ["win.stand", "win.survey", "win.survey", "emote.victory"], "win test: the winner's beats are %s" % str(got))
-	var f2: Dictionary = _stub(S, "down", 0.0, "KAI")
+	var f2: Dictionary = _stub(S, "down", 0.0, "PROTAGONIST")
 	S.game.ko = f2
 	var early := AnimFighter.new(0)
 	early._target_base(S, f2, 5.0)
@@ -2526,7 +2528,7 @@ func _test_last_stand() -> void:
 	AnimData.load_all()
 	_expect(not AnimData.last_stand.is_empty() and AnimData.entries.has("ls.ready_a") and AnimData.pose_exists("ls.hold.resolve"), "last stand test: the data or poses are not loaded")
 	var got: Array = []
-	for pair in [["KAI", "ls.ready_p"], ["VORR", "ls.ready_a"]]:
+	for pair in [["PROTAGONIST", "ls.ready_p"], ["RIVAL", "ls.ready_a"]]:
 		var af := AnimFighter.new(0)
 		af._rd.set_shape(String(pair[0]))
 		af.on_last_stand("last_stand_ready", 5.0, 20.0, "")

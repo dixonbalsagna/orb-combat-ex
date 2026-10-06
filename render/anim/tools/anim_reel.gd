@@ -61,7 +61,7 @@ func _run() -> void:
 	await process_frame
 	main.start_match(seed_, {"p1": true, "p2": true})
 	if shape != "":
-		AnimRagdoll.shape_of = {"default": shape, "KAI": shape, "VORR": shape}
+		AnimRagdoll.shape_of = {"default": shape, "PROTAGONIST": shape, "RIVAL": shape}
 	while main.host.ticks < from_tick:
 		main.frame(DT)
 	if wound != "":

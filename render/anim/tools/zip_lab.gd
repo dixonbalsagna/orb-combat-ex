@@ -19,7 +19,7 @@ const HOME := 125.0
 const CXD := 56.0
 const PRE := 24
 const POST := 34
-const FIGHTERS := {"protagonist": "KAI", "antihero": "VORR"}
+const FIGHTERS := {"protagonist": "PROTAGONIST", "antihero": "RIVAL"}
 const PIECES := {
 	"x": {"speed": ["strike.jab", "strike.cross", "strike.jab"], "tech": ["strike.cross"], "heavy": ["strike.hook"]},
 	"y": {"speed": ["strike.front_kick", "strike.low_kick", "strike.front_kick"], "tech": ["strike.side_kick"], "heavy": ["strike.roundhouse"]},
@@ -172,7 +172,7 @@ func _run() -> void:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
 	f0.id = FIGHTERS[fighter]
-	f1.id = "VORR" if fighter == "protagonist" else "KAI"
+	f1.id = "RIVAL" if fighter == "protagonist" else "PROTAGONIST"
 	AnimData.ensure_fighter(String(f0.id))
 	AnimData.ensure_fighter(String(f1.id))
 	RenderAnim._fighters.clear()

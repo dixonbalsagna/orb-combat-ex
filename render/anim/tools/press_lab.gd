@@ -25,7 +25,7 @@ const SCENES := {   # beats: [contact tick, piece, style, damage]
 	"check": {"kind": "light", "beats": [[42, "strike.cross", "speed", 12.0, {"check": true}], [62, "strike.short_elbow", "speed", 12.0, {"check": true}], [82, "strike.low_kick", "speed", 12.0, {"check": true}]]},
 	"combo": {"kind": "light", "beats": [[36, "strike.jab", "speed", 20.0], [45, "strike.cross", "speed", 20.0], [54, "strike.hook", "speed", 22.0], [90, "strike.haymaker", "heavy", 66.0]]},
 }
-const FIGHTERS := {"protagonist": "KAI", "antihero": "VORR"}
+const FIGHTERS := {"protagonist": "PROTAGONIST", "antihero": "RIVAL"}
 const DIST := 60.0
 const CUE_SCENES := {   # cues: [tick, actor, kind, text, n, target]; pre and post in seconds around the first and last beat
 	"riposte": {"kind": "light", "pre": 0.95, "post": 0.65, "beats": [[78, "strike.cross", "", 26.0, {"riposte": true, "sure": true}]],
@@ -96,7 +96,7 @@ func _run() -> void:
 	var f0 = S.fighters[0]
 	var f1 = S.fighters[1]
 	f0.id = FIGHTERS[fighter]
-	f1.id = "VORR" if fighter == "protagonist" else "KAI"
+	f1.id = "RIVAL" if fighter == "protagonist" else "PROTAGONIST"
 	AnimData.ensure_fighter(String(f0.id))
 	AnimData.ensure_fighter(String(f1.id))
 	RenderAnim._fighters.clear()

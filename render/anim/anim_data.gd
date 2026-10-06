@@ -205,7 +205,7 @@ static func load_every_wave() -> void:
 		_load_wave(wn)
 
 
-## The fighter of data/anim/fighters.json a roster id plays as: his key, or the id he replaces (KAI is the protagonist, VORR the antihero until the ids change). "" for none.
+## The fighter of data/anim/fighters.json a roster id plays as: his key, or the id he replaces (PROTAGONIST and RIVAL; the old placeholder spellings no longer resolve). "" for none.
 static func fighter_key(roster_id: String) -> String:
 	var rid: String = roster_id.to_lower()
 	for k in fighters_cfg:
