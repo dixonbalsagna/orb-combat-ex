@@ -251,6 +251,8 @@ Since 208c6c7: UI draws `PROTAGONIST` and `RIVAL` through `ui/data/fighter_names
 | **QA** | `qa/godot/bands.js` | 4 lines; as section 8 has it. `players.gd`, `masher.js` and `records.gd` name no fighter |
 | **Simulation** | `sim/core/tools/parity.gd` (53 lines now), `golden_recipes.gd` (6) | As section 8 has it |
 
+**Rows of section 8 that no longer hold:** the three on `data/fighters/names.json` (Simulation's new file, the loader that reads it, Narrative's text in it). That file is not made; section 9 has what replaces them. Simulation's `fighter_data.gd` row becomes: the three strings are no longer read; `name` is the id and `sigName` the key.
+
 **Already right:** Rendering's intro memory (`render/core/sim_host.gd`) keys a pair by roster ids. Encounter's brawl data, the shot data, the intro data and World's stages name no fighter.
 
 ## 9. The names step, revised: no word Orb will edit stays in the sim (the EP, 2026-10-05)
@@ -279,8 +281,9 @@ Since 208c6c7: UI draws `PROTAGONIST` and `RIVAL` through `ui/data/fighter_names
   "RIVAL":       {"name": "RIVAL", "title": "Challenger", "sigName": "The Barrage"} }
 ```
 
-- **First choice: `data/fighters/names.json`,** beside the roster. Narrative owns the text, UI's display layer is its only reader, and the sim never opens it, so it is in no sim hash and no replay header.
-- **Second choice:** UI's `ui/data/fighter_names.json` gains `title` and `sigName`. No file moves.
+- **Ruled (the EP, 2026-10-05): it is UI's existing `ui/data/fighter_names.json`,** which gains `title` and `sigName` beside each name. It is already schema-checked and tested, and it is the only reader's own data. Narrative proposes the words and UI holds them.
+- Its keys become the roster ids. Today they are the sim's names in lower case, and each row is a bare name; the shape above replaces that. Tools' schema and fixtures for the file follow.
+- The sim never opens it, so it is in no sim hash and no replay header. `data/fighters/names.json` is not made.
 
 **The display layer** (UI's `ui_data.gd`; every drawer of the sim's text already goes through it):
 
