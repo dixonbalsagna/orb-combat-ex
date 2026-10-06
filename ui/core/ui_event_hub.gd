@@ -687,7 +687,7 @@ static func _weight_name(v) -> String:
 	return "heavy" if int(v) >= 2 else ("medium" if int(v) == 1 and UiStance.three() else ("heavy" if int(v) >= 1 else "light"))
 
 
-## The director's wind-up of a medium (Y) or a heavy (B): `text` start (`source` the face button, `dur` its length: ticks if over 3, else seconds; `n` the landing tick)
+## The director's wind-up of a medium (Y) or a heavy (B): `text` start (`source` the face button; its length is the data's, stances.json `_windup_ticks`; `n` the landing tick)
 ## or end (`k` the result: 1 thrown, 2 stopped by a blow, 3 lost, 4 a miss). The ring fills over the wind-up; a stopped, lost or missed one leaves the grey mark.
 func _on_windup(m: UiFighterModel, d: Dictionary) -> void:
 	if m == null:
@@ -699,10 +699,7 @@ func _on_windup(m: UiFighterModel, d: Dictionary) -> void:
 				return
 			m.charge_cell = cell
 			m.charge_t = 0.0
-			var dur: float = float(d.get("dur", 0.0))
-			m.charge_dur = dur / 60.0 if dur > 3.0 else dur
-			if m.charge_dur <= 0.0:
-				m.charge_dur = 28.0 / 60.0 if cell == "b" else 12.0 / 60.0
+			m.charge_dur = UiStance.windup_ticks(cell) / 60.0   # the cue's `dur` is not read until Encounter says its unit
 			m.charge_on = true
 		"end":
 			var res: int = int(d.get("k", 0))

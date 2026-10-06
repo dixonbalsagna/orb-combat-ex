@@ -4839,8 +4839,8 @@ func _three_strength_rules() -> void:
 		hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "end", "source": "b", "k": pair[0]})
 		ends_ok = ends_ok and not m0.charge_on and m0.press_ack_kind == pair[1] and m0.press_ack_cell == "b" and absf(armoured_dur - 28.0 / 60.0) < 0.001
 	_ok(ends_ok, "three strengths: a wind-up stopped by a blow, lost or missed leaves the grey cross, ring or dash on B; B's lasts 28 ticks")
-	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "y", "dur": 0.2})
-	_ok(absf(m0.charge_dur - 0.2) < 0.001, "three strengths: a wind-up length in seconds is read as seconds")
+	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "y", "dur": 5.0})
+	_ok(absf(m0.charge_dur - 0.2) < 0.001, "three strengths: the ring's length is the data's 12 ticks for Y, whatever dur the cue carries (its unit is not known yet)")
 	m0.charge_t = 5.0
 	hud.advance(0.1)
 	_ok(not m0.charge_on, "three strengths: a wind-up whose end never came clears itself")
@@ -4937,6 +4937,10 @@ func _reduce_flashing_rules() -> void:
 			rm = i
 	_ok(ri == rm + 1 and not bool(UiData.options()["reduce_flashing"]["default"]) and str(rws[ri]["label"]) == "Reduce flashing", "reduce flashing: with its flag on Settings lists Reduce flashing right after Reduced motion, off by default")
 	var l: PackedStringArray = UiNotice.lines()
+	_ok(l.size() == 3 and l[0] == "This game contains flashing effects." and l[1] == "The \"Reduce flashing\" and \"Reduced motion\" settings (pause menu, Settings) reduce some of them, not all." and l[2] == "It has been checked only with our own automated tool, not an independent photosensitivity analyser." and not " ".join(l).to_lower().contains("passed") and not " ".join(l).to_lower().contains("safe"), "reduce flashing: with the flag on the notice is Legal's three lines (RL-117): the third says checked only with our own tool, never passed or safe")
+	UiData.set_feature("reduce_flashing", null)
+	_ok(UiNotice.sentence() == "This game contains flashing effects. The \"Reduced motion\" setting (pause menu, Settings) reduces some of them, not all. The game has not yet been tested with a photosensitivity analyser.", "reduce flashing: with the flag off the notice is the old three lines, README's")
+	UiData.set_feature("reduce_flashing", true)
 	_ok(l[1].contains("Reduce flashing") and l[1].contains("Reduced motion") and l[1].contains("some of them, not all") and l[0] == "This game contains flashing effects." and not " ".join(l).to_lower().contains(" safe"), "reduce flashing: the notice's second line names both settings and still claims no more (words for Legal to approve)")
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()

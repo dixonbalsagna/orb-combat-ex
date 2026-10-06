@@ -14,8 +14,9 @@ static func title() -> String:
 
 ## The lines of the notice, in order: the sentence that opens it, then the two that follow.
 static func lines() -> PackedStringArray:
-	var l1: String = UiData.t("prompt.photo_line1_rf" if UiData.feature("reduce_flashing") else "prompt.photo_line1")   # the second line names Reduce flashing once that setting is live (Legal approves the words)
-	return PackedStringArray([UiData.t("prompt.photo_title"), l1, UiData.t("prompt.photo_line2")])
+	# With the reduce_flashing flag on (Legal flips it, and the README's sentence, together): the second line names Reduce flashing and the third says what the game has been checked with (RL-117).
+	var rf: bool = UiData.feature("reduce_flashing")
+	return PackedStringArray([UiData.t("prompt.photo_title"), UiData.t("prompt.photo_line1_rf" if rf else "prompt.photo_line1"), UiData.t("prompt.photo_line2_rf" if rf else "prompt.photo_line2")])
 
 
 ## The whole notice as one sentence group (what README.md says, word for word).

@@ -58,6 +58,11 @@ static func live(kind: int) -> bool:
 	return bool(row.get("live", row.get("_live", false)))
 
 
+## The length of a wind-up in ticks for a face button (stances.json `_windup_ticks`: the medium's 12, the heavy's 28), for the ring. The windup cue's own `dur` is not read until its unit is known.
+static func windup_ticks(cell: String) -> float:
+	return float(((UiData.stances().get("_windup_ticks", {}) as Dictionary)).get(cell, 12))
+
+
 ## Whether the three-strength layout is on (features.json `three_strengths`): X light, Y medium, B heavy, and the signature on the power button held with B.
 static func three() -> bool:
 	return UiData.feature("three_strengths")
