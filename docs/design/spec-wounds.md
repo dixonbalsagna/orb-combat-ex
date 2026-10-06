@@ -13,6 +13,8 @@ Numbers are **starting values**, which QA tunes against `balance-targets.md` (§
 ## 1. Core rules
 
 > **Questionnaire 5** (`balance-targets.md` §13) changes several rules below. The brink is now the **core broken**, and limbs break only in a crippling moment (interim, pitch A). Trailing-fighter help applies. Each completed transformation starts a 15 s surge. At 11:00 a time-cap story event takes over. Where §13 and this spec differ, §13 wins until this spec is rewritten.
+>
+> **Three strengths** (2026-10-06). The core carries a third weight, the medium. Its region pick, its wear on a block, its stagger, whether it cripples, the broken-arm multiplier and its mood units are in `brawl-second-pass.md` §2, "What the core decides by strength". The new heavy keeps the heavy's rules here, and from the wrench on, a strike breaks a limb only by the wrench.
 
 | Rule | Spec |
 | :--- | :--- |

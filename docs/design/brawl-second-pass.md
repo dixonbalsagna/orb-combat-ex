@@ -217,6 +217,28 @@ Controls found two traps in "a tap lands when the wind-up ends, and a hold keeps
 
 **Data:** `x` (contact 2, flurry gap 6 to 12, rate 0.10); `y` (wind-up 12, worth 2.5, flurry gap 12 to 16, rate 0.156, ki 2, reel 6, guard chip ×2); `b` (wind-up 28, worth 6, flurry gap 28 to 34, rate 0.214, ki 5, stagger 12, armour: light damage taken 0.5, mediums interrupt to tick 20); `read.windupGrace` 4.
 
+### What the core decides by strength
+
+The core carries a third weight, the medium (Simulation's proposal, which the EP accepted). It decides six things by weight. **The new heavy keeps today's heavy column in all six,** and the medium gets a column of its own. Every medium figure is a first value, to be read on the first three-strength baseline.
+
+| What the core decides | A light | **A medium** | A heavy (B) |
+| :--- | :--- | :--- | :--- |
+| 1. Where it lands: the pick by head, core, arms, legs | 12, 4, 10, 6 | **8, 8, 7, 9** | 1, 3, 1, 3, as now |
+| 2. How a block wears it | Half to the arms, up to their cap. The rest is soaked, and nothing goes to the legs | **As a light** | The 0.7 and 0.3 split to arms and legs, as now |
+| 3. Whether it staggers | No | **No.** Its 6-tick reel is the director's | Yes, as now |
+| 4. Whether it can cripple a battered limb | No | **No** | Today's roll, until the wrench is built. From then only the wrench does (§3) |
+| 5. Thrown with a broken arm | ×1.15 | **×1.0** | ×0.8, as now |
+| 6. Its mood units | 13 | **40** (`impulses.brawlMedium`) | 120, on `brawlHeavy` as now |
+
+- **The pick is the midpoint of the other two,** as shares: a quarter each to the head and the core, and the rest split 7 to 9 between arms and legs. Today's heavy strikes are thrown far more often as mediums, on a 12-tick wind-up. If they kept the heavy's pick, a Y flurry would wear the core nearly five times as fast as an X flurry, and the brink would come early.
+- **A block treats a medium as a light.** A guard soaks the two quick strengths, and their wear on the arms stops at the cap. If a blocked medium took the heavy's split, a Y flurry on a guard would batter the legs and spill into the core, and "a blocked blow never reaches the core" would stop being true. The medium's own pressure on a guard is its doubled chip.
+- **A medium never cripples.** The pieces could when they were heavies, but they are thrown too often now. A tapped heavy keeps today's roll only so that limbs still break before the wrench exists. When the wrench is built, the roll goes and the wrench is the one way a strike breaks a limb, and it is certain.
+- **A broken arm leaves the medium alone.** It makes his lights sharper and his heavies weaker, and the medium is the strength in between.
+- **40 units** puts a flat-out Y flurry at 200 a second, between the X flurry's 130 and the B flurry's 257, and under the decay's 300. So no one button mashed alone raises the mood: a trade does, and a close, and a knock-back.
+- The launcher and the charged heavy are heavies for all six. The riposte's and the reversal's blows are mediums for all six, and their staggers are their own rules.
+- **A point-blank energy shot goes through the blast's own hit, with no exchange passed** (Simulation's free route, confirmed). On a guard it takes the blocked shot's rule. Unblocked, its wear spreads as a shot's does, and it can't cripple. Its mood units are a light's for a bolt and a medium's for the blast.
+- **A blow that names its region** is wanted now, in the same core change: one option on the core's hit, which a blocked blow ignores. The double hit uses it at once, for the head (§7). The wrench and the vicious blows need it next (§3, §4).
+
 ## 3. Holding: the burst on X, and the charges on Y and B
 
 ### A held X is the burst
@@ -470,7 +492,7 @@ They still read right with B as the heavy: each pair does what its two buttons m
 
 **Three small things C1 found** (Encounter's limits, `docs/director/brawl-c1.md` §6):
 - **The mood takes the clash's 480, and no more.** The two slides are knock-backs with no attacker, and the mood adds 180 for each today, which makes 840. A knock-back that nobody dealt feeds no mood. It is Simulation's line, and it can wait for its next change to the mood.
-- **"On the head" stands as the rule.** The core picks a blow's region by its family today, so until a blow can name its region, the core's pick is what plays. The wrench and the vicious blows need the same option (§3, §4), so it arrives with them.
+- **"On the head" stands as the rule.** The core picks a blow's region by its family today, so until a blow can name its region, the core's pick is what plays. That option is asked for now, with the third weight (§2).
 - **The nudge's rate is the same up, down and across.** That stands.
 
 | Orb's answer | The rule |
