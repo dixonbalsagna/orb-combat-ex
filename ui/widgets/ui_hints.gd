@@ -40,12 +40,50 @@ static func visible_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: 
 
 
 ## How strongly the legend shows: the usual alpha, and full for 3 s after the held stance changes (the last half second fades), so the first time a
-## stance button is held the answer to "what do these do now" is on the screen even after the 12 s are over. Not when the legend is off.
+## stance button is held the answer to "what do these do now" is on the screen even after the 12 s are over; and for a moment after a press that did nothing
+## (refused, energy, empty), so the mark on its button is seen. Not when the legend is off.
 static func legend_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: float) -> float:
 	var base: float = visible_alpha(m, mode, prompts_on, t)
 	if m.ai or mode == "off":
 		return base
-	return maxf(base, clampf((3.0 - m.stance_kind_t) / 0.5, 0.0, 1.0))
+	var pop: float = clampf((3.0 - m.stance_kind_t) / 0.5, 0.0, 1.0)
+	if POP_ACKS.has(m.press_ack_kind):
+		pop = maxf(pop, clampf((ACK_POP - m.press_ack_t) / 0.3, 0.0, 1.0))
+	return maxf(base, pop)
+
+
+## A press that did nothing: its mark lasts this long (a quick tick), and the legend is held up for ACK_POP when the press was refused, spent by the energy family or empty
+## (a held press is the ordinary flow of a brawl and does not raise the legend).
+const ACK_SECONDS := 0.5
+const ACK_POP := 1.3
+const POP_ACKS: Array = ["refused", "energy", "empty"]
+
+
+## How strong the press mark is now, 0 to 1: a quick fade (Orb: cool answers, flash 4 of 10, subtle); under reduced motion a static mark for the same time.
+static func ack_alpha(m: UiFighterModel, reduced: bool) -> float:
+	if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS:
+		return 0.0
+	return 0.9 if reduced else 0.9 * (1.0 - m.press_ack_t / ACK_SECONDS)
+
+
+## A small grey mark by the pressed button's glyph, by kind (a shape, not only a colour): a cross for a refused press or one the energy family spent, a dash for a cell
+## with no move, a dot for a press kept for his line and a ring for one that lapsed.
+static func draw_ack(ci: CanvasItem, kind: String, c: Vector2, size: float, alpha: float, col: Color = Color(UiLook.col(UiLook.INK_DIM))) -> void:
+	if alpha <= 0.01:
+		return
+	var k := Color(col, alpha)
+	var w: float = maxf(2.0, size * 0.18)
+	ci.draw_circle(c, size * 0.95, Color(UiLook.col(UiLook.SCRIM), 0.8 * alpha))   # a small dark disc so the grey mark reads over a glyph or a button
+	match kind:
+		"refused", "energy":
+			ci.draw_line(c + Vector2(-size, -size) * 0.5, c + Vector2(size, size) * 0.5, k, w, true)
+			ci.draw_line(c + Vector2(-size, size) * 0.5, c + Vector2(size, -size) * 0.5, k, w, true)
+		"empty":
+			ci.draw_line(c + Vector2(-size * 0.6, 0.0), c + Vector2(size * 0.6, 0.0), k, w, true)
+		"held":
+			ci.draw_circle(c, size * 0.32, k)
+		"lapsed":
+			ci.draw_arc(c, size * 0.42, 0.0, TAU, 20, k, w, true)
 
 
 ## The layout id this fighter plays on: touch-simple on touch; on a keyboard kb-solo, or kb-shared-p1 and kb-shared-p2 when two humans
@@ -111,11 +149,16 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 				continue   # the form-ready chip above the legend already says it
 		var label: String = str(r.get("label", ""))
 		var held := false
+		var dim := false
+		var row_cell := ""
 		var aid: String = str(acts[0])
+		if r.has("action") and FACE_CELLS.has(aid):
+			row_cell = str(FACE_CELLS[aid])
 		if by_stance and r.has("action") and FACE_CELLS.has(aid):
 			var cell: String = UiStance.cell(m.stance_kind, str(FACE_CELLS[aid]))
 			if cell != "" and UiStance.live(m.stance_kind):
 				label = cell   # what this face button does in the stance held now (only for a stance whose names are true on the live build)
+			dim = not UiStance.cell_works(m.stance_kind, str(FACE_CELLS[aid]))   # a button with no move in the stance held now reads as not yet, greyed
 		elif by_stance and r.has("action") and HOLD_STANCES.has(aid):
 			var kind: int = int(HOLD_STANCES[aid])
 			if UiStance.live(kind):
@@ -125,9 +168,11 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 			held = m.stance_kind == kind
 		elif aid == "mode":
 			label = UiData.t("prompt.mode_toggle" if energy == "toggle" else "prompt.mode_hold")
-		if by_stance and r.has("actions") and not UiStance.specials_row():
-			continue
-		out.append({"acts": acts, "label": label, "held": held})
+		if by_stance and r.has("actions"):
+			if not UiStance.specials_row():
+				continue
+			dim = true   # the Specials row stays until the charging stance is live, and its moves do not exist yet
+		out.append({"acts": acts, "label": label, "held": held, "dim": dim, "note": UiData.t("prompt.not_yet") if dim else "", "cell": row_cell})
 	return out
 
 
@@ -177,7 +222,7 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dic
 	var y: float = rect.position.y + pad
 	var placed: Array = []
 	for i in range(shown.size()):
-		placed.append({"specs": full[i], "label": shown[i]["label"], "held": bool(shown[i].get("held", false)), "y": y + row_h * 0.5})
+		placed.append({"specs": full[i], "label": shown[i]["label"], "held": bool(shown[i].get("held", false)), "dim": bool(shown[i].get("dim", false)), "note": str(shown[i].get("note", "")), "cell": str(shown[i].get("cell", "")), "y": y + row_h * 0.5})
 		y += row_h
 	out["rows"] = placed
 	out["label_x"] = rect.position.x + pad + maxw + gap
@@ -194,12 +239,14 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dic
 static func _widest_label(placed: Array, fs: int) -> float:
 	var w := 0.0
 	for r in placed:
-		w = maxf(w, UiText.width(str(r["label"]), fs))
+		var text: String = str(r["label"]) + (("  " + str(r["note"])) if str(r.get("note", "")) != "" else "")
+		w = maxf(w, UiText.width(text, fs))
 	return w
 
 
-static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold") -> Array:
-	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind]
+static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false) -> Array:
+	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
+	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step]
 
 
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:
@@ -212,6 +259,7 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 	var gap: float = p["gap"]
 	var left: bool = m.left_side
 	var box: Rect2 = p["box"]
+	var ack_a: float = ack_alpha(m, bool(o.get("reduced_motion", false)))
 	UiText.no_outline = true
 	var bx: float = box.position.x if left else rect.end.x - box.size.x
 	var shift: float = bx - box.position.x
@@ -225,7 +273,17 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 		for sp in r["specs"]:
 			var w: float = UiGlyphs.draw_spec(ci, sp, Vector2(x, float(r["y"])), gh, alpha, true)
 			x += w + gap * 0.4
-		UiText.draw(ci, str(r["label"]), Vector2(float(p["label_x"]) + shift, float(r["y"]) - UiText.height(fs) * 0.5 + UiText.ascent(fs)), fs, Color(UiLook.col(UiLook.INK), alpha), -1)
+		var dim_row: bool = bool(r.get("dim", false))
+		var ra: float = alpha * (0.45 if dim_row else 1.0)   # a row for a button with no move yet is greyed
+		var lx: float = float(p["label_x"]) + shift
+		var ly: float = float(r["y"]) - UiText.height(fs) * 0.5 + UiText.ascent(fs)
+		var lw: float = UiText.draw(ci, str(r["label"]), Vector2(lx, ly), fs, Color(UiLook.col(UiLook.INK), ra), -1)
+		if str(r.get("note", "")) != "":
+			UiText.draw(ci, str(r["note"]), Vector2(lx + lw + gap, ly), fs, Color(UiLook.col(UiLook.INK_DIM), maxf(ra, 0.5 * alpha)), -1)
+		# The press that did nothing: a short grey mark on this button's glyph.
+		if ack_a > 0.0 and str(r.get("cell", "")) == m.press_ack_cell and m.press_ack_kind != "":
+			var gx: float = rect.position.x + float(p["pad"]) + shift
+			draw_ack(ci, m.press_ack_kind, Vector2(gx + gh * 0.5, float(r["y"])), gh * 0.5, ack_a * alpha)
 	UiText.no_outline = false
 
 

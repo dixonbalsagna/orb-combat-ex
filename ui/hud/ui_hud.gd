@@ -582,7 +582,7 @@ func _update_layers() -> void:
 				var an: Dictionary = anchor_fn.call(m.slot)
 				var ap: Vector2 = an.get("pos", Vector2.ZERO)
 				you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(ya * 10.0), bool(an.get("visible", true))])
-			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o())) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
+			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"])) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
 	_l_you.update_sig(you_sig if not you_sig.is_empty() else null)
 	_join_step(hub.t_now - _join_prev_t, _dt)
 	_join_prev_t = hub.t_now
@@ -591,7 +591,7 @@ func _update_layers() -> void:
 	# The touch buttons: drawn from SimTouch.layout (UiLayout.touch_ctrl) with the host's state; redrawn only when something about them changes.
 	if touch_on and not layout.touch_ctrl.is_empty():
 		var tstate: Dictionary = _touch_state()
-		_l_touchctl.update_sig(UiTouchControls.sig(layout, tstate, _touch_intro_alpha(), _transform_avail(), _touch_pulse_step()))
+		_l_touchctl.update_sig(UiTouchControls.sig(layout, tstate, _touch_intro_alpha(), _transform_avail(), _touch_pulse_step(), _touch_extra()))
 	else:
 		_l_touchctl.update_sig(null)
 	for m in hub.models:
@@ -2428,6 +2428,27 @@ func _you_alpha(m: UiFighterModel) -> float:
 	return UiHints.legend_alpha(m, str(opts["control_hints"]), bool(opts["show_prompts"]), hub.t_now - float(_hint_t0[m.slot]))
 
 
+## What the HUD adds to the Full touch buttons for the first human: the buttons with no move in the stance held now ("dim", greyed and marked not yet) and the press
+## that did nothing ("ack": {name, kind, a}), both from the fighter's model. Empty on any other layout.
+func _touch_extra() -> Dictionary:
+	var out := {"dim": [], "ack": {}}
+	if not layout.touch_full:
+		return out
+	for m in hub.models:
+		if m.ai:
+			continue
+		for aid in UiHints.FACE_CELLS:
+			if not UiStance.cell_works(m.stance_kind, str(UiHints.FACE_CELLS[aid])):
+				(out["dim"] as Array).append(aid)
+		var a: float = UiHints.ack_alpha(m, bool(opts["reduced_motion"]))
+		if a > 0.0:
+			for aid2 in UiHints.FACE_CELLS:
+				if str(UiHints.FACE_CELLS[aid2]) == m.press_ack_cell:
+					out["ack"] = {"name": aid2, "kind": m.press_ack_kind, "a": a}
+		break
+	return out
+
+
 func _touch_state() -> Dictionary:
 	if touch_state_fn.is_valid():
 		var v = touch_state_fn.call()
@@ -2529,7 +2550,7 @@ func _transform_avail() -> bool:
 
 
 func _paint_touchctl(ci: CanvasItem) -> void:
-	UiTouchControls.draw(ci, layout, layout.s, _touch_state(), _touch_intro_alpha(), _transform_avail(), _touch_pulse_step())
+	UiTouchControls.draw(ci, layout, layout.s, _touch_state(), _touch_intro_alpha(), _transform_avail(), _touch_pulse_step(), _touch_extra())
 
 
 func _hint_alpha(m: UiFighterModel) -> float:

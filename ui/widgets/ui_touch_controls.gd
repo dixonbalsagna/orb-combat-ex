@@ -29,7 +29,7 @@ static func rect_of(c: Dictionary) -> Rect2:
 
 
 ## The redraw key: the pressed bits, the hold ring in twelfths, the stick (quantised to 2 px), the captions' alpha and Transform's state.
-static func sig(lay: UiLayout, state: Dictionary, intro_a: float, transform_avail: bool, pulse_step: int = -1) -> Array:
+static func sig(lay: UiLayout, state: Dictionary, intro_a: float, transform_avail: bool, pulse_step: int = -1, extra: Dictionary = {}) -> Array:
 	var bits := 0
 	var i := 0
 	for n in NAMES:
@@ -58,12 +58,18 @@ static func sig(lay: UiLayout, state: Dictionary, intro_a: float, transform_avai
 		var b: Vector2 = st.get("base", Vector2.ZERO)
 		var t: Vector2 = st.get("thumb", Vector2.ZERO)
 		sk = [int(b.x * 0.5), int(b.y * 0.5), int(t.x * 0.5), int(t.y * 0.5), bool(st.get("sprint", false))]
-	return [int(lay.vp.x), int(lay.vp.y), int(lay.dp * 100.0), lay.left_handed, lay.touch_full, bits, int(float((state.get("attack", {}) as Dictionary).get("hold", 0.0)) * HOLD_TICKS), sk, int(intro_a * 10.0), transform_avail, pulse_step]
+	return [int(lay.vp.x), int(lay.vp.y), int(lay.dp * 100.0), lay.left_handed, lay.touch_full, bits, int(float((state.get("attack", {}) as Dictionary).get("hold", 0.0)) * HOLD_TICKS), sk, int(intro_a * 10.0), transform_avail, pulse_step, extra_key(extra)]
+
+
+## The redraw key for what the HUD adds to the Full buttons: the greyed ones and the press mark in quarters of its life.
+static func extra_key(extra: Dictionary) -> Array:
+	var ack: Dictionary = extra.get("ack", {})
+	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0)]
 
 
 ## `pulse_step` is -1 for no pulse, else 0 to 7 round the cycle (the HUD steps it eight times a cycle while a form is ready and the fighter is free); under
 ## reduced motion it is 8, a steady bright ring.
-static func draw(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, intro_a: float, transform_avail: bool, pulse_step: int = -1) -> void:
+static func draw(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, intro_a: float, transform_avail: bool, pulse_step: int = -1, extra: Dictionary = {}) -> void:
 	if lay.touch_ctrl.is_empty():
 		return
 	var ink := Color(UiLook.col(UiLook.INK))
@@ -95,7 +101,7 @@ static func draw(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, int
 			UiText.draw(ci, UiData.t("prompt.move"), Vector2(zc.x, zc.y - UiText.height(fs0) * 0.5 + UiText.ascent(fs0) - float(fs0) * 0.6), fs0, Color(ink, 0.8 * intro_a), 0)
 			UiText.draw(ci, UiData.t("prompt.move_hint"), Vector2(zc.x, zc.y - UiText.height(fs0) * 0.5 + UiText.ascent(fs0) + float(fs0) * 0.6), fs0, Color(ink, 0.6 * intro_a), 0)
 	if lay.touch_full:
-		_draw_full(ci, lay, s, state, transform_avail, ink, dark, edge, scrim, line, pulse_step)
+		_draw_full(ci, lay, s, state, transform_avail, ink, dark, edge, scrim, line, pulse_step, extra)
 		UiText.no_outline = false
 		return
 	# The three buttons.
@@ -174,7 +180,7 @@ static func _form_pulse(ci: CanvasItem, c: Vector2, r: float, line: float, step:
 
 ## The Full layout: a diamond of Light, Heavy, Signature and Context, Power and Mode above it, Transform beside it (lit while a form is
 ## ready), Dodge and Guard stacked at the other edge. Each button carries its word; a held one fills.
-static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, transform_avail: bool, ink: Color, dark: Color, edge: Color, scrim: Color, line: float, pulse_step: int = -1) -> void:
+static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, transform_avail: bool, ink: Color, dark: Color, edge: Color, scrim: Color, line: float, pulse_step: int = -1, extra: Dictionary = {}) -> void:
 	var full: Dictionary = state.get("full", {})
 	for n in FULL_NAMES:
 		var c: Dictionary = lay.touch_ctrl.get(n, {})
@@ -184,6 +190,9 @@ static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionar
 		var p := Vector2(float(c.x), float(c.y))
 		var r: float = float(c.r)
 		var dim: float = 0.55 if (n == "transform" and not transform_avail and not down) else 1.0
+		var not_yet: bool = (extra.get("dim", []) as Array).has(n) and not down   # a button with no move in the stance held now: greyed, and says so
+		if not_yet:
+			dim = 0.45
 		ci.draw_circle(p, r, Color(ink, 0.88) if down else Color(scrim, 0.58 * dim))
 		ci.draw_arc(p, r, 0.0, TAU, 40, Color(edge, 0.9 * dim), line, true)
 		if n == "transform" and transform_avail and not down:
@@ -204,7 +213,13 @@ static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionar
 				word = UiStance.armed_word(true)
 			elif bool(fstate.get("latched", false)):
 				ci.draw_arc(p, r * 1.12, 0.0, TAU, 40, scol, maxf(3.0, line * 2.0), true)
+		if not_yet:
+			word = UiData.t("prompt.not_yet").to_upper()
 		var fs: int = UiText.px(14.0, s)
 		while fs > int(UiLook.text_floor) and UiText.width(word, fs) > r * 1.7:
 			fs -= 1
 		UiText.draw(ci, word, Vector2(p.x, p.y + UiText.ascent(fs) - UiText.height(fs) * 0.5), fs, Color(dark if down else ink, dim), 0)
+		# The press that did nothing: a short grey mark on the button (a shape: cross, dash, dot or ring).
+		var ack: Dictionary = extra.get("ack", {})
+		if not ack.is_empty() and str(ack.get("name", "")) == n and float(ack.get("a", 0.0)) > 0.0:
+			UiHints.draw_ack(ci, str(ack["kind"]), p + Vector2(r * 0.55, -r * 0.55), r * 0.38, float(ack["a"]), Color(UiLook.col(UiLook.INK)))

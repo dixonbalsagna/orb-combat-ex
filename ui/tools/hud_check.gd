@@ -52,6 +52,7 @@ func _run() -> void:
 	await _licences_rules()
 	await _first_run_rules()
 	await _rename_rules()
+	await _press_mark_rules()
 	await _key_help_rules()
 	await _stances_page_rules()
 	await _armed_touch_rules()
@@ -4585,6 +4586,161 @@ func _rename_rules() -> void:
 		_ok(seen.size() > 30 and bad.is_empty() and seen.has("PROTAGONIST") and seen.has("RIVAL") and feed_ok, "%s: %d lines drawn, none shows KAI, VORR, a raw key or an alias id, and the feed reads the signature's name %s" % [tag, seen.size(), str(bad.slice(0, 3))])
 		hud.queue_free()
 		await process_frame
+
+
+# --- A press that does nothing is never silent: the marks, and the greyed cells (docs/ui/hud-spec.md section 47) -------------------------------
+
+func _press_mark_rules() -> void:
+	_ok(UiData.t("prompt.not_yet") == "not yet", "press marks: the words not yet are data")
+	# Which cells have a move today, by what the sim does: the martial A, the charging stance's X, Y and A (nothing reads special) and the manoeuvre A do nothing;
+	# RT plus B is the plain signature, A with guard held the deflect, A in the energy stance a mine.
+	var works := {}
+	for k in range(5):
+		works[k] = [UiStance.cell_works(k, "x"), UiStance.cell_works(k, "y"), UiStance.cell_works(k, "a"), UiStance.cell_works(k, "b")]
+	_ok(works[0] == [true, true, false, true] and works[1] == [true, true, true, true] and works[2] == [true, true, true, true] and works[3] == [false, false, false, true] and works[4] == [true, true, false, true], "press marks: by stance, the cells with a move today (martial A, charging X Y A and manoeuvre A have none) %s" % str(works))
+	# The legend: a greyed row says "not yet", for every layout with the stance buttons, and nothing that works is greyed.
+	var m := UiFighterModel.new()
+	m.setup(0, "protagonist", "ONE")
+	m.ai = false
+	var dims_of := func(kind: int, preset: String) -> Array:
+		m.stance_kind = kind
+		var out: Array = []
+		for r in UiHints.rows(m, preset, "hold"):
+			if bool(r.get("dim", false)):
+				out.append(str((r["acts"] as Array)[0]))
+				if str(r.get("note", "")) != "not yet":
+					out.append("NO NOTE")
+			elif str(r.get("note", "")) != "":
+				out.append("NOTE ON A LIVE ROW")
+		return out
+	var legend_ok := true
+	var legend_info := ""
+	for preset in ["arena", "kb-solo", "kb-shared-p1"]:
+		var want: Dictionary = {0: ["context", "power"], 1: ["power"], 2: ["power"], 3: ["light", "heavy", "context", "power"], 4: ["context", "power"]}
+		for kind in range(5):
+			var got: Array = dims_of.call(kind, preset)
+			var w: Array = want[kind]
+			var same: bool = got.size() == w.size()
+			for a in w:
+				same = same and got.has(a)
+			if not same:
+				legend_ok = false
+				legend_info += "%s/%d:%s " % [preset, kind, str(got)]
+	_ok(legend_ok, "press marks: the legend greys the Specials row (shown only until the charging stance is live) and, per stance held, the rows of buttons with no move (martial and manoeuvre: Context; charging: Light, Heavy and Context), with the words not yet; guard's Context, the energy stance and Signature are not greyed %s" % legend_info)
+	var simple_dims: Array = dims_of.call(0, "simple-pad")
+	_ok(simple_dims.is_empty(), "press marks: Simple's legend greys nothing (the game picks its moves)")
+	# The charging stance live: its cells name the specials and nothing in it is greyed, and the Specials row goes.
+	var stances_d: Dictionary = UiData.stances()["stances"]
+	stances_d["charging"]["_live"] = true
+	var got_live: Array = dims_of.call(3, "arena")
+	var works_live: bool = UiStance.cell_works(3, "x")
+	stances_d["charging"]["_live"] = false
+	_ok(got_live.is_empty() and works_live, "press marks: when the charging stance is live (data) its cells are not greyed and the Specials row is gone %s" % str(got_live))
+	# The acknowledgements: each kind marks its button, from the UI form and from the sim's cue form; a quick fade; static under reduced motion; the legend rises for the kinds that matter.
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	var m0: UiFighterModel = hud.hub.model(0)
+	var cases: Array = [["refused", "", "b"], ["energy", "", "x"], ["held", "", "x"], ["lapsed", "y", "y"], ["empty", "a", "a"], ["empty", "x", "x"]]
+	var ack_ok := true
+	for cs in cases:
+		hud.consume({"type": "press_ack", "actor": 0, "kind": cs[0], "cell": cs[1]})
+		var form1: bool = m0.press_ack_kind == cs[0] and m0.press_ack_cell == cs[2] and m0.press_ack_t == 0.0
+		m0.press_ack_kind = ""
+		m0.press_ack_t = 99.0
+		hud.consume({"type": "cue", "actor": 0, "kind": "press_ack", "text": cs[0], "source": cs[1]})
+		var form2: bool = m0.press_ack_kind == cs[0] and m0.press_ack_cell == cs[2] and m0.press_ack_t == 0.0
+		if not (form1 and form2):
+			ack_ok = false
+	_ok(ack_ok, "press marks: refused, energy, held, lapsed and empty each mark their button (refused is B, energy X, the rest name theirs or are X), from the HUD's own event and from the brawl's cue")
+	m0.press_ack_kind = ""
+	hud.consume({"type": "cue", "actor": 0, "kind": "taunt_start", "text": "x"})
+	hud.consume({"type": "press_ack", "actor": 0, "kind": "something_else"})
+	_ok(m0.press_ack_kind == "", "press marks: any other cue or kind is ignored")
+	# The fade, the static mark under reduced motion, and the legend's rise.
+	hud.consume({"type": "press_ack", "actor": 0, "kind": "empty", "cell": "a"})
+	var a0: float = UiHints.ack_alpha(m0, false)
+	m0.press_ack_t = 0.25
+	var a1: float = UiHints.ack_alpha(m0, false)
+	var r1: float = UiHints.ack_alpha(m0, true)
+	m0.press_ack_t = 0.6
+	_ok(a0 > 0.8 and a1 > 0.2 and a1 < a0 and r1 == 0.9 and UiHints.ack_alpha(m0, false) == 0.0 and UiHints.ack_alpha(m0, true) == 0.0, "press marks: the mark fades quickly (%.2f then %.2f), is a steady mark under reduced motion and is gone after half a second" % [a0, a1])
+	m0.press_ack_t = 0.2
+	m0.stance_kind_t = 99.0
+	var hidden_t := 60.0   # a minute in: the legend is normally gone
+	var la_empty: float = UiHints.legend_alpha(m0, "auto", false, hidden_t)
+	m0.press_ack_kind = "held"
+	var la_held: float = UiHints.legend_alpha(m0, "auto", false, hidden_t)
+	m0.press_ack_kind = "refused"
+	m0.press_ack_t = 1.5
+	var la_late: float = UiHints.legend_alpha(m0, "auto", false, hidden_t)
+	m0.press_ack_kind = "empty"
+	m0.press_ack_t = 0.2
+	var la_off: float = UiHints.legend_alpha(m0, "off", false, hidden_t)
+	_ok(la_empty == 1.0 and la_held == 0.0 and la_late == 0.0 and la_off == 0.0, "press marks: the legend rises for a moment after an empty, refused or energy press, not after a held one, and not when it is off")
+	# The mark is on the right row of the plan, and the layer redraws for it.
+	m0.stance_kind = 0
+	m0.press_ack_kind = "empty"
+	m0.press_ack_cell = "a"
+	m0.press_ack_t = 0.05
+	var s0: Array = UiHints.sig(m0, 1.0, "arena")
+	m0.press_ack_t = 0.3
+	var s1: Array = UiHints.sig(m0, 1.0, "arena")
+	var s_red: Array = UiHints.sig(m0, 1.0, "arena", "hold", true)   # static under reduced motion: one step while the mark lasts
+	m0.press_ack_t = 0.7
+	var s2: Array = UiHints.sig(m0, 1.0, "arena")
+	var pl: Dictionary = UiHints.plan(m0, Rect2(0, 0, 360, 520), 1.0, {"control_scheme": "arena"})
+	var marked: Array = []
+	for row in pl["rows"]:
+		if str(row.get("cell", "")) == m0.press_ack_cell:
+			marked.append(str(row["label"]))
+	_ok(s0 != s1 and s1 != s2 and marked == ["Context"] and s_red != s1 and s_red != s2, "press marks: the legend row for the pressed button carries the mark, and the layer redraws as it fades (and once under reduced motion) %s %s %s" % [str(marked), str(s0 != s1), str(s1 != s2)])
+	# Full touch: the same greying on the buttons (and the mark), from the model of the first human.
+	hud.set_option("touch_ui", true)
+	hud.set_option("touch_preset", "touch-full")
+	hud.set_density(2.0)
+	hud.size = Vector2(2400, 1080)
+	hud.advance(1.0 / 60.0)
+	var full_ok: bool = bool(hud.layout.touch_full)
+	hud.hub.patch(0, {"stance_mask": 0})
+	var d0: Array = hud._touch_extra()["dim"]
+	hud.hub.patch(0, {"stance_mask": 4})
+	var d3: Array = hud._touch_extra()["dim"]
+	hud.hub.patch(0, {"stance_mask": 1})
+	var d1: Array = hud._touch_extra()["dim"]
+	hud.hub.patch(0, {"stance_mask": 2})
+	var d2: Array = hud._touch_extra()["dim"]
+	hud.hub.patch(0, {"stance_mask": 0})
+	hud.consume({"type": "press_ack", "actor": 0, "kind": "empty", "cell": "a"})
+	var ex: Dictionary = hud._touch_extra()
+	var key0: Array = UiTouchControls.extra_key(ex)
+	m0.press_ack_t = 0.3
+	var key1: Array = UiTouchControls.extra_key(hud._touch_extra())
+	_ok(full_ok and d0 == ["context"] and d3.size() == 3 and d3.has("light") and d3.has("heavy") and d3.has("context") and d1.is_empty() and d2.is_empty() and str(ex["ack"]["name"]) == "context" and str(ex["ack"]["kind"]) == "empty" and key0 != key1, "press marks: on Full touch the buttons with no move in the stance held are greyed (martial: Context; charging: Light, Heavy, Context), the press mark sits on the button, and the layer redraws as it fades")
+	var lay := UiLayout.new()
+	lay.dp = 2.0
+	lay.touch_ui = true
+	lay.touch_full = true
+	lay.compute(Vector2(2400, 1080), false)
+	var layer := Control.new()
+	layer.size = Vector2(2400, 1080)
+	root.add_child(layer)
+	UiTouchControls.draw(layer, lay, lay.s, {}, 0.0, false, -1, {"dim": ["context", "light"], "ack": {"name": "context", "kind": "empty", "a": 0.8}})
+	UiTouchControls.draw(layer, lay, lay.s, {}, 0.0, false, -1, {"dim": [], "ack": {"name": "signature", "kind": "refused", "a": 0.5}})
+	_ok(true, "press marks: Full touch draws greyed buttons and every mark without error")
+	UiText.tracing = true
+	UiText.trace = []
+	UiTouchControls.draw(layer, lay, lay.s, {}, 0.0, false, -1, {"dim": ["context"], "ack": {}})
+	UiText.tracing = false
+	_ok(UiText.trace.has("NOT YET") and not UiText.trace.has(UiData.t("prompt.full_context")), "press marks: a greyed Full touch button reads NOT YET in place of its word")
+	UiText.trace = []
+	layer.queue_free()
+	hud.queue_free()
+	await process_frame
 
 
 # --- The first run shows the gameplay pages only ---------------------------------------------------------------------------------------

@@ -4,7 +4,7 @@ extends Control
 ##
 ## Run:  godot --path . res://ui/demo/hud_demo.tscn
 ## Options after "--": --scenario=hero_vs_proud|empress_vs_cyborg|placeholders|stress|controls   --shot=file.png (save a frame)
-##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] --ko --feedback[=copied|review]
+##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] --ack=KIND[:CELL] --ko --feedback[=copied|review]
 ## Keys: Tab scenario | Space pause | R restart | S silhouette | F4 feed | C captions | M reduced motion | K crown always on | B brink ring | T arc thickness
 ##       Z clear zones | L region label | V viewport size | +/- fighter size | H hide this legend
 
@@ -103,6 +103,10 @@ func _ready() -> void:
 		# The held stance buttons, faked (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8): --mask=N for the first fighter, --rmask=N for the rival.
 		hud.hub.patch(0, {"stance_mask": int(args.get("mask", "0"))})
 		hud.hub.patch(1, {"stance_mask": int(args.get("rmask", "0"))})
+	if args.has("ack"):
+		# A press that did nothing, held in view for a still: --ack=KIND[:CELL] (refused, energy, held, lapsed or empty; the cell x, y, a or b) on the first fighter.
+		var ap: PackedStringArray = str(args["ack"]).split(":")
+		hud.consume({"type": "press_ack", "actor": 0, "kind": ap[0], "cell": ap[1] if ap.size() > 1 else ""})
 	if args.has("armed"):
 		# The plate's badge for an armed stance: NEXT BLOW with the ring (the first fighter's defensive stance armed).
 		hud.hub.patch(0, {"stance_mask": 1, "stance_armed": float(args["armed"]) if str(args["armed"]) != "1" else 0.6})
@@ -214,6 +218,8 @@ func _split_fn() -> Dictionary:
 
 
 func _process(delta: float) -> void:
+	if args.has("ack"):
+		hud.hub.model(0).press_ack_t = 0.08   # the mark lasts half a second: hold it in view
 	split_sep = move_toward(split_sep, 1.0 if split_on else 0.0, delta / 0.45)
 	if not paused:
 		_step(minf(delta, 0.1))

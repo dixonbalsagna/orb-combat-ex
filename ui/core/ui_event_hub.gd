@@ -171,7 +171,7 @@ func model(slot: int) -> UiFighterModel:
 # --- Event intake -------------------------------------------------------------------------------------------------
 
 const _FIELDS: Array = ["type", "actor", "target", "region", "stage", "internal", "n", "text", "dur", "k", "col", "kind",
-	"station", "revision", "speaker", "cues", "priority", "setpiece", "winner", "loser", "chance", "survived", "attacker", "victim", "tier", "version", "cover", "beats", "half_width", "resolve", "lead", "result", "action", "available", "dur_ticks", "clean_ticks", "weight", "state", "stance", "act", "band", "id", "text_key", "display"]
+	"station", "revision", "speaker", "cues", "priority", "setpiece", "winner", "loser", "chance", "survived", "attacker", "victim", "tier", "version", "cover", "beats", "half_width", "resolve", "lead", "result", "action", "available", "dur_ticks", "clean_ticks", "weight", "state", "stance", "act", "band", "id", "text_key", "display", "cell", "source"]
 
 
 ## Any event (a Dictionary, or an object with these properties such as the sim's FxEvent) as a Dictionary.
@@ -388,6 +388,10 @@ func consume(e) -> void:
 			_on_pulse(d)
 		"press_ack":
 			_on_press_ack(m, d)
+		"cue":
+			# The brawl's acknowledgements arrive as a cue named press_ack: its text is the kind and its source the face button (x, y, a or b), when it says.
+			if str(d.get("kind", "")) == "press_ack":
+				_on_press_ack(m, {"kind": str(d.get("text", "")), "cell": str(d.get("source", ""))})
 		"weight_set":
 			if m != null:
 				_set_weight(m, _weight_name(d.get("weight", "light")))
@@ -655,6 +659,16 @@ func _on_press_ack(m: UiFighterModel, d: Dictionary) -> void:
 			_sig_state(m, "expired")
 		"sig_fired":
 			_sig_state(m, "fired")
+		"refused", "energy", "held", "lapsed", "empty":
+			# A press that did not become a blow: a short grey mark on the button's glyph (docs/ui/hud-spec.md section 47). The signature that cannot start is B, a
+			# light spent by the energy family is X; the others name their button (`cell`), or default to X.
+			var kind: String = str(d.get("kind", ""))
+			var cell: String = str(d.get("cell", "")).to_lower()
+			if not ["x", "y", "a", "b"].has(cell):
+				cell = "b" if kind == "refused" else "x"
+			m.press_ack_kind = kind
+			m.press_ack_cell = cell
+			m.press_ack_t = 0.0
 
 
 static func _weight_name(v) -> String:

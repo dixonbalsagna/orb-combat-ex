@@ -58,6 +58,15 @@ static func live(kind: int) -> bool:
 	return bool(row.get("live", row.get("_live", false)))
 
 
+## Whether a face button (x, y, a or b) has a move in the stance on the live build: once the stance is live every cell does; until then the cells that do nothing
+## are listed in stances.json `_works` (false for them; the rest default to true). The martial A, the charging stance's X, Y and A (the sim never reads `special`) and
+## the manoeuvre stance's A do nothing today; RT plus B is the plain signature, A with guard held the deflect and A in the energy stance a mine, so those are not listed.
+static func cell_works(kind: int, button: String) -> bool:
+	if live(kind):
+		return true
+	return bool(((_row(kind).get("_works", {}) as Dictionary)).get(button, true))
+
+
 ## Whether the legend keeps the Specials row: yes until the charging stance is live (its cells then name the specials).
 static func specials_row() -> bool:
 	return not live(CHARGING)
