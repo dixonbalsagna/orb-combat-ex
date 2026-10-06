@@ -781,3 +781,11 @@ Later the same night, after the consult:
 > X Light Hold should give a high speed burst of low damage attacks that quickly slows down on a curve; I'm excited to see Y and B flurries, I want to see how this looks visually
 
 The EP reads this as Orb going ahead with three strengths (X light, Y medium, B heavy). It also answers the open hold-to-flurry question for X: a held X is a burst that slows on a curve, not a charge. Where vicious lives is still Orb's to pick.
+
+## Vicious, the flurries, and what Orb will test next (2026-10-06)
+
+> vicious inside the clinch is good, go with that. the flurries looked good to me, nothing stood out in particular, you have the call. Things I'll be looking for next time I test-run: "can I move my character around during active combat?" "can I move my character when the opponent is charging up an attack?" "can I reliably launch my opponent?" "do energy attacks look cool as part of close-range combos?"
+>
+> I'm making a push to finish the work I took on.  I'm certain I'll hand that off today.
+
+Standing from this: vicious lives inside the clinch (confirmed). The EP's call on B, given to it by Orb: the new super-heavy tier is built (16 key sets first), with today's heavies as stand-ins until it is posed. Orb's four questions are the acceptance test for the next playable build. "The work I took on" is the voice lab's taunt and quote lists.
