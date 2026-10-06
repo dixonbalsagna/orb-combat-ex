@@ -1,0 +1,89 @@
+{
+ "what": "A perfect-timed tech blow (three echoes), one sim tick per frame from the web build (scratch stage hook), crop round the two fighters. alive_by_window is the number of echoes whose window (VfxPress.echo_window: g0 [0,2.5), g1 [0,5), g2 [2.5,7.5) ticks since the blow) contains the age; counter_reads is VfxPress's per-instant limb-ghost counter read from the page (it grants a blow's echoes one tick after it spawns, so it reads 0 on age 0), peak_so_far is its ghost_peak.",
+ "frames": [
+  {
+   "tick": 303,
+   "age": 0,
+   "alive_by_window": 2,
+   "counter_reads": 0,
+   "peak_so_far": 0
+  },
+  {
+   "tick": 304,
+   "age": 1,
+   "alive_by_window": 2,
+   "counter_reads": 2,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 305,
+   "age": 2,
+   "alive_by_window": 2,
+   "counter_reads": 2,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 306,
+   "age": 3,
+   "alive_by_window": 2,
+   "counter_reads": 2,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 307,
+   "age": 4,
+   "alive_by_window": 2,
+   "counter_reads": 2,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 308,
+   "age": 5,
+   "alive_by_window": 1,
+   "counter_reads": 1,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 309,
+   "age": 6,
+   "alive_by_window": 1,
+   "counter_reads": 1,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 310,
+   "age": 7,
+   "alive_by_window": 1,
+   "counter_reads": 1,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 311,
+   "age": 8,
+   "alive_by_window": 0,
+   "counter_reads": 0,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 312,
+   "age": 9,
+   "alive_by_window": 0,
+   "counter_reads": 0,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 313,
+   "age": 10,
+   "alive_by_window": 0,
+   "counter_reads": 0,
+   "peak_so_far": 2
+  },
+  {
+   "tick": 314,
+   "age": 11,
+   "alive_by_window": 0,
+   "counter_reads": 0,
+   "peak_so_far": 2
+  }
+ ]
+}
