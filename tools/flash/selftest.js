@@ -241,5 +241,20 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
   }
 }
 
+// ---- the weighted register (VFX, 2026-10-06): rows carry weight and running sum
+{
+  const wr = (now, src, granted, why, wgt) => [now, now, src, granted, why, 0, wgt, 0];
+  const run = (rows, reduced) => L.checkRun({ scenario: 't', reduced: !!reduced, rows });
+  const ok1 = run([wr(1, 'explosion', true, 'ok', 1), wr(20, 'transform', true, 'ok', 1), wr(40, 'body_hit', true, 'ok', 0.17), wr(50, 'block', true, 'ok', 0.03)]);
+  check('weights summing to 2.2 in a window pass the budget of 2.5, with two flashes of weight 0.5 or more (cap 3)', ok1.pass && Math.abs(ok1.worstWeight - 2.2) < 1e-9 && ok1.worstBig === 2, JSON.stringify(ok1));
+  check('weights summing to 3 in 60 ticks fail the budget even with three flashes (the old count would have passed)', !run([wr(1, 'a', true, 'ok', 1), wr(20, 'b', true, 'ok', 1), wr(40, 'c', true, 'ok', 1)]).pass);
+  check('four flashes of weight 0.5 or more fail the cap of 3 even under the budget', !run([wr(1, 'a', true, 'ok', 0.5), wr(10, 'b', true, 'ok', 0.5), wr(20, 'c', true, 'ok', 0.5), wr(30, 'd', true, 'ok', 0.5)]).pass === true || run([wr(1, 'a', true, 'ok', 0.5), wr(10, 'b', true, 'ok', 0.5), wr(20, 'c', true, 'ok', 0.5), wr(30, 'd', true, 'ok', 0.5)]).worstBig === 4);
+  check('seven small flashes in 60 ticks fail the rate ceiling of 6', !run([1, 5, 10, 15, 20, 25, 30].map((t) => wr(t, 'x', true, 'ok', 0.05))).pass);
+  check('six small flashes pass the rate ceiling', run([1, 5, 10, 15, 20, 25].map((t) => wr(t, 'x', true, 'ok', 0.05))).pass);
+  check('a below_step row is not a flash', run([wr(1, 'x', true, 'below_step', 0), wr(2, 'x', true, 'below_step', 0), wr(3, 'x', true, 'below_step', 0), wr(4, 'x', true, 'below_step', 0), wr(5, 'x', true, 'below_step', 0), wr(6, 'x', true, 'below_step', 0), wr(7, 'x', true, 'below_step', 0)]).worst === 0);
+  check('reduced flashing has a budget of 1.0: weight 1.2 fails', !run([wr(1, 'a', true, 'ok', 0.6), wr(20, 'b', true, 'ok', 0.6)], true).pass && run([wr(1, 'a', true, 'ok', 0.6), wr(20, 'b', true, 'ok', 0.3)], true).pass);
+  check('the register own worst weight must agree with the recount', !L.checkRun({ scenario: 't', reduced: false, rows: [wr(1, 'a', true, 'ok', 1)], summary: { worst_second: 1, worst_weight: 2 } }).pass);
+}
+
 console.log(failed ? `flash self-test FAILED: ${failed} of ${ran} checks` : `flash self-test ok: ${ran} checks`);
 process.exit(failed ? 1 : 0);

@@ -12,41 +12,53 @@ const fs = require('fs');
 const path = require('path');
 
 const WINDOW = 60, CAP = 3, CAP_REDUCED = 1, LOG_MAX = 2400;
+const BUDGET = 2.5, BUDGET_REDUCED = 1.0, BIG_W = 0.5, BIG_CAP = 3, BIG_CAP_REDUCED = 1, RATE_CAP = 6, RATE_CAP_REDUCED = 3;
 const SOURCES = path.join(__dirname, 'sources.json');
 
 function loadSources(file) { return JSON.parse(fs.readFileSync(file || SOURCES, 'utf8')); }
 
-/** The most granted flashes in any window of WINDOW ticks, from rows [now, tick, source, granted, why, in_window]. */
-function worstWindow(rows) {
-  const ts = rows.filter((r) => r[3] === true).map((r) => r[0]).sort((a, b) => a - b);
-  let worst = 0, at = -1;
-  for (let i = 0, j = 0; i < ts.length; i++) {
-    if (j < i) j = i;
-    while (j < ts.length && ts[j] < ts[i] + WINDOW) j++;
-    if (j - i > worst) { worst = j - i; at = ts[i]; }
+/**
+ * The windows of a log, from rows [now, tick, source, granted, why, in_window, weight, sum] (the weighted register, VFX 2026-10-06; older logs have the first six columns, every
+ * flash then weighs 1 and only the old count of 3 a second applies). For every window of WINDOW ticks that starts at a granted flash: how many were granted, the sum of their
+ * weights, and how many weigh BIG_W or more. A `below_step` row is not a flash and is not counted.
+ */
+function windows(rows) {
+  const weighted = rows.some((r) => r.length > 6 && typeof r[6] === 'number');
+  const ev = rows.filter((r) => r[3] === true && r[4] !== 'below_step').map((r) => ({ t: r[0], w: weighted ? Number(r[6]) : 1 })).sort((a, b) => a.t - b.t);
+  const best = { weighted, count: 0, weight: 0, big: 0, at: -1, atWeight: -1 };
+  for (let i = 0; i < ev.length; i++) {
+    let count = 0, weight = 0, big = 0;
+    for (let j = i; j < ev.length && ev[j].t < ev[i].t + WINDOW; j++) { count++; weight += ev[j].w; if (ev[j].w >= BIG_W) big++; }
+    if (count > best.count) { best.count = count; best.at = ev[i].t; }
+    if (weight > best.weight + 1e-9) { best.weight = weight; best.atWeight = ev[i].t; }
+    if (big > best.big) best.big = big;
   }
-  return { worst, at };
+  return best;
 }
 
-/** One run object -> { pass, worst, cap, ... }. */
+/** One run object -> { pass, ... }: the weighted register's rules (sum of weights at most 2.5, 1.0 under reduced flashing; at most 3 flashes of weight 0.5 or more, 1 when reduced; at most 6 of any weight, 3 when reduced) or, for an old log, the old count of 3 (1). */
 function checkRun(run, src) {
-  const known = new Set(src ? [...src.counted, ...src.reserved] : [...loadSources().counted, ...loadSources().reserved]);
-  const cap = run.reduced ? CAP_REDUCED : CAP;
+  const sources = src || loadSources();
+  const known = new Set([...sources.counted, ...sources.reserved]);
+  const reduced = !!run.reduced;
   const rows = run.rows || [];
-  const w = worstWindow(rows);
+  const w = windows(rows);
+  const budget = reduced ? BUDGET_REDUCED : BUDGET, bigCap = reduced ? BIG_CAP_REDUCED : BIG_CAP, rateCap = reduced ? RATE_CAP_REDUCED : RATE_CAP;
   const bySource = {};
   for (const r of rows) {
     const s = (bySource[r[2]] = bySource[r[2]] || { granted: 0, refused: 0, unregulated: 0 });
-    if (r[3]) { s.granted++; if (r[4] === 'unregulated') s.unregulated++; } else s.refused++;
+    if (r[3] && r[4] !== 'below_step') { s.granted++; if (r[4] === 'unregulated') s.unregulated++; } else if (!r[3]) s.refused++;
   }
   const unknownSources = Object.keys(bySource).filter((s) => !known.has(s));
   const truncated = rows.length >= LOG_MAX || (run.asked != null && run.asked > rows.length);
-  // a grant of a red flash is a rule break on its own
   const red = rows.filter((r) => r[3] === true && r[4] === 'red').length;
-  // the register's own figure, for comparison: it must agree with the recount
-  const own = run.summary && typeof run.summary.worst_second === 'number' ? run.summary.worst_second : null;
-  const agree = own === null || own === w.worst;
-  return { scenario: run.scenario, reduced: !!run.reduced, worst: w.worst, at: w.at, cap, asks: rows.length, bySource, unknownSources, truncated, redGranted: red, ownWorst: own, agree, pass: w.worst <= cap && red === 0 && !truncated && agree };
+  const sm = run.summary || {};
+  const ownCount = typeof sm.worst_second === 'number' ? sm.worst_second : null;
+  const ownWeight = typeof sm.worst_weight === 'number' ? sm.worst_weight : null;
+  const agree = (ownCount === null || ownCount === w.count) && (!w.weighted || ownWeight === null || Math.abs(ownWeight - w.weight) < 0.01);
+  const legacyCap = reduced ? CAP_REDUCED : CAP;
+  const rules = w.weighted ? w.weight <= budget + 1e-6 && w.big <= bigCap && w.count <= rateCap : w.count <= legacyCap;
+  return { scenario: run.scenario, reduced, weighted: w.weighted, worst: w.count, worstWeight: w.weight, worstBig: w.big, at: w.weighted ? w.atWeight : w.at, budget, bigCap, rateCap, cap: w.weighted ? rateCap : legacyCap, asks: rows.length, bySource, unknownSources, truncated, redGranted: red, ownWorst: ownCount, ownWeight, agree, pass: rules && red === 0 && !truncated && agree };
 }
 
 function loadRuns(args) {
@@ -73,16 +85,18 @@ function main(argv) {
   let fail = 0;
   const problems = [];
   const results = runs.map((r) => ({ run: r, res: checkRun(r, src) }));
-  console.log(`${'scenario'.padEnd(11)} ${'mode'.padEnd(8)} ${'seed'.padStart(6)} ${'ticks'.padStart(6)} ${'asks'.padStart(5)} ${'granted'.padStart(8)} ${'worst/60'.padStart(9)} ${'cap'.padStart(4)}  result`);
+  console.log(`${'scenario'.padEnd(11)} ${'mode'.padEnd(8)} ${'seed'.padStart(6)} ${'ticks'.padStart(6)} ${'asks'.padStart(5)} ${'granted'.padStart(8)} ${'weight/budget'.padStart(14)} ${'big/cap'.padStart(8)} ${'count/cap'.padStart(10)}  result`);
   for (const { run, res } of results) {
     const granted = Object.values(res.bySource).reduce((n, s) => n + s.granted, 0);
     const why = [];
-    if (res.worst > res.cap) why.push(`${res.worst} in the 60 ticks from ${res.at}`);
+    if (res.weighted ? res.worstWeight > res.budget + 1e-6 : res.worst > res.cap) why.push(res.weighted ? `${res.worstWeight.toFixed(2)} of weight in the 60 ticks from ${res.at} (budget ${res.budget})` : `${res.worst} in the 60 ticks from ${res.at}`);
+    if (res.weighted && res.worstBig > res.bigCap) why.push(`${res.worstBig} flashes of weight 0.5 or more in 60 ticks (cap ${res.bigCap})`);
+    if (res.weighted && res.worst > res.rateCap) why.push(`${res.worst} flashes in the 60 ticks from ${res.at} (cap ${res.rateCap})`);
     if (res.redGranted) why.push(`${res.redGranted} red flashes granted`);
     if (res.truncated) why.push('the log is full, so earlier asks are missing');
-    if (!res.agree) why.push(`the register's own figure (${res.ownWorst}) disagrees with the recount (${res.worst})`);
+    if (!res.agree) why.push(`the register's own figures (${res.ownWorst} flashes, weight ${res.ownWeight}) disagree with the recount (${res.worst}, ${res.worstWeight.toFixed(2)})`);
     if (!res.pass) fail++;
-    console.log(`${String(res.scenario).padEnd(11)} ${(res.reduced ? 'reduced' : 'normal').padEnd(8)} ${String(run.seed ?? '?').padStart(6)} ${String(run.ticks ?? '?').padStart(6)} ${String(res.asks).padStart(5)} ${String(granted).padStart(8)} ${String(res.worst).padStart(9)} ${String(res.cap).padStart(4)}  ${res.pass ? 'ok' : 'FAIL: ' + why.join('; ')}`);
+    console.log(`${String(res.scenario).padEnd(11)} ${(res.reduced ? 'reduced' : 'normal').padEnd(8)} ${String(run.seed ?? '?').padStart(6)} ${String(run.ticks ?? '?').padStart(6)} ${String(res.asks).padStart(5)} ${String(granted).padStart(8)} ${(res.weighted ? res.worstWeight.toFixed(2) + '/' + res.budget : '-').padStart(14)} ${(res.weighted ? res.worstBig + '/' + res.bigCap : res.worst + '/' + res.cap).padStart(8)} ${(res.weighted ? res.worst + '/' + res.rateCap : '-').padStart(10)}  ${res.pass ? 'ok' : 'FAIL: ' + why.join('; ')}`);
     if (res.unknownSources.length) problems.push(`${run.scenario}: flash source(s) not in tools/flash/sources.json: ${res.unknownSources.join(', ')} (add them there, as counted or reserved, so the report states whether they are under the register)`);
   }
 
@@ -142,10 +156,10 @@ function main(argv) {
   for (const p of problems) console.log(`PROBLEM: ${p}`);
   const ok = fail === 0 && problems.length === 0;
   console.log(ok
-    ? `\nflash count passed: no window of 60 ticks grants more than ${CAP} (${CAP_REDUCED} under reduced flashing) in ${results.length} runs. This is the register's count of the sources that ask it; it is not a luminance measurement and not a clearance.`
+    ? `\nflash count passed: in no window of 60 ticks does the weighted register grant more than ${BUDGET} of weight (${BUDGET_REDUCED} under reduced flashing), more than ${BIG_CAP} flashes of weight ${BIG_W} or more (${BIG_CAP_REDUCED} reduced) or more than ${RATE_CAP} flashes (${RATE_CAP_REDUCED} reduced) in ${results.length} runs. This is the register's count of the sources that ask it; it is not a luminance measurement and not a clearance.`
     : `\nflash count FAILED (${fail} run${fail === 1 ? '' : 's'} over the cap, ${problems.length} problem${problems.length === 1 ? '' : 's'})`);
   return ok ? 0 : 1;
 }
 
-module.exports = { checkRun, worstWindow, loadSources, WINDOW, CAP, CAP_REDUCED };
+module.exports = { checkRun, windows, loadSources, WINDOW, CAP, CAP_REDUCED };
 if (require.main === module) process.exit(main(process.argv.slice(2)));
