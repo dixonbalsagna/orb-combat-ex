@@ -17,7 +17,7 @@ What the live build does with each press in a brawl (Arena pad, and the same on 
 | **RT + B** | `stanceMask` 4, `sig` | The ordinary signature: ends the brawl and fires the beam (ki 63.9 to 33.0 in the run). **The same as B alone**: nothing reads `stanceMask` or `sigHeld`, so there is no charging-stance signature or ultimate | works, but not a different move |
 | **A alone** (nothing held) | `context`, `contextHeld` | `DirInterrupt.tick` calls `DirBlast.context`, which returns inside any exchange, and outside one does something only with guard held (the context deflect, needs a seeking shot) or the energy mode (a mine). With nothing held: **nothing, silently** | **missing move** (the martial A: shove, grab, tackle) |
 | **B alone** | `sig` | The beam, 45 ki | works |
-| **X, Y alone** | `light`, `heavy` | A blow (light contact 6 ticks after the press; heavy at 34) | works |
+| **X, Y alone** | `light`, `heavy` | A blow (a brawl light's contact is **2 ticks** after the press, `brawl.light.contactTicks`; a heavy's is 34: wind-up 26 plus 8) | works |
 
 **Where, with the lines.**
 - **Input side is correct:** `layout.gd` `_layer_press` (lines 347 to 356) turns "RT down plus X, Y, A" into `_special_edge` 1, 2, 3 and takes the press away from the base action (a press on a layer never also sends `light`, `heavy` or `context`). Tested in `stance_test.gd` ("an armed charging stance makes X special1") and `layout_test.gd`.
@@ -41,7 +41,7 @@ What the live build does with each press in a brawl (Arena pad, and the same on 
 - The accessibility factor (`assistFactor` 2) doubles the window to 6 for a player who cannot press two buttons together.
 - **QA's measure:** the share of a scripted two-finger masher's presses that read as a pair, which should be under 5%.
 
-**What the first press does if the second never comes: it is the blow, thrown at once, unchanged.** The layout builds an intent every tick and an edge cannot be held back without a delay, so nothing is held back: X is a light on its press tick whether or not A follows. If A follows inside 3 ticks and the light has not landed (contact is 6 ticks after the press, so there are always 3 ticks to spare), the director replaces the light with the X+A attack and the light's pose is cancelled. If both edges arrive **in the same build** (about half of deliberate pairs), there is no first blow to undo, and the pair simply starts. A pair is **one press in the log** (a new `PAIR` kind), counted once in the mix.
+**What the first press does if the second never comes: it is the blow, thrown at once, unchanged.** The layout builds an intent every tick and an edge cannot be held back without a delay, so nothing is held back: X is a light on its press tick whether or not A follows. **Corrected 2026-10-05 (the EP's check): a brawl light lands 2 ticks after its press, not 6 (6 is the skill strike's contact), so a light is the one first press that can land before the partner arrives.** The rule: **a light that was pressed first is kept** (it is a real blow, it lands, its damage stands, it counts toward the run) and **the pair is still thrown from the partner's press**, with the partner's own motion becoming the pair attack. **Any other first press (Y, A, B) has a motion that is far from landing** (the heavy's contact is 34 ticks after the press, the energy bolt leaves 6 after, a lunge's crouch is 6 or 10 before it moves), so the director **replaces** that motion with the pair attack. A partner that is an X (light) is never thrown as its own light: it completes the pair. If both edges arrive **in the same build** (about half of deliberate pairs), there is no first blow to undo, and the pair simply starts. A pair is **one press in the log** (a new `PAIR` kind), counted once in the mix.
 
 **How it sits with the rest.**
 - **Debounce (2 ticks)** is per button, on its own re-press; the two buttons of a pair are different buttons, so it never touches a pair.
@@ -63,6 +63,24 @@ What the live build does with each press in a brawl (Arena pad, and the same on 
 
 **Is there a case for a cross-pad pair (X+B, Y+A)? No.** On a pad one thumb cannot press the two buttons that lie across the diamond; it needs a second finger or the other thumb off the stick, which is exactly the loss of control Orb asked the scheme to avoid ("players should always feel like they are able to control their character"). The only version that works is a one-key action (the pair macro above), which is not a cross-pad pair on the pad but a keyboard or accessibility binding, and it can carry any two cells. I have no pitch beyond that.
 
+### Pair timing, checked against the live data (2026-10-05)
+
+| Press | Contact after the press | In the pair window (3 ticks)? |
+| :--- | :--- | :--- |
+| Brawl light (X) | **2 ticks** (`brawl.light.contactTicks`; the first light from the close band steps in for at most `stepInTicks` 2 first, so 2 to 4) | **It can land first.** Kept; the pair is still thrown |
+| Brawl heavy (Y) | 34 (26 wind-up, 8 to land) | Never lands first: replaced by the pair |
+| Energy bolt | leaves 6 after the press (`blast.light.windupTicks`) | Replaced |
+| Mid-band lunge | crouch 6 (light) or 10 (heavy), then the flight | Replaced |
+| A (shove), B (signature) | A's shove wind-up is 8 (Game Design's clinch rule); B starts its motion at the press | Replaced |
+
+**The freshness rule does not change.** It looks backward from the pair (neither button pressed in the 8 ticks before), and a light kept as the first press is the pair's own first press, not an earlier one. A light mash still never pairs (its presses are 6 or more ticks apart and each fails the rule for the next).
+
+### "Decide at the release" for Y, and the same for A and B
+
+**Y: no delay.** The heavy's motion starts at the press, its usual contact is 34 ticks later, and a release at 5 to 8 ticks (or anywhere up to 15) is far inside that, so the quick move lands at its usual time, 34 ticks after the press (the release plus 2 is 7 to 10, which is earlier, so "whichever is later" is 34). It costs a tapped Y nothing. At exactly 16 ticks still down it is the hold (the classifier's `held >= 16`), so a release at 15 is the quick move and one at 16 is not.
+
+**A and B can be delayed, and that should be checked.** The quick move lands at the later of its usual time and 2 ticks after the release. For **A** the usual contact is the shove's 8-tick wind-up and the hold point is 18, so **an A that is released between 9 and 17 ticks after the press lands its shove at the release plus 2: up to 11 ticks later than a tap released inside 8** (19 ticks after the press against 8). For **B** (hold point 12) the same shape applies, with the zone being the ticks between its usual contact and 12. A **tap's length depends on the device**: a pad tap is about 3 to 6 ticks, a keyboard 4 to 8, a **touch tap 5 to 12**, so a touch player's A or B tap is the one that falls in the zone and gets a late shove. Two cheap mitigations if QA shows it: (1) land the quick move at its **usual time** and let a continued hold start the charge after it (the rule X already has, an instant move then a charge), which removes the wait for A and B at the price of a shove before every tackle; or (2) raise the hold points on touch by the touch tap's extra length. The first is simpler. I would have QA measure the share of A and B taps released in the 9-to-17 and usual-to-12 zones per device before choosing.
+
 ## 3. Mash, hold and alternation on X and Y
 
 **What the layouts and the reader deliver now.**
@@ -75,9 +93,9 @@ What the live build does with each press in a brawl (Arena pad, and the same on 
 2. **`mash_of(log, kind)`**: a heavy mash (Y presses only) and a light mash read separately, so "heavy mashing has the rapid attack pattern" is a rule the director can state. Data: `read.mashHeavyGap` if heavies are allowed a longer gap than 10 (Game Design's number).
 3. Nothing in the layouts: every layout delivers the edges and levels the above needs, **except Simple**, where X is the Attack button (tap on release, hold 12 ticks is the heavy), so Simple has no light charge or alternation by button; its director picks.
 
-**How a tap is told from the start of a hold without delaying the tap's blow.** It is not told apart before the blow, and **it cannot be for a light**: the press is an edge on its tick, the blow starts at once, and the hold shows later as `lightHeld` still true. A light's contact is 6 ticks after the press, but X's hold threshold is 8, so the decision comes after the blow has landed. Two ways to give Orb's "holding charges a light":
+**How a tap is told from the start of a hold without delaying the tap's blow.** It is not told apart before the blow, and **it cannot be for a light**: the press is an edge on its tick, the blow starts at once, and the hold shows later as `lightHeld` still true. A light's contact is 2 ticks after the press, and X's hold threshold is 8, so the decision comes after the blow has landed. Two ways to give Orb's "holding charges a light":
 - **A (recommended): the tap's blow stays instant, and a held X becomes the charge of the next blow.** The press throws the light at once; if the button is still down at 8 ticks the fighter winds up a charged light (faster to charge than Y, less power, no knockback), released on the flash like a held heavy. Cost: every charge is preceded by one ordinary light, which suits a brawl (a light is the opener anyway) and costs the input nothing.
-- **B: the press starts the wind-up and a quick release throws the tap.** Cost: every light's contact moves from 6 ticks after the press to about 8 or 9 (the release plus a wind-up), which breaks the "instant" the whole brawl is measured on (press to contact within 10 is Encounter's band). I would not do this.
+- **B: the press starts the wind-up and a quick release throws the tap.** Cost: every light's contact moves from 2 ticks after the press to about 8 or 9 (the release plus a wind-up), which breaks the "instant" the whole brawl is measured on (press to contact within 10 is Encounter's band). I would not do this.
 - **Y needs neither:** the heavy's wind-up already starts at the press and is 34 ticks long, so its tap and hold are told apart at 16 ticks, well before contact.
 
 ## 4. Movement in a brawl
