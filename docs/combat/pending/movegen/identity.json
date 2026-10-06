@@ -358,7 +358,18 @@
      ]
     },
     "_close": "what his burst's eighth blow is, when the rules allow: a straight"
-   }
+   },
+   "reaimed": {
+    "mv.rival.martial.b.09": {
+     "was": "chest",
+     "now": "legs"
+    },
+    "mv.rival.martial.b.10": {
+     "was": "chest",
+     "now": "arm"
+    }
+   },
+   "_reaimed": "rows whose place was moved after Legal screened them (Game Design's ruling on the wrench, 68b9a586): the same limb, tip, path and drive, another place. The sheet marks them for Legal"
   },
   "protagonist": {
    "waves": [

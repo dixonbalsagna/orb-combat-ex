@@ -581,7 +581,7 @@
   }
  },
  "reach": {
-  "_about": "Energy in reach (docs/design/brawl-second-pass.md section 5b, slice C2t): with RB held in a brawl, X is the point-blank bolt and Y the blast. pieces are the generated moves (docs/combat/pending/movegen): an energy hand, how it is let go, the place it is set on, and the path it has in a string (a thrust is a line, a flick an outward arc, a sweep an inward arc). set is the posed press or shot it is played on, when there is one. They count as blows in Legal's string rules. rule: Legal's e06 counts a piece by its hand and release, so a mash never throws the same hand and release twice running; the four bolts differ in one or the other, and one may always follow",
+  "_about": "Energy in reach (docs/design/brawl-second-pass.md section 5b, slice C2t): with RB held in a brawl, X is the point-blank bolt and Y the blast. pieces are the generated moves (docs/combat/pending/movegen): an energy hand, how it is let go, the place it is set on, and the path it has in a string (a thrust is a line, a flick an outward arc, a sweep an inward arc). set is the posed press or shot it is played on, when there is one. They count as blows in Legal's string rules. rule: Legal's e06 counts a piece by its hand and release, so a mash never throws the same hand and release twice running; the four bolts differ in one or the other, and one may always follow. run: Legal's e09 for a mashed run, as numbers the director can order by, with the arm (lead or free) for each bolt. runs: two sample runs of twelve a fighter",
   "rule": {
    "id": "e06",
    "same": [
@@ -589,6 +589,25 @@
     "release"
    ],
    "max": 1
+  },
+  "run": {
+   "_about": "A mashed run of point-blank bolts, ordered by Legal's e09 so that it reads as varied on screen and not only in data. An arm is lead or free: which arm throws a bolt is chosen for each throw, and Animation mirrors the piece. samePlacePathArm: never the same arm, path and place twice running. pathsIn: at least so many different paths in any so many bolts running. freeArm: the free arm takes a bolt now and then, never two in three (so never a left-right pump), at least one in six, and never on a regular count (two gaps running between its bolts are never equal). notPeriodic: the order of the pieces never repeats on a fixed count of 3 or 4. A run also keeps what every string keeps: never one of his last two pieces, e06, and the string rules. Each hand lands on the chest or the gut, below the collar line; the heads keep a hand's width apart (Animation)",
+   "samePlacePathArm": 1,
+   "pathsIn": [
+    3,
+    5
+   ],
+   "freeArm": {
+    "atMostOneIn": 3,
+    "atLeastOneIn": 6,
+    "gapsDiffer": true
+   },
+   "notPeriodic": [
+    3,
+    4
+   ],
+   "proof": 30,
+   "_proof": "a run of this many bolts must exist for each fighter (three seconds of mashing, the length Legal will watch): --check tries to make one"
   },
   "pieces": {
    "rival": {
@@ -711,6 +730,132 @@
      }
     ]
    }
+  },
+  "runs": {
+   "rival": [
+    {
+     "blows": [
+      "mv.rival.energy.x.reach.01",
+      "mv.rival.energy.x.reach.02",
+      "mv.rival.energy.x.reach.04",
+      "mv.rival.energy.x.reach.03",
+      "mv.rival.energy.x.reach.02",
+      "mv.rival.energy.x.reach.01",
+      "mv.rival.energy.x.reach.04",
+      "mv.rival.energy.x.reach.02",
+      "mv.rival.energy.x.reach.03",
+      "mv.rival.energy.x.reach.04",
+      "mv.rival.energy.x.reach.02",
+      "mv.rival.energy.x.reach.01"
+     ],
+     "arms": [
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead",
+      "lead",
+      "lead"
+     ]
+    },
+    {
+     "blows": [
+      "mv.rival.energy.x.reach.04",
+      "mv.rival.energy.x.reach.03",
+      "mv.rival.energy.x.reach.02",
+      "mv.rival.energy.x.reach.04",
+      "mv.rival.energy.x.reach.03",
+      "mv.rival.energy.x.reach.02",
+      "mv.rival.energy.x.reach.01",
+      "mv.rival.energy.x.reach.04",
+      "mv.rival.energy.x.reach.03",
+      "mv.rival.energy.x.reach.02",
+      "mv.rival.energy.x.reach.01",
+      "mv.rival.energy.x.reach.04"
+     ],
+     "arms": [
+      "free",
+      "lead",
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead"
+     ]
+    }
+   ],
+   "protagonist": [
+    {
+     "blows": [
+      "mv.protagonist.energy.x.reach.02",
+      "mv.protagonist.energy.x.reach.01",
+      "mv.protagonist.energy.x.reach.04",
+      "mv.protagonist.energy.x.reach.03",
+      "mv.protagonist.energy.x.reach.01",
+      "mv.protagonist.energy.x.reach.04",
+      "mv.protagonist.energy.x.reach.03",
+      "mv.protagonist.energy.x.reach.01",
+      "mv.protagonist.energy.x.reach.02",
+      "mv.protagonist.energy.x.reach.03",
+      "mv.protagonist.energy.x.reach.04",
+      "mv.protagonist.energy.x.reach.01"
+     ],
+     "arms": [
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead"
+     ]
+    },
+    {
+     "blows": [
+      "mv.protagonist.energy.x.reach.02",
+      "mv.protagonist.energy.x.reach.01",
+      "mv.protagonist.energy.x.reach.03",
+      "mv.protagonist.energy.x.reach.04",
+      "mv.protagonist.energy.x.reach.01",
+      "mv.protagonist.energy.x.reach.02",
+      "mv.protagonist.energy.x.reach.03",
+      "mv.protagonist.energy.x.reach.04",
+      "mv.protagonist.energy.x.reach.01",
+      "mv.protagonist.energy.x.reach.02",
+      "mv.protagonist.energy.x.reach.03",
+      "mv.protagonist.energy.x.reach.01"
+     ],
+     "arms": [
+      "lead",
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead"
+     ]
+    }
+   ]
   }
  },
  "pieces": {

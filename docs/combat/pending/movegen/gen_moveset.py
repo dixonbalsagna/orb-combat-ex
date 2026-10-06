@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 11
+VERSION = 12
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -655,6 +655,87 @@ def burst_cell(ctx, who, cid, cell, done):
     return {"kind": "string", "from": cell["from"], "valid": len(pool), "quotas": {}, "moves": moves}
 
 
+def reach_blow(parts, m, btn="rx"):
+    """A point-blank bolt as a blow of a string: it has a path and a place, and the energy parts Legal's e06 counts."""
+    return {"id": m["id"], "limb": "hand", "tip": parts["shot"]["hands"][m["hand"]]["shape"], "path": m["path"], "target": m["target"], "weight": "light", "arms": 1,
+            "step": [], "hand": m["hand"], "release": m["release"], "body": m["body"], "button": btn}
+
+
+def reach_run_breaks(parts, seq, arms):
+    """What a mashed run of point-blank bolts breaks: Legal's e09 as parts.json reach.run words it, and what every string keeps (never one of his last two pieces, e06,
+    the string rules). arms: lead or free, one for each bolt."""
+    rr, out = parts["reach"]["run"], []
+    for i, n in enumerate(seq):
+        if any(n["id"] == p["id"] for p in seq[max(0, i - 2):i]):
+            out.append("one of his last two")
+        out += string_breaks(parts, seq[max(0, i - 2):i + 1])
+        if i and arms[i] == arms[i - 1] and n["path"] == seq[i - 1]["path"] and n["target"] == seq[i - 1]["target"]:
+            out.append("e09: the same arm, path and place twice running")
+    need, span = rr["pathsIn"]
+    if any(len(set(n["path"] for n in seq[i:i + span])) < need for i in range(len(seq) - span + 1)):
+        out.append("e09: fewer than %d paths in %d" % (need, span))
+    fa = rr["freeArm"]
+    if any(arms[i:i + fa["atMostOneIn"]].count("free") > 1 for i in range(len(arms) - fa["atMostOneIn"] + 1)):
+        out.append("e09: the free arm twice in %d, a left-right pump" % fa["atMostOneIn"])
+    if any("free" not in arms[i:i + fa["atLeastOneIn"]] for i in range(len(arms) - fa["atLeastOneIn"] + 1)):
+        out.append("e09: one arm pumping, no bolt from the free arm in %d" % fa["atLeastOneIn"])
+    at = [i for i, a in enumerate(arms) if a == "free"]
+    gaps = [b - a for a, b in zip(at, at[1:])]
+    if fa.get("gapsDiffer") and any(a == b for a, b in zip(gaps, gaps[1:])):
+        out.append("e09: the free arm comes in on a regular count")
+    if any(len(seq) > 2 * p and all(seq[i]["id"] == seq[i + p]["id"] for i in range(len(seq) - p)) for p in rr.get("notPeriodic", [])):
+        out.append("e09: the order repeats on a fixed count")
+    return sorted(set(out))
+
+
+def reach_run(parts, pool, length, key):
+    """A run of that length ordered by e09, with its arms, or None: depth first, the order of tries from the key (a hash, so the same run every time)."""
+    rr = parts["reach"]["run"]
+    need, span = rr["pathsIn"]
+    def grow(seq):
+        if len(seq) == length:
+            return seq if not any(b.startswith("e09: the order") for b in reach_run_breaks(parts, seq, ["lead"] * length)) else None
+        cand = [n for n in pool if all(n["id"] != p["id"] for p in seq[-2:]) and not string_breaks(parts, seq[-2:] + [n])
+                and (len(seq) < span - 1 or len(set(x["path"] for x in seq[-(span - 1):] + [n])) >= need)]
+        for n in sorted(cand, key=lambda n: (-jitter(*key, "piece", len(seq), n["id"]), n["id"])):
+            got = grow(seq + [n])
+            if got:
+                return got
+        return None
+    seq = grow([])
+    if seq is None:
+        return None
+    def arm(arms):
+        if len(arms) == length:
+            return arms if not reach_run_breaks(parts, seq, arms) else None
+        first = "free" if jitter(*key, "arm", len(arms)) > 1.06 else "lead"
+        for a in (first, "lead" if first == "free" else "free"):
+            trial = arms + [a]
+            if not [b for b in reach_run_breaks(parts, seq[:len(trial)], trial) if "no bolt from the free arm" not in b or len(trial) >= rr["freeArm"]["atLeastOneIn"]]:
+                got = arm(trial)
+                if got:
+                    return got
+        return None
+    arms = arm([])
+    return (seq, arms) if arms else None
+
+
+def run_cell(ctx, who, cid, cell, done):
+    """Mashed runs of point-blank bolts, ordered by Legal's e09."""
+    parts, seed = ctx["parts"], ctx["seed"]
+    src = {m["id"]: m for m in done[cell["from"]]["moves"]}
+    pool = [reach_blow(parts, m) for m in src.values()]
+    moves = []
+    for k in range(cell["count"]):
+        got = reach_run(parts, pool, cell["length"], (seed, who, cid, k))
+        if got is None:
+            raise SystemExit("%s: no run of %d point-blank bolts can be ordered by e09 from his %d" % (who, cell["length"], len(pool)))
+        seq, arms = got
+        moves.append({"id": "mv.%s.%s.%02d" % (who, cid, k + 1), "blows": [n["id"] for n in seq], "arms": arms,
+                      "status": "waiting" if any(src[n["id"]]["status"] == "waiting" for n in seq) else "derived", "asks": list(cell.get("asks", [])), "review": "new"})
+    return {"kind": "run", "from": cell["from"], "valid": len(pool), "quotas": {}, "moves": moves}
+
+
 def special_cell(ctx, who, cid, cell):
     idn, seed = ctx["idn"], ctx["seed"]
     sp = idn["specials"][cell["slot"]]
@@ -738,6 +819,8 @@ def build():
                 doc["cells"][cid] = strike_cell(ctx, who, cid, cell)
             elif k == "string":
                 doc["cells"][cid] = burst_cell(ctx, who, cid, cell, doc["cells"])
+            elif k == "run":
+                doc["cells"][cid] = run_cell(ctx, who, cid, cell, doc["cells"])
             elif k == "travel":
                 doc["cells"][cid] = travel_cell(ctx, who, cid, cell, doc["cells"])
             elif k == "table":
@@ -843,6 +926,12 @@ def legal_findings(docs, parts, identity):
                     hits = []
                 if hits:
                     bad.append("%s: %s matches %s" % (who, m["id"], ", ".join(hits)))
+                if c["kind"] == "run":   # a mashed run of point-blank bolts: Legal's e09
+                    by_id = {x["id"]: reach_blow(parts, x) for x in doc["cells"][c["from"]]["moves"]}
+                    seq = [by_id.get(i) for i in m["blows"]]
+                    br = ["a bolt that is not in %s" % c["from"]] if None in seq else reach_run_breaks(parts, seq, m["arms"])
+                    if br:
+                        bad.append("%s: %s breaks %s" % (who, m["id"], "; ".join(br)))
                 if c["kind"] == "string":   # a burst: every blow of its gap's class, and the whole string inside Legal's rules and the burst's own
                     bu = g["burst"]
                     by_id = {x["id"]: x for x in doc["cells"][c["from"]]["moves"]}
@@ -1015,14 +1104,16 @@ def string_report(docs, parts, cells):
                 today[btn] = [m for m in pools[btn] if m["id"] in keep] + [slim(m, btn) for m in c.get("martial.%s.standin" % btn, {}).get("moves", [])]
         rx = c.get("energy.x.reach")
         if rx:   # energy in reach: a point-blank bolt takes a light's place in a string
-            pools["rx"] = [{"id": m["id"], "limb": "hand", "tip": parts["shot"]["hands"][m["hand"]]["shape"], "path": m["path"], "target": m["target"], "weight": "light", "arms": 1,
-                            "step": [], "hand": m["hand"], "release": m["release"], "body": m["body"], "button": "rx"} for m in rx["moves"]]
+            pools["rx"] = [reach_blow(parts, m) for m in rx["moves"]]
             today["rx"] = [m for m, src in zip(pools["rx"], rx["moves"]) if src["status"] != "waiting"]
         counts, blind = after_two(parts, pools)
         counts_today, _ = after_two(parts, today)
         rep[who] = {"mix": {b: {"pool": len(pools[b]), "fewest": min(counts[b]), "median": sorted(counts[b])[len(counts[b]) // 2],
                                 "today": len(today[b]), "todayFewest": min(counts_today[b]) if counts_today[b] else 0} for b in pools},
                     "blind": blind}
+        if rx and "run" in parts.get("reach", {}):   # Legal's e09: can his bolts make a run as long as the proof asks, in order and in arms
+            n = parts["reach"]["run"]["proof"]
+            rep[who]["run"] = {"bolts": len(rx["moves"]), "length": n, "made": reach_run(parts, [reach_blow(parts, m) for m in rx["moves"]], n, (who, "proof")) is not None}
         if "martial.b" in c and c["martial.b"]["kind"] == "strikes":
             sends = list(parts["strike"]["heavy"].get("launcher", {}).get("aim", {}).values())
             rep[who]["launch"] = {"tier": {sd: [m["id"].rsplit(".", 1)[1] for m in c["martial.b"]["moves"] if "launch" in m["forms"] and m["sends"] == sd] for sd in sends},
@@ -1044,6 +1135,8 @@ def string_findings(rep):
             floor = 1 if b == "rx" else FLOOR   # four point-blank bolts: one must always be left to throw
             if v["fewest"] < floor:
                 bad.append("%s: after some two blows only %d of his %d on %s may follow; the floor is %d" % (who, v["fewest"], v["pool"], b.upper(), floor))
+        if r.get("run") and not r["run"]["made"]:
+            bad.append("%s: his %d point-blank bolts cannot make a run of %d by e09" % (who, r["run"]["bolts"], r["run"]["length"]))
         for sd, ids in sorted(r.get("launch", {}).get("tier", {}).items()):
             if not ids:
                 bad.append("%s: no heavy of his tier is a launcher that sends %s" % (who, sd))
@@ -1127,7 +1220,7 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
     L.append("| :--- | :--- | :--- | :--- |")
     for group in [k for k, v in lgl.items() if isinstance(v, list)]:
         rows = lgl.get(group, [])
-        auto = [r["id"] for r in rows if r.get("kind") in ("travel", "move", "hand", "holdPoints", "string", "shape", "slots", "burst")]
+        auto = [r["id"] for r in rows if r.get("kind") in ("travel", "move", "hand", "holdPoints", "string", "shape", "slots", "burst", "reachRun")]
         rest = [r["id"] for r in rows if r["id"] not in auto]
         owner = sorted(set(r.get("owner", "") for r in rows if r["id"] in rest))
         L.append("| %s | %s to %s | %s | %s%s |" % (group, rows[0]["id"], rows[-1]["id"], ", ".join(auto) or "-", ", ".join(rest) or "-", (" (" + "; ".join(o for o in owner if o) + ")") if rest else ""))
@@ -1215,7 +1308,9 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
                 st = [m["status"] for m in c["moves"]]
                 mins = {q["name"]: q["min"] for q in cell.get("quotas", [])}
                 qt = "; ".join("%s %d of %d" % (k, v, mins[k]) for k, v in c["quotas"].items())
-                if c["kind"] == "string":
+                if c["kind"] == "run":
+                    L.append("**The %s:** %d runs of %d from his %d bolts. Legal's e09: never the same arm, path and place twice running; three paths in any five; the free arm now and then, never on a regular count." % (nm(who), len(st), cell["length"], c["valid"]))
+                elif c["kind"] == "string":
                     L.append("**The %s:** %d strings of %d from his %d lights; %d posed, %d derived. %s" % (who if who == "rival" else who.capitalize(), len(st), len(cell["slots"]), c["valid"], st.count("posed"), st.count("derived"),
                                                                                                     identity["fighters"][who].get("manner", {}).get("burst", "") if identity else ""))
                 else:
@@ -1254,6 +1349,15 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
                     if c["refused"]:
                         L.append("Refused by Legal's rows, so never offered: " + "; ".join("%s (%s)" % (" ".join(w(x) for x in r["shape"]), ", ".join(r["rows"])) for r in c["refused"]) + ".")
                         L.append("")
+                elif c["kind"] == "run":
+                    by_id = {x["id"]: x for x in out[who]["cells"][c["from"]]["moves"]}
+                    L.append("His bolts: " + "; ".join("%s is %s on a %s to the %s (%s)" % (i.rsplit(".", 1)[1], w(x["hand"]), x["release"], x["target"], w(x["path"])) for i, x in by_id.items()) + ".")
+                    L.append("")
+                    L.append("| # | " + " | ".join(str(i + 1) for i in range(len(c["moves"][0]["blows"]))) + " | Status |")
+                    L.append("| ---: | " + " | ".join(":---" for _ in c["moves"][0]["blows"]) + " | :--- |")
+                    for m in c["moves"]:
+                        L.append("| %s | %s | %s |" % (m["id"].rsplit(".", 1)[1], " | ".join("%s, %s" % (i.rsplit(".", 1)[1], "**free**" if a == "free" else "lead") for i, a in zip(m["blows"], m["arms"])), m["status"]))
+                    L.append("")
                 elif c["kind"] == "string":
                     by_id = {x["id"]: x for x in out[who]["cells"][c["from"]]["moves"]}
                     L.append("| # | Stick | " + " | ".join("%d: %s" % (i + 1, s) for i, s in enumerate(cell["slots"])) + " | Status |")
@@ -1312,6 +1416,8 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
             L.append("| %s | %s |" % (label, " | ".join("%d and %d of %d" % (rep[n]["mix"][b]["fewest"], rep[n]["mix"][b]["median"], rep[n]["mix"][b]["pool"]) for n in names)))
         if all("rx" in rep[n]["mix"] for n in names):
             L.append("| Point-blank bolts that may follow (energy in reach): fewest, median | %s |" % " | ".join("%d and %d of %d" % (rep[n]["mix"]["rx"]["fewest"], rep[n]["mix"]["rx"]["median"], rep[n]["mix"]["rx"]["pool"]) for n in names))
+        if all("run" in rep[n] for n in names):
+            L.append("| A mashed run of %d point-blank bolts ordered by e09, from his four | %s |" % (rep[names[0]]["run"]["length"], " | ".join("made" if rep[n]["run"]["made"] else "**cannot be made**" for n in names)))
         L.append("| Two blows drawn blind that break a rule | %s |" % " | ".join("%.1f%%" % rep[n]["blind"] for n in names))
         L.append("| **On what is posed today:** heavies that can play (the stand-ins), and the fewest that may follow | %s |" % " | ".join("%d, fewest %d" % (rep[n]["mix"]["b"]["today"], rep[n]["mix"]["b"]["todayFewest"]) for n in names))
         if all("burst" in rep[n] for n in names):
@@ -1334,7 +1440,9 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
     for who in names:
         for m in out[who]["cells"].get("martial.b", {}).get("moves", []):
             n_ += 1
-            L.append("| %d | %s (`%s`) | %s | a heavy: %s %s on %s path, with the drive `%s` | %s | %s |" % (n_, m["name"], m["id"].split(".", 2)[2], nm(who), m["limb"], m["tip"], an(w(m["path"])), m["drive"], ", ".join(m["asks"]), "passes; seen drawn first" if g["heavy"]["drive"][m["path"]].get("seen") else "passes"))
+            L.append("| %d | %s (`%s`) | %s | a heavy: %s %s on %s path, with the drive `%s` | %s | %s |" % (n_, m["name"], m["id"].split(".", 2)[2], nm(who), m["limb"], m["tip"], an(w(m["path"])), m["drive"], ", ".join(m["asks"]),
+                                                                                                              ("**re-aimed since Legal's screen: it was to the %s.** Its drive and shape passed; its new place is not screened" % identity["fighters"][who]["reaimed"][m["id"]]["was"])
+                                                                                                              if identity and m["id"] in identity["fighters"][who].get("reaimed", {}) else "passes; seen drawn first" if g["heavy"]["drive"][m["path"]].get("seen") else "passes"))
     for who in names:
         for m in out[who]["cells"].get("martial.b.standin", {}).get("moves", []):
             n_ += 1
@@ -1469,6 +1577,18 @@ def self_test(parts, identity):
     expect("a heavy that leaps is not a launcher", "launch" in forms_of(g, dict(hvy, limb="foot", tip="sole"), 0, ["leap"]), False)
     expect("a heavy to an arm is not a launcher: it is the wrench's", ("launch" in forms_of(g, dict(hvy, path="drop", target="arm"), 1), "wrench" in forms_of(g, dict(hvy, path="drop", target="arm"), 1)), (False, True))
     expect("a launcher is never a wrench", "wrench" in forms_of(g, hvy, 1), False)
+    rb0 = {"limb": "hand", "tip": "blade", "weight": "light", "arms": 1, "step": [], "body": "in_reach"}
+    rb = [dict(rb0, id="r%d" % i, release=rl, path=pa, target=tg, hand=hd) for i, (hd, rl, pa, tg) in enumerate([
+        ("blade_hand", "thrust", "line", "gut"), ("fist_glow", "thrust", "line", "chest"), ("blade_hand", "flick", "arc_out", "gut"), ("blade_hand", "sweep", "arc_in", "chest")])]
+    cyc = [rb[i % 4] for i in range(12)]
+    expect("a run in a fixed order of four repeats on a fixed count (e09)", [b for b in reach_run_breaks(parts_, cyc, ["lead", "lead", "free", "lead", "lead", "lead", "free", "lead", "lead", "free", "lead", "lead"])], ["e09: the order repeats on a fixed count"])
+    mixed = [rb[i] for i in (0, 1, 2, 3, 1, 0, 3, 2, 1, 3)]
+    expect("left, right, left, right is a pump (e09)", "e09: the free arm twice in 3, a left-right pump" in reach_run_breaks(parts_, mixed, ["lead", "free"] * 5), True)
+    expect("one arm for the whole run is a pump too (e09)", "e09: one arm pumping, no bolt from the free arm in 6" in reach_run_breaks(parts_, mixed, ["lead"] * 10), True)
+    expect("the free arm on every third bolt is a regular count (e09)", "e09: the free arm comes in on a regular count" in reach_run_breaks(parts_, mixed, ["lead", "lead", "free", "lead", "lead", "free", "lead", "lead", "free", "lead"]), True)
+    expect("five bolts on two paths (e09)", "e09: fewer than 3 paths in 5" in reach_run_breaks(parts_, [rb[i] for i in (0, 1, 2, 0, 1)], ["lead", "lead", "free", "lead", "lead"]), True)
+    made = reach_run(parts_, rb, 30, ("self-test",))
+    expect("thirty bolts can be ordered by e09 from four, and the run it makes passes", (made is not None, made is not None and reach_run_breaks(parts_, made[0], made[1])), (True, []))
     expect("a blast in reach from the lit fist passes (e06, e08)", group_hits(parts_, {"hand": "fist_glow", "release": "thrust", "body": "in_reach", "delivery": "blast", "target": "chest"}, "energy"), [])
     expect("a point-blank bolt from the pinch is refused (e06)", group_hits(parts_, {"hand": "pinch", "release": "thrust", "body": "in_reach", "delivery": "point_blank", "target": "chest"}, "energy"), ["e06"])
     vb = {"limb": "hand", "tip": "heel", "path": "line", "target": "arm", "weight": "light", "step": []}

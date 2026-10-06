@@ -776,6 +776,27 @@
         "what": "a crack for the shot against the thud of a fist"
        }
       ]
+     },
+     "run": {
+      "kind": "run",
+      "from": "energy.x.reach",
+      "count": 2,
+      "length": 12,
+      "asks": [
+       "E1",
+       "R1"
+      ],
+      "what": "a mashed run of point-blank bolts, ordered by Legal's e09: two sample runs of twelve, with the arm that throws each. The director may play one, or order its own by the same rules (parts.json reach.run)",
+      "needs": [
+       {
+        "who": "Animation",
+        "what": "each bolt mirrored for the free arm; the run drawn so that the paths differ on screen and the heads keep a hand's width apart"
+       },
+       {
+        "who": "Encounter",
+        "what": "the order of a mashed run by the rules of reach.run, with the arm for each bolt"
+       }
+      ]
      }
     }
    },

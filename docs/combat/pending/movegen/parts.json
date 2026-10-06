@@ -1670,6 +1670,7 @@
     "stance": "energy",
     "rows": [
      "e08",
+     "e09",
      "e06",
      "e01",
      "e02",
@@ -1679,8 +1680,8 @@
      "f01",
      "f03"
     ],
-    "from": "Legal's e08 (Combat's R1, adopted)",
-    "ask": "an energy blow in reach: one open, blade or lit-fist hand at shoulder height or lower; the hand is lit as a thin edge before it lands, never a ball; a blade hand is a flat blade, never a pointed finger or two fingers; a lit fist's light sits on its plate and knuckle edges only; the shot goes off at the contact as a thin edge or a short cone; each body takes a rim of its colour on the near side, never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash, counted over the whole screen; the blast's 12-tick wind-up is a held pose, its gather a thin ring or edge at the palm. The contact, the cone, the rim and a mashed run are seen drawn first"
+    "from": "Legal's e08 (Combat's R1, adopted) and e09",
+    "ask": "an energy blow in reach: one open, blade or lit-fist hand at shoulder height or lower; the hand is lit as a thin edge before it lands, never a ball; a blade hand is a flat blade, never a pointed finger or two fingers; a lit fist's light sits on its plate and knuckle edges only; the shot goes off at the contact as a thin edge or a short cone; each body takes a rim of its colour on the near side, never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash, counted over the whole screen; the blast's 12-tick wind-up is a held pose, its gather a thin ring or edge at the palm. A mashed run reads as varied on screen (e09): never the same arm, path and place twice running; no regular left-right pump, the free arm taking a bolt now and then; three different paths in any five; each hand below the collar line on the chest or the gut; a hand's width between the heads. The contact, the cone, the rim and a mashed run are seen drawn first"
    }
   ],
   "_conditions": "Legal's conditions from its screen of the sheet (docs/legal/movegen-screen.md section 1), for Animation: the sheet's Legal column lists the ids that apply to a row. They bite when a move is held or strung"
@@ -2072,7 +2073,26 @@
      ]
     }
    }
-  ]
+  ],
+  "run": {
+   "_about": "A mashed run of point-blank bolts, ordered by Legal's e09 so that it reads as varied on screen and not only in data. An arm is lead or free: which arm throws a bolt is chosen for each throw, and Animation mirrors the piece. samePlacePathArm: never the same arm, path and place twice running. pathsIn: at least so many different paths in any so many bolts running. freeArm: the free arm takes a bolt now and then, never two in three (so never a left-right pump), at least one in six, and never on a regular count (two gaps running between its bolts are never equal). notPeriodic: the order of the pieces never repeats on a fixed count of 3 or 4. A run also keeps what every string keeps: never one of his last two pieces, e06, and the string rules. Each hand lands on the chest or the gut, below the collar line; the heads keep a hand's width apart (Animation)",
+   "samePlacePathArm": 1,
+   "pathsIn": [
+    3,
+    5
+   ],
+   "freeArm": {
+    "atMostOneIn": 3,
+    "atLeastOneIn": 6,
+    "gapsDiffer": true
+   },
+   "notPeriodic": [
+    3,
+    4
+   ],
+   "proof": 30,
+   "_proof": "a run of this many bolts must exist for each fighter (three seconds of mashing, the length Legal will watch): --check tries to make one"
+  }
  },
  "readings": {
   "_about": "Which form each press of a strike button asks for (docs/design/brawl-second-pass.md section 8). One press is one attack: a button's pool is one list, and the press picks the form. The held X is not a form: it is a string of eight from the same pool (`strike.burst`, and the cell's `presses.hold`)",
@@ -2359,6 +2379,13 @@
     "owner": "Animation and VFX",
     "rule": "R1 adopted: an energy blow in reach is one open, blade or lit-fist hand at shoulder height or lower, lit as a thin edge before it lands, the shot going off at contact as a thin edge or short cone, each body taking a rim of its colour on the near side and never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash; the blast's 12-tick wind-up is a held pose (h05) with its gather a thin ring or edge at the palm; the blade hand is a flat blade, never a pointed finger or two fingers (e03)",
     "why": "R1 with the lit fist and the finger rule added"
+   },
+   {
+    "id": "e09",
+    "kind": "reachRun",
+    "uses": "reach.run",
+    "rule": "a mashed run of point-blank bolts must read as varied on screen, not only in data: no two bolts in a row with the same arm, path and place; no regular left-right alternation (an irregular order, with the free arm taking a bolt now and then); at least three different paths (line, outward arc, inward arc) in any five; each hand lands below the collar line on the chest or gut and never at the neck, throat or face; the two bodies keep a hand's width between the heads",
+    "why": "e06 for a mashed run: the same arm pumping, or two palms pumping in turn, is the barrage image"
    }
   ],
   "grabs": [

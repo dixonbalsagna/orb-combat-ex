@@ -3,9 +3,9 @@
 Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Sections 1 and 2 are generated content for the slice C2t; section 3 is a plan for C4b and nothing of it is built.
 Answers `docs/design/brawl-second-pass.md` (`51846cc5`): section 3 (the launcher), section 4 (the clinch and vicious), section 5b (energy in reach), section 13 (Orb's four tests).
 
-The generator is version 11. `--check` passes on all three lines and `--self-test` passes 73 cases.
+The generator is version 12. `--check` passes on all three lines and `--self-test` passes 79 cases.
 
-**Legal has screened sections 1 and 2** (`docs/legal/launcher-and-reach-screen.md`, `e9a57791`): the 8 bolts, the 4 blasts and the launcher pass; the rival's lit fist is allowed; R1 is its e08. Its answers are folded in below. Rows a fighter: 126 (rival 74 posed, 25 derived, 27 waiting; Protagonist 69, 30, 27): the 120 of before and 6 energy pieces in reach.
+**Legal has screened sections 1 and 2** (`docs/legal/launcher-and-reach-screen.md`, `e9a57791`): the 8 bolts, the 4 blasts and the launcher pass; the rival's lit fist is allowed; R1 is its e08. Its answers are folded in below. Rows a fighter: 128 (rival 74 posed, 25 derived, 29 waiting; Protagonist 69, 30, 29): the 120 of before, 6 energy pieces in reach and 2 sample runs of them.
 
 ## 1. The launcher (C2t)
 
@@ -64,6 +64,15 @@ With RB held in a brawl, X is the point-blank bolt and Y the blast. Orb's test: 
 - **Why four bolts and not one.** A mashed RB + X is one every 6 ticks. Legal's e06 says an energy flurry varies its piece and never pumps one hand or fires both palms in turn. So the four differ in hand or release, and after any two blows at least one may follow. `--check` tests it.
 - **The rival is fists and plates up close, beside the blade hand.** Legal allowed his lit fist (e06 now names three hands: open, blade, or his lit fist with the light on its plate and knuckle edges). My mix: three of his four bolts are a blade hand, as his lights are, and one is the lit fist; his blast is the lit fist, as his mediums are fists. He has no open palm here, which was Legal's point: he has none as a strike.
 - The blade hand is a flat blade, never a pointed finger or two fingers (Legal, e08).
+- **A mashed run, ordered by Legal's e09.** Legal saw Animation's drawn runs read as one arm pumping, though the data differed. So a run is now ordered, and checked by machine (`parts.json` `reach.run`):
+  - never the same arm, path and place twice running;
+  - at least three different paths in any five bolts;
+  - the free arm takes a bolt now and then: never two in three (so never a left-right pump), at least one in six, and never on a regular count;
+  - the order of the pieces never repeats on a fixed count;
+  - and what every string keeps: never one of his last two pieces, e06, and the string rules.
+- **Four bolts a fighter are enough.** His four have a line twice, an outward arc and an inward arc, and no two share a path and a place. A run of 30 can be ordered from them with irregular arms for both fighters; `--check` makes one each time and fails if it cannot. The arm is chosen for each throw, so Animation mirrors each bolt for the free arm.
+- Two sample runs of twelve a fighter are in the cell `energy.x.run` and in the recipes (`reach.runs`), with the arm for each bolt.
+- Each hand below the collar line, and a hand's width between the heads, are Animation's to draw. My places are the chest and the gut only.
 - **Chaining with no gap** is the paths: a thrust follows a straight or an arc as a jab would, and a flick or a sweep follows a hook. Nothing new is needed between a fist and a shot but the hand's state.
 - **State:** the thrusts are the posed bolt press and charged shot, played with the hand on him, so they are derived. The flick and the sweep are new releases: waiting.
 
@@ -102,6 +111,7 @@ Two notes in the live `data/combat/finishers.json` still quote the old values in
 - *The launcher:* nothing new to pose. The tier's 15 launchers and the stand-ins play on 14 ticks with the tell cut to its last third. The mediums in the launcher's pool play at 14 where they have 12.
 - *The point-blank bolt:* the bolt press with the hand on him, fitted to 2 ticks, for two hand states a fighter (palm thrust and flat palm; blade hand and open palm). The Protagonist's flat palm is still not posed as an energy hand.
 - *A flick and a sweep at the contact,* one each a fighter: new, or the swat and the spray press named for them.
+- *A mashed run:* each bolt mirrored for the free arm, in the order and arms of the sample runs (e09).
 - *The blast:* the charged shot's poses on a 12-tick wind-up, the hand set on the chest or the gut as it goes. The wind-up is a held pose (h05).
 - *Later, vicious:* eight looks a fighter inside the hold.
 
@@ -127,8 +137,9 @@ Two notes in the live `data/combat/finishers.json` still quote the old values in
 - `identity.json`: `energy.reach.hands`; `manner.reach`.
 - `cells.json`: a table cell under `presses.reach`, with `statusCap`, `distinct` and `asks`.
 - `combat.moveset/1`: a heavy has `wind`; a table row may carry `target`, `limb` and `path`; a refused row carries `hands`.
-- `combat.recipes/1`: the `brawl` key `launcher` and the pool `brawl.launcher`; two blocks, `launcher` (`aim`, `bySend`) and `reach` (`rule`, `pieces`).
+- `combat.recipes/1`: the `brawl` key `launcher` and the pool `brawl.launcher`; two blocks, `launcher` (`aim`, `noStick`, `bySend`) and `reach` (`rule`, `run`, `pieces`, `runs`).
+- Since the first list: `parts.json` `strike.heavy.launcher` (`noStick`, `wrench`), the form `wrench`, `reach.run`, a `vicious` block (a plan), and a sequence rule may be of the kind `hold`; `identity.json` `energy.reach.byDelivery` and `reaimed`; a cell of the kind `run` (`from`, `count`, `length`), whose rows have `blows` and `arms`.
 
 **For Encounter**
 - The launcher's pick: the stick's lean to a send (`launcher.aim`), then a piece of `launcher.bySend`, under the string rules and the fallback already in the file.
-- Energy in reach: the pieces and the one rule (never the same hand and release twice running).
+- Energy in reach: the pieces, the one rule (never the same hand and release twice running), and for a mashed run the rules of `reach.run` with the arm for each bolt.
