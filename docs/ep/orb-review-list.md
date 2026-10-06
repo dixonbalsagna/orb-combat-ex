@@ -175,3 +175,15 @@ Known and not fixed yet:
 Built in scratch, landing next: the zip's first slice (zip strike and zip heavy, all four exits, counters on arrival). Then the skill strike, the zip away, the fighter rename, and the depth lanes switched off.
 
 One mistake to know about: on the evening of 2026-10-05 the EP pushed a docs commit that carried the in-brawl riposte slice to the live page about an hour before its retune was ready, so for that hour the live build had the arms, the mood and the acts out of band. The retune (07f5652) closed it.
+
+## Flashing effects and the public page (2026-10-06): a decision for Orb
+
+Our own automated flash check (Tools' frame analyser, under Legal's corrected reading of WCAG 2.3.1) finds scenes in the live game over the limit of three flashes a second: a camera fly-past of collapsing buildings (4.5), and a signature beam's impact with an explosion in ordinary AI matches (4.5 and 3.5). Reduced mode does not fix them. Details: docs/tools/flash-check.md, docs/legal/photosensitivity-note.md (addendum 3, RL-119).
+
+Done without waiting: a click-through gate before anything plays, with Legal's wording, is being built and ships when verified; the readme gets the same words. Camera, Rendering and VFX have the failing scenes; "fixed" means the analyser passes the same clips at 2.5 or below.
+
+Orb decides:
+1. Leave the playable page up behind the gate while fixes are made, or take it down until the check passes. Legal: the gate is acceptable if fixes are days away; take it down if they are not in within about a week, or before any promotion or link; taking it down now is the cleaner choice if no residual risk is wanted.
+2. Whether "Reduce flashing" is on by default on the public web build (Legal recommends it; it does not fix the failing scenes).
+3. Later, before any store release: an independent analyser report (a paid test house, or the dated free tool).
+Also open from Controls: keys for one-key pair actions on the shared keyboards; the pad's left-stick click as a one-button A+B; a tablet layout.

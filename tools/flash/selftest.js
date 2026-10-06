@@ -37,8 +37,10 @@ const run = (frames, o) => W.analyse(frames, o);
 check('relative luminance of white is 1', Math.abs(W.relLum(255, 255, 255) - 1) < 1e-9);
 check('relative luminance of black is 0', W.relLum(0, 0, 0) === 0);
 check('relative luminance of mid grey (sRGB 128) is 0.2159', Math.abs(W.relLum(128, 128, 128) - 0.2159) < 5e-4, String(W.relLum(128, 128, 128)));
-check('the red measure is 0 for a pixel that is not a saturated red', W.redMeasure(200, 100, 100, 0.8) === 0 && W.redMeasure(0, 0, 0, 0.8) === 0);
-check('the red measure of (255,0,0) is 320', Math.abs(W.redMeasure(255, 0, 0, 0.8) - 320) < 1e-9);
+check('(200,0,0) is a saturated red and (110,110,110) is not', W.isSatRed(200, 0, 0, 0.8, 'either') && !W.isSatRed(110, 110, 110, 0.8, 'either'));
+check('a dark red (200,30,30) is a saturated red on the linear values only, so "either" takes it and "stored" does not', W.isSatRed(200, 30, 30, 0.8, 'either') && !W.isSatRed(200, 30, 30, 0.8, 'stored'));
+check('uv of white is the D65 point (0.1978, 0.4683)', Math.abs(W.uv(255, 255, 255)[0] - 0.1978) < 5e-4 && Math.abs(W.uv(255, 255, 255)[1] - 0.4683) < 5e-4, JSON.stringify(W.uv(255, 255, 255)));
+check('uv of black is given the white point (no light has no chromaticity)', W.uv(0, 0, 0)[0] === W.uv(255, 255, 255)[0] || Math.abs(W.uv(0, 0, 0)[0] - 0.19784) < 1e-9);
 {
   const f = frame(BLACK, WHITE, [0, 0, 0.5, 1]);
   const back = W.decodePng(W.encodePng(f.w, f.h, f.data));
@@ -79,12 +81,28 @@ const full4 = run(strobe(BLACK, WHITE, 7.5, 3));
 check('the same strobe at 4 a second is 4 flashes and fails', full4.general.flashes >= 4 && !full4.pass, JSON.stringify(full4.general));
 check('a full-frame strobe at 10 a second fails', !run(strobe(BLACK, WHITE, 3, 2)).pass);
 {
-  const r = run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.3, 0.3]));   // 9% of the frame, under 11.1%
-  check('a 9% strobe at 10 a second is under the area and passes', r.pass && r.general.flashes === 0, JSON.stringify(r.general));
+  // the frame here is 96 x 72, so the window is 32 x 24 = 768 px and a quarter of it is 192 px (2.78% of the frame)
+  const r = run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.15, 0.15]));   // 15 x 11 = 165 px: under a quarter of the window
+  check('a 2.4% corner strobing 10 a second is under a quarter of a window and passes', r.pass && r.general.flashes === 0 && r.thresholdPx === 192, JSON.stringify([r.general, r.thresholdPx]));
 }
 {
-  const r = run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.4, 0.4]));   // 16%, over it
-  check('a 16% strobe at 10 a second is over the area and fails', !r.pass && r.general.flashes > 3, JSON.stringify(r.general));
+  const r = run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.2, 0.2]));    // 20 x 15 = 300 px: over it
+  check('a 4.3% corner strobing 10 a second is over a quarter of a window and fails', !r.pass && r.general.flashes > 3, JSON.stringify(r.general));
+}
+check('a 9% corner strobing 10 a second fails (it passed under the lenient total-area reading)', !run(strobe(BLACK, WHITE, 3, 2, [0.0, 0.0, 0.3, 0.3])).pass);
+{
+  // the window is slid, and only one window counts: two blobs far apart, each under the threshold, pass; the same pixels together fail
+  const two = (n) => {
+    const st = [], a = frame(BLACK, BLACK), b = frame(BLACK, BLACK);
+    for (let y = 0; y < HEI; y++) for (let x = 0; x < WID; x++) { const in1 = x < 0.15 * WID && y < 0.15 * HEI, in2 = x >= 0.85 * WID && y >= 0.85 * HEI; if (in1 || in2) { const p = (y * WID + x) * 4; b.data[p] = b.data[p + 1] = b.data[p + 2] = 255; } }
+    for (let i = 0; i < n; i++) st.push(Math.floor(i / 3) % 2 ? b : a);
+    return st;
+  };
+  const r = run(two(120));
+  check('two 2.4% blobs at opposite corners (4.8% together) strobing 10 a second pass: no one window holds a quarter of its pixels', r.pass && r.general.flashes === 0, JSON.stringify(r.general));
+  // a thin strip across the whole frame: 0.9 x 0.05 of it is 4.5% of the frame, over the lenient total but only 15% of any window
+  const strip = run(strobe(BLACK, WHITE, 3, 2, [0.05, 0.45, 0.95, 0.5]));
+  check('a thin strip across the frame (4.5% of it, 15% of a window) strobing 10 a second passes under the window test', strip.pass && strip.general.flashes === 0, JSON.stringify(strip.general));
 }
 check('a swing of 0.08 (under the 10% step) at 10 a second passes', run(strobe([128, 128, 128], [140, 140, 140], 3, 2)).general.flashes === 0);
 check('a swing between two states both at or above 0.80 passes', run(strobe([235, 235, 235], [255, 255, 255], 3, 2)).pass);
@@ -107,15 +125,28 @@ check('the flashes are counted in any one second, not over the whole clip: 3 a s
 
 // ---- the red flash
 {
-  const r = run(strobe([200, 0, 0], [128, 0, 0], 3, 2));   // luminance steps by 0.08 only; the red measure steps by 90
-  check('a red-to-dark-red strobe at 10 a second is a red flash and not a general flash', r.red.flashes > 3 && r.general.flashes === 0 && !r.pass, JSON.stringify([r.general, r.red]));
+  const r = run(strobe([200, 0, 0], [110, 110, 110], 3, 2));   // luminance steps by 0.03 only; the chromaticity steps by 0.26 in uv and one state is a saturated red
+  check('a red to grey strobe at 10 a second is a red flash and not a general flash', r.red.flashes > 3 && r.general.flashes === 0 && !r.pass, JSON.stringify([r.general, r.red]));
 }
+check('a green to blue strobe at 10 a second is not a red flash (no saturated red)', run(strobe([60, 130, 60], [40, 40, 200], 3, 2)).red.flashes === 0);
+check('red to a state 0.15 away in uv is not a red flash (under 0.2)', run(strobe([200, 0, 0], [150, 80, 40], 3, 2)).red.flashes === 0);
 check('a grey strobe has no red flash', run(strobe([200, 200, 200], [128, 128, 128], 3, 2)).red.flashes === 0);
-check('a slow red pulse (once a second) passes', run(strobe([200, 0, 0], [128, 0, 0], 30, 3)).pass);
+check('a slow red pulse (once a second) passes', run(strobe([200, 0, 0], [110, 110, 110], 30, 3)).pass);
+check('the red flash is subject to the same area window: a 2.4% corner of it passes', run(strobe([200, 0, 0], [110, 110, 110], 3, 2, [0, 0, 0.15, 0.15])).red.flashes === 0);
+
+// ---- dips
+{
+  // a whole-frame dip 0.8 -> 0.3 in one frame and back over 4, three times, 20 frames apart: three dips, shortest gap 20 frames
+  const fr = [];
+  for (let i = 0; i < 100; i++) { const t = i % 20; const v = t === 5 ? 90 : t === 6 ? 130 : t === 7 ? 170 : t === 8 ? 210 : 235; const l = i >= 5 && i < 65 ? v : 235; fr.push(frame([l, l, l], [l, l, l])); }
+  const r = run(fr);
+  check('whole-screen dips are listed with their frame, depth and the gap between them', r.dips.list.length === 3 && r.dips.shortestGapFrames === 20 && r.dips.list[0].tick === 6 && r.dips.list[0].drop > 0.3, JSON.stringify(r.dips));
+}
 
 // ---- the parameters are real parameters
 check('the frame rate is a parameter: the same 180 frames read as 120 a second hold 6 flashes in a second and fail', run(strobe(BLACK, WHITE, 10, 3), { fps: 120 }).general.flashes === 6);
-check('a larger area threshold lets the 16% strobe through', run(strobe(BLACK, WHITE, 3, 2, [0, 0, 0.4, 0.4]), { areaFrac: 0.2 }).pass);
+check('a larger share of the window lets the 4.3% corner through (300 of 768 px is 39%, so 50% passes it)', run(strobe(BLACK, WHITE, 3, 2, [0, 0, 0.2, 0.2]), { areaShare: 0.5 }).pass);
+check('a fade over 4 frames is pooled into one change: black to white over 4 frames and back, twice a second, over the whole frame, is 2 flashes a second', run((() => { const o = []; for (let i = 0; i < 120; i++) { const t = (i % 30); const v = t < 4 ? [0, 85, 170, 255][t] : t < 15 ? 255 : t < 19 ? [170, 85, 0, 0][t - 15] : 0; o.push(frame([v, v, v], [v, v, v])); } return o; })()).general.flashes === 2);
 
 // ---- the register log
 const row = (now, source, granted, why, inw) => [now, now, source, granted, why, inw];

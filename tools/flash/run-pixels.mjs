@@ -49,6 +49,7 @@ async function one(job) {
   const t0 = Date.now();
   const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(job.ticks), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', '1800']);
   if (cap.code !== 0) return { ...job, error: cap.out.trim().split('\n').pop() };
+  if (argv.includes('--capture-only')) return { ...job, captured: true };
   const an = await run([join(here, 'analyse-frames.js'), dir, '--scale', '1', '--json', join(dir, 'analysis.json')]);
   const result = JSON.parse(readFileSync(join(dir, 'analysis.json'), 'utf8'))[0].result;
   const clip = JSON.parse(readFileSync(join(dir, 'clip.json'), 'utf8'));
@@ -79,22 +80,26 @@ await Promise.all(Array.from({ length: JOBS }, async () => {
     const job = jobs[next++];
     const r = await one(job);
     results.push(r);
-    console.log(r.error ? `${job.id}: CAPTURE FAILED: ${r.error}` : `${job.id}: ${r.result.general.flashes} general, ${r.result.red.flashes} red, largest change ${(100 * Math.max(r.result.general.largestChangeOfFrame, r.result.red.largestChangeOfFrame)).toFixed(1)}% of frame, ${r.seconds}s${r.cross && !r.cross.missing ? `, register count ${r.cross.agrees ? 'agrees' : 'DIFFERS'} with the headless run (${(100 * r.cross.share).toFixed(1)}% of ticks)` : ''}`);
+    if (r.captured) { console.log(`${job.id}: captured`); continue; }
+    console.log(r.error ? `${job.id}: CAPTURE FAILED: ${r.error}` : `${job.id}: ${r.result.general.flashes} general, ${r.result.red.flashes} red, largest window ${(100 * Math.max(r.result.general.largestWindowOfThreshold, r.result.red.largestWindowOfThreshold)).toFixed(0)}% of the limit, ${r.result.dips.list.length} dips, ${r.seconds}s${r.cross && !r.cross.missing ? `, register count ${r.cross.agrees ? 'agrees' : 'DIFFERS'} with the headless run (${(100 * r.cross.share).toFixed(1)}% of ticks)` : ''}`);
   }
 }));
+if (argv.includes('--capture-only')) { console.log(`captured ${results.length} clips into ${OUT}; analyse them with analyse-frames.js`); process.exit(results.some((r) => r.error) ? 1 : 0); }
 results.sort((a, b) => a.id.localeCompare(b.id));
 writeFileSync(join(OUT, 'summary.json'), JSON.stringify(results, null, 2) + '\n');
 
-console.log(`\n${'clip'.padEnd(24)} ${'ticks'.padStart(5)} ${'general'.padStart(8)} ${'red'.padStart(4)} ${'largest'.padStart(8)}  ${'register web/headless max'.padEnd(26)} result`);
+console.log(`\n${'clip'.padEnd(24)} ${'ticks'.padStart(5)} ${'general'.padStart(8)} ${'red'.padStart(4)} ${'window/limit'.padStart(13)} ${'dips'.padStart(5)}  ${'register web/headless max'.padEnd(26)} result`);
 let bad = 0;
 for (const r of results) {
   if (r.error) { bad++; console.log(`${r.id.padEnd(24)} CAPTURE FAILED: ${r.error}`); continue; }
   const x = r.cross && !r.cross.missing ? `${r.cross.maxWeb}/${r.cross.maxHead} ${r.cross.agrees ? 'same' : 'DIFFERENT'}` : 'n/a';
   const ok = r.result.pass && (!r.cross || r.cross.missing || r.cross.agrees);
   if (!ok) bad++;
-  console.log(`${r.id.padEnd(24)} ${String(r.ticks).padStart(5)} ${String(r.result.general.flashes).padStart(8)} ${String(r.result.red.flashes).padStart(4)} ${(100 * Math.max(r.result.general.largestChangeOfFrame, r.result.red.largestChangeOfFrame)).toFixed(1).padStart(7)}%  ${x.padEnd(26)} ${ok ? 'no failure found' : 'FAIL'}`);
+  console.log(`${r.id.padEnd(24)} ${String(r.ticks).padStart(5)} ${String(r.result.general.flashes).padStart(8)} ${String(r.result.red.flashes).padStart(4)} ${(Math.round(100 * Math.max(r.result.general.largestWindowOfThreshold, r.result.red.largestWindowOfThreshold)) + '%').padStart(13)} ${String(r.result.dips.list.length).padStart(5)}  ${x.padEnd(26)} ${ok ? 'no failure found' : 'FAIL'}`);
 }
 console.log(bad
-  ? `\npixel run FAILED in ${bad} of ${results.length} clips (frames kept in ${OUT} for the failures)`
-  : `\npixel run: no failure found in ${results.length} clips under this reading of criterion 2.3.1, and every register count agrees with the headless run. Not "safe", not "tested for photosensitivity": docs/tools/flash-check.md.`);
+  ? `
+pixel run FAILED in ${bad} of ${results.length} clips (frames kept in ${OUT} for the failures)`
+  : `
+An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (${results.length} clips; every register count agrees with the headless run; docs/tools/flash-check.md has the reading and its limits. This is not a clearance.)`);
 process.exit(bad ? 1 : 0);

@@ -2,7 +2,7 @@
 
 Owner: Tools and Pipeline. Legal's condition for the public web build (docs/legal/photosensitivity-note.md): WCAG 2.2 success criterion 2.3.1, "three flashes or below threshold". Two halves: the count runs in CI, the pixels run by hand on a local web export. Zero budget, headless only, Node built-ins and the project's own Godot.
 
-**What a pass means.** Half 1 passing means: *in the worst cases below, no 60-tick window grants more than 3 flashes (1 under reduced flashing) among the sources that ask the flash register.* Half 2 passing means: *under this reading of criterion 2.3.1, no failure was found in these captured frames.* Neither is "safe", "compliant" or "tested for photosensitivity", and neither is a clearance. The README's wording ("contains flashing effects, has not been analysed for photosensitivity") stays true until a recognised analyser has been run over recordings of the real build.
+**What a pass means.** Half 1 passing means: *in the worst cases below, no 60-tick window grants more than 3 flashes (1 under reduced flashing) among the sources that ask the flash register.* Half 2 passing means only that the analyser, under the reading written out below, found no failure in the captured frames; the sentence to use then is exactly: "An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure." Neither half is a clearance, and no other wording is used for either (not "safe", not "seizure-safe", not "tested for photosensitivity", not "WCAG compliant", not "certified"). The README's wording ("contains flashing effects, has not been analysed for photosensitivity") stays true until a recognised analyser has been run over recordings of the real build. **Half 2 under the corrected reading finds five of sixteen clips failing: see "What it found".**
 
 ## Half 1: the count (in CI today)
 
@@ -26,7 +26,7 @@ It **fails** when: any 60-tick window grants more than 3 flashes (more than 1 in
 
 The only direct writes into the sim are the ones `hash_check.gd` already makes (`formReady`, `tier`), ki refills for the beam cases and the staged blasts. A run takes about 90 seconds for all 16 runs; two runs write byte-identical files.
 
-**The negative control** (`--negative-control`) adds four flashes at ticks 100 to 130 that the register cannot refuse (its `note`); the recount must then fail with "4 in the 60 ticks from 100". CI runs it and fails if the check passes. `tools/flash/selftest.js` (37 checks, no build needed) covers the recount's edges (the 60-tick window, refused asks, reduced cap, unknown sources, a full log) and the analyser (below).
+**The negative control** (`--negative-control`) adds four flashes at ticks 100 to 130 that the register cannot refuse (its `note`); the recount must then fail with "4 in the 60 ticks from 100". CI runs it and fails if the check passes. `tools/flash/selftest.js` (47 checks, no build needed) covers the recount's edges (the 60-tick window, refused asks, reduced cap, unknown sources, a full log) and the analyser (below).
 
 ### Results of half 1 on HEAD 68a9663f, 16 runs, 0 script errors
 
@@ -51,35 +51,49 @@ By source over all normal runs, granted and refused: body_hit 239/744, head_flas
 godot --headless --path . --export-release "Web" <site>/index.html                # a HEAD export (about 20 s, one Godot process, templates already installed)
 godot --headless --path . --script res://tools/flash/flash_worst.gd -- --out=<flash>   # the headless runs, for the cross-check
 node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> --flash <flash> [--jobs 3] [--only mash,clash] [--keep]
-node tools/flash/analyse-frames.js <clip or folder of clips> [--scale 1]      # by hand
+node tools/flash/analyse-frames.js <clip or folder of clips> [--scale 1] [--dips]   # by hand (--json for the per-tick windows)
+node tools/flash/hit-windows.js <analysis.json> <flash-run.json> [--source body_hit]  # how big a window changes after a source's flashes
 node tools/flash/pixel-selftest.mjs                                           # the pipeline on a page that flashes on purpose (in CI)
 ```
 
 **A local web export costs nothing**: the Godot 4.7.2 web templates are installed on the machine that exports (a `git archive HEAD` copy, `--import`, then `--export-release "Web"`; build_info.json from `tools/write-build-info.mjs` is optional). CI's `site` job builds the same thing and could hand its artifact to this runner; it does not today. `run-pixels.mjs` serves the folder itself, drives headless Chrome (a throwaway profile, 1024 by 768 at device scale 1), steps Rendering's hook (`render/tools/flash_capture.gd`, offered at `/play/?flashcap=1`) one tick per screenshot, analyses every clip at full size, deletes the frames of clips that show no failure (`--keep` keeps them), and writes `summary.json`. Sixteen clips (the six cases, normal and reduced, `ai` at three seeds) are 35,000 frames and took 35 minutes on three Chrome jobs. On Git Bash set `MSYS_NO_PATHCONV=1` or quote `--path`.
 
-**What exists.** `tools/flash/wcag.js` (PNG decoder, the analyser), `analyse-frames.js`, `capture-web.mjs`, `run-pixels.mjs`, `mock-page/` and `pixel-selftest.mjs` (five scenes through headless Chrome with known answers: 0, 3 passes, 4 fails, a 9% corner passes, a 16% corner fails).
+**What exists.** `tools/flash/wcag.js` (PNG decoder, the analyser), `analyse-frames.js`, `capture-web.mjs`, `run-pixels.mjs`, `mock-page/` and `pixel-selftest.mjs` (six scenes through headless Chrome with known answers: a still frame 0, the whole frame at 3 a second passes, at 4 fails, a 2.25% corner at 10 a second passes, a 4% corner fails, red against grey is a red flash and no general one).
 
-### What it found, under this reading (16 clips, HEAD 68a9663f plus the collapse staging below)
+### What it found, under the corrected reading (16 clips, HEAD 68a9663f plus the collapse staging below)
 
-| Clip | Ticks | Worst second, general flashes (normal / reduced) | Red | Largest single change (normal / reduced) | Register in the web build vs headless |
+**Under the corrected reading five of the sixteen clips FAIL** (more than 3 flashes in a second): the collapse case in both modes, `ai` at seed 12345 in both modes, and `ai` at seed 4 in normal mode. Four more sit at exactly 3 with no margin. **Nothing is red.** (Yesterday's "no failure found" used an area test four times too lenient and a red formula that was not the standard's; it does not stand.)
+
+| Clip | Ticks | Worst second, general flashes: normal / reduced | Starts at tick (normal) | Red flashes | Result |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| mash | 1,800 | 0.5 / 0.5 | 0 | 13.6% / 15.0% of the frame | same (max 2 / 0) |
-| clash | 1,500 | 0 / 0 | 0 | 10.3% / 10.4% | same (2 / 1) |
-| signature | 1,500 | 0 / 0 | 0 | 7.5% / 7.5% | same (3 / 1) |
-| transform | 1,500 | 1 / 1 | 0 | 39.0% / 41.0% | same (3 / 1) |
-| collapse | 1,500 | **3 / 3** | 0 | 54.4% / 54.1% | same (3 / 1) |
-| ai, seed 12345 | 3,600 | 0.5 / 0.5 | 0 | 41.4% / 43.0% | same (3 / 1) |
-| ai, seed 4 | 3,600 | 1 / 1 | 0 | 43.0% / 45.8% | same (3 / 1) |
-| ai, seed 7 | 3,600 | 1 / 1 | 0 | 40.9% / 43.2% | same (3 / 1) |
+| mash | 1,800 | 3 / 2 | 1455 | 0 | at the limit (normal) |
+| clash | 1,500 | 3 / 3 | 182 | 0 | at the limit (both) |
+| signature | 1,500 | 2.5 / 2.5 | 83 | 0 | under |
+| transform | 1,500 | 2 / 2 | 449 | 0 | under |
+| collapse | 1,500 | **4.5 / 4.5** | 1352 | 0 | **FAIL (both)** |
+| ai, seed 12345 | 3,600 | **4.5 / 4.5** | 3290 | 0 | **FAIL (both)** |
+| ai, seed 4 | 3,600 | **3.5** / 2 | 1812 | 0 | **FAIL (normal)** |
+| ai, seed 7 | 3,600 | 3 / 1.5 | 1776 | 0 | at the limit (normal) |
 
-**No clip fails under this reading.** Nothing is red. What the reading shows that the register cannot:
+The same table with the register: in every clip the register in the web build counted the same flashes as the headless run at every tick (cross-check below), and each clip's register worst is at or under the cap (3, or 1 in reduced mode). The pixels exceed what the register counts because most of what changes the screen is not a register source.
 
-1. **The collapse case sits exactly at the limit: 3 flashes in its worst second, in normal and in reduced mode alike.** The second is frames 1363 to 1387: the camera flies close past the fronts of buildings, so large dark and bright façades sweep across 12 to 16% of the frame six times in under half a second (changes at frames 1363 to 1367, 1372 to 1375 and 1383 to 1387). That is motion across high-contrast surfaces, not an effect the register can see or limit, and **the reduced-flashing setting does nothing to it** (3 flashes both ways). It passes by one change. A recognised analyser might read the same sweep differently, and a slightly faster pass would fail.
-2. **The biggest single change is a whole-screen dip, not a flash**: at frame 1261 the mean luminance falls from 0.211 to 0.124 in one frame (54% of pixels change by 0.10 or more) and is back to 0.213 four frames later (the +40% at 1265). It looks like Camera's safety-cut brightness dip (`split_frame.gd`, `CUT_DIM`; I did not trace it to its trigger). It is a deliberate softening and one dark pulse a cut, so it counts as one flash per cut; how often cuts can come in a second is Camera's to cap, and nothing here limits it.
-3. **The body's white on a hit never reaches the area test**: no clip has a change of hit-flash size counted. The largest change in the mash clip, 13.6% at one frame, is a single event.
-4. **The first frame of every clip is the capture's start-up** (the camera settling at tick 1, up to +30%); it is not play.
+**Case by case.** Frames are in the run's scratch folders; ticks are the clip's tick numbers (the file `frame-NNNNNN.png` is tick NNNNNN).
 
-**The register in the web build counts the same flashes as the headless run, every tick**, in all 16 clips (the register's in-window count per tick, read from the page, equals the count rebuilt from the headless log in 100% of ticks). That is the drift check between the two copies of the staging (below), and evidence that the clips are the scenarios the count half plays.
+1. **collapse, ticks 1352 to 1397 (both modes): 4.5 flashes.** Eleven qualifying changes in 45 ticks, each 110 to 283% of the window limit (21,824 px), alternating every 2 to 10 ticks. The camera flies close past building facades while the blasts go off, so large dark and bright façades and the blast's flash sweep through the same windows. Reduced flashing changes nothing (4.5 both ways). Yesterday's reading called this "exactly 3"; the sliding window and the pooling count it as 4.5.
+2. **ai seed 12345, ticks 3290 to 3328: 4.5 (both modes).** A beam signature landing with an explosion: the white beam and the explosion's flash alternate with Camera's inset cut-in panel opening and closing and a broad grey band across the screen, nine changes in 38 ticks, each 102 to 151% of the limit. Reduced flashing does not calm the beam, the panel and the band together.
+3. **ai seed 4, ticks 1812 to 1872: 3.5 (normal).** The same kind of beam and impact, nine changes in 60 ticks (109 to 260% of the limit). The reduced run of the same seed is 2.
+4. **At exactly 3, no margin:** mash normal (tick 1455: the camera pans across a mountainside, sand to grey and back), clash in both modes (tick 182: the beams meeting), ai seed 7 normal (tick 1776). A slightly faster pan or a second beam would fail them.
+5. **Reduced flashing does not reliably reduce the pixels.** Clash, collapse and ai 12345 read the same in both modes; transform and signature the same. The register's cap of 1 a second removes VFX's and Rendering's flashes, and what remains (the camera, the beam's body, the scenery) is not under the setting.
+
+**Red: none.** The red test finds 0 flashes in all 16 clips; the largest window it ever sees is the collapse blast's orange flames, 19% of the limit.
+
+**Dips.** Whole-screen dips (a general down change over 40% of the frame or more) in the 16 clips: collapse tick 1262 (54% of the frame, mean luminance 0.211 to 0.124, one frame down, back in four), transform reduced tick 120 (41%, 0.288 to 0.166), ai seed 7 reduced tick 368 (43%, 0.276 to 0.164). Each is one down change, and none has another within a second, so the shortest interval between two dips is not defined in these clips. Each dip counts as a flash over the whole screen area under the standard (one dark pulse: a down change and its return), and the 3-a-second rule and the 10% step apply to it; nothing here limits how often cuts can come. (The dip at collapse tick 1262 looks like Camera's safety-cut brightness dip, `split_frame.gd` `CUT_DIM`; I did not trace its trigger.)
+
+**The body's white on a hit, re-read against the smaller threshold.** A body is about 40 by 90 px at 1024 by 768, about 3,600 px; both bodies fully white in one window would be about 7,200 px, a third of the 21,824-px threshold. So the body's white on its own cannot reach the area test. The measured windows near a body_hit grant (the largest window within 8 ticks after a grant, from `tools/flash/hit-windows.js`) are 101 to 115% of the threshold in mash, transform and signature, but the camera, a beam or an explosion is happening in the same ticks, and the analysis cannot separate them. **Not attributable**: I report the geometry bound and no more.
+
+**The register in the web build counts the same flashes as the headless run, every tick**, in all 16 clips (the register's count per tick read from the page equals the count rebuilt from the headless log in 100% of ticks). That is the drift check between the two copies of the staging, and evidence that the clips are the scenarios the count half plays.
+
+**Wording.** Only when a run is true to it: "An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure." This run does not meet it, because five clips fail. The tools print that sentence only on a pass of every clip they were given. The words "safe", "seizure-safe", "tested for photosensitivity", "WCAG compliant" and "certified" are not used about this check anywhere.
 
 ### The staging exists twice; the decision
 
@@ -110,29 +124,32 @@ func _to_the_city(S: SimState) -> void:
 
 and at the top of `_stage_collapse`: `if t == 0: _to_the_city(S); return`. The clips above were captured with exactly this patch in a scratch export. Until Rendering lands it, `run-pixels.mjs` on a clean export shows the collapse clip in the desert and the register cross-check reports it DIFFERENT, which is the check working.
 
-### The reading of the standard, written out for Legal to confirm
+### The reading of the standard, as implemented (corrected after Legal's RL-116 addendum)
 
-Each number is a parameter (`wcag.js` options, `analyse-frames.js --area-frac --fps`).
+Each number is a parameter (`wcag.js` `DEFAULTS`; `analyse-frames.js --area-share --fps`).
 
-- **General flash.** A pair of opposing changes in relative luminance of 0.10 or more (of a maximum of 1.0) where the darker state is below 0.80. Relative luminance is WCAG's: each of R, G, B (8-bit sRGB) is divided by 255, linearised (`c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4`), then `L = 0.2126 R + 0.7152 G + 0.0722 B`. Measured per pixel: a pixel's change is a swing of at least 0.10 from its last extreme, so a slow fade is one change and a flicker under 0.10 is none.
-- **Area.** A change counts only if the pixels making it cover at least 341 x 256 px at 1024 x 768, which is 11.1% of the frame (87,296 of 786,432 px), scaled to the frame. They are counted anywhere in the frame, contiguous or not, which over-counts against the standard. **To confirm: is 341 x 256 the threshold area itself (as read here), or the 10-degree field of which 25% is the threshold?** If the latter the threshold is a quarter of this and the clips will count more.
+- **Luminance: gamma-decoded.** Each of R, G, B (8-bit sRGB) is divided by 255 and linearised (`c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4`), then `L = 0.2126 R + 0.7152 G + 0.0722 B`, 0 to 1. It was gamma-decoded in the first version too; the header and this doc now say so.
+- **General flash.** A pair of opposing changes in relative luminance of 0.10 or more (of a maximum of 1.0) where the darker state is below 0.80. Measured per pixel: a pixel's change is a swing of at least 0.10 from its last extreme, so a slow fade is one change and a flicker under 0.10 is none.
+- **Area: a sliding window.** The window is 341 x 256 px at 1024 x 768, which is a third of the frame in each direction (scaled to the frame's size), and the threshold is **25% of the window's pixels: 21,824 px at 1024 x 768** (87,296 x 0.25). The window is slid to every position over the mask of pixels that turned a change on, using an integral image (one pass to build the cumulative sums, one to read every window in constant time); a change counts when some window holds at least the threshold. The changed pixels are not summed over the whole frame. Pixels that turn the same way on consecutive frames are pooled before the window is tried, so a fade over several frames is one change; a run ends when the other direction dominates a frame, so a fast alternation is many changes.
 - **Count.** Opposing changes in any window of one second (60 frames), divided by 2; more than 3 fails. Six changes in a second (3 flashes) pass; seven (3.5) fail.
-- **Red flash.** Per pixel, from the stored (gamma-encoded) values R, G, B in 0 to 1: a pixel is a *saturated red* when `R / (R + G + B) >= 0.8`; its red value is then `(R - G - B) * 320`, and a pixel that is not a saturated red has value 0. A swing of that value of more than 20 (that is, `R - G - B` changing by more than 0.0625) is a transition, counted like a general flash: same area, same count, capped at 3 a second. The standard's wording is "a pair of opposing transitions involving a saturated red ... change in (R - G - B) x 320 > 20 (negative values set to zero) for both colours". **To confirm**: (a) the scale is 0 to 1 and gamma-encoded, not linear; (b) in the standard the other colour of the pair keeps its own (R - G - B) x 320 with negatives set to zero, where this analyser sets any unsaturated pixel to 0, which makes every change that involves a saturated red at least as large here as there (it over-counts, never under-counts); (c) the 0.8 share applies to the stored values.
-- **Frames.** One PNG per sim tick, 60 a second, at 1024 x 768, device scale 1, analysed at full size (`--scale 1`; `analyse-frames.js` by itself shrinks to 640 wide or under).
+- **Red flash: the defined test.** A pair of opposing transitions where one state has R/(R+G+B) of 0.8 or more and the two states differ by more than 0.2 in CIE 1976 u'v' chromaticity, per pixel (u' = 4X / (X + 15Y + 3Z), v' = 9Y / (X + 15Y + 3Z), X Y Z from the linearised sRGB values with the Rec. 709 matrix; a pixel with no light is given the D65 white point). "Saturated red" is taken on the stored or on the linearised values, whichever is red (the more conservative of two readings of the text; `redSpace` = `stored` or `linear` narrows it). A transition into or out of red is counted like a general change: same window, same pooling, same count (more than 3 a second fails). There is no luminance floor, so a near-black dark red against black would count if it covered a window; no clip shows one. The first version's formula, (R-G-B) x 320 with a threshold of 20, is not used.
+- **Dips.** A general down change over 40% of the whole frame is listed with its tick, its area and the mean luminance before and lowest within 8 frames; each also counts in the flash count.
+- **Frames.** One PNG per sim tick, 60 a second, at 1024 x 768, device scale 1, analysed at full size (`--scale 1`; `analyse-frames.js` by itself shrinks to 640 wide or under and scales the window with it).
 
 ### What it cannot see, against a recognised analyser (Harding FPA, PEAT) and against play
 
 1. **It is not a recognised analyser** and has not been validated against one; it is my reading of the text as Legal states it. A recognised analyser must be run over recordings of the real build before anyone says the game has been analysed. That is Orb's decision (cost); the free option is dated.
 2. **Its frames are not play**: a tick is a frame, where real play draws between ticks at the display's rate; the crowd's cycles use the shader's clock; the scenes are staged (ki, forms, blasts, a teleport to the city), so they are worst cases and not matches the determinism tools know; the camera and HUD are the game's own. One machine's rendering (headless Chrome's GPU path), one canvas size.
-3. **No pattern analysis** (the standard also bars regular stripes and spirals), and **no viewing-distance field**: the area is total changed pixels, not a contiguous 10-degree field, so a player sitting closer sees a bigger field than 341 x 256.
+3. **No pattern analysis** (the standard also bars regular stripes and spirals), and **no viewing-distance field**: the window is the standard's estimate of a 10-degree field at 1024 x 768 at a typical distance, scaled to the frame, not the player's actual field.
 4. **Luminance is computed from the PNG's sRGB values**, not measured from a screen; brightness, gamma and a player's display change what they see.
-5. **Only the six cases at the seeds played.** A fight we did not play can flash, and collapse already sits at the limit.
-6. **Combined area is a plain count of changed pixels in the frame**, so many small separate flashes that together exceed the area count as one change here; the standard's own rule on combined area is not modelled beyond that.
+5. **Only the six cases at the seeds played.** A fight we did not play can flash, and nine of the sixteen clips are at or over the limit already.
+6. **Pooling and the run rule are my reading** of how a fade and an alternation are counted; a recognised analyser may count the same frames differently in either direction.
+7. **The window is aligned to the pixel grid and tested on the changed-pixel mask only**; it does not model the standard's note on combined areas of flashes that are not adjacent.
 
 ## Needs (outside my paths)
 
-1. **Rendering**: the collapse staging lines above in `render/tools/flash_capture.gd`, so the web clip and the headless run agree again once HEAD has them (`run-pixels.mjs` says DIFFERENT until they do).
-2. **Camera**: the camera's flight past building fronts (collapse clip, frames 1363 to 1387: three flashes in a second, at the limit, untouched by reduced flashing) and the safety cut's brightness dip (54% of the frame, once per cut): whether either needs a rate cap or a calmer pass under reduced flashing. That is Camera's call; I report it.
-3. **Legal**: confirm the area threshold and the red formula in "The reading of the standard".
-4. **EP**: the `flash` job joining `deploy.needs` once green on a real runner twice (a one-line commit from me on your word); CI building the clips would need `site`'s export and about 35 minutes, not worth it per push, so a manual run before a release is the use; a recognised analyser before a store release (Orb).
+1. **Rendering, VFX, Camera, Combat (via the EP)**: five clips fail and four sit at the limit. The causes in this run are the camera's flight past facades (collapse), the beam and explosion with the inset cut-in panel and the grey band (ai 12345 and 4), and the camera pans (mash, clash, ai 7). Which of those the register or a rate cap should own is for them; the case list above is the brief. Reduced flashing does not calm any of them.
+2. **Rendering**: the collapse staging lines in "The collapse staging changed" in `render/tools/flash_capture.gd`, so the web clip and the headless run agree (`run-pixels.mjs` says DIFFERENT until they do).
+3. **Legal**: confirm that the reading above matches RL-116 (the area window and the 25%, the u'v' red test with the stored-or-linear share).
+4. **EP**: the `flash` job joining `deploy.needs` once green on a real runner twice (a one-line commit from me on your word; the job's count half and the Chrome self-test follow the corrected analyser, and the pixel half is manual); CI building the clips would need `site`'s export and about 35 minutes, so a manual run before a release is the use; a recognised analyser before a store release (Orb).
 5. **VFX**: `drop_ticks` is a schema key (`flicker.drop_ticks`, integer 1 to 20, optional): read it in place of `VfxReact.DROP_TICKS` when ready.

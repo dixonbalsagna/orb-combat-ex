@@ -17,10 +17,12 @@ const scenes = {
   strobe3: (t) => { g.fillStyle = Math.floor(t / 10) % 2 ? '#fff' : '#000'; g.fillRect(0, 0, W, H); },
   // 4 a second: fails
   strobe4: (t) => { g.fillStyle = Math.floor(t / 7.5) % 2 ? '#fff' : '#000'; g.fillRect(0, 0, W, H); },
-  // a 9% corner at 10 a second: under the area, passes
-  corner9: (t) => { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); g.fillStyle = Math.floor(t / 3) % 2 ? '#fff' : '#000'; g.fillRect(0, 0, W * 0.3, H * 0.3); },
-  // a 16% corner at 10 a second: fails
-  corner16: (t) => { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); g.fillStyle = Math.floor(t / 3) % 2 ? '#fff' : '#000'; g.fillRect(0, 0, W * 0.4, H * 0.4); },
+  // a 2.25% corner at 10 a second: under a quarter of a 341 x 256 window (2.78% of the frame), passes
+  corner2: (t) => { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); g.fillStyle = Math.floor(t / 3) % 2 ? '#fff' : '#000'; g.fillRect(0, 0, W * 0.15, H * 0.15); },
+  // a 4% corner at 10 a second: over it, fails
+  corner4: (t) => { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); g.fillStyle = Math.floor(t / 3) % 2 ? '#fff' : '#000'; g.fillRect(0, 0, W * 0.2, H * 0.2); },
+  // red against grey at 10 a second over the whole frame: a red flash that is no general flash, fails
+  redgrey: (t) => { g.fillStyle = Math.floor(t / 3) % 2 ? '#6e6e6e' : '#c80000'; g.fillRect(0, 0, W, H); },
 };
 window.__flashcap = {
   ready: true,

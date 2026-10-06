@@ -17,8 +17,9 @@ const cases = [
   { scene: 'steady', general: 0, pass: true, what: 'a still frame' },
   { scene: 'strobe3', general: 3, pass: true, what: 'the whole frame black and white 3 times a second (at the limit)' },
   { scene: 'strobe4', general: 4, pass: false, what: 'the same 4 times a second' },
-  { scene: 'corner9', general: 0, pass: true, what: 'a 9% corner at 10 a second (under the area)' },
-  { scene: 'corner16', general: 10, pass: false, what: 'a 16% corner at 10 a second (over the area)' },
+  { scene: 'corner2', general: 0, pass: true, what: 'a 2.25% corner at 10 a second (under a quarter of a 341 x 256 window)' },
+  { scene: 'corner4', general: 10, pass: false, what: 'a 4% corner at 10 a second (over it)' },
+  { scene: 'redgrey', general: 0, pass: false, red: 10, what: 'red against grey at 10 a second (a red flash, not a general one)' },
 ];
 try {
   for (const c of cases) {
@@ -33,9 +34,9 @@ try {
     const json = join(tmp, `${c.scene}.json`);
     const an = spawnSync(process.execPath, [join(here, 'analyse-frames.js'), out, '--json', json], { encoding: 'utf8' });
     const r = JSON.parse(readFileSync(json, 'utf8'))[0].result;
-    const ok = r.general.flashes === c.general && r.pass === c.pass && (an.status === 0) === c.pass;
+    const ok = r.general.flashes === c.general && (c.red === undefined || r.red.flashes === c.red) && r.pass === c.pass && (an.status === 0) === c.pass;
     if (!ok) failed++;
-    console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${c.what}: ${r.general.flashes} flashes, ${r.pass ? 'no failure found' : 'fails'} (expected ${c.general}, ${c.pass ? 'no failure' : 'fails'})`);
+    console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${c.what}: ${r.general.flashes} general and ${r.red.flashes} red flashes, ${r.pass ? 'no failure found' : 'fails'} (expected ${c.general}, ${c.pass ? 'no failure' : 'fails'})`);
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
