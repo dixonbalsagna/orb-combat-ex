@@ -1,5 +1,7 @@
 # Fighter identity text (for `data/fighters/<id>/fighter.json`)
 
+**Update 2026-10-06 (the fighter rename window, `docs/architecture/pending/fighter-split.md` section 10).** The roster's data folders and ids are now `PROTAGONIST` and `RIVAL`; the prototype ids `KAI` and `VORR`, and the id `ANTIHERO`, are retired in the data. `identity` no longer carries `name`, `title` or `sigName`: the displayed names and titles live in `ui/data/fighter_names.json` (placeholders: PROTAGONIST, Martial Artist, Keeper's Lance; RIVAL, Challenger, The Barrage). The blocks below are kept as the record of the identity text and the voice devices; the `KAI`, `VORR` and `ANTIHERO` ids in them are the old spellings.
+
 Owner: Narrative and Fighter Identity. Version 1, 2026-09-29. Follows `docs/architecture/d1-roster-data.md` (section 3): the `identity` object carries Narrative's text. **Every name, title and tagline here is a placeholder. Orb names things later.** Lines are original and unsearched.
 
 **How to use it.** Simulation can copy each `identity` block into that fighter's `fighter.json`, next to Art's colours (`col`, `aura`, `hair`), which I have left out. The four existing keys (`name`, `title`, `role`, `sigName`) keep **today's prototype values** for KAI and VORR, so tests and the finisher data still match. The new keys are `tagline`, `blurb`, `voice_device`, `voice_bible`, `pronoun` and `placeholder`.

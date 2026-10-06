@@ -15,7 +15,7 @@
     "_about": "A fighter shouts the name of a signature, special or finisher, with no name card (Orb). Legal: the name is ours, and it is never stretched into drawn-out syllables across a charge. So each shout is one short burst, fired at the start of the move, and no_stretch tells Audio to render it as a single clipped hit.",
     "trigger": "signature_start",
     "fighters": {
-      "KAI": {
+      "PROTAGONIST": {
         "move_name": "Keeper's Lance",
         "lines": [
           { "id": "shout.kai.sig.1", "text": "Keeper's Lance!" },
@@ -28,7 +28,7 @@
         "no_stretch": true, "max_syllable_s": 0.25,
         "tags": ["move_name", "signature"]
       },
-      "VORR": {
+      "RIVAL": {
         "move_name": "The Barrage",
         "lines": [
           { "id": "shout.vorr.sig.1", "text": "The Barrage." },
@@ -40,13 +40,11 @@
         "cues": [{ "at": 0, "gesture": "effort.heavy", "intensity": 2 }],
         "no_stretch": true, "max_syllable_s": 0.25,
         "tags": ["move_name", "signature"],
-        "_note": "VORR is calm: a low, flat shout. The display style is shout so UI sizes it the same; Audio carries the calm."
+        "_note": "The rival is calm: a low, flat shout. The display style is shout so UI sizes it the same; Audio carries the calm."
       }
     },
     "real_fighters_stubs": {
-      "_about": "The same shape for the four real fighters' placeholder signature names (identity.md). Specials and finishers use the pattern '{move_name}!' with trigger special_start or finisher_start.",
-      "PROTAGONIST": { "move_name": "Keeper's Lance", "text": "Keeper's Lance!" },
-      "ANTIHERO": { "move_name": "The Barrage", "text": "The Barrage." },
+      "_about": "The same shape for the two real fighters who are not in the roster's data yet (identity.md). The PROTAGONIST and RIVAL blocks above are the roster pair's. Specials and finishers use the pattern '{move_name}!' with trigger special_start or finisher_start.",
       "EMPRESS": { "move_name": "Decree Line", "text": "Decree Line!" },
       "CYBORG": { "move_name": "Portal Blitz", "text": "Portal Blitz. Please stand clear." }
     }
@@ -71,7 +69,7 @@
           { "id": "taunt.prot.hit.2", "text": "Ha! I asked for that." }
         ]
       },
-      "ANTIHERO": {
+      "RIVAL": {
         "meter": "pride", "amount": 6,
         "gesture": "adjusts a cuff of his regalia without looking at the opponent",
         "lines": [
@@ -139,11 +137,9 @@
     "display": { "style": "caption", "dur_s": 1.4 },
     "lines": {
       "PROTAGONIST": { "id": "last.prot.1", "text": "One more." },
-      "ANTIHERO": { "id": "last.anti.1", "text": "I am not finished." },
+      "RIVAL": { "id": "last.anti.1", "text": "I am not finished." },
       "EMPRESS": { "id": "last.emp.1", "text": "We are not amused." },
-      "CYBORG": { "id": "last.cyb.1", "text": "Please hold. I am not done." },
-      "KAI": { "id": "last.kai.1", "text": "Not yet!" },
-      "VORR": { "id": "last.vorr.1", "text": "Not like this." }
+      "CYBORG": { "id": "last.cyb.1", "text": "Please hold. I am not done." }
     }
   },
   "labels": {
