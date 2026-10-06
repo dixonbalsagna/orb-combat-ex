@@ -591,14 +591,15 @@ function doubleBlock(R, D, wl, sum) {
   const hits = sum(D.map(r => r.doubleHits || 0)), ends = sum(D.map(r => ((r.brawl || {}).ends || {}).double || 0));
   if (!hits && !ends) { R.pending('double', '§7 second pass', 'The double hit rows: a match rate, matches with one, never over 4, both hit, the aftermath', 'the build has no double hit (no double_hit cue and no brawl_end double in these records)'); return; }
   const per = D.map(r => ((r.brawl || {}).ends || {}).double || 0), n = D.length, withOne = per.filter(x => x > 0).length;
-  R.point('double.perMatch', '§7 second pass', 'Double hits a match in AI matches (0.5 to 2)', { v: sum(per) / n, lo: 0.5, hi: 2, unit: 'num' });
-  if (n >= 100) R.rate('double.matchesWith', '§7 second pass', 'Matches with at least one double hit (40 to 70%)', { v: withOne / n, ci: wl(withOne, n), lo: 0.40, hi: 0.70 });
-  else R.pending('double.matchesWith', '§7 second pass', 'Matches with at least one double hit (40 to 70%)', `${n} matches so far (at least 100 are needed): ${withOne} of them`);
+  R.info('double.perMatch', '§7 second pass', 'Double hits a match, the AI against itself (reported; the band 0.5 to 2 is for a presser against the medium AI: the double.presser rows)', (sum(per) / n).toFixed(2), `${n} matches; none is in order between AIs (no level trade lasts 240 ticks)`);
+  R.info('double.matchesWith', '§7 second pass', 'Matches with at least one double hit, the AI against itself (reported)', `${(100 * withOne / n).toFixed(1)}% (${withOne} of ${n})`, 'the band 35 to 65% is for a presser against the medium AI');
   const most = Math.max(...per);
   R.add({ id: 'double.max', ref: '§7 second pass', what: 'Never more than 4 double hits in one match (hard test)', status: most > 4 ? 'FAIL' : 'PASS', value: `the most in one match is ${most}`, band: 'at most 4', note: `${n} matches` });
   R.add({ id: 'double.cue', ref: '§7 second pass', what: 'Every double_hit cue ends its brawl with the text double, and every double end follows a cue (hard test; a KO in the 8 ticks between may cost one)', status: Math.abs(hits - ends) > Math.max(1, Math.round(0.02 * hits)) ? 'FAIL' : 'PASS', value: `${hits} cues, ${ends} double ends`, band: 'equal (within 2%)', note: '' });
   const dl = D.flatMap(r => r.doubles || []);
   if (dl.length) {
+    const offTick = dl.filter(d => d.dur !== undefined && (d.dur < 240 || d.dur > 244));
+    R.add({ id: 'double.trade240', ref: '§7 second pass', what: 'Every double hit comes from a trade level for 240 ticks (hard test: the cue\'s dur, the trade\'s length, is 240 to 244)', status: offTick.length ? 'FAIL' : 'PASS', value: offTick.length ? `${offTick.length} of ${dl.length} off, first dur ${offTick[0].dur}` : `${dl.length} of ${dl.length} at 240 to 244`, band: '240 to 244', note: 'a hit freeze may add a tick or two' });
     const none = dl.filter(d => !(d.dmgA > 0 && d.dmgB > 0));
     R.add({ id: 'double.both', ref: '§7 second pass', what: 'Both fighters are hit by a double hit (hard test)', status: none.length ? 'FAIL' : 'PASS', value: none.length ? `${none.length} of ${dl.length} hit only one or neither` : `${dl.length} of ${dl.length} hit both`, band: 'both take damage on the landing tick', note: 'damage events on the landing tick and the next, by victim' });
     const m = a => a.reduce((x, y) => x + y, 0) / a.length;
@@ -608,7 +609,7 @@ function doubleBlock(R, D, wl, sum) {
 
 // ---- Game Design's rows from the second pass (docs/design/brawl-second-pass.md section 11), read from the AI's own matches. Each is PENDING until the build has the cue or the blow text it needs.
 // Perfect blocks per 100 blows by strength (reported until the first three-strength baseline): lights, mediums, heavies, from rec.cueText 'perfect_block:<strength>' over rec.brawl.blows; the build's own names go in STRENGTH.
-const STRENGTH = { light: ['light', 'flurry'], medium: ['medium', 'y'], heavy: ['heavy', 'b'] };
+const STRENGTH = { light: ['light'], medium: ['medium'], heavy: ['heavy'] };
 function secondPassRows(R, D, sum) {
   const mins = sum(D.map(r => ((r.brawl || {}).lens || []).reduce((a, b) => a + b, 0))) / 3600;   // minutes of brawl (live ticks)
   const blows = {}, pbs = {}, ct = {};
@@ -616,19 +617,19 @@ function secondPassRows(R, D, sum) {
     for (const [k, v] of Object.entries((r.brawl || {}).blows || {})) blows[k] = (blows[k] || 0) + v;
     for (const [k, v] of Object.entries(r.cueText || {})) ct[k] = (ct[k] || 0) + v;
   }
-  const pbOf = names => sum(names.map(n => ct['perfect_block:' + n] || 0)), blowOf = names => sum(names.map(n => blows[n] || 0));
+  const pbOf = names => sum(names.map(n => ct['pbstrength:' + n] || 0)), blowOf = names => sum(names.map(n => blows[n] || 0));
   const parts = [];
   for (const [kind, names] of Object.entries(STRENGTH)) { const b = blowOf(names); parts.push(`${kind} ${b ? (100 * pbOf(names) / b).toFixed(2) : '-'} (${pbOf(names)} over ${b})`); }
-  const typed = sum(Object.keys(ct).filter(k => k.startsWith('perfect_block:') && !k.endsWith(':')).map(k => ct[k]));
-  R.info('7.pb.byStrength', '§7 second pass', 'Perfect blocks per 100 blows by strength (reported; held as bands after the first three-strength baseline: lights 0.5 to 1.5, mediums 2 to 6, heavies 6 to 15 at medium)', typed ? parts.join('; ') : 'the perfect_block cue carries no strength text on this build', `${D.length} matches; the total per 100 blows is retired as a band`);
+  const typed = sum(Object.keys(ct).filter(k => k.startsWith('pbstrength:')).map(k => ct[k]));
+  R.info('7.pb.byStrength', '§7 second pass', 'Perfect blocks per 100 blows by strength (reported; held as bands after the first three-strength baseline: lights 0.5 to 1.5, mediums 2 to 6, heavies 6 to 15 at medium)', typed ? parts.join('; ') : 'no perfect block carries its strength on this build (the stagger source)', `${D.length} matches; the total per 100 blows is retired as a band`);
   // energy in the medium AI's brawl blows (5 to 15%): blows whose text names energy
   const eKeys = Object.keys(blows).filter(k => /energy|bolt|blast/.test(k)), allB = sum(Object.values(blows));
   if (eKeys.length && allB) R.point('10.energy.share', '§5b', "Energy blows as a share of the AI's brawl blows (5 to 15%)", { v: sum(eKeys.map(k => blows[k])) / allB, lo: 0.05, hi: 0.15, unit: 'pct' });
   else R.pending('10.energy.share', '§5b', "Energy blows as a share of the AI's brawl blows (5 to 15%)", 'the build has no energy blow in reach (no brawl blow text names energy, a bolt or a blast)');
   // the medium AI winds up a medium or a heavy 4 to 10 times in a minute of brawl
-  const wu = sum(D.map(r => (r.cues || {}).windup_start || 0)), hasWu = D.some(r => (r.cues || {}).windup_start);
+  const wu = sum(D.map(r => (r.cueText || {})['windup:start'] || 0)), hasWu = D.some(r => (r.cueText || {})['windup:start']);
   if (hasWu && mins > 0) R.point('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10; giving ground needs the moment to come)', { v: wu / mins, lo: 4, hi: 10, unit: 'num' });
-  else R.pending('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10)', 'the build has no windup_start cue (the three strengths are C2a)');
+  else R.pending('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10)', 'the build has no windup cue (the three strengths are C2a)');
 }
 
 function levelRows(byLevel) {

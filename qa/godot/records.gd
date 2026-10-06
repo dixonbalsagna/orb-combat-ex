@@ -318,7 +318,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			if e.type == "cue":   # the director's cues by kind: perfect_block, dodge_cancel, burst (step 3)
 				var cq: String = str(e.get("kind"))
 				rec.cues[cq] = rec.cues.get(cq, 0) + 1
-				if cq == "perfect_block" or cq == "windup_start" or cq == "energy_blow" or cq == "flash":   # Game Design's rows by strength and kind: the cue's text says which (the build names it)
+				if cq == "perfect_block" or cq == "windup" or cq == "miss" or cq == "launcher_open" or cq == "launcher_close" or cq == "energy_reach" or cq == "energy_land" or cq == "burst":   # Game Design's rows by strength and kind: the cue's text says which (Encounter's names, brawl-plan.md section 10.3)
 					var cqt: String = cq + ":" + str(e.get("text"))
 					rec.cueText[cqt] = int(rec.cueText.get(cqt, 0)) + 1
 				# the brawl's events (docs/director/brawl-b1.md section 4), compact: a brawl is one exchange, so the rows counted per exchange are re-based on these
@@ -329,12 +329,15 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 					rec.brawl.nblows.append(int(e.get("x")) + int(e.get("y")))        # blows the starter and the rival threw
 				elif cq == "double_hit":
 					rec.doubleHits += 1
-					dpend.append({"t": S.tick, "land": int(_ei(e, "n")), "dmg": [0.0, 0.0], "x0": [fs[0].x, fs[1].x], "sep0": snappedf(absf(SimWrap.sdx(fs[0].x, fs[1].x)) / 75.0, 0.01), "done": false})
+					dpend.append({"t": S.tick, "dur": int(_ei(e, "dur")), "land": int(_ei(e, "n")), "dmg": [0.0, 0.0], "x0": [fs[0].x, fs[1].x], "sep0": snappedf(absf(SimWrap.sdx(fs[0].x, fs[1].x)) / 75.0, 0.01), "done": false})
 				elif cq == "blow":
 					var bk: String = str(e.get("text"))
 					rec.brawl.blows[bk] = int(rec.brawl.blows.get(bk, 0)) + 1
 				elif cq == "stagger":
 					var sk: String = str(e.get("text"))
+					var sks: String = str(e.get("source"))
+					if sks != "" and sks != "<null>" and sks != "null":   # a perfect block's stagger carries the strength it turned (brawl-plan.md section 10.3)
+						rec.cueText["pbstrength:" + sks] = int(rec.cueText.get("pbstrength:" + sks, 0)) + 1
 					rec.brawl.staggers[sk] = int(rec.brawl.staggers.get(sk, 0)) + 1
 				elif cq == "trade_break":
 					rec.brawl.tradeBreaks += 1
@@ -486,7 +489,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		for dp in dpend:
 			if not bool(dp.done) and S.tick >= int(dp.land) + 30:
 				dp.done = true
-				rec.doubles.append({"t": dp.t, "land": dp.land, "dmgA": snappedf(dp.dmg[0], 0.1), "dmgB": snappedf(dp.dmg[1], 0.1), "sep0": dp.sep0, "sep30": snappedf(absf(SimWrap.sdx(fs[0].x, fs[1].x)) / 75.0, 0.01)})
+				rec.doubles.append({"t": dp.t, "dur": dp.dur, "land": dp.land, "dmgA": snappedf(dp.dmg[0], 0.1), "dmgB": snappedf(dp.dmg[1], 0.1), "sep0": dp.sep0, "sep30": snappedf(absf(SimWrap.sdx(fs[0].x, fs[1].x)) / 75.0, 0.01)})
 		dpend = dpend.filter(func(d): return not bool(d.done))
 		for zi in range(2):
 			var dkz: float = float(prev_ki[zi]) - float(fs[zi].ki)

@@ -159,3 +159,48 @@ Orb will play C1, C2a and C2t. The four questions are his acceptance test; the r
 4. A `gave_ground` flag (or a `whiff` text that says why) on a blow that missed.
 5. A `flash` cue with a full or spark text, and `perfect_block` with the strength as its text.
 6. The strength on `blow` texts: light, medium, heavy, and bolt or blast for energy.
+
+
+## I. After C1 as built, and the scripts for C2a and C2t (2026-10-06; Encounter's names from `docs/director/brawl-c1.md` and `brawl-plan.md` §10.3)
+
+Built in `qa/`, no batch run; every script smoke-tested at one match on a scratch export of 53d13b55 (no crash; every new row PENDING there, since the build has none of the cues). Self-test 20 of 20.
+
+### I1. The C1 rows, fixed to the build
+
+| Row | Change |
+| :--- | :--- |
+| `c1.centre.step.*` (hard) | Reads the centre's **speed** (`vx`, `vy`, units a second over 60 and 75, in bh a tick), at most 0.3; the pair's middle moving over 0.3 bh because a strike placed its attacker is reported beside it (count and largest) |
+| `c1.centre.latency` (hard) | Reads "moves at all within 2 live ticks" (the velocity's sign), not "at speed": the build answers on the tick after the stick is first read, small at first |
+| `c1.walk.*` | The floor stays 12 ticks after the later stick is first read (or the jab's press), never sooner. Two AIs never walk out by rule, and an AI weighs a walk-out once (`walkOut` 0.1 to 0.3), so the pairs are two scripts |
+| `double.trade240` (hard, new) | Every `double_hit` cue's `dur` (the trade's length) is 240 to 244, read from the records and from the pairs; C7 is built this way |
+| `double.perMatch`, `double.matchesWith` | The AI against itself is **reported**. The band (0.5 to 2 a match, at least one in 35 to 65% of matches) is on the pairs `double-lights` (a lights-only presser, stick toward) and `double-mix` (L L H, stick toward) against the medium AI, as `double.presser.*`; Game Design measured 0.3 and 0.2 on C1, so they read FAIL until C2a's `digIn` |
+| the lights mirror | The even mirror finishes (at least 95%) and its first slot (40 to 60%, at 200 matches) stay banded. **The momentum rows are retired** (the draw is gone). **The trade's two old hard rows are re-based to reported:** a break has no bound but the double hit; a close follows 85 to 95% of breaks (reported). A new **uneven mirror** (8 ticks against 10): finishes at least 95%, the faster tapper wins at least 80%, brink to KO 25 to 50 s |
+| the zip drop | `drop_land` fires only when he was above the ground and reaches it in his 24 ticks (he falls about 1.07 bh); a drop that starts on the ground, or more than about 1 bh up, never fires it. My 3 hooked drops had none: the zipper was on the ground. The row asks for one start and one end for each down, and reports the lands; no seeds go to Encounter |
+
+**A bug caught before it ran.** The first stick-hold script used the option name `hold=`, which the holder player already uses for the ticks of its hold (`hold=16`). A baseline run with it would have turned every holder script (T7 and the others) into a stick holder. It is `sthold=` now, and nothing was run between.
+
+### I2. The harness stage and `--jobs`
+
+The masher stage now builds one list of Godot jobs and runs it at most `--jobs` at a time (`pool` in `masher.js`, `jobs` from `run-godot.js`). Before, it started waves of three and seven jobs whatever `--jobs` said. The stage is 57 jobs long now (about 25 more than before), so it runs longer on `--jobs=3`: most pairs are 60 to 100 matches; the walk and drift pairs are capped at 150 sim seconds a match.
+
+### I3. The C2a and C2t scripts (players.gd)
+
+| Script | Spec | What it is |
+| :--- | :--- | :--- |
+| the Y masher, the B masher, the X masher | `masher:btn=Y:gap=12:tap=4`, `btn=B:gap=30:tap=4`, `btn=X:gap=6` | A press every gap ticks on one button (Y is the heavy edge, B a `sig` edge with no stance, X the light). `tap=N` holds the button's level for N ticks, a pad tap, so the wind-up reads a tap and not an edge with no level |
+| the alternator | `mix:mix=XYB:gap=12:tap=4` | X, Y, B in turn |
+| the X holder | `holder:kind=L:hold=60:rest=8` | holds X for 60 ticks, lets go 8: the burst |
+| the 10-tick tapper with B | `mix:mix=XXB:gap=10:tap=4` | X X B |
+| each flurry against the one it beats | pairs `fl-xy`, `fl-yb`, `fl-bx` | X every 6 against Y every 12, Y against B every 30, B against X, the second on a seeded offset of 0 to 7 ticks; rows `flurry.xy`, `.yb`, `.bx` at 55 to 75% |
+| the launcher's route | `route` | mashes X every 8 ticks and presses one B on the tick a `launcher_open` names him (until `n`, the end of the stagger); pairs `route-easy`, `-medium`, `-hard`; rows `route.*` (50 to 75% medium, 70 to 90 easy, 30 to 55 hard), `route.every.*` (hard: none lapsed, a launch for each used), `route.first30` (at least 80% at medium), `route.perMatch` (4 to 10 by him, 4 to 8 on him) |
+| a fighter who gives ground | `giver` (and `follow=1` on the rival) | presses nothing; from a seeded 0 to 22 ticks after a rival's `windup` start his stick goes away until the landing tick plus 10; his first step is timed. Rows: `give.lat.*` (hard, at most 2 ticks), `give.out.b` (hard: out of a tapped heavy every time when he starts by tick 16, the `miss` text `gave_ground`), `give.followed.b` (hard: never when followed), `give.medium.*` (reported) |
+| an energy presser | `energy=1:btn=X` and `btn=Y` | RB held with X (bolts) and Y (blasts), the stick toward; rows `energy.bolt` (hard: the announced contact is 2 ticks after the press), `energy.flash` (hard: at most 3 full flashes in 60 ticks, 20 ticks apart), `energy.blast` (hard: the knock-back is 4 bh, within 0.25) |
+| the burst against a mash | pairs `burst-dummy`, `mash-dummy` | damage a second of a held X against an X mash on a rival who never moves; `burst.share` 70 to 80%, never over |
+
+Reads added: `windup` (start, end with `k`), `miss` (`gave_ground`, `reach`, `dodge`), `launcher_open` and `launcher_close`, `burst`, `energy_reach` and `energy_land`, the `launch` event by actor and target, the `knockback` event after a blast, and the perfect block's strength from the `stagger` cue's `source` (`pbstrength:` keys; `7.pb.byStrength`, reported). The AI's wind-ups a minute of brawl (`10.windup.perMin`, 4 to 10) and the energy share of its brawl blows (`10.energy.share`, 5 to 15%) read the same cues in the arms.
+
+### I4. Not done, and why
+
+- The AI's own stick on a tick (`DirBrawl.stick(ex, f)` exists): "the AI holds against a player's stick on under 25% of the ticks" needs a script that reads it every tick; it is one more counter in `drift=` and I have not built it. Say if it should go in.
+- A blow's wound region and strength on the damage event (Simulation's): not needed by these rows.
+- The mood and the `care` before-and-after: unchanged from section H5.

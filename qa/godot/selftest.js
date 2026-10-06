@@ -170,9 +170,10 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
   });
   await t('double hit rows: PENDING without double hits; a good set judges 0.5 to 2 a match, 40 to 70% of matches, at most 4, both hit; a bad set fails the hard tests', async () => {
     assert.strictEqual(evaluate({ default: [rec()] }).find(r => r.id === 'double').status, 'PENDING');
-    const dbl = (j, n, over = {}) => rec({ seed: j, koAt: 300, doubleHits: n, brawl: { ends: { double: n, knockback: 5 }, blows: {}, staggers: {}, tradeBreaks: 0, lens: [], nblows: [] }, doubles: Array.from({ length: n }, () => ({ t: 1, land: 9, dmgA: 12, dmgB: 12, sep0: 1, sep30: 11, ...over })) });
+    const dbl = (j, n, over = {}) => rec({ seed: j, koAt: 300, doubleHits: n, brawl: { ends: { double: n, knockback: 5 }, blows: {}, staggers: {}, tradeBreaks: 0, lens: [], nblows: [] }, doubles: Array.from({ length: n }, () => ({ t: 1, dur: 240, land: 9, dmgA: 12, dmgB: 12, sep0: 1, sep30: 11, ...over })) });
     const good = evaluate({ default: Array.from({ length: 100 }, (_, j) => dbl(j, j < 55 ? (j < 20 ? 2 : 1) : 0)) }), g = k => good.find(r => r.id === k);
-    for (const k of ['double.perMatch', 'double.matchesWith', 'double.max', 'double.cue', 'double.both']) assert.strictEqual(g(k).status, 'PASS', k + ' ' + g(k).value);
+    for (const k of ['double.max', 'double.cue', 'double.both', 'double.trade240']) assert.strictEqual(g(k).status, 'PASS', k + ' ' + g(k).value);
+    for (const k of ['double.perMatch', 'double.matchesWith']) assert.strictEqual(g(k).status, 'INFO', k + ' is reported for the AI against itself');
     const bad = evaluate({ default: Array.from({ length: 100 }, (_, j) => ({ ...dbl(j, j < 55 ? 5 : 0, { dmgB: 0 }), doubleHits: j < 55 ? 4 : 0 })) }), b = k => bad.find(r => r.id === k);
     for (const k of ['double.max', 'double.cue', 'double.both']) assert.strictEqual(b(k).status, 'FAIL', k);
   });
@@ -181,7 +182,7 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const base = (pair, brawl) => ({ pair, n: 60, aWins: 30, bWins: 30, timeouts: 0, medianSec: 100, zips: 0, brawl });
     const noC1 = ['c1-drift-one', 'c1-walk-both', 'c1-walk-held'].map(p => base(p, { brawls: 50, ends: { knockback: 50 }, centre: { ticks: 0, over: 0 }, drift: { n: 0 }, walk: { brawls: 0, early: 0, n: 0 } }));
     for (const r of masherRows(noC1).filter(r => r.id.startsWith('c1.'))) assert.strictEqual(r.status, 'PENDING', r.id);
-    const C = { ticks: 5000, over: 0, maxStepBh: 0.2 }, D = { n: 55, latMax: 2, latMean: 1.2, rateBhPerSec: 2.4, maxStepBh: 0.2 };
+    const C = { ticks: 5000, speedTicks: 5000, over: 0, maxStepBh: 0.2, posMaxBh: 0.5, posOver: 1 }, D = { n: 55, latMax: 2, latMean: 1.2, rateBhPerSec: 2.4, maxStepBh: 0.2 };
     const good = masherRows([
       base('c1-drift-one', { brawls: 60, ends: { knockback: 60 }, centre: C, drift: D, walk: {} }),
       base('c1-walk-both', { brawls: 60, ends: { walk: 55, knockback: 5 }, centre: C, drift: { n: 0 }, walk: { brawls: 60, early: 0, lagMin: 12, lagMax: 20, n: 55 } }),
@@ -190,7 +191,7 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     ]), g = k => good.find(r => r.id === k);
     for (const k of ['c1.centre.latency', 'c1.centre.step.one', 'c1.walk.both', 'c1.walk.held', 'zip.drop']) assert.strictEqual(g(k).status, 'PASS', k + ' ' + g(k).value);
     const bad = masherRows([
-      base('c1-drift-one', { brawls: 60, ends: {}, centre: { ticks: 5000, over: 3, maxStepBh: 0.4 }, drift: { ...D, latMax: 5 }, walk: {} }),
+      base('c1-drift-one', { brawls: 60, ends: {}, centre: { ticks: 5000, speedTicks: 5000, over: 3, maxStepBh: 0.4 }, drift: { ...D, latMax: 5 }, walk: {} }),
       base('c1-walk-both', { brawls: 60, ends: { walk: 55 }, centre: C, drift: { n: 0 }, walk: { brawls: 60, early: 4, lagMin: 6, lagMax: 20, n: 55 } }),
       base('c1-walk-one', { brawls: 60, ends: { walk: 3 }, centre: C, drift: { n: 0 }, walk: { brawls: 0, early: 0, n: 0 } }),
       { ...base('zip-hook', { brawls: 10, ends: {}, zipEnds: { down: 12 }, drop: { start: 9, land: 9, end: 9, stateBad: 1, endBad: 0 } }), zips: 112 },
@@ -202,7 +203,7 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
   await t('second-pass rows: dead stick and the held stick against the AI; perfect blocks by strength, energy share and wind-ups read from cues, PENDING without them', async () => {
     const { masherRows } = require('./masher');
     const base = (pair, brawl) => ({ pair, n: 60, aWins: 30, bWins: 30, timeouts: 0, medianSec: 100, zips: 0, brawl });
-    const C = { ticks: 5000, over: 0, maxStepBh: 0.2 };
+    const C = { ticks: 5000, speedTicks: 5000, over: 0, maxStepBh: 0.2, posMaxBh: 0.5, posOver: 1 };
     const good = masherRows([
       base('c1-hold-one', { brawls: 60, ends: {}, centre: C, hold: { ticks: 4000, dead: 0, deadStates: {} } }),
       base('c1-drift-one', { brawls: 60, ends: {}, centre: C, drift: { n: 55, latMax: 2, latMean: 1, rateBhPerSec: 2.0, maxStepBh: 0.2 } }),
@@ -220,11 +221,39 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     // the rows read from the AI's records
     const none = evaluate({ default: [rec()] });
     for (const k of ['10.energy.share', '10.windup.perMin']) assert.strictEqual(none.find(r => r.id === k).status, 'PENDING', k);
-    const mk = (j) => rec({ seed: j, koAt: 300, cues: { windup_start: 6 }, cueText: { 'perfect_block:light': 5, 'perfect_block:medium': 3 }, brawl: { ends: {}, blows: { flurry: 400, light: 50, medium: 60, 'energy bolt': 30 }, staggers: {}, tradeBreaks: 0, lens: [1800, 1800], nblows: [] } });
+    const mk = (j) => rec({ seed: j, koAt: 300, cues: { windup: 12 }, cueText: { 'windup:start': 6, 'pbstrength:light': 5, 'pbstrength:medium': 3 }, brawl: { ends: {}, blows: { light: 450, medium: 60, bolt: 30 }, staggers: {}, tradeBreaks: 0, lens: [1800, 1800], nblows: [] } });
     const rows = evaluate({ default: Array.from({ length: 50 }, (_, j) => mk(j)) }), r = k => rows.find(x => x.id === k);
     assert.strictEqual(r('10.energy.share').status, 'PASS', 'energy ' + r('10.energy.share').value);   // 30 over 540 is 5.6%
     assert.strictEqual(r('10.windup.perMin').status, 'PASS', 'windup ' + r('10.windup.perMin').value);  // 6 over 1 minute of brawl
     assert.ok(/medium/.test(r('7.pb.byStrength').value));
+  });
+  await t('three-strength and playtest rows: flurries, route, giving ground, energy, burst, the double hit presser; PENDING on a build without the cues, hard tests fail on a bad set', async () => {
+    const { masherRows } = require('./masher');
+    const base = (pair, brawl, over = {}) => ({ pair, n: 60, aWins: 40, bWins: 20, timeouts: 0, medianSec: 100, zips: 0, brawl, stats: [{ damagePerMatch: 7000 }, { damagePerMatch: 0 }], ...over });
+    const old = ['fl-xy', 'route-medium', 'give-b-free', 'energy-x', 'burst-dummy', 'mash-dummy'].map(p => base(p, { brawls: 10, blows: { light: 100 }, ends: {} }));
+    for (const r of masherRows(old).filter(r => /^(flurry|route|give|energy|burst)/.test(r.id))) assert.strictEqual(r.status, 'PENDING', r.id + ' ' + r.value);
+    const three = { windupN: 50, blows: { light: 100, medium: 50, heavy: 30 }, ends: {}, brawls: 600 };
+    const set = (over = {}) => [
+      base('fl-xy', three), base('fl-yb', three, { aWins: 36, bWins: 24 }), base('fl-bx', three, { aWins: 38, bWins: 22 }),
+      base('route-medium', { ...three, launcher: { open: 80, used: 80, lapsed: 0, routeBy: Array(60).fill(6), routeOn: Array(60).fill(5), firstLaunchSec: Array(60).fill(12) } }),
+      base('give-b-free', { ...three, give: { n: 40, latMax: 1, heavy: { n16: 30, m16: 30, nl: 10, ml: 2 }, medium: {}, missTexts: { gave_ground: 32 } } }),
+      base('give-b-follow', { ...three, give: { n: 40, latMax: 1, heavy: { n16: 30, m16: 0, nl: 10, ml: 0 }, medium: {}, missTexts: {} } }),
+      base('energy-x', { ...three, energy: { bolt: 100, blast: 0, announce: { 'bolt:2': 100 }, flashes: 40, flashMax60: 3, flashMinGap: 20, src: {} } }),
+      base('energy-y', { ...three, energy: { bolt: 0, blast: 30, announce: {}, kb: [4, 4.01, 3.99], flashes: 0, src: {} } }),
+      base('burst-dummy', { ...three, burst: { n: 10, blows: [8, 8] } }, { stats: [{ damagePerMatch: 5600 }, { damagePerMatch: 0 }] }),
+      base('mash-dummy', three, { stats: [{ damagePerMatch: 7600 }, { damagePerMatch: 0 }] }),
+      base('double-lights', { ...three, doubleHits: 60, doublePer: Array.from({ length: 60 }, (_, i) => (i < 30 ? 2 : 0)) }),
+    ].map(r => ({ ...r, ...(over[r.pair] || {}), brawl: { ...r.brawl, ...((over[r.pair] || {}).brawl || {}) } }));
+    const good = masherRows(set()), g = k => good.find(r => r.id === k);
+    for (const k of ['flurry.xy', 'flurry.yb', 'flurry.bx', 'route.medium', 'route.every.medium', 'route.first30', 'route.perMatch', 'give.lat.b-free', 'give.out.b', 'give.followed.b', 'energy.bolt', 'energy.flash', 'energy.blast', 'burst.share', 'double.presser.lights']) assert.ok(g(k) && g(k).status === 'PASS', k + ' ' + (g(k) && g(k).status + ' ' + g(k).value));
+    const bad = masherRows(set({
+      'fl-xy': { aWins: 20, bWins: 40 },
+      'route-medium': { brawl: { launcher: { open: 80, used: 70, lapsed: 5, routeBy: Array(60).fill(6), routeOn: Array(60).fill(5), firstLaunchSec: Array(60).fill(12) } } },
+      'give-b-free': { brawl: { give: { n: 40, latMax: 5, heavy: { n16: 30, m16: 20, nl: 10, ml: 2 }, medium: {}, missTexts: {} } } },
+      'energy-x': { brawl: { energy: { bolt: 100, blast: 0, announce: { 'bolt:3': 100 }, flashes: 40, flashMax60: 5, flashMinGap: 10, src: {} } } },
+      'energy-y': { brawl: { energy: { bolt: 0, blast: 30, announce: {}, kb: [3, 4], flashes: 0, src: {} } } },
+    })), b = k => bad.find(r => r.id === k);
+    for (const k of ['flurry.xy', 'route.every.medium', 'give.lat.b-free', 'give.out.b', 'energy.bolt', 'energy.flash', 'energy.blast']) assert.strictEqual(b(k).status, 'FAIL', k + ' ' + b(k).value);
   });
   await t('perfect blocks a minute: easy 0.5 to 2, hard 2 to 5.5 from the level runs; the per-exchange row is reported only', async () => {
     const { levelRows } = require('./bands');
