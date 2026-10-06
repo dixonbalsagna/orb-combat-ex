@@ -1,5 +1,7 @@
 # Core notes for Encounter's zip slice and brawl B1
 
+**Built since (2026-10-05): the bowed rush of section 1 and the drop of section 3. As built: `docs/architecture/zip-core.md`.** Sections 4 and 5 (the `held` state, exhaustion) are still notes.
+
 Owner: Simulation and Engine. Date: 2026-10-05, read against 7fdb70e. Short answers to the EP's questions on `docs/director/brawl-plan.md` section 7 and `docs/director/brawl-b0.md`. Nothing here is built.
 
 ## 1. Can a point rush carry the zip's way out?

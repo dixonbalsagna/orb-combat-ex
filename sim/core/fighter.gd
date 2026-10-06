@@ -6,6 +6,7 @@ class_name SimFighter
 ## Water holds a launched fighter up (S3a gap fix): under water the launch's gravity is cancelled (neutral buoyancy), so
 ## the drag brings it below the free speed within about a second instead of holding it at a 430 u/s sink to the seabed.
 const WATER_BUOY: float = 1000.0
+const DROP_GRAV: float = 1000.0   # a dropped fighter's fall, units a second squared (a flight's own gravity)
 
 
 static func tierUp(S: SimState, f) -> void:
@@ -133,6 +134,82 @@ static func stepLaunched(S: SimState, f, dt: float) -> void:
 		f.vy = SimMathx.jmin(f.vy, 0.0)
 
 
+## A drop (melee-press-feel.md section 2c, the zip's knock-down): f falls from where he is and is out of control for
+## ticks live ticks, as in a tumble. It is not a launch: he has no launcher and no ground-contact journey, and reaching the
+## ground hurts nothing, wears nothing, digs nothing and scores nothing. His rush, if he has one, ends here. vx and vy are
+## the speed he starts with (none: he falls straight down). When the ticks run out he is free where he is, in the air or
+## on the ground. The director may end it sooner (a tech): dropEnd. Returns false, and does nothing, for a fighter who is
+## launched, down or already dropped, or after a KO. For the view he is airborne as a launched fighter is: stateT counts
+## up from 0, vx and vy are his speed, and his spin is 0 (his rot eases out as a free fighter's does).
+static func drop(S: SimState, f, ticks: int, vx: float = 0.0, vy: float = 0.0) -> bool:
+	if ticks <= 0 or S.game.ko != null or f.state == "launched" or f.state == "down" or f.state == "dropped":
+		return false
+	f.rush = null
+	f.state = "dropped"
+	f.dropT = ticks
+	f.stateT = 0.0
+	f.spin = 0.0
+	f.vx = vx
+	f.vy = vy
+	SimFx.dropStart(S, f, ticks)
+	return true
+
+
+## End f's drop now. how is the word on the drop_end event: "end" when its ticks ran out, or the caller's (a tech).
+static func dropEnd(S: SimState, f, how: String = "end") -> void:
+	if f.state != "dropped":
+		return
+	f.state = "free"
+	f.dropT = 0
+	f.vx = 0.0
+	f.vy = 0.0
+	SimFx.dropEnd(S, f, how)
+
+
+## Where f's rush puts him at u, from 0 (where it began) to 1 (its target): [x, y]. It is the straight line to the target
+## as the target is now, plus the bow: Rush.arc x 4u(1 - u), square to that line, on the mover's left for an arc above 0
+## (up when he travels toward +x, down toward -x). A bowed path is held by the ground and the ceiling. The step of a bowed
+## rush is this function, so a view that wants the path's direction takes rushAt(u + a little) - rushAt(u) and cannot
+## disagree with the sim. A straight rush steps as it always did (toward its target by the time left); that is the same
+## line while the target stands still. Before the rush's first step it begins where he is. With no rush it is where he
+## is. Read-only. (An array of two float64, not a Vector2: Godot's Vector2 is 32-bit.)
+static func rushAt(S: SimState, f, u: float) -> PackedFloat64Array:
+	var r = f.rush
+	if r == null:
+		return PackedFloat64Array([f.x, f.y])
+	var tx: float = r.tgt.x + r.off if r.tgt != null else r.px
+	var ty: float = r.tgt.y if r.tgt != null else r.py
+	var sx: float = r.x0 if r.dur > 0.0 else f.x
+	var sy: float = r.y0 if r.dur > 0.0 else f.y
+	var uu: float = SimMathx.jclamp(u, 0.0, 1.0)
+	var bx: float = SimWrap.sdx(sx, tx)
+	var by: float = ty - sy
+	var x: float = sx + bx * uu
+	var y: float = sy + by * uu
+	if r.arc != 0.0:
+		var bl: float = SimDetMath.hypot(bx, by)
+		var bow: float = r.arc * 4.0 * uu * (1.0 - uu)
+		if bl > 0.0:
+			x += -by / bl * bow
+			y += bx / bl * bow
+		else:
+			y += bow
+		x = SimWrap.wrap(x)
+		y = SimMathx.jclamp(y, WorldTerrain.groundY(S, x), SimConst.CEILING)
+	return PackedFloat64Array([SimWrap.wrap(x), y])
+
+
+## How far along his rush f is now, from 0 to 1: after a tick's step it is where that step put him, so rushAt(S, f,
+## rushU(S, f)) is his place on a bowed rush. 0 for a rush that has not taken a step; 1 with no rush.
+static func rushU(S: SimState, f) -> float:
+	var r = f.rush
+	if r == null:
+		return 1.0
+	if r.dur <= 0.0:
+		return 0.0
+	return SimMathx.jclamp(1.0 - (r.end - S.T - SimConst.DT) / r.dur, 0.0, 1.0)
+
+
 static func stepRush(S: SimState, f, dt: float) -> void:
 	var r = f.rush
 	if r == null:
@@ -153,8 +230,19 @@ static func stepRush(S: SimState, f, dt: float) -> void:
 		return
 	var k: float = dt / rem
 	SimFx.afterimage(S, f, 0.16)
-	f.x = SimWrap.wrap(f.x + SimWrap.sdx(f.x, tx) * k)
-	f.y += (ty - f.y) * k
+	if r.dur <= 0.0:   # the rush's first step: where it began and how long it had (rushAt reads them)
+		r.x0 = f.x
+		r.y0 = f.y
+		r.dur = rem
+	if r.arc != 0.0:
+		# A bowed rush (Rush.arc): each step is worked out from the rush's start (rushAt), so nothing drifts, and it
+		# arrives with the straight rush, on the same tick.
+		var at: PackedFloat64Array = rushAt(S, f, 1.0 - (rem - dt) / r.dur)
+		f.x = at[0]
+		f.y = at[1]
+	else:
+		f.x = SimWrap.wrap(f.x + SimWrap.sdx(f.x, tx) * k)
+		f.y += (ty - f.y) * k
 	if S.depthOn:
 		f.z = clampf(f.z + (tz - f.z) * k, SimConst.Z_BACK, SimConst.Z_FRONT)
 
@@ -370,6 +458,25 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 			spin(S, f, dt, SPIN_STOP)
 	elif f.state == "launched":
 		stepLaunched(S, f, dt)
+	elif f.state == "dropped":
+		# a drop (SimFighter.drop): he reads no stick and falls; the ground only stops him
+		var gd0: float = WorldTerrain.groundY(S, f.x)
+		var above: bool = f.y > gd0
+		f.stateT += dt
+		f.vy -= DROP_GRAV * dt
+		f.vx *= SimDetMath.pow(0.55, dt)
+		f.x = SimWrap.wrap(f.x + f.vx * dt)
+		f.y = SimMathx.jmin(f.y + f.vy * dt, SimConst.CEILING)
+		var gd: float = WorldTerrain.groundY(S, f.x)
+		if f.y <= gd:
+			f.y = gd
+			f.vx = 0.0
+			f.vy = 0.0
+			if above:
+				SimFx.dropLand(S, f)
+		f.dropT -= 1
+		if f.dropT <= 0:
+			dropEnd(S, f, "end")
 	elif f.state == "locked":
 		f.vx *= SimDetMath.pow(0.03, dt)
 		f.vy *= SimDetMath.pow(0.03, dt)

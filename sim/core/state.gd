@@ -506,6 +506,7 @@ class Fighter:
 	var jT: int = 0                  # ticks since the journey's first contact (cap 240)
 	var jV0: float = 0.0             # the journey's first-contact normalised speed (the wear budget)
 	var tumbleT: int = -1            # ticks rolled in a tumble, -1 when not tumbling (cap 72)
+	var dropT: int = 0               # ticks left of a drop (state "dropped": SimFighter.drop)
 	var contactT: int = 0            # ticks since the last contact, saturating at 8 (the early-recovery window)
 	var launchN: int = 0             # this fighter's launch number: every contact event carries it
 	var jLips: int = 0               # flights off a lip so far in this journey (journey_end carries it)
@@ -531,6 +532,10 @@ class Rush:
 	var py: float = 0.0
 	var pz: float = 0.0      # L0: a point rush's depth (a fighter rush homes to its target's z)
 	var end: float = 0.0
+	var arc: float = 0.0     # a bowed rush: how far it bows off the straight line at the middle (units; 0 is straight). Above 0 bows to the mover's left: up when he travels toward +x, down toward -x. The director sets it as it makes the rush
+	var x0: float = 0.0      # where the rush began; the core takes these three on every rush's first step (SimFighter.rushAt reads them)
+	var y0: float = 0.0
+	var dur: float = 0.0     # ... and how long it had left then (0: it has not taken a step)
 
 
 class AiState:

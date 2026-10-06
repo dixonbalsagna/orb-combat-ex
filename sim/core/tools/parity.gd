@@ -55,6 +55,8 @@ func _init() -> void:
 	check("the form impulse", _formImpulse())
 	check("blocked blows and the arms", _blockedArms())
 	check("blocked shots and the arms", _blockedShots())
+	check("a bowed rush", _rushArc())
+	check("a drop", _drop())
 	check("the mood by a blow's form", _moodForms())
 	check("depth in the core", _depth())
 	check("the intro phase", _intro())
@@ -2049,6 +2051,212 @@ func _depth() -> String:
 	if a.zT != -1200.0 or a.z != -1200.0:
 		return "a flight's end did not become the home depth (z %s, home %s)" % [str(a.z), str(a.zT)]
 	SimCore.dispose(S)
+	return ""
+
+
+## A bowed rush (Rush.arc). With no arc a rush is the straight one it was. With one it leaves from the same place and
+## arrives at the same point on the same tick, and between them it sits off the straight line by the arc x 4u(1 - u),
+## square to the line, on the mover's left for an arc above 0 (up when he travels toward +x). It holds across the seam
+## and for a rush at a fighter. The ground holds a bow that would dip under it. The arc is in the hash. Every rush keeps
+## where it began from its first step, and rushAt at rushU is where he is, for a straight rush and a bowed one.
+func _rushArc() -> String:
+	var quiet := SimIntent.new()
+	var cases: Array = [   # [start x, start height, target x, target height, arc, at the rival]
+		[2000.0, 0.0, 2900.0, 0.0, 240.0, false],      # level, toward +x: bows up
+		[2900.0, 0.0, 2000.0, 0.0, 240.0, false],      # level, toward -x: bows down
+		[2000.0, 0.0, 2600.0, 800.0, -180.0, false],   # a climb, bowed to the mover's right
+		[9500.0, 100.0, 150.0, 300.0, 300.0, false],   # across the seam
+		[2000.0, 0.0, 2900.0, 0.0, 200.0, true],       # at the rival (a fighter rush), who stands still
+	]
+	for ci in range(cases.size()):
+		var c: Array = cases[ci]
+		var label: String = "rush %d (arc %s)" % [ci, str(c[4])]
+		var P: Array = []   # the straight twin, then the bowed one
+		for arc in [0.0, c[4]]:
+			var S := SimCore.createSim()
+			SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+			var f = S.fighters[0]
+			var o = S.fighters[1]
+			var top: float = 0.0   # well above any ground on the way, so the straight line is clear
+			for k in range(41):
+				top = maxf(top, WorldTerrain.groundY(S, SimWrap.wrap(c[0] + SimWrap.sdx(c[0], c[2]) * float(k) / 40.0)))
+			f.x = c[0]; f.y = top + 2500.0 + c[1]; f.vx = 0.0; f.vy = 0.0
+			o.x = 6000.0; o.y = WorldTerrain.groundY(S, 6000.0) + 400.0
+			var r := SimState.Rush.new()
+			if c[5]:
+				o.x = c[2]; o.y = top + 2500.0 + c[3]
+				r.tgt = o
+				r.off = -60.0
+			else:
+				r.px = c[2]; r.py = top + 2500.0 + c[3]; r.pz = f.z
+			r.end = S.T + 20.0 * SimConst.DT
+			r.arc = arc
+			f.rush = r
+			P.append({"S": S, "f": f, "o": o, "r": r, "x": [], "y": [], "x0": f.x, "y0": f.y})
+		if SimHash.stateHash(P[0].S).gameplay == SimHash.stateHash(P[1].S).gameplay:
+			return label + ": the arc is not in the hash"
+		for q in P:   # before its first step: 0 is where he is, 1 is the target, and he has not moved along it
+			var a0: PackedFloat64Array = SimFighter.rushAt(q.S, q.f, 0.0)
+			var a1: PackedFloat64Array = SimFighter.rushAt(q.S, q.f, 1.0)
+			var wx: float = q.r.tgt.x + q.r.off if q.r.tgt != null else q.r.px
+			var wy: float = q.r.tgt.y if q.r.tgt != null else q.r.py
+			if a0[0] != q.x0 or a0[1] != q.y0 or absf(SimWrap.sdx(a1[0], wx)) > 0.000001 or absf(a1[1] - wy) > 0.000001 or SimFighter.rushU(q.S, q.f) != 0.0:
+				return label + ": before its first step rushAt gives %s and %s" % [str(a0), str(a1)]
+		for q in P:
+			for t in range(60):
+				if q.f.rush == null:
+					break
+				SimCore.step(q.S, [quiet, quiet])
+				q.x.append(q.f.x)
+				q.y.append(q.f.y)
+				if t == 0 and q.f.rush != null and not (q.r.dur > 0.0 and q.r.x0 == q.x0 and q.r.y0 == q.y0):
+					return label + ": after its first step the rush's start is %s,%s with %s left" % [str(q.r.x0), str(q.r.y0), str(q.r.dur)]
+				var here: PackedFloat64Array = SimFighter.rushAt(q.S, q.f, SimFighter.rushU(q.S, q.f))
+				if absf(SimWrap.sdx(here[0], q.f.x)) > 0.001 or absf(here[1] - q.f.y) > 0.001 or (q.f.rush == null and SimFighter.rushU(q.S, q.f) != 1.0):
+					return label + ": at tick %d rushAt at rushU is %s and he is at %s,%s" % [t, str(here), str(q.f.x), str(q.f.y)]
+		var M: int = P[0].x.size()
+		if M < 10 or P[1].x.size() != M or P[0].f.rush != null or P[1].f.rush != null:
+			return label + ": the straight rush took %d ticks and the bowed one %d" % [M, P[1].x.size()]
+		if P[0].x[M - 1] != P[1].x[M - 1] or P[0].y[M - 1] != P[1].y[M - 1]:
+			return label + ": the bowed rush arrived at %s,%s and the straight one at %s,%s" % [str(P[1].x[M - 1]), str(P[1].y[M - 1]), str(P[0].x[M - 1]), str(P[0].y[M - 1])]
+		var dx: float = SimWrap.sdx(P[0].x0, P[0].x[M - 1])
+		var dy: float = P[0].y[M - 1] - P[0].y0
+		var dl: float = SimDetMath.hypot(dx, dy)
+		var peak: float = 0.0
+		for i in range(M - 1):
+			var u: float = float(i + 1) / float(M)
+			var bow: float = c[4] * 4.0 * u * (1.0 - u)
+			var ox: float = SimWrap.sdx(P[0].x[i], P[1].x[i])
+			var oy: float = P[1].y[i] - P[0].y[i]
+			if absf(ox - (-dy / dl) * bow) > 0.001 or absf(oy - (dx / dl) * bow) > 0.001:
+				return label + ": at tick %d it is %s,%s off the straight line, and the bow there is %s" % [i, str(ox), str(oy), str(bow)]
+			peak = maxf(peak, SimDetMath.hypot(ox, oy))
+			if ci < 2 and oy * dx * c[4] <= 0.0:
+				return label + ": a level rush toward %s bowed %s" % ["+x" if dx > 0.0 else "-x", "down" if oy < 0.0 else "up"]
+		if absf(peak - absf(c[4])) > absf(c[4]) * 0.02:
+			return label + ": the bow's peak was %s" % str(peak)
+		for q in P:
+			SimCore.dispose(q.S)
+	# the ground holds a bow that would dip under it
+	var G := SimCore.createSim()
+	SimCore.newMatch(G, 5, {"p1": false, "p2": false}, {"intro": false})
+	var gf = G.fighters[0]
+	gf.x = 2000.0
+	gf.y = WorldTerrain.groundY(G, gf.x)
+	var gr := SimState.Rush.new()
+	gr.px = 2600.0; gr.py = WorldTerrain.groundY(G, 2600.0); gr.pz = gf.z
+	gr.end = G.T + 20.0 * SimConst.DT
+	gr.arc = -400.0
+	gf.rush = gr
+	for t in range(40):
+		SimCore.step(G, [quiet, quiet])
+		if gf.y < WorldTerrain.groundY(G, gf.x) - 0.000001:
+			return "a bow that dips took him %s under the ground at tick %d" % [str(WorldTerrain.groundY(G, gf.x) - gf.y), t]
+	if gf.rush != null or absf(SimWrap.sdx(gf.x, 2600.0)) > 0.000001:
+		return "the dipping rush did not arrive"
+	SimCore.dispose(G)
+	return ""
+
+
+## A drop (SimFighter.drop; melee-press-feel.md section 2c): a fighter knocked out of a rush falls from where he is and
+## reads no stick for the ticks given, then is free. Nothing is hurt, worn, dug, launched or scored, in the air or when
+## he reaches the ground; a frozen tick does not count; dropEnd ends it sooner with the caller's word; a fighter who is
+## launched, down or already dropped is not dropped.
+func _drop() -> String:
+	var quiet := SimIntent.new()
+	var push := SimIntent.new()
+	push.mx = 1.0
+	push.my = 1.0
+	var loud: Array = ["damage", "launch", "crater", "decisive", "knockback", "land", "left_ground", "bounce", "journey_end", "region_stage", "ko"]
+	for height in [3000.0, 30.0]:   # a fall that ends in the air, and one that reaches the ground
+		var label: String = "a drop from %d up" % int(height)
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+		var f = S.fighters[0]
+		f.y = WorldTerrain.groundY(S, f.x) + height
+		var r := SimState.Rush.new()
+		r.px = f.x; r.py = f.y; r.pz = f.z
+		r.end = S.T + 30.0 * SimConst.DT
+		f.rush = r
+		SimCore.step(S, [quiet, quiet])
+		var x0: float = f.x
+		var hp0: float = f.hp
+		var wear0: Array = f.wear.duplicate()
+		var craters0: int = S.craters.size()
+		S.out.fx.clear()
+		if SimFighter.drop(S, f, 0) or not SimFighter.drop(S, f, 24) or f.state != "dropped" or f.rush != null or f.dropT != 24:
+			return label + ": drop left him %s with %d ticks" % [f.state, f.dropT]
+		if SimFighter.drop(S, f, 24) or S.out.fx.size() != 1 or S.out.fx[0].type != "drop_start" or int(S.out.fx[0].actor) != 0 or absf(S.out.fx[0].dur - 0.4) > 0.000001:
+			return label + ": a second drop took, or drop_start was not sent once"
+		var y: float = f.y
+		var vy: float = 0.0
+		var landed: int = 0
+		var ended: String = ""
+		var live: int = 0
+		var frozen: int = 0
+		for t in range(40):
+			if live == 3 and frozen == 0:
+				S.dirS.stop = 0.05   # a hit-stop: its ticks are not the drop's
+			S.out.fx.clear()
+			var was: int = f.dropT
+			var yb: float = f.y
+			if not SimCore.step(S, [push, quiet]):
+				frozen += 1
+				if f.dropT != was or f.y != yb:
+					return label + ": a frozen tick moved the drop on"
+				continue
+			live += 1
+			vy -= SimFighter.DROP_GRAV * SimConst.DT
+			y += vy * SimConst.DT
+			var g: float = WorldTerrain.groundY(S, f.x)
+			if y <= g:
+				y = g
+				vy = 0.0
+			for e in S.out.fx:
+				if e.type in loud:
+					return label + ": a %s event at live tick %d" % [e.type, live]
+				if e.type == "drop_land":
+					landed += 1
+				elif e.type == "drop_end":
+					ended = e.kind
+			if f.spin != 0.0 or (live <= 24 and absf(f.stateT - float(live) * SimConst.DT) > 0.000001):
+				return label + ": at live tick %d his stateT is %s and his spin %s" % [live, str(f.stateT), str(f.spin)]
+			if live <= 24 and (f.x != x0 or absf(f.y - y) > 0.000001):
+				return label + ": at live tick %d he is at %s,%s (expected %s,%s)" % [live, str(f.x), str(f.y), str(x0), str(y)]
+			if (f.state == "dropped") != (live < 24) or (live >= 24 and (f.state != "free" or f.dropT != 0)):
+				return label + ": at live tick %d his state is %s with %d ticks left" % [live, f.state, f.dropT]
+			if live == 24:
+				break
+		if frozen == 0 or ended != "end" or landed != (1 if height < 100.0 else 0) or f.hp != hp0 or f.wear != wear0 or S.craters.size() != craters0 or f.launchBy != null:
+			return label + ": %d frozen ticks, ended '%s', landed %d times, hp %s (was %s), %d craters (were %d)" % [frozen, ended, landed, str(f.hp), str(hp0), S.craters.size(), craters0]
+		SimCore.step(S, [push, quiet])
+		if f.x == x0:
+			return label + ": free again, he did not answer the stick"
+		SimCore.dispose(S)
+	# ended sooner by the caller (a tech), a starting speed, and who cannot be dropped
+	var T := SimCore.createSim()
+	SimCore.newMatch(T, 5, {"p1": false, "p2": false}, {"intro": false})
+	var tf = T.fighters[0]
+	tf.y = WorldTerrain.groundY(T, tf.x) + 2000.0
+	var tx0: float = tf.x
+	if not SimFighter.drop(T, tf, 24, 300.0, 0.0):
+		return "a free fighter could not be dropped"
+	for t in range(5):
+		SimCore.step(T, [quiet, quiet])
+	if tf.state != "dropped" or tf.dropT != 19 or SimWrap.sdx(tx0, tf.x) <= 0.0:
+		return "five ticks into a drop with a sideways speed: %s, %d left, moved %s" % [tf.state, tf.dropT, str(SimWrap.sdx(tx0, tf.x))]
+	T.out.fx.clear()
+	SimFighter.dropEnd(T, tf, "tech")
+	if tf.state != "free" or tf.dropT != 0 or T.out.fx.size() != 1 or T.out.fx[0].type != "drop_end" or T.out.fx[0].kind != "tech":
+		return "dropEnd did not free him with its word"
+	SimFighter.dropEnd(T, tf, "tech")
+	if T.out.fx.size() != 1:
+		return "dropEnd on a free fighter sent an event"
+	for st in ["launched", "down"]:
+		tf.state = st
+		if SimFighter.drop(T, tf, 24) or tf.state != st:
+			return "a fighter who is %s was dropped" % st
+	SimCore.dispose(T)
 	return ""
 
 

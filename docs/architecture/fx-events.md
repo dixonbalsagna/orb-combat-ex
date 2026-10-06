@@ -183,6 +183,9 @@ An intro tick is a pre-clock tick: `SimCore.step` returns false and consumes no 
 | `shot_deflect` | id, actor, kind, x, y, z, x1, y1, dur | a deflect sent the shot wild from x, y, z: `actor` deflected it, and it lands at x1, y1 in `dur` seconds unless something is in its way (only with `deflect.scatter` on) | VFX, Audio, Camera |
 | `mine_trip` | id, actor, kind, x, y, z, dur | the mine `id` was set off by `actor` (a slot, or -1); `kind` is fighter, shot, blow or chain; it blows in `dur` seconds | VFX (the flash before the blast), Audio |
 | `knockback` | victim, attacker, kind, amount, dur, n, x, y, z | `victim` was sent back, not launched; `kind` is Combat's piece (a short slide, a long slide, a bump, a drift), `amount` the distance, `dur` its seconds, `n` the tick it ends | Animation, Camera, QA |
+| `drop_start` | actor, dur, x, y, z | `actor` was dropped (`SimFighter.drop`): out of control and falling for `dur` seconds of live ticks, from this place. Not a launch: no launcher, no journey, no score | Animation, Camera, Audio |
+| `drop_land` | actor, x, y, z | The dropped `actor` reached the ground here. Sent once in a drop. Nothing is hurt, worn or dug. He stays dropped until `drop_end` | Animation, VFX, Audio |
+| `drop_end` | actor, kind, x, y, z | `actor`'s drop ended and he is free: `kind` is `end` when its ticks ran out, or the caller's word (a tech) | Animation |
 | `exchange_end` | actor, kind | `actor`'s exchange ended: `continue` (both stay in reach), `knockback` or `launch` | QA, Camera |
 | `flow` | actor, n | `actor`'s flow count is now `n` | the HUD's recipe strip, QA |
 | `embed` | actor, x, y, z, depth, r, energy, dur, n | `actor` is driven into the ground: the crater's floor, its depth and radius, the impact's energy, the seconds he stays down, his launch number | Animation, Camera, VFX |

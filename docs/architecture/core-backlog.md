@@ -20,7 +20,7 @@ Owner: Simulation and Engine. A list of what is asked of `sim/core` and not yet 
 | A `held` state for throws | Combat, Animation | Per fighter: the holder's slot, the socket he is held by, the start and release ticks; hashed. The held fighter's position follows the holder until the release |
 | `react` on the `damage` event | Animation | A field naming the reaction the blow asks for (the strike's class or direction), so the hit reaction does not have to be guessed from the amount and the region |
 | The broken side per limb region | Animation, Art, UI | Which arm or leg broke (left or right), decided when the limb breaks and hashed, so the body, the wound card and the readout agree |
-| A `path` event for curved rushes | Animation, Camera, VFX | When a rush follows a curve (Combat's variety pass, the `arc` argument), an event with the path's shape and end tick, so the trail and the camera can lead it |
+| A `path` event for curved rushes | Animation, Camera, VFX | When a rush follows a curve, an event with the path's shape and end tick, so the trail and the camera can lead it. **The curve is built (`Rush.arc`, `zip-core.md`), and a view can read the path from `SimFighter.rushAt` and `rushU`.** The event itself waits until a consumer asks for it |
 | A per-slot AI level in the match setup | Encounter, QA, UI | `"aiLevel": [n, n]` in the setup (and so in the replay header), in place of Encounter's static `DirAI.level` |
 
 ## Smaller, approved or noted
@@ -28,7 +28,7 @@ Owner: Simulation and Engine. A list of what is asked of `sim/core` and not yet 
 - **Done 2026-10-02:** the intro phase, the last stand, the mood's form impulse.
 - **Rename `act1Damping` to `act1WearMul`** (EP approved): the data, the loader and Tools' schema together.
 - **I3:** remove the legacy `stance`, `dash` and `charge` intent fields and the `act.v2` flag; move `transformSource` into `SimAct`.
-- **`Rush.arc`** for a rush over a roof (Encounter's fight-lanes section) and for Combat's curved rushes: the same field as the `path` event's source.
+- **Done 2026-10-05:** `Rush.arc` (a rush that bows off its line) and `SimFighter.drop` (the zip's knock-down). As built: `zip-core.md`.
 - **World's data in the replay's data hash:** `contact.json` is in (below). `settlements.json` and the lane table join when World has a `dataHash()` for them.
 
 ## Notes from reviews, for other owners

@@ -6,7 +6,7 @@ const MASK: int = 0xFFFFFFFF
 const FIGHTER: Array = ["name", "title", "role", "col", "aura", "hair", "care", "dmgMul", "spd", "maxhp", "sigName", "hp", "x", "y", "vx", "vy", "face", "ki", "power", "tier", "stance", "state", "stateT",
 	"hidden", "hideT", "hiddenFor", "menace", "anguish", "ambush", "rot", "spin", "bounces", "lastAtkT", "hurtT", "keys", "beamCharge", "wet", "ambushUntil", "dPrev",
 	"menaceSeen", "menaceQuiet", "casSeen", "hasAnguish", "hasMenace", "launchT", "slide", "slideX0", "slideD", "slideE", "slideDmg", "slideAcc", "slideEvt", "launchSpecial", "hopped", "aimB", "aimX0", "aimZ0", "aimZ1", "aimD", "chainEvt", "z", "zT", "zWay", "jContacts", "jT", "jV0", "tumbleT", "contactT", "launchN", "jLips", "lastStandUsed", "lastStandLeft", "embedT", "embedCool", "slideFeet",
-	"canHide", "lockBackT", "exT"]
+	"canHide", "lockBackT", "exT", "dropT"]
 ## Intent v2 (I1): the v2 fields in the record's order, then today's dash, charge and stance until I3, then the agency fields.
 const INTENT: Array = ["mx", "my", "guard", "guardPress", "dodge", "sprint", "power", "powerPress", "powerTap", "mode", "light", "heavy", "sig", "upgrade", "special", "context", "transform", "dash", "charge", "stance", "lightHeld", "heavyHeld", "escape", "waited", "stanceMask", "contextHeld", "sigHeld"]
 const BUILDING: Array = ["x", "w", "h", "maxhp", "hp", "alive", "kind", "pop", "seed", "popAlive", "z", "d", "row", "fled", "floors", "fmask", "wear"]
@@ -133,8 +133,10 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 			out.append(null)
 		elif r.tgt != null:
 			out.append("tgt"); out.append(_idx(fs, r.tgt)); out.append(r.off); out.append(r.end)
+			out.append(r.arc); out.append(r.x0); out.append(r.y0); out.append(r.dur)
 		else:
 			out.append("pt"); out.append(r.px); out.append(r.py); out.append(r.end); out.append(r.pz)
+			out.append(r.arc); out.append(r.x0); out.append(r.y0); out.append(r.dur)
 		out.append(_idx(fs, f.launchBy))
 		_obj(out, f.ai, ["t", "atk", "sT", "sOff", "st"])
 		_obj(out, f.lastSeen, ["x", "y"])
@@ -293,6 +295,7 @@ const FX_FIELDS: Dictionary = {
 	"window_open": ["actor", "kind", "dur", "n"], "clash_draw": ["actor", "target"], "hazard_telegraph": ["actor", "source", "eta", "x"],
 	"searching": ["actor", "target", "x", "kind"], "danger": ["actor", "source", "eta"],
 	"launch": ["actor", "target", "amount", "face", "ux", "uy", "n"], "rush": ["actor", "target", "n"],
+	"drop_start": ["actor", "dur", "x", "y", "z"], "drop_land": ["actor", "x", "y", "z"], "drop_end": ["actor", "kind", "x", "y", "z"],
 	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
 	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
 	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],

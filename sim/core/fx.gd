@@ -202,6 +202,26 @@ static func transform(S: SimState, f, tier: float, source: String, dur: float, v
 ## long slide, a bump, a drift), amount the distance in units, dur its length in seconds and n the tick it ends.
 ## exchange_end: actor's exchange ended; kind is continue (both stay in reach), knockback or launch. flow: actor's flow
 ## count is now n. The director sends all three.
+## A drop (SimFighter.drop): f is out of control and falling for ticks ticks; he reached the ground in it; it ended
+## (kind: "end" when the ticks ran out, or the caller's word, such as "tech").
+static func dropStart(S: SimState, f, ticks: int) -> void:
+	var e := _ev(S, "drop_start")
+	e.actor = float(S.fighters.find(f)); e.dur = float(ticks) / 60.0
+	e.x = f.x; e.y = f.y; e.z = f.z
+
+
+static func dropLand(S: SimState, f) -> void:
+	var e := _ev(S, "drop_land")
+	e.actor = float(S.fighters.find(f))
+	e.x = f.x; e.y = f.y; e.z = f.z
+
+
+static func dropEnd(S: SimState, f, kind: String) -> void:
+	var e := _ev(S, "drop_end")
+	e.actor = float(S.fighters.find(f)); e.kind = kind
+	e.x = f.x; e.y = f.y; e.z = f.z
+
+
 static func knockback(S: SimState, f, by, kind: String, dist: float, endTick: int) -> void:
 	var e := _ev(S, "knockback")
 	e.victim = float(S.fighters.find(f)); e.attacker = float(S.fighters.find(by)) if by != null else -1.0
