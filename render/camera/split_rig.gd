@@ -104,7 +104,12 @@ var _wd_until: float = -1.0e9
 var _lg_until: float = -1.0e9            # the hold ends at this time
 var _lg_strike: float = -1.0e9           # the sim time of the strike (end of the move out)
 var _lg_sep: float = 0.0                 # the separation when the cue came (the one view's zoom holds at it)
-var _lg_mid: float = 0.0                 # the pair's midpoint when the cue came (the one view's focus holds near it)
+var _lg_mid: float = 0.0                 # the pair's midpoint when the cue came (the box's x is counted from it)
+var _lg_box: Array = [0.0, 0.0, 0.0, 0.0]   # the zip's frame: x0, x1 (from _lg_mid), y0, y1: the pair at the cue, widened by what the zip will do
+var _lg_cap: float = -1.0e9              # the hold never runs past this time
+var _lg_rel: bool = false                # the hold has ended and the frame is easing back to the live pair (no step)
+var _lg_rel_t: float = 0.0
+var _lg_f: Array = [0.0, 0.0, 0.0, 0.0]  # the box as the camera follows it: centre x (from _lg_mid), width, centre y, height (eased, so the merged camera's velocity lead sees a motion and not a step)
 var _nopin_until: Array = [-1.0e9, -1.0e9]   # a lunge or a charge by this fighter is not a one-way rush: no cut ahead
 var _lead: Array = [0.0, 0.0]   # the lead room a chased launch gets: world units the focus is ahead of him, signed
 var _rush_pin_t: Array = [-1.0e9, -1.0e9]   # the last time each pane was pinned (the tests give the arrival a moment)    # the pane is pinned on a rush's arrival point until the rush ends
@@ -218,7 +223,9 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_derived_beams_t = -1.0e9
 	_rush_pin = [false, false]
 	_lg_slot = -1
+	_lg_rel = false
 	_lg_until = -1.0e9
+	_lg_cap = -1.0e9
 	_wd_slot = -1
 	_wd_until = -1.0e9
 	_nopin_until = [-1.0e9, -1.0e9]
@@ -672,27 +679,121 @@ func _read_move_cue(S: SimState, ev, kind: String) -> void:
 		_lg_strike = S.T + (wind + mv) * DT
 		_nopin_until[la] = time + (wind + mv) * DT + 0.5
 		return
+	# A zip (zip_light, zip_heavy). In a split (or a pane still holding the screen) nothing is held: the way in is a rush and
+	# the slam's door and the lag bound already handle it, and a layout frozen while the pair closes put a fighter on the
+	# wrong side of the divider (the sweep's three failures on Z1). The rival's countdown still starts at the tell.
+	var total: float = float(_ef(ev, "dur", wind + 2.0 * mv + 20.0))   # ticks, the whole zip with the default exit
+	if total <= 0.0:
+		total = wind + 2.0 * mv + 20.0   # a cue without it
+	_lg_strike = S.T + (wind + mv) * DT
+	_nopin_until[la] = time + total * DT + 0.5
+	if sep >= 0.5 or e > 0.05:
+		_wd_slot = la
+		_wd_tgt = lt
+		_wd_until = time + (wind + mv + 1.0) * DT
+		return
 	_lg_slot = la
 	_lg_tgt = lt
-	_lg_until = time + minf((wind + 2.0 * mv) * DT + CamParams.LUNGE_HOLD_AFTER, CamParams.LUNGE_HOLD_MAX)
-	_lg_strike = S.T + (wind + mv) * DT
+	_lg_rel = false
+	_lg_cap = time + CamParams.ZIP_HOLD_MAX
+	_lg_until = minf(time + total * DT + CamParams.ZIP_HOLD_MARGIN, _lg_cap)
 	var d: float = SimWrap.sdx(S.fighters[la].x, S.fighters[lt].x)
 	_lg_sep = minf(absf(d), SimConst.HALF)
 	_lg_mid = S.fighters[la].x + d * 0.5
-	_nopin_until[la] = time + (wind + mv) * DT + 0.5
+	var ya: float = S.fighters[la].y
+	var yb: float = S.fighters[lt].y
+	_lg_box = [minf(-d * 0.5, d * 0.5), maxf(-d * 0.5, d * 0.5), minf(ya, yb), maxf(ya, yb)]
+	_lg_f = [0.5 * (float(_lg_box[0]) + float(_lg_box[1])), float(_lg_box[1]) - float(_lg_box[0]), 0.5 * (float(_lg_box[2]) + float(_lg_box[3])), float(_lg_box[3]) - float(_lg_box[2])]
 	lunge_holds += 1
 
 
-## The hold ends at its time, or when anything makes it not a lunge out and back: a launch, a knock-down, a shot.
-func _update_lunge(S: SimState) -> void:
-	if _lg_slot < 0:
+## Widen the zip's frame by a point (world x counted from the pair's midpoint at the cue).
+func _lg_extend(x: float, y: float) -> void:
+	var rx: float = SimWrap.sdx(_lg_mid, x)
+	_lg_box[0] = minf(float(_lg_box[0]), rx)
+	_lg_box[1] = maxf(float(_lg_box[1]), rx)
+	_lg_box[2] = minf(float(_lg_box[2]), y)
+	_lg_box[3] = maxf(float(_lg_box[3]), y)
+
+
+## The zip's blow lands: the exit point is known 6 or 10 ticks before he moves. The frame is widened to the whole way out (the
+## sampled path with its bow, over or under the rival as the read says), so the zoom and the focus are where the pair will
+## be before he goes, and he is neither chased nor cropped at the top of his arc.
+func _zip_out(S: SimState, ev) -> void:
+	var a: int = int(_ef(ev, "actor", -1))
+	if a != _lg_slot or a < 0 or a > 1:
 		return
-	var over: bool = time >= _lg_until or solo_kind != "" or fold_active or intro_active
-	for f in S.fighters:
-		if f.state == "launched" or f.state == "down" or f.state == "ko":
-			over = true
-	if over:
-		_lg_slot = -1
+	var f = S.fighters[a]
+	var ex: float = float(_ef(ev, "x", f.x))
+	var ey: float = float(_ef(ev, "y", f.y))
+	var bx: float = SimWrap.sdx(f.x, ex)
+	var by: float = ey - f.y
+	# From the blow on the frame is what is left of the zip: the rival and the way out (not where he began: a far-side exit
+	# ends on the other side, and keeping the start in would zoom the whole pair out for nothing).
+	var rv = S.fighters[_lg_tgt]
+	_lg_box = [SimWrap.sdx(_lg_mid, rv.x), SimWrap.sdx(_lg_mid, rv.x), rv.y, rv.y]
+	# The path: the straight line to the exit, sampled (the bow is a body height or two, a fraction of the screen's height at
+	# these zooms, so it is left out of the zoom's box and the sweep checks the bowed way out keeps its margin instead).
+	for k in range(0, 9):
+		var u: float = float(k) / 8.0
+		_lg_extend(SimWrap.wrap(f.x + bx * u), f.y + by * u)
+	_lg_extend(ex, ey)
+	# the rest of the zip: the ticks he stays in reach after the blow and the way out, then the end cue decides
+	var left: float = float(_ef(ev, "dur", 0.0)) + float(_ef(ev, "n", 0.0))
+	_lg_until = minf(maxf(_lg_until, time + left * DT + CamParams.ZIP_HOLD_MARGIN), _lg_cap)
+
+
+## zip_end is the return marker: he is home (or at his exit) after a `done`, and the hold runs 0.4 s more; any other end
+## (stopped, outrun, countered, caught, shot, down) ends it at once, since nothing is coming home.
+func _zip_end(ev) -> void:
+	var a: int = int(_ef(ev, "actor", -1))
+	if a != _lg_slot:
+		return
+	if String(_ef(ev, "text", "")) == "done":
+		_lg_until = minf(time + CamParams.LUNGE_HOLD_AFTER, _lg_cap)
+	else:
+		_lg_end()
+
+
+## The hold ends: the layout, the incoming read and the rest stop at once, but the frame the camera was holding eases back to
+## the live pair (_update_lunge) instead of stepping to it: a hold ended by a catch had stepped the merged camera 0.22 of a
+## screen in one tick.
+func _lg_end() -> void:
+	if _lg_slot >= 0:
+		_lg_rel = true
+		_lg_rel_t = 0.0
+	_lg_slot = -1
+
+
+## The hold ends at its time, or when anything makes it not a zip out and back: a launch, a knock-down, a drop, a shot.
+## While it holds, the frame takes in where they are and the camera follows it eased; after it, the frame eases back.
+func _update_lunge(S: SimState) -> void:
+	if _lg_slot < 0 and not _lg_rel:
+		return
+	if _lg_slot >= 0:
+		var over: bool = time >= _lg_until or solo_kind != "" or fold_active or intro_active
+		for f in S.fighters:
+			if f.state == "launched" or f.state == "down" or f.state == "ko" or f.state == "dropped":
+				over = true
+		if over:
+			_lg_end()
+	var klg: float = 1.0 - exp(-DT / CamParams.ZIP_FRAME_TAU)
+	var tgt: Array = []
+	if _lg_slot >= 0:
+		for f in S.fighters:
+			_lg_extend(f.x, f.y)
+		tgt = [0.5 * (float(_lg_box[0]) + float(_lg_box[1])), float(_lg_box[1]) - float(_lg_box[0]), 0.5 * (float(_lg_box[2]) + float(_lg_box[3])), float(_lg_box[3]) - float(_lg_box[2])]
+	else:
+		var A = S.fighters[0]
+		var B = S.fighters[1]
+		var d: float = SimWrap.sdx(A.x, B.x)
+		tgt = [SimWrap.sdx(_lg_mid, A.x + d * 0.5), absf(d), (A.y + B.y) * 0.5, _pair_dy(A, B)]
+		_lg_rel_t += DT
+		if _lg_rel_t > CamParams.ZIP_RELEASE:
+			_lg_rel = false
+			return
+	for q in range(4):
+		_lg_f[q] = float(_lg_f[q]) + (float(tgt[q]) - float(_lg_f[q])) * klg
 
 
 func _read_events(S: SimState, events: Array) -> void:
@@ -701,6 +802,10 @@ func _read_events(S: SimState, events: Array) -> void:
 			var mk: String = String(_ef(ev, "kind", ""))
 			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy" or mk == "zip_light" or mk == "zip_heavy":
 				_read_move_cue(S, ev, mk)
+			elif mk == "zip_out":
+				_zip_out(S, ev)
+			elif mk == "zip_end":
+				_zip_end(ev)
 	for ev in events:
 		match String(_ef(ev, "type", "")):
 			"last_stand_ready":
@@ -795,6 +900,11 @@ func _read_events(S: SimState, events: Array) -> void:
 						_hit_hold[ca] = CamParams.BOUNCE_HOLD
 						_bounce_t[ca] = time
 						bounce_pushes += 1
+			"drop_start":
+				# A zipper shot out of his way out falls where the shot put him: nothing to hold for; the ordinary follow
+				# (the zoom rate and the lag bound) keeps him on the screen.
+				if _lg_slot >= 0 and int(_ef(ev, "actor", -1)) == _lg_slot:
+					_lg_end()
 			"journey_end":
 				var ja: int = int(_ef(ev, "actor", -1))
 				if ja >= 0 and ja < 2:
@@ -1709,13 +1819,17 @@ func _merged_target(S: SimState) -> Vector3:
 	var mx: float = A.x + d * 0.5
 	var my: float = clampf((A.y + B.y) * 0.5 + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
 	var ahead: float = minf(SimConst.HALF, absf(d) + maxf(0.0, _sep_rate) * CamParams.ZOOM_OUT_LOOKAHEAD)
-	if _lg_slot >= 0:
-		# A lunge out and back: the zoom stays at the size of the pair at the cue, and the focus stays near where it was
-		# (it may lean toward the lunger by LUNGE_FOCUS_LEAD of the width).
-		ahead = _lg_sep
-		var lim: float = CamParams.LUNGE_FOCUS_LEAD * vw / maxf(_mz, 0.001)
-		mx = _lg_mid + clampf(SimWrap.sdx(_lg_mid, mx), -lim, lim)
-	var z: float = zoom_u(vw, vh, ahead, _pair_dy(A, B), maxf(A.tier, B.tier), _m(), true)
+	var dy_pair: float = _pair_dy(A, B)
+	var y_mid: float = (A.y + B.y) * 0.5
+	if _lg_slot >= 0 or _lg_rel:
+		# A zip out and back: the frame is the box the zip will use (the pair at the cue, widened to the exit and the bow at
+		# the blow), so the zoom stays and the focus sits where the pair will be, not where the zipper is.
+		ahead = minf(SimConst.HALF, float(_lg_f[1]))
+		mx = _lg_mid + float(_lg_f[0])
+		dy_pair = maxf(dy_pair, float(_lg_f[3]))
+		y_mid = float(_lg_f[2])
+		my = clampf(y_mid + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
+	var z: float = zoom_u(vw, vh, ahead, dy_pair, maxf(A.tier, B.tier), _m(), true)
 	var mult: float = maxf(_push_mult(0), _push_mult(1)) * _intro_mult()
 	if solo_kind == "ko":
 		pass
@@ -1724,7 +1838,7 @@ func _merged_target(S: SimState) -> Vector3:
 	if _pitch_now != 0.0:
 		# Put the pair's chest midpoint at 0.7 of the height, as the straight-on camera does: a few Newton steps on cam_y.
 		var cwx: float = SimWrap.wrap(mx)
-		var chest_y: float = (A.y + B.y) * 0.5 + CamParams.CHEST
+		var chest_y: float = y_mid + CamParams.CHEST
 		var zmid: float = (float(A.z) + float(B.z)) * 0.5
 		var cy: float = my
 		for it in range(3):
@@ -2000,8 +2114,6 @@ func _update_cameras(S: SimState) -> void:
 			var gnd: float = WorldTerrain.groundY(S, f.x)
 			lead_w = smoothstep(CamParams.LOW_AIR_DEAD * 0.5, CamParams.LOW_AIR_DEAD * 1.5, f.y - gnd)
 			fy_ref = lerpf(gnd + CamParams.CHEST, f.y + CamParams.CHEST, lead_w)
-		if _lg_slot == i and sep > 0.5 and not _rush_pin[i]:
-			freeze = true   # the lunger's pane holds on his home: he comes back to a place, not to a moving picture
 		if _rush_pin[i]:
 			var rp = f.rush
 			if rp == null or rp.tgt == null or solo_kind != "" or sep < 0.999:
@@ -2070,8 +2182,6 @@ func _update_cameras(S: SimState) -> void:
 					lag_whips += 1
 		# own zoom: first-order filter, then the rate cap
 		var zt: float = _own_zoom_target(S, i)
-		if _lg_slot == i and sep > 0.5:
-			zt = _zo[i]   # the lunger's pane keeps its size through the lunge
 		var tau_z: float = CamParams.TAU_Z
 		if (solo_kind == "ko" or solo_kind == "finisher") and solo_slot == i:
 			tau_z = CamParams.KO_DOLLY / 3.0

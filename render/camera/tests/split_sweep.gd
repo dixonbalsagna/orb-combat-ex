@@ -71,6 +71,7 @@ var _jolt_t0: float = 0.0
 var _jolt_t1: float = 0.0
 var _jolts: Array = []
 var _scan_rush_t: float = -9.0
+var _scan_zip_until: float = -9.0   # a zip's window (the cue to 0.4 s after its end), for the jolt classes
 var _rushes: Array = []
 var _scan_prev: SplitFrame = null
 var _scan_rel: Array = [Vector2.ZERO, Vector2.ZERO]
@@ -197,7 +198,14 @@ func _run() -> void:
 		await _scenario("rush %s" % rv[0], func(): return _rush_run(float(rv[1]), int(rv[2]), bool(rv[3])), {})
 	await _scenario("incoming closing", func(): return _incoming_closing(), {})
 	await _scenario("rush charge", func(): return _rush_run(6000.0, 20, false, true), {})
-	for lv in [["zip one view", false, 0.0, true, false], ["zip split", true, 0.0, true, false], ["zip one view at 49 degrees", false, 49.0, true, false], ["zip one view at 49 degrees unheld", false, 49.0, false, false], ["zip one view unheld", false, 0.0, false, false], ["zip split unheld", true, 0.0, false, false], ["one way one view", false, 0.0, true, true], ["one way split", true, 0.0, true, true], ["one way one view at 49 degrees", false, 49.0, true, true]]:
+	for zv in [["home", false, 0.0, "home", "", "done", false], ["far side", false, 0.0, "far", "over", "done", false], ["point over", false, 0.0, "point", "over", "done", false],
+			["point under", false, 0.0, "point", "under", "done", false], ["home at 49 degrees", false, 49.0, "home", "", "done", false],
+			["far side at 49 degrees", false, 49.0, "far", "over", "done", false], ["home across the seam", false, 0.0, "home", "", "done", true],
+			["far side across the seam", false, 0.0, "far", "over", "done", true], ["home, split closing", true, 0.0, "home", "", "done", false],
+			["far side, split closing at 49 degrees", true, 49.0, "far", "over", "done", false], ["caught", false, 0.0, "home", "", "caught", false],
+			["shot down", false, 0.0, "home", "", "shot", false], ["outrun", false, 0.0, "home", "", "outrun", false]]:
+		await _scenario("zip %s" % zv[0], func(): return _zip_run(bool(zv[1]), float(zv[2]), String(zv[3]), String(zv[4]), String(zv[5]), bool(zv[6])), {})
+	for lv in [["zip one view", false, 0.0, true, false], ["zip one view at 49 degrees unheld", false, 49.0, false, false], ["zip one view unheld", false, 0.0, false, false], ["one way one view", false, 0.0, true, true], ["one way split", true, 0.0, true, true], ["one way one view at 49 degrees", false, 49.0, true, true]]:
 		await _scenario("lunge %s" % lv[0], func(): return _lunge_run(bool(lv[1]), float(lv[2]), bool(lv[3]), bool(lv[4])), {})
 	await _scenario("panel clash beams", func(): return _panel_clash_beams(), {})
 	await _scenario("panel beam plays", func(): return _panel_beam_plays(), {})
@@ -1363,7 +1371,7 @@ func _lunge_run(split: bool, pitch: float, hold: bool, one_way: bool = false) ->
 	var off_after_strike: int = 0
 	var evs: Array = [_shot_events("rush", {"actor": 0.0, "target": 1.0, "n": strike_tick})]
 	if hold:
-		evs.append(_shot_events("cue", {"kind": "lunge_light" if one_way else "zip_light", "actor": 0.0, "target": 1.0, "amount": float(wind), "n": mv, "text": "lunge" if one_way else "zip"}))
+		evs.append(_shot_events("cue", {"kind": "lunge_light" if one_way else "zip_light", "actor": 0.0, "target": 1.0, "amount": float(wind), "n": mv, "dur": float(wind + 2 * mv + 20), "text": "lunge" if one_way else "zip"}))
 	for k in range(200):
 		var x: float = home
 		if k >= wind and k < wind + mv:
@@ -1432,6 +1440,163 @@ func _lunge_run(split: bool, pitch: float, hold: bool, one_way: bool = false) ->
 		_check(late_active == 0, "%s: the incoming read stayed on for %d ticks after the strike" % [_label, late_active])
 		_check(_rig.lunge_holds == 1 and _rig.rush_cuts == 0, "%s: %d holds, %d cut-aheads" % [_label, _rig.lunge_holds, _rig.rush_cuts])
 	stats["lunge " + _label] = "holds %d, cuts %d, layout changed on %d ticks, zoom moved %.3f, camera moved %.3f of the width, off its pane %d ticks, back within %.1f px, aimed %d ticks (wrong %d)" % [_rig.lunge_holds, cuts, mode_changes, dz, dcx, off_ticks, back_px, aimed_ticks, eta_bad]
+	_rig.pitch_deg = 0.0
+	return {}
+
+
+## A zip as Encounter's Z1 sends it (docs/camera/zip-framing.md): the cue zip_light at the tell (actor, target, amount the tell,
+## n the way in, dur the whole zip, x and y the ticks in reach), the zipper still through the tell, a way in (a rush at the
+## rival, 2.5 body heights short), the blow after the reach ticks (cue zip_out: text the exit, x and y the exit point, n the
+## way out) and the way out along the bowed path, then zip_end. `pending`: the pair has been far apart (two panes) and is
+## brought together, so the zip starts in a split whose merge is still pending (the failure on Z1). Checks: no cut; the
+## zipper on the screen on every tick of the zip (Legal's floor: the way in and out are seen); when held, no layout change,
+## the zoom nearly still, and for `home` he is back where he began; no arc cropped.
+func _zip_run(pending: bool, pitch: float, exit: String, pas: String, end_text: String, seam: bool) -> Dictionary:
+	var ax: float = SimConst.W - 300.0 if seam else 20000.0
+	var gap: float = 6000.0 if pending else 700.0
+	var y0: float = 300.0 if pas == "under" else 40.0
+	_pose(ax, y0, ax + gap, y0)
+	_rig.pitch_deg = pitch
+	_seed_rig()
+	for _i in range(300):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	if pending:
+		# the pair comes together over 1.5 s (a knock-back's aftermath) and the zip starts as the merge is pending
+		var b0: float = B.x
+		var tgt: float = SimWrap.wrap(A.x + 700.0)
+		for q in range(90):
+			B.x = SimWrap.wrap(b0 + SimWrap.sdx(b0, tgt) * smoothstep(0.0, 1.0, float(q + 1) / 90.0))
+			_tick_rig()
+	var home: float = A.x
+	var side: float = SimMathx.jsign(SimWrap.sdx(A.x, B.x))
+	var arrive: float = SimWrap.wrap(B.x - side * 187.5)
+	var d0: float = absf(SimWrap.sdx(A.x, B.x))
+	var ex: float = home
+	var ey: float = y0
+	if exit == "far":
+		ex = SimWrap.wrap(B.x + side * d0)
+	elif exit == "point":
+		ex = SimWrap.wrap(B.x - side * 900.0)   # up to 12.5 body heights (937 units) from the rival
+		ey = y0 + 250.0
+	var tell: int = 6
+	var tin: int = 8
+	var rb: int = 4
+	var ra: int = 6
+	var tout: int = 10
+	var bow: float = 150.0 if pas != "" else 0.0
+	var sgn: float = 1.0 if pas != "under" else -1.0
+	var total: int = tell + tin + rb + ra + tout
+	var cur0: SplitFrame = _rig.current()
+	var mode0: String = cur0.mode
+	var z0: float = cur0.cam_z[0]
+	var s0: Vector2 = cur0.screen_pos(0, A.x, A.y + CamParams.CHEST, float(A.z))
+	var cuts: int = 0
+	var mode_changes: int = 0
+	var dz: float = 0.0
+	var off_zipper: int = 0
+	var jerk: float = 0.0
+	var vel_prev: float = 0.0
+	var cam_prev: float = _rig.current().cam_x[0]
+	var top_margin: float = 1.0e9
+	var low_margin: float = 1.0e9
+	var evs: Array = [_shot_events("cue", {"kind": "zip_light", "actor": 0.0, "target": 1.0, "amount": float(tell), "n": tin, "dur": float(total), "x": float(rb), "y": float(ra), "text": "zip"}),
+		_shot_events("rush", {"actor": 0.0, "target": 1.0, "n": _S.tick + tell + tin})]
+	var blow_k: int = tell + tin + rb
+	var stop_k: int = 9999
+	if end_text != "done":
+		stop_k = blow_k - 2 if end_text != "outrun" else tell + 3
+	for k in range(total + 90):
+		var x: float = home
+		var y: float = y0
+		if k >= stop_k:
+			x = A.x
+			y = A.y
+			if end_text == "shot" and k > stop_k:
+				A.state = "dropped" if k < stop_k + 24 else "free"
+				y = maxf(WorldTerrain.groundY(_S, A.x), A.y - 30.0)
+		elif k < tell:
+			pass
+		elif k < tell + tin:
+			var u: float = smoothstep(0.0, 1.0, float(k - tell + 1) / float(tin))
+			x = SimWrap.wrap(home + SimWrap.sdx(home, arrive) * u)
+		elif k < blow_k + ra:
+			x = arrive
+		elif k < total:
+			var u2: float = smoothstep(0.0, 1.0, float(k - (blow_k + ra) + 1) / float(tout))
+			x = SimWrap.wrap(arrive + SimWrap.sdx(arrive, ex) * u2)
+			y = y0 + (ey - y0) * u2 + bow * 4.0 * u2 * (1.0 - u2) * sgn
+		else:
+			x = ex
+			y = ey
+		if k < stop_k:
+			A.x = x
+			A.y = y
+		else:
+			A.y = y
+		# the sim's rush on the way in
+		if k == tell:
+			var rr := SimState.Rush.new()
+			rr.tgt = B
+			rr.off = -side * 187.5
+			rr.end = _S.T + float(tin) * SplitRig.DT
+			A.rush = rr
+		elif k == tell + tin:
+			A.rush = null
+		if k == blow_k and stop_k > blow_k:
+			evs.append(_shot_events("cue", {"kind": "zip_out", "text": exit, "actor": 0.0, "target": 1.0, "x": ex, "y": ey, "n": tout, "amount": float(rb), "dur": float(ra)}))
+		if k == total and stop_k > total:
+			evs.append(_shot_events("cue", {"kind": "zip_end", "text": end_text, "actor": 0.0, "target": 1.0}))
+		if k == stop_k:
+			evs.append(_shot_events("cue", {"kind": "zip_end", "text": end_text, "actor": 0.0, "target": 1.0}))
+			if end_text == "shot":
+				evs.append(_shot_events("drop_start", {"actor": 0.0, "dur": 0.4}))
+		var sig0: int = _rig.sigma_shown
+		_tick_rig(evs)
+		evs = []
+		var cur: SplitFrame = _rig.current()
+		# (a zipper crossing the rival flips the order of the two: the rig flags that as a cut in the one view, where
+		# nothing is drawn from the sides; it is not a cut the player sees)
+		if cur.cut and _rig.sigma_shown == sig0:
+			cuts += 1
+		var vel_now: float = SimWrap.sdx(cam_prev, cur.cam_x[0]) * cur.cam_z[0] / vw
+		cam_prev = cur.cam_x[0]
+		if k < total + 30 and not cur.cut:
+			jerk = maxf(jerk, absf(vel_now - vel_prev))
+		vel_prev = vel_now
+		if k < total + 30:
+			if cur.mode != mode0 and not pending:
+				mode_changes += 1
+			dz = maxf(dz, absf(log(cur.cam_z[0]) - log(z0)))
+			var pa: Vector2 = cur.screen_pos(0, A.x, A.y + CamParams.CHEST, float(A.z))
+			if cur.shows(1) and not cur.shows(0):
+				pa = cur.screen_pos(1, A.x, A.y + CamParams.CHEST, float(A.z))
+			if pa.x < 0.0 or pa.x > vw or pa.y < 0.0 or pa.y > vh:
+				off_zipper += 1
+			top_margin = minf(top_margin, pa.y / vh)
+			low_margin = minf(low_margin, (vh - pa.y) / vh)
+	var cur1: SplitFrame = _rig.current()
+	var s1: Vector2 = cur1.screen_pos(0, A.x, A.y + CamParams.CHEST, float(A.z))
+	_check(cuts == 0, "%s: %d cuts during a zip" % [_label, cuts])
+	_check(off_zipper == 0, "%s: the zipper was off the screen for %d ticks (Legal's floor: his way in and way out are seen)" % [_label, off_zipper])
+	# (at 49 degrees the test pose with a pair 700 apart cycles split and merge by itself, before any zip: only the cut and the
+	# zipper's place are asserted there)
+	if not pending and pitch == 0.0:
+		_check(_rig.lunge_holds == 1, "%s: %d holds" % [_label, _rig.lunge_holds])
+		_check(jerk <= 0.05, "%s: the camera's velocity changed by %.3f of the width in a tick (a whip)" % [_label, jerk])
+		if end_text == "done":
+			_check(mode_changes == 0, "%s: the layout changed on %d ticks of a held zip" % [_label, mode_changes])
+			# the frame is widened once, at the blow, to the whole way out: a far-side exit (887 units from the near side of the
+			# rival to the far end, against 700) is a fifth of a log unit, a point at 12.5 body heights and above is more
+			_check(dz <= (0.06 if exit == "home" else (0.3 if exit == "far" else 0.45)), "%s: the zoom moved %.3f (ln) during a held zip" % [_label, dz])
+			if exit == "home":
+				_check((s1 - s0).length() <= 6.0, "%s: he is %.1f px from where he began" % [_label, (s1 - s0).length()])
+			if pas != "":
+				_check(top_margin >= 0.04 and low_margin >= 0.04, "%s: the bowed way out came within %.3f of the top and %.3f of the bottom" % [_label, top_margin, low_margin])
+	elif pending:
+		_check(_rig.lunge_holds == 0, "%s: a hold in a split (%d)" % [_label, _rig.lunge_holds])
+	stats["zip " + _label] = "holds %d, cuts %d, layout changed on %d ticks, zoom moved %.3f, camera jerk %.3f of the width, zipper off %d, margins top %.3f low %.3f" % [_rig.lunge_holds, cuts, mode_changes, dz, jerk, off_zipper, top_margin, low_margin]
 	_rig.pitch_deg = 0.0
 	return {}
 
@@ -2523,6 +2688,7 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 	_lr = []
 	_rushes = []
 	_scan_rush_t = -9.0
+	_scan_zip_until = -9.0
 	_scan_prev = null
 	_contact = {}
 	_beamcues = {}
@@ -2720,6 +2886,12 @@ func _jolt_tick(cur: SplitFrame, ev: Array) -> void:
 		for e in ev:
 			if String(e.type) == "launch":
 				launched = true
+			elif String(e.type) == "cue":
+				var ck: String = String(e.kind)
+				if ck == "zip_light" or ck == "zip_heavy":
+					_scan_zip_until = float(_tick) / 60.0 + maxf(float(e.dur), 20.0) / 60.0 + 0.6
+				elif ck == "zip_end":
+					_scan_zip_until = float(_tick) / 60.0 + 0.4
 		var rushing: bool = _S.fighters[0].rush != null or _S.fighters[1].rush != null or _rig._slam_slot >= 0 or cur.mode == "slam"
 		if rushing:
 			_scan_rush_t = float(_tick) / 60.0
@@ -2773,7 +2945,9 @@ func _jolt_tick(cur: SplitFrame, ev: Array) -> void:
 				val = dd
 			if which != "":
 				var cause: String = "other"
-				if rushing or float(_tick) / 60.0 - _scan_rush_t < 0.25:
+				if float(_tick) / 60.0 < _scan_zip_until:
+					cause = "zip (the cue's window)"
+				elif rushing or float(_tick) / 60.0 - _scan_rush_t < 0.25:
 					cause = "rush (the approach and the slam's door)"
 				elif sig["solo"] != _scan_sig.get("solo", "") or sig["slot"] != _scan_sig.get("slot", -1):
 					cause = "solo shot start, end or hand-over"
