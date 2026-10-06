@@ -99,6 +99,7 @@ func attach(m) -> void:
 		_solo.texture = viewports[0].get_texture()
 		_solo.visible = true
 	main.compositor = self
+	main.split_rig.flash_ask = Callable(self, "ask_register")
 	_on_resized()
 
 
@@ -125,15 +126,26 @@ func is_attached() -> bool:
 ## SimHost.ask_flash, source "cut_dip", a big-event source) as it begins: granted, it plays; refused, the cut has no dip. A new
 ## dip is a fade that rises from nothing or by a fifth or more over the last frame's. A host with no register (a tool's
 ## stand-in) grants every dip.
-func _dip_gate(fade: float) -> float:
+func _dip_gate(fade: float, depth: float) -> float:
 	if fade <= 0.0:
 		_dip_ok = true
 	elif fade > _dip_prev + 0.2:
-		_dip_ok = true
-		if main != null and main.get("host") != null and main.host.has_method("ask_flash"):
-			_dip_ok = bool(main.host.ask_flash("cut_dip", Color(0.03, 0.04, 0.06)))
+		_dip_ok = ask_register("cut_dip", 1.0, depth)   # the whole frame, at its real step: under 0.10 it costs nothing
 	_dip_prev = fade
 	return fade if _dip_ok else 0.0
+
+
+## One ask of the shared flash register for a change of `area` (a fraction of the screen) by `step` (the change in relative
+## luminance, or -1 when unknown): the weighted ask (VFX's `ask(source, colour, tick, area_px, step)`, areas counted at 1024 by
+## 768 as the register does). A host with no register (a tool's stand-in) grants every one. The rig's own calm choices
+## (the transformation's break) come through here too: `main.split_rig.flash_ask`.
+func ask_register(source: String, area: float, step: float = -1.0) -> bool:
+	if main == null or main.get("host") == null:
+		return true
+	var h = main.host
+	if h.get("vfx") == null or h.vfx.get("flashes") == null:
+		return true
+	return bool(h.vfx.flashes.ask(source, Color(0.3, 0.3, 0.35), int(h.S.tick), area * 1024.0 * 768.0, step))
 
 
 ## The player's settings (docs/camera/split-screen.md sections 2 and 13). Solo against the AI: split like two players
@@ -235,8 +247,8 @@ func _present_panel(fr: SplitFrame) -> void:
 		_panel_asked = false
 	elif not _panel_asked and float(p["open"]) > 0.001:
 		_panel_asked = true
-		if main != null and main.get("host") != null and main.host.has_method("ask_flash"):
-			_panel_blocked = not bool(main.host.ask_flash("cut_in_panel", Color(0.3, 0.3, 0.35)))
+		var pr: Rect2 = p["rect"]
+		_panel_blocked = not ask_register("cut_in_panel", clampf(pr.size.x * pr.size.y / maxf(size.x * size.y, 1.0), 0.0, 1.0))
 	if p.is_empty() or _panel_blocked or _panel_vp == null or float(p["open"]) <= 0.001:
 		_panel_rect.visible = false
 		if _panel_vp != null:
@@ -328,7 +340,8 @@ func present(fr: SplitFrame) -> void:
 	_mat.set_shader_parameter("feather", fr.feather)
 	_mat.set_shader_parameter("gap", fr.gap)
 	_mat.set_shader_parameter("gap_alpha", fr.line_alpha)
-	var dim: float = (CamParams.REDUCED_CUT_DIM if (reduced_motion or flash_reduced) else CamParams.CUT_DIM) * _dip_gate(fr.fade)
+	var depth: float = CamParams.REDUCED_CUT_DIM if (reduced_motion or flash_reduced) else CamParams.CUT_DIM
+	var dim: float = depth * _dip_gate(fr.fade, depth)
 	_mat.set_shader_parameter("dim0", dim)
 	_mat.set_shader_parameter("dim1", dim)
 	_solo.modulate = Color(1.0 - dim, 1.0 - dim, 1.0 - dim)

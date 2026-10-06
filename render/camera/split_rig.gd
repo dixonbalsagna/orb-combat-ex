@@ -107,6 +107,8 @@ var _lg_sep: float = 0.0                 # the separation when the cue came (the
 var _lg_mid: float = 0.0                 # the pair's midpoint when the cue came (the box's x is counted from it)
 var _lg_box: Array = [0.0, 0.0, 0.0, 0.0]   # the zip's frame: x0, x1 (from _lg_mid), y0, y1: the pair at the cue, widened by what the zip will do
 var _lg_cap: float = -1.0e9              # the hold never runs past this time
+var flash_ask: Callable = Callable()     # (source, area as a fraction of the screen, step) -> whether the flash register grants it; SplitView sets it
+var _tf_calm: bool = false               # this transformation's break is calm: no hard cut, no low angle (the register refused it, or reduced flashing)
 var flash_reduced: bool = false          # the reduced-flashing setting (the host passes the register's `reduced`): calmer passes
 var scroll_gov_ticks: int = 0            # ticks the scroll governor held the zoom back (counted for the tests)
 var _vsm: Array = [0.0, 0.0]             # each pane's focus speed, eased (units a second)
@@ -587,7 +589,8 @@ func _slam_run(S: SimState) -> void:
 		_layout_age = 0.0
 		_mode_changes.append(time)
 		_mode_reasons.append("merge slam")
-		_flash = CamParams.SLAM_FLASH
+		# (No divider flash here: the panes are one view on this tick and UI draws a divider only while they are open, so it
+		# never reached the screen; the door's sweep, the push and the shake carry the slam. `_flash` stays 0.)
 		_slam_done = true
 
 
@@ -1180,6 +1183,7 @@ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = nu
 	solo_t = 0.0
 	_tf_phase = ""
 	_tf_ver = ""
+	_tf_calm = false
 	_shot_pitch = 0.0
 	solo_phase = "follow"
 	_solo_dur = 0.0
@@ -1226,6 +1230,7 @@ func _end_solo(S: SimState) -> void:
 	solo_kind = ""
 	_tf_phase = ""
 	_tf_ver = ""
+	_tf_calm = false
 	_shot_pitch = 0.0
 	solo_prio = 0
 	solo_phase = ""
@@ -1597,7 +1602,14 @@ func _transform_beats(S: SimState) -> void:
 	var ph: String = "gather" if ti < _tf_g else ("break" if ti < _tf_g + _tf_b else "settle")
 	if ph != _tf_phase:
 		_tf_phase = ph
-		if _tf_ver == "full":
+		# The break's hard cut to a low angle is a whole-frame change (more dark sky: 0.249 to 0.151 mean luminance in Tools' ai 4
+		# clip) and the settle's cut back another within half a second. It asks the flash register as the break begins; refused,
+		# or under reduced flashing, the break is calm: the same beats, the zoom easing (not snapped) and no cut or low angle.
+		if _tf_ver == "full" and ph == "break":
+			_tf_calm = flash_reduced or (flash_ask.is_valid() and not bool(flash_ask.call("transform_cut", 1.0, 0.4)))
+		if _tf_ver == "full" and _tf_calm:
+			pass   # the filters take the zoom to the break's and the settle's size: no cut, no snap
+		elif _tf_ver == "full":
 			_cut_now = true
 			_snap_focus(S, solo_slot)
 			_zo[solo_slot] = _own_zoom_target(S, solo_slot)
@@ -2121,7 +2133,7 @@ func _anchor(S: SimState, i: int) -> Vector2:
 	if solo_kind == "wreck" and solo_slot == i:
 		var ap: float = 1.0 if reduced_motion else smoothstep(0.0, 1.0, clampf(solo_t / CamParams.WRECK_T, 0.0, 1.0))
 		solo_pt = Vector2(vw * (0.5 - CamParams.WRECK_ANCHOR_X * float(wreck_dir) * ap), vh * 0.70)
-	if solo_kind == "transform" and solo_slot == i and _tf_phase == "break" and _tf_ver == "full":
+	if solo_kind == "transform" and solo_slot == i and _tf_phase == "break" and _tf_ver == "full" and not _tf_calm:
 		solo_pt.y = vh * 0.74   # low in the frame, the sky above him
 	if e_slot >= 0:
 		if i == e_slot:
@@ -2529,7 +2541,7 @@ func _make_frame(S: SimState) -> SplitFrame:
 		var cf = S.fighters[ci]
 		var h_px: float = f.apparent_height(ci, cf.x, cf.y, float(cf.z))
 		var rad: float = maxf(CamParams.CUTAWAY_MIN_PX, CamParams.CUTAWAY_K * h_px)
-		if solo_kind == "transform" and _tf_phase == "break" and _tf_ver == "full":
+		if solo_kind == "transform" and _tf_phase == "break" and _tf_ver == "full" and not _tf_calm:
 			rad = maxf(rad, CamParams.CUTAWAY_BREAK_R * vh)   # keep the silhouette against the sky clear of a house in front
 		f.cutaway[ci] = {"request": _ov_kind != "smash", "radius_px": rad, "only": ci if two_up else -1}
 	f.incoming = [_incoming_for(S, 0, f), _incoming_for(S, 1, f)]

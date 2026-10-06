@@ -203,6 +203,8 @@ func _run() -> void:
 	for bv in [["drift", false, true], ["drift across the seam", true, true], ["drift across the seam, the fighters' midpoint", true, false]]:
 		await _scenario("brawl %s" % bv[0], func(): return _brawl_drift(bool(bv[1]), bool(bv[2])), {})
 	await _scenario("double hit", func(): return _double_hit_run(), {})
+	for tc in [["refused by the register", false], ["reduced flashing", true]]:
+		await _scenario("transformation calm, %s" % tc[0], func(): return _shot_transform_calm(bool(tc[1])), {})
 	for gv in [["fast", 100.0, false, false], ["fast, reduced flashing", 100.0, false, true], ["fast, reduced motion", 100.0, true, false], ["slow", 20.0, false, false]]:
 		await _scenario("scroll governor %s" % gv[0], func(): return _scroll_gov_run(float(gv[1]), bool(gv[2]), bool(gv[3])), {})
 	for zv in [["home", false, 0.0, "home", "", "done", false], ["far side", false, 0.0, "far", "over", "done", false], ["point over", false, 0.0, "point", "over", "done", false],
@@ -2559,6 +2561,48 @@ func _shot_transform_full() -> Dictionary:
 	_check(size_settle > size_break * 1.3, "%s: the settle is not back to the pose (%.0f px)" % [_label, size_settle])
 	_check(ended_at >= 130 and ended_at <= 140, "%s: the shot ended at tick %d (want about 135)" % [_label, ended_at])
 	stats["shot transformation full"] = "cuts %s, sizes %.0f / %.0f / %.0f / %.0f px, end tick %d" % [str(cut_ticks), first, size_gather_end, size_break, size_settle, ended_at]
+	return {}
+
+
+## A transformation's break when the flash register refuses it (or under reduced flashing): the same beats with no hard cut and no
+## low angle, the zoom easing to the break's size and the settle's instead of snapping. Tools' ai 4 clip: the break's cut to a
+## low angle was a whole-frame step (0.249 to 0.151 mean luminance) and the settle's cut back another, half a second later.
+func _shot_transform_calm(reduced_flashing: bool) -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 40.0, ax + 600.0, 40.0)
+	_seed_rig()
+	for _i in range(200):
+		_tick_rig()
+	if reduced_flashing:
+		_rig.flash_reduced = true
+	else:
+		_rig.flash_ask = func(_src, _a, _t): return false
+	_tick_rig([_shot_events("transform", {"actor": 0.0, "tier": 2.0, "source": "x", "dur": 3.0})])
+	var cuts: int = 0
+	var worst_pitch: float = 0.0
+	var dz: float = 0.0
+	var dy: float = 0.0
+	var prev: SplitFrame = _rig.current()
+	var ended_at: int = -1
+	for k in range(1, 200):
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		if cur.cut:
+			cuts += 1
+		worst_pitch = minf(worst_pitch, cur.pitch)
+		dz = maxf(dz, absf(log(cur.cam_z[0]) - log(prev.cam_z[0])))
+		dy = maxf(dy, absf(cur.cam_y[0] - prev.cam_y[0]) * cur.cam_z[0] / vh)
+		prev = cur
+		if ended_at < 0 and _rig.solo_kind == "":
+			ended_at = k
+	_check(cuts == 0, "%s: %d cuts in a calm break (want none)" % [_label, cuts])
+	_check(worst_pitch > -0.5, "%s: the camera pitched to %.1f degrees in a calm break" % [_label, worst_pitch])
+	_check(dz <= 0.06, "%s: the zoom moved %.3f (ln) in one tick (a snap)" % [_label, dz])
+	_check(dy <= 0.06, "%s: the camera moved %.3f of the screen height in one tick" % [_label, dy])
+	_check(ended_at >= 130 and ended_at <= 140, "%s: the shot ended at tick %d (want about 135)" % [_label, ended_at])
+	stats["transformation " + _label] = "cuts %d, lowest pitch %.1f, zoom step %.3f, height step %.3f of the screen, ended at %d" % [cuts, worst_pitch, dz, dy, ended_at]
+	_rig.flash_reduced = false
+	_rig.flash_ask = Callable()
 	return {}
 
 
