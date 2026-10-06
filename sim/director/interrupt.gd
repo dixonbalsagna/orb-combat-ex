@@ -230,8 +230,8 @@ static func _windowBeat(S: SimState, ex, f):
 	var role: String = "A" if f == ex.A else "D"
 	# (the classes with a window are the keys of interrupts.json perfectBlock.windows)
 	for b in ex.beats:
-		if b.done or b.op != "strike" or b.args.d != role or b.args.o == null:
-			continue
+		if b.done or b.op != "strike" or b.args.d != role or b.args.o == null or b.args.get("sure", false):
+			continue   # (a riposte and a reversal's heavy can't be blocked: melee-press-feel.md section 9f)
 		var cls: String = String(b.args.o.get("class", ""))
 		var w: float = _window(f, cls, ex.kind == "heavy")
 		if w < 0.0 or b.args.o.get("perfect", false):
@@ -292,6 +292,19 @@ static func guardPress(S: SimState, f) -> bool:
 static func perfectBlock(S: SimState, ex, a, d, o: Dictionary) -> void:
 	var pb: Dictionary = DirData.perfectBlock()
 	var c: Dictionary = data().perfectBlock
+	if DirBrawl.isBrawl(ex) and DirBrawl.cfg().has("perfectBlock"):
+		# Inside a brawl it resolves in place (melee-press-feel.md section 9f): he staggers where he is, the blocker has
+		# the riposte, and the brawl goes on.
+		var sep: bool = String(o.get("class", "")) == "heavy"   # a turned heavy or ender: a heavy riposte separates them
+		d.ki = SimMathx.jmin(100.0, d.ki + float(c.ki))
+		S.dirS.stop = SimMathx.jmax(S.dirS.stop, float(c.stopTicks) / DirData.TICKS_PER_SEC)
+		SimFx.cue(S, d, "perfect_block", "", "")
+		SimFx.ring(S, a.x + a.face * 30.0, a.y + 34.0, 700.0, "#9fe0ff", 0.4, 10.0)
+		SimFx.banner(S, "PERFECT BLOCK", "#9fe0ff", 0.8)
+		SimEvents.feed(S, d.name + " PERFECT BLOCK", a.name + " staggers in place; the next attack is a riposte" + (" (a heavy separates them)" if sep else ""))
+		SimFx.parry(S, d, a)   # the mood and Pride read it as a parry
+		DirBrawl.perfectBlocked(S, ex, a, d, o, sep)
+		return
 	_takeOver(ex)
 	DirBrawl.over(S, ex, "perfect_block")
 	ex.loser = S.fighters.find(a)
@@ -395,7 +408,7 @@ static func dodgeCancel(S: SimState, ex, f) -> bool:
 		return DirBands.cancel(S, f)   # his own approach: nothing had started, so it costs nothing
 	if ex.kind == "sig" or (f != ex.A and f != ex.D) or DirExchange.finisherPlanned(ex) or DirBury.diving(S, f):
 		return false
-	if DirBrawl.isBrawl(ex) and (ex.branch != "" or f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, (ex.D if f == ex.A else ex.A).x)) >= -SimAct.awayDead):
+	if DirBrawl.isBrawl(ex) and (ex.branch != "" or DirBrawl.sureAgainst(ex, f) or f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, (ex.D if f == ex.A else ex.A).x)) >= -SimAct.awayDead):
 		return false   # in a brawl a dodge leaves only with the stick away (melee-press-feel.md section 2)
 	var c: Dictionary = data().dodgeCancel
 	# The attacker's cancel is free until his first wind-up starts (agency-pass.md section 1): he was flown in by the
@@ -536,6 +549,16 @@ static func reversal(S: SimState, ex, f) -> bool:
 	var c: Dictionary = data().reversal
 	f.ki -= _cost(S, f)
 	si(f, REV_READY, S.tick + int(c.cooldownTicks))
+	if DirBrawl.isBrawl(ex) and DirBrawl.cfg().has("reversal"):
+		# Inside a brawl it resolves in place (melee-press-feel.md section 9f): his heavy lands as a brawl heavy, the
+		# attacker staggers where he is, and the brawl goes on.
+		var who = ex.D if f == ex.A else ex.A
+		DirBrawl.reversed(S, ex, f, who)
+		SimFx.cue(S, f, "reversal", "", "")
+		SimFx.banner(S, "REVERSAL", "#ffd45a", 0.8)
+		SimEvents.feed(S, f.name + " REVERSAL", "guard-cancel: its heavy lands in place")
+		SimFx.parry(S, f, who)   # the mood reads it as it reads the perfect block (section 9f)
+		return true
 	_takeOver(ex)
 	DirBrawl.over(S, ex, "reversal")
 	ex.loser = -1

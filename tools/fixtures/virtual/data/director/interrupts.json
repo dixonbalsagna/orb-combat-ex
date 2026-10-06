@@ -234,6 +234,15 @@
     "shooter": {
       "firedTicks": 90,
       "noMeleeTicks": 120
+    },
+    "perfectBlock": {
+      "staggerTicks": 20
+    },
+    "riposteTicks": 30,
+    "riposteReelTicks": 8,
+    "reversal": {
+      "contactTicks": 10,
+      "staggerTicks": 20
     }
   },
   "blast": {

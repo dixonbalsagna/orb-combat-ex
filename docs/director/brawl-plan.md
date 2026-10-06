@@ -299,3 +299,47 @@ Per fighter, about 12 integers: the phase and its ticks left; the kind and the r
 ### 7.9 Order
 
 Z1: the zip strike and the zip heavy with the three readings, the exit rule, the counters, caught, the dodge that becomes a zip, the AI, the cues. Z2: the zip away. Later, with their inputs: the zip tackle (`contextHeld`, the tackle) and the signature zip (the stance signatures). B1 follows Z1 unchanged, except that a caught or countered zipper then starts a brawl.
+
+### 7.10 Review after B1c (2026-10-05)
+
+This section was written before the brawl existed. The brawl is in (B1, B1b, B1c), the rulings it waited for are made, and the pieces it asked others for are built. Where this subsection and 7.1 to 7.9 disagree, this one holds. Nothing of the zip is built yet.
+
+**What is ruled now** (`docs/design/melee-press-feel.md` section 2c):
+
+| Point | Ruling | Data |
+| :--- | :--- | :--- |
+| **The stick** | Read in 16 directions, 22.5 degrees apart. Under the layout's dead zone it is no stick | `zip.exitSteps` 16 |
+| **Toward and away** | Within 45 degrees of straight toward the rival, and within 45 degrees of straight away. This replaces the two tolerances 7.3 asked for | `zip.towardDeg` 45, `zip.awayDeg` 45 |
+| **A shot on the way out** | A drop and nothing more. The shot does its own damage. He falls where he was hit and is out of control for 24 ticks, and he can tech out of it. No landing damage, no wear, not a launch, not decisive | `zip.knockdownTicks` 24 |
+| **Caught or countered** | A brawl starts on the tick of the blow that caught him, with the defender as its starter and no planned exchange between. A tech counter leaves him staggered in it. A heavy counter knocks him back, so there is no brawl | |
+| **The far-side exit** | It goes over or round the rival, with the rival in view. He is never simply behind the rival on the tick the strike lands | |
+| **Travel** | Each way takes at least max(4, the distance in bh over 3, rounded up) ticks, and the body is drawn on every one (Legal RL-076) | |
+
+**What is built for it, and where:**
+
+| From | Piece | Use |
+| :--- | :--- | :--- |
+| **Simulation** (`docs/architecture/zip-core.md`, 3bd86be) | `Rush.arc`: how far the path bows off the straight line at its middle, signed by the direction of travel. `SimFighter.rushAt(S, f, u)` and `rushU(S, f)` | The way out. A far-side exit bows over the rival. `rushAt` samples the path for the obstacle rule |
+| | `SimFighter.drop(S, f, ticks, vx, vy)` and `dropEnd(S, f, how)`; the state `dropped`; events `drop_start`, `drop_land`, `drop_end` | The knock-down by a shot on the way out |
+| **World** (`docs/world/point-clear.md`, 873d270) | `WorldStructures.blockedAt(S, x, y, z, margin)` | The exit point's obstacle rule (24 probes at most), and the samples along the way out |
+| **Controls** | Intent version 4: the mask's LT bit, `contextHeld`, `sigHeld`, the latched stick | As 7.1 |
+| **This director** (B1, B1c) | The brawl; a stagger in place; a blow that can't be blocked or dodged (`sure`) | Caught and countered start a brawl. The tech counter's stagger is the brawl's own |
+
+**The contract with Animation** (`docs/animation/zip.md` sections 9 and 12). The read is the truth and the cues are edges. This replaces the cue table in 7.4.
+
+- **`DirZip.read(S, f)`** is empty when `f` isn't zipping. Otherwise it gives: `reading` (speed, tech, heavy), `btn` (x, y), `phase` (tell, in, reach, out, settle), `n` (the live ticks since the phase began) and `len`; the plan `tell`, `in`, `hits`, `hd`, `out`, `lift`; `blow`; `via` (back or run), `pass` (over, round or empty), `entry_in`, `entry_out`; `dist_bh`; and `exit` (home, far, point, away; empty until the blow lands) with `x`, `y` from then.
+- `hits` is 1 in Z1 and `hd` is the ticks in reach. `settle` exists only for the zip away's 8 ticks.
+- `pass` is `over` when the way out bows over the rival, which is a real bow in the sim. It is `round` when he passes the rival at his height: the sim's path is straight there and the depth of the pass is the body's.
+- **`zip_light`, `zip_heavy`:** the tell starts. `amount` the tell's ticks, `n` the way in, `dur` the whole zip with the default exit.
+- **`zip_out`:** on the tick the blow lands, which is 6 or 10 ticks before the out begins. `text` the exit kind, `x` and `y` the exit point, `n` the out's ticks.
+- **`zip_end`:** on every zip, because it is Camera's return marker. `text` is `done` for a zip that reached its exit. The early ends are `stopped`, `outrun`, `countered`, `caught`, `shot` (a shot stopped a zip strike on the way in) and `down` (the drop on the way out). It is sent on the damage event's tick or before it.
+- The out begins only after the ticks in reach that follow the blow, so no strike tick falls under the way out (Legal).
+
+**What changes in 7.1 to 7.9:**
+- 7.1 and 7.3: "an exchange starts with the defender attacking" is now "a brawl starts with the defender as its starter".
+- 7.2: the way out is a point rush with `Rush.arc` where it has to clear the rival or the ground. The straight point rush stays for the exit back to his start.
+- 7.3: the knock-down is `SimFighter.drop` for `zip.knockdownTicks`. It is not a launch.
+- 7.6: the zip's integers go after the brawl's, which now end at `DirBrawl.END` (37 a fighter).
+- 7.7: the kept bands are the ones in force after section 9f: the masher 35 to 50%, the mixing presser's brawls, bolt-only 20 to 40%, the mixed blaster 30 to 50%, the medians 360 to 480 s. New for the zip: the AI's share of fight time in a brawl at 30% or more.
+- 7.8: Simulation's, World's and Animation's rows are answered above. Still open: Tools' schema for the `zip` block and the AI's four keys; QA's zipper, counter and puncher scripts; VFX's streak and ring; Camera's use of `zip_end`.
+- 7.9: the order stands. Z1 is the zip strike and the zip heavy; Z2 the zip away, which is also the AI's way out of a brawl it is losing (the last brawl slice).

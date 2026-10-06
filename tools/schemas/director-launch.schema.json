@@ -352,11 +352,12 @@
       "properties": {
         "weight": {
           "type": "object",
-          "description": "What a decisive win is worth toward opening a fighter on the brink, by its kind (launch, clash, guard_break, interrupt, knockback, beam, beam_clash, blast, barrage: default); blurPlain for a plain blur's own ender, barragePlain for a barrage's ender when any of its bolts was spammed. A kind name not in that list is a warning (launch-setup).",
+          "description": "What a decisive win is worth toward opening a fighter on the brink, by its kind (launch, clash, guard_break, interrupt, knockback, beam, beam_clash, blast, barrage: default); riposte for a riposte after a perfect block (melee-press-feel.md section 9f); blurPlain for a plain blur's own ender, barragePlain for a barrage's ender when any of its bolts was spammed. A kind name not in that list is a warning (launch-setup).",
           "required": [
             "default",
             "blurPlain",
-            "barragePlain"
+            "barragePlain",
+            "riposte"
           ],
           "propertyNames": {
             "pattern": "^(_.*|[a-z][A-Za-z0-9_]*)$"

@@ -1458,7 +1458,11 @@
         "heavy",
         "hitstop",
         "shotHeavyMul",
-        "shooter"
+        "shooter",
+        "perfectBlock",
+        "riposteTicks",
+        "riposteReelTicks",
+        "reversal"
       ],
       "properties": {
         "enabled": {
@@ -1821,6 +1825,58 @@
             }
           },
           "description": "Who the AI treats as a shooter in a brawl (Game Design section 9d): fired in the last firedTicks and landed no melee blow in the last noMeleeTicks.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "perfectBlock": {
+          "type": "object",
+          "required": [
+            "staggerTicks"
+          ],
+          "properties": {
+            "staggerTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Ticks the attacker staggers in place after a perfect block in a brawl."
+            }
+          },
+          "description": "A perfect block inside a brawl (melee-press-feel.md section 9f); not the top-level perfectBlock.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "riposteTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The window, in ticks after a perfect block, in which the defender's next attack cannot be blocked or dodged."
+        },
+        "riposteReelTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The reel, in ticks, a light riposte gives."
+        },
+        "reversal": {
+          "type": "object",
+          "required": [
+            "contactTicks",
+            "staggerTicks"
+          ],
+          "properties": {
+            "contactTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Ticks from the press to the reversal heavy's contact."
+            },
+            "staggerTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Ticks the attacker staggers in place after a reversal."
+            }
+          },
+          "description": "A reversal inside a brawl (melee-press-feel.md section 9f).",
           "additionalProperties": false,
           "patternProperties": {
             "^_": true

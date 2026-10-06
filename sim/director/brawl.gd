@@ -64,7 +64,10 @@ const TRADE_T0: int = BASE + 30 # on the exchange's attacker, for both: S.tick t
 const TRADE_WIN: int = BASE + 31 # ... and whose next landed blow closes a trade that reached its limit: his slot plus 1; 0 none
 const LAST_CLOSER: int = BASE + 32 # on the exchange's attacker, for both: who made the last close in this brawl, 1 the attacker, 2 the other; 0 nobody yet
 const SAFE_UNTIL: int = BASE + 33 # S.tick until which he cannot be closed on again (closeGuardTicks after he recovers from a close); -1 while that close's stagger lasts
-const END: int = BASE + 34
+const RIP_UNTIL: int = BASE + 34 # S.tick until which his next attack press is the riposte of his perfect block (section 9f); 0 none
+const RIP_KIND: int = BASE + 35  # ... 1: the blow he turned was a light; 2: a heavy or an ender, so a heavy riposte separates them
+const AI_RIP: int = BASE + 36    # the AI: 1 while it has its riposte to throw
+const END: int = BASE + 37
 const LIGHT: int = 0
 const FLURRY: int = 1
 const HEAVY: int = 2
@@ -265,6 +268,85 @@ static func revDue(S: SimState, f) -> bool:
 	return true
 
 
+## A perfect block inside the brawl (DirInterrupt.perfectBlock; section 9f). a's blow is turned: his string is closed,
+## his run is cleared and he staggers in place. d has the riposte: his next attack pressed within riposteTicks.
+## launch: the turned blow was a heavy or an ender, so a heavy riposte separates them. The brawl goes on.
+static func perfectBlocked(S: SimState, ex, a, d, o: Dictionary, launch: bool) -> void:
+	var c: Dictionary = cfg()
+	var n: int = int(c.perfectBlock.staggerTicks)
+	o["turned"] = true
+	a.stunTicks = maxi(a.stunTicks, n)
+	_drop(S, ex, a)
+	_tradeReset(ex)
+	_s(d, RIP_UNTIL, S.tick + int(c.riposteTicks))
+	_s(d, RIP_KIND, 2 if launch else 1)
+	_s(ex.A, LAST_AT, S.tick)   # the idle clock starts again
+	_s(ex.D, LAST_AT, S.tick)
+	var st = _ev(S, a, "stagger", "perfect_block")
+	st.target = float(S.fighters.find(d))
+	st.n = n
+	if d.ai != null and S.rng.next() < float(DirAI.lv().riposte):
+		_s(d, AI_RIP, 1)
+
+
+## A reversal inside the brawl (DirInterrupt.reversal; section 9f). att's string is closed, his run is cleared and he
+## staggers in place. f's heavy lands for certain reversal.contactTicks after the press, as a brawl heavy, in place:
+## it doesn't knock back and it doesn't launch. The brawl goes on.
+static func reversed(S: SimState, ex, f, att) -> void:
+	var c: Dictionary = cfg()
+	var rv: Dictionary = c.reversal
+	var n: int = int(rv.staggerTicks)
+	var lead: int = int(rv.contactTicks)
+	att.stunTicks = maxi(att.stunTicks, n)
+	_drop(S, ex, att)
+	_drop(S, ex, f)
+	_tradeReset(ex)
+	var st = _ev(S, att, "stagger", "reversal")
+	st.target = float(S.fighters.find(f))
+	st.n = n
+	var role: String = "A" if f == ex.A else "D"
+	DirInterrupt.si(f, DirInterrupt.PHRASE_P, SimAct.HEAVY)
+	_s(f, STR_ON, 1)
+	_s(f, STR_K, 1)
+	var args := {"a": role, "d": "D" if role == "A" else "A", "dmg": float(c.heavy.damage) * float(c.damageMul) * float(c.heavyMul),
+		"o": {"class": "heavy", "stop": float(int(c.hitstop.heavy)) / DirData.TICKS_PER_SEC, "big": true, "kb": float(c.recoil), "ignoreStance": true, "noParry": true, "weighed": true},
+		"brawl": true, "bk": HEAVY, "style": "heavy", "grade": "none", "k": 1, "n": 1, "closing": false, "charge": 0.0, "hand": "r", "ender": false,
+		"sure": true, "reversal": true}
+	var piece: String = _piece(S, f, SimAct.HEAVY, false, false)
+	if piece != "":
+		args["piece"] = piece
+	DirExchange.schedule(ex, ex.t + (float(lead + (0 if _inTick else 1)) - 0.25) / DirData.TICKS_PER_SEC, "strike", args)
+	_s(f, LINE, 1)
+	_s(f, KIND, HEAVY)
+	_s(f, CONTACT, _now(S) + lead)
+	_s(f, HOLD_AT, 0)
+	_s(f, FREE_AT, S.tick + (1 << 20))
+	_s(f, LAND_AT, S.tick)
+	_s(f, BLOWS, _g(f, BLOWS) + 1)
+	_s(ex.A, LAST_AT, S.tick)   # the idle clock starts again
+	_s(ex.D, LAST_AT, S.tick)
+	if f.ai != null:
+		_s(f, AI_GUARD, 0)
+		_s(f, AI_LEFT, 0)
+		_s(f, AI_CLOSE, 0)
+		_s(f, AI_RIP, 0)
+		_s(f, AI_NEXT, S.tick + lead)
+	var e = _ev(S, f, "blow", KINDS[HEAVY])
+	e.target = float(S.fighters.find(att))
+	e.n = S.tick + lead
+	e.amount = float(S.tick)
+	e.dur = float(lead)
+
+
+## True when f's rival has a blow on its way that f can't block or dodge: a riposte, or a reversal's heavy.
+static func sureAgainst(ex, f) -> bool:
+	var role: String = "D" if f == ex.A else "A"
+	for b in ex.beats:
+		if not b.done and b.op == "strike" and b.args != null and b.args.get("sure", false) and String(b.args.a) == role:
+			return true
+	return false
+
+
 ## Which of the exchange's interrupts a brawl allows (DirData.allows).
 static func allows(name: String) -> bool:
 	return (cfg().get("interrupts", []) as Array).has(name)
@@ -384,6 +466,13 @@ static func _throw(S: SimState, f, weight: int, p: int, paid: bool, arrived: boo
 		else:
 			f.ki -= float(c.heavy.ki)
 	var kind: int = HEAVY if weight == SimAct.HEAVY else (FLURRY if _g(f, TAP_GAP) > 0 else LIGHT)
+	# The riposte (section 9f): his next attack pressed within riposteTicks of his perfect block. It can't be blocked or
+	# dodged. A light is worth a skill strike; a heavy is a brawl heavy, and against a turned heavy or ender it separates.
+	var rip: int = _g(f, RIP_KIND) if (_g(f, RIP_UNTIL) > 0 and p <= _g(f, RIP_UNTIL)) else 0
+	_s(f, RIP_UNTIL, 0)
+	_s(f, RIP_KIND, 0)
+	if rip > 0 and kind == FLURRY:
+		kind = LIGHT
 	# A new string of his: an exchange number of its own, for the keyed draws and the brink chapter's "a later exchange".
 	if _g(f, STR_ON) == 0:
 		_s(f, STR_ON, 1)
@@ -415,6 +504,11 @@ static func _throw(S: SimState, f, weight: int, p: int, paid: bool, arrived: boo
 	var k: int = _g(f, STR_K) + 1   # its place among the blows of his string
 	_s(f, STR_K, k)
 	var ender: bool = kind == HEAVY and _g(f, STRING_N) >= int(c.enderAfter)
+	if rip > 0:
+		if kind == HEAVY:
+			ender = rip == 2
+		else:
+			dmg = float(c.light.damage) * float(c.damageMul) * float(c.skillMul)
 	var o2 := {"class": "heavy" if kind == HEAVY else "blow", "stop": float(stop) / DirData.TICKS_PER_SEC, "big": kind == HEAVY, "kb": float(c.recoil)}
 	# The AI weighs a perfect block against a light at most once in aiPerfectEveryTicks (a fresh guard press cannot be
 	# mashed), and against every heavy.
@@ -426,6 +520,15 @@ static func _throw(S: SimState, f, weight: int, p: int, paid: bool, arrived: boo
 	var args := {"a": role, "d": "D" if role == "A" else "A", "dmg": dmg, "o": o2, "brawl": true, "bk": kind,
 		"style": "heavy" if kind == HEAVY else "speed", "grade": "none", "k": k, "n": k, "closing": kind != HEAVY and _closes(S, ex, f),
 		"charge": 0.0, "hand": "r" if (k % 2) == 1 else "l", "ender": ender}
+	if rip > 0:
+		args["riposte"] = true
+		args["sure"] = true
+		o2["ignoreStance"] = true
+		o2["noParry"] = true
+		o2["weighed"] = true
+		var rp = _ev(S, f, "riposte", "heavy" if kind == HEAVY else "light")
+		rp.target = float(S.fighters.find(o))
+		rp.n = S.tick + lead
 	var piece: String = _piece(S, f, weight, ((pp >> 2) & 3) == 2, ender)
 	if piece != "":
 		args["piece"] = piece
@@ -617,16 +720,23 @@ static func contact(S: SimState, ex, b) -> void:
 		else:
 			ex.sD = 0.0
 	var landed0: int = DirInterrupt.gi(f, DirInterrupt.LANDED)
+	var was: bool = _inTick
+	_inTick = true   # the exchange's clock has stepped this tick: a blow scheduled from inside this beat (a reversal's heavy) counts from here
 	DirMelee.strike(S, ex, f, o, float(a.dmg), a.o)
+	_inTick = was
 	f.ambush = false   # an ambush is its first blow
 	if S.dirS.ex != ex or ex.cancel or ex.branch != "" or S.game.ko != null:
 		return   # a perfect block took the exchange over
+	if bool(a.o.get("turned", false)):
+		return   # a perfect block turned it (section 9f): he staggers in place and the brawl goes on
 	if _setPiece(ex):
 		over(S, ex, "break")   # the blow broke a limb: the break launch plays in this exchange
 		return
 	if DirInterrupt.gi(f, DirInterrupt.LANDED) == landed0:
 		# Blocked: it chips, and no run changes. A heavy on a guard staggers the blocker in place (the set guard and its
 		# 40 ticks down are B3).
+		if f.stunTicks > 0 and sureAgainst(ex, f):
+			return   # he reversed it (section 9f): the attacker staggers in place, and the guard is not broken
 		if kind == HEAVY:
 			o.stunTicks = maxi(o.stunTicks, int(c.heavy.staggerTicks))
 			_drop(S, ex, o)
@@ -645,6 +755,14 @@ static func contact(S: SimState, ex, b) -> void:
 	# A light or a flurry blow. The run (melee-press-feel.md section 3): his goes up one and the rival's comes down by
 	# replyTakes, never below 0. At a run of runToClose, or when a trade that reached its limit broke his way, this blow
 	# is the close. Otherwise the rival reels, and his next blow waits for the reel's end.
+	if bool(a.get("riposte", false)):
+		# The riposte's light: a skill strike's reel, and on the brink it counts as a close does. The brawl goes on.
+		_s(f, LL_AT, S.tick)
+		_reel(S, o, int(c.riposteReelTicks))
+		DirExchange.decisive(S, ex, f, o, "knockback", "riposte")
+		if _setPiece(ex):
+			over(S, ex, "finisher")
+		return
 	var closing: bool = _closes(S, ex, f)
 	_s(f, LL_AT, S.tick)
 	if not closing:
@@ -694,6 +812,11 @@ static func _heavyLanded(S: SimState, ex, f, o, a) -> void:
 	var st = _ev(S, o, "stagger", "heavy")
 	st.target = float(S.fighters.find(f))
 	st.n = int(c.heavy.staggerTicks)
+	if bool(a.get("sure", false)):
+		# The reversal's heavy, or a riposte's heavy on a turned light: on the brink it counts as a close does.
+		DirExchange.decisive(S, ex, f, o, "knockback", "riposte")
+		if _setPiece(ex):
+			over(S, ex, "finisher")
 
 
 ## f reels for `ticks`: his next blow waits for the reel's end (a press in it is held). A blow already on its way
@@ -741,7 +864,7 @@ static func tick(S: SimState, ex) -> void:
 		if _g(f, SAFE_UNTIL) < 0 and f.stunTicks <= 0:
 			_s(f, SAFE_UNTIL, S.tick + int(c.flurry.closeGuardTicks))   # he has recovered from a close: he cannot be closed on again for this long
 		# A boost with the stick away leaves, at the dodge-cancel's price and by its rules (a dodge tap is DirInterrupt's).
-		if ex.t > SimConst.DT * 1.5 and f.input.sprint and f.stunTicks <= 0 and f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, o.x)) < -SimAct.awayDead and DirInterrupt.dodgeCancel(S, ex, f):
+		if ex.t > SimConst.DT * 1.5 and f.input.sprint and f.stunTicks <= 0 and not sureAgainst(ex, f) and f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, o.x)) < -SimAct.awayDead and DirInterrupt.dodgeCancel(S, ex, f):
 			_inTick = false
 			return
 		# A heavy still held as its wind-up ends waits for the release; it is let go, or lets go at heldMaxTicks.
@@ -837,6 +960,24 @@ static func aiInput(S: SimState, f) -> void:
 		return
 	if _now(S) < _g(f, AI_HOLD):
 		i.heavyHeld = true
+	# Its riposte (section 9f): after its perfect block, its next press inside the window. Against a turned heavy or
+	# ender a heavy riposte is an ender, so it takes the ender's share; otherwise it is a light, and the brawl goes on.
+	if _g(f, AI_RIP) == 1:
+		if _g(f, RIP_UNTIL) == 0 or S.tick > _g(f, RIP_UNTIL):
+			_s(f, AI_RIP, 0)
+		elif _free(S, f):
+			_s(f, AI_RIP, 0)
+			_s(f, AI_GUARD, 0)
+			_s(f, AI_LEFT, 0)
+			_s(f, AI_CLOSE, 0)
+			if _g(f, RIP_KIND) == 2 and S.rng.next() < float(bl.get("enderShare", 0.5)):
+				_aiHeavy(S, f, lv, false)
+			else:
+				i.light = true
+				_s(f, AI_NEXT, S.tick + int(bl.get("tapGap", 10)))
+			return
+		else:
+			return   # its line is busy: the riposte waits
 	# Its answer to being closed on (section 9d, ruling 4): a heavy as its stagger ends, at its level's heavyAfterClose.
 	# The closer's blows on it while it staggered added nothing to his run, so his fresh run has to race the wind-up.
 	if _g(f, AI_AFTER) == 1:
@@ -895,7 +1036,9 @@ static func aiInput(S: SimState, f) -> void:
 		i.sig = true
 		_s(f, AI_NEXT, S.tick + gap)
 		return
-	if o.stance == 1.0 and S.rng.next() < float(lv.get("breakGuard", 0.0)):
+	# A heavy thrown after enderAfter landed blows is the ender, whatever it was thrown for: so the heavy at a guard takes
+	# the ender's share as well (section 9f).
+	if o.stance == 1.0 and S.rng.next() < float(lv.get("breakGuard", 0.0)) and (_g(f, STRING_N) < int(c.enderAfter) or S.rng.next() < float(vs.get("enderShare", bl.get("enderShare", 0.5)))):
 		_aiHeavy(S, f, lv, true)
 		return
 	if left == 0 and S.rng.next() < float(vs.get("guardShare", bl.get("guardShare", 0.3))):

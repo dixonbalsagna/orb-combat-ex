@@ -62394,6 +62394,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -62480,6 +62489,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -62571,6 +62589,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -62662,6 +62689,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -62749,6 +62785,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -62839,6 +62884,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -62923,6 +62977,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63013,6 +63076,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63102,6 +63174,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63189,6 +63270,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63276,6 +63366,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63366,6 +63465,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63456,6 +63564,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63546,6 +63663,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63633,6 +63759,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63723,6 +63858,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63813,6 +63957,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63903,6 +64056,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -63993,6 +64155,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64083,6 +64254,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64173,6 +64353,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64263,6 +64452,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64353,6 +64551,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64443,6 +64650,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64530,6 +64746,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64620,6 +64845,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64709,6 +64943,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64800,6 +65043,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64890,6 +65142,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -64980,6 +65241,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65069,6 +65339,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65159,6 +65438,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65249,6 +65537,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65339,6 +65636,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65419,6 +65725,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65510,6 +65825,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65600,6 +65924,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65690,6 +66023,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65780,6 +66122,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65858,6 +66209,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -65939,6 +66299,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66024,6 +66393,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66111,6 +66489,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66197,6 +66584,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66283,6 +66679,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66369,6 +66774,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66455,6 +66869,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66541,6 +66964,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66631,6 +67063,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66718,6 +67159,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66808,6 +67258,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66894,6 +67353,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -66988,6 +67456,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67075,6 +67552,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67162,6 +67648,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67251,6 +67746,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67341,6 +67845,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67431,6 +67944,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67521,6 +68043,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67607,6 +68138,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67697,6 +68237,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67787,6 +68336,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67877,6 +68435,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -67963,6 +68530,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68053,6 +68629,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68143,6 +68728,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68232,6 +68826,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68322,6 +68925,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68412,6 +69024,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68502,6 +69123,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68592,6 +69222,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68682,6 +69321,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68769,6 +69417,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68856,6 +69513,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -68945,6 +69611,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69036,6 +69711,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69126,6 +69810,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69216,6 +69909,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69306,6 +70008,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69393,6 +70104,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69483,6 +70203,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69574,6 +70303,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69663,6 +70401,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69752,6 +70499,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69842,6 +70598,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -69932,6 +70697,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70022,6 +70796,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70111,6 +70894,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70201,6 +70993,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70291,6 +71092,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70381,6 +71191,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70467,6 +71286,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70557,6 +71385,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70647,6 +71484,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70737,6 +71583,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70823,6 +71678,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -70912,6 +71776,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71001,6 +71874,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71091,6 +71973,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71178,6 +72069,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71268,6 +72168,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71355,6 +72264,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71445,6 +72363,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71532,6 +72459,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71622,6 +72558,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71712,6 +72657,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71802,6 +72756,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71892,6 +72855,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -71979,6 +72951,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -72069,6 +73050,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -72159,6 +73149,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -72248,6 +73247,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -72338,6 +73346,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -72428,6 +73445,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -72518,6 +73544,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -79374,6 +80409,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -79462,6 +80506,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -79551,6 +80604,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -79641,6 +80703,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -79731,6 +80802,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -79817,6 +80897,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -79907,6 +80996,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -79997,6 +81095,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80087,6 +81194,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80173,6 +81289,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80263,6 +81388,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80353,6 +81487,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80443,6 +81586,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80533,6 +81685,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80620,6 +81781,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80706,6 +81876,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80796,6 +81975,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80886,6 +82074,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -80976,6 +82173,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81066,6 +82272,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81152,6 +82367,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81242,6 +82466,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81332,6 +82565,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81422,6 +82664,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81512,6 +82763,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81595,7 +82855,16 @@
                 "light": 2,
                 "heavy": 5
               },
-              "shotHeavyMul": 2
+              "shotHeavyMul": 2,
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
             }
           }
         }
@@ -81686,6 +82955,15 @@
                 "firedTicks": 90,
                 "noMeleeTicks": 120,
                 "mood": 1
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81777,6 +83055,15 @@
                 "firedTicks": 90,
                 "noMeleeTicks": 120,
                 "_why": "a note"
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81863,6 +83150,15 @@
               "shotHeavyMul": 2,
               "shooter": {
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -81953,6 +83249,15 @@
               "shooter": {
                 "firedTicks": 0,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82043,6 +83348,15 @@
               "shooter": {
                 "firedTicks": -90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82133,6 +83447,15 @@
               "shooter": {
                 "firedTicks": 90.5,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82223,6 +83546,15 @@
               "shooter": {
                 "firedTicks": 1,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82309,6 +83641,15 @@
               "shotHeavyMul": 2,
               "shooter": {
                 "firedTicks": 90
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82399,6 +83740,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 0
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82489,6 +83839,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 1.5
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82579,6 +83938,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": "long"
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82669,6 +84037,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 1
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82757,7 +84134,16 @@
                 "firedTicks": 90,
                 "noMeleeTicks": 120
               },
-              "answerBy": 10
+              "answerBy": 10,
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
             }
           }
         }
@@ -82848,6 +84234,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -82938,6 +84333,15 @@
               "shooter": {
                 "firedTicks": 90,
                 "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
               }
             }
           }
@@ -84823,6 +86227,3021 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "director-interrupts-brawl1c-valid",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-interrupts-brawl1c-perfect-block-required",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/brawl"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-perfect-block-type",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": 20,
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/brawl/perfectBlock"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-perfect-block-unknown-key",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20,
+                "mood": 1
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/brawl/perfectBlock/mood"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-perfect-block-underscore-key-ok",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20,
+                "_why": "a note"
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-interrupts-brawl1c-perfect-block-stagger-required",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {},
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/brawl/perfectBlock"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-perfect-block-stagger-zero",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 0
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/brawl/perfectBlock/staggerTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-perfect-block-stagger-integer",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20.5
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/brawl/perfectBlock/staggerTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-perfect-block-stagger-one-ok",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 1
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-ticks-required",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/brawl"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-ticks-zero",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 0,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/brawl/riposteTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-ticks-integer",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30.5,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/brawl/riposteTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-ticks-type",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": "long",
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/brawl/riposteTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-ticks-one-ok",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 1,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-reel-required",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/brawl"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-reel-negative",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": -1,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/brawl/riposteReelTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-reel-integer",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8.5,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/brawl/riposteReelTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-riposte-reel-zero-ok",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 0,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-required",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/brawl"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-type",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": 10
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/brawl/reversal"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-unknown-key",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20,
+                "mood": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/brawl/reversal/mood"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-contact-required",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/brawl/reversal"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-stagger-required",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/brawl/reversal"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-contact-zero",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 0,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/brawl/reversal/contactTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-contact-integer",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10.5,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/brawl/reversal/contactTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-stagger-zero",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 0
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/brawl/reversal/staggerTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-stagger-integer",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/brawl/reversal/staggerTicks"
+      }
+    },
+    {
+      "id": "director-interrupts-brawl1c-reversal-one-one-ok",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "staggerTicks": 20
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 1,
+                "staggerTicks": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-interrupts-brawl1c-top-level-perfect-block-is-another-record",
+      "schema": "director-interrupts.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/interrupts.json",
+          "set": {
+            "/brawl": {
+              "enabled": true,
+              "interrupts": [
+                "hit",
+                "guard"
+              ],
+              "breakBh": 6,
+              "pullBhPerSec": 0.5,
+              "stepInTicks": 6,
+              "idleTicks": 90,
+              "heldPressTicks": 12,
+              "stringLapseTicks": 60,
+              "enderAfter": 5,
+              "recoil": 0.2,
+              "damageMul": 1,
+              "aiPerfectEveryTicks": 120,
+              "aiReversalEveryTicks": 180,
+              "tradeTicks": 8,
+              "heldMul": 1.2,
+              "skillMul": 1.2,
+              "setMul": 0.8,
+              "heavyMul": 1.5,
+              "light": {
+                "damage": 6,
+                "contactTicks": 6,
+                "blowTicks": 12,
+                "recover": 10
+              },
+              "flurry": {
+                "minGap": 4,
+                "maxGap": 20,
+                "mul": [
+                  [
+                    6,
+                    0.6
+                  ],
+                  [
+                    12,
+                    1.2
+                  ]
+                ],
+                "reelTicks": 10,
+                "staggerTicks": 8,
+                "runToClose": 4,
+                "replyTakes": 1,
+                "runLapseTicks": 24,
+                "tradeMaxTicks": 90,
+                "staggeredAddsRun": false,
+                "levelWithin": 1,
+                "momentum": 0.9,
+                "closeGuardTicks": 90
+              },
+              "heavy": {
+                "damage": 30,
+                "ki": 8,
+                "windupTicks": 20,
+                "landTicks": 6,
+                "recover": 20,
+                "recoverWhiff": 30,
+                "heldFullTicks": 40,
+                "heldMaxTicks": 60,
+                "heldLandTicks": 8,
+                "staggerTicks": 20,
+                "force": 1
+              },
+              "hitstop": {
+                "light": 2,
+                "heavy": 5
+              },
+              "shotHeavyMul": 2,
+              "shooter": {
+                "firedTicks": 90,
+                "noMeleeTicks": 120
+              },
+              "perfectBlock": {
+                "ki": 5
+              },
+              "riposteTicks": 30,
+              "riposteReelTicks": 8,
+              "reversal": {
+                "contactTicks": 10,
+                "staggerTicks": 20
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/brawl/perfectBlock/ki"
+      }
+    },
+    {
+      "id": "director-launch-setup-riposte-valid",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5,
+              "riposte": 0.34
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-launch-setup-riposte-required",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/setup/weight"
+      }
+    },
+    {
+      "id": "director-launch-setup-riposte-negative",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5,
+              "riposte": -0.1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/setup/weight/riposte"
+      }
+    },
+    {
+      "id": "director-launch-setup-riposte-above-one",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5,
+              "riposte": 1.1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/setup/weight/riposte"
+      }
+    },
+    {
+      "id": "director-launch-setup-riposte-type",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5,
+              "riposte": "a third"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/setup/weight/riposte"
+      }
+    },
+    {
+      "id": "director-launch-setup-riposte-zero-ok",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5,
+              "riposte": 0
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-launch-setup-riposte-one-ok",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5,
+              "riposte": 1
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-launch-setup-riposte-is-a-known-kind",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5,
+              "riposte": 0.5
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-launch-setup-riposte-other-unknown-kind-still-warns",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/setup/weight": {
+              "default": 1,
+              "blurPlain": 0.34,
+              "barragePlain": 0.5,
+              "riposte": 0.34,
+              "sneeze": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:launch-setup",
+        "pointer": "/setup/weight/sneeze"
+      }
     }
   ],
   "text": [
