@@ -106,6 +106,18 @@
             ],
             "description": "A super-heavy piece's drive: what the whole body does behind the limb (Combat's strike.heavy.drive, by id: step_through, turn, unwind, heave, fall, full_turn)."
           },
+          "hold_t": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 12,
+            "description": "Ticks the contact key is held (a heavy lands, then lets go sooner: Legal's nudge)."
+          },
+          "ci_end": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 30,
+            "description": "Ticks after the contact by which the solve releases the limb to the follow key."
+          },
           "limb2": {
             "enum": [
               "hand_r",

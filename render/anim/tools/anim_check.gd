@@ -598,8 +598,9 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 	var key: String = String(AnimData.ensure_fighter(String(f0.id)))
 	AnimData.ensure_fighter(String(f1.id))
 	var su_pre: String = "pu.su_" if who == "protagonist" else "ru.su_"   # the super-heavy tier is parked (no fighter's wave list names it): every piece of it is findable by name
+	var rc_pre: String = "pk." if who == "protagonist" else "rk."   # the energy-in-reach pieces (C2t) are parked too
 	for kid in AnimData.keysets:
-		if String(kid).begins_with(su_pre):
+		if String(kid).begins_with(su_pre) or String(kid).begins_with(rc_pre):
 			AnimData.pair_lists[key].by_name[String(kid).substr(3)] = String(kid)
 	for pre in ["pm.", "rm."]:
 		for nm2 in ["palm_rise", "back_chop", "fist_chop", "palm_heave", "gut_rise", "fist_sweep", "arm_chop", "plate_drop"]:
@@ -694,11 +695,14 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 			hi_max = maxi(hi_max, hi_run)
 		else:
 			hi_run = 0
-		if k >= int(contacts[0]) - 34 and k <= int(contacts[0]) and (k - int(contacts[0])) % 4 == 0:
+		if (k >= int(contacts[0]) - 34 and k <= int(contacts[0]) and (k - int(contacts[0])) % 4 == 0) or (k > int(contacts[0]) and k <= int(contacts[0]) + 14 and (k - int(contacts[0])) % 2 == 0):
 			var pv: Vector3 = af0.socket("pelvis")
 			var tr := {"dt": k - int(contacts[0]), "ph": String(af0.press.get("phase", "")), "ks": af0._part, "px": af0.socket("pelvis").x, "tw": absf(af0.socket("upper_arm_r").x - af0.socket("upper_arm_l").x)}
-			for sn in ["hand_r", "foot_r", "foot_l"]:
+			for sn in ["hand_r", "hand_l", "foot_r", "foot_l"]:
 				tr[sn] = (af0.socket(sn) - pv).snapped(Vector3(0.1, 0.1, 0.1))
+			tr["abs_hand_r"] = af0.socket("hand_r").y
+			tr["abs_hand_l"] = af0.socket("hand_l").y
+			tr["pv_y"] = pv.y
 			if not res.has("trace"):
 				res["trace"] = []
 			res["trace"].append(tr)
@@ -1058,20 +1062,37 @@ func _test_windups() -> void:
 	var wu: Dictionary = AnimHeldLint.windups()
 	var worst: String = ""
 	var judged: int = 0
+	var fol_max: float = 0.0
 	for who in ["protagonist", "antihero"]:
 		var pre: String = "pr." if who == "protagonist" else "w1."
 		var spre: String = "pu." if who == "protagonist" else "ru."
+		var epre: String = "pk." if who == "protagonist" else "rk."
 		var names: Array = []
 		for cid in wu:
 			var sid: String = String(wu[cid].strike)
-			if sid.begins_with(pre) or sid.begins_with(spre):
+			if sid.begins_with(pre) or sid.begins_with(spre) or sid.begins_with(epre):
 				var held_only: bool = ["double_hammer", "double_palm", "cross_arm_ram", "drop_kick", "spinning_elbow", "spinning_back_kick", "spinning_heel"].has(sid.substr(3))   # Combat's w1 to w3: held-Y only, judged on the long wind-up
 				names.append([sid.substr(3), bool(wu[cid].super) or held_only])
 		names.sort()
 		for nm in names:
 			var sup: bool = bool(nm[1])
-			var r: Dictionary = _tier_scene(S, who, "super" if sup else "medium", [String(nm[0])], [64], {"windup": 28 if sup else 12}, "heavy")
+			var r: Dictionary = _tier_scene(S, who, "super" if sup else "medium", [String(nm[0])], [64], {"windup": 28 if sup else 12, "hand": "r"}, "heavy")
 			judged += 1
+			if bool(nm[1]) and String(nm[0]).begins_with("su_"):
+				# the launcher (C2t): the same heavy on a 14-tick wind-up with the tell cut to its last third; the same rules hold
+				var rl: Dictionary = _tier_scene(S, who, "super", [String(nm[0])], [64], {"windup": 14, "hand": "r"}, "heavy")
+				judged += 1
+				if int(rl.hi_early) > 0 or int(rl.nan) > 0 or int(rl.screen) > 0 or int(rl.frames) != 1 or float(rl.err) >= 0.25:
+					worst += "%s %s on 14 ticks (%d ticks above 80 early, %d NaN, %d on screen, %d of 1 contacts, error %.3f); " % [who, String(nm[0]), int(rl.hi_early), int(rl.nan), int(rl.screen), int(rl.frames), float(rl.err)]
+			if bool(nm[1]) and String(nm[0]).begins_with("su_"):
+				# Legal (super-heavy screen): a hand held up after the blow is a held raise (b09, h05; L1 lowers at once): by 6 ticks after the contact at or below 76, and never above 80 in the 14 after
+				for tr in r.get("trace", []):
+					if int(tr.dt) >= 6:
+						for hk in ["abs_hand_r", "abs_hand_l"]:
+							var hy: float = float(tr[hk])
+							fol_max = maxf(fol_max, hy)
+							if hy > (76.0 if int(tr.dt) == 6 else 80.0):
+								worst += "%s %s: a hand is at %.0f %d ticks after the contact (76 or lower by 6, 80 after); " % [who, String(nm[0]), hy, int(tr.dt)]
 			if int(r.hi_early) > 0 or int(r.nan) > 0 or int(r.screen) > 0 or int(r.frames) != 1 or float(r.err) >= 0.25:
 				worst += "%s %s (%d ticks above 80 before the last 6, %d NaN, %d on screen, %d of 1 contacts, error %.3f); " % [who, String(nm[0]), int(r.hi_early), int(r.nan), int(r.screen), int(r.frames), float(r.err)]
 	_expect(worst == "", "windups (h05): %s" % worst)
@@ -1079,7 +1100,7 @@ func _test_windups() -> void:
 	RenderAnim.ground_feet = ground_was
 	RenderAnim.press_styles = styles_was
 	S.dirS.ex = null
-	print("windups: %d medium and heavy wind-ups judged on the real solve: no limb above 80 before the last 6 ticks, every contact solved" % judged)
+	print("windups: %d medium and heavy wind-ups judged on the real solve: no limb above 80 before the last 6 ticks, every contact solved; after a super-heavy's blow no hand is above %.0f from 6 ticks on" % [judged, fol_max])
 
 
 ## The super-heavy tier's drives (docs/combat/pending/movegen/three-strengths.md section 3, Legal D1 to D5), read off the three key poses of every piece: where the body is at the tell and where it ends, so a flurry's next

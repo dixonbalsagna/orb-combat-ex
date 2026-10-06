@@ -107323,6 +107323,233 @@
         "rule": "const",
         "pointer": "/schema"
       }
+    },
+    {
+      "id": "anim-wave-keysets-release-both-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/hold_t": 1,
+            "/keysets/pu.su_drive/ci_end": 6
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-release-hold-t-zero-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/hold_t": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-release-hold-t-twelve-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/hold_t": 12
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-release-hold-t-negative",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/hold_t": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keysets/pu.su_drive/hold_t"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-release-hold-t-above-twelve",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/hold_t": 13
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keysets/pu.su_drive/hold_t"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-release-hold-t-integer",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/hold_t": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keysets/pu.su_drive/hold_t"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-release-hold-t-type",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/hold_t": "short"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keysets/pu.su_drive/hold_t"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-release-ci-end-zero-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/ci_end": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-release-ci-end-thirty-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/ci_end": 30
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-release-ci-end-negative",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/ci_end": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keysets/pu.su_drive/ci_end"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-release-ci-end-above-thirty",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/ci_end": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keysets/pu.su_drive/ci_end"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-release-ci-end-integer",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/ci_end": 6.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keysets/pu.su_drive/ci_end"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-release-ci-end-type",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/ci_end": "soon"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keysets/pu.su_drive/ci_end"
+      }
+    },
+    {
+      "id": "anim-wave-keysets-release-with-the-superheavy-keys-ok",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/tell_at": 0.5,
+            "/keysets/pu.su_drive/squash_w": 0,
+            "/keysets/pu.su_drive/drive": "fall",
+            "/keysets/pu.su_drive/hold_t": 1,
+            "/keysets/pu.su_drive/ci_end": 6
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-release-unknown-key-still-refused",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag10.keysets.json",
+          "set": {
+            "/keysets/pu.su_drive/hold_ticks": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/keysets/pu.su_drive/hold_ticks"
+      }
     }
   ],
   "text": [

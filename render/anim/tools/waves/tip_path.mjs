@@ -98,6 +98,19 @@ export const TIP_PATH = {
   su_palm_heave: { tip: 'palm', path: 'rise' },
   su_ball_heave: { tip: 'ball', path: 'rise' },
   su_hammer_arm: { tip: 'heel', path: 'drop' },
+  // energy in reach (C2t): the point-blank bolts and the blast, as blows (Combat's c2t-content.md section 2)
+  'pk.bolt_thrust': { tip: 'palm', path: 'line' },
+  'pk.bolt_flat': { tip: 'palm', path: 'line' },
+  'pk.bolt_flick': { tip: 'palm', path: 'arc_out' },
+  'pk.bolt_sweep': { tip: 'palm', path: 'arc_in' },
+  'pk.blast_chest': { tip: 'palm', path: 'line' },
+  'pk.blast_gut': { tip: 'palm', path: 'line' },
+  'rk.bolt_blade': { tip: 'blade', path: 'line' },
+  'rk.bolt_fist': { tip: 'fist', path: 'line' },
+  'rk.bolt_flick': { tip: 'blade', path: 'arc_out' },
+  'rk.bolt_sweep': { tip: 'blade', path: 'arc_in' },
+  'rk.blast_chest': { tip: 'fist', path: 'line' },
+  'rk.blast_gut': { tip: 'fist', path: 'line' },
 };
 export function tipPath(prefix, name) {
   return TIP_PATH[prefix + '.' + name] || TIP_PATH[name];

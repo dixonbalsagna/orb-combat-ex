@@ -1820,6 +1820,10 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		ksid = RenderAnim.force_keyset
 	var ks: Dictionary = AnimData.keysets[ksid]
 	var mrule: Dictionary = _medium_rule(pstyle, ksid, bargs)   # Combat's rule for a medium on 12 ticks (w4 to w8), {} for any other blow
+	if ks.has("hold_t"):
+		var dh: float = float(ks.hold_t) * DT - H   # a key set's own hold of the contact key (data `hold_t`): the arm does not stay up after the blow (Legal b09, h05, L1)
+		H += dh
+		F += dh
 	# a broken arm does not strike and a broken leg does not kick: the blow uses the other limb (the sim keeps no side)
 	var lb: String = String(ks.get("limb", "hand_r"))
 	if lb.begins_with("hand") and _arm_broken:
@@ -1930,6 +1934,8 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	if dtc >= -Sn and dtc < F + R * 0.4:
 		if dtc < 0.0:
 			cw = smoothstep(0.0, 1.0, (dtc + Sn) / Sn)
+		elif ks.has("ci_end"):
+			cw = 1.0 - smoothstep(H, maxf(H + DT, float(ks.ci_end) * DT), dtc)   # a key set's own release of the contact solve (data `ci_end`, ticks after the contact): the follow key takes the limb
 		elif dtc < H + (F - H) * 0.5:
 			cw = 1.0
 		else:

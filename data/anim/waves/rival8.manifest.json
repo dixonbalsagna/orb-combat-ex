@@ -1,0 +1,222 @@
+{
+ "wave": "rival8",
+ "strikes": [
+  {
+   "id": "rk.bolt_blade",
+   "combat": "strike.bolt_blade",
+   "name": "bolt_blade",
+   "weight": "light",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 98,
+   "band": "mid",
+   "ticks": {
+    "load": 2,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A flat blade hand driven in to the gut with the forearm plate behind it; the shot a thin edge off the flat of the hand at the contact.",
+   "orig": "PROVISIONAL: a flat blade hand driven in to the gut, the forearm plate behind it, the other hand open in guard",
+   "poses": [
+    "rk.bolt_blade.chamber",
+    "rk.bolt_blade.contact",
+    "rk.bolt_blade.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "blade",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rk.bolt_fist",
+   "combat": "strike.bolt_fist",
+   "name": "bolt_fist",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 2,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. The lit fist: a straight punch to the chest, the shot leaving the knuckle edges at the contact.",
+   "orig": "PROVISIONAL: the lit fist: a straight punch to the chest, the other hand open in guard",
+   "poses": [
+    "rk.bolt_fist.chamber",
+    "rk.bolt_fist.contact",
+    "rk.bolt_fist.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rk.bolt_flick",
+   "combat": "strike.bolt_flick",
+   "name": "bolt_flick",
+   "weight": "light",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 2,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut, the shot at the contact.",
+   "orig": "PROVISIONAL: a blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut",
+   "poses": [
+    "rk.bolt_flick.chamber",
+    "rk.bolt_flick.contact",
+    "rk.bolt_flick.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "blade",
+   "path": "arc_out",
+   "flags": []
+  },
+  {
+   "id": "rk.bolt_sweep",
+   "combat": "strike.bolt_sweep",
+   "name": "bolt_sweep",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 2,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A blade sweep: the flat hand swept inward across the chest from the outside, the shot at the contact.",
+   "orig": "PROVISIONAL: a blade sweep: the flat hand swept inward across the chest from the outside",
+   "poses": [
+    "rk.bolt_sweep.chamber",
+    "rk.bolt_sweep.contact",
+    "rk.bolt_sweep.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "blade",
+   "path": "arc_in",
+   "flags": []
+  },
+  {
+   "id": "rk.blast_chest",
+   "combat": "strike.blast_chest",
+   "name": "blast_chest",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 12,
+    "follow": 4,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. The blast: the lit fist driven straight to the chest after a 12-tick gather held at the shoulder, the shot a cone that carries him.",
+   "orig": "PROVISIONAL: the blast: a 12-tick gather with the lit fist held at the shoulder and the other hand open, then driven straight to the chest",
+   "poses": [
+    "rk.blast_chest.chamber",
+    "rk.blast_chest.contact",
+    "rk.blast_chest.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rk.blast_gut",
+   "combat": "strike.blast_gut",
+   "name": "blast_gut",
+   "weight": "heavy",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 98,
+   "band": "mid",
+   "ticks": {
+    "load": 12,
+    "follow": 4,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. The blast on the gut: the lit fist driven low after the same gather, the shot a cone that carries him.",
+   "orig": "PROVISIONAL: the blast on the gut: the same gather, the lit fist driven low as the body drops behind it",
+   "poses": [
+    "rk.blast_gut.chamber",
+    "rk.blast_gut.contact",
+    "rk.blast_gut.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "line",
+   "flags": []
+  }
+ ],
+ "skipped": []
+}

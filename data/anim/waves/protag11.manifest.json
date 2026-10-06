@@ -1,0 +1,240 @@
+{
+ "wave": "protag11",
+ "strikes": [
+  {
+   "id": "pk.bolt_thrust",
+   "combat": "strike.bolt_thrust",
+   "name": "bolt_thrust",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 2,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. A palm thrust: the heel of the palm set on his chest, the shot let go as a short cone at the contact.",
+   "orig": "PROVISIONAL: a palm thrust, the heel of the palm set on the chest, the other hand open in guard",
+   "poses": [
+    "pk.bolt_thrust.chamber",
+    "pk.bolt_thrust.contact",
+    "pk.bolt_thrust.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "pk.bolt_flat",
+   "combat": "strike.bolt_flat",
+   "name": "bolt_flat",
+   "weight": "light",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 98,
+   "band": "mid",
+   "ticks": {
+    "load": 2,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. A flat palm set on his gut, the forearm level, the shot let go at the contact.",
+   "orig": "PROVISIONAL: a flat palm set on the gut, the forearm level, the body a little lower behind it",
+   "poses": [
+    "pk.bolt_flat.chamber",
+    "pk.bolt_flat.contact",
+    "pk.bolt_flat.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "pk.bolt_flick",
+   "combat": "strike.bolt_flick",
+   "name": "bolt_flick",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 2,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. A palm flick: the hand carried in across him and let out in a short outward arc onto the chest, the shot going off at the contact.",
+   "orig": "PROVISIONAL: a palm flick: the hand carried in across the body and let out in a short outward arc to the chest",
+   "poses": [
+    "pk.bolt_flick.chamber",
+    "pk.bolt_flick.contact",
+    "pk.bolt_flick.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "arc_out",
+   "flags": []
+  },
+  {
+   "id": "pk.bolt_sweep",
+   "combat": "strike.bolt_sweep",
+   "name": "bolt_sweep",
+   "weight": "light",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 2,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. A flat palm swept inward across the gut from the outside, the shot going off at the contact.",
+   "orig": "PROVISIONAL: a flat palm swept inward across the gut from the outside",
+   "poses": [
+    "pk.bolt_sweep.chamber",
+    "pk.bolt_sweep.contact",
+    "pk.bolt_sweep.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "arc_in",
+   "flags": []
+  },
+  {
+   "id": "pk.blast_chest",
+   "combat": "strike.blast_chest",
+   "name": "blast_chest",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 12,
+    "follow": 4,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. The blast: the palm set on his chest after a 12-tick gather held at the shoulder, the shot let go as a cone that carries him.",
+   "orig": "PROVISIONAL: the blast: a 12-tick gather with the palm held at the shoulder and the other hand open in guard, then the palm set on the chest",
+   "poses": [
+    "pk.blast_chest.chamber",
+    "pk.blast_chest.contact",
+    "pk.blast_chest.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "pk.blast_gut",
+   "combat": "strike.blast_gut",
+   "name": "blast_gut",
+   "weight": "heavy",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 98,
+   "band": "mid",
+   "ticks": {
+    "load": 12,
+    "follow": 4,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. The blast on the gut: the palm set low after a 12-tick gather held at the shoulder, the shot a cone that carries him.",
+   "orig": "PROVISIONAL: the blast on the gut: the same gather, the palm set low as the body drops behind it",
+   "poses": [
+    "pk.blast_gut.chamber",
+    "pk.blast_gut.contact",
+    "pk.blast_gut.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "line",
+   "flags": []
+  }
+ ],
+ "skipped": []
+}
