@@ -78,6 +78,40 @@ jobs:
       - name: Validate the data
         run: node tools/validate.js
 
+  # Photosensitivity check, half 1 (docs/tools/flash-check.md; Legal's condition for the public web build, WCAG 2.2 criterion 2.3.1): plays the worst cases
+  # (a mash, a beam clash, a signature, the transformation, a building collapse, real AI matches) in normal and in reduced-flashing mode, headless, and recounts
+  # the flash register's log: more than 3 granted flashes in any 60 ticks (1 under reduced flashing) fails. It is a count of the sources that ask the register,
+  # not a luminance measurement and not a clearance; the pixel half runs over captured frames (tools/flash/analyse-frames.js) and is not in CI yet.
+  # The negative control proves the chain can fail: four flashes the register cannot refuse must make the recount fail.
+  flash:
+    name: Flash count (worst cases, flash register)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - name: Flash analysers' self-test
+        run: node tools/flash/selftest.js
+      # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
+      - name: Pixel pipeline self-test (headless Chrome, mock page)
+        run: node tools/flash/pixel-selftest.mjs --require-browser
+      - uses: ./.github/actions/setup-godot
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Play the worst cases
+        run: '"$GODOT" --headless --path . --script res://tools/flash/flash_worst.gd -- --out="${RUNNER_TEMP}/flash"'
+      - name: Recount the register's log
+        run: node tools/flash/check-log.js "${RUNNER_TEMP}/flash"
+      - name: Negative control (the recount must fail on four unrefusable flashes)
+        run: |
+          "$GODOT" --headless --path . --script res://tools/flash/flash_worst.gd -- --only=mash --ticks=300 --negative-control --out="${RUNNER_TEMP}/flash-neg"
+          if node tools/flash/check-log.js "${RUNNER_TEMP}/flash-neg" --allow-missing > "${RUNNER_TEMP}/flash-neg.txt"; then echo "the negative control passed: the check cannot fail"; exit 1; fi
+          grep -q "in the 60 ticks from" "${RUNNER_TEMP}/flash-neg.txt"
+
   # The GDScript port against the JS reference sim's golden vectors, plus the render
   # checks. The sim job above does not set GODOT, so `npm test --prefix sim` skips its
   # godot stage there and the parity check runs once, here. The .godot/ import cache is

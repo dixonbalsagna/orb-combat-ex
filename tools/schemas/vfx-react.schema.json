@@ -39,6 +39,12 @@
           "type": "integer",
           "minimum": 1
         },
+        "drop_ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Optional. How long one dropout lasts, in ticks (VfxReact.DROP_TICKS, 4, until the key is set). One dropout in each period_ticks per fighter, so with the flash limit (docs/vfx/flash-registry.md) the flicker stays under 3 a second across both fighters."
+        },
         "shape_jitter": {
           "type": "number",
           "minimum": 0

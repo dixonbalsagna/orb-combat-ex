@@ -108721,6 +108721,139 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "vfx-react-drop-ticks-valid",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/drop_ticks": 4
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-react-drop-ticks-with-the-period-ok",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/period_ticks": 40,
+            "/flicker/drop_ticks": 4
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-react-drop-ticks-one-ok",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/drop_ticks": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-react-drop-ticks-twenty-ok",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/drop_ticks": 20
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-react-drop-ticks-zero",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/drop_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/flicker/drop_ticks"
+      }
+    },
+    {
+      "id": "vfx-react-drop-ticks-above-twenty",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/drop_ticks": 21
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/flicker/drop_ticks"
+      }
+    },
+    {
+      "id": "vfx-react-drop-ticks-integer",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/drop_ticks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/flicker/drop_ticks"
+      }
+    },
+    {
+      "id": "vfx-react-drop-ticks-type",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/drop_ticks": "four"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/flicker/drop_ticks"
+      }
+    },
+    {
+      "id": "vfx-react-drop-ticks-unknown-neighbour-still-refused",
+      "schema": "vfx-react.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/react.json",
+          "set": {
+            "/flicker/drop_tick": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/flicker/drop_tick"
+      }
     }
   ],
   "text": [

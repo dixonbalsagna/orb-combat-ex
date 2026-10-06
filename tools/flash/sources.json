@@ -1,0 +1,76 @@
+{
+  "_why": "Which flash sources are under the register today, and what each worst case must show to count as played. check-log.js reads it. `reserved` are the sources Rendering's docs/rendering/flash-sources.md names for the register: when one asks, it appears in the logs and is reported as counted; until then it is reported UNCOUNTED. `outside` are sources nothing asks for. A source in a log that is in neither `counted` nor `reserved` is a problem until it is added here.",
+  "counted": [
+    "energy",
+    "block",
+    "shot_hit",
+    "mine",
+    "zip_break",
+    "explosion",
+    "transform"
+  ],
+  "reserved": [
+    "body_hit",
+    "head_flash",
+    "guard_flash",
+    "cue_flare",
+    "beam",
+    "beam_clash"
+  ],
+  "reservedNotes": {
+    "body_hit": "Rendering: the whole body white for 0.12 s on every hit (fighter_view.gd); the largest strobe risk at a mash's hit rate. Counted here by proxy from the sim's hurt time, and by the pixel analyser.",
+    "head_flash": "Rendering: 2 or 3 icon pulses at the head (flash_view.gd); one pulse in reduced motion. Pixels only.",
+    "guard_flash": "Rendering: the guard arc flaring on a perfect block. Pixels only.",
+    "cue_flare": "Rendering: a soft glow at the chest on four of Combat's cue poses. Pixels only.",
+    "beam": "Rendering: a signature beam's white core (beam_view.gd): one bright step up and one down. Pixels only.",
+    "beam_clash": "Rendering: the flare where two beams meet (beam_view.gd). Pixels only."
+  },
+  "scenarios": [
+    {
+      "id": "mash",
+      "minTicks": 1500,
+      "minEvents": {
+        "damage": 20
+      }
+    },
+    {
+      "id": "clash",
+      "minTicks": 1200,
+      "minEvents": {
+        "beam_outcome:CLASH": 1
+      }
+    },
+    {
+      "id": "signature",
+      "minTicks": 1200,
+      "minEvents": {
+        "beam_outcome": 1
+      }
+    },
+    {
+      "id": "transform",
+      "minTicks": 1200,
+      "minEvents": {
+        "transform": 4
+      }
+    },
+    {
+      "id": "collapse",
+      "minTicks": 1200,
+      "minEvents": {
+        "building_fall": 3
+      }
+    },
+    {
+      "id": "ai",
+      "minTicks": 1200,
+      "minEvents": {
+        "damage": 20
+      }
+    }
+  ],
+  "outside": {
+    "divider_slam": "Camera's and UI's: the split divider's slam flash. Not Rendering's or VFX's; no register ask; pixels only.",
+    "glare": "VFX's glare on the rival's glasses: steady for its hold, not a flash; listed so a reader knows it was considered."
+  }
+}
