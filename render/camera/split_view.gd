@@ -148,6 +148,13 @@ func ask_register(source: String, area: float, step: float = -1.0) -> bool:
 	return bool(h.vfx.flashes.ask(source, Color(0.3, 0.3, 0.35), int(h.S.tick), area * 1024.0 * 768.0, step))
 
 
+## The feathered sweep of a layout change (a switch, off by default): 0 off, 1 only under reduced flashing or reduced motion,
+## 2 always. Option name for UI, when it ships: `camera_feathered_sweeps`.
+func set_feathered_sweeps(v: int) -> void:
+	if main != null:
+		main.split_rig.feather_mode = clampi(v, 0, 2)
+
+
 ## The player's settings (docs/camera/split-screen.md sections 2 and 13). Solo against the AI: split like two players
 ## (default) or follow the human fighter alone when far. Reduced motion: quicker swing, no tier push, no launch follow.
 func set_solo_split(on: bool) -> void:

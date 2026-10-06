@@ -83,6 +83,7 @@ var _contact: Dictionary = {}
 var _beamcues: Dictionary = {}
 var _bn: Array = []             # bounces being watched: how far the fighter moves in the world and on the screen after one
 var _bn_done: Array = []
+var _big_ts: Array = []          # times of big events in a match (a beam's fire or outcome, a transformation, a clash, a building's first hit)
 var _dip_ts: Array = []          # the times of the brightness dips in a match (safety cuts, a rush's cut back, the intro's end)
 var _dips_seen: int = 0
 var _intro_ref: Array = []
@@ -2948,6 +2949,7 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 	_bn = []
 	_bn_done = []
 	_dip_ts = []
+	_big_ts = []
 	_dips_seen = 0
 	while t < limit and not (_S.game.ko != null and _S.game.koT > 3.0):
 		SimCore.step(_S)
@@ -2985,6 +2987,8 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 				var rd: float = absf(SimWrap.sdx(ra.x, rt.x))
 				var rn: int = maxi(1, int(e.n) - _S.tick)
 				_rushes.append({"d": rd, "n": rn, "v": rd / (float(rn) / 60.0), "split": _rig.sep >= 0.5, "t": float(t) / 60.0})
+			if et == "beam_outcome" or et == "transform" or (et == "decisive" and (String(e.kind) == "clash" or String(e.kind) == "beam_clash")) or (et == "cue" and String(e.kind) == "beam_fire") or (et == "building_hit" and int(e.link) <= 1):
+				_big_ts.append(float(t) / 60.0)
 			if et == "attack" and String(e.kind) == "sig":
 				_beamcues["attack_sig"] = int(_beamcues.get("attack_sig", 0)) + 1
 			if et == "cue" and String(e.kind).begins_with("beam_"):
@@ -3068,6 +3072,17 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 			if float(_dip_ts[qj]) >= float(_dip_ts[qi]) and float(_dip_ts[qj]) < float(_dip_ts[qi]) + 1.0:
 				inw += 1
 		per_s = maxi(per_s, inw)
+	var mt: Array = _rig.mode_change_times()
+	var lay_gap: float = 1.0e9
+	var lay_near: int = 0
+	for qi in range(mt.size()):
+		if qi > 0:
+			lay_gap = minf(lay_gap, float(mt[qi]) - float(mt[qi - 1]))
+		for bt in _big_ts:
+			if absf(float(bt) - float(mt[qi])) <= 1.0:
+				lay_near += 1
+				break
+	stats["layout changes " + _label] = "%d in %.0f s (%.1f a minute), the closest %.2f s apart, %d within a second of a big event (%d such events)" % [mt.size(), float(t) / 60.0, float(mt.size()) * 3600.0 / float(maxi(t, 1)), lay_gap if mt.size() > 1 else -1.0, lay_near, _big_ts.size()]
 	stats["dips " + _label] = "%d brightness dips in %.0f s, the closest %.2f s apart, at most %d in any second" % [_dip_ts.size(), float(t) / 60.0, mingap if _dip_ts.size() > 1 else -1.0, per_s]
 	_journey_summary()
 	if not _bn_done.is_empty():

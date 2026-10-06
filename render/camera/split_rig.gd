@@ -107,6 +107,9 @@ var _lg_sep: float = 0.0                 # the separation when the cue came (the
 var _lg_mid: float = 0.0                 # the pair's midpoint when the cue came (the box's x is counted from it)
 var _lg_box: Array = [0.0, 0.0, 0.0, 0.0]   # the zip's frame: x0, x1 (from _lg_mid), y0, y1: the pair at the cue, widened by what the zip will do
 var _lg_cap: float = -1.0e9              # the hold never runs past this time
+var feather_mode: int = 0                # the feathered sweep of a layout change: 0 off (the default), 1 only under reduced flashing or reduced motion, 2 always
+var _gov_arm_until: float = -1.0e9       # the scroll governor is armed (at a charge's cue) until this time ...
+var _gov_arm_speed: float = 0.0          # ... as if the view were already moving this fast (units a second)
 var flash_ask: Callable = Callable()     # (source, area as a fraction of the screen, step) -> whether the flash register grants it; SplitView sets it
 var _tf_calm: bool = false               # this transformation's break is calm: no hard cut, no low angle (the register refused it, or reduced flashing)
 var flash_reduced: bool = false          # the reduced-flashing setting (the host passes the register's `reduced`): calmer passes
@@ -246,6 +249,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_lg_rel = false
 	_vsm = [0.0, 0.0]
 	_vsm_m = 0.0
+	_gov_arm_until = -1.0e9
 	_bc_on = false
 	_dbl_start = -1.0e9
 	_dbl_contact = -1.0e9
@@ -698,6 +702,10 @@ func _read_move_cue(S: SimState, ev, kind: String) -> void:
 	var wind: float = float(_ef(ev, "amount", 0))
 	var mv: float = float(_ef(ev, "n", 0))
 	if kind.begins_with("charge"):
+		# The governor is armed from the cue, not from the speed: the pursuit that follows is at the capped speed (6,000 units a
+		# second at most), and the zoom takes 0.35 s to come out; armed at the tell it is out when the flight starts.
+		_gov_arm_speed = CamParams.GOV_ARM_SPEED
+		_gov_arm_until = time + (wind + mv) * DT + 0.3
 		return   # a charge is a rush as before: a long one is cut ahead for (measured: following it costs 230 jolts in 13 matches)
 	if solo_kind != "" or _ov_kind != "" or fold_active or intro_active or _slam_slot >= 0:
 		return
@@ -825,6 +833,10 @@ func _brawl_centre(S: SimState) -> Dictionary:
 ## 6,000 units a second crossed a city at 0.1 of the width a tick, six screens a second, and the façades alternating light and
 ## dark were Tools' collapse clip's 4.5 flashes a second. The fighters stay at least R_FLOOR (23 px at 720p); a launched body
 ## is not governed (his launch chase has its own size and anchor).
+func _gov_armed() -> float:
+	return _gov_arm_speed if time < _gov_arm_until else 0.0
+
+
 func _scroll_gov(speed: float, z: float) -> float:
 	var lim: float = CamParams.SCROLL_MAX_REDUCED if (reduced_motion or flash_reduced) else CamParams.SCROLL_MAX
 	var w: float = speed * DT * z / vw
@@ -1987,7 +1999,7 @@ func _merged_target(S: SimState) -> Vector3:
 	var pz: float = 1.0 / cos(deg_to_rad(_pitch_now))
 	var gov_m: float = 1.0
 	if A.state != "launched" and B.state != "launched":
-		gov_m = _scroll_gov(_vsm_m, z)
+		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z)
 	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(CamParams.ZOOM_MIN, CamParams.R_FLOOR * vh / CamParams.BODY_H * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
 	if _pitch_now != 0.0:
 		# Put the pair's chest midpoint at 0.7 of the height, as the straight-on camera does: a few Newton steps on cam_y.
@@ -2078,7 +2090,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 	z *= _push_mult(i) * _hit_mult(i)
 	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
 		var zfl: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
-		z = maxf(z * _scroll_gov(float(_vsm[i]), z), minf(z, zfl))
+		z = maxf(z * _scroll_gov(maxf(float(_vsm[i]), _gov_armed()), z), minf(z, zfl))
 	if solo_kind == "launch" and solo_slot == i and solo_phase == "land":
 		z *= 1.0 + CamParams.LAND_PUSH * sin(PI * clampf(_land_t / 0.3, 0.0, 1.0))
 	var zmax: float = _zcap() * (1.0 + CamParams.TIER_PUSH)
@@ -2506,6 +2518,10 @@ func _make_frame(S: SimState) -> SplitFrame:
 	var ss: float = _smootherstep(sep)
 	f.gap = maxf(CamParams.GAP_MIN_PX, CamParams.GAP_FRAC * vw)
 	f.feather = CamParams.FEATHER_FRAC * vw * (1.0 - ss) if swing_t < 0.0 else 0.0
+	# The feathered sweep (a switch, off by default): while the panes open or close the blend between them is wide, so what changes
+	# on the screen in a tick changes by little at a time (a cross-fade of the two pictures, not an edge crossing them).
+	if swing_t < 0.0 and sep > 0.001 and sep < 0.999 and (feather_mode == 2 or (feather_mode == 1 and (reduced_motion or flash_reduced))):
+		f.feather = maxf(f.feather, CamParams.SWEEP_FEATHER_FRAC * vw * sin(PI * sep))
 	f.line_alpha = smoothstep(0.0, 0.45, sep)
 	for i in range(2):
 		f.cam_x[i] = _outs[i].x
