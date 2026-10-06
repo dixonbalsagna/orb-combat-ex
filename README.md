@@ -6,7 +6,7 @@ A free fighting game about wrecking a planet. No combo lists: pick a stance and 
 
 Every fighter, move and planet here is original. **Licence:** not chosen yet, so all rights are reserved for now. Please do not copy or redistribute this code or content until a licence is added. You may play the hosted build. "Meridian" is the team's internal codename.
 
-**Flashing effects.** This game contains flashing effects. The "Reduced motion" setting (pause menu, Settings) reduces some of them, not all. The game has not yet been tested with a photosensitivity analyser.
+**Flashing effects.** This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them. The "Reduced motion" setting (pause menu, Settings) changes a few effects but does not fix these scenes. No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.
 
 **Privacy.** This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game.
 

@@ -4936,27 +4936,24 @@ func _reduce_flashing_rules() -> void:
 		if str(rws[i]["key"]) == "reduced_motion":
 			rm = i
 	_ok(ri == rm + 1 and not bool(UiData.options()["reduce_flashing"]["default"]) and str(rws[ri]["label"]) == "Reduce flashing", "reduce flashing: with its flag on Settings lists Reduce flashing right after Reduced motion, off by default")
-	var l: PackedStringArray = UiNotice.lines()
-	_ok(l.size() == 3 and l[0] == "This game contains flashing effects." and l[1] == "The \"Reduce flashing\" and \"Reduced motion\" settings (pause menu, Settings) reduce some of them, not all." and l[2] == "It has been checked only with our own automated tool, not an independent photosensitivity analyser." and not " ".join(l).to_lower().contains("passed") and not " ".join(l).to_lower().contains("safe"), "reduce flashing: with the flag on the notice is Legal's three lines (RL-117): the third says checked only with our own tool, never passed or safe")
-	UiData.set_feature("reduce_flashing", null)
-	_ok(UiNotice.sentence() == "This game contains flashing effects. The \"Reduced motion\" setting (pause menu, Settings) reduces some of them, not all. The game has not yet been tested with a photosensitivity analyser.", "reduce flashing: with the flag off the notice is the old three lines, README's")
-	UiData.set_feature("reduce_flashing", true)
-	_ok(l[1].contains("Reduce flashing") and l[1].contains("Reduced motion") and l[1].contains("some of them, not all") and l[0] == "This game contains flashing effects." and not " ".join(l).to_lower().contains(" safe"), "reduce flashing: the notice's second line names both settings and still claims no more (words for Legal to approve)")
+	_ok(UiNotice.sentence() == GATE_TEXT and not UiNotice.sentence().to_lower().contains(" safe"), "reduce flashing: with its flag on the gate still says exactly Legal's text (the settings sentence is reworded with Legal when the setting goes live)")
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	hud.size = Vector2(1280, 720)
 	root.add_child(hud)
 	await process_frame
 	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
-	hud.show_photo_notice()
+	hud.show_photo_notice(true)
+	hud.notice_action("right")
 	hud.notice_action("right")
 	hud.notice_action("accept")
 	var rws2: Array = UiSettings.rows()
 	var fk := ""
 	if hud.settings_focus() >= 0 and hud.settings_focus() < rws2.size():
 		fk = str(rws2[hud.settings_focus()]["key"])
-	_ok(hud.is_settings_open() and fk == "reduce_flashing", "reduce flashing: OPEN SETTINGS lands on the Reduce flashing row once it exists (%s)" % fk)
+	_ok(hud.is_settings_open() and fk == "reduce_flashing", "reduce flashing: Open Settings lands on the Reduce flashing row once it exists (%s)" % fk)
 	hud.hide_settings()
+	hud.hide_photo_notice(false)
 	UiData.set_feature("reduce_flashing", null)
 	# The divider's slam flash: asked of the register once as it begins; under Reduce flashing or Reduced motion it does not flash.
 	var asked := {"n": 0, "kind": ""}
@@ -4983,21 +4980,21 @@ func _reduce_flashing_rules() -> void:
 	await process_frame
 
 
-# --- The photosensitivity notice (docs/ui/hud-spec.md section 49) ---------------------------------------------------------------------------
+# --- The flashing-effects gate (docs/ui/hud-spec.md section 51) ---------------------------------------------------------------------------
+
+## Legal's text (RL-119), word for word: what the gate says and what the README says.
+const GATE_TEXT := "This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them. The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes. No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version."
+
 
 func _notice_rules() -> void:
-	# The words are data and are README.md's sentence, no more: "contains flashing effects", Reduced motion "reduces some, not all", "not yet been tested with an analyser".
-	var readme: String = FileAccess.get_file_as_string("res://README.md")
-	var rd_line := ""
-	for ln in readme.split("\n"):
-		if str(ln).begins_with("**Flashing effects.** "):
-			rd_line = str(ln).trim_prefix("**Flashing effects.** ").strip_edges()
-	var sent: String = UiNotice.sentence()
-	_ok(rd_line != "" and sent == rd_line, "notice: the words are README.md's sentence exactly (%s)" % sent)
-	var lower: String = sent.to_lower()
-	_ok(sent.begins_with("This game contains flashing effects.") and lower.contains("reduced motion") and lower.contains("some of them, not all") and lower.contains("not yet been tested") and not lower.contains(" safe") and not lower.contains("has been tested") and not lower.contains("is tested") and not lower.contains("no flash"), "notice: it claims no more than that (not safe, not tested, not flash-free)")
-	_ok(UiNotice.label("continue") == "CONTINUE" and UiNotice.label("settings") == "OPEN SETTINGS", "notice: the two buttons are CONTINUE and OPEN SETTINGS")
-	# Geometry: fits at the 15 sizes, touch off and on, the buttons are 48 dp targets inside the card.
+	# The words are Legal's, exactly, and claim no more: never "safe", "tested" or "passed" (the flag changes nothing yet: the settings sentence has its own place).
+	var lower: String = GATE_TEXT.to_lower()
+	_ok(UiNotice.sentence() == GATE_TEXT and UiNotice.title() == "This game contains flashing effects." and not lower.contains(" safe") and not lower.contains("tested") and not lower.contains("passed"), "gate: the words are Legal's text exactly, and never say safe, tested or passed")
+	UiData.set_feature("reduce_flashing", true)
+	_ok(UiNotice.sentence() == GATE_TEXT, "gate: and the same with the reduce_flashing flag on (its settings sentence has its own place, reworded with Legal later)")
+	UiData.set_feature("reduce_flashing", null)
+	_ok(UiNotice.label("start") == "I understand, start" and UiNotice.label("settings") == "Open Settings" and UiNotice.label("close") == "Close", "gate: the buttons are I understand, start and Open Settings (Close when it is read again)")
+	# Geometry: fits at the 16 sizes, touch off and on, the gate's two buttons and the read-again notice's one are 48 dp targets inside the card.
 	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0], [Vector2(2560, 1600), 2.0], [Vector2(3840, 2160), 1.0],
 		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(1125, 2436), 3.0], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(844, 390), 1.0]]
 	var bad := PackedStringArray()
@@ -5006,127 +5003,152 @@ func _notice_rules() -> void:
 		lay.dp = cs[1]
 		lay.compute(cs[0], false)
 		for touch in [false, true]:
-			var p: Dictionary = UiNotice.plan(cs[0], lay.s, cs[1], touch, {"focus": 0})
-			var card: Rect2 = p["card"]
-			var ok: bool = bool(p["fits"]) and Rect2(Vector2.ZERO, cs[0]).encloses(card) and (p["items"] as Array).size() == 2 and float(p["fs_body"]) >= UiLook.text_floor - 0.5
-			for it in p["items"]:
-				var r: Rect2 = it["rect"]
-				ok = ok and r.size.y >= float(p["tm"]) - 0.01 and card.encloses(r) and UiNotice.hit(p, r.get_center()) == it["id"]
-			if not ok:
-				bad.append("%s dp %.1f touch=%s" % [str(cs[0]), cs[1], str(touch)])
-	_ok(bad.is_empty(), "notice: at %d sizes, touch off and on, the card is on screen and both buttons are 48 dp targets inside it (%d bad %s)" % [sizes.size(), bad.size(), str(bad.slice(0, 3))])
-	# The flow in the HUD.
+			for gate in [true, false]:
+				var p: Dictionary = UiNotice.plan(cs[0], lay.s, cs[1], touch, {"focus": -1, "gate": gate})
+				var card: Rect2 = p["card"]
+				var ok: bool = bool(p["fits"]) and Rect2(Vector2.ZERO, cs[0]).encloses(card) and (p["items"] as Array).size() == (2 if gate else 1) and float(p["fs_body"]) >= UiLook.text_floor - 0.5
+				for it in p["items"]:
+					var r: Rect2 = it["rect"]
+					ok = ok and r.size.y >= float(p["tm"]) - 0.01 and card.encloses(r) and UiNotice.hit(p, r.get_center()) == it["id"]
+				if not ok:
+					bad.append("%s dp %.1f touch=%s gate=%s" % [str(cs[0]), cs[1], str(touch), str(gate)])
+	_ok(bad.is_empty(), "gate: at %d sizes, touch off and on, the card is on screen and its buttons are 48 dp targets inside it (%d bad %s)" % [sizes.size(), bad.size(), str(bad.slice(0, 3))])
+	# The gate with a host that holds the match the way the game's main does (howto_opened pauses, howto_closed resumes), and a real sim that ticks only when not paused.
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	hud.size = Vector2(1280, 720)
 	root.add_child(hud)
 	await process_frame
-	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
-	hud.advance(1.0 / 60.0)
-	var sig := {"opened": 0, "closed": 0, "notice": [], "settings": 0}
-	hud.howto_opened.connect(func(_f): sig["opened"] += 1)
-	hud.howto_closed.connect(func(_f): sig["closed"] += 1)
-	hud.notice_closed.connect(func(o): sig["notice"].append(o))
-	hud.settings_opened.connect(func(): sig["settings"] += 1)
-	_ok(not hud.is_notice_open() and not UiHud.notice_auto_allowed("headless", ""), "notice: a headless run never opens it by itself")
-	_ok(UiHud.notice_auto_allowed("Windows", "") and not UiHud.notice_auto_allowed("Windows", "--bench") and not UiHud.notice_auto_allowed("Windows", "?frames=20") and not UiHud.notice_auto_allowed("Windows", "?shot=x") and not UiHud.notice_auto_allowed("Windows", "?nonotice"), "notice: it opens by itself once per session in a normal run, and not in a bench, a frame-limited run, a scripted shot or with nonotice")
+	var host := SimHost.new()
+	host.new_match(5)
+	var fl: Array = UiSimBridge.fighters(host.S)
+	hud.setup(fl[0], fl[1])
+	var held := {"paused": false, "opened": 0, "closed": 0, "set_opened": 0, "set_closed": 0, "ticks": 0}
+	hud.howto_opened.connect(func(_f): held["paused"] = true; held["opened"] += 1)
+	hud.howto_closed.connect(func(_f): held["paused"] = false; held["closed"] += 1)
+	hud.settings_opened.connect(func(): held["set_opened"] += 1)
+	hud.settings_closed.connect(func(): held["set_closed"] += 1)
+	var frame := func(n: int) -> void:
+		for i in range(n):
+			if not bool(held["paused"]):
+				host.tick(1280.0, 720.0)
+				held["ticks"] += 1
+			hud.advance(1.0 / 60.0)
+			await process_frame
+	_ok(not hud.is_notice_open() and not UiHud.notice_auto_allowed("headless", ""), "gate: a headless run never raises it by itself")
+	_ok(UiHud.notice_auto_allowed("Windows", "") and not UiHud.notice_auto_allowed("Windows", "--bench") and not UiHud.notice_auto_allowed("Windows", "?frames=20") and not UiHud.notice_auto_allowed("Windows", "?shot=x") and not UiHud.notice_auto_allowed("Windows", "?nonotice") and not UiHud.notice_auto_allowed("Windows", "?flashcap=1") and not UiHud.notice_auto_allowed("Windows", "?study=zip"), "gate: it is raised by setup() in a normal run, and not in a bench, a frame-limited run, a scripted shot, the capture hook, a study route or with nonotice")
 	UiHud.notice_seen_session = true
-	_ok(not UiHud.notice_auto_allowed("Windows", ""), "notice: and not again in the same session")
+	_ok(not UiHud.notice_auto_allowed("Windows", ""), "gate: once per session")
 	UiHud.notice_seen_session = false
+	_ok(UiHud.notice_auto_allowed("Windows", ""), "gate: and nothing is remembered across sessions (a new session raises it again)")
 	var key := func(code: int) -> InputEventKey:
 		var e := InputEventKey.new()
 		e.keycode = code
 		e.physical_keycode = code
 		e.pressed = true
 		return e
-	# A first run's How to play card asked for while the notice is up waits for it.
-	hud.show_photo_notice()
-	hud.show_photo_notice()
-	_ok(hud.is_notice_open() and hud.is_overlay_open() and sig["opened"] == 1 and hud.notice_focus() == 0, "notice: it opens once, holds the fight (the overlay signal fires once) and starts on CONTINUE")
-	hud.show_howto(true)
-	hud.toggle_pause_menu()
-	hud.show_settings()
-	hud.show_feedback("pause")
-	_ok(not hud.is_howto_open() and not hud.is_pause_menu_open() and not hud.is_settings_open() and not hud.is_feedback_open(), "notice: nothing else opens over it (How to play waits, the pause menu, Settings and feedback are refused)")
-	await _frames(hud, 3)
-	var redraws0: int = hud._l_notice.redraws
-	await _frames(hud, 12)
-	_ok(hud._l_notice.redraws == redraws0, "notice: nothing in it moves (no redraw over 12 frames), so it is the same under reduced motion")
-	UiText.tracing = true
-	UiText.trace = []
-	hud._l_notice.invalidate()
-	await _frames(hud, 2)
-	UiText.tracing = false
-	var seen: Array = UiText.trace.duplicate()
-	UiText.trace = []
-	var lines: PackedStringArray = UiNotice.lines()
-	var drawn_ok := seen.has("CONTINUE") and seen.has("OPEN SETTINGS")
-	var joined := " ".join(PackedStringArray(seen))
-	for w in ["flashing", "Reduced", "analyser"]:
-		drawn_ok = drawn_ok and joined.contains(w)
-	_ok(drawn_ok, "notice: the card draws its three lines and both buttons")
-	hud._unhandled_input(key.call(KEY_ENTER))
-	_ok(not hud.is_notice_open() and sig["closed"] == 1 and sig["notice"] == [false] and not hud.is_settings_open() and hud.is_howto_open() and hud.howto_page() == 0 and sig["opened"] == 2, "notice: Enter on CONTINUE closes it and gives the fight back, then the waiting How to play card opens")
-	hud.hide_howto()
-	# Right and Enter: OPEN SETTINGS opens Settings with the Reduced motion row focused.
-	hud.show_photo_notice()
-	hud._unhandled_input(key.call(KEY_RIGHT))
-	var f1: int = hud.notice_focus()
-	hud._unhandled_input(key.call(KEY_LEFT))
-	var f0: int = hud.notice_focus()
-	hud._unhandled_input(key.call(KEY_TAB))
-	hud._unhandled_input(key.call(KEY_ENTER))
-	var rws: Array = UiSettings.rows()
-	var focus_key := ""
-	if hud.settings_focus() >= 0 and hud.settings_focus() < rws.size():
-		focus_key = str(rws[hud.settings_focus()]["key"])
-	_ok(f1 == 1 and f0 == 0 and not hud.is_notice_open() and hud.is_settings_open() and focus_key == "reduced_motion" and sig["notice"].back() == true, "notice: Right, Left and Tab move between the buttons; OPEN SETTINGS opens Settings at the Reduced motion row (%s)" % focus_key)
-	hud.hide_settings()
-	# Esc, the pad and a tap.
-	hud.show_photo_notice()
-	hud._unhandled_input(key.call(KEY_ESCAPE))
-	var esc_ok: bool = not hud.is_notice_open() and sig["notice"].back() == false
-	hud.show_photo_notice()
-	var pad := InputEventJoypadButton.new()
-	pad.button_index = JOY_BUTTON_DPAD_RIGHT
-	pad.pressed = true
-	hud._unhandled_input(pad)
-	var pad_focus: int = hud.notice_focus()
-	var pad_a := InputEventJoypadButton.new()
-	pad_a.button_index = JOY_BUTTON_A
-	pad_a.pressed = true
-	hud._unhandled_input(pad_a)
-	var pad_ok: bool = pad_focus == 1 and not hud.is_notice_open() and hud.is_settings_open()
-	hud.hide_settings()
-	hud.show_photo_notice()
-	var pad_b := InputEventJoypadButton.new()
-	pad_b.button_index = JOY_BUTTON_B
-	pad_b.pressed = true
-	hud._unhandled_input(pad_b)
-	var padb_ok: bool = not hud.is_notice_open() and not hud.is_settings_open()
-	_ok(esc_ok and pad_ok and padb_ok, "notice: Esc and the pad's B continue; the pad's d-pad and A choose OPEN SETTINGS")
-	hud.set_option("touch_ui", true)
-	hud.advance(1.0 / 60.0)
+	var padbtn := func(b: int) -> InputEventJoypadButton:
+		var e := InputEventJoypadButton.new()
+		e.button_index = b
+		e.pressed = true
+		return e
 	var tap := func(pos: Vector2) -> void:
 		var e := InputEventMouseButton.new()
 		e.button_index = MOUSE_BUTTON_LEFT
 		e.pressed = true
 		e.position = pos
 		hud._unhandled_input(e)
-	hud.show_photo_notice()
+	hud.show_photo_notice(true)
+	hud.show_photo_notice(true)
+	_ok(hud.is_notice_open() and hud.is_notice_gate() and hud.is_overlay_open() and held["opened"] == 1 and held["paused"] and hud.notice_focus() == -1, "gate: it opens once, holds the match (the overlay signal fires once) and starts with no button focused")
+	hud.show_howto(true)
+	hud.toggle_pause_menu()
+	hud.show_settings()
+	hud.show_feedback("pause")
+	_ok(not hud.is_howto_open() and not hud.is_pause_menu_open() and not hud.is_settings_open() and not hud.is_feedback_open(), "gate: nothing else opens over it (How to play waits for it; the pause menu, Settings and feedback are refused)")
+	# Nothing moves: no sim tick, no frame of the demo, while the gate is up and whatever is pressed.
+	var tick0: int = int(host.S.tick)
+	await frame.call(30)
+	hud._unhandled_input(key.call(KEY_ESCAPE))
+	hud._unhandled_input(key.call(KEY_P))
+	hud._unhandled_input(padbtn.call(JOY_BUTTON_START))
+	hud._unhandled_input(padbtn.call(JOY_BUTTON_B))
+	hud._unhandled_input(key.call(KEY_F1))
+	hud._unhandled_input(key.call(KEY_N))
 	var np: Dictionary = hud.notice_plan()
 	tap.call(Vector2(2.0, 2.0))
-	var outside_ok: bool = hud.is_notice_open()
-	tap.call(((np["items"] as Array)[0]["rect"] as Rect2).get_center())
-	var tap_cont: bool = not hud.is_notice_open() and not hud.is_settings_open()
-	hud.show_photo_notice()
+	tap.call(((np["card"] as Rect2).position + Vector2(4.0, 4.0)))
+	await frame.call(30)
+	_ok(hud.is_notice_gate() and held["closed"] == 0 and held["paused"] and int(host.S.tick) == tick0 and int(held["ticks"]) == 0 and hud.notice_focus() == -1, "gate: Esc, P, the pad's Start and B, F1, N, a tap outside the buttons and a tap on the card do nothing, and no sim tick runs in 60 frames (tick %d, %d stepped)" % [int(host.S.tick), int(held["ticks"])])
+	var back_sig = hud._l_gate_back.sig
+	_ok(back_sig != null, "gate: the backdrop under it is opaque and up (the match is not shown at all while it stands)")
+	var redraws0: int = hud._l_notice.redraws
+	await frame.call(12)
+	_ok(hud._l_notice.redraws == redraws0, "gate: nothing in it moves (no redraw over 12 frames), so it is the same under reduced motion")
+	UiText.tracing = true
+	UiText.trace = []
+	hud._l_notice.invalidate()
+	await frame.call(2)
+	UiText.tracing = false
+	var seen: Array = UiText.trace.duplicate()
+	UiText.trace = []
+	var joined := " ".join(PackedStringArray(seen))
+	var drawn_ok: bool = seen.has("I understand, start") and seen.has("Open Settings")
+	for w in ["flashing effects", "fly-past", "three times", "photosensitive epilepsy", "not playing this version"]:
+		drawn_ok = drawn_ok and joined.contains(w)
+	_ok(drawn_ok, "gate: the card draws Legal's words and both buttons")
+	# A stray press does not start it: Enter or A with nothing focused only focuses the first button; a second press starts.
+	hud._unhandled_input(key.call(KEY_ENTER))
+	var stray_ok: bool = hud.is_notice_gate() and hud.notice_focus() == 0 and held["closed"] == 0 and int(held["ticks"]) == 0
+	hud._unhandled_input(key.call(KEY_RIGHT))
+	var f1: int = hud.notice_focus()
+	hud._unhandled_input(key.call(KEY_LEFT))
+	var f0: int = hud.notice_focus()
+	_ok(stray_ok and f1 == 1 and f0 == 0, "gate: a first Enter only focuses the first button, Right and Left move between the buttons")
+	# Open Settings: Settings opens over the gate, the gate stays up (no resume, no new hold), and Settings gives it back.
+	hud._unhandled_input(key.call(KEY_TAB))
+	hud._unhandled_input(key.call(KEY_ENTER))
+	var rws: Array = UiSettings.rows()
+	var focus_key := ""
+	if hud.settings_focus() >= 0 and hud.settings_focus() < rws.size():
+		focus_key = str(rws[hud.settings_focus()]["key"])
+	await frame.call(10)
+	_ok(hud.is_settings_open() and hud.is_notice_gate() and held["closed"] == 0 and held["paused"] and held["set_opened"] == 0 and focus_key == "reduced_motion" and int(host.S.tick) == tick0 and hud._l_gate_back.sig != null, "gate: Open Settings opens Settings at the Reduced motion row over the gate, which stays up (still held, still opaque, no second hold)")
+	hud.settings_action("close")
+	await frame.call(10)
+	_ok(not hud.is_settings_open() and hud.is_notice_gate() and held["closed"] == 0 and held["paused"] and held["set_closed"] == 0 and int(host.S.tick) == tick0, "gate: closing Settings gives the gate back, still holding the match")
+	# I understand, start: only now does the match run, and the How to play card that waited opens.
+	hud._unhandled_input(key.call(KEY_LEFT))
+	hud._unhandled_input(key.call(KEY_ENTER))
+	await frame.call(5)
+	_ok(not hud.is_notice_open() and held["closed"] == 1 and hud.is_howto_open() and held["opened"] == 2 and held["paused"] and int(held["ticks"]) == 0, "gate: I understand, start releases the gate once and the first-run How to play card that waited opens, holding the match in its turn")
+	hud.hide_howto()
+	await frame.call(5)
+	_ok(not held["paused"] and int(held["ticks"]) > 0 and held["closed"] == 2, "gate: and when that card closes the match runs")
+	# The pad and a tap: A with no focus only focuses; a tap on Open Settings opens Settings over it; a tap on I understand, start begins.
+	held["paused"] = false
+	hud.show_photo_notice(true)
+	hud._unhandled_input(padbtn.call(JOY_BUTTON_A))
+	var pad_f: int = hud.notice_focus()
+	hud._unhandled_input(padbtn.call(JOY_BUTTON_DPAD_RIGHT))
+	hud._unhandled_input(padbtn.call(JOY_BUTTON_A))
+	var pad_set: bool = hud.is_settings_open() and hud.is_notice_gate()
+	hud.settings_action("close")
+	hud._unhandled_input(padbtn.call(JOY_BUTTON_DPAD_LEFT))
+	hud._unhandled_input(padbtn.call(JOY_BUTTON_A))
+	_ok(pad_f == 0 and pad_set and not hud.is_notice_open(), "gate: on a pad A with nothing focused only focuses, the d-pad and A choose Open Settings or start")
+	hud.set_option("touch_ui", true)
+	hud.advance(1.0 / 60.0)
+	hud.show_photo_notice(true)
 	np = hud.notice_plan()
 	tap.call(((np["items"] as Array)[1]["rect"] as Rect2).get_center())
-	var tap_set: bool = not hud.is_notice_open() and hud.is_settings_open()
-	hud.hide_settings()
-	_ok(outside_ok and tap_cont and tap_set, "notice: on a touch screen a tap on a button chooses it and a tap outside does nothing")
+	var tap_set: bool = hud.is_settings_open() and hud.is_notice_gate()
+	hud.settings_action("close")
+	np = hud.notice_plan()
+	tap.call(((np["items"] as Array)[0]["rect"] as Rect2).get_center())
+	_ok(tap_set and not hud.is_notice_open(), "gate: on a touch screen a tap on Open Settings opens it over the gate and a tap on I understand, start begins")
 	hud.set_option("touch_ui", false)
-	# From Settings: a row that shows it again, over Settings, and gives Settings back.
+	# The same text read again from Settings: one Close button; Esc and B close it; it does not hold the match twice.
 	var rws2: Array = UiSettings.rows()
 	var ri := -1
 	var rm := -1
@@ -5135,18 +5157,14 @@ func _notice_rules() -> void:
 			ri = i
 		if str(rws2[i]["key"]) == "reduced_motion":
 			rm = i
-	_ok(ri >= 0 and rm >= 0 and ri == rm + 1 and str(rws2[ri]["label"]) == "Flashing effects notice", "notice: Settings has a Flashing effects notice row, right after Reduced motion")
-	var opened_before: int = sig["opened"]
+	_ok(ri >= 0 and rm >= 0 and ri == rm + 1 and str(rws2[ri]["label"]) == "Flashing effects notice", "gate: Settings has a Flashing effects notice row right after Reduced motion")
+	var opened_before: int = held["opened"]
 	hud.show_settings()
 	hud._set_focus = ri
 	hud.settings_action("accept")
-	_ok(hud.is_notice_open() and hud.is_settings_open() and sig["opened"] == opened_before, "notice: that row shows it over Settings without a second hold (Settings already holds the fight)")
-	hud._unhandled_input(key.call(KEY_RIGHT))
-	hud._unhandled_input(key.call(KEY_ENTER))
-	var key2 := ""
-	if hud.settings_focus() >= 0 and hud.settings_focus() < rws2.size():
-		key2 = str(rws2[hud.settings_focus()]["key"])
-	_ok(not hud.is_notice_open() and hud.is_settings_open() and key2 == "reduced_motion", "notice: OPEN SETTINGS from there moves the Settings focus to Reduced motion")
+	var read_ok: bool = hud.is_notice_open() and not hud.is_notice_gate() and hud.is_settings_open() and held["opened"] == opened_before and (hud.notice_plan()["items"] as Array).size() == 1
+	hud._unhandled_input(key.call(KEY_ESCAPE))
+	_ok(read_ok and not hud.is_notice_open() and hud.is_settings_open(), "gate: that row shows the text again over Settings with one Close button, and Esc closes it and gives Settings back")
 	hud.hide_settings()
 	hud.queue_free()
 	await process_frame

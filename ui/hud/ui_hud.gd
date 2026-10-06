@@ -169,7 +169,10 @@ static var notice_auto := true
 static var notice_seen_session := false
 var _notice_open := false
 var _notice_held := false
-var _notice_focus := 0
+var _notice_focus := -1
+var _notice_gate := false             # the session's gate (opaque, only its own buttons dismiss it), not the notice read again from Settings
+var _notice_allow_settings := false   # the gate opens Settings over itself
+var _l_gate_back: UiLayer
 var _notice_pending: Array = []        # a How to play card asked for while the notice was up: [first_run, page], opened when it closes
 var _l_notice: UiLayer
 ## The register's answer for the split divider's slam flash (UI draws it; Camera supplies the `slam` amount): the host sets `flash_fn(kind, strength, area) -> 0..1`, the share of the
@@ -262,6 +265,7 @@ func _ready() -> void:
 	_l_join = _layer(_paint_join)     # under the menus: the pause menu and How to play cover the join prompt, not the other way round
 	_l_pmenu = _layer(_paint_pmenu)
 	_l_howto = _layer(_paint_howto)
+	_l_gate_back = _layer(_paint_gate_back)   # the gate's opaque backdrop, under Settings (opened from the gate) and over the match
 	_l_settings = _layer(_paint_settings)
 	_l_remap = _layer(_paint_remap)
 	_l_fb = _layer(_paint_fb)
@@ -326,7 +330,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_notice]
+	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -345,7 +349,7 @@ func setup(ids: Array, names: Array) -> void:
 	_relayout()
 	if notice_auto_allowed(DisplayServer.get_name(), notice_args_text()):
 		notice_seen_session = true
-		show_photo_notice()
+		show_photo_notice(true)
 
 
 func consume(e) -> void:
@@ -630,7 +634,8 @@ func _update_layers() -> void:
 	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d|%d|%s" % [_howto_tab, _howto_held(), UiStance.live_bits(), _howto_scroll, _howto_first]) if _howto_open else null)
 
 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
-	_l_notice.update_sig(UiNotice.sig(notice_plan()) if _notice_open else null)
+	_l_notice.update_sig(UiNotice.sig(notice_plan()) if (_notice_open and (_notice_gate and not _set_open or not _notice_gate)) else null)
+	_l_gate_back.update_sig([_set_open] if (_notice_open and _notice_gate) else null)
 	_l_settings.update_sig(_settings_sig() if (_set_open and not _rm_open) else null)
 	_l_remap.update_sig(_remap_sig() if _rm_open else null)
 
@@ -908,7 +913,7 @@ func _paint_howto(ci: CanvasItem) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _notice_open:
+	if _notice_open and (not _notice_gate or not (_set_open or _rm_open)):
 		_notice_input(event)
 		return
 	if _pm_open and not (_rm_open or _set_open or _fb_open or _howto_open):
@@ -1026,50 +1031,61 @@ static func notice_args_text() -> String:
 	return hay
 
 
-## Whether this run is one that must not stop for a notice: a bench, a frame-limited run, a scripted shot, or `nonotice` (a command line, or the page's query).
+## Whether this run is one that must not stop for the gate: a bench, a frame-limited run, a scripted shot, the frame analyser's capture hook (flashcap), Animation's study routes
+## (study), or `nonotice` (a command line, or the page's query).
 static func notice_skipped_by_args(hay: String = "") -> bool:
-	for w in ["bench", "frames", "shot", "nonotice"]:
+	for w in ["bench", "frames", "shot", "nonotice", "flashcap", "study"]:
 		if hay.contains(w):
 			return true
 	return false
 
 
-## Whether setup() shows the notice now: once per session, never in a headless run (a test, a QA batch), never in a run that must not stop (see above), and not when the demo turned it off.
+## Whether setup() raises the gate now: once per session (nothing is remembered across sessions), never in a headless run (a test, a QA batch), never in a run that must not stop
+## (see above), and not when the demo turned it off.
 static func notice_auto_allowed(display_name: String, hay: String) -> bool:
 	return notice_auto and not notice_seen_session and display_name != "headless" and not notice_skipped_by_args(hay)
 
 
-## Show the notice (a no-op while it is already up). The fight is held through the How to play card's signals when no other overlay holds it already.
-func show_photo_notice() -> void:
+## Show the notice. `gate` true is the session's gate: opaque, no timeout, only its own two buttons dismiss it, the fight is held through the How to play card's signals; false is the
+## same text read again from Settings (one Close button, Esc closes). A no-op while it is already up.
+func show_photo_notice(gate: bool = false) -> void:
 	if _notice_open:
 		return
 	_notice_open = true
-	_notice_focus = 0
+	_notice_gate = gate
+	_notice_focus = -1 if gate else 0   # the gate starts with no button focused: a stray Enter or A only focuses the first button, it never starts the game
 	if not (_howto_open or _fb_open or _set_open or _pm_open):
 		_notice_held = true
 		howto_opened.emit(false)
 	_l_notice.invalidate()
+	_l_gate_back.invalidate()
 
 
-## Dismiss it: `open_settings` is the OPEN SETTINGS button (Settings opens at the Reduced motion row, or its focus moves there if Settings is already open).
+## Dismiss it: `open_settings` (the gate's Open Settings button) opens Settings over it and the gate stays up (the match stays held, nothing is shown of it) until
+## "I understand, start"; a read-again notice just closes.
 func hide_photo_notice(open_settings: bool = false) -> void:
 	if not _notice_open:
 		return
+	if open_settings:
+		var fk: String = "reduce_flashing" if UiData.feature("reduce_flashing") else "reduced_motion"
+		if _notice_gate:
+			_notice_allow_settings = true
+			show_settings(fk)
+			_notice_allow_settings = false
+		elif _set_open:
+			_settings_focus_key(fk)
+		return
 	_notice_open = false
 	_l_notice.update_sig(null)
+	_l_gate_back.update_sig(null)
+	_notice_gate = false
 	if _notice_held:
 		_notice_held = false
 		howto_closed.emit(false)
-	notice_closed.emit(open_settings)
+	notice_closed.emit(false)
 	var pending: Array = _notice_pending
 	_notice_pending = []
-	if open_settings:
-		var fk: String = "reduce_flashing" if UiData.feature("reduce_flashing") else "reduced_motion"
-		if _set_open:
-			_settings_focus_key(fk)
-		else:
-			show_settings(fk)
-	elif not pending.is_empty():
+	if not pending.is_empty():
 		show_howto(bool(pending[0]), int(pending[1]))
 
 
@@ -1077,34 +1093,53 @@ func is_notice_open() -> bool:
 	return _notice_open
 
 
+func is_notice_gate() -> bool:
+	return _notice_open and _notice_gate
+
+
 func notice_focus() -> int:
 	return _notice_focus
 
 
 func notice_plan() -> Dictionary:
-	return UiNotice.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _notice_focus})
+	return UiNotice.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _notice_focus, "gate": _notice_gate})
 
 
 func _paint_notice(ci: CanvasItem) -> void:
-	if _notice_open:
+	if _notice_open and (_notice_gate and not _set_open or not _notice_gate):
 		UiNotice.draw(ci, notice_plan())
 
 
-## One of "left", "right", "accept", "back" (what a key, a pad button or a tap does).
+func _paint_gate_back(ci: CanvasItem) -> void:
+	if _notice_open and _notice_gate:
+		UiNotice.draw_backdrop(ci)   # under Settings too: while the gate is up nothing of the match is shown
+
+
+## One of "left", "right", "accept", "back" (what a key, a pad button or a tap does). On the gate "back" does nothing at all, and "accept" with no button focused only focuses the first.
 func notice_action(act: String) -> void:
 	if not _notice_open:
 		return
+	var count: int = UiNotice.ids(_notice_gate).size()
 	match act:
 		"left", "up":
-			_notice_focus = UiNotice.moved(_notice_focus, -1)
+			_notice_focus = UiNotice.moved(_notice_focus, -1, count)
 			_l_notice.invalidate()
 		"right", "down":
-			_notice_focus = UiNotice.moved(_notice_focus, 1)
+			_notice_focus = UiNotice.moved(_notice_focus, 1, count)
 			_l_notice.invalidate()
 		"accept":
-			hide_photo_notice(UiNotice.IDS[_notice_focus] == "settings")
+			if _notice_focus < 0:
+				_notice_focus = 0
+				_l_notice.invalidate()
+				return
+			var id: String = str(UiNotice.ids(_notice_gate)[_notice_focus])
+			if id == "settings":
+				hide_photo_notice(true)
+			else:
+				hide_photo_notice(false)
 		"back":
-			hide_photo_notice(false)
+			if not _notice_gate:
+				hide_photo_notice(false)
 
 
 func _notice_input(event: InputEvent) -> void:
@@ -1114,7 +1149,7 @@ func _notice_input(event: InputEvent) -> void:
 				KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
 					notice_action("accept")
 				KEY_ESCAPE, KEY_P:
-					notice_action("back")
+					notice_action("back")   # the gate ignores it
 				KEY_LEFT, KEY_UP, KEY_A, KEY_W:
 					notice_action("left")
 				KEY_RIGHT, KEY_DOWN, KEY_D, KEY_S, KEY_TAB:
@@ -1125,7 +1160,7 @@ func _notice_input(event: InputEvent) -> void:
 				JOY_BUTTON_A:
 					notice_action("accept")
 				JOY_BUTTON_B, JOY_BUTTON_START:
-					notice_action("back")
+					notice_action("back")   # the gate ignores it
 				JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_UP:
 					notice_action("left")
 				JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_DPAD_DOWN:
@@ -1134,10 +1169,10 @@ func _notice_input(event: InputEvent) -> void:
 		# A tap arrives as a mouse click too; one tap, one action. A click outside the buttons does nothing.
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			var id: String = UiNotice.hit(notice_plan(), event.position)
-			if id == "continue":
-				hide_photo_notice(false)
-			elif id == "settings":
+			if id == "settings":
 				hide_photo_notice(true)
+			elif id == "start" or id == "close":
+				hide_photo_notice(false)
 	get_viewport().set_input_as_handled()
 
 
@@ -1404,7 +1439,7 @@ func _paint_join(ci: CanvasItem) -> void:
 ## play, and skip its own pad handling while is_settings_open() (see is_overlay_open()). Every change goes through set_option, so
 ## option_changed fires as it always does; the changes are kept for the next run (load_saved_options).
 func show_settings(focus_key: String = "") -> void:
-	if _set_open or _howto_open or _fb_open or _notice_open:
+	if _set_open or _howto_open or _fb_open or (_notice_open and not _notice_allow_settings):
 		return
 	UiSettings.two_humans = _humans() >= 2
 	_set_open = true
@@ -1415,7 +1450,8 @@ func show_settings(focus_key: String = "") -> void:
 	_set_focus = int(fo[0]) if not fo.is_empty() else -1
 	_set_scroll = UiSettings.scroll_to(settings_plan(), _set_focus, 0.0) if _set_focus >= 0 else 0.0
 	_l_settings.invalidate()
-	settings_opened.emit()
+	if not (_notice_open and _notice_gate):
+		settings_opened.emit()   # the gate already holds the match: Settings over it asks the host for nothing more
 	if focus_key != "":
 		_settings_focus_key(focus_key)
 
@@ -1440,7 +1476,8 @@ func hide_settings() -> void:
 	_set_open = false
 	_set_drag = {}
 	_l_settings.update_sig(null)
-	settings_closed.emit()
+	if not (_notice_open and _notice_gate):
+		settings_closed.emit()
 
 
 func is_settings_open() -> bool:
@@ -1517,7 +1554,7 @@ func _settings_accept(i: int) -> void:
 			_settings_step(i, 1)
 		UiSettings.BUTTON:
 			if str(r["action"]) == "photo_notice":
-				show_photo_notice()   # over the Settings screen: it gives it back when dismissed
+				show_photo_notice(false)   # the same text read again, over the Settings screen: it gives it back when closed
 			elif str(r["action"]) == "remap":
 				show_remap()
 			elif str(r["action"]) == "remap_two":
