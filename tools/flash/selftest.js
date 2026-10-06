@@ -141,5 +141,39 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
   check('a log that is full (the register keeps the last 2,400) is reported as truncated', L.checkRun(full).truncated === true);
 }
 
+
+// ---- drift: the staging exists twice (tools/flash/flash_worst.gd here, render/tools/flash_capture.gd in Rendering's export), and tick and seed counts live in sources.json too
+{
+  const fs = require('fs'), path = require('path');
+  const root = path.join(__dirname, '..', '..');
+  const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
+  const slots = (txt) => {
+    const m = txt.match(/const AI_SLOTS: Dictionary = \{([^\n]*)\}/);
+    if (!m) return null;
+    const o = {};
+    for (const x of m[1].matchAll(/"(\w+)":\s*\[(true|false),\s*(true|false)\]/g)) o[x[1]] = [x[2], x[3]].join(',');
+    return o;
+  };
+  const list = (txt) => { const m = txt.match(/const SCENARIOS: Array = \[([^\]]*)\]/); return m ? [...m[1].matchAll(/"(\w+)"/g)].map((x) => x[1]) : null; };
+  const nums = (txt, name) => {
+    const m = txt.match(new RegExp('const ' + name + ': Dictionary = \\{([^\\n]*)\\}'));
+    if (!m) return null;
+    const o = {};
+    for (const x of m[1].matchAll(/"(\w+)":\s*(\[[^\]]*\]|\d+)/g)) o[x[1]] = JSON.parse(x[2]);
+    return o;
+  };
+  const mine = read('tools/flash/flash_worst.gd');
+  const src = L.loadSources();
+  const ticks = nums(mine, 'TICKS'), seeds = nums(mine, 'SEEDS');
+  check('sources.json and flash_worst.gd agree on every scenario\'s ticks and seeds', src.scenarios.every((s) => ticks && seeds && ticks[s.id] === s.ticks && JSON.stringify(seeds[s.id]) === JSON.stringify(s.seeds)), JSON.stringify({ ticks, seeds }));
+  check('flash_worst.gd names exactly the scenarios of sources.json', JSON.stringify(list(mine)) === JSON.stringify(src.scenarios.map((s) => s.id)), JSON.stringify(list(mine)));
+  let theirs = null;
+  try { theirs = read('render/tools/flash_capture.gd'); } catch { /* an export without it */ }
+  if (theirs) {
+    check('Rendering\'s capture hook has the same scenarios as flash_worst.gd', JSON.stringify(list(theirs)) === JSON.stringify(list(mine)), JSON.stringify(list(theirs)));
+    check('Rendering\'s capture hook has the same human and AI slots as flash_worst.gd', JSON.stringify(slots(theirs)) === JSON.stringify(slots(mine)), JSON.stringify([slots(theirs), slots(mine)]));
+  }
+}
+
 console.log(failed ? `flash self-test FAILED: ${failed} of ${ran} checks` : `flash self-test ok: ${ran} checks`);
 process.exit(failed ? 1 : 0);

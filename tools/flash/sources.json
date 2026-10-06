@@ -31,42 +31,69 @@
       "minTicks": 1500,
       "minEvents": {
         "damage": 20
-      }
+      },
+      "ticks": 1800,
+      "seeds": [
+        12345
+      ]
     },
     {
       "id": "clash",
       "minTicks": 1200,
       "minEvents": {
         "beam_outcome:CLASH": 1
-      }
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
     },
     {
       "id": "signature",
       "minTicks": 1200,
       "minEvents": {
         "beam_outcome": 1
-      }
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
     },
     {
       "id": "transform",
       "minTicks": 1200,
       "minEvents": {
         "transform": 4
-      }
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
     },
     {
       "id": "collapse",
       "minTicks": 1200,
       "minEvents": {
-        "building_fall": 3
-      }
+        "building_fall": 3,
+        "staged_blast": 3
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
     },
     {
       "id": "ai",
       "minTicks": 1200,
       "minEvents": {
         "damage": 20
-      }
+      },
+      "ticks": 3600,
+      "seeds": [
+        12345,
+        4,
+        7
+      ]
     }
   ],
   "outside": {

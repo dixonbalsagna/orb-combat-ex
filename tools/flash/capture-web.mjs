@@ -6,6 +6,7 @@
 //   node tools/flash/capture-web.mjs --mock --scenario strobe4 --out <folder>    the self-test page (tools/flash/mock-page/), which flashes on purpose
 //
 // THE CONTRACT (what a page must offer so a clip is exactly one tick a frame; the build does not offer it yet, docs/tools/flash-check.md):
+//   (the game's hook, Rendering's, is offered at /play/?flashcap=1 and also gives in_window, the register's count after each step, and error; both are recorded)
 //   window.__flashcap = {
 //     ready:  true once the scene is built and the first frame is up,
 //     start:  (scenario, { reduced }) => void   sets the scene up as tools/flash/flash_worst.gd does and PAUSES the sim,
@@ -26,10 +27,10 @@ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv
 const has = (n) => argv.includes(n);
 const usage = () => {
   console.error('usage: node tools/flash/capture-web.mjs (--dir <site dir> [--path /play/] | --url <page url> | --mock) --scenario <id> --out <folder>\n' +
-    '       [--ticks 1800] [--reduced] [--width 960] [--height 540] [--software] [--browser chrome|edge] [--browser-path <exe>] [--timeout 900]');
+    '       [--ticks 1800] [--reduced] [--seed N] [--width 960] [--height 540] [--software] [--browser chrome|edge] [--browser-path <exe>] [--timeout 900]');
   process.exit(2);
 };
-const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--width', '--height', '--software', '--browser', '--browser-path', '--timeout']);
+const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--width', '--height', '--software', '--browser', '--browser-path', '--timeout']);
 for (const a of argv) if (a.startsWith('--') && !known.has(a)) { console.error(`unknown option ${a}`); usage(); }
 const here = dirname(fileURLToPath(import.meta.url));
 const DIR = has('--mock') ? join(here, 'mock-page') : opt('--dir');
@@ -40,6 +41,7 @@ if (!SCENARIO || !OUT || (!DIR && !URL_) || (DIR && URL_)) usage();
 const TICKS = Number(opt('--ticks', 1800));
 const WIDTH = Number(opt('--width', 960)), HEIGHT = Number(opt('--height', 540));
 const REDUCED = has('--reduced');
+const SEED = opt('--seed') === undefined ? null : Number(opt('--seed'));
 const TIMEOUT_S = Number(opt('--timeout', 900));
 const BROWSER = opt('--browser', 'chrome');
 const EXES = {
@@ -115,18 +117,22 @@ try {
   let ready = false;
   while (Date.now() < deadline && !ready) { await sleep(500); ready = await page.eval('Boolean(window.__flashcap && window.__flashcap.ready)').catch(() => false); }
   if (!ready) throw new Error(`the page offers no window.__flashcap that becomes ready (the contract is at the top of tools/flash/capture-web.mjs); the build does not have it yet`);
-  await page.eval(`window.__flashcap.start(${JSON.stringify(SCENARIO)}, { reduced: ${REDUCED} })`);
+  await page.eval(`window.__flashcap.start(${JSON.stringify(SCENARIO)}, { reduced: ${REDUCED}${SEED === null ? '' : ', seed: ' + SEED} })`);
   log(`${pageUrl}: ${SCENARIO}${REDUCED ? ' (reduced)' : ''}, ${TICKS} ticks at ${WIDTH}x${HEIGHT}`);
   let last = -1;
+  const inWindow = [];
   for (let i = 1; i <= TICKS; i++) {
     if (Date.now() > deadline) throw new Error(`timed out after ${i - 1} ticks`);
-    const tick = await page.eval('window.__flashcap.step()', true);
+    const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, win: window.__flashcap.in_window, err: window.__flashcap.error || null }))', true);
+    const tick = got && got.tick;
+    if (got && got.err) throw new Error(`the page reported an error: ${got.err}`);
+    inWindow.push(got && typeof got.win === 'number' ? got.win : null);
     if (typeof tick !== 'number' || tick <= last) throw new Error(`step() returned ${tick} after ${last}: the page did not advance exactly one tick`);
     last = tick;
     const shot = await page.send('Page.captureScreenshot', { format: 'png', fromSurface: true });
     writeFileSync(join(OUT, `frame-${String(i).padStart(6, '0')}.png`), Buffer.from(shot.data, 'base64'));
   }
-  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, reduced: REDUCED, fps: 60, ticks: TICKS, width: WIDTH, height: HEIGHT, page: pageUrl }, null, 2) + '\n');
+  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, page: pageUrl }, null, 2) + '\n');
   log(`wrote ${TICKS} frames to ${OUT}; next: node tools/flash/analyse-frames.js ${OUT}`);
 } catch (e) {
   console.error(`[capture-web] FAILED: ${e.message}`);

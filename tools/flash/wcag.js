@@ -164,23 +164,23 @@ function analyse(frames, opts = {}) {
   const dr = new Detector(n, o.redDelta, Infinity);
   const lum = new Float32Array(n), red = new Float32Array(n);
   const gEv = [], rEv = [];
-  const peak = { general: 0, red: 0 };
+  const peak = { general: 0, red: 0, gAt: -1, rAt: -1 };
   for (let k = 0; k < count; k++) {
     const fr = get(k);
     if (fr.w !== f0.w || fr.h !== f0.h) throw new Error(`frame ${k} is ${fr.w}x${fr.h}, the first is ${f0.w}x${f0.h}`);
     const d = fr.data;
     for (let i = 0, p = 0; i < n; i++, p += 4) { lum[i] = relLum(d[p], d[p + 1], d[p + 2]); red[i] = redMeasure(d[p], d[p + 1], d[p + 2], o.redShare); }
     const a = dg.push(lum), b = dr.push(red);
-    peak.general = Math.max(peak.general, a.up, a.down);
-    peak.red = Math.max(peak.red, b.up, b.down);
+    if (Math.max(a.up, a.down) > peak.general) { peak.general = Math.max(a.up, a.down); peak.gAt = k; }
+    if (Math.max(b.up, b.down) > peak.red) { peak.red = Math.max(b.up, b.down); peak.rAt = k; }
     if (a.up >= areaPx || a.down >= areaPx) gEv.push({ f: k, s: a.up >= a.down ? 1 : -1, area: Math.max(a.up, a.down) });
     if (b.up >= areaPx || b.down >= areaPx) rEv.push({ f: k, s: b.up >= b.down ? 1 : -1, area: Math.max(b.up, b.down) });
   }
   const g = worstWindow(gEv, o.fps), r = worstWindow(rEv, o.fps);
   return {
     frames: count, width: f0.w, height: f0.h, fps: o.fps, areaPx, areaOfFrame: o.areaFrac,
-    general: { flashes: g.flashes, atFrame: g.atFrame, qualifyingChanges: g.changes, largestChangePx: peak.general, largestChangeOfFrame: peak.general / n },
-    red: { flashes: r.flashes, atFrame: r.atFrame, qualifyingChanges: r.changes, largestChangePx: peak.red, largestChangeOfFrame: peak.red / n },
+    general: { flashes: g.flashes, atFrame: g.atFrame, qualifyingChanges: g.changes, largestChangePx: peak.general, largestChangeOfFrame: peak.general / n, largestAtFrame: peak.gAt },
+    red: { flashes: r.flashes, atFrame: r.atFrame, qualifyingChanges: r.changes, largestChangePx: peak.red, largestChangeOfFrame: peak.red / n, largestAtFrame: peak.rAt },
     pass: g.flashes <= o.maxFlashes && r.flashes <= o.maxFlashes,
     params: o,
   };

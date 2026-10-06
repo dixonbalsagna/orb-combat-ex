@@ -259,9 +259,29 @@ func _ready_forms(S: SimState, t: int, ticks: Array) -> void:
 			f.act.formReady = true
 
 
+## Both fighters set down beside the tallest tower (900 and 840 units to its left, on the ground), so the blasts that follow are on screen: at the start the nearest
+## building is 18,000 units away, off screen for a pixel capture. Staged on the first tick, before anything is drawn.
+func _to_the_city(S: SimState) -> void:
+	var tall = null
+	for b in S.buildings:
+		if b.alive and (tall == null or b.h > tall.h):
+			tall = b
+	if tall == null:
+		return
+	for i in range(2):
+		var f = S.fighters[i]
+		f.x = SimWrap.wrap(tall.x - 900.0 + 60.0 * float(i))
+		f.y = WorldTerrain.groundY(S, f.x) + 10.0
+		f.vx = 0.0
+		f.vy = 0.0
+
+
 ## Collapses staged the way the sim makes them (a blast levels the buildings it reaches, WorldStructures.explode), a row of towers every 150 ticks, from the fighters' own
 ## neighbourhood outwards, so a collapse is on screen again and again for the whole run.
 func _stage_collapse(S: SimState, t: int) -> void:
+	if t == 0:
+		_to_the_city(S)
+		return
 	if t < 90 or (t - 90) % 150 != 0:
 		return
 	var alive: Array = []
