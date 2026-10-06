@@ -820,3 +820,5 @@ Orb's answers to the EP's three questions on it (2026-10-06):
 - What should drive the sky's colour changes: "Where you are on the planet", "The fight's mood and damage", "Time passing" (not the match's acts).
 - Should the fighter panels swap sides: "It was pretty intuitive for me, but again I wasn't looking at it on mobile. lets find a compromise, perhaps in UI options in the settings menu"
 - On phones: "Landscape only".
+
+On Art's dynamic-sky direction (keys by place, a slow drift, mood and damage; 2026-10-06): "the art direction on the sky looks great, lets keep iterating these systems." Approved to build.
