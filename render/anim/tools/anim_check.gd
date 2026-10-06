@@ -623,6 +623,10 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 	var res := {"reach": [], "nan": 0, "screen": 0, "ghosts": 0, "squash": 0.0, "lead": 0.0, "load_first": [], "load_run": 0, "err": 0.0, "frames": 0, "parts": [], "exc": [], "sides": []}
 	var hi_run: int = 0
 	var hi_max: int = 0
+	var wrist_min: float = 1.0e9
+	var hi_early: int = 0
+	var peak_y: float = -1.0e9
+	var peak_apart: float = 0.0
 	var dev_sum: float = 0.0
 	var dev_n: int = 0
 	var arm_idx: Array = []
@@ -676,7 +680,15 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 				dv += af0.q[ai].angle_to(af0._base[ai])
 			dev_sum += dv
 			dev_n += 1
+		if k >= int(contacts[0]) - 28 and k <= int(contacts[0]) - 7:
+			wrist_min = minf(wrist_min, af0.socket("hand_r").distance_to(af0.socket("hand_l")))
 		var topy: float = maxf(maxf(af0.socket("hand_r").y, af0.socket("hand_l").y), maxf(af0.socket("foot_r").y, af0.socket("foot_l").y))
+		var hy: float = maxf(af0.socket("hand_r").y, af0.socket("hand_l").y)
+		if hy > peak_y:
+			peak_y = hy
+			peak_apart = af0.socket("hand_r").distance_to(af0.socket("hand_l"))
+		if topy > 80.0 and not cset.has(k) and k < int(contacts[0]) - 6:
+			hi_early += 1
 		if topy > 80.0 and not cset.has(k):
 			hi_run += 1
 			hi_max = maxi(hi_max, hi_run)
@@ -696,6 +708,9 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 	if run > int(res.load_run):
 		res.load_run = run
 	res["hi_max"] = hi_max
+	res["wrist_gather"] = wrist_min
+	res["hi_early"] = hi_early
+	res["peak_apart"] = peak_apart
 	res["dev"] = dev_sum / maxf(1.0, float(dev_n))
 	return res
 
@@ -724,6 +739,191 @@ func _h05_chamber(pid: String) -> Array:
 		if v != null and float(v[1]) > 80.0:
 			out.append("%s is above 80 (%.0f)" % [k, float(v[1])])
 	return out
+
+
+## A real zip, in a real sim (Encounter's DirZip: docs/director/zip-z1.md), started by the director's own function on a staged pair, the AI at its easiest so nobody answers. `exit_ai` is the AI zipper's
+## exit (0 back, 1 the far side, 2 above, 3 away); `hook` is called each tick with (S, zipper, tick since the start) and may end the zip another way. Returns what the body did, tick by tick.
+func _zip_live(seed: int, heavy: bool, exit_ai: int, hook = null, ticks_after: int = 40, rival_ans: int = 0, ans_at: int = 6, level: String = "easy") -> Dictionary:
+	load("res://sim/director/ai.gd").set("level", level)
+	RenderAnim._fighters.clear()
+	main.start_match(seed, {"p1": true, "p2": true})
+	for i in range(6):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var z0 = S.fighters[0]
+	var z1 = S.fighters[1]
+	S.dirS.ex = null
+	z0.x = 500.0
+	z1.x = 500.0 + 450.0
+	for f in [z0, z1]:
+		f.y = WorldTerrain.groundY(S, f.x)
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+		f.stunTicks = 0
+		f.ki = 100.0
+	DirZip.start(S, z0, z1, heavy, S.tick)
+	DirZip._s(z0, DirZip.AI_EXIT, exit_ai)
+	if rival_ans > 0:
+		DirZip._s(z1, DirZip.AI_ANS, rival_ans)
+		DirZip._s(z1, DirZip.AI_AT, S.tick + ans_at)
+	var res := {"phases": [], "frames": 0, "drawn_in": 0, "drawn_out": 0, "gap_zip": 0, "nan": 0, "screen": 0, "reads": [], "end": "", "exit": "", "pass": "", "via": "", "tilt": 0.0, "depth": 0.0, "pos": [], "states": [], "blows": 0, "dropped_ticks": 0, "drop_seen": false, "plan": {}, "arrived_hold": 0}
+	var t_zip: int = 0
+	var after: int = 0
+	var started := false
+	var af: AnimFighter = null
+	for k in range(900):
+		main.frame(1.0 / 60.0)
+		af = RenderAnim.fighter(S, z0)
+		var r: Dictionary = DirZip.read(S, z0)
+		res.frames += 1
+		for i in range(AnimRig.N):
+			if is_nan(af.q[i].x) or is_nan(af.q[i].w):
+				res.nan += 1
+		res.screen += AnimJoints.violations(af.q, af._rd.shape_key).size()
+		if not r.is_empty():
+			started = true
+			t_zip += 1
+			if (res.phases as Array).is_empty() or String(res.phases[res.phases.size() - 1]) != String(r.phase):
+				res.phases.append(String(r.phase))
+				if res.plan.is_empty():
+					res.plan = {"tell": int(r.tell), "in": int(r["in"]), "hd": int(r.hd), "out": int(r.out), "reading": String(r.reading)}
+			res.reads.append(r)
+			if String(r.phase) == "in" and not af.zip.is_empty() and String(af.zip.phase) == "in":
+				res.drawn_in += 1
+			if String(r.phase) == "out" and not af.zip.is_empty() and String(af.zip.phase) == "out":
+				res.drawn_out += 1
+			if af.zip.is_empty():
+				res.gap_zip += 1
+				res["gap_at"] = String(r.phase) + str(int(r.n))
+			if String(r.phase) == "reach" and int(r.blow) == 0 and bool(af.zip.get("live", false)):
+				res.arrived_hold += 1
+			if int(r.blow) == 1:
+				res.blows = 1
+			res.exit = String(r.exit) if String(r.exit) != "" else res.exit
+			res["pass"] = String(r["pass"]) if String(r["pass"]) != "" else res["pass"]
+			res.via = String(r.via) if String(r.via) != "" else res.via
+			res.tilt = maxf(float(res.tilt), absf(af._zip_tilt))
+			res.depth = maxf(float(res.depth), absf(af._zip_depth))
+			if hook != null:
+				hook.call(S, z0, t_zip)
+		res.pos.append(Vector2(z0.x, z0.y))
+		res.states.append(String(z0.state))
+		if z0.state == "dropped":
+			res.dropped_ticks += 1
+			res.drop_seen = true
+		if started and r.is_empty():
+			after += 1
+			if String(res.end) == "":
+				res.end = af._zip_last_end
+			if after > ticks_after:
+				break
+	res["hash"] = str(SimHash.stateHash(S).gameplay)
+	res["af"] = af
+	RenderAnim.reduced_motion = false
+	return res
+
+
+## A hook that ends the live zip the way the director would, once the zip is in `phase_name` for 2 ticks: `why` is the end word (stopped, outrun, shot or down); down also drops him (SimFighter.drop), as a shot on the way out does.
+func _zhook(phase_name: String, why: String, drop: bool = false) -> Callable:
+	var st := {"done": false}
+	return func(S, z, t):
+		var r: Dictionary = DirZip.read(S, z)
+		if st.done or r.is_empty() or String(r.phase) != phase_name or int(r.n) < 2:
+			return
+		st.done = true
+		DirZip._end(S, z, why)
+		var vx: float = z.vx
+		var vy: float = z.vy
+		z.rush = null
+		if drop:
+			SimFighter.drop(S, z, int(DirZip.cfg().knockdownTicks), vx, vy)
+
+
+## The zip's view (docs/animation/zip.md sections 9 to 15; the EP's Z1 brief): the body from the tell to the exit on real zips of the director, every zip_end word, the drop and the three exits.
+func _test_zip_view() -> void:
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.press_styles = true
+	var ai_was = load("res://sim/director/ai.gd").get("level")
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.ground_feet = false
+	var summary: Array = []
+	# 1. the tell to the exit, a strike and a heavy, on the four exits the AI zipper holds (back, the far side, above, away)
+	var kinds: Dictionary = {}
+	for sc in [[false, 0], [false, 1], [false, 2], [false, 3], [true, 0], [true, 1]]:
+		var r: Dictionary = _zip_live(4, sc[0], sc[1])
+		var tag: String = "zip view %s exit %d" % ["heavy" if sc[0] else "strike", sc[1]]
+		var n_in: int = 0
+		var n_out: int = 0
+		for rd in r.reads:
+			n_in += 1 if String(rd.phase) == "in" else 0
+			n_out += 1 if String(rd.phase) == "out" else 0
+		_expect(r.phases == ["tell", "in", "reach", "out"], "%s: the phases are %s" % [tag, str(r.phases)])
+		_expect(int(r.nan) == 0 and int(r.screen) == 0, "%s: %d NaN, %d joint violations on screen" % [tag, int(r.nan), int(r.screen)])
+		# Legal RL-076: the way in and the way out are each drawn on at least 4 ticks, the body present on every tick of the zip (the one tick the zip starts on is the sim's own: it began before the first frame)
+		_expect(n_in >= 4 and n_out >= 4 and int(r.drawn_in) == n_in and int(r.drawn_out) == n_out, "%s: the way in is %d ticks and was drawn on %d, the way out %d and %d (4 each at least, all drawn)" % [tag, n_in, int(r.drawn_in), n_out, int(r.drawn_out)])
+		_expect(int(r.gap_zip) <= 1, "%s: the zip's layers were missing on %d ticks (at %s)" % [tag, int(r.gap_zip), str(r.get("gap_at", "-"))])
+		_expect(String(r.end) == "done" and int(r.blows) == 1, "%s: the zip ended %s with %d blows (done and 1 wanted)" % [tag, String(r.end), int(r.blows)])
+		_expect(int(r.arrived_hold) >= (11 if sc[0] else 3), "%s: the body held its arrival for %d ticks before the blow (the sim's 4 or 12 ticks after arriving)" % [tag, int(r.arrived_hold)])
+		var key: String = "%s/%s/%s" % [String(r.exit), String(r["pass"]), String(r.via)]
+		kinds["%s %d" % ["heavy" if sc[0] else "strike", sc[1]]] = {"key": key, "tilt": float(r.tilt), "depth": float(r.depth), "exit": String(r.exit), "pos": r.pos}
+		summary.append("%s %d: %s tilt %.2f depth %.0f" % ["heavy" if sc[0] else "strike", sc[1], key, float(r.tilt), float(r.depth)])
+	# 2. the three exits read apart: home goes back (a back-step), the far side goes through (a run over him, drawn in front of him), a point goes round (a run, tilted along its path)
+	var home: Dictionary = kinds["strike 0"]
+	var far: Dictionary = kinds["strike 1"]
+	var pt: Dictionary = kinds["strike 2"]
+	_expect(String(home.exit) == "home" and String(far.exit) == "far" and String(pt.exit) == "point", "zip view: the exits came out %s, %s and %s" % [String(home.exit), String(far.exit), String(pt.exit)])
+	_expect(String(home.key) != String(far.key) and String(far.key) != String(pt.key) and String(home.key) != String(pt.key) or (float(far.tilt) > float(home.tilt) + 0.1 and float(pt.tilt) > float(home.tilt) + 0.1), "zip view: the three exits do not differ in via, pass or tilt (%s, %s, %s)" % [String(home.key), String(far.key), String(pt.key)])
+	_expect(float(far.depth) >= float(AnimData.zip.get("pass_depth", {}).get("z", 24.0)) - 0.01, "zip view: a far-side pass is drawn %.1f toward the camera, not %.1f (the pass depth)" % [float(far.depth), float(AnimData.zip.get("pass_depth", {}).get("z", 24.0))])
+	_expect(float(home.depth) == 0.0 and float(home.tilt) < 0.2, "zip view: a home exit tilts %.2f and is drawn %.1f in front (a back-step is neither)" % [float(home.tilt), float(home.depth)])
+	# 3. the pass names map to entries (over, round, under), and a read's entries and pass are what the body plays
+	var fi: AnimFighter = AnimFighter.new(0)
+	fi.pair_key = "protagonist"
+	var fake := {"phase": "out", "n": 1, "len": 10, "tell": 6, "in": 7, "hd": 10, "out": 10, "reading": "speed", "btn": "x", "blow": 1, "via": "run", "pass": "", "entry_in": "", "entry_out": "", "dist_bh": 6.0, "exit": "far", "x": 0.0, "y": 0.0}
+	var want := {"over": "arc_dive", "round": "pivot", "under": "pivot"}
+	for pk in want:
+		fake["pass"] = pk
+		var zz: Dictionary = AnimZip._from_read(fi, fake, 5.0)
+		_expect(String(zz.entry_out) == String(want[pk]) and int(zz.T4) == 6 + 7 + 10 + 10 and absf(float(zz.t0) - (5.0 - float(zz.tk) / 60.0)) < 0.0001, "zip view: pass %s plays %s (wanted %s), T4 %d" % [pk, String(zz.entry_out), String(want[pk]), int(zz.T4)])
+	# 4. every zip_end word has a look
+	var rs: Dictionary = {}
+	rs["stopped"] = _zip_live(4, false, 0, _zhook("in", "stopped"))
+	rs["outrun"] = _zip_live(4, false, 0, _zhook("in", "outrun"))
+	rs["shot"] = _zip_live(4, false, 0, _zhook("in", "shot"))
+	for why in ["stopped", "outrun", "shot"]:
+		var r2: Dictionary = rs[why]
+		_expect(String(r2.end) == why and int(r2.nan) == 0 and int(r2.screen) == 0, "zip view %s: the end was %s, %d NaN, %d joint violations on screen" % [why, String(r2.end), int(r2.nan), int(r2.screen)])
+	var ov: int = int((rs["outrun"].af as AnimFighter).debug.get("overcommits", 0))
+	_expect(ov >= 1, "zip view outrun: the zipper was not carried past off balance (overcommits %d)" % ov)
+	var ov0: int = int((rs["stopped"].af as AnimFighter).debug.get("overcommits", 0))
+	_expect(ov0 == 0, "zip view stopped: the zipper was carried past (overcommits %d)" % ov0)
+	# countered: a light pressed inside the arrival's window (a strike), a heavy for a heavy; caught: the hard AI's punish after the blow
+	var cs: Dictionary = _zip_live(4, false, 0, null, 30, 3, 10)
+	_expect(String(cs.end) == "countered" and int(cs.nan) == 0 and int(cs.screen) == 0, "zip view countered: the end was %s, %d NaN, %d violations" % [String(cs.end), int(cs.nan), int(cs.screen)])
+	var ch: Dictionary = {}
+	for sd in [4, 5, 6, 7, 8, 9, 10, 11]:
+		var cr: Dictionary = _zip_live(sd, false, 0, null, 30, 0, 6, "hard")
+		if String(cr.end) == "caught":
+			ch = cr
+			break
+	_expect(not ch.is_empty() and int(ch.nan) == 0 and int(ch.screen) == 0, "zip view caught: no zip of eight seeds against the hard AI ended caught (the punish)")
+	var cf: AnimFighter = cs.af
+	# 5. a drop: shot down on the way out, falls for the sim's ticks, lands soft, recovers
+	var dn: Dictionary = _zip_live(4, false, 0, _zhook("out", "down", true), 60)
+	var daf: AnimFighter = dn.af
+	_expect(bool(dn.drop_seen) and int(dn.dropped_ticks) == int(DirZip.cfg().knockdownTicks) and int(dn.nan) == 0 and int(dn.screen) == 0, "zip view down: dropped %d ticks (the sim's %d), %d NaN, %d violations on screen" % [int(dn.dropped_ticks), int(DirZip.cfg().knockdownTicks), int(dn.nan), int(dn.screen)])
+	_expect(String(dn.end) == "down" and daf._drop.is_empty() and String(dn.states[dn.states.size() - 1]) == "free", "zip view down: end %s, the drop %s at the end, the state %s" % [String(dn.end), str(daf._drop), String(dn.states[dn.states.size() - 1])])
+	_expect(int(daf.debug.get("drops", 0)) == 1, "zip view down: %d drops seen" % int(daf.debug.get("drops", 0)))
+	# 6. a rendered run and the sim alone end in the same gameplay hash
+	RenderAnim.enabled = false
+	var off: Dictionary = _zip_live(4, true, 1)
+	RenderAnim.enabled = true
+	var on_: Dictionary = _zip_live(4, true, 1)
+	_expect(String(off.hash) == String(on_.hash), "zip view: the gameplay hash differs with the animation off (%s) and on (%s)" % [String(off.hash), String(on_.hash)])
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	load("res://sim/director/ai.gd").set("level", ai_was if ai_was != null else "medium")
+	print("zip view: %s; every end word (stopped, outrun, shot, countered, caught, down) has a look; a drop falls %d ticks and recovers; the way in and out are drawn on every tick" % [" | ".join(summary), int(DirZip.cfg().knockdownTicks)])
 
 
 func _test_flurry_tiers() -> void:
@@ -821,7 +1021,13 @@ func _test_flurry_tiers() -> void:
 		var gl: Array = []
 		for gp in ["double_palm", "cross_arm_ram", "double_hammer"]:
 			var gr: Dictionary = _tier_scene(S, who2, "super", [gp], [70], {"windup": 28}, "heavy")
-			gl.append("%s %d ticks above 80 (%s)" % [gp, int(gr.hi_max), ", ".join(_h05_chamber(("pr." if who2 == "protagonist" else "w1.") + gp + ".chamber"))])
+			gl.append("%s %d ticks above 80, wrists %.1f apart through the gather, %.1f at the peak (%s)" % [gp, int(gr.hi_max), float(gr.wrist_gather), float(gr.peak_apart), ", ".join(_h05_chamber(("pr." if who2 == "protagonist" else "w1.") + gp + ".chamber"))])
+			if gp == "double_hammer":
+				# RL-105: the hands a shoulder width (20) apart at the peak, and the peak inside the last 6 ticks
+				_expect(int(gr.hi_early) == 0 and int(gr.hi_max) <= 6 and float(gr.peak_apart) >= 20.0, "flurry tiers %s: the double hammer's peak: %d ticks above 80 before the last 6, hands %.1f apart (need none early, at least 20 apart)" % [who2, int(gr.hi_early), float(gr.peak_apart)])
+			if gp == "cross_arm_ram":
+				# RL-105: the second forearm must not meet or cross the first until the last 6 ticks before the strike: the wrists more than 7 apart through the gather
+				_expect(float(gr.wrist_gather) > 7.0, "flurry tiers %s: the crossed-arm ram's wrists come within %.1f of each other in the gather (they must stay over 7 until the last 6 ticks)" % [who2, float(gr.wrist_gather)])
 		print("flurry tiers, 28-tick gathers (%s): %s" % [who2, "; ".join(gl)])
 	RenderAnim.ground_feet = ground_was
 	RenderAnim.press_styles = styles_was
@@ -2457,6 +2663,7 @@ func _run() -> void:
 	_test_pair_live()
 	_test_press_styles()
 	_test_flurry_tiers()
+	_test_zip_view()
 	_test_riposte()
 	_test_hand_tips()
 	_test_zip()

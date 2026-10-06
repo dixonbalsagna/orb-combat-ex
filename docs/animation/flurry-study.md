@@ -67,3 +67,9 @@ A B mash is a blow every 28 ticks, so a 3-second mash is six blows and must not 
 ## 8. What the study does not show
 
 The VFX looks (hit sparks, ghosts, smear lines, the full flash of a charge): the body exposes `ghosts` and `smear` on each style, but the pictures are the body alone. A real defender's flinch is the dummy's. The camera is fixed. The hold clips show the coil but not the glint at the full charge (VFX's). The Y and B holds are staged with the beat field `windup`; the sim's real charge read (Encounter's, planned) will feed the same field.
+
+## 9. Legal RL-105 nudges (2026-10-06)
+
+- **Heave and fall.** `art/animation/review/flurry-study/legal-heave-and-fall-near.png`: a larger, labelled crop per contact (label: fighter, piece, phase, ticks to contact), the dummy drawn 60 units farther away (render only) so the attacker's body reads alone. Top two rows the Protagonist's fall (`pu.su_drive`), bottom two the rival's heave (`ru.su_ram`), ticks -4, -2, -1, 0 around the contact, then the hold. Study flags: `window.__near = 1`, `window.__offset = 60`.
+- **Double hammer.** The peak's hands are now 22 apart (chamber `hand_r/hand_l` z of 11 and -11, was 8), Legal asked 20 or more. Ticks above 80: 5 (Protagonist) and 1 (rival), none before the last 6 before the contact. `anim_check` now asserts both (none above 80 earlier than 6 ticks before the contact, peak hands 20 or more apart).
+- **Crossed-arm ram.** Measured over the 28-tick gather (ticks -28 to -7): the wrists never come nearer than 25.9 (Protagonist) and 31.0 (rival) apart, against Legal's 7. They meet only at the strike (1.2 and 7.5 at the peak). No redraw. `anim_check` asserts wrists over 7 through the gather.

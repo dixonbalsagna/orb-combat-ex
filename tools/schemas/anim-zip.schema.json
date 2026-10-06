@@ -203,9 +203,257 @@
           "description": "The entry a zip round the rival plays.",
           "type": "string",
           "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "under": {
+          "description": "The entry a zip under the rival plays (optional).",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
         }
       },
       "description": "The entries a zip past the rival plays.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "pass_depth": {
+      "type": "object",
+      "required": [
+        "z",
+        "ticks"
+      ],
+      "properties": {
+        "z": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60,
+          "description": "How far toward the camera the zipper's drawn root comes during a pass (render-only)."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "The ticks the root takes to come forward (and to go back)."
+        }
+      },
+      "description": "Optional. How the zipper is drawn in front of the rival on a close pass.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "ends": {
+      "type": "object",
+      "properties": {
+        "done": {
+          "type": "object",
+          "required": [
+            "blend"
+          ],
+          "properties": {
+            "blend": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "Ticks the last zip pose is blended away over (0 leaves it to the next layer)."
+            },
+            "overcommit": {
+              "type": "boolean",
+              "description": "Carry the zipper past, off balance, as a whiff does."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "stopped": {
+          "type": "object",
+          "required": [
+            "blend"
+          ],
+          "properties": {
+            "blend": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "Ticks the last zip pose is blended away over (0 leaves it to the next layer)."
+            },
+            "overcommit": {
+              "type": "boolean",
+              "description": "Carry the zipper past, off balance, as a whiff does."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "outrun": {
+          "type": "object",
+          "required": [
+            "blend"
+          ],
+          "properties": {
+            "blend": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "Ticks the last zip pose is blended away over (0 leaves it to the next layer)."
+            },
+            "overcommit": {
+              "type": "boolean",
+              "description": "Carry the zipper past, off balance, as a whiff does."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "countered": {
+          "type": "object",
+          "required": [
+            "blend"
+          ],
+          "properties": {
+            "blend": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "Ticks the last zip pose is blended away over (0 leaves it to the next layer)."
+            },
+            "overcommit": {
+              "type": "boolean",
+              "description": "Carry the zipper past, off balance, as a whiff does."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "caught": {
+          "type": "object",
+          "required": [
+            "blend"
+          ],
+          "properties": {
+            "blend": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "Ticks the last zip pose is blended away over (0 leaves it to the next layer)."
+            },
+            "overcommit": {
+              "type": "boolean",
+              "description": "Carry the zipper past, off balance, as a whiff does."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "shot": {
+          "type": "object",
+          "required": [
+            "blend"
+          ],
+          "properties": {
+            "blend": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "Ticks the last zip pose is blended away over (0 leaves it to the next layer)."
+            },
+            "overcommit": {
+              "type": "boolean",
+              "description": "Carry the zipper past, off balance, as a whiff does."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "down": {
+          "type": "object",
+          "required": [
+            "blend"
+          ],
+          "properties": {
+            "blend": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12,
+              "description": "Ticks the last zip pose is blended away over (0 leaves it to the next layer)."
+            },
+            "overcommit": {
+              "type": "boolean",
+              "description": "Carry the zipper past, off balance, as a whiff does."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "description": "Optional. How the body leaves a zip, by the word zip_end carries (docs/animation/zip.md section 15).",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "arrival": {
+      "type": "object",
+      "required": [
+        "settle"
+      ],
+      "properties": {
+        "settle": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the travel pose settles toward the tell pose while the zipper stands in reach."
+        }
+      },
+      "description": "Optional. The zipper's arrival in reach.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "dropped": {
+      "type": "object",
+      "required": [
+        "land_w",
+        "tech"
+      ],
+      "properties": {
+        "land_w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The weight of the soft catch when a shot-down zipper reaches the ground."
+        },
+        "tech": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The sim's word on drop_end to the pose or sequence it plays (a word with none plays as end)."
+        }
+      },
+      "description": "Optional. A zipper shot down on his way out (SimFighter.drop).",
       "additionalProperties": false,
       "patternProperties": {
         "^_": true

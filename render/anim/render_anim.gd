@@ -224,6 +224,19 @@ static func consume(S: SimState, events: Array) -> void:
 							gd[key] = gv
 					var t_ev: float = S.T - float(S.tick - int(e.tick)) * (1.0 / 60.0)   # the event's own time
 					fighter(S, S.fighters[ga]).on_ground_event(String(e.type), gd, t_ev)
+			"drop_start", "drop_land", "drop_end":
+				# a zipper shot down on his way out (SimFighter.drop): the sim's events for the fall and the recovery
+				var dr: int = int(_ev(e, "actor", -1))
+				if dr >= 0 and dr < S.fighters.size():
+					var t_dr: float = S.T - float(S.tick - int(e.tick)) * (1.0 / 60.0)
+					var dfa: AnimFighter = fighter(S, S.fighters[dr])
+					match String(e.type):
+						"drop_start":
+							dfa.on_drop_start(t_dr)
+						"drop_land":
+							dfa.on_drop_land(t_dr)
+						"drop_end":
+							dfa.on_drop_end(String(e.kind), t_dr)
 			"intro_gesture":
 				# Narrative's gesture beat (docs/narrative/dynamic-intros.md section 11): kind is the intent, text the point it is at (land_first, look_start ...), actor the fighter's slot
 				var gi: int = int(_ev(e, "actor", -1))
@@ -282,8 +295,15 @@ static func consume(S: SimState, events: Array) -> void:
 				var t_cue: float = S.T - float(S.tick - int(e.tick)) * (1.0 / 60.0)   # the event's own time, not the end of the frame's
 				if who >= 0 and who < S.fighters.size():
 					# the brawl's perfect block and reversal (press-styles.md section 12): the staggered fighter (the cue's actor) reels in place for n ticks; the blocker's riposte is announced
-					if String(e.kind) == "stagger" and (String(e.text) == "perfect_block" or String(e.text) == "reversal"):
+					var kd: String = String(e.kind)
+					if kd == "stagger" and (String(e.text) == "perfect_block" or String(e.text) == "reversal" or String(e.text) == "zip" or String(e.text) == "counter"):
 						fighter(S, S.fighters[who]).on_stagger(String(e.text), int(_ev(e, "n", 0)), t_cue)
+					elif kd == "zip_light" or kd == "zip_heavy":
+						fighter(S, S.fighters[who]).on_zip_cue(kd, int(roundf(float(_ev(e, "amount", 0.0)))), int(_ev(e, "n", 0)), float(_ev(e, "dur", 0.0)), int(roundf(float(_ev(e, "x", 0.0)))), int(roundf(float(_ev(e, "y", 0.0)))), t_cue)
+					elif kd == "zip_out":
+						fighter(S, S.fighters[who]).on_zip_out(String(e.text), float(_ev(e, "x", 0.0)), float(_ev(e, "y", 0.0)), int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue)
+					elif kd == "zip_end":
+						zip_end(S, S.fighters[who], String(e.text))
 					elif String(e.kind) == "riposte":
 						fighter(S, S.fighters[who]).on_riposte(String(e.text), int(_ev(e, "n", 0)), S.tick)
 				for i in range(S.fighters.size()):

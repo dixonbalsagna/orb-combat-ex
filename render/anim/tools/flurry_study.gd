@@ -51,6 +51,8 @@ var cam: Camera3D
 var measure: bool = false
 var sil: bool = false
 var far: bool = false
+var near: bool = false          # RL-105: a close view, the dummy drawn `offset` units farther away (render only), so one contact frame reads
+var offset: float = 0.0
 var cap: bool = false
 var only: String = ""
 var scn_i: int = 0
@@ -86,6 +88,8 @@ func _ready() -> void:
 		cap = float(_js("window.__cap || 0", 0.0)) > 0.0
 		sil = sil or float(_js("window.__sil || 0", 0.0)) > 0.0
 		far = far or float(_js("window.__far || 0", 0.0)) > 0.0
+		near = float(_js("window.__near || 0", 0.0)) > 0.0
+		offset = float(_js("window.__offset || 0", 0.0))
 		var o = _js("window.__only || ''", "")
 		if String(o) != "":
 			only = String(o)
@@ -127,10 +131,10 @@ func _build_view() -> void:
 	env.ambient_light_color = Color(0.8, 0.8, 0.85)
 	cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
-	cam.size = 380.0 if far else 118.0
+	cam.size = 380.0 if far else (112.0 if near else 118.0)
 	cam.environment = env
 	add_child(cam)
-	cam.position = Vector3(0.0, 8.0 if not far else -20.0, 300.0)
+	cam.position = Vector3(offset * 0.5 if near else 0.0, 8.0 if not far else -20.0, 300.0)
 	cam.current = true
 	for i in range(2):
 		var pv := Node3D.new()
@@ -259,11 +263,13 @@ func _step_tick() -> void:
 			# the attacker is always on the left, in his own colours: the rival's run draws him in the second body (the purple one) and the dummy in the first
 			var bi: int = i if (fighter == "protagonist" or sil) else 1 - i   # (the silhouettes keep the attacker dark in both runs)
 			pivots[bi].scale = Vector3(af.vface, 1.0, 1.0)
-			var wx: float = -DIST * 0.5 if i == 0 else DIST * 0.5
+			var wx: float = -DIST * 0.5 if i == 0 else DIST * 0.5 + offset
 			pivots[bi].position = Vector3(wx, -43.0, 0.0)
 			bodies[bi].apply(af.q, af.hips, af.curl, af.root_off)
 		var st: String = "%s %s" % [String(FIGHTERS[fighter]), String(sc.label)]
 		label.text = st if not sil else String(sc.id)
+		if near and not af0.press.is_empty():
+			label.text = "%s  %s  %s: %s, %d ticks to contact" % [String(FIGHTERS[fighter]), String(af0._part), String(af0.press.phase), String(af0.press.style), int(af0.press.ticks_to_contact)]
 		if OS.has_feature("web"):
 			JavaScriptBridge.eval("window.__scn = '%s:%s'; window.__k = %d; window.__n = %d;" % [String(sc.id), fighter, k, n_ticks], true)
 	k += 1

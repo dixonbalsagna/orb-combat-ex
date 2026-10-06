@@ -52,6 +52,16 @@ var _zh: Dictionary = {}               # held by a zip (carried, lifted): {kind,
 var _zip_tilt: float = 0.0             # the body turned along its path (rad), smoothed
 var _zip_dy: float = 0.0               # the lifted fighter's cosmetic rise (model units)
 var _zip_phase: String = ""
+var zip_cue: Dictionary = {}              # the plan the last zip_light or zip_heavy cue announced: {kind, tell, in, dur, reach_before, reach_after, T} (VFX, Camera)
+var zip_exit: Dictionary = {}             # the last zip_out cue: {kind, x, y, out, reading, T}
+var _drop: Dictionary = {}                # a drop in progress: {t0, landed}
+var _zip_end: Dictionary = {}           # the zip_end cue's word for the live zip: {reason, T}
+var _zip_last_end: String = ""         # how the last live zip ended (for VFX and the tests)
+var _zip_depth: float = 0.0            # a pass: how far toward the camera the body is drawn (model units), render only
+var _zblend: Dictionary = {}           # the carry from the last zip pose into the next pose: {t0, n, q, hips, curl}
+var _zq: Array[Quaternion] = []        # the last zip pose (solved each tick of a live zip)
+var _zh0 := Vector3.ZERO
+var _zc0 := Vector2(0.5, 0.5)
 var press_ring: Array = []             # the last solved poses while a styled blow plays, newest last: {T, q, hips, root_off}: the afterimages (press_pose)
 var press_path: Array = []             # the striking limb's tip over the same solves (model space, root_off included), newest last: {T, tip}
 var _ci_latch: Array = [Vector2.ZERO, Vector2.ZERO]   # the contact point a styled blow landed on (the first limb, the second), kept through the hold
@@ -423,7 +433,7 @@ func _lead_layer(S: SimState, f, dt: float) -> void:
 	var net: float = beta - f.rot + _lead_d
 	var gain: float = 0.0
 	var aim: float = 0.0
-	if f.state == "launched":
+	if f.state == "launched" or f.state == "dropped":
 		var v := Vector2(f.vx, f.vy)
 		var sp: float = v.length()
 		var head_first: float = atan2(-v.x, v.y)   # the spine along the velocity: (-sin a, cos a) = v
@@ -658,7 +668,7 @@ func on_deflect(T: float, S: SimState, f) -> void:
 func _energy_layer(S: SimState, f, T: float) -> void:
 	if _en_t0 < 0.0 or not AnimData.pose_exists(_en_pose):
 		return
-	if _en_t1 < 0.0 and (T - _en_t0 > 2.5 or f.state == "launched" or f.state == "down" or _en_busy(S, f)):
+	if _en_t1 < 0.0 and (T - _en_t0 > 2.5 or f.state == "launched" or f.state == "down" or f.state == "dropped" or _en_busy(S, f)):
 		_en_t1 = T
 	var wgt: float = smoothstep(0.0, _en_in, T - _en_t0)
 	if _en_t1 >= 0.0:
@@ -697,7 +707,7 @@ func _agency_layer(S: SimState, f, T: float) -> void:
 	if _ag_kind.begins_with("charge_") and _ag_t1 < 0.0:
 		var cap: float = float(cfg.get("charge", {}).get(_ag_kind.substr(7), {}).get("max_ticks", 90)) / 60.0
 		var ex = S.dirS.ex
-		if T - _ag_t0 > cap or f.state == "launched" or f.state == "down" or (ex != null and (ex.A == f or ex.D == f)):
+		if T - _ag_t0 > cap or f.state == "launched" or f.state == "down" or f.state == "dropped" or (ex != null and (ex.A == f or ex.D == f)):
 			_ag_t1 = T
 	var wgt: float = smoothstep(0.0, _ag_in, T - _ag_t0)
 	if _ag_t1 >= 0.0:
@@ -878,7 +888,7 @@ func on_cue(kind: String, T: float, t_event: float = -1.0) -> void:
 func on_stagger(text: String, n: int, T: float) -> void:
 	if not RenderAnim.step3_cues or n <= 0:
 		return
-	var id: String = "s3.stagger_blocked" if text == "perfect_block" else ("s3.stagger_countered" if text == "reversal" else "")
+	var id: String = "s3.stagger_blocked" if (text == "perfect_block" or text == "zip") else ("s3.stagger_countered" if (text == "reversal" or text == "counter") else "")
 	if id == "" or not AnimData.entries.has(id):
 		return
 	_seq = {"id": id, "t0": T, "dur": float(n) * DT, "wt": 1.0, "fit": true}
@@ -886,6 +896,53 @@ func on_stagger(text: String, n: int, T: float) -> void:
 	_stag_t0 = T
 	debug["step3"] = int(debug.get("step3", 0)) + 1
 	debug["staggers"] = int(debug.get("staggers", 0)) + 1
+
+
+## The zip's cues are edges (zip.md sections 9 and 12): the read (DirZip.read) is what the body poses from. zip_light and zip_heavy start a zip: the plan the sim announced is kept for VFX and Camera
+## (`zip_cue`), and the last end word is cleared. zip_out is the exit becoming known (6 or 10 ticks before the way out): the exit point and the ticks are kept (`zip_exit`).
+func on_zip_cue(kind: String, amount: int, n_in: int, dur: float, rx: int, ry: int, T: float) -> void:
+	_zip_end = {}
+	_zblend = {}
+	zip_cue = {"kind": "heavy" if kind == "zip_heavy" else "strike", "tell": amount, "in": n_in, "dur": dur, "reach_before": rx, "reach_after": ry, "T": T}
+
+
+func on_zip_out(text: String, x: float, y: float, n: int, k: int, T: float) -> void:
+	zip_exit = {"kind": text, "x": x, "y": y, "out": n, "reading": ["speed", "tech", "held"][clampi(k, 0, 2)], "T": T}
+
+
+## A drop (SimFighter.drop: a zipper shot down on his way out): he falls for the ticks the sim says. The body is the tumble's (the ragdoll's flail from the pose he was in, the flight lead keeping a
+## steep fall feet down, the brace before the ground) and the zip's layers are already gone (the read went empty on the same tick: the end word `down`).
+func on_drop_start(T: float) -> void:
+	_drop = {"t0": T, "landed": false}
+	_zip = {}
+	_zblend = {}
+	debug["drops"] = int(debug.get("drops", 0)) + 1
+
+
+## He reached the ground in his drop: nothing hurts. The soft catch of a tumble's landing at the data's weight (zip.json `dropped.land_w`), held until the drop ends; no slam, no crumple.
+func on_drop_land(T: float) -> void:
+	if _drop.is_empty():
+		return
+	_drop["landed"] = true
+	var w: float = float(AnimData.zip.get("dropped", {}).get("land_w", 0.35))
+	if RenderAnim.reduced_motion:
+		w *= 0.6
+	if AnimData.pose_exists("gc.hold.brace_tumble"):
+		_gc_hold_t0 = T
+		_gc_hold_t1 = -1.0
+		_gc_hold_w = w
+
+
+## The drop is over: `end` when the ticks ran out (the catch is let go, the stance takes over), or the sim's own word for a tech (a table in zip.json: `recover` plays the tech flip). A word with no entry plays as `end`.
+func on_drop_end(kind: String, T: float) -> void:
+	_drop = {}
+	if _gc_hold_t0 >= 0.0 and _gc_hold_t1 < 0.0:
+		_gc_hold_t1 = T
+	var tech: Dictionary = AnimData.zip.get("dropped", {}).get("tech", {})
+	var id: String = String(tech.get(kind, ""))
+	if id != "" and AnimData.entries.has(id):
+		_seq = {"id": id, "t0": T, "dur": float(AnimData.entries[id].dur) / 60.0, "wt": 1.0}
+		debug["gc_poses"] = int(debug.get("gc_poses", 0)) + 1
 
 
 ## The riposte cue (the blocker's counter blow is coming): kept for VFX until the blow's own beat takes over; the posing is the beat's. `n` is the contact tick: a tick number after the
@@ -1281,7 +1338,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	if RenderAnim.debug_checks:
 		layers = ("cue:" + String(_cue.get("kind", "")) + " " if not _cue.is_empty() else "") + ("rush " if _rushing else "") + ("react " if not _reacts.is_empty() else "") + ("ik " if _ci_w > 0.001 else "") + ("beam " if f.beamCharge != null else "") + (f.state + " ")
 	_lead_layer(S, f, dt)
-	if not zip.is_empty() or absf(_zip_tilt) > 0.002:
+	if not zip.is_empty() or absf(_zip_tilt) > 0.002 or _zip_depth != 0.0 or (f.rush != null and float(f.rush.arc) != 0.0):
 		AnimZip.orient(self, S, f, dt)
 	# 6b. the limb pass: elbows and knees stay hinges in human range, arms stay out of the shoulder's blind spot
 	if RenderAnim.joint_audit:
@@ -1371,7 +1428,7 @@ func _target_base(S: SimState, f, T: float) -> void:
 			w12 = sk
 		else:
 			w13 = sk
-	elif state == "launched":
+	elif state == "launched" or state == "dropped":
 		var speed: float = Vector2(f.vx, f.vy).length()
 		w1 = smoothstep(700.0, 2200.0, speed)
 		w2 = (1.0 - smoothstep(150.0, 600.0, speed)) * 0.7
@@ -1973,7 +2030,7 @@ func _gesture_layer(S: SimState, f, T: float) -> void:
 	var fade: float = 0.15
 	if u < -0.0001:
 		return
-	if u > float(g.dur) + fade or f.state == "launched" or f.state == "down" or _en_busy(S, f):
+	if u > float(g.dur) + fade or f.state == "launched" or f.state == "down" or f.state == "dropped" or _en_busy(S, f):
 		_gest = {}
 		return
 	var env: float = smoothstep(0.0, 0.1, u) * (1.0 - smoothstep(float(g.dur), float(g.dur) + fade, u)) * float(g.w) * (0.6 if RenderAnim.reduced_motion else 1.0)
@@ -2570,7 +2627,7 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
 	var al := Vector2(ao.x * c - ao.y * sn, ao.x * sn + ao.y * c)
 	var st: String = f.state
 	var sliding: bool = f.slide > 0.0
-	var flying: bool = st == "launched" and not sliding
+	var flying: bool = (st == "launched" or st == "dropped") and not sliding
 	var speed: float = vw.length()
 	if _rd_have:
 		# a slam (flight to down) folds the body; a skid starting from a flight whips it
@@ -2594,7 +2651,7 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
 	var flail: float = 0.0
 	if flying:
 		# the early launch is a flail (limbs thrown about); the body tucks only at a high spin and only after the first moments
-		free_t = 0.85
+		free_t = 0.6 if st == "dropped" else 0.85   # a drop was a shot, not a throw: looser than a stand, looser less than a launch
 		tuck = AnimRagdoll.tuck_max * smoothstep(AnimRagdoll.tuck_spin.x, AnimRagdoll.tuck_spin.y, absf(f.spin)) * smoothstep(AnimRagdoll.tuck_after.x, AnimRagdoll.tuck_after.y, f.stateT) * (0.65 + 0.35 * cos(f.rot * 0.5))
 		flail = (1.0 - smoothstep(AnimRagdoll.flail_fade.x, AnimRagdoll.flail_fade.y, f.stateT)) * (1.0 - tuck)
 		if f.vy < -200.0 and f.aimB < 0:
@@ -2689,7 +2746,7 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
 	_rd_prev_slide = sliding
 	_rd_prev_speed = speed if st == "launched" else _rd_prev_speed
 	_rd_have = true
-	var active: bool = st == "launched" or st == "down" or _rd.free > 0.02 or _rd.energy() > 0.03
+	var active: bool = st == "launched" or st == "down" or st == "dropped" or _rd.free > 0.02 or _rd.energy() > 0.03
 	if active:
 		_rd.step(dt, vl, al, free_t, amp, S.T)
 	_rd.out_w = move_toward(_rd.out_w, 1.0 if active else 0.0, dt * 8.0)
@@ -3097,7 +3154,7 @@ func _wound_read(f) -> void:
 ## Heavy breathing from the average wear (faster and deeper as it rises, the shoulders heaving, the head heavy) and a
 ## stagger from the brink (a slow irregular sway of the pelvis and a little give in the hips). Sim time only, so it replays.
 func _wear_motion(f, T: float) -> void:
-	if f.state == "launched" or f.state == "down":
+	if f.state == "launched" or f.state == "down" or f.state == "dropped":
 		return
 	var ix: Dictionary = AnimRig.index
 	var br: float = sin(T * TAU * (0.8 + 1.4 * _worn) + slot * 1.9)
@@ -3124,7 +3181,7 @@ func _wear_motion(f, T: float) -> void:
 ## part of the pelvis go to wound.leg_favour, with a dip on each step when moving). Light in the air, strong on the ground.
 func _wound_limbs(f, T: float) -> void:
 	var ix: Dictionary = AnimRig.index
-	var calm: bool = f.state != "launched" and f.state != "down"
+	var calm: bool = f.state != "launched" and f.state != "down" and f.state != "dropped"
 	if _arm_broken:
 		var lw: float = 0.92 if calm else 0.5
 		var sfx: String = "r" if _hang_right else "l"
@@ -3247,7 +3304,7 @@ func _look_tick(S: SimState, f, dt: float) -> void:
 		var opp = _opponent(S, f)
 		var t: float = 0.0
 		var st: String = f.state
-		if opp != null and st != "launched" and st != "down" and not (f.beamCharge != null):
+		if opp != null and st != "launched" and st != "down" and st != "dropped" and not (f.beamCharge != null):
 			var dxo: float = SimWrap.sdx(f.x, opp.x) * vface
 			if dxo > 10.0 and dxo < 1200.0:
 				t = clampf(atan2(opp.y - f.y, maxf(dxo, 40.0)), -0.7, 0.7) * 0.8

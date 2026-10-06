@@ -74,7 +74,7 @@ export const strikes = {
     alt: { label: 'elbows in', contact: { hand_r: [56, 64, 9], hand_l: [56, 64, -9], pole_hand_r: [-2, 0, 6], pole_hand_l: [-2, 0, -6] } },
     orig: 'both clawed palms shoved in at shoulder width, fingers up, the elbows flared wide' },
   double_hammer: { kind: 'two_hand', legal: ['wrists_apart', 'no_clasp'],
-    chamber: { lean: -4, hips: [-2, -2, 0], hand_r: [6, 98, 8], pole_hand_r: [-8, 4, 8], hand_l: [6, 98, -8], pole_hand_l: [-8, 4, -8] },
+    chamber: { lean: -4, hips: [-2, -2, 0], hand_r: [6, 98, 11], pole_hand_r: [-8, 4, 8], hand_l: [6, 98, -11], pole_hand_l: [-8, 4, -8] },   // RL-105: the hands at the peak a shoulder width apart (22 drawn; Legal asks 20)
     contact: { family: 'upright_lunge', lean: 26, hips: [16, -6, 0], spine: { lean: 16 }, head: { pitch: 18 },
       hand_r: [38, 64, 8], pole_hand_r: [-8, 14, 10], hand_l: [38, 64, -8], pole_hand_l: [-8, 14, -10], ...LUNGE, ...OPEN },
     orig: 'both forearm guards brought down side by side like a dropped bar, the hands apart and open' },

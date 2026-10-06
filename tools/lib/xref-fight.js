@@ -1449,7 +1449,15 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.entrymap\.json$/)) { const d = get(rel); if (isObj(d) && Array.isArray(d.entries)) for (const r of d.entries) if (isObj(r) && typeof r.name === 'string') entryNames.add(r.name); }
     const needEntry = (n, at) => { if (entryNames.size && typeof n === 'string' && !entryNames.has(n)) err(ZP, at, 'zip-entry', `"${n}" is the name of no entrymap row (${[...entryNames].join(', ')})`); };
     if (isObj(zip.readings)) for (const [rk, r] of Object.entries(zip.readings)) if (!rk.startsWith('_') && isObj(r)) { needEntry(r.entry_in, `/readings/${esc(rk)}/entry_in`); needEntry(r.entry_out, `/readings/${esc(rk)}/entry_out`); }
-    if (isObj(zip.pass)) { needEntry(zip.pass.over, '/pass/over'); needEntry(zip.pass.round, '/pass/round'); }
+    if (isObj(zip.pass)) { needEntry(zip.pass.over, '/pass/over'); needEntry(zip.pass.round, '/pass/round'); needEntry(zip.pass.under, '/pass/under'); }
+    if (isObj(zip.dropped) && isObj(zip.dropped.tech)) {
+      const known = new Set();
+      const mainP = get('data/anim/poses.json');
+      if (isObj(mainP) && isObj(mainP.poses)) Object.keys(mainP.poses).forEach((k) => known.add(k));
+      for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.poses\.json$/)) { const d = get(rel); if (isObj(d) && isObj(d.poses)) Object.keys(d.poses).forEach((k) => known.add(k)); }
+      for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.sequences\.json$/)) { const d = get(rel); if (isObj(d) && isObj(d.sequences)) Object.keys(d.sequences).forEach((k) => known.add(k)); }
+      if (known.size) for (const [w, id] of Object.entries(zip.dropped.tech)) if (!w.startsWith('_') && typeof id === 'string' && !known.has(id)) err(ZP, `/dropped/tech/${esc(w)}`, 'zip-dropped', `"${id}" is neither a pose nor a sequence of data/anim`);
+    }
     const def = blocks.find(([k]) => k === 'default');
     if (def) for (const [bk, blk] of blocks) if (bk !== 'default' && bk !== 'shared') for (const n of Object.keys(def[1])) if (!n.startsWith('_') && !(n in blk)) err(ZP, `/poses/${esc(bk)}`, 'zip-name', `fighter "${bk}" has no pose for "${n}", which the default block has`, 'warning');
   }

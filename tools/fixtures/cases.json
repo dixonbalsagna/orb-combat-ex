@@ -55732,14 +55732,14 @@
             "/pass": {
               "over": "dash",
               "round": "arc_dive",
-              "under": "skid"
+              "beneath": "skid"
             }
           }
         }
       ],
       "expect": {
         "rule": "additionalProperties",
-        "pointer": "/pass/under"
+        "pointer": "/pass/beneath"
       }
     },
     {
@@ -104960,6 +104960,1071 @@
         "rule": "additionalProperties",
         "pointer": "/aim/nudgeStop"
       }
+    },
+    {
+      "id": "anim-zip-pass-under-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive",
+              "under": "skid"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-without-under-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-under-shape",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive",
+              "under": "Skid"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/pass/under"
+      }
+    },
+    {
+      "id": "anim-zip-pass-under-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive",
+              "under": 5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pass/under"
+      }
+    },
+    {
+      "id": "anim-zip-pass-under-unknown",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive",
+              "under": "nowhere"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:zip-entry",
+        "pointer": "/pass/under"
+      }
+    },
+    {
+      "id": "anim-zip-pass-under-alone-is-not-enough",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "under": "skid"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pass"
+      }
+    },
+    {
+      "id": "anim-zip-pass-over-still-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "round": "arc_dive",
+              "under": "skid"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pass"
+      }
+    },
+    {
+      "id": "anim-zip-pass-round-still-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "under": "skid"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pass"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 24,
+              "ticks": 3
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-depth-fraction-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 24.5,
+              "ticks": 3
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-depth-edges-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 0,
+              "ticks": 1
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-depth-far-edges-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 60,
+              "ticks": 8
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-depth-note-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 24,
+              "ticks": 3,
+              "_why": "comment"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-pass-depth-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": 24
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pass_depth"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-z-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "ticks": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pass_depth"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-ticks-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 24
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pass_depth"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-unknown-key",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 24,
+              "ticks": 3,
+              "y": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/pass_depth/y"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-z-negative",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": -1,
+              "ticks": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/pass_depth/z"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-z-above-sixty",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 60.5,
+              "ticks": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pass_depth/z"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-z-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": "near",
+              "ticks": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pass_depth/z"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-ticks-zero",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 24,
+              "ticks": 0
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/pass_depth/ticks"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-ticks-nine",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 24,
+              "ticks": 9
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pass_depth/ticks"
+      }
+    },
+    {
+      "id": "anim-zip-pass-depth-ticks-integer",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass_depth": {
+              "z": 24,
+              "ticks": 3.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pass_depth/ticks"
+      }
+    },
+    {
+      "id": "anim-zip-ends-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": 4
+              },
+              "stopped": {
+                "blend": 4
+              },
+              "outrun": {
+                "blend": 6,
+                "overcommit": true
+              },
+              "countered": {
+                "blend": 2
+              },
+              "caught": {
+                "blend": 2
+              },
+              "shot": {
+                "blend": 2
+              },
+              "down": {
+                "blend": 0
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-ends-empty-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {}
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-ends-one-row-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": 3
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-ends-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/ends"
+      }
+    },
+    {
+      "id": "anim-zip-ends-unknown-word",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": 4
+              },
+              "lost": {
+                "blend": 4
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/ends/lost"
+      }
+    },
+    {
+      "id": "anim-zip-ends-note-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": 4
+              },
+              "_why": "a note"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-ends-row-blend-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "overcommit": true
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/ends/done"
+      }
+    },
+    {
+      "id": "anim-zip-ends-row-unknown-key",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": 4,
+                "mood": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/ends/done/mood"
+      }
+    },
+    {
+      "id": "anim-zip-ends-blend-negative",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": -1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ends/done/blend"
+      }
+    },
+    {
+      "id": "anim-zip-ends-blend-above-twelve",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": 13
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/ends/done/blend"
+      }
+    },
+    {
+      "id": "anim-zip-ends-blend-integer",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": 4.5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/ends/done/blend"
+      }
+    },
+    {
+      "id": "anim-zip-ends-blend-edges-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "done": {
+                "blend": 0
+              },
+              "stopped": {
+                "blend": 12
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-ends-overcommit-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/ends": {
+              "outrun": {
+                "blend": 6,
+                "overcommit": "yes"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/ends/outrun/overcommit"
+      }
+    },
+    {
+      "id": "anim-zip-arrival-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/arrival": {
+              "settle": 0.4
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-arrival-edges-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/arrival": {
+              "settle": 0
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-arrival-one-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/arrival": {
+              "settle": 1
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-arrival-settle-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/arrival": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/arrival"
+      }
+    },
+    {
+      "id": "anim-zip-arrival-settle-negative",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/arrival": {
+              "settle": -0.1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/arrival/settle"
+      }
+    },
+    {
+      "id": "anim-zip-arrival-settle-above-one",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/arrival": {
+              "settle": 1.1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/arrival/settle"
+      }
+    },
+    {
+      "id": "anim-zip-arrival-settle-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/arrival": {
+              "settle": "half"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/arrival/settle"
+      }
+    },
+    {
+      "id": "anim-zip-arrival-unknown-key",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/arrival": {
+              "settle": 0.4,
+              "mood": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/arrival/mood"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 0.35,
+              "tech": {
+                "recover": "gc.tech_flip",
+                "tech": "gc.tech_flip"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-dropped-empty-tech-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 0.35,
+              "tech": {}
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-dropped-land-w-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "tech": {}
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/dropped"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-tech-required",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 0.35
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/dropped"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-unknown-key",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 0.35,
+              "tech": {},
+              "mood": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/dropped/mood"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-land-w-above-one",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 1.5,
+              "tech": {}
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/dropped/land_w"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-land-w-negative",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": -0.1,
+              "tech": {}
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/dropped/land_w"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-land-w-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": "soft",
+              "tech": {}
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/dropped/land_w"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-tech-word-shape",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 0.35,
+              "tech": {
+                "Drop End": "gc.tech_flip"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/dropped/tech/Drop End"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-tech-id-shape",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 0.35,
+              "tech": {
+                "tech": "GC Tech Flip"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/dropped/tech/tech"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-tech-id-type",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 0.35,
+              "tech": {
+                "tech": 5
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/dropped/tech/tech"
+      }
+    },
+    {
+      "id": "anim-zip-dropped-tech-names-no-pose",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/dropped": {
+              "land_w": 0.35,
+              "tech": {
+                "tech": "gc.nowhere"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:zip-dropped",
+        "pointer": "/dropped/tech/tech"
+      }
+    },
+    {
+      "id": "anim-zip-pass-under-with-a-note-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/pass": {
+              "over": "dash",
+              "round": "arc_dive",
+              "under": "skid",
+              "_why": "comment"
+            }
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

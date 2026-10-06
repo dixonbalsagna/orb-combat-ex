@@ -48,7 +48,9 @@ static func start(af: AnimFighter, spec: Dictionary, T: float) -> void:
 
 ## The zip ends early (caught in reach, countered on arrival, cancelled, outrun): the body leaves it to the hit reaction or the stance.
 static func end(af: AnimFighter, reason: String, T: float) -> void:
-	if af._zip.is_empty():
+	af._zip_last_end = reason
+	af._zip_end = {"reason": reason, "T": T}   # the live zip (the read is its truth) takes its end look from this when the read goes empty
+	if af._zip.is_empty() or bool(af._zip.get("live", false)):
 		return
 	af._zip["ended"] = reason
 	af._zip["T_end"] = T
@@ -136,33 +138,132 @@ static func phase_of(z: Dictionary, tk: float) -> String:
 	return ""
 
 
+## The zip's phase from the director's own read (DirZip.read: the truth; zip.md sections 9 and 12): the plan, the live tick the phase has run, the exit and the pass once the blow has landed. `tk` is the
+## zip's own tick (the tell, the way in, the ticks in reach and the way out counted in the sim's live ticks, so a hit-stop does not move it), `t0` the sim time it would have begun at.
+static func _from_read(af: AnimFighter, r: Dictionary, T: float) -> Dictionary:
+	var z: Dictionary = af._zip if bool(af._zip.get("live", false)) else {}
+	var tell: int = int(r.tell)
+	var inn: int = int(r["in"])
+	var hd: int = int(r.hd)
+	var out: int = int(r.out)
+	var n: int = int(r.n)
+	var ph: String = String(r.phase)
+	var tk: float = float(n)
+	if ph == "in":
+		tk += float(tell)
+	elif ph == "reach":
+		tk += float(tell + inn)
+	elif ph == "out":
+		tk += float(tell + inn + hd)
+	var sim_rd: String = String(r.reading)   # the sim's reading: speed, tech or heavy (the held one)
+	var rd: String = "heavy" if String(r.btn) == "y" else ("tech" if sim_rd == "tech" else "speed")   # the body's look: a zip heavy (Y) is the coil, the stretched lunge and the smear; a zip strike is the run, or the clean dash when timed
+	var row: Dictionary = AnimData.zip.readings.get(rd, {})
+	z["live"] = true
+	z["reading"] = rd
+	z["sim_reading"] = sim_rd
+	z["btn"] = String(r.btn)
+	z["tell"] = tell
+	z["inn"] = inn
+	z["hits"] = 1
+	z["hd"] = hd
+	z["ho"] = 0
+	z["out"] = out
+	z["T1"] = tell
+	z["T2"] = tell + inn
+	z["T3"] = tell + inn + hd
+	z["T4"] = tell + inn + hd + out
+	z["tk"] = tk
+	z["t0"] = T - tk * DT
+	z["blow"] = int(r.blow)
+	z["exit"] = String(r.exit)
+	var pas: String = String(r.get("pass", ""))
+	z["pass"] = pas
+	z["entry_in"] = String(r.get("entry_in", "")) if String(r.get("entry_in", "")) != "" else String(row.get("entry_in", ""))
+	var eo: String = String(r.get("entry_out", ""))
+	if eo == "" and pas != "":
+		eo = String(AnimData.zip.get("pass", {}).get(pas, ""))
+	z["entry_out"] = eo if eo != "" else String(row.get("entry_out", ""))
+	z["via"] = String(r.via) if String(r.via) != "" else "auto"
+	z["dist_bh"] = float(r.get("dist_bh", 0.0))
+	af._zip = z
+	af._zblend = {}
+	return z
+
+
+## The read went empty: the zip is over (the way out ran out, or the cue zip_end named another end). The body does not jump to its stance: the last zip pose is blended away over the reason's ticks
+## (data/anim/zip.json `ends`), and an outrun zipper is carried past off balance (the whiff he already has).
+static func _finish(af: AnimFighter, T: float) -> void:
+	var reason: String = String(af._zip_end.get("reason", "done"))
+	var E: Dictionary = AnimData.zip.get("ends", {}).get(reason, AnimData.zip.get("ends", {}).get("done", {}))
+	var n: int = int(E.get("blend", 4))
+	af._zip = {}
+	af._zip_end = {}
+	af._zip_last_end = reason
+	if n > 0 and af._zq.size() == AnimRig.N:
+		af._zblend = {"t0": T, "n": n, "q": af._zq, "hips": af._zh0, "curl": af._zc0}
+	if bool(E.get("overcommit", false)):
+		af._over_commit(T, af._rd_amp())
+
+
+## The carry from the last zip pose into whatever the body does next (a stance, a reaction): a smoothed mix over the ticks `_finish` set.
+static func _blend_end(af: AnimFighter, T: float) -> void:
+	var b: Dictionary = af._zblend
+	if b.is_empty():
+		return
+	var k: float = (T - float(b.t0)) / (float(b.n) * DT)
+	if k >= 1.0:
+		af._zblend = {}
+		return
+	var w: float = 1.0 - smoothstep(0.0, 1.0, maxf(k, 0.0))
+	AnimPose.mix(af.q, b.q, w)
+	af.hips = af.hips.lerp(b.hips, w)
+	af.curl = af.curl.lerp(b.curl, w)
+
+
 ## The zip's layers for this solve, under the exchange's strike block (which goes over them in the reach phase).
 static func layers(af: AnimFighter, S: SimState, f, T: float, dt: float) -> void:
 	af.zip = {}
 	af._zip_dy = 0.0
+	af._zip_depth = 0.0
 	if not on():
 		af._zip = {}
 		af._zh = {}
+		af._zblend = {}
+		af._zip_end = {}
 		return
 	if not af._zh.is_empty():
 		_held_layer(af, T)
-	var z: Dictionary = af._zip
-	if z.is_empty():
+	# the read only once the zip module has sized his state (DirZip._g would size it itself: a read must not write the sim, or a rendered run would differ from the sim alone)
+	var r: Dictionary = DirZip.read(S, f) if (S != null and f != null and f.act.dirI.size() >= DirZip.END) else {}
+	var z: Dictionary
+	var tk: float
+	var ph: String
+	if not r.is_empty():
+		z = _from_read(af, r, T)
+		tk = float(z.tk)
+		ph = String(r.phase)
+	elif not af._zip.is_empty() and bool(af._zip.get("live", false)):
+		_finish(af, T)
+		_blend_end(af, T)
 		return
-	var tk: float = (T - float(z.t0)) / DT
-	var ph: String = phase_of(z, tk)
-	if z.has("ended") and T >= float(z.T_end):
-		ph = ""
-	if ph == "":
-		if tk > float(z.T4) + 8.0 or z.has("ended"):
-			af._zip = {}
-		return
+	else:
+		_blend_end(af, T)
+		z = af._zip
+		if z.is_empty():
+			return
+		tk = (T - float(z.t0)) / DT
+		ph = phase_of(z, tk)
+		if z.has("ended") and T >= float(z.T_end):
+			ph = ""
+		if ph == "":
+			if tk > float(z.T4) + 8.0 or z.has("ended"):
+				af._zip = {}
+			return
 	var rd: String = String(z.reading)
 	var row: Dictionary = AnimData.zip.readings[rd]
 	var heavy: bool = rd == "heavy" or rd == "hold"
 	var smear: bool = false
 	var travelling: bool = false
-	var pstyles: Dictionary = AnimData.press.get("styles", {})
 	match ph:
 		"tell":
 			var k: float = smoothstep(0.0, 1.0, tk / maxf(float(z.tell), 1.0))
@@ -196,6 +297,11 @@ static func layers(af: AnimFighter, S: SimState, f, T: float, dt: float) -> void
 					_mix(af, String(row.hold_pose), smoothstep(0.0, float(z.ho) * 0.6, st2))
 				else:
 					_mix(af, String(row.throw_pose), smoothstep(0.0, 3.0, st2 - float(z.ho)))
+			elif bool(z.get("live", false)) and int(z.get("blow", 0)) == 0:
+				# the blow lands 4 (a strike) or 12 (a heavy) ticks after he arrives, and the strike block's own wind-up is cut to 2 or 3: until it starts he stands in his arrival (the travel pose settled toward the tell, the stretch released)
+				var sl: float = float(AnimData.zip.get("arrival", {}).get("settle", 0.4))
+				_mix(af, String(row.tell_pose), sl * 0.9)
+				_mix(af, String(row.travel_pose), 1.0 - sl)
 		"out":
 			var v: float = clampf((tk - float(z.T3)) / maxf(float(z.out), 1.0), 0.0, 1.0)
 			af._skip_inertia = true
@@ -217,11 +323,23 @@ static func layers(af: AnimFighter, S: SimState, f, T: float, dt: float) -> void
 			else:
 				travelling = true
 				_mix(af, "run_clean" if rd == "tech" else String(AnimData.zip.readings.speed.travel_pose), w2)
+			# a pass (over, round, under the rival): the body is drawn in front of him, a render-only offset toward the camera, in and out over the data's ticks
+			if String(z.get("pass", "")) != "":
+				var PD: Dictionary = AnimData.zip.get("pass_depth", {})
+				if not PD.is_empty():
+					var tt: float = maxf(float(PD.get("ticks", 3)), 1.0)
+					var nn: float = tk - float(z.T3)
+					af._zip_depth = float(PD.get("z", 0.0)) * minf(smoothstep(0.0, tt, nn), smoothstep(0.0, tt, float(z.out) - nn))
 		"settle":
 			pass
 	af.zip = {"reading": rd, "style": rd if rd == "speed" or rd == "tech" or rd == "heavy" else ("heavy" if rd == "hold" else "speed"), "btn": String(z.btn), "phase": ph, "tick": roundi(tk), "via": String(z.get("via_now", z.via)), "ghosts": int(row.get("ghosts", 0)),
-		"smear": smear, "travelling": travelling, "ticks_to_arrival": roundi(float(z.T2) - tk), "reach_ticks": int(z.ho + z.hits * z.hd), "hits": int(z.hits), "tilt": af._zip_tilt, "bone": "hand_r"}
+		"smear": smear, "travelling": travelling, "ticks_to_arrival": roundi(float(z.T2) - tk), "reach_ticks": int(z.ho + z.hits * z.hd), "hits": int(z.hits), "tilt": af._zip_tilt, "bone": "hand_r",
+		"live": bool(z.get("live", false)), "sim_reading": String(z.get("sim_reading", rd)), "blow": int(z.get("blow", 0)), "exit": String(z.get("exit", "")), "pass": String(z.get("pass", "")), "depth": af._zip_depth}
 	af._zip_phase = ph
+	if bool(z.get("live", false)):
+		af._zq = af.q.duplicate()
+		af._zh0 = af.hips
+		af._zc0 = af.curl
 
 
 ## A pose held for the fighter a zip holds, and the lift's cosmetic rise.
@@ -244,8 +362,12 @@ static func _held_layer(af: AnimFighter, T: float) -> void:
 static func orient(af: AnimFighter, S: SimState, f, dt: float) -> void:
 	var want: float = 0.0
 	var O: Dictionary = AnimData.zip.get("orient", {})
-	if not af.zip.is_empty() and bool(af.zip.get("travelling", false)):
+	af.root_off.z += af._zip_depth
+	var bowed: bool = f != null and f.rush != null and float(f.rush.arc) != 0.0
+	if bowed or (not af.zip.is_empty() and bool(af.zip.get("travelling", false))):
 		var vm: Vector2 = af._lead_measure(S, f)
+		if bowed:
+			vm = _tangent_v(S, f)
 		if vm.length() > float(O.get("speed", 700.0)):
 			var al: float = atan2(vm.y, maxf(absf(vm.x), 1.0))
 			if vm.x * af.vface < 0.0:
@@ -258,3 +380,15 @@ static func orient(af: AnimFighter, S: SimState, f, dt: float) -> void:
 	af.q[0] = Quaternion(Vector3(0, 0, 1), phi) * af.q[0]
 	var py: float = float(AnimData.flight.get("pivot_y", 34.0))
 	af.root_off += Vector3(py * sin(phi), py * (1.0 - cos(phi)), 0.0)
+
+
+## The direction and speed of a bowed rush, from the sim's own step (SimFighter.rushU and rushAt: the render cannot disagree with the bow's shape or its sign): the path's tangent at where he is, units a second.
+static func _tangent_v(S: SimState, f) -> Vector2:
+	var u: float = SimFighter.rushU(S, f)
+	var u0: float = maxf(u - 0.05, 0.0) if u > 0.94 else u
+	var u1: float = minf(u0 + 0.05, 1.0)
+	var a: PackedFloat64Array = SimFighter.rushAt(S, f, u0)
+	var b: PackedFloat64Array = SimFighter.rushAt(S, f, u1)
+	var d := Vector2(SimWrap.sdx(a[0], b[0]), b[1] - a[1])
+	var secs: float = maxf(float(f.rush.dur) * (u1 - u0), 0.001)
+	return d / secs

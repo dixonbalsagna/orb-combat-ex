@@ -15,7 +15,14 @@
   "default": {"run_tell": "approach.launch", "run": "move.dash", "run_clean": "move.burst", "coil": "brace", "lunge": "move.burst", "back": "move.brake", "back_travel": "move.brake"},
   "shared": {"tackle": "zp.hold.tackle", "carried": "zp.hold.carried", "lift": "zp.hold.lift", "lifted": "zp.hold.lifted", "throw": "zp.hold.throw"}
  },
- "pass": {"over": "arc_dive", "round": "pivot"},
+ "pass": {"over": "arc_dive", "round": "pivot", "under": "pivot"},
+ "pass_depth": {"z": 24.0, "ticks": 3},
+ "_ends": "How the body leaves a zip (zip.md section 15), by the word zip_end carried: the last zip pose is blended away over `blend` ticks (the stance or the reaction takes over; 0 leaves it to the next layer), and `overcommit` carries an outrun zipper past, off balance, as a whiff does. done is the way out running its ticks; a caught, countered or shot zipper is left to the damage events; down is the drop (the fall is the tumble's).",
+ "ends": {"done": {"blend": 4}, "stopped": {"blend": 4}, "outrun": {"blend": 6, "overcommit": true}, "countered": {"blend": 2}, "caught": {"blend": 2}, "shot": {"blend": 2}, "down": {"blend": 0}},
+ "_arrival": "In reach, until the strike block's own cut wind-up starts, the zipper stands in his arrival: the travel pose settled toward the tell pose by `settle`, the stretch released.",
+ "arrival": {"settle": 0.4},
+ "_dropped": "A zipper shot down on his way out (SimFighter.drop: state dropped; zip.md section 10). The fall is the tumble's body. land_w is the weight of the soft catch (gc.hold.brace_tumble) when he reaches the ground (nothing hurts), held until the drop ends; tech maps the sim's word on drop_end to an entry (a word with none plays as end).",
+ "dropped": {"land_w": 0.35, "tech": {"recover": "gc.tech_flip", "tech": "gc.tech_flip"}},
  "orient": {"max": 1.2, "rate": 18.0, "speed": 700.0, "gain": 0.85},
  "carry": 26.0
 }
