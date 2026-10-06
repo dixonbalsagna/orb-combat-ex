@@ -188,3 +188,36 @@ Pooled, the arms took 50 of 92 limb breaks, 54%.
 
 **Checks** (`parity.gd`): "the second breath waits for quiet" (what restarts the wait and what does not, and the director's line), and two rows in the wired-numbers check for the two rates.
 
+
+## 7. The third weight and a named region (2026-10-06, on 2dc8a663)
+
+Game Design's table is `docs/design/brawl-second-pass.md` section 2, "What the core decides by strength". The core now carries three weights for a blow: light, medium and heavy. **A blow's weight is the exchange's kind as the blow lands** (`ex.kind`; the brawl sets it for each press). The new heavy keeps the heavy's column. Every medium figure is a first value, and none has been run: nothing sends a medium yet.
+
+| What the core decides | Light | Medium | Heavy | Where it lives |
+| :--- | :--- | :--- | :--- | :--- |
+| Wound pick (head, core, arms, legs) | 12, 4, 10, 6 | 8, 8, 7, 9 | 1, 3, 1, 3 | `wounds.json` `family.light`, `family.medium`, `family.heavy` |
+| On a block | half to the arms, to the cap; nothing to the legs | as a light | 0.7 to the arms, 0.3 to the legs | `block.streamArmShare`, `block.armWearCap`, `guardWearSplit` |
+| Staggers a fighter whose head is battered | no | no | yes | code: the event's kind is heavy |
+| Marks a battered limb for the crippling roll | no | no | yes | `cripple.blows` |
+| Thrown with a broken arm | x1.15 | x1.0 | x0.8 | `penalties.armsBrokenLightMul`, `armsBrokenMediumMul`, `armsBrokenMul` |
+| Mood, in a brawl | `brawlLight` 13 | `brawlMedium` 40 | `brawlHeavy` 120 | `mood.json` `impulses` |
+
+- The broken-arm multiplier is for the exchange's attacker (`ex.A`), as it was. A blow by the exchange's defender takes none.
+- A medium's short reel is the director's. The core gives a medium no stagger.
+- Outside a brawl a medium feeds the mood as `strike`.
+- The damage event's `kind` is `medium` (`fx-events.md`).
+- The style label still counts a medium with the lights. That is open with the EP.
+
+**A hit that is not a blow can name a weight for the mood.** The option `form` on `SimDamage.hit` takes `brawl_light`, `brawl_medium` or `brawl_heavy`, and the mood adds that impulse whatever the event's kind. A point-blank shot goes through the blast's own hit, with no exchange passed, and names its weight there: a bolt as a light, a blast as a medium. Blocked, the named weight is dropped and the hit feeds the mood nothing, as a blocked blow does. Its wear is the blocked shot's (section 5).
+
+**A blow can name where it lands.** The option `region` on `SimDamage.hit` takes `head`, `core`, `arms` or `legs`.
+
+- Landed, the blow wears that region and the event names it. No region is drawn, so the seeded stream does not move.
+- Blocked, the name is ignored: the block's rule decides.
+- A name that is not a region is ignored, and the region is drawn as usual.
+
+**Data.** `family.medium` (four numbers, 0 or more) and `penalties.armsBrokenMediumMul` (above 0) in both fighters' `wounds.json`; `impulses.brawlMedium` (an integer, 0 or more) in `mood.json`. The three form words are not data. Tools' schema script is `docs/tools/pending/apply-core-medium.cjs`.
+
+**Neutral.** The goldens were regenerated on a clean export. Every match, replay and checkpoint is identical. Only the roster hash and the fight data hash moved, for the new keys.
+
+**Checks** (`parity.gd`): "a medium blow, rule by rule" (a case for each row above, beside a light and a heavy, and a blocked point-blank shot), "a blow that names its region" (each region, no draw, a blocked blow, a name that is no region), and the medium's and the named weights' rows in "the mood by a blow's form".

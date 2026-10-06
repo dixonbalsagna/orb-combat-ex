@@ -18,6 +18,7 @@
     "taunt": 180,
     "landmarkFall": 600,
     "brawlLight": 20,
+    "brawlMedium": 40,
     "blocked": 0,
     "skillStrike": 90,
     "brawlHeavy": 120,

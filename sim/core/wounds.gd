@@ -56,7 +56,7 @@ static func family(ex, D, o: Dictionary, stance: float = -1.0) -> String:
 		return "spread"
 	if ex.kind == "sig":
 		return "spread"
-	return "heavy" if ex.kind == "heavy" else "light"
+	return "heavy" if ex.kind == "heavy" else ("medium" if ex.kind == "medium" else "light")
 
 
 static func stageOf(w: int, at: Array = STAGE_AT) -> int:

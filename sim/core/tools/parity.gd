@@ -61,6 +61,8 @@ func _init() -> void:
 	check("the mood by a blow's form", _moodForms())
 	check("the free-flight speed and the locked damping, as reads", _flightReads())
 	check("the stick as held, through a stun", _heldStick())
+	check("a medium blow, rule by rule", _mediumWeight())
+	check("a blow that names its region", _namedRegion())
 	check("depth in the core", _depth())
 	check("the intro phase", _intro())
 	check("composed intros", _introComposed())
@@ -2472,6 +2474,183 @@ func _blockedShots() -> String:
 	return ""
 
 
+## The third weight (brawl-second-pass.md section 2): what the core decides for a medium blow, beside a light and a
+## heavy. Where it lands is its own row (family.medium). On a block it wears as a light. It does not stagger and cannot
+## cripple a battered limb. Thrown with a broken arm it has its own multiplier. The event's kind is medium. The weight is
+## the exchange's kind when the blow lands (the brawl sets it for each press).
+func _mediumWeight() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+	var a = S.fighters[0]
+	var d = S.fighters[1]
+	var wd = d.wd
+	var A: int = SimWounds.ARMS
+	var L: int = SimWounds.LEGS
+	if not wd.family.has("medium") or wd.family.medium.size() != 4:
+		return "the wounds data has no family.medium row"
+	var reset := func() -> void:
+		for f in [a, d]:
+			for r in range(4):
+				f.wear[r] = 0
+			SimWounds.updateStages(S, f)
+			f.stunTicks = 0
+			f.limbBreaks = 0
+			f.state = "free"
+			f.stance = 0.0
+		S.out.fx.clear()
+	var mk := func(kind: String, guard: bool):
+		var ex = DirExchange.newEx(a, d, kind)
+		ex.tpl = "brawl"
+		ex.sA = 0.0
+		ex.sD = 1.0 if guard else 0.0
+		d.stance = ex.sD
+		return ex
+	var last := func():
+		var e = null
+		for q in S.out.fx:
+			if q.type == "damage":
+				e = q
+		return e
+	# where it lands: its own row
+	reset.call()
+	var sum: float = 0.0
+	for x in wd.family.medium:
+		sum += x
+	var counts: Array = [0, 0, 0, 0]
+	for n in range(3200):
+		counts[SimWounds.pickRegion(S, d, "medium")] += 1
+	for r in range(4):
+		if absf(float(counts[r]) / 3200.0 - wd.family.medium[r] / sum) > 0.04:
+			return "a medium picked the %s %d times in 3200, and its row says %s in %s" % [SimWounds.REGIONS[r], counts[r], str(wd.family.medium[r]), str(sum)]
+	for kind in ["light", "medium", "heavy"]:
+		# landed: the family and the event's kind
+		reset.call()
+		var ex = mk.call(kind, false)
+		if SimWounds.family(ex, d, {}, ex.sD) != kind:
+			return "a landed %s takes the wound family %s" % [kind, SimWounds.family(ex, d, {}, ex.sD)]
+		var dealt: float = SimDamage.hit(S, ex, a, d, 10.0, {})
+		var e = last.call()
+		if dealt <= 0.0 or e == null or e.kind != kind or e.mode != "brawl":
+			return "a landed %s sent a damage event of kind %s" % [kind, "none" if e == null else e.kind]
+		# a battered head: only a heavy staggers (a medium's short reel is the director's)
+		reset.call()
+		d.wear[SimWounds.HEAD] = wd.stageAt[1] + 6000
+		SimWounds.updateStages(S, d)
+		d.stunTicks = 0
+		ex = mk.call(kind, false)
+		SimDamage.hit(S, ex, a, d, 10.0, {"region": "core"})
+		if not SimWounds.battered(d, SimWounds.HEAD) or (d.stunTicks > 0) != (kind == "heavy"):
+			return "a landed %s on a fighter with a battered head left a stagger of %d ticks" % [kind, d.stunTicks]
+		# blocked: a medium wears as a light (its share to the arms, nothing to the legs); a heavy splits
+		reset.call()
+		ex = mk.call(kind, true)
+		var k: float = SimWounds.wearK(S, d)
+		dealt = SimDamage.hit(S, ex, a, d, 10.0, {})
+		var asLight: bool = kind != "heavy"
+		var wantA: int = int(SimMathx.jround(dealt * (wd.blockArmShare if asLight else wd.guardArms) * k))
+		var wantL: int = 0 if asLight else int(SimMathx.jround(dealt * wd.guardLegs * k))
+		e = last.call()
+		if e == null or e.kind != "guard" or wantA <= 0 or d.wear[A] != wantA or d.wear[L] != wantL:
+			return "a blocked %s wore the arms %d (expected %d) and the legs %d (expected %d)" % [kind, d.wear[A], wantA, d.wear[L], wantL]
+		# a battered arm: only a heavy marks it for the crippling roll
+		reset.call()
+		d.wear[A] = wd.stageAt[1] + 6000
+		SimWounds.updateStages(S, d)
+		ex = mk.call(kind, false)
+		SimWounds.onExchangeStart(S, ex)
+		SimDamage.hit(S, ex, a, d, 10.0, {"region": "arms"})
+		if d.stage[A] != 2 or (ex.cripR == A) != (kind == "heavy"):
+			return "a %s on a battered arm left the crippling mark at %d" % [kind, ex.cripR]
+		# thrown with a broken arm: each weight's own multiplier
+		reset.call()
+		ex = mk.call(kind, false)
+		var whole: float = SimDamage.hit(S, ex, a, d, 10.0, {"region": "core"})
+		reset.call()
+		a.wear[A] = a.wd.stageAt[2]
+		SimWounds.updateStages(S, a)
+		ex = mk.call(kind, false)
+		var broken: float = SimDamage.hit(S, ex, a, d, 10.0, {"region": "core"})
+		var mul: float = a.wd.armsBrokenMul if kind == "heavy" else (a.wd.armsBrokenMediumMul if kind == "medium" else a.wd.armsBrokenLightMul)
+		if not SimWounds.broken(a, A) or whole <= 0.0 or absf(broken - whole * mul) > 0.000000001 * whole:
+			return "a %s thrown with a broken arm did %s against %s whole, and its multiplier is %s" % [kind, str(broken), str(whole), str(mul)]
+		# the medium's multiplier is its own key: moved for one blow, only a medium follows it
+		var keep: float = a.wd.armsBrokenMediumMul
+		a.wd.armsBrokenMediumMul = 0.5
+		ex = mk.call(kind, false)
+		var moved: float = SimDamage.hit(S, ex, a, d, 10.0, {"region": "core"})
+		a.wd.armsBrokenMediumMul = keep
+		if absf(moved - whole * (0.5 if kind == "medium" else mul)) > 0.000000001 * whole:
+			return "with the medium's broken-arm multiplier at 0.5, a %s did %s against %s whole" % [kind, str(moved), str(whole)]
+	# a blocked hit loses a weight named on its form: it feeds the mood nothing
+	reset.call()
+	d.stance = 1.0
+	SimDamage.hit(S, null, a, d, 10.0, {"kind": "blast", "shot": 1.0, "form": "brawl_light"})
+	var be = last.call()
+	if be == null or be.kind != "blast" or be.mode != "":
+		return "a blocked point-blank shot kept its form (%s)" % ("none" if be == null else be.mode)
+	d.stance = 0.0
+	SimDamage.hit(S, null, a, d, 10.0, {"kind": "blast", "shot": 1.0, "form": "brawl_light"})
+	be = last.call()
+	if be == null or be.kind != "blast" or be.mode != "brawl_light":
+		return "a landed point-blank shot lost its form"
+	SimCore.dispose(S)
+	return ""
+
+
+## A blow that names its region (the option region on SimDamage.hit): a landed blow wears that region and no other, its
+## event names it, and no region is drawn (the seeded stream does not move). A blocked blow ignores the name: the block's
+## rule decides. A name that is not a region is drawn as usual.
+func _namedRegion() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+	var a = S.fighters[0]
+	var d = S.fighters[1]
+	var reset := func() -> void:
+		for r in range(4):
+			d.wear[r] = 0
+		SimWounds.updateStages(S, d)
+		d.stunTicks = 0
+		d.state = "free"
+		S.out.fx.clear()
+	var last := func():
+		var e = null
+		for q in S.out.fx:
+			if q.type == "damage":
+				e = q
+		return e
+	for r in range(4):
+		reset.call()
+		d.stance = 0.0
+		var rng0: int = S.rng.state_i32()
+		var k: float = SimWounds.wearK(S, d)
+		var dealt: float = SimDamage.hit(S, null, a, d, 10.0, {"region": SimWounds.REGIONS[r], "ignoreStance": true})
+		var e = last.call()
+		var want: int = int(SimMathx.jround(dealt * k))
+		for q in range(4):
+			if want <= 0 or d.wear[q] != (want if q == r else 0):
+				return "a blow naming the %s wore the %s by %d" % [SimWounds.REGIONS[r], SimWounds.REGIONS[q], d.wear[q]]
+		if e == null or e.region != SimWounds.REGIONS[r] or S.rng.state_i32() != rng0:
+			return "a blow naming the %s reported %s, or drew a region" % [SimWounds.REGIONS[r], "nothing" if e == null else e.region]
+	# with no name, and with a name that is not a region, the region is drawn
+	for o in [{"ignoreStance": true}, {"region": "tail", "ignoreStance": true}]:
+		reset.call()
+		var rng1: int = S.rng.state_i32()
+		var k2: float = SimWounds.wearK(S, d)
+		var dealt2: float = SimDamage.hit(S, null, a, d, 10.0, o)
+		var e2 = last.call()
+		if S.rng.state_i32() == rng1 or e2 == null or not SimWounds.REGIONS.has(e2.region) or d.wear[0] + d.wear[1] + d.wear[2] + d.wear[3] != int(SimMathx.jround(dealt2 * k2)):
+			return "a blow with %s did not draw its region" % ("no name" if not o.has("region") else "a name that is no region")
+	# blocked: the name is ignored
+	reset.call()
+	d.stance = 1.0
+	SimDamage.hit(S, null, a, d, 10.0, {"region": "head"})
+	var eb = last.call()
+	if eb == null or eb.kind != "guard" or eb.region != "arms" or d.wear[SimWounds.HEAD] != 0 or d.wear[SimWounds.ARMS] <= 0:
+		return "a blocked blow naming the head reported %s and wore the head %d" % ["nothing" if eb == null else eb.region, d.wear[SimWounds.HEAD]]
+	SimCore.dispose(S)
+	return ""
+
+
 ## The stick as held (f.heldMx, f.heldMy): what the player holds this tick, recorded before the stun's gate. A stunned
 ## fighter's intent loses its stick, as before, and he does not move by it; the record keeps it, and it is in the hash.
 ## A launched or a dropped fighter's record is blank: nobody steers a knock-back.
@@ -2580,7 +2759,7 @@ func _moodForms() -> String:
 	var a = S.fighters[0]
 	var b = S.fighters[1]
 	var I: Dictionary = SimMood.imp
-	for key in ["brawlLight", "blocked", "skillStrike", "brawlHeavy", "flurryClose", "guardBreak", "knockback"]:
+	for key in ["brawlLight", "brawlMedium", "blocked", "skillStrike", "brawlHeavy", "flurryClose", "guardBreak", "knockback"]:
 		if not I.has(key):
 			return "mood.json impulses." + key + " is not loaded"
 	if I.brawlLight[0] <= 0 or I.brawlLight[0] >= I.strike[0] or I.brawlHeavy[0] >= I.heavyStrike[0] or I.blocked[0] != 0:
@@ -2608,6 +2787,11 @@ func _moodForms() -> String:
 		var cases: Array = [
 			["brawlLight", func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", true, "brawl")],
 			["brawlHeavy", func(): SimFx.damage(S, b, a, 5.0, "core", "heavy", "", true, "brawl")],
+			["brawlMedium", func(): SimFx.damage(S, b, a, 5.0, "core", "medium", "", true, "brawl")],
+			["strike", func(): SimFx.damage(S, b, a, 5.0, "core", "medium", "", true)],   # a medium outside a brawl is a strike
+			["brawlLight", func(): SimFx.damage(S, b, a, 5.0, "core", "blast", "", true, "brawl_light")],    # a weight named on the form:
+			["brawlMedium", func(): SimFx.damage(S, b, a, 5.0, "core", "blast", "", true, "brawl_medium")],   # a point-blank shot
+			["brawlHeavy", func(): SimFx.damage(S, b, a, 5.0, "core", "blast", "", true, "brawl_heavy")],
 			["skillStrike", func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", true, "skill")],
 			["strike", func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", true)],
 			["heavyStrike", func(): SimFx.damage(S, b, a, 5.0, "core", "heavy", "", true)],
@@ -2623,6 +2807,9 @@ func _moodForms() -> String:
 		# the director's double hit is the clash's units, whoever sends it and whatever his stance
 		if gain.call(func(): cue.call("double_hit", "")) != I.clash[0]:
 			return "the double hit's cue did not add the clash's %d" % I.clash[0]
+		# a shot with no weight named, and a form the mood does not know, feed nothing
+		if gain.call(func(): SimFx.damage(S, b, a, 5.0, "core", "blast", "", true)) != 0 or gain.call(func(): SimFx.damage(S, b, a, 5.0, "core", "blast", "", true, "brawl_huge")) != 0:
+			return "a shot with no weight named fed the mood"
 		# a knock-back with no attacker (the double hit throws both back) is nobody's blow and adds nothing
 		if gain.call(func(): SimFx.knockback(S, b, null, "short", 300.0, S.tick + 12)) != 0:
 			return "a knock-back with no attacker fed the mood"

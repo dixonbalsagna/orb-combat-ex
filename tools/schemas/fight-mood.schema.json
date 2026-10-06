@@ -48,6 +48,7 @@
         "taunt",
         "landmarkFall",
         "brawlLight",
+        "brawlMedium",
         "blocked",
         "skillStrike",
         "brawlHeavy",
@@ -112,6 +113,11 @@
         "brawlLight": {
           "type": "integer",
           "minimum": 0
+        },
+        "brawlMedium": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The mood a landed medium blow of a brawl feeds (brawlLight is the light one, brawlHeavy the heavy one)."
         },
         "blocked": {
           "type": "integer",

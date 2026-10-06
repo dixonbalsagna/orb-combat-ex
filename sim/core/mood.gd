@@ -14,6 +14,7 @@ const MOOD_PATH: String = "res://data/fight/mood.json"
 const STYLE_PATH: String = "res://data/fight/style.json"
 const BANDS: Array = ["calm", "tense", "frenzied"]
 const LABELS: Array = ["turtle", "rusher", "runner", "charger", "sniper", "mixer"]   # label index -> name
+const BRAWL_FORMS: Dictionary = {"brawl_light": "brawlLight", "brawl_medium": "brawlMedium", "brawl_heavy": "brawlHeavy"}   # a weight named on a hit's form -> its impulse
 const CAUSES: Array = ["regionBreak", "form", "limbBattered", "coreBruised", "coreBattered"]   # act beats (act_change kind)
 const ONCE: Array = ["limbBattered", "coreBruised", "coreBattered"]                       # S.mood.onceMask bits
 ## Style measures, by index into the per-second counters.
@@ -115,7 +116,7 @@ static func _loadMood(j: Dictionary) -> void:
 	imp = {}
 	var ij: Dictionary = j.get("impulses", {})
 	for k in ["strike", "heavyStrike", "chainLink", "parry", "clash", "beamLands", "regionBroken", "buildingLaunch", "buildingChain", "form", "finisherStart", "taunt", "landmarkFall",
-			"brawlLight", "blocked", "skillStrike", "brawlHeavy", "flurryClose", "guardBreak", "knockback"]:
+			"brawlLight", "brawlMedium", "blocked", "skillStrike", "brawlHeavy", "flurryClose", "guardBreak", "knockback"]:
 		var u: int = _int("mood.impulses." + k, ij.get(k))
 		imp[k] = [u, int(floor(float(u * num) / float(den)))]
 	for k in ij:
@@ -336,9 +337,14 @@ static func tick(S: SimState) -> void:
 			"damage":
 				# A blow feeds the mood by its form (melee-press-feel.md section 9d, ruling 2): a brawl's blows come six a
 				# second and are worth a fraction of a planned exchange's strike; a blocked blow has its own (0).
-				if e.number and (e.kind == "light" or e.kind == "heavy"):
+				# A blow's weight is the event's kind: light, medium or heavy. The director may instead name the weight on
+				# the form (brawl_light, brawl_medium, brawl_heavy) for a hit of another kind: a point-blank shot is a blast
+				# and feeds as a brawl's light or medium (brawl-second-pass.md section 2).
+				if e.number and BRAWL_FORMS.has(e.mode):
+					add += _imp(fs, BRAWL_FORMS[e.mode], int(e.attacker))
+				elif e.number and (e.kind == "light" or e.kind == "medium" or e.kind == "heavy"):
 					if e.mode == "brawl":
-						add += _imp(fs, "brawlHeavy" if e.kind == "heavy" else "brawlLight", int(e.attacker))
+						add += _imp(fs, "brawlHeavy" if e.kind == "heavy" else ("brawlMedium" if e.kind == "medium" else "brawlLight"), int(e.attacker))
 					elif e.mode == "skill":
 						add += _imp(fs, "skillStrike", int(e.attacker))
 					else:

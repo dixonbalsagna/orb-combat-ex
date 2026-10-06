@@ -119831,6 +119831,351 @@
         "rule": "xref:reach-keyset",
         "pointer": "/cover/zz.nowhere"
       }
+    },
+    {
+      "id": "wounds-medium-family-valid",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/family/medium": [
+              8,
+              8,
+              7,
+              9
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-medium-family-zeros-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/family/medium": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-medium-family-required",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "del": [
+            "/family/medium"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/family"
+      }
+    },
+    {
+      "id": "wounds-medium-family-length",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/family/medium": [
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/family/medium"
+      }
+    },
+    {
+      "id": "wounds-medium-family-five-weights",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/family/medium": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/family/medium"
+      }
+    },
+    {
+      "id": "wounds-medium-family-negative",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/family/medium": [
+              8,
+              -1,
+              7,
+              9
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/family/medium/1"
+      }
+    },
+    {
+      "id": "wounds-medium-family-item-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/family/medium": [
+              8,
+              8,
+              "seven",
+              9
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/family/medium/2"
+      }
+    },
+    {
+      "id": "wounds-medium-family-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/family/medium": 8
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/family/medium"
+      }
+    },
+    {
+      "id": "wounds-medium-mul-valid",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/penalties/armsBrokenMediumMul": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-medium-mul-below-one-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/penalties/armsBrokenMediumMul": 0.5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-medium-mul-above-one-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/penalties/armsBrokenMediumMul": 1.3
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "wounds-medium-mul-required",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "del": [
+            "/penalties/armsBrokenMediumMul"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/penalties"
+      }
+    },
+    {
+      "id": "wounds-medium-mul-zero",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/penalties/armsBrokenMediumMul": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/penalties/armsBrokenMediumMul"
+      }
+    },
+    {
+      "id": "wounds-medium-mul-negative",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/penalties/armsBrokenMediumMul": -0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/penalties/armsBrokenMediumMul"
+      }
+    },
+    {
+      "id": "wounds-medium-mul-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "set": {
+            "/penalties/armsBrokenMediumMul": "1.0"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/penalties/armsBrokenMediumMul"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlMedium-valid",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlMedium": 40
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "mood-impulse-brawlMedium-zero-ok",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlMedium": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "mood-impulse-brawlMedium-required",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "del": [
+            "/impulses/brawlMedium"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/impulses"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlMedium-negative",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlMedium": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/impulses/brawlMedium"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlMedium-integer",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlMedium": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/brawlMedium"
+      }
+    },
+    {
+      "id": "mood-impulse-brawlMedium-type",
+      "schema": "fight-mood.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/mood.json",
+          "set": {
+            "/impulses/brawlMedium": "forty"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/impulses/brawlMedium"
+      }
     }
   ],
   "text": [

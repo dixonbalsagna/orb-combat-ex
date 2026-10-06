@@ -16,14 +16,16 @@ static func jor(v: float, d: float) -> float:
 ## landing or collision: spread over the body, kind "impact", no damage number.
 ## Returns the region the damage wore, or -1.
 ## form: what kind of blow it was, for the mood (brawl, skill, or empty). block: what was blocked, for a guard hit's wear
-## (SimWounds.BLOCK_HEAVY and the rest).
-static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: String = "impact", col: String = "", number: bool = false, form: String = "", block: int = 0) -> int:
+## (SimWounds.BLOCK_HEAVY and the rest). named: the region a landed blow names (0 to 3), or -1 to draw it by the family.
+static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: String = "impact", col: String = "", number: bool = false, form: String = "", block: int = 0, named: int = -1) -> int:
 	# Since S2 hp is a readout only (the HUD bar): it floors at 0, and wounds and finishers decide the match.
 	f.hp = f.hp - amt if SimWounds.HP_ENDS_MATCH else SimMathx.jmax(0.0, f.hp - amt)
 	f.hurtT = S.T
 	if number:   # a hit (a blow or a shot, landed or blocked; not a landing or a collision): his second breath waits again
 		f.breathT = S.T
-	var region: int = SimWounds.pickRegion(S, f, fam) if amt > 0.0 else -1
+	var region: int = -1
+	if amt > 0.0:
+		region = named if (named >= 0 and named < 4 and fam != "guard") else SimWounds.pickRegion(S, f, fam)
 	SimFx.damage(S, f, by, amt, SimWounds.REGIONS[region] if region >= 0 else "", kind, col, number, form)
 	if region >= 0:
 		if fam == "guard":
@@ -58,6 +60,9 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	# Pitch A: a broken arm turns feral, so its lights hit harder.
 	if ex != null and A == ex.A and ex.kind == "light" and SimWounds.broken(A, SimWounds.ARMS):
 		m *= A.wd.armsBrokenLightMul
+	# The third weight (brawl-second-pass.md section 2): a medium thrown with a broken arm has its own multiplier.
+	if ex != null and A == ex.A and ex.kind == "medium" and SimWounds.broken(A, SimWounds.ARMS):
+		m *= A.wd.armsBrokenMediumMul
 	# S3b (R8): inside an exchange the stances are the ones frozen at requestAttack; outside, the live stance.
 	var dStance: float = D.stance
 	if ex != null and (D == ex.D or D == ex.A):
@@ -85,18 +90,25 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	S.dirS.stop = SimMathx.jmax(S.dirS.stop, jor(o.get("stop", 0.0), 0.05))
 	SimFx.shake(S, jor(o.get("shake", 0.0), 6.0), D.x, D.z)
 	var fam: String = SimWounds.family(ex, D, o, dStance)
-	var kind: String = o.get("kind", "") if o.get("kind", "") != "" else ("guard" if fam == "guard" else ("beam" if ex != null and ex.kind == "sig" else ("heavy" if ex != null and ex.kind == "heavy" else "light")))
-	# The blow's form, for the mood: the director may name it (o.form: skill, from brawl B2); a blow of a brawl is brawl.
+	var kind: String = o.get("kind", "") if o.get("kind", "") != "" else ("guard" if fam == "guard" else ("beam" if ex != null and ex.kind == "sig" else ("heavy" if ex != null and ex.kind == "heavy" else ("medium" if ex != null and ex.kind == "medium" else "light"))))
+	# The blow's form, for the mood: the director may name it (o.form: skill; brawl_light, brawl_medium or brawl_heavy
+	# for a hit that is not a blow, such as a point-blank shot); a blow of a brawl is brawl. A blocked hit loses a named
+	# weight: on a guard it feeds the mood nothing, as a blocked blow does.
 	var form: String = String(o.get("form", "brawl" if (ex != null and ex.tpl == "brawl") else ""))
+	if fam == "guard" and form.begins_with("brawl_"):
+		form = ""
 	# What was blocked, for the wear: a shot (kind blast) by its power, which the director's blast rules pass as o.shot
 	# (a shot with none is taken as a heavy one); a blow by its exchange's kind.
 	var block: int = SimWounds.BLOCK_HEAVY
 	if kind == "blast":
 		var sp = o.get("shot")
 		block = SimWounds.BLOCK_SHOT if ((sp is float or sp is int) and float(sp) < SimWounds.SHOT_HEAVY) else SimWounds.BLOCK_SHOT_HEAVY
-	elif ex != null and ex.kind == "light":
+	elif ex != null and (ex.kind == "light" or ex.kind == "medium"):   # a blocked medium is worn as a blocked light
 		block = SimWounds.BLOCK_LIGHT
-	var region: int = hurt(S, D, dd, A, fam, kind, "#ffd45a" if o.get("ignoreStance", false) else "#ffffff", true, form, block)
+	# A blow may name where it lands (o.region: head, core, arms or legs). A landed blow then wears that region, with no
+	# draw; a blocked blow ignores it, and the block's rule decides.
+	var named: int = SimWounds.REGIONS.find(String(o.get("region", ""))) if fam != "guard" else -1
+	var region: int = hurt(S, D, dd, A, fam, kind, "#ffd45a" if o.get("ignoreStance", false) else "#ffffff", true, form, block, named)
 	if kind == "heavy" and dd > 0.0:
 		SimWounds.stagger(S, D)
 	SimWounds.noteBlow(S, ex, A, D, region, kind, o)

@@ -119,6 +119,7 @@
       "type": "object",
       "required": [
         "light",
+        "medium",
         "heavy",
         "guard",
         "spread"
@@ -151,6 +152,7 @@
         "headDefence",
         "legsSlip",
         "armsBrokenLightMul",
+        "armsBrokenMediumMul",
         "legsBrokenGuardScale"
       ],
       "properties": {
@@ -204,6 +206,11 @@
         "armsBrokenLightMul": {
           "type": "number",
           "exclusiveMinimum": 0
+        },
+        "armsBrokenMediumMul": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "A broken arm's multiplier on a medium blow (armsBrokenLightMul is the light one). Above 0."
         },
         "legsBrokenGuardScale": {
           "type": "number",

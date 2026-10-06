@@ -14,7 +14,7 @@ const METERS: Array = ["anguish", "menace"]
 ## D1b: the (meter, effect) and (meter, source) pairs the code implements; anything else in meters.json is rejected.
 const METER_EFFECTS: Dictionary = {"menace": ["regen_bonus", "damage_mul", "beam_power"], "anguish": ["regen_penalty", "composure", "comeback"]}
 const METER_SOURCES: Dictionary = {"menace": ["casualty/self", "evacuee/self"], "anguish": ["casualty/self", "casualty/opponent"]}
-const PENALTIES: Array = ["coreKiRegen", "legsSpeed", "legsLockBreak", "staggerTicks", "dazeTicks", "armsGuardMul", "armsBrokenMul", "headParryNarrow", "headDefence", "legsSlip", "armsBrokenLightMul", "legsBrokenGuardScale"]
+const PENALTIES: Array = ["coreKiRegen", "legsSpeed", "legsLockBreak", "staggerTicks", "dazeTicks", "armsGuardMul", "armsBrokenMul", "headParryNarrow", "headDefence", "legsSlip", "armsBrokenLightMul", "armsBrokenMediumMul", "legsBrokenGuardScale"]
 const BLOWS: Array = ["heavy", "beam", "guard_break", "chain"]
 
 
@@ -35,6 +35,7 @@ class WoundsDef:
 	var cripSurgePower: float = 0.0
 	var cripLegWeight: float = 1.0   # the crippling pick: the legs' weight against the arms' 1 when both are eligible
 	var armsBrokenLightMul: float = 1.0
+	var armsBrokenMediumMul: float = 1.0   # a medium thrown with a broken arm (penalties.armsBrokenMediumMul)
 	var guardArms: float = 1.0     # guardWearSplit: a guard hit's wear, this share to the arms ...
 	var guardLegs: float = 0.0     # ... and this share to the legs
 	var blockArmShare: float = 1.0 # block.streamArmShare: a blocked light's chip wear, this share to the arms (the rest is soaked)
@@ -324,7 +325,7 @@ static func _wounds(id: String, j: Dictionary) -> WoundsDef:
 	w.fadeHidden = _int(where + " fade.hidden", fd.get("hidden", 0))
 	w.hiddenFloor = _int(where + " fade.hiddenFloor", fd.get("hiddenFloor", 0))
 	w.focusWear = float(j.get("focusWear", 0.0))
-	for fam in ["light", "heavy", "guard", "spread"]:
+	for fam in ["light", "medium", "heavy", "guard", "spread"]:
 		var row = j.get("family", {}).get(fam)
 		if not (row is Array and row.size() == 4):
 			_err(where + ": family." + fam + " needs 4 weights")
@@ -345,6 +346,7 @@ static func _wounds(id: String, j: Dictionary) -> WoundsDef:
 	w.headDefence = float(p.get("headDefence", 0.0))
 	w.legsSlip = float(p.get("legsSlip", 0.0))
 	w.armsBrokenLightMul = float(p.get("armsBrokenLightMul", 1.0))
+	w.armsBrokenMediumMul = float(p.get("armsBrokenMediumMul", 1.0))
 	var gs: Dictionary = j.get("guardWearSplit", {})
 	if not (gs.has("arms") and gs.has("legs")):
 		_err(where + ": guardWearSplit needs arms and legs")
