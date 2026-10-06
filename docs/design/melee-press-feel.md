@@ -860,7 +860,10 @@ Why they are short: the AI ends a string with an ender whenever two blows have l
 **What waits for Simulation's blocked-shots slice,** and isn't touched now:
 - the mixed blaster (28 of 100) and bolt-only (8 of 100). Both should rise when a blocked shot reaches the core;
 - then, in this order: medium's `barrageGuard` back up to at least easy's 0.2, starting at 0.3; `vsShooter.heavyApproachShare` back toward 0.2, 0.4 and 0.6, as far as the shooters' bands allow; and the final `block.shotArmShare`;
-- **the acts.** Acts 2 and 4 start at 66 and 250 s, against 90 to 150 s and 270 to 345 s, because the forms come about a quarter early. The lever is the ladder's `chargePerSec`: 0.4, from 0.5, as a start. It is Simulation's data and can go in the same regeneration;
+- **the acts.** Acts 2 and 4 started at 66 and 250 s, against 90 to 150 s and 270 to 345 s. **I named the wrong lever.** Simulation read ten matches tick by tick: a fighter's power up to each form is 54 to 56% from damage taken, 32 to 33% from damage dealt, 11 to 13% from the passive fill, and none from charging. So `chargePerSec` is left alone. What moved the acts is the brawl's scale: at 0.30 they started at 78, 187 and 290 s, and at 0.38 at 66, 160 and 250 s.
+  - **Nothing is changed now.** The scale is back at 0.31, so acts 3 and 4 should return to their bands by themselves. Read them on the next baseline.
+  - **If act 2 still starts before 90 s then,** raise the ladder's first threshold from 30 to 35 and leave 65 and 100. That moves the first form by about 12 s and nothing else. The start times matter because the forms are what a player sees, and the ultimate opens with act 3.
+  - **The two rates move into data either way,** at their present values: power for damage taken at 1% and for damage dealt at 0.6%, as keys in `ladder.json`. Numbers live in data;
 - **KAI at 55.5%.** It is half a point out on 100 matches an arm, which is good to 7 points. Nothing in this slice is by fighter. Read it on the next full baseline.
 
 ### 9f. The perfect block and the reversal inside a brawl (2026-10-05)
@@ -875,21 +878,29 @@ Encounter built §9e's ruling 2 in scratch. The two data values alone read a med
 | **What happens to the attacker** | His blow is turned. His string is closed and his run is cleared. He staggers in place for 20 ticks | The same: string closed, run cleared, and a stagger of 20 ticks in place |
 | **What the defender gets** | **The riposte:** his next attack pressed within 30 ticks can't be blocked or dodged | **Its heavy,** which lands for certain 10 ticks after the press |
 | **What that blow is worth** | With a light, a skill strike's worth: 4 brawl lights, and a reel of 8. With a heavy, a brawl heavy | A brawl heavy |
-| **What that blow does** | A light keeps the brawl going. A heavy lands as a lone heavy does, in place. **Against a perfect-blocked heavy or ender, a heavy riposte launches,** as it always has. That is the one case that separates them | It lands in place. It doesn't knock back and it doesn't launch |
+| **What that blow does** | A light keeps the brawl going. A heavy lands as a lone heavy does, in place. **Against a perfect-blocked heavy or ender, a heavy riposte separates them,** as it always has: it goes to the launch decision as an earned launch, and it is a knock-back when that decision isn't a launch. It never stays. That is the one case that separates them | It lands in place. It doesn't knock back and it doesn't launch |
 | **Set-up weight on the brink** | A light riposte counts as a close does. A launch counts in full | It counts as a close does |
 | **The mood** | The parry's 240, as now | The same |
 
 - A stagger of 20 ticks is longer than a close's 12, because both are harder to earn. Blows on a staggered fighter still add nothing to the run (§9d).
 - The brawl's 60-tick idle clock starts again after either.
-- **Data:** `brawl.perfectBlock.staggerTicks` 20, `brawl.riposteTicks` 30, `brawl.reversal.contactTicks` 10, `brawl.reversal.staggerTicks` 20, and `setup.weight.riposte` 0.34.
+- **Data:** `brawl.perfectBlock.staggerTicks` 20, `brawl.riposteTicks` 30, `brawl.riposteReelTicks` 8 (Encounter's key for the reel above), `brawl.reversal.contactTicks` 10, `brawl.reversal.staggerTicks` 20, and `setup.weight.riposte` 0.34.
 - **Also accepted, with no new key:** when the AI's heavy at a guard would be its string's ender, it is weighed by `brawl.enderShare`, as its closing heavy is. Those heavies were 93 of 196 separating endings.
 - `brawl.enderShare` stays at 0.6, 0.4 and 0.35. `aiReversalEveryTicks` goes back to 120: the reversal no longer ends the brawl, and it is what holds the masher's band.
 
 **What to expect, and the levers.**
-- **Match length will shorten,** because the AI spends more of the fight in a brawl. Encounter saw means of 338 to 372 s on its stronger builds. `brawl.damageMul` comes down to hold the median at 360 to 480 s: start at 0.34, from 0.38, and pick it on the measurement.
-- **The masher against medium** has to stay at 35 to 50%. The levers, in order: the reversal's stagger (12 to 30 ticks), and then how often the AI weighs a reversal.
+- **Match length will shorten,** because the AI spends more of the fight in a brawl. `brawl.damageMul` comes down to hold the median at 360 to 480 s. **As built it is 0.31:** Encounter's probe read a mean of 398 s there and 357 s at 0.34, so my starting 0.34 was too high.
+- **The masher against medium** has to stay at 35 to 50%. He reads 46 of 100 at a scale of 0.31. **The lever is how often the AI weighs a reversal,** `aiReversalEveryTicks`, from 120 to 240. The reversal's stagger isn't a lever under 22 ticks, as Encounter found: its heavy lands at tick 10 and staggers for 12 by itself, so a stagger of 12 to 20 changes nothing. Only values over 22 would show, and they are the second lever.
 - **The demo targets stand:** a median brawl of at least 2.5 s and nothing running for at most 15 s a minute. Nothing running already reads 11.4 s on §2b's list.
 - **30% of fight time in a brawl may need the zip,** as Encounter expects: between brawls the AIs spend about 11 s a minute in lunges and shots. Until the zip slice the target for the demo is 25%, and 30% after it.
+
+**First readings, and the long brawl.** With §9f built at a scale of 0.31, the AI against itself reads a median brawl of 2.9 s, 26.2% of fight time in a brawl, and nothing running for 9.9 s a minute. All three demo targets are met.
+
+A player who presses only lights against the medium AI now has brawls of 8 to 9 s at the median, and 67 to 72% of his fight time is in one. Both are over the bands. He never throws an ender, and nothing else ends a brawl now.
+- **That is the game working.** He chose never to end it, and a long, unbroken trade of blows is what Orb asked the brawl to allow. Nothing is added to end a long brawl: no fatigue, and no limit on a one-sided run.
+- **The two bands are read on a player who mixes.** QA's pressing script for these rows closes about half of its strings with an ender once two blows have landed. Against that script the bands stay as they are: a median brawl of 2.5 to 6 s, and 45 to 60% of fight time. The lights-only presser is reported beside it.
+- **One guard against a stuck brawl:** the 90th percentile of a brawl's length is at most 20 s, for the mixing player and for the AI against itself.
+- **For the last brawl slice, where the AI learns to leave:** it leaves a brawl it is losing. After it has been closed on twice in one brawl without closing once itself, its next free action is to leave, by a zip away or a dodge with the stick away, at a share by level. That is the AI playing well, and not a rule that ends brawls.
 
 ## 10. Stances and the face buttons
 
