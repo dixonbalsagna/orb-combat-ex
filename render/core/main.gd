@@ -1025,7 +1025,9 @@ func _notification(what: int) -> void:
 
 ## UI's options for Controls' two charge settings: slot 0's, and with _p2 slot 1's.
 const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
-## The options a web page's URL may set (parse_args): off unless the URL names them.
+## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
+## without UI's notice, and are dropped unless the page is on a local host (gate_args).
+const LOCAL_ONLY_ARGS: Array = ["study", "flashcap"]
 const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze"]
 
 
@@ -1063,7 +1065,17 @@ static func parse_args() -> Dictionary:
 			var kv: PackedStringArray = pair.split("=", true, 1)
 			if URL_ARGS.has(kv[0]) and not (kv.size() > 1 and (kv[1] == "0" or kv[1] == "false")):
 				out[kv[0]] = kv[1] if kv.size() > 1 and kv[1] != "" else "1"
-	return out
+	return gate_args(out, UiHud.bypass_allowed())
+
+
+## The arguments that start the game with no flashing-effects notice (the capture hook, the study route) are honoured
+## only where UI honours its own bypass words (UiHud.bypass_allowed: off the web, or on the web a local host). On a
+## public page they are dropped, however they arrived, so a link can never skip the gate. The look switches stay.
+static func gate_args(a: Dictionary, allowed: bool) -> Dictionary:
+	if not allowed:
+		for k in LOCAL_ONLY_ARGS:
+			a.erase(k)
+	return a
 
 
 func _record(frame_ms: float, n: int, tick_ms: float, view_ms: float) -> void:
