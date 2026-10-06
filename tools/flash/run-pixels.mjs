@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { requiredClips } from './clips.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const V = createRequire(import.meta.url)('./verdict.js');
@@ -25,23 +26,9 @@ const W = 1024, H = 768;
 const TICKS_OVERRIDE = opt('--ticks') ? Number(opt('--ticks')) : 0;   // a shorter clip, for a speed measurement (the verdict then covers only those ticks)
 if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--ticks N]'); process.exit(2); }
 const src = JSON.parse(readFileSync(join(here, 'sources.json'), 'utf8'));
-const roster = JSON.parse(readFileSync(join(here, '..', '..', 'data', 'fighters', 'roster.json'), 'utf8'));
 const CLIP = opt('--clip') ? opt('--clip').split(',') : null;
-// the required set (sources.json): the five fixed cases, and for `ai` every pairing at every seed, each in both modes. A clip's id is scenario[-pairing][-seed]-mode.
-const jobs = [];
-for (const sc of src.scenarios) {
-  if (ONLY && !ONLY.includes(sc.id)) continue;
-  const runs = sc.pairings ? src.pairings.map((p) => ({ slots: p.slots, seeds: p.seeds })) : [{ slots: null, seeds: [12345] }];
-  for (const r of runs) {
-    const dflt = !r.slots || (r.slots[0] === roster[0] && r.slots[1] === roster[1]);
-    const label = dflt ? '' : '-' + r.slots.join('-');
-    for (const seed of r.seeds) for (const reduced of [false, true]) {
-      const id = `${sc.id}${label}${r.seeds.length > 1 ? '-' + seed : ''}-${reduced ? 'reduced' : 'normal'}`;
-      if (CLIP && !CLIP.includes(id)) continue;
-      jobs.push({ id, scenario: sc.id, seed, reduced, ticks: sc.ticks, multi: r.seeds.length > 1, slots: dflt ? null : r.slots, label });
-    }
-  }
-}
+// the required set (sources.json, tools/flash/clips.mjs): the five fixed cases, and for `ai` every pairing at every seed, each in both modes
+const jobs = requiredClips(src).filter((j) => (!ONLY || ONLY.includes(j.scenario)) && (!CLIP || CLIP.includes(j.id)));
 if (!jobs.length) { console.error('no clip matches (ids look like collapse-normal, ai-12345-reduced, mash-reduced; --only takes scenario names)'); process.exit(2); }
 mkdirSync(OUT, { recursive: true });
 

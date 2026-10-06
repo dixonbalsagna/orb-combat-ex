@@ -45,6 +45,17 @@ By source over all normal runs, granted and refused: body_hit 239/744, head_flas
 
 **Every flash source now asks the register** except the split divider's slam flash (Camera's and UI's), which nothing asks for. The body hit flash is also counted by proxy from `hurtT`: the worst is 4 flash starts on one body in 60 ticks (the AI matches); advisory, because one body is a small part of the frame and the area test decides.
 
+## Bringing the site back: the recorded pass (2026-10-06)
+
+The playable site is offline (tools/site.json). It cannot be turned on by the one switch alone: `tools/build-site.mjs` builds the playable site only when `tools/site.json` has `"offline": false`, an `"approved"` date (Orb's word, recorded in the commit) **and** `tools/flash/release-pass.json` holds a pass for the commit being published.
+
+- **Recording.** After a full required-set run (`run-pixels.mjs`, every clip in both modes, on a clean export of the commit) that is PASS in every row, `node tools/flash/release-pass.mjs --record --summary <run's summary.json>` writes the file. It refuses a summary that misses a clip of the required set, has a capture error or has a row that is not PASS.
+- **What it holds:** a **content hash** (the git tree and blob ids of everything the player runs: every top-level entry except prototype, qa, research, docs, tools, .github and the repository's own text files), the sha-256 of `tools/flash/sources.json` (the required set), of `wcag.js` and `verdict.js` (the analyser's reading and verdict) and of `render/tools/flash_capture.gd` (the staging the clips were captured with), the commit, the date, and one row per clip: verdict, the three runs' counts, red, the margin and the whole-screen dips.
+- **What makes it stale:** any change to the content hash (render/, sim/, data/, ui/, audio/, art/, project.godot, export_presets.cfg), to the required set, to the analyser or to the capture staging. **A docs-only commit does nothing to it**, nor does a change to tools/ outside the analyser files, qa/, research/, prototype/, .github/ or the readme, because the hashed trees exclude those (the self-test builds a throwaway repository and checks each case). `art/` is hashed whole, which is conservative: an art-concept change asks for a new pass.
+- **The cap on dips:** no two whole-screen dips of a clip may be closer than 60 ticks (each dip already counts in the flash count; this keeps them from coming in a train).
+- **Checking:** `node tools/flash/release-pass.mjs --verify [--commit <sha>]` says which part failed. `build-site.mjs` runs the same check on HEAD of the checkout (the commit CI publishes). `tools/flash/release-pass-selftest.mjs` (19 checks, in the `flash` CI job) covers what stales a record and what does not.
+- **What it does not do:** it does not run the pixel check (that takes about 70 minutes on this PC and cannot run on a runner), it trusts that the summary is from a real run on that commit's export, and it does not replace Orb's word: the `approved` date is the decision.
+
 ## Half 2: the pixels (run for real, 2026-10-06)
 
 ```

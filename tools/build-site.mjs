@@ -1,5 +1,5 @@
 // Assembles the GitHub Pages site. Node built-ins only; deterministic (no clock, no random).
-//   node tools/build-site.mjs --web <dir with the Godot web export> --out <site dir> [--commit <sha>] [--band <dir>] [--config <site.json>]
+//   node tools/build-site.mjs --web <dir with the Godot web export> --out <site dir> [--commit <sha>] [--band <dir>] [--config <site.json>] [--local]
 // OFFLINE SWITCH: tools/site.json {"offline": true} (Orb's order, 2026-10-06) makes the site the plain notice of tools/site-notice.json and nothing else: /, /play/, /bench/, /band/ and
 // /404.html are that one static page and no game file is copied. The export is still required and checked, so a broken export still fails CI. Set it to false to publish as below.
 // Layout of <site dir>:
@@ -18,6 +18,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { siteNotice } from './site-notice.mjs';
+import { verify as verifyReleasePass } from './flash/release-pass.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -58,6 +59,20 @@ if (config.offline) {
   }
   console.log(`site built in ${outDir}: OFFLINE (tools/site.json): the notice at /, /play/, /bench/, /band/ and /404.html, no game files`);
   process.exit(0);
+}
+
+// GOING ONLINE: the playable site is published only with Orb's word (site.json "approved": a date) and a recorded full-set pass of the pixel check that matches the commit being
+// published (tools/flash/release-pass.json: tools/flash/release-pass.mjs says what makes it stale). --local skips both for a local test build and is refused on GitHub Actions.
+if (!args.includes('--local') || process.env.GITHUB_ACTIONS) {
+  const problems = [];
+  if (!(typeof config.approved === 'string' && /^\d{4}-\d{2}-\d{2}/.test(config.approved))) problems.push('tools/site.json has no "approved" date: the site goes online only on Orb\'s word, recorded there');
+  try { problems.push(...verifyReleasePass()); } catch (e) { problems.push(`the recorded pass could not be checked: ${e.message}`); }
+  if (problems.length) {
+    console.error('error: the playable site is not allowed online:');
+    for (const p of problems) console.error(`  ${p}`);
+    console.error('(set "offline": true in tools/site.json to publish the notice instead)');
+    process.exit(1);
+  }
 }
 
 mkdirSync(join(outDir, 'bench'), { recursive: true });

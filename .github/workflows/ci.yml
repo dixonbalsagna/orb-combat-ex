@@ -99,6 +99,8 @@ jobs:
           node-version: '24.19.0'
       - name: Flash analysers' self-test
         run: node tools/flash/selftest.js
+      - name: Release-pass rules self-test (what makes a recorded pass stale)
+        run: node tools/flash/release-pass-selftest.mjs
       # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
