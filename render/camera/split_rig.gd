@@ -2340,8 +2340,8 @@ func _update_cameras(S: SimState) -> void:
 		# own zoom: first-order filter, then the rate cap
 		# the scroll governor reads how fast the pane's camera is actually moving (a pinned pane is not: it waits)
 		var dfx: float = absf(SimWrap.sdx(_pfx[i], _fx[i]))
-		if dfx > 1500.0 or _rush_pin[i]:
-			dfx = 0.0   # a jump (a cut ahead, a seam) is not a scroll
+		if dfx > 1500.0:
+			dfx = 0.0   # a jump (a cut ahead, a seam) is not a scroll; a pinned pane that follows a fleeing target is one
 		_vsm[i] = float(_vsm[i]) + (minf(dfx / DT, 60000.0) - float(_vsm[i])) * 0.2
 		_pfx[i] = _fx[i]
 		var zt: float = _own_zoom_target(S, i)
