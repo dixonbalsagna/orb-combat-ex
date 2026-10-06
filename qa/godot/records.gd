@@ -79,11 +79,12 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var rec := {"seed": seed, "arm": arm, "names": [fs[0].name, fs[1].name], "attacks": {"light": 0, "heavy": 0, "sig": 0}, "ambush": 0,
 		"launches": {}, "melee": {}, "beams": [], "parries": [0, 0], "chains": [], "hides": [0, 0], "found": 0, "seam": 0, "maxMove": 0.0,
 		"bad": "", "koAt": -1.0, "winner": -1, "maxTier": [1, 1], "lowSec": 0.0, "lowCas": 0.0, "casByTier": [0.0, 0.0, 0.0, 0.0, 0.0],
-		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "fronts": 0}
+		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "fronts": 0}
 	var prev_x: Array = [fs[0].x, fs[1].x]
 	# the zip (docs/design/melee-press-feel.md section 2c; docs/director/brawl-plan.md section 7.4): one record a zip, from the zip_light or zip_heavy cue to its zip_end;
 	# the build may not have it yet, and then the list stays empty
 	var prev_ki: Array = [fs[0].ki, fs[1].ki]
+	var dpend: Array = []              # C1's double hits waiting for their landing and their slide (brawl-plan.md section 9.2: the double_hit cue, n the landing tick)
 	var zopen := {}                    # the zipper's index -> its open zip's index in rec.zips
 	var wsb = load("res://sim/world/structures.gd")
 	var can_block: bool = false
@@ -297,6 +298,8 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 				var cqk: String = str(e.get("kind"))
 				if cqk.begins_with("taunt_start") or cqk.begins_with("charge"):
 					last_play = S.T
+			if e.type == "drop_start" or e.type == "drop_land" or e.type == "drop_end":   # an event type of its own (sim/core/fx.gd), not a cue
+				rec.drops[str(e.type).substr(5)] = int(rec.drops.get(str(e.type).substr(5), 0)) + 1
 			if e.type == "launch":
 				ex_launch = true
 			elif e.type == "exchange_end":   # slice 3: one per exchange, kind continue | knockback | launch; a "continue" also covers an exchange that never reached a launch decision, so the decision itself is read from launch_plan
@@ -321,6 +324,9 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 					rec.brawl.ends[bw] = int(rec.brawl.ends.get(bw, 0)) + 1
 					rec.brawl.lens.append(int(e.get("amount")))                       # live ticks
 					rec.brawl.nblows.append(int(e.get("x")) + int(e.get("y")))        # blows the starter and the rival threw
+				elif cq == "double_hit":
+					rec.doubleHits += 1
+					dpend.append({"t": S.tick, "land": int(_ei(e, "n")), "dmg": [0.0, 0.0], "x0": [fs[0].x, fs[1].x], "sep0": snappedf(absf(SimWrap.sdx(fs[0].x, fs[1].x)) / 75.0, 0.01), "done": false})
 				elif cq == "blow":
 					var bk: String = str(e.get("text"))
 					rec.brawl.blows[bk] = int(rec.brawl.blows.get(bk, 0)) + 1
@@ -407,6 +413,10 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 					zdm.guard += 1   # a blocked zip blow
 				else:
 					zdm.dmg += e.amount
+			if e.type == "damage" and e.number and e.amount > 0.0 and int(e.victim) >= 0 and int(e.victim) < 2:
+				for dp in dpend:
+					if S.tick >= int(dp.land) and S.tick <= int(dp.land) + 1:
+						dp.dmg[int(e.victim)] += e.amount
 			if e.type == "damage" and e.region != "":
 				rec.dmgByRegion[e.region] = rec.dmgByRegion.get(e.region, 0.0) + e.amount
 				if int(e.victim) >= 0 and int(e.victim) < 2:
@@ -470,6 +480,11 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 					if fparts.size() >= 2:
 						rec.zips[zopen[fa]]["feedKi"] = float(fparts[1].strip_edges().replace(" ki", ""))
 		S.out.feed.clear()
+		for dp in dpend:
+			if not bool(dp.done) and S.tick >= int(dp.land) + 30:
+				dp.done = true
+				rec.doubles.append({"t": dp.t, "land": dp.land, "dmgA": snappedf(dp.dmg[0], 0.1), "dmgB": snappedf(dp.dmg[1], 0.1), "sep0": dp.sep0, "sep30": snappedf(absf(SimWrap.sdx(fs[0].x, fs[1].x)) / 75.0, 0.01)})
+		dpend = dpend.filter(func(d): return not bool(d.done))
 		for zi in range(2):
 			var dkz: float = float(prev_ki[zi]) - float(fs[zi].ki)
 			if dkz > 0.0:

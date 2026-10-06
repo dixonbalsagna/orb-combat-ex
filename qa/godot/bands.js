@@ -350,6 +350,7 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
       }
     }
     zipBlock(R, D, wl, sum);
+    doubleBlock(R, D, wl, sum);
     R.point('7.chain', '§7', 'Chains per 100 melee exchanges (10 to 30, agency pass 14; strings now come from the presses)', { v: sum(D.map(r => r.chains.length)) / m * 100, lo: 10, hi: 30 });
     const slip = sum(D.map(r => r.melee['PURSUIT — TARGET SLIPS AWAY'] || 0)), caught = sum(D.map(r => r.melee['PURSUIT — CAUGHT'] || 0));
     R.rate('7.slip', '§7', 'Pursuit slip rate (escape gamble)', { v: slip / (slip + caught), ci: wl(slip, slip + caught), lo: 0.35, hi: 0.65 });
@@ -581,6 +582,27 @@ function zipBlock(R, D, wl, sum) {
   R.add({ id: 'zip.brawl', ref: '§2c', what: 'No brawl is announced during a zip unless the zipper is caught or countered (hard test)', status: viol ? 'FAIL' : 'PASS', value: viol ? `${viol} brawl_start cues during a zip with another text` : `0 over ${n} zips`, band: 'never', note: 'a brawl_start while the zip is open whose text is not caught or countered' });
   const dr = { start: sum(D.map(r => (r.drops || {}).start || 0)), land: sum(D.map(r => (r.drops || {}).land || 0)), end: sum(D.map(r => (r.drops || {}).end || 0)) };
   R.info('zip.drops', '§2c', 'The dropped state: drop_start, drop_land and drop_end (reported; every start should land and end, apart from a KO in the air)', `${dr.start} starts, ${dr.land} lands, ${dr.end} ends`, `${D.length} matches`);
+}
+
+// ---- the double hit (brawl-second-pass.md section 7; brawl-plan.md section 9): a trade still level at 240 ticks ends with both fighters hit. rec.doubleHits (the double_hit cue), rec.doubles (damage to each at the landing and the
+// separation 30 ticks later), rec.brawl.ends.double (the brawl_end text). PENDING while the build has no double hit.
+function doubleBlock(R, D, wl, sum) {
+  const hits = sum(D.map(r => r.doubleHits || 0)), ends = sum(D.map(r => ((r.brawl || {}).ends || {}).double || 0));
+  if (!hits && !ends) { R.pending('double', '§7 second pass', 'The double hit rows: a match rate, matches with one, never over 4, both hit, the aftermath', 'the build has no double hit (no double_hit cue and no brawl_end double in these records)'); return; }
+  const per = D.map(r => ((r.brawl || {}).ends || {}).double || 0), n = D.length, withOne = per.filter(x => x > 0).length;
+  R.point('double.perMatch', '§7 second pass', 'Double hits a match in AI matches (0.5 to 2)', { v: sum(per) / n, lo: 0.5, hi: 2, unit: 'num' });
+  if (n >= 100) R.rate('double.matchesWith', '§7 second pass', 'Matches with at least one double hit (40 to 70%)', { v: withOne / n, ci: wl(withOne, n), lo: 0.40, hi: 0.70 });
+  else R.pending('double.matchesWith', '§7 second pass', 'Matches with at least one double hit (40 to 70%)', `${n} matches so far (at least 100 are needed): ${withOne} of them`);
+  const most = Math.max(...per);
+  R.add({ id: 'double.max', ref: '§7 second pass', what: 'Never more than 4 double hits in one match (hard test)', status: most > 4 ? 'FAIL' : 'PASS', value: `the most in one match is ${most}`, band: 'at most 4', note: `${n} matches` });
+  R.add({ id: 'double.cue', ref: '§7 second pass', what: 'Every double_hit cue ends its brawl with the text double, and every double end follows a cue (hard test; a KO in the 8 ticks between may cost one)', status: Math.abs(hits - ends) > Math.max(1, Math.round(0.02 * hits)) ? 'FAIL' : 'PASS', value: `${hits} cues, ${ends} double ends`, band: 'equal (within 2%)', note: '' });
+  const dl = D.flatMap(r => r.doubles || []);
+  if (dl.length) {
+    const none = dl.filter(d => !(d.dmgA > 0 && d.dmgB > 0));
+    R.add({ id: 'double.both', ref: '§7 second pass', what: 'Both fighters are hit by a double hit (hard test)', status: none.length ? 'FAIL' : 'PASS', value: none.length ? `${none.length} of ${dl.length} hit only one or neither` : `${dl.length} of ${dl.length} hit both`, band: 'both take damage on the landing tick', note: 'damage events on the landing tick and the next, by victim' });
+    const m = a => a.reduce((x, y) => x + y, 0) / a.length;
+    R.info('double.after', '§7 second pass', 'The double hit: damage to each and the separation 30 ticks after the landing (reported; the rule: 4 brawl lights each, thrown back 6 bh each way, so about 12 bh apart from the centre)', `${m(dl.map(d => d.dmgA)).toFixed(1)} and ${m(dl.map(d => d.dmgB)).toFixed(1)} damage; apart ${m(dl.map(d => d.sep0)).toFixed(1)} bh at the throw, ${m(dl.map(d => d.sep30)).toFixed(1)} bh after 30 ticks`, `${dl.length} double hits`);
+  }
 }
 
 function levelRows(byLevel) {

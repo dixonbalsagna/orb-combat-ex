@@ -168,6 +168,37 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const few = evaluate({ default: Array.from({ length: 5 }, (_, j) => mkRec(j)) });
     assert.strictEqual(few.find(r => r.id === 'zip.clean').status, 'PENDING');
   });
+  await t('double hit rows: PENDING without double hits; a good set judges 0.5 to 2 a match, 40 to 70% of matches, at most 4, both hit; a bad set fails the hard tests', async () => {
+    assert.strictEqual(evaluate({ default: [rec()] }).find(r => r.id === 'double').status, 'PENDING');
+    const dbl = (j, n, over = {}) => rec({ seed: j, koAt: 300, doubleHits: n, brawl: { ends: { double: n, knockback: 5 }, blows: {}, staggers: {}, tradeBreaks: 0, lens: [], nblows: [] }, doubles: Array.from({ length: n }, () => ({ t: 1, land: 9, dmgA: 12, dmgB: 12, sep0: 1, sep30: 11, ...over })) });
+    const good = evaluate({ default: Array.from({ length: 100 }, (_, j) => dbl(j, j < 55 ? (j < 20 ? 2 : 1) : 0)) }), g = k => good.find(r => r.id === k);
+    for (const k of ['double.perMatch', 'double.matchesWith', 'double.max', 'double.cue', 'double.both']) assert.strictEqual(g(k).status, 'PASS', k + ' ' + g(k).value);
+    const bad = evaluate({ default: Array.from({ length: 100 }, (_, j) => ({ ...dbl(j, j < 55 ? 5 : 0, { dmgB: 0 }), doubleHits: j < 55 ? 4 : 0 })) }), b = k => bad.find(r => r.id === k);
+    for (const k of ['double.max', 'double.cue', 'double.both']) assert.strictEqual(b(k).status, 'FAIL', k);
+  });
+  await t('C1 rows: PENDING on a build with no C1; a good set passes the centre, the walk-outs and the drop; a bad set fails the hard tests', async () => {
+    const { masherRows } = require('./masher');
+    const base = (pair, brawl) => ({ pair, n: 60, aWins: 30, bWins: 30, timeouts: 0, medianSec: 100, zips: 0, brawl });
+    const noC1 = ['c1-drift-one', 'c1-walk-both', 'c1-walk-held'].map(p => base(p, { brawls: 50, ends: { knockback: 50 }, centre: { ticks: 0, over: 0 }, drift: { n: 0 }, walk: { brawls: 0, early: 0, n: 0 } }));
+    for (const r of masherRows(noC1).filter(r => r.id.startsWith('c1.'))) assert.strictEqual(r.status, 'PENDING', r.id);
+    const C = { ticks: 5000, over: 0, maxStepBh: 0.2 }, D = { n: 55, latMax: 2, latMean: 1.2, rateBhPerSec: 2.4, maxStepBh: 0.2 };
+    const good = masherRows([
+      base('c1-drift-one', { brawls: 60, ends: { knockback: 60 }, centre: C, drift: D, walk: {} }),
+      base('c1-walk-both', { brawls: 60, ends: { walk: 55, knockback: 5 }, centre: C, drift: { n: 0 }, walk: { brawls: 60, early: 0, lagMin: 12, lagMax: 20, n: 55 } }),
+      base('c1-walk-held', { brawls: 60, ends: { idle: 20 }, centre: C, drift: { n: 0 }, walk: { brawls: 0, early: 0, n: 0 } }),
+      { ...base('zip-hook', { brawls: 10, ends: {}, zipEnds: { down: 12, done: 100 }, drop: { start: 12, land: 12, end: 12, stateBad: 0, endBad: 0 } }), zips: 112 },
+    ]), g = k => good.find(r => r.id === k);
+    for (const k of ['c1.centre.latency', 'c1.centre.step.one', 'c1.walk.both', 'c1.walk.held', 'zip.drop']) assert.strictEqual(g(k).status, 'PASS', k + ' ' + g(k).value);
+    const bad = masherRows([
+      base('c1-drift-one', { brawls: 60, ends: {}, centre: { ticks: 5000, over: 3, maxStepBh: 0.4 }, drift: { ...D, latMax: 5 }, walk: {} }),
+      base('c1-walk-both', { brawls: 60, ends: { walk: 55 }, centre: C, drift: { n: 0 }, walk: { brawls: 60, early: 4, lagMin: 6, lagMax: 20, n: 55 } }),
+      base('c1-walk-one', { brawls: 60, ends: { walk: 3 }, centre: C, drift: { n: 0 }, walk: { brawls: 0, early: 0, n: 0 } }),
+      { ...base('zip-hook', { brawls: 10, ends: {}, zipEnds: { down: 12 }, drop: { start: 9, land: 9, end: 9, stateBad: 1, endBad: 0 } }), zips: 112 },
+    ]), b = k => bad.find(r => r.id === k);
+    for (const k of ['c1.centre.latency', 'c1.centre.step.one', 'c1.walk.both', 'c1.walk.one', 'zip.drop']) assert.strictEqual(b(k).status, 'FAIL', k);
+    const gap = masherRows([{ ...base('zip-turret', { brawls: 10, ends: {}, zipEnds: { done: 100 }, drop: {} }), zips: 100 }]);
+    assert.strictEqual(gap.find(r => r.id === 'zip.drop.bolt').status, 'PENDING', 'no zip ended down: a coverage gap, never a pass');
+  });
   await t('perfect blocks a minute: easy 0.5 to 2, hard 2 to 5.5 from the level runs; the per-exchange row is reported only', async () => {
     const { levelRows } = require('./bands');
     const mk = pb => Array.from({ length: 10 }, () => rec({ koAt: 300, melee: { 'TRADE BLOWS': 20 }, cues: { perfect_block: pb }, brawl: { blows: { light: 500 } } }));

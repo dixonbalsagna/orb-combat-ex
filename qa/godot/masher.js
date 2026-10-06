@@ -41,11 +41,11 @@ function runMirror(n, base, specA = 'masher:forms=1', specB = null, tag = 'live'
 }
 
 // A pair of scripted players (players.gd specs) against each other: the energy rows of agency pass 16 (a bolt-only player finishes at least 95% against a melee masher and wins 20 to 40% against the medium AI; a blast-heavy script against a rush-heavy one 40 to 60%).
-function runPair(tag, a, b, n, base) {
+function runPair(tag, a, b, n, base, extra = []) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${a}`, `--b=${b}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${a}`, `--b=${b}`, ...extra], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -53,7 +53,7 @@ function runPair(tag, a, b, n, base) {
       const line = out.split(String.fromCharCode(10)).find(l => l.startsWith('{') && l.includes('"players"'));
       if (code !== 0 || !line) return reject(new Error('players.gd failed for ' + tag + ' (exit ' + code + ')' + String.fromCharCode(10) + out.slice(0, 1200)));
       const r = JSON.parse(line);
-      resolve({ pair: tag, zips: (r.brawl || {}).zips, zipEnds: (r.brawl || {}).zipEnds, n: r.n, aWins: r.aWins, bWins: r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, strings: r.stats[0].blurStrings, locked: r.stats[0].blurLocked });
+      resolve({ pair: tag, brawl: r.brawl, zips: (r.brawl || {}).zips, zipEnds: (r.brawl || {}).zipEnds, n: r.n, aWins: r.aWins, bWins: r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, strings: r.stats[0].blurStrings, locked: r.stats[0].blurLocked });
     });
   });
 }
@@ -88,6 +88,19 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
     () => runPair('blast-medium', 'tapper:idle=14:acc=80:win=4:mix=LLLH' + E, 'ai:level=medium', Math.min(n, 100), base),
     () => runPair('blast-slow-medium', 'tapper:acc=80:win=4:mix=LLH' + E, 'ai:level=medium', Math.min(n, 100), base),
   ]);
+  // C1 probes (brawl-plan.md section 9; docs/qa/three-strength-qa-plan.md section C), 60 matches each: two lights mashers, one or both with a stick script. On a build with no C1 every row is PENDING.
+  const W = 'masher:forms=1:clock=tick', n1 = Math.min(n, 60);
+  const c1 = await pool([
+    () => runPair('c1-drift-one', W + ':drift=east', W + ':off=7', n1, base, ['--capsec=150']),
+    () => runPair('c1-drift-both', W + ':drift=east', W + ':off=7:drift=east', n1, base, ['--capsec=150']),
+    () => runPair('c1-walk-both', W + ':walk=1', W + ':off=7:walk=1', n1, base, ['--capsec=150']),
+    () => runPair('c1-walk-jab', W + ':walk=1:jab=6', W + ':off=7:walk=1', n1, base, ['--capsec=150']),
+    () => runPair('c1-walk-guard', W + ':walk=1:wguard=1', W + ':off=7:walk=1:wguard=1', n1, base, ['--capsec=150']),
+    () => runPair('c1-walk-held', W + ':walk=1:wheld=1', W + ':off=7:walk=1', n1, base, ['--capsec=150']),
+    () => runPair('c1-walk-one', W + ':walk=1', W + ':off=7', n1, base, ['--capsec=150']),
+    () => runPair('zip-turret', 'zipper:forms=1', 'turret:energy=1:forms=1:p=25', Math.min(n, 100), base, ['--capsec=300']),
+    () => runPair('zip-hook', 'zipper:forms=1', 'turret:forms=1:hook=1', Math.min(n, 100), base, ['--capsec=300']),
+  ]);
   // Agency pass section 20: how often the perfect blur locks, live against the medium AI. A blind 8-tick masher at most 20% of five-blow strings; a script that presses on every contact (and follows the chain links) at least 80%; a metronome on the real clock at 10, 12 and 14 ticks (Encounter measured 9, 27 and 26%; the same 20% ceiling is QA's assumption until Game Design rules).
   const M = ':forms=1:stick=1', ai = 'ai:level=medium';
   const blur1 = await Promise.all([
@@ -99,7 +112,7 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
     runPair('blur-m12', 'masher:gap=12' + M, ai, n, base),
     runPair('blur-m14', 'masher:gap=14' + M, ai, n, base),
   ]);
-  return [...withForms, ...noForms, ...gaps, mirror, ...mirrors, ...pairs, ...blur1, ...blur2];
+  return [...withForms, ...noForms, ...gaps, mirror, ...mirrors, ...pairs, ...c1, ...blur1, ...blur2];
 }
 
 const BANDS = { easy: [0.60, 1, 'at least 60%'], medium: [0.35, 0.50, '35 to 50%'], hard: [0, 0.15, 'at most 15%'] };
@@ -140,6 +153,43 @@ function mirrorRows(m) {
   return rows;
 }
 
+// C1 rows from the stick-script pairs (players.gd: drift=, walk=, turret) and the drop row. The build has C1 when its DirBrawl has the centre read (centre.ticks > 0 in these runs) or has ended a brawl with the text walk or double.
+function c1Rows(r, results) {
+  const b = r.brawl || {}, c = b.centre || {}, d = b.drift || {}, w = b.walk || {}, ends = b.ends || {};
+  const has = (c.ticks || 0) > 0 || (ends.walk || 0) > 0 || (b.doubleHits || 0) > 0;
+  const none = (id, ref, what, band) => ({ id, ref, what, status: 'PENDING', value: 'the build has no C1 (no DirBrawl.centre, no walk end, no double hit in these runs)', band, note: `${r.n} matches` });
+  const rows = [];
+  if (r.pair === 'c1-drift-one' || r.pair === 'c1-drift-both') {
+    const one = r.pair === 'c1-drift-one', rate = d.rateBhPerSec;
+    if (!has || !d.n) { rows.push(none('c1.drift.' + (one ? 'one' : 'both'), '§1 second pass', `The centre drift under a held stick: ${one ? 'one fighter' : 'both fighters'} (reported; 0.4 and 0.8 of free-flight speed)`, 'reported')); return rows; }
+    rows.push({ id: 'c1.drift.' + (one ? 'one' : 'both'), ref: '§1 second pass', what: `How far a held stick moves a brawl, after its ramp: ${one ? 'one fighter holds east, the other none' : 'both hold east'} (reported, bh a second; the design is 0.4 of free-flight speed for one stick and 0.8 for two)`, status: 'INFO', value: `${rate} bh a second along the stick; ${d.n} drifts`, band: 'reported', note: `largest step ${d.maxStepBh} bh a tick` });
+    if (one) rows.push({ id: 'c1.centre.latency', ref: '§1 second pass', what: 'The centre moves within 2 ticks of a stick (hard test; the striking state, a lights mash)', status: d.latMax <= 2 ? 'PASS' : 'FAIL', value: `the first move came ${d.latMean} ticks after the stick on average, at most ${d.latMax} (999 means it never moved)`, band: 'at most 2 ticks', note: `${d.n} drifts; read from DirBrawl.centre velocity when it has one, else from a step over 0.15 units; the other states (charging, guarding, reeling) are for the C2 slices` });
+    rows.push({ id: 'c1.centre.step.' + (one ? 'one' : 'both'), ref: '§1 second pass', what: `The centre never moves more than 0.3 bh in a tick (hard test, every tick of every brawl in this run: ${one ? 'one stick' : 'two sticks'})`, status: (c.ticks || 0) === 0 ? 'PENDING' : (c.over > 0 ? 'FAIL' : 'PASS'), value: (c.ticks || 0) === 0 ? 'the build has no DirBrawl.centre' : `${c.over} of ${c.ticks} brawl ticks over; the largest step ${c.maxStepBh} bh`, band: 'at most 0.3 bh a tick', note: `${r.n} matches` });
+    return rows;
+  }
+  if (r.pair === 'zip-turret' || r.pair === 'zip-hook') {
+    const hook = r.pair === 'zip-hook', zid = hook ? 'zip.drop' : 'zip.drop.bolt', dr = b.drop || {}, down = (b.zipEnds || {}).down || 0;
+    const what = (hook ? 'A shot reported on the way out (DirZip.shot, the way the module check does) drops the zipper: ' : 'A real bolt that reaches the zipper on the way out drops him: ') + 'zip_end down, then drop_start, drop_land, drop_end, and the state dropped between (hard test)';
+    if (!r.zips) { rows.push({ id: zid, ref: '§2c', what, status: 'PENDING', value: 'the build has no zip', band: 'every down is a drop', note: `${r.n} matches` }); return rows; }
+    if (!down) { rows.push({ id: zid, ref: '§2c', what, status: 'PENDING', value: `no ${hook ? 'shot' : 'bolt'} reached a zipper on the way out in ${r.n} matches (${r.zips} zips; ends ${JSON.stringify(b.zipEnds)}): a coverage gap, not a pass`, band: 'every down is a drop', note: 'the turret presses a bolt on each tick of the way out and after the blow, with chance 50%' }); return rows; }
+    const ok = dr.start === down && dr.end === down && dr.land <= down && !dr.stateBad && !dr.endBad;
+    rows.push({ id: zid, ref: '§2c', what, status: ok ? 'PASS' : 'FAIL', value: `${down} zips ended down; ${dr.start} drop_start, ${dr.land} drop_land, ${dr.end} drop_end; the state was not dropped at ${dr.stateBad} starts and still dropped at ${dr.endBad} ends`, band: 'one drop_start and one drop_end for every down, the state dropped between; drop_land at most one each (a drop that began on the ground may have no land: reported)', note: `${r.n} matches, ${r.zips} zips; ends ${JSON.stringify(b.zipEnds)}` });
+    return rows;
+  }
+  // the walk-outs (the mutual walk-out only: the one-sided one is retired)
+  const walkBrawls = w.brawls || 0, walkEnds = ends.walk || 0, pair = r.pair;
+  const idOf = { 'c1-walk-both': 'c1.walk.both', 'c1-walk-jab': 'c1.walk.jab', 'c1-walk-guard': 'c1.walk.guard', 'c1-walk-held': 'c1.walk.held', 'c1-walk-one': 'c1.walk.one' }[pair];
+  const what = { 'c1-walk-both': 'Both fighters hold away within 45 degrees: the brawl ends walk, never sooner than 12 ticks after the later stick (hard test; free, nobody decisive)', 'c1-walk-jab': 'A blow thrown by either fighter in the 12 ticks starts the count again: the end comes at least 12 ticks after the blow press (hard test)', 'c1-walk-guard': 'The 12 ticks count while either guards: both walk with guards held, and the brawl still ends walk, never early (hard test)', 'c1-walk-held': 'The 12 ticks do not count while an attack button is held: one fighter holds the light button while both hold away, and no walk end comes (hard test)', 'c1-walk-one': 'One fighter alone cannot end a brawl by walking: the other keeps mashing, and no walk end comes (hard test)' }[pair];
+  if (!has) { rows.push(none(idOf, '§1 second pass', what, 'see the row')); return rows; }
+  if (pair === 'c1-walk-held' || pair === 'c1-walk-one') {
+    rows.push({ id: idOf, ref: '§1 second pass', what, status: walkEnds ? 'FAIL' : 'PASS', value: `${walkEnds} walk ends in ${r.n} matches (${b.brawls} brawls; ${walkBrawls} with both sticks away)`, band: 'none', note: 'a brawl that ends for any other reason is not counted' });
+    return rows;
+  }
+  const early = w.early || 0;
+  rows.push({ id: idOf, ref: '§1 second pass', what, status: early ? 'FAIL' : (walkEnds ? 'PASS' : 'FAIL'), value: `${walkEnds} walk ends in ${walkBrawls} brawls where both sticks were away (${walkBrawls ? (100 * walkEnds / walkBrawls).toFixed(0) : '-'}%); ${early} came under 12 ticks after the later stick or the jab; the shortest was ${w.lagMin} ticks and the longest ${w.lagMax}`, band: 'never under 12 ticks; the walk must happen', note: `${r.n} matches; the other ends of those brawls: ${JSON.stringify(Object.fromEntries(Object.entries(ends).filter(([k]) => k !== 'walk')))}` });
+  return rows;
+}
+
 function masherRows(results) {
   const rows = results.filter(r => !r.mirror && !r.pair).map(r => {
     const [lo, hi, text] = BANDS[r.level], decided = r.wins + r.losses, v = decided ? r.wins / decided : NaN, ok = decided && v >= lo && v <= hi, forms = !!r.forms;
@@ -154,7 +204,8 @@ function masherRows(results) {
       rows.push({ id: 'masher.' + r.pair.replace('-', '.'), ref: '§20', what: `The perfect blur locks on ${defs[0]}: share of five-blow strings against the medium AI (agency pass 20)`, status: r.strings >= 30 ? (r.pair.startsWith('blur-m') && !(share >= defs[1] && share <= defs[2]) ? 'INFO' : (share >= defs[1] && share <= defs[2] ? 'PASS' : 'FAIL')) : 'PENDING', value: `${pct} (${r.locked} of ${r.strings} strings)`, band: defs[3], note: `${r.n} matches; the script wins ${dec ? (100 * r.aWins / dec).toFixed(0) : '-'}%; metronome rows are reported and never fail the build (Controls measured the cause, a press inside a hit-stop is graded just after the blow, and the fix is parked with Orb); measured live as blur_locked cues over exchanges with five or more landed light strikes` });
       continue;
     }
-    if (r.pair === 'bolt-melee') rows.push({ id: 'masher.bolt.finish', ref: '§6 masher', what: 'A bolt-only player (energy held, a bolt every 8 ticks) finishes the match against a melee masher before the cap (agency pass 16: at least 95%)', status: dec / r.n >= 0.95 ? 'PASS' : 'FAIL', value: `${(100 * dec / r.n).toFixed(1)}% (${dec} of ${r.n}; ${r.timeouts} ran to the cap)`, band: 'at least 95%', note: `median ${r.medianSec} s; point estimate` });
+    if (r.pair && (r.pair.startsWith('c1-') || r.pair === 'zip-turret' || r.pair === 'zip-hook')) rows.push(...c1Rows(r, results));
+    else if (r.pair === 'bolt-melee') rows.push({ id: 'masher.bolt.finish', ref: '§6 masher', what: 'A bolt-only player (energy held, a bolt every 8 ticks) finishes the match against a melee masher before the cap (agency pass 16: at least 95%)', status: dec / r.n >= 0.95 ? 'PASS' : 'FAIL', value: `${(100 * dec / r.n).toFixed(1)}% (${dec} of ${r.n}; ${r.timeouts} ran to the cap)`, band: 'at least 95%', note: `median ${r.medianSec} s; point estimate` });
     else if (r.pair === 'bolt-medium') rows.push({ id: 'masher.bolt.medium', ref: '§6 masher', what: 'A bolt-only player wins against the medium AI (agency pass 16: 20 to 40%)', status: dec ? (r.aWins / dec >= 0.20 && r.aWins / dec <= 0.40 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec})` : 'no decided matches', band: '20 to 40%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
     else if (r.pair === 'blast-rush-slow') rows.push({ id: 'masher.blast.rushslow', ref: '§6 masher', what: 'The slow blaster (L L and a tapped H, one press every 24 ticks) against a rush-heavy timed script: at least 95% of matches finish before the cap (slice 12 is meant to fix this; 40 to 60% for the win share)', status: dec ? (r.aWins / dec >= 0.40 && r.aWins / dec <= 0.60 && dec / r.n >= 0.95 ? 'PASS' : 'FAIL') : 'FAIL', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec}); ${(100 * dec / r.n).toFixed(0)}% finished` : 'no decided matches', band: '40 to 60%, finish at least 95%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
     else if (r.pair === 'blast-rush') rows.push({ id: 'masher.blast.rush', ref: '§6 masher', what: 'A blast-heavy timed script (a bolt about every 14 ticks) against a rush-heavy timed script (agency pass 15.6: 40 to 60%, and at least 95% of matches finish)', status: dec ? (r.aWins / dec >= 0.40 && r.aWins / dec <= 0.60 && dec / r.n >= 0.95 ? 'PASS' : 'FAIL') : 'FAIL', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec}); ${(100 * dec / r.n).toFixed(0)}% finished` : 'no decided matches', band: '40 to 60%, finish at least 95%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });

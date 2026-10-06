@@ -56,7 +56,7 @@ Notes. B1 to B3 are the three-way rock, paper, scissors: if any of them reads un
 | C12 | One fighter's stick alone never ends a brawl | no `walk` end in the one-sided case | hard | same | the walker with one stick only, 24 and 60 ticks |
 | C13 | A boost held with the stick away is the escape, not the walk | the escape's price is paid, the end text is `escape` and not `walk` | hard | `brawl_end` text | the walker with one boost |
 
-Notes on the walk-out. The walk-out the EP calls retired is the one-sided rule (a fighter let go after 24 ticks of holding away with nothing landing on him), withdrawn in `brawl-second-pass.md` §1. I have no row for it in the harness and none is written: C12 is its replacement, a hard test that it does not exist. The two-stick walk-out stays in the page, so C9 to C11 are new. If the EP means the whole walk-out is retired, drop C9 to C11 and keep C12.
+Notes on the walk-out. The EP's ruling (2026-10-06): only the one-sided walk-out is retired (a fighter let go after 24 ticks of holding away with nothing landing on him; withdrawn in `brawl-second-pass.md` §1). The mutual walk-out stays, so C9 to C13 are all live: both hold away within 45 degrees for 12 ticks, free; the count runs while either guards, and does not run while either has a blow on its way or an attack button held, or is reeling or staggered. C12 is the hard test that the one-sided rule does not come back.
 
 ## D. Rows retired or re-read by §11
 
@@ -83,3 +83,18 @@ Notes on the walk-out. The walk-out the EP calls retired is the one-sided rule (
 - `brawl_end` texts `walk`, `double`, `escape` and the tick counts for each (C6 to C13).
 - The brawl's centre position, or the two fighters' positions each tick (readable already) plus the state they are in (C1 to C5).
 - An `open` tick count after a whiff (B13).
+
+## G. Harness state, 2026-10-06 (built in `qa/`, no Godot batch run; scripts smoke-tested on a scratch export at 2 matches, every row PENDING on a build with no C1)
+
+Built against the cues and reads that `docs/director/brawl-plan.md` §9.2 promises, so the names are the plan's and must be confirmed when C1 lands:
+
+| Plan row | In the harness | Reads |
+| :--- | :--- | :--- |
+| C1, C3, C4 | `c1.centre.latency` (hard, at most 2 ticks), `c1.centre.step.one` and `.both` (hard, 0.3 bh), `c1.drift.one` and `.both` (reported bh a second) | `DirBrawl.centre(S, ex)` returning `x`, `y`, `vx`, `vy` (the plan's keys); pairs `c1-drift-one` and `c1-drift-both`: lights mashers, one or both holding east from 24 ticks into a brawl for 60 ticks (`drift=east`) |
+| C6 to C8 | `double.perMatch` (0.5 to 2), `double.matchesWith` (40 to 70%, at least 100 matches), `double.max` (at most 4, hard), `double.cue` (a double_hit cue for every double end, hard), `double.both` (both fighters take damage on the landing tick, hard), `double.after` (damage and separation 30 ticks later, reported) | the `double_hit` cue (`n` the landing tick) and `brawl_end` text `double`; the AI's default arm |
+| C9 to C13 | `c1.walk.both`, `.jab`, `.guard` (hard: never under 12 ticks after the later stick or the jab press; the walk must happen), `.held` and `.one` (hard: no walk end at all) | `brawl_end` text `walk`; pairs `c1-walk-*`: both players hold away from 24 ticks into a brawl and stop pressing (`walk=1`), with `jab=6`, `wguard=1`, `wheld=1` as variants; the 12-tick floor is measured from the later stick or the jab's press tick, a lower bound that a blow cue could not give |
+| C7 (every trade level at 240 ticks ends in a double) | **PENDING, not built**: it needs the trade's tick count on a cue (`trade_break` carries `amount` and `n` today; the double path has no equivalent) | ask Encounter for the level trade's tick on `double_hit` |
+| C2 (the stick does nothing in a knock-back, launch, lift, hold, buried, a set piece, a stagger) and C5 (building faces) | not built: they need a script that holds a stick in each state | with C2a or after |
+| the drop | `zip.drop` (hard; the hooked shot) and `zip.drop.bolt` (a real bolt; a coverage gap is PENDING, never a pass) | `drop_start`, `drop_land`, `drop_end` are **event types of their own** (`sim/core/fx.gd`), not cues, which the zip rows had read as cues until this batch: the earlier "0, 0, 0" in the baseline was that, and not only the missing coverage |
+
+The drop row, what was found. A real bolt cannot reach a zipper on his way out in practice: the way out is 3 to 10 ticks, a bolt needs 6 to leave, and the zip's reach is itself a brawl, in which an energy press is a link and not a bolt. So the hard row (`zip.drop`) reports a shot of power 1 to `DirZip.shot` on a tick of the way out (`turret:...:hook=1`), the way Encounter's own check does; a second pair (`zip-turret`) fires real bolts with chance 25% a tick whenever no exchange runs, and reports how often one lands on the way out. On the build at 53d13b55, the hooked shot gives `zip_end down`, one `drop_start`, one `drop_end` and the state `dropped` in between. **`drop_land` did not fire in 3 of 3 drops** (the zipper was on the ground at the time, I suppose), so the row asks for one start and one end for each down, and reports the lands; Encounter to say whether a drop that begins on the ground should land.

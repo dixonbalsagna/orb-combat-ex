@@ -39,6 +39,17 @@ class Pl:
 	var plan: Array = []           # [{tick, k}] presses planned against the running exchange's blows
 	var last_press: int = -1000
 	var last_press_tick: int = -1000   # the S.tick of the last press (the clock a tapping player's real rate counts)
+	var G: Dictionary = {}         # the run's brawl counts (the same dictionary _match fills), so a stick script can report its drift
+	var st_since: int = -1         # stick scripts: the S.tick this script first saw its brawl
+	var walk_t0: int = -1          # the S.tick the walker's stick went away (walk=1)
+	var jab_tick: int = -1         # the S.tick of the walker's one blow (jab=N)
+	var jabbed: bool = false
+	var dr_t0: int = -1            # drift=...: the S.tick the stick went down
+	var dr_dir: float = 0.0
+	var dr_cx: Array = []          # the brawl's centre x each tick of the window (the director's DirBrawl.centre when the build has it, else the midpoint of the two)
+	var dr_cv: Array = []          # its velocity x each tick, when the build gives one
+	var hooked: bool = false       # turret hook=1: this zip has had its shot reported
+	var hk_n: int = 0              # the tick of the way out the shot is reported on (0 to 2, drawn at the tell)
 	var start_off: int = 0         # off=N: the first tap waits a seeded 0 to N ticks, so two identical mashers do not press on the same ticks (the mirror's tie-break)
 	var brawl_prev_c: int = -1         # the last beatAt read, to see a new blow go on its way
 	var brawl_off: int = 0
@@ -226,6 +237,143 @@ class Pl:
 			zip_next = S.tick + 120
 		return -1
 
+	## Whether a loaded script defines the method (has_method does not see a script's own static functions on every build).
+	static func has_m(sc, name: String) -> bool:
+		for m in sc.get_script_method_list():
+			if str(m.name) == name:
+				return true
+		return false
+
+	static var _centre_has: int = -1
+	## Whether this build's DirBrawl has the centre read (C1), looked up once.
+	static func centre_ok() -> bool:
+		if _centre_has < 0:
+			_centre_has = 1 if (brawl != null and has_m(brawl, "centre")) else 0
+		return _centre_has == 1
+
+	## C1's stick scripts (brawl-plan.md section 9; brawl-second-pass.md section 1). walk=1: after wat live ticks (default 24) in a brawl the player stops pressing and holds his stick away from the rival
+	## (jab=N throws one light N ticks into the walk, wguard=1 holds guard, wheld=1 holds the light button). drift=east|west|away|toward: from dat ticks (24) for dlen ticks (60) he holds that
+	## stick and keeps playing his script; the brawl's centre is read each tick, and the latency of the first move, the rate in bh a second and the largest step go to the run's counts.
+	func stick_script(S, slot: int, it, k: int) -> int:
+		var walk: bool = int(P.get("walk", "0")) != 0
+		var drift: String = String(P.get("drift", ""))
+		if not walk and drift == "":
+			return k
+		var f = S.fighters[slot]
+		var o = S.fighters[1 - slot]
+		var inb: bool = brawl != null and bool(brawl.call("inBrawl", S, f))
+		if not inb:
+			if dr_cx.size() > 0:
+				_drift_done()
+			st_since = -1
+			walk_t0 = -1
+			jab_tick = -1
+			jabbed = false
+			return k
+		if st_since < 0:
+			st_since = S.tick
+		var age: int = S.tick - st_since
+		var toward: float = SimMathx.jsign(SimWrap.sdx(f.x, o.x))
+		if walk and age >= int(P.get("wat", "24")):
+			it.mx = -toward
+			if walk_t0 < 0:
+				walk_t0 = S.tick
+			k = -1
+			var jb: int = int(P.get("jab", "0"))
+			if jb > 0 and not jabbed and S.tick - walk_t0 >= jb:
+				jabbed = true
+				jab_tick = S.tick
+				k = 0
+			if int(P.get("wguard", "0")) != 0:
+				it.guard = true
+			if int(P.get("wheld", "0")) != 0:
+				it.lightHeld = true
+		var dat: int = int(P.get("dat", "24"))
+		if drift != "" and age >= dat and age < dat + int(P.get("dlen", "60")):
+			var dd: float = 1.0 if drift == "east" else (-1.0 if drift == "west" else (toward if drift == "toward" else -toward))
+			it.mx = dd
+			if dr_t0 < 0:
+				dr_t0 = S.tick
+				dr_dir = dd
+				dr_cx = []
+				dr_cv = []
+			var cc = _centre(S, f)
+			dr_cx.append(cc[0])
+			dr_cv.append(cc[1])
+		elif drift != "" and dr_cx.size() > 0:
+			_drift_done()
+		return k
+
+	## The brawl's centre as [x, vx or null]: DirBrawl.centre when the build has it, else the midpoint of the two fighters.
+	func _centre(S, f) -> Array:
+		if S.dirS.ex != null and Pl.centre_ok():
+			var c = brawl.call("centre", S, S.dirS.ex)
+			if typeof(c) == TYPE_DICTIONARY and c.has("x"):
+				return [float(c.x), (float(c.vx) if c.has("vx") else null)]
+		var o = S.fighters[1 - S.fighters.find(f)]
+		return [f.x + SimWrap.sdx(f.x, o.x) * 0.5, null]
+
+	func _drift_done() -> void:
+		var n: int = dr_cx.size()
+		if n >= 12 and not G.is_empty():
+			var steps: Array = []
+			for i in range(n - 1):
+				steps.append(SimWrap.sdx(float(dr_cx[i]), float(dr_cx[i + 1])) * dr_dir)
+			var lat: int = -1
+			for i in range(n):
+				var moved: bool = (float(dr_cv[i]) * dr_dir > 1e-9) if dr_cv[i] != null else (i > 0 and float(steps[i - 1]) > 0.15)
+				if moved:
+					lat = i
+					break
+			var tot: float = 0.0
+			var cnt: int = 0
+			var mx: float = 0.0
+			for i in range(8, steps.size()):
+				tot += float(steps[i])
+				cnt += 1
+			for st in steps:
+				mx = maxf(mx, absf(float(st)))
+			G.driftN += 1
+			G.driftLat.append(lat if lat >= 0 else 999)
+			if cnt > 0:
+				G.driftRate.append(tot / float(cnt) * 60.0 / 75.0)   # bh a second along the stick, after the ramp
+			G.driftMaxStep = maxf(float(G.driftMaxStep), mx / 75.0)
+		dr_cx = []
+		dr_cv = []
+		dr_t0 = -1
+
+	## A bolt turret for the drop row (melee-press-feel.md section 2c: a shot on the way out drops a zipper). With the energy family held (energy=1) it presses a bolt, with chance p percent (default 25),
+	## on every tick while the rival's zip is in any phase and no exchange is running (inside one an energy press is a link, not a bolt). In practice the way out is 3 to 10 ticks and a bolt needs 6 to leave,
+	## and the zip's reach is itself a brawl (no bolt can be pressed in it), so a real bolt reaches a zipper on the way out only by luck: the row reports the coverage.
+	## hook=1: the turret presses no bolts. Once a zip, on a tick of its way out (0 to 2, drawn at the tell), it reports a shot of power 1 to DirZip.shot after the step, the way Encounter's own check does:
+	## the module's answer, the drop and its cues are then read as for a real hit (the damage of the shot is not applied).
+	func _turret(S, slot: int) -> int:
+		var zc = load("res://sim/director/zip.gd") if ResourceLoader.exists("res://sim/director/zip.gd") else null
+		if zc == null or S.dirS.ex != null or int(P.get("hook", "0")) != 0:
+			return -1
+		var zr = zc.call("read", S, S.fighters[1 - slot])
+		if typeof(zr) != TYPE_DICTIONARY or zr.is_empty():
+			return -1
+		if rng.randi_range(0, 99) < int(P.get("p", "25")):
+			return 0
+		return -1
+
+	## After the step: the hooked turret's shot report (see above).
+	func post_hook(S, slot: int) -> void:
+		if kind != "turret" or int(P.get("hook", "0")) == 0 or not ResourceLoader.exists("res://sim/director/zip.gd"):
+			return
+		var zc = load("res://sim/director/zip.gd")
+		var zr = zc.call("read", S, S.fighters[1 - slot])
+		if typeof(zr) != TYPE_DICTIONARY or zr.is_empty():
+			return
+		var ph: String = str(zr.get("phase", ""))
+		if ph == "tell":
+			hooked = false
+			hk_n = rng.randi_range(0, 2)
+		elif ph == "out" and not hooked and int(zr.get("n", 0)) >= hk_n:
+			hooked = true
+			zc.call("shot", S, S.fighters[1 - slot], {"power": 1.0})
+
 	## The tapper inside a brawl. The beat list holds a light's blow for 2 ticks only, so the old oracle never sees it (the script went blind). The
 	## director's own read is DirBrawl.beatAt(S, f): the S.tick of his blow on its way (B2: its beat point), or -1. A rhythm player throws one blow
 	## at a time, never a flurry (taps slower than 12 ticks are not one): a new blow goes on its way, the next press is planned at its read tick plus
@@ -292,6 +440,8 @@ class Pl:
 					return hold_kind
 			"zipper":
 				return _zipper(S, slot)
+			"turret":
+				return _turret(S, slot)
 			"tapper":
 				if S.dirS.ex != seen_ex:
 					seen_ex = S.dirS.ex
@@ -430,13 +580,20 @@ func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
 
 ## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
 func _gblank() -> Dictionary:
-	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "doubleHits": 0, "lastBlow": -1000, "walkBrawls": 0, "walkEarly": 0, "walkLags": [], "driftN": 0, "driftLat": [], "driftRate": [], "driftMaxStep": 0.0, "centreTicks": 0, "centreMaxStep": 0.0, "centreOver": 0, "dropStart": 0, "dropLand": 0, "dropEnd": 0, "dropStateBad": 0, "dropEndBad": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
 
 
 ## An event field as an int, 0 when the build's event has no such field.
 func _ei(e, k: String) -> int:
 	var v = e.get(k)
 	return int(v) if v != null else 0
+
+
+func _mean(a: Array) -> float:
+	var t: float = 0.0
+	for v in a:
+		t += float(v)
+	return t / maxf(1.0, float(a.size()))
 
 
 func _p95(a: Array) -> int:
@@ -457,7 +614,7 @@ func _greport(g: Dictionary) -> Dictionary:
 		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
 		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades,
 		"exactTradeFields": g.exact > 0 and g.exact == g.tradeBreaks, "levelTrades": g.drawsAfterClose, "levelChanges": g.drawChanges, "levelChangeShare": snappedf(float(g.drawChanges) / maxf(1.0, float(g.drawsAfterClose)), 0.001),
-		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
+		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "doubleHits": g.doubleHits, "walk": {"brawls": g.walkBrawls, "early": g.walkEarly, "lagMin": (g.walkLags.min() if g.walkLags.size() > 0 else -1), "lagMax": (g.walkLags.max() if g.walkLags.size() > 0 else -1), "n": g.walkLags.size()}, "drift": {"n": g.driftN, "latMax": (g.driftLat.max() if g.driftLat.size() > 0 else -1), "latMean": (snappedf(_mean(g.driftLat), 0.01) if g.driftLat.size() > 0 else -1.0), "rateBhPerSec": (snappedf(_mean(g.driftRate), 0.001) if g.driftRate.size() > 0 else -1.0), "maxStepBh": snappedf(g.driftMaxStep, 0.001)}, "centre": {"ticks": g.centreTicks, "maxStepBh": snappedf(g.centreMaxStep, 0.001), "over": g.centreOver}, "drop": {"start": g.dropStart, "land": g.dropLand, "end": g.dropEnd, "stateBad": g.dropStateBad, "endBad": g.dropEndBad}, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
@@ -466,6 +623,7 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 	for i in range(2):
 		var p := Pl.new()
 		p.setup(specs[i], seed, slots[i])
+		p.G = g
 		pl.append(p)
 	var lvl: String = ""
 	for p in pl:
@@ -480,6 +638,9 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 	var ai: Dictionary = {"p1": not by_slot[0].scripted(), "p2": not by_slot[1].scripted()}
 	SimCore.newMatch(S, seed, ai, {"v2": [by_slot[0].scripted(), by_slot[1].scripted()]})
 	var lt: int = 0
+	var cprev_ex = null            # C1: the brawl whose centre was read last tick, and where it was
+	var cprev_x: float = 0.0
+	var cprev_y: float = 0.0
 	var ticks: int = 0
 	var cur_ex = null
 	var ex_launch: bool = false
@@ -522,6 +683,7 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 					var zdx: float = SimWrap.sdx(S.fighters[slot].x, S.fighters[1 - slot].x)
 					it.mx = signf(zdx) if absf(zdx) > 12.0 * 75.0 else 0.0
 					it.dash = absf(zdx) > 40.0 * 75.0
+			k = p.stick_script(S, slot, it, k)
 			if k >= 0:
 				if k == 1:
 					it.heavy = true
@@ -543,6 +705,8 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 		var stepped: bool = SimCore.step(S, ins)
 		if stepped:
 			lt += 1
+			for hp in pl:
+				hp.post_hook(S, 0 if by_slot[0] == hp else 1)
 		for slot in range(2):
 			var p = by_slot[slot]
 			if not p.scripted():
@@ -564,6 +728,18 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 					brink_now[int(e.actor)] = true
 				elif e.type == "brink_exit":
 					brink_now.erase(int(e.actor))
+				elif e.type == "drop_start" or e.type == "drop_land" or e.type == "drop_end":   # the drop is an event type of its own (sim/core/fx.gd), not a cue
+					var dka: int = int(e.actor)
+					if e.type == "drop_start":
+						g.dropStart += 1
+						if dka >= 0 and dka < 2 and S.fighters[dka].state != "dropped":
+							g.dropStateBad += 1
+					elif e.type == "drop_land":
+						g.dropLand += 1
+					else:
+						g.dropEnd += 1
+						if dka >= 0 and dka < 2 and S.fighters[dka].state == "dropped":
+							g.dropEndBad += 1
 				elif e.type == "cue":
 					var ck: String = str(e.get("kind"))
 					if ck == "brawl_start":
@@ -574,7 +750,32 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 						g.ends[why] = int(g.ends.get(why, 0)) + 1
 						tb_tick = -1
 						last_closer = -1
+						# C1's walk-out: both scripts had their sticks away; the end must come at least 12 ticks after the later of the two sticks, and after a jab's press
+						if pl[0].walk_t0 >= 0 and pl[1].walk_t0 >= 0:
+							g.walkBrawls += 1
+							if why == "walk":
+								var lb: int = maxi(pl[0].walk_t0, pl[1].walk_t0)
+								lb = maxi(lb, maxi(pl[0].jab_tick, pl[1].jab_tick))
+								var lag: int = S.tick - lb
+								g.walkLags.append(lag)
+								if lag < 12:
+									g.walkEarly += 1
+					elif ck == "double_hit":
+						g.doubleHits += 1
+					elif ck == "drop_start":
+						g.dropStart += 1
+						var dsa: int = int(e.actor)
+						if dsa >= 0 and dsa < 2 and S.fighters[dsa].state != "dropped":
+							g.dropStateBad += 1
+					elif ck == "drop_land":
+						g.dropLand += 1
+					elif ck == "drop_end":
+						g.dropEnd += 1
+						var dea: int = int(e.actor)
+						if dea >= 0 and dea < 2 and S.fighters[dea].state == "dropped":
+							g.dropEndBad += 1
 					elif ck == "blow":
+						g.lastBlow = S.tick
 						var bt: String = str(e.get("text"))
 						g.blows[bt] = int(g.blows.get(bt, 0)) + 1
 					elif ck == "trade":
@@ -630,6 +831,25 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 							tb_tick = -1
 					elif ck == "stagger" and str(e.get("text")) == "heavy":
 						g.heavyStaggers += 1
+		# C1: the centre's step each tick of every brawl (a hard test: at most 0.3 bh); on a build with no DirBrawl.centre nothing is counted
+		if not g.is_empty() and Pl.centre_ok() and S.dirS.ex != null and S.dirS.ex.tpl == "brawl" and stepped:
+			var cen = Pl.brawl.call("centre", S, S.dirS.ex)
+			if typeof(cen) == TYPE_DICTIONARY and cen.has("x"):
+				var cy: float = float(cen.y) if cen.has("y") else 0.0
+				if cprev_ex == S.dirS.ex:
+					var cdx: float = SimWrap.sdx(cprev_x, float(cen.x))
+					var cst: float = sqrt(cdx * cdx + (cy - cprev_y) * (cy - cprev_y)) / 75.0
+					g.centreTicks += 1
+					g.centreMaxStep = maxf(float(g.centreMaxStep), cst)
+					if cst > 0.3 + 0.001:
+						g.centreOver += 1
+				cprev_ex = S.dirS.ex
+				cprev_x = float(cen.x)
+				cprev_y = cy
+			else:
+				cprev_ex = null
+		else:
+			cprev_ex = null
 		# exchange endings and per-player counts, from this tick's events
 		for e in S.out.fx:
 			if e.type == "damage" and e.number and int(e.attacker) >= 0 and int(e.attacker) < 2 and e.amount > 0.0:
