@@ -506,6 +506,8 @@ class Fighter:
 	var jV0: float = 0.0             # the journey's first-contact normalised speed (the wear budget)
 	var tumbleT: int = -1            # ticks rolled in a tumble, -1 when not tumbling (cap 72)
 	var dropT: int = 0               # ticks left of a drop (state "dropped": SimFighter.drop)
+	var heldMx: float = 0.0          # the stick as he holds it this tick, taken before any gate: a stun clears the intent's mx and my, not these. 0 for a launched or dropped fighter (nobody steers a knock-back). The director's nudge of a staggered fighter reads them
+	var heldMy: float = 0.0
 	var contactT: int = 0            # ticks since the last contact, saturating at 8 (the early-recovery window)
 	var launchN: int = 0             # this fighter's launch number: every contact event carries it
 	var jLips: int = 0               # flights off a lip so far in this journey (journey_end carries it)

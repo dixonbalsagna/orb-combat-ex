@@ -288,7 +288,7 @@ A blow feeds the mood by what kind of blow it was (Game Design, `docs/design/mel
 
 ## 8h. The double hit (2026-10-06)
 
-The director's cue `double_hit` (an even trade ending with both blows landing) adds `impulses.clash`, to no one fighter, on the tick the cue is sent (`zip-core.md` section 4).
+The director's cue `double_hit` (an even trade ending with both blows landing) adds `impulses.clash`, to no one fighter, on the tick the cue is sent (`zip-core.md` section 4). A `knockback` event with no attacker adds nothing: the double hit throws both fighters back that way, and its mood is the 480 alone (it read 840 before, with 180 for each throw).
 
 ## 9. Open points
 

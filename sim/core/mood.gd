@@ -358,7 +358,10 @@ static func tick(S: SimState) -> void:
 					# land: the mood keeps no memory of what is still to come.
 					add += _imp(fs, "clash", -1)
 			"knockback":
-				add += _imp(fs, "knockback", int(e.attacker))
+				# A knock-back with no attacker is nobody's blow: the director's double hit throws both fighters back this
+				# way, and its mood is the clash's units alone (the cue double_hit, above).
+				if int(e.attacker) >= 0:
+					add += _imp(fs, "knockback", int(e.attacker))
 			"parry":
 				add += _imp(fs, "parry", int(e.actor))
 			"clash_draw":

@@ -60,6 +60,7 @@ func _init() -> void:
 	check("a drop", _drop())
 	check("the mood by a blow's form", _moodForms())
 	check("the free-flight speed and the locked damping, as reads", _flightReads())
+	check("the stick as held, through a stun", _heldStick())
 	check("depth in the core", _depth())
 	check("the intro phase", _intro())
 	check("composed intros", _introComposed())
@@ -2471,6 +2472,53 @@ func _blockedShots() -> String:
 	return ""
 
 
+## The stick as held (f.heldMx, f.heldMy): what the player holds this tick, recorded before the stun's gate. A stunned
+## fighter's intent loses its stick, as before, and he does not move by it; the record keeps it, and it is in the hash.
+## A launched or a dropped fighter's record is blank: nobody steers a knock-back.
+func _heldStick() -> String:
+	var hold := SimIntent.new()
+	hold.mx = 0.6
+	hold.my = -0.4
+	var other := SimIntent.new()
+	other.mx = -1.0
+	other.my = 0.25
+	var quiet := SimIntent.new()
+	var H: Array = []
+	for stick in [hold, other]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+		var f = S.fighters[0]
+		f.y = WorldTerrain.groundY(S, f.x) + 900.0
+		SimCore.step(S, [stick, quiet])
+		if f.heldMx != stick.mx or f.heldMy != stick.my or f.input.mx != stick.mx:
+			return "a free fighter's held stick reads %s,%s and his intent %s" % [str(f.heldMx), str(f.heldMy), str(f.input.mx)]
+		f.vx = 0.0
+		f.vy = 0.0
+		f.stunTicks = 12
+		var x0: float = f.x
+		var y0: float = f.y
+		for t in range(8):
+			SimCore.step(S, [stick, quiet])
+			if f.input.mx != 0.0 or f.input.my != 0.0 or f.heldMx != stick.mx or f.heldMy != stick.my:
+				return "stunned, tick %d: his intent's stick is %s,%s and the held stick %s,%s" % [t, str(f.input.mx), str(f.input.my), str(f.heldMx), str(f.heldMy)]
+		if f.x != x0 or f.y != y0 or f.stunTicks != 4:
+			return "a stunned fighter moved by his stick (%s, %s), or his stun did not count down (%d left)" % [str(SimWrap.sdx(x0, f.x)), str(f.y - y0), f.stunTicks]
+		H.append(SimHash.stateHash(S).gameplay)
+		for st in ["launched", "dropped"]:
+			f.state = st
+			SimWounds.gateIntent(f, stick)
+			if f.heldMx != 0.0 or f.heldMy != 0.0:
+				return "a %s fighter's held stick reads %s,%s" % [st, str(f.heldMx), str(f.heldMy)]
+		f.state = "free"
+		SimWounds.gateIntent(f, stick)
+		if f.heldMx != stick.mx or f.heldMy != stick.my:
+			return "free again, the held stick did not come back"
+		SimCore.dispose(S)
+	if H[0] == H[1]:
+		return "two stunned fighters holding different sticks hash the same: the held stick is not in the hash"
+	return ""
+
+
 ## Two reads for the director (Encounter's control slice). SimFighter.flightSpeed is what a free fighter's step steers
 ## toward: from rest with the stick held, one step's velocity is the stick times it times the step's easing, by tier,
 ## stance, battered legs, the dash near and far, and the sea. SimFighter.lockedKeep(dt) is the share of his speed a locked
@@ -2575,6 +2623,9 @@ func _moodForms() -> String:
 		# the director's double hit is the clash's units, whoever sends it and whatever his stance
 		if gain.call(func(): cue.call("double_hit", "")) != I.clash[0]:
 			return "the double hit's cue did not add the clash's %d" % I.clash[0]
+		# a knock-back with no attacker (the double hit throws both back) is nobody's blow and adds nothing
+		if gain.call(func(): SimFx.knockback(S, b, null, "short", 300.0, S.tick + 12)) != 0:
+			return "a knock-back with no attacker fed the mood"
 		# a lone heavy's stagger is not a flurry's close, and a blow with no number is nothing
 		if gain.call(func(): cue.call("stagger", "heavy")) != 0 or gain.call(func(): SimFx.damage(S, b, a, 5.0, "core", "light", "", false, "brawl")) != 0:
 			return "a heavy's stagger or an unnumbered blow fed the mood"

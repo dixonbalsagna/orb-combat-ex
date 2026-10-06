@@ -262,6 +262,12 @@ static func daze(S: SimState, f) -> void:
 ## a staggered or dazed fighter can neither move, dash, charge nor attack (stance changes still go through); broken legs
 ## remove the dash. stunTicks counts down in step(), after control, so a stun of n ticks blocks exactly n ticks of input.
 static func gateIntent(f, i: SimIntent) -> void:
+	# The stick as held, recorded before the gate: a staggered fighter keeps a nudge, and the director reads it here
+	# (brawl-second-pass.md section 1). Blank for a launched or dropped fighter: a knock-back is the one exception to
+	# "a player always has some control", and it is enforced in this one place.
+	var flying: bool = f.state == "launched" or f.state == "dropped"
+	f.heldMx = 0.0 if flying else i.mx
+	f.heldMy = 0.0 if flying else i.my
 	if f.stunTicks > 0:
 		i.mx = 0.0
 		i.my = 0.0

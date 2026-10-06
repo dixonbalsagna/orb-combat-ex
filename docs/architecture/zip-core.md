@@ -73,3 +73,15 @@ Small pieces for Encounter's control slice (C1). None changes a match: the golde
 
 **Check** (`parity.gd`): "the free-flight speed and the locked damping, as reads", and a case for the cue in "the mood by a blow's form".
 
+## 5. The stick as held, through a stun (2026-10-06)
+
+A stun clears the fighter's intent, the stick with it, so a stunned fighter does not fly on his stick. Game Design has a staggered fighter keep half a nudge, so the director needs to know what he holds.
+
+- `f.heldMx` and `f.heldMy` are the stick as he holds it this tick. They are recorded at the top of `SimWounds.gateIntent`, on every tick his intent is read, before the stun clears anything. An AI slot's stick is recorded the same way.
+- The intent's own `mx` and `my` are gated as before. Nothing that read them changed.
+- **A launched or a dropped fighter's record is blank.** Nobody steers a knock-back: that exception is enforced here, in one place, and the director checks it too.
+- Both are in the hash. One golden regeneration: full-state checkpoints moved; every light digest and tick count stayed identical.
+- After a KO no intent is read, and the record keeps its last value.
+
+**Check** (`parity.gd`): "the stick as held, through a stun".
+
