@@ -496,3 +496,88 @@ C1 is built: `brawl-c1.md` has the rules, the cues, the reads and the rows. Wher
 - **The even lights-only mirror finishes.** The second pass expected a stalemate. A lead of 2 does appear between two even mashers, so closes still come, about 14 a match, beside about 21 double hits.
 - **A hole from Z1 is closed with it** (`DirZip.leaving`; `brawl-c1.md` section 4).
 - **9.5 is stale.** It sizes the C2 of the page before its three-strength rewrite (972e598), and it is re-cut with C2a.
+
+## 10. C2a and C2t, the three strengths and Orb's four tests: the cut (2026-10-06)
+
+Spec: `docs/design/brawl-second-pass.md` at a6d3ed5f, sections 1 to 3, 5b, 7, 10, 11 and 13, with Controls' `docs/controls/windup-read.md` section 5. Nothing here is built. Section 9.5 is replaced by this.
+
+### 10.1 What C2a includes
+
+| Thing | Rule | Data |
+| :--- | :--- | :--- |
+| **Three strengths** | X is today's light. Y is the medium: today's heavy strikes on a 12-tick wind-up, worth 2.5 brawl lights, 2 ki, a 6-tick reel. B is the heavy: a 28-tick wind-up, worth 6, 5 ki, a 12-tick stagger in place | `x`, `y`, `b` |
+| **The wind-up** | It starts on the press, on live ticks, and the blow is announced then with its landing tick. One press, one blow | |
+| **The tap rule** | Read where the wind-up ends, through Controls' `charge_read`. Button up: it lands then. Let go in the 4 ticks of grace: it goes at once. Still down at the decision point (16 and 32): it goes by itself at a tap's strength, until C2b gives a hold its charge | `read.windupGrace` (Controls') |
+| **A press that arrives already wound** | A medium or heavy edge whose level is off (Simple's Attack, let go) lands 2 ticks after it | |
+| **A fresh edge on a button believed held** | Released, then pressed: the old wind-up resolves as a tap and the new one starts. Never for a latched button | |
+| **Three flurries** | Each button has its own tap gap and rate: 6 to 12 ticks at 0.10 a tick, 12 to 16 at 0.156, 28 to 34 at 0.214. A press while his line is busy is kept 10 ticks, as now. Every landed flurry blow of any button adds 1 to his run and a reply takes 1 off | `x`, `y`, `b` |
+| **The mix-up** | The three in any order on his one line, each at its own pace. The pieces come from Combat's pools by button, and the repeat rules count the whole string | Combat's `recipes.brawl.json` |
+| **The heavy's armour** | While he winds a B: a light never stops it and does half; a medium stops it until tick 20 and after that lands in full; a blow that meets the armour adds nothing to the rival's run | `b.armour` |
+| **The burst** | A held X, read by Controls' `burst_read`: the light on the press, a 10-tick set, then seven more from 16 live ticks at gaps of 4, 4, 5, 6, 8 and 11. Its blows are the director's and aren't in the log. Each reels 2 ticks and adds half a point to the run. Letting go stops it after the blow in hand; any other press replaces it; after the eighth he is open 8 ticks | `burst` |
+| **B is off the beam** | A `signature` edge with no stance held is B, in reach and out of it. With RT held it fires the signature as today | |
+| **The ender goes** | "A heavy after two landed blows" is withdrawn, with `enderAfter`, the ender's pool and its share of the launch gate | |
+| **The AI** | It mashes one of the three by shares, mixes them, throws a heavy into an X flurry and a medium into a heavy's first 20 ticks, and holds the burst at a share. It digs in to a trade still level at the limit (`digIn` 0.2, 0.35, 0.5; half as much again for the rival). `rashHeavy`, `enderShare` and `heavyAfterClose` go | Each level's `brawl` block |
+
+Not in C2a: charges, the just release, the set and fresh guard, the wrench and the shove (C2b); skill strikes (C3); pairs (C6a).
+
+### 10.2 What C2t includes
+
+| Thing | Rule | Data |
+| :--- | :--- | :--- |
+| **Giving ground** | While the rival winds a medium or a heavy, a fighter with no blow on its way and no attack button down moves alone on his stick: 5 bh a second times his speed, 0.6 of it behind a guard. The rival's stick moves the rival alone at 0.6 of that. The attraction is off for those ticks. Never more than 4 bh apart | `give` |
+| **A wound blow's reach** | Read as it lands: striking distance and 0.5 bh for a medium, 1 bh for a heavy. Out of reach it misses and he is open 20 ticks | `give.reach` |
+| **Closing over ticks** | A press from a gap closes it as part of the blow: 2 ticks later for each bh, 4 at most, and never more than 0.6 bh in a tick. No blow places its attacker further than that in one tick any more (a hard test) | `give.close` |
+| **The stagger's half nudge** | A staggered fighter's stick nudges the centre at half, read from Simulation's `heldMx` and `heldMy` | `nudge.stagger` |
+| **The launcher** | A tap of B on a rival staggered for 12 ticks or more: a 14-tick wind-up, the stagger held until it lands, worth 3, 5 ki, and a launch the stick aims by quarter (Combat's `launcher.aim`). A B pressed in the 10 ticks before the stagger is kept and thrown as it | `launcher` |
+| **Energy in reach** | The stance is read from `mode` at the press and kept for the wind-up. RB + X is the point-blank bolt: contact at 2 ticks, worth 1, 1 ki, a 4-tick reel, 1 to the run, the X flurry's pace. RB + Y is the blast: a 12-tick wind-up with no armour, worth 2.5, 8 ki, a knock-back of 4 bh along the stick, and the brawl ends. On a guard each is a shot and takes the blocked shot's rule. Against a heavy's armour the bolt is a light and the blast a medium. Held, each is its tap | `energy.reach` |
+| **The AI** | It gives ground against 0.05, 0.2 and 0.4 of the wound blows it sees and follows a player who does at 0.3, 0.6 and 0.9. It throws the launcher after 0.15, 0.35 and 0.6 of the staggers it causes. A share of its brawl blows are energy | Each level's `brawl` block |
+
+### 10.3 Cues, fields and reads
+
+| Name | What it is | Others' name |
+| :--- | :--- | :--- |
+| `blow` | Its text is the strength: `light`, `medium`, `heavy`, and in C2t `bolt` and `blast`. **The text `flurry` is retired:** a flurry blow has `k` 1, and its beat has `flurry` true and `strength` | QA's, matched |
+| `windup` | One cue. Text `start` (`source` the cell, `dur` the wind-up, `n` the landing tick) and `end` (`k` the result: 1 thrown, 2 stopped by a blow, 3 lost to a stagger or the brawl's end, 4 a miss). `full` comes with the charges | UI's, matched. **Audio's `windup_start` and `cancel`, and QA's `windup_start`, are this cue** |
+| `burst` | Text `start` (`n` the tick its second blow lands) and `end` (`k` the blows thrown) | New |
+| `stagger` | As now, `n` its ticks. The close keeps the text `flurry`. A perfect block's has `source` the strength it turned | VFX's and QA's, matched |
+| `launcher_open`, `launcher_close` | Open: the fighter who may launch, his target, `n` the tick the stagger ends, text the stagger's kind. Close: text `used` or `lapsed`. Both players hear it | Audio's, matched. **It is Animation's signal for B** |
+| `miss` | A wound blow that met nothing: text `gave_ground`, `reach` or `dodge`; `n` the ticks he is open | QA's flag, as a cue |
+| `energy_reach`, `energy_land` | As VFX assumed: actor, target, text `bolt` or `blast`, the wind-up and the contact tick, the lean; then `source` `hit`, `guard`, `armour` or `miss`. `k` 1 on the one blow in 20 ticks that may take the full flash | VFX's, matched |
+| `launch` | The core's event, as now | VFX's, matched |
+| Strength, region and guard on a hit | The core's `damage` event has the region and the guard. The strength is on my `blow` cue and its beat; on the damage event it needs Simulation | Audio's: half matched |
+| `charge_full`, `charge_release` | With the charges | C2b |
+
+Reads: `DirBrawl.winding(S, f)` (the strength, the live ticks in and left, armoured or not), `DirBrawl.giving(S, f)`, `DirBrawl.launcherOpen(S, f)`.
+
+### 10.4 What they need
+
+| Who | What |
+| :--- | :--- |
+| **Game Design** | Nine defaults I build on unless told otherwise (10.5) |
+| **Simulation** | `heldMx` and `heldMy` (coming). A third weight for the press and the damage event, or its yes to my own strength field beside the core's light and heavy. The mood's units for a medium and a heavy. A point-blank shot through the blocked shot's rule: one option on the core's hit, or its yes to going through the blast's own hit |
+| **Controls** | The reads of `windup-read.md` section 5, landing with C2a. The log stamped with the live tick, which is my edit in `alchemy.gd` |
+| **Combat** | `recipes.brawl.json` placed as the live recipes by the EP's grant, as before |
+| **Tools** | The blocks `x`, `y`, `b`, `burst`, `launcher`, `give`, `energy.reach`, `nudge.stagger`; the AI's keys; `heavy`, `enderAfter`, `heavyMul`, `heldMul`, and the AI's `rashHeavy`, `enderShare` and `heavyAfterClose` retired. I send the list first, as for C1 |
+| **Animation, VFX, Audio, UI** | The names of 10.3 |
+| **QA** | Scripts for the Y masher, the B masher, the alternator, the hold-X player, the 10-tick tapper with B, each flurry against the one it beats, the launcher's route, a fighter who gives ground, and an energy presser |
+
+### 10.5 Nine defaults for Game Design
+
+1. **What ends a medium's wind-up.** The page says "no armour". A medium or a heavier blow that lands on him ends it, and a light doesn't: it does full damage and reels him after his blow. Otherwise the Y flurry beats nothing.
+2. **A Y or B still held at the decision point,** before charges exist: it goes by itself there, at a tap's strength.
+3. **B out of reach.** B with no stance is the heavy's lunge on today's heavy-lunge numbers, and its 28 ticks count from the press. Y's lunge lands as a medium. RT + B is the beam anywhere.
+4. **The riposte's and the reversal's heavy, without the ender.** Both are mediums in worth and stagger as now. Neither separates. From C2t a B pressed after a perfect block is the launcher, since its stagger is 20 ticks.
+5. **The zip's counters.** A Y whose wind-up ends in the tech window (4 ticks before his arrival to his blow) is the tech counter. A B whose wind-up ends in the heavy window (6 ticks before) is the heavy counter. Without this a Y pressed on the tell counters almost every zip.
+6. **The zip heavy's worth** stays the number it is built at, on a key of its own.
+7. **The close** is the next blow of any strength at a run of 4, with the close's 12-tick stagger.
+8. **Energy in reach, held:** a held RB + X is one bolt and a held RB + Y is the blast at its decision point.
+9. **A light from beyond what 4 ticks can close** (over 2.4 bh) is thrown, closes what it can, and misses if it is still out of reach.
+
+### 10.6 Sizes, and one chain or two
+
+| Slice | In my code | About |
+| :--- | :--- | :--- |
+| **C2a** | `takes`, `press`, `_throw`, `contact`, `tick`, `_hold`, `_piece`, `aiInput` and `_aiHeavy` in `brawl.gd` rewritten for three strengths; the log's live stamps and a third weight in `alchemy.gd`; B's routing and its lunge in `exchange.gd` and `bands.gd`; the AI's RT on its signature in `ai.gd`; the perfect block by strength in `interrupt.gd`; the ender out of `launch.gd`; the zip's counters | 800 lines, the largest brawl slice so far |
+| **C2t** | Each fighter moving alone, the leash, the reach and the miss; the closing step, which changes where a strike places its attacker; the stagger's nudge; the launcher and its aim; the two energy blows with the shot's rule on a guard; the AI's four shares | 550 lines |
+
+**One chain, built in two steps.** C2a alone has nothing that separates the fighters: the ender is gone, the charges are C2b's, and the launcher is C2t's. Its brawls would end by a signature, a double hit or going idle, so its pacing rows would mean nothing and its tuning would be done twice. Both slices rewrite the same functions, and Orb plays only after both. So: C2a first, to its gates and traces with no tuning; C2t on top; then one tuning pass and one chain. If Animation or Combat need C2a's cues in the tree sooner, C2a can go in on its gates alone, with its rows reported and not banded.
