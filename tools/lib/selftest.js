@@ -11,6 +11,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const core = require('./core');
 const { validate, checkSchema } = require('./schema');
+const { xref } = require('./xref');
 
 const fixtures = path.join(core.repoRoot, 'tools', 'fixtures');
 // Folders whose data does not exist yet: the self-test uses tools/fixtures/virtual in their place and ignores real files.
@@ -80,10 +81,19 @@ function applyValueMutation(value, m) {
   return doc;
 }
 
+// The schema findings (and the no-schema warning) of one document depend on that document alone, so those of every document a case does not
+// touch are the base's own and are worked out once; only a mutated document is checked again. The cross-references (xref) look across files, so
+// they are always run over the whole mutated set. The result is the same findings as checking every document every time (core.analyzeDocs).
+const baseSchema = new Map();
+function schemaFindingsOf(rel, doc) {
+  return core.analyzeDocs(new Map([[rel, doc]]), { withXref: false });
+}
+
 // Findings for the base data with the given mutations applied.
 function analyze(base, mutations) {
   const docs = new Map();
   const findings = [];
+  const touched = new Set();
   for (const [rel, b] of base) {
     if (b.value !== undefined) docs.set(rel, { value: b.value, lineOf: b.lineOf });
     findings.push(...b.lint);
@@ -91,6 +101,7 @@ function analyze(base, mutations) {
   for (const m of mutations) {
     const b = base.get(m.file);
     if (!b) throw new Error(`fixture file missing: ${m.file}`);
+    touched.add(m.file);
     if (m.replace) {
       if (!b.text.includes(m.replace[0])) throw new Error(`fixture text missing: ${m.replace[0]}`);
       const { parsed, findings: lint } = core.lintText(m.file, b.text.replace(m.replace[0], m.replace[1]));
@@ -100,7 +111,14 @@ function analyze(base, mutations) {
       docs.set(m.file, { value: applyValueMutation(b.value, m), lineOf: b.lineOf });
     }
   }
-  findings.push(...core.analyzeDocs(docs, { withXref: true }));
+  for (const [rel, d] of docs) {
+    if (touched.has(rel)) findings.push(...schemaFindingsOf(rel, d));
+    else {
+      if (!baseSchema.has(rel)) baseSchema.set(rel, schemaFindingsOf(rel, d));
+      findings.push(...baseSchema.get(rel));
+    }
+  }
+  findings.push(...xref(docs));
   return findings;
 }
 

@@ -161,7 +161,7 @@ Data files are owned by their directors; the validator reports problems and neve
 | :--- | :--- | :--- |
 | `qa` | `node qa/run-all.js` (Node 24.19.0) | about 35 s |
 | `sim` | `npm test --prefix sim` (Node 24.19.0) | about 1.5 min |
-| `data` | `node tools/validate.js --self-test`, then `node tools/validate.js` (Node 24.19.0): schemas and cross-references | a few seconds |
+| `data` | `node tools/validate.js --self-test`, then `node tools/validate.js` (Node 24.19.0): schemas and cross-references | about 15 seconds (the self-test took 4.5 minutes until 2026-10-06; see below) |
 | `godot-parity` | Godot 4.7.2 headless: import, GDScript parity, render determinism, render seam sweep | about 1 min |
 | `site` | Godot Web export, then assembles the Pages site (`tools/build-site.mjs`) | about 2 to 3 min (the 1.28 GB templates download dominates) |
 | `deploy` | Publishes the site to GitHub Pages. Only on push (or manual run) on `main`, and only after the five jobs above pass | seconds |
@@ -243,3 +243,5 @@ Order: push the workflow first (the tests and `site` job run; `deploy` fails har
 ## Held for now
 
 CONTRIBUTING.md, the pull request template and any licence field or licence check are on hold while Orb reconsiders the licence.
+
+**Why the self-test is fast, and what keeps it so.** The self-test runs every data case (about 3,800) by mutating a copy of the data in memory and running the whole validator on it. It took about 1.2 seconds per 15 cases (278 s for 3,843 cases) because each case (1) re-checked every document against its schema, though a case changes one file, and (2) re-read every `.gd` and `.js` file under `sim/` for the `hash-anim-read` rule (122 s of the 147 s profiled). Now `tools/lib/selftest.js` works out the schema findings of the untouched documents once and re-checks only the mutated ones, and `tools/lib/xref.js` scans `sim/` once per process. Cross-references still run over the whole mutated set for every case. On a clean export of HEAD (4,783 checks): 278 s before, 11 s after, and the findings of all 3,842 mutation cases are identical, checked case by case. A rule that reads files must read them once per process, not once per call.

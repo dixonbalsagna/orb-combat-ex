@@ -844,27 +844,34 @@ function xref(docs, root = repoRoot) {
   };
   for (const [rel, d] of docs) if (HASHED(rel)) hasRender(d.value, '', rel);
   // No sim file may read data/anim (it is not hashed, so a read would make a match depend on unhashed data).
-  const scanSim = (dir) => {
+  // The scan reads every file under sim/, whatever the data documents hold, and the files do not change while the process runs: it is done once
+  // per process (the self-test calls xref for every case; it read the whole sim tree each time).
+  const scanSim = (dir, out) => {
     let names = [];
     try { names = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
     for (const e of names) {
       const abs = path.join(dir, e.name);
-      if (e.isDirectory()) scanSim(abs);
+      if (e.isDirectory()) scanSim(abs, out);
       else if (/[.](gd|js)$/.test(e.name)) {
         const text = fs.readFileSync(abs, 'utf8');
         const at = text.indexOf('data/anim');
         if (at >= 0) {
           const line = text.slice(0, at).split('\n').length;
-          findings.push({ level: 'error', file: path.relative(root, abs).split(path.sep).join('/'), line, pointer: '', rule: 'xref:hash-anim-read', message: 'the sim reads data/anim, which the replay data hash does not cover; animation data is render-side only' });
+          out.push({ level: 'error', file: path.relative(root, abs).split(path.sep).join('/'), line, pointer: '', rule: 'xref:hash-anim-read', message: 'the sim reads data/anim, which the replay data hash does not cover; animation data is render-side only' });
         }
       }
     }
   };
-  if (docs.size > 1) scanSim(path.join(root, 'sim'));
+  if (docs.size > 1) {
+    if (!simAnimReads.has(root)) { const out = []; scanSim(path.join(root, 'sim'), out); simAnimReads.set(root, out); }
+    for (const f of simAnimReads.get(root)) findings.push({ ...f });
+  }
 
   xrefInput({ get, err, esc, isObj });
   xrefFight({ get, err, esc, isObj, plainKeys, docsFor: (re) => [...docs.keys()].filter((k) => re.test(k)).sort() });
   return findings;
 }
+
+const simAnimReads = new Map();
 
 module.exports = { xref };
