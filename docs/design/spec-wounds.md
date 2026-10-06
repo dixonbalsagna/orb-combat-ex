@@ -129,7 +129,7 @@ Orb removed hiding from the base game and kept it for a future stealth-specialis
 | **Flashes** | Found and Searching stay. Primed, the ambush window, is held for the future fighter. Art: please drop Primed from the base set. |
 
 **Recovery without hiding.** This replaces the old hidden fade (battered fading 3 per second while hidden). Without a replacement, battered regions would stay battered for the rest of a 6-to-8-minute fight, and comebacks would come only from Rally.
-- **Second breath.** After **4 s** with no exchange involving that fighter, a battered region fades 1 wear per second, down to 59, where it becomes bruised.
+- **Second breath.** After **4 s** with no exchange involving that fighter, a battered region fades 1 wear per second, down to 59, where it becomes bruised. It is for a break in the action: the 4 s start again on anything that hits him, landed or blocked, blow or shot, and on any attack of his own (`melee-press-feel.md` §9g).
 - It shows through the posture channel (a visible breath) and needs no UI.
 - The opponent denies it simply by attacking, since every attack closes the gap. Breaking lock through ESCAPE, or a long break launch, is how a fighter earns it.
 - Broken regions still mend only through Rally.

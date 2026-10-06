@@ -565,7 +565,7 @@ QA re-based the rows that were counted for each exchange (`docs/qa/brawl-rebase.
 
 | The row | The band | Ruling |
 | :--- | :--- | :--- |
-| **Perfect blocks for each 100 blows thrown,** by the easy, medium and hard AI. It was for each 100 melee exchanges, at 3 to 8, 5 to 15 and 12 to 20 | **1.3 to 3.5, 2.2 to 6.5 and 5.2 to 8.7** | Confirmed: the old bands divided by an exchange's old 2.3 blows. QA also reports the split, against heavies and against lights, with no band yet. A heavy has a wind-up to read, and a light doesn't |
+| **Perfect blocks a minute,** made by the easy, medium and hard AI. It was for each 100 melee exchanges, at 3 to 8, 5 to 15 and 12 to 20, and then for each 100 blows | **0.5 to 2, 1 to 4 and 2 to 5.5 a minute** | **Re-based again in §9g.** These are the old bands at the old 15 to 28 exchanges a minute. The count for each 100 blows is reported beside it, with its split against heavies and against lights |
 | **Brawls a minute, and blows a minute.** It was exchanges started a minute, 15 to 28 | Reported | Confirmed. The old row is retired when the planned exchange is gone |
 | **Share of fight time in a brawl** | 45 to 60% for a pressing player, and 30 to 50% for the AI against itself, by the last brawl slice | Confirmed, and the AI's share re-based in §9e: it now fires too often to brawl for half the fight |
 | **A brawl's median length** | **2.5 to 6 s** | **Corrected.** QA proposed my 6 to 12 s. That was set when a knock-back drew the fighters back together by itself. Orb removed that (questionnaire 17), so a brawl ends with its string's ender, and one string is 3 to 5 blows and a heavy |
@@ -901,6 +901,30 @@ A player who presses only lights against the medium AI now has brawls of 8 to 9 
 - **The two bands are read on a player who mixes.** QA's pressing script for these rows closes about half of its strings with an ender once two blows have landed. Against that script the bands stay as they are: a median brawl of 2.5 to 6 s, and 45 to 60% of fight time. The lights-only presser is reported beside it.
 - **One guard against a stuck brawl:** the 90th percentile of a brawl's length is at most 20 s, for the mixing player and for the AI against itself.
 - **For the last brawl slice, where the AI learns to leave:** it leaves a brawl it is losing. After it has been closed on twice in one brawl without closing once itself, its next free action is to leave, by a zip away or a dodge with the stick away, at a share by level. That is the AI playing well, and not a rule that ends brawls.
+
+### 9g. Rulings on the build with the perfect block and the reversal in place (2026-10-05)
+
+Encounter's B1c is built to §9f (`docs/director/brawl-b1c.md`). In band at 100 matches an arm: the median at 413 and 417 s with `brawl.damageMul` 0.31, KAI at 51.5%, the masher at 96, 45 and 0, bolt-only at 27, the mixed blaster at 48, the AI against itself at a median brawl of 2.8 s and 25.2% of fight time with nothing running for 10.3 s a minute, and the mixing presser at 3.03 s, 10.08 s at the 90th percentile and 57.5% of fight time. Simulation is retuning the three rows the extra blows pushed out, on the levers already ruled: the arms, the mood and the acts.
+
+**1. A reversal inside a brawl gives the parry's mood impulse.** Confirmed: 240, as a perfect block does. That is what "the same" meant in §9f's table.
+
+**2. Perfect blocks: the band follows, and the AI doesn't block more.** They read 1.58 for each 100 blows against 2.2 to 6.5 for the medium AI. Blows rose, and perfect blocks didn't.
+- A perfect block is worth more than it was: a 20-tick stagger in place, and a riposte that can't be answered. The masher's band holds at 45 with the AI blocking as it does. Raising `perfectMul` would take him out of it.
+- The band I confirmed was the old one divided by an exchange's 2.3 blows. That kept the rate for each contact while the contacts tripled. What the old band was really setting is how often a perfect block happens.
+- **So the row is counted for each minute:** 0.5 to 2, 1 to 4 and 2 to 5.5 perfect blocks a minute by the easy, medium and hard AI. Those are the old bands at the old 15 to 28 exchanges a minute. The count for each 100 blows stays as a reported number.
+
+**3. Second breath** read 40.4% of battered wear recovered, against at most 25%, on QA's 3,200-match baseline before B1c. It was 27.6%.
+- **The cause I expect:** its clock counts 4 s with no exchange involving the fighter (`spec-wounds.md` §1c). The AI now fires more, and spends more time between brawls in shots and lunges. If a shot that hits him, or one he blocks, isn't an exchange, then a fighter under fire is recovering as if the fight had paused. More battered arms sitting just over the line add to it, since they fade back to 59 cheaply.
+- **The rule, made exact:** second breath is for a break in the action. The 4 s start again on anything that hits him, landed or blocked, blow or shot, and on any attack of his own.
+- **One measurement first,** from Simulation or QA: how much second-breath time is spent under fire or inside 4 s of his own attack, and its split by region. If most of it is, the rule above is the fix. If it isn't, the lever is the wait, from 4 s to 6 s.
+- Read it again after the arms' retune either way, because fewer battered arms will lower it.
+
+**4. The acts.** All three start early on B1c: 64, 148 and 237 s, against 90 to 150 s, 150 to 240 s and 270 to 345 s. The scale is lower than it was, but more blows land, and power comes from damage.
+- The first threshold at 35 moves only the first form, so it can't bring acts 3 and 4 back.
+- **The second lever is the two rates, taken down together to three quarters:** power for damage taken from 1% to 0.75%, and for damage dealt from 0.6% to 0.45%. Their ratio is kept.
+- **With both in,** my estimate is acts at about 95, 188 and 300 s. It is reasoned from Simulation's finding that about 88% of power comes from damage, and it is not measured.
+- Later forms mean lower tiers for longer, so the median length will rise a little. It has room: 413 and 417 s against a ceiling of 480.
+- **Data,** once the rates are keys in `ladder.json`: thresholds 35, 65 and 100; power for damage taken 0.0075; power for damage dealt 0.0045.
 
 ## 10. Stances and the face buttons
 
