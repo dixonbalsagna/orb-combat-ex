@@ -110,7 +110,7 @@ Bold is over the gate. The analyser also reads each clip with the area threshold
 - **A beam comes and goes once.** Its strength rises over 0.1 s, where it was at full strength on its first tick, and its three layers have soft edges, where the glow was flat-topped with a hard edge.
 - **A refused beam, and every beam under reduced flashing, is calm:** a thin line in the beam's colour with a faint glow. It still shows where the beam is. Before, a "reduced" beam could take the second's one slot and be drawn at full size.
 - **A clash's flare and beams rise and fall** over 0.15 and 0.25 s, where they came on and went off in one tick.
-- **The pan haze, off unless switched on** (`--panhaze`, on the web `?panhaze=1`; `RenderLook.PAN_HAZE_DEFAULT` is the one line that flips it). While a pane's camera travels along the ground faster than 0.35 screen widths a second, the buildings lose their windows and marks and melt toward what is behind them: the sky's colour above the horizon line, the ground's below it. It is complete at 0.9 widths a second and 70% strong, comes in over 0.1 s and clears over 0.6 s.
+- **The pan haze, off unless switched on, and not needed** (`--panhaze`, on the web `?panhaze=1`; `RenderLook.PAN_HAZE_DEFAULT` is the one line that flips it). The EP's ruling, 2026-10-06: collapse passes Legal's rule at 2.5 with Camera's scroll governor, so the haze stays off and its code stays behind the switch. While a pane's camera travels along the ground faster than 0.35 screen widths a second, the buildings lose their windows and marks and melt toward what is behind them: the sky's colour above the horizon line, the ground's below it. It is complete at 0.9 widths a second and 70% strong, comes in over 0.1 s and clears over 0.6 s.
 
 ### What each costs the look
 
@@ -159,6 +159,17 @@ Before and after, on exports of 1172a4e8 (today's tree, with VFX's register and 
 Every clip is at or under the gate of 2.5 after, and none reads over 3 with the lower threshold. Clash in normal mode moved from 1.5 to 2: the char's darkening no longer lands on the tick of the camera's reframe, and one change at 118% of the threshold now stands apart where it merged before. The two-second-memory reading was not run.
 
 What it costs the look: the mark of a beam appears late. The ground glows, then darkens over a few seconds, where the black scar used to be there the moment the beam passed. Top row: tick 108, before and after. Middle: tick 170, before and after. Bottom: tick 330 after, when the char is in; and the reduced form at tick 108. ![groove](img/flash-groove.png)
+
+## The window fade: tried, and worse (2026-10-06)
+
+Camera read the collapse fly-by as a window grid flipping whole house fronts, and the EP asked for the windows, soot and cracks to fade toward the plain wall as the scenery crosses a pane fast (from 25 to 70 pixels a tick). It was built and measured on an export of d745a5f1, and not shipped.
+
+| Collapse, by Tools' `check-clip` | Normal | Reduced |
+| :-- | :-- | :-- |
+| Before | 2.5 | 2.5 |
+| With the fade | **3.5** | **3.5** |
+
+With the windows held fully gone for the whole fly-by, the second still reads 3.5 on the same seven changes. So the analyser counts the house bodies against the sunset and the grass. The windows break a front into mixed lighter and darker pixels; a plain wall flips the whole front one way, which is worse. The margin on this clip cannot come from fading detail: the levers are the camera's scroll in towns and the pursuit's speed through one.
 
 ## The capture hook for Tools' frame analyser
 

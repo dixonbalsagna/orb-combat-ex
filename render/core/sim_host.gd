@@ -25,6 +25,7 @@ var fxv := SimFxView.new(1)     # reference fx consumer (sim/core/view/fx.gd)
 var impact := ImpactFx.new()    # render-side crater, scorch and water effects (render/core/impact_fx.gd)
 var audio_cues := AudioCues.new()   # Audio's event reader (audio/audio_cues.gd); its own stream, seeded per match
 var pending_cues: Array = []    # cues made this frame's ticks, for the scene to play
+var sky := SkyDrive.new()       # the dynamic sky's shared drivers: the drift, the mood, the towns (render/core/sky_drive.gd)
 var vfx := VfxHub.new()         # VFX's state (render/vfx/, docs/vfx/plan.md): trails and the rest, from each tick's events
 var cam_rng: SimRng             # the 'camera' cosmetic stream: shake jitter
 var seed: int = 1
@@ -67,6 +68,7 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 	_skip_intro = 0
 	setup_used = su.duplicate(true)
 	SimCore.newMatch(S, seed, ai, su)
+	sky.reset(S)
 	hit_flash_T = [-INF, -INF]
 	_hit_T = [NAN, NAN]
 	_beam_ok.clear()

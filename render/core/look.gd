@@ -205,6 +205,20 @@ const SKY_UPPER_AT: float = 0.55
 const SKY_TOP_AT: float = 1.45
 const SKY_THIN: float = 5.0
 const FOG_BAND: float = 0.25             # ground haze depth below the horizon line, half-screen heights
+## The dynamic sky (render/core/sky_drive.gd; Art's docs/art/dynamic-sky.md and data/art/sky.json, which hold the
+## keys, the blend paths, the drift, the rate limits and the mood's colours and least durations). SKY above is the
+## sunset key and the fallback when the data is missing. These are the numbers the data gives only in words (from
+## Art's reference code, keys.mjs) and Rendering's own. Bands in Art's order: horizon, lower, upper, top.
+const SKY_FRENZY: Array = [0.10, 0.10, 0.25, 0.18]   # frenzy: the horizon toward ember, the lower toward deep, the upper toward the top, the top toward deep
+const SKY_RUIN: Array = [0.60, 0.60, 0.40, 0.25]     # ruin: the horizon, lower and upper toward smoke, the top toward ash
+const SKY_RUIN_STARS: float = 0.7                    # ... and the stars thin by this share (to 30%)
+const SKY_FRENZY_BY_BAND: Array = [0.0, 0.4, 1.0]    # the frenzy asked for by the sim's mood band: calm, tense, frenzied
+const SKY_STEP_PHASE: float = 5.0e-5     # a pane's sky is not worked out again while its place has moved less than this of a lap and nothing else has
+const SKY_TOWN_GAP: float = 2400.0 * WS  # buildings further apart than this along the ground are two towns
+const SKY_TOWN_SCAN_S: float = 0.5       # how often the towns' damage is read
+const SKY_GLOW_FULL: float = 0.5         # a town with this share of its buildings cracked or worse glows fully
+const SKY_GLOW_MIX: float = 0.35         # how far a full glow takes the horizon toward ember (Art)
+const SKY_GLOW_SHAPE := Vector3(0.39, 0.015, 0.04)   # the glow: half its width in half screen heights (0.22 of a 16 by 9 screen across); it rises over y above the horizon line, is full to z, and is gone at the top of the horizon band
 
 const TOWER := "#565e70"
 const TOWER_DEAD := "#3f424a"

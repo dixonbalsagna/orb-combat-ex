@@ -219,6 +219,7 @@ func _ready() -> void:
 		flashcap = FlashCapture.new(self)
 	if not manual and not args.has("bench") and not args.has("frames") and not args.has("shot") and flashcap == null and not ui_hud.howto_seen():
 		ui_hud.show_howto(true)     # the first run's How to play card (docs/ui/hud-spec.md section 17)
+	_sky_args()
 	if args.has("bench") or args.has("novsync"):
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
@@ -473,6 +474,11 @@ func frame(delta: float) -> void:
 	PaneWorld.pan_haze_on = (RenderLook.PAN_HAZE_DEFAULT or args.has("panhaze")) and not args.has("nopanhaze")   # the buildings' haze while the camera travels fast
 	PaneWorld.sky_react_on = args.has("skyreact")   # the clouds parting at tier 3 and 4: off unless asked for (QA's GB-002)
 	PaneWorld.sky_calm = host.vfx.reduced_motion
+	# The dynamic sky's shared drivers, once a frame before the panes. With reduced motion the drift and the mood hold
+	# and only the place blend stays (Art). A tool's posed frames show their place's sky at once.
+	host.sky.calm = host.vfx.reduced_motion
+	host.sky.snap_still = manual
+	host.sky.advance(host.S, (float(host.ticks) + host.acc / SimConst.DT) * SimConst.DT)
 	PaneWorld.flash_calm = host.vfx.reduced_motion or host.vfx.reduced_flashing   # the register's reduced mode: the grooves glow and char faintly
 	var n: int = host.advance(delta, vp.x, vp.y)
 	if args.has("flash-soak") and frames % 40 == 0 and not FlashSet.ids().is_empty():
@@ -689,6 +695,24 @@ func _shake() -> float:
 	var o: Dictionary = ui_hud.opts
 	var pref: float = clampf(float(o.get("camera_shake", CamParams.SHAKE_PREF_DEFAULT)), 0.0, 10.0)
 	return pref / 10.0 * CamParams.SHAKE_PREF_TOP * (0.25 if bool(o.get("reduced_motion", false)) else 1.0)
+
+
+## The dynamic sky's switches, for stills and comparisons: --staticsky (the sunset everywhere, as before), --sky=KEY
+## or --sky=0.58 (every pane holds that key or place of the lap) and --skymood=F,R,G (frenzy, ruin and every town's
+## glow held at those values, 0 to 1). On the web the page's URL may name them.
+func _sky_args() -> void:
+	SkyDrive.ensure()
+	host.sky.still = args.has("staticsky")
+	if args.has("sky"):
+		var v: String = str(args.sky)
+		host.sky.hold_phase = v.to_float() if v.is_valid_float() else NAN
+		for k in SkyDrive.keys:
+			if str(k.id) == v:
+				host.sky.hold_phase = float(k.phase)
+	if args.has("skymood"):
+		var parts: PackedStringArray = str(args.skymood).split(",")
+		if parts.size() == 3:
+			host.sky.hold_mood = [clampf(parts[0].to_float(), 0.0, 1.0), clampf(parts[1].to_float(), 0.0, 1.0), clampf(parts[2].to_float(), 0.0, 1.0)]
 
 
 ## The camera's scale for the flash register's weights (VfxHub.px_per_unit): pixels per world unit on the fighters'
@@ -1026,9 +1050,10 @@ func _notification(what: int) -> void:
 ## UI's options for Controls' two charge settings: slot 0's, and with _p2 slot 1's.
 const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
 ## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
-## without UI's notice, and are dropped unless the page is on a local host (gate_args).
-const LOCAL_ONLY_ARGS: Array = ["study", "flashcap"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze"]
+## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
+## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze.
+const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

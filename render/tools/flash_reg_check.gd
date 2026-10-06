@@ -363,12 +363,12 @@ func _run() -> void:
 	_expect(pw.pan_haze == 0.0, "... and with its switch off there is none")
 	PaneWorld.pan_haze_on = RenderLook.PAN_HAZE_DEFAULT
 	# 11. A public page's link cannot reach the capture hook or the study route (they start with no notice).
-	var pub: Dictionary = main.gate_args({"flashcap": "1", "study": "zip", "nointro": "1", "skyreact": "1", "panhaze": "1", "nopanhaze": "1"}, false)
+	var pub: Dictionary = main.gate_args({"flashcap": "1", "study": "zip", "nointro": "1", "sky": "night", "skymood": "1,1,1", "staticsky": "1", "skyreact": "1", "panhaze": "1", "nopanhaze": "1"}, false)
 	var loc: Dictionary = main.gate_args({"flashcap": "1", "study": "zip", "nointro": "1"}, true)
 	var named: bool = true
 	for k in main.LOCAL_ONLY_ARGS:
 		named = named and main.URL_ARGS.has(k)
-	_expect(not pub.has("flashcap") and not pub.has("study") and pub.size() == 4 and loc.size() == 3 and named and main.LOCAL_ONLY_ARGS.size() == 2, "on a public page the capture hook and the study route are dropped from the arguments and the look switches stay (%s); on a local host all are kept" % str(pub.keys()))
+	_expect(not pub.has("flashcap") and not pub.has("study") and not pub.has("nointro") and pub.size() == 3 and loc.size() == 3 and named, "on a public page the capture hook, the study route, nointro and the sky's debug holds are dropped from the arguments and the look switches stay (%s); on a local host all are kept" % str(pub.keys()))
 	_expect(not UiHud.page_is_local("127.0.0.2", "http:") and not UiHud.page_is_local("example.org", "https:") and UiHud.page_is_local("127.0.0.1", "http:") and UiHud.page_is_local("localhost", "http:"), "UI's rule for a local host, which the filter follows: 127.0.0.1 and localhost are, another address is not")
 	print("flash register check %s" % ("passed" if fails == 0 else "FAILED (%d)" % fails))
 	quit(0 if fails == 0 else 1)

@@ -6,6 +6,16 @@ extends SceneTree
 ## - main turns it on only for --skyreact, and the web page's URL may name it;
 ## - with it on: full at tier 4, half at tier 3, nothing for a fighter off the screen, nothing with reduced motion;
 ## - the cloud pattern's place wraps with the planet, and stands still with reduced motion.
+## The dynamic sky (render/core/sky_drive.gd; Art's docs/art/dynamic-sky.md), numbers too:
+## - at a match's start the pane hands the shader the sunset key to the bit: the colours and the stars it always had;
+## - every key's colours are the key's own on its place of the lap, and the port agrees with Art's reference code at
+##   places between the keys and at the mood's extremes;
+## - nothing is fast: with the camera flying a quarter of a lap a second and turning back every 3 seconds for 3
+##   minutes, no band's luminance changes by more than the place budget in any second; with the mood and the damage
+##   slammed on and off as well, and with a driver that jumps, none by more than 0.05 and their weighted mean by no
+##   more than 0.02;
+## - the mood eases over Art's least durations, and with reduced motion the drift and the mood hold;
+## - the switches (--staticsky, --sky, --skymood), and what a pane's sky costs a frame.
 ## The pictures (with a window only): with the reaction on, the clouds part and that is all the sky does (it once
 ## paled the sky in a tall opening down to the horizon, which read as a pale pillar from a high camera and hung in the
 ## sky for a fighter nobody could see). The sky is drawn with both at tier 1 and again with both at tier 4, from a low
@@ -60,6 +70,9 @@ func _run() -> void:
 		main.pane.get_node(name).visible = false
 	var S: SimState = main.host.S
 	var vp: Vector2 = main.get_viewport().get_visible_rect().size
+	_dynamic(S)
+	main.start_match(seed)
+	S = main.host.S
 	_numbers(S, vp)
 	if DisplayServer.get_name() == "headless":
 		print("(the pictures need a window: not drawn under --headless)")
@@ -69,6 +82,179 @@ func _run() -> void:
 		PaneWorld.sky_react_on = false
 	print("sky check %s" % ("passed" if fails == 0 else "FAILED (%d)" % fails))
 	quit(0 if fails == 0 else 1)
+
+
+# ------------------------------------------------------------------ the dynamic sky
+
+## Art's reference code (art/concepts/sky/keys.mjs skyAt and moodSky) at places between the keys and at the mood's
+## extremes: horizon, lower, upper, top.
+const REF: Dictionary = {
+	0.1: ["#f1deb2", "#6fac66", "#0060a1", "#182f73"], 0.25: ["#f6ca8d", "#dd8e6a", "#385595", "#162455"], 0.45: ["#6d6b74", "#5a485d", "#212651", "#090e27"],
+	0.7: ["#207279", "#005857", "#0c2a4d", "#091028"], 0.92: ["#eed8b7", "#4fa168", "#005c93", "#152c67"],
+}
+const REF_MOOD: Array = [[0.33, 1.0, 0.0, ["#f2af74", "#c06a61", "#3b386e", "#0f1635"]], [0.33, 0.0, 1.0, ["#775940", "#6d423a", "#3f3759", "#171e38"]], [0.02, 1.0, 1.0, ["#726456", "#314354", "#243d5e", "#192a55"]]]
+const REF_LAP_S: float = 48.68   # one lap at the limit, by the reference slewStep
+
+
+## The largest difference of a channel, of 255, between four colours and four hex strings.
+static func _off(cols: Array, hexes: Array) -> float:
+	var worst: float = 0.0
+	for i in range(4):
+		var h := Color.html(str(hexes[i]))
+		var c: Color = cols[i]
+		worst = maxf(worst, 255.0 * maxf(absf(c.r - h.r), maxf(absf(c.g - h.g), absf(c.b - h.b))))
+	return worst
+
+
+## The worst change in any second (60 frames) of each band's luminance and of their weighted mean: [band, mean].
+static func _worst_second(lums: Array) -> Array:
+	var wb: float = 0.0
+	var wm: float = 0.0
+	for i in range(60, lums.size()):
+		var a: Array = lums[i - 60]
+		var b: Array = lums[i]
+		for k in range(4):
+			wb = maxf(wb, absf(float(b[k]) - float(a[k])))
+		wm = maxf(wm, absf(SkyDrive.mean_of(b) - SkyDrive.mean_of(a)))
+	return [wb, wm]
+
+
+func _dynamic(S: SimState) -> void:
+	var host: SimHost = main.host
+	var sky: SkyDrive = host.sky
+	var W: float = SimConst.W
+	# The start: one frame as the game draws it.
+	main.frame(1.0 / 60.0)
+	var m: ShaderMaterial = main.pane._sky_mat
+	var same: bool = SkyDrive.ok
+	for i in range(4):
+		same = same and m.get_shader_parameter(["sky_top", "sky_upper", "sky_lower", "sky_horizon"][i]) == RenderLook.col(RenderLook.SKY[i])
+	var at: int = SkyDrive.key_at(sky.target(main.view_cam_x))
+	_expect(same and float(m.get_shader_parameter("star_low")) == 0.25 and at >= 0 and str(SkyDrive.keys[at].id) == "sunset", "at a match's start the sky is the sunset key to the bit: the four colours and the stars' strength it always had (data read: %s)" % SkyDrive.ok)
+	# Every key on its place, and the port against Art's reference.
+	var x_of: Callable = func(phase: float) -> float: return SimWrap.wrap(sky.spawn_x + (phase - SkyDrive.start_phase) * W)
+	var keys_ok: bool = SkyDrive.keys.size() == 5
+	for k in SkyDrive.keys:
+		var o: Dictionary = sky.pane({}, x_of.call(float(k.phase)), 0.0)
+		keys_ok = keys_ok and o.cols == k.cols and absf(float(o.star_low) - minf(1.0, 0.25 * float(k.stars) / 0.15)) < 1e-9
+	_expect(keys_ok, "each of the %d keys is its own colours on its place of the lap, and the stars follow the key" % SkyDrive.keys.size())
+	var worst: float = 0.0
+	for ph in REF.keys():
+		worst = maxf(worst, _off(sky.pane({}, x_of.call(float(ph)), 0.0).cols, REF[ph]))
+	var worst_mood: float = 0.0
+	for r in REF_MOOD:
+		sky.frenzy = float(r[1])
+		sky.ruin = float(r[2])
+		worst_mood = maxf(worst_mood, _off(sky.pane({}, x_of.call(float(r[0])), 0.0).cols, r[3]))
+	sky.frenzy = 0.0
+	sky.ruin = 0.0
+	_expect(worst <= 1.5 and worst_mood <= 1.5, "between the keys and at the mood's extremes the port agrees with Art's reference code (off by %.2f and %.2f of 255 at most)" % [worst, worst_mood])
+	var p: float = SkyDrive.start_phase
+	var moved: float = 0.0
+	var n: int = 0
+	while moved < 1.0 and n < 60 * 400:
+		var q: float = SkyDrive.slew(p, fposmod(p + 0.4, 1.0), 1.0 / 60.0)
+		moved += fposmod(q - p, 1.0)
+		p = q
+		n += 1
+	_expect(absf(float(n) / 60.0 - REF_LAP_S) < 1.0, "one lap at the limit takes %.1f s (the reference: %.1f)" % [float(n) / 60.0, REF_LAP_S])
+	# Nothing fast. The camera flies a quarter of a lap a second and turns back every 3 seconds, for 3 minutes.
+	var st: Dictionary = {}
+	var lums: Array = []
+	var x: float = sky.spawn_x
+	for i in range(180 * 60):
+		var t: float = float(i) / 60.0
+		x = SimWrap.wrap(x + (0.25 * W / 60.0) * (1.0 if int(t / 3.0) % 2 == 0 else -1.0))
+		var o: Dictionary = sky.pane(st, x, t)
+		lums.append(o.cols.map(func(c): return SkyDrive.lum_of(c)))
+	var w1: Array = _worst_second(lums)
+	_expect(w1[0] <= SkyDrive.place_band + 1e-4 and w1[1] <= SkyDrive.place_mean + 1e-4, "the place alone, under that drive: no band changes by more than %.3f in a second (worst %.4f) and their mean by no more than %.3f (%.4f)" % [SkyDrive.place_band, w1[0], SkyDrive.place_mean, w1[1]])
+	# The same with the mood and the damage slammed on and off (the tool's own match), then a driver that jumps.
+	sky.reset(S)
+	st = {}
+	lums = []
+	x = sky.spawn_x
+	for i in range(180 * 60):
+		var t: float = float(i) / 60.0
+		x = SimWrap.wrap(x + (0.25 * W / 60.0) * (1.0 if int(t / 3.0) % 2 == 0 else -1.0))
+		S.mood.band = 2 if int(t / 7.0) % 2 == 0 else 0
+		S.world.casualties = S.world.pop0 if int(t / 11.0) % 2 == 0 else 0.0
+		S.world.structuresLost = float(S.buildings.size()) if int(t / 11.0) % 2 == 0 else 0.0
+		sky.advance(S, t)
+		if i > 90 * 60 and i % 300 == 0:   # a driver this file did not foresee: the mood jumps
+			sky.frenzy = 1.0 - sky.frenzy
+			sky.ruin = 1.0 - sky.ruin
+		var o: Dictionary = sky.pane(st, x, t)
+		lums.append(o.cols.map(func(c): return SkyDrive.lum_of(c)))
+	var w2: Array = _worst_second(lums)
+	_expect(w2[0] <= SkyDrive.total_band + 1e-4 and w2[1] <= SkyDrive.total_mean + 1e-4, "with the mood and the damage slammed on and off, and a driver that jumps: no band changes by more than %.2f in a second (worst %.4f) and their mean by no more than %.2f (%.4f)" % [SkyDrive.total_band, w2[0], SkyDrive.total_mean, w2[1]])
+	# The mood's least durations, and reduced motion.
+	S.mood.band = 2
+	S.world.casualties = S.world.pop0
+	S.world.structuresLost = float(S.buildings.size())
+	for b in S.buildings:
+		b.alive = false
+	sky.reset(S)
+	var reached: Array = [-1.0, -1.0, -1.0]
+	for i in range(130 * 60):
+		var t: float = float(i) / 60.0
+		sky.advance(S, t)
+		if reached[0] < 0.0 and sky.frenzy >= 1.0:
+			reached[0] = t
+		if reached[1] < 0.0 and sky.ruin >= 1.0:
+			reached[1] = t
+		if reached[2] < 0.0 and not sky.towns.is_empty() and float(sky.towns[0].glow) >= 1.0:
+			reached[2] = t
+	_expect(reached[0] >= 30.0 - 0.05 and reached[0] < 31.0 and reached[1] >= 120.0 - 0.05 and reached[1] < 121.0 and reached[2] >= 50.0 - 0.05 and reached[2] < 51.5, "asked for all at once, frenzy is full after %.1f s, ruin after %.1f s and a wrecked town's glow after %.1f s (Art's least: 30, 120, 50); %d towns" % [reached[0], reached[1], reached[2], sky.towns.size()])
+	sky.reset(S)
+	sky.calm = true
+	for i in range(60 * 60):
+		sky.advance(S, float(i) / 60.0)
+	var held: bool = sky.drift == 0.0 and sky.frenzy == 0.0 and sky.ruin == 0.0
+	var st2: Dictionary = {}
+	sky.pane(st2, sky.spawn_x, 0.0)
+	sky.pane(st2, SimWrap.wrap(sky.spawn_x + 0.2 * W), 0.1)
+	_expect(held and float(st2.p) != SkyDrive.start_phase, "with reduced motion the drift and the mood hold, and the place blend stays")
+	sky.calm = false
+	sky.advance(S, 3601.0 / 60.0)
+	var d0: float = sky.drift
+	sky.advance(S, 3601.0 / 60.0 + 0.5)
+	_expect(d0 > 0.0 and absf(sky.drift - d0 - 0.5 * 0.0125 / 60.0) < 1e-9, "without it the sky drifts %.4f of a cycle a minute" % (SkyDrive.drift_per_s * 60.0))
+	# The switches.
+	sky.reset(S)
+	sky.still = true
+	var t_still: float = sky.target(SimWrap.wrap(sky.spawn_x + 0.4 * W))
+	sky.still = false
+	sky.hold_phase = 0.58
+	var o_hold: Dictionary = sky.pane({}, sky.spawn_x, 0.0)
+	sky.hold_phase = NAN
+	var names: bool = main.URL_ARGS.has("staticsky") and main.URL_ARGS.has("sky") and main.URL_ARGS.has("skymood")
+	_expect(t_still == SkyDrive.start_phase and o_hold.cols == SkyDrive.keys[3].cols and names, "--staticsky keeps the sunset everywhere, --sky holds a key (night's colours at the spawn), and the web page's URL may name them")
+	# What a pane's sky costs a frame, while it is moving (the dearest case).
+	st = {}
+	x = sky.spawn_x
+	sky.frenzy = 0.5
+	var t0: int = Time.get_ticks_usec()
+	for i in range(20000):
+		x = SimWrap.wrap(x + 0.25 * W / 60.0)
+		sky.frenzy = 0.5 + 0.4 * sin(float(i) * 0.001)
+		sky.pane(st, x, float(i) / 60.0)
+	var us: float = float(Time.get_ticks_usec() - t0) / 20000.0
+	sky.frenzy = 0.0
+	S.mood.band = 0
+	S.world.casualties = 0.0
+	S.world.structuresLost = 0.0
+	for b in S.buildings:
+		b.alive = true
+	sky.reset(S)
+	var st3: Dictionary = {}
+	var worked: int = 0
+	for i in range(600):   # ten seconds standing at the spawn: only the drift moves the sky
+		sky.advance(S, 400.0 + float(i) / 60.0)
+		if sky.pane(st3, sky.spawn_x, 400.0 + float(i) / 60.0).changed:
+			worked += 1
+	_expect(us < 400.0 and worked < 200, "a pane's sky costs %.0f microseconds a frame while it moves, on this machine, and is worked out on %d frames of 600 while it stands" % [us, worked])
+	sky.reset(S)
 
 
 ## What the pane hands the sky shader for the two fighters at tiers ta and tb: the reaction's two weights, then the

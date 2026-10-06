@@ -33,6 +33,11 @@ uniform float cloud_cover = 0.52;    // RenderLook.CLOUD_COVER
 uniform vec2 react_r = vec2(0.7, 0.24);   // RenderLook.SKY_REACT_R: the gap's half width and half height, in half screen heights
 uniform vec3 react_at = vec3(0.45, 0.46, 1.0);   // RenderLook.SKY_REACT_AT: how far above him the gap sits, and the lowest and highest its middle goes (heights above the horizon, as the cloud band's)
 uniform vec4 sky_react[2];           // xyz: the direction from the camera to a fighter (world axes); w: the reaction, 0 to 1
+uniform float star_low = 0.25;       // the stars' strength seen from the ground: 0.25 at the sunset key, as it always was (pane_world.gd gives the place's)
+uniform vec4 sky_glow[2];            // a wrecked town in view: xyz the direction from the camera to it (world axes), w its glow, 0 to 1
+uniform vec4 glow_col : source_color = vec4(0.851, 0.376, 0.235, 1.0);   // Art's ember
+uniform float glow_mix = 0.35;       // RenderLook.SKY_GLOW_MIX
+uniform vec3 glow_shape = vec3(0.39, 0.015, 0.04);   // RenderLook.SKY_GLOW_SHAPE
 uniform vec4 sky_react_col[2] : source_color;
 
 float hash21(vec2 p) {
@@ -56,11 +61,22 @@ void sky() {
 	vec3 c = sky_color(q);
 	float h = sky_height(q);
 	vec2 p = EYEDIR.xy / max(0.2, -EYEDIR.z);
+	// A wrecked town's glow: ember low in the horizon band above it, wide and soft, nothing at the line itself (where
+	// the ground's haze meets the sky) and nothing above the band. It only ever comes and goes over most of a minute.
+	for (int k = 0; k < 2; k++) {
+		float gw = sky_glow[k].w;
+		if (gw > 0.0) {
+			vec3 gd = sky_glow[k].xyz;
+			float gx = 1.0 - smoothstep(0.5, 1.0, abs(p.x - gd.x / max(0.2, -gd.z)) / (glow_shape.x * sky_tan));
+			float gy = smoothstep(0.0, glow_shape.y, h) * (1.0 - smoothstep(glow_shape.z, sky_lower_at, h));
+			c = mix(c, glow_col.rgb, glow_mix * gw * gx * gy);
+		}
+	}
 	vec2 g = p * 260.0;
 	float hs = hash21(floor(g));
 	float star = step(0.994, hs) * (1.0 - smoothstep(0.08, 0.2, length(fract(g) - 0.5)));
 	float fade = clamp((h - 0.35) * 1.5, 0.0, 1.0);
-	c += vec3(star * fade * mix(0.25, 1.0, space) * (0.6 + 0.4 * fract(hs * 97.0)));
+	c += vec3(star * fade * mix(star_low, 1.0, space) * (0.6 + 0.4 * fract(hs * 97.0)));
 	if (cloud_on > 0.5 && h > 0.0 && space < 0.98) {
 		// The reaction: a gap in the cloud band above each fighter at tier 3 or more (see the header). gap: how far
 		// the clouds are cleared here; rim: the bank round the gap; both fade out toward the band's lower edge.

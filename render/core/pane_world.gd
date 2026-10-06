@@ -47,12 +47,14 @@ static var sky_react_on: bool = false      # the clouds part for a fighter at ti
 static var flash_calm: bool = false        # reduced flashing or reduced motion: the grooves' glow and char are drawn calm (main sets it)
 static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
 var pan_haze: float = 0.0                  # 0 to 1, this frame
+var _sky_glows: int = 0                    # the town glows handed to the sky last frame
 var _pan_x: float = NAN                    # the camera's x and the time at the last frame seen
 var _pan_t: float = NAN
 var _pan_ground := Color.BLACK             # the ground's colour under the camera, eased (what a hazed wall melts toward below the horizon)
 var _react := PackedFloat32Array()         # per fighter: the sky's reaction to him, 0 to 1 (tier 3 half, tier 4 full)
 var _react_t: float = -1.0
 var _sky_mat: ShaderMaterial
+var _sky_st: Dictionary = {}               # this pane's place in the dynamic sky (SkyDrive.pane)
 
 
 func _init() -> void:
@@ -110,6 +112,7 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	view_cam_x = cam_x
 	cam_rig.frame(cam.y, cam.z, jitter, vp.y, pitch)
 	_pan_haze(host, a, cam_x, vp)
+	_sky_drive(host, a, cam_x)
 	planet.set_camera(cam_rig.position)
 	planet.set_calm(flash_calm)
 	_view_cues(cam, vp)
@@ -136,6 +139,32 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	vfx_layer.update(host, a, cam_x, cam.z, vp.x)
 	beams.update(S, cam_x, cam.z, host)
 	particles.update(host.fxv, host.impact, cam_x, cam.z, cam_rig.half_width(vp.x, RenderLook.Z_PARTICLES), fighter_views)
+
+
+## The dynamic sky for this pane's camera (render/core/sky_drive.gd; docs/rendering/dynamic-sky.md): the four bands'
+## colours for its place round the planet, the drift and the mood, rate limited, to the sky and to every material that
+## fogs toward it; the stars' strength; and the glow of up to two wrecked towns on its screen.
+func _sky_drive(host: SimHost, a: float, cam_x: float) -> void:
+	var out: Dictionary = host.sky.pane(_sky_st, cam_x, (float(host.ticks) + a) * SimConst.DT)
+	if out.changed:
+		for bi in range(4):
+			_sky_mat.set_shader_parameter(SkyDrive.UNIFORMS[bi], out.cols[bi])
+			mats.set_sky(SkyDrive.UNIFORMS[bi], out.cols[bi])
+		_sky_mat.set_shader_parameter("star_low", out.star_low)
+	var glows: Array = [Vector4(0.0, 0.0, -1.0, 0.0), Vector4(0.0, 0.0, -1.0, 0.0)]
+	var n: int = 0
+	for tw in host.sky.towns:
+		if float(tw.glow) <= 0.004 or n >= 2:
+			continue
+		var at := Vector3(SimWrap.sdx(cam_x, float(tw.x)), 0.0, 0.0)
+		var w: float = float(tw.glow) * _on_screen(at)
+		if w > 0.0:
+			var d: Vector3 = (at - cam_rig.position).normalized()
+			glows[n] = Vector4(d.x, d.y, d.z, w)
+			n += 1
+	if n > 0 or _sky_glows > 0:
+		_sky_mat.set_shader_parameter("sky_glow", glows)
+	_sky_glows = n
 
 
 ## The pan haze (RenderLook.PAN_HAZE_*; docs/rendering/flash-sources.md): how fast this pane's camera travels along the
@@ -427,6 +456,10 @@ func _setup_environment() -> void:
 		"sky_upper_at": RenderLook.SKY_UPPER_AT, "sky_top_at": RenderLook.SKY_TOP_AT, "sky_thin": RenderLook.SKY_THIN,
 		"fog_band": RenderLook.FOG_BAND,
 	}
+	SkyDrive.ensure()
+	_sky_mat.set_shader_parameter("glow_col", SkyDrive.ember)
+	_sky_mat.set_shader_parameter("glow_mix", RenderLook.SKY_GLOW_MIX)
+	_sky_mat.set_shader_parameter("glow_shape", RenderLook.SKY_GLOW_SHAPE)
 	for k in [["cloud_period", RenderLook.CLOUD_PERIOD], ["cloud_cover", RenderLook.CLOUD_COVER], ["react_r", RenderLook.SKY_REACT_R], ["react_at", RenderLook.SKY_REACT_AT]]:
 		_sky_mat.set_shader_parameter(k[0], k[1])
 	for k in skyp:
