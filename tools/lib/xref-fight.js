@@ -1373,6 +1373,12 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       const bonesG = isObj(profG) && isObj(profG.bone_lag) ? Object.keys(profG.bone_lag) : [];
       if (bonesG.length && Array.isArray(pst.guard.bones)) pst.guard.bones.forEach((bn, i) => { if (typeof bn === 'string' && !(bonesG.includes(bn + '_l') && bonesG.includes(bn + '_r'))) err(PS, `/guard/bones/${i}`, 'pressstyles-bone', `guard bone "${bn}" has no _l and _r pair in profiles.json bone_lag (a guard bone is written without its side)`); });
     }
+    if (isObj(pst.riposte) && isObj(pst.riposte.style) && isObj(pst.styles)) {
+      for (const w of ['light', 'heavy']) {
+        const sty = pst.riposte.style[w];
+        if (typeof sty === 'string' && !(sty in pst.styles)) err(PS, `/riposte/style/${w}`, 'pressstyles-riposte', `riposte style "${sty}" is not a key of styles (${Object.keys(pst.styles).filter((k) => !k.startsWith('_')).join(', ')})`);
+      }
+    }
     for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
       if (sid.startsWith('_') || !isObj(st)) continue;
       if (st.carry === true && typeof st.carry_ticks === 'number' && st.carry_ticks === 0) err(PS, `/styles/${esc(sid)}/carry_ticks`, 'pressstyles-carry', `style "${sid}" carries into the next blow, but carry_ticks is 0, so there is no blend`, 'warning');

@@ -42,6 +42,9 @@ var _smear: float = 0.0                 # the contact catch: how far behind the 
 var _smear_t0: float = -10.0
 var press: Dictionary = {}             # press styles (docs/animation/press-styles.md): the style of the blow playing and where it is, for VFX (empty when none)
 var _gest: Dictionary = {}              # an intro gesture playing: {id, t0, dur, w, mask (group names), pose (a single pose, not a sequence)}
+var riposte: Dictionary = {}           # a riposte blow playing (press-styles.md section 12): {kind light or heavy, reversal, sure, ticks_to_contact}, for VFX; empty when none
+var _rip_cue: Dictionary = {}          # the riposte cue's word (kind, the tick it came, ticks ahead): shown to VFX until the blow's own beat takes over
+var _stag_t0: float = -10.0            # when a stagger cue last played his stagger (the old stunTicks watch yields to it)
 var zip: Dictionary = {}               # the LT zip (docs/animation/zip.md): its phase and look for VFX, empty when no zip is playing
 var zip_path: Array = []               # where the zipping body was over the last solves: {T, x, y, phase}, newest last (the path of the body for the blur)
 var _zip: Dictionary = {}              # the zip told to this body (AnimZip.start), cleared when it is over
@@ -273,7 +276,9 @@ func on_tick(dt: float, frozen: bool, S: SimState = null, f = null) -> void:
 		_stun_prev = sn
 		if _stun_watch > 0:
 			_stun_watch -= 1
-			if int(f.stunTicks) > 0 and AnimData.entries.has(_stun_seq):
+			if S.T - _stag_t0 < 0.5:
+				_stun_watch = 0   # the stagger cue has played it, fitted to its ticks: the watch yields
+			elif int(f.stunTicks) > 0 and AnimData.entries.has(_stun_seq):
 				_seq = {"id": _stun_seq, "t0": _stun_t0, "dur": float(AnimData.entries[_stun_seq].dur) / 60.0}
 				debug["step3"] = int(debug.get("step3", 0)) + 1
 				_stun_watch = 0
@@ -867,6 +872,66 @@ func on_cue(kind: String, T: float, t_event: float = -1.0) -> void:
 		_cue = {"kind": kind, "t0": T, "dur": float(RenderLook.CUE_POSES[kind].dur)}
 
 
+## The stagger cue's perfect_block and reversal texts (press-styles.md section 12): the fighter who is staggered (the cue's actor) reels in place for `n` ticks, the step 3 stagger fitted to them (every
+## phase scaled together, so the whole reel takes the sim's ticks: a 24-tick sequence at 20 plays at 0.83, a 16-tick one at 1.25). The old stunTicks watch yields to it. Other staggers (flurry, heavy) are the
+## stunTicks path, as before.
+func on_stagger(text: String, n: int, T: float) -> void:
+	if not RenderAnim.step3_cues or n <= 0:
+		return
+	var id: String = "s3.stagger_blocked" if text == "perfect_block" else ("s3.stagger_countered" if text == "reversal" else "")
+	if id == "" or not AnimData.entries.has(id):
+		return
+	_seq = {"id": id, "t0": T, "dur": float(n) * DT, "wt": 1.0, "fit": true}
+	_stun_watch = 0
+	_stag_t0 = T
+	debug["step3"] = int(debug.get("step3", 0)) + 1
+	debug["staggers"] = int(debug.get("staggers", 0)) + 1
+
+
+## The riposte cue (the blocker's counter blow is coming): kept for VFX until the blow's own beat takes over; the posing is the beat's. `n` is the contact tick: a tick number after the
+## cue's own, or the ticks ahead when it is smaller (the sim has not fixed which; see the report).
+func on_riposte(text: String, n: int, tick_now: int) -> void:
+	var ahead: int = n - tick_now if n > tick_now else n
+	_rip_cue = {"kind": text if text == "heavy" else "light", "tick": tick_now, "ahead": maxi(ahead, 0)}
+
+
+## A riposte's or a reversal's beat: the style and grade the data gives a riposte when the beat names none (a perfect timing: tech and perfect for a light, heavy for a heavy), and `_rip` marks it
+## for the strike block (the wind-up cut to the data's 2 ticks or 3, no squash). Any other beat is returned as it is.
+func _rip_args(args: Dictionary, cls: String) -> Dictionary:
+	if not (bool(args.get("riposte", false)) or bool(args.get("reversal", false))):
+		return args
+	var R: Dictionary = AnimData.press.get("riposte", {})
+	if R.is_empty():
+		return args
+	var a: Dictionary = args.duplicate()
+	a["_rip"] = true
+	if not a.has("style") and R.has("style"):
+		a["style"] = String((R.style as Dictionary).get("heavy" if cls == "heavy" else "light", ""))
+	if not a.has("grade") and R.has("grade"):
+		a["grade"] = String(R.grade)
+	return a
+
+
+## How much of the block pose is left (1 to 0): it fades over the riposte's `fade` ticks ending on the blow's contact tick, and is gone after it. The riposte is read from the exchange's beats (this
+## fighter's own blows that carry riposte or reversal); 1 when there is none.
+func _rip_fade(S: SimState, f, T: float) -> float:
+	var ex = S.dirS.ex
+	if ex == null or (ex.A != f and ex.D != f):
+		return 1.0
+	var R: Dictionary = AnimData.press.get("riposte", {})
+	if R.is_empty():
+		return 1.0
+	var role: String = "A" if ex.A == f else "D"
+	var t0: float = T - ex.t
+	var span: float = maxf(float(R.get("fade", 4)), 1.0) * DT
+	var w: float = 1.0
+	for b in ex.beats:
+		if b.op == "strike" and String(b.args.a) == role and (bool(b.args.get("riposte", false)) or bool(b.args.get("reversal", false))):
+			var tc: float = t0 + b.t
+			w = minf(w, 1.0 - smoothstep(0.0, 1.0, (T - (tc - span)) / span))
+	return w
+
+
 ## The other fighter of a step 3 cue (the one who staggers after a perfect block or a reversal, the one who absorbs a burst); a burst shoves him
 ## only if his own speed jumps in the next ticks (the sim decides the range), so that one waits for the shove.
 func on_cue_other(kind: String, t_event: float) -> void:
@@ -874,6 +939,8 @@ func on_cue_other(kind: String, t_event: float) -> void:
 		return
 	var m: Dictionary = AnimData.cue_map[kind]
 	if m.has("other_if_stunned"):
+		if t_event - _stag_t0 >= 0.0 and t_event - _stag_t0 < 0.5:
+			return   # the stagger cue came first and has played it
 		_stun_watch = 3
 		_stun_seq = String(m.other_if_stunned)
 		_stun_t0 = t_event
@@ -1062,7 +1129,11 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 		if T >= float(_seq.t0) + float(_seq.dur) + 0.05:
 			_seq = {}
 		else:
-			_entry_layer(float(_seq.t0), float(_seq.dur), String(_seq.id), T, 1.0 / float(_prof.get("solve_hz", 60.0)), float(_seq.get("wt", 1.0)))
+			var sq_w: float = float(_seq.get("wt", 1.0))
+			var sq_id: String = String(_seq.id)
+			if sq_id.begins_with("s3.perfect_block") or sq_id.begins_with("s3.reversal"):
+				sq_w *= _rip_fade(S, f, T)   # the block pose gives way to the riposte that leaves from it
+			_entry_layer(float(_seq.t0), float(_seq.dur), sq_id, T, 1.0 / float(_prof.get("solve_hz", 60.0)), sq_w, bool(_seq.get("fit", false)))
 	if f.state == "intro" and RenderAnim.intro_poses and not AnimData.intro.is_empty():
 		if _intro.is_empty():
 			# the first frame, before any event has been drained (the sim sets the state at the start, the events come with the first tick): he is already falling
@@ -1116,10 +1187,18 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	_tc_left = -1.0
 	_pr_dx = 0.0
 	press = {}
+	riposte = {}
 	AnimZip.layers(self, S, f, T, dt)
 	var ex = S.dirS.ex
 	if ex != null and (ex.A == f or ex.D == f):
 		_exchange_layers(S, f, ex, T)
+	if riposte.is_empty() and not _rip_cue.is_empty():
+		# the riposte cue has come and the blow's own beat is not in the exchange yet: VFX is told what is coming
+		var rip_left: int = int(_rip_cue.ahead) - (S.tick - int(_rip_cue.tick))
+		if rip_left >= -12:
+			riposte = {"kind": String(_rip_cue.kind), "reversal": false, "sure": false, "ticks_to_contact": rip_left, "cue": true}
+		else:
+			_rip_cue = {}
 	# 4. the signature beam, and a transformation
 	_beam_layer(S, f, T)
 	if not _form.is_empty():
@@ -1559,7 +1638,8 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		if b.op == "strike":
 			var who: String = String(b.args.a)
 			if who == role and (not ex.cancel or b.t <= ct + 0.0001):
-				strikes.append([t0 + b.t, ordinal, b.args, "heavy" if _is_heavy(ex, b.args) else "light"])
+				var scls: String = "heavy" if _is_heavy(ex, b.args) else "light"
+				strikes.append([t0 + b.t, ordinal, _rip_args(b.args, scls), scls])
 			ordinal += 1
 		elif b.op == "chainStrike":
 			if role == "A" and (not ex.cancel or b.t <= ct + 0.0001):
@@ -1612,6 +1692,10 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 			if bool(strikes[n][2].get("zip", false)):
 				sp["load_ticks"] = {"light": 2, "heavy": 3}   # a zip's tell was the wind-up: the blow lands on the arrival
 				sp["load_ease"] = 1.0
+			elif bool(strikes[n][2].get("_rip", false)):
+				var rw: Dictionary = AnimData.press.get("riposte", {}).get("windup", {})
+				sp["load_ticks"] = {"light": int(rw.get("light", 2)), "heavy": int(rw.get("heavy", 3))}   # the block was the wind-up: the blow leaves from it
+				sp["load_ease"] = 1.0
 		profs.append(sp)
 		psts.append(psn)
 		var Fn: float = float(sp.get("follow_ticks", 6)) * DT * (0.85 + 0.25 * _blow_weight(strikes[n][2]))
@@ -1644,10 +1728,12 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	var side: bool = (_hash(int(ex.n), int(strikes[best][1]), slot + 1) & 1) == 1
 	var pstyle: String = String(psts[best])
 	var prow: Dictionary = AnimData.press.get("styles", {}).get(pstyle, {}) if pstyle != "" else {}
-	if pstyle != "" and bool(strikes[best][2].get("zip", false)):
+	if pstyle != "" and (bool(strikes[best][2].get("zip", false)) or bool(strikes[best][2].get("_rip", false))):
 		prow = prow.duplicate()
 		prow["squash"] = 0.0
 	var bargs: Dictionary = strikes[best][2]
+	if bool(bargs.get("_rip", false)):
+		riposte = {"kind": String(strikes[best][3]), "reversal": bool(bargs.get("reversal", false)), "sure": bool(bargs.get("sure", false)), "ticks_to_contact": roundi((tc2 - T) / DT)}
 	var bw3: float = bw2
 	if pstyle != "":
 		var BT: Dictionary = AnimData.press.get("beat", {})
@@ -1745,6 +1831,9 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		hw = 1.0 - w4
 	if pstyle != "":
 		_press_body(prow, pstyle, ul, dtc, Sn, H, F, bw3, ks, side, blow_id, best, tc2, T)
+		if not press.is_empty():
+			press["sure"] = bool(bargs.get("sure", false))
+			press["riposte"] = bool(bargs.get("_rip", false))
 	if RenderAnim.hand_tips:
 		_hand_tip(ks, side, heavy2, strikes[best][2], hw)
 	if RenderAnim.press_styles and bool(bargs.get("check", false)):

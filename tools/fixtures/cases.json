@@ -83915,6 +83915,914 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-valid",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-minimal-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect",
+              "extra": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/riposte/extra"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-underscore-key-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect",
+              "_why": "a note"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-empty-block",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/riposte"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/riposte"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-fade-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/riposte"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-light-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/riposte/windup"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-heavy-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/riposte/windup"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3,
+                "signature": 4
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/riposte/windup/signature"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-light-zero",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 0,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/riposte/windup/light"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-light-nine",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 9,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/riposte/windup/light"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-light-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2.5,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/riposte/windup/light"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-heavy-zero",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 0
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/riposte/windup/heavy"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-heavy-nine",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 9
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/riposte/windup/heavy"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-heavy-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": "slow"
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/riposte/windup/heavy"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-windup-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 1,
+                "heavy": 8
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-fade-zero",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 0,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/riposte/fade"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-fade-thirteen",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 13,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/riposte/fade"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-fade-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4.5,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/riposte/fade"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-fade-edges-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 12,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-fade-one-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 1,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-style-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy",
+                "signature": "tech"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/riposte/style/signature"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-style-light-enum",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "wild",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/riposte/style/light"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-style-heavy-enum",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "wild"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/riposte/style/heavy"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-style-only-light-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-style-every-name-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "speed",
+                "heavy": "tech"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-style-names-a-style-that-is-gone",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "push",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          },
+          "del": [
+            "/styles/push"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-riposte",
+        "pointer": "/riposte/style/light"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-style-heavy-names-a-style-that-is-gone",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "speed"
+              },
+              "grade": "perfect"
+            }
+          },
+          "del": [
+            "/styles/speed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-riposte",
+        "pointer": "/riposte/style/heavy"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-grade-perfect-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "perfect"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-grade-good-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "good"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-grade-off-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "off"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-grade-none-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "none"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-riposte-grade-enum",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": "excellent"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/riposte/grade"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-grade-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/riposte": {
+              "windup": {
+                "light": 2,
+                "heavy": 3
+              },
+              "fade": 4,
+              "style": {
+                "light": "tech",
+                "heavy": "heavy"
+              },
+              "grade": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/riposte/grade"
+      }
+    },
+    {
+      "id": "anim-press-styles-riposte-absent-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/riposte"
+          ]
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

@@ -1,0 +1,81 @@
+diff --git a/tools/schemas/anim-press-styles.schema.json b/tools/schemas/anim-press-styles.schema.json
+index 859fe92..8bd0c51 100644
+--- a/tools/schemas/anim-press-styles.schema.json
++++ b/tools/schemas/anim-press-styles.schema.json
+@@ -1087,6 +1087,76 @@
+       "patternProperties": {
+         "^_": true
+       }
++    },
++    "riposte": {
++      "type": "object",
++      "required": [
++        "windup",
++        "fade"
++      ],
++      "properties": {
++        "windup": {
++          "type": "object",
++          "required": [
++            "light",
++            "heavy"
++          ],
++          "properties": {
++            "light": {
++              "type": "integer",
++              "minimum": 1,
++              "maximum": 8
++            },
++            "heavy": {
++              "type": "integer",
++              "minimum": 1,
++              "maximum": 8
++            }
++          },
++          "additionalProperties": false,
++          "description": "The ticks the strike block cuts its own wind-up to for a riposte or a reversal blow (the block pose was the wind-up)."
++        },
++        "fade": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 12,
++          "description": "The ticks before the blow's contact tick over which the block pose fades out."
++        },
++        "style": {
++          "type": "object",
++          "properties": {
++            "light": {
++              "enum": [
++                "speed",
++                "tech",
++                "heavy",
++                "push"
++              ]
++            },
++            "heavy": {
++              "enum": [
++                "speed",
++                "tech",
++                "heavy",
++                "push"
++              ]
++            }
++          },
++          "additionalProperties": false,
++          "description": "The press style a riposte plays when its beat names none, by blow class."
++        },
++        "grade": {
++          "enum": [
++            "perfect",
++            "good",
++            "off",
++            "none"
++          ],
++          "description": "The grade a riposte plays when its beat names none."
++        }
++      },
++      "additionalProperties": false,
++      "description": "The brawl's riposte (press-styles.md section 12): the blocker's counter blow leaves from his block pose, which is its wind-up."
+     }
+   },
+   "additionalProperties": false,

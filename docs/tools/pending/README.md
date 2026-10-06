@@ -196,6 +196,14 @@ Run once, in the commit that lands Simulation's slice: `node docs/tools/pending/
 
 Run once, in the commit that lands the slice's data (after `apply-wear-mood.cjs`, applied): `node docs/tools/pending/apply-wear-shots.cjs`. It does **not** edit `data/`. The `block` record of `wounds.json` gains two required keys: `shotArmShare` (number, 0 to 1) and `shotArmWearCap` (integer, 0 or more, wear units). New rule `block-shot-cap`, beside `block-cap`: `shotArmWearCap` is below `stageAt[2]` (broken); `armWearCap` keeps its rule (below `stageAt[1]`). The fixtures and the 36 earlier block values get the keys; 19 new cases, each setting its own values. Re-runnable. Tested on a clean `git archive HEAD` (cd9eb08) with the two keys dropped into both fighters' files: 4 errors before, then 0 errors and 0 warnings, self-test passes (4309 of 4309), a second run changes nothing.
 
+## `apply-brawl-1c.cjs`: Encounter's perfect-block and reversal slice (Game Design section 9f)
+
+Run once, in the commit that lands the slice's data (after `apply-brawl-9d.cjs`, applied): `node docs/tools/pending/apply-brawl-1c.cjs`. It does **not** edit `data/`. `interrupts.json` `brawl` gains, all required: `perfectBlock` {staggerTicks (integer, at least 1)} (closed; **inside brawl**, not the file's top-level `perfectBlock`), `riposteTicks` (integer, at least 1), `riposteReelTicks` (integer, 0 or more) and `reversal` {contactTicks, staggerTicks} (integers, at least 1; closed). `launch.json` `setup.weight.riposte` (0 to 1) is required, and the `launch-setup` warning for an unknown weight kind now knows `riposte`. No new key in `ai.json`; the `ai-levels-order` warning (medium barrageGuard below easy's) is left as it is. The fixtures and the 624 earlier whole-block values follow; 38 new cases, each setting its own whole block. Re-runnable. Tested on a clean `git archive HEAD` with scratch values: 5 errors before, then 0 errors and 0 warnings beyond HEAD's own (that one warning), self-test passes (4409 of 4409), a second run changes nothing.
+
+## `apply-anim-riposte.cjs`: Animation's riposte block
+
+Run once, in the commit that lands the data: `node docs/tools/pending/apply-anim-riposte.cjs`. It does **not** edit `data/`. `data/anim/press_styles.json` gains an optional closed top-level `riposte` beside `guard`: `windup` {light, heavy} (required; both required; integers 1 to 8), `fade` (required; integer 1 to 12), `style` (optional, closed; `light` and `heavy` each optional, each one of speed, tech, heavy, push) and `grade` (optional; perfect, good, off or none). New rule `pressstyles-riposte`: a riposte style is a key of `styles`. 36 cases, each setting its own whole block. Re-runnable. Tested on a clean `git archive HEAD` with the working tree's `press_styles.json` dropped in: 1 error before, then 0 errors and 0 warnings beyond HEAD's own, self-test passes (4407 of 4407), a second run changes nothing. **One reading to confirm:** I made `style.light` and `style.heavy` each optional (you said both required only for `windup`).
+
 ## Which script goes with which commit
 
 State as of the tree at 648c637 (2026-10-04). **Applied** means the script's keys, rules and cases are in the tree and its commit is made; a script marked applied has nothing left to run and can be deleted. **Do not re-run** `apply-2b`, `apply-m1b`, `apply-contact`, `apply-launch`, `apply-biomes-contact`, `apply-uppercut`, `apply-anim-agency` and `apply-recipes`: they are older than later changes and would overwrite them (checked by running each on a clean export of HEAD). The other applied scripts change nothing on a second run.
@@ -218,6 +226,8 @@ State as of the tree at 648c637 (2026-10-04). **Applied** means the script's key
 | `apply-ui-fighter-names` | parked | UI's display-name switch (`ui/data/fighter_names.json`) | the file |
 | `apply-intro-default` | parked | Simulation's default-facts slice (`data/fight/intro.json` `defaultFacts`) | its data |
 | `apply-wear-shots` | parked | Simulation's blocked-shots slice (`wounds.json` `block.shotArm*`) | its data |
+| `apply-brawl-1c` | parked | Encounter's perfect-block and reversal slice (`interrupts.json`, `launch.json`) | its data |
+| `apply-anim-riposte` | parked | Animation's riposte build (`press_styles.json` `riposte`) | its data |
 | `apply-movegen` (and `xref-movegen.js`) | parked, follows generator version 5 | Combat's landing of parts, identity, cells, the movesets and `lock.json` | the files |
 | (launch pair finishers and templates) | held | Combat's go-live of `launch-pair.json` finishers, `templates.agency.json` and `templates.brawl.json` | their live form |
 

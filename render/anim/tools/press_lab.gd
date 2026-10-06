@@ -9,6 +9,8 @@ extends SceneTree
 ##   combo   three mashed blows and a heavy closer (the style changes inside a string)
 ##   push    one push: no impact snap, the blow drives into its contact (style push)
 ##   check   three checks (`check: true`): a cross, a short elbow and a low kick thrown over the guard: the other arm stays set
+##   riposte, riposte_heavy, reversal, riposte_long   the brawl's perfect block (or reversal) then the blocker's counter blow, and the rival's 20-tick stagger (the long one 40): the cues are staged by hand
+##           (docs/animation/press-styles.md section 12): the block cue, the riposte cue, the beat with `riposte` or `reversal` and `sure`, the stagger cue (actor the rival, n its ticks)
 ## Needs a window to draw; run it with --no-window (offscreen), never a window.
 ##   godot --no-window --path . -s res://render/anim/tools/press_lab.gd -- --scene=speed --fighter=protagonist --out=a.rgb [--off] [--path] [--size=300x190] [--step=1]
 ## --off plays the same beats with the press styles off (the before). --path draws the striking limb's tip path (the VFX hand-off) as dots.
@@ -25,6 +27,16 @@ const SCENES := {   # beats: [contact tick, piece, style, damage]
 }
 const FIGHTERS := {"protagonist": "KAI", "antihero": "VORR"}
 const DIST := 60.0
+const CUE_SCENES := {   # cues: [tick, actor, kind, text, n, target]; pre and post in seconds around the first and last beat
+	"riposte": {"kind": "light", "pre": 0.95, "post": 0.65, "beats": [[78, "strike.cross", "", 26.0, {"riposte": true, "sure": true}]],
+		"cues": [[40, 0, "perfect_block", "", 0, 1], [44, 0, "riposte", "light", 34, 1], [78, 1, "stagger", "perfect_block", 20, 0]]},
+	"riposte_heavy": {"kind": "heavy", "pre": 0.95, "post": 0.95, "beats": [[84, "strike.haymaker", "", 66.0, {"riposte": true}]],
+		"cues": [[40, 0, "perfect_block", "", 0, 1], [44, 0, "riposte", "heavy", 40, 1], [84, 1, "stagger", "perfect_block", 40, 0]]},
+	"reversal": {"kind": "light", "pre": 0.95, "post": 0.65, "beats": [[70, "strike.cross", "", 26.0, {"reversal": true}]],
+		"cues": [[40, 0, "reversal", "", 0, 1], [44, 0, "riposte", "light", 26, 1], [70, 1, "stagger", "reversal", 20, 0]]},
+	"riposte_long": {"kind": "light", "pre": 0.95, "post": 1.0, "beats": [[78, "strike.cross", "", 26.0, {"riposte": true}]],
+		"cues": [[40, 0, "perfect_block", "", 0, 1], [78, 1, "stagger", "perfect_block", 40, 0]]},
+}
 
 var scene: String = "speed"
 var fighter: String = "protagonist"
@@ -74,7 +86,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame
-	var sc: Dictionary = SCENES[scene]
+	var sc: Dictionary = CUE_SCENES[scene] if CUE_SCENES.has(scene) else SCENES[scene]
 	AnimData.load_all()
 	main.start_match(4, {"p1": false, "p2": false})
 	for i in range(10):
@@ -97,8 +109,8 @@ func _run() -> void:
 	var beats: Array = sc.beats
 	var t_first: float = float(beats[0][0]) * DT
 	var t_last: float = float(beats[beats.size() - 1][0]) * DT
-	var pre: float = 0.45 if scene != "heavy" else 0.62
-	var post: float = 0.55
+	var pre: float = float(sc.get("pre", 0.45 if scene != "heavy" else 0.62))
+	var post: float = float(sc.get("post", 0.55))
 	var start_t: float = t_first - pre
 	var end_t: float = t_last + post
 	if not measure:
@@ -179,7 +191,9 @@ func _run() -> void:
 	ex.tag = "LAB"
 	for b in beats:
 		var heavy_b: bool = float(b[3]) >= 40.0
-		var bargs := {"a": "A", "dmg": float(b[3]), "piece": String(b[1]), "style": String(b[2]), "o": {"big": heavy_b}}
+		var bargs := {"a": "A", "dmg": float(b[3]), "piece": String(b[1]), "o": {"big": heavy_b}}
+		if String(b[2]) != "":
+			bargs["style"] = String(b[2])
 		if b.size() > 4:
 			bargs.merge(b[4], true)
 		DirExchange.schedule(ex, float(b[0]) * DT, "strike", bargs)
@@ -207,6 +221,19 @@ func _run() -> void:
 		te.dt = DT
 		te.frozen = false
 		RenderAnim.consume(S, [te])
+		for cu in sc.get("cues", []):
+			if k == int(cu[0]):
+				var ce := SimState.FxEvent.new()
+				ce.type = "cue"
+				ce.actor = float(cu[1])
+				ce.kind = String(cu[2])
+				ce.text = String(cu[3])
+				ce.n = int(cu[4]) if String(cu[2]) != "riposte" else S.tick + int(cu[4])
+				ce.target = float(cu[5])
+				ce.tick = S.tick
+				if String(cu[2]) == "stagger":
+					S.fighters[int(cu[1])].stunTicks = int(cu[4])
+				RenderAnim.consume(S, [ce])
 		for bi in range(beats.size()):
 			if not sent[bi] and ex.t >= float(beats[bi][0]) * DT - DT * 0.5:
 				sent[bi] = true
@@ -238,7 +265,7 @@ func _run() -> void:
 						vnotes["%s %s %.0f @%s %d" % [vv[0], vv[1], float(vv[2]), String(af0.press.get("phase", "-")), roundi((float(k) * DT - float(beats[0][0]) * DT) / DT)]] = true
 			continue
 		if ex.t >= start_t and (k % step) == 0:
-			label.text = "%s  %s  %s%s" % [fighter, scene, "press styles OFF" if off else "press styles ON", ("   " + String(af0.press.style) + " " + String(af0.press.phase)) if not af0.press.is_empty() else ""]
+			label.text = "%s  %s  %s%s%s" % [fighter, scene, "press styles OFF" if off else "press styles ON", ("   " + String(af0.press.style) + " " + String(af0.press.phase)) if not af0.press.is_empty() else "", ("   riposte " + str(af0.riposte.get("ticks_to_contact", ""))) if not af0.riposte.is_empty() else ""]
 			for i in range(2):
 				var af: AnimFighter = af0 if i == 0 else af1
 				pivots[i].scale = Vector3(af.vface, 1.0, 1.0)

@@ -280,6 +280,12 @@ static func consume(S: SimState, events: Array) -> void:
 					var t_bc: float = S.T - float(S.tick - int(e.tick)) * (1.0 / 60.0)
 					fighter(S, S.fighters[who]).on_blast_cue(String(e.kind), t_bc, S, S.fighters[who])
 				var t_cue: float = S.T - float(S.tick - int(e.tick)) * (1.0 / 60.0)   # the event's own time, not the end of the frame's
+				if who >= 0 and who < S.fighters.size():
+					# the brawl's perfect block and reversal (press-styles.md section 12): the staggered fighter (the cue's actor) reels in place for n ticks; the blocker's riposte is announced
+					if String(e.kind) == "stagger" and (String(e.text) == "perfect_block" or String(e.text) == "reversal"):
+						fighter(S, S.fighters[who]).on_stagger(String(e.text), int(_ev(e, "n", 0)), t_cue)
+					elif String(e.kind) == "riposte":
+						fighter(S, S.fighters[who]).on_riposte(String(e.text), int(_ev(e, "n", 0)), S.tick)
 				for i in range(S.fighters.size()):
 					if who < 0 or i == who:
 						fighter(S, S.fighters[i]).on_cue(String(e.kind), S.T, t_cue)

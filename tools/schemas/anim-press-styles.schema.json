@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/anim-press-styles",
   "title": "anim.pressstyles/1",
-  "description": "data/anim/press_styles.json: how the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick. Used only with RenderAnim.press_styles (default off). Times are 60 Hz ticks. read: which style a blow plays when its beat names none, by how the press was read (\"\" for a hold: the profile it plays today). squash_pose: the pose whose legs, pelvis and spine are the squash, by fighter, and the bones it takes. styles: per style, the timing overrides, the flags, the squash, the stretch, the twist and the afterimages. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every squash pose is a pose; by_fighter keys are fighters of fighters.json; every bone is in profiles.json bone_lag; carry has a carry_ticks) are checked by tools/lib/xref-fight.js (pressstyles-*).",
+  "description": "data/anim/press_styles.json: how the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md). Render only, outside the sim's data hash; it never moves a blow's contact tick. Used only with RenderAnim.press_styles (default off). Times are 60 Hz ticks. read: which style a blow plays when its beat names none, by how the press was read (\"\" for a hold: the profile it plays today). squash_pose: the pose whose legs, pelvis and spine are the squash, by fighter, and the bones it takes. styles: per style, the timing overrides, the flags, the squash, the stretch, the twist and the afterimages. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (a riposte style names a key of styles (pressstyles-riposte); every squash pose is a pose; by_fighter keys are fighters of fighters.json; every bone is in profiles.json bone_lag; carry has a carry_ticks) are checked by tools/lib/xref-fight.js (pressstyles-*).",
   "type": "object",
   "required": [
     "schema",
@@ -159,6 +159,90 @@
         }
       },
       "description": "Optional. The guard a styled blow keeps up while it plays.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "riposte": {
+      "type": "object",
+      "required": [
+        "windup",
+        "fade"
+      ],
+      "properties": {
+        "windup": {
+          "type": "object",
+          "required": [
+            "light",
+            "heavy"
+          ],
+          "properties": {
+            "light": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8,
+              "description": "Ticks of wind-up (from the block pose) before a light riposte."
+            },
+            "heavy": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8,
+              "description": "Ticks of wind-up before a heavy riposte."
+            }
+          },
+          "description": "The riposte's wind-up, in ticks, by weight.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "fade": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "Ticks the block pose fades into the riposte."
+        },
+        "style": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "light": {
+              "enum": [
+                "speed",
+                "tech",
+                "heavy",
+                "push"
+              ],
+              "description": "The press style a light riposte plays in (a key of styles)."
+            },
+            "heavy": {
+              "enum": [
+                "speed",
+                "tech",
+                "heavy",
+                "push"
+              ],
+              "description": "The press style a heavy riposte plays in (a key of styles)."
+            }
+          },
+          "description": "Optional. The press style of the riposte, by weight; each weight is optional.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "grade": {
+          "enum": [
+            "perfect",
+            "good",
+            "off",
+            "none"
+          ],
+          "description": "Optional. The grade of block a riposte follows."
+        }
+      },
+      "description": "Optional. The brawl's riposte: the blocker's counter blow leaves from his block pose (docs/animation/press-styles.md section 12).",
       "additionalProperties": false,
       "patternProperties": {
         "^_": true

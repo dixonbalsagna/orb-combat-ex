@@ -409,6 +409,182 @@ func _press_scene(S: SimState, who: String, kind: String, beats: Array) -> Dicti
 	return res
 
 
+## The brawl's riposte and its stagger (docs/animation/press-styles.md section 12), against hand-staged cues (the sim sends none yet). A blocker's perfect block (or reversal) cue, the riposte cue, the blow's beat with
+## `riposte` (or `reversal`, `sure`), and the stagger cue for the rival with its ticks. `solve_every` 2 solves every second tick (consume still runs every tick), to compare the ragdoll's raw state at one and two.
+func _rip_scene(S: SimState, who: String, block: String, kind: String, stag_n: int, solve_every: int = 1, reduced: bool = false) -> Dictionary:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = "KAI" if who == "protagonist" else "VORR"
+	f1.id = "VORR" if who == "protagonist" else "KAI"
+	RenderAnim._fighters.clear()
+	RenderAnim.reduced_motion = reduced
+	for f in [f0, f1]:
+		f.x = 500.0 if f == f0 else 560.0
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+		f.stunTicks = 0
+	var contact: int = 60
+	var ex := DirExchange.newEx(f0, f1, "heavy" if kind == "heavy" else "light")
+	ex.n = 940
+	ex.tag = "LAB"
+	var bargs := {"a": "A", "dmg": 66.0 if kind == "heavy" else 26.0, "piece": "strike.haymaker" if kind == "heavy" else "strike.cross", "o": {"big": kind == "heavy"}, "sure": true}
+	bargs["reversal" if block == "reversal" else "riposte"] = true
+	DirExchange.schedule(ex, float(contact) / 60.0, "strike", bargs)
+	S.dirS.ex = ex
+	var res := {"viol": 0, "nan": 0, "rip_seen": 0, "ttc_at_contact": 99, "sure": false, "press_riposte": false, "load_ttc": 99, "fade": [], "seq": {}, "seq_after": "x", "watch": -1, "err": 0.0, "cue_only": 0, "stag_id": "", "stag_dur": 0.0, "stag_fit": false, "stag_end": -1}
+	var f1_seq_seen := false
+	var n_ticks: int = contact + stag_n + 30
+	for k in range(n_ticks):
+		S.tick = 1000 + k
+		S.T = 200.0 + float(k) / 60.0
+		ex.t = float(k) / 60.0
+		var evs: Array = []
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		evs.append(te)
+		if k == 20:
+			var bc := SimState.FxEvent.new()
+			bc.type = "cue"
+			bc.actor = 0.0
+			bc.kind = block
+			bc.tick = S.tick
+			evs.append(bc)
+		if k == 24:
+			var rc := SimState.FxEvent.new()
+			rc.type = "cue"
+			rc.actor = 0.0
+			rc.target = 1.0
+			rc.kind = "riposte"
+			rc.text = "heavy" if kind == "heavy" else "light"
+			rc.n = contact - k
+			rc.tick = S.tick
+			evs.append(rc)
+		if k == contact:
+			var sc := SimState.FxEvent.new()
+			sc.type = "cue"
+			sc.actor = 1.0
+			sc.target = 0.0
+			sc.kind = "stagger"
+			sc.text = block
+			sc.n = stag_n
+			sc.tick = S.tick
+			evs.append(sc)
+			f1.stunTicks = stag_n   # the sim's own stun: the old watch would see it
+		RenderAnim.consume(S, evs)
+		if k % solve_every != 0:
+			continue
+		var af0: AnimFighter = RenderAnim.solve(S, f0)
+		var af1: AnimFighter = RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(af0.q[i].x) or is_nan(af0.q[i].w) or is_nan(af1.q[i].x) or is_nan(af1.q[i].w):
+				res.nan += 1
+		for stage in af0.audit:
+			res.viol += (af0.audit[stage] as Array).size()
+		for stage in af1.audit:
+			res.viol += (af1.audit[stage] as Array).size()
+		if not af0.riposte.is_empty():
+			res.rip_seen += 1
+			if bool(af0.riposte.get("cue", false)):
+				res.cue_only += 1
+			elif int(af0.riposte.ticks_to_contact) == 0:
+				res.ttc_at_contact = 0
+		if not af0.press.is_empty():
+			res.sure = res.sure or bool(af0.press.get("sure", false))
+			res.press_riposte = res.press_riposte or bool(af0.press.get("riposte", false))
+			if String(af0.press.phase) == "load" and int(af0.press.ordinal) == 0:
+				res.load_ttc = mini(int(res.load_ttc) if int(res.load_ttc) != 99 else 99, 99)
+				res["load_first"] = maxi(int(res.get("load_first", 0)), int(af0.press.ticks_to_contact))
+		if k >= contact - 8 and k <= contact + 1:
+			res.fade.append(af0._rip_fade(S, f0, S.T))
+		if not af1._seq.is_empty() and String(af1._seq.id).begins_with("s3.stagger_"):
+			f1_seq_seen = true
+			res.stag_id = String(af1._seq.id)
+			res.stag_dur = float(af1._seq.dur) * 60.0
+			res.stag_fit = bool(af1._seq.get("fit", false))
+			res.watch = af1._stun_watch
+		elif f1_seq_seen and res.stag_end < 0:
+			res.stag_end = k - contact
+		res["err"] = float(af0.debug.get("contact_err_max", 0.0))
+	var th: Array = []
+	for f in [f0, f1]:
+		var a: AnimFighter = RenderAnim.fighter(S, f)
+		for i in range(AnimRagdoll.N):
+			th.append(a._rd.th[i])
+		th.append(a._rd.out_w)
+		for i in range(5):
+			th.append(a._sx[i])
+		th.append(a._look)
+	res["th"] = th
+	RenderAnim.reduced_motion = false
+	return res
+
+
+func _test_riposte() -> void:
+	_expect(AnimData.press.has("riposte") and AnimData.press.riposte.has("windup") and AnimData.press.riposte.has("fade"), "riposte: data/anim/press_styles.json has no riposte block")
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var audit_was: bool = RenderAnim.joint_audit
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.joint_audit = true
+	RenderAnim.ground_feet = false
+	AnimData.ensure_fighter("KAI")
+	AnimData.ensure_fighter("VORR")
+	var summary: Array = []
+	for who in ["protagonist", "antihero"]:
+		for case in [["perfect_block", "light", 20], ["perfect_block", "heavy", 40], ["reversal", "light", 20], ["reversal", "heavy", 40]]:
+			var block: String = case[0]
+			var kind: String = case[1]
+			var n: int = case[2]
+			var tag: String = "riposte %s %s %s n %d" % [who, block, kind, n]
+			RenderAnim.press_styles = true
+			var a: Dictionary = _rip_scene(S, who, block, kind, n)
+			_expect(int(a.nan) == 0 and int(a.viol) == 0, "%s: %d NaN rotations, %d joint violations" % [tag, int(a.nan), int(a.viol)])
+			_expect(int(a.rip_seen) > 5 and int(a.ttc_at_contact) == 0, "%s: the riposte was exposed for %d solves and did not reach 0 ticks to contact (%d)" % [tag, int(a.rip_seen), int(a.ttc_at_contact)])
+			_expect(bool(a.press_riposte) and bool(a.sure), "%s: press.riposte %s and press.sure %s on the blow (both must be true)" % [tag, str(a.press_riposte), str(a.sure)])
+			# the wind-up is cut: the blow's load phase starts at most 5 ticks (a light) or 6 (a heavy) before the contact
+			_expect(int(a.get("load_first", 99)) <= (6 if kind == "heavy" else 5), "%s: the riposte winds up %d ticks ahead of its contact (the cut is %d)" % [tag, int(a.get("load_first", 99)), int(AnimData.press.riposte.windup[kind])])
+			_expect(float(a.err) < 0.2, "%s: the blow is %.3f rad from its contact key" % [tag, float(a.err)])
+			# the block pose fades out over the fade ticks and is gone on the contact tick
+			var fd: Array = a.fade
+			var mono: bool = true
+			for i in range(1, fd.size()):
+				mono = mono and float(fd[i]) <= float(fd[i - 1]) + 0.0001
+			_expect(mono and float(fd[0]) > 0.99 and float(fd[fd.size() - 2]) < 0.01, "%s: the block's fade is %s (1 at the start of the fade, 0 on contact, never rising)" % [tag, str(fd)])
+			# the stagger: the rival's step 3 stagger fitted to n, the old watch cleared, still the cue's sequence five ticks later
+			var sid: String = "s3.stagger_blocked" if block == "perfect_block" else "s3.stagger_countered"
+			_expect(String(a.stag_id) == sid and absf(float(a.stag_dur) - float(n)) < 0.01 and bool(a.stag_fit) and int(a.watch) == 0, "%s: stagger %s fitted %s to %.1f ticks (want %s at %d), watch %d" % [tag, String(a.stag_id), str(a.stag_fit), float(a.stag_dur), sid, n, int(a.watch)])
+			_expect(int(a.stag_end) >= n - 2 and int(a.stag_end) <= n + 4, "%s: the stagger ended %d ticks after the cue (want %d)" % [tag, int(a.stag_end), n])
+			summary.append("%s %s n%d: load %d ticks ahead" % [block, kind, n, int(a.get("load_first", 99))])
+	# reduced motion does not shorten the stagger (it is the sim's time)
+	RenderAnim.press_styles = true
+	var rm: Dictionary = _rip_scene(S, "protagonist", "perfect_block", "light", 20, 1, true)
+	_expect(absf(float(rm.stag_dur) - 20.0) < 0.01, "riposte: reduced motion plays the stagger for %.1f ticks (the sim's 20)" % float(rm.stag_dur))
+	# the stagger cue wins over the old watch whichever comes first: a perfect_block cue after the stagger cue sets no watch (same tick)
+	# one tick a frame against two: the ragdoll's raw state agrees to the same tolerance as the ragdoll test
+	var r1: Dictionary = _rip_scene(S, "protagonist", "perfect_block", "heavy", 40, 1)
+	var r2: Dictionary = _rip_scene(S, "protagonist", "perfect_block", "heavy", 40, 2)
+	var dmax: float = 0.0
+	for i in range(mini(r1.th.size(), r2.th.size())):
+		dmax = maxf(dmax, absf(float(r1.th[i]) - float(r2.th[i])))
+	_expect(dmax <= RD_FRAME_TOL, "riposte: the ragdoll state differs by %s between one tick a frame and two (tolerance %s)" % [str(dmax), str(RD_FRAME_TOL)])
+	# the flag off: the beat plays as any blow (no cut, no press), the cue still exposes the riposte for VFX and the stagger still plays
+	RenderAnim.press_styles = false
+	var off: Dictionary = _rip_scene(S, "antihero", "perfect_block", "light", 20)
+	_expect(not bool(off.press_riposte) and String(off.stag_id) == "s3.stagger_blocked" and int(off.rip_seen) > 5, "riposte: with the press styles off press.riposte is %s, the stagger %s, the riposte exposed for %d solves" % [str(off.press_riposte), String(off.stag_id), int(off.rip_seen)])
+	RenderAnim.press_styles = styles_was
+	RenderAnim.joint_audit = audit_was
+	RenderAnim.ground_feet = ground_was
+	S.dirS.ex = null
+	print("riposte: %s; the block fades out over the data's ticks, press.sure and press.riposte exposed, the stagger fitted to n (20 and 40) for both builds, one tick a frame against two within %s" % [", ".join(summary.slice(0, 3)), str(RD_FRAME_TOL)])
+
+
 func _test_press_styles() -> void:
 	_expect(not RenderAnim.press_styles, "press styles: the flag must be OFF by default")
 	_expect(not AnimData.press.is_empty() and AnimData.press.get("styles", {}).has("tech") and AnimData.press.styles.has("speed") and AnimData.press.styles.has("heavy"), "press styles: data/anim/press_styles.json did not load")
@@ -2034,6 +2210,7 @@ func _run() -> void:
 	_test_flight_lead()
 	_test_pair_live()
 	_test_press_styles()
+	_test_riposte()
 	_test_hand_tips()
 	_test_zip()
 	_test_beat_fields()
