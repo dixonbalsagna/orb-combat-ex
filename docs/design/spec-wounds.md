@@ -129,7 +129,12 @@ Orb removed hiding from the base game and kept it for a future stealth-specialis
 | **Flashes** | Found and Searching stay. Primed, the ambush window, is held for the future fighter. Art: please drop Primed from the base set. |
 
 **Recovery without hiding.** This replaces the old hidden fade (battered fading 3 per second while hidden). Without a replacement, battered regions would stay battered for the rest of a 6-to-8-minute fight, and comebacks would come only from Rally.
-- **Second breath.** After **4 s** with no exchange involving that fighter, a battered region fades 1 wear per second, down to 59, where it becomes bruised. It is for a break in the action: the 4 s start again on anything that hits him, landed or blocked, blow or shot, and on any attack of his own, an approach that never lands included (`melee-press-feel.md` §9g).
+- **Second breath.** After **4 s** with no exchange involving that fighter, a battered region fades 1 wear per second, down to 59, where it becomes bruised. It is for a break in the action. **The 4 s start again on:**
+  - anything that hits him, landed or blocked, blow or shot;
+  - an exchange he is in;
+  - his own approach, from its tell: a lunge, a charge, a zip or a pursuit, whether or not it lands.
+
+  **They don't start again when he fires a shot, or when his shot lands.** A fighter who keeps his distance and shoots is not in the thick of it, and his breath is part of how ranged play holds up. The first wording restarted the wait on "any attack of his own", so a player firing a bolt every 8 ticks never got a second breath while the melee fighter he faced still got one between brawls: bolt-only fell from 27 to 8 of 100 against the medium AI, and the mixed blaster from 48 to 15. A fighter under fire still doesn't recover, which was the point of the rule (`melee-press-feel.md` §9g).
 - It shows through the posture channel (a visible breath) and needs no UI.
 - The opponent denies it simply by attacking, since every attack closes the gap. Breaking lock through ESCAPE, or a long break launch, is how a fighter earns it.
 - Broken regions still mend only through Rally.
