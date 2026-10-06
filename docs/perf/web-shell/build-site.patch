@@ -1,0 +1,29 @@
+--- a/tools/build-site.mjs
++++ b/tools/build-site.mjs
+@@ -41,6 +41,17 @@
+ mkdirSync(join(outDir, 'bench'), { recursive: true });
+ cpSync(webDir, join(outDir, 'play'), { recursive: true });
+ 
++// Phone web-app files (docs/perf/web-shell/): the manifest and its icons ship in /play/ next to index.html, where the page's manifest link points.
++const shell = resolve(import.meta.dirname, '..', 'docs', 'perf', 'web-shell');
++for (const f of ['manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png']) {
++  if (!existsSync(join(shell, f))) {
++    console.error(`error: ${join(shell, f)} is missing; run node docs/perf/tools/make-placeholder-icons.mjs or restore docs/perf/web-shell/`);
++    process.exit(1);
++  }
++}
++cpSync(join(shell, 'manifest.webmanifest'), join(outDir, 'play', 'manifest.webmanifest'));
++cpSync(join(shell, 'icons'), join(outDir, 'play', 'icons'), { recursive: true });
++
+ // ---- /bench/: the exported page, retargeted at ../play/ and given the bench arguments and a results panel ----
+ function replaceOnce(text, from, to) {
+   if (!text.includes(from)) {
+@@ -50,6 +61,8 @@
+   return text.replace(from, () => to);
+ }
+ let bench = readFileSync(join(webDir, 'index.html'), 'utf8');
++// The bench page is not an installable app: drop the manifest link (it would 404 at /bench/).
++bench = bench.replace("<link rel='manifest' href='manifest.webmanifest'>", '');
+ for (const file of ['index.icon.png', 'index.apple-touch-icon.png', 'index.png', 'index.js']) bench = replaceOnce(bench, `"${file}"`, `"../play/${file}"`);
+ bench = replaceOnce(bench, '"executable":"index"', '"executable":"../play/index"');
+ bench = replaceOnce(bench, '"args":[]', '"args":benchArgs()');
