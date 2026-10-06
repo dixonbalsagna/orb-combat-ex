@@ -33,6 +33,7 @@ var flash: float = 0.0               # seconds left of the divider's slam flash
 var shake: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # each pane's shake amount, px, before the cap and the player's scale
 var fade: float = 0.0                # 0..1: a safety cut's brightness dip, fading in (the compositor darkens by CUT_DIM x this)
 var pitch: float = 0.0               # the cameras' pitch in degrees (0: straight on); Rendering's CameraRig takes it
+var scroll: Array = [0.0, 0.0]          # per pane: how fast the scenery crosses it, in px a tick at 1024 wide (eased; in one view both are the shared camera's). Rendering fades the windows' and facades' contrast with it
 var incoming: Array = [{}, {}]       # per fighter: the other fighter coming at him: {active, aimed, eta, dist_u, dist_bh, closing, side, shown, screen_dir} (the HUD's edge marker reads it)
 var panel: Dictionary = {}           # the panel cut-in, or {}: kind, slot, open (0..1), still, rect (px), slant (px, signed), size, cam_x, cam_y, cam_z (the inset's own viewport)
 var cutaway: Array = [{}, {}]        # per pane: the occlusion hole's request {request, radius_px, only}
@@ -62,6 +63,7 @@ func duplicate() -> SplitFrame:
 	f.active = active.duplicate()
 	f.panel = panel.duplicate()
 	f.incoming = incoming.duplicate()
+	f.scroll = scroll.duplicate()
 	f.kind = kind.duplicate()
 	f.swing = swing
 	f.sigma = sigma
@@ -166,6 +168,7 @@ func split_record(pointer_always: bool = false) -> Dictionary:
 	d["dist_bh"] = absf(held_u) / CamParams.BODY_H
 	d["pointer"] = "always" if (pointer_always or sep < 0.5) else "split"
 	d["incoming"] = incoming
+	d["scroll"] = scroll
 	d["ring"] = {
 		"angle_A": ring[0], "angle_B": ring[1], "sigma": sigma, "arc_A": viewed_arc(0), "arc_B": viewed_arc(1),
 		"swing": swing, "sep": sep, "W": SimConst.W,

@@ -2545,6 +2545,11 @@ func _make_frame(S: SimState) -> SplitFrame:
 			rad = maxf(rad, CamParams.CUTAWAY_BREAK_R * vh)   # keep the silhouette against the sky clear of a house in front
 		f.cutaway[ci] = {"request": _ov_kind != "smash", "radius_px": rad, "only": ci if two_up else -1}
 	f.incoming = [_incoming_for(S, 0, f), _incoming_for(S, 1, f)]
+	# The scenery's speed across each pane (the governor's own measure, units a second eased), in px a tick at 1024 wide: the
+	# shared camera's in one view. A fast pursuit past lit windows strobes the facades; Rendering fades their contrast with this.
+	var scale_px: float = DT * 1024.0 / maxf(vw, 1.0)
+	var sc_m: float = _vsm_m * f.cam_z[0] * scale_px
+	f.scroll = [lerpf(float(_vsm[0]) * f.cam_z[0] * scale_px, sc_m, 1.0 - _smootherstep(sep)), lerpf(float(_vsm[1]) * f.cam_z[1] * scale_px, sc_m, 1.0 - _smootherstep(sep))]
 	if _ov_kind != "":
 		# A cut-in is one view: it draws its own camera over both panes, so the frame says one view with no divider. The
 		# layout itself goes on deciding underneath (holding it let a fighter fly 6,000 units away during a cut-in and

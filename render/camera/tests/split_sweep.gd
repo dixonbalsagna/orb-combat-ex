@@ -1768,6 +1768,7 @@ func _scroll_gov_run(step: float, reduced: bool, flash_red: bool) -> Dictionary:
 	var A = _S.fighters[0]
 	var B = _S.fighters[1]
 	var worst: float = 0.0
+	var scroll_err: float = 0.0
 	var off: int = 0
 	var zmin: float = 1.0e9
 	var z_before: float = _rig.current().cam_z[0]
@@ -1785,6 +1786,7 @@ func _scroll_gov_run(step: float, reduced: bool, flash_red: bool) -> Dictionary:
 		var vel: float = SimWrap.sdx(cam_prev, cur.cam_x[0]) * cur.cam_z[0] / vw
 		cam_prev = cur.cam_x[0]
 		if k >= 60:
+			scroll_err = maxf(scroll_err, absf(float(cur.scroll[0]) - absf(vel) * 1024.0))
 			worst = maxf(worst, absf(vel))
 			zmin = minf(zmin, cur.cam_z[0])
 			if not (_on_screen(cur, 0) and _on_screen(cur, 1)):
@@ -1803,6 +1805,7 @@ func _scroll_gov_run(step: float, reduced: bool, flash_red: bool) -> Dictionary:
 		_check(_rig.scroll_gov_ticks == gov0, "%s: the governor held the zoom back at a slow drift (%d ticks)" % [_label, _rig.scroll_gov_ticks - gov0])
 	_check(off == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off])
 	_check(jerk <= 0.05, "%s: the camera's velocity changed by %.3f of the width in a tick" % [_label, jerk])
+	_check(scroll_err <= 6.0, "%s: the frame's scroll was %.1f px a tick off the measured one" % [_label, scroll_err])
 	stats["scroll governor " + _label] = "step %.0f u/tick: scenery %.3f of the width a tick at most, zoom %.2f to %.2f (smallest %.2f, floor %.2f), jerk %.3f, off %d" % [step, worst, z_before, z_after, zmin, floor_z, jerk, off]
 	_rig.reduced_motion = false
 	_rig.flash_reduced = false
