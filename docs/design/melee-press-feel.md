@@ -464,6 +464,22 @@ The rows for the zip away wait for the second slice.
 | Does a late press clear anything? | **No.** It is a plain light. It adds 1 to his run like any light, it doesn't clear the rival's run, and it doesn't touch the flow. Letting a beat pass isn't a miss: he may have guarded, or wound up a heavy. The flow is lost only by an early press, or by 90 ticks with no press at all, as before |
 | Does the AI's timing share get a band of its own? | **No.** The masher's band is the check: 35 to 50% against the medium AI. The share of its lights that each level times is the first lever for that band from now on, ahead of its tap gap and its reversals. It starts from the values it has (0.15, 0.45 and 0.8), and stays in that order |
 
+**What the body does between contact and the beat point.** Animation read it as the contact pose pinned until the beat point. Encounter read §1's "30 ticks, ending on its beat" as the limb coming back and setting there. It is both, in that order, as the approved prototype plays it: the pose on the contact tick with its wire echoes, a held beat, and then the return.
+
+| From | To | What the limb does |
+| :--- | :--- | :--- |
+| Contact | 10 ticks before the beat point | **Pinned** in the contact pose. That is 14 ticks for a beat at 24, and 10 to 18 by the piece |
+| 10 ticks before the beat point | The beat point | **The return.** It always takes 10 ticks, and it speeds up into the end |
+| The beat point | | **The set:** the limb snaps home, with the glint and the tick of sound |
+
+- **The return is the cue.** A window of 4 ticks either side can't be reacted to, so the player has to see it coming. The return always starts 10 ticks before the beat and always takes 10 ticks, whatever the piece. So the lesson is one thing on every blow: press as the limb snaps home. A pose pinned all the way to the beat would give him a flash and nothing to time it by.
+- This holds for a light and for a skill strike alike. A flurry blow has no hold and no beat: its tap sets its length.
+- **To the sim the beat point is still only a tick.** An early press cuts whatever the limb is doing, and the flurry blow goes from where the limb is. A press in the last 4 ticks of the return throws the skill strike out of the return. After the window, the limb stays set, and the next press is a plain light.
+- The beat ring in settings closes on the same tick. It is a second cue and never the only one.
+- **Data:** `beat.returnTicks` 10. The hold is whatever is left.
+
+**The grade** (Controls' split, for the record): a press within 2 ticks of the beat point is perfect, and one at 3 or 4 is good. **Both pay the same:** the same worth, reel and flow. The window is narrow already, and a cell's numbers shouldn't vary by a tick. The grade is feedback: the look and the sound of the hit, the press log, and QA's records.
+
 **How the timing band is read.** Both ways:
 - **head to head, which is the banded row:** a timed presser against the same presser mashing at an 8-tick gap wins 62 to 82%;
 - **each against the medium AI, reported beside it.** The masher's band is his own. The timed presser's target against medium is 70 to 90% (§9c), and it is expected to read over that until the AI's answers to a timed string are switched on, which needs the parry.
