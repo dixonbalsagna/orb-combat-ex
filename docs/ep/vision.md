@@ -749,3 +749,21 @@ Orb played the live build at about 10:30pm on 2026-10-05 (the brawl with press s
 **More combat feedback (Orb):** "Y just feels really underpowered right now. an opponent flurrying on me should get punished if they don't block correctly when I charge a full Y attack. I suddenly realized a staple of modern fighting games are the two-button combined power attacks: A+B (grab-related) / X+A / Y+B / X+Y . I don't want to add combinations that cross the pad, like Y+X / X+B unless you make a really good pitch as to how that will benefit the control scheme. Please consider folding these into our combat mechanics."
 
 EP's note: on a standard pad the adjacent pairs are A+B, X+A, Y+B and X+Y, and the two that cross the pad are X+B and Y+A. Orb's "Y+X" in the cross-pad list is read as Y+A, to be confirmed with Orb.
+
+## Orb, 2026-10-06 (early): the brawl second pass's questions
+
+Answers to Game Design's questions on docs/design/brawl-second-pass.md:
+- Q2, what ends a string: a held Y ends it; X+Y is the lift.
+- Q5, the even mash's double throw-back: both take a hit.
+- Q6: yes, Y+A and X+B are the pairs to avoid.
+- Q1, Q3 and Q4 were answered in Orb's notes, verbatim:
+
+"1: if both players move their sticks in the opposite direction they should be able to walk out.
+
+3: I like the body blows suggestion, but it should read more as a new axis to the 'light / heavy' paradigm, I'm thinking 'vicious' or something similar, depending on the character it might be but not limited to headbutts, bites, clawing, gouging. please pitch some more alternatives.
+
+4: I'm going to defer to you, i don't know how much reduction the armor gives but you should determine the best fit.
+
+5: double knockbacks should be slightly uncommon, but exciting developments when they happen. Potential for dynamic closeup PiP  of, for instance, both characters punching each in the face, sending each flying in opposite directions."
+
+EP's ruling on Q4, which Orb deferred: a charging Y is armoured from its first tick against light and flurry-light blows (they do not interrupt it, and he takes half their damage); quick heavies and heavy-flurry blows interrupt it until it is half charged, and from half charge it is armoured against those too. A shove, a grab, a charged blow and a perfect block always end it. Numbers are Game Design's; the first playtest of the slice decides whether it holds.
