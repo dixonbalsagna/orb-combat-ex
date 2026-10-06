@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 8
+VERSION = 9
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -375,6 +375,8 @@ def strike_cell(ctx, who, cid, cell):
         c = cover.get(fp(m))
         if "only" in cell and (c is None or c["level"] != cell["only"]):
             continue   # a cell of stand-ins holds nothing else
+        if c is not None and c["from"] in cell.get("without", {}).get(who, []):
+            continue   # a posed strike this cell leaves out for this fighter (cells.json says why)
         if c is not None and c["level"] in cell.get("notLevels", []):
             continue   # a tier of new looks leaves out what a posed piece only stands in for
         m["_arms"] = c["arms"] if c else (1 if m["limb"] in ("hand", "elbow") else 0)

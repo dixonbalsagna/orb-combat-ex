@@ -88,7 +88,7 @@ Merged, ready-to-apply copies of the three combat data files, prepared on 2026-1
 
 ## Generated movesets
 
-`movegen/`: the moveset generator's inputs (`parts.json`, `identity.json`, `cells.json`, `lock.json`), its reference script, the generated movesets for both fighters over all five stances (120 and 121 rows; the martial arts stance on three strengths, `three-strengths.md`) and the review sheet. Its README has the counts and the keys for Tools. Parked; design in `../moveset-generator.md`.
+`movegen/`: the moveset generator's inputs (`parts.json`, `identity.json`, `cells.json`, `lock.json`), its reference script, the generated movesets for both fighters over all five stances (120 rows each; the martial arts stance on three strengths, `three-strengths.md`) and the review sheet. Its README has the counts and the keys for Tools. Parked; design in `../moveset-generator.md`.
 
 ## The launch pair: readiness and apply order
 

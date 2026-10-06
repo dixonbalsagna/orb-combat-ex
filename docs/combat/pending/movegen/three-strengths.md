@@ -3,7 +3,7 @@
 Owner: Combat and Choreography. Date: 2026-10-06. Status: parked, for the slice C2a. Nothing here is loaded or hashed.
 Answers `docs/design/brawl-second-pass.md` as rewritten for three strengths (`972e598`), sections 2, 3 and 8, and Orb's words in `docs/ep/vision.md` (last section).
 
-The generator is version 8. `--check` passes (files, Legal's rows, strings) and `--self-test` passes 58 cases. Every row below is in `review-sheet.md`, which is generated.
+The generator is version 9. `--check` passes (files, Legal's rows, strings) and `--self-test` passes 58 cases. Every row below is in `review-sheet.md`, which is generated.
 
 **Since this note was first written:** Legal passed all 41 rows with conditions, and the pools by button are in `../recipes.brawl.json`. Sections 8 and 9 have both.
 
@@ -15,11 +15,11 @@ The generator is version 8. `--check` passes (files, Legal's rows, strings) and 
 | **X held** | nothing | **The burst:** 5 strings of 8 a fighter, one for each lean of the stick, drawn from his 30 lights |
 | **Y** | 16 heavies | The same 16, same ids, **re-tagged as mediums.** Each carries the rule that says how it reads on a 12-tick wind-up |
 | **B** | a frame for his signature | **10 heavies a fighter, a new tier.** None is posed |
-| **B, for today** | nothing | **Stand-ins:** 5 posed pieces for the rival, 6 for the Protagonist, that can play on B until the tier is drawn |
+| **B, for today** | nothing | **Stand-ins:** 5 posed pieces a fighter, that can play on B until the tier is drawn |
 | **RT + B** | his release | The signature frame, with the melee art that sat on B |
 
 - No id changed and no strike changed shape. Outside the martial arts stance only the word changed: `heavy` is `medium` on one push each and on the blows of the manoeuvre Y.
-- **Rows a fighter:** rival 120 (74 posed, 21 derived, 25 waiting); Protagonist 121 (69, 27, 25). The 100 of before, plus 10 heavies, 5 bursts and the stand-ins.
+- **Rows a fighter:** rival 120 (74 posed, 21 derived, 25 waiting); Protagonist 120 (69, 26, 25). The 100 of before, plus 10 heavies, 5 bursts and 5 stand-ins.
 
 ## 2. Today's heavies as mediums, on 12 ticks
 
@@ -94,13 +94,13 @@ The tier has no headbutt (a vicious blow, which waits), no blow to a shin, and n
 
 A posed medium that is flagged (section 2) covers the heavy of its shape, and can play on B's 28-tick wind-up now.
 
-| The rival: 5 | The Protagonist: 6 |
+| The rival: 5 | The Protagonist: 5 |
 | :--- | :--- |
-| `strike.double_hammer`, `strike.drop_kick`, `strike.cross_arm_ram`, `strike.spinning_elbow`, `strike.spinning_heel` | `strike.spinning_heel`, `strike.double_palm`, `strike.spinning_back_kick`, `strike.drop_kick`, `strike.spinning_elbow`, `strike.cross_arm_ram` |
+| `strike.double_hammer`, `strike.drop_kick`, `strike.cross_arm_ram`, `strike.spinning_elbow`, `strike.spinning_heel` | `strike.double_palm`, `strike.spinning_back_kick`, `strike.drop_kick`, `strike.spinning_elbow`, `strike.cross_arm_ram` |
 
 - They are in their own cell (`martial.b.standin`), are not locked, and go as the tier is drawn. They are not among the ten: the tier is new looks.
-- **A stand-in flurry can run dry.** Two of the rival's and three of the Protagonist's are spins, and a spin never follows a spin (s04); most of the rest land on the chest, and no third blow running may (s02). After some two blows the rival has 1 stand-in he may throw and the Protagonist has none. Encounter needs a fallback while B runs on stand-ins: let the oldest piece repeat.
-- Most are also his held-Y pieces: 4 of the rival's and 5 of the Protagonist's. In C2a only B shows them, as the holds come in C2b.
+- **Neither fighter's stand-ins run dry.** After any two blows at least one of his five may follow. The Protagonist's spinning heel was a sixth and is left out for this (the EP's ruling): with it, a chest blow and then the heel left nothing, as his others are chest blows or spins. The fallback of section 9 stays as the net.
+- Most are also his held-Y pieces: 4 of each fighter's. In C2a only B shows them, as the holds come in C2b.
 
 ## 5. The burst
 
@@ -155,7 +155,7 @@ The floor is 3 for each button. Each burst string is checked too: Legal's rules 
 - `combat.moveset/1`: a weight may be `medium`; a medium has `wind`; a heavy has `drive` and `name`; a `string` cell's rows have `lean`, `blows`, `slots`; a `temporary` cell; `review` may be `stand-in`; `keys.level` may be `stand_in`. Ids may have a third part: `mv.rival.martial.x.hold.01`, `mv.rival.martial.b.standin.01`.
 
 **Legal**
-- The list is the section "New looks for Legal: three strengths" of `review-sheet.md`: 41 rows. Six drives, 20 heavies, 11 stand-ins on a longer wind-up, the burst, the mediums on 12 ticks, and how each fighter throws a heavy.
+- The list is the section "New looks for Legal: three strengths" of `review-sheet.md`: 41 rows when Legal screened it, 40 now that one stand-in is dropped. Six drives, 20 heavies, 11 stand-ins (now 10) on a longer wind-up, the burst, the mediums on 12 ticks, and how each fighter throws a heavy.
 - **Rows written for two weights.** b12 names `heavy` and `held`. I apply it to mediums and heavies, and to the form `charged`, so nothing is loosened by the new words. Legal to confirm, or to re-word the rows.
 - **Two conditions were mine, proposed:** W1 (a heavy's wind-up is judged as a held pose) and U1 (the burst). Legal adopted both (section 8).
 - **To look at first:** the falling drive (the limb must not be held raised), the heaving elbow to the jaw (b03 names hands only), and the stepping blade hand to the jaw.
@@ -200,7 +200,7 @@ In `../recipes.brawl.json`, which is still the live recipes plus what is parked.
 | X mashed; on the beat | `flurry`; `skill`, `juggle` | `brawl.flurry`; `brawl.skill` | 9; 9 | 10; 10 |
 | Y tapped, mashed, on the beat | `medium` | `brawl.medium`: the mediums that read on 12 ticks | 10 | 10 |
 | Y held (C2b) | `mediumHeld` | `brawl.medium.held`: every medium | 14 | 14 |
-| B tapped, mashed, on the beat, held | `heavy`, `heavyHeld` | `brawl.heavy`: **the stand-ins** | 5 | 6 |
+| B tapped, mashed, on the beat, held | `heavy`, `heavyHeld` | `brawl.heavy`: **the stand-ins** | 5 | 5 |
 | X+Y (C6a) | `lift` | `brawl.lift`: the rising mediums | 3 | 3 |
 | X held | the `burst` block | `burst.fast`, `burst.mid`, `burst.slow` | 8, 13, 27 | 8, 12, 24 |
 
@@ -216,11 +216,10 @@ In `../recipes.brawl.json`, which is still the live recipes plus what is parked.
 
 Legal's rules are never dropped.
 
-**Where B runs dry on stand-ins:**
-- **The rival never does.** After any two blows at least one of his five may follow.
-- **The Protagonist does in 13 of 1,200 histories,** and in 3 mashed-B strings: after a double palm, a drop kick or a crossed-arm ram, then the spinning heel. Both blows are to the chest, so a third to the chest is barred (s02), and his other stand-ins are spins, which can't follow a spin (s04).
-- **Repeating does not save any of them:** the repeat would be that third blow to the chest or that second spin. So in these the press takes step 3 and throws a medium on B's wind-up. Step 2 is in the file, and today it is never the step that is reached.
-- Taking the spinning heel out of the Protagonist's stand-ins would leave five that never run dry. It is in, since the fallback covers it.
-- This goes when the tier's ten are posed: after any two blows at least 4 of the rival's and 5 of the Protagonist's may follow.
+**Where B runs dry on stand-ins: nowhere, now.**
+- **Neither fighter's five run dry.** After any two blows of his three pools at least one stand-in may follow.
+- **The Protagonist had a sixth, the spinning heel, and it is dropped** (the EP's ruling, both halves: drop it, and keep the fallback as the net). With it he had none in 13 of 1,200 histories and in 3 mashed-B strings: a double palm, a drop kick or a crossed-arm ram, then the heel. Both blows landed on the chest, and his others were chest blows or spins.
+- Repeating did not save any of those: the repeat would have been a third blow to the chest (s02) or a spin after a spin (s04). That is why the third step exists, and why it stays.
+- The tier's ten never run dry either: after any two blows at least 4 of the rival's and 5 of the Protagonist's may follow.
 
 **For Tools,** beyond section 7: in `combat.recipes/1`, `brawl` gains the keys `medium`, `mediumHeld` and `heavyHeld` and loses `ender` and `break`; two new blocks, `burst` (`slots`, `pools`, `rules`, `close`, `samples`) and `fallback` (`steps`, `lower`, `heavyOnStandIns`); pool names may have three parts (`brawl.medium.held`).

@@ -502,7 +502,7 @@
    "mediumHeld": "combo.link"
   },
   "heavyOnStandIns": {
-   "_about": "Why this block exists today: B runs on a handful of stand-ins. How often each step is reached, over every two blows of his three pools that Legal's rules allow (all) and over two stand-ins running, which is a mashed B (mashedB). Counted on the pieces table. runsDry lists every mashed B that leaves no stand-in to throw: in each, the third blow would be a third running to the chest or a spin after a spin, so repeating a piece is not allowed either and the press takes the step lower. This block goes when the heavy tier's ten are posed, which never run dry (after any two blows at least 4 of the rival's and 5 of the Protagonist's may follow)",
+   "_about": "Why this block exists today: B runs on a handful of stand-ins. How often each step is reached, over every two blows of his three pools that Legal's rules allow (all) and over two stand-ins running, which is a mashed B (mashedB). Counted on the pieces table. runsDry lists every mashed B that leaves no stand-in to throw; it is empty for both fighters, since the Protagonist's spinning heel was taken out of his stand-ins for that (with it, three strings ran dry, and repeating was not allowed either). The steps above stay as the net. This block goes when the heavy tier's ten are posed, which never run dry (after any two blows at least 4 of the rival's and 5 of the Protagonist's may follow)",
    "rival": {
     "standIns": 5,
     "all": {
@@ -514,38 +514,14 @@
     "runsDry": []
    },
    "protagonist": {
-    "standIns": 6,
+    "standIns": 5,
     "all": {
-     "pool": 1187,
-     "lower": 13
+     "pool": 1134
     },
     "mashedB": {
-     "pool": 21,
-     "lower": 3
+     "pool": 18
     },
-    "runsDry": [
-     {
-      "after": [
-       "strike.double_palm",
-       "strike.spinning_heel"
-      ],
-      "then": "lower"
-     },
-     {
-      "after": [
-       "strike.drop_kick",
-       "strike.spinning_heel"
-      ],
-      "then": "lower"
-     },
-     {
-      "after": [
-       "strike.cross_arm_ram",
-       "strike.spinning_heel"
-      ],
-      "then": "lower"
-     }
-    ]
+    "runsDry": []
    }
   }
  },
@@ -2472,15 +2448,11 @@
    ],
    "brawl.heavy": [
     {
-     "id": "strike.spinning_heel",
+     "id": "strike.spinning_back_kick",
      "status": "posed"
     },
     {
      "id": "strike.double_palm",
-     "status": "posed"
-    },
-    {
-     "id": "strike.spinning_back_kick",
      "status": "posed"
     },
     {

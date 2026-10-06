@@ -9,7 +9,7 @@ Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here i
 | `cells.json` | Game Design's matrix, all five stances: what each button holds, its count, quotas, readings and what it needs from others; the seed | `data/combat/cells.json` |
 | `lock.json` | **generated:** every strike move's id and shape, so an id never changes shape | `data/combat/movesets/lock.json` |
 | `gen_moveset.py` | the reference generator: standard library only, no state, no clock | a script under `tools/`, Tools' to hold |
-| `moveset.rival.json`, `moveset.protagonist.json` | **generated:** 120 and 121 rows over the five stances | `data/combat/movesets/<fighter>.json` |
+| `moveset.rival.json`, `moveset.protagonist.json` | **generated:** 120 rows each over the five stances | `data/combat/movesets/<fighter>.json` |
 | `review-sheet.md` | **generated:** every move on one row, by stance, with Legal's conditions and what each stance needs | stays in docs |
 | `three-strengths.md` | the note for the slice C2a: the mediums on 12 ticks, the heavy tier, the burst, the string check, and what Animation, Tools and Legal need | stays in docs |
 | `second-pass-plan.md` | a plan, not built: what the brawl's second pass (`docs/design/brawl-second-pass.md`) needs from parts, identity and cells, in the EP's build order, with sizes | stays in docs |
@@ -30,7 +30,7 @@ Orb moved the martial face buttons to three strengths: X light, Y medium, B heav
 | X held | the burst: 5 strings of 8 lights, one for each lean | 5: 1, 4, 0 | 5: 0, 5, 0 |
 | Y | the same 16 strikes, re-tagged as mediums; 12 and 11 read on a 12-tick wind-up, the rest are flagged for a held Y | 16: 14, 2, 0 | 16: 14, 2, 0 |
 | B | a new tier of 10 heavies: whole-body blows, each a shape and a drive | 10: 0, 0, 10 | 10: 0, 0, 10 |
-| B, stand-ins | posed pieces that can play on B until the tier is drawn; not locked | 5: 0, 5, 0 | 6: 0, 6, 0 |
+| B, stand-ins | posed pieces that can play on B until the tier is drawn; not locked | 5: 0, 5, 0 | 5: 0, 5, 0 |
 
 - No id changed and no strike changed shape. The lock's 34 heavy rows were re-tagged as medium.
 - The signature frame that sat on the martial B is the charging stance's B (RT + B) now.
@@ -76,7 +76,7 @@ Game Design's matrix (`docs/design/melee-press-feel.md` section 10): X quick, Y 
 - **The Protagonist's three specials are placeholders** (a turning step, three curving shots, a turn aside). They are Combat's first offer so that his charging row is not empty, and they are marked so in the data and on the sheet.
 - **Which of the rival's specials sits on which button is my guess:** the cutting step on X, the barrage volley on Y, the grip and drag on A.
 
-**All five stances:** 120 rows for the rival (74 posed, 21 derived, 25 waiting) and 121 for the Protagonist (69, 27, 25). The 25 waiting are the 10 new heavies, the 14 special looks and the short beam.
+**All five stances:** 120 rows for the rival (74 posed, 21 derived, 25 waiting) and 120 for the Protagonist (69, 26, 25). The 25 waiting are the 10 new heavies, the 14 special looks and the short beam.
 
 "Posed" here means the poses exist. Most of what these four stances lack is not a pose but the action itself, which is the next section.
 
