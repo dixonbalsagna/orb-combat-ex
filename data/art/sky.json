@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "note": "The dynamic sky, directed by Art (docs/art/dynamic-sky.md). Written by art/concepts/sky/gen.mjs from art/concepts/sky/keys.mjs; do not edit by hand. The sky stays inside the game's look: four bands, top to horizon, the way render/core/look.gd SKY has them. The key \"sunset\" IS the current look and the sky at the start of a match. Rendering builds the sky from this file; Tools adds the schema.",
+  "bands": [
+    "horizon",
+    "lower",
+    "upper",
+    "top"
+  ],
+  "anchors_half_screens": {
+    "horizon": 0,
+    "lower": 0.12,
+    "upper": 0.55,
+    "top": 1.45
+  },
+  "start": {
+    "key": "sunset",
+    "phase": 0.32
+  },
+  "keys": [
+    {
+      "id": "noon",
+      "phase": 0,
+      "hold": 0.04,
+      "stars": 0,
+      "bands": {
+        "top": "#14307a",
+        "upper": "#005999",
+        "lower": "#0084c5",
+        "horizon": "#e8e2c8"
+      },
+      "note": "high day: a deep blue sky with a warm cream haze at the horizon (not a pale blue, which would swallow the Protagonist's aura)"
+    },
+    {
+      "id": "golden",
+      "phase": 0.18,
+      "hold": 0.03,
+      "stars": 0,
+      "bands": {
+        "top": "#1a2f6e",
+        "upper": "#0066a8",
+        "lower": "#e0a468",
+        "horizon": "#f8dba0"
+      },
+      "note": "late afternoon: the blue climbs, amber comes up from the horizon"
+    },
+    {
+      "id": "sunset",
+      "phase": 0.32,
+      "hold": 0.03,
+      "stars": 0.15,
+      "bands": {
+        "top": "#111a3e",
+        "upper": "#4b4483",
+        "lower": "#d9776b",
+        "horizon": "#f4b87a"
+      },
+      "note": "THE CURRENT LOOK (render/core/look.gd SKY): indigo, violet, coral, peach. A match starts here"
+    },
+    {
+      "id": "night",
+      "phase": 0.58,
+      "hold": 0.06,
+      "stars": 1,
+      "bands": {
+        "top": "#05081a",
+        "upper": "#0a1636",
+        "lower": "#12294f",
+        "horizon": "#243e66"
+      },
+      "note": "night: blue-black, a cold blue rim; no violet, so the rival's violet is never swallowed"
+    },
+    {
+      "id": "dawn",
+      "phase": 0.84,
+      "hold": 0.03,
+      "stars": 0.3,
+      "bands": {
+        "top": "#16264e",
+        "upper": "#00618b",
+        "lower": "#d98f86",
+        "horizon": "#f6c9a0"
+      },
+      "note": "dawn: teal into rose into apricot, cooler and greener than the sunset so the two are not mistaken"
+    }
+  ],
+  "blend": {
+    "space": "oklab",
+    "ease": "smoothstep",
+    "hold": "each key holds its colours for `hold` of a lap, then blends to the next key",
+    "path": "per transition and band: lab (straight in OKLab) or lch+ / lch- (round the hue wheel one way or the other, linear in lightness and chroma), chosen so no blend passes through a grey or violet that sits on a lane colour",
+    "transitions": [
+      {
+        "from": "noon",
+        "to": "golden",
+        "horizon": "lab",
+        "lower": "lch-",
+        "upper": "lab",
+        "top": "lab"
+      },
+      {
+        "from": "golden",
+        "to": "sunset",
+        "horizon": "lab",
+        "lower": "lab",
+        "upper": "lab",
+        "top": "lab"
+      },
+      {
+        "from": "sunset",
+        "to": "night",
+        "horizon": "lab",
+        "lower": "lab",
+        "upper": "lab",
+        "top": "lab"
+      },
+      {
+        "from": "night",
+        "to": "dawn",
+        "horizon": "lch-",
+        "lower": "lch-",
+        "upper": "lab",
+        "top": "lab"
+      },
+      {
+        "from": "dawn",
+        "to": "noon",
+        "horizon": "lab",
+        "lower": "lch+",
+        "upper": "lab",
+        "top": "lab"
+      }
+    ]
+  },
+  "place": {
+    "cycles_per_lap": 1,
+    "phase_of": "fract(start.phase + (camera_x - spawn_x) / lap_length)",
+    "per_pane": true,
+    "note": "Flying once round the planet runs the whole cycle: noon, golden, sunset, night, dawn, noon. In split view each pane uses its own camera's place; the time drift and the mood are shared."
+  },
+  "time": {
+    "cycles_per_minute": 0.0125,
+    "cycle_minutes": 80,
+    "note": "Added to the place phase. A match that stays in one place goes from the sunset towards night over about 20 minutes; minute 8 is about 0.1 of a cycle on."
+  },
+  "rate_limit": {
+    "unit": "relative luminance (WCAG: 0 black to 1 white) per second",
+    "total": {
+      "mean": 0.02,
+      "band": 0.05
+    },
+    "place_and_time": {
+      "mean": 0.015,
+      "band": 0.035
+    },
+    "mood": {
+      "mean": 0.005,
+      "band": 0.015
+    },
+    "how": "The shown phase follows the target phase through slewStep (art/concepts/sky/keys.mjs): each frame it moves as far as it can without any band changing faster than place_and_time.band or the weighted mean faster than place_and_time.mean. Mood drivers ease at the rates in mood.min_seconds_0_to_1.",
+    "weights": {
+      "horizon": 0.18,
+      "lower": 0.3,
+      "upper": 0.3,
+      "top": 0.22
+    },
+    "measured": {
+      "seconds_for_one_lap_at_the_limit": 49,
+      "stress_test_worst_1s_mean": 0.0148,
+      "stress_test_worst_1s_band": 0.035,
+      "stress_test": "target phase flying round at 0.25 cycles a second and reversing every 3 seconds, 180 seconds"
+    },
+    "fastest_allowed": "no band 0.05 a second, the weighted mean 0.02 a second, all drivers together; a general flash (WCAG 2.3.1) needs an opposing pair of 0.10 or more inside a second, so the sky can never make one"
+  },
+  "mood": {
+    "inputs": {
+      "frenzy": "0 to 1, the fight's mood (Encounter and Combat supply it; Art does not define how it is measured)",
+      "ruin": "0 to 1, the share of the world destroyed (structures down and people lost), never above 1",
+      "glow": "0 to 1 for each burning town in view, with its direction"
+    },
+    "min_seconds_0_to_1": {
+      "frenzy": 30,
+      "ruin": 120,
+      "glow": 50
+    },
+    "colours": {
+      "ember": "#d9603c",
+      "smoke": "#2e221c",
+      "ash": "#2b2724",
+      "deep": "#05060f"
+    },
+    "frenzy": "top toward deep by 18%, upper toward the top by 25%, lower toward deep by 10%, horizon toward ember by 10%",
+    "ruin": "horizon and lower toward smoke by 60%, upper by 40%, the top toward ash by 25%; stars thin to 30% at 1",
+    "glow": "the horizon band toward ember by 35% in a wide low glow over the burning town (about 0.22 of the screen wide and a third of the horizon band tall); nothing above the lower band",
+    "order": "frenzy, then ruin, then glow, each applied to the key's bands",
+    "never": [
+      "nothing fast: every driver is rate limited as above",
+      "no pulsing, flicker or beat-sync, no reaction to a single hit (that is the VFX flashes' job)",
+      "never white, never a lightning flash",
+      "never grey toward violet: ruin darkens and warms (smoke) instead of greying"
+    ]
+  },
+  "readability": {
+    "lane_colours": {
+      "P": "#8fd6ff",
+      "A": "#9a80d8"
+    },
+    "rule": "The two aura colours stay at CIEDE2000 of 24 or more from every key's four bands, 20 or more at every blended place, and 24 or more at every mood extreme; the aura is always drawn with a dark keyline (#0a0d14) so it also reads where a bright horizon (L 0.5 to 0.8) would match it.",
+    "measured": {
+      "at_keys_and_mood_extremes_min_dE00": {
+        "protagonist": 24.6,
+        "rival": 25.1
+      },
+      "round_the_lap_min_dE00": {
+        "protagonist": 20.3,
+        "rival": 23.1
+      }
+    }
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "note": "Colour-vision presets for the two launch fighters (docs/art/colour-vision.md). Written by art/concepts/colour-vision/gen.mjs; do not edit by hand. The default look is unchanged: a preset remaps only the two lane colours (the auras). The body colour (col) pair is 48 or more apart (CIEDE2000) under every preset, so it is not remapped. UI owns the setting and the cue remap; Tools adds the schema.",
+  "simulation": {
+    "model": "Machado, Oliveira and Fernandes 2009, severity 1.0, applied in linear RGB",
+    "matrices": {
+      "protan": [
+        [
+          0.152286,
+          1.052583,
+          -0.204868
+        ],
+        [
+          0.114503,
+          0.786281,
+          0.099216
+        ],
+        [
+          -0.003882,
+          -0.048116,
+          1.051998
+        ]
+      ],
+      "deutan": [
+        [
+          0.367322,
+          0.860646,
+          -0.227968
+        ],
+        [
+          0.280085,
+          0.672501,
+          0.047413
+        ],
+        [
+          -0.01182,
+          0.04294,
+          0.968881
+        ]
+      ],
+      "tritan": [
+        [
+          1.255528,
+          -0.076749,
+          -0.178779
+        ],
+        [
+          -0.078411,
+          0.930809,
+          0.147602
+        ],
+        [
+          0.004733,
+          0.691367,
+          0.3039
+        ]
+      ]
+    }
+  },
+  "default": {
+    "protagonist": {
+      "col": "#3d8fdc",
+      "aura": "#8fd6ff"
+    },
+    "rival": {
+      "col": "#a52a2a",
+      "aura": "#9a80d8"
+    }
+  },
+  "presets": {
+    "protan": {
+      "protagonist": {
+        "col": "#3d8fdc",
+        "aura": "#46b9b9"
+      },
+      "rival": {
+        "col": "#a52a2a",
+        "aura": "#6b0bcb"
+      },
+      "chosen_by": "the strongest pair (the nearest-to-default pair was more than 3 dE weaker at its weakest)",
+      "measured_dE00_under_this_vision": {
+        "between_the_two": 39.6,
+        "protagonist": {
+          "to_wound_and_guard_marks": 14.6,
+          "nearest_mark": "wound fresh",
+          "to_sky_near_the_fighters": 15.8,
+          "to_any_sky_band": 15.8
+        },
+        "rival": {
+          "to_wound_and_guard_marks": 27.2,
+          "nearest_mark": "wound broken",
+          "to_sky_near_the_fighters": 14,
+          "to_any_sky_band": 7.7
+        }
+      }
+    },
+    "deutan": {
+      "protagonist": {
+        "col": "#3d8fdc",
+        "aura": "#35b6ab"
+      },
+      "rival": {
+        "col": "#a52a2a",
+        "aura": "#5b0bcb"
+      },
+      "chosen_by": "the pair nearest the default that clears the floors (cue 16, sky 12, between 24, lightness gap 24)",
+      "measured_dE00_under_this_vision": {
+        "between_the_two": 36.8,
+        "protagonist": {
+          "to_wound_and_guard_marks": 16.5,
+          "nearest_mark": "wound fresh",
+          "to_sky_near_the_fighters": 20.3,
+          "to_any_sky_band": 20.3
+        },
+        "rival": {
+          "to_wound_and_guard_marks": 32.3,
+          "nearest_mark": "guard",
+          "to_sky_near_the_fighters": 12.3,
+          "to_any_sky_band": 7.9
+        }
+      }
+    },
+    "tritan": {
+      "protagonist": {
+        "col": "#3d8fdc",
+        "aura": "#b7aaf8"
+      },
+      "rival": {
+        "col": "#a52a2a",
+        "aura": "#7243d0"
+      },
+      "chosen_by": "the pair nearest the default that clears the floors (cue 20, sky 16, between 28, lightness gap 28)",
+      "measured_dE00_under_this_vision": {
+        "between_the_two": 28.5,
+        "protagonist": {
+          "to_wound_and_guard_marks": 20.1,
+          "nearest_mark": "guard",
+          "to_sky_near_the_fighters": 17.9,
+          "to_any_sky_band": 17.9
+        },
+        "rival": {
+          "to_wound_and_guard_marks": 33.9,
+          "nearest_mark": "guard",
+          "to_sky_near_the_fighters": 17.8,
+          "to_any_sky_band": 12.8
+        }
+      }
+    }
+  },
+  "cue_set": {
+    "wound_and_guard_marks": {
+      "wound fresh": "#8fd6ff",
+      "wound bruised": "#f2e6a0",
+      "wound battered": "#ffb454",
+      "wound broken": "#ff5c8a",
+      "wound internal": "#bfeeff",
+      "guard": "#5aaaff"
+    },
+    "hud_chips_for_ui_to_check": {
+      "charge": "#5fb4ff",
+      "charge ready": "#c8e6ff",
+      "hidden": "#bedcff",
+      "warn": "#ffd45a",
+      "stance 1": "#ff6a5a",
+      "stance 3": "#62d986",
+      "stance 4": "#b892ff"
+    },
+    "source": "ui/core/ui_look.gd (2026-10-06)"
+  },
+  "hue_families": {
+    "protagonist": {
+      "h": [
+        150,
+        250
+      ],
+      "l": [
+        26,
+        88
+      ],
+      "s": [
+        45,
+        100
+      ]
+    },
+    "rival": {
+      "h": [
+        260,
+        320
+      ],
+      "l": [
+        26,
+        88
+      ],
+      "s": [
+        40,
+        100
+      ]
+    }
+  },
+  "rule_for_future_fighters": [
+    "Give every fighter a lane colour and an aura colour in a hue family agreed with Legal (the Anti-hero's is violet, hue 260 to 320; never white, red, orange, gold or yellow for an aura).",
+    "Any two fighters that can meet must stay at CIEDE2000 of 25 or more apart by default and 20 or more apart under each of protan, deutan and tritan; a lightness gap of at least 25 L* between them is the surest way to get there.",
+    "Each lane colour must stay at 20 or more (default) and 14 or more (simulated) from the wound and guard marks and from the sky near the fighters (the horizon and lower bands of every key and mood extreme in data/art/sky.json).",
+    "Never carry meaning in colour alone: the aura is always drawn with a dark keyline, and each fighter has a non-colour mark (a ring pattern or a chip shape) so a fighter is told apart with the colour turned off.",
+    "Every new fighter ships a protan, deutan and tritan triple, found by art/concepts/colour-vision/search.mjs in the fighter's own hue family and checked with art/concepts/colour-vision/check.mjs; Art approves it before it enters data/art/colour-vision.json."
+  ]
+}

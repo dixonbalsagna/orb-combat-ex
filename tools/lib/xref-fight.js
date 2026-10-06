@@ -13,6 +13,7 @@ const STYLE = 'data/fight/style.json';
 const MEASURES = new Set(['stance0', 'stance1', 'stance2', 'stance3', 'light', 'heavy', 'sig', 'closing', 'opened', 'charge', 'chargeCut', 'sigLanded', 'stanceTotal']);
 
 function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
+  require('./xref-art').xrefArt({ get, err, esc, isObj });
   // ---- reach (data/anim/reach.json) ----
   const reachDoc = get('data/anim/reach.json');
   if (isObj(reachDoc) && isObj(reachDoc.cover)) {

@@ -120176,6 +120176,2545 @@
         "rule": "type",
         "pointer": "/impulses/brawlMedium"
       }
+    },
+    {
+      "id": "art-sky-valid",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-sky-key-required-version",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-note",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-bands",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/bands"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-anchors-half-screens",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/anchors_half_screens"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-start",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/start"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-keys",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/keys"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-blend",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/blend"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-place",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/place"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-time",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/time"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-rate-limit",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/rate_limit"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-mood",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/mood"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-key-required-readability",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/readability"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-sky-unknown-key",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "art-sky-note-ok",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-sky-version",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-sky-bands-order",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/bands": [
+              "top",
+              "upper",
+              "lower",
+              "horizon"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/bands"
+      }
+    },
+    {
+      "id": "art-sky-anchor-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/anchors_half_screens/lower": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/anchors_half_screens/lower"
+      }
+    },
+    {
+      "id": "art-sky-anchor-order",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/anchors_half_screens/lower": 0.7,
+            "/anchors_half_screens/upper": 0.55
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-anchor-order",
+        "pointer": "/anchors_half_screens/upper"
+      }
+    },
+    {
+      "id": "art-sky-anchor-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/anchors_half_screens/top": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/anchors_half_screens/top"
+      }
+    },
+    {
+      "id": "art-sky-start-key-unknown",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/start/key": "twilight"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-start-key",
+        "pointer": "/start/key"
+      }
+    },
+    {
+      "id": "art-sky-start-key-ok",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/start/key": "golden"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-sky-start-phase-above-one",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/start/phase": 1.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/start/phase"
+      }
+    },
+    {
+      "id": "art-sky-start-phase-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/start/phase": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/start/phase"
+      }
+    },
+    {
+      "id": "art-sky-keys-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys": "five"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keys"
+      }
+    },
+    {
+      "id": "art-sky-keys-one",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys": [
+              {
+                "id": "noon",
+                "phase": 0,
+                "hold": 0.04,
+                "stars": 0,
+                "bands": {
+                  "top": "#14307a",
+                  "upper": "#005999",
+                  "lower": "#0084c5",
+                  "horizon": "#e8e2c8"
+                },
+                "note": "high day: a deep blue sky with a warm cream haze at the horizon (not a pale blue, which would swallow the Protagonist's aura)"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/keys"
+      }
+    },
+    {
+      "id": "art-sky-key-id-shape",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/id": "Noon Day"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/keys/0/id"
+      }
+    },
+    {
+      "id": "art-sky-key-id-twice",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/1/id": "noon"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-key-id",
+        "pointer": "/keys/1/id"
+      }
+    },
+    {
+      "id": "art-sky-key-phase-equal",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/1/phase": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-key-phase",
+        "pointer": "/keys/1/phase"
+      }
+    },
+    {
+      "id": "art-sky-key-phase-falls",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/1/phase": -0.001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-key-phase",
+        "pointer": "/keys/1/phase"
+      }
+    },
+    {
+      "id": "art-sky-key-phase-one",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/phase": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/keys/0/phase"
+      }
+    },
+    {
+      "id": "art-sky-key-phase-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/phase": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keys/0/phase"
+      }
+    },
+    {
+      "id": "art-sky-key-hold-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/hold": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keys/0/hold"
+      }
+    },
+    {
+      "id": "art-sky-key-hold-zero-ok",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/hold": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-sky-key-stars-above-one",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/stars": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keys/0/stars"
+      }
+    },
+    {
+      "id": "art-sky-key-stars-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/stars": -0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keys/0/stars"
+      }
+    },
+    {
+      "id": "art-sky-key-unknown-key",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/mood": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/keys/0/mood"
+      }
+    },
+    {
+      "id": "art-sky-key-note-required",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/keys/0/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/keys/0"
+      }
+    },
+    {
+      "id": "art-sky-key-band-not-hex-horizon",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/bands/horizon": "blue"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/keys/0/bands/horizon"
+      }
+    },
+    {
+      "id": "art-sky-key-band-not-hex-lower",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/bands/lower": "blue"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/keys/0/bands/lower"
+      }
+    },
+    {
+      "id": "art-sky-key-band-not-hex-upper",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/bands/upper": "blue"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/keys/0/bands/upper"
+      }
+    },
+    {
+      "id": "art-sky-key-band-not-hex-top",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/bands/top": "blue"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/keys/0/bands/top"
+      }
+    },
+    {
+      "id": "art-sky-key-band-missing-horizon",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/keys/0/bands/horizon"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/keys/0/bands"
+      }
+    },
+    {
+      "id": "art-sky-key-band-missing-lower",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/keys/0/bands/lower"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/keys/0/bands"
+      }
+    },
+    {
+      "id": "art-sky-key-band-missing-upper",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/keys/0/bands/upper"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/keys/0/bands"
+      }
+    },
+    {
+      "id": "art-sky-key-band-missing-top",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/keys/0/bands/top"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/keys/0/bands"
+      }
+    },
+    {
+      "id": "art-sky-key-band-short-hex",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/bands/top": "#14307"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/keys/0/bands/top"
+      }
+    },
+    {
+      "id": "art-sky-key-band-upper-case-ok",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/keys/0/bands/top": "#14307A"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-sky-blend-space",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/blend/space": "rgb"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/blend/space"
+      }
+    },
+    {
+      "id": "art-sky-blend-ease",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/blend/ease": "bounce"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/blend/ease"
+      }
+    },
+    {
+      "id": "art-sky-transition-path",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/blend/transitions/0/lower": "rgb"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/blend/transitions/0/lower"
+      }
+    },
+    {
+      "id": "art-sky-transition-path-ok",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/blend/transitions/0/lower": "lch+"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-sky-transition-missing-band",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "del": [
+            "/blend/transitions/0/top"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/blend/transitions/0"
+      }
+    },
+    {
+      "id": "art-sky-transition-wrong-next",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/blend/transitions/0/to": "dawn"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-transitions",
+        "pointer": "/blend/transitions/0/to"
+      }
+    },
+    {
+      "id": "art-sky-transition-from-twice",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/blend/transitions/1/from": "noon"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-transitions",
+        "pointer": "/blend/transitions/1/from"
+      }
+    },
+    {
+      "id": "art-sky-transitions-one-short",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/blend/transitions": [
+              {
+                "from": "golden",
+                "to": "sunset",
+                "horizon": "lab",
+                "lower": "lab",
+                "upper": "lab",
+                "top": "lab"
+              },
+              {
+                "from": "sunset",
+                "to": "night",
+                "horizon": "lab",
+                "lower": "lab",
+                "upper": "lab",
+                "top": "lab"
+              },
+              {
+                "from": "night",
+                "to": "dawn",
+                "horizon": "lch-",
+                "lower": "lch-",
+                "upper": "lab",
+                "top": "lab"
+              },
+              {
+                "from": "dawn",
+                "to": "noon",
+                "horizon": "lab",
+                "lower": "lch+",
+                "upper": "lab",
+                "top": "lab"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-transitions",
+        "pointer": "/blend/transitions"
+      }
+    },
+    {
+      "id": "art-sky-time-cycle-mismatch",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/time/cycle_minutes": 40,
+            "/time/cycles_per_minute": 0.0125
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-time",
+        "pointer": "/time/cycle_minutes"
+      }
+    },
+    {
+      "id": "art-sky-time-cycle-agrees-ok",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/time/cycle_minutes": 100,
+            "/time/cycles_per_minute": 0.01
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-sky-time-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/time/cycles_per_minute": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/time/cycles_per_minute"
+      }
+    },
+    {
+      "id": "art-sky-place-per-pane-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/place/per_pane": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/place/per_pane"
+      }
+    },
+    {
+      "id": "art-sky-place-cycles-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/place/cycles_per_lap": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/place/cycles_per_lap"
+      }
+    },
+    {
+      "id": "art-sky-rate-total-mean-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/mean": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/total/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-total-mean-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/mean": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/total/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-total-mean-at-the-flash-threshold",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/mean": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/rate_limit/total/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-total-mean-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/mean": "slow"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rate_limit/total/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-total-band-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/band": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/total/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-total-band-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/band": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/total/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-total-band-at-the-flash-threshold",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/band": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/rate_limit/total/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-total-band-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/band": "slow"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rate_limit/total/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-place-and-time-mean-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/place_and_time/mean": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/place_and_time/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-place-and-time-mean-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/place_and_time/mean": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/place_and_time/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-place-and-time-mean-at-the-flash-threshold",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/place_and_time/mean": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/rate_limit/place_and_time/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-place-and-time-mean-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/place_and_time/mean": "slow"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rate_limit/place_and_time/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-place-and-time-band-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/place_and_time/band": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/place_and_time/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-place-and-time-band-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/place_and_time/band": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/place_and_time/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-place-and-time-band-at-the-flash-threshold",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/place_and_time/band": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/rate_limit/place_and_time/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-place-and-time-band-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/place_and_time/band": "slow"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rate_limit/place_and_time/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-mood-mean-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/mean": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/mood/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-mood-mean-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/mean": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/mood/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-mood-mean-at-the-flash-threshold",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/mean": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/rate_limit/mood/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-mood-mean-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/mean": "slow"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rate_limit/mood/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-mood-band-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/band": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/mood/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-mood-band-negative",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/band": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/mood/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-mood-band-at-the-flash-threshold",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/band": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/rate_limit/mood/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-mood-band-type",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/band": "slow"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rate_limit/mood/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-mean-above-band",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/total/mean": 0.06,
+            "/rate_limit/total/band": 0.05
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-rate-limit",
+        "pointer": "/rate_limit/total/mean"
+      }
+    },
+    {
+      "id": "art-sky-rate-part-band-above-total",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/mood/band": 0.09,
+            "/rate_limit/mood/mean": 0.004,
+            "/rate_limit/total/band": 0.05
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-rate-limit",
+        "pointer": "/rate_limit/mood/band"
+      }
+    },
+    {
+      "id": "art-sky-rate-weights-sum",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/weights/horizon": 0.3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-rate-limit",
+        "pointer": "/rate_limit/weights"
+      }
+    },
+    {
+      "id": "art-sky-rate-weight-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/weights/top": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/rate_limit/weights/top"
+      }
+    },
+    {
+      "id": "art-sky-rate-measured-open-ok",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/rate_limit/measured/extra_number": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-sky-mood-seconds-zero",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/mood/min_seconds_0_to_1/frenzy": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/mood/min_seconds_0_to_1/frenzy"
+      }
+    },
+    {
+      "id": "art-sky-mood-colour-not-hex",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/mood/colours/ember": "orange"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/mood/colours/ember"
+      }
+    },
+    {
+      "id": "art-sky-mood-never-empty",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/mood/never": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/mood/never"
+      }
+    },
+    {
+      "id": "art-sky-readability-lane-not-hex",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/readability/lane_colours/P": "blue"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/readability/lane_colours/P"
+      }
+    },
+    {
+      "id": "art-sky-readability-lane-not-the-default-aura",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/readability/lane_colours/P": "#8fd6fe"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:sky-lane-colours",
+        "pointer": "/readability/lane_colours/P"
+      }
+    },
+    {
+      "id": "art-sky-readability-lane-case-ok",
+      "schema": "art-sky.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/sky.json",
+          "set": {
+            "/readability/lane_colours/P": "#8FD6FF"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-valid",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-key-required-version",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-colour-vision-key-required-note",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-colour-vision-key-required-simulation",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/simulation"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-colour-vision-key-required-default",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/default"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-colour-vision-key-required-presets",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-colour-vision-key-required-cue-set",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/cue_set"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-colour-vision-key-required-hue-families",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/hue_families"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-colour-vision-key-required-rule-for-future-fighters",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/rule_for_future_fighters"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-colour-vision-unknown-key",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "art-colour-vision-note-ok",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-version",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-colour-vision-matrix-row-short",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/simulation/matrices/protan/0": [
+              0.1,
+              0.2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/simulation/matrices/protan/0"
+      }
+    },
+    {
+      "id": "art-colour-vision-matrix-rows",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/simulation/matrices/deutan": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/simulation/matrices/deutan"
+      }
+    },
+    {
+      "id": "art-colour-vision-matrix-cell-type",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/simulation/matrices/tritan/1/1": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/simulation/matrices/tritan/1/1"
+      }
+    },
+    {
+      "id": "art-colour-vision-matrix-missing-vision",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/simulation/matrices/tritan"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/simulation/matrices"
+      }
+    },
+    {
+      "id": "art-colour-vision-default-col-not-hex",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/default/protagonist/col": "blue"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/default/protagonist/col"
+      }
+    },
+    {
+      "id": "art-colour-vision-default-aura-not-hex",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/default/protagonist/aura": "#12345"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/default/protagonist/aura"
+      }
+    },
+    {
+      "id": "art-colour-vision-default-aura-missing",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/default/protagonist/aura"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/default/protagonist"
+      }
+    },
+    {
+      "id": "art-colour-vision-default-unknown-key",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/default/protagonist/glow": "#ffffff"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/default/protagonist/glow"
+      }
+    },
+    {
+      "id": "art-colour-vision-default-fighter-key-shape",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/default/Bad Name": {
+              "col": "#112233",
+              "aura": "#445566"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/default/Bad Name"
+      }
+    },
+    {
+      "id": "art-colour-vision-default-fighter-without-presets",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/default/nobody": {
+              "col": "#112233",
+              "aura": "#445566"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-fighters",
+        "pointer": "/presets/protan"
+      }
+    },
+    {
+      "id": "art-colour-vision-default-fighter-missing-but-in-the-presets",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/default/protagonist"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-fighters",
+        "pointer": "/presets/protan/protagonist"
+      }
+    },
+    {
+      "id": "art-colour-vision-protan-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/protan"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets"
+      }
+    },
+    {
+      "id": "art-colour-vision-protan-fighter-missing",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/protan/protagonist"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-fighters",
+        "pointer": "/presets/protan"
+      }
+    },
+    {
+      "id": "art-colour-vision-protan-aura-not-hex",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/protan/protagonist/aura": "teal"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/presets/protan/protagonist/aura"
+      }
+    },
+    {
+      "id": "art-colour-vision-protan-aura-changes-ok",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/protan/protagonist/aura": "#123456"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-protan-body-changed",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/protan/protagonist/col": "#123456"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-body",
+        "pointer": "/presets/protan/protagonist/col"
+      }
+    },
+    {
+      "id": "art-colour-vision-protan-body-case-ok",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/protan/protagonist/col": "#3D8FDC"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-protan-fighter-without-default",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/protan/nobody": {
+              "col": "#112233",
+              "aura": "#445566"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-fighters",
+        "pointer": "/presets/protan/nobody"
+      }
+    },
+    {
+      "id": "art-colour-vision-protan-chosen-by-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/protan/chosen_by"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets/protan"
+      }
+    },
+    {
+      "id": "art-colour-vision-protan-measured-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/protan/measured_dE00_under_this_vision"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets/protan"
+      }
+    },
+    {
+      "id": "art-colour-vision-protan-between-negative",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/protan/measured_dE00_under_this_vision/between_the_two": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/presets/protan/measured_dE00_under_this_vision/between_the_two"
+      }
+    },
+    {
+      "id": "art-colour-vision-deutan-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/deutan"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets"
+      }
+    },
+    {
+      "id": "art-colour-vision-deutan-fighter-missing",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/deutan/protagonist"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-fighters",
+        "pointer": "/presets/deutan"
+      }
+    },
+    {
+      "id": "art-colour-vision-deutan-aura-not-hex",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/deutan/protagonist/aura": "teal"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/presets/deutan/protagonist/aura"
+      }
+    },
+    {
+      "id": "art-colour-vision-deutan-aura-changes-ok",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/deutan/protagonist/aura": "#123456"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-deutan-body-changed",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/deutan/protagonist/col": "#123456"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-body",
+        "pointer": "/presets/deutan/protagonist/col"
+      }
+    },
+    {
+      "id": "art-colour-vision-deutan-body-case-ok",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/deutan/protagonist/col": "#3D8FDC"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-deutan-fighter-without-default",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/deutan/nobody": {
+              "col": "#112233",
+              "aura": "#445566"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-fighters",
+        "pointer": "/presets/deutan/nobody"
+      }
+    },
+    {
+      "id": "art-colour-vision-deutan-chosen-by-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/deutan/chosen_by"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets/deutan"
+      }
+    },
+    {
+      "id": "art-colour-vision-deutan-measured-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/deutan/measured_dE00_under_this_vision"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets/deutan"
+      }
+    },
+    {
+      "id": "art-colour-vision-deutan-between-negative",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/deutan/measured_dE00_under_this_vision/between_the_two": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/presets/deutan/measured_dE00_under_this_vision/between_the_two"
+      }
+    },
+    {
+      "id": "art-colour-vision-tritan-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/tritan"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets"
+      }
+    },
+    {
+      "id": "art-colour-vision-tritan-fighter-missing",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/tritan/protagonist"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-fighters",
+        "pointer": "/presets/tritan"
+      }
+    },
+    {
+      "id": "art-colour-vision-tritan-aura-not-hex",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/tritan/protagonist/aura": "teal"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/presets/tritan/protagonist/aura"
+      }
+    },
+    {
+      "id": "art-colour-vision-tritan-aura-changes-ok",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/tritan/protagonist/aura": "#123456"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-tritan-body-changed",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/tritan/protagonist/col": "#123456"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-body",
+        "pointer": "/presets/tritan/protagonist/col"
+      }
+    },
+    {
+      "id": "art-colour-vision-tritan-body-case-ok",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/tritan/protagonist/col": "#3D8FDC"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-colour-vision-tritan-fighter-without-default",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/tritan/nobody": {
+              "col": "#112233",
+              "aura": "#445566"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:colour-vision-fighters",
+        "pointer": "/presets/tritan/nobody"
+      }
+    },
+    {
+      "id": "art-colour-vision-tritan-chosen-by-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/tritan/chosen_by"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets/tritan"
+      }
+    },
+    {
+      "id": "art-colour-vision-tritan-measured-required",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/presets/tritan/measured_dE00_under_this_vision"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets/tritan"
+      }
+    },
+    {
+      "id": "art-colour-vision-tritan-between-negative",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/presets/tritan/measured_dE00_under_this_vision/between_the_two": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/presets/tritan/measured_dE00_under_this_vision/between_the_two"
+      }
+    },
+    {
+      "id": "art-colour-vision-cue-not-hex",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/cue_set/wound_and_guard_marks/wound fresh": "cyan"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cue_set/wound_and_guard_marks/wound fresh"
+      }
+    },
+    {
+      "id": "art-colour-vision-cue-set-empty",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/cue_set/wound_and_guard_marks": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/cue_set/wound_and_guard_marks"
+      }
+    },
+    {
+      "id": "art-colour-vision-hue-range-short",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/hue_families/protagonist/h": [
+              150
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/hue_families/protagonist/h"
+      }
+    },
+    {
+      "id": "art-colour-vision-hue-range-negative",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/hue_families/protagonist/l": [
+              -1,
+              88
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hue_families/protagonist/l/0"
+      }
+    },
+    {
+      "id": "art-colour-vision-hue-range-missing-s",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "del": [
+            "/hue_families/protagonist/s"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/hue_families/protagonist"
+      }
+    },
+    {
+      "id": "art-colour-vision-rule-empty",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/rule_for_future_fighters": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/rule_for_future_fighters"
+      }
+    },
+    {
+      "id": "art-colour-vision-rule-item-type",
+      "schema": "art-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/colour-vision.json",
+          "set": {
+            "/rule_for_future_fighters": [
+              5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rule_for_future_fighters/0"
+      }
     }
   ],
   "text": [

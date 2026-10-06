@@ -1,0 +1,711 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/art-sky",
+  "title": "art sky (version 1)",
+  "description": "data/art/sky.json: the dynamic sky (docs/art/dynamic-sky.md): four bands from the horizon up, five keys round one lap, the blend paths between them, where the match starts, how the sky follows place, time and mood, and the rate limits that keep it below a flash. Version field: version. Policy: closed except keys starting with an underscore; the measured objects Art's generator writes are open. Cross-references in tools/lib/xref-fight.js (sky-key-id, sky-key-phase, sky-start-key, sky-anchor-order, sky-transitions, sky-time, sky-rate-limit, sky-lane-colours). The rate limits are positive and below 0.10 of relative luminance a second, the threshold of a general flash (WCAG 2.3.1), which the schema fixes.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  },
+  "required": [
+    "version",
+    "note",
+    "bands",
+    "anchors_half_screens",
+    "start",
+    "keys",
+    "blend",
+    "place",
+    "time",
+    "rate_limit",
+    "mood",
+    "readability"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the file comes from."
+    },
+    "bands": {
+      "const": [
+        "horizon",
+        "lower",
+        "upper",
+        "top"
+      ],
+      "description": "The four bands, horizon to top."
+    },
+    "anchors_half_screens": {
+      "type": "object",
+      "required": [
+        "horizon",
+        "lower",
+        "upper",
+        "top"
+      ],
+      "properties": {
+        "horizon": {
+          "type": "number",
+          "description": "Where the band sits, in half screens above the horizon (rising: sky-anchor-order).",
+          "minimum": 0
+        },
+        "lower": {
+          "type": "number",
+          "description": "Where the band sits, in half screens above the horizon (rising: sky-anchor-order).",
+          "minimum": 0
+        },
+        "upper": {
+          "type": "number",
+          "description": "Where the band sits, in half screens above the horizon (rising: sky-anchor-order).",
+          "minimum": 0
+        },
+        "top": {
+          "type": "number",
+          "description": "Where the band sits, in half screens above the horizon (rising: sky-anchor-order).",
+          "minimum": 0
+        }
+      },
+      "description": "Band anchors.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "start": {
+      "type": "object",
+      "required": [
+        "key",
+        "phase"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The key the match starts at (a key id: sky-start-key)."
+        },
+        "phase": {
+          "type": "number",
+          "description": "The phase it starts at.",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "description": "The start.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "keys": {
+      "type": "array",
+      "minItems": 2,
+      "description": "The keys round one lap, in phase order (sky-key-id, sky-key-phase).",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "phase",
+          "hold",
+          "stars",
+          "bands",
+          "note"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The key's id."
+          },
+          "phase": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 1,
+            "description": "Where in the lap the key is."
+          },
+          "hold": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 1,
+            "description": "The share of a lap the key holds its colours."
+          },
+          "stars": {
+            "type": "number",
+            "description": "How many stars show, 0 to 1.",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "bands": {
+            "type": "object",
+            "required": [
+              "horizon",
+              "lower",
+              "upper",
+              "top"
+            ],
+            "properties": {
+              "horizon": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The horizon band's colour."
+              },
+              "lower": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The lower band's colour."
+              },
+              "upper": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The upper band's colour."
+              },
+              "top": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The top band's colour."
+              }
+            },
+            "description": "The four band colours.",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Why the key looks as it does."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      }
+    },
+    "blend": {
+      "type": "object",
+      "required": [
+        "space",
+        "ease",
+        "hold",
+        "path",
+        "transitions"
+      ],
+      "properties": {
+        "space": {
+          "const": "oklab",
+          "description": "The colour space blends run in."
+        },
+        "ease": {
+          "enum": [
+            "smoothstep",
+            "linear"
+          ],
+          "description": "The easing."
+        },
+        "hold": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How a hold works."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How a path is chosen."
+        },
+        "transitions": {
+          "type": "array",
+          "minItems": 2,
+          "description": "One per key, round the lap (sky-transitions).",
+          "items": {
+            "type": "object",
+            "required": [
+              "from",
+              "to",
+              "horizon",
+              "lower",
+              "upper",
+              "top"
+            ],
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "description": "A key id."
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The next key id."
+              },
+              "horizon": {
+                "enum": [
+                  "lab",
+                  "lch+",
+                  "lch-"
+                ],
+                "description": "The horizon band's blend path."
+              },
+              "lower": {
+                "enum": [
+                  "lab",
+                  "lch+",
+                  "lch-"
+                ],
+                "description": "The lower band's blend path."
+              },
+              "upper": {
+                "enum": [
+                  "lab",
+                  "lch+",
+                  "lch-"
+                ],
+                "description": "The upper band's blend path."
+              },
+              "top": {
+                "enum": [
+                  "lab",
+                  "lch+",
+                  "lch-"
+                ],
+                "description": "The top band's blend path."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          }
+        }
+      },
+      "description": "How colours blend between keys.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "place": {
+      "type": "object",
+      "required": [
+        "cycles_per_lap",
+        "phase_of",
+        "per_pane",
+        "note"
+      ],
+      "properties": {
+        "cycles_per_lap": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Cycles of the sky in one lap of the planet."
+        },
+        "phase_of": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The formula."
+        },
+        "per_pane": {
+          "type": "boolean",
+          "description": "Whether each split pane has its own phase."
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Note."
+        }
+      },
+      "description": "The sky follows place.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "time": {
+      "type": "object",
+      "required": [
+        "cycles_per_minute",
+        "cycle_minutes",
+        "note"
+      ],
+      "properties": {
+        "cycles_per_minute": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The drift with time, cycles a minute."
+        },
+        "cycle_minutes": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Minutes for one cycle (1 / cycles_per_minute: sky-time)."
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Note."
+        }
+      },
+      "description": "The sky follows time.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "rate_limit": {
+      "type": "object",
+      "required": [
+        "unit",
+        "total",
+        "place_and_time",
+        "mood",
+        "how",
+        "weights",
+        "measured",
+        "fastest_allowed"
+      ],
+      "properties": {
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The unit."
+        },
+        "total": {
+          "type": "object",
+          "required": [
+            "mean",
+            "band"
+          ],
+          "properties": {
+            "mean": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 0.1,
+              "description": "The weighted mean, relative luminance a second, all drivers together."
+            },
+            "band": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 0.1,
+              "description": "The fastest any band moves."
+            }
+          },
+          "description": "All drivers together.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "place_and_time": {
+          "type": "object",
+          "required": [
+            "mean",
+            "band"
+          ],
+          "properties": {
+            "mean": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 0.1,
+              "description": "Mean."
+            },
+            "band": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 0.1,
+              "description": "Band."
+            }
+          },
+          "description": "Place and time together.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "mood": {
+          "type": "object",
+          "required": [
+            "mean",
+            "band"
+          ],
+          "properties": {
+            "mean": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 0.1,
+              "description": "Mean."
+            },
+            "band": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 0.1,
+              "description": "Band."
+            }
+          },
+          "description": "Mood.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "how": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the limit is kept."
+        },
+        "weights": {
+          "type": "object",
+          "required": [
+            "horizon",
+            "lower",
+            "upper",
+            "top"
+          ],
+          "properties": {
+            "horizon": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The horizon band's weight in the mean (the four sum to 1: sky-rate-limit)."
+            },
+            "lower": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The lower band's weight in the mean (the four sum to 1: sky-rate-limit)."
+            },
+            "upper": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The upper band's weight in the mean (the four sum to 1: sky-rate-limit)."
+            },
+            "top": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The top band's weight in the mean (the four sum to 1: sky-rate-limit)."
+            }
+          },
+          "description": "Band weights.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "measured": {
+          "type": "object",
+          "required": [],
+          "properties": {},
+          "additionalProperties": true,
+          "description": "What the stress test measured (Art's generator writes it)."
+        },
+        "fastest_allowed": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The rule in words, with the flash threshold."
+        }
+      },
+      "description": "The rate limits.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "mood": {
+      "type": "object",
+      "required": [
+        "inputs",
+        "min_seconds_0_to_1",
+        "colours",
+        "frenzy",
+        "ruin",
+        "glow",
+        "order",
+        "never"
+      ],
+      "properties": {
+        "inputs": {
+          "type": "object",
+          "required": [
+            "frenzy",
+            "ruin",
+            "glow"
+          ],
+          "properties": {
+            "frenzy": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Input."
+            },
+            "ruin": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Input."
+            },
+            "glow": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Input."
+            }
+          },
+          "description": "The mood inputs.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "min_seconds_0_to_1": {
+          "type": "object",
+          "required": [
+            "frenzy",
+            "ruin",
+            "glow"
+          ],
+          "properties": {
+            "frenzy": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The least seconds the input takes from 0 to 1."
+            },
+            "ruin": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Seconds."
+            },
+            "glow": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Seconds."
+            }
+          },
+          "description": "How fast an input may rise.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "colours": {
+          "type": "object",
+          "required": [
+            "ember",
+            "smoke",
+            "ash",
+            "deep"
+          ],
+          "properties": {
+            "ember": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "Ember."
+            },
+            "smoke": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "Smoke."
+            },
+            "ash": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "Ash."
+            },
+            "deep": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "Deep."
+            }
+          },
+          "description": "The mood colours.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "frenzy": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What frenzy does."
+        },
+        "ruin": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What ruin does."
+        },
+        "glow": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What glow does."
+        },
+        "order": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The order they apply in."
+        },
+        "never": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A thing the sky never does."
+          },
+          "description": "What the sky never does."
+        }
+      },
+      "description": "The mood.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "readability": {
+      "type": "object",
+      "required": [
+        "lane_colours",
+        "rule",
+        "measured"
+      ],
+      "properties": {
+        "lane_colours": {
+          "type": "object",
+          "required": [
+            "P",
+            "A"
+          ],
+          "properties": {
+            "P": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "The Protagonist's lane colour (the default aura: sky-lane-colours)."
+            },
+            "A": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "The Anti-hero's lane colour."
+            }
+          },
+          "description": "The lane colours.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The readability rule."
+        },
+        "measured": {
+          "type": "object",
+          "required": [],
+          "properties": {},
+          "additionalProperties": true,
+          "description": "What was measured."
+        }
+      },
+      "description": "Readability against the sky.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  }
+}

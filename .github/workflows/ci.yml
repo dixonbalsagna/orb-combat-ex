@@ -77,6 +77,9 @@ jobs:
         run: node tools/validate.js --self-test
       - name: Validate the data
         run: node tools/validate.js
+      # Platform's phone head block in export_presets.cfg must match docs/perf/web-shell/ (node built-ins, a fifth of a second).
+      - name: The web export's phone head is current
+        run: node docs/perf/tools/web-head.mjs --check
 
   # Photosensitivity check, half 1 (docs/tools/flash-check.md; Legal's condition for the public web build, WCAG 2.2 criterion 2.3.1): plays the worst cases
   # (a mash, a beam clash, a signature, the transformation, a building collapse, real AI matches) in normal and in reduced-flashing mode, headless, and recounts

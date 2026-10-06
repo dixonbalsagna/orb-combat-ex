@@ -1,0 +1,441 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/art-colour-vision",
+  "title": "art colour vision (version 1)",
+  "description": "data/art/colour-vision.json: the colour-vision presets (docs/art/colour-vision.md): per fighter the default body and aura colours and, for protan, deutan and tritan vision, the aura that keeps the fighters apart and apart from the sky and the cue marks; the cue set, the hue families and the rule for future fighters. A preset remaps only the aura. Version field: version. Policy: closed except keys starting with an underscore; the measured objects are open. Cross-references in tools/lib/xref-fight.js (colour-vision-fighters: every roster fighter, lower-cased, has a default and a preset in each of the three, and no preset names anyone else; colour-vision-body: a preset keeps the body colour).",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  },
+  "required": [
+    "version",
+    "note",
+    "simulation",
+    "default",
+    "presets",
+    "cue_set",
+    "hue_families",
+    "rule_for_future_fighters"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the file comes from."
+    },
+    "simulation": {
+      "type": "object",
+      "required": [
+        "model",
+        "matrices"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The colour-vision model."
+        },
+        "matrices": {
+          "type": "object",
+          "required": [
+            "protan",
+            "deutan",
+            "tritan"
+          ],
+          "properties": {
+            "protan": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "deutan": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "tritan": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "description": "The 3 x 3 matrices, applied in linear RGB.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "description": "How the presets were simulated.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "default": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "col",
+          "aura"
+        ],
+        "properties": {
+          "col": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "The body colour."
+          },
+          "aura": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "The aura (lane) colour."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The default colours per fighter (a fighter's lower-cased roster id)."
+    },
+    "presets": {
+      "type": "object",
+      "required": [
+        "protan",
+        "deutan",
+        "tritan"
+      ],
+      "properties": {
+        "protan": {
+          "type": "object",
+          "required": [
+            "chosen_by",
+            "measured_dE00_under_this_vision"
+          ],
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][A-Za-z0-9_]*)$"
+          },
+          "properties": {
+            "chosen_by": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the pair was chosen."
+            },
+            "measured_dE00_under_this_vision": {
+              "type": "object",
+              "required": [
+                "between_the_two"
+              ],
+              "properties": {
+                "between_the_two": {
+                  "type": "number",
+                  "description": "CIEDE2000 between the two fighters under this vision.",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": true,
+              "description": "What was measured."
+            }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "col",
+              "aura"
+            ],
+            "properties": {
+              "col": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The body colour."
+              },
+              "aura": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The aura (lane) colour."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The protan preset: each fighter's colours, and how they were chosen."
+        },
+        "deutan": {
+          "type": "object",
+          "required": [
+            "chosen_by",
+            "measured_dE00_under_this_vision"
+          ],
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][A-Za-z0-9_]*)$"
+          },
+          "properties": {
+            "chosen_by": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the pair was chosen."
+            },
+            "measured_dE00_under_this_vision": {
+              "type": "object",
+              "required": [
+                "between_the_two"
+              ],
+              "properties": {
+                "between_the_two": {
+                  "type": "number",
+                  "description": "CIEDE2000 between the two fighters under this vision.",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": true,
+              "description": "What was measured."
+            }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "col",
+              "aura"
+            ],
+            "properties": {
+              "col": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The body colour."
+              },
+              "aura": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The aura (lane) colour."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The deutan preset: each fighter's colours, and how they were chosen."
+        },
+        "tritan": {
+          "type": "object",
+          "required": [
+            "chosen_by",
+            "measured_dE00_under_this_vision"
+          ],
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][A-Za-z0-9_]*)$"
+          },
+          "properties": {
+            "chosen_by": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the pair was chosen."
+            },
+            "measured_dE00_under_this_vision": {
+              "type": "object",
+              "required": [
+                "between_the_two"
+              ],
+              "properties": {
+                "between_the_two": {
+                  "type": "number",
+                  "description": "CIEDE2000 between the two fighters under this vision.",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": true,
+              "description": "What was measured."
+            }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "col",
+              "aura"
+            ],
+            "properties": {
+              "col": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The body colour."
+              },
+              "aura": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "The aura (lane) colour."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The tritan preset: each fighter's colours, and how they were chosen."
+        }
+      },
+      "description": "The three presets.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "cue_set": {
+      "type": "object",
+      "required": [
+        "wound_and_guard_marks",
+        "hud_chips_for_ui_to_check",
+        "source"
+      ],
+      "properties": {
+        "wound_and_guard_marks": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "A mark colour."
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The wound and guard marks."
+        },
+        "hud_chips_for_ui_to_check": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "A chip colour."
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "HUD chips UI checks."
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the colours come from."
+        }
+      },
+      "description": "The cue colours the auras are kept apart from.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "hue_families": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "h",
+          "l",
+          "s"
+        ],
+        "properties": {
+          "h": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "description": "Hue range, degrees."
+          },
+          "l": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "description": "Lightness range."
+          },
+          "s": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "description": "Saturation range."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Each fighter's hue family."
+    },
+    "rule_for_future_fighters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "description": "A rule."
+      },
+      "description": "The rule for a fighter who joins the roster."
+    }
+  }
+}

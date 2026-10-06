@@ -40,6 +40,14 @@
       "schema": "art-auras.schema.json"
     },
     {
+      "match": "data/art/colour-vision.json",
+      "schema": "art-colour-vision.schema.json"
+    },
+    {
+      "match": "data/art/sky.json",
+      "schema": "art-sky.schema.json"
+    },
+    {
       "match": "data/fighters/roster.json",
       "schema": "fighter-roster.schema.json"
     },
