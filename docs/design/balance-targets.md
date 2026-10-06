@@ -929,3 +929,34 @@ KAI is at 52.6% and the median is 7:10, with 72 bands passing and 14 failing. Pe
 - World: `tumble.brakeMul` 0.7, and `dur` on `tumble_end`.
 - QA: the tumble row reads `tumble_end.dur` of 18 or more, over ground journeys; the bounce row's band is 20 to 40%.
 - QA re-checks journey length after the change. A longer tumble lengthens journeys a little: the bounds of at most 8% capped and at most 20% over 4,000 units still apply.
+
+## 24. The lanes window: people as shares, and cut floors (World's `docs/world/lanes-remeasure-plan.md` §5 and §6, 2026-10-05)
+
+Landing the lane table re-lays the cities: 186 buildings, 89 of them towers of up to 62 floors, and a starting population of 1,800 against 390 today. The share of civilians lost stays about flat (22.9 to 25.4%), so the people lost in a match go from 99 to 488. Two rulings for World, to build in that window.
+
+### 1. The planner reads people as a share of the planet
+
+**Yes to World's proposal.** The three counts that the planner still reads as people are scaled by the starting population over 390, so at 390 they are today's numbers:
+
+| Constant | Today | It reads |
+| :--- | :--- | :--- |
+| `POP_NEAR_REF` | 35 people | "Populated" is 1 at this many living civilians in the radius. The launch planner's care term, the location chooser and the lure use it |
+| `BRUNT_POP_REF` | 8 people | Where a building's occupancy stops counting more, in BUILDING SMASH scoring |
+| The brunt candidate's cap | 8 people | The same cap, in the candidate score |
+
+- **The hero's avoidance and the villain's seeking should feel the same for each share of the planet's people, and not for each building.** A full tower weighs more than a house, up to the cap, because more people are in it. A place reads as populated by how much of the planet lives there. That is how the meters, the mood and the collateral budget already count, so a casualty means the same thing everywhere in the game.
+- With a count, 4.6 times the people made every place read as populated, and the hero's care and the lure had nothing left to choose between. That is the fault this fixes.
+- **These should become shares in data** when they are next touched: 35 of 390 is 9% of the planet within the radius, and 8 of 390 is 2%. Numbers live in data.
+- How the count is shown to the player (99 or 488, a share, or both) is Orb's, with the age-rating question. It isn't ruled here.
+
+### 2. Cut floors
+
+Under the re-lay the cut-floor look nearly goes: floors punched out fall from 1.98 to 0.78 a match, and buildings reaching stage 2 by a cut fall from 1.37 to 0.35. The mid-rise towers stand at about 12 floors, and a punch brings 44% of the towers it hits down whole, where it was 8%.
+
+- **Yes to both parts of World's proposal:** the population scaling above, which brings BUILDING SMASH plans back from 1.30 to 1.50 a match, and **a damaged floor counting for stage 2 as a cut one does.** Stage 2 is "a floor or a corner gone" (`agency-pass.md` §25), and a floor that is cracked through belongs there. Together they read about one cut-floor event a match, and they cost the stage numbers nothing.
+- People leave a building at stage 2, so a tower with a damaged floor now empties sooner. That is intended.
+
+**Should a punch bring a 12-floor tower down whole? At the low tiers, no.** Orb asked for buildings that are less levelled and more damaged, and power has to have weight by tier. A whole tower falling to one body at tier 1 is neither.
+- **The rule to cost, as a second step:** a body that goes through a tower of 8 floors or more cuts the floors it passes through. The tower above them comes down only at tier 3 or 4, or when the cut is in its bottom two floors and leaves it nothing to stand on.
+- **It isn't for this window unless it is cheap.** World measures it first as a what-if. I expect whole collapses to fall from 44% of tower hits toward the old 8 to 20%, cut floors to rise past one a match, and front-row structures lost to fall a few points. That row is at 39.7 to 41.5% against a target of 40 to 48% inside the 25 to 50% band, so it may come in under the target.
+- If more than one cut floor a match is wanted after that, the lever is the planner's BUILDING SMASH baseline, which is Encounter's data, as World says.

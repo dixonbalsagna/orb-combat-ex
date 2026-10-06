@@ -7,7 +7,7 @@ Owner: Game Design. These pages define what the game is and why it is fun, and e
 | [pillars.md](pillars.md) | The seven pillars: what each means in play, how we test it, what breaks it, and where the prototype stands |
 | [stance-matrix.md](stance-matrix.md) | What each stance is for, what beats it and what it costs. Intended outcomes per pairing, P2 gaps, dominance risks, and the P2 stance rules |
 | [economy.md](economy.md) | HP, ki, tiers and transformations, ego meters, hiding and ambush, collateral scaling, and how a 5-to-7-minute match escalates |
-| [balance-targets.md](balance-targets.md) | The bands QA checks: win rate, length, escalation, collateral, variety, stance balance, story beats. Also the prototype's balance-gap diagnosis |
+| [balance-targets.md](balance-targets.md) | The bands QA checks: win rate, length, escalation, collateral, variety, stance balance, story beats. Also the prototype's balance-gap diagnosis, and rulings for World through to the lanes window (people as shares of the planet, cut floors) |
 | [living-destruction-numbers.md](living-destruction-numbers.md) | Numbers for fire, smoke and dust cover, landslides, quakes, rifts and lava: tier ladders, rates, hazard wear, frequencies, and the readability and collateral rules |
 | [moveset-rules.md](moveset-rules.md) | Specials, signatures, world-changing abilities, hidden weapons, one transformation mechanic per fighter, and style shifts (questionnaire 6) |
 | [launch-pair-plan.md](launch-pair-plan.md) | The next big update's two fighters, the Protagonist and the rival, by owner: identity in play, stats and forms, moveset needs, energy kinds, what changes, what Orb supplies, and the order |
