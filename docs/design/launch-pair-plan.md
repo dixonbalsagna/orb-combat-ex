@@ -17,6 +17,8 @@ Orb's picture is that both are solid all-rounders (`pitches.md` §7). Pillar 5 i
 | **His taunt** | Feeds his power, +5, until his heat track exists. After that it is heat +10 | Pride +6 |
 | **His signature move** | None beyond the shared kit in this update | **On the Chin** (`spec-wounds.md` §3) |
 
+**Their care, as numbers** (2026-10-06). Both fighters' `care` is 0.0 in the data today, so the launch planner and the AI's nudge of a brawl have nothing to read. First values: **0.8 for the Protagonist and −0.5 for the rival.** The old hero's 1.0 put most launches and beams over the sea, which is a known finding, and a little less keeps the town in play. The rival is proud and not cruel: he wants the fight seen and a skyline broken, and he doesn't hunt people. So he sits under the old villain's −0.8, which is kept for a fighter who feeds on casualties. Both move collateral and the pair's win rate, so they go in with a QA baseline, and before the AI's nudge is tuned.
+
 **Balance.** Every pairing stays inside 45 to 55%. The placeholder `dmgMul` values (0.95 and 1.02) go: QA re-centres with each fighter's own numbers. The rival also has his situational bands: he wins under 45% of the matches that end before Apex, and over 60% of those that reach it (`pitches.md` §7).
 
 **Confirmed by Orb** (questionnaire 17, 2026-10-05). The identity split stands: palms, blade hands and arcs for the Protagonist, and fists, plates and straight lines for the rival. The rival's hands are a mix: fists on his heavies and blade hands on his lights. His glasses are always on, so no blow, wound, form or set piece takes them off.
