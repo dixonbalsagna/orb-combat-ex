@@ -474,7 +474,7 @@
   "flurry": [
     {
       "id": "f01",
-      "rule": "a flurry's or burst's blur follows each striking limb's real path: at any instant at most 2 ghosts of any limb and at most 4 limb-ghosts on screen in all; never extra arms, legs or fists drawn at once, never a fan of limbs round the target. This replaces the 'two ghosts per blow' wording, which does not hold at 15 blows a second",
+      "rule": "a flurry's or burst's blur follows each striking limb's real path: at any instant at most 2 ghosts of any limb and at most 4 limb-ghosts on screen in all; never extra arms, legs or fists drawn at once, never a fan of limbs round the target. This replaces the 'two ghosts per blow' wording, which does not hold at 15 blows a second. The numbers are ceilings on what is alive at one instant, not counts that must be drawn: fewer is always fine, reduced motion draws fewer, and a tech blow's 3 wire echoes that pop off in turn with never more than 2 alive at once meet it. Body ghosts of a zip fall under m05 (at most 5)",
       "why": "the many-armed barrage blur, by instant rather than by blow"
     },
     {

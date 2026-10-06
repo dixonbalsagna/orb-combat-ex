@@ -125,6 +125,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-103 | Stand-ins on a 28-tick wind-up, the mediums on 12 ticks, the manner rows | Combat, Animation | Medium | PASS WITH CONDITIONS (W1 adopted as h05): double hammer, double palm and the ram stand-ins need their gather re-judged | Open |
 | RL-104 | The burst (held X) and f01 restated; W1 and U1 adopted; b02, b03, b12 clarified | Combat, Animation | Medium | f01 by instant, new f04 and f05; elbow and knee added to b03; ru.su_ram and pu.su_drive confirmed as redraws | Open |
 | RL-105 | Flurry study drawn: heave and fall wind-ups, 28-tick gathers (double palm, ram, double hammer), burst opening; b03 tips completed | Animation, Combat | Low | Pass with nudges: double hammer hands to shoulder width; ram's gather one forearm only; larger contact crops asked; ram stays a stand-in | Open until nudges drawn |
+| RL-106 | Heave and fall contact crops seen; f01 ceiling clarified (tech echoes meet it) | Animation, VFX | Low | Closed: pu.su_drive and ru.su_ram pass; double hammer 22 apart and ram wrists 25.9 and 31.0 apart accepted; f01 is a ceiling by instant | Closed |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
