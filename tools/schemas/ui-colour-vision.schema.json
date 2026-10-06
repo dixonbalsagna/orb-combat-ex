@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/ui-colour-vision",
+  "title": "ui colour vision (schema 1)",
+  "description": "ui/data/colour_vision.json: the colour-blind presets the HUD applies (docs/ui/hud-spec.md section 56; UI's proposal docs/ui/ui-colour-vision.schema.json). A preset remaps only what carries gameplay meaning: `map` gives a colour role (UiLook.ROLE_HEX, an upper-case name) its replacement hex, `lanes` the fighters' lane colours by neutral fighter id (copied from data/art/colour-vision.json, which Art owns). Version field: schema. Policy: closed except keys starting with an underscore. Cross-references in tools/lib/xref-art.js: ui-colour-choices (choices holds \"off\", has a preset for every other choice and no preset that is not a choice), ui-colour-lanes (a preset's lane colours are Art's aura colours for that vision, when data/art/colour-vision.json is present), ui-colour-alias (an alias names a fighter of Art's file).",
+  "type": "object",
+  "required": [
+    "schema",
+    "note",
+    "choices",
+    "fighter_alias",
+    "presets"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  },
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the presets come from."
+    },
+    "choices": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "description": "The settings choices, in menu order (\"off\" and a preset each)."
+    },
+    "fighter_alias": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The roster ids the HUD sees onto Art's neutral ids."
+    },
+    "presets": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The presets by vision.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "lanes",
+          "map"
+        ],
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        },
+        "properties": {
+          "lanes": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "The fighters' lane colours by neutral fighter id (ui-colour-lanes)."
+          },
+          "map": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "pattern": "^(_.*|[A-Z][A-Z0-9_]*)$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "A colour role to its replacement hex."
+          }
+        }
+      }
+    }
+  }
+}

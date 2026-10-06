@@ -91,6 +91,13 @@ Every finding names the file, the line, the JSON pointer and the rule, for examp
 | `pressstyles-riposte` | data/anim/press_styles.json: a riposte style (light, heavy) is a key of `styles` |
 | `pressstyles-set` | data/anim/press_styles.json: every key of a style's `set.pose` is a fighter of fighters.json and every pose id is a pose of poses.json or of a wave |
 | `pressstyles-strength` | data/anim/press_styles.json: every value of `strength` (light, medium, heavy, bolt, blast) is a key of `styles` |
+| `sky-key-id`, `sky-key-phase` | data/art/sky.json: key ids are unique; key phases start at or above 0, strictly increase and stay below 1 |
+| `sky-start-key`, `sky-anchor-order` | data/art/sky.json: start.key is a key id; the band anchors rise from the horizon to the top |
+| `sky-transitions` | data/art/sky.json: the transitions are the cycle of the keys (key i to key i+1, the last to the first, each once) |
+| `sky-time`, `sky-rate-limit` | data/art/sky.json: cycle_minutes is 1 / cycles_per_minute; every rate-limit mean is at most its band, every band is positive and below the flash threshold 0.10 (fixed in the schema), the total band is at least the others, the band weights sum to 1 |
+| `sky-lane-colours` | data/art/sky.json readability.lane_colours are the default auras of data/art/colour-vision.json |
+| `colour-vision-fighters`, `colour-vision-body` | data/art/colour-vision.json: every roster fighter (lower-cased) has a default and a preset in protan, deutan and tritan, no preset or default names anyone else, and a preset keeps each fighter's body colour |
+| `ui-colour-choices`, `ui-colour-lanes`, `ui-colour-alias` | ui/data/colour_vision.json: choices hold `off`, have a preset for every other choice and no preset that is not a choice; a preset's lane colours are Art's aura colours for that vision (data/art/colour-vision.json); an alias names a fighter of Art's file |
 | `pressstyles-hold` | data/anim/press_styles.json: a style's `hold.from` is below its `hold.to` |
 | `reach-keyset` | data/anim/reach.json: every key of `cover` is a key set of keysets.json or of a wave's keysets |
 | `medium-wind-set` | data/anim/medium_wind.json: every key of `sets` and every `held_only` entry is a key set of a wave (or of keysets.json); every value of `sets` is a key of `rules`; a key set is not in both |

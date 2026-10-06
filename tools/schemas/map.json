@@ -124,6 +124,10 @@
       "schema": "ui-stances.schema.json"
     },
     {
+      "match": "ui/data/colour_vision.json",
+      "schema": "ui-colour-vision.schema.json"
+    },
+    {
       "match": "ui/data/fighter_names.json",
       "schema": "ui-fighter-names.schema.json"
     },

@@ -122183,6 +122183,12 @@
           "set": {
             "/presets/protan/protagonist/aura": "#123456"
           }
+        },
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/lanes/protagonist": "#123456"
+          }
         }
       ],
       "expect": null
@@ -122340,6 +122346,12 @@
           "set": {
             "/presets/deutan/protagonist/aura": "#123456"
           }
+        },
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/deutan/lanes/protagonist": "#123456"
+          }
         }
       ],
       "expect": null
@@ -122496,6 +122508,12 @@
           "file": "data/art/colour-vision.json",
           "set": {
             "/presets/tritan/protagonist/aura": "#123456"
+          }
+        },
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/tritan/lanes/protagonist": "#123456"
           }
         }
       ],
@@ -122715,6 +122733,569 @@
         "rule": "type",
         "pointer": "/rule_for_future_fighters/0"
       }
+    },
+    {
+      "id": "ui-colour-vision-valid",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/schema": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-colour-vision-key-required-schema",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-colour-vision-key-required-note",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-colour-vision-key-required-choices",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "del": [
+            "/choices"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-colour-vision-key-required-fighter-alias",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "del": [
+            "/fighter_alias"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-colour-vision-key-required-presets",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "del": [
+            "/presets"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "ui-colour-vision-unknown-key",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "ui-colour-vision-note-ok",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-colour-vision-schema-version",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "ui-colour-vision-choices-one",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/choices": [
+              "off"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/choices"
+      }
+    },
+    {
+      "id": "ui-colour-vision-choices-duplicate",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/choices": [
+              "off",
+              "protan",
+              "protan"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/choices/2"
+      }
+    },
+    {
+      "id": "ui-colour-vision-choices-shape",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/choices": [
+              "off",
+              "Protan Mode",
+              "protan"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/choices/1"
+      }
+    },
+    {
+      "id": "ui-colour-vision-choices-without-off",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/choices": [
+              "protan",
+              "deutan",
+              "tritan"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ui-colour-choices",
+        "pointer": "/choices"
+      }
+    },
+    {
+      "id": "ui-colour-vision-choice-without-a-preset",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/choices": [
+              "off",
+              "protan",
+              "deutan",
+              "tritan",
+              "achroma"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ui-colour-choices",
+        "pointer": "/choices"
+      }
+    },
+    {
+      "id": "ui-colour-vision-preset-not-a-choice",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/choices": [
+              "off",
+              "deutan",
+              "tritan"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ui-colour-choices",
+        "pointer": "/presets/protan"
+      }
+    },
+    {
+      "id": "ui-colour-vision-presets-empty",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/presets"
+      }
+    },
+    {
+      "id": "ui-colour-vision-preset-key-shape",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/Bad Name": {
+              "lanes": {
+                "protagonist": "#46b9b9",
+                "rival": "#6b0bcb"
+              },
+              "map": {
+                "STAGE_BRUISED": "#f2e6a0",
+                "STAGE_BATTERED": "#c8102e",
+                "STAGE_BROKEN": "#b8860b"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/presets/Bad Name"
+      }
+    },
+    {
+      "id": "ui-colour-vision-preset-lanes-required",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "del": [
+            "/presets/protan/lanes"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets/protan"
+      }
+    },
+    {
+      "id": "ui-colour-vision-preset-map-required",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "del": [
+            "/presets/protan/map"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/presets/protan"
+      }
+    },
+    {
+      "id": "ui-colour-vision-preset-unknown-key",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/presets/protan/extra"
+      }
+    },
+    {
+      "id": "ui-colour-vision-lanes-empty",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/lanes": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/presets/protan/lanes"
+      }
+    },
+    {
+      "id": "ui-colour-vision-lane-not-hex",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/lanes/protagonist": "teal"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/presets/protan/lanes/protagonist"
+      }
+    },
+    {
+      "id": "ui-colour-vision-lane-short-hex",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/lanes/protagonist": "#46b9b"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/presets/protan/lanes/protagonist"
+      }
+    },
+    {
+      "id": "ui-colour-vision-lane-type",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/lanes/protagonist": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/presets/protan/lanes/protagonist"
+      }
+    },
+    {
+      "id": "ui-colour-vision-lane-not-arts-aura",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/lanes/protagonist": "#123456"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ui-colour-lanes",
+        "pointer": "/presets/protan/lanes/protagonist"
+      }
+    },
+    {
+      "id": "ui-colour-vision-lane-case-ok",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/lanes/protagonist": "#46B9B9"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-colour-vision-lane-fighter-not-in-arts-file",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/lanes/nobody": "#112233"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ui-colour-lanes",
+        "pointer": "/presets/protan/lanes/nobody"
+      }
+    },
+    {
+      "id": "ui-colour-vision-map-empty",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/map": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/presets/protan/map"
+      }
+    },
+    {
+      "id": "ui-colour-vision-map-role-shape",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/map/stage bruised": "#f2e6a0"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/presets/protan/map/stage bruised"
+      }
+    },
+    {
+      "id": "ui-colour-vision-map-colour-not-hex",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/map/STAGE_BRUISED": "gold"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/presets/protan/map/STAGE_BRUISED"
+      }
+    },
+    {
+      "id": "ui-colour-vision-map-colour-ok",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/presets/protan/map/STAGE_BRUISED": "#ABCDEF"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "ui-colour-vision-alias-value-shape",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/fighter_alias/anti_hero": "The Rival"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/fighter_alias/anti_hero"
+      }
+    },
+    {
+      "id": "ui-colour-vision-alias-value-not-an-art-fighter",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/fighter_alias/anti_hero": "nobody"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ui-colour-alias",
+        "pointer": "/fighter_alias/anti_hero"
+      }
+    },
+    {
+      "id": "ui-colour-vision-alias-empty-ok",
+      "schema": "ui-colour-vision.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/colour_vision.json",
+          "set": {
+            "/fighter_alias": {}
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

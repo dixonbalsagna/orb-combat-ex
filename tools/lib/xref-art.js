@@ -10,6 +10,7 @@ const VISIONS = ['protan', 'deutan', 'tritan'];
 const NOT_FIGHTER = ['chosen_by', 'measured_dE00_under_this_vision'];
 
 function xrefArt({ get, err, esc, isObj }) {
+  xrefUiColour({ get, err, esc, isObj });
   const sky = get(SKY);
   const cv = get(CVF);
   if (isObj(sky)) {
@@ -104,4 +105,28 @@ function xrefArt({ get, err, esc, isObj }) {
   }
 }
 
-module.exports = { xrefArt };
+// UI's colour-blind presets (ui/data/colour_vision.json): the choices and the presets agree, the lanes are Art's auras, the alias names an Art fighter.
+function xrefUiColour({ get, err, esc, isObj }) {
+  const UI = 'ui/data/colour_vision.json';
+  const ui = get(UI);
+  if (!isObj(ui)) return;
+  const presets = isObj(ui.presets) ? ui.presets : {};
+  const choices = Array.isArray(ui.choices) ? ui.choices : [];
+  if (choices.length && !choices.includes('off')) err(UI, '/choices', 'ui-colour-choices', 'choices must hold "off"');
+  for (const c of choices) if (c !== 'off' && !isObj(presets[c])) err(UI, '/choices', 'ui-colour-choices', `choice "${c}" has no preset`);
+  for (const p of Object.keys(presets)) if (!p.startsWith('_') && choices.length && !choices.includes(p)) err(UI, `/presets/${esc(p)}`, 'ui-colour-choices', `preset "${p}" is not one of the choices (${choices.join(', ')})`);
+  const art = get('data/art/colour-vision.json');
+  if (!isObj(art) || !isObj(art.presets) || !isObj(art.default)) return;
+  for (const [p, pr] of Object.entries(presets)) {
+    if (p.startsWith('_') || !isObj(pr) || !isObj(pr.lanes) || !isObj(art.presets[p])) continue;
+    for (const [id, hex] of Object.entries(pr.lanes)) {
+      if (id.startsWith('_') || typeof hex !== 'string') continue;
+      const a = isObj(art.presets[p][id]) ? art.presets[p][id].aura : undefined;
+      if (typeof a !== 'string') err(UI, `/presets/${esc(p)}/lanes/${esc(id)}`, 'ui-colour-lanes', `"${id}" has no aura in the ${p} preset of data/art/colour-vision.json`);
+      else if (a.toLowerCase() !== hex.toLowerCase()) err(UI, `/presets/${esc(p)}/lanes/${esc(id)}`, 'ui-colour-lanes', `lane colour ${hex} is not Art's ${p} aura for ${id} (${a})`);
+    }
+  }
+  if (isObj(ui.fighter_alias)) for (const [k, v] of Object.entries(ui.fighter_alias)) if (!k.startsWith('_') && typeof v === 'string' && !isObj(art.default[v])) err(UI, `/fighter_alias/${esc(k)}`, 'ui-colour-alias', `"${k}" is aliased to "${v}", who is not a fighter of data/art/colour-vision.json`);
+}
+
+module.exports = { xrefArt, xrefUiColour };
