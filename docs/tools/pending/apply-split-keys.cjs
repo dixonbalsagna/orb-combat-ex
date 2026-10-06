@@ -6,6 +6,9 @@
 // It does NOT edit data/. It renames the archetype key under `shapes` in tools/schemas/combat-finishers.schema.json (the styles schema
 // does not name it; the style-fighter rule reads the keys of shapes, so it follows) and adds the rule `finisher-fighter`: a finisher's
 // `fighter` is `*` or an id of data/fighters/roster.json, and every key of select.byFighter is a roster id. Re-runnable.
+// It also finishes part A of the fighter rename (docs/architecture/pending/fighter-split.md section 10): from the window on, `name`, `title` and
+// `sigName` are forbidden in a fighter's `identity` (tools/schemas/fighter.schema.json; the two fixtures' fighter.json lose them; the cases that
+// allowed them become cases that forbid them). Run it in the window's commit, after the data has lost the three words.
 const fs = require('fs');
 const rj = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
 const wj = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
@@ -42,6 +45,34 @@ const wj = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
     ].join('\n'));
     fs.writeFileSync(f, t);
   }
+}
+
+// ---- the identity words are forbidden from the window on ----
+{
+  const f = 'tools/schemas/fighter.schema.json';
+  const s = rj(f);
+  const id = s.properties.identity;
+  let changed = false;
+  for (const k of ['name', 'title', 'sigName']) if (id.properties[k]) { delete id.properties[k]; changed = true; }
+  id.required = id.required.filter((k) => !['name', 'title', 'sigName'].includes(k));
+  if (changed) wj(f, s);
+  for (const fid of ['FIXTURE_HERO', 'FIXTURE_VILLAIN']) {
+    const ff = `tools/fixtures/virtual/data/fighters/${fid}/fighter.json`;
+    if (!fs.existsSync(ff)) continue;
+    const o = rj(ff);
+    let ch = false;
+    for (const k of ['name', 'title', 'sigName']) if (o.identity && o.identity[k] !== undefined) { delete o.identity[k]; ch = true; }
+    if (ch) wj(ff, o);
+  }
+  const cf = 'tools/fixtures/cases.json';
+  const c = rj(cf);
+  const FJ = 'data/fighters/FIXTURE_HERO/fighter.json';
+  const gone = new Set(['fighter-identity-name-optional-ok', 'fighter-identity-title-optional-ok', 'fighter-identity-sig-name-optional-ok', 'fighter-identity-all-three-words-optional-ok', 'fighter-identity-name-empty-still-refused', 'fighter-identity-title-type-still-refused', 'fighter-identity-sig-name-given-ok']);
+  c.cases = c.cases.filter((y) => !gone.has(y.id));
+  const add = ['name', 'title', 'sigName'].map((k) => ({ id: `fighter-identity-${k}-forbidden`, schema: 'fighter.schema.json', mutate: [{ file: FJ, set: { [`/identity/${k}`]: 'A Word' } }], expect: { rule: 'additionalProperties', pointer: `/identity/${k}` } }));
+  add.push({ id: 'fighter-identity-without-the-three-words-ok', schema: 'fighter.schema.json', mutate: [{ file: FJ, set: { '/identity/role': 'hero' } }], expect: null });
+  for (const k of add) if (!c.cases.some((y) => y.id === k.id)) c.cases.push(k);
+  wj(cf, c);
 }
 
 // ---- cases ----
