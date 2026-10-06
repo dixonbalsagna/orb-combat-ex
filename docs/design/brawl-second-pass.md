@@ -13,7 +13,7 @@ Owner: Game Design. Date: 2026-10-06. Orb played the live brawl on the evening o
 | "holding a button should charge up an attack" | A held X is a charged light: quick, modest, no knock-back. A held Y is a charged heavy: slow, armoured, and it knocks back or launches | §3 |
 | "Y just feels really underpowered... an opponent flurrying on me should get punished" | A charging Y can't be stopped by a flurry. It lands for up to 10 brawl lights | §3 |
 | A: a tap is a shove, a mash is a clinch into a trip and a throw, a hold is a tackle | Ruled as Orb sketched it | §4 |
-| "B needs a recast and its own unique moveset" | B is his ki at close range: a burst on a tap, a ki flurry on a mash. A signature needs a held B, and it plays live | §5 |
+| "B needs a recast and its own unique moveset" | B is his Charge at close range: a burst on a tap, a Charge flurry on a mash. A signature needs a held B, and it plays live | §5 |
 | Two-button power attacks on adjacent buttons | X+Y the lift, X+A the slip, Y+B the breaker, A+B the seize | §6 |
 | An even mash: "both thrown back, nobody wins" | At the trade's limit a level trade throws both back. The seeded draw and its momentum are gone | §7 |
 
@@ -33,6 +33,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 | Both hold away from each other | The brawl lets go after 12 ticks |
 
 - **It answers at once.** The centre starts to move within 2 ticks of a stick, and reaches its speed in 8.
+- **It moves smoothly.** The centre never moves more than 0.3 bh in one tick, whatever the two sticks add up to. Animation needs that for the drift to read (`docs/animation/brawl-second-pass-view.md`), and it is fed the pair's velocity while it drifts.
 - **The brawl keeps the speed it began with.** Half of the fighters' closing speed carries on as drift for 20 ticks. Nobody is stopped dead.
 - **The attraction is softer.** It holds each fighter at striking distance from the centre and no longer pins him to a point.
 - **The stick still leans the blow** (`melee-press-feel.md` §13). So holding toward the rival drives him back with elbows and knees, holding away gives ground with kicks, and up and down climb or sink with rising and dropping blows. One stick does both jobs.
@@ -51,7 +52,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 **What it gives the game.** Position is the player's job under pillar 2, and now he has it inside a brawl. The Protagonist's AI nudges a brawl away from a town, and the rival's nudges it toward one. A charged Y can be walked into place before it is let go.
 
-**Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.walkOutTicks` 24, `brawl.partTicks` 12, `brawl.nudge.guard` 0.6, `brawl.nudge.stagger` 0.5.
+**Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.walkOutTicks` 24, `brawl.partTicks` 12, `brawl.nudge.guard` 0.6, `brawl.nudge.stagger` 0.5, `brawl.maxStepBh` 0.3.
 
 ## 2. A flurry on every button
 
@@ -59,7 +60,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 **The rule: a tap of X, Y or B is one blow, thrown at once. Tapped again quickly, in any order, the taps are a flurry.**
 
-| | X: a light | Y: a quick heavy | B: a ki burst (§5) |
+| | X: a light | Y: a quick heavy | B: a Charge burst (§5) |
 | :--- | ---: | ---: | ---: |
 | Press to contact | 2 ticks | 6 ticks | 4 ticks |
 | Fastest in a flurry | One every 6 ticks | One every 12 ticks | One every 8 ticks |
@@ -142,20 +143,20 @@ Orb's sketch, ruled as given. A is how a fighter takes hold of the other's body.
 
 **Data:** `shove` (wind-up 8, push 3 bh, stagger on a charge 8, lockout 45), `clinch` (reach 10, trip at 2 taps, throw at 4, max 45, trip worth 2, no-guard 20, throw 8 bh, tech 8), `tackle` (charge 16 to 36, range 6 to 12.5 bh, carry 6 to 16 bh, ki 10, whiff 20), `taunt.ki` 10.
 
-## 5. B: recast as his ki at close range
+## 5. B: recast as his Charge at close range
 
 **Orb:** "just hitting B and getting locked into what feels like a beam-attack cutscene doesn't feel right, B needs a recast and its own unique moveset."
 
 Until now a tap of B was a 25-ki signature, and in the martial arts stance it fired the beam with its full staging. One press took the fight away from the player.
 
-**The recast: B is his ki, used at arm's length.** X is the quick body blow and Y the strong one. B is the blow that reaches further, pushes, and costs ki. It has a moveset like theirs.
+**The recast: B is his Charge, used at arm's length.** (Ki is the resource's name in data and in these pages. The player sees it as Charge, so the moves are named with that word.) X is the quick body blow and Y the strong one. B is the blow that reaches further, pushes, and costs Charge. It has a moveset like theirs.
 
 | B | What it is | Ki |
 | :--- | :--- | ---: |
-| **Tapped** | **A ki burst:** a short flash from the hand, 4 ticks to land, with a reach of 5 bh. It is worth 1.2 to 2 brawl lights by how fast it is tapped, the rival reels for 6 ticks, and it pushes him and the brawl's centre 0.5 bh | 4 |
+| **Tapped** | **A Charge burst:** a short flash from the hand, 4 ticks to land, with a reach of 5 bh. It is worth 1.2 to 2 brawl lights by how fast it is tapped, the rival reels for 6 ticks, and it pushes him and the brawl's centre 0.5 bh | 4 |
 | **Mashed, or mixed with X and Y** | Part of the flurry (§2). X, Y and B together are a three-way mix-up | 4 a blow |
-| **On the beat** (from the skill strike's slice) | A ki skill strike, worth 5 | 6 |
-| **Held to 12 ticks** | **A ki blast** at point-blank: worth 5 brawl lights, with a knock-back of 4 bh | 12 |
+| **On the beat** (from the skill strike's slice) | A Charge skill strike, worth 5 | 6 |
+| **Held to 12 ticks** | **A Charge blast** at point-blank: worth 5 brawl lights, with a knock-back of 4 bh | 12 |
 | **Held to the first flash, 24 ticks** | **His art:** the quick form of the stance's signature (`melee-press-feel.md` §11) | 25 |
 | **Held to the second flash, 48 ticks** | **His signature** | 45 |
 
@@ -231,9 +232,9 @@ Each pair does what its two buttons mean together. X is quick, Y is strong, A is
 | **A tapped** | The shove. Out of reach: a pick-up, a civilian, or the taunt | 0 |
 | **A mashed** | The clinch, the trip, and the throw | 0 |
 | **A held** | The tackle, into a crater | 10 |
-| **B tapped** | A ki burst, with a reach of 5 bh | 4 |
-| **B mashed** | The ki flurry, and the third part of a mix-up | 4 a blow |
-| **B held** | A ki blast at 12 ticks, his art at 24, his signature at 48, all live | 12, 25 or 45 |
+| **B tapped** | A Charge burst, with a reach of 5 bh | 4 |
+| **B mashed** | The Charge flurry, and the third part of a mix-up | 4 a blow |
+| **B held** | A Charge blast at 12 ticks, his art at 24, his signature at 48, all live | 12, 25 or 45 |
 | **X+Y** | The lift | 10 |
 | **X+A** | The slip | 5 |
 | **Y+B** | The breaker | 20 |
@@ -266,22 +267,29 @@ The energy arts stance already fits: its X sprays when mashed, its Y is a heavy 
 
 ## 10. Build order
 
-Control is first, as Orb asked, and I don't argue otherwise: it is the complaint about feel, and every later slice is judged by playing inside it. The zip's first slice lands when it is ready, beside these.
+This is the EP's order (2026-10-06), with Animation's sizes (`docs/animation/brawl-second-pass-view.md`). It replaces my first one, which had A before B. Control is still first. The zip's first slice lands when it is ready, beside these.
 
-| Slice | What | Size | Encounter | Controls | Simulation | Animation and VFX | Camera and UI |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **C1** | **Control:** the nudged centre, the softer attraction, the carried speed, walking out (§1). With it, **the even mash** (§7) | Medium | The brawl's movement. The AI's nudge: the hero away from towns, the rival toward them. The double throw-back, and the draw taken out | Nothing new: the stick is already in the intent | The fighters' movement inside a brawl, if it sits in the core | Footwork while striking, and the lean of a drifting pair | Camera: frame a pair that moves |
-| **C2** | **Y:** the quick heavy, the heavy flurry and the mix-up (§2). **The charges:** held X, held Y with its armour, the guard rules and the just release (§3) | Large | The flurry by button, armour, the fresh guard, the knock-back from a charge. The AI: when it charges, and the shove as its answer once C4 is in | The tap against the hold on Y at 4 ticks. `lightHeld` and `heavyHeld` exist | Wear from armoured hits | The heavy flurry's pieces and looks. Charge poses, and the charge flash | UI: the charge cue, and haptics on landed blows, closes, launches and landings (Orb, questionnaire 19) |
-| **C3** | **The skill strike,** as cut, widened to Y on the beat (§9) | Medium, and already cut | As cut | As cut (`docs/controls/skill-strike-input.md`) | The mood's 50 | The return as the cue | UI: the beat ring option |
-| **C4** | **A:** the shove, the clinch with the trip and the throw, the tackle and its crater (§4). The taunt's gamble | Large | Three new states, and the break-out. The AI's use of the shove against a charge | The tap, the mash and the hold on A | The crater and the burial exist. The carry | Paired poses for the clinch and the throw, which the generator doesn't make yet | Camera: the tackle's line |
-| **C5** | **B:** the ki burst and its flurry, the ki blast, and signatures on a hold, played live (§5) | Large | B in the flurry. The held ladder. Live staging, and the beam held by the player | The tap, the mash and the hold on B | Ki spent by the second | Ki blows. The live signature without its cut scene | Camera: no takeover on an art. UI: the two flashes |
-| **C6** | **The four power attacks** (§6), and with them the lift and the juggle | Large | Four moves, and the juggle | **The two-button reads** | Nothing new | Four moves for each fighter | |
-| **Z2** | The zip away, the chase of a launch, the signature zip | Medium | As planned, with the chase | Nothing new | | | Camera: the chase |
-| **H1** | The fire-on-the-move hybrid, LT + RB | Medium | The hybrid's cells | The hybrid's mask is reserved | | | |
+| Order | Slice | What | Animation's size | What it needs |
+| ---: | :--- | :--- | :--- | :--- |
+| 1 | **C1** | **Control** (§1) and **the even mash** (§7) | Small to medium, with no new pose | Encounter: the brawl's movement, the AI's nudge, the double throw-back. Simulation: movement in a brawl, if it sits in the core. Animation: a smooth drift, with the pair's velocity fed to it. Camera: a pair that moves. Controls: nothing new |
+| 2 | **C2** | **Y:** the quick heavy, the heavy flurry and the mix-up (§2). **The charges:** held X, held Y, armour, the fresh guard, the just release (§3) | Medium. The quick heavy, the heavy flurry and the mix-up are data only. The charges need 2 to 4 poses | Encounter: the flurry by button, armour, the charge's state for Animation to read. Controls: the tap against the hold on Y at 4 ticks. VFX: the charge flash. UI: the charge cue, and haptics |
+| | | **Orb plays C1 and C2 before C3 is built** | | |
+| 3 | **C3** | **The skill strike** as cut, widened to Y on the beat (§9) | As already sized | As cut |
+| 4 | **C5** | **B recast:** the Charge burst and its flurry, the Charge blast, and signatures on a hold, played live (§5). It comes ahead of A because Orb's complaint about the locked beam shouldn't wait behind paired poses | Medium, with 0 to 2 poses | Encounter: B in the flurry, the held ladder, live staging. Controls: the tap, the mash and the hold on B. Simulation: Charge spent by the second. Camera: no takeover on an art. UI: the two flashes |
+| 5 | **C4a and C6a** | **The shove and the tackle** (§4), with the taunt's gamble. **The lift, the slip and the breaker** (§6), with the juggle | The shove is small and the tackle small to medium. The three power attacks are most of C6's 10 poses | Encounter: the new states, the juggle, the AI's shove against a charge. Controls: the tap and the hold on A, and **the two-button reads.** Camera: the tackle's line |
+| 6 | **C4b** | **The clinch, the trip and the throw** (§4), with **the seize** (§6) | Large: about 14 poses, a paired-motion layer, a new kind for the generator, and a held state in the sim. Four directors | Animation, Combat, Encounter and Simulation together. Controls: the mash on A |
+| 7 | **Z2** | The zip away, the chase of a launch, the signature zip | | As planned |
+| 8 | **H1** | The fire-on-the-move hybrid, LT + RB | | The hybrid's cells and its tell |
 
-- **C1 and C2 are what Orb's notes are mostly about,** and they are the two to play before anything after them is built.
-- **Animation carries the most new work:** paired poses in C4, and four moves a fighter in C6. Both wait on its say.
-- **Legal screens after this page:** the clinch, the trip and the throw, the tackle and its crater, the ki burst, and the four power attacks.
+**Does anything depend on the clinch existing before B? No.** The recast of B needs nothing from A. The seize is the only pair that needs the clinch's paired poses, and it is built with them.
+
+**One thing does depend on the order: the shove.** It is the designed answer to a charged Y (§3), and it arrives three slices after the charge. Until then a charge is answered only by a fresh guard, a perfect block or getting out of reach. Animation sizes the shove as small, so I'd ask for it to ride with C2 if Orb finds the charged Y too safe in that first playtest.
+
+**Legal's screen** (`docs/legal/brawl-screen.md`, RL-098 to RL-101). Nothing is avoided. Five things are conditional and have to be seen drawn: the tackle; the held B's tell at 12, 24 and 48 ticks with each flash; the charged Y's hold and its full flash; the breaker's lit edges with the seize's tell and hold; and a three-hop zip chain, with the LT + RB tell. Three of its points are rules of this page from now on:
+- **the repeat rules count the whole string, and not the button.** Alternating X, Y and B changes the piece on every tap, so "never one of his last two pieces" and "no two blows running to the same place" are checked across all three buttons;
+- **at up to ten blows a second the smear follows the one limb that is striking,** with at most two ghosts for each blow. That is the 4 of 10 of §2;
+- **each charge flash is a thin ring or an edge flash, of 4 ticks or fewer, and never over the whole body.** That holds for the charged X, the charged Y and B's two flashes;
+- **the player-facing names say Charge and not ki,** as the interface does: the Charge burst, the Charge blast and the Charge flurry.
 
 ## 11. The bands that move
 
