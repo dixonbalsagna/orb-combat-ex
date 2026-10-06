@@ -29,6 +29,8 @@ The fist's own blow still comes from the `damage` event and its press look (the 
 
 ## The flash limit (Legal's k05 and §5b point 8)
 
+**Update 2026-10-06:** the energy flash now asks the shared flash registry (`hub.flashes`, docs/vfx/flash-registry.md) as the low-priority source `energy`, on top of its own 1-in-20-ticks pace; the description below is the first version of that rule, kept for the recording it was made against.
+
 One full flash is the soft disc at a landing. The counter (`VfxReach.allow_full`) gives one only when:
 - at least 20 ticks have passed since the last full flash, across both fighters; and
 - the hub's flash log holds fewer than 3 flashes in the last 60 ticks. The log counts every energy full flash and every block flash (the press styles' block flash reports to it, `VfxPress.flash_sink`).

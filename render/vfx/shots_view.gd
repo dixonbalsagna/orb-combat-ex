@@ -498,7 +498,7 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				var sh_h: float = VfxPress.p("shield_h")
 				n = _put(n, contact, Vector2(0.0, 1.0), sh_h, maxf(1.4, minpx * 1.6) * 2.0, zf, shc, 0.5, 0.5, SHAPE_STREAK)
 				var ft: float = clampf(st / VfxPress.p("flash_life"), 0.0, 1.0)
-				if ft < 1.0:
+				if ft < 1.0 and not e.noflash:
 					var fc: Color = e.col2
 					fc.a = al * (1.0 - ft)
 					var fr1: float = 10.0 + ft * 22.0
@@ -921,7 +921,8 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 					var fd := Vector2(dv.x * cos(ang) - dv.y * sin(ang), dv.x * sin(ang) + dv.y * cos(ang))
 					n = _put(n, c + fd * (14.0 + 30.0 * u), fd, 12.0, 4.0, zm, gk, 0.5, 0.5, SHAPE_STREAK)
 				var fr3: float = lerpf(8.0, 22.0, u)
-				n = _put(n, c, Vector2(1.0, 0.0), fr3 * 2.0, fr3 * 2.0, zm + 0.1, gk, minf(0.5, 4.0 / fr3), 0.0, SHAPE_RING)
+				if not m.noflash:
+					n = _put(n, c, Vector2(1.0, 0.0), fr3 * 2.0, fr3 * 2.0, zm + 0.1, gk, minf(0.5, 4.0 / fr3), 0.0, SHAPE_RING)
 	return n
 
 
@@ -1005,7 +1006,7 @@ func _beamplay(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: flo
 			continue
 		var hd := Vector2(rx0, float(b.oy) + float(b.uy) * s0)
 		var dv := Vector2(float(b.ux), float(b.uy))
-		var pulse: float = 1.0 if hub.reduced_motion else 0.8 + 0.2 * sin(TAU * (float(bp.clock) + a) / 6.0)
+		var pulse: float = 1.0 if hub.reduced_motion else 0.8 + 0.2 * sin(TAU * (float(bp.clock) + a) / 20.0)
 		var c1: Color = lane
 		c1.a = al * 0.85 * pulse
 		n = _wedge(n, hd - dv * 24.0, dv, VfxBeamPlay.p("beamplay", "head_len"), VfxBeamPlay.p("beamplay", "head_w") * (0.8 + 0.1 * float(b.pw)), float(b.oz) + z0, c1)
@@ -1203,7 +1204,7 @@ func _draw_mine(n: int, m: VfxShots.Mine, life_k: float, S: SimState, hub: VfxHu
 			var uf: float = clampf(age / VfxShots.MINE_FUSE_TICKS, 0.0, 1.0)
 			close = lerpf(1.0, 0.8, uf)
 			core_k = lerpf(1.0, 1.4, uf)
-			blink = 1.0 if (hub.reduced_motion or int(age / 4.0) % 2 == 0) else 0.45
+			blink = 1.0 if (hub.reduced_motion or int(age / 10.0) % 2 == 0) else 0.45      # 3 a second at most (it was 7.5): Legal k05
 			var wr: float = lerpf(40.0, m.radius, 1.0 - pow(1.0 - uf, 2.0))
 			var wc: Color = lane
 			wc.a = alpha * 0.55 * (1.0 - uf * 0.5)

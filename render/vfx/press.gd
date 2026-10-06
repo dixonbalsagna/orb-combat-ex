@@ -52,6 +52,7 @@ class Fx:
 	var col: Color = Color.WHITE
 	var col2: Color = Color.WHITE
 	var small: bool = false         # reduced motion or a low-quality tick: the short form
+	var noflash: bool = false       # the flash register refused this block's flash: the shield line only
 	var real: bool = false          # Animation's hand-off was used: ja and jb are real poses, path the real fist path
 	var ghosts: int = 0             # how many after-images Animation asks for (press.ghosts), 0: ours
 	var ja: PackedVector2Array = PackedVector2Array()   # the old pose's joints (JOINTS order), offsets from its anchor, x turned to the world
@@ -72,7 +73,7 @@ var wind: Array = [Wind.new(), Wind.new()]
 var fly: Array = [0.0, 0.0]         # ticks of flight left per slot (a heavy ender's target)
 var hist: Array = [[], []]          # per slot: Vector2 (world x, y) of the last ticks, newest last
 var made: Dictionary = {}           # counters by style, for the tests
-var flash_sink = null               # the screen's flash counter (VfxReach.note_flash): a block's flash is one of the flashes Legal's k05 counts
+var flash_sink = null               # the screen's flash register (VfxFlashRegistry): a block's flash asks it before it is drawn
 var shown: int = 0                  # effects drawn last frame (the tests)
 var beat_glint: bool = false        # the beat option (UI's ring for every blow, the rival's too): a glint on the striking limb at the beat. hub.beat_glint_enabled sets it
 var clock: int = 0
@@ -384,7 +385,7 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 			x.col = lane_of(S, vic)
 			x.life = p("block_life")
 	if style == "block" and flash_sink != null:
-		flash_sink.note_flash(S.tick)
+		x.noflash = not flash_sink.ask("block", x.col2, S.tick)
 	_take_real(S, x, att, style)
 	if bool(ba.get("sure", false)) and style != "block":
 		var br := Fx.new()

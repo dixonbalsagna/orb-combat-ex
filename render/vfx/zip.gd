@@ -66,6 +66,7 @@ class Zip:
 
 class Mark:
 	var kind: String = ""           # counter, caught or gbreak
+	var noflash: bool = false       # the flash register refused a guard break's flash ring
 	var slot: int = 0               # whose it is (the zipper for caught; the one who countered or whose guard broke)
 	var x: float = 0.0
 	var y: float = 0.0
@@ -81,6 +82,7 @@ var zips: Array = []                # Zip, oldest first
 var marks: Array = []               # Mark
 var made: Dictionary = {}           # counters by kind, for the tests
 var shown: int = 0                  # effects drawn last frame (the tests)
+var flashes = null                  # the screen's flash register (set by the hub): a guard break's flash ring asks it
 var violations: Dictionary = {}     # cues that break Legal's travel minimum (m02), by kind, for QA and the tests: the sim sets the ticks, so this only counts
 
 static var _data: Dictionary = {}
@@ -450,6 +452,7 @@ func _mark(S: SimState, who: int, zs: int, kind: String, style: String) -> void:
 			m.col = VfxPress.lane_of(S, who)
 		_:
 			m.kind = "gbreak"
+			m.noflash = flashes != null and not flashes.ask("zip_break", VfxPress.lane_of(S, who), S.tick)
 			m.x = wf.x
 			m.y = wf.y + 34.0
 			m.life = p("gbreak_life")

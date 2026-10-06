@@ -201,6 +201,7 @@ func _run() -> void:
 	_zip_real()
 	_riposte()
 	_reach()
+	_flashes()
 	_press_load()
 	_real()
 	_stages()
@@ -569,7 +570,7 @@ func _react() -> void:
 		lo_min = minf(lo_min, v)
 		if v < 0.7:
 			dips += 1
-	_check(lo_min < 0.7 and dips > 20 and dips < 250, "a battered core makes the aura drop out (%d of 300 ticks, lowest %.2f)" % [dips, lo_min])
+	_check(lo_min < 0.7 and dips > 4 and dips < 120, "a battered core makes the aura drop out (%d of 300 ticks, lowest %.2f)" % [dips, lo_min])
 	f.stage[1] = 3
 	f.brink = true
 	var lo3: float = 1.0
@@ -581,6 +582,20 @@ func _react() -> void:
 		if VfxReact.flicker(f, t, 0, false) != VfxReact.flicker(f, t, 1, false):
 			differ = true
 	_check(VfxReact.flicker(f, 41, 0, false) == VfxReact.flicker(f, 41, 0, false) and differ, "the flicker is a pure function of the tick, and the two slots do not flicker in step")
+	# And never more than three dropouts a second across both fighters (Legal k05): count the ticks a dropout begins in any 60.
+	var onsets: Array = []
+	for t in range(1, 600):
+		for sl in [0, 1]:
+			if VfxReact.flicker(f, t, sl, false) < 0.7 and VfxReact.flicker(f, t - 1, sl, false) >= 0.7:
+				onsets.append(t)
+	var worst_on: int = 0
+	for t0 in onsets:
+		var kk: int = 0
+		for t1 in onsets:
+			if t1 >= t0 and t1 < t0 + 60:
+				kk += 1
+		worst_on = maxi(worst_on, kk)
+	_check(worst_on <= 3, "the wear flicker begins at most %d dropouts in any second across both fighters (Legal k05)" % worst_on)
 	_check(VfxReact.flicker(f, 9, 0, true) == VfxReact.flicker(f, 10, 0, true) and VfxReact.flicker(f, 9, 0, true) < 1.0, "reduced motion: a steady dimming, no flicker (%.2f)" % VfxReact.flicker(f, 9, 0, true))
 	f.stage[1] = 0
 	f.brink = false
@@ -3850,18 +3865,17 @@ func _reach() -> void:
 		worst = maxi(worst, inside)
 	_check(int(hm.inreach.made.get("land", 0)) == 30 and worst <= 3 and int(hm.inreach.made.get("full_flash", 0)) >= 6, "30 bolts mashed from both fighters: 30 landings, %d full flashes, never more than %d in a second (the limit is 3)" % [int(hm.inreach.made.get("full_flash", 0)), worst])
 	_check(most <= 60, "a mash never draws more than %d quads at once" % most)
-	# The screen's flash count (Legal's k05) includes the block's flash: two block flashes in the last second leave room for one full flash and no more.
+	# The screen's flash register (Legal's k05) counts every effect: with one explosion's flash already in the second, the energy flash gets the one low-priority slot left, and then waits for the window.
 	var hk := VfxHub.new()
 	hk.press_enabled = true
 	hk.reset(S, 6)
-	hk.inreach.note_flash(S.tick)
-	hk.inreach.note_flash(S.tick)
+	hk.flashes.note("explosion")
 	var allowed: int = 0
 	for t in range(70):
 		_tick(S, hk, [])
-		if hk.inreach.allow_full(S):
+		if hk.inreach.allow_full(S, Color(0.6, 0.8, 0.95)):
 			allowed += 1
-	_check(allowed == 2 and hk.inreach.flashes_in_second(S.tick) <= 3, "with two block flashes already on the screen, %d full flashes were allowed in the next 70 ticks and never a fourth in any second" % allowed)
+	_check(allowed == 2 and hk.flashes.worst_from_log() <= 3, "with an explosion's flash already on the screen, %d full energy flashes were allowed in the next 70 ticks and never a fourth in any second" % allowed)
 	# Reduced motion: no full flash at all, the rim dimmer, one spill streak; nothing else removed.
 	var hr := VfxHub.new()
 	hr.press_enabled = true
@@ -3893,6 +3907,154 @@ func _reach() -> void:
 	_check(quads.call(hs) == 0, "and it is gone in its ticks")
 	view.queue_free()
 	SimCore.dispose(S)
+
+
+## The shared flash register (docs/vfx/flash-registry.md; Legal's k05 and WCAG 2.3.1): the rule itself, then one case per effect family that has a full flash, then a worst second with every family at once.
+func _flashes() -> void:
+	print("flash registry")
+	var R := VfxFlashRegistry.new()
+	R.reset()
+	# The rule: three in any 60 ticks, low-priority sources two of them, red never, and the window slides.
+	var got: Array = []
+	for k in range(5):
+		R.begin_tick(false)
+		got.append(R.ask("explosion", Color(1.0, 0.62, 0.2)))
+	_check(got == [true, true, true, false, false], "three flashes in a second and no fourth (%s)" % str(got))
+	for k in range(60):
+		R.begin_tick(false)
+	_check(R.ask("explosion", Color(1.0, 0.62, 0.2)), "the window slides: a second later a flash is granted again")
+	R.reset()
+	R.begin_tick(false)
+	var lows: Array = [R.ask("energy"), R.ask("block"), R.ask("shot_hit"), R.ask("transform")]
+	_check(lows == [true, true, false, true], "low-priority sources get two of the three, and the big event still gets its slot (%s)" % str(lows))
+	R.reset()
+	R.begin_tick(false)
+	_check(not R.ask("explosion", Color(1.0, 0.1, 0.1)) and R.refused_by.get("explosion", 0) == 1 and R.log[R.log.size() - 1]["why"] == "red", "a red flash is never granted, and the log says why")
+	R.reset()
+	R.begin_tick(true)
+	var red_set: Array = [R.ask("energy"), R.ask("explosion", Color(1.0, 0.62, 0.2)), R.ask("transform")]
+	_check(red_set == [false, true, false], "reduced flashing: one a second, and none for the low-priority sources (%s)" % str(red_set))
+	R.reset()
+	R.note("body_hit")
+	R.begin_tick(false)
+	R.note("body_hit")
+	_check(R.in_window() == 2 and R.granted_by.get("body_hit", 0) == 2 and R.log[0]["why"] == "unregulated", "a flash another system draws is counted and never refused")
+	# Energy: a mash gives at most three in a second, with the register and the energy's own 20-tick pace.
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var S2 := SimCore.createSim()
+	SimCore.newMatch(S2, 6)
+	var g: float = WorldTerrain.groundY(S2, plains)
+	S2.fighters[0].x = plains
+	S2.fighters[0].y = g
+	S2.fighters[1].x = SimWrap.wrap(plains + 70.0)
+	S2.fighters[1].y = g
+	var ld := func(slot: int): return VfxMock.ev("cue", {"actor": slot, "kind": "energy_land", "text": "bolt", "source": "hit", "target": 1 - slot, "x": 1.0, "y": 0.0})
+	var h := VfxHub.new()
+	h.press_enabled = true
+	h.reset(S2, 6)
+	for t in range(180):
+		_tick(S2, h, [ld.call(t % 2)] if t % 6 == 0 else [])
+	_check(h.flashes.granted_by.get("energy", 0) >= 4 and h.flashes.worst_from_log() <= 3, "energy: a 3-second mash is granted %d full flashes, never more than %d in a second" % [int(h.flashes.granted_by.get("energy", 0)), h.flashes.worst_from_log()])
+	# Block: the shield line always draws; its flash asks.
+	var hb := VfxHub.new()
+	hb.press_enabled = true
+	hb.reset(S2, 6)
+	var guard := func(): return VfxMock.ev("damage", {"x": S2.fighters[1].x, "y": g + 50.0, "z": 0.0, "amount": 1.0, "col": "#ffffff", "victim": 1, "attacker": 0, "region": "core", "kind": "guard", "number": true})
+	for k in range(5):
+		_tick(S2, hb, [guard.call()])
+	var nof: int = hb.press.fx.filter(func(f): return f.style == "block" and f.noflash).size()
+	var fl: int = hb.press.fx.filter(func(f): return f.style == "block" and not f.noflash).size()
+	_check(fl == 2 and nof == 3, "block: five blocks in a few ticks, two flashes (the low-priority share) and three shield lines without one (%d, %d)" % [fl, nof])
+	# Shot hits and mines: the flash ring asks, the ring that goes with it does not.
+	var hs := VfxHub.new()
+	hs.explosions_enabled = false
+	hs.reset(S2, 6)
+	var shot_hit := func(): return VfxMock.ev("shot_hit", {"actor": 0, "victim": 1, "kind": "bolt", "id": 1, "x": S2.fighters[1].x, "y": g + 60.0, "z": 0.0, "amount": 9.0, "outcome": "hit", "link": 0})
+	for k in range(5):
+		hs.shots.fx.clear()
+		_tick(S2, hs, [shot_hit.call()])
+	_check(int(hs.flashes.granted_by.get("shot_hit", 0)) == 2 and int(hs.flashes.refused_by.get("shot_hit", 0)) == 3, "shot hits: five in a row get two flash rings (granted %d, refused %d)" % [int(hs.flashes.granted_by.get("shot_hit", 0)), int(hs.flashes.refused_by.get("shot_hit", 0))])
+	var rings_only: bool = hs.shots.fx.any(func(f): return f.kind == "ring") and not hs.shots.fx.any(func(f): return f.kind == "flash")
+	_check(rings_only, "a refused hit still draws its ring, and no flash")
+	# Explosions: a flame burst asks; refused, it is sparks and smoke (the explosion counter still counts the event).
+	var he := VfxHub.new()
+	he.reset(S2, 6)
+	for k in range(6):
+		_tick(S2, he, [shot_hit.call()])
+	_check(int(he.flashes.granted_by.get("explosion", 0)) >= 1 and int(he.flashes.refused_by.get("explosion", 0)) >= 1 and he.flashes.worst_from_log() <= 3, "explosions: six hits in a few ticks, %d bursts and %d downgraded to sparks" % [int(he.flashes.granted_by.get("explosion", 0)), int(he.flashes.refused_by.get("explosion", 0))])
+	# Transformation: the break's flash asks once; refused, transform_view's p() gives it no alpha.
+	var ht := VfxHub.new()
+	ht.reset(S2, 6)
+	ht.flashes.ask("explosion", Color(1.0, 0.62, 0.2))
+	ht.flashes.ask("explosion", Color(1.0, 0.62, 0.2))
+	ht.flashes.ask("explosion", Color(1.0, 0.62, 0.2))
+	_tick(S2, ht, [VfxMock.ev("transform", {"actor": 0, "tier": 3.0, "source": "ai", "dur": 0.0, "version": "live"})])
+	var scale_refused: float = 1.0
+	var asked: bool = false
+	for k in range(120):
+		_tick(S2, ht, [])
+		for f in ht.xform.forms:
+			if f.flash_asked:
+				asked = true
+				scale_refused = VfxTransform.flash_scale
+		if asked:
+			break
+	_check(asked and scale_refused == 0.0 and VfxTransform.p("break", "flash_alpha") == 0.0, "transformation: with the second's slots taken the break's flash is refused (scale %.1f)" % scale_refused)
+	var ht2 := VfxHub.new()
+	ht2.reset(S2, 6)
+	_tick(S2, ht2, [VfxMock.ev("transform", {"actor": 0, "tier": 3.0, "source": "ai", "dur": 0.0, "version": "live"})])
+	var granted_scale: float = -1.0
+	for k in range(120):
+		_tick(S2, ht2, [])
+		for f in ht2.xform.forms:
+			if f.flash_asked:
+				granted_scale = VfxTransform.flash_scale
+		if granted_scale >= 0.0:
+			break
+	_check(granted_scale == 1.0 and int(ht2.flashes.granted_by.get("transform", 0)) == 1, "transformation: on a quiet screen the flash is granted once (scale %.1f)" % granted_scale)
+	VfxTransform.flash_scale = 1.0
+	# A guard break's flash ring.
+	var hz := VfxHub.new()
+	hz.press_enabled = true
+	hz.reset(S2, 6)
+	for k in range(4):
+		_tick(S2, hz, [VfxMock.ev("cue", {"actor": 1, "kind": "lunge_guard_broken", "text": "", "source": "", "target": 0})])
+	var nz: int = hz.zip.marks.filter(func(m): return m.kind == "gbreak" and m.noflash).size()
+	_check(nz == 2, "guard break: four in a few ticks, two flash rings withheld (%d)" % nz)
+	# The worst second: every family at once on one screen. Never more than three flashes granted, the rest drawn without the flash.
+	var hw := VfxHub.new()
+	hw.press_enabled = true
+	hw.reset(S2, 6)
+	for t in range(120):
+		var evs: Array = []
+		if t % 6 == 0:
+			evs.append(ld.call(t % 2))
+			evs.append(guard.call())
+			evs.append(shot_hit.call())
+		if t == 10:
+			evs.append(VfxMock.ev("transform", {"actor": 0, "tier": 3.0, "source": "ai", "dur": 1.0, "version": "short"}))
+		if t % 25 == 5:
+			evs.append(VfxMock.ev("cue", {"actor": 1, "kind": "lunge_guard_broken", "text": "", "source": "", "target": 0}))
+		_tick(S2, hw, evs)
+	var sm: Dictionary = hw.flashes.summary()
+	_check(int(sm["worst_second"]) <= 3 and int(sm["refused"]) > 0 and int(sm["granted"]) > 0, "every family at once for 2 seconds: granted %d, refused %d, never more than %d in a second" % [int(sm["granted"]), int(sm["refused"]), int(sm["worst_second"])])
+	var rows: Array = hw.flashes.log_rows()
+	_check(rows.size() == int(sm["granted"]) + int(sm["refused"]) and rows[0].size() == 6, "the log has a row for every ask (%d rows)" % rows.size())
+	# Reduced flashing through the hub: one a second at most, none of the low-priority kind.
+	var hr := VfxHub.new()
+	hr.press_enabled = true
+	hr.reduced_flashing = true
+	hr.reset(S2, 6)
+	hr.reduced_flashing = true
+	for t in range(120):
+		var evs2: Array = []
+		if t % 6 == 0:
+			evs2.append(ld.call(t % 2))
+			evs2.append(shot_hit.call())
+		_tick(S2, hr, evs2)
+	var sr: Dictionary = hr.flashes.summary()
+	_check(int(sr["worst_second"]) <= 1 and not hr.flashes.granted_by.has("energy") and not hr.flashes.granted_by.has("shot_hit"), "reduced flashing: at most %d a second and no energy or hit-ring flash (granted %s)" % [int(sr["worst_second"]), str(hr.flashes.granted_by)])
+	SimCore.dispose(S2)
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:

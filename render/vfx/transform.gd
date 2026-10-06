@@ -43,6 +43,8 @@ class Form:
 	var age: float = 0.0       # ticks played
 	var adv: bool = false      # the last step advanced the clock
 	var pause: bool = false    # runs through a sim pause (full and short)
+	var flash_asked: bool = false   # the break's flash asked the register (once)
+	var flash_ok: bool = true       # ... and was granted
 	var motes := PackedFloat32Array()
 
 	func total() -> int:
@@ -55,6 +57,8 @@ class Form:
 
 static var _data: Dictionary = {}
 static var _loaded: bool = false
+## The flash register's word on the break's flash (transform_view.gd draws it from `p("break", "flash_alpha")` and cannot ask): 1 granted or nobody asked, 0 refused. The hub sets it every tick.
+static var flash_scale: float = 1.0
 
 var forms: Array = []          # Form, at most one per slot
 var started: int = 0           # counters for the tests
@@ -76,10 +80,11 @@ static func warm() -> void:
 ## One number: group.key from the data file, else the default.
 static func p(group: String, key: String) -> float:
 	warm()
+	var sc: float = flash_scale if (group == "break" and key == "flash_alpha") else 1.0
 	var g = _data.get(group)
 	if g is Dictionary and g.has(key):
-		return float(g[key])
-	return float(DEFAULTS[group][key])
+		return float(g[key]) * sc
+	return float(DEFAULTS[group][key]) * sc
 
 
 ## The three beat lengths of a version, in ticks.
@@ -108,6 +113,7 @@ static func aura(tier: int) -> Dictionary:
 
 func reset(seed: int) -> void:
 	forms.clear()
+	flash_scale = 1.0
 	started = 0
 	finished = 0
 	_rng = SimRng.new(SimRng.deriveSeed(seed, "vfx.xform"))

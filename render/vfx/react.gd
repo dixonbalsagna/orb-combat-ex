@@ -11,7 +11,7 @@ extends RefCounted
 ## scattered, not a ring; nothing here is lightning, wind or a darkening sky.
 
 const DEFAULTS: Dictionary = {
-	"flicker": {"min_stage": 2, "amp": 0.8, "brink_add": 0.25, "density": 0.55, "period_ticks": 3, "shape_jitter": 0.03},
+	"flicker": {"min_stage": 2, "amp": 0.8, "brink_add": 0.25, "density": 0.55, "period_ticks": 40, "shape_jitter": 0.03},
 	"rubble": {"min_tier": 3, "rate_t3": 4.0, "rate_t4": 9.0, "spread_bh_t3": 1.6, "spread_bh_t4": 2.6, "rise_min": 25, "rise_max": 70, "accel": 16, "life_min": 1.8, "life_max": 3.0, "size_min": 8, "size_max": 20, "near_ground_bh": 3.0, "alive_cap": 36},
 	"cracks": {"min_tier": 3, "still_ticks": 30, "still_speed": 300, "r_t3": 150, "r_t4": 230, "energy_t3": 8, "energy_t4": 18, "grow_s": 2.5, "fade_in_ticks": 20, "fade_out_ticks": 60, "stay_ticks": 90, "move_radius": 220},
 	"windows": {"min_tier": 3, "min_energy": 8, "reach_t3": 1800, "reach_t4": 3200, "speed": 2600, "min_floors": 3, "floors_max": 6, "max_buildings": 10, "scale": 0.8, "keep_s": 6},
@@ -97,6 +97,10 @@ static func _h(n: int, slot: int) -> float:
 	return float(x & 0xFFFF) / 65536.0
 
 
+## How long one dropout lasts, in ticks (a constant until a `drop_ticks` key can be added to tools/schemas/vfx-react.schema.json, which is Tools's).
+const DROP_TICKS: int = 4
+
+
 ## The factor an aura's alpha is multiplied by at a tick: 1 for a fighter who is not worn, and dropouts of a few ticks for
 ## one who is (more and deeper the more worn). With reduced motion: a steady dimming instead, no flicker.
 static func flicker(f, tick: int, slot: int, reduced: bool) -> float:
@@ -106,8 +110,12 @@ static func flicker(f, tick: int, slot: int, reduced: bool) -> float:
 	var amp: float = p("flicker", "amp")
 	if reduced:
 		return 1.0 - 0.5 * amp * w
-	var n: int = tick / maxi(int(p("flicker", "period_ticks")), 1)
-	var gate: bool = _h(n, slot) < p("flicker", "density") * (0.5 + 0.5 * w)
+	# At most one dropout of `drop_ticks` in each `period_ticks` (1.5 a second a fighter at the defaults), so two worn fighters together stay inside the screen's three flashes a second
+	# (Legal's k05, docs/vfx/flash-registry.md). The old pattern dropped out up to 20 times a second.
+	var per: int = maxi(int(p("flicker", "period_ticks")), 1)
+	var n: int = tick / per
+	var ph: int = (tick + slot * (per / 2)) % per
+	var gate: bool = _h(n, slot) < p("flicker", "density") * (0.5 + 0.5 * w) and ph < DROP_TICKS
 	return 1.0 - amp * w * (1.0 if gate else 0.12)
 
 

@@ -74,6 +74,8 @@ var stages_enabled: bool = VfxLook.STAGES_DEFAULT   # building stages (stages.gd
 var stages := VfxStages.new()
 var press := VfxPress.new()
 var beat_glint_enabled: bool = false          # the beat option (UI's beat ring for every blow, the rival's too): a glint on the striking limb at the beat (press.gd)
+var flashes := VfxFlashRegistry.new()          # the shared flash register: every full flash asks it (flash_registry.gd, docs/vfx/flash-registry.md)
+var reduced_flashing: bool = false              # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
 var explosions_enabled: bool = VfxLook.EXPLOSIONS_DEFAULT   # the blasts erupt in flame, sparks, smoke and a smouldering scorch; a knocked-loose shot tumbles and smokes (explode.gd)
@@ -132,7 +134,11 @@ func reset(S: SimState, p_seed: int) -> void:
 	stages.reset()
 	zip.reset()
 	inreach.reset()
-	press.flash_sink = inreach
+	flashes.reset()
+	press.flash_sink = flashes
+	inreach.registry = flashes
+	zip.flashes = flashes
+	shots.flashes = flashes
 	earth.debris = debris
 	earth.reset()
 	water.debris = debris
@@ -194,6 +200,7 @@ func consume(S: SimState, events: Array) -> void:
 func _consume(S: SimState, events: Array) -> void:
 	if not enabled:
 		return
+	flashes.begin_tick(reduced_motion or reduced_flashing)
 	var dt: float = SimConst.DT
 	var frozen: bool = true
 	for e in events:
@@ -205,6 +212,18 @@ func _consume(S: SimState, events: Array) -> void:
 		for e in events:
 			if e.type == "transform":
 				xform.begin(int(e.actor), float(e.tier), String(_g(e, "version", "live")), float(_g(e, "dur", 0.0)))
+	if transform_enabled:
+		# The break's flash asks the register once, when the break begins; transform_view draws it from VfxTransform.p, so the answer is the scale p applies.
+		var gate: float = 1.0
+		for f in xform.forms:
+			var tb: float = f.age - float(f.g)
+			if tb >= 0.0 and tb < VfxTransform.p("break", "flash_ticks"):
+				if not f.flash_asked:
+					f.flash_asked = true
+					f.flash_ok = flashes.ask("transform", VfxPress.lane_of(S, f.slot), S.tick)
+				if not f.flash_ok:
+					gate = 0.0
+		VfxTransform.flash_scale = gate
 	if transform_enabled and standing_aura_enabled:
 		aura.step(S, frozen, xform.forms)
 	for e in events:

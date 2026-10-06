@@ -241,6 +241,10 @@ Encounter's Z1 cues (`zip_light`, `zip_heavy`, `zip_out`, `zip_end`) drive the z
 
 The point-blank bolt and the blast (RB held in reach), drawn ahead of the sim from assumed cues `energy_reach` and `energy_land`: a lit palm, the gather, a crack, a hollow ring, a rationed flash, the rim on both bodies, the spill and its scorch, the blast's carry; "B now" chevrons on a long stagger and the launch's send-off. The flash limit counts across both fighters and the block's flash (Legal's k05). `render/vfx/reach.gd`, `shots_view.gd` `_reach`; docs/vfx/reach.md (cues, the counter's guarantees and gaps, the recording); `effects_check.gd` `_reach()`.
 
+### The shared flash registry (2026-10-06)
+
+One register in the hub (`hub.flashes`, `flash_registry.gd`) that every full flash asks before it draws: three a second across the screen, two of them for the low-priority kinds, one a second and none of those in reduced flashing, nothing red; the energy landing, the block, shot-hit and mine rings, the flame burst, the transformation's break flash (through `transform.gd`, not the held view) and a guard break's ring are under it; the wear flicker, the mine fuse blink and the beam head's pulse were re-timed; Rendering's body hit flash, head flashes, guard arc flash and beam clash are not yet. A per-ask log for Tools and UI. docs/vfx/flash-registry.md (the table of every source, what Reduced motion does and does not do); `effects_check.gd` `_flashes()`.
+
 ### Building stages (plan, 2026-10-05)
 
 A note only: what VFX will draw for World's `building_stage` event (glass shower at windows out, a cladding shed and dust skirt for a part gone, a bigger shed and a plume for a shell, nothing new for rubble) and an ambient shell plume read from the stage query, so a seek or late join still looks wrecked. Not built until World's slice is committed. docs/vfx/building-stages-plan.md.

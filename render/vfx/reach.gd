@@ -46,7 +46,7 @@ var fx: Array = []
 var made: Dictionary = {}
 var full_ticks: Array = []          # the ticks a full flash was given (the tests check the rate)
 var last_full: int = -1000
-var flash_log: Array = []           # every flash on the screen that this hub knows of (an energy full flash, a block's flash), by tick: Legal's k05 counts them together
+var registry: VfxFlashRegistry = null   # the screen's flash register (flash_registry.gd): a full flash asks it before it is drawn
 var shown: int = 0                  # quads drawn last frame
 var smoke_jobs: Array = []          # {slot, left, every}: smoke off a carried fighter after a blast
 
@@ -78,35 +78,19 @@ func reset() -> void:
 	made.clear()
 	full_ticks.clear()
 	last_full = -1000
-	flash_log.clear()
 	shown = 0
 	smoke_jobs.clear()
 
 
-## A flash from another effect (a block's, so far) counts against the screen's three a second.
-func note_flash(tick: int) -> void:
-	flash_log.append(tick)
-	while flash_log.size() > 60:
-		flash_log.pop_front()
-
-
-## Flashes on the whole screen in the 60 ticks up to and including `tick`.
-func flashes_in_second(tick: int) -> int:
-	var k: int = 0
-	for t in flash_log:
-		if t > tick - 60 and t <= tick:
-			k += 1
-	return k
-
-
-## The flash limit (§5b point 8 and Legal's k05, three full flashes a second over the whole screen, both fighters and every effect together): true when a full flash may be drawn on this tick,
-## and then it takes the slot: at most one in each `flash_every` ticks, and never a fourth in any 60.
-func allow_full(S: SimState) -> bool:
-	if S.tick - last_full < int(p("flash_every")) or flashes_in_second(S.tick) >= 3:
+## The flash limit (§5b point 8 and Legal's k05): true when a full flash may be drawn on this tick, and then it takes the slot. Two rules: at least `flash_every` ticks since the
+## last one across both fighters (the design's pace), and the screen's register (three a second across every effect, fewer for low-priority sources, none in reduced motion).
+func allow_full(S: SimState, col: Color = Color.WHITE) -> bool:
+	if S.tick - last_full < int(p("flash_every")):
+		return false
+	if registry != null and not registry.ask("energy", col, S.tick):
 		return false
 	last_full = S.tick
 	full_ticks.append(S.tick)
-	note_flash(S.tick)
 	while full_ticks.size() > 40:
 		full_ticks.pop_front()
 	return true
@@ -224,7 +208,7 @@ func _land(S: SimState, e, reduced: bool, debris) -> void:
 		l.guard = guard
 		l.small = reduced
 		l.life = p("land_life")
-		l.big = (not reduced) and (not guard or blast) and allow_full(S)
+		l.big = (not reduced) and (not guard or blast) and allow_full(S, col.lightened(0.3))
 		fx.append(l)
 		made["land"] = int(made.get("land", 0)) + 1
 		if l.big:
