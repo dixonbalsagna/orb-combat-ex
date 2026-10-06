@@ -16,8 +16,9 @@
 // (the ticks in reach before and after the blow): integers of 0 or more.
 // Rules (zip-order): band.minBh below maxBh; each inTicks lo at most hi; exit.capBh at most band.maxBh; towardDeg + awayDeg at most 180. Rule
 // zip-floor: floor.minTicks at least 4 (Legal, RL-076: a zip's way in and out each last at least 4 ticks, no blink step).
-// data/director/ai.json, each level: zipShare, zipHeavyShare, zipCounter, zipDodge and zipExit (shares 0 to 1; zipExit: the share of its zips
-// that pick an exit other than back), required.
+// data/director/ai.json, each level: zipShare, zipHeavyShare, zipCounter, zipDodge, zipExit and zipPunish (shares 0 to 1; zipExit: the share of
+// its zips that pick an exit other than back; zipPunish: the share at which the AI presses a light on a zipper in reach once his blow has resolved),
+// required.
 // The fixtures get the block and the keys; every case sets its own whole block. Re-runnable (a second run changes nothing).
 const fs = require('fs');
 const rj = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -52,9 +53,9 @@ const VALID = {
   counter: { techBefore: 4, heavyBefore: 6, staggerTicks: 12, mul: 1.25 },
   dodgeConvertTicks: 8,
 };
-const VALID_AI = { zipShare: 0.3, zipHeavyShare: 0.2, zipCounter: 0.5, zipDodge: 0.4, zipExit: 0.5 };
+const VALID_AI = { zipShare: 0.3, zipHeavyShare: 0.2, zipCounter: 0.5, zipDodge: 0.4, zipExit: 0.5, zipPunish: 0.5 };
 const AI_KEYS = Object.keys(VALID_AI);
-const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2, zipDodge: 0.2, zipExit: 0.2 }, medium: { zipShare: 0.3, zipHeavyShare: 0.2, zipCounter: 0.5, zipDodge: 0.4, zipExit: 0.5 }, hard: { zipShare: 0.5, zipHeavyShare: 0.4, zipCounter: 0.8, zipDodge: 0.7, zipExit: 0.8 } };
+const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2, zipDodge: 0.2, zipExit: 0.2, zipPunish: 0.2 }, medium: { zipShare: 0.3, zipHeavyShare: 0.2, zipCounter: 0.5, zipDodge: 0.4, zipExit: 0.5, zipPunish: 0.5 }, hard: { zipShare: 0.5, zipHeavyShare: 0.4, zipCounter: 0.8, zipDodge: 0.7, zipExit: 0.8, zipPunish: 0.8 } };
 
 // =============================== interrupts schema ===============================
 {
@@ -134,7 +135,7 @@ const AI_BY_LEVEL = { easy: { zipShare: 0.1, zipHeavyShare: 0.1, zipCounter: 0.2
   let changed = false;
   for (const name of ['easy', 'medium', 'hard']) {
     const L = s.properties.levels.properties[name];
-    for (const [k, d] of [['zipShare', 'The chance the AI zips in from the band.'], ['zipHeavyShare', 'The chance a zip it makes is the heavy.'], ['zipCounter', 'The chance it counters with a zip.'], ['zipDodge', 'The chance it turns a dodge into a zip.'], ['zipExit', 'The share of its zips that pick an exit other than back.']]) {
+    for (const [k, d] of [['zipShare', 'The chance the AI zips in from the band.'], ['zipHeavyShare', 'The chance a zip it makes is the heavy.'], ['zipCounter', 'The chance it counters with a zip.'], ['zipDodge', 'The chance it turns a dodge into a zip.'], ['zipExit', 'The share of its zips that pick an exit other than back.'], ['zipPunish', 'The share at which it presses a light on a zipper in reach once his blow has resolved.']]) {
       if (!L.properties[k]) { L.properties[k] = share(d); changed = true; }
       if (!L.required.includes(k)) { L.required.push(k); changed = true; }
     }
