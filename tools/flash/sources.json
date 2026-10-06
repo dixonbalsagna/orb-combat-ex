@@ -89,15 +89,35 @@
         "damage": 20
       },
       "ticks": 3600,
-      "seeds": [
-        12345,
-        4,
-        7
-      ]
+      "pairings": true
     }
   ],
   "outside": {
     "divider_slam": "Camera's and UI's: the split divider's slam flash. Not Rendering's or VFX's; no register ask; pixels only.",
     "glare": "VFX's glare on the rival's glasses: steady for its hold, not a flash; listed so a reader knows it was considered."
-  }
+  },
+  "pairings": [
+    {
+      "slots": [
+        "PROTAGONIST",
+        "RIVAL"
+      ],
+      "seeds": [
+        12345,
+        4,
+        7,
+        1,
+        3,
+        5,
+        38,
+        39
+      ],
+      "needSignatures": [
+        "PROTAGONIST",
+        "RIVAL"
+      ],
+      "_why": "AI matches of the launch pair, full length, in both modes. 12345, 4 and 7 are hash_check's seeds (12345 and 4 failed the first pixel gate); 1, 3, 5, 38 and 39 were chosen by tools/flash/seed_scan.gd so that both fighters fire their signature across the set (PROTAGONIST in 1, 3, 5, 38, 39; RIVAL in 4, 7, 1, 5, 39), with a beam clash (most), a guard (5, 38), a deflect (39) and a city collapse (3, 5, 39), and so that the staged run raises no script error (seeds 17 and 19 were dropped: they raise 670 and 794 errors in sim/world/collateral.gd, see docs/tools/flash-check.md)."
+    }
+  ],
+  "_pairings": "The fixed list of AI matches the pixel gate must pass (Legal, RL-119). One entry for every unordered pair of distinct fighters in data/fighters/roster.json (slots in roster order; selftest.js fails when the roster has a pair this list lacks), each with seeds that between them show every fighter of the pair firing its signature (check-log.js checks it from the runs' events). Add an entry when a fighter joins the roster."
 }

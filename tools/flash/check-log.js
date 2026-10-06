@@ -103,6 +103,17 @@ function main(argv) {
   for (const { run } of results) {
     if (run.reduced && run.reduced_seen === false) problems.push(`scenario ${run.scenario} seed ${run.seed}: asked for reduced flashing but the register never ran reduced (its cap stayed 3), so the 1-a-second check did not apply`);
   }
+  // the AI-match set: every pairing at every seed in both modes, and across a pairing's seeds both fighters fire their signature
+  for (const pr of src.pairings || []) {
+    const mine = results.filter((x) => x.run.scenario === 'ai' && Array.isArray(x.run.slots) && x.run.slots[0] === pr.slots[0] && x.run.slots[1] === pr.slots[1]);
+    for (const seed of pr.seeds) for (const mode of [false, true]) {
+      if (!mine.some((x) => x.run.seed === seed && !!x.run.reduced === mode) && !allowMissing) problems.push(`AI match ${pr.slots.join(' v ')} seed ${seed} (${mode ? 'reduced' : 'normal'}) is missing from the runs`);
+    }
+    for (const id of pr.needSignatures) {
+      const n = mine.filter((x) => !x.run.reduced).reduce((a, x) => a + ((x.run.events || {})['sig:' + id] || 0), 0);
+      if (n < 1 && !allowMissing) problems.push(`the AI matches of ${pr.slots.join(' v ')} never show ${id} firing its signature: add a seed that does (tools/flash/seed_scan.gd lists them)`);
+    }
+  }
   const totalAsks = results.reduce((n, x) => n + x.res.asks, 0);
   if (!totalAsks) problems.push('no flash was asked in any run: the register was never exercised');
 

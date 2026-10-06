@@ -15,7 +15,7 @@ const tmp = mkdtempSync(join(tmpdir(), 'flash-pix-'));
 let failed = 0;
 const cases = [
   { scene: 'steady', general: 0, pass: true, what: 'a still frame' },
-  { scene: 'strobe3', general: 3, pass: true, what: 'the whole frame black and white 3 times a second (at the limit)' },
+  { scene: 'strobe3', general: 3, pass: false, what: 'the whole frame black and white 3 times a second (within the standard, over our gate of 2.5)' },
   { scene: 'strobe4', general: 4, pass: false, what: 'the same 4 times a second' },
   { scene: 'corner2', general: 0, pass: true, what: 'a 2.25% corner at 10 a second (under a quarter of a 341 x 256 window)' },
   { scene: 'corner4', general: 10, pass: false, what: 'a 4% corner at 10 a second (over it)' },

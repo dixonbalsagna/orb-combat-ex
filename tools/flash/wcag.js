@@ -12,7 +12,8 @@
 //               its height), at least a quarter of the window's pixels change together, the window slid to every position (an integral image over the changed-pixel mask).
 //               At 1024 x 768 that is 25% of 87,296 = 21,824 pixels. A fade that takes several frames is one change: the pixels that turn the same way on consecutive frames are
 //               pooled before the window is tried
-//   count       flashes = opposing changes / 2 in any window of one second (fps frames); more than 3 fails
+//   count       flashes = opposing changes / 2 in any window of one second (fps frames); more than 3 fails the standard. OUR gate is 2.5 (RL-119): `pass` means the worst
+//               second is 2.5 or below, `passStandard` that it is 3 or below
 // A change is a swing of one pixel's value of at least the threshold, taken from its last extreme, so a slow ramp is one change and a flicker below the threshold is none.
 'use strict';
 const zlib = require('zlib');
@@ -28,7 +29,8 @@ const DEFAULTS = {
   windowH: 256 / 768,    // ... and of its height (341 x 256 at 1024 x 768)
   areaShare: 0.25,       // the share of the window's pixels that must change together
   poolMin: 0.002,        // a frame joins a same-direction run when at least this share of the frame turned that way on it
-  maxFlashes: 3,         // more than this in any second fails
+  maxFlashes: 3,         // the standard's limit: more than this in any second fails the standard
+  gate: 2.5,             // OUR gate (Legal, RL-119): the check is a proxy with unmeasured error, so the worst second must be this or below
   dipArea: 0.40,         // a dip: a down change over this share of the whole frame ...
 };
 
@@ -292,7 +294,8 @@ function analyse(frames, opts = {}) {
     general: { events: pg.events.map((e) => ({ tick: e.f + 1, sign: e.s, windowPx: e.window, pooledPx: e.size })), flashes: g.flashes, atFrame: g.atFrame, atTick: g.atFrame + 1, qualifyingChanges: g.changes, largestWindowPx: pg.best, largestWindowOfThreshold: pg.best / thr, largestChangePx: pg.bestDirPx, largestChangeOfFrame: pg.bestDirPx / n, largestAtFrame: pg.bestAt, windowByTick: Object.fromEntries([...pg.series].map(([f, v]) => [f + 1, v])) },
     red: { events: pr.events.map((e) => ({ tick: e.f + 1, sign: e.s, windowPx: e.window, pooledPx: e.size })), flashes: r.flashes, atFrame: r.atFrame, atTick: r.atFrame + 1, qualifyingChanges: r.changes, largestWindowPx: pr.best, largestWindowOfThreshold: pr.best / thr, largestChangePx: pr.bestDirPx, largestChangeOfFrame: pr.bestDirPx / n, largestAtFrame: pr.bestAt },
     dips: { list: dips, shortestGapFrames: gaps.length ? Math.min(...gaps) : null },
-    pass: g.flashes <= o.maxFlashes && r.flashes <= o.maxFlashes,
+    pass: g.flashes <= o.gate && r.flashes <= o.gate,
+    passStandard: g.flashes <= o.maxFlashes && r.flashes <= o.maxFlashes,
     params: o,
   };
 }

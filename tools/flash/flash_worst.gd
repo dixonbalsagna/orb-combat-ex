@@ -18,9 +18,8 @@ extends SceneTree
 
 const DT: float = 1.0 / 60.0
 const FORM_TICKS: Array = [300, 1500]
-const SCENARIOS: Array = ["mash", "clash", "signature", "transform", "collapse", "ai"]
-const SEEDS: Dictionary = {"mash": [12345], "clash": [12345], "signature": [12345], "transform": [12345], "collapse": [12345], "ai": [12345, 4, 7]}
-const TICKS: Dictionary = {"mash": 1800, "clash": 1500, "signature": 1500, "transform": 1500, "collapse": 1500, "ai": 3600}
+## The scenarios, their lengths and the AI-match set (seeds and pairings) are tools/flash/sources.json's, so the headless runs, check-log.js and run-pixels.mjs read one list.
+const SOURCES: String = "res://tools/flash/sources.json"
 ## Which slots are AI (true) in each scenario.
 const AI_SLOTS: Dictionary = {"mash": [false, false], "clash": [false, false], "signature": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
 
@@ -28,6 +27,8 @@ var main: Node
 var out_dir: String = "build/flash"
 var only: Array = []
 var tick_override: int = 0
+var defs: Dictionary = {}
+var slots_override: Array = []
 var seed_override: Array = []
 var held: Dictionary = {}        # key code -> true: what this tool has pressed, so a key is only sent when it changes
 var events: Dictionary = {}      # event type (and beam_outcome:kind) -> count, for the run being played
@@ -50,8 +51,17 @@ func _initialize() -> void:
 			trace = true
 		elif a.begins_with("--ticks="):
 			tick_override = int(a.substr(8))
+		elif a.begins_with("--slots="):
+			slots_override = Array(a.substr(8).split(","))
 		elif a.begins_with("--seeds="):
 			seed_override = Array(a.substr(8).split(",")).map(func(s): return int(s))
+	var jf := FileAccess.open(SOURCES, FileAccess.READ)
+	if jf == null:
+		push_error("cannot read %s" % SOURCES)
+		quit(1)
+		return
+	defs = JSON.parse_string(jf.get_as_text())
+	jf.close()
 	var vpn := SubViewport.new()
 	vpn.size = Vector2i(1280, 720)
 	vpn.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -69,23 +79,39 @@ func _run() -> void:
 	if not DirAccess.dir_exists_absolute(_abs(out_dir)):
 		DirAccess.make_dir_recursive_absolute(_abs(out_dir))
 	var written: int = 0
-	for sc in SCENARIOS:
+	var roster: Array = JSON.parse_string(FileAccess.get_file_as_string("res://data/fighters/roster.json"))
+	for sd in defs["scenarios"]:
+		var sc: String = str(sd["id"])
 		if not only.is_empty() and not only.has(sc):
 			continue
-		for seed in (seed_override if not seed_override.is_empty() else SEEDS[sc]):
-			for reduced in [false, true]:
-				var run: Dictionary = await _play(sc, int(seed), reduced)
-				var name: String = "flash-%s-%s%s.json" % [sc, "reduced" if reduced else "normal", "" if SEEDS[sc].size() == 1 else "-%d" % seed]
-				var f := FileAccess.open(_abs(out_dir).path_join(name), FileAccess.WRITE)
-				if f == null:
-					push_error("cannot write %s" % name)
-					failed = true
-					continue
-				f.store_string(JSON.stringify(run))
-				f.close()
-				written += 1
-				var s: Dictionary = run["summary"]
-				print("%-10s %-8s seed %-6d %4d ticks: %3d asks, %3d granted, worst %d in 60 ticks (the register's own figure), events %s" % [sc, "reduced" if reduced else "normal", seed, run["ticks"], run["rows"].size(), s["granted"], s["worst_second"], _top(run["events"])])
+		# the runs of a scenario: `ai` is one per pairing of sources.json, the others the default pair with the one seed
+		var runs: Array = []
+		if sd.get("pairings", false):
+			for pr in defs["pairings"]:
+				runs.append({"slots": pr["slots"], "seeds": pr["seeds"]})
+		else:
+			runs.append({"slots": [], "seeds": [12345]})
+		if not slots_override.is_empty():
+			runs = [{"slots": slots_override, "seeds": runs[0]["seeds"]}]
+		for r in runs:
+			var sl: Array = r["slots"]
+			var default_pair: bool = sl.is_empty() or (sl.size() == 2 and str(sl[0]) == str(roster[0]) and str(sl[1]) == str(roster[1]))
+			var label: String = "" if default_pair else "-" + "-".join(sl)
+			var seeds: Array = seed_override if not seed_override.is_empty() else r["seeds"]
+			for seed in seeds:
+				for reduced in [false, true]:
+					var run: Dictionary = await _play(sc, int(seed), reduced, int(sd["ticks"]), [] if default_pair else sl)
+					var name: String = "flash-%s-%s%s%s.json" % [sc, "reduced" if reduced else "normal", label, "" if r["seeds"].size() == 1 else "-%d" % int(seed)]
+					var f := FileAccess.open(_abs(out_dir).path_join(name), FileAccess.WRITE)
+					if f == null:
+						push_error("cannot write %s" % name)
+						failed = true
+						continue
+					f.store_string(JSON.stringify(run))
+					f.close()
+					written += 1
+					var s: Dictionary = run["summary"]
+					print("%-10s %-8s seed %-6d %4d ticks: %3d asks, %3d granted, worst %d in 60 ticks (the register's own figure), events %s" % [sc, "reduced" if reduced else "normal", int(seed), run["ticks"], run["rows"].size(), s["granted"], s["worst_second"], _top(run["events"])])
 	print("wrote %d run files to %s" % [written, _abs(out_dir)])
 	quit(1 if failed or written == 0 else 0)
 
@@ -102,9 +128,9 @@ static func _top(ev: Dictionary) -> String:
 	return ", ".join(parts)
 
 
-func _play(sc: String, seed: int, reduced: bool) -> Dictionary:
+func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = []) -> Dictionary:
 	var ai: Array = AI_SLOTS[sc]
-	main.start_match(seed, {"p1": ai[0], "p2": ai[1]})
+	main.start_match(seed, {"p1": ai[0], "p2": ai[1]}, null if slots.is_empty() else {"slots": slots})
 	var host: SimHost = main.host
 	host.vfx.force_reduced = reduced
 	_release_all()
@@ -118,8 +144,11 @@ func _play(sc: String, seed: int, reduced: bool) -> Dictionary:
 			if e.type == "beam_outcome":
 				var k: String = "beam_outcome:%s" % str(e.kind)
 				events[k] = int(events.get(k, 0)) + 1
+			elif e.type == "attack" and str(e.kind) == "sig":
+				var k2: String = "sig:%s" % str(host.S.fighters[int(e.actor)].id)
+				events[k2] = int(events.get(k2, 0)) + 1
 	host.drained.connect(cb)
-	var total: int = tick_override if tick_override > 0 else int(TICKS[sc])
+	var total: int = tick_override if tick_override > 0 else ticks
 	var reduced_seen: bool = false
 	var guard: int = 0
 	while host.ticks < total and guard < total * 4:
@@ -140,7 +169,7 @@ func _play(sc: String, seed: int, reduced: bool) -> Dictionary:
 	var fl = host.vfx.flashes
 	var sm: Dictionary = fl.summary()
 	return {
-		"scenario": sc, "seed": seed, "reduced": reduced, "reduced_seen": reduced_seen, "ticks": host.ticks, "cap": sm["cap"],
+		"scenario": sc, "seed": seed, "slots": [str(host.S.fighters[0].id), str(host.S.fighters[1].id)], "reduced": reduced, "reduced_seen": reduced_seen, "ticks": host.ticks, "cap": sm["cap"],
 		"rows": fl.log_rows(), "asked": int(sm["granted"]) + int(sm["refused"]), "summary": sm, "events": events.duplicate(),
 		"proxy": {"body_hit": {"seconds": RenderLook.HIT_FLASH_S, "worst_per_fighter": [_worst_starts(body_starts[0]), _worst_starts(body_starts[1])], "worst_flashes_per_second": maxi(_worst_starts(body_starts[0]), _worst_starts(body_starts[1])), "starts": [body_starts[0].size(), body_starts[1].size()]}},
 	}

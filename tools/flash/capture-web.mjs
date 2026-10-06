@@ -27,10 +27,10 @@ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv
 const has = (n) => argv.includes(n);
 const usage = () => {
   console.error('usage: node tools/flash/capture-web.mjs (--dir <site dir> [--path /play/] | --url <page url> | --mock) --scenario <id> --out <folder>\n' +
-    '       [--ticks 1800] [--reduced] [--seed N] [--width 960] [--height 540] [--software] [--browser chrome|edge] [--browser-path <exe>] [--timeout 900]');
+    '       [--ticks 1800] [--reduced] [--seed N] [--slots A,B] [--skip N] [--width 960] [--height 540] [--software] [--browser chrome|edge] [--browser-path <exe>] [--timeout 900]');
   process.exit(2);
 };
-const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--width', '--height', '--software', '--browser', '--browser-path', '--timeout']);
+const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--width', '--height', '--software', '--browser', '--browser-path', '--timeout']);
 for (const a of argv) if (a.startsWith('--') && !known.has(a)) { console.error(`unknown option ${a}`); usage(); }
 const here = dirname(fileURLToPath(import.meta.url));
 const DIR = has('--mock') ? join(here, 'mock-page') : opt('--dir');
@@ -42,6 +42,8 @@ const TICKS = Number(opt('--ticks', 1800));
 const WIDTH = Number(opt('--width', 960)), HEIGHT = Number(opt('--height', 540));
 const REDUCED = has('--reduced');
 const SEED = opt('--seed') === undefined ? null : Number(opt('--seed'));
+const SLOTS = opt('--slots') ? opt('--slots').split(',') : null;      // a pairing: two roster ids (the hook may not offer it yet)
+const SKIP = opt('--skip') === undefined ? null : Number(opt('--skip'));   // ticks to run without drawing before the clip starts (the hook may not offer it yet)
 const TIMEOUT_S = Number(opt('--timeout', 900));
 const BROWSER = opt('--browser', 'chrome');
 const EXES = {
@@ -117,7 +119,7 @@ try {
   let ready = false;
   while (Date.now() < deadline && !ready) { await sleep(500); ready = await page.eval('Boolean(window.__flashcap && window.__flashcap.ready)').catch(() => false); }
   if (!ready) throw new Error(`the page offers no window.__flashcap that becomes ready (the contract is at the top of tools/flash/capture-web.mjs); the build does not have it yet`);
-  await page.eval(`window.__flashcap.start(${JSON.stringify(SCENARIO)}, { reduced: ${REDUCED}${SEED === null ? '' : ', seed: ' + SEED} })`);
+  await page.eval(`window.__flashcap.start(${JSON.stringify(SCENARIO)}, { reduced: ${REDUCED}${SEED === null ? '' : ', seed: ' + SEED}${SLOTS ? ', slots: ' + JSON.stringify(SLOTS) : ''}${SKIP === null ? '' : ', skip: ' + SKIP} })`);
   log(`${pageUrl}: ${SCENARIO}${REDUCED ? ' (reduced)' : ''}, ${TICKS} ticks at ${WIDTH}x${HEIGHT}`);
   let last = -1;
   const inWindow = [];

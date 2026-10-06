@@ -4,7 +4,7 @@
 //
 //   godot --headless --path . --export-release "Web" <site>/index.html            (a HEAD export; the Web preset, templates already installed)
 //   godot --headless --path . --script res://tools/flash/flash_worst.gd -- --out=<flash>            (the headless runs for the cross-check)
-//   node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <flash>] [--jobs 3] [--only mash,clash] [--keep]
+//   node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <flash>] [--jobs 3] [--only mash,clash] [--clip collapse-normal] [--keep | --keep-ranges]
 //
 // Writes <out>/<id>/ (frames and clip.json), <out>/summary.json and a table. Frames of clips that show no failure are deleted unless --keep. Exit 0 when every clip shows
 // no failure under the reading (docs/tools/flash-check.md) and every cross-check agrees, 1 otherwise. On Git Bash set MSYS_NO_PATHCONV=1 or quote --path.
@@ -20,13 +20,26 @@ const DIR = opt('--dir'), PATH = opt('--path', '/index.html?flashcap=1'), OUT = 
 const JOBS = Number(opt('--jobs', 3));
 const ONLY = opt('--only') ? opt('--only').split(',') : null;
 const W = 1024, H = 768;
-if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--keep]'); process.exit(2); }
+if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges]'); process.exit(2); }
 const src = JSON.parse(readFileSync(join(here, 'sources.json'), 'utf8'));
+const roster = JSON.parse(readFileSync(join(here, '..', '..', 'data', 'fighters', 'roster.json'), 'utf8'));
+const CLIP = opt('--clip') ? opt('--clip').split(',') : null;
+// the required set (sources.json): the five fixed cases, and for `ai` every pairing at every seed, each in both modes. A clip's id is scenario[-pairing][-seed]-mode.
 const jobs = [];
 for (const sc of src.scenarios) {
   if (ONLY && !ONLY.includes(sc.id)) continue;
-  for (const seed of sc.seeds) for (const reduced of [false, true]) jobs.push({ id: `${sc.id}${sc.seeds.length > 1 ? '-' + seed : ''}-${reduced ? 'reduced' : 'normal'}`, scenario: sc.id, seed, reduced, ticks: sc.ticks, multi: sc.seeds.length > 1 });
+  const runs = sc.pairings ? src.pairings.map((p) => ({ slots: p.slots, seeds: p.seeds })) : [{ slots: null, seeds: [12345] }];
+  for (const r of runs) {
+    const dflt = !r.slots || (r.slots[0] === roster[0] && r.slots[1] === roster[1]);
+    const label = dflt ? '' : '-' + r.slots.join('-');
+    for (const seed of r.seeds) for (const reduced of [false, true]) {
+      const id = `${sc.id}${label}${r.seeds.length > 1 ? '-' + seed : ''}-${reduced ? 'reduced' : 'normal'}`;
+      if (CLIP && !CLIP.includes(id)) continue;
+      jobs.push({ id, scenario: sc.id, seed, reduced, ticks: sc.ticks, multi: r.seeds.length > 1, slots: dflt ? null : r.slots, label });
+    }
+  }
 }
+if (!jobs.length) { console.error('no clip matches (ids look like collapse-normal, ai-12345-reduced, mash-reduced; --only takes scenario names)'); process.exit(2); }
 mkdirSync(OUT, { recursive: true });
 
 const run = (args) => new Promise((ok) => {
@@ -47,7 +60,7 @@ function seriesFromRows(rows, ticks) {
 async function one(job) {
   const dir = join(OUT, job.id);
   const t0 = Date.now();
-  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(job.ticks), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', '1800']);
+  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.slots ? ['--slots', job.slots.join(',')] : []), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(job.ticks), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', '1800']);
   if (cap.code !== 0) return { ...job, error: cap.out.trim().split('\n').pop() };
   if (argv.includes('--capture-only')) return { ...job, captured: true };
   const an = await run([join(here, 'analyse-frames.js'), dir, '--scale', '1', '--json', join(dir, 'analysis.json')]);
@@ -55,7 +68,7 @@ async function one(job) {
   const clip = JSON.parse(readFileSync(join(dir, 'clip.json'), 'utf8'));
   let cross = null;
   if (FLASH) {
-    const f = join(FLASH, `flash-${job.scenario}-${job.reduced ? 'reduced' : 'normal'}${job.multi ? '-' + job.seed : ''}.json`);
+    const f = join(FLASH, `flash-${job.scenario}-${job.reduced ? 'reduced' : 'normal'}${job.label}${job.multi ? '-' + job.seed : ''}.json`);
     if (existsSync(f) && clip.inWindow && clip.inWindow.every((x) => typeof x === 'number')) {
       const head = seriesFromRows(JSON.parse(readFileSync(f, 'utf8')).rows, job.ticks);
       let best = null;
@@ -69,8 +82,20 @@ async function one(job) {
     } else cross = { missing: true };
   }
   const bad = !result.pass;
-  if (!bad && !argv.includes('--keep')) for (const f of readdirSync(dir)) if (/\.png$/i.test(f)) rmSync(join(dir, f));
-  return { ...job, seconds: Math.round((Date.now() - t0) / 1000), result, cross, kept: bad || argv.includes('--keep') };
+  let kept = bad || argv.includes('--keep');
+  if (argv.includes('--keep-ranges')) {
+    // keep only the frames a person needs: the worst second (30 ticks before to 90 after its start) and every dip (15 before to 30 after), delete the rest
+    const ranges = [];
+    for (const k of ['general', 'red']) if (result[k].flashes >= 1 && result[k].atTick > 0) ranges.push([result[k].atTick - 30, result[k].atTick + 90]);
+    for (const d of result.dips.list) ranges.push([d.tick - 15, d.tick + 30]);
+    for (const f of readdirSync(dir)) {
+      const m = /^frame-(\d+)\.png$/.exec(f);
+      if (m && !ranges.some(([lo, hi]) => Number(m[1]) >= lo && Number(m[1]) <= hi)) rmSync(join(dir, f));
+    }
+    writeFileSync(join(dir, 'kept-ranges.json'), JSON.stringify({ ranges }, null, 2) + String.fromCharCode(10));
+    kept = true;
+  } else if (!bad && !argv.includes('--keep')) for (const f of readdirSync(dir)) if (/\.png$/i.test(f)) rmSync(join(dir, f));
+  return { ...job, seconds: Math.round((Date.now() - t0) / 1000), result, cross, kept };
 }
 
 const results = [];
@@ -95,11 +120,15 @@ for (const r of results) {
   const x = r.cross && !r.cross.missing ? `${r.cross.maxWeb}/${r.cross.maxHead} ${r.cross.agrees ? 'same' : 'DIFFERENT'}` : 'n/a';
   const ok = r.result.pass && (!r.cross || r.cross.missing || r.cross.agrees);
   if (!ok) bad++;
-  console.log(`${r.id.padEnd(24)} ${String(r.ticks).padStart(5)} ${String(r.result.general.flashes).padStart(8)} ${String(r.result.red.flashes).padStart(4)} ${(Math.round(100 * Math.max(r.result.general.largestWindowOfThreshold, r.result.red.largestWindowOfThreshold)) + '%').padStart(13)} ${String(r.result.dips.list.length).padStart(5)}  ${x.padEnd(26)} ${ok ? 'no failure found' : 'FAIL'}`);
+  console.log(`${r.id.padEnd(24)} ${String(r.ticks).padStart(5)} ${String(r.result.general.flashes).padStart(8)} ${String(r.result.red.flashes).padStart(4)} ${(Math.round(100 * Math.max(r.result.general.largestWindowOfThreshold, r.result.red.largestWindowOfThreshold)) + '%').padStart(13)} ${String(r.result.dips.list.length).padStart(5)}  ${x.padEnd(26)} ${ok ? 'no failure found' : (r.result.passStandard ? 'OVER OUR GATE (2.5), within the standard' : 'FAIL: over the standard (3)')}`);
+}
+for (const r of results.filter((x) => !x.error)) {
+  const d = r.result.dips;
+  if (d.list.length) console.log(`dips in ${r.id}: ${d.list.map((x) => `tick ${x.tick} (${(100 * x.areaOfFrame).toFixed(0)}% of the frame, mean luminance ${x.meanBefore.toFixed(3)} to ${x.meanMin.toFixed(3)})`).join('; ')}; shortest gap ${d.shortestGapFrames === null ? 'n/a (one dip or none)' : d.shortestGapFrames + ' ticks'}`);
 }
 console.log(bad
   ? `
-pixel run FAILED in ${bad} of ${results.length} clips (frames kept in ${OUT} for the failures)`
+pixel run FAILED the gate (2.5 flashes in any second, Legal's RL-119; the standard's limit is 3) in ${bad} of ${results.length} clips (frames kept in ${OUT} for the failures)`
   : `
 An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (${results.length} clips; every register count agrees with the headless run; docs/tools/flash-check.md has the reading and its limits. This is not a clearance.)`);
 process.exit(bad ? 1 : 0);

@@ -76,7 +76,9 @@ check('uv of black is given the white point (no light has no chromaticity)', W.u
 
 // ---- the general flash
 const full3 = run(strobe(BLACK, WHITE, 10, 3));
-check('a full-frame black/white strobe at 3 a second is 3 flashes and passes', full3.general.flashes === 3 && full3.pass, JSON.stringify(full3.general));
+check('a full-frame black/white strobe at 3 a second is 3 flashes: within the standard, over our gate of 2.5', full3.general.flashes === 3 && full3.passStandard && !full3.pass);
+check('a strobe of 5 changes a second (2.5 flashes) is at our gate and passes it', run(strobe(BLACK, WHITE, 12, 3)).general.flashes === 2.5 && run(strobe(BLACK, WHITE, 12, 3)).pass);
+check('the gate is a parameter: gate 3 passes the 3-a-second strobe', run(strobe(BLACK, WHITE, 10, 3), { gate: 3 }).pass);
 const full4 = run(strobe(BLACK, WHITE, 7.5, 3));
 check('the same strobe at 4 a second is 4 flashes and fails', full4.general.flashes >= 4 && !full4.pass, JSON.stringify(full4.general));
 check('a full-frame strobe at 10 a second fails', !run(strobe(BLACK, WHITE, 3, 2)).pass);
@@ -115,12 +117,12 @@ check('the same swing from just below 0.80 fails (darker state under it)', !run(
   check('a slow ramp up and down (30 frames each) is a pass', r.pass && r.general.flashes <= 1, JSON.stringify(r.general));
 }
 check('a still image has no flashes', run([frame(GREY, GREY), frame(GREY, GREY), frame(GREY, GREY)]).general.flashes === 0);
-check('the flashes are counted in any one second, not over the whole clip: 3 a second for 10 seconds passes', run(strobe(BLACK, WHITE, 10, 10)).pass);
+check('the flashes are counted in any one second, not over the whole clip: 3 a second for 10 seconds is within the standard', run(strobe(BLACK, WHITE, 10, 10)).passStandard);
 {
   // 3 flashes in the first second then a pause then 3 more in the next: a window of one second never holds more than 3
   const fr = [];
   for (let i = 0; i < 240; i++) fr.push(i < 60 ? [frame(BLACK, BLACK), frame(WHITE, WHITE)][Math.floor(i / 10) % 2] : i < 120 ? frame(BLACK, BLACK) : i < 180 ? [frame(BLACK, BLACK), frame(WHITE, WHITE)][Math.floor((i - 120) / 10) % 2] : frame(BLACK, BLACK));
-  check('two bursts of 3 flashes a second apart pass', run(fr).pass);
+  check('two bursts of 3 flashes a second apart are within the standard', run(fr).passStandard);
 }
 
 // ---- the red flash
@@ -186,22 +188,23 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
     return o;
   };
   const list = (txt) => { const m = txt.match(/const SCENARIOS: Array = \[([^\]]*)\]/); return m ? [...m[1].matchAll(/"(\w+)"/g)].map((x) => x[1]) : null; };
-  const nums = (txt, name) => {
-    const m = txt.match(new RegExp('const ' + name + ': Dictionary = \\{([^\\n]*)\\}'));
-    if (!m) return null;
-    const o = {};
-    for (const x of m[1].matchAll(/"(\w+)":\s*(\[[^\]]*\]|\d+)/g)) o[x[1]] = JSON.parse(x[2]);
-    return o;
-  };
   const mine = read('tools/flash/flash_worst.gd');
   const src = L.loadSources();
-  const ticks = nums(mine, 'TICKS'), seeds = nums(mine, 'SEEDS');
-  check('sources.json and flash_worst.gd agree on every scenario\'s ticks and seeds', src.scenarios.every((s) => ticks && seeds && ticks[s.id] === s.ticks && JSON.stringify(seeds[s.id]) === JSON.stringify(s.seeds)), JSON.stringify({ ticks, seeds }));
-  check('flash_worst.gd names exactly the scenarios of sources.json', JSON.stringify(list(mine)) === JSON.stringify(src.scenarios.map((s) => s.id)), JSON.stringify(list(mine)));
+  const ids = src.scenarios.map((s) => s.id);
+  check('flash_worst.gd has a human or AI slot setting for every scenario of sources.json', ids.every((id) => (slots(mine) || {})[id] !== undefined), JSON.stringify(slots(mine)));
+  check('flash_worst.gd reads its scenarios, lengths and seeds from sources.json (no list of its own to drift)', /res:\/\/tools\/flash\/sources\.json/.test(mine) && !/const SEEDS|const TICKS|const SCENARIOS/.test(mine));
+  // the AI-match set: one entry for every unordered pair of distinct roster fighters, seeds that show every fighter's signature (check-log.js checks the runs)
+  const roster = JSON.parse(read('data/fighters/roster.json'));
+  const pairKey = (a, b) => a + '|' + b;
+  const have = new Set((src.pairings || []).map((p) => pairKey(p.slots[0], p.slots[1])));
+  const missing = [];
+  for (let i = 0; i < roster.length; i++) for (let j = i + 1; j < roster.length; j++) if (!have.has(pairKey(roster[i], roster[j]))) missing.push(roster[i] + ' v ' + roster[j]);
+  check('sources.json has an AI-match entry for every pair of roster fighters (add one when a fighter joins): ' + (missing.join(', ') || 'none missing'), missing.length === 0);
+  check('every AI-match entry names roster fighters, at least 3 distinct seeds, and needs both signatures', (src.pairings || []).every((p) => p.slots.length === 2 && p.slots.every((s) => roster.includes(s)) && new Set(p.seeds).size >= 3 && p.needSignatures.length === 2 && p.needSignatures.every((s) => p.slots.includes(s))));
   let theirs = null;
   try { theirs = read('render/tools/flash_capture.gd'); } catch { /* an export without it */ }
   if (theirs) {
-    check('Rendering\'s capture hook has the same scenarios as flash_worst.gd', JSON.stringify(list(theirs)) === JSON.stringify(list(mine)), JSON.stringify(list(theirs)));
+    check('Rendering capture hook has the same scenarios as sources.json', JSON.stringify(list(theirs)) === JSON.stringify(ids), JSON.stringify(list(theirs)));
     check('Rendering\'s capture hook has the same human and AI slots as flash_worst.gd', JSON.stringify(slots(theirs)) === JSON.stringify(slots(mine)), JSON.stringify([slots(theirs), slots(mine)]));
   }
 }

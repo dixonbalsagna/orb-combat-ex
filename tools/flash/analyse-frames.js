@@ -1,11 +1,11 @@
 // Half 2 of the photosensitivity check: the pixels. Runs the WCAG 2.2 criterion 2.3.1 analyser (tools/flash/wcag.js) over captured frames, one PNG per tick.
 //
-//   node tools/flash/analyse-frames.js <clip dir | folder of clip dirs> [--fps 60] [--scale N] [--area-share 0.25] [--json out.json] [--dips] [--allow-short]
+//   node tools/flash/analyse-frames.js <clip dir | folder of clip dirs> [--fps 60] [--scale N] [--area-share 0.25] [--gate 2.5] [--json out.json] [--dips] [--allow-short]
 //
 // A clip is a folder of PNGs named so that they sort in play order (frame-000001.png ...), one per sim tick (so 60 a second), optionally with clip.json
 // ({ "scenario": "mash", "reduced": false, "fps": 60 }) beside them, which tools/flash/capture-web.mjs writes. A folder whose subfolders are clips analyses each.
 // --scale N box-averages N x N pixels first (default: the smallest factor that brings the width to 640 or under); the area window and its threshold are fractions of the frame, so they
-// scale with it. Exit 0 when every clip shows no more than 3 general and 3 red flashes in any second under this reading, 1 when one does, 2 on bad input.
+// scale with it. Exit 0 when every clip shows no more than 2.5 general and 2.5 red flashes in any second (OUR gate, Legal's RL-119; the standard's limit is 3 and is reported separately), 1 when one does, 2 on bad input.
 //
 // What a pass means, and does not: docs/tools/flash-check.md. It is NOT a recognised analyser (Harding / PEAT); a pass is worded only as Legal's sentence printed below.
 'use strict';
@@ -37,9 +37,9 @@ function shrink(fr, s) {
 
 function main(argv) {
   const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
-  const flagsWithValue = new Set(['--fps', '--scale', '--area-share', '--json']);
+  const flagsWithValue = new Set(['--fps', '--scale', '--area-share', '--gate', '--json']);
   const args = argv.filter((a, i) => !a.startsWith('--') && !flagsWithValue.has(argv[i - 1]));
-  if (!args.length) { console.error('usage: node tools/flash/analyse-frames.js <clip dir | folder of clip dirs> [--fps 60] [--scale N] [--area-share 0.25] [--json out.json] [--dips] [--allow-short]'); return 2; }
+  if (!args.length) { console.error('usage: node tools/flash/analyse-frames.js <clip dir | folder of clip dirs> [--fps 60] [--scale N] [--area-share 0.25] [--gate 2.5] [--json out.json] [--dips] [--allow-short]'); return 2; }
   if (!fs.existsSync(args[0])) { console.error(`no such folder: ${args[0]}`); return 2; }
   const clips = listClips(args[0]);
   if (!clips.length) { console.error('no PNG frames found'); return 2; }
@@ -54,6 +54,7 @@ function main(argv) {
     const scale = Number(opt('--scale', Math.max(1, Math.ceil(first.w / 640))));
     const opts = { fps, count: c.files.length };
     if (opt('--area-share')) opts.areaShare = Number(opt('--area-share'));
+    if (opt('--gate')) opts.gate = Number(opt('--gate'));
     if (c.files.length < fps && !argv.includes('--allow-short')) { console.error(`${c.dir}: ${c.files.length} frames is under one second at ${fps} fps; a clip must hold at least a second (--allow-short to analyse anyway)`); return 2; }
     const get = (i) => shrink(i === 0 ? first : W.decodePng(fs.readFileSync(path.join(c.dir, c.files[i]))), scale);
     let r;
@@ -61,7 +62,8 @@ function main(argv) {
     const name = path.basename(c.dir) + (meta.reduced ? ' (reduced)' : '');
     const big = `${(100 * Math.max(r.general.largestWindowOfThreshold, r.red.largestWindowOfThreshold)).toFixed(0)}% of limit`;
     if (!r.pass) bad++;
-    console.log(`${name.padEnd(26)} ${String(r.frames).padStart(6)} ${(r.width + 'x' + r.height).padStart(9)} ${String(r.general.flashes).padStart(8)} ${String(r.red.flashes).padStart(5)} ${big.padStart(15)} ${String(r.dips.list.length).padStart(5)}  ${r.pass ? 'no failure found' : 'FAIL: more than ' + r.params.maxFlashes + ' flashes in a second' + (r.general.flashes > r.params.maxFlashes ? ` (general, from tick ${r.general.atTick})` : '') + (r.red.flashes > r.params.maxFlashes ? ` (red, from tick ${r.red.atTick})` : '')}`);
+    const verdict = r.pass ? 'no failure found' : (r.passStandard ? `OVER OUR GATE (${r.params.gate}), within the standard (${r.params.maxFlashes})` : `FAIL: over the standard (${r.params.maxFlashes})`) + ` from tick ${(r.general.flashes >= r.red.flashes ? r.general.atTick : r.red.atTick)}${r.red.flashes > r.general.flashes ? ' (red)' : ''}`;
+    console.log(`${name.padEnd(26)} ${String(r.frames).padStart(6)} ${(r.width + 'x' + r.height).padStart(9)} ${String(r.general.flashes).padStart(8)} ${String(r.red.flashes).padStart(5)} ${big.padStart(15)} ${String(r.dips.list.length).padStart(5)}  ${verdict}`);
     if (argv.includes('--dips')) for (const d of r.dips.list) console.log(`    dip at tick ${d.tick}: ${(100 * d.areaOfFrame).toFixed(0)}% of the frame, mean luminance ${d.meanBefore.toFixed(3)} to ${d.meanMin.toFixed(3)} (depth ${d.drop.toFixed(3)})`);
     report.push({ clip: c.dir, meta, scale, result: r });
   }
