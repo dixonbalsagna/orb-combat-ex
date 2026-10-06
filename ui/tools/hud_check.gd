@@ -4917,6 +4917,106 @@ func _three_strength_rules() -> void:
 	hud.queue_free()
 	await process_frame
 	await _reduce_flashing_rules()
+	await _launcher_rules()
+
+
+## The launcher's steady mark, the How to play line and the damage event's kind and mode (docs/ui/hud-spec.md section 52).
+func _launcher_rules() -> void:
+	root.size = Vector2i(1920, 1080)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1920, 1080)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	var note_of := func(m: UiFighterModel) -> String:
+		m.stance_kind = 0
+		for r in UiHints.rows(m, "arena", "hold"):
+			if str((r["acts"] as Array)[0]) == "signature":
+				return str(r.get("note", ""))
+		return "?"
+	var ma: UiFighterModel = hud.hub.model(0)
+	var mb: UiFighterModel = hud.hub.model(1)
+	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
+	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 22.0})
+	_ok(note_of.call(ma) == "" and note_of.call(mb) == "", "launcher: with three_strengths off the heavy row says nothing about it")
+	UiData.set_feature("three_strengths", true)
+	var n_ready: String = note_of.call(ma)
+	var n_rest: String = note_of.call(mb)
+	_ok(n_ready == "launcher ready" and n_rest == "launcher resting", "launcher: with it on the legend's heavy row says launcher ready or launcher resting (steady words, two states)")
+	hud.hub.patch(0, {"launcher_ready": false, "launcher_rest_left": 38.0})
+	var n_rest0: String = note_of.call(ma)
+	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
+	_ok(n_rest0 == "launcher resting" and note_of.call(ma) == "launcher ready", "launcher: the words follow the state and carry no countdown (the rest time left is not drawn)")
+	var fresh_m := UiFighterModel.new()
+	fresh_m.setup(0, "protagonist", "ONE")
+	_ok(note_of.call(fresh_m) == "", "launcher: nothing shows until the director sends it")
+	var m0: UiFighterModel = hud.hub.model(0)
+	var sig_a: Array = [m0.launcher_known and m0.launcher_ready]
+	hud.hub.patch(0, {"launcher_rest_left": 5.0})
+	var sig_b: Array = [m0.launcher_known and m0.launcher_ready]
+	_ok(sig_a == sig_b, "launcher: the seconds of rest left do not change what the plate draws, so it never redraws for a countdown")
+	# The plate carries the mark itself (a filled or a hollow triangle; the word has no room beside the SIGNATURE chip, so it is the mark alone)
+	# and redraws when the state changes, at any size.
+	# On a tight plate (1280x720) there is no room for the word: the mark alone is drawn and the plate redraws when the state changes.
+	root.size = Vector2i(1280, 720)
+	hud.size = Vector2(1280, 720)
+	await _frames(hud, 3)
+	var rd0: int = hud._l_plate[0].redraws
+	hud.hub.patch(0, {"launcher_ready": false})
+	await _frames(hud, 3)
+	var rd1: int = hud._l_plate[0].redraws
+	hud.hub.patch(0, {"launcher_ready": true})
+	root.size = Vector2i(1920, 1080)
+	hud.size = Vector2(1920, 1080)
+	await _frames(hud, 3)
+	_ok(rd1 > rd0, "launcher: the plate redraws when the state changes (its filled or hollow mark), on a tight plate too")
+	# Full touch: a steady mark on the heavy button.
+	hud.set_option("touch_ui", true)
+	hud.set_option("touch_preset", "touch-full")
+	hud.set_density(2.0)
+	hud.size = Vector2(2400, 1080)
+	hud.advance(1.0 / 60.0)
+	var k_ready: Array = UiTouchControls.extra_key(hud._touch_extra())
+	var l_ready: String = str(hud._touch_extra()["launcher"])
+	hud.hub.patch(0, {"launcher_ready": false, "launcher_rest_left": 30.0})
+	var l_rest: String = str(hud._touch_extra()["launcher"])
+	var k_rest: Array = UiTouchControls.extra_key(hud._touch_extra())
+	_ok(l_ready == "ready" and l_rest == "rest" and k_ready != k_rest, "launcher: on Full touch the heavy button carries a filled mark when a launch is ready and a hollow one while it rests, and the layer redraws for the change")
+	hud.set_option("touch_ui", false)
+	# The damage event: kind may be medium and mode brawl_*; the body is marked as before.
+	hud.consume({"type": "damage", "attacker": 0, "victim": 1, "region": "head", "kind": "medium"})
+	var m1: UiFighterModel = hud.hub.model(1)
+	var k1: String = m1.last_hit_kind
+	hud.consume({"type": "damage", "attacker": 0, "victim": 1, "region": "core", "kind": "blast", "mode": "brawl_heavy"})
+	_ok(k1 == "medium" and m1.last_hit_kind == "blast" and m1.last_hit_mode == "brawl_heavy", "damage: the hub takes kind medium and a blast's mode brawl_heavy (brawl_light and brawl_medium the same)")
+	hud.consume({"type": "damage", "attacker": 0, "victim": 1, "region": "core", "kind": "blast", "mode": "brawl_medium"})
+	_ok(m1.last_hit_mode == "brawl_medium", "damage: brawl_medium is taken too")
+	# How to play: the line is under the three strengths only, and the pages still fit with it.
+	var fits_on := true
+	var has_line_on := false
+	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0], [Vector2(2560, 1600), 2.0], [Vector2(3840, 2160), 1.0],
+		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(1125, 2436), 3.0], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0]]
+	var reads: int = UiHowto.page_index("reads")
+	for cs in cases:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(cs[0], false)
+		var p: Dictionary = UiHowto.plan(cs[0], lay.s, cs[1], false, reads, "kbd", 0)
+		fits_on = fits_on and bool(p["fits"])
+		for rec in p["items"]:
+			if str(rec["kind"]) == "icon" and " ".join(PackedStringArray(rec["lines"])).begins_with("A launch needs an opening"):
+				has_line_on = true
+	UiData.set_feature("three_strengths", null)
+	var p_off: Dictionary = UiHowto.plan(Vector2(1280, 720), 0.67, 1.0, false, reads, "kbd", 0)
+	var line_off := false
+	for rec in p_off["items"]:
+		if str(rec["kind"]) == "icon" and " ".join(PackedStringArray(rec["lines"])).begins_with("A launch needs an opening"):
+			line_off = true
+	_ok(fits_on and has_line_on and not line_off, "launcher: How to play's Reading the fight page says a launch needs an opening and the launcher rests after it lands, under the three strengths only, and every page fits at 15 sizes with it")
+	hud.queue_free()
+	await process_frame
 
 
 # --- Reduce flashing: the row, the notice's line, the divider's slam flash (docs/ui/hud-spec.md section 50) ---------------------------------------

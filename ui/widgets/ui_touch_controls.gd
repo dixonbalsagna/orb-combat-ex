@@ -65,7 +65,7 @@ static func sig(lay: UiLayout, state: Dictionary, intro_a: float, transform_avai
 static func extra_key(extra: Dictionary) -> Array:
 	var ack: Dictionary = extra.get("ack", {})
 	var chg: Dictionary = extra.get("charge", {})
-	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0), str(chg.get("name", "")), int(float(chg.get("frac", 0.0)) * 8.0), (extra.get("lit", []) as Array).duplicate()]
+	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0), str(chg.get("name", "")), int(float(chg.get("frac", 0.0)) * 8.0), (extra.get("lit", []) as Array).duplicate(), str(extra.get("launcher", ""))]
 
 
 ## `pulse_step` is -1 for no pulse, else 0 to 7 round the cycle (the HUD steps it eight times a cycle while a form is ready and the fighter is free); under
@@ -258,6 +258,18 @@ static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionar
 			UiHints.draw_charge(ci, p, r * 1.1, float(chg["frac"]), bool(chg.get("armoured", false)), 1.0)
 		if (extra.get("lit", []) as Array).has(n):
 			UiHints.draw_lit(ci, p, r * 0.95, 1.0)
+		var lmark: String = str(extra.get("launcher", ""))
+		if lmark != "" and n == "signature":
+			# The launcher's steady state on B: a filled mark while a launch is ready, a hollow dim one while it rests (no countdown).
+			var lc: Vector2 = p + Vector2(-r * 0.62, -r * 0.62)
+			var lr: float = r * 0.2
+			var tri := PackedVector2Array([lc + Vector2(0.0, -lr), lc + Vector2(lr * 0.95, lr * 0.75), lc + Vector2(-lr * 0.95, lr * 0.75)])
+			if lmark == "ready":
+				UiIcons.fill_poly(ci, tri, ink)
+			else:
+				var cl: PackedVector2Array = tri.duplicate()
+				cl.append(tri[0])
+				ci.draw_polyline(cl, Color(ink, 0.55), maxf(2.0, lr * 0.4), true)
 		# The press that did nothing: a short grey mark on the button (a shape: cross, dash, dot or ring).
 		var ack: Dictionary = extra.get("ack", {})
 		if not ack.is_empty() and str(ack.get("name", "")) == n and float(ack.get("a", 0.0)) > 0.0:

@@ -67,6 +67,7 @@
         { "icon": "card", "col": 0, "text": "Cards name what changed." },
         { "icon": "brink", "col": 0, "text": "A faint ring: on the brink. A finisher can end it." },
         { "icon": "reads", "col": 0, "text": "Read your rival: stance, weight, finisher kind." },
+        { "icon": "three_launch", "col": 0, "text": "A launch needs an opening, and the launcher rests after it lands: until it is ready again the same button only knocks him back." },
         { "icon": "struggle", "col": 1, "text": "Finisher rings show hold or slip. GUARD a launch, DODGE a melee, PRESS a beam." },
         { "icon": "toll", "col": 1, "text": "The top chip counts what the fight costs the world." },
         { "icon": "strip", "col": 1, "text": "The strip is the whole planet. It wraps." },

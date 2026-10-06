@@ -216,7 +216,10 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 			if not UiStance.specials_row():
 				continue
 			dim = true   # the Specials row stays until the charging stance is live, and its moves do not exist yet
-		out.append({"acts": acts, "label": label, "held": held, "dim": dim, "note": UiData.t("prompt.not_yet") if dim else "", "cell": row_cell})
+		var row_note: String = UiData.t("prompt.not_yet") if dim else ""
+		if UiStance.three() and m.launcher_known and aid == "signature" and by_stance and m.stance_kind != UiStance.CHARGING and not dim:
+			row_note = UiData.t("state.launcher_note_ready" if m.launcher_ready else "state.launcher_note_rest")   # the heavy row says whether a launch is ready (steady words, no countdown)
+		out.append({"acts": acts, "label": label, "held": held, "dim": dim, "note": row_note, "cell": row_cell})
 	if UiStance.three():
 		if by_stance and m.stance_kind != UiStance.CHARGING:
 			# The signature is on the power button held with B: a chord row after the heavy row.

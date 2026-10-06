@@ -165,6 +165,8 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			if not UiGlyphs.bound(preset, first, slot):
 				continue
 		var icon_name: String = str(it.get("icon", ""))
+		if icon_name.begins_with("three_") and not UiStance.three():
+			continue   # a line that is true only under the three strengths (features.json)
 		if icon_name.begins_with("first_run_") and not bool(extra.get("first_run", false)):
 			continue   # a line only the first run's card carries (where to find About)
 		if icon_name.begins_with("about_") and not about_shown(icon_name):
@@ -215,7 +217,7 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			rec["lines"] = lines_a
 			heights[col] = float(heights[col]) + ha + item_gap
 		else:
-			var plain: bool = icon_name == "" or icon_name.begins_with("about_") or icon_name.begins_with("first_run_")   # a text-only paragraph (the About page): no icon, the whole column
+			var plain: bool = icon_name == "" or icon_name.begins_with("about_") or icon_name.begins_with("first_run_") or icon_name.begins_with("three_")   # a text-only paragraph (the About page): no icon, the whole column
 			var tx: float = x if plain else x + isz + gap * 0.8
 			var st: String = str(it.get("stance", ""))
 			var lines_i: PackedStringArray = UiText.wrap(text, fs_body, maxf(colw - (tx - x) - (name_w if st != "" else 0.0), 20.0))

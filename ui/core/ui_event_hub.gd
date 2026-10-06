@@ -171,7 +171,7 @@ func model(slot: int) -> UiFighterModel:
 # --- Event intake -------------------------------------------------------------------------------------------------
 
 const _FIELDS: Array = ["type", "actor", "target", "region", "stage", "internal", "n", "text", "dur", "k", "col", "kind",
-	"station", "revision", "speaker", "cues", "priority", "setpiece", "winner", "loser", "chance", "survived", "attacker", "victim", "tier", "version", "cover", "beats", "half_width", "resolve", "lead", "result", "action", "available", "dur_ticks", "clean_ticks", "weight", "state", "stance", "act", "band", "id", "text_key", "display", "cell", "source"]
+	"station", "revision", "speaker", "cues", "priority", "setpiece", "winner", "loser", "chance", "survived", "attacker", "victim", "tier", "version", "cover", "beats", "half_width", "resolve", "lead", "result", "action", "available", "dur_ticks", "clean_ticks", "weight", "state", "stance", "act", "band", "id", "text_key", "display", "cell", "source", "mode", "launcher_ready", "launcher_rest_left"]
 
 
 ## Any event (a Dictionary, or an object with these properties such as the sim's FxEvent) as a Dictionary.
@@ -281,6 +281,8 @@ func consume(e) -> void:
 				var vm: UiFighterModel = model(int(vf))
 				if vm != null:
 					vm.mark_hit(_region(d.get("region")))
+					vm.last_hit_kind = str(d.get("kind", ""))   # light, medium (the core's third weight), heavy, blast, beam, guard ...
+					vm.last_hit_mode = str(d.get("mode", ""))   # brawl_light, brawl_medium or brawl_heavy on a kind-blast hit
 		"rally":
 			_on_rally(m, d)
 		"heat_stage":
@@ -470,10 +472,12 @@ func patch(actor: int, d: Dictionary) -> void:
 	if m == null:
 		return
 	var old_stance: int = m.stance
-	for k in ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed"]:
+	for k in ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed", "launcher_ready", "launcher_rest_left"]:
 		if d.has(k):
 			# Hiding is removed from the base game (a future fighter); with the flag off the hidden state is ignored.
 			m.set(k, (bool(d[k]) and UiData.feature("hiding")) if k == "hidden" else (UiData.display_name(str(d[k])) if k == "name" else d[k]))
+	if d.has("launcher_ready") or d.has("launcher_rest_left"):
+		m.launcher_known = true   # the director sends it (ready: bool, restLeft: seconds): from now the plate says LAUNCH or RESTING
 	if d.has("aura") and d["aura"] is Color:
 		m.aura = d["aura"]
 	elif d.has("aura") and d["aura"] is String:

@@ -4,7 +4,7 @@ extends Control
 ##
 ## Run:  godot --path . res://ui/demo/hud_demo.tscn
 ## Options after "--": --scenario=hero_vs_proud|empress_vs_cyborg|placeholders|stress|controls   --shot=file.png (save a frame)
-##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --three --charge=CELL[:FRACTION] --launcher --rf --ko --feedback[=copied|review]
+##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --three --charge=CELL[:FRACTION] --launcher --launchready --rf --ko --feedback[=copied|review]
 ## Keys: Tab scenario | Space pause | R restart | S silhouette | F4 feed | C captions | M reduced motion | K crown always on | B brink ring | T arc thickness
 ##       Z clear zones | L region label | V viewport size | +/- fighter size | H hide this legend
 
@@ -112,6 +112,9 @@ func _ready() -> void:
 		# A wind-up in view for a still: --charge=CELL[:FRACTION] (y or b; the ring is held at that fraction of its length).
 		var cp: PackedStringArray = str(args["charge"]).split(":")
 		hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": cp[0], "dur": 28.0 if cp[0] == "b" else 12.0})
+	if args.has("launchready"):
+		hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})   # --launchready: the first fighter's launcher is ready, the rival's resting
+		hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 22.0})
 	if args.has("launcher"):
 		hud.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1, "n": 999})
 	if args.has("ack"):

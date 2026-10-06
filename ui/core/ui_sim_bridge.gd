@@ -49,6 +49,13 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 			# S1's fixed-point wear (units of 1/6000 of a wear point per region): the crown thins smoothly from it.
 			for r in range(mini(4, f.wear.size())):
 				wear[["head", "core", "arms", "legs"][r]] = float(f.wear[r]) / 6000.0
+		var lp: Dictionary = {}
+		if "launcherReady" in f:
+			lp["launcher_ready"] = bool(f.launcherReady)   # the director's read of the launcher (names to be confirmed with Encounter): ready, and seconds of rest left
+		if "launcherRestLeft" in f:
+			lp["launcher_rest_left"] = float(f.launcherRestLeft)
+		if not lp.is_empty():
+			hud.hub.patch(i, lp)
 		hud.hub.patch(i, {
 			"name": str(f.id), "ai": f.ai != null, "stance": int(f.stance), "tier": tier, "momentum": into,
 			"charge": float(f.ki), "hidden": bool(f.hidden), "charging": str(f.state) == "charging",

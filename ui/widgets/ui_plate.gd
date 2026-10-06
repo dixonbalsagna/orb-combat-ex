@@ -217,6 +217,9 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	# back to light for lack of Charge shows LOW CHARGE and the mark struck through for a moment.
 	var fallback: bool = m.weight == "heavy" and m.weight_fallback_t < 1.5
 	chips.append(["weight", UiData.t("state.weight_fallback") if fallback else UiData.t("state.weight_" + m.weight + ("_energy" if m.energy else "")), UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
+	if UiStance.three() and m.launcher_known:
+		# The launcher: LAUNCH (a filled mark, bright) while a launch is ready, RESTING (a hollow mark, dim) after one landed. Steady, two states, no countdown.
+		chips.append(["launcher", UiData.t("state.launcher_ready" if m.launcher_ready else "state.launcher_rest"), UiLook.col(UiLook.INK if m.launcher_ready else UiLook.INK_DIM)])
 	if m.hidden:
 		chips.append(["hidden", UiData.t("state.hidden"), UiLook.col(UiLook.HIDDEN)])
 	if m.lost_trail:
@@ -232,6 +235,10 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 		var label: String = ch[1]
 		var lw: float = UiText.width(label, sfs)
 		var w: float = chip_h * 0.9 + lw + 16.0 * s
+		if cur + w > chip_limit and ch[0] == "launcher":
+			label = ""   # no room for the word on a tight plate: the mark alone (a filled or a hollow triangle) still says ready or resting
+			lw = 0.0
+			w = chip_h * 0.9 + 12.0 * s
 		if cur + w > chip_limit:
 			break
 		_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 1.6)
@@ -247,6 +254,15 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 					ci.draw_line(icp + Vector2(-d * er * 0.2, 0.0), icp + Vector2(d * er * 1.9, 0.0), _c(ch[2]), maxf(2.0, er * 0.9), true)
 				else:
 					UiReads.weight_mark(ci, icp, chip_h * 0.62, m.weight == "heavy", _c(ch[2]), fallback)
+			"launcher":
+				var lr: float = chip_h * 0.3
+				var tri := PackedVector2Array([icp + Vector2(0.0, -lr), icp + Vector2(lr * 0.95, lr * 0.75), icp + Vector2(-lr * 0.95, lr * 0.75)])
+				if m.launcher_ready:
+					UiIcons.fill_poly(ci, tri, _c(ch[2]))
+				else:
+					var closed: PackedVector2Array = tri.duplicate()
+					closed.append(tri[0])
+					ci.draw_polyline(closed, _c(ch[2]), maxf(2.0, lr * 0.4), true)
 			"hidden":
 				UiIcons.eye_slash(ci, icp, chip_h * 0.75, _c(ch[2]))
 			"lost":
