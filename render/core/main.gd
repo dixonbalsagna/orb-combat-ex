@@ -104,6 +104,15 @@ const FLASH_KEYS: Array = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_
 
 func _ready() -> void:
 	args = parse_args()
+	# A debug route to Animation's study scenes: never taken unless the argument is there (_study_scene), and only by
+	# the game's own main scene. A tool's main is not the game (a study scene drives a main of its own, and would be
+	# sent round again).
+	var study: String = _study_scene()
+	if study != "" and not manual and get_parent() == get_tree().root:
+		for off in [set_process, set_physics_process, set_process_input, set_process_unhandled_input]:
+			off.call(false)
+		get_tree().change_scene_to_file.call_deferred(study)
+		return
 	pane = PaneWorld.new()
 	add_child(pane)
 	move_child(pane, 0)
@@ -205,6 +214,8 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	if host == null:
+		return   # the game never started here (the study route left at once)
 	SimCore.dispose(host.S)
 	for p in all_panes():
 		p.mats.clear()
@@ -948,7 +959,22 @@ func _notification(what: int) -> void:
 
 
 ## The options a web page's URL may set (parse_args): off unless the URL names them.
-const URL_ARGS: Array = ["nointro", "skyreact"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study"]
+
+
+## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+## the game, --study=zip another by its name (res://render/anim/tools/<name>_study.tscn); on the web /play/?study=1
+## or ?study=zip. A name that is not a plain word, or has no such scene, is ignored.
+func _study_scene() -> String:
+	if not args.has("study"):
+		return ""
+	var which: String = str(args["study"])
+	if which == "1" or which == "" or which == "true":
+		which = "flurry"
+	if not which.is_valid_identifier():
+		return ""
+	var path: String = "res://render/anim/tools/%s_study.tscn" % which
+	return path if ResourceLoader.exists(path) else ""
 
 
 static func fresh_seed() -> int:
@@ -962,8 +988,9 @@ static func parse_args() -> Dictionary:
 			var kv: PackedStringArray = a.substr(2).split("=", true, 1)
 			out[kv[0]] = kv[1] if kv.size() > 1 else "1"
 	# On the web the page's own URL can set the options named in URL_ARGS (the page passes the game no arguments):
-	# /play/?nointro=1 starts without the intro, /play/?skyreact=1 lets the clouds part at tier 3 and 4. A value of 0,
-	# or none of these keys, changes nothing.
+	# /play/?nointro=1 starts without the intro, /play/?skyreact=1 lets the clouds part at tier 3 and 4, /play/?study=1
+	# opens Animation's study scene in place of the game (_study_scene). A value of 0, or none of these keys, changes
+	# nothing.
 	if OS.has_feature("web"):
 		for pair in str(JavaScriptBridge.eval("location.search", true)).trim_prefix("?").split("&", false):
 			var kv: PackedStringArray = pair.split("=", true, 1)

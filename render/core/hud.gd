@@ -83,9 +83,17 @@ func _prompt(host: SimHost, vw: float, vh: float) -> void:
 		_text("Computer vs computer demo. Press any key to take control of P1.", Vector2(vw * 0.5, vh - 62.0), 16, Color(1, 1, 1, 0.9), 0)
 	elif not main.started and not card:
 		# The system and debug keys only (UI's legend and hints own the fighters' controls), wrapped to the screen's width.
+		# On a short or narrow screen the block would climb over the fighters, so it keeps to the screen's lowest fifth:
+		# lines go from the end (the debug keys first), the prompt never.
 		var lines: Array = _wrap(SYSTEM_KEYS, ",  ", 11, vw - 24.0)
 		var n_sys: int = lines.size()
 		lines.append_array(_wrap(_flash_items(), "   ", 11, vw - 24.0))
+		var room: int = help_room(vh)
+		if not legacy and lines.size() > room:
+			lines.resize(room)
+			n_sys = mini(n_sys, room)
+			if room > 0:
+				lines[room - 1] = str(lines[room - 1]) + "  ..."
 		var y0: float = vh - 62.0 - HELP_STEP * float(lines.size() - 1) if not legacy else 124.0
 		_text("Computer vs computer demo. Press any key to take control of P1.", Vector2(vw * 0.5, y0 - 18.0), 16, Color(1, 1, 1, 0.9), 0)
 		for k in range(lines.size()):
@@ -110,6 +118,12 @@ func _touch_gap(vw: float, dp: float) -> Vector2:
 			else:
 				x1 = minf(x1, float(c.x) - float(c.r))
 	return Vector2(x0 + 8.0 * dp, x1 - 8.0 * dp)
+
+
+## How many lines of key help the demo's prompt may carry on a screen this tall and stay in its lowest fifth (the
+## prompt's own line is above them and is always shown).
+static func help_room(vh: float) -> int:
+	return maxi(0, 1 + int(floor((0.22 * vh - 96.0) / HELP_STEP)))
 
 
 func _dp() -> float:
@@ -155,27 +169,15 @@ static func _name(f) -> String:
 	return UiData.display_name(str(f.id))
 
 
-static var _ui_title: int = -1   # whether UiData has display_title: -1 not looked yet, 0 no, 1 yes
-
-## A fighter's title as a player sees it: UI's display title for his roster id (UiData.display_title), once UI has
-## the function and a title for him. Until then, his own title field while the sim still gives him one (it goes at
-## the roster's rename: docs/architecture/pending/fighter-split.md section 10). With neither, no title.
+## A fighter's title as a player sees it: UI's display title for his roster id (the sim keeps no title). "" when UI
+## has none for him, and the panel then leaves it out.
 static func _title(f) -> String:
-	if _ui_title < 0:
-		_ui_title = 0
-		for m in (load("res://ui/core/ui_data.gd") as Script).get_script_method_list():
-			if String(m.name) == "display_title":
-				_ui_title = 1
-	var t: String = ""
-	if _ui_title == 1:
-		t = str((load("res://ui/core/ui_data.gd") as Script).call("display_title", str(f.id)))
-	if t == "" and "title" in f:
-		t = str(f.title)
-	return t
+	return UiData.display_title(str(f.id))
 
 
 ## The two lines at the head of a fighter's panel in the old HUD: his name (and CPU for the computer), then his title
-## with his stance. No draw call, so a check can ask for them (tools/hud_words_check.gd).
+## with his stance. No draw call, so a check can ask for them (tools/hud_words_check.gd: no other headless gate
+## draws this HUD, and a read of a field the sim has dropped is a run-time error).
 static func panel_words(f) -> Array:
 	var title: String = _title(f)
 	var st: String = RenderLook.STANCE_LONG[int(f.stance)]
