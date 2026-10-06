@@ -133,6 +133,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-111 | Correction to RL-109 and RL-110: Orb confirmed vicious blows inside the clinch on 2026-10-06 (docs/ep/vision.md, last section) | Combat | Low | Design confirmed; the launch pair's plan has no bite, gouge or claw, so the rating question does not arise for them and stays open for the Cyborg; s08 applies; poses screened when Combat and Animation have them (clinch slice, last in the order) | Open until poses exist |
 | RL-112 | The six nudges (super-heavy) with numbers and new sheets | Animation | Low | Closed: all six pass | Closed |
 | RL-113 | Energy in reach drawn: 12 pieces and two mashed runs; e09 added | Animation, VFX | Medium | 11 of 12 pieces pass; rk.bolt_sweep and both mashed runs nudge (varied on screen, hand below the collar, heads apart); light, cone, rim and flash still to be seen | Open |
+| RL-114 | rk.bolt_sweep, pk.run, rk.run and the ball heave watch closed; the held-X burst set pose ruled | Animation | Low | Closed: all pass; set pose passes with elbows bent and hands in front of the shoulders, never straight arms wide or at the hip | Closed; light, cone, rim and flash analysis still to be seen |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
