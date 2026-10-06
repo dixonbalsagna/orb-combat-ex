@@ -30,8 +30,8 @@
       { "action": "remap_two", "label": "Remap player 2's controls", "value": "Open", "help": "Change which button or key does what for player two, when two people play.", "needs": "remap" }
     ] },
     { "id": "camera", "title": "Camera", "items": ["camera_zoom", "camera_shake", "camera_launch_follow", "camera_panels", "split_solo"] },
-    { "id": "display", "title": "Display", "items": ["vfx_quality", "info_flashes", "brink_cue", "silhouette", "region_label"] },
-    { "id": "access", "title": "Accessibility", "items": ["reduced_motion", "reduce_flashing", { "action": "photo_notice", "label": "Flashing effects notice", "value": "Read", "help": "The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that the game has not yet been tested with a photosensitivity analyser." }, "captions", "crown_always", "thickness", "hitstop_scale", "keep_hints", "haptics"] },
+    { "id": "display", "title": "Display", "items": ["vfx_quality", "hud_sides", "you_marker", "info_flashes", "brink_cue", "silhouette", "region_label"] },
+    { "id": "access", "title": "Accessibility", "items": ["colour_vision", "reduced_motion", "reduce_flashing", { "action": "photo_notice", "label": "Flashing effects notice", "value": "Read", "help": "The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that the game has not yet been tested with a photosensitivity analyser." }, "captions", "crown_always", "thickness", "hitstop_scale", "keep_hints", "haptics"] },
     { "id": "cosmetics", "title": "Cosmetics", "items": ["unlock_all"] }
   ],
   "needs": { "touch_preset": "touch_full" },
@@ -45,6 +45,9 @@
     "touch_preset": { "touch-simple": "Simple", "touch-full": "Full" },
     "vfx_quality": { "auto": "Auto", "high": "High", "medium": "Medium", "low": "Low" },
     "control_hints": { "auto": "Auto", "always": "Always", "off": "Off" },
+    "colour_vision": { "off": "Off", "protan": "Protanopia", "deutan": "Deuteranopia", "tritan": "Tritanopia" },
+    "you_marker": { "always": "Always", "intro": "Intro", "off": "Off" },
+    "hud_sides": { "fixed": "Fixed", "follow": "Follow" },
     "camera_launch_follow": { "auto": "Auto", "chase": "Chase", "split": "Split" },
     "camera_panels": { "full": "Full", "still": "Still", "off": "Off" },
     "thickness": { "0.75": "Thin", "1.0": "Normal", "1.5": "Thick" }

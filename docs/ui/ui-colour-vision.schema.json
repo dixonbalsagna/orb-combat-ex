@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/ui-colour-vision",
+  "title": "ui colour vision (schema 1)",
+  "description": "ui/data/colour_vision.json: the colour-blind presets. For Tools to add to tools/schemas (proposal from UI; map.json would send ui/data/colour_vision.json to it). Version field: schema. Policy: closed. `map` keys are colour roles (UiLook.ROLE_HEX) and values hex colours; `lanes` is the two fighters' lane colours by neutral fighter id (copied from data/art/colour-vision.json, which Art owns; a hud_check case compares them).",
+  "type": "object",
+  "required": ["schema", "choices", "presets"],
+  "properties": {
+    "schema": { "const": 1 },
+    "note": { "type": "string" },
+    "choices": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "type": "string" } },
+    "fighter_alias": { "type": "object", "additionalProperties": { "type": "string" } },
+    "presets": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["lanes", "map"],
+        "properties": {
+          "lanes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" } },
+          "map": { "type": "object", "propertyNames": { "pattern": "^[A-Z][A-Z0-9_]*$" }, "additionalProperties": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

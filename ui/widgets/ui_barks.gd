@@ -152,8 +152,10 @@ static func _bark(ci: CanvasItem, hub: UiEventHub, b: UiEventHub.Bark, lane: Rec
 	w = maxf(w, UiText.width(m.name if m != null else "", tfs) + maxf(60.0 * s, cap_w + 24.0 * s)) + pad * 2.0 + fe
 	var x: float = lane.position.x if left else lane.end.x - w
 	var panel := Rect2(x, lane.end.y - total_h, w, total_h)
-	var tx0: float = panel.position.x + fe   # the text area's left edge, and its right edge below, inside the face
-	var tx1: float = panel.end.x - fe
+	# The text area, inside the embedded face (which is at the panel's left in a left lane and at its right in a right lane): the caption tag on the near edge of the
+	# face's other side, never run into the name (it did, on a narrow phone, when both edges gave up the face's width).
+	var tx0: float = panel.position.x + (fe if left else 0.0)
+	var tx1: float = panel.end.x - (0.0 if left else fe)
 	UiIcons.rrect(ci, panel, 8.0 * s, Color(UiLook.col(UiLook.SCRIM), 0.55 * fade), Color(m.aura if m != null else Color.WHITE, 0.55 * fade), maxf(1.5, 2.0 * s))
 	if embed and m != null:
 		var fr := Rect2(panel.position.x if left else panel.end.x - fe, panel.position.y, fe, fe)

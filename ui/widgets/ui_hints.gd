@@ -361,12 +361,29 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 	UiText.no_outline = false
 
 
-## The YOU marker over a fighter: a small pill with the label and a pointer toward the head, kept inside `safe`.
-static func draw_you(ci: CanvasItem, label: String, anchor: Dictionary, s: float, alpha: float, safe: Rect2) -> void:
+## The YOU marker over a fighter: a small pill with the label and a pointer toward the head, kept inside `safe`, edged and pointed in the fighter's lane colour (the colour of its plate).
+## `compact` (after the opening seconds) is just the pointer, with the label only for P1 and P2: a steady, small mark that never goes away.
+static func draw_you(ci: CanvasItem, label: String, anchor: Dictionary, s: float, alpha: float, safe: Rect2, lane: Color = Color(0.96, 0.95, 0.92), compact: bool = false) -> void:
 	if label == "" or anchor.is_empty() or not bool(anchor.get("visible", true)) or alpha <= 0.01:
 		return
 	var c: Vector2 = anchor["pos"]
+	if not safe.has_point(c):
+		return   # off screen: the edge arrow (draw_you_edge) points to it instead
 	var R: float = UiCrown.radius(float(anchor.get("h", 90.0)), s)
+	var dark := Color(UiLook.col(UiLook.INK_DARK))
+	UiText.no_outline = true
+	if compact:
+		var tw0: float = 9.0 * s
+		var tip0 := Vector2(clampf(c.x, safe.position.x + tw0 * 2.0, safe.end.x - tw0 * 2.0), maxf(c.y - R * 1.3 - 6.0 * s, safe.position.y + 16.0 * s))
+		var tri0 := PackedVector2Array([tip0, tip0 + Vector2(-tw0, -tw0 * 1.5), tip0 + Vector2(tw0, -tw0 * 1.5)])
+		UiIcons.fill_poly(ci, tri0, Color(dark, 0.85 * alpha))
+		var inner := PackedVector2Array([tip0 + Vector2(0.0, -1.6 * s), tip0 + Vector2(-tw0 * 0.62, -tw0 * 1.38), tip0 + Vector2(tw0 * 0.62, -tw0 * 1.38)])
+		UiIcons.fill_poly(ci, inner, Color(lane, alpha))
+		if label != "YOU":
+			var fs0: int = UiText.px(15.0, s)
+			UiText.draw(ci, label, Vector2(tip0.x, tip0.y - tw0 * 1.5 - 3.0 * s - UiText.height(fs0) + UiText.ascent(fs0)), fs0, Color(UiLook.col(UiLook.INK), alpha), 0)
+		UiText.no_outline = false
+		return
 	var fs: int = UiText.px(22.0, s)
 	var tw: float = UiText.width(label, fs)
 	var pw: float = tw + 22.0 * s
@@ -374,10 +391,43 @@ static func draw_you(ci: CanvasItem, label: String, anchor: Dictionary, s: float
 	var cx: float = clampf(c.x, safe.position.x + pw * 0.5, safe.end.x - pw * 0.5)
 	var top: float = clampf(c.y - R * 1.3 - ph - 22.0 * s, safe.position.y, safe.end.y - ph - 12.0 * s)
 	var r := Rect2(cx - pw * 0.5, top, pw, ph)
-	UiText.no_outline = true
-	UiIcons.rrect(ci, r, ph * 0.5, Color(UiLook.col(UiLook.INK), 0.92 * alpha), Color(UiLook.col(UiLook.INK_DARK), 0.7 * alpha), 1.5)
-	UiText.draw(ci, label, Vector2(r.get_center().x, r.get_center().y - UiText.height(fs) * 0.5 + UiText.ascent(fs)), fs, Color(UiLook.col(UiLook.INK_DARK), alpha), 0)
-	# The pointer: a small triangle under the pill, toward the head.
+	UiIcons.rrect(ci, r, ph * 0.5, Color(UiLook.col(UiLook.INK), 0.92 * alpha), Color(lane, alpha), maxf(3.0, 3.5 * s))
+	UiText.draw(ci, label, Vector2(r.get_center().x, r.get_center().y - UiText.height(fs) * 0.5 + UiText.ascent(fs)), fs, Color(dark, alpha), 0)
+	# The pointer: a small triangle under the pill, toward the head, in the lane colour on a dark keyline.
 	var tip := Vector2(clampf(c.x, r.position.x + ph * 0.5, r.end.x - ph * 0.5), r.end.y + 12.0 * s)
-	UiIcons.fill_poly(ci, PackedVector2Array([tip, tip + Vector2(-8.0 * s, -12.0 * s), tip + Vector2(8.0 * s, -12.0 * s)]), Color(UiLook.col(UiLook.INK), 0.92 * alpha))
+	UiIcons.fill_poly(ci, PackedVector2Array([tip + Vector2(0.0, 2.0 * s), tip + Vector2(-10.0 * s, -14.0 * s), tip + Vector2(10.0 * s, -14.0 * s)]), Color(dark, 0.85 * alpha))
+	UiIcons.fill_poly(ci, PackedVector2Array([tip, tip + Vector2(-8.0 * s, -12.0 * s), tip + Vector2(8.0 * s, -12.0 * s)]), Color(lane, alpha))
+	UiText.no_outline = false
+
+
+## Where the edge arrow for an off-screen fighter sits and which way it points: {pos, dir} on `safe`'s border, or {} when the fighter is on screen (or has no anchor).
+static func edge_arrow(anchor: Dictionary, safe: Rect2, s: float) -> Dictionary:
+	if anchor.is_empty() or not bool(anchor.get("visible", true)):
+		return {}
+	var c: Vector2 = anchor["pos"]
+	if safe.has_point(c):
+		return {}
+	var inset: float = 22.0 * s
+	var inner := Rect2(safe.position + Vector2(inset, inset), safe.size - Vector2(inset, inset) * 2.0)
+	var mid: Vector2 = safe.get_center()
+	var dir: Vector2 = (c - mid).normalized()
+	var pos := Vector2(clampf(c.x, inner.position.x, inner.end.x), clampf(c.y, inner.position.y, inner.end.y))
+	return {"pos": pos, "dir": dir}
+
+
+## The edge arrow: a triangle on the screen's border pointing toward the off-screen fighter, in its lane colour on a dark keyline, with the label under it.
+static func draw_you_edge(ci: CanvasItem, label: String, arrow: Dictionary, s: float, alpha: float, lane: Color) -> void:
+	if arrow.is_empty() or label == "" or alpha <= 0.01:
+		return
+	var p: Vector2 = arrow["pos"]
+	var d: Vector2 = arrow["dir"]
+	var n := Vector2(-d.y, d.x)
+	var L: float = 16.0 * s
+	var W: float = 12.0 * s
+	var dark := Color(UiLook.col(UiLook.INK_DARK))
+	UiText.no_outline = true
+	UiIcons.fill_poly(ci, PackedVector2Array([p + d * (L + 3.0 * s), p - d * (L * 0.5 + 3.0 * s) + n * (W + 3.0 * s), p - d * (L * 0.5 + 3.0 * s) - n * (W + 3.0 * s)]), Color(dark, 0.85 * alpha))
+	UiIcons.fill_poly(ci, PackedVector2Array([p + d * L, p - d * L * 0.5 + n * W, p - d * L * 0.5 - n * W]), Color(lane, alpha))
+	var fs: int = UiText.px(15.0, s)
+	UiText.draw(ci, label, Vector2(p.x, p.y + (L + 8.0 * s if d.y <= 0.0 else -L - 8.0 * s - UiText.height(fs)) + UiText.ascent(fs)), fs, Color(UiLook.col(UiLook.INK), alpha), 0)
 	UiText.no_outline = false

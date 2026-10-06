@@ -225,6 +225,17 @@ static func option_defaults() -> Dictionary:
 	return out
 
 
+const COLOUR_VISION_PATH := "res://ui/data/colour_vision.json"
+static var _colour_vision: Dictionary = {}
+
+
+## The colour-blind presets (ui/data/colour_vision.json).
+static func colour_vision() -> Dictionary:
+	if _colour_vision.is_empty():
+		_colour_vision = _read(COLOUR_VISION_PATH)
+	return _colour_vision
+
+
 const GLYPHS_PATH := "res://ui/data/glyphs.json"
 static var _glyphs: Dictionary = {}
 

@@ -61,11 +61,16 @@ static func sig(lay: UiLayout, state: Dictionary, intro_a: float, transform_avai
 	return [int(lay.vp.x), int(lay.vp.y), int(lay.dp * 100.0), lay.left_handed, lay.touch_full, bits, int(float((state.get("attack", {}) as Dictionary).get("hold", 0.0)) * HOLD_TICKS), int(float((state.get("attack", {}) as Dictionary).get("hold_ticks", 0.0))), int((state.get("attack", {}) as Dictionary).get("tier", 0)), sk, int(intro_a * 10.0), transform_avail, pulse_step, extra_key(extra)]
 
 
+## A control's caption alpha: the intro's, or full while the player has not used that control yet (a first-use hint that goes once it is used, remembered between runs).
+static func _caption_a(intro_a: float, extra: Dictionary, name: String) -> float:
+	return maxf(intro_a, 1.0 if (extra.get("unused", []) as Array).has(name) else 0.0)
+
+
 ## The redraw key for what the HUD adds to the Full buttons: the greyed ones and the press mark in quarters of its life.
 static func extra_key(extra: Dictionary) -> Array:
 	var ack: Dictionary = extra.get("ack", {})
 	var chg: Dictionary = extra.get("charge", {})
-	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0), str(chg.get("name", "")), int(float(chg.get("frac", 0.0)) * 8.0), (extra.get("lit", []) as Array).duplicate(), str(extra.get("launcher", ""))]
+	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0), str(chg.get("name", "")), int(float(chg.get("frac", 0.0)) * 8.0), (extra.get("lit", []) as Array).duplicate(), str(extra.get("launcher", "")), (extra.get("unused", []) as Array).duplicate(), (extra.get("cells", {}) as Dictionary).duplicate()]
 
 
 ## `pulse_step` is -1 for no pulse, else 0 to 7 round the cycle (the HUD steps it eight times a cycle while a form is ready and the fighter is free); under
@@ -92,15 +97,18 @@ static func draw(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, int
 		ci.draw_circle(b, rs, Color(scrim, 0.35))
 		ci.draw_arc(b, rs, 0.0, TAU, 40, Color(edge, 0.7 if sprint else 0.45), line * (2.0 if sprint else 1.0), true)
 		ci.draw_circle(b + off, rs * 0.42, Color(ink, 0.55))
-	elif intro_a > 0.01:
-		# The first seconds: where the stick will be, and what a flick does.
+	else:
+		# The stick is invisible until touched (any touch in the left zone off a button is the stick): an idle ring marks where it will be, always; it is brighter and
+		# carries its words until the stick has been used once (and for the first seconds of a match).
+		var sa: float = _caption_a(intro_a, extra, "stick")
 		var z: Dictionary = lay.touch_ctrl.get("stick", {})
 		if not z.is_empty():
 			var zc := Vector2((float(z.x0) + float(z.x1)) * 0.5, float(z.y0) + (float(z.y1) - float(z.y0)) * 0.32)
-			ci.draw_arc(zc, rs * 0.8, 0.0, TAU, 32, Color(edge, 0.3 * intro_a), line, true)
-			var fs0: int = UiText.px(16.0, s)
-			UiText.draw(ci, UiData.t("prompt.move"), Vector2(zc.x, zc.y - UiText.height(fs0) * 0.5 + UiText.ascent(fs0) - float(fs0) * 0.6), fs0, Color(ink, 0.8 * intro_a), 0)
-			UiText.draw(ci, UiData.t("prompt.move_hint"), Vector2(zc.x, zc.y - UiText.height(fs0) * 0.5 + UiText.ascent(fs0) + float(fs0) * 0.6), fs0, Color(ink, 0.6 * intro_a), 0)
+			ci.draw_arc(zc, rs * 0.8, 0.0, TAU, 32, Color(edge, maxf(0.16, 0.3 * sa)), line, true)
+			if sa > 0.01:
+				var fs0: int = UiText.px(16.0, s)
+				UiText.draw(ci, UiData.t("prompt.move"), Vector2(zc.x, zc.y - UiText.height(fs0) * 0.5 + UiText.ascent(fs0) - float(fs0) * 0.6), fs0, Color(ink, 0.8 * sa), 0)
+				UiText.draw(ci, UiData.t("prompt.move_hint"), Vector2(zc.x, zc.y - UiText.height(fs0) * 0.5 + UiText.ascent(fs0) + float(fs0) * 0.6), fs0, Color(ink, 0.6 * sa), 0)
 	if lay.touch_full:
 		_draw_full(ci, lay, s, state, transform_avail, ink, dark, edge, scrim, line, pulse_step, extra)
 		UiText.no_outline = false
@@ -131,26 +139,29 @@ static func draw(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionary, int
 				UiIcons.caret_up(ci, p + Vector2(0.0, r * 0.1), r * 0.95, icol)
 				if down:
 					ci.draw_arc(p, r * 1.14, 0.0, TAU, 40, Color(UiLook.col(UiLook.CHARGE)), maxf(3.0, r * 0.1), true)
-		if intro_a > 0.01:
+		var ia: float = _caption_a(intro_a, extra, n)   # a caption stays until the control has been used once
+		if ia > 0.01:
 			var fs: int = UiText.px(15.0, s)
 			var lh: float = UiText.height(fs)
 			var word: String = UiData.t("prompt." + n)
 			var hint: String = UiData.t("prompt." + n + "_hint")
-			if lay.portrait:
-				# Portrait is tight: Power's word goes to its left, Attack's and Guard's below; only Attack keeps its gesture line.
-				if n == "power":
-					UiText.draw(ci, word, Vector2(p.x - r - 8.0 * lay.dp, p.y - lh * 0.5 + UiText.ascent(fs)), fs, Color(ink, 0.95 * intro_a), 1)
-				else:
-					var by: float = p.y + r + UiText.ascent(fs) + float(fs) * 0.1
-					UiText.draw(ci, word, Vector2(p.x, by), fs, Color(ink, 0.95 * intro_a), 0)
-					if n == "attack":
-						UiText.draw(ci, hint, Vector2(p.x, by + lh), fs, Color(ink, 0.7 * intro_a), 0)
+			if n == "power":
+				# Power's words go to its left in both orientations (above it they run into the right plate on a short landscape screen): the word, and under it the gesture.
+				UiText.draw(ci, word, Vector2(p.x - r - 8.0 * lay.dp, p.y - lh + UiText.ascent(fs)), fs, Color(ink, 0.95 * ia), 1)
+				if not lay.portrait:
+					UiText.draw(ci, hint, Vector2(p.x - r - 8.0 * lay.dp, p.y + UiText.ascent(fs)), fs, Color(ink, 0.7 * ia), 1)
+			elif lay.portrait:
+				# Portrait is tight: Attack's and Guard's words go below; only Attack keeps its gesture line.
+				var by: float = p.y + r + UiText.ascent(fs) + float(fs) * 0.1
+				UiText.draw(ci, word, Vector2(p.x, by), fs, Color(ink, 0.95 * ia), 0)
+				if n == "attack":
+					UiText.draw(ci, hint, Vector2(p.x, by + lh), fs, Color(ink, 0.7 * ia), 0)
 			else:
-				# Landscape: Power's words go above it (Attack sits just under it); Attack's and Guard's go below.
-				var top: float = (p.y - r - lh * 2.0 - 2.0) if n == "power" else (p.y + r + float(fs) * 0.1)
+				# Landscape: Attack's and Guard's words go below them.
+				var top: float = p.y + r + float(fs) * 0.1
 				var base: float = top + UiText.ascent(fs)
-				UiText.draw(ci, word, Vector2(p.x, base), fs, Color(ink, 0.95 * intro_a), 0)
-				UiText.draw(ci, hint, Vector2(p.x, base + lh), fs, Color(ink, 0.7 * intro_a), 0)
+				UiText.draw(ci, word, Vector2(p.x, base), fs, Color(ink, 0.95 * ia), 0)
+				UiText.draw(ci, hint, Vector2(p.x, base + lh), fs, Color(ink, 0.7 * ia), 0)
 	# TRANSFORM, in the context button's slot, only while it can be used.
 	if transform_avail:
 		var tc: Dictionary = lay.touch_ctrl.get("context", {})
@@ -234,6 +245,9 @@ static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionar
 			word = UiData.t("prompt.three_full_heavy")        # the three strengths: Y is the medium and B the heavy (the ids stay)
 		elif UiStance.three() and n == "signature":
 			word = UiData.t("prompt.three_full_signature")
+		var cell_word: String = str((extra.get("cells", {}) as Dictionary).get(n, ""))   # a live stance names its face buttons (energy: BOLTS, SHOT, MINE, BEAM)
+		if cell_word != "":
+			word = cell_word
 		var stance_word: String = UiStance.touch_word(n)   # a stance button is named for its stance once the stance is live
 		if stance_word != "":
 			word = stance_word

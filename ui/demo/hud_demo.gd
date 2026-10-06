@@ -75,6 +75,12 @@ func _ready() -> void:
 		hud.set_option("show_prompts", true)
 	if args.has("dp"):
 		hud.set_density(float(args["dp"]))
+	if args.has("cvd"):
+		hud.set_option("colour_vision", str(args["cvd"]))   # protan, deutan or tritan
+	if args.has("youmark"):
+		hud.set_option("you_marker", str(args["youmark"]))   # always, intro or off
+	if args.has("sides"):
+		hud.set_option("hud_sides", str(args["sides"]))   # fixed or follow
 	if args.has("left"):
 		hud.set_option("left_handed", true)
 	if args.has("touch"):
@@ -315,7 +321,10 @@ func _split_record() -> Dictionary:
 
 
 func _anchor(slot: int) -> Dictionary:
-	return {"pos": _fighter_pos(slot), "h": _fh(), "visible": true}
+	var pos: Vector2 = _fighter_pos(slot)
+	if args.has("edge") and slot == 0:
+		pos = Vector2(-pos.x - 400.0, pos.y)   # my fighter is off the left edge: the edge arrow
+	return {"pos": pos, "h": _fh(), "visible": true}
 
 
 func _strip() -> Dictionary:

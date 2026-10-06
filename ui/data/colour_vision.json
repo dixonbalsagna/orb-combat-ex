@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "note": "Colour-blind presets (docs/ui/hud-spec.md section 56). Orb: no stylistic palette change, so the default look stays and a preset remaps only what carries gameplay meaning. `map` gives a colour role (UiLook.ROLE_HEX: the wound stages) its replacement; every other colour stays, and the guard cue stays the defensive stance's #5aaaff in every preset (Art measured against it). `lanes` are the fighters' aura colours, by neutral fighter id, copied from Art's data/art/colour-vision.json (Art owns them: a hud_check case compares the two when that file is present). `fighter_alias` maps the roster ids the HUD sees onto Art's ids. The stage colours were chosen with Art's simulated-vision check (art/concepts/colour-vision/check.mjs rule: Machado 2009, CIEDE2000) so the three stages stay at least 20 apart from each other, from the neutral fresh colour, from the internal and guard colours and from the preset's lanes under that vision: protan 26.1, deutan 19.9, tritan 22.0 (the default cues are 3.7, 6.2 and 14.3 apart under the same three). Every cue that uses these colours also carries a word, an icon or a shape: a preset adds a second route, never the only one.",
+  "choices": ["off", "protan", "deutan", "tritan"],
+  "fighter_alias": { "anti_hero": "rival" },
+  "presets": {
+    "protan": {
+      "lanes": { "protagonist": "#46b9b9", "rival": "#6b0bcb" },
+      "map": { "STAGE_BRUISED": "#f2e6a0", "STAGE_BATTERED": "#c8102e", "STAGE_BROKEN": "#b8860b" }
+    },
+    "deutan": {
+      "lanes": { "protagonist": "#35b6ab", "rival": "#5b0bcb" },
+      "map": { "STAGE_BRUISED": "#f0e442", "STAGE_BATTERED": "#c8102e", "STAGE_BROKEN": "#ff5c8a" }
+    },
+    "tritan": {
+      "lanes": { "protagonist": "#b7aaf8", "rival": "#7243d0" },
+      "map": { "STAGE_BRUISED": "#f0e442", "STAGE_BATTERED": "#cc79a7", "STAGE_BROKEN": "#c8102e" }
+    }
+  }
+}

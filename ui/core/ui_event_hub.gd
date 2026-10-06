@@ -479,9 +479,11 @@ func patch(actor: int, d: Dictionary) -> void:
 	if d.has("launcher_ready") or d.has("launcher_rest_left"):
 		m.launcher_known = true   # the director sends it (ready: bool, restLeft: seconds): from now the plate says LAUNCH or RESTING
 	if d.has("aura") and d["aura"] is Color:
-		m.aura = d["aura"]
+		m.aura_raw = d["aura"]
+		m.aura = UiLook.lane(m.id, m.aura_raw)
 	elif d.has("aura") and d["aura"] is String:
-		m.aura = UiLook.col(d["aura"])
+		m.aura_raw = Color.html(d["aura"])   # the fighter's own colour, not run through a preset's remap
+		m.aura = UiLook.lane(m.id, m.aura_raw)
 	if d.has("stance"):
 		m.stance = clampi(int(d["stance"]), 0, 3)
 		if m.stance != old_stance:

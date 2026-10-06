@@ -91,13 +91,48 @@ const HZ_HEAT := 2.2
 
 static var _cache: Dictionary = {}
 
+## The colour roles a colour-blind preset may remap (ui/data/colour_vision.json): the wound stages.
+const ROLE_HEX: Dictionary = {"STAGE_BRUISED": STAGE_BRUISED, "STAGE_BATTERED": STAGE_BATTERED, "STAGE_BROKEN": STAGE_BROKEN}
+
+## The colour-blind preset in force ("off", "protan", "deutan" or "tritan") and, for it, the original hex -> replacement hex of the roles it remaps and the fighters' lane colours by id.
+static var vision: String = "off"
+static var _remap: Dictionary = {}
+static var _lanes: Dictionary = {}
+
 
 static func col(hex: String) -> Color:
 	var c = _cache.get(hex)
 	if c == null:
-		c = Color.html(hex)
+		c = Color.html(_remap.get(hex, hex))
 		_cache[hex] = c
 	return c
+
+
+## Choose the colour-blind preset. "off" (and any name the data does not have) is the game's own palette. Returns whether the colours changed.
+static func set_vision(mode: String) -> bool:
+	var preset: Dictionary = (UiData.colour_vision().get("presets", {}) as Dictionary).get(mode, {})
+	var nm: String = mode if not preset.is_empty() else "off"
+	if nm == vision:
+		return false
+	vision = nm
+	_remap = {}
+	_lanes = {}
+	if nm != "off":
+		var m: Dictionary = preset.get("map", {})
+		for role in m:
+			if ROLE_HEX.has(role):
+				_remap[ROLE_HEX[role]] = str(m[role])
+		_lanes = (preset.get("lanes", {}) as Dictionary).duplicate()
+	_cache.clear()
+	return true
+
+
+## A fighter's lane colour (its aura): its own, or, while a preset is on, Art's preset colour for that fighter (by its roster id), if Art has one.
+static func lane(id: String, own: Color) -> Color:
+	if vision == "off" or _lanes.is_empty():
+		return own
+	var key: String = str((UiData.colour_vision().get("fighter_alias", {}) as Dictionary).get(id, id))
+	return Color.html(str(_lanes[key])) if _lanes.has(key) else own
 
 
 static func alpha(hex: String, a: float) -> Color:
@@ -108,7 +143,7 @@ static func alpha(hex: String, a: float) -> Color:
 static func stage_col(stage: int, fresh: Color) -> Color:
 	match stage:
 		0:
-			return fresh
+			return col(CROWN_FRESH)   # fresh is a neutral of its own, never a fighter's aura (the Protagonist's aura was exactly the old fresh colour: Art, 2026-10-06)
 		1:
 			return col(STAGE_BRUISED)
 		2:

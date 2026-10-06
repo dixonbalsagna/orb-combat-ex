@@ -34,7 +34,7 @@ var touch_reserve := Rect2()                 # portrait: kept free for Controls'
 var left_handed := false                     # the touch buttons on the left, the stick on the right (SimTouch mirrors them)
 var face: Array = [Rect2(), Rect2()]        # per slot: the square for the speaker's face cut-in, in its column above the bark lane (empty: the face is embedded in the bark panel)
 var touch_full := false                      # the Full touch layout (nine buttons, SimTouch.layout with full = true) instead of Simple's three
-var touch_top_limit := -1.0                 # Full touch: the lowest edge of the plates (px from the top); SimTouch.layout keeps its buttons under it. -1 when not Full touch. The host passes the same value for its hit test
+var touch_top_limit := -1.0                 # Touch landscape: the lowest edge of the plates (px from the top); SimTouch.layout keeps its buttons under it. -1 for Simple touch in portrait or without touch. SimTouch keeps Full touch's buttons under it (Simple ignores it today). The host passes the same value for its hit test
 var touch_ctrl: Dictionary = {}              # SimTouch.layout(...) for this screen in touch mode: attack, guard, power, context circles and the stick zone
 var bark_single := false                     # touch landscape: one bark lane, on the side away from the buttons, the lines stacking as in portrait
 var cards_one := false                       # touch landscape: the buttons leave room for one wound card a side, not two
@@ -244,6 +244,8 @@ func _place_forms() -> void:
 func _pass(insets: Vector4) -> void:
 	var mx: float = maxf(vp.x * 0.04, 24.0 if not portrait else 14.0)
 	var my: float = maxf(vp.y * 0.045, 16.0)
+	if touch_ui and not portrait:
+		my = maxf(maxf(minf(my, vp.y * 0.025), 8.0 * dp), 12.0)   # a short phone landscape (Safari's bars take the rest): the plates sit nearer the top; a notch or bar comes in through `insets`
 	safe = Rect2(mx + insets.x, my + insets.y, vp.x - 2.0 * mx - insets.x - insets.z, vp.y - 2.0 * my - insets.y - insets.w)
 	pm = plate_metrics(s, portrait)
 	card_h = maxf(60.0 * s, float(UiText.px(22.0, s)) * 2.0 + 12.0)
@@ -262,7 +264,7 @@ func _pass(insets: Vector4) -> void:
 	touch_top_limit = -1.0
 	if touch_ui:
 		var tmargin: float = maxf(maxf(vp.x - safe.end.x, vp.y - safe.end.y), 8.0 * dp)
-		touch_top_limit = (safe.position.y + float(pm["h"]) + 4.0 * s) if touch_full else -1.0   # the plates' lower edge: Full's buttons sit under it on a short screen
+		touch_top_limit = (safe.position.y + float(pm["h"]) + 4.0 * s) if (touch_full or not portrait) else -1.0   # the plates' lower edge: no button sits above it on a short screen (SimTouch honours it for Full today; Simple's Power is Controls' to move)
 		touch_ctrl = SimTouch.layout(vp.x, vp.y, dp, portrait, left_handed, tmargin, touch_full, touch_top_limit)
 	if portrait:
 		_portrait()
@@ -382,6 +384,13 @@ func _fits() -> bool:
 		return false
 	if touch_ui and not touch_ctrl.is_empty() and cards_none:
 		return false   # the buttons must leave room for at least one wound card a side (the loop tries a smaller scale first)
+	if touch_ui and not touch_ctrl.is_empty() and not portrait:
+		# A short phone landscape: the plates step down until no touch button is under one (the buttons come from Controls and do not move with our scale).
+		for k in touch_keys():
+			var c: Dictionary = touch_ctrl[k]
+			var br := Rect2(float(c.x) - float(c.r), float(c.y) - float(c.r), float(c.r) * 2.0, float(c.r) * 2.0)
+			if br.intersects(plate[0]) or br.intersects(plate[1]):
+				return false
 	var view := Rect2(Vector2.ZERO, vp)
 	for i in range(2):
 		if prompts[i].size.y > 0.0 and (prompts[i].intersects(bark[i]) or not view.encloses(prompts[i])):

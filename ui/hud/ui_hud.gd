@@ -172,6 +172,10 @@ var _notice_held := false
 var _notice_focus := -1
 var _notice_gate := false             # the session's gate (opaque, only its own buttons dismiss it), not the notice read again from Settings
 var _notice_allow_settings := false   # the gate opens Settings over itself
+var _turn_open := false               # the "turn your phone" card is up (a phone held upright; the match waits)
+var _turn_held := false               # ... and it is the one holding the match
+var _turn_anyway := false             # "Play upright anyway" was pressed this session
+var _l_turn: UiLayer
 var _notice_scroll := 0.0              # the card's text scrolled up by this many pixels, on a screen too short to show it all
 var _notice_drag := false              # a finger or the mouse is dragging the text
 var _l_gate_back: UiLayer
@@ -182,6 +186,9 @@ var _l_notice: UiLayer
 var flash_fn: Callable
 var _slam_prev := 0.0
 var _slam_scale_v := 1.0
+var _tl_down: Dictionary = {}          # touch index -> {name, t}: the fingers on the touch buttons right now (local, independent of the sim)
+var _touch_used: Dictionary = {}       # the touch controls the player has used once (saved)
+var _touch_used_loaded := false
 var _howto_page := 0
 var _howto_scroll := 0                # the third-party licences page: the first visible line
 var _howto_scroll_f := 0.0            # ... and the fractional part while a finger or the wheel drags
@@ -223,6 +230,7 @@ func _ready() -> void:
 	resized.connect(func(): _relayout())
 	UiData.ensure()
 	opts.merge(UiData.option_defaults(), true)   # the options' defaults live in ui/data/options.json
+	UiLook.set_vision(str(opts["colour_vision"]))   # the preset is a per-process setting: a new HUD starts from its own option
 	_l_letter = _layer(_paint_letterbox)
 	_l_strip_base = _layer(_paint_strip_base)
 	_div_dark = _bar()
@@ -271,6 +279,7 @@ func _ready() -> void:
 	_l_settings = _layer(_paint_settings)
 	_l_remap = _layer(_paint_remap)
 	_l_fb = _layer(_paint_fb)
+	_l_turn = _layer(_paint_turn)
 	_l_notice = _layer(_paint_notice)   # last: over everything
 	_fb_text = TextEdit.new()        # the free-text box and the report preview are real text controls, placed by the panel's plan
 	_fb_text.visible = false
@@ -332,7 +341,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_notice, _l_gate_back]
+	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -347,6 +356,7 @@ func redraw_count() -> int:
 ## Fighters: readout profile ids ("protagonist", "anti_hero", "empress", "cyborg", or a stand-in's alias such as "stand_in_protagonist") and names.
 func setup(ids: Array, names: Array) -> void:
 	hub.setup_fighters(ids, names)
+	_apply_vision()
 	_last_size = Vector2.ZERO
 	_relayout()
 	if notice_auto_allowed(DisplayServer.get_name(), notice_args_text(), bypass_allowed()):
@@ -367,6 +377,8 @@ func advance(dt: float) -> void:
 	hub.keep_hints = bool(opts["keep_hints"])
 	_t += dt
 	_dt = dt
+	for idx in _tl_down:
+		_tl_down[idx]["t"] = float(_tl_down[idx]["t"]) + dt
 	_frame += 1
 	hub.captions_on = bool(opts["captions"])
 	hub.reduced_motion = bool(opts["reduced_motion"])
@@ -378,18 +390,64 @@ func advance(dt: float) -> void:
 	_update_layers()
 
 
-## Which fighter is on the left of the screen: slot 0 unless Camera's sigma says the rival lies to slot 0's left. The plate,
-## card and bark columns follow the fighter's side; a swap fades the plates out and in over 0.2 s (instant under reduced motion).
+## Which fighter is on the left of the screen. By default the panels are FIXED (Orb, 2026-10-06): slot 0's plate, wound cards and bark lane stay in the left column and slot 1's in the right,
+## wherever the fighters are. With the Fighter panels setting on Follow they move over to the side their fighter is on (Camera's sigma in a split screen, else the fighters' screen positions
+## from the host's anchors), but only after the fighters have held their sides for FOLLOW_DWELL seconds, never while an exchange, a hazard moment, a cinematic or a pause is on, and not at
+## all with two humans (each keeps their own corner). A swap fades the plates out and in over 0.2 s (instant under reduced motion).
+const FOLLOW_DWELL := 1.5
+const FOLLOW_DEADBAND := 0.06          # of the screen's width: fighters closer than this in x do not count as having crossed
+var _side_goal := false                # the side the columns are heading to (true: slot 0 on the right)
+var _side_hold := 0.0                  # seconds the fighters have held the other side, while nothing is going on
+
+
 func _want_swapped() -> bool:
-	if _split.is_empty():
-		return false
-	var sg = _split.get("sigma")
-	if sg == null and _split.get("ring") is Dictionary:
-		sg = (_split["ring"] as Dictionary).get("sigma")
-	return sg != null and float(sg) < 0.0
+	return _side_goal and str(opts["hud_sides"]) == "follow"
+
+
+## 1 when slot 0 is on the right of the screen, 0 when on the left, -1 when it cannot be told.
+func _fighters_side() -> int:
+	if not _split.is_empty():
+		var sg = _split.get("sigma")
+		if sg == null and _split.get("ring") is Dictionary:
+			sg = (_split["ring"] as Dictionary).get("sigma")
+		return -1 if sg == null else (1 if float(sg) < 0.0 else 0)
+	if anchor_fn.is_valid() and hub.models.size() >= 2:
+		var a0: Dictionary = anchor_fn.call(0)
+		var a1: Dictionary = anchor_fn.call(1)
+		if a0.is_empty() or a1.is_empty() or not bool(a0.get("visible", true)) or not bool(a1.get("visible", true)):
+			return -1
+		var dx: float = (a0["pos"] as Vector2).x - (a1["pos"] as Vector2).x
+		if absf(dx) < FOLLOW_DEADBAND * layout.vp.x:
+			return -1
+		return 1 if dx > 0.0 else 0
+	return -1
+
+
+## An exchange, a hazard moment, a cinematic or a pause: the panels stay where they are.
+func _sides_busy() -> bool:
+	if hub.mode != UiEventHub.Mode.NORMAL or hub.sim_paused or hub.intro_active:
+		return true
+	for m in hub.models:
+		if not m.form_free:
+			return true   # the sim's own "in an exchange or out" condition
+	return false
 
 
 func _step_swap(dt: float) -> void:
+	if str(opts["hud_sides"]) == "follow" and _humans() < 2:
+		var side: int = _fighters_side()
+		if side < 0 or (side == 1) == _side_goal:
+			_side_hold = 0.0
+		elif _sides_busy():
+			_side_hold = 0.0
+		else:
+			_side_hold += dt
+			if _side_hold >= FOLLOW_DWELL:
+				_side_goal = side == 1
+				_side_hold = 0.0
+	else:
+		_side_goal = false
+		_side_hold = 0.0
 	var rate: float = 1000.0 if bool(opts["reduced_motion"]) else 10.0
 	if _want_swapped() != _swapped:
 		_swap_fade = maxf(0.0, _swap_fade - dt * rate)
@@ -410,12 +468,21 @@ func set_option(key: String, value) -> void:
 		for l in _all_layers():
 			if l != null:
 				l.force = bool(value)
+	if key == "colour_vision":
+		_apply_vision()
 	if key == "silhouette" or key == "touch_ui" or key == "left_handed" or key == "touch_preset":
 		_last_size = Vector2.ZERO
 	_relayout()
 	for l in _all_layers():
 		if l != null:
 			l.invalidate()
+
+
+## Put the colour-blind preset in force: the palette's remap, and each fighter's lane colour (the preset's, or its own when off). The layers all redraw in set_option.
+func _apply_vision() -> void:
+	UiLook.set_vision(str(opts["colour_vision"]))
+	for m in hub.models:
+		m.aura = UiLook.lane(m.id, m.aura_raw)
 
 
 func _relayout() -> void:
@@ -608,10 +675,12 @@ func _update_layers() -> void:
 			_prev_ai[m.slot] = m.ai
 			var ya: float = UiHints.visible_alpha(m, str(opts["control_hints"]), prompts_on, hub.t_now - float(_hint_t0[m.slot]))
 			var ha: float = 0.0 if (touch_on or layout.portrait) else UiHints.legend_alpha(m, str(opts["control_hints"]), prompts_on, hub.t_now - float(_hint_t0[m.slot]))   # the legend is for a keyboard or a pad; the YOU marker is for every screen
-			if ya > 0.01 and m.you_label != "" and anchor_fn.is_valid():
+			var yk: Dictionary = _you_marker(m)
+			if float(yk["a"]) > 0.01 and anchor_fn.is_valid():
 				var an: Dictionary = anchor_fn.call(m.slot)
 				var ap: Vector2 = an.get("pos", Vector2.ZERO)
-				you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(ya * 10.0), bool(an.get("visible", true))])
+				var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
+				you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(float(yk["a"]) * 10.0), bool(an.get("visible", true)), bool(yk["compact"]), m.aura.to_html(false), int((ea.get("pos", Vector2.ZERO) as Vector2).x * 0.5), int((ea.get("pos", Vector2.ZERO) as Vector2).y * 0.5)])
 			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"])) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
 	_l_you.update_sig(you_sig if not you_sig.is_empty() else null)
 	_join_step(hub.t_now - _join_prev_t, _dt)
@@ -636,6 +705,8 @@ func _update_layers() -> void:
 	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d|%d|%s" % [_howto_tab, _howto_held(), UiStance.live_bits(), _howto_scroll, _howto_first]) if _howto_open else null)
 
 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
+	_turn_step()
+	_l_turn.update_sig(UiTurn.sig(turn_plan()) if _turn_open else null)
 	_l_notice.update_sig(UiNotice.sig(notice_plan()) if (_notice_open and (_notice_gate and not _set_open or not _notice_gate)) else null)
 	_l_gate_back.update_sig([_set_open] if (_notice_open and _notice_gate) else null)
 	_l_settings.update_sig(_settings_sig() if (_set_open and not _rm_open) else null)
@@ -773,7 +844,7 @@ func _paint_struggle(ci: CanvasItem) -> void:
 ## is open the HUD takes every key and click (so the fighters do not move behind it): the host should freeze the sim on
 ## howto_opened and unfreeze on howto_closed.
 func show_howto(first_run: bool = false, page: int = 0) -> void:
-	if _notice_open:
+	if _notice_open or _turn_open:
 		_notice_pending = [first_run, page]   # the notice comes first; the card opens when it is dismissed
 		return
 	if _howto_open or _fb_open or _set_open:
@@ -915,6 +986,9 @@ func _paint_howto(ci: CanvasItem) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _turn_open:
+		_turn_input(event)
+		return
 	if _notice_open and (not _notice_gate or not (_set_open or _rm_open)):
 		_notice_input(event)
 		return
@@ -1129,6 +1203,61 @@ func hide_photo_notice(open_settings: bool = false) -> void:
 		show_howto(bool(pending[0]), int(pending[1]))
 
 
+# --- The "turn your phone" card (docs/ui/hud-spec.md section 56) ---------------------------------------------------------------------
+
+func turn_plan() -> Dictionary:
+	return UiTurn.plan(layout.vp, layout.s, dp)
+
+
+func is_turn_open() -> bool:
+	return _turn_open
+
+
+## A phone held upright shows the card and the match waits, once the gate and any other card are done with the screen; turning the phone, or "Play upright anyway", takes it away.
+func _turn_step() -> void:
+	var touch: bool = bool(opts["touch_ui"]) or DisplayServer.is_touchscreen_available()
+	var want: bool = not _turn_anyway and UiTurn.wanted(layout.vp, dp, touch) and not (_notice_open or _pm_open or _howto_open or _set_open or _fb_open or _rm_open)
+	if _turn_open and not UiTurn.wanted(layout.vp, dp, touch):
+		want = false
+	if want == _turn_open:
+		return
+	_turn_open = want
+	if want:
+		_turn_held = true
+		howto_opened.emit(false)   # the host holds the match and lets go of every held control, as for any card
+	elif _turn_held:
+		_turn_held = false
+		howto_closed.emit(false)
+	_l_turn.invalidate()
+	if not want and not _notice_pending.is_empty():
+		var pending: Array = _notice_pending
+		_notice_pending = []
+		show_howto(bool(pending[0]), int(pending[1]))
+
+
+func _paint_turn(ci: CanvasItem) -> void:
+	if _turn_open:
+		UiTurn.draw(ci, turn_plan())
+
+
+func turn_anyway() -> void:
+	_turn_anyway = true
+	_turn_step()
+
+
+func _turn_input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		if event.pressed and not event.echo and (event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER or event.keycode == KEY_SPACE):
+			turn_anyway()
+	elif event is InputEventJoypadButton:
+		if event.pressed and event.button_index == JOY_BUTTON_A:
+			turn_anyway()
+	elif event is InputEventMouseButton:
+		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT and UiTurn.hit(turn_plan(), event.position):
+			turn_anyway()
+	get_viewport().set_input_as_handled()
+
+
 func is_notice_open() -> bool:
 	return _notice_open
 
@@ -1261,7 +1390,7 @@ func _notice_input(event: InputEvent) -> void:
 ## sim and lets go of held keys); closing it is a Resume. While the menu is open the HUD takes every key, pad button and click, and the
 ## How to play card, Settings and Send feedback open over it and give it back when they close. Does nothing while one of those is open.
 func toggle_pause_menu() -> void:
-	if _notice_open:
+	if _notice_open or _turn_open:
 		return
 	if _pm_open:
 		if not (_rm_open or _set_open or _fb_open or _howto_open):
@@ -1271,7 +1400,7 @@ func toggle_pause_menu() -> void:
 
 
 func show_pause_menu() -> void:
-	if _pm_open or _howto_open or _fb_open or _set_open or _notice_open:
+	if _pm_open or _howto_open or _fb_open or _set_open or _notice_open or _turn_open:
 		return
 	_pm_open = true
 	_pm_confirm = false
@@ -1518,7 +1647,7 @@ func _paint_join(ci: CanvasItem) -> void:
 ## play, and skip its own pad handling while is_settings_open() (see is_overlay_open()). Every change goes through set_option, so
 ## option_changed fires as it always does; the changes are kept for the next run (load_saved_options).
 func show_settings(focus_key: String = "") -> void:
-	if _set_open or _howto_open or _fb_open or (_notice_open and not _notice_allow_settings):
+	if _set_open or _howto_open or _fb_open or _turn_open or (_notice_open and not _notice_allow_settings):
 		return
 	UiSettings.two_humans = _humans() >= 2
 	_set_open = true
@@ -1565,7 +1694,7 @@ func is_settings_open() -> bool:
 
 ## Any of the three overlays (How to play, feedback, Settings) is open: the host leaves keys, pad and touch to the HUD.
 func is_overlay_open() -> bool:
-	return _howto_open or _fb_open or _set_open or _pm_open or _notice_open
+	return _howto_open or _fb_open or _set_open or _pm_open or _notice_open or _turn_open
 
 
 func settings_focus() -> int:
@@ -2431,7 +2560,7 @@ func _remap_input(event: InputEvent) -> void:
 ## HUD takes every key and click, like the How to play card: the host pauses the sim on feedback_opened and restores the pause it
 ## found on feedback_closed. Nothing is sent anywhere: COPY REPORT puts plain text on the clipboard.
 func show_feedback(context: String = "pause") -> void:
-	if _fb_open or _howto_open or _set_open or _notice_open:
+	if _fb_open or _howto_open or _set_open or _notice_open or _turn_open:
 		return
 	_fb_open = true
 	_fb_context = context
@@ -2723,7 +2852,9 @@ func _you_alpha(m: UiFighterModel) -> float:
 ## What the HUD adds to the Full touch buttons for the first human: the buttons with no move in the stance held now ("dim", greyed and marked not yet) and the press
 ## that did nothing ("ack": {name, kind, a}), both from the fighter's model. Empty on any other layout.
 func _touch_extra() -> Dictionary:
-	var out := {"dim": [], "ack": {}, "lit": [], "launcher": ""}
+	var out := {"dim": [], "ack": {}, "lit": [], "launcher": "", "unused": [], "cells": {}}
+	if bool(opts["touch_ui"]):
+		out["unused"] = _touch_unused()
 	if not layout.touch_full:
 		return out
 	for m in hub.models:
@@ -2732,6 +2863,12 @@ func _touch_extra() -> Dictionary:
 		for aid in UiHints.FACE_CELLS:
 			if not UiStance.cell_works(m.stance_kind, str(UiHints.FACE_CELLS[aid])):
 				(out["dim"] as Array).append(aid)
+		if UiStance.live(m.stance_kind):
+			# A live stance names the face buttons by its moves (energy: BOLTS, SHOT, MINE, BEAM): the mine is reachable and says so.
+			for aid4 in UiHints.FACE_CELLS:
+				var cw: String = UiStance.cell(m.stance_kind, str(UiHints.FACE_CELLS[aid4]))
+				if cw != "":
+					(out["cells"] as Dictionary)[aid4] = cw.to_upper()
 		var cf: float = UiHints.charge_frac(m, bool(opts["reduced_motion"]))
 		if cf >= 0.0:
 			for aid3 in UiHints.FACE_CELLS:
@@ -2751,11 +2888,88 @@ func _touch_extra() -> Dictionary:
 
 
 func _touch_state() -> Dictionary:
+	var st: Dictionary = {}
 	if touch_state_fn.is_valid():
 		var v = touch_state_fn.call()
 		if v is Dictionary:
-			return v
-	return {}
+			st = (v as Dictionary).duplicate(true)
+	# What the finger does on the same frame, whatever the sim has done with it yet: on touch a tap cannot be told from the start of a hold, so the light is sent on
+	# the release and the body shows nothing until then. The button answers on touch-down, every time, and Attack's ring starts on the first frame (section 54).
+	for idx in _tl_down:
+		var n: String = str(_tl_down[idx]["name"])
+		var ticks: float = float(_tl_down[idx]["t"]) * 60.0
+		if layout.touch_full:
+			var full: Dictionary = st.get("full", {})
+			var fs_: Dictionary = (full.get(n, {}) as Dictionary).duplicate()
+			fs_["down"] = true
+			full[n] = fs_
+			st["full"] = full
+		else:
+			var bs: Dictionary = (st.get(n, {}) as Dictionary).duplicate()
+			bs["down"] = true
+			if n == "attack":
+				bs["hold_ticks"] = maxf(float(bs.get("hold_ticks", 0.0)), ticks)
+				bs["hold"] = maxf(float(bs.get("hold", 0.0)), clampf(ticks / 28.0, 0.0, 1.0))
+			st[n] = bs
+	if bool((st.get("stick", {}) as Dictionary).get("active", false)):
+		_mark_touch_used("stick")
+	return st
+
+
+## The touch button (by name) a point is on, or "": the nearest circle within its radius.
+func _touch_button_at(pos: Vector2) -> String:
+	var best := ""
+	var best_d := 1e9
+	for n in layout.touch_keys():
+		var c: Dictionary = layout.touch_ctrl.get(n, {})
+		if c.is_empty():
+			continue
+		var d: float = pos.distance_to(Vector2(float(c.x), float(c.y)))
+		if d <= float(c.r) * 1.1 and d < best_d:
+			best = str(n)
+			best_d = d
+	return best
+
+
+## Watches the fingers on the touch buttons, only to draw them (the sim's own touch layer still owns the input): the press shows on the frame it lands.
+func _input(event: InputEvent) -> void:
+	if not bool(opts["touch_ui"]) or not (event is InputEventScreenTouch):
+		return
+	if event.pressed:
+		if _notice_open or _pm_open or _set_open or _rm_open or _howto_open or _fb_open:
+			return
+		var n: String = _touch_button_at(event.position)
+		if n != "":
+			_tl_down[event.index] = {"name": n, "t": 0.0}
+			_mark_touch_used(n)
+	else:
+		_tl_down.erase(event.index)
+
+
+func _load_touch_used() -> void:
+	if _touch_used_loaded:
+		return
+	_touch_used_loaded = true
+	var saved = UiPrefs.get_value("touch_used", {})
+	_touch_used = (saved as Dictionary).duplicate() if saved is Dictionary else {}
+
+
+## A touch control the player has used once (remembered between runs): its first-use caption stops.
+func _mark_touch_used(name: String) -> void:
+	_load_touch_used()
+	if not bool(_touch_used.get(name, false)):
+		_touch_used[name] = true
+		UiPrefs.set_value("touch_used", _touch_used)
+
+
+## The touch controls whose first-use captions still show (Simple: attack, guard, power and the stick; Full: the stick, its other buttons carry their words always).
+func _touch_unused() -> Array:
+	_load_touch_used()
+	var out: Array = []
+	for n in (["stick"] if layout.touch_full else ["attack", "guard", "power", "stick"]):
+		if not bool(_touch_used.get(n, false)):
+			out.append(n)
+	return out
 
 
 ## The captions on the touch buttons show like the legend does: the first 12 s of a match and while prompts are on.
@@ -2921,13 +3135,32 @@ func _paint_form(ci: CanvasItem, slot: int) -> void:
 	UiFormPrompt.draw(ci, hub.models[slot], _form_plan[slot], layout.s, bool(opts["reduced_motion"]))
 
 
+## The marker over a human's fighter: the pill with the label while the control hints show (the opening seconds), then, with "Mark my fighter" on Always (the default), a small steady
+## pointer in the fighter's lane colour for the whole fight. {a: alpha, compact: pointer only}. Off, or the Intro choice after the opening, shows nothing.
+func _you_marker(m: UiFighterModel) -> Dictionary:
+	var mode: String = str(opts["you_marker"])
+	if m.you_label == "" or mode == "off":
+		return {"a": 0.0, "compact": false}
+	var a: float = _you_alpha(m)
+	if a > 0.01:
+		return {"a": a, "compact": false}
+	if mode == "always":
+		return {"a": 0.9, "compact": true}
+	return {"a": 0.0, "compact": false}
+
+
 func _paint_you(ci: CanvasItem) -> void:
 	if not anchor_fn.is_valid():
 		return
 	for m in hub.models:
-		var a: float = _you_alpha(m)
-		if a > 0.01 and m.you_label != "":
-			UiHints.draw_you(ci, m.you_label, anchor_fn.call(m.slot), layout.s, a, layout.safe)
+		var yk: Dictionary = _you_marker(m)
+		if float(yk["a"]) > 0.01 and m.you_label != "":
+			var an: Dictionary = anchor_fn.call(m.slot)
+			var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
+			if ea.is_empty():
+				UiHints.draw_you(ci, m.you_label, an, layout.s, float(yk["a"]), layout.safe, m.aura, bool(yk["compact"]))
+			else:
+				UiHints.draw_you_edge(ci, m.you_label, ea, layout.s, float(yk["a"]), m.aura)   # the fighter is off screen: an arrow on the edge points to it
 
 
 func _paint_tele(ci: CanvasItem) -> void:

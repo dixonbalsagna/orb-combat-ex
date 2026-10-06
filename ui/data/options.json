@@ -37,6 +37,9 @@
     "left_handed": { "default": false, "group": "controls", "label": "Left-handed touch layout", "help": "On a touch screen, the buttons on the left and the move stick on the right.", "accessibility": true },
     "unlock_all": { "default": false, "group": "display", "label": "Unlock all cosmetics", "help": "Every cosmetic can be equipped. Nothing is marked as earned: your real collection keeps counting and comes back when this is off." },
     "thickness": { "default": 1.0, "group": "accessibility", "label": "Crown thickness", "help": "Arc thickness of the wear crown: 0.75, 1, 1.5.", "accessibility": true, "choices": [0.75, 1.0, 1.5] },
+    "colour_vision": { "default": "off", "group": "accessibility", "label": "Colour-blind mode", "help": "Swaps the colours that carry meaning (wear stages, stances, moods, and the two fighters' colours) for ones that stay apart with protanopia, deuteranopia or tritanopia. Off keeps the game's own colours. Every cue also has a word, an icon or a shape.", "accessibility": true, "choices": ["off", "protan", "deutan", "tritan"] },
+    "you_marker": { "default": "always", "group": "display", "label": "Mark my fighter", "help": "A small marker over your fighter in your colour. Always keeps it up through the fight, Intro shows it with the control hints at the start only, Off hides it.", "choices": ["always", "intro", "off"] },
+    "hud_sides": { "default": "fixed", "group": "display", "label": "Fighter panels", "help": "Fixed: player one's panel stays on the left, player two's on the right. Follow: the panels move over to the side their fighter is on, after the fighters have held their sides for a moment. They never move in the middle of an exchange, and with two players they stay in their own corners.", "choices": ["fixed", "follow"] },
     "region_label": { "default": false, "group": "display", "label": "Place names", "help": "The place under the camera on the planet strip." }
   }
 }

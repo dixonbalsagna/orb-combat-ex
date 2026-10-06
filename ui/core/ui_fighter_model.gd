@@ -9,7 +9,8 @@ var id: String = "default"         # readout profile id ("protagonist", "anti_he
 var profile: Dictionary = {}
 var name: String = ""
 var title: String = ""
-var aura: Color = Color("#8fd6ff")
+var aura: Color = Color("#8fd6ff")    # the lane colour in use: the fighter's own, or a colour-blind preset's (UiLook.lane)
+var aura_raw: Color = Color("#8fd6ff")  # the fighter's own aura, as the sim sent it
 var ai: bool = false
 var left_side: bool = true         # which side's column it lives in
 

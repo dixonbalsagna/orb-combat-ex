@@ -55,6 +55,7 @@ func _run() -> void:
 	await _press_mark_rules()
 	await _notice_rules()
 	await _gate_short_rules()
+	await _phone_rules()
 	_gate_bypass_rules()
 	await _three_strength_rules()
 	await _key_help_rules()
@@ -63,6 +64,7 @@ func _run() -> void:
 	await _armed_hub_rules()
 	await _beat_ring_rules()
 	await _touch_controls_rules()
+	await _touch_feel_rules()
 	await _settings_rules()
 	_touch_full_rules()
 	await _remap_rules()
@@ -810,10 +812,59 @@ func _split_rules() -> void:
 		hud.advance(1.0 / 60.0)
 		await process_frame
 	st["sigma"] = -1.0
+	for i in range(130):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(str(hud.opts["hud_sides"]) == "fixed" and not hud.layout.swapped and hud.hub.model(0).left_side and not hud.hub.model(1).left_side, "hud sides: by default the panels are FIXED: sigma -1 for over two seconds moves nothing")
+	hud.set_option("hud_sides", "follow")
+	hud.hub.model(1).ai = true   # one human and the computer: the case Follow is for
+	for i in range(60):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(not hud.layout.swapped, "hud sides: Follow waits out its dwell (1.5 s) before it moves (%d frames in)" % 60)
+	hud.hub.model(1).form_free = false   # an exchange is on: the sides hold
+	for i in range(240):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(not hud.layout.swapped, "hud sides: and never moves in the middle of an exchange, however long the fighters have held their sides")
+	hud.hub.model(1).form_free = true
+	for i in range(130):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud.layout.swapped and not hud.hub.model(0).left_side and hud.hub.model(1).left_side, "hud split: with Follow, sigma -1 held swaps the plate, card and bark columns")
+	var was_ai1: bool = hud.hub.model(1).ai
+	var was_ai0: bool = hud.hub.model(0).ai
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = false
+	for i in range(130):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(not hud.layout.swapped and hud.hub.model(0).left_side, "hud sides: with two humans the panels go back to and stay in their own corners, whatever Follow says and wherever the fighters are")
+	hud.hub.model(0).ai = was_ai0
+	hud.hub.model(1).ai = was_ai1
+	for i in range(130):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud.layout.swapped, "hud sides: with one human again, Follow takes them over to the fighters' sides")
+	st["sigma"] = 1.0
+	for i in range(130):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(not hud.layout.swapped, "hud sides: and back")
+	st["sigma"] = -1.0
+	for i in range(130):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud.layout.swapped, "hud sides: and over to the other side")
+	hud.set_option("hud_sides", "fixed")
 	for i in range(30):
 		hud.advance(1.0 / 60.0)
 		await process_frame
-	_ok(hud.layout.swapped and not hud.hub.model(0).left_side and hud.hub.model(1).left_side, "hud split: sigma -1 swaps the plate, card and bark columns")
+	_ok(not hud.layout.swapped, "hud sides: switching back to Fixed puts them back")
+	hud.set_option("hud_sides", "follow")
+	for i in range(130):
+		hud.advance(1.0 / 60.0)
+		await process_frame
 	st["sep"] = 0.0
 	for i in range(6):
 		hud.advance(1.0 / 60.0)
@@ -3401,13 +3452,36 @@ func _hints_rules() -> void:
 	while steps < 900 and hud._l_hints[0].sig != null:
 		hud.advance(1.0 / 30.0)
 		steps += 1
-	_ok(steps > 300 and hud._l_hints[0].sig == null and hud._l_you.sig == null, "hints: they are gone after the first 12 s (%d half-frames)" % steps)
+	_ok(steps > 300 and hud._l_hints[0].sig == null and hud._l_you.sig != null, "hints: the legend is gone after the first 12 s (%d half-frames), and my fighter keeps its small steady marker (Mark my fighter: Always)" % steps)
+	var yk_late: Dictionary = hud._you_marker(hud.hub.model(0))
+	_ok(bool(yk_late["compact"]) and float(yk_late["a"]) > 0.5 and float(hud._you_marker(hud.hub.model(1))["a"]) == 0.0, "hints: the steady marker is the pointer only, and only over the human")
+	hud.set_option("you_marker", "intro")
+	hud.advance(1.0 / 60.0)
+	_ok(hud._l_you.sig == null, "hints: with Mark my fighter on Intro nothing stays after the opening")
+	hud.set_option("you_marker", "off")
+	hud.advance(1.0 / 60.0)
+	_ok(hud._l_you.sig == null, "hints: and Off shows none")
+	hud.set_option("you_marker", "always")
+	hud.advance(1.0 / 60.0)
+	# The marker is in the fighter's lane colour, and an off-screen fighter gets an arrow on the edge instead of a marker.
+	var ea0: Dictionary = UiHints.edge_arrow({"pos": hud.layout.vp * 0.4, "h": 120.0, "visible": true}, hud.layout.safe, hud.layout.s)
+	var ea1: Dictionary = UiHints.edge_arrow({"pos": Vector2(-400, 500), "h": 120.0, "visible": true}, hud.layout.safe, hud.layout.s)
+	var ea2: Dictionary = UiHints.edge_arrow({"pos": Vector2(hud.layout.vp.x + 600.0, 100), "h": 120.0, "visible": true}, hud.layout.safe, hud.layout.s)
+	_ok(ea0.is_empty() and not ea1.is_empty() and (ea1["dir"] as Vector2).x < -0.5 and hud.layout.safe.grow(1.0).has_point(ea1["pos"]) and not ea2.is_empty() and (ea2["dir"] as Vector2).x > 0.5 and hud.layout.safe.grow(1.0).has_point(ea2["pos"]) and UiHints.edge_arrow({"pos": Vector2(-400, 500), "visible": false}, hud.layout.safe, 1.0).is_empty(), "hints: a fighter off screen gets an arrow on the screen's edge pointing to it, on screen none")
+	var you_sig_a: Array = hud._l_you.sig.duplicate() if hud._l_you.sig != null else []
+	hud.hub.model(0).aura = Color("#46b9b9")
+	hud.advance(1.0 / 60.0)
+	_ok(hud._l_you.sig != null and hud._l_you.sig != you_sig_a, "hints: the marker redraws when the lane colour changes")
 	hud.set_option("control_hints", "always")
 	hud.advance(1.0 / 60.0)
 	_ok(hud._l_hints[0].sig != null and hud._l_you.sig != null, "hints: 'always' brings them back")
 	hud.set_option("control_hints", "off")
+	hud.set_option("you_marker", "intro")
 	hud.advance(1.0 / 60.0)
-	_ok(hud._l_hints[0].sig == null and hud._l_you.sig == null, "hints: 'off' hides them")
+	_ok(hud._l_hints[0].sig == null and hud._l_you.sig == null, "hints: 'off' hides them (and the marker too, when it is set to the intro only)")
+	hud.set_option("you_marker", "always")
+	hud.advance(1.0 / 60.0)
+	_ok(hud._l_hints[0].sig == null and hud._l_you.sig != null, "hints: but the steady marker over my fighter stays with the hints off (its own setting)")
 	hud.set_option("control_hints", "auto")
 	hud.consume({"type": "match_start"})
 	hud.hub.model(0).ai = false
@@ -3561,6 +3635,112 @@ func _touch_controls_rules() -> void:
 
 
 # --- The Settings screen (docs/ui/hud-spec.md section 26) ------------------------------------------------------------------------
+
+## Touch feel (docs/ui/hud-spec.md section 54): the button answers on touch-down whatever the sim has done, Attack's ring starts on the first frame, a first-use
+## caption stays until the control is used once, and a live stance names the Full buttons.
+func _touch_feel_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_touch.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	root.size = Vector2i(2532, 1170)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(2532, 1170)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.set_density(3.0)
+	hud.set_option("touch_ui", true)
+	var st := {"attack": {"down": false, "hold": 0.0}, "guard": {"down": false}, "power": {"down": false}, "stick": {"active": false}}
+	hud.touch_state_fn = func(): return st   # the sim says nothing is pressed, throughout
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var ac: Dictionary = hud.layout.touch_ctrl["attack"]
+	var apos := Vector2(float(ac.x), float(ac.y))
+	var gc: Dictionary = hud.layout.touch_ctrl["guard"]
+	var gpos := Vector2(float(gc.x), float(gc.y))
+	# Press Attack: down on the same frame, with the sim still saying up, and the ring's ticks count from that frame.
+	var ev := InputEventScreenTouch.new()
+	ev.index = 0
+	ev.pressed = true
+	ev.position = apos
+	hud._input(ev)
+	var s0: Dictionary = hud._touch_state()
+	_ok(bool((s0.get("attack", {}) as Dictionary).get("down", false)) and not bool((st["attack"] as Dictionary).get("down", false)), "touch feel: a finger on Attack shows it pressed on the same frame, with the sim still saying nothing")
+	_ok(float((s0["attack"] as Dictionary).get("hold_ticks", -1.0)) == 0.0, "touch feel: and the ring is at its start, tick 0")
+	var r0: int = hud._l_touchctl.redraws
+	for i in range(6):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var s1: Dictionary = hud._touch_state()
+	var ht: float = float((s1["attack"] as Dictionary).get("hold_ticks", 0.0))
+	_ok(ht >= 5.5 and ht <= 6.5, "touch feel: the ring counts the frames the finger is down, with no sim (%.1f ticks after 6 frames)" % ht)
+	_ok(hud._l_touchctl.redraws > r0, "touch feel: and the layer redraws as it fills")
+	# The sim's own number wins when it is ahead.
+	st["attack"] = {"down": true, "hold": 0.0, "hold_ticks": 40.0}
+	_ok(float((hud._touch_state()["attack"] as Dictionary)["hold_ticks"]) == 40.0, "touch feel: the sim's own hold count is used when it is ahead of the local one")
+	st["attack"] = {"down": false, "hold": 0.0}
+	var up := InputEventScreenTouch.new()
+	up.index = 0
+	up.pressed = false
+	up.position = apos
+	hud._input(up)
+	_ok(not bool((hud._touch_state().get("attack", {}) as Dictionary).get("down", false)), "touch feel: lifting the finger clears it on the same frame")
+	# A second finger on Guard, then a press that misses every button does nothing.
+	var g := InputEventScreenTouch.new()
+	g.index = 1
+	g.pressed = true
+	g.position = gpos
+	hud._input(g)
+	_ok(bool((hud._touch_state().get("guard", {}) as Dictionary).get("down", false)), "touch feel: Guard answers the same way")
+	g.pressed = false
+	hud._input(g)
+	var miss := InputEventScreenTouch.new()
+	miss.index = 2
+	miss.pressed = true
+	miss.position = Vector2(10, 10)
+	hud._input(miss)
+	_ok(hud._tl_down.is_empty(), "touch feel: a touch that is on no button is the stick's and marks nothing")
+	# While a menu or card is open the buttons are not there to press.
+	hud._howto_open = true
+	hud._input(ev)
+	_ok(hud._tl_down.is_empty(), "touch feel: nothing is pressed under an open card")
+	hud._howto_open = false
+	# First-use captions: unused controls keep theirs after the intro, a used one drops it, and it is remembered.
+	var unused0: Array = hud._touch_extra()["unused"]
+	_ok(not unused0.has("attack") and not unused0.has("guard") and unused0.has("power") and unused0.has("stick"), "touch feel: Attack and Guard have been used, so their captions are gone; Power's and the stick's stay %s" % str(unused0))
+	_ok(bool(UiPrefs.get_value("touch_used", {}).get("attack", false)), "touch feel: the used controls are remembered between runs")
+	hud.hub.t_now = 100.0   # long past the intro
+	var key_a: Array = UiTouchControls.sig(hud.layout, hud._touch_state(), 0.0, false, -1, hud._touch_extra())
+	var ex2: Dictionary = hud._touch_extra()
+	(ex2["unused"] as Array).erase("power")
+	var key_b: Array = UiTouchControls.sig(hud.layout, hud._touch_state(), 0.0, false, -1, ex2)
+	_ok(key_a != key_b, "touch feel: the redraw key changes when a caption goes")
+	_ok(UiTouchControls._caption_a(0.0, {"unused": ["power"]}, "power") == 1.0 and UiTouchControls._caption_a(0.0, {"unused": []}, "power") == 0.0 and UiTouchControls._caption_a(0.7, {"unused": []}, "power") == 0.7, "touch feel: a first-use caption is full alpha until used, and the intro's alpha otherwise")
+	# Full touch: the stick keeps its words until used, and the live energy stance names the face buttons.
+	hud.set_option("touch_preset", "touch-full")
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	if hud.layout.touch_full:
+		_ok((hud._touch_extra()["unused"] as Array) == ["stick"] or (hud._touch_extra()["unused"] as Array).is_empty(), "touch feel: on Full touch only the stick has a first-use caption")
+		var stances_d: Dictionary = UiData.stances()["stances"]
+		var was: bool = bool(stances_d["energy"].get("_live", false))
+		stances_d["energy"]["_live"] = true
+		hud.hub.model(0).stance_kind = UiStance.ENERGY
+		var cells: Dictionary = hud._touch_extra()["cells"]
+		stances_d["energy"]["_live"] = was
+		_ok(cells.size() == 4 and str(cells["context"]).length() > 0, "touch feel: in the live energy stance Full touch names all four face buttons by its moves %s" % str(cells))
+		hud.hub.model(0).stance_kind = 0
+		_ok((hud._touch_extra()["cells"] as Dictionary).is_empty() or not UiStance.live(0), "touch feel: and in a stance that is not live it keeps its words")
+	else:
+		_ok(false, "touch feel: the touch_preset option did not reach the layout (Full)")
+	hud.queue_free()
+	await process_frame
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
+
 
 func _settings_rules() -> void:
 	var od: Dictionary = UiData.options()
@@ -5086,6 +5266,150 @@ func _reduce_flashing_rules() -> void:
 
 ## Legal's text (RL-119), word for word: what the gate says and what the README says.
 const GATE_TEXT := "This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them. The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes. No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version."
+
+
+## The phone batch (docs/ui/hud-spec.md section 56): the turn-your-phone card, the colour-blind presets and the short-screen touch layout.
+func _phone_rules() -> void:
+	# The card: only a phone (a touch screen under 600 dp on its short side) held upright.
+	_ok(UiTurn.wanted(Vector2(1170, 2532), 3.0, true) and UiTurn.wanted(Vector2(390, 844), 1.0, true) and not UiTurn.wanted(Vector2(2532, 1170), 3.0, true) and not UiTurn.wanted(Vector2(1170, 2532), 3.0, false) and not UiTurn.wanted(Vector2(1600, 2400), 2.0, true), "turn card: a phone held upright, not sideways, not without touch, not a tablet")
+	var bad := PackedStringArray()
+	for cs in [[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(320, 568), 1.0]]:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.touch_ui = true
+		lay.compute(cs[0], false)
+		var p: Dictionary = UiTurn.plan(cs[0], lay.s, cs[1])
+		var b: Rect2 = p["button"]
+		if not bool(p["fits"]) or b.size.y < 48.0 * float(cs[1]) - 0.01 or not Rect2(Vector2.ZERO, cs[0]).encloses(b):
+			bad.append(str(cs[0]))
+	_ok(bad.is_empty(), "turn card: fits at seven phone sizes, its button on screen and 48 dp %s" % str(bad))
+	root.size = Vector2i(585, 1266)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(585, 1266)
+	root.add_child(hud)
+	await process_frame
+	var held := {"paused": false, "opened": 0, "closed": 0}
+	hud.howto_opened.connect(func(_f): held["paused"] = true; held["opened"] += 1)
+	hud.howto_closed.connect(func(_f): held["paused"] = false; held["closed"] += 1)
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.set_density(3.0)
+	hud.set_option("touch_ui", true)
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	# (the test HUD's own size is twice the window it sits in, so these windows are half of the phone's pixels)
+	_ok(hud.is_turn_open() and held["paused"] and hud._l_turn.sig != null, "turn card: a phone held upright raises it and holds the match")
+	_ok(hud.is_overlay_open(), "turn card: the host leaves every input to the HUD while it is up")
+	hud.show_pause_menu()
+	hud.show_settings()
+	_ok(not hud._pm_open and not hud._set_open and held["opened"] == 1, "turn card: no menu opens over it, and it holds the match once")
+	hud.size = Vector2(1266, 585)
+	root.size = Vector2i(1266, 585)
+	for i in range(4):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(not hud.is_turn_open() and not held["paused"] and held["closed"] == 1 and hud._l_turn.sig == null, "turn card: turning the phone sideways takes it away and lets the match go")
+	hud.size = Vector2(585, 1266)
+	root.size = Vector2i(585, 1266)
+	for i in range(4):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud.is_turn_open(), "turn card: and it comes back when the phone is turned upright again")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = (hud.turn_plan()["card"] as Rect2).position + Vector2(5, 5)
+	hud._unhandled_input(click)
+	_ok(hud.is_turn_open(), "turn card: a tap off the button does nothing")
+	click.position = (hud.turn_plan()["button"] as Rect2).get_center()
+	hud._unhandled_input(click)
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(not hud.is_turn_open() and not held["paused"], "turn card: Play upright anyway lets the match go, for the session")
+	hud.queue_free()
+	await process_frame
+	# The gate comes first: with it up the card waits, and shows when the gate is dismissed.
+	var hud2: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud2.size = Vector2(585, 1266)
+	root.add_child(hud2)
+	await process_frame
+	hud2.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud2.set_density(3.0)
+	hud2.set_option("touch_ui", true)
+	hud2.show_photo_notice(true)
+	for i in range(3):
+		hud2.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud2.is_notice_gate() and not hud2.is_turn_open(), "turn card: the flashing gate stays first on a phone held upright")
+	hud2.hide_photo_notice(false)
+	for i in range(3):
+		hud2.advance(1.0 / 60.0)
+		await process_frame
+	_ok(not hud2.is_notice_open() and hud2.is_turn_open(), "turn card: then the card follows the gate")
+	hud2.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
+	# Colour-blind presets: only the colours that carry meaning, only when chosen; the default look is the same as before.
+	var hud3: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud3.size = Vector2(1280, 720)
+	root.add_child(hud3)
+	await process_frame
+	hud3.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud3.hub.model(0).ai = false
+	hud3.hub.model(1).ai = true
+	hud3.hub.patch(0, {"aura": Color("#8fd6ff")})
+	hud3.hub.patch(1, {"aura": Color("#9a80d8")})
+	var def_bruised: Color = UiLook.stage_col(1, Color.WHITE)
+	var def_fresh: Color = UiLook.stage_col(0, Color("#8fd6ff"))
+	_ok(UiLook.vision == "off" and def_fresh == UiLook.col(UiLook.CROWN_FRESH) and def_fresh != Color("#8fd6ff") and hud3.hub.model(0).aura == Color("#8fd6ff"), "colour vision: off by default; fresh is its own neutral, no longer the Protagonist's aura; the fighters keep their own colours")
+	var art: Dictionary = {}
+	if FileAccess.file_exists("res://data/art/colour-vision.json"):
+		art = JSON.parse_string(FileAccess.get_file_as_string("res://data/art/colour-vision.json"))
+	var lanes_ok := true
+	var drift := ""
+	for mode in ["protan", "deutan", "tritan"]:
+		hud3.set_option("colour_vision", mode)
+		var m0: UiFighterModel = hud3.hub.model(0)
+		var m1: UiFighterModel = hud3.hub.model(1)
+		var pre: Dictionary = UiData.colour_vision()["presets"][mode]
+		if m0.aura != Color.html(str(pre["lanes"]["protagonist"])) or m1.aura != Color.html(str(pre["lanes"]["rival"])):
+			lanes_ok = false
+		if not art.is_empty():
+			var ap: Dictionary = (art["presets"] as Dictionary)[mode]
+			if str(ap["protagonist"]["aura"]).to_lower() != str(pre["lanes"]["protagonist"]).to_lower() or str(ap["rival"]["aura"]).to_lower() != str(pre["lanes"]["rival"]).to_lower():
+				drift += mode + " "
+		_ok(UiLook.stage_col(1, Color.WHITE) != def_bruised or mode == "protan", "colour vision %s: the wound stages change colour (bruised stays only where it is already apart)" % mode)
+		var st: Array = [UiLook.stage_col(0, Color.WHITE), UiLook.stage_col(1, Color.WHITE), UiLook.stage_col(2, Color.WHITE), UiLook.stage_col(3, Color.WHITE)]
+		_ok(st[0] != st[1] and st[1] != st[2] and st[2] != st[3] and st[0] != st[2] and st[1] != st[3] and st[0] != st[3], "colour vision %s: the four stages are four different colours" % mode)
+		_ok(UiLook.stance_col(1) == UiLook.col("#5aaaff"), "colour vision %s: the guard cue stays the defensive stance's colour (what Art measured against)" % mode)
+	_ok(lanes_ok, "colour vision: each preset gives the Protagonist and the rival Art's lane colours")
+	_ok(drift == "", "colour vision: those lane colours still equal Art's data/art/colour-vision.json when that file is present (%s)" % ("absent" if art.is_empty() else "drift: " + drift))
+	hud3.hub.patch(0, {"aura": Color("#abcdef")})
+	_ok(hud3.hub.model(0).aura == Color.html(str(UiData.colour_vision()["presets"]["tritan"]["lanes"]["protagonist"])) and hud3.hub.model(0).aura_raw == Color("#abcdef"), "colour vision: a new aura from the sim keeps the preset's colour and remembers the fighter's own")
+	hud3.set_option("colour_vision", "off")
+	_ok(UiLook.vision == "off" and hud3.hub.model(0).aura == Color("#abcdef") and UiLook.stage_col(1, Color.WHITE) == def_bruised and hud3.hub.model(1).aura == Color("#9a80d8"), "colour vision: off puts every colour back")
+	hud3.set_option("colour_vision", "nonsense")
+	_ok(UiLook.vision == "off", "colour vision: a name the data does not have is the game's own palette")
+	hud3.queue_free()
+	await process_frame
+	# The short phone landscape: where Simple and Full touch still pass UI's own rules at phone density (Platform's minimum usable height, CSS px, bars included).
+	var short_bad := PackedStringArray()
+	for cs2 in [[Vector2(844, 390), false], [Vector2(844, 360), false], [Vector2(667, 375), false], [Vector2(667, 360), false], [Vector2(932, 430), false], [Vector2(844, 300), true], [Vector2(667, 320), true], [Vector2(568, 320), true], [Vector2(844, 390), true]]:
+		var lay2 := UiLayout.new()
+		lay2.dp = 3.0
+		lay2.touch_ui = true
+		lay2.touch_full = cs2[1]
+		lay2.compute((cs2[0] as Vector2) * 3.0, false)
+		var vw := Rect2(Vector2.ZERO, (cs2[0] as Vector2) * 3.0)
+		for n in lay2.touch_keys():
+			var cc: Dictionary = UiTouchControls.circle(lay2, n)
+			var rr: Rect2 = UiTouchControls.rect_of(cc)
+			if not vw.encloses(rr) or float(cc.r) * 2.0 < 48.0 * 3.0 - 0.01 or rr.intersects(lay2.plate[0]) or rr.intersects(lay2.plate[1]) or rr.intersects(lay2.toll) or rr.intersects(lay2.pause_btn):
+				short_bad.append("%s %s %s" % [str(cs2[0]), "full" if cs2[1] else "simple", n])
+	_ok(short_bad.is_empty(), "short phone landscape: Simple passes down to 360 CSS px of height and Full down to 300, at phone density, nothing under a plate, the toll or the pause button %s" % str(short_bad.slice(0, 4)))
 
 
 ## What may skip the gate (docs/ui/hud-spec.md section 51): whole parameter names only, and on the web only from a local host.

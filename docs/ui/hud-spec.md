@@ -1306,3 +1306,67 @@ Platform found two faults in the live gate (docs/perf/phone-web-fullscreen.md). 
 - **Picks the biggest type that lets the whole text fit** above them, down to the legibility floor (12 dp on a phone); if it still does not fit, **the text scrolls inside the card**: wheel, a drag on the text, Up and Down (they move between the buttons when nothing scrolls; Left and Right and Tab always do), Page Up and Down, Home and End. Nothing but the two buttons dismisses it, and none of those scrolls does.
 - **Says that there is more:** a scrollbar on the card's right edge, "Scroll for more" with a down arrow while there is more below it, and an up arrow once scrolled. Lines cut by the view's edge fade by how much of them shows.
 - **Tests** (`_gate_short_rules`, `_gate_bypass_rules`): twelve phone sizes in both orientations (including 664x270, 750x330, 568x320, 480x240 and the same at density 3) through the plan; 664x270, 750x330, 568x320 and 1992x810 through a real draw pass (heading and both buttons drawn, the start button on screen and 48 dp, the cue shown when it scrolls, the wheel reaching the last line, a drag and the Down key scrolling with the gate still up); each bypass word as a substring (never skips), as a whole name on a non-local host (never skips) and on a local host (skips); which pages are local.
+
+
+## 54. Touch that answers at once, and first-use captions (2026-10-06, the friend's phone notes)
+
+![Simple touch, 844x390 (iPhone landscape): Power's words moved to its left, the idle stick ring and its words until used](img/phone-simple-844-web.png) ![667x375](img/phone-simple-667-web.png) ![Full touch: move side left, actions right](img/phone-full-844-web.png)
+
+**Why it felt queued (Controls, docs/controls/phone-touch.md).** On touch a tap cannot be told from the start of a hold, so the light is sent on the release: finger down to contact is the tap's length plus 2 ticks (5 to 13 ticks). The body shows nothing until then. So the button itself must answer on touch-down, every time.
+
+- **A pressed state on the same frame, independent of the sim.** `UiHud._input` watches the fingers (`InputEventScreenTouch`) on the touch circles, only to draw them; Controls' own touch layer still owns the input. `_touch_state()` merges them into what the host sends: the circle under a finger is `down` the frame it lands (Simple's Attack, Guard and Power; every Full button), and **Attack's ring starts on that frame** (`hold_ticks` counts the frames the finger is down; the sim's own number is used when it is ahead of ours). Lifting clears it on the same frame. A press that lands under an open card or menu does nothing. Tested with a sim that says nothing is pressed throughout.
+- **First-use captions stay until used.** Simple's Attack, Guard, Power and the move stick keep their words (they used to go after 12 s); a control's caption goes the first time it is used and the choice is remembered between runs (`UiPrefs` `touch_used`). On Full touch only the stick has one (its other buttons always carry their words).
+- **The move stick is invisible until touched** (any touch in the left zone off a button is the stick, Controls). An idle ring now marks the zone's place **at all times**, faint after the opening, brighter with "MOVE / FLICK TO DODGE" until the stick has been used.
+- **Power's words moved to its left in landscape**; above it they ran into the right plate on a short screen.
+- **Full touch names its face buttons by a live stance's moves** (the energy stance: BOLTS, SHOT, MINE, BEAM) once that stance is live (`stances.json` `_live`), so the mine is reachable and says so.
+- **What Simple touch lacks.** (a) **No mine** (Controls): a mine needs a context edge plus the energy mode; Simple's fourth slot is Transform and Simple sends no mode. Controls' proposal, which needs Encounter and Game Design before it works: a **tap** on Transform is Context (a hold of 30 ticks stays Transform), and for a Simple slot Context outside reach lays a mine. The label will read "TAP: MINE / HOLD: TRANSFORM" with a first-fight hint behind it; **it is not shown until the rule exists.** (b) Medium and heavy are on Attack's hold and swipe (the three-strength ring is built behind the flag). (c) No energy or mode switch.
+- **A "last move" label (the friend's second idea).** My opinion: no list or queue. The fight is not queued (a press is a blow), and a list would read as a delay, which is the complaint. What helps is the button answering at once (above) and the body's anticipation (Encounter and Animation add a 2 to 3 frame wind-up on touch-down). If a label is wanted at all, one small word at the Attack button for a moment after contact (LIGHT, MEDIUM, HEAVY) is cheap, and the press marks already do the "did nothing" half. Not built.
+- **Safari has no vibration API**, so there is no haptic answer on iPhone; the on-screen press is the answer.
+
+## 55. Who is who, and the panels (2026-10-06)
+
+![my fighter off the screen: an arrow on the edge](img/phone-edge-arrow-web.png)
+
+**Telling my fighter from the rival, inside the existing look.**
+- **The YOU marker is a steady mark, not a 12-second one.** A new option **Mark my fighter** (Display): **Always** (default), **Intro**, **Off**. The pill with the word YOU shows for the opening seconds as before; after it, with Always, a small pointer in the fighter's lane colour stays over my fighter for the whole fight (the word only for P1 and P2). Only over a human. Independent of the control hints (Control hints off no longer takes the marker).
+- **It carries the lane colour** (the fighter's aura, which is the colour of its plate, bark panel and face frame): the pill's edge and pointer are in it, on a dark keyline.
+- **An edge arrow** when my fighter is off the screen (`UiHints.edge_arrow`): a triangle on the screen's border pointing to it, in the lane colour, with the label.
+- **"Fresh" is a neutral of its own** (`#dfe6f0`), no longer the fighter's aura: Art found the Protagonist's aura `#8fd6ff` was exactly the old fresh colour, so a pale blue meant two things. The wound marks (silhouette, cards, crown) now read the neutral for a fresh body and a fighter's colour never doubles as a wound.
+
+**Fighter panels: Fixed or Follow (Orb: a compromise, in Settings).** New option **Fighter panels** (Display), default **Fixed**: slot 0's plate, wound cards and bark lane stay in the left column and slot 1's in the right. **Follow** moves them to the side their fighter is on (Camera's `sigma` in a split screen, else the fighters' screen positions from the host's anchors) with these rules: a **dwell of 1.5 s** with the fighters holding the other side; a **dead band** (6% of the width) so fighters passing each other do not count; a **0.2 s fade and slide** (instant under Reduced motion); **never while an exchange (`form_free` false), a hazard moment, a cinematic, the intro or a pause is on**; and **with two humans the panels stay in their own corners** whatever it says (each player keeps their corner). Switching back to Fixed puts them back. The old behaviour (follow Camera's sigma in a split screen) was the default; it now needs Follow.
+
+## 56. Colour-blind presets, the turn-your-phone card and short phone screens (2026-10-06)
+
+![deuteranopia: the lane colours are Art's teal and violet](img/phone-deutan-web.png) ![the turn-your-phone card](img/phone-turn-card-web.png)
+
+**Colour-blind mode** (Accessibility): **Off**, **Protanopia**, **Deuteranopia**, **Tritanopia**. Orb: no stylistic palette change, so **Off is today's look** and a preset remaps only what carries gameplay meaning:
+- **The two fighters' lane colours are Art's** (`data/art/colour-vision.json`, docs/art/colour-vision.md; the fighters' own aura families, split by lightness), copied into `ui/data/colour_vision.json` by neutral fighter id (`anti_hero` is Art's `rival`); a `hud_check` case compares the copy with Art's file when it is present, so they cannot drift. The HUD's plates, bark panels, faces, cards, the YOU marker and the edge arrow take them; `lane_colors_changed` carries them to Camera's pane borders; Rendering reads `UiHud.lane_colors()` (or Art's file) for the fighters.
+- **The wound stages** (bruised, battered, broken) get colours chosen with Art's simulated-vision check (Machado 2009, CIEDE2000): the default stage, internal and guard cues are only **3.7, 6.2 and 14.3** apart under protan, deutan and tritan; the preset sets are **26.1, 19.9 and 22.0** apart (from each other, the neutral fresh, internal, guard and the preset's lanes).
+- **The guard cue stays the defensive stance's `#5aaaff` in every preset** (what Art measured against; confirm to Art).
+- **Everything else is unchanged:** stance chips, ego bars, charge bars and warnings are shape- or word-coded (below).
+
+**Every place colour alone could carry meaning (the audit), and what carries it as well:**
+| Place | Colour | Also carried by |
+|---|---|---|
+| Lane identity (plate, bark panel, face frame, YOU marker) | aura | Left or right column, the name, YOU/CPU tags, P1/P2 |
+| Planet strip's fighter dots | aura | **circle for the first fighter, diamond for the second** |
+| Split-screen pane borders (Camera) | lane colour | pane side and the pointer chips' words |
+| Wound stage: silhouette | stage colour | **pattern: clean, hatched, cracked, shattered** |
+| Wound stage: crown | stage colour | **dashed and flickering strokes** (static dashed under reduced motion) |
+| Wound stage: card | stage colour | **the stage word** |
+| Stance chips and rings | stance colour | **icon and word** |
+| Ego bar | mood colour | **the mood word** (RESPECT, PRIDE...) |
+| Charge and ready rings | blue and pale blue | **fill, notches, the pulse (a static thick ring under reduced motion)** |
+| Press marks, launcher mark | grey | **shapes: cross, dash, dot, ring, filled or hollow triangle** |
+| Banners | event colour | the words |
+| **Planet strip biomes** | biome colour | **colour only**; the Place names option gives the name under the camera. Low gameplay weight; a pattern per biome is Art's call |
+| **Fighters' bodies on the field** | aura | **Art's rule 4 (a ring pattern or chip shape per fighter) is not built; Art and Rendering** |
+| **Internal (scald) against fresh on the crown** | pale cyan against neutral | the silhouette pattern and the card word carry it; the crown has no separate stroke shape: Art |
+
+**What the others must do.** *Art:* confirm the guard colour above and the stage sets; give each fighter a non-colour mark; a pattern per biome if wanted. *Rendering:* read the preset's lane colours for the bodies, auras and flashes (`UiHud.lane_colors()` or Art's file, and the option `colour_vision`), and the pane borders already follow `lane_colors_changed`. *Controls:* nothing for the colours.
+
+**The turn-your-phone card (Orb: phones landscape only).** `UiTurn`: a touch screen under 600 dp on its short side held upright shows an opaque card (a phone turning sideways, "Turn your phone", "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.") and the HUD holds the match the way the gate does (`howto_opened`, `howto_closed`); no menu opens over it; turning the phone takes it away, and the match goes on. **The flashing gate always comes first**, and the card follows it. One small button, **Play upright anyway**, is the way out for a phone with its rotation locked (iOS cannot be unlocked from a page) or in a mount; Orb may take it out (one line, `UiTurn.plan`). Words are data (`terms.json` `prompt.turn_*`).
+
+**Short phone screens.** Safari's bars leave 340 to 360 CSS px of height on the tall phones and less on the small ones. UI's side: the plates sit nearer the top on a short touch landscape, step down until no touch button is under one, and Power's words moved to its left. **Measured at phone density (dp 3), the smallest height at which the buttons are on screen, 48 dp, clear of each other and of the plates, the toll and the pause button: Simple 350 CSS px (340 at 667 wide and below), Full 290 to 300.** Below that Simple's **Power button runs under the right plate**, because SimTouch honours `touch_top_limit` for Full only: the HUD now passes it for Simple too, and **Controls honouring it for Simple** would take Simple down to about 270. A bark panel's caption tag no longer runs into the speaker's name (the text area subtracted the face's width from the wrong side).
+
+**Tests:** `_touch_feel_rules`, `_phone_rules`, and the amended hints and split cases (a steady marker, an off-screen arrow, Fixed and Follow with the dwell, an exchange, two humans). `hud_check` and the demo flags `--cvd=`, `--youmark=`, `--sides=` and `--edge`.
