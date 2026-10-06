@@ -822,3 +822,11 @@ Orb's answers to the EP's three questions on it (2026-10-06):
 - On phones: "Landscape only".
 
 On Art's dynamic-sky direction (keys by place, a slow drift, mood and damage; 2026-10-06): "the art direction on the sky looks great, lets keep iterating these systems." Approved to build.
+
+## The public page is taken down (2026-10-06)
+
+Asked what was left before the next big update, and with the EP's advice to take the playable build down until the flash check passes, Orb said:
+
+> go ahead and remove the page for now, make sure to leave a message with short notes about what to expect when it comes back up.
+
+Standing from this: the public site serves no playable build until Orb says it returns. It comes back when the flash check passes on the required set and the gate's faults are fixed, on Orb's word.
