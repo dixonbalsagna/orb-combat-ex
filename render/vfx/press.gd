@@ -271,6 +271,30 @@ static func echo_window(g: int) -> Vector2:
 	return Vector2(maxf(float(g - 1), 0.0) * pop, 2.5 + float(g) * pop)
 
 
+## How many of a tech blow's `ne` echoes are alive `age` ticks after the blow.
+static func echoes_alive(age: float, ne: int) -> int:
+	var k: int = 0
+	for g in range(ne):
+		var w: Vector2 = echo_window(g)
+		if age >= w.x and age < w.y:
+			k += 1
+	return k
+
+
+## The limb-ghosts a blow holds now: a speed blow's smear is one, a tech blow's are the echoes alive (the tally and the counter read the same number).
+static func limb_units(e) -> int:
+	if e.style == "speed" and e.gscale > 0.0:
+		return 1
+	if e.style == "tech":
+		return echoes_alive(e.age, mini(e.ghosts if e.ghosts > 0 else 3, 3))
+	return 0
+
+
+## Run the counter again after a tick's events have made their blows: a blow made this tick is governed on its first drawn frame (the counter otherwise reads it a tick late).
+func regrant() -> void:
+	_grant_ghosts()
+
+
 ## The per-instant limb-ghost counter (Legal's f01: at most 2 ghosts of any limb at any instant and at most 4 limb-ghosts on screen in all). A speed blow's smear is one limb-ghost; a
 ## tech blow's echoes are one each while they are alive (never more than 2 at once: the third echo of a perfect blow comes as the first pops); the newest blows are granted first, so in a flurry the two
 ## newest smears of a limb are drawn and the older ones fade without theirs (their contact rings stay). Heavy blows' ghosts and the zip's are body ghosts under m05 (at most 5), not counted here.
@@ -280,15 +304,7 @@ func _grant_ghosts() -> void:
 	var peak_limb: int = 0
 	for i in range(fx.size() - 1, -1, -1):
 		var e: Fx = fx[i]
-		var units: int = 0
-		if e.style == "speed" and e.gscale > 0.0:
-			units = 1
-		elif e.style == "tech":
-			var ne: int = mini(e.ghosts if e.ghosts > 0 else 3, 3)
-			for g in range(ne):
-				var w: Vector2 = echo_window(g)
-				if e.age >= w.x and e.age < w.y:
-					units += 1
+		var units: int = limb_units(e)
 		e.gunits = units
 		if units == 0:
 			continue

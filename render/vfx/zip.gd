@@ -121,6 +121,23 @@ static func min_ticks(distance_bh: float) -> int:
 	return maxi(int(p("min_travel")), int(ceil(distance_bh / p("bh_per_tick"))))
 
 
+## An echo's window on a zip's leg, in ticks since the leg began (the press's rule, VfxPress.echo_window: the back echoes pop one at a time, each living `echo_pop` ticks longer than the one
+## behind it, and the third comes as the first pops), so never more than two are alive at any instant (Legal's f01 counts tech echoes too).
+static func echo_window(g: int) -> Vector2:
+	var pop: float = p("echo_pop")
+	return Vector2(maxf(float(g - 1), 0.0) * pop, 2.0 + float(g) * pop)
+
+
+## How many of a leg's `ne` echoes are alive `tt` ticks after it began.
+static func echoes_alive(tt: float, ne: int) -> int:
+	var k: int = 0
+	for g in range(ne):
+		var w: Vector2 = echo_window(g)
+		if tt >= w.x and tt < w.y:
+			k += 1
+	return k
+
+
 ## Where the wire echoes stand on a leg from p0 to the body p1: evenly spaced and always short of the body (never ahead of it, never at the arrival point before he gets there).
 static func echo_points(p0: Vector2, p1: Vector2, count: int) -> Array:
 	var out: Array = []

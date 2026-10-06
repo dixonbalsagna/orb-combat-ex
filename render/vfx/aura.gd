@@ -112,6 +112,8 @@ func step(S: SimState, frozen: bool, forms: Array) -> void:
 ## recommendation. A cool colour (KAI's light blue) is used as it is.
 static func lane_color(hex: String) -> Color:
 	var c: Color = RenderLook.col(hex)
+	if not vision_map.is_empty():
+		c = vision_map.get(hex.to_lower(), c)    # a colour-blind preset's lane colour for this fighter (the hub keeps the table: _sync_vision)
 	var fire: bool = c.s > 0.35 and c.v > 0.35 and (c.h < 0.19 or c.h > 0.96)
 	var whiteish: bool = c.s < 0.12 and c.v > 0.8
 	if not (fire or whiteish):
@@ -120,6 +122,8 @@ static func lane_color(hex: String) -> Color:
 
 
 static var _sub: Color = Color(0.0, 0.0, 0.0, 0.0)
+## A fighter's own aura hex (lower case) -> the colour-blind preset's lane colour, empty when the option is off (set by VfxHub._sync_vision).
+static var vision_map: Dictionary = {}
 
 
 static func _lane_sub() -> Color:

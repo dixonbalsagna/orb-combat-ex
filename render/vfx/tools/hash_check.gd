@@ -24,7 +24,7 @@ var max_ticks: int = 3600
 var negative: bool = false
 var main: Node
 var flash_by: Dictionary = {}    # source -> [granted, refused] over every run
-var stats: Dictionary = {"max_k": 0.0, "marks": 0, "ribbons": 0, "ticks": 0, "crack_builds": 0, "crack_ms": 0.0, "debris": 0, "forms": 0, "water": 0, "react": 0, "earth": 0, "rocks": 0, "blast": 0, "rings": 0, "shots": 0, "shots_fired": 0, "shot_events": 0, "flash_granted": 0, "flash_refused": 0, "flash_worst": 0, "flash_weight": 0.0}
+var stats: Dictionary = {"max_k": 0.0, "marks": 0, "ribbons": 0, "ticks": 0, "crack_builds": 0, "crack_ms": 0.0, "debris": 0, "forms": 0, "water": 0, "react": 0, "earth": 0, "rocks": 0, "blast": 0, "rings": 0, "shots": 0, "shots_fired": 0, "shot_events": 0, "flash_granted": 0, "flash_refused": 0, "flash_worst": 0, "flash_weight": 0.0, "gh_limb": 0, "gh_limb_one": 0, "gh_body": 0, "gh_after": 0, "gh_all": 0, "gh_over_limb": 0, "gh_over_body": 0}
 
 
 func _initialize() -> void:
@@ -88,7 +88,8 @@ func _run() -> void:
 	print("water effects fired %d times, transformations started %d (real events from the sim), %d rubble, standing-crack and window effects, %d chunks, flames and contact effects, up to %d levitating rocks drawn at once, %d craters amplified by tier, %d pressure rings, %d shots fired (up to %d drawn at once), %d shot hits, trades and ends seen" % [stats["water"], stats["forms"], stats["react"], stats["earth"], stats["rocks"], stats["blast"], stats["rings"], stats["shots_fired"], stats["shots"], stats["shot_events"]])
 	print("flash register in the real matches: %d full flashes granted, %d refused, never more than %d in any second and a weight of %.2f in any second (2.5 at most), over each whole run as the register ran" % [stats["flash_granted"], stats["flash_refused"], stats["flash_worst"], stats["flash_weight"]])
 	print("   by source (granted, refused): %s" % str(flash_by))
-	ok = ok and ran and stats["flash_worst"] <= 6 and stats["flash_weight"] <= 2.5001
+	print("ghosts in the real matches (every source, Rendering's after-images included): most limb-ghosts at once %d (4 at most), of one limb %d (2 at most), most body ghosts of one body %d (5 at most; Rendering's after-images %d of them), everything on the screen %d; ticks over a limb limit %d, over the body limit %d" % [stats["gh_limb"], stats["gh_limb_one"], stats["gh_body"], stats["gh_after"], stats["gh_all"], stats["gh_over_limb"], stats["gh_over_body"]])
+	ok = ok and ran and stats["flash_worst"] <= 6 and stats["flash_weight"] <= 2.5001 and stats["gh_over_limb"] == 0
 	print("\nhash check passed" if ok else "\nhash check FAILED")
 	quit(0 if ok else 1)
 
@@ -155,6 +156,14 @@ func _rendered(seed: int, last: int, dt_of: Callable, reduced: bool = false) -> 
 	stats["shot_events"] += main.host.vfx.shots.hits + main.host.vfx.shots.clashes + main.host.vfx.shots.ends
 	stats["rings"] += main.host.vfx.pressure.ring_count
 	var fsum: Dictionary = main.host.vfx.flashes.summary()
+	var gsum: Dictionary = main.host.vfx.ghosts.summary()
+	stats["gh_limb"] = maxi(stats["gh_limb"], int(gsum["limb_peak"]))
+	stats["gh_limb_one"] = maxi(stats["gh_limb_one"], int(gsum["limb_peak_one"]))
+	stats["gh_body"] = maxi(stats["gh_body"], maxi(int(gsum["body_peak"][0]), int(gsum["body_peak"][1])))
+	stats["gh_after"] = maxi(stats["gh_after"], maxi(int(gsum["after_peak"][0]), int(gsum["after_peak"][1])))
+	stats["gh_all"] = maxi(stats["gh_all"], int(gsum["all_peak"]))
+	stats["gh_over_limb"] += int(gsum["over"]["limb"]) + int(gsum["over"]["limb_all"])
+	stats["gh_over_body"] += int(gsum["over"]["body"])
 	stats["flash_granted"] += int(fsum["granted"])
 	stats["flash_refused"] += int(fsum["refused"])
 	stats["flash_worst"] = maxi(stats["flash_worst"], int(fsum["worst_running"]))

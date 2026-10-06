@@ -79,6 +79,8 @@ var px_per_unit: float = 1.3                    # pixels per world unit at 1024 
 var reduced_flashing: bool = false              # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
+var ghosts := VfxGhostTally.new()               # the combined ghost count: limb ghosts (f01) and body ghosts (m05) of every source, Rendering's after-images too (ghost_tally.gd)
+var _vision_sig: String = ""                    # the colour-blind preset and the fighters' lane colours last applied (see _sync_vision)
 var explosions_enabled: bool = VfxLook.EXPLOSIONS_DEFAULT   # the blasts erupt in flame, sparks, smoke and a smouldering scorch; a knocked-loose shot tumbles and smokes (explode.gd)
 var earth_enabled: bool = VfxLook.EARTH_DEFAULT   # material chunks for `debris`, cel flames for `fire`, and the ground-contact events (docs/vfx/earth-plan.md)
 var earth := VfxEarth.new()
@@ -135,6 +137,8 @@ func reset(S: SimState, p_seed: int) -> void:
 	stages.reset()
 	zip.reset()
 	inreach.reset()
+	ghosts.reset()
+	_vision_sig = ""
 	flashes.reset()
 	press.flash_sink = flashes
 	inreach.registry = flashes
@@ -198,11 +202,35 @@ func consume(S: SimState, events: Array) -> void:
 	stat_consume_max = maxi(stat_consume_max, dt_us)
 
 
+## The colour-blind preset (UI's `colour_vision`, UiLook.vision): every effect that draws in a fighter's lane or aura colour (VfxAura.lane_color, VfxLook.trail_accent, so the press looks, the zip,
+## energy in reach, the wind-up rings, the launcher's chevrons, the shots, the aura and the transformation) reads Art's preset colour for that fighter (UiLook.lane, by its roster id) in place of its
+## own. Off, the table is empty and nothing changes by a pixel. The table is keyed by the fighter's own aura hex and rebuilt when the preset or the fighters change.
+func _sync_vision(S: SimState) -> void:
+	var mode: String = UiLook.vision
+	var sig: String = mode
+	for f in S.fighters:
+		sig += "|" + String(f.id) + String(f.aura)
+	if sig == _vision_sig:
+		return
+	_vision_sig = sig
+	var m: Dictionary = {}
+	if mode != "off":
+		for f in S.fighters:
+			var own: Color = RenderLook.col(String(f.aura))
+			var lane: Color = UiLook.lane(String(f.id).to_lower(), own)    # by roster id, lower case: the key Art's data and UI's alias use
+			if not lane.is_equal_approx(own):
+				m[String(f.aura).to_lower()] = lane
+	VfxAura.vision_map = m
+	for i in range(mini(accents.size(), S.fighters.size())):
+		accents[i] = VfxLook.trail_accent(String(S.fighters[i].aura))
+
+
 func _consume(S: SimState, events: Array) -> void:
 	if not enabled:
 		return
 	flashes.ppu = px_per_unit
 	flashes.begin_tick(reduced_motion or reduced_flashing)
+	_sync_vision(S)
 	var dt: float = SimConst.DT
 	var frozen: bool = true
 	for e in events:
@@ -299,6 +327,8 @@ func _consume(S: SimState, events: Array) -> void:
 		debris.reduced = reduced_motion
 		inreach.step(S, frozen, debris, press)
 		inreach.on_events(S, events, reduced_motion, debris, press)
+		press.regrant()
+		ghosts.step(S, events, press, zip, frozen, reduced_motion)
 	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled or stages_enabled:
 		debris.quality = quality
 		debris.reduced = reduced_motion

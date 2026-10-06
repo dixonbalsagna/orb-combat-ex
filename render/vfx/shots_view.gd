@@ -940,12 +940,12 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 			var tt: float = (age - z.t1()) if age < z.t3() else (age - z.t3())
 			if tt >= 0.0 and tt < 12.0 and (cur - p0).length() > 8.0:
 				var ne: int = int(VfxZip.p("echoes"))
-				var pop: float = VfxZip.p("echo_pop")
 				var ep: Array = VfxZip.echo_points(p0, cur, ne)
 				for g in range(ne):
 					if red and g != ne - 1:
 						continue
-					if tt >= 2.0 + float(g) * pop:
+					var zw: Vector2 = VfxZip.echo_window(g)
+					if tt >= zw.y or tt < zw.x:
 						continue
 					var ec: Color = col.darkened(0.3)
 					ec.a = al

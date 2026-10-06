@@ -203,6 +203,8 @@ func _run() -> void:
 	_reach()
 	_flashes()
 	_brawl()
+	_ghosts()
+	_vision()
 	_press_load()
 	_real()
 	_stages()
@@ -3169,7 +3171,8 @@ func _zip() -> void:
 			if (ep - org).dot(body - org) <= 0.0 or (ep - org).length() >= (body - org).length():
 				echo_ok = false
 	_check(echo_ok, "the echoes always stand between the start and the body, never ahead of him or at the arrival point before he gets there")
-	_check(seq[0] >= 11 and seq[1] >= 11, "the echoes are drawn during the travel, not only after it (quads by travel tick %s)" % str(seq))
+	_check(seq[0] >= 11 and seq[2] >= 11 and seq[1] < seq[0], "the echoes are drawn during the travel, staggered (the third comes as the first pops, so a tick holds two of them at most): quads by travel tick %s" % str(seq))
+	_check(ht.ghosts.limb_peak_one <= VfxGhostTally.LIMB_MAX and ht.ghosts.limb_peak <= VfxGhostTally.LIMB_ALL_MAX and ht.ghosts.limb_peak >= 2, "the tally reads the zip leg's echoes as limb-ghosts: never more than two at once (peak %d)" % ht.ghosts.limb_peak)
 	var seq2: Array = []
 	for k in range(7):
 		_tick(S, ht, [])
@@ -4274,6 +4277,110 @@ func _brawl() -> void:
 	_check(no_flash and int(he.inreach.made.get("full_flash", 0)) == 1, "energy_land with k 0 gets no full flash, with k 1 it may (the register decides)")
 	view.queue_free()
 	SimCore.dispose(S)
+
+
+## The combined ghost count (RL-122's condition): VFX's own after-images and Rendering's, read at every instant.
+func _ghosts() -> void:
+	print("the combined ghost count")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	S.fighters[0].x = plains
+	S.fighters[0].y = g
+	S.fighters[1].x = SimWrap.wrap(plains + 70.0)
+	S.fighters[1].y = g
+	# A perfect timed blow: three echoes in sequence, never more than two alive (and one limb's), counted from the tick they are made.
+	var h := VfxHub.new()
+	h.press_enabled = true
+	h.reset(S, 6)
+	var ex := SimState.Exchange.new()
+	ex.A = S.fighters[0]
+	ex.D = S.fighters[1]
+	var b := SimState.Beat.new()
+	b.op = "strike"
+	b.done = true
+	b.t = 0.0
+	b.args = {"a": "A", "d": "D", "style": "tech", "grade": "perfect", "dmg": 5.0, "o": {}}
+	ex.beats = [b]
+	S.dirS.ex = ex
+	var alive: Array = []
+	for k in range(12):
+		var evs: Array = []
+		if k == 0:
+			evs.append(VfxMock.ev("damage", {"x": S.fighters[1].x, "y": S.fighters[1].y + 50.0, "z": 0.0, "amount": 5.0, "col": "#ffffff", "victim": 1, "attacker": 0, "region": "core", "kind": "light", "number": true}))
+		_tick(S, h, evs)
+		alive.append(h.ghosts.limb_total)
+	_check(alive.slice(0, 5) == [2, 2, 2, 2, 2] and alive.slice(5, 8) == [1, 1, 1] and alive.slice(8) == [0, 0, 0, 0], "a perfect tech blow, tick by tick: two echoes alive for 5 ticks (the third comes as the first pops), one for 3, none after (%s)" % str(alive))
+	_check(h.ghosts.limb_peak_one <= VfxGhostTally.LIMB_MAX and h.ghosts.limb_peak <= VfxGhostTally.LIMB_ALL_MAX and int(h.ghosts.over["limb"]) == 0 and int(h.ghosts.over["limb_all"]) == 0, "never more than 2 of a limb or 4 in all (peak %d, one limb %d)" % [h.ghosts.limb_peak, h.ghosts.limb_peak_one])
+	# Rendering's after-images (the sim's `after` events: one for each tick of a rush, shown for AFTER_LIFE) are counted on top, for the fighter in whose colour they stand.
+	var hr := VfxHub.new()
+	hr.press_enabled = true
+	hr.reset(S, 6)
+	var shown: int = VfxGhostTally.after_ticks()
+	for k in range(shown + 4):
+		_tick(S, hr, [VfxMock.ev("after", {"x": S.fighters[0].x, "y": S.fighters[0].y, "life": 0.16, "col": String(S.fighters[0].aura), "face": 1.0, "z": 0.0})])
+	_check(int(hr.ghosts.after_peak[0]) == shown and int(hr.ghosts.after_peak[1]) == 0 and int(hr.ghosts.body_peak[0]) == shown, "a rush's after-images (one a tick, each shown %d ticks) are counted for his fighter: %d alive at once, none for the other" % [shown, int(hr.ghosts.after_peak[0])])
+	for k in range(shown + 1):
+		_tick(S, hr, [])
+	_check(int(hr.ghosts.after_now[0]) == 0, "and they are gone when their ticks are over")
+	# Together with a blow's own: the limb count does not take Rendering's body outlines (m05's separate limit), the body count does.
+	var hc := VfxHub.new()
+	hc.press_enabled = true
+	hc.reset(S, 6)
+	S.dirS.ex = ex
+	for k in range(10):
+		var evs2: Array = [VfxMock.ev("after", {"x": S.fighters[1].x, "y": S.fighters[1].y, "life": 0.16, "col": String(S.fighters[1].aura), "face": -1.0, "z": 0.0})]
+		if k == 0:
+			evs2.append(VfxMock.ev("damage", {"x": S.fighters[1].x, "y": S.fighters[1].y + 50.0, "z": 0.0, "amount": 5.0, "col": "#ffffff", "victim": 1, "attacker": 0, "region": "core", "kind": "light", "number": true}))
+		_tick(S, hc, evs2)
+	_check(hc.ghosts.limb_peak == 2 and int(hc.ghosts.after_peak[1]) == shown and int(hc.ghosts.after_peak[0]) == 0, "a blow and a rush at once: limb ghosts still 2, Rendering's counted on the rusher (limb %d, his after-images %d)" % [hc.ghosts.limb_peak, int(hc.ghosts.after_peak[1])])
+	# The zip leg's wire echoes follow the same stagger.
+	_check(VfxZip.echoes_alive(0.0, 3) == 2 and VfxZip.echoes_alive(1.9, 3) == 2 and VfxZip.echoes_alive(2.2, 3) == 1 and VfxZip.echoes_alive(2.6, 3) == 2 and VfxZip.echoes_alive(4.6, 3) == 1 and VfxZip.echoes_alive(7.0, 3) == 0, "a zip leg's three echoes: two alive at most at any instant, one in the gap (%d %d %d %d %d %d)" % [VfxZip.echoes_alive(0.0, 3), VfxZip.echoes_alive(1.9, 3), VfxZip.echoes_alive(2.2, 3), VfxZip.echoes_alive(2.6, 3), VfxZip.echoes_alive(4.6, 3), VfxZip.echoes_alive(7.0, 3)])
+	var worst_zip: int = 0
+	for k in range(0, 160):
+		worst_zip = maxi(worst_zip, VfxZip.echoes_alive(float(k) * 0.05, 3))
+	_check(worst_zip == 2, "swept in twentieths of a tick, never more than two of a zip leg's echoes at once (%d)" % worst_zip)
+
+
+## The colour-blind presets (Art's data/art/colour-vision.json by way of UI's `colour_vision`): everything drawn in a lane colour reads the preset, and with the option off nothing changes.
+func _vision() -> void:
+	print("colour-blind presets")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var art: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/art/colour-vision.json"))
+	var own0: Color = RenderLook.col(String(S.fighters[0].aura))
+	var own1: Color = RenderLook.col(String(S.fighters[1].aura))
+	var base0: Color = VfxAura.lane_color(String(S.fighters[0].aura))
+	var base1: Color = VfxAura.lane_color(String(S.fighters[1].aura))
+	var acc0: Color = VfxLook.trail_accent(String(S.fighters[0].aura))
+	var ids: String = String(S.fighters[0].id) + "," + String(S.fighters[1].id)
+	for mode in ["protan", "deutan", "tritan"]:
+		UiLook.set_vision(mode)
+		var h := VfxHub.new()
+		h.press_enabled = true
+		h.reset(S, 6)
+		_tick(S, h, [])
+		var want0: Color = Color.html(String((art["presets"][mode] as Dictionary)[_art_key(String(S.fighters[0].id))]["aura"]))
+		var want1: Color = Color.html(String((art["presets"][mode] as Dictionary)[_art_key(String(S.fighters[1].id))]["aura"]))
+		_check(VfxAura.lane_color(String(S.fighters[0].aura)).is_equal_approx(want0) and VfxAura.lane_color(String(S.fighters[1].aura)).is_equal_approx(want1), "%s: the aura's lane colour is Art's pair for the two fighters (%s, %s) [%s]" % [mode, want0.to_html(false), want1.to_html(false), ids])
+		_check(VfxPress.lane_of(S, 0).is_equal_approx(want0) and VfxPress.lane_of(S, 1).is_equal_approx(want1), "%s: the press looks, the zip and energy in reach (lane_of) read it" % mode)
+		_check(h.accents[0].is_equal_approx(want0) and h.accents[1].is_equal_approx(want1), "%s: the trails' accent reads it" % mode)
+		_check(VfxShots.lane_of(S, 0).is_equal_approx(want0) and VfxBeamPlay.lane_of(S, 1).is_equal_approx(want1), "%s: the shots and the beam read it" % mode)
+		_check(not want0.is_equal_approx(base0) and not want1.is_equal_approx(base1), "%s: and it is not the default look" % mode)
+	UiLook.set_vision("off")
+	var ho := VfxHub.new()
+	ho.press_enabled = true
+	ho.reset(S, 6)
+	_tick(S, ho, [])
+	_check(VfxAura.vision_map.is_empty() and VfxAura.lane_color(String(S.fighters[0].aura)) == base0 and VfxAura.lane_color(String(S.fighters[1].aura)) == base1 and ho.accents[0] == acc0 and VfxPress.lane_of(S, 0) == base0, "with the option off the table is empty and every lane colour is exactly what it was")
+	_check(own0 != Color() and own1 != Color(), "(the fighters' own colours are read, not replaced)")
+
+
+## Art's data keys the two launch fighters "protagonist" and "rival"; UI's alias maps the Anti-hero's id to the second.
+func _art_key(id: String) -> String:
+	var alias: Dictionary = UiData.colour_vision().get("fighter_alias", {})
+	return String(alias.get(id.to_lower(), id.to_lower()))
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:

@@ -168,6 +168,8 @@ const SPOKES_BY_QUALITY: Array = [0.5, 0.75, 1.0]     # multiplier on hairline s
 ## The trail's accent for a fighter colour: the colour itself unless it sits in the fire hues, which fire owns.
 static func trail_accent(hex: String) -> Color:
 	var c: Color = RenderLook.col(hex)
+	if not VfxAura.vision_map.is_empty():
+		c = VfxAura.vision_map.get(hex.to_lower(), c)    # the colour-blind preset's lane colour (VfxHub._sync_vision)
 	if c.s > 0.35 and c.v > 0.35 and (c.h < 0.19 or c.h > 0.96):
 		return VfxPalette.haze()
 	return c
