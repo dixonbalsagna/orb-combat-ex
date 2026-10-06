@@ -62,26 +62,21 @@ func _init() -> void:
 				flash_ok = false
 				print("flash cue %s is %.2f s, longer than its flash (%.2f s)" % [c.sound, len_s, float(bank.flashes.flashes[fl].max_s)])
 			n_flash += 1
-	# the same cues under the new fighter ids (PROTAGONIST and RIVAL): the voice and family are found by f.id
+	# the voice and the sound family are found by roster id (f.id), not by the display name: a renamed label changes nothing
 	var base_ids: Array = []
 	for actor in range(fs.fighters.size()):
 		base_ids.append(cue_maker.flash(fs, actor, "found").sound)
-	fs.fighters[0].id = "PROTAGONIST"
-	fs.fighters[1].id = "RIVAL"
-	fs.fighters[0].name = "PROTAGONIST"
-	fs.fighters[1].name = "RIVAL"
+	var grunts_a: String = _grunt_run(cue_maker, fs)
+	fs.fighters[0].name = "PROTAGONIST-A"
+	fs.fighters[1].name = "RIVAL-B"
 	var same_ids: bool = true
 	for actor in range(fs.fighters.size()):
 		var c2 = cue_maker.flash(fs, actor, "found")
 		same_ids = same_ids and c2 != null and c2.sound == base_ids[actor]
-	var grunts_new: String = _grunt_run(cue_maker, fs)
-	fs.fighters[0].id = "KAI"
-	fs.fighters[1].id = "VORR"
-	var grunts_old: String = _grunt_run(cue_maker, fs)
-	same_ids = same_ids and grunts_old == grunts_new and grunts_new != ""
-	print("grunts through the cue mapper under KAI and VORR, then PROTAGONIST and RIVAL: %s" % ("identical" if grunts_old == grunts_new else "DIFFERENT"))
+	var grunts_b: String = _grunt_run(cue_maker, fs)
+	same_ids = same_ids and grunts_a == grunts_b and grunts_a != "" and fs.fighters[0].id == "PROTAGONIST" and fs.fighters[1].id == "RIVAL"
 	flash_ok = flash_ok and same_ids
-	print("new fighter ids (PROTAGONIST, RIVAL): the flash cues are the same sounds as under KAI and VORR: %s" % ("yes" if same_ids else "NO"))
+	print("roster ids PROTAGONIST and RIVAL: the flash cues and the grunt cues are the same whatever the display label: %s" % ("yes" if same_ids else "NO"))
 	SimCore.dispose(fs)
 	# the pulse numbers must match Art's data/art/flashes.json (copied into flash_cues.json)
 	if FileAccess.file_exists("res://data/art/flashes.json"):

@@ -4,7 +4,7 @@
   "note": "Grunt recipes for the source-filter voice (audio/synth/grunt_synth.gd). One row per fighter voice and gesture, matched to the voice bibles in docs/narrative/voices/. Vowel formants are the published average male values (Peterson and Barney, 1952). Working gestures: effort.heavy, pain.head and pain.limb for the Protagonist and the Anti-hero (the same gesture with two different voices). The pain grunts are the generic wear-scaled ones from line-system.md; the runtime raises their pitch with the size of the hit. The rest of each palette is in docs/audio/grunts.md.",
   "voices": {
     "protagonist": {
-      "label": "The Protagonist (the greybox hero, KAI, is the stand-in). Hearty, open, warm.",
+      "label": "The Protagonist (roster id PROTAGONIST). Hearty, open, warm.",
       "gestures": {
         "effort.heavy": {
           "rate": 24000,
@@ -249,7 +249,7 @@
       }
     },
     "anti_hero": {
-      "label": "The Anti-hero (VORR is the stand-in). Low, clipped, held back; the effort is a pressed exhale, never a shout.",
+      "label": "The Anti-hero (roster id RIVAL, the launch pair's rival). Low, clipped, held back; the effort is a pressed exhale, never a shout.",
       "gestures": {
         "effort.heavy": {
           "rate": 24000,

@@ -193,26 +193,25 @@ func _director_schema() -> void:
 	bab.reset(4)
 
 
-## The sim's fighter ids are going from KAI and VORR to PROTAGONIST and RIVAL (docs/architecture/pending/fighter-split.md):
-## the babble finds a fighter's voice by f.id, so it must give the same plan under either spelling.
+## The babble finds a fighter's voice by its roster id (f.id), never by its display name: a mirror arm or a renamed label
+## (PROTAGONIST-A) must not change it.
 func _new_ids() -> void:
-	print("5c. fighters carrying the new ids")
+	print("5c. voices are found by roster id")
 	var line := {"id": "t.new.1", "text": "Hold on now, I'll be fine in a minute.", "mood": "desperate", "intensity": 2}
-	var digests: Dictionary = {}
-	for spelling in [["KAI", "VORR"], ["PROTAGONIST", "RIVAL"]]:
+	var digests: Array = []
+	for label in [["PROTAGONIST", "RIVAL"], ["PROTAGONIST-A", "RIVAL-B"]]:
 		var S := SimCore.createSim()
 		SimCore.newMatch(S, 5)
-		S.fighters[0].id = spelling[0]
-		S.fighters[1].id = spelling[1]
-		S.fighters[0].name = spelling[0]
-		S.fighters[1].name = spelling[1]
+		ok(S.fighters[0].id == "PROTAGONIST" and S.fighters[1].id == "RIVAL", "the sim's roster ids are PROTAGONIST and RIVAL")
+		S.fighters[0].name = label[0]
+		S.fighters[1].name = label[1]
 		bab.reset(5)
 		var a: AudioBabble.Plan = bab.speak_line(S, 0, line)
 		var b: AudioBabble.Plan = bab.speak_line(S, 1, line)
-		ok(a != null and b != null and a.voice == "protagonist" and b.voice == "anti_hero", "%s and %s get the protagonist and anti-hero voices" % [spelling[0], spelling[1]])
-		digests[spelling[0]] = [a.digest(), b.digest()]
+		ok(a != null and b != null and a.voice == "protagonist" and b.voice == "anti_hero", "labels %s and %s: the protagonist and anti-hero voices" % [label[0], label[1]])
+		digests.append(str([a.digest(), b.digest()]))
 		SimCore.dispose(S)
-	ok(str(digests["KAI"]) == str(digests["PROTAGONIST"]), "the same plans under either spelling (no audible difference)")
+	ok(digests[0] == digests[1], "the same plans whatever the display label")
 	bab.reset(4)
 
 

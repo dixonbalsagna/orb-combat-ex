@@ -1,9 +1,7 @@
 {
   "schema": 1,
-  "note": "How the sim's fx events become sound cues (audio/audio_cues.gd). Sounds, thresholds, scaling and grunt rules live here, not in code. Damage amounts are the sim's own: over three seeded 90 s matches the median hit was 29.5, the 75th percentile 74 and the 90th percentile 101, with beam hits up to about 300. Crater energy ran from 0.24 to 15.3 with a median of 2.6. 'fighters' maps a fighter's roster id (f.id) to its voice; the old ids (KAI, VORR) and the new ones (PROTAGONIST, RIVAL) both work.",
+  "note": "How the sim's fx events become sound cues (audio/audio_cues.gd). Sounds, thresholds, scaling and grunt rules live here, not in code. Damage amounts are the sim's own: over three seeded 90 s matches the median hit was 29.5, the 75th percentile 74 and the 90th percentile 101, with beam hits up to about 300. Crater energy ran from 0.24 to 15.3 with a median of 2.6. 'fighters' maps a fighter's roster id (f.id, never its display name) to its voice.",
   "fighters": {
-    "KAI": "protagonist",
-    "VORR": "anti_hero",
     "PROTAGONIST": "protagonist",
     "RIVAL": "anti_hero"
   },
