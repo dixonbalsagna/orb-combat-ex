@@ -111,7 +111,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 | Knocked back, launched, lifted, thrown, carried by a tackle, or buried | None. These are Orb's exception |
 | A finisher, a struggle or another staged moment | The stick has that moment's own job, or none |
 
-- **Why a stagger keeps half.** A stagger comes with every close and every landed heavy, so the stick would go dead several times in a brawl. A nudge moves both fighters, so a staggered fighter who drags the brawl doesn't get away from the next blow. It costs the attacker nothing, and the staggered player still chooses where the fight goes, and where he is launched from (§3). The core clears a stunned fighter's stick today, so this needs the stick as held, read before that (Simulation).
+- **Why a stagger keeps half.** A stagger comes with every close and every landed heavy, so the stick would go dead several times in a brawl. A nudge moves both fighters, so a staggered fighter who drags the brawl doesn't get away from the next blow. It costs the attacker nothing, and the staggered player still chooses where the fight goes, and where he is launched from (§3). The core clears a stunned fighter's stick, so the director reads the stick as held from Simulation's record (`heldMx` and `heldMy`). The stick isn't kept in the intent: a staggered fighter isn't always locked, and he would fly on it. The core blanks that record for a launched or dropped fighter, so "no control in a knock-back" is enforced in one place (the EP's ruling).
 - **A hit freeze is not a lock.** Nothing moves for either fighter for its few ticks, and the stick is read again on the next live tick.
 - **The AI doesn't cancel a player's nudge by habit.** It opposes his stick only for a reason of its own: its care for a town, or a wall behind it. Against the medium AI a held stick moves the brawl at least 0.7 as far as it does against a rival who holds none (§11).
 
@@ -243,6 +243,11 @@ The press throws the light, as always. While X stays down, more blows follow by 
 **The just release** (Orb picked it) is on the heavy only: letting go within 4 ticks after the full-charge flash. His line is free 10 ticks sooner, and it adds 1 to the flow. It is kept subtle: no extra damage.
 
 **The wrench.** A charged heavy that lands on a battered limb is the crippling blow, and breaks it. This is the one place a strike is vicious; the rest of that idea lives in the clinch (§4). Orb confirmed vicious inside the clinch on 2026-10-06, and the EP cleared the wrench with it.
+- **The stick picks the limb, and the piece lands there.** A charged heavy let go with the stick leaned at a battered limb, down for the legs or away for the arms, is the wrench on that limb. The lean is read at the release.
+- **Leaned anywhere else, or at a limb that isn't battered, it is an ordinary charged heavy,** and the lean aims where it sends him.
+- **With no stick** the blow lands where its family's pick puts it, as now. If that is a battered limb, it is the wrench too. So the AI and a Simple player still get them.
+- **The rule decides, and the content follows it.** Each fighter needs one heavy that lands on an arm and one that lands on a leg. The Protagonist has both. The rival's ten have neither, so two of his are re-aimed. He doesn't need two more (Combat's question). Until then his wrench plays his nearest heavy, and the crippling moment's own beat carries the read.
+- **A wrench doesn't launch,** even at a full charge: a blow to a limb doesn't send the whole body. He is knocked back, as by any charged heavy. A tapped heavy and the launcher never wrench.
 
 **The launcher: a heavy on a staggered rival.** New, for Orb's third test: "can I reliably launch my opponent?" Until now a launch came from a full charged heavy, which takes 48 ticks and has no set-up that makes it sure. So a player couldn't launch on purpose.
 
@@ -253,12 +258,29 @@ The press throws the light, as always. While X stays down, more blows follow by 
 - **A held B loses the guarantee.** The stagger holds for the 14 ticks only. Held past that, it is a charged heavy like any other.
 - **The staggered fighter keeps half his nudge** (§1), so he has a say in where he is launched from. Nothing gets him out: a stagger takes his buttons, as it does today.
 - **So the B flurry's second blow launches** when the first lands clean: the hammer, and then the launch.
+- **The stagger has a ping, and both players hear it** (the EP's ruling). Local play shares its speakers, so the cue can't be private. It tells the defender that he is open as much as it tells the attacker to press B.
 
 **The route to teach:** mash X until he staggers, then B, and aim with the stick. The game says when, because the close has its own cue.
 
 **The other launches stand,** and each is a step up in skill: the full charged heavy, which is the read and is worth 8 to 10; the lift and then a heavy, since a heavy that lands on a lifted rival launches him (C6a); and a charged heavy at a flow of 3 (C3).
 
 **The AI** throws the launcher after 0.15, 0.35 and 0.6 of the staggers it causes, by level. That replaces `heavyAfterClose` (0.2, 0.6 and 0.9), so that a player isn't launched twice as often as today.
+
+**One map for the stick, wherever it aims a blow in reach.** Combat assumed it (`docs/combat/pending/movegen/c2t-content.md`), and it is confirmed.
+
+| The stick | Where a launcher or a charged heavy sends him | The region a vicious blow or a wrench works on |
+| :--- | :--- | :--- |
+| Up | It lifts him | The head |
+| Down | It drives him under | The legs |
+| Toward the rival | It drives him back along the line | The core |
+| Away from the rival | It turns him past the attacker | The arms |
+| None | A launcher: the launch planner's pick, with a piece that matches it. A full charged heavy: the lift (above) | A vicious blow: the core. A charged heavy: its family's own pick |
+
+- Each direction owns a quarter of the circle, 45 degrees either side. A stick on a diagonal reads as up or down.
+- **It is read once:** at the press for a launcher, at the release for a charged heavy, and at each tap for a vicious blow. After that the stick nudges the launch as it always does.
+- **The send is the stick's, and the piece follows it where one fits.** While stand-ins are on B, few of them read at 14 ticks. A launcher still goes where the stick says when its piece doesn't match. That is a fault in the look and not in the rule, so it doesn't fail Orb's test.
+- A wrench uses only the down and away rows, and only on a battered limb.
+- The data key is Combat's `launcher.aim`.
 
 **He can nudge the brawl while he winds or charges** (§1).
 
@@ -283,7 +305,7 @@ Orb's sketch, with one move to a press. A is how a fighter takes hold of the oth
 | Loses to | Any blow that lands on him in its wind-up | Any blow that lands first. **The rival's own tap of A within 8 ticks of the hold breaks it:** both are pushed 1.5 bh apart. A burst | A shove or any blow while he coils. A dodge, after which he flies 6 bh past and is open for 20 ticks. A charged heavy that lands as he arrives |
 | Limit | One shove in 45 ticks | The grab lockout: 90 ticks, shared with every grab | The grab lockout |
 
-- **Vicious lives in the clinch,** and Orb confirmed it on 2026-10-06: "vicious inside the clinch is good, go with that." Orb liked a "vicious" kind of blow: "headbutts, bites, clawing, gouging", by character. Every one of those is something done while holding someone. So it has no button of its own. In the hold, the stick aims at a region and each tap works on it. With the wrench (§3) it is how a player goes after one wound on purpose. The four fighters' looks, and what touches the rating, are in `pitch-third-blow.md`: the Protagonist's version is pointed and not cruel, and the Cyborg's bite is the one to settle.
+- **Vicious lives in the clinch,** and Orb confirmed it on 2026-10-06: "vicious inside the clinch is good, go with that." Orb liked a "vicious" kind of blow: "headbutts, bites, clawing, gouging", by character. Every one of those is something done while holding someone. So it has no button of its own. In the hold, the stick aims at a region and each tap works on it: up the head, down the legs, toward the core and away the arms, and the core with no stick (the map is in §3). With the wrench (§3) it is how a player goes after one wound on purpose. The four fighters' looks, and what touches the rating, are in `pitch-third-blow.md`: the Protagonist's version is pointed and not cruel, and the Cyborg's bite is the one to settle.
 - **The held fighter keeps half his nudge** (§1). The holder chooses what is done to him, and he still has a say in where it happens.
 - **The clinch is how a flying fighter takes control,** as Orb put it: no ground is needed.
 - **No grab spam** stands (`melee-press-feel.md` §10). The clinch, the tackle, the zip tackle, the dive grab and the seize (§6) share the one lockout, and a thrown fighter can't be grabbed for 120 ticks.
@@ -562,7 +584,7 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 
 ## 13. Orb's four tests
 
-**Orb,** 2026-10-06: "Things I'll be looking for next time I test-run: 'can I move my character around during active combat?' 'can I move my character when the opponent is charging up an attack?' 'can I reliably launch my opponent?' 'do energy attacks look cool as part of close-range combos?'" These are the acceptance test for the next playable build.
+**Orb,** 2026-10-06: "Things I'll be looking for next time I test-run: 'can I move my character around during active combat?' 'can I move my character when the opponent is charging up an attack?' 'can I reliably launch my opponent?' 'do energy attacks look cool as part of close-range combos?'" These are the acceptance test for the next playable build. The before, on the build Orb played: QA reads a held stick as dead on 12,369 of 15,323 brawl ticks, which is 81%, all of them in the locked state.
 
 | Orb's question | The answer | Where | Slice | What Orb should see | QA's check (§11) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
