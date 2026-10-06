@@ -767,3 +767,11 @@ Answers to Game Design's questions on docs/design/brawl-second-pass.md:
 5: double knockbacks should be slightly uncommon, but exciting developments when they happen. Potential for dynamic closeup PiP  of, for instance, both characters punching each in the face, sending each flying in opposite directions."
 
 EP's ruling on Q4, which Orb deferred: a charging Y is armoured from its first tick against light and flurry-light blows (they do not interrupt it, and he takes half their damage); quick heavies and heavy-flurry blows interrupt it until it is half charged, and from half charge it is armoured against those too. A shove, a grab, a charged blow and a perfect block always end it. Numbers are Game Design's; the first playtest of the slice decides whether it holds.
+
+## Three strengths on three buttons (Orb, 2026-10-05, late)
+
+Asked whether reading on release would help tell a flurry from a timed or charged attack, then, on the tap-and-hold rule (a quick move, then the charged one from the same press):
+
+> I don't like the idea of one button press equalling two attacks, lets fix heavy and vicious this way. Proposal X=light, Y=med, B=heavy. turn whatever heavy strikes into medium, and invent new super-heavy looking attacks. give me consult on this and valid alternatives
+
+Standing from this: one press is one attack. The EP's consult and Orb's pick follow in the review list.
