@@ -775,3 +775,9 @@ Asked whether reading on release would help tell a flurry from a timed or charge
 > I don't like the idea of one button press equalling two attacks, lets fix heavy and vicious this way. Proposal X=light, Y=med, B=heavy. turn whatever heavy strikes into medium, and invent new super-heavy looking attacks. give me consult on this and valid alternatives
 
 Standing from this: one press is one attack. The EP's consult and Orb's pick follow in the review list.
+
+Later the same night, after the consult:
+
+> X Light Hold should give a high speed burst of low damage attacks that quickly slows down on a curve; I'm excited to see Y and B flurries, I want to see how this looks visually
+
+The EP reads this as Orb going ahead with three strengths (X light, Y medium, B heavy). It also answers the open hold-to-flurry question for X: a held X is a burst that slows on a curve, not a charge. Where vicious lives is still Orb's to pick.
