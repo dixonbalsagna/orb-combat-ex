@@ -430,9 +430,21 @@
      ]
     },
     "reads": "half"
+   },
+   {
+    "form": "wrench",
+    "when": {
+     "weight": [
+      "heavy"
+     ],
+     "target": [
+      "arm",
+      "legs"
+     ]
+    }
    }
   ],
-  "_forms": "the forms a move can take, by rule, and the press that asks for each (`readings` below). light: a tapped X. flurry: a mashed X. burst: a blow that fits inside the held-X burst (`burst` below). skill and juggle: X on the beat. quick: a tapped or mashed Y or B, and Y or B on the beat; a medium is quick only if it reads on a 12-tick wind-up (`windup` below). charged: a held Y or B. lift: an upward blow, for the pair X+Y and for a full charged heavy with no stick. ender and break are gone with their rules: a string no longer ends by itself, and every heavy breaks a set guard. arms is the number of arms the posed strike it starts from uses; a generated shape uses one. launch: a tap of B on a staggered rival, the launcher: a heavy that reads on half the wind-up and lands on the trunk or the head, so that it is the whole body it sends. A heavy to an arm or a leg is not a launcher: it is what the wrench is thrown with",
+  "_forms": "the forms a move can take, by rule, and the press that asks for each (`readings` below). light: a tapped X. flurry: a mashed X. burst: a blow that fits inside the held-X burst (`burst` below). skill and juggle: X on the beat. quick: a tapped or mashed Y or B, and Y or B on the beat; a medium is quick only if it reads on a 12-tick wind-up (`windup` below). charged: a held Y or B. lift: an upward blow, for the pair X+Y and for a full charged heavy with no stick. ender and break are gone with their rules: a string no longer ends by itself, and every heavy breaks a set guard. arms is the number of arms the posed strike it starts from uses; a generated shape uses one. launch: a tap of B on a staggered rival, the launcher: a heavy that reads on half the wind-up and lands on the trunk or the head, so that it is the whole body it sends. A heavy to an arm or a leg is not a launcher: it is what the wrench is thrown with. wrench: a held B on a battered limb, with the stick on that limb: a heavy whose own place is an arm or a leg",
   "windup": {
    "_about": "What a blow needs to be thrown on a wind-up shorter than it was made for. The first rule that matches is the blow's rule. `medium`: Y's 12-tick wind-up, where today's heavy strikes had 26. reads quick: thrown on a tap, in the Y flurry and on the beat, with the change given. reads charged: it only reads on a long wind-up, so it is flagged and not forced: it is thrown on a held Y only, and it may stand in for a heavy on B. `heavy`: half of B's wind-up, 14 ticks, which is the launcher on a staggered rival and, later, a heavy on the beat. reads half: it can be thrown there. reads full: it needs the whole wind-up. The ticks are Game Design's and live in Encounter's data; no tick is written here",
    "medium": [
@@ -785,7 +797,14 @@
      "toward": "across",
      "away": "turned"
     },
-    "_aim": "the stick's lean to the send wanted: up lifts him, down drives him under, toward drives him back along the line, away turns him past the attacker. With no stick, any launcher"
+    "_aim": "the stick's lean to the send wanted: up lifts him, down drives him under, toward drives him back along the line, away turns him past the attacker. Each direction owns 45 degrees either side, and a diagonal reads as up or down (Game Design, section 3 of the design page)",
+    "noStick": "planner",
+    "_noStick": "with no stick the launch planner picks where he goes, and the blow is a launcher that sends that way: never just any",
+    "wrench": {
+     "away": "arm",
+     "down": "legs"
+    },
+    "_wrench": "the wrench: a charged heavy on a battered limb is the crippling blow. The stick picks the limb by the same map (away the arms, down the legs), and the piece has to land there: it is a heavy whose own place is that limb (the form wrench). A wrench never launches; a tapped heavy and the launcher never wrench"
    }
   },
   "burst": {
@@ -1231,6 +1250,13 @@
     ],
     "rule": "no string places a piece after a step that is not drawn: no vanish, blink or teleport step",
     "why": "the vanishing-step staging"
+   },
+   {
+    "id": "s08",
+    "kind": "hold",
+    "max": 2,
+    "rule": "inside a hold, vicious blows run no more than 2 in a row to the same place, and the arm counts as three places (shoulder, elbow, wrist) and the head, core and legs as two each, so four taps on one region alternate places; vicious blows are strikes, never a grip on the throat, hair or tail, and never a clawed hand on the face; the sound rule f03 holds across the taps",
+    "why": "s02 applied to the clinch; Orb's design and the rating question are still open (not cleared by this row)"
    }
   ],
   "_bannedSequences": "Legal's sequence rules, each with a form a program can check beside Legal's words. run: at most `max` blows in a row that share the parts in `same` (tighter: a smaller max where a filter holds). after: a blow matching `after` is never followed by one matching a `never` filter (state: only in that state at run time; the generator's own strings obey it always). steps: a string uses only drawn steps. audio: not checkable from parts; Audio and the director's line picker hold it",
@@ -1643,16 +1669,18 @@
     "id": "R1",
     "stance": "energy",
     "rows": [
+     "e08",
+     "e06",
      "e01",
      "e02",
      "e03",
-     "e06",
      "k03",
+     "k05",
      "f01",
      "f03"
     ],
-    "from": "Combat, proposed: not yet Legal's",
-    "ask": "an energy blow in reach: one open or blade hand at shoulder height or lower; the hand is lit as a thin edge before it lands, never a ball; the shot goes off at the contact as a thin edge or a short cone; each body takes a rim of its colour on the near side, never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash; the blast's 12-tick wind-up is a held pose, its gather a thin ring or edge at the palm"
+    "from": "Legal's e08 (Combat's R1, adopted)",
+    "ask": "an energy blow in reach: one open, blade or lit-fist hand at shoulder height or lower; the hand is lit as a thin edge before it lands, never a ball; a blade hand is a flat blade, never a pointed finger or two fingers; a lit fist's light sits on its plate and knuckle edges only; the shot goes off at the contact as a thin edge or a short cone; each body takes a rim of its colour on the near side, never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash, counted over the whole screen; the blast's 12-tick wind-up is a held pose, its gather a thin ring or edge at the palm. The contact, the cone, the rim and a mashed run are seen drawn first"
    }
   ],
   "_conditions": "Legal's conditions from its screen of the sheet (docs/legal/movegen-screen.md section 1), for Animation: the sheet's Legal column lists the ids that apply to a row. They bite when a move is held or strung"
@@ -2066,7 +2094,8 @@
     "mash": "quick",
     "hold": "charged",
     "beat": "quick",
-    "staggered": "launch"
+    "staggered": "launch",
+    "heldOnABatteredLimb": "wrench"
    }
   },
   "energy": {
@@ -2297,7 +2326,8 @@
       ],
       "shape": [
        "open",
-       "blade"
+       "blade",
+       "fist"
       ],
       "height": [
        "shoulder",
@@ -2313,8 +2343,8 @@
      ],
      "max": 1
     },
-    "rule": "a burst, a blast and a ki-style flurry (B) are thrown by one open or blade hand at shoulder height or lower; a flurry varies the piece (hand state, release, body) and never pumps the same hand repeatedly or both palms in turn; a point-blank blast shows its flash as a thin edge or short cone at the hand, never a ball",
-    "why": "the shouted two-palm barrage and the held sphere"
+    "rule": "a burst, a blast and a ki-style flurry (B), and an energy blow in reach (RB + X or Y), are thrown by one hand at shoulder height or lower: an open hand, a blade hand, or the rival's lit fist with the light on its plate and knuckle edges only (the cleared fist glow), never a ball or glow round the fist; a flurry varies the piece (hand state, release, body) and never pumps the same hand repeatedly or both palms in turn; a point-blank blast shows its flash as a thin edge or short cone at the hand, never a ball; never aimed at the face",
+    "why": "the shouted two-palm barrage and the held sphere; the lit fist was cleared in RL-062 and is not banned by e02 or e06"
    },
    {
     "id": "e07",
@@ -2322,6 +2352,13 @@
     "owner": "Animation and VFX",
     "rule": "a beam held and steered by the player stays a plain straight line; steering moves the aim or the origin only, never twists, spirals or whips the beam, and the firing pose does not change while it is held",
     "why": "the drilling and whipping beams"
+   },
+   {
+    "id": "e08",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "R1 adopted: an energy blow in reach is one open, blade or lit-fist hand at shoulder height or lower, lit as a thin edge before it lands, the shot going off at contact as a thin edge or short cone, each body taking a rim of its colour on the near side and never a flash over the whole body; never at the face; mashed, the piece changes every blow (hand state, release) and at most one blow in 20 ticks gets the full flash; the blast's 12-tick wind-up is a held pose (h05) with its gather a thin ring or edge at the palm; the blade hand is a flat blade, never a pointed finger or two fingers (e03)",
+    "why": "R1 with the lit fist and the finger rule added"
    }
   ],
   "grabs": [
@@ -2478,6 +2515,13 @@
     "owner": "VFX, Animation and Audio",
     "rule": "a mutual throw-back, a spark-lock between two heavy commitments, a power-attack tell and a taunt's finish show no rubble ring with cracks and wind, no lightning on bodies, no body-wide aura and no gold, white or red flash; sparks sit at the contact point only",
     "why": "marks 4, 5, 3 and 7"
+   },
+   {
+    "id": "k05",
+    "kind": "drawn",
+    "owner": "VFX, Animation and Audio",
+    "rule": "full flashes are counted over the whole screen, every effect and both fighters together: at most three in any one second, each small (a thin edge or short cone), none red, and a reduced-motion setting halves the rate; the cap is checked by a flash analysis of a recorded mashed sequence on the real build",
+    "why": "photosensitivity; Combat's one in 20 ticks is the same 3 a second"
    }
   ],
   "flurry": [
@@ -2594,6 +2638,35 @@
     "collar",
     "elbow",
     "waist"
+   ]
+  }
+ },
+ "vicious": {
+  "_about": "PLAN, for slice C4b: inside the clinch each further tap of A is a vicious blow on the region the stick leans to, up to four. Nothing is generated from this block yet. regions: the stick's lean to the region (Game Design, 68b9a586); with no stick, the core. places: the places a region has, for Legal's s08: no more than two blows running to one place, so four taps on a region alternate. An arm is three places. A vicious blow is a strike, never a grip",
+  "regions": {
+   "up": "head",
+   "down": "legs",
+   "toward": "core",
+   "away": "arms"
+  },
+  "noStick": "core",
+  "places": {
+   "head": [
+    "head",
+    "jaw"
+   ],
+   "core": [
+    "chest",
+    "gut"
+   ],
+   "legs": [
+    "legs",
+    "shins"
+   ],
+   "arms": [
+    "shoulder",
+    "elbow",
+    "wrist"
    ]
   }
  }

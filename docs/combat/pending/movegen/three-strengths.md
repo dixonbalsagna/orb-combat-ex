@@ -69,8 +69,8 @@ The tier has no headbutt (a vicious blow, which waits), no blow to a shin, and n
 | 06 | heaving elbow to the jaw | up | heaving palm to the chest | up |
 | 07 | heaving fist to the gut | up | heaving ball of the foot to the gut | up |
 | 08 | falling hammer fist to the head | down | falling hammer fist to the arm | down |
-| 09 | stepping edge of the foot to the chest | across | turning knee to the legs | turned |
-| 10 | falling forearm plate to the chest | down | turning elbow to the jaw | turned |
+| 09 | stepping edge of the foot to the legs (re-aimed for the wrench; it was to the chest) | across | turning knee to the legs | turned |
+| 10 | falling forearm plate to the arm (re-aimed for the wrench; it was to the chest) | down | turning elbow to the jaw | turned |
 
 - **The rival** is fists, plates and lines, from the front and from above, at the head and chest where it is seen. He holds the tell open with his chin up and leaves the limb out for a beat.
 - **The Protagonist** is open hands, the heel and arcs, through one point of the body or a limb. His tell is compact, the turn does the work, and he is back in his guard at once. He never brings a heavy down on a head (a `never` row).

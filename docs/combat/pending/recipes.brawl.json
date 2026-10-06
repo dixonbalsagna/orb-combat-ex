@@ -527,13 +527,14 @@
   }
  },
  "launcher": {
-  "_about": "A tap of B on a staggered rival: it always lands and launches (docs/design/brawl-second-pass.md section 3, slice C2t). The stick nudges the launch and the director stages it; this is only the blow that starts it, picked by where it sends. aim: the stick's lean to the send wanted; with no stick, any. bySend: the pool's pieces by where each sends (its path). Until the heavy tier is posed these are STAND-INS: first his heavy stand-ins that read on half the wind-up (a spin or a leap does not), then his posed mediums that land on the trunk or the head, which were the launching blows before the three strengths. A medium that one of his own never rows would bar as a heavy is left out (the Protagonist never brings one down on a head). The tier's own launchers replace them: every send has at least one (docs/combat/pending/movegen/review-sheet.md)",
+  "_about": "A tap of B on a staggered rival: it always lands and launches (docs/design/brawl-second-pass.md section 3, slice C2t). The stick nudges the launch and the director stages it; this is only the blow that starts it, picked by where it sends. aim: the stick's lean to the send wanted. noStick: with no stick the launch planner's pick decides the send, and the piece is one that sends that way. bySend: the pool's pieces by where each sends (its path). Until the heavy tier is posed these are STAND-INS: first his heavy stand-ins that read on half the wind-up (a spin or a leap does not), then his posed mediums that land on the trunk or the head, which were the launching blows before the three strengths. A medium that one of his own never rows would bar as a heavy is left out (the Protagonist never brings one down on a head). The tier's own launchers replace them: every send has at least one (docs/combat/pending/movegen/review-sheet.md)",
   "aim": {
    "up": "up",
    "down": "down",
    "toward": "across",
    "away": "turned"
   },
+  "noStick": "planner",
   "bySend": {
    "rival": {
     "up": [
@@ -603,7 +604,7 @@
      },
      {
       "id": "mv.rival.energy.x.reach.02",
-      "hand": "open_palm",
+      "hand": "fist_glow",
       "release": "thrust",
       "target": "chest",
       "path": "line",
@@ -632,7 +633,7 @@
     "blast": [
      {
       "id": "mv.rival.energy.y.reach.01",
-      "hand": "blade_hand",
+      "hand": "fist_glow",
       "release": "thrust",
       "target": "chest",
       "path": "line",
@@ -641,7 +642,7 @@
      },
      {
       "id": "mv.rival.energy.y.reach.02",
-      "hand": "blade_hand",
+      "hand": "fist_glow",
       "release": "thrust",
       "target": "gut",
       "path": "line",

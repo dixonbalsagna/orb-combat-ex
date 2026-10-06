@@ -404,6 +404,24 @@
       "name": "launch",
       "min": 6,
       "form": "launch"
+     },
+     {
+      "name": "wrench, an arm",
+      "min": 1,
+      "filter": {
+       "target": [
+        "arm"
+       ]
+      }
+     },
+     {
+      "name": "wrench, a leg",
+      "min": 1,
+      "filter": {
+       "target": [
+        "legs"
+       ]
+      }
      }
     ],
     "_quotas": "two for each way a charged heavy can send the rival (the two that send up are also the lift), then two for each lean of the stick, so a flurry of four held on one lean still shows four blows",

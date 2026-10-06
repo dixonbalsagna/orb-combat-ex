@@ -17,7 +17,7 @@ Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here i
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, on any match with Legal's rows, or when a string runs out of blows (a strike button left with fewer than 3 pieces after some two blows, or a light that cannot open a burst). It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 68 cases.
+- **To prove the refusals:** `--self-test`, 73 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -33,7 +33,7 @@ Orb moved the martial face buttons to three strengths: X light, Y medium, B heav
 | B | a new tier of 10 heavies: whole-body blows, each a shape and a drive | 10: 0, 0, 10 | 10: 0, 0, 10 |
 | B, stand-ins | posed pieces that can play on B until the tier is drawn; not locked | 5: 0, 5, 0 | 5: 0, 5, 0 |
 
-- **For the slice C2t** (`c2t-content.md`): a heavy that reads on half of B's wind-up and lands on the trunk or the head carries the form `launch` (rival 10, Protagonist 7), and each fighter has 6 energy pieces in reach, 4 point-blank bolts and 2 blasts, in the cells `energy.x.reach` and `energy.y.reach`. Rows are 126 a fighter: rival 74 posed, 25 derived, 27 waiting; Protagonist 69, 30, 27.
+- **For the slice C2t** (`c2t-content.md`): a heavy that reads on half of B's wind-up and lands on the trunk or the head carries the form `launch` (rival 8, Protagonist 7); a heavy whose place is an arm or a leg carries the form `wrench` (one of each a fighter; the rival's rows 09 and 10 were re-aimed for it, by Game Design's ruling), and each fighter has 6 energy pieces in reach, 4 point-blank bolts and 2 blasts, in the cells `energy.x.reach` and `energy.y.reach`. Rows are 126 a fighter: rival 74 posed, 25 derived, 27 waiting; Protagonist 69, 30, 27.
 - No id changed and no strike changed shape. The lock's 34 heavy rows were re-tagged as medium.
 - The signature frame that sat on the martial B is the charging stance's B (RT + B) now.
 - Sections 1 and 2 below were written before this: where they say heavy for the martial Y, read medium.
@@ -105,6 +105,8 @@ By team. The sheet lists the same under each stance, cell by cell, and `cells.js
 | Motion, m01 to m08 | zips and their marks | refuses a far-side zip that does not leave over the rival or round him (m04); the rest are how a zip is drawn and timed: conditions for Animation, VFX and Simulation |
 | Grabs, g01 to g03 | grabs | no grab is generated; the hold points a grab may use are listed and checked (g01) |
 | Held, h01 to h03 with `heldScope` (RL-087), and stacking, k01 and k02 | any pose held 12 ticks or more, by its class (the pair test on every held pose; the emitter test on charges, tells, signatures, energy poses and a held heavy's hold); every tick of a tell or a charge | not checkable from parts: conditions H1 and K1 on every signature frame and held action, for Animation's lint and VFX. `heldScope` is copied whole into `parts.json` `legal`, and `--check` compares it |
+
+**The screen of the launcher and energy in reach** (`docs/legal/launcher-and-reach-screen.md`, `e9a57791`): all 17 rows pass. e06 names the rival's lit fist as a third hand, R1 is e08, k05 is a flash ceiling for VFX, and s08 applies s02 by place inside a hold (an arm is three places), which the string rules now do for any blow that carries a place. Details in `c2t-content.md`.
 
 **The screen of the three strengths** (`docs/legal/three-strengths-screen.md`): all 41 of Combat's rows passed with conditions. b03 and b12 changed, h05 to h07, f04 and f05 are new, and f01 is restated. What the generator does with each, and the conditions carried into the sheet (W1, U1, D1 to D5, B1), are in `three-strengths.md` section 8. `--check` also tests the pools by button in `../recipes.brawl.json` (the burst's pools, its samples, and that every pool named exists).
 

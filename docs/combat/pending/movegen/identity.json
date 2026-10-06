@@ -254,10 +254,18 @@
     "reach": {
      "hands": {
       "blade_hand": 3,
-      "open_palm": 1,
       "fist_glow": 2.5
      },
-     "_hands": "his lights are blade hands, so his point-blank bolt is a blade hand driven in on a line. His own blast would be the lit fist, the plate behind it: Legal's e06 asks an open or a blade hand for a blast, so the generator refuses it and it is a question for Legal"
+     "byDelivery": {
+      "point_blank": {
+       "fist_glow": 0.6
+      },
+      "blast": {
+       "fist_glow": 3,
+       "blade_hand": 0.3
+      }
+     },
+     "_hands": "fists and plates up close, beside the blade hand: his lights are blade hands, so three of his four point-blank bolts are a blade hand and one is the lit fist; his mediums are fists, so his blast is the lit fist with the plate behind it. Legal's e06 names the lit fist as his third hand (e9a57791). No open palm here: it is an energy hand of his at range, and he has no palm as a strike"
     }
    },
    "specials": {
@@ -322,7 +330,7 @@
     "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
     "heavy": "A show-off. He lets the rival see it coming: the tell is held open to view with the chin up, the blow travels in the straightest line that drive allows, and he leaves the limb out for a beat after it lands, 12 ticks or fewer. The limb stays drawn back through the tell: never arms spread as an invitation, never a beckon, and no taunt is part of a blow (Legal's h07). Never a second motion on the same wind-up",
     "burst": "A show of speed: blade hands that flick out and back with the elbow high, then a straight he leaves out for a beat",
-    "reach": "A show of it, in straight lines: a blade hand driven in with the forearm plate behind it, the light running down the plate's edge and off the fingertips as it lands. His blast is braced the same way and let go along the forearm"
+    "reach": "A show of it, in straight lines. A blade hand driven in flat with the forearm plate behind it, the light a thin edge along the plate and off the flat of the hand: a flat blade, never a pointed finger. And the lit fist, thrown as a straight punch whose shot leaves the knuckle edges. His blast is the lit fist braced against him and let go along the forearm"
    },
    "pinned": {
     "martial.b": [
