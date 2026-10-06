@@ -1,0 +1,50 @@
+--- a/render/camera/tests/split_sweep.gd
++++ b/render/camera/tests/split_sweep.gd
+@@ -2736,13 +2736,21 @@
+ 				_beamcues[String(e.kind)] = int(_beamcues.get(String(e.kind), 0)) + 1
+ 			if et == "bounce" and int(e.actor) >= 0 and int(e.actor) < 2:
+ 				var bf = _S.fighters[int(e.actor)]
+-				_bn.append({"a": int(e.actor), "n": 0, "wy0": 1.0e9, "wy1": -1.0e9, "sy0": 1.0e9, "sy1": -1.0e9, "mode": cur.mode, "solo": _rig.solo_kind, "z0": cur.cam_z[0]})
++				# One record for one episode: a body skidding over rough ground sends a burst of bounce events (five or six in 0.7 s in
++				# C1's match 3), all of them the same few ticks of the same fighter, and counting each was counting one skid six times.
++				var dup: bool = false
++				for ob in _bn:
++					if int(ob["a"]) == int(e.actor):
++						dup = true
++				if not dup:
++					_bn.append({"a": int(e.actor), "n": 0, "wy0": 1.0e9, "wy1": -1.0e9, "sy0": 1.0e9, "sy1": -1.0e9, "hy1": 0.0, "mode": cur.mode, "solo": _rig.solo_kind, "z0": cur.cam_z[0]})
+ 		var bi: int = 0
+ 		while bi < _bn.size():
+ 			var b = _bn[bi]
+ 			var bf2 = _S.fighters[int(b["a"])]
+ 			var pi2: int = int(b["a"]) if cur.shows(int(b["a"])) else (0 if cur.shows(0) else 1)
+ 			var sp2: Vector2 = cur.screen_pos(pi2, bf2.x, bf2.y + CamParams.CHEST, float(bf2.z))
++			b["hy1"] = maxf(float(b["hy1"]), bf2.y - WorldTerrain.groundY(_S, bf2.x))   # his height above the ground under him
+ 			b["wy0"] = minf(float(b["wy0"]), bf2.y)
+ 			b["wy1"] = maxf(float(b["wy1"]), bf2.y)
+ 			b["sy0"] = minf(float(b["sy0"]), sp2.y)
+@@ -2809,11 +2817,19 @@
+ 					seen += 1
+ 		stats["bounce reading " + _label] = "%d bounces watched for 40 ticks: world rise mean %.0f u (%.2f bh), screen excursion mean %.0f px (%.2f of the screen height); of %d with a rise over 0.4 bh, %d moved on the screen at least half as much as the world did" % [_bn_done.size(), rise / float(_bn_done.size()), rise / float(_bn_done.size()) / CamParams.BODY_H, scr / float(_bn_done.size()), scr / float(_bn_done.size()) / vh, big, seen]
+ 	_jolt_summary()
+-	if ticks > 0 and human < 0 and rig_human < 0 and _bn_done.size() >= 10:
+-		var sc: float = 0.0
+-		for b in _bn_done:
+-			sc += float(b["sy1"]) - float(b["sy0"])
+-		_check(sc / float(_bn_done.size()) >= 30.0, "%s: bounces move %.0f px on the screen on average (want at least 30)" % [_label, sc / float(_bn_done.size())])
++	if ticks > 0 and human < 0 and rig_human < 0:
++		# Bounces that rose off the ground (over half a body height above the ground under them): a body sliding up a slope has a
++		# world height that rises and nothing above the ground to read, and the camera follows the ground, as it should.
++		var hops: Array = _bn_done.filter(func(b): return float(b["hy1"]) >= 0.5 * CamParams.BODY_H)
++		var hsum: float = 0.0
++		for hb in hops:
++			hsum += float(hb["sy1"]) - float(hb["sy0"])
++		stats["bounce hops " + _label] = "%d hops moved %.0f px on the screen on average; %d slides left out" % [hops.size(), hsum / maxf(1.0, float(hops.size())), _bn_done.size() - hops.size()]
++		if hops.size() >= 6:
++			var sc: float = 0.0
++			for b in hops:
++				sc += float(b["sy1"]) - float(b["sy0"])
++			_check(sc / float(hops.size()) >= 30.0, "%s: bounces move %.0f px on the screen on average (want at least 30; %d hops, %d slides left out)" % [_label, sc / float(hops.size()), hops.size(), _bn_done.size() - hops.size()])
+ 	if not _rushes.is_empty():
+ 		var ds: Array = _rushes.map(func(r): return float(r["d"]))
+ 		var vs: Array = _rushes.map(func(r): return float(r["v"]))
