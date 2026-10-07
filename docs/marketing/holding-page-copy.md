@@ -1,70 +1,96 @@
-# Holding page copy: sharper lines
+# Holding page copy, version 3 (Orb's rewrite request, inside Legal's RL-123 edits)
 
-Status: draft, private, not reviewed by Legal. Nothing goes live until Legal and Orb have seen it. Written 2026-10-06 by Marketing for the EP's draft page (`site-preview/index.html`). Voice and rules as in `go-to-market-plan.md` and `store-copy-draft.md`.
+Status: draft, private. Version 3, 2026-10-06, written by Marketing on Orb's direct instruction after reading version 2 ("towers shed their glass" is the wrong word for a skyscraper, and the page reads flat). Still inside Legal's screen (`docs/legal/holding-page-screen.md`, RL-123, edits a to f). Not reviewed by Legal in this form. Nothing goes live until Legal and Orb have seen it.
 
-**What changed, in one line:** "rebuilt from the ground up" and "Fights that write themselves" are gone, because to someone who has not played they read as "it was broken" and "it plays itself". The new lines say what you do (you press, you steer) and what the fight director does (shapes the exchange).
+**Who it is written for:** someone Orb handed the link to. Not search, not a feed. One unindexed page: no social cards, no description or tags, linked from nowhere by us, the title shown as "(working title)".
+
+**What changed from version 2:** active verbs and commands instead of passive description; one sentence per move; towers lose windows and come down because you hit them, not because they "shed". Legal's required phrases are untouched: "designed to", "are meant to", "Planned:", "past a rival's guard", the ordinary-code sentence, and its exact city caption.
 
 ## Taglines
 
 | | Line |
 |---|---|
-| **Recommended** | Real-time anime brawling, choreographed as you fight, on a planet with no edges. |
-| Alternative 1 | Every press is a blow. Every blow leaves a mark. |
-| Alternative 2 | A planet with no edges, and a fight director that shapes every exchange. |
+| **Recommended** | Real-time anime brawling on a planet with no edges. Every press lands a blow. |
+| Alternative 1 | Fly far. Hit hard. Bring the towers down. |
+| Alternative 2 | Every press is a blow. Every blow leaves a mark. |
+
+Directly under the tagline (Legal edit e):
+
+> A one-person project: Orb directs it and builds it with AI tools.
+
+The status box follows, first and unchanged (Legal's).
 
 ## The copy, line by line
 
-The status box, its heading and the two disclosure and privacy footers that follow it are Legal's and are not touched here, except for the footer note at the end.
-
-| Place | EP draft | My version |
+| Place | EP draft | Version 3 |
 |---|---|---|
-| Tagline | A real-time anime brawler where the whole planet is the arena. | Real-time anime brawling, choreographed as you fight, on a planet with no edges. |
-| Section 1 heading | Fights that write themselves | You press. The fight takes shape. |
-| Section 1 body | No combo lists to memorise. Every press is a blow, and a procedural fight director threads your lights, mediums and heavies into combos on the fly, shaped by where you are, what you chose and how the fight is going. No two exchanges are meant to play the same way twice. | No combo lists to memorise. Every press is a blow. We are building a procedural fight director that threads your light, medium and heavy strikes into combos on the fly, shaped by where you stand, what you chose and how the fight is going. |
-| Heavy GIF caption | **Heavy flurry, animation study.** Whole-body blows, each ending where the next begins. Work in progress, on a test stage. | **Heavy flurry.** Whole-body blows, each ending where the next begins. Animation study on a test stage. |
-| Section 2 heading | Real-time brawling, rebuilt from the ground up | Brawling you steer |
-| Section 2 body | Planned: flurries you can steer across the sky, charged heavies that shrug off jabs, launchers you aim with the stick, point-blank energy blasts, and zips that carry you through a rival's guard and out the other side. | We are building a brawl in your hands: flurries you steer across the sky, charged heavies that shrug off jabs, launchers you aim with the stick, point-blank energy, and zips that carry you through a rival's guard and out the other side. |
+| Section 1 heading | Fights that write themselves | **Combos that build as you fight** |
+| Section 1 body | No combo lists to memorise. Every press is a blow, and a procedural fight director threads your lights, mediums and heavies into combos on the fly, shaped by where you are, what you chose and how the fight is going. No two exchanges are meant to play the same way twice. | No combo lists to memorise. Press a button, land a blow. The fight director is designed to chain your light, medium and heavy strikes into combos on the fly, shaped by where you stand and how the fight is going. No two exchanges are meant to play out the same way twice. The fight director is ordinary game code, not an AI model. |
+| Clip caption | **Heavy flurry, animation study.** Whole-body blows, each ending where the next begins. Work in progress, on a test stage. | **Heavy flurry.** Whole-body blows, each one ending where the next begins. Animation study on a test stage. |
+| Section 2 heading | Real-time brawling, rebuilt from the ground up | **A brawl in your hands** |
+| Section 2 body | Planned: flurries you can steer across the sky, charged heavies that shrug off jabs, launchers you aim with the stick, point-blank energy blasts, and zips that carry you through a rival's guard and out the other side. | Planned: steer a flurry across the sky. Charge a heavy that shrugs off jabs. Aim a launcher with the stick. Fire point-blank energy. Zip past a rival's guard and out the other side. |
 | Blast caption | **Point-blank.** Energy thrown at arm's length, mid-combo. | **Point-blank.** Energy at arm's length, mid-combo. |
 | Double-hit caption | **The double hit.** Trade evenly for long enough and both of you fly. | **The double hit.** Trade evenly for long enough and both fighters fly. |
-| Section 3 heading | The planet is the arena | The planet is the arena (unchanged) |
-| Section 3 body | No walls and no corners. Fly far enough in one direction and you loop the world: city, desert, ocean, mountains. Planned: a sky that turns from noon to night as you cross it. | No walls, no corners. Fly far enough in one direction and you loop the world: city, desert, ocean, mountains. The sky turns from noon to night as you cross it. |
+| Section 3 heading | The planet is the arena | **No edges. No corners.** |
+| Section 3 body | No walls and no corners. Fly far enough in one direction and you loop the world: city, desert, ocean, mountains. Planned: a sky that turns from noon to night as you cross it. | No walls, no side to be cornered on. Fly one way and you come back round the other: city, desert, ocean, mountains. Planned: a sky that turns from noon to night as you cross it. |
 | Sky caption | **One lap of the planet is one day.** Concept art for the dynamic sky. | **One lap, one day.** Concept art for the dynamic sky. |
-| Section 4 heading | Power has weight | Power has weight (unchanged) |
-| Section 4 body | Beams carve trenches. Towers crack, shed their glass and come down a stage at a time. The world keeps every scar until the match ends. | Beams carve trenches. Towers shed their glass, crack, hollow out and fall, one stage at a time. The world keeps every scar until the match ends. |
-| City caption | **Downtown, mid-fight.** Every building here can be broken. | **Downtown, mid-fight.** Buildings here come down a stage at a time. |
+| Section 4 heading | Power has weight | **Hit hard enough and it stays broken** |
+| Section 4 body | Beams carve trenches. Towers crack, shed their glass and come down a stage at a time. The world keeps every scar until the match ends. | Beams gouge trenches into the ground. Blast the windows out of a tower, split its walls, strip it to a shell, bring it down: one stage at a time. Slam a rival into one and the tower pays for it. The world keeps every scar until the match ends. |
+| City caption | **Downtown, mid-fight.** Every building here can be broken. | **Downtown, mid-fight.** Buildings here break in stages. (Legal's exact wording) |
 
-**Footer note (a suggestion for Legal).** The page's disclosure footer quotes only the first two sentences of Legal's statement, and this page leans hard on the word "procedural". Legal's rule is the same text everywhere, and its statement includes the line that the procedural systems are ordinary code, not AI models. Suggested footer, which is Legal's short form without the bracketed music and voice sentences:
+**Foot of the page** (Legal edit e keeps the full statement at the foot, with the privacy line): the work-in-progress line unchanged, then
 
 > **How this game was made.** Orb Combat EX is a one-person project: Orb directs it and builds it with AI tools. AI tools wrote the game's code and drafted its art, animation data, dialogue, UI text and design documents. Nothing in the game is generated by AI while you play: its procedural systems (planets, fight choreography, the computer-controlled opponent) are ordinary code, not AI models. Orb directs the project, makes the creative decisions, edits the dialogue by hand, and tests and plays the game. No part of this game is described as human-made unless this page says so.
 
-## Optional lines (each needs Legal's say)
+then the privacy line unchanged.
 
-- **The shift Orb described**, after the Section 2 body: "Earlier builds let the fight play too much by itself. We are rebuilding toward fluid, hands-on combat, closer to a traditional fighting game." It is honest and answers the worry that we forgot to let you move. It also admits a weakness and compares to a genre, not a franchise. Legal decides. If it is dropped, "Brawling you steer" carries the point alone.
-- **The roster:** "Planned: four fighters at launch." Legal's store-copy screen holds fighter counts as "do not claim until true" (C13). I would leave it out of a page with no date.
+## A note on "blasting through skyscrapers"
 
-## What I did not use, and why
+I did not write "through". The build documents a fighter launched into a building damaging it (pillar 4) and beams carving along their path, but I cannot confirm a fighter flies clean through a tower, and Legal's zip rule (m04) says a zip never passes through a body. If a fighter really can break through a tower in the build, tell me and I will use "through". Until then "slam a rival into one and the tower pays for it" is the strongest line I can stand behind.
 
-- "Auto-battler", "rebuilt", "fixed" and "forgot": they describe the problem, not the game.
-- "Never the same twice", "infinite", "revolutionary", "next-gen", "dream game": claims the build cannot back. "No two exchanges are meant to play the same way twice" is cut for the same reason.
-- Franchise and game comparisons, borrowed catchphrases and any "like ___" line.
-- Anything about the flashing fix beyond the status box.
+## Alt text for the images
+
+| Image | Alt text |
+|---|---|
+| Heavy flurry clip poster | Two fighters trading heavy blows on a flat dark test stage |
+| Point-blank blast | A point-blank energy blast passing through a fighter, a hollow ring with crossed lines |
+| Double hit | Two fighters landing blows on each other at the same instant |
+| Sky strip (cropped to the three panels only) | Concept art of two fighters under a noon sky, a golden-hour sky and a night sky |
+| Downtown | Two small fighters among tall city towers, one tower cracked and another collapsed, with small figures below |
+
+## Handoffs from Legal's screen (not copy)
+
+- The clip is a video, not an inline GIF: `controls`, no autoplay, no loop, a poster still only for reduced-motion visitors, and the encoded file passes Tools' analyser before it ships. The caption never says "no flashing" or "safe".
+- The sky image is cropped to the three panels only.
+- The page has no animation apart from the clip. `zip.jpg` is not used (not reviewed).
+
+## What I did not use
+
+"Shed", "auto-battler", "rebuilt", "fixed", "forgot", "fights that write themselves"; hype the build cannot back ("infinite", "never the same", "revolutionary", "dream game"); "through" a tower (see the note above); any franchise or game comparison, borrowed catchphrase or "like ___" line; anything about the flashing fix beyond the status box.
 
 ## Claims this copy makes
 
 | ID | Claim | Evidence | Check before it goes live | Legal status |
 |---|---|---|---|---|
-| H1 | Every press is a blow | C4: melee-press-feel.md, brawl B1 | none beyond C4 | clear (C4) |
-| H2 | A procedural fight director shapes the exchange from your presses | C26: pillars.md pillar 2, exchange-templates.md | none | clear (C26) |
-| H3 | We are building light, medium and heavy strikes into combos | in development (EP) | keep "we are building" | unreviewed |
-| H4 | We are building steered flurries, charged heavies, an aimed launcher, point-blank energy and zips | in development (EP) | keep "we are building"; no promise of when | unreviewed |
-| H5 | No walls or corners; you loop the world: city, desert, ocean, mountains | C7: pillars.md pillar 1; the world's biomes | verify when the build is back | clear (C7) |
-| H6 | The sky turns from noon to night as you cross it | EP: dynamic sky approved and built | EP confirms it is in the build, else go back to "we are building" | unreviewed |
-| H7 | Beams carve trenches; towers shed glass, crack, hollow out and fall in stages; scars stay until the match ends | C5, C6: building-stages.md, pillar 4 | verify when the build is back | clear (C5, C6) |
-| H8 | "Trade evenly for long enough and both fighters fly" | the double hit (EP) | EP confirms the double hit is in the build | unreviewed |
-| H9 | The images are work-in-progress builds, test scenes and concept art | the captions and the page's own small print | keep the "concept art" and "animation study" labels | unreviewed |
+| H1 | Every press is a blow; press a button, land a blow | C4: melee-press-feel.md, brawl B1 | none beyond C4 | clear (C4) |
+| H2 | The fight director is designed to chain light, medium and heavy strikes into combos, shaped by position and how the fight is going | design (pillars.md pillar 2, exchange-templates.md); not in a live build | keep "designed to" | clear with "designed to" (RL-123) |
+| H3 | No two exchanges are meant to play out the same way twice | design intent | keep "are meant to" | clear (RL-123) |
+| H4 | The fight director is ordinary game code, not an AI model | Legal's clarifier, go-to-market.md section 1 | none | Legal's own wording |
+| H5 | Planned: steered flurries, charged heavies, an aimed launcher, point-blank energy, zips past a rival's guard | in development (EP); zips pass beside or over a body (m04) | keep "Planned" | clear with "past" (RL-123) |
+| H6 | No walls or corners; fly one way and you come back round the other: city, desert, ocean, mountains | C7: pillars.md pillar 1 | verify when the build is back | clear (C7) |
+| H7 | Planned: a sky that turns from noon to night as you cross it | concept art; EP: dynamic sky approved and built | keep "Planned" | clear (RL-123) |
+| H8 | Beams gouge trenches into the ground | C6: pillars.md pillar 4 | verify when the build is back | clear (C6) |
+| H9 | A tower breaks one stage at a time: windows out, walls split, stripped to a shell, brought down | C5: building-stages.md | verify when the build is back | clear (C5); my rewording needs Legal's eye |
+| H10 | Slam a rival into a tower and the tower pays for it | pillars.md pillar 4 (a fighter launched into a building damages it) | verify in the build that a launch into a tower damages it | **unreviewed, new** |
+| H11 | The world keeps every scar until the match ends | C6 | verify when the build is back | clear (C6) |
+| H12 | Buildings here break in stages | C5 | none | clear (RL-123) |
+| H13 | Trade evenly for long enough and both fighters fly | the double hit (EP) | EP confirms it is in the build | clear for the image (k04); the sentence is unreviewed |
+| H14 | A one-person project: Orb directs it and builds it with AI tools | Legal's statement, 10.1 | none | Legal's own wording |
+| H15 | Images are work-in-progress builds, test scenes and concept art | the captions and small print | keep the labels | clear (RL-123) |
 
 ## Open questions
 
-1. Legal: the full statement as the footer (above), and whether to use the optional "shift" line.
-2. EP: is the sky in the build, and is the double hit? (H6 and H8.)
-3. Orb: the recommended tagline, or one of the two alternatives?
+1. Orb: the recommended tagline, or one of the two alternatives. And does the new voice land, or do you want it hotter still?
+2. Legal: the section 4 body, especially H9 (reworded stages) and H10 (the new "slam a rival into one" sentence).
+3. Orb or EP: can a fighter break clean through a tower in the build? If yes, "through" comes back.
+4. EP: is the double hit in the build (H13)?
