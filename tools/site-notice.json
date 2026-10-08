@@ -3,6 +3,9 @@
   "title": "Orb Combat EX (working title)",
   "blocks": [
     {
+      "p": "The whole planet is the arena. No walls, no corners, and a brawl choreographed around you."
+    },
+    {
       "p": "A one-person project: Orb directs it and builds it with AI tools."
     },
     {
@@ -15,25 +18,25 @@
       "h2": "Combos that build as you fight"
     },
     {
-      "p": "No combo lists to memorise. Every press is a blow, and the fight director is designed to thread your light, medium and heavy strikes into combos on the fly, shaped by where you stand and how the fight is going. No two exchanges are meant to play out the same way twice. The fight director is ordinary game code, not an AI model."
+      "p": "No combo lists to memorise. Press a button, land a blow. The fight director is designed to chain your light, medium and heavy strikes into combos on the fly, shaped by where you stand and how the fight is going. No two exchanges are meant to play out the same way twice. The fight director is ordinary game code, not an AI model."
     },
     {
-      "h2": "Brawling you steer"
+      "h2": "A brawl in your hands"
     },
     {
-      "p": "Planned: a brawl in your hands. Flurries you steer across the sky, charged heavies that shrug off jabs, launchers you aim with the stick, point-blank energy, and zips that carry you past a rival's guard and out the other side."
+      "p": "Planned: steer a flurry across the sky. Charge a heavy that shrugs off jabs. Aim a launcher with the stick. Fire point-blank energy. Zip past a rival's guard and out the other side."
     },
     {
-      "h2": "The planet is the arena."
+      "h2": "No edges. No corners."
     },
     {
-      "p": "No walls, no corners. Fly far enough in one direction and you loop the world: city, desert, ocean, mountains. Planned: a sky that turns from noon to night as you cross it."
+      "p": "No walls, no side to be cornered on. Fly one way and you come back round the other: city, desert, ocean, mountains. Planned: a sky that turns from noon to night as you cross it."
     },
     {
-      "h2": "Power has weight."
+      "h2": "Hit hard enough and it stays broken"
     },
     {
-      "p": "Beams carve trenches. Buildings crack and break apart in stages. The world keeps every scar until the match ends."
+      "p": "Beams gouge trenches into the ground. Buildings crack and break apart in stages. The world keeps every scar until the match ends."
     },
     {
       "small": "Features described here are in development and may change."

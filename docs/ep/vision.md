@@ -848,3 +848,9 @@ On the draft holding page, which used a strip of Art's sky concept sheet showing
 > and finally, I just looked at my usage and I'm at 88% for the week! I'd like to save on tokens because I have one other little project I'm working on, so please let everything finish up and put a hold on.
 
 Standing from this: no in-progress character art on any public page; fighters as they appeared in past builds are fine. Pictures for the holding page are to be landscape screenshots, re-chosen or newly staged, when work resumes. All directors are on hold after their current step until Orb says to resume.
+
+## The title stays (Orb, 2026-10-08)
+
+> The "orbcombat" user has no public email, no way to contact them, and they live on the other side of the planet from me. short of rudely committing a push to their repository, which is considered spam and not a professional way to reach them at all, I don't know how to politely contact them about the name conflict. Let's continue with Orb Combat EX as planned.
+
+Standing from this: the title is Orb Combat EX. Legal's note stands that the clash should be looked at again before any store page.
