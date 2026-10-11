@@ -20,6 +20,9 @@ var _pool: Array = []          # AudioStreamPlayer2D
 var _meta: Array = []          # per player: {priority, group, t}
 var _listener: AudioListener2D
 var _clock: float = 0.0
+var _duck: Dictionary = {}     # bus name -> {db, until}: a bus held down for a moment by a cue
+var _base_db: Dictionary = {}  # bus name -> its level in mix.json
+const DUCK_RELEASE := 0.08     # seconds to come back up
 
 
 func _init(p_bank: AudioBank = null) -> void:
@@ -38,11 +41,44 @@ func _ready() -> void:
 		p.attenuation = 0.0
 		add_child(p)
 		_pool.append(p)
-		_meta.append({"priority": -1, "group": "", "t": -1.0})
+		_meta.append({"priority": -1, "group": "", "t": -1.0, "cls": ""})
 
 
 func _process(delta: float) -> void:
 	_clock += delta
+	for bus in _duck.keys():
+		var d: Dictionary = _duck[bus]
+		var idx: int = AudioServer.get_bus_index(bus)
+		var left: float = float(d.until) - _clock
+		if left <= 0.0:
+			if idx != -1:
+				AudioServer.set_bus_volume_db(idx, float(_base_db.get(bus, 0.0)))
+			_duck.erase(bus)
+		elif idx != -1:
+			var k: float = clampf(left / DUCK_RELEASE, 0.0, 1.0)     # 1 while held, then a short ramp back up
+			AudioServer.set_bus_volume_db(idx, float(_base_db.get(bus, 0.0)) + float(d.db) * k)
+
+
+## How far a bus is held down right now, in dB (0 when it is not).
+func duck_db(bus: String) -> float:
+	if not _duck.has(bus):
+		return 0.0
+	var left: float = float(_duck[bus].until) - _clock
+	return float(_duck[bus].db) * clampf(left / DUCK_RELEASE, 0.0, 1.0)
+
+
+func _hold_down(bus: String, db: float, ms: int) -> void:
+	var idx: int = AudioServer.get_bus_index(bus)
+	if idx == -1:
+		return
+	if not _base_db.has(bus):
+		_base_db[bus] = AudioServer.get_bus_volume_db(idx)
+	var until: float = _clock + float(ms) * 0.001 + DUCK_RELEASE
+	if _duck.has(bus):
+		until = maxf(until, float(_duck[bus].until))
+		db = minf(db, float(_duck[bus].db))
+	_duck[bus] = {"db": db, "until": until}
+	AudioServer.set_bus_volume_db(idx, float(_base_db[bus]) + db)
 
 
 ## Create the buses and the master limiter named in mix.json (once; safe to call again).
@@ -75,6 +111,8 @@ func distance_db(dist: float) -> float:
 
 ## Play a cue for a camera at cam_x with zoom pixels per world unit. Returns true if a voice took it.
 func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
+	if cue.sound == "" and cue.stop_group != "":
+		return stop_group(cue.stop_group, cue.fade_ms)
 	var dx: float = SimWrap.sdx(cam_x, cue.x)
 	var dist: float = absf(dx)
 	if dist >= float(mix.space.max_distance):
@@ -94,7 +132,9 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 		p.bus = "SfxMuffled" if cue.bus == "Sfx" else ("VoiceMuffled" if cue.bus == "Voice" else cue.bus)
 	p.position = Vector2(dx * zoom, 0.0)
 	p.play()
-	_meta[slot] = {"priority": cue.priority, "group": cue.group, "t": _clock}
+	_meta[slot] = {"priority": cue.priority, "group": cue.group, "t": _clock, "cls": cue.cls}
+	for d in cue.duck:
+		_hold_down(String(d.bus), float(d.db), int(d.ms))
 	played += 1
 	return true
 
@@ -105,6 +145,16 @@ func _take(cue: AudioCues.Cue) -> int:
 		for i in range(_pool.size()):
 			if _meta[i].group == cue.group and _pool[i].playing:
 				return i
+	if cue.cap > 0 and cue.cls != "":
+		var oldest: int = -1
+		var count: int = 0
+		for i in range(_pool.size()):
+			if _pool[i].playing and _meta[i].cls == cue.cls:
+				count += 1
+				if oldest == -1 or _meta[i].t < _meta[oldest].t:
+					oldest = i
+		if count >= cue.cap:
+			return oldest if cue.priority >= int(_meta[oldest].priority) else -1
 	var weakest: int = -1
 	for i in range(_pool.size()):
 		if not _pool[i].playing:
@@ -114,6 +164,22 @@ func _take(cue: AudioCues.Cue) -> int:
 	if weakest != -1 and cue.priority >= int(_meta[weakest].priority):
 		return weakest
 	return -1
+
+
+## Fade out whatever is playing in a group (the launcher's ping, once the launch is thrown). True if there was one.
+func stop_group(group: String, fade_ms: int = 40) -> bool:
+	var found: bool = false
+	for i in range(_pool.size()):
+		if _pool[i].playing and _meta[i].group == group:
+			found = true
+			var p: AudioStreamPlayer2D = _pool[i]
+			if fade_ms <= 0:
+				p.stop()
+			else:
+				var tw: Tween = create_tween()
+				tw.tween_property(p, "volume_db", -60.0, float(fade_ms) * 0.001)
+				tw.tween_callback(p.stop)
+	return found
 
 
 func active() -> int:

@@ -27,6 +27,11 @@ class Cue:
 	var group: String = ""       # a voice group replaces its own earlier voice ("voice.0" is fighter 0's mouth)
 	var muffled: bool = false    # underwater: the player routes it through the low-pass bus
 	var caption: String = ""     # for muted or deaf players; UI's captions read it
+	var cls: String = ""         # a voice class that has a cap ("hit.light"): at most `cap` of them sound at once
+	var cap: int = 0
+	var duck: Array = []         # [{bus, db, ms}]: drop these buses for a moment while this cue sounds (the launcher's ping)
+	var stop_group: String = ""  # a stop request, not a sound: fade out the voice in this group
+	var fade_ms: int = 40
 
 
 var cfg: Dictionary = {}
@@ -34,11 +39,13 @@ var bank: AudioBank
 var _rng: SimRng
 var _last_variant: Dictionary = {}    # sound id -> the variant played last
 var _last_grunt: Dictionary = {}      # "fighter.gesture" -> sim time it last fired
+var brawl: AudioBrawl                 # the brawl's cues (audio_brawl.gd)
 
 
 func _init(p_bank: AudioBank = null) -> void:
 	cfg = AudioBank.load_json(CUES_PATH)
 	bank = p_bank if p_bank != null else AudioBank.new()
+	brawl = AudioBrawl.new(self)
 	reset(1)
 
 
@@ -47,15 +54,19 @@ func reset(p_seed: int) -> void:
 	_rng = SimRng.new(SimRng.deriveSeed(p_seed, "audio"))
 	_last_variant.clear()
 	_last_grunt.clear()
+	brawl.reset()
 
 
 ## One tick's events, in order. Returns the cues to play.
 func consume(S: SimState, events: Array) -> Array:
 	var out: Array = []
+	out.append_array(brawl.begin(S, events))
 	for e in events:
 		match e.type:
 			"damage":
 				_damage(S, e, out)
+			"cue":
+				brawl.on_cue(S, e, out)
 			"crater":
 				_crater(S, e, out)
 			"flash":
@@ -94,6 +105,12 @@ func flash(S: SimState, actor: int, flash_id: String) -> Cue:
 
 func _damage(S: SimState, e, out: Array) -> void:
 	var d: Dictionary = cfg.damage
+	if brawl.handles(e):
+		out.append_array(brawl.hit(S, e))
+		for rule in cfg.get("grunts", []):
+			if rule.on == "damage" and e.amount >= float(rule.get("min_amount", 0.0)):
+				_grunt(S, rule, e, out)
+		return
 	var id: String = ""
 	for c in d.classes:
 		if e.amount < float(c.below):
@@ -112,6 +129,26 @@ func _crater(S: SimState, e, out: Array) -> void:
 	if e.energy < float(c.min_energy):
 		return
 	out.append(make_sfx(S, c.sound, e.x, e.y, e.energy, c))
+
+
+## A finished cue for a sound, with the muffle test and the usual small random spread in pitch and level. The brawl's
+## cues are built here so that one stream does all the picking.
+func make_cue(sound: String, x: float, y: float, gain_db: float, pitch: float, priority: int, bus: String, cls: String, cap: int, caption: String, S: SimState) -> Cue:
+	var cue := Cue.new()
+	cue.sound = sound
+	cue.variant = _pick_variant(sound)
+	cue.x = x
+	cue.y = y
+	cue.gain_db = gain_db
+	cue.pitch = pitch
+	_vary(cue)
+	cue.priority = priority
+	cue.bus = bus
+	cue.cls = cls
+	cue.cap = cap
+	cue.caption = caption
+	cue.muffled = _muffled(S, x, y)
+	return cue
 
 
 ## A bank sound scaled by size: bigger means lower and louder (so a huge crater is a deep, long crash). S may be null

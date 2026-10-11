@@ -4,7 +4,30 @@ Owner: Audio and Music. 2026-10-06. A plan on paper, as the EP asked; nothing is
 
 **Held until the three-strength flurries are in:** the retune of today's cue density (about 290 to 345 cues a minute, almost all `impact.light`). The flurry rules below are the plan for it.
 
-## 1. The cues
+## Built (2026-10-06): against Encounter's final cue names, with staged events
+
+The EP ruled that the launcher's ping is **one sound, heard by both players** (local play shares speakers). Its partners are VFX's mark on the staggered rival, Controls' rumble on closes, and (for the full-charge tick) VFX's flash and UI's ring. The sim side does not exist yet, so everything below is built against **staged events** with the field names Encounter gave (`audio/tools/brawl_check.gd` stages them, as VFX did) and passes. Code: `audio/audio_brawl.gd`; data (every name and number): `audio/data/brawl_cues.json`; recipes: `audio/data/impacts.json`.
+
+| Event (Encounter's name) | Sound | Notes |
+| :--- | :--- | :--- |
+| `damage` (kind light, heavy or guard) with the attacker's `blow` cue (text light, medium, heavy; bolt, blast; the retired `flurry` counts as light) | `impact.light`, `impact.medium`, `impact.heavy`; a guarded hit is `impact.guard` (higher for a light blow, lower for a heavy) | Strength is the blow cue matched by attacker and contact tick (8-tick window, each cue used once); without one it falls back to the damage amount (26 and 60). When Simulation puts the strength on the damage event, set `strength.kind_is_strength` to true |
+| a run of lights, and a `stagger` cue with text `flurry` | **flurry mode**: from the third light in a second the light is 2 dB quieter and climbs a third of a semitone a blow (to 3); the closing blow is 3 dB louder | Voice caps by class: light 4, medium 3, heavy 3, guard 3 |
+| `launcher_open` (actor may launch, target staggered, n the tick the stagger ends) | `ui.launcher`: one pitched dry ping, no random spread, at the staggered fighter, priority 95, one voice, on its own `Alert` bus | Ducks Sfx 3 dB for 150 ms and Music 4 dB for 250 ms; a stagger under 12 ticks (a shove's 8) makes none |
+| `launcher_close` | fades the ping out (40 ms) when the launch was thrown (text `thrown`, `taken` or `launched`, or k 1); lets it ring out if the window lapsed | Encounter to confirm which the close carries |
+| `windup` start (n the landing tick) and end (k 1 thrown, 2 stopped by a blow, 3 lost, 4 a miss) | `windup.medium` (12 ticks) or `windup.heavy` (28 ticks) by length, stretched by pitch so it peaks as the blow lands; k 2 and 3 fade it out | A 3-tick contact (a light) has no gather. The heavy's charge continues from here (next row) |
+| `miss` (gave_ground, reach, dodge) | `impact.whiff` | by text: lower and quieter for giving ground, higher for a reach |
+| `double_hit` (8 ticks ahead, n the landing tick), then the two damage events | `double.charge` now, one `impact.double` at the landing for the pair | The second hit of the pair is not sounded again |
+| `charge_full` (text b; actor the charger) with the `windup` start and end | **B's charge**: from the 32nd *live* tick of a held wind-up (a hit-stop's frozen ticks do not count) the `charge.hum` (a low drone with a tremolo that speeds up, 0.65 s, covers the longest hold of 38 ticks); at the event a fixed `charge.tick.heavy`: a lower click with a ring, exact to the tick, on the `Alert` bus, priority 92, no pitch or variant spread | The hum is cut (40 ms) by the `windup` end, however it ended (thrown, stopped, lost). The Y's `charge_full` is ignored here (text y) |
+| a light or medium on a heavy that is winding or charging (armour) | the hit as usual, plus a dull `impact.absorbed` under it | A light is always absorbed. A medium is absorbed only after 20 live ticks (inside the first 20 it ends the charge, so no armour tick); a heavy and a guarded hit are never absorbed. Armour is read from the `windup` start (a wind-up over 20 ticks is a heavy's), so it needs no new event |
+| `energy_reach` (blast: amount 12 ticks) and `energy_land` (text bolt or blast; source hit, guard, armour, miss) | blast: `energy.gather` then `energy.blast`; bolt: one crack, `energy.bolt` | A guard is quieter and lower, armour in between, a miss is the air. A mashed bolt: from the sixth in a second 3 dB down and no zap (`energy.bolt.lite`), at most 2 voices |
+
+**To hear it:** `audio/preview/brawl-demo.wav` (10.3 s): a staged X flurry closing on a stagger, the launcher's ping over a loop of the 180 BPM metal reference clip (with the ducks), the B wind-up and the launch, a medium, a guarded light, a whiff, ten bolts, a blast and a double hit, and B's held charge (hum, a light absorbed, the full tick, thrown). Made by `audio/tools/render_brawl_demo.gd` from the real mapper. It is a staged sequence mixed in a script, not a game recording.
+
+**Audibility estimate** for the ping against the metal reference clip (800 to 2800 Hz, music normalised to -16 LUFS on a -8 dB bus): the ping sits 5.8 dB above the music, and 9.8 dB with the duck. It is the synthetic reference, so redo it when Suno's files arrive; only the duck depth and the ping level would move.
+
+**Not built:** the Y's full-charge tick (waits for C2b with `charge_release` and `just`), and the low-pass on the music during the duck (needs the music wired). The density retune stays held until the flurries are in.
+
+## 1. The cues (the plan)
 
 | Cue | What the player must hear | From which event (proposed) | Today's stand-in |
 | :--- | :--- | :--- | :--- |

@@ -24,6 +24,10 @@
       "name": "VoiceMuffled",
       "volume_db": -2.0,
       "lowpass_hz": 1400
+    },
+    {
+      "name": "Alert",
+      "volume_db": 0.0
     }
   ],
   "master_limiter": {

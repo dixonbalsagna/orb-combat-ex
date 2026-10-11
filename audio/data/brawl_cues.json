@@ -1,0 +1,280 @@
+{
+  "schema": 1,
+  "note": "How the brawl's cues become sound (audio/audio_brawl.gd; plan in docs/audio/brawl-cues.md). Strength comes from the blow cue (text light, medium, heavy; bolt and blast for energy in reach; the old text flurry counts as light), matched to the damage event by the attacker and the contact tick; if no blow cue is found it falls back to the damage amount. Everything tunable is here.",
+  "strength": {
+    "from_blow": {
+      "light": "light",
+      "medium": "medium",
+      "heavy": "heavy",
+      "flurry": "light",
+      "skill": "light",
+      "bolt": "light",
+      "blast": "heavy",
+      "release": ""
+    },
+    "blow_window_ticks": 8,
+    "fallback_amounts": {
+      "medium_from": 26.0,
+      "heavy_from": 60.0
+    },
+    "kind_is_strength": false
+  },
+  "hit": {
+    "light": {
+      "sound": "impact.light",
+      "cls": "hit.light",
+      "cap": 4,
+      "priority": 40,
+      "gain_db": 0.0,
+      "caption": "[hit]"
+    },
+    "medium": {
+      "sound": "impact.medium",
+      "cls": "hit.medium",
+      "cap": 3,
+      "priority": 50,
+      "gain_db": 0.0,
+      "caption": "[hit]"
+    },
+    "heavy": {
+      "sound": "impact.heavy",
+      "cls": "hit.heavy",
+      "cap": 3,
+      "priority": 60,
+      "gain_db": 0.0,
+      "caption": "[heavy hit]"
+    },
+    "guard": {
+      "sound": "impact.guard",
+      "cls": "hit.guard",
+      "cap": 3,
+      "priority": 45,
+      "gain_db": -2.0,
+      "caption": "[blocked]",
+      "pitch": {
+        "light": 1.25,
+        "medium": 1.0,
+        "heavy": 0.8
+      }
+    },
+    "size_ref": 40.0,
+    "pitch_exp": -0.12,
+    "pitch_min": 0.85,
+    "pitch_max": 1.15,
+    "gain_exp": 0.35,
+    "gain_db_min": -3.0,
+    "gain_db_max": 2.0
+  },
+  "flurry": {
+    "window_ticks": 60,
+    "after": 3,
+    "step_db": -2.0,
+    "climb_st_per_blow": 0.33,
+    "climb_max_st": 3.0,
+    "close_db": 3.0
+  },
+  "launcher": {
+    "sound": "ui.launcher",
+    "gain_db": -2.0,
+    "priority": 95,
+    "cls": "launcher",
+    "cap": 1,
+    "caption": "[ready]",
+    "min_ticks": 12,
+    "duck": [
+      {
+        "bus": "Sfx",
+        "db": -3.0,
+        "ms": 150
+      },
+      {
+        "bus": "Music",
+        "db": -4.0,
+        "ms": 250
+      }
+    ],
+    "close": {
+      "stop_texts": [
+        "thrown",
+        "taken",
+        "launched"
+      ],
+      "stop_k": [
+        1
+      ],
+      "stop_ms": 40
+    },
+    "note": "One sound for every fighter, with no random spread in pitch or level: it is learned by ear, and both players hear it (EP ruling). It plays on its own bus (Alert), because it ducks Sfx and Music and must not duck itself.",
+    "bus": "Alert"
+  },
+  "windup": {
+    "min_ticks": 6,
+    "classes": [
+      {
+        "max_ticks": 20,
+        "sound": "windup.medium",
+        "nominal_ticks": 12
+      },
+      {
+        "max_ticks": 999,
+        "sound": "windup.heavy",
+        "nominal_ticks": 28
+      }
+    ],
+    "gain_db": -6.0,
+    "priority": 45,
+    "cls": "windup",
+    "cap": 2,
+    "pitch_min": 0.75,
+    "pitch_max": 1.35,
+    "end": {
+      "stop_k": [
+        2,
+        3
+      ],
+      "stop_ms": 60
+    },
+    "note": "The gather is sized to the real wind-up: pitch = nominal ticks over the cue's ticks, so it peaks as the blow lands. A wind-up stopped by a blow (k 2) or lost (k 3) is faded out; thrown (k 1) and a miss (k 4) let it finish."
+  },
+  "miss": {
+    "sound": "impact.whiff",
+    "priority": 35,
+    "cls": "miss",
+    "cap": 2,
+    "caption": "[miss]",
+    "gave_ground": {
+      "gain_db": -8.0,
+      "pitch": 0.9
+    },
+    "reach": {
+      "gain_db": -6.0,
+      "pitch": 1.1
+    },
+    "dodge": {
+      "gain_db": -7.0,
+      "pitch": 1.0
+    }
+  },
+  "double": {
+    "charge": {
+      "sound": "double.charge",
+      "gain_db": -3.0,
+      "nominal_ticks": 8,
+      "priority": 70,
+      "cls": "double",
+      "cap": 1
+    },
+    "hit": {
+      "sound": "impact.double",
+      "gain_db": 0.0,
+      "priority": 70,
+      "cls": "hit.heavy",
+      "cap": 3,
+      "caption": "[double hit]",
+      "landing_ticks": 2
+    }
+  },
+  "energy": {
+    "gather": {
+      "sound": "energy.gather",
+      "nominal_ticks": 12,
+      "gain_db": -6.0,
+      "priority": 50,
+      "cls": "windup",
+      "cap": 2,
+      "pitch_min": 0.75,
+      "pitch_max": 1.35
+    },
+    "bolt": {
+      "sound": "energy.bolt",
+      "lite": "energy.bolt.lite",
+      "priority": 55,
+      "cls": "energy.bolt",
+      "cap": 2,
+      "caption": "[bolt]",
+      "window_ticks": 60,
+      "after": 5,
+      "step_db": -3.0,
+      "land": {
+        "hit": {
+          "gain_db": 0.0,
+          "pitch": 1.0
+        },
+        "guard": {
+          "gain_db": -5.0,
+          "pitch": 0.85
+        },
+        "armour": {
+          "gain_db": -3.0,
+          "pitch": 0.9
+        },
+        "miss": {
+          "gain_db": -6.0,
+          "pitch": 1.2,
+          "sound": "impact.whiff"
+        }
+      }
+    },
+    "blast": {
+      "sound": "energy.blast",
+      "priority": 65,
+      "cls": "hit.heavy",
+      "cap": 3,
+      "caption": "[blast]",
+      "land": {
+        "hit": {
+          "gain_db": 0.0,
+          "pitch": 1.0
+        },
+        "guard": {
+          "gain_db": -6.0,
+          "pitch": 0.9
+        },
+        "armour": {
+          "gain_db": -3.0,
+          "pitch": 0.95
+        },
+        "miss": {
+          "gain_db": -8.0,
+          "pitch": 0.8
+        }
+      }
+    },
+    "note": "Energy in reach (docs/vfx/reach.md): a bolt has no gather (2 ticks) and one crack at the landing; a blast gathers for 12 ticks and lands with a whump. A mashed bolt (up to 10 a second) steps down 3 dB and loses its zap from the fifth in a second, so it never strobes in sound as the flash must not in light."
+  },
+  "charge": {
+    "heavy_over_ticks": 20,
+    "hum": {
+      "sound": "charge.hum",
+      "from_live": 32,
+      "gain_db": -8.0,
+      "priority": 48,
+      "cls": "charge",
+      "cap": 2,
+      "stop_ms": 40
+    },
+    "full": {
+      "sound": "charge.tick.heavy",
+      "gain_db": -2.0,
+      "priority": 92,
+      "bus": "Alert",
+      "cls": "chargetick",
+      "cap": 2,
+      "texts": [
+        "",
+        "b"
+      ],
+      "caption": "[charged]"
+    },
+    "armour": {
+      "sound": "impact.absorbed",
+      "gain_db": -4.0,
+      "priority": 30,
+      "cls": "absorbed",
+      "cap": 2,
+      "medium_after_live": 20,
+      "medium_pitch": 0.85
+    },
+    "note": "A held B keeps charging from 32 live ticks (the hum, with a rising tremolo, until the release) and is full at 44 (`charge_full`: the tick, exact to the event, one fixed sound so a release can be timed by ear). Live ticks are counted from the `tick` events that are not frozen, so a hit-stop does not move the hum. While a heavy winds up or charges it is armoured: a light never ends it and a medium only in its first 20 live ticks; a hit that does not end it gets the dull absorbed tick under it."
+  }
+}

@@ -23,3 +23,4 @@ build/
 # Raw music hand-backs from Orb (large; chosen takes are encoded and committed separately)
 audio/music/incoming/*.wav
 audio/music/incoming/*.mp3
+__pycache__/
