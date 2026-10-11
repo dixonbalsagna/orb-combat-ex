@@ -879,3 +879,9 @@ Answering docs/research/co-op-brawler.md, in Orb's words:
 > keep work going, I want to see the reworked arenas when they are ready
 
 Standing from this: co-op is wanted, as free roaming for both players with any enemy engageable and a second player joining an engaged fight without a break (so more than "lead and wing" if the director can carry it); graded henchmen from procedural body parts; several planet runs, a boss per planet; planet destruction achievable in versus and unlocked by situation in story; no friendly fire, with a possible illusion or mind-control exception; online versus comes before online co-op; the phone control scheme is still an open worry. Still research and paper rules; nothing is scoped into a build yet.
+
+Asked what "the reworked arenas" are, Orb said (2026-10-11):
+
+> the band that the fighters travel, extra Z-axis space for engaging and believable building layouts and dectruction
+
+Standing from this: Orb wants to see World's fight lanes, buildings in depth and district layouts with destruction reading in depth, as soon as there is something to look at.
