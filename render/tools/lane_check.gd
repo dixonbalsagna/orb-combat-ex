@@ -4,10 +4,12 @@ extends SceneTree
 ## - with the option off nothing is remapped: a fighter's aura colour is the sim's, to the bit;
 ## - with a preset on, everything Rendering draws in a fighter's aura colour is UI's lane colour for him: the view's
 ##   aura colour, and RenderLook.col() of the sim's aura string (his beams, after-images and the old HUD ask that).
+##   The views are the same ones: the body takes the palette with the new accent (AnimBody.set_palette), nothing is
+##   rebuilt;
 ##   Where UI's lane colour is not the one in Art's file the check says so in a note: Rendering follows UI's, so the
 ##   world and the HUD agree;
 ## - the fighters' body colours are not remapped (Art: they stay apart under every preset);
-## - off again, it is the sim's colour again, and nothing is rebuilt for a change that is none.
+## - off again, it is the sim's colour again, on the same views, and the body wears its own palette again.
 ## The safe-area insets (UiHud.insets):
 ## - CSS's insets scale from the page's pixels to the viewport's; nothing odd in, nothing out;
 ## - a phone's safe rectangle against its window gives the four insets;
@@ -55,22 +57,26 @@ func _run() -> void:
 		var lanes: Array = main.ui_hud.lane_colors()
 		var ok: bool = not (lanes[0] as Color).is_equal_approx(raw[0]) or not (lanes[1] as Color).is_equal_approx(raw[1])
 		for i in range(2):
-			ok = ok and (main.fighter_views[i]._aura_col as Color).is_equal_approx(lanes[i]) and RenderLook.col(str(S.fighters[i].aura)).is_equal_approx(lanes[i])
+			var v: FighterView = main.fighter_views[i]
+			ok = ok and (v._aura_col as Color).is_equal_approx(lanes[i]) and RenderLook.col(str(S.fighters[i].aura)).is_equal_approx(lanes[i])
 			ok = ok and RenderLook.col(str(S.fighters[i].col)) == Color.html(str(S.fighters[i].col))
+			# The body wears the palette with the lane colour as its accent, and the charge orb's glow is in it.
+			ok = ok and (v.orb_outer.material_override.get_shader_parameter("albedo") as Color).is_equal_approx(Color(lanes[i], 0.9))
+			if v.anim_body != null:
+				ok = ok and (v._pal["accent"] as Color).is_equal_approx(lanes[i]) and v.anim_body.mi.mesh == AnimRig.mesh_for(v._pal)
 			if not (lanes[i] as Color).is_equal_approx(want[i]):
 				print("note  %s: UI's lane colour for %s is #%s, and Art's preset says #%s (Rendering follows UI's, so the world and the HUD agree)" % [mode, str(S.fighters[i].id), (lanes[i] as Color).to_html(false), (want[i] as Color).to_html(false)])
-		_expect(ok and main.fighter_views[0] != v0, "%s: each fighter's aura colour is UI's lane colour for him under the preset, the views were built again in them, and the body colours are left alone" % mode)
-		v0 = main.fighter_views[0]
+		_expect(ok and main.fighter_views[0] == v0, "%s: each fighter's aura colour is UI's lane colour for him under the preset, on the same views (the body wears the palette with that accent, nothing rebuilt), and the body colours are left alone" % mode)
 	var panes_ok: bool = true
 	for p in main.all_panes():
 		for i in range(mini(2, p.fighter_views.size())):
 			panes_ok = panes_ok and (p.fighter_views[i]._aura_col as Color).is_equal_approx(RenderLook.col(str(S.fighters[i].aura)))
-	_expect(panes_ok and main.fighter_views[0].flash_view.pulses_fn.is_valid(), "every pane's views have the preset's colour, and the rebuilt views keep their hooks (a head flash still asks the register)")
+	_expect(panes_ok and main.fighter_views[0].flash_view.pulses_fn.is_valid(), "every pane's views have the preset's colour, and the views keep their hooks (a head flash still asks the register)")
 	main.ui_hud.set_option("colour_vision", "off")
 	for k in range(3):
 		main.frame(1.0 / 60.0)
 	var v_off: FighterView = main.fighter_views[0]
-	_expect(RenderLook._lanes.is_empty() and v_off._aura_col == raw[0] and main.fighter_views[1]._aura_col == raw[1], "off again: the sim's colours, to the bit")
+	_expect(RenderLook._lanes.is_empty() and v_off == v0 and v_off._aura_col == raw[0] and main.fighter_views[1]._aura_col == raw[1] and (v_off.anim_body == null or ((v_off._pal["accent"] as Color) == raw[0] and v_off.anim_body.mi.mesh == AnimRig.mesh_for(v_off._pal))), "off again: the sim's colours, to the bit, on the same views, and the body wears its own palette again")
 	main.start_match(7, {"p1": true, "p2": true}, {"intro": "skip"})
 	var v_new: FighterView = main.fighter_views[0]
 	for k in range(3):

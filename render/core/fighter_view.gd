@@ -78,6 +78,7 @@ var _faded: bool = false
 var _flash: bool = false
 var _stance: int = -1
 var _aura_col := Color.WHITE
+var _pal: Dictionary = {}      # the body's palette as built (AnimRig.mesh_for); its accent is the lane colour (set_lane)
 var _turn: float = 1.0         # visual facing, -1 to 1: follows f.face through 0 (facing the camera)
 var _pose: float = 30.0        # the pose angle in degrees, eased toward the current pose's
 var _last_t: float = -1.0
@@ -193,6 +194,20 @@ func build(f) -> void:
 		_build_anim(f)
 
 
+## A new lane colour on the same view (UI's colour-vision preset, which RenderLook.set_lanes has taken): everything of
+## his drawn in his aura colour follows it, and the body takes the palette with the new accent (AnimBody.set_palette:
+## the cached mesh of that palette, the skin and the bones as they are). Nothing is rebuilt, so a pose, a flash in
+## flight and the view's hooks carry on.
+func set_lane(c: Color) -> void:
+	if c == _aura_col:
+		return
+	_aura_col = c
+	RenderMats.set_glow(orb_outer.material_override, c, 0.9)   # the others take the colour as they are drawn
+	if anim_body != null:
+		_pal["accent"] = c
+		anim_body.set_palette(_pal)
+
+
 ## The animation slice A1 mannequin (render/anim/, docs/animation/pose-pipeline.md): one skinned figure replaces the box
 ## parts (which stay, hidden, so the arm and head anchors below keep working). The pose comes from RenderAnim, solved once
 ## a frame for every pane. `--noanim` keeps the placeholder.
@@ -203,6 +218,7 @@ func _build_anim(f) -> void:
 		"skin": RenderLook.col(RenderLook.SKIN), "gear": RenderLook.col(RenderLook.CAPE if f.role == "villain" else "#cdd6e4"),
 		"accent": _aura_col, "hair": RenderLook.col(f.hair),
 	}
+	_pal = pal
 	anim_body = AnimBody.new()
 	anim_body.build(pal, true)
 	body.add_child(anim_body)

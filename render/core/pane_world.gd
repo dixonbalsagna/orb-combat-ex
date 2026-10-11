@@ -82,8 +82,8 @@ func build(S: SimState) -> void:
 	vfx_layer.build(S)
 
 
-## The fighters' views, built from the sim's fighters: for a new match, and again when their lane colours change (a
-## colour-blind preset: a view's colours are made when it is built).
+## The fighters' views, built from the sim's fighters for a new match. (A lane colour that changes later, a
+## colour-blind preset, is taken by the same views: FighterView.set_lane.)
 func build_fighters(S: SimState) -> void:
 	for v in fighter_views:
 		fighters_root.remove_child(v)

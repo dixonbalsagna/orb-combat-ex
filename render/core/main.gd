@@ -717,8 +717,8 @@ func _sky_args() -> void:
 
 ## UI's lane colours changed (at a match's first frame, and when the colour-blind preset changes). Camera's panel
 ## strip takes them for its borders. With a preset on they differ from the sim's aura colours: RenderLook then gives
-## the preset's colour wherever a fighter's aura colour is asked for, and the fighters' views are built again in it.
-## With the preset off nothing is remapped and nothing is rebuilt.
+## the preset's colour wherever a fighter's aura colour is asked for, and each fighter's views take it in place
+## (FighterView.set_lane: the body through Animation's AnimBody.set_palette). Nothing is rebuilt.
 func _on_lane_colors(a: Color, b: Color) -> void:
 	if split_view != null:
 		split_view.set_panel_colors(a, b)
@@ -726,11 +726,8 @@ func _on_lane_colors(a: Color, b: Color) -> void:
 	if S.fighters.size() < 2 or not RenderLook.set_lanes([S.fighters[0].aura, S.fighters[1].aura], [a, b]):
 		return
 	for p in all_panes():
-		p.build_fighters(S)
-		for v in p.fighter_views:
-			v.flashes_on = flashes_on
-	for i in range(fighter_views.size()):
-		_setup_flash(fighter_views[i], i)
+		for i in range(mini(p.fighter_views.size(), S.fighters.size())):
+			p.fighter_views[i].set_lane(RenderLook.col(S.fighters[i].aura))
 
 
 ## The safe area's insets for UI's layout (UiHud.insets: left, top, right, bottom, in the viewport's pixels): what a

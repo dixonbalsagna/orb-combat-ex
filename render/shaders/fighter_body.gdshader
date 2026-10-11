@@ -20,6 +20,9 @@ render_mode unshaded, cull_back;
 
 uniform vec4 albedo : source_color = vec4(1.0);
 uniform float shade : hint_range(0.0, 1.0) = 0.35;
+// The world's light on the body (AnimBody.set_tint, set each frame from the sky): one multiply colour, plain values like the palette's, white (no change) unless set. The mesh's vertex alpha is its mask: 1 on the
+// body, 0 on the lane colour's parts (the forearms and sashes), which are never tinted. The outline (fighter_hull) is another pass and takes none; a hit flash is drawn with the tint white.
+uniform vec4 tint = vec4(1.0);
 uniform float hit_mix = 0.0;          // a hit that was granted its flash: the body's own colours this far toward white (RenderLook.HIT_TINT), a light tint and not pure white
 uniform vec4 damage = vec4(0.0);      // per region (head, core, arms, legs): 0 fresh, 1 bruised, 2 battered, 3 broken, eased
 uniform int bone_region[32];          // each bone's region: 0 head, 1 core, 2 arms, 3 legs
@@ -105,5 +108,5 @@ void fragment() {
 			}
 		}
 	}
-	ALBEDO = mix(flat_shade(albedo.rgb * c, n, shade), vec3(1.0), hit_mix);
+	ALBEDO = mix(flat_shade(albedo.rgb * c * mix(vec3(1.0), tint.rgb, COLOR.a), n, shade), vec3(1.0), hit_mix);
 }
