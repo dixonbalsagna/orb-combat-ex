@@ -174,3 +174,15 @@ Orb's pick. Stages 1 to 3, plus stage 4 and 5 prep. A screen, not a clearance.
 **Stage 4 (meaning and language), partly done.** "Orb" and "EX" are common loanwords in Japanese and English, and no negative meaning is known. Not run: a native check in other languages. "EX" reads as the fighting-game "extended" convention and implies a base title. Localization can confirm.
 
 **Stage 5 (counsel) brief, for the final title.** Ask counsel to: (a) run a formal search in the US, EU, UK and Japan for the title in classes 9, 28 and 41, (b) assess the OrbCombat clash, (c) advise on the "-Combat" nod to Madness Combat, (d) advise on filing and on the pseudonym, and (e) read the licence files and README before the repo goes public.
+
+## Title decision (Orb, 2026-10-08) and status 2026-10-11
+
+**Orb's ruling (`docs/ep/vision.md`):** the OrbCombat author has no public email and no way to contact them; the title stays **Orb Combat EX**.
+
+**Re-checked 2026-10-11** (GitHub and Steam APIs): `Cascachu/OrbCombat` is unchanged (last pushed 2026-06-16, public, no stars, GDScript, GPL-3.0, issues enabled, no discussions); the user profile has no email or website. Steam search for "orb combat" still returns only "Orbital Combat". The formal registers (USPTO exact phrase, EUIPO, UK, Japan) have **still not been run**.
+
+**Status: decided by the owner; conditional.** Legal's note stands that the clash is unresolved. Nothing here requires Orb to change the title.
+1. **Record of the attempt.** Orb tried to find a contact and found none. That is the record. GitHub Issues are enabled on that repository; one short, polite note there is a normal channel and not spam, if Orb ever wants to use it. It is Orb's call and not a condition. A draft: "Hello, I am making a free fighting game called Orb Combat EX. I noticed your project OrbCombat has a similar name. They are different games and I do not want to cause confusion. If you object, please tell me here."
+2. **Before any store page, itch.io page or the first promotion:** run the formal search (US, EU, UK, Japan; classes 9, 28 and 41; exact phrase and near matches), re-check GitHub, Steam, Google Play and the App Store on the day, and record the result here. A lawyer's one-sitting review can do it (go-to-market.md).
+3. **The visible heading** may keep "(working title)" until then. See the report of 2026-10-11 (RL-124).
+4. Keep the rest of the earlier conditions: no orb-shaped artefacts for the Protagonist, distance from the web series, "Orb" as a pseudonym against the copyright-holder line.

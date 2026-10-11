@@ -308,6 +308,11 @@
       "id": "m11",
       "rule": "a slip or a step that goes behind the rival is drawn travel of at least 4 ticks with the rival in view (m04)",
       "why": "the appear-behind-you beat"
+    },
+    {
+      "id": "m12",
+      "rule": "body ghosts (whole-figure copies from any source: zip, press styles, tech echoes, Animation's after-images) are budgeted per fighter at any instant: at most 5 round one fighter from all sources together, so at most 10 on screen with two fighters; limb ghosts stay under f01 (2 of one limb, 4 in all per fighter). Every ghost keeps m05: a flat lane tint, 0.35 opacity or less, on the fighter's own recent path, overlapping along it as a smear, never placed round the target or in a ring, gone within 8 ticks, the body on top. The 5 is a bright line for the build's gate, not a legal cliff, and may be revised on evidence (stills and the per-tick breakdown) from VFX and Rendering",
+      "why": "m05 and m09 made explicit per fighter and across sources"
     }
   ],
   "energy": [
