@@ -862,3 +862,20 @@ Standing from this: the title is Orb Combat EX. Legal's note stands that the cla
 > I want research into a co-op brawler mode. Look into how the systems could be adapted to make the versus mode, as we have it today, part of a bigger game with 2 player co-operative fights against AI opponents
 
 Standing from this: the hold of 2026-10-06 is lifted. The co-op mode is a research question only (Research & Prototyping writes docs/research/co-op-brawler.md); nothing is built or scoped until Orb has read it.
+
+## Co-op: Orb's answers to the study's eight questions (2026-10-11)
+
+Answering docs/research/co-op-brawler.md, in Orb's words:
+
+> 1) solo or co-op, CPU partner optional
+> 2) multi-fighter combat sounds really cool, if the director system is capable of dynamically integrating choreographed multi-fighter fights we're going to go for that; I see two players able to fly around the planet as they are able to in the system we already have, then choose to engage any enemy they see. if player2 is already engaged, the fight should seamlessly continue if player1 starts attacking the same opponent.
+> 3) there's got to be weaker grade opponents, ideally various grades of henchmen created with procedural body parts to create lots of variety
+> 4) Multiple planet runs, each planet has a boss
+> 5) Planet destruction should be rebalanced in such a way that in versus mode it is achievable, in story mode it becomes unlocked in certain situations.
+> 6) No friendly fire on partners, leaving possibility open of an illusion technique or mind-control that can be an exception
+> 7) online versus
+> 8) I'm still concerned about the feasibility of the phone control scheme
+
+> keep work going, I want to see the reworked arenas when they are ready
+
+Standing from this: co-op is wanted, as free roaming for both players with any enemy engageable and a second player joining an engaged fight without a break (so more than "lead and wing" if the director can carry it); graded henchmen from procedural body parts; several planet runs, a boss per planet; planet destruction achievable in versus and unlocked by situation in story; no friendly fire, with a possible illusion or mind-control exception; online versus comes before online co-op; the phone control scheme is still an open worry. Still research and paper rules; nothing is scoped into a build yet.
