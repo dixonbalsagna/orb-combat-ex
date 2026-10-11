@@ -84,12 +84,37 @@ static func genWorld(S: SimState) -> void:
 	var spans: Array = _platforms(S)
 	# Front streets first (the original layout, draw for draw), then the extra rows of each settlement.
 	var totals: Array = []
-	for st in SETTLEMENTS:
-		totals.append(_row(S, r, spans[totals.size()][0], spans[totals.size()][1], st.kind, 1, 1.0, 1.0, 0.0))
-	for k in range(SETTLEMENTS.size()):
-		var st = SETTLEMENTS[k]
-		for rw in st.rows:
-			_row(S, r, spans[k][0], spans[k][1], rw[1], rw[0], rw[2], rw[3], rw[4] * WS)
+	var newPop: float = -1.0
+	if bool(WorldSettle.data().get("enabled", false)):
+		newPop = 0.0
+		var dOff: int = 0
+		var si: int = -1
+		var dlist: Array = []
+		for sd in WorldSettle.data().settlements:
+			si += 1
+			var g: Dictionary = WorldSettle.generate(S, sd)
+			for dd in g.districts:
+				dd["settlement"] = si
+				dlist.append(dd)
+			for e in g.buildings:
+				var nb := SimState.Building.new()
+				nb.x = e.x; nb.w = e.w; nb.d = e.d; nb.h = e.h; nb.kind = e.kind; nb.row = float(e.row); nb.z = e.z; nb.seed = e.seed
+				nb.district = dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
+				nb.floors = e.floors
+				nb.fmask = (1 << nb.floors) - 1
+				nb.maxhp = e.maxhp; nb.hp = e.maxhp; nb.alive = true
+				nb.pop = float(e.pop); nb.popAlive = nb.pop
+				newPop += nb.pop
+				S.buildings.append(nb)
+			dOff += g.districts.size()
+		S.lanes = WorldLanes.build(S, dlist)
+	else:
+		for st in SETTLEMENTS:
+			totals.append(_row(S, r, spans[totals.size()][0], spans[totals.size()][1], st.kind, 1, 1.0, 1.0, 0.0))
+		for k in range(SETTLEMENTS.size()):
+			var st = SETTLEMENTS[k]
+			for rw in st.rows:
+				_row(S, r, spans[k][0], spans[k][1], rw[1], rw[0], rw[2], rw[3], rw[4] * WS)
 	# Conserve each settlement's population: rescale all its rows to the front street's total.
 	var pop: float = 0.0
 	var byS: Array = []
@@ -100,6 +125,8 @@ static func genWorld(S: SimState) -> void:
 		var k: int = _settlementOf(b.x)
 		byS[k].append(b)
 	for k in range(SETTLEMENTS.size()):
+		if newPop >= 0.0:
+			break
 		var raw: float = 0.0
 		for b in byS[k]:
 			raw += b.pop
@@ -108,6 +135,8 @@ static func genWorld(S: SimState) -> void:
 			b.pop = SimMathx.jmax(1.0, SimMathx.jround(b.pop * scale))
 			b.popAlive = b.pop
 			pop += b.pop
+	if newPop >= 0.0:
+		pop = newPop
 	var x2: float = 4530.0 * PS
 	while x2 < 5470.0 * PS:
 		var tr := SimState.TreeState.new()

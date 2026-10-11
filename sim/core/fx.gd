@@ -635,9 +635,9 @@ static func evacuate(S: SimState, b: int, x: float, n: float, cx: float, reason:
 
 ## A building fell (any source). mode "implode" is area damage (straight down into its footprint, staggered by delay),
 ## "burst" a launch through it; rubble is the heap left; n folds in further implodes of the same blast past the event cap.
-static func buildingFall(S: SimState, b: int, x: float, z: float, w: float, h: float, mode: String, delay: float, cx: float, rubble: float, n: float) -> void:
+static func buildingFall(S: SimState, b: int, x: float, z: float, w: float, h: float, mode: String, delay: float, cx: float, rubble: float, n: float, landmark: bool = false) -> void:
 	var e := _ev(S, "building_fall")
-	e.b = float(b); e.x = x; e.y = z; e.w = w; e.depth = h; e.mode = mode; e.delay = delay; e.cx = cx; e.rubble = rubble; e.n = n
+	e.b = float(b); e.x = x; e.y = z; e.w = w; e.depth = h; e.mode = mode; e.delay = delay; e.cx = cx; e.rubble = rubble; e.n = n; e.landmark = landmark
 
 
 ## The collateral window once a second: the room left, the budget, the ceiling left, and whether the window is over.

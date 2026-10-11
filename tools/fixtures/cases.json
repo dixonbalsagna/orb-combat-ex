@@ -238866,6 +238866,2020 @@
         "rule": "xref:brawl-cue-order",
         "pointer": "/strength/fallback_amounts/medium_from"
       }
+    },
+    {
+      "id": "settle-lanes-enabled-required",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "settle-lanes-enabled-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "settle-lanes-enabled-false-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/enabled": false
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-foreground-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/foreground": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/foreground"
+      }
+    },
+    {
+      "id": "settle-lanes-foreground-absent-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "del": [
+            "/foreground"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-foreground-true-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/foreground": true
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-pop-refs-required",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "del": [
+            "/pop_refs"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs": 0.09
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pop_refs"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-unknown-key",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs/far_share": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/pop_refs/far_share"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-near-required",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "del": [
+            "/pop_refs/near_share"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pop_refs"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-building-required",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "del": [
+            "/pop_refs/building_share"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pop_refs"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-near-zero",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs/near_share": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/pop_refs/near_share"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-near-above-one",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs/near_share": 1.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pop_refs/near_share"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-near-one-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs/near_share": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-pop-refs-near-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs/near_share": "some"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pop_refs/near_share"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-building-zero",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs/building_share": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/pop_refs/building_share"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-building-above-one",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs/building_share": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pop_refs/building_share"
+      }
+    },
+    {
+      "id": "settle-lanes-pop-refs-building-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/pop_refs/building_share": [
+              0.02
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pop_refs/building_share"
+      }
+    },
+    {
+      "id": "settle-lanes-looks-required",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "del": [
+            "/looks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "settle-lanes-looks-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/looks": "harbour"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/looks"
+      }
+    },
+    {
+      "id": "settle-lanes-looks-empty",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/looks": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/looks"
+      }
+    },
+    {
+      "id": "settle-lanes-looks-duplicate",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/looks": [
+              "harbour",
+              "harbour"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/looks/1"
+      }
+    },
+    {
+      "id": "settle-lanes-looks-unknown-look",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/looks/0": "slums"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/looks/0"
+      }
+    },
+    {
+      "id": "settle-lanes-looks-empty-string",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/looks/0": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/looks/0"
+      }
+    },
+    {
+      "id": "settle-lanes-looks-one-leaves-the-others",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/looks": [
+              "harbour"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:settle-look",
+        "pointer": "/settlements/0/districts/1/look"
+      }
+    },
+    {
+      "id": "settle-lanes-district-look-not-in-looks",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/looks": [
+              "harbour",
+              "village_harbour",
+              "suburb",
+              "industrial",
+              "mid_rise",
+              "downtown",
+              "village_workshop"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:settle-look",
+        "pointer": "/settlements/3/districts/0/look"
+      }
+    },
+    {
+      "id": "settle-lanes-looks-reordered-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/looks": [
+              "downtown",
+              "mid_rise",
+              "industrial",
+              "suburb",
+              "village_hill",
+              "village_workshop",
+              "village_harbour",
+              "harbour"
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-depth-fill-required",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "del": [
+            "/settlements/0/districts/0/depth_fill"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/settlements/0/districts/0"
+      }
+    },
+    {
+      "id": "settle-lanes-depth-fill-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/settlements/0/districts/0/depth_fill"
+      }
+    },
+    {
+      "id": "settle-lanes-depth-fill-too-short",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill": [
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/settlements/0/districts/0/depth_fill"
+      }
+    },
+    {
+      "id": "settle-lanes-depth-fill-too-long",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill": [
+              0.4,
+              0.6,
+              0.8
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/settlements/0/districts/0/depth_fill"
+      }
+    },
+    {
+      "id": "settle-lanes-depth-fill-item-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill/0": "half"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/settlements/0/districts/0/depth_fill/0"
+      }
+    },
+    {
+      "id": "settle-lanes-depth-fill-below-min",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill": [
+              0.05,
+              0.6
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/settlements/0/districts/0/depth_fill/0"
+      }
+    },
+    {
+      "id": "settle-lanes-depth-fill-above-one",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill": [
+              0.5,
+              1.2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/settlements/0/districts/0/depth_fill/1"
+      }
+    },
+    {
+      "id": "settle-lanes-depth-fill-descending",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill": [
+              0.8,
+              0.4
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:settle-range",
+        "pointer": "/settlements/0/districts/0/depth_fill"
+      }
+    },
+    {
+      "id": "settle-lanes-depth-fill-equal-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill": [
+              0.6,
+              0.6
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-depth-fill-edges-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_fill": [
+              0.1,
+              1
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-depth-aspect-gone",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/depth_aspect": [
+              1,
+              1.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/settlements/0/districts/0/depth_aspect"
+      }
+    },
+    {
+      "id": "settle-lanes-traffic-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/traffic": "busy"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/settlements/0/districts/0/traffic"
+      }
+    },
+    {
+      "id": "settle-lanes-traffic-negative",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/traffic": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/settlements/0/districts/0/traffic"
+      }
+    },
+    {
+      "id": "settle-lanes-traffic-above-one",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/traffic": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/settlements/0/districts/0/traffic"
+      }
+    },
+    {
+      "id": "settle-lanes-traffic-edges-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/traffic": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-traffic-one-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/traffic": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-lanes-row-without-a-lane",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/lanes/5"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:settle-lane-row",
+        "pointer": "/settlements/1/districts/0/rows",
+        "file": "data/biomes/settlements.json"
+      }
+    },
+    {
+      "id": "settle-lanes-row-without-a-lane-foreground",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/lanes/0"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:settle-lane-row",
+        "pointer": "/settlements/0/districts/0/rows",
+        "file": "data/biomes/settlements.json"
+      }
+    },
+    {
+      "id": "biomes-stages-core-cap-required",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "del": [
+            "/coreCapShare"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "biomes-stages-core-cap-type",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/coreCapShare": "half"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/coreCapShare"
+      }
+    },
+    {
+      "id": "biomes-stages-core-cap-below-limit",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/coreCapShare": 0.04
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/coreCapShare"
+      }
+    },
+    {
+      "id": "biomes-stages-core-cap-zero",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/coreCapShare": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/coreCapShare"
+      }
+    },
+    {
+      "id": "biomes-stages-core-cap-above-one",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/coreCapShare": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/coreCapShare"
+      }
+    },
+    {
+      "id": "biomes-stages-core-cap-limit-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/coreCapShare": 0.05
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-core-cap-off-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/coreCapShare": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-stages-core-cap-first-value-ok",
+      "schema": "biomes-stages.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/stages.json",
+          "set": {
+            "/coreCapShare": 0.5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-valid",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/z_front": 5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-key-required-schema",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "lanes-key-required-z-front",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/z_front"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "lanes-key-required-z-back",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/z_back"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "lanes-key-required-d-min-bh",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/d_min_bh"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "lanes-key-required-lanes",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/lanes"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "lanes-key-required-strips",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/strips"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "lanes-unknown-key",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "lanes-underscore-key-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-about-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/_about": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/_about"
+      }
+    },
+    {
+      "id": "lanes-schema-version",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/schema": "biomes.lanes/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "lanes-z-front-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/z_front": "near"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/z_front"
+      }
+    },
+    {
+      "id": "lanes-z-back-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/z_back": "far"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/z_back"
+      }
+    },
+    {
+      "id": "lanes-d-min-zero",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/d_min_bh": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/d_min_bh"
+      }
+    },
+    {
+      "id": "lanes-d-min-negative",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/d_min_bh": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/d_min_bh"
+      }
+    },
+    {
+      "id": "lanes-d-min-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/d_min_bh": "small"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/d_min_bh"
+      }
+    },
+    {
+      "id": "lanes-lanes-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lanes"
+      }
+    },
+    {
+      "id": "lanes-lanes-too-few",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes": [
+              {
+                "name": "only",
+                "kind": "street",
+                "top": 5,
+                "bottom": -4,
+                "row": -1
+              }
+            ],
+            "/strips": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/lanes"
+      }
+    },
+    {
+      "id": "lanes-lane-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1": "street"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lanes/1"
+      }
+    },
+    {
+      "id": "lanes-lane-unknown-key",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/width": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/lanes/1/width"
+      }
+    },
+    {
+      "id": "lanes-lane-underscore-key-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/_note": "the front street"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-lane-name-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/lanes/1/name"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes/1"
+      }
+    },
+    {
+      "id": "lanes-lane-kind-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/lanes/1/kind"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes/1"
+      }
+    },
+    {
+      "id": "lanes-lane-top-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/lanes/1/top"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes/1"
+      }
+    },
+    {
+      "id": "lanes-lane-bottom-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/lanes/1/bottom"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes/1"
+      }
+    },
+    {
+      "id": "lanes-lane-row-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/lanes/1/row"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes/1"
+      }
+    },
+    {
+      "id": "lanes-lane-name-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/name": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lanes/1/name"
+      }
+    },
+    {
+      "id": "lanes-lane-name-shape",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/name": "Front Street"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/lanes/1/name"
+      }
+    },
+    {
+      "id": "lanes-lane-name-empty",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/name": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/lanes/1/name"
+      }
+    },
+    {
+      "id": "lanes-lane-kind-unknown",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/kind": "plaza"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/lanes/1/kind"
+      }
+    },
+    {
+      "id": "lanes-lane-top-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/top": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lanes/1/top"
+      }
+    },
+    {
+      "id": "lanes-lane-bottom-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/bottom": "low"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lanes/1/bottom"
+      }
+    },
+    {
+      "id": "lanes-lane-row-below",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/row": -2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lanes/1/row"
+      }
+    },
+    {
+      "id": "lanes-lane-row-above",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/row": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lanes/2/row"
+      }
+    },
+    {
+      "id": "lanes-lane-row-integer",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/row": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lanes/2/row"
+      }
+    },
+    {
+      "id": "lanes-lane-kind-ridge-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/5/kind": "ridge"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-strips-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/strips"
+      }
+    },
+    {
+      "id": "lanes-strips-empty-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips": []
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-strip-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0": "sidewalk"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/strips/0"
+      }
+    },
+    {
+      "id": "lanes-strip-unknown-key",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/width": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/strips/0/width"
+      }
+    },
+    {
+      "id": "lanes-strip-lane-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/strips/0/lane"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strips/0"
+      }
+    },
+    {
+      "id": "lanes-strip-kind-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/strips/0/kind"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strips/0"
+      }
+    },
+    {
+      "id": "lanes-strip-top-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/strips/0/top"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strips/0"
+      }
+    },
+    {
+      "id": "lanes-strip-bottom-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/strips/0/bottom"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/strips/0"
+      }
+    },
+    {
+      "id": "lanes-strip-lane-shape",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/lane": "Front Street"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/strips/0/lane"
+      }
+    },
+    {
+      "id": "lanes-strip-kind-unknown",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/kind": "gutter"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/strips/0/kind"
+      }
+    },
+    {
+      "id": "lanes-strip-top-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/top": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/strips/0/top"
+      }
+    },
+    {
+      "id": "lanes-strip-bottom-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/bottom": "low"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/strips/0/bottom"
+      }
+    },
+    {
+      "id": "lanes-z-front-below-back",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/z_front": -30
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-order",
+        "pointer": "/z_front"
+      }
+    },
+    {
+      "id": "lanes-z-front-equals-back",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/z_front": -27
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-order",
+        "pointer": "/z_front"
+      }
+    },
+    {
+      "id": "lanes-lane-top-below-bottom",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/top": -12,
+            "/lanes/2/bottom": -4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-order",
+        "pointer": "/lanes/2/top"
+      }
+    },
+    {
+      "id": "lanes-lane-top-equals-bottom",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/top": -8,
+            "/lanes/2/bottom": -8
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-order",
+        "pointer": "/lanes/2/top"
+      }
+    },
+    {
+      "id": "lanes-lane-name-duplicate",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/name": "front_street"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-name",
+        "pointer": "/lanes/2/name"
+      }
+    },
+    {
+      "id": "lanes-lanes-overlap",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/top": -2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-overlap",
+        "pointer": "/lanes/2/top"
+      }
+    },
+    {
+      "id": "lanes-lanes-touching-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/top": -4
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-lanes-gap-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/0/bottom": 8
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-lanes-out-of-order",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/0/top": 3,
+            "/lanes/0/bottom": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-overlap",
+        "pointer": "/lanes/1/top"
+      }
+    },
+    {
+      "id": "lanes-street-row",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/row": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-row",
+        "pointer": "/lanes/1/row"
+      }
+    },
+    {
+      "id": "lanes-block-row",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/row": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-row",
+        "pointer": "/lanes/2/row"
+      }
+    },
+    {
+      "id": "lanes-block-street-row",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/row": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-row",
+        "pointer": "/lanes/2/row"
+      }
+    },
+    {
+      "id": "lanes-scenery-row",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/0/row": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-row",
+        "pointer": "/lanes/0/row"
+      }
+    },
+    {
+      "id": "lanes-row-duplicate",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/4/row": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-row",
+        "pointer": "/lanes/4/row"
+      }
+    },
+    {
+      "id": "lanes-block-rows-swapped-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/2/row": 2,
+            "/lanes/4/row": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-band-street-outside",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/1/top": 6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-band",
+        "pointer": "/lanes/1"
+      }
+    },
+    {
+      "id": "lanes-band-block-outside",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/4/bottom": -28
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:lanes-band",
+        "pointer": "/lanes/4"
+      }
+    },
+    {
+      "id": "lanes-band-scenery-outside-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/lanes/5/bottom": -60
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "lanes-strip-lane-unknown",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/lane": "nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:strip-lane",
+        "pointer": "/strips/0/lane"
+      }
+    },
+    {
+      "id": "lanes-strip-lane-not-street",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/lane": "block_1"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:strip-lane",
+        "pointer": "/strips/0/lane"
+      }
+    },
+    {
+      "id": "lanes-strip-order",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/top": 4,
+            "/strips/0/bottom": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:strip-order",
+        "pointer": "/strips/0/top"
+      }
+    },
+    {
+      "id": "lanes-strip-outside-lane",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/0/top": 6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:strip-inside",
+        "pointer": "/strips/0/top"
+      }
+    },
+    {
+      "id": "lanes-strip-below-lane",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/4/bottom": -5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:strip-inside",
+        "pointer": "/strips/4/top"
+      }
+    },
+    {
+      "id": "lanes-strip-overlap",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/1/top": 4.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:strip-overlap",
+        "pointer": "/strips/1/top"
+      }
+    },
+    {
+      "id": "lanes-strip-touching-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/strips/1/top": 4
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

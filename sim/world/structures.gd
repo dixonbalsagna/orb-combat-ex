@@ -7,7 +7,18 @@ class_name WorldStructures
 const WS: float = SimConst.WS
 ## popNear reads 1 at this many living civilians within the radius: the original 70, times WS / PS because the population
 ## per building is scaled by that (terrain.gd _row) while the radius callers pass grows with WS.
-const POP_NEAR_REF: float = 70.0 * SimConst.WS / SimConst.PS
+const POP_NEAR_REF: float = 70.0 * SimConst.WS / SimConst.PS   # the old absolute reference (35 people at the original 390): kept for the parity oracle; the sim reads popNearRef(S)
+
+
+## The reads of "populated" are shares of the planet's people, not counts (Game Design, balance-targets section 24): within a radius, 9% of the
+## starting population is "populated" (1.0); a building's own cap for the planner's care is 2% of it. At 390 people that is 35 and 8, as before.
+## data/biomes/settlements.json pop_refs {near_share, building_share}.
+static func popNearRef(S: SimState) -> float:
+	return float(WorldSettle.data().get("pop_refs", {}).get("near_share", 0.09)) * S.world.pop0
+
+
+static func buildingPopRef(S: SimState) -> float:
+	return float(WorldSettle.data().get("pop_refs", {}).get("building_share", 0.02)) * S.world.pop0
 ## The nearest-building search skips buildings closer than this (the original 60, times WS: a building is WS times wider).
 const NEAR_MIN: float = 60.0 * SimConst.WS
 ## Depth rows (a building's row field): 0 foreground, 1 the front street, 2 mid, 3 back. Until the director-chosen brunt
@@ -42,6 +53,7 @@ const STAGES_SCHEMA: String = "biomes.stages/1"
 static var _hpAt: Array = [0.9, 0.65, 0.35]
 static var _cutStage: int = 2
 static var _leave: float = 0.0
+static var _coreCap: float = 1.0
 static var _stLoaded: bool = false
 static var _stErrors: Array = []
 static var _stHash: String = ""
@@ -81,6 +93,7 @@ static func _stLoad() -> void:
 	_hpAt = [float(hp[0]), float(hp[1]), float(hp[2])]
 	_cutStage = clampi(int(j.get("cutFloorsStage", 2)), 1, 3)
 	_leave = clampf(float(j.get("leaveFrac", 0.0)), 0.0, 0.9)
+	_coreCap = clampf(float(j.get("coreCapShare", 1.0)), 0.05, 1.0)
 
 
 ## The stage of a building, 0 to 4: 0 intact, 1 windows out, 2 a part gone, 3 a shell, 4 rubble (not alive). A pure function of its hit points and its
@@ -100,7 +113,20 @@ static func stage(b) -> int:
 				s = 3
 	if b.floors >= WorldBrunt.FLOORS_MIN and b.fmask != (1 << b.floors) - 1:
 		s = maxi(s, _cutStage)
+	elif b.floors >= WorldBrunt.FLOORS_MIN and b.fdmg.size() > 0:   # a damaged floor counts like a cut one (Game Design, section 24): the tower empties sooner, as intended
+		for v in b.fdmg:
+			if v > 0.0:
+				s = maxi(s, _cutStage)
+				break
 	return s
+
+
+## The most of a building's hit points one floors hit may take from its core (stages.json coreCapShare; 1 is off): a tower of a few floors does not
+## fall whole to the first cut.
+static func coreCap() -> float:
+	if not _stLoaded:
+		_stLoad()
+	return _coreCap
 
 
 ## The share of its hit points a blast must leave a standing building (stages.json leaveFrac; 0 off).
@@ -288,7 +314,7 @@ static func damageBuilding(S: SimState, b, d: float, cause, mode: String = "burs
 				S.world.fallFold = 0.0
 		if mode != "implode" or S.world.fallN < float(IMPLODE_EVENT_CAP):
 			S.world.fallN += 1.0
-			SimFx.buildingFall(S, b.idx, b.x, b.z, b.w, b.h, mode, delay, cx, heap, 1.0)
+			SimFx.buildingFall(S, b.idx, b.x, b.z, b.w, b.h, mode, delay, cx, heap, 1.0, b.landmark > 0)
 		else:
 			S.world.fallFold += 1.0
 	else:
@@ -435,14 +461,14 @@ static func explode(S: SimState, x: float, y: float, r: float, cause, sf: float 
 	return levelled
 
 
-## Living civilians in standing buildings centred within r of x, scaled so POP_NEAR_REF or more reads 1.
+## Living civilians in standing buildings centred within r of x, scaled so popNearRef(S) or more reads 1.
 static func popNear(S: SimState, x: float, r: float) -> float:
 	var s: float = 0.0
 	for bi in near(S, x, r):
 		var b = S.buildings[bi]
 		if b.alive and absf(SimWrap.sdx(x, b.x)) < r:
 			s += b.popAlive
-	return SimMathx.jclamp(s / POP_NEAR_REF, 0.0, 1.0)
+	return SimMathx.jclamp(s / popNearRef(S), 0.0, 1.0)
 
 
 ## Nearest standing building on the front street on one side (sign), more than NEAR_MIN and less than maxD away, whose

@@ -80,7 +80,7 @@ static func roam(S: SimState, f) -> float:
 	var cur: int = BIOMES.find(WorldBiomes.biomeAt(f.x))
 	var hist: PackedFloat32Array = S.popHist
 	if hero:
-		var crowded: bool = _window(hist, i0) > LURE_START
+		var crowded: bool = _window(hist, i0, WorldStructures.popNearRef(S)) > LURE_START
 		if not bool(_d.oceanSurface) and (WorldTerrain.seaAt(S, f.x) or BIOMES[cur] == "ocean"):
 			crowded = true   # without sea destinations, the old rule: the hero never stays over the sea
 		var over: bool = total >= MIN_RECORD and bt.size() == BIOMES.size() and bt[cur] / total - _planet[cur] > float(_d.excessStart)
@@ -107,6 +107,7 @@ static func roam(S: SimState, f) -> float:
 ## biomes (clear of towns when it is leaving a crowd, and another biome when it is only moving on); the villain takes the
 ## nearest bucket with people in each direction.
 static func _search(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: int, bt: PackedFloat64Array, total: float, dest: Array, hero: bool, crowded: bool) -> float:
+	var ref: float = WorldStructures.popNearRef(S)
 	var popW: float = float(_d.popW) * f.care
 	var varW: float = float(_d.varietyW)
 	var keepW: float = float(_d.keepW)
@@ -123,16 +124,16 @@ static func _search(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: int,
 			elif idx >= BUCKETS:
 				idx -= BUCKETS
 			var bi: int = _bucketBiome[idx]
-			var win: float = _window(hist, idx)
+			var win: float = _window(hist, idx, ref)
 			var ok: bool = dest.has(BIOMES[bi])
 			if ok and hero:
-				var own: float = minf(hist[idx] / WorldStructures.POP_NEAR_REF, 1.0)
+				var own: float = minf(hist[idx] / ref, 1.0)
 				ok = own <= EMPTY and (win <= EMPTY or not crowded) and (crowded or bi != cur)
 				if ok and BIOMES[bi] != "ocean":
 					var x: float = idx * STEP + STEP / 2.0
 					ok = not S.base[int(x / SimConst.COL)] < WorldWater.RESERVOIR_BASE   # land, not a crater lake
 			elif ok:
-				ok = minf(hist[idx] / WorldStructures.POP_NEAR_REF, 1.0) > EMPTY
+				ok = minf(hist[idx] / ref, 1.0) > EMPTY
 			if ok:
 				var ex: float = (bt[bi] / total - _planet[bi]) if shares else 0.0   # signed: an under-visited biome draws
 				var cost: float = n * STEP + popW * popCost + varW * ex - (keepW if SimMathx.jsign(f.vx) == float(s) else 0.0)
@@ -145,9 +146,9 @@ static func _search(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: int,
 	return best
 
 
-## Population within +-WINDOW buckets of bucket i, as popNear reads it (POP_NEAR_REF or more is 1).
-static func _window(hist: PackedFloat32Array, i: int) -> float:
+## Population within +-WINDOW buckets of bucket i, as popNear reads it (ref, the near reference, or more is 1).
+static func _window(hist: PackedFloat32Array, i: int, ref: float) -> float:
 	var sum: float = 0.0
 	for k in range(i - WINDOW, i + WINDOW + 1):
 		sum += hist[k + BUCKETS if k < 0 else (k - BUCKETS if k >= BUCKETS else k)]
-	return minf(sum / WorldStructures.POP_NEAR_REF, 1.0)
+	return minf(sum / ref, 1.0)

@@ -1,0 +1,34 @@
+	# the lanes window's rulings: a damaged floor is stage 2, the core cap, the population references as shares, row 0 off
+	var S10 := fresh()
+	var t10 = null
+	for b in S10.buildings:
+		if b.kind == "tower" and b.alive and b.floors >= 8:
+			t10 = b
+			break
+	ok(WorldStructures.stage(t10) == 0, "a whole tower is stage 0 before its floor is damaged")
+	t10.fdmg = PackedFloat32Array()
+	t10.fdmg.resize(t10.floors)
+	t10.fdmg.fill(0.0)
+	t10.fdmg[3] = 40.0
+	ok(WorldStructures.stage(t10) == 2, "a tower with a damaged floor (no cut floor) is stage 2 (%d)" % WorldStructures.stage(t10))
+	var S11 := fresh()
+	S11.fighters[0].tier = 3.0
+	var t11 = null
+	for b in S11.buildings:
+		if b.kind == "tower" and b.alive and b.floors >= 5 and b.floors <= 9:
+			t11 = b
+			break
+	if t11 != null:
+		var y11: float = WorldStructures.baseY(S11, t11) + t11.h * 0.4
+		var oc11: Dictionary = WorldBrunt.outcomeDmg(S11, t11, y11, 3000.0)
+		WorldBrunt.applyFloors(S11, t11, oc11, S11.fighters[0], 0.0, t11.x, S11.fighters[1], y11)
+		ok(t11.hp >= t11.maxhp * (1.0 - WorldStructures.coreCap()) - 0.01, "one floors hit leaves a tower of %d floors at %.0f%% of its hit points at least (cap %.2f of the core)" % [t11.floors, 100.0 * t11.hp / t11.maxhp, WorldStructures.coreCap()])
+	ok(WorldStructures.coreCap() > 0.0 and WorldStructures.coreCap() <= 1.0, "the core cap is read (%.2f)" % WorldStructures.coreCap())
+	var S12 := fresh()
+	ok(absf(WorldStructures.popNearRef(S12) - 0.09 * S12.world.pop0) < 0.001 and absf(WorldStructures.buildingPopRef(S12) - 0.02 * S12.world.pop0) < 0.001, "the population references are 9%% and 2%% of the starting population (%.1f and %.1f of %.0f)" % [WorldStructures.popNearRef(S12), WorldStructures.buildingPopRef(S12), S12.world.pop0])
+	if WorldSettle.enabled() and not bool(WorldSettle.data().get("foreground", true)):
+		var r0: int = 0
+		for b in S12.buildings:
+			if int(b.row) == 0:
+				r0 += 1
+		ok(r0 == 0, "the foreground row is empty while settlements.json foreground is false (%d buildings in row 0)" % r0)

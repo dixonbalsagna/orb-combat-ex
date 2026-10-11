@@ -15,6 +15,22 @@ const CEILING_FRAC: float = 0.85            # no building is taller than this sh
 const PLACES: Array = ["centre", "start", "end"]
 const SHARE_EPS: float = 0.001
 
+const LANES_PATH: String = "res://data/biomes/lanes.json"
+static var _lanes: Array = []
+static var _dmin: float = 1.5
+
+## The lane (top, bottom in bh, kind) that holds building row `row`.
+static func laneOfRow(row: int) -> Dictionary:
+	if _lanes.is_empty():
+		var f := FileAccess.open(LANES_PATH, FileAccess.READ)
+		var j = JSON.parse_string(f.get_as_text())
+		_lanes = j.lanes
+		_dmin = float(j.d_min_bh)
+	for l in _lanes:
+		if int(l.row) == row:
+			return l
+	return {}
+
 static var _data: Dictionary = {}
 static var _errors: Array = []
 static var _loaded: bool = false
@@ -25,6 +41,20 @@ static func data() -> Dictionary:
 	if not _loaded:
 		_load()
 	return _data
+
+
+static func enabled() -> bool:
+	return bool(data().get("enabled", false))
+
+
+## A hash of the parsed settlement and lane data (the "_" notes left out), for the replay header's data hash.
+static func dataHash() -> String:
+	var h := SimHash.Hasher.new()
+	h.text("biomes.settlements")
+	FighterData._canon(h, data())
+	h.text("biomes.lanes")
+	FighterData._canon(h, WorldLanes.data())
+	return h.hex()
 
 
 static func errors() -> Array:
@@ -154,7 +184,7 @@ static func _validate(d: Dictionary) -> void:
 				_err(dn + "/kinds: weights sum to zero")
 			_hdist(dd.get("height_bh", null), dn + "/height_bh")
 			_range2(dd.get("width_bh", null), dn + "/width_bh", 0.5, 40.0)
-			_range2(dd.get("depth_aspect", null), dn + "/depth_aspect", 0.2, 3.0)
+			_range2(dd.get("depth_fill", null), dn + "/depth_fill", 0.1, 1.0)
 			_range2(dd.get("gap_bh", null), dn + "/gap_bh", 0.0, 40.0)
 			_range2(dd.get("block_bh", null), dn + "/block_bh", 4.0, 200.0)
 			_range2(dd.get("avenue_bh", null), dn + "/avenue_bh", 1.0, 40.0)
@@ -239,9 +269,11 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
 			var aw: float = ra.range_(dd.avenue_bh[0], dd.avenue_bh[1]) * BH
 			avenues.append([ax, ax + aw])
 			ax += aw
-		dinfo.append({"name": dd.name, "look": dd.look, "a": da, "b": db, "avenues": avenues})
+		dinfo.append({"name": dd.name, "look": dd.look, "a": da, "b": db, "avenues": avenues, "rows": dd.rows, "traffic": float(dd.get("traffic", 0.0))})
 		var first: int = out.size()
 		for row in dd.rows:
+			if int(row) == 0 and not bool(data().get("foreground", true)):
+				continue   # the foreground row stands between the camera and the fight: empty until Camera frames it (each row has its own stream, so no other building moves)
 			var r := SimRng.new(SimRng.deriveSeed(LAYOUT_SEED, "settle:%s:%s:row%d" % [s.id, dd.name, int(row)]))
 			var x: float = da + r.range_(0.0, 6.0) * BH
 			while x < db:
@@ -256,7 +288,7 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
 				var wr: Array = kd.width_bh if kd.has("width_bh") else dd.width_bh
 				var hd: Dictionary = kd.height_bh if kd.has("height_bh") else dd.height_bh
 				var w: float = (wr[0] + uw * (wr[1] - wr[0])) * BH
-				var aspect: float = dd.depth_aspect[0] + ua * (dd.depth_aspect[1] - dd.depth_aspect[0])
+				var fillf: float = dd.depth_fill[0] + ua * (dd.depth_fill[1] - dd.depth_fill[0])
 				var gap: float = (dd.gap_bh[0] + ug * (dd.gap_bh[1] - dd.gap_bh[0])) * BH
 				var blocked: bool = false
 				for av in avenues:
@@ -280,8 +312,13 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
 					rejected += 1
 					continue
 				var h: float = h_bh * BH
-				out.append({"x": cx, "w": w, "d": w * aspect, "h": h, "kind": kd.kind, "shape": kd.shape, "row": int(row),
-					"z": WorldTerrain.ROW_Z_BH[int(row)] * BH + ((seed_ - 0.5) * 2.0 * WorldTerrain.ROW_JITTER_BH * BH if int(row) > 0 else 0.0),
+				# L1: the footprint lies inside its lane; the blocks are flush to their street, the scenery rows centred
+				var ln: Dictionary = laneOfRow(int(row))
+				var lw: float = float(ln.top) - float(ln.bottom)
+				var dd_bh: float = clampf(lw * fillf, _dmin, lw)
+				var zc: float = (float(ln.top) - dd_bh * 0.5) if ln.kind == "block" else 0.5 * (float(ln.top) + float(ln.bottom))
+				out.append({"x": cx, "w": w, "d": dd_bh * BH, "h": h, "kind": kd.kind, "shape": kd.shape, "row": int(row),
+					"z": zc * BH,
 					"district": di, "landmark": 0, "seed": seed_, "hp_mult": 1.0, "pop_mult": 1.0, "dens": float(dd.pop_density)})
 		# landmarks: by rule, not by draw
 		for lmr in dd.landmarks:
@@ -296,6 +333,13 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
 					if b.landmark != 0 or b.row != int(lmr.row):
 						continue
 					var dist: float = absf(b.x - target)
+					var lw2: float = float(lm.width_bh) * BH * 0.5
+					var crosses: bool = false
+					for av in avenues:
+						if b.x - lw2 < av[1] and b.x + lw2 > av[0]:
+							crosses = true
+					if crosses:
+						continue
 					if dist < bestd:
 						bestd = dist
 						best = i
@@ -306,10 +350,19 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
 				b2.shape = lm.shape
 				b2.h = float(lm.height_bh) * BH
 				b2.w = float(lm.width_bh) * BH
-				b2.d = b2.w * 0.9
+				var lnl: Dictionary = laneOfRow(int(b2.row))
+				b2.d = minf(b2.w * 0.9, (float(lnl.top) - float(lnl.bottom)) * BH)
+				if lnl.kind == "block":
+					b2.z = (float(lnl.top) * BH) - b2.d * 0.5
 				b2.kind = "tower" if lm.height_bh >= 12.0 else "house"
 				b2.hp_mult = float(lm.hp_mult)
 				b2.pop_mult = float(lm.pop_mult)
+				# the landmark's footprint takes the room it needs: the neighbours it overlaps in its row go
+				for i in range(out.size() - 1, first - 1, -1):
+					if i != best and out[i].row == b2.row and absf(out[i].x - b2.x) < (out[i].w + b2.w) * 0.5:
+						out.remove_at(i)
+						if i < best:
+							best -= 1
 				# a plaza: the foreground row is cleared in front of it
 				for i in range(out.size() - 1, first - 1, -1):
 					var f: Dictionary = out[i]

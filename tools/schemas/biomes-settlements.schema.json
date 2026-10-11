@@ -2,19 +2,56 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/biomes-settlements",
   "title": "settlements (World, sim/world/settlements.gd)",
-  "description": "data/biomes/settlements.json: the settlements, their districts, building kinds and landmarks (World's districts data, loaded by sim/world/settlements.gd). Mirrors the loader's _validate: ranges are ascending and inside their limits, heights stay under 85 percent of the flight ceiling (272 building heights), shares sum to 1 (district shares per settlement, settlement population shares overall) within 0.001, and every shape, landmark key and row a district names exists (checked by tools/lib/xref-fight.js). The shape list is Art's 20 (docs/art/district-looks.md: `tower` is renamed `shaft`) and a district's look is one of Art's 8; a new shape or look is a schema line in the same commit as the data. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "description": "data/biomes/settlements.json: the settlements, their districts, building kinds and landmarks (World's districts data, loaded by sim/world/settlements.gd). Mirrors the loader's _validate: ranges are ascending and inside their limits, heights stay under 85 percent of the flight ceiling (272 building heights), shares sum to 1 (district shares per settlement, settlement population shares overall) within 0.001, and every shape, landmark key and row a district names exists (checked by tools/lib/xref-fight.js). The shape list is Art's 20 (docs/art/district-looks.md: `tower` is renamed `shaft`) and a district's look is one of Art's 8; a new shape or look is a schema line in the same commit as the data. The lanes window (2026-10-11): `enabled`, `foreground`, `pop_refs` and `looks` at the top, and a district's `depth_fill` (the share of a lane's depth a footprint fills) in place of `depth_aspect`; a district's look is one of `looks` and its rows are rows of data/biomes/lanes.json (settle-look, settle-lane-row: tools/lib/xref-lanes.js). Version field: schema. Policy: closed except keys starting with an underscore.",
   "type": "object",
   "required": [
     "schema",
+    "enabled",
+    "pop_refs",
     "pop0",
     "pop_height_exp",
     "shapes",
     "landmarks",
-    "settlements"
+    "settlements",
+    "looks"
   ],
   "properties": {
     "schema": {
       "const": "biomes.settlements/1"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "The re-laid city (lanes, rows in depth) is used when true; false keeps the layout before the lanes window (the generator is not called)."
+    },
+    "foreground": {
+      "type": "boolean",
+      "description": "Default true. false leaves row 0, the foreground row, empty: it stands between the camera and the fight until Camera frames it."
+    },
+    "pop_refs": {
+      "type": "object",
+      "required": [
+        "near_share",
+        "building_share"
+      ],
+      "properties": {
+        "near_share": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "The share of the planet's people within the radius that reads \"populated\" (the planner and the lure), as a share of the starting population."
+        },
+        "building_share": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "A building's own cap for the planner's care term, as a share of the starting population."
+        }
+      },
+      "description": "The population references of the planner and the lure, as shares of the starting population.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     },
     "pop0": {
       "type": "integer",
@@ -169,6 +206,24 @@
           "^_": true
         }
       }
+    },
+    "looks": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "harbour",
+          "village_harbour",
+          "village_workshop",
+          "village_hill",
+          "suburb",
+          "industrial",
+          "mid_rise",
+          "downtown"
+        ]
+      },
+      "description": "The look names in index order: every district's look is one of them (the cross-reference settle-look) and S.lanes carries the index."
     }
   },
   "additionalProperties": false,
@@ -221,7 +276,7 @@
         "kinds",
         "height_bh",
         "width_bh",
-        "depth_aspect",
+        "depth_fill",
         "gap_bh",
         "block_bh",
         "avenue_bh",
@@ -338,15 +393,16 @@
             "maximum": 40
           }
         },
-        "depth_aspect": {
+        "depth_fill": {
           "type": "array",
           "minItems": 2,
           "maxItems": 2,
           "items": {
             "type": "number",
-            "minimum": 0.2,
-            "maximum": 3
-          }
+            "minimum": 0.1,
+            "maximum": 1
+          },
+          "description": "The share of a lane's depth a footprint fills, low and high (ascending: settle-range)."
         },
         "gap_bh": {
           "type": "array",
@@ -389,6 +445,12 @@
         "pop_density": {
           "type": "number",
           "minimum": 0
+        },
+        "traffic": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The lane strips' vehicle density the props will read (unused until P1)."
         },
         "landmarks": {
           "type": "array",

@@ -22,6 +22,7 @@ var scorch := PackedFloat32Array()    # scorch intensity per terrain column, 0 t
 var craters: Array = []               # Crater records, oldest first, capped at WorldCrater.LIST_MAX (fx-events.md)
 var deformZ: Array = []               # T: the depth rows' deform (a PackedFloat32Array each; the plane row's slot is an empty placeholder: S.deform is the plane row), only when depthOn
 var rubbleZ: Array = []               # T: the same for the rubble heaps
+var lanes := PackedFloat32Array()      # L1: the lane table (world/lanes.gd build), derived, not hashed: read by the ground shader and the props
 var low := PackedFloat32Array()       # T: the lowest deform across the rows at each column (derived, not hashed): the ground water runs on when depthOn
 var rubble := PackedFloat32Array()    # rubble heap height per terrain column (world/structures.gd): part of S.deform, kept apart for cover, tint and digging
 var bIdx: Array = []                  # spatial index of the buildings: PackedInt32Array per x bucket (world/structures.gd), never changes in a match
@@ -217,6 +218,9 @@ class Crater:
 
 
 class Building:
+	var district: int = 0      # D1: the district it stands in (index over all settlements), set at generation
+	var shape: String = ""      # D1: the render shape (settlements.json shapes)
+	var landmark: int = 0      # D1: 1-based landmark index (0 none)
 	var floors: int = 1        # floor count (world/brunt.gd floorCount), set at generation
 	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
 	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
@@ -367,6 +371,7 @@ class FxEvent:
 	var mode: String = ""        # building_fall: "implode" or "burst"
 	var delay: float = 0.0       # building_fall: the ripple delay in seconds (cosmetic)
 	var rubble: float = 0.0      # building_fall: the heap height left
+	var landmark: bool = false   # building_fall: the fallen building is a landmark (Game Design's mood reads it: landmarkFall)
 	var room: float = 0.0        # collateral_state
 	var budget: float = 0.0
 	var left: float = 0.0

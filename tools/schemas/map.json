@@ -380,6 +380,10 @@
       "schema": "biomes-settlements.schema.json"
     },
     {
+      "match": "data/biomes/lanes.json",
+      "schema": "biomes-lanes.schema.json"
+    },
+    {
       "match": "data/biomes/contact.json",
       "schema": "biomes-contact.schema.json"
     },

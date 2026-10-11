@@ -44,7 +44,7 @@ const KNOCKBACK: float = 700.0      # push when no launch is chosen
 ## BUILDING SMASH scoring (B2). The occupancy term saturates at BRUNT_POP_REF living people: at today's scale a building holds
 ## one to five, not the thirteen the first draft assumed.
 const BRUNT_BASE: float = 14.0
-const BRUNT_POP_REF: float = 8.0
+const BRUNT_POP_REF: float = 8.0   # the old absolute cap: WorldStructures.buildingPopRef(S) (2% of the starting population) is what is read
 const BRUNT_TALL_W: float = 12.0     # the fighter who feeds on collateral seeks tall buildings
 const BRUNT_FRESH: float = 4.0       # an undamaged building
 const BRUNT_ROW_W: float = 2.0       # ... and deeper rows (more dramatic)
@@ -238,7 +238,7 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
 	var first = S.buildings[chain[0].b]
 	for i in range(chain.size()):
 		var cb = S.buildings[chain[i].b]
-		pers += (-A.care) * CARE_W * clampf(cb.popAlive / BRUNT_POP_REF, 0.0, 1.0)
+		pers += (-A.care) * CARE_W * clampf(cb.popAlive / WorldStructures.buildingPopRef(S), 0.0, 1.0)
 		if A.care < 0.0:
 			pers += (-A.care) * BRUNT_TALL_W * clampf(cb.h / SimConst.WS / 400.0, 0.0, 1.0)
 	drama += first.h / SimConst.WS / 32.0 + (BRUNT_FRESH if first.hp >= first.maxhp else 0.0)

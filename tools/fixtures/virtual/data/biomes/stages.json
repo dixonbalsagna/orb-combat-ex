@@ -7,5 +7,6 @@
     0.35
   ],
   "cutFloorsStage": 2,
-  "leaveFrac": 0.1
+  "leaveFrac": 0.1,
+  "coreCapShare": 0.5
 }

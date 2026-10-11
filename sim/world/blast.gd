@@ -181,7 +181,7 @@ static func _floors(S: SimState, b, oc: Dictionary, by, cx: float, y: float, slo
 		for j in oc.hit:
 			b.fdmg[j] += oc.dmg
 		SimFx.floorHitShot(S, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, slot, ux, uy)
-	b.hp -= WorldBrunt.CORE_SHARE * oc.dmg
+	b.hp -= minf(WorldBrunt.CORE_SHARE * oc.dmg, WorldStructures.coreCap() * b.maxhp)
 	if b.hp <= 0.0:
 		res.collapse = true
 		WorldStructures.collapse(S, b, by, "burst", cx, 0.0)

@@ -2,13 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/biomes-stages",
   "title": "biomes.stages/1",
-  "description": "data/biomes/stages.json: the stages of a building's destruction (docs/world/staged-destruction.md; WorldStructures.stage). hpAt: the health shares (of its full health) at which a building enters its next stage, three numbers falling from the first. cutFloorsStage: the stage from which cut floors show. Version field: schema. Policy: closed except keys starting with an underscore. The order of hpAt (strictly decreasing) is checked by tools/lib/xref-fight.js (stages-order).",
+  "description": "data/biomes/stages.json: the stages of a building's destruction (docs/world/staged-destruction.md; WorldStructures.stage). hpAt: the health shares (of its full health) at which a building enters its next stage, three numbers falling from the first. cutFloorsStage: the stage from which cut floors show. coreCapShare: one floors hit wears a building's core by at most this share of its hit points (1 is off). Version field: schema. Policy: closed except keys starting with an underscore. The order of hpAt (strictly decreasing) is checked by tools/lib/xref-fight.js (stages-order).",
   "type": "object",
   "required": [
     "schema",
     "hpAt",
     "cutFloorsStage",
-    "leaveFrac"
+    "leaveFrac",
+    "coreCapShare"
   ],
   "properties": {
     "schema": {
@@ -36,6 +37,12 @@
       "minimum": 0,
       "maximum": 0.9,
       "description": "One blast (damageArea, not a beam or a brunt) cannot take a standing building below this share of its hit points, so a second blast finishes it. 0 is off."
+    },
+    "coreCapShare": {
+      "type": "number",
+      "minimum": 0.05,
+      "maximum": 1,
+      "description": "One floors hit (a brunt or a shot through a skyscraper) wears a building's core by at most this share of its hit points. 1 is off; the loader clamps to 0.05..1."
     }
   },
   "additionalProperties": false,

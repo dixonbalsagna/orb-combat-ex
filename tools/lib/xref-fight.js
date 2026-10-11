@@ -14,6 +14,7 @@ const MEASURES = new Set(['stance0', 'stance1', 'stance2', 'stance3', 'light', '
 
 function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
   require('./xref-brawl-cues').xrefBrawlCues({ get, err, esc, isObj });
+  require('./xref-lanes').xrefLanes({ get, err, esc, isObj });
   require('./xref-art').xrefArt({ get, err, esc, isObj });
   // ---- reach (data/anim/reach.json) ----
   const reachDoc = get('data/anim/reach.json');
@@ -357,7 +358,7 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
         });
         if (Array.isArray(d.kinds) && d.kinds.length && wsum <= 0) err(F, dat + '/kinds', 'settle-weights', 'kind weights sum to zero');
         hdist(d.height_bh, dat + '/height_bh');
-        for (const k of ['width_bh', 'depth_aspect', 'gap_bh', 'block_bh', 'avenue_bh']) asc(d[k], dat + '/' + k);
+        for (const k of ['width_bh', 'depth_fill', 'gap_bh', 'block_bh', 'avenue_bh']) asc(d[k], dat + '/' + k);
         (Array.isArray(d.landmarks) ? d.landmarks : []).forEach((lm, li) => {
           if (!isObj(lm)) return;
           if (!seenLm.has(lm.key)) err(F, dat + '/landmarks/' + li + '/key', 'settle-landmark', 'unknown landmark key "' + lm.key + '"');

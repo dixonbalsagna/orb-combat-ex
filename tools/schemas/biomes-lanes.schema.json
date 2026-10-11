@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-lanes",
+  "title": "lanes (World, the fight lanes: docs/world/fight-lanes-world.md)",
+  "description": "data/biomes/lanes.json: the fight lanes of the re-laid city, in fighter heights (bh = 75 units), z positive toward the camera. The band is z_front to z_back; the lanes of kind block carry the footprints (rows 1 and 2), the scenery lanes rows 0 and 3, a street has row -1 and holds none; the strips split a street into sidewalk, kerb and carriageway. Ordering and containment are checked by tools/lib/xref-lanes.js (lanes-name, lanes-order, lanes-overlap, lanes-row, lanes-band, strip-lane, strip-order, strip-inside, strip-overlap). Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "z_front",
+    "z_back",
+    "d_min_bh",
+    "lanes",
+    "strips"
+  ],
+  "properties": {
+    "schema": {
+      "const": "biomes.lanes/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "z_front": {
+      "type": "number",
+      "description": "The front of the band (above z_back: lanes-order)."
+    },
+    "z_back": {
+      "type": "number",
+      "description": "The back of the band."
+    },
+    "d_min_bh": {
+      "type": "number",
+      "description": "The least depth, in fighter heights, a footprint may have.",
+      "exclusiveMinimum": 0
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "top",
+          "bottom",
+          "row"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The lane's name (unique: lanes-name)."
+          },
+          "kind": {
+            "enum": [
+              "street",
+              "block",
+              "scenery",
+              "ridge"
+            ],
+            "description": "street (no footprints, row -1), block (rows 1 and 2), scenery or ridge (rows 0 and 3)."
+          },
+          "top": {
+            "type": "number",
+            "description": "The lane's front edge (above bottom: lanes-order)."
+          },
+          "bottom": {
+            "type": "number",
+            "description": "The lane's back edge."
+          },
+          "row": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 3,
+            "description": "-1 for a street, else the row of footprints the lane holds (lanes-row)."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "description": "The lanes, front to back (they may not overlap: lanes-overlap)."
+    },
+    "strips": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "lane",
+          "kind",
+          "top",
+          "bottom"
+        ],
+        "properties": {
+          "lane": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The street lane this strip is in (strip-lane)."
+          },
+          "kind": {
+            "enum": [
+              "sidewalk",
+              "kerb",
+              "carriageway"
+            ]
+          },
+          "top": {
+            "type": "number",
+            "description": "The strip's front edge (above bottom, inside its lane: strip-order, strip-inside)."
+          },
+          "bottom": {
+            "type": "number",
+            "description": "The strip's back edge."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "description": "The strips of the streets (the strips of one lane do not overlap: strip-overlap)."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

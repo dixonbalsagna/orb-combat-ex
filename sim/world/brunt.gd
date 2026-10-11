@@ -271,26 +271,27 @@ static func chainDeaths(chain: Array) -> float:
 # ===================================================================== candidates and aim (the planner's interface)
 
 ## A cheap score used to choose which buildings are worth an aim search: tall, occupied, undamaged.
-static func _cheap(b) -> float:
-	return b.h / (BH * WS) + minf(b.popAlive, 8.0) + (2.0 if b.hp >= b.maxhp else 0.0)
+static func _cheap(b, popCap: float) -> float:
+	return b.h / (BH * WS) + minf(b.popAlive, popCap) + (2.0 if b.hp >= b.maxhp else 0.0)
 
 
 ## The buildings worth trying for a launch of D by A: alive, BR_MIN to BR_MAX away in x on either side, in any row, with
 ## the top above D's height minus 40, the best BR_PRESELECT per side by the cheap score. Ordered by side (-1 then 1) and
 ## score, then index, so the order is fixed.
 static func candidates(S: SimState, D) -> Array:
+	var popCap: float = WorldStructures.buildingPopRef(S)
 	var sides: Array = [[], []]
 	for bi in WorldStructures.near(S, D.x, BR_MAX):
 		var b = S.buildings[bi]
-		if not b.alive:
-			continue
+		if not b.alive or (WorldSettle.enabled() and b.row != 1.0 and b.row != 2.0):
+			continue   # D1: the scenery rows (0 and 3) are not brunt targets
 		var dx: float = SimWrap.sdx(D.x, b.x)
 		var d: float = absf(dx) - b.w * 0.5
 		if d < BR_MIN or d > BR_MAX:
 			continue
 		if D.y > WorldStructures.baseY(S, b) + WorldStructures.curH(b) + 40.0:
 			continue
-		sides[0 if dx < 0.0 else 1].append([_cheap(b), bi])
+		sides[0 if dx < 0.0 else 1].append([_cheap(b, popCap), bi])
 	var out: Array = []
 	for s in sides:
 		s.sort_custom(func(p, q): return p[0] > q[0] or (p[0] == q[0] and p[1] < q[1]))
@@ -536,7 +537,7 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
 			b.fdmg[j] += oc.dmg
 		SimFx.floorHit(S, f, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, by)
 	# local damage wears the core; the building goes when it is spent
-	b.hp -= CORE_SHARE * oc.dmg
+	b.hp -= minf(CORE_SHARE * oc.dmg, WorldStructures.coreCap() * b.maxhp)   # the cap: one floors hit takes at most this share of the core
 	if b.hp <= 0.0:
 		res.collapse = true
 		WorldStructures.collapse(S, b, by, "burst", cx, evt)

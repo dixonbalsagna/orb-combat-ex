@@ -454,7 +454,7 @@ func _init() -> void:
 	for b in Sr.buildings:
 		rows[int(b.row)] += 1
 	print("  buildings by row (foreground, front street, mid, back): %s of %d, people %.0f" % [str(rows), Sr.buildings.size(), Sr.world.pop0])
-	check(rows[1] > 0 and rows[2] > 0 and rows[3] > 0 and rows[0] > 0, "every depth row has buildings")
+	check(rows[1] > 0 and rows[2] > 0 and rows[3] > 0 and (rows[0] > 0 or not bool(WorldSettle.data().get("foreground", true))), "every depth row has buildings (the foreground row may be switched off in settlements.json)")
 	var idx_ok: bool = true
 	var rg3 := SimRng.new(5)
 	for k in range(60):
@@ -464,8 +464,8 @@ func _init() -> void:
 		for b in Sr.buildings:
 			if b.alive and absf(SimWrap.sdx(xq, b.x)) < rq:
 				brute += b.popAlive
-		var viaIdx: float = WorldStructures.popNear(Sr, xq, rq) * WorldStructures.POP_NEAR_REF
-		var cl: float = minf(brute, WorldStructures.POP_NEAR_REF)
+		var viaIdx: float = WorldStructures.popNear(Sr, xq, rq) * WorldStructures.popNearRef(Sr)
+		var cl: float = minf(brute, WorldStructures.popNearRef(Sr))
 		if absf(viaIdx - cl) > 0.01:
 			idx_ok = false
 	check(idx_ok, "popNear through the spatial index equals the brute-force sum")
@@ -839,7 +839,12 @@ func _init() -> void:
 	for k in range(-80, 80):
 		var i2: int = cf_t + k
 		heap_max = maxf(heap_max, Sr_t.deform[i2] - d1_t[i2])
-		heap_step = maxf(heap_step, absf((Sr_t.base[i2 + 1] + Sr_t.deform[i2 + 1]) - (Sr_t.base[i2] + Sr_t.deform[i2])))
+		var at_wall: bool = false
+		for b2 in Sr_t.buildings:
+			if b2.alive and b2 != f1_t and absf(float(i2) * SimConst.COL - b2.x) < b2.w * 0.5 + 2.0 * SimConst.COL:
+				at_wall = true
+		if not at_wall:
+			heap_step = maxf(heap_step, absf((Sr_t.deform[i2 + 1] - d1_t[i2 + 1]) - (Sr_t.deform[i2] - d1_t[i2])))   # the heap's own step: the terrain's relief is not the heap's
 	for b in Sr_t.buildings:
 		if b.alive and b != f1_t:
 			var c0f: int = int(floor((b.x - b.w * 0.5) / SimConst.COL)) - 1

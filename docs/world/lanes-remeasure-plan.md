@@ -110,3 +110,31 @@ Base for every row: L1 with D1 with the two rulings (population references scale
 | Core cap 0.35 | 7% (0.08) | 0.37 (0.52) | 0.63 | 41.1% | 32.7% | 12.0% | 7.07% | 27.1% |
 
 **Reading.** The target (whole collapses falling from 44% toward 8 to 20% of tower hits) is met by the **core cap 0.5**: 33% to 11% on this base (44% on L1 with D1 alone, before the references are scaled); the cut floors that stand at the KO double (0.17 to 0.32); front row 40.7% (inside the 40 to 48 target and the 25 to 50 band; it does not fall, because a tower that survives its cut still goes at the next blast), all rows 32.3, shells 11.8, tier 4 6.97 a minute (floor 6), civilians flat. Cut floors a match are more than one with the references scaled: floor hits (punch, crack, dent) 1.14 a match, punches 0.93, of which 0.63 are cut-floor stage events; the damaged-floor reading adds the cracks. **Cost:** the cap is two lines (`brunt.gd` `applyFloors` and `blast.gd` `_floors`: `b.hp -= minf(CORE_SHARE * oc.dmg, coreCap * b.maxhp)`) and one number; I would put the number in `data/biomes/stages.json` (`coreCapShare`, 0.5; 0 or 1 is off, one more key for Tools) with a loader line. **It can ride in the window** (it moves the goldens, and the window regenerates them anyway) with its own `stagecheck.gd` case (a tower of 5 floors hit by a tier-3 brunt survives its first cut at 50% of its hit points). The tier rule on pancakes is not worth its 6 lines: it changes nothing at the tiers where towers are hit.
+
+## 9. The lanes window applied (2026-10-11, on HEAD 2e0f3b2c)
+
+L1 with D1 and the three rulings are in the tree (`docs/world/scratch-build/lanes-window/` has the scripts), `depthOn` still false, one golden regeneration (the layout changes every match). Two additions to what was planned: `settlements.json` `foreground` false leaves row 0 empty (the foreground row stands between the camera and the fight until Camera frames it; no other building moves, each row has its own stream), and the population references are shares in data (`pop_refs`: 0.09 and 0.02 of the starting population).
+
+**Measured, 100 matches, default arm, seeds 1 to 100, HEAD (the C2 chain's brawl) against the window:**
+
+| | HEAD | Window |
+| :--- | ---: | ---: |
+| Buildings (houses / towers) | 196 (59 / 137) | 169 (81 / 88) |
+| Rows 0 / 1 / 2 / 3 | 11 / 80 / 66 / 39 | 0 / 65 / 65 / 39 |
+| Starting population | 390 | 1,800 |
+| Front row lost at the KO | 20.9% | 20.9% |
+| All rows lost | 15.9% | 16.0% |
+| Civilians lost (share) | 11.8% | 14.8% |
+| People lost a match (40 matches) | 41.6 | 207.9 |
+| Tier 1 / 2 / 3 / 4 casualties a minute (share of the population) | 0.04 / 0.29 / 2.35 / 5.63% | 0.03 / 0.44 / 3.09 / 6.27% |
+| Tier 1 / 2 / 3 / 4 structures a minute (all rows) | 0.01 / 0.31 / 2.44 / 8.88% | 0.03 / 0.41 / 2.62 / 7.88% |
+| Shells at the KO (all rows / front row) | 8.9% / 10.6% | 6.6% / 8.8% |
+| Cut floors still standing at the KO, towers a match | 0.28 | 0.03 |
+| Floor hits a match (punch, crack, dent) | 0.47 | 0.30 |
+| BUILDING SMASH plans a match | 0.32 | 0.42 |
+| Shots ending on a building a match | 1.9 | 2.3 |
+| Share of the fight volume blocked at the plane | 22.5% | 16.3% |
+| Length, mean | 329 s | 337 s |
+| C1 | clean | clean |
+
+**What the table says.** (1) The re-lay keeps the damage in the same place: front row and all rows the same, structures per tier inside their bands, casualties per minute up (0.29 to 0.44 at tier 2, 2.35 to 3.09 at tier 3: shares of 1,800, budgets 4% and 8%), civilians 11.8% to 14.8% of the people (the C2 build's own level was already under QA's 12 to 30% band's foot; the window brings it in). (2) **Front row 20.9% is under the 25 to 50 band on HEAD already** (Encounter's brawl: matches of 329 s with 32 launches a match); the window does not move it. (3) **Cut floors are rare either way**: 0.4 punched floors a match on HEAD, 0.2 punched plus 0.1 cracked with the window: BUILDING SMASH is 0.3 to 0.4 plans a match in the new brawl, so a tower is rarely hit; the lever is the planner's baseline for it (Encounter's data), not the world. (4) People as a count are 5 times larger (41.6 to 207.9 a match); everything that reads people as a share is as before; the HUD and the KO feed print a count of 1,800 at most.
