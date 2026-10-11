@@ -1,3 +1,4 @@
+const fs = require('fs');
 // The scripted masher (docs/design/control-rules.md section 6): a v2 human slot pressing light every 8 ticks against the AI at each level.
 // masher.gd plays the matches in one Godot process per level; this turns the wins into band rows. Point estimates only, with the sample size in the note:
 // at 40 matches the 95% interval is about 30 points wide (the medium row read 60% at 40 matches and 43% at 200), so the default is 100 and a row near a band edge needs more (--masher=N).
@@ -5,7 +6,7 @@ const { spawn } = require('child_process');
 const { godot, guard, ROOT } = require('./godot');
 const MIRROR_N = parseInt(process.env.QA_MIRROR_N || '200', 10);   // matches a mirror plays (the first-slot row is read on 200)
 
-function runLevel(level, n, base, forms = false, gap = 8) {
+function _runLevel(level, n, base, forms = false, gap = 8) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
@@ -23,7 +24,7 @@ function runLevel(level, n, base, forms = false, gap = 8) {
 
 // Levels run side by side (three Godot processes).
 // The lights-only mirror (Game Design, agency pass 13): two mashers who take their forms play each other; at least 95% of the matches must finish before the cap (two beginners on one button must not sit in a stalemate).
-function runMirror(n, base, specA = 'masher:forms=1', specB = null, tag = 'live') {
+function _runMirror(n, base, specA = 'masher:forms=1', specB = null, tag = 'live') {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
@@ -41,7 +42,7 @@ function runMirror(n, base, specA = 'masher:forms=1', specB = null, tag = 'live'
 }
 
 // A pair of scripted players (players.gd specs) against each other: the energy rows of agency pass 16 (a bolt-only player finishes at least 95% against a melee masher and wins 20 to 40% against the medium AI; a blast-heavy script against a rush-heavy one 40 to 60%).
-function runPair(tag, a, b, n, base, extra = []) {
+function _runPair(tag, a, b, n, base, extra = []) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
@@ -57,6 +58,22 @@ function runPair(tag, a, b, n, base, extra = []) {
     });
   });
 }
+
+// Resuming and selecting (QA_MASHER_ONLY, QA_MASHER_SAVE): the stage is many Godot jobs and the runner holds their results in memory, so a stop used to lose all of them.
+// QA_MASHER_SAVE=<file> writes each job's result there as it finishes and, when the file exists, reads the finished ones back and skips them; QA_MASHER_ONLY=<regex> runs only the jobs whose name matches
+// (a level run is level:<level>:<forms|noforms>:<gap>, a mirror mirror:<tag>, a pair its tag). A skipped job leaves no row.
+const ONLY = process.env.QA_MASHER_ONLY ? new RegExp(process.env.QA_MASHER_ONLY) : null;
+const SAVE = process.env.QA_MASHER_SAVE || '';
+let LOADED = {};
+try { if (SAVE && fs.existsSync(SAVE)) LOADED = JSON.parse(fs.readFileSync(SAVE, 'utf8')); } catch (e) { LOADED = {}; }
+function gate(name, spawn) {
+  if (LOADED[name]) return Promise.resolve(LOADED[name]);
+  if (ONLY && !ONLY.test(name)) return Promise.resolve(null);
+  return spawn().then(r => { if (SAVE) { LOADED[name] = r; try { fs.writeFileSync(SAVE, JSON.stringify(LOADED)); } catch (e) { /* the run goes on */ } } return r; });
+}
+const runLevel = (level, n, base, forms = false, gap = 8) => gate(`level:${level}:${forms ? 'forms' : 'noforms'}:${gap}`, () => _runLevel(level, n, base, forms, gap));
+const runMirror = (n, base, specA = 'masher:forms=1', specB = null, tag = 'live') => gate('mirror:' + tag, () => _runMirror(n, base, specA, specB, tag));
+const runPair = (tag, a, b, n, base, extra = []) => gate(tag, () => _runPair(tag, a, b, n, base, extra));
 
 // At most `k` Godot jobs at once (the standing cap is three): the tasks are thunks, run by k workers, results in order.
 async function pool(tasks, k = 3) {
@@ -132,7 +149,7 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   T.push(() => runPair('blur-m10', 'masher:gap=10' + M, ai, n, base));
   T.push(() => runPair('blur-m12', 'masher:gap=12' + M, ai, n, base));
   T.push(() => runPair('blur-m14', 'masher:gap=14' + M, ai, n, base));
-  return pool(T, Math.max(1, jobs));
+  return (await pool(T, Math.max(1, jobs))).filter(Boolean);
 }
 
 const BANDS = { easy: [0.60, 1, 'at least 60%'], medium: [0.35, 0.50, '35 to 50%'], hard: [0, 0.15, 'at most 15%'] };
@@ -236,7 +253,7 @@ function c1Rows(r, results) {
 // Orb's four tests and the three strengths (docs/qa/three-strength-qa-plan.md H; brawl-plan.md section 10.3 has the names). Every row is PENDING while the build has none of the cue it reads.
 function c2Rows(r, results) {
   const b = r.brawl || {}, rows = [], dec = r.aWins + r.bWins, pct = v => (100 * v).toFixed(1) + '%', blows = b.blows || {};
-  const has3 = (b.windupN || 0) > 0 || (blows.medium || 0) > 0 || (blows.heavy || 0) > 0;
+  const has3 = (b.windupN || 0) > 0;   // the three strengths exist when the build sends a windup cue; on C1 a Y press is today's heavy and a B press the beam, which only looks like heavy blows
   const pend = (id, ref, what, band, why) => ({ id, ref, what, status: 'PENDING', value: why, band, note: `${r.n} matches` });
   const per = b.doublePer || [], mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
   if (r.pair === 'double-lights' || r.pair === 'double-mix') {
@@ -265,9 +282,9 @@ function c2Rows(r, results) {
   if (/^route-/.test(r.pair)) {
     const lv = r.pair.slice(6), lc = b.launcher || {}, by = lc.routeBy || [], on = lc.routeOn || [], fl = (lc.firstLaunchSec || []).filter(x => x >= 0);
     const band = { easy: [0.70, 0.90], medium: [0.50, 0.75], hard: [0.30, 0.55] }[lv];
-    if (!(lc.open > 0)) { rows.push(pend('route.' + lv, '§13 second pass', `The launcher's route (X every 8 ticks, a B tap when the stagger opens) launches in ${band[0] * 100} to ${band[1] * 100}% of the brawls it is tried in against ${lv}`, `${band[0] * 100} to ${band[1] * 100}%`, 'the build has no launcher_open cue (C2t)')); return rows; }
+    if (!(lc.open > 0)) { rows.push(pend('route.' + lv, '§13 second pass', `The launcher's route (X every 8 ticks, a B tap when the stagger opens) launches in ${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}% of the brawls it is tried in against ${lv}`, `${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}%`, 'the build has no launcher_open cue (C2t)')); return rows; }
     const tried = b.brawls || 0, launches = by.reduce((x, y) => x + y, 0), share = tried ? launches / tried : 0;
-    rows.push({ id: 'route.' + lv, ref: '§13 second pass', what: `The launcher's route launches in ${band[0] * 100} to ${band[1] * 100}% of the brawls it is tried in against the ${lv} AI (launches by the route's player over brawls)`, status: share >= band[0] && share <= band[1] ? 'PASS' : 'FAIL', value: `${pct(share)} (${launches} launches in ${tried} brawls); route player wins ${dec ? pct(r.aWins / dec) : '-'}`, band: `${band[0] * 100} to ${band[1] * 100}%`, note: `${r.n} matches; an approximation: launches, not brawls with a launch` });
+    rows.push({ id: 'route.' + lv, ref: '§13 second pass', what: `The launcher's route launches in ${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}% of the brawls it is tried in against the ${lv} AI (launches by the route's player over brawls)`, status: share >= band[0] && share <= band[1] ? 'PASS' : 'FAIL', value: `${pct(share)} (${launches} launches in ${tried} brawls); route player wins ${dec ? pct(r.aWins / dec) : '-'}`, band: `${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}%`, note: `${r.n} matches; an approximation: launches, not brawls with a launch` });
     rows.push({ id: 'route.every.' + lv, ref: '§13 second pass', what: `From a stagger of 12 ticks or more a tapped B lands and launches, every time (hard test), against the ${lv} AI`, status: lc.lapsed === 0 && lc.used > 0 && launches >= 0.98 * lc.used ? 'PASS' : 'FAIL', value: `${lc.used} launchers used and ${lc.lapsed} lapsed by the route's player; ${launches} launches by him`, band: 'none lapsed, a launch for each', note: `${lc.open} launcher_open cues in ${r.n} matches` });
     if (lv === 'medium') {
       rows.push({ id: 'route.first30', ref: '§13 second pass', what: 'A first launch inside 30 s of the first brawl, in at least 80% of matches at medium', status: fl.length ? (fl.filter(x => x <= 30).length / by.length >= 0.80 ? 'PASS' : 'FAIL') : 'FAIL', value: `${by.length ? pct(fl.filter(x => x <= 30).length / by.length) : '-'} of ${by.length} matches (${fl.length} had a launch at all)`, band: 'at least 80%', note: 'a launch by the route\'s player' });
