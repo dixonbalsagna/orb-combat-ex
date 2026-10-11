@@ -655,7 +655,7 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | Presses of a scripted two-finger masher that read as a pair | Not a row | **New:** under 5% |
 | A full charged heavy thrown into an X flurry lands | Not a row | **New:** at least 80% when the flurrier keeps flurrying. A shove ends a heavy at least 90% of the times it is tried in reach |
 | The even lights-only mirror finishes | At least 95% | **Kept: at least 95%.** As built it finishes 20 of 20, by double hits and closes (§7). Its first slot wins 40 to 60%, read at 100 matches. Its double hits a match are reported: about 21 |
-| An uneven mirror: 8 ticks against 10 | Not a row | **New:** it finishes at least 95% of the time, and the faster tapper wins at least 80%. Brink to KO at 25 to 50 s is read here |
+| An uneven mirror: 8 ticks against 10 | Not a row | **New:** it finishes at least 95% of the time, and the faster tapper wins at least 80%. Its brink to KO is reported: the 25 to 50 s row is retired (§14) |
 | Level trades that change who has the momentum; wins from the first slot | 5 to 15%; 40 to 60% | **Retired** with the draw |
 | A trade's break | Within 12 ticks of the limit, and always followed by a close within 24 ticks (a hard test) | **Re-based.** A break is always for a lead now. It comes at the limit, or on the tick a lead of 2 appears after it, with no bound but the double hit at 240. A close follows 85 to 95% of breaks, reported: a lead tends to appear as the other fighter stops landing, and then the trade lapses first |
 | Double hits a match | Not a row | **New, for a presser against the medium AI,** lights only and mixing: 0.5 to 2, and at least one in 35 to 65% of matches. Measured on C1 at 0.3 and 0.2, and at 0 on the first chain, where the AI's spread tap gap leaves no level trade. `digIn` is re-ruled for it (§7, §14), and the masher's band comes first. The AI against itself is reported, and none is in order. Every trade still level at 240 ticks ends in one (a hard test) |
@@ -726,7 +726,7 @@ Encounter's chain of C2a, C2t and the heavy's hold is built and passes its gates
 | X over Y, Y over B and B over X, head to head | 100%, 92% and 52% | 55 to 75% each | **The band changes** to 60 to 90%, and each edge has its lever |
 | A first launch inside 30 s | 71% of matches | 80% | **The band changes:** 65% inside 30 s, and 90% inside 60 s |
 | The AI against itself: launches a match | 14.1 | 6 to 12 | **The levers,** as Encounter has them |
-| The AI against itself: the match's median | 340 to 350 s | 360 to 480 s | **The lever,** `brawl.damageMul`, after one check |
+| The AI against itself: the match's median | 340 to 350 s | 360 to 480 s | **The lever is `wearPerDamage`** (below). `brawl.damageMul` was tried, and is back at 0.31 |
 
 **The double hit.** The spread on the AI's tap gap restores the masher, at 45 of 100, and it also means a trade against the AI is never level for long. As I ruled it, the AI dug in only once a trade was still level at the limit, and that moment no longer comes.
 - `digIn` is decided as a trade starts. At its share the AI matches his pace for that trade, blow for blow, and holds it until the trade breaks or the double hit lands.
@@ -753,5 +753,14 @@ Encounter's chain of C2a, C2t and the heavy's hold is built and passes its gates
 
 **Launches, and the match's length.** No objection to what Encounter is tuning.
 - **Launches:** the AI's share of openings and its charge share are the right levers. The charge share is new to §3's list: a full charged heavy launches whatever the rest says, so it sits beside lever 2. The rest stays at 40 s until Orb has played it.
-- **Length:** `brawl.damageMul` from 0.31 to 0.27 is the lever that set the median before. One check first: read the first brink (4:30 to 7:00) and brink to KO (45 to 90 s) apart. If the first brink is in band and brink to KO is short, the cause is set-ups and not damage, and the blast's half set-up is the first fix.
+- **Length:** I first named `brawl.damageMul`. Encounter tried it, and it isn't the lever (below). The two halves are still read apart: the first brink (4:30 to 7:00) and brink to KO (45 to 90 s).
 - **One band, not two.** The band is QA's, a median of 360 to 480 s. My 400 to 450 s is the target to tune to.
+
+**The match's length, after Encounter's tune** (2026-10-11). Launches read 11.2 a match and the X masher 45 of 100, both in band, and the median is still 340 to 360 s. `brawl.damageMul` at 0.27 bought 5 to 12 s and pushed the masher to 56, so it is back at 0.31, and it isn't the lever.
+- **Why the match is shorter.** The brawl is 40% of live time, against 31% on main. That share is inside its own band of 30 to 50%, where main's wasn't. So the fight is denser, as it was meant to be, and the same wear arrives sooner.
+- **I don't accept 340 to 360 s.** Orb's answer was matches of five minutes or more, and QA holds that as a 10th percentile of 300 s. Before the chain it read 303 s in one arm, with the median at 419 s. A median 60 s lower puts a good share of matches under five minutes.
+- **The lever is `wearPerDamage`,** 330 today. It scales the wear from every source alike, so it moves the first brink and leaves the win rates where they are. `brawl.damageMul` scales the brawl's blows only, which is why it moved the masher. It is the same lever that brought the 10th percentile back from 293 s on the riposte build.
+- **Its steps:** 300 first, then 285. Not under 270 without reading limb breaks again.
+- **What to read with it.** The 10th percentile at 300 s or more is the row that decides. The median inside 360 to 480 s, toward 400 to 450. The first brink inside 4:30 to 7:00. Limb breaks a match, which will fall a little.
+- **If brink to KO reads under 45 s,** that half is set-ups and not wear. A close is half a set-up, and the launcher's blow now always follows it, so one close can be worth one and a half. The lever: the knock-back a resting launcher gives counts half, so a close and its knock-back make one.
+- **The even mirror's brink row is retired** (QA's question). I derived 25 to 50 s when a level trade ended in a draw, and that rule is gone. The even mirror's brink to KO is read against the overall 45 to 90 s like any match, and at 56 to 66 s it is in. The uneven mirror's is reported.
