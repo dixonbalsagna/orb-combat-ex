@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "How the brawl's cues become sound (audio/audio_brawl.gd; plan in docs/audio/brawl-cues.md). Strength comes from the blow cue (text light, medium, heavy; bolt and blast for energy in reach; the old text flurry counts as light), matched to the damage event by the attacker and the contact tick; if no blow cue is found it falls back to the damage amount. Everything tunable is here.",
+  "note": "How the brawl's cues become sound (audio/audio_brawl.gd; plan in docs/audio/brawl-cues.md). Since C2 the damage event's kind is the strength (light, medium, heavy; guard for a guarded blow), so `kind_is_strength` is on. The attacker's `blow` cue (text light, medium, heavy, bolt, blast, release) still gives a guarded hit its strength, and with `kind_is_strength` off it is the whole answer, falling back to the damage amount. Everything tunable is here.",
   "strength": {
     "from_blow": {
       "light": "light",
@@ -9,7 +9,7 @@
       "flurry": "light",
       "skill": "light",
       "bolt": "light",
-      "blast": "heavy",
+      "blast": "medium",
       "release": ""
     },
     "blow_window_ticks": 8,
@@ -17,7 +17,7 @@
       "medium_from": 26.0,
       "heavy_from": 60.0
     },
-    "kind_is_strength": false
+    "kind_is_strength": true
   },
   "hit": {
     "light": {
@@ -71,7 +71,12 @@
     "step_db": -2.0,
     "climb_st_per_blow": 0.33,
     "climb_max_st": 3.0,
-    "close_db": 3.0
+    "close_db": 3.0,
+    "lite": {
+      "sound": "impact.light.lite",
+      "after": 4
+    },
+    "note": "A run of lights is 5 to 10 blows a second (taps 6 to 12 ticks apart, a burst 4 to 11). Every blow keeps its sound, since each press is a blow, but from the third in a second it is 2 dB down and climbing in pitch, and from the fifth it is the `lite` knock: the same click with half the body and tail, so a run reads as a rattle and not a pile. The blow that closes the run is the full light at +3 dB."
   },
   "launcher": {
     "sound": "ui.launcher",
@@ -95,14 +100,11 @@
     ],
     "close": {
       "stop_texts": [
-        "thrown",
-        "taken",
-        "launched"
+        "used"
       ],
-      "stop_k": [
-        1
-      ],
-      "stop_ms": 40
+      "stop_k": [],
+      "stop_ms": 40,
+      "note": "Encounter's C2: text `used` when his B is thrown (the ping is cut, the launch's own sound confirms), `lapsed` when the opening ends (it rings out)."
     },
     "note": "One sound for every fighter, with no random spread in pitch or level: it is learned by ear, and both players hear it (EP ruling). It plays on its own bus (Alert), because it ducks Sfx and Music and must not duck itself.",
     "bus": "Alert"
@@ -134,7 +136,7 @@
       ],
       "stop_ms": 60
     },
-    "note": "The gather is sized to the real wind-up: pitch = nominal ticks over the cue's ticks, so it peaks as the blow lands. A wind-up stopped by a blow (k 2) or lost (k 3) is faded out; thrown (k 1) and a miss (k 4) let it finish."
+    "note": "The gather is sized to the cue's `dur` (the wind-up alone, in live ticks): pitch = nominal ticks over dur, so it peaks as the blow lands. The cue's `n` is the landing tick, which also counts the ticks a press spends closing the gap; the gather waits those ticks (live ticks, so a hit-stop does not shift it). A wind-up stopped by a blow (k 2) or lost (k 3) is faded out; thrown (k 1) and a miss (k 4) let it finish."
   },
   "miss": {
     "sound": "impact.whiff",
@@ -246,7 +248,6 @@
     "heavy_over_ticks": 20,
     "hum": {
       "sound": "charge.hum",
-      "from_live": 32,
       "gain_db": -8.0,
       "priority": 48,
       "cls": "charge",
@@ -260,10 +261,6 @@
       "bus": "Alert",
       "cls": "chargetick",
       "cap": 2,
-      "texts": [
-        "",
-        "b"
-      ],
       "caption": "[charged]"
     },
     "armour": {
@@ -275,6 +272,6 @@
       "medium_after_live": 20,
       "medium_pitch": 0.85
     },
-    "note": "A held B keeps charging from 32 live ticks (the hum, with a rising tremolo, until the release) and is full at 44 (`charge_full`: the tick, exact to the event, one fixed sound so a release can be timed by ear). Live ticks are counted from the `tick` events that are not frozen, so a hit-stop does not move the hum. While a heavy winds up or charges it is armoured: a light never ends it and a medium only in its first 20 live ticks; a hit that does not end it gets the dull absorbed tick under it."
+    "note": "The hum starts on the `windup` cue with text `charge` (tick 32 of a held B) and is cut by the release (the `blow` cue with text `release`, 4 ticks before the landing), or by the wind-up's end if it was stopped. `charge_full` (44) is the tick: one fixed sound, exact to the event. While a heavy winds or charges it is armoured: a light never ends it and a medium only before live tick 20 (counted from the wind-up's own start, after the gap is closed); a hit that does not end it gets the dull absorbed tick under it."
   }
 }

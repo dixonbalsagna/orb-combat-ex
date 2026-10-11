@@ -28,6 +28,7 @@ const KIND = {
   num: (d) => ({ type: 'number', description: d }),
   bool: (d) => ({ type: 'boolean', description: d }),
   strs: (d) => ({ type: 'array', items: { type: 'string' }, description: d }),
+  intsE: (d) => ({ type: 'array', items: { type: 'integer', minimum: 0 }, description: d }),
   ints: (d) => ({ type: 'array', minItems: 1, items: { type: 'integer', minimum: 0 }, description: d }),
 };
 const L = (k, d) => ({ __leaf: true, k, d });
@@ -59,12 +60,12 @@ const SPEC = O({
     size_ref: L('pos', 'The reference size.'), pitch_exp: L('num', 'Exponent.'), pitch_min: L('pos', 'Lowest pitch ratio (at most pitch_max).'), pitch_max: L('pos', 'Highest pitch ratio.'),
     gain_exp: L('num', 'Exponent.'), gain_db_min: L('db', 'Lowest gain (at most gain_db_max).'), gain_db_max: L('db', 'Highest gain.'),
   }),
-  flurry: O({ window_ticks: L('i1', 'Window.'), after: L('i0', 'Blows before the climb starts.'), step_db: L('db', 'Step per blow, dB.'), climb_st_per_blow: L('n0', 'Semitones per blow.'), climb_max_st: L('n0', 'Most semitones.'), close_db: L('db', 'The close, dB.') }),
+  flurry: O({ window_ticks: L('i1', 'Window.'), after: L('i0', 'Blows before the climb starts.'), step_db: L('db', 'Step per blow, dB.'), climb_st_per_blow: L('n0', 'Semitones per blow.'), climb_max_st: L('n0', 'Most semitones.'), close_db: L('db', 'The close, dB.'), lite: O({ sound: L('snd', 'The lighter knock (half the body and tail).'), after: L('i0', 'Blows in a run from which the lite knock plays.') }, { note: false }) }, { note: true }),
   launcher: O({
     sound: L('snd', 'The sound.'), gain_db: L('db', 'Gain, dB.'), priority: L('i0', 'Priority.'), cls: L('str', 'Class.'), cap: L('i1', 'Cap.'), caption: L('str', 'Caption.'),
     min_ticks: L('i0', 'The shortest it is heard.'),
     duck: ARR({ type: 'array', items: Object.assign({ type: 'object', required: ['bus', 'db', 'ms'], properties: { bus: KIND.bus('The bus ducked.'), db: KIND.db('By how much, dB.'), ms: KIND.i0('Over how long, ms.') } }, closed), description: 'What it ducks.' }),
-    close: O({ stop_texts: L('strs', 'Cue texts that end it.'), stop_k: L('ints', 'Cue kinds that end it.'), stop_ms: L('i0', 'Fade out, ms.') }, { note: false }),
+    close: O({ stop_texts: L('strs', 'Cue texts that end it.'), stop_k: L('intsE', 'Cue kinds that end it (may be empty: the texts end it).'), stop_ms: L('i0', 'Fade out, ms.') }, { note: true }),
     bus: L('bus', 'The bus it plays on.'),
   }),
   windup: O({
@@ -88,8 +89,8 @@ const SPEC = O({
   }),
   charge: O({
     heavy_over_ticks: L('i1', 'A hold over this many ticks is a heavy.'),
-    hum: O({ sound: L('snd', 'The sound.'), from_live: L('i0', 'From this live tick.'), gain_db: L('db', 'Gain.'), priority: L('i0', 'Priority.'), cls: L('str', 'Class.'), cap: L('i1', 'Cap.'), stop_ms: L('i0', 'Fade, ms.') }, { note: false }),
-    full: O({ sound: L('snd', 'The sound.'), gain_db: L('db', 'Gain.'), priority: L('i0', 'Priority.'), bus: L('bus', 'The bus.'), cls: L('str', 'Class.'), cap: L('i1', 'Cap.'), texts: L('strs', 'Cue texts.'), caption: L('str', 'Caption.') }, { note: false }),
+    hum: O({ sound: L('snd', 'The sound.'), gain_db: L('db', 'Gain.'), priority: L('i0', 'Priority.'), cls: L('str', 'Class.'), cap: L('i1', 'Cap.'), stop_ms: L('i0', 'Fade, ms.') }, { note: false }),
+    full: O({ sound: L('snd', 'The sound.'), gain_db: L('db', 'Gain.'), priority: L('i0', 'Priority.'), bus: L('bus', 'The bus.'), cls: L('str', 'Class.'), cap: L('i1', 'Cap.'), caption: L('str', 'Caption.') }, { note: false }),
     armour: O({ sound: L('snd', 'The sound.'), gain_db: L('db', 'Gain.'), priority: L('i0', 'Priority.'), cls: L('str', 'Class.'), cap: L('i1', 'Cap.'), medium_after_live: L('i0', 'Ticks.'), medium_pitch: L('pos', 'Pitch.') }, { note: false }),
   }),
 }, { note: true });
@@ -110,7 +111,7 @@ function build() {
 // =============================== schema, map, xref ===============================
 {
   const f = 'tools/schemas/audio-brawl-cues.schema.json';
-  if (!fs.existsSync(f)) wj(f, build());
+  wj(f, build());
   const mf = 'tools/schemas/map.json';
   const m = rj(mf);
   if (!m.rules.some((r) => r.match === 'audio/data/brawl_cues.json')) {
@@ -185,6 +186,10 @@ function build() {
       } else if (k === 'strs') {
         cs(s + '-type', { set: { [P]: 'a' } }, { rule: 'type', pointer: P });
         cs(s + '-item-type', { set: { [P]: [1] } }, { rule: 'type', pointer: P + '/0' });
+      } else if (k === 'intsE') {
+        cs(s + '-empty-ok', { set: { [P]: [] } }, null);
+        cs(s + '-item-negative', { set: { [P]: [-1] } }, { rule: 'minimum', pointer: P + '/0' });
+        cs(s + '-type', { set: { [P]: 'a' } }, { rule: 'type', pointer: P });
       } else if (k === 'ints') {
         cs(s + '-empty', { set: { [P]: [] } }, { rule: 'minItems', pointer: P });
         cs(s + '-item-negative', { set: { [P]: [-1] } }, { rule: 'minimum', pointer: P + '/0' });

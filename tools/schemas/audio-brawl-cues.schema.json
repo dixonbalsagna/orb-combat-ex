@@ -1,0 +1,1607 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/audio-brawl-cues",
+  "title": "audio brawl cues (schema 1)",
+  "description": "audio/data/brawl_cues.json: how the brawl's cues become sound (audio/audio_brawl.gd, docs/audio/brawl-cues.md): strength from the blow cue, the hit sounds and their pitch and gain law, the flurry's climb, the launcher, the wind-up, the miss, the double, energy in reach and the charge. Version field: schema. Policy: closed except keys starting with an underscore (and the `note` string beside the numbers). Cross-references in tools/lib/xref-brawl-cues.js (brawl-cue-sound, brawl-cue-bus, brawl-cue-order).",
+  "type": "object",
+  "required": [
+    "schema",
+    "strength",
+    "hit",
+    "flurry",
+    "launcher",
+    "windup",
+    "miss",
+    "double",
+    "energy",
+    "charge",
+    "note"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "strength": {
+      "type": "object",
+      "required": [
+        "from_blow",
+        "blow_window_ticks",
+        "fallback_amounts",
+        "kind_is_strength"
+      ],
+      "properties": {
+        "from_blow": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "enum": [
+              "light",
+              "medium",
+              "heavy",
+              ""
+            ]
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A blow cue text to the strength it reads as (light, medium, heavy, or \"\" for none)."
+        },
+        "blow_window_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks a blow cue stays attributable."
+        },
+        "fallback_amounts": {
+          "type": "object",
+          "required": [
+            "medium_from",
+            "heavy_from"
+          ],
+          "properties": {
+            "medium_from": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Damage from which a hit reads medium."
+            },
+            "heavy_from": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Damage from which a hit reads heavy (above medium_from: brawl-cue-order)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "kind_is_strength": {
+          "type": "boolean",
+          "description": "Whether the hit kind is itself the strength."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "hit": {
+      "type": "object",
+      "required": [
+        "light",
+        "medium",
+        "heavy",
+        "guard",
+        "size_ref",
+        "pitch_exp",
+        "pitch_min",
+        "pitch_max",
+        "gain_exp",
+        "gain_db_min",
+        "gain_db_max"
+      ],
+      "properties": {
+        "light": {
+          "type": "object",
+          "required": [
+            "sound",
+            "cls",
+            "cap",
+            "priority",
+            "gain_db",
+            "caption"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The class (the voice-limit group)."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many of its class may play at once."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Its priority when voices run out."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain, dB."
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The caption."
+            },
+            "note": {
+              "type": "string",
+              "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "medium": {
+          "type": "object",
+          "required": [
+            "sound",
+            "cls",
+            "cap",
+            "priority",
+            "gain_db",
+            "caption"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The class (the voice-limit group)."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many of its class may play at once."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Its priority when voices run out."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain, dB."
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The caption."
+            },
+            "note": {
+              "type": "string",
+              "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "heavy": {
+          "type": "object",
+          "required": [
+            "sound",
+            "cls",
+            "cap",
+            "priority",
+            "gain_db",
+            "caption"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The class (the voice-limit group)."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many of its class may play at once."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Its priority when voices run out."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain, dB."
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The caption."
+            },
+            "note": {
+              "type": "string",
+              "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "guard": {
+          "type": "object",
+          "required": [
+            "sound",
+            "cls",
+            "cap",
+            "priority",
+            "gain_db",
+            "caption",
+            "pitch"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The class (the voice-limit group)."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How many of its class may play at once."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Its priority when voices run out."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain, dB."
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The caption."
+            },
+            "pitch": {
+              "type": "object",
+              "required": [
+                "light",
+                "medium",
+                "heavy"
+              ],
+              "properties": {
+                "light": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "Pitch."
+                },
+                "medium": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "Pitch."
+                },
+                "heavy": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "Pitch."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "note": {
+              "type": "string",
+              "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "size_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The reference size."
+        },
+        "pitch_exp": {
+          "type": "number",
+          "description": "Exponent."
+        },
+        "pitch_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Lowest pitch ratio (at most pitch_max)."
+        },
+        "pitch_max": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Highest pitch ratio."
+        },
+        "gain_exp": {
+          "type": "number",
+          "description": "Exponent."
+        },
+        "gain_db_min": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "Lowest gain (at most gain_db_max)."
+        },
+        "gain_db_max": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "Highest gain."
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "flurry": {
+      "type": "object",
+      "required": [
+        "window_ticks",
+        "after",
+        "step_db",
+        "climb_st_per_blow",
+        "climb_max_st",
+        "close_db",
+        "lite"
+      ],
+      "properties": {
+        "window_ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Window."
+        },
+        "after": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Blows before the climb starts."
+        },
+        "step_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "Step per blow, dB."
+        },
+        "climb_st_per_blow": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Semitones per blow."
+        },
+        "climb_max_st": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Most semitones."
+        },
+        "close_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "The close, dB."
+        },
+        "lite": {
+          "type": "object",
+          "required": [
+            "sound",
+            "after"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The lighter knock (half the body and tail). (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "after": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Blows in a run from which the lite knock plays."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "launcher": {
+      "type": "object",
+      "required": [
+        "sound",
+        "gain_db",
+        "priority",
+        "cls",
+        "cap",
+        "caption",
+        "min_ticks",
+        "duck",
+        "close",
+        "bus"
+      ],
+      "properties": {
+        "sound": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+        },
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "Gain, dB."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Priority."
+        },
+        "cls": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Class."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Cap."
+        },
+        "caption": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Caption."
+        },
+        "min_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The shortest it is heard."
+        },
+        "duck": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "bus",
+              "db",
+              "ms"
+            ],
+            "properties": {
+              "bus": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+                "description": "The bus ducked. (a bus of mix.json: brawl-cue-bus)"
+              },
+              "db": {
+                "type": "number",
+                "minimum": -60,
+                "maximum": 24,
+                "description": "By how much, dB."
+              },
+              "ms": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Over how long, ms."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "description": "What it ducks."
+        },
+        "close": {
+          "type": "object",
+          "required": [
+            "stop_texts",
+            "stop_k",
+            "stop_ms"
+          ],
+          "properties": {
+            "stop_texts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Cue texts that end it."
+            },
+            "stop_k": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "description": "Cue kinds that end it (may be empty: the texts end it)."
+            },
+            "stop_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fade out, ms."
+            },
+            "note": {
+              "type": "string",
+              "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "bus": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "description": "The bus it plays on. (a bus of mix.json: brawl-cue-bus)"
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "windup": {
+      "type": "object",
+      "required": [
+        "min_ticks",
+        "classes",
+        "gain_db",
+        "priority",
+        "cls",
+        "cap",
+        "pitch_min",
+        "pitch_max",
+        "end"
+      ],
+      "properties": {
+        "min_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The shortest wind-up that is heard."
+        },
+        "classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "max_ticks",
+              "sound",
+              "nominal_ticks"
+            ],
+            "properties": {
+              "max_ticks": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Up to this many ticks (rising: brawl-cue-order)."
+              },
+              "sound": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+              },
+              "nominal_ticks": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The wind-up it is made for."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "description": "The classes of wind-up, by length."
+        },
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "Gain."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Priority."
+        },
+        "cls": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Class."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Cap."
+        },
+        "pitch_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Lowest pitch (at most pitch_max)."
+        },
+        "pitch_max": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Highest pitch."
+        },
+        "end": {
+          "type": "object",
+          "required": [
+            "stop_k",
+            "stop_ms"
+          ],
+          "properties": {
+            "stop_k": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "description": "Cue kinds that end it."
+            },
+            "stop_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fade out, ms."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "miss": {
+      "type": "object",
+      "required": [
+        "sound",
+        "priority",
+        "cls",
+        "cap",
+        "caption",
+        "gave_ground",
+        "reach",
+        "dodge"
+      ],
+      "properties": {
+        "sound": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Priority."
+        },
+        "cls": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Class."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Cap."
+        },
+        "caption": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Caption."
+        },
+        "gave_ground": {
+          "type": "object",
+          "required": [
+            "gain_db",
+            "pitch"
+          ],
+          "properties": {
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "pitch": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Pitch."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "reach": {
+          "type": "object",
+          "required": [
+            "gain_db",
+            "pitch"
+          ],
+          "properties": {
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "pitch": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Pitch."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "dodge": {
+          "type": "object",
+          "required": [
+            "gain_db",
+            "pitch"
+          ],
+          "properties": {
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "pitch": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Pitch."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "double": {
+      "type": "object",
+      "required": [
+        "charge",
+        "hit"
+      ],
+      "properties": {
+        "charge": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "nominal_ticks",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "nominal_ticks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Nominal length."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "hit": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "priority",
+            "cls",
+            "cap",
+            "caption",
+            "landing_ticks"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Caption."
+            },
+            "landing_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "energy": {
+      "type": "object",
+      "required": [
+        "gather",
+        "bolt",
+        "blast"
+      ],
+      "properties": {
+        "gather": {
+          "type": "object",
+          "required": [
+            "sound",
+            "nominal_ticks",
+            "gain_db",
+            "priority",
+            "cls",
+            "cap",
+            "pitch_min",
+            "pitch_max"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "nominal_ticks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Nominal length."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "pitch_min": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Lowest pitch (at most pitch_max)."
+            },
+            "pitch_max": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Highest pitch."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "bolt": {
+          "type": "object",
+          "required": [
+            "sound",
+            "lite",
+            "priority",
+            "cls",
+            "cap",
+            "caption",
+            "window_ticks",
+            "after",
+            "step_db",
+            "land"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "lite": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The lighter sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Caption."
+            },
+            "window_ticks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Window."
+            },
+            "after": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "After."
+            },
+            "step_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Step, dB."
+            },
+            "land": {
+              "type": "object",
+              "required": [
+                "hit",
+                "guard",
+                "armour",
+                "miss"
+              ],
+              "properties": {
+                "hit": {
+                  "type": "object",
+                  "required": [
+                    "gain_db",
+                    "pitch"
+                  ],
+                  "properties": {
+                    "gain_db": {
+                      "type": "number",
+                      "minimum": -60,
+                      "maximum": 24,
+                      "description": "Gain, dB."
+                    },
+                    "pitch": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "Pitch ratio."
+                    },
+                    "sound": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                      "description": "Its own sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "guard": {
+                  "type": "object",
+                  "required": [
+                    "gain_db",
+                    "pitch"
+                  ],
+                  "properties": {
+                    "gain_db": {
+                      "type": "number",
+                      "minimum": -60,
+                      "maximum": 24,
+                      "description": "Gain, dB."
+                    },
+                    "pitch": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "Pitch ratio."
+                    },
+                    "sound": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                      "description": "Its own sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "armour": {
+                  "type": "object",
+                  "required": [
+                    "gain_db",
+                    "pitch"
+                  ],
+                  "properties": {
+                    "gain_db": {
+                      "type": "number",
+                      "minimum": -60,
+                      "maximum": 24,
+                      "description": "Gain, dB."
+                    },
+                    "pitch": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "Pitch ratio."
+                    },
+                    "sound": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                      "description": "Its own sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "miss": {
+                  "type": "object",
+                  "required": [
+                    "gain_db",
+                    "pitch"
+                  ],
+                  "properties": {
+                    "gain_db": {
+                      "type": "number",
+                      "minimum": -60,
+                      "maximum": 24,
+                      "description": "Gain, dB."
+                    },
+                    "pitch": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "Pitch ratio."
+                    },
+                    "sound": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                      "description": "Its own sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "note": {
+                  "type": "string",
+                  "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "blast": {
+          "type": "object",
+          "required": [
+            "sound",
+            "priority",
+            "cls",
+            "cap",
+            "caption",
+            "land"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Caption."
+            },
+            "land": {
+              "type": "object",
+              "required": [
+                "hit",
+                "guard",
+                "armour",
+                "miss"
+              ],
+              "properties": {
+                "hit": {
+                  "type": "object",
+                  "required": [
+                    "gain_db",
+                    "pitch"
+                  ],
+                  "properties": {
+                    "gain_db": {
+                      "type": "number",
+                      "minimum": -60,
+                      "maximum": 24,
+                      "description": "Gain, dB."
+                    },
+                    "pitch": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "Pitch ratio."
+                    },
+                    "sound": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                      "description": "Its own sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "guard": {
+                  "type": "object",
+                  "required": [
+                    "gain_db",
+                    "pitch"
+                  ],
+                  "properties": {
+                    "gain_db": {
+                      "type": "number",
+                      "minimum": -60,
+                      "maximum": 24,
+                      "description": "Gain, dB."
+                    },
+                    "pitch": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "Pitch ratio."
+                    },
+                    "sound": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                      "description": "Its own sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "armour": {
+                  "type": "object",
+                  "required": [
+                    "gain_db",
+                    "pitch"
+                  ],
+                  "properties": {
+                    "gain_db": {
+                      "type": "number",
+                      "minimum": -60,
+                      "maximum": 24,
+                      "description": "Gain, dB."
+                    },
+                    "pitch": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "Pitch ratio."
+                    },
+                    "sound": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                      "description": "Its own sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "miss": {
+                  "type": "object",
+                  "required": [
+                    "gain_db",
+                    "pitch"
+                  ],
+                  "properties": {
+                    "gain_db": {
+                      "type": "number",
+                      "minimum": -60,
+                      "maximum": 24,
+                      "description": "Gain, dB."
+                    },
+                    "pitch": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "Pitch ratio."
+                    },
+                    "sound": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                      "description": "Its own sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "note": {
+                  "type": "string",
+                  "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "charge": {
+      "type": "object",
+      "required": [
+        "heavy_over_ticks",
+        "hum",
+        "full",
+        "armour"
+      ],
+      "properties": {
+        "heavy_over_ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A hold over this many ticks is a heavy."
+        },
+        "hum": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "priority",
+            "cls",
+            "cap",
+            "stop_ms"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "stop_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fade, ms."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "full": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "priority",
+            "bus",
+            "cls",
+            "cap",
+            "caption"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "bus": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+              "description": "The bus. (a bus of mix.json: brawl-cue-bus)"
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "caption": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Caption."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "armour": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "priority",
+            "cls",
+            "cap",
+            "medium_after_live",
+            "medium_pitch"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sound. (a sound synthesised in impacts.json: brawl-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "medium_after_live": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks."
+            },
+            "medium_pitch": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Pitch."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (the generator of this file keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "How the brawl cues become sound."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

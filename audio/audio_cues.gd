@@ -105,8 +105,9 @@ func flash(S: SimState, actor: int, flash_id: String) -> Cue:
 
 func _damage(S: SimState, e, out: Array) -> void:
 	var d: Dictionary = cfg.damage
-	if brawl.handles(e):
-		out.append_array(brawl.hit(S, e))
+	if brawl.handles(e) or brawl.covers(S, e):
+		if brawl.handles(e):
+			out.append_array(brawl.hit(S, e))
 		for rule in cfg.get("grunts", []):
 			if rule.on == "damage" and e.amount >= float(rule.get("min_amount", 0.0)):
 				_grunt(S, rule, e, out)

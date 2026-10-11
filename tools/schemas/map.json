@@ -84,6 +84,10 @@
       "schema": "audio-impacts.schema.json"
     },
     {
+      "match": "audio/data/brawl_cues.json",
+      "schema": "audio-brawl-cues.schema.json"
+    },
+    {
       "match": "audio/data/babble.json",
       "schema": "audio-babble.schema.json"
     },

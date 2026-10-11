@@ -20,10 +20,14 @@ var cues                                  # AudioCues
 var _blows: Dictionary = {}               # attacker slot -> Array of {text, n, tick, used}
 var _lights: Dictionary = {}              # attacker slot -> Array of the ticks of its recent light hits
 var _close: Dictionary = {}               # attacker slot -> the tick its flurry closed on
-var _winding: Dictionary = {}              # winder slot -> {heavy, live, hum, full}: a wind-up or charge in progress
+var _winding: Dictionary = {}              # winder slot -> {heavy, live, hum, cut, full}: a wind-up or charge in progress
+var _pending: Array = []                  # gathers that wait for the gap to close: {actor, wait (live ticks), cue}
 var _bolts: Dictionary = {}               # firing slot -> the ticks of its recent bolts
+var _landed: Dictionary = {}              # victim slot -> the tick an energy_land cue named it (the shot's own sound plays)
 var _double_n: int = -1                   # the tick a double hit's two blows land on (-1 for none)
 var _double_done: bool = false            # the one sound for the pair has been made
+var _double_x: float = 0.0                # the double hit's centre (the cue's x and y)
+var _double_y: float = 0.0
 
 
 func _init(p_cues) -> void:
@@ -37,12 +41,15 @@ func reset() -> void:
 	_close.clear()
 	_bolts.clear()
 	_winding.clear()
+	_pending.clear()
+	_landed.clear()
 	_double_n = -1
 	_double_done = false
 
 
 ## Read the batch's blow and stagger cues first, so a damage event later in the same batch can find its strength, and count
-## the live ticks of any heavy that is winding or charging. Returns the cues that fall due on this tick (the charge hum).
+## the live ticks of the heavies that are winding or charging and of the gathers that wait for the gap to close. Returns the
+## cues that fall due on this tick (a gather whose wait is over) and the hum's cut at a release.
 func begin(S: SimState, events: Array) -> Array:
 	var due: Array = []
 	var keep: int = int(cfg.strength.blow_window_ticks) * 6
@@ -58,22 +65,26 @@ func begin(S: SimState, events: Array) -> Array:
 				if not _blows.has(a):
 					_blows[a] = []
 				_blows[a].append({"text": String(e.text), "n": int(e.n), "tick": S.tick, "used": false})
+				if String(e.text) == "release":
+					_cut_hum(a, due)
 			"stagger":
 				if e.text == "flurry":
 					_close[int(e.target)] = S.tick
+			"energy_land":
+				_landed[int(e.target)] = S.tick
 	for a in _blows.keys():
 		_blows[a] = _blows[a].filter(func(b): return S.tick - int(b.tick) <= keep and not b.used)
-	var H: Dictionary = cfg.charge.hum
-	for a in _winding.keys():
-		var w: Dictionary = _winding[a]
-		if live_tick:
-			w["live"] = int(w.live) + 1
-		if bool(w.heavy) and not bool(w.hum) and int(w.live) >= int(H.from_live) and a < S.fighters.size():
-			w["hum"] = true
-			var f = S.fighters[a]
-			var c = cues.make_cue(String(H.sound), f.x, f.y, float(H.gain_db), 1.0, int(H.priority), "Sfx", String(H.cls), int(H.cap), "", S)
-			c.group = "charge.%d" % a
-			due.append(c)
+	if live_tick:
+		for a in _winding.keys():
+			_winding[a]["live"] = int(_winding[a].live) + 1
+		var left: Array = []
+		for p in _pending:
+			p["wait"] = int(p.wait) - 1
+			if int(p.wait) <= 0:
+				due.append(p.cue)
+			else:
+				left.append(p)
+		_pending = left
 	return due
 
 
@@ -138,48 +149,84 @@ func _launcher_close(S: SimState, e, out: Array) -> void:
 	out.append(c)
 
 
-## The wind-up of a medium or heavy: a rising gather sized to the real wind-up (n is the landing tick), cut if a blow stops it.
+## The wind-up of a medium or heavy: a rising gather sized to the cue's `dur` (the wind-up alone, in live ticks), cut if a blow
+## stops it. `n` is the landing tick, which also counts the ticks a press spends closing the gap, so the gather waits those.
+## The text `charge` is a held B going on to charge (the hum); `end` is the wind-up's last word (k 1 thrown, 2 stopped by a
+## blow, 3 lost to a stagger or the brawl's end, 4 a miss).
 func _windup(S: SimState, e, out: Array) -> void:
 	var W: Dictionary = cfg.windup
 	var a: int = int(e.actor)
 	if a < 0 or a >= S.fighters.size():
 		return
-	if String(e.text) == "end":
+	var text: String = String(e.text)
+	if text == "end":
 		var ks: Array = W.end.stop_k.map(func(v): return int(v))
 		if int(e.k) in ks:
 			var c = cues.Cue.new()
 			c.stop_group = "windup.%d" % a
 			c.fade_ms = int(W.end.stop_ms)
 			out.append(c)
-		if _winding.has(a):
-			# the wind-up or charge is over, however it ended: the hum goes with it
-			if bool(_winding[a].hum):
-				var h = cues.Cue.new()
-				h.stop_group = "charge.%d" % a
-				h.fade_ms = int(cfg.charge.hum.stop_ms)
-				out.append(h)
-			_winding.erase(a)
+		_cut_hum(a, out)      # the wind-up or charge is over, however it ended: the hum goes with it
+		_winding.erase(a)
+		_drop_pending(a)
 		return
-	var ticks: int = int(e.n) - S.tick
-	if String(e.text) != "start" or ticks < int(W.min_ticks):
+	if text == "charge":
+		_charge_hum(S, a, out)
 		return
-	_winding[a] = {"heavy": ticks > int(cfg.charge.heavy_over_ticks), "live": 0, "hum": false, "full": false}
+	if text != "start":
+		return
+	var dur: int = int(e.dur) if int(e.dur) > 0 else int(e.n) - S.tick
+	if dur < int(W.min_ticks):
+		return
+	var lead: int = maxi(int(e.n) - S.tick - dur, 0)
+	_drop_pending(a)
+	_winding[a] = {"heavy": dur > int(cfg.charge.heavy_over_ticks), "live": -lead, "hum": false, "cut": false, "full": false}
 	var cls: Dictionary = {}
 	for k in W.classes:
-		if ticks <= int(k.max_ticks):
+		if dur <= int(k.max_ticks):
 			cls = k
 			break
 	var f = S.fighters[a]
-	var c2 = cues.make_cue(String(cls.sound), f.x, f.y, float(W.gain_db), clampf(float(cls.nominal_ticks) / float(ticks), float(W.pitch_min), float(W.pitch_max)), int(W.priority), "Sfx", String(W.cls), int(W.cap), "", S)
+	var c2 = cues.make_cue(String(cls.sound), f.x, f.y, float(W.gain_db), clampf(float(cls.nominal_ticks) / float(dur), float(W.pitch_min), float(W.pitch_max)), int(W.priority), "Sfx", String(W.cls), int(W.cap), "", S)
 	c2.group = "windup.%d" % a
-	out.append(c2)
+	if lead > 0:
+		_pending.append({"actor": a, "wait": lead, "cue": c2})
+	else:
+		out.append(c2)
+
+
+func _drop_pending(a: int) -> void:
+	_pending = _pending.filter(func(p): return int(p.actor) != a)
+
+
+## The held B goes on to charge (tick 32): the hum, until the release.
+func _charge_hum(S: SimState, a: int, out: Array) -> void:
+	var H: Dictionary = cfg.charge.hum
+	var w: Dictionary = _winding.get(a, {"heavy": true, "live": 0, "hum": false, "cut": false, "full": false})
+	w["hum"] = true
+	w["cut"] = false
+	_winding[a] = w
+	var f = S.fighters[a]
+	var c = cues.make_cue(String(H.sound), f.x, f.y, float(H.gain_db), 1.0, int(H.priority), "Sfx", String(H.cls), int(H.cap), "", S)
+	c.group = "charge.%d" % a
+	out.append(c)
+
+
+## The hum ends with the release (the blow cue text `release`), 4 ticks before the landing, or with the wind-up's end.
+func _cut_hum(a: int, out: Array) -> void:
+	if _winding.has(a) and bool(_winding[a].hum) and not bool(_winding[a].cut):
+		_winding[a]["cut"] = true
+		var h = cues.Cue.new()
+		h.stop_group = "charge.%d" % a
+		h.fade_ms = int(cfg.charge.hum.stop_ms)
+		out.append(h)
 
 
 ## A heavy is full (44 live ticks of a held B): one fixed tick with a ring, exact to the event, so a release can be timed by ear.
-## Only B's (text empty or b); the charged medium is not in this chain.
+## Only B's (source b); the Y's full charge is C2b's.
 func _charge_full(S: SimState, e, out: Array) -> void:
 	var F: Dictionary = cfg.charge.full
-	if not (String(e.text) in F.texts):
+	if String(e.source) == "y" or String(e.text) == "y":
 		return
 	var a: int = int(e.actor)
 	if a < 0 or a >= S.fighters.size():
@@ -270,6 +317,8 @@ func _double_hit(S: SimState, e, out: Array) -> void:
 	var ahead: int = maxi(int(e.amount), 1)
 	var x: float = float(e.x) if float(e.x) != 0.0 else (S.fighters[0].x + S.fighters[1].x) * 0.5
 	var y: float = float(e.y) if float(e.x) != 0.0 else (S.fighters[0].y + S.fighters[1].y) * 0.5
+	_double_x = x
+	_double_y = y
 	var c = cues.make_cue(String(D.charge.sound), x, y, float(D.charge.gain_db), clampf(float(D.charge.nominal_ticks) / float(ahead), 0.7, 1.4), int(D.charge.priority), "Sfx", String(D.charge.cls), int(D.charge.cap), "", S)
 	out.append(c)
 
@@ -277,6 +326,12 @@ func _double_hit(S: SimState, e, out: Array) -> void:
 ## Is this damage event one of the brawl's melee hits?
 func handles(e) -> bool:
 	return String(e.kind) in ["light", "medium", "heavy", "guard"]
+
+
+## Is this the damage of an energy shot whose own cue (energy_land) plays this tick? Then the threshold stand-in is not
+## added on top of the bolt's crack or the blast's whump.
+func covers(S: SimState, e) -> bool:
+	return String(e.kind) == "blast" and int(_landed.get(int(e.victim), -99)) == S.tick
 
 
 ## The strength of a hit: light, medium or heavy.
@@ -313,7 +368,7 @@ func hit(S: SimState, e) -> Array:
 			return out
 		_double_done = true
 		var D: Dictionary = cfg.double.hit
-		out.append(cues.make_cue(String(D.sound), (S.fighters[0].x + S.fighters[1].x) * 0.5, (S.fighters[0].y + S.fighters[1].y) * 0.5, float(D.gain_db), 1.0, int(D.priority), "Sfx", String(D.cls), int(D.cap), String(D.caption), S))
+		out.append(cues.make_cue(String(D.sound), _double_x, _double_y, float(D.gain_db), 1.0, int(D.priority), "Sfx", String(D.cls), int(D.cap), String(D.caption), S))
 		return out
 	var st: String = strength(S, e)
 	var H: Dictionary = cfg.hit
@@ -326,6 +381,7 @@ func hit(S: SimState, e) -> Array:
 		pitch *= float(H.guard.pitch.get(st, 1.0))
 	var a: int = int(e.attacker)
 	var closing: bool = _close.get(a, -1) == S.tick
+	var sound: String = String(meta.sound)
 	if st == "light" and not guarded:
 		var F: Dictionary = cfg.flurry
 		var recent: Array = _lights.get(a, []).filter(func(t): return S.tick - int(t) <= int(F.window_ticks))
@@ -335,11 +391,13 @@ func hit(S: SimState, e) -> Array:
 		elif n >= int(F.after):
 			gain += float(F.step_db)
 			pitch *= pow(2.0, minf(float(F.climb_max_st), float(F.climb_st_per_blow) * float(n - int(F.after) + 1)) / 12.0)
+			if F.has("lite") and n >= int(F.lite.after):
+				sound = String(F.lite.sound)
 		recent.append(S.tick)
 		_lights[a] = recent
 	elif closing:
 		gain += float(cfg.flurry.close_db)
-	out.append(cues.make_cue(String(meta.sound), float(e.x), float(e.y), gain, pitch, int(meta.priority), "Sfx", String(meta.cls), int(meta.cap), String(meta.caption), S))
+	out.append(cues.make_cue(sound, float(e.x), float(e.y), gain, pitch, int(meta.priority), "Sfx", String(meta.cls), int(meta.cap), String(meta.caption), S))
 	var v: int = int(e.victim)
 	if not guarded and _winding.has(v) and bool(_winding[v].heavy) and (st == "light" or st == "medium"):
 		var A: Dictionary = cfg.charge.armour

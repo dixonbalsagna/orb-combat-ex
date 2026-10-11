@@ -98,6 +98,7 @@ Every finding names the file, the line, the JSON pointer and the rule, for examp
 | `sky-lane-colours` | data/art/sky.json readability.lane_colours are the default auras of data/art/colour-vision.json |
 | `colour-vision-fighters`, `colour-vision-body` | data/art/colour-vision.json: every roster fighter (lower-cased) has a default and a preset in protan, deutan and tritan, no preset or default names anyone else, and a preset keeps each fighter's body colour |
 | `ui-colour-choices`, `ui-colour-lanes`, `ui-colour-alias` | ui/data/colour_vision.json: choices hold `off`, have a preset for every other choice and no preset that is not a choice; a preset's lane colours are Art's aura colours for that vision (data/art/colour-vision.json); an alias names a fighter of Art's file |
+| `brawl-cue-sound`, `brawl-cue-bus`, `brawl-cue-order` | audio/data/brawl_cues.json: every sound is synthesised in impacts.json; every bus is a bus of mix.json; each pitch and gain range has its min at most its max, `medium_from` is below `heavy_from` and the wind-up classes rise |
 | `pressstyles-hold` | data/anim/press_styles.json: a style's `hold.from` is below its `hold.to` |
 | `reach-keyset` | data/anim/reach.json: every key of `cover` is a key set of keysets.json or of a wave's keysets |
 | `medium-wind-set` | data/anim/medium_wind.json: every key of `sets` and every `held_only` entry is a key set of a wave (or of keysets.json); every value of `sets` is a key of `rules`; a key set is not in both |

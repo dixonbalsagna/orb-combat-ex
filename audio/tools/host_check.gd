@@ -6,12 +6,14 @@ extends SceneTree
 ##   1. the sim is unchanged: the gameplay hash every 60 ticks and at the end is identical with and without audio
 ##      (audio reads the sim and draws nothing from its RNG);
 ##   2. the cues are reproducible: a second audio run gives the same cue log (same variants, pitches, levels);
-##   3. every cue names a sound the bank can render, and every cue's numbers are finite and inside the data's limits;
+##   3. every cue names a sound the bank can render (or is a stop request for a group), and every cue's numbers are finite
+##      and inside the data's limits;
 ##   4. what a fight sounds like: cues per sound, grunts, the busiest tick.
 ## Exit code 1 on any failure. No sound device is used.
 
 var seeds: Array = [4, 12345, 777]
 var max_ticks: int = 5400
+var _bank: AudioBank
 
 
 func _init() -> void:
@@ -21,6 +23,7 @@ func _init() -> void:
 		elif a.begins_with("--ticks="):
 			max_ticks = int(a.substr(8))
 	var bank := AudioBank.new()
+	_bank = bank
 	var ok: bool = true
 	for sd in seeds:
 		var plain: Array = _run(sd, null)
@@ -34,9 +37,11 @@ func _init() -> void:
 		ok = ok and same_sim and same_cues and bad == ""
 		print("seed %-6d ticks %d  sim hash %s  %s" % [sd, plain[1], str(plain[0][-1]), "unchanged by audio" if same_sim else "CHANGED BY AUDIO"])
 		print("            cue log %s  %s   %d cues (%.1f a minute), busiest tick %d" % [with_audio[2].substr(0, 16), "reproducible" if same_cues else "NOT REPRODUCIBLE", with_audio[3].size(), with_audio[3].size() * 3600.0 / with_audio[1], with_audio[4]])
+		print("            light knocks ringing together (busy ticks): mean %.2f, most %d, ticks with three or more %.1f%%" % [with_audio[5][0], with_audio[5][1], with_audio[5][2]])
 		var by: Dictionary = {}
 		for c in with_audio[3]:
-			by[c.sound] = by.get(c.sound, 0) + 1
+			var key: String = c.sound if c.sound != "" else "(stop)"
+			by[key] = by.get(key, 0) + 1
 		var parts: Array = []
 		for k in by:
 			parts.append("%s %d" % [k, by[k]])
@@ -106,6 +111,11 @@ func _run(sd: int, cues) -> Array:
 	var all: Array = []
 	var lines := PackedStringArray()
 	var busiest: int = 0
+	var ringing: Array = []                  # end ticks of the light knocks still sounding
+	var busy_ticks: int = 0
+	var busy_sum: int = 0
+	var busy_max: int = 0
+	var crowd: int = 0
 	var t: int = 0
 	while t < max_ticks and not (S.game.ko != null and S.game.koT > 3.0):
 		SimCore.step(S)
@@ -114,19 +124,33 @@ func _run(sd: int, cues) -> Array:
 			busiest = maxi(busiest, made.size())
 			for c in made:
 				all.append(c)
+				if c.sound.begins_with("impact.light"):
+					ringing.append(t + int(_bank.duration(c.sound, c.variant) / c.pitch * 60.0))
 				lines.append("%d|%s|%d|%.3f|%.3f|%.3f|%.4f|%s|%s" % [t, c.sound, c.variant, c.x, c.y, c.gain_db, c.pitch, c.group, str(c.muffled)])
 		S.out.fx.clear()
 		S.out.feed.clear()
+		ringing = ringing.filter(func(e): return e > t)
+		if not ringing.is_empty():
+			busy_ticks += 1
+			busy_sum += ringing.size()
+			busy_max = maxi(busy_max, ringing.size())
+			if ringing.size() >= 3:
+				crowd += 1
 		t += 1
 		if t % 60 == 0:
 			hashes.append(SimHash.stateHash(S).gameplay)
 	hashes.append(SimHash.stateHash(S).gameplay)
 	SimCore.dispose(S)
-	return [hashes, t, "\n".join(lines).sha256_text(), all, busiest]
+	return [hashes, t, "\n".join(lines).sha256_text(), all, busiest, [float(busy_sum) / maxf(float(busy_ticks), 1.0), busy_max, 100.0 * float(crowd) / maxf(float(t), 1.0)]]
 
 
 func _validate(all: Array, bank: AudioBank, cfg: Dictionary) -> String:
 	for c in all:
+		if c.sound == "":
+			# a stop request (the launcher's ping, a wind-up or a charge's hum cut short) carries no sound, only the group to stop
+			if c.stop_group == "":
+				return "a cue with no sound and no group to stop"
+			continue
 		if not bank.has_sound(c.sound):
 			return "cue for a sound the bank does not have: " + c.sound
 		if c.variant < 0 or c.variant >= bank.variants(c.sound):

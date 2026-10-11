@@ -1,19 +1,26 @@
 extends SceneTree
-## Render a short listening demo of the brawl's sounds, made by the real mapper from STAGED events (the sim's side is not
-## built yet): an X flurry that closes on a stagger, the launcher's "B now" ping over a loop of the 180 BPM metal
-## reference clip, the B wind-up and the launch, a mashed point-blank bolt, a blast, and a double hit. It shows the
-## ducking too: the music drops 4 dB and the impacts 3 dB for a moment under the ping. From the repo root:
-##   godot --headless --path . --script res://audio/tools/render_brawl_demo.gd [-- --out=FILE]
-## Mono 16-bit at 22.05 kHz. Not a game recording: a way to hear the mapping and the mix before the events exist.
+## Render a short listening demo of the brawl's sounds over a loop of the 180 BPM metal reference clip, with the ducks
+## (the music drops 4 dB and the impacts 3 dB for a moment under the launcher's ping). From the repo root:
+##   godot --headless --path . --script res://audio/tools/render_brawl_demo.gd [-- --out=FILE] [--match=SEED [--seconds=10]]
+## Without --match it plays a STAGED sequence made by the real mapper: an X flurry that closes on a stagger, the ping, the B
+## wind-up and the launch, a mashed bolt, a blast, a double hit, and B's held charge. With --match=SEED it runs that seeded
+## AI-vs-AI match on the real sim, feeds each tick's events to the mapper, and renders the busiest window (default 10 s:
+## the one with the most launcher, charge, wind-up and heavy cues) of it. Mono 16-bit at 22.05 kHz.
 
 const RATE := 22050
 
 
 func _init() -> void:
 	var out_path: String = ProjectSettings.globalize_path("res://audio/preview/brawl-demo.wav")
+	var match_seed: int = -1
+	var window_s: float = 10.0
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out_path = a.substr(6)
+		elif a.begins_with("--match="):
+			match_seed = int(a.substr(8))
+		elif a.begins_with("--seconds="):
+			window_s = float(a.substr(10))
 	var bank := AudioBank.new()
 	var cues := AudioCues.new(bank)
 	cues.reset(4)
@@ -21,33 +28,30 @@ func _init() -> void:
 	SimCore.newMatch(S, 4)
 	S.fighters[0].x = 4000.0
 	S.fighters[1].x = 4060.0
-	var script: Dictionary = _script()
+	var timeline: Array = []                     # [tick, cue]
+	if match_seed >= 0:
+		timeline = _match_timeline(bank, match_seed, window_s)
+	else:
+		timeline = _staged_timeline(cues, S)
 	var voices: Array = []                       # {group, start, buf, rate, pitch, gain, bus, end_at}
 	var ducks: Array = []                        # {bus, from, to, db}
 	var last_tick: int = 0
-	for t in script.keys():
-		last_tick = maxi(last_tick, int(t))
-	for t in range(0, last_tick + 1):
-		if not script.has(t):
+	for entry in timeline:
+		last_tick = maxi(last_tick, int(entry[0]))
+	for entry in timeline:
+		var c = entry[1]
+		var at: float = float(int(entry[0])) / 60.0
+		if c.sound == "" and c.stop_group != "":
+			for v in voices:
+				if v.group == c.stop_group and v.end_at < 0.0:
+					v.end_at = at + float(c.fade_ms) * 0.001
 			continue
-		S.tick = t
-		S.T = float(t) / 60.0
-		for e in script[t]:
-			if e.type == "cue" and e.kind == "blow" and int(e.n) == -1:
-				e.n = t
-		for c in cues.consume(S, script[t]):
-			var at: float = float(t) / 60.0
-			if c.sound == "" and c.stop_group != "":
-				for v in voices:
-					if v.group == c.stop_group and v.end_at < 0.0:
-						v.end_at = at + float(c.fade_ms) * 0.001
-				continue
-			if c.kind == "voice":
-				continue
-			var buf: PackedFloat32Array = bank.buffer(c.sound, c.variant)
-			voices.append({"group": c.group, "start": at, "buf": buf, "rate": bank.rate_of(c.sound), "pitch": c.pitch, "gain": c.gain_db, "bus": c.bus, "end_at": -1.0})
-			for d in c.duck:
-				ducks.append({"bus": String(d.bus), "from": at, "to": at + float(d.ms) * 0.001 + 0.08, "db": float(d.db)})
+		if c.kind == "voice":
+			continue
+		var buf: PackedFloat32Array = bank.buffer(c.sound, c.variant)
+		voices.append({"group": c.group, "start": at, "buf": buf, "rate": bank.rate_of(c.sound), "pitch": c.pitch, "gain": c.gain_db, "bus": c.bus, "end_at": -1.0})
+		for d in c.duck:
+			ducks.append({"bus": String(d.bus), "from": at, "to": at + float(d.ms) * 0.001 + 0.08, "db": float(d.db)})
 	var total: float = float(last_tick) / 60.0 + 1.6
 	var n: int = int(total * RATE)
 	var sfx := PackedFloat32Array()
@@ -59,7 +63,6 @@ func _init() -> void:
 	# the music: the metal reference, looped, on the Music bus at -8 dB, with the duck
 	var music := PackedFloat32Array()
 	music.resize(n)
-	var ref: AudioStreamWAV = load("res://audio/preview/suno-reference/suno-ref-riff-180bpm-E.wav")
 	var mus: PackedFloat32Array = _wav_samples("res://audio/preview/suno-reference/suno-ref-riff-180bpm-E.wav")
 	var mg: float = AudioDsp.db_to_lin(-8.0 - 1.3)
 	for i in range(n):
@@ -83,6 +86,75 @@ func _init() -> void:
 	print("%s: %.1f s, %d cues, %d ducks, error %d" % [out_path, total, voices.size(), ducks.size(), err])
 	SimCore.dispose(S)
 	quit(0 if err == OK else 1)
+
+
+## The staged sequence through the mapper, by tick.
+func _staged_timeline(cues, S) -> Array:
+	var script: Dictionary = _script()
+	var out: Array = []
+	var last: int = 0
+	for t in script.keys():
+		last = maxi(last, int(t))
+	for t in range(0, last + 1):
+		if not script.has(t):
+			continue
+		S.tick = t
+		S.T = float(t) / 60.0
+		for e in script[t]:
+			if e.type == "cue" and e.kind == "blow" and int(e.n) == -1:
+				e.n = t
+		for c in cues.consume(S, script[t]):
+			out.append([t, c])
+	return out
+
+
+## A real seeded match: every tick's events through the mapper, then the window of `secs` seconds with the most going on.
+func _match_timeline(bank: AudioBank, sd: int, secs: float) -> Array:
+	var cues := AudioCues.new(bank)
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, sd)
+	cues.reset(sd)
+	var all: Array = []
+	var weight: Dictionary = {"ui.launcher": 12, "charge.tick.heavy": 12, "charge.hum": 6, "windup.heavy": 5, "windup.medium": 3, "energy.blast": 6, "impact.double": 6, "impact.heavy": 4, "impact.medium": 2, "impact.guard": 1}
+	var score: PackedInt32Array = PackedInt32Array()
+	var t: int = 0
+	while t < 7200 and not (S.game.ko != null and S.game.koT > 3.0):
+		SimCore.step(S)
+		var s_t: int = 0
+		for c in cues.consume(S, S.out.fx):
+			all.append([t, c])
+			s_t += int(weight.get(c.sound, 1 if c.sound.begins_with("impact.") or c.sound.begins_with("energy.") else 0))
+		score.append(s_t)
+		S.out.fx.clear()
+		S.out.feed.clear()
+		t += 1
+	SimCore.dispose(S)
+	var win: int = int(secs * 60.0)
+	var best: int = 0
+	var best_sum: int = -1
+	var run: int = 0
+	for i in range(score.size()):
+		run += score[i]
+		if i >= win:
+			run -= score[i - win]
+		if i >= win - 1 and run > best_sum:
+			best_sum = run
+			best = i - win + 1
+	var out: Array = []
+	for entry in all:
+		if int(entry[0]) >= best and int(entry[0]) < best + win:
+			out.append([int(entry[0]) - best, entry[1]])
+	print("match seed %d: %d ticks, window starts at tick %d (%.1f s), %d cues in the window" % [sd, t, best, float(best) / 60.0, out.size()])
+	var by: Dictionary = {}
+	for entry in out:
+		var key: String = entry[1].sound if entry[1].sound != "" else "(stop)"
+		by[key] = int(by.get(key, 0)) + 1
+	var parts: Array = []
+	for k in by:
+		parts.append("%s %d" % [k, by[k]])
+	parts.sort()
+	print("  in the window: " + ", ".join(parts))
+	return out
 
 
 func _mix_voice(dst: PackedFloat32Array, v: Dictionary) -> void:

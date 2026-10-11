@@ -92,7 +92,8 @@ func _sound_of(list: Array) -> Array:
 
 # ---- step 1: the three strengths and the guard
 func _hits() -> void:
-	print("1. strength comes from the blow cue, the amount only as a fallback")
+	print("1. strength: from the blow cue and the amount (kind_is_strength off), then from the damage kind (on)")
+	cues.brawl.cfg.strength.kind_is_strength = false
 	cues.reset(11)
 	var t: int = 1000
 	var r: Array = tick(t, [blow(0, "medium"), dmg(0, "light", 12.0)])
@@ -126,6 +127,20 @@ func _hits() -> void:
 	t += 600
 	r = tick(t, [blow(0, "heavy"), dmg(0, "light", 12.0), dmg(0, "light", 12.0)])
 	ok(_sound_of(r) == ["impact.heavy", "impact.light"], "one blow cue is used for one hit, the next falls back")
+	# C2: the damage kind is the strength
+	cues.brawl.cfg.strength.kind_is_strength = true
+	cues.reset(12)
+	t += 600
+	r = tick(t, [blow(0, "light"), dmg(0, "medium", 12.0)])
+	ok(_sound_of(r) == ["impact.medium"], "with the strength on the damage event, the kind is the strength (a medium kind, a light blow cue)")
+	r = tick(t + 60, [dmg(0, "heavy", 5.0)])
+	ok(_sound_of(r) == ["impact.heavy"], "a heavy kind is a heavy whatever the amount")
+	r = tick(t + 120, [blow(0, "heavy"), dmg(0, "guard", 10.0)])
+	ok(_sound_of(r) == ["impact.guard"] and _pitch_of(r) < 1.0, "a guarded heavy blow is a lower guard")
+	r = tick(t + 180, [cue("energy_land", "bolt", 0, {"source": "hit"}), dmg(0, "blast", 20.0)])
+	ok(_sound_of(r).is_empty() and r.any(func(c): return c.sound == "energy.bolt"), "the energy blow's own damage (kind blast) is left to energy_land: no impact on top")
+	r = tick(t + 240, [dmg(0, "blast", 20.0)])
+	ok(not _sound_of(r).is_empty(), "a blast with no energy_land (a shot from afar) keeps the old stand-in")
 
 
 func _pitch_of(list: Array) -> float:
@@ -144,26 +159,31 @@ func _flurry() -> void:
 	var p_last: float = 0.0
 	var g_close: float = 0.0
 	var g_seventh: float = 0.0
+	var lite_run: Array = []
 	var N: int = 60
 	for trial in range(N):
 		cues.reset(100 + trial)
 		var base: int = 5000 + trial * 400
 		var gains: Array = []
 		var pitches: Array = []
+		var snd: Array = []
 		for i in range(8):
 			var ev: Array = [blow(0, "light"), dmg(0, "light", 12.0)]
 			if i == 7:
 				ev.append(cue("stagger", "flurry", 1, {"target": 0.0, "n": 14.0}))
 			var r: Array = tick(base + 6 * i, ev)
-			var c = r.filter(func(x): return x.sound == "impact.light")[0]
+			var c = r.filter(func(x): return x.sound.begins_with("impact.light"))[0]
 			gains.append(c.gain_db)
 			pitches.append(c.pitch)
+			snd.append(c.sound)
 		g_first += (gains[0] + gains[1] + gains[2]) / 3.0
 		g_rest += (gains[3] + gains[4] + gains[5] + gains[6]) / 4.0
 		p_first += pitches[0]
 		p_last += pitches[6]
 		g_seventh += gains[6]
 		g_close += gains[7]
+		if trial == 0:
+			lite_run = snd
 	g_first /= N
 	g_rest /= N
 	p_first /= N
@@ -174,6 +194,7 @@ func _flurry() -> void:
 	ok(g_rest < g_first - 1.0 and g_rest > g_first - 3.2, "from the fourth blow a light is about 2 dB quieter")
 	ok(p_last > p_first * 1.05, "the run climbs in pitch")
 	ok(g_close > g_seventh + 3.5, "the blow that closes the flurry is the loudest of the run")
+	ok(lite_run.slice(0, 5) == ["impact.light", "impact.light", "impact.light", "impact.light", "impact.light.lite"] and lite_run[6] == "impact.light.lite" and lite_run[7] == "impact.light", "from the fifth blow in a second the knock is the lite one; the closing blow is the full light again (%s)" % str(lite_run))
 	# a different attacker's lights do not count toward this one's flurry
 	cues.reset(5)
 	var gs: Array = []
@@ -203,7 +224,7 @@ func _flurry_digest() -> String:
 func _sounds() -> void:
 	print("3. the new impact sounds")
 	var info: Dictionary = {}
-	for id in ["impact.light", "impact.medium", "impact.heavy", "impact.guard", "impact.whiff"]:
+	for id in ["impact.light", "impact.light.lite", "impact.medium", "impact.heavy", "impact.guard", "impact.whiff"]:
 		var buf: PackedFloat32Array = bank.buffer(id, 0)
 		var rate: int = bank.rate_of(id)
 		info[id] = {"s": float(buf.size()) / rate, "peak": AudioDsp.peak(buf), "rms": AudioDsp.rms(buf)}
@@ -211,6 +232,7 @@ func _sounds() -> void:
 	ok(info["impact.light"].s < info["impact.medium"].s and info["impact.medium"].s < info["impact.heavy"].s, "light, medium and heavy are told apart by length")
 	ok(info["impact.medium"].s > 0.22 and info["impact.medium"].s < 0.4, "the medium is about 0.3 s")
 	ok(info["impact.light"].peak < info["impact.medium"].peak and info["impact.medium"].peak < info["impact.heavy"].peak, "and by level")
+	ok(info["impact.light.lite"].s < info["impact.light"].s * 0.8 and info["impact.light.lite"].rms < info["impact.light"].rms, "the lite knock is shorter and quieter than the light")
 	for id in ["impact.medium", "impact.guard", "impact.whiff"]:
 		var b: PackedFloat32Array = bank.buffer(id, 0)
 		ok(AudioDsp.peak(b) < 0.99 and absf(b[0]) < 0.01 and absf(b[b.size() - 1]) < 0.01, "%s: no clipping and clean ends" % id)
@@ -239,13 +261,13 @@ func _launcher() -> void:
 		gains[q[0].gain_db] = true
 		pitches[q[0].pitch] = true
 	ok(gains.size() == 1 and pitches.size() == 1, "the ping is identical every time (one gain, one pitch)")
-	# close: thrown cuts it, a lapse lets it ring
-	r = tick(t + 4000, [cue("launcher_close", "thrown", 0)])
-	ok(r.size() == 1 and r[0].sound == "" and r[0].stop_group == "launcher.0" and r[0].fade_ms == 40, "a thrown launch stops the ping (40 ms fade)")
+	# close (Encounter's C2): used cuts it, lapsed lets it ring
+	r = tick(t + 4000, [cue("launcher_close", "used", 0)])
+	ok(r.size() == 1 and r[0].sound == "" and r[0].stop_group == "launcher.0" and r[0].fade_ms == 40, "a used launcher (his B thrown) stops the ping (40 ms fade)")
 	r = tick(t + 4100, [cue("launcher_close", "lapsed", 0)])
 	ok(r.is_empty(), "a lapsed window lets it ring out")
 	r = tick(t + 4200, [cue("launcher_close", "", 0, {"k": 1.0})])
-	ok(r.size() == 1, "k 1 on the close also means thrown")
+	ok(r.is_empty(), "the close says used or lapsed by text only (k means nothing here)")
 	var buf: PackedFloat32Array = bank.buffer("ui.launcher", 0)
 	var rate: int = bank.rate_of("ui.launcher")
 	print("     ui.launcher %.2f s, peak %.1f dBFS, rms %.1f dBFS" % [float(buf.size()) / rate, 20.0 * log(AudioDsp.peak(buf)) / log(10.0), 20.0 * log(AudioDsp.rms(buf)) / log(10.0)])
@@ -265,6 +287,24 @@ func _windup() -> void:
 	ok(r[0].sound == "windup.medium" and absf(r[0].pitch - 12.0 / 14.0) < 0.02, "a 14-tick wind-up (the launcher's) is stretched to peak as it lands")
 	r = tick(t + 300, [cue("windup", "start", 0, {"n": t + 300 + 3})])
 	ok(r.is_empty(), "a 3-tick contact (a light) has no gather")
+	# the real shape: dur is the wind-up alone, n the landing tick, closing ticks included; the gather waits for the gap
+	cues.reset(32)
+	r = tk(t + 1000, false, [cue("windup", "start", 0, {"n": t + 1000 + 14, "dur": 12.0, "source": "y"})])
+	ok(r.is_empty(), "a Y whose gap needs 2 ticks to close has no gather yet")
+	r = tk(t + 1001, false)
+	r.append_array(tk(t + 1002, true))
+	ok(r.is_empty(), "and a frozen tick (a hit-stop) does not count toward it")
+	r = tk(t + 1003, false)
+	ok(r.size() == 1 and r[0].sound == "windup.medium" and absf(r[0].pitch - 1.0) < 0.05 and r[0].group == "windup.0", "the gather starts with the wind-up itself, at its own 12 ticks")
+	r = tk(t + 1100, false, [cue("windup", "start", 0, {"n": t + 1100 + 16, "dur": 12.0, "source": "y"})])
+	r = tk(t + 1101, false, [cue("windup", "end", 0, {"k": 2.0})])
+	var late: Array = []
+	for i in range(2, 8):
+		late.append_array(tk(t + 1100 + i, false))
+	ok(late.is_empty(), "a wind-up stopped by a blow before its gap closes never gathers")
+	r = tk(t + 1200, false, [cue("windup", "start", 1, {"n": t + 1200 + 14, "dur": 14.0, "source": "b", "k": 1.0})])
+	ok(r.size() == 1 and r[0].sound == "windup.medium" and absf(r[0].pitch - 12.0 / 14.0) < 0.02, "a launcher's B (dur 14, thrown in an opening) gathers at once, stretched")
+	cues.reset(31)
 	for k in [2, 3]:
 		r = tick(t + 400 + k, [cue("windup", "end", 0, {"k": float(k)})])
 		ok(r.size() == 1 and r[0].stop_group == "windup.0" and r[0].fade_ms == 60, "a wind-up stopped by a blow or lost (k %d) is faded out" % k)
@@ -350,7 +390,7 @@ func _energy() -> void:
 	ok(absf(float(bank.buffer("energy.gather", 0).size()) / bank.rate_of("energy.gather") - 12.0 / 60.0) < 0.02, "the gather is 12 ticks long")
 
 
-# ---- the heavy's charge: the hum, the full tick, the armour
+# ---- the heavy's charge: the hum, the full tick, the armour (Encounter's C2 shapes)
 func tk(t: int, frozen: bool, events: Array = []) -> Array:
 	var te := SimState.FxEvent.new()
 	te.type = "tick"
@@ -360,50 +400,45 @@ func tk(t: int, frozen: bool, events: Array = []) -> Array:
 
 
 func _charge() -> void:
-	print("8. the heavy's charge: hum, full tick, armour")
+	print("8. the heavy's charge: hum, full tick, armour (Encounter's C2 shapes)")
 	cues.reset(61)
 	var t0: int = 70000
-	# B held: a 28-tick wind-up starts, then it runs on as a charge (the sim ends it when thrown)
-	var r: Array = tk(t0, false, [cue("windup", "start", 1, {"n": t0 + 28})])
-	var hum_at: int = -1
-	var hums: int = 0
-	for i in range(1, 60):
-		var batch: Array = tk(t0 + i, false)
-		for c in batch:
-			if c.sound == "charge.hum":
-				hums += 1
-				if hum_at < 0:
-					hum_at = i
-					ok(c.group == "charge.1" and c.cls == "charge", "the hum is in the charger's own group")
-	ok(hums == 1 and hum_at == 32, "one hum, on the 32nd live tick (got %d at %d)" % [hums, hum_at])
-	# the full tick: exact to the event, one fixed sound, on the Alert bus
-	r = tk(t0 + 44, false, [cue("charge_full", "b", 1)])
+	# a held B: start (b, dur 28), a `charge` windup at tick 32, charge_full at 44, the release blow (4 ticks to land), the end
+	var r: Array = tk(t0, false, [cue("windup", "start", 1, {"n": t0 + 28, "dur": 28.0, "source": "b"})])
+	ok(r.filter(func(c): return c.sound == "windup.heavy").size() == 1 and absf(r[0].pitch - 1.0) < 0.05, "a B's wind-up (dur 28) gathers at once")
+	var early: int = 0
+	for i in range(1, 32):
+		early += tk(t0 + i, false).filter(func(c): return c.sound == "charge.hum").size()
+	ok(early == 0, "no hum while it is only winding")
+	r = tk(t0 + 32, false, [cue("windup", "charge", 1, {"n": t0 + 44, "source": "b"})])
+	var hum: Array = r.filter(func(c): return c.sound == "charge.hum")
+	ok(hum.size() == 1 and hum[0].group == "charge.1" and hum[0].cls == "charge", "the `charge` windup starts the hum, in the charger's own group")
+	for i in range(33, 44):
+		tk(t0 + i, false)
+	r = tk(t0 + 44, false, [cue("charge_full", "", 1, {"source": "b"})])
 	var ticks: Array = r.filter(func(c): return c.sound == "charge.tick.heavy")
 	ok(ticks.size() == 1 and ticks[0].bus == "Alert" and ticks[0].priority >= 90, "charge_full makes one tick on the Alert bus, critical priority")
 	ok(ticks[0].variant == 0 and is_equal_approx(ticks[0].pitch, 1.0), "fixed: no variant, no pitch change")
-	r = tk(t0 + 45, false, [cue("charge_full", "y", 1)])
-	ok(r.filter(func(c): return c.sound == "charge.tick.heavy").is_empty(), "the Y's full charge is not in this chain")
-	# release: the hum is cut, however the charge ended
-	r = tk(t0 + 48, false, [cue("windup", "end", 1, {"k": 1.0})])
-	ok(r.size() == 1 and r[0].stop_group == "charge.1" and r[0].sound == "", "thrown: the hum stops")
-	# hit-stop: frozen ticks do not move the hum
+	r = tk(t0 + 45, false, [cue("charge_full", "", 1, {"source": "y"})])
+	ok(r.filter(func(c): return c.sound == "charge.tick.heavy").is_empty(), "the Y's full charge (source y) is not in this chain")
+	r = tk(t0 + 60, false, [blow(1, "release", t0 + 64)])
+	ok(r.size() == 1 and r[0].stop_group == "charge.1" and r[0].sound == "", "the release (a blow cue text release) cuts the hum, 4 ticks before the landing")
+	for i in range(61, 64):
+		tk(t0 + i, false)
+	r = tk(t0 + 64, false, [cue("windup", "end", 1, {"k": 1.0})])
+	ok(r.is_empty(), "the landing (end k 1) has nothing left to stop")
+	# stopped by a blow while charging: the gather and the hum both go
 	cues.reset(62)
 	var t1: int = 71000
-	tk(t1, false, [cue("windup", "start", 0, {"n": t1 + 28})])
-	var early: int = 0
-	for i in range(1, 31):
-		early += tk(t1 + i, false).filter(func(c): return c.sound == "charge.hum").size()
-	for i in range(31, 51):
-		early += tk(t1 + i, true).filter(func(c): return c.sound == "charge.hum").size()
-	ok(early == 0, "20 frozen ticks (a hit-stop) do not start the hum early")
-	r = tk(t1 + 51, false)
-	r.append_array(tk(t1 + 52, false))
-	ok(r.filter(func(c): return c.sound == "charge.hum").size() == 1, "it starts on the 32nd live tick (a hit-stop in between)")
-	tk(t1 + 60, false, [cue("windup", "end", 0, {"k": 3.0})])
+	tk(t1, false, [cue("windup", "start", 0, {"n": t1 + 28, "dur": 28.0, "source": "b"})])
+	tk(t1 + 32, false, [cue("windup", "charge", 0, {"n": t1 + 44, "source": "b"})])
+	r = tk(t1 + 36, false, [cue("windup", "end", 0, {"k": 2.0})])
+	var stops: Array = r.filter(func(c): return c.sound == "")
+	ok(stops.size() == 2 and (stops[0].stop_group == "windup.0" or stops[1].stop_group == "windup.0") and (stops[0].stop_group == "charge.0" or stops[1].stop_group == "charge.0"), "a charge stopped by a blow cuts the gather and the hum")
 	# a medium's wind-up is no charge: no hum
 	cues.reset(63)
 	var t2: int = 72000
-	tk(t2, false, [cue("windup", "start", 0, {"n": t2 + 12})])
+	tk(t2, false, [cue("windup", "start", 0, {"n": t2 + 12, "dur": 12.0, "source": "y"})])
 	var mh: int = 0
 	for i in range(1, 60):
 		mh += tk(t2 + i, false).filter(func(c): return c.sound == "charge.hum").size()
@@ -411,16 +446,16 @@ func _charge() -> void:
 	# armour: B (slot 1) is charging; A's blows land on him
 	cues.reset(64)
 	var t3: int = 73000
-	tk(t3, false, [cue("windup", "start", 1, {"n": t3 + 28})])
+	tk(t3, false, [cue("windup", "start", 1, {"n": t3 + 28, "dur": 28.0, "source": "b"})])
 	for i in range(1, 6):
 		tk(t3 + i, false)
 	r = tk(t3 + 6, false, [blow(0, "light"), dmg(0, "light", 12.0)])
 	ok(r.filter(func(c): return c.sound == "impact.absorbed").size() == 1 and r.filter(func(c): return c.sound == "impact.light").size() == 1, "a light on a charging B: the hit, and the dull absorbed tick under it")
-	r = tk(t3 + 8, false, [blow(0, "medium"), dmg(0, "light", 35.0)])
+	r = tk(t3 + 8, false, [blow(0, "medium"), dmg(0, "medium", 35.0)])
 	ok(r.filter(func(c): return c.sound == "impact.absorbed").is_empty(), "a medium in the first 20 live ticks ends it: no armour tick")
 	for i in range(9, 26):
 		tk(t3 + i, false)
-	r = tk(t3 + 26, false, [blow(0, "medium"), dmg(0, "light", 35.0)])
+	r = tk(t3 + 26, false, [blow(0, "medium"), dmg(0, "medium", 35.0)])
 	var ab: Array = r.filter(func(c): return c.sound == "impact.absorbed")
 	ok(ab.size() == 1 and ab[0].pitch < 1.0, "a medium after 20 live ticks is absorbed (a lower tick)")
 	r = tk(t3 + 27, false, [blow(0, "heavy"), dmg(0, "heavy", 80.0)])
@@ -428,7 +463,6 @@ func _charge() -> void:
 	r = tk(t3 + 28, false, [cue("windup", "end", 1, {"k": 2.0})])
 	r = tk(t3 + 40, false, [blow(0, "light"), dmg(0, "light", 12.0)])
 	ok(r.filter(func(c): return c.sound == "impact.absorbed").is_empty(), "once the charge is over, a light is an ordinary light")
-	# a light on a fighter who is not winding up
 	r = tk(t3 + 60, false, [blow(1, "light"), dmg(1, "light", 12.0)])
 	ok(r.filter(func(c): return c.sound == "impact.absorbed").is_empty(), "no armour tick on a fighter who is not winding up")
 	# the sounds
@@ -483,7 +517,7 @@ func _voices() -> void:
 	for i in range(20):
 		v._process(0.02)
 	ok(is_equal_approx(AudioServer.get_bus_volume_db(sfx_idx), base_sfx) and v.duck_db("Sfx") == 0.0, "after 0.4 s the bus is back at its level")
-	var stop = tick(41100, [cue("launcher_close", "thrown", 0)])[0]
+	var stop = tick(41100, [cue("launcher_close", "used", 0)])[0]
 	ok(v.play(stop, 0.0, 1.0), "a stop request finds the ping's voice")
 	await create_timer(0.25).timeout
 	var still: int = 0
