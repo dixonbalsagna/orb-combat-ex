@@ -238,6 +238,13 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
   if (theirs) {
     check('Rendering capture hook has the same scenarios as sources.json', JSON.stringify(list(theirs)) === JSON.stringify(ids), JSON.stringify(list(theirs)));
     check('Rendering\'s capture hook has the same human and AI slots as flash_worst.gd', JSON.stringify(slots(theirs)) === JSON.stringify(slots(mine)), JSON.stringify([slots(theirs), slots(mine)]));
+    // the scripted presses: the same buttons on the same ticks in both (a layout change that moves a button is made in both; 2026-10-11 the signature became RT + B and the web clips played no signature)
+    const presses = (txt) => {
+      const m = txt.match(/func _?drive\(sc: String[\s\S]*?\n(?=func |## )/);
+      return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trim()).filter((l) => /^(_btn|_walk|_ready_forms|_stage_collapse|_to_the_city|for f in S\.fighters|f\.ki|S\.fighters\[)/.test(l)) : null;
+    };
+    const pm = presses(mine), pt = presses(theirs);
+    check("Rendering's capture hook presses the same buttons on the same ticks as flash_worst.gd", !!pm && !!pt && JSON.stringify(pm) === JSON.stringify(pt), JSON.stringify([pm && pm.length, pt && pt.length]));
   }
 }
 

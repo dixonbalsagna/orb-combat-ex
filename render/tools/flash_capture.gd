@@ -160,12 +160,16 @@ func drive(sc: String, t: int, S: SimState) -> void:
 			_walk(S, 1500.0)
 			for f in S.fighters:
 				f.ki = 100.0
-			_btn(0, "east", t % 30 < 2)
-			_btn(1, "east", t % 30 < 2)
+			# the signature is the power layer's B (arena layout: RT held, then B); a base B is the heavy since the three-strength brawl
+			_btn(0, "rt", true)
+			_btn(1, "rt", true)
+			_btn(0, "east", t % 30 < 12)
+			_btn(1, "east", t % 30 < 12)
 		"signature":    # player one firing the signature on a cycle against the AI
 			_walk(S, 1800.0)
 			S.fighters[0].ki = 100.0
-			_btn(0, "east", t % 90 < 2)
+			_btn(0, "rt", t % 90 < 60)
+			_btn(0, "east", t % 90 > 2 and t % 90 < 14)
 			_btn(0, "west", t % 90 > 40 and _tap(t, 6, 0))
 		"transform":    # AI against AI, the form made ready for both three times
 			_ready_forms(S, t, [60, 500, 1000])

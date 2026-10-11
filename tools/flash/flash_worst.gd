@@ -202,7 +202,7 @@ static func _worst_starts(ts: Array) -> int:
 # ------------------------------------------------------------------ input
 ## Humans play through pads (device 0 for slot 0, device 1 for slot 1) because that is the hub's two-human path: two players cannot both be on the keyboard until a
 ## second device has joined. A pad's first press claims the first free slot, so each is claimed by a harmless button in order. Buttons are the arena layout's:
-## west light, north heavy, east signature; the stick walks.
+## west light (X), north medium (Y), east heavy (B); the signature is RT held plus east; the stick walks.
 
 func _btn(dev: int, name: String, down: bool) -> void:
 	var k: String = "%d:%s" % [dev, name]
@@ -262,12 +262,16 @@ func _drive(sc: String, t: int, S: SimState) -> void:
 			_walk(S, 1500.0)
 			for f in S.fighters:
 				f.ki = 100.0
-			_btn(0, "east", t % 30 < 2)
-			_btn(1, "east", t % 30 < 2)
+			# the signature is the power layer's B (arena layout: RT held, then B); a base B is the heavy since the three-strength brawl
+			_btn(0, "rt", true)
+			_btn(1, "rt", true)
+			_btn(0, "east", t % 30 < 12)
+			_btn(1, "east", t % 30 < 12)
 		"signature":
 			_walk(S, 1800.0)
 			S.fighters[0].ki = 100.0
-			_btn(0, "east", t % 90 < 2)
+			_btn(0, "rt", t % 90 < 60)
+			_btn(0, "east", t % 90 > 2 and t % 90 < 14)
 			_btn(0, "west", t % 90 > 40 and _tap(t, 6, 0))
 		"transform":
 			_ready_forms(S, t, [60, 500, 1000])
