@@ -57,7 +57,7 @@ static func _row(S: SimState, f) -> Dictionary:
 	_ensure()
 	var h: int = 0
 	for p in DirAlchemy.window(S, f):
-		h += p & 1
+		h += ((p >> 11) & 1) if DirBrawl.on() else (p & 1)   # with three strengths only B is a heavy press: a medium counts with the lights
 	var rows = _rec.get("styles", STYLES)
 	# Section 20: the style goes by the share of heavies among the presses in the window, and Controls' classifier
 	# reads it (none is blur, up to its powerShare combo, over it power; a lone heavy is power).

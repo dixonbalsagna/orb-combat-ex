@@ -21,6 +21,7 @@ func _init() -> void:
 	_devices()
 	_preset_and_hold()
 	_disconnect()
+	_rumble()
 	_sim()
 	_determinism()
 	print("hub_test: %d checks, %d failed" % [checks, fails])
@@ -33,6 +34,65 @@ func _tick(hub: SimInputHub, slot: int, n: int = 1) -> SimIntent:
 		i = hub.intent(slot)
 		hub.consumed()
 	return i
+
+
+## hub.rumble_target: where a slot's rumble goes (read-only, for the host).
+func _rumble() -> void:
+	var hub := SimInputHub.new()
+	hub.set_humans(false, false)
+	ok(hub.rumble_target(0)["kind"] == "none" and hub.rumble_target(1)["kind"] == "none", "rumble: no human slot, nowhere to send (an AI slot)")
+	hub.set_humans(true, false)
+	hub.key("KeyJ", true)
+	hub.key("KeyJ", false)
+	_tick(hub, 0)
+	ok(hub.rumble_target(0) == {"kind": "kb", "id": -1} and hub.rumble_target(1)["kind"] == "none", "rumble: a keyboard player has a target of kind kb with no id (nothing to vibrate); the other slot is an AI")
+	hub.pad_button(7, "south", true)
+	hub.pad_button(7, "south", false)
+	hub.take_joins()
+	hub.set_humans(true, true)
+	_tick(hub, 1)
+	var t1: Dictionary = hub.rumble_target(1)
+	ok(t1["kind"] == "pad" and t1["id"] == 7, "rumble: a pad player's target is the pad's own device id (7)")
+	hub.pad_button(3, "south", true)
+	hub.pad_button(3, "south", false)
+	var ids: Array = []
+	for s in range(2):
+		var tt: Dictionary = hub.rumble_target(s)
+		if tt["kind"] == "pad":
+			ids.append(tt["id"])
+	ok(ids.has(7), "rumble: a second pad does not move player two's target")
+	hub.touch_down(1, 400.0, 300.0, "attack")
+	hub.touch_up(1)
+	var kinds: Array = [hub.rumble_target(0)["kind"], hub.rumble_target(1)["kind"]]
+	ok(kinds.has("pad") or kinds.has("touch") or kinds.has("kb"), "rumble: every slot answers with a known kind")
+	for s in range(2):
+		var r: Dictionary = hub.rumble_target(s)
+		ok(["pad", "touch", "kb", "none"].has(r["kind"]) and typeof(r["id"]) == TYPE_INT, "rumble: slot %d answers {kind, id} with an integer id" % s)
+	# Read-only: asking changes nothing in the intents.
+	var h1 := SimInputHub.new()
+	var h2 := SimInputHub.new()
+	for h in [h1, h2]:
+		h.set_humans(true, false)
+		h.pad_button(5, "west", true)
+	var same: bool = true
+	for k in range(40):
+		var a: int = SimIntent.pack(h1.intent(0))
+		h2.rumble_target(0)
+		h2.rumble_target(1)
+		var b: int = SimIntent.pack(h2.intent(0))
+		h1.consumed()
+		h2.consumed()
+		same = same and a == b
+	ok(same, "rumble: asking for the target changes nothing in the intents")
+	# A pad that goes away is no target.
+	var hp := SimInputHub.new()
+	hp.set_humans(true, false)
+	hp.pad_button(9, "south", true)
+	hp.pad_button(9, "south", false)
+	_tick(hp, 0)
+	ok(hp.rumble_target(0)["kind"] == "pad" and hp.rumble_target(0)["id"] == 9, "rumble: a pad slot points at its pad")
+	hp.pad_disconnected(9)
+	ok(hp.rumble_target(0)["kind"] != "pad" or hp.rumble_target(0)["id"] != 9, "rumble: and not at a pad that has gone")
 
 
 func _devices() -> void:

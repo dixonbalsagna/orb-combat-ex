@@ -63,17 +63,27 @@
           2,
           4
         ],
-        "enderShare": 0.3,
-        "rashHeavy": 1,
         "guardShare": 0.2,
         "guardTicks": [
           20,
           60
         ],
         "perfectMul": 0.3,
-        "heavyAfterClose": 0.2,
         "nudgeShare": 0.2,
-        "walkOut": 0.1
+        "walkOut": 0.1,
+        "mixMedium": 0.05,
+        "mixHeavy": 0.08,
+        "heavyIntoFlurry": 0.1,
+        "mediumIntoHeavy": 0.13,
+        "burst": 0.15,
+        "digIn": 0.18,
+        "giveGround": 0.05,
+        "follow": 0.08,
+        "launcher": 0.1,
+        "charge": 0.13,
+        "energy": 0.15,
+        "breakGuard": 0.18,
+        "tapGapMax": 14
       },
       "vsShooter": {
         "guardShare": 0,
@@ -127,17 +137,27 @@
           3,
           5
         ],
-        "enderShare": 0.45,
-        "rashHeavy": 0.58,
         "guardShare": 0.4,
         "guardTicks": [
           20,
           60
         ],
         "perfectMul": 0.15,
-        "heavyAfterClose": 0.6,
         "nudgeShare": 0.5,
-        "walkOut": 0.3
+        "walkOut": 0.3,
+        "mixMedium": 0.1,
+        "mixHeavy": 0.15,
+        "heavyIntoFlurry": 0.2,
+        "mediumIntoHeavy": 0.25,
+        "burst": 0.3,
+        "digIn": 0.35,
+        "giveGround": 0.1,
+        "follow": 0.15,
+        "launcher": 0.2,
+        "charge": 0.25,
+        "energy": 0.3,
+        "breakGuard": 0.35,
+        "tapGapMax": 14
       },
       "vsShooter": {
         "guardShare": 0,
@@ -191,17 +211,27 @@
           3,
           5
         ],
-        "enderShare": 0.6,
-        "rashHeavy": 0.1,
         "guardShare": 0.4,
         "guardTicks": [
           20,
           60
         ],
         "perfectMul": 0.5,
-        "heavyAfterClose": 0.9,
         "nudgeShare": 0.8,
-        "walkOut": 0.5
+        "walkOut": 0.5,
+        "mixMedium": 0.14,
+        "mixHeavy": 0.21,
+        "heavyIntoFlurry": 0.28,
+        "mediumIntoHeavy": 0.35,
+        "burst": 0.42,
+        "digIn": 0.49,
+        "giveGround": 0.14,
+        "follow": 0.21,
+        "launcher": 0.28,
+        "charge": 0.35,
+        "energy": 0.42,
+        "breakGuard": 0.49,
+        "tapGapMax": 14
       },
       "vsShooter": {
         "guardShare": 0,
@@ -253,5 +283,8 @@
     },
     "swayRate": 5,
     "evadeBackoff": 500
+  },
+  "digInBy": {
+    "FIXTURE_VILLAIN": 0.5
   }
 }

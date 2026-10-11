@@ -33,8 +33,15 @@ extends RefCounted
 ##    gesture reads as light until holdStart, then as heavy), so the sim can tell a tap from a hold and see its release;
 ##  - escape is an edge from its own control (provisional: R3, a key, a swipe up on Guard on touch);
 ##  - a press of an attack button within debounce ticks of its own release is the same press (worn pad contacts);
-##  - a preset whose attack control has a hold gesture (the Simple layouts) fires its light on release and a heavy at
-##    holdStart, because today's director cannot upgrade a request it has already started (touch-bridge.md).
+##  - a preset whose attack control has a hold gesture (the Simple layouts): THE HOLD IS THE WIND-UP (brawl second pass section 2,
+##    docs/controls/windup-read.md). One button carries the three strengths and the blow goes when it is let go, at the weight the
+##    hold has reached, counted in LIVE ticks (the steps the sim took: `consumed()` is called only for those, so a hit freeze does not
+##    count): under read.simpleMediumStart (12) the light (an `light` edge), from 12 the medium (a `heavy` edge), from
+##    read.simpleHeavyStart (28) the heavy (a `signature` edge, B's cell). While it is held the level says which weight it has
+##    reached: lightHeld, then heavyHeld, then sigHeld;
+##  - the slow buttons (Y, B, A) have two accessibility settings, layout only: a LATCHED CHARGE (a press starts the wind-up and its level
+##    stays on; the next press of that button lets it go and sends no edge) and CHARGES OFF (the slow buttons report held only on the
+##    press tick, so every press is a tap). Neither applies to the Simple layouts, whose holds are weights.
 
 ## The held-attack bridge: true while the director starts an exchange the moment it gets a request. Encounter's queue
 ## (I2 later) turns it off, and a light then fires on press and the hold upgrades it.
@@ -92,6 +99,15 @@ var mode_style: String = "hold"
 
 # numbers, from data
 var hold_start: int
+var simple_medium_start: int = 12
+var simple_heavy_start: int = 28
+var live: int = 0                  # the live steps the sim took (consumed() calls): the clock a hit freeze stops
+var latch_charge: bool = false     # the slow buttons: a press latches the charge, the next press lets it go
+var charges_off: bool = false      # the slow buttons never report held beyond the press tick
+var _wound: Dictionary = {}        # action -> true for an edge the Simple attack made on its release: the blow is already wound, its level is off
+var _latched: Dictionary = {}      # action -> true while its charge is latched on
+var _latch_ctl: Dictionary = {}    # action -> the control that latched it
+var _latch_swallow: Dictionary = {}   # control -> true: its press let a latch go, so its release does nothing
 var transform_confirm: int
 var chord_window: int
 var lunge_ticks: int
@@ -108,6 +124,8 @@ var trig_off: float
 
 func _init(p_preset: Dictionary = {}) -> void:
 	hold_start = SimInputData.ti(["tapHold", "holdStart"], 12)
+	simple_medium_start = SimInputData.ti(["read", "simpleMediumStart"], 12)
+	simple_heavy_start = SimInputData.ti(["read", "simpleHeavyStart"], 28)
 	transform_confirm = SimInputData.ti(["tapHold", "transformConfirm"], 30)
 	chord_window = SimInputData.ti(["tapHold", "chordWindow"], 6)
 	lunge_ticks = SimInputData.ti(["dodge", "lungeTicks"], 12)
@@ -192,6 +210,10 @@ func release_all() -> void:
 	_tf_t0.clear()
 	_tf_sent.clear()
 	_atk.clear()
+	_wound.clear()
+	_latched.clear()
+	_latch_ctl.clear()
+	_latch_swallow.clear()
 	_edge_t0 = -1
 	_up_tick.clear()
 	_last_as.clear()
@@ -213,6 +235,40 @@ func release_all() -> void:
 func set_trigger_threshold(on: float) -> void:
 	trig_on = clampf(on, 0.2, 0.6)
 	trig_off = maxf(0.05, trig_on - 0.1)
+
+
+## Whether the two slow-button settings are in force: never on a Simple preset, whose attack hold is a weight, not a charge.
+func _latch_on() -> bool:
+	return latch_charge and not charges_off and _hold_attack.is_empty()
+
+
+func _charges_off_on() -> bool:
+	return charges_off and _hold_attack.is_empty()
+
+
+## Latched charge (accessibility): on a slow button (Y, B, A) a press starts the wind-up and its level stays on after the finger
+## leaves; the next press of that button lets it go (a release, no new edge). Turning it off lets any latched charge go.
+func set_latch_charge(on: bool) -> void:
+	if on == latch_charge:
+		return
+	latch_charge = on
+	_latched.clear()
+	_latch_ctl.clear()
+	_latch_swallow.clear()
+	for a in ["heavy", "signature", "context"]:
+		for c in _held.get(a, []).duplicate():
+			if not _down.get(c, false):
+				_hold_del(a, c)
+
+
+## Charges off (accessibility): the slow buttons report held only on their press tick, so every press is a tap and never a charge.
+func set_charges_off(on: bool) -> void:
+	if on == charges_off:
+		return
+	charges_off = on
+	_latched.clear()
+	_latch_ctl.clear()
+	_latch_swallow.clear()
 
 
 ## Switch the one-shot stance arming on or off. Switching it off disarms.
@@ -320,7 +376,7 @@ func press(c: String) -> bool:
 						continue   # a hold-attack control fires its light on release (or a heavy at holdStart)
 					_base_press(str(b["action"]), c)
 			if _hold_attack.has(c):
-				_atk[c] = {"t0": tick, "fired": false}
+				_atk[c] = {"t0": live, "fired": false}
 	_check_chords(c)
 	return true
 
@@ -336,8 +392,19 @@ func release(c: String) -> void:
 			if b["layer"] == null and b["gesture"] == null:
 				_base_release(str(b["action"]), c)
 		if _atk.has(c):
-			if not _atk[c]["fired"]:
-				_aedge["light"] = true   # a tap on a hold-attack control, taken on release (the bridge)
+			# The Simple attack: the hold was the wind-up, and the blow goes now at the weight it reached, in live ticks.
+			# The edge carries its level OFF (`_wound`): the hold was the wind-up and it is over, which is how the director tells this
+			# blow from a press of the same cell (Y's `signature` edge always has its level on, on the tick of its press).
+			var held: int = live - int(_atk[c]["t0"])
+			if held >= simple_heavy_start:
+				_aedge["signature"] = true
+				_wound["signature"] = true
+			elif held >= simple_medium_start:
+				_aedge["heavy"] = true
+				_wound["heavy"] = true
+			else:
+				_aedge["light"] = true
+				_wound["light"] = true
 			_atk.erase(c)
 	elif _as.get(c, "") == "layer" and _single.has(c):
 		for b in _single[c]:
@@ -406,11 +473,18 @@ func _base_press(action: String, c: String) -> void:
 			_aedge["mode"] = true
 			_mode_t0 = tick
 			_stance_press_t[SimStance.ENERGY] = tick
-		"light", "heavy":
+		"light":
 			_hold_add(action, c)
 			_aedge[action] = true
-		"signature", "context":
-			_hold_add(action, c)   # sigHeld and contextHeld
+		"heavy", "signature", "context":   # the slow buttons Y, B and A (sigHeld and contextHeld are their levels)
+			if _latch_on() and _latched.get(action, false):
+				# The press that lets a latched charge go: the level falls and no edge is sent (the director reads a release).
+				_latched[action] = false
+				_hold_del(action, str(_latch_ctl.get(action, c)))
+				_latch_swallow[c] = true
+				return
+			if not _charges_off_on():   # charges off: on for the press tick only (the edge), so a press is always a tap
+				_hold_add(action, c)
 			_aedge[action] = true
 		"escape":
 			_aedge[action] = true
@@ -424,7 +498,16 @@ func _base_release(action: String, c: String) -> void:
 		"dodge":
 			_hold_del(action, c)
 			_oneshot_tap(SimStance.MANOEUVRE, c)
-		"light", "heavy", "signature", "context":
+		"light":
+			_hold_del(action, c)
+		"heavy", "signature", "context":
+			if _latch_swallow.get(c, false):
+				_latch_swallow.erase(c)   # the press that let a latched charge go: its release does nothing
+				return
+			if _latch_on():
+				_latched[action] = true   # the charge stays on after the finger leaves, until this button is pressed again
+				_latch_ctl[action] = c
+				return
 			_hold_del(action, c)
 		"mode":
 			_hold_del("mode", c)
@@ -517,12 +600,6 @@ func build() -> SimIntent:
 	elif _keys_move.size() == 4:
 		i.my = (1.0 if _down.get(_keys_move[0], false) else 0.0) - (1.0 if _down.get(_keys_move[2], false) else 0.0)
 		i.mx = (1.0 if _down.get(_keys_move[3], false) else 0.0) - (1.0 if _down.get(_keys_move[1], false) else 0.0)
-	# Held attack controls (the Simple layouts): a heavy at holdStart.
-	for c in _atk:
-		var a: Dictionary = _atk[c]
-		if not a["fired"] and tick - int(a["t0"]) >= hold_start:
-			a["fired"] = true
-			_aedge["heavy"] = true
 	# The transform: a chord counted from when both were down, or a single control held.
 	var tf: bool = false
 	for ch in _chords:
@@ -556,16 +633,23 @@ func build() -> SimIntent:
 	i.heavy = _aedge.has("heavy")
 	i.sig = _aedge.has("signature")
 	i.context = _aedge.has("context")
-	i.sigHeld = _is_down("signature") or _aedge.has("signature")        # B held (the signature's held reading), on any layer
+	i.sigHeld = _is_down("signature") or (_aedge.has("signature") and not _wound.has("signature"))        # B held (the signature's held reading), on any layer
 	i.contextHeld = _is_down("context") or _aedge.has("context")        # A held (the channel, the zip tackle)
+
 	i.escape = _aedge.has("escape")
 	i.special = _special_edge
 	# The attack levels: a press shorter than a tick still counts for its tick; a hold-gesture control reads as light until
 	# holdStart and as heavy from then on (the upgrade).
-	var l_held: bool = _is_down("light") or _aedge.has("light")
-	var h_held: bool = _is_down("heavy") or _aedge.has("heavy")
+	var l_held: bool = _is_down("light") or (_aedge.has("light") and not _wound.has("light"))
+	var h_held: bool = _is_down("heavy") or (_aedge.has("heavy") and not _wound.has("heavy"))
 	for c in _atk:
-		if tick - int(_atk[c]["t0"]) >= hold_start:
+		# The Simple attack's level is the weight the hold has reached (live ticks): light, then medium (heavyHeld), then heavy (sigHeld).
+		var hl: int = live - int(_atk[c]["t0"])
+		if hl >= simple_heavy_start:
+			h_held = false
+			l_held = false
+			i.sigHeld = true
+		elif hl >= simple_medium_start:
 			h_held = true
 			l_held = false
 		else:
@@ -647,7 +731,7 @@ func transform_hold() -> float:
 ## A pausing set piece froze the sim: whatever was pressed meanwhile is dropped (call each frozen tick, or once when it
 ## ends) so a pile of presses is not released at once.
 func drop_edges() -> void:
-	consumed()
+	_clear_edges()
 
 
 ## The pause ended: edges are dropped and every hold is read again as if it began now, so a sprint, a channel or the
@@ -665,11 +749,18 @@ func resume() -> void:
 		if ch["active"]:
 			ch["since"] = tick
 	for c in _atk:
-		_atk[c]["t0"] = tick
+		_atk[c]["t0"] = live
 
 
 ## SimCore.step took the intent (it does not on a hit-stop tick): the edges are spent.
 func consumed() -> void:
+	live += 1
+	_clear_edges()
+
+
+## The edges are spent (a step took them, or a pause dropped them). Only a step that was taken advances `live`.
+func _clear_edges() -> void:
+	_wound.clear()
 	_aedge.clear()
 	_special_edge = 0
 	_edge_t0 = -1

@@ -16,7 +16,8 @@
     "answerTicks",
     "beamLook",
     "mineMinKi",
-    "stance"
+    "stance",
+    "digInBy"
   ],
   "properties": {
     "schema": {
@@ -326,14 +327,24 @@
               "required": [
                 "tapGap",
                 "string",
-                "enderShare",
-                "rashHeavy",
                 "guardShare",
                 "guardTicks",
                 "perfectMul",
-                "heavyAfterClose",
                 "nudgeShare",
-                "walkOut"
+                "walkOut",
+                "mixMedium",
+                "mixHeavy",
+                "heavyIntoFlurry",
+                "mediumIntoHeavy",
+                "burst",
+                "digIn",
+                "giveGround",
+                "follow",
+                "launcher",
+                "charge",
+                "energy",
+                "breakGuard",
+                "tapGapMax"
               ],
               "properties": {
                 "tapGap": {
@@ -350,18 +361,6 @@
                     "minimum": 1
                   },
                   "description": "The length of the AI's string, in blows: [lo, hi]."
-                },
-                "enderShare": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance a string ends on its ender."
-                },
-                "rashHeavy": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance of a rash heavy."
                 },
                 "guardShare": {
                   "type": "number",
@@ -384,12 +383,6 @@
                   "minimum": 0,
                   "description": "The multiplier on its perfect-block chance in a brawl."
                 },
-                "heavyAfterClose": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance of a heavy right after a close."
-                },
                 "nudgeShare": {
                   "type": "number",
                   "minimum": 0,
@@ -401,6 +394,83 @@
                   "minimum": 0,
                   "maximum": 1,
                   "description": "The chance the AI walks out of a brawl."
+                },
+                "mixMedium": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mixMedium."
+                },
+                "mixHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mixHeavy."
+                },
+                "heavyIntoFlurry": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for heavyIntoFlurry."
+                },
+                "mediumIntoHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mediumIntoHeavy."
+                },
+                "burst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for burst."
+                },
+                "digIn": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for digIn."
+                },
+                "giveGround": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for giveGround."
+                },
+                "follow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for follow."
+                },
+                "launcher": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for launcher."
+                },
+                "charge": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for charge."
+                },
+                "energy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for energy."
+                },
+                "breakGuard": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for breakGuard."
+                },
+                "tapGapMax": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The slowest gap, in ticks, between the AI taps in a brawl (at least tapGap: rule brawl-order). Added 2026-10-11 on the EP request."
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -691,14 +761,24 @@
               "required": [
                 "tapGap",
                 "string",
-                "enderShare",
-                "rashHeavy",
                 "guardShare",
                 "guardTicks",
                 "perfectMul",
-                "heavyAfterClose",
                 "nudgeShare",
-                "walkOut"
+                "walkOut",
+                "mixMedium",
+                "mixHeavy",
+                "heavyIntoFlurry",
+                "mediumIntoHeavy",
+                "burst",
+                "digIn",
+                "giveGround",
+                "follow",
+                "launcher",
+                "charge",
+                "energy",
+                "breakGuard",
+                "tapGapMax"
               ],
               "properties": {
                 "tapGap": {
@@ -715,18 +795,6 @@
                     "minimum": 1
                   },
                   "description": "The length of the AI's string, in blows: [lo, hi]."
-                },
-                "enderShare": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance a string ends on its ender."
-                },
-                "rashHeavy": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance of a rash heavy."
                 },
                 "guardShare": {
                   "type": "number",
@@ -749,12 +817,6 @@
                   "minimum": 0,
                   "description": "The multiplier on its perfect-block chance in a brawl."
                 },
-                "heavyAfterClose": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance of a heavy right after a close."
-                },
                 "nudgeShare": {
                   "type": "number",
                   "minimum": 0,
@@ -766,6 +828,83 @@
                   "minimum": 0,
                   "maximum": 1,
                   "description": "The chance the AI walks out of a brawl."
+                },
+                "mixMedium": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mixMedium."
+                },
+                "mixHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mixHeavy."
+                },
+                "heavyIntoFlurry": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for heavyIntoFlurry."
+                },
+                "mediumIntoHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mediumIntoHeavy."
+                },
+                "burst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for burst."
+                },
+                "digIn": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for digIn."
+                },
+                "giveGround": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for giveGround."
+                },
+                "follow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for follow."
+                },
+                "launcher": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for launcher."
+                },
+                "charge": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for charge."
+                },
+                "energy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for energy."
+                },
+                "breakGuard": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for breakGuard."
+                },
+                "tapGapMax": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The slowest gap, in ticks, between the AI taps in a brawl (at least tapGap: rule brawl-order). Added 2026-10-11 on the EP request."
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1056,14 +1195,24 @@
               "required": [
                 "tapGap",
                 "string",
-                "enderShare",
-                "rashHeavy",
                 "guardShare",
                 "guardTicks",
                 "perfectMul",
-                "heavyAfterClose",
                 "nudgeShare",
-                "walkOut"
+                "walkOut",
+                "mixMedium",
+                "mixHeavy",
+                "heavyIntoFlurry",
+                "mediumIntoHeavy",
+                "burst",
+                "digIn",
+                "giveGround",
+                "follow",
+                "launcher",
+                "charge",
+                "energy",
+                "breakGuard",
+                "tapGapMax"
               ],
               "properties": {
                 "tapGap": {
@@ -1080,18 +1229,6 @@
                     "minimum": 1
                   },
                   "description": "The length of the AI's string, in blows: [lo, hi]."
-                },
-                "enderShare": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance a string ends on its ender."
-                },
-                "rashHeavy": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance of a rash heavy."
                 },
                 "guardShare": {
                   "type": "number",
@@ -1114,12 +1251,6 @@
                   "minimum": 0,
                   "description": "The multiplier on its perfect-block chance in a brawl."
                 },
-                "heavyAfterClose": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1,
-                  "description": "The chance of a heavy right after a close."
-                },
                 "nudgeShare": {
                   "type": "number",
                   "minimum": 0,
@@ -1131,6 +1262,83 @@
                   "minimum": 0,
                   "maximum": 1,
                   "description": "The chance the AI walks out of a brawl."
+                },
+                "mixMedium": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mixMedium."
+                },
+                "mixHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mixHeavy."
+                },
+                "heavyIntoFlurry": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for heavyIntoFlurry."
+                },
+                "mediumIntoHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for mediumIntoHeavy."
+                },
+                "burst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for burst."
+                },
+                "digIn": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for digIn."
+                },
+                "giveGround": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for giveGround."
+                },
+                "follow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for follow."
+                },
+                "launcher": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for launcher."
+                },
+                "charge": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for charge."
+                },
+                "energy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for energy."
+                },
+                "breakGuard": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The AI's share for breakGuard."
+                },
+                "tapGapMax": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The slowest gap, in ticks, between the AI taps in a brawl (at least tapGap: rule brawl-order). Added 2026-10-11 on the EP request."
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1445,6 +1653,20 @@
       },
       "description": "The AI's stance choice (docs/director/brawl-plan.md section 3).",
       "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "digInBy": {
+      "type": "object",
+      "description": "Per fighter, how far the AI digs in against that fighter (a number 0 or more). Every key is a fighter of data/fighters/roster.json (rule ai-digin-fighter).",
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Z][A-Z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0
+      },
       "patternProperties": {
         "^_": true
       }

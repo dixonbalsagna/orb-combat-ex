@@ -23,7 +23,13 @@ func _init() -> void:
 	_log()
 	_hold()
 	_cells()
+	_windup()
 	_zip()
+	_burst()
+	_pairs()
+	_flurries()
+	_aread()
+	_repress()
 	_rhythm()
 	_mash()
 	_taps_and_stale()
@@ -75,7 +81,7 @@ func _log() -> void:
 	ok(log.size() == 20, "log: 25 presses leave the last 20")
 	ok(int(log[0]["down"]) == 150 and int(log[19]["down"]) == 340, "log: oldest first, the oldest dropped")
 	SimPressRead.release(log, SimPressRead.LIGHT, 345)
-	ok(int(log[19]["up"]) == 345 and int(log[18]["up"]) == -1, "log: a release closes the latest held entry of its kind")
+	ok(int(log[19]["up"]) == 345 and int(log[18]["up"]) == 340, "log: a release closes the latest held entry of its kind (and a fresh press lets the one before go, at the point it was read)")
 	var l2: Array = []
 	SimPressRead.push(l2, SimPressRead.LIGHT, 0, 10)
 	SimPressRead.push(l2, SimPressRead.HEAVY, 0, 12)
@@ -115,12 +121,14 @@ func _one(kind: int, stance: int, held: int) -> Array:
 	return log
 
 
-## The hold is per cell (Game Design, 2026-10-05): X 8, Y 16, B 20, B in the charging stance 45, A 18.
+## The hold of each cell (brawl second pass): X the burst's start 8; Y 16, B 32 in the martial stance, A 16 (the wind-up plus the grace);
+## a stance's own signature (B outside the martial stance) the game's hold.
 func _cells() -> void:
 	var p: Dictionary = SimPressRead.params()
-	ok(p["holdLight"] == 8 and p["holdHeavy"] == 16 and p["holdSig"] == 20 and p["holdSigCharging"] == 45 and p["holdContext"] == 18, "cells: the data's five holds")
-	var cells: Array = [[SimPressRead.LIGHT, 0, 8, "X"], [SimPressRead.HEAVY, 0, 16, "Y"], [SimPressRead.SIG, 0, 20, "B"], [SimPressRead.SIG, 8, 20, "B in manoeuvre"], [SimPressRead.SIG, 2, 20, "B in energy"],
-		[SimPressRead.SIG, 4, 45, "B in charging"], [SimPressRead.CONTEXT, 0, 18, "A"]]
+	ok(p["burstStart"] == 16 and p["windupMedium"] == 12 and p["windupHeavy"] == 28 and p["windupContext"] == 12 and p["windupGrace"] == 4, "cells: the data's wind-ups, the grace and the burst's start")
+	ok(not p.has("holdHeavy") and not p.has("holdSig") and not p.has("holdSigCharging") and not p.has("holdContext") and not p.has("holdLight"), "cells: the old per-cell holds are retired")
+	var cells: Array = [[SimPressRead.LIGHT, 0, 8, "X"], [SimPressRead.HEAVY, 0, 16, "Y"], [SimPressRead.SIG, 0, 32, "B"], [SimPressRead.SIG, 8, 12, "B in manoeuvre"], [SimPressRead.SIG, 2, 12, "B in energy"],
+		[SimPressRead.SIG, 4, 12, "B in charging"], [SimPressRead.CONTEXT, 0, 16, "A"], [SimPressRead.HEAVY, 2, 16, "Y in energy (the blast)"]]
 	for c in cells:
 		var below: Dictionary = SimPressRead.classify(_one(c[0], c[1], -1), 100 + int(c[2]) - 1)
 		var live: Dictionary = SimPressRead.classify(_one(c[0], c[1], -1), 100 + int(c[2]))
@@ -128,7 +136,7 @@ func _cells() -> void:
 		ok(below["style"] != "hold", "cells: %s down %d ticks is not yet a hold" % [c[3], int(c[2]) - 1])
 		ok(live["style"] == "hold", "cells: %s still down at %d ticks is a hold, live" % [c[3], c[2]])
 		ok(over["style"] != "hold", "cells: %s let go is no longer a hold" % c[3])
-	ok(SimPressRead.hold_ticks_for({"kind": SimPressRead.SIG, "stance": 4}, p) == 45 and SimPressRead.hold_ticks_for({"kind": SimPressRead.SIG}, p) == 20, "cells: an entry with no stance field reads as martial")
+	ok(SimPressRead.hold_ticks_for({"kind": SimPressRead.SIG, "stance": 4}, p) == 12 and SimPressRead.hold_ticks_for({"kind": SimPressRead.SIG}, p) == 32, "cells: an entry with no stance field reads as martial")
 	ok(SimPressRead.hold_ticks_for({"kind": SimPressRead.HEAVY}, p, {"hold_ticks": 30}) == 30, "cells: a caller can set one number for every cell")
 	# The CONTEXT kind has its own log slot and mix count, and does not stand in for a blow.
 	var l: Array = []
@@ -143,6 +151,302 @@ func _cells() -> void:
 	ok(int(s[0]["stance"]) == 12, "stance: the stance mask the press was made in is on the entry")
 
 
+## A one-press log with live ticks: down at tick 100 (live `ld`), released `held` live ticks later (still down if held < 0).
+func _live(kind: int, stance: int, held: int, ld: int = 50) -> Array:
+	var log: Array = []
+	SimPressRead.push(log, kind, 0, 100, NB, -1, stance, ld)
+	if held >= 0:
+		SimPressRead.release(log, kind, 100 + held, ld + held)
+	return log
+
+
+## windup_for, decision_for, charge_read and tap_throw_at (docs/controls/windup-read.md section 2).
+func _windup() -> void:
+	var p: Dictionary = SimPressRead.params()
+	ok(SimPressRead.windup_for({"kind": SimPressRead.HEAVY}, p) == 12 and SimPressRead.windup_for({"kind": SimPressRead.SIG}, p) == 28 and SimPressRead.windup_for({"kind": SimPressRead.CONTEXT}, p) == 12, "windup: Y 12, B 28, A 12")
+	ok(SimPressRead.windup_for({"kind": SimPressRead.LIGHT}, p) == -1 and SimPressRead.windup_for({"kind": SimPressRead.PAIR}, p) == -1, "windup: X and a pair have none")
+	ok(SimPressRead.windup_for({"kind": SimPressRead.SIG, "stance": 1}, p) == -1 and SimPressRead.windup_for({"kind": SimPressRead.SIG, "stance": 4}, p) == -1, "windup: B outside the martial stance is the stance's own signature, no wind-up here")
+	ok(SimPressRead.windup_for({"kind": SimPressRead.HEAVY, "stance": 2}, p) == 12 and SimPressRead.windup_for({"kind": SimPressRead.HEAVY, "stance": 4}, p) == -1, "windup: Y keeps its 12 in the energy stance (the blast), none under RT")
+	ok(SimPressRead.decision_for({"kind": SimPressRead.HEAVY}, p) == 16 and SimPressRead.decision_for({"kind": SimPressRead.SIG}, p) == 32 and SimPressRead.decision_for({"kind": SimPressRead.CONTEXT}, p) == 16 and SimPressRead.decision_for({"kind": SimPressRead.LIGHT}, p) == -1, "decision: the wind-up plus the grace (16, 32, 16)")
+	# Y: winding before 16, charge at 16 still down; a release at 16 or before is a tap, after it a charge.
+	var y: int = SimPressRead.HEAVY
+	ok(SimPressRead.charge_read(_live(y, 0, -1)[0], 50 + 5) == "winding", "charge_read: Y down 5 live ticks is winding")
+	ok(SimPressRead.charge_read(_live(y, 0, -1)[0], 50 + 15) == "winding" and SimPressRead.charge_read(_live(y, 0, -1)[0], 50 + 16) == "charge", "charge_read: still down at 16 live ticks it is the charge")
+	ok(SimPressRead.charge_read(_live(y, 0, 3)[0], 200) == "tap" and SimPressRead.charge_read(_live(y, 0, 12)[0], 200) == "tap" and SimPressRead.charge_read(_live(y, 0, 16)[0], 200) == "tap", "charge_read: a release at 3, 12 or 16 (inside the grace) is a tap")
+	ok(SimPressRead.charge_read(_live(y, 0, 17)[0], 200) == "charge", "charge_read: a release at 17 is a charge's release")
+	# B and A.
+	ok(SimPressRead.charge_read(_live(SimPressRead.SIG, 0, 32)[0], 200) == "tap" and SimPressRead.charge_read(_live(SimPressRead.SIG, 0, 33)[0], 200) == "charge" and SimPressRead.charge_read(_live(SimPressRead.SIG, 0, -1)[0], 50 + 32) == "charge", "charge_read: B decides at 32")
+	ok(SimPressRead.charge_read(_live(SimPressRead.CONTEXT, 0, 16)[0], 200) == "tap" and SimPressRead.charge_read(_live(SimPressRead.CONTEXT, 0, -1)[0], 50 + 16) == "charge", "charge_read: A decides at 16")
+	ok(SimPressRead.charge_read(_live(SimPressRead.LIGHT, 0, 30)[0], 200) == "none" and SimPressRead.charge_read(_live(SimPressRead.SIG, 4, 30)[0], 200) == "none", "charge_read: X, and a stance's signature, have no wind-up read")
+	# The live clock, not the real one: a freeze of 9 real ticks between the press and the release adds nothing.
+	var f: Array = []
+	SimPressRead.push(f, y, 0, 100, NB, -1, 0, 50)
+	SimPressRead.release(f, y, 100 + 25, 50 + 14)   # 25 real ticks down, 14 live
+	ok(SimPressRead.charge_read(f[0], 300) == "tap", "charge_read: a release made after a 11-tick freeze is read at its live point (14 of 16: a tap)")
+	var g: Array = []
+	SimPressRead.push(g, y, 0, 100, NB, -1, 0, 50)
+	ok(SimPressRead.charge_read(g[0], 50 + 15) == "winding", "charge_read: still down at 15 live ticks, however long the real clock says")
+	# Without live stamps the real ticks stand in.
+	ok(SimPressRead.charge_read(_one(y, 0, 3)[0], 500) == "tap" and SimPressRead.charge_read(_one(y, 0, 20)[0], 500) == "charge", "charge_read: no live stamps, the real ticks stand in")
+	# tap_throw_at: the wind-up's end, or the release if later (inside the grace).
+	ok(SimPressRead.tap_throw_at(_live(y, 0, 3)[0]) == 50 + 12, "tap_throw_at: an early tap's blow lands when the wind-up ends (live 62)")
+	ok(SimPressRead.tap_throw_at(_live(y, 0, 14)[0]) == 50 + 14, "tap_throw_at: a release in the grace goes at once, at the release (live 64)")
+	ok(SimPressRead.tap_throw_at(_live(y, 0, 17)[0]) == -1 and SimPressRead.tap_throw_at(_live(y, 0, -1)[0]) == -1, "tap_throw_at: not a tap, no throw tick")
+	ok(SimPressRead.tap_throw_at(_live(SimPressRead.SIG, 0, 5)[0]) == 50 + 28, "tap_throw_at: B's tap lands at 28")
+
+
+func _burst() -> void:
+	var x: int = SimPressRead.LIGHT
+	var b0: Dictionary = SimPressRead.burst_read(_live(x, 0, -1)[0], 50 + 15)
+	ok(not b0["ready"] and b0["held"] == 15 and b0["stance"] == 0, "burst: down 15 live ticks, not yet (a held X is one light and a 10-tick set until 16)")
+	var b1: Dictionary = SimPressRead.burst_read(_live(x, 0, -1)[0], 50 + 16)
+	ok(b1["ready"] and b1["since"] == 0, "burst: at 16 live ticks the burst is on")
+	ok(SimPressRead.burst_read(_live(x, 0, -1)[0], 50 + 20)["since"] == 4, "burst: it counts the live ticks past its start")
+	ok(not SimPressRead.burst_read(_live(x, 0, 30)[0], 500)["ready"], "burst: letting go ends it")
+	ok(SimPressRead.burst_read(_live(x, 2, -1)[0], 50 + 10)["stance"] == 2, "burst: the stance is reported (the director rules a held X in the energy stance)")
+	ok(not SimPressRead.burst_read(_live(SimPressRead.HEAVY, 0, -1)[0], 50 + 40)["ready"], "burst: only X has one")
+	# The burst's own lights are the director's: nothing here pushes them. A real second press afterwards is an ordinary press.
+	var log: Array = _live(x, 0, -1)
+	ok(log.size() == 1, "burst: reading it adds nothing to the log")
+	var c: Dictionary = SimPressRead.classify(log, 100 + 20)
+	ok(c["style"] == "hold", "burst: the classifier calls a held X a hold, as the alchemist always did")
+
+
+## pair_read, pair_commit (docs/controls/q19-input.md section 2; brawl second pass section 6).
+func _pairs() -> void:
+	var xk: int = SimPressRead.LIGHT
+	var yk: int = SimPressRead.HEAVY
+	var bk: int = SimPressRead.SIG
+	var ak: int = SimPressRead.CONTEXT
+	var p: Dictionary = SimPressRead.params()
+	ok(p["pairWindow"] == 3 and p["pairFresh"] == 8, "pairs: the window 3 and the freshness 8 are data")
+	# The four pairs, either order, in the same build (gap 0) and up to the window.
+	var cases: Array = [[xk, yk, "xy"], [xk, ak, "xa"], [yk, bk, "yb"], [ak, bk, "ab"]]
+	for c in cases:
+		for gap in [0, 1, 2, 3]:
+			var fwd: Array = []
+			SimPressRead.push(fwd, c[0], 0, 100)
+			SimPressRead.push(fwd, c[1], 0, 100 + gap)
+			var r1: Dictionary = SimPressRead.pair_read(fwd)
+			ok(r1.get("pair", "") == c[2] and r1["first"] == c[0] and r1["second"] == c[1] and r1["keep_light"] == (c[0] == xk), "pairs: %s forward at gap %d" % [c[2], gap])
+			var back: Array = []
+			SimPressRead.push(back, c[1], 0, 100)
+			SimPressRead.push(back, c[0], 0, 100 + gap)
+			var r2: Dictionary = SimPressRead.pair_read(back)
+			ok(r2.get("pair", "") == c[2] and r2["keep_light"] == (c[1] == xk), "pairs: %s the other way at gap %d (a light pressed first is the one kept)" % [c[2], gap])
+	# Outside the window, not a pair.
+	var late: Array = []
+	SimPressRead.push(late, xk, 0, 100)
+	SimPressRead.push(late, yk, 0, 104)
+	ok(SimPressRead.pair_read(late).is_empty(), "pairs: 4 ticks apart is two presses")
+	var assist: Dictionary = SimPressRead.pair_read(late, {"assist": true})
+	ok(assist.get("pair", "") == "xy", "pairs: the assist setting doubles the window to 6")
+	var very_late: Array = []
+	SimPressRead.push(very_late, xk, 0, 100)
+	SimPressRead.push(very_late, yk, 0, 107)
+	ok(SimPressRead.pair_read(very_late, {"assist": true}).is_empty(), "pairs: 7 apart is two presses even with the assist")
+	# The cross-pad pairs are not pairs.
+	var xb: Array = []
+	SimPressRead.push(xb, xk, 0, 100)
+	SimPressRead.push(xb, bk, 0, 101)
+	var ya: Array = []
+	SimPressRead.push(ya, yk, 0, 100)
+	SimPressRead.push(ya, ak, 0, 101)
+	ok(SimPressRead.pair_read(xb).is_empty() and SimPressRead.pair_read(ya).is_empty(), "pairs: X+B and Y+A cross the pad and are never read")
+	var same: Array = []
+	SimPressRead.push(same, xk, 0, 100)
+	SimPressRead.push(same, xk, 0, 101)
+	ok(SimPressRead.pair_read(same).is_empty() and SimPressRead.pair_read([]).is_empty() and SimPressRead.pair_read(_one(xk, 0, 3)).is_empty(), "pairs: one button twice, an empty log and a single press are no pair")
+	# Freshness: a button pressed in the 8 ticks before is a mash, not a pair.
+	var mash: Array = []
+	SimPressRead.push(mash, xk, 0, 94)
+	SimPressRead.push(mash, xk, 0, 100)
+	SimPressRead.push(mash, yk, 0, 102)
+	ok(SimPressRead.pair_read(mash).is_empty(), "pairs: an X pressed 6 ticks before is a mash: the Y is not paired with the next X")
+	var mash2: Array = []
+	SimPressRead.push(mash2, xk, 0, 100)
+	SimPressRead.push(mash2, yk, 0, 106)
+	SimPressRead.push(mash2, xk, 0, 108)
+	ok(SimPressRead.pair_read(mash2).is_empty(), "pairs: Y then X 2 ticks apart after a Y 2 ticks before: not fresh")
+	var ok_fresh: Array = []
+	SimPressRead.push(ok_fresh, xk, 0, 80)
+	SimPressRead.push(ok_fresh, yk, 0, 100)
+	SimPressRead.push(ok_fresh, xk, 0, 101)
+	ok(SimPressRead.pair_read(ok_fresh).get("pair", "") == "xy", "pairs: presses 20 ticks before are fresh: a pair")
+	var ab_other: Array = []
+	SimPressRead.push(ab_other, ak, 0, 95)   # an A is not part of an X+Y pair
+	SimPressRead.push(ab_other, xk, 0, 100)
+	SimPressRead.push(ab_other, yk, 0, 101)
+	ok(SimPressRead.pair_read(ab_other).get("pair", "") == "xy", "pairs: another button's recent press does not spoil it")
+	# No pairs under RT.
+	var rt: Array = []
+	SimPressRead.push(rt, xk, 0, 100, NB, -1, 4)
+	SimPressRead.push(rt, yk, 0, 101, NB, -1, 4)
+	ok(SimPressRead.pair_read(rt).is_empty(), "pairs: none under the charging stance")
+	var en: Array = []
+	SimPressRead.push(en, xk, 1, 100, NB, -1, 2)
+	SimPressRead.push(en, yk, 1, 101, NB, -1, 2)
+	ok(SimPressRead.pair_read(en).get("pair", "") == "xy", "pairs: the other stances keep the four pairs")
+	# A pair is one press: commit replaces the two entries, counts once, and a pair that used a button makes it unfresh.
+	var cm: Array = []
+	SimPressRead.push(cm, xk, 0, 200)
+	SimPressRead.push(cm, ak, 0, 201)
+	var pr: Dictionary = SimPressRead.pair_read(cm)
+	SimPressRead.pair_commit(cm, pr)
+	ok(cm.size() == 1 and int(cm[0]["kind"]) == SimPressRead.PAIR and cm[0]["pair"] == "xa" and int(cm[0]["down"]) == 200, "pairs: a pair is one press in the log")
+	var mix: Dictionary = SimPressRead.classify(cm, 205)["mix_long"]
+	ok(int(mix.get("pair", 0)) == 1 and int(mix["light"]) == 0 and int(mix["context"]) == 0, "pairs: the mix counts it once, as a pair")
+	SimPressRead.push(cm, xk, 0, 204)
+	SimPressRead.push(cm, yk, 0, 205)
+	ok(SimPressRead.pair_read(cm).is_empty(), "pairs: an X 4 ticks after an X+A pair is not fresh")
+	SimPressRead.push(cm, xk, 0, 300)
+	SimPressRead.push(cm, yk, 0, 301)
+	ok(SimPressRead.pair_read(cm).get("pair", "") == "xy", "pairs: later, with the pair long past, a new pair is read")
+	SimPressRead.pair_commit(cm, {})
+	ok(cm.size() == 5, "pairs: committing no pair changes nothing")
+	# Marked entries are not reused.
+	var used: Array = []
+	SimPressRead.push(used, xk, 0, 100)
+	SimPressRead.push(used, yk, 0, 101)
+	used[1]["paired"] = true
+	ok(SimPressRead.pair_read(used).is_empty(), "pairs: an entry already marked as paired is not used again")
+
+
+func _flurries() -> void:
+	var xk: int = SimPressRead.LIGHT
+	var yk: int = SimPressRead.HEAVY
+	var bk: int = SimPressRead.SIG
+	var ak: int = SimPressRead.CONTEXT
+	ok(SimPressRead.flurry_gap(xk) == 12 and SimPressRead.flurry_gap(yk) == 16 and SimPressRead.flurry_gap(bk) == 34, "flurries: each button's pace is X 12, Y 16, B 34")
+	# mash_of: each button on its own.
+	var lx: Array = _mk([100, 106, 112, 118])
+	var m1: Dictionary = SimPressRead.mash_of(lx, xk, 120)
+	ok(m1["mash"] and m1["presses"] == 4 and m1["gap"] == 6 and m1["going"], "mash_of: four X presses 6 apart are an X flurry")
+	ok(not SimPressRead.mash_of(_mk([100, 106, 112]), xk, 114)["mash"], "mash_of: three X are not (X needs four)")
+	var ly: Array = _mk([100, 114], [], [yk, yk])
+	ok(SimPressRead.mash_of(ly, yk, 118)["mash"] and SimPressRead.mash_of(ly, yk, 118)["presses"] == 2, "mash_of: two Y presses 14 apart are a Y flurry (it needs two)")
+	ok(not SimPressRead.mash_of(_mk([100, 120], [], [yk, yk]), yk, 122)["mash"], "mash_of: Y presses 20 apart are two presses (the pace is 16)")
+	ok(SimPressRead.mash_of(_mk([100, 130], [], [bk, bk]), bk, 135)["mash"], "mash_of: two B presses 30 apart are a B flurry (the pace is 34)")
+	ok(not SimPressRead.mash_of(_mk([100, 106, 112, 118]), xk, 140)["going"], "mash_of: 22 ticks after the last it is over")
+	ok(SimPressRead.mash_of([], xk, 100)["presses"] == 0, "mash_of: an empty log")
+	# Other buttons in between do not break one button's flurry.
+	var mixed: Array = _mk([100, 104, 108, 112], [], [yk, xk, yk, xk])
+	ok(SimPressRead.mash_of(mixed, yk, 114)["mash"] and SimPressRead.mash_of(mixed, yk, 114)["presses"] == 2, "mash_of: a Y flurry with an X between its blows is still a Y flurry")
+	# alternation.
+	var alt: Array = _mk([100, 108, 116, 124], [], [xk, yk, xk, yk])
+	var a1: Dictionary = SimPressRead.alternation(alt, 126)
+	ok(a1["presses"] == 4 and a1["switches"] == 3 and a1["kinds"] == 3 and a1["mixup"], "alternation: X Y X Y 8 apart is a mix-up of 3 switches over X and Y")
+	var three: Array = _mk([100, 110, 120], [], [xk, yk, bk])
+	var a2: Dictionary = SimPressRead.alternation(three, 125)
+	ok(a2["presses"] == 3 and a2["kinds"] == 7 and a2["switches"] == 2 and a2["mixup"], "alternation: X Y B is the three in order, a mix-up")
+	var pure: Array = _mk([100, 108, 116, 124], [], [xk, xk, xk, xk])
+	var a3: Dictionary = SimPressRead.alternation(pure, 126)
+	ok(a3["presses"] == 4 and a3["switches"] == 0 and not a3["mixup"], "alternation: four X is a flurry, not a mix-up")
+	var one_sw: Array = _mk([100, 108, 116], [], [xk, xk, yk])
+	ok(SimPressRead.alternation(one_sw, 118)["switches"] == 1 and not SimPressRead.alternation(one_sw, 118)["mixup"], "alternation: one change is not a mix-up")
+	# The chain breaks at a gap longer than the previous button's pace, and when it has stopped.
+	var gapchain: Array = _mk([100, 140, 148, 156], [], [xk, xk, yk, xk])
+	var a4: Dictionary = SimPressRead.alternation(gapchain, 158)
+	ok(a4["presses"] == 3 and a4["switches"] == 2, "alternation: an X to X gap of 40 ends the chain (X pace 12): the latest three")
+	ok(SimPressRead.alternation(alt, 160)["presses"] == 0, "alternation: long after the last it is over")
+	var b_then_x: Array = _mk([100, 130], [], [bk, xk])
+	ok(SimPressRead.alternation(b_then_x, 132)["presses"] == 2, "alternation: an X 30 after a B is inside B's pace")
+	var b_far: Array = _mk([100, 140], [], [bk, xk])
+	ok(SimPressRead.alternation(b_far, 142)["presses"] == 1, "alternation: an X 40 after a B is not (the pace is 34)")
+	var with_a: Array = _mk([100, 108], [], [ak, xk])
+	ok(SimPressRead.alternation(with_a, 110)["presses"] == 1, "alternation: an A press is not part of a mix-up of the three")
+	ok(SimPressRead.alternation([], 100)["presses"] == 0, "alternation: an empty log")
+	# Energy arts in reach: X pressed as a punch and as a bolt (mode 0 and 1) is one button; a mode count makes it a mix-up.
+	var fist_bolt: Array = _mk([100, 108, 116, 124], [], [xk, xk, xk, xk], [0, 1, 0, 1])
+	ok(SimPressRead.alternation(fist_bolt, 126)["switches"] == 0 and not SimPressRead.alternation(fist_bolt, 126)["mixup"], "alternation: fist and bolt are all X: no switch by default")
+	var fb: Dictionary = SimPressRead.alternation(fist_bolt, 126, {"count_mode": true})
+	ok(fb["switches"] == 3 and fb["mixup"] and fb["presses"] == 4, "alternation: with count_mode a change of mode is a switch (punch, bolt, punch, bolt)")
+	var flurry_across: Dictionary = SimPressRead.mash_of(fist_bolt, xk, 126)
+	ok(flurry_across["mash"] and flurry_across["presses"] == 4, "mash_of: an X flurry carries across fist and bolt (the flurry's clock does not care about the mode)")
+	ok(int(SimPressRead.classify(fist_bolt, 126)["mix_long"]["energy"]) == 2, "classify: the mix still counts the two bolts as energy")
+
+
+func _aread() -> void:
+	var ak: int = SimPressRead.CONTEXT
+	# One press: winding, then a shove (a tap), or the coil.
+	var live_a: Array = _live(ak, 0, -1)
+	ok(SimPressRead.a_read(live_a, 50 + 5)["read"] == "winding", "a_read: down 5 live ticks is the shove winding up")
+	ok(SimPressRead.a_read(live_a, 50 + 15)["read"] == "winding", "a_read: still winding at 15")
+	var coil: Dictionary = SimPressRead.a_read(live_a, 50 + 16)
+	ok(coil["read"] == "coil" and coil["since"] == 0 and coil["frac"] == 0.0, "a_read: still down at 16 live ticks he coils for the tackle (no shove)")
+	var coil2: Dictionary = SimPressRead.a_read(live_a, 50 + 26)
+	ok(coil2["read"] == "coil" and coil2["since"] == 10 and absf(coil2["frac"] - 0.5) < 1e-9, "a_read: the coil's share runs to full at 36 (half at 26)")
+	ok(SimPressRead.a_read(live_a, 50 + 46)["frac"] == 1.0 and SimPressRead.a_read(live_a, 50 + 46, {"coil_full": 56})["frac"] == 0.75, "a_read: full at 36, and the full tick is the caller's")
+	for h in [2, 12, 16]:
+		var sh: Dictionary = SimPressRead.a_read(_live(ak, 0, h), 300)
+		ok(sh["read"] == "shove" and sh["throw_at"] == 50 + maxi(12, h), "a_read: let go at %d, the shove goes at live %d" % [h, 50 + maxi(12, h)])
+	ok(SimPressRead.a_read(_live(ak, 0, 17), 300)["read"] == "coil", "a_read: let go at 17 is the tackle's release, not a shove")
+	ok(SimPressRead.a_read([], 100)["read"] == "none" and SimPressRead.a_read(_live(SimPressRead.HEAVY, 0, -1), 100)["read"] == "none", "a_read: no A press, nothing")
+	# A second press inside the shove's wind-up is the clinch.
+	var cl: Array = []
+	SimPressRead.push(cl, ak, 0, 100, NB, -1, 0, 50)
+	SimPressRead.release(cl, ak, 103, 53)
+	SimPressRead.push(cl, ak, 0, 108, NB, -1, 0, 58)
+	var c1: Dictionary = SimPressRead.a_read(cl, 60)
+	ok(c1["read"] == "clinch" and c1["taps"] == 0 and c1["since"] == 2, "a_read: a second A inside the shove's 12 ticks is the clinch (no shove)")
+	SimPressRead.release(cl, ak, 111, 61)
+	SimPressRead.push(cl, ak, 0, 118, NB, -1, 0, 68)
+	SimPressRead.release(cl, ak, 120, 70)
+	SimPressRead.push(cl, ak, 0, 126, NB, -1, 0, 76)
+	var c2: Dictionary = SimPressRead.a_read(cl, 78)
+	ok(c2["read"] == "clinch" and c2["taps"] == 2, "a_read: each further tap is counted (the vicious blows)")
+	# A second press AFTER the shove's wind-up is a new shove, not a clinch.
+	var two: Array = []
+	SimPressRead.push(two, ak, 0, 100, NB, -1, 0, 50)
+	SimPressRead.release(two, ak, 103, 53)
+	SimPressRead.push(two, ak, 0, 120, NB, -1, 0, 70)
+	var c3: Dictionary = SimPressRead.a_read(two, 72)
+	ok(c3["read"] == "winding", "a_read: a second A at 20 live ticks is a new press of its own (winding)")
+	# Live ticks, not real: a freeze between the two presses does not make a clinch late.
+	var fz: Array = []
+	SimPressRead.push(fz, ak, 0, 100, NB, -1, 0, 50)
+	SimPressRead.release(fz, ak, 103, 53)
+	SimPressRead.push(fz, ak, 0, 118, NB, -1, 0, 58)   # 18 real ticks later but 8 live
+	ok(SimPressRead.a_read(fz, 60)["read"] == "clinch", "a_read: the clinch is judged on the live clock (18 real, 8 live)")
+	# The run lapses: an old press does not join a new one.
+	var old: Array = []
+	SimPressRead.push(old, ak, 0, 100, NB, -1, 0, 50)
+	SimPressRead.release(old, ak, 103, 53)
+	SimPressRead.push(old, ak, 0, 400, NB, -1, 0, 350)
+	ok(SimPressRead.a_read(old, 352)["read"] == "winding", "a_read: a press long after the last is a fresh one")
+
+
+## A fresh press edge on a button the log still has held means released, then pressed (a release and a re-press in one freeze).
+func _repress() -> void:
+	var y: int = SimPressRead.HEAVY
+	var log: Array = []
+	SimPressRead.push(log, y, 0, 100, NB, -1, 0, 50)
+	SimPressRead.push(log, y, 0, 109, NB, -1, 0, 53)   # the edge for a re-press that came with the old press still believed held
+	ok(log.size() == 2 and int(log[0]["up"]) == 109 and int(log[0]["lup"]) == 53 and int(log[1]["up"]) == -1, "repress: the new edge lets the old press go at the point it was read")
+	ok(SimPressRead.charge_read(log[0], 53) == "tap", "repress: and the old wind-up resolves as a tap (3 live ticks)")
+	# A press that was already a charge resolves as a charge's release.
+	var old: Array = []
+	SimPressRead.push(old, y, 0, 100, NB, -1, 0, 50)
+	SimPressRead.push(old, y, 0, 130, NB, -1, 0, 80)
+	ok(SimPressRead.charge_read(old[0], 80) == "charge", "repress: a press held past its decision is a charge's release when the new edge arrives")
+	# Not on a latched button: the next press is the release and the log is not touched here.
+	var lat: Array = []
+	SimPressRead.push(lat, y, 0, 100, NB, -1, 0, 50)
+	SimPressRead.push(lat, y, 0, 130, NB, -1, 0, 80, true)
+	ok(int(lat[0]["up"]) == -1 and lat.size() == 2, "repress: on a latched button the rule does not apply")
+	# Only the same button: an edge of another kind does not release it.
+	var other: Array = []
+	SimPressRead.push(other, y, 0, 100, NB, -1, 0, 50)
+	SimPressRead.push(other, SimPressRead.LIGHT, 0, 105, NB, -1, 0, 55)
+	ok(int(other[0]["up"]) == -1, "repress: another button's press does not release it")
+	# Without live stamps it works on the real ticks.
+	var real: Array = _one(y, 0, -1)
+	SimPressRead.push(real, y, 0, 108)
+	ok(int(real[0]["up"]) == 108 and not real[0].has("lup"), "repress: no live stamps, no live field")
+	# An entry with no live stamp is not given one.
+	ok(not SimPressRead.push([], y, 0, 100)[0].has("ldown"), "repress: an entry pushed without a live tick carries no ldown")
+
+
 ## zip_read: the starter is the press at `zip_start`; heavy, tech, speed, else plain (docs/controls/lunge-control.md B6.4).
 func _zip() -> void:
 	var p: Dictionary = SimPressRead.params()
@@ -151,12 +455,18 @@ func _zip() -> void:
 	ok(SimPressRead.zip_read([], 120, 100, NB) == "plain" and SimPressRead.zip_read(_one(SimPressRead.LIGHT, 8, 3), 120, 77, NB) == "plain", "zip: no starter is plain")
 	# Plain: a tap, off the beat, with nothing after.
 	ok(SimPressRead.zip_read(_one(SimPressRead.LIGHT, 8, 3), 120, 100, NB) == "plain", "zip: a single tap is plain")
-	# Heavy: the starter held for its cell's hold.
-	ok(SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, 16), 130, 100, NB) == "heavy", "zip: Y held 16 ticks is heavy")
-	ok(SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, 15), 130, 100, NB) == "plain", "zip: Y held 15 ticks is not")
-	ok(SimPressRead.zip_read(_one(SimPressRead.LIGHT, 8, 8), 130, 100, NB) == "heavy", "zip: X held 8 ticks is heavy (X's own cell)")
-	ok(SimPressRead.zip_read(_one(SimPressRead.CONTEXT, 8, 18), 130, 100, NB) == "heavy" and SimPressRead.zip_read(_one(SimPressRead.CONTEXT, 8, 17), 130, 100, NB) == "plain", "zip: A held 18 ticks is heavy, 17 is not")
+	# Heavy: the starter is a charge, still down at its wind-up plus grace or let go after it.
+	ok(SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, 17), 130, 100, NB) == "heavy", "zip: Y let go at 17 ticks is a charge: heavy")
+	ok(SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, 16), 130, 100, NB) == "heavy", "zip: an unstamped log keeps today's rule: Y down 16 ticks is heavy, so nothing live changes")
+	ok(SimPressRead.zip_read(_live(SimPressRead.HEAVY, 8, 16), 130, 100, NB) == "plain" and SimPressRead.zip_read(_live(SimPressRead.HEAVY, 8, 17), 130, 100, NB) == "heavy", "zip: with live stamps Y let go at 16 (inside the grace) is a tap, at 17 a charge")
+	ok(SimPressRead.zip_read(_one(SimPressRead.LIGHT, 8, 8), 140, 100, NB) == "heavy" and SimPressRead.zip_read(_one(SimPressRead.LIGHT, 8, 7), 140, 100, NB) == "plain", "zip: X held 8 ticks is heavy (the legacy hold, unchanged until C2a), 7 is not")
+	ok(SimPressRead.zip_read(_live(SimPressRead.CONTEXT, 8, 17), 130, 100, NB) == "heavy" and SimPressRead.zip_read(_live(SimPressRead.CONTEXT, 8, 16), 130, 100, NB) == "plain", "zip: A (stamped) let go at 17 is the tackle's coil, 16 is a shove")
+	ok(SimPressRead.zip_read(_one(SimPressRead.SIG, 8, 11), 140, 100, NB) == "plain" and SimPressRead.zip_read(_one(SimPressRead.SIG, 8, 12), 140, 100, NB) == "heavy", "zip: B in the manoeuvre stance has no wind-up here: the game's hold (12) applies")
 	ok(SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, -1), 116, 100, NB) == "heavy" and SimPressRead.zip_read(_one(SimPressRead.HEAVY, 8, -1), 115, 100, NB) == "plain", "zip: still down at now counts, live")
+	# On the live clock when the log carries it: a 9-tick freeze inside the hold does not make a tap a charge, nor a charge a tap.
+	var lz: Array = []
+	SimPressRead.push(lz, SimPressRead.HEAVY, 0, 100, NB, -1, 8, 50)
+	ok(SimPressRead.zip_read(lz, 125, 100, NB, {"live_now": 50 + 15}) == "plain" and SimPressRead.zip_read(lz, 125, 100, NB, {"live_now": 50 + 16}) == "heavy", "zip: a starter still down is judged on the live clock (25 real, 15 live: not yet)")
 	# Tech: the starter on a blow's beat.
 	var t: Array = []
 	SimPressRead.push(t, SimPressRead.LIGHT, 0, 100, 4, -1, 8)

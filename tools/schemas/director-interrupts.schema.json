@@ -1440,17 +1440,14 @@
         "interrupts",
         "breakBh",
         "pullBhPerSec",
-        "stepInTicks",
         "idleTicks",
         "heldPressTicks",
         "stringLapseTicks",
-        "enderAfter",
         "recoil",
         "damageMul",
         "aiPerfectEveryTicks",
         "aiReversalEveryTicks",
         "tradeTicks",
-        "heldMul",
         "skillMul",
         "setMul",
         "heavyMul",
@@ -1472,7 +1469,14 @@
         "carryTicks",
         "partTicks",
         "partDeg",
-        "double"
+        "double",
+        "plannedHeavyDamage",
+        "woundLandTicks",
+        "medium",
+        "burst",
+        "give",
+        "launcher",
+        "energy"
       ],
       "properties": {
         "enabled": {
@@ -1498,11 +1502,6 @@
           "minimum": 0,
           "description": "How fast the fighters are pulled back toward striking distance, in body heights a second."
         },
-        "stepInTicks": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "The step in before a blow, in ticks."
-        },
         "idleTicks": {
           "type": "integer",
           "minimum": 0,
@@ -1517,11 +1516,6 @@
           "type": "integer",
           "minimum": 0,
           "description": "Ticks after which a string lapses."
-        },
-        "enderAfter": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "The blow of a string that can be its ender."
         },
         "recoil": {
           "type": "number",
@@ -1688,24 +1682,19 @@
         "heavy": {
           "type": "object",
           "required": [
-            "damage",
             "ki",
             "windupTicks",
-            "landTicks",
             "recover",
             "recoverWhiff",
-            "heldFullTicks",
-            "heldMaxTicks",
-            "heldLandTicks",
             "staggerTicks",
-            "force"
+            "force",
+            "worth",
+            "gap",
+            "reachBh",
+            "armour",
+            "charge"
           ],
           "properties": {
-            "damage": {
-              "type": "number",
-              "minimum": 0,
-              "description": "Damage of a heavy blow."
-            },
             "ki": {
               "type": "number",
               "minimum": 0,
@@ -1715,11 +1704,6 @@
               "type": "integer",
               "minimum": 0,
               "description": "Wind-up."
-            },
-            "landTicks": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Ticks to land."
             },
             "recover": {
               "type": "integer",
@@ -1731,21 +1715,6 @@
               "minimum": 0,
               "description": "Recovery after a heavy that misses."
             },
-            "heldFullTicks": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Ticks held to a full charge."
-            },
-            "heldMaxTicks": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "The most it can be held."
-            },
-            "heldLandTicks": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Ticks to land a held heavy."
-            },
             "staggerTicks": {
               "type": "integer",
               "minimum": 0,
@@ -1755,6 +1724,125 @@
               "type": "number",
               "minimum": 0,
               "description": "The knock force."
+            },
+            "worth": {
+              "type": "number",
+              "minimum": 0,
+              "description": "What a heavy is worth."
+            },
+            "gap": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "description": "The gap, in ticks, between heavies: [lo, hi]."
+            },
+            "reachBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Its reach, in body heights."
+            },
+            "armour": {
+              "type": "object",
+              "required": [
+                "lightMul",
+                "mediumUntilTicks",
+                "shotMediumPower",
+                "shotHeavyPower"
+              ],
+              "properties": {
+                "lightMul": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The multiplier on a light that hits an armoured heavy."
+                },
+                "mediumUntilTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks a medium is still armoured against."
+                },
+                "shotMediumPower": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The shot power a medium armours."
+                },
+                "shotHeavyPower": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The shot power a heavy armours."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "charge": {
+              "type": "object",
+              "required": [
+                "fromTicks",
+                "fullTicks",
+                "landTicks",
+                "maxTicks",
+                "worth",
+                "ki",
+                "reachBh",
+                "aiReleaseTicks"
+              ],
+              "properties": {
+                "fromTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks held before the charge begins (below fullTicks: rule brawl-order)."
+                },
+                "fullTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks held to a full charge (below maxTicks)."
+                },
+                "landTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks the charged blow takes to land."
+                },
+                "maxTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The most it can be held."
+                },
+                "worth": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "description": "What a charged heavy is worth: [uncharged, full]."
+                },
+                "ki": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The ki it costs."
+                },
+                "reachBh": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Its reach, in body heights."
+                },
+                "aiReleaseTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks after which the AI releases it."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
             }
           },
           "additionalProperties": false,
@@ -1766,7 +1854,8 @@
           "type": "object",
           "required": [
             "light",
-            "heavy"
+            "heavy",
+            "medium"
           ],
           "properties": {
             "light": {
@@ -1778,6 +1867,11 @@
               "type": "integer",
               "minimum": 0,
               "description": "Hit-stop of a heavy blow."
+            },
+            "medium": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Hit-stop of a medium blow."
             }
           },
           "additionalProperties": false,
@@ -1789,11 +1883,6 @@
           "type": "integer",
           "minimum": 0,
           "description": "The window, in ticks, in which two blows landing together are a trade."
-        },
-        "heldMul": {
-          "type": "number",
-          "exclusiveMinimum": 0,
-          "description": "The worth of a held blow."
         },
         "skillMul": {
           "type": "number",
@@ -1906,7 +1995,8 @@
           "type": "object",
           "required": [
             "guard",
-            "clearBh"
+            "clearBh",
+            "stagger"
           ],
           "properties": {
             "guard": {
@@ -1918,6 +2008,11 @@
               "type": "number",
               "minimum": 0,
               "description": "The clearance, in body heights, the nudge keeps from the rival."
+            },
+            "stagger": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The nudge's share while the rival is staggered."
             }
           },
           "description": "Limits on the nudge.",
@@ -1978,6 +2073,393 @@
             }
           },
           "description": "The double (a flurry's two-handed finish).",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "plannedHeavyDamage": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The damage a planned heavy is worth in the planner."
+        },
+        "woundLandTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks a blow that wounds takes to land."
+        },
+        "medium": {
+          "type": "object",
+          "required": [
+            "windupTicks",
+            "worth",
+            "ki",
+            "gap",
+            "rate",
+            "reelTicks",
+            "recover",
+            "recoverWhiff",
+            "guardChipMul",
+            "reachBh"
+          ],
+          "properties": {
+            "windupTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The medium blow's wind-up (below the heavy's: rule brawl-order)."
+            },
+            "worth": {
+              "type": "number",
+              "minimum": 0,
+              "description": "What a medium blow is worth."
+            },
+            "ki": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The ki it costs."
+            },
+            "gap": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "description": "The gap, in ticks, between mediums: [lo, hi]."
+            },
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Its rate."
+            },
+            "reelTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks the rival reels."
+            },
+            "recover": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Recovery after a medium that lands."
+            },
+            "recoverWhiff": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Recovery after a medium that misses."
+            },
+            "guardChipMul": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The share of its damage a guard takes."
+            },
+            "reachBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Its reach, in body heights."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "burst": {
+          "type": "object",
+          "required": [
+            "lands",
+            "second",
+            "rate",
+            "reelTicks",
+            "runHalves",
+            "openTicks"
+          ],
+          "properties": {
+            "lands": {
+              "type": "array",
+              "minItems": 7,
+              "maxItems": 7,
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "description": "The ticks at which the burst's seven blows land (never falling: rule brawl-order)."
+            },
+            "second": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The second blow's share."
+            },
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Its rate."
+            },
+            "reelTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks the rival reels."
+            },
+            "runHalves": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Run halves."
+            },
+            "openTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks the burst stays open."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "give": {
+          "type": "object",
+          "required": [
+            "bhPerSec",
+            "bySpeed",
+            "speedRef",
+            "guard",
+            "follow",
+            "leashBh",
+            "closeTicksPerBh",
+            "closeMaxTicks",
+            "closeMaxBh",
+            "closeSlackBh",
+            "lightReachBh",
+            "edgeBh"
+          ],
+          "properties": {
+            "bhPerSec": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Body heights a second given."
+            },
+            "bySpeed": {
+              "type": "boolean",
+              "description": "Whether the speed sets the give."
+            },
+            "speedRef": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The reference speed."
+            },
+            "guard": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The give while guarding."
+            },
+            "follow": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How far the other follows."
+            },
+            "leashBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The leash, in body heights."
+            },
+            "closeTicksPerBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Ticks a body height of closing takes."
+            },
+            "closeMaxTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The most ticks a close takes."
+            },
+            "closeMaxBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The farthest a close goes, in body heights (at most the leash: rule brawl-order)."
+            },
+            "closeSlackBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The close's slack."
+            },
+            "lightReachBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "A light's reach."
+            },
+            "edgeBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The edge distance."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "launcher": {
+          "type": "object",
+          "required": [
+            "minStagger",
+            "windupTicks",
+            "worth",
+            "ki",
+            "restS",
+            "flightMul"
+          ],
+          "properties": {
+            "minStagger": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The shortest stagger a launcher needs."
+            },
+            "windupTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Its wind-up."
+            },
+            "worth": {
+              "type": "number",
+              "minimum": 0,
+              "description": "What it is worth."
+            },
+            "ki": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The ki it costs."
+            },
+            "restS": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Seconds the launcher rests between uses (Game Design re-ruling, tuned between 25 and 60)."
+            },
+            "flightMul": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "description": "The flight multiplier of the launched fighter: above 0, at most 1 (tuned down to 0.6)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "energy": {
+          "type": "object",
+          "required": [
+            "reach"
+          ],
+          "properties": {
+            "reach": {
+              "type": "object",
+              "required": [
+                "bolt",
+                "blast",
+                "flashEveryTicks"
+              ],
+              "properties": {
+                "bolt": {
+                  "type": "object",
+                  "required": [
+                    "contactTicks",
+                    "worth",
+                    "ki",
+                    "reelTicks",
+                    "runHalves",
+                    "shot"
+                  ],
+                  "properties": {
+                    "contactTicks": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Ticks of contact."
+                    },
+                    "worth": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "What it is worth."
+                    },
+                    "ki": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "The ki it costs."
+                    },
+                    "reelTicks": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Ticks the rival reels."
+                    },
+                    "runHalves": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Run halves."
+                    },
+                    "shot": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$",
+                      "description": "The shot kind it fires (data/fight/shots.json)."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "blast": {
+                  "type": "object",
+                  "required": [
+                    "windupTicks",
+                    "worth",
+                    "ki",
+                    "knockBh",
+                    "shot"
+                  ],
+                  "properties": {
+                    "windupTicks": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Its wind-up."
+                    },
+                    "worth": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "What it is worth."
+                    },
+                    "ki": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "The ki it costs."
+                    },
+                    "knockBh": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How far it knocks, in body heights."
+                    },
+                    "shot": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$",
+                      "description": "The shot kind it fires."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "flashEveryTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks between the energy's flashes."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          },
           "additionalProperties": false,
           "patternProperties": {
             "^_": true
@@ -2114,7 +2596,8 @@
             "reachBefore",
             "reachAfter",
             "outTicks",
-            "heldTicks"
+            "heldTicks",
+            "damage"
           ],
           "properties": {
             "ki": {
@@ -2156,6 +2639,11 @@
               "type": "integer",
               "minimum": 1,
               "description": "The longest the heavy can be held."
+            },
+            "damage": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The damage a zip heavy deals."
             }
           },
           "description": "The zip heavy.",

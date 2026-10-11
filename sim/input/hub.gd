@@ -40,6 +40,9 @@ var mode_styles: Array = ["", ""]
 ## "on" or "off") and the trigger sensitivity (0 the data default, else the on threshold, 0.2 to 0.6).
 var stance_oneshot_pref: Array = ["", ""]
 var trigger_pref: Array = [0.0, 0.0]
+## The two slow-button settings (Y, B, A; accessibility, layout only): a latched charge, and charges off. Per player, off by default.
+var latch_charge_pref: Array = [false, false]
+var charges_off_pref: Array = [false, false]
 var _was: Array = [false, false]
 
 
@@ -316,6 +319,8 @@ func intent(slot: int) -> SimIntent:
 			if pads.has(d):
 				pads[d].set_mode_style(style)
 				pads[d].set_stance_oneshot(stance_oneshot_of(slot))
+				pads[d].set_latch_charge(bool(latch_charge_pref[slot]))
+				pads[d].set_charges_off(bool(charges_off_pref[slot]))
 				if float(trigger_pref[slot]) > 0.0:
 					pads[d].set_trigger_threshold(float(trigger_pref[slot]))
 				i = pads[d].build()
@@ -324,11 +329,15 @@ func intent(slot: int) -> SimIntent:
 		"touch":
 			touch.set_mode_style(style)
 			touch.set_stance_oneshot(stance_oneshot_of(slot))
+			touch.set_latch_charge(bool(latch_charge_pref[slot]))
+			touch.set_charges_off(bool(charges_off_pref[slot]))
 			i = touch.build()
 		_:
 			var kl: SimLayout = _kb_layout(slot)
 			kl.set_mode_style(style)
 			kl.set_stance_oneshot(stance_oneshot_of(slot))
+			kl.set_latch_charge(bool(latch_charge_pref[slot]))
+			kl.set_charges_off(bool(charges_off_pref[slot]))
 			i = kl.build()
 	return SimIntent.canon(i)
 
@@ -431,6 +440,29 @@ func set_stance_oneshot(setting: String, slot: int = -1) -> void:
 	for s in range(2):
 		if slot < 0 or s == slot:
 			stance_oneshot_pref[s] = setting
+
+
+## Latched charge (accessibility): on a slow button (Y, B, A) a press starts the wind-up and the next press lets it go. -1 is both players.
+## Not on the Simple layouts, whose attack hold is a weight.
+func set_latch_charge(on: bool, slot: int = -1) -> void:
+	for s in range(2):
+		if slot < 0 or s == slot:
+			latch_charge_pref[s] = on
+
+
+## Charges off (accessibility): the slow buttons report held only on their press tick, so every press is a tap. -1 is both players.
+func set_charges_off(on: bool, slot: int = -1) -> void:
+	for s in range(2):
+		if slot < 0 or s == slot:
+			charges_off_pref[s] = on
+
+
+func latch_charge_of(slot: int) -> bool:
+	return bool(latch_charge_pref[slot])
+
+
+func charges_off_of(slot: int) -> bool:
+	return bool(charges_off_pref[slot])
 
 
 ## The trigger sensitivity (the on threshold, 0.2 to 0.6; 0 for the data default). -1 is both players.
@@ -536,6 +568,24 @@ func transform_hold(slot: int) -> float:
 ## layout_of(slot).
 func device_of(slot: int) -> String:
 	return str(slot_device[slot])
+
+
+## Where a slot's rumble goes, for the host (read-only: nothing here touches the intent, the replay or the hash; the rumble setting
+## itself is the player's, in UI's options). {kind, id}: "pad" with the joypad's device id (the one `pad_button` was given, which is
+## Godot's joypad id for `Input.start_joy_vibration`), "touch" (a handheld's haptics, no id: -1), "kb" (a keyboard has none: -1) or
+## "none" (a slot nobody holds, an AI slot, or a pad that has gone). The slot's device can change when a pad joins or is lost, so
+## ask each time a pulse is sent and do not cache it. Whether the hardware can rumble is the host's to find out (the pad's own
+## capability, the browser's support): the input layer does not know it.
+func rumble_target(slot: int) -> Dictionary:
+	if not _taken(slot):
+		return {"kind": "none", "id": -1}
+	match slot_device[slot]:
+		"pad":
+			var d: int = slot_pad[slot]
+			return {"kind": "pad", "id": d} if pads.has(d) else {"kind": "none", "id": -1}
+		"touch":
+			return {"kind": "touch", "id": -1}
+	return {"kind": "kb", "id": -1}
 
 
 ## The preset id a slot plays with now: "kb-solo", "kb-shared-p1" or "kb-shared-p2", its pad preset, or the touch preset.

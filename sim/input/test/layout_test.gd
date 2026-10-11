@@ -356,15 +356,48 @@ func _simple_pad() -> void:
 	ok(i.light and not i.heavy, "simple: X tapped is a light on release (the bridge)")
 	l.consumed()
 	_run(l, 3)   # past the 2-tick contact debounce: a re-press is a new press
+	# The hold is the wind-up (brawl second pass): no edge while it is held; the level says the weight reached (live ticks); the blow
+	# goes on the release: under 12 the light, from 12 the medium (a `heavy` edge), from 28 the heavy (a `signature` edge, B's cell).
 	l.press("pad:west")
 	i = _run(l, 11)
-	ok(not i.heavy, "simple: no heavy before 12 ticks")
+	ok(not i.heavy and not i.light and i.lightHeld and not i.heavyHeld, "simple: held 11 live ticks it is still the light's level, with no edge")
+	_run(l, 1)   # 12 live steps taken since the press
 	i = l.build()
-	ok(i.heavy and not i.light, "simple: X held is a heavy at 12 ticks")
-	l.consumed()
+	ok(i.heavyHeld and not i.lightHeld and not i.heavy and not i.sigHeld, "simple: at 12 live ticks the level is the medium's, and still no edge")
 	l.release("pad:west")
 	i = l.build()
-	ok(not i.light, "simple: no light after the heavy")
+	ok(i.heavy and not i.light and not i.sig and not i.heavyHeld and not i.lightHeld, "simple: let go at 12 the blow goes as the medium (a heavy edge) with its level OFF: the hold was the wind-up and it is over")
+	l.consumed()
+	_run(l, 3)
+	l.press("pad:west")
+	i = _run(l, 27)
+	ok(i.heavyHeld and not i.sigHeld and not i.sig, "simple: at 27 live ticks it is still the medium")
+	_run(l, 1)   # 28 live steps
+	i = l.build()
+	ok(i.sigHeld and not i.heavyHeld and not i.lightHeld, "simple: at 28 the level is the heavy's (B's cell, sigHeld)")
+	l.release("pad:west")
+	i = l.build()
+	ok(i.sig and not i.heavy and not i.light and not i.sigHeld, "simple: let go from 28 the blow goes as the heavy (a signature edge, B's cell) with its level off, which tells it from Y's press (a signature edge with its level on)")
+	l.consumed()
+	_run(l, 3)
+	# Hit-stop: builds with no consumed() (the sim took no step) do not count: 9 frozen builds do not make a medium of a short hold.
+	l.press("pad:west")
+	_run(l, 5)
+	for k in range(9):
+		l.build()
+	l.release("pad:west")
+	i = l.build()
+	ok(i.light and not i.heavy, "simple: the hold is counted in live ticks: 5 live and 9 frozen is a light")
+	l.consumed()
+	# And a hold across a freeze does reach the medium on the live ticks alone.
+	_run(l, 3)
+	l.press("pad:west")
+	_run(l, 8)
+	for k in range(9):
+		l.build()
+	_run(l, 4)
+	l.release("pad:west")
+	ok(l.build().heavy, "simple: 12 live ticks across a freeze are a medium")
 	l.consumed()
 	l.press("pad:north")
 	ok(l.build().sig, "simple: Y is the signature")

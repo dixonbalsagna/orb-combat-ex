@@ -30,6 +30,22 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       }
     }
   }
+  // ---- the AI's slowest tap gap (data/director/ai.json): at least the tap gap ----
+  const aiTap = get('data/director/ai.json');
+  if (isObj(aiTap) && isObj(aiTap.levels)) {
+    for (const [lv, L] of Object.entries(aiTap.levels)) {
+      const b = isObj(L) ? L.brawl : null;
+      if (isObj(b) && typeof b.tapGap === 'number' && typeof b.tapGapMax === 'number' && b.tapGapMax < b.tapGap) err('data/director/ai.json', `/levels/${esc(lv)}/brawl/tapGapMax`, 'brawl-order', `tapGapMax ${b.tapGapMax} is below tapGap ${b.tapGap}`);
+    }
+  }
+
+  // ---- the AI's digInBy (data/director/ai.json) ----
+  const aiDoc = get('data/director/ai.json');
+  const rosterDoc = get('data/fighters/roster.json');
+  if (isObj(aiDoc) && isObj(aiDoc.digInBy) && Array.isArray(rosterDoc)) {
+    for (const k of Object.keys(aiDoc.digInBy)) if (!k.startsWith('_') && !rosterDoc.includes(k)) err('data/director/ai.json', `/digInBy/${esc(k)}`, 'ai-digin-fighter', `"${k}" is not a fighter of data/fighters/roster.json (${rosterDoc.join(', ')})`);
+  }
+
   // ---- combat styles ----
   const styles = get(STYLES);
   if (isObj(styles)) {
@@ -774,7 +790,13 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
         if (Array.isArray(brl.flurry.mul)) for (let i = 1; i < brl.flurry.mul.length; i++) { const p = brl.flurry.mul[i - 1]; const q = brl.flurry.mul[i]; if (Array.isArray(p) && Array.isArray(q) && typeof p[0] === 'number' && typeof q[0] === 'number' && q[0] <= p[0]) err(IT, `/brawl/flurry/mul/${i}/0`, 'brawl-order', `the mul table's gap ${q[0]} does not rise above the one before (${p[0]})`); }
       }
       if (isObj(brl.flurry) && typeof brl.flurry.runLapseTicks === 'number' && typeof brl.flurry.tradeMaxTicks === 'number' && brl.flurry.runLapseTicks >= brl.flurry.tradeMaxTicks) err(IT, '/brawl/flurry/runLapseTicks', 'brawl-order', `runLapseTicks ${brl.flurry.runLapseTicks} is not below tradeMaxTicks ${brl.flurry.tradeMaxTicks}, so a run could outlast the trade it belongs to`);
-      if (isObj(brl.heavy) && typeof brl.heavy.heldFullTicks === 'number' && typeof brl.heavy.heldMaxTicks === 'number' && brl.heavy.heldFullTicks > brl.heavy.heldMaxTicks) err(IT, '/brawl/heavy/heldFullTicks', 'brawl-order', `heldFullTicks ${brl.heavy.heldFullTicks} is above heldMaxTicks ${brl.heavy.heldMaxTicks}, so a held heavy could never be full`);
+      const hv = isObj(brl.heavy) ? brl.heavy : {};
+      const chg = isObj(hv.charge) ? hv.charge : {};
+      if (typeof chg.fromTicks === 'number' && typeof chg.fullTicks === 'number' && chg.fromTicks >= chg.fullTicks) err(IT, '/brawl/heavy/charge/fromTicks', 'brawl-order', `charge fromTicks ${chg.fromTicks} must be below fullTicks ${chg.fullTicks}`);
+      if (typeof chg.fullTicks === 'number' && typeof chg.maxTicks === 'number' && chg.fullTicks >= chg.maxTicks) err(IT, '/brawl/heavy/charge/fullTicks', 'brawl-order', `charge fullTicks ${chg.fullTicks} must be below maxTicks ${chg.maxTicks}`);
+      if (isObj(brl.medium) && typeof brl.medium.windupTicks === 'number' && typeof hv.windupTicks === 'number' && brl.medium.windupTicks >= hv.windupTicks) err(IT, '/brawl/medium/windupTicks', 'brawl-order', `medium windupTicks ${brl.medium.windupTicks} must be below heavy windupTicks ${hv.windupTicks}`);
+      if (isObj(brl.give) && typeof brl.give.closeMaxBh === 'number' && typeof brl.give.leashBh === 'number' && brl.give.closeMaxBh > brl.give.leashBh) err(IT, '/brawl/give/closeMaxBh', 'brawl-order', `give closeMaxBh ${brl.give.closeMaxBh} must be at most leashBh ${brl.give.leashBh}`);
+      if (isObj(brl.burst) && Array.isArray(brl.burst.lands)) for (let li = 1; li < brl.burst.lands.length; li++) if (typeof brl.burst.lands[li] === 'number' && typeof brl.burst.lands[li - 1] === 'number' && brl.burst.lands[li] < brl.burst.lands[li - 1]) err(IT, `/brawl/burst/lands/${li}`, 'brawl-order', `burst lands ${brl.burst.lands[li]} falls below the one before (${brl.burst.lands[li - 1]})`);
     }
     const bu = itr.buried;
     const embedC = get('data/biomes/contact.json');

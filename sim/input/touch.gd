@@ -83,6 +83,7 @@ var _dodge_edge: bool = false
 var _power_press: bool = false
 var _power_tap: bool = false
 var _power_t0: int = 0
+var live: int = 0                 # the live steps the sim took (consumed() calls): the clock a hit freeze stops (the Simple attack's hold)
 var _power_voided: bool = false   # a layer press (Attack with Power held) fired during this hold
 var _special_edge: int = 0
 var _tf_t0: int = -1              # the Transform button's press tick, or -1
@@ -111,6 +112,8 @@ func _init(overrides: Dictionary = {}) -> void:
 	cfg = DEFAULTS.duplicate()
 	# The numbers are data (data/input/timing.json); DEFAULTS above stand in where a key is missing.
 	cfg.holdTicks = SimInputData.ti(["tapHold", "holdStart"], int(cfg.holdTicks))
+	cfg.mediumStart = SimInputData.ti(["read", "simpleMediumStart"], 12)
+	cfg.heavyStart = SimInputData.ti(["read", "simpleHeavyStart"], 28)
 	cfg.transformTicks = SimInputData.ti(["tapHold", "transformConfirm"], 30)
 	cfg.swipeDp = SimInputData.tf(["touch", "swipeUpPx"], float(cfg.swipeDp))
 	cfg.swipeTicks = SimInputData.ti(["touch", "swipeUpTicks"], 24)
@@ -155,6 +158,17 @@ func armed_stance() -> int:
 
 func energy_latched() -> bool:
 	return _full != null and _full.energy_latched()
+
+
+## The two slow-button settings (Full touch only; the Simple attack's hold is a weight, not a charge): a latched charge, and charges off.
+func set_latch_charge(on: bool) -> void:
+	if _full != null:
+		_full.set_latch_charge(on)
+
+
+func set_charges_off(on: bool) -> void:
+	if _full != null:
+		_full.set_charges_off(on)
 
 
 ## The player's energy style ("hold", "toggle", "hybrid"; the Simple touch layout leaves the mode to the director). Full touch is
@@ -272,7 +286,7 @@ func touch_down(id: int, x: float, y: float, widget: String) -> void:
 	if _owner.has(widget):
 		return   # one finger per control; the second is ignored
 	_owner[widget] = id
-	_touches[id] = {"w": widget, "x0": x, "y0": y, "x": x, "y": y, "t0": tick, "fired": false, "flicked": false, "beyond": 0, "layer": false}
+	_touches[id] = {"w": widget, "x0": x, "y0": y, "x": x, "y": y, "t0": tick, "l0": live, "fired": false, "flicked": false, "beyond": 0, "layer": false}
 	if full_mode and widget != "stick":
 		_full.press("touch:" + widget)
 		return
@@ -288,9 +302,9 @@ func touch_down(id: int, x: float, y: float, widget: String) -> void:
 		"attack":
 			if _owner.has("power"):
 				# The power layer: Attack with Power held is the director's pick of a special, at once, and not a light.
+				# The power layer: Attack with Power held is not decided yet. A tap is the director's pick of a special (on the release);
+				# a swipe up is RT + Y, the signature's hold (see _check_swipe): the hold that follows is its tell.
 				_touches[id].layer = true
-				_touches[id].fired = true
-				_special_edge = 7
 				_power_voided = true
 		"context":
 			_tf_t0 = tick
@@ -321,8 +335,18 @@ func touch_up(id: int) -> void:
 		_owner.erase(t.w)
 		_touches.erase(id)
 		return
-	if t.w == "attack" and not t.fired:
-		req_light = true   # a tap: released before holdTicks (the bridge fires it on release; see touch-bridge.md)
+	if t.w == "attack" and t.layer and not t.fired:
+		_special_edge = 7   # Power held and a tap on Attack: the director's special, on the release
+	elif t.w == "attack" and not t.fired:
+		# The hold is the wind-up (brawl second pass section 2): the blow goes on the release, at the weight the hold reached in LIVE
+		# ticks: under mediumStart (12) the light, from it the medium (a heavy request), from heavyStart (28) the heavy (B's cell).
+		var held: int = live - int(t.l0)
+		if held >= int(cfg.heavyStart):
+			req_sig = true
+		elif held >= int(cfg.mediumStart):
+			req_heavy = true
+		else:
+			req_light = true
 	if t.w == "power" and not _power_voided and (tick - _power_t0) < int(cfg.holdTicks):
 		_power_tap = true
 	if t.w == "context":
@@ -372,7 +396,11 @@ func _check_swipe(t: Dictionary) -> void:
 	if t.fired:
 		return
 	if (tick - int(t.t0)) <= int(cfg.holdTicks) and (float(t.y0) - float(t.y)) >= float(cfg.swipeDp) * dp:
+		# A swipe up on Attack is Y, B's cell: the press edge comes now with its level on (the wind-up starts now), and the finger
+		# staying down is the hold (sigHeld) from `swl` on: the charged heavy, or under Power (RT + Y) the signature's ladder.
 		t.fired = true
+		t.sw = true
+		t.swl = live
 		req_sig = true
 
 
@@ -430,9 +458,7 @@ func build() -> SimIntent:
 			"power":
 				power = true
 			"attack":
-				if not t.fired and (tick - int(t.t0)) >= int(cfg.holdTicks):
-					t.fired = true
-					req_heavy = true
+				pass   # the weight is decided on the release (touch_up); the level below says which one the hold has reached
 			"stick":
 				var dx: float = float(t.x) - float(t.x0)
 				var dy: float = float(t.y) - float(t.y0)
@@ -469,11 +495,16 @@ func build() -> SimIntent:
 	i.special = _special_edge
 	i.transform = _transform_edge
 	i.escape = _escape_edge
-	# The attack level: a finger on Attack is light until holdTicks and heavy from then on (the Simple upgrade).
+	# The attack level: the weight the hold has reached, in live ticks: light, then the medium (heavyHeld), then the heavy (sigHeld).
 	for id in _touches:
 		var at: Dictionary = _touches[id]
-		if at.w == "attack" and not at.layer:
-			if tick - int(at.t0) >= int(cfg.holdTicks):
+		if at.w == "attack" and at.get("sw", false):
+			i.sigHeld = true   # a swipe's finger still down: Y held (the charge, or RT + Y's ladder)
+		elif at.w == "attack" and not at.layer:
+			var hl: int = live - int(at.l0)
+			if hl >= int(cfg.heavyStart):
+				i.sigHeld = true
+			elif hl >= int(cfg.mediumStart):
 				i.heavyHeld = true
 			else:
 				i.lightHeld = true
@@ -540,7 +571,11 @@ func display_state() -> Dictionary:
 		var t: Dictionary = _touches[id]
 		match t.w:
 			"attack":
-				out.attack = {"down": true, "hold": 1.0 if t.fired else clampf(float(tick - int(t.t0)) / float(cfg.holdTicks), 0.0, 1.0)}
+				# The Simple attack's ring: `hold` is the share of the way to the medium (1.0 from it on), `hold_ticks` the live ticks held,
+				# `tier` the weight reached (0 light, 1 medium, 2 heavy) and `medium_at` and `heavy_at` where the two marks go.
+				var ht: int = (live - int(t.swl)) if t.get("sw", false) else (live - int(t.l0))
+				out.attack = {"swipe": t.get("sw", false), "down": true, "hold": 1.0 if t.fired else clampf(float(ht) / float(cfg.mediumStart), 0.0, 1.0), "hold_ticks": ht,
+						"tier": 2 if ht >= int(cfg.heavyStart) else (1 if ht >= int(cfg.mediumStart) else 0), "medium_at": int(cfg.mediumStart), "heavy_at": int(cfg.heavyStart)}
 			"guard":
 				out.guard = {"down": true}
 			"power":
@@ -598,7 +633,9 @@ func transform_hold() -> float:
 
 ## A pausing set piece froze the sim: presses made meanwhile are dropped.
 func drop_edges() -> void:
-	consumed()
+	if _full != null:
+		_full.drop_edges()
+	_clear_requests()
 
 
 ## The pause ended: edges dropped, and every hold read again as if it began now.
@@ -608,6 +645,7 @@ func resume() -> void:
 		_full.resume()
 	for id in _touches:
 		_touches[id].t0 = tick
+		_touches[id].l0 = live
 		_touches[id].beyond = 0
 	_power_t0 = tick
 	if _tf_t0 >= 0 and not _tf_sent:
@@ -616,8 +654,14 @@ func resume() -> void:
 
 ## SimCore.step consumed the intent (it did not freeze for hit-stop): the requests are spent.
 func consumed() -> void:
+	live += 1
 	if _full != null:
 		_full.consumed()
+	_clear_requests()
+
+
+## The requests are spent (a step took them, or a pause dropped them). Only a step that was taken advances `live`.
+func _clear_requests() -> void:
 	req_light = false
 	req_heavy = false
 	req_sig = false

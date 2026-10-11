@@ -372,30 +372,77 @@
           "minimum": 1,
           "description": "... each within this many ticks of the one before (10)."
         },
-        "holdLight": {
+        "burstStart": {
           "type": "integer",
           "minimum": 1,
-          "description": "X (light) down this many ticks is a hold (8). The hold is per button cell; holdTicks stays as the fallback."
+          "description": "A light (X) held this many LIVE ticks starts the burst; the classifier's hold for X (8; Game Design is ruling between 4, 8 and more). Replaces holdLight."
         },
-        "holdHeavy": {
+        "windupMedium": {
           "type": "integer",
           "minimum": 1,
-          "description": "Y (heavy) hold (16)."
+          "description": "Y, the medium: a tap lands when this wind-up ends (12 live ticks); still down at wind-up plus grace it is the charged medium."
         },
-        "holdSig": {
+        "windupHeavy": {
           "type": "integer",
           "minimum": 1,
-          "description": "B (the signature) hold (20)."
+          "description": "B, the heavy, in the martial stance: its wind-up (28)."
         },
-        "holdSigCharging": {
+        "windupContext": {
           "type": "integer",
           "minimum": 1,
-          "description": "B in the charging stance, the ultimate's hold (45)."
+          "description": "A: the shove's wind-up (12); held to wind-up plus grace it is the tackle's coil."
         },
-        "holdContext": {
+        "windupGrace": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "A release in this many ticks after the wind-up's end is still a tap, on every device (4)."
+        },
+        "pairWindow": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Two adjacent face buttons within this many ticks are one pair (3; doubled by the assist setting)."
+        },
+        "pairFresh": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "... and neither button was pressed in this many ticks before (8)."
+        },
+        "flurryGapX": {
           "type": "integer",
           "minimum": 1,
-          "description": "A (context) hold (18)."
+          "description": "The pace of the X flurry: a press of the same button within this many ticks continues it (12)."
+        },
+        "flurryGapY": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The pace of the Y flurry (16)."
+        },
+        "flurryGapB": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The pace of the B flurry (34)."
+        },
+        "flurryNeedSlow": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Presses that make a Y or B flurry (2); X uses mashPresses."
+        },
+        "mixupSwitches": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Changes of button in one chain of X, Y and B presses that make a mix-up (2)."
+        },
+        "simpleMediumStart": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The Simple layout's attack: held this many live ticks, the release is the medium (12)."
+        },
+        "simpleHeavyStart": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "... and held this many, the release is the heavy (28)."
         }
       },
       "additionalProperties": false,

@@ -421,6 +421,17 @@ static func hit(S: SimState, sh, f) -> bool:
 			DirBands.drop(S, f, "a " + sh.kind + " stopped his charge")
 			SimFx.cue(S, f, "charge_stopped", "", "")
 			outcome = "stop"
+	elif DirBands.pending(f) and DirBrawl.on() and (DirInterrupt.gi(f, DirInterrupt.APPR_REQ) & 3) == SimAct.HEAVY:
+		# A lunge with a wound blow, Y's medium or B's heavy (brawl-second-pass.md section 2): what stops its wind-up
+		# stops the lunge, with a bolt as a light, a heavy shot as a medium and a charged shot as a heavy.
+		var ls: String = DirBrawl.lungeShot(S, f, sh.power)
+		if ls == "stop":
+			DirBands.drop(S, f, "a " + sh.kind + " stopped his lunge")
+			SimFx.cue(S, f, "charge_stopped", "lunge", "")
+			outcome = "stop"
+		elif ls == "shrug":
+			dmg *= float(DirBrawl.cfg().heavy.armour.lightMul)
+			outcome = "shrug"
 	# A zipper (DirZip.shot): on the way in a zip strike is stopped and a zip heavy shrugs off a weak shot; on the way
 	# out a shot drops him.
 	var zo: String = DirZip.shot(S, f, sh)

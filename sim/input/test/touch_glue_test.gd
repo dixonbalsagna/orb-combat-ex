@@ -98,12 +98,14 @@ func _run() -> void:
 			got = ex.kind
 			break
 	ok(got == "light", "attack tap: a light exchange, got '%s'" % got)
-	# A hold is a heavy.
+	# A hold is the wind-up, and the blow goes on the release as the medium (a heavy exchange): 14 live frames down, then let go.
 	_fresh()
 	f = host.S.fighters[0]
 	_frames(80)
 	f.ki = 100.0
 	_touch(4, _at("attack"), true)
+	_frames(14)
+	_touch(4, _at("attack"), false)
 	got = ""
 	for i in range(90):
 		_frames(1)
@@ -111,9 +113,9 @@ func _run() -> void:
 		if ex2 != null and ex2.A == f:
 			got = ex2.kind
 			break
-	_touch(4, _at("attack"), false)
-	ok(got == "heavy", "attack hold: a heavy exchange, got '%s'" % got)
-	# A swipe up is the signature.
+	ok(got == "heavy", "attack hold: a heavy exchange on the release, got '%s'" % got)
+	# A swipe up is Y, B's cell (the heavy: a `signature` edge with its level on). On the director before the three strengths (C2) that
+	# edge starts a signature exchange; on the C2 director it is the heavy blow (B is the heavy, the signature moved to RT + B).
 	_fresh()
 	f = host.S.fighters[0]
 	_frames(80)
@@ -130,7 +132,7 @@ func _run() -> void:
 			got = ex3.kind
 			break
 	_touch(5, a + Vector2(0.0, -45.0 * 2.75), false)
-	ok(got == "sig", "attack swipe up: a signature exchange, got '%s'" % got)
+	ok(got == "sig" or got == "heavy", "attack swipe up: B's cell starts an exchange (a signature before C2, the heavy after), got '%s'" % got)
 	# A flick on the stick: the dodge stance and a dash.
 	_fresh()
 	f = host.S.fighters[0]

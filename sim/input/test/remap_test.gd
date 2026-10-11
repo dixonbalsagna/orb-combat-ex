@@ -279,7 +279,9 @@ func _gestures() -> void:
 	l.press("pad:dpad_up")
 	for k in range(12):
 		l.build()
-	ok(l.build().heavy, "gesture: the moved control still gives a heavy when held")
+		l.consumed()
+	l.release("pad:dpad_up")
+	ok(l.build().heavy, "gesture: the moved control still gives the medium (a heavy edge) when held 12 live ticks and let go")
 	ok(SimInputRemap.apply_overrides(sp, []) == sp, "gesture: no overrides leave the preset alone")
 	var d: Array = SimInputRemap.diff(sp, eff)
 	ok(SimInputRemap.diff(sp, SimInputRemap.apply_overrides(sp, d)).size() == d.size(), "gesture: the diff round-trips")

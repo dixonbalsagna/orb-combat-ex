@@ -307,6 +307,8 @@ static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, spec
 	if S.dirS.ex != null and String(plan.get("name", "")) != "KNOCK BACK":
 		DirInterrupt.si(S.dirS.ex.A, DirInterrupt.LAST_END, DirInterrupt.END_LAUNCH)
 	tgt.state = "launched"
+	if String(plan.get("name", "")) != "KNOCK BACK":
+		DirBrawl.launched(S, tgt)   # the brawl's launcher rests on him after any launch
 	tgt.launchBy = att
 	tgt.bounces = 0.0
 	tgt.launchSpecial = special

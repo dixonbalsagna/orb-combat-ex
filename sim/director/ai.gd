@@ -230,6 +230,7 @@ static func aiInput(S: SimState, f) -> void:
 			var sigPick: float = skill().sigPick
 			if SimFighter.sigFree(f) or (f.ki >= 50.0 and q < sigPick and S.T >= f.sigReadyT):   # the signature cooldown (fighter.json sigCooldown); the AI takes its last stand
 				i.sig = true
+				i.stanceMask |= 4   # the charging stance: with no stance held, B is the heavy
 			elif q < sigPick + (1.0 - sigPick) * (maxf(HEAVY_SHARE, float(lv().breakGuard)) if DirInterrupt.on() and DirInterrupt.gi(o, DirInterrupt.GUARDED) >= 2 else HEAVY_SHARE):
 				i.heavy = true   # step 3: a rival that only guards gets the guard-breaker (a heavy) at the level's rate
 			else:

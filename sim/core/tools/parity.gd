@@ -1345,6 +1345,7 @@ func _lastStandGates() -> String:
 	S.dirS.cool = 0.0
 	a.ki = 0.0
 	a.sigReadyT = S.T + 100.0
+	a.input.stanceMask = 4   # a stance held: with three strengths B alone is the heavy
 	DirExchange.requestAttack(S, a, "sig")
 	if S.dirS.ex != null:
 		return "a signature with no ki, inside the cooldown, started without a last stand"

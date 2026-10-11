@@ -424,7 +424,7 @@ static func dodgeCancel(S: SimState, ex, f) -> bool:
 		return DirBands.cancel(S, f)   # his own approach: nothing had started, so it costs nothing
 	if ex.kind == "sig" or (f != ex.A and f != ex.D) or DirExchange.finisherPlanned(ex) or DirBury.diving(S, f):
 		return false
-	if DirBrawl.isBrawl(ex) and (ex.branch != "" or DirBrawl.sureAgainst(ex, f) or f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, (ex.D if f == ex.A else ex.A).x)) >= -SimAct.awayDead):
+	if DirBrawl.isBrawl(ex) and (ex.branch != "" or DirBrawl.sureAgainst(ex, f) or DirBrawl.open(S, f) or f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, (ex.D if f == ex.A else ex.A).x)) >= -SimAct.awayDead):
 		return false   # in a brawl a dodge leaves only with the stick away (melee-press-feel.md section 2)
 	var c: Dictionary = data().dodgeCancel
 	# The attacker's cancel is free until his first wind-up starts (agency-pass.md section 1): he was flown in by the

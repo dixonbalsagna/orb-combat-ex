@@ -114,10 +114,31 @@ func _init() -> void:
 	var ends: Dictionary = {}
 	var kinds: Dictionary = {}
 	var acks: Dictionary = {}
+	var c3: Dictionary = {}       # the three strengths' cues, counted by name and text (slices C2a and C2t)
+	var launchWhy: Dictionary = {}   # launches by what earned them (the feed's reason)
+	var blowMoveMax := 0.0        # the most a blow's attacker moved on the tick it was thrown, in units
+	var blowMoveOver := 0         # ... and the blows that moved theirs more than 0.6 bh
+	var anyMoveMax := 0.0         # the most either fighter moved in a tick of a brawl that went on
+	var anyMoveOver := 0
+	var launchesBy := [0, 0]      # launches by who launched
+	var dmgBy: Array = [{}, {}, {}]   # damage dealt, by slot (the third: nobody, a landing or a collision) and kind
+	var slack: Dictionary = {}    # by the damage kind of a brawl blow: [blows, the most the two stood past striking distance as it landed, blows over 15 units]
+	var sentBy := [0, 0]          # brawls that ended with a launch or a knock-back, by who sent the other
+	var dbg: bool = args.has("--debug-moves")
+	var route: bool = args.has("--route=1")   # the launcher route: a tap of B while the launcher is open
+	var routeB := -1000
+	var dbgR: bool = args.has("--debug-route")
+	var watch := 0
+	var watched := 0
+	var routeTry := false
+	var arrivals := 0             # blows thrown on the tick their attacker arrived by a lunge or a zip
+	var arrivalsOver := 0         # ... on which he moved more than 0.6 bh (the lunge, the zip)
+	var blowN := 0
 	for m in range(n):
 		var S := SimCore.createSim()
 		SimCore.newMatch(S, base + m, {"p1": meAi, "p2": not dummy}, {"v2": [not meAi, dummy]})
 		var me = S.fighters[0]
+		routeB = -1000
 		var ai = S.fighters[1]
 		var lt := 0
 		var ticks := 0
@@ -171,6 +192,15 @@ func _init() -> void:
 				wantEnder = false
 				mute = 40
 			it.waited = mini(15, carry) if pending else 0
+			routeTry = false
+			if route and brawlCls != null and S.dirS.ex != null and brawlCls.launcherOpen(S, me) >= 0 and S.tick - routeB > 40:
+				it.light = false
+				it.lightHeld = false
+				it.heavy = false
+				it.sig = true
+				it.sigHeld = true
+				routeB = S.tick
+				routeTry = true
 			if forms and me.act.formReady:
 				it.transform = true
 			if breakAt > 0 and S.tick - breakAt > 30:
@@ -186,10 +216,34 @@ func _init() -> void:
 					st = "reeling"
 				elif me.act.dirI[brawlCls.LINE] != 0 or S.tick + 1 < me.act.dirI[brawlCls.FREE_AT]:
 					st = "busy"
+			var pxy := [me.x, me.y, ai.x, ai.y]
+			var sigNow: bool = it.sig
+			var lightNow: bool = it.light
 			var stepped: bool = SimCore.step(S, [null if meAi else it, SimIntent.new() if dummy else null])
+			var moved := [0.0, 0.0]
+			if stepped:
+				moved[0] = sqrt(pow(SimWrap.sdx(float(pxy[0]), me.x), 2.0) + pow(me.y - float(pxy[1]), 2.0))
+				moved[1] = sqrt(pow(SimWrap.sdx(float(pxy[2]), ai.x), 2.0) + pow(ai.y - float(pxy[3]), 2.0))
+				if inB and S.dirS.ex == exWas and S.dirS.ex != null and S.dirS.ex.tpl == "brawl" and S.dirS.ex.branch == "" and me.state == "locked" and ai.state == "locked":
+					for mv in moved:
+						anyMoveMax = maxf(anyMoveMax, float(mv))
+						if float(mv) > 0.6 * 75.0 + 0.075:
+							anyMoveOver += 1
+							if dbg and anyMoveOver <= 14:
+								print("OVER tick m", m, " t", S.tick, " moved ", snappedf(float(moved[0]) / 75.0, 0.01), " / ", snappedf(float(moved[1]) / 75.0, 0.01), " tag ", S.dirS.ex.tag, " exT ", snappedf(S.dirS.ex.t * 60.0, 0.1), " rush ", me.rush != null, ai.rush != null, " stun ", me.stunTicks, "/", ai.stunTicks, " lines ", me.act.dirI[brawlCls.LINE], "/", ai.act.dirI[brawlCls.LINE], " close ", me.act.dirI[brawlCls.CLOSE_N], "/", ai.act.dirI[brawlCls.CLOSE_N], " gapNow ", snappedf(DirBands.dist(me, ai) / 75.0, 0.01))
+			for fe in S.out.feed:
+				var ftag: String = String(fe.tag)
+				if ftag.begins_with("LAUNCH: "):
+					var at: int = ftag.find("(earned: ")
+					var why: String = ftag.substr(at + 9).trim_suffix(")") if at >= 0 else "planned"
+					launchWhy[why] = int(launchWhy.get(why, 0)) + 1
 			if inB:
 				brawlReal += 1
 			for e in S.out.fx:
+				if e.type == "damage" and e.amount > 0.0:
+					var da: int = int(e.attacker) if (int(e.attacker) >= 0 and int(e.attacker) < 2) else 2
+					var dk: String = String(e.kind) + ("" if da < 2 else ":on" + str(int(e.victim)))
+					dmgBy[da][dk] = float(dmgBy[da].get(dk, 0.0)) + float(e.amount)
 				if e.type == "damage" and e.amount > 0.0 and S.dirS.ex != null:
 					blows += 1
 				if answering and e.type == "damage" and e.number and int(e.attacker) == 1 and (e.kind == "heavy" or e.kind == "guard"):
@@ -208,8 +262,40 @@ func _init() -> void:
 					kbAt = 0
 				if e.type == "cue" and e.kind == "brawl_end" and e.text == "knockback":
 					kbAt = S.tick
+				if e.type == "damage" and e.amount > 0.0 and e.number and inB and int(e.attacker) >= 0 and int(e.attacker) < 2 and ["light", "medium", "heavy", "blast"].has(String(e.kind)):
+					var sl: float = maxf(0.0, DirBands.dist(me, ai) - float(DirData.contact().offset))
+					var row: Array = slack.get(String(e.kind), [0, 0.0, 0])
+					row[0] = int(row[0]) + 1
+					row[1] = snappedf(maxf(float(row[1]), sl), 0.1)
+					if sl > 15.0:
+						row[2] = int(row[2]) + 1
+					slack[String(e.kind)] = row
+				if e.type == "launch_plan" and String(e.chosen) != "STAY" and int(e.actor) >= 0 and int(e.actor) < 2 and inB:
+					sentBy[int(e.actor)] += 1
+				if e.type == "launch_plan" and String(e.chosen) != "KNOCK BACK" and String(e.chosen) != "STAY" and int(e.actor) >= 0 and int(e.actor) < 2:
+					launchesBy[int(e.actor)] += 1
 				if e.type != "cue":
 					continue
+				if ["windup", "miss", "launcher_open", "launcher_close", "energy_reach", "energy_land", "charge_full", "burst", "stagger", "guard_break"].has(String(e.kind)):
+					var ck: String = String(e.kind) + ":" + String(e.text)
+					if e.kind == "windup":
+						ck += ":" + (String(e.source) if e.text != "end" else str(int(e.k))) + (":launcher" if (e.text == "start" and int(e.k) == 1) else "") + (":" + ("ai" if S.fighters[int(e.actor)].ai != null else "player") if e.text == "start" else "")
+					elif e.kind == "energy_land":
+						ck += ":" + String(e.source) + (":flash" if int(e.k) == 1 else "")
+					elif e.kind == "launcher_close" or e.kind == "launcher_open":
+						ck += ":" + ("ai" if S.fighters[int(e.actor)].ai != null else "player")
+					c3[ck] = int(c3.get(ck, 0)) + 1
+				if e.kind == "blow" and e.text != "release" and stepped and int(e.actor) >= 0 and int(e.actor) < 2 and (String(e.source) == "lunge" or String(e.source) == "zip"):
+					arrivals += 1
+					if float(moved[int(e.actor)]) > 0.6 * 75.0 + 0.075:
+						arrivalsOver += 1
+				elif e.kind == "blow" and e.text != "release" and stepped and int(e.actor) >= 0 and int(e.actor) < 2:
+					blowN += 1
+					blowMoveMax = maxf(blowMoveMax, float(moved[int(e.actor)]))
+					if float(moved[int(e.actor)]) > 0.6 * 75.0 + 0.075:
+						blowMoveOver += 1
+						if dbg and blowMoveOver <= 14:
+							print("OVER blow m", m, " t", S.tick, " ", e.text, " a", int(e.actor), " moved ", snappedf(float(moved[int(e.actor)]) / 75.0, 0.01), " tag ", (S.dirS.ex.tag if S.dirS.ex != null else "-"), " exT ", (snappedf(S.dirS.ex.t * 60.0, 0.1) if S.dirS.ex != null else -1.0), " lead ", int(e.dur), " gapNow ", snappedf(DirBands.dist(me, ai) / 75.0, 0.01))
 				if e.kind == "stagger" and e.text == "perfect_block":
 					pbN += 1
 				if e.kind == "stagger" and e.text == "reversal":
@@ -259,9 +345,25 @@ func _init() -> void:
 					lens.append(int(e.amount))
 					perBrawl.append(int(e.x) + int(e.y))
 					ends[e.text] = int(ends.get(e.text, 0)) + 1
+			if dbgR:
+				for e in S.out.fx:
+					if e.type == "cue" and e.kind == "launcher_open" and int(e.actor) == 0 and watched < 40:
+						watch = 20
+						watched += 1
+						print("WATCH open m", m, " t", S.tick)
+				if watch > 0:
+					watch -= 1
+					var cs := ""
+					for e in S.out.fx:
+						if e.type == "cue" and int(e.actor) == 0 and ["press_ack", "blow", "launcher_close", "windup", "brawl_end"].has(String(e.kind)):
+							cs += " " + String(e.kind) + ":" + String(e.text) + ":" + String(e.source)
+					var bc = brawlCls
+					print("WATCH t", S.tick, " stepped ", stepped, " sig ", sigNow, " x ", lightNow, " line ", me.act.dirI[bc.LINE], " kind ", me.act.dirI[bc.KIND], " heldP ", me.act.dirI[bc.HELD_P], " free ", me.act.dirI[bc.FREE_AT] - S.tick, " reel ", me.act.dirI[bc.REEL_AT] - int(round(S.T * 60.0)), " lc ", me.act.dirI[bc.LC_UNTIL], " stun ", me.stunTicks, "/", ai.stunTicks, " ki ", snappedf(me.ki, 0.1), " routeB ", routeB, cs)
 			S.out.fx.clear()
 			S.out.feed.clear()
 			if not stepped:
+				if routeTry:
+					routeB = -1000   # a press made in a hit freeze is made again
 				if pending:
 					carry += 1
 				continue
@@ -348,6 +450,12 @@ func _init() -> void:
 	for v in latReal:
 		if int(v) <= 4:
 			in4 += 1
+	var dmgOut: Array = []
+	for dd in dmgBy:
+		var od := {}
+		for dk2 in dd:
+			od[dk2] = snappedf(float(dd[dk2]) / float(n), 1.0)
+		dmgOut.append(od)
 	var pm := func(x: int) -> float: return snappedf(60.0 * float(x) / float(maxi(1, live)), 0.1)
 	var bs: float = float(maxi(1, brawlReal)) / 60.0
 	print(JSON.stringify({
@@ -358,6 +466,8 @@ func _init() -> void:
 		"mix": mix, "brawlP90Sec": snappedf(float(_q(lens, 0.9)) / 60.0, 0.01), "brawlMedianSec": snappedf(float(_q(lens, 0.5)) / 60.0, 0.01), "brawlMedianBlows": _q(perBrawl, 0.5), "brawlEnds": ends,
 		"tapsPerSec": snappedf(float(taps) / bs, 0.01), "contactsPerSec": snappedf(float(contacts) / bs, 0.01), "damagePerSec": snappedf(dmg / bs, 0.1),
 		"blowKinds": kinds, "acks": acks, "tapsInBrawl": taps, "contacts": contacts,
+		"three": c3, "launchWhy": launchWhy, "launchesPerMatch": [snappedf(float(launchesBy[0]) / float(n), 0.1), snappedf(float(launchesBy[1]) / float(n), 0.1)], "brawlMinutes": snappedf(float(brawlLive) / 3600.0, 0.01), "damageAMatchBy": dmgOut, "slackAtContact": slack, "sentInBrawlBy": sentBy,
+		"closing": {"blows": blowN, "blowMoveMaxBh": snappedf(blowMoveMax / 75.0, 0.001), "blowsOver": blowMoveOver, "arrivalBlows": arrivals, "arrivalBlowsOver": arrivalsOver, "anyMoveMaxBh": snappedf(anyMoveMax / 75.0, 0.001), "ticksOver": anyMoveOver},
 		"pressToContactReal": {"median": _q(latReal, 0.5), "p95": _q(latReal, 0.95)},
 		"pressToContactLive": {"median": _q(latLive, 0.5), "p95": _q(latLive, 0.95)},
 		"contactWithin4Share": snappedf(float(in4) / float(maxi(1, latReal.size())), 0.001),

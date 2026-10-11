@@ -7,8 +7,10 @@ extends RefCounted
 ## (Encounter and Simulation own it); this file only builds and reads it.
 ##
 ## A log is an Array of entries, oldest first, at most `logSize` long (20: the running mix; the recipe reads the latest `mixShort`, 5):
-##   {kind: int (LIGHT, HEAVY, SIG, CONTEXT), mode: int (0 physical, 1 energy), down: int tick, up: int tick or -1 while held,
+##   {kind: int (LIGHT, HEAVY, SIG, CONTEXT, PAIR), mode: int (0 physical, 1 energy), down: int tick, up: int tick or -1 while held,
 ##    beat: int, stance: int (the stance mask the press was made in, 0 martial; absent reads as 0)}
+## and, when the director stamps them (brawl second pass, C2a), `ldown` and `lup`: the LIVE tick of the press and of its release
+## (the clock that stops in a hit freeze, which the wind-ups and the burst count). Absent, every read falls back to `down` and `up`.
 ## `beat` is the signed distance in ticks from the press to the nearest blow contact of the running exchange (negative:
 ## early), or NO_BEAT outside one. A charged press (a hold at range or close) also carries `flash`: the tick the sim's
 ## charge flashed, or NO_FLASH; releasing on the flash is the timed release. The director stamps the PLANNED flash tick when
@@ -31,7 +33,11 @@ const LIGHT: int = 0
 const HEAVY: int = 1
 const SIG: int = 2
 const CONTEXT: int = 3   # A: the grab, the channel, the zip tackle (a press and a hold)
+const PAIR: int = 4      # two adjacent face buttons pressed together (pair_commit): one press in the log
 const NO_BEAT: int = 32767
+## What the classifier and the zip's heavy reading count as a held X until the director's second pass (C2a) reads the burst: the old
+## holdLight, 8. The burst itself starts at `burstStart` (16), which burst_read reads. Fold this into burstStart when C2a lands.
+const LEGACY_LIGHT_HOLD: int = 8
 const NO_FLASH: int = 32767
 
 const DEFAULTS: Dictionary = {
@@ -55,11 +61,20 @@ const DEFAULTS: Dictionary = {
 	"perfectStreak": 3,   # this many perfect presses in a row make a timed string
 	"zipMashPresses": 3,  # a zip has three hits: the starter and two more presses make its speed reading
 	"zipMashGap": 10,     # ... each within this many ticks of the one before
-	"holdLight": 8,       # the hold reading of each button (Game Design, 2026-10-05): X
-	"holdHeavy": 16,      # Y
-	"holdSig": 20,        # B (the 45 ki signature)
-	"holdSigCharging": 45,   # B in the charging stance (the ultimate)
-	"holdContext": 18,    # A
+	"burstStart": 16,     # a light held this many live ticks starts the burst: the same line as Y's and A's hold (brawl second pass section 3)
+	"windupMedium": 12,   # Y: a tap lands when this wind-up ends; still down at wind-up + grace it is the charged medium
+	"windupHeavy": 28,    # B in the martial stance: the heavy's wind-up
+	"windupContext": 12,  # A: the shove's wind-up; held to wind-up + grace it is the tackle's coil
+	"windupGrace": 4,     # a release in this many ticks after the wind-up's end is still a tap (every device)
+	"pairWindow": 3,      # two adjacent face buttons within this many ticks are one press (doubled by the assist setting)
+	"pairFresh": 8,       # ... and neither was pressed in the ticks before
+	"flurryGapX": 12,     # the pace of each flurry: a press of the same button within this many ticks continues it
+	"flurryGapY": 16,
+	"flurryGapB": 34,
+	"flurryNeedSlow": 2,  # presses that make a Y or B flurry (X is mashPresses)
+	"mixupSwitches": 2,   # button changes in one chain that make a mix-up (X Y X)
+	"simpleMediumStart": 12,   # the Simple layout: the hold is the wind-up; from this many live ticks the release is the medium ...
+	"simpleHeavyStart": 28,    # ... and from this many the heavy
 }
 
 
@@ -73,20 +88,31 @@ static func params() -> Dictionary:
 
 
 ## A new press at `tick`. Trims the log to `logSize` and returns it. `beat_offset` is NO_BEAT outside an exchange.
-static func push(log: Array, kind: int, mode: int, tick: int, beat_offset: int = NO_BEAT, size: int = -1, stance: int = 0) -> Array:
+static func push(log: Array, kind: int, mode: int, tick: int, beat_offset: int = NO_BEAT, size: int = -1, stance: int = 0, live: int = -1, latched: bool = false) -> Array:
 	var n: int = size if size > 0 else SimInputData.ti(["read", "logSize"], int(DEFAULTS["logSize"]))
-	log.append({"kind": kind, "mode": mode, "down": tick, "up": -1, "beat": beat_offset, "flash": NO_FLASH, "stance": stance})
+	if not latched:
+		# A fresh press edge on a button the log still has held means "released, then pressed": a release and a re-press inside one
+		# hit freeze reach the sim as the level unchanged and one new edge (docs/controls/windup-read.md, section 1). The old press
+		# is let go at the point the new one is read. Not on a latched button, where the next press IS the release and sends no edge.
+		release(log, kind, tick, live)
+	var e: Dictionary = {"kind": kind, "mode": mode, "down": tick, "up": -1, "beat": beat_offset, "flash": NO_FLASH, "stance": stance}
+	if live >= 0:
+		e["ldown"] = live
+	log.append(e)
 	while log.size() > n:
 		log.pop_front()
 	return log
 
 
-## The button of `kind` was released at `tick`: closes the latest still-held entry of that kind.
-static func release(log: Array, kind: int, tick: int) -> void:
+## The button of `kind` was released at `tick` (and at live tick `live`, when the caller keeps one): closes the latest still-held
+## entry of that kind.
+static func release(log: Array, kind: int, tick: int, live: int = -1) -> void:
 	for k in range(log.size() - 1, -1, -1):
 		var e: Dictionary = log[k]
 		if int(e["kind"]) == kind and int(e["up"]) < 0:
 			e["up"] = tick
+			if live >= 0:
+				e["lup"] = live
 			return
 
 
@@ -127,17 +153,89 @@ static func release_grade(entry: Dictionary, opts: Dictionary = {}) -> String:
 	return "early" if d - int(opts.get("offset", 0)) < 0 else "late"
 
 
-## How long a button of this entry must be down to be a hold: its cell's number (X 8, Y 16, B 20, B in the charging stance 45, A 18).
+## The wind-up of this entry's button, in live ticks (brawl second pass sections 2 to 4): Y the medium 12, B the heavy 28 (martial stance
+## only: in the other stances B is that stance's own signature, whose hold is the director's), A the shove 12, in any stance. -1 for
+## a button with no wind-up: X (a tap is instant and a hold is the burst), PAIR, and B outside the martial stance. Y keeps its 12 in
+## the energy stance (RB + Y, the blast).
+static func windup_for(entry: Dictionary, p: Dictionary = {}) -> int:
+	var q: Dictionary = p if not p.is_empty() else params()
+	var stance: int = int(entry.get("stance", 0))
+	match int(entry.get("kind", LIGHT)):
+		HEAVY: return int(q["windupMedium"]) if (stance & 4) == 0 else -1
+		SIG: return int(q["windupHeavy"]) if stance == 0 else -1
+		CONTEXT: return int(q["windupContext"])
+	return -1
+
+
+## Where a tap ends and a charge begins: the wind-up plus the grace (Y 16, B 32, A 16), in live ticks from the press. -1 for a
+## button with no wind-up.
+static func decision_for(entry: Dictionary, p: Dictionary = {}) -> int:
+	var q: Dictionary = p if not p.is_empty() else params()
+	var w: int = windup_for(entry, q)
+	return -1 if w < 0 else w + int(q["windupGrace"])
+
+
+## How long a button of this entry must be down to count as held (the classifier's `hold` style, the zip's heavy): the decision point
+## for a button with a wind-up, 8 for X (LEGACY_LIGHT_HOLD: the burst's start, burstStart, is read by burst_read), and the game's hold
+## for the rest (a stance's own signature).
 ## `opts.hold_ticks` overrides it for every cell (a caller with its own rule).
 static func hold_ticks_for(entry: Dictionary, p: Dictionary, opts: Dictionary = {}) -> int:
 	if opts.has("hold_ticks"):
 		return int(opts["hold_ticks"])
-	match int(entry.get("kind", LIGHT)):
-		LIGHT: return int(p["holdLight"])
-		HEAVY: return int(p["holdHeavy"])
-		SIG: return int(p["holdSigCharging"]) if (int(entry.get("stance", 0)) & 4) != 0 else int(p["holdSig"])
-		CONTEXT: return int(p["holdContext"])
-	return int(p["holdTicks"])
+	if int(entry.get("kind", LIGHT)) == LIGHT:
+		return LEGACY_LIGHT_HOLD
+	var d: int = decision_for(entry, p)
+	return d if d >= 0 else int(p["holdTicks"])
+
+
+## The ticks an entry has been down: on the live clock when it carries `ldown` (a still-held press runs to `live_now`, a released one
+## to its `lup`), else on the real clock (`now`, `up`).
+static func held_ticks(entry: Dictionary, now: int, live_now: int = -1) -> int:
+	if entry.has("ldown") and (int(entry["up"]) < 0 or entry.has("lup")):
+		var lend: int = int(entry["lup"]) if int(entry["up"]) >= 0 else (live_now if live_now >= 0 else now)
+		return lend - int(entry["ldown"])
+	var end: int = int(entry["up"]) if int(entry["up"]) >= 0 else now
+	return end - int(entry["down"])
+
+
+## The read of a slow button (Y, B, A) at the wind-up's end (docs/controls/windup-read.md): "winding" while it is down before the
+## decision point, "tap" if it was let go at or before wind-up plus grace live ticks (the blow lands when the wind-up ends, or at the
+## release if that is later: tap_throw_at), "charge" if it is still down at the decision point or was let go after it. "none" for a
+## button with no wind-up (X, and B outside the martial stance). `live_now` is the director's live tick.
+static func charge_read(entry: Dictionary, live_now: int, p: Dictionary = {}) -> String:
+	var q: Dictionary = p if not p.is_empty() else params()
+	var dec: int = decision_for(entry, q)
+	if dec < 0:
+		return "none"
+	var held: int = held_ticks(entry, live_now, live_now)
+	if int(entry["up"]) >= 0:
+		return "tap" if held <= dec else "charge"
+	return "winding" if held < dec else "charge"
+
+
+## The live tick a tap's blow is thrown: when its wind-up ends, or at its release if that came after the wind-up's end (inside the
+## grace). -1 unless the entry is a tap. The press must carry `ldown` (and the release `lup`).
+static func tap_throw_at(entry: Dictionary, p: Dictionary = {}) -> int:
+	var q: Dictionary = p if not p.is_empty() else params()
+	if charge_read(entry, 0, q) != "tap":
+		return -1
+	var start: int = int(entry.get("ldown", entry["down"]))
+	var end: int = int(entry["lup"]) if entry.has("lup") else int(entry["up"])
+	return maxi(start + windup_for(entry, q), end)
+
+
+## The burst on a held X (section 3): the press was an instant light; from `burstStart` live ticks down more blows follow by
+## themselves. {held, ready, since, stance}: how long it has been down, whether the burst is on, how many live ticks past its start,
+## and the stance it was pressed in (the director decides what a held X is outside the martial stance: at range, in the energy
+## stance, it is the volley). The burst's lights are the director's: not pushed to the log, never graded for timing, not counted as
+## mash. Letting go (the entry's `up`) ends it.
+static func burst_read(entry: Dictionary, live_now: int, p: Dictionary = {}) -> Dictionary:
+	var q: Dictionary = p if not p.is_empty() else params()
+	if int(entry.get("kind", LIGHT)) != LIGHT:
+		return {"held": 0, "ready": false, "since": 0, "stance": int(entry.get("stance", 0))}
+	var held: int = held_ticks(entry, live_now, live_now)
+	var ready: bool = int(entry["up"]) < 0 and held >= int(q["burstStart"])
+	return {"held": held, "ready": ready, "since": maxi(0, held - int(q["burstStart"])) if ready else 0, "stance": int(entry.get("stance", 0))}
 
 
 ## The reading of a zip (docs/controls/lunge-control.md B6.4): "plain", "speed", "tech" or "heavy". The starter is the press made at
@@ -156,8 +254,16 @@ static func zip_read(log: Array, now: int, zip_start: int, arrival: int, opts: D
 	if si < 0:
 		return "plain"
 	var st: Dictionary = log[si]
-	var end: int = int(st["up"]) if int(st["up"]) >= 0 else now
-	if end - int(st["down"]) >= hold_ticks_for(st, p, opts):
+	# Heavy: the starter is a charge (still down at wind-up plus grace, or let go after it), on the live clock when the log carries it.
+	# X, which has no wind-up, is a heavy zip as before when held for the burst's start.
+	var live_now: int = int(opts.get("live_now", now))
+	var hs: int = held_ticks(st, now, live_now)
+	var released: bool = int(st["up"]) >= 0
+	var thr: int = hold_ticks_for(st, p, opts)
+	# A release AT the decision point is a tap only for a log that carries live ticks (the director's C2a log); an unstamped log (today's)
+	# keeps the old rule, where a press held for the number of ticks counts, so nothing live changes before the director stamps its log.
+	var new_rule: bool = released and st.has("ldown") and windup_for(st, p) >= 0 and not opts.has("hold_ticks")
+	if (hs > thr) if new_rule else (hs >= thr):
 		return "heavy"
 	var half: int = _half(p, opts)
 	var shift: int = int(opts.get("offset", 0))
@@ -180,6 +286,194 @@ static func zip_read(log: Array, now: int, zip_start: int, arrival: int, opts: D
 	if chain >= int(p["zipMashPresses"]):
 		return "speed"
 	return "plain"
+
+
+## The four pairs are the diamond's edges (docs/controls/q19-input.md section 2; X is LIGHT, Y HEAVY, B SIG, A CONTEXT): X+Y, X+A, Y+B,
+## A+B. X+B and Y+A cross the pad and are not pairs. Keyed by the two kinds, smaller first.
+const _PAIRS: Dictionary = {"01": "xy", "03": "xa", "12": "yb", "23": "ab"}
+
+
+static func _kinds_of(e: Dictionary) -> Array:
+	return e["cells"] if int(e["kind"]) == PAIR else [int(e["kind"])]
+
+
+## Whether the last two presses in the log are a pair (brawl second pass section 6): adjacent face buttons within `pairWindow` ticks
+## (doubled by `opts.assist`), both FRESH (neither button, nor a pair that used it, pressed in the `pairFresh` ticks before the
+## first), neither already part of a pair, and not made under RT (no pairs under the charging stance). The first press is never
+## delayed: it has been thrown as its own blow, and a LIGHT pressed first is kept (`keep_light`: it lands 2 ticks after its press, its
+## damage stands); a Y, B or A pressed first has only just begun its wind-up, which the pair replaces. Returns {} when there is no
+## pair, else {pair: "xy" | "xa" | "yb" | "ab", first, second (kinds), t1, t2 (the graded ticks), keep_light, stance}. No intent
+## bit: the edges are the intent's own (light, heavy, sig, context).
+static func pair_read(log: Array, opts: Dictionary = {}) -> Dictionary:
+	if log.size() < 2:
+		return {}
+	var p: Dictionary = opts.get("p", params())
+	var e2: Dictionary = log[log.size() - 1]
+	var e1: Dictionary = log[log.size() - 2]
+	if e1.get("paired", false) or e2.get("paired", false):
+		return {}
+	var k1: int = int(e1["kind"])
+	var k2: int = int(e2["kind"])
+	if k1 == k2 or k1 > CONTEXT or k2 > CONTEXT:
+		return {}
+	var key: String = "%d%d" % [mini(k1, k2), maxi(k1, k2)]
+	if not _PAIRS.has(key):
+		return {}
+	if ((int(e1.get("stance", 0)) | int(e2.get("stance", 0))) & 4) != 0:
+		return {}
+	var window: int = int(p["pairWindow"]) * (int(p["assistFactor"]) if opts.get("assist", false) else 1)
+	var gap: int = int(e2["down"]) - int(e1["down"])
+	if gap < 0 or gap > window:
+		return {}
+	for k in range(log.size() - 2):
+		var prev: Dictionary = log[k]
+		var kinds: Array = _kinds_of(prev)
+		if (kinds.has(k1) or kinds.has(k2)) and int(e1["down"]) - int(prev["down"]) < int(p["pairFresh"]):
+			return {}
+	return {"pair": _PAIRS[key], "first": k1, "second": k2, "t1": int(e1["down"]), "t2": int(e2["down"]), "keep_light": k1 == LIGHT, "stance": int(e2.get("stance", 0))}
+
+
+## A pair is ONE press in the log: replaces the last two entries (the ones pair_read found) with a PAIR entry carrying the pair's
+## code and the two kinds, counted once in the mix and in a mash. Does nothing for an empty read.
+static func pair_commit(log: Array, pr: Dictionary) -> void:
+	if pr.is_empty() or log.size() < 2:
+		return
+	var e1: Dictionary = log[log.size() - 2]
+	var e2: Dictionary = log[log.size() - 1]
+	log.resize(log.size() - 2)
+	var up: int = -1 if (int(e1["up"]) < 0 or int(e2["up"]) < 0) else maxi(int(e1["up"]), int(e2["up"]))
+	var e: Dictionary = {"kind": PAIR, "mode": int(e2["mode"]), "down": int(e1["down"]), "up": up, "beat": NO_BEAT, "flash": NO_FLASH, "stance": int(e2.get("stance", 0)),
+			"pair": str(pr["pair"]), "cells": [int(pr["first"]), int(pr["second"])], "t2": int(pr["t2"])}
+	if e1.has("ldown"):
+		e["ldown"] = int(e1["ldown"])
+	log.append(e)
+
+
+## The pace of each button's flurry: the longest gap that still continues it (X 12, Y 16, B 34; brawl second pass section 2).
+static func flurry_gap(kind: int, p: Dictionary = {}) -> int:
+	var q: Dictionary = p if not p.is_empty() else params()
+	match kind:
+		LIGHT: return int(q["flurryGapX"])
+		HEAVY: return int(q["flurryGapY"])
+		SIG: return int(q["flurryGapB"])
+	return int(q["mashGap"])
+
+
+## Whether the presses of ONE button are a flurry: {mash, presses, gap, going}. `presses` counts the latest run of this kind with
+## every gap within the button's pace; `going` is whether the last is within that pace of `now`; `mash` is going with at least
+## `mashPresses` presses (X) or `flurryNeedSlow` (Y, B). Other buttons in between do not break it: a Y flurry with a light thrown
+## between its blows is still a Y flurry.
+static func mash_of(log: Array, kind: int, now: int, opts: Dictionary = {}) -> Dictionary:
+	var p: Dictionary = opts.get("p", params())
+	var gap: int = flurry_gap(kind, p)
+	var same: Array = []
+	for e in log:
+		if int(e["kind"]) == kind:
+			same.append(e)
+	if same.is_empty():
+		return {"mash": false, "presses": 0, "gap": 0, "going": false}
+	var n: int = 1
+	var last_gap: int = 0
+	var k: int = same.size() - 1
+	while k > 0:
+		var g: int = int(same[k]["down"]) - int(same[k - 1]["down"])
+		if g > gap:
+			break
+		if n == 1:
+			last_gap = g
+		n += 1
+		k -= 1
+	var going: bool = now - int(same[same.size() - 1]["down"]) <= gap
+	var need: int = int(p["mashPresses"]) if kind == LIGHT else int(p["flurryNeedSlow"])
+	return {"mash": going and n >= need, "presses": n, "gap": last_gap, "going": going}
+
+
+## The mix-up (section 2: "the three in any order"): the latest chain of X, Y and B presses where each press came within the
+## PREVIOUS press's button's pace of the next (an X within 12, a Y within 16, a B within 34), and the chain is still going at `now`.
+## {presses, switches (changes of button along it), kinds (bits: X 1, Y 2, B 4), mixup (switches >= mixupSwitches)}.
+## `opts.n` caps the chain (8). With `opts.count_mode` a change of mode (fist to bolt: the energy arts in reach, section 5b) counts as a
+## switch too, so "punches and bolts" read as a mix-up of two instruments although every press is an X.
+static func alternation(log: Array, now: int, opts: Dictionary = {}) -> Dictionary:
+	var p: Dictionary = opts.get("p", params())
+	var cap: int = int(opts.get("n", 8))
+	var out: Dictionary = {"presses": 0, "switches": 0, "kinds": 0, "mixup": false}
+	if log.is_empty():
+		return out
+	var last: Dictionary = log[log.size() - 1]
+	var lk: int = int(last["kind"])
+	if lk > SIG or now - int(last["down"]) > flurry_gap(lk, p):
+		return out
+	var presses: int = 1
+	var switches: int = 0
+	var kinds: int = 1 << lk
+	var i: int = log.size() - 2
+	while i >= 0 and presses < cap:
+		var prev: Dictionary = log[i]
+		var cur: Dictionary = log[i + 1]
+		var pk: int = int(prev["kind"])
+		if pk > SIG or int(cur["down"]) - int(prev["down"]) > flurry_gap(pk, p):
+			break
+		presses += 1
+		kinds |= 1 << pk
+		if pk != int(cur["kind"]) or (opts.get("count_mode", false) and int(prev["mode"]) != int(cur["mode"])):
+			switches += 1
+		i -= 1
+	out["presses"] = presses
+	out["switches"] = switches
+	out["kinds"] = kinds
+	out["mixup"] = switches >= int(p["mixupSwitches"])
+	return out
+
+
+## A's three readings (section 4), on the live clock: {read, held, taps, since, throw_at, frac}.
+##   "none":    no press of A in the log;
+##   "winding": the latest A is down inside the shove's wind-up (12 live ticks): nothing is decided yet;
+##   "shove":   it was let go by the wind-up's end or inside its grace: the shove goes (`throw_at`, the live tick);
+##   "coil":    still down at wind-up plus grace (16): he coils for the tackle, no shove is thrown. `since` is the live ticks past the
+##              decision and `frac` the coil's share of the way to full (`opts.coil_full`, the tackle's full-coil tick, 36);
+##   "clinch":  a SECOND press of A inside the first's wind-up turns the shove into the reach for a clinch (the shove is not thrown).
+##              `taps` counts the presses after the second within `opts.clinch_max` (45) live ticks of the first (the vicious blows);
+##              `since` runs from the second press.
+## The press log entries carry `ldown` (and `lup`) when the director stamps them; without them the real ticks stand in.
+static func a_read(log: Array, live_now: int, opts: Dictionary = {}) -> Dictionary:
+	var p: Dictionary = opts.get("p", params())
+	var out: Dictionary = {"read": "none", "held": 0, "taps": 0, "since": 0, "throw_at": -1, "frac": 0.0}
+	var runs: Array = []
+	for e in log:
+		if int(e["kind"]) == CONTEXT:
+			runs.append(e)
+	if runs.is_empty():
+		return out
+	var last: Dictionary = runs[runs.size() - 1]
+	var clinch_max: int = int(opts.get("clinch_max", 45))
+	var lv: Callable = func(e: Dictionary) -> int: return int(e.get("ldown", e["down"]))
+	var start: int = runs.size() - 1
+	while start > 0 and lv.call(last) - lv.call(runs[start - 1]) <= clinch_max:
+		start -= 1
+	var w: int = int(p["windupContext"])
+	if runs.size() - start >= 2:
+		var first: Dictionary = runs[start]
+		var second: Dictionary = runs[start + 1]
+		if lv.call(second) - lv.call(first) < w:
+			out["read"] = "clinch"
+			out["taps"] = runs.size() - start - 2
+			out["since"] = live_now - lv.call(second)
+			out["held"] = held_ticks(last, live_now, live_now)
+			return out
+	out["held"] = held_ticks(last, live_now, live_now)
+	match charge_read(last, live_now, p):
+		"winding":
+			out["read"] = "winding"
+		"tap":
+			out["read"] = "shove"
+			out["throw_at"] = tap_throw_at(last, p)
+		"charge":
+			out["read"] = "coil"
+			var dec: int = decision_for(last, p)
+			out["since"] = int(out["held"]) - dec
+			var full: int = int(opts.get("coil_full", 36))
+			out["frac"] = clampf(float(int(out["held"]) - dec) / maxf(1.0, float(full - dec)), 0.0, 1.0)
+	return out
 
 
 static func _half(p: Dictionary, opts: Dictionary) -> int:
@@ -325,6 +619,7 @@ static func _mix(log: Array, n: int, lapsed: bool) -> Dictionary:
 			HEAVY: m["heavy"] += 1
 			SIG: m["sig"] += 1
 			CONTEXT: m["context"] += 1
+			PAIR: m["pair"] = int(m.get("pair", 0)) + 1
 		if int(log[k]["mode"]) == 1:
 			m["energy"] += 1
 	return m

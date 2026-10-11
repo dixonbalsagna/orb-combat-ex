@@ -128,7 +128,8 @@ static func _mine(S: SimState, f) -> bool:
 ##    never starts a lunge of his own. The energy family is not kept: his shot is his answer.
 ##  - LT held in the mid band, free to act, with the ki: the zip starts. Without the ki the press is the plain lunge.
 static func takes(S: SimState, A, kind: String) -> bool:
-	if not on() or kind == "sig":
+	var big: bool = DirBrawl.isB(A, kind)   # B with no stance held: the heavy
+	if not on() or (kind == "sig" and not big):
 		return false
 	if zipping(A):
 		_cue(S, A, "press_ack", "zip", DirBrawl._cell(kind)).n = S.tick
@@ -137,11 +138,12 @@ static func takes(S: SimState, A, kind: String) -> bool:
 	if Z != null:
 		if A.act.mode == 1 or A.state != "free" or A.stunTicks > 0:
 			return false
-		var w: int = 2 if kind == "heavy" else 1
-		if w == 2 and A.ki < float(DirBrawl.cfg().heavy.ki):
+		var w: int = 3 if big else (2 if kind == "heavy" else 1)   # X, Y the medium, B the heavy
+		var price: float = float((DirBrawl.cfg().heavy if w == 3 else DirBrawl.cfg().medium).ki)
+		if w >= 2 and A.ki < price:
 			w = 1
-		if w == 2 and _g(A, ANS_W) != 2:
-			A.ki -= float(DirBrawl.cfg().heavy.ki)   # a heavy is paid for as it is pressed, as in a brawl
+		if w >= 2 and _g(A, ANS_W) != w:
+			A.ki -= price   # a wound blow is paid for as it is pressed, as in a brawl
 		var pp: int = S.tick - DirBrawl._waited(A)
 		var mash: bool = _g(A, ANS_LAST) > 0 and pp - _g(A, ANS_LAST) <= int(DirBrawl.cfg().flurry.maxGap)
 		_s(A, ANS_LAST, pp)
@@ -387,30 +389,37 @@ static func _arrive(S: SimState, f, D) -> void:
 	var bc: Dictionary = DirBrawl.cfg()
 	var rd: int = _g(f, READ)
 	var mul: float = float(c.mul[["speed", "tech", "held"][rd]])
-	var dmg: float = (float(bc.heavy.damage) * float(bc.heavyMul) if heavy else float(bc.light.damage) * float(bc.skillMul)) * float(bc.damageMul) * mul
+	var dmg: float = (float(c.heavy.damage) if heavy else float(bc.light.damage) * float(bc.skillMul)) * float(bc.damageMul) * mul   # the zip heavy keeps the worth it was built at, on its own key
 	var rb: int = _g(f, RB)
 	# The rival's answer, pressed where he stood before the arrival. A heavy that lands inside its window cancels the
 	# zip's blow: it lands in full and knocks him back.
 	var aw: int = _g(D, ANS_W)
 	var at: int = _g(D, ANS_AT)
 	_s(D, ANS_W, 0)
-	var hdmg: float = float(bc.heavy.damage) * float(bc.damageMul) * float(bc.heavyMul)
-	var mark: int = at + int(bc.heavy.windupTicks)   # a heavy is timed by the end of its wind-up
-	var land: int = mark + int(bc.heavy.landTicks)
-	var cancelled: bool = aw == 2 and mark >= S.tick - int(c.counter.heavyBefore) and mark <= S.tick + rb
-	if cancelled:
-		DirBrawl.blowAt(S, ex, D, DirBrawl.HEAVY, maxi(1, land - S.tick), hdmg, {"counter": "heavy", "sure": true, "ender": true})
+	# A slow blow counters by when it lands, and not by when it is pressed (brawl-second-pass.md section 9): a medium
+	# whose wind-up ends in the tech window is the tech counter, and a heavy whose wind-up ends in the heavy window
+	# is the heavy counter.
+	var wb: Dictionary = bc.heavy if aw == 3 else bc.medium
+	var akind: int = DirBrawl.BIG if aw == 3 else DirBrawl.MEDIUM
+	var hdmg: float = float(wb.worth) * DirBrawl._unit()
+	var mark: int = at + int(wb.windupTicks)   # it lands as its wind-up ends
+	var land: int = mark
+	var cancelled: bool = aw >= 2 and mark >= S.tick - int(c.counter.heavyBefore if aw == 3 else c.counter.techBefore) and mark <= S.tick + rb
+	if cancelled and aw == 3:
+		DirBrawl.blowAt(S, ex, D, DirBrawl.BIG, maxi(1, land - S.tick), hdmg, {"counter": "heavy", "sure": true, "charged": true})
+	elif cancelled:
+		DirBrawl.blowAt(S, ex, D, DirBrawl.MEDIUM, maxi(1, land - S.tick), hdmg * float(c.counter.mul), {"counter": "tech", "sure": true})
 	else:
-		DirBrawl.blowAt(S, ex, f, DirBrawl.HEAVY if heavy else DirBrawl.LIGHT, rb, dmg, {"zip": true, "style": READS[rd], "read": rd})
+		DirBrawl.blowAt(S, ex, f, DirBrawl.BIG if heavy else DirBrawl.LIGHT, rb, dmg, {"zip": true, "style": READS[rd], "read": rd})
 		if aw == 1 and S.tick - at <= int(c.counter.techBefore):
 			_s(D, ANS_LAST, at - 1 if _g(D, ANS_MASH) == 1 else 0)   # (markAnswer reads a press soon after another as a mash)
 			DirBrawl._throw(S, D, SimAct.LIGHT, at, false, false)   # inside the window: markAnswer makes it the tech counter
-		elif aw == 2 and mark > S.tick + rb:
-			DirBrawl.blowAt(S, ex, D, DirBrawl.HEAVY, land - S.tick, hdmg, {})   # too late to counter: it lands after his blow, and catches him if he is still there
-		elif aw == 2:
+		elif aw >= 2 and mark > S.tick + rb:
+			DirBrawl.blowAt(S, ex, D, akind, land - S.tick, hdmg, {})   # too late to counter: it lands after his blow, and catches him if he is still there
+		elif aw >= 2:
 			# Too early: it met nothing, and he is in its recovery as the zip lands.
-			DirBrawl._s(D, DirBrawl.FREE_AT, land + int(bc.heavy.recoverWhiff))
-			SimEvents.feed(S, D.name + " TOO EARLY", "his heavy met nothing before the zip arrived")
+			DirBrawl._s(D, DirBrawl.FREE_AT, land + int(wb.recoverWhiff))
+			SimEvents.feed(S, D.name + " TOO EARLY", "his blow met nothing before the zip arrived")
 	SimFx.attack(S, f, D, "heavy" if heavy else "light", DirExchange.STN[int(D.stance)], ex.tag, false)
 	SimEvents.feed(S, f.name + " ZIP ARRIVES", "in reach; his blow lands in " + str(rb) + " ticks" + (" (cancelled by the answer)" if cancelled else ""))
 
@@ -542,6 +551,9 @@ static func onHit(S: SimState, ex, z, by, a) -> void:
 		var st = _cue(S, z, "stagger", "counter")
 		st.target = float(S.fighters.find(by))
 		st.n = n
+		_caught(S, ex, z, "countered")
+		DirBrawl.opening(S, ex, by, z, n, "counter")   # a tech counter is an opening: his B in this stagger always lands
+		return
 	_caught(S, ex, z, "countered")
 
 
@@ -826,8 +838,8 @@ static func seen(S: SimState, D, Z, n: int) -> void:
 	var g: float = float((lv.get("approachReact", [0.0]) as Array)[0])   # the guard, at the rate it guards any approach
 	var rb: int = _g(Z, RB)
 	if u < zc:
-		var mark: int = rt + int(DirBrawl.cfg().heavy.windupTicks)
-		if _g(Z, KIND) == 2 and mark >= n - int(c.counter.heavyBefore) and mark <= n + rb and D.ki >= float(DirBrawl.cfg().heavy.ki):
+		var mark: int = rt + int(DirBrawl.cfg().medium.windupTicks)
+		if _g(Z, KIND) == 2 and mark >= n - int(c.counter.techBefore) and mark <= n + rb and D.ki >= float(DirBrawl.cfg().medium.ki):
 			_s(D, AI_ANS, 4)
 			_s(D, AI_AT, S.tick + rt)
 		else:

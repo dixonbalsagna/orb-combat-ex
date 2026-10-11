@@ -169,16 +169,13 @@
     ],
     "breakBh": 4.5,
     "pullBhPerSec": 0.5,
-    "stepInTicks": 2,
     "idleTicks": 60,
     "heldPressTicks": 10,
     "stringLapseTicks": 30,
-    "enderAfter": 2,
     "recoil": 1,
     "tradeTicks": 2,
     "damageMul": 0.3,
     "heavyMul": 2,
-    "heldMul": 1.25,
     "skillMul": 4,
     "setMul": 1.5,
     "aiPerfectEveryTicks": 30,
@@ -214,21 +211,42 @@
       "doubleTicks": 240
     },
     "heavy": {
-      "damage": 66,
       "ki": 4,
       "windupTicks": 26,
-      "landTicks": 8,
       "recover": 10,
       "recoverWhiff": 30,
-      "heldFullTicks": 46,
-      "heldMaxTicks": 180,
-      "heldLandTicks": 8,
       "staggerTicks": 12,
-      "force": 1600
+      "force": 1600,
+      "worth": 3,
+      "gap": [
+        8,
+        16
+      ],
+      "reachBh": 1.4,
+      "armour": {
+        "lightMul": 0.5,
+        "mediumUntilTicks": 10,
+        "shotMediumPower": 2,
+        "shotHeavyPower": 3
+      },
+      "charge": {
+        "fromTicks": 12,
+        "fullTicks": 40,
+        "landTicks": 8,
+        "maxTicks": 120,
+        "worth": [
+          3,
+          6
+        ],
+        "ki": 6,
+        "reachBh": 1.4,
+        "aiReleaseTicks": 60
+      }
     },
     "hitstop": {
       "light": 2,
-      "heavy": 6
+      "heavy": 6,
+      "medium": 4
     },
     "shotHeavyMul": 2,
     "shooter": {
@@ -248,7 +266,8 @@
     "nudgeRampTicks": 8,
     "nudge": {
       "guard": 0.6,
-      "clearBh": 0.5
+      "clearBh": 0.5,
+      "stagger": 0.5
     },
     "maxStepBh": 0.3,
     "carryShare": 0.5,
@@ -259,6 +278,81 @@
       "windupTicks": 8,
       "throwBh": 6,
       "throwTicks": 24
+    },
+    "plannedHeavyDamage": 66,
+    "woundLandTicks": 6,
+    "medium": {
+      "windupTicks": 14,
+      "worth": 1.5,
+      "ki": 2,
+      "gap": [
+        4,
+        10
+      ],
+      "rate": 1,
+      "reelTicks": 6,
+      "recover": 8,
+      "recoverWhiff": 20,
+      "guardChipMul": 0.3,
+      "reachBh": 1
+    },
+    "burst": {
+      "lands": [
+        2,
+        4,
+        6,
+        8,
+        10,
+        12,
+        14
+      ],
+      "second": 0.5,
+      "rate": 1,
+      "reelTicks": 6,
+      "runHalves": 2,
+      "openTicks": 20
+    },
+    "give": {
+      "bhPerSec": 1,
+      "bySpeed": true,
+      "speedRef": 1,
+      "guard": 0.5,
+      "follow": 0.5,
+      "leashBh": 6,
+      "closeTicksPerBh": 4,
+      "closeMaxTicks": 30,
+      "closeMaxBh": 4,
+      "closeSlackBh": 0.5,
+      "lightReachBh": 1,
+      "edgeBh": 2
+    },
+    "launcher": {
+      "minStagger": 10,
+      "windupTicks": 12,
+      "worth": 4,
+      "ki": 8,
+      "restS": 40,
+      "flightMul": 1
+    },
+    "energy": {
+      "reach": {
+        "bolt": {
+          "contactTicks": 6,
+          "worth": 2,
+          "ki": 4,
+          "reelTicks": 6,
+          "runHalves": 2,
+          "shot": "bolt"
+        },
+        "blast": {
+          "windupTicks": 16,
+          "worth": 4,
+          "ki": 10,
+          "knockBh": 3,
+          "shot": "charged"
+        },
+        "flashEveryTicks": 20
+      }
     }
   },
   "blast": {
@@ -374,7 +468,8 @@
       "reachBefore": 12,
       "reachAfter": 10,
       "outTicks": 12,
-      "heldTicks": 20
+      "heldTicks": 20,
+      "damage": 40
     },
     "floor": {
       "minTicks": 4,

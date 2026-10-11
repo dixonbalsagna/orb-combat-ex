@@ -286,7 +286,7 @@ static func strike(S: SimState, ex, a, d, dmg: float, o = null) -> void:
 		return
 	if (a.state == "launched" or a.state == "down") and not DirData.contact().is_empty():
 		return   # a fighter in flight or down throws no blow (a blow scheduled before it was launched)
-	if dmg > 0.0:
+	if dmg > 0.0 and not o.get("placed", false):   # a brawl's blow places its own attacker, a closing step at most (DirBrawl.contact)
 		_contact(S, a, d)
 	if d.state == "launched" or d.state == "down":
 		d.state = "locked"
@@ -367,12 +367,15 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	if ex.cancel or S.game.ko != null:
 		return
 	var ends: String = String(args.get("ends", "")) if args != null else ""
+	# forced (the brawl's launcher, and its heavy charged to full): a launch whatever was earned, and never a knock-back,
+	# aimed by args.tilt as a stick aims one (1 up, then clockwise by eighths; 0 the planner's own pick).
+	var forced: bool = args != null and bool(args.get("forced", false))
 	var gate: Dictionary = DirLaunch.data().get("earned", {})
 	var why: String = "the gate is off"
 	if not longOnly and (gate.get("enabled", false) or ends == "level") and not DirData.contact().is_empty():
 		# The earned launch (agency-pass.md section 3): not earned, a heavy gives the knock-back and a light leaves both
 		# fighters in reach, so the brawl goes on.
-		why = DirLaunch.earned(S, ex, att, tgt) if ends != "level" else ""
+		why = String(args.get("why", "forced")) if forced else (DirLaunch.earned(S, ex, att, tgt) if ends != "level" else "")
 		if why == "":
 			var heavy: bool = DirLaunch.heavyBlow(S, ex, att) and ends != "level"
 			# A blur always closes (section 13): the light that follows enderAfter landed strikes is the blur's own ender,
@@ -395,7 +398,8 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 		force *= float(gate.get("forceMul", 1.0))
 	# The stick picks the direction and the planner snaps to the most dramatic target near it (a human's press only).
 	var pt: int = DirLaunch.phrase(S, ex, att) if (att.ai == null and not longOnly and not DirData.contact().is_empty()) else -1
-	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", (pt >> 4) & 15 if pt >= 0 else 0, gate.get("enabled", false) and not DirData.contact().is_empty())
+	var tilt: int = int(args.get("tilt", 0)) if forced else ((pt >> 4) & 15 if pt >= 0 else 0)
+	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", tilt, forced or (gate.get("enabled", false) and not DirData.contact().is_empty()))
 	var parts: PackedStringArray = []
 	for k in r.top:
 		parts.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))

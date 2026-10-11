@@ -179,7 +179,10 @@ func _levels() -> void:
 	ok(i.heavyHeld and not i.lightHeld, "levels: and as heavy after")
 	s.release("pad:west")
 	i = s.build()
-	ok(not i.heavyHeld and not i.lightHeld, "levels: released, neither")
+	ok(i.heavy and not i.heavyHeld and not i.lightHeld, "levels: released at 13 live ticks, the medium's edge has its level off (already wound)")
+	s.consumed()
+	i = s.build()
+	ok(not i.heavyHeld and not i.lightHeld, "levels: and the next build, neither")
 	# The bounce keeps the level: a worn contact opens for a tick and nothing lets go.
 	var d: SimLayout = _mk("arena")
 	d.press("pad:west")
@@ -198,11 +201,15 @@ func _touch(dp: float) -> void:
 	var i: SimIntent = null
 	for n in range(5):
 		i = t.build()
+		t.consumed()
 	ok(i.lightHeld and not i.heavyHeld, "touch: Attack is the light level at first")
 	for n in range(10):
 		i = t.build()
-	ok(i.heavyHeld and not i.lightHeld, "touch: and the heavy level after holdTicks")
+		t.consumed()
+	ok(i.heavyHeld and not i.lightHeld, "touch: and the medium's level after 12 live ticks (the hold is the wind-up)")
 	t.touch_up(1)
+	i = t.build()
+	ok(i.heavy and not i.light, "touch: the release carries the medium's edge")
 	t.consumed()
 	ok(not t.build().heavyHeld, "touch: lifted, no level")
 	# Escape: a swipe up on Guard (Simple touch), within swipeUpTicks, 40 dp or more.
@@ -304,16 +311,13 @@ func _waited() -> void:
 	l.consumed()
 	l.release("pad:lb")
 	_run(l, 3)
-	# A hold reaching holdStart makes its own edge on the build that makes it: 0.
+	# The Simple attack's blow is made on the release (the hold is the wind-up): an edge made on that build waits 0.
 	var s: SimLayout = _mk("simple-pad")
 	s.press("pad:west")
-	var held: SimIntent = null
-	for n in range(14):
-		held = s.build()
-		if held.heavy:
-			break
-		s.consumed()
-	ok(held.heavy and held.waited == 0, "waited: an edge the layout makes itself (a hold reaching holdStart) waited 0")
+	_run(s, 14)
+	s.release("pad:west")
+	var held: SimIntent = s.build()
+	ok(held.heavy and held.waited == 0, "waited: the Simple release's edge, made on its own build, waited 0")
 	# Through the hub, canonical: a freeze of three ticks.
 	var hub := SimInputHub.new()
 	hub.set_humans(true, false)

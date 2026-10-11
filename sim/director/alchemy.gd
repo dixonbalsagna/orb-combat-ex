@@ -44,7 +44,9 @@ const BLUR_U3: int = READ + 9
 const BLUR_U4: int = READ + 10
 const BLUR_AT: int = READ + 11               # ... the live tick its last blow landed on
 const FLOW_EX: int = READ + 12               # his flow when the running exchange, or his finisher, started: it counts in contests
-const SIZE: int = READ + 13
+const LDOWN0: int = READ + 13                # the live tick each press arrived on (a wind-up counts live ticks) ...
+const LUP0: int = LDOWN0 + RING              # ... and the live tick its button was let go, -1 while it is held
+const SIZE: int = LUP0 + RING
 const PLAIN: int = 0
 const HELD: int = 1
 const MASHED: int = 2
@@ -141,8 +143,26 @@ static func _down(f, k: int) -> int:
 static var aiBeat: int = -1
 
 
+## Three strengths (brawl-second-pass.md section 2): B with no stance held is the heavy. Its press is logged as a heavy
+## with this bit, so every reader of a press's weight (bit 0) still sees the two it knows, and logOf gives Controls'
+## reader its third kind (SimPressRead.SIG).
+const BIG: int = 1 << 11
+const STANCE_SHIFT: int = 16   # bits 16 to 19 of a packed press: the stance mask it was pressed in
+
+
+## The reader's kind of a packed press: SimPressRead.LIGHT, HEAVY (Y, the medium) or SIG (B, the heavy).
+static func kindOf(p: int) -> int:
+	return SimPressRead.SIG if (p & BIG) != 0 else (p & 1)
+
+
+## The live clock in ticks (it stops in a hit-stop): what a wind-up counts.
+static func _live(S: SimState) -> int:
+	return int(round(S.T * DirData.TICKS_PER_SEC))
+
+
 ## A press: weight (SimAct.LIGHT or HEAVY; a signature is not an ingredient), family (0 physical, 1 energy), and the stick.
-static func log(S: SimState, f, weight: int, family: int) -> void:
+## big: it is B's press, the heavy (logged as a heavy with the BIG bit).
+static func log(S: SimState, f, weight: int, family: int, big: bool = false) -> void:
 	if weight != SimAct.LIGHT and weight != SimAct.HEAVY:
 		return
 	_size(f)
@@ -159,10 +179,16 @@ static func log(S: SimState, f, weight: int, family: int) -> void:
 	var k: int = n % RING
 	var h: int = _waited(S, f)
 	var at: int = S.tick - h
-	var held: bool = i.heavyHeld if weight == SimAct.HEAVY else i.lightHeld
+	var held: bool = i.sigHeld if big else (i.heavyHeld if weight == SimAct.HEAVY else i.lightHeld)
 	var beat: int = SimPressRead.beat_offset(at, _blows(S, f, at))
-	f.act.dirI[P0 + k] = weight | (family << 1) | (dir << 2) | (tilt << 4) | (h << FREEZE_SHIFT)
+	# A fresh press edge on a button the log still has held means "released, then pressed" (Controls,
+	# docs/controls/windup-read.md section 1): the old press is let go where the new one is read. A latched button
+	# sends no edge for its release, so this never touches one.
+	_release(S, f, SimPressRead.SIG if big else weight)
+	f.act.dirI[P0 + k] = weight | (family << 1) | (dir << 2) | (tilt << 4) | (BIG if big else 0) | (h << FREEZE_SHIFT) | ((i.stanceMask & 15) << STANCE_SHIFT)
 	f.act.dirI[T0 + k] = S.tick
+	f.act.dirI[LDOWN0 + k] = _live(S)
+	f.act.dirI[LUP0 + k] = -1 if held else _live(S)
 	f.act.dirI[UP0 + k] = -1 if held else at   # a button that is not down as a level was tapped: it is let go at once
 	f.act.dirI[BEAT0 + k] = beat
 	f.act.dirI[FLASH0 + k] = SimPressRead.NO_FLASH
@@ -221,11 +247,13 @@ static func tick(S: SimState) -> void:
 		_size(f)
 		var i: SimIntent = f.input
 		var was: int = f.act.dirI[HELD_WAS]
-		var now: int = (1 if i.lightHeld else 0) | (2 if i.heavyHeld else 0)
+		var now: int = (1 if i.lightHeld else 0) | (2 if i.heavyHeld else 0) | (4 if i.sigHeld else 0)
 		if (was & 1) != 0 and (now & 1) == 0:
-			_release(S, f, SimAct.LIGHT)
+			_release(S, f, SimPressRead.LIGHT)
 		if (was & 2) != 0 and (now & 2) == 0:
-			_release(S, f, SimAct.HEAVY)
+			_release(S, f, SimPressRead.HEAVY)
+		if (was & 4) != 0 and (now & 4) == 0:
+			_release(S, f, SimPressRead.SIG)
 		f.act.dirI[HELD_WAS] = now
 		var latch: Dictionary = {"sector": f.act.dirI[AIM_S] - 1, "tick": f.act.dirI[AIM_T]}
 		SimAim.update(latch, i.mx, i.my, S.tick)
@@ -238,12 +266,14 @@ static func tick(S: SimState) -> void:
 		f.act.dirI[LIVE_AT] = S.tick
 
 
-## The button of that weight was let go: his newest press of it that is still held closes, at the graded tick.
-static func _release(S: SimState, f, weight: int) -> void:
+## The button of that kind (SimPressRead.LIGHT, HEAVY or SIG) was let go: his newest press of it that is still held
+## closes, at the graded tick, and on the live clock at the live tick it is read on.
+static func _release(S: SimState, f, kind: int) -> void:
 	var n: int = f.act.dirI[COUNT]
 	for k in range(n - 1, maxi(-1, n - 1 - RING), -1):
-		if (f.act.dirI[P0 + k % RING] & 1) == weight and f.act.dirI[UP0 + k % RING] < 0:
+		if kindOf(f.act.dirI[P0 + k % RING]) == kind and f.act.dirI[UP0 + k % RING] < 0:
 			f.act.dirI[UP0 + k % RING] = S.tick - _freeze(S, f)
+			f.act.dirI[LUP0 + k % RING] = _live(S)
 			return
 
 
@@ -265,8 +295,22 @@ static func logOf(f) -> Array:
 	var n: int = f.act.dirI[COUNT]
 	for k in range(maxi(0, n - RING), n):
 		var p: int = f.act.dirI[P0 + k % RING]
-		out.append({"kind": p & 1, "mode": (p >> 1) & 1, "down": f.act.dirI[T0 + k % RING] - ((p >> FREEZE_SHIFT) & 15), "up": f.act.dirI[UP0 + k % RING], "beat": f.act.dirI[BEAT0 + k % RING], "flash": f.act.dirI[FLASH0 + k % RING]})
+		var e: Dictionary = {"kind": kindOf(p), "mode": (p >> 1) & 1, "down": f.act.dirI[T0 + k % RING] - ((p >> FREEZE_SHIFT) & 15), "up": f.act.dirI[UP0 + k % RING], "beat": f.act.dirI[BEAT0 + k % RING], "flash": f.act.dirI[FLASH0 + k % RING],
+			"stance": (p >> STANCE_SHIFT) & 15, "ldown": f.act.dirI[LDOWN0 + k % RING]}
+		if f.act.dirI[UP0 + k % RING] >= 0:
+			e["lup"] = f.act.dirI[LUP0 + k % RING]
+		out.append(e)
 	return out
+
+
+## His newest press of that kind (SimPressRead.LIGHT, HEAVY or SIG) as Controls' reader takes an entry, or {} when the
+## log has none: for charge_read and burst_read on the brawl's wind-ups.
+static func entryOf(f, kind: int) -> Dictionary:
+	var lg: Array = logOf(f)
+	for k in range(lg.size() - 1, -1, -1):
+		if int(lg[k].kind) == kind:
+			return lg[k]
+	return {}
 
 
 ## Controls' read of his log now (SimPressRead.classify): style, timing, streak, steady, release, the two mixes.

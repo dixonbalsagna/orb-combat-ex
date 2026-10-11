@@ -40,6 +40,15 @@ func _run(t: SimTouch, n: int) -> SimIntent:
 	return last
 
 
+## Builds that the sim took (build then consumed): live ticks, the clock the Simple attack's hold is counted in.
+func _live(t: SimTouch, n: int) -> SimIntent:
+	var last: SimIntent = null
+	for k in range(n):
+		last = t.build()
+		t.consumed()
+	return last
+
+
 func _taps_and_holds(dp: float) -> void:
 	# A tap: released before holdTicks is one light, held until consumed.
 	var t := _mk(dp)
@@ -59,17 +68,47 @@ func _taps_and_holds(dp: float) -> void:
 	_run(t, 11)
 	t.touch_up(1)
 	ok(t.build().light, "tap: 11 ticks is still a tap")
-	# A hold: heavy at holdTicks, no light on release.
+	# A hold is the wind-up (brawl second pass): no edge while it is held, the level says the weight reached (live ticks), and the blow
+	# goes on the release: under 12 the light, from 12 the medium (a heavy request), from 28 the heavy (B's cell, a sig request).
 	t = _mk(dp)
 	t.touch_down(1, 700.0, 300.0, "attack")
-	i = _run(t, 11)
-	ok(not i.heavy, "hold: no heavy before 12 ticks")
+	i = _live(t, 11)
+	ok(not i.heavy and not i.light and i.lightHeld and not i.heavyHeld, "hold: 11 live ticks is still the light's level, with no edge")
+	_live(t, 1)
 	i = t.build()
-	ok(i.heavy and not i.light, "hold: heavy at 12 ticks")
-	t.consumed()
+	ok(i.heavyHeld and not i.lightHeld and not i.heavy and not i.light and not i.sigHeld, "hold: at 12 live ticks the level is the medium's, still no edge")
 	t.touch_up(1)
 	i = t.build()
-	ok(not i.light and not i.heavy, "hold: nothing more on release")
+	ok(i.heavy and not i.light and not i.sig, "hold: let go at 12 the blow goes as the medium")
+	t.consumed()
+	i = t.build()
+	ok(not i.light and not i.heavy and not i.sig, "hold: nothing more after it")
+	t = _mk(dp)
+	t.touch_down(1, 700.0, 300.0, "attack")
+	_live(t, 27)
+	ok(t.build().heavyHeld and not t.build().sigHeld, "hold: at 27 it is still the medium")
+	_live(t, 1)
+	i = t.build()
+	ok(i.sigHeld and not i.heavyHeld and not i.lightHeld, "hold: at 28 live ticks the level is the heavy's (sigHeld)")
+	t.touch_up(1)
+	i = t.build()
+	ok(i.sig and not i.heavy and not i.light, "hold: let go from 28 the blow goes as the heavy (B's cell)")
+	t.consumed()
+	# A hit freeze does not count: 5 live ticks and 9 frozen builds is a light; 8 live, a freeze, 4 live is a medium.
+	t = _mk(dp)
+	t.touch_down(1, 700.0, 300.0, "attack")
+	_live(t, 5)
+	_run(t, 9)
+	t.touch_up(1)
+	i = t.build()
+	ok(i.light and not i.heavy, "hold: the hold is counted in live ticks: 5 live and 9 frozen is a light")
+	t = _mk(dp)
+	t.touch_down(1, 700.0, 300.0, "attack")
+	_live(t, 8)
+	_run(t, 9)
+	_live(t, 4)
+	t.touch_up(1)
+	ok(t.build().heavy, "hold: 12 live ticks across a freeze are a medium")
 	# A swipe up: the signature at once, no light or heavy.
 	t = _mk(dp)
 	t.touch_down(1, 700.0, 300.0, "attack")
@@ -87,10 +126,12 @@ func _taps_and_holds(dp: float) -> void:
 	# A slow swipe is a hold: the heavy has fired, the swipe adds nothing.
 	t = _mk(dp)
 	t.touch_down(1, 700.0, 300.0, "attack")
-	_run(t, 13)
+	_live(t, 13)
 	t.touch_move(1, 700.0, 300.0 - 80.0 * dp)
 	i = t.build()
-	ok(i.heavy and not i.sig, "swipe: after the hold time it is a heavy, not a signature")
+	ok(not i.sig and not i.heavy and i.heavyHeld, "swipe: after the hold time it is a hold (the medium's level), not a signature")
+	t.touch_up(1)
+	ok(t.build().heavy, "swipe: and the release is the medium")
 	# One finger per button.
 	t = _mk(dp)
 	t.touch_down(1, 700.0, 300.0, "attack")
@@ -120,16 +161,40 @@ func _guard_power(dp: float) -> void:
 	t.touch_up(9)
 	ok(t.build().powerTap, "power: a tap is powerTap on release")
 	t.consumed()
-	# The power layer: Attack while Power is down is a special (the director's pick), at once, and no tap follows.
+	# The power layer: Attack while Power is down is not decided at the touch: a tap is the director's special (on the release, no
+	# light and no power tap), a swipe up is RT + Y (the signature's hold, below).
 	t.touch_down(10, 500.0, 300.0, "power")
 	_run(t, 2)
 	t.touch_down(11, 700.0, 300.0, "attack")
 	i = t.build()
-	ok(i.special == 7 and not i.light and not i.heavy, "power layer: Attack with Power held is special 7, with no light")
+	ok(i.special == 0 and not i.light and not i.heavy and not i.sig, "power layer: Attack with Power held is not decided at the touch")
 	t.touch_up(11)
+	i = t.build()
+	ok(i.special == 7 and not i.light and not i.heavy, "power layer: and the tap is special 7 on the release, with no light")
+	t.consumed()
 	t.touch_up(10)
 	i = t.build()
 	ok(not i.powerTap and not i.light, "power layer: releasing after a layer press fires no tap and no light")
+	t.consumed()
+	# RT + Y on Simple touch: hold Power, swipe up on Attack, and keep the finger down: the signature's hold. The press edge comes at the
+	# swipe with its level on, the hold is sigHeld, and the stance mask is 4 (the charging stance).
+	t.touch_down(20, 500.0, 300.0, "power")
+	_run(t, 2)
+	t.touch_down(21, 700.0, 300.0, "attack")
+	_live(t, 2)
+	t.touch_move(21, 702.0, 300.0 - 41.0 * dp)
+	i = t.build()
+	ok(i.sig and i.sigHeld and i.stanceMask == 4 and i.special == 0 and not i.light, "RT+Y: the swipe with Power held is a signature edge with its level on, in the charging stance")
+	t.consumed()
+	i = _live(t, 30)
+	ok(i.sigHeld and not i.sig and not i.heavyHeld and not i.lightHeld, "RT+Y: the finger staying down is the hold (sigHeld), with no edge")
+	var dsw: Dictionary = t.display_state()
+	ok(dsw.attack.down and dsw.attack.get("swipe", false) and dsw.attack.hold_ticks >= 30, "RT+Y: the ring's state says it is a swipe hold and how long it has run (live ticks)")
+	t.touch_up(21)
+	i = t.build()
+	ok(not i.sigHeld and not i.sig, "RT+Y: letting go ends it (the director reads the level falling)")
+	t.consumed()
+	t.touch_up(20)
 	t.consumed()
 	# The transform control: the context slot held 30 ticks.
 	t.touch_down(12, 400.0, 300.0, "context")
@@ -216,11 +281,14 @@ func _display(dp: float) -> void:
 	var d: Dictionary = t.display_state()
 	ok(not d.attack.down and not d.guard.down and not d.power.down and not d.stick.active and not d.transform.down, "display: everything idle at rest")
 	t.touch_down(1, 700.0, 300.0, "attack")
-	_run(t, 6)
+	_live(t, 6)
 	d = t.display_state()
 	ok(d.attack.down and absf(d.attack.hold - 0.5) < 0.01, "display: attack hold progress is half at 6 of 12 ticks")
-	_run(t, 8)
-	ok(t.display_state().attack.hold == 1.0, "display: attack hold is full once it is a heavy")
+	ok(d.attack.hold_ticks == 6 and d.attack.tier == 0 and d.attack.medium_at == 12 and d.attack.heavy_at == 28, "display: hold_ticks, the tier and the two marks are there for the ring")
+	_live(t, 8)
+	ok(t.display_state().attack.hold == 1.0 and t.display_state().attack.tier == 1 and t.display_state().attack.hold_ticks == 14, "display: attack hold is full once it is the medium (tier 1)")
+	_live(t, 14)
+	ok(t.display_state().attack.tier == 2 and t.display_state().attack.hold_ticks == 28, "display: at 28 live ticks it is the heavy (tier 2)")
 	t.touch_up(1)
 	t.touch_down(2, 600.0, 300.0, "guard")
 	t.touch_down(3, 500.0, 300.0, "power")

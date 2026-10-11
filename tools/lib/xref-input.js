@@ -150,7 +150,14 @@ function xrefInput({ get, err, esc, isObj }) {
     if (Number.isInteger(am.dwellTicks) && Number.isInteger(am.exitWindow) && am.dwellTicks > am.exitWindow) err(TIMING, '/aim/dwellTicks', 'timing-aim', `dwellTicks ${am.dwellTicks} is above exitWindow ${am.exitWindow}: a direction cannot be held for more ticks than the exit read looks back over`);
     const rd = isObj(timing.read) ? timing.read : {};
     const lt2 = (x, y, pointer, what) => { if (Number.isInteger(rd[x]) && Number.isInteger(rd[y]) && rd[x] > rd[y]) err(TIMING, pointer, 'timing-read', what); };
-    lt2('holdSig', 'holdSigCharging', '/read/holdSig', `holdSig ${rd.holdSig} is above holdSigCharging ${rd.holdSigCharging}: the ultimate's hold should not be shorter than the signature's`);
+    lt2('simpleMediumStart', 'simpleHeavyStart', '/read/simpleMediumStart', `simpleMediumStart ${rd.simpleMediumStart} is above simpleHeavyStart ${rd.simpleHeavyStart}: on the Simple layout the medium's hold cannot be longer than the heavy's`);
+    if (Number.isInteger(rd.windupMedium) && Number.isInteger(rd.windupHeavy) && rd.windupMedium >= rd.windupHeavy) err(TIMING, '/read/windupMedium', 'timing-read', `windupMedium ${rd.windupMedium} is not below windupHeavy ${rd.windupHeavy}: the heavy's wind-up is the longer`);
+    lt2('pairWindow', 'pairFresh', '/read/pairWindow', `pairWindow ${rd.pairWindow} is above pairFresh ${rd.pairFresh}: a pair would be wider than the freshness it asks of its two buttons`);
+    const grace = Number.isInteger(rd.windupGrace) ? rd.windupGrace : 0;
+    for (const k of ['windupMedium', 'windupHeavy', 'windupContext']) if (Number.isInteger(rd[k]) && Number.isInteger(rd.staleTicks) && rd[k] + grace > rd.staleTicks) err(TIMING, `/read/${k}`, 'timing-read', `${k} ${rd[k]} plus the grace ${grace} is the decision point, and it is later than staleTicks ${rd.staleTicks}: the log would have forgotten the press`);
+    for (const k of ['flurryGapX', 'flurryGapY', 'flurryGapB']) lt2(k, 'staleTicks', `/read/${k}`, `${k} ${rd[k]} is longer than staleTicks ${rd.staleTicks}: a flurry could not be continued after the log has forgotten it`);
+    lt2('flurryNeedSlow', 'logSize', '/read/flurryNeedSlow', `a flurry of ${rd.flurryNeedSlow} presses cannot be seen in a log of ${rd.logSize}`);
+    if (Number.isInteger(rd.mixupSwitches) && Number.isInteger(rd.logSize) && rd.mixupSwitches >= rd.logSize) err(TIMING, '/read/mixupSwitches', 'timing-read', `${rd.mixupSwitches} switches need more than ${rd.logSize} presses, and the log keeps ${rd.logSize}`);
     lt2('rhythmNeed', 'rhythmOf', '/read/rhythmNeed', `rhythmNeed ${rd.rhythmNeed} is more than the ${rd.rhythmOf} presses rhythm looks at`);
     lt2('mashPresses', 'logSize', '/read/mashPresses', `a mash of ${rd.mashPresses} presses cannot be seen in a log of ${rd.logSize}`);
     lt2('mixShort', 'logSize', '/read/mixShort', `mixShort ${rd.mixShort} is more than the ${rd.logSize} presses the log keeps`);

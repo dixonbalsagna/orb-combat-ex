@@ -43,11 +43,16 @@ static func requestAttack(S: SimState, A, kind: String) -> void:
 	# never queued, so mashed clash presses do not fire as attacks after it.
 	if DirBeam.inClash(S, A):
 		return
-	DirAlchemy.log(S, A, KIND.find(kind), A.act.mode)   # the press log (read-only for now)
+	var big: bool = DirBrawl.isB(A, kind)   # B with no stance held is the heavy (brawl-second-pass.md section 2)
+	DirAlchemy.log(S, A, SimAct.HEAVY if big else KIND.find(kind), A.act.mode, big)   # the press log
 	if DirBrawl.takes(S, A, kind):
 		return   # a brawl is on and he is in it: the press is a blow on his own line, never a request
 	if DirZip.takes(S, A, kind):
 		return   # a zip: its start with LT held in the mid band, a zipper's own press, or his rival's answer where he stands
+	if big:
+		# Out of reach B is the heavy's lunge: it travels as today's heavy lunge does, and it arrives as the heavy.
+		DirBrawl.noteBig(A, S.tick)
+		kind = "heavy"
 	if not A.act.v2:
 		_start(S, A, kind)
 		return
@@ -362,6 +367,7 @@ static func runBeat(S: SimState, ex, b) -> void:
 			if a.get("brawl", false):
 				DirBrawl.contact(S, ex, b)   # a brawl's blow: it lands, and its line, its string and its close follow
 				DirBrawl.carryOn(ex)   # the strike placed its attacker and stopped him: the pair's drift carries on
+				DirBrawl.afterBlow(S, ex, b)   # a press kept behind this blow is thrown as it lands
 			else:
 				DirMelee.strike(S, ex, A if a.a == "A" else D, A if a.d == "A" else D, DirBrawl.worth(S, ex, b, a.dmg), a.o)   # outside a brawl a blow is worth its form
 		"launch":
@@ -586,6 +592,7 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	ex.t += dt
 	DirInterrupt.tick(S)   # step 3: this tick's inputs inside the exchange (perfect block, reversal, dodge-cancel, burst)
 	DirBrawl.tick(S, ex)   # a brawl's lines: held presses and heavies, the magnet, and what ends it
+	DirBrawl.tellTick(S, ex)   # a signature's tell: its defender may move
 	if S.dirS.ex != ex:
 		return
 	DirBeamPlay.lateTick(S, ex)   # a late answer to a beam on its way
