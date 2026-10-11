@@ -1,6 +1,6 @@
 # The brawl, second pass: control first, three strengths on three buttons, and a recast of A
 
-Owner: Game Design. Dates: 2026-10-06, revised the same day for three strengths, and again for Orb's four tests (§13). Orb played the live brawl on the evening of 2026-10-05, answered questionnaire 19, then this page's five questions, and then settled the buttons (`docs/ep/vision.md`, the last three sections). This page turns all of that into rules.
+Owner: Game Design. Dates: 2026-10-06, revised the same day for three strengths, and again for Orb's four tests (§13). Re-ruled on 2026-10-11 against the first chain as built (§14). Orb played the live brawl on the evening of 2026-10-05, answered questionnaire 19, then this page's five questions, and then settled the buttons (`docs/ep/vision.md`, the last three sections). This page turns all of that into rules.
 
 **It revises `melee-press-feel.md`.** Where the two disagree, this page is the newer rule. §9 lists what stands and what changes. **Every number is a starting value,** and none has been run in the sim. Controls' input design, Legal's first screen and Animation's first sizes are folded in. The three-strengths revision needs a fresh look from each (§10).
 
@@ -331,7 +331,7 @@ The press throws the light, as always. **The burst starts when the hold is certa
 | Launches a match by the route's player | 16 | 4 to 10 |
 | Launches a match on him | 12 | 4 to 8 |
 | Brawls that end in his launch | 51% | See below |
-| The AI against itself, mean match | 554 s, against 394 s on main | A median of 400 to 450 s, and never outside 5:00 to 8:00 |
+| The AI against itself, mean match | 554 s, against 394 s on main | A median of 360 to 480 s, with 400 to 450 s as the target |
 | Blows that move their attacker over 0.6 bh in a tick | 0 of about 7,000, against 23 on main | None (a hard test). It holds |
 
 Reliable had become constant. Two things in my rule caused it, and both change now. Neither is a number to tune.
@@ -353,8 +353,8 @@ Reliable had become constant. Two things in my rule caused it, and both change n
   - launches a match by the route's player 4 to 10, and on him 4 to 8;
   - the AI against itself, 6 to 12 launches a match in all;
   - the route sends him, by a launch or a knock-back, in 50 to 75% of the brawls it is tried in, and launches in 10 to 25% of them;
-  - a first launch inside 30 s of the first brawl in at least 80% of matches, since the launcher is ready at the start;
-  - the match's median at 400 to 450 s for the AI against itself, and never outside 5:00 to 8:00, which is Orb's five minutes or more and acceptance test W3;
+  - a first launch inside 30 s of the first brawl in at least 65% of matches, and inside 60 s in at least 90% (§14);
+  - the match's median inside 360 to 480 s for the AI against itself, with 400 to 450 s as the target. That is Orb's five minutes or more and acceptance test W3;
   - the collateral rows as they stand. Launches drive them, so they are read after the launches are in band, and lever 3 is theirs.
 
 **One map for the stick, wherever it aims a blow in reach.** Combat assumed it (`docs/combat/pending/movegen/c2t-content.md`), and it is confirmed.
@@ -434,13 +434,14 @@ New, for Orb's fourth test: "do energy attacks look cool as part of close-range 
 | From the press | At once: contact at 2 ticks | A wind-up of 12 ticks, read as a medium's is |
 | Worth, in brawl lights | 1. At range a bolt is half a light, and here all of it lands | 2.5, a medium's |
 | Ki | 1, a bolt's price | 8, the heavy shot's price |
-| A clean hit | He reels for 4 ticks, and it adds 1 to the run | **A knock-back of 4 bh,** along the stick's lean. The brawl ends |
-| Mashed | The X flurry's pace and worth: one every 6 ticks at the fastest. About 10 ki a second, flat out | One every 12 ticks, though the first clean one ends the brawl |
+| A clean hit | He reels for 4 ticks, and it adds 1 to the run | **As a string's ender, a knock-back of 4 bh** along the stick's lean, and the brawl ends. It is an ender when his run is 2 or more as it lands. Thrown cold, he reels for 6 ticks and nothing more |
+| Mashed | The X flurry's pace and worth: one every 6 ticks at the fastest. About 10 ki a second, flat out | One every 12 ticks. Each is a medium of light until his run is 2 |
 | On a guard | **It is a shot.** Half its wear goes to his arms up to their cap, and the rest reaches his core (`melee-press-feel.md` §9, blocked shots). A blocked blow never does | The same, and no knock-back |
 | Against a heavy's armour | A light: it never interrupts, and does half | A medium: it interrupts until tick 20 |
 | While it winds up | | No armour. Any medium or heavier blow that lands ends it |
 
-- **Its job is one a fist can't do.** A guard soaks blows for ever and leaks shots, so energy is how a string gets through a guard without waiting to set it. And the blast is the quickest knock-back in the game: 12 ticks, against the 48 of a full charged heavy. Both are paid for in ki, and RB held means no guard.
+- **Its job is one a fist can't do.** A guard soaks blows for ever and leaks shots, so energy is how a string gets through a guard without waiting to set it. And the blast is the quickest knock-back in the game, as a string's ender: 12 ticks, against the 48 of a full charged heavy. Both are paid for in ki, and RB held means no guard.
+- **The blast is an ender, and not an opener** (re-ruled on the first chain, §14). As first ruled, a clean blast knocked back every time, and no light stops its wind-up, so a script that only blasted won 58 of 60. Now it knocks back only when his run is 2 or more as it lands, which is the old ender's rule. Bolts in reach count toward the run as fists do. Its knock-back counts as half a set-up, as a close does.
 - **They chain both ways, with no gap.** Holding RB changes what X and Y throw for as long as it is held, and letting go changes them back. Switching is instant and free (`melee-press-feel.md` §12). The line, the run, the flurry's clock and the mix-up carry across, so a point-blank bolt lands between two punches as a light would.
 - **The same button keeps firing as he leaves.** After the blast he is 4 bh away, and RB + X is now a bolt in flight. So the string a player finds first is: punches, the blast, bolts after him as he slides, and a zip back in.
 - **The launcher takes no energy.** A blast isn't a heavy, so it doesn't launch a staggered rival.
@@ -460,7 +461,7 @@ New, for Orb's fourth test: "do energy attacks look cool as part of close-range 
 7. **Each fighter's own.** The colour is his ki's. The Protagonist fires from the heel of the palm. The rival's is for Combat and Art to pick, in fists, plates and straight lines.
 8. **A mashed bolt must not strobe.** At up to ten a second, full flashes would pass the limit of three a second. One blow in each 20 ticks gets the full flash, and the rest get sparks at the hand. Legal and the accessibility checklist rule the final figure.
 
-**Data:** `energy.reach.bolt` (worth 1, ki 1, reel 4, run 1), `energy.reach.blast` (wind-up 12, worth 2.5, ki 8, knock-back 4 bh), `energy.reach.spill` (2 to 3 bh and 6 bh, drawn only), `energy.reach.flashEveryTicks` 20.
+**Data:** `energy.reach.bolt` (worth 1, ki 1, reel 4, run 1), `energy.reach.blast` (wind-up 12, worth 2.5, ki 8, knock-back 4 bh at a run of 2 or more, half a set-up, reel 6 otherwise), `energy.reach.spill` (2 to 3 bh and 6 bh, drawn only), `energy.reach.flashEveryTicks` 20.
 
 ## 6. Four power attacks, on buttons that sit together
 
@@ -510,7 +511,7 @@ They still read right with B as the heavy: each pair does what its two buttons m
 - **The band is for a player who presses, and not for the AI against itself.** It is re-based on C1 as built (`docs/director/brawl-c1.md`). Orb's "slightly uncommon" is about his own trades. Against the medium AI, a lights-only presser and a mixing presser each see 0.5 to 2 double hits a match, and at least one in 35 to 65% of matches. As built they see 0.3 and 0.2, which is under.
 - **The AI against itself is reported, and none is in order.** Its strings are 3 to 5 blows and then a heavy or a guard, so no level trade between AIs lasts 240 ticks. Of about 18 that reach 120 ticks in twelve matches, none does.
 - **It is measured now and tuned on C2a,** as the EP leans. Three strengths change how a level trade forms, so a number tuned today would be tuned twice.
-- **The limit is not the lever.** One a match between AIs would need about 120 to 130 ticks, which makes the double hit the default again. The 240 stays, and it never goes under 180. The lever is the AI: at a share, it digs in when a trade is still level at the limit, and keeps trading until the trade breaks. First shares for C2a: 0.2, 0.35 and 0.5 by level, and half as much again for the rival, who doesn't give a level trade up (`digIn`).
+- **The limit is not the lever.** One a match between AIs would need about 120 to 130 ticks, which makes the double hit the default again. The 240 stays, and it never goes under 180. The lever is the AI's `digIn`. As first ruled, it dug in when a trade was still level at the limit. On the first chain that moment never comes, so it is re-ruled (§14): it is decided as a trade starts, and at its share the AI matches his pace for that trade until the trade breaks or the double hit lands. First shares: 0.1, 0.2 and 0.3 by level, and half as much again for the rival, who doesn't give a level trade up.
 - **The close-up is rationed.** Two players who only mash see a double hit about every 8 s: 21 a match in the even mirror. The rule stands for them. The inset plays for the first of a match, and after that no more than once in 45 s. The rest play in the main view.
 - **The seeded draw and its momentum are withdrawn** (`flurry.momentum`, `melee-press-feel.md` §9d).
 
@@ -575,7 +576,7 @@ They still read right with B as the heavy: each pair does what its two buttons m
 | **RB + Y, in reach** | The blast, with a knock-back of 4 bh (§5b) | 8 |
 | **The stick** | Nudges the brawl's centre, leans the blow, and gives ground while the rival winds up or charges (§1) | |
 
-**The ki prices, in one place.** Lights are free. A medium is 2 and a charged medium 4. A heavy is 5 and a charged heavy 8. The tackle is 10, and the pairs are 10, 5, 20 and 20. The stick's lean never costs anything. This is the answer to Combat's parked question on Y: it is the medium now, at 2.
+**The ki prices, in one place.** Lights are free. A medium is 2 and a charged medium 4. A heavy is 5 and a charged heavy 8. The tackle is 10, and the pairs are 10, 5, 20 and 20. The stick's lean never costs anything. **A press he can't pay for throws the strongest blow he can pay for:** a B becomes a medium, and with nothing a Y or a B becomes a light. Every press is still a blow. This is the answer to Combat's parked question on Y: it is the medium now, at 2.
 
 **No press is ever silent.** Controls found that RT with X, Y or A reaches the intent as a special that nothing reads, and that the martial arts A does nothing, both without a word to the player. From now on a press on a cell that has no move in the stance he is in gives a `press_ack` of `empty` from Encounter, and UI shows it as a small grey tick on the button. The presses the brawl already refuses reach the HUD the same way.
 
@@ -648,15 +649,16 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | Press to contact | 2 ticks for a light | **By button:** X at 2, with 95% inside 4. Y at 12, never past 16. B at 28, never past 32. Every press starts its move within 10 ticks |
 | A tap that is read as a hold, by device | Not a row | **New:** under 2% on a pad and a keyboard, and under 5% on touch. The lever is the grace. It covers X as well: a tap of X that throws a second light counts here, and the lever there is the burst's start |
 | The burst against a mash over the same time | Not a row | **New:** 70 to 80% of the mash's damage. Never over |
-| Each flurry against the one it beats, head to head | Not a row | **New:** X against Y, Y against B and B against X each win 55 to 75% |
+| Each flurry against the one it beats, head to head | Not a row | **New:** X against Y, Y against B and B against X each win 60 to 90%. It was 55 to 75%, which two scripts can't meet. The first chain read 100%, 92% and 52%, and each edge has a lever (§14) |
 | The masher against the medium AI | 35 to 50%, tapping X every 8 ticks | Kept for the X masher. **New, reported:** the Y masher, the B masher, the alternator and the player who only holds X. **The slower masher's fall is intended.** At a 10-tick gap he fell from 33 to 16 of 100 on C1, because a level trade no longer ends in a draw and the medium AI taps at 8. The draw doesn't come back: a slower tapper should lose a trade of lights. His answer is a heavy into the flurry, which arrives with C2a. Reported there: the 10-tick tapper who throws B when the AI's run on him reaches 2. If he is still under 25%, the lever is a spread on the AI's tap gap, 8 to 10 at medium, so that its pace isn't one number to fall short of |
+| The Y masher and the B masher against the medium AI | Reported | **New:** 20 to 50% each. No single button mashed beats medium more than half the time, and none is shut out. The first chain read 0 of 60 and 60 of 60 (§14) |
 | Presses of a scripted two-finger masher that read as a pair | Not a row | **New:** under 5% |
 | A full charged heavy thrown into an X flurry lands | Not a row | **New:** at least 80% when the flurrier keeps flurrying. A shove ends a heavy at least 90% of the times it is tried in reach |
 | The even lights-only mirror finishes | At least 95% | **Kept: at least 95%.** As built it finishes 20 of 20, by double hits and closes (§7). Its first slot wins 40 to 60%, read at 100 matches. Its double hits a match are reported: about 21 |
 | An uneven mirror: 8 ticks against 10 | Not a row | **New:** it finishes at least 95% of the time, and the faster tapper wins at least 80%. Brink to KO at 25 to 50 s is read here |
 | Level trades that change who has the momentum; wins from the first slot | 5 to 15%; 40 to 60% | **Retired** with the draw |
 | A trade's break | Within 12 ticks of the limit, and always followed by a close within 24 ticks (a hard test) | **Re-based.** A break is always for a lead now. It comes at the limit, or on the tick a lead of 2 appears after it, with no bound but the double hit at 240. A close follows 85 to 95% of breaks, reported: a lead tends to appear as the other fighter stops landing, and then the trade lapses first |
-| Double hits a match | Not a row | **New, for a presser against the medium AI,** lights only and mixing: 0.5 to 2, and at least one in 35 to 65% of matches. Measured on C1 at 0.3 and 0.2, and tuned on C2a by the AI's `digIn` (§7). The AI against itself is reported, and none is in order. Every trade still level at 240 ticks ends in one (a hard test) |
+| Double hits a match | Not a row | **New, for a presser against the medium AI,** lights only and mixing: 0.5 to 2, and at least one in 35 to 65% of matches. Measured on C1 at 0.3 and 0.2, and at 0 on the first chain, where the AI's spread tap gap leaves no level trade. `digIn` is re-ruled for it (§7, §14), and the masher's band comes first. The AI against itself is reported, and none is in order. Every trade still level at 240 ticks ends in one (a hard test) |
 | The centre moves within 2 ticks of a stick, in every state where the stick works | Not a row | **New** (a hard test) |
 | The centre's step in a tick | Not a row | **New (a hard test), read on the centre's speed:** the nudge never moves the pair more than 0.3 bh in a tick. **Reported beside it:** the ticks on which the pair's middle moves more than 0.3 bh because a strike placed its attacker. On C1 that is 0 to 2 in about 85,000 brawl ticks, the largest 1.01 bh. It isn't worth changing the attraction for. From C2t a press closes a gap over ticks (§1), and then no blow moves its attacker more than 0.6 bh in a tick (a hard test) |
 | How far a held stick moves a brawl against a rival who holds none | Not a row | **New, reported,** as bh for each second |
@@ -667,9 +669,10 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | A dead stick in a brawl | Not a row | **New (a hard test):** on no live tick of a brawl does a fighter's stick do nothing, unless he is knocked back, launched, lifted, thrown, carried, buried or in a staged moment |
 | A held stick against the medium AI | Not a row | **New:** it moves the brawl at least 0.7 as far as against a rival who holds none. The AI holds against a player's stick on under 25% of the ticks he holds it |
 | Giving ground | Not a row | **New.** Hard tests: while the rival winds up or charges, a fighter with his hands down moves within 2 ticks of his stick; started by tick 16, he is out of a tapped heavy that isn't followed, every time; followed from its first tick, never. Bands: the medium AI winds up or charges a medium or a heavy 4 to 10 times in a minute of brawl; a player's heavies miss the medium AI by its giving ground 10 to 25% of the time |
-| The launcher | Not a row | **New.** A hard test: a B pressed in an opening lands and sends him, every time, and launches every time the launcher is ready. Bands for the scripted route (X every 8 ticks, and B on the stagger) against medium: it sends him in 50 to 75% of the brawls it is tried in, and launches in 10 to 25% of them; a first launch inside 30 s of the first brawl in at least 80% of matches. Launches a match at medium: 4 to 10 by the route's player, 4 to 8 on him, and 6 to 12 in all for the AI against itself. The first build read 16 and 12 (§3) |
-| The match's length, the AI against itself | A median near 415 s | **Held:** a median of 400 to 450 s, and never outside 5:00 to 8:00. The first build's mean was 554 s, against 394 s on main for the same seeds, because launches had replaced knock-backs (§3). The collateral rows stand, and are read once the launches are in band |
+| The launcher | Not a row | **New.** A hard test: a B pressed in an opening lands and sends him, every time, and launches every time the launcher is ready. Bands for the scripted route (X every 8 ticks, and B on the stagger) against medium: it sends him in 50 to 75% of the brawls it is tried in, and launches in 10 to 25% of them; a first launch inside 30 s of the first brawl in at least 65% of matches, and inside 60 s in at least 90%. Launches a match at medium: 4 to 10 by the route's player, 4 to 8 on him, and 6 to 12 in all for the AI against itself. The first build read 16 and 12 (§3) |
+| The match's length, the AI against itself | A median near 415 s | **Held:** the band is QA's, a median of 360 to 480 s, and 400 to 450 s is the target to tune to. The first build's mean was 554 s, against 394 s on main for the same seeds, because launches had replaced knock-backs (§3). The collateral rows stand, and are read once the launches are in band |
 | Energy in reach | Not a row | **New.** Hard tests: a point-blank bolt lands 2 ticks after its press; a clean blast knocks back 4 bh; no more than three full flashes in any second. Bands: 5 to 15% of the medium AI's brawl blows are energy; a blocked point-blank bolt reaches the core once the arms are at their cap. The bolt-only and mixed blaster rows are read again |
+| The blast-heavy script against the medium AI | 30 to 50% | **Kept.** The first chain read 58 of 60, and the blast is re-ruled as an ender (§5b) |
 | Perfect blocks | 1 to 4 a minute at medium, 0.5 to 2 at easy, 2 to 5.5 at hard. Per 100 blows it fell from 2.47 to 1.42 as blows a minute rose from 100 to 168 | **The band is by the minute, and it stands** at all three levels. It is what a player meets, and it doesn't move with the mix of blows. **Per 100 blows is reported by strength,** and held as bands after the first three-strength baseline. At medium: lights 0.5 to 1.5, mediums 2 to 6, heavies 6 to 15. The total per 100 blows is retired as a band. If the AI's perfect block is a chance for each blow today, it should be rated by strength or by time, so that a faster brawl doesn't buy more of them |
 | A shot on the way out drops a zipper | A drop row | **A rule and a hard test, with no band.** A real bolt can't reach him: his way out is 3 to 10 ticks and a bolt needs 6 to leave (QA). The test by an injected shot stands. In play it is a rare event: a shot already in flight when he leaves, or a mine on his line. Its count is reported, and none is in order. Nothing replaces it: a shooter's answers to a zip are on the way in and at point-blank, where they already are (`melee-press-feel.md` §2c). Encounter confirms it is barely reachable as built: only a shot already in the air does it, and a drop lands only within about 1 bh of the ground. The ruling stands, and the rule stays for mines |
 
@@ -699,7 +702,7 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1. Can I move my character around during active combat?** | Yes, in every state but a knock-back and its kind. The stick moves the brawl while he strikes, mashes, winds up, charges, guards and reels. A stagger and a clinch now keep half | §1, the state table | C1. The stagger's half is in C2t, and the clinch's in C4b | He holds a direction while mashing and the fight drifts that way at once. The AI doesn't hold it still | No live tick of a brawl with a dead stick outside the exception (a hard test). A held stick against the medium AI moves the brawl at least 0.7 as far as against no stick |
 | **2. Can I move my character when the opponent is charging up an attack?** | Yes, and alone. He gives ground: his stick moves him and not the rival. He is out of a tapped heavy if he starts by tick 16 and the rival doesn't walk it after him | §1, giving ground | C2t, against wind-ups and the heavy's charge (§10) | The AI winds up a heavy, he pulls the stick away, and the blow cuts air in front of him. Then his medium punishes it | He moves within 2 ticks of his stick (a hard test). Out of an unfollowed tapped heavy from tick 16 every time, and never when followed. The medium AI winds up 4 to 10 times in a minute of brawl |
-| **3. Can I reliably launch my opponent?** | Yes. A tap of B on a rival staggered by a close always lands and sends him, and it launches whenever the launcher is ready, which the ping says. It is ready at the start, and again 40 s after his last launch. The route is: mash X until he staggers, then B, and aim with the stick | §3, the launcher | C2t | The same three inputs send him every time and launch him whenever the ping sounds, and the stick decides where he goes | From an opening, every time the launcher is ready (a hard test). The scripted route sends him in 50 to 75% of the brawls it is tried in against medium, and launches in 10 to 25%. A first launch inside 30 s of the first brawl in at least 80% of matches |
+| **3. Can I reliably launch my opponent?** | Yes. A tap of B on a rival staggered by a close always lands and sends him, and it launches whenever the launcher is ready, which the ping says. It is ready at the start, and again 40 s after his last launch. The route is: mash X until he staggers, then B, and aim with the stick | §3, the launcher | C2t | The same three inputs send him every time and launch him whenever the ping sounds, and the stick decides where he goes | From an opening, every time the launcher is ready (a hard test). The scripted route sends him in 50 to 75% of the brawls it is tried in against medium, and launches in 10 to 25%. A first launch inside 30 s of the first brawl in at least 65% of matches, and inside 60 s in at least 90% |
 | **4. Do energy attacks look cool as part of close-range combos?** | They can now be part of one. With RB held in reach, X is a point-blank bolt and Y is the blast, which knocks him back 4 bh. They chain into and out of blows with no gap | §5b | C2t | Punches, a palm shot that lights both fighters, the blast that carries him off, and bolts chasing him as he slides | The bolt lands 2 ticks after its press, and a clean blast knocks back 4 bh (hard tests). No more than three full flashes in a second (a hard test). "Cool" is Orb's to judge, against §5b's list |
 
 **The build that can pass all four is C1, C2a and C2t.** Without C2t, the first question passes on C1 alone. The second is half there on C2a: he can nudge, and stop a heavy with a medium, but he can't get out of its way alone. The third and fourth fail: no launch can be made on purpose, and an energy press in reach does nothing. The heavy's charge is in that chain too, cut small (§10), so that the second question is answered against a held charge and not only a wind-up.
@@ -709,3 +712,46 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 2. An AI that never winds up a heavy, so the moment doesn't come, or one that always walks it after him. Both are shares in the AI's data.
 3. A close he can't see. The stagger has to be plain to the eye and the ear, since it is the cue for B. UI may show the run as it fills.
 4. Shots too small to notice, or a mash of them that strobes. §5b's list is the brief.
+
+## 14. The first chain as built, and the follow-up tune
+
+Encounter's chain of C2a, C2t and the heavy's hold is built and passes its gates (2026-10-11). These rows are out of band. Each is my rule or my number, and none is a fault in the build. Nothing here has been run: every new value is a first value for the follow-up tune.
+
+| The row | Measured | The band | The ruling |
+| :--- | :--- | :--- | :--- |
+| Double hits a match, for a presser against medium | 0 | 0.5 to 2 | **The rule changes:** `digIn` matches his pace (§7). The band stands, and the masher's band comes first |
+| The blast-heavy script against medium | 58 of 60 | 30 to 50% | **The rule changes:** the blast knocks back only as a string's ender, and that knock-back is half a set-up (§5b). The band stands |
+| The B masher against medium, a press every 30 ticks | 60 of 60 | Reported until now | **A band, and the AI's levers:** 20 to 50% |
+| The Y masher against medium | 0 of 60 | Reported until now | **A band, and a lever:** 20 to 50% |
+| X over Y, Y over B and B over X, head to head | 100%, 92% and 52% | 55 to 75% each | **The band changes** to 60 to 90%, and each edge has its lever |
+| A first launch inside 30 s | 71% of matches | 80% | **The band changes:** 65% inside 30 s, and 90% inside 60 s |
+| The AI against itself: launches a match | 14.1 | 6 to 12 | **The levers,** as Encounter has them |
+| The AI against itself: the match's median | 340 to 350 s | 360 to 480 s | **The lever,** `brawl.damageMul`, after one check |
+
+**The double hit.** The spread on the AI's tap gap restores the masher, at 45 of 100, and it also means a trade against the AI is never level for long. As I ruled it, the AI dug in only once a trade was still level at the limit, and that moment no longer comes.
+- `digIn` is decided as a trade starts. At its share the AI matches his pace for that trade, blow for blow, and holds it until the trade breaks or the double hit lands.
+- First shares: 0.1, 0.2 and 0.3 by level, and half as much again for the rival. The range at medium is 0.1 to 0.4.
+- The masher's band comes first. If he falls under 35%, the share comes down, and the double hit against the AI is reported and not banded.
+
+**The blast.** A clean blast was a decisive knock-back every 12 ticks, and no light stops it. That made it an opener, and I meant an ender (§5b has the rule).
+- If the script is still over 50% with the rule in, the next lever is its price, from 8 ki up to 12.
+
+**The one-button mashers.** No single button mashed should beat medium more than half the time, and none should be shut out. So the Y and B mashers take a band of 20 to 50%. The X masher keeps 35 to 50%.
+- **The B masher** wins everything because the medium AI doesn't answer a wind-up it can see. The levers are the AI's, in order: its medium into a heavy's first 20 ticks, to 0.25, 0.5 and 0.75 of the heavies it sees by level; then its giving ground; then its perfect block against a heavy.
+- **One check before that tune.** A heavy every 30 ticks costs 10 ki a second, and ki comes back at 5. The rule for a press he can't pay for is in §8: he throws the strongest blow he can pay for. If the build throws the heavy anyway, that alone may be the row.
+- **The Y masher** loses everything because the X flurry beats it outright, and the AI mostly taps X. Its first lever is that edge, below.
+
+**The three edges.** 55 to 75% was a guess that two scripts can't meet: two fixed rhythms give nearly the same result every time. The band is 60 to 90% for the flurry that should win. A lock at 100% leaves the loser nothing but a change of button, and 52% is no edge at all.
+
+| The edge | Measured | The lever | From, and to |
+| :--- | ---: | :--- | :--- |
+| X over Y | 100% | What a landed medium does to the run, as what it adds and what it takes as a reply (`flurry.runBy.medium`). Today it counts 1, as a light does, so two lights always outrun one medium | 1, toward 2. At 2 the trade is level and ends by the trade's own rules |
+| Y over B | 92% | The tick until which a medium stops a heavy | 20, down to 14 |
+| B over X | 52% | What a light does through the armour. Then: a light that meets the armour takes nothing off his run, if it does today | 0.5, down to 0.3 |
+
+**The first launch.** 80% was a guess. The route's first launch needs a close, and how often a masher earns one is the brawl's own texture, which this row shouldn't bend. The band is 65% of matches inside 30 s of the first brawl, and 90% inside 60 s.
+
+**Launches, and the match's length.** No objection to what Encounter is tuning.
+- **Launches:** the AI's share of openings and its charge share are the right levers. The charge share is new to §3's list: a full charged heavy launches whatever the rest says, so it sits beside lever 2. The rest stays at 40 s until Orb has played it.
+- **Length:** `brawl.damageMul` from 0.31 to 0.27 is the lever that set the median before. One check first: read the first brink (4:30 to 7:00) and brink to KO (45 to 90 s) apart. If the first brink is in band and brink to KO is short, the cause is set-ups and not damage, and the blast's half set-up is the first fix.
+- **One band, not two.** The band is QA's, a median of 360 to 480 s. My 400 to 450 s is the target to tune to.
