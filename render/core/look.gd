@@ -327,7 +327,12 @@ const EYE := "#111111"
 ## a figure where the fighter was, in his lane colour. How long one shows at most (the event's own life may be
 ## longer), its quad, its opacity at the start, how far behind the fighter's depth it is drawn, and how far the
 ## fighter must have moved off it before it shows (nothing at the first distance, all of it at the second).
-const AFTER_LIFE: float = 0.1
+## An after-image is shown for five ticks, so a rush (one a tick) has five at once and no more (Legal's m12: at most
+## five whole-figure ghosts round one fighter from all sources; at 0.1 s a rush had six). The half tick is margin: a
+## particle's age is a sum of ticks, and VFX's tally (render/vfx/ghost_tally.gd after_ticks) rounds this down to the
+## same five. AFTER_MAX holds the five whatever sends them: past it the oldest are not drawn (ParticleView).
+const AFTER_LIFE: float = 5.5 / 60.0
+const AFTER_MAX: int = 5
 const AFTER_SIZE := Vector2(48.0, 88.0)
 const AFTER_ALPHA: float = 0.5
 const AFTER_BEHIND: float = 14.0
@@ -391,6 +396,13 @@ const FLASH_STEP: Dictionary = {"body_hit": 0.7, "head_flash": 0.5, "guard_flash
 ## to nothing at its end. Its three layers' edges, outer glow to core, as the glow shader's falloff: the higher, the
 ## softer the edge (a hard edge flips whole strips of pixels when the camera moves).
 const BEAM_RISE_S: float = 0.1
+## The most pixels of beam (at the flash register's scale, 1024 by 768) a bright beam's tail may uncover in a tick as
+## it draws back from the firer (BeamView.tail_at). A beam that reaches a defender across the planet is tens of
+## thousands of units long, and a tail that kept pace with its length left the firer's screen in one tick at nine
+## tenths of its strength: the whole thick core going out at once, a counted change for the frame analyser (ai seed 1,
+## tick 2153: 121% of the area threshold on that one tick). The analyser's own floor for a frame to count toward a
+## change is 0.2% of the picture (1,573 pixels); this is under it.
+const BEAM_TAIL_PX: float = 1000.0
 const BEAM_EDGE: Array = [2.6, 1.8, 0.9]
 ## A clash's flare and its two beams rise over CLASH_RISE_S and fall over the clash's last CLASH_FALL_S.
 const CLASH_RISE_S: float = 0.15

@@ -35,14 +35,18 @@ func _ready() -> void:
 
 func update(S: SimState, cam_x: float, z: float, host: SimHost = null) -> void:
 	var n: int = 0
+	# The scale a bright beam's tail is paced at: the flash register's (the closest pane's, so every pane draws one
+	# beam's tail at the same place in the world); a tool's posed state has only this view's own.
+	var ppu: float = host.vfx.px_per_unit if host != null else z
 	for b in S.beams:
 		var k: float = strength(b.t, b.life)
 		var s: float = b.p * b.len
-		var tail: float = clampf((b.t - 0.4) / (b.life - 0.4), 0.0, 1.0) * b.len if b.t > 0.4 else 0.0
+		var bright: bool = host == null or host.beam_flash(b)
+		var tail: float = tail_at(b, ppu if bright else 0.0)
 		var x0: float = SimWrap.sdx(cam_x, b.ox + b.ux * tail)
 		var a := Vector2(x0, b.oy + b.uy * tail)
 		var e := Vector2(x0 + b.ux * (s - tail), b.oy + b.uy * s)
-		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, host == null or host.beam_flash(b))
+		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright)
 		n += 1
 	var c = S.game.clash
 	var clash_ok: bool = host == null or host.clash_flash
@@ -63,6 +67,24 @@ func update(S: SimState, cam_x: float, z: float, host: SimHost = null) -> void:
 	for i in range(n, _pool.size()):
 		for mi in _pool[i]:
 			mi.visible = false
+
+
+## How far along beam b its tail has drawn back from where it was fired, in world units. From 0.4 s the tail follows
+## the head and reaches the beam's far end as its life ends. For the bright form (ppu above 0: the pixels a world unit)
+## it goes no faster than uncovers RenderLook.BEAM_TAIL_PX pixels of beam a tick, the beam taken as wide as the flash
+## register takes it (SimHost.beam_px): a beam whose tail was slower than that is as it was, and a long one leaves the
+## firer a strip a tick while its strength falls; what the tail has not reached by its life's end has faded to nothing.
+## The calm form (ppu 0: refused, or reduced flashing) goes as it always has: its thin line going at once is not a
+## change the analyser counts, and held on screen under a moving camera it read worse (ai seed 1, reduced: 2.5 as it
+## is, 3.5 capped).
+static func tail_at(b, ppu: float = 0.0) -> float:
+	if b.t <= 0.4:
+		return 0.0
+	var own: float = clampf((b.t - 0.4) / (b.life - 0.4), 0.0, 1.0) * b.len
+	if ppu <= 0.0:
+		return own
+	var a_tick: float = RenderLook.BEAM_TAIL_PX / (b.w * float(LAYERS[1][0]) * ppu * ppu)
+	return minf(own, (b.t - 0.4) / SimConst.DT * a_tick)
 
 
 ## A beam's strength at age t of its life: one rise, a hold, one fall.

@@ -107,6 +107,26 @@ Tools' frame analyser (docs/tools/flash-check.md) plays the real web build in he
 
 The largest single window in these clips still reads 400% of the limit (a camera or scenery change the count does not weigh), so a pass is at the gate, with no margin.
 
+## A beam on a cliff face: the column of needles and the dust (ai seed 1 normal, ticks 2147 to 2181, 2026-10-11)
+
+Tools' recount read 4 / 4 / 3 there (primary / area-15% / two-second memory). I reproduced it from a HEAD export (`capture-web` ai seed 1, 2,200 ticks) and took the layers apart by switching them off in scratch exports:
+
+| Variant | Primary reading, whole clip to tick 2200 |
+| :-- | ---: |
+| as built (HEAD d70dc706) | 4 (at tick 2147) |
+| VFX off altogether | 2.5 |
+| earth flames off (`VfxEarth.on_fire`) | 4 (the needles are not those) |
+| scorch embers off (`VfxDebris.embers`) | 3 |
+
+So the "ground-flame needle column" is the **scorch's embers**: a beam's landing makes 2 + 1.5 power of them every tick, each a 42 to 112 unit needle of the ember ramp, up to 100 alive (`EMBER_CAP`), bright orange on a dark cliff. A fast camera pan (Camera's governor lets scenery cross 0.045 of the width a tick) moves every needle edge at once, so the column's own pixel area becomes the change. The beam's dust (a ring of tan puffs, up to 240 alive) does the same on the sand beside it. At tick 2182 with VFX on, 45,000 pixels changed by 0.10 or more in one tick against 16,000 with VFX off (the terrain's own edges).
+
+What I did (render/vfx only, data in `vfx_look.gd`): the register's area threshold is the unit.
+- **Embers:** `VfxLook.EMBER_AREA_SHARE` 0.4: the needles alive may cover at most 0.4 of 21,824 px (at the hub's `px_per_unit`; half of that under reduced motion or reduced flashing). A scorch past it makes fewer needles that tick, so the column keeps its shape and thins.
+- **Puffs:** `VfxLook.PUFF_AREA_SHARE` 1.5: the puffs in the pool, at their widest, may cover at most 1.5 of the threshold; a new puff past it is not made (`VfxDebris._add`), the old ones fade as before.
+- Both caps are in screen pixels, so a wide framing is not thinned and a close one is. The effect tests that count puffs and needles run at a mid-wide framing (`px_per_unit` 0.3 to 0.6) for that reason.
+
+Result (`check-clip`, my tree, normal): see the table in the report; reduced was already thinner and reads 2.5.
+
 ## What I could and could not do about the held files
 
 `transform_view.gd` and `vfx_layer.gd` stay untouched. The transformation's flash is brought under the register through `transform.gd` alone (a static scale the view's own `VfxTransform.p("break", "flash_alpha")` call already passes through), so **nothing is needed from those two files for the transformation**. The pressure rings are thin rings (not a flash) and need nothing.

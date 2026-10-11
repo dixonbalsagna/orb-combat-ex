@@ -230,6 +230,8 @@ func _consume(S: SimState, events: Array) -> void:
 		return
 	flashes.ppu = px_per_unit
 	flashes.begin_tick(reduced_motion or reduced_flashing)
+	debris.puff_area_cap = VfxLook.PUFF_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05)
+	debris.ember_area_cap = VfxLook.EMBER_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.5 if (reduced_motion or reduced_flashing) else 1.0)
 	_sync_vision(S)
 	var dt: float = SimConst.DT
 	var frozen: bool = true

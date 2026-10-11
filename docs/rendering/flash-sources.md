@@ -22,7 +22,7 @@ Owner: Rendering and Technical Art. 2026-10-06. Legal's condition for the public
 | **A perfect block's guard flash** | `fighter_view.gd`, `guard.gdshader`, 0.3 s | The guard arc's line thickens, a second line leaves it, and its fill deepens | **Yes**, `guard_flash` (not low: it may take the slot kept for big events), once for each block | The two lines still flash; the fill does not deepen (`flash_fill` 0). Lines are not a flash |
 | **Head flashes** | `flash_view.gd` | Small shapes at the head that swell two or three times in under a second | **Yes**, `head_flash` (low). Each swell asks as the flash starts, so a three-swell flash plays as many swells as were granted | With none granted the flash still shows once, calm: it fades in, holds and fades, with no swell, sweep or jitter (the reduced-motion form). The player still gets what it says |
 | **A cue's flare** | `fighter_view.gd` (`flare`) | A soft glow at the chest, up to a body and a half across, on four of Combat's cue poses | **Yes**, `cue_flare` (low), once for each fighter the cue plays on | No flare. The pose, the hand spark and the ring still play |
-| **A signature beam** | `beam_view.gd` | Three additive cylinders, the inner one white, with soft edges. Its strength rises over 0.1 s, holds and falls to nothing at its end: one rise and one fall | **Yes**, `beam` (not low: a big event), once for each beam. Under reduced flashing it does not ask | **Calm:** a thin line in the beam's own colour where the white core was (0.3 of its width), and the glow at 18% of its strength, which adds under a tenth of full luminance. Always calm under reduced flashing |
+| **A signature beam** | `beam_view.gd` | Three additive cylinders, the inner one white, with soft edges. Its strength rises over 0.1 s, holds and falls to nothing at its end: one rise and one fall. Bright, its tail leaves the firer at no more than 1,000 pixels of beam a tick ("The beam's tail") | **Yes**, `beam` (not low: a big event), once for each beam. Under reduced flashing it does not ask | **Calm:** a thin line in the beam's own colour where the white core was (0.3 of its width), and the glow at 18% of its strength, which adds under a tenth of full luminance. Always calm under reduced flashing |
 | **A beam clash's flare** | `beam_view.gd` | A white glow where two beams meet, with the two clash beams. All three rise over 0.15 s and fall over the clash's last 0.25 s | **Yes**, `beam_clash` (not low), once for each clash. Under reduced flashing it does not ask | No flare; the two beams are drawn calm, as a refused beam is |
 | **The split divider's slam flash** | UI draws it (`ui_hud.gd`, `_slam_scale`); Camera's rig gives the amount (`slam` in the split record); the host answers (`main._hud_flash`, set as `UiHud.flash_fn`) | The divider's light line widens to two and a half times and goes fully opaque for 0.08 s as a slam shuts the split | **Yes**, `divider_slam`, once as a slam begins. Not in the register's low list yet (see below) | UI draws the divider as it is, with no flash (the answer is all or none) |
 | A cue's hand spark and ring | `fighter_view.gd` | A small spark at the hand; a hollow ring | No: small or hollow, not a flash | |
@@ -161,6 +161,30 @@ Before and after, on exports of 1172a4e8 (today's tree, with VFX's register and 
 Every clip is at or under the gate of 2.5 after, and none reads over 3 with the lower threshold. Clash in normal mode moved from 1.5 to 2: the char's darkening no longer lands on the tick of the camera's reframe, and one change at 118% of the threshold now stands apart where it merged before. The two-second-memory reading was not run.
 
 What it costs the look: the mark of a beam appears late. The ground glows, then darkens over a few seconds, where the black scar used to be there the moment the beam passed. Top row: tick 108, before and after. Middle: tick 170, before and after. Bottom: tick 330 after, when the char is in; and the reduced form at tick 108. ![groove](img/flash-groove.png)
+
+## The beam's tail (2026-10-11)
+
+Tools' reading of ai seed 1 in normal mode (4 in the worst second, ticks 2147 to 2181): a signature beam landing on a cliff face, its thick white core ending in one step at tick 2153.
+
+- **Why it went in one tick.** The beam was not ending. A beam's tail draws back from the firer from 0.4 s and reaches the beam's far end as its life ends, so its pace is the beam's length over about half a second. This beam reaches a defender across the planet and is 32,058 units long: its tail left at 605 units a tick, off the firer's screen in one tick, at 0.88 of full strength.
+- **Now** a bright beam's tail uncovers at most `RenderLook.BEAM_TAIL_PX` (1,000) pixels of beam a tick at the register's scale (`BeamView.tail_at`), the beam taken as wide as the register takes it. Here that is 18 pixels a tick along the beam. A beam whose tail was slower than that is as it was. What the tail has not reached when the beam's life ends has faded to nothing by then.
+- **The calm beam is untouched** (refused, or reduced flashing). Capping it too was measured and was worse: a thin line held on screen under a moving camera took ai seed 1 reduced from 2.5 to 3.5. As shipped the reduced clip is the same to the pixel.
+
+Before (ticks 2152 and 2153) and after (2153, 2158 and 2164): ![the beam's tail](img/beam-tail.png)
+
+Ticks 2040 to 2240 of ai seed 1 at 1024 by 768, read by Tools' analyser as it was at ce61e3f5. Before is an export of ce61e3f5, whose `render/`, `sim/` and `data/` are 823239ee's; after is 823239ee with this change.
+
+| | Worst second | Area threshold 15% lower | Two-second memory | The change at tick 2153 |
+|---|---|---|---|---|
+| Normal, before | **4** | **4** | 1.5 | 121% of the threshold (143% of the lower one) |
+| Normal, after | **3** | **4** | 1.5 | not counted (89%); 105% of the lower one |
+| Normal, no beam drawn at all (a scratch build) | 2 | 2 | 1.5 | none |
+| Reduced, before and after | 2.5 | 2 | 1 | none |
+
+- **The clip still fails the combined rule** on the stricter reading, and still reads 3 against the gate of 2.5.
+- **What is left is not the beam's end.** With no beam drawn the clip reads 2, so a bright beam still costs one flash on the main reading and two on the stricter one, and neither is a change of the beam's own. The analyser counts, on each frame, only the direction that turned more pixels, and under Camera's re-frame the scenery here turns 2 to 3% of the picture each way on every tick. At tick 2153 the beam's flank, moved 7 pixels by the pan, tips a balanced frame to darker (26,987 pixels against 20,911; without the beam 18,801 against 22,491). At ticks 2172 to 2174 its footprint tips three near-balanced frames to brighter, which splits one long darkening into two. Both go with Camera's and VFX's parts of this clip, not with a different beam.
+- **signature and clash in normal mode, before and after:** signature read 2.5, 2.5 and 2 before (the worst second, the lower threshold, the two-second memory) and 1.5, 1.5 and 1 after; clash read 2, 2.5 and 2 before and 2, 3 and 2.5 after. Both pass before and after. Clash's two stricter readings are half a flash up, and its lower-threshold reading now sits on the limit of 3 (full clips, 1,500 ticks each).
+- `tools/after_check.gd` asserts the cap at five zooms and that the calm tail is where it was.
 
 ## The window fade: tried, and worse (2026-10-06)
 

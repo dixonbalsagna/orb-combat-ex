@@ -46,6 +46,10 @@ var _biome: String = "plains"   # the dust colours of the place being spawned at
 var _yspread: float = 60.0      # how far above and below the spawn height a shard may start (a floor band, for floors)
 var _ember_tick: int = 0        # embers spawned this tick (budget VfxLook.EMBER_PER_TICK)
 var _ember_alive: int = 0       # embers in the pool (cap VfxLook.EMBER_CAP)
+var _ember_area: float = 0.0    # their drawn area, world units squared (a needle is its length times its width), recounted each step
+var _puff_area: float = 0.0     # the drawn area the puffs in the pool will have at their widest, world units squared, recounted each step
+var puff_area_cap: float = INF  # the most of it the pool keeps: the hub sets it from the register's area threshold and the camera's scale; a puff over it is not made (the oldest keep fading)
+var ember_area_cap: float = INF # the most of it a scorch may keep alive: the hub sets it from the register's area threshold and the camera's scale (a flash's bright pixels, docs/vfx/flash-registry.md)
 var _spray_alive: int = 0       # water streaks in the pool (cap data/vfx/water.json caps.spray_alive)
 var _rubble_alive: int = 0      # slow rising rubble bits in the pool (cap data/vfx/react.json rubble.alive_cap)
 var _flame_alive: int = 0       # flames in the pool (cap data/vfx/earth.json flame.alive_cap)
@@ -88,6 +92,8 @@ func step(S: SimState, dt: float) -> void:
 	_spawned_tick = 0
 	_ember_tick = 0
 	_ember_alive = 0
+	_ember_area = 0.0
+	_puff_area = 0.0
 	var spray_n: int = 0   # recounted below, after the jobs, so a job's throws see the real count
 	var rubble_n: int = 0
 	var flame_n: int = 0
@@ -113,6 +119,10 @@ func step(S: SimState, dt: float) -> void:
 			flame_n += 1
 		if b.kind == EMBER:
 			_ember_alive += 1
+			_ember_area += b.sx * b.sy
+		elif b.kind == PUFF:
+			var fin: float = b.sx + b.grow * maxf(b.life - b.age, 0.0)
+			_puff_area += 0.785 * fin * fin
 		if b.age >= b.life:
 			bits[i] = bits[bits.size() - 1]
 			bits.pop_back()
@@ -345,6 +355,8 @@ func embers(S: SimState, x: float, y: float, power: float, variant: String) -> v
 		var px: float = x + _rs.range_(-60.0, 60.0)
 		if kp >= q or _ember_tick >= VfxLook.EMBER_PER_TICK or _ember_alive >= VfxLook.EMBER_CAP:
 			continue
+		if _ember_area + sz * (2.2 if variant == "FIRESTORM" else 1.4) * 9.0 > ember_area_cap:
+			continue      # the column's bright area is held under the register's weight: a camera jump moves all of it at once
 		var b: Bit
 		match variant:
 			"GLASS TRENCH":
@@ -369,6 +381,7 @@ func embers(S: SimState, x: float, y: float, power: float, variant: String) -> v
 		b.sy = 9.0
 		_ember_tick += 1
 		_ember_alive += 1
+		_ember_area += b.sx * b.sy
 		b.grav = 160.0
 		b.spin = 0.0
 		b.rot = atan2(vy, vx)
@@ -512,6 +525,13 @@ func _add(b: Bit) -> void:
 	if _spawned_tick > VfxLook.SPAWN_PER_TICK and b.kind == PUFF:
 		dropped += 1
 		return
+	if b.kind == PUFF:
+		var fin2: float = b.sx + b.grow * b.life
+		var a2: float = 0.785 * fin2 * fin2
+		if _puff_area + a2 > puff_area_cap:
+			dropped += 1
+			return
+		_puff_area += a2
 	spawned += 1
 	if bits.size() >= VfxLook.DEBRIS_CAP:
 		for i in range(bits.size()):

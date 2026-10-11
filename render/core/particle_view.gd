@@ -13,6 +13,8 @@ const STRIDE := 20
 const SHAPE := {"spark": 0.0, "deb": 0.0, "after": 4.0, "flame": 1.0, "splash": 1.0, "ring": 2.0, "dust": 3.0, "ripple": 2.0, "shock": 2.0}
 
 static var after_on: bool = true   # afterimages; the reduced version drops them (main sets it from VFX's quality)
+var after_count := PackedInt32Array()   # per fighter of this pane: the after-images drawn round him this frame (at most RenderLook.AFTER_MAX)
+var _after_skip: Dictionary = {}        # the after-images past a fighter's five this frame: not drawn
 
 var _buf := PackedFloat32Array()
 var count: int = 0
@@ -41,6 +43,7 @@ func _ready() -> void:
 ## half_w: half the visible width in world units, for culling. views: the pane's fighter views as placed this frame
 ## (an afterimage is drawn behind its fighter, and not while he stands on it).
 func update(V: SimFxView, I: ImpactFx, cam_x: float, z: float, half_w: float, views: Array = []) -> void:
+	_after_budget(V.parts, cam_x, views)
 	var n: int = _fill(V.parts, 0, cam_x, z, half_w + 80.0, views)
 	if I != null:
 		n = _fill(I.parts, n, cam_x, z, half_w + 80.0, views)
@@ -48,6 +51,50 @@ func update(V: SimFxView, I: ImpactFx, cam_x: float, z: float, half_w: float, vi
 	multimesh.visible_instance_count = n
 	if n > 0:
 		multimesh.buffer = _buf
+
+
+## Whose after-image a particle is: the nearest fighter in its colour (any fighter, if none has it). Returns his index
+## in views and his distance from it, or [-1, INF] with no fighters.
+static func _after_owner(c: Color, vx: float, y: float, views: Array) -> Array:
+	var idx: int = -1
+	var best: float = INF
+	var mine: bool = false
+	for i in range(views.size()):
+		var v = views[i]
+		var own: bool = (v._aura_col as Color).is_equal_approx(c)
+		var d: float = Vector2(vx - v.position.x, y - v.position.y).length()
+		if (own and not mine) or (own == mine and d < best):
+			best = d
+			mine = own
+			idx = i
+	return [idx, best]
+
+
+## Legal's m12: at most RenderLook.AFTER_MAX after-images round one fighter at once. A rush sends one a tick and each
+## is shown five ticks, so there are five; if anything ever sends more (two in a tick), the oldest past five are not
+## drawn. One still within RenderLook.AFTER_CLEAR of its fighter is not shown and takes no place.
+func _after_budget(list: Array, cam_x: float, views: Array) -> void:
+	_after_skip.clear()
+	after_count.resize(views.size())
+	after_count.fill(0)
+	if not after_on:
+		return
+	var by: Dictionary = {}
+	for p in list:
+		if p.type != "after" or p.age >= minf(p.life, RenderLook.AFTER_LIFE):
+			continue
+		var own: Array = _after_owner(RenderLook.col(p.col), SimWrap.sdx(cam_x, p.x), p.y, views)
+		if float(own[1]) <= RenderLook.AFTER_CLEAR.x:
+			continue
+		if not by.has(own[0]):
+			by[own[0]] = []
+		by[own[0]].append(p)
+	for o in by:
+		var a: Array = by[o]
+		if a.size() > RenderLook.AFTER_MAX:
+			a.sort_custom(func(p, q): return p.age < q.age)
+			for k in range(RenderLook.AFTER_MAX, a.size()):
+				_after_skip[a[k]] = true
 
 
 func _fill(list: Array, n: int, cam_x: float, z: float, lim: float, views: Array) -> int:
@@ -105,30 +152,28 @@ func _fill(list: Array, n: int, cam_x: float, z: float, lim: float, views: Array
 				c.a = k
 			"after":
 				var shown: float = minf(p.life, RenderLook.AFTER_LIFE)
-				if not after_on or p.age >= shown:
+				if not after_on or p.age >= shown or _after_skip.has(p):
 					continue
 				# Whose it is: the nearest fighter in its colour (any fighter, if none has it). It stands behind him
 				# and shows only as far as he has moved off it, so a fighter who steps in and strikes wears nothing.
 				var away: float = 1.0
-				var best: float = INF
-				var mine: bool = false
-				for v in views:
-					var own: bool = (v._aura_col as Color).is_equal_approx(c)
-					var d: float = Vector2(vx - v.position.x, p.y - v.position.y).length()
-					if (own and not mine) or (own == mine and d < best):
-						best = d
-						mine = own
-						pz = v.position.z - RenderLook.AFTER_BEHIND
-						# A rush's trail (the short-lived ones, one a tick) lies head first along the way he went;
-						# a dodge's or an escape's stands as he stands.
-						if p.life < 0.3 and d > 1.0:
-							rot = atan2(v.position.y - p.y, v.position.x - vx) - PI * 0.5
-						else:
-							rot = v.pivot.rotation.z
+				var own: Array = _after_owner(c, vx, p.y, views)
+				var best: float = own[1]
+				if int(own[0]) >= 0:
+					var v = views[int(own[0])]
+					pz = v.position.z - RenderLook.AFTER_BEHIND
+					# A rush's trail (the short-lived ones, one a tick) lies head first along the way he went;
+					# a dodge's or an escape's stands as he stands.
+					if p.life < 0.3 and best > 1.0:
+						rot = atan2(v.position.y - p.y, v.position.x - vx) - PI * 0.5
+					else:
+						rot = v.pivot.rotation.z
 				if best < INF:
 					away = smoothstep(RenderLook.AFTER_CLEAR.x, RenderLook.AFTER_CLEAR.y, best)
 				if away <= 0.0:
 					continue
+				if int(own[0]) >= 0 and int(own[0]) < after_count.size():
+					after_count[int(own[0])] += 1
 				sx = RenderLook.AFTER_SIZE.x
 				sy = RenderLook.AFTER_SIZE.y
 				cy += 38.0

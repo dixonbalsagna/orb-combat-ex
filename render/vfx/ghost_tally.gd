@@ -114,18 +114,27 @@ func step(S: SimState, events: Array, press: VfxPress, zip: VfxZip, frozen: bool
 	if record:
 		detail = [[], []]
 	# Rendering's: counted for their whole life, and the shown ones (away from him) apart.
+	# Rendering holds at most RenderLook.AFTER_MAX round one fighter and leaves the oldest out (ParticleView), so that is the most that is drawn whatever is sent.
 	var aft_alive: Array = [0, 0]
 	var aft: Array = [0, 0]
+	var shown_list: Array = [[], []]
 	for a in after:
 		var s: int = int(a[0])
 		aft_alive[s] += 1
 		var away: float = away_of(S, s, float(a[2]), float(a[3]))
 		if away > 0.0:
-			aft[s] += 1
-			if record:
-				var age_a: int = life - int(a[1])
-				var f = S.fighters[s]
-				detail[s].append({"source": "after-image (Rendering)", "age": age_a, "alpha": snappedf(RenderLook.AFTER_ALPHA * (1.0 - float(age_a) / float(life)) * away, 0.001), "dx": snappedf(SimWrap.sdx(f.x, float(a[2])), 0.1), "dy": snappedf(float(a[3]) - f.y, 0.1)})
+			shown_list[s].append([a, away])
+	for s in range(2):
+		var sl: Array = shown_list[s]
+		while sl.size() > RenderLook.AFTER_MAX:
+			sl.pop_front()
+		aft[s] = sl.size()
+		if record:
+			var f = S.fighters[s]
+			for it in sl:
+				var a2: Array = it[0]
+				var age_a: int = life - int(a2[1])
+				detail[s].append({"source": "after-image (Rendering)", "age": age_a, "alpha": snappedf(RenderLook.AFTER_ALPHA * (1.0 - float(age_a) / float(life)) * float(it[1]), 0.001), "dx": snappedf(SimWrap.sdx(f.x, float(a2[2])), 0.1), "dy": snappedf(float(a2[3]) - f.y, 0.1)})
 	# VFX's echoes (limb-ghosts and whole wire figures) ...
 	limb_now = {}
 	var ech: Array = [0, 0]

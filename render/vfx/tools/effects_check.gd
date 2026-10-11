@@ -58,8 +58,9 @@ func _run() -> void:
 	S.T += 5.0
 	_tick(S, h2, [])
 	_check(h2.crack_sets.size() == S.craters.size() - 2 and h2.debris.jobs.is_empty(), "sets rebuilt long after their records have no vents")
-	# Embers by variant.
+	# Embers by variant (at a mid framing: the scorch column's area is held to a share of the register's threshold in screen pixels, so a close one keeps fewer).
 	print("embers")
+	h.px_per_unit = 0.6
 	for v in ["GLASS TRENCH", "FIRESTORM", "HORIZON CLEAVE", "FIELD SCAR"]:
 		var before: int = h.debris.spawned
 		var e := VfxMock.ev("scorch", {"x": x, "y": 50.0, "w": 100.0, "power": 3.0, "variant": v, "owner": 0})
@@ -205,6 +206,7 @@ func _run() -> void:
 	_brawl()
 	_ghosts()
 	_vision()
+	_scorch_budget()
 	_press_load()
 	_real()
 	_stages()
@@ -1048,6 +1050,7 @@ func _earth() -> void:
 	for surf in ["soil", "sand", "paving"]:
 		var hc := VfxHub.new()
 		hc.reset(S, 6)
+		hc.px_per_unit = 0.3      # a mid-wide framing: the puff pool's area budget is in screen pixels (VfxLook.PUFF_AREA_SHARE)
 		_tick(S, hc, [land.call("slam", surf, 3500.0)])
 		var ch: int = hc.debris.bits.filter(func(b): return b.kind == VfxDebris.CHUNK).size()
 		var pf: int = hc.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF).size()
@@ -1125,6 +1128,7 @@ func _earth() -> void:
 	# A crater's ejecta and the slide's end, which ImpactFx drew as squares.
 	var hcr2 := VfxHub.new()
 	hcr2.reset(S, 6)
+	hcr2.px_per_unit = 0.3
 	_tick(S, hcr2, [VfxMock.ev("crater", {"x": plains, "y": g, "r": 220.0, "depth": 60.0, "energy": 14.0, "cause": "impact", "owner": 1.0, "special": 0.0, "rim": 20.0, "z": 0.0})])
 	var ej: int = hcr2.debris.bits.filter(func(b): return b.kind == VfxDebris.CHUNK).size()
 	var ejd: int = hcr2.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF).size()
@@ -1311,6 +1315,7 @@ func _intro() -> void:
 	var land := func(actor: float): return VfxMock.ev("entrance_land", {"actor": actor, "x": plains, "y": WorldTerrain.groundY(S, plains), "z": 0.0, "y1": WorldTerrain.groundY(S, plains) + 6000.0, "r": 196.0})
 	var hf := VfxHub.new()
 	hf.reset(S, 6)
+	hf.px_per_unit = 0.3
 	_tick(S, hf, [VfxMock.ev("entrance_fall", {"actor": 0.0, "x": plains, "y": 0.0, "z": 0.0, "y1": 6000.0, "dur": 0.6})])
 	_tick(S, hf, [land.call(0.0)])
 	var chunks: int = hf.debris.bits.filter(func(b): return b.kind == VfxDebris.CHUNK).size()
@@ -1386,6 +1391,7 @@ func _intro() -> void:
 	# Jobs run through the intro: the sim clock stands still, the effects clock does not.
 	var hj := VfxHub.new()
 	hj.reset(S, 6)
+	hj.px_per_unit = 0.3
 	S.T = 0.0
 	hj.debris.vent(hj.fx_now(S) + 0.1, plains, 0.0, 100.0)
 	for k in range(10):
@@ -4352,9 +4358,12 @@ func _ghosts() -> void:
 	hs.press_enabled = true
 	hs.reset(S, 6)
 	hs.press.fly[1] = 20.0
-	for k in range(6):
-		_tick(S, hs, [VfxMock.ev("after", {"x": S.fighters[1].x + 80.0, "y": S.fighters[1].y, "life": 0.16, "col": String(S.fighters[1].aura), "face": -1.0, "z": 0.0})])
-	_check(int(hs.ghosts.after_now[1]) == 6 and int(hs.ghosts.fly_n[1]) == 0 and int(hs.ghosts.over["rendering"]) > 0, "Rendering's alone above five: VFX's flying-target ghosts give way entirely (%d of his, fly_n %d) and the excess is Rendering's (%d ticks)" % [int(hs.ghosts.after_now[1]), int(hs.ghosts.fly_n[1]), int(hs.ghosts.over["rendering"])])
+	for k in range(8):
+		# two after-images for one fighter in one tick (a rush's and a dodge's): Rendering draws five at most, the tally reads five at most
+		_tick(S, hs, [VfxMock.ev("after", {"x": S.fighters[1].x + 80.0, "y": S.fighters[1].y, "life": 0.16, "col": String(S.fighters[1].aura), "face": -1.0, "z": 0.0}),
+			VfxMock.ev("after", {"x": S.fighters[1].x + 140.0, "y": S.fighters[1].y, "life": 0.45, "col": String(S.fighters[1].aura), "face": -1.0, "z": 0.0})])
+	_check(int(hs.ghosts.after_peak[1]) == RenderLook.AFTER_MAX and int(hs.ghosts.after_now[1]) == RenderLook.AFTER_MAX and int(hs.ghosts.over["rendering"]) == 0, "Rendering's are held at five (RenderLook.AFTER_MAX) whatever is sent: the tally reads %d shown of %d alive, and never an excess that is not drawn (%d ticks over)" % [int(hs.ghosts.after_now[1]), int(hs.ghosts.after_alive[1]), int(hs.ghosts.over["rendering"])])
+	_check(int(hs.ghosts.fly_n[1]) == 0 and int(hs.ghosts.total_peak[1]) == VfxGhostTally.BUDGET, "with five of Rendering's shown VFX's flying-target ghosts give way entirely (fly_n %d) and the fighter stands at exactly five (%d)" % [int(hs.ghosts.fly_n[1]), int(hs.ghosts.total_peak[1])])
 	var hn := VfxHub.new()
 	hn.press_enabled = true
 	hn.reset(S, 6)
@@ -4407,6 +4416,38 @@ func _vision() -> void:
 func _art_key(id: String) -> String:
 	var alias: Dictionary = UiData.colour_vision().get("fighter_alias", {})
 	return String(alias.get(id.to_lower(), id.to_lower()))
+
+
+## A beam on a cliff face for a second and a half (seed 1, normal: the flash check's 4 over its gate at ticks 2147 to 2181): the scorch's embers and the beam's dust are held to
+## a share of the register's area threshold (the puff pool is capped for every source), so a camera jump cannot turn the column into a flash of its own.
+func _scorch_budget() -> void:
+	print("the scorch column's area budget")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	var run := func(ppu: float) -> Array:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.embers_enabled = true
+		h.px_per_unit = ppu
+		var peak_e: float = 0.0
+		var peak_p: float = 0.0
+		var ems: int = 0
+		for k in range(90):
+			_tick(S, h, [VfxMock.ev("scorch", {"x": plains, "y": g + 20.0, "w": 100.0, "power": 3.0, "variant": "FIRESTORM", "owner": 0}),
+				VfxMock.ev("dust", {"x": plains, "y": g + 10.0, "z": 0.0, "n": 6, "col": "#c8a064"})])
+			peak_e = maxf(peak_e, h.debris._ember_area)
+			peak_p = maxf(peak_p, h.debris._puff_area)
+			ems = maxi(ems, h.debris._ember_alive)
+		return [peak_e, peak_p, ems, h.debris.ember_area_cap, h.debris.puff_area_cap]
+	var tight: Array = run.call(1.3)
+	var loose: Array = run.call(0.05)
+	var one_needle: float = 176.0 * 9.0
+	var one_puff: float = 0.785 * 82.0 * 82.0
+	_check(float(tight[0]) <= float(tight[3]) + one_needle and float(tight[0]) < float(loose[0]) * 0.5, "embers: the needles' area stays at %.0f of %.0f units squared at the close framing (%.0f with no budget)" % [float(tight[0]), float(tight[3]), float(loose[0])])
+	_check(float(tight[1]) <= float(tight[4]) + one_puff and float(tight[1]) < float(loose[1]), "dust: a beam's puffs stay at %.0f of %.0f units squared (%.0f with no budget)" % [float(tight[1]), float(tight[4]), float(loose[1])])
+	_check(int(tight[2]) > 0 and float(tight[1]) > 0.0, "and the column is still there (%d needles at most, %.0f of puff area)" % [int(tight[2]), float(tight[1])])
 
 
 func _tick(S: SimState, h: VfxHub, events: Array) -> void:
