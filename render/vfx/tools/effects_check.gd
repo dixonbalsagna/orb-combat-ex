@@ -4319,7 +4319,7 @@ func _ghosts() -> void:
 	hr.reset(S, 6)
 	var shown: int = VfxGhostTally.after_ticks()
 	for k in range(shown + 4):
-		_tick(S, hr, [VfxMock.ev("after", {"x": S.fighters[0].x, "y": S.fighters[0].y, "life": 0.16, "col": String(S.fighters[0].aura), "face": 1.0, "z": 0.0})])
+		_tick(S, hr, [VfxMock.ev("after", {"x": S.fighters[0].x - 80.0, "y": S.fighters[0].y, "life": 0.16, "col": String(S.fighters[0].aura), "face": 1.0, "z": 0.0})])
 	_check(int(hr.ghosts.after_peak[0]) == shown and int(hr.ghosts.after_peak[1]) == 0 and int(hr.ghosts.body_peak[0]) == shown, "a rush's after-images (one a tick, each shown %d ticks) are counted for his fighter: %d alive at once, none for the other" % [shown, int(hr.ghosts.after_peak[0])])
 	for k in range(shown + 1):
 		_tick(S, hr, [])
@@ -4330,11 +4330,37 @@ func _ghosts() -> void:
 	hc.reset(S, 6)
 	S.dirS.ex = ex
 	for k in range(10):
-		var evs2: Array = [VfxMock.ev("after", {"x": S.fighters[1].x, "y": S.fighters[1].y, "life": 0.16, "col": String(S.fighters[1].aura), "face": -1.0, "z": 0.0})]
+		var evs2: Array = [VfxMock.ev("after", {"x": S.fighters[1].x + 80.0, "y": S.fighters[1].y, "life": 0.16, "col": String(S.fighters[1].aura), "face": -1.0, "z": 0.0})]
 		if k == 0:
 			evs2.append(VfxMock.ev("damage", {"x": S.fighters[1].x, "y": S.fighters[1].y + 50.0, "z": 0.0, "amount": 5.0, "col": "#ffffff", "victim": 1, "attacker": 0, "region": "core", "kind": "light", "number": true}))
 		_tick(S, hc, evs2)
 	_check(hc.ghosts.limb_peak == 2 and int(hc.ghosts.after_peak[1]) == shown and int(hc.ghosts.after_peak[0]) == 0, "a blow and a rush at once: limb ghosts still 2, Rendering's counted on the rusher (limb %d, his after-images %d)" % [hc.ghosts.limb_peak, int(hc.ghosts.after_peak[1])])
+	# The budget (m12): at most 5 whole-figure ghosts round one fighter from all sources together. Rendering's are read first; VFX's own take what is left.
+	var hb := VfxHub.new()
+	hb.press_enabled = true
+	hb.reset(S, 6)
+	S.dirS.ex = ex
+	for k in range(4):
+		_tick(S, hb, [VfxMock.ev("after", {"x": S.fighters[0].x - 80.0, "y": S.fighters[0].y, "life": 0.16, "col": String(S.fighters[0].aura), "face": 1.0, "z": 0.0})])
+	_tick(S, hb, [VfxMock.ev("after", {"x": S.fighters[0].x - 80.0, "y": S.fighters[0].y, "life": 0.16, "col": String(S.fighters[0].aura), "face": 1.0, "z": 0.0}),
+		VfxMock.ev("damage", {"x": S.fighters[1].x, "y": S.fighters[1].y + 50.0, "z": 0.0, "amount": 5.0, "col": "#ffffff", "victim": 1, "attacker": 0, "region": "core", "kind": "light", "number": true})])
+	_check(int(hb.ghosts.after_now[0]) == 5 and int(hb.ghosts.echoes_now[0]) == 0 and int(hb.ghosts.total_now[0]) == 5 and int(hb.ghosts.asked_peak[0]) == 7, "five of Rendering's after-images shown and a perfect blow's two echoes asked for: the echoes yield, five in all (asked %d, drawn %d)" % [int(hb.ghosts.asked_peak[0]), int(hb.ghosts.total_now[0])])
+	for k in range(12):
+		_tick(S, hb, [])
+	_check(int(hb.ghosts.over["body"]) == 0 and int(hb.ghosts.total_peak[0]) <= VfxGhostTally.BUDGET, "and never more than five on him in any tick (peak %d)" % int(hb.ghosts.total_peak[0]))
+	var hs := VfxHub.new()
+	hs.press_enabled = true
+	hs.reset(S, 6)
+	hs.press.fly[1] = 20.0
+	for k in range(6):
+		_tick(S, hs, [VfxMock.ev("after", {"x": S.fighters[1].x + 80.0, "y": S.fighters[1].y, "life": 0.16, "col": String(S.fighters[1].aura), "face": -1.0, "z": 0.0})])
+	_check(int(hs.ghosts.after_now[1]) == 6 and int(hs.ghosts.fly_n[1]) == 0 and int(hs.ghosts.over["rendering"]) > 0, "Rendering's alone above five: VFX's flying-target ghosts give way entirely (%d of his, fly_n %d) and the excess is Rendering's (%d ticks)" % [int(hs.ghosts.after_now[1]), int(hs.ghosts.fly_n[1]), int(hs.ghosts.over["rendering"])])
+	var hn := VfxHub.new()
+	hn.press_enabled = true
+	hn.reset(S, 6)
+	for k in range(3):
+		_tick(S, hn, [VfxMock.ev("after", {"x": S.fighters[0].x - 10.0, "y": S.fighters[0].y, "life": 0.16, "col": String(S.fighters[0].aura), "face": 1.0, "z": 0.0})])
+	_check(int(hn.ghosts.after_alive[0]) == 3 and int(hn.ghosts.after_now[0]) == 0, "an after-image still under his feet (10 units off) is alive but not shown, so it takes no place of the budget")
 	# The zip leg's wire echoes follow the same stagger.
 	_check(VfxZip.echoes_alive(0.0, 3) == 2 and VfxZip.echoes_alive(1.9, 3) == 2 and VfxZip.echoes_alive(2.2, 3) == 1 and VfxZip.echoes_alive(2.6, 3) == 2 and VfxZip.echoes_alive(4.6, 3) == 1 and VfxZip.echoes_alive(7.0, 3) == 0, "a zip leg's three echoes: two alive at most at any instant, one in the gap (%d %d %d %d %d %d)" % [VfxZip.echoes_alive(0.0, 3), VfxZip.echoes_alive(1.9, 3), VfxZip.echoes_alive(2.2, 3), VfxZip.echoes_alive(2.6, 3), VfxZip.echoes_alive(4.6, 3), VfxZip.echoes_alive(7.0, 3)])
 	var worst_zip: int = 0

@@ -414,12 +414,16 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				# a thin straight speed line; a hard diamond.
 				var pop: float = VfxPress.p("echo_pop")
 				var ne: int = mini(e.ghosts if e.ghosts > 0 else 3, 3) if e.ghost_ok else 0      # f01: at most 2 echoes of a limb alive at once (the third comes as the first pops), and the counter's say
+				var shown_e: int = 0                # m12: the echoes the fighter's budget lets be drawn, the lowest of the alive ones first
 				for g in range(ne):
 					if red and g != mini(ne - 1, 1):
 						continue
 					var ew: Vector2 = VfxPress.echo_window(g)
 					if st >= ew.y or st < ew.x:
 						continue
+					if e.echo_n >= 0 and shown_e >= e.echo_n:
+						continue
+					shown_e += 1
 					var fr: float = float(g + 1) / float(ne + 1)
 					var ec: Color = e.col.darkened(0.3)
 					ec.a = al
@@ -447,6 +451,8 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				var gf: float = 1.0 - clampf(st / gl, 0.0, 1.0)
 				if not red and gf > 0.0:
 					var ng: int = mini(e.ghosts if e.ghosts > 0 else 3, 5)
+					if e.body_n >= 0:
+						ng = mini(ng, e.body_n)      # m12: what the fighter's budget of five leaves after Rendering's after-images and the echoes
 					for k in range(ng):
 						var fr2: float = float(k + 1) / float(ng + 1)
 						var gc: Color = e.col
@@ -535,7 +541,7 @@ func _press(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				continue
 			var gz: float = host.fighter_z(s, a) + Z_FX - 12.0
 			var vcol: Color = VfxPress.lane_of(S, s)
-			for k in range(1, int(VfxPress.p("fly_ghosts")) + 1):
+			for k in range(1, mini(int(VfxPress.p("fly_ghosts")), int(hub.ghosts.fly_n[s])) + 1):
 				var hp: Vector2 = pr.back(S, s, k * 4)
 				var hrx: float = SimWrap.sdx(cam_x, hp.x)
 				if absf(hrx - vx) < 6.0:
@@ -941,12 +947,16 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 			if tt >= 0.0 and tt < 12.0 and (cur - p0).length() > 8.0:
 				var ne: int = int(VfxZip.p("echoes"))
 				var ep: Array = VfxZip.echo_points(p0, cur, ne)
+				var shown_z: int = 0
 				for g in range(ne):
 					if red and g != ne - 1:
 						continue
 					var zw: Vector2 = VfxZip.echo_window(g)
 					if tt >= zw.y or tt < zw.x:
 						continue
+					if shown_z >= int(hub.ghosts.zecho_n[z.slot]):
+						continue
+					shown_z += 1
 					var ec: Color = col.darkened(0.3)
 					ec.a = al
 					var fp: Vector2 = ep[g]
@@ -960,7 +970,7 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 		# Speed and heavy: a smear of up to 5 ghosts on the body's real recent path, each overlapping the next by about a third, one flat lane-colour tint at 0.35 or
 		# less and fainter the older. Nothing is drawn where he has not been; a stationary body has no ghosts.
 		var heavy: bool = style == "heavy"
-		var ng: int = 1 if red else mini(int(VfxZip.p("ghosts")), 5)
+		var ng: int = mini(1 if red else mini(int(VfxZip.p("ghosts")), 5), int(hub.ghosts.zip_n[z.slot]))     # m12: the budget's share
 		var trail: Array = VfxZip.trail_points(pr.hist[z.slot], VfxZip.p("ghost_gap"), ng)
 		var oldest: Vector2 = cur
 		for g in range(trail.size()):

@@ -58,6 +58,8 @@ class Fx:
 	var ghost_ok: bool = true       # the limb-ghost counter allows this blow's smear or echoes (f01)
 	var limb: int = 0               # slot * 2 + hand: the limb whose ghosts these are
 	var gunits: int = 0             # the limb-ghosts it holds this tick (1 for a smear, the echoes alive for a tech blow)
+	var echo_n: int = -1            # a tech blow: how many of its echoes the fighter's whole-figure budget lets be drawn (m12), -1: all of the alive ones
+	var body_n: int = -1            # a heavy blow's release stack: how many body ghosts the fighter's whole-figure budget leaves it (m12; VfxGhostTally), -1: as many as it asks for
 	var real: bool = false          # Animation's hand-off was used: ja and jb are real poses, path the real fist path
 	var ghosts: int = 0             # how many after-images Animation asks for (press.ghosts), 0: ours
 	var ja: PackedVector2Array = PackedVector2Array()   # the old pose's joints (JOINTS order), offsets from its anchor, x turned to the world
