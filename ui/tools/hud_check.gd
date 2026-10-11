@@ -5386,6 +5386,20 @@ func _phone_rules() -> void:
 		_ok(st[0] != st[1] and st[1] != st[2] and st[2] != st[3] and st[0] != st[2] and st[1] != st[3] and st[0] != st[3], "colour vision %s: the four stages are four different colours" % mode)
 		_ok(UiLook.stance_col(1) == UiLook.col("#5aaaff"), "colour vision %s: the guard cue stays the defensive stance's colour (what Art measured against)" % mode)
 	_ok(lanes_ok, "colour vision: each preset gives the Protagonist and the rival Art's lane colours")
+	# Every id the HUD can be set up with (the stand-ins' aliases and the roster ids) follows a preset: none keeps its own colour.
+	var alias_bad := PackedStringArray()
+	for mode2 in ["protan", "deutan", "tritan"]:
+		hud3.set_option("colour_vision", mode2)
+		var want_p: Color = Color.html(str(UiData.colour_vision()["presets"][mode2]["lanes"]["protagonist"]))
+		var want_r: Color = Color.html(str(UiData.colour_vision()["presets"][mode2]["lanes"]["rival"]))
+		for id in ["protagonist", "stand_in_protagonist"]:
+			if UiLook.lane(id, Color("#123456")) != want_p:
+				alias_bad.append("%s %s" % [mode2, id])
+		for id in ["rival", "anti_hero"]:
+			if UiLook.lane(id, Color("#123456")) != want_r:
+				alias_bad.append("%s %s" % [mode2, id])
+	_ok(alias_bad.is_empty(), "colour vision: the Protagonist's stand-in id and the rival's roster ids take the preset's lanes too %s" % str(alias_bad))
+	_ok(UiLook.lane("some_future_fighter", Color("#123456")) == Color("#123456"), "colour vision: a fighter Art has no preset for keeps its own colour")
 	_ok(drift == "", "colour vision: those lane colours still equal Art's data/art/colour-vision.json when that file is present (%s)" % ("absent" if art.is_empty() else "drift: " + drift))
 	hud3.hub.patch(0, {"aura": Color("#abcdef")})
 	_ok(hud3.hub.model(0).aura == Color.html(str(UiData.colour_vision()["presets"]["tritan"]["lanes"]["protagonist"])) and hud3.hub.model(0).aura_raw == Color("#abcdef"), "colour vision: a new aura from the sim keeps the preset's colour and remembers the fighter's own")
