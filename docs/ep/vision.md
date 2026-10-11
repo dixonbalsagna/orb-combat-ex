@@ -854,3 +854,11 @@ Standing from this: no in-progress character art on any public page; fighters as
 > The "orbcombat" user has no public email, no way to contact them, and they live on the other side of the planet from me. short of rudely committing a push to their repository, which is considered spam and not a professional way to reach them at all, I don't know how to politely contact them about the name conflict. Let's continue with Orb Combat EX as planned.
 
 Standing from this: the title is Orb Combat EX. Legal's note stands that the clash should be looked at again before any store page.
+
+## Resume, and research into a co-op mode (Orb, 2026-10-11)
+
+> lets get this project back on track
+
+> I want research into a co-op brawler mode. Look into how the systems could be adapted to make the versus mode, as we have it today, part of a bigger game with 2 player co-operative fights against AI opponents
+
+Standing from this: the hold of 2026-10-06 is lifted. The co-op mode is a research question only (Research & Prototyping writes docs/research/co-op-brawler.md); nothing is built or scoped until Orb has read it.
