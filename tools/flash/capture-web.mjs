@@ -95,23 +95,72 @@ if (DIR) {
   pageUrl = `http://127.0.0.1:${server.address().port}${has('--mock') ? '/' : opt('--path', '/play/')}`;
 }
 mkdirSync(OUT, { recursive: true });
-const profile = mkdtempSync(join(tmpdir(), 'flash-cap-'));
-const flags = [`--user-data-dir=${profile}`, '--remote-debugging-port=0', '--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-sync', '--disable-component-update',
+// The browser is started by launchBrowser(): a cold machine (a fresh CI runner, a first launch after an update) can take far longer than a warm one to open its DevTools port, and
+// a launch can simply fail, so it waits up to 90 s for the port and, on a failure or an early exit, kills that browser, clears its profile and tries again (3 attempts in all).
+const baseFlags = ['--remote-debugging-port=0', '--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-sync', '--disable-component-update',
   '--hide-scrollbars', '--mute-audio', ...(process.env.CI ? ['--no-sandbox'] : []), `--window-size=${WIDTH},${HEIGHT}`, ...(has('--software') ? ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : []), 'about:blank'];
-const child = spawn(exe, flags, { stdio: 'ignore', detached: false });
-const cleanup = () => {
-  try { if (platform() === 'win32') spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', timeout: 15000 }); else child.kill('SIGKILL'); } catch { /* gone */ }
-  for (let i = 0; i < 5; i++) { try { rmSync(profile, { recursive: true, force: true }); break; } catch { spawnSync(process.execPath, ['-e', 'setTimeout(()=>{},400)']); } }
+const PORT_WAIT_MS = 90000, LAUNCH_ATTEMPTS = 3;
+let child = null, profile = null, browserPort = null;
+/** Closes the browser this run started: through DevTools (Browser.close), then by process (the launcher exe of a recent Chrome on Windows exits at once and the browser runs on under another PID, so a PID kill is not enough: it is found by its profile folder). */
+async function killBrowser() {
+  if (browserPort) {
+    try {
+      const v = await (await fetch(`http://127.0.0.1:${browserPort}/json/version`)).json();
+      const c = await Cdp.open(v.webSocketDebuggerUrl);
+      await Promise.race([c.send('Browser.close'), sleep(3000)]);
+      c.close();
+    } catch { /* gone, or never up */ }
+  }
+  browserPort = null;
+  try {
+    if (platform() === 'win32') {
+      if (profile) spawnSync('powershell', ['-NoProfile', '-Command', `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*${profile.replace(/'/g, "''")}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: 'ignore', timeout: 30000 });
+      if (child) spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', timeout: 15000 });
+    } else if (child) child.kill('SIGKILL');
+  } catch { /* gone */ }
+  child = null;
+  if (profile) for (let i = 0; i < 8; i++) { try { rmSync(profile, { recursive: true, force: true }); break; } catch { await sleep(400); } }
+  profile = null;
+}
+async function launchBrowser() {
+  let lastError = 'no attempt';
+  for (let attempt = 1; attempt <= LAUNCH_ATTEMPTS; attempt++) {
+    profile = mkdtempSync(join(tmpdir(), 'flash-cap-'));
+    let failed = null;
+    child = spawn(exe, [`--user-data-dir=${profile}`, ...baseFlags], { stdio: 'ignore', detached: false });
+    // an exit with code 0 is the launcher handing over (a recent Chrome on Windows); any other exit before the port is a failed start
+    child.on('exit', (code, sig) => { if (code !== 0 && code !== null) failed = `the browser exited with code ${code}`; else if (sig) failed = `the browser was killed by ${sig}`; });
+    child.on('error', (e) => { failed = e.message; });
+    const t0 = Date.now();
+    let port;
+    while (!port && !failed && Date.now() - t0 < PORT_WAIT_MS) {
+      const f = join(profile, 'DevToolsActivePort');
+      if (existsSync(f)) { const n = Number(readFileSync(f, 'utf8').split('\n')[0]); if (n > 0) port = n; }
+      if (!port) await sleep(200);
+    }
+    if (port) {
+      let target;
+      const t1 = Date.now();
+      while (!target && Date.now() - t1 < 30000) {
+        try { target = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find((x) => x.type === 'page'); } catch { /* not up yet */ }
+        if (!target) await sleep(200);
+      }
+      if (target) { browserPort = port; return target; }
+      browserPort = port;
+      lastError = 'the browser opened its DevTools port but offered no page target in 30 s';
+    } else lastError = failed || `the browser did not open a DevTools port in ${PORT_WAIT_MS / 1000} s`;
+    log(`browser launch attempt ${attempt} of ${LAUNCH_ATTEMPTS} failed: ${lastError}${attempt < LAUNCH_ATTEMPTS ? '; trying again' : ''}`);
+    await killBrowser();
+  }
+  throw new Error(lastError);
+}
+const cleanup = async () => {
+  await killBrowser();
   if (server) server.close();
 };
 let page, code = 0;
 try {
-  let port;
-  for (let i = 0; i < 100 && !port; i++) { const f = join(profile, 'DevToolsActivePort'); if (existsSync(f)) port = Number(readFileSync(f, 'utf8').split('\n')[0]); else await sleep(200); }
-  if (!port) throw new Error('the browser did not open a DevTools port in 20 s');
-  let target;
-  for (let i = 0; i < 50 && !target; i++) { try { target = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find((t) => t.type === 'page'); } catch { /* not up */ } if (!target) await sleep(200); }
-  if (!target) throw new Error('no page target');
+  const target = await launchBrowser();
   page = await Cdp.open(target.webSocketDebuggerUrl);
   await page.send('Emulation.setDeviceMetricsOverride', { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: false });
   await page.send('Page.navigate', { url: pageUrl });
@@ -143,6 +192,6 @@ try {
   code = 1;
 } finally {
   if (page) page.close();
-  cleanup();
+  await cleanup();
 }
 process.exit(code);

@@ -85,6 +85,7 @@ const ZIPHEAVY_ADD = { damage: N(40, 'The damage a zip heavy deals.') };
 const REMOVED_BRAWL = ['enderAfter', 'heldMul', 'stepInTicks'];
 const REMOVED_HEAVY = ['damage', 'landTicks', 'heldFullTicks', 'heldMaxTicks', 'heldLandTicks'];
 const AI_BRAWL_ADD = Object.fromEntries(['mixMedium', 'mixHeavy', 'heavyIntoFlurry', 'mediumIntoHeavy', 'burst', 'digIn', 'giveGround', 'follow', 'launcher', 'charge', 'energy', 'breakGuard'].map((k, i) => [k, SH(0.1 + 0.05 * (i % 6), `The AI\'s share for ${k}.`)]));
+const AI_TAPGAP_MAX = N(14, 'The slowest gap, in ticks, between the AI taps in a brawl (at least tapGap: rule brawl-order). Added 2026-10-11 on the EP request.');
 const REMOVED_AI = ['enderShare', 'rashHeavy', 'heavyAfterClose'];
 const AI_BY_LEVEL = { easy: 0.5, medium: 1, hard: 1.4 };   // scales the sample shares, kept inside 0 to 1 below
 const DIGIN_SAMPLE = 0.5;
@@ -147,6 +148,7 @@ const fixAiBrawl = (b, level) => {
   if (!b || typeof b !== 'object') return 0;
   let n = strip(b, REMOVED_AI);
   for (const [k, v] of Object.entries(aiSample(level))) if (b[k] === undefined) { b[k] = v; n++; }
+  if (b.tapGapMax === undefined) { b.tapGapMax = Math.max(AI_TAPGAP_MAX.v, typeof b.tapGap === 'number' ? b.tapGap : 0); n++; }
   return n;
 };
 
@@ -173,6 +175,7 @@ const fixAiBrawl = (b, level) => {
   for (const name of ['easy', 'medium', 'hard']) {
     const b = s.properties.levels.properties[name].properties.brawl;
     ch = addTo(b, AI_BRAWL_ADD) || ch;
+    ch = addTo(b, { tapGapMax: AI_TAPGAP_MAX }) || ch;
     ch = dropFrom(b, REMOVED_AI) || ch;
   }
   if (!s.properties.digInBy) {
@@ -206,6 +209,22 @@ const fixAiBrawl = (b, level) => {
       "      if (isObj(brl.burst) && Array.isArray(brl.burst.lands)) for (let li = 1; li < brl.burst.lands.length; li++) if (typeof brl.burst.lands[li] === 'number' && typeof brl.burst.lands[li - 1] === 'number' && brl.burst.lands[li] < brl.burst.lands[li - 1]) err(IT, `/brawl/burst/lands/${li}`, 'brawl-order', `burst lands ${brl.burst.lands[li]} falls below the one before (${brl.burst.lands[li - 1]})`);",
     ].join('\n');
     t = t.slice(0, i) + block + t.slice(j);
+  }
+  if (!t.includes('/brawl/tapGapMax')) {
+    const anchor = "  // ---- combat styles ----\n";
+    if (!t.includes(anchor)) throw new Error('tapGapMax anchor');
+    t = t.replace(anchor, () => [
+      "  // ---- the AI's slowest tap gap (data/director/ai.json): at least the tap gap ----",
+      "  const aiTap = get('data/director/ai.json');",
+      "  if (isObj(aiTap) && isObj(aiTap.levels)) {",
+      "    for (const [lv, L] of Object.entries(aiTap.levels)) {",
+      "      const b = isObj(L) ? L.brawl : null;",
+      "      if (isObj(b) && typeof b.tapGap === 'number' && typeof b.tapGapMax === 'number' && b.tapGapMax < b.tapGap) err('data/director/ai.json', `/levels/${esc(lv)}/brawl/tapGapMax`, 'brawl-order', `tapGapMax ${b.tapGapMax} is below tapGap ${b.tapGap}`);",
+      "    }",
+      "  }",
+      "",
+      anchor,
+    ].join('\n'));
   }
   if (!t.includes("'ai-digin-fighter'")) {
     const a = "    if (isObj(brl)) {\n      if (isObj(brl.flurry)) {";
@@ -304,7 +323,7 @@ const fixAiBrawl = (b, level) => {
   const out = [];
   /** the cases of one leaf; mk builds a case for a path tweak, base is the pointer of the block, req the pointer of the parent for `required`. */
   // leaves a cross-reference orders against another: their zero and large edge cases would break the order, so only the order cases cover them
-  const ordered = new Set(['give/leashBh', 'give/closeMaxBh', 'heavy/charge/fromTicks', 'heavy/charge/fullTicks', 'heavy/charge/maxTicks', 'medium/windupTicks', 'heavy/windupTicks', 'burst/lands']);
+  const ordered = new Set(['give/leashBh', 'give/closeMaxBh', 'heavy/charge/fromTicks', 'heavy/charge/fullTicks', 'heavy/charge/maxTicks', 'medium/windupTicks', 'heavy/windupTicks', 'burst/lands', 'tapGapMax']);
   const leafCases = (mk, base, path, leaf) => {
     const s = slug(path);
     const skipEdge = ordered.has(path.join('/'));
@@ -390,6 +409,13 @@ const fixAiBrawl = (b, level) => {
   // the AI: the shares, the removed keys, digInBy
   out.push(ai('valid', () => {}, null));
   for (const k of Object.keys(AI_BRAWL_ADD)) leafCases(ai, '/levels/medium/brawl', [k], AI_BRAWL_ADD[k]);
+  // tapGapMax: a number 0 or more, at least tapGap (only the order cases cover its edges)
+  leafCases(ai, '/levels/medium/brawl', ['tapGapMax'], AI_TAPGAP_MAX);
+  out.push(
+    ai('tapgapmax-below-tapgap', (o) => { o.tapGap = 10; o.tapGapMax = 9; }, { rule: 'xref:brawl-order', pointer: '/levels/medium/brawl/tapGapMax' }),
+    ai('tapgapmax-equals-tapgap-ok', (o) => { o.tapGap = 10; o.tapGapMax = 10; }, null),
+    ai('tapgapmax-above-tapgap-ok', (o) => { o.tapGap = 10; o.tapGapMax = 40; }, null),
+  );
   out.push(...REMOVED_AI.map((k) => ai(k.toLowerCase() + '-retired', (o) => { o[k] = 0.4; }, { rule: 'additionalProperties', pointer: '/levels/medium/brawl/' + k })));
   const roster = rj('tools/fixtures/virtual/data/fighters/roster.json');
   const rid = (Array.isArray(roster) ? roster : Object.keys(roster))[0];
