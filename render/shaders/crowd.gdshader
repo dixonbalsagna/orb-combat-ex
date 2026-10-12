@@ -14,6 +14,7 @@ render_mode unshaded, cull_back;
 #include "res://render/shaders/color.gdshaderinc"
 
 uniform float boost = 1.0;
+uniform vec2 crowd_near = vec2(0.0, 0.0);   // RenderLook.NEAR_CLIP in a match with depth on: a figure nearer the lens than y shrinks, and is nothing nearer than x. (0, 0): off
 uniform float outline = 0.7;
 uniform vec4 outline_col : source_color = vec4(0.05, 0.05, 0.08, 1.0);
 uniform vec4 legs : source_color = vec4(0.17, 0.18, 0.25, 1.0);
@@ -80,7 +81,12 @@ void vertex() {
 	}
 	// A small idle hop on about half of them, out of step.
 	v.y += max(0.0, sin(TIME * 4.0 + ph * 40.0)) * 0.9 * step(0.5, ph) * (1.0 - run) * (1.0 - st);
-	VERTEX = v * boost;
+	// Camera's near-clip rule for the crowd: so near the lens a figure is in it, not in the picture.
+	float nearc = 1.0;
+	if (crowd_near.y > 0.0) {
+		nearc = smoothstep(crowd_near.x, crowd_near.y, -(VIEW_MATRIX * (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0))).z);
+	}
+	VERTEX = v * boost * nearc;
 	NORMAL = nrm;
 }
 

@@ -52,7 +52,8 @@
 //    building in front of the fight has the floors the fight is seen through opened in this pane (stub_tex's g and b:
 //    from this world y to that one). There the walls are gone, front, sides and back, so the street behind shows
 //    under the tower. What stays says it is built so: a post at each corner and one a bay along the front, in the
-//    wall's own colour, and the pale edge of the floor above. No soot, no cracks, no broken line, nothing dark painted in. A building
+//    wall's own colour, and the pale edge of the floor above. A post gives way inside the patch (the hole's capsule),
+//    so none stands between the camera and the fight. No soot, no cracks, no broken line, nothing dark painted in. A building
 //    that opens floors is never holed (b at or above -1.5e9 marks one).
 // An instance with nothing to cut and no part gone keeps back-face culling (its back faces are thrown away in the
 // vertex stage), so only the cut towers and the buildings at stage 2 and 3 pay for their insides. tools/cull_check.gd
@@ -96,6 +97,7 @@ uniform vec4 look_trim[10] : source_color;   // doors, shutters, panels
 uniform float pattern_budget = 0.085;   // RenderLook.PATTERN_BUDGET: on a look with flag 16, the most a pane and its wall differ in relative luminance
 uniform float dmg_holes = 0.18;      // RenderLook.DMG_HOLES: at stage 2, the share of a facade's bays broken open
 uniform vec3 row_haze = vec3(0.5, 600.0, 2800.0);   // RenderLook.ROW_HAZE: the most of the air a far row takes, and the depths behind the fighter plane it starts and is full at
+uniform float haze_focus = 0.0;      // the depth of the camera's focus plane (Camera's dolly): the rows' haze is measured from it. 0: the fighter plane
 uniform vec3 open_post = vec3(190.0, 9.0, 0.82);   // RenderLook.OPEN_POST: an opened floor's posts (a bay's width at most, a post's width, its tone against the wall's)
 uniform float open_slab = 7.0;       // RenderLook.OPEN_SLAB: the edge of the floor over an opening
 uniform vec4 open_slab_col : source_color = vec4(0.55, 0.58, 0.63, 1.0);   // RenderLook.OPEN_SLAB_COL
@@ -167,7 +169,7 @@ void vertex() {
 	v_winb = vec3(wb.x, wb.y, float(INSTANCE_ID) + (zface ? 0.0 : 0.5));
 	v_face = vec4(zface ? v0.x * sx : v0.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(n0.y) < 0.5 ? 1.0 : 0.0), v0.x * sx);
 	v_dmg = vec3(wb.z, min(top, stubbed), sx);
-	v_look = vec3(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0));
+	v_look = vec3(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0));
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
@@ -232,17 +234,21 @@ void fragment() {
 		discard;
 	}
 	float dith = fract(dot(FRAGCOORD.xy, vec2(0.7548777, 0.5698403)));
+	bool holed = false;   // inside a hole (or the patch), nearer the camera than it cuts to
 	for (int i = 0; i < 2; i++) {
-		if (hole[i].w > 0.0 && v_open.y < -1.5e9) {
+		if (hole[i].w > 0.0) {
 			// The distance to the hole's axis (a point for a round hole), and how far along it this pixel is.
 			vec4 ends = i == 0 ? v_hole0 : v_hole1;
 			vec2 ab = ends.zw - ends.xy;
 			vec2 ap = FRAGCOORD.xy - ends.xy;
 			float t = clamp(dot(ap, ab) / max(dot(ab, ab), 0.0001), 0.0, 1.0);
 			if (-VERTEX.z < mix(hole_near[i].x, hole_near[i].y, t) && length(ap - ab * t) < mix(hole[i].w, hole_to[i].w, t) * (hole_edge.x + hole_edge.y * dith)) {
-				discard;
+				holed = true;
 			}
 		}
+	}
+	if (holed && v_open.y < -1.5e9) {
+		discard;   // a building that opens floors is never holed: only its posts give way, below
 	}
 	float st = v_dmg.x;
 	bool wall = v_face.z > 0.5;
@@ -401,8 +407,8 @@ void fragment() {
 				float bay = v_face.y / max(1.0, floor(v_face.y / open_post.x + 0.5));
 				post = abs(fract((v_face.x + 0.5 * v_face.y) / bay + 0.5) - 0.5) * bay < pw;
 			}
-			if (!post) {
-				discard;
+			if (!post || holed) {
+				discard;   // no wall here; and no post inside the patch, so none stands between the camera and the fight
 			}
 			col = FRONT_FACING ? flat_shade(wallc * open_post.z, NORMAL, 0.35) : inside.rgb;
 		} else if (wall && FRONT_FACING && ((v_wy >= v_open.y && v_wy < v_open.y + sl) || (v_wy <= v_open.x && v_wy > v_open.x - sl))) {

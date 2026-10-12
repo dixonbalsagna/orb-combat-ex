@@ -15,6 +15,7 @@ var _cache: Dictionary = {}
 var _tracked: Array = []      # other materials whose shader includes bend.gdshaderinc
 var _bend: float = 0.0
 var _dist: float = 3000.0
+var _focus: float = 0.0       # the depth of the camera's focus plane (Camera's dolly): the plane the bend leaves flat
 var _sky: Dictionary = {}     # sky uniforms the tracked (fogging) materials share
 var _haze: float = 0.0        # this pane's pan haze (pane_world.gd), for the tracked materials that take it
 var _haze_ground := Color.BLACK
@@ -115,12 +116,19 @@ func track(m: ShaderMaterial) -> void:
 ## How far the planet's bend lowers a point at camera-relative x and depth z this frame: the CPU twin of bent_world()
 ## in render/shaders/bend.gdshaderinc, for what is placed rather than bent in a shader (a fighter at depth).
 func sag(x: float, z: float) -> float:
-	var back: float = maxf(-z, 0.0)
+	var back: float = maxf(_focus - z, 0.0)
 	var k: float = clampf((back - 60.0) / 1200.0, 0.0, 1.0) * _dist / (_dist + back)
 	return _bend * x * x * k
 
 
-func set_bend(b: float, dist: float) -> void:
+## focus: the depth of the camera's focus plane (0: the fighter plane). It is sent only once it has ever moved.
+func set_bend(b: float, dist: float, focus: float = 0.0) -> void:
+	if focus != _focus:
+		_focus = focus
+		for m in _cache.values():
+			m.set_shader_parameter("bend_focus", focus)
+		for m in _tracked:
+			m.set_shader_parameter("bend_focus", focus)
 	if absf(b - _bend) <= 1e-4 * absf(_bend) + 1e-12 and absf(dist - _dist) <= 1e-4 * _dist:
 		return
 	_bend = b

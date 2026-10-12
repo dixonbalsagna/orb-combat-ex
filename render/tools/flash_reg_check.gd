@@ -282,6 +282,24 @@ func _run() -> void:
 	_expect(not host.vfx.reduced_flashing and not host.vfx.flashes.reduced, "... and the register is back to its full budget with the option off")
 	_expect(calm_on == [RenderLook.HEAT_CALM, RenderLook.CHAR_CALM] and tm.get_shader_parameter("heat_gain") == 1.0 and tm.get_shader_parameter("char_gain") == 1.0, "under it a groove's glow and char are drawn calm (%s of their strength), and at full strength again with it off" % str(calm_on))
 	_expect(ease_on[0] == 1.0 and ease_on[1] != null and is_equal_approx(float(ease_on[1]), float(ease_on[2])) and tm.get_shader_parameter("calm_ease") == 0.0 and tm.get_shader_parameter("crater_calm_s") == RenderLook.CRATER_CALM_S, "under it a new crater's colours spread in over %.1f s (the ground shader's calm ease is on and its clock is the match's time); with it off they are there at once, as ever" % RenderLook.CRATER_CALM_S)
+	# 6b. A flash's size off the plane: only in a match with depth on.
+	var area: float = PI * RenderLook.FLASH_HEAD_R * RenderLook.FLASH_HEAD_R
+	var flat: Array = [host.vfx.cam_dist, host.flash_px(area), host.flash_px(area, -1000.0), host.vfx.clear_query.is_valid()]
+	main.start_match(4, {"p1": true, "p2": true}, {"intro": "skip", "depth": true})
+	for k in range(3):
+		main.frame(1.0 / 60.0)
+	var d_cam: float = host.vfx.cam_dist
+	var on_plane: float = host.flash_px(area)
+	var behind: float = host.flash_px(area, -1012.0)
+	var front_px: float = host.flash_px(area, 150.0)
+	var d_reg: float = host.vfx.flashes.cam_dist   # the register's copy is the frame before's
+	var share: float = pow(d_reg / (d_reg + 1012.0), 2.0)
+	_expect(flat[0] == 0.0 and flat[1] == flat[2] and not flat[3], "with depth off the camera's distance is not given, a flash off the plane is weighed as on it, and VFX's clear query is not set")
+	_expect(host.S.depthOn and d_cam > 100.0 and absf(d_reg - d_cam) < 0.05 * d_cam and absf(behind / on_plane - share) < 0.01 and front_px > on_plane and host.vfx.clear_query.is_valid(), "with depth on Rendering's flashes are weighed by the pixels they cover at their fighter's depth (the camera is %.0f units from the plane: a head flash in the middle street is %.2f of its size on the plane, one at the near kerb %.2f), and the clear query is set" % [d_cam, behind / on_plane, front_px / on_plane])
+	main.start_match(4, {"p1": true, "p2": true}, {"intro": "skip"})
+	for k in range(3):
+		main.frame(1.0 / 60.0)
+	_expect(host.vfx.cam_dist == 0.0 and not host.vfx.clear_query.is_valid(), "... and both are unset again in the next match without depth")
 	# 7. The split divider's slam flash (UI draws it and asks once as a slam begins): the HUD's flash_fn is the host's.
 	main.start_match(4, {"p1": true, "p2": true}, {"intro": "skip"})
 	main.frame(1.0 / 60.0)

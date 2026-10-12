@@ -104,14 +104,74 @@ Orb's ruling for the foreground row was one see-through patch sized to the actio
 | How a tower opens when the fight is behind it | Orb picked open floors (2026-10-12) | **Done:** `open-floors.md` |
 | The crowd hazed by its depth | Rendering | A small look batch, with the flash clip |
 | The ground field reads the sim's rows of ground in depth | Rendering | With L4's first crater in depth |
-| A shadow on the roof he stands on | World's read, then Rendering | With roofs as a place to stand |
-| The mark's look | UI, VFX, Art | Any time |
+| A shadow on the roof he stands on | World's read, then Rendering | **Done** with depth on (section 8) |
+| The mark's look | UI, VFX, Art | **Done** to VFX's look (section 8). UI and Art have not been asked |
 | VFX's layers off the plane | VFX | Before depth is switched on |
 | The flash clips for a fight in depth (a drift across the street, a fight behind a tower, a send down an avenue) | Tools, with Camera's list | With the patch |
+
+## 8. The second batch (2026-10-12): the others' pieces, and ready for Camera's dolly
+
+Everything in it is inert with depth off. VFX's audit (`docs/vfx/depth.md`), Camera's paper (`docs/camera/city-in-depth.md` section 6), World's `standingAt` and Simulation's particle depth had landed; this is Rendering's half of each.
+
+**VFX's hooks.**
+- **The camera's distance** (`host.vfx.cam_dist`) is given each frame beside the scale, in a match with depth on. With depth off it stays 0 and every flash is weighed as on the plane, as before: a brunt launch's events carry a depth with depth off too.
+- **Rendering's own flashes ask at their fighter's depth:** the body's white, a head flash, a cue's flare, the guard arc, a beam (at its middle) and a clash (between the two). At a close brawl a head flash in the middle street weighs 0.29 of one on the plane.
+- **The clear query** is in `open-floors.md`.
+
+**The pair's mark has VFX's look** (its section 6).
+
+| | Was | Is |
+|---|---|---|
+| Colour | A pale core in a dark rim, fixed colours | Drawn against its own ground: the core within 0.09 of the ground's relative luminance at the nearer foot and 0.02 at the farther, the rim 0.05 darker. Lighter than the ground, or darker on pale ground. Never more than a tenth from it |
+| The wedge | In width | In width and in value |
+| Width | 4.8 px at its middle | By the nearer fighter's size: 4 px at 54%, 5.4 on the plane, 6 at 119% |
+| Coming and going | Up in 0.2 s, down in 0.5 s | Up in 0.5 s, down in 0.5 s, and it stays a second once asked for, so a drift across the threshold and back does not blink it |
+| Strength | Full | 45% while the line is steady; full for 0.6 s when the line turns by 5 degrees or more; 30% while the lane cues' stripes are up as well |
+| Reduced motion or flashing | The same | Steady at 60%, on and off at once, never louder |
+
+No hue, and nothing moves along it, as before.
+
+**Camera's near-clip rule** and its cut flag are in `open-floors.md`.
+
+**A shadow on a roof.** Over a standing building a fighter's shadow lies on its roof (World's `standingAt`), not on the ground under it. With depth on.
+
+**Camera's dolly: Rendering's side is in.** Camera moves the camera's focus plane to the pair's depth, so a fighter is plane size in any street. It is on main behind a switch, off (b6cc22a5; `SplitRig.depth_dolly`), and its frame carries `focus_z` a pane. Camera's list of what Rendering changes (its D6) is done:
+
+| What was measured from the fighter plane | Now measured from the focus plane |
+|---|---|
+| The camera's place (its point 1) | `main` hands a pane the frame's `focus_z`, and the pane passes it to `CameraRig.frame` |
+| The rows' haze | A row is hazed by how far behind the focus it stands, so the block the fight is in front of is clear |
+| The world's bend at far zoom | The focus plane is the one that stays flat |
+| The pair's mark's width, and Rendering's flash sizes | By a fighter's depth from the focus. `host.vfx.cam_dist` is the rig's distance to the focus plane (its point 2) |
+| The particles' cull (the one `half_width` call with a depth, its point 2) | The view's edge at the particle's own depth, from the focus. Before, a particle made in a far street was culled at the plane's edge, where the view is half as wide: that is fixed for today's camera too |
+| The near-clip rule | Reads the lens where the rig put it, so it follows the dolly |
+
+- **With the switch off nothing changes:** `focus_z` is 0 on every frame and every number is the one it was.
+- **Not seen with the committed dolly.** What follows was seen with Camera's files before they were committed. Its point 3 (a building behind the lens is not drawn) holds for a low building, which sinks inside 300 units of the lens. **A tower the lens passes through on a drift between streets has not been looked at:** a tower opens floors and does not sink.
+- **Seen in a scratch tree with Camera's uncommitted files:** the pair is plane size in the middle street and against the back block's rear wall (see Limits), the camera standing in the street in front. At a crossing it is seen down the avenue with nothing opened. Behind a tower the opened floors fill the frame: the dark under the tower is the top quarter of the picture, and the fight is under it.
+- **Two things that showed there and are fixed in this batch:** a post stood between the two fighters (posts now give way inside the patch), and the crowd of the street the camera stands in was a row of heads across the bottom of the frame (the crowd follows the near-clip distances).
+- **One thing for VFX:** its `ppu_at(z)` takes a depth from the fighter plane. With the dolly it needs the depth from the focus: Rendering's asks subtract it already (`SimHost.flash_focus_z`), and VFX's own will need the same number.
+
+**When Camera's `clear[i]` replaces my own reads** (its section 4). Today a pane reads `request`, `only` and a hole radius from Camera and works the action out itself. What changes:
+
+| Today, Rendering's | With `clear[i]` |
+|---|---|
+| The action: the fighters' chests, where each will be in 0.3 s, a beam's stretch, a shot | Camera's `rect`, `x0`, `x1` and `y_top`. My capsule is fitted to the rectangle |
+| The hold (0.75 s) and the lead | Camera's: the rectangle arrives already held and already led |
+| Growth by area, 16,000 pixels a tick | Kept, as a ceiling on top of Camera's own bounds. Its edge bound of 0.045 of the width a tick is 13,800 pixels a tick an edge on a rectangle 300 pixels tall, and two edges can move at once |
+| When a low building sinks: the patch's size, 40 to 70 square fighter heights | Camera's `p` and `sigma`. Which buildings are under it stays mine |
+| How many floors open: the capsule's sight lines at the building, whole floors | Camera's `y_top` in the same sight-line sum. Camera adds a floor of margin; I add 20 units. One of the two goes |
+| A floor's pace: by area, a continuous edge | Kept. Camera's "a floor every 3 ticks" is a step of a whole floor across a tower's width, about 38,000 pixels in one tick |
+| `request` and `only` | Gone: no `clear[i]` is no request, and each pane's rectangle is already its own |
+| Nothing eased across a cut: only when a pane was not drawn for half a second | Camera's `clear[i].cut` (on main since b6cc22a5; also true on a pane's first frame). The pane's read is in and checked: it takes `cut` in its request. `main` hands a pane its `cutaway` only, so nothing sets it yet. That one line goes in with the rest of `clear[i]` |
+| Which buildings, the near-clip rule, the clear query, the look | Stay Rendering's |
+
+**The line for Simulation's depth window.** `render/core/sim_host.gd`, in `new_match`: `cam.reset()` becomes `cam.reset(S)` when Simulation's build lands, so a start at a crossing is framed. Not changed yet, as asked.
 
 ## Limits
 
 - **Stills only.** Nothing here was seen moving: the scratch scenario holds the fighters still.
+- **The scratch scenario stood the pair nearer than its captions say** (found 2026-10-12). It set a fighter's depth each tick and not his home depth, so the sim eased him a ninth of the way back to the plane before each frame: he was drawn at 0.89 of the depth asked. "The middle street" in the stills is 900 units back, inside that street. "The back street" is 1,800 back, hard against the back block's rear wall, and one fighter of the pair stood on the wall's line. The sizes in section 1 are worked from the camera and stand. The scenario now sets both.
 - The sizes in section 1 are for the one-view camera at a close brawl and at zoom 0.6. A split's panes were not measured.
 - The beam in depth is proved by its numbers, not by a picture: no pose fires a beam in depth yet.
 - The mark was seen on a street. On water, grass and char it is drawn by the same code and was not looked at.

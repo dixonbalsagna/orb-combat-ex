@@ -362,17 +362,19 @@ uniform vec4 lane_cue[2];           // a fighter's world x, his depth, the strip
 uniform vec4 lane_cue_col[2] : source_color;
 uniform float lane_cue_w = 14.0;    // RenderLook.LANE_CUE_W: the stripe's half width in depth
 uniform vec4 pair_mark = vec4(0.0); // the pair's mark: one fighter's world x and depth, then the other's
-uniform vec4 pair_mark_col : source_color = vec4(0.0, 0.0, 0.0, 0.0);   // its rim's colour; a: its strength (0: none)
-uniform vec4 pair_mark_core : source_color = vec4(0.9, 0.92, 0.95, 1.0);   // its core's colour
-uniform vec2 pair_mark_w = vec2(2.4, 0.6);   // RenderLook.PAIR_MARK_PX and PAIR_MARK_TAPER
+uniform float pair_mark_k = 0.0;    // its strength, 0 to 1 (0: none)
+uniform vec2 pair_mark_w = vec2(2.5, 0.6);   // its half width in pixels at its middle (by the nearer fighter's size) and RenderLook.PAIR_MARK_TAPER
+uniform vec4 pair_mark_v = vec4(0.09, 0.07, 0.05, 0.55);   // RenderLook.PAIR_MARK_CORE, GRAD, RIM and PALE
 
-// The pair's mark at world x and depth px: a stroke on the ground from under one fighter to under the other (rgb,
-// alpha), a pale core in a dark rim, broader toward the one nearer the camera by how far their line is turned in depth
-// (full at 30 degrees).
-// upz: world units a pixel spans in depth: the stroke's width is in pixels, because the ground is seen at a low angle.
-vec4 pair_mark_at(vec2 px, float upz) {
-	if (pair_mark_col.a <= 0.0) {
-		return vec4(0.0);
+// The ground's colour c with the pair's mark on it at world x and depth px: a stroke from under one fighter to under
+// the other, a wedge in width and in value (broader and brighter toward the one nearer the camera, by how far their
+// line is turned in depth; full at 30 degrees). It is drawn against the ground it lies on: its core within
+// pair_mark_v.x of the ground's relative luminance (lighter, or darker on pale ground), its rim darker by
+// pair_mark_v.z; so it is never a bright line on a dark road. upz: world units a pixel spans in depth (the stroke's
+// width is in pixels, because the ground is seen at a low angle).
+vec3 pair_mark_on(vec3 c, vec2 px, float upz) {
+	if (pair_mark_k <= 0.0) {
+		return c;
 	}
 	vec2 d = pair_mark.zw - pair_mark.xy;
 	d.x -= world_w * floor(d.x / world_w + 0.5);
@@ -382,7 +384,13 @@ vec4 pair_mark_at(vec2 px, float upz) {
 	float turn = clamp(-d.y / max(0.5 * length(d), 1.0), -1.0, 1.0);   // above 0: the first fighter is the nearer
 	float hw = upz * pair_mark_w.x * (1.0 + pair_mark_w.y * turn * (1.0 - 2.0 * t));
 	float r = length(q - d * t) / max(hw, 0.0001);
-	return vec4(mix(pair_mark_col.rgb, pair_mark_core.rgb, 1.0 - smoothstep(0.35, 0.6, r)), pair_mark_col.a * (1.0 - smoothstep(0.75, 1.0, r)));
+	float cover = 1.0 - smoothstep(0.75, 1.0, r);
+	if (cover <= 0.0) {
+		return c;
+	}
+	float near = turn >= 0.0 ? 1.0 - t : t;   // 1 at the nearer fighter's end
+	float core = (pair_mark_v.x - pair_mark_v.y * (1.0 - near)) * (dot(c, vec3(0.2126, 0.7152, 0.0722)) < pair_mark_v.w ? 1.0 : -1.0);
+	return max(c + vec3(mix(-pair_mark_v.z, core, 1.0 - smoothstep(0.35, 0.6, r)) * cover * pair_mark_k), vec3(0.0));
 }
 
 // How much of a district's street paint a world x gets (0 outside every district), for the vertex stage.

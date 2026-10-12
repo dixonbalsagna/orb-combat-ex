@@ -53,6 +53,7 @@ Between the two heights the walls are gone: front, sides and back. What is left 
 
 - **The dark under the tower** is the inside of the building above, seen from below. Nothing dark is painted into the opening.
 - **Posts are thin** (9 units, never under a pixel and a bit) and few: the side and back walls keep their corners only, so little stands between the camera and the fight.
+- **A post gives way inside the patch** (since the second batch of 2026-10-12). The patch's capsule round the action cuts posts as it cuts a low building's wall, with the same soft edge, so no post stands between the camera and a fighter. Seen with Camera's dolly in a scratch tree, where the posts are near the lens and three times as wide on screen: one stood between the two fighters.
 - **No dither.** The hole and the patch are dithered because they cut a round window through a wall. An opened floor ends on a floor line and needs none.
 
 ## How fast it changes
@@ -71,14 +72,40 @@ Between the two heights the walls are gone: front, sides and back. What is left 
 - **The pair is small.** The camera does not follow depth yet, so in the middle street a fighter is half his size. That is Camera's, and it is the larger problem in this picture.
 - **Closing** is a low dark edge coming down. It is the quieter of the two changes.
 
+## What VFX and Camera read of it (the second batch, 2026-10-12)
+
+**VFX's clear query** (`docs/vfx/depth.md` section 4; `PaneWorld.clear_query`, set as `host.vfx.clear_query` in a match with depth on). Nothing a building throws (window glass, cladding, stage dust) is drawn in front of the fight inside a see-through region; the fight's own effects always are. For a world point it answers the share left to be seen:
+
+| Where the point is | Answer |
+|---|---|
+| At the fight's depth there, behind it, or within 30 units in front of it (`CLEAR_GAP`) | 1: the fight's own |
+| Nearer the camera than that, over an opened floor's face on this pane's screen | 0 |
+| Nearer the camera than that, inside the patch, when a building of the patch's kind stands in front of a fighter | 0 in the patch's solid part, rising to 1 across its soft edge |
+| Anywhere else | 1 |
+
+- **Per pane.** The hub keeps one callable. It answers for the pane whose effects are being drawn. Asked outside a draw (a thing about to be thrown), it gives the most any pane would show, so glass thrown where one pane has a floor open is still made for the other.
+- **A patch that cuts nothing hides nothing.** With depth on the patch is worked out every frame, also for a pair in the open; its capsule counts only when a low building is actually in front of a fighter.
+
+**Camera's near-clip rule** (`docs/camera/city-in-depth.md` section 1; `RenderLook.NEAR_CLIP`), in a match with depth on:
+
+- A building of the patch's kind whose face is nearer the lens than 600 units stands as its stub, whatever the action's size. Nearer than 300 it is not drawn: it sinks on from its stub to under its footing, at the same pace.
+- **A building that opens floors is not touched by it.** It opens. So near the lens the opened band fills the frame, and what is seen of the tower is its posts and the dark under it.
+- **The crowd follows the same two distances:** a figure nearer the lens than 600 units shrinks, and is nothing nearer than 300. With Camera's dolly the camera stands in a street, and that street's crowd would be a row of heads across the bottom of the frame.
+- With today's camera it changes nothing: at the close brawl the nearest block is 1,355 units from the lens, and the foreground row is empty in the data. It is for the dolly, and for the foreground row when it is switched on in a match with depth on.
+
+**Camera's cut flag** (its section 3). A pane's request may carry `cut`. On that frame the patch, the stubs and the open floors are at their targets: nothing eases across a cut. The pane's read is in and checked. Camera's frame carries the flag as `clear[i].cut` (b6cc22a5), and `main` hands a pane its `cutaway` only, so nothing sets it yet: that line goes in with `clear[i]` (`fighters-in-depth.md` section 8).
+
+**The blocks' patch has the patch's soft edge.** With depth on the patch through the rows behind was drawn with the fighter's hole's hard edge: an oversight of the first batch, fixed.
+
 ## Checks
 
-- `render/tools/open_check.gd` (headless, 10 checks): depth off, a real match opens nothing and every building's texel says it never will; depth on, a building's kind is its floors as built; in front of a tower nothing opens; behind it the tower opens from the ground to a floor line above the sight line to the pair's heads, by no more than the area budget a tick, and does not sink; back in front it holds, then closes at half the budget, and is shut; Camera's request off closes it; behind a low building the patch is handed to the blocks' material and no floor opens; on every tick no building does both.
+- `render/tools/open_check.gd` (headless, 15 checks; the last five are the second batch's: the clear query behind an opened tower and behind a low building, Camera's cut flag, a pair moved 12,000 units between two ticks under a camera already there, the near-clip rule): depth off, a real match opens nothing and every building's texel says it never will; depth on, a building's kind is its floors as built; in front of a tower nothing opens; behind it the tower opens from the ground to a floor line above the sight line to the pair's heads, by no more than the area budget a tick, and does not sink; back in front it holds, then closes at half the budget, and is shut; Camera's request off closes it; behind a low building the patch is handed to the blocks' material and no floor opens; on every tick no building does both.
 - The gates and the flash clip are in the report that came with this batch.
 
 ## Limits
 
-- **Seen on one tower** (a plain shaft, downtown) and, in a still, on two towers one behind the other. Not seen: a stepped tower (its tiers are nested boxes, so its posts stand in tiers), the bell tower, a tapered stack or lighthouse, a shell, a tower with a brunt's tunnel in it, a tall building in the foreground row, a split screen's two panes.
+- **Legal's conditions are not built.** Legal's screen (`docs/legal/city-and-open-floors-screen.md`, w01, on main since 321c046d) passes open floors only if they read as design: a regular row of sturdy columns, a deep slab edge, a lit lobby, one double-height floor on a building under ten floors, a fade, never on a damaged building. Of those, today it opens by area over about eleven ticks and closes when the fight leaves. The rest waits for a brief.
+- **Seen on** a plain shaft downtown, two towers one behind the other, and (stills of 2026-10-12, `img/lanes/INDEX.md`) the stepped ledger hall, the bell tower and a shell. Not seen: a tapered stack or lighthouse, a tower with a brunt's tunnel in it, a tall building in the foreground row, a split screen's two panes.
 - **A post can cross a fighter.** It is 9 units wide against his 45.
 - **A fight in the air behind a tower** opens a band of floors that starts above the ground. That is built and has not been seen.
 - **A few buildings of 5 floors or more are not towers:** the village hall, the hill chapel, the stack, the lighthouse. They open floors like the rest and have not been looked at.

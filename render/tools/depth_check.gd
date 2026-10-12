@@ -4,10 +4,13 @@ extends SceneTree
 ## - depth off: the pair's mark is never set, and a beam's prisms are placed by the old formula, to the bit;
 ## - depth on (the tool's own match, `"depth": true`): a fighter is drawn at the sim's depth and so is his shadow;
 ##   the two at different depths show their lane cues; a close pair near the ground at different depths has the pair's
-##   mark from one to the other, and it goes when they are apart, level in depth, or in the air;
+##   mark from one to the other, quiet while their line is steady, full for a moment when it turns, quieter beside the
+##   lane cues, steady and unfaded under reduced flashing; it stays a second once up and goes when they are apart or
+##   in the air; its width follows the nearer fighter's size;
+## - over a roof a fighter's shadow lies on the roof;
 ## - a beam in depth (the sim's Beam.oz and zs) lies along its true line: its middle and its axis are the line's;
 ## - a particle is drawn at the depth it was made at (SimFxView.Part.z) in a match with depth on, and on the plane with
-##   depth off whatever depth it carries;
+##   depth off whatever depth it carries; it is culled at the edge of the view at its own depth;
 ## - a fighter in the middle street behind a block counts as hidden (so the pane opens the block), and one standing in
 ##   a crossing, seen down the avenue, does not.
 ##   godot --headless --path . --script res://render/tools/depth_check.gd
@@ -61,8 +64,13 @@ func _ticks(n: int) -> void:
 
 
 func _mark() -> float:
-	var c = main.planet._terrain_mat.get_shader_parameter("pair_mark_col")
-	return (c as Color).a if c is Color else 0.0
+	var k = main.planet._terrain_mat.get_shader_parameter("pair_mark_k")
+	return float(k) if k != null else 0.0
+
+
+## The ground as drawn under fighter i (not a roof).
+func planet_ground(S: SimState, P: PaneWorld, i: int) -> float:
+	return P.planet.ground.ground_at(S, S.fighters[i].x, S.fighters[i].z)
 
 
 func _one_view() -> void:
@@ -80,7 +88,7 @@ func _run() -> void:
 	for k in range(300):
 		host.acc = DT * 0.9999
 		main.frame(DT)
-		set_any = set_any or main.planet._terrain_mat.get_shader_parameter("pair_mark_col") != null or main.planet._pair_on
+		set_any = set_any or main.planet._terrain_mat.get_shader_parameter("pair_mark_k") != null or main.planet._pair_on
 	_expect(not host.S.depthOn and not set_any, "depth off, a real match of 300 ticks: the pair's mark is never set")
 	var bv: BeamView = main.pane.beams
 	var a := Vector2(-140.0, 260.0)
@@ -126,6 +134,20 @@ func _run() -> void:
 	pv.deep = true
 	pv.update(fake, null, host.camera_x(1.0), 1.15, 4000.0, [])
 	_expect(pv.count == 1 and not was_deep and flat == RenderLook.Z_PARTICLES and is_equal_approx(pv._buf[11], RenderLook.Z_PARTICLES - 300.0), "a particle made at depth -300: with depth off it is drawn on the plane as ever (%.0f), with depth on at its depth (%.0f); the pane had depth off" % [flat, pv._buf[11]])
+	# ... and culled at the edge of the view at its own depth: 700 units from the camera, the plane's half-width 500
+	# (580 with the cull's margin), the view half a unit wider for each unit of depth.
+	part.x = SimWrap.wrap(host.camera_x(1.0) + 700.0)
+	pv.deep = false
+	pv.widen = 0.5
+	pv.update(fake, null, host.camera_x(1.0), 1.15, 500.0, [])
+	var n_off: int = pv.count
+	pv.deep = true
+	pv.update(fake, null, host.camera_x(1.0), 1.15, 500.0, [])
+	var n_far: int = pv.count
+	part.z = -100.0
+	pv.update(fake, null, host.camera_x(1.0), 1.15, 500.0, [])
+	_expect(n_off == 0 and n_far == 1 and pv.count == 0, "a particle 700 units from the camera, where the plane's view ends at 580: with depth off it is not drawn (%d); with depth on it is drawn at depth -300, where the view ends at 730 (%d), and not at -100, where it ends at 630 (%d)" % [n_off, n_far, pv.count])
+	pv.widen = 0.0
 	pv.deep = was_deep
 	# --- depth on: the tool's own match
 	main.start_match(4, {"p1": false, "p2": false}, {"intro": "skip", "depth": true})
@@ -163,24 +185,85 @@ func _run() -> void:
 		drawn.append(v.position.z)
 		placed = placed and absf(v.position.z - host.fighter_z(i, 1.0)) < 0.001 and absf(v.position.z - float(fz[i])) < NEAR and (P.shadows[i] as MeshInstance3D).position.z == v.position.z
 	_expect(placed, "depth on: each fighter is drawn at the sim's depth and his shadow lies at it (set to %.0f and %.0f, drawn at %.1f and %.1f after the sim's own tick)" % [fz[0], fz[1], drawn[0], drawn[1]])
-	var pm = main.planet._terrain_mat.get_shader_parameter("pair_mark")
+	var tm: ShaderMaterial = main.planet._terrain_mat
+	var pm = tm.get_shader_parameter("pair_mark")
 	var ends_ok: bool = pm is Vector4 and absf(SimWrap.sdx((pm as Vector4).x, fx[0])) < NEAR and absf((pm as Vector4).y - float(drawn[0])) < 0.001 and absf(SimWrap.sdx((pm as Vector4).z, fx[1])) < NEAR and absf((pm as Vector4).w - float(drawn[1])) < 0.001
-	_expect(is_equal_approx(_mark(), RenderLook.PAIR_MARK_ALPHA) and ends_ok, "a close pair on the ground at different depths has the pair's mark at full, from one fighter's place to the other's (strength %.2f)" % _mark())
+	var steady: float = RenderLook.PAIR_MARK_STEADY
+	var w_near: float = (tm.get_shader_parameter("pair_mark_w") as Vector2).x
+	_expect(is_equal_approx(_mark(), steady) and ends_ok, "a close pair on the ground at different depths has the pair's mark from one fighter's place to the other's, quiet while their line is steady (strength %.2f)" % _mark())
+	var mv: Vector4 = tm.get_shader_parameter("pair_mark_v")
+	_expect(mv.x <= 0.1 and mv.z <= 0.1 and mv.y > 0.0 and mv.y < mv.x and tm.get_shader_parameter("pair_mark_col") == null, "it is drawn against its own ground: its core at most %.2f of relative luminance from it at the nearer end and %.2f at the farther, its rim %.2f darker; no colour of its own is set" % [mv.x, mv.x - mv.y, mv.z])
+	# The line turns by a dozen degrees (still under the lane cues' distance): full for a moment, then quiet again.
+	fz = [8.0, -8.0]
+	_ticks(int(RenderLook.PAIR_MARK_LEVEL_S.x / DT) + 3)
+	var loud: float = _mark()
+	_ticks(int((RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y) / DT) + 4)
+	_expect(loud > 0.95 and is_equal_approx(_mark(), steady), "when the line turns by %.0f degrees or more it is full for %.1f s (%.2f), then quiet again (%.2f)" % [RenderLook.PAIR_MARK_TURN_DEG, RenderLook.PAIR_MARK_LOUD_S, loud, _mark()])
+	# Level in depth: it stays PAIR_MARK_HOLD_S, then fades.
 	fz = [0.0, 0.0]
-	_ticks(2)
+	_ticks(int(RenderLook.PAIR_MARK_HOLD_S / DT) - 6)
+	var held: float = _mark()
+	_ticks(12)
 	var falling: float = _mark()
 	_ticks(int(RenderLook.PAIR_MARK_OUT_S / DT) + 4)
-	_expect(falling > 0.0 and falling < RenderLook.PAIR_MARK_ALPHA and _mark() == 0.0, "level in depth, the mark goes over %.1f s and not at once (%.2f after two ticks, then %.2f)" % [RenderLook.PAIR_MARK_OUT_S, falling, _mark()])
+	_expect(is_equal_approx(held, steady) and falling > 0.0 and falling < steady and _mark() == 0.0, "level in depth it stays %.1f s (%.2f), then goes over %.1f s and not at once (%.2f, then %.2f)" % [RenderLook.PAIR_MARK_HOLD_S, held, RenderLook.PAIR_MARK_OUT_S, falling, _mark()])
+	# Angled again: it comes up over PAIR_MARK_IN_S.
 	fz = [22.0, -22.0]
+	_ticks(4)
+	var rising: float = _mark()
 	_ticks(int(RenderLook.PAIR_MARK_IN_S / DT) + 4)
 	var back: float = _mark()
+	# Nearer the camera, the stroke is wider.
+	fz = [140.0, 100.0]
+	_ticks(int((RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y + RenderLook.PAIR_MARK_LEVEL_S.x) / DT) + 6)
+	var w_front: float = (tm.get_shader_parameter("pair_mark_w") as Vector2).x
+	fz = [22.0, -22.0]
+	_ticks(int((RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y + RenderLook.PAIR_MARK_LEVEL_S.x) / DT) + 6)
+	_expect(rising > 0.0 and rising < steady and is_equal_approx(back, steady) and w_front > w_near + 0.1 and w_near > 1.5 and w_front < 3.5, "it comes up over %.1f s (%.2f after four ticks, then %.2f); its half width is %.2f pixels for a pair near the plane and %.2f for one at the near kerb" % [RenderLook.PAIR_MARK_IN_S, rising, back, w_near, w_front])
+	# Beside the lane cues it is quieter.
+	fz = [48.0, -48.0]
+	_ticks(int((RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y) / DT) + 8)
+	var beside: float = _mark()
+	fz = [22.0, -22.0]
+	_ticks(int((RenderLook.LANE_CUE_OUT_S + RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y + RenderLook.PAIR_MARK_LEVEL_S.x) / DT) + 8)
+	_expect(is_equal_approx(beside, RenderLook.PAIR_MARK_CUES) and is_equal_approx(_mark(), steady), "with the lane cues' stripes up as well it is at %.2f, and back at %.2f when they are gone" % [beside, _mark()])
+	# Under reduced flashing: steady, and not faded.
+	main.ui_hud.set_option("reduce_flashing", true)
+	_ticks(3)
+	var calm: float = _mark()
+	lift = [0.0, RenderLook.PAIR_MARK_H + 80.0]
+	_ticks(2)
+	var calm_off: float = _mark()
+	lift = [0.0, 0.0]
+	_ticks(2)
+	var calm_on: float = _mark()
+	main.ui_hud.set_option("reduce_flashing", false)
+	_ticks(int(RenderLook.PAIR_MARK_LEVEL_S.y / DT) + 6)
+	_expect(is_equal_approx(calm, RenderLook.PAIR_MARK_CALM) and calm_off == 0.0 and is_equal_approx(calm_on, RenderLook.PAIR_MARK_CALM) and is_equal_approx(_mark(), steady), "under reduced flashing it is steady at %.2f with no fade (off at once: %.2f, on at once: %.2f), and quiet again without it (%.2f)" % [calm, calm_off, calm_on, _mark()])
 	lift = [0.0, RenderLook.PAIR_MARK_H + 80.0]
 	_ticks(int(RenderLook.PAIR_MARK_OUT_S / DT) + 4)
 	var air: float = _mark()
 	lift = [0.0, 0.0]
 	fx = [tower.x - 60.0, tower.x + RenderLook.PAIR_MARK_SEP + 40.0]
 	_ticks(int(RenderLook.PAIR_MARK_OUT_S / DT) + 4)
-	_expect(is_equal_approx(back, RenderLook.PAIR_MARK_ALPHA) and air == 0.0 and _mark() == 0.0, "it comes back when they are angled again (%.2f), and goes with one of them in the air (%.2f) or the two apart (%.2f)" % [back, air, _mark()])
+	_expect(air == 0.0 and _mark() == 0.0, "it goes with one of them in the air (%.2f) or the two apart (%.2f)" % [air, _mark()])
+	# Over a roof: the shadow is on the roof.
+	var low_b = null
+	for b in S.buildings:
+		if int(b.row) == 1 and int(b.landmark) == 0 and b.d > 200.0 and b.w > 200.0 and (low_b == null or b.h < low_b.h):
+			low_b = b
+	if low_b != null:
+		var roof: float = WorldStructures.baseY(S, low_b) + WorldStructures.curH(low_b)
+		fx = [low_b.x - 40.0, low_b.x + 40.0]
+		fz = [low_b.z, low_b.z]
+		lift = [roof - WorldTerrain.groundY(S, low_b.x) + 60.0, roof - WorldTerrain.groundY(S, low_b.x) + 60.0]
+		_ticks(6)
+		var sh: MeshInstance3D = P.shadows[0]
+		var st: Dictionary = WorldStructures.standingAt(S, S.fighters[0].x, S.fighters[0].y, S.fighters[0].z, 0.3 * FighterView.HEIGHT)
+		_expect(str(st.get("kind", "")) == "roof" and absf(sh.position.y - (float(st["y"]) + RenderLook.SHADOW_LIFT)) < 0.01 and sh.position.y > planet_ground(S, P, 0) + 50.0, "over a roof (a %s %.0f units tall) his shadow lies on the roof, %.0f above the ground under the building" % [str(low_b.shape), low_b.h, sh.position.y - planet_ground(S, P, 0)])
+		lift = [0.0, 0.0]
+	else:
+		_expect(false, "this world has a building to stand on")
 	# The lane cues.
 	fx = [tower.x - 200.0, tower.x + 200.0]
 	fz = [0.0, -(RenderLook.LANE_CUE_DZ + 60.0)]

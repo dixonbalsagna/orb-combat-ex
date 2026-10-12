@@ -116,9 +116,7 @@ void fragment() {
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));   // the lane cue lies on the surface
 	c = mix(c, cue.rgb, cue.a);
 	a = max(a, cue.a);
-	vec4 pm = pair_mark_at(v_px, fwidth(v_px.y));   // ... and so does the pair's mark
-	c = mix(c, pm.rgb, pm.a);
-	a = max(a, pm.a);
+	c = pair_mark_on(c, v_px, fwidth(v_px.y));   // ... and so does the pair's mark
 	float fog = ground_fog(elevation(v_view), -v_wz, fog_near, fog_far);
 	ALBEDO = mix(c, sky_color(elevation(v_view)), fog);
 	ALPHA = mix(a, 1.0, fog);

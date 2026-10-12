@@ -18,6 +18,7 @@ var _after_skip: Dictionary = {}        # the after-images past a fighter's five
 
 var _buf := PackedFloat32Array()
 var count: int = 0
+var widen: float = 0.0                  # with depth on (the pane sets it): how much wider half the view is for each unit a particle lies behind the particles' plane (CameraRig.half_width's slope), so one made in a far street is culled at that street's edge of the view, not the plane's
 var deep: bool = false                  # a match with depth on (the pane sets it): particles are drawn at the depth they were made at. With depth off they stay on the plane, as ever (a brunt launch's events carry a depth too)
 
 
@@ -104,7 +105,8 @@ func _fill(list: Array, n: int, cam_x: float, z: float, lim: float, views: Array
 		if n >= CAP:
 			break
 		var vx: float = SimWrap.sdx(cam_x, p.x)
-		if absf(vx) > lim:
+		var pz: float = zz + (p.z if deep else 0.0)   # the depth it was made at (SimFxView.Part.z; 0 on the fighter plane)
+		if absf(vx) > lim + widen * (zz - pz):
 			continue
 		var k: float = 1.0 - p.age / p.life
 		var c: Color = RenderLook.col(p.col)
@@ -115,7 +117,6 @@ func _fill(list: Array, n: int, cam_x: float, z: float, lim: float, views: Array
 		var cy: float = p.y
 		var inner: float = 0.0
 		var flat: bool = false
-		var pz: float = zz + (p.z if deep else 0.0)   # the depth it was made at (SimFxView.Part.z; 0 on the fighter plane)
 		var cz: float = 0.0
 		var cw: float = 0.0
 		match p.type:

@@ -336,10 +336,12 @@ func _on_flashes_due(events: Array) -> void:
 
 
 ## How many of a head flash's pulses the shared flash register grants (FlashView.pulses_fn): each swell is a flash.
-func _flash_pulses(wanted: int, col: Color) -> int:
+## slot: whose head it is, for the depth it is drawn at (-1: on the plane).
+func _flash_pulses(wanted: int, col: Color, slot: int = -1) -> int:
 	var n: int = 0
+	var z: float = host.S.fighters[slot].z if slot >= 0 and slot < host.S.fighters.size() else 0.0
 	for k in range(wanted):
-		if host.ask_flash("head_flash", col, host.flash_px(PI * RenderLook.FLASH_HEAD_R * RenderLook.FLASH_HEAD_R), RenderLook.FLASH_STEP.head_flash):
+		if host.ask_flash("head_flash", col, host.flash_px(PI * RenderLook.FLASH_HEAD_R * RenderLook.FLASH_HEAD_R, z), RenderLook.FLASH_STEP.head_flash):
 			n += 1
 	return n
 
@@ -357,7 +359,7 @@ func _setup_flash(v: FighterView, i: int) -> void:
 	fl.info_fn = ui_hud.info_flashes
 	fl.up_fn = ui_hud.set_flash_up
 	fl.started_fn = _flash_started
-	fl.pulses_fn = _flash_pulses
+	fl.pulses_fn = _flash_pulses.bind(i)
 
 
 func _flash_started(actor: int, id: String) -> void:
@@ -398,7 +400,7 @@ func _cue_events(events: Array) -> void:
 			for i in range(mini(2, fighter_views.size())):
 				if who < 0 or i == who:
 					var fr: float = RenderLook.FLASH_CUE_R * RenderLook.FLASH_GLOW_R
-					flare_ok[i] = host.ask_flash("cue_flare", fighter_views[i]._aura_col, host.flash_px(PI * fr * fr), minf(1.0, float(pose.flare)) * float(RenderLook.FLASH_STEP.cue_flare))
+					flare_ok[i] = host.ask_flash("cue_flare", fighter_views[i]._aura_col, host.flash_px(PI * fr * fr, host.S.fighters[i].z), minf(1.0, float(pose.flare)) * float(RenderLook.FLASH_STEP.cue_flare))
 		for pw in all_panes():
 			var views: Array = pw.fighter_views
 			for i in range(views.size()):
@@ -414,7 +416,7 @@ func _guard_events(events: Array) -> void:
 		if e.type == "parry":
 			var who: int = int(e.actor)
 			# The arc's flash asks the register once, for every pane; refused, its lines flash and its fill does not.
-			var full: bool = who >= 0 and who < fighter_views.size() and host.ask_flash("guard_flash", fighter_views[who]._aura_col, host.flash_px(RenderLook.GUARD_SIZE.x * RenderLook.GUARD_SIZE.y * RenderLook.FLASH_GUARD_FILL), RenderLook.FLASH_STEP.guard_flash)
+			var full: bool = who >= 0 and who < fighter_views.size() and host.ask_flash("guard_flash", fighter_views[who]._aura_col, host.flash_px(RenderLook.GUARD_SIZE.x * RenderLook.GUARD_SIZE.y * RenderLook.FLASH_GUARD_FILL, host.S.fighters[who].z if who < host.S.fighters.size() else 0.0), RenderLook.FLASH_STEP.guard_flash)
 			for pw in all_panes():
 				if who >= 0 and who < pw.fighter_views.size():
 					pw.fighter_views[who].guard_flash(host.S.T, full)
@@ -512,19 +514,24 @@ func render_view(a: float) -> void:
 			split_rig.pitch_deg = cam_pitch
 		split_frame = split_rig.frame(a)
 		var zmax: float = 0.0
+		var zfocus: float = 0.0   # the closer pane's focus depth, for the flash register's sizes
 		# Camera's frame may carry the pitch and each pane's cut-away request; until it does, the debug pitch, and in a
 		# split each pane opens the buildings in front of its own fighter only.
 		var fp = split_frame.get("pitch")
 		var pitch: float = float(fp) if fp != null else cam_pitch
 		var cw = split_frame.get("cutaway")
+		var fzs = split_frame.get("focus_z")   # Camera's dolly: each pane's focus depth, once the frame carries it
 		var two: bool = panes.size() > 1 and split_frame.shows(0) and split_frame.shows(1)
 		for i in range(panes.size()):
 			if i == 0 or split_frame.shows(i):
 				var j: Vector2 = compositor.pane_jitter(i) if compositor.has_method("pane_jitter") else (host.jitter if i == 0 else Vector2.ZERO)
 				panes[i].occlusion = occlusion
 				panes[i].cutaway = cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {})
+				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
 				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch)
-				zmax = maxf(zmax, float(split_frame.cam_z[i]))
+				if float(split_frame.cam_z[i]) > zmax:
+					zmax = float(split_frame.cam_z[i])
+					zfocus = panes[i].focus_z
 		if inset != null and compositor.has_method("inset_view"):
 			var iv: Dictionary = compositor.inset_view(a)
 			if not iv.is_empty():
@@ -532,12 +539,13 @@ func render_view(a: float) -> void:
 				inset.cutaway = iv.get("cutaway", {})
 				inset.render(host, a, float(iv["cam_x"]), Vector3(0.0, float(iv["cam_y"]), float(iv["cam_z"])), iv.get("jitter", Vector2.ZERO), float(iv.get("pitch", pitch)))
 		compositor.present(split_frame)
-		_flash_scale(zmax)
+		_flash_scale(zmax, zfocus)
 	else:
 		split_frame = null
 		var vh: float = maxf(get_viewport().get_visible_rect().size.y, 1.0)
 		pane.occlusion = occlusion
 		pane.cutaway = {}
+		pane.focus_z = 0.0
 		pane.render(host, a, host.camera_x(a), host.camera(a), PaneShake.capped(host.jitter, vh, _shake()), cam_pitch)
 		_flash_scale(host.camera(a).z)
 	view_cam_x = pane.view_cam_x
@@ -773,8 +781,19 @@ static func insets_rect(safe: Rect2, win: Rect2, vp_w: float) -> Vector4:
 ## The camera's scale for the flash register's weights (VfxHub.px_per_unit): pixels per world unit on the fighters'
 ## plane as they would be at 1024 by 768, which is 768 over the visible world height there. zoom is a pane's own
 ## pixels per world unit; in a split it is the closer pane's, where a flash covers the most.
-func _flash_scale(zoom: float) -> void:
-	host.vfx.px_per_unit = 768.0 * zoom / maxf(get_viewport().get_visible_rect().size.y, 1.0)
+## In a match with depth on it also gives the camera's distance to the plane that scale is for (VfxHub.cam_dist), so
+## a flash off the plane is weighed by the pixels it covers there, and VFX's clear query (PaneWorld.clear_query: what
+## the patch and the opened floors leave to be seen of what a building throws). With depth off both stay unset: a
+## brunt launch's events carry a depth too, and their weights and their glass are as they always were.
+## focus: the depth of the focus plane that scale is for (Camera's dolly; 0: the fighter plane).
+func _flash_scale(zoom: float, focus: float = 0.0) -> void:
+	host.flash_focus_z = focus
+	var vh: float = maxf(get_viewport().get_visible_rect().size.y, 1.0)
+	host.vfx.px_per_unit = 768.0 * zoom / vh
+	var deep: bool = host.S.depthOn
+	host.vfx.cam_dist = CameraRig.distance_for(maxf(zoom, 1.0e-6), vh) if deep else 0.0
+	if host.vfx.clear_query.is_valid() != deep:
+		host.vfx.clear_query = (func(p: Vector3) -> float: return PaneWorld.clear_query(p)) if deep else Callable()
 
 
 ## The share of a HUD flash the shared flash register allows (UiHud.flash_fn): all of it or none. UI draws the split

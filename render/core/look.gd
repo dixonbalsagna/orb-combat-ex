@@ -74,6 +74,7 @@ const PATCH_LOOK_MAX: float = 900.0      # ... at most this far ahead of a fight
 const PATCH_EDGE := Vector2(0.55, 0.5)   # its edge: solid inside this share of its radius, thinning out over the next
 const PATCH_AREA_TICK: float = 16000.0
 const PATCH_HOLD_S: float = 0.75         # Camera's hold (docs/camera/city-in-depth.md A4)
+const PATCH_RESEAT: float = 4.0          # the whole patch as last drawn more than this many half-widths of the view to one side of the camera, with a fighter in view: it is put on the fighters at once, as on a first frame (the pair was moved under a camera already there: a seek, a tool's pose). That far off, none of it is on the screen at any depth, so nothing seen is taken away; an end coming home across the screen still walks
 const PATCH_R_MAX: float = 0.42          # its radius is never more than this share of the pane's height
 const PATCH_BIG := Vector2(40.0, 70.0)
 const PATCH_UNDER := Vector2(0.1, 0.35)
@@ -109,21 +110,40 @@ const LANE_CUE_DZ: float = 40.0          # the fighters count as at different de
 const LANE_CUE_VZ: float = 60.0          # ... and a depth as changing past this many units a second
 const LANE_CUE_IN_S: float = 0.15        # it comes up over this long,
 const LANE_CUE_OUT_S: float = 0.6        # ... and goes over this long
-## The pair's mark (ground.gdshaderinc pair_mark_at; Game Design's docs/design/depth.md section 7): in a match with
-## depth on, a stroke on the ground from under one fighter to under the other while they brawl, so the line they stand
-## on reads on any screen. The ground is seen at a low angle (a 20 degree line is a 3 degree slope on screen), so the
-## stroke also tapers: it is broader under the fighter nearer the camera, by how far the line is turned. It is a pale
-## core in a dark rim, so it shows on a pale sidewalk and on a dark road alike.
-const PAIR_MARK_PX: float = 2.4          # the stroke's half width in pixels at its middle,
+## The pair's mark (ground.gdshaderinc pair_mark_on; Game Design's docs/design/depth.md section 7; its look is VFX's,
+## docs/vfx/depth.md section 6): in a match with depth on, a stroke on the ground from under one fighter to under the
+## other while they brawl, so the line they stand on reads on any screen. The ground is seen at a low angle (a 20
+## degree line is a 3 degree slope on screen), so the stroke is a wedge in width and in value: broader and brighter
+## under the fighter nearer the camera. It is drawn against its own ground: a core a little lighter than the ground
+## under it (a little darker on pale ground) in a rim a little darker, never more than a tenth of relative luminance
+## from that ground, so no pan moves a bright line across the screen. No hue, and nothing moves along it.
+const PAIR_MARK_W := Vector2(2.34, 3.08) # the stroke's width in pixels at its middle: the first, plus the second times the nearer fighter's size against his size on the plane (4 px at 54%, 6 at 119%),
 const PAIR_MARK_TAPER: float = 0.6       # ... broader by this share at the nearer end and thinner at the farther, at 30 degrees
-const PAIR_MARK_COL: String = "#10141c"  # ... its rim: the shadows' dark,
-const PAIR_MARK_CORE: String = "#e6ebf2" # ... its core: a neutral pale, no fighter's hue,
-const PAIR_MARK_ALPHA: float = 0.6       # ... and its strength at full
+const PAIR_MARK_CORE: float = 0.09       # the core against its ground at the nearer end, in relative luminance,
+const PAIR_MARK_GRAD: float = 0.07       # ... less this much at the farther end (the wedge in value),
+const PAIR_MARK_RIM: float = 0.05        # ... the rim's darkening,
+const PAIR_MARK_PALE: float = 0.55       # ... and ground lighter than this takes a darker core
+const PAIR_MARK_STEADY: float = 0.45     # its strength while the line is steady,
+const PAIR_MARK_TURN_DEG: float = 5.0    # ... full for PAIR_MARK_LOUD_S once the line has turned this much,
+const PAIR_MARK_LOUD_S: float = 0.6
+const PAIR_MARK_CUES: float = 0.3        # ... this while the lane cues' stripes are up as well (one mark, never three),
+const PAIR_MARK_CALM: float = 0.6        # ... and steady at this, with no fade, under reduced motion or reduced flashing
+const PAIR_MARK_LEVEL_S := Vector2(0.2, 0.5)   # its strength steps up over the first and down over the second
 const PAIR_MARK_SEP: float = 300.0       # the two are a pair when this near along the street (4 fighter heights),
 const PAIR_MARK_DZ: float = 6.0          # ... at depths this far apart or more,
 const PAIR_MARK_H: float = 150.0         # ... and neither higher above his ground than this (2 fighter heights)
-const PAIR_MARK_IN_S: float = 0.2        # it comes up over this long,
-const PAIR_MARK_OUT_S: float = 0.5       # ... and goes over this long
+const PAIR_MARK_IN_S: float = 0.5        # it comes up over this long,
+const PAIR_MARK_OUT_S: float = 0.5       # ... goes over this long,
+const PAIR_MARK_HOLD_S: float = 1.0      # ... and once asked for stays this long, so a drift across PAIR_MARK_DZ and back does not blink it
+## Camera's near-clip rule (docs/camera/city-in-depth.md section 1), in a match with depth on: a building of the
+## patch's kind whose face is nearer the lens than NEAR_CLIP.x is not drawn, and one nearer than NEAR_CLIP.y stands as
+## its stub, whatever the action's size: so near, it is in the lens, not something to open. A building that opens
+## floors is not touched by it (it opens).
+const NEAR_CLIP := Vector2(300.0, 600.0)
+const NEAR_SINK: float = 30.0            # a building not drawn is sunk this far under its footing
+## VFX's clear query (docs/vfx/depth.md section 4): what the patch and the opened floors leave to be seen of a thing a
+## building threw. Only a point nearer the camera than the fight there by more than CLEAR_GAP is ever hidden.
+const CLEAR_GAP: float = 30.0
 ## Open floors (Orb, 2026-10-12: "'open floors' sounds like it would look the most natural, get that implemented";
 ## docs/rendering/open-floors.md). In a match with depth on, a tall building standing between a pane's camera and the
 ## action loses the floors the action is seen through, across its whole width: the street shows under it, and the tower

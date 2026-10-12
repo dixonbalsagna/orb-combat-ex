@@ -61,6 +61,10 @@ var _stub_live: Dictionary = {}      # the buildings whose stub is not 0, or is 
 var _stub_t: float = -1.0
 var _stub_hold: Dictionary = {}      # a building lowered by the foreground patch -> the tick time before which it does not stand again
 var _sink_last: float = -1.0e9       # the tick time a building last sank under the patch (none stands again within the hold of it)
+var _crowd_near: bool = false        # the crowd shader has the near-clip rule on (a match with depth on)
+var _bld_soft: bool = false          # the rows' material has the patch's soft edge (a match with depth on)
+var _focus_z: float = 0.0            # this pane's focus depth as last sent to the building shader
+var _gone: Dictionary = {}           # a building Camera's near-clip rule takes out of the picture -> how far gone it is, 0 (its stub) to 1 (under its footing)
 var _open: Dictionary = {}           # this pane's open floors: building -> [low, high (world y as drawn), the low and the high wanted, the tick times each was last asked for, pixels a unit of its height, its footing]
 var _open_t: float = -1.0
 var _open_kind := PackedByteArray()  # per building: 1 if it opens floors in this match (opens)
@@ -151,6 +155,7 @@ func build(S: SimState) -> void:
 	_stub.resize(S.buildings.size())
 	_stub.fill(0.0)
 	_stub_live.clear()
+	_gone.clear()
 	_stub_t = -1.0
 	_stub_tex = _stub_texture(_bld_mat, _n_inst)
 	_stub_tex0 = _stub_texture(_front_mat, _n_inst0)
@@ -249,6 +254,15 @@ func _startle(S: SimState) -> void:
 
 
 ## Crowd legibility for this frame: boost scales each figure about its feet; outline is the shell width in units.
+## Camera's near-clip rule for the crowd (RenderLook.NEAR_CLIP): on in a match with depth on, when the camera may stand
+## in a street. Sent only when it changes.
+func set_crowd_near(on: bool) -> void:
+	if on == _crowd_near or _crowd_mat == null:
+		return
+	_crowd_near = on
+	_crowd_mat.set_shader_parameter("crowd_near", RenderLook.NEAR_CLIP if on else Vector2.ZERO)
+
+
 func set_crowd_view(boost: float, outline: float) -> void:
 	_crowd_mat.set_shader_parameter("boost", boost)
 	_crowd_mat.set_shader_parameter("outline", outline)
@@ -657,8 +671,7 @@ func _set_lanes(S: SimState) -> void:
 		_terrain_mat.set_shader_parameter(k[0], RenderLook.col(k[1]))
 	for m in [_terrain_mat, _water_mat]:
 		m.set_shader_parameter("lane_cue_w", RenderLook.LANE_CUE_W)
-		m.set_shader_parameter("pair_mark_w", Vector2(RenderLook.PAIR_MARK_PX, RenderLook.PAIR_MARK_TAPER))
-		m.set_shader_parameter("pair_mark_core", RenderLook.col(RenderLook.PAIR_MARK_CORE))
+		m.set_shader_parameter("pair_mark_v", Vector4(RenderLook.PAIR_MARK_CORE, RenderLook.PAIR_MARK_GRAD, RenderLook.PAIR_MARK_RIM, RenderLook.PAIR_MARK_PALE))
 
 
 ## Per frame, per pane: the lane cues on the ground and the water (ground.gdshaderinc). cues: per fighter [his world
@@ -684,16 +697,30 @@ func set_lane_cues(cues: Array) -> void:
 
 
 ## Per frame, per pane: the pair's mark on the ground and the water (ground.gdshaderinc). ends: one fighter's world x
-## and depth, then the other's; strength 0: none. Nothing is set while there is none and there was none.
-func set_pair_mark(ends: Vector4, strength: float) -> void:
+## and depth, then the other's; strength 0 to 1 (0: none); half_px: its half width in pixels at its middle. Nothing is
+## set while there is none and there was none.
+func set_pair_mark(ends: Vector4, strength: float, half_px: float = 2.5) -> void:
 	if strength <= 0.0 and not _pair_on:
 		return
 	_pair_on = strength > 0.0
-	var c: Color = RenderLook.col(RenderLook.PAIR_MARK_COL)
-	c.a = maxf(strength, 0.0)
 	for m in [_terrain_mat, _water_mat]:
 		m.set_shader_parameter("pair_mark", ends)
-		m.set_shader_parameter("pair_mark_col", c)
+		m.set_shader_parameter("pair_mark_k", maxf(strength, 0.0))
+		m.set_shader_parameter("pair_mark_w", Vector2(half_px, RenderLook.PAIR_MARK_TAPER))
+
+
+## This pane's opened floors as faces, for VFX's clear query: each [the building's x from the camera, its width, its
+## front face's depth, the opening's low and high world y].
+func open_faces(S: SimState, cam_x: float) -> Array:
+	var out: Array = []
+	for bi in _open:
+		var o: Array = _open[bi]
+		if float(o[1]) - float(o[0]) < 0.05:
+			continue
+		var b = S.buildings[bi]
+		var zd: Vector2 = _depth(b)
+		out.append([SimWrap.sdx(cam_x, b.x), b.w, zd.x + zd.y * 0.5, float(o[0]), float(o[1])])
+	return out
 
 
 ## The camera's world position this frame, for the foreground rule in the ground and water shaders.
@@ -705,6 +732,16 @@ func set_calm(on: bool) -> void:
 	_terrain_mat.set_shader_parameter("heat_gain", RenderLook.HEAT_CALM if on else 1.0)
 	_terrain_mat.set_shader_parameter("char_gain", RenderLook.CHAR_CALM if on else 1.0)
 	_terrain_mat.set_shader_parameter("calm_ease", 1.0 if on else 0.0)   # a new crater's colours spread in (RenderLook.CRATER_CALM_S)
+
+
+## The depth of this pane's focus plane (Camera's dolly; 0: the fighter plane): the rows' haze is measured from it.
+## Sent only when it changes, so nothing is set while it stays 0.
+func set_focus(z: float) -> void:
+	if z == _focus_z or _bld_mat == null:
+		return
+	_focus_z = z
+	for m in [_bld_mat, _front_mat]:
+		m.set_shader_parameter("haze_focus", z)
 
 
 func set_camera(p: Vector3) -> void:
@@ -937,7 +974,9 @@ static func tick_time(S: SimState) -> float:
 ## soft: the buildings the foreground row's patch lowers and how far (0 to 1; PaneWorld._row0_patch). They sink over
 ## PATCH_SINK_S and stand again over PATCH_RISE_S, and none stands again until PATCH_HOLD_S after the last of them
 ## sank (Camera's rule: a sink and a stand within a second are a flash).
-func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}) -> void:
+## gone: the buildings too near the lens to draw at all (Camera's near-clip rule; they are in `soft` at 1 as well):
+## each sinks on from its stub to under its footing, at the same pace.
+func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}, gone: Dictionary = {}) -> void:
 	var now: float = tick_time(S)
 	var snap: bool = _stub_t < 0.0
 	var dt: float = clampf(now - _stub_t, 0.0, 0.1) if not snap else 1.0e3
@@ -947,6 +986,8 @@ func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}) -> void:
 	for bi in soft:
 		if float(soft[bi]) > 0.0:
 			_stub_live[bi] = true
+	for bi in gone:
+		_stub_live[bi] = true
 	if _stub_live.is_empty():
 		return
 	var done: Array = []
@@ -973,6 +1014,14 @@ func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}) -> void:
 		elif _top[bi] > -INF:
 			var top: float = _top[bi]
 			var low: float = minf(top, top - WorldStructures.curH(S.buildings[bi]) + RenderLook.STUB_H)
+			if gone.has(bi) or _gone.has(bi):
+				# Past its stub: on down, under its footing (and back up when it is no longer too near).
+				var g: float = move_toward(float(_gone.get(bi, 0.0)), 1.0 if gone.has(bi) and v >= 1.0 else 0.0, (dt if not snap else 1.0e3) / RenderLook.PATCH_SINK_S)
+				if g > 0.0:
+					_gone[bi] = g
+					low = lerpf(low, top - WorldStructures.curH(S.buildings[bi]) - RenderLook.NEAR_SINK, g * g * (3.0 - 2.0 * g))
+				else:
+					_gone.erase(bi)
 			y = lerpf(top, low, v * v * (3.0 - 2.0 * v))
 		var row0: bool = _row0[bi] >= 0
 		var st: Array = _stub_tex0 if row0 else _stub_tex
@@ -1140,7 +1189,11 @@ func snap_open() -> void:
 ## both), the radius and the view distance to cut up to at that end].
 ## front: the foreground row's own hole, its patch (one entry of the same shape, or empty: row 0 then takes the
 ## fighters' holes like the rows behind).
-func set_holes(holes: Array, front: Array = []) -> void:
+## deep (a match with depth on): the holes of the rows behind are the patch too, and take its soft edge.
+func set_holes(holes: Array, front: Array = [], deep: bool = false) -> void:
+	if deep != _bld_soft:
+		_bld_soft = deep
+		_bld_mat.set_shader_parameter("hole_edge", RenderLook.PATCH_EDGE if deep else Vector2(0.8, 0.25))
 	var sets: Array = [_hole_set(holes), _hole_set([front] if not front.is_empty() else holes)]
 	var any: bool = bool(sets[0][3]) or bool(sets[1][3])
 	if not any and not _holes_on:

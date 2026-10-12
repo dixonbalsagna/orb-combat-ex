@@ -189,25 +189,32 @@ func ask_flash(source: String, col: Color = Color.WHITE, area_px: float = -1.0, 
 	return vfx.flashes.ask(source, col, S.tick, area_px, step)
 
 
-## An area in world units on the fighters' plane as pixels at 1024 by 768, at the camera's scale the register was
-## last given (VfxHub.px_per_unit, which main sets every frame).
-func flash_px(area_units: float) -> float:
-	return area_units * vfx.flashes.ppu * vfx.flashes.ppu
+var flash_focus_z: float = 0.0   # the depth of the focus plane the register's scale is for (Camera's dolly; main sets it; 0: the fighter plane)
+
+
+## An area in world units as pixels at 1024 by 768, at the camera's scale the register was last given
+## (VfxHub.px_per_unit and cam_dist, which main sets every frame). z: the depth it is drawn at (its fighter's); off the
+## fighters' plane it covers more or fewer pixels (VfxFlashRegistry.ppu_at). The plane's scale with depth off.
+func flash_px(area_units: float, z: float = 0.0) -> float:
+	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
+	return area_units * ppu * ppu
 
 
 ## What a beam of length len and width w (world units; the sim's b.w) covers in one of the standard's windows: its body
 ## layer's width, along as much of its length as a window holds.
-func beam_px(len: float, w: float) -> float:
-	var ppu: float = vfx.flashes.ppu
+## z: the depth it is drawn at (the plane's scale with depth off).
+func beam_px(len: float, w: float, z: float = 0.0) -> float:
+	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
 	return minf(len * ppu, RenderLook.FLASH_WINDOW_DIAG) * w * float(BeamView.LAYERS[1][0]) * ppu
 
 
 ## A clash's flare and its two beams, each reaching half way between the fighters.
 func clash_px(c) -> float:
-	var ppu: float = vfx.flashes.ppu
+	var z: float = 0.5 * (c.A.z + c.D.z)   # between the two fighters, in depth as along the street
+	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
 	var half: float = 0.5 * absf(SimWrap.sdx(c.A.x, c.D.x))
 	var r: float = (RenderLook.FLASH_CLASH_R + 20.0 / maxf(ppu, 0.01)) * RenderLook.FLASH_GLOW_R
-	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0) + beam_px(half, 26.0 + c.D.tier * 8.0)
+	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0, z) + beam_px(half, 26.0 + c.D.tier * 8.0, z)
 
 
 ## Whether a beam's bright form (its white core, at full strength) was granted. One the host has not seen in a tick
@@ -222,7 +229,7 @@ func _ask_beams() -> void:
 	var live: Dictionary = {}
 	for b in S.beams:
 		var id: int = b.get_instance_id()
-		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w), RenderLook.FLASH_STEP.beam))
+		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w, b.oz + 0.5 * b.zs * b.len), RenderLook.FLASH_STEP.beam))
 	_beam_ok = live
 	var on: bool = S.game.clash != null
 	if on and not _clash_on:
@@ -247,7 +254,7 @@ func _ask_hits() -> void:
 				all += g.size()
 			if _hit_grants[i].size() >= RenderLook.HIT_TINT_BODY or all >= RenderLook.HIT_TINT_ALL:
 				continue
-			if ask_flash("body_hit", Color.WHITE, flash_px(RenderLook.FLASH_BODY_AREA * FighterView.HEIGHT * FighterView.HEIGHT), RenderLook.FLASH_STEP.body_hit):
+			if ask_flash("body_hit", Color.WHITE, flash_px(RenderLook.FLASH_BODY_AREA * FighterView.HEIGHT * FighterView.HEIGHT, S.fighters[i].z), RenderLook.FLASH_STEP.body_hit):
 				hit_flash_T[i] = ht
 				_hit_grants[i].append(ticks)
 

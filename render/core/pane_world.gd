@@ -34,6 +34,7 @@ var occlusion: int = OCCL_HOLE     # main sets it (a debug toggle)
 ## request (false: no cut-away, for a shot that wants the wall whole), radius_px (the hole's radius; 0 or absent:
 ## RenderLook's rule), only (a fighter slot: only his; absent or -1: both fighters').
 var cutaway: Dictionary = {}
+var focus_z: float = 0.0            # the depth of this pane's focus plane this frame (Camera's dolly: SplitFrame.focus_z, which main hands over when the frame carries it). 0: the fighter plane, as ever
 var occluded: Array = []           # per fighter: a building stands between this pane's camera and him (for Camera)
 var _join: float = 0.0             # 0 to 1: the two fighters' holes grown into one
 var _join_t: float = -1.0
@@ -52,8 +53,15 @@ var _cue := PackedFloat32Array()   # per fighter: his lane cue, 0 to 1
 var _cue_z := PackedFloat32Array() # ... his depth at the last tick seen,
 var _cue_want: Array = []          # ... and whether the cue was wanted then
 var _cue_t: float = -1.0
-var _pair: float = 0.0             # the pair's mark, 0 to 1
+var _pair: float = 0.0             # the pair's mark: how far it is up, 0 to 1,
 var _pair_t: float = -1.0
+var _pair_lvl: float = 0.0         # ... its strength (steady, loud after a turn, quieter beside the lane cues),
+var _pair_hold: float = -1.0e9     # ... the tick time it stays up to,
+var _pair_ang: float = 0.0         # ... the line's angle when it last spoke up, in degrees,
+var _pair_loud: float = -1.0e9     # ... and the tick time it is loud until
+var _clear: Dictionary = {}        # this pane's see-through region for VFX's clear query (clear_at): the patch's capsule and the opened floors, on its screen
+static var _drawing: PaneWorld = null   # the pane whose effects are being drawn: VFX's clear query is asked of it
+static var _clear_live: Array = []      # the panes with a see-through region (a query outside a draw asks them all)
 static var clouds_on: bool = true          # the sky's clouds (main's --noclouds)
 static var sky_calm: bool = false          # reduced motion: the clouds stand still and nothing parts (main sets it)
 static var sky_react_on: bool = false      # the clouds part for a fighter at tier 3 or more: off unless asked for (main's --skyreact; QA's GB-002)
@@ -131,7 +139,9 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	var S: SimState = host.S
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	view_cam_x = cam_x
-	cam_rig.frame(cam.y, cam.z, jitter, vp.y, pitch)
+	cam_rig.frame(cam.y, cam.z, jitter, vp.y, pitch, focus_z)
+	planet.set_focus(focus_z)
+	planet.set_crowd_near(S.depthOn)
 	_pan_haze(host, a, cam_x, vp)
 	_sky_drive(host, a, cam_x)
 	planet.set_camera(cam_rig.position)
@@ -158,10 +168,13 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	_lane_cues(host, a)
 	_pair_mark(host, a)
 	_sky_react(host, cam_x)
+	_drawing = self   # VFX's clear query is this pane's while its effects are drawn
 	vfx_layer.update(host, a, cam_x, cam.z, vp.x)
+	_drawing = null
 	beams.update(S, cam_x, cam.z, host)
 	particles.deep = S.depthOn
-	particles.update(host.fxv, host.impact, cam_x, cam.z, cam_rig.half_width(vp.x, RenderLook.Z_PARTICLES), fighter_views)
+	particles.widen = cam_rig.half_width(vp.x) / maxf(cam_rig.dist, 1.0) if S.depthOn else 0.0
+	particles.update(host.fxv, host.impact, cam_x, cam.z, cam_rig.half_width(vp.x, RenderLook.Z_PARTICLES - focus_z), fighter_views)
 
 
 ## The dynamic sky for this pane's camera (render/core/sky_drive.gd; docs/rendering/dynamic-sky.md): the four bands'
@@ -237,6 +250,13 @@ func _occlusion(S: SimState, cam_x: float, vp: Vector2) -> void:
 	var eye: Vector3 = cam_rig.position
 	var on: bool = bool(cutaway.get("request", true))
 	var only: int = int(cutaway.get("only", -1))
+	if bool(cutaway.get("cut", false)):
+		# Camera's cut flag: nothing eases across a cut. The patch, the stubs and the open floors are at their targets
+		# on this frame.
+		planet.snap_stubs()
+		planet.snap_open()
+		_patch_t = -1.0
+		_join_t = -1.0
 	var chest: Array = []
 	var px: Array = []
 	var tall := PackedFloat32Array()
@@ -288,10 +308,20 @@ func _occlusion(S: SimState, cam_x: float, vp: Vector2) -> void:
 	if front.is_empty():
 		patch = {}
 		_patch_t = -1.0
+	var gone: Dictionary = {}
 	if deep:
 		want.clear()
-	planet.set_stubs(S, want, soft)
+		# Camera's near-clip rule (RenderLook.NEAR_CLIP): a building of the patch's kind too near the lens is not
+		# something to open. Nearer than the first distance it is not drawn; nearer than the second it is its stub.
+		for fc in planet.row0_faces(S, cam_x, cam_rig.half_width(vp.x) + 600.0, true):
+			var d_lens: float = eye.z - float(fc[5])
+			if d_lens < RenderLook.NEAR_CLIP.y:
+				soft[int(fc[0])] = 1.0
+				if d_lens < RenderLook.NEAR_CLIP.x:
+					gone[int(fc[0])] = true
+	planet.set_stubs(S, want, soft, gone)
 	_open_floors(S, cam_x, vp, aim)
+	_clear_region(S, cam_x, cand, eye, chest, seen, front)
 	# The holes.
 	var holes: Array = []
 	var inv: Transform3D = cam_rig.transform.affine_inverse()
@@ -329,7 +359,81 @@ func _occlusion(S: SimState, cam_x: float, vp: Vector2) -> void:
 	if deep:
 		var none: Array = [Vector3.ZERO, 0.0, 0.0, Vector3.ZERO, 0.0, 0.0]
 		holes = [front if not front.is_empty() else none, none]
-	planet.set_holes(holes, front)
+	planet.set_holes(holes, front, deep)
+
+
+## This pane's see-through region, for VFX's clear query (docs/vfx/depth.md section 4; clear_at): the patch's capsule on
+## this pane's screen, if a building of the patch's kind stands in front of a fighter (the patch is then a window
+## through it), and the face of every opened floor. None with depth off, or with nothing opened and nothing in front.
+func _clear_region(S: SimState, cam_x: float, cand: Array, eye: Vector3, chest: Array, seen: Array, front: Array) -> void:
+	_clear = {}
+	if not S.depthOn or not patch.has("wa"):
+		_clear_live.erase(self)
+		return
+	var hide: Dictionary = {}
+	for i in range(chest.size()):
+		if seen[i]:
+			planet.occluders(S, cand, eye, cam_x, chest[i], RenderLook.OCCL_MARGIN, -1, hide)
+	var cuts: bool = false
+	for bi in hide:
+		cuts = cuts or not planet.opens_floors(bi)
+	var rects: Array = []
+	for f in planet.open_faces(S, cam_x):
+		var r := Rect2()
+		var n: int = 0
+		for sx in [-0.5, 0.5]:
+			for y in [float(f[3]), float(f[4])]:
+				var w := Vector3(float(f[0]) + sx * float(f[1]), y, float(f[2]))
+				if cam_rig.is_position_behind(w):
+					continue
+				var s: Vector2 = cam_rig.unproject_position(w)
+				r = Rect2(s, Vector2.ZERO) if n == 0 else r.expand(s)
+				n += 1
+		if n == 4:
+			rects.append(r)
+	if not cuts and rects.is_empty():
+		_clear_live.erase(self)
+		return
+	_clear = {"wa": patch["wa"], "wb": patch["wb"], "pa": patch["a"], "pb": patch["b"], "pr": patch["r"], "patch": cuts and not front.is_empty(), "rects": rects}
+	if not _clear_live.has(self):
+		_clear_live.append(self)
+
+
+## What this pane's see-through region leaves to be seen of a thing at world point p that a building threw (glass,
+## cladding, stage dust): 1 all of it, 0 none. A point at the fight's depth or behind it is always 1: the fight's own
+## effects are never hidden. Nearer the camera than the fight, a point over an opened floor's face is 0, and one inside
+## the patch fades out toward its middle as the patch's own edge does.
+func clear_at(p: Vector3) -> float:
+	if _clear.is_empty():
+		return 1.0
+	var v := Vector3(SimWrap.sdx(view_cam_x, p.x), p.y, p.z)
+	var wa: Vector3 = _clear["wa"]
+	var wb: Vector3 = _clear["wb"]
+	var t: float = clampf((v.x - wa.x) / (wb.x - wa.x), 0.0, 1.0) if absf(wb.x - wa.x) > 1.0 else 0.5
+	if v.z <= lerpf(wa.z, wb.z, t) + RenderLook.CLEAR_GAP or cam_rig.is_position_behind(v):
+		return 1.0
+	var s: Vector2 = cam_rig.unproject_position(v)
+	for r in _clear["rects"]:
+		if (r as Rect2).has_point(s):
+			return 0.0
+	if bool(_clear["patch"]):
+		var a: Vector2 = _clear["pa"]
+		var ab: Vector2 = (_clear["pb"] as Vector2) - a
+		var u: float = clampf((s - a).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
+		return smoothstep(RenderLook.PATCH_EDGE.x, RenderLook.PATCH_EDGE.x + RenderLook.PATCH_EDGE.y, (s - a - ab * u).length() / maxf(float(_clear["pr"]), 0.001))
+	return 1.0
+
+
+## VFX's clear query (VfxHub.clear_query; main sets it in a match with depth on): the pane being drawn answers. Asked
+## outside a draw (a thing about to be thrown), the most any pane with a region would show of it; 1 with none.
+static func clear_query(p: Vector3) -> float:
+	if _drawing != null:
+		return _drawing.clear_at(p)
+	var best: float = -1.0
+	for pw in _clear_live:
+		if is_instance_valid(pw):
+			best = maxf(best, (pw as PaneWorld).clear_at(p))
+	return best if best >= 0.0 else 1.0
 
 
 ## Open floors (RenderLook.OPEN_*; Orb, 2026-10-12): with depth on, every tall building (PlanetView.opens) standing
@@ -466,7 +570,8 @@ func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Arr
 	var ext: Vector2 = _patch_ext
 	var dr: float = _patch_r
 	var left: float = -1.0   # what this frame's area budget has left for the open floors (under 0: the patch jumped; all of theirs)
-	if _patch_t < 0.0 or now < _patch_t or now - _patch_t > 0.5:
+	var far: float = RenderLook.PATCH_RESEAT * hw
+	if _patch_t < 0.0 or now < _patch_t or now - _patch_t > 0.5 or minf(da.x, db.x) > far or maxf(da.x, db.x) < -far:
 		da = a
 		db = b2
 		ext = ext_want
@@ -681,8 +786,9 @@ func _lane_cues(host: SimHost, a: float) -> void:
 
 
 ## The pair's mark (RenderLook.PAIR_MARK_*): only in a match with depth on, a stroke on the ground between the two
-## fighters while they are close, near the ground and at different depths. It eases on tick time, like the lane cue.
-## Presentation only: it reads the sim. With depth off it sets nothing.
+## fighters while they are close, near the ground and at different depths. Its look and its timing are VFX's
+## (docs/vfx/depth.md section 6): it fades on tick time, holds once up, is quiet while the line is steady and speaks up
+## when the line turns. Presentation only: it reads the sim. With depth off it sets nothing.
 func _pair_mark(host: SimHost, a: float) -> void:
 	var S: SimState = host.S
 	if not S.depthOn or fighter_views.size() != 2:
@@ -692,8 +798,9 @@ func _pair_mark(host: SimHost, a: float) -> void:
 			planet.set_pair_mark(Vector4.ZERO, 0.0)
 		return
 	var snap: bool = _pair_t < 0.0
-	var dt: float = 0.0 if snap else clampf(PlanetView.tick_time(S) - _pair_t, 0.0, 0.1)
-	_pair_t = PlanetView.tick_time(S)
+	var now: float = PlanetView.tick_time(S)
+	var dt: float = 0.0 if snap else clampf(now - _pair_t, 0.0, 0.1)
+	_pair_t = now
 	var x := PackedFloat64Array()
 	var up := PackedFloat32Array()
 	var shown: bool = true
@@ -705,12 +812,37 @@ func _pair_mark(host: SimHost, a: float) -> void:
 		shown = shown and v.visible
 	var z0: float = (fighter_views[0] as FighterView).depth
 	var z1: float = (fighter_views[1] as FighterView).depth
-	var want: bool = shown and pair_wants(SimWrap.sdx(x[0], x[1]), z1 - z0, up[0], up[1])
-	if snap:
-		_pair = 1.0 if want else 0.0
+	var dx: float = SimWrap.sdx(x[0], x[1])
+	# Up while they are a pair at an angle, and for PAIR_MARK_HOLD_S after the angle goes (a drift across the threshold
+	# and back does not blink it); gone at once in its fade when they part or one leaves the ground.
+	var near_pair: bool = shown and pair_wants(dx, RenderLook.PAIR_MARK_DZ, up[0], up[1])
+	if near_pair and absf(z1 - z0) >= RenderLook.PAIR_MARK_DZ:
+		_pair_hold = now + RenderLook.PAIR_MARK_HOLD_S
+	var show: bool = near_pair and now < _pair_hold
+	# Its strength: quiet while the line is steady, full for a moment when it turns, quieter beside the lane cues;
+	# steady and unfaded in the calm modes.
+	var ang: float = rad_to_deg(atan2((z1 - z0) * signf(dx), absf(dx)))
+	if not show or _pair <= 0.0:
+		_pair_ang = ang
+	elif absf(ang - _pair_ang) >= RenderLook.PAIR_MARK_TURN_DEG:
+		_pair_ang = ang
+		_pair_loud = now + RenderLook.PAIR_MARK_LOUD_S
+	var cues_up: bool = false
+	for w in _cue_want:
+		cues_up = cues_up or bool(w)
+	var lvl: float = RenderLook.PAIR_MARK_CALM if flash_calm else (RenderLook.PAIR_MARK_CUES if cues_up else (1.0 if now < _pair_loud else RenderLook.PAIR_MARK_STEADY))
+	if snap or flash_calm:
+		_pair = 1.0 if show else 0.0
+		_pair_lvl = lvl
 	elif dt > 0.0:
-		_pair = move_toward(_pair, 1.0 if want else 0.0, dt / (RenderLook.PAIR_MARK_IN_S if want else RenderLook.PAIR_MARK_OUT_S))
-	planet.set_pair_mark(Vector4(x[0], z0, x[1], z1), _pair * RenderLook.PAIR_MARK_ALPHA)
+		if _pair <= 0.0:
+			_pair_lvl = lvl   # coming up: at its strength from the start
+		else:
+			_pair_lvl = move_toward(_pair_lvl, lvl, dt / (RenderLook.PAIR_MARK_LEVEL_S.x if lvl > _pair_lvl else RenderLook.PAIR_MARK_LEVEL_S.y))
+		_pair = move_toward(_pair, 1.0 if show else 0.0, dt / (RenderLook.PAIR_MARK_IN_S if show else RenderLook.PAIR_MARK_OUT_S))
+	# Its width by the nearer fighter's size against his size on the plane.
+	var size: float = cam_rig.dist / maxf(cam_rig.dist - (maxf(z0, z1) - focus_z), 0.2 * cam_rig.dist)
+	planet.set_pair_mark(Vector4(x[0], z0, x[1], z1), _pair * _pair_lvl, 0.5 * (RenderLook.PAIR_MARK_W.x + RenderLook.PAIR_MARK_W.y * size))
 
 
 ## Whether two fighters are a pair to mark: dx along the street and dz in depth between them, and each one's height above
@@ -730,6 +862,11 @@ static func _shadow_mesh() -> PlaneMesh:
 func _place_shadow(S: SimState, i: int, wx: float, vx: float, y: float, z: float, shown: bool = true) -> void:
 	var sh: MeshInstance3D = shadows[i]
 	var g: float = maxf(planet.ground.ground_at(S, wx, z), WorldWater.surfaceAt(S, wx))
+	if S.depthOn:
+		# Over a roof his shadow lies on the roof (World's standingAt), not on the ground under the building.
+		var st: Dictionary = WorldStructures.standingAt(S, wx, y, z, 0.3 * FighterView.HEIGHT)
+		if str(st.get("kind", "")) == "roof":
+			g = maxf(g, float(st["y"]))
 	var up: float = clampf((y - g) / RenderLook.SHADOW_FADE_H, 0.0, 1.0)
 	sh.visible = shown and y >= g - 1.0
 	sh.position = Vector3(vx, g + RenderLook.SHADOW_LIFT, z)
@@ -756,7 +893,7 @@ func _view_cues(c: Vector3, vp: Vector2) -> void:
 	var high: float = smoothstep(RenderLook.HIGH_FROM, RenderLook.HIGH_TO, c.y)
 	var d: float = lerpf(RenderLook.CURVE_NEAR, RenderLook.CURVE_WIDE, wide) + RenderLook.CURVE_HIGH * high
 	# Every layer from full depth weight back sags d * vh pixels at its screen edge (bend.gdshaderinc).
-	mats.set_bend(4.0 * d * vp.y * c.z / (vp.x * vp.x), cam_rig.dist)
+	mats.set_bend(4.0 * d * vp.y * c.z / (vp.x * vp.x), cam_rig.dist, focus_z)
 	# The horizon is the far edge of the ground: its elevation from the camera anchors the sky and the fog.
 	var hz: float = (0.0 - cam_rig.position.y) / (cam_rig.position.z + RenderLook.FOG_FAR)
 	for k in [["space", high], ["horizon", hz]]:
