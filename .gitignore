@@ -24,3 +24,6 @@ build/
 audio/music/incoming/*.wav
 audio/music/incoming/*.mp3
 __pycache__/
+
+# Orb's homework folder: review sheets, questionnaires and Orb's answers. Local only (it can hold in-progress character art).
+homework/
