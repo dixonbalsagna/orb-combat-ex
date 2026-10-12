@@ -535,19 +535,33 @@
   ],
   "world": [
     {
+      "id": "w03",
+      "rule": "a landmark has no clock face, no red and white striping, no stripes or beams of light, no antenna mast on a stepped tower, no multicolour night lighting on a tower top, and no pair of thin pale spires on a dark tower that reads as horns",
+      "why": "originality: no real landmark's likeness and none of the earlier look-alike conditions (clock face, red and white striping, stripes or beams of light); the horns reading is a recommendation, not a condition. Kept on its own grounds; not from the withdrawn sensitivity rule"
+    }
+  ],
+  "withdrawn": [
+    {
       "id": "w01",
-      "rule": "no building opens, loses support or shows its lower floors empty while it is damaged or in a break stage, and an open-floor building closes when the fight leaves; the opening reads as architecture (a lobby or arcade), never as damage: no soot, cracks, glass or debris, regular sturdy columns at least a fixed share of the front's width, a deep beam or slab edge visible, a lit interior",
-      "why": "Orb's sensitivity rule (no falling-tower imagery or wording); a tall mass on a few thin posts reads as an unsupported tower"
+      "withdrawn": "2026-10-12",
+      "why": "rested on the withdrawn 'sensitivity' rule (no falling-tower imagery or wording); structural believability of open floors is Orb's design requirement, not a Legal condition"
     },
     {
       "id": "w02",
-      "rule": "no public picture, caption, clip or page text shows or words a tower falling, shedding glass, being brought down, or a building opened beside debris; no public picture shows a casualty count above zero or the civilian toll as a headline",
-      "why": "public copy sensitivities; rating exposure"
+      "withdrawn": "2026-10-12",
+      "why": "rested on the withdrawn rule; destruction may be shown and described in public. The casualty-count point is replaced by the ratings and platform notes (p01, p02)"
+    }
+  ],
+  "public": [
+    {
+      "id": "p01",
+      "rule": "pages hosted on GitHub (the repository and GitHub Pages) follow GitHub's Acceptable Use Policies: no content that gratuitously depicts or glorifies violence, and a page's primary focus is not advertising or promotion; keep the graphic material and the sales copy on the store pages and the video platforms, not on the GitHub-hosted site",
+      "why": "GitHub's rules (read 2026-10-12); independent of the rating"
     },
     {
-      "id": "w03",
-      "rule": "a landmark has no clock face, no red and white striping, no stripes or beams of light, no antenna mast on a stepped tower, no multicolour night lighting on a tower top, and no pair of thin pale spires on a dark tower that reads as horns",
-      "why": "look-alike screen for known landmarks and the bat-ears building"
+      "id": "p02",
+      "rule": "a store listing's content descriptors, age gate and the questionnaire answers match the real build (graphic violence, the Cyborg's consumption, civilian casualties); public trailers and screenshots on each platform use that platform's mature-content marking and age restriction",
+      "why": "ratings and platform rules; the Mature target frees the content, not the labelling"
     }
   ]
 }
