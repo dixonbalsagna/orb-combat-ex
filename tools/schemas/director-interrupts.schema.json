@@ -2437,6 +2437,20 @@
                       "minimum": 0,
                       "description": "How far it knocks, in body heights."
                     },
+                    "enderRun": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "It knocks back only when his run is this or more as it lands."
+                    },
+                    "halfSetup": {
+                      "type": "boolean",
+                      "description": "Whether its knock-back counts as half a set-up."
+                    },
+                    "reelTicks": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "The reel of one thrown cold."
+                    },
                     "shot": {
                       "type": "string",
                       "pattern": "^[a-z][a-z0-9_]*$",

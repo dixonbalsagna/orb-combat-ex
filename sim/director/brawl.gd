@@ -692,9 +692,15 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 			paid = true
 	var lau: bool = st == 2 and not paid and _g(f, LC_UNTIL) > 0 and o.stunTicks > 0 and f.ki >= float(c.launcher.ki)
 	if st > 0 and not paid:
+		# A press he can't pay for throws the strongest blow he can pay for (brawl-second-pass.md section 8): a B becomes
+		# a medium, and with nothing a Y or a B becomes a light. It has no cue of its own: the blow's cue says what he threw.
 		var price: float = float(c.launcher.ki) if lau else float((c.heavy if st == 2 else c.medium).ki)
+		if st == 2 and f.ki < price:
+			st = 1
+			lau = false
+			price = float(c.medium.ki)
 		if f.ki < price:
-			st = 0   # no ki for it: it is a light, as outside a brawl
+			st = 0
 		else:
 			f.ki -= price
 	var weight: int = SimAct.LIGHT if st == 0 else SimAct.HEAVY
@@ -1018,9 +1024,14 @@ static func contact(S: SimState, ex, b) -> void:
 	if far > reach:   # the very edge of a reach (give.edgeBh) doesn't connect
 		_miss(S, ex, f, o, kind, wind, energy)
 		return
+	_stepIn(S, ex, f, o, 1)   # he is placed for the contact, and never further than a closing step
+	if not special and absf(SimWrap.sdx(f.x, o.x)) > float(ct.reach):
+		# Placed, the two still stand beyond the strike's reach: it meets nothing. No damaging strike of a brawl lands
+		# from beyond contact.reach of horizontal distance, whatever its own reach said before the step.
+		_miss(S, ex, f, o, kind, wind, energy, true)
+		return
 	if wind:
 		_wEnd(S, f, kind, 1)
-	_stepIn(S, ex, f, o, 1)   # he is placed for the contact, and never further than a closing step
 	a.o["placed"] = true
 	ex.kind = "heavy" if kind == BIG else ("medium" if kind == MEDIUM else "light")   # the core reads the exchange's kind as the blow's weight
 	ex.sA = 0.0 if quiet(ex) else ex.A.stance   # a zipper has no guard in reach
@@ -1114,10 +1125,12 @@ static func contact(S: SimState, ex, b) -> void:
 		_s(o, HOLD_AT, 0)
 		_drop(S, ex, o)
 		oWinding = false
-	if energy == "blast":
-		# The blast, clean: a knock-back of its own length along the stick's lean, and the brawl ends.
+	if energy == "blast" and _g(f, RUN) >= 2 * int(c.energy.reach.blast.enderRun):
+		# The blast as a string's ender (section 5b, re-ruled in 14): his run is enderRun or more as it lands. A
+		# knock-back of its own length along the stick's lean, half a set-up, and the brawl ends. Thrown cold it is a
+		# medium with its own reel (below): an ender, and not an opener.
 		_s(f, LL_AT, S.tick)
-		_knock(S, ex, f, o, float(c.energy.reach.blast.knockBh), _quarter(f, o))
+		_knock(S, ex, f, o, float(c.energy.reach.blast.knockBh), _quarter(f, o), bool(c.energy.reach.blast.halfSetup))
 		return
 	if bool(a.get("riposte", false)) or bool(a.get("reversal", false)):
 		# A riposte, or a reversal's blow: on the brink it counts as a close does. The brawl goes on.
@@ -1158,7 +1171,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if kind == BIG:
 		_bigLanded(S, ex, f, o, a)
 		return
-	var reel: int = int(c.medium.reelTicks) if kind == MEDIUM else (int(c.burst.reelTicks) if bool(a.get("burst", false)) else (int(c.energy.reach.bolt.reelTicks) if bolt else int(c.flurry.reelTicks)))
+	var reel: int = (int(c.energy.reach.blast.reelTicks) if energy == "blast" else int(c.medium.reelTicks)) if kind == MEDIUM else (int(c.burst.reelTicks) if bool(a.get("burst", false)) else (int(c.energy.reach.bolt.reelTicks) if bolt else int(c.flurry.reelTicks)))
 	if oWinding:
 		_s(o, REEL_AT, maxi(_g(o, REEL_AT), _g(o, CONTACT) + reel))   # a light on a winding medium: its reel waits until his blow has landed
 	else:
@@ -1422,7 +1435,7 @@ static func _giveStep(S: SimState, ex, g) -> void:
 		var ny: float = f.y
 		var d1: float = d0
 		var k: float = 1.0
-		for _i in range(5):
+		for _i in range(8):
 			nx = SimWrap.wrap(f.x + ux * step * k)
 			ny = maxf(WorldTerrain.groundY(S, nx), f.y + uy * step * k)
 			d1 = SimDetMath.hypot(SimWrap.sdx(o.x, nx), ny - o.y)
@@ -1434,9 +1447,12 @@ static func _giveStep(S: SimState, ex, g) -> void:
 				k *= step / ln
 				continue
 			var got: float = d1 - d0
-			if (want > 0.0 and got >= want - 0.02) or (want < 0.0 and got <= want + 0.02) or k >= 2.0:
+			# Backing off, the gap opens by his step and no more: on a rising face the ground lifts him, and he takes a
+			# shorter step along it. Following, the gap closes by the step at least.
+			if (want > 0.0 and absf(got - want) <= 0.02) or (want < 0.0 and got <= want + 0.02) or (k >= 2.0 and absf(got) < absf(want)):
 				break
-			k = minf(2.0, k * 1.5 if got * want <= 0.0 else k * minf(1.5, want / got))
+			k = minf(2.0, k * 1.5 if got * want <= 0.0 else k * clampf(want / got, 0.25, 1.5))
+		var fit: bool = want <= 0.0 or d1 - d0 <= want + 0.5   # false: a ledge lifted him further than any step along it
 		var lim: float = d1
 		if d1 > maxf(far, d0):
 			lim = maxf(far, d0)
@@ -1459,8 +1475,9 @@ static func _giveStep(S: SimState, ex, g) -> void:
 		_own(f, went)
 		if f == g:
 			# What he gave is counted on the gap the winder's blow must reach: a whole step when he backs straight off (and
-			# the leash did not hold him), whatever the ground made of it; any other way, what the gap really changed by.
-			var gave: float = want if (want > 0.0 and lim == d1) else DirBands.dist(f, o) - d0
+			# the leash did not hold him), whatever the ground made of it; any other way, and over a ledge that lifted him
+			# further than his step, what the gap really changed by.
+			var gave: float = want if (want > 0.0 and lim == d1 and fit) else DirBands.dist(f, o) - d0
 			if _g(w, GAPV_ON) == 1:
 				_s(w, GAPV, maxi(0, _g(w, GAPV) + int(round(gave * 16.0))))
 			if gave > 0.01:
@@ -1527,15 +1544,16 @@ static func _reachOf(a, kind: int) -> float:
 
 ## f's blow met nothing (brawl-second-pass.md section 1). A wound blow leaves him open for its recoverWhiff: no blow,
 ## no guard, no giving ground. The cue says why: gave_ground, the rival backed out of its reach against this wind-up;
-## reach, they were apart some other way. n: the ticks he is open.
-static func _miss(S: SimState, ex, f, o, kind: int, wind: bool, energy: String) -> void:
+## reach, they were apart some other way, or (placed) the two still stood beyond the strike's reach after its
+## placement. n: the ticks he is open.
+static func _miss(S: SimState, ex, f, o, kind: int, wind: bool, energy: String, placed: bool = false) -> void:
 	var open: int = int(_wcfg(kind).recoverWhiff) if _wound(kind) else 0
 	if open > 0:
 		_s(f, FREE_AT, S.tick + open)
 		_s(f, OPEN_UNTIL, _now(S) + open)
 	if wind:
 		_wEnd(S, f, kind, 4)
-	var e = _ev(S, f, "miss", "gave_ground" if _g(o, GAVE) == 1 else "reach", _cellOf(2 if kind == BIG else (1 if kind == MEDIUM else 0)))
+	var e = _ev(S, f, "miss", "gave_ground" if (_g(o, GAVE) == 1 and not placed) else "reach", _cellOf(2 if kind == BIG else (1 if kind == MEDIUM else 0)))
 	e.target = float(S.fighters.find(o))
 	e.n = open
 	if energy != "":
@@ -1596,7 +1614,7 @@ static func _send(S: SimState, ex, f, o, aim: int, why: String, mul: float) -> v
 ## f knocks o back: a heavy charged short of full, and the blast. A short send, decisive, and the brawl ends. bh: its
 ## length in body heights, or 0 for the knock-back's own by his tier. With the stick away (aim 4) he goes back past
 ## the attacker; any other way, along the line.
-static func _knock(S: SimState, ex, f, o, bh: float, aim: int) -> void:
+static func _knock(S: SimState, ex, f, o, bh: float, aim: int, half: bool = false) -> void:
 	var kb: Dictionary = DirLaunch.data().knockBack
 	var mul: float = 1.0
 	if bh > 0.0:
@@ -1607,7 +1625,7 @@ static func _knock(S: SimState, ex, f, o, bh: float, aim: int) -> void:
 		DirLaunch.knock(S, f, o, mul, SimWrap.wrap(o.x + SimWrap.sdx(f.x, o.x)))
 	else:
 		DirLaunch.knock(S, f, o, mul)
-	DirMelee._knockDecisive(S, ex, f, o)
+	DirMelee._knockDecisive(S, ex, f, o, "blurPlain" if half else "")   # half: it counts as half a set-up, as a close does
 	if S.dirS.ex != ex:
 		return
 	if _setPiece(ex):
@@ -2340,7 +2358,8 @@ static func tick(S: SimState, ex) -> void:
 ##  - A medium into a rival's heavy while a medium still ends it, at mediumIntoHeavy: one draw for each wind-up.
 ##  - The burst, a held X, at its share.
 ##  - Its signature as outside, pressed with the charging stance held, since B alone is the heavy.
-##  - In a trade still level at its limit it digs in at its level's digIn, and keeps trading until the trade breaks.
+##  - As a trade starts it weighs digging in, at its level's digIn: dug in, it matches his pace for that trade, blow
+##    for blow, until the trade breaks or the double hit lands. Two AIs never both dig in to one trade (digInBoth).
 ## It answers a paced string by its answerBy-th landed blow with a guard, and attacks into a gap (section 9c). Against a
 ## shooter it takes its level's vsShooter guard share. It writes real presses and holds, as a player does.
 static func aiInput(S: SimState, f) -> void:
@@ -2427,6 +2446,26 @@ static func aiInput(S: SimState, f) -> void:
 			return
 		else:
 			return   # its line is busy: the riposte waits
+	# Digging in (section 7, as re-ruled in 14): decided as a trade starts. At its share the AI matches his pace for
+	# that trade, blow for blow, and holds it until the trade breaks or the double hit lands.
+	var t0: int = _g(ex.A, TRADE_T0)
+	if t0 > 0 and _g(ex.A, TRADE_WIN) == 0:
+		if (_g(f, AI_DIG) & m30) != t0:
+			var share: float = float(bl.get("digIn", 0.0)) * float(DirAI.skill().get("digInBy", {}).get(String(f.id), 1.0))
+			# Two AIs never both dig in to one trade (digInBoth): each would match the other, and every such trade would
+			# run level to the double hit. One of the two, drawn for the trade, may. Against a player he is the one who
+			# presses on, and nothing changes.
+			if o.ai != null and not bool(DirAI.skill().get("digInBoth", false)) and (0 if SimRng.keyed(seed, "brawl.dig.who", t0) < 0.5 else 1) != slot:
+				share = 0.0
+			_s(f, AI_DIG, t0 | ((1 << 30) if SimRng.keyed(seed, "brawl.dig", t0 * 2 + slot) < share else 0))
+		if (_g(f, AI_DIG) >> 30) == 1:
+			_s(f, AI_GUARD, 0)
+			_s(f, AI_LEFT, 0)
+			if S.tick >= _g(f, AI_NEXT):
+				i.light = true
+				var pace: int = _g(o, TAP_GAP)
+				_s(f, AI_NEXT, S.tick + (pace if pace > 0 else gap))
+			return
 	# Against a shooter (ruling 5) its guard share is its level's vsShooter number.
 	var vs: Dictionary = lv.get("vsShooter", {}) if shooter(S, f, o) else {}
 	var flurried: bool = _g(o, TAP_GAP) > 0 and S.tick - _g(o, LAST_TAP) <= int(c.flurry.maxGap) and o.stunTicks <= 0 and o.stance != 1.0
@@ -2470,16 +2509,6 @@ static func aiInput(S: SimState, f) -> void:
 		return
 	if _g(f, LINE) != 0:
 		return   # a new choice waits for its blow to land
-	# A trade still level at its limit: at its share it digs in, and trades on until the trade breaks.
-	var t0: int = _g(ex.A, TRADE_T0)
-	if t0 > 0 and _g(ex.A, TRADE_WIN) == 0 and S.tick - t0 >= int(c.flurry.tradeMaxTicks):
-		if (_g(f, AI_DIG) & ((1 << 30) - 1)) != t0:
-			var share: float = float(bl.get("digIn", 0.0)) * float(DirAI.skill().get("digInBy", {}).get(String(f.id), 1.0))
-			_s(f, AI_DIG, t0 | ((1 << 30) if SimRng.keyed(seed, "brawl.dig", t0 * 2 + slot) < share else 0))
-		if (_g(f, AI_DIG) >> 30) == 1:
-			i.light = true
-			_s(f, AI_NEXT, S.tick + gap)
-			return
 	# A new choice.
 	if SimFighter.sigFree(f) or (f.ki >= 50.0 and S.T >= f.sigReadyT and S.rng.next() < float(DirAI.skill().sigPick)):
 		i.sig = true

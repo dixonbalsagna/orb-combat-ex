@@ -1670,6 +1670,10 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "digInBoth": {
+      "type": "boolean",
+      "description": "Whether two AIs may both dig in to one trade."
     }
   },
   "additionalProperties": false,
