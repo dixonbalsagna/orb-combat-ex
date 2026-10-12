@@ -891,3 +891,9 @@ Standing from this: Orb wants to see World's fight lanes, buildings in depth and
 > when the build is playable and appreciably upgraded from where we had it, please be sure to get the web browser version working again so I can share my progress and get fresh eyes on it. at a minimum I want the updated Z axis to stand out as a new feature.
 
 Standing from this: Orb wants the browser build back online to share once it is playable and clearly better than the build taken down, with the city's depth standing out as a new feature. The flash conditions for the site's return (Legal RL-119/121/123) still have to be met or Orb has to rule on them.
+
+Orb's rulings the same evening, on the reworked city and the site's return:
+- City scale: "Shorter and broader": downtown 20 to 40 fighter heights with wider buildings and two or three taller landmarks.
+- Crowd: "Thin and mute it": fewer figures on the fight's sidewalk, smaller and greyer so the fighters stand out.
+- Foreground row: not ruled; Orb asked: "I remember there being a blotch-pattern that would render the buildings in the foreground see-thru, is that still what we're going with?"
+- The site's return: "Wait for the pass": the site stays down until the whole flash set passes on the published commit.
