@@ -320,6 +320,8 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 				rec.cues[cq] = rec.cues.get(cq, 0) + 1
 				if cq == "perfect_block" or cq == "windup" or cq == "miss" or cq == "launcher_open" or cq == "launcher_close" or cq == "energy_reach" or cq == "energy_land" or cq == "burst":   # Game Design's rows by strength and kind: the cue's text says which (Encounter's names, brawl-plan.md section 10.3)
 					var cqt: String = cq + ":" + str(e.get("text"))
+					if cq == "windup" and str(e.get("text")) == "start" and _ei(e, "k") == 1:
+						cqt = "windup:opening"   # a B thrown in an opening (the launcher) is not a wind-up the AI chose
 					rec.cueText[cqt] = int(rec.cueText.get(cqt, 0)) + 1
 				# the brawl's events (docs/director/brawl-b1.md section 4), compact: a brawl is one exchange, so the rows counted per exchange are re-based on these
 				if cq == "brawl_end":

@@ -109,6 +109,7 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   // C1 probes (brawl-plan.md section 9; docs/qa/three-strength-qa-plan.md): two lights mashers, one or both with a stick script. On a build with no C1 every row is PENDING.
   T.push(() => runPair('c1-drift-one', W + ':drift=east', W + ':off=7', n1, base, caps));
   T.push(() => runPair('c1-hold-one', W + ':sthold=east', W + ':off=7', n1, base, caps));
+  T.push(() => runPair('c1-hold-ai', W + ':sthold=toward', ai, n1, base, caps));
   T.push(() => runPair('c1-drift-ai', W + ':drift=east:dat=24:dlen=60', ai, n1, base, caps));
   T.push(() => runPair('c1-drift-both', W + ':drift=east', W + ':off=7:drift=east', n1, base, caps));
   T.push(() => runPair('c1-walk-both', W + ':walk=1', W + ':off=7:walk=1', n1, base, caps));
@@ -200,12 +201,13 @@ function c1Rows(r, results) {
   const has = (c.ticks || 0) > 0 || (ends.walk || 0) > 0 || (b.doubleHits || 0) > 0;
   const none = (id, ref, what, band) => ({ id, ref, what, status: 'PENDING', value: 'the build has no C1 (no DirBrawl.centre, no walk end, no double hit in these runs)', band, note: `${r.n} matches` });
   const rows = [];
-  if (r.pair === 'c1-hold-one') {
+  if (r.pair === 'c1-hold-one' || r.pair === 'c1-hold-ai') {
+    const holdId = r.pair === 'c1-hold-ai' ? 'c1.dead.ai' : 'c1.dead';
     // Orb's test 1 (brawl-second-pass.md section 13): no live tick of a brawl with a dead stick outside a knock-back and its kind (a hard test). The stick is held on every live tick of a brawl; a tick after the ramp (14 ticks)
     // on which the fighter does not move along it, in a state that is not launched, down, dropped, buried, held, thrown, lifted or carried, is a dead tick. The rival holds no stick, so nothing cancels it.
     const hd = b.hold || {};
     const what = 'No live tick of a brawl with a dead stick, outside a knock-back and its kind (hard test; states reached: striking and mashing, staggered, reeling; the wind-up, charge and guard states come with C2a and C2b)';
-    rows.push({ id: 'c1.dead', ref: '§11 second pass', what, status: hd.dead ? 'FAIL' : (hd.ticks ? 'PASS' : 'PENDING'), value: hd.ticks ? `${hd.dead} dead ticks of ${hd.ticks} held ticks (${(100 * hd.dead / hd.ticks).toFixed(1)}%); by state ${JSON.stringify(hd.deadStates || {})}; by cause ${JSON.stringify(hd.deadCause || {})}` : 'the stick was never held long enough in a brawl', band: 'none', note: `${r.n} matches; before C1 this is the lock itself (every held tick of a locked fighter is dead; 12,369 of 15,323 on 53d13b55 in a 2-match smoke); a fighter against a building face or the ground also stops, which this read cannot tell from a dead stick: look at the states first` });
+    rows.push({ id: holdId, ref: '§11 second pass', what: what + (r.pair === 'c1-hold-ai' ? ' [a presser holding toward against the medium AI]' : ' [a lights masher holding east against a rival with no stick]'), status: hd.dead ? 'FAIL' : (hd.ticks ? 'PASS' : 'PENDING'), value: hd.ticks ? `${hd.dead} dead ticks of ${hd.ticks} held LIVE ticks (${(100 * hd.dead / hd.ticks).toFixed(1)}%); a further ${hd.freezeHeld || 0} held ticks fell in a hit freeze and are not counted; by direction ${JSON.stringify(Object.fromEntries(Object.entries(hd.byDir || {}).map(([k, v]) => [k, `${v.dead} of ${v.held}`])))}; by state ${JSON.stringify(hd.deadStates || {})}; by cause ${JSON.stringify(hd.deadCause || {})}` : 'the stick was never held long enough in a brawl', band: 'none', note: `${r.n} matches; before C1 this is the lock itself (every held tick of a locked fighter is dead; 12,369 of 15,323 on 53d13b55 in a 2-match smoke); a fighter against a building face or the ground also stops, which this read cannot tell from a dead stick: look at the states first` });
     return rows;
   }
   if (r.pair === 'c1-drift-ai') {
@@ -260,6 +262,8 @@ function c2Rows(r, results) {
     const lights = r.pair === 'double-lights', n = per.length, withOne = per.filter(x => x > 0).length, m = mean(per);
     const what = `Double hits against the medium AI by ${lights ? 'a lights-only presser (stick toward)' : 'a mixing presser (L L H, stick toward)'}: a match, and matches with at least one (0.5 to 2; 35 to 65%)`;
     if (!n) return [pend('double.presser.' + (lights ? 'lights' : 'mix'), '§7 second pass', what, '0.5 to 2; 35 to 65%', 'no match recorded')];
+    const most = Math.max(...per);
+    rows.push({ id: 'double.presser.max.' + (lights ? 'lights' : 'mix'), ref: '§7 second pass', what: `Never more than 4 double hits in a match for a steady presser against the medium AI (hard test; ${lights ? 'X every 8 ticks, stick toward' : 'L L H, stick toward'})`, status: most > 4 ? 'FAIL' : 'PASS', value: `the most in one match is ${most} (mean ${m.toFixed(2)})`, band: 'at most 4', note: `${n} matches` });
     const ok = m >= 0.5 && m <= 2 && withOne / n >= 0.35 && withOne / n <= 0.65;
     rows.push({ id: 'double.presser.' + (lights ? 'lights' : 'mix'), ref: '§7 second pass', what, status: (b.doubleHits || 0) === 0 && !(b.ends || {}).double ? 'PENDING' : (ok ? 'PASS' : 'FAIL'), value: `${m.toFixed(2)} a match; ${pct(withOne / n)} of matches (${withOne} of ${n}); ${b.doubleHits} double hits`, band: '0.5 to 2; 35 to 65%', note: `${n} matches; measured on C1 at 0.3 and 0.2, tuned on C2a by the AI's digIn; the trade length on the cue is the double.trade240 row` });
     return rows;
@@ -315,8 +319,8 @@ function c2Rows(r, results) {
       const fl = en.flashes || 0;
       rows.push({ id: 'energy.flash', ref: '§5b second pass', what: 'No more than three full flashes in any second, and one blow in 20 ticks at most may take one (hard test; a mashed RB + X)', status: fl ? (en.flashMax60 <= 3 && en.flashMinGap >= 20 ? 'PASS' : 'FAIL') : 'PENDING', value: fl ? `${fl} full flashes; the most in 60 ticks ${en.flashMax60}; the shortest gap ${en.flashMinGap} ticks` : 'no energy_land carried k 1', band: 'at most 3 in 60 ticks, 20 ticks apart', note: `${r.n} matches; sources ${JSON.stringify(en.src)}` });
     } else {
-      const kb = en.kb || [], bad = kb.filter(x => Math.abs(x - 4) > 0.25);
-      rows.push({ id: 'energy.blast', ref: '§5b second pass', what: 'A clean blast knocks him back 4 bh (hard test: the knock-back after a blast that landed with the source hit)', status: kb.length ? (bad.length ? 'FAIL' : 'PASS') : 'PENDING', value: kb.length ? `${kb.length} knock-backs, ${bad.length} off 4 bh by more than 0.25 (range ${Math.min(...kb)} to ${Math.max(...kb)})` : 'no knock-back followed a clean blast', band: '4 bh, within 0.25', note: `${en.blast} blasts pressed; sources ${JSON.stringify(en.src)}` });
+      const kb = en.kb || [], bad = kb.filter(x => Math.abs(x - 4) > 0.25), hit = en.blastHit || 0;
+      rows.push({ id: 'energy.blast', ref: '§5b second pass', what: 'A clean blast\'s own knock-back is 4 bh (hard test: the knock-back of its target within 3 ticks; since the follow-up a cold blast has none of its own and knocks back only as a string\'s ender)', status: kb.length ? (bad.length ? 'FAIL' : 'PASS') : 'PENDING', value: kb.length ? `${kb.length} of ${hit} clean blasts knocked back, ${bad.length} off 4 bh by more than 0.25 (range ${Math.min(...kb)} to ${Math.max(...kb)}); the other ${hit - kb.length} were cold` : `no knock-back followed ${hit} clean blasts`, band: '4 bh, within 0.25', note: `${en.blast} blasts pressed; sources ${JSON.stringify(en.src)}` });
     }
     return rows;
   }

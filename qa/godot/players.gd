@@ -62,6 +62,8 @@ class Pl:
 	var gv_y0: float = 0.0
 	var gv_lat: int = -1
 	var gv_dur: int = 0
+	var last_live: bool = true     # did the last SimCore.step run a live tick (false in a hit freeze: S.tick advances and nothing can move)
+	var dr_fx: Array = []          # the drifting fighter's own x on each live sample
 	var hold_last_tick: int = -1   # hold=...: the S.tick of the last tick the stick was held in a brawl, and where he stood then
 	var hold_last_x: float = 0.0
 	var hold_run: int = 0          # consecutive live ticks the stick has been held in a brawl
@@ -317,12 +319,21 @@ class Pl:
 			if S.tick != hold_last_tick:
 				if hold_last_tick >= 0 and S.tick - hold_last_tick == 1:
 					hold_run += 1
-					if hold_run >= 14 and not G.is_empty():
+					if hold_run >= 14 and not G.is_empty() and not last_live:
+						G.freezeHeld += 1   # held through a hit freeze: nothing can move, so it is neither a live nor a dead tick
+					elif hold_run >= 14 and not G.is_empty():
 						G.holdTicks += 1
+						var hk: String = hold if hold in ["east", "west", "toward", "away"] else "other"
+						var hb: Dictionary = G.holdByDir.get(hk, {"held": 0, "dead": 0})
+						hb.held = int(hb.held) + 1
+						G.holdByDir[hk] = hb
 						var stp: float = SimWrap.sdx(hold_last_x, f.x) * hd
 						var exempt: bool = f.state == "launched" or f.state == "down" or f.state == "dropped" or f.state == "buried" or f.state == "held" or f.state == "thrown" or f.state == "lifted" or f.state == "carried"
 						if stp < 0.001 and not exempt:
 							G.deadTicks += 1
+							var hb2: Dictionary = G.holdByDir.get(hk, {"held": 0, "dead": 0})
+							hb2.dead = int(hb2.dead) + 1
+							G.holdByDir[hk] = hb2
 							G.deadStates[str(f.state)] = int(G.deadStates.get(str(f.state), 0)) + 1
 							# the cause: a stagger or daze (the core gates his input: stunTicks), a building face or the ground one step along the stick, or neither
 							var cause: String = "other"
@@ -345,11 +356,13 @@ class Pl:
 				dr_state = str(f.state)
 				dr_cx = []
 				dr_cv = []
-			if S.tick != dr_last:
+				dr_fx = []
+			if S.tick != dr_last and (last_live or dr_cx.size() == 0):
 				dr_last = S.tick
 				var cc = _centre(S, f)
 				dr_cx.append(cc[0])
 				dr_cv.append(cc[1])
+				dr_fx.append(f.x)
 			# the AI's own stick (DirBrawl.stick: its nudge, kept out of its intent): the ticks it holds against the player's
 			if o.ai != null and not G.is_empty() and brawl != null and S.dirS.ex != null and Pl.has_m(brawl, "stick"):
 				var ast = brawl.call("stick", S.dirS.ex, o)
@@ -430,7 +443,8 @@ class Pl:
 				steps.append(SimWrap.sdx(float(dr_cx[i]), float(dr_cx[i + 1])) * dr_dir)
 			var lat: int = -1
 			for i in range(n):
-				var moved: bool = ((float(dr_cv[i]) - float(dr_cv[0])) * dr_dir > 1e-6) if (dr_cv[i] != null and dr_cv[0] != null) else (i > 0 and float(steps[i - 1]) > 0.15)
+				# the fighter's own step along the stick on a live tick (against an AI the pair is often moving already, so the pair's speed rising is not the read)
+				var moved: bool = i > 0 and SimWrap.sdx(float(dr_fx[i - 1]), float(dr_fx[i])) * dr_dir > 0.05
 				if moved:
 					lat = i
 					break
@@ -453,6 +467,7 @@ class Pl:
 			G.driftMaxStep = maxf(float(G.driftMaxStep), mx / 75.0)
 		dr_cx = []
 		dr_cv = []
+		dr_fx = []
 		dr_t0 = -1
 
 	## A bolt turret for the drop row (melee-press-feel.md section 2c: a shot on the way out drops a zipper). With the energy family held (energy=1) it presses a bolt, with chance p percent (default 25),
@@ -709,7 +724,7 @@ func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
 
 ## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
 func _gblank() -> Dictionary:
-	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "doubleHits": 0, "lastBlow": -1000, "walkBrawls": 0, "walkEarly": 0, "walkLags": [], "driftN": 0, "driftLat": [], "driftRate": [], "driftMaxStep": 0.0, "centreTicks": 0, "centreSpeedTicks": 0, "centreMaxStep": 0.0, "centreOver": 0, "centrePosMax": 0.0, "centrePosOver": 0, "holdTicks": 0, "flashGapMin": 99999, "flashMax60": 0, "deadCause": {}, "driftLatHist": {}, "driftSlowStates": {}, "closeSamples": [], "blowMoveMax": 0.0, "blowMoveN": 0, "blowMoveOver": 0, "aiStickTicks": 0, "aiOpposeTicks": 0, "deadTicks": 0, "deadStates": {}, "dblPer": [], "dblDurMin": 9999, "dblDurMax": 0, "giveLog": [], "lastMissTick": -1000, "lastMissText": "", "lcOpen": 0, "lcUsed": 0, "lcLapsed": 0, "routeBy": [], "routeOn": [], "firstLaunchSec": [], "energy": {"bolt": 0, "blast": 0, "announce": {}, "late": 0, "src": {}, "kb": [], "flashTicks": [], "pendBlast": -1000}, "burstN": 0, "burstBlows": [], "windupN": 0, "dropStart": 0, "dropLand": 0, "dropEnd": 0, "dropStateBad": 0, "dropEndBad": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "doubleHits": 0, "lastBlow": -1000, "walkBrawls": 0, "walkEarly": 0, "walkLags": [], "driftN": 0, "driftLat": [], "driftRate": [], "driftMaxStep": 0.0, "centreTicks": 0, "centreSpeedTicks": 0, "centreMaxStep": 0.0, "centreOver": 0, "centrePosMax": 0.0, "centrePosOver": 0, "holdTicks": 0, "freezeHeld": 0, "holdByDir": {}, "flashGapMin": 99999, "flashMax60": 0, "deadCause": {}, "driftLatHist": {}, "driftSlowStates": {}, "closeSamples": [], "blowMoveMax": 0.0, "blowMoveN": 0, "blowMoveOver": 0, "aiStickTicks": 0, "aiOpposeTicks": 0, "deadTicks": 0, "deadStates": {}, "dblPer": [], "dblDurMin": 9999, "dblDurMax": 0, "giveLog": [], "lastMissTick": -1000, "lastMissText": "", "lcOpen": 0, "lcUsed": 0, "lcLapsed": 0, "routeBy": [], "routeOn": [], "firstLaunchSec": [], "energy": {"blastHit": 0, "pendActor": -1, "pendTarget": -9, "bolt": 0, "blast": 0, "announce": {}, "late": 0, "src": {}, "kb": [], "flashTicks": [], "pendBlast": -1000}, "burstN": 0, "burstBlows": [], "windupN": 0, "dropStart": 0, "dropLand": 0, "dropEnd": 0, "dropStateBad": 0, "dropEndBad": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
 
 
 ## An event field as an int, 0 when the build's event has no such field.
@@ -760,7 +775,7 @@ func _energysum(g: Dictionary) -> Dictionary:
 			else:
 				break
 		most = maxi(most, c)
-	return {"bolt": en.bolt, "blast": en.blast, "announce": en.announce, "late": en.late, "src": en.src, "kb": en.kb, "flashes": ft.size(), "flashMinGap": (int(g.flashGapMin) if int(g.flashGapMin) < 99999 else -1), "flashMax60": int(g.flashMax60)}
+	return {"blastHit": en.blastHit, "bolt": en.bolt, "blast": en.blast, "announce": en.announce, "late": en.late, "src": en.src, "kb": en.kb, "flashes": ft.size(), "flashMinGap": (int(g.flashGapMin) if int(g.flashGapMin) < 99999 else -1), "flashMax60": int(g.flashMax60)}
 
 
 func _mean(a: Array) -> float:
@@ -788,7 +803,7 @@ func _greport(g: Dictionary) -> Dictionary:
 		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
 		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades,
 		"exactTradeFields": g.exact > 0 and g.exact == g.tradeBreaks, "levelTrades": g.drawsAfterClose, "levelChanges": g.drawChanges, "levelChangeShare": snappedf(float(g.drawChanges) / maxf(1.0, float(g.drawsAfterClose)), 0.001),
-		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "doubleHits": g.doubleHits, "walk": {"brawls": g.walkBrawls, "early": g.walkEarly, "lagMin": (g.walkLags.min() if g.walkLags.size() > 0 else -1), "lagMax": (g.walkLags.max() if g.walkLags.size() > 0 else -1), "n": g.walkLags.size()}, "drift": {"latHist": g.driftLatHist, "slowStates": g.driftSlowStates, "aiStickTicks": g.aiStickTicks, "aiOpposeTicks": g.aiOpposeTicks, "n": g.driftN, "latMax": (g.driftLat.max() if g.driftLat.size() > 0 else -1), "latMean": (snappedf(_mean(g.driftLat), 0.01) if g.driftLat.size() > 0 else -1.0), "rateBhPerSec": (snappedf(_mean(g.driftRate), 0.001) if g.driftRate.size() > 0 else -1.0), "maxStepBh": snappedf(g.driftMaxStep, 0.001)}, "centre": {"ticks": g.centreTicks, "speedTicks": g.centreSpeedTicks, "maxStepBh": snappedf(g.centreMaxStep, 0.001), "over": g.centreOver, "posMaxBh": snappedf(g.centrePosMax, 0.001), "posOver": g.centrePosOver}, "hold": {"ticks": g.holdTicks, "dead": g.deadTicks, "deadStates": g.deadStates, "deadCause": g.deadCause}, "doublePer": g.dblPer, "doubleDur": [g.dblDurMin if g.dblDurMin < 9999 else -1, g.dblDurMax], "give": _givesum(g), "launcher": {"open": g.lcOpen, "used": g.lcUsed, "lapsed": g.lcLapsed, "routeBy": g.routeBy, "routeOn": g.routeOn, "firstLaunchSec": g.firstLaunchSec}, "energy": _energysum(g), "burst": {"n": g.burstN, "blows": g.burstBlows}, "windupN": g.windupN, "closing": {"samples": g.closeSamples, "blowMoveMaxBh": snappedf(g.blowMoveMax, 0.001), "blowMoveN": g.blowMoveN, "blowMoveOver": g.blowMoveOver}, "drop": {"start": g.dropStart, "land": g.dropLand, "end": g.dropEnd, "stateBad": g.dropStateBad, "endBad": g.dropEndBad}, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
+		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "doubleHits": g.doubleHits, "walk": {"brawls": g.walkBrawls, "early": g.walkEarly, "lagMin": (g.walkLags.min() if g.walkLags.size() > 0 else -1), "lagMax": (g.walkLags.max() if g.walkLags.size() > 0 else -1), "n": g.walkLags.size()}, "drift": {"latHist": g.driftLatHist, "slowStates": g.driftSlowStates, "aiStickTicks": g.aiStickTicks, "aiOpposeTicks": g.aiOpposeTicks, "n": g.driftN, "latMax": (g.driftLat.max() if g.driftLat.size() > 0 else -1), "latMean": (snappedf(_mean(g.driftLat), 0.01) if g.driftLat.size() > 0 else -1.0), "rateBhPerSec": (snappedf(_mean(g.driftRate), 0.001) if g.driftRate.size() > 0 else -1.0), "maxStepBh": snappedf(g.driftMaxStep, 0.001)}, "centre": {"ticks": g.centreTicks, "speedTicks": g.centreSpeedTicks, "maxStepBh": snappedf(g.centreMaxStep, 0.001), "over": g.centreOver, "posMaxBh": snappedf(g.centrePosMax, 0.001), "posOver": g.centrePosOver}, "hold": {"ticks": g.holdTicks, "freezeHeld": g.freezeHeld, "byDir": g.holdByDir, "dead": g.deadTicks, "deadStates": g.deadStates, "deadCause": g.deadCause}, "doublePer": g.dblPer, "doubleDur": [g.dblDurMin if g.dblDurMin < 9999 else -1, g.dblDurMax], "give": _givesum(g), "launcher": {"open": g.lcOpen, "used": g.lcUsed, "lapsed": g.lcLapsed, "routeBy": g.routeBy, "routeOn": g.routeOn, "firstLaunchSec": g.firstLaunchSec}, "energy": _energysum(g), "burst": {"n": g.burstN, "blows": g.burstBlows}, "windupN": g.windupN, "closing": {"samples": g.closeSamples, "blowMoveMaxBh": snappedf(g.blowMoveMax, 0.001), "blowMoveN": g.blowMoveN, "blowMoveOver": g.blowMoveOver}, "drop": {"start": g.dropStart, "land": g.dropLand, "end": g.dropEnd, "stateBad": g.dropStateBad, "endBad": g.dropEndBad}, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
@@ -812,6 +827,9 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 	var ai: Dictionary = {"p1": not by_slot[0].scripted(), "p2": not by_slot[1].scripted()}
 	SimCore.newMatch(S, seed, ai, {"v2": [by_slot[0].scripted(), by_slot[1].scripted()]})
 	var lt: int = 0
+	if not g.is_empty():
+		g.lastMissTick = -1000   # a miss read from the last match is not this match's
+		g.lastMissText = ""
 	var m_flash0: int = g.energy.flashTicks.size() if not g.is_empty() else 0   # the flashes of this match start here (S.tick restarts each match)
 	var m_dbl0: int = g.doubleHits if not g.is_empty() else 0   # per-match counts for the pairs' rows
 	var m_fb: int = -1
@@ -876,6 +894,11 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 				if int(p.P.get("tap", "0")) > 0:
 					p.tap_k = k
 					p.tap_left = int(p.P.get("tap", "0"))
+			if p.kind == "holder" and k >= 0:
+				if k == 1:
+					it.heavyHeld = true
+				else:
+					it.lightHeld = true
 			if p.tap_left > 0:
 				p.tap_left -= 1
 				if p.tap_k == 1:
@@ -898,6 +921,8 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 			ins[slot] = it
 			sent[slot] = k
 		var stepped: bool = SimCore.step(S, ins)
+		for lp in pl:
+			lp.last_live = stepped
 		if stepped:
 			lt += 1
 			for hp in pl:
@@ -933,7 +958,8 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 					if ltg >= 0 and ltg < 2 and by_slot[ltg].kind == "route":
 						m_ron += 1
 				elif e.type == "knockback":
-					if S.tick - int(g.energy.pendBlast) <= 3:
+					# the blast's own: from its actor to its target within 3 ticks (a string's ender; a cold blast has none)
+					if S.tick - int(g.energy.pendBlast) <= 3 and int(e.victim) == int(g.energy.get("pendTarget", -9)):
 						g.energy.kb.append(snappedf(float(e.amount) / 75.0, 0.01))
 						g.energy.pendBlast = -1000
 				elif e.type == "drop_start" or e.type == "drop_land" or e.type == "drop_end":   # the drop is an event type of its own (sim/core/fx.gd), not a cue
@@ -1034,6 +1060,9 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 							g.energy.flashTicks.append(S.tick)
 						if elt == "blast" and str(e.get("source")) == "hit":
 							g.energy.pendBlast = S.tick
+							g.energy.pendActor = int(e.actor)
+							g.energy.pendTarget = int(e.target)
+							g.energy.blastHit = int(g.energy.get("blastHit", 0)) + 1
 					elif ck == "blow":
 						g.lastBlow = S.tick
 						var bat: int = int(e.actor)
