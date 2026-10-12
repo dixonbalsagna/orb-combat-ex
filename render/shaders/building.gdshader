@@ -48,13 +48,20 @@
 //    dark band, a burnt-out tower is dark, and neither is stripes. Lit panes are few and keep their light.
 // 8. Row haze. A part takes the air's colour by how far behind the fighter plane its front face stands (row_haze), so
 //    the back block and the scenery row read as depth. The front block takes none.
-// 9. Open floors (RenderLook.OPEN_*; Orb, 2026-10-12). The camera's, not damage: in a match with depth on, a tall
-//    building in front of the fight has the floors the fight is seen through opened in this pane (stub_tex's g and b:
-//    from this world y to that one). There the walls are gone, front, sides and back, so the street behind shows
-//    under the tower. What stays says it is built so: a post at each corner and one a bay along the front, in the
-//    wall's own colour, and the pale edge of the floor above. A post gives way inside the patch (the hole's capsule),
-//    so none stands between the camera and the fight. No soot, no cracks, no broken line, nothing dark painted in. A building
-//    that opens floors is never holed (b at or above -1.5e9 marks one).
+// 9. The lobby (RenderLook.OPEN_*; Orb, 2026-10-12: real-looking supports). The camera's, not damage: in a match with depth
+//    on, a tower in front of a fight at street level opens its lobby in this pane (stub_tex's g, b and a: the share
+//    of it that is open, its top as a world y, and the tower's share of the patch). Under the top the walls are gone,
+//    front, sides and back, so the street behind shows under the tower. What stands says it is built so: on every
+//    side a regular row of columns, each open_col.x of its face wide; a beam open_beam deep on them; and, seen from
+//    under it, a warm lit ceiling (the eye's ray is met with the ceiling's plane, so it lies flat over the lobby with
+//    its lamps in rows). It fades in by stipple: a share of the lobby's pixels is through, the rest still the wall.
+//    Only the tower's shell at the street carries the colonnade (win_tex's fourth texel: the shell's footprint from
+//    this part); a part inside the shell, or stuck onto it, is simply gone under the lobby's top (g is negative on it).
+//    Inside the patch (the hole's capsule) a column or the beam is thinned to a ghost, not removed. No soot, no
+//    cracks, no broken line, nothing dark painted in.
+//    The patch on a tower: a building that never has a lobby (b under -1.5e9) is holed as ever. A tower is holed only
+//    by its share of the patch (a: the hole's radius is scaled by it), which planet_view.gd raises when the fight is
+//    above the lobby's ceiling or the tower is damaged.
 // An instance with nothing to cut and no part gone keeps back-face culling (its back faces are thrown away in the
 // vertex stage), so only the cut towers and the buildings at stage 2 and 3 pay for their insides. tools/cull_check.gd
 // compares that with the rasterizer's own culling.
@@ -98,9 +105,15 @@ uniform float pattern_budget = 0.085;   // RenderLook.PATTERN_BUDGET: on a look 
 uniform float dmg_holes = 0.18;      // RenderLook.DMG_HOLES: at stage 2, the share of a facade's bays broken open
 uniform vec3 row_haze = vec3(0.5, 600.0, 2800.0);   // RenderLook.ROW_HAZE: the most of the air a far row takes, and the depths behind the fighter plane it starts and is full at
 uniform float haze_focus = 0.0;      // the depth of the camera's focus plane (Camera's dolly): the rows' haze is measured from it. 0: the fighter plane
-uniform vec3 open_post = vec3(190.0, 9.0, 0.82);   // RenderLook.OPEN_POST: an opened floor's posts (a bay's width at most, a post's width, its tone against the wall's)
-uniform float open_slab = 7.0;       // RenderLook.OPEN_SLAB: the edge of the floor over an opening
-uniform vec4 open_slab_col : source_color = vec4(0.55, 0.58, 0.63, 1.0);   // RenderLook.OPEN_SLAB_COL
+uniform vec2 open_col = vec2(0.0833, 4.0);   // RenderLook.OPEN_COL: a lobby's columns (a column's width as a share of its face, columns a face)
+uniform float open_beam = 26.0;      // RenderLook.OPEN_BEAM: the beam on them, under the lobby's top
+uniform vec4 open_frame_col : source_color = vec4(0.55, 0.58, 0.63, 1.0);   // RenderLook.OPEN_FRAME_COL: their stone, half the wall's own colour
+uniform float open_far = 0.7;        // RenderLook.OPEN_FAR: the far side's columns and beam, in shade
+uniform vec4 open_ceil : source_color = vec4(0.64, 0.59, 0.47, 1.0);    // RenderLook.OPEN_CEIL: the lit ceiling
+uniform vec4 open_lamp : source_color = vec4(0.72, 0.65, 0.52, 1.0);    // RenderLook.OPEN_LAMP: its lamp panels (held to pattern_budget from the ceiling)
+uniform float open_grid = 75.0;      // RenderLook.OPEN_GRID: a ceiling bay
+uniform float open_ghost = 0.72;
+uniform vec2 open_near = vec2(300.0, 600.0);   // RenderLook.NEAR_CLIP: a column nearer the lens than the second is thinned toward a ghost, and is one at the first     // RenderLook.OPEN_GHOST: the share of a column's pixels gone inside the patch
 
 varying flat vec4 v_cut;      // x, y, z: the mask's three parts; w: floor height
 varying flat vec2 v_base;     // x: the base's world y; y: the top standing floor
@@ -114,7 +127,8 @@ varying flat vec4 v_hole1;
 varying float v_wy;
 varying vec3 v_view;          // from the camera, in world axes, for the sky's colour behind (the pan haze)
 varying flat vec3 v_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1
-varying flat vec2 v_open;     // this pane's open floors: from world y x to world y y (y at or under x: none; y under -1.5e9: a building that never opens floors)
+varying flat vec3 v_open;     // this pane's lobby: x the share of it open (0: shut; negative on a part inside the shell or stuck onto it), y its top (world y; under -1.5e9: a building with no lobby), z the tower's share of the patch
+varying flat vec4 v_shell;    // the footprint of the tower's shell at the street: xy its middle (x across from the camera, z in depth), zw half its width and depth (0: none)
 
 // A world point on this pane's screen, in FRAGCOORD's pixels.
 vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
@@ -125,7 +139,7 @@ vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
 void vertex() {
 	vec4 so = texelFetch(stub_tex, ivec2(min(INSTANCE_ID, textureSize(stub_tex, 0).x - 1), 0), 0);
 	float stub = so.r;
-	v_open = so.gb;
+	v_open = so.gba;
 	vec4 c = texelFetch(cut_tex, ivec2(min(INSTANCE_ID, textureSize(cut_tex, 0).x - 1), 0), 0);
 	float top_floor = floor(c.z / 16384.0);
 	v_cut = vec4(c.x, c.y, c.z - top_floor * 16384.0, c.w);
@@ -170,10 +184,12 @@ void vertex() {
 	v_face = vec4(zface ? v0.x * sx : v0.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(n0.y) < 0.5 ? 1.0 : 0.0), v0.x * sx);
 	v_dmg = vec3(wb.z, min(top, stubbed), sx);
 	v_look = vec3(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0));
+	vec4 shl = texelFetch(win_tex, ivec2(id, 3), 0);
+	v_shell = vec4(MODEL_MATRIX[3].x + shl.x, MODEL_MATRIX[3].z + shl.y, shl.z, shl.w);
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
-	if (c.w <= 0.0 && wb.z < 1.5 && ref_cull < 0.5 && so.b <= so.g) {
+	if (c.w <= 0.0 && wb.z < 1.5 && ref_cull < 0.5 && so.g == 0.0) {
 		// Nothing to cut: cull this face if it looks away from the camera, as cull_back would. Every corner of a face
 		// must decide the same, or a face thrown away at some corners only is drawn stretched to the screen's corner
 		// (a dark stripe from a roof). So the test uses the face's plane and nothing of the corner itself: the true
@@ -234,7 +250,10 @@ void fragment() {
 		discard;
 	}
 	float dith = fract(dot(FRAGCOORD.xy, vec2(0.7548777, 0.5698403)));
-	bool holed = false;   // inside a hole (or the patch), nearer the camera than it cuts to
+	bool lobby = v_open.y > -1.5e9;         // a tower with a lobby
+	float share = lobby ? v_open.z : 1.0;   // how much of the hole is this building's: all of it, or a tower's share of the patch
+	bool holed = false;      // inside a hole (or its share of the patch), nearer the camera than it cuts to
+	bool in_patch = false;   // inside the patch itself, whatever this tower's share of it
 	for (int i = 0; i < 2; i++) {
 		if (hole[i].w > 0.0) {
 			// The distance to the hole's axis (a point for a round hole), and how far along it this pixel is.
@@ -242,13 +261,16 @@ void fragment() {
 			vec2 ab = ends.zw - ends.xy;
 			vec2 ap = FRAGCOORD.xy - ends.xy;
 			float t = clamp(dot(ap, ab) / max(dot(ab, ab), 0.0001), 0.0, 1.0);
-			if (-VERTEX.z < mix(hole_near[i].x, hole_near[i].y, t) && length(ap - ab * t) < mix(hole[i].w, hole_to[i].w, t) * (hole_edge.x + hole_edge.y * dith)) {
-				holed = true;
+			float lim = mix(hole[i].w, hole_to[i].w, t) * (hole_edge.x + hole_edge.y * dith);
+			float off = length(ap - ab * t);
+			if (-VERTEX.z < mix(hole_near[i].x, hole_near[i].y, t)) {
+				in_patch = in_patch || off < lim;
+				holed = holed || off < lim * share;
 			}
 		}
 	}
-	if (holed && v_open.y < -1.5e9) {
-		discard;   // a building that opens floors is never holed: only its posts give way, below
+	if (holed) {
+		discard;
 	}
 	float st = v_dmg.x;
 	bool wall = v_face.z > 0.5;
@@ -391,28 +413,54 @@ void fragment() {
 			col = inside.rgb;
 		}
 	}
-	if (v_open.y > v_open.x) {
-		// Open floors: between the two heights only the posts stand. Over the opening, and under one that starts above
-		// the ground, the floor's edge is a clean pale line.
-		float sl = max(open_slab, 1.3 * fwidth(v_wy));
-		float pw = 0.5 * max(open_post.y, 1.3 * fwidth(v_face.x));
-		if (v_wy > v_open.x && v_wy < v_open.y) {
-			if (!wall) {
+	float open_k = abs(v_open.x);
+	if (lobby && open_k > 0.0) {
+		float ltop = v_open.y;
+		float ceil_y = ltop - open_beam;
+		bool inner = v_open.x < 0.0;
+		vec3 eye = INV_VIEW_MATRIX[3].xyz;
+		float edge_x = fwidth(v_face.x);
+		// Where the eye's ray to this pixel passes the ceiling's height (worked out for every pixel, so its rate of
+		// change across the screen is defined wherever it is used).
+		vec2 at = eye.xz + v_view.xz * ((ceil_y - eye.y) / max(v_view.y, 0.0001)) - v_shell.xy;
+		float edge_c = max(fwidth(at.x), fwidth(at.y));
+		bool ceiling = false;
+		if (v_shell.z > 0.0 && eye.y < ceil_y && v_wy >= ceil_y && v_view.y > 0.0001) {
+			// Seen from under it. Inside the shell's footprint that point is on the lobby's ceiling, whatever wall the
+			// ray goes on to meet.
+			if (abs(at.x) < v_shell.z - 1.0 && abs(at.y) < v_shell.w - 1.0) {
+				vec2 bay = abs(fract(at / open_grid + 0.5) - 0.5);
+				float near_c = 1.0 - smoothstep(0.3, 0.75, edge_c / open_grid);
+				col = mix(open_ceil.rgb, toward(open_ceil.rgb, open_lamp.rgb, pattern_budget), mix(0.31, step(max(bay.x, bay.y), 0.28), near_c));   // too far to draw the lamps, their share of a bay
+				ceiling = true;
+			}
+		}
+		if (!ceiling && v_wy < ltop + (inner ? 0.5 : 0.0) && dith < open_k) {
+			// Under the lobby's top, on the share of its pixels that is through: nothing of a part inside the shell,
+			// no lid; of the shell's walls the beam and the columns.
+			if (inner || !wall) {
 				discard;
 			}
-			// A post at each corner, and along the front wall one a bay. The side and back walls keep their corners only,
-			// so few posts stand between the camera and the fight.
-			bool post = 0.5 * v_face.y - abs(v_face.x) < 2.0 * pw;
-			if (!post && v_back < 0.5 && fract(v_winb.z) < 0.25) {
-				float bay = v_face.y / max(1.0, floor(v_face.y / open_post.x + 0.5));
-				post = abs(fract((v_face.x + 0.5 * v_face.y) / bay + 0.5) - 0.5) * bay < pw;
+			bool stands = v_wy >= ceil_y;   // the beam
+			if (!stands) {
+				float n = max(2.0, open_col.y);
+				float cw = max(open_col.x * v_face.y, 1.3 * edge_x);
+				float pitch = (v_face.y - cw) / (n - 1.0);
+				float u = v_face.x + 0.5 * v_face.y - 0.5 * cw;
+				stands = abs(u - clamp(floor(u / pitch + 0.5), 0.0, n - 1.0) * pitch) < 0.5 * cw;
 			}
-			if (!post || holed) {
-				discard;   // no wall here; and no post inside the patch, so none stands between the camera and the fight
+			// Inside the patch a column is a ghost, so the fight shows through it. So near the lens that it is in it
+			// (Camera's near-clip distances), it thins to one too: a solid column a fifth of the screen wide, swept
+			// past by a travelling camera, is a large change every time it crosses.
+			float thin = max(in_patch ? 1.0 : 0.0, 1.0 - smoothstep(open_near.x, open_near.y, -VERTEX.z));
+			if (!stands || fract(dot(FRAGCOORD.xy, vec2(0.5698403, 0.7548777)) + 0.37) < open_ghost * thin) {
+				discard;
 			}
-			col = FRONT_FACING ? flat_shade(wallc * open_post.z, NORMAL, 0.35) : inside.rgb;
-		} else if (wall && FRONT_FACING && ((v_wy >= v_open.y && v_wy < v_open.y + sl) || (v_wy <= v_open.x && v_wy > v_open.x - sl))) {
-			col = flat_shade(open_slab_col.rgb, NORMAL, 0.35);
+			vec3 frame = mix(wallc, open_frame_col.rgb, 0.5);
+			col = FRONT_FACING ? flat_shade(frame, NORMAL, 0.35) : frame * open_far;
+			if (FRONT_FACING && v_wy >= ceil_y && v_wy < ceil_y + 3.0) {
+				col *= 0.8;   // the beam's foot, in its own shade
+			}
 		}
 	}
 	if (v_look.z > 0.001) {

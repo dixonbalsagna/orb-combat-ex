@@ -317,6 +317,29 @@ static func _snap(y: float, fh: float) -> float:
 	return maxf(fh, round(y / fh) * fh)
 
 
+## Which of a building's parts is its shell at the street: the widest walled box that stands on the ground, centred on
+## the footprint. A lobby's colonnade is this part's (RenderLook.OPEN_*); every other part that reaches the lobby is
+## inside it or stuck onto it. 0 (the body) when none qualifies.
+static func shell(ps: Array) -> int:
+	var best: int = 0
+	var area: float = -1.0
+	for j in range(ps.size()):
+		var p: Array = ps[j]
+		if float(p[Y0]) > 0.0 or (int(p[FLAGS]) & ROOF) != 0 or absf(float(p[X])) > 1.0 or absf(float(p[Z])) > 1.0:
+			continue
+		var a: float = float(p[W]) * float(p[D])
+		if a > area:
+			area = a
+			best = j
+	return best
+
+
+## Whether a building of this shape has a lobby to open (RenderLook.OPEN_SHAPES): the towers with straight walls. A
+## tapered stack, a lighthouse, a hall and a chapel do not, whatever their floors.
+static func has_lobby(shape: String) -> bool:
+	return RenderLook.OPEN_SHAPES.has(shape)
+
+
 ## A part as it stands now. H: the building's standing height (WorldStructures.curH); h: its full height; stage: the
 ## damage stage it is drawn at; cut: a tower whose top floors are gone (it loses its caps and is cut off at H; any other
 ## building is scaled down with its hit points, as the sim's height is). Returns [bottom, top] above the footing, or an

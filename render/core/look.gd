@@ -137,27 +137,44 @@ const PAIR_MARK_OUT_S: float = 0.5       # ... goes over this long,
 const PAIR_MARK_HOLD_S: float = 1.0      # ... and once asked for stays this long, so a drift across PAIR_MARK_DZ and back does not blink it
 ## Camera's near-clip rule (docs/camera/city-in-depth.md section 1), in a match with depth on: a building of the
 ## patch's kind whose face is nearer the lens than NEAR_CLIP.x is not drawn, and one nearer than NEAR_CLIP.y stands as
-## its stub, whatever the action's size: so near, it is in the lens, not something to open. A building that opens
-## floors is not touched by it (it opens).
+## its stub, whatever the action's size: so near, it is in the lens, not something to open. A tall building is not
+## touched by it (a tower opens its lobby or takes the patch); an open lobby's columns and beam thin to ghosts between
+## the two distances (OPEN_GHOST), so a travelling camera does not sweep solid columns across the lens.
 const NEAR_CLIP := Vector2(300.0, 600.0)
 const NEAR_SINK: float = 30.0            # a building not drawn is sunk this far under its footing
 ## VFX's clear query (docs/vfx/depth.md section 4): what the patch and the opened floors leave to be seen of a thing a
 ## building threw. Only a point nearer the camera than the fight there by more than CLEAR_GAP is ever hidden.
 const CLEAR_GAP: float = 30.0
-## Open floors (Orb, 2026-10-12: "'open floors' sounds like it would look the most natural, get that implemented";
-## docs/rendering/open-floors.md). In a match with depth on, a tall building standing between a pane's camera and the
-## action loses the floors the action is seen through, across its whole width: the street shows under it, and the tower
-## and the skyline stay. The action is the patch's own capsule, so both methods are sized and held alike.
-## One building, one method: a building of OPEN_FLOORS_MIN floors or more opens floors and is never holed, patched or
-## sunk; a lower one takes the patch, sinks under a large one, and never opens floors.
+## The lobby (Orb, 2026-10-12: "'open floors' sounds like it would look the most natural, get that implemented", and
+## "gaps between floors without realistic looking supports will make players lose their suspension of disbelief";
+## docs/rendering/open-floors.md). In a match with depth
+## on, a tower standing between a pane's camera and a fight at street level opens its lobby in that pane: one storey at
+## the ground, two floors tall, open through the building, so the street behind shows under the tower. What stands says
+## it is built so: a regular row of columns on every side, each a twelfth of its face wide; a deep beam on them; a warm
+## lit ceiling. It fades in and out by stipple, inside the area budget and never faster than OPEN_FADE_S.
+## The lobby is the building's and the patch is the fight's. What the lobby cannot show (a fighter above its ceiling),
+## the see-through patch shows, as on a low building. A damaged or breaking tower never opens a lobby and does not keep
+## one open: the patch alone. A tall building that is not a tower (a stack, a lighthouse, a hall, a chapel) has no
+## lobby: the patch. No tall building is sunk to a stub in a match with depth on.
 const OPEN_FLOORS_MIN: int = 5           # World's FLOORS_MIN: the buildings whose floors a brunt can clear (from about 7 fighter heights)
-const OPEN_PAD: float = 20.0             # the capsule is taken this much taller, in world units at the action's depth,
-const OPEN_SIDE: float = 75.0            # ... and a tower opens when the capsule's own line (the fighters, the gap, what is travelling) comes this near being hidden by it: not for the room the patch leaves round them
-const OPEN_CLOSE: float = 0.5            # an opening closes at this share of the area an opening may turn a tick,
-const OPEN_HOLD_S: float = 0.75          # ... and only when nothing has asked for that end of it this long (PATCH_HOLD_S)
-const OPEN_POST := Vector3(190.0, 9.0, 0.82)   # the posts left standing in an opened floor: a bay's width along the front (about), a post's width, its tone against the wall's
-const OPEN_SLAB: float = 7.0             # the edge of the floor over an opening (and under one that starts above the ground),
-const OPEN_SLAB_COL: String = "#8d95a1"  # ... a neutral pale: no fighter's hue
+const OPEN_SHAPES: Array = ["shaft", "slab", "block", "stepped", "crown", "spire"]   # the towers with straight walls: these have a lobby
+const OPEN_LOBBY_FLOORS: int = 2         # the lobby is one storey this many floors tall (one double-height storey, not two floors with a line between),
+const OPEN_LOBBY_H: float = 280.0        # ... and on a tower of OPEN_TALL floors or more, as many floors as reach this height (at most OPEN_LOBBY_MAX)
+const OPEN_TALL: int = 10
+const OPEN_LOBBY_MAX: int = 4
+const OPEN_COL := Vector2(0.0833, 4.0)   # the colonnade: a column's width as a share of its face (a twelfth: sturdy against the first build's thin posts), and columns a face (the two corners and those between, evenly)
+const OPEN_BEAM: float = 26.0            # the beam the columns carry: this deep, under the lobby's top
+const OPEN_FRAME_COL: String = "#8d95a1" # the columns' and the beam's stone, mixed half with the wall's own colour: a neutral pale, no fighter's hue
+const OPEN_FAR: float = 0.7              # the far side's columns and beam, in the lobby's shade
+const OPEN_CEIL: String = "#a39679"      # the lobby's ceiling, lit warm (a lit lobby, not the tower's dark inside),
+const OPEN_LAMP: String = "#b7a785"      # ... and its lamp panels, a square a bay: 0.08 of relative luminance over the ceiling, inside the contrast budget (PATTERN_BUDGET), so a shaking camera does not flip rows of them. The shader holds them to the budget whatever is set here
+const OPEN_GRID: float = 75.0            # a ceiling bay
+const OPEN_GHOST: float = 0.72           # inside the patch a column or the beam is thinned to a ghost (this share of its pixels gone), not removed: the row still reads as standing and the fight shows through it. At 0.55 a fighter standing behind a column was veiled (the clip of 2026-10-12)
+const OPEN_FADE_S: float = 0.3           # the lobby and the patch on a tower fade in and out over at least this long,
+const OPEN_CLOSE: float = 0.5            # ... a closing at this share of the area an opening may turn a tick,
+const OPEN_HOLD_S: float = 0.75          # ... and only when nothing has asked for it this long (PATCH_HOLD_S)
+const OPEN_SIDE: float = 75.0            # a tower answers when the capsule's own line (the fighters, the gap, what is travelling) comes this near being hidden by it: not for the room the patch leaves round them
+const OPEN_HEAD: float = 30.0            # the patch takes over on a tower when the sight line to this far above a fighter's head passes over the lobby's ceiling
 ## Windows on the buildings' walls (building.gdshader): a row a floor, a column every WINDOW_PITCH along the wall, lit
 ## or dark by a hash. A floor's windows go out with VFX's blow-outs (PlanetView.blow_windows) and stay out.
 const WINDOW_PITCH: float = 62.0

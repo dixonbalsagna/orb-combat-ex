@@ -1,24 +1,32 @@
 extends SceneTree
-## Open floors (headless, through the real main scene; RenderLook.OPEN_*, docs/rendering/open-floors.md): what the pane
-## asks of the planet view and what the planet view hands the building shader. No picture is judged here.
-## - depth off, a real match: no building is of the kind that opens floors, nothing opens, and every texel says so;
-## - depth on (the tool's own match): a building opens floors by its floors as built and by nothing else;
+## The towers' lobbies (headless, through the real main scene; RenderLook.OPEN_*, docs/rendering/open-floors.md): what
+## the pane asks of the planet view and what the planet view hands the building shader. No picture is judged here.
+## - depth off, a real match: no building has a lobby, nothing opens, and every texel says so;
+## - depth on (the tool's own match): a building has a lobby by its shape and its floors as built and by nothing else;
+##   a tall building of another shape has none and is never among those the patch sinks;
 ## - a pair in the front street in front of a tower: nothing opens;
-## - the pair suddenly in the middle street behind the tower: the tower opens from the ground to a floor line above the
-##   sight line to their heads, across its width, by no more than the area budget a tick, and it does not sink;
-## - the pair back in the front street: the opening holds for OPEN_HOLD_S, then closes at no more than OPEN_CLOSE of
+## - the pair suddenly in the middle street behind the tower: its lobby fades in, one storey from the ground to a floor
+##   line, by no more than the area budget a tick and over no less than OPEN_FADE_S; the tower takes no share of the
+##   patch (the sight line to their heads passes under the ceiling) and does not sink;
+## - the pair back in the front street: the lobby holds for OPEN_HOLD_S, then fades out at no more than OPEN_CLOSE of
 ##   the budget a tick, and is shut;
-## - Camera's request off: nothing is asked, and what was open closes;
-## - Camera's cut flag: an opening is at its target on that frame;
+## - Camera's request off: nothing is asked, and what was open shuts;
+## - Camera's cut flag: a lobby is open on that frame;
 ## - the pair moved far along the street between two ticks under a camera already there: the patch's ends are on the
-##   fighters on that frame, and the tower opens;
-## - behind a low building the low building does not open floors: the patch is handed to the blocks' material;
-## - VFX's clear query: behind an opened tower a point on the opened floor's face is hidden and one above it, one at
-##   the fight's depth and one behind the fight are not; behind a low building a point in front of the fight inside the
-##   patch is hidden;
+##   fighters on that frame, and the lobby opens;
+## - the pair lifted over the lobby's ceiling behind the tower: the tower takes its share of the patch, by area; back
+##   on the ground it gives the share up after its hold;
+## - the tower damaged while its lobby is open: the lobby shuts with no hold and the tower takes the patch; damaged, it
+##   never opens;
+## - a stepped tower's lobby: one part, its shell at the street, carries the colonnade, and the others are marked
+##   as inside it;
+## - behind a low building the low building has no lobby: the patch is handed to the blocks' material;
+## - VFX's clear query: behind an open lobby a point on the lobby's face is hidden and one above it, one at the fight's
+##   depth and one behind the fight are not; behind a low building a point in front of the fight inside the patch is
+##   hidden;
 ## - Camera's near-clip rule: a low building nearer the lens than NEAR_CLIP.y stands as its stub, nearer than
 ##   NEAR_CLIP.x it is under its footing, and a tower as near is neither;
-## - on every tick of all of it, no building both opens floors and sinks or is of the patch's kind.
+## - on every tick of all of it, no tall building sinks and no building without a lobby opens one.
 ##   godot --headless --path . --script res://render/tools/open_check.gd
 
 const DT: float = 1.0 / 60.0
@@ -27,8 +35,9 @@ var main: Node
 var fails: int = 0
 var fx: Array = [0.0, 0.0]
 var fz: Array = [0.0, 0.0]
-var both: bool = false          # a building was seen doing both
-var most: float = 0.0           # the most pixels the openings turned in a tick since it was last cleared
+var lift: float = 0.0           # the pair's height above its ground
+var both: bool = false          # a tall building was seen sinking, or a building without a lobby with one
+var most: float = 0.0           # the most pixels the lobbies and the towers' shares turned in a tick since it was last cleared
 
 
 func _initialize() -> void:
@@ -53,12 +62,12 @@ func _hold() -> void:
 		var f = S.fighters[i]
 		f.x = SimWrap.wrap(fx[i])
 		f.z = fz[i]
-		f.y = WorldTerrain.groundY(S, f.x) + 2.0
+		f.y = WorldTerrain.groundY(S, f.x) + 2.0 + lift
 		f.vx = 0.0
 		f.vy = 0.0
 
 
-## n ticks with the fighters held where the tool has them. Returns the openings' turned pixels, tick by tick.
+## n ticks with the fighters held where the tool has them. Returns the pixels turned, tick by tick.
 func _ticks(n: int) -> PackedFloat32Array:
 	var host: SimHost = main.host
 	var P: PlanetView = main.planet
@@ -71,7 +80,7 @@ func _ticks(n: int) -> PackedFloat32Array:
 		out.append(P.open_turned)
 		most = maxf(most, P.open_turned)
 		for bi in range(host.S.buildings.size()):
-			if P.opens_floors(bi) and P._stub[bi] > 0.0:
+			if P.stands_tall(bi) and P._stub[bi] > 0.0:
 				both = true
 			if not P.opens_floors(bi) and P._open.has(bi):
 				both = true
@@ -97,10 +106,21 @@ func _settle(n: int = 90) -> void:
 	_ticks(2)
 
 
-func _texel(bi: int) -> Color:
+## The texel of building bi's part j in this pane's stub texture (j under 0: its shell at the street).
+func _texel(bi: int, j: int = -1) -> Color:
 	var P: PlanetView = main.planet
 	var st: Array = P._stub_tex0 if P._row0[bi] >= 0 else P._stub_tex
-	return (st[0] as Image).get_pixel((P._inst[bi] as PackedInt32Array)[0], 0)
+	var part: int = RenderShapes.shell(P._parts[bi]) if j < 0 else j
+	return (st[0] as Image).get_pixel((P._inst[bi] as PackedInt32Array)[part], 0)
+
+
+## How many ticks of a run turned anything.
+static func _took(turned: PackedFloat32Array) -> int:
+	var n: int = 0
+	for k in range(turned.size()):
+		if turned[k] > 0.5:
+			n = k + 1
+	return n
 
 
 func _run() -> void:
@@ -118,9 +138,10 @@ func _run() -> void:
 		any = any or not P._open.is_empty() or P.open_turned != 0.0
 	var off: bool = true
 	for bi in range(S.buildings.size()):
-		var t: Color = _texel(bi)
-		off = off and not P.opens_floors(bi) and t.g == 0.0 and t.b == PlanetView.OPEN_OFF
-	_expect(not S.depthOn and not any and off, "depth off, a real match of 300 ticks: no building is of the kind that opens floors, nothing opens, and all %d buildings' texels say so" % S.buildings.size())
+		for j in range((P._inst[bi] as PackedInt32Array).size()):
+			var t: Color = _texel(bi, j)
+			off = off and not P.opens_floors(bi) and not P.stands_tall(bi) and t.g == 0.0 and t.b == PlanetView.OPEN_OFF and t.a == 0.0
+	_expect(not S.depthOn and not any and off, "depth off, a real match of 300 ticks: no building has a lobby, nothing opens, and every part of all %d buildings says so" % S.buildings.size())
 	# --- depth on
 	main.start_match(4, {"p1": false, "p2": false}, {"intro": "skip", "depth": true})
 	host = main.host
@@ -130,12 +151,19 @@ func _run() -> void:
 		main.split_view.detach()
 	var kinds: bool = true
 	var n_open: int = 0
+	var n_tall: int = 0
 	for bi in range(S.buildings.size()):
 		var b = S.buildings[bi]
-		var k: bool = int(b.floors) >= RenderLook.OPEN_FLOORS_MIN
+		var tall_b: bool = int(b.floors) >= RenderLook.OPEN_FLOORS_MIN
+		var k: bool = tall_b and RenderLook.OPEN_SHAPES.has(str(b.shape))
 		n_open += 1 if k else 0
-		kinds = kinds and P.opens_floors(bi) == k and _texel(bi).b == (PlanetView.OPEN_SHUT if k else PlanetView.OPEN_OFF)
-	_expect(S.depthOn and kinds and n_open > 0 and n_open < S.buildings.size(), "depth on: a building opens floors by its floors as built (%d or more: %d of %d buildings), and its texel says which kind it is" % [RenderLook.OPEN_FLOORS_MIN, n_open, S.buildings.size()])
+		n_tall += 1 if tall_b and not k else 0
+		kinds = kinds and P.opens_floors(bi) == k and P.stands_tall(bi) == tall_b and _texel(bi).b == (PlanetView.OPEN_SHUT if k else PlanetView.OPEN_OFF) and _texel(bi).g == 0.0
+	var sunk: Array = []
+	for fc in P.row0_faces(S, host.camera_x(1.0), 1.0e9, true):
+		if int(S.buildings[int(fc[0])].floors) >= RenderLook.OPEN_FLOORS_MIN:
+			sunk.append(int(fc[0]))
+	_expect(S.depthOn and kinds and n_open > 0 and n_open < S.buildings.size() and sunk.is_empty(), "depth on: a building has a lobby by its shape and its floors as built (%d or more: %d of %d buildings), and its texel says which kind it is; %d tall buildings of other shapes have none; no tall building is among those the patch may sink" % [RenderLook.OPEN_FLOORS_MIN, n_open, S.buildings.size(), n_tall])
 	var lanes: PackedFloat32Array = S.lanes
 	var streets: Array = []
 	for k in range(int(lanes[1])):
@@ -144,10 +172,15 @@ func _run() -> void:
 			streets.append(0.5 * (lanes[o] + lanes[o + 1]))
 	var tower = null
 	var low = null
+	var stepped = null
 	for b in S.buildings:
-		if int(b.row) != 1 or int(b.landmark) != 0:
+		if int(b.row) != 1:
 			continue
-		if int(b.floors) >= 10 and (tower == null or b.w > tower.w):
+		if str(b.shape) == "stepped" and P.opens_floors(int(b.idx)):
+			stepped = b
+		if int(b.landmark) != 0:
+			continue
+		if int(b.floors) >= 10 and P.opens_floors(int(b.idx)) and RenderShapes.shell(P._parts[int(b.idx)]) == 0 and (tower == null or b.w > tower.w):
 			tower = b
 		if int(b.floors) < RenderLook.OPEN_FLOORS_MIN and (low == null or b.w > low.w):
 			low = b
@@ -158,34 +191,32 @@ func _run() -> void:
 	var z_mid: float = streets[1]
 	var ti: int = int(tower.idx)
 	var budget: float = RenderLook.PATCH_AREA_TICK * (1280.0 * 720.0) / (1024.0 * 768.0)
+	var fade_ticks: int = int(ceil(RenderLook.OPEN_FADE_S / DT))
 	# In front of the tower.
 	fx = [tower.x - 60.0, tower.x + 60.0]
 	fz = [0.0, 0.0]
 	_settle()
-	_expect(P._open.is_empty() and _texel(ti).b == PlanetView.OPEN_SHUT, "a pair in the front street in front of a tower: nothing opens")
+	_expect(P._open.is_empty() and _texel(ti).b == PlanetView.OPEN_SHUT and _texel(ti).g == 0.0, "a pair in the front street in front of a tower: nothing opens")
 	# Behind it, at once.
 	fz = [z_mid, z_mid]
 	most = 0.0
 	var turned: PackedFloat32Array = _ticks(150)
-	var took: int = 0
-	for k in range(turned.size()):
-		if turned[k] > 0.5:
-			took = k + 1
+	var took: int = _took(turned)
 	var o: Vector2 = P.open_now(ti)
 	var foot: float = P._top[ti] - WorldStructures.curH(tower)
 	var fh: float = tower.h / float(tower.floors)
+	var n_fl: int = PlanetView.lobby_floors(tower)
 	var eye: Vector3 = main.pane.cam_rig.position
 	var zf: float = tower.z + tower.d * 0.5
 	var need: float = -INF
 	for v in main.pane.fighter_views:
-		var head: Vector3 = (v as FighterView).position + Vector3(0.0, 75.0, 0.0)
+		var head: Vector3 = (v as FighterView).position + Vector3(0.0, 75.0 + RenderLook.OPEN_HEAD, 0.0)
 		need = maxf(need, lerpf(head.y, eye.y, (zf - head.z) / (eye.z - head.z)))
-	var floors_open: float = (o.y - foot) / fh
 	var tx: Color = _texel(ti)
-	_expect(absf(o.x - foot) < 0.01 and o.y >= need and o.y < P._top[ti] - fh and absf(floors_open - roundf(floors_open)) < 0.001 and tx.g == PlanetView.OPEN_GROUND and absf(tx.b - o.y) < 0.01, "the pair suddenly in the middle street behind the tower: it opens from the ground to a floor line (%d floors of %.0f units, to %.0f) above the sight line to their heads (%.0f), with %.0f of the tower standing over it" % [int(roundf(floors_open)), fh, o.y - foot, need - foot, P._top[ti] - o.y])
-	_expect(most <= budget + 1.0 and took > 1, "it opens by area: at most %.0f pixels a tick (the budget is %.0f), over %d ticks" % [most, budget, took])
+	_expect(P.lobby_share(ti) == 1.0 and absf(o.x - foot) < 0.01 and absf(o.y - (foot + float(n_fl) * fh)) < 0.01 and o.y - RenderLook.OPEN_BEAM > need and tx.g == 1.0 and absf(tx.b - o.y) < 0.01 and tx.a == 0.0 and P.patch_share(ti) == 0.0, "the pair suddenly in the middle street behind the tower: its lobby opens, one storey of %d floors (%.0f units) from the ground; the sight line to %.0f units over their heads passes at %.0f, under its ceiling at %.0f, and the tower takes no share of the patch" % [n_fl, o.y - foot, RenderLook.OPEN_HEAD, need - foot, o.y - RenderLook.OPEN_BEAM - foot])
+	_expect(most <= budget + 1.0 and took >= fade_ticks, "it fades in: at most %.0f pixels a tick (the budget is %.0f), over %d ticks (no fewer than %d)" % [most, budget, took, fade_ticks])
 	_expect(P._stub[ti] == 0.0 and not (main.pane.patch as Dictionary).get("sink", {}).has(ti), "the tower does not sink and is not among the buildings the patch lowers")
-	# VFX's clear query, behind the opened tower.
+	# VFX's clear query, behind the open lobby.
 	PaneWorld._drawing = main.pane
 	var face_z: float = tower.z + tower.d * 0.5
 	var q_open: float = PaneWorld.clear_query(Vector3(tower.x, foot + 0.5 * fh, face_z))
@@ -194,37 +225,33 @@ func _run() -> void:
 	var q_behind: float = PaneWorld.clear_query(Vector3(tower.x, foot + 40.0, z_mid - 300.0))
 	PaneWorld._drawing = null
 	var q_any: float = PaneWorld.clear_query(Vector3(tower.x, foot + 0.5 * fh, face_z))
-	_expect(q_open == 0.0 and q_above == 1.0 and q_fight == 1.0 and q_behind == 1.0 and q_any == 0.0 and host.vfx.clear_query.is_valid() and float(host.vfx.clear_query.call(Vector3(tower.x, foot + 0.5 * fh, face_z))) == 0.0, "VFX's clear query behind the opened tower: a point on the opened floor's face is hidden (%.0f), one on the wall above it is not (%.0f), nor one at the fight's depth (%.0f) or behind the fight (%.0f); the hub's callable answers the same" % [q_open, q_above, q_fight, q_behind])
-	# Back in front: the hold, then the close.
+	_expect(q_open == 0.0 and q_above == 1.0 and q_fight == 1.0 and q_behind == 1.0 and q_any == 0.0 and host.vfx.clear_query.is_valid() and float(host.vfx.clear_query.call(Vector3(tower.x, foot + 0.5 * fh, face_z))) == 0.0, "VFX's clear query behind the open lobby: a point on the lobby's face is hidden (%.0f), one on the wall above it is not (%.0f), nor one at the fight's depth (%.0f) or behind the fight (%.0f); the hub's callable answers the same" % [q_open, q_above, q_fight, q_behind])
+	# Back in front: the hold, then the fade out.
 	fz = [0.0, 0.0]
 	var hold_ticks: int = int(RenderLook.OPEN_HOLD_S / DT)
 	_ticks(hold_ticks - 3)
-	var held: Vector2 = P.open_now(ti)
+	var held: float = P.lobby_share(ti)
 	most = 0.0
 	turned = _ticks(240)
-	took = 0
-	for k in range(turned.size()):
-		if turned[k] > 0.5:
-			took = k + 1
-	_expect(held.is_equal_approx(o) and most <= RenderLook.OPEN_CLOSE * budget + 1.0 and took > 1 and not P._open.has(ti) and _texel(ti).b == PlanetView.OPEN_SHUT and _texel(ti).g == 0.0, "the pair back in the front street: the opening holds for %.2f s, then closes at no more than %.0f pixels a tick (%.0f is half the budget) over %d ticks, and is shut" % [RenderLook.OPEN_HOLD_S, most, RenderLook.OPEN_CLOSE * budget, took])
+	took = _took(turned)
+	_expect(held == 1.0 and most <= RenderLook.OPEN_CLOSE * budget + 1.0 and took >= fade_ticks and not P._open.has(ti) and _texel(ti).b == PlanetView.OPEN_SHUT and _texel(ti).g == 0.0, "the pair back in the front street: the lobby holds for %.2f s, then fades out at no more than %.0f pixels a tick (%.0f is half the budget) over %d ticks, and is shut" % [RenderLook.OPEN_HOLD_S, most, RenderLook.OPEN_CLOSE * budget, took])
 	# Camera's request.
 	fz = [z_mid, z_mid]
 	_ticks(60)
-	var was: Vector2 = P.open_now(ti)
+	var was: float = P.lobby_share(ti)
 	_pane_ticks(hold_ticks + 240, {"request": false})
 	var shut: bool = not P._open.has(ti)
 	_pane_ticks(120, {})
-	_expect(was.y > was.x and shut and P.open_now(ti).y > P.open_now(ti).x, "Camera's request off: nothing is asked and the opening closes; on again, it opens")
+	_expect(was == 1.0 and shut and P.lobby_share(ti) == 1.0, "Camera's request off: nothing is asked and the lobby shuts; on again, it opens")
 	# Camera's cut flag: in front (shut), then behind with a cut on the next frame.
 	fz = [0.0, 0.0]
 	_ticks(hold_ticks + 240)
 	var shut2: bool = not P._open.has(ti)
 	fz = [z_mid, z_mid]
 	_ticks(1)
-	var part: Vector2 = P.open_now(ti)
+	var part: float = P.lobby_share(ti)
 	_pane_ticks(1, {"cut": true})
-	var jumped: Vector2 = P.open_now(ti)
-	_expect(shut2 and part.y - part.x < o.y - o.x - 1.0 and absf((jumped.y - jumped.x) - (o.y - o.x)) < 0.01, "Camera's cut flag: one tick after the pair is behind the tower %.0f units are open; on a cut the next frame all %.0f are" % [part.y - part.x, jumped.y - jumped.x])
+	_expect(shut2 and part > 0.0 and part < 0.2 and P.lobby_share(ti) == 1.0, "Camera's cut flag: one tick after the pair is behind the tower %.0f%% of its lobby is through; on a cut the next frame all of it is" % (100.0 * part))
 	# The pair moved along the street between two ticks, under a camera that is already where they now stand (a seek, a
 	# tool's pose): the patch's ends are put on them, not walked there by the budget.
 	var jump: float = 12000.0
@@ -240,8 +267,56 @@ func _run() -> void:
 	var pj: Dictionary = main.pane.patch
 	var end_off: float = maxf(absf((pj["wa"] as Vector3).x), absf((pj["wb"] as Vector3).x)) if pj.has("wa") else INF
 	_ticks(40)
-	var oj: Vector2 = P.open_now(ti)
-	_expect(had and end_off < 400.0 and oj.y - oj.x > fh - 0.01, "the pair moved %.0f units along the street between two ticks under a camera already there: the patch's ends are within %.0f units of the camera on that frame, and the tower opens (%.0f units)" % [jump, end_off, oj.y - oj.x])
+	_expect(had and end_off < 400.0 and P.lobby_share(ti) == 1.0, "the pair moved %.0f units along the street between two ticks under a camera already there: the patch's ends are within %.0f units of the camera on that frame, and the lobby opens" % [jump, end_off])
+	# Over the lobby's ceiling: the patch takes the tower.
+	lift = o.y - foot + 80.0
+	most = 0.0
+	turned = _ticks(180)
+	took = _took(turned)
+	var p_up: float = P.patch_share(ti)
+	var k_up: float = P.lobby_share(ti)
+	var a_up: float = _texel(ti).a
+	lift = 0.0
+	_ticks(int(RenderLook.PATCH_HOLD_S / DT) + 120)
+	_expect(p_up == 1.0 and a_up == 1.0 and most <= budget + 1.0 and took > 1 and P.patch_share(ti) == 0.0 and _texel(ti).a == 0.0 and P.lobby_share(ti) == 1.0, "the pair lifted %.0f units, over the lobby's ceiling: the tower takes its share of the patch, at most %.0f pixels a tick (the lobby is %.0f%% open meanwhile); back on the ground it gives the share up and its lobby is open" % [o.y - foot + 80.0, most, 100.0 * k_up])
+	# Damaged while its lobby is open: the lobby goes and the patch takes the tower.
+	WorldStructures.stage(tower)   # loads the stages' thresholds
+	var at: Array = WorldStructures._hpAt
+	var hp_was: float = tower.hp
+	tower.hp = tower.maxhp * (float(at[0]) + float(at[1])) * 0.5
+	var st_now: int = WorldStructures.stage(tower)
+	_ticks(2)
+	var k_first: float = P.lobby_share(ti)
+	_ticks(120)
+	var k_dmg: float = P.lobby_share(ti)
+	var p_dmg: float = P.patch_share(ti)
+	fz = [0.0, 0.0]
+	_ticks(hold_ticks + 240)
+	fz = [z_mid, z_mid]
+	_ticks(120)
+	_expect(st_now >= 1 and not PlanetView.lobby_ok(tower) and k_first < 1.0 and k_dmg == 0.0 and p_dmg == 1.0 and P.lobby_share(ti) == 0.0 and P.patch_share(ti) == 1.0 and _texel(ti).g == 0.0, "the tower damaged (stage %d) while its lobby is open: the lobby starts to shut at once (%.0f%% two ticks on) and is shut, and the tower takes the patch; with the pair gone and back behind it, it does not open again" % [st_now, 100.0 * k_first])
+	tower.hp = hp_was
+	fz = [0.0, 0.0]
+	_ticks(hold_ticks + 240)
+	# A stepped tower: its shell at the street carries the colonnade.
+	if stepped != null:
+		var si: int = int(stepped.idx)
+		fx = [stepped.x - 60.0, stepped.x + 60.0]
+		fz = [z_mid, z_mid]
+		_settle(120)
+		var ps: Array = P._parts[si]
+		var sh: int = RenderShapes.shell(ps)
+		var widest: bool = true
+		var marks: bool = true
+		for j in range(ps.size()):
+			var pj2: Array = ps[j]
+			if float(pj2[RenderShapes.Y0]) <= 0.0 and (int(pj2[RenderShapes.FLAGS]) & RenderShapes.ROOF) == 0 and absf(float(pj2[RenderShapes.X])) <= 1.0 and absf(float(pj2[RenderShapes.Z])) <= 1.0:
+				widest = widest and float(pj2[RenderShapes.W]) * float(pj2[RenderShapes.D]) <= float(ps[sh][RenderShapes.W]) * float(ps[sh][RenderShapes.D])
+			marks = marks and (_texel(si, j).g == (1.0 if j == sh else -1.0))
+		var wt: Color = (P._win[0] as Image).get_pixel((P._inst[si] as PackedInt32Array)[0], 3)
+		_expect(P.lobby_share(si) == 1.0 and widest and marks and sh != 0 and absf(wt.b - 0.5 * float(ps[sh][RenderShapes.W])) < 0.01 and absf(wt.a - 0.5 * float(ps[sh][RenderShapes.D])) < 0.01, "a stepped tower (%s, %d parts): its lobby is open, its widest part on the ground is the shell that carries the colonnade (part %d, not the core), every other part is marked as inside it, and each part knows the shell's footprint (%.0f by %.0f)" % ["a landmark" if int(stepped.landmark) != 0 else "plain", ps.size(), sh, 2.0 * wt.b, 2.0 * wt.a])
+	else:
+		_expect(true, "(no stepped tower in the front block of this world: the shell is not checked)")
 	# Behind a low building.
 	fx = [low.x - 50.0, low.x + 50.0]
 	fz = [z_mid, z_mid]
@@ -250,7 +325,7 @@ func _run() -> void:
 	var pt: Dictionary = main.pane.patch
 	var hole = P._bld_mat.get_shader_parameter("hole")
 	var hw: float = (hole[0] as Vector4).w if hole is Array and (hole as Array).size() > 0 else 0.0
-	_expect(not P.opens_floors(li) and not P._open.has(li) and _texel(li).b == PlanetView.OPEN_OFF and pt.has("wa") and hw > 0.0, "behind a low building (%s, %d floors) in the middle street: it does not open floors; the patch is handed to the blocks' material (radius %.0f pixels)" % [str(low.shape), int(low.floors), hw])
+	_expect(not P.opens_floors(li) and not P._open.has(li) and _texel(li).b == PlanetView.OPEN_OFF and pt.has("wa") and hw > 0.0, "behind a low building (%s, %d floors) in the middle street: it has no lobby; the patch is handed to the blocks' material (radius %.0f pixels)" % [str(low.shape), int(low.floors), hw])
 	PaneWorld._drawing = main.pane
 	var lz: float = low.z + low.d * 0.5
 	var q_patch: float = PaneWorld.clear_query(Vector3(low.x, WorldTerrain.groundY(S, low.x) + 40.0, lz))
@@ -291,6 +366,6 @@ func _run() -> void:
 	tower.row = keep[2]
 	tower.z = keep[3]
 	tower.x = keep[4]
-	_expect(not both, "on every tick of all of it, no building both opens floors and sinks, and none of the patch's kind opens floors")
+	_expect(not both, "on every tick of all of it, no tall building sinks, and no building without a lobby opens one")
 	print("open check %s" % ("passed" if fails == 0 else "FAILED: %d" % fails))
 	quit(0 if fails == 0 else 1)

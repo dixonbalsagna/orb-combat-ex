@@ -21,9 +21,8 @@ const WATER_SHADER: Shader = preload("res://render/shaders/water.gdshader")
 const CROWD_SHADER: Shader = preload("res://render/shaders/crowd.gdshader")
 const BUILDING_SHADER: Shader = preload("res://render/shaders/building.gdshader")
 const STUB_WHOLE := 1.0e9     # a stub height that cuts nothing
-const OPEN_OFF := -2.0e9      # stub_tex's b for a building that never opens floors (building.gdshader v_open),
-const OPEN_SHUT := -1.0e9     # ... for one that does, with none open,
-const OPEN_GROUND := -1.0e6   # ... and its g for an opening that starts at the ground
+const OPEN_OFF := -2.0e9      # stub_tex's b for a building with no lobby (building.gdshader v_open),
+const OPEN_SHUT := -1.0e9     # ... and for a tower with one, while this pane has nothing of it open (open, b is the lobby's top)
 const STREET_STRIPS := 16     # the ground shader's array sizes (ground.gdshaderinc): three streets of five strips, and one to spare
 const STREET_SPANS := 16
 const STREET_AVENUES := 24
@@ -65,9 +64,9 @@ var _crowd_near: bool = false        # the crowd shader has the near-clip rule o
 var _bld_soft: bool = false          # the rows' material has the patch's soft edge (a match with depth on)
 var _focus_z: float = 0.0            # this pane's focus depth as last sent to the building shader
 var _gone: Dictionary = {}           # a building Camera's near-clip rule takes out of the picture -> how far gone it is, 0 (its stub) to 1 (under its footing)
-var _open: Dictionary = {}           # this pane's open floors: building -> [low, high (world y as drawn), the low and the high wanted, the tick times each was last asked for, pixels a unit of its height, its footing]
+var _open: Dictionary = {}           # this pane's lobbies and the towers' shares of the patch (set_open): building -> [the share of its lobby open, its share of the patch, the tick times each was last asked for, the pixels a unit of its height covers, its lobby's floor and top, the two shares wanted now]
 var _open_t: float = -1.0
-var _open_kind := PackedByteArray()  # per building: 1 if it opens floors in this match (opens)
+var _open_kind := PackedByteArray()  # per building, in a match with depth on: 1 a tower with a lobby (opens), 2 a tall building without one; 0 any other, and every building with depth off
 var open_turned: float = 0.0         # the pixels the openings turned in the last set_open (for tools)
 var _top := PackedFloat64Array()     # per building: its top as drawn (-INF when it does not stand), shared by panes
 var _cut: Array = []                 # [Image, ImageTexture, dirty]: each building's cut floors (building.gdshader), shared by panes
@@ -465,8 +464,9 @@ func _set_crowd(S: SimState, bi: int, b, alive: int) -> void:
 			_crowd.set_instance_transform(ci, _hidden(x))
 
 
-## A building's windows, damage stage and shape for building.gdshader (three texels of win_tex an instance, so one
-## for each of its parts): a bit per floor whose windows are out (24, 24 and 14 bits, as the floor cut packs them) and
+## A building's windows, damage stage and shape for building.gdshader (four texels of win_tex an instance, so one
+## for each of its parts; the fourth is the footprint of the building's shell at the street as seen from this part, its
+## middle across and in depth and half its width and depth, for a lobby's ceiling): a bit per floor whose windows are out (24, 24 and 14 bits, as the floor cut packs them) and
 ## the height of a floor (0: no windows on this part, or it does not stand); then the wall's base, how many floors
 ## stand under the part's top, the stage it is drawn at (_drawn) and the rows of windows a floor; then the part's
 ## shape (its top's width and depth shares, its lean) and its district's look. The shader draws the look's windows from
@@ -482,6 +482,7 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 	var ps: Array = _parts[bi]
 	var ix: PackedInt32Array = _inst[bi]
 	var img: Image = wt[0]
+	var sh: Array = ps[RenderShapes.shell(ps)]
 	for j in range(ps.size()):
 		var p: Array = ps[j]
 		var k: int = ix[j]
@@ -496,10 +497,12 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 				up = img.get_pixel(k, 1).g * fh
 		var c := Color(base, ceilf(up / maxf(fh, 1.0)), float(dr[1]), float(RenderShapes.rows(fh)))
 		var s := Color(float(p[RenderShapes.TX]), float(p[RenderShapes.TZ]), float(p[RenderShapes.LEAN]), float(int(p[RenderShapes.LOOKX]) if int(p[RenderShapes.LOOKX]) >= 0 else _look[bi]))
-		if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c or img.get_pixel(k, 2) != s:
+		var f := Color(float(sh[RenderShapes.X]) - float(p[RenderShapes.X]), float(sh[RenderShapes.Z]) - float(p[RenderShapes.Z]), 0.5 * float(sh[RenderShapes.W]), 0.5 * float(sh[RenderShapes.D]))
+		if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c or img.get_pixel(k, 2) != s or img.get_pixel(k, 3) != f:
 			img.set_pixel(k, 0, a)
 			img.set_pixel(k, 1, c)
 			img.set_pixel(k, 2, s)
+			img.set_pixel(k, 3, f)
 			wt[2] = true
 
 
@@ -709,17 +712,17 @@ func set_pair_mark(ends: Vector4, strength: float, half_px: float = 2.5) -> void
 		m.set_shader_parameter("pair_mark_w", Vector2(half_px, RenderLook.PAIR_MARK_TAPER))
 
 
-## This pane's opened floors as faces, for VFX's clear query: each [the building's x from the camera, its width, its
-## front face's depth, the opening's low and high world y].
+## This pane's open lobbies as faces, for VFX's clear query: each [the building's x from the camera, its width, its
+## front face's depth, the lobby's floor and its top as world y]. One counts from when half of it is through.
 func open_faces(S: SimState, cam_x: float) -> Array:
 	var out: Array = []
 	for bi in _open:
 		var o: Array = _open[bi]
-		if float(o[1]) - float(o[0]) < 0.05:
+		if float(o[0]) < 0.5:
 			continue
 		var b = S.buildings[bi]
 		var zd: Vector2 = _depth(b)
-		out.append([SimWrap.sdx(cam_x, b.x), b.w, zd.x + zd.y * 0.5, float(o[0]), float(o[1])])
+		out.append([SimWrap.sdx(cam_x, b.x), b.w, zd.x + zd.y * 0.5, float(o[5]), float(o[6])])
 	return out
 
 
@@ -1028,7 +1031,7 @@ func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}, gone: Dicti
 		for k in _inst[bi]:   # every part of the building is cut down with it
 			var px: Color = (st[0] as Image).get_pixel(k, 0)
 			if absf(px.r - y) > 0.01:
-				(st[0] as Image).set_pixel(k, 0, Color(y, px.g, px.b, 0.0))
+				(st[0] as Image).set_pixel(k, 0, Color(y, px.g, px.b, px.a))
 				changed[1 if row0 else 0] = true
 	for bi in done:
 		_stub_live.erase(bi)
@@ -1043,10 +1046,10 @@ func snap_stubs() -> void:
 	_stub_t = -1.0
 
 
-## Whether building b opens floors in this match (RenderLook.OPEN_FLOORS_MIN): only with depth on, and by its floors as
-## built, so a building is of one kind for the whole match and never both opens floors and takes the patch.
+## Whether building b has a lobby to open in this match (RenderLook.OPEN_*): only with depth on, a tower by its shape
+## and by its floors as built, so a building is of one kind for the whole match.
 static func opens(S: SimState, b) -> bool:
-	return S.depthOn and int(b.floors) >= RenderLook.OPEN_FLOORS_MIN
+	return S.depthOn and int(b.floors) >= RenderLook.OPEN_FLOORS_MIN and RenderShapes.has_lobby(str(b.shape))
 
 
 ## The same for a building of this pane's world, by its index.
@@ -1054,12 +1057,62 @@ func opens_floors(bi: int) -> bool:
 	return bi >= 0 and bi < _open_kind.size() and _open_kind[bi] == 1
 
 
-## This pane's opening in building bi as drawn: its low and high ends (world y), or (0, 0) when shut.
+## Whether building bi is a tall building in a match with depth on (a tower with a lobby, or a tall building without
+## one: a stack, a lighthouse, a hall, a chapel). No tall building is sunk to a stub there.
+func stands_tall(bi: int) -> bool:
+	return bi >= 0 and bi < _open_kind.size() and _open_kind[bi] != 0
+
+
+## How many floors tall building b's lobby is: one double-height storey, and on a tower of OPEN_TALL floors or more as
+## many floors as reach OPEN_LOBBY_H.
+static func lobby_floors(b) -> int:
+	var floors: int = maxi(int(b.floors), 1)
+	var n: int = RenderLook.OPEN_LOBBY_FLOORS
+	if floors >= RenderLook.OPEN_TALL:
+		n = clampi(int(ceil(RenderLook.OPEN_LOBBY_H / maxf(b.h / float(floors), 1.0))), RenderLook.OPEN_LOBBY_FLOORS, RenderLook.OPEN_LOBBY_MAX)
+	return maxi(1, mini(n, floors - 1))
+
+
+## Building bi's lobby as it stands in this pane's world: its floor and its top (world y), or ZERO when the building is
+## not drawn. Its ceiling is OPEN_BEAM under the top.
+func lobby_span(S: SimState, bi: int) -> Vector2:
+	if _top[bi] == -INF:
+		return Vector2.ZERO
+	var b = S.buildings[bi]
+	var foot: float = _top[bi] - WorldStructures.curH(b)
+	return Vector2(foot, foot + float(lobby_floors(b)) * b.h / float(maxi(int(b.floors), 1)))
+
+
+## Whether building b may have its lobby open now: standing, undamaged, no floor cleared. A damaged or breaking tower
+## never opens it and does not keep it open (a clean lit lobby under a burnt-out frame is not one building): the patch
+## shows the fight through it instead.
+static func lobby_ok(b) -> bool:
+	return b.alive and WorldStructures.stage(b) == 0 and b.fmask == (1 << int(b.floors)) - 1
+
+
+## The share of building bi's lobby that is open in this pane (0 to 1).
+func lobby_share(bi: int) -> float:
+	return float(_open[bi][0]) if _open.has(bi) else 0.0
+
+
+## Tower bi's share of the patch in this pane (0 to 1): the see-through window on it, when the fight is above its
+## lobby's ceiling or it is not whole.
+func patch_share(bi: int) -> float:
+	return float(_open[bi][1]) if _open.has(bi) else 0.0
+
+
+## Whether the patch cuts building bi in this pane: any building without a lobby, and a tower by its share.
+func takes_patch(bi: int) -> bool:
+	return not opens_floors(bi) or patch_share(bi) > 0.5
+
+
+## This pane's lobby in building bi as drawn: its floor and its top (world y), or (0, 0) while less than half of it is
+## through.
 func open_now(bi: int) -> Vector2:
-	return Vector2(float(_open[bi][0]), float(_open[bi][1])) if _open.has(bi) else Vector2.ZERO
+	return Vector2(float(_open[bi][5]), float(_open[bi][6])) if _open.has(bi) and float(_open[bi][0]) >= 0.5 else Vector2.ZERO
 
 
-## At build: every building's kind in this pane's stub textures. With depth off none opens floors and nothing is written.
+## At build: every building's kind in this pane's stub textures. With depth off none has a lobby and nothing is written.
 func _mark_open(S: SimState) -> void:
 	_open.clear()
 	_open_t = -1.0
@@ -1069,36 +1122,52 @@ func _mark_open(S: SimState) -> void:
 	if not S.depthOn:
 		return
 	for bi in range(S.buildings.size()):
-		if opens(S, S.buildings[bi]):
+		var b = S.buildings[bi]
+		if opens(S, b):
 			_open_kind[bi] = 1
-			_put_open(bi, 0.0, OPEN_SHUT)
+			_put_open(bi, 0.0, OPEN_SHUT, 0.0)
+		elif int(b.floors) >= RenderLook.OPEN_FLOORS_MIN:
+			_open_kind[bi] = 2
 	(_stub_tex[1] as ImageTexture).update(_stub_tex[0])
 	(_stub_tex0[1] as ImageTexture).update(_stub_tex0[0])
 
 
-## Write building bi's opening to every part's texel. Returns which texture changed (0 the rows', 1 the foreground
-## row's, -1 none).
-func _put_open(bi: int, lo: float, hi: float) -> int:
+## Write building bi's lobby to its parts' texels: the share open (negative on every part but the shell, which alone
+## carries the colonnade), the lobby's top, the tower's share of the patch. Returns which texture changed (0 the
+## rows', 1 the foreground row's, -1 none).
+func _put_open(bi: int, k: float, top: float, p: float) -> int:
 	var row0: bool = _row0[bi] >= 0
 	var st: Array = _stub_tex0 if row0 else _stub_tex
+	var ix: PackedInt32Array = _inst[bi]
+	var shell: int = RenderShapes.shell(_parts[bi])
 	var hit: int = -1
-	for k in _inst[bi]:
-		var px: Color = (st[0] as Image).get_pixel(k, 0)
-		if px.g != lo or px.b != hi:
-			(st[0] as Image).set_pixel(k, 0, Color(px.r, lo, hi, 0.0))
+	for j in range(ix.size()):
+		var g: float = k if j == shell else -k
+		var px: Color = (st[0] as Image).get_pixel(ix[j], 0)
+		if absf(px.g - g) > 0.0001 or absf(px.b - top) > 0.01 or absf(px.a - p) > 0.0001:
+			(st[0] as Image).set_pixel(ix[j], 0, Color(px.r, g, top, p))
 			hit = 1 if row0 else 0
 	return hit
 
 
-## Per frame, per pane: the open floors (building.gdshader's v_open; RenderLook.OPEN_*). want: building -> Vector3(the
-## lowest and the highest world y the action is seen through at it, the pixels of this pane's screen a unit of its
-## height covers). Only a building that opens floors (opens) is taken.
-## - An opening's ends are floor lines: the low one a floor's foot, the high one a floor's ceiling.
-## - It grows as soon as it is asked to, and an end draws back only when nothing has asked for it for OPEN_HOLD_S.
-## - All the openings of the pane together turn at most a tick's share of RenderLook.PATCH_AREA_TICK pixels (at 1024
-##   by 768), less what the patch turned this frame (`left`: what the patch left of it, under 0 for all of it), shared
-##   by what each asks for; a closing end goes at OPEN_CLOSE of that.
-func set_open(S: SimState, want: Dictionary, vp: Vector2, left: float = -1.0) -> void:
+## The area on this pane's screen that a share p of the patch covers (its capsule with the radius scaled by p), in pixels.
+## patch: the capsule's length and radius in pixels.
+static func _patch_area(patch: Vector2, p: float) -> float:
+	return 2.0 * patch.x * patch.y * p + PI * patch.y * patch.y * p * p
+
+
+## Per frame, per pane: the towers' lobbies and their shares of the patch (building.gdshader's v_open; RenderLook.OPEN_*).
+## want: building -> Vector3(1 if the action is seen under its lobby's ceiling, 1 if it is seen over it, the pixels of
+## this pane's screen a unit of its height covers across its face). Only a tower with a lobby (opens) is taken.
+## patch: the patch on this pane's screen, its length and its radius in pixels.
+## - A lobby opens when the action is seen under its ceiling and the tower is whole (lobby_ok). It shuts OPEN_HOLD_S
+##   after nothing has asked for it, and with no hold on a tower that is no longer whole.
+## - A tower takes its share of the patch when the action is seen over the ceiling, or when it stands in front of the
+##   action and is not whole. It gives the share up PATCH_HOLD_S after.
+## - Both fade. All of them together turn at most a tick's share of RenderLook.PATCH_AREA_TICK pixels (at 1024 by 768),
+##   less what the patch itself turned this frame (`left`: what it left of the budget, under 0 for all of it), a
+##   closing at OPEN_CLOSE of that; and none goes faster than over OPEN_FADE_S.
+func set_open(S: SimState, want: Dictionary, vp: Vector2, left: float = -1.0, patch: Vector2 = Vector2.ZERO) -> void:
 	var now: float = tick_time(S)
 	var snap: bool = _open_t < 0.0 or now < _open_t
 	var ticks: float = clampf(now - _open_t, 0.0, 0.1) / SimConst.DT if not snap else 0.0
@@ -1106,69 +1175,68 @@ func set_open(S: SimState, want: Dictionary, vp: Vector2, left: float = -1.0) ->
 	open_turned = 0.0
 	for bi in want:
 		if not _open.has(bi) and opens_floors(bi) and _top[bi] > -INF:
-			_open[bi] = [0.0, 0.0, 0.0, 0.0, now, now, 1.0, 0.0, false]
+			# [share open, share of the patch, when the lobby was last asked for, when the patch was, pixels a unit of
+			#  height, the lobby's floor, its top, the shares wanted now]
+			_open[bi] = [0.0, 0.0, -1.0e9, -1.0e9, 1.0, 0.0, 0.0, 0.0, 0.0]
 	if _open.is_empty():
 		return
 	var budget: float = RenderLook.PATCH_AREA_TICK * (vp.x * vp.y) / (1024.0 * 768.0) * ticks
 	if left >= 0.0:
 		budget = minf(budget, left)
-	# What each opening wants now.
+	# What each wants now, and the area it would turn.
 	var need: float = 0.0
 	for bi in _open:
 		var o: Array = _open[bi]
 		var b = S.buildings[bi]
-		var top: float = _top[bi]
-		if top == -INF:
-			o[2] = o[0]
-			o[3] = o[0]
-			continue
-		var foot: float = top - WorldStructures.curH(b)
-		var fh: float = maxf(b.h / float(maxi(int(b.floors), 1)), 1.0)
-		o[7] = foot
-		if want.has(bi) and opens_floors(bi):
-			var w: Vector3 = want[bi]
-			var k_lo: float = maxf(floorf((w.x - foot) / fh), 0.0)
-			var k_hi: float = maxf(ceilf((w.y - foot) / fh), k_lo + 1.0)
-			var t_lo: float = minf(foot + k_lo * fh, top - 1.0)
-			var t_hi: float = minf(foot + k_hi * fh, top)
-			o[6] = w.z
-			if not o[8]:   # a new opening starts shut at its low end and opens upward
-				o[0] = t_lo
-				o[1] = t_lo
-				o[2] = t_lo
-				o[3] = t_hi
-				o[8] = true
-			if t_lo <= float(o[2]):
-				o[2] = t_lo
-				o[4] = now
-			elif now - float(o[4]) >= RenderLook.OPEN_HOLD_S:
-				o[2] = t_lo
-			if t_hi >= float(o[3]):
-				o[3] = t_hi
-				o[5] = now
-			elif now - float(o[5]) >= RenderLook.OPEN_HOLD_S:
-				o[3] = t_hi
-		elif now - maxf(float(o[4]), float(o[5])) >= RenderLook.OPEN_HOLD_S:
-			o[3] = o[2]   # nothing asks for it any more: the top comes down to the bottom
-		o[2] = minf(float(o[2]), float(o[3]))
-		var d_lo: float = float(o[2]) - float(o[0])
-		var d_hi: float = float(o[3]) - float(o[1])
-		need += float(o[6]) * ((-d_lo if d_lo < 0.0 else d_lo / RenderLook.OPEN_CLOSE) + (d_hi if d_hi > 0.0 else -d_hi / RenderLook.OPEN_CLOSE))
-	var k: float = 1.0 if snap else minf(1.0, budget / maxf(need, 0.001))
+		var span: Vector2 = lobby_span(S, bi)
+		var whole: bool = span != Vector2.ZERO and lobby_ok(b)
+		var asked: bool = want.has(bi)
+		var w: Vector3 = want[bi] if asked else Vector3.ZERO
+		if asked:
+			o[4] = w.z
+		if span != Vector2.ZERO:
+			o[5] = span.x
+			o[6] = span.y
+		if asked and whole and w.x > 0.5:
+			o[2] = now
+		if asked and (w.y > 0.5 or not whole):
+			o[3] = now
+		o[7] = 1.0 if whole and now - float(o[2]) < RenderLook.OPEN_HOLD_S else 0.0
+		o[8] = 1.0 if span != Vector2.ZERO and now - float(o[3]) < RenderLook.PATCH_HOLD_S else 0.0
+		var dk: float = float(o[7]) - float(o[0])
+		var da: float = _patch_area(patch, float(o[8])) - _patch_area(patch, float(o[1]))
+		var lobby_px: float = float(o[4]) * (float(o[6]) - float(o[5]))
+		need += lobby_px * (dk if dk > 0.0 else -dk / RenderLook.OPEN_CLOSE) + (da if da > 0.0 else -da / RenderLook.OPEN_CLOSE)
+	var s: float = 1.0 if snap else minf(1.0, budget / maxf(need, 0.001))
+	var step: float = 1.0 if snap else ticks * SimConst.DT / RenderLook.OPEN_FADE_S   # no fade is shorter than OPEN_FADE_S
 	var changed: Array = [false, false]
 	var done: Array = []
 	for bi in _open:
 		var o: Array = _open[bi]
-		var d_lo: float = (float(o[2]) - float(o[0])) * k
-		var d_hi: float = (float(o[3]) - float(o[1])) * k
-		open_turned += float(o[6]) * (absf(d_lo) + absf(d_hi))
-		o[0] = float(o[0]) + d_lo
-		o[1] = float(o[1]) + d_hi
-		var shut: bool = float(o[1]) - float(o[0]) < 0.05
-		var hit: int = _put_open(bi, 0.0, OPEN_SHUT) if shut else _put_open(bi, OPEN_GROUND if float(o[0]) <= float(o[7]) + 0.05 else float(o[0]), float(o[1]))
+		var k0: float = float(o[0])
+		var p0: float = float(o[1])
+		var k1: float = k0 + clampf((float(o[7]) - k0) * s, -step, step)
+		var p1: float = float(o[8])
+		if patch.y > 0.0 and not snap:
+			# By area: the share whose capsule covers what the budget allows of the change.
+			var a0: float = _patch_area(patch, p0)
+			var a1: float = a0 + (_patch_area(patch, float(o[8])) - a0) * s
+			var lr: float = patch.x * patch.y
+			var rr: float = PI * patch.y * patch.y
+			p1 = (sqrt(maxf(lr * lr + rr * a1, 0.0)) - lr) / rr
+			p1 = p0 + clampf(p1 - p0, -step, step)
+		if absf(k1 - float(o[7])) < 0.0001:
+			k1 = float(o[7])
+		if absf(p1 - float(o[8])) < 0.0001:
+			p1 = float(o[8])
+		open_turned += float(o[4]) * (float(o[6]) - float(o[5])) * absf(k1 - k0) + absf(_patch_area(patch, p1) - _patch_area(patch, p0))
+		o[0] = k1
+		o[1] = p1
+		var gone: bool = k1 <= 0.0 and p1 <= 0.0 and float(o[7]) <= 0.0 and float(o[8]) <= 0.0 and not want.has(bi)
+		var hit: int = _put_open(bi, 0.0, OPEN_SHUT, 0.0) if gone else _put_open(bi, k1, float(o[6]), p1)
 		if hit >= 0:
 			changed[hit] = true
-		if shut and float(o[3]) - float(o[2]) < 0.05 and not want.has(bi):
+		if gone:
 			done.append(bi)
 	for bi in done:
 		_open.erase(bi)
@@ -1178,7 +1246,7 @@ func set_open(S: SimState, want: Dictionary, vp: Vector2, left: float = -1.0) ->
 		(_stub_tex0[1] as ImageTexture).update(_stub_tex0[0])
 
 
-## The next set_open jumps to its targets instead of easing (for tools that pose a frame).
+## The next set_open jumps to its targets instead of fading (a cut; tools that pose a frame).
 func snap_open() -> void:
 	_open_t = -1.0
 
@@ -1237,11 +1305,12 @@ func has_row0() -> bool:
 ## The standing buildings of the foreground row within `reach` of the camera's x, for the patch: each [the building,
 ## its x from the camera, its width, its footing, its top as it stands whole, its front face's depth].
 ## deep (a match with depth on): every row's buildings, each with its back face's depth as a seventh number, since the
-## patch then works through every row in front of the action. A building that opens floors is never among them.
+## patch then works through every row in front of the action. A tall building (stands_tall) is never among them: none
+## is sunk in a match with depth on.
 func row0_faces(S: SimState, cam_x: float, reach: float, deep: bool = false) -> Array:
 	var out: Array = []
 	for bi in (range(S.buildings.size()) if deep else _row0_b):
-		if _top[bi] == -INF or opens_floors(bi):
+		if _top[bi] == -INF or stands_tall(bi):
 			continue
 		var b = S.buildings[bi]
 		var bx: float = SimWrap.sdx(cam_x, b.x)
@@ -1273,9 +1342,15 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("pan_mix", RenderLook.PAN_HAZE_MIX)
 	m.set_shader_parameter("dmg_holes", RenderLook.DMG_HOLES)
 	m.set_shader_parameter("pattern_budget", RenderLook.PATTERN_BUDGET)
-	m.set_shader_parameter("open_post", RenderLook.OPEN_POST)
-	m.set_shader_parameter("open_slab", RenderLook.OPEN_SLAB)
-	m.set_shader_parameter("open_slab_col", RenderLook.col(RenderLook.OPEN_SLAB_COL))
+	m.set_shader_parameter("open_col", RenderLook.OPEN_COL)
+	m.set_shader_parameter("open_beam", RenderLook.OPEN_BEAM)
+	m.set_shader_parameter("open_frame_col", RenderLook.col(RenderLook.OPEN_FRAME_COL))
+	m.set_shader_parameter("open_far", RenderLook.OPEN_FAR)
+	m.set_shader_parameter("open_ceil", RenderLook.col(RenderLook.OPEN_CEIL))
+	m.set_shader_parameter("open_lamp", RenderLook.col(RenderLook.OPEN_LAMP))
+	m.set_shader_parameter("open_grid", RenderLook.OPEN_GRID)
+	m.set_shader_parameter("open_ghost", RenderLook.OPEN_GHOST)
+	m.set_shader_parameter("open_near", RenderLook.NEAR_CLIP)
 	var lu: Dictionary = RenderShapes.look_uniforms()
 	for key in lu:
 		m.set_shader_parameter(key, lu[key])
@@ -1284,10 +1359,10 @@ func _building_mat() -> ShaderMaterial:
 	return m
 
 
-## A three-row float texture of window and shape data, a column an instance: [image, texture, dirty]. A column not
-## written yet is a plain box.
+## A four-row float texture of window and shape data, a column an instance: [image, texture, dirty]. A column not
+## written yet is a plain box with no shell.
 static func _win_texture(n: int) -> Array:
-	var img := Image.create_empty(maxi(1, n), 3, false, Image.FORMAT_RGBAF)
+	var img := Image.create_empty(maxi(1, n), 4, false, Image.FORMAT_RGBAF)
 	img.fill(Color(0, 0, 0, 0))
 	img.fill_rect(Rect2i(0, 2, maxi(1, n), 1), Color(1.0, 1.0, 0.0, 0.0))
 	return [img, ImageTexture.create_from_image(img), false]

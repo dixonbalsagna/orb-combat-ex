@@ -376,7 +376,7 @@ func _clear_region(S: SimState, cam_x: float, cand: Array, eye: Vector3, chest: 
 			planet.occluders(S, cand, eye, cam_x, chest[i], RenderLook.OCCL_MARGIN, -1, hide)
 	var cuts: bool = false
 	for bi in hide:
-		cuts = cuts or not planet.opens_floors(bi)
+		cuts = cuts or planet.takes_patch(bi)
 	var rects: Array = []
 	for f in planet.open_faces(S, cam_x):
 		var r := Rect2()
@@ -436,32 +436,44 @@ static func clear_query(p: Vector3) -> float:
 	return best if best >= 0.0 else 1.0
 
 
-## Open floors (RenderLook.OPEN_*; Orb, 2026-10-12): with depth on, every tall building (PlanetView.opens) standing
-## between this pane's camera and the line of the patch's capsule is asked to open the floors the capsule is seen
-## through, across its width. The capsule is the patch's own as drawn (both fighters, the gap, what is travelling; held
-## and grown by area), so the two methods follow one action. A tower opens for the line itself (within OPEN_SIDE), not
-## for the room the patch leaves round it: a pair standing clear in an avenue opens neither corner. No patch (no fighter in view, or Camera's request off): nothing is asked
-## and the openings close after their hold. The building a launched fighter is aimed at stays whole. Presentation only.
+## The towers' lobbies (RenderLook.OPEN_*; Orb, 2026-10-12): with depth on, every tower with a lobby
+## (PlanetView.opens) standing between this pane's camera and the line of the patch's capsule is asked two things.
+## Is the action seen under its lobby's ceiling (the sight line to a fighter's feet passes under it): then the lobby
+## opens. Is it seen over the ceiling (the sight line to OPEN_HEAD above his head passes over it): then the tower takes
+## its share of the patch, as a low building does. The capsule is the patch's own as drawn (both fighters, the gap, what
+## is travelling), so the two follow one action. A tower answers for the line itself (within OPEN_SIDE), not for the
+## room the patch leaves round it: a pair standing clear in an avenue opens neither corner. No patch (no fighter in
+## view, or Camera's request off): nothing is asked, and lobbies shut and shares fall after their holds. The building a
+## launched fighter is aimed at stays whole. Presentation only.
 func _open_floors(S: SimState, cam_x: float, vp: Vector2, aim: PackedInt32Array) -> void:
 	if not S.depthOn:
 		return
 	var want: Dictionary = {}
 	var left: float = -1.0
+	var patch_px := Vector2.ZERO
 	if patch.has("wa"):
 		var eye: Vector3 = cam_rig.position
 		var wa: Vector3 = patch["wa"]
 		var wb: Vector3 = patch["wb"]
-		var r: float = float(patch["wr"]) + RenderLook.OPEN_PAD
+		var r: float = float(patch["wr"])
 		left = float(patch["left"])
+		patch_px = Vector2((patch["a"] as Vector2).distance_to(patch["b"]), float(patch["r"]))
+		var feet: float = 0.5 * FighterView.HEIGHT
+		var head: float = 0.5 * FighterView.HEIGHT + RenderLook.OPEN_HEAD
 		for bi in planet.occluder_candidates(S, cam_x, minf(eye.x, minf(wa.x, wb.x) - r), maxf(eye.x, maxf(wa.x, wb.x) + r), minf(wa.z, wb.z), 0.0):
 			if not planet.opens_floors(bi) or aim.has(bi):
 				continue
+			var span: Vector2 = planet.lobby_span(S, bi)
+			if span == Vector2.ZERO:
+				continue
+			var ceil_y: float = span.y - RenderLook.OPEN_BEAM
 			var b = S.buildings[bi]
 			var zd: Vector2 = PlanetView._depth(b)
 			var zf: float = zd.x + zd.y * 0.5
 			var bx: float = SimWrap.sdx(cam_x, b.x)
-			var lo: float = INF
-			var hi: float = -INF
+			var hit: bool = false
+			var under: bool = false
+			var over: bool = false
 			for k in range(7):
 				var p: Vector3 = wa.lerp(wb, float(k) / 6.0)
 				if zf <= p.z + 1.0 or eye.z - p.z < 1.0:
@@ -470,16 +482,17 @@ func _open_floors(S: SimState, cam_x: float, vp: Vector2, aim: PackedInt32Array)
 					var s: float = (zface - p.z) / (eye.z - p.z)
 					if absf(p.x + (eye.x - p.x) * s - bx) > 0.5 * b.w + RenderLook.OPEN_SIDE * (1.0 - s):
 						continue
-					lo = minf(lo, lerpf(p.y - r, eye.y, s))
-					hi = maxf(hi, lerpf(p.y + r, eye.y, s))
-			if hi > lo:
+					hit = true
+					under = under or lerpf(p.y - feet, eye.y, s) < ceil_y
+					over = over or lerpf(p.y + head, eye.y, s) > ceil_y
+			if hit:
 				# The pixels a unit of its height covers on this pane's screen: its face's width in view, times the scale there.
 				var c0: Vector2 = cam_rig.unproject_position(Vector3(bx - 0.5 * b.w, eye.y, zf))
 				var c1: Vector2 = cam_rig.unproject_position(Vector3(bx + 0.5 * b.w, eye.y, zf))
 				var wpx: float = maxf(minf(c1.x, vp.x) - maxf(c0.x, 0.0), 0.0)
 				var ppu: float = absf(cam_rig.unproject_position(Vector3(bx, eye.y + 100.0, zf)).y - cam_rig.unproject_position(Vector3(bx, eye.y, zf)).y) / 100.0
-				want[bi] = Vector3(lo, hi, maxf(wpx * ppu, 0.001))
-	planet.set_open(S, want, vp, left)
+				want[bi] = Vector3(1.0 if under else 0.0, 1.0 if over else 0.0, maxf(wpx * ppu, 0.001))
+	planet.set_open(S, want, vp, left, patch_px)
 
 
 ## The next frame's stubs, joined hole and lane cues jump to their targets instead of easing (for tools that pose a

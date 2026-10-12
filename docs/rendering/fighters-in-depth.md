@@ -100,8 +100,8 @@ Orb's ruling for the foreground row was one see-through patch sized to the actio
 |---|---|---|
 | A depth on the sim's effect particles (`SimFxView.Part.z`) | Simulation, then Rendering's one line | **Done** (9a8b3a2c and the batch after it) |
 | The camera closes on the pair's depth, or zooms; it keeps a pair in a crossing near the middle of the frame | Camera | Before the middle street is fought in |
-| The patch through every row in front of the action | Rendering | **Done** with depth on, for buildings under 5 floors (`open-floors.md`). With depth off the rows behind keep the hole and stubs |
-| How a tower opens when the fight is behind it | Orb picked open floors (2026-10-12) | **Done:** `open-floors.md` |
+| The patch through every row in front of the action | Rendering | **Done** with depth on, for every building without a lobby, and on a tower when the fight is over its lobby's ceiling or the tower is damaged (`open-floors.md`). With depth off the rows behind keep the hole and stubs |
+| How a tower opens when the fight is behind it | Orb picked open floors (2026-10-12) | **Done**, reworked the same day as a lobby with real-looking supports: `open-floors.md` |
 | The crowd hazed by its depth | Rendering | A small look batch, with the flash clip |
 | The ground field reads the sim's rows of ground in depth | Rendering | With L4's first crater in depth |
 | A shadow on the roof he stands on | World's read, then Rendering | **Done** with depth on (section 8) |
@@ -149,7 +149,8 @@ No hue, and nothing moves along it, as before.
 - **With the switch off nothing changes:** `focus_z` is 0 on every frame and every number is the one it was.
 - **Not seen with the committed dolly.** What follows was seen with Camera's files before they were committed. Its point 3 (a building behind the lens is not drawn) holds for a low building, which sinks inside 300 units of the lens. **A tower the lens passes through on a drift between streets has not been looked at:** a tower opens floors and does not sink.
 - **Seen in a scratch tree with Camera's uncommitted files:** the pair is plane size in the middle street and against the back block's rear wall (see Limits), the camera standing in the street in front. At a crossing it is seen down the avenue with nothing opened. Behind a tower the opened floors fill the frame: the dark under the tower is the top quarter of the picture, and the fight is under it.
-- **Two things that showed there and are fixed in this batch:** a post stood between the two fighters (posts now give way inside the patch), and the crowd of the street the camera stands in was a row of heads across the bottom of the frame (the crowd follows the near-clip distances).
+- **Seen with the committed dolly switched on** (a scratch scene, the stills and the clip of the lobby batch, `img/lanes/INDEX.md`): a pair in the middle street behind a tower is plane size under its colonnade, the lit ceiling across the top quarter of the picture.
+- **Two things that showed there and were fixed:** a post stood between the two fighters (in the lobby a column is thinned to a ghost inside the patch), and the crowd of the street the camera stands in was a row of heads across the bottom of the frame (the crowd follows the near-clip distances).
 - **One thing for VFX:** its `ppu_at(z)` takes a depth from the fighter plane. With the dolly it needs the depth from the focus: Rendering's asks subtract it already (`SimHost.flash_focus_z`), and VFX's own will need the same number.
 
 **When Camera's `clear[i]` replaces my own reads** (its section 4). Today a pane reads `request`, `only` and a hole radius from Camera and works the action out itself. What changes:
