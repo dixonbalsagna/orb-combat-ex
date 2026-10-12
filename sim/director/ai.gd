@@ -316,6 +316,11 @@ static func skill() -> Dictionary:
 			pr.append(float(j.pressReact.get(name, 0.0)))
 		_skill = {"pressReact": pr, "beamAnswer": float(j.beamAnswer), "sigPick": float(j.sigPick), "level": String(j.get("level", "medium")), "levels": j.get("levels", {}), "perfectBlock": j.get("perfectBlock", {}),
 			"digInBy": j.get("digInBy", {}), "digInBoth": bool(j.get("digInBoth", false)), "digInMax": int(j.get("digInMax", -1)), "digInRestS": float(j.get("digInRestS", 0.0))}   # the brawl's dig-in keys (DirBrawl.aiInput)
+		# Every other top-level key is carried as it is written, so no key of ai.json is dead (reactTicks, answerTicks,
+		# mineMinKi, stance, beamLook, and whatever comes after them).
+		for jk in j.keys():
+			if not _skill.has(jk):
+				_skill[jk] = j[jk]
 	return _skill
 
 

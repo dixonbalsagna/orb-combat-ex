@@ -470,6 +470,18 @@
                   "maximum": 1,
                   "description": "The AI's share for breakGuard."
                 },
+                "mediumVsHeavies": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Against a rival whose last two blows were heavies, the share of its strings that are mediums."
+                },
+                "perfectVsHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Its perfect block against a heavy it sees wound in a brawl."
+                },
                 "tapGapMax": {
                   "type": "number",
                   "minimum": 0,
@@ -904,6 +916,18 @@
                   "maximum": 1,
                   "description": "The AI's share for breakGuard."
                 },
+                "mediumVsHeavies": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Against a rival whose last two blows were heavies, the share of its strings that are mediums."
+                },
+                "perfectVsHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Its perfect block against a heavy it sees wound in a brawl."
+                },
                 "tapGapMax": {
                   "type": "number",
                   "minimum": 0,
@@ -1337,6 +1361,18 @@
                   "minimum": 0,
                   "maximum": 1,
                   "description": "The AI's share for breakGuard."
+                },
+                "mediumVsHeavies": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Against a rival whose last two blows were heavies, the share of its strings that are mediums."
+                },
+                "perfectVsHeavy": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Its perfect block against a heavy it sees wound in a brawl."
                 },
                 "tapGapMax": {
                   "type": "number",

@@ -60,7 +60,7 @@ const TAP_GAP: int = BASE + 8   # the ticks between his last two light presses, 
 const STR_ON: int = BASE + 9    # 1 while his string runs
 const STRING_N: int = BASE + 10 # landed blows of his string
 const LAND_AT: int = BASE + 11  # S.tick of his last blow thrown or landed (the string's lapse)
-const RUN: int = BASE + 12      # his run against the rival, in halves: up two for each blow he lands (one for a burst's), down two for each that lands on him
+const RUN: int = BASE + 12      # his run against the rival, in quarters of a point (RUN_U): up a point for each blow he lands (half for a burst's, flurry.runBy.medium for a medium), down by the same for each that lands on him
 const BLOWS: int = BASE + 13    # blows he has thrown in this brawl
 const HOLD_AT: int = BASE + 14  # the live tick his heavy's press went down; 0 none
 const LAST_AT: int = BASE + 15  # S.tick of his last attack press in this brawl
@@ -136,7 +136,11 @@ const GAPV: int = BASE + 84       # on a fighter who winds: the gap his blow mus
 const GAPV_ON: int = BASE + 85    # ... 1 once that count has begun
 const MATCH_DBL: int = BASE + 86   # the double hits of this match so far (kept across brawls, on both): the AI digs in to digInMax of them
 const MATCH_DBL_AT: int = BASE + 87   # the live tick of the last one (kept across brawls): the AI does not dig in within digInRestS of it
-const END: int = BASE + 88
+const LAST2: int = BASE + 88      # his last two blows thrown in this brawl, newest in the low 3 bits: 0 none, else the kind plus 1
+const AI_MEDS: int = BASE + 89    # the AI: 1 while its string is mediums (against a rival whose last two blows were heavies)
+const END: int = BASE + 90
+const RUN_U: int = 4   # the run is counted in quarters of a point
+const HEAVY2: int = ((3 + 1) << 3) | (3 + 1)   # LAST2 when both were heavies (BIG)
 const LIGHT: int = 0
 const FLURRY: int = 1
 const MEDIUM: int = 2   # Y: a wound blow of 12 ticks (the heavy strikes before the three strengths)
@@ -162,9 +166,9 @@ static func _size(f) -> void:
 		f.act.dirI.resize(END)
 
 
+## A read never sizes the integers (their count is in the gameplay hash): a slot that was never written reads 0.
 static func _g(f, k: int) -> int:
-	_size(f)
-	return f.act.dirI[k]
+	return f.act.dirI[k] if k < f.act.dirI.size() else 0
 
 
 static func _s(f, k: int, v: int) -> void:
@@ -717,6 +721,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		kind = LIGHT
 	if st == 2 or energy:
 		rip = 0   # B after a perfect block is the launcher, and a shot is no riposte
+	_s(f, LAST2, ((_g(f, LAST2) & 7) << 3) | (kind + 1))   # his last two blows, for the AI's answer to a run of heavies
 	# A new string of his: an exchange number of its own, for the keyed draws and the brink chapter's "a later exchange".
 	if _g(f, STR_ON) == 0:
 		_s(f, STR_ON, 1)
@@ -929,7 +934,7 @@ static func _closes(S: SimState, ex, f) -> bool:
 	var o = ex.D if f == ex.A else ex.A
 	if _g(o, SAFE_UNTIL) < 0 or S.tick < _g(o, SAFE_UNTIL):
 		return false
-	return _g(f, RUN) >= 2 * int(cfg().flurry.runToClose) or _g(ex.A, TRADE_WIN) == (1 if f == ex.A else 2)
+	return _g(f, RUN) >= RUN_U * int(cfg().flurry.runToClose) or _g(ex.A, TRADE_WIN) == (1 if f == ex.A else 2)
 
 
 ## The trade's clock starts again: after a close, a stagger, a real answer, and when the trade stops.
@@ -964,7 +969,7 @@ static func _tradeTick(S: SimState, ex) -> void:
 	var t: int = S.tick - _g(ex.A, TRADE_T0)
 	if _g(ex.A, TRADE_WIN) != 0 or _g(ex.A, DBL_AT) != 0 or t < int(fl.tradeMaxTicks):
 		return
-	if absi(_g(ex.A, RUN) - _g(ex.D, RUN)) <= 2 * int(fl.levelWithin):
+	if absi(_g(ex.A, RUN) - _g(ex.D, RUN)) <= RUN_U * int(fl.levelWithin):
 		if t >= int(fl.doubleTicks) and not quiet(ex) and ex.A.stunTicks <= 0 and ex.D.stunTicks <= 0 and ex.A.rush == null and ex.D.rush == null:
 			_double(S, ex)
 		return
@@ -976,8 +981,8 @@ static func _tradeTick(S: SimState, ex) -> void:
 	e.n = t
 	# For QA: the limit; and the two runs at the break, his and the rival's. A break is always for a lead now.
 	e.amount = float(int(fl.tradeMaxTicks))
-	e.x = float(_g(who, RUN)) * 0.5
-	e.y = float(_g(ex.D if w == 1 else ex.A, RUN)) * 0.5
+	e.x = float(_g(who, RUN)) / float(RUN_U)
+	e.y = float(_g(ex.D if w == 1 else ex.A, RUN)) / float(RUN_U)
 	SimEvents.feed(S, "THE TRADE BREAKS", who.name + "'s next blow that lands closes it, after " + str(t) + " ticks")
 
 
@@ -1127,7 +1132,7 @@ static func contact(S: SimState, ex, b) -> void:
 		_s(o, HOLD_AT, 0)
 		_drop(S, ex, o)
 		oWinding = false
-	if energy == "blast" and _g(f, RUN) >= 2 * int(c.energy.reach.blast.enderRun):
+	if energy == "blast" and _g(f, RUN) >= RUN_U * int(c.energy.reach.blast.enderRun):
 		# The blast as a string's ender (section 5b, re-ruled in 14): his run is enderRun or more as it lands. A
 		# knock-back of its own length along the stick's lean, half a set-up, and the brawl ends. Thrown cold it is a
 		# medium with its own reel (below): an ender, and not an opener.
@@ -1165,11 +1170,13 @@ static func contact(S: SimState, ex, b) -> void:
 		if _setPiece(ex):
 			over(S, ex, "finisher")
 		return
-	# The run (in halves: a burst's blow adds one half): his goes up and the rival's comes down by replyTakes.
+	# The run (in quarters of a point: a burst's blow adds half a point): his goes up and the rival's comes down by
+	# replyTakes. A landed medium counts flurry.runBy.medium both ways, so a flurry of mediums out-runs slow lights.
 	var bolt: bool = energy == "bolt"
+	var pts: int = int(round(float(c.flurry.runBy.medium) * float(RUN_U))) if (kind == MEDIUM and energy == "") else RUN_U
 	if o.stunTicks <= 0 or bool(c.flurry.staggeredAddsRun):
-		_s(f, RUN, _g(f, RUN) + (int(c.burst.runHalves) if bool(a.get("burst", false)) else (int(c.energy.reach.bolt.runHalves) if bolt else 2)))
-	_s(o, RUN, maxi(0, _g(o, RUN) - 2 * int(c.flurry.replyTakes)))
+		_s(f, RUN, _g(f, RUN) + (int(c.burst.runHalves) * RUN_U / 2 if bool(a.get("burst", false)) else (int(c.energy.reach.bolt.runHalves) * RUN_U / 2 if bolt else pts)))
+	_s(o, RUN, maxi(0, _g(o, RUN) - pts * int(c.flurry.replyTakes)))
 	if kind == BIG:
 		_bigLanded(S, ex, f, o, a)
 		return
@@ -2214,6 +2221,8 @@ static func _burstEnd(S: SimState, f) -> void:
 static func _aiPick(S: SimState, ex, f, bl: Dictionary) -> int:
 	var c: Dictionary = cfg()
 	var key: int = S.tick * 2 + (0 if f == ex.A else 1)
+	if _g(f, AI_MEDS) == 1 and f.ki >= float(c.medium.ki):
+		return 1   # this string is mediums: he has thrown two heavies running
 	var r: float = SimRng.keyed(int(S.game.seed), "brawl.mix", key)
 	var mh: float = float(bl.get("mixHeavy", 0.0))
 	if r < mh:
@@ -2602,6 +2611,9 @@ static func aiInput(S: SimState, f) -> void:
 	# Each string has its own pace, between tapGap and tapGapMax: its pace isn't one number to fall short of.
 	var gmax: int = maxi(gap, int(bl.get("tapGapMax", gap)))
 	_s(f, AI_GAP, mini(gmax, gap + int(SimRng.keyed(seed, "brawl.tapgap", S.tick * 2 + slot) * float(gmax - gap + 1))))
+	# Against a rival whose last two blows were heavies its string is mediums, at its level's share: the triangle,
+	# played by the AI (a medium that lands on a heavy in its first ticks ends it).
+	_s(f, AI_MEDS, 1 if (_g(o, LAST2) == HEAVY2 and SimRng.keyed(seed, "brawl.meds", S.tick * 2 + slot) < float(bl.get("mediumVsHeavies", 0.0))) else 0)
 	_aiPress(S, f, i, _aiPick(S, ex, f, bl), bl)
 	_aiNudge(S, ex, f, true)
 

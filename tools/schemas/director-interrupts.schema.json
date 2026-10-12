@@ -1663,6 +1663,18 @@
               "minimum": 0,
               "description": "Runs within this many blows of each other are a level trade, settled by the momentum."
             },
+            "runBy": {
+              "type": "object",
+              "properties": {
+                "medium": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "What a landed medium adds to his run and takes off the rival's, in points."
+                }
+              },
+              "additionalProperties": false,
+              "description": "What a landed blow counts on the run, by strength; a strength not named counts 1."
+            },
             "closeGuardTicks": {
               "type": "integer",
               "minimum": 0,

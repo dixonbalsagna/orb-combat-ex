@@ -413,7 +413,11 @@ static func _aiBlocks(S: SimState, ex) -> void:
 		var cls: String = String(b.args.o.get("class", ""))
 		if p > 0.0 and ((cls == "heavy") if DirBrawl.isBrawl(ex) else (cls != "opener" or ex.kind == "heavy")):
 			p += float(r5.heavyAdd)
-		if p > 0.0 and S.rng.next() < p * float(lv.perfectBlockMul) * (float(lv.get("brawl", {}).get("perfectMul", 1.0)) if DirBrawl.isBrawl(ex) else 1.0):
+		var chance: float = p * float(lv.perfectBlockMul) * (float(lv.get("brawl", {}).get("perfectMul", 1.0)) if DirBrawl.isBrawl(ex) else 1.0)
+		# A heavy it sees, a B wound in the open (brawl-second-pass.md section 14): its level's own share.
+		if DirBrawl.isBrawl(ex) and int(b.args.get("bk", -1)) == DirBrawl.BIG and lv.get("brawl", {}).has("perfectVsHeavy"):
+			chance = float(lv.brawl.perfectVsHeavy)
+		if p > 0.0 and S.rng.next() < chance:
 			guardPress(S, f)
 
 

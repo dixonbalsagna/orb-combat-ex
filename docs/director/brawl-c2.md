@@ -21,9 +21,9 @@ Code, all in `sim/director/`: `brawl.gd` (most of it), `alchemy.gd` (the press l
 - **A wound blow** (a medium, a heavy) is announced when it is thrown, with its landing tick. Its wind-up counts live ticks.
 - **The tap rule.** At the wind-up's end the button is read. Up: it lands. Down: it waits. Let go inside 4 ticks: it goes at once. A medium still down at 16 goes by itself, as a tap.
 - **The heavy's hold.** Still down at 32 it charges, for 3 more ki; without them it goes at 32 as a tap. It is full at 44, with `charge_full`. It lands 4 ticks after he lets go, and by itself at 70. It is worth 8 to 10 by its charge. A clean hit below full knocks him back; at full it launches him.
-- **Armour.** While a heavy winds or charges, a light does half and changes nothing else. A medium that lands before tick 20 ends it; after that it does its damage and nothing more.
+- **Armour.** While a heavy winds or charges, a light does 0.3 of its worth (`heavy.armour.lightMul`) and changes nothing else. A medium that lands before tick 20 ends it; after that it does its damage and nothing more.
 - **A medium winding:** a wound blow that lands ends it. A light lands in full, adds to the run, and its reel waits until his blow has landed. A stagger ends any wind-up.
-- **The run** counts in halves. A landed blow of any strength adds one point; a burst's blow adds half. The close comes at a run of 4, whatever lands it.
+- **The run** is counted in quarters of a point. A landed light or heavy adds one point, a medium two (`flurry.runBy.medium`), and a burst's blow half. A blow that lands on him takes the same off his own run. The close comes at a run of 4, whatever lands it.
 - **A press he can't pay for** throws the strongest blow he can pay for. A B without its 5 ki is a medium, in an opening too. A Y or a B without a medium's 2 ki is a light. It has no cue of its own: the blow's cue names what he threw.
 - **The burst.** A light whose button is still down 16 live ticks after the press throws seven more by itself, landing at 18, 22, 26, 31, 37, 45 and 56 ticks from the press. Each carries its number, 2 to 8, on its beat.
 - **On the Simple layout** a wound press whose button is already up when it arrives was wound by its hold, and lands 2 ticks later.
@@ -83,7 +83,10 @@ Each level's `brawl` block, easy, medium, hard:
 | `mediumIntoHeavy` | A medium into a rival's heavy while one still ends it | 0, 0.2, 0.5 |
 | `burst` | A held X | 0.05, 0.08, 0.08 |
 | `digIn` | Decided as a trade starts: it matches his pace for that trade, blow for blow, until the trade breaks or the double hit lands | 0.1, 0.3, 0.3, half as much again for the rival. Two AIs never both dig in to one trade (`digInBoth` false, beside `digInBy`): one of the two, drawn for the trade, may. It digs in only while the match has had fewer than 2 double hits (`digInMax`), and not within 45 s of fight time of the last (`digInRestS`) |
-| `giveGround` | It backs off from a wind-up it sees, after its reaction time; and from a signature's tell | 0.05, 0.2, 0.4 |
+| `giveGround` | It backs off from a wind-up it sees, after its reaction time; and from a signature's tell | 0.1, 0.45, 0.7 |
+| `mediumVsHeavies` | Against a rival whose last two blows were heavies, its string is mediums | 0.15, 0.4, 0.7 |
+| `perfectVsHeavy` | Its perfect block against a heavy it sees wound in the open | 0.05, 0.2, 0.4 |
+| `perfectMul` | Its perfect-block share inside a brawl, on its level's own | 0.21, 0.15, 0.5 |
 | `follow` | It walks its blow after a rival who backs off | 0.3, 0.6, 0.9 |
 | `launcher` | It throws its B in an opening | 0.15, 0.25, 0.6 |
 | `charge` | It charges a heavy, and lets go within 8 ticks of the flash | 0.15, 0.15, 0.45 |
@@ -130,10 +133,11 @@ Reads: `DirBrawl.winding(S, f)`, `DirBrawl.giving(S, f)`, `DirBrawl.launcherOpen
 14. **No blow lands from beyond 68 units** (the EP's ruling on QA's hard row, follow-up). Two causes were traced, and each has its own fix. A light's reach could be wider than the room its placement had left on a tick the core had already moved him: that blow now misses, with the text `reach`. And a wound blow's counted gap ran short of the ground when the rival backed off up a rising face, because the ground lifted him by more than his step: the step is now fitted both ways, so the count and the ground agree. Over a ledge that no step fits, the count takes what the gap really opened by.
 15. **Two AIs never both dig in to one trade** (`digInBoth` false, follow-up). As ruled, each AI drew its own share as a trade started. With both dug in, each matched the other's pace and the trade ran level to the double hit: 1.65 double hits a match between AIs, and 6 in one match against a hard row of 4. With one digger a trade it reads 0.01 a match, and 1 at most. Against a player nothing changes.
 16. **The medium AI's `digIn` is 0.3,** inside Game Design's range of 0.1 to 0.4. At 0.2 a presser got 0.37 double hits a match, under the band; the masher read 48 of 100 at both.
-17. **The AI's loader reads the dig-in keys** (the stick slice). `DirAI.skill()` keeps only the keys it lists, and `digInBy`, since C1, and `digInBoth` were not among them: each read took its default. So the rival's half as much again was applied in no reading of sections 9 and 11, and `digInBoth` was false whatever the data said. Four other top-level keys are read the same way and still take their defaults: `reactTicks`, `mineMinKi`, `stance` and `beamLook`, whose data equals the default, and `answerTicks`, whose data says 20 where the code's default is 28.
+17. **The AI's loader reads the dig-in keys** (the stick slice). `DirAI.skill()` keeps only the keys it lists, and `digInBy`, since C1, and `digInBoth` were not among them: each read took its default. So the rival's half as much again was applied in no reading of sections 9 and 11, and `digInBoth` was false whatever the data said. Since the second-round tune the loader carries every top-level key as it is written, so none is dead: `reactTicks`, `mineMinKi`, `stance` and `beamLook`, whose data equalled the code's default, and `answerTicks`, whose data now says the 28 the code was playing.
 18. **A player's held stick is never left dead** (`nudge.floor` 0.5, the stick slice): the pair moves his way by half his own nudge at least, whatever the AI's stick, the speed the brawl began with or the centre's old drift say. Two players who oppose each other still cancel. And the one who may give ground moves alone only by a stick that does not point at the rival: toward him it nudges the centre.
 19. **Nobody is cornered by a nudge** (the stick slice). At a building's face, and at a slope too steep to take in one step, the pair goes up it by the same step and over, where it used to stop.
 20. **The AI digs in to a bounded number of double hits** (`digInMax` 2, `digInRestS` 45, the stick slice). Against a steady presser who flies back in, every trade it dug in to ran level to the double hit: 10.3 a match on my probe, against a hard row of 4, where QA's masher read 0.6.
+21. **The brawl's reads are pure** (the second-round apply). A read used to size the director's integers before it looked, and their count is in the gameplay hash: UI's call to `launcherRest` in an intro changed it. Now a slot that was never written reads 0, and only a write sizes. `sim/director/tools/reads_check.gd` calls every read on a fresh match, in an intro, in a brawl and after one, and fails if the hash or the count moves. The change alone leaves every golden as it was.
 
 ## 9. As measured, the first chain (2026-10-11, scratch copy of main acb1a1bb with the slice)
 
@@ -244,3 +248,57 @@ The other rows hold: the blast script 26 of 60; out of an unfollowed tapped heav
 **The AI's own stick.** The medium AI's `nudgeShare` is 0.3, from 0.5 (the EP's ruling). By QA's pair it holds its stick against a player's on 21.4% of the ticks he holds his, from 35.5%, against a band of under 25%. His drift against it reads 1.48 bh a second, the same as against no stick. Every row of the table above was read at 0.5. At 0.3 the X masher read 54 of 100, and QA's presser 0.70 double hits a match. The masher row read 58 at 0.35, 38 at 0.4 and 47 at 0.5: it moves by ten with any change in the AI's draws, so 100 matches can't place it inside a band of 35 to 50.
 
 **Two of QA's readings need a change with it.** The dead-stick count should leave out the ticks on which the sim did not step. And the drift's latency against the AI reads the pair's speed rising above what it was as the stick went down: against an AI the pair is often moving already, so it reads late, or never, while he steps along his stick from the first or second tick.
+
+## 13. The second-round tune (2026-10-12, scratch copy of main 981ba0e3)
+
+Game Design's rulings (`docs/design/brawl-second-pass.md` section 14, "The second round"), in its order, each lever read before the next. The X masher is read on 200 matches, seeds 1 and 101: on main its two halves read 54 and 40.
+
+**The code under it.** With every new key at the value that plays as today, the masher rows read the same wins, medians and blow counts as main.
+- The AI's loader carries every top-level key (decision 17).
+- The run is counted in quarters, so a medium can count more than a light.
+- Each fighter's last two blows of the brawl are kept, for the AI's answer to a run of heavies.
+- The AI's perfect block against a heavy takes its level's `perfectVsHeavy` when the key is there.
+
+**The levers.**
+
+| Lever | From, to | What it read | Kept |
+| :--- | :--- | :--- | :--- |
+| `wearPerDamage` | 270, 255 | Median 373 to 400 s; 10th percentile 269 to 287 s; first brink 282 to 302 s | Yes |
+| The second breath's wait, `fade.breathAfterTicks` | 240, 180, 150 | At 180: 10th percentile 281 s. At 150: 303 s. The wear it gives back: 22.9%, 32.1%, 44.0% of all battered wear | Yes, at 150. **It costs two rows** (below) |
+| `cripple.base` and the light's pick, `family.light` | 0.02, 0.03; and 12, 4, 10, 6 to 12, 4, 8, 8 | Limb breaks 0.25 to 0.37 a match; the arms' share 80% to 62% | Yes |
+| `mediumVsHeavies` (new) | 0.15, 0.4, 0.7 | The B masher 60 of 60, unmoved. His heavy staggers the AI for 12 ticks, so its medium lands on tick 22 of his next wind-up, 2 ticks after the armour holds | Yes, as ruled. It can't act at his pace |
+| `giveGround` | 0.05, 0.2, 0.4 to 0.1, 0.45, 0.7 | The B masher 46 of 60 | Yes |
+| `perfectVsHeavy` (new) | 0.05, 0.2, 0.4 | The B masher 14 of 60 | Yes. **In band.** `mediumIntoHeavy` and the heavy's ki were not needed and stand |
+| `flurry.runBy.medium` (new) | 1, 1.75, then 2 | The Y masher 0, 1, then 4 of 60. He is out of ki within seconds: a medium every 12 ticks costs twice what comes back | Yes, at 2, Game Design's next step. **Under its band** |
+| `heavy.armour.lightMul` | 0.5, 0.3 | The X masher 78 to 87 of 200; the B masher 15 to 14 | Yes |
+| The easy AI's `perfectMul` | 0.3, 0.21 | Perfect blocks a minute at easy 2.51 to 1.94 | Yes |
+| `impulses.brawlLight`, then `brawlMedium` | 13, 16, 20; and 40, 55 | At 16: Calm 35%, Frenzied 5.2%. After the acts' lever they read 43% and 3.6%, and at 20 and 55: 32%, 11%, and 17.5% in act 4. The mood moves nothing in the fight | Yes |
+| The ladder's `takenPerDamage` and `dealtPerDamage` | 0.0075 and 0.0045, to 0.0056 and 0.0034 | Acts 2, 3 and 4 start at 90, 153 and 233 s, then at 111, 193 and 302 s. Limb breaks fell back to 0.27 | Yes |
+| `cripple.base` again | 0.03, 0.04 | Limb breaks 0.27 to 0.29 | Yes. Just under its band at Game Design's last step |
+
+**The tuned build, as measured.** The default arm, 100 matches, and QA's pairs.
+
+| Row | Main | Tuned | Band |
+| :--- | :--- | :--- | :--- |
+| Match median | 373 s | 424 s | 360 to 480 s |
+| 10th percentile | 269 s | 313 s | 300 s or more |
+| First brink; brink to KO | 282 s; 72 s | 337 s; 63 s | 270 to 420 s; 45 to 90 s |
+| Limb breaks a match; the arms' share | 0.25; 88% | 0.29; 55% | 0.3 to 0.5; 35 to 65% |
+| Calm; Frenzied; Frenzied in act 4 | 41%; 3.4%; 9% | 32%; 11%; 17.5% | 20 to 40%; 5 to 20%; 15% or more |
+| Acts 2, 3 and 4 start at | 90, 153, 239 s | 111, 193, 302 s | 90 to 150, 150 to 240, 270 to 345 s |
+| The X masher against medium | 94 of 200 | 75 of 200 | 35 to 50% |
+| The B masher | 60 of 60 | 12 of 60 | 20 to 50% |
+| The Y masher | 0 of 60 | 2 of 60. **Under** | 20 to 50% |
+| Perfect blocks a minute at easy | 2.51 | 1.94 | 0.5 to 2 |
+| Double hits a match, a presser; one or more; the most | | 0.74; 58%; 2 | 0.5 to 2; 35 to 65%; 4 |
+| Out of an unfollowed tapped heavy; out of a followed one | | 3,693 of 3,693; 0 of 2,017 | Every time; never |
+| Within 68 units; a blow over 0.6 bh in a tick | 0 of 163,752 | 0; 0 of 25,599 | None |
+| The wear the second breath gives back | 22.7% | 42.4%. **Over** | At most 25% |
+| The blast script against medium | 26 of 60 | 37 of 60. **Over** | 30 to 50% |
+| Launches a match, the AI against itself, 12 matches | | 14.3. **Over,** in matches a fifth longer | 6 to 12 |
+
+The other arms read medians of 422, 369 and 371 s, and 10th percentiles of 305, 292 and 299 s. On the default arm alone the harness reads 92 pass and 18 fail, where main reads 87 and 23.
+
+**The hard AI's perfect blocks** read 5.82 a minute against a band of 2 to 5.5, and 5.61 with its brawl `perfectMul` at 0.45. One step doesn't reach the band, so it stays at 0.5.
+
+**The second breath's wait costs two rows.** Taking each length lever back alone, the blast script reads 42 of 60 without the ladder's rates, 37 without the wear, and 30 with the wait back at 240. So it is the wait that lifts the blast script, as it lifts the wear given back. The blast's price is not its lever here: at 12 ki it reads 40 of 60, and the script wins on its bolts. With the wait at 240 the 10th percentile reads about 287 s.
