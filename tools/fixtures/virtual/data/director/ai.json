@@ -83,7 +83,9 @@
         "charge": 0.13,
         "energy": 0.15,
         "breakGuard": 0.18,
-        "tapGapMax": 14
+        "tapGapMax": 14,
+        "mediumVsHeavies": 0.15,
+        "perfectVsHeavy": 0.05
       },
       "vsShooter": {
         "guardShare": 0,
@@ -157,7 +159,9 @@
         "charge": 0.25,
         "energy": 0.3,
         "breakGuard": 0.35,
-        "tapGapMax": 14
+        "tapGapMax": 14,
+        "mediumVsHeavies": 0.4,
+        "perfectVsHeavy": 0.2
       },
       "vsShooter": {
         "guardShare": 0,
@@ -231,7 +235,9 @@
         "charge": 0.35,
         "energy": 0.42,
         "breakGuard": 0.49,
-        "tapGapMax": 14
+        "tapGapMax": 14,
+        "mediumVsHeavies": 0.7,
+        "perfectVsHeavy": 0.4
       },
       "vsShooter": {
         "guardShare": 0,

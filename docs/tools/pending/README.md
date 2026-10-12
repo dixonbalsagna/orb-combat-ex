@@ -290,3 +290,10 @@ The two parked scripts are independent of each other and of the order (tested to
 Keys other owners will send, so that nothing is a surprise; each becomes a parked script when its owner reports.
 - **UI:** a `three_strengths` flag in `ui/data/features.json` and `default_web` in `ui/data/options.json`.
 - **Controls:** `read.windupMedium`, `windupHeavy`, `windupContext` and `windupGrace` in `data/input/timing.json` (`docs/controls/windup-read.md`).
+
+## 2026-10-12 (applied or parked; each re-runnable)
+- `apply-brawl-required-keys.cjs` (applied): the blast's enderRun, halfSetup, reelTicks, nudge.floor and the AI's digInBoth, digInMax, digInRestS are required; rule `brawl-order` for enderRun against flurry.runToClose (`xref-brawl-keys.js`).
+- `apply-world-keys.cjs` (applied): settlements.json `aspect_max` and each district's `row_pop` required; a kind's `aspect_max` and lanes.json `demo_start` stay optional by design, with cases and the rule `lanes-demo-start` (`xref-lanes.js`).
+- `apply-brawl-round2-keys.cjs` (applied): the AI levels' mediumVsHeavies and perfectVsHeavy and the flurry's runBy required.
+- `apply-combat-depth.cjs` (PARKED): the schema, map line and cases for data/combat/depth.json; refuses until the file is in the tree (Simulation's depth window); waives the version-field rule for it (the file carries no `schema`).
+- `flash-capture-budget.patch` (apply with the tools/flash edits): the web hook reads the page's `budget=1` and switches Camera's travel budget on.

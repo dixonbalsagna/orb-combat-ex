@@ -13,7 +13,8 @@
     "shapes",
     "landmarks",
     "settlements",
-    "looks"
+    "looks",
+    "aspect_max"
   ],
   "properties": {
     "schema": {
@@ -286,7 +287,8 @@
         "block_bh",
         "avenue_bh",
         "row_h",
-        "pop_density"
+        "pop_density",
+        "row_pop"
       ],
       "properties": {
         "name": {

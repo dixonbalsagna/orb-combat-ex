@@ -1587,7 +1587,8 @@
             "staggeredAddsRun",
             "levelWithin",
             "closeGuardTicks",
-            "doubleTicks"
+            "doubleTicks",
+            "runBy"
           ],
           "properties": {
             "minGap": {
@@ -1673,7 +1674,13 @@
                 }
               },
               "additionalProperties": false,
-              "description": "What a landed blow counts on the run, by strength; a strength not named counts 1."
+              "description": "What a landed blow counts on the run, by strength; a strength not named counts 1.",
+              "required": [
+                "medium"
+              ],
+              "patternProperties": {
+                "^_": true
+              }
             },
             "closeGuardTicks": {
               "type": "integer",

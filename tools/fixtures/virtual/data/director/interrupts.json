@@ -208,7 +208,10 @@
       "staggeredAddsRun": false,
       "levelWithin": 1,
       "closeGuardTicks": 90,
-      "doubleTicks": 240
+      "doubleTicks": 240,
+      "runBy": {
+        "medium": 2
+      }
     },
     "heavy": {
       "ki": 4,

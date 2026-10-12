@@ -250,6 +250,8 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
       const m = txt.match(new RegExp('func ' + name + '\\([^\\n]*\\n(?:(?:\\t[^\\n]*)?\\n)*'));
       return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trimEnd()).filter((l) => l.trim() && !/events\[/.test(l)) : null;
     };
+        // Camera's travel budget switch: the web hook reads the page's `budget=1`, the headless run reads --budget, and both turn on the same rule
+    check('the travel budget switch (budget=1 on the web hook, --budget on flash_worst.gd) sets the same rule', /"budget"/.test(theirs) && /set_travel_budget\(true\)/.test(theirs) && /--budget/.test(mine) && /set_travel_budget\(true\)/.test(mine));
     for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms', '_mash']) {
       const a = fn(mine, name), b = fn(theirs, name);
       check(`Rendering's capture hook stages the same collapse ${name} as flash_worst.gd`, !!a && !!b && JSON.stringify(a) === JSON.stringify(b), JSON.stringify([a && a.length, b && b.length]));

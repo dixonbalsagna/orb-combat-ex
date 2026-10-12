@@ -10,6 +10,7 @@
 //     strip-order    a strip's top is above its bottom
 //     strip-inside   a strip lies inside its lane
 //     strip-overlap  the strips of one lane do not overlap
+//     lanes-demo-start  demo_start.lane is a street lane of this file, and demo_start.look is one of settlements.json's `looks`
 //   data/biomes/settlements.json with the two files above
 //     settle-look      every district's look is one of the file's `looks` (the index S.lanes carries)
 //     settle-lane-row  every row a district names is the row of a lane of lanes.json that holds footprints (not a street)
@@ -72,6 +73,15 @@ function xrefLanes({ get, err, esc, isObj }) {
         if (list[k].top > list[k - 1].bottom + EPS) err(LF, `/strips/${list[k].i}/top`, 'strip-overlap', `the strip ${list[k].bottom}..${list[k].top} overlaps /strips/${list[k - 1].i} (${list[k - 1].bottom}..${list[k - 1].top}) in the same lane`);
       }
     }
+  }
+
+  if (isObj(d) && isObj(d.demo_start)) {
+    const ds = d.demo_start;
+    const lane = typeof ds.lane === 'string' ? lanes.find((l) => isObj(l) && l.name === ds.lane) : undefined;
+    if (typeof ds.lane === 'string' && !lane) err(LF, '/demo_start/lane', 'lanes-demo-start', `demo_start lane "${ds.lane}" is not a lane of this file`);
+    else if (lane && lane.kind !== 'street') err(LF, '/demo_start/lane', 'lanes-demo-start', `demo_start lane "${ds.lane}" is a ${lane.kind} lane: the demo starts at a crossing of a street`);
+    const sd = get(SF);
+    if (typeof ds.look === 'string' && isObj(sd) && Array.isArray(sd.looks) && !sd.looks.includes(ds.look)) err(LF, '/demo_start/look', 'lanes-demo-start', `demo_start look "${ds.look}" is not in settlements.json's looks ${JSON.stringify(sd.looks)}`);
   }
 
   const st = get(SF);

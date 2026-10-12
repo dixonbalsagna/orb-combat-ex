@@ -30,7 +30,7 @@ const usage = () => {
     '       [--ticks 1800] [--reduced] [--seed N] [--slots A,B] [--skip N] [--width 960] [--height 540] [--software] [--browser chrome|edge] [--browser-path <exe>] [--timeout 900]');
   process.exit(2);
 };
-const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--width', '--height', '--software', '--browser', '--browser-path', '--timeout']);
+const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--width', '--height', '--software', '--budget', '--browser', '--browser-path', '--timeout']);
 for (const a of argv) if (a.startsWith('--') && !known.has(a)) { console.error(`unknown option ${a}`); usage(); }
 const here = dirname(fileURLToPath(import.meta.url));
 const DIR = has('--mock') ? join(here, 'mock-page') : opt('--dir');
@@ -94,6 +94,8 @@ if (DIR) {
   server = await serve(DIR);
   pageUrl = `http://127.0.0.1:${server.address().port}${has('--mock') ? '/' : opt('--path', '/play/')}`;
 }
+// Camera's travel budget (SplitRig.travel_budget, off by default): the page's `budget=1` switches it on for the hook (render/tools/flash_capture.gd), so a run with and without it is the same sim
+if (has('--budget') && !has('--mock')) pageUrl += (pageUrl.includes('?') ? '&' : '?') + 'budget=1';
 mkdirSync(OUT, { recursive: true });
 // The browser is started by launchBrowser(): a cold machine (a fresh CI runner, a first launch after an update) can take far longer than a warm one to open its DevTools port, and
 // a launch can simply fail, so it waits up to 90 s for the port and, on a failure or an early exit, kills that browser, clears its profile and tries again (3 attempts in all).
@@ -185,7 +187,7 @@ try {
     const shot = await page.send('Page.captureScreenshot', { format: 'png', fromSurface: true });
     writeFileSync(join(OUT, `frame-${String(i).padStart(6, '0')}.png`), Buffer.from(shot.data, 'base64'));
   }
-  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, page: pageUrl }, null, 2) + '\n');
+  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, budget: has('--budget'), page: pageUrl }, null, 2) + '\n');
   log(`${TICKS} frames in ${Math.round((Date.now() - tStart) / 1000)} s of capture (${(TICKS / Math.max(1, (Date.now() - tStart) / 1000)).toFixed(2)} frames a second${has('--software') ? ', software rendering' : ''})`);
   log(`wrote ${TICKS} frames to ${OUT}; next: node tools/flash/analyse-frames.js ${OUT}`);
 } catch (e) {

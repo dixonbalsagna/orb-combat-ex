@@ -347,7 +347,9 @@
                 "charge",
                 "energy",
                 "breakGuard",
-                "tapGapMax"
+                "tapGapMax",
+                "mediumVsHeavies",
+                "perfectVsHeavy"
               ],
               "properties": {
                 "tapGap": {
@@ -793,7 +795,9 @@
                 "charge",
                 "energy",
                 "breakGuard",
-                "tapGapMax"
+                "tapGapMax",
+                "mediumVsHeavies",
+                "perfectVsHeavy"
               ],
               "properties": {
                 "tapGap": {
@@ -1239,7 +1243,9 @@
                 "charge",
                 "energy",
                 "breakGuard",
-                "tapGapMax"
+                "tapGapMax",
+                "mediumVsHeavies",
+                "perfectVsHeavy"
               ],
               "properties": {
                 "tapGap": {
