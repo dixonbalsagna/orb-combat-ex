@@ -375,4 +375,9 @@ func _depthStep() -> String:
 
 ## The second breath (spec-wounds.md section 1c): a battered region fades once the fighter has had quiet for the wait'''),
 ])
+if 'y its feet' in open('sim/world/structures.gd',encoding='utf-8').read():   # World's feet window: blocked takes his feet
+    edit('sim/core/tools/parity.gd', [
+    ('WorldStructures.blocked(S, f.x, f.y + ry, f.z, float(body[0]), float(body[1]), float(body[2])) >= 0',
+     'WorldStructures.blocked(S, f.x, f.y, f.z, float(body[0]), float(body[1]), float(body[2])) >= 0'),
+    ])
 print("part (a): the checks are in")

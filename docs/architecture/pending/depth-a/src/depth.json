@@ -1,5 +1,6 @@
 {
   "_note": "Fighters in depth: the core's numbers (sim/core/depth.gd; docs/architecture/depth-core.md). Depths and speeds are in fighter heights (1 bh is 75 units). Every number is a first value from docs/design/depth.md, and none has been run in a match. The director's own depth numbers join this file in its window.",
+  "schema": "combat.depth/1",
   "enabled": false,
   "_enabled": "the one switch. SimCore.newMatch copies it into S.depthOn unless the match's setup has its own \"depth\". Off until the director's depth window: with it off nothing below is read by a match, and this file is not in a replay's data hash",
   "maxBhPerSec": 1.2,

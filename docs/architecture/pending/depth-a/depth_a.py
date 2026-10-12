@@ -21,6 +21,10 @@ def between(p, start, end, new):
     assert i<j
     open(p,'w',encoding='utf-8',newline='\n').write(s[:i]+new+s[j:])
 
+# World's sweep and blocked took a body's point as its middle (L3); World's feet window makes it his feet, which is the
+# sim's own point. The contact rule is written for whichever the tree has.
+FEET = 'y its feet' in open('sim/world/structures.gd',encoding='utf-8').read()
+
 os.makedirs('data/combat', exist_ok=True)
 shutil.copyfile(os.path.join(HERE,'src','depth.json'), 'data/combat/depth.json')
 shutil.copyfile(os.path.join(HERE,'src','depth.gd'), 'sim/core/depth.gd')
@@ -405,4 +409,13 @@ static func addDepth(f, cause: String, v: float) -> void:
 
 
 ''')
-print("part (a): a fighter's depth outside a flight is in")
+if FEET:
+    edit(F, [
+    ('''		# the sweep takes the body's centre: his feet are f.y, half his height under it
+		var h: Dictionary = WorldStructures.sweep(S, list, px, py + ry, pz, tx, ty + ry, tz, rx, ry, rz)''',
+     '''		var h: Dictionary = WorldStructures.sweep(S, list, px, py, pz, tx, ty, tz, rx, ry, rz)   # the sweep's point is his feet, as f.y is'''),
+    ('''		py = h.y - ry
+''','''		py = h.y
+'''),
+    ])
+print("part (a): a fighter's depth outside a flight is in (World's body point: %s)" % ("his feet" if FEET else "the body's middle"))

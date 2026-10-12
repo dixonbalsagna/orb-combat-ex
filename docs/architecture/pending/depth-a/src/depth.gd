@@ -6,6 +6,7 @@ class_name SimDepth
 ## data/biomes/lanes.json), read once here.
 
 const PATH: String = "res://data/combat/depth.json"
+const SCHEMA: String = "combat.depth/1"
 const BH: float = 75.0     # a fighter height, in units
 const SKIN: float = 0.01   # units left between a body and a face it stopped at, so a later step along the face starts clear of it
 ## The causes of depth a director may add (SimFighter.addDepth). capExempt in the data names the ones the cap does not hold.
@@ -39,6 +40,8 @@ static func _ensure() -> void:
 	h.text("depth")
 	FighterData._canon(h, j)
 	_hash = h.hex()
+	if j.get("schema", "") != SCHEMA:
+		_err("schema: expected " + SCHEMA + ", got " + str(j.get("schema", "")))
 	var on = j.get("enabled", false)
 	if not (on is bool):
 		_err("enabled: must be true or false, got " + str(on))
