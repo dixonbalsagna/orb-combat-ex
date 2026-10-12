@@ -883,6 +883,10 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 					var zdx: float = SimWrap.sdx(S.fighters[slot].x, S.fighters[1 - slot].x)
 					it.mx = signf(zdx) if absf(zdx) > 12.0 * 75.0 else 0.0
 					it.dash = absf(zdx) > 40.0 * 75.0
+			if int(p.P.get("approach", "0")) != 0 and S.dirS.ex == null:   # fly in to a brawl's distance (a script with nothing to approach him: the burst's pair against a rival who never moves)
+				var apx: float = SimWrap.sdx(S.fighters[slot].x, S.fighters[1 - slot].x)
+				it.mx = signf(apx) if absf(apx) > 3.0 * 75.0 else 0.0
+				it.dash = absf(apx) > 20.0 * 75.0
 			k = p.stick_script(S, slot, it, k)
 			if k >= 0:
 				if k == 1:

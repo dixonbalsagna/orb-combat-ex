@@ -54,7 +54,7 @@ function _runPair(tag, a, b, n, base, extra = []) {
       const line = out.split(String.fromCharCode(10)).find(l => l.startsWith('{') && l.includes('"players"'));
       if (code !== 0 || !line) return reject(new Error('players.gd failed for ' + tag + ' (exit ' + code + ')' + String.fromCharCode(10) + out.slice(0, 1200)));
       const r = JSON.parse(line);
-      resolve({ pair: tag, brawl: r.brawl, zips: (r.brawl || {}).zips, zipEnds: (r.brawl || {}).zipEnds, n: r.n, aWins: r.aWins, bWins: r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, strings: r.stats[0].blurStrings, locked: r.stats[0].blurLocked });
+      resolve({ pair: tag, stats: r.stats, brawl: r.brawl, zips: (r.brawl || {}).zips, zipEnds: (r.brawl || {}).zipEnds, n: r.n, aWins: r.aWins, bWins: r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, strings: r.stats[0].blurStrings, locked: r.stats[0].blurLocked });
     });
   });
 }
@@ -142,8 +142,8 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   T.push(() => runPair('energy-x', W + ':energy=1:btn=X:gap=6:sthold=toward', ai, n1, base, caps));
   T.push(() => runPair('energy-y', W + ':energy=1:btn=Y:gap=14:tap=4:sthold=toward', ai, n1, base, caps));
   // The burst against a mash over the same time, against a rival who never moves.
-  T.push(() => runPair('burst-dummy', 'holder:forms=0:kind=L:hold=55:rest=2', 'masher:forms=0:gap=100000', Math.min(n, 30), base, ['--capsec=120']));
-  T.push(() => runPair('mash-dummy', 'masher:forms=0:btn=X:gap=8', 'masher:forms=0:gap=100000', Math.min(n, 30), base, ['--capsec=120']));
+  T.push(() => runPair('burst-dummy', 'holder:forms=0:kind=L:hold=55:rest=2:approach=1', 'masher:forms=0:gap=100000', Math.min(n, 30), base, ['--capsec=120']));
+  T.push(() => runPair('mash-dummy', 'masher:forms=0:btn=X:gap=8:approach=1', 'masher:forms=0:gap=100000', Math.min(n, 30), base, ['--capsec=120']));
   // Agency pass section 20: how often the perfect blur locks, live against the medium AI. A blind 8-tick masher at most 20% of five-blow strings; a script that presses on every contact at least 80%; metronomes at 10, 12 and 14 ticks.
   T.push(() => runPair('blur-blind', 'masher' + M, ai, n, base));
   T.push(() => runPair('blur-contact', 'tapper:acc=100:win=0:jit=0:mix=L' + M, ai, n, base));
