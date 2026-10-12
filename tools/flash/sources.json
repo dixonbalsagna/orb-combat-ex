@@ -42,6 +42,17 @@
       ]
     },
     {
+      "id": "mashcity",
+      "minTicks": 1500,
+      "minEvents": {
+        "damage": 20
+      },
+      "ticks": 1800,
+      "seeds": [
+        12345
+      ]
+    },
+    {
       "id": "clash",
       "minTicks": 1200,
       "minEvents": {

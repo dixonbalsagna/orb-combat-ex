@@ -1,0 +1,49 @@
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -30,11 +30,11 @@
+ ## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export). Tools' drift check
+ ## fails when the two differ (docs/tools/flash-check.md): change them together.
+ 
+-const SCENARIOS: Array = ["mash", "clash", "signature", "transform", "collapse", "ai"]
++const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "transform", "collapse", "ai"]
+ const SEED: int = 12345
+ const FORM_TICKS: Array = [300, 1500]
+ ## Which slots are the AI's (true) in each scenario.
+-const AI_SLOTS: Dictionary = {"mash": [false, false], "clash": [false, false], "signature": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
++const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
+ 
+ var main: Node
+ var scenario: String = ""
+@@ -151,11 +151,11 @@
+ func drive(sc: String, t: int, S: SimState) -> void:
+ 	match sc:
+ 		"mash":         # both human, walking into reach and mashing light, with a heavy now and then
+-			_walk(S, 250.0)
+-			_btn(0, "west", _tap(t, 4, 0))
+-			_btn(1, "west", _tap(t, 4, 2))
+-			_btn(0, "north", t % 37 < 2)
+-			_btn(1, "north", t % 41 < 2)
++			_mash(t, S)
++		"mashcity":     # the same, in the re-laid city, set down beside its tallest tower
++			if t == 0:
++				_to_the_city(S)
++			_mash(t, S)
+ 		"clash":        # both human, ki kept full, both firing the signature together every 30 ticks
+ 			_walk(S, 1500.0)
+ 			for f in S.fighters:
+@@ -183,6 +183,15 @@
+ 				S.fighters[1].stage[1] = 2
+ 
+ 
++## Both human, walking into reach and mashing light every 4 ticks each (staggered), with a heavy now and then.
++func _mash(t: int, S: SimState) -> void:
++	_walk(S, 250.0)
++	_btn(0, "west", _tap(t, 4, 0))
++	_btn(1, "west", _tap(t, 4, 2))
++	_btn(0, "north", t % 37 < 2)
++	_btn(1, "north", t % 41 < 2)
++
++
+ func _ready_forms(S: SimState, t: int, ticks: Array) -> void:
+ 	if ticks.has(t):
+ 		for f in S.fighters:

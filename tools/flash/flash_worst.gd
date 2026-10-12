@@ -2,6 +2,7 @@ extends SceneTree
 ## Half 1 of the photosensitivity check (docs/tools/flash-check.md): plays the worst cases Legal names through the real game scene and writes the flash register's whole
 ## log for each, in normal and in reduced-flashing mode, for tools/flash/check-log.js to recount. Headless, one process, no window.
 ##   mash        both fighters human, walking into reach and mashing light (every 4 ticks each, staggered) with a heavy now and then
+##   mashcity    the same mash in the re-laid city: the fighters set down beside its tallest tower, the towers at their backs (Rendering, docs/rendering/lanes-camera-flash.md clip 1)
 ##   clash       both human, ki kept full, both firing the signature together every 30 ticks, so beams meet
 ##   signature   P1 human firing the signature on a cycle against the AI
 ##   transform   AI against AI, the form made ready for both at fixed ticks three times (tier 1 to 4: the game never goes past 4), so the transformation plays through again and again
@@ -21,7 +22,7 @@ const FORM_TICKS: Array = [300, 1500]
 ## The scenarios, their lengths and the AI-match set (seeds and pairings) are tools/flash/sources.json's, so the headless runs, check-log.js and run-pixels.mjs read one list.
 const SOURCES: String = "res://tools/flash/sources.json"
 ## Which slots are AI (true) in each scenario.
-const AI_SLOTS: Dictionary = {"mash": [false, false], "clash": [false, false], "signature": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
+const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
 
 var main: Node
 var out_dir: String = "build/flash"
@@ -259,11 +260,11 @@ func _walk(S: SimState, near: float) -> void:
 func _drive(sc: String, t: int, S: SimState) -> void:
 	match sc:
 		"mash":
-			_walk(S, 250.0)
-			_btn(0, "west", _tap(t, 4, 0))
-			_btn(1, "west", _tap(t, 4, 2))
-			_btn(0, "north", t % 37 < 2)
-			_btn(1, "north", t % 41 < 2)
+			_mash(t, S)
+		"mashcity":
+			if t == 0:
+				_to_the_city(S)
+			_mash(t, S)
 		"clash":
 			_walk(S, 1500.0)
 			for f in S.fighters:
@@ -289,6 +290,15 @@ func _drive(sc: String, t: int, S: SimState) -> void:
 				S.fighters[0].tier = 3.0
 			if t == 1200:
 				S.fighters[1].stage[1] = 2
+
+
+## Both human, walking into reach and mashing light every 4 ticks each (staggered), with a heavy now and then.
+func _mash(t: int, S: SimState) -> void:
+	_walk(S, 250.0)
+	_btn(0, "west", _tap(t, 4, 0))
+	_btn(1, "west", _tap(t, 4, 2))
+	_btn(0, "north", t % 37 < 2)
+	_btn(1, "north", t % 41 < 2)
 
 
 ## Forms ready at fixed ticks (hash_check does the same), so real `transform` events play, and tiers raised so the power effects are in view.

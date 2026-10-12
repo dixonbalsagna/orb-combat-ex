@@ -18,6 +18,7 @@ It **fails** when: any 60-tick window grants more than 3 flashes (more than 1 in
 | Scenario | What is played | Must show |
 | :-- | :-- | :-- |
 | `mash` | both fighters human, walking into reach, light every 4 ticks each (staggered), a heavy now and then, 1,800 ticks | 20 damage events |
+| `mashcity` | the same mash, in the re-laid city: both set down beside its tallest tower on tick 0 (Rendering's clip 1, docs/rendering/lanes-camera-flash.md: the towers' facades under the shake of a hit-stop), 1,800 ticks | 20 `damage` events |
 | `clash` | both human, ki kept full, both hold RT and fire the signature (B) together every 30 ticks, 1,500 ticks | a `beam_outcome` of kind CLASH |
 | `signature` | P1 human holds RT and fires the signature (B) on a 90-tick cycle against the AI, 1,500 ticks | a beam outcome |
 | `transform` | AI against AI, the form made ready for both at ticks 60, 500 and 1000 (tier 1 to 4; the game never goes past 4), 1,500 ticks | 4 `transform` events |

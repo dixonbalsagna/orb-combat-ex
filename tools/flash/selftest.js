@@ -241,7 +241,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
     // the scripted presses: the same buttons on the same ticks in both (a layout change that moves a button is made in both; 2026-10-11 the signature became RT + B and the web clips played no signature)
     const presses = (txt) => {
       const m = txt.match(/func _?drive\(sc: String[\s\S]*?\n(?=func |## )/);
-      return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trim()).filter((l) => /^(_btn|_walk|_ready_forms|_stage_collapse|_to_the_city|for f in S\.fighters|f\.ki|S\.fighters\[)/.test(l)) : null;
+      return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trim()).filter((l) => /^(_btn|_walk|_mash|_ready_forms|_stage_collapse|_to_the_city|for f in S\.fighters|f\.ki|S\.fighters\[)/.test(l)) : null;
     };
     const pm = presses(mine), pt = presses(theirs);
     check("Rendering's capture hook presses the same buttons on the same ticks as flash_worst.gd", !!pm && !!pt && JSON.stringify(pm) === JSON.stringify(pt), JSON.stringify([pm && pm.length, pt && pt.length]));
@@ -250,7 +250,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
       const m = txt.match(new RegExp('func ' + name + '\\([^\\n]*\\n(?:(?:\\t[^\\n]*)?\\n)*'));
       return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trimEnd()).filter((l) => l.trim() && !/events\[/.test(l)) : null;
     };
-    for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms']) {
+    for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms', '_mash']) {
       const a = fn(mine, name), b = fn(theirs, name);
       check(`Rendering's capture hook stages the same collapse ${name} as flash_worst.gd`, !!a && !!b && JSON.stringify(a) === JSON.stringify(b), JSON.stringify([a && a.length, b && b.length]));
     }
