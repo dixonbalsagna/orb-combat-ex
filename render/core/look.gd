@@ -124,6 +124,20 @@ const PAIR_MARK_DZ: float = 6.0          # ... at depths this far apart or more,
 const PAIR_MARK_H: float = 150.0         # ... and neither higher above his ground than this (2 fighter heights)
 const PAIR_MARK_IN_S: float = 0.2        # it comes up over this long,
 const PAIR_MARK_OUT_S: float = 0.5       # ... and goes over this long
+## Open floors (Orb, 2026-10-12: "'open floors' sounds like it would look the most natural, get that implemented";
+## docs/rendering/open-floors.md). In a match with depth on, a tall building standing between a pane's camera and the
+## action loses the floors the action is seen through, across its whole width: the street shows under it, and the tower
+## and the skyline stay. The action is the patch's own capsule, so both methods are sized and held alike.
+## One building, one method: a building of OPEN_FLOORS_MIN floors or more opens floors and is never holed, patched or
+## sunk; a lower one takes the patch, sinks under a large one, and never opens floors.
+const OPEN_FLOORS_MIN: int = 5           # World's FLOORS_MIN: the buildings whose floors a brunt can clear (from about 7 fighter heights)
+const OPEN_PAD: float = 20.0             # the capsule is taken this much taller, in world units at the action's depth,
+const OPEN_SIDE: float = 75.0            # ... and a tower opens when the capsule's own line (the fighters, the gap, what is travelling) comes this near being hidden by it: not for the room the patch leaves round them
+const OPEN_CLOSE: float = 0.5            # an opening closes at this share of the area an opening may turn a tick,
+const OPEN_HOLD_S: float = 0.75          # ... and only when nothing has asked for that end of it this long (PATCH_HOLD_S)
+const OPEN_POST := Vector3(190.0, 9.0, 0.82)   # the posts left standing in an opened floor: a bay's width along the front (about), a post's width, its tone against the wall's
+const OPEN_SLAB: float = 7.0             # the edge of the floor over an opening (and under one that starts above the ground),
+const OPEN_SLAB_COL: String = "#8d95a1"  # ... a neutral pale: no fighter's hue
 ## Windows on the buildings' walls (building.gdshader): a row a floor, a column every WINDOW_PITCH along the wall, lit
 ## or dark by a hash. A floor's windows go out with VFX's blow-outs (PlanetView.blow_windows) and stay out.
 const WINDOW_PITCH: float = 62.0

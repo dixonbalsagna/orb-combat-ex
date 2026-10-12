@@ -279,12 +279,18 @@ func _occlusion(S: SimState, cam_x: float, vp: Vector2) -> void:
 			for bi in aim:
 				want.erase(bi)
 	# Row 0, the foreground: one patch for the whole action, and the buildings under a big one lowered.
+	# With depth on the same patch works through every row in front of the action, and a tall building opens floors
+	# (RenderLook.OPEN_*): the pane's own hole and stubs are for a match with depth off.
 	var soft: Dictionary = {}
-	var front: Array = _row0_patch(S, cam_x, vp, chest, seen, tall, soft, only) if on and planet.has_row0() else []
+	var deep: bool = S.depthOn
+	var front: Array = _row0_patch(S, cam_x, vp, chest, seen, tall, soft, only, aim) if on and (deep or planet.has_row0()) else []
 	if front.is_empty():
 		patch = {}
 		_patch_t = -1.0
+	if deep:
+		want.clear()
 	planet.set_stubs(S, want, soft)
+	_open_floors(S, cam_x, vp, aim)
 	# The holes.
 	var holes: Array = []
 	var inv: Transform3D = cam_rig.transform.affine_inverse()
@@ -319,7 +325,56 @@ func _occlusion(S: SimState, cam_x: float, vp: Vector2) -> void:
 		holes[1][3] = (chest[1] as Vector3).lerp(chest[0], e)
 		holes[1][4] = lerpf(r1[0], r0[0], e)
 		holes[1][5] = lerpf(r1[1], r0[1], e)
+	if deep:
+		var none: Array = [Vector3.ZERO, 0.0, 0.0, Vector3.ZERO, 0.0, 0.0]
+		holes = [front if not front.is_empty() else none, none]
 	planet.set_holes(holes, front)
+
+
+## Open floors (RenderLook.OPEN_*; Orb, 2026-10-12): with depth on, every tall building (PlanetView.opens) standing
+## between this pane's camera and the line of the patch's capsule is asked to open the floors the capsule is seen
+## through, across its width. The capsule is the patch's own as drawn (both fighters, the gap, what is travelling; held
+## and grown by area), so the two methods follow one action. A tower opens for the line itself (within OPEN_SIDE), not
+## for the room the patch leaves round it: a pair standing clear in an avenue opens neither corner. No patch (no fighter in view, or Camera's request off): nothing is asked
+## and the openings close after their hold. The building a launched fighter is aimed at stays whole. Presentation only.
+func _open_floors(S: SimState, cam_x: float, vp: Vector2, aim: PackedInt32Array) -> void:
+	if not S.depthOn:
+		return
+	var want: Dictionary = {}
+	var left: float = -1.0
+	if patch.has("wa"):
+		var eye: Vector3 = cam_rig.position
+		var wa: Vector3 = patch["wa"]
+		var wb: Vector3 = patch["wb"]
+		var r: float = float(patch["wr"]) + RenderLook.OPEN_PAD
+		left = float(patch["left"])
+		for bi in planet.occluder_candidates(S, cam_x, minf(eye.x, minf(wa.x, wb.x) - r), maxf(eye.x, maxf(wa.x, wb.x) + r), minf(wa.z, wb.z), 0.0):
+			if not planet.opens_floors(bi) or aim.has(bi):
+				continue
+			var b = S.buildings[bi]
+			var zd: Vector2 = PlanetView._depth(b)
+			var zf: float = zd.x + zd.y * 0.5
+			var bx: float = SimWrap.sdx(cam_x, b.x)
+			var lo: float = INF
+			var hi: float = -INF
+			for k in range(7):
+				var p: Vector3 = wa.lerp(wb, float(k) / 6.0)
+				if zf <= p.z + 1.0 or eye.z - p.z < 1.0:
+					continue   # the building does not stand in front of this part of the action
+				for zface in [zf, maxf(zd.x - zd.y * 0.5, p.z)]:
+					var s: float = (zface - p.z) / (eye.z - p.z)
+					if absf(p.x + (eye.x - p.x) * s - bx) > 0.5 * b.w + RenderLook.OPEN_SIDE * (1.0 - s):
+						continue
+					lo = minf(lo, lerpf(p.y - r, eye.y, s))
+					hi = maxf(hi, lerpf(p.y + r, eye.y, s))
+			if hi > lo:
+				# The pixels a unit of its height covers on this pane's screen: its face's width in view, times the scale there.
+				var c0: Vector2 = cam_rig.unproject_position(Vector3(bx - 0.5 * b.w, eye.y, zf))
+				var c1: Vector2 = cam_rig.unproject_position(Vector3(bx + 0.5 * b.w, eye.y, zf))
+				var wpx: float = maxf(minf(c1.x, vp.x) - maxf(c0.x, 0.0), 0.0)
+				var ppu: float = absf(cam_rig.unproject_position(Vector3(bx, eye.y + 100.0, zf)).y - cam_rig.unproject_position(Vector3(bx, eye.y, zf)).y) / 100.0
+				want[bi] = Vector3(lo, hi, maxf(wpx * ppu, 0.001))
+	planet.set_open(S, want, vp, left)
 
 
 ## The next frame's stubs, joined hole and lane cues jump to their targets instead of easing (for tools that pose a
@@ -329,9 +384,14 @@ func _occlusion(S: SimState, cam_x: float, vp: Vector2) -> void:
 ## with the buildings a big patch lowers ({building: 0 to 1}). chest, seen, tall: per fighter, his chest as drawn, whether
 ## this pane sees him, his drawn height in pixels; only: Camera's request (a fighter slot: the patch is his alone).
 ## Presentation only: it reads the sim and this pane's camera.
-func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Array, tall: PackedFloat32Array, soft: Dictionary, only: int = -1) -> Array:
+## With depth on (S.depthOn) it is the patch for every row: each end lies at its own fighter's depth, so the patch cuts
+## what stands in front of their line, the building a launched fighter is aimed at stays whole (aim: per fighter, as for
+## his own hole), and a big patch lowers the low buildings of any row that it covers in front of that line.
+func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Array, tall: PackedFloat32Array, soft: Dictionary, only: int = -1, aim: PackedInt32Array = PackedInt32Array()) -> Array:
+	var deep: bool = S.depthOn
 	var ppu: float = 0.0
 	var pts: Array = []
+	var ends: Array = []   # per point: [his depth, his slot]
 	var extra: Array = []
 	var z_plane: float = -INF
 	for i in range(chest.size()):
@@ -339,6 +399,7 @@ func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Arr
 			continue
 		var c: Vector3 = chest[i]
 		pts.append(Vector2(c.x, c.y))
+		ends.append([c.z, i])
 		ppu = maxf(ppu, tall[i] / FighterView.HEIGHT)
 		z_plane = maxf(z_plane, c.z)
 		# Where he will be: a rush, a launch and a zip are in his velocity.
@@ -373,10 +434,15 @@ func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Arr
 	# whatever lies off it.
 	var a: Vector2 = pts[0]
 	var b2: Vector2 = pts[pts.size() - 1]
+	var ea: Array = ends[0]
+	var eb: Array = ends[ends.size() - 1]
 	if b2.x < a.x:
 		var tmp: Vector2 = a
 		a = b2
 		b2 = tmp
+		var etmp: Array = ea
+		ea = eb
+		eb = etmp
 	var u: Vector2 = (b2 - a).normalized() if a.distance_to(b2) > 1.0 else Vector2.RIGHT
 	var len0: float = a.distance_to(b2)
 	var r_min: float = RenderLook.PATCH_BODY * FighterView.HEIGHT
@@ -398,6 +464,7 @@ func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Arr
 	var db: Vector2 = Vector2(SimWrap.sdx(cam_x, _patch_b.x), _patch_b.y)
 	var ext: Vector2 = _patch_ext
 	var dr: float = _patch_r
+	var left: float = -1.0   # what this frame's area budget has left for the open floors (under 0: the patch jumped; all of theirs)
 	if _patch_t < 0.0 or now < _patch_t or now - _patch_t > 0.5:
 		da = a
 		db = b2
@@ -432,6 +499,7 @@ func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Arr
 		db = db.lerp(b2, k)
 		ext += Vector2(grow.x, grow.y) * k
 		dr += grow.z * k
+		left = maxf(budget - need * k, 0.0)
 	_patch_t = now
 	_patch_a = Vector2(SimWrap.wrap(cam_x + da.x), da.y)
 	_patch_b = Vector2(SimWrap.wrap(cam_x + db.x), db.y)
@@ -441,9 +509,12 @@ func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Arr
 	var ud: Vector2 = (db - da).normalized() if da.distance_to(db) > 1.0 else Vector2.RIGHT
 	da -= ud * ext.x
 	db += ud * ext.y
+	# Each end's depth: the nearer fighter's for the foreground row's patch; with depth on, its own fighter's.
+	var za: float = float(ea[0]) if deep else z_plane
+	var zb: float = float(eb[0]) if deep else z_plane
 	# On this pane's screen.
-	var pa: Vector2 = cam_rig.unproject_position(Vector3(da.x, da.y, z_plane))
-	var pb: Vector2 = cam_rig.unproject_position(Vector3(db.x, db.y, z_plane))
+	var pa: Vector2 = cam_rig.unproject_position(Vector3(da.x, da.y, za))
+	var pb: Vector2 = cam_rig.unproject_position(Vector3(db.x, db.y, zb))
 	var pr: float = dr * ppu
 	var size: float = (2.0 * dr * da.distance_to(db) + PI * dr * dr) / (FighterView.HEIGHT * FighterView.HEIGHT)
 	# The hybrid: a big patch lowers the buildings it covers.
@@ -451,7 +522,12 @@ func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Arr
 	var sink: Dictionary = {}
 	if big > 0.0:
 		var ab: Vector2 = pb - pa
-		for fc in planet.row0_faces(S, cam_x, hw):
+		for fc in planet.row0_faces(S, cam_x, hw, deep):
+			if fc.size() > 6:
+				# A building of the rows behind: only if it stands in front of the fighters' line there.
+				var tz: float = clampf((float(fc[1]) - da.x) / (db.x - da.x), 0.0, 1.0) if absf(db.x - da.x) > 1.0 else 0.5
+				if float(fc[6]) <= lerpf(za, zb, tz) + 1.0:
+					continue
 			var inside: int = 0
 			var shown: int = 0
 			for ix in range(5):
@@ -471,13 +547,28 @@ func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Arr
 				if big * under > 0.0:
 					soft[int(fc[0])] = big * under
 					sink[int(fc[0])] = big * under
-	patch = {"a": pa, "b": pb, "r": pr, "size": size, "sink": sink}
-	var near: float = -(cam_rig.transform.affine_inverse() * Vector3(da.x, da.y, z_plane)).z - RenderLook.HOLE_GAP
-	return [Vector3(da.x, da.y, z_plane), pr, near, Vector3(db.x, db.y, z_plane), pr, near]
+	patch = {"a": pa, "b": pb, "r": pr, "size": size, "sink": sink, "wa": Vector3(da.x, da.y, za), "wb": Vector3(db.x, db.y, zb), "wr": dr, "left": left}
+	var inv: Transform3D = cam_rig.transform.affine_inverse()
+	var near_a: float = -(inv * Vector3(da.x, da.y, za)).z - RenderLook.HOLE_GAP
+	var near_b: float = near_a
+	if deep:
+		near_b = -(inv * Vector3(db.x, db.y, zb)).z - RenderLook.HOLE_GAP
+		for e in [ea, eb]:
+			var slot: int = int(e[1])
+			if slot < aim.size() and aim[slot] >= 0:
+				var ab = S.buildings[aim[slot]]
+				if ab.d > 0.0:
+					var lim: float = -(inv * Vector3(SimWrap.sdx(cam_x, ab.x), da.y, ab.z + ab.d * 0.5)).z - RenderLook.HOLE_GAP
+					if e == ea:
+						near_a = minf(near_a, lim)
+					if e == eb:
+						near_b = minf(near_b, lim)
+	return [Vector3(da.x, da.y, za), pr, near_a, Vector3(db.x, db.y, zb), pr, near_b]
 
 
 func snap_occlusion() -> void:
 	planet.snap_stubs()
+	planet.snap_open()
 	_patch_t = -1.0
 	_join_t = -1.0
 	_cue_t = -1.0

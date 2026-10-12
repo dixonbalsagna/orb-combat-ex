@@ -48,6 +48,12 @@
 //    dark band, a burnt-out tower is dark, and neither is stripes. Lit panes are few and keep their light.
 // 8. Row haze. A part takes the air's colour by how far behind the fighter plane its front face stands (row_haze), so
 //    the back block and the scenery row read as depth. The front block takes none.
+// 9. Open floors (RenderLook.OPEN_*; Orb, 2026-10-12). The camera's, not damage: in a match with depth on, a tall
+//    building in front of the fight has the floors the fight is seen through opened in this pane (stub_tex's g and b:
+//    from this world y to that one). There the walls are gone, front, sides and back, so the street behind shows
+//    under the tower. What stays says it is built so: a post at each corner and one a bay along the front, in the
+//    wall's own colour, and the pale edge of the floor above. No soot, no cracks, no broken line, nothing dark painted in. A building
+//    that opens floors is never holed (b at or above -1.5e9 marks one).
 // An instance with nothing to cut and no part gone keeps back-face culling (its back faces are thrown away in the
 // vertex stage), so only the cut towers and the buildings at stage 2 and 3 pay for their insides. tools/cull_check.gd
 // compares that with the rasterizer's own culling.
@@ -90,6 +96,9 @@ uniform vec4 look_trim[10] : source_color;   // doors, shutters, panels
 uniform float pattern_budget = 0.085;   // RenderLook.PATTERN_BUDGET: on a look with flag 16, the most a pane and its wall differ in relative luminance
 uniform float dmg_holes = 0.18;      // RenderLook.DMG_HOLES: at stage 2, the share of a facade's bays broken open
 uniform vec3 row_haze = vec3(0.5, 600.0, 2800.0);   // RenderLook.ROW_HAZE: the most of the air a far row takes, and the depths behind the fighter plane it starts and is full at
+uniform vec3 open_post = vec3(190.0, 9.0, 0.82);   // RenderLook.OPEN_POST: an opened floor's posts (a bay's width at most, a post's width, its tone against the wall's)
+uniform float open_slab = 7.0;       // RenderLook.OPEN_SLAB: the edge of the floor over an opening
+uniform vec4 open_slab_col : source_color = vec4(0.55, 0.58, 0.63, 1.0);   // RenderLook.OPEN_SLAB_COL
 
 varying flat vec4 v_cut;      // x, y, z: the mask's three parts; w: floor height
 varying flat vec2 v_base;     // x: the base's world y; y: the top standing floor
@@ -103,6 +112,7 @@ varying flat vec4 v_hole1;
 varying float v_wy;
 varying vec3 v_view;          // from the camera, in world axes, for the sky's colour behind (the pan haze)
 varying flat vec3 v_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1
+varying flat vec2 v_open;     // this pane's open floors: from world y x to world y y (y at or under x: none; y under -1.5e9: a building that never opens floors)
 
 // A world point on this pane's screen, in FRAGCOORD's pixels.
 vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
@@ -111,7 +121,9 @@ vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
 }
 
 void vertex() {
-	float stub = texelFetch(stub_tex, ivec2(min(INSTANCE_ID, textureSize(stub_tex, 0).x - 1), 0), 0).r;
+	vec4 so = texelFetch(stub_tex, ivec2(min(INSTANCE_ID, textureSize(stub_tex, 0).x - 1), 0), 0);
+	float stub = so.r;
+	v_open = so.gb;
 	vec4 c = texelFetch(cut_tex, ivec2(min(INSTANCE_ID, textureSize(cut_tex, 0).x - 1), 0), 0);
 	float top_floor = floor(c.z / 16384.0);
 	v_cut = vec4(c.x, c.y, c.z - top_floor * 16384.0, c.w);
@@ -159,7 +171,7 @@ void vertex() {
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
-	if (c.w <= 0.0 && wb.z < 1.5 && ref_cull < 0.5) {
+	if (c.w <= 0.0 && wb.z < 1.5 && ref_cull < 0.5 && so.b <= so.g) {
 		// Nothing to cut: cull this face if it looks away from the camera, as cull_back would. Every corner of a face
 		// must decide the same, or a face thrown away at some corners only is drawn stretched to the screen's corner
 		// (a dark stripe from a roof). So the test uses the face's plane and nothing of the corner itself: the true
@@ -221,7 +233,7 @@ void fragment() {
 	}
 	float dith = fract(dot(FRAGCOORD.xy, vec2(0.7548777, 0.5698403)));
 	for (int i = 0; i < 2; i++) {
-		if (hole[i].w > 0.0) {
+		if (hole[i].w > 0.0 && v_open.y < -1.5e9) {
 			// The distance to the hole's axis (a point for a round hole), and how far along it this pixel is.
 			vec4 ends = i == 0 ? v_hole0 : v_hole1;
 			vec2 ab = ends.zw - ends.xy;
@@ -371,6 +383,30 @@ void fragment() {
 				discard;
 			}
 			col = inside.rgb;
+		}
+	}
+	if (v_open.y > v_open.x) {
+		// Open floors: between the two heights only the posts stand. Over the opening, and under one that starts above
+		// the ground, the floor's edge is a clean pale line.
+		float sl = max(open_slab, 1.3 * fwidth(v_wy));
+		float pw = 0.5 * max(open_post.y, 1.3 * fwidth(v_face.x));
+		if (v_wy > v_open.x && v_wy < v_open.y) {
+			if (!wall) {
+				discard;
+			}
+			// A post at each corner, and along the front wall one a bay. The side and back walls keep their corners only,
+			// so few posts stand between the camera and the fight.
+			bool post = 0.5 * v_face.y - abs(v_face.x) < 2.0 * pw;
+			if (!post && v_back < 0.5 && fract(v_winb.z) < 0.25) {
+				float bay = v_face.y / max(1.0, floor(v_face.y / open_post.x + 0.5));
+				post = abs(fract((v_face.x + 0.5 * v_face.y) / bay + 0.5) - 0.5) * bay < pw;
+			}
+			if (!post) {
+				discard;
+			}
+			col = FRONT_FACING ? flat_shade(wallc * open_post.z, NORMAL, 0.35) : inside.rgb;
+		} else if (wall && FRONT_FACING && ((v_wy >= v_open.y && v_wy < v_open.y + sl) || (v_wy <= v_open.x && v_wy > v_open.x - sl))) {
+			col = flat_shade(open_slab_col.rgb, NORMAL, 0.35);
 		}
 	}
 	if (v_look.z > 0.001) {

@@ -21,6 +21,9 @@ const WATER_SHADER: Shader = preload("res://render/shaders/water.gdshader")
 const CROWD_SHADER: Shader = preload("res://render/shaders/crowd.gdshader")
 const BUILDING_SHADER: Shader = preload("res://render/shaders/building.gdshader")
 const STUB_WHOLE := 1.0e9     # a stub height that cuts nothing
+const OPEN_OFF := -2.0e9      # stub_tex's b for a building that never opens floors (building.gdshader v_open),
+const OPEN_SHUT := -1.0e9     # ... for one that does, with none open,
+const OPEN_GROUND := -1.0e6   # ... and its g for an opening that starts at the ground
 const STREET_STRIPS := 16     # the ground shader's array sizes (ground.gdshaderinc): three streets of five strips, and one to spare
 const STREET_SPANS := 16
 const STREET_AVENUES := 24
@@ -58,6 +61,10 @@ var _stub_live: Dictionary = {}      # the buildings whose stub is not 0, or is 
 var _stub_t: float = -1.0
 var _stub_hold: Dictionary = {}      # a building lowered by the foreground patch -> the tick time before which it does not stand again
 var _sink_last: float = -1.0e9       # the tick time a building last sank under the patch (none stands again within the hold of it)
+var _open: Dictionary = {}           # this pane's open floors: building -> [low, high (world y as drawn), the low and the high wanted, the tick times each was last asked for, pixels a unit of its height, its footing]
+var _open_t: float = -1.0
+var _open_kind := PackedByteArray()  # per building: 1 if it opens floors in this match (opens)
+var open_turned: float = 0.0         # the pixels the openings turned in the last set_open (for tools)
 var _top := PackedFloat64Array()     # per building: its top as drawn (-INF when it does not stand), shared by panes
 var _cut: Array = []                 # [Image, ImageTexture, dirty]: each building's cut floors (building.gdshader), shared by panes
 var _cut0: Array = []                # ... and the row-0 buildings', by row-0 index
@@ -147,6 +154,7 @@ func build(S: SimState) -> void:
 	_stub_t = -1.0
 	_stub_tex = _stub_texture(_bld_mat, _n_inst)
 	_stub_tex0 = _stub_texture(_front_mat, _n_inst0)
+	_mark_open(S)
 	_bld_mat.set_shader_parameter("cut_tex", _cut[1])
 	_front_mat.set_shader_parameter("cut_tex", _cut0[1])
 	_bld_mat.set_shader_parameter("win_tex", _win[1])
@@ -965,8 +973,9 @@ func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}) -> void:
 		var row0: bool = _row0[bi] >= 0
 		var st: Array = _stub_tex0 if row0 else _stub_tex
 		for k in _inst[bi]:   # every part of the building is cut down with it
-			if absf((st[0] as Image).get_pixel(k, 0).r - y) > 0.01:
-				(st[0] as Image).set_pixel(k, 0, Color(y, 0.0, 0.0))
+			var px: Color = (st[0] as Image).get_pixel(k, 0)
+			if absf(px.r - y) > 0.01:
+				(st[0] as Image).set_pixel(k, 0, Color(y, px.g, px.b, 0.0))
 				changed[1 if row0 else 0] = true
 	for bi in done:
 		_stub_live.erase(bi)
@@ -979,6 +988,146 @@ func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}) -> void:
 ## The next set_stubs jumps to its targets instead of easing (for tools that pose a frame).
 func snap_stubs() -> void:
 	_stub_t = -1.0
+
+
+## Whether building b opens floors in this match (RenderLook.OPEN_FLOORS_MIN): only with depth on, and by its floors as
+## built, so a building is of one kind for the whole match and never both opens floors and takes the patch.
+static func opens(S: SimState, b) -> bool:
+	return S.depthOn and int(b.floors) >= RenderLook.OPEN_FLOORS_MIN
+
+
+## The same for a building of this pane's world, by its index.
+func opens_floors(bi: int) -> bool:
+	return bi >= 0 and bi < _open_kind.size() and _open_kind[bi] == 1
+
+
+## This pane's opening in building bi as drawn: its low and high ends (world y), or (0, 0) when shut.
+func open_now(bi: int) -> Vector2:
+	return Vector2(float(_open[bi][0]), float(_open[bi][1])) if _open.has(bi) else Vector2.ZERO
+
+
+## At build: every building's kind in this pane's stub textures. With depth off none opens floors and nothing is written.
+func _mark_open(S: SimState) -> void:
+	_open.clear()
+	_open_t = -1.0
+	open_turned = 0.0
+	_open_kind.resize(S.buildings.size())
+	_open_kind.fill(0)
+	if not S.depthOn:
+		return
+	for bi in range(S.buildings.size()):
+		if opens(S, S.buildings[bi]):
+			_open_kind[bi] = 1
+			_put_open(bi, 0.0, OPEN_SHUT)
+	(_stub_tex[1] as ImageTexture).update(_stub_tex[0])
+	(_stub_tex0[1] as ImageTexture).update(_stub_tex0[0])
+
+
+## Write building bi's opening to every part's texel. Returns which texture changed (0 the rows', 1 the foreground
+## row's, -1 none).
+func _put_open(bi: int, lo: float, hi: float) -> int:
+	var row0: bool = _row0[bi] >= 0
+	var st: Array = _stub_tex0 if row0 else _stub_tex
+	var hit: int = -1
+	for k in _inst[bi]:
+		var px: Color = (st[0] as Image).get_pixel(k, 0)
+		if px.g != lo or px.b != hi:
+			(st[0] as Image).set_pixel(k, 0, Color(px.r, lo, hi, 0.0))
+			hit = 1 if row0 else 0
+	return hit
+
+
+## Per frame, per pane: the open floors (building.gdshader's v_open; RenderLook.OPEN_*). want: building -> Vector3(the
+## lowest and the highest world y the action is seen through at it, the pixels of this pane's screen a unit of its
+## height covers). Only a building that opens floors (opens) is taken.
+## - An opening's ends are floor lines: the low one a floor's foot, the high one a floor's ceiling.
+## - It grows as soon as it is asked to, and an end draws back only when nothing has asked for it for OPEN_HOLD_S.
+## - All the openings of the pane together turn at most a tick's share of RenderLook.PATCH_AREA_TICK pixels (at 1024
+##   by 768), less what the patch turned this frame (`left`: what the patch left of it, under 0 for all of it), shared
+##   by what each asks for; a closing end goes at OPEN_CLOSE of that.
+func set_open(S: SimState, want: Dictionary, vp: Vector2, left: float = -1.0) -> void:
+	var now: float = tick_time(S)
+	var snap: bool = _open_t < 0.0 or now < _open_t
+	var ticks: float = clampf(now - _open_t, 0.0, 0.1) / SimConst.DT if not snap else 0.0
+	_open_t = now
+	open_turned = 0.0
+	for bi in want:
+		if not _open.has(bi) and opens_floors(bi) and _top[bi] > -INF:
+			_open[bi] = [0.0, 0.0, 0.0, 0.0, now, now, 1.0, 0.0, false]
+	if _open.is_empty():
+		return
+	var budget: float = RenderLook.PATCH_AREA_TICK * (vp.x * vp.y) / (1024.0 * 768.0) * ticks
+	if left >= 0.0:
+		budget = minf(budget, left)
+	# What each opening wants now.
+	var need: float = 0.0
+	for bi in _open:
+		var o: Array = _open[bi]
+		var b = S.buildings[bi]
+		var top: float = _top[bi]
+		if top == -INF:
+			o[2] = o[0]
+			o[3] = o[0]
+			continue
+		var foot: float = top - WorldStructures.curH(b)
+		var fh: float = maxf(b.h / float(maxi(int(b.floors), 1)), 1.0)
+		o[7] = foot
+		if want.has(bi) and opens_floors(bi):
+			var w: Vector3 = want[bi]
+			var k_lo: float = maxf(floorf((w.x - foot) / fh), 0.0)
+			var k_hi: float = maxf(ceilf((w.y - foot) / fh), k_lo + 1.0)
+			var t_lo: float = minf(foot + k_lo * fh, top - 1.0)
+			var t_hi: float = minf(foot + k_hi * fh, top)
+			o[6] = w.z
+			if not o[8]:   # a new opening starts shut at its low end and opens upward
+				o[0] = t_lo
+				o[1] = t_lo
+				o[2] = t_lo
+				o[3] = t_hi
+				o[8] = true
+			if t_lo <= float(o[2]):
+				o[2] = t_lo
+				o[4] = now
+			elif now - float(o[4]) >= RenderLook.OPEN_HOLD_S:
+				o[2] = t_lo
+			if t_hi >= float(o[3]):
+				o[3] = t_hi
+				o[5] = now
+			elif now - float(o[5]) >= RenderLook.OPEN_HOLD_S:
+				o[3] = t_hi
+		elif now - maxf(float(o[4]), float(o[5])) >= RenderLook.OPEN_HOLD_S:
+			o[3] = o[2]   # nothing asks for it any more: the top comes down to the bottom
+		o[2] = minf(float(o[2]), float(o[3]))
+		var d_lo: float = float(o[2]) - float(o[0])
+		var d_hi: float = float(o[3]) - float(o[1])
+		need += float(o[6]) * ((-d_lo if d_lo < 0.0 else d_lo / RenderLook.OPEN_CLOSE) + (d_hi if d_hi > 0.0 else -d_hi / RenderLook.OPEN_CLOSE))
+	var k: float = 1.0 if snap else minf(1.0, budget / maxf(need, 0.001))
+	var changed: Array = [false, false]
+	var done: Array = []
+	for bi in _open:
+		var o: Array = _open[bi]
+		var d_lo: float = (float(o[2]) - float(o[0])) * k
+		var d_hi: float = (float(o[3]) - float(o[1])) * k
+		open_turned += float(o[6]) * (absf(d_lo) + absf(d_hi))
+		o[0] = float(o[0]) + d_lo
+		o[1] = float(o[1]) + d_hi
+		var shut: bool = float(o[1]) - float(o[0]) < 0.05
+		var hit: int = _put_open(bi, 0.0, OPEN_SHUT) if shut else _put_open(bi, OPEN_GROUND if float(o[0]) <= float(o[7]) + 0.05 else float(o[0]), float(o[1]))
+		if hit >= 0:
+			changed[hit] = true
+		if shut and float(o[3]) - float(o[2]) < 0.05 and not want.has(bi):
+			done.append(bi)
+	for bi in done:
+		_open.erase(bi)
+	if changed[0]:
+		(_stub_tex[1] as ImageTexture).update(_stub_tex[0])
+	if changed[1]:
+		(_stub_tex0[1] as ImageTexture).update(_stub_tex0[0])
+
+
+## The next set_open jumps to its targets instead of easing (for tools that pose a frame).
+func snap_open() -> void:
+	_open_t = -1.0
 
 
 ## Per frame, per pane: the cut-away holes around the fighters (building.gdshader). holes: per fighter [his chest as
@@ -1030,17 +1179,22 @@ func has_row0() -> bool:
 
 ## The standing buildings of the foreground row within `reach` of the camera's x, for the patch: each [the building,
 ## its x from the camera, its width, its footing, its top as it stands whole, its front face's depth].
-func row0_faces(S: SimState, cam_x: float, reach: float) -> Array:
+## deep (a match with depth on): every row's buildings, each with its back face's depth as a seventh number, since the
+## patch then works through every row in front of the action. A building that opens floors is never among them.
+func row0_faces(S: SimState, cam_x: float, reach: float, deep: bool = false) -> Array:
 	var out: Array = []
-	for bi in _row0_b:
-		if _top[bi] == -INF:
+	for bi in (range(S.buildings.size()) if deep else _row0_b):
+		if _top[bi] == -INF or opens_floors(bi):
 			continue
 		var b = S.buildings[bi]
 		var bx: float = SimWrap.sdx(cam_x, b.x)
 		if absf(bx) > reach + b.w:
 			continue
 		var zd: Vector2 = _depth(b)
-		out.append([bi, bx, b.w, _top[bi] - WorldStructures.curH(b), _top[bi], zd.x + zd.y * 0.5])
+		var fc: Array = [bi, bx, b.w, _top[bi] - WorldStructures.curH(b), _top[bi], zd.x + zd.y * 0.5]
+		if deep and _row0[bi] < 0:
+			fc.append(zd.x - zd.y * 0.5)
+		out.append(fc)
 	return out
 
 
@@ -1062,6 +1216,9 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("pan_mix", RenderLook.PAN_HAZE_MIX)
 	m.set_shader_parameter("dmg_holes", RenderLook.DMG_HOLES)
 	m.set_shader_parameter("pattern_budget", RenderLook.PATTERN_BUDGET)
+	m.set_shader_parameter("open_post", RenderLook.OPEN_POST)
+	m.set_shader_parameter("open_slab", RenderLook.OPEN_SLAB)
+	m.set_shader_parameter("open_slab_col", RenderLook.col(RenderLook.OPEN_SLAB_COL))
 	var lu: Dictionary = RenderShapes.look_uniforms()
 	for key in lu:
 		m.set_shader_parameter(key, lu[key])
@@ -1086,10 +1243,11 @@ static func _cut_texture(n: int) -> Array:
 	return [img, ImageTexture.create_from_image(img), false]
 
 
-## A one-row float texture of a material's stub heights, one texel an instance, all whole: [image, texture].
+## A one-row float texture of a material's per-pane cuts, one texel an instance: r its stub height (whole), g and b
+## its open floors (none, and a building that never opens any): [image, texture].
 static func _stub_texture(m: ShaderMaterial, n: int) -> Array:
-	var img := Image.create_empty(maxi(1, n), 1, false, Image.FORMAT_RF)
-	img.fill(Color(STUB_WHOLE, 0.0, 0.0))
+	var img := Image.create_empty(maxi(1, n), 1, false, Image.FORMAT_RGBAF)
+	img.fill(Color(STUB_WHOLE, 0.0, OPEN_OFF, 0.0))
 	var tex := ImageTexture.create_from_image(img)
 	m.set_shader_parameter("stub_tex", tex)
 	return [img, tex]
