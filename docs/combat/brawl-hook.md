@@ -92,7 +92,7 @@ The recipes give the order ready-made: `reach.runs[fighter]` holds two runs of t
 | A spin is never followed by a spin or a head kick | s04 | `pieces[id].path`, `limb`, `target` | 0 | 0 |
 | No more than three running of one limb, tip and path | s01 | `limb` and `path` (a row has no tip: judged on the two, it is stricter) | not counted | |
 | The burst's own four | f05 | `burst.rules` | not counted | |
-| Never the same energy hand and release twice running | e06 | `reach.rule`, `reach.pieces` | kept among bolts: each is its own pair, and no piece follows itself. A blast after the thrust bolt of the same hand is open with Legal (`pending/nine-cells.md` section 3) | |
+| Never the same energy hand and release twice running | e06 | `reach.rule`, `reach.pieces` | kept among bolts: each is its own pair, and no piece follows itself. A blast after a bolt is not a repeat (Legal, `321c046d`), so the pick does nothing for it | |
 | A mashed run of bolts reads as varied | e09 | `reach.run`, `reach.runs` | part 4 | |
 
 - **The two gut blows are one give-up.** After six tries that all draw the gut, `_piece` takes the last one and clears the flag (brawl.gd:924), so the blow after it may go to the gut as well. It happened once, on the rival's bolts: two of his four go to the gut. Asking the pool for a piece that is not to the gut, in place of six blind tries, closes it; so does the step `repeat` or `lower` of part 6.

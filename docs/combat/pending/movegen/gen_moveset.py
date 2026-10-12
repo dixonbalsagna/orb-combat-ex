@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 13
+VERSION = 14
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -197,6 +197,17 @@ def string_breaks(parts, blows, airborne=True):
             if run > st["max"]:
                 out.append(r["id"]); break
     return sorted(set(out))
+
+
+def legal_unread(parts):
+    """The groups of Legal's file that are not copied into parts.json (no move is made of them), with their row counts: said on --check's Legal line so that a new
+    group is seen."""
+    lf = os.path.join(ROOT, "docs", "legal", "movegen-banned.json")
+    if not os.path.exists(lf):
+        return ""
+    known = parts.get("legal", {}).get("mirrored", [])
+    other = ["%s %d" % (k, len(v)) for k, v in load(lf).items() if k not in ("schema", "_about", "banned", "bannedSequences") and k not in known and isinstance(v, (list, dict))]
+    return (" (not read, no move is made of them: %s)" % ", ".join(other)) if other else ""
 
 
 def group_hits(parts, m, kind):
@@ -677,7 +688,7 @@ def burst_cell(ctx, who, cid, cell, done):
 def reach_blow(parts, m, btn="rx"):
     """A point-blank bolt as a blow of a string: it has a path and a place, and the energy parts Legal's e06 counts."""
     return {"id": m["id"], "limb": "hand", "tip": parts["shot"]["hands"][m["hand"]]["shape"], "path": m["path"], "target": m["target"], "weight": "light", "arms": 1,
-            "step": [], "hand": m["hand"], "release": m["release"], "body": m["body"], "button": btn}
+            "step": [], "hand": m["hand"], "release": m["release"], "body": m["body"], "delivery": m.get("delivery"), "button": btn}
 
 
 def reach_run_breaks(parts, seq, arms):
@@ -1001,15 +1012,15 @@ def legal_findings(docs, parts, identity):
             if mine_seq.get(r["id"]) != (r["rule"], r["why"]):
                 bad.append("sequence rule %s differs from Legal's file" % r["id"])
         for group, rows in theirs.items():
-            if group in ("schema", "_about", "banned", "bannedSequences"):
+            if group in ("schema", "_about", "banned", "bannedSequences") or group not in lg.get("mirrored", []):   # mirrored: the groups a move is made of, named in parts.json
                 continue
             if not isinstance(rows, list):   # a block that is not rows (heldScope): the copy must be the same
                 if lg.get(group) != rows:
                     bad.append("Legal's block %s is missing from parts.json or differs" % group)
                 continue
-            mine = {r["id"]: (r["rule"], r["why"]) for r in lg.get(group, [])}
+            mine = {r["id"]: (r.get("rule"), r.get("why")) for r in lg.get(group, [])}
             for r in rows:
-                if mine.get(r["id"]) != (r["rule"], r["why"]):
+                if mine.get(r["id"]) != (r.get("rule"), r.get("why")):
                     bad.append("Legal's row %s (%s) is missing from parts.json or differs" % (r["id"], group))
     for p, nexts in g["links"].items():
         for q in nexts:
@@ -1636,6 +1647,8 @@ def self_test(parts, identity):
     expect("a point-blank bolt from the blade hand passes", group_hits(parts_, {"hand": "blade_hand", "release": "thrust", "body": "in_reach", "delivery": "point_blank", "target": "chest"}, "energy"), [])
     pb = {"id": "r1", "limb": "hand", "tip": "blade", "path": "line", "target": "chest", "hand": "blade_hand", "release": "thrust", "body": "in_reach"}
     expect("the same point-blank bolt twice running is refused, even at another place (e06)", string_breaks(parts_, [pb, dict(pb, id="r2", target="gut")]), ["e06"])
+    expect("a blast after a bolt of the same hand and release is not a repeat: the delivery counts (e06, as Legal cleared it)",
+           string_breaks(parts_, [dict(pb, delivery="point_blank"), dict(pb, id="r3", delivery="blast")]), [])
     expect("a point-blank bolt counts as a blow: a third running to the chest (f02, s02)", string_breaks(parts_, [dict(hvy, id="a"), dict(hvy, id="b", tip="plate", path="arc_in"), pb]), ["f02", "s02"])
     hv = [m for m in shapes(g) if m["weight"] == "heavy"]
     expect("the heavy tier has no headbutt, no blow to a shin and no rising hand to the jaw or head",
@@ -1701,7 +1714,7 @@ def main():
         on_disk = {who: load(os.path.join(HERE, "moveset.%s.json" % who)) for who in out if os.path.exists(os.path.join(HERE, "moveset.%s.json" % who))}
         bad = sorted(set(fresh + legal_findings(on_disk, parts, identity)))
         print("files: " + ("up to date" if not stale else "OUT OF DATE: " + ", ".join(stale)))
-        print("Legal's rows: " + ("no match" if not bad else "%d MATCH" % len(bad)))
+        print("Legal's rows: " + ("no match" if not bad else "%d MATCH" % len(bad)) + legal_unread(parts))
         for b in bad:
             print("  " + b)
         print("strings: " + ("no dead end" if not dead else "%d PROBLEM" % len(dead)))

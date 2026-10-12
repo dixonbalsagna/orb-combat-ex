@@ -2134,6 +2134,16 @@
   "applies": {
    "strike.banned": "strike pieces only: the martial cells, the checks, the pushes, and the blow of a zip, a step or a charge. An energy piece is judged by the energy rows: b09 would refuse a lit fist, and e01 is the rule for where an energy hand's light may sit"
   },
+  "mirrored": {
+   "motion": true,
+   "energy": true,
+   "grabs": true,
+   "held": true,
+   "stacking": true,
+   "flurry": true,
+   "heldScope": true
+  },
+  "_mirrored": "the groups of Legal's file that are copied here and compared by --check: the ones a move is made of. Legal's file also holds groups about buildings, landmarks and public copy (world, withdrawn, public); they are their owners' and are not read. --check names them on its Legal line",
   "motion": [
    {
     "id": "m01",
@@ -2366,12 +2376,13 @@
      "same": [
       "hand",
       "release",
-      "body"
+      "body",
+      "delivery"
      ],
      "max": 1
     },
-    "rule": "a burst, a blast and a ki-style flurry (B), and an energy blow in reach (RB + X or Y), are thrown by one hand at shoulder height or lower: an open hand, a blade hand, or the rival's lit fist with the light on its plate and knuckle edges only (the cleared fist glow), never a ball or glow round the fist; a flurry varies the piece (hand state, release, body) and never pumps the same hand repeatedly or both palms in turn; a point-blank blast shows its flash as a thin edge or short cone at the hand, never a ball; never aimed at the face",
-    "why": "the shouted two-palm barrage and the held sphere; the lit fist was cleared in RL-062 and is not banned by e02 or e06"
+    "rule": "a burst, a blast and a ki-style flurry (B), and an energy blow in reach (RB + X or Y), are thrown by one hand at shoulder height or lower: an open hand, a blade hand, or the rival's lit fist with the light on its plate and knuckle edges only (the cleared fist glow), never a ball or glow round the fist; a flurry varies the piece (hand state, release, body) and never pumps the same hand repeatedly or both palms in turn; a point-blank blast shows its flash as a thin edge or short cone at the hand, never a ball; never aimed at the face. The repeat rule counts the hand, the release and the delivery (a bolt, or a blast braced on a held pose for 12 ticks that lands once and ends the brawl): a blast after a bolt of the same hand and release is not a repeat, because the blast is its own piece and cannot be a pump. Two bolts of the same hand, release and delivery in a row stay refused (e09)",
+    "why": "the shouted two-palm barrage and the held sphere; the lit fist was cleared in RL-062 and is not banned by e02 or e06; clarified 2026-10-12 for Combat (the delivery counts)"
    },
    {
     "id": "e07",
@@ -2563,6 +2574,14 @@
     "owner": "VFX, Animation and Audio",
     "rule": "full flashes are counted over the whole screen, every effect and both fighters together: at most three in any one second, each small (a thin edge or short cone), none red, and a reduced-motion setting halves the rate; the cap is checked by a flash analysis of a recorded mashed sequence on the real build; a shared flash registry counts every full flash from every effect (energy, explosions, signatures, transformations, hit rings, beam clashes) against the cap, which is a condition before the first public release of the web build; the evidence needed is in photosensitivity-note.md",
     "why": "photosensitivity; Combat's one in 20 ticks is the same 3 a second"
+   },
+   {
+    "id": "k06",
+    "kind": "numbers",
+    "owner": "UI",
+    "check": "a persistent HUD cue changes no faster than 3 times a second",
+    "rule": "a persistent HUD cue (a battered or low-state stroke, a pulse, a ring) changes no faster than 3 times a second and by preference 2 or fewer, is static under reduced motion and Reduce flashing, and counts in the flash check's frame like any other effect (the HUD is part of the screen); below the area threshold it is not a standard flash, but a flicker that runs for a whole match in a fixed place is held to the rate anyway",
+    "why": "UI's crown at 4 Hz in thin arcs under 8,000 px"
    }
   ],
   "flurry": [

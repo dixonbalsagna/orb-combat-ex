@@ -4,6 +4,8 @@ Owner: Combat and Choreography. Date: 2026-10-12. Status: **parked, measured in 
 
 Today the live brawl picks by strength alone from four old pools, so B plays the old heavies, a bolt is an ordinary light, and the heavy tier and the energy pieces Animation has posed are never thrown. `recipes.brawl.json` names a pool for every cell, and `../brawl-hook.md` is the change that reads it.
 
+**Since the report (2026-10-12):** committed as `c6f58415`. Animation's packs are on main (`04dd6729`, `115ee361`) with the ids and rows this note names, and with its part of section 6 done: a blow's strength picks its style, every bolt and blast is thrown from either arm, and the charged medium has its hold. Legal cleared the blast after a bolt (`321c046d`). The generator is version 14 with 80 self-test cases; `recipes.brawl.json` has not changed since the commit. The window waits on Encounter's hook.
+
 **Built on Animation's packs as they stand in the working tree** on 2026-10-12 at 10:04, not yet committed: its ids for the rival's flick and sweep, and rows 09 and 10 of each tier, which it marks provisional. The generator reads the tree. If a pack moves again, `--check` goes red and the chain of section 8 brings the data level in minutes.
 
 ## 1. What is parked
@@ -40,7 +42,7 @@ Today the live brawl picks by strength alone from four old pools, so B plays the
 | The rival | 90 | 23 | 15 |
 | The Protagonist | 85 | 28 | 15 |
 
-B is 10 posed a fighter, with no row waiting. Energy in reach is 4 bolts and 2 blasts a fighter, all posed. The generator is version 13: `--check` passes on all three lines, and `--self-test` passes its 79 cases.
+B is 10 posed a fighter, with no row waiting. Energy in reach is 4 bolts and 2 blasts a fighter, all posed. The generator was version 13 at the report and is 14 now: `--check` passes on all three lines, and `--self-test` passes its 80 cases.
 
 ## 2. Four calls of mine
 
@@ -84,17 +86,13 @@ The rival threw all ten of his tier, as a heavy or as a launcher.
 - **The rises.** Legal's s05 bans a rise after a rise only while he is airborne. The probe did not read his height, so 52 is a ceiling. The new pools hold more rising blows than the old ones.
 - **One place three times** happens less than half as often as today, and it still happens: the picker doesn't keep that rule.
 
-**Open, for Legal: a blast straight after a thrust bolt of the same hand.** Legal's e06 counts an energy piece by its hand and release, and the generator refuses the same pair twice running. Each fighter's two blasts are a thrust from one hand (the rival's lit fist, the Protagonist's palm), and one of his bolts is that same hand and release (`strike.bolt_fist`, `strike.bolt_thrust`). So RB + X then RB + Y breaks the rule as the machine reads it one time in four, and no pick can avoid it: the bolt is thrown before anyone knows a blast follows.
-- My reading: the blast is its own piece. It is braced on a held pose for 12 ticks, lands once and ends the brawl, so it cannot be a pump. If Legal agrees, the rule counts the delivery too, and nothing else changes.
-- If Legal does not, each fighter needs a blast from another hand or release, which is new art.
-- The generator's string check never put a blast after a bolt, so this was not caught before. Nothing in the parked data changes either way until Legal answers.
+**A blast straight after a thrust bolt of the same hand: cleared by Legal** (`321c046d`). Each fighter's two blasts are a thrust from the hand one of his bolts uses, so RB + X then RB + Y repeated a hand and release one time in four, and no pick could avoid it. Legal's e06 now says the repeat rule counts the delivery too: a blast is braced on a held pose for 12 ticks, lands once and ends the brawl, so it is its own piece. The generator reads it that way from version 14. Two bolts of one hand and release running stay refused.
 
-**Joints.** Animation's `joint_scan.gd --strict` on the scratch copy and the same seeds exits 0. That run was made on the tier's first eight a fighter and the energy pieces, before rows 09 and 10 came into Animation's packs.
-- 878 authored poses (8,740 frames): none past a limit. That covers `rival7`, `rival8`, `protag10` and `protag11` as committed.
+**Joints.** Animation's `joint_scan.gd --strict` on the scratch copy, the final file and the same seeds exits 0.
+- 890 authored poses (8,860 frames): none past a limit. `rival7` and `protag10` with their ten rows each: 300 frames a pack. `rival8` and `protag11`: 180 each.
 - 116 sequences: none.
 - 24,000 fighter-frames of the four matches, with the tier and the energy pieces thrown: none reaches the screen past a limit.
-- The solve's last pass pulls three of the new pieces back by more than 30 degrees on some frames: `ru.su_knee` (22 frames), `pk.bolt_flat` (6) and `pk.bolt_thrust` (5). They pass, and Animation may want to look.
-- **Rows 09 and 10 are not covered by it.** The same scan with them thrown was started on the final file. It had finished one match of four when this was reported, because the machine was at 100% with other sessions' runs. Its result goes to the EP in a message.
+- The solve's last pass pulls three of the Protagonist's bolts back by more than 30 degrees on some frames, all at the left upper arm's twist: `pk.bolt_flat` (6 frames), `pk.bolt_sweep` (5) and `pk.bolt_thrust` (5). They pass, and Animation may want to look.
 
 **Not measured.**
 - The launcher's pick by send, the mashed bolts from their runs and a charge's second pick: the stand-in does none of them (parts 2 and 4 of the hook, and the end of part 1).

@@ -17,7 +17,7 @@ Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here i
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, on any match with Legal's rows, or when a string runs out of blows (a strike button left with fewer than 3 pieces after some two blows, or a light that cannot open a burst). It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 79 cases.
+- **To prove the refusals:** `--self-test`, 80 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -56,6 +56,7 @@ Animation posed the ten heavies of each tier (rows 09 and 10 are provisional, an
 - A run of mashed bolts is a loop: the generator checks the join, so it keeps Legal's e09 however long it is played (`cells.json`, `loop`).
 - `--check` also tests the hand-kept data: each energy key set named in `identity.json` is a row of its pack, on the rule's path and place.
 - The energy ids are Animation's. A rule may carry `strikeNow` while a rename is on its way; none does now.
+- **Version 14 (2026-10-12, later):** Legal's e06 counts the delivery, so a blast after a bolt of the same hand is not a repeat. Legal's file now also holds groups no move is made of (`world`, `withdrawn`, `public`). `parts.json` `legal.mirrored` names the groups that are copied and compared, and `--check` names the others on its Legal line with their row counts, so a new group is seen.
 
 ## 1. The martial arts stance, regenerated on Animation's data
 
