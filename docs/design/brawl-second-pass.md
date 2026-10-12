@@ -118,6 +118,8 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 **What it gives the game.** Position is the player's job under pillar 2, and now he has it inside a brawl. The Protagonist's AI nudges a brawl away from a town, and the rival's nudges it toward one. It reads each fighter's `care` for that: 0.8 for the Protagonist and −0.5 for the rival (`launch-pair-plan.md` §1). Both are 0.0 in the data today, so neither AI leans anywhere. A charged heavy can be walked into place before it is let go.
 
+**Depth.** How a brawl drifts toward and away from the camera, and where it may stand in the band, is in `depth.md`. Nothing in this section changes for it: the stick moves the pair along the fighters' line, and that line may be angled in depth.
+
 **Data:** `brawl.nudgeMul` 0.4, `brawl.nudgeRampTicks` 8, `brawl.carryShare` 0.5 for 20 ticks, `brawl.partTicks` 12 and `brawl.partDeg` 45, `brawl.nudge.guard` 0.6, `brawl.maxStepBh` 0.3, and for digital input `brawl.nudgeDigital` 0.4 to 1.0 over 12 ticks. New: `brawl.nudge.stagger` 0.5, `brawl.nudge.held` 0.5, and `give` (5 bh a second for every fighter, the edge 0.033 bh, guard 0.6, follow 0.6, at most 2.4 bh past striking distance, reach 0.5, 1 and 1 to 1.5 bh past striking distance, closing 2 ticks a bh up to 4, and the AI's shares).
 
 ## 2. Three strengths on three buttons
