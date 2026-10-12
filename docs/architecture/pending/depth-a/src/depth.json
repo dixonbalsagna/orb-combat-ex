@@ -1,0 +1,11 @@
+{
+  "_note": "Fighters in depth: the core's numbers (sim/core/depth.gd; docs/architecture/depth-core.md). Depths and speeds are in fighter heights (1 bh is 75 units). Every number is a first value from docs/design/depth.md, and none has been run in a match. The director's own depth numbers join this file in its window.",
+  "enabled": false,
+  "_enabled": "the one switch. SimCore.newMatch copies it into S.depthOn unless the match's setup has its own \"depth\". Off until the director's depth window: with it off nothing below is read by a match, and this file is not in a replay's data hash",
+  "maxBhPerSec": 1.2,
+  "_maxBhPerSec": "the cap: the most a drift in depth moves a fighter, outside a flight or a rush. It holds the capped velocity (Fighter.vz) and a free fighter's ease to his home depth (depth.md section 3)",
+  "faceMarginBh": 0.5,
+  "_faceMarginBh": "a fighter outside a flight keeps his centre this far from a standing building's face, and so from a kerb line where a block stands. The body's own half extents (lanes.json body) are the least it can be",
+  "capExempt": ["shove", "sidestep"],
+  "_capExempt": "the causes of depth the cap does not hold: SimFighter.addDepth puts them in the exempt velocity (Fighter.vzX). The causes are push, carry, home, magnet, shove, sidestep and giveGround. A knock-back is one motion along the line (Game Design's ruling). The sidestep is assumed exempt and a give-ground step capped until Game Design rules on them"
+}

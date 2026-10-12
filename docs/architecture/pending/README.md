@@ -4,7 +4,7 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **One script is parked:** `weight_event.py`, the blow's weight on the damage event, for Audio. It moves every golden's light digest and no state hash, so by the EP's ruling it rides with the next golden regeneration and has none of its own. Prove it alone on a clean export first.
 
-**A written plan, not a build:** `depth-core.md`: the core's part of fighters in depth (a fighter's depth outside a flight with the contact rule, what the hash gains, the camera's start at a crossing, snapshots). Its part (c), a depth on the view's particles, is built.
+**A parked build:** `depth-a/`: a fighter's depth outside a flight (two depth velocities, a capped ease, the contact rule against buildings, the director's step call, the camera's start at a crossing), with its new `SimDepth` loader and `data/combat/depth.json`. Proved on a clean export of 33c6f5bd: no golden moves with depth off. It is applied in the depth window, with Encounter's D1a. The plan, what the director calls and the proof are in `depth-core.md`, which also holds the snapshot design (paper).
 
 The tier cap (`tier_cap.py`) was applied on 8106e07a (2026-10-12) and its script is deleted.
 
