@@ -1,0 +1,5 @@
+50eb6743c264cca64503557e05b1c2c52227c48a sim/director/brawl.gd
+3ad8fa73d807ae3678b67bb4b829b83e233948c4 sim/director/ai.gd
+bb02718bf3e606fb3b7c3639895edec8ad6eaef6 data/director/interrupts.json
+c3e72287d163cdf76b05fba95b82b0f44f2f158d data/director/ai.json
+ff42e206073a708a2a825689ccd86a256e2e4156 docs/director/brawl-c2.md

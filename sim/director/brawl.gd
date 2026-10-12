@@ -134,7 +134,9 @@ const TELL_MV: int = BASE + 82     # ... and how far he has moved in it, in sixt
 const AI_GAP: int = BASE + 83     # the AI: the tap gap of the string it is throwing (drawn between tapGap and tapGapMax); 0 before its first
 const GAPV: int = BASE + 84       # on a fighter who winds: the gap his blow must reach, in sixteenths of a unit, counted from the tick its wind-up began
 const GAPV_ON: int = BASE + 85    # ... 1 once that count has begun
-const END: int = BASE + 86
+const MATCH_DBL: int = BASE + 86   # the double hits of this match so far (kept across brawls, on both): the AI digs in to digInMax of them
+const MATCH_DBL_AT: int = BASE + 87   # the live tick of the last one (kept across brawls): the AI does not dig in within digInRestS of it
+const END: int = BASE + 88
 const LIGHT: int = 0
 const FLURRY: int = 1
 const MEDIUM: int = 2   # Y: a wound blow of 12 ticks (the heavy strikes before the three strengths)
@@ -1408,6 +1410,8 @@ static func _giveStep(S: SimState, ex, g) -> void:
 		if bool(gi.bySpeed):
 			sp *= _flySpeed(S, f) / float(gi.speedRef)   # times his own speed, against a standard fighter's
 		var along: float = ux * ax + uy * ay   # 1 straight away, -1 straight at him
+		if f == g and along < 0.0:
+			continue   # toward the rival his stick is a nudge of the centre (_move): alone, it could not take him inside striking distance
 		var step: float = sp * SimConst.DT * minf(1.0, ul)
 		var want: float = 0.0   # how much the gap should change by this step: over 0 it opens, under 0 it closes; 0: he goes where his stick points
 		if f == w:
@@ -1636,16 +1640,21 @@ static func _knock(S: SimState, ex, f, o, bh: float, aim: int, half: bool = fals
 
 ## The brawl's slots of both fighters are cleared as it begins. Two things are kept: the tick of the last full flash
 ## of an energy blow in reach (one landing in energy.reach.flashEveryTicks may take it, across brawls too), and the
-## tick each fighter was last launched (the launcher's rest on him).
+## tick each fighter was last launched (the launcher's rest on him), and the match's double hits with the tick of
+## the last (the AI's digging in is bounded by them).
 static func _reset(ex) -> void:
 	var flash: int = 0
 	for f in [ex.A, ex.D]:
 		_size(f)
 		flash = maxi(flash, f.act.dirI[FLASH_AT])
 		var launchedAt: int = f.act.dirI[LAUNCH_AT]
+		var doubles: int = f.act.dirI[MATCH_DBL]
+		var doubleAt: int = f.act.dirI[MATCH_DBL_AT]
 		for k in range(BASE, END):
 			f.act.dirI[k] = 0
 		f.act.dirI[LAUNCH_AT] = launchedAt
+		f.act.dirI[MATCH_DBL] = doubles
+		f.act.dirI[MATCH_DBL_AT] = doubleAt
 	for f in [ex.A, ex.D]:
 		f.act.dirI[FLASH_AT] = flash
 
@@ -1654,8 +1663,9 @@ static func _reset(ex) -> void:
 ## and moves the centre at nudgeMul of his own free-flight speed, less while he guards; a staggered fighter has no
 ## stick. The two add up, so two who agree go twice as fast and two who oppose cancel. The centre's own speed follows
 ## the sticks by at most a full nudge over nudgeRampTicks, up and down. The speed the brawl began with is added,
-## fading over carryTicks. The whole is never more than maxStepBh in a tick. A building's face stops it, and the part
-## of the step along the face carries on. The core moves a locked fighter by his own velocity on its next step, after
+## fading over carryTicks. A player's held stick is never left dead by any of that: the pair moves his way by
+## nudge.floor of his own nudge at least. The whole is never more than maxStepBh in a tick. At a building's face the
+## part of the step along the face carries on, and a step straight into it goes up the face and over. The core moves a locked fighter by his own velocity on its next step, after
 ## its damping (SimFighter.lockedKeep): so both are given the centre's velocity over what the damping keeps.
 static func _move(S: SimState, ex) -> void:
 	var c: Dictionary = cfg()
@@ -1667,6 +1677,8 @@ static func _move(S: SimState, ex) -> void:
 	var tx: float = 0.0
 	var ty: float = 0.0
 	var top: float = 0.0
+	var ownX: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # each one's own nudge, A then D
+	var ownY: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])
 	for f in [A, D]:
 		var rx: int = 0
 		var ry: int = 0
@@ -1685,7 +1697,7 @@ static func _move(S: SimState, ex) -> void:
 		_s(f, NUDGE_Y, ny)
 		var sp: float = float(c.nudgeMul) * _flySpeed(S, f)
 		top = maxf(top, sp)
-		if gv == f:
+		if gv == f and _alone(ex, f):
 			continue
 		var ux: float = float(nx) / 127.0
 		var uy: float = float(ny) / 127.0
@@ -1697,6 +1709,8 @@ static func _move(S: SimState, ex) -> void:
 			sp *= float(c.nudge.guard)   # he guards
 		tx += ux * sp
 		ty += uy * sp
+		ownX[0 if f == A else 1] = ux * sp
+		ownY[0 if f == A else 1] = uy * sp
 	var acc: float = top / maxf(1.0, float(int(c.nudgeRampTicks)))
 	var vx: float = float(_g(A, CEN_VX)) / 16.0
 	var vy: float = float(_g(A, CEN_VY)) / 16.0
@@ -1710,6 +1724,22 @@ static func _move(S: SimState, ex) -> void:
 		wx += float(_g(A, CARRY_X)) / 16.0 * share
 		wy += float(_g(A, CARRY_Y)) / 16.0 * share
 		_s(A, CARRY_N, cn - 1)
+	# A player's held stick always moves the pair his way (Orb's rule: he can always move, outside knock-backs,
+	# staggers and hit-stop): by nudge.floor of his own nudge at least, whatever the AI's stick, the speed the brawl
+	# began with or the centre's old drift say. Two players who oppose each other still cancel.
+	var floorShare: float = float(c.nudge.floor)
+	if floorShare > 0.0:
+		for pk in range(2):
+			var pl = A if pk == 0 else D
+			var own: float = SimDetMath.hypot(ownX[pk], ownY[pk])
+			if pl.ai != null or own <= 0.0:
+				continue
+			if (D if pk == 0 else A).ai == null and ownX[pk] * ownX[1 - pk] + ownY[pk] * ownY[1 - pk] < 0.0:
+				continue
+			var his: float = (wx * ownX[pk] + wy * ownY[pk]) / own   # the pair's speed along his stick
+			if his < floorShare * own:
+				wx += (floorShare * own - his) * ownX[pk] / own
+				wy += (floorShare * own - his) * ownY[pk] / own
 	var cap: float = float(c.maxStepBh) * DirInterrupt.BH / dt
 	var wl: float = SimDetMath.hypot(wx, wy)
 	if wl > cap:
@@ -1733,6 +1763,11 @@ static func _move(S: SimState, ex) -> void:
 			elif oky:
 				wx = 0.0
 				vx = 0.0
+			elif not _walled(S, m[0], m[1] + sl * dt + cl):
+				# Nobody is cornered: the pair goes up the face by the same step, and over it (flight goes over anything).
+				# The centre keeps its speed across, so the step carries on the moment the face is cleared.
+				wx = 0.0
+				wy = sl
 			else:
 				wx = 0.0
 				wy = 0.0
@@ -1742,6 +1777,7 @@ static func _move(S: SimState, ex) -> void:
 	# step across is halved until it does, and a face too steep for that stops it (a nudge upward goes over).
 	if wx != 0.0:
 		var fit: bool = false
+		var across: float = absf(wx)
 		for _k in range(5):
 			var lift: float = 0.0
 			for f in [A, D]:
@@ -1752,6 +1788,7 @@ static func _move(S: SimState, ex) -> void:
 			wx *= 0.5
 		if not fit:
 			wx = 0.0
+			wy = maxf(wy, across)   # too steep to take in one step: they go up it by the same step
 	_s(A, CEN_VX, int(round(vx * 16.0)))
 	_s(A, CEN_VY, int(round(vy * 16.0)))
 	_s(A, PMOVE_X, _g(A, MOVE_X))
@@ -1759,6 +1796,17 @@ static func _move(S: SimState, ex) -> void:
 	_s(A, MOVE_X, int(round(wx * 16.0)))
 	_s(A, MOVE_Y, int(round(wy * 16.0)))
 	carryOn(ex)
+
+
+## True when the stick of f, the one who may give ground, moves him alone (_giveStep): any stick that does not point
+## at the rival. Toward him it nudges the centre, as always.
+static func _alone(ex, f) -> bool:
+	var o = ex.D if f == ex.A else ex.A
+	var st: PackedFloat64Array = stick(ex, f)
+	var ul: float = SimDetMath.hypot(st[0], st[1])
+	if ul <= SimAct.awayDead:
+		return false
+	return st[0] * SimWrap.sdx(o.x, f.x) + st[1] * (f.y - o.y) >= 0.0
 
 
 ## Both fighters are given the pair's velocity, over what the core's damping keeps. Once a tick from _move, and again
@@ -1844,6 +1892,9 @@ static func _double(S: SimState, ex) -> void:
 	_s(ex.A, DBL_N, 0)
 	_s(ex.A, PART_N, 0)
 	var m: PackedFloat64Array = _mid(ex)
+	for df in [ex.A, ex.D]:
+		_s(df, MATCH_DBL, _g(df, MATCH_DBL) + 1)
+		_s(df, MATCH_DBL_AT, maxi(1, _now(S)))
 	var e = _ev(S, ex.A, "double_hit", "both")
 	e.target = float(S.fighters.find(ex.D))
 	e.n = S.tick + lead
@@ -2456,6 +2507,12 @@ static func aiInput(S: SimState, f) -> void:
 			# run level to the double hit. One of the two, drawn for the trade, may. Against a player he is the one who
 			# presses on, and nothing changes.
 			if o.ai != null and not bool(DirAI.skill().get("digInBoth", false)) and (0 if SimRng.keyed(seed, "brawl.dig.who", t0) < 0.5 else 1) != slot:
+				share = 0.0
+			# It digs in to a bounded number of double hits: only while the match has had fewer than digInMax, and not
+			# within digInRestS of fight time of the last. Against a steady presser every trade it dug in to ran to one.
+			var digMax: int = int(DirAI.skill().get("digInMax", -1))
+			var digRest: int = int(round(float(DirAI.skill().get("digInRestS", 0.0)) * DirData.TICKS_PER_SEC))
+			if (digMax >= 0 and _g(f, MATCH_DBL) >= digMax) or (_g(f, MATCH_DBL_AT) > 0 and _now(S) - _g(f, MATCH_DBL_AT) < digRest):
 				share = 0.0
 			_s(f, AI_DIG, t0 | ((1 << 30) if SimRng.keyed(seed, "brawl.dig", t0 * 2 + slot) < share else 0))
 		if (_g(f, AI_DIG) >> 30) == 1:

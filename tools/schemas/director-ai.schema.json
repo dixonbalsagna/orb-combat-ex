@@ -1674,6 +1674,16 @@
     "digInBoth": {
       "type": "boolean",
       "description": "Whether two AIs may both dig in to one trade."
+    },
+    "digInMax": {
+      "type": "integer",
+      "minimum": -1,
+      "description": "The AI digs in only while the match has had fewer double hits than this (-1: no bound)."
+    },
+    "digInRestS": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Seconds of fight time after a double hit in which the AI does not dig in."
     }
   },
   "additionalProperties": false,

@@ -314,7 +314,8 @@ static func skill() -> Dictionary:
 		var pr: Array = []
 		for name in DirExchange.STN:
 			pr.append(float(j.pressReact.get(name, 0.0)))
-		_skill = {"pressReact": pr, "beamAnswer": float(j.beamAnswer), "sigPick": float(j.sigPick), "level": String(j.get("level", "medium")), "levels": j.get("levels", {}), "perfectBlock": j.get("perfectBlock", {})}
+		_skill = {"pressReact": pr, "beamAnswer": float(j.beamAnswer), "sigPick": float(j.sigPick), "level": String(j.get("level", "medium")), "levels": j.get("levels", {}), "perfectBlock": j.get("perfectBlock", {}),
+			"digInBy": j.get("digInBy", {}), "digInBoth": bool(j.get("digInBoth", false)), "digInMax": int(j.get("digInMax", -1)), "digInRestS": float(j.get("digInRestS", 0.0))}   # the brawl's dig-in keys (DirBrawl.aiInput)
 	return _skill
 
 

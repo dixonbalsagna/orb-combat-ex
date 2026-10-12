@@ -2013,6 +2013,12 @@
               "type": "number",
               "minimum": 0,
               "description": "The nudge's share while the rival is staggered."
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "A player's held stick moves the pair his way by this share of his own nudge at least."
             }
           },
           "description": "Limits on the nudge.",

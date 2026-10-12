@@ -13,6 +13,8 @@
   "sigPick": 0.025,
   "digInBy": {"RIVAL": 1.5},
   "digInBoth": false,
+  "digInMax": 2,
+  "digInRestS": 45,
   "_sigPick": "the chance an AI attack is the signature, with 50 ki and the cooldown over: about 3 signatures a match (band 2 to 4)",
   "perfectBlock": {
     "guard": 0.25,
@@ -79,7 +81,7 @@
       "approachReact": [0.1, 0.05, 0.1]
     },
     "medium": {
-      "brawl": {"tapGap": 8, "tapGapMax": 11, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.15, "nudgeShare": 0.5, "walkOut": 0.2, "mixMedium": 0.004, "mixHeavy": 0.002, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0.2, "burst": 0.08, "digIn": 0.3, "giveGround": 0.2, "follow": 0.6, "launcher": 0.25, "charge": 0.15, "energy": 0.12, "breakGuard": 0.1},
+      "brawl": {"tapGap": 8, "tapGapMax": 11, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "perfectMul": 0.15, "nudgeShare": 0.3, "walkOut": 0.2, "mixMedium": 0.004, "mixHeavy": 0.002, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0.2, "burst": 0.08, "digIn": 0.3, "giveGround": 0.2, "follow": 0.6, "launcher": 0.25, "charge": 0.15, "energy": 0.12, "breakGuard": 0.1},
       "vsShooter": {"guardShare": 0, "enderShare": 0.45, "heavyApproachShare": 0.1},
       "zipShare": 0.25, "zipHeavyShare": 0.3, "zipCounter": 0.2, "zipDodge": 0.1, "zipPunish": 0.75, "zipExit": 0.3,
       "beamAnswer": 0.35,

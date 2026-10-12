@@ -82,7 +82,7 @@ Each level's `brawl` block, easy, medium, hard:
 | `heavyIntoFlurry` | A heavy into a running flurry of lights | 0.01, 0.01, 0.05 |
 | `mediumIntoHeavy` | A medium into a rival's heavy while one still ends it | 0, 0.2, 0.5 |
 | `burst` | A held X | 0.05, 0.08, 0.08 |
-| `digIn` | Decided as a trade starts: it matches his pace for that trade, blow for blow, until the trade breaks or the double hit lands | 0.1, 0.3, 0.3, half as much again for the rival. Two AIs never both dig in to one trade (`digInBoth` false, beside `digInBy`): one of the two, drawn for the trade, may |
+| `digIn` | Decided as a trade starts: it matches his pace for that trade, blow for blow, until the trade breaks or the double hit lands | 0.1, 0.3, 0.3, half as much again for the rival. Two AIs never both dig in to one trade (`digInBoth` false, beside `digInBy`): one of the two, drawn for the trade, may. It digs in only while the match has had fewer than 2 double hits (`digInMax`), and not within 45 s of fight time of the last (`digInRestS`) |
 | `giveGround` | It backs off from a wind-up it sees, after its reaction time; and from a signature's tell | 0.05, 0.2, 0.4 |
 | `follow` | It walks its blow after a rival who backs off | 0.3, 0.6, 0.9 |
 | `launcher` | It throws its B in an opening | 0.15, 0.25, 0.6 |
@@ -130,6 +130,10 @@ Reads: `DirBrawl.winding(S, f)`, `DirBrawl.giving(S, f)`, `DirBrawl.launcherOpen
 14. **No blow lands from beyond 68 units** (the EP's ruling on QA's hard row, follow-up). Two causes were traced, and each has its own fix. A light's reach could be wider than the room its placement had left on a tick the core had already moved him: that blow now misses, with the text `reach`. And a wound blow's counted gap ran short of the ground when the rival backed off up a rising face, because the ground lifted him by more than his step: the step is now fitted both ways, so the count and the ground agree. Over a ledge that no step fits, the count takes what the gap really opened by.
 15. **Two AIs never both dig in to one trade** (`digInBoth` false, follow-up). As ruled, each AI drew its own share as a trade started. With both dug in, each matched the other's pace and the trade ran level to the double hit: 1.65 double hits a match between AIs, and 6 in one match against a hard row of 4. With one digger a trade it reads 0.01 a match, and 1 at most. Against a player nothing changes.
 16. **The medium AI's `digIn` is 0.3,** inside Game Design's range of 0.1 to 0.4. At 0.2 a presser got 0.37 double hits a match, under the band; the masher read 48 of 100 at both.
+17. **The AI's loader reads the dig-in keys** (the stick slice). `DirAI.skill()` keeps only the keys it lists, and `digInBy`, since C1, and `digInBoth` were not among them: each read took its default. So the rival's half as much again was applied in no reading of sections 9 and 11, and `digInBoth` was false whatever the data said. Four other top-level keys are read the same way and still take their defaults: `reactTicks`, `mineMinKi`, `stance` and `beamLook`, whose data equals the default, and `answerTicks`, whose data says 20 where the code's default is 28.
+18. **A player's held stick is never left dead** (`nudge.floor` 0.5, the stick slice): the pair moves his way by half his own nudge at least, whatever the AI's stick, the speed the brawl began with or the centre's old drift say. Two players who oppose each other still cancel. And the one who may give ground moves alone only by a stick that does not point at the rival: toward him it nudges the centre.
+19. **Nobody is cornered by a nudge** (the stick slice). At a building's face, and at a slope too steep to take in one step, the pair goes up it by the same step and over, where it used to stop.
+20. **The AI digs in to a bounded number of double hits** (`digInMax` 2, `digInRestS` 45, the stick slice). Against a steady presser who flies back in, every trade it dug in to ran level to the double hit: 10.3 a match on my probe, against a hard row of 4, where QA's masher read 0.6.
 
 ## 9. As measured, the first chain (2026-10-11, scratch copy of main acb1a1bb with the slice)
 
@@ -206,3 +210,37 @@ The other three arms read medians of 364, 321 and 318 s, and 10th percentiles of
 - **The AI's wind-ups a minute of brawl: 15.7 against 4 to 10.** It is the row. QA's count sums both fighters' `windup` starts, and both are AIs in the arms, so each AI reads about 7.9. It also counts the B thrown in an opening (`k` 1), which nobody can give ground against.
 - **Launches as a share of the endings that separate: 50.7% against 25 to 40%.** It is a rule that is not built. The knock-backs that band counts on come from C2b's throws, and Game Design's own table marks the row to be read again after C2b. The blast, now an ender, gives fewer knock-backs than it did.
 - **Two of QA's scripted rows need a change with these rules.** The clean blast's knock-back row reads any knock-back within 3 ticks of a clean blast, and a blast thrown cold has none of its own. The give log keeps the tick of the last miss from one match into the next, so one miss marks every wind-up of the next match up to that tick.
+
+## 12. The stick slice (2026-10-11, scratch copy of main 9a22894a with the follow-up)
+
+Orb's rule: a held stick moves the pair on every live tick of a brawl, outside knock-backs, staggers and hit-stop. The changes are decisions 17 to 20.
+
+**What a dead stick was.**
+- **Mostly the hit freeze.** QA's count runs on the match clock, which also advances through a freeze, when nothing moves. In its own pair, a holder against a scripted masher with no stick, 27.7% of held ticks read dead before this slice and after it. Two lights mashers land a blow every 4 ticks or so, and each blow freezes 2. Against the medium AI the freeze is 31% of a presser's held ticks.
+- **On live ticks, three causes.** The AI's stick pointed the other way, and the two cancelled. The speed the brawl began with, or the centre's old drift, still carried the pair against his stick. And a building's face stopped the step dead: in the re-laid city one brawl stood 500 ticks at a face.
+
+**As measured.** My probe: a presser, X every 8 ticks, against the medium AI, the stick held one way through every brawl.
+
+| Row | Before | After |
+| :--- | :--- | :--- |
+| Live held ticks with a dead stick, east | 8.6% | 0.4% |
+| West | 8.4% | 0.6%, and 0.3% when going up a face is not counted |
+| Away from the rival | 6.3% | 0.6%, and 0.3% |
+| Toward him | 15.1% | 0.5% |
+| The stick down from tick 24 of a brawl for 60 ticks (QA's drift, 30 matches): his first step along it within 2 live ticks | 1,679 of 2,524 | 2,564 of 2,568; the other 4 at 3, on a stagger |
+| The same: no step along it in the 60 ticks | 133 | 0 east; 43 of 2,526 away, each going up a face |
+| QA's own pair, a holder against a scripted masher, every tick counted | 60,758 of 219,108 dead | 60,956 of 219,969 |
+| The drift against the AI, by QA's pair | 1.12 bh a second | 1.39, against 1.47 with no rival stick |
+| Double hits a match, my steady presser | 10.3 | 2.0 |
+| Double hits a match, QA's presser; one or more; the most | 0.61; 48%; 3 | 0.69; 56%; 2 |
+| The X masher against medium | 47 of 100 | 47 of 100 |
+
+What is left on live ticks is by rule: the double hit's wind-up and a zip in reach read no stick, and a stagger leaves half a nudge.
+
+The other rows hold: the blast script 26 of 60; out of an unfollowed tapped heavy 3,693 of 3,693, out of a followed one 0 of 2,502; no blow over 0.6 bh outside an arrival, 0 of 45,219; within 68 units, 0 of 660,881 beyond; the most double hits between AIs in one match 1.
+
+**The arms.** Medians 351, 373, 298 and 334 s; 10th percentiles 263, 273, 239 and 269 s; first brink 273 s; brink to KO 66.6 s; limb breaks 0.16 a match. The default arm on the same base without the slice read 381 and 264 s, and with the rival's share at 1.0 the slice reads 356 and 273 s. One run to the next moves a 100-match median by about 15 s, so QA's larger run decides whether the slice costs length.
+
+**The AI's own stick.** The medium AI's `nudgeShare` is 0.3, from 0.5 (the EP's ruling). By QA's pair it holds its stick against a player's on 21.4% of the ticks he holds his, from 35.5%, against a band of under 25%. His drift against it reads 1.48 bh a second, the same as against no stick. Every row of the table above was read at 0.5. At 0.3 the X masher read 54 of 100, and QA's presser 0.70 double hits a match. The masher row read 58 at 0.35, 38 at 0.4 and 47 at 0.5: it moves by ten with any change in the AI's draws, so 100 matches can't place it inside a band of 35 to 50.
+
+**Two of QA's readings need a change with it.** The dead-stick count should leave out the ticks on which the sim did not step. And the drift's latency against the AI reads the pair's speed rising above what it was as the stick went down: against an AI the pair is often moving already, so it reads late, or never, while he steps along his stick from the first or second tick.
