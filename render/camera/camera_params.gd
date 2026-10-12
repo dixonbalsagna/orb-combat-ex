@@ -243,6 +243,7 @@ const INTRO_STARE_PUSH: float = 0.10    # the two-shot pushes in this much over 
 const INTRO_FACES: bool = true          # two face cuts before the clock, if the animation has a face to show
 const INTRO_FACE_R: float = 0.20
 const INTRO_FACE_TICKS: int = 24        # each face lasts this many ticks ...
+const INTRO_FACES_MIN: int = 120       # a staredown shorter than this (2 s) has no face cuts: three cuts in a second are the flash rule's, and the look is the shot
 const INTRO_FACE_LEAD: int = 60         # ... and the first starts this many ticks before the clock; the last 12 are the two-shot again
 const INTRO_BELL: float = 0.05          # the clock: a punch-in this big for 3 ticks
 const INTRO_BELL_LEN: float = 0.05

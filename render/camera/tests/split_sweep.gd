@@ -281,6 +281,8 @@ func _run() -> void:
 	_intro_composed_all()
 	_intro_resize_all()
 	_opening_default()
+	_crossing_start(0)
+	_crossing_start(72)
 	_sim_unchanged()
 	print("frames checked  %d, checks %d" % [frames_checked, checks])
 	for k in stats:
@@ -1226,7 +1228,7 @@ func _depth(zrow: float, gap: float, pitch: float = 0.0) -> Dictionary:
 	# The back row can reach about 25 px at the zoom cap (depth-and-chains.md); the others keep their 40 px or so.
 	var want: float = 20.0 if zrow < -2000.0 else 28.0
 	if pitch > 0.0:
-		want *= 0.6   # a raised camera sees a deep standing fighter smaller (docs/camera/camera-v2.md section 8): 0.7 then, 0.6 with the budget's zoom-out
+		want *= 0.58   # a raised camera sees a deep standing fighter smaller (docs/camera/camera-v2.md section 8): 0.7 then, 0.6 with the budget's zoom-out, 0.58 since the camera is aimed for the zoom that is drawn (12.11 px became 11.92 in block row 2)
 	_check(min_px >= want * vh / 720.0, "%s: the deep fighter shrank to %.1f px (want at least %.0f)" % [_label, min_px, want * vh / 720.0])
 	# The travel budget: a brunt at 5,000 units a second in a foreground row is faster than the picture may change by, so he may
 	# leave his pane's screen for the ticks it takes the pane to cut to him (TRAVEL_COOL), once; not for longer.
@@ -2640,6 +2642,84 @@ func _intro_resize(sc: String, order: int, gap: int) -> void:
 	_check(bad == 0, "%s: %d camera values were not finite" % [_label, bad])
 	_check(both, "%s: a fighter off the screen a few seconds into the match" % _label)
 	stats["intro resize " + sc + " " + str(order)] = "divider ticks %d, two-pane ticks %d, subject off %d, bad values %d" % [div_ticks, two_pane, off, bad]
+	SimCore.dispose(_S)
+	_S = null
+
+
+## The start at a crossing (setup "start": "crossing", docs/camera/crossing-start.md): the pair stands astride an avenue, 900 units
+## apart. stare = 0: the match opens on the clock (the AI rushes at once). stare > 0: a staredown-only intro of that many ticks is
+## played first (intro_start and staredown_start at tick 0, clock_start at `stare`, the sim held). Both: one view and no split in
+## the first 100 ticks, no brightness dip, both fighters on the screen with room through the look and the 40 ticks of the rush after
+## it, the camera inside the avenue while they close;
+## with a staredown, no cut after the first frame (no face cuts in a short one), the push lands at 10%, the clock is not a cut.
+func _crossing_start(stare: int) -> void:
+	var label: String = "crossing start" if stare == 0 else "crossing start staredown %d" % stare
+	if only != "" and not label.contains(only) and only != "crossing":
+		return
+	_begin(label)
+	SimCore.newMatch(_S, 3, {"p1": true, "p2": true}, {"intro": false, "start": "crossing"})
+	_rig.reset(_S, vw, vh)
+	_watch_first()
+	_S.dt = SplitRig.DT
+	var worst_margin: float = 1.0e9
+	var min_size: float = 1.0e9
+	var split_seen: bool = false
+	var dips: int = 0
+	var cuts_in_look: int = 0
+	var z_first: float = -1.0
+	var z_clock: float = -1.0
+	var off_avenue: int = 0
+	var closing_ticks: int = 0
+	var fade_prev: float = 0.0
+	var first_gap: float = absf(SimWrap.sdx(_S.fighters[0].x, _S.fighters[1].x))
+	for t in range(0, 150):
+		var ev: Array = []
+		if stare > 0 and t == 0:
+			ev.append(_shot_events("intro_start", {"dur": float(stare) / 60.0, "delay": 0.0}))
+			ev.append(_shot_events("staredown_start", {"dur": float(stare) / 60.0}))
+		if stare > 0 and t == stare:
+			ev.append(_shot_events("clock_start", {"kind": "full"}))
+		if t >= stare:
+			SimCore.step(_S)
+			ev.append_array(_S.out.fx.duplicate())
+			_S.out.fx.clear()
+			_S.out.feed.clear()
+		_rig.step(_S, vw, vh, ev)
+		_tick += 1
+		_watch()
+		var cur: SplitFrame = _rig.current()
+		if t < 100:
+			split_seen = split_seen or cur.mode != "merged"
+		if cur.fade > fade_prev + 1e-6:
+			dips += 1
+		fade_prev = cur.fade
+		if stare > 0 and t >= 1 and t < stare and cur.cut:
+			cuts_in_look += 1
+		if t == 1:
+			z_first = cur.cam_z[0]
+		if stare > 0 and t == stare - 1:
+			z_clock = cur.cam_z[0]
+		for i in range(2):
+			var f = _S.fighters[i]
+			var pos: Vector2 = cur.screen_pos(0, f.x, f.y + CamParams.CHEST, float(f.z))
+			if t < stare + 40:   # the look and the rush to the collision (the brawl that follows drifts: the follow's rows own it)
+				worst_margin = minf(worst_margin, minf(pos.x, vw - pos.x) / vw)
+				min_size = minf(min_size, _apparent_px(i, cur) / vh)
+		# while they close on each other the camera is inside the avenue they stand astride (a pad of half a body)
+		var gap: float = absf(SimWrap.sdx(_S.fighters[0].x, _S.fighters[1].x))
+		if t >= stare and gap > 0.5 * first_gap and t < stare + 20:
+			closing_ticks += 1
+			if WorldLanes.avenueAt(_S, cur.cam_x[0], 0.5 * CamParams.BODY_H) < 0:
+				off_avenue += 1
+	_check(not split_seen, "%s: the layout was not one view in the first 100 ticks" % label)
+	_check(dips == 0, "%s: %d brightness dips in the first 150 ticks" % [label, dips])
+	_check(worst_margin >= 0.10, "%s: a fighter within %.3f of the screen edge" % [label, worst_margin])
+	_check(min_size >= 0.075, "%s: a fighter only %.3f of the screen height" % [label, min_size])
+	_check(off_avenue == 0, "%s: the camera was outside the avenue on %d of %d closing ticks" % [label, off_avenue, closing_ticks])
+	if stare > 0:
+		_check(cuts_in_look == 0, "%s: %d cuts inside the staredown" % [label, cuts_in_look])
+		_check(z_first > 0.0 and absf(z_clock / z_first - 1.0 - CamParams.INTRO_STARE_PUSH) < 0.03, "%s: the push was %.3f, want %.2f" % [label, z_clock / z_first - 1.0, CamParams.INTRO_STARE_PUSH])
+	stats[label] = "one view, edge margin %.3f of the width, smallest %.3f of the height, %d dips, %d cuts in the look, %d of %d closing ticks off the avenue" % [worst_margin, min_size, dips, cuts_in_look, off_avenue, closing_ticks]
 	SimCore.dispose(_S)
 	_S = null
 

@@ -1917,7 +1917,7 @@ func _update_intro(S: SimState) -> void:
 	if not intro_active or _in_stare_t < 0:
 		return
 	_in_stare_t += 1
-	if not CamParams.INTRO_FACES or reduced_motion:
+	if not CamParams.INTRO_FACES or reduced_motion or _in_stare_dur < CamParams.INTRO_FACES_MIN:
 		return
 	var left: int = _in_stare_dur - _in_stare_t
 	if _in_phase == "stare" and left == CamParams.INTRO_FACE_LEAD:
@@ -2695,7 +2695,17 @@ func _outputs(S: SimState) -> void:
 		# higher SLAM_ZOOM_RATE (it was exempt: 0.2 of a log unit in one tick, the largest jolt in the sweep's scan).
 		if _oz_valid:
 			var cap: float = (CamParams.SLAM_ZOOM_RATE if slam_now else CamParams.ZOOM_RATE_TRANS) * DT
-			o.z = exp(log(_oz[i]) + clampf(log(o.z) - log(_oz[i]), -cap, cap))
+			var z_held: float = exp(log(_oz[i]) + clampf(log(o.z) - log(_oz[i]), -cap, cap))
+			var z_mis: float = absf(log(z_held) - log(o.z))
+			if w <= 0.0 and z_mis > 0.02 and _ov_kind == "":
+				# The comfort limit held the drawn zoom back from the pane's own: aim the camera for the zoom that is drawn, so the
+				# focus still lands on his anchor. (Aimed for the target zoom, a pane zooming out for a fighter at 12,000 units a
+				# second put him 620 px off his anchor, 1.5 widths past the pane's edge, for the second the zoom took: seed 17.)
+				# Taken in as the mismatch grows (2% to 15%), so a small hold is the old picture and nothing pops.
+				var aimed: Vector3 = _cam_from_focus(i, z_held, _anchors[i], fz_i)
+				var k_aim: float = smoothstep(0.02, 0.15, z_mis)
+				o = Vector3(SimWrap.wrap(o.x + SimWrap.sdx(o.x, aimed.x) * k_aim), lerpf(o.y, aimed.y, k_aim), z_held)
+			o.z = z_held
 		_outs[i] = o
 		_oz[i] = o.z
 	if _ov_kind != "":
