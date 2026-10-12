@@ -145,6 +145,11 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-123 | Rewritten holding page: promotion hold, words, five assets, the clip (holding-page-screen.md) | EP, Tools, Marketing | Medium | Acceptable as Orb's one-page decision with limits (noindex, no cards, no links by us); edits: fights-that-write-themselves heading, 'past' not 'through', AI line near the top, caption wording; sky image cropped; clip as video with no autoplay or loop, analyser pass as served | Open until the revised page and the clip result are seen |
 | RL-124 | Holding notice tagline and last section as live (tools/site-notice.json); title ruling of 2026-10-08 | Tools, EP | Low | Both pass; no falling-towers words; title stays, keep '(working title)' until the formal search; holds (noindex, no cards, unlinked) stay until then | Open until the formal search |
 | RL-125 | Body ghost budget: 11 on screen against m05 | VFX, Rendering | Medium | 5 per fighter from all sources together (10 on screen) is a hard gate, revisable on evidence; m12 added | Open until the per-tick breakdown |
+| RL-126 | e06: a blast after a bolt of the same hand (the delivery counts); Combat's readings of h08, k05, m12 confirmed | Combat | Low | Ruled: not a repeat | Closed |
+| RL-127 | The re-laid city and seven landmarks (city-and-open-floors-screen.md) | World, Rendering | Low | Pass; crown tower nudge (short corner stubs, not pale horns); w03 | Open until redrawn |
+| RL-128 | Open floors | Rendering | Medium | Conditional: sturdy regular columns, deep beam, lit lobby, never on a damaged building, never in public with debris; w01 | Open until seen |
+| RL-129 | 1,800 civilians and the CIVILIANS LOST count | World, EP | Medium | Pass in game; never shown above zero in public (w02); rating answers honest; expect the upper range | Open until the questionnaires |
+| RL-130 | Release margin and the required flash set grown; UI's 4 Hz crown stroke (k06) | Tools, UI | Medium | Margin rules and the new scenes added (addendum 6); stroke to 3 Hz or less, preferably 2, static under reduced motion | Open |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
