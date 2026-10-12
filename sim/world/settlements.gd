@@ -34,6 +34,7 @@ static func laneOfRow(row: int) -> Dictionary:
 static var _data: Dictionary = {}
 static var _errors: Array = []
 static var _loaded: bool = false
+static var _widest: float = -1.0   # the widest footprint the data can make, in units (widest(); reset with the data)
 
 
 ## The parsed and checked file (loaded once). Errors are listed by errors(); on an error the data is empty.
@@ -69,6 +70,7 @@ static func _err(msg: String) -> void:
 
 static func _load() -> void:
 	_loaded = true
+	_widest = -1.0
 	_errors = []
 	_data = {}
 	var f := FileAccess.open(PATH, FileAccess.READ)
@@ -82,6 +84,25 @@ static func _load() -> void:
 	_validate(d)
 	if _errors.is_empty():
 		_data = d
+
+
+## The widest footprint the data can make, in units: the widest of any district's or kind's width range and of every landmark. The building
+## index pads its queries by half of it (WorldStructures.near), so a wide building whose edge a query reaches is never missed. 0 when
+## the data is not loaded.
+static func widest() -> float:
+	if _widest < 0.0:
+		var d: Dictionary = data()
+		var w: float = 0.0
+		for s in d.get("settlements", []):
+			for dd in s.get("districts", []):
+				w = maxf(w, float(dd.width_bh[1]))
+				for kd in dd.get("kinds", []):
+					if kd.has("width_bh"):
+						w = maxf(w, float(kd.width_bh[1]))
+		for lm in d.get("landmarks", []):
+			w = maxf(w, float(lm.width_bh))
+		_widest = w * BH
+	return _widest
 
 
 ## The 1-based landmark index of a key (0 is none), as stored on a building.
@@ -349,9 +370,35 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
 					if dist < bestd:
 						bestd = dist
 						best = i
+				var shift_x: float = NAN
+				if best < 0:
+					# no building of the row holds the landmark between the avenues: slide it into the nearest block that is wide enough
+					# (a tight grid leaves a landmark of 9 fighter heights no candidate; the ones that fit above are unchanged)
+					var lw3: float = float(lm.width_bh) * BH * 0.5
+					for i in range(first, out.size()):
+						var c: Dictionary = out[i]
+						if c.landmark != 0 or c.row != int(lmr.row):
+							continue
+						var lo: float = da
+						var hi: float = db
+						for av in avenues:
+							if av[1] <= c.x and av[1] > lo:
+								lo = av[1]
+							if av[0] >= c.x and av[0] < hi:
+								hi = av[0]
+						if hi - lo < lw3 * 2.0:
+							continue
+						var nx: float = clampf(c.x, lo + lw3, hi - lw3)
+						var dist2: float = absf(nx - target)
+						if dist2 < bestd:
+							bestd = dist2
+							best = i
+							shift_x = nx
 				if best < 0:
 					continue
 				var b2: Dictionary = out[best]
+				if not is_nan(shift_x):
+					b2.x = shift_x
 				b2.landmark = li
 				b2.shape = lm.shape
 				b2.h = float(lm.height_bh) * BH

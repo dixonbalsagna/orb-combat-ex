@@ -99,9 +99,9 @@ Everything below is a pure read of the sim state, in units (bh = 75), z positive
 - **Tools:** schema keys for the re-lay: `aspect_max` (top level of `settlements.json` and a kind's own), `row_pop` (district, four numbers from 0 to 1); `lanes.json` strips are rounded to 4 decimals.
 - **Simulation:** nothing for the pick; the list above for L4.
 
-## G. Reads for Encounter's depth slice (scratch, 2026-10-12, on L3)
+## G. Reads for Encounter's depth slice (in the tree since the small golden window, lanes-remeasure-plan.md section 13)
 
-Files: `docs/world/scratch-build/depth-reads/` (`mk_reads.py` applies the four functions to a tree root, `depthreads_check.gd` is the check). Nothing is in the tree.
+Files: `sim/world/lanes.gd`, `sim/world/structures.gd`, check `sim/world/tools/depthreads_check.gd`; the scripts that applied them are in `docs/world/scratch-build/depth-reads/`. A fifth read for Rendering's fighter shadow: `WorldStructures.standingAt(S, x, y, z, rx, up)` returns `{"y", "kind": "ground" or "roof", "b"}`, the ground or the roof of a standing building under a body (5.0 us).
 
 | Game Design's ask (`docs/design/depth.md`) | Function | Returns | Cost (a call, the tree's city, scratch) |
 |---|---|---|---|
@@ -114,11 +114,11 @@ At 60 ticks a second a brawl that asks all four every tick spends about 57 us a 
 
 **Two numbers in `docs/design/depth.md` are from the two-street table and are now wrong.** The front street is 5 bh, not 9 (three streets of 5 bh in the same 32 bh band, option P): 1.5 bh a second crosses it kerb to kerb in 3.3 s, not 6, and with the 1 bh margin a brawl has 3 bh of free depth in a street (2 s of drift), and "the band has 5 bh left there" is now the whole street. Game Design should re-read sections 3 and 5 against P.
 
-## H. A demo start at a crossing (scratch)
+## H. A demo start at a crossing (in the tree)
 
 `mk_demostart.py` and `demostart_check.gd` in the same folder. **Data:** `data/biomes/lanes.json` gets `demo_start: {"look": "downtown", "lane": "front_street"}` (a schema line for Tools: object, `look` a string from `settlements.json` `looks`, `lane` a lane name). **Function:** `WorldLanes.demoStartX(S, gap, default_x)`: the crossing of that street nearest the middle of the first district of that look, less half the gap, so the pair stands astride it (START_X when the data names nothing). **Scenario option:** `setup.start == "crossing"` in `SimCore.newMatch`: two lines in `sim/core/sim.gd` (Simulation's; a grant): `start_x = WorldLanes.demoStartX(S, SimConst.START_GAP, SimConst.START_X)` in place of `SimConst.START_X` for `x0` and `x1`. Default off, so no match and no golden changes. Checked: on seed 3 the pair's middle is within a unit of a crossing at x 50,101 in downtown, the gap is 900, the nearest building edge is 191 units away, and the match runs 3,600 ticks with no NaN. **For the web build:** the host's setup passes `{"start": "crossing"}` for the demo only; **Camera's** `sim/core/view/camera.gd` starts at `START_X + 350` (lines 11 and 17), so its reset should read the fighters' middle instead, or the first frames pan across 40,000 units; that file is Camera's.
 
-## I. The landmarks: seven in the data, five in the world on main
+## I. The landmarks: seven in the data, five in the world on main (fixed in section 13 of lanes-remeasure-plan.md)
 
 `settlements.json` has seven landmarks (bell tower, chimney stack, lighthouse, village hall, hill chapel, crown tower, ledger hall). **On main the world holds five**: the ledger hall and the crown tower are gone. Cause: option P's tighter grid leaves no building in downtown's rows 1 and 2 whose 9-fighter-height footprint lies between two avenues (the generator rejects a candidate that crosses an avenue), and the landmark is then dropped silently. They were there in the city before P. **Fix (scratch, `mk_lmfit.py`):** when no candidate fits, slide the nearest candidate along its row into the nearest block that is wide enough (clamped between its avenues); the landmarks that already fit do not move. With it: all seven stand (ledger hall at x 48,015 in row 1, crown tower at 53,220 in row 2), `lane_check` clean (118 buildings, 10 avenues, 0 across an avenue). It changes the layout, so it needs a golden regeneration: a small window of its own.
 

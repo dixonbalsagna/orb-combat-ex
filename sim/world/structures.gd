@@ -261,7 +261,7 @@ static func buildIndex(S: SimState) -> void:
 ## The indices of the buildings whose centres are within r + the widest half width of x, in bucket order (then index).
 static func near(S: SimState, x: float, r: float) -> Array:
 	var out: Array = []
-	var reach: float = r + MAX_HALF_W
+	var reach: float = r + maxf(MAX_HALF_W, WorldSettle.widest() * 0.5 + 8.0)   # the data's widest footprint, so a landmark is never missed
 	if reach * 2.0 >= SimConst.W:
 		for i in range(S.buildings.size()):
 			out.append(i)
@@ -369,6 +369,63 @@ static func sweep(S: SimState, list: Array, x0: float, y0: float, z0: float, x1:
 			bt = t
 			var face: String = "end" if axis == 0 else ("top" if axis == 1 and sgn > 0.0 else ("bottom" if axis == 1 else ("front" if sgn > 0.0 else "back")))
 			best = {"hit": true, "b": bi, "t": t, "x": SimWrap.wrap(x0 + d0 * t), "y": y0 + d1 * t, "z": z0 + d2 * t, "face": face, "nx": sgn if axis == 0 else 0.0, "nz": sgn if axis == 2 else 0.0}
+	return best
+
+
+## The surface under a body at (x, z): the ground, or the roof of a standing building whose footprint holds (x, z) (grown by rx) and whose top is
+## at or below y + up (the body is on it or above it). {"y": height of the surface, "kind": "ground" or "roof", "b": the building's index or -1}.
+## Rendering's fighter shadow reads it. A pure read.
+static func standingAt(S: SimState, x: float, y: float, z: float, rx: float = 0.0, up: float = 6.0) -> Dictionary:
+	var best_y: float = WorldTerrain.groundY(S, x, z)
+	var out: Dictionary = {"y": best_y, "kind": "ground", "b": -1}
+	for bi in near(S, x, rx):
+		var b = S.buildings[bi]
+		if not b.alive:
+			continue
+		if absf(SimWrap.sdx(x, b.x)) > b.w * 0.5 + rx or absf(z - b.z) > b.d * 0.5 + rx:
+			continue
+		var top: float = baseY(S, b) + curH(b)
+		if top <= y + up and top > best_y:
+			best_y = top
+			out = {"y": top, "kind": "roof", "b": bi}
+	return out
+
+
+## "The nearest face" (docs/design/depth.md): the face of the building nearest to a body at (x, y, z) within reach units in plan, or {}.
+## {"b": index, "d": plan distance to the face (0 inside the footprint), "face": "front" (toward the camera), "back" or "end", "nx", "nz": the face's
+## outward normal, the way the body is pushed off it}. A body above a building's standing top has no face on that building; a fallen
+## building has none. Ties go to the lower index. A pure read.
+static func nearestFace(S: SimState, x: float, y: float, z: float, reach: float) -> Dictionary:
+	var best: Dictionary = {}
+	var bd: float = reach
+	for bi in near(S, x, reach):
+		var b = S.buildings[bi]
+		if not b.alive:
+			continue
+		var gy: float = baseY(S, b)
+		if y > gy + curH(b):
+			continue
+		var ex: float = SimWrap.sdx(x, b.x)   # the building's centre minus the body's
+		var dx: float = maxf(absf(ex) - b.w * 0.5, 0.0)
+		var dz: float = maxf(absf(z - b.z) - b.d * 0.5, 0.0)
+		var d: float = sqrt(dx * dx + dz * dz)
+		if d > bd or (not best.is_empty() and d == bd and bi > int(best.b)):
+			continue
+		bd = d
+		var fz: float = z - b.z   # positive: the body is nearer the camera than the building's middle
+		var face: String
+		var nx: float = 0.0
+		var nz: float = 0.0
+		if dx > dz or (dx == dz and dx > 0.0):
+			face = "end"
+			nx = -1.0 if ex > 0.0 else 1.0
+		elif fz >= 0.0:
+			face = "front"
+			nz = 1.0
+		else:
+			face = "back"
+			nz = -1.0
+		best = {"b": bi, "d": d, "face": face, "nx": nx, "nz": nz}
 	return best
 
 

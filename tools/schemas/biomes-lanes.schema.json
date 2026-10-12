@@ -119,6 +119,28 @@
         }
       },
       "description": "The strips of the streets (the strips of one lane do not overlap: strip-overlap)."
+    },
+    "demo_start": {
+      "type": "object",
+      "description": "Where a demo start (a setup's \"start\": \"crossing\") puts the pair: the crossing of the street lane named by `lane` nearest the middle of the first district whose look is `look` (settlements.json looks). Optional; the demo starts at START_X when it is absent.",
+      "required": [
+        "look",
+        "lane"
+      ],
+      "properties": {
+        "look": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lane": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     }
   },
   "additionalProperties": false,

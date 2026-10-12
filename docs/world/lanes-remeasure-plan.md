@@ -227,3 +227,35 @@ The street grid of `docs/world/depth-streets.md` (D) is in the tree on top of se
 Within noise of section 11 everywhere; the volume blocked at the plane is a little lower because the avenues open the blocks. The depth-on numbers (L3) are in `depth-streets.md` section E.
 
 **Gates.** `npm test --prefix sim` 5 of 5; probe, `lane_check`, `isect_check`, `stagecheck`, `blockcheck`, `directcheck`, `minecheck` 0 failed; render `lane_check`, `stage_check`, `shape_check` (15 strips of 16 at most, 17 avenues of 24), `ground_check`, `patch_check` and VFX's `effects_check` pass; render determinism plain and `--intro --seeds=2 --ticks=900` pass; seam sweep passes; the flash count passes (`mash`, `mashcity`, `collapse`: 64 building falls in the collapse scene, mashcity sets down by the tallest tower and plays as before). `validate.js` 183 files, 0 errors; `--self-test`: 6711 of 6718 until Tools' cases are re-pointed (seven fixtures address the old table by index: `docs/world/scratch-build/city3/cases-p.diff`, which also adds eight cases for `aspect_max` and `row_pop`; with it 6726 of 6726).
+
+## 13. The small golden window: seven landmarks, the index's pad, the chapel, the reads, the demo start (2026-10-12, on HEAD f659a95a)
+
+In the tree, one golden regeneration:
+1. **The landmark fit** (`settlements.gd`): when no candidate in its row holds a landmark between the avenues, the nearest candidate slides into the nearest block that is wide enough. The five that fitted do not move. All seven stand again: ledger hall (x 48,015, row 1, 46 bh) and crown tower (x 53,220, row 2, 52 bh) are back in downtown.
+2. **The index's pad is derived from the data** (`WorldSettle.widest()`, cached with the data; `WorldStructures.near` pads by half of it plus 8 units, never under the old 264). Chosen over a bigger constant so it cannot go stale when a landmark gets wider: the widest footprint today is 9 bh (675 units, half 337).
+3. **The chapel's box is the nave's:** `hill_chapel` `height_bh` 14 to 10. The generator calls anything under 12 bh a `house`. What that changes: **hit points** (a house is 3 per unit of height, a tower 6): the chapel goes from 1,181 hit points to 422, about the village hall's 405 (its `hp_mult` 1.5 is as before; raise it to 4.2 to keep the old 1,181); the **debris tint** (brown, not slate). Nothing else reads the kind in the sim: stages, floors, people and the brunt do not; Rendering's `planet_view.gd` line 349 reads `kind` for a depth fraction of the footprint (0.9 for a house, 0.8 for a tower), which is the planet view's own and moves the chapel's apparent depth a tenth.
+4. **The demo start at a crossing:** `data/biomes/lanes.json` `demo_start` {look "downtown", lane "front_street"}; `WorldLanes.demoStartX`; `setup.start == "crossing"` in `SimCore.newMatch` (`sim/core/sim.gd`, two lines by grant, default off). Schema line `demo_start` (optional) in `tools/schemas/biomes-lanes.schema.json` and five cases in `tools/fixtures/cases.json`.
+5. **The reads** (additive, pure; `sim/world/tools/depthreads_check.gd`, 12 checks): `WorldLanes.home`, `crossingNear`, `depthRoom`, `WorldStructures.nearestFace`, and, for Rendering's fighter shadow, `WorldStructures.standingAt(S, x, y, z, rx, up)` = the ground or the roof under a body (5.0 us a call).
+
+**Measured on the tree, 100 matches (40 for the stage and shot figures), option P against the window:**
+
+| | P (3cee6dce) | Window |
+| :--- | ---: | ---: |
+| Landmarks standing | 5 of 7 | 7 of 7 |
+| Buildings (rows 1 / 2 / 3) | 118 (50 / 46 / 22) | 118 (50 / 46 / 22) |
+| Front row lost at the KO | 32.0% | 30.5% |
+| All rows lost | 26.6% | 25.2% |
+| Civilians lost (share) | 19.0% | 18.2% |
+| Tier 1 / 2 / 3 / 4 structures a minute (all rows) | 0.05 / 0.58 / 2.54 / 8.00% | 0.05 / 0.60 / 2.85 / 7.46% |
+| Shells at the KO (all rows / front row) | 8.8% / 11.1% | 9.2% / 11.5% |
+| Cut floors still standing at the KO, towers a match | 0.15 | 0.05 |
+| BUILDING SMASH plans a match | 0.38 | 0.45 |
+| Shots ending on a building a match | 2.3 | 2.1 |
+| Structures lost a match | 28.5 of 118 | 28.1 of 118 |
+| Share of the fight volume blocked at the plane | 14.0% | 14.1% |
+| Length, mean | 388 s | 385 s |
+| C1 | clean | clean (0 of 100) |
+
+Noise-sized moves: the two tall landmarks and the index's pad hit a few more buildings and stage a few more shells; tier 4 stays above the band's floor of 6.
+
+**Gates.** `npm test --prefix sim` 5 of 5 on the regenerated golden; probe, `lane_check`, `isect_check`, `probe_collide`, `depthreads_check`, `demostart_check`, `stagecheck`, `blockcheck`, `directcheck`, `minecheck` 0 failed; render `lane_check`, `stage_check`, `shape_check`, `ground_check`, `patch_check`, `depth_check` and `effects_check` pass; render determinism plain and `--intro` pass; seam sweep passes; validate 0 errors, `--self-test` 6731 of 6731; flash count passes (collapse 70 building falls, mashcity as before).

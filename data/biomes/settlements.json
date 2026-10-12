@@ -68,7 +68,7 @@
       "key": "hill_chapel",
       "width_bh": 5,
       "shape": "chapel",
-      "height_bh": 14,
+      "height_bh": 10,
       "hp_mult": 1.5,
       "pop_mult": 1.5
     },

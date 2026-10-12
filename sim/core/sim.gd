@@ -49,8 +49,11 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	var p2ai: bool = bool(ai["p2"]) if ai.has("p2") and ai["p2"] != null else (S.fighters[1].ai != null if S.fighters.size() > 1 else true)
 	dispose(S)
 	var slots: Array = setup.get("slots", FighterData.order().slice(0, 2))
-	var x0: float = SimConst.START_X
-	var x1: float = SimConst.START_X + SimConst.START_GAP
+	var start_x: float = SimConst.START_X
+	if setup.get("start", "") == "crossing":   # a demo start astride a crossing of the city (World: lanes.json demo_start); default off
+		start_x = WorldLanes.demoStartX(S, SimConst.START_GAP, SimConst.START_X)
+	var x0: float = start_x
+	var x1: float = start_x + SimConst.START_GAP
 	var flip: bool = setup.get("flip", false)
 	S.fighters = [SimRoster.createFighter(FighterData.def(slots[0]), x1 if flip else x0, "p1", p1ai), SimRoster.createFighter(FighterData.def(slots[1]), x0 if flip else x1, "p2", p2ai)]
 	if setup.has("names"):

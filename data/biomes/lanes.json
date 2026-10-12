@@ -146,5 +146,9 @@
       "top": -28.6,
       "bottom": -29.5
     }
-  ]
+  ],
+  "demo_start": {
+    "look": "downtown",
+    "lane": "front_street"
+  }
 }

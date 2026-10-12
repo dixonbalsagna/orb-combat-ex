@@ -128,6 +128,116 @@ static func intersections(S: SimState, x: float, r: float) -> Array:
 	return out
 
 
+## The crossing nearest to (x, z) within r units in plan, or []: [cx, cz, d] with d the plan distance to its middle. A cross street is the
+## avenue, a crossing its meeting with a street (intersections()).
+static func crossingNear(S: SimState, x: float, z: float, r: float) -> Array:
+	var best: Array = []
+	var bd: float = r
+	for c in intersections(S, x, r):
+		var d: float = sqrt(c[4] * c[4] + (c[1] - z) * (c[1] - z))
+		if d <= bd:
+			bd = d
+			best = [c[0], c[1], d]
+	return best
+
+
+## "The middle of the street or the crossing here" (docs/design/depth.md, the ease home): the point a brawl at (x, z) settles toward, as
+## [hx, hz, kind]. kind 1: the point is in a street lane and an avenue holds x (within pad): the middle of the crossing, hx the avenue's
+## middle. kind 0: in a street lane only: hx = x (the street runs on), hz the lane's middle. kind 2: in no street (a cross street between
+## the blocks, or inside a block row at street level, a wreck): hz the middle of the nearest street, hx = x. A pure function of the table
+## and the data: no state, no draw.
+static func home(S: SimState, x: float, z: float, pad: float = 0.0) -> Array:
+	var best_mid: float = z
+	var best_d: float = 1.0e30
+	var hit_lane: bool = false
+	var mid: float = z
+	for l in data().get("lanes", []):
+		if l.kind != "street":
+			continue
+		var top: float = float(l.top) * BH
+		var bot: float = float(l.bottom) * BH
+		var m: float = (top + bot) * 0.5
+		if z <= top and z >= bot:
+			hit_lane = true
+			mid = m
+			break
+		var d: float = minf(absf(z - top), absf(z - bot))
+		if d < best_d:
+			best_d = d
+			best_mid = m
+	if not hit_lane:
+		return [x, best_mid, 2]
+	var t: PackedFloat32Array = S.lanes
+	if t.size() >= 13:
+		var nd: int = int(t[3])
+		var na: int = int(t[4])
+		var oA: int = int(t[12]) + 6 * nd
+		for i in range(na):
+			var a0: float = t[oA + 3 * i]
+			var a1: float = t[oA + 3 * i + 1]
+			var cx: float = (a0 + a1) * 0.5
+			if absf(SimWrap.sdx(x, cx)) <= (a1 - a0) * 0.5 - pad:
+				return [cx, mid, 1]
+	return [x, mid, 0]
+
+
+## The depth interval open around z at x for a body of half depth rz at height y: [z_lo, z_hi] in units. The whole band when x is
+## in an avenue (clear air across the blocks) or the body is above every roof in reach; otherwise the street lane that holds z, kept
+## rz in from its edges; [z, z] when z is in no street (a wreck: the caller eases out). This is what a drift in depth clamps to: the
+## part that runs into a face stops, the rest carries on along the street (the slide).
+static func depthRoom(S: SimState, x: float, y: float, z: float, rx: float, rz: float) -> Array:
+	var lim: Array = limits()
+	var band: Array = [lim[1] + rz, lim[0] - rz]
+	if avenueAt(S, x, rx) >= 0:
+		return band
+	var roof: float = 0.0
+	for bi in WorldStructures.near(S, x, rx):
+		var b = S.buildings[bi]
+		if b.alive and absf(SimWrap.sdx(x, b.x)) < b.w * 0.5 + rx:
+			roof = maxf(roof, WorldStructures.baseY(S, b) + WorldStructures.curH(b))
+	if y > roof + rz:
+		return band
+	for l in data().get("lanes", []):
+		if l.kind != "street":
+			continue
+		var top: float = float(l.top) * BH
+		var bot: float = float(l.bottom) * BH
+		if z <= top and z >= bot:
+			return [bot + rz, top - rz]
+	return [z, z]
+
+
+## Where a demo start puts the first fighter so the pair stands astride a crossing (a setup's "start": "crossing"): the crossing of the
+## street named by data/biomes/lanes.json demo_start.lane nearest the middle of the first district with demo_start.look, less half the gap
+## between the fighters. START_X (the caller's default) when the data names nothing, the look is not in the world or no avenue crosses.
+static func demoStartX(S: SimState, gap: float, default_x: float) -> float:
+	var ds: Dictionary = data().get("demo_start", {})
+	if ds.is_empty() or S.lanes.size() < 13:
+		return default_x
+	var looks: Array = WorldSettle.data().get("looks", [])
+	var li: int = looks.find(str(ds.get("look", "")))
+	if li < 0:
+		return default_x
+	var t: PackedFloat32Array = S.lanes
+	var nd: int = int(t[3])
+	var oD: int = int(t[12])
+	var mx: float = -1.0
+	for i in range(nd):
+		if int(t[oD + 6 * i + 2]) == li:
+			mx = (t[oD + 6 * i] + t[oD + 6 * i + 1]) * 0.5
+			break
+	if mx < 0.0:
+		return default_x
+	var zl: float = 0.0
+	for l in data().get("lanes", []):
+		if l.name == str(ds.get("lane", "front_street")):
+			zl = (float(l.top) + float(l.bottom)) * 0.5 * BH
+	var c: Array = crossingNear(S, mx, zl, 12.0 * BH * 4.0)
+	if c.is_empty():
+		return default_x
+	return SimWrap.wrap(float(c[0]) - gap * 0.5)
+
+
 ## S.lanes (docs/world/fight-lanes-world.md section 10): a flat PackedFloat32Array, world units, z positive toward the camera.
 ## 0 to 12 header (version, nLanes, nStrips, nDistricts, nAvenues, nRows, rowZ0, rowStep, zFront, zBack, offLanes, offStrips,
 ## offDistricts); lanes 4 floats each (zTop, zBottom, kind 0 street / 1 block / 2 scenery / 3 ridge, row or -1); strips 4 each (lane,

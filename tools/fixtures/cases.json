@@ -242277,6 +242277,83 @@
       "expect": null
     },
     {
+      "id": "lanes-demo-start-type",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/demo_start": "crossing"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/demo_start"
+      }
+    },
+    {
+      "id": "lanes-demo-start-unknown-key",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/demo_start/near": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/demo_start/near"
+      }
+    },
+    {
+      "id": "lanes-demo-start-look-required",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/demo_start/look"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/demo_start"
+      }
+    },
+    {
+      "id": "lanes-demo-start-lane-shape",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "set": {
+            "/demo_start/lane": "Front Street"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/demo_start/lane"
+      }
+    },
+    {
+      "id": "lanes-demo-start-absent-ok",
+      "schema": "biomes-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lanes.json",
+          "del": [
+            "/demo_start"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
       "id": "lanes-key-required-schema",
       "schema": "biomes-lanes.schema.json",
       "mutate": [
