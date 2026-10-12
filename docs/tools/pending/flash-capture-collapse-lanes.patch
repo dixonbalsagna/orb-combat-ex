@@ -1,0 +1,31 @@
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -210,17 +210,20 @@
+ 	if t == 0:
+ 		_to_the_city(S)
+ 		return
+-	if t < 90 or (t - 90) % 150 != 0:
++	# A blast from tick 90 and every 150 after it, and its second 3 ticks later: a blast cannot finish a standing building (stages.json leaveFrac leaves a tenth
++	# for the next), and the re-laid city's buildings are tall (thousands of hit points), so the blast is doubled, and aimed at the front row (the plane's row: a blast reaches only the buildings near it in depth).
++	var u: int = t - 90
++	if u < 0 or (u % 150 != 0 and u % 150 != 3):
+ 		return
+-	var alive: Array = []
++	var front: Array = []
+ 	for b in S.buildings:
+-		if b.alive:
+-			alive.append(b)
+-	if alive.is_empty():
++		if b.alive and b.row == WorldStructures.PLANE_ROW:
++			front.append(b)
++	if front.is_empty():
+ 		return
+ 	var cx: float = S.fighters[0].x
+-	alive.sort_custom(func(a, b): return absf(SimWrap.sdx(cx, a.x)) < absf(SimWrap.sdx(cx, b.x)))
+-	var k: int = ((t - 90) / 150) % maxi(1, alive.size() / 4)
+-	var b0 = alive[mini(alive.size() - 1, k * 3)]
++	front.sort_custom(func(a, b): return absf(SimWrap.sdx(cx, a.x)) < absf(SimWrap.sdx(cx, b.x)))
++	var k: int = (u / 150) % maxi(1, front.size() / 3)
++	var b0 = front[mini(front.size() - 1, k * 3)]
+ 	S.fighters[0].tier = 3.0
+ 	WorldStructures.explode(S, b0.x, WorldTerrain.groundY(S, b0.x) + 40.0, 800.0, S.fighters[0])

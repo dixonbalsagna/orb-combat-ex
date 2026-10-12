@@ -245,6 +245,15 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
     };
     const pm = presses(mine), pt = presses(theirs);
     check("Rendering's capture hook presses the same buttons on the same ticks as flash_worst.gd", !!pm && !!pt && JSON.stringify(pm) === JSON.stringify(pt), JSON.stringify([pm && pm.length, pt && pt.length]));
+    // the staging of the transform, collapse and ai scenes: the same functions, line for line (only the event tally, which only flash_worst.gd keeps, is left out)
+    const fn = (txt, name) => {
+      const m = txt.match(new RegExp('func ' + name + '\\([^\\n]*\\n(?:(?:\\t[^\\n]*)?\\n)*'));
+      return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trimEnd()).filter((l) => l.trim() && !/events\[/.test(l)) : null;
+    };
+    for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms']) {
+      const a = fn(mine, name), b = fn(theirs, name);
+      check(`Rendering's capture hook stages the same collapse ${name} as flash_worst.gd`, !!a && !!b && JSON.stringify(a) === JSON.stringify(b), JSON.stringify([a && a.length, b && b.length]));
+    }
   }
 }
 

@@ -135,7 +135,8 @@ async function launchBrowser() {
     let port;
     while (!port && !failed && Date.now() - t0 < PORT_WAIT_MS) {
       const f = join(profile, 'DevToolsActivePort');
-      if (existsSync(f)) { const n = Number(readFileSync(f, 'utf8').split('\n')[0]); if (n > 0) port = n; }
+      // the browser may still hold the file open as it writes it (Windows: EBUSY, 2026-10-11): that is "not yet", the next poll reads it
+      if (existsSync(f)) { try { const n = Number(readFileSync(f, 'utf8').split('\n')[0]); if (n > 0) port = n; } catch { /* locked while it is written */ } }
       if (!port) await sleep(200);
     }
     if (port) {
