@@ -95,6 +95,7 @@ var _tf_s: int = 0
 var intro_active: bool = false           # between intro_start and clock_start (docs/architecture/intro-phase.md)
 var rush_cuts: int = 0                   # long rushes the rusher's pane was cut ahead for (counted for the tests)
 var _rush_pin: Array = [false, false]
+var _rush_wait: Array = [0, 0]            # ticks before a long rush's cut ahead is made (a rush that ends in them is not cut for)
 var lunge_holds: int = 0                 # lunges held for (counted for the tests); docs/camera/lunge-framing.md
 var _lg_slot: int = -1                   # the attacker of a lunge being held for, else -1
 var _lg_tgt: int = -1
@@ -122,7 +123,9 @@ var scroll_caps: int = 0                # ticks the re-frame limiter held a pane
 var _pfy: Array = [0.0, 0.0]
 var _onset_cool: Array = [0, 0]          # ticks before another onset may arm the limiter
 var _onset_run: Array = [0, 0]           # ticks the limiter has run in this onset
+var _pvy_last: Array = [0.0, 0.0]         # the body's measured vertical velocity last tick (units a second), for the set-down test
 var _pst: Array = [Vector2.ZERO, Vector2.ZERO]   # the focus step each pane took last tick (units): the limiter lets a step stay as large, never grow
+var _ydefer: Array = [0, 0]              # ticks the focus holds its height after a body is set down on lower ground
 var _onset: Array = [0, 0]               # ticks left of a motion's onset (his velocity just stepped): the re-frame limiter's window
 var _pfx: Array = [0.0, 0.0]              # last tick's pane focus x
 var _vsm_m: float = 0.0                  # the one view's
@@ -254,6 +257,11 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_sig_done = [true, true]
 	_derived_beams_t = -1.0e9
 	_rush_pin = [false, false]
+	_rush_wait = [0, 0]
+	_od_valid = false
+	_od_shown = [false, false]
+	_tb_cut_t = [-1.0e9, -1.0e9]
+	_tb_lost = [0.0, 0.0]
 	_lg_slot = -1
 	_lg_rel = false
 	_vsm = [0.0, 0.0]
@@ -262,6 +270,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_onset = [0, 0]
 	_onset_run = [0, 0]
 	_onset_cool = [0, 0]
+	_ydefer = [0, 0]
+	_pvy_last = [0.0, 0.0]
 	_pst = [Vector2.ZERO, Vector2.ZERO]
 	_vsm_m = 0.0
 	_gov_arm_until = -1.0e9
@@ -317,6 +327,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 		if String(_ef(ev, "type", "")) == "relocate":
 			cut = true
 	_read_events(S, events)
+	_rush_commit(S)
 	_update_lunge(S)
 	_update_brawl_focus(S)
 	_update_shake(events)
@@ -852,8 +863,17 @@ func _gov_armed() -> float:
 	return _gov_arm_speed if time < _gov_arm_until else 0.0
 
 
-func _scroll_gov(speed: float, z: float) -> float:
-	var lim: float = CamParams.SCROLL_MAX_REDUCED if (reduced_motion or flash_reduced) else CamParams.SCROLL_MAX
+## The speed the body has (units a second): a launched fighter has it from the launch event, ten ticks before he moves (the hit-stop), so the
+## zoom is out by the time he goes; the governor's measured speed (the focus's) comes only as he moves.
+func _body_speed(f) -> float:
+	var sp: float = Vector2(float(f.vx), float(f.vy)).length()
+	return sp if sp < 60000.0 else 0.0
+
+
+## `headroom` scales the limit: the governor aims at 0.9 of the travel budget, so the displayed camera (held to the budget) has a tenth
+## of it to catch up with a lag the budget made, and a steady pursuit settles at no lag instead of a slow drift and a cut every half second.
+func _scroll_gov(speed: float, z: float, headroom: float = CamParams.GOV_HEADROOM) -> float:
+	var lim: float = (CamParams.SCROLL_MAX_REDUCED if (reduced_motion or flash_reduced) else CamParams.SCROLL_MAX) * headroom
 	var w: float = speed * DT * z / vw
 	if w <= lim:
 		return 1.0
@@ -931,6 +951,38 @@ func _update_lunge(S: SimState) -> void:
 		_lg_f[q] = float(_lg_f[q]) + (float(tgt[q]) - float(_lg_f[q])) * klg
 
 
+## Whether a rush of `ra` at `rt` is long enough, in screens at the rusher pane's zoom, to cut ahead for.
+func _rush_far(S: SimState, ra: int, rt: int) -> bool:
+	var rf = S.fighters[ra]
+	var r_off: float = float(rf.rush.off) if rf.rush != null else 0.0
+	var dr: float = absf(SimWrap.sdx(rf.x, S.fighters[rt].x + r_off))   # to the arrival point
+	return dr * maxf(_zo[ra], 0.001) >= CamParams.RUSH_CUT_SCREENS * vw
+
+
+func _rush_pin_now(ra: int) -> void:
+	_rush_pin[ra] = true
+	rush_cuts += 1
+	_cut_now = true
+	if reduced_motion:
+		_cut_fade = CamParams.REDUCED_CUT_FADE
+
+
+## The cut ahead of a long rush, RUSH_COMMIT_TICKS after its event, if it is still on and still long.
+func _rush_commit(S: SimState) -> void:
+	for i in range(2):
+		if int(_rush_wait[i]) <= 0:
+			continue
+		_rush_wait[i] = int(_rush_wait[i]) - 1
+		if int(_rush_wait[i]) > 0:
+			continue
+		var rf = S.fighters[i]
+		if rf.rush == null or rf.rush.tgt == null or _rush_pin[i]:
+			continue
+		var rt: int = 1 - i
+		if sep > 0.999 and solo_kind == "" and _ov_kind == "" and not fold_active and not intro_active and _slam_slot < 0 and time >= float(_nopin_until[i]) and _rush_far(S, i, rt):
+			_rush_pin_now(i)
+
+
 func _read_events(S: SimState, events: Array) -> void:
 	for ev in events:
 		if String(_ef(ev, "type", "")) == "cue":
@@ -979,15 +1031,14 @@ func _read_events(S: SimState, events: Array) -> void:
 				var ra: int = int(_ef(ev, "actor", -1))
 				var rt: int = int(_ef(ev, "target", -1))
 				if ra >= 0 and ra < 2 and rt >= 0 and rt < 2 and ra != rt and sep > 0.999 and solo_kind == "" and _ov_kind == "" and not fold_active and not intro_active and _slam_slot < 0 and time >= float(_nopin_until[ra]):
-					var rf = S.fighters[ra]
-					var r_off: float = float(rf.rush.off) if rf.rush != null else 0.0
-					var dr: float = absf(SimWrap.sdx(rf.x, S.fighters[rt].x + r_off))   # to the arrival point
-					if dr * maxf(_zo[ra], 0.001) >= CamParams.RUSH_CUT_SCREENS * vw:
-						_rush_pin[ra] = true
-						rush_cuts += 1
-						_cut_now = true
-						if reduced_motion:
-							_cut_fade = CamParams.REDUCED_CUT_FADE
+					if _rush_far(S, ra, rt):
+						# Not at once: a rush that is knocked off in its first ticks (a blast landing, a parry) made a cut ahead
+						# and a cut back two ticks later, a pair of whole-pane changes (Tools' collapse clip, ticks 1168 to 1172).
+						# It is made after RUSH_COMMIT_TICKS if the rush is still on.
+						if CamParams.RUSH_COMMIT_TICKS > 0:
+							_rush_wait[ra] = CamParams.RUSH_COMMIT_TICKS
+						else:
+							_rush_pin_now(ra)
 			"attack":
 				# A signature is asked for: its panel waits for the fire beat, the outcome or the beam, whichever comes
 				# first, and is made once for it (a clash makes more beams later; a swat and a split make some: none of
@@ -1974,6 +2025,7 @@ func _snap_focus(S: SimState, i: int) -> void:
 
 func _snap_cameras(S: SimState) -> void:
 	_oz_valid = false
+	_od_valid = false
 	for i in range(2):
 		_snap_focus(S, i)
 		_zo[i] = _own_zoom_target(S, i)
@@ -2014,7 +2066,8 @@ func _merged_target(S: SimState) -> Vector3:
 	var pz: float = 1.0 / cos(deg_to_rad(_pitch_now))
 	var gov_m: float = 1.0
 	if A.state != "launched" and B.state != "launched":
-		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z)
+		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
+	_gov_bind_m = gov_m < 0.999
 	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(CamParams.ZOOM_MIN, CamParams.R_FLOOR * vh / CamParams.BODY_H * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
 	if _pitch_now != 0.0:
 		# Put the pair's chest midpoint at 0.7 of the height, as the straight-on camera does: a few Newton steps on cam_y.
@@ -2105,7 +2158,18 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 	z *= _push_mult(i) * _hit_mult(i)
 	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
 		var zfl: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
-		z = maxf(z * _scroll_gov(maxf(float(_vsm[i]), _gov_armed()), z), minf(z, zfl))
+		var gv: float = _scroll_gov(maxf(maxf(float(_vsm[i]), _gov_armed()), _body_speed(f)), z * pz)
+		_gov_bind[i] = gv < 0.999
+		z = maxf(z * gv, minf(z, zfl))
+	elif f.state == "launched" and not reduced_motion:
+		# A launched body is followed at his size, but the scenery behind a launch at 6,000 units a second crosses a pane at
+		# 0.06 of the width a tick, and a cliff face against sunlit sand swept 23,000 pixels twice in 14 ticks at ai seed
+		# 4 (Tools: 3 flashes, the pair 6 and 5% over the area threshold). The same governor as any pursuit (the scenery no
+		# faster than SCROLL_MAX of the width a tick), with a floor of his size: LAUNCH_FLOOR of the height.
+		var zl: float = CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H
+		var gvl: float = _scroll_gov(maxf(float(_vsm[i]), _body_speed(f)), z * pz)
+		_gov_bind[i] = gvl < 0.999
+		z = maxf(z * gvl, minf(z, zl))
 	if solo_kind == "launch" and solo_slot == i and solo_phase == "land":
 		z *= 1.0 + CamParams.LAND_PUSH * sin(PI * clampf(_land_t / 0.3, 0.0, 1.0))
 	var zmax: float = _zcap() * (1.0 + CamParams.TIER_PUSH)
@@ -2245,6 +2309,23 @@ static func _blend_cam(a: Vector3, b: Vector3, w: float) -> Vector3:
 var _oz: PackedFloat64Array = PackedFloat64Array([0.5, 0.5])
 var _oz_valid: bool = false
 var _outs: Array = [Vector3.ZERO, Vector3.ZERO]
+# The travel budget (docs/camera/split-screen.md section 24h): the displayed camera of a pane moves, zooms and re-frames by at
+# most TRAVEL_MAX of the screen's width a tick; where it cannot keep him in frame inside that, it cuts once.
+var travel_budget: bool = false                        # the rule is a switch until the flash set has measured it (SplitView.set_travel_budget); its constants and the governor's headroom stay
+var _od: Array = [Vector3.ZERO, Vector3.ZERO]          # the camera each pane displayed last tick
+var _od_valid: bool = false
+var _od_before: Array = [Vector3.ZERO, Vector3.ZERO]
+var _scr: Array = [0.0, 0.0]                           # the picture's scroll each pane displayed this tick, px a tick at 1024 wide (0 on a cut)
+var _gov_bind: Array = [false, false]                  # the scroll governor is holding pane i's zoom target back this tick
+var _zr_pane: Array = [1.2, 1.2]
+var _gov_bind_m: bool = false                          # ... and the merged camera's
+var _zr_now: float = 1.2                               # this tick's comfort rate for the drawn zoom (e-folds a second)
+var _od_shown: Array = [false, false]
+var _tgt_prev: Array = [Vector3.ZERO, Vector3.ZERO]    # the unlimited target of last tick
+var _tb_lost: Array = [0.0, 0.0]                       # seconds the pane has had a subject outside its picture, held back by the budget
+var _tb_cut_t: Array = [-1.0e9, -1.0e9]                # when each pane last cut for the budget
+var travel_limited: int = 0                            # ticks a pane's displayed camera was held to the budget (counted for the tests)
+var travel_cuts: int = 0                               # cuts the budget made (counted for the tests)
 var _anchors: Array = [Vector2.ZERO, Vector2.ZERO]
 var _owns: Array = [Vector3.ZERO, Vector3.ZERO]
 
@@ -2259,6 +2340,7 @@ func _update_cameras(S: SimState) -> void:
 	var sw: float = smoothstep(0.0, 1.0, _stiff_w)
 	var transition: bool = (sep > 0.001 and sep < 0.999) or e > 0.001 or solo_kind != "" or solo_w > 0.001 or stiff
 	var zrate: float = CamParams.ZOOM_RATE_TRANS if transition else CamParams.ZOOM_RATE
+	_zr_now = zrate
 	for i in range(2):
 		var f = S.fighters[i]
 		var tau_x: float = CamParams.TAU_X
@@ -2284,7 +2366,7 @@ func _update_cameras(S: SimState) -> void:
 		if absf(vxm) > 60000.0 or absf(vym) > 60000.0:
 			_vlx[i] = 0.0
 			_vly[i] = 0.0
-		elif absf(vxm - float(_vlx[i])) > CamParams.ONSET_MAX or absf(vym - float(_vly[i])) > CamParams.ONSET_MAX:
+		elif absf(vxm - float(_vlx[i])) > CamParams.ONSET_MAX or absf(vym - float(_vly[i])) > CamParams.ONSET_MAX_Y:
 			_vlx[i] = vxm   # a fling (a step of over 12,000 units a second) is chased as before: it cannot be eased, only followed
 			_vly[i] = vym
 		else:
@@ -2323,6 +2405,8 @@ func _update_cameras(S: SimState) -> void:
 			var gnd: float = WorldTerrain.groundY(S, f.x)
 			lead_w = smoothstep(CamParams.LOW_AIR_DEAD * 0.5, CamParams.LOW_AIR_DEAD * 1.5, f.y - gnd)
 			fy_ref = lerpf(gnd + CamParams.CHEST, f.y + CamParams.CHEST, lead_w)
+		if int(_rush_wait[i]) > 0 and not _rush_pin[i]:
+			freeze = true   # a rush's pane waits RUSH_COMMIT_TICKS before its cut ahead: still, not following him (the whip of a pane chasing 18,000 units a second was 63 more rush jolts in the sweep)
 		if _rush_pin[i]:
 			var rp = f.rush
 			if rp == null or rp.tgt == null or solo_kind != "" or sep < 0.999:
@@ -2372,6 +2456,20 @@ func _update_cameras(S: SimState) -> void:
 				vlead_x = clampf(vlead_x, -vlim, vlim)
 			var tx: float = f.x + lead_c + vlead_x
 			var ty: float = fy_ref + float(_vly[i]) * lead_w * DT * (1.0 - ky) / ky
+			# A body the sim sets down on lower ground (a floor that went from under him, a roof that fell: 206 units in one tick
+			# at ai seed 4, tick 1809, with no flight before it) is a position step, not a motion: the focus holds its height for
+			# SETDOWN_HOLD ticks and the pane's picture does not shift by 150 pixels in one tick (a third of the frame's edges
+			# changing at once); he moves down the screen instead, and the filter takes him back after the hold.
+			if f.state != "launched" and absf(vym) * DT > CamParams.SETDOWN_STEP and absf(float(_pvy_last[i])) < 1500.0 and not _cut_now:
+				_ydefer[i] = CamParams.SETDOWN_HOLD
+			if int(_ydefer[i]) > 0:
+				_ydefer[i] = int(_ydefer[i]) - 1
+				ty = _fy[i]
+				# never so long that he is near the pane's edge: at most SETDOWN_ROOM of the height from the focus
+				var room_y: float = CamParams.SETDOWN_ROOM * vh / zc
+				var off_y: float = f.y + CamParams.CHEST - ty
+				if absf(off_y) > room_y:
+					ty = f.y + CamParams.CHEST - signf(off_y) * room_y
 			# Aimed at a building (B2): the focus leads toward it, a bounded distance on screen, so it is in frame.
 			if _aim[i] != null and f.state == "launched":
 				var zz: float = maxf(_zo[i], 0.001)
@@ -2430,6 +2528,7 @@ func _update_cameras(S: SimState) -> void:
 		if dfx > 1500.0:
 			dfx = 0.0   # a jump (a cut ahead, a seam) is not a scroll; a pinned pane that follows a fleeing target is one
 		_vsm[i] = float(_vsm[i]) + (minf(dfx / DT, 60000.0) - float(_vsm[i])) * 0.2
+		_pvy_last[i] = vym
 		_pst[i] = Vector2(SimWrap.sdx(_pfx[i], _fx[i]), float(_fy[i]) - float(_pfy[i]))
 		_pfx[i] = _fx[i]
 		_pfy[i] = _fy[i]
@@ -2445,9 +2544,16 @@ func _update_cameras(S: SimState) -> void:
 			tau_z = 0.12   # the beats are on a clock: the push has to land by the break
 		if stiff:
 			tau_z = lerpf(tau_z, CamParams.SLAM_TAU, sw)
+		# A zoom-out the scroll governor asks for is taken with a short time constant (GOV_TAU, at the ordinary rate cap): a
+		# pursuit at 6,000 units a second crossed 0.09 of the width a tick for the second the slow zoom took, and the travel
+		# budget held the picture back (a cut every half second) for as long.
+		var gov_out: bool = bool(_gov_bind[i]) and zt < _zo[i]
+		if gov_out:
+			tau_z = minf(tau_z, CamParams.GOV_TAU)
 		var kz: float = 1.0 - exp(-DT / tau_z)
 		var dz: float = (log(zt) - log(_zo[i])) * kz
 		var cap: float = (CamParams.SLAM_ZOOM_RATE if stiff else zrate) * DT
+		_zr_pane[i] = zrate
 		dz = clampf(dz, -cap, cap)
 		_zo[i] = exp(log(_zo[i]) + dz)
 	# the merged shadow camera: the reference camera's ease, snapped while two full panes are up
@@ -2472,7 +2578,10 @@ func _update_cameras(S: SimState) -> void:
 		_mx = SimWrap.wrap(_mx + SimWrap.sdx(_mx, mt.x + vmx * DT * (1.0 - km) / km) * km)
 		_vsm_m += (minf(absf(SimWrap.sdx(mx_old, _mx)) / DT, 60000.0) - _vsm_m) * 0.2
 		_my += (mt.y + vmy * DT * (1.0 - km) / km - _my) * km
-		var dzm: float = (log(mt.z) - log(_mz)) * km
+		var kzm: float = km
+		if _gov_bind_m and mt.z < _mz:
+			kzm = maxf(km, 1.0 - exp(-DT / CamParams.GOV_TAU))
+		var dzm: float = (log(mt.z) - log(_mz)) * kzm
 		var capm: float = (CamParams.SLAM_ZOOM_RATE if stiff else CamParams.ZOOM_RATE_TRANS) * DT
 		dzm = clampf(dzm, -capm, capm)
 		_mz = exp(log(_mz) + dzm)
@@ -2515,6 +2624,129 @@ func _outputs(S: SimState) -> void:
 		_oz[0] = oc.z
 		_oz[1] = oc.z
 	_oz_valid = true
+	_travel_budget(S)
+
+
+## The pane's displayed travel in a tick, in widths of the screen: the camera's step at the new zoom, in x and y together, and
+## half of the zoom's change (the scenery at the screen's edge moves by that much when the picture scales about its centre).
+func _travel(a: Vector3, b: Vector3) -> float:
+	var dx: float = SimWrap.sdx(a.x, b.x)
+	var dy: float = b.y - a.y
+	return sqrt(dx * dx + dy * dy) * b.z / maxf(vw, 1.0) + 0.5 * absf(log(maxf(b.z, 0.0001) / maxf(a.z, 0.0001)))
+
+
+## Whether a fighter this pane is for would be outside its picture, less a pad of TRAVEL_PAD of the width, in camera `cam`: the
+## pane's own half in a split (the anchor's distance to the nearer side of the screen), the whole screen in one view.
+func _subject_leaving(S: SimState, i: int, cam: Vector3) -> bool:
+	var subj: Array = []
+	if sep < 0.5 or (e > 0.5 and e_slot == i):
+		subj = [0, 1] if (sep < 0.5 and solo_slot < 0) else ([solo_slot] if solo_slot >= 0 else [i])
+	else:
+		subj = [i]
+	var pad: float = CamParams.TRAVEL_PAD * vw
+	var split_w: float = _smootherstep(sep) * (1.0 - clampf(e, 0.0, 1.0))
+	var a: Vector2 = _anchors[i]
+	var half: float = lerpf(0.5 * vw, minf(a.x, vw - a.x), split_w)
+	var cx: float = lerpf(0.5 * vw, a.x, split_w)
+	for k in subj:
+		var f = S.fighters[int(k)]
+		var ps: Vector2 = SplitFrame.project(cam.x, cam.y, cam.z, _pitch_now, vw, vh, f.x, f.y + CamParams.CHEST, float(f.z))
+		if absf(ps.x - cx) > half - pad or ps.y < pad or ps.y > vh - pad:
+			return true
+	return false
+
+
+func _pane_shown(i: int) -> bool:
+	if i == 0:
+		return not (sep > 0.001 and e >= 0.999 and sliver <= 0.0 and e_slot == 1)
+	return sep > 0.001 and not (e >= 0.999 and sliver <= 0.0 and e_slot == 0)
+
+
+## The rule: whatever moves a pane's picture (a follow, a pan, a zoom, a re-frame, a pane opening or closing, a rush's
+## follow), the displayed camera never moves it by more than TRAVEL_MAX of the screen's width in a tick (TRAVEL_MAX_REDUCED under
+## reduced flashing or motion). The check counts a change when a quarter of a window of pixels turns by a tenth of the
+## luminance within a second, and a picture that sweeps at 0.1 of its width a tick does that on every tick it sweeps;
+## scenery at 0.045 does not, in the clips measured. Where the limited camera would put a subject outside his picture the
+## budget's camera is left to bring him back (the HUD's edge arrow points at him), and the pane cuts to the target, with the
+## cut dip asking the register, only when he has been gone for TRAVEL_WAIT, or at once when a layout change is opening a pane
+## for him; at most once in TRAVEL_COOL. A cut costs a flash, a subject off the screen none (measured: a cut added a pair of
+## 25,000 to 50,000-pixel changes to a clip that passed). A cut, a pane that is hidden, a first frame, a cut-in's camera, a
+## composed intro, the fold and a zip are not limited.
+func _travel_budget(S: SimState) -> void:
+	if not travel_budget:
+		for i in range(2):
+			_od[i] = _outs[i]
+			_od_shown[i] = _pane_shown(i)
+			_tgt_prev[i] = _outs[i]
+			_scr[i] = 0.0 if not _od_valid else absf(SimWrap.sdx(float(_od_before[i].x), float(_outs[i].x))) * float(_outs[i].z) * 1024.0 / maxf(vw, 1.0)
+			_od_before[i] = _outs[i]
+		_od_valid = true
+		return
+	var b: float = CamParams.TRAVEL_MAX_REDUCED if (reduced_motion or flash_reduced) else CamParams.TRAVEL_MAX
+	var pm: float = _punch_mult()   # drawn after the filters (a 6-tick punch would be smoothed away), so it is in the picture: and in the budget
+	for i in range(2):
+		var o: Vector3 = _outs[i]
+		var tgt: Vector3 = Vector3(o.x, o.y, o.z * pm)
+		var tgt_full: Vector3 = tgt
+		var shown: bool = _pane_shown(i)
+		var t_t: float = _travel(_tgt_prev[i], tgt) if _od_valid else 0.0
+		_od_before[i] = _od[i]
+		# Not limited: a first frame, a pane that was hidden, a cut, a cut-in's own camera, a composed intro (authored shots, not
+		# in the required clips), the fold's wide shot (a relocation across the planet) and a zip (the camera holds a frame box
+		# there: what moves is the zipper, and its flash is the register's `zip_break`).
+		if not (_od_valid and shown and bool(_od_shown[i]) and not _cut_now and _ov_kind == "" and not intro_active and not fold_active and _lg_slot < 0 and not _lg_rel):
+			_od[i] = tgt
+		else:
+			var pd: Vector3 = _od[i]
+			# The drawn zoom also keeps the comfort rate when it catches up with a target it was held back from.
+			var zc_cap: float = (CamParams.SLAM_ZOOM_RATE if _slam_slot >= 0 and e > 0.0 else (CamParams.ZOOM_RATE_TRANS if sep < 0.5 else maxf(_zr_now, float(_zr_pane[i])))) * DT
+			var dlz: float = clampf(log(tgt.z) - log(pd.z), -zc_cap, zc_cap)
+			tgt = Vector3(tgt.x, tgt.y, exp(log(pd.z) + dlz))
+			var t: float = _travel(pd, tgt)
+			# Catching up with a target that has slowed or stopped goes no faster than TRAVEL_CATCH more than the target moves
+			# (a pop on a fighter who has stopped is the camera's, however smooth: the calm-step check's 0.02).
+			var b_now: float = minf(b, t_t + CamParams.TRAVEL_CATCH)
+			if t > b_now:
+				# The step scales together in x, y and ln z; the position term is taken at the limited zoom, so the factor is
+				# found in three passes (the second-order error of one is 2 to 3% of the budget at a zoom that is moving).
+				var k: float = b_now / t
+				var lim: Vector3 = pd
+				for _pass in range(3):
+					lim = Vector3(SimWrap.wrap(pd.x + SimWrap.sdx(pd.x, tgt.x) * k), pd.y + (tgt.y - pd.y) * k, exp(log(pd.z) + (log(tgt.z) - log(pd.z)) * k))
+					var tl: float = _travel(pd, lim)
+					if tl <= 0.00001:
+						break
+					k *= b_now / tl
+				lim = Vector3(SimWrap.wrap(pd.x + SimWrap.sdx(pd.x, tgt.x) * k), pd.y + (tgt.y - pd.y) * k, exp(log(pd.z) + (log(tgt.z) - log(pd.z)) * k))
+				# A cut and its dip are one flash, and measured it costs one (a pair of changes of 25,000 to 50,000 pixels), where a
+				# subject who is off the screen costs none: so the pane waits for the budget's camera to bring him back, and cuts
+				# only when he has been gone for TRAVEL_WAIT, or at once when a layout change is opening a pane for him (its
+				# target settles, and he is the reason for it). The HUD's edge arrow points at him meanwhile.
+				var leaving: bool = _subject_leaving(S, i, Vector3(lim.x, lim.y, lim.z))
+				_tb_lost[i] = float(_tb_lost[i]) + DT if leaving else 0.0
+				var morphing: bool = sep > 0.001 and sep < 0.999
+				var cool: float = CamParams.TRAVEL_COOL_MORPH if morphing else CamParams.TRAVEL_COOL
+				var due: bool = leaving and time - float(_tb_cut_t[i]) >= cool and (morphing or float(_tb_lost[i]) >= CamParams.TRAVEL_WAIT)
+				if due:
+					_cut_now = true
+					_cut_dip()
+					_tb_cut_t[i] = time
+					travel_cuts += 1
+					_od[i] = tgt_full
+				else:
+					_od[i] = lim
+					_outs[i] = Vector3(lim.x, lim.y, lim.z / pm)
+					_oz[i] = lim.z / pm
+					travel_limited += 1
+			else:
+				_tb_lost[i] = 0.0
+				_od[i] = tgt
+				_outs[i] = Vector3(tgt.x, tgt.y, tgt.z / pm)
+				_oz[i] = tgt.z / pm
+		_scr[i] = 0.0 if (_cut_now or not _od_valid or not bool(_od_shown[i])) else absf(SimWrap.sdx(float(_od_before[i].x), float(_od[i].x))) * float(_od[i].z) * 1024.0 / maxf(vw, 1.0)
+		_od_shown[i] = shown
+		_tgt_prev[i] = tgt_full
+	_od_valid = true
 
 
 static func _smootherstep(t: float) -> float:
@@ -2642,7 +2874,10 @@ func _make_frame(S: SimState) -> SplitFrame:
 	# shared camera's in one view. A fast pursuit past lit windows strobes the facades; Rendering fades their contrast with this.
 	var scale_px: float = DT * 1024.0 / maxf(vw, 1.0)
 	var sc_m: float = _vsm_m * f.cam_z[0] * scale_px
-	f.scroll = [lerpf(float(_vsm[0]) * f.cam_z[0] * scale_px, sc_m, 1.0 - _smootherstep(sep)), lerpf(float(_vsm[1]) * f.cam_z[1] * scale_px, sc_m, 1.0 - _smootherstep(sep))]
+	if travel_budget:
+		f.scroll = [float(_scr[0]), float(_scr[1])]   # what the pane's picture did this tick (the displayed camera's), not what the focus did
+	else:
+		f.scroll = [lerpf(float(_vsm[0]) * f.cam_z[0] * scale_px, sc_m, 1.0 - _smootherstep(sep)), lerpf(float(_vsm[1]) * f.cam_z[1] * scale_px, sc_m, 1.0 - _smootherstep(sep))]
 	if _ov_kind != "":
 		# A cut-in is one view: it draws its own camera over both panes, so the frame says one view with no divider. The
 		# layout itself goes on deciding underneath (holding it let a fighter fly 6,000 units away during a cut-in and

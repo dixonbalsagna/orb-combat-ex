@@ -148,6 +148,14 @@ func ask_register(source: String, area: float, step: float = -1.0) -> bool:
 	return bool(h.vfx.flashes.ask(source, Color(0.3, 0.3, 0.35), int(h.S.tick), area * 1024.0 * 768.0, step))
 
 
+## The travel budget (docs/camera/split-screen.md section 24h): a pane's picture changes by at most 0.045 of the width a tick
+## (0.03 under reduced flashing), and the pane cuts when a subject has been gone for 0.6 s. Off by default until the flash set has
+## measured it. Not a player option: a build-time switch (`camera_travel_budget` in the debug options).
+func set_travel_budget(on: bool) -> void:
+	if main != null:
+		main.split_rig.travel_budget = on
+
+
 ## The feathered sweep of a layout change (a switch, off by default): 0 off, 1 only under reduced flashing or reduced motion,
 ## 2 always. Option name for UI, when it ships: `camera_feathered_sweeps`.
 func set_feathered_sweeps(v: int) -> void:

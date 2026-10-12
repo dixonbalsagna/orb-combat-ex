@@ -66,6 +66,7 @@ const PLANE_Y: float = 0.7             # the fighter plane on screen in the refe
 # --- opening, merging, the slam (sections 6 and 7) ---
 const T_OPEN: float = 0.45
 const RUSH_CUT_SCREENS: float = 1.2     # a rush this long in screens (at the rusher pane's zoom) cuts his pane ahead to where it ends
+const RUSH_COMMIT_TICKS: int = 6        # the cut ahead is made this many ticks after the rush begins, if it is still on (0 = at once)
 const INCOMING_MIN_CLOSING: float = 3000.0   # an incoming read shows when the other fighter closes this fast (units a second) off the pane
 const CHASE_LEAD_X: float = 0.12        # lead room for a chased launch: the focus ahead of him by at most this share of the pane width
 const CHASE_LEAD_T: float = 0.25        # seconds of his velocity (the lead before the cap)
@@ -77,6 +78,22 @@ const SWEEP_FEATHER_FRAC: float = 0.30   # the feathered sweep (a switch): the b
 # The re-frame at an impact (a body's velocity steps from rest: a beam's launch out of hit-stop, ground that falls away):
 const LEAD_SLEW: float = 2700.0          # the lead velocity's change a tick, units a second (45 units a tick each tick): a step is eased over about three ticks
 const ONSET_MAX: float = 12000.0         # a velocity step over this (units a second) is a fling: not eased, chased as before
+# The travel budget (split_rig `_travel_budget`): how much of the screen's width a pane's picture may change by in a tick from
+# camera motion of any kind, and what the camera does when a fight is faster than that.
+const TRAVEL_MAX: float = 0.045          # the pane's displayed camera: its step at its zoom, in widths, plus half its zoom's change, a tick
+const TRAVEL_MAX_REDUCED: float = 0.03   # under reduced flashing or reduced motion
+const TRAVEL_CATCH: float = 0.01         # catching up with a target goes no faster than this (of the width a tick) more than the target itself moves
+const TRAVEL_PAD: float = 0.04           # a subject is leaving his pane when the limited camera puts him within this (of the width) of its edge
+const TRAVEL_WAIT: float = 0.6           # a subject outside his pane's picture (the budget held its camera back) is waited for this long before the pane cuts to him
+const TRAVEL_COOL: float = 1.0           # a pane cuts for the budget at most once in this many seconds (a cut and its dip are a flash)
+const TRAVEL_COOL_MORPH: float = 0.1     # (a pane that is opening or closing cuts at most once in this many: its target settles, and the fighter it opens for must be seen)
+const GOV_HEADROOM: float = 0.9          # the zoom governor aims at this share of the budget (SCROLL_MAX is the budget's number), so the displayed camera can catch up
+const GOV_TAU: float = 0.2             # a zoom-out the scroll governor asks for is taken with this time constant (and at the transition's rate cap)
+const LAUNCH_FLOOR: float = 0.05         # a launched body's pane is governed like any pursuit, but he is never smaller than this share of the height for it
+const SETDOWN_STEP: float = 120.0        # a body that is not launched and changes height by this much (units) in one tick was set down by the sim ...
+const SETDOWN_HOLD: int = 30             # ... and the focus holds its height this many ticks before it follows him
+const SETDOWN_ROOM: float = 0.22        # but he stays within this share of the height from the focus
+const ONSET_MAX_Y: float = 40000.0       # ... in y a step this big is a body set down on lower ground, not a flight (the fastest is about 8,000): eased as any re-frame
 const CAP_TICKS: int = 4                 # a step arms the limiter for this many ticks (it stays on while it is binding) ...
 const CAP_COOL: int = 30                 # ... and a step may not arm it again for this many ticks (one onset, not a whole ramp)
 const SCROLL_CAP: float = 0.045          # the limiter: a pane's focus moves at most this much of the width a tick (SCROLL_MAX_REDUCED under reduced motion) ...
