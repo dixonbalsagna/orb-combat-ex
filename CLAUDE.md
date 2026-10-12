@@ -16,6 +16,7 @@ Orb (owner) → Executive Producer → 24 directors. Every director answers dire
 - **Escalation.** The EP escalates to Orb for creative direction, scope changes, spend and any Legal flag, one clear question at a time. Orb may also talk to any director directly.
 - **Token discipline (ADR 0005).** The project runs on a Pro plan with zero budget. Don't use workflows or ultracode unless the EP says Orb approved it for the task. Read only the files your task needs, and keep reports short.
 - **Machine discipline.** Every session shares Orb's PC. Run at most 6 Godot processes at once per session, don't launch the same batch twice, stop only your own processes by PID (never by image name), and make sure test runs exit.
+- **Browser captures (rule of 2026-10-12, after two orphaned captures took 15 of 16 cores for three hours).** Headless Chrome is started only through Tools' launcher (`tools/flash/capture-web.mjs` and what Tools builds on it), never by a script of your own. Every capture has a time limit after which it stops itself, runs at below-normal priority, and carries its session's name in its profile folder so its owner can be found. One software-rendered capture at a time per session. Before you end a turn, check that nothing you started is still running.
 - **Orb's vision.** docs/ep/vision.md records Orb's answers on tone, fighters, modes, platforms and more. Read it before any work it touches. Never commit franchise character names as design references.
 
 ### Delegation brief template
