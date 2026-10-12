@@ -902,3 +902,9 @@ Orb's rulings the same evening, on the reworked city and the site's return:
 > try option 1, the larger see-through patch first, as the patch needs to become bigger to accomodate more missing action allow a hybrid approach where the building also shrinks, I'd need to see it in motion to appreciate though
 
 Standing from this: the foreground opens by a larger see-through patch that follows the fight; as it must grow, the building also shrinks. Orb judges it from a motion clip before it is settled.
+
+## The brawl drifts in depth (Orb, 2026-10-11, night)
+
+> keep going, let me know when the motion clip is ready. In one of the prototypes for the depth axis I really liked how the brawl could get dragged gradually forwards and backwards relative to the camera. ideally, assuming a neighborhood with streets making up a perfect 4x4 grid the same depth as the Z axis, the fight could occur over any intersection. the way you described it a few days ago made a lot of sense, and the prototypes all looked like they were leading in the right direction. I'm going to sleep for the night, keep busy for at least the next five hours.
+
+Standing from this: the fighters are to travel the depth band, not only fight in front of a city drawn in depth: a brawl can be dragged gradually toward and away from the camera, and in a neighbourhood whose streets form a grid as deep as the band, a fight can happen over any intersection. The depth prototypes (research/band-proto and World's lanes plan, L3, T, L4) are the direction.
