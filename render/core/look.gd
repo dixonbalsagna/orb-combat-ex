@@ -109,6 +109,21 @@ const LANE_CUE_DZ: float = 40.0          # the fighters count as at different de
 const LANE_CUE_VZ: float = 60.0          # ... and a depth as changing past this many units a second
 const LANE_CUE_IN_S: float = 0.15        # it comes up over this long,
 const LANE_CUE_OUT_S: float = 0.6        # ... and goes over this long
+## The pair's mark (ground.gdshaderinc pair_mark_at; Game Design's docs/design/depth.md section 7): in a match with
+## depth on, a stroke on the ground from under one fighter to under the other while they brawl, so the line they stand
+## on reads on any screen. The ground is seen at a low angle (a 20 degree line is a 3 degree slope on screen), so the
+## stroke also tapers: it is broader under the fighter nearer the camera, by how far the line is turned. It is a pale
+## core in a dark rim, so it shows on a pale sidewalk and on a dark road alike.
+const PAIR_MARK_PX: float = 2.4          # the stroke's half width in pixels at its middle,
+const PAIR_MARK_TAPER: float = 0.6       # ... broader by this share at the nearer end and thinner at the farther, at 30 degrees
+const PAIR_MARK_COL: String = "#10141c"  # ... its rim: the shadows' dark,
+const PAIR_MARK_CORE: String = "#e6ebf2" # ... its core: a neutral pale, no fighter's hue,
+const PAIR_MARK_ALPHA: float = 0.6       # ... and its strength at full
+const PAIR_MARK_SEP: float = 300.0       # the two are a pair when this near along the street (4 fighter heights),
+const PAIR_MARK_DZ: float = 6.0          # ... at depths this far apart or more,
+const PAIR_MARK_H: float = 150.0         # ... and neither higher above his ground than this (2 fighter heights)
+const PAIR_MARK_IN_S: float = 0.2        # it comes up over this long,
+const PAIR_MARK_OUT_S: float = 0.5       # ... and goes over this long
 ## Windows on the buildings' walls (building.gdshader): a row a floor, a column every WINDOW_PITCH along the wall, lit
 ## or dark by a hash. A floor's windows go out with VFX's blow-outs (PlanetView.blow_windows) and stay out.
 const WINDOW_PITCH: float = 62.0

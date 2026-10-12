@@ -326,6 +326,29 @@ uniform float avenue_walk = 60.0;   // RenderLook.AVENUE_WALK
 uniform vec4 lane_cue[2];           // a fighter's world x, his depth, the stripe's half length along x, its strength (0: none)
 uniform vec4 lane_cue_col[2] : source_color;
 uniform float lane_cue_w = 14.0;    // RenderLook.LANE_CUE_W: the stripe's half width in depth
+uniform vec4 pair_mark = vec4(0.0); // the pair's mark: one fighter's world x and depth, then the other's
+uniform vec4 pair_mark_col : source_color = vec4(0.0, 0.0, 0.0, 0.0);   // its rim's colour; a: its strength (0: none)
+uniform vec4 pair_mark_core : source_color = vec4(0.9, 0.92, 0.95, 1.0);   // its core's colour
+uniform vec2 pair_mark_w = vec2(2.4, 0.6);   // RenderLook.PAIR_MARK_PX and PAIR_MARK_TAPER
+
+// The pair's mark at world x and depth px: a stroke on the ground from under one fighter to under the other (rgb,
+// alpha), a pale core in a dark rim, broader toward the one nearer the camera by how far their line is turned in depth
+// (full at 30 degrees).
+// upz: world units a pixel spans in depth: the stroke's width is in pixels, because the ground is seen at a low angle.
+vec4 pair_mark_at(vec2 px, float upz) {
+	if (pair_mark_col.a <= 0.0) {
+		return vec4(0.0);
+	}
+	vec2 d = pair_mark.zw - pair_mark.xy;
+	d.x -= world_w * floor(d.x / world_w + 0.5);
+	vec2 q = px - pair_mark.xy;
+	q.x -= world_w * floor(q.x / world_w + 0.5);
+	float t = clamp(dot(q, d) / max(dot(d, d), 1.0), 0.0, 1.0);
+	float turn = clamp(-d.y / max(0.5 * length(d), 1.0), -1.0, 1.0);   // above 0: the first fighter is the nearer
+	float hw = upz * pair_mark_w.x * (1.0 + pair_mark_w.y * turn * (1.0 - 2.0 * t));
+	float r = length(q - d * t) / max(hw, 0.0001);
+	return vec4(mix(pair_mark_col.rgb, pair_mark_core.rgb, 1.0 - smoothstep(0.35, 0.6, r)), pair_mark_col.a * (1.0 - smoothstep(0.75, 1.0, r)));
+}
 
 // How much of a district's street paint a world x gets (0 outside every district), for the vertex stage.
 float street_weight(float xw) {

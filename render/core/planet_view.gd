@@ -67,6 +67,7 @@ var _blown: Array = []               # per building: a bit per floor whose windo
 var _blow_seen: Dictionary = {}      # the blow-outs already taken: Vector2(building, its time)
 var _holes_on: bool = false          # a porthole is open in this pane's building materials
 var _cues_on: bool = false           # a lane cue shows in this pane's ground materials
+var _pair_on: bool = false           # the pair's mark shows in them
 var _foot: Array = []                # per building: the lowest and highest ground under its footprint (shared by panes)
 var _falls: Dictionary = {}          # building -> [sim time its sink starts, standing height]: implodes in progress
 var _fold: Array = []                # [cx, sim time]: a district of implodes folded into one event this tick
@@ -645,6 +646,8 @@ func _set_lanes(S: SimState) -> void:
 		_terrain_mat.set_shader_parameter(k[0], RenderLook.col(k[1]))
 	for m in [_terrain_mat, _water_mat]:
 		m.set_shader_parameter("lane_cue_w", RenderLook.LANE_CUE_W)
+		m.set_shader_parameter("pair_mark_w", Vector2(RenderLook.PAIR_MARK_PX, RenderLook.PAIR_MARK_TAPER))
+		m.set_shader_parameter("pair_mark_core", RenderLook.col(RenderLook.PAIR_MARK_CORE))
 
 
 ## Per frame, per pane: the lane cues on the ground and the water (ground.gdshaderinc). cues: per fighter [his world
@@ -667,6 +670,19 @@ func set_lane_cues(cues: Array) -> void:
 	for m in [_terrain_mat, _water_mat]:
 		m.set_shader_parameter("lane_cue", v)
 		m.set_shader_parameter("lane_cue_col", c)
+
+
+## Per frame, per pane: the pair's mark on the ground and the water (ground.gdshaderinc). ends: one fighter's world x
+## and depth, then the other's; strength 0: none. Nothing is set while there is none and there was none.
+func set_pair_mark(ends: Vector4, strength: float) -> void:
+	if strength <= 0.0 and not _pair_on:
+		return
+	_pair_on = strength > 0.0
+	var c: Color = RenderLook.col(RenderLook.PAIR_MARK_COL)
+	c.a = maxf(strength, 0.0)
+	for m in [_terrain_mat, _water_mat]:
+		m.set_shader_parameter("pair_mark", ends)
+		m.set_shader_parameter("pair_mark_col", c)
 
 
 ## The camera's world position this frame, for the foreground rule in the ground and water shaders.

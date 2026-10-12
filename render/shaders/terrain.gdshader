@@ -128,6 +128,8 @@ void fragment() {
 	c = flat_shade(c, NORMAL, 0.55) * mix(1.2, 0.95, v_back);
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
 	c = mix(c, cue.rgb, cue.a);
+	vec4 pm = pair_mark_at(v_px, fwidth(v_px.y));
+	c = mix(c, pm.rgb, pm.a);
 	float hh = clamp(v_heat, 0.0, 1.6);
 	vec3 glow = mix(heat_lo.rgb, heat_hi.rgb, clamp(hh - 0.6, 0.0, 1.0));
 	// The glow's tint comes in gently at low heat (a weak beam's groove is a faint red, not a dark one, at first).

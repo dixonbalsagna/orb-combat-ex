@@ -52,6 +52,8 @@ var _cue := PackedFloat32Array()   # per fighter: his lane cue, 0 to 1
 var _cue_z := PackedFloat32Array() # ... his depth at the last tick seen,
 var _cue_want: Array = []          # ... and whether the cue was wanted then
 var _cue_t: float = -1.0
+var _pair: float = 0.0             # the pair's mark, 0 to 1
+var _pair_t: float = -1.0
 static var clouds_on: bool = true          # the sky's clouds (main's --noclouds)
 static var sky_calm: bool = false          # reduced motion: the clouds stand still and nothing parts (main sets it)
 static var sky_react_on: bool = false      # the clouds part for a fighter at tier 3 or more: off unless asked for (main's --skyreact; QA's GB-002)
@@ -154,6 +156,7 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 		_place_shadow(S, i, wx, vx, pose.y, v.depth, v.visible)
 	_occlusion(S, cam_x, vp)
 	_lane_cues(host, a)
+	_pair_mark(host, a)
 	_sky_react(host, cam_x)
 	vfx_layer.update(host, a, cam_x, cam.z, vp.x)
 	beams.update(S, cam_x, cam.z, host)
@@ -478,6 +481,7 @@ func snap_occlusion() -> void:
 	_patch_t = -1.0
 	_join_t = -1.0
 	_cue_t = -1.0
+	_pair_t = -1.0
 	_react_t = -1.0
 	for v in fighter_views:
 		v.snap_damage()
@@ -582,6 +586,45 @@ func _lane_cues(host: SimHost, a: float) -> void:
 		var v: FighterView = fighter_views[i]
 		cues.append([host.fighter_x(i, a), v.depth, (_cue[i] if v.visible else 0.0) * RenderLook.LANE_CUE_ALPHA, v._aura_col])
 	planet.set_lane_cues(cues)
+
+
+## The pair's mark (RenderLook.PAIR_MARK_*): only in a match with depth on, a stroke on the ground between the two
+## fighters while they are close, near the ground and at different depths. It eases on tick time, like the lane cue.
+## Presentation only: it reads the sim. With depth off it sets nothing.
+func _pair_mark(host: SimHost, a: float) -> void:
+	var S: SimState = host.S
+	if not S.depthOn or fighter_views.size() != 2:
+		if _pair_t >= 0.0:
+			_pair = 0.0
+			_pair_t = -1.0
+			planet.set_pair_mark(Vector4.ZERO, 0.0)
+		return
+	var snap: bool = _pair_t < 0.0
+	var dt: float = 0.0 if snap else clampf(PlanetView.tick_time(S) - _pair_t, 0.0, 0.1)
+	_pair_t = PlanetView.tick_time(S)
+	var x := PackedFloat64Array()
+	var up := PackedFloat32Array()
+	var shown: bool = true
+	for i in range(2):
+		var v: FighterView = fighter_views[i]
+		var wx: float = host.fighter_x(i, a)
+		x.append(wx)
+		up.append(host.fighter_pose(i, a).y - maxf(planet.ground.ground_at(S, wx, v.depth), WorldWater.surfaceAt(S, wx)))
+		shown = shown and v.visible
+	var z0: float = (fighter_views[0] as FighterView).depth
+	var z1: float = (fighter_views[1] as FighterView).depth
+	var want: bool = shown and pair_wants(SimWrap.sdx(x[0], x[1]), z1 - z0, up[0], up[1])
+	if snap:
+		_pair = 1.0 if want else 0.0
+	elif dt > 0.0:
+		_pair = move_toward(_pair, 1.0 if want else 0.0, dt / (RenderLook.PAIR_MARK_IN_S if want else RenderLook.PAIR_MARK_OUT_S))
+	planet.set_pair_mark(Vector4(x[0], z0, x[1], z1), _pair * RenderLook.PAIR_MARK_ALPHA)
+
+
+## Whether two fighters are a pair to mark: dx along the street and dz in depth between them, and each one's height above
+## his ground.
+static func pair_wants(dx: float, dz: float, up0: float, up1: float) -> bool:
+	return absf(dx) <= RenderLook.PAIR_MARK_SEP and absf(dz) >= RenderLook.PAIR_MARK_DZ and maxf(up0, up1) <= RenderLook.PAIR_MARK_H
 
 
 static func _shadow_mesh() -> PlaneMesh:

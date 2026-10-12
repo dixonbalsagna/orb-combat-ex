@@ -46,7 +46,7 @@ func update(S: SimState, cam_x: float, z: float, host: SimHost = null) -> void:
 		var x0: float = SimWrap.sdx(cam_x, b.ox + b.ux * tail)
 		var a := Vector2(x0, b.oy + b.uy * tail)
 		var e := Vector2(x0 + b.ux * (s - tail), b.oy + b.uy * s)
-		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright)
+		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright, b.oz + b.zs * tail, b.oz + b.zs * s)
 		n += 1
 	var c = S.game.clash
 	var clash_ok: bool = host == null or host.clash_flash
@@ -58,11 +58,12 @@ func update(S: SimState, cam_x: float, z: float, host: SimHost = null) -> void:
 		var ax: float = SimWrap.sdx(cam_x, c.A.x)
 		var dx: float = SimWrap.sdx(c.A.x, c.D.x)
 		var m := Vector2(ax + dx * mid, c.A.y + 38.0 + (c.D.y - c.A.y) * mid)
-		_beam(n, Vector2(ax, c.A.y + 38.0), m, 26.0 + c.A.tier * 8.0, RenderLook.col(c.A.aura), ck, z, clash_ok)
-		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, 26.0 + c.D.tier * 8.0, RenderLook.col(c.D.aura), ck, z, clash_ok)
+		var mz: float = c.A.z + (c.D.z - c.A.z) * mid   # the fighters' depths (0 on the plane): the beams meet between them
+		_beam(n, Vector2(ax, c.A.y + 38.0), m, 26.0 + c.A.tier * 8.0, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz)
+		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, 26.0 + c.D.tier * 8.0, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz)
 		RenderMats.set_glow(_flare.material_override, Color.WHITE, ck)
 		n += 2
-		_flare.position = Vector3(m.x, m.y, RenderLook.Z_BEAMS + 2.0)
+		_flare.position = Vector3(m.x, m.y, RenderLook.Z_BEAMS + 2.0 + mz)
 		_flare.scale = Vector3.ONE * 2.0 * (70.0 + 20.0 / z)
 	for i in range(n, _pool.size()):
 		for mi in _pool[i]:
@@ -98,7 +99,9 @@ static func clash_strength(t: float, dur: float) -> float:
 	return smoothstep(0.0, RenderLook.CLASH_RISE_S, t) * (1.0 - smoothstep(dur - RenderLook.CLASH_FALL_S, dur, t))
 
 
-func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true) -> void:
+## One beam from a to e (this view's x and the world's y). za, ze: the depth at each end (the sim's Beam.oz and zs; 0 on
+## the fighter plane). A beam with no depth is placed exactly as it always was.
+func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0) -> void:
 	while _pool.size() <= i:
 		var layers: Array = []
 		for j in range(LAYERS.size()):
@@ -125,5 +128,13 @@ func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: floa
 				cj = c.lerp(Color.WHITE, 0.35)
 			else:
 				aj *= RenderLook.BEAM_SOFT
-		mi.transform = Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (l + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
+		if za == 0.0 and ze == 0.0:
+			mi.transform = Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (l + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
+		else:
+			# In depth: the same prism along its true line, its width still across the screen.
+			var dir := Vector3(d.x, d.y, ze - za)
+			var l3: float = dir.length()
+			dir /= l3
+			var side := Vector3(u.y, -u.x, 0.0)
+			mi.transform = Transform3D(Basis(side * th, dir * (l3 + th * 0.5), side.cross(dir) * th), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS + (za + ze) * 0.5))
 		RenderMats.set_glow(mi.material_override, cj, aj)
