@@ -4,6 +4,8 @@ Owner: Audio and Music. 2026-10-06. A plan on paper, as the EP asked; nothing is
 
 **Density retune:** done on the real flurries (2026-10-11); see the measurement under "Built" below.
 
+**The beat, the nine cells and depth (2026-10-12):** `docs/audio/brawl-beat.md`.
+
 ## Built (2026-10-06) and checked against the real C2 events (2026-10-11)
 
 The EP ruled that the launcher's ping is **one sound, heard by both players** (local play shares speakers). Its partners are VFX's mark on the staggered rival, Controls' rumble on closes, and (for the full-charge tick) VFX's flash and UI's ring. It was first built against **staged events**; Encounter's C2 chain (2e0f3b2c, `docs/director/brawl-c2.md`) is the real thing, and the table below is as corrected against it. `audio/tools/brawl_check.gd` stages the real shapes; `audio/tools/host_check.gd` runs real seeded matches. Code: `audio/audio_brawl.gd`; data (every name and number): `audio/data/brawl_cues.json`; recipes: `audio/data/impacts.json`.

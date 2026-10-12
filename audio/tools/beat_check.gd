@@ -1,0 +1,117 @@
+extends SceneTree
+## The numbers behind docs/audio/brawl-beat.md: how long each hit rings against the perfect follow-up's window, and whether
+## the spark and notes can be heard on top of a hit (and do not hide it). From the repo root:
+##   godot --headless --path . --script res://audio/tools/beat_check.gd
+## Exit code 1 if a note cannot be heard against the hit it rides on, or hides it. No sound device is used.
+
+var bank: AudioBank
+var fails: int = 0
+
+
+func _initialize() -> void:
+	bank = AudioBank.new()
+	_run.call_deferred()
+
+
+func ok(cond: bool, msg: String) -> void:
+	print("  %s  %s" % ["ok  " if cond else "FAIL", msg])
+	if not cond:
+		fails += 1
+
+
+func _db(x: float) -> float:
+	return 20.0 * log(maxf(x, 1e-9)) / log(10.0)
+
+
+## RMS of buf over [t0, t0 + len] ms (zero past the end).
+func _rms_at(buf: PackedFloat32Array, rate: int, t0_ms: float, len_ms: float) -> float:
+	var a: int = int(t0_ms * 0.001 * rate)
+	var b: int = mini(int((t0_ms + len_ms) * 0.001 * rate), buf.size())
+	if a >= b:
+		return 0.0
+	var sum: float = 0.0
+	for i in range(a, b):
+		sum += buf[i] * buf[i]
+	return sqrt(sum / float(b - a))
+
+
+## The same, through a band-pass at f (q) first.
+func _band_rms(buf: PackedFloat32Array, rate: int, f: float, q: float, t0_ms: float, len_ms: float) -> float:
+	var c: PackedFloat32Array = buf.duplicate()
+	AudioDsp.filter(c, "bp", f, f, 0.0, q, rate)
+	return _rms_at(c, rate, t0_ms, len_ms)
+
+
+func _loudest_frame(buf: PackedFloat32Array, rate: int) -> float:
+	var best: float = 0.0
+	var t: float = 0.0
+	while t < float(buf.size()) / rate * 1000.0:
+		best = maxf(best, _rms_at(buf, rate, t, 10.0))
+		t += 5.0
+	return best
+
+
+func _run() -> void:
+	print("1. how much of a hit is still sounding when its window closes")
+	print("   (window ends 5, 6 and 8 ticks after the hit for a light, a medium and a heavy: 83, 100 and 133 ms)")
+	var rows: Array = [["impact.light", 83.0], ["impact.light.lite", 83.0], ["impact.medium", 100.0], ["impact.medium.grind", 100.0], ["impact.heavy", 133.0], ["impact.guard", 100.0]]
+	for r in rows:
+		var id: String = r[0]
+		var end_ms: float = r[1]
+		var at_end: float = 0.0
+		var at_peak: float = 0.0
+		var t20: float = 0.0
+		var n: int = bank.variants(id)
+		for v in range(n):
+			var buf: PackedFloat32Array = bank.buffer(id, v)
+			var rate: int = bank.rate_of(id)
+			var peak: float = _loudest_frame(buf, rate)
+			at_peak += peak
+			at_end += _rms_at(buf, rate, end_ms, 10.0)
+			var t: float = 0.0
+			while t < float(buf.size()) / rate * 1000.0 and _rms_at(buf, rate, t, 10.0) > peak * 0.1:
+				t += 5.0
+			t20 += t
+		print("   %-20s at the window's end: %6.1f dB under its loudest 10 ms; down 20 dB by %4.0f ms" % [id, _db(at_end / at_peak), t20 / float(n)])
+	var light_end: float = _db(_rms_at(bank.buffer("impact.light", 0), bank.rate_of("impact.light"), 83.0, 10.0) / _loudest_frame(bank.buffer("impact.light", 0), bank.rate_of("impact.light")))
+	ok(light_end < -10.0, "a light is mostly gone when its window closes (%.1f dB)" % light_end)
+
+	print("2. can the spark and the notes be heard on top of the hit they ride on, and do they hide it")
+	var cfgj: Dictionary = AudioBank.load_json("res://audio/data/beat_cues.json")
+	var ratios: Array = cfgj.perfect.own.ratios
+	var notes: Array = [["spark", "perfect.spark", 1652.0], ["light", "perfect.light", 1652.0], ["medium", "perfect.medium", 1652.0], ["heavy", "perfect.heavy", 1652.0], ["close", "perfect.close", 2200.0]]
+	var imp: Dictionary = {"spark": "impact.light", "light": "impact.light", "medium": "impact.medium", "heavy": "impact.heavy", "close": "impact.light"}
+	print("   offset = how long after the hit's start the sound plays; SNR = the sound's band over the hit's own energy in that band, over the sound's first 60 ms")
+	for nrow in notes:
+		var kind: String = nrow[0]
+		var nid: String = nrow[1]
+		var f0: float = nrow[2]
+		var iid: String = imp[kind]
+		var worst: float = 99.0
+		var line: String = ""
+		for ratio in ([1.0, ratios[1], ratios[2]] if kind != "close" else [1.0]):
+			var fnote: float = f0 * ratio
+			for off in [0.0, 17.0, 33.0, 50.0, 100.0, 133.0]:
+				var nb: PackedFloat32Array = bank.buffer(nid, 0)
+				var ib: PackedFloat32Array = bank.buffer(iid, 0)
+				var n_rms: float = _band_rms(nb, bank.rate_of(nid), fnote, 2.0, 0.0, 60.0)
+				# the recipe's playback pitch shifts the note's frequency, not its level; a cue's gain is 0 dB
+				var i_rms: float = _band_rms(ib, bank.rate_of(iid), fnote, 2.0, off, 60.0)
+				var snr: float = _db(n_rms / maxf(i_rms, 1e-9))
+				worst = minf(worst, snr)
+				if ratio == 1.0 or kind == "close":
+					line += "  +%3.0f ms: %5.1f dB" % [off, snr]
+		print("   %-6s on %-12s%s" % [kind, iid, line])
+		ok(worst > -6.0, "%s is not buried by %s at any offset (worst %.1f dB)" % [kind, iid, worst])
+
+	print("3. does a note hide the hit (the hit's own band over the note's, at the hit's start)")
+	for pair in [["perfect.light", "impact.light"], ["perfect.medium", "impact.medium"], ["perfect.heavy", "impact.heavy"], ["perfect.close", "impact.light"]]:
+		var nbuf: PackedFloat32Array = bank.buffer(pair[0], 0)
+		var ibuf: PackedFloat32Array = bank.buffer(pair[1], 0)
+		var n_all: float = _rms_at(nbuf, bank.rate_of(pair[0]), 0.0, 60.0)
+		var i_all: float = _rms_at(ibuf, bank.rate_of(pair[1]), 0.0, 60.0)
+		var d: float = _db(i_all / maxf(n_all, 1e-9))
+		print("   %-14s over %-14s the hit's first 60 ms is %.1f dB above the note's" % [pair[1], pair[0], d])
+		ok(d > 3.0 or pair[0] == "perfect.close", "%s still leads %s in its first 60 ms" % [pair[1], pair[0]])
+	print("\nbeat check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
+	quit(1 if fails > 0 else 0)

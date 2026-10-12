@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "note": "The beat (docs/audio/brawl-beat.md): the perfect follow-up's tick, spark, notes, close, link shimmer and droop; the held X's settle; the mashed Y's grind; the Y's charge hum and full tick; the launcher's rest. A separate file from brawl_cues.json so that file keeps its shape; audio/audio_brawl.gd merges the two. Needs a schema from Tools (a warning until then).",
+  "perfect": {
+    "note": "The perfect follow-up (docs/audio/brawl-beat.md). At the tap: a spark (a pitched tick, the confirmation). On the follow-up's own hit: a note stepping up with the chain's count (own: G#6, A#6, then the close on C#7, the octave of the launcher's ping, a resolved 5-6-1; the opponent's: the same start with a diminished stack, unresolved), coloured by the follow-up's strength; a link adds a shimmer. Never louder than a hit; everything on the Alert bus so the ping's duck does not take it.",
+    "bus": "Alert",
+    "land": {
+      "before": 3,
+      "after": 12
+    },
+    "own": {
+      "ratios": [
+        1.0,
+        1.12246,
+        1.33484
+      ],
+      "by_strength": {
+        "light": "perfect.light",
+        "medium": "perfect.medium",
+        "heavy": "perfect.heavy"
+      },
+      "close": "perfect.close",
+      "spark": "perfect.spark"
+    },
+    "foe": {
+      "ratios": [
+        1.0,
+        1.18921,
+        1.41421
+      ],
+      "note": "perfect.foe",
+      "close": "perfect.foe.close",
+      "spark": "perfect.spark"
+    },
+    "link": {
+      "sound": "perfect.link",
+      "gain_db": 0.0
+    },
+    "gain_db": {
+      "spark": 0.0,
+      "note": 0.0,
+      "close": 0.0
+    },
+    "priority": {
+      "spark": 78,
+      "note": 80,
+      "close": 90,
+      "tick": 70,
+      "break": 60
+    },
+    "cls": {
+      "spark": "perfect.spark",
+      "note": "perfect",
+      "close": "perfect.close",
+      "link": "perfect.link",
+      "tick": "perfect.tick",
+      "break": "perfect.break"
+    },
+    "cap": {
+      "spark": 1,
+      "note": 2,
+      "close": 1,
+      "link": 1,
+      "tick": 1,
+      "break": 1
+    },
+    "tick": {
+      "sound": "perfect.tick",
+      "gain_db": 0.0,
+      "caption": ""
+    },
+    "broken": {
+      "sound": "perfect.break",
+      "gain_db": 0.0,
+      "texts": [
+        "missed",
+        "stopped",
+        "blocked"
+      ]
+    },
+    "spark_clear": {
+      "ticks": 2,
+      "look_ahead": 3,
+      "max_wait": 6
+    }
+  },
+  "held": {
+    "note": "The held X: the burst eases into its floor pace. It should sound like one move settling, so the knock starts as the lite rattle and relaxes into the full light as the gap between blows grows, and its pitch falls with the gap (a mash climbs; a hold settles).",
+    "after_gap_ticks": 14,
+    "complete_blows": 8,
+    "lite_gap_max": 6,
+    "pitch_from_gap": 4,
+    "pitch_st_per_tick": -0.5,
+    "pitch_min_st": -3.0,
+    "gain_db": -2.0
+  },
+  "grind": {
+    "note": "The mashed Y: from the second medium in 48 ticks each is 1.5 dB down, 0.25 st lower (to 1.5) and has a churning layer under it: mass, not speed.",
+    "sound": "impact.medium.grind",
+    "window_ticks": 48,
+    "after": 1,
+    "step_db": -1.5,
+    "drop_st_per_blow": 0.25,
+    "max_drop_st": 1.5
+  },
+  "rest": {
+    "sound": "launcher.rest",
+    "gain_db": -6.0,
+    "priority": 50,
+    "cls": "launcher.rest",
+    "cap": 1,
+    "caption": ""
+  },
+  "charge_y": {
+    "hum": {
+      "sound": "charge.hum.y",
+      "gain_db": -9.0,
+      "priority": 46,
+      "cls": "charge.y",
+      "cap": 2,
+      "stop_ms": 40
+    },
+    "full": {
+      "sound": "charge.tick.light",
+      "gain_db": -3.0,
+      "priority": 92,
+      "bus": "Alert",
+      "cls": "chargetick",
+      "cap": 2,
+      "caption": "[charged]"
+    }
+  }
+}

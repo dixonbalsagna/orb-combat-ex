@@ -2,6 +2,10 @@ extends SceneTree
 ## Render a short listening demo of the brawl's sounds over a loop of the 180 BPM metal reference clip, with the ducks
 ## (the music drops 4 dB and the impacts 3 dB for a moment under the launcher's ping). From the repo root:
 ##   godot --headless --path . --script res://audio/tools/render_brawl_demo.gd [-- --out=FILE] [--match=SEED [--seconds=10]]
+##   godot --headless --path . --script res://audio/tools/render_brawl_demo.gd -- --scene=perfect [--out=FILE]
+## --scene=perfect: the perfect follow-up, staged (Encounter's pass 3 cues do not exist yet): a chain of three lights that
+## closes with the ping and the launch; a chain that breaks (and the string goes on); a link (a medium, then a heavy that
+## closes); and the opponent's chain, heard from the player's side. Over the metal reference loop, as the demo is.
 ## Without --match it plays a STAGED sequence made by the real mapper: an X flurry that closes on a stagger, the ping, the B
 ## wind-up and the launch, a mashed bolt, a blast, a double hit, and B's held charge. With --match=SEED it runs that seeded
 ## AI-vs-AI match on the real sim, feeds each tick's events to the mapper, and renders the busiest window (default 10 s:
@@ -13,10 +17,13 @@ const RATE := 22050
 func _init() -> void:
 	var out_path: String = ProjectSettings.globalize_path("res://audio/preview/brawl-demo.wav")
 	var match_seed: int = -1
+	var scene: String = ""
 	var window_s: float = 10.0
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out_path = a.substr(6)
+		elif a.begins_with("--scene="):
+			scene = a.substr(8)
 		elif a.begins_with("--match="):
 			match_seed = int(a.substr(8))
 		elif a.begins_with("--seconds="):
@@ -32,7 +39,7 @@ func _init() -> void:
 	if match_seed >= 0:
 		timeline = _match_timeline(bank, match_seed, window_s)
 	else:
-		timeline = _staged_timeline(cues, S)
+		timeline = _staged_timeline(cues, S, scene == "perfect")
 	var voices: Array = []                       # {group, start, buf, rate, pitch, gain, bus, end_at}
 	var ducks: Array = []                        # {bus, from, to, db}
 	var last_tick: int = 0
@@ -88,24 +95,95 @@ func _init() -> void:
 	quit(0 if err == OK else 1)
 
 
-## The staged sequence through the mapper, by tick.
-func _staged_timeline(cues, S) -> Array:
-	var script: Dictionary = _script()
+## The staged sequence through the mapper, by tick. The perfect scene also feeds a live `tick` event every tick (the mapper's
+## clock for a spark that waits for a hit's transient) and says which fighters the AI plays.
+func _staged_timeline(cues, S, perfect: bool = false) -> Array:
+	var script: Dictionary = _perfect_script() if perfect else _script()
+	var ai: Dictionary = _perfect_ai() if perfect else {}
 	var out: Array = []
 	var last: int = 0
 	for t in script.keys():
 		last = maxi(last, int(t))
 	for t in range(0, last + 1):
-		if not script.has(t):
+		if ai.has(t):
+			S.fighters[0].ai = SimState.AiState.new() if bool(ai[t][0]) else null
+			S.fighters[1].ai = SimState.AiState.new() if bool(ai[t][1]) else null
+		var evs: Array = script.get(t, [])
+		if perfect:
+			evs = [_tick()] + evs
+		elif not script.has(t):
 			continue
 		S.tick = t
 		S.T = float(t) / 60.0
-		for e in script[t]:
+		for e in evs:
 			if e.type == "cue" and e.kind == "blow" and int(e.n) == -1:
 				e.n = t
-		for c in cues.consume(S, script[t]):
+		for c in cues.consume(S, evs):
 			out.append([t, c])
 	return out
+
+
+## Who the AI plays, by tick: [fighter 0 is the AI, fighter 1 is]. The opponent's chain is the AI's, against a human.
+func _perfect_ai() -> Dictionary:
+	return {0: [false, false], 330: [true, false], 440: [false, false]}
+
+
+## The perfect follow-up, by tick (60 a second). Fighter 0 hits fighter 1 throughout.
+func _perfect_script() -> Dictionary:
+	var s: Dictionary = {}
+	var add := func(t: int, e) -> void:
+		if not s.has(t):
+			s[t] = []
+		s[t].append(e)
+	var hit := func(t: int, kind: String, amount: float) -> void:
+		add.call(t, _blow(t, 0, kind))
+		add.call(t, _dmg(0, kind, amount))
+	# A. a chain of three lights: the plain light, its pose lets go (the tick), then a tap on each hit
+	hit.call(10, "light", 12.0)
+	add.call(16, _cue("window_open", "light", 0, {"k": 1.0, "n": 28}))
+	add.call(19, _cue("perfect", "light", 0, {"k": 1.0, "n": 29}))
+	hit.call(29, "light", 12.0)
+	add.call(30, _cue("perfect", "light", 0, {"k": 2.0, "n": 40}))
+	hit.call(40, "light", 12.0)
+	add.call(41, _cue("perfect", "light", 0, {"k": 3.0, "n": 51}))
+	hit.call(51, "light", 12.0)
+	add.call(51, _cue("stagger", "chain", 1, {"target": 1.0, "n": 63}))
+	add.call(51, _cue("launcher_open", "chain", 0, {"n": 63}))
+	# ... and a fourth tap, B on that hit: the launcher, thrown and landing
+	add.call(53, _cue("launcher_close", "used", 0))
+	add.call(53, _cue("windup", "start", 0, {"n": 67, "dur": 14.0, "source": "b", "k": 1.0}))
+	add.call(67, _cue("windup", "end", 0, {"k": 1.0}))
+	hit.call(67, "heavy", 80.0)
+	# B. a chain that breaks: one perfect, then the window passes; the string goes on with plain lights
+	hit.call(110, "light", 12.0)
+	add.call(116, _cue("window_open", "light", 0, {"k": 1.0, "n": 128}))
+	add.call(119, _cue("perfect", "light", 0, {"k": 1.0, "n": 129}))
+	hit.call(129, "light", 12.0)
+	add.call(141, _cue("chain_broken", "missed", 0, {"k": 1.0}))
+	hit.call(146, "light", 12.0)
+	hit.call(158, "light", 12.0)
+	hit.call(170, "light", 12.0)
+	# C. a link: a perfect medium after a plain light (the count jumps two), then a perfect heavy that closes (count 4)
+	hit.call(230, "light", 12.0)
+	add.call(236, _cue("window_open", "light", 0, {"k": 1.0, "n": 248}))
+	add.call(239, _cue("perfect", "medium", 0, {"k": 2.0, "n": 245, "source": "link"}))
+	hit.call(245, "medium", 35.0)
+	add.call(251, _cue("perfect", "heavy", 0, {"k": 4.0, "n": 265, "source": "link"}))
+	hit.call(265, "heavy", 80.0)
+	add.call(265, _cue("stagger", "chain", 1, {"target": 1.0, "n": 277}))
+	add.call(265, _cue("launcher_open", "chain", 0, {"n": 277}))
+	# D. the opponent's chain (the AI hitting the human): its spark is the defender's tell, its notes are the other colour
+	hit.call(340, "light", 12.0)
+	add.call(349, _cue("perfect", "light", 0, {"k": 1.0, "n": 359}))
+	hit.call(359, "light", 12.0)
+	add.call(370, _cue("perfect", "light", 0, {"k": 2.0, "n": 380}))
+	hit.call(380, "light", 12.0)
+	add.call(391, _cue("perfect", "light", 0, {"k": 3.0, "n": 401}))
+	hit.call(401, "light", 12.0)
+	add.call(401, _cue("stagger", "chain", 1, {"target": 1.0, "n": 413}))
+	add.call(401, _cue("launcher_open", "chain", 0, {"n": 413}))
+	add.call(500, _tick())
+	return s
 
 
 ## A real seeded match: every tick's events through the mapper, then the window of `secs` seconds with the most going on.

@@ -33,6 +33,8 @@ func _run() -> void:
 	_windup()
 	_energy()
 	_charge()
+	_perfect()
+	_held_and_grind()
 	await _voices()
 	SimCore.dispose(S)
 	print("\nbrawl check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
@@ -477,6 +479,221 @@ func _charge() -> void:
 	ok(hum_sec >= 0.6, "the hum lasts as long as the longest hold (38 ticks, %.2f s)" % hum_sec)
 
 
+# ---- the beat: the perfect follow-up (staged: Encounter's pass 3 names are proposals), the held X, the grind, the Y's charge
+func _notes(r: Array, prefix: String) -> Array:
+	return r.filter(func(c): return c.sound.begins_with(prefix))
+
+
+func _perfect() -> void:
+	print("9. the perfect follow-up: tick, spark, notes stepping up, the close, a broken chain, the opponent's colour")
+	cues.reset(81)
+	S.fighters[0].ai = null
+	S.fighters[1].ai = null
+	var t0: int = 80000
+	var r: Array = tick(t0, [cue("window_open", "light", 0, {"k": 1.0, "n": t0 + 12})])
+	ok(r.size() == 1 and r[0].sound == "perfect.tick" and r[0].bus == "Alert", "a plain light's pose lets go (k 1): a dry tick")
+	r = tick(t0 + 1, [cue("window_open", "medium", 0, {"k": 0.0, "n": t0 + 9})])
+	ok(r.is_empty(), "a window that opens on the hit has no sound of its own: the hit is the cue")
+	# a chain of three lights: the tap (spark), the follow-up's hit (the note), step by step
+	var ratios: Array = [1.0, 1.12246, 1.33484]
+	var hit_tick: int = t0 + 20
+	for k in range(1, 4):
+		var tap: int = t0 + 10 * k + (0 if k == 1 else 0)
+		r = tk(tap, false, [cue("perfect", "light", 0, {"k": float(k), "n": hit_tick})])
+		r.append_array(tk(tap + 1, false))
+		r.append_array(tk(tap + 2, false))
+		var sp: Array = _notes(r, "perfect.spark")
+		ok(r.size() == 1 and sp.size() == 1 and absf(sp[0].pitch - ratios[k - 1]) < 0.0001 and sp[0].variant == 0, "perfect %d: one spark at the tap, at the chain's note (x%.3f)" % [k, ratios[k - 1]])
+		var ev: Array = [blow(0, "light"), dmg(0, "light", 12.0)]
+		if k == 3:
+			ev.append(cue("launcher_open", "chain", 0, {"n": hit_tick + 12}))
+		r = tick(hit_tick, ev)
+		if k < 3:
+			var nt: Array = _notes(r, "perfect.light")
+			ok(nt.size() == 1 and absf(nt[0].pitch - ratios[k - 1]) < 0.0001 and nt[0].priority >= 80 and _sound_of(r) == ["impact.light"], "the follow-up's hit carries note %d on top of its impact" % k)
+		else:
+			var cl: Array = _notes(r, "perfect.close")
+			ok(cl.size() == 1 and absf(cl[0].pitch - 1.0) < 0.0001 and cl[0].priority >= 90 and _notes(r, "perfect.light").is_empty(), "the third resolves: the close, not a third note")
+			ok(r.any(func(c): return c.sound == "ui.launcher") and cl[0].bus == "Alert", "with the opening's ping in the same tick, neither ducked by the other (both on Alert)")
+		hit_tick += 10
+	# a spark never starts on a hit's transient: a tap on the hit waits 2 ticks (30 ms), a tap 6 ticks after does not
+	cues.reset(87)
+	var t4: int = 84000
+	tk(t4, false, [blow(0, "light", t4), dmg(0, "light", 12.0)])
+	r = tk(t4, false, [cue("perfect", "light", 0, {"k": 1.0, "n": t4 + 10})])
+	ok(_notes(r, "perfect.spark").is_empty(), "a tap on the hit's own tick: no spark yet")
+	r = tk(t4 + 1, false)
+	ok(_notes(r, "perfect.spark").is_empty(), "...nor a tick later")
+	r = tk(t4 + 2, false)
+	ok(_notes(r, "perfect.spark").size() == 1, "...it sounds 2 live ticks after the hit, when the transient has passed")
+	r = tk(t4 + 8, false, [cue("perfect", "light", 0, {"k": 2.0, "n": t4 + 18})])
+	ok(_notes(r, "perfect.spark").size() == 1, "a tap 8 ticks after the hit sounds at once")
+	# a link: a perfect medium after a light (the chain jumps two), then a heavy that closes
+	cues.reset(82)
+	var t1: int = 81000
+	r = tick(t1, [cue("perfect", "medium", 0, {"k": 2.0, "n": t1 + 6, "source": "link"})])
+	ok(r.size() == 1 and absf(r[0].pitch - 1.12246) < 0.0001, "a link steps two: the spark is already note 2")
+	r = tick(t1 + 6, [blow(0, "medium"), dmg(0, "medium", 35.0)])
+	ok(_notes(r, "perfect.medium").size() == 1 and _notes(r, "perfect.link").size() == 1, "a medium's colour plus the link's shimmer")
+	r = tick(t1 + 12, [cue("perfect", "heavy", 0, {"k": 4.0, "n": t1 + 26, "source": "link"})])
+	r = tick(t1 + 26, [blow(0, "heavy"), dmg(0, "heavy", 80.0)])
+	var close_link: Array = _notes(r, "perfect.close")
+	ok(close_link.size() == 1 and _notes(r, "perfect.link").size() == 1 and _notes(r, "perfect.heavy").is_empty(), "a heavy link that closes the chain is the close with the shimmer (count 4)")
+	# a blocked follow-up counts: the guard's sound and the note
+	cues.reset(83)
+	r = tick(t1 + 100, [cue("perfect", "light", 0, {"k": 1.0, "n": t1 + 110})])
+	r = tick(t1 + 110, [blow(0, "light"), dmg(0, "guard", 10.0)])
+	ok(_notes(r, "perfect.light").size() == 1 and _sound_of(r) == ["impact.guard"], "a perfect on a blocked hit still has its note")
+	# the hit-stop moves the landing a little: the note still finds its hit; a hit long after finds nothing
+	cues.reset(84)
+	tick(t1 + 200, [cue("perfect", "light", 0, {"k": 1.0, "n": t1 + 210})])
+	r = tick(t1 + 216, [blow(0, "light"), dmg(0, "light", 12.0)])
+	ok(_notes(r, "perfect.light").size() == 1, "a landing 6 ticks late (a hit-stop between) still carries the note")
+	tick(t1 + 300, [cue("perfect", "light", 0, {"k": 1.0, "n": t1 + 310})])
+	r = tick(t1 + 340, [blow(0, "light"), dmg(0, "light", 12.0)])
+	ok(_notes(r, "perfect.").is_empty(), "an unrelated hit 30 ticks after the follow-up's time gets no note (it never landed)")
+	# broken: quiet, not a buzzer; the string goes on
+	cues.reset(85)
+	var t2: int = 82000
+	tick(t2, [cue("perfect", "light", 0, {"k": 1.0, "n": t2 + 10})])
+	tick(t2 + 10, [blow(0, "light"), dmg(0, "light", 12.0)])
+	r = tick(t2 + 25, [cue("chain_broken", "missed", 0, {"k": 1.0})])
+	ok(r.size() == 1 and r[0].sound == "perfect.break" and absf(r[0].pitch - 1.0) < 0.0001, "a missed window: one quiet droop from the last note")
+	var br: float = AudioDsp.peak(bank.buffer("perfect.break", 0))
+	var lt: float = AudioDsp.peak(bank.buffer("impact.light", 0))
+	ok(20.0 * log(br / lt) / log(10.0) < -12.0, "and it is at least 12 dB under a light hit (%.1f dB)" % (20.0 * log(br / lt) / log(10.0)))
+	r = tick(t2 + 40, [cue("chain_broken", "lapsed", 0, {"k": 2.0})])
+	ok(r.is_empty(), "a chain that lapsed after 90 ticks is silent")
+	r = tick(t2 + 41, [cue("chain_broken", "missed", 0, {"k": 0.0})])
+	ok(r.is_empty(), "a break with nothing in the chain is silent")
+	tick(t2 + 50, [cue("perfect", "light", 0, {"k": 1.0, "n": t2 + 60})])
+	tick(t2 + 54, [cue("chain_broken", "stopped", 0, {"k": 1.0})])
+	r = tick(t2 + 60, [blow(0, "light"), dmg(0, "light", 12.0)])
+	ok(_notes(r, "perfect.").filter(func(c): return c.sound != "perfect.break").is_empty(), "a follow-up stopped in its wind-up never sounds its note")
+	# the opponent: the AI's chain against a human has its own colour and an unresolved close
+	cues.reset(86)
+	S.fighters[0].ai = SimState.AiState.new()
+	S.fighters[1].ai = null
+	var t3: int = 83000
+	r = tick(t3, [cue("window_open", "light", 0, {"k": 1.0, "n": t3 + 12})])
+	ok(r.is_empty(), "the opponent's window has no tick (it is not the player's to use)")
+	r = tick(t3 + 10, [cue("perfect", "light", 0, {"k": 2.0, "n": t3 + 20})])
+	ok(r.size() == 1 and absf(r[0].pitch - 1.18921) < 0.0001, "the opponent's spark steps a minor third, not a major second (an unresolved set)")
+	r = tick(t3 + 20, [blow(0, "light"), dmg(0, "light", 12.0)])
+	ok(_notes(r, "perfect.foe").size() == 1 and _notes(r, "perfect.light").is_empty(), "its note is the reedy colour")
+	tick(t3 + 30, [cue("perfect", "light", 0, {"k": 3.0, "n": t3 + 40})])
+	r = tick(t3 + 40, [blow(0, "light"), dmg(0, "light", 12.0)])
+	ok(_notes(r, "perfect.foe.close").size() == 1 and _notes(r, "perfect.close").is_empty(), "and its close is the unresolved stack")
+	S.fighters[0].ai = null
+	# two AIs (a demo) and two humans share the player's colour
+	S.fighters[1].ai = SimState.AiState.new()
+	S.fighters[0].ai = SimState.AiState.new()
+	r = tick(t3 + 100, [cue("perfect", "light", 0, {"k": 1.0, "n": t3 + 110})])
+	r = tick(t3 + 110, [blow(0, "light"), dmg(0, "light", 12.0)])
+	ok(_notes(r, "perfect.foe").is_empty() and _notes(r, "perfect.light").size() == 1, "two AIs (a demo) use one colour")
+	S.fighters[0].ai = null
+	S.fighters[1].ai = null
+	# levels: no note masks the hit it rides on
+	var imp: Dictionary = {"light": "impact.light", "medium": "impact.medium", "heavy": "impact.heavy"}
+	for st in ["light", "medium", "heavy"]:
+		var pk: float = AudioDsp.peak(bank.buffer("perfect." + st, 0))
+		var ik: float = AudioDsp.peak(bank.buffer(imp[st], 0))
+		var diff: float = 20.0 * log(ik / pk) / log(10.0)
+		print("     perfect.%-7s %.1f dB under %s" % [st, diff, imp[st]])
+		ok(diff >= 5.0, "the %s note sits at least 5 dB under a %s hit" % [st, st])
+	var cl_pk: float = AudioDsp.peak(bank.buffer("perfect.close", 0))
+	ok(20.0 * log(AudioDsp.peak(bank.buffer("impact.light", 0)) / cl_pk) / log(10.0) >= 2.0, "the close is under a light hit even with its +3 dB close")
+	for id in ["perfect.spark", "perfect.light", "perfect.medium", "perfect.heavy", "perfect.link", "perfect.close", "perfect.break", "perfect.tick", "perfect.foe", "perfect.foe.close"]:
+		var b: PackedFloat32Array = bank.buffer(id, 0)
+		ok(AudioDsp.peak(b) < 0.99 and absf(b[b.size() - 1]) < 0.01 and float(b.size()) / bank.rate_of(id) < 0.35, "%s: no clipping, clean end, under 0.35 s (%.3f s)" % [id, float(b.size()) / bank.rate_of(id)])
+
+
+func _held_and_grind() -> void:
+	print("10. the held X settles; the mashed Y grinds; the charged medium; the launcher's rest")
+	var t: int = 90000
+	var lands: Array = [18, 22, 26, 31, 37, 45, 56]
+	var mean_p: Array = []
+	var sounds: Array = []
+	var SEEDS: int = 24
+	for sd in range(SEEDS):
+		cues.reset(1000 + sd)
+		var tb: int = t + sd * 1000
+		var run_p: Array = []
+		var run_s: Array = []
+		# a held X: the press's own light, burst start (n the first burst blow's landing), then the blows at the burst's gaps
+		tick(tb, [blow(0, "light"), dmg(0, "light", 12.0)])
+		tick(tb + 16, [cue("burst", "start", 0, {"source": "x", "n": tb + 18})])
+		for i in range(lands.size()):
+			var at: int = tb + lands[i]
+			var r: Array = tick(at, [blow(0, "light", at), dmg(0, "light", 12.0)])
+			var c = r.filter(func(x): return x.sound.begins_with("impact.light"))[0]
+			run_p.append(c.pitch)
+			run_s.append(c.sound)
+		# the floor pace: one blow every 10 ticks after the burst's end
+		tick(tb + 57, [cue("burst", "end", 0, {"source": "x", "k": 8.0})])
+		for i in range(1, 4):
+			var at2: int = tb + 56 + 10 * i
+			var r2: Array = tick(at2, [blow(0, "light", at2), dmg(0, "light", 12.0)])
+			var c2 = r2.filter(func(x): return x.sound.begins_with("impact.light"))[0]
+			run_p.append(c2.pitch)
+			run_s.append(c2.sound)
+		if mean_p.is_empty():
+			mean_p = run_p.map(func(_x): return 0.0)
+			sounds = run_s
+		for i in range(run_p.size()):
+			mean_p[i] += run_p[i] / float(SEEDS)
+	var pitches: Array = mean_p
+	print("     held X, mean pitch by blow over %d seeds: %s" % [SEEDS, str(pitches.map(func(p): return snappedf(p, 0.001)))])
+	print("     held X, sound by blow: %s" % str(sounds))
+	ok(sounds[0] == "impact.light.lite" and sounds[5] == "impact.light" and sounds[-1] == "impact.light", "the burst starts as the lite rattle and relaxes into the full light as the gap grows")
+	ok(pitches[0] > pitches[3] and pitches[3] > pitches[6] and absf(pitches[-1] - pitches[6]) < 0.03, "the pitch falls as it slows and then holds at its floor pace (one move settling)")
+	ok(pitches[0] / pitches[6] > 1.10 and pitches[0] / pitches[6] < 1.25, "by about three semitones (%.3f)" % (pitches[0] / pitches[6]))
+	# a mash replaces the burst: no settle for the mash's blows
+	cues.reset(92)
+	tick(t + 500, [cue("burst", "start", 0, {"source": "x", "n": t + 518})])
+	tick(t + 510, [cue("burst", "end", 0, {"source": "x", "k": 2.0})])
+	var mp: Array = []
+	for i in range(8):
+		var at3: int = t + 520 + 6 * i
+		var r3: Array = tick(at3, [blow(0, "light", at3), dmg(0, "light", 12.0)])
+		mp.append(r3.filter(func(x): return x.sound.begins_with("impact.light"))[0].pitch)
+	ok(mp[6] > mp[0], "a burst cut short by another press is a mash: it climbs, it does not settle")
+	# the mashed Y's grind
+	cues.reset(93)
+	var base: float = 0.0
+	var seq: Array = []
+	for i in range(5):
+		var at4: int = t + 1000 + 12 * i
+		var r4: Array = tick(at4, [blow(0, "medium", at4), dmg(0, "medium", 35.0)])
+		var m = r4.filter(func(x): return x.sound.begins_with("impact.medium"))[0]
+		seq.append(m)
+	ok(seq[0].sound == "impact.medium" and seq[1].sound == "impact.medium.grind" and seq[4].sound == "impact.medium.grind", "from the second medium in 48 ticks each has the grind's churn under it")
+	ok(seq[4].pitch < seq[1].pitch and seq[4].gain_db < seq[1].gain_db + 2.0, "it gets heavier, not louder (pitch %.3f to %.3f)" % [seq[1].pitch, seq[4].pitch])
+	var rest: Array = tick(t + 2000, [blow(0, "medium", t + 2000), dmg(0, "medium", 35.0)])
+	ok(rest.any(func(x): return x.sound == "impact.medium"), "after a pause a medium is a plain medium again")
+	# the charged medium: the Y's hum and its brighter tick; the B's are unchanged
+	cues.reset(94)
+	var t5: int = 95000
+	tick(t5, [cue("windup", "start", 0, {"n": t5 + 16, "dur": 16.0, "source": "y"})])
+	var r5: Array = tick(t5 + 16, [cue("windup", "charge", 0, {"n": t5 + 24, "source": "y"})])
+	var hy: Array = r5.filter(func(c): return c.sound == "charge.hum.y")
+	ok(hy.size() == 1 and r5.filter(func(c): return c.sound == "charge.hum").is_empty() and hy[0].group == "charge.0", "the Y's charge is its own, higher hum")
+	r5 = tick(t5 + 24, [cue("charge_full", "", 0, {"source": "y"})])
+	var ty: Array = r5.filter(func(c): return c.sound == "charge.tick.light")
+	ok(ty.size() == 1 and ty[0].bus == "Alert" and ty[0].variant == 0 and is_equal_approx(ty[0].pitch, 1.0), "full: a brighter tick with no ring, fixed")
+	var by: Array = tk(t5 + 400, false, [cue("charge_full", "", 1, {"source": "b"})]).filter(func(c): return c.sound == "charge.tick.heavy")
+	ok(by.size() == 1, "and the B's tick is still the lower one with the ring")
+	r5 = tick(t5 + 30, [blow(0, "release", t5 + 34)])
+	ok(r5.size() == 1 and r5[0].stop_group == "charge.0", "the release cuts the Y's hum like the B's")
+	var tl: float = AudioDsp.peak(bank.buffer("charge.tick.light", 0))
+	print("     charge.tick.light %.3f s, charge.hum.y %.3f s" % [float(bank.buffer("charge.tick.light", 0).size()) / bank.rate_of("charge.tick.light"), float(bank.buffer("charge.hum.y", 0).size()) / bank.rate_of("charge.hum.y")])
+	ok(tl < 0.99, "the Y's tick does not clip")
+	# the launcher's rest
+	cues.reset(95)
+	var rr: Array = tick(t5 + 500, [cue("launcher_rest", "flurry", 0, {"target": 1.0})])
+	ok(rr.size() == 1 and rr[0].sound == "launcher.rest" and rr[0].bus == "Sfx" and rr[0].duck.is_empty(), "an opening while the launcher rests: a dull knock, no ping, no duck")
+
+
 # ---- step 1: the voices (needs the scene tree)
 func _voices() -> void:
 	print("4. the voices: class caps")
@@ -537,5 +754,31 @@ func _voices() -> void:
 		if v._pool[i].playing and v._meta[i].cls == "energy.bolt":
 			live_bolts += 1
 	ok(live_bolts <= 2, "eight bolts in one tick leave at most 2 bolt voices (%d)" % live_bolts)
+	# the beat: a chain of three (a hit every 10 ticks) keeps every spark, note and the close
+	cues.reset(96)
+	S.fighters[0].ai = null
+	S.fighters[1].ai = null
+	var chain_cues: Array = []
+	var tt: int = 43000
+	for k in range(1, 4):
+		var tap: int = tt + 10 * (k - 1)
+		var hit_at: int = tap + 10
+		chain_cues.append_array(tk(tap, false, [cue("perfect", "light", 0, {"k": float(k), "n": hit_at})]))
+		chain_cues.append_array(tk(tap + 1, false))
+		chain_cues.append_array(tk(tap + 2, false))
+		var ev: Array = [blow(0, "light", hit_at), dmg(0, "light", 12.0)]
+		if k == 3:
+			ev.append(cue("launcher_open", "chain", 0, {"n": hit_at + 12}))
+		chain_cues.append_array(tick(hit_at, ev))
+	var wanted: int = 0
+	var played_c: int = 0
+	for c in chain_cues:
+		if c.sound.begins_with("perfect.") or c.sound == "ui.launcher":
+			wanted += 1
+			if v.play(c, S.fighters[0].x, 1.0):
+				played_c += 1
+		else:
+			v.play(c, S.fighters[0].x, 1.0)
+	ok(wanted >= 7 and played_c == wanted, "a chain of three: every spark, note, the close and the ping gets a voice (%d of %d)" % [played_c, wanted])
 	v.queue_free()
 	await process_frame
