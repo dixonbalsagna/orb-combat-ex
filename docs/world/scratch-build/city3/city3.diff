@@ -1,0 +1,116 @@
+diff --git a/sim/world/lanes.gd b/sim/world/lanes.gd
+index d83cddb1..ab92408a 100644
+--- a/sim/world/lanes.gd
++++ b/sim/world/lanes.gd
+@@ -71,6 +71,63 @@ static func clearLane(S: SimState, x: float, z: float) -> float:
+ 	return best
+ 
+ 
++## The depth limits of the band in units, [z_front, z_back]: z_front is toward the camera. A flight that leaves them is a bug (the band clamp).
++static func limits() -> Array:
++	return [float(data().get("z_front", 0.0)) * BH, float(data().get("z_back", 0.0)) * BH]
++
++
++## The street lanes of the table, front to back, as [z_top, z_bottom] in units: the corridors along the planet a brawl may drift through.
++static func streets() -> Array:
++	var out: Array = []
++	for l in data().get("lanes", []):
++		if l.kind == "street":
++			out.append([float(l.top) * BH, float(l.bottom) * BH])
++	return out
++
++
++## The avenue that holds x with the body's half width to spare (an inset of pad at each side), or -1. A body in an avenue may stand at any depth of
++## the band: the avenue is clear air across the blocks, from the front street to the back street.
++static func avenueAt(S: SimState, x: float, pad: float = 0.0) -> int:
++	var t: PackedFloat32Array = S.lanes
++	if t.size() < 13:
++		return -1
++	var nd: int = int(t[3])
++	var na: int = int(t[4])
++	var oA: int = int(t[12]) + 6 * nd
++	for i in range(na):
++		var a0: float = t[oA + 3 * i]
++		var a1: float = t[oA + 3 * i + 1]
++		if absf(SimWrap.sdx(x, (a0 + a1) * 0.5)) <= (a1 - a0) * 0.5 - pad:
++			return i
++	return -1
++
++
++## The intersections within r of x, nearest first, each [cx, cz, hx, hz, d]: the centre of the crossing of an avenue (S.lanes) and a street lane,
++## its half extents and its distance from x. Clear air from the ground to the sky by construction: no footprint stands in an avenue (the
++## generator skips it) nor in a street lane. Empty when the table has no avenues (an open field, a village without cross streets).
++static func intersections(S: SimState, x: float, r: float) -> Array:
++	var t: PackedFloat32Array = S.lanes
++	var out: Array = []
++	if t.size() < 13:
++		return out
++	var nd: int = int(t[3])
++	var na: int = int(t[4])
++	var oA: int = int(t[12]) + 6 * nd
++	var st: Array = streets()
++	for i in range(na):
++		var a0: float = t[oA + 3 * i]
++		var a1: float = t[oA + 3 * i + 1]
++		var cx: float = (a0 + a1) * 0.5
++		var hx: float = (a1 - a0) * 0.5
++		var d: float = absf(SimWrap.sdx(x, cx))
++		if d > r + hx:
++			continue
++		for sl in st:
++			out.append([cx, (sl[0] + sl[1]) * 0.5, hx, (sl[0] - sl[1]) * 0.5, d])
++	out.sort_custom(func(p, q): return p[4] < q[4] or (p[4] == q[4] and p[1] > q[1]))
++	return out
++
++
+ ## S.lanes (docs/world/fight-lanes-world.md section 10): a flat PackedFloat32Array, world units, z positive toward the camera.
+ ## 0 to 12 header (version, nLanes, nStrips, nDistricts, nAvenues, nRows, rowZ0, rowStep, zFront, zBack, offLanes, offStrips,
+ ## offDistricts); lanes 4 floats each (zTop, zBottom, kind 0 street / 1 block / 2 scenery / 3 ridge, row or -1); strips 4 each (lane,
+diff --git a/sim/world/settlements.gd b/sim/world/settlements.gd
+index 9625f642..c6e9e291 100644
+--- a/sim/world/settlements.gd
++++ b/sim/world/settlements.gd
+@@ -193,6 +193,9 @@ static func _validate(d: Dictionary) -> void:
+ 				_err(dn + "/row_h: four factors, one per row")
+ 			if not _num(dd.get("pop_density", null)) or dd.pop_density < 0.0:
+ 				_err(dn + "/pop_density: a number >= 0")
++			var rpop = dd.get("row_pop", null)
++			if rpop != null and (not (rpop is Array) or rpop.size() != 4):
++				_err(dn + "/row_pop: four factors, one per row")
+ 			for lm in dd.get("landmarks", []):
+ 				if not lm_keys.has(lm.get("key", "")):
+ 					_err(dn + "/landmarks: unknown key " + str(lm.get("key", "")))
+@@ -316,10 +319,13 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
+ 				var ln: Dictionary = laneOfRow(int(row))
+ 				var lw: float = float(ln.top) - float(ln.bottom)
+ 				var dd_bh: float = clampf(lw * fillf, _dmin, lw)
++				var amax: float = float(kd.get("aspect_max", data().get("aspect_max", 0.0)))
++				if amax > 0.0:
++					h = minf(h, amax * minf(w, dd_bh * BH))   # the aspect rule: no tower is thinner than a believable ratio of its height
+ 				var zc: float = (float(ln.top) - dd_bh * 0.5) if ln.kind == "block" else 0.5 * (float(ln.top) + float(ln.bottom))
+ 				out.append({"x": cx, "w": w, "d": dd_bh * BH, "h": h, "kind": kd.kind, "shape": kd.shape, "row": int(row),
+ 					"z": zc * BH,
+-					"district": di, "landmark": 0, "seed": seed_, "hp_mult": 1.0, "pop_mult": 1.0, "dens": float(dd.pop_density)})
++					"district": di, "landmark": 0, "seed": seed_, "hp_mult": 1.0, "pop_mult": 1.0, "dens": float(dd.pop_density) * float(dd.get("row_pop", [1.0, 1.0, 1.0, 1.0])[int(row)])})
+ 		# landmarks: by rule, not by draw
+ 		for lmr in dd.landmarks:
+ 			var li: int = landmarkIndex(lmr.key)
+diff --git a/sim/world/tools/lane_check.gd b/sim/world/tools/lane_check.gd
+index 638391ec..ee67b18d 100644
+--- a/sim/world/tools/lane_check.gd
++++ b/sim/world/tools/lane_check.gd
+@@ -21,9 +21,11 @@ func _init() -> void:
+ 		if hi > float(ln.top) + 0.001 or lo < float(ln.bottom) - 0.001:
+ 			out_of_lane += 1
+ 		if r == 1 or r == 2:
+-			# street intervals: front street +5 to -4, back street -12 to -18
+-			if (hi > -4.0 + 0.001 and lo < 5.0) or (hi > -18.0 + 0.001 and lo < -12.0 - 0.001 and r == 1) or (r == 2 and hi > -12.0 + 0.001):
+-				street_hits += 1
++			# a block footprint never overlaps a street lane of the table (data/biomes/lanes.json), whatever the table is
++			for sl in WorldLanes.data().lanes:
++				if sl.kind == "street" and hi > float(sl.bottom) + 0.001 and lo < float(sl.top) - 0.001:
++					street_hits += 1
++					break
+ 		if not byrow.has(r):
+ 			byrow[r] = []
+ 		byrow[r].append(b)

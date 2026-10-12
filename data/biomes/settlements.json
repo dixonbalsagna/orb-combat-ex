@@ -3,7 +3,10 @@
   "_about": "Settlements, districts and landmarks (docs/world/districts-plan.md). Lengths in fighter heights (bh = 75 units); spans in the original planet's coordinates (9,600 around). Districts are listed west to east and take their share of the settlement's trimmed span in order. Read by sim/world/settlements.gd; not yet used by the generator (D1 window).",
   "enabled": true,
   "foreground": false,
-  "pop_refs": {"near_share": 0.09, "building_share": 0.02},
+  "pop_refs": {
+    "near_share": 0.09,
+    "building_share": 0.02
+  },
   "pop0": 1800,
   "pop_height_exp": 0.3,
   "shapes": [
@@ -31,17 +34,17 @@
   "landmarks": [
     {
       "key": "bell_tower",
-      "width_bh": 5,
+      "width_bh": 10,
       "shape": "spire",
-      "height_bh": 150,
+      "height_bh": 65,
       "hp_mult": 1.8,
       "pop_mult": 1.5
     },
     {
       "key": "chimney_stack",
-      "width_bh": 3,
+      "width_bh": 4,
       "shape": "chimney",
-      "height_bh": 45,
+      "height_bh": 36,
       "hp_mult": 1.5,
       "pop_mult": 0.5
     },
@@ -68,6 +71,22 @@
       "height_bh": 14,
       "hp_mult": 1.5,
       "pop_mult": 1.5
+    },
+    {
+      "key": "crown_tower",
+      "width_bh": 12,
+      "shape": "crown",
+      "height_bh": 52,
+      "hp_mult": 1.6,
+      "pop_mult": 1.2
+    },
+    {
+      "key": "ledger_hall",
+      "width_bh": 13,
+      "shape": "stepped",
+      "height_bh": 46,
+      "hp_mult": 1.6,
+      "pop_mult": 1.2
     }
   ],
   "settlements": [
@@ -156,6 +175,12 @@
               "place": "start",
               "row": 1
             }
+          ],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
           ]
         },
         {
@@ -213,7 +238,13 @@
             1.0
           ],
           "pop_density": 0.6,
-          "landmarks": []
+          "landmarks": [],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
+          ]
         }
       ]
     },
@@ -282,7 +313,13 @@
             1.0
           ],
           "pop_density": 0.5,
-          "landmarks": []
+          "landmarks": [],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
+          ]
         },
         {
           "name": "industrial",
@@ -311,7 +348,8 @@
               "width_bh": [
                 1.5,
                 2.5
-              ]
+              ],
+              "aspect_max": 10
             }
           ],
           "height_bh": {
@@ -355,6 +393,12 @@
               "place": "end",
               "row": 1
             }
+          ],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
           ]
         },
         {
@@ -379,23 +423,23 @@
             }
           ],
           "height_bh": {
-            "median": 25,
-            "spread": 0.35,
-            "min": 12,
-            "max": 45,
+            "median": 12,
+            "spread": 0.3,
+            "min": 7,
+            "max": 20,
             "centre_bump": 0.2
           },
           "width_bh": [
-            4,
-            8
+            6,
+            12
           ],
           "depth_fill": [
-            0.7,
+            0.75,
             1.0
           ],
           "gap_bh": [
-            0.8,
-            2
+            0.6,
+            1.6
           ],
           "block_bh": [
             26,
@@ -412,7 +456,13 @@
             1.3
           ],
           "pop_density": 0.7,
-          "landmarks": []
+          "landmarks": [],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
+          ]
         },
         {
           "name": "downtown",
@@ -441,23 +491,23 @@
             }
           ],
           "height_bh": {
-            "median": 62,
-            "spread": 0.4,
-            "min": 35,
-            "max": 260,
-            "centre_bump": 0.7
+            "median": 28,
+            "spread": 0.22,
+            "min": 18,
+            "max": 40,
+            "centre_bump": 0.3
           },
           "width_bh": [
-            2,
-            5
+            7,
+            14
           ],
           "depth_fill": [
-            0.7,
+            0.85,
             1.0
           ],
           "gap_bh": [
-            0.2,
-            0.9
+            0.4,
+            1.4
           ],
           "block_bh": [
             30,
@@ -480,7 +530,25 @@
               "count": 1,
               "place": "centre",
               "row": 1
+            },
+            {
+              "key": "ledger_hall",
+              "count": 1,
+              "place": "start",
+              "row": 1
+            },
+            {
+              "key": "crown_tower",
+              "count": 1,
+              "place": "end",
+              "row": 2
             }
+          ],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
           ]
         },
         {
@@ -505,23 +573,23 @@
             }
           ],
           "height_bh": {
-            "median": 25,
-            "spread": 0.35,
-            "min": 12,
-            "max": 45,
+            "median": 12,
+            "spread": 0.3,
+            "min": 7,
+            "max": 20,
             "centre_bump": 0.2
           },
           "width_bh": [
-            4,
-            8
+            6,
+            12
           ],
           "depth_fill": [
-            0.7,
+            0.75,
             1.0
           ],
           "gap_bh": [
-            0.8,
-            2
+            0.6,
+            1.6
           ],
           "block_bh": [
             26,
@@ -538,7 +606,13 @@
             1.3
           ],
           "pop_density": 0.7,
-          "landmarks": []
+          "landmarks": [],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
+          ]
         },
         {
           "name": "suburb_east",
@@ -596,7 +670,13 @@
             1.0
           ],
           "pop_density": 0.5,
-          "landmarks": []
+          "landmarks": [],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
+          ]
         }
       ]
     },
@@ -670,6 +750,12 @@
               "place": "centre",
               "row": 1
             }
+          ],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
           ]
         },
         {
@@ -721,7 +807,13 @@
             1.0
           ],
           "pop_density": 0.5,
-          "landmarks": []
+          "landmarks": [],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
+          ]
         }
       ]
     },
@@ -795,6 +887,12 @@
               "place": "start",
               "row": 1
             }
+          ],
+          "row_pop": [
+            1.0,
+            0.25,
+            1.0,
+            1.0
           ]
         }
       ]
@@ -809,5 +907,6 @@
     "downtown",
     "village_workshop",
     "village_hill"
-  ]
+  ],
+  "aspect_max": 5.0
 }

@@ -138,3 +138,66 @@ L1 with D1 and the three rulings are in the tree (`docs/world/scratch-build/lane
 | C1 | clean | clean |
 
 **What the table says.** (1) The re-lay keeps the damage in the same place: front row and all rows the same, structures per tier inside their bands, casualties per minute up (0.29 to 0.44 at tier 2, 2.35 to 3.09 at tier 3: shares of 1,800, budgets 4% and 8%), civilians 11.8% to 14.8% of the people (the C2 build's own level was already under QA's 12 to 30% band's foot; the window brings it in). (2) **Front row 20.9% is under the 25 to 50 band on HEAD already** (Encounter's brawl: matches of 329 s with 32 launches a match); the window does not move it. (3) **Cut floors are rare either way**: 0.4 punched floors a match on HEAD, 0.2 punched plus 0.1 cracked with the window: BUILDING SMASH is 0.3 to 0.4 plans a match in the new brawl, so a tower is rarely hit; the lever is the planner's baseline for it (Encounter's data), not the world. (4) People as a count are 5 times larger (41.6 to 207.9 a match); everything that reads people as a share is as before; the HUD and the KO feed print a count of 1,800 at most.
+
+## 10. The city shorter and broader (Orb, 2026-10-11; scratch on HEAD 05212a4c, not applied)
+
+Orb: "shorter and broader", downtown 20 to 40 fighter heights with wider buildings and two or three taller landmarks so sky shows at the fight's framing; the crowd on the fight's sidewalk thinned and muted. `docs/world/scratch-build/city2/mk_city2.py` makes it (data plus 6 lines in `settlements.gd`); review diagrams in `docs/world/stills/city2/` (uncommitted).
+
+**A. The re-lay (data).**
+- **Rule: a footprint's height is at most 5 times its narrower side** (`aspect_max` 5 at the top of `settlements.json`; a kind may carry its own: chimneys 10). Applied in the generator as a cap on the height; landmarks are exempt by hand.
+- Downtown: median 28 fighter heights (range 18 to 40), width 7 to 14 fighter heights, footprint depth 85 to 100% of its 8 to 9 deep lane (was median 62, up to 260, width 2 to 5). Mid-rise: median 12 (7 to 20), width 6 to 12 (was median 25, width 4 to 8). Suburbs, villages and the harbour as they were.
+- **Three landmarks that stand clear**, one in each place: the bell tower (spire, 65 fighter heights, 10 wide, front block, centre; was 150), the ledger hall (stepped, 46, 13 wide, front block, start of downtown) and the crown tower (crown, 52, 12 wide, back block, end of downtown); the chimney stack 36 (was 45); the lighthouse and the village landmarks as they were.
+- Streets stay clear by construction (the lanes and avenues are unchanged); the footprints stay in their lanes (`lane_check`).
+
+| (100 matches, default arm; stages 60; shots 40) | HEAD today | Shorter and broader |
+| :--- | ---: | ---: |
+| Buildings (houses / towers) | 169 (81 / 88) | 121 (81 / 40) |
+| Rows 1 / 2 / 3 | 65 / 65 / 39 | 49 / 48 / 24 |
+| Towers: height median / p90 / max (fighter heights) | 65.6 / 132.7 / 245 | **30.9 / 40.0 / 65** |
+| Towers: aspect median / p90 / max | 18.4 / 41.3 / 72.4 | 4.1 / 8.1 / 11.1 (landmarks and chimneys) |
+| Front row lost at the KO | 29.8% | 31.4% |
+| All rows lost | 22.8% | 25.6% |
+| Civilians lost (share) | 19.3% | 18.3% |
+| People lost a match (40 matches) | 335.9 | 281.9 |
+| Tier 2 / 3 / 4 casualties a minute | 0.28 / 2.05 / 6.12% | 0.26 / 2.29 / 5.96% |
+| Tier 2 / 3 / 4 structures a minute | 0.23 / 1.52 / 7.86% | 0.45 / 2.33 / 8.92% (band 6 to 20) |
+| Shells at the KO, all rows (front row) | 7.9% (10.4%) | 9.8% (12.2%) |
+| BUILDING SMASH plans a match | 0.32 | 0.27 |
+| Shots ending on a building (40 matches, a match) | 2.1 | 1.4 |
+| Fight volume blocked at the plane / within 1,500 units of a building | 16.3% / 65.0% | 15.9% / 54.5% |
+| Length, mean | 382 s | 371 s |
+| C1 | clean | clean |
+
+Reading: damage lands where it did (front row 31%, all rows 26%, the per-tier rates inside their bands); the city has fewer, broader buildings (121 against 169: a downtown of about 40 towers instead of 88); shorter buildings have less hit points (`maxhp` is 6 per unit of height), so they fall to a little less: structures per minute at tiers 2 and 3 rise (0.23 to 0.45, 1.52 to 2.33) and shells and levelled buildings rise a couple of points. Shots and BUILDING SMASH land a little less often on buildings (fewer buildings in reach). The skyline (`bellgate-skyline`) reads as a city: a low band of suburbs, mid-rise blocks, a downtown of broad towers with three landmarks above it.
+
+**B. The crowd on the fight's sidewalk.** What decides it: the sim gives each building a whole number of people (`pop`: by largest remainder from the settlement's share of the 1,800, weighted by footprint x district density x height^0.3 x the landmark's multiplier); Rendering stands each building's people on its street side, in front of its face, so **the front block's people are the fight's sidewalk**: 678 of the 1,800 today (38%, in 65 buildings). The lever, as data: `row_pop` on a district (four factors, one per row, default 1) multiplies the weight; with `[1, 0.25, 1, 1]` on every district that has a front block the front block holds **247 people (14%)** and the back block and the scenery rows 1,038 and 515, the city total unchanged (1,800). Effect on play: civilians lost 19.5% to 18.3% (the front block is the one that is hit most). **Rendering's** part (the EP briefs): the figure's size (`CROWD_SCALE` 5, about a fighter's height: smaller), its colour (the `CROWD` shirt palette: greyer, less saturated, with the front sidewalk's figures dimmed against the fighters) and, if wanted, one figure for two or three people on the back rows; the sim's count stays the truth for the toll and the casualties.
+
+**C. Tall roofs.** The shapes narrow toward the top (a stepped tower's top tier is 62% of the box, spires, crowns, gables and chimneys narrower still) and a fighter's hit can find air up to a fifth of the width each side (`docs/rendering/lanes-look.md`). **Recommendation: keep the sim's box a rectangle and make the shapes fill it.** The box is read by every blast, shot (the exact swept test), brunt flight, `blockedAt` and L3's collisions; a tapering box would touch all of them and cost a hit test per height. Instead Rendering draws a stepped or crowned top at 85% of the width or more (a visible step, not 62%), and a spire, finial or ridge above the sim's height as an ornament that does not collide (its height is on top of `h`, at most 15%). The shorter, broader city makes the problem smaller (the stepped and spire kinds are 55% of downtown's generated towers by weight, and the landmarks are three).
+
+**Apply list** (when you give the go; one golden regeneration): `data/biomes/settlements.json` (the numbers above), `sim/world/settlements.gd` (6 lines: the aspect cap, the `row_pop` weight, its check), `sim/core/test/golden.json`; Tools: `aspect_max` (number from 1, top level, and on a kind), `row_pop` (district: four numbers from 0), nothing else (every other value is inside the schema's bounds: heights up to 272, widths up to 40, depth fill up to 1); docs.
+
+## 11. The re-lay window applied (2026-10-12, on HEAD bd7f6e9f)
+
+Section 10's city is in the tree: `settlements.json` (the aspect rule `aspect_max` 5, a chimney's 10; downtown 18 to 40 fighter heights, median 28; mid-rise 7 to 20, median 12; wider and deeper footprints; the bell tower 65 and two new landmarks, `ledger_hall` 46 stepped and `crown_tower` 52 crowned; `row_pop` [1, 0.25, 1, 1] on every district), `settlements.gd` (the aspect cap and the `row_pop` weight and check: 8 changed lines), the two schema keys, one golden regeneration. 121 buildings (houses 65, towers 56), rows 1 / 2 / 3 = 49 / 48 / 24, population 1,800, tallest 65 fighter heights (the bell tower); no tower of the districts is over 20 floors.
+
+**Measured on the tree, 100 matches (seeds 1 to 100, default arm; the stage and shot figures 40 or 60 matches), the committed city against the window, same code:**
+
+| | Committed city (HEAD) | Window |
+| :--- | ---: | ---: |
+| Buildings (houses / towers) | 169 (81 / 88) | 121 (65 / 56) |
+| Front row lost at the KO | 29.8% | 31.3% |
+| All rows lost | 22.8% | 25.4% |
+| Civilians lost (share) | 19.3% | 18.6% (about 335 people a match of 1,800) |
+| Tier 1 / 2 / 3 / 4 structures a minute (all rows) | 0.01 / 0.23 / 1.48 / 7.89% | 0.05 / 0.52 / 2.69 / 7.67% |
+| Shells at the KO (all rows / front row) | 7.9% / 10.4% | 11.5% / 14.3% |
+| Cut floors still standing at the KO, towers a match | 0.03 | 0.15 (0.38 towers with floor damage, dead too) |
+| BUILDING SMASH plans a match | 0.32 | 0.40 |
+| Shots ending on a building a match | 2.1 | 1.8 |
+| Structures lost a match (40 matches) | 33.9 | 26.9 of 121 |
+| Share of the fight volume blocked at the plane | 16.3% | 15.9% |
+| Length, mean (100 matches) | 382 s | 385 s |
+| C1 | clean | clean (0 fails of 100) |
+
+**What it says.** (1) The damage stays where it was: front row 31.3% against 29.8%, civilians 18.6% against 19.3%, length 385 against 382 s; QA's civilian band (12 to 30%) holds. (2) Fewer, broader buildings go down sooner at the middle tiers (tier 2 and 3: 0.52 and 2.69 a minute against 0.23 and 1.48), the tier 4 rate is the same (7.67 against 7.89, over the floor of 6). (3) Shorter towers leave a shell more often (11.5% against 7.9%: a 28-fighter-height tower has 14 floors, not 31) and a cut floor is still standing at the KO a little more (0.15 a match). (4) BUILDING SMASH plans 0.40 a match (0.32): the lever is still Encounter's baseline, not the world's. (5) Blocked volume at the plane 15.9%.
+
+**Gates on the tree.** `npm test --prefix sim` 5 of 5; the world probe 0 failures; `lane_check`, `stagecheck`, `blockcheck`, `directcheck`, `minecheck` clean; render determinism plain and `--intro --seeds=2 --ticks=900` pass; the seam sweep passes; render `lane_check`, `stage_check`, `ground_check`, `patch_check` and VFX's `effects_check` pass; `validate.js` 183 files, 0 errors, `--self-test` 6718 of 6718; the flash count passes for `mash`, `mashcity` and `collapse`. **One fails: `render/tools/shape_check.gd:156`** ("this world has a tall tower and a stepped one in the front row to try"): it looks for a non-landmark row 1 building of at least 20 floors, and the tallest in the new city is 17 (a shaft; the stepped ones are 14 and 16). With `>= 14` in that line it passes (scratch copy). Rendering's file, so not edited here.

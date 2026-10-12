@@ -2,6 +2,10 @@
 
 From World, 2026-10-11, after the lanes window. Read with `docs/world/arenas-status.md` and the stills in `docs/world/stills/` (review pictures of what the data is; not Rendering's look and not for a public page).
 
+## Update 2026-10-12: the city is shorter and broader (Orb's ruling, `docs/world/lanes-remeasure-plan.md` section 10 and 11)
+
+Downtown is now **20 to 40 fighter heights** (median 28; a tower stands at most 5 times its narrower side), mid-rise 7 to 20, with wider and deeper footprints; three landmarks stand clear of it (the bell tower 65 fighter heights, the new ledger hall 46 stepped, the crown tower 52 crowned), the chimney stack 36. 121 buildings in 11 districts. The front block (row 1) carries a quarter of the people (`row_pop`): it is the fight's sidewalk. Read the scale line below as these numbers: a downtown tower is 14 to 20 floors (floors are 2 fighter heights), the tallest is a landmark at 32 floors. Everything else below is as written.
+
 ## What is in the sim now
 
 - **The city is re-laid** (`data/biomes/settlements.json` `enabled` true): 169 buildings (houses 81, towers 88) in 11 districts of 4 settlements, west to east: a harbour and its village; **Bellgate** (suburb, industrial, mid-rise, downtown, mid-rise, suburb); a workshop village with a suburb; a hill village. Rows: 1 front block 65, 2 back block 65, 3 scenery 39. **Row 0 (the foreground) is empty on purpose** (`"foreground": false`): it stands between the camera and the fight until Camera frames it. The generator supports it; switching it on is one data flag and will add about 17 low buildings in front of the front street.

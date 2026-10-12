@@ -27,6 +27,11 @@
       "type": "boolean",
       "description": "Default true. false leaves row 0, the foreground row, empty: it stands between the camera and the fight until Camera frames it."
     },
+    "aspect_max": {
+      "type": "number",
+      "minimum": 1,
+      "description": "The aspect rule (2026-10-11, Orb: shorter and broader): a building's height is at most this many times the narrower side of its footprint. A landmark is exempt; a kind may carry its own (a chimney's is 10)."
+    },
     "pop_refs": {
       "type": "object",
       "required": [
@@ -372,6 +377,11 @@
                   "minimum": 0.5,
                   "maximum": 40
                 }
+              },
+              "aspect_max": {
+                "type": "number",
+                "minimum": 1,
+                "description": "This kind's own aspect rule, over the file's."
               }
             },
             "additionalProperties": false,
@@ -451,6 +461,16 @@
           "minimum": 0,
           "maximum": 1,
           "description": "The lane strips' vehicle density the props will read (unused until P1)."
+        },
+        "row_pop": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "description": "The people's density factor by row 0 to 3 (default 1 each). The front block's street side is the fight's sidewalk, so the front block carries fewer."
         },
         "landmarks": {
           "type": "array",
