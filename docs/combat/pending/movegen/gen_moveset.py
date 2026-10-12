@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 12
+VERSION = 13
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -238,6 +238,17 @@ def posed(parts, idn, tips):
         tip = idn.get("tipOf", {}).get(sid, s.get("tip"))
         path = s.get("path")
         target = "arm" if s["target"].startswith("arm") else s["target"]
+        tier = wave in idn.get("tierWaves", [])   # a pack of the heavy tier: its rows are heavies, read by the tier's own tips
+        if tier:
+            hm = {"limb": limb, "tip": tip, "path": path, "target": target, "weight": "heavy"}
+            if (path not in g["heavy"]["tips"].get(limb, {}).get(tip, []) or target not in g["targets"][limb].get(path, [])
+                    or any(match(r["shape"], hm) for r in g["heavy"].get("never", []))):
+                unread.append("%s (%s %s %s to the %s, a heavy)" % (s["id"], limb, tip, path, target))
+                continue
+            arms_ = int(s.get("uses", {}).get("arms", 1 if limb in ("hand", "elbow") else 0))
+            cover[(limb, tip, path, target, "heavy")] = {"level": "posed", "from": sid, "set": s["id"], "wave": wave, "legal": list(s.get("legal", [])), "flags": list(s.get("flags", [])),
+                                                         "measured": "flags" in s, "arms": arms_, "ground": s.get("ground", "ok"), "_rank": (0, 0 if arms_ <= 1 else 1)}
+            continue
         if tip not in g["tips"].get(limb, {}) or path not in g["tips"][limb][tip] or target not in g["targets"][limb].get(path, []):
             unread.append("%s (%s %s %s to the %s)" % (s["id"], limb, tip, path, target))
             continue
@@ -267,7 +278,8 @@ def posed(parts, idn, tips):
             base = {"limb": limb, "tip": tip, "path": path, "target": target, "weight": "medium"}
             wr = windup_of(g, base, arms, s.get("flags", []))
             if (wr is not None and wr["reads"] == "charged" and path in hv["tips"].get(limb, {}).get(tip, [])
-                    and not any(match(r["shape"], dict(base, weight="heavy")) for r in hv.get("never", []))):
+                    and not any(match(r["shape"], dict(base, weight="heavy")) for r in hv.get("never", []))
+                    and cover.get((limb, tip, path, target, "heavy"), {}).get("level", "stand_in") == "stand_in"):   # never over a key set of the tier itself
                 cover[(limb, tip, path, target, "heavy")] = {"level": "stand_in", "from": sid, "set": s["id"], "wave": wave, "legal": list(s.get("legal", [])),
                                                              "flags": list(s.get("flags", [])), "measured": "flags" in s, "arms": arms, "ground": s.get("ground", "ok"),
                                                              "_rank": (LEVELS.index("stand_in"), 0 if arms <= 1 else 1)}
@@ -547,6 +559,7 @@ def table_cell(ctx, who, cid, cell):
     blk, en = parts[cell["block"]], idn["energy"]
     hands = en.get(cell["block"], {}).get("hands", en["hands"])   # a block may have its own weights for his hands (energy in reach)
     cand, refused = [], []
+    rule_now = {p["strike"]: p["strikeNow"] for p in en.get(cell["block"], {}).get("posed", []) if "strikeNow" in p}
     for hand, release, body, delivery, target in itertools.product(sorted(hands), blk["release"], blk["body"], cell["delivery"], blk.get("targets", [None])):
         m = {"hand": hand, "release": release, "body": body, "delivery": delivery}
         if target:   # a piece set on a place is a blow as well as a shot: it has a path, by its release
@@ -563,9 +576,11 @@ def table_cell(ctx, who, cid, cell):
             refused.append({"move": dict(m, _forms=None), "rows": hits})
             continue
         m["_w"] = hands[hand] * en.get(cell["block"], {}).get("byDelivery", {}).get(delivery, {}).get(hand, 1) * en["release"].get(release, 1) * jitter(seed, who, cid, hand, release, body, delivery, *([target] if target else []))
-        m["_set"] = next((p["set"] for p in en["posed"] if match(p["when"], m)), None)
+        rule = next((p for p in en.get(cell["block"], {}).get("posed", []) + en["posed"] if match(p["when"], m)), None)
+        m["_set"] = rule["set"] if rule else None
+        m["_strike"] = rule.get("strike") if rule else None   # a key set drawn for this very piece: it is posed, and this is the id the recipes name
         if m["_set"]:
-            m["_w"] *= 1.6 if hand in en["posedHands"] else 1.2
+            m["_w"] *= 3.0 if m["_strike"] else 1.6 if hand in en["posedHands"] else 1.2
         cand.append(m)
     valid = len(cand)
     def penalty(p, m):
@@ -581,7 +596,11 @@ def table_cell(ctx, who, cid, cell):
     for i, m in enumerate(picked):
         hand_set = en["posedHands"].get(m["hand"])
         keys = {"set": m["_set"], "hand": hand_set}
-        status = "posed" if (m["_set"] and hand_set) else "derived" if m["_set"] else "waiting"
+        status = "posed" if (m["_set"] and (hand_set or m["_strike"])) else "derived" if m["_set"] else "waiting"
+        if m["_strike"]:
+            keys["strike"] = m["_strike"]
+            if rule_now.get(m["_strike"]):
+                keys["strikeNow"] = rule_now[m["_strike"]]   # the id Animation's pack has today, until it gives this fighter's piece an id of its own
         if status == "posed" and cell.get("statusCap"):
             status = cell["statusCap"]   # posed pieces used a new way
         mv = {"id": "mv.%s.%s.%02d" % (who, cid, i + 1), "hand": m["hand"], "release": m["release"], "body": m["body"], "delivery": m["delivery"], "forms": m["_forms"],
@@ -688,13 +707,16 @@ def reach_run_breaks(parts, seq, arms):
     return sorted(set(out))
 
 
-def reach_run(parts, pool, length, key):
-    """A run of that length ordered by e09, with its arms, or None: depth first, the order of tries from the key (a hash, so the same run every time)."""
+def reach_run(parts, pool, length, key, loop=False):
+    """A run of that length ordered by e09, with its arms, or None: depth first, the order of tries from the key (a hash, so the same run every time). loop: the run
+    played round and round must keep every rule, so the join is checked as each search completes, and the search backs up when it fails."""
     rr = parts["reach"]["run"]
     need, span = rr["pathsIn"]
+    arm_words = ("e09: the free arm", "e09: one arm pumping")
     def grow(seq):
         if len(seq) == length:
-            return seq if not any(b.startswith("e09: the order") for b in reach_run_breaks(parts, seq, ["lead"] * length)) else None
+            twice = seq + seq if loop else seq
+            return seq if not [b for b in reach_run_breaks(parts, twice, ["lead"] * len(twice)) if not b.startswith(arm_words)] else None
         cand = [n for n in pool if all(n["id"] != p["id"] for p in seq[-2:]) and not string_breaks(parts, seq[-2:] + [n])
                 and (len(seq) < span - 1 or len(set(x["path"] for x in seq[-(span - 1):] + [n])) >= need)]
         for n in sorted(cand, key=lambda n: (-jitter(*key, "piece", len(seq), n["id"]), n["id"])):
@@ -707,7 +729,7 @@ def reach_run(parts, pool, length, key):
         return None
     def arm(arms):
         if len(arms) == length:
-            return arms if not reach_run_breaks(parts, seq, arms) else None
+            return arms if not reach_run_breaks(parts, seq + seq if loop else seq, arms + arms if loop else arms) else None
         first = "free" if jitter(*key, "arm", len(arms)) > 1.06 else "lead"
         for a in (first, "lead" if first == "free" else "free"):
             trial = arms + [a]
@@ -727,13 +749,16 @@ def run_cell(ctx, who, cid, cell, done):
     pool = [reach_blow(parts, m) for m in src.values()]
     moves = []
     for k in range(cell["count"]):
-        got = reach_run(parts, pool, cell["length"], (seed, who, cid, k))
+        got = reach_run(parts, pool, cell["length"], (seed, who, cid, k), bool(cell.get("loop")))
         if got is None:
-            raise SystemExit("%s: no run of %d point-blank bolts can be ordered by e09 from his %d" % (who, cell["length"], len(pool)))
+            raise SystemExit("%s: no run of %d point-blank bolts can be ordered by e09 from his %d%s" % (who, cell["length"], len(pool), " as a loop" if cell.get("loop") else ""))
         seq, arms = got
         moves.append({"id": "mv.%s.%s.%02d" % (who, cid, k + 1), "blows": [n["id"] for n in seq], "arms": arms,
                       "status": "waiting" if any(src[n["id"]]["status"] == "waiting" for n in seq) else "derived", "asks": list(cell.get("asks", [])), "review": "new"})
-    return {"kind": "run", "from": cell["from"], "valid": len(pool), "quotas": {}, "moves": moves}
+    res = {"kind": "run", "from": cell["from"], "valid": len(pool), "quotas": {}, "moves": moves}
+    if cell.get("loop"):
+        res["loop"] = True
+    return res
 
 
 def special_cell(ctx, who, cid, cell):
@@ -795,7 +820,7 @@ def build():
         h = hashlib.sha256()
         for name in ("parts.json", "identity.json", "cells.json"):
             h.update(raw(os.path.join(HERE, name)))
-        for wave in idn["waves"]:
+        for wave in idn["waves"] + idn.get("energyWaves", []):
             rows = load(anim("waves", wave + ".manifest.json"))["strikes"]
             h.update(json.dumps([[s["id"], s["combat"], s["limb"], s.get("tip"), s.get("path"), s["target"], s["weight"], s.get("legal", []), s.get("flags", [])] for s in rows], sort_keys=True).encode("utf-8"))
         h.update(json.dumps({k: v for k, v in tips.get("reaim", {}).items() if any(v2["set"] == k for v2 in cover.values())}, sort_keys=True).encode("utf-8"))
@@ -929,7 +954,7 @@ def legal_findings(docs, parts, identity):
                 if c["kind"] == "run":   # a mashed run of point-blank bolts: Legal's e09
                     by_id = {x["id"]: reach_blow(parts, x) for x in doc["cells"][c["from"]]["moves"]}
                     seq = [by_id.get(i) for i in m["blows"]]
-                    br = ["a bolt that is not in %s" % c["from"]] if None in seq else reach_run_breaks(parts, seq, m["arms"])
+                    br = ["a bolt that is not in %s" % c["from"]] if None in seq else reach_run_breaks(parts, seq + (seq if c.get("loop") else []), m["arms"] + (m["arms"] if c.get("loop") else []))
                     if br:
                         bad.append("%s: %s breaks %s" % (who, m["id"], "; ".join(br)))
                 if c["kind"] == "string":   # a burst: every blow of its gap's class, and the whole string inside Legal's rules and the burst's own
@@ -1048,6 +1073,19 @@ def recipes_findings(parts):
             seq = [every.get(i) for i in ids]
             if None in seq or len(seq) != len(bu["slots"]) or any(n["id"] not in [x["id"] for x in by[cl]] for n, cl in list(zip(seq, bu["slots"]))[1:]) or not ok(seq):
                 bad.append("recipes: %s's burst sample for the lean %s is not a whole burst under the rules" % (who, lean))
+    return bad
+
+
+def identity_findings(parts, identity):
+    """Each key set a fighter's energy rules name is a row of the pack they name, drawn on the path and the place the rule says."""
+    bad = []
+    for who, idn in sorted(identity["fighters"].items()):
+        for rule in idn.get("energy", {}).get("reach", {}).get("posed", []):
+            rows = {s["id"]: s for s in load(anim("waves", rule["wave"] + ".manifest.json"))["strikes"]} if os.path.exists(anim("waves", rule["wave"] + ".manifest.json")) else {}
+            s = rows.get(rule["set"])
+            want = (parts["reach"]["path"][rule["when"]["release"][0]], rule["when"]["target"][0])
+            if s is None or s.get("combat") not in (rule["strike"], rule.get("strikeNow")) or (s.get("path"), s.get("target")) != want:
+                bad.append("%s: the energy key set %s is not in %s as %s on a %s to the %s" % (who, rule["set"], rule["wave"], rule["strike"], want[0], want[1]))
     return bad
 
 
@@ -1309,7 +1347,7 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
                 mins = {q["name"]: q["min"] for q in cell.get("quotas", [])}
                 qt = "; ".join("%s %d of %d" % (k, v, mins[k]) for k, v in c["quotas"].items())
                 if c["kind"] == "run":
-                    L.append("**The %s:** %d runs of %d from his %d bolts. Legal's e09: never the same arm, path and place twice running; three paths in any five; the free arm now and then, never on a regular count." % (nm(who), len(st), cell["length"], c["valid"]))
+                    L.append("**The %s:** %d runs of %d from his %d bolts, each a loop: played round and round it still keeps the rule. Legal's e09: never the same arm, path and place twice running; three paths in any five; the free arm now and then, never on a regular count." % (nm(who), len(st), cell["length"], c["valid"]))
                 elif c["kind"] == "string":
                     L.append("**The %s:** %d strings of %d from his %d lights; %d posed, %d derived. %s" % (who if who == "rival" else who.capitalize(), len(st), len(cell["slots"]), c["valid"], st.count("posed"), st.count("derived"),
                                                                                                     identity["fighters"][who].get("manner", {}).get("burst", "") if identity else ""))
@@ -1652,9 +1690,9 @@ def main():
     for name, text in files.items():
         assert name.endswith(".md") or json.loads(text)
     fresh = legal_findings(out, parts, identity)
-    data = data_findings(parts)
+    data = data_findings(parts) + identity_findings(parts, identity)
     if data:
-        print("parts.json: %d PROBLEM" % len(data))
+        print("the hand-kept data: %d PROBLEM" % len(data))
         for b in data:
             print("  " + b)
         sys.exit(1)

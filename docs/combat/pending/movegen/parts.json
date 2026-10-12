@@ -2226,6 +2226,13 @@
     "check": "a slip or a step behind the rival is drawn travel of at least 4 ticks",
     "rule": "a slip or a step that goes behind the rival is drawn travel of at least 4 ticks with the rival in view (m04)",
     "why": "the appear-behind-you beat"
+   },
+   {
+    "id": "m12",
+    "kind": "drawn",
+    "owner": "Animation and VFX",
+    "rule": "body ghosts (whole-figure copies from any source: zip, press styles, tech echoes, Animation's after-images) are budgeted per fighter at any instant: at most 5 round one fighter from all sources together, so at most 10 on screen with two fighters; limb ghosts stay under f01 (2 of one limb, 4 in all per fighter). Every ghost keeps m05: a flat lane tint, 0.35 opacity or less, on the fighter's own recent path, overlapping along it as a smear, never placed round the target or in a ring, gone within 8 ticks, the body on top. The 5 is a bright line for the build's gate, not a legal cliff, and may be revised on evidence (stills and the per-tick breakdown) from VFX and Rendering",
+    "why": "m05 and m09 made explicit per fighter and across sources"
    }
   ],
   "energy": [
@@ -2512,6 +2519,13 @@
     "owner": "Animation (a lint on poses held 12 ticks or more)",
     "rule": "a manner (the rival's show-off, the Protagonist's pointed) is a way of throwing, not a gesture: the rival's open tell keeps the limb drawn back (never arms spread as an invitation, never a beckon), and his limb left out after landing lasts 12 ticks or fewer; no taunt pose is part of a blow",
     "why": "h02 and the taunt rules"
+   },
+   {
+    "id": "h08",
+    "kind": "drawn",
+    "owner": "Animation (a lint on poses held 12 ticks or more)",
+    "rule": "a heave (the deep-sink rising blow) may take one sliding half step of up to about 22 units when the closing slack needs it: the rear foot stays on the ground, no leap, no rise before the blow (the stand is the heave's own), the other foot never leaves the ground; reach beyond that is a stepping drive's job, so Encounter limits a heave's slack to what the step covers",
+    "why": "D4 and L1: grounded, never the jumping rising uppercut; a small slide is not a leap"
    }
   ],
   "stacking": [
@@ -2547,7 +2561,7 @@
     "id": "k05",
     "kind": "drawn",
     "owner": "VFX, Animation and Audio",
-    "rule": "full flashes are counted over the whole screen, every effect and both fighters together: at most three in any one second, each small (a thin edge or short cone), none red, and a reduced-motion setting halves the rate; the cap is checked by a flash analysis of a recorded mashed sequence on the real build",
+    "rule": "full flashes are counted over the whole screen, every effect and both fighters together: at most three in any one second, each small (a thin edge or short cone), none red, and a reduced-motion setting halves the rate; the cap is checked by a flash analysis of a recorded mashed sequence on the real build; a shared flash registry counts every full flash from every effect (energy, explosions, signatures, transformations, hit rings, beam clashes) against the cap, which is a condition before the first public release of the web build; the evidence needed is in photosensitivity-note.md",
     "why": "photosensitivity; Combat's one in 20 ticks is the same 3 a second"
    }
   ],

@@ -7,7 +7,8 @@
    "waves": [
     "wave1",
     "rival2",
-    "rival4"
+    "rival4",
+    "rival7"
    ],
    "_waves": "Animation's manifests that hold his posed strikes; a later wave's row replaces an earlier one's for the same strike",
    "weights": {
@@ -265,7 +266,124 @@
        "blade_hand": 0.3
       }
      },
-     "_hands": "fists and plates up close, beside the blade hand: his lights are blade hands, so three of his four point-blank bolts are a blade hand and one is the lit fist; his mediums are fists, so his blast is the lit fist with the plate behind it. Legal's e06 names the lit fist as his third hand (e9a57791). No open palm here: it is an energy hand of his at range, and he has no palm as a strike"
+     "_hands": "fists and plates up close, beside the blade hand: his lights are blade hands, so three of his four point-blank bolts are a blade hand and one is the lit fist; his mediums are fists, so his blast is the lit fist with the plate behind it. Legal's e06 names the lit fist as his third hand (e9a57791). No open palm here: it is an energy hand of his at range, and he has no palm as a strike",
+     "posed": [
+      {
+       "when": {
+        "delivery": [
+         "point_blank"
+        ],
+        "hand": [
+         "blade_hand"
+        ],
+        "release": [
+         "thrust"
+        ],
+        "target": [
+         "gut"
+        ]
+       },
+       "set": "rk.bolt_blade",
+       "strike": "strike.bolt_blade",
+       "wave": "rival8"
+      },
+      {
+       "when": {
+        "delivery": [
+         "point_blank"
+        ],
+        "hand": [
+         "fist_glow"
+        ],
+        "release": [
+         "thrust"
+        ],
+        "target": [
+         "chest"
+        ]
+       },
+       "set": "rk.bolt_fist",
+       "strike": "strike.bolt_fist",
+       "wave": "rival8"
+      },
+      {
+       "when": {
+        "delivery": [
+         "point_blank"
+        ],
+        "hand": [
+         "blade_hand"
+        ],
+        "release": [
+         "flick"
+        ],
+        "target": [
+         "gut"
+        ]
+       },
+       "set": "rk.bolt_flick",
+       "strike": "strike.bolt_flick_gut",
+       "wave": "rival8"
+      },
+      {
+       "when": {
+        "delivery": [
+         "point_blank"
+        ],
+        "hand": [
+         "blade_hand"
+        ],
+        "release": [
+         "sweep"
+        ],
+        "target": [
+         "chest"
+        ]
+       },
+       "set": "rk.bolt_sweep",
+       "strike": "strike.bolt_sweep_chest",
+       "wave": "rival8"
+      },
+      {
+       "when": {
+        "delivery": [
+         "blast"
+        ],
+        "hand": [
+         "fist_glow"
+        ],
+        "release": [
+         "thrust"
+        ],
+        "target": [
+         "chest"
+        ]
+       },
+       "set": "rk.blast_chest",
+       "strike": "strike.blast_chest",
+       "wave": "rival8"
+      },
+      {
+       "when": {
+        "delivery": [
+         "blast"
+        ],
+        "hand": [
+         "fist_glow"
+        ],
+        "release": [
+         "thrust"
+        ],
+        "target": [
+         "gut"
+        ]
+       },
+       "set": "rk.blast_gut",
+       "strike": "strike.blast_gut",
+       "wave": "rival8"
+      }
+     ],
+     "_posed": "the key sets Animation drew for his energy pieces in reach, by hand, release and place. The first rule that fits a piece is its key set; a rule with a strike id makes the piece posed, and that id is what the recipes and the director name. The ids are Animation's: the rival's flick and sweep have ids of his own (strike.bolt_flick_gut, strike.bolt_sweep_chest), since both fighters had them under one id on different places and the pieces table is one row an id. A rule may carry strikeNow, the id a pack has today, while a rename is on its way; none does now"
     }
    },
    "specials": {
@@ -369,13 +487,21 @@
      "now": "arm"
     }
    },
-   "_reaimed": "rows whose place was moved after Legal screened them (Game Design's ruling on the wrench, 68b9a586): the same limb, tip, path and drive, another place. The sheet marks them for Legal"
+   "_reaimed": "rows whose place was moved after Legal screened them (Game Design's ruling on the wrench, 68b9a586): the same limb, tip, path and drive, another place. The sheet marks them for Legal",
+   "tierWaves": [
+    "rival7"
+   ],
+   "_tierWaves": "packs whose strikes are heavies of the new tier: Animation's weight heavy there is this file's heavy, and each row is read by the heavy tier's own tips",
+   "energyWaves": [
+    "rival8"
+   ]
   },
   "protagonist": {
    "waves": [
     "protag1",
     "protag6",
-    "protag7"
+    "protag7",
+    "protag10"
    ],
    "weights": {
     "limb": {
@@ -601,7 +727,124 @@
       "flat_palm": 2,
       "ring_hand": 1
      },
-     "_hands": "he fires from the heel of the palm (Game Design)"
+     "_hands": "he fires from the heel of the palm (Game Design)",
+     "posed": [
+      {
+       "when": {
+        "delivery": [
+         "point_blank"
+        ],
+        "hand": [
+         "palm_thrust"
+        ],
+        "release": [
+         "thrust"
+        ],
+        "target": [
+         "chest"
+        ]
+       },
+       "set": "pk.bolt_thrust",
+       "strike": "strike.bolt_thrust",
+       "wave": "protag11"
+      },
+      {
+       "when": {
+        "delivery": [
+         "point_blank"
+        ],
+        "hand": [
+         "flat_palm"
+        ],
+        "release": [
+         "thrust"
+        ],
+        "target": [
+         "gut"
+        ]
+       },
+       "set": "pk.bolt_flat",
+       "strike": "strike.bolt_flat",
+       "wave": "protag11"
+      },
+      {
+       "when": {
+        "delivery": [
+         "point_blank"
+        ],
+        "hand": [
+         "palm_thrust"
+        ],
+        "release": [
+         "flick"
+        ],
+        "target": [
+         "chest"
+        ]
+       },
+       "set": "pk.bolt_flick",
+       "strike": "strike.bolt_flick",
+       "wave": "protag11"
+      },
+      {
+       "when": {
+        "delivery": [
+         "point_blank"
+        ],
+        "hand": [
+         "flat_palm"
+        ],
+        "release": [
+         "sweep"
+        ],
+        "target": [
+         "gut"
+        ]
+       },
+       "set": "pk.bolt_sweep",
+       "strike": "strike.bolt_sweep",
+       "wave": "protag11"
+      },
+      {
+       "when": {
+        "delivery": [
+         "blast"
+        ],
+        "hand": [
+         "palm_thrust"
+        ],
+        "release": [
+         "thrust"
+        ],
+        "target": [
+         "chest"
+        ]
+       },
+       "set": "pk.blast_chest",
+       "strike": "strike.blast_chest",
+       "wave": "protag11"
+      },
+      {
+       "when": {
+        "delivery": [
+         "blast"
+        ],
+        "hand": [
+         "palm_thrust"
+        ],
+        "release": [
+         "thrust"
+        ],
+        "target": [
+         "gut"
+        ]
+       },
+       "set": "pk.blast_gut",
+       "strike": "strike.blast_gut",
+       "wave": "protag11"
+      }
+     ],
+     "_posed": "the key sets Animation drew for his energy pieces in reach, by hand, release and place. The first rule that fits a piece is its key set; a rule with a strike id makes the piece posed, and that id is what the recipes and the director name. The ids are Animation's: the rival's flick and sweep have ids of his own (strike.bolt_flick_gut, strike.bolt_sweep_chest), since both fighters had them under one id on different places and the pieces table is one row an id. A rule may carry strikeNow, the id a pack has today, while a rename is on its way; none does now"
     }
    },
    "specials": {
@@ -725,7 +968,14 @@
      ]
     },
     "_close": "what his burst's eighth blow is, when the rules allow: an arc"
-   }
+   },
+   "tierWaves": [
+    "protag10"
+   ],
+   "_tierWaves": "packs whose strikes are heavies of the new tier: Animation's weight heavy there is this file's heavy, and each row is read by the heavy tier's own tips",
+   "energyWaves": [
+    "protag11"
+   ]
   }
  },
  "_reuse": "how strongly a shape that is already posed, or one swap or re-aim from it, is preferred. A re-aim Animation measured as ok is free; one at the edge needs a look, so it is preferred less. These are the first slice's values: lower them toward 1 and identity decides more, at the cost of new key sets",

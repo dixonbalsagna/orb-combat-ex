@@ -523,7 +523,7 @@
       "chest",
       "heavy"
      ],
-     null
+     "pu.su_turn"
     ],
     [
      "mv.protagonist.martial.b.02",
@@ -534,7 +534,7 @@
       "chest",
       "heavy"
      ],
-     null
+     "pu.su_drive"
     ],
     [
      "mv.protagonist.martial.b.03",
@@ -545,7 +545,7 @@
       "gut",
       "heavy"
      ],
-     null
+     "pu.su_edge_step"
     ],
     [
      "mv.protagonist.martial.b.04",
@@ -556,7 +556,7 @@
       "jaw",
       "heavy"
      ],
-     null
+     "pu.su_blade_jaw"
     ],
     [
      "mv.protagonist.martial.b.05",
@@ -567,7 +567,7 @@
       "gut",
       "heavy"
      ],
-     null
+     "pu.su_edge_unwind"
     ],
     [
      "mv.protagonist.martial.b.06",
@@ -578,7 +578,7 @@
       "chest",
       "heavy"
      ],
-     null
+     "pu.su_palm_heave"
     ],
     [
      "mv.protagonist.martial.b.07",
@@ -589,7 +589,7 @@
       "gut",
       "heavy"
      ],
-     null
+     "pu.su_ball_heave"
     ],
     [
      "mv.protagonist.martial.b.08",
@@ -600,7 +600,7 @@
       "arm",
       "heavy"
      ],
-     null
+     "pu.su_hammer_arm"
     ],
     [
      "mv.protagonist.martial.b.09",
@@ -611,7 +611,7 @@
       "legs",
       "heavy"
      ],
-     null
+     "pu.su_knee_legs"
     ],
     [
      "mv.protagonist.martial.b.10",
@@ -622,7 +622,7 @@
       "jaw",
       "heavy"
      ],
-     null
+     "pu.su_elbow_jaw"
     ]
    ],
    "defensive.x": [
@@ -1283,7 +1283,7 @@
       "chest",
       "heavy"
      ],
-     null
+     "ru.su_ram"
     ],
     [
      "mv.rival.martial.b.02",
@@ -1294,7 +1294,7 @@
       "chest",
       "heavy"
      ],
-     null
+     "ru.su_heel"
     ],
     [
      "mv.rival.martial.b.03",
@@ -1305,7 +1305,7 @@
       "gut",
       "heavy"
      ],
-     null
+     "ru.su_knee"
     ],
     [
      "mv.rival.martial.b.04",
@@ -1316,7 +1316,7 @@
       "head",
       "heavy"
      ],
-     null
+     "ru.su_plate"
     ],
     [
      "mv.rival.martial.b.05",
@@ -1327,7 +1327,7 @@
       "jaw",
       "heavy"
      ],
-     null
+     "ru.su_hook"
     ],
     [
      "mv.rival.martial.b.06",
@@ -1338,7 +1338,7 @@
       "jaw",
       "heavy"
      ],
-     null
+     "ru.su_elbow_heave"
     ],
     [
      "mv.rival.martial.b.07",
@@ -1349,7 +1349,7 @@
       "gut",
       "heavy"
      ],
-     null
+     "ru.su_fist_heave"
     ],
     [
      "mv.rival.martial.b.08",
@@ -1360,7 +1360,7 @@
       "head",
       "heavy"
      ],
-     null
+     "ru.su_hammer"
     ],
     [
      "mv.rival.martial.b.09",
@@ -1371,7 +1371,7 @@
       "legs",
       "heavy"
      ],
-     null
+     "ru.su_edge_legs"
     ],
     [
      "mv.rival.martial.b.10",
@@ -1382,7 +1382,7 @@
       "arm",
       "heavy"
      ],
-     null
+     "ru.su_plate_arm"
     ]
    ],
    "defensive.x": [

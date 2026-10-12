@@ -1,17 +1,17 @@
 {
  "schema": "combat.recipes/1",
  "_target": "data/combat/recipes.json",
- "_changes": "PARKED for Encounter's brawl (docs/director/brawl-plan.md), built on the live file and still the live file plus what is listed here. From the first version: `beat` (the beat point by path), on every `pieces` row a `path`, with `sends` on the heavies, and two pools for each fighter (brawl.flurry, brawl.skill). For three strengths (docs/design/brawl-second-pass.md, slice C2a): `brawl` now maps each press of X, Y and B to a pool; four more pools for each fighter (brawl.medium, brawl.medium.held, brawl.heavy, and brawl.lift re-read as the rising mediums); the `burst` block with three pools (burst.fast, burst.mid, burst.slow) and a sample for each lean; the `fallback` block; for slice C2t the `launcher` block with its pool (brawl.launcher) and the `reach` block; and pieces rows for the strikes of Animation's later packs (rival4, protag7) that the new pools name, with those packs named in `_status`; one path re-read from Animation (the crossed-arm ram travels a line). Gone: brawl.break and the ender, with their rules. Nothing that is live is changed. Drop _target and _changes when it lands",
+ "_changes": "PARKED: the next data/combat/recipes.json. It is the live file plus what is listed here; nothing that is live is changed. For the brawl as built (docs/director/brawl-c2.md) and the nine cells (docs/design/brawl-second-pass.md section 15): `brawl` names a pool for every cell the brawl throws from; new pools for each fighter (brawl.flurry, brawl.skill, brawl.medium, brawl.medium.held, brawl.heavy, brawl.launcher, brawl.launcher.lower, brawl.heavy.lower, brawl.reversal, brawl.lift, burst.fast, burst.mid, burst.slow, reach.bolt, reach.blast); the blocks `beat`, `burst`, `fallback`, `launcher` and `reach`; on every `pieces` row a `path`, with `sends` on what can send him; pieces rows for the strikes of Animation's later packs (rival4, rival7, rival8, protag7, protag10, protag11), one row an id. B and the launcher draw on the heavy tier Animation has posed, with the old stand-ins as B's fallback. The energy ids are Animation's: the rival's flick and sweep have ids of his own (strike.bolt_flick_gut, strike.bolt_sweep_chest), so this file lands with or after that rename is committed. Drop _target and _changes when it lands",
  "_about": "PARKED: ready to become data/combat/recipes.json as it stands (drop _target), but not moved. The pieces each of Game Design's recipes calls (docs/design/agency-pass.md section 2), per fighter. Fighter keys are the neutral working ids (protagonist, rival) until Orb names the pair. The rules and numbers quoted are Game Design's; the director's own numbers (the window, the flow's thresholds, the multipliers) belong in Encounter's data/director/alchemy.json. Checked against HEAD 45a95b9: every posed id is a strike of a wave manifest, and every blur step fills for both fighters.",
  "_status": {
   "live": "plays in live matches today. Nothing in these pools does yet: KAI and VORR still draw on the placeholder key sets, and go-live step 1 is a flag, off",
-  "posed": "posed in one of Animation's packs and parked: it plays when its fighter lands (wave 1, rival2 and rival4 for the rival; protag1, protag6 and protag7 for the Protagonist). The director may draw on posed and live pieces alike",
+  "posed": "posed in one of Animation's packs: it plays (wave 1, rival2, rival4, rival7 and rival8 for the rival; protag1, protag6, protag7, protag10 and protag11 for the Protagonist). The director may draw on posed and live pieces alike",
   "waiting": "not posed yet: the director skips it"
  },
  "_counts": {
   "rival": {
-   "pieces": 55,
-   "posed": 51,
+   "pieces": 71,
+   "posed": 67,
    "waiting": [
     "strike.tail_jab",
     "strike.tail_spike",
@@ -20,8 +20,8 @@
    ]
   },
   "protagonist": {
-   "pieces": 51,
-   "posed": 51,
+   "pieces": 67,
+   "posed": 67,
    "waiting": []
   }
  },
@@ -302,18 +302,25 @@
   "default": 24
  },
  "brawl": {
-  "_about": "Which pool each press in the martial arts stance draws on, for three strengths (docs/design/brawl-second-pass.md section 8): X a light, Y a medium, B a heavy. One press is one attack: the pool is the button's, and the press changes only how it is thrown. X: light (tapped), lightToward (tapped with the stick toward the rival), flurry (mashed), skill (on the beat), juggle; a held X is the `burst` block. Y: medium (tapped, mashed and on the beat) is the mediums that read on a 12-tick wind-up; mediumHeld (a held Y, slice C2b) is every medium, the ones that need a long wind-up included. B: heavy (tapped, mashed and on the beat) and heavyHeld (slice C2b). No piece of the heavy tier is posed, so brawl.heavy holds STAND-INS: his posed pieces that only read on a long wind-up, played on B's. The tier's own pieces (docs/combat/pending/movegen) replace them as they are drawn. lift is the pair X+Y (slice C6a). The pools for Y and B come from the generated movesets, so they keep to each fighter's identity: the rival's have no palm and no blade hand. When a pool has nothing it may throw, `fallback` says what is thrown. launcher is a tap of B on a staggered rival (section 3 of the design page): see the `launcher` block. With RB held in reach, X and Y are the energy pieces of the `reach` block, which are not strikes and have no pool",
+  "_about": "The pool each cell of the brawl draws on (docs/design/brawl-second-pass.md section 15; docs/director/brawl-c2.md). One press is one attack: the pool is the cell's, and the press changes only how it is thrown. X: light (tapped), lightToward (tapped with the stick toward the rival), flurry (mashed), skill and juggle (on the beat, slice C3); a held X is the `burst` block, and its floor pace is the burst's slow class. Y: medium (tapped, mashed, on the beat, and the reversal's medium) is the mediums that read on a 12-tick wind-up; mediumHeld (the charged medium) is every medium, the ones that need a long wind-up included. B: heavy (tapped, mashed, on the beat) and heavyHeld (the charge) are the heavy tier; launcher is a tap of B in an opening (the `launcher` block). The wrench (a held B on a battered limb, slice C2b) has no pool: it is a heavy whose row lands on the limb the stick asks, found in the heavy's pool as the launcher's send is. bolt and blast are X and Y with RB held in reach (the `reach` block). The held X: burstFast, burstMid and burstSlow are the burst's blows by the class of the gap before each (the `burst` block), and burstFloor is the pace it settles to. reversal is the medium that answers a perfect block: it comes straight out of the guard, so it is a medium on a line or a rise, never a dropping kick or a turning blow. The double hit has no pool: it is one staged picture with its own poses. lift is the pair X+Y (slice C6a). The pools for Y, B and the energy pieces come from the generated movesets, so they keep to each fighter's identity. When a pool has nothing it may throw, `fallback` says what is thrown",
   "light": "combo.link",
   "lightToward": "blur.toward",
   "flurry": "brawl.flurry",
-  "skill": "brawl.skill",
-  "juggle": "brawl.skill",
+  "burstFast": "burst.fast",
+  "burstMid": "burst.mid",
+  "burstSlow": "burst.slow",
+  "burstFloor": "burst.slow",
   "medium": "brawl.medium",
   "mediumHeld": "brawl.medium.held",
+  "reversal": "brawl.reversal",
   "heavy": "brawl.heavy",
   "heavyHeld": "brawl.heavy",
-  "lift": "brawl.lift",
-  "launcher": "brawl.launcher"
+  "launcher": "brawl.launcher",
+  "bolt": "reach.bolt",
+  "blast": "reach.blast",
+  "skill": "brawl.skill",
+  "juggle": "brawl.skill",
+  "lift": "brawl.lift"
  },
  "burst": {
   "_about": "A held X: eight lights that slow on a curve (docs/design/brawl-second-pass.md section 3). The first is the light the press threw. Each later blow comes from the pool of the gap before it: fast for a gap of 5 ticks or fewer (hands only, on a path with no raise and no turn), mid for 6 to 8 (an elbow or a knee fits), slow for 9 or more (any light). The gaps are Game Design's and live in the director's data; slots names their classes in order. rules are what keep a 4-tick gap from reading as a stutter, judged on the pieces table (limb, path, target) together with Legal's string rules. Every light a tap can throw can open a whole burst under them (gen_moveset.py --check tests it). close is the path each fighter's eighth blow takes when the rules leave him one. samples are one whole burst for each lean of the stick, for Animation's study and for the director to play as they are",
@@ -493,41 +500,87 @@
    },
    {
     "step": "lower",
-    "what": "a piece of the pool one strength down, thrown on this button's wind-up and at this button's worth: brawl.medium for a heavy, combo.link for a medium"
+    "what": "a piece of the pool one strength down, thrown on this cell's wind-up and at this cell's worth"
    }
   ],
   "lower": {
-   "heavy": "brawl.medium",
-   "heavyHeld": "brawl.medium.held",
+   "heavy": "brawl.heavy.lower",
+   "heavyHeld": "brawl.heavy.lower",
+   "launcher": "brawl.launcher.lower",
    "medium": "combo.link",
-   "mediumHeld": "combo.link"
+   "mediumHeld": "combo.link",
+   "reversal": "brawl.medium"
   },
-  "heavyOnStandIns": {
-   "_about": "Why this block exists today: B runs on a handful of stand-ins. How often each step is reached, over every two blows of his three pools that Legal's rules allow (all) and over two stand-ins running, which is a mashed B (mashedB). Counted on the pieces table. runsDry lists every mashed B that leaves no stand-in to throw; it is empty for both fighters, since the Protagonist's spinning heel was taken out of his stand-ins for that (with it, three strings ran dry, and repeating was not allowed either). The steps above stay as the net. This block goes when the heavy tier's ten are posed, which never run dry (after any two blows at least 4 of the rival's and 5 of the Protagonist's may follow)",
+  "_lower": "for B the step lower is his stand-ins: the posed mediums that only read on a long wind-up, which played B before the tier was drawn",
+  "onTheTier": {
+   "_about": "How often each step is reached with B on the heavy tier's posed pieces, counted on the pieces table over every two blows of his pools that Legal's rules allow: heavy (a tapped or mashed B), mashedB (two heavies running), launcher (any launcher), and bySend (a launcher that sends the way the stick asks). A send the tier has no piece for always takes the step lower",
    "rival": {
-    "standIns": 5,
-    "all": {
-     "pool": 886
+    "heavies": 10,
+    "heavy": {
+     "pool": 1176
     },
     "mashedB": {
-     "pool": 18
+     "pool": 86
     },
-    "runsDry": []
+    "launcher": {
+     "pool": 1176
+    },
+    "bySend": {
+     "up": {
+      "pool": 1002,
+      "lower": 168,
+      "repeat": 6
+     },
+     "down": {
+      "pool": 1174,
+      "repeat": 2
+     },
+     "across": {
+      "pool": 1167,
+      "repeat": 9
+     },
+     "turned": {
+      "pool": 1174,
+      "repeat": 2
+     }
+    }
    },
    "protagonist": {
-    "standIns": 5,
-    "all": {
-     "pool": 1134
+    "heavies": 10,
+    "heavy": {
+     "pool": 1460
     },
     "mashedB": {
-     "pool": 18
+     "pool": 82
     },
-    "runsDry": []
+    "launcher": {
+     "pool": 1460
+    },
+    "bySend": {
+     "up": {
+      "pool": 1263,
+      "lower": 190,
+      "repeat": 7
+     },
+     "down": {
+      "pool": 1250,
+      "repeat": 54,
+      "lower": 156
+     },
+     "across": {
+      "pool": 1450,
+      "repeat": 10
+     },
+     "turned": {
+      "pool": 1450,
+      "repeat": 10
+     }
+    }
    }
   }
  },
  "launcher": {
-  "_about": "A tap of B on a staggered rival: it always lands and launches (docs/design/brawl-second-pass.md section 3, slice C2t). The stick nudges the launch and the director stages it; this is only the blow that starts it, picked by where it sends. aim: the stick's lean to the send wanted. noStick: with no stick the launch planner's pick decides the send, and the piece is one that sends that way. bySend: the pool's pieces by where each sends (its path). Until the heavy tier is posed these are STAND-INS: first his heavy stand-ins that read on half the wind-up (a spin or a leap does not), then his posed mediums that land on the trunk or the head, which were the launching blows before the three strengths. A medium that one of his own never rows would bar as a heavy is left out (the Protagonist never brings one down on a head). The tier's own launchers replace them: every send has at least one (docs/combat/pending/movegen/review-sheet.md)",
+  "_about": "A tap of B on a staggered rival: it always lands and launches (docs/design/brawl-second-pass.md section 3). The stick nudges the launch and the director stages it; this is only the blow that starts it, picked by where it sends. aim: the stick's quarter to the send wanted. noStick: with no stick the launch planner's pick decides the send, and the piece is one that sends that way. bySend: the pool's pieces by where each sends (a piece's `sends`): heavies of the tier that read on half the wind-up and land on the trunk or the head. bySendLower: his posed mediums by send, for the step lower of `fallback` when no piece of the tier may be thrown that way",
   "aim": {
    "up": "up",
    "down": "down",
@@ -538,18 +591,53 @@
   "bySend": {
    "rival": {
     "up": [
+     "strike.su_elbow_heave",
+     "strike.su_fist_heave"
+    ],
+    "down": [
+     "strike.su_heel",
+     "strike.su_hammer"
+    ],
+    "across": [
+     "strike.su_ram",
+     "strike.su_knee"
+    ],
+    "turned": [
+     "strike.su_plate",
+     "strike.su_hook"
+    ]
+   },
+   "protagonist": {
+    "up": [
+     "strike.su_palm_heave",
+     "strike.su_ball_heave"
+    ],
+    "down": [
+     "strike.su_drive"
+    ],
+    "across": [
+     "strike.su_edge_step",
+     "strike.su_blade_jaw"
+    ],
+    "turned": [
+     "strike.su_edge_unwind",
+     "strike.su_elbow_jaw"
+    ]
+   }
+  },
+  "bySendLower": {
+   "rival": {
+    "up": [
      "strike.uppercut",
      "strike.rising_knee",
      "strike.fist_rise"
     ],
     "down": [
-     "strike.double_hammer",
      "strike.dropping_elbow",
      "strike.stomp",
      "strike.hammer"
     ],
     "across": [
-     "strike.cross_arm_ram",
      "strike.driving_knee",
      "strike.headbutt"
     ],
@@ -568,8 +656,6 @@
      "strike.stomp"
     ],
     "across": [
-     "strike.double_palm",
-     "strike.cross_arm_ram",
      "strike.palm_push"
     ],
     "turned": [
@@ -581,7 +667,7 @@
   }
  },
  "reach": {
-  "_about": "Energy in reach (docs/design/brawl-second-pass.md section 5b, slice C2t): with RB held in a brawl, X is the point-blank bolt and Y the blast. pieces are the generated moves (docs/combat/pending/movegen): an energy hand, how it is let go, the place it is set on, and the path it has in a string (a thrust is a line, a flick an outward arc, a sweep an inward arc). set is the posed press or shot it is played on, when there is one. They count as blows in Legal's string rules. rule: Legal's e06 counts a piece by its hand and release, so a mash never throws the same hand and release twice running; the four bolts differ in one or the other, and one may always follow. run: Legal's e09 for a mashed run, as numbers the director can order by, with the arm (lead or free) for each bolt. runs: two sample runs of twelve a fighter",
+  "_about": "Energy in reach (docs/design/brawl-second-pass.md section 5b): with RB held in a brawl, X is the point-blank bolt and Y the blast. The pools reach.bolt and reach.blast hold Animation's strikes for them; pieces says what each is (the energy hand, how it is let go, the place it is set on, its path in a string). They count as blows in Legal's string rules. rule: Legal's e06 counts a piece by its hand and release, so a mash never throws the same hand and release twice running; the four bolts differ in one or the other, and one may always follow. run: Legal's e09 for a mashed run, as numbers the director can order by, with the arm (lead or free) for each bolt: the arm is not left, right, left, right. runs: sample runs of twenty a fighter, each a loop: played round and round it still keeps every rule, so a mash picks one and stays on it. after: for each run, the runs that may follow it (itself always)",
   "rule": {
    "id": "e06",
    "same": [
@@ -613,120 +699,108 @@
    "rival": {
     "bolt": [
      {
-      "id": "mv.rival.energy.x.reach.01",
+      "id": "strike.bolt_blade",
+      "set": "rk.bolt_blade",
       "hand": "blade_hand",
       "release": "thrust",
       "target": "gut",
-      "path": "line",
-      "set": "rw.bolt",
-      "status": "derived"
+      "path": "line"
      },
      {
-      "id": "mv.rival.energy.x.reach.02",
+      "id": "strike.bolt_fist",
+      "set": "rk.bolt_fist",
       "hand": "fist_glow",
       "release": "thrust",
       "target": "chest",
-      "path": "line",
-      "set": "rw.bolt",
-      "status": "derived"
+      "path": "line"
      },
      {
-      "id": "mv.rival.energy.x.reach.03",
+      "id": "strike.bolt_flick_gut",
+      "set": "rk.bolt_flick",
       "hand": "blade_hand",
       "release": "flick",
       "target": "gut",
-      "path": "arc_out",
-      "set": null,
-      "status": "waiting"
+      "path": "arc_out"
      },
      {
-      "id": "mv.rival.energy.x.reach.04",
+      "id": "strike.bolt_sweep_chest",
+      "set": "rk.bolt_sweep",
       "hand": "blade_hand",
       "release": "sweep",
       "target": "chest",
-      "path": "arc_in",
-      "set": null,
-      "status": "waiting"
+      "path": "arc_in"
      }
     ],
     "blast": [
      {
-      "id": "mv.rival.energy.y.reach.01",
+      "id": "strike.blast_chest",
+      "set": "rk.blast_chest",
       "hand": "fist_glow",
       "release": "thrust",
       "target": "chest",
-      "path": "line",
-      "set": "rw.charged_brace",
-      "status": "derived"
+      "path": "line"
      },
      {
-      "id": "mv.rival.energy.y.reach.02",
+      "id": "strike.blast_gut",
+      "set": "rk.blast_gut",
       "hand": "fist_glow",
       "release": "thrust",
       "target": "gut",
-      "path": "line",
-      "set": "rw.charged_brace",
-      "status": "derived"
+      "path": "line"
      }
     ]
    },
    "protagonist": {
     "bolt": [
      {
-      "id": "mv.protagonist.energy.x.reach.01",
+      "id": "strike.bolt_thrust",
+      "set": "pk.bolt_thrust",
       "hand": "palm_thrust",
       "release": "thrust",
       "target": "chest",
-      "path": "line",
-      "set": "pg.bolt",
-      "status": "derived"
+      "path": "line"
      },
      {
-      "id": "mv.protagonist.energy.x.reach.02",
+      "id": "strike.bolt_flat",
+      "set": "pk.bolt_flat",
       "hand": "flat_palm",
       "release": "thrust",
       "target": "gut",
-      "path": "line",
-      "set": "pg.bolt",
-      "status": "derived"
+      "path": "line"
      },
      {
-      "id": "mv.protagonist.energy.x.reach.03",
+      "id": "strike.bolt_flick",
+      "set": "pk.bolt_flick",
       "hand": "palm_thrust",
       "release": "flick",
       "target": "chest",
-      "path": "arc_out",
-      "set": null,
-      "status": "waiting"
+      "path": "arc_out"
      },
      {
-      "id": "mv.protagonist.energy.x.reach.04",
+      "id": "strike.bolt_sweep",
+      "set": "pk.bolt_sweep",
       "hand": "flat_palm",
       "release": "sweep",
       "target": "gut",
-      "path": "arc_in",
-      "set": null,
-      "status": "waiting"
+      "path": "arc_in"
      }
     ],
     "blast": [
      {
-      "id": "mv.protagonist.energy.y.reach.01",
+      "id": "strike.blast_chest",
+      "set": "pk.blast_chest",
       "hand": "palm_thrust",
       "release": "thrust",
       "target": "chest",
-      "path": "line",
-      "set": "pg.charged",
-      "status": "derived"
+      "path": "line"
      },
      {
-      "id": "mv.protagonist.energy.y.reach.02",
+      "id": "strike.blast_gut",
+      "set": "pk.blast_gut",
       "hand": "palm_thrust",
       "release": "thrust",
       "target": "gut",
-      "path": "line",
-      "set": "pg.charged",
-      "status": "derived"
+      "path": "line"
      }
     ]
    }
@@ -735,18 +809,26 @@
    "rival": [
     {
      "blows": [
-      "mv.rival.energy.x.reach.01",
-      "mv.rival.energy.x.reach.02",
-      "mv.rival.energy.x.reach.04",
-      "mv.rival.energy.x.reach.03",
-      "mv.rival.energy.x.reach.02",
-      "mv.rival.energy.x.reach.01",
-      "mv.rival.energy.x.reach.04",
-      "mv.rival.energy.x.reach.02",
-      "mv.rival.energy.x.reach.03",
-      "mv.rival.energy.x.reach.04",
-      "mv.rival.energy.x.reach.02",
-      "mv.rival.energy.x.reach.01"
+      "strike.bolt_blade",
+      "strike.bolt_fist",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_flick_gut",
+      "strike.bolt_fist",
+      "strike.bolt_blade",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_fist",
+      "strike.bolt_flick_gut",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_fist",
+      "strike.bolt_blade",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_flick_gut",
+      "strike.bolt_fist",
+      "strike.bolt_blade",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_fist",
+      "strike.bolt_flick_gut",
+      "strike.bolt_sweep_chest"
      ],
      "arms": [
       "lead",
@@ -760,23 +842,39 @@
       "lead",
       "lead",
       "lead",
-      "lead"
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "free"
      ]
     },
     {
      "blows": [
-      "mv.rival.energy.x.reach.04",
-      "mv.rival.energy.x.reach.03",
-      "mv.rival.energy.x.reach.02",
-      "mv.rival.energy.x.reach.04",
-      "mv.rival.energy.x.reach.03",
-      "mv.rival.energy.x.reach.02",
-      "mv.rival.energy.x.reach.01",
-      "mv.rival.energy.x.reach.04",
-      "mv.rival.energy.x.reach.03",
-      "mv.rival.energy.x.reach.02",
-      "mv.rival.energy.x.reach.01",
-      "mv.rival.energy.x.reach.04"
+      "strike.bolt_sweep_chest",
+      "strike.bolt_flick_gut",
+      "strike.bolt_fist",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_flick_gut",
+      "strike.bolt_fist",
+      "strike.bolt_blade",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_flick_gut",
+      "strike.bolt_fist",
+      "strike.bolt_blade",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_flick_gut",
+      "strike.bolt_fist",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_flick_gut",
+      "strike.bolt_fist",
+      "strike.bolt_sweep_chest",
+      "strike.bolt_flick_gut",
+      "strike.bolt_fist"
      ],
      "arms": [
       "free",
@@ -789,6 +887,14 @@
       "lead",
       "free",
       "lead",
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead",
+      "free",
       "lead",
       "lead"
      ]
@@ -797,18 +903,26 @@
    "protagonist": [
     {
      "blows": [
-      "mv.protagonist.energy.x.reach.02",
-      "mv.protagonist.energy.x.reach.01",
-      "mv.protagonist.energy.x.reach.04",
-      "mv.protagonist.energy.x.reach.03",
-      "mv.protagonist.energy.x.reach.01",
-      "mv.protagonist.energy.x.reach.04",
-      "mv.protagonist.energy.x.reach.03",
-      "mv.protagonist.energy.x.reach.01",
-      "mv.protagonist.energy.x.reach.02",
-      "mv.protagonist.energy.x.reach.03",
-      "mv.protagonist.energy.x.reach.04",
-      "mv.protagonist.energy.x.reach.01"
+      "strike.bolt_flat",
+      "strike.bolt_thrust",
+      "strike.bolt_sweep",
+      "strike.bolt_flick",
+      "strike.bolt_thrust",
+      "strike.bolt_sweep",
+      "strike.bolt_flick",
+      "strike.bolt_thrust",
+      "strike.bolt_flat",
+      "strike.bolt_flick",
+      "strike.bolt_sweep",
+      "strike.bolt_thrust",
+      "strike.bolt_flat",
+      "strike.bolt_flick",
+      "strike.bolt_thrust",
+      "strike.bolt_sweep",
+      "strike.bolt_flick",
+      "strike.bolt_thrust",
+      "strike.bolt_sweep",
+      "strike.bolt_flick"
      ],
      "arms": [
       "lead",
@@ -822,23 +936,39 @@
       "free",
       "lead",
       "lead",
-      "lead"
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead",
+      "lead",
+      "free"
      ]
     },
     {
      "blows": [
-      "mv.protagonist.energy.x.reach.02",
-      "mv.protagonist.energy.x.reach.01",
-      "mv.protagonist.energy.x.reach.03",
-      "mv.protagonist.energy.x.reach.04",
-      "mv.protagonist.energy.x.reach.01",
-      "mv.protagonist.energy.x.reach.02",
-      "mv.protagonist.energy.x.reach.03",
-      "mv.protagonist.energy.x.reach.04",
-      "mv.protagonist.energy.x.reach.01",
-      "mv.protagonist.energy.x.reach.02",
-      "mv.protagonist.energy.x.reach.03",
-      "mv.protagonist.energy.x.reach.01"
+      "strike.bolt_flat",
+      "strike.bolt_thrust",
+      "strike.bolt_flick",
+      "strike.bolt_sweep",
+      "strike.bolt_thrust",
+      "strike.bolt_flat",
+      "strike.bolt_flick",
+      "strike.bolt_sweep",
+      "strike.bolt_thrust",
+      "strike.bolt_flat",
+      "strike.bolt_flick",
+      "strike.bolt_thrust",
+      "strike.bolt_sweep",
+      "strike.bolt_flick",
+      "strike.bolt_thrust",
+      "strike.bolt_sweep",
+      "strike.bolt_flick",
+      "strike.bolt_thrust",
+      "strike.bolt_sweep",
+      "strike.bolt_flick"
      ],
      "arms": [
       "lead",
@@ -852,14 +982,40 @@
       "free",
       "lead",
       "lead",
+      "lead",
+      "lead",
+      "lead",
+      "free",
+      "lead",
+      "lead",
+      "lead",
+      "free",
       "lead"
      ]
     }
    ]
+  },
+  "after": {
+   "rival": [
+    [
+     0
+    ],
+    [
+     1
+    ]
+   ],
+   "protagonist": [
+    [
+     0
+    ],
+    [
+     1
+    ]
+   ]
   }
  },
  "pieces": {
-  "_about": "Each pool strike's striking limb and the socket it lands on, one row per strike id, shared by both fighters (each fighter's own key set plays it). The director fills a blur pattern's steps from these, and Tools checks them against Animation's manifests. limb: hand, foot, elbow, knee, shoulder, head or own. target: a socket of data/anim/sockets.json. path: the angle the limb travels (line, arc_in, arc_out, rise, drop, spin); it gives the piece its beat point (beat). sends, on a heavy: where it sends the rival when it ends a string (across, up, down, turned), for the stick's aim",
+  "_about": "Each pool strike's striking limb and the socket it lands on, one row per strike id, shared by both fighters (each fighter's own key set plays it). The director fills a blur pattern's steps from these, and Tools checks them against Animation's manifests. limb: hand, foot, elbow, knee, shoulder, head or own. target: a socket of data/anim/sockets.json. path: the angle the limb travels (line, arc_in, arc_out, rise, drop, spin); it gives the piece its beat point (beat). sends: where it sends the rival (across, up, down, turned), for the stick's aim",
   "strike.jab": {
    "limb": "hand",
    "target": "head",
@@ -1296,6 +1452,216 @@
    "limb": "hand",
    "target": "arm_r",
    "path": "drop"
+  },
+  "strike.su_ram": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "line",
+   "sends": [
+    "across"
+   ]
+  },
+  "strike.su_heel": {
+   "limb": "foot",
+   "target": "chest",
+   "path": "drop",
+   "sends": [
+    "down"
+   ]
+  },
+  "strike.su_knee": {
+   "limb": "knee",
+   "target": "gut",
+   "path": "line",
+   "sends": [
+    "across"
+   ]
+  },
+  "strike.su_plate": {
+   "limb": "hand",
+   "target": "head",
+   "path": "arc_in",
+   "sends": [
+    "turned"
+   ]
+  },
+  "strike.su_hook": {
+   "limb": "hand",
+   "target": "jaw",
+   "path": "arc_in",
+   "sends": [
+    "turned"
+   ]
+  },
+  "strike.su_elbow_heave": {
+   "limb": "elbow",
+   "target": "jaw",
+   "path": "rise",
+   "sends": [
+    "up"
+   ]
+  },
+  "strike.su_fist_heave": {
+   "limb": "hand",
+   "target": "gut",
+   "path": "rise",
+   "sends": [
+    "up"
+   ]
+  },
+  "strike.su_hammer": {
+   "limb": "hand",
+   "target": "head",
+   "path": "drop",
+   "sends": [
+    "down"
+   ]
+  },
+  "strike.su_edge_legs": {
+   "limb": "foot",
+   "target": "legs",
+   "path": "line",
+   "sends": [
+    "across"
+   ]
+  },
+  "strike.su_plate_arm": {
+   "limb": "hand",
+   "target": "arm_r",
+   "path": "drop",
+   "sends": [
+    "down"
+   ]
+  },
+  "strike.bolt_blade": {
+   "limb": "hand",
+   "target": "gut",
+   "path": "line"
+  },
+  "strike.bolt_fist": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "line"
+  },
+  "strike.bolt_flick_gut": {
+   "limb": "hand",
+   "target": "gut",
+   "path": "arc_out"
+  },
+  "strike.bolt_sweep_chest": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "arc_in"
+  },
+  "strike.blast_chest": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "line"
+  },
+  "strike.blast_gut": {
+   "limb": "hand",
+   "target": "gut",
+   "path": "line"
+  },
+  "strike.su_turn": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "spin",
+   "sends": [
+    "turned"
+   ]
+  },
+  "strike.su_drive": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "drop",
+   "sends": [
+    "down"
+   ]
+  },
+  "strike.su_edge_step": {
+   "limb": "foot",
+   "target": "gut",
+   "path": "line",
+   "sends": [
+    "across"
+   ]
+  },
+  "strike.su_blade_jaw": {
+   "limb": "hand",
+   "target": "jaw",
+   "path": "line",
+   "sends": [
+    "across"
+   ]
+  },
+  "strike.su_edge_unwind": {
+   "limb": "foot",
+   "target": "gut",
+   "path": "arc_out",
+   "sends": [
+    "turned"
+   ]
+  },
+  "strike.su_palm_heave": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "rise",
+   "sends": [
+    "up"
+   ]
+  },
+  "strike.su_ball_heave": {
+   "limb": "foot",
+   "target": "gut",
+   "path": "rise",
+   "sends": [
+    "up"
+   ]
+  },
+  "strike.su_hammer_arm": {
+   "limb": "hand",
+   "target": "arm_r",
+   "path": "drop",
+   "sends": [
+    "down"
+   ]
+  },
+  "strike.su_knee_legs": {
+   "limb": "knee",
+   "target": "legs",
+   "path": "arc_in",
+   "sends": [
+    "turned"
+   ]
+  },
+  "strike.su_elbow_jaw": {
+   "limb": "elbow",
+   "target": "jaw",
+   "path": "arc_in",
+   "sends": [
+    "turned"
+   ]
+  },
+  "strike.bolt_thrust": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "line"
+  },
+  "strike.bolt_flat": {
+   "limb": "hand",
+   "target": "gut",
+   "path": "line"
+  },
+  "strike.bolt_flick": {
+   "limb": "hand",
+   "target": "chest",
+   "path": "arc_out"
+  },
+  "strike.bolt_sweep": {
+   "limb": "hand",
+   "target": "gut",
+   "path": "arc_in"
   }
  },
  "lastPress": {
@@ -1931,23 +2297,43 @@
    ],
    "brawl.heavy": [
     {
-     "id": "strike.double_hammer",
+     "id": "strike.su_ram",
      "status": "posed"
     },
     {
-     "id": "strike.drop_kick",
+     "id": "strike.su_heel",
      "status": "posed"
     },
     {
-     "id": "strike.cross_arm_ram",
+     "id": "strike.su_knee",
      "status": "posed"
     },
     {
-     "id": "strike.spinning_elbow",
+     "id": "strike.su_plate",
      "status": "posed"
     },
     {
-     "id": "strike.spinning_heel",
+     "id": "strike.su_hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_elbow_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_fist_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_hammer",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_edge_legs",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_plate_arm",
      "status": "posed"
     }
    ],
@@ -2151,13 +2537,39 @@
    ],
    "brawl.launcher": [
     {
-     "id": "strike.double_hammer",
+     "id": "strike.su_ram",
      "status": "posed"
     },
     {
-     "id": "strike.cross_arm_ram",
+     "id": "strike.su_heel",
      "status": "posed"
     },
+    {
+     "id": "strike.su_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_plate",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_elbow_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_fist_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_hammer",
+     "status": "posed"
+    }
+   ],
+   "brawl.launcher.lower": [
     {
      "id": "strike.uppercut",
      "status": "posed"
@@ -2192,6 +2604,78 @@
     },
     {
      "id": "strike.roundhouse",
+     "status": "posed"
+    }
+   ],
+   "reach.bolt": [
+    {
+     "id": "strike.bolt_blade",
+     "status": "posed"
+    },
+    {
+     "id": "strike.bolt_fist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.bolt_flick_gut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.bolt_sweep_chest",
+     "status": "posed"
+    }
+   ],
+   "reach.blast": [
+    {
+     "id": "strike.blast_chest",
+     "status": "posed"
+    },
+    {
+     "id": "strike.blast_gut",
+     "status": "posed"
+    }
+   ],
+   "brawl.heavy.lower": [
+    {
+     "id": "strike.double_hammer",
+     "status": "posed"
+    },
+    {
+     "id": "strike.drop_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross_arm_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.spinning_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.spinning_heel",
+     "status": "posed"
+    }
+   ],
+   "brawl.reversal": [
+    {
+     "id": "strike.uppercut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.fist_rise",
+     "status": "posed"
+    },
+    {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.headbutt",
      "status": "posed"
     }
    ]
@@ -2827,23 +3311,43 @@
    ],
    "brawl.heavy": [
     {
-     "id": "strike.spinning_back_kick",
+     "id": "strike.su_turn",
      "status": "posed"
     },
     {
-     "id": "strike.double_palm",
+     "id": "strike.su_drive",
      "status": "posed"
     },
     {
-     "id": "strike.drop_kick",
+     "id": "strike.su_edge_step",
      "status": "posed"
     },
     {
-     "id": "strike.spinning_elbow",
+     "id": "strike.su_blade_jaw",
      "status": "posed"
     },
     {
-     "id": "strike.cross_arm_ram",
+     "id": "strike.su_edge_unwind",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_palm_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_ball_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_hammer_arm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_knee_legs",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_elbow_jaw",
      "status": "posed"
     }
    ],
@@ -3031,13 +3535,35 @@
    ],
    "brawl.launcher": [
     {
-     "id": "strike.double_palm",
+     "id": "strike.su_drive",
      "status": "posed"
     },
     {
-     "id": "strike.cross_arm_ram",
+     "id": "strike.su_edge_step",
      "status": "posed"
     },
+    {
+     "id": "strike.su_blade_jaw",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_edge_unwind",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_palm_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_ball_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_elbow_jaw",
+     "status": "posed"
+    }
+   ],
+   "brawl.launcher.lower": [
     {
      "id": "strike.rising_palm",
      "status": "posed"
@@ -3072,6 +3598,74 @@
     },
     {
      "id": "strike.body_hook",
+     "status": "posed"
+    }
+   ],
+   "reach.bolt": [
+    {
+     "id": "strike.bolt_thrust",
+     "status": "posed"
+    },
+    {
+     "id": "strike.bolt_flat",
+     "status": "posed"
+    },
+    {
+     "id": "strike.bolt_flick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.bolt_sweep",
+     "status": "posed"
+    }
+   ],
+   "reach.blast": [
+    {
+     "id": "strike.blast_chest",
+     "status": "posed"
+    },
+    {
+     "id": "strike.blast_gut",
+     "status": "posed"
+    }
+   ],
+   "brawl.heavy.lower": [
+    {
+     "id": "strike.spinning_back_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.double_palm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.drop_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.spinning_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross_arm_ram",
+     "status": "posed"
+    }
+   ],
+   "brawl.reversal": [
+    {
+     "id": "strike.rising_palm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.uppercut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_push",
      "status": "posed"
     }
    ]

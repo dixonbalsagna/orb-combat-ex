@@ -39,6 +39,24 @@ Orb moved the martial face buttons to three strengths: X light, Y medium, B heav
 - Sections 1 and 2 below were written before this: where they say heavy for the martial Y, read medium.
 - `second-pass-plan.md` was written for two strengths. Its B section, the charged light and the quick heavy are withdrawn; the cell addressing, the pairs, the tackle and the `pair` kind stand.
 
+## 0b. The nine cells (2026-10-12)
+
+Animation posed the ten heavies of each tier (rows 09 and 10 are provisional, and in its working tree only on this date) and the energy pieces in reach, and the generator (version 13) reads its four packs: `rival7` and `protag10` through `tierWaves` in `identity.json`, `rival8` and `protag11` through `energyWaves` and the rules of `energy.reach.posed`. The note is `../nine-cells.md`.
+
+| Cell | The rival: rows, posed, derived, waiting | The Protagonist |
+| :--- | :--- | :--- |
+| B | 10: 10, 0, 0 | 10: 10, 0, 0 |
+| B, stand-ins (now B's fallback) | 5: 0, 5, 0 | 5: 0, 5, 0 |
+| RB + X in reach | 4: 4, 0, 0 | 4: 4, 0, 0 |
+| RB + X mashed: two loops of twenty | 2: 0, 2, 0 | 2: 0, 2, 0 |
+| RB + Y in reach | 2: 2, 0, 0 | 2: 2, 0, 0 |
+| All five stances | 128: 90, 23, 15 | 128: 85, 28, 15 |
+
+- The table of section 0 is superseded for B.
+- A run of mashed bolts is a loop: the generator checks the join, so it keeps Legal's e09 however long it is played (`cells.json`, `loop`).
+- `--check` also tests the hand-kept data: each energy key set named in `identity.json` is a row of its pack, on the rule's path and place.
+- The energy ids are Animation's. A rule may carry `strikeNow` while a rename is on its way; none does now.
+
 ## 1. The martial arts stance, regenerated on Animation's data
 
 The generator no longer uses my reading of each strike. It reads the tip, the path and the pose flags from Animation's manifests, and how far a key set can be re-aimed from `data/anim/tips.json`. My strike table and my guessed neighbour table are gone from `parts.json`.

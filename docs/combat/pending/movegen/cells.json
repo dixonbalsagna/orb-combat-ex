@@ -302,7 +302,7 @@
       ]
      },
      "_without": "posed strikes left out of a fighter's stand-ins. The Protagonist's spinning heel lands on the chest, as three of his others do, and it is a spin, as two are: with it, a mashed B could reach a point where no stand-in may follow under Legal's string rules. Without it his five never run dry (the EP's ruling)",
-     "what": "stand-ins for B until the tier is posed: his posed mediums that only read on a long wind-up, played at B's wind-up. Not locked: they go as the tier's own poses arrive",
+     "what": "the fallback for B: his posed mediums that only read on a long wind-up, played at B's wind-up when no heavy of the tier may be thrown. They stood in for the whole tier until Animation posed its first eight a fighter. Not locked",
      "filter": {
       "weight": [
        "heavy"
@@ -700,7 +700,6 @@
        "point_blank"
       ],
       "count": 4,
-      "statusCap": "derived",
       "asks": [
        "E1",
        "R1"
@@ -781,12 +780,13 @@
       "kind": "run",
       "from": "energy.x.reach",
       "count": 2,
-      "length": 12,
+      "length": 20,
+      "loop": true,
       "asks": [
        "E1",
        "R1"
       ],
-      "what": "a mashed run of point-blank bolts, ordered by Legal's e09: two sample runs of twelve, with the arm that throws each. The director may play one, or order its own by the same rules (parts.json reach.run)",
+      "what": "a mashed run of point-blank bolts, ordered by Legal's e09: two runs of twenty, with the arm that throws each. Each is a loop: the director picks one and plays it round for as long as the mash lasts, or orders its own by the same rules (parts.json reach.run)",
       "needs": [
        {
         "who": "Animation",
@@ -868,7 +868,6 @@
        "blast"
       ],
       "count": 2,
-      "statusCap": "derived",
       "asks": [
        "E1",
        "R1",

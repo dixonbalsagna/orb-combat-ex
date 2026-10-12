@@ -2,6 +2,8 @@
 
 Owner: Combat and Choreography. Date: 2026-10-04. Status: parked data, nothing in the tree is edited. For Encounter's `docs/director/brawl-plan.md` (what it asks of Combat, section 5). Built on the live `data/combat/recipes.json` at `d24c5c1`.
 
+**Since (2026-10-12):** `recipes.brawl.json` names a pool for every cell of the brawl, with the heavy tier and the energy pieces in them. The current note is `nine-cells.md`.
+
 Two files: `recipes.brawl.json`, the next version of the live recipes, and `channel.rival.json`, On the Chin's beats. The generated cells (`../moveset-generator.md`) are held until Orb answers on the identity split, so everything here is made from the strikes that are posed today.
 
 ## 1. What runs on the live file, unchanged

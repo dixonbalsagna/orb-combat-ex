@@ -1,4 +1,10 @@
-# Parked data for Encounter's step 2b
+# Combat's parked data
+
+**Start here (2026-10-12): `nine-cells.md`.** It is the next thing to land: `recipes.brawl.json` with a pool for every cell of the brawl, the heavy tier and the energy pieces in them, how it was measured, the apply list, and the lists for Tools and Animation. The change that reads it is `../brawl-hook.md`, for Encounter.
+
+`retired/` holds parked files that have landed or been overtaken, with a README. The step 2b files described below are there now; the text is kept as the record.
+
+## Parked data for Encounter's step 2b (landed)
 
 Merged, ready-to-apply copies of the three combat data files, prepared on 2026-10-01 from the live files. They are parked here because they change the combat data hash and the goldens; files under `docs/` are not loaded or hashed by the sim. The EP says when to apply them. They replace the earlier Q4 copies.
 
@@ -84,11 +90,11 @@ Merged, ready-to-apply copies of the three combat data files, prepared on 2026-1
 
 ## The split
 
-`split-rename.py`: Combat's part of the rename to PROTAGONIST and RIVAL, as exact text edits on `data/combat` (a dry run by default, `--apply` to write). The change list is `apply-order.md` section 9. For the window with Simulation.
+`retired/split-rename.py` (run in the rename window): Combat's part of the rename to PROTAGONIST and RIVAL, as exact text edits on `data/combat` (a dry run by default, `--apply` to write). The change list is `apply-order.md` section 9. For the window with Simulation.
 
 ## Generated movesets
 
-`movegen/`: the moveset generator's inputs (`parts.json`, `identity.json`, `cells.json`, `lock.json`), its reference script, the generated movesets for both fighters over all five stances (128 rows each; the martial arts stance on three strengths, `three-strengths.md`; the launcher and energy in reach for the slice C2t, with a plan for vicious, `c2t-content.md`) and the review sheet. Its README has the counts and the keys for Tools. Parked; design in `../moveset-generator.md`.
+`movegen/`: the moveset generator's inputs (`parts.json`, `identity.json`, `cells.json`, `lock.json`), its reference script, the generated movesets for both fighters over all five stances (128 rows each; the martial arts stance on three strengths, `three-strengths.md`; the launcher and energy in reach for the slice C2t, with a plan for vicious, `c2t-content.md`; the heavy tier and the energy pieces as Animation posed them, `nine-cells.md`) and the review sheet. Its README has the counts and the keys for Tools. Parked; design in `../moveset-generator.md`.
 
 ## The launch pair: readiness and apply order
 
@@ -108,7 +114,7 @@ One page for Orb: what each of the six waves adds in plain words, its new-pose c
 
 ## The alchemist's recipes, the traded-blows set piece and the charges (parked; the rules are Game Design's)
 
-`brawl-prep.md`, `recipes.brawl.json` and `channel.rival.json`: Combat's data for Encounter's brawl (`docs/director/brawl-plan.md`). The next version of the live recipes (a path on every piece, the beat point by path, and for three strengths a `brawl` block that maps each press of X, Y and B to a pool, the mediums, the heavies as stand-ins, the `burst` block and a stated `fallback`: `movegen/three-strengths.md` section 9) and On the Chin's beats with the `chin_plant` cue. Slice B1 runs on the live file unchanged. Not moved.
+`brawl-prep.md`, `recipes.brawl.json` and `channel.rival.json`: Combat's data for Encounter's brawl (`docs/director/brawl-plan.md`). The next version of the live recipes (a path on every piece, the beat point by path, and for three strengths a `brawl` block that maps each press of X, Y and B to a pool, the mediums, the `burst` block and a stated `fallback`: `movegen/three-strengths.md` section 9; since 2026-10-12 the heavy tier on B with the stand-ins as its fallback, the launcher by send and energy in reach: `nine-cells.md`) and On the Chin's beats with the `chin_plant` cue. Slice B1 runs on the live file unchanged. Not moved.
 
 `recipes.slice11.json` (**landed** at `5493345`, kept as the record): the next version of the live `data/combat/recipes.json`, for Encounter's slice 11 (`../alchemist-recipes.md` section 6): a `pieces` block with each pool strike's limb and target, two more blur patterns (reap, breach) with `patternGates`, and the blur's two forms as Game Design ruled them. Not moved.
 

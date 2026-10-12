@@ -5,6 +5,8 @@ Answers `docs/design/brawl-second-pass.md` as rewritten for three strengths (`97
 
 The generator is version 9. `--check` passes (files, Legal's rows, strings) and `--self-test` passes 58 cases. Every row below is in `review-sheet.md`, which is generated.
 
+**Since (2026-10-12):** B's pool is the heavy tier as Animation posed it, ten a fighter, and the stand-ins are its fallback (`../nine-cells.md`).
+
 **Since this note was first written:** Legal passed all 41 rows with conditions, and the pools by button are in `../recipes.brawl.json`. Sections 8 and 9 have both.
 
 ## 1. What changed, in one table

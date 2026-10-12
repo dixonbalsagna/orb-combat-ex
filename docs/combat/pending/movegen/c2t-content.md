@@ -5,6 +5,8 @@ Answers `docs/design/brawl-second-pass.md` (`51846cc5`): section 3 (the launcher
 
 The generator is version 12. `--check` passes on all three lines and `--self-test` passes 79 cases.
 
+**Since (2026-10-12):** Animation has posed the ten heavies of each tier and all six energy pieces in reach a fighter, and the generator is version 13. The launcher draws on the tier, the stand-ins are B's fallback, and the counts below are older. See `../nine-cells.md`.
+
 **Legal has screened sections 1 and 2** (`docs/legal/launcher-and-reach-screen.md`, `e9a57791`): the 8 bolts, the 4 blasts and the launcher pass; the rival's lit fist is allowed; R1 is its e08. Its answers are folded in below. Rows a fighter: 128 (rival 74 posed, 25 derived, 29 waiting; Protagonist 69, 30, 29): the 120 of before, 6 energy pieces in reach and 2 sample runs of them.
 
 ## 1. The launcher (C2t)
