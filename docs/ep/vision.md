@@ -927,3 +927,11 @@ Standing from this:
 - The site does not come back at the first flash pass. It comes back when the build is a large step beyond the one taken down: the three-strength brawl tuned, the reworked city, and fighters travelling the depth band, with the whole flash set passing on that build. No date is set; quality over speed.
 - The held light attack's flurry stays as Orb designed it and likes it.
 - A design rule: each of the three attacks (light, medium, heavy) has a meaningful use in each of three ways of pressing: held, tapped, and mashed rapidly. None of the nine is a trap or a flourish.
+
+## Well-timed taps are rewarded (Orb, 2026-10-12)
+
+Asked whether rewarding well-timed taps is the direction for the tapped column of the nine-cell table:
+
+> yes, reward well-timed taps, if the player taps at the moment they land a hit they get a perfect followup --- please brainstorm if this could be improved
+
+Standing from this: the timing anchor is the moment the player's own hit lands; a tap on it earns a perfect follow-up. The details are open to improvement, to be proposed to Orb.
