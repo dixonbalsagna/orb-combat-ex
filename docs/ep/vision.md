@@ -935,3 +935,17 @@ Asked whether rewarding well-timed taps is the direction for the tapped column o
 > yes, reward well-timed taps, if the player taps at the moment they land a hit they get a perfect followup --- please brainstorm if this could be improved
 
 Standing from this: the timing anchor is the moment the player's own hit lands; a tap on it earns a perfect follow-up. The details are open to improvement, to be proposed to Orb.
+
+## Four fighters soon; destruction is a priority; the "sensitivity" remark was sarcasm (Orb, 2026-10-12)
+
+> just clarifying: right now we're building a moveset and calibrating balance on two generic stand-in characters, once we start introducing actual fighters intended for the release version how will the balance be affected? how much retooling will need to happen? Ideally each character should have their own 'flavor' of attack animations and movesets, with a large common pool of attacks to pull from.
+>
+> Can we establish a workflow for the characters so I can get at least four into the playable build soon?
+>
+> footnote: I was being sarcastic about the "sensitivity" ruling that legal seems to be taking at face value. now I'm in a weird spot because you took my ruling seriously and legal seems to be making calls based on it. it really was just an extraordinarily out-of-place piece of writing "take the towers down" or whatever, but I will resolve to be careful in the future about saying things that may be taken overly literally or affect future rulings. realistic building destruction is absolutely a priority, gaps between floors without realistic looking supports will make players lose their suspension of disbelief, so lets get some kind of compromise in there so smashing opponents through multiple buildings is climactic, catastrophic, visually appealing, and part of the gameplay hook. I just get frustrated that the quality of writing I'm presented with for forward facing things like web-pages and in-game dialogue seems so rushed and bizarre.
+
+Standing from this:
+- **Withdrawn:** the rule of 2026-10-06 against showing or describing buildings falling, breaking or being brought down. It was the EP's over-literal reading of a sarcastic remark about one bad line of copy. Every ruling built on it is to be re-made without it.
+- **Building destruction is a priority and a hook:** smashing an opponent through several buildings is to be climactic, catastrophic and good to look at, and part of how the game is played. Buildings must look structurally believable, including where floors are opened or cut: real-looking supports.
+- **Fighters:** each has his own flavour of attack animations and moveset, drawn from a large common pool. A workflow is wanted that gets at least four fighters into the playable build soon. The four of the vision: the Protagonist, the Anti-hero, the Galactic Tyrant, the Demon Cyborg.
+- **Writing:** Orb finds the forward-facing writing shown so far (web pages, in-game dialogue) rushed and bizarre. Forward-facing text is to be written with care and seen by Orb before it is used.
