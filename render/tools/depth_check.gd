@@ -6,6 +6,8 @@ extends SceneTree
 ##   the two at different depths show their lane cues; a close pair near the ground at different depths has the pair's
 ##   mark from one to the other, and it goes when they are apart, level in depth, or in the air;
 ## - a beam in depth (the sim's Beam.oz and zs) lies along its true line: its middle and its axis are the line's;
+## - a particle is drawn at the depth it was made at (SimFxView.Part.z) in a match with depth on, and on the plane with
+##   depth off whatever depth it carries;
 ## - a fighter in the middle street behind a block counts as hidden (so the pane opens the block), and one standing in
 ##   a crossing, seen down the avenue, does not.
 ##   godot --headless --path . --script res://render/tools/depth_check.gd
@@ -107,6 +109,24 @@ func _run() -> void:
 		ok = ok and t.basis.y.length() >= a3.distance_to(e3) and t.basis.determinant() > 0.0
 		ok = ok and is_equal_approx(t.basis.x.length(), t.basis.z.length()) and t.basis.x.z == 0.0
 	_expect(ok, "a beam in depth (from %.0f to %.0f) lies along its true line: each layer's middle and axis are the line's, its section square and across the screen" % [za, ze])
+	# --- a particle at a depth
+	var pv: ParticleView = main.pane.particles
+	var part := SimFxView.Part.new()
+	part.type = "spark"
+	part.x = host.camera_x(1.0)
+	part.y = 200.0
+	part.vx = 100.0
+	var fake := SimFxView.new(1)
+	fake.parts = [part]
+	part.z = -300.0
+	var was_deep: bool = pv.deep
+	pv.deep = false
+	pv.update(fake, null, host.camera_x(1.0), 1.15, 4000.0, [])
+	var flat: float = pv._buf[11]
+	pv.deep = true
+	pv.update(fake, null, host.camera_x(1.0), 1.15, 4000.0, [])
+	_expect(pv.count == 1 and not was_deep and flat == RenderLook.Z_PARTICLES and is_equal_approx(pv._buf[11], RenderLook.Z_PARTICLES - 300.0), "a particle made at depth -300: with depth off it is drawn on the plane as ever (%.0f), with depth on at its depth (%.0f); the pane had depth off" % [flat, pv._buf[11]])
+	pv.deep = was_deep
 	# --- depth on: the tool's own match
 	main.start_match(4, {"p1": false, "p2": false}, {"intro": "skip", "depth": true})
 	host = main.host

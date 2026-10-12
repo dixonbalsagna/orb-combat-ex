@@ -12,7 +12,7 @@ Owner: Rendering and Technical Art. For the EP, on Orb's ask that the depth axis
 - **One thing was wrong in my own code and is fixed in this batch:** every beam was drawn on the plane, whatever depth the sim fired it at.
 - **One thing is new in this batch:** the pair's mark on the ground. It is drawn only in a match with depth on.
 - **Everything in this batch draws nothing new with depth off.** A beam with no depth is placed by the old formula, to the bit, and the mark is never set.
-- **Still to build, with their owners, are in the last table.** The two that matter most: the sim's effect particles carry no depth (Simulation), and the patch that opens the foreground row must open the blocks too (Rendering, after Orb or Camera picks how a tower is opened).
+- **Still to build, with their owners, are in the last table.** Since this was written: Simulation gave the effect particles a depth and Rendering draws them at it in a depth-on match; and Orb picked open floors for a tower in front of the fight, which is built (`open-floors.md`), with the patch working through every row for the low buildings.
 
 ## 1. Size and movement on screen
 
@@ -51,7 +51,7 @@ Seen in stills and asserted by `render/tools/depth_check.gd`.
 | What | What is seen | Whose |
 |---|---|---|
 | **Beams** | Drawn on the plane at any depth. By the numbers, a beam fired in the middle street would be drawn nearly twice the fighter's scale and would not leave from his hands. Not seen: no pose fires a beam in depth | Rendering. **Fixed in this batch** |
-| **The sim's effect particles** (sparks, rings, dust, the shock) | `SimFxView.Part` has no depth, so `particle_view.gd` draws every one on the plane. In the middle street a hit's sparks would be drawn 1,000 units in front of the fighters: nearly twice their size, and shifted toward the frame's edge | **Simulation:** a `z` on the part, from the event's (`FxEvent.z` is there). Then one line of mine |
+| **The sim's effect particles** (sparks, rings, dust, the shock) | They had no depth, so every one was drawn on the plane: in the middle street a hit's sparks would have been 1,000 units in front of the fighters, nearly twice their size | **Done, 2026-10-12.** Simulation gave `SimFxView.Part` and the damage numbers a depth (9a8b3a2c). In a match with depth on Rendering draws them at it, and its own impact particles at their event's. With depth off they stay on the plane: a brunt launch's events carry a depth too, and moving those is a look change for another day |
 | **Size** | Section 1 | **Camera** |
 | **The angle of the pair's line** | Section 1: 6 pixels and 3%. The lane cue does not show under 40 units of depth | Rendering. **The pair's mark, in this batch** |
 | **The crowd at depth** | In the middle and back streets the fighters stand among grey figures of their own size. Neither is hazed, and at half size the fighters are hard to pick out | Rendering: give the crowd the rows' haze by its depth (a look change: it needs the flash clip and Orb's eye) |
@@ -98,10 +98,10 @@ Orb's ruling for the foreground row was one see-through patch sized to the actio
 
 | What | Who | When |
 |---|---|---|
-| A depth on the sim's effect particles (`SimFxView.Part.z`) | Simulation, then Rendering's one line | Before depth is switched on: every hit off the plane is wrong without it |
+| A depth on the sim's effect particles (`SimFxView.Part.z`) | Simulation, then Rendering's one line | **Done** (9a8b3a2c and the batch after it) |
 | The camera closes on the pair's depth, or zooms; it keeps a pair in a crossing near the middle of the frame | Camera | Before the middle street is fought in |
-| The patch through every row in front of the action | Rendering | When the EP says; needs the flash clips |
-| How a tower opens under a large patch (a window, or open floors) | Orb, from motion; Camera and Rendering build it | With the patch |
+| The patch through every row in front of the action | Rendering | **Done** with depth on, for buildings under 5 floors (`open-floors.md`). With depth off the rows behind keep the hole and stubs |
+| How a tower opens when the fight is behind it | Orb picked open floors (2026-10-12) | **Done:** `open-floors.md` |
 | The crowd hazed by its depth | Rendering | A small look batch, with the flash clip |
 | The ground field reads the sim's rows of ground in depth | Rendering | With L4's first crater in depth |
 | A shadow on the roof he stands on | World's read, then Rendering | With roofs as a place to stand |

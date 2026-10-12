@@ -272,6 +272,7 @@ func _run() -> void:
 	var r_on: bool = host.vfx.reduced_flashing and host.vfx.flashes.reduced
 	var tm: ShaderMaterial = main.pane.planet._terrain_mat
 	var calm_on: Array = [tm.get_shader_parameter("heat_gain"), tm.get_shader_parameter("char_gain")]
+	var ease_on: Array = [tm.get_shader_parameter("calm_ease"), tm.get_shader_parameter("crater_now"), host.S.T]
 	var low_none: bool = not host.ask_flash("body_hit") and not host.ask_flash("head_flash", cyan) and not host.ask_flash("cue_flare", cyan)
 	var big_one: bool = host.ask_flash("guard_flash", cyan) and not host.ask_flash("beam", cyan) and not host.ask_flash("beam_clash")
 	_expect(r_on and low_none and big_one, "UI's Reduce flashing option puts the register in its reduced mode: no body white, head flash or cue flare, and one big flash a second (a guard flash granted, then a beam and a clash refused)")
@@ -280,6 +281,7 @@ func _run() -> void:
 		main.frame(1.0 / 60.0)
 	_expect(not host.vfx.reduced_flashing and not host.vfx.flashes.reduced, "... and the register is back to its full budget with the option off")
 	_expect(calm_on == [RenderLook.HEAT_CALM, RenderLook.CHAR_CALM] and tm.get_shader_parameter("heat_gain") == 1.0 and tm.get_shader_parameter("char_gain") == 1.0, "under it a groove's glow and char are drawn calm (%s of their strength), and at full strength again with it off" % str(calm_on))
+	_expect(ease_on[0] == 1.0 and ease_on[1] != null and is_equal_approx(float(ease_on[1]), float(ease_on[2])) and tm.get_shader_parameter("calm_ease") == 0.0 and tm.get_shader_parameter("crater_calm_s") == RenderLook.CRATER_CALM_S, "under it a new crater's colours spread in over %.1f s (the ground shader's calm ease is on and its clock is the match's time); with it off they are there at once, as ever" % RenderLook.CRATER_CALM_S)
 	# 7. The split divider's slam flash (UI draws it and asks once as a slam begins): the HUD's flash_fn is the host's.
 	main.start_match(4, {"p1": true, "p2": true}, {"intro": "skip"})
 	main.frame(1.0 / 60.0)

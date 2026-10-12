@@ -18,6 +18,7 @@ var _after_skip: Dictionary = {}        # the after-images past a fighter's five
 
 var _buf := PackedFloat32Array()
 var count: int = 0
+var deep: bool = false                  # a match with depth on (the pane sets it): particles are drawn at the depth they were made at. With depth off they stay on the plane, as ever (a brunt launch's events carry a depth too)
 
 
 func _ready() -> void:
@@ -114,7 +115,7 @@ func _fill(list: Array, n: int, cam_x: float, z: float, lim: float, views: Array
 		var cy: float = p.y
 		var inner: float = 0.0
 		var flat: bool = false
-		var pz: float = zz
+		var pz: float = zz + (p.z if deep else 0.0)   # the depth it was made at (SimFxView.Part.z; 0 on the fighter plane)
 		var cz: float = 0.0
 		var cw: float = 0.0
 		match p.type:

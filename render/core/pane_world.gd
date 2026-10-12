@@ -160,6 +160,7 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	_sky_react(host, cam_x)
 	vfx_layer.update(host, a, cam_x, cam.z, vp.x)
 	beams.update(S, cam_x, cam.z, host)
+	particles.deep = S.depthOn
 	particles.update(host.fxv, host.impact, cam_x, cam.z, cam_rig.half_width(vp.x, RenderLook.Z_PARTICLES), fighter_views)
 
 

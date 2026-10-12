@@ -197,6 +197,36 @@ Camera read the collapse fly-by as a window grid flipping whole house fronts, an
 
 With the windows held fully gone for the whole fly-by, the second still reads 3.5 on the same seven changes. So the analyser counts the house bodies against the sunset and the grass. The windows break a front into mixed lighter and darker pixels; a plain wall flips the whole front one way, which is worse. The margin on this clip cannot come from fading detail: the levers are the camera's scroll in towns and the pursuit's speed through one.
 
+## The collapse in reduced mode: the crater (2026-10-12)
+
+On the shorter city with three streets the collapse clip passed in normal mode and failed in reduced mode. The worst second is the clip's first blast: two blasts three ticks apart at a tower's foot, the tower gone to a shell and then down.
+
+**Which layer it hangs on.** Three scratch exports of aaa93683, each with one layer of that second held still, by Tools' `check-clip` (primary reading, the area threshold 15% lower, the two-second memory; the gate is 2.5 and 3):
+
+| What is held still | Normal | Reduced |
+| :-- | :-- | :-- |
+| Nothing (the game as it is) | 2.5 / 2.5 / 2.5, pass | 3.5 / 3.5 / 2.5, fail |
+| **The ground: no crater earth, ejecta or char** | 2.5 / 2.5 / 2.5, pass | **2.5 / 2.5 / 2.5, pass** |
+| The tower's face: no stage look, no windows out | 3.5 / 3.5 / 3, fail | 3 / 3.5 / 3, fail |
+| The tower's top: never cut down, never gone | 3.5 / 3.5 / 2.5, fail | 2.5 / 3.5 / 2.5, fail |
+
+- **Only the ground gives a pass in both modes.** Holding the tower's face or its top makes normal mode worse: a whole face that stays lit against the dusk flips the other way.
+- **Why reduced mode was the worse one.** In normal mode a fresh crater is under its own bright glow and darkens as it cools, over seconds. Reduced mode draws that glow at three tenths (`HEAT_CALM`), and a blast's crater has no glow at all (only a beam's has), so the street went from pale pavement to dark earth in one tick, twice in a tenth of a second. The second darkening was the change that took the count over.
+
+**The ease, reduced mode only** (`RenderLook.CRATER_CALM_S`, `ground.gdshaderinc` `crater_new`). Under reduced flashing or reduced motion a new crater keeps the ground's own colour at first. Its earth, its ejecta and its char spread from its centre to the edge of its apron over 1.5 s of match time. The bowl's shape is there at once: the street bends down, and its colour follows. Ground that an older crater already coloured is not given back. Normal mode is not changed: the shader takes the old path, and its counted changes are the same, tick for tick.
+
+| Collapse, on an export of 6d3a945d | Normal | Reduced |
+| :-- | :-- | :-- |
+| Before | 2.5 / 2.5 / 2.5, pass | 3 / 3.5 / 2.5, fail |
+| With the ease | 2.5 / 2.5 / 2.5, pass | **2.5 / 2.5 / 2.5, pass** |
+
+- **It passes at the gate, with nothing to spare.** Half a flash either way is this clip's noise.
+- **The other reduced clips with craters read the same with it as without it:** signature 2.5 / 2.5 / 2.5 and clash 2 / 2 / 2, both a pass. The AI matches and the mash were not run.
+- **What it removes** is the darkening counted at tick 99. A smaller one is counted at tick 130, when the spread has covered enough ground; it falls outside the worst second.
+- **It does not make every tick small.** At tick 91, 18% of the screen still darkens in one tick where it was 22%: most of that is the tower's face, which the table above says not to touch.
+- **What it costs the look in reduced mode:** for a second and a half a fresh crater is a dent in painted street, lane marks and all, before it is earth.
+- `tools/flash_reg_check.gd` asserts the ease is on under UI's Reduce flashing and off without it.
+
 ## The capture hook for Tools' frame analyser
 
 Tools' analyser measures pixels against the standard (`docs/tools/flash-check.md`). It needs clips that are exactly one tick a frame, so the game offers a hook, **only** when started with `--flashcap` or, on the web, `/play/?flashcap=1` (`render/tools/flash_capture.gd`, `FlashCapture`; the contract is at the top of `tools/flash/capture-web.mjs`). Normal play never makes one: without the argument the page has no `window.__flashcap`.

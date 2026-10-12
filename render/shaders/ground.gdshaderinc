@@ -11,6 +11,9 @@ uniform float far_scale = 1.0;       // WS: the far relief's depth wavelengths g
 uniform float sea_base = -30.0;      // WorldWater.RESERVOIR_BASE: base ground below this is the sea
 uniform float wet_min = 0.5;         // WorldWater.MIN_DEPTH: water shallower than this counts as dry
 uniform float dent_min = 6.0;        // a dent deeper than this colours as a crater floor (6 x WS)
+uniform float calm_ease = 0.0;       // 1 under reduced flashing: a new crater's colours spread in (crater_new); 0: at once, as ever
+uniform float crater_now = 0.0;      // the match time (SimState.T), for a crater's age; set only while calm_ease is on
+uniform float crater_calm_s = 1.5;   // RenderLook.CRATER_CALM_S
 uniform float col_w = 8.0;
 uniform float world_w = 9600.0;
 uniform float rim_in = 0.3;          // WorldCrater.RIM_IN
@@ -142,6 +145,38 @@ vec3 ground_offset3(int i, float xw, float z) {
 
 float ground_offset(int i, float xw, float z) {
 	return ground_offset3(i, xw, z).x;
+}
+
+// Under reduced flashing: how much of its own colour the ground at column i, world x xw, depth z still keeps under a
+// crater dug moments ago (1: all of it; 0: none, the crater's colours as ever). A crater's colours spread from its
+// centre to the edge of its apron over crater_calm_s of match time (the record's time is the sim's). Ground that any
+// crater has already coloured is not given back: the least of the craters over a point decides.
+float crater_new(int i, float xw, float z) {
+	float keep = 1.0;
+	bool any = false;
+	for (int k = 0; k < 6; k++) {
+		float fi = gf(i, 6 + k);
+		if (fi < 0.0) {
+			break;
+		}
+		int ci = int(fi + 0.5);
+		vec4 a = texelFetch(craters, ivec2(ci, 0), 0);
+		vec4 b = texelFetch(craters, ivec2(ci, 1), 0);
+		float dx = xw - a.x;
+		dx -= world_w * round(dx / world_w);
+		float rho = sqrt(dx * dx + z * z) / max(a.y * (1.0 + rim_out) + abs(b.x), 1.0);   // 1 at the edge of its apron (and its furrow's tail)
+		if (rho >= 1.15) {
+			continue;
+		}
+		float u = (crater_now - b.w) / crater_calm_s;
+		float kk = 0.0;   // an older crater: its colours are all there
+		if (u >= 0.0 && u < 1.0) {
+			kk = smoothstep(u - 0.08, u + 0.08, rho);
+			any = true;
+		}
+		keep = min(keep, mix(kk, 1.0, smoothstep(1.0, 1.15, rho)));
+	}
+	return any ? keep : 0.0;
 }
 
 // Far relief noise (n, dn/dx, dn/dz), n in about [-1, 1]: whole harmonics of the planet's circumference along x, so it

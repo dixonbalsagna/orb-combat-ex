@@ -233,7 +233,7 @@ func _floats(host: SimHost) -> void:
 	var cam: Camera3D = main.cam_rig
 	var cx: float = main.view_cam_x
 	for fl in host.fxv.floats:
-		var p: Vector2 = cam.unproject_position(Vector3(SimWrap.sdx(cx, fl.x), fl.y, 0.0))
+		var p: Vector2 = cam.unproject_position(Vector3(SimWrap.sdx(cx, fl.x), fl.y, fl.z if host.S.depthOn else 0.0))   # at the hit's depth, in a match with depth on
 		var fs: int = int(round(14.0 + minf(10.0, fl.txt.length() * 2.0)))
 		var c: Color = RenderLook.col(fl.col)
 		_text(UiData.display_text(str(fl.txt)), p, fs, Color(c, 1.0 - fl.t / 0.9), 0)

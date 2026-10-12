@@ -84,7 +84,7 @@ func _crater(e) -> void:
 	var sp: float = (260.0 + 90.0 * sqrt(E)) * SWS
 	for k in range(clampi(int(3.0 + E * 2.0), 3, 30)):
 		var off: float = _re.range_(-0.6, 0.6) * e.r
-		var p := _part("deb", e.x + off, e.y, col)
+		var p := _part("deb", e.x + off, e.y, col, e.z)
 		p.vx = (1.0 if off >= 0.0 else -1.0) * _re.range_(0.3, 1.0) * sp
 		p.vy = _re.range_(0.6, 1.4) * sp
 		p.grav = 900.0
@@ -92,7 +92,7 @@ func _crater(e) -> void:
 		p.size = _re.range_(3.0, 7.0 + sqrt(E)) * SWS
 	for k in range(clampi(int(4.0 + e.r / 20.0), 4, 18)):
 		var side: float = 1.0 if k % 2 == 0 else -1.0
-		var p := _part("dust", e.x + side * e.r * _re.range_(0.8, 1.25), e.y + e.rim, "#9b8f7e")
+		var p := _part("dust", e.x + side * e.r * _re.range_(0.8, 1.25), e.y + e.rim, "#9b8f7e", e.z)
 		p.vx = side * _re.range_(20.0, 90.0) * SWS
 		p.vy = _re.range_(20.0, 100.0) * SWS
 		p.life = _re.range_(1.0, 2.2)
@@ -103,7 +103,7 @@ func _crater(e) -> void:
 
 ## A crater's shock ring on the ground, and the heat a beam leaves in it. These stay when VFX throws the ejecta.
 func _crater_ring(e, E: float) -> void:
-	var s := _part("shock", e.x, e.y + 2.0, "#f2e6c9")
+	var s := _part("shock", e.x, e.y + 2.0, "#f2e6c9", e.z)
 	s.r = 0.3 * e.r
 	s.gr = 3.2 * e.r
 	s.life = 0.45
@@ -119,7 +119,7 @@ func _scorch(e) -> void:
 		return
 	var col: String = "#ffe08a" if P > 2.5 else "#ff9a3c"
 	for k in range(1 + int(P * 0.8)):
-		var p := _part("spark", e.x + _rm.range_(-0.5, 0.5) * hw, e.y + 3.0, col)
+		var p := _part("spark", e.x + _rm.range_(-0.5, 0.5) * hw, e.y + 3.0, col, e.z)
 		p.vx = _rm.range_(-60.0, 60.0)
 		p.vy = _rm.range_(140.0, 240.0 + 70.0 * P)
 		p.grav = 120.0
@@ -134,14 +134,14 @@ func _slide_dust(e) -> void:
 	var paved: bool = e.variant == "paved"
 	var hw: float = e.w * 0.5
 	for k in range(clampi(int(2.0 + e.spd / 400.0), 2, 8)):
-		var p := _part("dust", e.x + _re.range_(-1.0, 1.0) * hw, e.y, "#8f8a84" if paved else "#9b8f7e")
+		var p := _part("dust", e.x + _re.range_(-1.0, 1.0) * hw, e.y, "#8f8a84" if paved else "#9b8f7e", e.z)
 		p.vx = _re.range_(-60.0, 60.0) * SWS
 		p.vy = _re.range_(40.0, 160.0) * SWS
 		p.life = _re.range_(0.8, 1.8)
 		p.size = _re.range_(14.0, 30.0) * SWS
 		p.drag = 0.02
 	for k in range(clampi(int(e.spd / 300.0), 1, 6)):
-		var c := _part("deb", e.x + _re.range_(-0.6, 0.6) * hw, e.y + 4.0, "#6d6a66" if paved else "#6e5c46")
+		var c := _part("deb", e.x + _re.range_(-0.6, 0.6) * hw, e.y + 4.0, "#6d6a66" if paved else "#6e5c46", e.z)
 		c.vx = _re.range_(-1.0, 1.0) * (120.0 + 0.2 * e.spd)
 		c.vy = _re.range_(150.0, 400.0 + 0.2 * e.spd)
 		c.grav = 900.0
@@ -155,7 +155,7 @@ func _slide_end(S: SimState, e) -> void:
 		return
 	var y: float = WorldTerrain.groundY(S, e.x1)
 	for k in range(clampi(int(4.0 + e.energy), 4, 14)):
-		var p := _part("dust", e.x1 + _re.range_(-0.5, 0.5) * e.w, y, "#8f8a84" if e.variant == "paved" else "#9b8f7e")
+		var p := _part("dust", e.x1 + _re.range_(-0.5, 0.5) * e.w, y, "#8f8a84" if e.variant == "paved" else "#9b8f7e", e.z)
 		p.vx = _re.range_(-90.0, 90.0) * SWS
 		p.vy = _re.range_(30.0, 140.0) * SWS
 		p.life = _re.range_(1.0, 2.2)
@@ -167,12 +167,12 @@ func _slide_end(S: SimState, e) -> void:
 func _skim(e) -> void:
 	var sp: float = clampf(e.spd / 1500.0, 0.3, 2.0)
 	for k in range(2):
-		var p := _part("ripple", e.x, e.y + 1.0, "#e8f6ff")
+		var p := _part("ripple", e.x, e.y + 1.0, "#e8f6ff", e.z)
 		p.r = 6.0
 		p.gr = (110.0 + 60.0 * sp) * (1.0 if k == 0 else 0.55)
 		p.life = 1.1 + 0.3 * k
 	for k in range(clampi(int(6.0 + 6.0 * sp), 6, 18)):
-		var d := _part("splash", e.x + _rw.range_(-20.0, 20.0), e.y, "#e8f6ff")
+		var d := _part("splash", e.x + _rw.range_(-20.0, 20.0), e.y, "#e8f6ff", e.z)
 		d.vx = _rw.range_(-240.0, 240.0)
 		d.vy = _rw.range_(250.0, 700.0) * sp
 		d.grav = 1200.0
@@ -186,7 +186,7 @@ func _splash(S: SimState, e) -> void:
 	if s == WorldWater.DRY or absf(e.y - s) > 60.0:
 		return
 	for k in range(2):
-		var p := _part("ripple", e.x, s + 1.0, "#e8f6ff")
+		var p := _part("ripple", e.x, s + 1.0, "#e8f6ff", e.z)
 		p.r = 4.0
 		p.gr = (70.0 + e.n * 5.0) * (1.0 if k == 0 else 0.6)
 		p.life = 1.0 + 0.3 * k
@@ -203,14 +203,14 @@ func _wake(S: SimState) -> void:
 			continue
 		var back: float = -1.0 if f.vx > 0.0 else 1.0
 		for k in range(2):
-			var p := _part("splash", f.x, s, "#e8f6ff")
+			var p := _part("splash", f.x, s, "#e8f6ff", f.z)
 			p.vx = back * _rw.range_(60.0, 220.0)
 			p.vy = _rw.range_(150.0, 420.0)
 			p.grav = 1200.0
 			p.life = _rw.range_(0.5, 0.9)
 			p.size = _rw.range_(2.0, 4.0)
 		if _ticks % 3 == 0:
-			var r := _part("ripple", f.x, s + 1.0, "#e8f6ff")
+			var r := _part("ripple", f.x, s + 1.0, "#e8f6ff", f.z)
 			r.r = 3.0
 			r.gr = 55.0
 			r.life = 0.8
@@ -250,11 +250,13 @@ func _cool(dt: float) -> void:
 	_hot = any
 
 
-func _part(type: String, x: float, y: float, col: String) -> SimFxView.Part:
+## z: the depth it is made at (its event's, or a fighter's; 0 on the fighter plane).
+func _part(type: String, x: float, y: float, col: String, z: float = 0.0) -> SimFxView.Part:
 	var p := SimFxView.Part.new()
 	p.type = type
 	p.x = SimWrap.wrap(x)
 	p.y = y
+	p.z = z
 	p.col = col
 	if parts.size() < CAP:
 		parts.append(p)

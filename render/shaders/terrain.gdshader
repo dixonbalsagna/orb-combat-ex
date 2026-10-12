@@ -52,6 +52,7 @@ varying float v_rubble;
 varying vec2 v_px;
 varying float v_wz;
 varying float v_street;
+varying float v_new;          // under reduced flashing: how much of its own colour the ground keeps under a crater dug moments ago (ground.gdshaderinc crater_new); 0 otherwise
 
 void vertex() {
 	int i = int(UV.x + 0.5) % nc;
@@ -82,6 +83,7 @@ void vertex() {
 	v_rubble = abs(z) <= -z_band_back ? rubble_at(i, z) : 0.0;
 	v_px = vec2(xw, z);
 	v_street = street_n > 0 ? street_weight(xw) : 0.0;
+	v_new = calm_ease > 0.0 ? crater_new(i, xw, z) : 0.0;
 	v_back = clamp((z_front - z) / (z_front - z_band_back), 0.0, 1.0);
 	vec4 bw = bent_world(MODEL_MATRIX, VERTEX);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;   // from the camera, in world axes (the camera may be pitched)
@@ -101,9 +103,10 @@ void fragment() {
 		c = mix(c, st.rgb, st.a * v_street);
 	}
 	if (v_dent < -dent_min) {
-		c = v_desert > 0.5 ? crater_desert.rgb : crater.rgb;
+		vec3 earth = v_desert > 0.5 ? crater_desert.rgb : crater.rgb;
+		c = v_new > 0.0 ? mix(earth, c, v_new) : earth;
 	} else if (v_dent > 0.5 * dent_min) {
-		c = mix(c, ejecta.rgb, clamp(v_dent / (5.0 * dent_min), 0.0, 0.6));
+		c = mix(c, ejecta.rgb, clamp(v_dent / (5.0 * dent_min), 0.0, 0.6) * (1.0 - v_new));
 	}
 	c = mix(c, snow.rgb, smoothstep(snow_from, snow_full, v_h));
 	if (v_crack > 0.01) {
@@ -124,7 +127,7 @@ void fragment() {
 	// A groove chars as it cools: under a fresh glow the ground keeps its own colour, so a beam's burn does not turn a
 	// broad strip of ground dark in one tick.
 	float fresh = smoothstep(char_fresh.x, char_fresh.y, v_heat);
-	c = mix(c, char_col.rgb, clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh));
+	c = mix(c, char_col.rgb, clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new));
 	c = flat_shade(c, NORMAL, 0.55) * mix(1.2, 0.95, v_back);
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
 	c = mix(c, cue.rgb, cue.a);

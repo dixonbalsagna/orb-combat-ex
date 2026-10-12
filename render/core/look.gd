@@ -211,6 +211,12 @@ const HEAT_LO := "#c2381c"               # a cooling groove
 ## char at CHAR_CALM, so a camera moving over a groove changes little.
 const CHAR_FRESH := Vector2(0.04, 0.2)
 const HEAT_CALM: float = 0.3
+## Under reduced flashing (or reduced motion) a new crater also keeps the ground's own colour at first. Its earth, its
+## ejecta and its char spread from its centre to the edge of its apron over CRATER_CALM_S of match time, so a blast
+## does not turn a third of the screen dark in one tick. (Measured on the collapse clip: with the ground's darkening
+## held, reduced mode read 2.5 where it read 3.5; docs/rendering/flash-sources.md.) Ground an older crater already
+## coloured stays as it is. Normal mode is not changed: there a fresh crater's glow covers it while it cools.
+const CRATER_CALM_S: float = 1.5
 const CHAR_CALM: float = 0.35
 const HEAT_HI := "#ffd27a"               # a fresh groove from a strong beam
 ## Ground field widths across the band's depth (render/core/ground_field.gd). Bowls and grooves take their sizes from

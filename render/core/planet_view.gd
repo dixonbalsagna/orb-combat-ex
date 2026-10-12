@@ -184,6 +184,8 @@ func build(S: SimState) -> void:
 ## pane's planet only; a second pane's draws what that one made). heat is the render-side glow of fresh grooves
 ## (ImpactFx).
 func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32Array(), heat_changed: bool = false) -> void:
+	if _calm and _terrain_mat != null:
+		_terrain_mat.set_shader_parameter("crater_now", S.T)   # the calm form's clock: a new crater's age
 	for c in _copies:
 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
 	if source != null:
@@ -611,6 +613,7 @@ func _make_materials() -> void:
 	_terrain_mat.set_shader_parameter("heat_lo", RenderLook.col(RenderLook.HEAT_LO))
 	_terrain_mat.set_shader_parameter("heat_hi", RenderLook.col(RenderLook.HEAT_HI))
 	_terrain_mat.set_shader_parameter("char_fresh", RenderLook.CHAR_FRESH)
+	_terrain_mat.set_shader_parameter("crater_calm_s", RenderLook.CRATER_CALM_S)
 	_terrain_mat.set_shader_parameter("z_front", RenderLook.Z_TERRAIN_FRONT)
 	_terrain_mat.set_shader_parameter("snow", RenderLook.col(RenderLook.SNOW))
 	_terrain_mat.set_shader_parameter("snow_from", RenderLook.SNOW_FROM)
@@ -701,6 +704,7 @@ func set_calm(on: bool) -> void:
 	_calm = on
 	_terrain_mat.set_shader_parameter("heat_gain", RenderLook.HEAT_CALM if on else 1.0)
 	_terrain_mat.set_shader_parameter("char_gain", RenderLook.CHAR_CALM if on else 1.0)
+	_terrain_mat.set_shader_parameter("calm_ease", 1.0 if on else 0.0)   # a new crater's colours spread in (RenderLook.CRATER_CALM_S)
 
 
 func set_camera(p: Vector3) -> void:
