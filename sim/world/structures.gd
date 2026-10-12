@@ -289,7 +289,7 @@ static func along(S: SimState, xa: float, xb: float, pad: float) -> Array:
 	return out
 
 
-## The earliest crossing of the segment (x0, y0, z0) to (x1, y1, z1) by a body of half extents (rx, ry, rz) against the boxes of the
+## The earliest crossing of the segment (x0, y0, z0) to (x1, y1, z1) by a body of half extents (rx, ry, rz), y its feet (it spans y to y + 2 ry), against the boxes of the
 ## buildings in list (a footprint in x and z, from the ground it stands on to its standing top): the slab method, one division an
 ## axis, no trigonometry. Ties go to the lower index. A box the body already overlaps at the start is reported at t = 0 with the
 ## face of least penetration, or skipped when skipInside is set (the hit test: a body leaving the building it just crossed).
@@ -308,8 +308,8 @@ static func sweep(S: SimState, list: Array, x0: float, y0: float, z0: float, x1:
 		var gy: float = baseY(S, b)
 		var lo0: float = cx - b.w * 0.5 - rx
 		var hi0: float = cx + b.w * 0.5 + rx
-		var lo1: float = gy - ry
-		var hi1: float = gy + curH(b) + ry
+		var lo1: float = gy - 2.0 * ry   # y is the body's feet (the sim's point: standing is y == groundY): the body spans y to y + 2 ry
+		var hi1: float = gy + curH(b)
 		var lo2: float = b.z - b.d * 0.5 - rz
 		var hi2: float = b.z + b.d * 0.5 + rz
 		var inside: bool = lo0 <= 0.0 and 0.0 <= hi0 and lo1 <= y0 and y0 <= hi1 and lo2 <= z0 and z0 <= hi2
@@ -434,7 +434,7 @@ static func blocked(S: SimState, x: float, y: float, z: float, rx: float, ry: fl
 	for bi in along(S, x, x, rx):
 		var b = S.buildings[bi]
 		var gy: float = baseY(S, b)
-		if absf(SimWrap.sdx(x, b.x)) <= b.w * 0.5 + rx and y >= gy - ry and y <= gy + curH(b) + ry and z >= b.z - b.d * 0.5 - rz and z <= b.z + b.d * 0.5 + rz:
+		if absf(SimWrap.sdx(x, b.x)) <= b.w * 0.5 + rx and y >= gy - 2.0 * ry and y <= gy + curH(b) and z >= b.z - b.d * 0.5 - rz and z <= b.z + b.d * 0.5 + rz:
 			return bi
 	return -1
 

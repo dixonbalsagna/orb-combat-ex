@@ -21,19 +21,27 @@ const AIM_MIN_SP: float = 500.0            # normalised arrival speed below whic
 const FLIGHT_STEPS: int = 300              # the flight search horizon: 5 s at the fixed step
 const FLIGHT_X_MAX: float = 40000.0
 # ---- the hit ----
-const BRUNT_MUL: float = 1.8               # damage = spN * (0.55 + 0.25 tier) * BRUNT_MUL
 const FIGHTER_DMG: float = 0.012           # the fighter's damage per unit of normalised speed
-const KEEP_HI: float = 0.8                 # speed kept after a punch: clamp(KEEP_HI - KEEP_K * strength / KEEP_REF, KEEP_MIN, KEEP_HI)
-const KEEP_K: float = 0.45
-const KEEP_REF: float = 3000.0
-const KEEP_MIN: float = 0.35
-const KEEP_FREE: float = 0.95              # through floors that are already gone
-const HEAVY_KEEP: float = 0.7              # a heavy wreck (0.6 to 1) carries on at this much of the kept speed
 const CHAIN_MIN_SP: float = 500.0
+# ---- data/biomes/brunt.json (docs/world/destruction-hook.md, docs/design/buildings.md): the ladder, the chain, the lodge ----
+const BRUNT_PATH: String = "res://data/biomes/brunt.json"
+const BRUNT_SCHEMA: String = "biomes.brunt/1"
+const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (a key it does carry overrides)
+	"bruntMul": 1.8, "tierFactor": [0.12, 0.27, 0.47, 0.73], "specialTier": 4,
+	"chainMax": [1, 2, 3, 4], "chainSpecial": 5, "houseLink": 0.5, "houseKeep": 0.6,
+	"towerPunches": [0, 1, 99, 99], "giveWay": 2.0, "wallMemory": 0.25, "wallMin": 0.25, "heldDeathShare": 0.6,
+	"lodgeSeconds": [0.5, 0.5, 0.7, 0.9], "lodgeSpecialSeconds": 0.9, "lodgeDump": 1.0,
+	"keepHi": 0.8, "keepK": 0.45, "keepRef": 3000.0, "keepMin": 0.35, "keepFree": 0.95, "heavyKeep": 0.7,
+}
+const MARK_TOWER: int = -1                 # in Fighter.splashed (a list of building ids): a -1 for each tower this flight went through ...
+const MARK_HOUSE: int = -2                 # ... and a -2 for each house
+static var _c: Dictionary = {}
+static var _cLoaded: bool = false
+static var _cErrors: Array = []
+static var _cHash: String = ""
 const CHAIN_GAP: float = 260.0 * WS        # the next building's near edge within this of the last one's far edge
 const CHAIN_DZ: float = 180.0 * WS         # and its depth within this of the last one's
-const CHAIN_MAX: Array = [2, 2, 3, 4]      # by the launcher's tier; a finisher (special) may use CHAIN_ABS
-const CHAIN_ABS: int = 5
+# (the chain's length by tier is data: brunt.json chainMax, chainSpecial, houseLink)
 const SPLASH_FRAC: float = 0.25            # buildings beside a hit take this share of its damage, once per launch
 const SPLASH_W: float = 0.9
 const SPLASH_Z: float = 120.0 * WS
@@ -52,6 +60,108 @@ const CORE_SHARE: float = 0.25             # local damage also wears the core hp
 const TUNNEL_MAX: int = 2                  # a cleared span up to this many floors is carried by the columns
 const PANCAKE_K: float = 0.6               # a falling stack of m floors breaks a floor of strength s when K * m >= s
 const FLOOR_DEATH: float = 1.0             # a cracked floor's occupants die in proportion ratio * this
+
+
+# ===================================================================== the data
+
+static func cfg() -> Dictionary:
+	if not _cLoaded:
+		_cLoad()
+	return _c
+
+
+static func dataErrors() -> Array:
+	if not _cLoaded:
+		_cLoad()
+	return _cErrors
+
+
+## The data's hash, folded into the replay's data hash (a file's change must change a replay's identity).
+static func dataHash() -> String:
+	if not _cLoaded:
+		_cLoad()
+	return _cHash
+
+
+static func _cLoad() -> void:
+	_cLoaded = true
+	_cErrors = []
+	_c = BRUNT_KEYS.duplicate(true)
+	var f := FileAccess.open(BRUNT_PATH, FileAccess.READ)
+	if f == null:
+		_cErrors.append("brunt.json: cannot open " + BRUNT_PATH)
+		return
+	var j = JSON.parse_string(f.get_as_text())
+	if not (j is Dictionary) or j.get("schema", "") != BRUNT_SCHEMA:
+		_cErrors.append("brunt.json: not a %s object" % BRUNT_SCHEMA)
+		return
+	for k in BRUNT_KEYS:
+		if not j.has(k):
+			continue
+		var dv = BRUNT_KEYS[k]
+		var v = j[k]
+		if dv is Array:
+			if not (v is Array) or v.size() != dv.size():
+				_cErrors.append("brunt.json: %s is %d numbers" % [k, dv.size()])
+				continue
+			var okA: bool = true
+			for e in v:
+				if not (e is float or e is int):
+					okA = false
+			if not okA:
+				_cErrors.append("brunt.json: %s is numbers" % k)
+				continue
+		elif not (v is float or v is int):
+			_cErrors.append("brunt.json: %s is a number" % k)
+			continue
+		_c[k] = v
+	var h := SimHash.Hasher.new()
+	h.text("biomes.brunt")
+	FighterData._canon(h, j)
+	_cHash = h.hex()
+
+
+## The tier index 0 to 3 a launch is read at: the launcher's tier, a finisher at least at specialTier.
+static func tierIx(tier: float, special: bool) -> int:
+	var t: int = clampi(int(tier), 1, 4)
+	if special:
+		t = maxi(t, int(cfg().specialTier))
+	return t - 1
+
+
+## The lodge's hold in seconds (the body is seen to stop in the wall): by tier, a finisher its own.
+static func lodgeSeconds(tier: float, special: bool) -> float:
+	var c: Dictionary = cfg()
+	if special:
+		return float(c.lodgeSpecialSeconds)
+	return float(c.lodgeSeconds[tierIx(tier, false)])
+
+
+## A building without floors (under FLOORS_MIN): a house, a shop, a hall. A body goes through it at any tier.
+static func isHouse(b) -> bool:
+	return b.floors < FLOORS_MIN
+
+
+## What this flight has already gone through (Fighter.splashed carries a -1 for each tower and a -2 for each house, beside the ids splashed).
+static func _count(f, mark: int) -> int:
+	var n: int = 0
+	for v in f.splashed:
+		if v == mark:
+			n += 1
+	return n
+
+
+## The links a flight has used: a tower is one, a house half a link (houseLink).
+static func chainUsed(f) -> float:
+	return float(_count(f, MARK_TOWER)) + float(cfg().houseLink) * float(_count(f, MARK_HOUSE))
+
+
+static func _splashN(f) -> int:
+	var n: int = 0
+	for v in f.splashed:
+		if v >= 0:
+			n += 1
+	return n
 
 
 # ===================================================================== floors
@@ -201,8 +311,39 @@ static func _flightToSwept(S: SimState, x0: float, y0: float, vx0: float, vy0: f
 ## What hitting building b at height y with normalised speed spN and launcher tier does, without changing anything.
 ## Returns {"floors": bool, "k", "hit": Array of standing floors covered, "sumS", "dmg", "ratio", "outcome" (punch, crack,
 ## dent for floors; collapse, heavy, wreck, crack for whole buildings), "pass": continues through, "keep", "deaths"}.
-static func outcomeOf(S: SimState, b, y: float, spN: float, tier: float) -> Dictionary:
-	return outcomeDmg(S, b, y, spN * (0.55 + 0.25 * tier) * BRUNT_MUL)
+##
+## The ladder (docs/design/buildings.md section 1): a house is always gone through (a collapse, the speed kept houseKeep); a tower the tier's
+## towerPunches already went through this flight (punched) holds the body, unless its covered floors have already taken giveWay times their
+## own strength in damage (a building that remembers its walls): the held hit is a crack or a dent, the body comes off the face.
+static func outcomeOf(S: SimState, b, y: float, spN: float, tier: float, punched: int = 0, special: bool = false) -> Dictionary:
+	var c: Dictionary = cfg()
+	var ti: int = tierIx(tier, special)
+	var dmg: float = spN * float(c.tierFactor[ti]) * float(c.bruntMul)
+	if isHouse(b):
+		var r: float = dmg / b.maxhp
+		return {"floors": false, "dmg": maxf(dmg, b.hp), "ratio": r, "outcome": "collapse", "pass": true, "keep": float(c.houseKeep), "deaths": b.popAlive}
+	var oc: Dictionary = outcomeDmg(S, b, y, dmg)
+	if oc.outcome == "punch" and oc.hit.size() > 0 and punched >= int(c.towerPunches[ti]) and not _weak(b, oc.hit):
+		var held: Dictionary = oc.duplicate()
+		held.outcome = "crack"
+		held.pass = false
+		held.keep = 0.0
+		held.held = true
+		held.deaths = floorPop(b) * float(oc.hit.size()) * minf(minf(1.0, oc.ratio * FLOOR_DEATH), float(c.heldDeathShare))
+		return held
+	return oc
+
+
+## Have the floors a body covers already taken giveWay times their own strength in damage (the remembered walls)?
+static func _weak(b, hit: Array) -> bool:
+	if b.fdmg.size() != b.floors:
+		return false
+	var taken: float = 0.0
+	var own: float = 0.0
+	for j in hit:
+		taken += b.fdmg[j]
+		own += floorStr(b, j)
+	return taken >= float(cfg().giveWay) * own
 
 
 ## The same by the damage itself (a brunt's from its speed and tier, a shot's from its kind: WorldBlast.shotBuilding).
@@ -219,33 +360,40 @@ static func outcomeDmg(S: SimState, b, y: float, dmg: float) -> Dictionary:
 			if j >= 0 and j < b.floors and isStanding(b, j):
 				hit.append(j)
 		if hit.is_empty():
-			return {"floors": true, "k": k, "hit": hit, "sumS": 0.0, "dmg": dmg, "ratio": 999.0, "outcome": "punch", "pass": true, "keep": KEEP_FREE, "deaths": 0.0}
+			return {"floors": true, "k": k, "hit": hit, "sumS": 0.0, "dmg": dmg, "ratio": 999.0, "outcome": "punch", "pass": true, "keep": float(cfg().keepFree), "deaths": 0.0}
 		var sumS: float = 0.0
+		var cm: Dictionary = cfg()
+		var haveD: bool = b.fdmg.size() == b.floors
 		for j in hit:
-			sumS += floorStr(b, j)
+			var st: float = floorStr(b, j)
+			if haveD and b.fdmg[j] > 0.0:   # a building that remembers its walls: damage already taken weakens the floor (not below wallMin of it)
+				st = maxf(st * float(cm.wallMin), st - float(cm.wallMemory) * b.fdmg[j])
+			sumS += st
 		var ratio: float = dmg / sumS
 		var pop: float = floorPop(b)
 		if ratio >= 1.0:
-			var keep: float = clampf(KEEP_HI - KEEP_K * sumS / KEEP_REF, KEEP_MIN, KEEP_HI)
+			var keep: float = clampf(float(cm.keepHi) - float(cm.keepK) * sumS / float(cm.keepRef), float(cm.keepMin), float(cm.keepHi))
 			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "punch", "pass": true, "keep": keep, "deaths": pop * float(hit.size())}
 		if ratio >= 0.4:
 			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "crack", "pass": false, "keep": 0.0, "deaths": pop * float(hit.size()) * minf(1.0, ratio * FLOOR_DEATH)}
 		return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "dent", "pass": false, "keep": 0.0, "deaths": 0.0}
 	var r: float = dmg / b.maxhp
-	var keepw: float = clampf(KEEP_HI - KEEP_K * b.maxhp / KEEP_REF, KEEP_MIN, KEEP_HI)
+	var cw: Dictionary = cfg()
+	var keepw: float = clampf(float(cw.keepHi) - float(cw.keepK) * b.maxhp / float(cw.keepRef), float(cw.keepMin), float(cw.keepHi))
 	var frac: float = minf(b.hp, dmg) / b.maxhp
 	var dead: float = minf(b.popAlive, b.pop * frac * 1.3)
 	if r >= 1.0:
 		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "collapse", "pass": true, "keep": keepw, "deaths": b.popAlive}
 	if r >= 0.6:
-		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "heavy", "pass": true, "keep": keepw * HEAVY_KEEP, "deaths": dead}
+		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "heavy", "pass": true, "keep": keepw * float(cw.heavyKeep), "deaths": dead}
 	if r >= 0.4:
 		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "wreck", "pass": false, "keep": 0.0, "deaths": dead}
 	return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "crack", "pass": false, "keep": 0.0, "deaths": dead}
 
 
-static func chainCap(tier: float, special: bool) -> int:
-	return CHAIN_ABS if special else CHAIN_MAX[clampi(int(tier), 1, 4) - 1]
+static func chainCap(tier: float, special: bool) -> float:
+	var c: Dictionary = cfg()
+	return float(c.chainSpecial) if special else float(c.chainMax[tierIx(tier, false)])
 
 
 ## The next building on the line after b, for a fighter leaving b's far edge with velocity (vx, vy) at height y (vx
@@ -273,25 +421,37 @@ static func next(S: SimState, b, y: float, vx: float, vy: float, trav: float) ->
 
 
 ## The chain a launch would make: starting from the first hit fr (a flightTo result) on building b, by a launcher of the given
-## tier (special: a finisher may chain up to CHAIN_ABS). Returns an Array of {"b", "spN", "y", "dmg", "ratio", "outcome",
-## "keep", "deaths", "t"}; length 1 is a plain brunt. A pure lookahead: nothing is changed.
+## tier (special: a finisher may chain up to chainSpecial links, a house half a link). Returns an Array of {"b", "spN", "y", "dmg", "ratio",
+## "outcome", "keep", "deaths", "t", "lodge"}; length 1 is a plain brunt; "lodge" is true on the last link when the body goes through it and
+## ends inside it. A pure lookahead: nothing is changed.
 static func chainPlan(S: SimState, tier: float, special: bool, b, fr: Dictionary, trav: float) -> Array:
 	var out: Array = []
-	var cap: int = chainCap(tier, special)
+	var cap: float = chainCap(tier, special)
 	var cur = b
 	var r: Dictionary = fr
 	var t0: float = fr.t
+	var punched: int = 0
+	var used: float = 0.0
+	var hl: float = float(cfg().houseLink)
 	while true:
-		var oc: Dictionary = outcomeOf(S, cur, r.y, r.spN, tier)
-		out.append({"b": cur.idx, "spN": r.spN, "y": r.y, "dmg": oc.dmg, "ratio": oc.ratio, "outcome": oc.outcome, "keep": oc.keep, "deaths": oc.deaths, "t": t0})
-		if not oc.pass or out.size() >= cap:
+		var oc: Dictionary = outcomeOf(S, cur, r.y, r.spN, tier, punched, special)
+		var entry: Dictionary = {"b": cur.idx, "spN": r.spN, "y": r.y, "dmg": oc.dmg, "ratio": oc.ratio, "outcome": oc.outcome, "keep": oc.keep, "deaths": oc.deaths, "t": t0, "lodge": false}
+		out.append(entry)
+		if not oc.pass:
 			break
+		if isHouse(cur):
+			used += hl
+		else:
+			used += 1.0
+			punched += 1
 		var vx2: float = r.vx * oc.keep
 		var vy2: float = r.vy * oc.keep
-		if SimDetMath.hypot(vx2 / trav, vy2) < CHAIN_MIN_SP:
+		if used >= cap - 0.0001 or SimDetMath.hypot(vx2 / trav, vy2) < CHAIN_MIN_SP:
+			entry.lodge = true
 			break
 		var nx: Dictionary = next(S, cur, r.y, vx2, vy2, trav)
 		if nx.b < 0:
+			entry.lodge = true
 			break
 		cur = S.buildings[nx.b]
 		r = nx.r
@@ -471,7 +631,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 	var trav: float = f.launchT
 	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
-	var oc: Dictionary = outcomeOf(S, b, y, spN, by.tier)
+	var oc: Dictionary = outcomeOf(S, b, y, spN, by.tier, _count(f, MARK_TOWER), f.launchSpecial)
 	f.flightHits += 1
 	var link: int = f.flightHits
 	var slot: float = float(S.fighters.find(f))
@@ -491,14 +651,24 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		WorldStructures.damageBuilding(S, b, oc.dmg, by, "burst", cx, evt)
 		if not b.alive:
 			hitText = "collapse"
-	SimFx.buildingHitB2(S, f, b, y, link, by, oc, hitText, spN)
 	var passes: bool = oc.pass or hitText == "collapse" or hitText == "pancake"
 	var far: float = SimWrap.wrap(b.x + dir * b.w * 0.5)
 	# --- what comes next: decided before the splash, so the splash can never take the next link of a chain away ---
-	var keep: float = (oc.keep if oc.pass else KEEP_HI) if passes else 0.0
+	var cm: Dictionary = cfg()
+	var keep: float = (oc.keep if oc.pass else float(cm.keepHi)) if passes else 0.0
+	if passes:
+		f.splashed.append(MARK_HOUSE if isHouse(b) else MARK_TOWER)   # this flight went through it
 	var nx: Dictionary = {"b": -1}
-	if passes and link < chainCap(by.tier, f.launchSpecial) and SimDetMath.hypot(f.vx * keep / trav, f.vy * keep) >= CHAIN_MIN_SP:
+	var spLeft: float = SimDetMath.hypot(f.vx * keep / trav, f.vy * keep)
+	if passes and chainUsed(f) < chainCap(by.tier, f.launchSpecial) - 0.0001 and spLeft >= CHAIN_MIN_SP:
 		nx = next(S, b, y, f.vx * keep, f.vy * keep, trav)
+	# the lodge: the last building of a chain takes what is left; he ends inside it
+	var lodge: bool = passes and nx.b < 0
+	var oce: Dictionary = oc
+	if lodge:
+		oce = oc.duplicate()
+		oce.keep = 0.0   # (a building_hit that passes with keep 0 is a lodge: the body ends inside the building)
+	SimFx.buildingHitB2(S, f, b, y, link, by, oce, hitText, spN)
 	# --- splash on the neighbours, once per launch ---
 	_splash(S, f, b, oc.dmg, by, evt, cx, far, dir, passes and nx.b >= 0)
 	# --- the fighter ---
@@ -506,6 +676,23 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
 	var stop: float = STOP_FIRST if link == 1 else STOP_LINK
 	S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
+	if lodge:
+		# what is left of the launch is one more hit on the building (the core wears most), and he is held in the breach
+		var tfac: float = float(cm.tierFactor[tierIx(by.tier, f.launchSpecial)])
+		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
+		if b.alive and rest > 0.0:
+			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
+		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
+		S.dirS.stop = SimMathx.jmax(S.dirS.stop, lodgeSeconds(by.tier, f.launchSpecial))
+		var bodyW: float = WorldLanes.body()[0]
+		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
+		f.y = y
+		f.vx = 0.0
+		f.vy = 0.0
+		endFlight(S, f)
+		return
+	if not passes:
+		S.dirS.stop = SimMathx.jmax(S.dirS.stop, lodgeSeconds(by.tier, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
 	if passes:
 		f.vx *= keep
 		f.vy *= keep
@@ -537,7 +724,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 static func _splash(S: SimState, f, b, dmg: float, by, evt: float, cx: float, far: float, dir: float, chainGoesOn: bool) -> void:
 	for bi in WorldStructures.near(S, b.x, b.w * (0.5 + SPLASH_W) + 64.0):
 		var nb = S.buildings[bi]
-		if not nb.alive or nb == b or f.splashed.size() >= SPLASH_CAP:
+		if not nb.alive or nb == b or _splashN(f) >= SPLASH_CAP:
 			continue
 		if f.splashed.has(bi) or nb.idx == f.aimB:
 			continue
@@ -594,7 +781,10 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
 	elif oc.outcome == "crack":
 		for j in oc.hit:
 			b.fdmg[j] += oc.dmg
-		var d: float = popF * float(oc.hit.size()) * minf(1.0, oc.ratio * FLOOR_DEATH)
+		var share: float = minf(1.0, oc.ratio * FLOOR_DEATH)
+		if oc.get("held", false):
+			share = minf(share, float(cfg().heldDeathShare))
+		var d: float = popF * float(oc.hit.size()) * share
 		if d > 0.0:
 			WorldCollateral.kill(S, b.idx, d, by, evt, cx, oc.hit[0])
 		SimFx.floorHit(S, f, b, oc.hit[0], 0, "crack", oc.ratio, y, by)

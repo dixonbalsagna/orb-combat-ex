@@ -155,4 +155,5 @@ static func dataHash() -> String:
 	h.text(WorldSettle.dataHash())    # World's settlements and lanes: data/biomes/settlements.json, lanes.json
 	h.text(WorldBlast.dataHash())     # World's shot blast: data/biomes/blast.json
 	h.text(WorldStructures.stagesHash())   # World's building stages: data/biomes/stages.json
+	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
 	return h.hex()

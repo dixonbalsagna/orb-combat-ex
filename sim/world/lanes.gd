@@ -238,6 +238,26 @@ static func demoStartX(S: SimState, gap: float, default_x: float) -> float:
 	return SimWrap.wrap(float(c[0]) - gap * 0.5)
 
 
+## The next crossing along the avenue that holds x (the nearest avenue within reach units of x), from depth z toward the camera (dirz +1)
+## or deeper (dirz -1): [cx, cz, hx, hz, dz] with dz the depth distance from z (always above 0.5 unit), or [] when the band ends first or no
+## avenue is in reach. A send "down the cross street" (docs/design/depth.md section 5) lands there. A pure read.
+static func crossingAlong(S: SimState, x: float, z: float, dirz: float, reach: float = 225.0) -> Array:
+	var ix: Array = intersections(S, x, reach)
+	if ix.is_empty():
+		return []
+	var cx: float = ix[0][0]
+	var best: Array = []
+	var bd: float = 1.0e30
+	for c in ix:
+		if absf(c[0] - cx) > 1.0:
+			continue
+		var dz: float = (c[1] - z) * dirz
+		if dz > 0.5 and dz < bd:
+			bd = dz
+			best = [c[0], c[1], c[2], c[3], dz]
+	return best
+
+
 ## S.lanes (docs/world/fight-lanes-world.md section 10): a flat PackedFloat32Array, world units, z positive toward the camera.
 ## 0 to 12 header (version, nLanes, nStrips, nDistricts, nAvenues, nRows, rowZ0, rowStep, zFront, zBack, offLanes, offStrips,
 ## offDistricts); lanes 4 floats each (zTop, zBottom, kind 0 street / 1 block / 2 scenery / 3 ridge, row or -1); strips 4 each (lane,

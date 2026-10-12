@@ -138,3 +138,38 @@ Roofs (stand on a roof, a fight on the roofs) are bigger than any of these: the 
 Order I would take: **F with A** (a small window of code and data, the rules of tier and the lodge, one golden), then **B**, then **C** with Rendering's look landing alongside; D waits for Game Design.
 
 What I need from the EP: Orb's or Game Design's ruling on V2 (does tier 1 dent?), the three rules of section 4, and the order above. No tree edits without your go.
+
+## 8. Window A applied (2026-10-12, on HEAD da6d39f8): the ladder, the lodge, the remembered walls, the feet convention
+
+Game Design's ruling (`docs/design/buildings.md`) took V2 with houses added. In the tree:
+
+- **`data/biomes/brunt.json`** (schema `biomes-brunt.schema.json`, a map line, ten fixture cases): `tierFactor` [0.12, 0.27, 0.47, 0.73] and `bruntMul` 1.8; `chainMax` [1, 2, 3, 4], `chainSpecial` 5, `houseLink` 0.5, `houseKeep` 0.6; **`towerPunches` [0, 1, 99, 99]** (the towers a flight may go through by tier: **Orb's "does a tower hold early on" is `towerPunches[0]`: 0 holds, 1 lets a tier-1 body through one tower**); `giveWay` 2.0, `wallMemory` 0.25, `wallMin` 0.25, `heldDeathShare` 0.6; `lodgeSeconds` [0.5, 0.5, 0.7, 0.9], `lodgeSpecialSeconds` 0.9, `lodgeDump` 1.0; the energy a building takes (`keepHi`, `keepK`, `keepRef`, `keepMin`, `keepFree`, `heavyKeep`) moved out of code unchanged. A finisher reads as tier 4 (`specialTier`). The replay's data hash gains `WorldBrunt.dataHash()`.
+- **The ladder** (`WorldBrunt.outcomeOf`): a house is always gone through (a collapse that kills it, the speed kept `houseKeep`); a tower beyond the tier's `towerPunches` holds the body (a crack or a dent: it rebounds) unless the floors it covers have already taken `giveWay` times their own strength in damage; otherwise the ratio of the hit to the floors' strength decides as before (punch, crack, dent).
+- **A building that remembers its walls:** the damage a floor has taken (`fdmg`, which a held hit adds to) now weakens it (`wallMemory` of it off its strength, to `wallMin` of it), and gives way the tier-1 wall after a number of hits by the building's size: a median tower of 10 floors after three at speed 1,400; a 20-floor tower of 3,375 hit points holds a tier-1 body for good.
+- **The chain in links:** a tower is a link, a house half a link (a count kept in `Fighter.splashed` as a -1 for each tower and a -2 for each house, so there is no new state), the cap by tier is in links.
+- **The lodge:** the last building a body goes through takes what is left of the launch as one more hit on its core (`lodgeDump`, capped by `coreCapShare`: the building may come down), he ends inside it (his x at its far face less two body widths, no speed, then he falls), and the world holds for `lodgeSeconds` (the existing hit-stop, `S.dirS.stop`). A held body (a wall) is held for the same seconds and then comes off the face as before. **The event for a lodge is a `building_hit` with `outcome` punch, collapse or pancake and `keep` 0** (a pass that keeps nothing); a held hit is crack or dent. No new event type.
+- **L3's feet convention:** `WorldStructures.sweep` and `blocked` take the point as the body's feet (the box runs `y` to `y + 2 ry`), as the sim's `f.y` is; `probe_collide` updated; depth is off, so nothing moves.
+- **`WorldLanes.crossingAlong(S, x, z, dirz, reach)`** for Encounter's send down an avenue.
+- **Not in this window** (they touch the fighter and the director): the wall slam's damage (one number, `wallSlamMul`, and a line in `hit`: Combat gives the number), its stagger (`f.stunTicks = max(f.stunTicks, 24)`, an existing hashed field: Simulation to say World may set it from `brunt.hit`) and the attacker's first move after 45 ticks (Encounter's approach lock). The hold is a hit-stop of the whole sim, not a live hold of one body; a live hold (the rival moving while the body is in the wall) needs a fighter state, with the stagger.
+
+**Measured on the tree, from a town start (the crossing start), seeds 1 to 60, the same HEAD without the window against with it:**
+
+| Row of `buildings.md` section 4 | Without | With | Bound |
+| :--- | ---: | ---: | :--- |
+| Bodies into buildings a match | 2.4 | 1.7 | 4 to 8 |
+| Floors punched a match | 1.8 | 0.45 | |
+| A tier-1 body through a tower | 0.23 a match (40% of its tower hits) | **0** (menu: 0 of 166 tower links) | never |
+| Tower links that punch, tier 2 / 3 / 4 (the brunt menu) | 99 / 96 / 94% | 76 / 90 / 96% | tier 3 and 4: through when the strength is there |
+| Chain lengths of a plan, tier 1 / 2 / 3 / 4 (the cap) | 2 / 2 / 3 / 4 | 1 to 2 / 1 to 3 / 1 to 4 / 1 to 5 buildings (a house is half a link) | 1, 2, 3, 4 links |
+| Every chain ends in a lodge or a hold | | 230 of 230 flights (146 held, 84 lodged) | every time |
+| The hold seconds | | 230 of 230 at the tier's seconds | 0.5 to 0.9 |
+| Held at a wall (wall slams) a match | 0.5 (cracks) | 0.65 (cracks and dents) | 1 to 3 |
+| Chains of two buildings or more a match | 0.67 | 0.32 | 0.5 to 2, tier 3 and up |
+| Structures lost a match | 41.7 of 118 | 43.9 | in band |
+| People lost | 24.0% | 23.6% | in band (12 to 30%) |
+| Length | 478 s | 474 s | in band |
+| Fight time within 1,500 units of a building | 22% | 22% | 30 to 50% |
+
+**What it says.** The ladder does what Game Design ruled: tier 1 is a wall (0 punches of 166 links), the first minute breaks houses and shows a tower hit, and tier 3 and 4 go through nearly every tower. **The bodies-into-buildings row went down** (2.4 to 1.7), not up: with tier 1 and 2 held at the first tower the flights that used to punch through and chain on now end there, and the planner's choice of a building is what it was (1.2 a match, 7% of launches). The 4 to 8 band and the 30 to 50% time-in-town are step 4 of the order, Encounter's: the haul, the distance bonus, the stick's vote. The chain counted in links is limited by the buildings ahead, not by the cap: at tier 4, of 324 plans 118 end with nothing ahead and 190 at the cap. Wall slams (0.7 a match) are below 1 to 3 for the same reason: there are few bodies.
+
+**Gates:** `npm test --prefix sim` 5 of 5 (the golden moved by one line: the replay's data hash; no golden match changed, as none of the nine touches a building); probe 0 failed (plan equals outcome in 218 launches, none over the cap); `brunt_check.gd` (13 checks: the ladder over 90 speed and height pairs, a house at every tier, the remembered walls, 230 flights); `probe_collide`, `lane_check`, `isect_check`, `depthreads_check`, `demostart_check`, `stagecheck`, `blockcheck`, `directcheck`, `minecheck` 0 failed; render lane, stage, shape, ground, patch, depth and effects checks pass; determinism plain and `--intro`, seam sweep pass; the flash count passes (collapse 70 falls, mashcity as before); `lead_scan --strict --max=40` 0 feet-first frames in the shipped run and 3 in a run from the crossing start (64,000 fighter-frames; all three a locked rush or a held drift, none a launched flight, none a wall rebound).

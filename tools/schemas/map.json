@@ -400,6 +400,10 @@
       "schema": "biomes-stages.schema.json"
     },
     {
+      "match": "data/biomes/brunt.json",
+      "schema": "biomes-brunt.schema.json"
+    },
+    {
       "match": "data/input/actions.json",
       "schema": "input-actions.schema.json"
     },

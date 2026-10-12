@@ -244429,6 +244429,160 @@
       "expect": null
     },
     {
+      "id": "brunt-tier-factor-too-short",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/tierFactor": [0.1, 0.2]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/tierFactor"
+      }
+    },
+    {
+      "id": "brunt-tier-factor-zero",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/tierFactor/0": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/tierFactor/0"
+      }
+    },
+    {
+      "id": "brunt-tower-punches-negative",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/towerPunches/0": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/towerPunches/0"
+      }
+    },
+    {
+      "id": "brunt-tower-punches-fraction",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/towerPunches/1": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/towerPunches/1"
+      }
+    },
+    {
+      "id": "brunt-house-link-above-one",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/houseLink": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/houseLink"
+      }
+    },
+    {
+      "id": "brunt-lodge-seconds-too-long",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeSeconds/3": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lodgeSeconds/3"
+      }
+    },
+    {
+      "id": "brunt-chain-special-required",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/chainSpecial"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-unknown-key",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "brunt-underscore-key-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "brunt-tier-1-through-one-tower-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/towerPunches/0": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
       "id": "lanes-key-required-schema",
       "schema": "biomes-lanes.schema.json",
       "mutate": [

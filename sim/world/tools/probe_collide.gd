@@ -90,7 +90,7 @@ func _init() -> void:
 			var px: float = x0 + (x1 - x0) * tt
 			var py: float = y0 + (y1 - y0) * tt
 			var pz: float = z0 + (z1 - z0) * tt
-			if absf(px - X) <= 200.0 + rx and py >= gy3 - ry and py <= top3 + ry and pz >= -700.0 - 125.0 - rz and pz <= -700.0 + 125.0 + rz:
+			if absf(px - X) <= 200.0 + rx and py >= gy3 - 2.0 * ry and py <= top3 and pz >= -700.0 - 125.0 - rz and pz <= -700.0 + 125.0 + rz:
 				bt = tt
 				break
 		if sr.hit != (bt >= 0.0):

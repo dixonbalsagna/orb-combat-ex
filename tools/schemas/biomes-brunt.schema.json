@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-brunt",
+  "title": "biomes.brunt/1",
+  "description": "data/biomes/brunt.json: what a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt.cfg). The ladder by tier (tierFactor, towerPunches), the chain (chainMax, chainSpecial, houseLink), the energy a building takes (houseKeep, keepHi, keepK, keepRef, keepMin, keepFree, heavyKeep), the building that remembers its walls (giveWay, wallMemory, wallMin, heldDeathShare) and the lodge (lodgeSeconds, lodgeSpecialSeconds, lodgeDump). Every key is optional in the loader (a default stands); the file carries them all. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "tierFactor",
+    "chainMax",
+    "chainSpecial",
+    "towerPunches",
+    "lodgeSeconds"
+  ],
+  "properties": {
+    "schema": {
+      "const": "biomes.brunt/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "bruntMul": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "The damage scale of a brunt: speed x tierFactor x bruntMul."
+    },
+    "tierFactor": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "description": "By tier 1 to 4: the damage a body does a building per unit of normalised speed (before bruntMul). The ladder's slope: tier 1 a wall, tier 3 and 4 through."
+    },
+    "specialTier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "description": "A finisher (a special launch) reads as at least this tier."
+    },
+    "chainMax": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": 0.5
+      },
+      "description": "Links a flight may use, by tier 1 to 4: a tower is one link, a house houseLink."
+    },
+    "chainSpecial": {
+      "type": "number",
+      "minimum": 0.5,
+      "description": "A finisher's links."
+    },
+    "houseLink": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "description": "What a house counts as of a link."
+    },
+    "houseKeep": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "description": "The share of speed kept through a house."
+    },
+    "towerPunches": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "description": "By tier 1 to 4: the towers a flight may go through. A tower beyond it holds the body (a wall), unless its covered floors have taken giveWay times their strength in damage. 0 at tier 1: a tier-1 hit never goes through an intact tower."
+    },
+    "giveWay": {
+      "type": "number",
+      "minimum": 0,
+      "description": "A held tower gives way when the damage already taken on the floors a body covers is this many times their own strength (the remembered walls)."
+    },
+    "wallMemory": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The share of the damage a floor has taken that is taken off its strength."
+    },
+    "wallMin": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "description": "A floor never weakens below this share of its own strength."
+    },
+    "heldDeathShare": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The most of the people on a held floor one hit kills."
+    },
+    "lodgeSeconds": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 3
+      },
+      "description": "By tier: the seconds the last building of a chain holds the body (a hit-stop in the wall)."
+    },
+    "lodgeSpecialSeconds": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "A finisher's hold."
+    },
+    "lodgeDump": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 4,
+      "description": "The share of what is left of the launch taken as one more hit on the last building's core."
+    },
+    "keepHi": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1
+    },
+    "keepK": {
+      "type": "number",
+      "minimum": 0
+    },
+    "keepRef": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "keepMin": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1
+    },
+    "keepFree": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1
+    },
+    "heavyKeep": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

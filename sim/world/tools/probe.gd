@@ -667,7 +667,12 @@ func _init() -> void:
 		for hb in hits:
 			if not predicted.has(hb):
 				stray_hits += 1
-		if hits.size() > WorldBrunt.chainCap(Ab.tier, false):
+		var used_links: float = 0.0   # the links the body went through (a tower one, a house half; a held building adds none)
+		for hi in range(hits.size()):
+			var ot: String = String(hit_txt[hi])
+			if ot.begins_with("punch") or ot.begins_with("collapse") or ot.begins_with("pancake") or ot.begins_with("heavy"):
+				used_links += float(WorldBrunt.cfg().houseLink) if WorldBrunt.isHouse(Sb2.buildings[hits[hi]]) else 1.0
+		if used_links > WorldBrunt.chainCap(Ab.tier, false) + 0.0001:
 			cap_break += 1
 		if Db.aimB != -1 or Db.chainEvt != 0.0:
 			open_token += 1
