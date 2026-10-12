@@ -550,3 +550,41 @@ So the feather helps collapse's reduced reading (2.5 to 1.5), does nothing for c
 **Should it ask?** As a big-event source, yes in principle (a whole-area change the register does not weigh today); in practice it would change at most 6 of the 34 (18%), and for those 6 the cost of waiting is small (a merge that waits a few ticks leaves two panes of one pair a few ticks longer; the launch's end is a return to the shared view). So: a **merge** and a **launch's end** may ask and, refused, retry each tick for up to 0.5 s (the dwell timers already tolerate it); a **split out of frame** and a **slam** do not ask (readability and timing come first; they would be weighed in the register as already-spent flashes for the others, if VFX's register takes a "spent" report: `ask` with the area and no refusal path). The rest of the 480 (the ordinary trigger openings and closings) stand alone and need nothing. Expected gain over the set: under one change in fifteen and only where a beam or a blast is in the same second, i.e. not what the analyser's worst seconds are made of; I would build it only if a measured clip's worst second contains a merge.
 
 **Mash-normal at the ceiling (2.5 primary, 3 on the two-second memory).** The kept frames (ticks 1252 to 1372, the desert) show the right pane's scenery changing as P2 flies left and a large grey mountain flank slides in at ticks 1296 to 1306, with the divider already open; events at ticks 1291 (2.1 of the area threshold), 1300 (3.4), 1315, 1333 (3.5), 1338. If it reads over: (1) read the `scroll` field at those ticks first (the right pane's scenery speed); if it is above the governor's 46 px a tick, the governor is the lever (a charge is armed from its cue; a flying fighter who is not charging is not); (2) the displayed camera's own morph at an opening is not measured by the governor (it reads the focus's speed, not the blend's), so a cap on the displayed scroll during a transition (the sweep of `sep` slowed so the blend never moves a pane more than 46 px a tick, except for an urgent opening) is the principled fix and covers the opening at 1292 and the closing at tick 66 of collapse together; cost: a long morph (cameras far apart) takes longer to finish, 0.6 to 0.9 s instead of 0.45, which is harmless for a merge and is why an urgent opening stays exempt.
+
+
+### 24f. The re-frame at a signature beam's impact (EP brief, 2026-10-11; Tools' `ai` seed 1, ticks 2140 to 2190)
+
+**What the picture does.** A beam lands on a cliff face at about tick 2140. The struck fighter goes from rest to 7,900 units a second out of hit-stop, and the camera did the same in the same tick: the follow point's lead cancels the filter's lag exactly, so a velocity step became a step of the view (0.10 of the width a tick; 140 and 215 units in a tick in x and y with the ground falling away). Over three ticks a dark cliff face swept across bright sand, 20 to 35% of the frame, and the cut-in panel opened at 2147 and closed at 2167 over the same view. Counted changes in the second: 2140+, 2147-, 2152+, 2168-, 2177-, 2182+ (2.5 flashes, no slack).
+
+**What was found, in order.** (1) The lead copied a one-tick velocity step into the camera. (2) A shot's anchor fell back to the default one for the ticks its `solo_w` eased out after the shot ended: the picture jumped 0.13 of the width at the end of the launch's hold (tick 2167). (3) The order flip (sigma) fired at once when an expanded pane was partly open (`sep <= 0.02`), swapping the sides under a 0.5 to 0.7 expanded pane. None of the three alone moved the count: with all three fixed the sweep of the cliff edge, at about 105 px a tick for three ticks, was still over the area threshold. The sweep's *speed* is what the analyser counts, so the lever is the rate of the re-frame.
+
+**What was built** (`split_rig.gd`, `camera_params.gd`, `split_sweep.gd`; nothing outside `render/camera`):
+- **Lead slew** (`LEAD_SLEW`, 2,700 units a second a tick): the velocity the lead uses changes by at most 45 units a tick each tick. A step over `ONSET_MAX` (12,000 units a second: a fling) is not eased and is chased as before; it cannot be eased, only followed.
+- **Anchor hold**: a shot's anchor is kept while the shot fades out (`_anchor_hold`), so the end of a shot no longer jumps to the default anchor.
+- **Order flip** waits for the pane to hide it: `(sep <= 0.02 and e <= 0.02) or hidden`, and a shot's `solo_w` no longer counts as hidden.
+- **Re-frame limiter** (`SCROLL_CAP` 0.045 of the width a tick, `SCROLL_MAX_REDUCED` 0.03 under reduced motion or reduced flashing): armed for `CAP_TICKS` (4) ticks by a velocity step of over `LEAD_SLEW` (once in `CAP_COOL`, 30 ticks), it holds the focus to the cap or the step taken last tick, whichever is larger (it can slow at once, it cannot speed up), and stays armed while it binds, to `CAP_MAX` (20) ticks. It gives way at `CAP_LAG` (0.14 of the width): from there the fighter is followed at his speed, so it never switches on and off at that edge. A cut, a snap, an intro shot, or a jump over 1,500 units is not a re-frame. The count is `scroll_caps` (for the tests).
+
+**What did not work** (each measured with the analyser on `ai-1-normal`, scratch web builds of HEAD plus the above):
+
+| Variant | Primary / area-15% / 2 s memory | Sweep |
+| :--- | :--- | :--- |
+| HEAD | 4 / 4 / 3 FAIL | |
+| lead slew, anchor hold, flip guard only | 4 | |
+| limiter always on (no window), lag edge 0.32 | 1.5 / 2 / 2.5 PASS | failed: launched fighters 0.31 and 0.235 of the width from their anchors (bound 0.20), calm steps of 0.021 to 0.026, a fighter out of his pane for 0.31 s in a real match |
+| limiter that may speed up by 0.01 of the width a tick each tick | 4 / 4 / 3 FAIL | |
+| limiter with a hard cap, a fixed 4-tick window | not measured: the release was a 0.4 of the width catch-up in one tick in real match 17 (0.37 jolt) | |
+| **limiter that may not speed up, lag edge 0.14 (built)** | **2 / 2 / 2.5 PASS** (reduced 2 / 2 / 2 PASS) | passes, jolts 567 to 585 |
+
+The one thing that mattered: any speeding-up at all brings the sweep back over the threshold. The cap has to hold for the three or four ticks the cliff edge crosses the strip, and the lag edge is what keeps that from being a lag: with 0.32 a launched fighter was left 0.31 of the width off his anchor, and the catch-up afterwards (0.026 of the width a tick while he stood still) failed the calm-step check; at 0.18 one such step remained (0.021 against 0.0206); at 0.14 the sweep passes clean.
+
+**Before and after for that second** (ticks 2100 to 2250, counted changes with the area threshold at 21,824 px; `+` and `-` are the direction):
+
+| | Changes | Primary | Area-15% | 2 s memory |
+| :--- | :--- | :--- | :--- | :--- |
+| HEAD, normal | 2145+ 2147- 2152+ 2153- 2160+ 2168- 2174+ 2177- 2181+ | 4 | 4 | 3 |
+| built, normal | 2145+ 2153- 2158+ 2172- 2179+ 2183+ 2188+ | **2** | 2 | 2.5 |
+| built, reduced | 2140+ 2156+ 2172- 2183- 2188+ | **2** | 2 | 2 |
+
+**Cost, from the sweep** (13 real matches and the scenario rows): the jolt total 567 to 585. "Solo shot start, end or hand-over" fell 47 to 5 (the anchor hold); "chase (a launch or knock-back in progress)" rose 27 to 67 (the limiter's entry and exit, where the camera's velocity is no longer the fighter's by design). Jolts over 0.1 of the width a tick: 206 to 189. The launch rows gained two checks: in the first `CAP_MAX` ticks the fighter may be `CAP_LAG` + 0.02 from his anchor; after them the old 0.20 bound holds. The gameplay hash is unchanged (without and with the compositor, 9747f4a07c3e6d35).
+
+**Not done.** The brief's second suggestion (count the re-frame against the register, so the strip is refused when the second is full) was not built: with the sweep eased the second reads 2, and the strip is left as it was. If a clip turns up where a re-frame and the strip are both over the threshold, `SplitView.ask_register("reframe", area, step)` at the limiter's arming is the place, with the limiter held to the floor (no step-taken-last-tick term) when it is refused.

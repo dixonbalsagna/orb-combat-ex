@@ -114,7 +114,16 @@ var flash_ask: Callable = Callable()     # (source, area as a fraction of the sc
 var _tf_calm: bool = false               # this transformation's break is calm: no hard cut, no low angle (the register refused it, or reduced flashing)
 var flash_reduced: bool = false          # the reduced-flashing setting (the host passes the register's `reduced`): calmer passes
 var scroll_gov_ticks: int = 0            # ticks the scroll governor held the zoom back (counted for the tests)
+var _vlx: Array = [0.0, 0.0]             # the velocity the follow point's lead uses, its change per tick limited (units a second)
+var _vly: Array = [0.0, 0.0]
+var _anchor_hold: Array = [Vector2.ZERO, Vector2.ZERO]   # the anchor a shot used last, held while the shot fades out
 var _vsm: Array = [0.0, 0.0]             # each pane's focus speed, eased (units a second)
+var scroll_caps: int = 0                # ticks the re-frame limiter held a pane's focus back (counted for the tests)
+var _pfy: Array = [0.0, 0.0]
+var _onset_cool: Array = [0, 0]          # ticks before another onset may arm the limiter
+var _onset_run: Array = [0, 0]           # ticks the limiter has run in this onset
+var _pst: Array = [Vector2.ZERO, Vector2.ZERO]   # the focus step each pane took last tick (units): the limiter lets a step stay as large, never grow
+var _onset: Array = [0, 0]               # ticks left of a motion's onset (his velocity just stepped): the re-frame limiter's window
 var _pfx: Array = [0.0, 0.0]              # last tick's pane focus x
 var _vsm_m: float = 0.0                  # the one view's
 var dips: int = 0                        # brightness dips started (a safety cut, a rush's cut back, the intro's end), for the flash report
@@ -248,6 +257,12 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_lg_slot = -1
 	_lg_rel = false
 	_vsm = [0.0, 0.0]
+	_vlx = [0.0, 0.0]
+	_vly = [0.0, 0.0]
+	_onset = [0, 0]
+	_onset_run = [0, 0]
+	_onset_cool = [0, 0]
+	_pst = [Vector2.ZERO, Vector2.ZERO]
 	_vsm_m = 0.0
 	_gov_arm_until = -1.0e9
 	_bc_on = false
@@ -663,9 +678,9 @@ func _update_orientation(S: SimState) -> void:
 	# A pair that is close enough to merge again does not swing: the flip waits and is unseen once they are one view.
 	var merging: bool = split_wanted and r_now > _r_merge() and swing_t < 0.0
 	if cand != 0 and _flip_age >= CamParams.FLIP_DWELL and not merging:
-		var hidden: bool = (e >= CamParams.INSTANT_SWAP_E and sliver <= 0.0) or solo_w >= CamParams.INSTANT_SWAP_E
+		var hidden: bool = (e >= CamParams.INSTANT_SWAP_E and sliver <= 0.0)
 		var full: bool = sep >= 0.999 and _slam_slot < 0
-		if sep <= 0.02 or hidden:
+		if (sep <= 0.02 and e <= 0.02) or hidden:
 			sigma_u = cand
 			sigma_shown = cand
 			_flip_age = 0.0
@@ -2147,6 +2162,12 @@ func _anchor(S: SimState, i: int) -> Vector2:
 		solo_pt = Vector2(vw * (0.5 - CamParams.WRECK_ANCHOR_X * float(wreck_dir) * ap), vh * 0.70)
 	if solo_kind == "transform" and solo_slot == i and _tf_phase == "break" and _tf_ver == "full" and not _tf_calm:
 		solo_pt.y = vh * 0.74   # low in the frame, the sky above him
+	# A shot's anchor is held while the shot fades out (solo_w easing to 0 after it ended): the fallback was the default one,
+	# and the picture jumped by the difference (0.13 of the width at the end of a launch's hold, tick 2167 of ai seed 1).
+	if solo_kind != "" and solo_slot == i:
+		_anchor_hold[i] = solo_pt
+	elif solo_kind == "" and solo_slot == i and solo_w > 0.0 and Vector2(_anchor_hold[i]) != Vector2.ZERO:
+		solo_pt = _anchor_hold[i]
 	if e_slot >= 0:
 		if i == e_slot:
 			q = maxf(e, solo_w if solo_slot == i else 0.0)
@@ -2256,6 +2277,25 @@ func _update_cameras(S: SimState) -> void:
 		var vym: float = (f.y - _ppy[i]) / DT
 		_ppx[i] = f.x
 		_ppy[i] = f.y
+		# The lead follows the velocity with its change per tick limited. A body that goes from rest to 7,900 units a second
+		# in one tick (a beam's launch out of hit-stop, ground that falls away under him) was followed by a camera that went
+		# from rest to a tenth of the screen a tick in that tick, because the lead cancels the filter's lag exactly: a step of
+		# 0.10 of the width a tick, and at 2145 of ai seed 1 one of Tools' counted changes. It now takes about three ticks.
+		if absf(vxm) > 60000.0 or absf(vym) > 60000.0:
+			_vlx[i] = 0.0
+			_vly[i] = 0.0
+		elif absf(vxm - float(_vlx[i])) > CamParams.ONSET_MAX or absf(vym - float(_vly[i])) > CamParams.ONSET_MAX:
+			_vlx[i] = vxm   # a fling (a step of over 12,000 units a second) is chased as before: it cannot be eased, only followed
+			_vly[i] = vym
+		else:
+			if int(_onset_cool[i]) > 0:
+				_onset_cool[i] = int(_onset_cool[i]) - 1
+			elif absf(vxm - float(_vlx[i])) > CamParams.LEAD_SLEW or absf(vym - float(_vly[i])) > CamParams.LEAD_SLEW:
+				_onset[i] = CamParams.CAP_TICKS   # his velocity stepped: a launch out of hit-stop, ground that fell away
+				_onset_run[i] = 0
+				_onset_cool[i] = CamParams.CAP_COOL
+			_vlx[i] = float(_vlx[i]) + clampf(vxm - float(_vlx[i]), -CamParams.LEAD_SLEW, CamParams.LEAD_SLEW)
+			_vly[i] = float(_vly[i]) + clampf(vym - float(_vly[i]), -CamParams.LEAD_SLEW, CamParams.LEAD_SLEW)
 		var zc: float = maxf(_zo[i], 0.001)
 		# Lead room: while a launched fighter is chased (a pane's chase, or a launch shot's follow) the focus sits a little
 		# ahead of him, so more of the pane is in front of him than behind; smoothed so it never moves the picture quickly.
@@ -2326,12 +2366,12 @@ func _update_cameras(S: SimState) -> void:
 			# The lead that makes the discrete filter track a constant speed exactly: DT (1 - k) / k, about tau - DT / 2.
 			# The velocity lead cancels the filter's lag at a steady speed; a rush that starts and stops inside one time constant (a
 			# short blitz) would leave the focus up to 700 units past him and slide back when he stops, so in a rush it is bounded.
-			var vlead_x: float = vxm * DT * (1.0 - kx) / kx
+			var vlead_x: float = float(_vlx[i]) * DT * (1.0 - kx) / kx
 			if f.rush != null:
 				var vlim: float = CamParams.RUSH_LEAD_MAX * vw / zc
 				vlead_x = clampf(vlead_x, -vlim, vlim)
 			var tx: float = f.x + lead_c + vlead_x
-			var ty: float = fy_ref + vym * lead_w * DT * (1.0 - ky) / ky
+			var ty: float = fy_ref + float(_vly[i]) * lead_w * DT * (1.0 - ky) / ky
 			# Aimed at a building (B2): the focus leads toward it, a bounded distance on screen, so it is in frame.
 			if _aim[i] != null and f.state == "launched":
 				var zz: float = maxf(_zo[i], 0.001)
@@ -2349,13 +2389,50 @@ func _update_cameras(S: SimState) -> void:
 					_fx[i] = SimWrap.wrap(_fx[i] + qd * back)
 					_fy[i] += (f.y + CamParams.CHEST - _fy[i]) * back
 					lag_whips += 1
+			# The re-frame limiter: after his velocity steps (a beam's launch out of hit-stop, ground that falls away under him)
+			# the focus may not take a larger step than SCROLL_CAP of the width a tick (0.03 under reduced motion or reduced
+			# flashing) or than the step it took last tick: it can slow down at once, it cannot speed up, so the re-frame is
+			# eased and not a jump (140 and 215 units in a tick at ai seed 1's impact: a dark cliff face swept across bright
+			# sand in 3 ticks). Measured: allowing it any speeding-up at all (0.01 of the width a tick each tick) puts the sweep
+			# back over the analyser's area threshold. It gives way where the lag has him (CAP_LAG, 0.14 of the width from the
+			# focus: from there he is followed at his speed, so it never switches on and off at that edge), ends by itself when
+			# the focus asks for no more than it may take, or after CAP_MAX ticks, and a cut, a snap or a jump over 1,500
+			# units is not a re-frame.
+			var lim_on: bool = int(_onset[i]) > 0
+			if lim_on:
+				_onset[i] = int(_onset[i]) - 1
+				_onset_run[i] = int(_onset_run[i]) + 1
+			if lim_on and not _cut_now and not (solo_kind == "intro" and solo_slot == i):
+				var calm_c: bool = reduced_motion or flash_reduced
+				var floor_u: float = (CamParams.SCROLL_MAX_REDUCED if calm_c else CamParams.SCROLL_CAP) * vw / zc
+				var room: float = CamParams.CAP_LAG * vw / zc
+				var pst: Vector2 = _pst[i]
+				var sx: float = SimWrap.sdx(_pfx[i], _fx[i])
+				var sy: float = _fy[i] - float(_pfy[i])
+				var capped: bool = false
+				# The step may be as large as it takes to keep him within CAP_LAG of the focus, so the limit never switches on
+				# and off at that edge: a fling past it is followed at his speed, 0.14 behind.
+				var step_x: float = maxf(maxf(floor_u, absf(pst.x)), absf(SimWrap.sdx(_pfx[i], f.x) + lead_c) - room)
+				var step_y: float = maxf(maxf(floor_u, absf(pst.y)), absf(f.y + CamParams.CHEST - float(_pfy[i])) - room)
+				if absf(sx) > step_x and absf(sx) < 1500.0:
+					_fx[i] = SimWrap.wrap(_pfx[i] + signf(sx) * step_x)
+					capped = true
+				if absf(sy) > step_y and absf(sy) < 1500.0:
+					_fy[i] = float(_pfy[i]) + signf(sy) * step_y
+					capped = true
+				if capped:
+					scroll_caps += 1
+					if int(_onset_run[i]) < CamParams.CAP_MAX:
+						_onset[i] = maxi(int(_onset[i]), 1)
 		# own zoom: first-order filter, then the rate cap
 		# the scroll governor reads how fast the pane's camera is actually moving (a pinned pane is not: it waits)
 		var dfx: float = absf(SimWrap.sdx(_pfx[i], _fx[i]))
 		if dfx > 1500.0:
 			dfx = 0.0   # a jump (a cut ahead, a seam) is not a scroll; a pinned pane that follows a fleeing target is one
 		_vsm[i] = float(_vsm[i]) + (minf(dfx / DT, 60000.0) - float(_vsm[i])) * 0.2
+		_pst[i] = Vector2(SimWrap.sdx(_pfx[i], _fx[i]), float(_fy[i]) - float(_pfy[i]))
 		_pfx[i] = _fx[i]
+		_pfy[i] = _fy[i]
 		var zt: float = _own_zoom_target(S, i)
 		var tau_z: float = CamParams.TAU_Z
 		if (solo_kind == "ko" or solo_kind == "finisher") and solo_slot == i:

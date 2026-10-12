@@ -334,6 +334,8 @@ func _begin(label: String) -> void:
 	_allow_cut_frames = 0
 	_last_trans_t = -9.0
 	_probe_max = 0.0
+	_onset_dev = 0.0
+	_onset_scroll = 0.0
 	_offscreen_t = [0.0, 0.0]
 
 
@@ -571,6 +573,8 @@ func _frame_checks(fr: SplitFrame, cur: SplitFrame, alpha: float = 1.0) -> void:
 var _prev_g_valid: Array = [false, false]
 var _prev_fpos: Array = [Vector2.ZERO, Vector2.ZERO]
 var _probe_max: float = 0.0
+var _onset_dev: float = 0.0
+var _onset_scroll: float = 0.0
 var _fz_prev: Array = [0.0, 0.0]
 var _fz_cur: Array = [0.0, 0.0]
 var _ft_prev: Array = [Vector2.ZERO, Vector2.ZERO]
@@ -818,16 +822,27 @@ func _launch(speed: float, dist: float, vertical: bool = false, gap: float = 500
 		var flight: float = clampf(dist / maxf(speed, 1.0), 0.2, 6.0)
 		B.vx = dist / flight
 		var n2: int = int(flight * 60.0)
+		var pcam: int = 1 if _rig.current().shows(1) else 0
+		var cam_p: float = _rig.current().cam_x[pcam]
 		for k in range(n2):
 			B.x = SimWrap.wrap(B.x + B.vx * SplitRig.DT)
 			_tick_rig()
-			_probe(1)
+			# The first ticks of the flight are the onset (his velocity steps from rest): the re-frame limiter eases the camera
+			# (it moves at most SCROLL_CAP of the width a tick) and lets him drift to CAP_LAG; after CAP_MAX ticks
+			# the lag bound's 0.20 holds.
+			var cur_l: SplitFrame = _rig.current()
+			if k < CamParams.CAP_MAX + 1:
+				_onset_dev = maxf(_onset_dev, (cur_l.screen_pos(1 if cur_l.shows(1) else 0, B.x, B.y + CamParams.CHEST, float(B.z)) - cur_l.anchor[1]).length() / vw)
+			cam_p = cur_l.cam_x[pcam]
+			if k >= CamParams.CAP_MAX + 4:
+				_probe(1)
 	B.state = "down"
 	B.vx = 0.0
 	for _i in range(360):
 		_tick_rig()
 	if not vertical and speed >= CamParams.LAUNCH_MIN_SPEED:
 		_check(_probe_max <= CamParams.LAG_HARD + 0.01, "%s: the launched fighter was %.3f of the width from his anchor (bound %.2f)" % [_label, _probe_max, CamParams.LAG_HARD])
+		_check(_onset_dev <= CamParams.CAP_LAG + 0.02, "%s: in the onset of the flight he was %.3f of the width from his anchor (bound %.2f)" % [_label, _onset_dev, CamParams.CAP_LAG + 0.02])
 		_check(_rig.lag_cuts == 0, "%s: %d safety cuts in a launch" % [_label, _rig.lag_cuts])
 		stats["lag bound " + _label] = "worst %.3f of the width, whips %d, cuts %d" % [_probe_max, _rig.lag_whips, _rig.lag_cuts]
 	return {}

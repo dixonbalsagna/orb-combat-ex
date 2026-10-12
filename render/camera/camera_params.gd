@@ -74,6 +74,14 @@ const RUSH_LEAD_MAX: float = 0.12        # the follow point's velocity lead in a
 const ZIP_FRAME_TAU: float = 0.20        # the zip frame (the box the camera holds) is followed with this time constant
 const GOV_ARM_SPEED: float = 6000.0     # a charge's cue arms the scroll governor as if the view were already moving this fast
 const SWEEP_FEATHER_FRAC: float = 0.30   # the feathered sweep (a switch): the blend's half-width at its widest, a fraction of the width
+# The re-frame at an impact (a body's velocity steps from rest: a beam's launch out of hit-stop, ground that falls away):
+const LEAD_SLEW: float = 2700.0          # the lead velocity's change a tick, units a second (45 units a tick each tick): a step is eased over about three ticks
+const ONSET_MAX: float = 12000.0         # a velocity step over this (units a second) is a fling: not eased, chased as before
+const CAP_TICKS: int = 4                 # a step arms the limiter for this many ticks (it stays on while it is binding) ...
+const CAP_COOL: int = 30                 # ... and a step may not arm it again for this many ticks (one onset, not a whole ramp)
+const SCROLL_CAP: float = 0.045          # the limiter: a pane's focus moves at most this much of the width a tick (SCROLL_MAX_REDUCED under reduced motion) ...
+const CAP_MAX: int = 20                  # ... for at most this many ticks in one onset ...
+const CAP_LAG: float = 0.14              # ... and gives way when the fighter is this far (of the width) from the focus: from there he is followed at his speed
 const SCROLL_MAX: float = 0.045          # the scroll governor: the scenery crosses the screen no faster than this much of its width a tick ...
 const SCROLL_MAX_REDUCED: float = 0.03   # ... and this much under reduced motion or reduced flashing (Tools' flash analyser: collapse, 4.5 flashes a second)
 const BRAWL_FOCUS_TAU: float = 0.05       # the one view follows a brawl's centre eased with this time constant (its drift as the lead)
