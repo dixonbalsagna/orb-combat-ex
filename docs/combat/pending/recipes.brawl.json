@@ -1,7 +1,7 @@
 {
  "schema": "combat.recipes/1",
  "_target": "data/combat/recipes.json",
- "_changes": "PARKED: the next data/combat/recipes.json. It is the live file plus what is listed here; nothing that is live is changed. For the brawl as built (docs/director/brawl-c2.md) and the nine cells (docs/design/brawl-second-pass.md section 15): `brawl` names a pool for every cell the brawl throws from; new pools for each fighter (brawl.flurry, brawl.skill, brawl.medium, brawl.medium.held, brawl.heavy, brawl.launcher, brawl.launcher.lower, brawl.heavy.lower, brawl.reversal, brawl.lift, burst.fast, burst.mid, burst.slow, reach.bolt, reach.blast); the blocks `beat`, `burst`, `fallback`, `launcher` and `reach`; on every `pieces` row a `path`, with `sends` on what can send him; pieces rows for the strikes of Animation's later packs (rival4, rival7, rival8, protag7, protag10, protag11), one row an id. B and the launcher draw on the heavy tier Animation has posed, with the old stand-ins as B's fallback. The energy ids are Animation's: the rival's flick and sweep have ids of his own (strike.bolt_flick_gut, strike.bolt_sweep_chest), so this file lands with or after that rename is committed. Drop _target and _changes when it lands",
+ "_changes": "PARKED: the next data/combat/recipes.json. It is the live file plus what is listed here; nothing that is live is changed. For the brawl as built (docs/director/brawl-c2.md) and the nine cells (docs/design/brawl-second-pass.md section 15): `brawl` names a pool for every cell the brawl throws from; new pools for each fighter (brawl.light, brawl.light.toward, brawl.flurry, brawl.skill, brawl.medium, brawl.medium.held, brawl.heavy, brawl.launcher, brawl.launcher.lower, brawl.heavy.lower, brawl.reversal, brawl.lift, burst.fast, burst.mid, burst.slow, reach.bolt, reach.blast); the blocks `beat`, `burst`, `fallback`, `launcher` and `reach`; on every `pieces` row a `path`, with `sends` on what can send him; pieces rows for the strikes of Animation's later packs (rival4, rival7, rival8, protag7, protag10, protag11), one row an id. A tapped light, a light with the stick toward him and the flurry draw on his generated lights (brawl.light, brawl.light.toward, brawl.flurry), not on the old shared pools combo.link and blur.toward, which stay for the older exchanges. B and the launcher draw on the heavy tier Animation has posed, with the old stand-ins as B's fallback. The energy ids are Animation's: the rival's flick and sweep have ids of his own (strike.bolt_flick_gut, strike.bolt_sweep_chest), so this file lands with or after that rename is committed. Drop _target and _changes when it lands",
  "_about": "PARKED: ready to become data/combat/recipes.json as it stands (drop _target), but not moved. The pieces each of Game Design's recipes calls (docs/design/agency-pass.md section 2), per fighter. Fighter keys are the neutral working ids (protagonist, rival) until Orb names the pair. The rules and numbers quoted are Game Design's; the director's own numbers (the window, the flow's thresholds, the multipliers) belong in Encounter's data/director/alchemy.json. Checked against HEAD 45a95b9: every posed id is a strike of a wave manifest, and every blur step fills for both fighters.",
  "_status": {
   "live": "plays in live matches today. Nothing in these pools does yet: KAI and VORR still draw on the placeholder key sets, and go-live step 1 is a flag, off",
@@ -302,9 +302,9 @@
   "default": 24
  },
  "brawl": {
-  "_about": "The pool each cell of the brawl draws on (docs/design/brawl-second-pass.md section 15; docs/director/brawl-c2.md). One press is one attack: the pool is the cell's, and the press changes only how it is thrown. X: light (tapped), lightToward (tapped with the stick toward the rival), flurry (mashed), skill and juggle (on the beat, slice C3); a held X is the `burst` block, and its floor pace is the burst's slow class. Y: medium (tapped, mashed, on the beat, and the reversal's medium) is the mediums that read on a 12-tick wind-up; mediumHeld (the charged medium) is every medium, the ones that need a long wind-up included. B: heavy (tapped, mashed, on the beat) and heavyHeld (the charge) are the heavy tier; launcher is a tap of B in an opening (the `launcher` block). The wrench (a held B on a battered limb, slice C2b) has no pool: it is a heavy whose row lands on the limb the stick asks, found in the heavy's pool as the launcher's send is. bolt and blast are X and Y with RB held in reach (the `reach` block). The held X: burstFast, burstMid and burstSlow are the burst's blows by the class of the gap before each (the `burst` block), and burstFloor is the pace it settles to. reversal is the medium that answers a perfect block: it comes straight out of the guard, so it is a medium on a line or a rise, never a dropping kick or a turning blow. The double hit has no pool: it is one staged picture with its own poses. lift is the pair X+Y (slice C6a). The pools for Y, B and the energy pieces come from the generated movesets, so they keep to each fighter's identity. When a pool has nothing it may throw, `fallback` says what is thrown",
-  "light": "combo.link",
-  "lightToward": "blur.toward",
+  "_about": "The pool each cell of the brawl draws on (docs/design/brawl-second-pass.md section 15; docs/director/brawl-c2.md). One press is one attack: the pool is the cell's, and the press changes only how it is thrown. X: light (tapped), lightToward (tapped with the stick toward the rival), flurry (mashed), skill and juggle (on the beat, slice C3); a held X is the `burst` block, and its floor pace is the burst's slow class. Y: medium (tapped, mashed, on the beat, and the reversal's medium) is the mediums that read on a 12-tick wind-up; mediumHeld (the charged medium) is every medium, the ones that need a long wind-up included. B: heavy (tapped, mashed, on the beat) and heavyHeld (the charge) are the heavy tier; launcher is a tap of B in an opening (the `launcher` block). The wrench (a held B on a battered limb, slice C2b) has no pool: it is a heavy whose row lands on the limb the stick asks, found in the heavy's pool as the launcher's send is. bolt and blast are X and Y with RB held in reach (the `reach` block). The held X: burstFast, burstMid and burstSlow are the burst's blows by the class of the gap before each (the `burst` block), and burstFloor is the pace it settles to. reversal is the medium that answers a perfect block: it comes straight out of the guard, so it is a medium on a line or a rise, never a dropping kick or a turning blow. The double hit has no pool: it is one staged picture with its own poses. lift is the pair X+Y (slice C6a). The pools for X (a tapped light, a light toward him, the flurry, the skill strike and the burst), Y, B and the energy pieces come from the generated movesets, so they keep to each fighter's identity. When a pool has nothing it may throw, `fallback` says what is thrown",
+  "light": "brawl.light",
+  "lightToward": "brawl.light.toward",
   "flurry": "brawl.flurry",
   "burstFast": "burst.fast",
   "burstMid": "burst.mid",
@@ -393,41 +393,41 @@
      "strike.low_thrust"
     ],
     "away": [
-     "strike.snap_round",
-     "strike.spear_hand",
-     "strike.hook",
-     "strike.fist_sweep",
+     "strike.lift_kick",
      "strike.jab",
      "strike.gut_rise",
+     "strike.cross",
+     "strike.rising_elbow",
+     "strike.spear_hand",
      "strike.plate_hammer",
      "strike.shoulder_check"
     ],
     "none": [
      "strike.cross",
      "strike.gut_rise",
+     "strike.fist_sweep",
      "strike.jab",
-     "strike.short_uppercut",
-     "strike.short_knee",
-     "strike.rising_elbow",
-     "strike.forearm_drop",
-     "strike.front_kick"
+     "strike.knee_lift",
+     "strike.hook",
+     "strike.front_kick",
+     "strike.shoulder_check"
     ],
     "down": [
-     "strike.sweep",
-     "strike.fist_sweep",
+     "strike.low_thrust",
+     "strike.short_uppercut",
      "strike.spear_hand",
      "strike.backfist",
-     "strike.knee_hook",
-     "strike.knee_lift",
-     "strike.low_kick",
-     "strike.side_kick"
+     "strike.short_knee",
+     "strike.short_elbow",
+     "strike.side_kick",
+     "strike.jab"
     ],
     "up": [
+     "strike.short_uppercut",
+     "strike.spear_hand",
      "strike.hook",
-     "strike.cross",
-     "strike.gut_rise",
-     "strike.jab",
-     "strike.short_elbow",
+     "strike.fist_sweep",
+     "strike.knee_hook",
      "strike.knee_lift",
      "strike.plate_drop",
      "strike.front_kick"
@@ -435,7 +435,7 @@
    },
    "protagonist": {
     "toward": [
-     "strike.short_elbow",
+     "strike.knee_hook",
      "strike.backfist",
      "strike.palm_heel",
      "strike.hook",
@@ -450,7 +450,7 @@
      "strike.palm_lift",
      "strike.hook",
      "strike.palm_rise",
-     "strike.knee_hook",
+     "strike.short_elbow",
      "strike.front_kick",
      "strike.low_kick"
     ],
@@ -475,10 +475,10 @@
      "strike.sweep"
     ],
     "up": [
-     "strike.backfist",
      "strike.palm_heave",
+     "strike.backfist",
+     "strike.palm_heel",
      "strike.hook",
-     "strike.back_chop",
      "strike.short_knee",
      "strike.rising_elbow",
      "strike.fist_chop",
@@ -507,8 +507,8 @@
    "heavy": "brawl.heavy.lower",
    "heavyHeld": "brawl.heavy.lower",
    "launcher": "brawl.launcher.lower",
-   "medium": "combo.link",
-   "mediumHeld": "combo.link",
+   "medium": "brawl.light",
+   "mediumHeld": "brawl.light",
    "reversal": "brawl.medium"
   },
   "_lower": "for B the step lower is his stand-ins: the posed mediums that only read on a long wind-up, which played B before the tier was drawn",
@@ -517,30 +517,30 @@
    "rival": {
     "heavies": 10,
     "heavy": {
-     "pool": 1176
+     "pool": 1982
     },
     "mashedB": {
      "pool": 86
     },
     "launcher": {
-     "pool": 1176
+     "pool": 1982
     },
     "bySend": {
      "up": {
-      "pool": 1002,
-      "lower": 168,
+      "lower": 340,
+      "pool": 1636,
       "repeat": 6
      },
      "down": {
-      "pool": 1174,
+      "pool": 1980,
       "repeat": 2
      },
      "across": {
-      "pool": 1167,
-      "repeat": 9
+      "pool": 1970,
+      "repeat": 12
      },
      "turned": {
-      "pool": 1174,
+      "pool": 1980,
       "repeat": 2
      }
     }
@@ -548,32 +548,32 @@
    "protagonist": {
     "heavies": 10,
     "heavy": {
-     "pool": 1460
+     "pool": 1704
     },
     "mashedB": {
      "pool": 82
     },
     "launcher": {
-     "pool": 1460
+     "pool": 1704
     },
     "bySend": {
      "up": {
-      "pool": 1263,
-      "lower": 190,
+      "pool": 1385,
+      "lower": 312,
       "repeat": 7
      },
      "down": {
-      "pool": 1250,
-      "repeat": 54,
-      "lower": 156
+      "pool": 1510,
+      "repeat": 64,
+      "lower": 130
      },
      "across": {
-      "pool": 1450,
-      "repeat": 10
+      "pool": 1692,
+      "repeat": 12
      },
      "turned": {
-      "pool": 1450,
-      "repeat": 10
+      "pool": 1692,
+      "repeat": 12
      }
     }
    }
@@ -2107,27 +2107,7 @@
    ],
    "brawl.flurry": [
     {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.cross",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
-     "status": "posed"
-    },
-    {
-     "id": "strike.palm_heel",
-     "status": "posed"
-    },
-    {
-     "id": "strike.spear_hand",
-     "status": "posed"
-    },
-    {
-     "id": "strike.short_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -2135,25 +2115,57 @@
      "status": "posed"
     },
     {
-     "id": "strike.short_knee",
+     "id": "strike.shoulder_check",
      "status": "posed"
     },
     {
-     "id": "strike.shoulder_check",
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.jab",
+     "status": "posed"
+    },
+    {
+     "id": "strike.spear_hand",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.short_uppercut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_lift",
+     "status": "posed"
+    },
+    {
+     "id": "strike.gut_rise",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
      "status": "posed"
     }
    ],
    "brawl.skill": [
     {
-     "id": "strike.backfist",
-     "status": "posed"
-    },
-    {
-     "id": "strike.twin_spear",
+     "id": "strike.elbow_drop",
      "status": "posed"
     },
     {
      "id": "strike.front_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.sweep",
      "status": "posed"
     },
     {
@@ -2169,16 +2181,40 @@
      "status": "posed"
     },
     {
-     "id": "strike.sweep",
+     "id": "strike.backfist",
      "status": "posed"
     },
     {
-     "id": "strike.tail_jab",
-     "status": "waiting"
+     "id": "strike.forearm_drop",
+     "status": "posed"
     },
     {
-     "id": "strike.tail_sweep",
-     "status": "waiting"
+     "id": "strike.fist_drop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.arm_chop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.lift_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.fist_sweep",
+     "status": "posed"
+    },
+    {
+     "id": "strike.plate_drop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_thrust",
+     "status": "posed"
+    },
+    {
+     "id": "strike.plate_hammer",
+     "status": "posed"
     }
    ],
    "brawl.lift": [
@@ -2678,6 +2714,146 @@
      "id": "strike.headbutt",
      "status": "posed"
     }
+   ],
+   "brawl.light": [
+    {
+     "id": "strike.short_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.shoulder_check",
+     "status": "posed"
+    },
+    {
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.elbow_drop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.front_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.sweep",
+     "status": "posed"
+    },
+    {
+     "id": "strike.side_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.jab",
+     "status": "posed"
+    },
+    {
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.spear_hand",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.forearm_drop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.fist_drop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.short_uppercut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_lift",
+     "status": "posed"
+    },
+    {
+     "id": "strike.arm_chop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.lift_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.fist_sweep",
+     "status": "posed"
+    },
+    {
+     "id": "strike.plate_drop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_thrust",
+     "status": "posed"
+    },
+    {
+     "id": "strike.gut_rise",
+     "status": "posed"
+    },
+    {
+     "id": "strike.plate_hammer",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
+     "status": "posed"
+    }
+   ],
+   "brawl.light.toward": [
+    {
+     "id": "strike.short_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.shoulder_check",
+     "status": "posed"
+    },
+    {
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.elbow_drop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_lift",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
+     "status": "posed"
+    }
    ]
   },
   "protagonist": {
@@ -3113,31 +3289,7 @@
    ],
    "brawl.flurry": [
     {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.cross",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
-     "status": "posed"
-    },
-    {
-     "id": "strike.palm_heel",
-     "status": "posed"
-    },
-    {
-     "id": "strike.spear_hand",
-     "status": "posed"
-    },
-    {
      "id": "strike.short_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
@@ -3145,29 +3297,49 @@
      "status": "posed"
     },
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.shoulder_check",
      "status": "posed"
     },
     {
-     "id": "strike.ridge_hand",
+     "id": "strike.knee_hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.jab",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_heel",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_rise",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_lift",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_heave",
      "status": "posed"
     }
    ],
    "brawl.skill": [
     {
-     "id": "strike.backfist",
+     "id": "strike.hook_kick",
      "status": "posed"
     },
     {
-     "id": "strike.twin_spear",
-     "status": "posed"
-    },
-    {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.side_kick",
+     "id": "strike.sweep",
      "status": "posed"
     },
     {
@@ -3175,11 +3347,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.snap_round",
+     "id": "strike.side_kick",
      "status": "posed"
     },
     {
-     "id": "strike.sweep",
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.back_chop",
      "status": "posed"
     },
     {
@@ -3191,7 +3367,23 @@
      "status": "posed"
     },
     {
-     "id": "strike.hook_kick",
+     "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.front_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.lift_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.edge_crescent",
+     "status": "posed"
+    },
+    {
+     "id": "strike.fist_chop",
      "status": "posed"
     }
    ],
@@ -3666,6 +3858,126 @@
     },
     {
      "id": "strike.palm_push",
+     "status": "posed"
+    }
+   ],
+   "brawl.light": [
+    {
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.short_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.shoulder_check",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.sweep",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.side_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.jab",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_heel",
+     "status": "posed"
+    },
+    {
+     "id": "strike.back_chop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knife_chop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer_fist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_rise",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_lift",
+     "status": "posed"
+    },
+    {
+     "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.front_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.lift_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.edge_crescent",
+     "status": "posed"
+    },
+    {
+     "id": "strike.fist_chop",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_heave",
+     "status": "posed"
+    }
+   ],
+   "brawl.light.toward": [
+    {
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.short_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.shoulder_check",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
      "status": "posed"
     }
    ]

@@ -95,8 +95,9 @@ The recipes give the order ready-made: `reach.runs[fighter]` holds two runs of t
 | Never the same energy hand and release twice running | e06 | `reach.rule`, `reach.pieces` | kept among bolts: each is its own pair, and no piece follows itself. A blast after a bolt is not a repeat (Legal, `321c046d`), so the pick does nothing for it | |
 | A mashed run of bolts reads as varied | e09 | `reach.run`, `reach.runs` | part 4 | |
 
+- **The gut filter is a must (the EP, 2026-10-12).** In place of giving up after six tries, ask the pool for a piece that is not to the gut and is not one of his last two. With the lights rebuilt from each fighter's own cell, today's picker breaks the rule 7 times in 7,238 blows (6 give-ups); with a stand-in for this filter it is 0, and the filter fired 6 times. The stand-in walks the pool from its first piece; a keyed start is better.
 - **The two gut blows are one give-up.** After six tries that all draw the gut, `_piece` takes the last one and clears the flag (brawl.gd:924), so the blow after it may go to the gut as well. It happened once, on the rival's bolts: two of his four go to the gut. Asking the pool for a piece that is not to the gut, in place of six blind tries, closes it; so does the step `repeat` or `lower` of part 6.
-- **The rises:** the probe did not read whether he was airborne, so 52 is a ceiling. The new pools hold more rising blows than the old ones.
+- **A rise after a rise is the next rule to keep, when a juggle exists.** Legal's s05 binds only while he is airborne, and `brawl.gd` has no such state today, so nothing breaks it. But the pools now hold more rising blows (the Anti-hero's uppercuts, the Protagonist's rising palms): a rise followed a rise 437 times in 7,238 blows on the ground, where it was 52 before the lights were rebuilt and 0 on today's pools. In a juggle the pick has to refuse it, by the row's `path`.
 - The rules count the whole string, whatever button threw each blow (Legal's f02). `PIECE_1` and `PIECE_2` already do, since they are one pair a fighter.
 - Two more small ints a fighter (his last two places) and one for his last path cover s02, s04 and s05.
 

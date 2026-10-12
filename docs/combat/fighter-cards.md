@@ -1,6 +1,6 @@
 # A fighter's card, and the pool builder for any number of fighters
 
-Owner: Combat and Choreography. Date: 2026-10-12. Status: built in scratch on the EP's go; nothing in the sim tree or in `recipes.brawl.json` is touched. Step 6 of Game Design's `docs/design/fighter-pipeline.md`.
+Owner: Combat and Choreography. Date: 2026-10-12. Status: the tools are in scratch. The finding of section 2 was ruled on by the EP the same day, and the rebuilt light pools are in the parked `recipes.brawl.json`. Step 6 of Game Design's `docs/design/fighter-pipeline.md`.
 
 ## 1. The card
 
@@ -17,7 +17,7 @@ The two that exist are in `pending/cards/`: `protagonist.md` and `rival.md` (the
 
 **"The pieces a player will see most" has no answer.** Within a press the game draws evenly. So a line shows three of the press's pieces with his own first, says how many of the pool are his alone, and the card says a player sees them all.
 
-## 2. What the cards found: the lights are still the shared ones
+## 2. What the cards found: the lights were still the shared ones
 
 The cards were made first from the frozen `recipes.brawl.json`, and they showed this:
 
@@ -31,25 +31,33 @@ The cards were made first from the frozen `recipes.brawl.json`, and they showed 
 - **Those three presses are most of a fight.** In the four measured matches, 82% of the Anti-hero's blows were a tapped or mashed light.
 - **The old pools also break his own ban.** The Anti-hero never strikes with an open palm, and his tapped light and his flurry both hold the palm heel.
 
-**The same pools built from each fighter's generated lights** (the builder's `--x-cells`): `light` draws on a new `brawl.light`, `lightToward` on a new `brawl.light.toward`, and `brawl.flurry` and `brawl.skill` are rebuilt. Nothing else in the file changes but the burst's samples and the fallback's counts. No piece row, no key of `brawl` and nothing in Tools' schema changes, and the hook reads pool names from the file.
+**The same pools built from each fighter's generated lights.** `light` draws on a new `brawl.light`, `lightToward` on a new `brawl.light.toward`, and `brawl.flurry` and `brawl.skill` are rebuilt. Nothing else in the file changes but the burst's samples and the fallback's counts. No piece row, no key of `brawl` and nothing in Tools' schema changes, and the hook reads pool names from the file.
 
-| Measured on the same four seeds, 7,298 blows | As frozen | Lights from his own cell |
+**The EP ruled yes on 2026-10-12, and the parked file was rewritten that day.** Measured on a fresh copy of main (`6581ede7`), four seeds:
+
+| | Today's pools | The rewritten file, today's picker | With the hook's gut filter |
+| :--- | ---: | ---: | ---: |
+| Brawl blows; match seconds | 7,238; 1,177.1 | 7,238; 1,177.1 | 7,238; 1,177.1 |
+| The Anti-hero's blows that are a piece only he has | 13 of 3,671 | 33% | 33% |
+| The Protagonist's | 24% | 37% | 37% |
+| Two running to the gut | 0 | 7 | 0 |
+| Three running to one place | 235 | 56 | 54 |
+| A rise after a rise, at any height | 0 | 437 | 440 |
+
+| The pools, pieces and his alone | As first frozen | Rewritten |
 | :--- | ---: | ---: |
-| The Anti-hero's blows that are a piece only he has | 12% | 33% |
-| The Protagonist's | 24% | 37% |
-| X tapped: pieces, his alone | 16, 0 and 20, 4 | 27, 11 and 24, 9 |
-| The flurry: pieces, his alone | 9, 0 and 10, 1 | 12, 3 and 11, 3 |
-| A piece his own bans refuse, in a pool a cell names | 2 (the Anti-hero's palm heel) | none |
-| Three running to one place | 106 | 55 |
-| Two running to the gut, with today's picker | 2 | 7 |
-| Two running to the gut, with the hook's gut filter | | 0 |
-| A rise after a rise, at any height | 52 | 445 |
+| X tapped | 16, 0 and 20, 4 | 27, 11 and 24, 9 |
+| X tapped, stick toward | 4, 0 and 4, 0 | 7, 2 and 5, 0 |
+| The flurry | 9, 0 and 10, 1 | 12, 3 and 11, 3 |
+| A piece his own bans refuse, in a pool a cell names | the Anti-hero's palm heel, in two | none |
 
-- **The fight is the same** in every run: the same 7,298 blows and the same match seconds.
-- **The gut rule needs the hook's filter.** The new flurry pools hold more blows to the gut (the Anti-hero's: 4 of 12, where it was 2 of 9), so today's picker gives up more often. With a stand-in for part 5 of `brawl-hook.md` (ask the pool for a piece that is not to the gut, in place of giving up), the count is 0. The filter fired 6 times in 7,298 blows.
-- **The rises.** The new pools hold more rising blows: the Anti-hero's uppercuts and the Protagonist's rising palms. Legal's s05 binds only while he is airborne, and `brawl.gd` has no such state, so nothing here breaks it. It will matter in a juggle, where the pick must keep it.
-- **The generator's check passes** on the rebuilt file, on all three lines.
-- **The cards in `pending/cards/` are made from the rebuilt pools.** If the frozen file lands as it is, their three light lines are the table above instead.
+- **The fight is the same** in every run. Main's own fight moved between my first measure and this one (7,298 blows then), so the totals differ from `pending/nine-cells.md` section 3's first table.
+- **On the first frozen file** the shares were 12% and 24% (measured on the earlier copy).
+- **The gut rule needs the hook's filter, and the EP has made it a must.** The new flurry pools hold more blows to the gut (the Anti-hero's: 4 of 12, where it was 2 of 9), so today's picker gives up more often: 6 times here. With a stand-in for part 5 of `brawl-hook.md` (ask the pool for a piece that is not to the gut, in place of giving up) the count is 0.
+- **The rises.** The new pools hold more rising blows: the Anti-hero's uppercuts and the Protagonist's rising palms. Legal's s05 binds only while he is airborne, and `brawl.gd` has no such state, so nothing here breaks it. It is the next rule the pick has to keep, when a juggle exists.
+- **Joints:** Animation's strict scan passes on the rewritten file with the filter in (896 poses, 122 sequences, 24,000 live fighter-frames, none past a limit).
+- **The generator's check passes,** and Tools' parked script fits the file (`pending/nine-cells.md` section 3).
+- **The cards in `pending/cards/` are made from the rewritten file.**
 
 ## 3. Any number of fighters
 
@@ -64,7 +72,21 @@ Proved in scratch on a roster of three: the two in the tree and a third made fro
 
 Two checks the builder gained: no pool that a cell names may be empty, and no piece in it may be a shape the fighter's own bans refuse.
 
-**Not built: sharing heavies by Game Design's rule.** With every pack open, the generator filled the third fighter's ten heavies from the two tiers that exist: 7 of the Anti-hero's and 3 of the Protagonist's, and none of his own. Game Design's rule is 2 of his own at tier 1 and no two fighters sharing more than half. That needs a new kind of quota in a cell: at least so many that no pack has, and at most so many from one other fighter's tier. It is small, and it is the next thing to build before the Cyborg.
+**Sharing heavies by Game Design's rule: built in scratch** (the EP's go of 2026-10-12; `share_quota.py` makes a copy of the generator with it).
+- **The rule as data,** on the heavy cell: `"share": {"own": {"1": 2, "2": 4}, "maxWithOne": 0.5}`. A fighter says his tier in his identity (`tier`, 1 when it is not said) and which packs are another fighter's (`borrows`).
+- **His alone** is a piece from a pack of his own, or a new shape that no other fighter's cell holds. A new shape waits for Animation, so the rule is also his list of what to pose.
+- **The cap** counts what he takes from one other fighter's packs, and stops at half the cell.
+- **A launcher for every send** became four quotas of the cell, filled first. The check already held every tier to it; without the quotas, a fighter who borrows under a cap could end with none that sends down, and the generator refused to write.
+- **`--check` fails** when a cell with the rule has too few of his own or too many from one fighter.
+
+| The third fighter's ten heavies | With no rule | Tier 1 | Tier 2 |
+| :--- | ---: | ---: | ---: |
+| His alone (new, waiting) | 0 | 2 | 4 |
+| From the Anti-hero's tier | 7 | 5 | 4 |
+| From the Protagonist's tier | 3 | 3 | 2 |
+| A launcher for every send | yes | yes | yes |
+
+At tier 1 his two are a stepping knee to the legs and a turning elbow to the chest: his own weights picked them. The other two fighters' moves do not change, and `--check` passes on the three. When this goes into the tree, the two parked movesets change by their inputs line and by a count in the heavy cell.
 
 ## 4. The Cyborg's three silhouettes, as rows
 
@@ -79,4 +101,4 @@ Two lines each, on today's systems. The Courier's is the row that ran in section
 
 ## 5. Where the tools are
 
-In Combat's session scratch (`dyn/`), not in the tree: `fighter_card.py` with `card_text.json`; `make_pools_n.py`, which writes `pools_n.py` from the step 2 builder; `gen_at.py`, which runs the generator on a copy of its inputs; `roster3_setup.py` and `roster_scratch_setup.py` for the scratch roster and the probe. When the card is accepted it belongs beside the generator, and its hand-kept lines in `identity.json`.
+In Combat's session scratch (`dyn/`), not in the tree: `fighter_card.py` with `card_text.json`; `make_pools_n.py`, which writes `pools_n.py` from the step 2 builder; `gen_at.py`, which runs the generator on a copy of its inputs; `roster3_setup.py` and `roster_scratch_setup.py` for the scratch roster and the probe; `share_quota.py`, which writes the generator's copy with the sharing rule. When the card is accepted it belongs beside the generator, and its hand-kept lines in `identity.json`.

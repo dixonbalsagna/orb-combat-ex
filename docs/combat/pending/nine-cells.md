@@ -6,6 +6,8 @@ Today the live brawl picks by strength alone from four old pools, so B plays the
 
 **Since the report (2026-10-12):** committed as `c6f58415`. Animation's packs are on main (`04dd6729`, `115ee361`) with the ids and rows this note names, and with its part of section 6 done: a blow's strength picks its style, every bolt and blast is thrown from either arm, and the charged medium has its hold. Legal cleared the blast after a bolt (`321c046d`). The generator is version 14 with 80 self-test cases; `recipes.brawl.json` has not changed since the commit. The window waits on Encounter's hook.
 
+**The lights, 2026-10-12 (the EP's ruling).** In the file as first reported, the tapped light, the light with the stick toward and the flurry still drew on old pools, where I had written "unchanged" and "as committed". That meant: the presses a player makes most had nothing of the Anti-hero's own (16, 4 and 9 pieces, none his) and little of the Protagonist's, and the Anti-hero's held a palm strike that his identity bans. A fighter's card showed it (`../fighter-cards.md` section 2). The three are now built from each fighter's generated lights, like every other cell, and section 3 has a second measure.
+
 **Built on Animation's packs as they stand in the working tree** on 2026-10-12 at 10:04, not yet committed: its ids for the rival's flick and sweep, and rows 09 and 10 of each tier, which it marks provisional. The generator reads the tree. If a pack moves again, `--check` goes red and the chain of section 8 brings the data level in minutes.
 
 ## 1. What is parked
@@ -14,9 +16,9 @@ Today the live brawl picks by strength alone from four old pools, so B plays the
 
 | Game Design's cell (`docs/design/brawl-second-pass.md` §15) | `brawl` key | Pool | Rival | Protagonist | What it holds |
 | :--- | :--- | :--- | ---: | ---: | :--- |
-| X tapped | `light` | `combo.link` | live | live | Unchanged |
-| X tapped, stick toward | `lightToward` | `blur.toward` | live | live | Unchanged |
-| X mashed | `flurry` | `brawl.flurry` | 9 | 10 | As committed |
+| X tapped | `light` | `brawl.light` | 27 | 24 | His generated lights that are posed. Until 2026-10-12 this was `combo.link`, an old pool the two fighters nearly share |
+| X tapped, stick toward | `lightToward` | `brawl.light.toward` | 7 | 5 | Those of his lights thrown by elbow, knee, shoulder or head. Until 2026-10-12 this was the old `blur.toward`, four shared pieces |
+| X mashed | `flurry` | `brawl.flurry` | 12 | 11 | His lights that fit the flurry's gap. Rebuilt from his generated lights on 2026-10-12; before, it was made from the old shared strikes |
 | X held: the burst | `burstFast`, `burstMid`, `burstSlow` | `burst.fast`, `burst.mid`, `burst.slow` | 8, 13, 27 | 8, 12, 24 | Lights by the gap before each blow: a kick never fits a fast gap |
 | X held: the pace it settles to | `burstFloor` | `burst.slow` | 27 | 24 | Every light |
 | Y tapped or mashed | `medium` | `brawl.medium` | 10 | 10 | The mediums that read on a 12-tick wind-up |
@@ -28,7 +30,8 @@ Today the live brawl picks by strength alone from four old pools, so B plays the
 | RB + X in reach | `bolt` | `reach.bolt` | 4 | 4 | The point-blank bolts |
 | RB + Y in reach | `blast` | `reach.blast` | 2 | 2 | The blasts |
 
-- `skill`, `juggle` and `lift` are as committed. Nothing reads them yet.
+- `skill` and `juggle` draw on `brawl.skill` (15 and 13 pieces), rebuilt from his generated lights with the others. `lift` is as it was. Nothing reads the three yet.
+- **The old pools stay in the file** (`combo.link`, `blur.toward`, `blur.base` and the rest): the older exchanges and the hook's fallback read them. No cell of the brawl draws on them now.
 - **Fallback pools:** `brawl.heavy.lower` (5 a fighter: the old stand-ins) and `brawl.launcher.lower` (9 a fighter: posed mediums, by send).
 - **Blocks:** `beat`, `burst`, `fallback` (`steps`, `lower`, `onTheTier`), `launcher` (`aim`, `noStick`, `bySend`, `bySendLower`) and `reach` (`rule`, `run`, `pieces`, `runs`, `after`).
 - **`pieces`:** 30 new rows for Animation's 32 new key sets, one row an id. `strike.blast_chest` and `strike.blast_gut` are one row each for both fighters: the place and the path are the same. Every heavy has `sends`.
@@ -94,6 +97,23 @@ The rival threw all ten of his tier, as a heavy or as a launcher.
 - 24,000 fighter-frames of the four matches, with the tier and the energy pieces thrown: none reaches the screen past a limit.
 - The solve's last pass pulls three of the Protagonist's bolts back by more than 30 degrees on some frames, all at the left upper arm's twist: `pk.bolt_flat` (6 frames), `pk.bolt_sweep` (5) and `pk.bolt_thrust` (5). They pass, and Animation may want to look.
 
+**Measured again with the lights rebuilt** (a fresh copy of main at `6581ede7`, the same four seeds; main's own fight has moved since the first measure, so the totals differ).
+
+| | Today's pools | The rewritten file, today's picker | With the hook's gut filter |
+| :--- | ---: | ---: | ---: |
+| Brawl blows; match seconds | 7,238; 1,177.1 | 7,238; 1,177.1 | 7,238; 1,177.1 |
+| Blows with no piece | 0 | 0 | 0 |
+| The Anti-hero's blows that are a piece only he has | 13 of 3,671 | 1,222 (33%) | 1,219 (33%) |
+| The Protagonist's | 864 of 3,567 (24%) | 1,324 (37%) | 1,324 (37%) |
+| Two running to the gut | 0 | 7 | 0 |
+| Three running to one place | 235 | 56 | 54 |
+| A rise after a rise, at any height | 0 | 437 | 440 |
+
+- Every blow came from its cell's pool, for both fighters.
+- **The gut rule needs the filter.** Today's picker gave up 6 times; the filter took its place 6 times and the count is 0.
+- **Joints,** with the filter in: `joint_scan.gd --strict` exits 0. 896 authored poses (8,920 frames) and 122 sequences, none past a limit; 24,000 fighter-frames of the four matches, none reaches the screen past a limit. The solve's largest corrections are now on kicks that the tapped light throws more often: `w1.snap_round` (38 frames over 30 degrees), `pr.hook_kick` (10), the two front kicks (9 each).
+- **Tools' parked `apply-brawl-recipes.cjs` fits the rewritten file.** In a scratch copy of main with the file as `data/combat/recipes.json` and the script run: the validator reports 189 files, 0 errors, 0 warnings, its self-test passes 7,385 of 7,385, and a second run of the script changes nothing.
+
 **Not measured.**
 - The launcher's pick by send, the mashed bolts from their runs and a charge's second pick: the stand-in does none of them (parts 2 and 4 of the hook, and the end of part 1).
 - Blasts: the AI threw one.
@@ -104,7 +124,7 @@ The rival threw all ten of his tier, as a heavy or as a launcher.
 1. **Animation's working tree is committed:** the rename (`rival8`) and rows 09 and 10 of each tier (`rival7`, `protag10`). The recipes name those ids.
 2. **`recipes.brawl.json` becomes `data/combat/recipes.json`,** with `_target` and `_changes` dropped: by Tools' script, or by Combat on the EP's word.
 3. **Tools' schema** takes the additions of section 5.
-4. **Encounter's hook** (`../brawl-hook.md`).
+4. **Encounter's hook** (`../brawl-hook.md`), with the gut filter of its part 5, which is a must.
 5. **The goldens are regenerated once.** The frozen parity copy holds templates and finishers only and is not touched.
 
 - Steps 2 and 4 belong together. With the file and no hook, the fight plays as today and only the data hash moves. With the hook and no file, it falls back to today's four pools.
