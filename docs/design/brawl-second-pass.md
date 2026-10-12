@@ -1,6 +1,6 @@
 # The brawl, second pass: control first, three strengths on three buttons, and a recast of A
 
-Owner: Game Design. Dates: 2026-10-06, revised the same day for three strengths, and again for Orb's four tests (§13). Re-ruled on 2026-10-11 against the first chain as built (§14). The nine cells of §15 are the brawl's acceptance table (2026-10-12). Orb played the live brawl on the evening of 2026-10-05, answered questionnaire 19, then this page's five questions, and then settled the buttons (`docs/ep/vision.md`, the last three sections). This page turns all of that into rules.
+Owner: Game Design. Dates: 2026-10-06, revised the same day for three strengths, and again for Orb's four tests (§13). Re-ruled on 2026-10-11 against the first chain as built (§14). The nine cells of §15 are the brawl's acceptance table (2026-10-12), and §16 is its tapped column: the perfect follow-up. Orb played the live brawl on the evening of 2026-10-05, answered questionnaire 19, then this page's five questions, and then settled the buttons (`docs/ep/vision.md`, the last three sections). This page turns all of that into rules.
 
 **It revises `melee-press-feel.md`.** Where the two disagree, this page is the newer rule. §9 lists what stands and what changes. **Every number is a starting value,** and none has been run in the sim. Controls' input design, Legal's first screen and Animation's first sizes are folded in. The three-strengths revision needs a fresh look from each (§10).
 
@@ -606,7 +606,7 @@ The energy arts stance already fits: a bolt, a heavy shot that charges when held
 | :--- | :--- | :--- |
 | **B1 and its repairs** (live) | A light is a blow at once. The run, the close, the close guard, blows on a staggered fighter adding nothing. The brawl's worths and `brawl.damageMul`. The perfect block and the reversal in place, and the riposte | The magnetism (§1). **Y is the medium:** today's heavy strikes, on a 12-tick wind-up where they had 26. **B stops firing the beam** and becomes the heavy, on a new tier of blows. The ender rule goes. The level trade's draw goes (§7). `enderShare` becomes how often the AI ends a string with a charged heavy |
 | **The zip's first slice** | All of it. LT + X is the zip strike and LT + Y the zip heavy, as built | Named again when the stances are re-read: with three strengths LT + Y is a zip medium and LT + B a zip heavy. Not now. **Its counters follow the strengths** (confirmed): an X in the tech window as built; a Y whose wind-up ends in the tech window is the tech counter; a B whose wind-up ends in the heavy window is the heavy counter. A slow blow counters by when it lands, and not by when it is pressed. **The zip heavy keeps the worth it is built at,** on a key of its own, since today's heavy strikes are worth half as mediums |
-| **The skill strike as cut** | All of it for X: the beat point, the 4 ticks either side, the grade at the press, its worth of 4, the cleared run, the flow, the early and late rules, the pinned pose and the 10-tick return as the cue | It widens to all three. The beat follows any landed light, medium, heavy or skill strike. **On the beat, a wind-up is halved:** a medium skill strike lands 6 ticks after the press and is worth 6, for 2 ki; a heavy skill strike lands after 14, is worth 9, and is armoured as a heavy is, for 5 ki. Each adds 1 to the flow and clears the rival's run. "An ender at a flow of 3 launches" becomes "a charged heavy at a flow of 3 launches, at any charge". The showcase is subtle. **Three skill strikes running close** (§15) |
+| **The skill strike as cut** | All of it for X: the beat point, the 4 ticks either side, the grade at the press, its worth of 4, the cleared run, the flow, the early and late rules, the pinned pose and the 10-tick return as the cue | It widens to all three. The beat follows any landed light, medium, heavy or skill strike. **On the beat, a wind-up is halved:** a medium skill strike lands 6 ticks after the press and is worth 6, for 2 ki; a heavy skill strike lands after 14, is worth 9, and is armoured as a heavy is, for 5 ki. Each adds 1 to the flow and clears the rival's run. "An ender at a flow of 3 launches" becomes "a charged heavy at a flow of 3 launches, at any charge". The showcase is subtle. **Three skill strikes running close** (§15). **§16 moves the beat to the hit itself,** and renames the skill strike the perfect follow-up |
 | **Timing on a charged blow** | | Only the just release, on a full charged heavy |
 | **The lift and the juggle** (not built) | The juggle: up to five skill strikes, each worth less | The lift moves to X+Y, and to a full charged heavy with no stick |
 | **Three blows stopping a wind-up** (not built) | | Withdrawn. A heavy's wind-up is armoured against lights, and mediums stop it only in its first 20 ticks |
@@ -908,7 +908,7 @@ Encounter's second tune is built and lands as it is. Nothing below has been run:
 
 | | **Tapped** | **Mashed** | **Held** |
 | :--- | :--- | :--- | :--- |
-| **X, the light** | **The beat.** A light placed on the beat is a skill strike: worth 4, and it clears his run. Three running close. Off the beat it is the link between slower blows and the quickest punish. **For:** stopping his flurry without out-mashing him. **Beaten by:** armour, a guard, and a perfect block, which a steady beat invites | **The pressure.** It builds the run fastest: four blows he doesn't answer, and the next one closes. **For:** making an opening. **Beaten by:** a heavy's armour, a skill strike, a charged medium held through it | **The easy pressure.** The burst, slowing on its curve to a pace it keeps. It is 70% of a mash for no effort, and its changing rhythm can't be perfect-blocked. **For:** keeping him busy while the stick moves the fight, and a rival who turns flurries. **Beaten by:** a mash, which out-runs it, and armour |
+| **X, the light** | **The beat.** A light placed on the beat is a skill strike: worth 4, and it clears his run. Three running close. Off the beat it is the link between slower blows and the quickest punish. **For:** stopping his flurry without out-mashing him. **Beaten by:** armour, a medium that lands in its wind-up, and a perfect block, which a steady beat invites (§16) | **The pressure.** It builds the run fastest: four blows he doesn't answer, and the next one closes. **For:** making an opening. **Beaten by:** a heavy's armour, a skill strike, a charged medium held through it | **The easy pressure.** The burst, slowing on its curve to a pace it keeps. It is 70% of a mash for no effort, and its changing rhythm can't be perfect-blocked. **For:** keeping him busy while the stick moves the fight, and a rival who turns flurries. **Beaten by:** a mash, which out-runs it, and armour |
 | **Y, the medium** | **The stop.** It ends a heavy in its first 20 ticks, and it punishes a miss: 16 ticks against the 20 he is open. On the beat it lands in 6 ticks and is worth 6. **For:** answering anything slow. **Beaten by:** a flurry of lights, which it can't out-run, and a heavy past tick 20 | **The grind.** The most damage and wear a second without armour. It chips a guard twice as hard, and it beats a flurry of heavies. **For:** the race to the brink, and a rival who turtles. **Beaten by:** the X flurry, which closes first, and his own ki | **The patient close.** A charged medium: lights don't stop it, and at full it staggers him as a close does. It ends any charge, always. **For:** closing through a flurry of lights, and punishing a rival who holds something. **Beaten by:** a medium, a fast mash that closes first, giving ground |
 | **B, the heavy** | **The hammer.** In an opening it is the launcher. Thrown cold it trades through lights on its armour and staggers him. **For:** the decisive hit when he is open. **Beaten by:** a medium in its first 20 ticks, giving ground, a perfect block | **The advance.** Heavy after heavy. Lights don't answer armour, so his run climbs while theirs doesn't. **For:** walking through a masher. **Beaten by:** a flurry of mediums, giving ground and the punish, ki: it costs twice what comes back | **The big read.** A charged heavy: a knock-back with no opening needed, and a launch at full. **For:** making space, and punishing a rival who has committed to a flurry. **Beaten by:** a medium early, a charged medium always, giving ground, a fresh guard |
 
@@ -918,7 +918,7 @@ Encounter's second tune is built and lands as it is. Nothing below has been run:
 
 | Cell | Today, as built | The gap |
 | :--- | :--- | :--- |
-| X tapped | A light. The beat isn't built for any button | **The skill strike, on all three** (§9, slice C3), with one new rule: **three skill strikes running close.** The third staggers him for the close's 12 ticks, under the close guard |
+| X tapped | A light. The beat isn't built for any button | **The perfect follow-up, on all three** (§16, which re-rules §9's skill strike on Orb's anchor: his own hit), with one new rule: **three perfects running close.** The third staggers him for the close's 12 ticks, under the close guard |
 | X mashed | The flurry. The masher reads 37.5% on one of QA's scripts and 12% on the other | None in the rule. QA says which script the band is read on, and all nine rows use that one |
 | X held | The burst, and then nothing. The holder wins 0 of 40 | **The floor pace,** ruled in §3: one blow every 10 ticks through a tap's path. **New:** the held flurry's blows can't be perfect-blocked |
 | Y tapped | A medium, 12 ticks | The beat, as for X |
@@ -972,3 +972,127 @@ The nine have to be learnable from the screen and the sound alone, and on the ph
 | **Audio** | A tick on the beat. A sound for the stop, and the opening's ping | Three impact classes, and a flurry mode that tells them apart by pace | The burst falling in pitch as it slows. A charge rising to a click at full, higher for Y than for B |
 
 **On Simple** seven of the nine are on its buttons. A held X and a held Y aren't, because Attack reads a hold as strength. The hold-to-flurry setting gives the first. The second is the director's, as the pairs are.
+
+## 16. The perfect follow-up: a tap on the hit
+
+**Orb,** 2026-10-12: "yes, reward well-timed taps, if the player taps at the moment they land a hit they get a perfect followup --- please brainstorm if this could be improved".
+
+This is the tapped column of §15. It replaces §9's beat point and its window: the anchor is now the player's own hit. The worths of 4, 6 and 9 and the halved wind-ups stand. Nothing here is built or run, and every number is a first value.
+
+### The rule
+
+1. **When a blow of his lands, a window opens.** It opens on a clean hit, on a blocked one, and on one that meets armour.
+2. **A tap of X, Y or B inside the window is a perfect.** It throws the follow-up of that strength. The tap is the follow-up's press: one press is still one attack.
+3. **A follow-up is a full blow with a short wind-up,** so its own hit comes a beat later and can be tapped in turn.
+
+| The follow-up | Lands, after the tap | Worth | Ki | Its own bonus |
+| :--- | ---: | ---: | ---: | :--- |
+| **Light** | 10 ticks | 4 | 0 | The quickest chain, and free |
+| **Medium** | 6 ticks | 6 | A medium's | It stops a heavy at any tick of its wind-up, where a plain medium stops it only in its first 20 |
+| **Heavy** | 14 ticks | 9 | 5 | Armoured, and it staggers him for 12 |
+
+Every follow-up clears his run, as a skill strike did.
+
+4. **The window is the hit.** It is counted in ticks as the player sees them, the hit's freeze included.
+
+| The blow that landed | The window | Its length |
+| :--- | :--- | ---: |
+| A light follow-up | From 2 ticks before the hit to 5 after | 8 |
+| A medium, plain or a follow-up | From 3 before to 6 after | 10 |
+| A heavy, plain or a follow-up | From 3 before to 8 after | 12 |
+| **A plain light,** thrown at once | From 6 to 12 after the hit, as its pose lets go | 7 |
+
+- The quickest blow has the tightest window, and the slowest the widest.
+- **The plain light is the one case that isn't on the hit.** It lands 2 ticks after its press, sooner than any hand can press again. So its hit holds its pose for 6 ticks, and the window is as it lets go. Every later hit in a chain has travel, and its window is on the hit.
+- No window ends sooner than 5 ticks after its hit. That is what a tap aimed at the hit needs when the picture is 3 frames behind.
+
+5. **A hand that is mashing never makes one.** A press under 9 ticks after a plain press is a mash press, whatever the window says: a flurry blow, at once. So a chain can't start from a mash, and a plain light's window is in effect 7 to 12 ticks after its hit. After a perfect the window alone decides, so a tap on a perfect medium's hit, 6 ticks on, counts. A masher keeps his flurry and never the perfects, and a tapper has the perfects and not the flurry's pace.
+6. **An early press ends the chain, and not the string.** A press between a follow-up's throw and its window doesn't stop the follow-up. It lands, and the chain is back to nothing. A press after the window is a plain blow, and the chain is back to nothing.
+
+### The chain
+
+- **It counts perfects in a row.** It is the flow of §9, under its own name.
+- **The blow that brings the chain to 3 closes.** He staggers for the close's 12 ticks, which is an opening, under the close guard. A fourth tap, of B on that hit, is the launcher.
+- **Against a guard the third perfect breaks it.** So timing matters when he blocks, and nobody is taught to stop.
+- **A link counts double.** A follow-up of a different strength from the blow that landed adds 2 to the chain. So a light, a perfect medium and a perfect heavy close in three blows, where three lights need four. A mixed chain is harder to keep, since its beats are 10, 6 and 14 ticks apart.
+- **It ends** on a missed window, when a medium or a heavier blow lands on him in a follow-up's wind-up, when he is staggered, and 90 ticks after his last perfect.
+- **The stick at the tap aims the follow-up,** by the stick map of §3, as it aims any blow. It does nothing more in depth: that question is with Orb (`depth.md` §8).
+
+### What beats it
+
+- **A perfect block.** A follow-up can be perfect-blocked, and a steady beat is the easiest thing to read. Timing answers timing.
+- **A stop.** A medium or a heavier blow that lands in a follow-up's wind-up ends it. A light doesn't.
+- **Armour.** A winding heavy takes a perfect light at half and isn't stopped by it.
+- **A dodge.** The follow-up misses, and he is open for 20 ticks.
+- A guard alone doesn't: the third perfect breaks it.
+
+### The EP's twelve, weighed
+
+| | The idea | | Why |
+| ---: | :--- | :--- | :--- |
+| 1 | The window is the hit, by strength | **Kept** | With the plain light's one exception above |
+| 2 | No wind-up, can't be perfect-blocked, a bonus by strength | **Changed** | Half a wind-up and not none: a follow-up needs travel, or its own hit comes 2 ticks after the tap and can't be tapped. It can be perfect-blocked: a chain needs an answer in its own language, and that edge is the held X's. The heavy gets no knock-back of its own: that is the close and the launcher |
+| 3 | A chain that escalates, and the third closes | **Kept** | |
+| 4 | Mashing must not earn it | **Kept, by another test** | A press before the hit can't be the test: a light's own press is 2 ticks before its hit. The test is 9 ticks since a plain press, so a chain can't start from a mash |
+| 5 | Links between strengths | **Kept** | A link counts double. It doesn't answer the mindless mix by itself: that row falls only if a steady 12-tick hand makes few perfects, which is a proof row |
+| 6 | The stick aims the follow-up, and leans the line in depth | **Half kept** | It aims. It doesn't turn the line, while depth steering is Orb's open question |
+| 7 | A perfect on a blocked hit counts | **Kept** | The third breaks the guard |
+| 8 | One rhythm for attack and defence | **Kept, as an aim** | The perfect block's windows are 8 ticks against a light and 10 against a heavy today. These are 8, 10 and 12. They are aligned when this is tuned, and they share one cue |
+| 9 | One signal for the window and one for the perfect; Simple and phones; an assist | **Kept** | On Simple the release is the tap, as Controls has it. The assist widens every window by half, and is flagged as Simple's assists are |
+| 10 | Fighters differ in their timing | **Kept, small** | A fighter's three follow-up times may differ from another's by 2 ticks at most. His windows don't, and his own don't vary from blow to blow, or the beat can't be learned. Both fighters share one set in the first build |
+| 11 | The AI's rates, and what beats a chain | **Kept** | Below, and above |
+| 12 | Rollback, flash, one press | **Kept** | The 5 ticks after a hit. A perfect's mark is a spark at the hand and a sound, and never a flash: at one every 10 ticks it would pass three a second. Only the close may flash |
+
+### The AI
+
+| | Easy | Medium | Hard |
+| :--- | ---: | ---: | ---: |
+| Windows it taps (`perfectShare`) | 0.1 | 0.35 | 0.7 |
+| The longest chain it keeps | 1 | 2 | 3 |
+| Follow-ups it perfect-blocks, of those it sees | 0.05 | 0.15 | 0.3 |
+
+It never taps every window, and only the hard AI closes with a chain.
+
+### Bands, and the proof rows
+
+- **A player who taps every window,** one button only, against medium: 40 to 75% (§15). The levers are the three worths, and then the windows.
+- **A player who makes two in three:** reported. He shouldn't read under his own button's masher.
+
+| Proof row | Bound |
+| :--- | :--- |
+| A tap inside its window makes a perfect, and one outside doesn't | Every time (hard) |
+| A hand at a steady 6 or 8 ticks | No perfect, ever (hard) |
+| A follow-up lands at its time after the tap: 10, 6 and 14 ticks | Within 2 ticks (hard) |
+| The third perfect running, clean; and on a guard | A close, every time; a broken guard, every time (hard) |
+| A perfect block against a follow-up | Turns it, every time (hard) |
+| A steady hand at 12 ticks, X, Y, B in turn | Under 25% of its presses are perfects. Its match row stays 30 to 55% |
+| A script that taps at the seen hit, with the picture 3 frames late | At least 95% of its perfects |
+| A perfect's mark | No full flash; three a second at most stands (hard) |
+| The perfect block's windows beside these | Reported, until they are aligned |
+
+### The order, inside pass 3
+
+| Step | What |
+| ---: | :--- |
+| 3a | The window, the mash test, the perfect light, the chain's count, the cues |
+| 3b | The perfect medium and the perfect heavy, with the medium's sure stop |
+| 3c | The third closes, and breaks a guard; a link counts double; the AI's three rows |
+| 3d | Later: a fighter's own times, and the perfect block's windows aligned |
+
+### What the player must be shown
+
+| | The window is open | The perfect is made | The chain |
+| :--- | :--- | :--- | :--- |
+| **UI** | A ring closing on the button that can follow | The ring snaps shut, in the fighter's colour | One, two, three marks. The third is the close's mark |
+| **Animation** | The hit holds its pose. For a plain light the pose lets go at the window | The follow-up reads as a bigger blow than a mashed one, drawn back and thrown | The third is the close's pose |
+| **Audio** | The hit itself is the cue. A plain light has a tick as its pose lets go | A bright note on the hit, one step higher for each in the chain | The third resolves the phrase, with the opening's ping |
+| **Pad** | | A short pulse | A stronger one on the third |
+
+On a phone a tap is a tap. With the Simple layout the release is what is timed.
+
+### For Orb
+
+1. **The quick light.** A light lands too soon after its press to be tapped on the hit, so its window is as the pose lets go, 6 to 12 ticks later. Every other window is on the hit. Is that right for the one case, or should a chain have to start from a medium or a heavy?
+2. **A follow-up keeps half its wind-up.** A perfect heavy lands 14 ticks after the tap, and not at once. At once it would be a sure thing, and there would be no next hit to tap. Is a short wind-up the "perfect" Orb means?
+3. **A perfect block can answer a perfect.** The other choice is that nothing but a stop or a dodge can.
+4. **Mixing closes sooner.** A change of strength counts double toward the close. Wanted, or should three be three?
