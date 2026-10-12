@@ -21,9 +21,9 @@ const WATER_SHADER: Shader = preload("res://render/shaders/water.gdshader")
 const CROWD_SHADER: Shader = preload("res://render/shaders/crowd.gdshader")
 const BUILDING_SHADER: Shader = preload("res://render/shaders/building.gdshader")
 const STUB_WHOLE := 1.0e9     # a stub height that cuts nothing
-const STREET_STRIPS := 8      # the ground shader's array sizes (ground.gdshaderinc)
+const STREET_STRIPS := 16     # the ground shader's array sizes (ground.gdshaderinc): three streets of five strips, and one to spare
 const STREET_SPANS := 16
-const STREET_AVENUES := 12
+const STREET_AVENUES := 24
 const BUILDING_TOP: float = 2600.0   # the buildings' culling box reaches this high, in WS (the tallest tower of the re-laid city is under 2,300)
 static var row_haze: bool = true     # the rows' haze (building.gdshader); a tool may switch it off to compare
 

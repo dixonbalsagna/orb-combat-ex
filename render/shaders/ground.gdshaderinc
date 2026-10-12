@@ -308,7 +308,7 @@ vec4 ground_vertex(float col, float flag, float z, float ox) {
 
 // --- Fight lanes (ADR 0009; render/core/lanes.gd): the streets painted on the ground, and the lane cue. ---
 uniform int street_n = 0;           // street strips in use
-uniform vec4 street_strips[8];      // zTop, zBottom (world z; the top is nearer the camera), kind (0 sidewalk, 1 kerb parking, 2 carriageway), the street's centre z
+uniform vec4 street_strips[16];     // zTop, zBottom (world z; the top is nearer the camera), kind (0 sidewalk, 1 kerb parking, 2 carriageway), the street's centre z
 uniform int span_n = 0;             // districts in use
 uniform vec4 street_spans[16];      // a district's world x interval (x0, x1); z, w: its lane mask and look (not read yet)
 uniform float span_edge = 120.0;    // RenderLook.STREET_EDGE: the paint fades in over this at a district's ends
@@ -319,7 +319,7 @@ uniform vec4 street_line : source_color = vec4(0.78, 0.76, 0.66, 1.0);
 uniform float street_dash = 120.0;  // RenderLook.STREET_DASH: a centre-line dash and its gap, each
 uniform float street_bay = 190.0;   // RenderLook.STREET_BAY: a kerb parking bay's length
 uniform int avenue_n = 0;           // avenues in use: the cross streets that part the blocks
-uniform vec4 avenues[12];           // an avenue's world x interval (x0, x1); z: its district
+uniform vec4 avenues[24];           // an avenue's world x interval (x0, x1); z: its district
 uniform vec4 lot_z;                 // the two block lanes in depth: the first's zTop, zBottom, the second's
 uniform vec4 lot_col[8] : source_color;   // a look's paved ground in its blocks; a: how strongly it covers the biome's (0: yards)
 uniform float avenue_walk = 60.0;   // RenderLook.AVENUE_WALK
@@ -346,6 +346,16 @@ vec4 street_paint(vec2 px, float upx) {
 			continue;
 		}
 		float fine = 1.0 - smoothstep(4.0, 12.0, upx);
+		if (st.z < 1.5) {
+			// A crossing: where an avenue's carriageway meets the street, the sidewalk and the kerb give way to road.
+			for (int a = 0; a < avenue_n; a++) {
+				vec4 av = avenues[a];
+				float e = min(px.x - av.x, av.y - px.x);
+				if (e > min(avenue_walk, 0.2 * (av.y - av.x))) {
+					return vec4(street_road.rgb, 1.0);
+				}
+			}
+		}
 		if (st.z < 0.5) {
 			// Sidewalk, with slab joints across it.
 			float joint = 1.0 - smoothstep(0.0, 2.5, abs(fract(px.x / 75.0) - 0.5) * 75.0);

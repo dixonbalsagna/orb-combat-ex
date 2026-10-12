@@ -7,8 +7,11 @@ extends SceneTree
 ## - a look whose windows cover more than three tenths of its wall carries the contrast budget (flag 16: pane and wall
 ##   within RenderLook.PATTERN_BUDGET of each other, building.gdshader 7b), and its towers are massed in its shadow tone;
 ## - every one of the 20 shapes builds, the body first and on the ground, and a shape with no builder is the sim's box;
-## - in a real match no part of any building stands higher than the sim's height, or wider than the sim's width but
-##   for a roof's eaves;
+## - in a real match no wall of any building stands higher than the sim's height or wider than its width (a roof's
+##   eaves apart); what stands above is an ornament of at most RenderShapes.ORN_MAX of the height; and at the sim's
+##   height the walls fill at least RenderShapes.FILL of its width (World's rule: a fighter must not hit air beside a
+##   narrow top), but for the shapes that are thin by nature, which are named;
+## - every landmark in the data has its own treatment;
 ## - a part as it stands: whole, scaled with the hit points, cut off with a tower's top floors (its caps gone), and as
 ##   a shell (roofs and caps gone, the body as tall as the sim says);
 ## - the planet view: an instance for every part, the body's the building's own; each part's texel carries its shape and
@@ -43,11 +46,29 @@ func _expect(ok: bool, what: String) -> void:
 		fails += 1
 
 
-## The worst a building's parts do against the sim's box: [over the height, a wall over the width, a roof's eaves over the width (share of the width)].
+## Shapes that are thin or stepped by nature: the fill rule does not hold for them (listed for World).
+const THIN: Array = ["crane", "mast", "quay", "terrace", "chapel"]
+
+
+## How much of the sim's width a building's walls fill near its top (at nine tenths of its height).
+static func _fill(b, ps: Array) -> float:
+	var y: float = 0.9 * b.h - 0.5
+	var best: float = 0.0
+	for p in ps:
+		var y0: float = float(p[RenderShapes.Y0])
+		var y1: float = float(p[RenderShapes.Y1])
+		if y0 > y or y1 < y or y1 <= y0:
+			continue
+		best = maxf(best, float(p[RenderShapes.W]) * lerpf(1.0, float(p[RenderShapes.TX]), (y - y0) / (y1 - y0)) / b.w)
+	return minf(best, 1.0)
+
+
+## The worst a building's parts do against the sim's box: [a wall over the height or an ornament over its allowance, a wall over the width, a roof's eaves over the width (share of the width)].
 static func _over(b, ps: Array) -> Vector3:
 	var o := Vector3.ZERO
 	for p in ps:
-		o.x = maxf(o.x, float(p[RenderShapes.Y1]) - b.h)
+		var orn: bool = (int(p[RenderShapes.FLAGS]) & RenderShapes.ORN) != 0
+		o.x = maxf(o.x, float(p[RenderShapes.Y1]) - b.h * (1.0 + (RenderShapes.ORN_MAX if orn else 0.0)))
 		var half: float = absf(float(p[RenderShapes.X])) + 0.5 * float(p[RenderShapes.W]) * maxf(1.0, float(p[RenderShapes.TX]))
 		if (int(p[RenderShapes.FLAGS]) & RenderShapes.ROOF) != 0:
 			o.z = maxf(o.z, (half - 0.5 * b.w) / b.w)
@@ -92,14 +113,15 @@ func _run() -> void:
 	# Every shape builds.
 	var bad: Array = []
 	for sh in SHAPES + ["a shape nobody drew"]:
-		for dims in [[260.0, 500.0, 6200.0, 41, 0], [300.0, 420.0, 380.0, 3, 0], [375.0, 338.0, 11250.0, 62, 1]]:
+		for dims in [[900.0, 600.0, 2700.0, 18, 0], [300.0, 420.0, 380.0, 3, 0], [750.0, 600.0, 4875.0, 33, 1]]:
 			var b := SimState.Building.new()
 			b.shape = sh; b.w = dims[0]; b.d = dims[1]; b.h = dims[2]; b.floors = dims[3]; b.landmark = dims[4]; b.seed = 0.37; b.kind = "tower" if dims[2] > 1000.0 else "house"
 			var ps: Array = RenderShapes.parts(b, RenderShapes.look(0))
 			var o: Vector3 = _over(b, ps)
-			if ps.is_empty() or float(ps[0][RenderShapes.Y0]) != 0.0 or o.x > 0.01 or o.y > 0.5 or o.z > 0.13 or (sh == "a shape nobody drew" and ps.size() != 1):
-				bad.append("%s %s: %d parts, over %s" % [sh, str(dims), ps.size(), str(o)])
-	_expect(bad.is_empty(), "each of the %d shapes builds at three sizes, the body first and on the ground, inside the sim's box (a roof's eaves at most 13%% of the width out); a shape with no builder is the sim's box%s" % [SHAPES.size(), "" if bad.is_empty() else ": " + str(bad.slice(0, 3))])
+			var thin: bool = THIN.has(sh)
+			if ps.is_empty() or float(ps[0][RenderShapes.Y0]) != 0.0 or o.x > 0.01 or o.y > 0.5 or o.z > 0.13 or (sh == "a shape nobody drew" and ps.size() != 1) or (not thin and _fill(b, ps) < RenderShapes.FILL - 0.001):
+				bad.append("%s %s: %d parts, over %s, fills %.2f" % [sh, str(dims), ps.size(), str(o), _fill(b, ps)])
+	_expect(bad.is_empty(), "each of the %d shapes builds at three sizes, the body first and on the ground: no wall over the sim's height or width (a roof's eaves at most 13%% out), ornaments at most %.0f%% above it, and the walls %.0f%% of the width or more near the top (%s are thin by nature); a shape with no builder is the sim's box%s" % [SHAPES.size(), 100.0 * RenderShapes.ORN_MAX, 100.0 * RenderShapes.FILL, ", ".join(PackedStringArray(THIN)), "" if bad.is_empty() else ": " + str(bad.slice(0, 3))])
 	# The real city.
 	var worst := Vector3.ZERO
 	var by: Dictionary = {}
@@ -110,7 +132,25 @@ func _run() -> void:
 		worst = Vector3(maxf(worst.x, o.x), maxf(worst.y, o.y), maxf(worst.z, o.z))
 		by[str(b.shape)] = int(by.get(str(b.shape), 0)) + 1
 		total += (P._parts[bi] as Array).size()
-	_expect(worst.x <= 0.01 and worst.y <= 0.5 and worst.z <= 0.13, "seed %d: none of the %d buildings' %d parts stands higher than the sim's height (%.2f over), or wider than its width (%.2f) but for a roof's eaves (%.0f%% of the width)" % [seed_n, S.buildings.size(), total, worst.x, worst.y, 100.0 * worst.z])
+	var thinnest: float = 1.0
+	var thin_n: int = 0
+	var marks: Dictionary = {}
+	var plain: Array = []
+	for bi in range(S.buildings.size()):
+		var b = S.buildings[bi]
+		if THIN.has(str(b.shape)):
+			thin_n += 1
+		else:
+			thinnest = minf(thinnest, _fill(b, P._parts[bi]))
+		var key: String = RenderShapes.landmark_key(b)
+		if key != "":
+			marks[key] = true
+			var twin := SimState.Building.new()
+			twin.shape = b.shape; twin.w = b.w; twin.d = b.d; twin.h = b.h; twin.floors = b.floors; twin.seed = b.seed; twin.kind = b.kind
+			if (RenderShapes.parts(twin, RenderShapes.look(P._look[bi])) as Array).size() >= (P._parts[bi] as Array).size() and key != "lighthouse" and key != "hill_chapel":
+				plain.append(key)
+	_expect(worst.x <= 0.01 and worst.y <= 0.5 and worst.z <= 0.13 and thinnest >= RenderShapes.FILL - 0.001, "seed %d: none of the %d buildings' %d parts has a wall over the sim's height (%.2f over, ornaments' allowance counted) or its width (%.2f) but for a roof's eaves (%.0f%% of the width); the walls fill %.0f%% of the width or more near the top (%d buildings are of the shapes thin by nature)" % [seed_n, S.buildings.size(), total, worst.x, worst.y, 100.0 * worst.z, 100.0 * thinnest, thin_n])
+	_expect(plain.is_empty() and marks.size() >= 1, "each landmark in this world (%s) has a treatment of its own%s" % [", ".join(PackedStringArray(marks.keys())), "" if plain.is_empty() else ": none for " + str(plain)])
 	print("      shapes in this world: %s" % str(by))
 	# A part as it stands.
 	var tw := SimState.Building.new()
@@ -123,15 +163,16 @@ func _run() -> void:
 	for j in range(tps.size()):
 		var p: Array = tps[j]
 		var cap: bool = (int(p[RenderShapes.FLAGS]) & (RenderShapes.CAP | RenderShapes.ROOF)) != 0
+		var top: float = 1.0 + (RenderShapes.ORN_MAX if (int(p[RenderShapes.FLAGS]) & RenderShapes.ORN) != 0 else 0.0)
 		var w: Array = RenderShapes.span(p, j == 0, 6000.0, 6000.0, 0, false)
-		whole_ok = whole_ok and not w.is_empty() and float(w[1]) <= 6000.0 + 0.01
+		whole_ok = whole_ok and not w.is_empty() and float(w[1]) <= 6000.0 * top + 0.01
 		var c: Array = RenderShapes.span(p, j == 0, 2400.0, 6000.0, 2, true)
 		cut_ok = cut_ok and (c.is_empty() if cap else (c.is_empty() or float(c[1]) <= 2400.0 + 0.01)) and (j > 0 or float(c[1]) == 2400.0)
 		var s: Array = RenderShapes.span(p, j == 0, 3000.0, 6000.0, 1, false)
-		scale_ok = scale_ok and not s.is_empty() and float(s[1]) <= 3000.0 + 0.01 and is_equal_approx(float(s[1]), float(p[RenderShapes.Y1]) * 0.5)
+		scale_ok = scale_ok and not s.is_empty() and float(s[1]) <= 3000.0 * top + 0.01 and is_equal_approx(float(s[1]), float(p[RenderShapes.Y1]) * 0.5)
 		var e: Array = RenderShapes.span(p, j == 0, 1800.0, 6000.0, 3, false)
 		shell_ok = shell_ok and (e.is_empty() if cap else float(e[1]) <= 1800.0 + 0.01) and (j > 0 or float(e[1]) == 1800.0)
-	_expect(whole_ok and scale_ok and cut_ok and shell_ok, "a stepped tower's parts: all show when it is whole; they scale with its hit points; with its top floors gone the caps go and nothing stands over its height; a shell has no cap and its body is as tall as the sim says")
+	_expect(whole_ok and scale_ok and cut_ok and shell_ok, "a stepped tower's parts: all show when it is whole, only an ornament over the sim's height; they scale with its hit points; with its top floors gone the caps and ornaments go and nothing stands over its height; a shell has neither and its body is as tall as the sim says")
 	# The planet view.
 	var inst_ok: bool = P._n_inst >= S.buildings.size()
 	var texel_ok: bool = true
@@ -153,7 +194,7 @@ func _run() -> void:
 	var step: int = -1
 	for bi in range(S.buildings.size()):
 		var b = S.buildings[bi]
-		if int(b.row) == 1 and int(b.floors) >= 20 and int(b.landmark) == 0:
+		if int(b.row) >= 1 and int(b.row) <= 2 and int(b.floors) >= 10 and int(b.landmark) == 0:
 			if str(b.shape) == "stepped" and step < 0:
 				step = bi
 			elif str(b.shape) != "stepped" and tall < 0:

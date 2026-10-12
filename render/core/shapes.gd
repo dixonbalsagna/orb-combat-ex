@@ -9,9 +9,12 @@ extends RefCounted
 ## pinched to a ridge; a saw-tooth roof is a row of leaning boxes. Art's rule holds by construction: prisms and stacks of
 ## prisms, no curves (an octagonal stack is drawn four-sided until Art draws it).
 ##
-## Every part stays inside the sim's box (b.w wide, b.h tall above its footing), so what is drawn never stands where
-## the sim has nothing. Shapes that narrow toward the top (stepped, crown, spire, chimney, lighthouse, a gable) are
-## narrower than the sim's box up there; that is listed for World in docs/rendering/lanes-look.md.
+## The sim's box is a rectangle (b.w wide, b.h tall above its footing) and every blast, shot and flight reads it, so
+## the shapes FILL it (World's rule, 2026-10-12): at the sim's height a building's walls are at least 85% of its width
+## (a stepped tower's top tier, a crown's chamfer, a stack's taper), so a fighter does not hit air beside a narrow
+## top. What makes the silhouette stands ABOVE the sim's height as an ornament that does not collide: a spire, a
+## finial, a ridge, a plant box, a lantern room, at most ORN_MAX of the height (flag ORN). No wall is wider than the
+## box. A gable starts a little under the sim's height (at most a tenth of it) so its pitch is not flat.
 ##
 ## Reads the sim and the settlements data only; writes neither.
 
@@ -20,6 +23,9 @@ const SETTLEMENTS: String = "res://data/biomes/settlements.json"
 const ROOF: int = 1     # a roof facet: its own colour, no windows, gone from a shell
 const PLAIN: int = 2    # no windows
 const CAP: int = 4      # a top piece (a roof, a spire, a plant box): gone from a shell, and from a tower whose top floors are gone
+const ORN: int = 8      # an ornament: it stands above the sim's height (wholly or with its upper part) and does not collide
+const ORN_MAX: float = 0.15   # ... by at most this share of the height
+const FILL: float = 0.85      # the least share of the sim's width the walls have at its height
 ## A part as an array: [x offset, z offset, width, depth, bottom, top (above the footing, of the whole building),
 ## top's width share, top's depth share, lean, colour, flags].
 const X := 0
@@ -70,6 +76,7 @@ const STEEL: String = "#6b7280"
 const TIMBER: String = "#7a5a3c"
 
 static var _names: Array = []
+static var _marks: Array = []
 
 
 ## The looks' names in the data's order (a district's look is an index into this).
@@ -80,6 +87,18 @@ static func look_names() -> Array:
 		if _names.is_empty():
 			_names = [FALLBACK]
 	return _names
+
+
+## Building b's landmark key in the data ("bell_tower", "ledger_hall", ...), or "" for none.
+static func landmark_key(b) -> String:
+	var k: int = int(b.landmark)
+	if k <= 0:
+		return ""
+	if _marks.is_empty():
+		var j = JSON.parse_string(FileAccess.get_file_as_string(SETTLEMENTS))
+		for m in ((j as Dictionary).get("landmarks", []) if j is Dictionary else []):
+			_marks.append(str((m as Dictionary).get("key", "")))
+	return str(_marks[k - 1]) if k <= _marks.size() else "landmark"
 
 
 ## Look k's table (the fallback for a name with no entry here, so a look World adds is drawn, plainly, until Art has it).
@@ -134,107 +153,147 @@ static func parts(b, lk: Dictionary, depth: float = -1.0) -> Array:
 	var trim: Color = _c(lk["trim"])
 	var out: Array = []
 	var shape: String = str(b.shape)
-	var plant: float = clampf(0.4 * fh, 24.0, 70.0)
+	var mark: String = landmark_key(b)
+	var orn: float = ORN_MAX * h
+	var plant: float = minf(clampf(0.4 * fh, 24.0, 70.0), orn)
 	match shape:
 		"stepped":
-			# A core the full height at about 60 percent of the base, with two skirts: the setbacks.
-			out.append(_p(0.0, 0.0, w * 0.62, d * 0.7, 0.0, h - plant, wall))
-			out.append(_p(0.0, 0.0, w, d, 0.0, _snap(h * 0.45, fh), wall))
-			out.append(_p(0.0, 0.0, w * 0.8, d * 0.85, 0.0, _snap(h * 0.74, fh), wall))
-			out.append(_p(side * w * 0.08, 0.0, w * 0.3, d * 0.3, h - plant, h, dark, PLAIN | CAP))
-		"crown":
-			var c: float = clampf(0.9 * w, fh, 0.12 * h)
-			out.append(_p(0.0, 0.0, w, d, 0.0, h - c, wall))
-			out.append(_p(0.0, 0.0, w, d, h - c, h, _c(tones[1]), PLAIN | CAP, 0.5, 0.5))
-		"spire":
-			var c: float = clampf(1.6 * w, 1.5 * fh, 0.2 * h)
-			if int(b.landmark) > 0:
-				# The Gatebell (Art, Legal RL-040): a stone shaft, an open belfry, a spire, one stair bump; no clock face.
-				var bel: float = clampf(1.1 * w, fh, 0.08 * h)
-				out.append(_p(0.0, 0.0, w, d, 0.0, h - c - bel, _c(tones[0]), 0, 1.0, 1.0, 0.0, STONE))
-				out.append(_p(0.0, 0.0, w * 0.84, d * 0.84, h - c - bel, h - c, _c(BELFRY), PLAIN | CAP))
-				out.append(_p(0.0, 0.0, w, d, h - c - bel - 0.12 * bel, h - c - bel, _c(tones[0]), PLAIN | CAP))
-				out.append(_p(0.0, 0.0, w, d, h - c - 0.12 * bel, h - c, _c(tones[0]), PLAIN | CAP))
-				out.append(_p(0.0, 0.0, w * 0.96, d * 0.96, h - c, h, roof, ROOF | CAP, 0.02, 0.02))
-				out.append(_p(side * w * 0.3, d * 0.5 + 12.0, w * 0.2, 24.0, 0.0, _snap(h * 0.045, fh), _c(tones[1]), 0, 1.0, 1.0, 0.0, STONE))
+			# Two setbacks, the top tier still 86 percent of the base: the steps show and the box is full.
+			var a_top: float = _snap(h * 0.45, fh)
+			var b_top: float = _snap(h * 0.74, fh)
+			if mark == "ledger_hall":
+				# The ledger hall: a broad stepped hall of pale stone, a dark arcade at the street, a pale ledge at
+				# each setback, and a low stepped cap above. Generic: no real building.
+				var stone: Color = _c(tones[0])
+				var ledge: Color = _c("#d5d9df")
+				out.append(_p(0.0, 0.0, w * 0.86, d * 0.9, 0.0, h, stone, 0, 1.0, 1.0, 0.0, STONE))
+				out.append(_p(0.0, 0.0, w, d, 0.0, a_top, stone, 0, 1.0, 1.0, 0.0, STONE))
+				out.append(_p(0.0, 0.0, w * 0.93, d * 0.95, 0.0, b_top, stone, 0, 1.0, 1.0, 0.0, STONE))
+				out.append(_p(0.0, d * 0.5 + 4.0, w * 0.98, 8.0, 0.0, minf(fh, a_top), _c(BELFRY), PLAIN))
+				out.append(_p(0.0, 3.0, w * 0.999, d + 6.0, a_top - 0.18 * fh, a_top, ledge, PLAIN))
+				out.append(_p(0.0, 3.0, w * 0.929, d * 0.95 + 6.0, b_top - 0.18 * fh, b_top, ledge, PLAIN))
+				out.append(_p(0.0, 3.0, w * 0.859, d * 0.9 + 6.0, h - 0.18 * fh, h, ledge, PLAIN | CAP))
+				out.append(_p(0.0, 0.0, w * 0.6, d * 0.62, h, h + orn * 0.5, stone, PLAIN | CAP | ORN))
+				out.append(_p(0.0, 0.0, w * 0.34, d * 0.36, h + orn * 0.5, h + orn, ledge, PLAIN | CAP | ORN))
 			else:
-				out.append(_p(0.0, 0.0, w, d, 0.0, h - c, wall))
-				out.append(_p(0.0, 0.0, w * 0.94, d * 0.94, h - c, h, roof, ROOF | CAP, 0.02, 0.02))
+				out.append(_p(0.0, 0.0, w * 0.86, d * 0.9, 0.0, h, wall))
+				out.append(_p(0.0, 0.0, w, d, 0.0, a_top, wall))
+				out.append(_p(0.0, 0.0, w * 0.93, d * 0.95, 0.0, b_top, wall))
+				out.append(_p(side * w * 0.08, 0.0, w * 0.3, d * 0.3, h, h + plant, dark, PLAIN | CAP | ORN))
+		"crown":
+			# A chamfer the box still fills (86 percent at the top), and the cut gem above it.
+			var c: float = clampf(0.5 * w, fh, 0.1 * h)
+			out.append(_p(0.0, 0.0, w, d, 0.0, h - c, wall))
+			out.append(_p(0.0, 0.0, w, d, h - c, h, _c(tones[1]), PLAIN | CAP, 0.86, 0.86))
+			if mark == "crown_tower":
+				# The crown tower: a pale band under the chamfer and a crown above it, a low gem between four points.
+				out.append(_p(0.0, 3.0, w * 0.999, d + 6.0, h - c - 0.2 * fh, h - c, _c("#d5d9df"), PLAIN | CAP))
+				out.append(_p(0.0, 0.0, w * 0.6, d * 0.6, h, h + orn * 0.55, _c(tones[1]), PLAIN | CAP | ORN, 0.5, 0.5))
+				for sx in [-1.0, 1.0]:
+					for sz in [-1.0, 1.0]:
+						out.append(_p(sx * w * 0.36, sz * d * 0.36, w * 0.13, d * 0.13, h, h + orn, _c("#d5d9df"), ROOF | CAP | ORN, 0.04, 0.04))
+			else:
+				out.append(_p(0.0, 0.0, w * 0.86, d * 0.86, h, h + orn * 0.6, _c(tones[1]), PLAIN | CAP | ORN, 0.55, 0.55))
+		"spire":
+			# A shaft the whole height of the box, and the spire above it: never a needle (no taller than 15 percent).
+			if mark == "bell_tower":
+				# The Gatebell (Art, Legal RL-040): a stone shaft, an open belfry, a spire, one stair bump; no clock face.
+				var bel: float = clampf(0.5 * w, fh, 0.08 * h)
+				out.append(_p(0.0, 0.0, w, d, 0.0, h - bel, _c(tones[0]), 0, 1.0, 1.0, 0.0, STONE))
+				out.append(_p(0.0, 0.0, w * 0.9, d * 0.9, h - bel, h, _c(BELFRY), PLAIN | CAP))
+				out.append(_p(0.0, 3.0, w * 0.999, d + 6.0, h - bel - 0.12 * bel, h - bel, _c("#d5d9df"), PLAIN | CAP))
+				out.append(_p(0.0, 3.0, w * 0.999, d + 6.0, h - 0.12 * bel, h, _c("#d5d9df"), PLAIN | CAP))
+				out.append(_p(0.0, 0.0, w * 0.96, d * 0.96, h, h + orn, roof, ROOF | CAP | ORN, 0.02, 0.02))
+				out.append(_p(side * w * 0.3, d * 0.5 + 12.0, w * 0.2, 24.0, 0.0, _snap(h * 0.06, fh), _c(tones[1]), 0, 1.0, 1.0, 0.0, STONE))
+			else:
+				out.append(_p(0.0, 0.0, w, d, 0.0, h, wall))
+				out.append(_p(0.0, 0.0, w * 0.94, d * 0.94, h, h + minf(orn, 0.75 * w), roof, ROOF | CAP | ORN, 0.02, 0.02))
 		"slab", "block", "shaft":
-			out.append(_p(0.0, 0.0, w, d, 0.0, h - plant, wall))
-			out.append(_p(side * w * (0.22 if shape == "block" else 0.12), 0.0, w * (0.34 if shape == "block" else 0.42), d * 0.36, h - plant, h, dark, PLAIN | CAP))
+			out.append(_p(0.0, 0.0, w, d, 0.0, h, wall))
+			out.append(_p(side * w * (0.22 if shape == "block" else 0.12), 0.0, w * (0.34 if shape == "block" else 0.42), d * 0.36, h, h + plant, dark, PLAIN | CAP | ORN))
 		"warehouse":
-			var rh: float = minf(0.13 * d, 0.3 * h)
-			out.append(_p(0.0, 0.0, w, d, 0.0, h - rh, wall))
-			out.append(_p(0.0, 0.0, w * 1.02, d * 1.04, h - rh, h, roof, ROOF | CAP, 1.0, 0.03))
+			var rise: float = 0.13 * d
+			var up: float = minf(orn, rise)
+			var dn: float = minf(rise - up, 0.1 * h)
+			out.append(_p(0.0, 0.0, w, d, 0.0, h - dn, wall))
+			out.append(_p(0.0, 0.0, w * 1.02, d * 1.04, h - dn, h + up, roof, ROOF | CAP | ORN, 1.0, 0.03))
 		"sawtooth":
-			var th: float = clampf(0.2 * h, 30.0, 120.0)
+			var rise: float = clampf(0.2 * h, 30.0, 120.0)
+			var up: float = minf(orn, rise)
+			var dn: float = minf(rise - up, 0.1 * h)
 			var n: int = clampi(int(round(w / 190.0)), 2, 5)
-			out.append(_p(0.0, 0.0, w, d, 0.0, h - th, wall))
+			out.append(_p(0.0, 0.0, w, d, 0.0, h - dn, wall))
 			for i in range(n):
-				out.append(_p((float(i) + 0.5) / float(n) * w - 0.5 * w, 0.0, w / float(n), d, h - th, h, roof, ROOF | CAP, 1.0, 1.0, 1.0))
+				out.append(_p((float(i) + 0.5) / float(n) * w - 0.5 * w, 0.0, w / float(n), d, h - dn, h + up, roof, ROOF | CAP | ORN, 1.0, 1.0, 1.0))
 		"chimney":
-			var ch: float = clampf(0.03 * h, 24.0, 110.0)
-			var tp: float = 0.72
-			out.append(_p(0.0, 0.0, w, d, 0.0, h - ch, _c(BRICK_STACK), PLAIN, tp, tp))
-			out.append(_p(0.0, 0.0, w * tp * 1.12, d * tp * 1.12, h - ch, h, _c(SOOT), PLAIN | CAP, 1.14, 1.14))
-			if int(b.landmark) > 0:
+			# A stack whose taper the box still fills, and its flared cap above.
+			var tp: float = 0.86
+			out.append(_p(0.0, 0.0, w, d, 0.0, h, _c(BRICK_STACK), PLAIN, tp, tp))
+			out.append(_p(0.0, 0.0, w * tp * 1.02, d * tp * 1.02, h, h + minf(orn, clampf(0.03 * h, 24.0, 110.0)), _c(SOOT), PLAIN | CAP | ORN, 1.12, 1.12))
+			if mark != "":
 				# The stack (Art, Legal): pale stone and soot bands, a flared cap, a short side flue. No red and white.
 				(out[0] as Array)[COL] = _c("#b9b2a4")
 				for band in [[0.3, 0.37], [0.58, 0.65]]:
-					var w0: float = 1.0 - (1.0 - tp) * float(band[0]) * h / (h - ch)
-					var w1: float = 1.0 - (1.0 - tp) * float(band[1]) * h / (h - ch)
-					out.append(_p(0.0, 0.0, w * w0 * 1.03, d * w0 * 1.03, h * float(band[0]), h * float(band[1]), _c(SOOT), PLAIN, w1 / w0, w1 / w0))
+					var w0: float = 1.0 - (1.0 - tp) * float(band[0])
+					var w1: float = 1.0 - (1.0 - tp) * float(band[1])
+					out.append(_p(0.0, 0.0, w * w0 * 0.999, d * w0 * 1.03, h * float(band[0]), h * float(band[1]), _c(SOOT), PLAIN, w1 / w0, w1 / w0))
 				out.append(_p(side * w * 0.2, d * 0.5 + 10.0, w * 0.16, 20.0, 0.0, h * 0.28, _c(SOOT), PLAIN))
 		"lighthouse":
-			# A tapering tower in two wide bands, a lantern room of pale glass under a low cone. No stripe, no beam.
-			var tp: float = 0.68
-			var hb: float = 0.84 * h
-			out.append(_p(0.0, 0.0, w, d, 0.0, hb, _c(tones[0]), 0, tp, tp, 0.0, STONE))
-			var w0: float = 1.0 - (1.0 - tp) * 0.36 / 0.84
-			var w1: float = 1.0 - (1.0 - tp) * 0.6 / 0.84
-			out.append(_p(0.0, 0.0, w * w0 * 1.02, d * w0 * 1.02, 0.36 * h, 0.6 * h, _c(SLATE), PLAIN, w1 / w0, w1 / w0))
-			out.append(_p(0.0, 0.0, w * tp * 1.22, d * tp * 1.22, hb, 0.86 * h, dark, PLAIN | CAP))
-			out.append(_p(0.0, 0.0, w * tp * 0.8, d * tp * 0.8, 0.86 * h, 0.94 * h, _c(LANTERN), PLAIN | CAP))
-			out.append(_p(0.0, 0.0, w * tp * 0.96, d * tp * 0.96, 0.94 * h, h, _c(SLATE), ROOF | CAP, 0.02, 0.02))
+			# A tapering tower in two wide bands the box still fills, and above it a gallery, a lantern room of pale
+			# glass and a low cone. No stripe, no beam.
+			var tp: float = 0.86
+			out.append(_p(0.0, 0.0, w, d, 0.0, h, _c(tones[0]), 0, tp, tp, 0.0, STONE))
+			var w0: float = 1.0 - (1.0 - tp) * 0.4
+			var w1: float = 1.0 - (1.0 - tp) * 0.66
+			out.append(_p(0.0, 0.0, w * w0 * 0.999, d * w0 * 1.03, 0.4 * h, 0.66 * h, _c(SLATE), PLAIN, w1 / w0, w1 / w0))
+			out.append(_p(0.0, 0.0, w * tp * 1.12, d * tp * 1.12, h, h + 0.12 * orn, dark, PLAIN | CAP | ORN))
+			out.append(_p(0.0, 0.0, w * tp * 0.74, d * tp * 0.74, h + 0.12 * orn, h + 0.62 * orn, _c(LANTERN), PLAIN | CAP | ORN))
+			out.append(_p(0.0, 0.0, w * tp * 0.9, d * tp * 0.9, h + 0.62 * orn, h + orn, _c(SLATE), ROOF | CAP | ORN, 0.02, 0.02))
 		"house", "shop", "thatch":
-			# A gable whose end faces the street: 35 to 40 degrees, a thatch about 55 with deep eaves.
+			# A gable whose end faces the street. Its ridge stands above the sim's height and its eaves a little under
+			# it: 35 to 40 degrees where the house's height allows, a thatch steeper with deep eaves.
 			var steep: bool = shape == "thatch"
-			var rh: float = minf((0.71 if steep else 0.377) * w, (0.6 if steep else 0.45) * h)
-			out.append(_p(0.0, 0.0, w, d, 0.0, h - rh, wall))
-			out.append(_p(0.0, 0.0, w * (1.22 if steep else 1.08), d * 1.04, h - rh, h, roof, ROOF | CAP, 0.02, 1.0))
-			if shape == "shop" and fh * 0.92 < h - rh:
+			var rise: float = (0.71 if steep else 0.377) * w
+			var up: float = minf(orn, rise)
+			var dn: float = minf(rise - up, (0.12 if steep else 0.1) * h)
+			out.append(_p(0.0, 0.0, w, d, 0.0, h - dn, wall))
+			out.append(_p(0.0, 0.0, w * (1.22 if steep else 1.08), d * 1.04, h - dn, h + up, roof, ROOF | CAP | ORN, 0.02, 1.0))
+			if shape == "shop" and fh * 0.92 < h - dn:
 				out.append(_p(0.0, d * 0.5 + 20.0, w * 0.96, 40.0, fh * 0.86, fh * 0.92, trim, PLAIN))
 		"terrace":
 			# Two stone steps up a slope, the upper one under a steep roof.
-			var rh: float = minf(0.36 * w, 0.4 * h)
-			out.append(_p(side * w * 0.24, 0.0, w * 0.52, d, 0.0, h - rh, wall))
-			out.append(_p(side * w * 0.24, 0.0, w * 0.58, d * 1.04, h - rh, h, roof, ROOF | CAP, 0.02, 1.0))
+			var up: float = minf(orn, 0.36 * w)
+			var dn: float = minf(0.36 * w - up, 0.1 * h)
+			out.append(_p(side * w * 0.24, 0.0, w * 0.52, d, 0.0, h - dn, wall))
+			out.append(_p(side * w * 0.24, 0.0, w * 0.58, d * 1.04, h - dn, h + up, roof, ROOF | CAP | ORN, 0.02, 1.0))
 			out.append(_p(-side * w * 0.26, 0.0, w * 0.48, d, 0.0, 0.58 * h, _c(tones[1])))
 		"hall":
 			# A long gable, its slope to the street, with a porch.
-			var lan: float = 0.07 * h if int(b.landmark) > 0 else 0.0
-			var rh: float = minf(0.42 * d, 0.42 * h)
-			out.append(_p(0.0, 0.0, w, d, 0.0, h - rh - lan, wall))
-			out.append(_p(0.0, 0.0, w * 1.04, d * 1.06, h - rh - lan, h - lan, roof, ROOF | CAP, 1.0, 0.02))
-			var ph: float = minf(0.42 * h, h - rh - lan)
+			var rise: float = 0.42 * d
+			var up: float = minf((0.6 if mark != "" else 1.0) * orn, rise)
+			var dn: float = minf(rise - up, 0.1 * h)
+			out.append(_p(0.0, 0.0, w, d, 0.0, h - dn, wall))
+			out.append(_p(0.0, 0.0, w * 1.04, d * 1.06, h - dn, h + up, roof, ROOF | CAP | ORN, 1.0, 0.02))
+			var ph: float = minf(0.42 * h, h - dn)
 			out.append(_p(0.0, d * 0.5 + 30.0, w * 0.3, 60.0, 0.0, ph * 0.78, _c(tones[1]), PLAIN))
 			out.append(_p(0.0, d * 0.5 + 30.0, w * 0.34, 66.0, ph * 0.78, ph, roof, ROOF, 0.02, 1.0))
-			if lan > 0.0:
-				out.append(_p(0.0, 0.0, w * 0.09, w * 0.09, h - lan - 0.25 * rh, h, _c(tones[0]), PLAIN | CAP))   # the hall's ridge lantern
+			if mark != "":
+				out.append(_p(0.0, 0.0, w * 0.09, w * 0.09, h + 0.3 * orn, h + orn, _c(tones[0]), PLAIN | CAP | ORN))   # the hall's ridge lantern
 		"chapel":
-			# A gable with a small belfry at one end.
-			var nave: float = 0.6 * h
-			var rh: float = minf(0.55 * w * 0.74, 0.45 * nave)
+			# A gable with a small belfry at one end (the belfry's own cap above the sim's height).
+			var nave: float = 0.72 * h
+			var rh: float = minf(0.55 * w * 0.74, 0.4 * nave)
 			out.append(_p(-side * w * 0.13, 0.0, w * 0.74, d, 0.0, nave - rh, wall))
 			out.append(_p(-side * w * 0.13, 0.0, w * 0.8, d * 1.04, nave - rh, nave, roof, ROOF | CAP, 0.02, 1.0))
-			out.append(_p(side * w * 0.37, 0.0, w * 0.26, minf(d, w * 0.26), 0.0, 0.86 * h, _c(tones[1]), 0, 1.0, 1.0, 0.0, STONE))
-			out.append(_p(side * w * 0.37, 0.0, w * 0.2, minf(d, w * 0.2), 0.74 * h, 0.82 * h, _c(BELFRY), PLAIN))
-			out.append(_p(side * w * 0.37, 0.0, w * 0.3, minf(d, w * 0.3), 0.86 * h, h, roof, ROOF | CAP, 0.02, 0.02))
+			out.append(_p(side * w * 0.37, 0.0, w * 0.26, minf(d, w * 0.26), 0.0, h, _c(tones[1]), 0, 1.0, 1.0, 0.0, STONE))
+			out.append(_p(side * w * 0.37, 0.0, w * 0.2, minf(d, w * 0.2), 0.84 * h, 0.94 * h, _c(BELFRY), PLAIN))
+			out.append(_p(side * w * 0.37, 0.0, w * 0.26, minf(d, w * 0.26), h, h + orn, roof, ROOF | CAP | ORN, 0.02, 0.02))
 		"shed":
-			var rh: float = 0.28 * h
-			out.append(_p(0.0, 0.0, w, d, 0.0, h - rh, wall))
-			out.append(_p(0.0, 0.0, w * 1.04, d * 1.04, h - rh, h, roof, ROOF | CAP, 1.0, 1.0, side))
+			var rise: float = 0.28 * h
+			var up: float = minf(orn, 0.6 * rise)
+			var dn: float = minf(rise - up, 0.1 * h)
+			out.append(_p(0.0, 0.0, w, d, 0.0, h - dn, wall))
+			out.append(_p(0.0, 0.0, w * 1.04, d * 1.04, h - dn, h + up, roof, ROOF | CAP | ORN, 1.0, 1.0, side))
 		"quay":
 			out.append(_p(0.0, 0.0, w, d, 0.0, 0.55 * h, _c(tones[2]), PLAIN))
 			for i in range(4):

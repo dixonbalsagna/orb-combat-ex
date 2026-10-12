@@ -1,12 +1,12 @@
-# The re-laid city's look (2026-10-11)
+# The re-laid city's look (2026-10-11; the shorter city, fuller tops and street grid 2026-10-12)
 
 Owner: Rendering and Technical Art. For World's brief `docs/world/rendering-brief-lanes.md` (piece 2) and Art's `docs/art/district-looks.md`. Render only: it reads `S.lanes`, `S.buildings` and `data/biomes/settlements.json`, and writes nothing to the sim. The gameplay hash is unchanged.
 
 ## What is drawn now
 
 - **The lane table is the sim's.** `RenderLanes.table` returns `S.lanes`; the stand-in is gone. A world with no table paints no streets.
-- **Streets, avenues and lots.** The eight street strips are painted as before (sidewalk, kerb parking, carriageway), now from the real table. The ten avenues cross the two block lanes as a carriageway between two sidewalks. The ground of a block is paved in the looks that are paved (downtown, mid-rise, industrial, harbour) and stays the biome's ground in a suburb or a village (yards).
-- **Shapes.** Each building is drawn by its `shape`, in parts: all 20 names have a builder. 13 are in today's world.
+- **Streets, avenues and lots.** The street strips are painted from the table (sidewalk, kerb parking, carriageway): up to sixteen, so three streets of five strips fit (World's street grid, 2026-10-12; `STREET_STRIPS`). Up to 24 avenues cross the block lanes as a carriageway between two sidewalks (`STREET_AVENUES`). **Where an avenue meets a street the street's sidewalk and kerb give way to road:** a crossing. The ground of a block is paved in the looks that are paved (downtown, mid-rise, industrial, harbour) and stays the biome's ground in a suburb or a village (yards).
+- **Shapes.** Each building is drawn by its `shape`, in parts: all 20 names have a builder. 14 are in the re-laid city. **The shapes fill the sim's box** and their spires, gems and ridges stand above it (2026-10-12: see "Filling the sim's box").
 - **District looks.** Eight palettes and window patterns, from Art's table, chosen by the building's district.
 - **Row haze.** The back block and the scenery row take the air's colour, so the three rows read as depth.
 - **Stages** keep their four looks on every shape, and stage 2 gains broken-open bays so it reads from the street.
@@ -15,30 +15,30 @@ Owner: Rendering and Technical Art. For World's brief `docs/world/rendering-brie
 ## How a shape is built
 
 - **One box, deformed.** Every part of every building is an instance of one box in one MultiMesh. `building.gdshader` narrows a part's top (a taper: a frustum, a pyramid, or on one axis a gable's ridge) or slopes it down to one side (a lean: a shed's facet, a saw tooth). A plain box is untouched, to the bit.
-- **Parts** come from `render/core/shapes.gd` (`RenderShapes.parts`): the body first, then tiers, caps and roofs. 169 buildings are 401 parts in today's world.
+- **Parts** come from `render/core/shapes.gd` (`RenderShapes.parts`): the body first, then tiers, caps, roofs and ornaments. 121 buildings are 296 parts in the re-laid city (`shape_check` prints the count).
 - **Art's rule holds by construction:** prisms and stacks of prisms, no curves.
 - **The body keeps the building's own instance index,** so the stub, the porthole, the floor cut, the windows and the stage data work as they did. Each other part has its own texel of the same data.
 - **Draw calls fall by two a copy:** the separate roof MultiMeshes are gone (a roof is a part).
 
-| Shape | Drawn as | In today's world |
+| Shape | Drawn as | In the re-laid city |
 |---|---|---|
-| shaft, slab, block | A box with a plant box on the roof, off centre | 27, 21, 5 |
-| stepped | A core at 62% of the width with two skirts (setbacks at 45% and 74% of the height) | 18 |
-| spire | A box under a four-sided pyramid | 13 |
-| crown | A box under a frustum (the chamfered top) | none |
-| house, shop | A box under a gable whose end faces the street (about 37 degrees); a shop has an awning | 65, 11 |
+| shaft, slab, block | The sim's box, with a plant box above it, off centre | 4, 13, 4 |
+| stepped | A core at 86% of the width for the whole height, with two skirts (setbacks at 45% and 74% of the height) and a plant box above | 8 (one is the ledger hall) |
+| spire | The sim's box with a four-sided pyramid above it | 6 (one is the bell tower) |
+| crown | The box to a chamfer that keeps 86% of the width at the sim's height, and a cut gem above | 1 (the crown tower) |
+| house, shop | A box under a gable whose end faces the street (about 37 degrees where the height allows): the ridge above the sim's height, the eaves at most a tenth under it; a shop has an awning | 65, 11 |
 | thatch | As a house, about 55 degrees, deep eaves | none |
-| terrace | Two steps, the upper under a steep roof | none |
+| terrace | Two steps, the upper under a steep roof (thin by nature) | none |
 | warehouse | A long box under a shallow gable, its slope to the street | 3 |
 | sawtooth | A box under a row of leaning teeth | none |
 | hall | A long gable with a porch | 1 |
 | shed | A box under one leaning facet | 1 |
-| chapel | A gable with a belfry tower at one end | 1 |
-| chimney | A tapered stack with a flared cap | 2 |
-| lighthouse | A tapered tower, one wide band, a gallery, a lantern room, a cone | 1 |
-| quay, crane, mast | A low platform with posts; a mast with a jib and a cab; a pole with a yard arm | none |
+| chapel | A gable with a belfry tower at one end (thin by nature) | 1 |
+| chimney | A stack tapering to 86% of its width, with a flared cap above | 2 |
+| lighthouse | A tower tapering to 86%, one wide band; a gallery, a lantern room and a cone above | 1 |
+| quay, crane, mast | A low platform with posts; a mast with a jib and a cab; a pole with a yard arm (thin by nature) | none |
 
-**Landmarks.** The Gatebell is a pale stone shaft with slit windows, a dark belfry between two cornices, a spire, and a small stair bump on one side; no clock face. The stack has two soot bands and a short side flue; no red and white. The lighthouse has one wide slate band and a pale lantern room; no stripe, no beam. The hall has a ridge lantern. The chapel is the plain chapel.
+**Landmarks** are drawn by their key in the data (`RenderShapes.landmark_key`), each on its own shape. **The bell tower** (the Gatebell) is a pale stone shaft with slit windows, a dark belfry between two cornices, a spire above the sim's height, and a small stair bump on one side; no clock face. **The ledger hall** (new) is a broad stepped hall of pale stone: a dark arcade at the street, a pale ledge at each setback, and a low two-step cap above. **The crown tower** (new) is a glass tower with a pale band under its chamfer and a crown above it: a low gem between four pale corner points. The stack has two soot bands and a short side flue; no red and white. The lighthouse has one wide slate band and a pale lantern room; no stripe, no beam. The hall has a ridge lantern. The chapel is the plain chapel. The ledger hall and the crown tower are Rendering's own, from parts that existed, and generic by intent (no real building): Art has not drawn them and Legal has not seen them.
 
 ## District looks
 
@@ -77,11 +77,11 @@ The collapse clip still fails for another reason, Camera's zoom after a launch: 
 
 ## Row haze
 
-A part takes the air's colour by how far behind the fighter plane its front face stands (`RenderLook.ROW_HAZE`): none on the front block, 0.17 on the back block, 0.44 on the scenery row. The colour is the sky's toward the horizon in the pixel's own direction, so it follows the dynamic sky. Fighters, the crowd and the ground are not hazed by it.
+A part takes the air's colour by how far behind the fighter plane its front face stands (`RenderLook.ROW_HAZE`): none on the front block, 0.17 on the back block, 0.44 on the scenery row (with World's three streets the back block stands nearer, and they are 0.14 and 0.49). The colour is the sky's toward the horizon in the pixel's own direction, so it follows the dynamic sky. Fighters, the crowd and the ground are not hazed by it.
 
 ## Stages at the new heights: what I see
 
-Stills from the web build, the camera at fight framing in the downtown front street (towers of 60 floors behind the fighters).
+Stills from the web build, the camera at fight framing in the downtown front street (towers of 60 floors behind the fighters). Seen on the first re-lay. On the shorter city of 2026-10-12 the stages were not looked at again: a tower's top is still far out of the frame (18 fighter heights and more against a frame 7 tall), so the same is expected, and `stage_check` passes.
 
 - **Whole to windows out reads:** the lit panes go out and the slate-blue tower turns near black. It is a step in value, not a pattern, so it holds at any distance.
 - **Windows out to a part gone barely reads from the street on a tower.** Stage 2's marks are a sheared top corner, which is thousands of units out of sight, and cracks and broken-open bays (`RenderLook.DMG_HOLES`, added in this work), which are dark on dark. On stone and plaster (the Gatebell, a house) the broken bays are strong.
@@ -94,7 +94,7 @@ Stills from the web build, the camera at fight framing in the downtown front str
 
 - **The fighters read against the towers.** The ground floors behind them are dark slate with faint glass; nothing in the facade is a fighter's hue.
 - **The crowd was what competed,** and is changed: see "The crowd, thinned and muted" below.
-- **No sky shows downtown at fight framing.** The towers fill the frame, so depth comes only from the street and the row haze.
+- **Sky shows downtown only through a gap** (looked at again on World's shorter, broader city, 2026-10-12). At fight framing the frame is about 7 fighter heights tall and 12.7 wide, and its top is about 6 above the street at the front block's face. The shortest downtown tower is 18. So no tower shows sky over it, at any height World could choose. An avenue does, from the far roofs to the top of the frame, and so does a gap between two towers. With an avenue every 11 to 15 fighter heights (World's street grid) a part of one is in the frame nearly always; with the one avenue downtown has in the files of today it is in the frame at a quarter of the camera's places. More sky than that is Camera's (a lower camera that looks up) or World's (a low front block).
 - **Lit panes are the brightest things behind the fighters** at dusk.
 
 ## The crowd, thinned and muted (2026-10-11)
@@ -111,29 +111,40 @@ Before and after, the downtown front street and a suburb street at fight framing
 
 **What I see.** Downtown the row behind the fighters goes from a band of red, blue, green and orange as tall as they are to small dark figures against the tower's foot, and the fighters are the only colour on the street. In the suburb the figures read as people on a pavement, not as a third and fourth fighter.
 
-## Narrower than the sim's box (for World and Simulation)
+## Filling the sim's box (World's rule, 2026-10-12)
 
-Every part stays inside the sim's box: nothing stands higher than the sim's height, and no wall is wider than its width (`shape_check` asserts both; a roof's eaves overhang by at most 11% of the width). The reverse does not hold. A stepped tower's top tier is 62% of the sim's width, and a spire, a crown, a gable, a chimney and a lighthouse narrow toward the top. A fighter can collide with the sim's box where the drawn building has air, by up to a fifth of the width each side. If that matters, the sim's box for these shapes would take the upper width.
+The sim's box stays a rectangle, and every blast, shot and flight reads it. A shape used to narrow inside the box (a stepped tower's top tier was 62% of the width), so a fighter could hit air beside a narrow top. Now the shapes fill the box and the silhouette stands on top of it:
+
+- **At the sim's height the walls are 85% of its width or more** (`RenderShapes.FILL`). A stepped tower's top tier is 86%. A crown's chamfer, a stack's taper and a lighthouse's taper end at 86%.
+- **What makes the silhouette stands above the sim's height,** as an ornament that does not collide (flag `ORN`): a spire, a crown's gem and points, a ridge, a plant box, a lantern room, a flared cap. A fighter flies through it.
+- **An ornament is at most 15% of the height** (`ORN_MAX`), so a spire is a cap and never a needle.
+- **A gable** has its ridge above the sim's height and its eaves at most a tenth under it. So the box still has air in it beside a ridge: a wedge over each eave, at most a tenth of the building's height (on a house, about 20 units). The ridge stands over the box by at most 15%.
+- **No wall is wider than the box.** A roof's eaves overhang by 4% of the width in the re-laid city (13% is allowed).
+- **Ornaments go with the caps:** a tower whose top floors are gone has none, and a shell has none.
+- **Thin by nature, outside the fill rule, listed for World:** `chapel` (a nave at 72% of the height beside a belfry a quarter of the width), `terrace` (two steps), `crane`, `mast`, `quay`. The hill chapel is the only one in the re-laid city. If hitting air beside its belfry matters, the chapel's box should be the nave's.
+
+`shape_check` asserts all of it: on each shape at three sizes, and on every building of a real world.
 
 ## For Art: stand-ins
 
 - Octagonal shapes are four-sided: `chimney`, `lighthouse`, the Gatebell's spire.
 - The Gatebell's belfry is a dark band, not four open arches with a bell inside.
 - The lighthouse has one band where the brief has two.
-- `crown`, `terrace`, `sawtooth`, `thatch`, `quay`, `crane` and `mast` are built but not in today's data, so they are checked for size only, not seen.
+- `terrace`, `sawtooth`, `thatch`, `quay`, `crane` and `mast` are built but not in today's data, so they are checked for size only, not seen. So is a plain `crown` (the one crown in the data is the crown tower).
 - Doors, shutters and awnings are flat colour.
 - The palettes and window numbers are in `shapes.gd`; they belong in data once Art owns a file for them.
-- Avenues do not open the sidewalks where they meet a street.
+- A crossing is plain road: no painted crossing, no stop line.
+- The ledger hall and the crown tower are Rendering's looks (see Landmarks), not Art's.
 
 ## Checks
 
-- `render/tools/shape_check.gd` (headless, 11 checks): the table is the sim's and fits the shader's arrays; every look has its table; a look of stripes carries the contrast budget; all 20 shapes build inside the sim's box; a part scales, is cut off and loses its caps as the sim's height says; an instance and a texel for every part; a damaged tower's top is the sim's; a cut tower's skirt opens the same floors; the rows' haze; the ground shader's avenues and block lanes.
+- `render/tools/shape_check.gd` (headless, 12 checks): the table is the sim's and fits the shader's arrays (16 strips, 16 districts, 24 avenues); every look has its table; a look of stripes carries the contrast budget; all 20 shapes build with no wall outside the sim's box, fill it near the top, and keep their ornaments to 15% above it; the same on every building of a real world; each landmark in the world has its own treatment; a part scales, is cut off and loses its caps and ornaments as the sim's height says; an instance and a texel for every part; a damaged tower's top is the sim's; a cut tower's skirt opens the same floors; the rows' haze; the ground shader's strips, avenues and block lanes.
 - Unchanged and passing: determinism (plain and `--intro`), seam sweep, pane, stage, lane, sky, flash register, hud words, ground, after.
 - **Not run:** `cull_check` needs a window. The vertex-stage culling was rewritten for deformed boxes and is judged by the web stills only.
 - **Headless Godot compiles no shaders:** the look is proven by stills from the web build in headless Chrome.
 
 ## Limits
 
-- **Cost is not measured.** The building fragment shader does more (the look's pattern), and there are 401 instances where there were about 250. The bench waits for a free machine.
+- **Cost is not measured.** The building fragment shader does more (the look's pattern), and there are about 300 instances (401 on the first re-lay, about 250 before it). The bench waits for a free machine.
 - Row 0 is empty in the data. Its buildings would take the same shapes; they have not been seen.
 - The world's light at night is not built: lit panes and facades are the dusk values at every hour.
