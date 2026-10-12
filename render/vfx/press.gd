@@ -477,7 +477,7 @@ func _blow(S: SimState, e, reduced: bool) -> void:
 			x.col = lane_of(S, vic)
 			x.life = p("block_life")
 	if style == "block" and flash_sink != null:
-		x.noflash = not flash_sink.ask("block", x.col2, S.tick, VfxFlashRegistry.ring_px(20.0, 3.0, flash_sink.ppu), 0.15)
+		x.noflash = not flash_sink.ask("block", x.col2, S.tick, VfxFlashRegistry.ring_px(20.0, 3.0, flash_sink.ppu_at(S.fighters[vic].z)), 0.15)
 	_take_real(S, x, att, style)
 	if bool(ba.get("sure", false)) and style != "block":
 		var br := Fx.new()

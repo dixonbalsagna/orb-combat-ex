@@ -75,6 +75,8 @@ var stages := VfxStages.new()
 var press := VfxPress.new()
 var beat_glint_enabled: bool = false          # the beat option (UI's beat ring for every blow, the rival's too): a glint on the striking limb at the beat (press.gd)
 var flashes := VfxFlashRegistry.new()          # the shared flash register: every full flash asks it (flash_registry.gd, docs/vfx/flash-registry.md)
+var clear_query: Callable = Callable()          # Rendering's read of what an opened floor and the see-through patch leave visible: (x, y, z) -> 0..1, set each frame with depth on (docs/vfx/depth.md). Invalid: all of it
+var cam_dist: float = 0.0                       # the camera's distance to the fighters' plane (units), set by the host each frame; 0 = unknown: effects off the plane are sized as on it (depth off)
 var px_per_unit: float = 1.3                    # pixels per world unit at 1024 by 768 on the fighters' plane (the host sets it from the camera): the size of a flash for the register's weights
 var reduced_flashing: bool = false              # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
@@ -229,6 +231,8 @@ func _consume(S: SimState, events: Array) -> void:
 	if not enabled:
 		return
 	flashes.ppu = px_per_unit
+	flashes.cam_dist = cam_dist
+	debris.clear_query = clear_query
 	flashes.begin_tick(reduced_motion or reduced_flashing)
 	debris.puff_area_cap = VfxLook.PUFF_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05)
 	debris.ember_area_cap = VfxLook.EMBER_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.5 if (reduced_motion or reduced_flashing) else 1.0)
@@ -252,7 +256,7 @@ func _consume(S: SimState, events: Array) -> void:
 			if tb >= 0.0 and tb < VfxTransform.p("break", "flash_ticks"):
 				if not f.flash_asked:
 					f.flash_asked = true
-					f.flash_ok = flashes.ask("transform", VfxPress.lane_of(S, f.slot), S.tick, VfxFlashRegistry.disc_px(VfxTransform.p("break", "flash_radius_bh") * VfxLook.BH, flashes.ppu), 0.2)
+					f.flash_ok = flashes.ask("transform", VfxPress.lane_of(S, f.slot), S.tick, VfxFlashRegistry.disc_px(VfxTransform.p("break", "flash_radius_bh") * VfxLook.BH, flashes.ppu_at(S.fighters[f.slot].z)), 0.2)
 				if not f.flash_ok:
 					gate = 0.0
 		VfxTransform.flash_scale = gate
@@ -377,13 +381,19 @@ func _consume(S: SimState, events: Array) -> void:
 						_on_building_fall(S, e)
 				"scorch":
 					if embers_enabled:
+						debris.z_shift = float(_g(e, "z", 0.0))
 						debris.embers(S, float(e.x), float(e.y), float(e.power), String(e.variant))
+						debris.z_shift = 0.0
 				"splash":
 					if water_enabled and int(e.n) >= 10:
+						debris.z_shift = float(_g(e, "z", 0.0))
 						water.plunge(S, float(e.x), float(e.y), int(e.n))
+						debris.z_shift = 0.0
 				"skim":
 					if water_enabled:
+						debris.z_shift = float(_g(e, "z", 0.0))
 						water.skim(S, float(e.x), float(e.y), float(e.spd), int(e.n))
+						debris.z_shift = 0.0
 				"debris":
 					if earth_enabled and not fall_xs.has(snappedf(float(e.x), 0.01)):
 						earth.on_debris(e)
@@ -408,7 +418,9 @@ func _consume(S: SimState, events: Array) -> void:
 						blast.on_crater(S, e, debris, fx_now(S), blast_powerup_enabled, xform.forms)
 				"beamSplash":
 					if water_enabled:
+						debris.z_shift = float(_g(e, "z", 0.0))
 						_on_beam_splash(S, float(e.x))
+						debris.z_shift = 0.0
 		if water_enabled and not frozen:
 			water.wake(S)
 		# Bits fly on sim time: a tenth of a step in hit-stop, like the reference consumer's particles.

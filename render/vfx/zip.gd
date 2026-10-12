@@ -41,6 +41,8 @@ class Zip:
 	var out: float = 6.0
 	var ox: float = 0.0             # where he started
 	var oy: float = 0.0
+	var oz: float = 0.0             # ... and the depth he started at, and the depth the tell says he will arrive at (a zip homes in all three axes; 0 with depth off)
+	var pz: float = 0.0
 	var px: float = 0.0             # where the tell says he will arrive (an estimate: the rival's place, short of him)
 	var py: float = 0.0
 	var ax: float = 0.0             # where he arrived (recorded when it happens)
@@ -262,6 +264,8 @@ func _start(S: SimState, e, kind: String) -> void:
 		violations["short_out"] = int(violations.get("short_out", 0)) + 1
 	z.ox = f.x
 	z.oy = f.y
+	z.oz = f.z
+	z.pz = ft.z
 	var side: float = 1.0 if SimWrap.sdx(f.x, ft.x) >= 0.0 else -1.0
 	z.px = SimWrap.wrap(ft.x - side * 30.0)
 	z.py = ft.y
@@ -306,6 +310,8 @@ func _start_real(S: SimState, e, kind: String) -> void:
 	z.out = maxf(z.mv, 1.0)
 	z.ox = f.x
 	z.oy = f.y
+	z.oz = f.z
+	z.pz = ft.z
 	var side: float = 1.0 if SimWrap.sdx(f.x, ft.x) >= 0.0 else -1.0
 	var ct: Dictionary = DirData.contact()
 	z.px = SimWrap.wrap(ft.x - side * maxf(float(ct.get("offset", 45.0)), float(ct.get("minSeparation", 45.0))))   # where the rush ends (DirZip._arrive's offset)
@@ -469,7 +475,7 @@ func _mark(S: SimState, who: int, zs: int, kind: String, style: String) -> void:
 			m.col = VfxPress.lane_of(S, who)
 		_:
 			m.kind = "gbreak"
-			m.noflash = flashes != null and not flashes.ask("zip_break", VfxPress.lane_of(S, who), S.tick, VfxFlashRegistry.ring_px(22.0, 4.0, flashes.ppu), 0.15)
+			m.noflash = flashes != null and not flashes.ask("zip_break", VfxPress.lane_of(S, who), S.tick, VfxFlashRegistry.ring_px(22.0, 4.0, flashes.ppu_at(S.fighters[who].z)), 0.15)
 			m.x = wf.x
 			m.y = wf.y + 34.0
 			m.life = p("gbreak_life")

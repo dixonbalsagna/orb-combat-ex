@@ -51,6 +51,7 @@ const DEFAULT_WEIGHT: Dictionary = {
 }
 
 var reduced: bool = false           # reduced motion or the reduced-flashing setting: set by the hub every tick
+var cam_dist: float = 0.0           # the camera's distance to the fighters' plane in units (the hub's), 0 = unknown: ppu_at is ppu
 var ppu: float = 1.3                # pixels per world unit at 1024 by 768 on the fighters' plane: the host sets it from the camera (hub.px_per_unit); the close framing is about 1.3
 var now: int = 0                    # the clock, in ticks
 var grants: Array = []              # {now, w, low}: the flashes granted in the last WINDOW ticks
@@ -82,6 +83,14 @@ func begin_tick(p_reduced: bool) -> void:
 
 static func is_red(c: Color) -> bool:
 	return c.r > 0.55 and c.g < 0.45 * c.r and c.b < 0.45 * c.r
+
+
+## Pixels per world unit at depth z (positive toward the camera): the plane's, scaled by how much nearer or farther from the camera that depth is, so a flash in the middle street covers
+## the pixels it covers there (a fighter at 54% size is 0.29 of the area). Without the camera's distance, the plane's.
+func ppu_at(z: float) -> float:
+	if cam_dist <= 1.0 or z == 0.0:
+		return ppu
+	return ppu * clampf(cam_dist / maxf(cam_dist - z, cam_dist * 0.2), 0.25, 3.0)
 
 
 ## A disc of r world units, in px at 1024 by 768 for a ppu: a flash's area for the ask.

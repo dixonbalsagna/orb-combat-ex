@@ -206,6 +206,7 @@ func _run() -> void:
 	_brawl()
 	_ghosts()
 	_vision()
+	_depth()
 	_panes()
 	_scorch_budget()
 	_press_load()
@@ -4468,6 +4469,77 @@ func _ghosts() -> void:
 	for k in range(0, 160):
 		worst_zip = maxi(worst_zip, VfxZip.echoes_alive(float(k) * 0.05, 3))
 	_check(worst_zip == 2, "swept in twentieths of a tick, never more than two of a zip leg's echoes at once (%d)" % worst_zip)
+
+
+## Effects off the plane (docs/vfx/depth.md): what reads an event's depth, and that everything is as it was with none.
+func _depth() -> void:
+	print("depth")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	# Scorch embers and the sea's rings take the event's depth (they were drawn at the plane's constant whatever it said).
+	var zs_of := func(ev: Dictionary, kind: String, setup: Callable) -> Array:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		setup.call(h)
+		_tick(S, h, [VfxMock.ev(kind, ev)])
+		var zs: Array = []
+		for b in h.debris.bits:
+			zs.append(b.z)
+		return zs
+	var embers_on := func(h: VfxHub): h.embers_enabled = true
+	var water_on := func(h: VfxHub): h.water_enabled = true
+	var z0: Array = zs_of.call({"x": plains, "y": g + 20.0, "w": 100.0, "power": 3.0, "variant": "FIRESTORM", "owner": 0, "z": 0.0}, "scorch", embers_on)
+	var z1: Array = zs_of.call({"x": plains, "y": g + 20.0, "w": 100.0, "power": 3.0, "variant": "FIRESTORM", "owner": 0, "z": -1000.0}, "scorch", embers_on)
+	_check(z0.size() > 0 and z0.size() == z1.size() and absf(float(z1.min()) - (float(z0.min()) - 1000.0)) < 1e-6, "scorch embers are made at the event's depth (%d bits, nearest %.0f at the plane and %.0f at -1000)" % [z0.size(), float(z0.min()), float(z1.min())])
+	var s0: Array = zs_of.call({"x": plains, "y": 0.0, "z": 0.0, "spd": 3000.0, "n": 1}, "skim", water_on)
+	var s1: Array = zs_of.call({"x": plains, "y": 0.0, "z": -1000.0, "spd": 3000.0, "n": 1}, "skim", water_on)
+	if s0.size() > 0:
+		_check(s0.size() == s1.size() and absf(float(s1.min()) - (float(s0.min()) - 1000.0)) < 1e-6, "a skim's spray and ring are at the event's depth (%d bits)" % s0.size())
+	else:
+		_check(true, "a skim over dry ground throws no spray in this world (water layer proved by the staged cases)")
+	# The register sizes a flash at its depth: 54% in the middle street is 0.29 of the area, 119% in front is 1.42.
+	var R := VfxFlashRegistry.new()
+	R.ppu = 1.3
+	_check(is_equal_approx(R.ppu_at(-1012.0), 1.3), "with no camera distance every depth is the plane's (depth off)")
+	R.cam_dist = 1168.0
+	var mid: float = R.ppu_at(-1012.0) / 1.3
+	var front: float = R.ppu_at(187.0) / 1.3
+	_check(absf(mid - 0.536) < 0.01 and absf(front - 1.19) < 0.01 and is_equal_approx(R.ppu_at(0.0), 1.3), "a flash in the middle street covers %.2f of the plane's pixels a unit (area %.2f) and %.2f in the front street (docs/fighters-in-depth.md: 54%% and 119%%)" % [mid, mid * mid, front])
+	var w_plane: float = R.weight_of("explosion", VfxFlashRegistry.disc_px(40.0, R.ppu_at(0.0)))
+	var w_mid: float = R.weight_of("explosion", VfxFlashRegistry.disc_px(40.0, R.ppu_at(-1012.0)))
+	_check(w_mid < w_plane * 0.35 and w_mid > 0.0, "the same blast weighs %.2f at the plane and %.2f in the middle street" % [w_plane, w_mid])
+	# A zip's depth: from his own to his target's.
+	var hz := VfxHub.new()
+	hz.press_enabled = true
+	hz.reset(S, 6)
+	S.fighters[0].z = 0.0
+	S.fighters[1].z = -300.0
+	S.fighters[1].x = SimWrap.wrap(S.fighters[0].x + 400.0)
+	_tick(S, hz, [VfxMock.ev("cue", {"actor": 0, "kind": "zip_light", "text": "", "source": "", "target": 1, "amount": 6.0, "n": 6.0, "x": 4.0, "y": 6.0})])
+	var zz = hz.zip.zips[0] if hz.zip.zips.size() > 0 else null
+	_check(zz != null and is_equal_approx(zz.oz, 0.0) and is_equal_approx(zz.pz, -300.0), "a zip records the depth he starts at and the target's (%s)" % ("none made" if zz == null else "%.0f to %.0f" % [zz.oz, zz.pz]))
+	S.fighters[1].z = 0.0
+	# Rendering's patch and opened floors: what is not visible is not thrown, and with no query everything is.
+	var hq := VfxHub.new()
+	hq.reset(S, 6)
+	var tower = null
+	for b in S.buildings:
+		if b.alive and int(b.floors) >= 4 and float(b.w) > 150.0:
+			tower = b
+			break
+	if tower != null:
+		var base: float = WorldStructures.baseY(S, tower)
+		hq.debris.window_row(tower.x, tower.w, base + tower.h * 0.5, 40.0, hq.front_z(tower), 1.0)
+		var seen_all: int = hq.debris.bits.size()
+		hq.debris.bits.clear()
+		hq.debris.clear_query = func(p: Vector3) -> float: return 0.0 if p.z > -9999.0 else 1.0
+		hq.debris.window_row(tower.x, tower.w, base + tower.h * 0.5, 40.0, hq.front_z(tower), 1.0)
+		var seen_none: int = hq.debris.bits.size()
+		_check(seen_all >= 6 and seen_none == 0, "a window row is thrown without a query (%d slivers) and not at all where the patch or an opened floor says it is not seen (%d)" % [seen_all, seen_none])
+	else:
+		_check(false, "a tower to throw glass from")
 
 
 ## The colour-blind presets (Art's data/art/colour-vision.json by way of UI's `colour_vision`): everything drawn in a lane colour reads the preset, and with the option off nothing changes.

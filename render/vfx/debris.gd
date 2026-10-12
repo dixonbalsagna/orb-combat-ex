@@ -39,6 +39,7 @@ class Job:
 	var at: float = 0.0
 	var kind: String = ""
 	var a: Dictionary = {}
+	var zs: float = 0.0           # the depth shift (z_shift) in force when the job was made: it runs with it
 
 var bits: Array = []          # Bit
 var _spawned_tick: int = 0     # spawns since the last step: the per-tick budget keeps one busy tick from being a frame spike
@@ -48,6 +49,8 @@ var _ember_tick: int = 0        # embers spawned this tick (budget VfxLook.EMBER
 var _ember_alive: int = 0       # embers in the pool (cap VfxLook.EMBER_CAP)
 var _ember_area: float = 0.0    # their drawn area, world units squared (a needle is its length times its width), recounted each step
 var _puff_area: float = 0.0     # the drawn area the puffs in the pool will have at their widest, world units squared, recounted each step
+var z_shift: float = 0.0        # added to every bit's z as it is made: the caller sets it to an event's depth round a handler that places bits with plane constants (water, scorch). 0: nothing changes
+var clear_query: Callable = Callable()   # Rendering's read of what the patch and the opened floors leave visible, (x, y, z) -> 0..1 (docs/vfx/depth.md); invalid: everything is
 var pane: Dictionary = {}       # the facade's pane grid (VfxPanes.grid) while a caller throws glass from one building: window glass starts at a pane, not at a spot on the wall
 var puff_area_cap: float = INF  # the most of it the pool keeps: the hub sets it from the register's area threshold and the camera's scale; a puff over it is not made (the oldest keep fading)
 var ember_area_cap: float = INF # the most of it a scorch may keep alive: the hub sets it from the register's area threshold and the camera's scale (a flash's bright pixels, docs/vfx/flash-registry.md)
@@ -142,7 +145,7 @@ func step(S: SimState, dt: float) -> void:
 		if b.kind == SPRAY and b.vy < 0.0 and b.y < b.ky:
 			b.age = b.life
 		elif b.kind != PUFF and b.kind != RING and b.kind != FLAME and b.z > -200.0:
-			var g: float = WorldTerrain.groundY(S, b.x)
+			var g: float = WorldTerrain.groundY(S, b.x, b.z)      # the ground at the bit's own depth (the plane's with depth off)
 			if b.y < g:
 				b.y = g
 				if b.bounces < 2 and absf(b.vy) > 120.0:
@@ -163,6 +166,12 @@ func step(S: SimState, dt: float) -> void:
 
 
 func _run_job(S: SimState, j: Job) -> void:
+	z_shift = j.zs
+	_run_job_kind(S, j)
+	z_shift = 0.0
+
+
+func _run_job_kind(S: SimState, j: Job) -> void:
 	match j.kind:
 		"skirt":
 			_skirt(S, j.a)
@@ -519,6 +528,7 @@ func thin_puffs(x: float, r: float, fade: float = 0.2) -> int:
 
 ## Add to the pool. When it is full a shard or chip drops the oldest puff first; a puff at the puff cap drops the oldest puff.
 func _add(b: Bit) -> void:
+	b.z += z_shift
 	_spawned_tick += 1
 	if _spawned_tick > VfxLook.SPAWN_PER_TICK + VfxLook.SHARD_PER_TICK and b.kind != RING:
 		dropped += 1
@@ -583,6 +593,8 @@ func stage_glass(bx: float, w: float, y0: float, y1: float, front_z: float, dirx
 			var pn: Vector4 = VfxPanes.nearest(pane, px, py)
 			px = pn.x + _rs.range_(-0.3, 0.3) * pn.z
 			py = pn.y + _rs.range_(-0.3, 0.3) * pn.w
+		if not _visible_at(px, py, front_z):
+			continue
 		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), dirx * _rs.range_(40.0, 200.0) + _rs.range_(-40.0, 40.0), _rs.range_(-60.0, 220.0), 1.0, _rs.range_(1.0, 1.9))
 		_add(b)
 
@@ -598,6 +610,8 @@ func stage_shed(bx: float, w: float, y0: float, y1: float, front_z: float, dirx:
 			var cp: Vector2 = VfxPanes.clamp_point(pane, px, py)      # inside the drawn silhouette: a stepped tower is narrower than its box up there
 			px = cp.x
 			py = cp.y
+		if not _visible_at(px, py, front_z):
+			continue
 		var kind: int = CHUNK if k % 5 != 0 else STEEL
 		var b: Bit = _bit(kind, px, py, front_z + VfxLook.Z_SHARD_OVER + _rs.range_(0.0, 30.0), dirx * _rs.range_(30.0, 160.0) + _rs.range_(-30.0, 30.0), _rs.range_(-40.0, 120.0), kscale, _rs.range_(1.2, 2.2))
 		_add(b)
@@ -626,6 +640,13 @@ func stage_smoke(bx: float, y: float, front_z: float, n: int, kind: int) -> void
 			dust_puff(_biome, bx + _rd.range_(-40.0, 40.0), y, front_z + _rd.range_(0.0, 20.0), _rd.range_(-14.0, 14.0), _rd.range_(40.0, 70.0), 30.0, 90.0, 2.5, 0, grey)
 
 
+## Whether a thing thrown from a facade point (x, y, z) would be seen: Rendering's read of the patch and the opened floors (hub.clear_query), true with none.
+func _visible_at(x: float, y: float, z: float) -> bool:
+	if not clear_query.is_valid():
+		return true
+	return float(clear_query.call(Vector3(x, y, z))) > 0.5
+
+
 ## Window glass blowing out along a band of the facade and falling: one sliver about every window width.
 func window_row(bx: float, w: float, ym: float, half_band: float, front_z: float, scale: float) -> void:
 	var q: float = VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)] * (0.5 if reduced else 1.0)
@@ -638,6 +659,8 @@ func window_row(bx: float, w: float, ym: float, half_band: float, front_z: float
 			px = pn.x + _rs.range_(-0.3, 0.3) * pn.z
 			py = pn.y + _rs.range_(-0.3, 0.3) * pn.w
 		var kp: float = _rs.next()
+		if not _visible_at(px, py, front_z):
+			continue      # an opened floor has no window to blow out, and nothing is thrown across the patch
 		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), _rs.range_(-70.0, 70.0), _rs.range_(-60.0, 200.0), 1.0, _rs.range_(1.0, 1.9))
 		if kp < q:
 			_add(b)

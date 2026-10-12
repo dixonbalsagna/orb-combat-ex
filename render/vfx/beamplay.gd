@@ -168,7 +168,7 @@ func step(S: SimState, frozen: bool, debris: VfxDebris = null) -> void:
 				if e.kind == "wake" and e.slot == slot:
 					live += 1
 			if live < int(p("beamplay", "trail_max")):
-				_add("wake", hd.x, hd.y, float(b.oz), float(b.ux), float(b.uy), p("beamplay", "head_ring") * 0.8, p("beamplay", "trail_life"), lane_of(S, slot), Color.WHITE, slot)
+				_add("wake", hd.x, hd.y, float(b.oz) + float(b.zs) * float(b.p) * float(b.len), float(b.ux), float(b.uy), p("beamplay", "head_ring") * 0.8, p("beamplay", "trail_life"), lane_of(S, slot), Color.WHITE, slot)
 	for s in range(2):
 		var w: Walk = walks[s]
 		if w.on:

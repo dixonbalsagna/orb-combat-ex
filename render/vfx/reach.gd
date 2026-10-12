@@ -88,10 +88,10 @@ func reset() -> void:
 
 ## The flash limit (§5b point 8 and Legal's k05): true when a full flash may be drawn on this tick, and then it takes the slot. Two rules: at least `flash_every` ticks since the
 ## last one across both fighters (the design's pace), and the screen's register (three a second across every effect, fewer for low-priority sources, none in reduced motion).
-func allow_full(S: SimState, col: Color = Color.WHITE, pace: bool = true, radius: float = 19.0) -> bool:
+func allow_full(S: SimState, col: Color = Color.WHITE, pace: bool = true, radius: float = 19.0, z: float = 0.0) -> bool:
 	if pace and S.tick - last_full < int(p("flash_every")):
 		return false
-	if registry != null and not registry.ask("energy", col, S.tick, VfxFlashRegistry.disc_px(radius, registry.ppu), 0.2):
+	if registry != null and not registry.ask("energy", col, S.tick, VfxFlashRegistry.disc_px(radius, registry.ppu_at(z)), 0.2):
 		return false
 	last_full = S.tick
 	full_ticks.append(S.tick)
@@ -227,7 +227,7 @@ func _land(S: SimState, e, reduced: bool, debris) -> void:
 		l.life = p("land_life")
 		# Encounter's `k` on the cue is 1 on the one blow in 20 ticks that may take the full flash; the register still decides. Without it, the 1-in-20 pace is ours.
 		var kk: float = float(VfxHub._g(e, "k", -1.0))
-		l.big = (not reduced) and (not guard or blast) and (kk < 0.0 or kk >= 1.0) and allow_full(S, col.lightened(0.3), kk < 0.0, 28.0 if blast else 19.0)
+		l.big = (not reduced) and (not guard or blast) and (kk < 0.0 or kk >= 1.0) and allow_full(S, col.lightened(0.3), kk < 0.0, 28.0 if blast else 19.0, fv.z)
 		fx.append(l)
 		made["land"] = int(made.get("land", 0)) + 1
 		if l.big:
@@ -419,7 +419,7 @@ func _charge_full(S: SimState, e, reduced: bool) -> void:
 	o.col = VfxPress.lane_of(S, slot)
 	o.small = reduced
 	o.life = 4.0
-	o.big = registry == null or registry.ask("charge_full", o.col.lightened(0.3), S.tick, VfxFlashRegistry.ring_px(24.0, 2.2, registry.ppu), 0.15)
+	o.big = registry == null or registry.ask("charge_full", o.col.lightened(0.3), S.tick, VfxFlashRegistry.ring_px(24.0, 2.2, registry.ppu_at(S.fighters[slot].z)), 0.15)
 	fx.append(o)
 	made["charge_full"] = int(made.get("charge_full", 0)) + 1
 	if o.big:
@@ -444,7 +444,7 @@ func _double(S: SimState, e, reduced: bool) -> void:
 	o.life = 12.0
 	var land: float = float(VfxHub._g(e, "n", float(S.tick) + 8.0))
 	o.age = -maxf(land - float(S.tick), 0.0)
-	o.big = (not reduced) and registry != null and registry.ask("double_hit", o.col.lightened(0.3), S.tick, VfxFlashRegistry.disc_px(22.0, registry.ppu), 0.2)
+	o.big = (not reduced) and registry != null and registry.ask("double_hit", o.col.lightened(0.3), S.tick, VfxFlashRegistry.disc_px(22.0, registry.ppu_at(S.fighters[pr.x].z)), 0.2)
 	fx.append(o)
 	made["double"] = int(made.get("double", 0)) + 1
 

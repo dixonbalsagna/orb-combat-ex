@@ -142,6 +142,7 @@ func plunge(S: SimState, x: float, y: float, n: int) -> void:
 	j.at = debris.now + p("plunge", "rebound_delay")
 	j.kind = "plunge2"
 	j.a = {"x": x, "y": y, "s": s, "H": H * p("plunge", "rebound_share")}
+	j.zs = debris.z_shift
 	debris.jobs.append(j)
 	debris._ring(x, y + 30.0, RenderLook.Z_BEAMS + 6.0, 60.0 * s, 950.0 * s, 0.4)
 	debris._ring(x, y + 30.0, RenderLook.Z_BEAMS + 7.0, 30.0 * s, 650.0 * s, 0.55)

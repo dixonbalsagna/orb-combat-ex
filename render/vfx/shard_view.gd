@@ -51,6 +51,8 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 	shards = 0
 	var lim: float = half_w + 1500.0
 	var minpx: float = 1.6 / maxf(zoom, 1e-6)
+	var cq: Callable = d.clear_query
+	var use_cq: bool = cq.is_valid()      # Rendering's read of what the patch and an opened floor leave visible (docs/vfx/depth.md); invalid with depth off
 	# Three passes so the order is puffs, then shards, then rings, without sorting.
 	for pass_i in range(3):
 		for b in d.bits:
@@ -95,6 +97,10 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 				_:
 					c.a = 1.0 - smoothstep(0.7, 1.0, f)
 					shards += 1
+			if use_cq:
+				c.a *= clampf(float(cq.call(Vector3(b.x, b.y, b.z))), 0.0, 1.0)
+				if c.a <= 0.004:
+					continue
 			var mode: float = 0.0
 			var rot_v: float = b.rot if not is_puff and not is_ring else 0.0
 			var cy_v: float = b.y

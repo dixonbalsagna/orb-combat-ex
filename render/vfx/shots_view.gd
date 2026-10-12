@@ -912,18 +912,19 @@ func _zip(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float, a
 			var k: float = age / z.t1()
 			var tc: Color = col
 			tc.a = al * VfxZip.p("tell_alpha") * (0.35 + 0.65 * k)
-			var go: float = WorldTerrain.groundY(S, z.ox) + 3.0
-			var gp: float = WorldTerrain.groundY(S, z.px) + 3.0
+			var go: float = WorldTerrain.groundY(S, z.ox, z.oz) + 3.0      # the ground at its own depth (the plane's with depth off)
+			var gp: float = WorldTerrain.groundY(S, z.px, z.pz) + 3.0
 			var tw: float = maxf(VfxZip.p("ground_line_w"), minpx * 1.2)
 			var nseg: int = clampi(int(ceil(absf(pt.x - o.x) / 24.0)), 1, 24)      # it follows the ground, so a dune between them never hides it
 			var tp: Vector2 = Vector2(o.x, go)
 			for sg in range(1, nseg + 1):
 				var kx: float = float(sg) / float(nseg)
 				var sx: float = lerpf(o.x, pt.x, kx)
-				var tq := Vector2(sx, WorldTerrain.groundY(S, SimWrap.wrap(cam_x + sx)) + 3.0)
-				n = _line(n, tp, tq, tw, zb, tc)
+				var zk: float = lerpf(z.oz, z.pz, kx)       # a zip homes in depth too: the line runs from his depth to the one he arrives at
+				var tq := Vector2(sx, WorldTerrain.groundY(S, SimWrap.wrap(cam_x + sx), zk) + 3.0)
+				n = _line(n, tp, tq, tw, zb + (zk - z.oz), tc)
 				tp = tq
-			n = _line(n, Vector2(pt.x, gp), Vector2(pt.x, gp + 12.0), maxf(VfxZip.p("ground_line_w"), minpx * 1.2), zb, tc)
+			n = _line(n, Vector2(pt.x, gp), Vector2(pt.x, gp + 12.0), maxf(VfxZip.p("ground_line_w"), minpx * 1.2), zb + (z.pz - z.oz), tc)
 			var rem: float = z.t1() - age
 			if z.style == "heavy" and rem <= VfxZip.p("ring_ticks"):
 				var kr: float = 1.0 - rem / VfxZip.p("ring_ticks")
