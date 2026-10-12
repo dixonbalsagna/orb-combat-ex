@@ -6,6 +6,8 @@ Owner: Rendering and Technical Art. For the EP to route to Camera, Tools, VFX an
 
 **The geometry at fight framing** (0.6 pixels a unit at 720p): the camera stands about 2,240 units in front of the fighter plane and about 320 above the street. It sees 1,200 units of height.
 
+**Correction, 2026-10-12.** Those numbers are the camera at a zoom of 0.6, with the fighters well apart. At a close brawl the camera is nearer: measured at zoom 1.15 (1280 by 720, the mash scenario) it stands 1,168 units in front of the plane and about 175 above the street, and sees 626 units of height (8.3 fighter heights) and 1,113 of width. Everything below that depends on the distance is worse at the close end: a foreground building hides more of the street, and a fighter's size changes faster with his depth. Camera's `docs/camera/city-in-depth.md` section 1 took the 2,240 and the 320 from here.
+
 ### Row 0, the foreground (off in the data until this is settled)
 
 - **Every row-0 building hides the street.** Row 0 stands 562 to 938 units in front of the plane. From the camera, a building there taller than 120 to 170 units hides a fighter's feet, and one taller than 170 to 210 hides him whole. Suburb houses are 225 to 490 tall. A 300-unit house covers the screen from its bottom edge to just under the middle.
