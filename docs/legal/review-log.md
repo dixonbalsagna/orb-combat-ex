@@ -150,6 +150,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-128 | Open floors | Rendering | Medium | Conditional: sturdy regular columns, deep beam, lit lobby, never on a damaged building, never in public with debris; w01 | Open until seen |
 | RL-129 | 1,800 civilians and the CIVILIANS LOST count | World, EP | Medium | Pass in game; never shown above zero in public (w02); rating answers honest; expect the upper range | Open until the questionnaires |
 | RL-130 | Release margin and the required flash set grown; UI's 4 Hz crown stroke (k06) | Tools, UI | Medium | Margin rules and the new scenes added (addendum 6); stroke to 3 Hz or less, preferably 2, static under reduced motion | Open |
+| RL-131 | Tools' seven questions on the release rule; starved captures void; seeds re-picked per release; toll chip fine | Tools, UI | Medium | Answered in photosensitivity-note.md addendum 7: per-change windows never a pass; 20 in all with coverage, five worst carried; guarded launcher recorded; second capture in the 2.0 to 3.0 band, worse counts | Closed; file frozen until the EP confirms |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
