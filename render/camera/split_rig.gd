@@ -265,6 +265,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_cl_hold = [0.0, 0.0]
 	_cl_sigma = [0.0, 0.0]
 	_cl_shown_prev = [false, false]
+	_cl_reg = [Rect2(), Rect2()]
+	_cl_pc_ok = [false, false]
 	_fz = [0.0, 0.0]
 	_fzm = 0.0
 	_fzo = [0.0, 0.0]
@@ -2326,6 +2328,10 @@ var _cl_have: Array = [false, false]
 var _cl_hold: Array = [0.0, 0.0]           # seconds with nothing asking for more room
 var _cl_sigma: Array = [0.0, 0.0]
 var _cl_shown_prev: Array = [false, false]
+var _cl_reg: Array = [Rect2(), Rect2()]   # the pane's room last tick, for how far its edges moved
+var _cl_pc: Array = [Vector2.ZERO, Vector2.ZERO]   # the chest each pane's rectangle last saw, for the step it leads by
+var _cl_pc_slot: Array = [-1, -1]
+var _cl_pc_ok: Array = [false, false]
 # The dolly (docs/camera/city-in-depth.md section 6): the depth the frame's scale is defined at follows the pair's depth, so a
 # fight in any street is drawn at the plane's size. A switch until Rendering applies SplitFrame.focus_z (and the proof).
 var depth_dolly: bool = false
@@ -2900,6 +2906,16 @@ func _clear_demand(S: SimState, f: SplitFrame, i: int, region: Rect2) -> Diction
 		var h: float = maxf(f.apparent_height(i, fk.x, fk.y, float(fk.z)), 8.0)
 		h_ref = maxf(h_ref, h)
 		pts.append([pos, h])
+		# where he is going on the screen: his step this tick (camera and body together), a few ticks ahead
+		var kk: int = int(k)
+		if bool(_cl_pc_ok[i]) and _cl_pc_slot[i] == kk:
+			var vstep: Vector2 = pos - Vector2(_cl_pc[i])
+			if vstep.length() < 0.5 * vw:
+				pts.append([pos + vstep * CamParams.CLEAR_LEAD_TICKS, h])
+		if subj.size() == 1 or kk == 0:
+			_cl_pc[i] = pos
+			_cl_pc_slot[i] = kk
+			_cl_pc_ok[i] = true
 		y_top = maxf(y_top, fk.y + 1.2 * CamParams.BODY_H)
 		if fk.state == "launched":
 			for tt in [0.25, 0.5]:
@@ -2956,12 +2972,30 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
 		_cl_hold[i] = 0.0
 		_cl_sigma[i] = 0.0
 		return {}
-	# the pane's own room on the screen: a split's half about its anchor, the whole screen in one view
+	# the pane's own room on the screen: the part of the screen on its side of the divider (and the blend across the
+	# feather), as a box; the whole screen in one view
 	var split_w: float = _smootherstep(sep) * (1.0 - clampf(e, 0.0, 1.0)) if two_up else 0.0
-	var a: Vector2 = _anchors[i]
-	var half: float = lerpf(0.5 * vw, minf(a.x, vw - a.x), split_w)
-	var cxp: float = lerpf(0.5 * vw, a.x, split_w)
-	var region: Rect2 = Rect2(Vector2(cxp - half, 0.0), Vector2(2.0 * half, vh))
+	var region: Rect2 = Rect2(Vector2.ZERO, Vector2(vw, vh))
+	if split_w > 0.0 and bool(f.active[0]) and bool(f.active[1]):
+		var side: float = 1.0 if i == 1 else -1.0
+		var pts: Array = [Vector2(0.0, 0.0), Vector2(vw, 0.0), Vector2(vw, vh), Vector2(0.0, vh)]
+		var kept: Array = []
+		for k in range(4):
+			var p0: Vector2 = pts[k]
+			var p1: Vector2 = pts[(k + 1) % 4]
+			var d0: float = side * (p0 - f.c).dot(f.n) + f.feather
+			var d1: float = side * (p1 - f.c).dot(f.n) + f.feather
+			if d0 >= 0.0:
+				kept.append(p0)
+			if (d0 >= 0.0) != (d1 >= 0.0):
+				kept.append(p0.lerp(p1, d0 / (d0 - d1)))
+		if kept.size() >= 3:
+			var lo: Vector2 = kept[0]
+			var hi: Vector2 = kept[0]
+			for q in kept:
+				lo = Vector2(minf(lo.x, q.x), minf(lo.y, q.y))
+				hi = Vector2(maxf(hi.x, q.x), maxf(hi.y, q.y))
+			region = Rect2(lo, hi - lo)
 	var dm: Dictionary = _clear_demand(S, f, i, region)
 	var target: Rect2 = Rect2()
 	var hole_r: float = float(f.cutaway[i].get("radius_px", 0.0))
@@ -2982,7 +3016,7 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
 			target.position.x += lead
 			target.size.x -= lead
 	target = target.intersection(region) if target.size != Vector2.ZERO else target
-	var jump: bool = _cut_now or not _cl_have[i] or not bool(_cl_shown_prev[i])
+	var jump: bool = _cut_now or not _cl_have[i] or not bool(_cl_shown_prev[i]) or _cl_rect[i].size == Vector2.ZERO
 	var r_now: Rect2 = _cl_rect[i]
 	var grew: bool = false
 	if jump or target.size == Vector2.ZERO:
@@ -2990,7 +3024,13 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
 		_cl_hold[i] = 0.0 if jump else float(_cl_hold[i])
 		grew = jump
 	else:
+		# the rectangle may grow by its pane's own growth too (the divider sweeping over the picture while the panes open),
+		# never by more than CLEAR_GROW of the screen's width in a tick
+		var reg_p: Rect2 = _cl_reg[i] if _cl_reg[i].size != Vector2.ZERO else region
+		var g_cap: float = CamParams.CLEAR_GROW * vw
 		var g: float = CamParams.CLEAR_GROW * region.size.x
+		var g_l: float = minf(g_cap, g + maxf(0.0, reg_p.position.x - region.position.x))
+		var g_r: float = minf(g_cap, g + maxf(0.0, region.end.x - reg_p.end.x))
 		var sh: float = CamParams.CLEAR_SHRINK * region.size.x
 		var can_shrink: bool = float(_cl_hold[i]) >= CamParams.CLEAR_HOLD
 		var x0: float = r_now.position.x
@@ -3002,12 +3042,12 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
 		var u0: float = target.position.y
 		var u1: float = target.end.y
 		if t0 < x0:
-			x0 = maxf(t0, x0 - g)
+			x0 = maxf(t0, x0 - g_l)
 			grew = true
 		elif t0 > x0 and can_shrink:
 			x0 = minf(t0, x0 + sh)
 		if t1 > x1:
-			x1 = minf(t1, x1 + g)
+			x1 = minf(t1, x1 + g_r)
 			grew = true
 		elif t1 < x1 and can_shrink:
 			x1 = maxf(t1, x1 - sh)
@@ -3038,6 +3078,7 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
 		sig = maxf(sig_t, sig - DT / CamParams.CLEAR_STAND)
 	_cl_sigma[i] = sig
 	_cl_rect[i] = r_now
+	_cl_reg[i] = region
 	_cl_have[i] = true
 	_cl_shown_prev[i] = true
 	# world x of the rectangle's sides at the focus plane
@@ -3045,7 +3086,7 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
 	var wx0: float = SimWrap.wrap(f.cam_x[i] + (r_now.position.x - vw * 0.5) / z_i)
 	var wx1: float = SimWrap.wrap(f.cam_x[i] + (r_now.end.x - vw * 0.5) / z_i)
 	return {
-		"rect": r_now, "p": p, "sigma": sig, "y_top": float(dm["y_top"]), "x0": wx0, "x1": wx1,
+		"rect": r_now, "region": region, "p": p, "sigma": sig, "y_top": float(dm["y_top"]), "x0": wx0, "x1": wx1,
 		"holding": float(_cl_hold[i]) < CamParams.CLEAR_HOLD, "cut": jump, "hole": hole_r,
 	}
 

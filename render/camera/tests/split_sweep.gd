@@ -69,6 +69,10 @@ var only: String = ""
 var budget_on: bool = true   # --budget=off runs every row with the travel budget switched off (the shipped default)
 var _clear_prev: SplitFrame = null   # the last tick's frame, for the foreground's clear[i] rules
 var _clear_grow_tick: Array = [-1000, -1000]
+var _clear_miss: Array = [0, 0]
+var _clear_gap: Array = [0.0, 0.0]
+var _clear_cp: Array = [Vector2.ZERO, Vector2.ZERO]
+var _clear_cp_ok: Array = [false, false]
 var _trav_prev: SplitFrame = null   # the last tick's frame, for the travel budget's check
 var _trav_cuts: int = 0
 var _launch_off_max: int = 0   # the longest run of ticks the launched fighter was off his pane's screen in a flight
@@ -341,6 +345,9 @@ func _begin(label: String) -> void:
 	_trav_prev = null
 	_clear_prev = null
 	_clear_grow_tick = [-1000, -1000]
+	_clear_miss = [0, 0]
+	_clear_gap = [0.0, 0.0]
+	_clear_cp_ok = [false, false]
 	_prev_disp = null
 	_sigma_changes = 0
 	_swings = 0
@@ -642,8 +649,29 @@ func _clear_scan(cur: SplitFrame) -> void:
 			continue
 		var chest: Vector2 = cur.screen_pos(i, f.x, f.y + CamParams.CHEST, float(f.z))
 		var inside_screen: bool = chest.x >= 0.0 and chest.x <= vw and chest.y >= 0.0 and chest.y <= vh and (cur.weight1(chest) >= 0.5 if i == 1 else cur.weight1(chest) < 0.5)
-		if inside_screen and not r.grow(2.0).has_point(chest):
-			_fail_once("clear_holds", "%s: pane %d's clear rectangle %s does not hold his chest %s at t=%.2f s" % [_label, i, str(r), str(chest), float(_tick) / 60.0])
+		# The rectangle grows at a bounded rate, so it may trail a chest that jumps or outruns it; it must be closing the
+		# gap at that rate: more ticks behind than 4 plus the widest gap of the streak over the rate is a fault.
+		var grown: Rect2 = r.grow(2.0)
+		var reg: Rect2 = c.get("region", Rect2(Vector2.ZERO, Vector2(vw, vh)))
+		var rate: float = maxf(CamParams.CLEAR_GROW * reg.size.x, 1.0)
+		var chest_step: float = (chest - Vector2(_clear_cp[i])).length() if bool(_clear_cp_ok[i]) else 0.0
+		_clear_cp[i] = chest
+		_clear_cp_ok[i] = true
+		if inside_screen and not grown.has_point(chest) and chest_step >= 0.75 * rate:
+			pass   # he outruns the rectangle's own growth rate: it trails him by design until he slows or the camera catches up
+		elif inside_screen and not grown.has_point(chest):
+			var gap: float = maxf(maxf(grown.position.x - chest.x, chest.x - grown.end.x), maxf(grown.position.y - chest.y, chest.y - grown.end.y))
+			_clear_miss[i] += 1
+			_clear_gap[i] = maxf(float(_clear_gap[i]), gap)
+			var allowed: int = 4 + int(ceil(float(_clear_gap[i]) / rate))
+			if _clear_miss[i] > allowed:
+				_fail_once("clear_holds", "%s: pane %d's clear rectangle %s has not held his chest %s for %d ticks (widest gap %.0f px, at most %d) at t=%.2f s" % [_label, i, str(r), str(chest), _clear_miss[i], float(_clear_gap[i]), allowed, float(_tick) / 60.0])
+		else:
+			_clear_miss[i] = 0
+			_clear_gap[i] = 0.0
+		if bool(c.get("cut", false)):   # the pane's own jump (it opens, or its picture is cut): the rectangle starts again
+			_clear_grow_tick[i] = _tick
+			continue
 		if prev == null or prev.clear[i].is_empty() or bool(prev.cut) or not bool(prev.active[i]):
 			continue
 		var pr: Rect2 = prev.clear[i]["rect"]
@@ -720,6 +748,9 @@ func _seed_rig() -> void:
 
 func _watch_first() -> void:
 	_tick = 1
+	_clear_prev = null   # a re-seeded rig starts its rectangles again
+	_clear_grow_tick = [-1000, -1000]
+	_clear_miss = [0, 0]
 	_disp_t = float(_tick) * SplitRig.DT
 	_mode_seq.append(_rig.current().mode)
 

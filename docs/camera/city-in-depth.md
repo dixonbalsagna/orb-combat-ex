@@ -96,6 +96,34 @@ Orb, shown the options: "open floors sounds like it would look the most natural,
 2. Tests in `split_sweep`: the rectangle contains each fighter's box at every pane size and shot type; its edges never move faster than the bounds; it narrows only after the hold; no two opposite changes within 0.75 s over the real matches; a cut jumps the state; a split's two panes are independent and their blend is continuous.
 3. Tools' clips (the list in `lanes-camera-flash.md` section 2): a fighter pacing a street in a suburb, a beam down the front row, a launch along the downtown front street, a flight over a block in the back street.
 
+### 4a. As built in the rig (2026-10-12)
+
+`SplitFrame.clear[i]` is `{}` for a pane that is not shown, else a Dictionary:
+
+| Key | Meaning |
+| :--- | :--- |
+| `rect` | Rect2 in the pane's picture pixels (0,0 at the screen's top left, 1280 x 720 at the reference size); `size == ZERO` when nothing is asked for |
+| `region` | Rect2: the part of the screen that is this pane's (its side of the divider plus the feather; the whole screen in one view). The rectangle never leaves it |
+| `p` | area of `rect` over area of `region` |
+| `sigma` | the shrink, `smoothstep(0.18, 0.40, p)`, already eased (sink 0.5 s, stand 0.75 s, stand only on the hold); Rendering applies it as is |
+| `y_top` | top of the action in world units (fighters + 1.2 bh, launch path, beams' ends, zip box); the stub top and the floors read it |
+| `x0`, `x1` | world x of the rectangle's sides at the focus plane (wrapped), for buildings matched by column |
+| `holding` | true while the hold clock runs (no building may stand, the patch does not narrow) |
+| `cut` | true on a tick that is a jump for this pane (first frame, a pane that has just opened, a cut frame, a rectangle that was empty): apply the target state at once |
+| `hole` | today's hole radius in px, the floor of the rectangle |
+
+What the rig does that the table above does not say:
+
+- **Subjects.** One view (separation under 0.5): both fighters. A split or a solo: his own box, plus the strip toward the rival (at most 0.5 of the pane's width), plus, for a launched body, where he will be in 0.25 s and 0.5 s, plus both ends of every beam in flight, plus the zip's frame box. Each is a box of 0.3 h half-width and 0.5 h half-height padded by 0.5 h (h the apparent height at the fighter's own depth, so a fighter in the back street asks for a smaller rectangle).
+- **Lead.** The chest's own screen step this tick, eight ticks ahead, is another subject; and the centre's drift times 0.5 s widens the side it moves to (cap 0.2 of the region's width).
+- **Growth.** An edge grows by at most 0.045 of the region's width a tick, plus how far the region's own edge moved outward that tick (the panes opening over the picture), never more than 0.045 of the screen's width. It narrows by at most 0.02 of the region's width, and only after 0.75 s with nothing asking for room.
+- **Reset.** A rig reset, a pane that was not shown, or an empty rectangle starts again from the target: `cut` is true.
+- **A chest that outruns the rate.** A fighter crossing the pane faster than the rectangle may grow is trailed by it by design (it catches up as he slows or the camera catches him); the scan counts only a rectangle that is not closing on him.
+
+Scan in `split_sweep` (every row, real matches included): `cut` on a cut frame for each shown pane; the edges' growth and narrowing bounds; no narrowing within the hold of a growth; sigma's per-tick bound; the rectangle holds his chest while he is on the screen and in his pane, allowing the rate-limited trail above.
+
+**What Rendering changes to read it** (nothing in Camera's files): (1) take `clear[i].rect` where the pane's hole radius is read now and keep `hole` as the floor; (2) shrink the row-0 buildings whose columns meet `x0..x1` by `sigma` (height `h_s + (1 - sigma)(h - h_s)`), and draw the patch over the rectangle; (3) open floors from `y_top` by the H formula, one step per 3 ticks, closing one per 6 after `holding` ends; (4) on `cut`, set every one of those to its target; (5) `frame.focus_z[i]` into `SplitFrame.project`'s `wz` and the `CameraRig` pivot as section 6 says.
+
 ## 5. Numbers to settle with Rendering before building
 
 | Number | Mine | Why |

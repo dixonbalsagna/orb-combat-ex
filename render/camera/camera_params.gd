@@ -105,6 +105,7 @@ const CLEAR_SHRINK: float = 0.02         # and closes at most this much, and onl
 const CLEAR_HOLD: float = 0.75           # seconds with no demand for the space before anything narrows or stands again
 const CLEAR_SINK: float = 0.5            # sigma 0 to 1 in at least this many seconds ...
 const CLEAR_STAND: float = 0.75          # ... and 1 to 0 in at least this many
+const CLEAR_LEAD_TICKS: float = 8.0      # the rectangle also reaches this many ticks of the chest's own screen step ahead of it
 const CLEAR_LEAD: float = 0.5            # seconds of the action's own motion the rectangle leads by ...
 const CLEAR_LEAD_MAX: float = 0.2        # ... capped at this share of the pane's width
 const CLEAR_ROOM: float = 0.5            # a split pane's strip toward the rival runs at most this share of the pane's width
