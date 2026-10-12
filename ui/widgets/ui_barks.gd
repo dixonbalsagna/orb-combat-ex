@@ -95,7 +95,11 @@ static func _shout(ci: CanvasItem, hub: UiEventHub, b: UiEventHub.Bark, lane: Re
 		lane = Rect2(lane.position.x + (fe + 8.0 * s if left else 0.0), lane.position.y, lane.size.x - fe - 8.0 * s, lane.size.y)
 	var lines: PackedStringArray = UiText.wrap(b.text, fs, lane.size.x)
 	var shown: int = UiBarkTiming.reveal_count(b.text, b.age, inten)
-	var fade: float = minf(clampf(b.age / 0.06, 0.0, 1.0), clampf((b.reveal_time + b.dur - b.age) / 0.25, 0.0, 1.0))
+	var waits := false
+	for w in hub.bark_wait:
+		if w.slot == b.slot:
+			waits = true
+	var fade: float = minf(1.0 if b.chained else clampf(b.age / 0.06, 0.0, 1.0), 1.0 if waits else clampf((b.reveal_time + b.dur - b.age) / 0.25, 0.0, 1.0))
 	var yy: float = lane.end.y - float(lines.size() - 1) * (float(fs) + 4.0) - 6.0 * s
 	if embed:
 		var m0: UiFighterModel = hub.model(b.slot)
@@ -139,9 +143,14 @@ static func _bark(ci: CanvasItem, hub: UiEventHub, b: UiEventHub.Bark, lane: Rec
 	fe = minf(total_h, fe) if embed else 0.0
 	var fade: float = 1.0
 	var left_t: float = b.reveal_time + b.dur - b.age
-	if left_t < 0.25:
+	var next_waits := false   # another line of this speaker is queued: the panel carries on into it and does not fade out
+	for w in hub.bark_wait:
+		if w.slot == b.slot:
+			next_waits = true
+	if left_t < 0.25 and not next_waits:
 		fade = clampf(left_t / 0.25, 0.0, 1.0)
-	fade = minf(fade, clampf(b.age / 0.08, 0.0, 1.0))
+	if not b.chained:
+		fade = minf(fade, clampf(b.age / 0.08, 0.0, 1.0))
 	# Anchor the panel to the lane's bottom edge, growing upward.
 	var w: float = 0.0
 	for l in lines:

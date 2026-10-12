@@ -81,6 +81,13 @@ var insets := Vector4.ZERO     # left, top, right, bottom safe-area insets from 
 
 var _t := 0.0
 var _lb := 0.0                 # letterbox progress, 0..1
+const LETTERBOX_HOLD := 1.5
+const LETTERBOX_REST := 1.0
+var _lb_on := false            # the letterbox's gate (a cinematic is asked for; the bars follow it with a hold)
+var _lb_t := -1.0e9
+var touch_ui_min_gap := 1.0    # seconds between two touch-ui changes after the first two (a hybrid device alternating its inputs does not toggle the buttons every press)
+var _touch_ui_t := -1.0e9
+var _touch_pending = null
 var _last_size := Vector2.ZERO
 var _last_sil := false
 var _last_insets := Vector4.ZERO
@@ -143,6 +150,14 @@ var _saved_opts: Dictionary = {}      # the options the player changed on the Se
 var _l_fb: UiLayer
 var _l_hints: Array = []
 var _l_you: UiLayer
+# The control legend is a block of about 30,000 px that the photosensitivity check reads as a flash each time it appears or goes. It is driven by presses (a refused press, a wind-up, a
+# stance change), which can come every few ticks, so it is GATED: once shown it holds for LEGEND_HOLD seconds, once gone it stays gone for LEGEND_REST, and it fades over LEGEND_FADE
+# (docs/ui/hud-spec.md section 57). The Control hints setting Always and Off bypass it (they never toggle).
+const LEGEND_HOLD := 3.0
+const LEGEND_REST := 2.0
+const LEGEND_FADE := 1.0
+var _legend_g: Array = [{"a": 0.0, "on": false, "t": -1.0e9}, {"a": 0.0, "on": false, "t": -1.0e9}]   # the legend's own gate (asked for only on a keyboard or a pad, upright)
+var _you_g: Array = [{"a": 0.0, "on": false, "t": -1.0e9}, {"a": 0.0, "on": false, "t": -1.0e9}]      # and the YOU pill's and the touch captions' (asked for on every screen)
 var _hint_t0: Array = [0.0, 0.0]       # when each fighter became a human (the legend shows for 12 s from then)
 var _prev_ai: Array = [true, true]
 var _prev_clock := 0.0
@@ -174,6 +189,7 @@ var _notice_gate := false             # the session's gate (opaque, only its own
 var _notice_allow_settings := false   # the gate opens Settings over itself
 var _turn_open := false               # the "turn your phone" card is up (a phone held upright; the match waits)
 var _turn_held := false               # ... and it is the one holding the match
+var _turn_t := -1.0e9
 var _turn_anyway := false             # "Play upright anyway" was pressed this session
 var _l_turn: UiLayer
 var _notice_scroll := 0.0              # the card's text scrolled up by this many pixels, on a screen too short to show it all
@@ -385,8 +401,19 @@ func advance(dt: float) -> void:
 	_split = split_fn.call() if split_fn.is_valid() else {}
 	_step_swap(dt)
 	hub.advance(dt)
-	var target: float = 1.0 if hub.mode == UiEventHub.Mode.CINEMATIC else 0.0
+	var want_lb: bool = hub.mode == UiEventHub.Mode.CINEMATIC
+	# The letterbox bars and the HUD they take away are blocks of tens of thousands of px: once in, they hold LETTERBOX_HOLD seconds; once out, LETTERBOX_REST before the next.
+	if want_lb != _lb_on:
+		if _t - _lb_t >= (LETTERBOX_HOLD if _lb_on else LETTERBOX_REST):
+			_lb_on = want_lb
+			_lb_t = _t
+	var target: float = 1.0 if _lb_on else 0.0
 	_lb = move_toward(_lb, target, dt * (100.0 if bool(opts["reduced_motion"]) else 4.0))
+	# A touch-or-not change from the host (the last input device) applies at most once a second: the touch buttons are a block too.
+	if _touch_pending != null and _touch_pending != opts["touch_ui"] and _t - _touch_ui_t >= touch_ui_min_gap:
+		var tp = _touch_pending
+		_touch_pending = null
+		set_option("touch_ui", tp)
 	_update_layers()
 
 
@@ -460,6 +487,14 @@ func _step_swap(dt: float) -> void:
 
 func set_option(key: String, value) -> void:
 	value = UiData.clamp_option(key, value)
+	if key == "touch_ui":
+		if _t > 2.0 and touch_ui_min_gap > 0.0 and opts.has(key):
+			_touch_pending = value   # asked for; it applies in advance(), at most once per touch_ui_min_gap
+			if value == opts[key] or _t - _touch_ui_t < touch_ui_min_gap:
+				return
+		_touch_pending = null
+		if not opts.has(key) or opts[key] != value:
+			_touch_ui_t = _t
 	var changed: bool = not opts.has(key) or opts[key] != value
 	opts[key] = value
 	if changed:
@@ -655,6 +690,9 @@ func _update_layers() -> void:
 	# Who is the player (YOU), and the control legend: it shows for 12 s from the match start, or from the moment a fighter became human.
 	if hub.t_now < _prev_clock:
 		_hint_t0 = [0.0, 0.0]
+		for g in _legend_g + _you_g:
+			g["on"] = false
+			g["t"] = -1.0e9
 		_join_t = -1.0
 		_join_note = {}
 		_join_prev_t = 0.0
@@ -673,8 +711,8 @@ func _update_layers() -> void:
 						if not h.ai:
 							_hint_t0[h.slot] = hub.t_now
 			_prev_ai[m.slot] = m.ai
-			var ya: float = UiHints.visible_alpha(m, str(opts["control_hints"]), prompts_on, hub.t_now - float(_hint_t0[m.slot]))
-			var ha: float = 0.0 if (touch_on or layout.portrait) else UiHints.legend_alpha(m, str(opts["control_hints"]), prompts_on, hub.t_now - float(_hint_t0[m.slot]))   # the legend is for a keyboard or a pad; the YOU marker is for every screen
+			_legend_step(m, prompts_on)
+			var ha: float = float((_legend_g[clampi(m.slot, 0, 1)] as Dictionary)["a"])   # the legend is for a keyboard or a pad; the YOU marker is for every screen
 			var yk: Dictionary = _you_marker(m)
 			if float(yk["a"]) > 0.01 and anchor_fn.is_valid():
 				var an: Dictionary = anchor_fn.call(m.slot)
@@ -1219,8 +1257,9 @@ func _turn_step() -> void:
 	var want: bool = not _turn_anyway and UiTurn.wanted(layout.vp, dp, touch) and not (_notice_open or _pm_open or _howto_open or _set_open or _fb_open or _rm_open)
 	if _turn_open and not UiTurn.wanted(layout.vp, dp, touch):
 		want = false
-	if want == _turn_open:
-		return
+	if want == _turn_open or _t - _turn_t < 1.0:
+		return   # a card of this size does not come and go inside a second (a phone turned back and forth)
+	_turn_t = _t
 	_turn_open = want
 	if want:
 		_turn_held = true
@@ -2846,7 +2885,33 @@ func _humans() -> int:
 
 
 func _you_alpha(m: UiFighterModel) -> float:
-	return UiHints.legend_alpha(m, str(opts["control_hints"]), bool(opts["show_prompts"]), hub.t_now - float(_hint_t0[m.slot]))
+	return float((_you_g[clampi(m.slot, 0, 1)] as Dictionary)["a"])
+
+
+## One step of the legend's gates (see LEGEND_HOLD): what the presses ask for (UiHints.legend_alpha) is a request, not the picture. Always and Off are the player's own choice and apply at once.
+func _legend_step(m: UiFighterModel, prompts_on: bool) -> void:
+	var s: int = clampi(m.slot, 0, 1)
+	var mode: String = str(opts["control_hints"])
+	var raw: float = UiHints.legend_alpha(m, mode, prompts_on, hub.t_now - float(_hint_t0[s]))
+	_gate_step(_you_g[s], raw, mode != "auto" or m.ai)
+	var upright_kbd: bool = not (bool(opts["touch_ui"]) or layout.portrait)
+	# The legend is for a keyboard or a pad; on touch (or upright) it is simply never asked for, and the gate takes it away the way it takes any other.
+	_gate_step(_legend_g[s], raw if upright_kbd else 0.0, mode != "auto" or m.ai)
+
+
+func _gate_step(g: Dictionary, raw: float, bypass: bool) -> void:
+	if bypass:
+		g["a"] = raw
+		g["on"] = raw > 0.5
+		g["t"] = -1.0e9
+		return
+	var want: bool = raw > 0.5
+	if want != bool(g["on"]):
+		var since: float = _t - float(g["t"])
+		if since >= (LEGEND_REST if want else LEGEND_HOLD):
+			g["on"] = want
+			g["t"] = _t
+	g["a"] = move_toward(float(g["a"]), 1.0 if bool(g["on"]) else 0.0, _dt / LEGEND_FADE)
 
 
 ## What the HUD adds to the Full touch buttons for the first human: the buttons with no move in the stance held now ("dim", greyed and marked not yet) and the press

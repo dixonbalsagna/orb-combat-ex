@@ -57,11 +57,13 @@ class Bark:
 	var style: String = "caption"   # caption, thought (an inner line: smaller, leaning, softer) or shout
 	var kind: String = "line"       # Narrative's kind: line, reply, retort, callback, jewel or thought (dialogue-director.md section 5)
 	var fighter: bool = true        # a fighter speaks it (false for a crowd or narrator line, which gets no face)
+	var chained: bool = false       # it took the place of a line of the same speaker that had just ended: its panel carries on (no fade out and in, which a flash check reads as the panel going and coming)
 	var face: bool = false          # this line has a face cut-in (decided when it becomes visible)
 	var face_expr: String = "neutral"
 
 
 var models: Array = []           # UiFighterModel
+var _bark_end: Dictionary = {}   # slot -> the clock when its last bark ended (for chaining)
 var cards: Array = []            # visible Card
 var waiting: Array = []          # queued Card
 var world_card: Card = null
@@ -401,6 +403,9 @@ func consume(e) -> void:
 				m.launcher_open = true
 			elif ck == "launcher_close" and m != null:
 				m.launcher_open = false
+			else:
+				var uk: String = "cue_unread_" + ck   # a cue kind the HUD has no reading for (blow, miss, charge_full, energy_reach, energy_land, double_hit, burst ...): counted, for the report
+				stats[uk] = int(stats.get(uk, 0)) + 1
 		"weight_set":
 			if m != null:
 				_set_weight(m, _weight_name(d.get("weight", "light")))
@@ -705,7 +710,8 @@ func _on_windup(m: UiFighterModel, d: Dictionary) -> void:
 				return
 			m.charge_cell = cell
 			m.charge_t = 0.0
-			m.charge_dur = UiStance.windup_ticks(cell) / 60.0   # the cue's `dur` is not read until Encounter says its unit
+			var dur_ticks: float = float(d.get("dur", 0.0))   # the wind-up alone in live ticks (docs/director/brawl-c2.md section 7); the data's length when the cue has none
+			m.charge_dur = (dur_ticks / 60.0) if dur_ticks > 0.0 else UiStance.windup_ticks(cell) / 60.0
 			m.charge_on = true
 		"end":
 			var res: int = int(d.get("k", 0))
@@ -1157,6 +1163,8 @@ func _age_barks(dt: float) -> void:
 		_fire_cues(b)
 		if b.age < b.reveal_time + b.dur:
 			keep.append(b)
+		else:
+			_bark_end[b.slot] = t_now
 	barks = keep
 	# A queued line takes the place of a finished one for its speaker; a line that waited too long is dropped.
 	var still: Array = []
@@ -1167,6 +1175,7 @@ func _age_barks(dt: float) -> void:
 			if v.slot == w.slot:
 				taken = true
 		if not taken and barks.size() < UiLook.CAP_BARK_LINES[mode] and not (mode == Mode.CINEMATIC and w.priority < 3):
+			w.chained = t_now - float(_bark_end.get(w.slot, -9.0)) < 0.2
 			barks.append(w)
 			stats["barks_shown"] += 1
 			_decide_face(w)

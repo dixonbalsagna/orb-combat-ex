@@ -1370,3 +1370,55 @@ Platform found two faults in the live gate (docs/perf/phone-web-fullscreen.md). 
 **Short phone screens.** Safari's bars leave 340 to 360 CSS px of height on the tall phones and less on the small ones. UI's side: the plates sit nearer the top on a short touch landscape, step down until no touch button is under one, and Power's words moved to its left. **Measured at phone density (dp 3), the smallest height at which the buttons are on screen, 48 dp, clear of each other and of the plates, the toll and the pause button: Simple 350 CSS px (340 at 667 wide and below), Full 290 to 300.** Below that Simple's **Power button runs under the right plate**, because SimTouch honours `touch_top_limit` for Full only: the HUD now passes it for Simple too, and **Controls honouring it for Simple** would take Simple down to about 270. A bark panel's caption tag no longer runs into the speaker's name (the text area subtracted the face's width from the wrong side).
 
 **Tests:** `_touch_feel_rules`, `_phone_rules`, and the amended hints and split cases (a steady marker, an off-screen arrow, Fixed and Follow with the dwell, an exchange, two humans). `hud_check` and the demo flags `--cvd=`, `--youmark=`, `--sides=` and `--edge`.
+
+
+## 57. The HUD and the flash gate: nothing of a block's size comes and goes inside a second (2026-10-11)
+
+VFX traced the mash clip's 3, 3, 3 reading (gate 2.5) to this HUD, not the bodies: **the controls legend** (a panel of about 30,000 px; 42,700 at 1024x768) came and went every 4 to 12 ticks while buttons were pressed, each toggle read as a flash. The legend was asked for by presses (a refused, empty or energy press raised it for 1.3 s; a wind-up on Y or B and the launch window held it up), so it followed the mash.
+
+**The fix: the legend is gated.** What the presses ask for is a request, not the picture (`UiHud._legend_step`, `_gate_step`):
+- **Hold:** once up, it stays up at least **3 s**. **Rest:** once gone, it stays gone at least **2 s** (the fade is 1 s, so it is dark for a second at least before it can return). **Fade:** **1 s** in and out. So the legend can change state at most about every 2 s, and its fastest cycle is 3 + 1 + 1 + 2 s.
+- **What still raises it:** the same requests as before (the first 12 s of a match, a stance change, a press that did nothing, a wind-up, the launch window): the gate only stops them toggling it faster than the check can see. Control hints on **Always** or **Off** are the player's own choice and apply at once (they never toggle).
+- **The YOU pill and the touch captions** read the same gate (they were driven by the same alpha); on touch the legend is simply never asked for, so a touch flip no longer snaps it.
+
+**Every other block of the HUD, audited (px at the 1024x768 reference the analyser reads; the area threshold is 21,824):**
+| Element | Size | Fastest change before | After |
+| :-- | --: | :-- | :-- |
+| Controls legend (per player) | 42,700 | 4 to 12 ticks (the mash) | **gated: up 3 s, gone 2 s, fades 1 s** |
+| Bark panel (one line) | up to 23,300 | the next line of the same speaker faded the panel out over 0.25 s and in over 0.08 s: a dip about every 1.5 to 3.5 s | **chained: the second line takes the first's place with no fade out or in** |
+| Docked speaker face | 23,600 | slid out over 0.22 s and in over 0.18 s between two lines | **stays between a speaker's lines** |
+| Letterbox bars (two) and the HUD they hide | 55,000 each | followed the cinematic mode at a 0.25 s ramp | **once in it holds 1.5 s, once out it rests 1 s** |
+| Touch buttons (the three, boxed) | 53,600 at 2532x1170 | with every flip of the touch flag (the last input device) | **at most once a second** |
+| "Turn your phone" card (opaque) | full screen | with the rotation threshold | **at most once a second** |
+| Plates | 17,300 | always up; the numbers and chips change inside | unchanged |
+| Wound cards, one row | 9,400 (two rows 18,800) | rows come and go by themselves, 1.2 s life and a 0.25 s fade | unchanged: under the threshold each |
+| Toll chip | 13,000 | brightens for 2.5 s after a change | unchanged |
+| Banner | glyphs only, about 5,000 | replaced in place, 1.0 s or more | unchanged: text only |
+| Prompt row, form chip, pointer chips, ring map, strip, feedback pill | 3,000 to 8,000 | by presses and stance changes | unchanged: under the threshold |
+| Pause menu, How to play, Settings, Send feedback, the gate | full screen, opaque | the player's own press | **player-driven**; a player pressing P five times a second flashes it with their own hand. Not rate-limited today (open: a 0.4 s debounce on the pause key if Legal wants it) |
+| The three-strength widgets (the wind-up ring, the lit B, the press marks, the launcher chip and mark, the weight chip, Full touch's marks) | under 5,000 each | with the brawl's cues | under the threshold: arcs and small marks |
+| The crown's battered stroke (4 Hz) | thin arcs, under 8,000 | flickers at 4 Hz (static under Reduced motion) | unchanged; **a rate above 3 Hz in a small area: Legal to read** |
+
+**The rule in `hud_check` (`_block_toggle_rules`):** a mash is played at the HUD (a press that did nothing every 4 ticks for 150, then one in a hundred ticks for 250, a wind-up on and off, a stance change every 10 ticks, the launch window, banners, a KO, the touch flag and Reduced motion flipping), at 1024x768, 1280x720 and a phone landscape, and each block layer's presence is sampled every tick: **a block that changes state twice inside 60 ticks fails** (the legend counts once it is above a quarter opacity). Run against the HUD before the fix, the rule found the legends at 50 and 27 ticks between a change and the next; after, none. Plus `bark chain` (a speaker's second line takes the first's place at once) and the touch flag's once-a-second limit.
+
+**A read that wrote (found by `determinism.gd --intro --seeds=2 --ticks=900`, tick 60):** the plate's launcher mark first read the brawl's `DirBrawl.launcherRest(S, f)`; its first line sizes the fighter's director slots (`_g` calls `_size`, which resizes `f.act.dirI`, a field the gameplay hash includes), so calling it before the director had run changed the hash whenever an intro played. The bridge now reads the slot itself, only if it is already there (`UiSimBridge._launcher_rest_ticks`: the sim's own `LAUNCH_AT` and `launcher.restS`, no call into the director), and `hud_check` has `_sim_untouched_rules`: patching and feeding the HUD must leave the gameplay hash and the size of every field the director sizes exactly as they were, at the start of a match and through 240 ticks (the rule fails, `[0, 0]` against `[307, 307]`, on the old call). **Standing rule for this folder: the HUD calls no function of the sim or the director that it has not read and found pure; a "get" can write. The intro run of determinism.gd is in UI's own gate list.**
+
+**Verified on the pixels (the web export of main b1b2ed6a with this HUD, `check-clip.mjs --clip mash-normal,mash-reduced`, headless):** mash-normal and mash-reduced both **0 general flashes, 0 red, area 0, 0 dips, PASS** (before: 3, 3, 3 on the three readings). hud_check 4,608 checks, 0 failed.
+
+## 58. The three-strength HUD against the real brawl's cues (2026-10-11, main b1b2ed6a, flags not turned on)
+
+`ui/tools/hud_brawl_try.gd` plays AI against AI through the real sim host with `three_strengths` on in that process only, feeds every event to the HUD and reports (seed 12345, 3,600 ticks):
+
+**Arrives and reads:**
+- **`windup`** `start` (6), `end` (6, all k 1 thrown): the ring on the legend and on Full touch's button ran 171 ticks in all. **The cue's `dur` is in ticks** (12, 14 and 28 seen); the ring now takes it (was the data's 12 and 28). The ring is armoured (a second ring) on B.
+- **`launcher_open` and `launcher_close`** (with `used` and `lapsed`): the lit B shows for the 60 ticks it was open. The close's text is not shown.
+- **The plate's launcher mark:** the bridge now reads the brawl's own `DirBrawl.launcherRest(S, f)`: 0 means a launch is ready on that fighter, else the ticks the launcher rests on him (the mark is ready for 3,617 ticks of the run and resting for 3,583; it needs the mark's "known" state, which comes with the first read). The old guessed field names are gone.
+- **`press_ack`:** `held` arrived 145 times (an ordinary brawl, no mark by design); the other kinds did not occur in an AI-only run, so **refused, energy and empty were not exercised against real events** (they are in the hud_check by synthetic events).
+
+**Arrives and does not read (counted by the hub as `cue_unread_*`):**
+- **`blow`** (398: light 357, medium 7, heavy 5, bolt 28, release 1): **the plate's weight chip never moved off light (7,200 ticks)**, because it listens for `weight_set`, which the brawl does not send. The blow cue's text (`light`, `medium`, `heavy`, `bolt`, `blast`, `release`) is what names the weight of the last blow: **the one reading to build next** (the chip would follow the last blow for about 1.5 s).
+- **`energy_reach` (28) and `energy_land` (27: hit, guard, armour, miss):** nothing shows. A bolt in reach is a candidate for a small mark on the energy button and a land result on the plate for a moment.
+- **`charge_full` (1):** the ring has no "full" state; the ring's own end stands in for it.
+- **`miss`** (none in the run), **`double_hit`** (none), **`charge_stopped`** (1), **`burst`** start and end (3), **`stagger`** (16: perfect_block, reversal, heavy, flurry), **`trade`** (125), **`perfect_block`** (4), **`guard_break`** (2), **`riposte`** (3), **`reversal`** (6), **`brawl_start`** and **`brawl_end`** (4, 3): the HUD has no reading for them. These are the director's moments (the Combat feed and Audio use them); most do not need a HUD mark. The ones a player would miss without one: **`miss`** (the swinger is open for `n` ticks) and **`double_hit`**.
+
+**What I would build, in order, if Orb wants the flags on:** the weight chip from `blow`; a mark for `miss` (the open window); the energy bolt's land result; the launcher close's `used` or `lapsed`. All four are small marks (under the flash threshold).

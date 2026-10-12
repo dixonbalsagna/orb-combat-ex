@@ -31,6 +31,23 @@ static func fighters(S) -> Array:
 	return [ids, names]
 
 
+## The live ticks for which the brawl's launcher still rests on fighter f (0: a launch is ready on him), or -1 when the brawl is off or the sim has no such slot. A READ ONLY copy
+## of DirBrawl.launcherRest: that one sizes the fighter's director slots on the way (`_g` calls `_size`, which resizes f.act.dirI, a field the gameplay hash includes), so calling it
+## from here changed the hash when an intro played (determinism.gd --intro, tick 60). This reads the slot only if it is already there, from the sim's own constant and config.
+static func _launcher_rest_ticks(S, f) -> int:
+	var cmap: Dictionary = (DirBrawl as GDScript).get_script_constant_map()
+	if not cmap.has("LAUNCH_AT") or not DirBrawl.on():
+		return -1
+	if not ("act" in f) or not ("dirI" in f.act):
+		return -1
+	var slot: int = int(cmap["LAUNCH_AT"])
+	var at: int = int(f.act.dirI[slot]) if f.act.dirI.size() > slot else 0
+	if at <= 0:
+		return 0
+	var rest_s: float = float((DirBrawl.cfg().get("launcher", {}) as Dictionary).get("restS", 0.0))
+	return maxi(0, int(round(rest_s * 60.0)) - (int(round(float(S.T) * 60.0)) - at))
+
+
 ## Copy per-fighter state into the HUD. Call once per tick or per frame; it writes only to the HUD's models.
 static func patch(hud: UiHud, S, input_hub = null) -> void:
 	var move_names: Array = []
@@ -50,10 +67,10 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 			for r in range(mini(4, f.wear.size())):
 				wear[["head", "core", "arms", "legs"][r]] = float(f.wear[r]) / 6000.0
 		var lp: Dictionary = {}
-		if "launcherReady" in f:
-			lp["launcher_ready"] = bool(f.launcherReady)   # the director's read of the launcher (names to be confirmed with Encounter): ready, and seconds of rest left
-		if "launcherRestLeft" in f:
-			lp["launcher_rest_left"] = float(f.launcherRestLeft)
+		var rest_ticks: int = _launcher_rest_ticks(S, f)
+		if rest_ticks >= 0:
+			lp["launcher_ready"] = rest_ticks == 0
+			lp["launcher_rest_left"] = float(rest_ticks) / 60.0
 		if not lp.is_empty():
 			hud.hub.patch(i, lp)
 		hud.hub.patch(i, {

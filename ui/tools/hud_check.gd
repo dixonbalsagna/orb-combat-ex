@@ -56,6 +56,7 @@ func _run() -> void:
 	await _notice_rules()
 	await _gate_short_rules()
 	await _phone_rules()
+	await _block_toggle_rules()
 	_gate_bypass_rules()
 	await _three_strength_rules()
 	await _key_help_rules()
@@ -74,6 +75,7 @@ func _run() -> void:
 	await _two_player_rules()
 	await _sim_pause_rules()
 	await _bridge()
+	await _sim_untouched_rules()
 	print("hud_check: %d checks, %d failed" % [checks, fails])
 	quit(1 if fails > 0 else 0)
 
@@ -159,6 +161,26 @@ func _bark_timing() -> void:
 	hub.consume({"type": "bark", "speaker": 0, "text": text, "cues": [{"at": 0, "gesture": "wince", "intensity": 1}]})
 	var b = hub.barks[0]
 	_ok(b.reveal_time + b.dur >= UiLook.BARK_MIN and b.reveal_time + b.dur <= UiLook.BARK_MAX + 1.5, "bark: shown for a sensible time (%.2f s)" % (b.reveal_time + b.dur))
+	# One speaker's lines run into each other: the second takes the first's place without the panel (or the face) going and coming, which a flash check reads as a 23,000 px block.
+	var hub2 := UiEventHub.new()
+	hub2.setup_fighters(["protagonist", "anti_hero"], ["A", "B"])
+	hub2.consume({"type": "bark", "speaker": 0, "text": "First line.", "priority": 2})
+	for k in range(30):
+		hub2.advance(1.0 / 60.0)
+	hub2.consume({"type": "bark", "speaker": 0, "text": "Second line right behind it.", "priority": 2})
+	_ok(hub2.barks.size() == 1 and hub2.bark_wait.size() == 1 and not (hub2.barks[0] as UiEventHub.Bark).chained, "bark chain: the first shows, the second waits for the speaker's lane")
+	var dark_ticks := 0
+	var chained_seen := false
+	for i in range(900):
+		hub2.advance(1.0 / 60.0)
+		if hub2.barks.is_empty() and i > 5 and hub2.bark_wait.is_empty():
+			break
+		if hub2.barks.is_empty():
+			dark_ticks += 1
+		for bb in hub2.barks:
+			if (bb as UiEventHub.Bark).chained:
+				chained_seen = true
+	_ok(chained_seen and dark_ticks == 0, "bark chain: the second line takes the first's place at once and is marked chained (no tick with no panel in between: %d)" % dark_ticks)
 
 
 # --- Hub rules -----------------------------------------------------------------------------------------------------
@@ -392,6 +414,40 @@ func _draw_smoke() -> void:
 
 
 # --- Bridge --------------------------------------------------------------------------------------------------------
+
+## The HUD never writes the sim, not even by reading it: patching the HUD from the sim state must leave the gameplay hash (and the size of every field it includes) exactly as it was,
+## at the start of a match (before the director has sized its slots: a read through DirBrawl.launcherRest once resized f.act.dirI there and broke determinism.gd --intro at tick 60)
+## and through a stretch of play.
+func _sim_untouched_rules() -> void:
+	var host := SimHost.new()
+	host.new_match(2)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	await process_frame
+	var f: Array = UiSimBridge.fighters(host.S)
+	hud.setup(f[0], f[1])
+	var sizes0: Array = [host.S.fighters[0].act.dirI.size(), host.S.fighters[1].act.dirI.size()]
+	var h0 = SimHash.stateHash(host.S).gameplay
+	for k in range(3):
+		UiSimBridge.patch(hud, host.S)
+		hud.advance(1.0 / 60.0)
+	var sizes1: Array = [host.S.fighters[0].act.dirI.size(), host.S.fighters[1].act.dirI.size()]
+	_ok(SimHash.stateHash(host.S).gameplay == h0 and sizes1 == sizes0, "sim untouched: patching the HUD from a fresh match leaves the gameplay hash and the director's slots as they were %s %s" % [str(sizes0), str(sizes1)])
+	var moved := 0
+	for i in range(240):
+		host.tick(1280.0, 720.0)
+		if i % 20 == 0:
+			var before = SimHash.stateHash(host.S).gameplay
+			var s0: Array = [host.S.fighters[0].act.dirI.size(), host.S.fighters[1].act.dirI.size()]
+			UiSimBridge.patch(hud, host.S)
+			UiSimBridge.feed(hud, host.feed.slice(maxi(0, host.feed.size() - 1)))
+			hud.advance(1.0 / 60.0)
+			if SimHash.stateHash(host.S).gameplay != before or [host.S.fighters[0].act.dirI.size(), host.S.fighters[1].act.dirI.size()] != s0:
+				moved += 1
+	_ok(moved == 0, "sim untouched: and through 240 ticks of play, no patch or feed moved the hash (%d of 12 did)" % moved)
+	hud.queue_free()
+	await process_frame
+
 
 func _bridge() -> void:
 	if not ClassDB.class_exists("Node") or load("res://render/core/sim_host.gd") == null or not (load("res://render/core/sim_host.gd") as GDScript).can_instantiate():
@@ -2898,14 +2954,14 @@ func _key_help_rules() -> void:
 	await _frames(hud, 4)
 	hud.hub.t_now = 60.0
 	hud.hub.model(0).stance_prompt_t = 99.0
-	await _frames(hud, 2)
+	await _frames(hud, 340)   # the legend's gate holds it three seconds, then it fades over one (section 57)
 	var legend_off: bool = hud._l_hints[0].sig == null
 	var row_off: bool = hud._l_prompts[0].sig == null
 	hud.hub.patch(0, {"stance_mask": 8})
 	await _frames(hud, 3)
 	_ok(legend_off and row_off and hud._l_hints[0].sig != null and hud._l_prompts[0].sig != null, "key help hud (%s %s %s %s): after the legend and the row had faded, holding a stance button brings both back" % [legend_off, row_off, hud._l_hints[0].sig != null, hud._l_prompts[0].sig != null])
-	await _frames(hud, 200)
-	_ok(hud._l_hints[0].sig == null and hud._l_prompts[0].sig == null, "key help hud: and they fade again about three seconds later")
+	await _frames(hud, 300)
+	_ok(hud._l_hints[0].sig == null and hud._l_prompts[0].sig == null, "key help hud: and they fade again about four seconds later (the gate's hold and fade)")
 	hud.queue_free()
 	await process_frame
 	root.size = Vector2i(1280, 720)
@@ -3589,6 +3645,9 @@ func _touch_controls_rules() -> void:
 	_ok(hud._l_touchctl.sig != null and hud._l_touchctl.redraws > 0, "touch controls: the HUD draws them in touch mode")
 	_ok(hud._l_you.sig != null and hud.hub.model(0).you_label == "YOU", "touch controls: and the YOU marker shows on touch")
 	_ok(hud._l_prompts[0].sig == null and hud._l_prompts[1].sig == null and hud._l_hints[0].sig == null, "touch controls: the stance ring and the legend are retired")
+	for i in range(90):   # the opening captions' fade-in settles (one second)
+		hud.advance(1.0 / 60.0)
+		await process_frame
 	var r0: int = hud._l_touchctl.redraws
 	for i in range(60):
 		hud.advance(1.0 / 60.0)
@@ -5021,8 +5080,10 @@ func _three_strength_rules() -> void:
 		hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "end", "source": "b", "k": pair[0]})
 		ends_ok = ends_ok and not m0.charge_on and m0.press_ack_kind == pair[1] and m0.press_ack_cell == "b" and absf(armoured_dur - 28.0 / 60.0) < 0.001
 	_ok(ends_ok, "three strengths: a wind-up stopped by a blow, lost or missed leaves the grey cross, ring or dash on B; B's lasts 28 ticks")
-	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "y", "dur": 5.0})
-	_ok(absf(m0.charge_dur - 0.2) < 0.001, "three strengths: the ring's length is the data's 12 ticks for Y, whatever dur the cue carries (its unit is not known yet)")
+	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "y", "dur": 14.0})
+	_ok(absf(m0.charge_dur - 14.0 / 60.0) < 0.001, "three strengths: the ring's length is the cue's dur in live ticks (14 here: the director's wind-up alone, brawl-c2.md section 7)")
+	hud.consume({"type": "cue", "actor": 0, "kind": "windup", "text": "start", "source": "y"})
+	_ok(absf(m0.charge_dur - 0.2) < 0.001, "three strengths: and the data's 12 ticks for Y when the cue carries none")
 	m0.charge_t = 5.0
 	hud.advance(0.1)
 	_ok(not m0.charge_on, "three strengths: a wind-up whose end never came clears itself")
@@ -5268,6 +5329,88 @@ func _reduce_flashing_rules() -> void:
 const GATE_TEXT := "This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them. The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes. No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version."
 
 
+## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD
+## (a refused or empty press every 4 ticks, a wind-up on and off every 6, a stance change every 10, the launch window, banners, the touch flag flipping), at a keyboard-and-pad size and on a
+## phone, and every layer's presence is sampled each tick; a layer that changes state twice in 60 ticks (after the first 30 ticks) fails.
+func _block_toggle_rules() -> void:
+	for cfg in [[Vector2(1024, 768), 1.0, false, "1024x768"], [Vector2(1280, 720), 1.0, false, "1280x720"], [Vector2(1266, 585), 3.0, true, "phone landscape"]]:
+		root.size = Vector2i(int(cfg[0].x), int(cfg[0].y))
+		var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+		hud.size = cfg[0]
+		root.add_child(hud)
+		await process_frame
+		hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+		hud.anchor_fn = func(slot): return {"pos": Vector2(500.0 + 300.0 * float(slot), 400.0), "h": 120.0, "visible": true}
+		hud.hub.model(0).ai = false
+		hud.hub.model(1).ai = false
+		hud.set_density(float(cfg[1]))
+		if bool(cfg[2]):
+			hud.set_option("touch_ui", true)
+		# The blocks: the layers that can hold more than about 15,000 px at 1024x768 (the legend's panel is about 30,000); the small ones (the prompt row, the chips) are not counted.
+		var blocks: Dictionary = {"legend P1": hud._l_hints[0], "legend P2": hud._l_hints[1], "letterbox": hud._l_letter, "touch buttons": hud._l_touchctl, "events (banner, cards, barks)": hud._l_events,
+			"turn card": hud._l_turn, "pause menu": hud._l_pmenu, "intro": hud._l_intro}
+		if bool(cfg[2]):
+			# On a phone-sized run the touch flag is flipped on purpose and the legend is not part of the picture (the flag hides it, by design, and a flip that lands a tick after the legend's fade
+			# began is the player's own input, not the HUD's); the buttons and the cards are what this run measures.
+			blocks.erase("legend P1")
+			blocks.erase("legend P2")
+		var names_l: Array = blocks.keys()
+		var prev: Array = []
+		var last_change: Array = []
+		for i in range(names_l.size()):
+			prev.append(false)
+			last_change.append(-1000)
+		var worst: Dictionary = {}
+		var touch_flips := 0
+		var kinds: Array = ["refused", "empty", "energy"]
+		for f in range(1500):
+			# A mash comes in bursts: every 4 ticks for 150 ticks, then one press in a hundred ticks for 250 (the sparse phase is what made the legend come and go).
+			var dense: bool = (f % 400) < 150
+			if (dense and f % 4 == 0) or (not dense and f % 100 == 0):
+				hud.consume({"type": "press_ack", "actor": (f / 4) % 2, "kind": kinds[(f / 8) % 3], "cell": ["x", "y", "a", "b"][(f / 4) % 4]})
+			if dense and f % 6 == 0:
+				hud.consume({"type": "cue", "actor": (f / 6) % 2, "kind": "windup", "text": "start" if (f / 6) % 4 < 2 else "end", "source": "y", "k": 2})
+			if dense and f % 10 == 0:
+				hud.consume({"type": "stance_set", "actor": (f / 10) % 2, "stance": (f / 10) % 4})
+			if f % (7 if dense else 50) == 0:
+				hud.consume({"type": "cue", "actor": 0, "kind": "launcher_open" if (f / 7) % 2 == 0 else "launcher_close"})
+			if f % 20 == 0:
+				hud.consume({"type": "banner", "text": "PARRY" if (f / 20) % 2 == 0 else "COUNTER", "col": "#ffffff", "dur": 1.0})
+			if f == 700:
+				hud.consume({"type": "ko", "winner": 0, "loser": 1})
+			if f % 12 == 0 and f > 150 and bool(cfg[2]):
+				hud.set_option("touch_ui", (f / 12) % 2 == 0)   # the last input device flipping back and forth (a phone-sized run only: on a keyboard it would hide the legend by design)
+			if f % 33 == 0 and f > 150:
+				hud.set_option("reduced_motion", (f / 33) % 2 == 0)
+			var tb: bool = bool(hud.opts["touch_ui"])
+			hud.advance(1.0 / 60.0)
+			if bool(hud.opts["touch_ui"]) != tb:
+				touch_flips += 1
+			for i in range(names_l.size()):
+				var l = blocks[names_l[i]]
+				var on: bool = l.sig != null
+				if str(names_l[i]).begins_with("legend P"):
+					# The legend counts as there once it is visibly up (a quarter opacity), not at the first tick of its fade.
+					var sl: int = int(str(names_l[i]).substr(8)) - 1
+					on = float((hud._legend_g[sl] as Dictionary)["a"]) > 0.25 and hud.layout.hints[sl].size.y > 0.0
+				if on != prev[i]:
+					if f > 30 and f - int(last_change[i]) < 60 and int(last_change[i]) > 30:
+						worst[names_l[i]] = minf(float(worst.get(names_l[i], 1e9)), float(f - int(last_change[i])))
+					last_change[i] = f
+					prev[i] = on
+			if f % 50 == 0:
+				await process_frame
+		if bool(cfg[2]):
+			_ok(touch_flips <= 1500 / 60 + 1, "block toggles %s: the touch flag flipping every 12 ticks reaches the buttons at most once a second (%d flips in 1,500 ticks)" % [cfg[3], touch_flips])
+		var names := PackedStringArray()
+		for k in worst:
+			names.append("%s: %d ticks" % [k, int(worst[k])])
+		_ok(worst.is_empty(), "block toggles %s: no layer changes state twice inside 60 ticks under a mash %s" % [cfg[3], str(names)])
+		hud.queue_free()
+		await process_frame
+	root.size = Vector2i(1280, 720)
+
+
 ## The phone batch (docs/ui/hud-spec.md section 56): the turn-your-phone card, the colour-blind presets and the short-screen touch layout.
 func _phone_rules() -> void:
 	# The card: only a phone (a touch screen under 600 dp on its short side) held upright.
@@ -5307,13 +5450,13 @@ func _phone_rules() -> void:
 	_ok(not hud._pm_open and not hud._set_open and held["opened"] == 1, "turn card: no menu opens over it, and it holds the match once")
 	hud.size = Vector2(1266, 585)
 	root.size = Vector2i(1266, 585)
-	for i in range(4):
+	for i in range(70):   # a card does not come and go inside a second
 		hud.advance(1.0 / 60.0)
 		await process_frame
 	_ok(not hud.is_turn_open() and not held["paused"] and held["closed"] == 1 and hud._l_turn.sig == null, "turn card: turning the phone sideways takes it away and lets the match go")
 	hud.size = Vector2(585, 1266)
 	root.size = Vector2i(585, 1266)
-	for i in range(4):
+	for i in range(70):   # a card does not come and go inside a second
 		hud.advance(1.0 / 60.0)
 		await process_frame
 	_ok(hud.is_turn_open(), "turn card: and it comes back when the phone is turned upright again")
@@ -5325,7 +5468,7 @@ func _phone_rules() -> void:
 	_ok(hud.is_turn_open(), "turn card: a tap off the button does nothing")
 	click.position = (hud.turn_plan()["button"] as Rect2).get_center()
 	hud._unhandled_input(click)
-	for i in range(3):
+	for i in range(70):
 		hud.advance(1.0 / 60.0)
 		await process_frame
 	_ok(not hud.is_turn_open() and not held["paused"], "turn card: Play upright anyway lets the match go, for the session")
@@ -5345,7 +5488,7 @@ func _phone_rules() -> void:
 		await process_frame
 	_ok(hud2.is_notice_gate() and not hud2.is_turn_open(), "turn card: the flashing gate stays first on a phone held upright")
 	hud2.hide_photo_notice(false)
-	for i in range(3):
+	for i in range(70):
 		hud2.advance(1.0 / 60.0)
 		await process_frame
 	_ok(not hud2.is_notice_open() and hud2.is_turn_open(), "turn card: then the card follows the gate")

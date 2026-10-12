@@ -84,13 +84,13 @@ static func embedded(lay: UiLayout, slot: int) -> bool:
 
 ## The slide of a face for a bark: {off: 0 (in place) to 1 (fully out), a: opacity}. It slides in over `slide_in`, holds, and slides out over
 ## `slide_out` at the end of the line; in reduced motion it fades instead of sliding.
-static func motion(b: UiEventHub.Bark, reduced: bool) -> Dictionary:
+static func motion(b: UiEventHub.Bark, reduced: bool, carries_on: bool = false) -> Dictionary:
 	var d: Dictionary = data().get("timing", {})
 	var tin: float = maxf(float(d.get("slide_in", 0.18)), 0.01)
 	var tout: float = maxf(float(d.get("slide_out", 0.22)), 0.01)
 	var total: float = b.reveal_time + b.dur
-	var kin: float = clampf(b.age / tin, 0.0, 1.0)
-	var kout: float = clampf((total - b.age) / tout, 0.0, 1.0)
+	var kin: float = 1.0 if b.chained else clampf(b.age / tin, 0.0, 1.0)   # a line that takes over from the speaker's last does not slide in again ...
+	var kout: float = 1.0 if carries_on else clampf((total - b.age) / tout, 0.0, 1.0)   # ... and one that is followed by another of theirs does not slide out (a 23,000 px square going and coming)
 	var k: float = minf(kin, kout)
 	var eased: float = 1.0 - pow(1.0 - k, 3.0)
 	if reduced:
@@ -108,7 +108,11 @@ static func draw_docked(ci: CanvasItem, hub: UiEventHub, lay: UiLayout, s: float
 		var m: UiFighterModel = hub.model(b.slot)
 		var r: Rect2 = lay.face[b.slot]
 		var left: bool = r.get_center().x < lay.vp.x * 0.5
-		var mo: Dictionary = motion(b, reduced)
+		var follows := false
+		for w in hub.bark_wait:
+			if w.slot == b.slot:
+				follows = true
+		var mo: Dictionary = motion(b, reduced, follows)
 		var shift: float = (r.end.x + 4.0) if left else (lay.vp.x - r.position.x + 4.0)
 		var rr := Rect2(r.position + Vector2((-shift if left else shift) * float(mo["off"]), 0.0), r.size)
 		draw_portrait(ci, rr, m, b.face_expr, float(mo["a"]) * swap, s, not left)
