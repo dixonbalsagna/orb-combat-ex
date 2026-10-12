@@ -80,6 +80,7 @@ var _water_seen := PackedFloat32Array()
 var _ncr: int = 0
 var _first = null
 var _last = null
+var _cdepth: float = 0.0             # the sum of the records' depths at the last update: a record deepened where it lies changes it
 
 
 func _init() -> void:
@@ -118,6 +119,9 @@ func rebuild(S: SimState) -> void:
 	_ncr = S.craters.size()
 	_first = S.craters[0] if _ncr > 0 else null
 	_last = S.craters[_ncr - 1] if _ncr > 0 else null
+	_cdepth = 0.0
+	for c in S.craters:
+		_cdepth += c.depth
 	trench.fill(0.0)
 	for sl in S.slides:
 		_add_slide(sl)
@@ -151,6 +155,19 @@ func update(S: SimState, heat: PackedFloat32Array, heat_changed: bool) -> bool:
 			_heat = heat
 			rebuild(S)
 			return true
+	# A record deepened where it lies (WorldCrater.deepen: the brawl's bury digs an existing crater deeper). The list
+	# is the same list, so nothing above sees it: its depth in the crater texture follows here. Its place in the
+	# columns' lists is by energy, which a deepening leaves alone.
+	var dsum: float = 0.0
+	for c in S.craters:
+		dsum += c.depth
+	if dsum != _cdepth:
+		_cdepth = dsum
+		for idx in range(mini(n, LIST_W)):
+			var d: float = S.craters[idx].depth
+			if absf(cdata[idx * 4 + 2] - d) > 0.001:
+				cdata[idx * 4 + 2] = d
+				cchg = true
 	var ns: int = S.slides.size()
 	if ns != _nsl or (ns > 0 and (S.slides[0] != _sl_first or S.slides[ns - 1] != _sl_last)):
 		if ns > _nsl and (_nsl == 0 or S.slides[0] == _sl_first):

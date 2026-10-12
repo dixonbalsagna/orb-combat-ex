@@ -262,17 +262,24 @@ const HOUSE_DEAD := "#5d4a37"
 const ROOF := "#7a3b2e"
 const TREE := "#1f4a26"
 const TREE_TOP := "#2f6b35"
-## Civilians: bright shirts over dark trousers with a dark outline, so they read on any ground. Life-size against the
-## fighters (Orb: people as tall as a fighter, towers tens of times taller): CROWD_SCALE times the 17-unit figure. They
-## grow further as the camera zooms out, up to CROWD_BOOST_MAX, so they stay about CROWD_MIN_PX tall on screen.
-const CROWD: Array = ["#f8f9fa", "#ffd43b", "#ff6b6b", "#4dabf7", "#69db7c", "#ff922b", "#da77f2", "#3bc9db"]
+## Civilians, thinned and muted (Orb, 2026-10-11: "Thin and mute it", so the fighters stand out; World thins their
+## number in data). They were bright shirts with a black outline, 85 units tall against a fighter's 75. Now:
+## - smaller than a fighter: CROWD_SCALE times the 17-unit figure is 59 units, about four fifths of his height;
+## - grey: each shirt is one of CROWD's quiet tones leaned CROWD_DISTRICT of the way to its district's wall tone
+##   (RenderShapes), so a crowd sits in its street's own colours. No tone is a fighter's hue (teal, orchid, moss,
+##   coral): lane colours stay the fighters' alone;
+## - a softer outline than a fighter's keyline.
+## They still grow as the camera zooms out so they stay about CROWD_MIN_PX tall, but only up to CROWD_BOOST_MAX, which
+## stops at a fighter's own height.
+const CROWD: Array = ["#8b8f97", "#a09a8c", "#777d89", "#b3ada0", "#6c7078", "#978b7a", "#9498a0", "#7d7468"]
+const CROWD_DISTRICT: float = 0.35
 const CROWD_SKIN: Array = ["#f1c9a5", "#8d5a3b"]
 const CROWD_LEGS := "#2b2f3f"
-const CROWD_OUTLINE := "#0d0e14"
-const CROWD_SCALE: float = 5.0          # about a fighter's height (90)
+const CROWD_OUTLINE := "#343842"
+const CROWD_SCALE: float = 3.45         # 59 units: about four fifths of a fighter's height (75)
 const CROWD_SPREAD: float = 50.0 * WS    # how far past a building's width its people stand
 const CROWD_MIN_PX: float = 12.0
-const CROWD_BOOST_MAX: float = 2.0
+const CROWD_BOOST_MAX: float = 1.25
 const CROWD_OUTLINE_PX: float = 1.1
 ## Evacuation (render/core/crowd_flight.gd, World's `evacuate` event): people who flee a blow run away from it, faster
 ## the closer they were, drifting back behind the building row; a share look back once; each fades out at the end of

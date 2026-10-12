@@ -93,9 +93,23 @@ Stills from the web build, the camera at fight framing in the downtown front str
 ## The fight at the foot of the towers: what I see
 
 - **The fighters read against the towers.** The ground floors behind them are dark slate with faint glass; nothing in the facade is a fighter's hue.
-- **The crowd is what competes.** With 1,800 people the front sidewalk is a solid row of figures as tall as the fighters, in saturated colours, directly behind them. This is not new in this batch, but the denser city makes it constant downtown. It is Art's and World's to tune (density, size, saturation).
+- **The crowd was what competed,** and is changed: see "The crowd, thinned and muted" below.
 - **No sky shows downtown at fight framing.** The towers fill the frame, so depth comes only from the street and the row haze.
 - **Lit panes are the brightest things behind the fighters** at dusk.
+
+## The crowd, thinned and muted (2026-10-11)
+
+Orb, shown the downtown stills: "Thin and mute it". World thins the number on the fight's sidewalk in data. Rendering's half is how a figure is drawn.
+
+- **Smaller than a fighter.** A figure was 85 units tall against a fighter's 75. It is 59 now, about four fifths of his height (`RenderLook.CROWD_SCALE`).
+- **Grey, in its street's colours.** Shirts were eight saturated colours, several of them close to the fighters' lane hues (teal, orchid, coral). Each is now one of eight quiet greys leaned 35% toward its district's wall tone (`CROWD`, `CROWD_DISTRICT`). No tone is a fighter's hue; lane colours stay the fighters' alone.
+- **A softer outline** than a fighter's keyline (`CROWD_OUTLINE`).
+- **Never larger than a fighter when the camera pulls back.** Figures still grow to stay about 12 pixels tall, but the growth stops at a fighter's own height (`CROWD_BOOST_MAX` 1.25, was 2).
+- Runners and startled figures use the same size and colours.
+
+Before and after, the downtown front street and a suburb street at fight framing (review stills, not committed): `img/lanes/crowd-downtown-before.png`, `crowd-downtown-after.png`, `crowd-suburb-before.png`, `crowd-suburb-after.png`.
+
+**What I see.** Downtown the row behind the fighters goes from a band of red, blue, green and orange as tall as they are to small dark figures against the tower's foot, and the fighters are the only colour on the street. In the suburb the figures read as people on a pavement, not as a third and fourth fighter.
 
 ## Narrower than the sim's box (for World and Simulation)
 

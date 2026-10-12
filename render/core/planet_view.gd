@@ -1177,7 +1177,7 @@ func _make_props(S: SimState) -> void:
 			_crowd_x.append(SimWrap.wrap(b.x + (cr.next() - 0.5) * (b.w + RenderLook.CROWD_SPREAD)))
 			var out: float = RenderLook.CROWD_GAP + cr.next() * RenderLook.CROWD_DEEP
 			_crowd_z.append(face - out if front else face + out)
-			var shirt: Color = RenderLook.col(RenderLook.CROWD[int(cr.next() * RenderLook.CROWD.size())]).srgb_to_linear()
+			var shirt: Color = RenderLook.col(RenderLook.CROWD[int(cr.next() * RenderLook.CROWD.size())]).lerp(RenderLook.col(RenderShapes.look(_look[bi])["wall"][1]), RenderLook.CROWD_DISTRICT).srgb_to_linear()
 			looks.append(Color(shirt.r, shirt.g, shirt.b, cr.next()))
 	_crowd_first[nb] = _crowd_x.size()
 	_crowd = _multimesh(CrowdMesh.build(), _crowd_x.size(), 80.0, true, true, z0, z1)
