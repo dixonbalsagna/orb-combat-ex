@@ -59,6 +59,7 @@ class Pl:
 	var gv_to: int = -1
 	var gv_off: int = 0
 	var gv_x0: float = 0.0
+	var gv_y0: float = 0.0
 	var gv_lat: int = -1
 	var gv_dur: int = 0
 	var hold_last_tick: int = -1   # hold=...: the S.tick of the last tick the stick was held in a brawl, and where he stood then
@@ -323,6 +324,13 @@ class Pl:
 						if stp < 0.001 and not exempt:
 							G.deadTicks += 1
 							G.deadStates[str(f.state)] = int(G.deadStates.get(str(f.state), 0)) + 1
+							# the cause: a stagger or daze (the core gates his input: stunTicks), a building face or the ground one step along the stick, or neither
+							var cause: String = "other"
+							if int(f.stunTicks) > 0:
+								cause = "stun"
+							else:
+								cause = _blocked_ahead(S, f, hd)
+							G.deadCause[cause] = int(G.deadCause.get(cause, 0)) + 1
 				else:
 					hold_run = 0
 				hold_last_tick = S.tick
@@ -363,7 +371,8 @@ class Pl:
 			it.mx = -toward
 			if S.tick == gv_from:
 				gv_x0 = f.x
-			elif gv_lat < 0 and absf(SimWrap.sdx(gv_x0, f.x)) > 0.05:
+				gv_y0 = f.y
+			elif gv_lat < 0 and (absf(SimWrap.sdx(gv_x0, f.x)) > 0.05 or absf(f.y - gv_y0) > 0.05):
 				gv_lat = S.tick - gv_from
 		if int(P.get("follow", "0")) != 0 and winding_n >= S.tick:
 			it.mx = toward
@@ -388,6 +397,21 @@ class Pl:
 			G.giveLog.append(en)
 			gv_from = -1
 			gv_to = -1
+
+	## A building face or the ground within a step along the stick (WorldStructures.blockedAt reads both): the geometry that stops a held stick without any rule doing it.
+	func _blocked_ahead(S, f, dirx: float) -> String:
+		if not ResourceLoader.exists("res://sim/world/structures.gd") or not ResourceLoader.exists("res://sim/world/terrain.gd"):
+			return "other"
+		var ws = load("res://sim/world/structures.gd")
+		var wt = load("res://sim/world/terrain.gd")
+		if not Pl.has_m(ws, "blockedAt") or not Pl.has_m(wt, "groundY"):
+			return "other"
+		var ax: float = f.x + dirx * 30.0
+		var ground_only: bool = f.y - 30.0 < float(wt.call("groundY", S, ax, 0.0))
+		# a building face: blocked with the ground's own part taken out (the margin test is also true for a fighter near the ground)
+		if bool(ws.call("blockedAt", S, ax, f.y + 60.0, 0.0, 30.0)) and not (f.y + 60.0 - 30.0 < float(wt.call("groundY", S, ax, 0.0))):
+			return "building"
+		return "ground" if ground_only else "other"
 
 	## The brawl's centre as [x, vx or null]: DirBrawl.centre when the build has it, else the midpoint of the two fighters.
 	func _centre(S, f) -> Array:
@@ -685,7 +709,7 @@ func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
 
 ## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
 func _gblank() -> Dictionary:
-	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "doubleHits": 0, "lastBlow": -1000, "walkBrawls": 0, "walkEarly": 0, "walkLags": [], "driftN": 0, "driftLat": [], "driftRate": [], "driftMaxStep": 0.0, "centreTicks": 0, "centreSpeedTicks": 0, "centreMaxStep": 0.0, "centreOver": 0, "centrePosMax": 0.0, "centrePosOver": 0, "holdTicks": 0, "driftLatHist": {}, "driftSlowStates": {}, "closeSamples": [], "blowMoveMax": 0.0, "blowMoveN": 0, "blowMoveOver": 0, "aiStickTicks": 0, "aiOpposeTicks": 0, "deadTicks": 0, "deadStates": {}, "dblPer": [], "dblDurMin": 9999, "dblDurMax": 0, "giveLog": [], "lastMissTick": -1000, "lastMissText": "", "lcOpen": 0, "lcUsed": 0, "lcLapsed": 0, "routeBy": [], "routeOn": [], "firstLaunchSec": [], "energy": {"bolt": 0, "blast": 0, "announce": {}, "late": 0, "src": {}, "kb": [], "flashTicks": [], "pendBlast": -1000}, "burstN": 0, "burstBlows": [], "windupN": 0, "dropStart": 0, "dropLand": 0, "dropEnd": 0, "dropStateBad": 0, "dropEndBad": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "doubleHits": 0, "lastBlow": -1000, "walkBrawls": 0, "walkEarly": 0, "walkLags": [], "driftN": 0, "driftLat": [], "driftRate": [], "driftMaxStep": 0.0, "centreTicks": 0, "centreSpeedTicks": 0, "centreMaxStep": 0.0, "centreOver": 0, "centrePosMax": 0.0, "centrePosOver": 0, "holdTicks": 0, "flashGapMin": 99999, "flashMax60": 0, "deadCause": {}, "driftLatHist": {}, "driftSlowStates": {}, "closeSamples": [], "blowMoveMax": 0.0, "blowMoveN": 0, "blowMoveOver": 0, "aiStickTicks": 0, "aiOpposeTicks": 0, "deadTicks": 0, "deadStates": {}, "dblPer": [], "dblDurMin": 9999, "dblDurMax": 0, "giveLog": [], "lastMissTick": -1000, "lastMissText": "", "lcOpen": 0, "lcUsed": 0, "lcLapsed": 0, "routeBy": [], "routeOn": [], "firstLaunchSec": [], "energy": {"bolt": 0, "blast": 0, "announce": {}, "late": 0, "src": {}, "kb": [], "flashTicks": [], "pendBlast": -1000}, "burstN": 0, "burstBlows": [], "windupN": 0, "dropStart": 0, "dropLand": 0, "dropEnd": 0, "dropStateBad": 0, "dropEndBad": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
 
 
 ## An event field as an int, 0 when the build's event has no such field.
@@ -736,7 +760,7 @@ func _energysum(g: Dictionary) -> Dictionary:
 			else:
 				break
 		most = maxi(most, c)
-	return {"bolt": en.bolt, "blast": en.blast, "announce": en.announce, "late": en.late, "src": en.src, "kb": en.kb, "flashes": ft.size(), "flashMinGap": (gap if gap < 99999 else -1), "flashMax60": most}
+	return {"bolt": en.bolt, "blast": en.blast, "announce": en.announce, "late": en.late, "src": en.src, "kb": en.kb, "flashes": ft.size(), "flashMinGap": (int(g.flashGapMin) if int(g.flashGapMin) < 99999 else -1), "flashMax60": int(g.flashMax60)}
 
 
 func _mean(a: Array) -> float:
@@ -764,7 +788,7 @@ func _greport(g: Dictionary) -> Dictionary:
 		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
 		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades,
 		"exactTradeFields": g.exact > 0 and g.exact == g.tradeBreaks, "levelTrades": g.drawsAfterClose, "levelChanges": g.drawChanges, "levelChangeShare": snappedf(float(g.drawChanges) / maxf(1.0, float(g.drawsAfterClose)), 0.001),
-		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "doubleHits": g.doubleHits, "walk": {"brawls": g.walkBrawls, "early": g.walkEarly, "lagMin": (g.walkLags.min() if g.walkLags.size() > 0 else -1), "lagMax": (g.walkLags.max() if g.walkLags.size() > 0 else -1), "n": g.walkLags.size()}, "drift": {"latHist": g.driftLatHist, "slowStates": g.driftSlowStates, "aiStickTicks": g.aiStickTicks, "aiOpposeTicks": g.aiOpposeTicks, "n": g.driftN, "latMax": (g.driftLat.max() if g.driftLat.size() > 0 else -1), "latMean": (snappedf(_mean(g.driftLat), 0.01) if g.driftLat.size() > 0 else -1.0), "rateBhPerSec": (snappedf(_mean(g.driftRate), 0.001) if g.driftRate.size() > 0 else -1.0), "maxStepBh": snappedf(g.driftMaxStep, 0.001)}, "centre": {"ticks": g.centreTicks, "speedTicks": g.centreSpeedTicks, "maxStepBh": snappedf(g.centreMaxStep, 0.001), "over": g.centreOver, "posMaxBh": snappedf(g.centrePosMax, 0.001), "posOver": g.centrePosOver}, "hold": {"ticks": g.holdTicks, "dead": g.deadTicks, "deadStates": g.deadStates}, "doublePer": g.dblPer, "doubleDur": [g.dblDurMin if g.dblDurMin < 9999 else -1, g.dblDurMax], "give": _givesum(g), "launcher": {"open": g.lcOpen, "used": g.lcUsed, "lapsed": g.lcLapsed, "routeBy": g.routeBy, "routeOn": g.routeOn, "firstLaunchSec": g.firstLaunchSec}, "energy": _energysum(g), "burst": {"n": g.burstN, "blows": g.burstBlows}, "windupN": g.windupN, "closing": {"samples": g.closeSamples, "blowMoveMaxBh": snappedf(g.blowMoveMax, 0.001), "blowMoveN": g.blowMoveN, "blowMoveOver": g.blowMoveOver}, "drop": {"start": g.dropStart, "land": g.dropLand, "end": g.dropEnd, "stateBad": g.dropStateBad, "endBad": g.dropEndBad}, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
+		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "doubleHits": g.doubleHits, "walk": {"brawls": g.walkBrawls, "early": g.walkEarly, "lagMin": (g.walkLags.min() if g.walkLags.size() > 0 else -1), "lagMax": (g.walkLags.max() if g.walkLags.size() > 0 else -1), "n": g.walkLags.size()}, "drift": {"latHist": g.driftLatHist, "slowStates": g.driftSlowStates, "aiStickTicks": g.aiStickTicks, "aiOpposeTicks": g.aiOpposeTicks, "n": g.driftN, "latMax": (g.driftLat.max() if g.driftLat.size() > 0 else -1), "latMean": (snappedf(_mean(g.driftLat), 0.01) if g.driftLat.size() > 0 else -1.0), "rateBhPerSec": (snappedf(_mean(g.driftRate), 0.001) if g.driftRate.size() > 0 else -1.0), "maxStepBh": snappedf(g.driftMaxStep, 0.001)}, "centre": {"ticks": g.centreTicks, "speedTicks": g.centreSpeedTicks, "maxStepBh": snappedf(g.centreMaxStep, 0.001), "over": g.centreOver, "posMaxBh": snappedf(g.centrePosMax, 0.001), "posOver": g.centrePosOver}, "hold": {"ticks": g.holdTicks, "dead": g.deadTicks, "deadStates": g.deadStates, "deadCause": g.deadCause}, "doublePer": g.dblPer, "doubleDur": [g.dblDurMin if g.dblDurMin < 9999 else -1, g.dblDurMax], "give": _givesum(g), "launcher": {"open": g.lcOpen, "used": g.lcUsed, "lapsed": g.lcLapsed, "routeBy": g.routeBy, "routeOn": g.routeOn, "firstLaunchSec": g.firstLaunchSec}, "energy": _energysum(g), "burst": {"n": g.burstN, "blows": g.burstBlows}, "windupN": g.windupN, "closing": {"samples": g.closeSamples, "blowMoveMaxBh": snappedf(g.blowMoveMax, 0.001), "blowMoveN": g.blowMoveN, "blowMoveOver": g.blowMoveOver}, "drop": {"start": g.dropStart, "land": g.dropLand, "end": g.dropEnd, "stateBad": g.dropStateBad, "endBad": g.dropEndBad}, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
 
 
 ## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
@@ -788,6 +812,7 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 	var ai: Dictionary = {"p1": not by_slot[0].scripted(), "p2": not by_slot[1].scripted()}
 	SimCore.newMatch(S, seed, ai, {"v2": [by_slot[0].scripted(), by_slot[1].scripted()]})
 	var lt: int = 0
+	var m_flash0: int = g.energy.flashTicks.size() if not g.is_empty() else 0   # the flashes of this match start here (S.tick restarts each match)
 	var m_dbl0: int = g.doubleHits if not g.is_empty() else 0   # per-match counts for the pairs' rows
 	var m_fb: int = -1
 	var m_fl: int = -1
@@ -1012,7 +1037,8 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 					elif ck == "blow":
 						g.lastBlow = S.tick
 						var bat: int = int(e.actor)
-						if bat >= 0 and bat < 2 and stepped:
+						var bsrc: String = str(e.get("source"))
+						if bat >= 0 and bat < 2 and stepped and bsrc != "lunge" and bsrc != "zip":
 							var bmx: float = SimWrap.sdx(float(pfx[bat]), S.fighters[bat].x)
 							var bmy: float = S.fighters[bat].y - float(pfy[bat])
 							var bms: float = sqrt(bmx * bmx + bmy * bmy) / 75.0
@@ -1205,6 +1231,17 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 		else:
 			g.firstSlotSeq.append(-1)   # no winner (a timeout)
 	if not g.is_empty():
+		var mf: Array = g.energy.flashTicks.slice(m_flash0)
+		for fi in range(mf.size()):
+			if fi > 0:
+				g.flashGapMin = mini(int(g.flashGapMin), int(mf[fi]) - int(mf[fi - 1]))
+			var fc: int = 0
+			for fj in range(fi, mf.size()):
+				if int(mf[fj]) - int(mf[fi]) < 60:
+					fc += 1
+				else:
+					break
+			g.flashMax60 = maxi(int(g.flashMax60), fc)
 		g.dblPer.append(g.doubleHits - m_dbl0)
 		for rp in pl:
 			if rp.kind == "route":

@@ -221,7 +221,7 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     // the rows read from the AI's records
     const none = evaluate({ default: [rec()] });
     for (const k of ['10.energy.share', '10.windup.perMin']) assert.strictEqual(none.find(r => r.id === k).status, 'PENDING', k);
-    const mk = (j) => rec({ seed: j, koAt: 300, cues: { windup: 12 }, cueText: { 'windup:start': 6, 'pbstrength:light': 5, 'pbstrength:medium': 3 }, brawl: { ends: {}, blows: { light: 450, medium: 60, bolt: 30 }, staggers: {}, tradeBreaks: 0, lens: [1800, 1800], nblows: [] } });
+    const mk = (j) => rec({ seed: j, koAt: 300, cues: { windup: 12 }, cueText: { 'windup:start': 12, 'pbstrength:light': 5, 'pbstrength:medium': 3 }, brawl: { ends: {}, blows: { light: 450, medium: 60, bolt: 30 }, staggers: {}, tradeBreaks: 0, lens: [1800, 1800], nblows: [] } });
     const rows = evaluate({ default: Array.from({ length: 50 }, (_, j) => mk(j)) }), r = k => rows.find(x => x.id === k);
     assert.strictEqual(r('10.energy.share').status, 'PASS', 'energy ' + r('10.energy.share').value);   // 30 over 540 is 5.6%
     assert.strictEqual(r('10.windup.perMin').status, 'PASS', 'windup ' + r('10.windup.perMin').value);  // 6 over 1 minute of brawl
@@ -250,7 +250,7 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
       'fl-xy': { aWins: 20, bWins: 40 },
       'route-medium': { brawl: { launcher: { open: 80, used: 70, lapsed: 5, routeBy: Array(60).fill(6), routeOn: Array(60).fill(5), firstLaunchSec: Array(60).fill(12) } } },
       'give-b-free': { brawl: { give: { n: 40, latMax: 5, heavy: { n16: 30, m16: 20, nl: 10, ml: 2 }, medium: {}, missTexts: {} } } },
-      'energy-x': { brawl: { energy: { bolt: 100, blast: 0, announce: { 'bolt:3': 100 }, flashes: 40, flashMax60: 5, flashMinGap: 10, src: {} } } },
+      'energy-x': { brawl: { energy: { bolt: 100, blast: 0, announce: { 'bolt:9': 100 }, flashes: 40, flashMax60: 5, flashMinGap: 10, src: {} } } },
       'energy-y': { brawl: { energy: { bolt: 0, blast: 30, announce: {}, kb: [3, 4], flashes: 0, src: {} } } },
     })), b = k => bad.find(r => r.id === k);
     for (const k of ['flurry.xy', 'route.every.medium', 'give.lat.b-free', 'give.out.b', 'energy.bolt', 'energy.flash', 'energy.blast']) assert.strictEqual(b(k).status, 'FAIL', k + ' ' + b(k).value);

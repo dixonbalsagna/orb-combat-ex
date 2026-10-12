@@ -628,7 +628,7 @@ function secondPassRows(R, D, sum) {
   else R.pending('10.energy.share', '§5b', "Energy blows as a share of the AI's brawl blows (5 to 15%)", 'the build has no energy blow in reach (no brawl blow text names energy, a bolt or a blast)');
   // the medium AI winds up a medium or a heavy 4 to 10 times in a minute of brawl
   const wu = sum(D.map(r => (r.cueText || {})['windup:start'] || 0)), hasWu = D.some(r => (r.cueText || {})['windup:start']);
-  if (hasWu && mins > 0) R.point('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10; giving ground needs the moment to come)', { v: wu / mins, lo: 4, hi: 10, unit: 'num' });
+  if (hasWu && mins > 0) R.point('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl, per fighter (4 to 10; an AI-against-AI match has two fighters, so the total is counted twice: ' + (wu / mins).toFixed(1) + ' in all)', { v: wu / mins / 2, lo: 4, hi: 10, unit: 'num' });
   else R.pending('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10)', 'the build has no windup cue (the three strengths are C2a)');
 }
 
