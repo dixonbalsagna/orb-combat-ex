@@ -225,14 +225,21 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
   const ids = src.scenarios.map((s) => s.id);
   check('flash_worst.gd has a human or AI slot setting for every scenario of sources.json', ids.every((id) => (slots(mine) || {})[id] !== undefined), JSON.stringify(slots(mine)));
   check('flash_worst.gd reads its scenarios, lengths and seeds from sources.json (no list of its own to drift)', /res:\/\/tools\/flash\/sources\.json/.test(mine) && !/const SEEDS|const TICKS|const SCENARIOS/.test(mine));
-  // the AI-match set: one entry for every unordered pair of distinct roster fighters, seeds that show every fighter's signature (check-log.js checks the runs)
+  // the AI-match set (Legal's RL-131): the pairings of sources.json name roster fighters, every roster fighter is in at least 5 of the picked matches, and the coverage table (the rolling cycle:
+  // which release last captured each pairing) lists every pairing of the roster, uncaptured first. Not one entry for every pair at once: with twelve fighters that is 66 pairings.
   const roster = JSON.parse(read('data/fighters/roster.json'));
-  const pairKey = (a, b) => a + '|' + b;
-  const have = new Set((src.pairings || []).map((p) => pairKey(p.slots[0], p.slots[1])));
-  const missing = [];
-  for (let i = 0; i < roster.length; i++) for (let j = i + 1; j < roster.length; j++) if (!have.has(pairKey(roster[i], roster[j]))) missing.push(roster[i] + ' v ' + roster[j]);
-  check('sources.json has an AI-match entry for every pair of roster fighters (add one when a fighter joins): ' + (missing.join(', ') || 'none missing'), missing.length === 0);
-  check('every AI-match entry names roster fighters, at least 3 distinct seeds, and needs both signatures', (src.pairings || []).every((p) => p.slots.length === 2 && p.slots.every((s) => roster.includes(s)) && new Set(p.seeds).size >= 3 && p.needSignatures.length === 2 && p.needSignatures.every((s) => p.slots.includes(s))));
+  const pairs = [];
+  for (let a = 0; a < roster.length; a++) for (let b = a + 1; b < roster.length; b++) pairs.push(roster[a] + ',' + roster[b]);
+  const pr = src.pairings || [];
+  check('every AI-match entry names two distinct roster fighters, at least 1 seed, and needs the signatures of fighters in it', pr.every((p) => p.slots.length === 2 && p.slots[0] !== p.slots[1] && p.slots.every((s) => roster.includes(s)) && new Set(p.seeds).size >= 1 && p.needSignatures.every((s) => p.slots.includes(s))));
+  const perFighter = {};
+  for (const p of pr) for (const s of p.slots) perFighter[s] = (perFighter[s] || 0) + new Set(p.seeds).size;
+  const thin = roster.filter((f) => (perFighter[f] || 0) < 5);
+  check('every roster fighter is in at least 5 of the picked AI matches (re-run tools/flash/pick-seeds.mjs when a fighter joins): ' + (thin.join(', ') || 'none short'), thin.length === 0);
+  let hist = {};
+  try { hist = JSON.parse(read('tools/flash/seed-history.json')); } catch { /* none */ }
+  const miss = pairs.filter((k) => !(k in (hist.coverage || {})));
+  check('the coverage table (tools/flash/seed-history.json) lists every pairing of the roster: ' + (miss.join('; ') || 'none missing'), miss.length === 0);
   let theirs = null;
   try { theirs = read('render/tools/flash_capture.gd'); } catch { /* an export without it */ }
   if (theirs) {

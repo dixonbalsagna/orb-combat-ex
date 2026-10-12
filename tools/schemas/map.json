@@ -56,8 +56,16 @@
       "schema": "fighter.schema.json"
     },
     {
+      "match": "data/fight/wounds.json",
+      "schema": "fighter-wounds.schema.json"
+    },
+    {
       "match": "data/fighters/*/wounds.json",
       "schema": "fighter-wounds.schema.json"
+    },
+    {
+      "match": "data/fight/ladder.json",
+      "schema": "fighter-ladder.schema.json"
     },
     {
       "match": "data/fighters/*/ladder.json",

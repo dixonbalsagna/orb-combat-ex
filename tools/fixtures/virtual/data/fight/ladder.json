@@ -1,5 +1,5 @@
 {
-  "_about": "Validator fixture, not game data. Field names are a guess from the D1 plan.",
+  "_about": "Validator fixture, not game data: the shared ladder (data/fight/ladder.json). Field names are a guess from the D1 plan.",
   "schema": "ladder/1",
   "fillPerSec": 0.45,
   "thresholds": [

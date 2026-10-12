@@ -50,7 +50,7 @@ func _init(m: Node) -> void:
 	main = m
 	JavaScriptBridge.eval("""window.__flashcap = {
 		ready: false, tick: 0, scenario: '', error: '', in_window: 0, _req: null, _want: 0, _done: 0, _waiting: [],
-		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0, variant: (opts && opts.variant) | 0, skip: (opts && opts.skip) | 0 }; },
+		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0, variant: (opts && opts.variant) | 0, skip: (opts && opts.skip) | 0, slots: (opts && Array.isArray(opts.slots)) ? opts.slots.map(String) : [] }; },
 		step() { return new Promise((res) => { this._waiting.push(res); this._want += 1; }); },
 		_shown(tick, inWindow) { this.tick = tick; this.in_window = inWindow; this._done += 1; const r = this._waiting.shift(); if (r) r(tick); }
 	};""", true)
@@ -71,13 +71,13 @@ func poll() -> void:
 	if not (st is Dictionary):
 		return
 	if st.get("req") is Dictionary:
-		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)), int(st.req.get("skip", 0)), int(st.req.get("variant", 0)))
+		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)), int(st.req.get("skip", 0)), int(st.req.get("variant", 0)), Array(st.req.get("slots", [])))
 	if int(st.get("pending", 0)) > 0:
 		step()
 
 
 ## Set a worst case up, as tools/flash/flash_worst.gd does, and hold the sim (nothing ticks until step()).
-func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int = 0) -> void:
+func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int = 0, slots: Array = []) -> void:
 	VARIANT = variant
 	var err: String = ""
 	if not SCENARIOS.has(sc):
@@ -86,7 +86,8 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
 	scenario = sc
 	var ai: Array = AI_SLOTS[sc]
 	var host: SimHost = main.host
-	main.start_match(seed if seed != 0 else SEED, {"p1": ai[0], "p2": ai[1]}, {})   # its own setup: no intro, not filed
+	# a pairing other than the roster's first two: the page's `slots` (two fighter ids, tools/flash/capture-web.mjs --slots), as flash_worst.gd's --slots does
+	main.start_match(seed if seed != 0 else SEED, {"p1": ai[0], "p2": ai[1]}, {} if slots.size() != 2 else {"slots": slots})   # its own setup: no intro, not filed
 	# Camera's travel budget (off by default): the page's `budget=1`, set by tools/flash/run-pixels.mjs --budget, so a run with and without it is the same sim
 	if main.split_view != null and str(main.args.get("budget", "0")) == "1":
 		main.split_view.set_travel_budget(true)

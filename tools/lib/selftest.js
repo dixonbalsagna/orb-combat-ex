@@ -111,14 +111,19 @@ function analyze(base, mutations) {
       docs.set(m.file, { value: applyValueMutation(b.value, m), lineOf: b.lineOf });
     }
   }
-  for (const [rel, d] of docs) {
-    if (touched.has(rel)) findings.push(...schemaFindingsOf(rel, d));
+  // fighters as data (tools/lib/shared.js): each fighter's wounds and ladder file is validated, and read by the cross-references, as laid over the shared file in data/fight/
+  const rs = core.resolveShared(docs);
+  findings.push(...rs.findings);
+  for (const [rel, d] of rs.docs) {
+    if (d.skipSchema) continue;
+    const reached = touched.has(rel) || (rs.deps.get(rel) || []).some((x) => touched.has(x));
+    if (reached) findings.push(...schemaFindingsOf(rel, d));
     else {
       if (!baseSchema.has(rel)) baseSchema.set(rel, schemaFindingsOf(rel, d));
       findings.push(...baseSchema.get(rel));
     }
   }
-  findings.push(...xref(docs));
+  findings.push(...xref(rs.docs));
   return findings;
 }
 

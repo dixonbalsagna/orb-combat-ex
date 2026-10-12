@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/biomes-brunt",
   "title": "biomes.brunt/1",
-  "description": "data/biomes/brunt.json: what a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt.cfg). The ladder by tier (tierFactor, towerPunches), the chain (chainMax, chainSpecial, houseLink), the energy a building takes (houseKeep, keepHi, keepK, keepRef, keepMin, keepFree, heavyKeep), the building that remembers its walls (giveWay, wallMemory, wallMin, heldDeathShare) and the lodge (lodgeSeconds, lodgeSpecialSeconds, lodgeDump). Every key is optional in the loader (a default stands); the file carries them all. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "description": "data/biomes/brunt.json: what a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt.cfg). The ladder by tier (tierFactor, towerPunches), the chain (chainMax, chainSpecial, houseLink), the energy a building takes (houseKeep, keepHi, keepK, keepRef, keepMin, keepFree, heavyKeep), the building that remembers its walls (giveWay, wallMemory, wallMin, heldDeathShare) and the lodge (lodgeSeconds, lodgeSpecialSeconds, lodgeDump). Every key has a default in the loader and the file carries them all, so every key is required here (a number cannot vanish unseen); the order rules are tools/lib/xref-brunt.js (brunt-order). Version field: schema. Policy: closed except keys starting with an underscore.",
   "type": "object",
   "required": [
     "schema",
@@ -10,7 +10,23 @@
     "chainMax",
     "chainSpecial",
     "towerPunches",
-    "lodgeSeconds"
+    "lodgeSeconds",
+    "bruntMul",
+    "specialTier",
+    "houseLink",
+    "houseKeep",
+    "giveWay",
+    "wallMemory",
+    "wallMin",
+    "heldDeathShare",
+    "lodgeSpecialSeconds",
+    "lodgeDump",
+    "keepHi",
+    "keepK",
+    "keepRef",
+    "keepMin",
+    "keepFree",
+    "heavyKeep"
   ],
   "properties": {
     "schema": {

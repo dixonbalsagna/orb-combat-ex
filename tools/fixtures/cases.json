@@ -2176,7 +2176,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               360000,
@@ -2188,7 +2188,8 @@
       ],
       "expect": {
         "rule": "xref:increasing",
-        "pointer": "/stageAt"
+        "pointer": "/stageAt",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -2196,7 +2197,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               1.5,
@@ -2216,7 +2217,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/rally"
           ]
@@ -2232,7 +2233,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/light": [
               1,
@@ -2252,7 +2253,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/thresholds": [
               50,
@@ -2264,7 +2265,8 @@
       ],
       "expect": {
         "rule": "xref:increasing",
-        "pointer": "/thresholds"
+        "pointer": "/thresholds",
+        "file": "data/fighters/FIXTURE_HERO/ladder.json"
       }
     },
     {
@@ -2272,7 +2274,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/fillPerSec": 0
           }
@@ -2288,7 +2290,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "del": [
             "/tiers"
           ]
@@ -2367,7 +2369,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/penalties/armsSpeed": 0.9
           }
@@ -2383,7 +2385,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/penalties/legsSlip"
           ]
@@ -2399,7 +2401,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/penalties/staggerTicks": 12.5
           }
@@ -2415,7 +2417,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/profile/type": "fancy"
           }
@@ -2431,7 +2433,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/light": [
               1,
@@ -2453,7 +2455,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/fade/out": 25.5
           }
@@ -2635,7 +2637,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/cripple/lateAct": 5
           }
@@ -2651,7 +2653,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/act1Damping": 2.5
           }
@@ -2667,7 +2669,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/overtime/cap"
           ]
@@ -2683,7 +2685,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/overtime/startTicks": 28800.5
           }
@@ -3067,7 +3069,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/guardWearSplit"
           ]
@@ -3083,7 +3085,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/guardWearSplit/arms": 1.4
           }
@@ -3099,7 +3101,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/guardWearSplit/legs"
           ]
@@ -3115,7 +3117,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/guardWearSplit/legs": 0.5
           }
@@ -3123,7 +3125,8 @@
       ],
       "expect": {
         "rule": "xref:guard-split",
-        "pointer": "/guardWearSplit"
+        "pointer": "/guardWearSplit",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -3131,7 +3134,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/guardWearSplit/arms": 0.6000000000001,
             "/guardWearSplit/legs": 0.4
@@ -3145,7 +3148,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/cripple/legWeight"
           ]
@@ -3161,7 +3164,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/cripple/legWeight": 0
           }
@@ -3177,7 +3180,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/cripple/legWeight": "heavy"
           }
@@ -3193,7 +3196,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/cripple/legWeight": 3
           }
@@ -5090,7 +5093,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "del": [
             "/manualTierUp"
           ]
@@ -5106,7 +5109,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/manualTierUp": "yes"
           }
@@ -5122,7 +5125,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/manualTierUp": true
           }
@@ -5415,7 +5418,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/beam/structure": [
               4,
@@ -5435,7 +5438,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/beam/structure/0": -1
           }
@@ -5451,7 +5454,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/beam/levelCapShare/3": 1.5
           }
@@ -5467,7 +5470,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/beam/levelCapShare/2": 0.3
           }
@@ -5475,7 +5478,8 @@
       ],
       "expect": {
         "rule": "xref:ladder-beam-order",
-        "pointer": "/beam/levelCapShare/2"
+        "pointer": "/beam/levelCapShare/2",
+        "file": "data/fighters/FIXTURE_HERO/ladder.json"
       }
     },
     {
@@ -5483,7 +5487,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/beam/overshoot/3": 0.05
           }
@@ -5491,7 +5495,8 @@
       ],
       "expect": {
         "rule": "xref:ladder-beam-order",
-        "pointer": "/beam/overshoot/3"
+        "pointer": "/beam/overshoot/3",
+        "file": "data/fighters/FIXTURE_HERO/ladder.json"
       }
     },
     {
@@ -5499,7 +5504,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "del": [
             "/beam/overshoot"
           ]
@@ -5515,7 +5520,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/beam/overshoot": [
               0,
@@ -7301,7 +7306,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "del": [
             "/chargePerSec"
           ]
@@ -7317,7 +7322,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/chargePerSec": -1
           }
@@ -7333,7 +7338,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/stepKinds/1": "cinematic"
           }
@@ -7349,7 +7354,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/stepKinds": [
               "pausing",
@@ -7368,7 +7373,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/stepKinds/0": "live"
           }
@@ -7413,7 +7418,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/act1Damping": 1.3
           }
@@ -16252,7 +16257,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16273,7 +16278,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "ringCap": -1
@@ -16291,7 +16296,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16314,7 +16319,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16339,7 +16344,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16362,7 +16367,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16386,7 +16391,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16410,7 +16415,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16426,7 +16431,8 @@
       ],
       "expect": {
         "rule": "xref:ladder-reach-order",
-        "pointer": "/reach/structure/2"
+        "pointer": "/reach/structure/2",
+        "file": "data/fighters/FIXTURE_HERO/ladder.json"
       }
     },
     {
@@ -16434,7 +16440,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16455,7 +16461,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -16479,7 +16485,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/reach": {
               "structure": [
@@ -25596,7 +25602,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/lastStand"
           ]
@@ -25612,7 +25618,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/lastStand/windowS": -1
           }
@@ -25628,7 +25634,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/lastStand/windowS": 0
           }
@@ -25641,7 +25647,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/lastStand/windowS": 1.5
           }
@@ -25654,7 +25660,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/lastStand/windowS": 1.234
           }
@@ -25662,7 +25668,8 @@
       ],
       "expect": {
         "rule": "xref:wounds-last-stand",
-        "pointer": "/lastStand/windowS"
+        "pointer": "/lastStand/windowS",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -25670,7 +25677,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/lastStand/windowS": 0
           }
@@ -85102,7 +85109,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85125,7 +85132,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85148,7 +85155,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85175,7 +85182,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85199,7 +85206,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85224,7 +85231,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85250,7 +85257,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85276,7 +85283,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85302,7 +85309,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85325,7 +85332,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85348,7 +85355,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85373,7 +85380,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85399,7 +85406,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85425,7 +85432,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85451,7 +85458,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85474,7 +85481,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85492,7 +85499,8 @@
       ],
       "expect": {
         "rule": "xref:block-cap",
-        "pointer": "/block/armWearCap"
+        "pointer": "/block/armWearCap",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -85500,7 +85508,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85518,7 +85526,8 @@
       ],
       "expect": {
         "rule": "xref:block-cap",
-        "pointer": "/block/armWearCap"
+        "pointer": "/block/armWearCap",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -85526,7 +85535,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -85549,7 +85558,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               100,
@@ -85567,7 +85576,8 @@
       ],
       "expect": {
         "rule": "xref:block-cap",
-        "pointer": "/block/armWearCap"
+        "pointer": "/block/armWearCap",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -98528,7 +98538,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98551,7 +98561,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98576,7 +98586,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98602,7 +98612,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98628,7 +98638,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98654,7 +98664,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98677,7 +98687,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98700,7 +98710,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98725,7 +98735,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98751,7 +98761,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98777,7 +98787,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98803,7 +98813,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98826,7 +98836,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98844,7 +98854,8 @@
       ],
       "expect": {
         "rule": "xref:block-shot-cap",
-        "pointer": "/block/shotArmWearCap"
+        "pointer": "/block/shotArmWearCap",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -98852,7 +98863,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98870,7 +98881,8 @@
       ],
       "expect": {
         "rule": "xref:block-shot-cap",
-        "pointer": "/block/shotArmWearCap"
+        "pointer": "/block/shotArmWearCap",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -98878,7 +98890,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98901,7 +98913,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98924,7 +98936,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               100,
@@ -98942,7 +98954,8 @@
       ],
       "expect": {
         "rule": "xref:block-shot-cap",
-        "pointer": "/block/shotArmWearCap"
+        "pointer": "/block/shotArmWearCap",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -98950,7 +98963,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -98968,7 +98981,8 @@
       ],
       "expect": {
         "rule": "xref:block-cap",
-        "pointer": "/block/armWearCap"
+        "pointer": "/block/armWearCap",
+        "file": "data/fighters/FIXTURE_HERO/wounds.json"
       }
     },
     {
@@ -98976,7 +98990,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/stageAt": [
               180000,
@@ -106317,7 +106331,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/takenPerDamage": 0.0075,
             "/dealtPerDamage": 0.0045
@@ -106331,7 +106345,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "del": [
             "/takenPerDamage"
           ]
@@ -106347,7 +106361,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "del": [
             "/dealtPerDamage"
           ]
@@ -106363,7 +106377,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/takenPerDamage": -0.001
           }
@@ -106379,7 +106393,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/dealtPerDamage": -0.001
           }
@@ -106395,7 +106409,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/takenPerDamage": "some"
           }
@@ -106411,7 +106425,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/dealtPerDamage": "0.0045"
           }
@@ -106427,7 +106441,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/takenPerDamage": 0,
             "/dealtPerDamage": 0.0045
@@ -106441,7 +106455,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/takenPerDamage": 0.0075,
             "/dealtPerDamage": 0
@@ -106455,7 +106469,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/takenPerDamage": 5,
             "/dealtPerDamage": 3
@@ -106469,7 +106483,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/takenPerDamage": 0.0075,
             "/dealtPerDamage": 0.0045,
@@ -106484,7 +106498,7 @@
       "schema": "fighter-ladder.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/ladder.json",
+          "file": "data/fight/ladder.json",
           "set": {
             "/takenPerDamage": 0.0075,
             "/dealtPerDamage": 0.0045,
@@ -141114,7 +141128,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/medium": [
               8,
@@ -141132,7 +141146,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/medium": [
               0,
@@ -141150,7 +141164,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/family/medium"
           ]
@@ -141166,7 +141180,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/medium": [
               1,
@@ -141186,7 +141200,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/medium": [
               1,
@@ -141208,7 +141222,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/medium": [
               8,
@@ -141229,7 +141243,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/medium": [
               8,
@@ -141250,7 +141264,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/family/medium": 8
           }
@@ -141266,7 +141280,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/penalties/armsBrokenMediumMul": 1
           }
@@ -141279,7 +141293,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/penalties/armsBrokenMediumMul": 0.5
           }
@@ -141292,7 +141306,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/penalties/armsBrokenMediumMul": 1.3
           }
@@ -141305,7 +141319,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "del": [
             "/penalties/armsBrokenMediumMul"
           ]
@@ -141321,7 +141335,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/penalties/armsBrokenMediumMul": 0
           }
@@ -141337,7 +141351,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/penalties/armsBrokenMediumMul": -0.5
           }
@@ -141353,7 +141367,7 @@
       "schema": "fighter-wounds.schema.json",
       "mutate": [
         {
-          "file": "data/fighters/FIXTURE_HERO/wounds.json",
+          "file": "data/fight/wounds.json",
           "set": {
             "/penalties/armsBrokenMediumMul": "1.0"
           }
@@ -244435,7 +244449,10 @@
         {
           "file": "data/biomes/brunt.json",
           "set": {
-            "/tierFactor": [0.1, 0.2]
+            "/tierFactor": [
+              0.1,
+              0.2
+            ]
           }
         }
       ],
@@ -253866,6 +253883,1351 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "shared-wounds-own-leaf-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/act1Damping": 0.8
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "shared-wounds-own-empty-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "root": {}
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "shared-wounds-own-note-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "shared-wounds-own-unknown-key",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/act1Dampning": 0.8
+          }
+        }
+      ],
+      "expect": {
+        "rule": "shared-unknown-key",
+        "pointer": "/act1Dampning"
+      }
+    },
+    {
+      "id": "shared-wounds-own-unknown-nested-key",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/fade": {
+              "hiddn": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "shared-unknown-key",
+        "pointer": "/fade/hiddn"
+      }
+    },
+    {
+      "id": "shared-wounds-own-wrong-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/act1Damping": "half"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/act1Damping"
+      }
+    },
+    {
+      "id": "shared-wounds-own-not-an-object",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "root": []
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "shared-wounds-own-list-replaces-whole",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/stageAt": [
+              200000,
+              100000,
+              50000
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:increasing",
+        "pointer": "/stageAt"
+      }
+    },
+    {
+      "id": "shared-wounds-own-list-too-short",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/stageAt": [
+              1,
+              2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/stageAt"
+      }
+    },
+    {
+      "id": "shared-wounds-own-dictionary-subset-ok",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/fade": {
+              "out": 30
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "shared-wounds-own-dictionary-wrong-leaf-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/wounds.json",
+          "set": {
+            "/fade": {
+              "out": "slow"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/fade/out"
+      }
+    },
+    {
+      "id": "shared-ladder-own-leaf-ok",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/ladder.json",
+          "set": {
+            "/fillPerSec": 0.5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "shared-ladder-own-empty-ok",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/ladder.json",
+          "root": {}
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "shared-ladder-own-unknown-key",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/ladder.json",
+          "set": {
+            "/fillPerSecond": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "shared-unknown-key",
+        "pointer": "/fillPerSecond"
+      }
+    },
+    {
+      "id": "shared-ladder-own-unknown-nested-key",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/ladder.json",
+          "set": {
+            "/tiers": {
+              "speedPerTear": 0.1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "shared-unknown-key",
+        "pointer": "/tiers/speedPerTear"
+      }
+    },
+    {
+      "id": "shared-ladder-own-wrong-type",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/ladder.json",
+          "set": {
+            "/fillPerSec": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/fillPerSec"
+      }
+    },
+    {
+      "id": "shared-ladder-own-list-replaces-whole",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/ladder.json",
+          "set": {
+            "/thresholds": [
+              25,
+              50
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "shared-ladder-own-dictionary-subset-ok",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/FIXTURE_VILLAIN/ladder.json",
+          "set": {
+            "/tiers": {
+              "speedPerTier": 0.2
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "shared-wounds-shared-key-required",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/wounds.json",
+          "del": [
+            "/rally"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "shared-wounds-shared-leaf-type",
+      "schema": "fighter-wounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/wounds.json",
+          "set": {
+            "/wearPerDamage": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/wearPerDamage"
+      }
+    },
+    {
+      "id": "shared-ladder-shared-key-required",
+      "schema": "fighter-ladder.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/ladder.json",
+          "del": [
+            "/thresholds"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-required-brunt-mul",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/bruntMul"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-brunt-mul",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/bruntMul": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bruntMul"
+      }
+    },
+    {
+      "id": "brunt-key-required-tier-factor",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/tierFactor"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-tier-factor",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/tierFactor": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tierFactor"
+      }
+    },
+    {
+      "id": "brunt-key-required-special-tier",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/specialTier"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-special-tier",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/specialTier": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/specialTier"
+      }
+    },
+    {
+      "id": "brunt-key-required-chain-max",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/chainMax"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-chain-max",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/chainMax": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/chainMax"
+      }
+    },
+    {
+      "id": "brunt-key-required-chain-special",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/chainSpecial"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-chain-special",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/chainSpecial": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/chainSpecial"
+      }
+    },
+    {
+      "id": "brunt-key-required-house-link",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/houseLink"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-house-link",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/houseLink": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/houseLink"
+      }
+    },
+    {
+      "id": "brunt-key-required-house-keep",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/houseKeep"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-house-keep",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/houseKeep": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/houseKeep"
+      }
+    },
+    {
+      "id": "brunt-key-required-tower-punches",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/towerPunches"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-tower-punches",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/towerPunches": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/towerPunches"
+      }
+    },
+    {
+      "id": "brunt-key-required-give-way",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/giveWay"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-give-way",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/giveWay": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/giveWay"
+      }
+    },
+    {
+      "id": "brunt-key-required-wall-memory",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/wallMemory"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-wall-memory",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/wallMemory": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/wallMemory"
+      }
+    },
+    {
+      "id": "brunt-key-required-wall-min",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/wallMin"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-wall-min",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/wallMin": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/wallMin"
+      }
+    },
+    {
+      "id": "brunt-key-required-held-death-share",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/heldDeathShare"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-held-death-share",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/heldDeathShare": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/heldDeathShare"
+      }
+    },
+    {
+      "id": "brunt-key-required-lodge-seconds",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/lodgeSeconds"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-lodge-seconds",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeSeconds": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lodgeSeconds"
+      }
+    },
+    {
+      "id": "brunt-key-required-lodge-special-seconds",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/lodgeSpecialSeconds"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-lodge-special-seconds",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeSpecialSeconds": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lodgeSpecialSeconds"
+      }
+    },
+    {
+      "id": "brunt-key-required-lodge-dump",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/lodgeDump"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-lodge-dump",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeDump": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lodgeDump"
+      }
+    },
+    {
+      "id": "brunt-key-required-keep-hi",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/keepHi"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-keep-hi",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/keepHi": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keepHi"
+      }
+    },
+    {
+      "id": "brunt-key-required-keep-k",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/keepK"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-keep-k",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/keepK": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keepK"
+      }
+    },
+    {
+      "id": "brunt-key-required-keep-ref",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/keepRef"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-keep-ref",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/keepRef": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keepRef"
+      }
+    },
+    {
+      "id": "brunt-key-required-keep-min",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/keepMin"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-keep-min",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/keepMin": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keepMin"
+      }
+    },
+    {
+      "id": "brunt-key-required-keep-free",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/keepFree"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-keep-free",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/keepFree": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keepFree"
+      }
+    },
+    {
+      "id": "brunt-key-required-heavy-keep",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "del": [
+            "/heavyKeep"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "brunt-key-type-heavy-keep",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/heavyKeep": "much"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/heavyKeep"
+      }
+    },
+    {
+      "id": "brunt-tier-factor-falls",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/tierFactor": [
+              0.5,
+              0.4,
+              0.6,
+              0.7
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:brunt-order",
+        "pointer": "/tierFactor/1"
+      }
+    },
+    {
+      "id": "brunt-tier-factor-equal-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/tierFactor": [
+              0.5,
+              0.5,
+              0.6,
+              0.7
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "brunt-chain-max-falls",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/chainMax": [
+              2,
+              1,
+              3,
+              4
+            ],
+            "/chainSpecial": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:brunt-order",
+        "pointer": "/chainMax/1"
+      }
+    },
+    {
+      "id": "brunt-chain-max-equal-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/chainMax": [
+              2,
+              2,
+              2,
+              2
+            ],
+            "/chainSpecial": 2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "brunt-chain-special-below-tier-4",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/chainMax": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "/chainSpecial": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:brunt-order",
+        "pointer": "/chainSpecial"
+      }
+    },
+    {
+      "id": "brunt-tower-punches-fall",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/towerPunches": [
+              0,
+              2,
+              1,
+              99
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:brunt-order",
+        "pointer": "/towerPunches/2"
+      }
+    },
+    {
+      "id": "brunt-tower-punches-equal-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/towerPunches": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "brunt-lodge-seconds-fall",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeSeconds": [
+              0.9,
+              0.5,
+              0.7,
+              0.9
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:brunt-order",
+        "pointer": "/lodgeSeconds/1"
+      }
+    },
+    {
+      "id": "brunt-lodge-special-below-tier-4",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeSeconds": [
+              0.5,
+              0.5,
+              0.7,
+              0.9
+            ],
+            "/lodgeSpecialSeconds": 0.4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:brunt-order",
+        "pointer": "/lodgeSpecialSeconds"
+      }
+    },
+    {
+      "id": "brunt-lodge-special-equal-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeSeconds": [
+              0.5,
+              0.5,
+              0.7,
+              0.9
+            ],
+            "/lodgeSpecialSeconds": 0.9
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "brunt-keep-min-above-hi",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/keepMin": 0.9,
+            "/keepHi": 0.8,
+            "/keepFree": 0.95
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:brunt-order",
+        "pointer": "/keepMin"
+      }
+    },
+    {
+      "id": "brunt-keep-hi-above-free",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/keepMin": 0.35,
+            "/keepHi": 0.99,
+            "/keepFree": 0.95
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:brunt-order",
+        "pointer": "/keepHi"
+      }
+    },
+    {
+      "id": "brunt-keep-equal-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/keepMin": 0.8,
+            "/keepHi": 0.8,
+            "/keepFree": 0.8
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "brunt-house-link-zero",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/houseLink": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/houseLink"
+      }
+    },
+    {
+      "id": "brunt-house-link-one-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/houseLink": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "brunt-tower-punches-length",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/towerPunches": [
+              0,
+              1,
+              99
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/towerPunches"
+      }
+    },
+    {
+      "id": "brunt-chain-max-length",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/chainMax": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/chainMax"
+      }
+    },
+    {
+      "id": "brunt-lodge-seconds-above-limit",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeSeconds": [
+              0.5,
+              0.5,
+              0.7,
+              3.5
+            ],
+            "/lodgeSpecialSeconds": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lodgeSeconds/3"
+      }
     }
   ],
   "text": [
