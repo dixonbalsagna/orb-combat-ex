@@ -253205,6 +253205,407 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-pose-valid",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": {
+                "protagonist": "ch.y_p.load",
+                "antihero": "ch.y_r.load"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-pose-absent-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-hold-pose-empty",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": {}
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/styles/medium/hold/pose"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-pose-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": "ch.y_p.load"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/medium/hold/pose"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-pose-pose-id-shape",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": {
+                "protagonist": "Load Pose",
+                "antihero": "ch.y_r.load"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/styles/medium/hold/pose/protagonist"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-pose-pose-id-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": {
+                "protagonist": 5,
+                "antihero": "ch.y_r.load"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/styles/medium/hold/pose/protagonist"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-pose-fighter-key-shape",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": {
+                "protagonist": "ch.y_p.load",
+                "antihero": "ch.y_r.load",
+                "Not A Fighter": "ch.y_p.load"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/styles/medium/hold/pose/Not A Fighter"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-pose-fighter-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": {
+                "protagonist": "ch.y_p.load",
+                "antihero": "ch.y_r.load",
+                "nobody": "ch.y_p.load"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-hold",
+        "pointer": "/styles/medium/hold/pose/nobody"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-pose-pose-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": {
+                "protagonist": "ch.nowhere.load",
+                "antihero": "ch.y_r.load"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-hold",
+        "pointer": "/styles/medium/hold/pose/protagonist"
+      }
+    },
+    {
+      "id": "anim-press-styles-hold-pose-note-key-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/hold": {
+              "from": 10,
+              "to": 28,
+              "squash": 0.45,
+              "lean_back": 0.08,
+              "pose": {
+                "protagonist": "ch.y_p.load",
+                "antihero": "ch.y_r.load",
+                "_why": "a note"
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/plain_light"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light": 6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beat/plain_light"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-pin-ticks-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/plain_light/pin_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat/plain_light"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light/hold_ticks": 6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/beat/plain_light/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-note-key-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-pin-ticks-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light/pin_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/plain_light/pin_ticks"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-pin-ticks-above-max",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light/pin_ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/plain_light/pin_ticks"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-pin-ticks-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light/pin_ticks": 5.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beat/plain_light/pin_ticks"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-pin-ticks-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light/pin_ticks": "six"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beat/plain_light/pin_ticks"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-pin-ticks-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light/pin_ticks": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-beat-plain-light-pin-ticks-max-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/plain_light/pin_ticks": 60
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

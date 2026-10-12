@@ -98,6 +98,10 @@ export const TIP_PATH = {
   su_palm_heave: { tip: 'palm', path: 'rise' },
   su_ball_heave: { tip: 'ball', path: 'rise' },
   su_hammer_arm: { tip: 'heel', path: 'drop' },
+  su_edge_legs: { tip: 'edge', path: 'line' },
+  su_plate_arm: { tip: 'plate', path: 'drop' },
+  su_knee_legs: { tip: 'cap', path: 'arc_in' },
+  su_elbow_jaw: { tip: 'point', path: 'arc_in' },
   // energy in reach (C2t): the point-blank bolts and the blast, as blows (Combat's c2t-content.md section 2)
   'pk.bolt_thrust': { tip: 'palm', path: 'line' },
   'pk.bolt_flat': { tip: 'palm', path: 'line' },

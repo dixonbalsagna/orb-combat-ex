@@ -46,6 +46,14 @@ func apply(q: Array[Quaternion], hips: Vector3, curl: Vector2, root_off: Vector3
 	skel.set_bone_pose_rotation(_fingers_r, q[_fingers_r] * Quaternion(Vector3(0, 0, 1), curl.y))
 
 
+## Fighters in depth (docs/animation/fighters-in-depth.md): the body turned about the vertical by the line of the pair, `AnimFighter.depth_yaw` (radians, 0 with depth off: nothing changes by a pixel). Rendering calls it each
+## frame with that value (positive turns the front toward the camera: the body's own +x is its front, and a turn toward +z is a negative rotation about y; a body that Rendering faces left by a half turn needs the
+## sign flipped by the caller, `AnimFighter.vface`). The anchor of the hybrid projection and the keyline turn with the mesh.
+func set_yaw(y: float) -> void:
+	if -y != rotation.y:
+		rotation.y = -y
+
+
 ## The hybrid projection's anchor (world space), on both the body and its outline pass.
 func set_anchor(a: Vector3) -> void:
 	_mat.set_shader_parameter("anchor", a)

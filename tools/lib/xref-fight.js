@@ -1464,6 +1464,15 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
       if (sid.startsWith('_') || !isObj(st) || !isObj(st.hold)) continue;
       if (typeof st.hold.from === 'number' && typeof st.hold.to === 'number' && st.hold.from >= st.hold.to) err(PS, `/styles/${esc(sid)}/hold/from`, 'pressstyles-hold', `hold from ${st.hold.from} must be below to ${st.hold.to}`);
+      if (isObj(st.hold.pose)) {
+        const fgsHold = get('data/anim/fighters.json');
+        const fidsHold = isObj(fgsHold) && isObj(fgsHold.fighters) ? Object.keys(fgsHold.fighters).filter((k) => !k.startsWith('_')) : [];
+        for (const [fk, pid] of Object.entries(st.hold.pose)) {
+          if (fk.startsWith('_')) continue;
+          if (fidsHold.length && !fidsHold.includes(fk)) err(PS, `/styles/${esc(sid)}/hold/pose/${esc(fk)}`, 'pressstyles-hold', `hold pose names "${fk}", who is not a fighter of fighters.json (${fidsHold.join(', ')})`);
+          if (typeof pid === 'string' && allPosesPs.size && !allPosesPs.has(pid)) err(PS, `/styles/${esc(sid)}/hold/pose/${esc(fk)}`, 'pressstyles-hold', `hold pose "${pid}" is not in poses.json nor a wave's poses`);
+        }
+      }
     }
     if (isObj(pst.riposte) && isObj(pst.riposte.style) && isObj(pst.styles)) {
       for (const w of ['light', 'heavy']) {

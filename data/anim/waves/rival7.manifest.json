@@ -81,7 +81,7 @@
    "target": "gut",
    "limb": "knee_r",
    "limb2": null,
-   "offset": 28,
+   "offset": 40,
    "reach": 59,
    "band": "close",
    "ticks": {
@@ -293,6 +293,82 @@
    "_genericAb": false,
    "_family": null,
    "tip": "heel",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "ru.su_edge_legs",
+   "combat": "strike.su_edge_legs",
+   "name": "su_edge_legs",
+   "weight": "heavy",
+   "target": "legs",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 50,
+   "reach": 84,
+   "band": "mid",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "legal": [],
+   "look": "PROVISIONAL. A stepping kick with the edge of the foot, low: the leg chambered close and the whole body carried a pace behind it, one straight line into the rival legs; chin up, a show of it.",
+   "orig": "PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs",
+   "poses": [
+    "ru.su_edge_legs.chamber",
+    "ru.su_edge_legs.contact",
+    "ru.su_edge_legs.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "edge",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "ru.su_plate_arm",
+   "combat": "strike.su_plate_arm",
+   "name": "su_plate_arm",
+   "weight": "heavy",
+   "target": "arm_r",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 108,
+   "band": "long",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "legal": [
+    "hands_open_or_claw",
+    "no_clasp",
+    "no_held_raise"
+   ],
+   "look": "PROVISIONAL. A falling forearm plate: risen tall with the plated forearm at his shoulder and the other hand up, then the body comes down and the plate falls across the rival arm.",
+   "orig": "PROVISIONAL: a falling forearm plate: risen tall with the plated forearm at his shoulder and the other hand up, the body comes down and the plate falls across the rival arm",
+   "poses": [
+    "ru.su_plate_arm.chamber",
+    "ru.su_plate_arm.contact",
+    "ru.su_plate_arm.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "plate",
    "path": "drop",
    "flags": []
   }

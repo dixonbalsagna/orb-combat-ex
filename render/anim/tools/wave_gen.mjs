@@ -16,7 +16,7 @@ const wave = argv[0] || 'wave1';
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
 const project = resolve(opt('project', '.'));
 const outDir = resolve(opt('out', join(project, 'data/anim/waves')));
-const prefix = wave === 'ground1' ? 'gc' : wave === 'intro1' ? 'in' : wave === 'laststand1' ? 'ls' : wave === 'agency1' ? 'ag' : wave === 'energy1' ? 'en' : wave === 'protag1' ? 'pr' : wave === 'protag2' ? 'pe' : wave === 'protag3' ? 'pn' : wave === 'protag4' ? 'pf' : wave === 'rival1' ? 'rv' : wave === 'rival2' ? 'rb' : wave === 'rival3' ? 'rw' : wave === 'protag5' ? 'pg' : wave === 'pair1' ? 'pp' : wave === 'protag6' ? 'ph' : wave === 'protag10' ? 'pu' : wave === 'rival7' ? 'ru' : wave === 'protag11' ? 'pk' : wave === 'rival8' ? 'rk' : wave === 'burst1' ? 'bu' : wave === 'launch1' ? 'lq' : wave === 'miss1' ? 'mi' : wave === 'protag9' ? 'pi' : wave === 'rival6' ? 'ri' : wave === 'pair2' ? 'zp' : wave === 'protag7' ? 'pm' : wave === 'protag8' ? 'ps' : wave === 'rival4' ? 'rm' : wave === 'rival5' ? 'rs' : wave.startsWith('step') ? 's' + wave.slice(4) : wave.replace('wave', 'w');   // w1, s3
+const prefix = wave === 'ground1' ? 'gc' : wave === 'intro1' ? 'in' : wave === 'laststand1' ? 'ls' : wave === 'agency1' ? 'ag' : wave === 'energy1' ? 'en' : wave === 'protag1' ? 'pr' : wave === 'protag2' ? 'pe' : wave === 'protag3' ? 'pn' : wave === 'protag4' ? 'pf' : wave === 'rival1' ? 'rv' : wave === 'rival2' ? 'rb' : wave === 'rival3' ? 'rw' : wave === 'protag5' ? 'pg' : wave === 'pair1' ? 'pp' : wave === 'protag6' ? 'ph' : wave === 'protag10' ? 'pu' : wave === 'rival7' ? 'ru' : wave === 'protag11' ? 'pk' : wave === 'rival8' ? 'rk' : wave === 'burst1' ? 'bu' : wave === 'depth1' ? 'dp' : wave === 'launch1' ? 'lq' : wave === 'charge1' ? 'ch' : wave === 'miss1' ? 'mi' : wave === 'protag9' ? 'pi' : wave === 'rival6' ? 'ri' : wave === 'pair2' ? 'zp' : wave === 'protag7' ? 'pm' : wave === 'protag8' ? 'ps' : wave === 'rival4' ? 'rm' : wave === 'rival5' ? 'rs' : wave.startsWith('step') ? 's' + wave.slice(4) : wave.replace('wave', 'w');   // w1, s3
 
 const poses = JSON.parse(readFileSync(join(project, 'data/anim/poses.json'), 'utf8')).poses;
 const mod = await import(pathToFileURL(resolve(project, 'render/anim/tools/waves/' + wave + '.mjs')).href);
@@ -269,7 +269,7 @@ for (const row of combat.strikes) {
   if (sp.hold_t !== undefined) ks.hold_t = sp.hold_t;          // ticks the contact key is held (the style's own is 8): a blow whose arm must not stay up after it (Legal L1, b09, h05)
   if (sp.ci_end !== undefined) ks.ci_end = sp.ci_end;          // ticks after the contact by which the contact solve lets the limb go to the follow key
   if (sp.drive !== undefined) ks.drive = sp.drive;             // the drive (Combat's step_through, turn, unwind, heave, fall, full_turn)
-  ks._combat = row.id;
+  ks._combat = sp.combat || row.id;   // `combat` in a spec: the piece's Combat id when it differs from the row's (one id a fighter: the pieces table is one row an id for both)
   ks._wave = wave;
   const parts = { chamber: ch, contact: ct, follow: fo };
   ks.keys = [];
@@ -313,7 +313,7 @@ for (const row of combat.strikes) {
     }
     outKeysets[idg] = ksg;
   }
-  manifest.push({ id, combat: row.id, name, weight: row.weight, target: ks.target, limb: L, limb2: ks.limb2 || null,
+  manifest.push({ id, combat: sp.combat || row.id, name, weight: row.weight, target: ks.target, limb: L, limb2: ks.limb2 || null,
     offset: row.range.offset, reach: row.range.reach, band: row.range.band, ticks: row.ticks, ground: row.ground, uses: row.uses,
     from: sp.from || null, legal: sp.legal || [], look: row.look, orig: sp.orig, poses: ks.keys.map(k => k.pose), alt: sp.alt ? sp.alt.label : null, _genericAb: !!sp.genericAb, _family: sp.family || null });
 }

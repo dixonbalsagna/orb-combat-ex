@@ -75,7 +75,7 @@
   },
   {
    "id": "rk.bolt_flick",
-   "combat": "strike.bolt_flick",
+   "combat": "strike.bolt_flick_gut",
    "name": "bolt_flick",
    "weight": "light",
    "target": "gut",
@@ -111,7 +111,7 @@
   },
   {
    "id": "rk.bolt_sweep",
-   "combat": "strike.bolt_sweep",
+   "combat": "strike.bolt_sweep_chest",
    "name": "bolt_sweep",
    "weight": "light",
    "target": "chest",

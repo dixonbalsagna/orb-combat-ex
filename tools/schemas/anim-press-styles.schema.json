@@ -295,7 +295,8 @@
       "required": [
         "grade",
         "closing",
-        "charge"
+        "charge",
+        "plain_light"
       ],
       "description": "What the beat tells (Encounter's slice B0: style, grade, k, n, closing, charge, hand, ender). grade: a tech blow's held beat and after-images by the press grade; closing: the least a closing or ending blow holds its follow-through; charge: a heavy's wind-up is load_min of its length when tapped and the whole when held, its squash following the blow's weight from tapped to held.",
       "properties": {
@@ -425,6 +426,25 @@
             }
           },
           "additionalProperties": false
+        },
+        "plain_light": {
+          "type": "object",
+          "required": [
+            "pin_ticks"
+          ],
+          "description": "A plain light (no beat, no grade): its pose is pinned for this many ticks at the contact.",
+          "properties": {
+            "pin_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "Ticks the pose is pinned."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
         }
       },
       "additionalProperties": false,
@@ -756,6 +776,21 @@
                   "minimum": 0,
                   "maximum": 0.5,
                   "description": "How far the body leans back in the hold."
+                },
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
                 }
               },
               "additionalProperties": false,
@@ -1085,6 +1120,21 @@
                   "minimum": 0,
                   "maximum": 0.5,
                   "description": "How far the body leans back in the hold."
+                },
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
                 }
               },
               "additionalProperties": false,
@@ -1414,6 +1464,21 @@
                   "minimum": 0,
                   "maximum": 0.5,
                   "description": "How far the body leans back in the hold."
+                },
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
                 }
               },
               "additionalProperties": false,
@@ -1743,6 +1808,21 @@
                   "minimum": 0,
                   "maximum": 0.5,
                   "description": "How far the body leans back in the hold."
+                },
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
                 }
               },
               "additionalProperties": false,
@@ -2072,6 +2152,21 @@
                   "minimum": 0,
                   "maximum": 0.5,
                   "description": "How far the body leans back in the hold."
+                },
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
                 }
               },
               "additionalProperties": false,
@@ -2402,6 +2497,21 @@
                   "minimum": 0,
                   "maximum": 0.5,
                   "description": "How far the body leans back in the hold."
+                },
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
                 }
               },
               "additionalProperties": false,
@@ -2732,6 +2842,21 @@
                   "minimum": 0,
                   "maximum": 0.5,
                   "description": "How far the body leans back in the hold."
+                },
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
                 }
               },
               "additionalProperties": false,

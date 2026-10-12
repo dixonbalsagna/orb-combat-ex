@@ -256,6 +256,9 @@ static func ensure_fighter(roster_id: String) -> String:
 				if nm.begins_with("tail") or not keysets.has(String(st.id)):
 					continue
 				lst.by_name[nm] = String(st.id)
+				var cid: String = String(st.get("combat", ""))
+				if cid.begins_with("strike.") and cid.substr(7) != nm:
+					lst.by_name[cid.substr(7)] = String(st.id)   # the piece's own Combat id when it differs from the set's name (one id a fighter in the pieces table: the rival's strike.bolt_flick_gut is rk.bolt_flick)
 				if nm.begins_with("su_") or nm.begins_with("bolt_") or nm.begins_with("blast_"):
 					continue   # the super-heavy tier and the energy-in-reach pieces are named by the director's beat (`piece`), never picked at random: they are findable by name and in no pick list
 				if gated.has(nm):

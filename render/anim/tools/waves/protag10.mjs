@@ -13,6 +13,9 @@ const NEW = {
   su_palm_heave: { like: 'uppercut', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. A heaving palm: sunk deep with the palm loaded low and the other hand up, both legs drive it up into the chest; no leap, the arm lowers at once.' },
   su_ball_heave: { like: 'front_kick', limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A heaving kick with the ball of the foot: sunk deep on the standing leg, the legs drive him up and the foot up into the gut; the standing foot keeps its place.' },
   su_hammer_arm: { like: 'hammer', limb: 'hand', target: 'arm_r', weight: 'heavy', look: 'PROVISIONAL. A falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once.' },
+  // rows 09 and 10 (c2t-content.md section 1): the leg wrench's piece and his second turning launcher
+  su_knee_legs: { like: 'short_knee', limb: 'knee', target: 'legs', weight: 'heavy', look: 'PROVISIONAL. A turning knee: his back half turned, the knee carried round low on an arc into the rival legs, both open hands up for balance, back in his guard at once.' },
+  su_elbow_jaw: { like: 'spinning_elbow', limb: 'elbow', target: 'jaw', weight: 'heavy', look: 'PROVISIONAL. A turning elbow: the back half turned with the elbow carried behind at shoulder height, the hips and shoulders unwinding so the point comes across level at the jaw; one turn, never two.' },
 };
 export function rows(wave1) {
   const by = Object.fromEntries(wave1.map(r => [r.id.replace('strike.', ''), r]));
@@ -80,4 +83,18 @@ export const strikes = {
     contact: { family: 'upright_lunge', lean: 18, hips: [16, -8, 0], spine: { lean: 12, twist: 12 }, head: { pitch: 12 }, hand_r: [42, 64, 10], pole_hand_r: [-2, 12, 8], hand_l: [20, 58, -8],
       foot_r: [-4, 2.5, 9], foot_l: [22, 2.5, -8], hands: { r: 'fist', l: 'open' } },
     orig: 'PROVISIONAL: a falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once' },
+  su_knee_legs: { tell_at: 0.5, squash_w: 0.0, drive: 'turn', kind: 'knee', target: 'legs', step_max: 14, follow_t: 0.7, legal: ['no_clasp'],
+    chamber: { family: 'upright', lean: 4, hips: [-4, -2, 0], hip_twist: -22, spine: { lean: 2, twist: -40 }, head: { pitch: -2, yaw: 24 }, hand_r: [14, 60, 12], hand_l: [20, 62, -8],
+      foot_r: [-10, 14, 12], foot_l: [10, 2.5, -8], ...OPEN },
+    contact: { family: 'upright_lunge', lean: 0, hip_twist: 26, hips: [14, -6, 0], spine: { lean: 2, twist: 34 }, head: { pitch: 6, yaw: -14 }, hand_r: [22, 62, 12], hand_l: [28, 66, -8],
+      foot_r: [26, 18, 16], pole_foot_r: [8, 1, 8], foot_l: [8, 2.5, -7], ...OPEN },
+    follow: { spine: { twist: 16 }, hips: [10, -4, 0], foot_r: [14, 8, 12] },
+    orig: 'PROVISIONAL: a turning knee: the back half turned, the knee carried round low on an arc into the rival legs, both open hands up for balance' },
+  su_elbow_jaw: { tell_at: 0.5, squash_w: 0.0, drive: 'turn', kind: 'elbow', target: 'jaw', step_max: 22, legal: ['single_turn', 'hands_open_or_claw'],
+    chamber: { family: 'upright', lean: 2, hips: [-4, -2, 0], hip_twist: -26, spine: { lean: 2, twist: -54 }, head: { pitch: -2, yaw: 30 }, hand_r: [-8, 62, 22], pole_hand_r: [-8, 2, 12], hand_l: [18, 60, -8],
+      foot_r: [-8, 2.5, 9], foot_l: [10, 2.5, -8], ...OPEN },
+    contact: { family: 'upright_lunge', lean: 8, hip_twist: 34, hips: [4, -4, 0], spine: { lean: 2, twist: 54 }, head: { pitch: 4, yaw: -24 }, hand_r: [20, 72, 12], pole_hand_r: [8, 4, 10], hand_l: [-2, 58, -14],
+      foot_r: [-6, 2.5, 9], foot_l: [30, 2.5, -7], ...OPEN },
+    follow: { spine: { twist: 26 }, hips: [30, -4, 0], hand_r: [18, 62, 12], hand_l: [14, 58, -8] },
+    orig: 'PROVISIONAL: a turning elbow: the back half turned with the elbow carried behind at shoulder height, the point coming across level at the jaw as he unwinds; one turn' },
 };

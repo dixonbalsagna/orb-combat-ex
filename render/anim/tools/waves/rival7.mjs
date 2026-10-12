@@ -8,19 +8,22 @@ const FIST = { hands: { r: 'fist', l: 'open' } };
 const NEW = {
   su_ram: { like: 'overhand', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. A long low lunge, the whole body behind one straight fist.' },
   su_heel: { like: 'axe_kick', limb: 'foot', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. The leg raised high, the heel dropped from above onto the chest, the body folding over it.' },
-  su_knee: { like: 'driving_knee', limb: 'knee', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A stepping knee: the striking side drawn back, the whole body travels a pace and the knee arrives in the gut as the foot lands.' },
+  su_knee: { like: 'driving_knee', offset: 40, limb: 'knee', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A stepping knee: the striking side drawn back, the whole body travels a pace and the knee arrives in the gut as the foot lands.' },
   su_plate: { like: 'hook', limb: 'hand', target: 'head', weight: 'heavy', look: 'PROVISIONAL. A turning forearm: his back half turned with the forearm carried behind, then the hips and shoulders unwind through the head.' },
   su_hook: { like: 'overhand', limb: 'hand', target: 'jaw', weight: 'heavy', look: 'PROVISIONAL. A turning fist: the shoulders wound away in a low stance, then unwound through the jaw.' },
   su_elbow_heave: { like: 'rising_elbow', limb: 'elbow', target: 'jaw', weight: 'heavy', look: 'PROVISIONAL. A heaving elbow: sunk deep with the elbow loaded low, the other hand up; the legs drive him tall and the elbow up the centre line; his feet keep their place.' },
   su_fist_heave: { like: 'uppercut', limb: 'hand', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A heaving fist: sunk deep with the fist low in front, the legs drive it up into the gut; his feet keep their place.' },
   su_hammer: { like: 'hammer', limb: 'hand', target: 'head', weight: 'heavy', look: 'PROVISIONAL. A falling hammer fist: risen tall with the fist at his shoulder, then the whole body comes down and the fist falls on the head.' },
+  // rows 09 and 10 (docs/combat/pending/movegen/c2t-content.md section 1: re-aimed for the wrench, a held B on a battered limb; neither launches)
+  su_edge_legs: { like: 'low_kick', limb: 'foot', target: 'legs', weight: 'heavy', look: 'PROVISIONAL. A stepping kick with the edge of the foot, low: the leg chambered close and the whole body carried a pace behind it, one straight line into the rival legs; chin up, a show of it.' },
+  su_plate_arm: { like: 'hook', limb: 'hand', target: 'arm_r', weight: 'heavy', look: 'PROVISIONAL. A falling forearm plate: risen tall with the plated forearm at his shoulder and the other hand up, then the body comes down and the plate falls across the rival arm.' },
 };
 export function rows(wave1) {
   const by = Object.fromEntries(wave1.map(r => [r.id.replace('strike.', ''), r]));
   return Object.entries(NEW).map(([n, o]) => {
     const b = by[o.like];
     return { ...b, id: 'strike.' + n, limb: o.limb, target: o.target, weight: o.weight, look: o.look,
-      range: { ...b.range, lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) }, ticks: { load: 28, follow: 8, recover: 14 },
+      range: { ...b.range, offset: o.offset ?? b.range.offset, lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) }, ticks: { load: 28, follow: 8, recover: 14 },
       _estimate: 'PROVISIONAL: range and ticks borrowed from strike.' + o.like + ' (lunge 1.25 times, reach 1.1 times); the load is the 28-tick wind-up of B (docs/design/brawl-second-pass.md) for the look study' };
   });
 }
@@ -43,8 +46,8 @@ export const strikes = {
   su_knee: { tell_at: 0.5, squash_w: 0.3, drive: 'step_through', kind: 'knee', target: 'gut', step_max: 22,
     chamber: { family: 'upright', lean: -6, hips: [-8, -2, 0], spine: { lean: -6, twist: -14 }, head: { pitch: -8 }, hand_r: [0, 58, 14], pole_hand_r: [-10, 6, 10], hand_l: [16, 60, -8],
       foot_r: [-16, 2.5, 10], foot_l: [14, 2.5, -8], ...OPEN },
-    contact: { family: 'upright_lunge', lean: 10, hips: [34, -2, 0], spine: { lean: 8, twist: 10 }, head: { pitch: 6 }, hand_r: [16, 56, 12], hand_l: [24, 62, -8],
-      foot_r: [32, 32, 8], pole_foot_r: [12, 1, 0], foot_l: [34, 2.5, -8], ...OPEN },
+    contact: { family: 'upright_lunge', lean: -8, hips: [14, -2, 0], spine: { lean: -8, twist: 8 }, head: { pitch: 2 }, hand_r: [20, 54, 12], hand_l: [22, 56, -10],
+      foot_r: [32, 26, 8], pole_foot_r: [10, 1, 0], foot_l: [-6, 6, -8], ...OPEN },
     follow: { hips: [28, -6, 0], hand_r: [14, 54, 12], foot_r: [24, 12, 8], foot_l: [30, 2.5, -8] },
     orig: 'PROVISIONAL: a stepping knee, the striking side drawn back at shoulder height and the other hand open toward the rival, the body carried a full pace behind the knee' },
   su_plate: { hold_t: 1, ci_end: 6, tell_at: 0.5, squash_w: 0.0, drive: 'turn', kind: 'hand', target: 'head', step_max: 22, legal: ['hands_open_or_claw'],
@@ -82,4 +85,18 @@ export const strikes = {
       foot_r: [-4, 2.5, 9], foot_l: [28, 2.5, -8], hands: { r: 'fist', l: 'open' } },
     follow: { hips: [18, -14, 0], hand_r: [40, 52, 10], hand_l: [22, 58, -8] },
     orig: 'PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head' },
+  su_edge_legs: { tell_at: 0.5, squash_w: 0.3, drive: 'step_through', kind: 'foot', target: 'legs', step_max: 22,
+    chamber: { family: 'upright', lean: -6, hips: [-4, -2, 0], spine: { lean: -4, twist: -12 }, head: { pitch: -4 }, hand_r: [6, 60, 12], hand_l: [16, 62, -8],
+      foot_r: [-4, 28, 10], pole_foot_r: [8, 8, 2], foot_l: [10, 2.5, -8], ...OPEN },
+    contact: { family: 'upright_lunge', lean: -14, hips: [30, -6, 0], spine: { lean: -10, twist: 18 }, head: { pitch: 0 }, hand_r: [10, 62, 14], hand_l: [22, 64, -10],
+      foot_r: [58, 20, 8], foot_l: [30, 2.5, -8], ...OPEN },
+    follow: { hips: [26, -4, 0], foot_r: [44, 12, 8], foot_l: [28, 2.5, -8] },
+    orig: 'PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs' },
+  su_plate_arm: { hold_t: 1, ci_end: 6, tell_at: 0.5, squash_w: 0.0, drive: 'fall', kind: 'hand', target: 'arm_r', step_max: 22, legal: ['hands_open_or_claw', 'no_clasp', 'no_held_raise'],
+    chamber: { family: 'upright', lean: -4, hips: [-2, 3, 0], spine: { lean: -4, twist: -8 }, head: { pitch: -6 }, hand_r: [4, 66, 10], pole_hand_r: [-8, 6, 8], hand_l: [16, 62, -8],
+      foot_r: [-6, 2.5, 9], foot_l: [10, 2.5, -8], ...OPEN },
+    contact: { family: 'upright_lunge', lean: 20, hips: [20, -8, 0], spine: { lean: 14, twist: 12 }, head: { pitch: 12 }, hand_r: [46, 60, 10], pole_hand_r: [-4, 12, 8], hand_l: [22, 58, -8],
+      foot_r: [-4, 2.5, 9], foot_l: [26, 2.5, -8], ...OPEN },
+    follow: { hips: [16, -10, 0], hand_r: [34, 50, 10], hand_l: [22, 58, -8] },
+    orig: 'PROVISIONAL: a falling forearm plate: risen tall with the plated forearm at his shoulder and the other hand up, the body comes down and the plate falls across the rival arm' },
 };

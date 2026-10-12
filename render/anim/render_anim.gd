@@ -28,6 +28,11 @@ static var last_stand_poses: bool = true   # the last stand's body cue (docs 9.2
 static var pair_live: bool = true           # the launch pair play their own waves live (strikes, entries, blast presses, taunts: docs/animation/pair-live.md); --no-pair-live switches it off (the before)
 static var hand_tips: bool = true             # a blow shows the hand state of its tip (data/anim/tips.json: the rival's heavies close to a fist); --no-hand-tips switches it off
 static var intro_gestures: bool = true         # the sim's intro_gesture events play the fighter's own motion for the intent (docs/animation/intro-gestures.md); inert until the composer sends them; --no-intro-gestures switches it off
+static var strength_styles: bool = false      # force a brawl beat's strength and burst number over the beat's own explicit `style` (`speed` for a light, `heavy` for a wound blow): the nine cells' looks (Y the medium row, B the super row, a held X's blows the burst row, the wind-ups whole, the held charge, the armour read) on a sim that still stamps the style. false (the shipped default) is today's picture.
+static var plain_pin: bool = false             # a plain light (one light, no flurry, no chain) keeps its hand set on the target for the data's `beat.plain_light.pin_ticks` while the body goes on (the perfect follow-up's window opens as it lets go); a beat's own `plain: true` does the same. false is today's picture
+static var hook_seen: bool = false            # set by the first brawl beat that carries a strength and no style row of its own: Encounter's hook (the brawl asks by cell and no longer names a style) has landed, so the nine cells' looks are the picture with no switch to flip
+static func second_pass() -> bool:
+	return strength_styles or hook_seen
 static var medium_wind: bool = true          # Combat's eight rules for a medium on Y's 12-tick wind-up (data/anim/medium_wind.json): a flatter chamber, a half step; false is the before (tools)
 static var press_styles: bool = true         # the three press styles (tech, speed, heavy) move the body through a strike (docs/animation/press-styles.md); ON by default since 2026-10-08 (brawl B1 stamps every blow's beat); --no-press-styles switches it off (the before), Shift+F7 flips it with VFX's looks
 static var flight_lead: bool = true         # a fast launched body flies head first (docs 9.23); --no-flight-lead switches it off (the before)
@@ -313,8 +318,10 @@ static func consume(S: SimState, events: Array) -> void:
 					elif kd == "launcher_close":
 						for ic in range(S.fighters.size()):
 							fighter(S, S.fighters[ic]).on_launcher_close(String(e.text))
+					elif kd == "charge_full":
+						fighter(S, S.fighters[who]).on_charge_full(t_cue)
 					elif kd == "windup":
-						fighter(S, S.fighters[who]).on_windup(String(e.text), String(_ev(e, "source", "")), float(_ev(e, "dur", 0.0)), int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue)
+						fighter(S, S.fighters[who]).on_windup(String(e.text), String(_ev(e, "source", "")), float(_ev(e, "dur", 0.0)), int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue, S.tick)
 					elif kd == "miss":
 						fighter(S, S.fighters[who]).on_miss(String(e.text), int(_ev(e, "n", 0)), t_cue)
 					elif kd == "double_hit":
@@ -343,7 +350,9 @@ static func consume(S: SimState, events: Array) -> void:
 						var dw := Vector2(SimWrap.sdx(atk.x, vf.x), vf.y - atk.y)
 						if dw.length() > 1.0:
 							dm = Vector2(dw.x * fighter(S, vf).vface, dw.y).normalized()
-					fighter(S, vf).on_hit(S.T, String(e.region), front, float(e.amount) / 70.0, String(e.kind), dm, float(e.amount) / 60.0, S.tick)
+					var vfa: AnimFighter = fighter(S, vf)
+					vfa.armoured = RenderAnim.second_pass() and bool(DirBrawl.winding(S, vf).get("armoured", false))   # a heavy winding or charging: a light does not shift him (the nine cells)
+					vfa.on_hit(S.T, String(e.region), front, float(e.amount) / 70.0, String(e.kind), dm, float(e.amount) / 60.0, S.tick)
 					if String(e.kind) == "guard" and a >= 0 and a < S.fighters.size():
 						fighter(S, S.fighters[a]).on_blocked(S.T)
 
@@ -371,7 +380,7 @@ static func _taunt_ctx(S: SimState, f) -> Dictionary:
 	for fo in S.fighters:
 		if fighter(S, fo)._hit_n > 0:
 			traded = true
-	return {"air": f.y - WorldTerrain.groundY(S, f.x) > 20.0, "traded": traded}
+	return {"air": f.y - WorldTerrain.groundY(S, f.x, f.z) > 20.0, "traded": traded}
 
 
 ## A field of an event that may not exist yet (World's ground-contact events arrive with their fields; until then the event is not sent).
