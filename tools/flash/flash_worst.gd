@@ -3,6 +3,8 @@ extends SceneTree
 ## log for each, in normal and in reduced-flashing mode, for tools/flash/check-log.js to recount. Headless, one process, no window.
 ##   mash        both fighters human, walking into reach and mashing light (every 4 ticks each, staggered) with a heavy now and then
 ##   mashcity    the same mash in the re-laid city: the fighters set down beside its tallest tower, the towers at their backs (Rendering, docs/rendering/lanes-camera-flash.md clip 1)
+##   signaturecity  the signature scene started beside the tallest tower of the re-laid city (Legal's list, RL-128)
+##   rushcity    P1 sprints along the front street past the towers and the crowd, turning every 150 ticks; the AI fights him (camera travel at speed over contrasty scenery)
 ##   clash       both human, ki kept full, both firing the signature together every 30 ticks, so beams meet
 ##   signature   P1 human firing the signature on a cycle against the AI
 ##   transform   AI against AI, the form made ready for both at fixed ticks three times (tier 1 to 4: the game never goes past 4), so the transformation plays through again and again
@@ -22,7 +24,7 @@ const FORM_TICKS: Array = [300, 1500]
 ## The scenarios, their lengths and the AI-match set (seeds and pairings) are tools/flash/sources.json's, so the headless runs, check-log.js and run-pixels.mjs read one list.
 const SOURCES: String = "res://tools/flash/sources.json"
 ## Which slots are AI (true) in each scenario.
-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
+const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
 
 var main: Node
 var out_dir: String = "build/flash"
@@ -280,11 +282,15 @@ func _drive(sc: String, t: int, S: SimState) -> void:
 			_btn(0, "east", t % 30 < 12)
 			_btn(1, "east", t % 30 < 12)
 		"signature":
-			_walk(S, 1800.0)
-			S.fighters[0].ki = 100.0
-			_btn(0, "rt", t % 90 < 60)
-			_btn(0, "east", t % 90 > 2 and t % 90 < 14)
-			_btn(0, "west", t % 90 > 40 and _tap(t, 6, 0))
+			_signature(t, S)
+		"signaturecity":
+			if t == 0:
+				_to_the_city(S)
+			_signature(t, S)
+		"rushcity":
+			if t == 0:
+				_to_the_city(S)
+			_rush(t, S)
 		"transform":
 			_ready_forms(S, t, [60, 500, 1000])
 		"collapse":
@@ -295,6 +301,22 @@ func _drive(sc: String, t: int, S: SimState) -> void:
 				S.fighters[0].tier = 3.0
 			if t == 1200:
 				S.fighters[1].stage[1] = 2
+
+
+## P1 holds the signature on a cycle against the AI.
+func _signature(t: int, S: SimState) -> void:
+	_walk(S, 1800.0)
+	S.fighters[0].ki = 100.0
+	_btn(0, "rt", t % 90 < 60)
+	_btn(0, "east", t % 90 > 2 and t % 90 < 14)
+	_btn(0, "west", t % 90 > 40 and _tap(t, 6, 0))
+
+
+## P1 sprints along the front street.
+func _rush(t: int, S: SimState) -> void:
+	# P1 sprints (stick held, dodge held: the sprint) along the front street, turning every 150 ticks so the run stays in the city; the AI fights him
+	_stick(0, 1.0 if (t / 150) % 2 == 0 else -1.0)
+	_btn(0, "lt", true)
 
 
 ## Both human, walking into reach and mashing light every 4 ticks each (staggered), with a heavy now and then.

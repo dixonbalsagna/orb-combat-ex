@@ -1,0 +1,60 @@
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -30,11 +30,11 @@
+ ## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export). Tools' drift check
+ ## fails when the two differ (docs/tools/flash-check.md): change them together.
+ 
+-const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "transform", "collapse", "ai"]
++const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "ai"]
+ const SEED: int = 12345
+ const FORM_TICKS: Array = [300, 1500]
+ ## Which slots are the AI's (true) in each scenario.
+-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
++const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
+ 
+ var main: Node
+ var scenario: String = ""
+@@ -169,11 +169,15 @@
+ 			_btn(0, "east", t % 30 < 12)
+ 			_btn(1, "east", t % 30 < 12)
+ 		"signature":    # player one firing the signature on a cycle against the AI
+-			_walk(S, 1800.0)
+-			S.fighters[0].ki = 100.0
+-			_btn(0, "rt", t % 90 < 60)
+-			_btn(0, "east", t % 90 > 2 and t % 90 < 14)
+-			_btn(0, "west", t % 90 > 40 and _tap(t, 6, 0))
++			_signature(t, S)
++		"signaturecity":    # the same, started beside the tallest tower
++			if t == 0:
++				_to_the_city(S)
++			_signature(t, S)
++		"rushcity":    # player one sprints along the front street past the towers, turning every 150 ticks
++			if t == 0:
++				_to_the_city(S)
++			_rush(t, S)
+ 		"transform":    # AI against AI, the form made ready for both three times
+ 			_ready_forms(S, t, [60, 500, 1000])
+ 		"collapse":     # AI against AI, a blast through a row of buildings every 150 ticks
+@@ -195,6 +199,22 @@
+ 	_btn(1, "north", t % 41 < 2)
+ 
+ 
++## Player one firing the signature on a cycle.
++func _signature(t: int, S: SimState) -> void:
++	_walk(S, 1800.0)
++	S.fighters[0].ki = 100.0
++	_btn(0, "rt", t % 90 < 60)
++	_btn(0, "east", t % 90 > 2 and t % 90 < 14)
++	_btn(0, "west", t % 90 > 40 and _tap(t, 6, 0))
++
++
++## Player one sprints.
++func _rush(t: int, S: SimState) -> void:
++	# P1 sprints (stick held, dodge held: the sprint) along the front street, turning every 150 ticks so the run stays in the city; the AI fights him
++	_stick(0, 1.0 if (t / 150) % 2 == 0 else -1.0)
++	_btn(0, "lt", true)
++
++
+ func _ready_forms(S: SimState, t: int, ticks: Array) -> void:
+ 	if ticks.has(t):
+ 		for f in S.fighters:

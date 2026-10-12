@@ -30,11 +30,11 @@ extends RefCounted
 ## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export). Tools' drift check
 ## fails when the two differ (docs/tools/flash-check.md): change them together.
 
-const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "transform", "collapse", "ai"]
+const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "ai"]
 const SEED: int = 12345
 const FORM_TICKS: Array = [300, 1500]
 ## Which slots are the AI's (true) in each scenario.
-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
+const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
 
 var main: Node
 var scenario: String = ""
@@ -49,7 +49,7 @@ func _init(m: Node) -> void:
 	main = m
 	JavaScriptBridge.eval("""window.__flashcap = {
 		ready: false, tick: 0, scenario: '', error: '', in_window: 0, _req: null, _want: 0, _done: 0, _waiting: [],
-		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0 }; },
+		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0, skip: (opts && opts.skip) | 0 }; },
 		step() { return new Promise((res) => { this._waiting.push(res); this._want += 1; }); },
 		_shown(tick, inWindow) { this.tick = tick; this.in_window = inWindow; this._done += 1; const r = this._waiting.shift(); if (r) r(tick); }
 	};""", true)
@@ -70,13 +70,13 @@ func poll() -> void:
 	if not (st is Dictionary):
 		return
 	if st.get("req") is Dictionary:
-		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)))
+		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)), int(st.req.get("skip", 0)))
 	if int(st.get("pending", 0)) > 0:
 		step()
 
 
 ## Set a worst case up, as tools/flash/flash_worst.gd does, and hold the sim (nothing ticks until step()).
-func begin(sc: String, reduced: bool, seed: int = 0) -> void:
+func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0) -> void:
 	var err: String = ""
 	if not SCENARIOS.has(sc):
 		err = "no scenario '%s' (%s): playing ai" % [sc, ", ".join(PackedStringArray(SCENARIOS))]
@@ -99,6 +99,12 @@ func begin(sc: String, reduced: bool, seed: int = 0) -> void:
 			host.hub.pad_button(dev, "back", true)
 			host.hub.pad_button(dev, "back", false)
 			host.take_players()
+	# `skip` ticks run without a picture first (the clip then starts at tick skip + 1): the fast-forward of a window subset, the same sim as a clip that drew them
+	for i in range(maxi(0, skip)):
+		if scenario != "":
+			drive(scenario, host.ticks, host.S)
+		host.acc = SimConst.DT * 0.9999
+		main.frame(SimConst.DT)
 	JavaScriptBridge.eval("window.__flashcap.scenario = %s; window.__flashcap.error = %s; window.__flashcap.tick = 0;" % [JSON.stringify(sc), JSON.stringify(err)], true)
 
 
@@ -169,11 +175,15 @@ func drive(sc: String, t: int, S: SimState) -> void:
 			_btn(0, "east", t % 30 < 12)
 			_btn(1, "east", t % 30 < 12)
 		"signature":    # player one firing the signature on a cycle against the AI
-			_walk(S, 1800.0)
-			S.fighters[0].ki = 100.0
-			_btn(0, "rt", t % 90 < 60)
-			_btn(0, "east", t % 90 > 2 and t % 90 < 14)
-			_btn(0, "west", t % 90 > 40 and _tap(t, 6, 0))
+			_signature(t, S)
+		"signaturecity":    # the same, started beside the tallest tower
+			if t == 0:
+				_to_the_city(S)
+			_signature(t, S)
+		"rushcity":    # player one sprints along the front street past the towers, turning every 150 ticks
+			if t == 0:
+				_to_the_city(S)
+			_rush(t, S)
 		"transform":    # AI against AI, the form made ready for both three times
 			_ready_forms(S, t, [60, 500, 1000])
 		"collapse":     # AI against AI, a blast through a row of buildings every 150 ticks
@@ -193,6 +203,22 @@ func _mash(t: int, S: SimState) -> void:
 	_btn(1, "west", _tap(t, 4, 2))
 	_btn(0, "north", t % 37 < 2)
 	_btn(1, "north", t % 41 < 2)
+
+
+## Player one firing the signature on a cycle.
+func _signature(t: int, S: SimState) -> void:
+	_walk(S, 1800.0)
+	S.fighters[0].ki = 100.0
+	_btn(0, "rt", t % 90 < 60)
+	_btn(0, "east", t % 90 > 2 and t % 90 < 14)
+	_btn(0, "west", t % 90 > 40 and _tap(t, 6, 0))
+
+
+## Player one sprints.
+func _rush(t: int, S: SimState) -> void:
+	# P1 sprints (stick held, dodge held: the sprint) along the front street, turning every 150 ticks so the run stays in the city; the AI fights him
+	_stick(0, 1.0 if (t / 150) % 2 == 0 else -1.0)
+	_btn(0, "lt", true)
 
 
 func _ready_forms(S: SimState, t: int, ticks: Array) -> void:

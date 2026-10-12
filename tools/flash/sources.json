@@ -75,6 +75,28 @@
       ]
     },
     {
+      "id": "signaturecity",
+      "minTicks": 1200,
+      "minEvents": {
+        "beam_outcome": 1
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
+    },
+    {
+      "id": "rushcity",
+      "minTicks": 1200,
+      "minEvents": {
+        "damage": 1
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
+    },
+    {
       "id": "transform",
       "minTicks": 1200,
       "minEvents": {
@@ -125,7 +147,19 @@
         3,
         5,
         38,
-        39
+        39,
+        6,
+        9,
+        11,
+        33,
+        43,
+        73,
+        84,
+        86,
+        89,
+        97,
+        104,
+        106
       ],
       "needSignatures": [
         "PROTAGONIST",

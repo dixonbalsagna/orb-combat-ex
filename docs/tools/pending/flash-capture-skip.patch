@@ -1,0 +1,40 @@
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -49,7 +49,7 @@
+ 	main = m
+ 	JavaScriptBridge.eval("""window.__flashcap = {
+ 		ready: false, tick: 0, scenario: '', error: '', in_window: 0, _req: null, _want: 0, _done: 0, _waiting: [],
+-		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0 }; },
++		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0, skip: (opts && opts.skip) | 0 }; },
+ 		step() { return new Promise((res) => { this._waiting.push(res); this._want += 1; }); },
+ 		_shown(tick, inWindow) { this.tick = tick; this.in_window = inWindow; this._done += 1; const r = this._waiting.shift(); if (r) r(tick); }
+ 	};""", true)
+@@ -70,13 +70,13 @@
+ 	if not (st is Dictionary):
+ 		return
+ 	if st.get("req") is Dictionary:
+-		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)))
++		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)), int(st.req.get("skip", 0)))
+ 	if int(st.get("pending", 0)) > 0:
+ 		step()
+ 
+ 
+ ## Set a worst case up, as tools/flash/flash_worst.gd does, and hold the sim (nothing ticks until step()).
+-func begin(sc: String, reduced: bool, seed: int = 0) -> void:
++func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0) -> void:
+ 	var err: String = ""
+ 	if not SCENARIOS.has(sc):
+ 		err = "no scenario '%s' (%s): playing ai" % [sc, ", ".join(PackedStringArray(SCENARIOS))]
+@@ -99,6 +99,12 @@
+ 			host.hub.pad_button(dev, "back", true)
+ 			host.hub.pad_button(dev, "back", false)
+ 			host.take_players()
++	# `skip` ticks run without a picture first (the clip then starts at tick skip + 1): the fast-forward of a window subset, the same sim as a clip that drew them
++	for i in range(maxi(0, skip)):
++		if scenario != "":
++			drive(scenario, host.ticks, host.S)
++		host.acc = SimConst.DT * 0.9999
++		main.frame(SimConst.DT)
+ 	JavaScriptBridge.eval("window.__flashcap.scenario = %s; window.__flashcap.error = %s; window.__flashcap.tick = 0;" % [JSON.stringify(sc), JSON.stringify(err)], true)
+ 
+ 

@@ -241,7 +241,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
     // the scripted presses: the same buttons on the same ticks in both (a layout change that moves a button is made in both; 2026-10-11 the signature became RT + B and the web clips played no signature)
     const presses = (txt) => {
       const m = txt.match(/func _?drive\(sc: String[\s\S]*?\n(?=func |## )/);
-      return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trim()).filter((l) => /^(_btn|_walk|_mash|_ready_forms|_stage_collapse|_to_the_city|for f in S\.fighters|f\.ki|S\.fighters\[)/.test(l)) : null;
+      return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trim()).filter((l) => /^(_btn|_walk|_mash|_signature|_rush|_ready_forms|_stage_collapse|_to_the_city|for f in S\.fighters|f\.ki|S\.fighters\[)/.test(l)) : null;
     };
     const pm = presses(mine), pt = presses(theirs);
     check("Rendering's capture hook presses the same buttons on the same ticks as flash_worst.gd", !!pm && !!pt && JSON.stringify(pm) === JSON.stringify(pt), JSON.stringify([pm && pm.length, pt && pt.length]));
@@ -252,7 +252,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
     };
         // Camera's travel budget switch: the web hook reads the page's `budget=1`, the headless run reads --budget, and both turn on the same rule
     check('the travel budget switch (budget=1 on the web hook, --budget on flash_worst.gd) sets the same rule', /"budget"/.test(theirs) && /set_travel_budget\(true\)/.test(theirs) && /--budget/.test(mine) && /set_travel_budget\(true\)/.test(mine));
-    for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms', '_mash']) {
+    for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms', '_mash', '_signature', '_rush']) {
       const a = fn(mine, name), b = fn(theirs, name);
       check(`Rendering's capture hook stages the same collapse ${name} as flash_worst.gd`, !!a && !!b && JSON.stringify(a) === JSON.stringify(b), JSON.stringify([a && a.length, b && b.length]));
     }
