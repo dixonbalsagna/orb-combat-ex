@@ -56,6 +56,8 @@ var _stub_tex0: Array = []           # ... and per row-0 index
 var _stub := PackedFloat32Array()    # this pane's stubs, per building: 0 whole to 1 cut down to its stub
 var _stub_live: Dictionary = {}      # the buildings whose stub is not 0, or is wanted
 var _stub_t: float = -1.0
+var _stub_hold: Dictionary = {}      # a building lowered by the foreground patch -> the tick time before which it does not stand again
+var _sink_last: float = -1.0e9       # the tick time a building last sank under the patch (none stands again within the hold of it)
 var _top := PackedFloat64Array()     # per building: its top as drawn (-INF when it does not stand), shared by panes
 var _cut: Array = []                 # [Image, ImageTexture, dirty]: each building's cut floors (building.gdshader), shared by panes
 var _cut0: Array = []                # ... and the row-0 buildings', by row-0 index
@@ -904,18 +906,38 @@ static func tick_time(S: SimState) -> float:
 ## Per frame, per pane: cut the buildings in `want` down to low stubs and let the others stand again, eased on tick
 ## time (RenderLook.STUB_*). building.gdshader lowers every vertex of a cut building to the height in stub_tex, so the
 ## box sinks to a solid stub with its own top.
-func set_stubs(S: SimState, want: Dictionary) -> void:
-	var dt: float = clampf(tick_time(S) - _stub_t, 0.0, 0.1) if _stub_t >= 0.0 else 1.0e3
-	_stub_t = tick_time(S)
+## soft: the buildings the foreground row's patch lowers and how far (0 to 1; PaneWorld._row0_patch). They sink over
+## PATCH_SINK_S and stand again over PATCH_RISE_S, and none stands again until PATCH_HOLD_S after the last of them
+## sank (Camera's rule: a sink and a stand within a second are a flash).
+func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}) -> void:
+	var now: float = tick_time(S)
+	var snap: bool = _stub_t < 0.0
+	var dt: float = clampf(now - _stub_t, 0.0, 0.1) if not snap else 1.0e3
+	_stub_t = now
 	for bi in want:
 		_stub_live[bi] = true
+	for bi in soft:
+		if float(soft[bi]) > 0.0:
+			_stub_live[bi] = true
 	if _stub_live.is_empty():
 		return
 	var done: Array = []
 	var changed: Array = [false, false]
 	for bi in _stub_live:
 		var cut: bool = want.has(bi)
-		var v: float = move_toward(_stub[bi], 1.0 if cut else 0.0, dt / (RenderLook.STUB_IN_S if cut else RenderLook.STUB_OUT_S))
+		var v: float = _stub[bi]
+		if cut or not (soft.has(bi) or _stub_hold.has(bi)):
+			v = move_toward(v, 1.0 if cut else 0.0, dt / (RenderLook.STUB_IN_S if cut else RenderLook.STUB_OUT_S))
+		else:
+			var target: float = float(soft.get(bi, 0.0))
+			if target > v:
+				v = move_toward(v, target, dt / RenderLook.PATCH_SINK_S)
+				_stub_hold[bi] = now + RenderLook.PATCH_HOLD_S
+				_sink_last = now
+			elif target < v and (snap or (now >= float(_stub_hold.get(bi, -1.0)) and now >= _sink_last + RenderLook.PATCH_HOLD_S)):
+				v = move_toward(v, target, dt / RenderLook.PATCH_RISE_S)
+			if v <= 0.0:
+				_stub_hold.erase(bi)
 		_stub[bi] = v
 		var y: float = STUB_WHOLE
 		if v <= 0.0:
@@ -947,7 +969,25 @@ func snap_stubs() -> void:
 ## drawn (camera-relative world space), the radius in pixels (0: none), the view distance up to which buildings are cut
 ## there, then the hole's other end (his chest again for a round hole; toward the other fighter for one that covers
 ## both), the radius and the view distance to cut up to at that end].
-func set_holes(holes: Array) -> void:
+## front: the foreground row's own hole, its patch (one entry of the same shape, or empty: row 0 then takes the
+## fighters' holes like the rows behind).
+func set_holes(holes: Array, front: Array = []) -> void:
+	var sets: Array = [_hole_set(holes), _hole_set([front] if not front.is_empty() else holes)]
+	var any: bool = bool(sets[0][3]) or bool(sets[1][3])
+	if not any and not _holes_on:
+		return
+	_holes_on = any
+	var k: int = 0
+	for m in [_bld_mat, _front_mat]:
+		m.set_shader_parameter("hole", sets[k][0])
+		m.set_shader_parameter("hole_to", sets[k][1])
+		m.set_shader_parameter("hole_near", sets[k][2])
+		k += 1
+	_front_mat.set_shader_parameter("hole_edge", RenderLook.PATCH_EDGE if not front.is_empty() else Vector2(0.8, 0.25))
+
+
+## Up to two holes as the shader's three arrays, and whether any is open.
+static func _hole_set(holes: Array) -> Array:
 	var hv: Array = []
 	var ht: Array = []
 	var hn := PackedVector2Array()
@@ -964,13 +1004,28 @@ func set_holes(holes: Array) -> void:
 			hv.append(Vector4.ZERO)
 			ht.append(Vector4.ZERO)
 			hn.append(Vector2.ZERO)
-	if not any and not _holes_on:
-		return
-	_holes_on = any
-	for m in [_bld_mat, _front_mat]:
-		m.set_shader_parameter("hole", hv)
-		m.set_shader_parameter("hole_to", ht)
-		m.set_shader_parameter("hole_near", hn)
+	return [hv, ht, hn, any]
+
+
+## Whether this world has a foreground row.
+func has_row0() -> bool:
+	return not _row0_b.is_empty()
+
+
+## The standing buildings of the foreground row within `reach` of the camera's x, for the patch: each [the building,
+## its x from the camera, its width, its footing, its top as it stands whole, its front face's depth].
+func row0_faces(S: SimState, cam_x: float, reach: float) -> Array:
+	var out: Array = []
+	for bi in _row0_b:
+		if _top[bi] == -INF:
+			continue
+		var b = S.buildings[bi]
+		var bx: float = SimWrap.sdx(cam_x, b.x)
+		if absf(bx) > reach + b.w:
+			continue
+		var zd: Vector2 = _depth(b)
+		out.append([bi, bx, b.w, _top[bi] - WorldStructures.curH(b), _top[bi], zd.x + zd.y * 0.5])
+	return out
 
 
 func _building_mat() -> ShaderMaterial:

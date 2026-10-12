@@ -68,6 +68,7 @@ uniform vec4 win_lit : source_color = vec4(0.95, 0.81, 0.53, 1.0);
 uniform vec4 win_glass : source_color = vec4(0.17, 0.21, 0.31, 1.0);
 uniform vec4 hole[2];          // xyz: a hidden fighter's chest (world, as drawn); w: the hole's radius in pixels (0: none)
 uniform vec4 hole_to[2];       // xyz: the hole's other end (the chest again for a round hole); w: the radius there
+uniform vec2 hole_edge = vec2(0.8, 0.25);   // a hole's dithered edge: solid inside this share of its radius, thinning out over the next (the foreground row's patch has a softer one: RenderLook.PATCH_EDGE)
 uniform vec2 hole_near[2];     // cut what is nearer the camera than this (view distance): at the chest, at the other end
 uniform vec4 inside : source_color = vec4(0.07, 0.07, 0.09, 1.0);   // RenderLook.BUILDING_INSIDE
 uniform vec2 dmg_bite = vec2(0.36, 0.3);       // RenderLook.DMG_BITE and the rest: see look.gd
@@ -226,7 +227,7 @@ void fragment() {
 			vec2 ab = ends.zw - ends.xy;
 			vec2 ap = FRAGCOORD.xy - ends.xy;
 			float t = clamp(dot(ap, ab) / max(dot(ab, ab), 0.0001), 0.0, 1.0);
-			if (-VERTEX.z < mix(hole_near[i].x, hole_near[i].y, t) && length(ap - ab * t) < mix(hole[i].w, hole_to[i].w, t) * (0.8 + 0.25 * dith)) {
+			if (-VERTEX.z < mix(hole_near[i].x, hole_near[i].y, t) && length(ap - ab * t) < mix(hole[i].w, hole_to[i].w, t) * (hole_edge.x + hole_edge.y * dith)) {
 				discard;
 			}
 		}

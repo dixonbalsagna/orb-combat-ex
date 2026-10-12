@@ -37,6 +37,17 @@ var cutaway: Dictionary = {}
 var occluded: Array = []           # per fighter: a building stands between this pane's camera and him (for Camera)
 var _join: float = 0.0             # 0 to 1: the two fighters' holes grown into one
 var _join_t: float = -1.0
+## The foreground row's patch as drawn (RenderLook.PATCH_*): the fighters' ends of it (wrapped world x, y), its reach
+## past each, its radius in world units, the tick times before which each reach and the radius do not shrink, and the
+## tick time it was last set (-1: the next one snaps). `patch` is this frame's, for tools and for Camera: {a, b: its ends in this pane's pixels, r: its
+## radius in pixels, size: its area in square fighter heights, sink: {building: how far it is lowered, 0 to 1}}.
+var _patch_a := Vector2.ZERO
+var _patch_b := Vector2.ZERO
+var _patch_ext := Vector2.ZERO
+var _patch_r: float = 0.0
+var _patch_hold := Vector3(-1.0, -1.0, -1.0)
+var _patch_t: float = -1.0
+var patch: Dictionary = {}
 var _cue := PackedFloat32Array()   # per fighter: his lane cue, 0 to 1
 var _cue_z := PackedFloat32Array() # ... his depth at the last tick seen,
 var _cue_want: Array = []          # ... and whether the cue was wanted then
@@ -264,7 +275,13 @@ func _occlusion(S: SimState, cam_x: float, vp: Vector2) -> void:
 				planet.occluders(S, cand, eye, cam_x, (chest[0] as Vector3).lerp(chest[1], float(k) / steps), RenderLook.OCCL_MARGIN, -1, want)
 			for bi in aim:
 				want.erase(bi)
-	planet.set_stubs(S, want)
+	# Row 0, the foreground: one patch for the whole action, and the buildings under a big one lowered.
+	var soft: Dictionary = {}
+	var front: Array = _row0_patch(S, cam_x, vp, chest, seen, tall, soft, only) if on and planet.has_row0() else []
+	if front.is_empty():
+		patch = {}
+		_patch_t = -1.0
+	planet.set_stubs(S, want, soft)
 	# The holes.
 	var holes: Array = []
 	var inv: Transform3D = cam_rig.transform.affine_inverse()
@@ -299,13 +316,166 @@ func _occlusion(S: SimState, cam_x: float, vp: Vector2) -> void:
 		holes[1][3] = (chest[1] as Vector3).lerp(chest[0], e)
 		holes[1][4] = lerpf(r1[0], r0[0], e)
 		holes[1][5] = lerpf(r1[1], r0[1], e)
-	planet.set_holes(holes)
+	planet.set_holes(holes, front)
 
 
 ## The next frame's stubs, joined hole and lane cues jump to their targets instead of easing (for tools that pose a
 ## frame).
+## The foreground row's patch (RenderLook.PATCH_*; Orb, 2026-10-11): one dithered window through row 0 for the whole
+## action in this pane. Returns it as a hole for the row's material ([] when no fighter is in view), and fills `soft`
+## with the buildings a big patch lowers ({building: 0 to 1}). chest, seen, tall: per fighter, his chest as drawn, whether
+## this pane sees him, his drawn height in pixels; only: Camera's request (a fighter slot: the patch is his alone).
+## Presentation only: it reads the sim and this pane's camera.
+func _row0_patch(S: SimState, cam_x: float, vp: Vector2, chest: Array, seen: Array, tall: PackedFloat32Array, soft: Dictionary, only: int = -1) -> Array:
+	var ppu: float = 0.0
+	var pts: Array = []
+	var extra: Array = []
+	var z_plane: float = -INF
+	for i in range(chest.size()):
+		if not seen[i] or (only >= 0 and only != i):
+			continue
+		var c: Vector3 = chest[i]
+		pts.append(Vector2(c.x, c.y))
+		ppu = maxf(ppu, tall[i] / FighterView.HEIGHT)
+		z_plane = maxf(z_plane, c.z)
+		# Where he will be: a rush, a launch and a zip are in his velocity.
+		var f = S.fighters[i]
+		var ahead := Vector2(f.vx, f.vy) * RenderLook.PATCH_LOOK_S
+		extra.append(Vector2(c.x, c.y) + ahead.limit_length(RenderLook.PATCH_LOOK_MAX))
+	if pts.is_empty() or ppu <= 0.0:
+		return []
+	var hw: float = 0.5 * vp.x / ppu
+	# What is travelling: each beam's stretch inside the view, each shot.
+	for b in S.beams:
+		var o := Vector2(SimWrap.sdx(cam_x, b.ox), b.oy)
+		var d := Vector2(b.ux, b.uy)
+		var s1: float = b.p * b.len
+		var t0: float = 0.0
+		var t1: float = s1
+		if absf(d.x) > 0.001:
+			var ta: float = (-hw - o.x) / d.x
+			var tb: float = (hw - o.x) / d.x
+			t0 = maxf(t0, minf(ta, tb))
+			t1 = minf(t1, maxf(ta, tb))
+		elif absf(o.x) > hw:
+			continue
+		if t1 > t0:
+			extra.append(o + d * t0)
+			extra.append(o + d * t1)
+	for sh in S.shots:
+		var sx: float = SimWrap.sdx(cam_x, sh.x)
+		if absf(sx) < hw:
+			extra.append(Vector2(sx, sh.y))
+	# What is wanted: the fighters at its ends, reaching along their line for whatever lies past them, as wide as
+	# whatever lies off it.
+	var a: Vector2 = pts[0]
+	var b2: Vector2 = pts[pts.size() - 1]
+	if b2.x < a.x:
+		var tmp: Vector2 = a
+		a = b2
+		b2 = tmp
+	var u: Vector2 = (b2 - a).normalized() if a.distance_to(b2) > 1.0 else Vector2.RIGHT
+	var len0: float = a.distance_to(b2)
+	var r_min: float = RenderLook.PATCH_BODY * FighterView.HEIGHT
+	var r_want: float = r_min
+	var ext_want := Vector2.ZERO
+	for p in extra:
+		var q: Vector2 = p
+		var t: float = (q - a).dot(u)
+		ext_want.x = maxf(ext_want.x, -t)
+		ext_want.y = maxf(ext_want.y, t - len0)
+		r_want = maxf(r_want, absf((q - a).dot(Vector2(-u.y, u.x))) + RenderLook.PATCH_PAD)
+	r_want = minf(r_want, maxf(r_min, RenderLook.PATCH_R_MAX * vp.y / ppu))
+	ext_want = Vector2(minf(ext_want.x, 2.4 * hw), minf(ext_want.y, 2.4 * hw))
+	# As drawn. Each end follows its fighter, and the reach past him and the radius grow, by area: never more than
+	# PATCH_AREA_TICK pixels a tick in all, shared by what each asks for. A reach and the radius shrink the same way,
+	# but only once nothing has asked them to grow for PATCH_HOLD_S.
+	var now: float = PlanetView.tick_time(S)
+	var da: Vector2 = Vector2(SimWrap.sdx(cam_x, _patch_a.x), _patch_a.y)
+	var db: Vector2 = Vector2(SimWrap.sdx(cam_x, _patch_b.x), _patch_b.y)
+	var ext: Vector2 = _patch_ext
+	var dr: float = _patch_r
+	if _patch_t < 0.0 or now < _patch_t or now - _patch_t > 0.5:
+		da = a
+		db = b2
+		ext = ext_want
+		dr = r_want
+		_patch_hold = Vector3(now, now, now)
+	else:
+		var ticks: float = (now - _patch_t) / SimConst.DT
+		var budget: float = RenderLook.PATCH_AREA_TICK * (vp.x * vp.y) / (1024.0 * 768.0) * ticks   # pixels of area this frame
+		var r_px: float = maxf(dr * ppu, 1.0)
+		# What each part asks for: an end to follow its fighter, a reach to grow or (past its hold) shrink, the radius.
+		var ask_a: float = da.distance_to(a)
+		var ask_b: float = db.distance_to(b2)
+		var grow := Vector3(ext_want.x - ext.x, ext_want.y - ext.y, r_want - dr)
+		if grow.x > 0.5:
+			_patch_hold.x = now + RenderLook.PATCH_HOLD_S
+		elif now < _patch_hold.x:
+			grow.x = 0.0
+		if grow.y > 0.5:
+			_patch_hold.y = now + RenderLook.PATCH_HOLD_S
+		elif now < _patch_hold.y:
+			grow.y = 0.0
+		if grow.z > 0.25:
+			_patch_hold.z = now + RenderLook.PATCH_HOLD_S
+		elif now < _patch_hold.z:
+			grow.z = 0.0
+		# The area all of it would turn, and the share of it this frame's budget allows.
+		var edge: float = 2.0 * (da.distance_to(db) + ext.x + ext.y) * ppu + TAU * r_px
+		var need: float = (ask_a + ask_b + absf(grow.x) + absf(grow.y)) * ppu * 2.0 * r_px + absf(grow.z) * ppu * edge
+		var k: float = minf(1.0, budget / maxf(need, 0.001))
+		da = da.lerp(a, k)
+		db = db.lerp(b2, k)
+		ext += Vector2(grow.x, grow.y) * k
+		dr += grow.z * k
+	_patch_t = now
+	_patch_a = Vector2(SimWrap.wrap(cam_x + da.x), da.y)
+	_patch_b = Vector2(SimWrap.wrap(cam_x + db.x), db.y)
+	_patch_ext = ext
+	_patch_r = dr
+	# Its two ends as drawn: each fighter's, pushed out along their line by its reach.
+	var ud: Vector2 = (db - da).normalized() if da.distance_to(db) > 1.0 else Vector2.RIGHT
+	da -= ud * ext.x
+	db += ud * ext.y
+	# On this pane's screen.
+	var pa: Vector2 = cam_rig.unproject_position(Vector3(da.x, da.y, z_plane))
+	var pb: Vector2 = cam_rig.unproject_position(Vector3(db.x, db.y, z_plane))
+	var pr: float = dr * ppu
+	var size: float = (2.0 * dr * da.distance_to(db) + PI * dr * dr) / (FighterView.HEIGHT * FighterView.HEIGHT)
+	# The hybrid: a big patch lowers the buildings it covers.
+	var big: float = smoothstep(RenderLook.PATCH_BIG.x, RenderLook.PATCH_BIG.y, size)
+	var sink: Dictionary = {}
+	if big > 0.0:
+		var ab: Vector2 = pb - pa
+		for fc in planet.row0_faces(S, cam_x, hw):
+			var inside: int = 0
+			var shown: int = 0
+			for ix in range(5):
+				for iy in range(5):
+					var wp := Vector3(float(fc[1]) + (float(ix) / 4.0 - 0.5) * float(fc[2]), lerpf(float(fc[3]), float(fc[4]), (float(iy) + 0.5) / 5.0), float(fc[5]))
+					if cam_rig.is_position_behind(wp):
+						continue
+					var sp: Vector2 = cam_rig.unproject_position(wp)
+					if sp.x < 0.0 or sp.x > vp.x or sp.y < 0.0 or sp.y > vp.y:
+						continue
+					shown += 1
+					var t: float = clampf((sp - pa).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
+					if (sp - pa - ab * t).length() < pr * 0.8:
+						inside += 1
+			if shown >= 4:
+				var under: float = smoothstep(RenderLook.PATCH_UNDER.x, RenderLook.PATCH_UNDER.y, float(inside) / float(shown))
+				if big * under > 0.0:
+					soft[int(fc[0])] = big * under
+					sink[int(fc[0])] = big * under
+	patch = {"a": pa, "b": pb, "r": pr, "size": size, "sink": sink}
+	var near: float = -(cam_rig.transform.affine_inverse() * Vector3(da.x, da.y, z_plane)).z - RenderLook.HOLE_GAP
+	return [Vector3(da.x, da.y, z_plane), pr, near, Vector3(db.x, db.y, z_plane), pr, near]
+
+
 func snap_occlusion() -> void:
 	planet.snap_stubs()
+	_patch_t = -1.0
 	_join_t = -1.0
 	_cue_t = -1.0
 	_react_t = -1.0

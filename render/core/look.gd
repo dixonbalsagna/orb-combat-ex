@@ -57,6 +57,28 @@ const STUB_H: float = 40.0               # a cut-down building stands this tall
 const STUB_MARGIN: float = 110.0         # buildings this near a fighter's sight line are cut down with the one hiding him
 const STUB_IN_S: float = 0.2             # a building sinks to its stub over this long,
 const STUB_OUT_S: float = 0.35           # ... and stands again over this long
+## The foreground row's patch (Orb, 2026-10-11: "the larger see-through patch first ... allow a hybrid approach where the
+## building also shrinks"). Row 0 stands between the camera and the fight, so it opens with ONE dithered window for
+## the whole action: both fighters, the street between them, and what is travelling (where a fighter will be
+## PATCH_LOOK_S ahead, a beam, a shot). Its radius round a fighter is PATCH_BODY of his heights, so the street under
+## him and a height over his head show. It grows and shrinks by area: never more than PATCH_AREA_TICK pixels a tick in
+## all (at 1024 by 768), under the frame analyser's area threshold of 21,824, and a reach or the radius shrinks only
+## when nothing has asked it to grow for PATCH_HOLD_S, so it does not breathe.
+## The hybrid: a patch larger than PATCH_BIG.x square fighter heights (about 9% of the screen at fight framing) lowers
+## the buildings it covers (a building counts as under it by the share of its face covered, PATCH_UNDER), and at
+## PATCH_BIG.y (about 15%) they are stubs: a small skirmish is a window, a big exchange a lowered building.
+const PATCH_BODY: float = 2.2
+const PATCH_PAD: float = 60.0            # round anything else it must show, world units
+const PATCH_LOOK_S: float = 0.3
+const PATCH_LOOK_MAX: float = 900.0      # ... at most this far ahead of a fighter, world units
+const PATCH_EDGE := Vector2(0.55, 0.5)   # its edge: solid inside this share of its radius, thinning out over the next
+const PATCH_AREA_TICK: float = 16000.0
+const PATCH_HOLD_S: float = 0.75         # Camera's hold (docs/camera/city-in-depth.md A4)
+const PATCH_R_MAX: float = 0.42          # its radius is never more than this share of the pane's height
+const PATCH_BIG := Vector2(40.0, 70.0)
+const PATCH_UNDER := Vector2(0.1, 0.35)
+const PATCH_SINK_S: float = 0.45         # a building under a big patch sinks over this long,
+const PATCH_RISE_S: float = 0.8          # ... and stands again over this, once the hold has passed with nothing sinking
 const STUB_SPAN: float = 150.0           # the stretch between two fighters is kept clear in steps of this
 ## Fight lanes (ADR 0009): the streets painted on the ground from the lane table (render/core/lanes.gd), and the lane
 ## cue, a stripe on the ground at a fighter's depth in his colour, shown while it says something: the fighters are at
