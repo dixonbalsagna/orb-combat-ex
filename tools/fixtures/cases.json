@@ -241989,13 +241989,135 @@
       "expect": null
     },
     {
+      "id": "settle-aspect-max-type",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/aspect_max": "five"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/aspect_max"
+      }
+    },
+    {
+      "id": "settle-aspect-max-below-one",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/aspect_max": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/aspect_max"
+      }
+    },
+    {
+      "id": "settle-aspect-max-one-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/aspect_max": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "settle-kind-aspect-max-below-one",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/kinds/0/aspect_max": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/settlements/0/districts/0/kinds/0/aspect_max"
+      }
+    },
+    {
+      "id": "settle-row-pop-too-short",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/row_pop": [1, 1, 1]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/settlements/0/districts/0/row_pop"
+      }
+    },
+    {
+      "id": "settle-row-pop-negative",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/row_pop": [1, -0.1, 1, 1]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/settlements/0/districts/0/row_pop/1"
+      }
+    },
+    {
+      "id": "settle-row-pop-above-one",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/row_pop": [1, 1.5, 1, 1]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/settlements/0/districts/0/row_pop/1"
+      }
+    },
+    {
+      "id": "settle-row-pop-edges-ok",
+      "schema": "biomes-settlements.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/settlements.json",
+          "set": {
+            "/settlements/0/districts/0/row_pop": [0, 1, 0, 1]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
       "id": "settle-lanes-row-without-a-lane",
       "schema": "biomes-settlements.schema.json",
       "mutate": [
         {
           "file": "data/biomes/lanes.json",
           "del": [
-            "/lanes/5"
+            "/lanes/6"
           ]
         }
       ],
@@ -242708,7 +242830,7 @@
         {
           "file": "data/biomes/lanes.json",
           "set": {
-            "/lanes/5/kind": "ridge"
+            "/lanes/6/kind": "ridge"
           }
         }
       ],
@@ -242926,7 +243048,7 @@
         {
           "file": "data/biomes/lanes.json",
           "set": {
-            "/z_front": -27
+            "/z_front": -29.5
           }
         }
       ],
@@ -243161,7 +243283,7 @@
         {
           "file": "data/biomes/lanes.json",
           "set": {
-            "/lanes/4/bottom": -28
+            "/z_back": -20
           }
         }
       ],
@@ -243177,7 +243299,7 @@
         {
           "file": "data/biomes/lanes.json",
           "set": {
-            "/lanes/5/bottom": -60
+            "/lanes/6/bottom": -60
           }
         }
       ],
@@ -243271,7 +243393,7 @@
         {
           "file": "data/biomes/lanes.json",
           "set": {
-            "/strips/1/top": 4.5
+            "/strips/1/top": 2
           }
         }
       ],
@@ -243287,7 +243409,7 @@
         {
           "file": "data/biomes/lanes.json",
           "set": {
-            "/strips/1/top": 4
+            "/strips/1/top": 1.6
           }
         }
       ],

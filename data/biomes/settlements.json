@@ -34,7 +34,7 @@
   "landmarks": [
     {
       "key": "bell_tower",
-      "width_bh": 10,
+      "width_bh": 9,
       "shape": "spire",
       "height_bh": 65,
       "hp_mult": 1.8,
@@ -74,7 +74,7 @@
     },
     {
       "key": "crown_tower",
-      "width_bh": 12,
+      "width_bh": 9,
       "shape": "crown",
       "height_bh": 52,
       "hp_mult": 1.6,
@@ -82,7 +82,7 @@
     },
     {
       "key": "ledger_hall",
-      "width_bh": 13,
+      "width_bh": 9,
       "shape": "stepped",
       "height_bh": 46,
       "hp_mult": 1.6,
@@ -430,8 +430,8 @@
             "centre_bump": 0.2
           },
           "width_bh": [
-            6,
-            12
+            5,
+            8
           ],
           "depth_fill": [
             0.75,
@@ -442,12 +442,12 @@
             1.6
           ],
           "block_bh": [
-            26,
-            40
+            9.0,
+            13.0
           ],
           "avenue_bh": [
-            8,
-            10
+            5.0,
+            6.0
           ],
           "row_h": [
             1.0,
@@ -498,8 +498,8 @@
             "centre_bump": 0.3
           },
           "width_bh": [
-            7,
-            14
+            6,
+            9
           ],
           "depth_fill": [
             0.85,
@@ -510,12 +510,12 @@
             1.4
           ],
           "block_bh": [
-            30,
-            48
+            10.0,
+            14.0
           ],
           "avenue_bh": [
-            10,
-            14
+            5.0,
+            6.0
           ],
           "row_h": [
             1.0,
@@ -580,8 +580,8 @@
             "centre_bump": 0.2
           },
           "width_bh": [
-            6,
-            12
+            5,
+            8
           ],
           "depth_fill": [
             0.75,
@@ -592,12 +592,12 @@
             1.6
           ],
           "block_bh": [
-            26,
-            40
+            9.0,
+            13.0
           ],
           "avenue_bh": [
-            8,
-            10
+            5.0,
+            6.0
           ],
           "row_h": [
             1.0,

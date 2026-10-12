@@ -1,6 +1,6 @@
 # The street grid and the depth API (D, E, F of Orb's depth addition)
 
-Owner: World and Environment. 2026-10-12. Scratch only (nothing in the tree changes until the EP's go). Files: `docs/world/scratch-build/city3/` (`files/` the finished copies, `city3.diff` the three code files against HEAD, `mk_grid.py` the data step), pictures in `docs/world/stills/streets3/` (review diagrams, uncommitted, not for a public page).
+Owner: World and Environment. 2026-10-12. **Option P is applied to the tree** (lanes-remeasure-plan.md section 12); sections E and F are for the depth windows (L3 and L4), which wait for the EP's go. Files: `docs/world/scratch-build/city3/` (`files/` the finished copies, `city3.diff` the three code files against HEAD, `mk_grid.py` the data step), pictures in `docs/world/stills/streets3/` (review diagrams, uncommitted, not for a public page).
 
 Orb's picture: a neighbourhood whose streets make a perfect grid, as deep as the Z axis is, with the fight able to happen over any intersection.
 

@@ -1,49 +1,56 @@
 {
   "schema": "biomes.lanes/1",
-  "_about": "The fight lanes (docs/world/fight-lanes-world.md). Depths in fighter heights (bh = 75 units), z positive toward the camera. The band is z_front to z_back; rows 0 and 3 are scenery, rows 1 and 2 hold the blocks, the two streets hold no footprint.",
-  "z_front": 5.0,
-  "z_back": -27.0,
+  "_about": "The fight lanes (docs/world/fight-lanes-world.md). Depths in fighter heights (bh = 75 units), z positive toward the camera. The band is z_front to z_back; rows 0 and 3 are scenery, rows 1 and 2 hold the blocks, the two streets hold no footprint. Three streets along the band (front, middle, back) and two block rows: a fight can happen over any intersection of a street and an avenue.",
+  "z_front": 2.5,
+  "z_back": -29.5,
   "lanes": [
     {
       "name": "foreground",
       "kind": "scenery",
-      "top": 12.5,
-      "bottom": 7.5,
+      "top": 10.0,
+      "bottom": 5.0,
       "row": 0
     },
     {
       "name": "front_street",
       "kind": "street",
-      "top": 5.0,
-      "bottom": -4.0,
+      "top": 2.5,
+      "bottom": -2.5,
       "row": -1
     },
     {
       "name": "block_1",
       "kind": "block",
-      "top": -4.0,
-      "bottom": -12.0,
+      "top": -2.5,
+      "bottom": -11.0,
       "row": 1
     },
     {
-      "name": "back_street",
+      "name": "mid_street",
       "kind": "street",
-      "top": -12.0,
-      "bottom": -18.0,
+      "top": -11.0,
+      "bottom": -16.0,
       "row": -1
     },
     {
       "name": "block_2",
       "kind": "block",
-      "top": -18.0,
-      "bottom": -27.0,
+      "top": -16.0,
+      "bottom": -24.5,
       "row": 2
+    },
+    {
+      "name": "back_street",
+      "kind": "street",
+      "top": -24.5,
+      "bottom": -29.5,
+      "row": -1
     },
     {
       "name": "background",
       "kind": "scenery",
-      "top": -34.0,
-      "bottom": -42.0,
+      "top": -36.5,
+      "bottom": -44.5,
       "row": 3
     }
   ],
@@ -52,50 +59,92 @@
     {
       "lane": "front_street",
       "kind": "sidewalk",
-      "top": 5.0,
-      "bottom": 4.0
+      "top": 2.5,
+      "bottom": 1.6
     },
     {
       "lane": "front_street",
       "kind": "kerb",
-      "top": 4.0,
-      "bottom": 2.8
+      "top": 1.6,
+      "bottom": 0.9
     },
     {
       "lane": "front_street",
       "kind": "carriageway",
-      "top": 2.8,
-      "bottom": -1.8
+      "top": 0.9,
+      "bottom": -0.9
     },
     {
       "lane": "front_street",
       "kind": "kerb",
-      "top": -1.8,
-      "bottom": -3.0
+      "top": -0.9,
+      "bottom": -1.6
     },
     {
       "lane": "front_street",
       "kind": "sidewalk",
-      "top": -3.0,
-      "bottom": -4.0
+      "top": -1.6,
+      "bottom": -2.5
+    },
+    {
+      "lane": "mid_street",
+      "kind": "sidewalk",
+      "top": -11.0,
+      "bottom": -11.9
+    },
+    {
+      "lane": "mid_street",
+      "kind": "kerb",
+      "top": -11.9,
+      "bottom": -12.6
+    },
+    {
+      "lane": "mid_street",
+      "kind": "carriageway",
+      "top": -12.6,
+      "bottom": -14.4
+    },
+    {
+      "lane": "mid_street",
+      "kind": "kerb",
+      "top": -14.4,
+      "bottom": -15.1
+    },
+    {
+      "lane": "mid_street",
+      "kind": "sidewalk",
+      "top": -15.1,
+      "bottom": -16.0
     },
     {
       "lane": "back_street",
       "kind": "sidewalk",
-      "top": -12.0,
-      "bottom": -13.0
+      "top": -24.5,
+      "bottom": -25.4
+    },
+    {
+      "lane": "back_street",
+      "kind": "kerb",
+      "top": -25.4,
+      "bottom": -26.1
     },
     {
       "lane": "back_street",
       "kind": "carriageway",
-      "top": -13.0,
-      "bottom": -17.0
+      "top": -26.1,
+      "bottom": -27.9
+    },
+    {
+      "lane": "back_street",
+      "kind": "kerb",
+      "top": -27.9,
+      "bottom": -28.6
     },
     {
       "lane": "back_street",
       "kind": "sidewalk",
-      "top": -17.0,
-      "bottom": -18.0
+      "top": -28.6,
+      "bottom": -29.5
     }
   ]
 }

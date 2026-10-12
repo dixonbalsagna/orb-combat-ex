@@ -468,7 +468,8 @@
           "maxItems": 4,
           "items": {
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 1
           },
           "description": "The people's density factor by row 0 to 3 (default 1 each). The front block's street side is the fight's sidewalk, so the front block carries fewer."
         },

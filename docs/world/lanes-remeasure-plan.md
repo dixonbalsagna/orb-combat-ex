@@ -201,3 +201,29 @@ Section 10's city is in the tree: `settlements.json` (the aspect rule `aspect_ma
 **What it says.** (1) The damage stays where it was: front row 31.3% against 29.8%, civilians 18.6% against 19.3%, length 385 against 382 s; QA's civilian band (12 to 30%) holds. (2) Fewer, broader buildings go down sooner at the middle tiers (tier 2 and 3: 0.52 and 2.69 a minute against 0.23 and 1.48), the tier 4 rate is the same (7.67 against 7.89, over the floor of 6). (3) Shorter towers leave a shell more often (11.5% against 7.9%: a 28-fighter-height tower has 14 floors, not 31) and a cut floor is still standing at the KO a little more (0.15 a match). (4) BUILDING SMASH plans 0.40 a match (0.32): the lever is still Encounter's baseline, not the world's. (5) Blocked volume at the plane 15.9%.
 
 **Gates on the tree.** `npm test --prefix sim` 5 of 5; the world probe 0 failures; `lane_check`, `stagecheck`, `blockcheck`, `directcheck`, `minecheck` clean; render determinism plain and `--intro --seeds=2 --ticks=900` pass; the seam sweep passes; render `lane_check`, `stage_check`, `ground_check`, `patch_check` and VFX's `effects_check` pass; `validate.js` 183 files, 0 errors, `--self-test` 6718 of 6718; the flash count passes for `mash`, `mashcity` and `collapse`. **One fails: `render/tools/shape_check.gd:156`** ("this world has a tall tower and a stepped one in the front row to try"): it looks for a non-landmark row 1 building of at least 20 floors, and the tallest in the new city is 17 (a shaft; the stepped ones are 14 and 16). With `>= 14` in that line it passes (scratch copy). Rendering's file, so not edited here.
+
+## 12. Option P applied: three streets in the unchanged band (2026-10-12, on HEAD eece95ef)
+
+The street grid of `docs/world/depth-streets.md` (D) is in the tree on top of section 11's city: `data/biomes/lanes.json` (front street 2.5 to -2.5, middle street -11 to -16, back street -24.5 to -29.5 fighter heights, each of five strips; the band is z_front 2.5, z_back -29.5, 32 bh as before; blocks -2.5 to -11 and -16 to -24.5), `data/biomes/settlements.json` (blocks 9 to 14 bh, avenues 5 to 6 bh, downtown widths 6 to 9, mid-rise 5 to 8, landmark widths 9), `sim/world/lanes.gd` (additive: `limits()`, `streets()`, `avenueAt()`, `intersections()`), `sim/world/tools/lane_check.gd` (the street-overlap check reads the lane table) and `sim/world/tools/isect_check.gd` (new, 9 checks). One golden regeneration. **Neutral for the sim's state:** `S.lanes` stays derived and unhashed; Bellgate goes from 3 avenues to 10 (17 on the planet), 15 crossings within 3,000 units of downtown's centre, none with a footprint in it.
+
+**Measured on the tree, 100 matches (40 for the stage and shot figures), section 11's city against P:**
+
+| | Section 11 (two streets) | P (three streets) |
+| :--- | ---: | ---: |
+| Buildings (rows 1 / 2 / 3) | 121 (49 / 48 / 24) | 118 (50 / 46 / 22) |
+| Front row lost at the KO | 31.3% | 32.0% |
+| All rows lost | 25.4% | 26.6% |
+| Civilians lost (share) | 18.6% | 19.0% |
+| Tier 1 / 2 / 3 / 4 structures a minute (all rows) | 0.05 / 0.52 / 2.69 / 7.67% | 0.05 / 0.58 / 2.54 / 8.00% |
+| Shells at the KO (all rows / front row) | 11.5% / 14.3% | 8.8% / 11.1% |
+| Cut floors still standing at the KO, towers a match | 0.15 | 0.15 |
+| BUILDING SMASH plans a match | 0.40 | 0.38 |
+| Shots ending on a building a match | 1.8 | 2.3 |
+| Structures lost a match | 26.9 of 121 | 28.5 of 118 |
+| Share of the fight volume blocked at the plane | 15.9% | 14.0% |
+| Length, mean | 385 s | 388 s |
+| C1 | clean | clean (0 of 100) |
+
+Within noise of section 11 everywhere; the volume blocked at the plane is a little lower because the avenues open the blocks. The depth-on numbers (L3) are in `depth-streets.md` section E.
+
+**Gates.** `npm test --prefix sim` 5 of 5; probe, `lane_check`, `isect_check`, `stagecheck`, `blockcheck`, `directcheck`, `minecheck` 0 failed; render `lane_check`, `stage_check`, `shape_check` (15 strips of 16 at most, 17 avenues of 24), `ground_check`, `patch_check` and VFX's `effects_check` pass; render determinism plain and `--intro --seeds=2 --ticks=900` pass; seam sweep passes; the flash count passes (`mash`, `mashcity`, `collapse`: 64 building falls in the collapse scene, mashcity sets down by the tallest tower and plays as before). `validate.js` 183 files, 0 errors; `--self-test`: 6711 of 6718 until Tools' cases are re-pointed (seven fixtures address the old table by index: `docs/world/scratch-build/city3/cases-p.diff`, which also adds eight cases for `aspect_max` and `row_pop`; with it 6726 of 6726).

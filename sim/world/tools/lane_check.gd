@@ -21,9 +21,11 @@ func _init() -> void:
 		if hi > float(ln.top) + 0.001 or lo < float(ln.bottom) - 0.001:
 			out_of_lane += 1
 		if r == 1 or r == 2:
-			# street intervals: front street +5 to -4, back street -12 to -18
-			if (hi > -4.0 + 0.001 and lo < 5.0) or (hi > -18.0 + 0.001 and lo < -12.0 - 0.001 and r == 1) or (r == 2 and hi > -12.0 + 0.001):
-				street_hits += 1
+			# a block footprint never overlaps a street lane of the table (data/biomes/lanes.json), whatever the table is
+			for sl in WorldLanes.data().lanes:
+				if sl.kind == "street" and hi > float(sl.bottom) + 0.001 and lo < float(sl.top) - 0.001:
+					street_hits += 1
+					break
 		if not byrow.has(r):
 			byrow[r] = []
 		byrow[r].append(b)

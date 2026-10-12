@@ -71,6 +71,63 @@ static func clearLane(S: SimState, x: float, z: float) -> float:
 	return best
 
 
+## The depth limits of the band in units, [z_front, z_back]: z_front is toward the camera. A flight that leaves them is a bug (the band clamp).
+static func limits() -> Array:
+	return [float(data().get("z_front", 0.0)) * BH, float(data().get("z_back", 0.0)) * BH]
+
+
+## The street lanes of the table, front to back, as [z_top, z_bottom] in units: the corridors along the planet a brawl may drift through.
+static func streets() -> Array:
+	var out: Array = []
+	for l in data().get("lanes", []):
+		if l.kind == "street":
+			out.append([float(l.top) * BH, float(l.bottom) * BH])
+	return out
+
+
+## The avenue that holds x with the body's half width to spare (an inset of pad at each side), or -1. A body in an avenue may stand at any depth of
+## the band: the avenue is clear air across the blocks, from the front street to the back street.
+static func avenueAt(S: SimState, x: float, pad: float = 0.0) -> int:
+	var t: PackedFloat32Array = S.lanes
+	if t.size() < 13:
+		return -1
+	var nd: int = int(t[3])
+	var na: int = int(t[4])
+	var oA: int = int(t[12]) + 6 * nd
+	for i in range(na):
+		var a0: float = t[oA + 3 * i]
+		var a1: float = t[oA + 3 * i + 1]
+		if absf(SimWrap.sdx(x, (a0 + a1) * 0.5)) <= (a1 - a0) * 0.5 - pad:
+			return i
+	return -1
+
+
+## The intersections within r of x, nearest first, each [cx, cz, hx, hz, d]: the centre of the crossing of an avenue (S.lanes) and a street lane,
+## its half extents and its distance from x. Clear air from the ground to the sky by construction: no footprint stands in an avenue (the
+## generator skips it) nor in a street lane. Empty when the table has no avenues (an open field, a village without cross streets).
+static func intersections(S: SimState, x: float, r: float) -> Array:
+	var t: PackedFloat32Array = S.lanes
+	var out: Array = []
+	if t.size() < 13:
+		return out
+	var nd: int = int(t[3])
+	var na: int = int(t[4])
+	var oA: int = int(t[12]) + 6 * nd
+	var st: Array = streets()
+	for i in range(na):
+		var a0: float = t[oA + 3 * i]
+		var a1: float = t[oA + 3 * i + 1]
+		var cx: float = (a0 + a1) * 0.5
+		var hx: float = (a1 - a0) * 0.5
+		var d: float = absf(SimWrap.sdx(x, cx))
+		if d > r + hx:
+			continue
+		for sl in st:
+			out.append([cx, (sl[0] + sl[1]) * 0.5, hx, (sl[0] - sl[1]) * 0.5, d])
+	out.sort_custom(func(p, q): return p[4] < q[4] or (p[4] == q[4] and p[1] > q[1]))
+	return out
+
+
 ## S.lanes (docs/world/fight-lanes-world.md section 10): a flat PackedFloat32Array, world units, z positive toward the camera.
 ## 0 to 12 header (version, nLanes, nStrips, nDistricts, nAvenues, nRows, rowZ0, rowStep, zFront, zBack, offLanes, offStrips,
 ## offDistricts); lanes 4 floats each (zTop, zBottom, kind 0 street / 1 block / 2 scenery / 3 ridge, row or -1); strips 4 each (lane,
