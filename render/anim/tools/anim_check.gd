@@ -1778,8 +1778,8 @@ func _test_energy_reach() -> void:
 ## (error under 0.25, one contact, nothing on screen, no NaN) and the bolts' hand at the chest or the gut (38 to 62 high, below the collar) with the left hand as with the right. Mirroring is the renderer's
 ## (`side` from the beat's `hand`): this proves each piece plays whole on the other arm.
 ## What the solve's last pass has to pull back (Combat's finding on `ru.su_knee`, `pk.bolt_flat` and `pk.bolt_thrust`: over 30 degrees on some live frames): each of the three, and the other pieces of their kind, on
-## the real solve at their own striking distance and at the slack the closing rule may leave them (data/anim/reach.json), the frames whose correction goes over 30 degrees counted. The flagged knee and the four
-## new pieces may have none up to 20 units of slack; the bolts and the rest are measured and printed.
+## the real solve at their own striking distance and at the slack the closing rule may leave them (data/anim/reach.json), the frames whose correction goes over 30 degrees counted. The flagged knee and the heel,
+## the four new pieces and the three bolts that showed it may have none up to 20 units of slack; the rest are measured and printed.
 func _test_fix30() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -1804,14 +1804,18 @@ func _test_fix30() -> void:
 	# the solve's net doing its work: the library has them, and they pass the joint scan)
 	for pc in [["antihero", "su_knee", "super", 28, "heavy", true], ["antihero", "su_edge_legs", "super", 28, "heavy", true], ["antihero", "su_plate_arm", "super", 28, "heavy", true],
 			["protagonist", "su_knee_legs", "super", 28, "heavy", true], ["protagonist", "su_elbow_jaw", "super", 28, "heavy", true],
-			["protagonist", "bolt_flat", "speed", 2, "light", false], ["protagonist", "bolt_thrust", "speed", 2, "light", false],
-			["antihero", "su_ram", "super", 28, "heavy", false], ["antihero", "bolt_fist", "speed", 2, "light", false]]:
+			["antihero", "su_heel", "super", 28, "heavy", true],
+			["protagonist", "bolt_flat", "speed", 2, "light", true], ["protagonist", "bolt_thrust", "speed", 2, "light", true], ["antihero", "bolt_fist", "speed", 2, "light", true],
+			["antihero", "su_ram", "super", 28, "heavy", false]]:
 		var row: Array = []
 		var pre0: String = ("ru." if pc[0] == "antihero" else "pu.") if String(pc[1]).begins_with("su_") else ("rk." if pc[0] == "antihero" else "pk.")
 		var cov: float = float(cover.get(pre0 + String(pc[1]), 10.0))
 		for over in [0.0, minf(cov, 10.0), minf(cov, 20.0)]:
 			_tier_dist = float(offs.get(pre0 + String(pc[1]), 58.0)) + over
-			var r: Dictionary = _tier_scene(S, String(pc[0]), String(pc[2]), [String(pc[1])], [40], {"windup": int(pc[3]), "hand": "r"}, String(pc[4]))
+			var bx := {"windup": int(pc[3]), "hand": "r"}
+			if String(pc[1]).begins_with("bolt_"):
+				bx["strength"] = "bolt"   # a bolt's return is 3 ticks longer (data beat.bolt_recover_add): the arm is let go as it comes home
+			var r: Dictionary = _tier_scene(S, String(pc[0]), String(pc[2]), [String(pc[1])], [40], bx, String(pc[4]))
 			row.append("+%d: %.0f deg, %d frames over 30" % [int(over), rad_to_deg(float(r.get("fix_max", 0.0))), int(r.get("fix_n30", 0))])
 			if bool(pc[5]):
 				_expect(int(r.get("fix_n30", 0)) == 0, "fix30 %s %s +%d: %d frames of the last pass pulling over 30 degrees (worst %.0f)" % [pc[0], pc[1], int(over), int(r.get("fix_n30", 0)), rad_to_deg(float(r.get("fix_max", 0.0)))])

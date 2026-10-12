@@ -39,7 +39,7 @@ export const strikes = {
   su_heel: { tell_at: 0.5, squash_w: 0.0, drive: 'fall', kind: 'foot', target: 'chest', step_max: 22,
     chamber: { family: 'upright', lean: -14, hips: [-4, 3, 0], spine: { lean: -12, twist: -6 }, head: { pitch: -6 }, hand_r: [6, 58, 14], hand_l: [12, 58, -12], foot_r: [2.5, 67, 7],
       foot_l: [6, 2.5, -8], ...OPEN },
-    contact: { family: 'upright_lunge', lean: 30, hips: [16, -8, 0], spine: { lean: 22, twist: 4 }, head: { pitch: 20 }, hand_r: [18.5, 62, 18], hand_l: [22, 56, -10], foot_r: [46, 38, 8],
+    contact: { family: 'upright_lunge', lean: 20, hips: [10, -8, 0], spine: { lean: 22, twist: 4 }, head: { pitch: 20 }, hand_r: [18.5, 62, 18], hand_l: [22, 56, -10], foot_r: [40, 38, 8],
       foot_l: [10, 2.5, -8], ...OPEN },
     follow: { lean: 24, hips: [12, -6, 0], spine: { lean: 16, twist: 2 }, hand_l: [17, 52, -9], foot_r: [30, 22, 8], foot_l: [10, 2.5, -8] },
     orig: 'PROVISIONAL: the leg raised high, the heel dropped from above onto the chest, the body folding over it' },

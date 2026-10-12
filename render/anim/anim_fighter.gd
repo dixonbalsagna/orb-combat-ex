@@ -119,6 +119,7 @@ var _ag_t1: float = -1.0               # ... until this time (-1: until the exch
 var _ag_w: float = 0.0
 var _ag_in: float = 0.1
 var _ag_out: float = 0.15
+var _ag_fast: bool = false             # the charge hold was ended by a launch or a fall: it lets go in a few ticks, not in 0.15 s (the lean of a charge does not ride a flight)
 var _ls_t0: float = -1.0               # the last stand's window open from this time (the held resolve), -1 when closed ...
 var _ls_t1: float = -1.0               # ... and closed at this time (the resolve fades out)
 var _intro: Dictionary = {}           # the opening, from the sim's events: {on, fall_t, fall_dur, land_t, stare_t, stare_dur} (seconds on the sim's tick)
@@ -378,6 +379,7 @@ func on_agency(kind: String, T: float, e: Dictionary) -> void:
 			if kk.is_empty() or not AnimData.pose_exists(String(kk.hold)):
 				return
 			_ag_hold = String(kk.hold)
+			_ag_fast = false
 			_ag_kind = "knockback"
 			_ag_t0 = T
 			_ag_t1 = T + clampf(float(e.get("dur", 0.5)), 0.1, 3.0)
@@ -425,6 +427,7 @@ func on_agency(kind: String, T: float, e: Dictionary) -> void:
 			if cc.is_empty() or not AnimData.pose_exists(String(cc.hold)):
 				return
 			_ag_hold = String(cc.hold)
+			_ag_fast = false
 			_ag_kind = "charge_" + which
 			_ag_t0 = T
 			_ag_t1 = (T + float(cc.ticks) / 60.0) if cc.has("ticks") else -1.0
@@ -460,6 +463,10 @@ func _lead_layer(S: SimState, f, dt: float) -> void:
 		if f.slide > 0.0:
 			# landing into a skid: the pose's own lean without the sim's turn (it is easing him upright), only faster; a body the pose lays out along the skid is flown head first
 			var lay: float = smoothstep(float(L.lay[0]), float(L.lay[1]), absf(sin(beta)))
+			if sp > 1.0:
+				# the pose leans against the way he travels (a lip's launch drawn leaning into the facing while the shove carries him backwards): the feet lead, whatever the lean's size, so he is flown head first
+				var dot_b: float = (-sin(beta) * v.x + cos(beta) * v.y) / sp
+				lay = maxf(lay, smoothstep(-0.2, -0.55, dot_b))
 			aim = beta + lay * wrapf(head_first - beta, -PI, PI) if sp > 1.0 else beta
 			gain = float(L.get("skid_rate", 20.0)) / maxf(rate, 0.001)
 		else:
@@ -470,7 +477,14 @@ func _lead_layer(S: SimState, f, dt: float) -> void:
 				var st: Array = L.steep
 				gain *= 1.0 - smoothstep(float(st[0]), float(st[1]), -f.vy / maxf(absf(f.vx), 1.0))
 			aim = head_first
-		_lead_d += wrapf(aim - net, -PI, PI) * (1.0 - exp(-dt * rate * gain))
+		var delta: float = wrapf(aim - net, -PI, PI)
+		if sp > 300.0 and absf(delta) > 1.2:
+			# a turn that has to pass through "feet first" on the short way (an upside-down body landing into a skid, turned upright through the horizontal) goes the long way, through head first
+			var mid: float = net + delta * 0.5
+			var dm: float = (-sin(mid) * v.x + cos(mid) * v.y) / sp
+			if dm < -0.5:
+				delta -= signf(delta) * TAU
+		_lead_d += delta * (1.0 - exp(-dt * rate * gain))
 	else:
 		# on his feet or flying free and carried fast (a knockback moves him by position, not by velocity): a body folded or laid out with the feet leading is stood up
 		# to a tilt of `tilt` degrees at most; otherwise the turn is let go, back to the sim's own angle, the short way
@@ -488,6 +502,7 @@ func _lead_layer(S: SimState, f, dt: float) -> void:
 		_lead_d += (want_d - _lead_d) * (1.0 - exp(-dt * float(L.get("tilt_rate", 45.0))))   # (quick: a knockback is over in a few frames)
 	_lead_d = wrapf(_lead_d, -PI, PI)
 	_lead_w = gain
+	debug["lead_probe"] = [rad_to_deg(beta), rad_to_deg(f.rot), rad_to_deg(aim), rad_to_deg(net), gain, f.slide]
 	if absf(_lead_d) < 0.0005:
 		_lead_d = 0.0
 		return
@@ -729,10 +744,12 @@ func _agency_layer(S: SimState, f, T: float) -> void:
 		var ex = S.dirS.ex
 		if T - _ag_t0 > cap or f.state == "launched" or f.state == "down" or f.state == "dropped" or (ex != null and (ex.A == f or ex.D == f)):
 			_ag_t1 = T
+			_ag_fast = f.state == "launched" or f.state == "dropped"
 	var wgt: float = smoothstep(0.0, _ag_in, T - _ag_t0)
 	if _ag_t1 >= 0.0:
-		wgt *= 1.0 - smoothstep(0.0, _ag_out, T - _ag_t1)
-		if T - _ag_t1 >= _ag_out:
+		var out_t: float = minf(_ag_out, 0.05) if _ag_fast else _ag_out
+		wgt *= 1.0 - smoothstep(0.0, out_t, T - _ag_t1)
+		if T - _ag_t1 >= out_t:
 			_ag_t0 = -1.0
 			_ag_t1 = -1.0
 			return
@@ -2318,6 +2335,8 @@ func _press_prof(sp: Dictionary, style: String, args: Dictionary = {}) -> Dictio
 	var B: Dictionary = AnimData.press.get("beat", {})
 	if B.is_empty():
 		return out
+	if (String(args.get("strength", "")) == "bolt" or String(args.get("piece", "")).begins_with("strike.bolt_")) and B.has("bolt_recover_add"):
+		out["recover_ticks"] = int(out.get("recover_ticks", 7)) + int(B.bolt_recover_add)   # a bolt's return is longer: the contact solve lets the arm go as it comes home, not while it is still stretched
 	if style == "speed" and B.has("plain_light") and (bool(args.get("plain", false)) or (RenderAnim.plain_pin and String(args.get("strength", "")) == "light" and not bool(args.get("flurry", false)) and int(args.get("k", 1)) <= 1 and int(args.get("burst", 0)) == 0 and bool(args.get("brawl", false)))):
 		out["ci_pin"] = int(B.plain_light.get("pin_ticks", 6))   # the hand stays set on him (riding his reaction) while the body follows through: not a frozen pose
 	if style == "tech" and args.has("grade"):

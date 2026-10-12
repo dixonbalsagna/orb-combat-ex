@@ -445,6 +445,12 @@
           "patternProperties": {
             "^_": true
           }
+        },
+        "bolt_recover_add": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8,
+          "description": "Ticks added to a bolt's return (a beat whose piece is strike.bolt_* or whose strength is bolt), so the arm's twist is not solved in one frame."
         }
       },
       "additionalProperties": false,
