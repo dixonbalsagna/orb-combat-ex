@@ -897,3 +897,8 @@ Orb's rulings the same evening, on the reworked city and the site's return:
 - Crowd: "Thin and mute it": fewer figures on the fight's sidewalk, smaller and greyer so the fighters stand out.
 - Foreground row: not ruled; Orb asked: "I remember there being a blotch-pattern that would render the buildings in the foreground see-thru, is that still what we're going with?"
 - The site's return: "Wait for the pass": the site stays down until the whole flash set passes on the published commit.
+- Foreground row, ruled after seeing the see-through patch and the stubs side by side:
+
+> try option 1, the larger see-through patch first, as the patch needs to become bigger to accomodate more missing action allow a hybrid approach where the building also shrinks, I'd need to see it in motion to appreciate though
+
+Standing from this: the foreground opens by a larger see-through patch that follows the fight; as it must grow, the building also shrinks. Orb judges it from a motion clip before it is settled.
