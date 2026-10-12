@@ -43,10 +43,11 @@ const ROW_H: float = 150.0   # a row of windows is about this tall: a floor tall
 ## pane: its span up the row, and the strips a row; glass: dark glass, bright glass, the share lit warm; trim: doors,
 ## shutters, frames, awnings; lot: the paved ground of its blocks and how strongly it covers the biome's (0: yards).
 ## flags: 1 only the top row has windows (a clerestory), 2 a door in the ground row's middle cell, 4 shutters beside a
-## pane, 8 wide door panels along the ground row.
+## pane, 8 wide door panels along the ground row, 16 the contrast budget (its windows cover most of the wall, so pane
+## and wall are kept within RenderLook.PATTERN_BUDGET of each other: building.gdshader 7b).
 const LOOK: Dictionary = {
-	"downtown": {"wall": ["#b8c0cc", "#7f8896", "#4a5261"], "roof": "#4a5261", "win": [46.0, 0.16, 0.84, 1.0], "pane": [0.07, 1.0, 1.0], "glass": ["#2c4a63", "#6aa0c0", 0.1], "trim": "#4a5261", "flags": 0, "lot": ["#7b7e86", 1.0]},
-	"mid_rise": {"wall": ["#c6cdd7", "#929aa7", "#5a6270"], "roof": "#5a6270", "win": [120.0, 0.05, 0.95, 1.0], "pane": [0.16, 0.84, 2.0], "glass": ["#2c4a63", "#6aa0c0", 0.2], "trim": "#5a6270", "flags": 0, "lot": ["#7b7e86", 1.0]},
+	"downtown": {"wall": ["#b8c0cc", "#7f8896", "#4a5261"], "roof": "#4a5261", "win": [46.0, 0.16, 0.84, 1.0], "pane": [0.07, 1.0, 1.0], "glass": ["#2c4a63", "#6aa0c0", 0.1], "trim": "#4a5261", "flags": 16, "lot": ["#7b7e86", 1.0]},
+	"mid_rise": {"wall": ["#c6cdd7", "#929aa7", "#5a6270"], "roof": "#5a6270", "win": [120.0, 0.05, 0.95, 1.0], "pane": [0.16, 0.84, 2.0], "glass": ["#2c4a63", "#6aa0c0", 0.12], "trim": "#5a6270", "flags": 16, "lot": ["#7b7e86", 1.0]},
 	"suburb": {"wall": ["#d9cfc0", "#b9ac8f", "#8f8468"], "roof": "#5b6474", "win": [95.0, 0.3, 0.7, 1.0], "pane": [0.34, 0.74, 1.0], "glass": ["#34425a", "#6aa0c0", 0.3], "trim": "#7a5a3c", "flags": 2, "lot": ["#8a8d86", 0.0]},
 	"industrial": {"wall": ["#9ea3ab", "#8a8f98", "#5c6068"], "roof": "#6b7280", "win": [150.0, 0.04, 0.96, 1.0], "pane": [0.5, 0.86, 1.0], "glass": ["#2f2a2a", "#8a9aa6", 0.1], "trim": "#2f2a2a", "flags": 9, "lot": ["#6e7076", 1.0]},
 	"harbour": {"wall": ["#eee6d6", "#d8cfbb", "#a89f8a"], "roof": "#4c6f8e", "win": [110.0, 0.3, 0.7, 0.4], "pane": [0.3, 0.8, 1.0], "glass": ["#7a5a3c", "#7a5a3c", 0.08], "trim": "#7a5a3c", "flags": 2, "lot": ["#b9ac8f", 1.0]},
@@ -124,6 +125,11 @@ static func parts(b, lk: Dictionary, depth: float = -1.0) -> Array:
 	var side: float = -1.0 if fposmod(float(b.seed) * 0.3819660113, 1.0) < 0.5 else 1.0
 	var wall: Color = _c(tones[0] if u < 0.45 else tones[1])
 	var dark: Color = _c(tones[2])
+	if (int(lk["flags"]) & 16) != 0:
+		# A look with the contrast budget (the tall glass towers): the mass is the shadow tone, as dark as a burnt-out
+		# tower is, so a street of whole and damaged towers is one value under a fast camera; the lighter tones are trim.
+		wall = _c(tones[2])
+		dark = _c(tones[1])
 	var roof: Color = _c(lk["roof"])
 	var trim: Color = _c(lk["trim"])
 	var out: Array = []

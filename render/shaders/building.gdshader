@@ -40,6 +40,12 @@
 //    glass, the bright glass and the trim. A floor taller than a row of windows carries several (win_tex's second
 //    texel, a). Too far to draw panes, a wall is the average of its wall and its glass, so it does not change value
 //    as the camera pulls back.
+// 7b. The contrast budget. A look whose windows cover most of its wall (flag 16: downtown's bands, mid-rise's strips)
+//    is stripes at fight framing. Stripes of pale wall and dark glass flip a quarter of the screen brighter and
+//    darker on every tick the camera shakes (measured: 14% each way a tick in a hit-stop, where the old dark walls
+//    flipped 1%). So on such a look a pane takes its glass's colour only as far as pattern_budget of relative
+//    luminance from its wall, and a row whose panes are out has its wall as dark as they are: a burnt-out floor is a
+//    dark band, a burnt-out tower is dark, and neither is stripes. Lit panes are few and keep their light.
 // 8. Row haze. A part takes the air's colour by how far behind the fighter plane its front face stands (row_haze), so
 //    the back block and the scenery row read as depth. The front block takes none.
 // An instance with nothing to cut and no part gone keeps back-face culling (its back faces are thrown away in the
@@ -80,6 +86,7 @@ uniform vec4 look_b[10];             // ... the pane's span up the row (from, to
 uniform vec4 look_glass[10] : source_color;   // dark glass; a: the share of panes lit warm
 uniform vec4 look_hi[10] : source_color;     // bright glass
 uniform vec4 look_trim[10] : source_color;   // doors, shutters, panels
+uniform float pattern_budget = 0.085;   // RenderLook.PATTERN_BUDGET: on a look with flag 16, the most a pane and its wall differ in relative luminance
 uniform float dmg_holes = 0.18;      // RenderLook.DMG_HOLES: at stage 2, the share of a facade's bays broken open
 uniform vec3 row_haze = vec3(0.5, 600.0, 2800.0);   // RenderLook.ROW_HAZE: the most of the air a far row takes, and the depths behind the fighter plane it starts and is full at
 
@@ -191,6 +198,16 @@ bool cleared(float k, vec3 m) {
 	return !bit_on(k, m);
 }
 
+// Relative luminance (the shader works in linear light).
+float lum(vec3 c) {
+	return dot(c, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// The colour `to`, but no farther from `from` in relative luminance than `budget`.
+vec3 toward(vec3 from, vec3 to, float budget) {
+	return mix(from, to, min(1.0, budget / max(abs(lum(to) - lum(from)), 0.0001)));
+}
+
 float win_hash(vec3 p) {
 	p = fract(p * vec3(0.1031, 0.1030, 0.0973));
 	p += dot(p, p.yxz + 33.33);
@@ -260,6 +277,12 @@ void fragment() {
 		vec2 r = vec2(fract(cx), fract(fr));
 		float kf = floor(fy);
 		float fine = 1.0 - smoothstep(0.3, 0.75, max(fwidth(cx), fwidth(fr)));
+		bool soft = mod(floor(lb.w / 16.0), 2.0) > 0.5;
+		if (soft && (st > 0.5 || (kf >= 0.0 && kf < v_winb.y && bit_on(kf, v_win.xyz)))) {
+			// A row whose panes are out, on a look with the contrast budget: its wall is as dark as they are.
+			wallc = toward(inside.rgb, wallc, pattern_budget);
+			col = flat_shade(wallc, NORMAL, 0.35);
+		}
 		if (st > 2.5) {
 			// The frame of a shell, and the few panels of cladding it keeps. Too far to draw the cells, it is their
 			// average: mostly the dark inside.
@@ -280,9 +303,14 @@ void fragment() {
 			bool across = r.x > la.y && r.x < la.z;
 			bool tall = ry > lb.x && ry < lb.y;
 			vec3 glass = look_glass[lk].rgb;
+			vec3 bright = look_hi[lk].rgb;
+			if (soft) {
+				glass = toward(wallc, glass, pattern_budget);
+				bright = toward(wallc, bright, pattern_budget);
+			}
 			// Too far to draw panes, the wall is the average of wall and glass (the dark inside where they are out).
 			float cover = top_only ? 0.0 : (la.z - la.y) * (lb.y - lb.x) * la.w;
-			vec3 avg = flat_shade(mix(mix(glass, look_hi[lk].rgb, 0.1), win_lit.rgb, look_glass[lk].a), NORMAL, 0.35);
+			vec3 avg = flat_shade(mix(mix(glass, bright, 0.1), win_lit.rgb, look_glass[lk].a), NORMAL, 0.35);
 			vec3 far = mix(col, gone ? inside.rgb : avg, cover);
 			// A pane's own colour (lit, bright or dark) shows from near only: from the middle distance every pane is the
 			// glass's average, so a far tower is bands, not a sparkle that shimmers as the camera moves.
@@ -302,7 +330,7 @@ void fragment() {
 				vec3 wc = inside.rgb;
 				if (!gone) {
 					float hsh = win_hash(vec3(v_winb.z, floor(cx), row));
-					wc = mix(avg, hsh < look_glass[lk].a ? win_lit.rgb : flat_shade(hsh > 0.9 ? look_hi[lk].rgb : glass, NORMAL, 0.35), vary);
+					wc = mix(avg, hsh < look_glass[lk].a ? win_lit.rgb : flat_shade(hsh > 0.9 ? bright : glass, NORMAL, 0.35), vary);
 				}
 				near = wc;
 			} else if (has && shutters && tall && r.x > la.y - 0.11 && r.x < la.z + 0.11) {

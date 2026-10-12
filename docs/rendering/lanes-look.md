@@ -10,6 +10,7 @@ Owner: Rendering and Technical Art. For World's brief `docs/world/rendering-brie
 - **District looks.** Eight palettes and window patterns, from Art's table, chosen by the building's district.
 - **Row haze.** The back block and the scenery row take the air's colour, so the three rows read as depth.
 - **Stages** keep their four looks on every shape, and stage 2 gains broken-open bays so it reads from the street.
+- **Tall towers are tone on tone** (the contrast budget, added the same day after the first version failed the flash check: see below).
 
 ## How a shape is built
 
@@ -45,8 +46,8 @@ One facade palette and one window pattern a look (`RenderShapes.LOOK`, Art's hex
 
 | Look | Windows as drawn |
 |---|---|
-| downtown | Continuous vertical glass bands between pale piers, a floor line every row |
-| mid_rise | Two horizontal strips a storey |
+| downtown | Continuous vertical glass bands between piers, a floor line every row; tone on tone (the contrast budget) |
+| mid_rise | Two horizontal strips a storey; tone on tone (the contrast budget) |
 | suburb | A grid of small windows, two or three a facade, a door |
 | industrial | A clerestory strip under the roof, door panels along the ground |
 | harbour | Few shuttered openings, a door |
@@ -58,6 +59,22 @@ One facade palette and one window pattern a look (`RenderShapes.LOOK`, Art's hex
 - **From the middle distance every pane is the glass's average,** and from far a wall is the average of wall and glass. A far tower is bands, not a sparkle that shimmers as the camera moves, and a wall does not change value as the camera pulls back.
 - **A look World adds later** is drawn in the mid-rise table until Art gives it one; `shape_check` names it.
 
+## The contrast budget (downtown and mid-rise)
+
+**What went wrong.** The first version drew downtown as Art's table reads: pale piers, dark glass. At fight framing that is stripes, a column every 46 units, and once a tower's windows were out the stripes were pale against black. The collapse flash clip went from 2 to 5.5 in reduced mode. The cause was screen shake in a hit-stop: the sim is frozen, the camera moves a few pixels, and 14% of the screen turned brighter and 14% darker on every tick. With the old dark walls it was 1%.
+
+**The rule now** (`RenderLook.PATTERN_BUDGET`, 0.085 of relative luminance; `building.gdshader` 7b), on a look whose windows cover more than three tenths of its wall:
+- A pane takes its glass's colour only as far as the budget from its wall. The bands are there, faintly.
+- A row whose panes are out has its wall as dark as they are: a burnt-out floor is a dark band, a burnt-out tower is dark.
+- The towers are massed in the look's shadow tone (`#4a5261` downtown), so a whole tower and a damaged one are close in value. The lighter tones are trim.
+- Lit panes are few and keep their light.
+
+**What it costs the look.** Downtown and mid-rise are dark slate with faint glass and warm lit panes, close in value to the old city, in Art's hues. The pale piers of Art's table are gone from the towers; the Gatebell keeps its pale stone and stands out for it. Art should see this: the alternative is a pale city whose every camera shake counts.
+
+**Measured** (hit-stop of the collapse clip, ticks 1419 to 1426, pixels turning a tick): old look about 8,000 each way; first version about 110,000 each way; with the budget about 9,000 each way.
+
+The collapse clip still fails for another reason, Camera's zoom after a launch: `lanes-camera-flash.md`.
+
 ## Row haze
 
 A part takes the air's colour by how far behind the fighter plane its front face stands (`RenderLook.ROW_HAZE`): none on the front block, 0.17 on the back block, 0.44 on the scenery row. The colour is the sky's toward the horizon in the pixel's own direction, so it follows the dynamic sky. Fighters, the crowd and the ground are not hazed by it.
@@ -66,16 +83,16 @@ A part takes the air's colour by how far behind the fighter plane its front face
 
 Stills from the web build, the camera at fight framing in the downtown front street (towers of 60 floors behind the fighters).
 
-- **Whole to windows out reads at once:** blue glass and lit panes become black bands between the pale piers.
-- **Windows out to a part gone did not read from the street.** Stage 2's marks are a sheared top corner, which is thousands of units out of sight, and cracks, which are dark on a facade that is already mostly dark. **Added:** at stage 2 about a sixth of a facade's bays are broken open, wall and all (`RenderLook.DMG_HOLES`). It breaks the regular grid and reads at any height. It is subtle on a glass tower and strong on stone.
-- **A shell reads by its frame:** the pale piers become thin grey posts and slabs.
+- **Whole to windows out reads:** the lit panes go out and the slate-blue tower turns near black. It is a step in value, not a pattern, so it holds at any distance.
+- **Windows out to a part gone barely reads from the street on a tower.** Stage 2's marks are a sheared top corner, which is thousands of units out of sight, and cracks and broken-open bays (`RenderLook.DMG_HOLES`, added in this work), which are dark on dark. On stone and plaster (the Gatebell, a house) the broken bays are strong.
+- **A shell reads by its frame:** thin grey posts and slabs with the dark inside between.
 - **A cut floor reads well:** a tunnel three floors tall is a dark opening as tall as seven fighters, and a stepped tower's skirt opens the same floors as its core.
 - **Rubble** is unchanged (the ground's heap).
 - **A tower's height loss does not read from the street,** for the same reason as the sheared corner: the top is out of the frame.
 
 ## The fight at the foot of the towers: what I see
 
-- **The fighters read against the towers.** The ground floors behind them are dark glass and pale piers; nothing in the facade is a fighter's hue.
+- **The fighters read against the towers.** The ground floors behind them are dark slate with faint glass; nothing in the facade is a fighter's hue.
 - **The crowd is what competes.** With 1,800 people the front sidewalk is a solid row of figures as tall as the fighters, in saturated colours, directly behind them. This is not new in this batch, but the denser city makes it constant downtown. It is Art's and World's to tune (density, size, saturation).
 - **No sky shows downtown at fight framing.** The towers fill the frame, so depth comes only from the street and the row haze.
 - **Lit panes are the brightest things behind the fighters** at dusk.
@@ -96,7 +113,7 @@ Every part stays inside the sim's box: nothing stands higher than the sim's heig
 
 ## Checks
 
-- `render/tools/shape_check.gd` (headless, 10 checks): the table is the sim's and fits the shader's arrays; every look has its table; all 20 shapes build inside the sim's box; a part scales, is cut off and loses its caps as the sim's height says; an instance and a texel for every part; a damaged tower's top is the sim's; a cut tower's skirt opens the same floors; the rows' haze; the ground shader's avenues and block lanes.
+- `render/tools/shape_check.gd` (headless, 11 checks): the table is the sim's and fits the shader's arrays; every look has its table; a look of stripes carries the contrast budget; all 20 shapes build inside the sim's box; a part scales, is cut off and loses its caps as the sim's height says; an instance and a texel for every part; a damaged tower's top is the sim's; a cut tower's skirt opens the same floors; the rows' haze; the ground shader's avenues and block lanes.
 - Unchanged and passing: determinism (plain and `--intro`), seam sweep, pane, stage, lane, sky, flash register, hud words, ground, after.
 - **Not run:** `cull_check` needs a window. The vertex-stage culling was rewritten for deformed boxes and is judged by the web stills only.
 - **Headless Godot compiles no shaders:** the look is proven by stills from the web build in headless Chrome.

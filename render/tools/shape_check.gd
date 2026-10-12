@@ -4,6 +4,8 @@ extends SceneTree
 ## compiles no shaders): the stills come from the web build (docs/rendering/lanes-look.md).
 ## - the lane table is the sim's, and fits the ground shader's arrays (strips, districts, avenues);
 ## - every look in the data has its table here (a look with none is drawn in the fallback, and named);
+## - a look whose windows cover more than three tenths of its wall carries the contrast budget (flag 16: pane and wall
+##   within RenderLook.PATTERN_BUDGET of each other, building.gdshader 7b), and its towers are massed in its shadow tone;
 ## - every one of the 20 shapes builds, the body first and on the ground, and a shape with no builder is the sim's box;
 ## - in a real match no part of any building stands higher than the sim's height, or wider than the sim's width but
 ##   for a roof's eaves;
@@ -73,6 +75,20 @@ func _run() -> void:
 		if not RenderShapes.LOOK.has(str(n)):
 			missing.append(str(n))
 	_expect(missing.is_empty() and RenderShapes.look_names().size() <= RenderShapes.STONE, "every look in the data (%d) has its colours and windows here%s" % [RenderShapes.look_names().size(), "" if missing.is_empty() else ": none for %s (drawn as %s)" % [str(missing), RenderShapes.FALLBACK]])
+	# The contrast budget: a look of stripes must carry it.
+	var loud: Array = []
+	var massed: bool = true
+	for n in RenderShapes.LOOK:
+		var lk: Dictionary = RenderShapes.LOOK[n]
+		var cover: float = (float(lk["win"][2]) - float(lk["win"][1])) * (float(lk["pane"][1]) - float(lk["pane"][0])) * float(lk["win"][3])
+		var budget: bool = (int(lk["flags"]) & 16) != 0
+		if cover > 0.3 and (int(lk["flags"]) & 1) == 0 and not budget:
+			loud.append("%s (%.0f%% of the wall)" % [n, 100.0 * cover])
+		if budget:
+			var tb := SimState.Building.new()
+			tb.shape = "shaft"; tb.w = 300.0; tb.d = 500.0; tb.h = 6000.0; tb.floors = 40; tb.seed = 0.61
+			massed = massed and (RenderShapes.parts(tb, lk)[0][RenderShapes.COL] as Color).is_equal_approx(RenderLook.col(lk["wall"][2]))
+	_expect(loud.is_empty() and massed and RenderLook.PATTERN_BUDGET < 0.1, "every look whose windows cover more than 30%% of its wall carries the contrast budget (%.3f of relative luminance, under the tenth the frame analyser counts), and its towers are massed in its shadow tone%s" % [RenderLook.PATTERN_BUDGET, "" if loud.is_empty() else ": not " + str(loud)])
 	# Every shape builds.
 	var bad: Array = []
 	for sh in SHAPES + ["a shape nobody drew"]:

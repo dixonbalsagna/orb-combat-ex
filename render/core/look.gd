@@ -76,6 +76,10 @@ const ROW_HAZE := Vector3(0.5, 600.0, 2800.0)
 ## At stage 2 (a part gone) this share of a facade's bays is broken open, wall and all: the stage's other marks (the
 ## sheared top corner, the cracks) do not show from the street under a tower 60 floors tall with its windows out.
 const DMG_HOLES: float = 0.18
+## The contrast budget (building.gdshader 7b): on a look whose windows cover most of its wall, the most a pane and its
+## wall may differ in relative luminance. The frame analyser counts a pixel that changes by a tenth; under that, a
+## facade's own pattern cannot flip a pixel however the camera shakes, pans or cuts across it.
+const PATTERN_BUDGET: float = 0.085
 const LANE_CUE_W: float = 14.0           # the stripe's half width in depth,
 const LANE_CUE_LEN: float = 450.0        # ... its half length along the street,
 const LANE_CUE_ALPHA: float = 0.5        # ... and its strength at full
