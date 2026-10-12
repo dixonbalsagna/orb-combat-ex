@@ -49,7 +49,7 @@ static func legend_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: f
 	var pop: float = clampf((3.0 - m.stance_kind_t) / 0.5, 0.0, 1.0)
 	if POP_ACKS.has(m.press_ack_kind):
 		pop = maxf(pop, clampf((ACK_POP - m.press_ack_t) / 0.3, 0.0, 1.0))
-	if m.charge_on or m.launcher_open:
+	if m.charge_on or m.launcher_open or (UiStance.three() and m.punish_left > 0.0):
 		pop = 1.0   # a wind-up on Y or B, or the launch window on B: the legend is up while it lasts
 	return maxf(base, pop)
 
@@ -83,14 +83,29 @@ static func draw_charge(ci: CanvasItem, c: Vector2, r: float, frac: float, armou
 
 
 ## The launch window on B: a bright ring round the glyph with four short ticks (a shape, not only a colour).
-static func draw_lit(ci: CanvasItem, c: Vector2, r: float, alpha: float) -> void:
+## A ring of ten dots round X's glyph, one lit per flurry blow: the burst lights them fast, the pace one at a time (a shape, a count of lit dots).
+static func draw_dots(ci: CanvasItem, c: Vector2, r: float, lit: int, alpha: float) -> void:
+	if alpha <= 0.01 or lit <= 0:
+		return
+	var ink := Color(UiLook.col(UiLook.INK))
+	var dr: float = maxf(1.8, r * 0.13)
+	for i in range(10):
+		var a: float = -PI * 0.5 + float(i) * TAU / 10.0
+		var p: Vector2 = c + Vector2.from_angle(a) * r * 1.4
+		if i < lit:
+			ci.draw_circle(p, dr, Color(ink, alpha))
+		else:
+			ci.draw_arc(p, dr, 0.0, TAU, 10, Color(ink, alpha * 0.7), maxf(1.2, dr * 0.45), true)
+
+
+static func draw_lit(ci: CanvasItem, c: Vector2, r: float, alpha: float, ticks: int = 4) -> void:
 	if alpha <= 0.01:
 		return
 	var warn := Color(UiLook.col(UiLook.WARN))
 	var w: float = maxf(3.0, r * 0.28)
 	ci.draw_arc(c, r * 1.1, 0.0, TAU, 28, Color(warn, alpha), w, true)
-	for i in range(4):
-		var d := Vector2.from_angle(float(i) * PI * 0.5 + PI * 0.25)
+	for i in range(ticks):
+		var d := Vector2.from_angle(float(i) * TAU / float(ticks) + (PI * 0.25 if ticks == 4 else -PI * 0.5))
 		ci.draw_line(c + d * r * 1.45, c + d * r * 1.85, Color(warn, alpha), maxf(2.0, w * 0.6), true)
 
 
@@ -314,7 +329,7 @@ static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String 
 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
 	var cf: float = charge_frac(m, reduced)
 	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
-		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", m.launcher_open, UiStance.three()]
+		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", m.launcher_open, UiStance.three(), m.punish_left > 0.0, m.flurry_dots]
 
 
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:
@@ -358,6 +373,10 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 				draw_charge(ci, gc, gh * 0.62, charge_frac(m, bool(o.get("reduced_motion", false))), m.charge_cell == "b", alpha)
 			if m.launcher_open and str(r["cell"]) == "b":
 				draw_lit(ci, gc, gh * 0.52, alpha)
+			if UiStance.three() and m.punish_left > 0.0 and str(r["cell"]) == "y":
+				draw_lit(ci, gc, gh * 0.52, alpha, 3)   # he missed and is open: the medium (Y) stops him, a lit ring with three ticks (B's launcher has four)
+			if UiStance.three() and m.flurry_dots > 0 and str(r["cell"]) == "x":
+				draw_dots(ci, gc, gh * 0.5, m.flurry_dots, alpha)
 	UiText.no_outline = false
 
 

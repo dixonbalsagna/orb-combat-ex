@@ -4,6 +4,11 @@ class_name UiPlate
 ## Every cue pairs colour with shape: stance icons, striped meter fills with tick marks, diamond pips, chips with icons.
 ## The plate mirrors for the right-hand fighter and fills its bars from the outer edge inward.
 
+## How long the weight chip names the blow just thrown, how long a bolt's land and a run of unanswered blows stay on the plate (seconds).
+const BLOW_HOLD := 1.2
+const LAND_HOLD := 0.8
+const RUN_HOLD := 2.5
+
 const STANCE_IDS: Array = ["press", "guard", "dodge", "escape"]   # the sim's stance order: AGGRESSIVE, DEFENSIVE, EVASIVE, ESCAPE
 
 static var _A := 1.0   # the plate's overall opacity this frame (dimmed during a cinematic)
@@ -216,10 +221,27 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	# The weight (the sticky light or heavy) comes first: the rival's weight is a read the player must always have. A heavy that fell
 	# back to light for lack of Charge shows LOW CHARGE and the mark struck through for a moment.
 	var fallback: bool = m.weight == "heavy" and m.weight_fallback_t < 1.5
-	chips.append(["weight", UiData.t("state.weight_fallback") if fallback else UiData.t("state.weight_" + m.weight + ("_energy" if m.energy else "")), UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
+	var blow_on: bool = UiStance.three() and m.blow_kind != "" and m.blow_t < BLOW_HOLD   # the three strengths: the chip names the blow just thrown (the blow cue), then falls back
+	var weight_word: String = UiData.t("state.weight_fallback") if fallback else UiData.t("state.weight_" + m.weight + ("_energy" if m.energy else ""))
+	if blow_on:
+		weight_word = UiData.t("state.blow_" + m.blow_kind)
+	chips.append(["weight", weight_word, UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
 	if UiStance.three() and m.launcher_known:
 		# The launcher: LAUNCH (a filled mark, bright) while a launch is ready, RESTING (a hollow mark, dim) after one landed. Steady, two states, no countdown.
 		chips.append(["launcher", UiData.t("state.launcher_ready" if m.launcher_ready else "state.launcher_rest"), UiLook.col(UiLook.INK if m.launcher_ready else UiLook.INK_DIM)])
+	if UiStance.three():
+		# OPEN, a bolt's land and the run are short, urgent reads: the most urgent takes the weight chip's place (a plate has room for one chip beside the pips), the rest follow if there is room.
+		var specials: Array = []
+		if m.open_left > 0.0:
+			specials.append(["open", UiData.t("state.open"), UiLook.col(UiLook.INK)])   # open after a miss: his guard is down for the ticks it says
+		if m.run_n > 0 and m.run_t < RUN_HOLD:
+			specials.append(["run", "", UiLook.col(UiLook.INK)])   # the run of unanswered blows on him: pips and a caret
+		if m.land_kind != "" and m.land_t < LAND_HOLD:
+			specials.append(["land", UiData.t("state.land_" + m.land_kind), UiLook.col(UiLook.INK_DIM)])
+		if not specials.is_empty():
+			var first: Array = specials.pop_front()
+			chips.insert(0, first)
+			chips.append_array(specials)
 	if m.hidden:
 		chips.append(["hidden", UiData.t("state.hidden"), UiLook.col(UiLook.HIDDEN)])
 	if m.lost_trail:
@@ -235,6 +257,8 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 		var label: String = ch[1]
 		var lw: float = UiText.width(label, sfs)
 		var w: float = chip_h * 0.9 + lw + 16.0 * s
+		if ch[0] == "run":
+			w = float(m.run_to + 1) * chip_h * 0.42 + 16.0 * s   # the pips and the caret, no word
 		if cur + w > chip_limit and ch[0] == "launcher":
 			label = ""   # no room for the word on a tight plate: the mark alone (a filled or a hollow triangle) still says ready or resting
 			lw = 0.0
@@ -246,14 +270,16 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 		var icp := Vector2(icx, chip_y + chip_h * 0.5)
 		match ch[0]:
 			"weight":
-				if m.energy and not fallback:
+				var bolt_blow: bool = blow_on and (m.blow_kind == "bolt" or m.blow_kind == "blast")
+				var heavy_blow: bool = blow_on and (m.blow_kind == "heavy" or m.blow_kind == "release")
+				if (m.energy or bolt_blow) and not fallback and not (blow_on and not bolt_blow):
 					# The energy mark: a blast leaving a point (a dot and a short line). Plain shapes, no flame or crackle.
 					var er: float = chip_h * 0.16
 					var d: float = 1.0 if left else -1.0
 					ci.draw_circle(icp + Vector2(-d * er * 1.3, 0.0), er * (1.4 if m.weight == "heavy" else 1.0), _c(ch[2]))
 					ci.draw_line(icp + Vector2(-d * er * 0.2, 0.0), icp + Vector2(d * er * 1.9, 0.0), _c(ch[2]), maxf(2.0, er * 0.9), true)
 				else:
-					UiReads.weight_mark(ci, icp, chip_h * 0.62, m.weight == "heavy", _c(ch[2]), fallback)
+					UiReads.weight_mark(ci, icp, chip_h * 0.62, (m.weight == "heavy" and not blow_on) or heavy_blow, _c(ch[2]), fallback)
 			"launcher":
 				var lr: float = chip_h * 0.3
 				var tri := PackedVector2Array([icp + Vector2(0.0, -lr), icp + Vector2(lr * 0.95, lr * 0.75), icp + Vector2(-lr * 0.95, lr * 0.75)])
@@ -263,6 +289,39 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 					var closed: PackedVector2Array = tri.duplicate()
 					closed.append(tri[0])
 					ci.draw_polyline(closed, _c(ch[2]), maxf(2.0, lr * 0.4), true)
+			"open":
+				# Two brackets facing in: a gap, "he is open".
+				var bw: float = chip_h * 0.3
+				var bh: float = chip_h * 0.34
+				for sgn in [-1.0, 1.0]:
+					var bxp: float = icp.x + sgn * bw
+					ci.draw_polyline(PackedVector2Array([Vector2(bxp - sgn * bw * 0.6, icp.y - bh), Vector2(bxp, icp.y - bh), Vector2(bxp, icp.y + bh), Vector2(bxp - sgn * bw * 0.6, icp.y + bh)]), _c(ch[2]), maxf(2.0, chip_h * 0.09), true)
+			"land":
+				# How a bolt landed, a shape: a solid dot (hit), a bar (guard), an arc (armour), a hollow dot (miss).
+				var lr2: float = chip_h * 0.2
+				match m.land_kind:
+					"hit":
+						ci.draw_circle(icp, lr2, _c(ch[2]))
+					"guard":
+						ci.draw_rect(Rect2(icp.x - lr2 * 1.3, icp.y - lr2 * 0.4, lr2 * 2.6, lr2 * 0.8), _c(ch[2]))
+					"armour":
+						ci.draw_arc(icp + Vector2(0.0, lr2 * 0.5), lr2 * 1.3, PI * 1.05, PI * 1.95, 12, _c(ch[2]), maxf(2.0, lr2 * 0.7), true)
+					_:
+						ci.draw_arc(icp, lr2, 0.0, TAU, 14, _c(ch[2]), maxf(1.6, lr2 * 0.45), true)
+			"run":
+				# The run: one pip for each unanswered blow, a caret after the last (the next blow closes).
+				var pw: float = chip_h * 0.26
+				var ph: float = chip_h * 0.5
+				var px0: float = (x0 + cur + 8.0 * s) if left else (x1 - cur - 8.0 * s - pw)
+				for pi in range(m.run_to):
+					var pxx: float = px0 + (float(pi) * pw * 1.6 if left else -float(pi) * pw * 1.6)
+					var pr := Rect2(pxx, icp.y - ph * 0.5, pw, ph)
+					if pi < m.run_n:
+						ci.draw_rect(pr, _c(ch[2]))
+					else:
+						ci.draw_rect(pr, _c(ch[2]), false, maxf(1.5, pw * 0.2))
+				var cxx: float = px0 + (float(m.run_to) * pw * 1.6 if left else -float(m.run_to) * pw * 1.6) + pw * 0.5
+				ci.draw_polyline(PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)]), _c(ch[2]), maxf(1.8, pw * 0.25), true)
 			"hidden":
 				UiIcons.eye_slash(ci, icp, chip_h * 0.75, _c(ch[2]))
 			"lost":

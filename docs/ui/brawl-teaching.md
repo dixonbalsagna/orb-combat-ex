@@ -84,3 +84,13 @@ Words are data (`terms.json` prompt). The marks above are what teaches the rest:
 Gates for every step: `hud_check` including `_block_toggle_rules` and `_sim_untouched_rules`, `hud_words_check`, `determinism.gd` plain and `-- --intro --seeds=2 --ticks=900`; the new marks get cases (shape, size under 5,000 px, redraw counts at rest, the cues in and out of the flags, reduced motion). At most two Godot processes.
 
 **Needs, to Encounter (through the EP):** `perfect_window`, `perfect_made`, `perfect_broken` with the fields in section 3; `run` and `run_to` on `blow`; `miss`'s `n` (it has it). **To Camera or Rendering:** the `occluded` key on the anchor. **To Controls or the host:** play `haptic_requested`.
+
+## 7. Built (steps 1 and 2, 2026-10-12), behind `three_strengths`
+
+![a miss on the keyboard layout: OPEN on the rival's plate, K (Medium) lit with three ticks, J's ring of dots](img/brawl-marks-kbd-web.png) ![Full touch](img/brawl-marks-full-web.png)
+
+- **The weight chip** follows the `blow` cue (`UiPlate.BLOW_HOLD` 1.2 s); **OPEN** (brackets) on the swinger's plate for the miss's `n` ticks, with the target's medium glyph lit with three ticks on a legend and on Full touch; **a bolt's land** as a chip with a shape (dot, bar, arc, hollow); **the run** as pips and a caret on the target's plate once the `blow` cue carries `run` and `run_to` (inert until then); **X's ring of dots** (ten, one per flurry blow, clearing 0.6 s after the last).
+- **Where, differently from the mock:** the bolt's land is a plate chip (the plate is where a bolt's thrower is named), not a glyph at the energy button. **One chip beside the pips:** the most urgent of OPEN, the run and the land takes the weight chip's place; a human plate with SIGNATURE up has no room for any chip beside the pips, so the weight chip and the small marks show on the rival's plate and on the legend (open: take SIGNATURE's chip off the plate while one of these is up).
+- **The launcher's close (used or lapsed)** is not built: `launcher_close` is read for the lit B but its text is not drawn; it comes with the steady mark's second look.
+- **Tests:** `_brawl_marks_rules` (the flag off draws nothing; the chip says each kind and falls back; a miss; the lit medium and its redraw key; Full touch's lit button; a bolt's land; the run and the dots clear on time; the unread counter). hud_check 4,628 checks, 0 failed; hud words, pane, determinism plain and `-- --intro --seeds=2 --ticks=900` pass.
+- **Demo:** `--three --blow=heavy --miss --land=armour --run=3 --dots=6`.

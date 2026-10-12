@@ -70,7 +70,7 @@ static func _caption_a(intro_a: float, extra: Dictionary, name: String) -> float
 static func extra_key(extra: Dictionary) -> Array:
 	var ack: Dictionary = extra.get("ack", {})
 	var chg: Dictionary = extra.get("charge", {})
-	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0), str(chg.get("name", "")), int(float(chg.get("frac", 0.0)) * 8.0), (extra.get("lit", []) as Array).duplicate(), str(extra.get("launcher", "")), (extra.get("unused", []) as Array).duplicate(), (extra.get("cells", {}) as Dictionary).duplicate()]
+	return [(extra.get("dim", []) as Array).duplicate(), str(ack.get("name", "")), str(ack.get("kind", "")), int(float(ack.get("a", 0.0)) * 4.0), str(chg.get("name", "")), int(float(chg.get("frac", 0.0)) * 8.0), (extra.get("lit", []) as Array).duplicate(), int(extra.get("dots", 0)), str(extra.get("launcher", "")), (extra.get("unused", []) as Array).duplicate(), (extra.get("cells", {}) as Dictionary).duplicate()]
 
 
 ## `pulse_step` is -1 for no pulse, else 0 to 7 round the cycle (the HUD steps it eight times a cycle while a form is ready and the fighter is free); under
@@ -271,7 +271,9 @@ static func _draw_full(ci: CanvasItem, lay: UiLayout, s: float, state: Dictionar
 		if not chg.is_empty() and str(chg.get("name", "")) == n:
 			UiHints.draw_charge(ci, p, r * 1.1, float(chg["frac"]), bool(chg.get("armoured", false)), 1.0)
 		if (extra.get("lit", []) as Array).has(n):
-			UiHints.draw_lit(ci, p, r * 0.95, 1.0)
+			UiHints.draw_lit(ci, p, r * 0.95, 1.0, 3 if n == "heavy" else 4)
+		if n == "light" and int(extra.get("dots", 0)) > 0:
+			UiHints.draw_dots(ci, p, r * 0.9, int(extra["dots"]), 1.0)
 		var lmark: String = str(extra.get("launcher", ""))
 		if lmark != "" and n == "signature":
 			# The launcher's steady state on B: a filled mark while a launch is ready, a hollow dim one while it rests (no countdown).

@@ -403,6 +403,16 @@ func consume(e) -> void:
 				m.launcher_open = true
 			elif ck == "launcher_close" and m != null:
 				m.launcher_open = false
+			elif ck == "blow":
+				_on_blow(m, d)
+			elif ck == "miss":
+				_on_miss(m, d)
+			elif ck == "energy_land" and m != null:
+				m.land_kind = str(d.get("source", "")).to_lower()
+				m.land_t = 0.0
+			elif ck == "burst" and m != null:
+				if str(d.get("text", "")) == "start":
+					m.flurry_dots = 0
 			else:
 				var uk: String = "cue_unread_" + ck   # a cue kind the HUD has no reading for (blow, miss, charge_full, energy_reach, energy_land, double_hit, burst ...): counted, for the report
 				stats[uk] = int(stats.get(uk, 0)) + 1
@@ -721,6 +731,36 @@ func _on_windup(m: UiFighterModel, d: Dictionary) -> void:
 				m.press_ack_kind = {2: "refused", 3: "lapsed", 4: "empty"}.get(res, "lapsed")
 				m.press_ack_cell = c2
 				m.press_ack_t = 0.0
+
+
+## The brawl's blow cue (docs/director/brawl-c2.md section 7): `text` light, medium, heavy, bolt, blast or release, `k` 1 for a flurry blow. The plate's weight chip names it for a moment;
+## a flurry blow lights the next dot of X's ring. When the cue carries `run` (the target's run of unanswered blows) and `run_to`, the target's plate shows the run (the pips and the caret).
+func _on_blow(m: UiFighterModel, d: Dictionary) -> void:
+	if m == null:
+		return
+	var kind: String = str(d.get("text", "")).to_lower()
+	if ["light", "medium", "heavy", "bolt", "blast", "release"].has(kind):
+		m.blow_kind = kind
+		m.blow_t = 0.0
+	if int(d.get("k", 0)) == 1:
+		m.flurry_dots = (m.flurry_dots % 10) + 1
+		m.flurry_t = 0.0
+	if d.has("run"):
+		var tm: UiFighterModel = model(int(d.get("target", -1)))
+		if tm != null:
+			tm.run_n = clampi(int(d["run"]), 0, 8)
+			tm.run_to = clampi(int(d.get("run_to", 4)), 1, 8)
+			tm.run_t = 0.0
+
+
+## The brawl's miss cue: the swinger is the actor, the rival the target; `n` the ticks he is open. OPEN on the swinger's plate, and the target's medium glyph lit for as long.
+func _on_miss(m: UiFighterModel, d: Dictionary) -> void:
+	var secs: float = clampf(float(d.get("n", 20)), 1.0, 90.0) / 60.0
+	if m != null:
+		m.open_left = secs
+	var tm: UiFighterModel = model(int(d.get("target", -1)))
+	if tm != null:
+		tm.punish_left = secs
 
 
 func _set_weight(m: UiFighterModel, w: String) -> void:

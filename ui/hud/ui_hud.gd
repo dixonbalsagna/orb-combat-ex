@@ -617,7 +617,8 @@ func _update_layers() -> void:
 		var pulse: int = int(_t * 8.0) if (not reduced and m.brink) else 0
 		_l_plate[m.slot].update_sig([m.name, m.ai, m.stance, m.tier, int(m.momentum), int(m.charge), int(m.ego), m.hidden, m.lost_trail,
 			m.charging, m.chain_n if m.chain_t >= 0.0 else 0, m.brink, m.shame, full, _plate_alpha(m), pulse, m.you_label,
-			m.weight, m.launcher_known and m.launcher_ready, m.launcher_known and UiStance.three(), m.weight_fallback_t < 1.5, m.sig_queued, m.sig_funded, int(m.sig_cap_t * 6.0) if m.sig_funded else 0, m.sig_note if m.sig_note_t < 1.4 else "",
+			m.weight, (m.blow_kind if (UiStance.three() and m.blow_t < UiPlate.BLOW_HOLD) else ""), m.open_left > 0.0, (m.land_kind if m.land_t < UiPlate.LAND_HOLD else ""),
+			(m.run_n if m.run_t < UiPlate.RUN_HOLD else 0), m.launcher_known and m.launcher_ready, m.launcher_known and UiStance.three(), m.weight_fallback_t < 1.5, m.sig_queued, m.sig_funded, int(m.sig_cap_t * 6.0) if m.sig_funded else 0, m.sig_note if m.sig_note_t < 1.4 else "",
 			0 if reduced else int(clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0) * 5.0), int(m.last_stand_left * 6.0), int(m.last_stand_dur), m.energy, m.stance_kind, int(clampf(m.stance_armed, 0.0, 1.0) * 12.0) if (m.stance_armed > 0.0 and not reduced) else (1 if m.stance_armed > 0.0 else 0)])
 		_l_sil[m.slot].update_sig(_sil_sig(m, reduced) if layout.silhouette_on else null)
 
@@ -2941,6 +2942,10 @@ func _touch_extra() -> Dictionary:
 					out["charge"] = {"name": aid3, "frac": cf, "armoured": m.charge_cell == "b"}
 		if m.launcher_open:
 			(out["lit"] as Array).append("signature")   # the launch window is on B
+		if UiStance.three() and m.punish_left > 0.0:
+			(out["lit"] as Array).append("heavy")   # he missed and is open: Y (the medium) is lit with three ticks
+		if UiStance.three() and m.flurry_dots > 0:
+			out["dots"] = m.flurry_dots
 		if UiStance.three() and m.launcher_known:
 			out["launcher"] = "ready" if m.launcher_ready else "rest"
 		var a: float = UiHints.ack_alpha(m, bool(opts["reduced_motion"]))

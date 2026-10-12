@@ -56,6 +56,7 @@ func _run() -> void:
 	await _notice_rules()
 	await _gate_short_rules()
 	await _phone_rules()
+	await _brawl_marks_rules()
 	await _block_toggle_rules()
 	_gate_bypass_rules()
 	await _three_strength_rules()
@@ -5327,6 +5328,91 @@ func _reduce_flashing_rules() -> void:
 
 ## Legal's text (RL-119), word for word: what the gate says and what the README says.
 const GATE_TEXT := "This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them. The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes. No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version."
+
+
+## The brawl's small marks (docs/ui/brawl-teaching.md section 1 and 2), behind three_strengths: the plate's weight chip following the blow cue, OPEN after a miss with the medium's glyph lit,
+## a bolt's land, the run of unanswered blows, and X's ring of dots; inert with the flag off.
+func _brawl_marks_rules() -> void:
+	root.size = Vector2i(960, 540)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(960, 540)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.anchor_fn = func(slot): return {"pos": Vector2(500.0 + 300.0 * float(slot), 400.0), "h": 120.0, "visible": true}
+	var m0: UiFighterModel = hud.hub.model(0)
+	var m1: UiFighterModel = hud.hub.model(1)
+	var drawn := func(frames: int) -> String:
+		UiText.tracing = true
+		UiText.trace = []
+		for l in hud._all_layers():
+			if l != null:
+				l.invalidate()
+		for i in range(frames):
+			hud.advance(1.0 / 60.0)
+			await process_frame
+		UiText.tracing = false
+		var out := " ".join(PackedStringArray(UiText.trace))
+		UiText.trace = []
+		return out
+	# With the flag off nothing of it draws, whatever the cues say.
+	UiData.set_feature("three_strengths", false)
+	hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "medium", "k": 0, "target": 1})
+	hud.consume({"type": "cue", "actor": 1, "kind": "miss", "text": "reach", "n": 20, "target": 0})
+	var off_text: String = await drawn.call(4)
+	_ok(not off_text.contains("MEDIUM") and not off_text.contains("OPEN"), "brawl marks: with three_strengths off the blow and the miss draw nothing")
+	UiData.set_feature("three_strengths", true)
+	# The weight chip names the blow, then falls back.
+	hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "heavy", "k": 0, "target": 1})
+	var on_text: String = await drawn.call(3)
+	_ok(m0.blow_kind == "heavy" and on_text.contains("HEAVY"), "brawl marks: the plate's chip names the blow just thrown (%s)" % m0.blow_kind)
+	for kind in ["light", "medium", "bolt", "blast", "release"]:
+		hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": kind, "k": 0, "target": 1})
+		var tx: String = await drawn.call(2)
+		_ok(tx.contains(kind.to_upper()), "brawl marks: the chip says %s" % kind.to_upper())
+	var gone: String = await drawn.call(90)
+	var later: String = await drawn.call(3)
+	_ok(not later.contains("RELEASE") and m0.blow_t > UiPlate.BLOW_HOLD, "brawl marks: and the chip falls back after %.1f s" % UiPlate.BLOW_HOLD)
+	# A miss: OPEN on the swinger's plate, the target's medium glyph lit, both for the ticks it says.
+	hud.consume({"type": "cue", "actor": 1, "kind": "miss", "text": "reach", "n": 30, "target": 0, "source": "y"})
+	var miss_text: String = await drawn.call(3)
+	_ok(absf(m1.open_left - 0.5) < 0.1 and absf(m0.punish_left - 0.5) < 0.1 and miss_text.contains("OPEN"), "brawl marks: a miss shows OPEN on the swinger's plate and lights the target's medium (%.2f, %.2f)" % [m1.open_left, m0.punish_left])
+	var sig_a: Array = UiHints.sig(m0, 1.0, "arena")
+	m0.punish_left = 0.0
+	_ok(UiHints.sig(m0, 1.0, "arena") != sig_a, "brawl marks: the legend redraws when the lit medium goes")
+	var lit_touch: Dictionary = {}
+	m0.punish_left = 0.4
+	hud.set_option("touch_preset", "touch-full")
+	hud.set_option("touch_ui", true)
+	hud.advance(1.0 / 60.0)
+	lit_touch = hud._touch_extra()
+	_ok(hud.layout.touch_full and (lit_touch["lit"] as Array).has("heavy"), "brawl marks: on Full touch the medium's button is lit with the miss")
+	hud.set_option("touch_ui", false)
+	hud.set_option("touch_preset", "touch-simple")
+	# A bolt's land.
+	hud.consume({"type": "cue", "actor": 0, "kind": "energy_land", "text": "bolt", "source": "armour"})
+	var land_text: String = await drawn.call(2)
+	_ok(m0.land_kind == "armour" and land_text.contains("ARMOUR"), "brawl marks: a bolt's land shows how it landed")
+	# The run of unanswered blows on the target.
+	hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "k": 1, "target": 1, "run": 3, "run_to": 4})
+	_ok(m1.run_n == 3 and m1.run_to == 4 and m0.flurry_dots == 1, "brawl marks: a flurry blow with a run sets the target's run (%d of %d) and lights a dot (%d)" % [m1.run_n, m1.run_to, m0.flurry_dots])
+	for i in range(11):
+		hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "k": 1, "target": 1})
+	_ok(m0.flurry_dots == 2, "brawl marks: the ring of dots wraps after ten (%d)" % m0.flurry_dots)
+	var kinds_seen: String = await drawn.call(2)
+	await drawn.call(60)
+	_ok(m0.flurry_dots == 0, "brawl marks: the dots clear 0.6 s after the blows stop")
+	await drawn.call(100)
+	_ok(m1.run_n == 0, "brawl marks: and the run after 2.5 s")
+	# The hub counts what it has no reading for, and no longer counts the ones it reads.
+	hud.consume({"type": "cue", "actor": 0, "kind": "double_hit"})
+	_ok(int(hud.hub.stats.get("cue_unread_double_hit", 0)) == 1 and int(hud.hub.stats.get("cue_unread_blow", 0)) == 0 and int(hud.hub.stats.get("cue_unread_miss", 0)) == 0, "brawl marks: the unread counter holds only what has no reading")
+	UiData.set_feature("three_strengths", null)
+	hud.queue_free()
+	await process_frame
+	root.size = Vector2i(1280, 720)
 
 
 ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD

@@ -50,7 +50,7 @@
     "parry": "PARRY",
     "chain": "CHAIN ×{n}",
     "ai": "CPU",
-    "weight_light": "LIGHT",
+    "blow_light": "LIGHT", "blow_medium": "MEDIUM", "blow_heavy": "HEAVY", "blow_bolt": "BOLT", "blow_blast": "BLAST", "blow_release": "RELEASE", "open": "OPEN", "land_hit": "HIT", "land_guard": "GUARD", "land_armour": "ARMOUR", "land_miss": "MISS", "weight_light": "LIGHT",
     "weight_medium": "MEDIUM",
     "launcher_ready": "LAUNCH",
     "launcher_rest": "RESTING",

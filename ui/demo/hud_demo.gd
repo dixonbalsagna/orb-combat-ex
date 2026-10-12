@@ -75,6 +75,17 @@ func _ready() -> void:
 		hud.set_option("show_prompts", true)
 	if args.has("dp"):
 		hud.set_density(float(args["dp"]))
+	if args.has("blow"):
+		hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": str(args["blow"]), "k": 0, "target": 1})   # the plate's weight chip names it (with --three)
+	if args.has("miss"):
+		hud.consume({"type": "cue", "actor": 1, "kind": "miss", "text": "reach", "n": 600, "target": 0})   # OPEN on the rival's plate, my medium lit (long, so a still catches it)
+	if args.has("land"):
+		hud.consume({"type": "cue", "actor": 0, "kind": "energy_land", "text": "bolt", "source": str(args["land"])})
+	if args.has("run"):
+		hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "k": 1, "target": 1, "run": int(args["run"]) if str(args["run"]) != "1" else 3, "run_to": 4})
+	if args.has("dots"):
+		for i in range(int(args["dots"]) if str(args["dots"]) != "1" else 6):
+			hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "k": 1})
 	if args.has("cvd"):
 		hud.set_option("colour_vision", str(args["cvd"]))   # protan, deutan or tritan
 	if args.has("youmark"):
@@ -245,6 +256,18 @@ func _process(delta: float) -> void:
 		m0.charge_t = m0.charge_dur * (float(cpp[1]) if cpp.size() > 1 else 0.6)   # hold the ring where it is
 	if args.has("ack"):
 		hud.hub.model(0).press_ack_t = 0.08   # the mark lasts half a second: hold it in view
+	# The brawl's small marks last a second or two: hold them in view for a still (docs/ui/brawl-teaching.md).
+	if args.has("blow"):
+		hud.hub.model(0).blow_t = 0.1
+	if args.has("miss"):
+		hud.hub.model(1).open_left = 0.5
+		hud.hub.model(0).punish_left = 0.5
+	if args.has("land"):
+		hud.hub.model(0).land_t = 0.1
+	if args.has("run"):
+		hud.hub.model(1).run_t = 0.1
+	if args.has("dots"):
+		hud.hub.model(0).flurry_t = 0.1
 	split_sep = move_toward(split_sep, 1.0 if split_on else 0.0, delta / 0.45)
 	if not paused:
 		_step(minf(delta, 0.1))
