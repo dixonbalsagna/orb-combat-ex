@@ -42,6 +42,7 @@ var steps: int = 0               # ticks stepped since the page loaded
 var _held: Dictionary = {}       # what this hook has pressed, so a button is only sent when it changes
 var _frames: int = 0
 var _ready_told: bool = false
+var VARIANT: int = 0                # a different run of a fixed scene: the pair set down VARIANT x 450 units further along the world (the page's start option)
 var _shown_due: bool = false     # a tick was drawn last frame: its step() resolves now
 
 
@@ -49,7 +50,7 @@ func _init(m: Node) -> void:
 	main = m
 	JavaScriptBridge.eval("""window.__flashcap = {
 		ready: false, tick: 0, scenario: '', error: '', in_window: 0, _req: null, _want: 0, _done: 0, _waiting: [],
-		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0, skip: (opts && opts.skip) | 0 }; },
+		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0, variant: (opts && opts.variant) | 0, skip: (opts && opts.skip) | 0 }; },
 		step() { return new Promise((res) => { this._waiting.push(res); this._want += 1; }); },
 		_shown(tick, inWindow) { this.tick = tick; this.in_window = inWindow; this._done += 1; const r = this._waiting.shift(); if (r) r(tick); }
 	};""", true)
@@ -70,13 +71,14 @@ func poll() -> void:
 	if not (st is Dictionary):
 		return
 	if st.get("req") is Dictionary:
-		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)), int(st.req.get("skip", 0)))
+		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)), int(st.req.get("skip", 0)), int(st.req.get("variant", 0)))
 	if int(st.get("pending", 0)) > 0:
 		step()
 
 
 ## Set a worst case up, as tools/flash/flash_worst.gd does, and hold the sim (nothing ticks until step()).
-func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0) -> void:
+func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int = 0) -> void:
+	VARIANT = variant
 	var err: String = ""
 	if not SCENARIOS.has(sc):
 		err = "no scenario '%s' (%s): playing ai" % [sc, ", ".join(PackedStringArray(SCENARIOS))]
@@ -194,6 +196,10 @@ func drive(sc: String, t: int, S: SimState) -> void:
 				S.fighters[0].tier = 3.0
 			if t == 1200:
 				S.fighters[1].stage[1] = 2
+	# a variant of a fixed scene is a different run of it (Legal RL-131): the pair set down 450 units further along the world for each step of the variant (another place, another
+	# scenery, another camera phase); 0 is the scene as it was
+	if t == 0 and VARIANT != 0:
+		_apply_variant(S, VARIANT)
 
 
 ## Both human, walking into reach and mashing light every 4 ticks each (staggered), with a heavy now and then.
@@ -219,6 +225,15 @@ func _rush(t: int, S: SimState) -> void:
 	# P1 sprints (stick held, dodge held: the sprint) along the front street, turning every 150 ticks so the run stays in the city; the AI fights him
 	_stick(0, 1.0 if (t / 150) % 2 == 0 else -1.0)
 	_btn(0, "lt", true)
+
+
+## The pair set down again `variant` x 450 units along the world from where the scene put them.
+func _apply_variant(S: SimState, variant: int) -> void:
+	for f in S.fighters:
+		f.x = SimWrap.wrap(f.x + 450.0 * float(variant))
+		f.y = WorldTerrain.groundY(S, f.x) + 10.0
+		f.vx = 0.0
+		f.vy = 0.0
 
 
 func _ready_forms(S: SimState, t: int, ticks: Array) -> void:

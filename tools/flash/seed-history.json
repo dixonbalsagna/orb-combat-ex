@@ -1,0 +1,7 @@
+{
+  "_about": "What the seed pick (tools/flash/pick-seeds.mjs, Legal's RL-131) remembers between releases. failed: a seed that failed in an earlier candidate stays in the pick until its cause is fixed and recorded (set fixed to true with the cause). coverage: the date each pairing was last captured in a release pass (null: never), so the rolling cycle takes the uncaptured first.",
+  "failed": [],
+  "coverage": {
+    "PROTAGONIST,RIVAL": null
+  }
+}

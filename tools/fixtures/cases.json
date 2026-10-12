@@ -253606,6 +253606,112 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "anim-press-styles-beat-bolt-recover-add-required",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "del": [
+            "/beat/bolt_recover_add"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beat"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-bolt-recover-add-type",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/bolt_recover_add": "three"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beat/bolt_recover_add"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-bolt-recover-add-integer",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/bolt_recover_add": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beat/bolt_recover_add"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-bolt-recover-add-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/bolt_recover_add": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beat/bolt_recover_add"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-bolt-recover-add-above-max",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/bolt_recover_add": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beat/bolt_recover_add"
+      }
+    },
+    {
+      "id": "anim-press-styles-beat-bolt-recover-add-zero-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/bolt_recover_add": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-styles-beat-bolt-recover-add-max-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/beat/bolt_recover_add": 8
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

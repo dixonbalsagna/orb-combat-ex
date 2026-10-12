@@ -24,12 +24,13 @@ const JOBS = Number(opt('--jobs', 3));
 // every capture browser runs on the same CPU_CAP percent of the machine's logical processors (tools/machine/browser.mjs: an affinity mask on the same cores for all of them, so the whole set
 // together stays inside it), at below-normal priority, and is ended by its own guard at CLIP_TIMEOUT_S plus 5 minutes (docs/tools/machine-captures.md)
 const CPU_CAP = Number(opt('--cpu-cap', 40));
+const VARIANT = Number(opt('--variant', 0));   // a different run of every fixed scene (the pair set down VARIANT x 450 units further along the world): a sensitive clip's re-capture (RL-131)
 const SKIP = Number(opt('--skip', 0));   // ticks run without a picture before every clip (a window of a match: the clip is --ticks long from tick skip + 1); needs the hook's skip
 const CLIP_TIMEOUT_S = Number(opt('--clip-timeout', 3600));
 const ONLY = opt('--only') ? opt('--only').split(',') : null;
 const W = 1024, H = 768;
 const TICKS_OVERRIDE = opt('--ticks') ? Number(opt('--ticks')) : 0;   // a shorter clip, for a speed measurement (the verdict then covers only those ticks)
-if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--ticks N] [--skip N] [--cpu-cap 40] [--clip-timeout 3600]'); process.exit(2); }
+if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--ticks N] [--skip N] [--variant N] [--cpu-cap 40] [--clip-timeout 3600]'); process.exit(2); }
 const src = JSON.parse(readFileSync(join(here, 'sources.json'), 'utf8'));
 const CLIP = opt('--clip') ? opt('--clip').split(',') : null;
 // the required set (sources.json, tools/flash/clips.mjs): the five fixed cases, and for `ai` every pairing at every seed, each in both modes
@@ -60,7 +61,7 @@ function seriesFromRows(rows, ticks, skip = 0) {
 async function one(job) {
   const dir = join(OUT, job.id);
   const t0 = Date.now();
-  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.slots ? ['--slots', job.slots.join(',')] : []), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(TICKS_OVERRIDE || job.ticks), ...(argv.includes('--software') ? ['--software'] : []), ...(argv.includes('--budget') ? ['--budget'] : []), ...(SKIP > 0 ? ['--skip', String(SKIP)] : []), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', String(CLIP_TIMEOUT_S), '--cpu-cap', String(CPU_CAP)], (CLIP_TIMEOUT_S + 900) * 1000);
+  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.slots ? ['--slots', job.slots.join(',')] : []), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(TICKS_OVERRIDE || job.ticks), ...(argv.includes('--software') ? ['--software'] : []), ...(argv.includes('--budget') ? ['--budget'] : []), ...(SKIP > 0 ? ['--skip', String(SKIP)] : []), ...(VARIANT !== 0 ? ['--variant', String(VARIANT)] : []), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', String(CLIP_TIMEOUT_S), '--cpu-cap', String(CPU_CAP)], (CLIP_TIMEOUT_S + 900) * 1000);
   if (cap.code !== 0) return { ...job, error: cap.out.trim().split('\n').pop() };
   if (argv.includes('--capture-only')) return { ...job, captured: true };
   const an = await run([join(here, 'analyse-frames.js'), dir, '--scale', '1', '--json', join(dir, 'analysis.json')]);
@@ -95,7 +96,7 @@ async function one(job) {
     writeFileSync(join(dir, 'kept-ranges.json'), JSON.stringify({ ranges }, null, 2) + String.fromCharCode(10));
     kept = true;
   } else if (!bad && !argv.includes('--keep')) for (const f of readdirSync(dir)) if (/\.png$/i.test(f)) rmSync(join(dir, f));
-  return { ...job, seconds: Math.round((Date.now() - t0) / 1000), result, cross, kept };
+  return { ...job, seconds: Math.round((Date.now() - t0) / 1000), result, cross, kept, guard: { ...(clip.guard || {}), loadBefore: clip.loadBefore, loadAfter: clip.loadAfter, framesPerSecond: clip.framesPerSecond } };
 }
 
 const results = [];

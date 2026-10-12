@@ -12,7 +12,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
-import { tmpdir, platform } from 'node:os';
+import { tmpdir, platform, cpus } from 'node:os';
 import { join, extname, resolve, sep, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
@@ -82,6 +82,16 @@ export class Cdp {
     return r.result ? r.result.value : undefined;
   }
   close() { try { this.ws.close(); } catch { /* gone */ } }
+}
+
+/** The machine's CPU use over `ms`, in percent of all logical processors (all processes, this one included). */
+export async function cpuLoad(ms = 1000) {
+  const read = () => cpus().reduce((a, c) => { const t = c.times; const total = t.user + t.nice + t.sys + t.idle + t.irq; return { total: a.total + total, idle: a.idle + t.idle }; }, { total: 0, idle: 0 });
+  const a = read();
+  await sleep(ms);
+  const b = read();
+  const dt = b.total - a.total;
+  return dt > 0 ? Math.round((100 * (dt - (b.idle - a.idle))) / dt) : 0;
 }
 
 function killTreeByProfile(profile) {

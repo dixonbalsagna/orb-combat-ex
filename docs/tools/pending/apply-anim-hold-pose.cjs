@@ -1,6 +1,7 @@
 // Animation's press-styles additions of 2026-10-12 (the charged medium and heavy's held look and the plain light's pin): data/anim/press_styles.json gains
 //   styles.<style>.hold.pose   optional: a map of fighter (a fighter of data/anim/fighters.json) to the pose the hold is held in (a pose of poses.json or a wave's poses file): rule pressstyles-hold
 //   beat.plain_light.pin_ticks required: the ticks a plain light's pose is pinned (an integer 0 to 60)
+//   beat.bolt_recover_add      required (Animation's follow-up, 2026-10-12; added optional by the EP in 115ee361): an integer 0 to 8, the ticks added to a bolt's return
 // NOT run by CI, the validator or the sim. Run once from the repo root, in the commit that lands the data:
 //     node docs/tools/pending/apply-anim-hold-pose.cjs
 // It does NOT edit data/. It edits tools/schemas/anim-press-styles.schema.json, tools/lib/xref-fight.js (the hold loop of the press-styles block), tools/fixtures/cases.json and
@@ -36,6 +37,7 @@ if (!live.beat || !live.beat.plain_light) throw new Error('data/anim/press_style
     };
     if (!beat.required.includes('plain_light')) beat.required.push('plain_light');
   }
+  if (beat.properties.bolt_recover_add && !beat.required.includes('bolt_recover_add')) beat.required.push('bolt_recover_add');
   wj(f, s);
 }
 {
@@ -82,7 +84,7 @@ if (!live.beat || !live.beat.plain_light) throw new Error('data/anim/press_style
   hc('fighter-unknown', (h) => { h.pose.nobody = h.pose[f0]; }, { rule: 'xref:pressstyles-hold', pointer: `${hp}/nobody` });
   hc('pose-unknown', (h) => { h.pose[f0] = 'ch.nowhere.load'; }, { rule: 'xref:pressstyles-hold', pointer: `${hp}/${f0}` });
   hc('note-key-ok', (h) => { h.pose._why = 'a note'; }, null);
-  const bc = (n, set, del, expect) => out.push({ id: 'anim-press-styles-beat-plain-light-' + n, schema: 'anim-press-styles.schema.json', mutate: [{ file: D, ...(set ? { set } : {}), ...(del ? { del } : {}) }], expect });
+  const bc = (n, set, del, expect) => out.push({ id: 'anim-press-styles-beat-' + (n.startsWith('bolt-') ? '' : 'plain-light-') + n, schema: 'anim-press-styles.schema.json', mutate: [{ file: D, ...(set ? { set } : {}), ...(del ? { del } : {}) }], expect });
   const PL = '/beat/plain_light';
   bc('required', null, [PL], { rule: 'required', pointer: '/beat' });
   bc('type', { [PL]: 6 }, null, { rule: 'type', pointer: PL });
@@ -95,6 +97,14 @@ if (!live.beat || !live.beat.plain_light) throw new Error('data/anim/press_style
   bc('pin-ticks-type', { [`${PL}/pin_ticks`]: 'six' }, null, { rule: 'type', pointer: `${PL}/pin_ticks` });
   bc('pin-ticks-zero-ok', { [`${PL}/pin_ticks`]: 0 }, null, null);
   bc('pin-ticks-max-ok', { [`${PL}/pin_ticks`]: 60 }, null, null);
+  const BR = '/beat/bolt_recover_add';
+  bc('bolt-recover-add-required', null, [BR], { rule: 'required', pointer: '/beat' });
+  bc('bolt-recover-add-type', { [BR]: 'three' }, null, { rule: 'type', pointer: BR });
+  bc('bolt-recover-add-integer', { [BR]: 2.5 }, null, { rule: 'type', pointer: BR });
+  bc('bolt-recover-add-negative', { [BR]: -1 }, null, { rule: 'minimum', pointer: BR });
+  bc('bolt-recover-add-above-max', { [BR]: 9 }, null, { rule: 'maximum', pointer: BR });
+  bc('bolt-recover-add-zero-ok', { [BR]: 0 }, null, null);
+  bc('bolt-recover-add-max-ok', { [BR]: 8 }, null, null);
   let n = 0;
   for (const k of out) {
     const i = c.cases.findIndex((y) => y.id === k.id);

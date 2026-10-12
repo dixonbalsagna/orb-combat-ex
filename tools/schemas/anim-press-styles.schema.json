@@ -296,7 +296,8 @@
         "grade",
         "closing",
         "charge",
-        "plain_light"
+        "plain_light",
+        "bolt_recover_add"
       ],
       "description": "What the beat tells (Encounter's slice B0: style, grade, k, n, closing, charge, hand, ender). grade: a tech blow's held beat and after-images by the press grade; closing: the least a closing or ending blow holds its follow-through; charge: a heavy's wind-up is load_min of its length when tapped and the whole when held, its squash following the blow's weight from tapped to held.",
       "properties": {

@@ -40,6 +40,7 @@ var body_starts: Array = [[], []]   # per fighter, the ticks at which the body h
 var failed: bool = false
 var trace: bool = false
 var negative: bool = false
+var VARIANT: int = 0           # --variant=N: a different run of a fixed scene (the pair set down N x 450 units further along the world)
 var budget: bool = false         # --budget: Camera's travel budget on (SplitRig.travel_budget, off by default), as the web hook's `budget=1`
 
 
@@ -51,6 +52,8 @@ func _initialize() -> void:
 			only = Array(a.substr(7).split(","))
 		elif a == "--negative-control":
 			negative = true
+		elif a.begins_with("--variant="):
+			VARIANT = int(a.substr(10))
 		elif a == "--budget":
 			budget = true
 		elif a == "--trace":
@@ -301,6 +304,10 @@ func _drive(sc: String, t: int, S: SimState) -> void:
 				S.fighters[0].tier = 3.0
 			if t == 1200:
 				S.fighters[1].stage[1] = 2
+	# a variant of a fixed scene is a different run of it (Legal RL-131): the pair set down 450 units further along the world for each step of the variant (another place, another
+	# scenery, another camera phase); 0 is the scene as it was
+	if t == 0 and VARIANT != 0:
+		_apply_variant(S, VARIANT)
 
 
 ## P1 holds the signature on a cycle against the AI.
@@ -317,6 +324,15 @@ func _rush(t: int, S: SimState) -> void:
 	# P1 sprints (stick held, dodge held: the sprint) along the front street, turning every 150 ticks so the run stays in the city; the AI fights him
 	_stick(0, 1.0 if (t / 150) % 2 == 0 else -1.0)
 	_btn(0, "lt", true)
+
+
+## The pair set down again `variant` x 450 units along the world from where the scene put them.
+func _apply_variant(S: SimState, variant: int) -> void:
+	for f in S.fighters:
+		f.x = SimWrap.wrap(f.x + 450.0 * float(variant))
+		f.y = WorldTerrain.groundY(S, f.x) + 10.0
+		f.vx = 0.0
+		f.vy = 0.0
 
 
 ## Both human, walking into reach and mashing light every 4 ticks each (staggered), with a heavy now and then.

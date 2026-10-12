@@ -18,7 +18,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Cdp, launchBrowser, serve, browserExe } from '../machine/browser.mjs';   // the one guarded launcher (docs/tools/machine-captures.md)
+import { Cdp, launchBrowser, serve, browserExe, cpuLoad } from '../machine/browser.mjs';   // the one guarded launcher (docs/tools/machine-captures.md)
 
 const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
@@ -28,7 +28,7 @@ const usage = () => {
     '       [--ticks 1800] [--reduced] [--seed N] [--slots A,B] [--skip N] [--width 960] [--height 540] [--software] [--browser chrome|edge] [--browser-path <exe>] [--timeout 900]\n       [--session <name>] [--time-limit <hard limit, seconds>] [--cpu-cap 25]');
   process.exit(2);
 };
-const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--width', '--height', '--software', '--budget', '--browser', '--browser-path', '--timeout', '--session', '--purpose', '--time-limit', '--cpu-cap']);
+const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--variant', '--width', '--height', '--software', '--budget', '--browser', '--browser-path', '--timeout', '--session', '--purpose', '--time-limit', '--cpu-cap']);
 for (const a of argv) if (a.startsWith('--') && !known.has(a)) { console.error(`unknown option ${a}`); usage(); }
 const here = dirname(fileURLToPath(import.meta.url));
 const DIR = has('--mock') ? join(here, 'mock-page') : opt('--dir');
@@ -41,6 +41,7 @@ const WIDTH = Number(opt('--width', 960)), HEIGHT = Number(opt('--height', 540))
 const REDUCED = has('--reduced');
 const SEED = opt('--seed') === undefined ? null : Number(opt('--seed'));
 const SLOTS = opt('--slots') ? opt('--slots').split(',') : null;      // a pairing: two roster ids (the hook may not offer it yet)
+const VARIANT = opt('--variant') === undefined ? 0 : Number(opt('--variant'));   // a different run of a fixed scene (the hook's variant)
 const SKIP = opt('--skip') === undefined ? null : Number(opt('--skip'));   // ticks to run without drawing before the clip starts (the hook may not offer it yet)
 const TIMEOUT_S = Number(opt('--timeout', 900));
 const BROWSER = opt('--browser', 'chrome');
@@ -73,6 +74,7 @@ const cleanup = async () => {
 };
 let page, code = 0;
 try {
+  const loadBefore = await cpuLoad(1000);   // the machine's load before this capture starts: a recorded condition of a release pass (a starved machine voids a clip)
   const target = await launchBrowserGuarded();
   page = await Cdp.open(target.webSocketDebuggerUrl);
   await page.send('Emulation.setDeviceMetricsOverride', { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: false });
@@ -81,7 +83,7 @@ try {
   let ready = false;
   while (Date.now() < deadline && !ready) { await sleep(500); ready = await page.eval('Boolean(window.__flashcap && window.__flashcap.ready)').catch(() => false); }
   if (!ready) throw new Error(`the page offers no window.__flashcap that becomes ready (the contract is at the top of tools/flash/capture-web.mjs); the build does not have it yet`);
-  await page.eval(`window.__flashcap.start(${JSON.stringify(SCENARIO)}, { reduced: ${REDUCED}${SEED === null ? '' : ', seed: ' + SEED}${SLOTS ? ', slots: ' + JSON.stringify(SLOTS) : ''}${SKIP === null ? '' : ', skip: ' + SKIP} })`);
+  await page.eval(`window.__flashcap.start(${JSON.stringify(SCENARIO)}, { reduced: ${REDUCED}${SEED === null ? '' : ', seed: ' + SEED}${SLOTS ? ', slots: ' + JSON.stringify(SLOTS) : ''}${SKIP === null ? '' : ', skip: ' + SKIP}${VARIANT ? ', variant: ' + VARIANT : ''} })`);
   log(`${pageUrl}: ${SCENARIO}${REDUCED ? ' (reduced)' : ''}, ${TICKS} ticks at ${WIDTH}x${HEIGHT}`);
   let last = -1;
   const tStart = Date.now();
@@ -97,7 +99,9 @@ try {
     const shot = await page.send('Page.captureScreenshot', { format: 'png', fromSurface: true });
     writeFileSync(join(OUT, `frame-${String(i).padStart(6, '0')}.png`), Buffer.from(shot.data, 'base64'));
   }
-  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, budget: has('--budget'), page: pageUrl }, null, 2) + '\n');
+  const loadAfter = await cpuLoad(1000);
+  const guard = browser ? { tag: String(browser.profile).split(/[\\/]/).pop(), session: browser.entry.session, purpose: browser.entry.purpose, cpuPercent: browser.entry.cpuPercent, timeoutS: browser.entry.timeoutS, priority: 'below-normal', hardEndMs: browser.deadlineMs } : null;
+  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, budget: has('--budget'), variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
   log(`${TICKS} frames in ${Math.round((Date.now() - tStart) / 1000)} s of capture (${(TICKS / Math.max(1, (Date.now() - tStart) / 1000)).toFixed(2)} frames a second${has('--software') ? ', software rendering' : ''})`);
   log(`wrote ${TICKS} frames to ${OUT}; next: node tools/flash/analyse-frames.js ${OUT}`);
 } catch (e) {
