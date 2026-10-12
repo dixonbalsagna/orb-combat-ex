@@ -68,6 +68,14 @@ const STREET_LINE: String = "#c8c2a8"
 const STREET_EDGE: float = 120.0         # the paint fades in over this at a district's ends
 const STREET_DASH: float = 120.0         # a centre-line dash and its gap, each
 const STREET_BAY: float = 190.0          # a kerb parking bay's length (a car is 2.5 bh)
+const AVENUE_WALK: float = 60.0          # an avenue's sidewalk, each side of its carriageway (at most a fifth of its width)
+## The rows' haze (building.gdshader row_haze): the most of the air's colour a far row takes, and the depths behind the
+## fighter plane (to a building's front face) where it starts and is full. The front block (its faces at 300) takes
+## none, the back block (1,350) about a sixth, the scenery row (2,550) about four tenths: the rows read as depth.
+const ROW_HAZE := Vector3(0.5, 600.0, 2800.0)
+## At stage 2 (a part gone) this share of a facade's bays is broken open, wall and all: the stage's other marks (the
+## sheared top corner, the cracks) do not show from the street under a tower 60 floors tall with its windows out.
+const DMG_HOLES: float = 0.18
 const LANE_CUE_W: float = 14.0           # the stripe's half width in depth,
 const LANE_CUE_LEN: float = 450.0        # ... its half length along the street,
 const LANE_CUE_ALPHA: float = 0.5        # ... and its strength at full

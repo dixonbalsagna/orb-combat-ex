@@ -318,6 +318,11 @@ uniform vec4 street_kerb : source_color = vec4(0.36, 0.37, 0.40, 1.0);
 uniform vec4 street_line : source_color = vec4(0.78, 0.76, 0.66, 1.0);
 uniform float street_dash = 120.0;  // RenderLook.STREET_DASH: a centre-line dash and its gap, each
 uniform float street_bay = 190.0;   // RenderLook.STREET_BAY: a kerb parking bay's length
+uniform int avenue_n = 0;           // avenues in use: the cross streets that part the blocks
+uniform vec4 avenues[12];           // an avenue's world x interval (x0, x1); z: its district
+uniform vec4 lot_z;                 // the two block lanes in depth: the first's zTop, zBottom, the second's
+uniform vec4 lot_col[8] : source_color;   // a look's paved ground in its blocks; a: how strongly it covers the biome's (0: yards)
+uniform float avenue_walk = 60.0;   // RenderLook.AVENUE_WALK
 uniform vec4 lane_cue[2];           // a fighter's world x, his depth, the stripe's half length along x, its strength (0: none)
 uniform vec4 lane_cue_col[2] : source_color;
 uniform float lane_cue_w = 14.0;    // RenderLook.LANE_CUE_W: the stripe's half width in depth
@@ -355,6 +360,37 @@ vec4 street_paint(vec2 px, float upx) {
 		float on = step(0.5, fract(px.x / (2.0 * street_dash)));
 		float mid = 1.0 - smoothstep(2.0, 5.0, abs(px.y - st.w));
 		return vec4(mix(street_road.rgb, street_line.rgb, 0.85 * on * mid * fine), 1.0);
+	}
+	return vec4(0.0);
+}
+
+// The ground of a block at world x and depth px.y, where no street strip lies: an avenue crossing it (a carriageway
+// between two sidewalks, a dashed line down its middle), or its district's paved lot. rgb, and alpha 0 where the
+// biome's own ground shows (a suburb's and a village's yards, and anything outside the blocks).
+vec4 block_paint(vec2 px, float upx) {
+	bool first = px.y <= lot_z.x && px.y > lot_z.y;
+	bool second = px.y <= lot_z.z && px.y > lot_z.w;
+	if (!first && !second) {
+		return vec4(0.0);
+	}
+	for (int k = 0; k < avenue_n; k++) {
+		vec4 av = avenues[k];
+		if (px.x > av.x && px.x < av.y) {
+			float e = min(px.x - av.x, av.y - px.x);
+			if (e < min(avenue_walk, 0.2 * (av.y - av.x))) {
+				return vec4(street_walk.rgb, 1.0);
+			}
+			float fine = 1.0 - smoothstep(4.0, 12.0, upx);
+			float mid = 1.0 - smoothstep(2.0, 5.0, abs(px.x - 0.5 * (av.x + av.y)));
+			float on = step(0.5, fract(px.y / (2.0 * street_dash)));
+			return vec4(mix(street_road.rgb, street_line.rgb, 0.85 * on * mid * fine), 1.0);
+		}
+	}
+	for (int k = 0; k < span_n; k++) {
+		vec4 sp = street_spans[k];
+		if (px.x >= sp.x && px.x < sp.y) {
+			return lot_col[clamp(int(sp.w + 0.5), 0, 7)];
+		}
 	}
 	return vec4(0.0);
 }

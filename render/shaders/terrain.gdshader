@@ -95,6 +95,9 @@ void fragment() {
 		c = sea_floor.rgb;
 	} else if (v_street > 0.001) {
 		vec4 st = street_paint(v_px, fwidth(v_px.x));
+		if (st.a <= 0.0) {
+			st = block_paint(v_px, fwidth(v_px.x));   // between the streets: an avenue, or the district's paved lot
+		}
 		c = mix(c, st.rgb, st.a * v_street);
 	}
 	if (v_dent < -dent_min) {

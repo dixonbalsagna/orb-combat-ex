@@ -23,6 +23,9 @@ const BUILDING_SHADER: Shader = preload("res://render/shaders/building.gdshader"
 const STUB_WHOLE := 1.0e9     # a stub height that cuts nothing
 const STREET_STRIPS := 8      # the ground shader's array sizes (ground.gdshaderinc)
 const STREET_SPANS := 16
+const STREET_AVENUES := 12
+const BUILDING_TOP: float = 2600.0   # the buildings' culling box reaches this high, in WS (the tallest tower of the re-laid city is under 2,300)
+static var row_haze: bool = true     # the rows' haze (building.gdshader); a tool may switch it off to compare
 
 static var streets: bool = true   # paint the lane table's streets on the ground (main's --nostreets, for A/B)
 static var windows: bool = true   # draw the buildings' windows (main's --nowindows, for A/B)
@@ -35,12 +38,15 @@ var _water_meshes: Array = []
 var _crowd_mat: ShaderMaterial
 var _terrain_mat: ShaderMaterial
 var _water_mat: ShaderMaterial
-var _bld: MultiMesh
-var _roof: MultiMesh
+var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
 var _tree: MultiMesh
 var _crowd: MultiMesh
-var _bld0: MultiMesh                 # row 0, in front of the fighter plane: its own MultiMesh
-var _roof0: MultiMesh
+var _bld0: MultiMesh                 # row 0, in front of the fighter plane: its own MultiMesh (bodies by row-0 index, then the other parts)
+var _parts: Array = []               # per building: its parts as it stands whole (RenderShapes.parts), the body first; shared by panes
+var _inst: Array = []                # per building: each part's instance in its MultiMesh (PackedInt32Array, the body's first)
+var _look := PackedInt32Array()      # per building: its district's look
+var _n_inst: int = 1                 # instances in _bld
+var _n_inst0: int = 1                # ... and in _bld0
 var _row0 := PackedInt32Array()      # per building: its index in _bld0, or -1
 var _row0_b := PackedInt32Array()    # per row-0 index: the building
 var _front_mat: ShaderMaterial       # this pane's material for row 0 (its holes and stubs, by row-0 index)
@@ -111,11 +117,14 @@ func build(S: SimState) -> void:
 		_make_props(S)
 	else:
 		_bld = source._bld
-		_roof = source._roof
+		_parts = source._parts
+		_inst = source._inst
+		_look = source._look
+		_n_inst = source._n_inst
+		_n_inst0 = source._n_inst0
 		_tree = source._tree
 		_crowd = source._crowd
 		_bld0 = source._bld0
-		_roof0 = source._roof0
 		_row0 = source._row0
 		_row0_b = source._row0_b
 		_foot = source._foot
@@ -133,8 +142,8 @@ func build(S: SimState) -> void:
 	_stub.fill(0.0)
 	_stub_live.clear()
 	_stub_t = -1.0
-	_stub_tex = _stub_texture(_bld_mat, S.buildings.size())
-	_stub_tex0 = _stub_texture(_front_mat, _row0_b.size())
+	_stub_tex = _stub_texture(_bld_mat, _n_inst)
+	_stub_tex0 = _stub_texture(_front_mat, _n_inst0)
 	_bld_mat.set_shader_parameter("cut_tex", _cut[1])
 	_front_mat.set_shader_parameter("cut_tex", _cut0[1])
 	_bld_mat.set_shader_parameter("win_tex", _win[1])
@@ -152,9 +161,7 @@ func build(S: SimState) -> void:
 			_mesh_child(n, "Water%d" % m, _water_meshes[m], _water_mat)
 		if absi(k) <= 1:
 			_mm_child(n, "Buildings", _bld, _bld_mat)
-			_mm_child(n, "Roofs", _roof, _bld_mat)
 			_mm_child(n, "Buildings0", _bld0, _front_mat)
-			_mm_child(n, "Roofs0", _roof0, _front_mat)
 			_mm_child(n, "Trees", _tree)
 			_mm_child(n, "Crowd", _crowd, _crowd_mat)
 		_copies.append(n)
@@ -353,10 +360,10 @@ func _footing(S: SimState, b) -> Vector2:
 	return Vector2(lo, hi)
 
 
-## Place building bi at standing height h and hand the shader its look. Returns World's damage stage it is drawn at
-## (0 to 3: a building that is falling keeps the stage it last stood at).
+## Place building bi at standing height h and hand the shader its look: every part of its shape (RenderShapes), each
+## an instance of the one box. Returns World's damage stage it is drawn at (0 to 3: a building that is falling keeps
+## the stage it last stood at).
 func _set_building(S: SimState, bi: int, b, h: float) -> int:
-	var tower: bool = b.kind == "tower"
 	var stage: int = mini(WorldStructures.stage(b), 3) if b.alive else int(_bld_seen[bi][4])
 	var zd: Vector2 = _depth(b)
 	var zc: float = zd.x
@@ -374,31 +381,40 @@ func _set_building(S: SimState, bi: int, b, h: float) -> int:
 			h = float(f[1])
 			var e: float = clampf(u, 0.0, 1.0)
 			sink = h * e * e
-	var mm: MultiMesh = _bld0 if _row0[bi] >= 0 else _bld
-	var roof: MultiMesh = _roof0 if _row0[bi] >= 0 else _roof
-	var k: int = _row0[bi] if _row0[bi] >= 0 else bi
-	var ct: Array = _cut0 if _row0[bi] >= 0 else _cut
-	var cut: Color = floor_cut(b) if b.alive else Color(0, 0, 0, 0)
-	if (ct[0] as Image).get_pixel(k, 0) != cut:
-		(ct[0] as Image).set_pixel(k, 0, cut)
-		ct[2] = true
+	var front: bool = _row0[bi] >= 0
+	var mm: MultiMesh = _bld0 if front else _bld
+	var ct: Array = _cut0 if front else _cut
 	_drawn[bi] = [h, stage, standing]
-	_write_windows(S, bi, b, sink)
 	# The sim's footing (World's T4): the highest ground under the footprint on the fighter plane. The fighter's brunt
-	# geometry uses it, so the drawn top is base + height; the box runs down to the lowest ground as drawn under it.
+	# geometry uses it, so the drawn top is base + height; a part on the ground runs down to the lowest ground as drawn
+	# under it. The parts stay inside the sim's box: none stands higher than base + height.
 	var base: float = WorldStructures.baseY(S, b)
 	_top[bi] = base + h - sink if standing else -INF
-	if standing:
-		var top: float = base + h - sink
-		var bottom: float = minf(foot.x, base) - sink
-		mm.set_instance_transform(k, Transform3D(Basis.from_scale(Vector3(b.w, top - bottom, d)), Vector3(b.x, (top + bottom) * 0.5, zc)))
-		mm.set_instance_color(k, RenderLook.col(RenderLook.TOWER if tower else RenderLook.HOUSE))
-	else:
-		mm.set_instance_transform(k, _hidden(b.x))
-	if not tower and standing and stage < 3:   # a shell has lost its roof
-		roof.set_instance_transform(k, Transform3D(Basis.from_scale(Vector3(b.w * RenderLook.ROOF_OVER, RenderLook.ROOF_H, d * 1.1)), Vector3(b.x, base + h - sink + RenderLook.ROOF_H * 0.5, zc)))
-	else:
-		roof.set_instance_transform(k, _hidden(b.x))
+	var ps: Array = _parts[bi]
+	var ix: PackedInt32Array = _inst[bi]
+	# A tower whose top floors are gone is cut off at its height and loses its caps; any other building is scaled.
+	var cut_top: bool = int(b.floors) >= WorldBrunt.FLOORS_MIN and b.fmask != (1 << int(b.floors)) - 1
+	var spans: Array = []
+	for j in range(ps.size()):
+		var p: Array = ps[j]
+		var k: int = ix[j]
+		var sp: Array = RenderShapes.span(p, j == 0, h, b.h, stage, cut_top) if standing else []
+		spans.append(sp)
+		# The floors cleared under this part's top (a tunnel): only a part that stands on the ground and has floors.
+		var cut: Color = Color(0, 0, 0, 0)
+		if b.alive and not sp.is_empty() and float(p[RenderShapes.Y0]) <= 0.0 and (int(p[RenderShapes.FLAGS]) & (RenderShapes.PLAIN | RenderShapes.ROOF)) == 0:
+			cut = floor_cut(b) if j == 0 else floor_cut_to(b, int(round(float(sp[1]) / WorldBrunt.floorH(b))) - 1)
+		if (ct[0] as Image).get_pixel(k, 0) != cut:
+			(ct[0] as Image).set_pixel(k, 0, cut)
+			ct[2] = true
+		if sp.is_empty():
+			mm.set_instance_transform(k, _hidden(b.x))
+			continue
+		var top: float = base + float(sp[1]) - sink
+		var bottom: float = (minf(foot.x, base) if float(sp[0]) <= 0.0 else base + float(sp[0])) - sink
+		mm.set_instance_transform(k, Transform3D(Basis.from_scale(Vector3(float(p[RenderShapes.W]), top - bottom, float(p[RenderShapes.D]))), Vector3(b.x + float(p[RenderShapes.X]), (top + bottom) * 0.5, zc + float(p[RenderShapes.Z]))))
+		mm.set_instance_color(k, Color(p[RenderShapes.COL] as Color, 0.0 if (int(p[RenderShapes.FLAGS]) & RenderShapes.ROOF) != 0 else 1.0))   # alpha 0: a roof (building.gdshader)
+	_write_windows(S, bi, b, sink, spans)
 	return stage
 
 
@@ -422,24 +438,42 @@ func _set_crowd(S: SimState, bi: int, b, alive: int) -> void:
 			_crowd.set_instance_transform(ci, _hidden(x))
 
 
-## A building's windows and damage stage for building.gdshader (two texels of win_tex): a bit per floor whose windows
-## are out (24, 24 and 14 bits, as the floor cut packs them) and the height of a floor (0: it does not stand); then
-## the wall's base, how many floors stand and the stage it is drawn at (_drawn). The shader draws a row of windows a
-## floor from these, and the stage's look over them.
-func _write_windows(S: SimState, bi: int, b, sink: float = 0.0) -> void:
+## A building's windows, damage stage and shape for building.gdshader (three texels of win_tex an instance, so one
+## for each of its parts): a bit per floor whose windows are out (24, 24 and 14 bits, as the floor cut packs them) and
+## the height of a floor (0: no windows on this part, or it does not stand); then the wall's base, how many floors
+## stand under the part's top, the stage it is drawn at (_drawn) and the rows of windows a floor; then the part's
+## shape (its top's width and depth shares, its lean) and its district's look. The shader draws the look's windows from
+## these, and the stage's look over them. spans: each part's [bottom, top] as placed (empty: hidden); left out (a
+## blow-out, between placements) the last placement's.
+func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) -> void:
 	var wt: Array = _win0 if _row0[bi] >= 0 else _win
-	var k: int = _row0[bi] if _row0[bi] >= 0 else bi
 	var dr: Array = _drawn[bi]
 	var floors: int = maxi(int(b.floors), 1)
 	var fh: float = b.h / float(floors)
 	var m: int = int(_blown[bi])
-	var a := Color(float(m & 0xFFFFFF), float((m >> 24) & 0xFFFFFF), float((m >> 48) & 0x3FFF), fh if dr[2] else 0.0)
-	var c := Color(WorldStructures.baseY(S, b) - sink, ceilf(float(dr[0]) / maxf(fh, 1.0)), float(dr[1]), 0.0)
+	var base: float = WorldStructures.baseY(S, b) - sink
+	var ps: Array = _parts[bi]
+	var ix: PackedInt32Array = _inst[bi]
 	var img: Image = wt[0]
-	if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c:
-		img.set_pixel(k, 0, a)
-		img.set_pixel(k, 1, c)
-		wt[2] = true
+	for j in range(ps.size()):
+		var p: Array = ps[j]
+		var k: int = ix[j]
+		var plain: bool = (int(p[RenderShapes.FLAGS]) & (RenderShapes.PLAIN | RenderShapes.ROOF)) != 0
+		var a := Color(float(m & 0xFFFFFF), float((m >> 24) & 0xFFFFFF), float((m >> 48) & 0x3FFF), fh if dr[2] and not plain else 0.0)
+		# The body's floors standing are the building's (the stage check reads them); another part's, those under its top.
+		var up: float = float(dr[0])
+		if j > 0:
+			if spans is Array:
+				up = float(spans[j][1]) if not (spans[j] as Array).is_empty() else 0.0
+			else:
+				up = img.get_pixel(k, 1).g * fh
+		var c := Color(base, ceilf(up / maxf(fh, 1.0)), float(dr[1]), float(RenderShapes.rows(fh)))
+		var s := Color(float(p[RenderShapes.TX]), float(p[RenderShapes.TZ]), float(p[RenderShapes.LEAN]), float(int(p[RenderShapes.LOOKX]) if int(p[RenderShapes.LOOKX]) >= 0 else _look[bi]))
+		if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c or img.get_pixel(k, 2) != s:
+			img.set_pixel(k, 0, a)
+			img.set_pixel(k, 1, c)
+			img.set_pixel(k, 2, s)
+			wt[2] = true
 
 
 ## Per frame, the first pane's planet: windows going out. VFX throws the glass (render/vfx/react.gd) and lists each
@@ -477,6 +511,18 @@ static func floor_cut(b) -> Color:
 	if int(b.floors) < WorldBrunt.FLOORS_MIN:
 		return Color(0, 0, 0, 0)
 	var top: int = WorldBrunt.topFloor(b)
+	var m: int = int(b.fmask)
+	if top < 1 or (m & ((1 << (top + 1)) - 1)) == (1 << (top + 1)) - 1:
+		return Color(0, 0, 0, 0)
+	return Color(float(m & 0xFFFFFF), float((m >> 24) & 0xFFFFFF), float((m >> 48) & 0x3FFF) + 16384.0 * float(top), WorldBrunt.floorH(b))
+
+
+## The same for a part of the tower that ends lower than the tower does (a stepped tower's skirt): the cleared floors
+## under floor `top`, the floor whose ceiling is the part's top. All zero when every floor under it stands.
+static func floor_cut_to(b, top: int) -> Color:
+	if int(b.floors) < WorldBrunt.FLOORS_MIN:
+		return Color(0, 0, 0, 0)
+	top = mini(top, WorldBrunt.topFloor(b))
 	var m: int = int(b.fmask)
 	if top < 1 or (m & ((1 << (top + 1)) - 1)) == (1 << (top + 1)) - 1:
 		return Color(0, 0, 0, 0)
@@ -581,6 +627,16 @@ func _set_lanes(S: SimState) -> void:
 	_terrain_mat.set_shader_parameter("street_strips", strips)
 	_terrain_mat.set_shader_parameter("street_spans", spans)
 	_terrain_mat.set_shader_parameter("span_edge", RenderLook.STREET_EDGE)
+	# The avenues that cross the blocks, and the blocks' own ground: paved in the looks that are (RenderShapes).
+	var av: Array = RenderLanes.avenues(t, STREET_AVENUES)
+	_terrain_mat.set_shader_parameter("avenue_n", av.size() if streets else 0)
+	while av.size() < STREET_AVENUES:
+		av.append(Vector4.ZERO)
+	_terrain_mat.set_shader_parameter("avenues", av)
+	var bl: Array = RenderLanes.blocks(t)
+	_terrain_mat.set_shader_parameter("lot_z", Vector4(bl[0].x if bl.size() > 0 else 0.0, bl[0].y if bl.size() > 0 else 0.0, bl[1].x if bl.size() > 1 else 0.0, bl[1].y if bl.size() > 1 else 0.0))
+	_terrain_mat.set_shader_parameter("lot_col", RenderShapes.lot_colours())
+	_terrain_mat.set_shader_parameter("avenue_walk", RenderLook.AVENUE_WALK)
 	_terrain_mat.set_shader_parameter("street_dash", RenderLook.STREET_DASH)
 	_terrain_mat.set_shader_parameter("street_bay", RenderLook.STREET_BAY)
 	for k in [["street_walk", RenderLook.STREET_WALK], ["street_road", RenderLook.STREET_ROAD], ["street_kerb", RenderLook.STREET_KERB], ["street_line", RenderLook.STREET_LINE]]:
@@ -870,10 +926,10 @@ func set_stubs(S: SimState, want: Dictionary) -> void:
 			y = lerpf(top, low, v * v * (3.0 - 2.0 * v))
 		var row0: bool = _row0[bi] >= 0
 		var st: Array = _stub_tex0 if row0 else _stub_tex
-		var k: int = _row0[bi] if row0 else bi
-		if absf((st[0] as Image).get_pixel(k, 0).r - y) > 0.01:
-			(st[0] as Image).set_pixel(k, 0, Color(y, 0.0, 0.0))
-			changed[1 if row0 else 0] = true
+		for k in _inst[bi]:   # every part of the building is cut down with it
+			if absf((st[0] as Image).get_pixel(k, 0).r - y) > 0.01:
+				(st[0] as Image).set_pixel(k, 0, Color(y, 0.0, 0.0))
+				changed[1 if row0 else 0] = true
 	for bi in done:
 		_stub_live.erase(bi)
 	if changed[0]:
@@ -933,14 +989,21 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("dmg_frame", RenderLook.col(RenderLook.DMG_FRAME))
 	m.set_shader_parameter("roof_over", RenderLook.ROOF_OVER)
 	m.set_shader_parameter("pan_mix", RenderLook.PAN_HAZE_MIX)
+	m.set_shader_parameter("dmg_holes", RenderLook.DMG_HOLES)
+	var lu: Dictionary = RenderShapes.look_uniforms()
+	for key in lu:
+		m.set_shader_parameter(key, lu[key])
+	m.set_shader_parameter("row_haze", RenderLook.ROW_HAZE if row_haze else Vector3(0.0, RenderLook.ROW_HAZE.y, RenderLook.ROW_HAZE.z))
 	mats.track(m)
 	return m
 
 
-## A two-row float texture of window data, a column an instance: [image, texture, dirty].
+## A three-row float texture of window and shape data, a column an instance: [image, texture, dirty]. A column not
+## written yet is a plain box.
 static func _win_texture(n: int) -> Array:
-	var img := Image.create_empty(maxi(1, n), 2, false, Image.FORMAT_RGBAF)
+	var img := Image.create_empty(maxi(1, n), 3, false, Image.FORMAT_RGBAF)
 	img.fill(Color(0, 0, 0, 0))
+	img.fill_rect(Rect2i(0, 2, maxi(1, n), 1), Color(1.0, 1.0, 0.0, 0.0))
 	return [img, ImageTexture.create_from_image(img), false]
 
 
@@ -965,7 +1028,6 @@ static func _stub_texture(m: ShaderMaterial, n: int) -> Array:
 func _make_props(S: SimState) -> void:
 	var nb: int = S.buildings.size()
 	var box := BoxMesh.new()
-	var prism := PrismMesh.new()
 	var cone := CylinderMesh.new()
 	cone.top_radius = 0.0
 	cone.bottom_radius = 0.5
@@ -987,17 +1049,43 @@ func _make_props(S: SimState) -> void:
 			_row0_b.append(bi)
 	z0 -= RenderLook.CROWD_GAP + RenderLook.CROWD_DEEP + 200.0
 	z1 += RenderLook.CROWD_GAP + RenderLook.CROWD_DEEP + 200.0
-	_bld = _multimesh(box, nb, 1400.0, false, false, z0, z1)
-	_roof = _multimesh(prism, nb, 1400.0, false, false, z0, z1)
-	_bld0 = _multimesh(box, maxi(1, _row0_b.size()), 1400.0, false, false, z0, z1)
-	_cut = _cut_texture(nb)
-	_cut0 = _cut_texture(maxi(1, _row0_b.size()))
-	_win = _win_texture(nb)
-	_win0 = _win_texture(maxi(1, _row0_b.size()))
+	# Each building's parts (its shape, in its district's look) and their instances: the bodies keep the building's own
+	# index (its row-0 index in row 0), the other parts follow them.
+	var lanes: PackedFloat32Array = RenderLanes.table(S)
+	_parts.clear()
+	_inst.clear()
+	_look.resize(nb)
+	_n_inst = maxi(1, nb)
+	_n_inst0 = maxi(1, _row0_b.size())
+	for bi in range(nb):
+		var b = S.buildings[bi]
+		_look[bi] = RenderShapes.look_of(lanes, b)
+		var ps: Array = RenderShapes.parts(b, RenderShapes.look(_look[bi]), _depth(b).y)
+		var ix := PackedInt32Array()
+		var front: bool = _row0[bi] >= 0
+		ix.append(_row0[bi] if front else bi)
+		for j in range(1, ps.size()):
+			if front:
+				ix.append(_n_inst0)
+				_n_inst0 += 1
+			else:
+				ix.append(_n_inst)
+				_n_inst += 1
+		_parts.append(ps)
+		_inst.append(ix)
+	_bld = _multimesh(box, _n_inst, BUILDING_TOP, false, false, z0, z1)
+	_bld0 = _multimesh(box, _n_inst0, BUILDING_TOP, false, false, z0, z1)
+	for k in range(_n_inst):
+		_bld.set_instance_transform(k, _hidden(0.0))
+	for k in range(_n_inst0):
+		_bld0.set_instance_transform(k, _hidden(0.0))
+	_cut = _cut_texture(_n_inst)
+	_cut0 = _cut_texture(_n_inst0)
+	_win = _win_texture(_n_inst)
+	_win0 = _win_texture(_n_inst0)
 	_blown.resize(nb)
 	_blown.fill(0)
 	_blow_seen.clear()
-	_roof0 = _multimesh(prism, maxi(1, _row0_b.size()), 1400.0, false, false, z0, z1)
 	_tree = _multimesh(cone, S.trees.size(), 400.0)
 	_bld_seen.clear()
 	_drawn.clear()
@@ -1010,15 +1098,6 @@ func _make_props(S: SimState) -> void:
 	for bi in range(nb):
 		_bld_seen.append([-1.0, false, -1, -1.0, 0])
 		_drawn.append([0.0, 0, false])
-		_roof.set_instance_color(bi, Color(RenderLook.col(RenderLook.ROOF), 0.0))   # alpha 0: a roof (building.gdshader)
-		if _row0[bi] >= 0:
-			_bld.set_instance_transform(bi, _hidden(S.buildings[bi].x))
-			_roof.set_instance_transform(bi, _hidden(S.buildings[bi].x))
-	for j in range(_row0_b.size()):
-		_roof0.set_instance_color(j, Color(RenderLook.col(RenderLook.ROOF), 0.0))
-	if _row0_b.is_empty():
-		_bld0.set_instance_transform(0, _hidden(0.0))
-		_roof0.set_instance_transform(0, _hidden(0.0))
 	var tr := SimRng.new(SimRng.deriveSeed(4242, "render.trees"))
 	_tree_seen.clear()
 	_tree_z.resize(S.trees.size())

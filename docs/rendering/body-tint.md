@@ -17,4 +17,4 @@ Two small pieces ahead of the world's light (`dynamic-sky.md`). Neither changes 
 - **Now** the same views take it: `FighterView.set_lane` sets the view's aura colour and the charge orb's glow, and hands the body the palette with the new accent through Animation's `AnimBody.set_palette` (the cached mesh of that palette; the skin and the bones stay). The aura, the streaks, the cue flare and the guard arc take the colour as they are drawn.
 - **Why it matters:** a pose, a flash in flight and the view's hooks carry on across a change, and nothing is allocated for one.
 - **Check:** `tools/lane_check.gd` (10 checks) now asserts the views are the same objects under each preset and off again, that the body wears the palette with the lane colour as its accent, and that the orb's glow is in it.
-- **To follow once the after-image batch is committed:** `README.md` still says the views are built again (its paragraph on the colour-blind presets, and the lane check's row). It was reported in that batch and is frozen; the two sentences change after the commit.
+- `README.md` says the same since the lanes batch (2026-10-11).

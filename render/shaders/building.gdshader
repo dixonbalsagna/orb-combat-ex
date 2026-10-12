@@ -29,6 +29,19 @@
 //      with the dark inside between, there is no lid, and the walls end in a broken line. planet_view.gd hides the
 //      roof. From far off it is a low dark block.
 //    4 fallen: not drawn (planet_view.gd sinks it and hides it, as before).
+// 6. Shapes (render/core/shapes.gd). A building is a few PARTS, each an instance of the one box: its tiers, its cap,
+//    its roof. win_tex's third texel shapes the box: the top's width and depth as a share of the base's (a taper: 1 a
+//    box, less a frustum, near 0 a pyramid or, on one axis only, a gable's ridge) and a lean that slopes the top down to
+//    nothing toward one side (a shed's facet, a saw tooth). Walls and tops take the true normal of the deformed face,
+//    for their shade and for the culling below. A roof is a part whose instance colour has alpha 0, as before.
+// 7. District looks. The same texel's fourth number is the look (settlements.json looks): a column of windows every
+//    (or one of shapes.gd's extra looks, a stone tower's slits): a column of windows every look_a.x along the wall, the pane's span in its cell and the share of cells that have one; look_b the pane's span
+//    up the row, the strips a row and flags (a clerestory under the roof only, a door, shutters, door panels); the
+//    glass, the bright glass and the trim. A floor taller than a row of windows carries several (win_tex's second
+//    texel, a). Too far to draw panes, a wall is the average of its wall and its glass, so it does not change value
+//    as the camera pulls back.
+// 8. Row haze. A part takes the air's colour by how far behind the fighter plane its front face stands (row_haze), so
+//    the back block and the scenery row read as depth. The front block takes none.
 // An instance with nothing to cut and no part gone keeps back-face culling (its back faces are thrown away in the
 // vertex stage), so only the cut towers and the buildings at stage 2 and 3 pay for their insides. tools/cull_check.gd
 // compares that with the rasterizer's own culling.
@@ -62,6 +75,13 @@ uniform float pan_haze = 0.0;        // 0 to 1: this pane's camera is travelling
 uniform float pan_mix = 0.7;         // RenderLook.PAN_HAZE_MIX: how far it melts at full haze
 uniform vec4 pan_ground : source_color = vec4(0.37, 0.57, 0.25, 1.0);   // the ground's colour under this pane's camera: what is behind a wall below the horizon line
 uniform float ref_cull = 0.0;        // 1: leave the back faces to the rasterizer (tools/cull_check.gd's reference picture)
+uniform vec4 look_a[10];             // a look's windows: the pitch of a column, the pane's span across its cell (from, to), the share of cells with one
+uniform vec4 look_b[10];             // ... the pane's span up the row (from, to), strips a row, flags (1 top row only, 2 a door, 4 shutters, 8 door panels)
+uniform vec4 look_glass[10] : source_color;   // dark glass; a: the share of panes lit warm
+uniform vec4 look_hi[10] : source_color;     // bright glass
+uniform vec4 look_trim[10] : source_color;   // doors, shutters, panels
+uniform float dmg_holes = 0.18;      // RenderLook.DMG_HOLES: at stage 2, the share of a facade's bays broken open
+uniform vec3 row_haze = vec3(0.5, 600.0, 2800.0);   // RenderLook.ROW_HAZE: the most of the air a far row takes, and the depths behind the fighter plane it starts and is full at
 
 varying flat vec4 v_cut;      // x, y, z: the mask's three parts; w: floor height
 varying flat vec2 v_base;     // x: the base's world y; y: the top standing floor
@@ -74,6 +94,7 @@ varying flat vec4 v_hole0;    // each hole's two ends on this pane's screen, in 
 varying flat vec4 v_hole1;
 varying float v_wy;
 varying vec3 v_view;          // from the camera, in world axes, for the sky's colour behind (the pan haze)
+varying flat vec3 v_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1
 
 // A world point on this pane's screen, in FRAGCOORD's pixels.
 vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
@@ -86,21 +107,47 @@ void vertex() {
 	vec4 c = texelFetch(cut_tex, ivec2(min(INSTANCE_ID, textureSize(cut_tex, 0).x - 1), 0), 0);
 	float top_floor = floor(c.z / 16384.0);
 	v_cut = vec4(c.x, c.y, c.z - top_floor * 16384.0, c.w);
-	vec4 w = MODEL_MATRIX * vec4(VERTEX, 1.0);
+	int id = min(INSTANCE_ID, textureSize(win_tex, 0).x - 1);
+	// The part's shape: the box's top is narrowed (a taper) or sloped down to one side (a lean). A plain box (1, 1, 0)
+	// is left as it is, to the bit.
+	vec4 sh = texelFetch(win_tex, ivec2(id, 2), 0);
+	vec3 n0 = NORMAL;
+	vec3 v0 = VERTEX;
+	vec3 mv = VERTEX;
+	float up = mv.y + 0.5;
+	mv.x *= mix(1.0, sh.x, up);
+	mv.z *= mix(1.0, sh.y, up);
+	float ls = sh.z > 0.0 ? 1.0 : (sh.z < 0.0 ? -1.0 : 0.0);
+	if (up > 0.5 && ls != 0.0) {
+		mv.y -= abs(sh.z) * (ls * v0.x + 0.5);
+	}
+	// The deformed face's normal, in the model's space (a covector: the engine's normal matrix takes the uneven scale).
+	vec3 nm = n0;
+	if (abs(n0.x) > 0.5) {
+		nm = vec3(n0.x, 0.5 * (1.0 - sh.x), 0.0);
+	} else if (abs(n0.z) > 0.5) {
+		nm = vec3(0.0, 0.5 * (1.0 - sh.y), n0.z);
+	} else if (n0.y > 0.5) {
+		nm = vec3(ls * abs(sh.z), 1.0, 0.0);
+	}
+	VERTEX = mv;
+	NORMAL = nm;
+	vec4 w = MODEL_MATRIX * vec4(mv, 1.0);
 	float top = MODEL_MATRIX[3].y + 0.5 * length(MODEL_MATRIX[1].xyz);
 	v_base = vec2(top - (top_floor + 1.0) * c.w, top_floor);
-	v_back = NORMAL.z < -0.5 ? 1.0 : 0.0;
-	w.y = min(w.y, COLOR.a < 0.5 ? stub - 1.0 : stub);
+	v_back = n0.z < -0.5 ? 1.0 : 0.0;
+	float stubbed = COLOR.a < 0.5 ? stub - 1.0 : stub;
+	w.y = min(w.y, stubbed);
 	v_wy = w.y;
-	int id = min(INSTANCE_ID, textureSize(win_tex, 0).x - 1);
 	v_win = texelFetch(win_tex, ivec2(id, 0), 0);
 	vec4 wb = texelFetch(win_tex, ivec2(id, 1), 0);
-	bool zface = abs(NORMAL.z) > 0.5;
+	bool zface = abs(n0.z) > 0.5;
 	float sx = length(MODEL_MATRIX[0].xyz);
 	float sz = length(MODEL_MATRIX[2].xyz);
 	v_winb = vec3(wb.x, wb.y, float(INSTANCE_ID) + (zface ? 0.0 : 0.5));
-	v_face = vec4(zface ? VERTEX.x * sx : VERTEX.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(NORMAL.y) < 0.5 ? 1.0 : 0.0), VERTEX.x * sx);
-	v_dmg = vec3(wb.z, min(top, COLOR.a < 0.5 ? stub - 1.0 : stub), sx);
+	v_face = vec4(zface ? v0.x * sx : v0.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(n0.y) < 0.5 ? 1.0 : 0.0), v0.x * sx);
+	v_dmg = vec3(wb.z, min(top, stubbed), sx);
+	v_look = vec3(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0));
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
@@ -112,10 +159,12 @@ void vertex() {
 		// one point of the plane, the same from every corner (the foot of the model's origin on it, rounded so the
 		// corners agree to the bit; lowered with the stub).
 		vec3 s2 = max(vec3(dot(MODEL_MATRIX[0].xyz, MODEL_MATRIX[0].xyz), dot(MODEL_MATRIX[1].xyz, MODEL_MATRIX[1].xyz), dot(MODEL_MATRIX[2].xyz, MODEL_MATRIX[2].xyz)), vec3(1e-12));
-		vec3 n = (VIEW_MATRIX * (MODEL_MATRIX * vec4(NORMAL / s2, 0.0))).xyz;
-		float pd = floor(dot(NORMAL, VERTEX) * 4096.0 + 0.5) / 4096.0;
-		vec4 fp = MODEL_MATRIX * vec4(NORMAL * pd, 1.0);
-		fp.y = min(fp.y, COLOR.a < 0.5 ? stub - 1.0 : stub);
+		// For a deformed box that is the deformed face's normal and a point the deforming leaves on the face: a wall's
+		// bottom edge, a top's middle (its high edge when it leans).
+		vec3 n = (VIEW_MATRIX * (MODEL_MATRIX * vec4(nm / s2, 0.0))).xyz;
+		vec3 fpm = abs(n0.y) < 0.5 ? n0 * 0.5 + vec3(0.0, -0.5, 0.0) : (n0.y > 0.5 ? vec3(-0.5 * ls, 0.5, 0.0) : vec3(0.0, -0.5, 0.0));
+		vec4 fp = MODEL_MATRIX * vec4(fpm, 1.0);
+		fp.y = min(fp.y, stubbed);
 		if (dot(n, (VIEW_MATRIX * fp).xyz) > 0.0) {
 			POSITION = vec4(2.0, 2.0, 2.0, 1.0);
 		}
@@ -201,11 +250,16 @@ void fragment() {
 	vec3 wallc = (st > 1.5 && !roof) ? COLOR.rgb * dmg_soot : COLOR.rgb;
 	vec3 col = FRONT_FACING ? flat_shade(wallc, NORMAL, 0.35) : inside.rgb;
 	if (FRONT_FACING && wall && v_win.w > 0.0) {
+		int lk = clamp(int(v_look.x + 0.5), 0, 9);
+		vec4 la = look_a[lk];
+		vec4 lb = look_b[lk];
 		float fy = (v_wy - v_winb.x) / v_win.w;
-		float cx = (v_face.x / v_face.y + 0.5) * max(1.0, floor(v_face.y / win_pitch));
-		vec2 r = vec2(fract(cx), fract(fy));
+		float fr = fy * v_look.y;                 // rows of windows: a tall floor carries several
+		float ncol = max(1.0, floor(v_face.y / la.x));
+		float cx = (v_face.x / v_face.y + 0.5) * ncol;
+		vec2 r = vec2(fract(cx), fract(fr));
 		float kf = floor(fy);
-		float fine = 1.0 - smoothstep(0.3, 0.75, max(fwidth(cx), fwidth(fy)));
+		float fine = 1.0 - smoothstep(0.3, 0.75, max(fwidth(cx), fwidth(fr)));
 		if (st > 2.5) {
 			// The frame of a shell, and the few panels of cladding it keeps. Too far to draw the cells, it is their
 			// average: mostly the dark inside.
@@ -215,19 +269,56 @@ void fragment() {
 			col = mix(mix(inside.rgb, bare, 0.4), cell, fine);
 		} else if (windows > 0.5 && kf >= 0.0 && kf < v_winb.y) {
 			bool gone = st > 0.5 || bit_on(kf, v_win.xyz);
-			bool across = r.x > 0.24 && r.x < 0.76;
-			if (st > 0.5) {
-				col = mix(mix(col, inside.rgb, 0.22), col, fine);   // too far to draw panes: the wall takes their share of dark
-			}
-			if (across && r.y > 0.3 && r.y < 0.78) {
+			float row = floor(fr);
+			float flags = lb.w;
+			bool top_only = mod(flags, 2.0) > 0.5;
+			bool door = mod(floor(flags / 2.0), 2.0) > 0.5;
+			bool shutters = mod(floor(flags / 4.0), 2.0) > 0.5;
+			bool panels = mod(floor(flags / 8.0), 2.0) > 0.5;
+			float ry = lb.z > 1.5 ? fract(r.y * 2.0) : r.y;   // two strips a row
+			bool has = win_hash(vec3(v_winb.z, floor(cx), row + 57.0)) < la.w && (!top_only || row >= v_winb.y * v_look.y - 1.5);
+			bool across = r.x > la.y && r.x < la.z;
+			bool tall = ry > lb.x && ry < lb.y;
+			vec3 glass = look_glass[lk].rgb;
+			// Too far to draw panes, the wall is the average of wall and glass (the dark inside where they are out).
+			float cover = top_only ? 0.0 : (la.z - la.y) * (lb.y - lb.x) * la.w;
+			vec3 avg = flat_shade(mix(mix(glass, look_hi[lk].rgb, 0.1), win_lit.rgb, look_glass[lk].a), NORMAL, 0.35);
+			vec3 far = mix(col, gone ? inside.rgb : avg, cover);
+			// A pane's own colour (lit, bright or dark) shows from near only: from the middle distance every pane is the
+			// glass's average, so a far tower is bands, not a sparkle that shimmers as the camera moves.
+			float vary = 1.0 - smoothstep(0.06, 0.2, max(fwidth(cx), fwidth(fr)));
+			vec3 near = col;
+			bool ground = row < 0.5;
+			if (ground && panels) {
+				// Wide door panels along the ground row, every other cell.
+				if (mod(floor(cx), 2.0) < 0.5 && r.x > 0.1 && r.x < 0.9 && r.y < 0.82) {
+					near = flat_shade(look_trim[lk].rgb, NORMAL, 0.35);
+				}
+			} else if (ground && door && floor(cx) == floor(ncol * 0.5)) {
+				if (r.x > 0.3 && r.x < 0.7 && r.y < 0.74) {
+					near = flat_shade(look_trim[lk].rgb, NORMAL, 0.35);
+				}
+			} else if (has && across && tall) {
 				vec3 wc = inside.rgb;
 				if (!gone) {
-					wc = win_hash(vec3(v_winb.z, floor(cx), kf)) < win_lit_share ? win_lit.rgb : flat_shade(win_glass.rgb, NORMAL, 0.35);
+					float hsh = win_hash(vec3(v_winb.z, floor(cx), row));
+					wc = mix(avg, hsh < look_glass[lk].a ? win_lit.rgb : flat_shade(hsh > 0.9 ? look_hi[lk].rgb : glass, NORMAL, 0.35), vary);
 				}
-				col = mix(col, wc, fine);
-			} else if (gone && across && r.y >= 0.78) {
-				col = mix(col, inside.rgb, fine * 0.45 * (1.0 - (r.y - 0.78) / 0.22));   // soot above an empty pane
+				near = wc;
+			} else if (has && shutters && tall && r.x > la.y - 0.11 && r.x < la.z + 0.11) {
+				near = flat_shade(look_trim[lk].rgb, NORMAL, 0.35);   // shutters beside the pane
+			} else if (gone && has && across && ry >= lb.y) {
+				near = mix(col, inside.rgb, 0.45 * (1.0 - (ry - lb.y) / max(1.0 - lb.y, 0.001)));   // soot above an empty pane
 			}
+			if (st > 1.5) {
+				// A part gone: here and there a bay of the facade is broken open, wall and all, so the stage reads at street
+				// level under a tower whose sheared top is far out of sight.
+				far = mix(far, inside.rgb, 0.85 * dmg_holes);
+				if (win_hash(vec3(v_winb.z, floor(cx) + 0.5, row + 91.0)) < dmg_holes) {
+					near = mix(near, inside.rgb, 0.85);
+				}
+			}
+			col = mix(far, near, fine);
 		}
 		if (st > 1.5 && st < 2.5) {
 			// Two cracks: one from the top down, one from the ground up. Each wanders in straight jags and never thins
@@ -252,6 +343,10 @@ void fragment() {
 			}
 			col = inside.rgb;
 		}
+	}
+	if (v_look.z > 0.001) {
+		// The rows' haze: the air's colour toward the horizon in this direction, more of it the farther back the row.
+		col = mix(col, sky_color(min(elevation(v_view), horizon + 0.3 * sky_tan)), v_look.z);
 	}
 	if (pan_haze > 0.001) {
 		// A fast pan: the plain wall in place of its panes, soot and cracks, then toward what is behind it: the sky's
