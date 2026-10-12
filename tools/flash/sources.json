@@ -8,7 +8,10 @@
     "zip_break",
     "explosion",
     "transform",
-    "charge_full"
+    "charge_full",
+    "cut_dip",
+    "cut_in_panel",
+    "transform_cut"
   ],
   "reserved": [
     "body_hit",

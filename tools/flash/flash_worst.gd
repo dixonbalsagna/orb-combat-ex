@@ -74,6 +74,12 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame
+	# the compositor the game runs: Camera's cut-in strip, cut dip and transformation cuts ask the register themselves, and a tool's main has none unless the tool attaches it
+	var sv := SplitView.new()
+	main.split_view = sv
+	main.add_child(sv)
+	main._sync_split_options()
+	sv.attach(main)
 	main.host.vfx.auto_quality = false
 	main.host.vfx.destruction_enabled = true
 	if not DirAccess.dir_exists_absolute(_abs(out_dir)):
