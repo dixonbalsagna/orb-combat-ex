@@ -1996,7 +1996,8 @@
           "required": [
             "guard",
             "clearBh",
-            "stagger"
+            "stagger",
+            "floor"
           ],
           "properties": {
             "guard": {
@@ -2420,7 +2421,10 @@
                     "worth",
                     "ki",
                     "knockBh",
-                    "shot"
+                    "shot",
+                    "enderRun",
+                    "halfSetup",
+                    "reelTicks"
                   ],
                   "properties": {
                     "windupTicks": {
@@ -2446,7 +2450,7 @@
                     "enderRun": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "It knocks back only when his run is this or more as it lands."
+                      "description": "The blast knocks back only when his run is this or more as it lands (at most flurry.runToClose, or it is never an ender: rule brawl-order)."
                     },
                     "halfSetup": {
                       "type": "boolean",

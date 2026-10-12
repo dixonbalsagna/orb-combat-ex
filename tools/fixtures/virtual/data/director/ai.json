@@ -286,5 +286,8 @@
   },
   "digInBy": {
     "FIXTURE_VILLAIN": 0.5
-  }
+  },
+  "digInBoth": false,
+  "digInMax": 2,
+  "digInRestS": 45
 }

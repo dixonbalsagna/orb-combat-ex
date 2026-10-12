@@ -267,7 +267,8 @@
     "nudge": {
       "guard": 0.6,
       "clearBh": 0.5,
-      "stagger": 0.5
+      "stagger": 0.5,
+      "floor": 0.5
     },
     "maxStepBh": 0.3,
     "carryShare": 0.5,
@@ -349,7 +350,10 @@
           "worth": 4,
           "ki": 10,
           "knockBh": 3,
-          "shot": "charged"
+          "shot": "charged",
+          "enderRun": 2,
+          "halfSetup": true,
+          "reelTicks": 6
         },
         "flashEveryTicks": 20
       }

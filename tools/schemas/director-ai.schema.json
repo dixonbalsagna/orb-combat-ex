@@ -17,7 +17,10 @@
     "beamLook",
     "mineMinKi",
     "stance",
-    "digInBy"
+    "digInBy",
+    "digInBoth",
+    "digInMax",
+    "digInRestS"
   ],
   "properties": {
     "schema": {

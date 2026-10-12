@@ -15,6 +15,7 @@ const MEASURES = new Set(['stance0', 'stance1', 'stance2', 'stance3', 'light', '
 function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
   require('./xref-brawl-cues').xrefBrawlCues({ get, err, esc, isObj });
   require('./xref-lanes').xrefLanes({ get, err, esc, isObj });
+  require('./xref-brawl-keys').xrefBrawlKeys({ get, err, esc, isObj });
   require('./xref-art').xrefArt({ get, err, esc, isObj });
   // ---- reach (data/anim/reach.json) ----
   const reachDoc = get('data/anim/reach.json');
