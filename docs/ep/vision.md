@@ -916,3 +916,14 @@ Shown the see-through patch and the stub for a fight in the middle street, and t
 > "open floors" sounds like it would look the most natural, get that implemented
 
 Standing from this: tall buildings in front of a fight open by their lowest floors. The see-through patch with the shrinking hybrid stays the rule for the low foreground row until Orb has judged the motion clip.
+
+## The next public build is a big step; every attack useful held, tapped or mashed (Orb, 2026-10-12)
+
+> I want the next playable version on the site to be a huge step from what was offered before. take your time and get it right. I still like the way the held light-attack flurries, lets make sure every attack has some meaningful way to be utilized either help, tapped, mashed rapidly
+
+("help" read as "held".)
+
+Standing from this:
+- The site does not come back at the first flash pass. It comes back when the build is a large step beyond the one taken down: the three-strength brawl tuned, the reworked city, and fighters travelling the depth band, with the whole flash set passing on that build. No date is set; quality over speed.
+- The held light attack's flurry stays as Orb designed it and likes it.
+- A design rule: each of the three attacks (light, medium, heavy) has a meaningful use in each of three ways of pressing: held, tapped, and mashed rapidly. None of the nine is a trap or a flourish.
