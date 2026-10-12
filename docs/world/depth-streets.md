@@ -98,3 +98,46 @@ Everything below is a pure read of the sim state, in units (bh = 75), z positive
 - **Rendering:** `STREET_STRIPS` 8 to 16 (three streets with five strips), the avenues as gaps in the blocks (they are already in `S.lanes`), the crossings' paving.
 - **Tools:** schema keys for the re-lay: `aspect_max` (top level of `settlements.json` and a kind's own), `row_pop` (district, four numbers from 0 to 1); `lanes.json` strips are rounded to 4 decimals.
 - **Simulation:** nothing for the pick; the list above for L4.
+
+## G. Reads for Encounter's depth slice (scratch, 2026-10-12, on L3)
+
+Files: `docs/world/scratch-build/depth-reads/` (`mk_reads.py` applies the four functions to a tree root, `depthreads_check.gd` is the check). Nothing is in the tree.
+
+| Game Design's ask (`docs/design/depth.md`) | Function | Returns | Cost (a call, the tree's city, scratch) |
+|---|---|---|---|
+| "the middle of the street or the crossing here" (the ease home) | `WorldLanes.home(S, x, z, pad)` | `[hx, hz, kind]`: kind 1 the middle of the crossing (hx the avenue's middle), kind 0 the lane's middle with x kept, kind 2 the nearest street's middle when the point is in no street (a cross street between blocks, or a wreck inside a block row) | 4.6 us |
+| "a crossing within 3 bh" (down the cross street) | `WorldLanes.crossingNear(S, x, z, r)` | `[cx, cz, d]` or `[]`; r in units | 10.9 us at r = 3 bh |
+| where a drift in depth may go ("the part that runs into a face stops, the rest carries on") | `WorldLanes.depthRoom(S, x, y, z, rx, rz)` | `[z_lo, z_hi]`: the whole band in an avenue or above every roof in reach; the street lane that holds z, kept rz in; `[z, z]` in a wreck | 13.8 us |
+| "the nearest face" | `WorldStructures.nearestFace(S, x, y, z, reach)` | `{}` or `{"b", "d", "face": "front"/"back"/"end", "nx", "nz"}`: the nearest face of a standing building whose top is above y, within reach in plan; the normal is the way off it | 27.5 us (4,000 random queries agree with brute force, 0 of 4,000 differ once `MAX_HALF_W` is 380; 16 differ with the tree's 264, see fight-lanes-world.md section 16) |
+
+At 60 ticks a second a brawl that asks all four every tick spends about 57 us a tick, 0.3% of the 16.7 ms frame. `clearLane` (the street for a body, rz and 0.5 unit in from the edge) stays the one call for "put this body somewhere valid"; `depthRoom` gives the interval, `home` the target, `nearestFace` the face for the slide. The "1 bh clear of every face" rule is a margin the caller passes as rz or reach.
+
+**Two numbers in `docs/design/depth.md` are from the two-street table and are now wrong.** The front street is 5 bh, not 9 (three streets of 5 bh in the same 32 bh band, option P): 1.5 bh a second crosses it kerb to kerb in 3.3 s, not 6, and with the 1 bh margin a brawl has 3 bh of free depth in a street (2 s of drift), and "the band has 5 bh left there" is now the whole street. Game Design should re-read sections 3 and 5 against P.
+
+## H. A demo start at a crossing (scratch)
+
+`mk_demostart.py` and `demostart_check.gd` in the same folder. **Data:** `data/biomes/lanes.json` gets `demo_start: {"look": "downtown", "lane": "front_street"}` (a schema line for Tools: object, `look` a string from `settlements.json` `looks`, `lane` a lane name). **Function:** `WorldLanes.demoStartX(S, gap, default_x)`: the crossing of that street nearest the middle of the first district of that look, less half the gap, so the pair stands astride it (START_X when the data names nothing). **Scenario option:** `setup.start == "crossing"` in `SimCore.newMatch`: two lines in `sim/core/sim.gd` (Simulation's; a grant): `start_x = WorldLanes.demoStartX(S, SimConst.START_GAP, SimConst.START_X)` in place of `SimConst.START_X` for `x0` and `x1`. Default off, so no match and no golden changes. Checked: on seed 3 the pair's middle is within a unit of a crossing at x 50,101 in downtown, the gap is 900, the nearest building edge is 191 units away, and the match runs 3,600 ticks with no NaN. **For the web build:** the host's setup passes `{"start": "crossing"}` for the demo only; **Camera's** `sim/core/view/camera.gd` starts at `START_X + 350` (lines 11 and 17), so its reset should read the fighters' middle instead, or the first frames pan across 40,000 units; that file is Camera's.
+
+## I. The landmarks: seven in the data, five in the world on main
+
+`settlements.json` has seven landmarks (bell tower, chimney stack, lighthouse, village hall, hill chapel, crown tower, ledger hall). **On main the world holds five**: the ledger hall and the crown tower are gone. Cause: option P's tighter grid leaves no building in downtown's rows 1 and 2 whose 9-fighter-height footprint lies between two avenues (the generator rejects a candidate that crosses an avenue), and the landmark is then dropped silently. They were there in the city before P. **Fix (scratch, `mk_lmfit.py`):** when no candidate fits, slide the nearest candidate along its row into the nearest block that is wide enough (clamped between its avenues); the landmarks that already fit do not move. With it: all seven stand (ledger hall at x 48,015 in row 1, crown tower at 53,220 in row 2), `lane_check` clean (118 buildings, 10 avenues, 0 across an avenue). It changes the layout, so it needs a golden regeneration: a small window of its own.
+
+**The chapel.** `hill_chapel` is 14 fighter heights tall and 5 wide; the sim's box is the whole 5 x 14 x depth prism, but Rendering draws a nave of 0.72 of the height (10 bh) and a belfry 0.26 of the width wide that reaches the full 14. A fighter that hits the box above the nave and beside the belfry hits air: about 4 bh of height over a 3.7 bh wide nave. **The box can be the nave's:** `height_bh` 10 in the data, and Rendering's builder draws the nave to `h` and the belfry as an ornament above it (its rule already lets an ornament rise to 15% over the box: 11.5 bh in all, the chapel a little lower than now). At 10 bh the generator calls it a `house`, not a `tower` (`height_bh` under 12), so its hit points per height drop to the house's. A data line plus Rendering's `chapel` builder (`render/core/shapes.gd`, lines 282 to 289); neutral for the code, a layout-neutral golden change only through the chapel's box.
+
+## J. Option Q on paper: the literal 4 x 4
+
+**What it is.** Four streets and three block rows in the band: 4 x 5 bh of street and 3 x 8.5 bh of block is 45 bh (40 bh with 4 bh streets and 7 bh blocks, 48 with 5 and 9): the band goes from 32 to 40 to 48 fighter heights, 25 to 50% deeper. The block rows are ids 1, 2 and 3 and the scenery row becomes 4: **a fifth row id**. Four streets in the 32 bh we have would leave 4 bh streets with 2 bh of free depth, which is not a street to fight in.
+
+| Who | What Q costs them |
+|---|---|
+| **World** | `lanes.json` (four streets, three blocks, rows 0 to 4); `settlements.gd` and `settlements.json` (`rows`, `row_h` and `row_pop` get five factors; the brunt's candidate rows 1 and 2 become 1 to 3); the terrain's depth rows (`initRows`, `rowZOf`, the row arrays: one more row of 1,200 columns each, the memory and the hash); about 40 more buildings (roughly 160); the whole city re-measured; one golden. A window of the size of the lanes window |
+| **Simulation** | `state.gd` (the row arrays' count), `hash.gd` (the rows hashed), `sim.gd` (`initRows`); the band limits are data, so nothing else |
+| **Encounter** | L4's planner has a longer band: `depth.maxBhPerSec` 1.5 takes 30 s to cross 45 bh (20 s now); candidates "toward the camera" and "into the row behind" gain a middle block; the location bands rerun |
+| **Camera** | The farthest street is 45 bh back, not 32: from Game Design's 3% a second at 1.5 bh a second the size ratio from front to back is about 0.41 against 0.53 (compound, 2% a bh): the far street reads at two fifths the front's size. Camera says whether the frame and the see-through foreground hold |
+| **Rendering** | The ground shader's strips 16 to 20 (four streets of five) and avenues; row fog and the row textures for five rows; about a third more buildings drawn; the foreground patch's rows |
+| **Tools** | `lanes.json`'s `row` maximum 3 to 4 and the lanes-row cross-check (blocks 1 to 3, scenery 0 and 4); `row_h` and `row_pop` lengths 4 to 5; the index-addressed self-test fixtures re-pointed again |
+| **Game Design** | `depth.md` numbers (the street width, the crossing time, the drift room) and the "four streets" rule |
+| **QA** | New baselines; the flash scenes' targets (the front row nearest the fighters, the tallest tower) re-checked |
+| **Art, VFX, Audio, UI, Narrative, Legal** | Nothing beyond a look at the far street |
+
+**What P gives Orb today without it.** Three streets and a crossing every 11 to 15 fighter heights: 15 crossings within 3,000 units of downtown's middle; a brawl can change street twice (front to middle to back), which reads as the neighbourhood's grid at the depth the band has. Q adds a fourth street and a third block of buildings: more places for a fight and a deeper skyline, at the price above. **Recommendation:** decide after seeing P with depth on (L4); Q is a layout, not a rule, and every cost above is data and a fixed list of files, so it can follow without waiting on anything else.

@@ -274,6 +274,114 @@ static func near(S: SimState, x: float, r: float) -> Array:
 	return out
 
 
+## L3: the standing buildings whose x extent can meet a flight from xa to xb (padded by pad), as indices in ascending order. Made once
+## per flight or per tick; the sweep then tests only these.
+static func along(S: SimState, xa: float, xb: float, pad: float) -> Array:
+	var d: float = SimWrap.sdx(xa, xb)
+	var mid: float = SimWrap.wrap(xa + d * 0.5)
+	var half: float = absf(d) * 0.5 + pad
+	var out: Array = []
+	for bi in near(S, mid, half):
+		var b = S.buildings[bi]
+		if b.alive and absf(SimWrap.sdx(mid, b.x)) - b.w * 0.5 <= half:
+			out.append(bi)
+	out.sort()
+	return out
+
+
+## The earliest crossing of the segment (x0, y0, z0) to (x1, y1, z1) by a body of half extents (rx, ry, rz) against the boxes of the
+## buildings in list (a footprint in x and z, from the ground it stands on to its standing top): the slab method, one division an
+## axis, no trigonometry. Ties go to the lower index. A box the body already overlaps at the start is reported at t = 0 with the
+## face of least penetration, or skipped when skipInside is set (the hit test: a body leaving the building it just crossed).
+## Returns {"hit": false} or {"hit": true, "b", "t" (0 to 1), "x", "y", "z", "face" ("end", "top", "bottom", "front", "back"), "nx", "nz"}.
+static func sweep(S: SimState, list: Array, x0: float, y0: float, z0: float, x1: float, y1: float, z1: float, rx: float, ry: float, rz: float, skipInside: bool = false) -> Dictionary:
+	var best: Dictionary = {"hit": false}
+	var bt: float = 2.0
+	var d0: float = SimWrap.sdx(x0, x1)
+	var d1: float = y1 - y0
+	var d2: float = z1 - z0
+	for bi in list:
+		var b = S.buildings[bi]
+		if not b.alive:
+			continue
+		var cx: float = SimWrap.sdx(x0, b.x)
+		var gy: float = baseY(S, b)
+		var lo0: float = cx - b.w * 0.5 - rx
+		var hi0: float = cx + b.w * 0.5 + rx
+		var lo1: float = gy - ry
+		var hi1: float = gy + curH(b) + ry
+		var lo2: float = b.z - b.d * 0.5 - rz
+		var hi2: float = b.z + b.d * 0.5 + rz
+		var inside: bool = lo0 <= 0.0 and 0.0 <= hi0 and lo1 <= y0 and y0 <= hi1 and lo2 <= z0 and z0 <= hi2
+		var t: float = 0.0
+		var axis: int = -1
+		var sgn: float = 0.0
+		if inside:
+			if skipInside:
+				continue
+			var pen0: float = minf(0.0 - lo0, hi0 - 0.0)
+			var pen1: float = minf(y0 - lo1, hi1 - y0)
+			var pen2: float = minf(z0 - lo2, hi2 - z0)
+			if pen0 <= pen1 and pen0 <= pen2:
+				axis = 0
+				sgn = -1.0 if (0.0 - lo0) < (hi0 - 0.0) else 1.0
+			elif pen1 <= pen2:
+				axis = 1
+				sgn = -1.0 if (y0 - lo1) < (hi1 - y0) else 1.0
+			else:
+				axis = 2
+				sgn = -1.0 if (z0 - lo2) < (hi2 - z0) else 1.0
+		else:
+			var tmin: float = 0.0
+			var tmax: float = 1.0
+			var miss: bool = false
+			for a in range(3):
+				var p: float = 0.0 if a == 0 else (y0 if a == 1 else z0)
+				var dd: float = d0 if a == 0 else (d1 if a == 1 else d2)
+				var lo: float = lo0 if a == 0 else (lo1 if a == 1 else lo2)
+				var hi: float = hi0 if a == 0 else (hi1 if a == 1 else hi2)
+				if absf(dd) < 1.0e-9:
+					if p < lo or p > hi:
+						miss = true
+						break
+					continue
+				var ta: float = (lo - p) / dd
+				var tb: float = (hi - p) / dd
+				var sg: float = -1.0
+				if ta > tb:
+					var tt: float = ta
+					ta = tb
+					tb = tt
+					sg = 1.0
+				if ta > tmin:
+					tmin = ta
+					axis = a
+					sgn = sg
+				if tb < tmax:
+					tmax = tb
+				if tmin > tmax:
+					miss = true
+					break
+			if miss or axis < 0:
+				continue
+			t = tmin
+		if t < bt:
+			bt = t
+			var face: String = "end" if axis == 0 else ("top" if axis == 1 and sgn > 0.0 else ("bottom" if axis == 1 else ("front" if sgn > 0.0 else "back")))
+			best = {"hit": true, "b": bi, "t": t, "x": SimWrap.wrap(x0 + d0 * t), "y": y0 + d1 * t, "z": z0 + d2 * t, "face": face, "nx": sgn if axis == 0 else 0.0, "nz": sgn if axis == 2 else 0.0}
+	return best
+
+
+## The index of the lowest building whose box the body overlaps right now, or -1.
+static func blocked(S: SimState, x: float, y: float, z: float, rx: float, ry: float, rz: float) -> int:
+	for bi in along(S, x, x, rx):
+		var b = S.buildings[bi]
+		var gy: float = baseY(S, b)
+		if absf(SimWrap.sdx(x, b.x)) <= b.w * 0.5 + rx and y >= gy - ry and y <= gy + curH(b) + ry and z >= b.z - b.d * 0.5 - rz and z <= b.z + b.d * 0.5 + rz:
+			return bi
+	return -1
+
+
 ## Depth from the fighter plane to the building's nearest face.
 static func dz(b) -> float:
 	return maxf(0.0, absf(b.z) - b.d * 0.5)
@@ -408,6 +516,7 @@ static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, c
 		ringCap = int(cause.ld.reachRingCap)
 	var r: float = r0 * tf
 	var ringLevelled: int = 0
+	var zc: float = float(cause.z) if (S.depthOn and cause != null and "z" in cause) else 0.0
 	for bi in near(S, x, r):
 		var b = S.buildings[bi]
 		if not b.alive:
@@ -415,7 +524,13 @@ static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, c
 		var d: float = absf(SimWrap.sdx(x, b.x)) - b.w / 2.0
 		if d > r:
 			continue
-		if not beam and dz(b) > Z_REACH:
+		if S.depthOn and not beam:
+			# L3: a blast reaches a building by its distance in plan, from the blast's depth to the footprint's nearest point
+			var gz: float = maxf(0.0, absf(zc - b.z) - b.d * 0.5)
+			d = SimDetMath.hypot(maxf(d, 0.0), gz)
+			if d > r:
+				continue
+		elif not beam and dz(b) > Z_REACH:
 			continue
 		var top: float = baseY(S, b) + curH(b)
 		if y - r * 0.6 > top:
