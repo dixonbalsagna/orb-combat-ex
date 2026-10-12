@@ -103,7 +103,7 @@ static func _body(ci: CanvasItem, m: UiFighterModel, c: Vector2, R: float, t: fl
 	var core_r: float = R * UiLook.CROWN_CORE_R
 	var core_th: float = th * thin * (1.0 + 0.28 * float(heat))
 	if heat > 0 and not reduced:
-		core_r *= 1.0 + 0.035 * float(heat) * sin(t * UiLook.HZ_HEAT * TAU * (1.0 + 0.4 * float(heat)))
+		core_r *= 1.0 + 0.035 * float(heat) * sin(t * UiLook.HZ_HEAT * TAU)
 	_region_arc(ci, m, "core", c, core_r, PI * 0.5, CORE_SPAN, core_th, t, alpha, crawl, false, UiLook.col(UiLook.INTERNAL) if heat > 0 else Color(0, 0, 0, 0))
 	if m.internal_stage > 0 or heat > 0:
 		var ist: int = maxi(m.internal_stage, 1 if heat > 0 else 0)

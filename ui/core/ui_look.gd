@@ -84,9 +84,9 @@ const CROWN_THICK := 0.085            # arc thickness as a fraction of R, floore
 const CROWN_MIN_THICK := 4.0
 
 ## Flicker and pulse rates, Hz.
-const HZ_BATTERED := 4.0
+const HZ_BATTERED := 2.0              # Legal's rule k06: a flicker that runs a whole match is no faster than 3 a second, preferably 2 or fewer
 const HZ_BRINK := 1.2
-const HZ_HEAT := 2.2
+const HZ_HEAT := 2.0
 
 
 static var _cache: Dictionary = {}

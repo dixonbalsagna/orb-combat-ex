@@ -1422,3 +1422,10 @@ VFX traced the mash clip's 3, 3, 3 reading (gate 2.5) to this HUD, not the bodie
 - **`miss`** (none in the run), **`double_hit`** (none), **`charge_stopped`** (1), **`burst`** start and end (3), **`stagger`** (16: perfect_block, reversal, heavy, flurry), **`trade`** (125), **`perfect_block`** (4), **`guard_break`** (2), **`riposte`** (3), **`reversal`** (6), **`brawl_start`** and **`brawl_end`** (4, 3): the HUD has no reading for them. These are the director's moments (the Combat feed and Audio use them); most do not need a HUD mark. The ones a player would miss without one: **`miss`** (the swinger is open for `n` ticks) and **`double_hit`**.
 
 **What I would build, in order, if Orb wants the flags on:** the weight chip from `blow`; a mark for `miss` (the open window); the energy bolt's land result; the launcher close's `used` or `lapsed`. All four are small marks (under the flash threshold).
+
+## 59. Legal's rules in the HUD: the flicker's rate, the toll in pictures, the plate's chips (2026-10-12)
+
+- **No flicker above 3 a second (RL-129, rule k06).** The crown's battered stroke flickered at 4 Hz in thin arcs, and the core's heat swell ran up to 4.8 Hz at the hottest. Both are now **2 Hz** (`UiLook.HZ_BATTERED`, `HZ_HEAT`; the heat is told by the swell's size, not its rate). Static under Reduced motion as before. The other constants: the brink ring 1.2 Hz, the form prompt's pulse 1.4 Hz, the telegraph's 1.2 Hz. `hud_check` `_rate_rules` fails any of them above 3 Hz and the two that run a whole match above 2 Hz.
+- **The toll in pictures.** In game "CIVILIANS LOST n / 1800" is neutral and stays, with no sound and no celebration when it rises (the HUD makes no sound; the chip brightens for 2.5 s after a change). **No public picture or clip may show a count above zero:** the demo takes `--public`, which pins the three counters at zero for every frame; every still in docs/ui/img shows zero.
+- **The human's own plate has room for one chip beside the pips,** so SIGNATURE's chip waits while the weight chip naming a blow, OPEN, the run or a bolt's land is up (`UiPlate.marks_up`), and returns after; the legend still says the signature.
+

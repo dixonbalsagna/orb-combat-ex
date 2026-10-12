@@ -57,6 +57,7 @@ func _run() -> void:
 	await _gate_short_rules()
 	await _phone_rules()
 	await _brawl_marks_rules()
+	_rate_rules()
 	await _block_toggle_rules()
 	_gate_bypass_rules()
 	await _three_strength_rules()
@@ -5406,6 +5407,15 @@ func _brawl_marks_rules() -> void:
 	_ok(m0.flurry_dots == 0, "brawl marks: the dots clear 0.6 s after the blows stop")
 	await drawn.call(100)
 	_ok(m1.run_n == 0, "brawl marks: and the run after 2.5 s")
+	# The human's own plate: SIGNATURE's chip waits while one of the marks is up, and comes back after.
+	hud.hub.patch(0, {"charge": 100.0})
+	var sig_before: String = await drawn.call(70)
+	hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "heavy", "k": 0, "target": 1})
+	var sig_during: String = await drawn.call(4)
+	await drawn.call(90)
+	var sig_after: String = await drawn.call(4)
+	var mine_before: int = sig_before.split("SIGNATURE").size() - 1
+	_ok(mine_before >= 1 and sig_during.contains("HEAVY") and (sig_during.split("SIGNATURE").size() - 1) < mine_before and (sig_after.split("SIGNATURE").size() - 1) >= mine_before - 0, "brawl marks: SIGNATURE's chip on my plate gives way to the chip that names the blow, and returns (%d, %d, %d)" % [mine_before, sig_during.split("SIGNATURE").size() - 1, sig_after.split("SIGNATURE").size() - 1])
 	# The hub counts what it has no reading for, and no longer counts the ones it reads.
 	hud.consume({"type": "cue", "actor": 0, "kind": "double_hit"})
 	_ok(int(hud.hub.stats.get("cue_unread_double_hit", 0)) == 1 and int(hud.hub.stats.get("cue_unread_blow", 0)) == 0 and int(hud.hub.stats.get("cue_unread_miss", 0)) == 0, "brawl marks: the unread counter holds only what has no reading")
@@ -5413,6 +5423,17 @@ func _brawl_marks_rules() -> void:
 	hud.queue_free()
 	await process_frame
 	root.size = Vector2i(1280, 720)
+
+
+## Legal's rule k06 (RL-129): nothing in the HUD flickers or pulses faster than 3 a second, and what runs a whole match preferably 2 or fewer. The rates are constants; this holds them.
+func _rate_rules() -> void:
+	var rates := {"battered stroke": UiLook.HZ_BATTERED, "brink ring": UiLook.HZ_BRINK, "heat swell": UiLook.HZ_HEAT, "form prompt pulse": UiFormPrompt.PULSE_HZ}
+	var bad := PackedStringArray()
+	for k in rates:
+		if float(rates[k]) > 3.0:
+			bad.append("%s %.1f Hz" % [k, float(rates[k])])
+	_ok(bad.is_empty(), "rate rule: no flicker or pulse constant is above 3 Hz %s" % str(bad))
+	_ok(UiLook.HZ_BATTERED <= 2.0 and UiLook.HZ_HEAT <= 2.0, "rate rule: and the two that run a whole match (the battered stroke, the heat swell) are 2 Hz or slower")
 
 
 ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD

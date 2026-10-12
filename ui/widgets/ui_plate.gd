@@ -4,6 +4,13 @@ class_name UiPlate
 ## Every cue pairs colour with shape: stance icons, striped meter fills with tick marks, diamond pips, chips with icons.
 ## The plate mirrors for the right-hand fighter and fills its bars from the outer edge inward.
 
+## Whether one of the brawl's small marks is up on this plate (the weight chip naming a blow, OPEN, a run, a bolt's land): under the three strengths only.
+static func marks_up(m: UiFighterModel) -> bool:
+	if not UiStance.three():
+		return false
+	return (m.blow_kind != "" and m.blow_t < BLOW_HOLD) or m.open_left > 0.0 or (m.run_n > 0 and m.run_t < RUN_HOLD) or (m.land_kind != "" and m.land_t < LAND_HOLD)
+
+
 ## How long the weight chip names the blow just thrown, how long a bolt's land and a run of unanswered blows stay on the plate (seconds).
 const BLOW_HOLD := 1.2
 const LAND_HOLD := 0.8
@@ -185,6 +192,8 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	elif sig_ready:
 		sig_mode = "ready"
 	var sig_show: bool = sig_mode != ""
+	if sig_show and not m.ai and marks_up(m):
+		sig_show = false   # a plate has room for one chip beside the pips: while the weight chip, OPEN, the run or a bolt's land is up, SIGNATURE's chip waits (the legend still says it)
 	var tier_rh: float = float(pm["tier_h"])
 	var sig_w: float = UiText.width(sig_label, tfs) + tier_rh * 0.9 + 16.0 * s if sig_show else 0.0
 
