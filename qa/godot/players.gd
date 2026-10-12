@@ -533,7 +533,17 @@ class Pl:
 			"masher":
 				var gap: int = int(P.get("gap", "8"))
 				# clock=tick: the taps count S.tick, which runs through hit-stop (a player's real tap rate; the brawl's flurry counts it); the default counts live ticks
-				var due: bool = (S.tick - last_press_tick >= gap) if String(P.get("clock", "live")) == "tick" else (lt - last_press >= gap)
+				# clock=tick: the taps fall on every gap-th S.tick by the absolute count, as masher.gd's do (a human's rate is real time, so a hit-stop delays a press and does not shift the next one);
+				# clock=since: a press when gap S.ticks have passed since the last press was consumed (what clock=tick was before 2026-10-12: it read 12 of 100 against medium where masher.gd read 54);
+				# the default counts live ticks since the last press
+				var ck: String = String(P.get("clock", "live"))
+				var due: bool
+				if ck == "tick":
+					due = S.tick >= start_off and (S.tick - start_off) % gap == 0
+				elif ck == "since":
+					due = S.tick - last_press_tick >= gap
+				else:
+					due = lt - last_press >= gap
 				if S.tick < start_off:
 					due = false
 				if due:
@@ -569,16 +579,16 @@ class Pl:
 						pending_rel = int(pk["rel"])
 						return hold_kind
 					if S.dirS.ex == null and lt >= hold_until and lt >= next_idle:   # nothing to time against: request an exchange with an ordinary hold
-						hold_kind = 1 if String(P.get("kind", "H")) == "H" else 0
+						hold_kind = _hk()
 						pending_rel = -1
 						return hold_kind
 					# inside a brawl there is no flash to release on (the heavy's flash is B2/B3's), so the timed hold plays as a plain one rather than going blind
 					if brawl != null and bool(brawl.call("inBrawl", S, S.fighters[slot])) and plan.is_empty() and lt >= hold_until and lt >= rest_until:
-						hold_kind = 1 if String(P.get("kind", "H")) == "H" else 0
+						hold_kind = _hk()
 						pending_rel = -1
 						return hold_kind
 				elif lt >= hold_until and lt >= rest_until:
-					hold_kind = 1 if String(P.get("kind", "H")) == "H" else 0
+					hold_kind = _hk()
 					return hold_kind
 			"zipper":
 				return _zipper(S, slot)
@@ -644,6 +654,11 @@ class Pl:
 			hold_until = pending_rel if (int(P.get("timed", "0")) != 0 and pending_rel > lt) else lt + int(P.get("hold", "16"))
 			rest_until = hold_until + int(P.get("rest", "24"))
 			SimPressRead.release(log, mini(k, 1), hold_until)
+
+	## The button a holder holds: B is 2 (a signature edge with sigHeld), H or Y is 1, anything else (L, X) 0.
+	func _hk() -> int:
+		var kd: String = String(P.get("kind", "H"))
+		return 2 if kd == "B" else (1 if (kd == "H" or kd == "Y") else 0)
 
 	func is_holding(lt: int) -> bool:
 		return kind == "holder" and lt < hold_until
@@ -899,7 +914,10 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 					p.tap_k = k
 					p.tap_left = int(p.P.get("tap", "0"))
 			if p.kind == "holder" and k >= 0:
-				if k == 1:
+				if k == 2:
+					it.sigHeld = true
+					it.sig = true
+				elif k == 1:
 					it.heavyHeld = true
 				else:
 					it.lightHeld = true
@@ -918,7 +936,9 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 			if int(p.P.get("energy", "0")) != 0:
 				it.mode = 1   # the energy family held: presses are bolts and charged shots, not melee
 			if p.is_holding(lt):
-				if p.hold_kind == 1 and "heavyHeld" in it:
+				if p.hold_kind == 2:
+					it.sigHeld = true
+				elif p.hold_kind == 1 and "heavyHeld" in it:
 					it.set("heavyHeld", true)
 				elif "lightHeld" in it:
 					it.set("lightHeld", true)

@@ -279,10 +279,17 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
   // Structures levelled per minute by the higher tier at the time (balance-targets 15; agency pass 15.6: the guard is at most 2% a minute at tier 1 and 4% at tier 2; tiers 3 and 4 keep their bands 3 to 10 and 6 to 20%)
   if (D && D.every(r => r.strTimeline)) {
     const per = tier => { let lost = 0, secs = 0, n = 0; for (const r of D) { const t = r.strTimeline; n += r.nStructs; for (let k = 1; k < t.length; k++) { if (t[k][2] === tier) { secs += t[k][0] - t[k - 1][0]; lost += t[k][1] - t[k - 1][1]; } } } return secs ? { rate: (lost / (n / D.length)) / (secs / 60) * 100, secs } : null; };
-    for (const [tier, lo, hi] of [[1, 0, 2], [2, 0, 4], [3, 3, 10], [4, 6, 20]]) {
+    // tier 3's floor is re-based from 3 to 2 for the re-laid city (World, lanes-remeasure-plan.md sections 10 to 13: 118 buildings, rows 50 / 46 / 22, population 1,800 with 247 on the fight's sidewalk): fewer, broader buildings fall at 2.2 to 2.9% a minute at tier 3, where the old city's 88 towers fell at 1.5 to 3
+    for (const [tier, lo, hi] of [[1, 0, 2], [2, 0, 4], [3, 2, 10], [4, 6, 20]]) {
       const r = per(tier);
       if (r) R.point(`15.str.t${tier}`, '§15', `Structures levelled per minute at tier ${tier}, % of all structures (${lo ? lo + ' to ' : 'at most '}${hi}%)`, { v: r.rate, lo: lo || undefined, hi, unit: 'num', note: `${(r.secs / 60).toFixed(0)} match minutes at this tier` });
     }
+  }
+
+  // Launches a match, the AI against itself (Game Design, brawl-second-pass.md §14: 6 to 12, the top moving to 14 if collateral, the median and the 10th percentile hold at 14.3): reported with the three it is read against
+  if (D && D.length && D.every(r => r.launches)) {
+    const perM = D.map(r => Object.values(r.launches).reduce((a, b) => a + b, 0)), ko = D.map(r => r.koAt).filter(x => x > 0).sort((a, b) => a - b);
+    R.info('10.launches.perMatch', '§14 second pass', 'Launches a match, the AI against itself, with the match median, the 10th percentile and the civilians lost beside it (6 to 12; the top is 14 if all three hold)', `${mean(perM).toFixed(1)} a match; median ${ko.length ? ko[Math.floor(ko.length / 2)].toFixed(0) : '-'} s, 10th percentile ${ko.length ? ko[Math.floor(ko.length * 0.1)].toFixed(0) : '-'} s, civilians lost ${(mean(D.map(r => r.civPct)) * (D.every(r => r.civPct <= 1) ? 100 : 1)).toFixed(1)}%`, `${D.length} default-arm matches; the planner's launch decisions (a beam or finisher launch is in the count)`);
   }
 
   // Energy and signatures as shares of the match's damage (agency pass 14: blasts 10 to 25% until Orb has played it; signatures at most 30%, provisional)
