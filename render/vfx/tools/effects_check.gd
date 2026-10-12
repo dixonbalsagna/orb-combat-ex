@@ -206,6 +206,7 @@ func _run() -> void:
 	_brawl()
 	_ghosts()
 	_vision()
+	_panes()
 	_scorch_budget()
 	_press_load()
 	_real()
@@ -693,11 +694,24 @@ func _react() -> void:
 	place.call(3.0)
 	var city: float = SimWrap.wrap(2960.0 * SimConst.PS)
 	var towers: Array = VfxMock.towers_near(S, city, 40000.0)
-	var bt = S.buildings[towers[0]]
-	var cx: float = SimWrap.wrap(bt.x - 700.0)
+	# The re-laid city has districts of different densities: take the tower with the most buildings of three floors or more within the tier 3 reach of the crater, and the rule is that the
+	# wave blows every one of them up to max_buildings (10), nearest first, so the check holds in any city that has at least one block with two.
+	var reach3: float = VfxReact.p("windows", "reach_t3")
+	var best_n: int = -1
+	var cx: float = 0.0
+	for ti in towers:
+		var tx: float = SimWrap.wrap(S.buildings[ti].x - 700.0)
+		var cnt: int = 0
+		for bb in S.buildings:
+			if bb.alive and int(bb.floors) >= int(VfxReact.p("windows", "min_floors")) and absf(SimWrap.sdx(tx, bb.x)) <= reach3 + bb.w * 0.5:
+				cnt += 1
+		if cnt > best_n:
+			best_n = cnt
+			cx = tx
 	var crater := func(energy: float, owner: float): return VfxMock.ev("crater", {"x": cx, "y": 0.0, "r": 200.0, "depth": 60.0, "energy": energy, "cause": "impact", "owner": owner, "special": 0.0})
 	_tick(S, hw, [crater.call(18.0, 0.0)])
-	_check(hw.react.blow_buildings >= 3 and hw.react.blowouts.size() >= 3, "a big impact blows the windows of the block (%d buildings listed for Rendering)" % hw.react.blow_buildings)
+	var want_b: int = mini(best_n, int(VfxReact.p("windows", "max_buildings")))
+	_check(best_n >= 2 and hw.react.blow_buildings == want_b and hw.react.blowouts.size() == want_b, "a big impact blows the windows of the block (%d of the %d buildings of three floors or more within %d units listed for Rendering)" % [hw.react.blow_buildings, best_n, int(reach3)])
 	var first: float = 1e30
 	var last_at: float = 0.0
 	for w in hw.react.blowouts:
@@ -3500,7 +3514,32 @@ func _real_stages() -> void:
 	var steps: Dictionary = {}
 	var max_bits: int = 0
 	var busiest: int = 0
-	for t in range(16000):
+	# The re-laid city's towers carry thousands of hit points and an AI match leaves them standing (the fight is out in the open), so the stages are staged the way the sim makes
+	# them (tools/flash/flash_worst.gd's collapse): both fighters beside the tallest tower and, from tick 90 and every 150, a doubled blast (WorldStructures.explode) through the front
+	# row nearest them. The events are the sim's own.
+	var tall = null
+	for bb in S.buildings:
+		if bb.alive and (tall == null or bb.h > tall.h):
+			tall = bb
+	if tall != null:
+		for i in range(2):
+			S.fighters[i].x = SimWrap.wrap(tall.x - 900.0 + 60.0 * float(i))
+			S.fighters[i].y = WorldTerrain.groundY(S, S.fighters[i].x) + 10.0
+			S.fighters[i].vx = 0.0
+			S.fighters[i].vy = 0.0
+	for t in range(3000):
+		var u: int = t - 90
+		if u >= 0 and (u % 150 == 0 or u % 150 == 3):
+			var front: Array = []
+			for bb in S.buildings:
+				if bb.alive and bb.row == WorldStructures.PLANE_ROW:
+					front.append(bb)
+			if not front.is_empty():
+				var cx: float = S.fighters[0].x
+				front.sort_custom(func(a, c): return absf(SimWrap.sdx(cx, a.x)) < absf(SimWrap.sdx(cx, c.x)))
+				var b0 = front[mini(front.size() - 1, ((u / 150) % maxi(1, front.size() / 3)) * 3)]
+				S.fighters[0].tier = 3.0
+				WorldStructures.explode(S, b0.x, WorldTerrain.groundY(S, b0.x) + 40.0, 800.0, S.fighters[0])
 		SimCore.step(S)
 		var evs: Array = S.out.fx.duplicate()
 		var in_tick: int = 0
@@ -3514,7 +3553,7 @@ func _real_stages() -> void:
 		max_bits = maxi(max_bits, h.debris.bits.size())
 		S.out.fx.clear()
 	var tot_e: int = int(h.stages.made.get("events", 0))
-	_check(tot_e > 0 and max_bits <= VfxLook.DEBRIS_CAP, "a real match (seed 12345, 16000 ticks): %d building_stage events read, steps %s, busiest tick %d, glass %d, sheds %d, plumes %d; the pool never past its cap (%d of %d)" % [tot_e, str(steps), busiest, int(h.stages.made.get("glass", 0)), int(h.stages.made.get("shed", 0)), int(h.stages.made.get("plume", 0)), max_bits, VfxLook.DEBRIS_CAP])
+	_check(tot_e > 0 and max_bits <= VfxLook.DEBRIS_CAP, "a staged match in the re-laid city (seed 12345, 3000 ticks, blasts through the front row): %d building_stage events read, steps %s, busiest tick %d, glass %d, sheds %d, plumes %d; the pool never past its cap (%d of %d)" % [tot_e, str(steps), busiest, int(h.stages.made.get("glass", 0)), int(h.stages.made.get("shed", 0)), int(h.stages.made.get("plume", 0)), max_bits, VfxLook.DEBRIS_CAP])
 	SimCore.dispose(S)
 
 
@@ -4283,6 +4322,59 @@ func _brawl() -> void:
 	_check(no_flash and int(he.inreach.made.get("full_flash", 0)) == 1, "energy_land with k 0 gets no full flash, with k 1 it may (the register decides)")
 	view.queue_free()
 	SimCore.dispose(S)
+
+
+## The glass starts at a pane (Rendering's re-laid city: a column every look pitch, rows by floor height, panes by the look's spans, all read from RenderShapes).
+func _panes() -> void:
+	print("panes")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var seen_looks: Dictionary = {}
+	var ok_grid: bool = true
+	var checked: int = 0
+	for b in S.buildings:
+		if not b.alive or int(b.floors) < 2:
+			continue
+		var g: Dictionary = VfxPanes.grid(S, b)
+		if g.is_empty():
+			continue
+		var lk: Dictionary = RenderShapes.look(RenderShapes.look_of(RenderLanes.table(S), b))
+		seen_looks[str(lk.get("win", []))] = true
+		var want_cols: int = maxi(1, int(floor(float(b.w) / float(lk["win"][0]))))
+		var pn: Vector4 = VfxPanes.nearest(g, b.x + b.w * 0.37, g["base"] + b.h * 0.5)
+		var inside: bool = pn.x >= b.x - b.w * 0.5 - 0.01 and pn.x <= b.x + b.w * 0.5 + 0.01 and pn.y >= g["base"] and pn.y <= g["base"] + b.h
+		if int(g["ncol"]) != want_cols or not inside or pn.z <= 0.0 or pn.w <= 0.0:
+			ok_grid = false
+		checked += 1
+		if checked >= 60:
+			break
+	_check(checked >= 20 and ok_grid, "the grid is the look's: %d buildings in %d looks, columns every pitch, every nearest pane inside its wall" % [checked, seen_looks.size()])
+	_check(seen_looks.size() >= 2, "more than one district look is in the city (%d)" % seen_looks.size())
+	# A wave of glass: every sliver starts inside the pane it was thrown from (to a third of its width and height).
+	var h := VfxHub.new()
+	h.reset(S, 6)
+	var tower = null
+	for b in S.buildings:
+		if b.alive and int(b.floors) >= 4 and float(b.w) > 150.0:
+			tower = b
+			break
+	if tower == null:
+		_check(false, "a tower of 4 floors or more and a body wider than 150 units to throw glass from")
+		return
+	var g2: Dictionary = VfxPanes.grid(S, tower)
+	h.debris.pane = g2
+	h.debris.window_row(tower.x, tower.w, g2["base"] + tower.h * 0.5, tower.h / float(maxi(int(tower.floors), 1)) * 0.3, 0.0, 1.0)
+	h.debris.pane = {}
+	var worst: float = 0.0
+	var n_glass: int = 0
+	for bt in h.debris.bits:
+		if bt.kind != VfxDebris.GLASS and bt.kind != VfxDebris.TRI:
+			continue
+		n_glass += 1
+		var pn2: Vector4 = VfxPanes.nearest(g2, bt.x, bt.y)
+		var off: float = maxf(absf(SimWrap.sdx(pn2.x, bt.x)) / maxf(pn2.z * 0.5, 1.0), absf(bt.y - pn2.y) / maxf(pn2.w * 0.5, 1.0))
+		worst = maxf(worst, off)
+	_check(n_glass >= 6 and worst <= 0.65, "%d slivers of a window row start within a third of their pane's size of its centre (worst %.2f of a half pane)" % [n_glass, worst])
 
 
 ## The combined ghost count (RL-122's condition): VFX's own after-images and Rendering's, read at every instant.

@@ -114,12 +114,18 @@ func on_events(S: SimState, events: Array, debris: VfxDebris, front: Callable, q
 		var drew: int = 0
 		if c1:
 			var n1: int = maxi(1, int(round(lerpf(p("glass_min"), p("glass_max"), clampf(width_k - 0.6, 0.0, 1.0)) * k)))
+			if bi >= 0 and bi < S.buildings.size():
+				debris.pane = VfxPanes.grid(S, S.buildings[bi])
 			debris.stage_glass(bx, w, g + h * 0.15, g + h, fz, dirx, n1)
+			debris.pane = {}
 			made["glass"] = int(made.get("glass", 0)) + 1
 			drew += n1
 		if c3:
 			var n3: int = maxi(1, int(round(p("shed_big") * width_k * k)))
+			if bi >= 0 and bi < S.buildings.size():
+				debris.pane = VfxPanes.grid(S, S.buildings[bi])
 			debris.stage_shed(bx, w, g + h * 0.1, g + h, fz, dirx, n3, 1.0 + 0.3 * width_k)
+			debris.pane = {}
 			debris.stage_skirt(S, bx, w, h, fz, maxi(1, int(round(p("skirt_big") * k))))
 			debris.stage_smoke(bx, g + h, fz, maxi(1, int(round(p("belch") * k))), 0.0)
 			made["shed"] = int(made.get("shed", 0)) + 1
@@ -131,7 +137,10 @@ func on_events(S: SimState, events: Array, debris: VfxDebris, front: Callable, q
 				made["deduped"] = int(made.get("deduped", 0)) + 1
 			else:
 				var n2: int = maxi(1, int(round(p("shed_small") * width_k * k)))
+				if bi >= 0 and bi < S.buildings.size():
+					debris.pane = VfxPanes.grid(S, S.buildings[bi])
 				debris.stage_shed(bx, w, g + h * 0.4, g + h, fz, dirx, n2, 0.9)
+				debris.pane = {}
 				debris.stage_skirt(S, bx, w, h, fz, maxi(1, int(round(p("skirt_small") * k))))
 				made["shed"] = int(made.get("shed", 0)) + 1
 				made["skirt"] = int(made.get("skirt", 0)) + 1

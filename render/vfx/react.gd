@@ -261,7 +261,7 @@ func on_crater(S: SimState, e, hub) -> void:
 		var j := VfxDebris.Job.new()
 		j.at = at
 		j.kind = "blow"
-		j.a = {"x": b.x, "w": b.w, "base": WorldStructures.baseY(S, b), "fh": b.h / float(F), "z": hub.front_z(b), "floors": floors, "scale": p("windows", "scale")}
+		j.a = {"x": b.x, "w": b.w, "base": WorldStructures.baseY(S, b), "fh": b.h / float(F), "z": hub.front_z(b), "floors": floors, "scale": p("windows", "scale"), "pane": VfxPanes.grid(S, b)}
 		debris.jobs.append(j)
 		blowouts.append({"b": b.idx, "at": at, "strength": strength, "lo": int(floors[0]), "hi": int(floors[floors.size() - 1])})
 		blow_buildings += 1

@@ -48,6 +48,7 @@ var _ember_tick: int = 0        # embers spawned this tick (budget VfxLook.EMBER
 var _ember_alive: int = 0       # embers in the pool (cap VfxLook.EMBER_CAP)
 var _ember_area: float = 0.0    # their drawn area, world units squared (a needle is its length times its width), recounted each step
 var _puff_area: float = 0.0     # the drawn area the puffs in the pool will have at their widest, world units squared, recounted each step
+var pane: Dictionary = {}       # the facade's pane grid (VfxPanes.grid) while a caller throws glass from one building: window glass starts at a pane, not at a spot on the wall
 var puff_area_cap: float = INF  # the most of it the pool keeps: the hub sets it from the register's area threshold and the camera's scale; a puff over it is not made (the oldest keep fading)
 var ember_area_cap: float = INF # the most of it a scorch may keep alive: the hub sets it from the register's area threshold and the camera's scale (a flash's bright pixels, docs/vfx/flash-registry.md)
 var _spray_alive: int = 0       # water streaks in the pool (cap data/vfx/water.json caps.spray_alive)
@@ -578,6 +579,10 @@ func stage_glass(bx: float, w: float, y0: float, y1: float, front_z: float, dirx
 	for k in range(count):
 		var px: float = bx + _rs.range_(-0.5, 0.5) * w
 		var py: float = _rs.range_(y0, maxf(y1, y0 + 1.0))
+		if not pane.is_empty():
+			var pn: Vector4 = VfxPanes.nearest(pane, px, py)
+			px = pn.x + _rs.range_(-0.3, 0.3) * pn.z
+			py = pn.y + _rs.range_(-0.3, 0.3) * pn.w
 		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), dirx * _rs.range_(40.0, 200.0) + _rs.range_(-40.0, 40.0), _rs.range_(-60.0, 220.0), 1.0, _rs.range_(1.0, 1.9))
 		_add(b)
 
@@ -589,6 +594,10 @@ func stage_shed(bx: float, w: float, y0: float, y1: float, front_z: float, dirx:
 	for k in range(count):
 		var px: float = bx + _rs.range_(-0.5, 0.5) * w
 		var py: float = _rs.range_(y0, maxf(y1, y0 + 1.0))
+		if not pane.is_empty():
+			var cp: Vector2 = VfxPanes.clamp_point(pane, px, py)      # inside the drawn silhouette: a stepped tower is narrower than its box up there
+			px = cp.x
+			py = cp.y
 		var kind: int = CHUNK if k % 5 != 0 else STEEL
 		var b: Bit = _bit(kind, px, py, front_z + VfxLook.Z_SHARD_OVER + _rs.range_(0.0, 30.0), dirx * _rs.range_(30.0, 160.0) + _rs.range_(-30.0, 30.0), _rs.range_(-40.0, 120.0), kscale, _rs.range_(1.2, 2.2))
 		_add(b)
@@ -624,6 +633,10 @@ func window_row(bx: float, w: float, ym: float, half_band: float, front_z: float
 	for k in range(n):
 		var px: float = bx + ((float(k) + _rs.next()) / float(n) - 0.5) * w
 		var py: float = ym + _rs.range_(-half_band, half_band)
+		if not pane.is_empty():
+			var pn: Vector4 = VfxPanes.nearest(pane, px, py)
+			px = pn.x + _rs.range_(-0.3, 0.3) * pn.z
+			py = pn.y + _rs.range_(-0.3, 0.3) * pn.w
 		var kp: float = _rs.next()
 		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), _rs.range_(-70.0, 70.0), _rs.range_(-60.0, 200.0), 1.0, _rs.range_(1.0, 1.9))
 		if kp < q:
@@ -738,8 +751,10 @@ func rubble(x: float, y: float, z: float, vx: float, vy: float, size: float, lif
 ## A wave of windows blowing out of one building (react.gd): glass shards thrown out of a few floors' rows. a: x, w (the
 ## building), base (its foot), fh (a floor's height), z (its facade), floors (the floor numbers), scale.
 func _blow(_S: SimState, a: Dictionary) -> void:
+	pane = a.get("pane", {})
 	for fl in a.floors:
 		window_row(a.x, a.w, a.base + (float(fl) + 0.5) * a.fh, a.fh * 0.3, a.z, a.scale)
+	pane = {}
 
 
 # ------------------------------------------------------------------------------------------------- material chunks and flame

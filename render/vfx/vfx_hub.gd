@@ -511,7 +511,9 @@ func _on_floor_hit(S: SimState, e) -> void:
 	var xi: float = SimWrap.wrap(float(_g(e, "x", b.x - sgn * b.w * 0.5)) + sgn * minf(b.w * 0.15, 60.0))
 	var xo: float = b.x + sgn * b.w * 0.5
 	var ym: float = (y0 + y1) * 0.5
+	debris.pane = VfxPanes.grid(S, b)
 	debris.floor_hit(S, b.x, b.w, front_z(b), xi, xo, ym, (y1 - y0) * 0.5, dir.x, dir.y, sp, outcome)
+	debris.pane = {}
 
 
 ## The stack above a cleared span pancaked (floors_fall: b, from, to, n, x, z, w): floors from to to (inclusive) broke.
