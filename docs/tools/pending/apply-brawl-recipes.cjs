@@ -9,11 +9,17 @@
 //     may have three parts: brawl.medium.held). THREE STRENGTHS (docs/design/brawl-second-pass.md; docs/combat/pending/movegen/three-strengths.md
 //     sections 7 and 9): `ender` and `break` are gone (a key that names them is an unknown key).
 //   burst (optional): {slots, pools {fast, mid, slow}, rules, close, samples}: a held X
-//   fallback (optional): {steps, lower, heavyOnStandIns}: what a press throws when its pool has nothing it may throw
+//   fallback (optional): {steps, lower, onTheTier}: what a press throws when its pool has nothing it may throw; onTheTier (per fighter: heavies, heavy, mashedB, launcher, bySend) says how
+//     often each step is reached with B on the heavy tier (it replaces heavyOnStandIns)
+//   launcher (optional): {aim, noStick, bySend, bySendLower}: a tap of B in an opening, picked by where it sends
+//   reach (optional): {rule, run, pieces, runs, after}: energy in reach, the point-blank bolt and blast and the runs a mash keeps to
+//   (brought up to docs/combat/pending/nine-cells.md section 5 on 2026-10-12: the brawl kinds launcher, reversal, bolt, blast, burstFast, burstMid, burstSlow and burstFloor)
 // and adds the rule recipes-brawl: every pool `brawl` names exists for every fighter; every piece of a fighter's power.last has `sends`;
 // when `beat` is there, it has a value for every path a piece uses or a default; and the rules recipes-burst (the burst's pools exist for every
 // fighter, its slots have pools, close and samples are fighters' with pieces that exist and a blow for every slot) and recipes-fallback (lower names
-// brawl kinds and pools every fighter has; heavyOnStandIns names fighters, pieces and steps that exist). The validator fixture becomes the whole new file, and the
+// brawl kinds and pools every fighter has; onTheTier names fighters that exist), recipes-launcher (a fighter is a key of pools; every id is a row of pieces whose `sends` has that send; a bySend id is
+// in his brawl.launcher, a bySendLower id in his brawl.launcher.lower) and recipes-reach (a fighter is a key of pools; every id is a row of pieces with that target and path and is in his reach.bolt or
+// reach.blast; a run's blows are of his reach.bolt and `arms` is as long as `blows`; `after` has a list for each run and names runs that exist). The validator fixture becomes the whole new file, and the
 // cases are added (the earlier whole-row `pieces` cases are patched to carry a path). Re-runnable (a second run changes nothing).
 const fs = require('fs');
 const rj = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -21,7 +27,7 @@ const wj = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
 const closed = { additionalProperties: false, patternProperties: { '^_': true } };
 const PATHS = ['line', 'arc_in', 'arc_out', 'rise', 'drop', 'spin'];
 const SENDS = ['across', 'up', 'down', 'turned'];
-const KINDS = ['light', 'lightToward', 'flurry', 'skill', 'juggle', 'medium', 'mediumHeld', 'heavy', 'heavyHeld', 'lift'];
+const KINDS = ['light', 'lightToward', 'flurry', 'skill', 'juggle', 'medium', 'mediumHeld', 'reversal', 'heavy', 'heavyHeld', 'launcher', 'bolt', 'blast', 'burstFast', 'burstMid', 'burstSlow', 'burstFloor', 'lift'];
 const STEPS = ['pool', 'repeat', 'lower'];
 const LEANS = ['toward', 'away', 'none', 'down', 'up'];
 const CLASSES = ['open', 'fast', 'mid', 'slow'];
@@ -110,25 +116,45 @@ const poolName = { type: 'string', pattern: '^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$' 
       },
     }, { required: ['slots', 'pools', 'rules', 'close', 'samples'], description: 'A held X (docs/design/brawl-second-pass.md section 3): lights that slow on a curve.' });
     const counts = { type: 'object', propertyNames: { enum: STEPS }, additionalProperties: { type: 'integer', minimum: 0 }, description: 'How many times each step is reached.' };
+    const fighterKeys = { pattern: '^(_.*|[a-z][a-z0-9_]*)$' };
+    const fighterMap = (item, description) => ({ type: 'object', minProperties: 1, propertyNames: fighterKeys, additionalProperties: item, patternProperties: { '^_': true }, description });
     const fallback = obj({
       steps: { type: 'array', minItems: 1, items: obj({ step: { enum: STEPS }, what: why }), description: 'The steps, tried in order.' },
       lower: { type: 'object', minProperties: 1, propertyNames: { enum: KINDS }, additionalProperties: poolName, description: 'A brawl kind to the pool one strength down, for the step `lower`.' },
-      heavyOnStandIns: {
-        type: 'object',
-        propertyNames: { pattern: '^(_.*|[a-z][a-z0-9_]*)$' },
-        additionalProperties: obj({
-          standIns: { type: 'integer', minimum: 0 },
-          all: counts,
-          mashedB: counts,
-          runsDry: { type: 'array', items: obj({ after: { type: 'array', minItems: 1, items: strikeId }, then: { enum: STEPS } }) },
-        }),
-        patternProperties: { '^_': true },
-        description: 'Why the block exists today: how often each step is reached with B on stand-ins, by fighter. It goes when the heavy tier is posed.',
-      },
+      onTheTier: Object.assign(fighterMap(obj({
+        heavies: { type: 'integer', minimum: 0, description: 'How many heavies the tier has.' },
+        heavy: counts,
+        mashedB: counts,
+        launcher: counts,
+        bySend: { type: 'object', minProperties: 1, propertyNames: { enum: SENDS }, additionalProperties: counts, description: 'A send to how often each step is reached when the stick asks for it.' },
+      }), 'How often each step is reached with B on the heavy tier\'s posed pieces, by fighter (the count is made on the pieces table): heavy (a tapped or mashed B), mashedB (two heavies running), launcher and bySend.'), {}),
     }, { required: ['steps', 'lower'], description: 'What a press throws when its pool has nothing it may throw. No press is silent.' });
+    const sendOf = { enum: SENDS };
+    const sendMap = { type: 'object', minProperties: 1, propertyNames: { enum: SENDS }, additionalProperties: { type: 'array', minItems: 1, items: strikeId }, description: 'A send to the strikes that send that way.' };
+    const launcher = obj({
+      aim: obj({ up: sendOf, down: sendOf, toward: sendOf, away: sendOf }, { description: 'The stick\'s quarter to the send wanted.' }),
+      noStick: { enum: ['planner'], description: 'With no stick the launch planner\'s pick decides the send.' },
+      bySend: fighterMap(sendMap, 'A fighter to his tier\'s launcher pieces by where each sends (each in his brawl.launcher pool and with that send in its row\'s sends).'),
+      bySendLower: fighterMap(sendMap, 'A fighter to his posed mediums by send, for the fallback step lower (each in his brawl.launcher.lower pool).'),
+    }, { description: 'A tap of B on a staggered rival: it always lands and launches (docs/design/brawl-second-pass.md section 3); this is the blow that starts it, picked by where it sends.' });
+    const piece = obj({ id: strikeId, set: poolName, hand: name, release: name, target: name, path: { enum: PATHS } }, { description: 'A bolt or a blast: the piece, its set, the energy hand, how it is let go, the place it is set on and its path in a string.' });
+    const pieceList = { type: 'array', minItems: 1, items: piece };
+    const reach = obj({
+      rule: obj({ id: name, same: { type: 'array', minItems: 1, uniqueItems: true, items: { enum: ['hand', 'release'] } }, max: { type: 'integer', minimum: 1 } }, { description: 'Legal\'s e06: a piece counts by its hand and release, and a mash never throws the same twice running.' }),
+      run: obj({
+        samePlacePathArm: { type: 'integer', minimum: 1, description: 'Never the same arm, path and place twice running (the most in a row).' },
+        pathsIn: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1 }, description: 'At least this many different paths in any this many bolts running: [paths, bolts].' },
+        freeArm: obj({ atMostOneIn: { type: 'integer', minimum: 1 }, atLeastOneIn: { type: 'integer', minimum: 1 }, gapsDiffer: { type: 'boolean' } }, { description: 'The free arm takes a bolt now and then: at most one in this many, at least one in this many, and on no regular count.' }),
+        notPeriodic: { type: 'array', minItems: 1, items: { type: 'integer', minimum: 2 }, description: 'The order never repeats on a fixed count of these.' },
+        proof: { type: 'integer', minimum: 1, description: 'A run of this many bolts must exist for each fighter.' },
+      }, { description: 'Legal\'s e09 for a mashed run, as numbers the director can order by.' }),
+      pieces: fighterMap(obj({ bolt: pieceList, blast: pieceList }), 'A fighter to his bolt and blast pieces (each a row of pieces with that target and path, and in his reach.bolt or reach.blast pool).'),
+      runs: fighterMap({ type: 'array', minItems: 1, items: obj({ blows: { type: 'array', minItems: 1, items: strikeId }, arms: { type: 'array', minItems: 1, items: { enum: ['lead', 'free'] } } }) }, 'A fighter to sample runs of twenty, each a loop (the blows are his reach.bolt pieces; arms is as long as blows).'),
+      after: fighterMap({ type: 'array', minItems: 1, items: { type: 'array', minItems: 1, items: { type: 'integer', minimum: 0 } } }, 'A fighter to, for each run, the runs that may follow it.'),
+    }, { description: 'Energy in reach (docs/design/brawl-second-pass.md section 5b): with RB held in a brawl, X is the point-blank bolt and Y the blast.' });
     const ordered = {};
-    for (const k of Object.keys(s.properties)) { ordered[k] = s.properties[k]; if (k === 'brawl') { ordered.burst = burst; ordered.fallback = fallback; } }
-    if (!ordered.burst) { ordered.burst = burst; ordered.fallback = fallback; }
+    for (const k of Object.keys(s.properties)) { ordered[k] = s.properties[k]; if (k === 'brawl') { ordered.burst = burst; ordered.fallback = fallback; ordered.launcher = launcher; ordered.reach = reach; } }
+    if (!ordered.burst) { ordered.burst = burst; ordered.fallback = fallback; ordered.launcher = launcher; ordered.reach = reach; }
     s.properties = ordered;
     changed = true;
   }
@@ -139,7 +165,7 @@ const poolName = { type: 'string', pattern: '^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$' 
 {
   const f = 'tools/fixtures/virtual/data/combat/recipes.json';
   const o = rj(f);
-  if (!o.beat || !o.brawl) {
+  if (!o.beat || !o.brawl || !o.launcher || !o.reach || !(o.fallback && o.fallback.onTheTier)) {
     const live = fs.existsSync('data/combat/recipes.json') ? rj('data/combat/recipes.json') : null;
     const full = live && live.beat ? live : rj('docs/combat/pending/recipes.brawl.json');
     const out = {};
@@ -216,14 +242,74 @@ const poolName = { type: 'string', pattern: '^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$' 
       "        if (typeof pn === 'string') for (const fid of fighters) if (isObj(pools[fid]) && !(pn in pools[fid])) err(RC, `/fallback/lower/${esc(kind)}`, 'recipes-fallback', `lower ${kind} draws on pool \"${pn}\", which fighter \"${fid}\" does not have`);",
       "      }",
       "      const stepNames = Array.isArray(fb.steps) ? fb.steps.filter(isObj).map((s) => s.step) : [];",
-      "      if (isObj(fb.heavyOnStandIns)) for (const [fid, row] of Object.entries(fb.heavyOnStandIns)) {",
+      "      void stepNames;",
+      "      if (isObj(fb.onTheTier)) for (const fid of Object.keys(fb.onTheTier)) {",
+      "        if (fid.startsWith('_')) continue;",
+      "        if (!fighters.includes(fid)) err(RC, `/fallback/onTheTier/${esc(fid)}`, 'recipes-fallback', `onTheTier names fighter \"${fid}\", who is not a key of pools`);",
+      "      }",
+      "    }",
+      "    // the launcher: a fighter's tier launchers, by send, are rows that send that way and are in his pools",
+      "    if (isObj(rec.launcher)) {",
+      "      const ln = rec.launcher;",
+      "      for (const key of ['bySend', 'bySendLower']) {",
+      "        if (!isObj(ln[key])) continue;",
+      "        const poolKey = key === 'bySend' ? 'brawl.launcher' : 'brawl.launcher.lower';",
+      "        for (const [fid, sends] of Object.entries(ln[key])) {",
+      "          if (fid.startsWith('_') || !isObj(sends)) continue;",
+      "          if (!fighters.includes(fid)) { err(RC, `/launcher/${key}/${esc(fid)}`, 'recipes-launcher', `${key} names fighter \"${fid}\", who is not a key of pools`); continue; }",
+      "          const inPool = new Set((isObj(pools[fid]) && Array.isArray(pools[fid][poolKey]) ? pools[fid][poolKey] : []).filter(isObj).map((e) => e.id));",
+      "          for (const [send, list] of Object.entries(sends)) {",
+      "            if (!Array.isArray(list)) continue;",
+      "            list.forEach((id, i) => {",
+      "              if (typeof id !== 'string') return;",
+      "              const at = `/launcher/${key}/${esc(fid)}/${esc(send)}/${i}`;",
+      "              if (prow && !(id in prow)) err(RC, at, 'recipes-launcher', `piece \"${id}\" is not a row of pieces`);",
+      "              else if (prow && isObj(prow[id]) && !(Array.isArray(prow[id].sends) && prow[id].sends.includes(send))) err(RC, at, 'recipes-launcher', `piece \"${id}\" does not send \"${send}\" (its sends: ${JSON.stringify(prow[id].sends || [])})`);",
+      "              if (inPool.size && !inPool.has(id)) err(RC, at, 'recipes-launcher', `piece \"${id}\" is not in ${fid}'s pool ${poolKey}`);",
+      "            });",
+      "          }",
+      "        }",
+      "      }",
+      "    }",
+      "    // energy in reach: a fighter's bolts and blasts are rows with that target and path and are in his reach pools; his runs use his bolts; after has a list for each run",
+      "    if (isObj(rec.reach)) {",
+      "      const rc = rec.reach;",
+      "      const bolts = {};",
+      "      if (isObj(rc.pieces)) for (const [fid, row] of Object.entries(rc.pieces)) {",
       "        if (fid.startsWith('_') || !isObj(row)) continue;",
-      "        if (!fighters.includes(fid)) err(RC, `/fallback/heavyOnStandIns/${esc(fid)}`, 'recipes-fallback', `heavyOnStandIns names fighter \"${fid}\", who is not a key of pools`);",
-      "        if (Array.isArray(row.runsDry)) row.runsDry.forEach((r, i) => {",
+      "        if (!fighters.includes(fid)) { err(RC, `/reach/pieces/${esc(fid)}`, 'recipes-reach', `reach.pieces names fighter \"${fid}\", who is not a key of pools`); continue; }",
+      "        for (const kind of ['bolt', 'blast']) {",
+      "          const list = Array.isArray(row[kind]) ? row[kind] : [];",
+      "          const poolKey = 'reach.' + kind;",
+      "          const inPool = new Set((isObj(pools[fid]) && Array.isArray(pools[fid][poolKey]) ? pools[fid][poolKey] : []).filter(isObj).map((e) => e.id));",
+      "          if (kind === 'bolt') bolts[fid] = new Set(list.filter(isObj).map((e) => e.id));",
+      "          list.forEach((e, i) => {",
+      "            if (!isObj(e) || typeof e.id !== 'string') return;",
+      "            const at = `/reach/pieces/${esc(fid)}/${kind}/${i}`;",
+      "            if (prow && !(e.id in prow)) err(RC, `${at}/id`, 'recipes-reach', `piece \"${e.id}\" is not a row of pieces`);",
+      "            else if (prow && isObj(prow[e.id])) {",
+      "              if (typeof e.target === 'string' && prow[e.id].target !== e.target) err(RC, `${at}/target`, 'recipes-reach', `target \"${e.target}\" is not the piece's own (${JSON.stringify(prow[e.id].target)})`);",
+      "              if (typeof e.path === 'string' && prow[e.id].path !== e.path) err(RC, `${at}/path`, 'recipes-reach', `path \"${e.path}\" is not the piece's own (${JSON.stringify(prow[e.id].path)})`);",
+      "            }",
+      "            if (inPool.size && !inPool.has(e.id)) err(RC, `${at}/id`, 'recipes-reach', `piece \"${e.id}\" is not in ${fid}'s pool ${poolKey}`);",
+      "          });",
+      "        }",
+      "      }",
+      "      if (isObj(rc.runs)) for (const [fid, runs] of Object.entries(rc.runs)) {",
+      "        if (fid.startsWith('_') || !Array.isArray(runs)) continue;",
+      "        if (!fighters.includes(fid)) { err(RC, `/reach/runs/${esc(fid)}`, 'recipes-reach', `reach.runs names fighter \"${fid}\", who is not a key of pools`); continue; }",
+      "        runs.forEach((r, i) => {",
       "          if (!isObj(r)) return;",
-      "          if (prow && Array.isArray(r.after)) r.after.forEach((id, j) => { if (typeof id === 'string' && !(id in prow)) err(RC, `/fallback/heavyOnStandIns/${esc(fid)}/runsDry/${i}/after/${j}`, 'recipes-fallback', `piece \"${id}\" is not a row of pieces`); });",
-      "          if (stepNames.length && typeof r.then === 'string' && !stepNames.includes(r.then)) err(RC, `/fallback/heavyOnStandIns/${esc(fid)}/runsDry/${i}/then`, 'recipes-fallback', `\"${r.then}\" is not one of the steps (${stepNames.join(', ')})`);",
+      "          if (Array.isArray(r.blows) && Array.isArray(r.arms) && r.blows.length !== r.arms.length) err(RC, `/reach/runs/${esc(fid)}/${i}/arms`, 'recipes-reach', `arms has ${r.arms.length} entries, but blows has ${r.blows.length}`);",
+      "          if (Array.isArray(r.blows) && bolts[fid] && bolts[fid].size) r.blows.forEach((id, j) => { if (typeof id === 'string' && !bolts[fid].has(id)) err(RC, `/reach/runs/${esc(fid)}/${i}/blows/${j}`, 'recipes-reach', `\"${id}\" is not one of ${fid}'s reach.bolt pieces`); });",
       "        });",
+      "      }",
+      "      if (isObj(rc.after)) for (const [fid, lists] of Object.entries(rc.after)) {",
+      "        if (fid.startsWith('_') || !Array.isArray(lists)) continue;",
+      "        if (!fighters.includes(fid)) { err(RC, `/reach/after/${esc(fid)}`, 'recipes-reach', `reach.after names fighter \"${fid}\", who is not a key of pools`); continue; }",
+      "        const n = isObj(rc.runs) && Array.isArray(rc.runs[fid]) ? rc.runs[fid].length : null;",
+      "        if (n !== null && lists.length !== n) err(RC, `/reach/after/${esc(fid)}`, 'recipes-reach', `after has ${lists.length} lists, but ${fid} has ${n} runs`);",
+      "        if (n !== null) lists.forEach((l, i) => { if (Array.isArray(l)) l.forEach((x, k) => { if (Number.isInteger(x) && x >= n) err(RC, `/reach/after/${esc(fid)}/${i}/${k}`, 'recipes-reach', `run ${x} does not exist (${fid} has ${n})`); }); });",
       "      }",
       "    }",
       anchor,
@@ -292,7 +378,6 @@ const poolName = { type: 'string', pattern: '^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$' 
   const bu = (n, tweak, expect) => { const b = clone(fx.burst); tweak(b); return { id: 'combat-recipes-burst-' + n, schema: 'combat-recipes.schema.json', mutate: [{ file: R, set: { '/burst': b } }], expect }; };
   const fb = (n, tweak, expect) => { const b = clone(fx.fallback); tweak(b); return { id: 'combat-recipes-fallback-' + n, schema: 'combat-recipes.schema.json', mutate: [{ file: R, set: { '/fallback': b } }], expect }; };
   const lean0 = Object.keys(fx.burst.samples[f0])[0];
-  const standRow = Object.entries(fx.fallback.heavyOnStandIns || {}).find(([k, v]) => !k.startsWith('_') && v && Array.isArray(v.runsDry) && v.runsDry.length);
   const burstCases = [
     x('burst-optional', { del: ['/burst'] }, null),
     bu('valid', () => {}, null),
@@ -342,20 +427,98 @@ const poolName = { type: 'string', pattern: '^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$' 
     fb('lower-kind-enum', (b) => { b.lower.dance = 'combo.link'; }, { rule: 'propertyNames', pointer: '/fallback/lower/dance' }),
     fb('lower-pool-shape', (b) => { b.lower.medium = 'Combo Link'; }, { rule: 'pattern', pointer: '/fallback/lower/medium' }),
     fb('lower-pool-missing', (b) => { b.lower.medium = 'combo.nowhere'; }, { rule: 'xref:recipes-fallback', pointer: '/fallback/lower/medium' }),
-    fb('stand-in-fighter-unknown', (b) => { b.heavyOnStandIns.nobody = clone(b.heavyOnStandIns[f0]); }, { rule: 'xref:recipes-fallback', pointer: '/fallback/heavyOnStandIns/nobody' }),
-    fb('stand-in-count-negative', (b) => { b.heavyOnStandIns[f0].standIns = -1; }, { rule: 'minimum', pointer: '/fallback/heavyOnStandIns/' + f0 + '/standIns' }),
-    fb('stand-in-count-step-enum', (b) => { b.heavyOnStandIns[f0].all.panic = 3; }, { rule: 'propertyNames', pointer: '/fallback/heavyOnStandIns/' + f0 + '/all/panic' }),
-    fb('stand-in-count-integer', (b) => { b.heavyOnStandIns[f0].all.pool = 1.5; }, { rule: 'type', pointer: '/fallback/heavyOnStandIns/' + f0 + '/all/pool' }),
+    fb('tier-fighter-unknown', (b) => { b.onTheTier.nobody = clone(b.onTheTier[f0]); }, { rule: 'xref:recipes-fallback', pointer: '/fallback/onTheTier/nobody' }),
+    fb('tier-optional', (b) => { delete b.onTheTier; }, null),
+    fb('tier-key-required-heavies', (b) => { delete b.onTheTier[f0].heavies; }, { rule: 'required', pointer: '/fallback/onTheTier/' + f0 }),
+    fb('tier-key-required-bysend', (b) => { delete b.onTheTier[f0].bySend; }, { rule: 'required', pointer: '/fallback/onTheTier/' + f0 }),
+    fb('tier-unknown-key', (b) => { b.onTheTier[f0].extra = 1; }, { rule: 'additionalProperties', pointer: '/fallback/onTheTier/' + f0 + '/extra' }),
+    fb('tier-heavies-negative', (b) => { b.onTheTier[f0].heavies = -1; }, { rule: 'minimum', pointer: '/fallback/onTheTier/' + f0 + '/heavies' }),
+    fb('tier-count-negative', (b) => { b.onTheTier[f0].heavy.pool = -1; }, { rule: 'minimum', pointer: '/fallback/onTheTier/' + f0 + '/heavy/pool' }),
+    fb('tier-count-step-enum', (b) => { b.onTheTier[f0].mashedB.panic = 3; }, { rule: 'propertyNames', pointer: '/fallback/onTheTier/' + f0 + '/mashedB/panic' }),
+    fb('tier-count-integer', (b) => { b.onTheTier[f0].launcher.pool = 1.5; }, { rule: 'type', pointer: '/fallback/onTheTier/' + f0 + '/launcher/pool' }),
+    fb('tier-send-enum', (b) => { b.onTheTier[f0].bySend.sideways = { pool: 1 }; }, { rule: 'propertyNames', pointer: '/fallback/onTheTier/' + f0 + '/bySend/sideways' }),
+    fb('tier-heavy-on-stand-ins-is-gone', (b) => { b.heavyOnStandIns = {}; }, { rule: 'additionalProperties', pointer: '/fallback/heavyOnStandIns' }),
   ];
-  if (standRow) {
-    const [sf] = standRow;
-    burstCases.push(
-      fb('runs-dry-piece-unknown', (b) => { b.heavyOnStandIns[sf].runsDry[0].after[0] = 'strike.nowhere'; }, { rule: 'xref:recipes-fallback', pointer: '/fallback/heavyOnStandIns/' + sf + '/runsDry/0/after/0' }),
-      fb('runs-dry-then-not-a-step', (b) => { b.heavyOnStandIns[sf].runsDry[0].then = 'give_up'; }, { rule: 'enum', pointer: '/fallback/heavyOnStandIns/' + sf + '/runsDry/0/then' }),
-      fb('runs-dry-then-a-step-the-list-lacks', (b) => { b.steps = b.steps.filter((s) => s.step !== 'lower'); b.heavyOnStandIns[sf].runsDry[0].then = 'lower'; }, { rule: 'xref:recipes-fallback', pointer: '/fallback/heavyOnStandIns/' + sf + '/runsDry/0/then' }),
-    );
-  }
   add.push(...burstCases);
+  // the launcher block (each case sets its own whole block, taken from the fixture's today)
+  const ln = (n, tweak, expect) => { const b = clone(fx.launcher); tweak(b); return { id: 'combat-recipes-launcher-' + n, schema: 'combat-recipes.schema.json', mutate: [{ file: R, set: { '/launcher': b } }], expect }; };
+  const sendOf0 = Object.keys(fx.launcher.bySend[f0])[0];
+  const lowerSend0 = Object.keys(fx.launcher.bySendLower[f0])[0];
+  const poolOf = (fid, key) => new Set((fx.pools[fid][key] || []).map((e) => e.id));
+  const notSending = Object.entries(fx.pieces).find(([id, row]) => id.startsWith('strike.') && row && !(Array.isArray(row.sends) && row.sends.includes(sendOf0)) && poolOf(f0, 'brawl.launcher').has(id));
+  const notInPool = Object.keys(fx.pieces).find((id) => id.startsWith('strike.') && (fx.pieces[id].sends || []).includes(sendOf0) && !poolOf(f0, 'brawl.launcher').has(id));
+  const launcherCases = [
+    x('launcher-optional', { del: ['/launcher'] }, null),
+    ln('valid', () => {}, null),
+    ln('unknown-key', (b) => { b.extra = 1; }, { rule: 'additionalProperties', pointer: '/launcher/extra' }),
+    ln('note-ok', (b) => { b._why = 'a note'; }, null),
+    ln('key-required-aim', (b) => { delete b.aim; }, { rule: 'required', pointer: '/launcher' }),
+    ln('key-required-nostick', (b) => { delete b.noStick; }, { rule: 'required', pointer: '/launcher' }),
+    ln('key-required-bysend', (b) => { delete b.bySend; }, { rule: 'required', pointer: '/launcher' }),
+    ln('key-required-bysendlower', (b) => { delete b.bySendLower; }, { rule: 'required', pointer: '/launcher' }),
+    ln('aim-key-required', (b) => { delete b.aim.away; }, { rule: 'required', pointer: '/launcher/aim' }),
+    ln('aim-unknown-key', (b) => { b.aim.sideways = 'up'; }, { rule: 'additionalProperties', pointer: '/launcher/aim/sideways' }),
+    ln('aim-send-enum', (b) => { b.aim.up = 'sideways'; }, { rule: 'enum', pointer: '/launcher/aim/up' }),
+    ln('nostick-enum', (b) => { b.noStick = 'random'; }, { rule: 'enum', pointer: '/launcher/noStick' }),
+    ln('bysend-empty', (b) => { b.bySend = {}; }, { rule: 'minProperties', pointer: '/launcher/bySend' }),
+    ln('bysend-fighter-unknown', (b) => { b.bySend.nobody = clone(b.bySend[f0]); }, { rule: 'xref:recipes-launcher', pointer: '/launcher/bySend/nobody' }),
+    ln('bysend-send-enum', (b) => { b.bySend[f0].sideways = clone(b.bySend[f0][sendOf0]); }, { rule: 'propertyNames', pointer: '/launcher/bySend/' + f0 + '/sideways' }),
+    ln('bysend-list-empty', (b) => { b.bySend[f0][sendOf0] = []; }, { rule: 'minItems', pointer: '/launcher/bySend/' + f0 + '/' + sendOf0 }),
+    ln('bysend-id-shape', (b) => { b.bySend[f0][sendOf0][0] = 'ram'; }, { rule: 'pattern', pointer: '/launcher/bySend/' + f0 + '/' + sendOf0 + '/0' }),
+    ln('bysend-piece-unknown', (b) => { b.bySend[f0][sendOf0][0] = 'strike.nowhere'; }, { rule: 'xref:recipes-launcher', pointer: '/launcher/bySend/' + f0 + '/' + sendOf0 + '/0' }),
+    ln('bysendlower-piece-unknown', (b) => { b.bySendLower[f0][lowerSend0][0] = 'strike.nowhere'; }, { rule: 'xref:recipes-launcher', pointer: '/launcher/bySendLower/' + f0 + '/' + lowerSend0 + '/0' }),
+  ];
+  if (notSending) {
+    launcherCases.push(ln('bysend-piece-does-not-send-that-way', (b) => { b.bySend[f0][sendOf0][0] = notSending[0]; }, { rule: 'xref:recipes-launcher', pointer: '/launcher/bySend/' + f0 + '/' + sendOf0 + '/0' }));
+  }
+  if (notInPool) {
+    launcherCases.push(ln('bysend-piece-not-in-his-pool', (b) => { b.bySend[f0][sendOf0][0] = notInPool; }, { rule: 'xref:recipes-launcher', pointer: '/launcher/bySend/' + f0 + '/' + sendOf0 + '/0' }));
+  }
+  // the reach block
+  const rh = (n, tweak, expect) => { const b = clone(fx.reach); tweak(b); return { id: 'combat-recipes-reach-' + n, schema: 'combat-recipes.schema.json', mutate: [{ file: R, set: { '/reach': b } }], expect }; };
+  const rb0 = fx.reach.pieces[f0].bolt[0];
+  const otherPath = PATHS.find((p2) => p2 !== rb0.path);
+  const otherTarget = rb0.target === 'chest' ? 'gut' : 'chest';
+  const boltIds = fx.reach.pieces[f0].bolt.map((e) => e.id);
+  const reachCases = [
+    x('reach-optional', { del: ['/reach'] }, null),
+    rh('valid', () => {}, null),
+    rh('unknown-key', (b) => { b.extra = 1; }, { rule: 'additionalProperties', pointer: '/reach/extra' }),
+    rh('note-ok', (b) => { b._why = 'a note'; }, null),
+    rh('key-required-rule', (b) => { delete b.rule; }, { rule: 'required', pointer: '/reach' }),
+    rh('key-required-run', (b) => { delete b.run; }, { rule: 'required', pointer: '/reach' }),
+    rh('key-required-pieces', (b) => { delete b.pieces; }, { rule: 'required', pointer: '/reach' }),
+    rh('key-required-runs', (b) => { delete b.runs; }, { rule: 'required', pointer: '/reach' }),
+    rh('key-required-after', (b) => { delete b.after; }, { rule: 'required', pointer: '/reach' }),
+    rh('rule-id-shape', (b) => { b.rule.id = 'E 6'; }, { rule: 'pattern', pointer: '/reach/rule/id' }),
+    rh('rule-same-enum', (b) => { b.rule.same = ['colour']; }, { rule: 'enum', pointer: '/reach/rule/same/0' }),
+    rh('rule-same-empty', (b) => { b.rule.same = []; }, { rule: 'minItems', pointer: '/reach/rule/same' }),
+    rh('rule-max-zero', (b) => { b.rule.max = 0; }, { rule: 'minimum', pointer: '/reach/rule/max' }),
+    rh('run-key-required', (b) => { delete b.run.proof; }, { rule: 'required', pointer: '/reach/run' }),
+    rh('run-same-place-zero', (b) => { b.run.samePlacePathArm = 0; }, { rule: 'minimum', pointer: '/reach/run/samePlacePathArm' }),
+    rh('run-paths-in-length', (b) => { b.run.pathsIn = [3]; }, { rule: 'minItems', pointer: '/reach/run/pathsIn' }),
+    rh('run-paths-in-item', (b) => { b.run.pathsIn = [0, 5]; }, { rule: 'minimum', pointer: '/reach/run/pathsIn/0' }),
+    rh('run-free-arm-key-required', (b) => { delete b.run.freeArm.gapsDiffer; }, { rule: 'required', pointer: '/reach/run/freeArm' }),
+    rh('run-gaps-differ-type', (b) => { b.run.freeArm.gapsDiffer = 'yes'; }, { rule: 'type', pointer: '/reach/run/freeArm/gapsDiffer' }),
+    rh('run-not-periodic-empty', (b) => { b.run.notPeriodic = []; }, { rule: 'minItems', pointer: '/reach/run/notPeriodic' }),
+    rh('run-proof-zero', (b) => { b.run.proof = 0; }, { rule: 'minimum', pointer: '/reach/run/proof' }),
+    rh('pieces-fighter-unknown', (b) => { b.pieces.nobody = clone(b.pieces[f0]); }, { rule: 'xref:recipes-reach', pointer: '/reach/pieces/nobody' }),
+    rh('pieces-bolt-empty', (b) => { b.pieces[f0].bolt = []; }, { rule: 'minItems', pointer: '/reach/pieces/' + f0 + '/bolt' }),
+    rh('piece-key-required', (b) => { delete b.pieces[f0].bolt[0].hand; }, { rule: 'required', pointer: '/reach/pieces/' + f0 + '/bolt/0' }),
+    rh('piece-path-enum', (b) => { b.pieces[f0].bolt[0].path = 'zigzag'; }, { rule: 'enum', pointer: '/reach/pieces/' + f0 + '/bolt/0/path' }),
+    rh('piece-unknown', (b) => { b.pieces[f0].bolt[0].id = 'strike.nowhere'; }, { rule: 'xref:recipes-reach', pointer: '/reach/pieces/' + f0 + '/bolt/0/id' }),
+    rh('piece-target-differs', (b) => { b.pieces[f0].bolt[0].target = otherTarget; }, { rule: 'xref:recipes-reach', pointer: '/reach/pieces/' + f0 + '/bolt/0/target' }),
+    rh('piece-path-differs', (b) => { b.pieces[f0].bolt[0].path = otherPath; }, { rule: 'xref:recipes-reach', pointer: '/reach/pieces/' + f0 + '/bolt/0/path' }),
+    rh('run-blows-not-his-bolts', (b) => { b.runs[f0][0].blows[0] = fx.reach.pieces[f0].blast[0].id; }, { rule: 'xref:recipes-reach', pointer: '/reach/runs/' + f0 + '/0/blows/0' }),
+    rh('run-arms-too-short', (b) => { b.runs[f0][0].arms.pop(); }, { rule: 'xref:recipes-reach', pointer: '/reach/runs/' + f0 + '/0/arms' }),
+    rh('run-arms-enum', (b) => { b.runs[f0][0].arms[0] = 'left'; }, { rule: 'enum', pointer: '/reach/runs/' + f0 + '/0/arms/0' }),
+    rh('run-fighter-unknown', (b) => { b.runs.nobody = clone(b.runs[f0]); }, { rule: 'xref:recipes-reach', pointer: '/reach/runs/nobody' }),
+    rh('after-names-a-run-that-does-not-exist', (b) => { b.after[f0][0] = [b.runs[f0].length]; }, { rule: 'xref:recipes-reach', pointer: '/reach/after/' + f0 + '/0/0' }),
+    rh('after-too-short', (b) => { b.after[f0].pop(); }, { rule: 'xref:recipes-reach', pointer: '/reach/after/' + f0 }),
+    rh('after-negative', (b) => { b.after[f0][0] = [-1]; }, { rule: 'minimum', pointer: '/reach/after/' + f0 + '/0/0' }),
+  ];
+  void boltIds;
+  add.push(...launcherCases, ...reachCases);
   let n = 0;
   for (const k of add) {
     const i = c.cases.findIndex((y) => y.id === k.id);
@@ -372,9 +535,9 @@ const poolName = { type: 'string', pattern: '^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$' 
   if (!t.includes('recipes-brawl')) {
     const a = '`recipes-pieces`, `recipes-blur`, `recipes-showcase` |';
     if (!t.includes(a)) throw new Error('brawl README anchor');
-    t = t.replace(a, () => '`recipes-pieces`, `recipes-brawl`, `recipes-blur`, `recipes-showcase` |');
+    t = t.replace(a, () => '`recipes-pieces`, `recipes-brawl`, `recipes-launcher`, `recipes-reach`, `recipes-blur`, `recipes-showcase` |');
     const line = t.split('\n').find((l) => l.includes('`recipes-brawl`'));
-    t = t.replace(line, () => line.replace(/ \|$/, () => '; the pools `brawl` names exist for every fighter, every piece of a fighter\'s power.last has `sends`, and `beat` (when there) has a value for every piece path in use or a default |'));
+    t = t.replace(line, () => line.replace(/ \|$/, () => '; the pools `brawl` names exist for every fighter, every piece of a fighter\'s power.last has `sends`, and `beat` (when there) has a value for every piece path in use or a default; `recipes-launcher`: a launcher piece is a row whose `sends` has that send and is in the fighter\'s brawl.launcher (or .lower) pool; `recipes-reach`: a bolt or blast is a row with that target and path in his reach pool, a run\'s blows are his bolts, `arms` is as long as `blows` and `after` has a list for each run |'));
     fs.writeFileSync(f, t);
   }
 }

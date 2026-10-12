@@ -5,6 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { contentHash, hashesAt, problemsWith, DIP_GAP_TICKS } from './release-pass.mjs';
+import { setFor } from './which-set.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -66,6 +67,28 @@ check('an extra row does not hold', problemsWith({ ...good, rows: [...good.rows,
 check('a row that is OVER GATE or FAIL does not hold', problemsWith({ ...good, rows: [row('collapse-normal'), row('collapse-reduced', { verdict: 'OVER GATE' })] }, now, ids).some((p) => /OVER GATE, not PASS/.test(p)) && problemsWith({ ...good, rows: [row('collapse-normal', { verdict: 'FAIL' }), row('collapse-reduced')] }, now, ids).length === 1);
 check(`two whole-screen dips closer than ${DIP_GAP_TICKS} ticks do not hold`, problemsWith({ ...good, rows: [row('collapse-normal', { shortestDipGapTicks: DIP_GAP_TICKS - 1 }), row('collapse-reduced')] }, now, ids).some((p) => /dips/.test(p)));
 check(`two dips ${DIP_GAP_TICKS} ticks apart hold`, problemsWith({ ...good, rows: [row('collapse-normal', { shortestDipGapTicks: DIP_GAP_TICKS }), row('collapse-reduced')] }, now, ids).length === 0);
+
+// the margin rules (Legal's addendum 6, RL-128)
+const rowM = (id, extra = {}) => row(id, { primary: 2, areaLower: 2, stricter: 2, marginal: '0/4', ...extra });
+const rec = (rows) => ({ ...now, rows });
+const pM = (rows) => problemsWith(rec(rows), now, ids);
+check('readings that agree and no change near the threshold hold', pM([rowM('collapse-normal'), rowM('collapse-reduced')]).length === 0);
+check('readings more than 1.0 apart are sensitive: no re-capture, no pass', pM([rowM('collapse-normal', { primary: 2, areaLower: 3.5, stricter: 2 }), rowM('collapse-reduced')]).some((p) => /sensitive.*no re-capture/.test(p)));
+check('readings exactly 1.0 apart are not sensitive', pM([rowM('collapse-normal', { primary: 2, areaLower: 3, stricter: 2 }), rowM('collapse-reduced')]).length === 0);
+check('the memory reading counts in the spread', pM([rowM('collapse-normal', { primary: 1, areaLower: 1.5, stricter: 3 }), rowM('collapse-reduced')]).some((p) => /sensitive/.test(p)));
+check('a sensitive row with a passing, steady re-capture at another seed holds', pM([rowM('collapse-normal', { primary: 2, areaLower: 3.5, stricter: 2, recapture: { verdict: 'PASS', how: 'seed 7', primary: 2, areaLower: 2.5, stricter: 2, marginal: '0/4' } }), rowM('collapse-reduced')]).length === 0);
+check('a re-capture that is not PASS does not count', pM([rowM('collapse-normal', { primary: 2, areaLower: 3.5, stricter: 2, recapture: { verdict: 'FAIL', how: 'seed 7', primary: 4, areaLower: 4, stricter: 4 } }), rowM('collapse-reduced')]).some((p) => /re-capture .* is FAIL/.test(p)));
+check('a re-capture that is itself sensitive does not count', pM([rowM('collapse-normal', { primary: 2, areaLower: 3.5, stricter: 2, recapture: { verdict: 'PASS', how: 'skip 600', primary: 1, areaLower: 3, stricter: 1.5 } }), rowM('collapse-reduced')]).some((p) => /still sensitive/.test(p)));
+check('a change within 15% above the threshold in a second that totals 2.5 does not hold', pM([rowM('collapse-normal', { primary: 2.5, areaLower: 2.5, stricter: 2.5, marginal: '1/5' }), rowM('collapse-reduced')]).some((p) => /within 15% above the area threshold/.test(p)));
+check('the same change in a second that totals 2.0 holds', pM([rowM('collapse-normal', { primary: 2, marginal: '1/4' }), rowM('collapse-reduced')]).length === 0);
+check('the numeric marginalCount is read as well as the older string', pM([rowM('collapse-normal', { primary: 2.5, areaLower: 2.5, stricter: 2.5, marginal: undefined, marginalCount: 2 }), rowM('collapse-reduced')]).some((p) => /2 counted changes/.test(p)));
+check('a clip at exactly 3 on the primary reading is OVER GATE and does not hold', pM([rowM('collapse-normal', { verdict: 'OVER GATE', primary: 3 }), rowM('collapse-reduced')]).some((p) => /OVER GATE, not PASS/.test(p)));
+
+// which set a change needs (docs/tools/release-set-plan.md)
+check('a change to the camera needs the full set', setFor(['render/camera/split_rig.gd', 'docs/x.md']).set === 'FULL');
+check('a change to the scenery data needs the full set', setFor(['data/biomes/lanes.json']).set === 'FULL');
+check('a change to the simulation needs the AI seeds only', setFor(['sim/director/brawl.gd', 'tools/x.js']).set === 'AI');
+check('a change to docs and tools needs none', setFor(['docs/x.md', 'tools/flash/a.mjs', 'README.md']).set === 'NONE');
 
 console.log(failed ? `release-pass self-test FAILED: ${failed} of ${ran}` : `release-pass self-test ok: ${ran} checks`);
 process.exit(failed ? 1 : 0);
