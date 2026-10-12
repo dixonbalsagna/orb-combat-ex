@@ -70,7 +70,7 @@ World's streets (option P, on main): three along-streets of 5 bh each, at depths
 
 | What | First value | Key |
 | :--- | :--- | :--- |
-| The most a brawl's centre moves in depth, from every cause but a flight | **1.2 bh a second** | `depth.maxBhPerSec` |
+| The most a brawl's centre moves in depth, from every cause but a flight or a knock-back | **1.2 bh a second** | `depth.maxBhPerSec` |
 | The ease home, toward the middle of the street or the crossing it is in | 0.5 bh a second, after 30 ticks with no stick held | `depth.homeBhPerSec`, `depth.homeWaitTicks` |
 | The way out of a wreck | 1.2 bh a second, when he is next free | Encounter's rule |
 | A sidestep | 1 bh, over the dodge's own ticks | `depth.sidestepBh`, `depth.sidestepDeg` 20 |
@@ -81,7 +81,7 @@ World's streets (option P, on main): three along-streets of 5 bh each, at depths
 - **Why 1.2, and not the 1.5 I had.** It is the most one push gives: a nudge is about 2.4 bh a second along the line, by my reading of Encounter's figures, and half of it is depth at 30°. Two sticks that agree don't double it. An ordinary push at 20° drags at 0.8 bh a second.
 - **In a street** there are 4 bh of room. The fastest drag goes kerb to kerb in 3.3 s, and an ordinary one in 5 s. Left alone, a brawl is back in the middle of the street in about 4 s.
 - **In an avenue** the room is the whole band, 32 bh. From the middle of one street to the next is 13.5 bh: 11 s at the cap, which is longer than most brawls. So a fight changes street by drift over two or three brawls, or at once by the send down the avenue (§5). A brawl left alone between two streets eases to the nearer one.
-- **Flights are not held to it.** A launch, a throw and a zip cross depth at their own speed, and the camera has its own rules for them.
+- **Flights are not held to it, and neither is a knock-back.** A launch, a throw and a zip cross depth at their own speed, and the camera has its own rules for them. A knock-back is one motion along the line, and its depth part goes with the rest of it: the shove, the blast, a charged heavy, a resting launcher, the double hit. Capped, a shove's depth part would trail behind the shove for most of a second (Simulation's question).
 
 **What it does on screen, and what I need from Camera** (Rendering's measures at a close brawl).
 - A drift at the old cap changed a fighter's size by about 10% a second. I had said 3%, and I was wrong. At 1.2 bh a second it is about 8%.
@@ -159,7 +159,7 @@ Not in D1: the free fighters' easing, the send toward the camera, beams in depth
 | Row | Kind | The bound |
 | :--- | :--- | :--- |
 | An attack that misses because of depth | Hard | None |
-| A brawl's centre, in depth, outside a flight | Hard | Never over 1.2 bh a second |
+| A brawl's centre, in depth, outside a flight or a knock-back | Hard | Never over 1.2 bh a second |
 | The line's angle; the two fighters apart on screen in a brawl | Hard | Never over 30°; never under 0.5 bh |
 | A brawl's centre inside a standing footprint at street level, or outside the band | Hard | Never |
 | Depth moving the pair with a stick held, other than along the line | Hard | Never |
