@@ -260,6 +260,14 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_rush_wait = [0, 0]
 	_od_valid = false
 	_od_shown = [false, false]
+	_cl_rect = [Rect2(), Rect2()]
+	_cl_have = [false, false]
+	_cl_hold = [0.0, 0.0]
+	_cl_sigma = [0.0, 0.0]
+	_cl_shown_prev = [false, false]
+	_fz = [0.0, 0.0]
+	_fzm = 0.0
+	_fzo = [0.0, 0.0]
 	_tb_cut_t = [-1.0e9, -1.0e9]
 	_tb_lost = [0.0, 0.0]
 	_lg_slot = -1
@@ -355,6 +363,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 		_snap_cameras(S)
 	_cut_fade = maxf(0.0, _cut_fade - DT)
 	_prev = _cur
+	if cut:
+		_cut_now = true   # a relocation is a cut for the foreground's state too
 	_cur = _make_frame(S)
 	_cur.cut = cut or _cut_now
 	_cut_now = false
@@ -1667,7 +1677,8 @@ func _overlay_cam(S: SimState) -> Vector3:
 		fx = f.x
 		fy = f.y + CamParams.CHEST
 		fz = float(f.z)
-	return _cam_at(fx, fy, fz, z, Vector2(vw * 0.5, vh * 0.62))
+	_ov_focus_z = fz if depth_dolly else 0.0   # a cut-in's camera stands at its subject's depth
+	return _cam_at(fx, fy, fz - _ov_focus_z, z, Vector2(vw * 0.5, vh * 0.62))
 
 
 ## The transformation shot's three beats. Full: the break is a hard cut to a low wide angle (the pitch drops, the fighter
@@ -2026,6 +2037,7 @@ func _snap_focus(S: SimState, i: int) -> void:
 func _snap_cameras(S: SimState) -> void:
 	_oz_valid = false
 	_od_valid = false
+	_snap_focus_depth(S)
 	for i in range(2):
 		_snap_focus(S, i)
 		_zo[i] = _own_zoom_target(S, i)
@@ -2073,7 +2085,7 @@ func _merged_target(S: SimState) -> Vector3:
 		# Put the pair's chest midpoint at 0.7 of the height, as the straight-on camera does: a few Newton steps on cam_y.
 		var cwx: float = SimWrap.wrap(mx)
 		var chest_y: float = y_mid + CamParams.CHEST
-		var zmid: float = (float(A.z) + float(B.z)) * 0.5
+		var zmid: float = (float(A.z) + float(B.z)) * 0.5 - _fzm
 		var cy: float = my
 		for it in range(3):
 			var s0: float = SplitFrame.project(cwx, cy, z, _pitch_now, vw, vh, cwx, chest_y, zmid).y
@@ -2178,7 +2190,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 	# A fighter in depth (Fighter.z, positive toward the camera) draws at s = d / (d + w) of his plane size, d = K / zoom.
 	# The zoom that gives the apparent height the plane zoom z would have is 1 / (1/z - w / K); where that cannot be
 	# reached (the back row) the cap is used, the biggest he can be.
-	var w: float = -float(f.z)
+	var w: float = -(float(f.z) - float(_fz[i]))
 	if absf(w) > 1.0:
 		var k: float = CamParams.K_FACTOR * vh
 		var den: float = 1.0 / z - w / k
@@ -2291,7 +2303,7 @@ func _refine_cam(cam: Vector3, fx: float, fy: float, fz: float, target: Vector2)
 
 ## The perspective scale of fighter i at the depth he has now, for the pane's current zoom.
 func _depth_s(S: SimState, i: int, z: float) -> float:
-	var zz: float = float(S.fighters[i].z)
+	var zz: float = float(S.fighters[i].z) - float(_fz[i])
 	if zz == 0.0:
 		return 1.0
 	var d: float = CamParams.K_FACTOR * vh / z
@@ -2309,6 +2321,20 @@ static func _blend_cam(a: Vector3, b: Vector3, w: float) -> Vector3:
 var _oz: PackedFloat64Array = PackedFloat64Array([0.5, 0.5])
 var _oz_valid: bool = false
 var _outs: Array = [Vector3.ZERO, Vector3.ZERO]
+var _cl_rect: Array = [Rect2(), Rect2()]   # what each pane's foreground is told to open, held and rate-limited
+var _cl_have: Array = [false, false]
+var _cl_hold: Array = [0.0, 0.0]           # seconds with nothing asking for more room
+var _cl_sigma: Array = [0.0, 0.0]
+var _cl_shown_prev: Array = [false, false]
+# The dolly (docs/camera/city-in-depth.md section 6): the depth the frame's scale is defined at follows the pair's depth, so a
+# fight in any street is drawn at the plane's size. A switch until Rendering applies SplitFrame.focus_z (and the proof).
+var depth_dolly: bool = false
+var _fz: Array = [0.0, 0.0]            # each pane's own camera's focus depth (units, positive toward the camera)
+var _fzm: float = 0.0                  # the merged camera's
+var _fzt: Array = [0.0, 0.0]           # where each target was last tick (for its step)
+var _fzmt: float = 0.0
+var _fzo: Array = [0.0, 0.0]           # what each pane displays (the blend of the two, and a cut-in's own)
+var _ov_focus_z: float = 0.0
 # The travel budget (docs/camera/split-screen.md section 24h): the displayed camera of a pane moves, zooms and re-frames by at
 # most TRAVEL_MAX of the screen's width a tick; where it cannot keep him in frame inside that, it cuts once.
 var travel_budget: bool = false                        # the rule is a switch until the flash set has measured it (SplitView.set_travel_budget); its constants and the governor's headroom stay
@@ -2330,7 +2356,52 @@ var _anchors: Array = [Vector2.ZERO, Vector2.ZERO]
 var _owns: Array = [Vector3.ZERO, Vector3.ZERO]
 
 
+## The focus depth: the pair's, eased (DOLLY_TAU) and capped (3 bh a second in a brawl, 12 in a flight), inside the band. The
+## panes' own cameras take their fighter's depth, the merged camera the pair's mean. Off: it is 0.0 and nothing below changes.
+func _update_focus_depth(S: SimState) -> void:
+	if not depth_dolly:
+		if _fzm != 0.0 or float(_fz[0]) != 0.0 or float(_fz[1]) != 0.0:
+			_fz = [0.0, 0.0]
+			_fzm = 0.0
+		return
+	var A = S.fighters[0]
+	var B = S.fighters[1]
+	var flight: bool = A.state == "launched" or B.state == "launched" or chase_slot >= 0 or solo_kind == "launch"
+	var cap: float = (CamParams.DOLLY_CAP_FLIGHT if flight else CamParams.DOLLY_CAP_BRAWL) * DT
+	var k: float = 1.0 - exp(-DT / CamParams.DOLLY_TAU)
+	# The focus never lags the pair by more than DOLLY_LAG: past a street a shove or a flight outruns the cap, and a fighter
+	# a lens-distance ahead of the focus would be behind the camera.
+	# A drift's onset: with the focus eased alone, a fighter who starts to drift is drawn 7.7% a second smaller for as long as
+	# the filter has not moved (his own drift at 1.2 bh a second), and with a smoothed lead the stop took the lead back at 7%.
+	# So the focus takes DOLLY_FEED of the target's own step this tick, outright, and eases the rest: the onset and the stop
+	# are each (1 - DOLLY_FEED) of the drift (3.8% a second), and a steady drift's lag settles at 22 units.
+	for i in range(2):
+		var ti: float = clampf(float(S.fighters[i].z), CamParams.DOLLY_Z_BACK, CamParams.DOLLY_Z_FRONT)
+		var di: float = clampf(ti - float(_fzt[i]), -cap, cap)
+		_fzt[i] = ti
+		var fi: float = float(_fz[i]) + CamParams.DOLLY_FEED * di + clampf((ti - float(_fz[i])) * k, -cap, cap)
+		_fz[i] = clampf(fi, ti - CamParams.DOLLY_LAG, ti + CamParams.DOLLY_LAG)
+	var tm: float = clampf((float(A.z) + float(B.z)) * 0.5, CamParams.DOLLY_Z_BACK, CamParams.DOLLY_Z_FRONT)
+	var dm: float = clampf(tm - _fzmt, -cap, cap)
+	_fzmt = tm
+	var fm: float = _fzm + CamParams.DOLLY_FEED * dm + clampf((tm - _fzm) * k, -cap, cap)
+	_fzm = clampf(fm, tm - CamParams.DOLLY_LAG, tm + CamParams.DOLLY_LAG)
+
+
+func _snap_focus_depth(S: SimState) -> void:
+	if not depth_dolly:
+		_fz = [0.0, 0.0]
+		_fzm = 0.0
+		return
+	for i in range(2):
+		_fz[i] = clampf(float(S.fighters[i].z), CamParams.DOLLY_Z_BACK, CamParams.DOLLY_Z_FRONT)
+		_fzt[i] = _fz[i]
+	_fzm = clampf((float(S.fighters[0].z) + float(S.fighters[1].z)) * 0.5, CamParams.DOLLY_Z_BACK, CamParams.DOLLY_Z_FRONT)
+	_fzmt = _fzm
+
+
 func _update_cameras(S: SimState) -> void:
+	_update_focus_depth(S)
 	if _slam_slot >= 0:
 		_slam_run(S)
 	var stiff: bool = _slam_slot >= 0 and e > 0.0
@@ -2593,22 +2664,26 @@ func _update_cameras(S: SimState) -> void:
 func _outputs(S: SimState) -> void:
 	for i in range(2):
 		_anchors[i] = _anchor(S, i)
-		_owns[i] = _cam_from_focus(i, _zo[i], _anchors[i], float(S.fighters[i].z))
+		_owns[i] = _cam_from_focus(i, _zo[i], _anchors[i], float(S.fighters[i].z) - float(_fz[i]))
 	var shared: Vector3 = Vector3(_mx, _my, _mz)
+	var fz_sh: float = _fzm
 	if solo_slot >= 0 and solo_w > 0.0:
 		shared = _blend_cam(shared, _owns[solo_slot], smoothstep(0.0, 1.0, solo_w))
+		fz_sh = lerpf(_fzm, float(_fz[solo_slot]), smoothstep(0.0, 1.0, solo_w))
 	var w: float = 1.0 - _smootherstep(sep)
 	var slam_now: bool = _slam_slot >= 0 and e > 0.0
 	for i in range(2):
 		var o: Vector3 = _blend_cam(_owns[i], shared, w)
-		var fz_i: float = float(S.fighters[i].z)
-		if w > 0.0 and w < 1.0 and (_pitch_now != 0.0 or absf(fz_i) > 1.0) and solo_kind == "" and _ov_kind == "":
+		var fzo_i: float = lerpf(float(_fz[i]), fz_sh, w)   # the depth the displayed camera is defined at
+		_fzo[i] = fzo_i
+		var fz_i: float = float(S.fighters[i].z) - fzo_i
+		if w > 0.0 and w < 1.0 and (_pitch_now != 0.0 or absf(fz_i) > 1.0 or absf(float(_fz[i]) - fz_sh) > 1.0) and solo_kind == "" and _ov_kind == "":
 			# At a pitch or in depth the screen is not linear in the camera's y: blending the cameras let the fighter
 			# leave the screen mid-blend (a pair 2,600 units apart in depth at 49 degrees: fighter 0 190 px below the
 			# bottom while the split opened). Blend where he is on the screen instead: the camera that puts him at
 			# the mix of his place in the shared view and his anchor, at the blended zoom.
 			var f_i = S.fighters[i]
-			var ps: Vector2 = SplitFrame.project(shared.x, shared.y, shared.z, _pitch_now, vw, vh, f_i.x, f_i.y + CamParams.CHEST, fz_i)
+			var ps: Vector2 = SplitFrame.project(shared.x, shared.y, shared.z, _pitch_now, vw, vh, f_i.x, f_i.y + CamParams.CHEST, float(f_i.z) - fz_sh)
 			o = _cam_at(f_i.x, f_i.y + CamParams.CHEST, fz_i, o.z, ps.lerp(_anchors[i], 1.0 - w))
 		# Whatever the blends do, the drawn zoom never changes faster than the comfort limit; the slam's door gets the
 		# higher SLAM_ZOOM_RATE (it was exempt: 0.2 of a log unit in one tick, the largest jolt in the sweep's scan).
@@ -2621,6 +2696,8 @@ func _outputs(S: SimState) -> void:
 		var oc: Vector3 = _overlay_cam(S)
 		_outs[0] = oc
 		_outs[1] = oc
+		_fzo[0] = _ov_focus_z
+		_fzo[1] = _ov_focus_z
 		_oz[0] = oc.z
 		_oz[1] = oc.z
 	_oz_valid = true
@@ -2650,7 +2727,7 @@ func _subject_leaving(S: SimState, i: int, cam: Vector3) -> bool:
 	var cx: float = lerpf(0.5 * vw, a.x, split_w)
 	for k in subj:
 		var f = S.fighters[int(k)]
-		var ps: Vector2 = SplitFrame.project(cam.x, cam.y, cam.z, _pitch_now, vw, vh, f.x, f.y + CamParams.CHEST, float(f.z))
+		var ps: Vector2 = SplitFrame.project(cam.x, cam.y, cam.z, _pitch_now, vw, vh, f.x, f.y + CamParams.CHEST, float(f.z) - float(_fzo[i]))
 		if absf(ps.x - cx) > half - pad or ps.y < pad or ps.y > vh - pad:
 			return true
 	return false
@@ -2808,6 +2885,171 @@ func _incoming_for(S: SimState, i: int, f: SplitFrame) -> Dictionary:
 		"closing": closing, "side": 1 if d >= 0.0 else -1, "shown": shown, "screen_dir": dir}
 
 
+## The pane's picture's boxes the foreground must open for the action (section 2.1 of docs/camera/city-in-depth.md), as one
+## rectangle in pane pixels plus the top of the action in world units. Empty size when the pane is not shown.
+func _clear_demand(S: SimState, f: SplitFrame, i: int, region: Rect2) -> Dictionary:
+	var subj: Array = [0, 1] if (f.sep < 0.5 and solo_slot < 0) else ([solo_slot] if solo_slot >= 0 else [i])
+	var box: Rect2 = Rect2()
+	var have: bool = false
+	var y_top: float = -1.0e9
+	var h_ref: float = 0.0
+	var pts: Array = []
+	for k in subj:
+		var fk = S.fighters[int(k)]
+		var pos: Vector2 = f.screen_pos(i, fk.x, fk.y + CamParams.CHEST, float(fk.z))
+		var h: float = maxf(f.apparent_height(i, fk.x, fk.y, float(fk.z)), 8.0)
+		h_ref = maxf(h_ref, h)
+		pts.append([pos, h])
+		y_top = maxf(y_top, fk.y + 1.2 * CamParams.BODY_H)
+		if fk.state == "launched":
+			for tt in [0.25, 0.5]:
+				var lx: float = SimWrap.wrap(fk.x + float(fk.vx) * float(tt))
+				var ly: float = fk.y + float(fk.vy) * float(tt)
+				pts.append([f.screen_pos(i, lx, ly + CamParams.CHEST, float(fk.z)), h])
+				y_top = maxf(y_top, ly + 1.2 * CamParams.BODY_H)
+	# the strip between the fighters: in one view the two chests; in a split, his own toward the rival, to the pane's edge
+	if subj.size() == 2:
+		pass   # both boxes are in pts; the bounding rectangle spans the gap
+	elif subj.size() == 1 and f.sep >= 0.5:
+		var rv = S.fighters[1 - i]
+		var rp: Vector2 = f.screen_pos(i, rv.x, rv.y + CamParams.CHEST, float(rv.z))
+		var own: Vector2 = pts[0][0]
+		var d: Vector2 = rp - own
+		var maxlen: float = CamParams.CLEAR_ROOM * region.size.x
+		if d.length() > maxlen:
+			d = d.normalized() * maxlen
+		pts.append([own + d, float(pts[0][1])])
+	# beams in flight: the polyline's two ends (a beam is straight)
+	for b in S.beams:
+		var bx0: float = float(b.ox)
+		var by0: float = float(b.oy)
+		var bx1: float = SimWrap.wrap(bx0 + float(b.ux) * float(b.len))
+		var by1: float = by0 + float(b.uy) * float(b.len)
+		pts.append([f.screen_pos(i, bx0, by0, float(b.oz)), h_ref])
+		pts.append([f.screen_pos(i, bx1, by1, float(b.oz) + float(b.zs) * float(b.len)), h_ref])
+		y_top = maxf(y_top, maxf(by0, by1))
+	# a zip's frame box
+	if _lg_slot >= 0 or _lg_rel:
+		var cx: float = _lg_mid + float(_lg_f[0])
+		var hw: float = 0.5 * float(_lg_f[1])
+		var cy: float = float(_lg_f[2])
+		var hh: float = 0.5 * float(_lg_f[3])
+		for sx in [-1.0, 1.0]:
+			for sy in [-1.0, 1.0]:
+				pts.append([f.screen_pos(i, SimWrap.wrap(cx + sx * hw), cy + sy * hh, 0.0), h_ref])
+		y_top = maxf(y_top, cy + hh)
+	for pe in pts:
+		var c: Vector2 = pe[0]
+		var hp: float = float(pe[1])
+		var half: Vector2 = Vector2(0.3 * hp, 0.5 * hp) + Vector2.ONE * (CamParams.CLEAR_PAD * hp)
+		var r: Rect2 = Rect2(c - half, half * 2.0)
+		box = r if not have else box.merge(r)
+		have = true
+	return {"box": box, "have": have, "y_top": y_top, "h": h_ref}
+
+
+func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary:
+	var shown: bool = bool(f.active[i])
+	if not shown:
+		_cl_have[i] = false
+		_cl_shown_prev[i] = false
+		_cl_hold[i] = 0.0
+		_cl_sigma[i] = 0.0
+		return {}
+	# the pane's own room on the screen: a split's half about its anchor, the whole screen in one view
+	var split_w: float = _smootherstep(sep) * (1.0 - clampf(e, 0.0, 1.0)) if two_up else 0.0
+	var a: Vector2 = _anchors[i]
+	var half: float = lerpf(0.5 * vw, minf(a.x, vw - a.x), split_w)
+	var cxp: float = lerpf(0.5 * vw, a.x, split_w)
+	var region: Rect2 = Rect2(Vector2(cxp - half, 0.0), Vector2(2.0 * half, vh))
+	var dm: Dictionary = _clear_demand(S, f, i, region)
+	var target: Rect2 = Rect2()
+	var hole_r: float = float(f.cutaway[i].get("radius_px", 0.0))
+	if bool(dm["have"]):
+		target = dm["box"]
+	# the floor: today's hole round each subject (the rectangle is never smaller)
+	if hole_r > 0.0:
+		var fl: Vector2 = f.screen_pos(i, S.fighters[i].x, S.fighters[i].y + CamParams.CHEST, float(S.fighters[i].z))
+		var fr: Rect2 = Rect2(fl - Vector2.ONE * hole_r, Vector2.ONE * hole_r * 2.0)
+		target = fr if target.size == Vector2.ZERO else target.merge(fr)
+	# the lead: toward where the action goes, by its speed times CLEAR_LEAD, at most CLEAR_LEAD_MAX of the width
+	if _cl_have[i] and target.size != Vector2.ZERO:
+		var drift: float = (target.get_center().x - _cl_rect[i].get_center().x) if _cl_rect[i].size != Vector2.ZERO else 0.0
+		var lead: float = clampf(drift * CamParams.CLEAR_LEAD * 60.0, -CamParams.CLEAR_LEAD_MAX * region.size.x, CamParams.CLEAR_LEAD_MAX * region.size.x)
+		if lead > 0.0:
+			target.size.x += lead
+		else:
+			target.position.x += lead
+			target.size.x -= lead
+	target = target.intersection(region) if target.size != Vector2.ZERO else target
+	var jump: bool = _cut_now or not _cl_have[i] or not bool(_cl_shown_prev[i])
+	var r_now: Rect2 = _cl_rect[i]
+	var grew: bool = false
+	if jump or target.size == Vector2.ZERO:
+		r_now = target
+		_cl_hold[i] = 0.0 if jump else float(_cl_hold[i])
+		grew = jump
+	else:
+		var g: float = CamParams.CLEAR_GROW * region.size.x
+		var sh: float = CamParams.CLEAR_SHRINK * region.size.x
+		var can_shrink: bool = float(_cl_hold[i]) >= CamParams.CLEAR_HOLD
+		var x0: float = r_now.position.x
+		var x1: float = r_now.end.x
+		var y0: float = r_now.position.y
+		var y1: float = r_now.end.y
+		var t0: float = target.position.x
+		var t1: float = target.end.x
+		var u0: float = target.position.y
+		var u1: float = target.end.y
+		if t0 < x0:
+			x0 = maxf(t0, x0 - g)
+			grew = true
+		elif t0 > x0 and can_shrink:
+			x0 = minf(t0, x0 + sh)
+		if t1 > x1:
+			x1 = minf(t1, x1 + g)
+			grew = true
+		elif t1 < x1 and can_shrink:
+			x1 = maxf(t1, x1 - sh)
+		if u0 < y0:
+			y0 = maxf(u0, y0 - g)
+			grew = true
+		elif u0 > y0 and can_shrink:
+			y0 = minf(u0, y0 + sh)
+		if u1 > y1:
+			y1 = minf(u1, y1 + g)
+			grew = true
+		elif u1 < y1 and can_shrink:
+			y1 = maxf(u1, y1 - sh)
+		r_now = Rect2(Vector2(x0, y0), Vector2(x1 - x0, y1 - y0))
+	# the hold clock: it runs while nothing asked for more room, restarts at every growth
+	if grew:
+		_cl_hold[i] = 0.0
+	elif target.size != Vector2.ZERO and r_now.encloses(target):
+		_cl_hold[i] = float(_cl_hold[i]) + DT
+	var p: float = (r_now.size.x * r_now.size.y) / maxf(region.size.x * region.size.y, 1.0) if r_now.size != Vector2.ZERO else 0.0
+	var sig_t: float = smoothstep(CamParams.CLEAR_P0, CamParams.CLEAR_P1, p)
+	var sig: float = float(_cl_sigma[i])
+	if jump:
+		sig = sig_t
+	elif sig_t > sig:
+		sig = minf(sig_t, sig + DT / CamParams.CLEAR_SINK)
+	elif sig_t < sig and float(_cl_hold[i]) >= CamParams.CLEAR_HOLD and not grew:
+		sig = maxf(sig_t, sig - DT / CamParams.CLEAR_STAND)
+	_cl_sigma[i] = sig
+	_cl_rect[i] = r_now
+	_cl_have[i] = true
+	_cl_shown_prev[i] = true
+	# world x of the rectangle's sides at the focus plane
+	var z_i: float = maxf(f.cam_z[i], 0.0001)
+	var wx0: float = SimWrap.wrap(f.cam_x[i] + (r_now.position.x - vw * 0.5) / z_i)
+	var wx1: float = SimWrap.wrap(f.cam_x[i] + (r_now.end.x - vw * 0.5) / z_i)
+	return {
+		"rect": r_now, "p": p, "sigma": sig, "y_top": float(dm["y_top"]), "x0": wx0, "x1": wx1,
+		"holding": float(_cl_hold[i]) < CamParams.CLEAR_HOLD, "cut": jump, "hole": hole_r,
+	}
+
+
 func _make_frame(S: SimState) -> SplitFrame:
 	var f := SplitFrame.new()
 	f.vw = vw
@@ -2849,6 +3091,7 @@ func _make_frame(S: SimState) -> SplitFrame:
 	f.slam = _slam_done
 	f.shake = _shk.duplicate()
 	f.pitch = _pitch_now
+	f.focus_z = PackedFloat64Array([float(_fzo[0]), float(_fzo[1])])
 	f.panel = _panel_frame(S)
 	f.fade = clampf(_cut_fade / (CamParams.REDUCED_CUT_FADE if reduced_motion else CamParams.CUT_FADE), 0.0, 1.0) if _cut_fade > 0.0 else 0.0
 	_slam_done = false
@@ -2869,6 +3112,8 @@ func _make_frame(S: SimState) -> SplitFrame:
 		if solo_kind == "transform" and _tf_phase == "break" and _tf_ver == "full" and not _tf_calm:
 			rad = maxf(rad, CamParams.CUTAWAY_BREAK_R * vh)   # keep the silhouette against the sky clear of a house in front
 		f.cutaway[ci] = {"request": _ov_kind != "smash", "radius_px": rad, "only": ci if two_up else -1}
+	for ci in range(2):
+		f.clear[ci] = _make_clear(S, f, ci, two_up)
 	f.incoming = [_incoming_for(S, 0, f), _incoming_for(S, 1, f)]
 	# The scenery's speed across each pane (the governor's own measure, units a second eased), in px a tick at 1024 wide: the
 	# shared camera's in one view. A fast pursuit past lit windows strobes the facades; Rendering fades their contrast with this.

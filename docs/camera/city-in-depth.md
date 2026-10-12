@@ -127,7 +127,22 @@ Orb, shown the options: "open floors sounds like it would look the most natural,
 
 *D5. Band limits (confirmed).* `z_front` +2.5 bh and `z_back` -29.5 bh. At `z_back` the camera at the close brawl stands at -13.9 bh, in the middle street (-11 to -16), clear of every footprint; at `z_front` at +18 bh, beyond the foreground row. `focus_z` is clamped to the band.
 
-*D6. Not built.* D1 to D4 are paper; building them is a field in the frame, the rig's follow and one Rendering change (`CameraRig`'s pivot depth). With depth off (`S.depthOn` false) every fighter's `z` is 0 and `focus_z` stays 0: the picture is today's, bit for bit.
+*D6. Built (2026-10-12), behind a switch, off.* `SplitRig.depth_dolly` (default false), `SplitView.set_depth_dolly(on)`. The rig computes `frame.focus_z[i]` per pane; `SplitFrame.screen_pos`, `depth_scale` and `apparent_height` take it; `CameraRig.frame(..., focus_z)` places the 3D camera at it. The focus is eased (0.5 s), takes half of the target's own depth step outright each tick (so the onset and the stop are each half of the drift: a drift of 1.2 bh a second is drawn 3.5% a second bigger or smaller at the onset, against 7.7% with a fixed focus), is capped at 3 bh a second in a brawl and 12 in a flight, is clamped to the band, and is never more than 4 bh (300 units) from the depth it follows (a fighter that far off is 0.8 to 1.35 of his size and never behind the lens). Measured in `split_sweep`, close brawl at 720p:
+
+| Row | Result |
+| :--- | :--- |
+| A pair drifts 1.2 bh a second to the middle street, then to the back street | drawn at 0.98 of plane size at the least; size changes 3.5% a second at most (fixed focus: 7.7%); never off the screen |
+| A sidestep of 1 bh over 15 ticks (4 bh a second, past the cap) | 0.967 of plane size at the least; the size change is the sidestep's own (25% a second over a quarter second): the dolly follows it at 3 bh a second and the rest is the zoom's |
+| A pair astride an avenue (midpoint in the avenue, middle street) | the pair's midpoint 0.000 of the width from the middle of the frame; the camera's x inside the avenue on every tick |
+| B launched across a street at 12 bh a second | the focus within 138 units of him; never behind the lens; 0.87 of plane size at the least |
+| The dolly off, with fighters at depth | `focus_z` 0.0 on every frame, and every frame field equal to a clean HEAD's: the digest of 1,500 ticks (a pair drifting through three streets, a flight, a sidestep) over `mode, sep, e, cam_x, cam_y, cam_z, anchor, active, scroll, cutaway, cut, shake` is equal to the bit |
+
+**What Rendering must change to take it** (two lines and a convention):
+1. `render/core/pane_world.gd:134`, `cam_rig.frame(cam.y, cam.z, jitter, vp.y, pitch)`: pass `frame.focus_z[pane]` as the sixth argument, and the same for the inset's camera if it has one (it keeps 0: the inset is its own viewport, whose subject it frames at the plane). `CameraRig.focus_z` is then the depth of the plane the zoom is defined at; `CameraRig.dist` is the distance to it, unchanged.
+2. Anything that treats depth 0 as "the camera's plane" takes `z - focus_z` instead: `CameraRig.half_width(vw, zd)` is called with the depth relative to the focus; `host.vfx.cam_dist` is `CameraRig.dist` (the distance from the lens to the focus plane), and an object at depth `z` is `cam_dist - (z - focus_z)` from the lens, so the pair, at the focus plane, is always `cam_dist` from it and its flash weights by size are those of the plane (that is the point of D1); the foreground's near-clip (section 1) reads the lens at `focus_z + cam_dist * cos(pitch)`.
+3. Convention: while the dolly is on, a building whose depth is greater than the lens's is behind the camera and is not drawn (row 0, for a pair in the middle street). The frame says nothing more about it.
+
+The frame carries `focus_z` per pane and it is interpolated between ticks with the cameras'. A cut-in's camera (`_ov_kind`) stands at its subject's depth (`focus_z` = the subject's), so a close-up on a deep fighter is a close-up at plane size, not a deep one.
 
 ## 7. What is open
 

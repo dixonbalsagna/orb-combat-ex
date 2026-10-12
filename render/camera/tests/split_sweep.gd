@@ -67,6 +67,8 @@ var dump_to: int = 0
 var shots_dir: String = ""
 var only: String = ""
 var budget_on: bool = true   # --budget=off runs every row with the travel budget switched off (the shipped default)
+var _clear_prev: SplitFrame = null   # the last tick's frame, for the foreground's clear[i] rules
+var _clear_grow_tick: Array = [-1000, -1000]
 var _trav_prev: SplitFrame = null   # the last tick's frame, for the travel budget's check
 var _trav_cuts: int = 0
 var _launch_off_max: int = 0   # the longest run of ticks the launched fighter was off his pane's screen in a flight
@@ -197,6 +199,13 @@ func _run() -> void:
 		for row in [[-600.0, "front street"], [-2025.0, "block row 2"]]:
 			await _scenario("depth %s at pitch %d one view" % [row[1], int(pitch)], func(): return _depth(float(row[0]), 600.0, float(pitch)), {})
 			await _scenario("depth %s at pitch %d split" % [row[1], int(pitch)], func(): return _depth(float(row[0]), 9000.0, float(pitch)), {})
+	# The dolly (docs/camera/city-in-depth.md section 6): a pair in the middle or back street is drawn at plane size.
+	await _scenario("dolly off is inert", func(): return _dolly_drift(90.0, -1012.0, false), {})
+	await _scenario("dolly drift 1.2 bh a second to the middle street", func(): return _dolly_drift(90.0, -1012.0, true), {})
+	await _scenario("dolly drift 1.2 bh a second to the back street", func(): return _dolly_drift(90.0, -2025.0, true), {})
+	await _scenario("dolly sidestep 4 bh a second", func(): return _dolly_sidestep(), {})
+	await _scenario("dolly pair at a crossing", func(): return _dolly_crossing(), {})
+	await _scenario("dolly launch across a street", func(): return _dolly_launch(), {})
 	for lv in ["one view", "split", "reduced", "over a shot"]:
 		await _scenario("last stand %s" % lv, func(): return _last_stand(lv), {})
 	for iv in ["full", "humans", "reduced", "skip"]:
@@ -330,6 +339,8 @@ func _begin(label: String) -> void:
 	_rig.travel_budget = budget_on
 	_tick = 0
 	_trav_prev = null
+	_clear_prev = null
+	_clear_grow_tick = [-1000, -1000]
 	_prev_disp = null
 	_sigma_changes = 0
 	_swings = 0
@@ -430,6 +441,7 @@ func _watch() -> void:
 		_disp_t += 1.0 / DISPLAY_HZ
 	var cur: SplitFrame = _rig.current()
 	_travel_scan(cur)
+	_clear_scan(cur)
 	_mode_seq.append(cur.mode)
 	if cur.sigma != _last_sigma:
 		_sigma_changes += 1
@@ -607,6 +619,55 @@ func _fail_once(key: String, msg: String) -> void:
 	if not _failed_once.has(k):
 		_failed_once[k] = true
 		fails.append(msg)
+
+
+## What the foreground is told to open (clear[i], docs/camera/city-in-depth.md sections 2 and 3), in every row: on a tick that is
+## not a cut for the pane, an edge of the rectangle grows by at most CLEAR_GROW of the width and narrows by at most CLEAR_SHRINK, and
+## only when no edge has grown for CLEAR_HOLD seconds (so a stand and a sink are never within a second of each other); sigma
+## moves by at most 1 / CLEAR_SINK a second up and 1 / CLEAR_STAND down; the rectangle holds his chest while he is on the screen;
+## a cut frame says cut for every shown pane.
+func _clear_scan(cur: SplitFrame) -> void:
+	var prev: SplitFrame = _clear_prev
+	_clear_prev = cur
+	for i in range(2):
+		if not bool(cur.active[i]) or cur.clear[i].is_empty():
+			continue
+		var c: Dictionary = cur.clear[i]
+		var f = _S.fighters[i]
+		if cur.cut:
+			_check(bool(c.get("cut", false)), "%s: pane %d's clear[] did not say cut on a cut frame" % [_label, i])
+			continue
+		var r: Rect2 = c["rect"]
+		if r.size == Vector2.ZERO:
+			continue
+		var chest: Vector2 = cur.screen_pos(i, f.x, f.y + CamParams.CHEST, float(f.z))
+		var inside_screen: bool = chest.x >= 0.0 and chest.x <= vw and chest.y >= 0.0 and chest.y <= vh and (cur.weight1(chest) >= 0.5 if i == 1 else cur.weight1(chest) < 0.5)
+		if inside_screen and not r.grow(2.0).has_point(chest):
+			_fail_once("clear_holds", "%s: pane %d's clear rectangle %s does not hold his chest %s at t=%.2f s" % [_label, i, str(r), str(chest), float(_tick) / 60.0])
+		if prev == null or prev.clear[i].is_empty() or bool(prev.cut) or not bool(prev.active[i]):
+			continue
+		var pr: Rect2 = prev.clear[i]["rect"]
+		if pr.size == Vector2.ZERO:
+			continue
+		var gmax: float = CamParams.CLEAR_GROW * vw * 1.02 + 0.5
+		var smax: float = CamParams.CLEAR_SHRINK * vw * 1.02 + 0.5
+		var grew: bool = false
+		for e in [[pr.position.x, r.position.x, -1.0], [pr.end.x, r.end.x, 1.0], [pr.position.y, r.position.y, -1.0], [pr.end.y, r.end.y, 1.0]]:
+			var dgrow: float = (float(e[1]) - float(e[0])) * float(e[2])   # outward is positive
+			if dgrow > 0.001:
+				grew = true
+				if dgrow > gmax:
+					_fail_once("clear_grow", "%s: pane %d's clear rectangle grew by %.1f px in a tick (bound %.1f) at t=%.2f s" % [_label, i, dgrow, gmax, float(_tick) / 60.0])
+			elif dgrow < -0.001:
+				if -dgrow > smax:
+					_fail_once("clear_shrink", "%s: pane %d's clear rectangle narrowed by %.1f px in a tick (bound %.1f) at t=%.2f s" % [_label, i, -dgrow, smax, float(_tick) / 60.0])
+				if _tick - int(_clear_grow_tick[i]) < int(CamParams.CLEAR_HOLD * 60.0) - 1:
+					_fail_once("clear_hold", "%s: pane %d's clear rectangle narrowed %d ticks after it last grew (the hold is %d) at t=%.2f s" % [_label, i, _tick - int(_clear_grow_tick[i]), int(CamParams.CLEAR_HOLD * 60.0), float(_tick) / 60.0])
+		if grew:
+			_clear_grow_tick[i] = _tick
+		var ds: float = float(c["sigma"]) - float(prev.clear[i]["sigma"])
+		if ds > 1.0 / (CamParams.CLEAR_SINK * 60.0) * 1.05 + 1e-6 or -ds > 1.0 / (CamParams.CLEAR_STAND * 60.0) * 1.05 + 1e-6:
+			_fail_once("clear_sigma", "%s: pane %d's sigma moved by %.4f in a tick at t=%.2f s" % [_label, i, ds, float(_tick) / 60.0])
 
 
 ## The travel budget (docs/camera/split-screen.md section 24h), in every row: on a tick that is not a cut, a pane that has a real
@@ -894,6 +955,173 @@ func _launch(speed: float, dist: float, vertical: bool = false, gap: float = 500
 		_check(_rig.travel_cuts <= max_cuts, "%s: %d cuts for the travel budget in a %.1f s flight (bound %d)" % [_label, _rig.travel_cuts, flight_s, max_cuts])
 		_check(_rig.lag_cuts == 0, "%s: %d safety cuts in a launch" % [_label, _rig.lag_cuts])
 		stats["lag bound " + _label] = "worst %.3f of the width, off the screen at most %d ticks, whips %d, safety cuts %d, budget cuts %d, ticks held back %d" % [_probe_max, _launch_off_max, _rig.lag_whips, _rig.lag_cuts, _rig.travel_cuts, _rig.travel_limited]
+	return {}
+
+
+## The apparent size of fighter i in pane p against his size on the plane at the zoom drawn: 1.0 is plane size.
+func _size_ratio(cur: SplitFrame, p: int, f) -> float:
+	var h: float = cur.apparent_height(p, f.x, f.y, float(f.z))
+	return h / maxf(CamParams.BODY_H * cur.cam_z[p], 0.0001)
+
+
+## A brawl pair drifts in depth at `rate` units a second (1.2 bh a second is 90) to depth `target` and stays: with the dolly on
+## he is drawn at plane size the whole way (never under 95%, and his drawn size changes by at most 5% a second); off, the
+## focus stays at 0 (the picture is the old one).
+func _dolly_drift(rate: float, target: float, on: bool) -> Dictionary:
+	_rig.depth_dolly = on
+	var ax: float = 70000.0
+	_pose(ax, 40.0, ax + 110.0, 40.0)
+	_seed_rig()
+	for _i in range(120):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	var z: float = 0.0
+	var dz: float = rate / 60.0
+	var min_size: float = 1.0e9
+	var max_rate: float = 0.0
+	var max_focus: float = 0.0
+	var prev_h: float = -1.0
+	var worst_off: float = 0.0
+	var ticks: int = int(absf(target) / dz) + 240
+	for k in range(ticks):
+		z = maxf(z - dz, target)
+		A.z = z
+		B.z = z
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		var p: int = 0
+		var h: float = cur.apparent_height(p, A.x, A.y, float(A.z))
+		if on:
+			min_size = minf(min_size, _size_ratio(cur, p, A))
+		max_focus = maxf(max_focus, absf(cur.focus_z[0]))
+		if prev_h > 0.0 and not cur.cut:
+			max_rate = maxf(max_rate, absf(h - prev_h) / prev_h * 60.0)
+		prev_h = h
+		var pa: Vector2 = cur.screen_pos(p, A.x, A.y + CamParams.CHEST, float(A.z))
+		worst_off = maxf(worst_off, maxf(maxf(-pa.x, pa.x - vw), maxf(-pa.y, pa.y - vh)))
+	if on:
+		_check(min_size >= 0.95, "%s: he was drawn at %.2f of his plane size (want 0.95 or more)" % [_label, min_size])
+		_check(max_rate <= 0.05, "%s: his drawn size changed by %.3f a second (want 0.05 at most)" % [_label, max_rate])
+		_check(absf(max_focus - absf(target)) < 20.0, "%s: the focus reached %.0f of %.0f" % [_label, max_focus, absf(target)])
+		_check(worst_off <= 0.0, "%s: he left the screen by %.0f px" % [_label, worst_off])
+		_check(_rig.travel_cuts == 0, "%s: %d cuts" % [_label, _rig.travel_cuts])
+	else:
+		_check(max_focus == 0.0, "%s: the focus moved to %.1f with the dolly off" % [_label, max_focus])
+	stats["dolly drift " + _label] = "min size %.3f, size changes %.3f a second at most, focus %.0f, off %.0f px" % [min_size, max_rate, max_focus, worst_off]
+	_rig.depth_dolly = false
+	return {}
+
+
+## A sidestep (1 bh over 15 ticks: 4 bh a second, past the cap of 3) from the front street: never under 85% of his size.
+func _dolly_sidestep() -> Dictionary:
+	_rig.depth_dolly = true
+	var ax: float = 70000.0
+	_pose(ax, 40.0, ax + 110.0, 40.0)
+	_seed_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	for _i in range(150):
+		_tick_rig()
+	var min_size: float = 1.0e9
+	var max_rate: float = 0.0
+	var prev_h: float = -1.0
+	for k in range(240):
+		var z: float = -75.0 * smoothstep(0.0, 15.0, float(k)) + 75.0 * smoothstep(90.0, 105.0, float(k))
+		A.z = z
+		B.z = z
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		min_size = minf(min_size, _size_ratio(cur, 0, A))
+		var h: float = cur.apparent_height(0, A.x, A.y, float(A.z))
+		if prev_h > 0.0:
+			max_rate = maxf(max_rate, absf(h - prev_h) / prev_h * 60.0)
+		prev_h = h
+	_check(min_size >= 0.85, "%s: he was drawn at %.2f of his plane size (the floor is 0.85)" % [_label, min_size])
+	stats["dolly sidestep"] = "min size %.3f, size changes %.3f a second at most" % [min_size, max_rate]
+	_rig.depth_dolly = false
+	return {}
+
+
+## A pair astride an avenue in the middle street: the camera's x stands inside the avenue and the pair's midpoint is within
+## 0.12 of the width of the middle of the frame, so it is seen down the avenue with nothing opened.
+func _dolly_crossing() -> Dictionary:
+	_rig.depth_dolly = true
+	var ax: float = -1.0
+	var x: float = 0.0
+	while x < SimConst.W:
+		if WorldLanes.avenueAt(_S, x, 75.0) >= 0:
+			ax = x
+			break
+		x += 50.0
+	_check(ax >= 0.0, "%s: no avenue in the sweep's world" % _label)
+	if ax < 0.0:
+		_rig.depth_dolly = false
+		return {}
+	_pose(ax - 50.0, 40.0, ax + 50.0, 40.0)
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	_seed_rig()
+	for _i in range(60):
+		_tick_rig()
+	var worst_c: float = 0.0
+	var worst_in: int = 0
+	for k in range(480):
+		var z: float = -1012.0 * smoothstep(0.0, 360.0, float(k))
+		A.z = z
+		B.z = z
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		if k >= 400:
+			var mid: Vector2 = cur.screen_pos(0, ax, 40.0 + CamParams.CHEST, z)
+			worst_c = maxf(worst_c, absf(mid.x - vw * 0.5) / vw)
+			if WorldLanes.avenueAt(_S, cur.cam_x[0], 37.5) < 0:
+				worst_in += 1
+	_check(worst_c <= 0.12, "%s: the pair's midpoint was %.3f of the width from the middle of the frame (want 0.12 at most)" % [_label, worst_c])
+	_check(worst_in == 0, "%s: the camera's x was outside the avenue on %d ticks" % [_label, worst_in])
+	stats["dolly crossing"] = "midpoint %.3f of the width from the centre, camera outside the avenue on %d ticks, mode %s" % [worst_c, worst_in, _rig.current().mode]
+	_rig.depth_dolly = false
+	return {}
+
+
+## B is launched across a street (12 bh a second in depth, 3,000 units a second along): the focus is never more than DOLLY_LAG
+## from him, he is never behind the lens, and never under 70% of his size.
+func _dolly_launch() -> Dictionary:
+	_rig.depth_dolly = true
+	var ax: float = 70000.0
+	_pose(ax, 40.0, ax + 110.0, 40.0)
+	_seed_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	for _i in range(120):
+		_tick_rig()
+	A.z = -1012.0
+	B.z = -1012.0
+	for _i in range(200):
+		_tick_rig()
+	B.state = "launched"
+	var min_size: float = 1.0e9
+	var worst_lag: float = 0.0
+	var behind: int = 0
+	for k in range(160):
+		B.x = SimWrap.wrap(B.x + 50.0)
+		B.z = maxf(-1012.0 - 15.0 * float(k), -2212.0)
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		var p: int = 1 if cur.shows(1) else 0
+		# (in the one view the focus is the pair's mean: B is half the pair's depth apart from it at least)
+		var allowed: float = CamParams.DOLLY_LAG + (absf(A.z - B.z) * 0.5 if cur.sep < 0.999 else 0.0)
+		worst_lag = maxf(worst_lag, absf(B.z - cur.focus_z[p]) - (allowed - CamParams.DOLLY_LAG))
+		min_size = minf(min_size, _size_ratio(cur, p, B))
+		if CamParams.K_FACTOR * vh / cur.cam_z[p] - (B.z - cur.focus_z[p]) < 100.0:
+			behind += 1
+	B.state = "down"
+	B.vx = 0.0
+	_check(worst_lag <= CamParams.DOLLY_LAG + 1.0, "%s: the focus was %.0f units from him (bound %.0f)" % [_label, worst_lag, CamParams.DOLLY_LAG])
+	_check(behind == 0, "%s: he was behind the lens for %d ticks" % [_label, behind])
+	_check(min_size >= 0.7, "%s: he was drawn at %.2f of his plane size (want 0.7 or more)" % [_label, min_size])
+	stats["dolly launch"] = "focus at most %.0f units from him, smallest %.2f, behind the lens %d ticks" % [worst_lag, min_size, behind]
+	_rig.depth_dolly = false
 	return {}
 
 
@@ -3022,6 +3250,8 @@ func _static_equals_reference() -> void:
 # ------------------------------------------------------------------------------------------------ real matches
 
 func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1, rig_human: int = -1) -> void:
+	if only != "" and not only.begins_with("real"):
+		return   # --only= names a scenario row; the real matches (minutes each) run for --only=real... and for a full run
 	var limit: int = ticks if ticks > 0 else match_ticks
 	_begin("real match %d%s%s%s%s" % [seed, (" human %d" % human) if human >= 0 else "", (" pitch %d" % int(pitch)) if pitch > 0.0 else "", " full" if ticks > 0 else "", (" (rig sees slot %d as the human)" % rig_human if rig_human < 2 else " (rig sees two humans)") if rig_human >= 0 else ""])
 	SimCore.newMatch(_S, seed, {"p1": human != 0, "p2": human != 1})

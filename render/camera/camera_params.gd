@@ -88,6 +88,26 @@ const TRAVEL_WAIT: float = 0.6           # a subject outside his pane's picture 
 const TRAVEL_COOL: float = 1.0           # a pane cuts for the budget at most once in this many seconds (a cut and its dip are a flash)
 const TRAVEL_COOL_MORPH: float = 0.1     # (a pane that is opening or closing cuts at most once in this many: its target settles, and the fighter it opens for must be seen)
 const GOV_HEADROOM: float = 0.9          # the zoom governor aims at this share of the budget (SCROLL_MAX is the budget's number), so the displayed camera can catch up
+# The dolly (docs/camera/city-in-depth.md section 6): the camera's focus plane follows the pair's depth.
+const DOLLY_TAU: float = 0.5             # the focus depth is eased with this time constant (s)
+const DOLLY_CAP_BRAWL: float = 225.0     # and moves at most this fast in a brawl (units a second: 3 bh; the sim's own drift is 1.2 bh)
+const DOLLY_CAP_FLIGHT: float = 900.0    # ... and this fast in a flight (12 bh a second)
+const DOLLY_FEED: float = 0.5            # the focus takes this share of the target's own depth step outright each tick (the rest is eased)
+const DOLLY_LAG: float = 300.0           # the focus is never farther than this (units, 4 bh) from the depth it is following: a fighter that far off is 0.8 to 1.35 of his size
+const DOLLY_Z_FRONT: float = 187.5       # the band's limits for the focus depth (units; +2.5 bh and -29.5 bh)
+const DOLLY_Z_BACK: float = -2212.5
+# The patch and the open floors (docs/camera/city-in-depth.md sections 2 and 3): what the foreground opens, and how fast.
+const CLEAR_PAD: float = 0.5             # the action's boxes are grown by this many body heights on screen
+const CLEAR_P0: float = 0.18             # below this share of the pane the patch only; ...
+const CLEAR_P1: float = 0.40             # ... above it everything stands as a stub; between, the building shrinks by smoothstep
+const CLEAR_GROW: float = 0.045          # an edge grows at most this much of the pane's width a tick (the travel budget's number)
+const CLEAR_SHRINK: float = 0.02         # and closes at most this much, and only after the hold
+const CLEAR_HOLD: float = 0.75           # seconds with no demand for the space before anything narrows or stands again
+const CLEAR_SINK: float = 0.5            # sigma 0 to 1 in at least this many seconds ...
+const CLEAR_STAND: float = 0.75          # ... and 1 to 0 in at least this many
+const CLEAR_LEAD: float = 0.5            # seconds of the action's own motion the rectangle leads by ...
+const CLEAR_LEAD_MAX: float = 0.2        # ... capped at this share of the pane's width
+const CLEAR_ROOM: float = 0.5            # a split pane's strip toward the rival runs at most this share of the pane's width
 const GOV_TAU: float = 0.2             # a zoom-out the scroll governor asks for is taken with this time constant (and at the transition's rate cap)
 const LAUNCH_FLOOR: float = 0.05         # a launched body's pane is governed like any pursuit, but he is never smaller than this share of the height for it
 const SETDOWN_STEP: float = 120.0        # a body that is not launched and changes height by this much (units) in one tick was set down by the sim ...

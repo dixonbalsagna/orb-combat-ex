@@ -17,6 +17,7 @@ var zoom: float = 0.45
 var view_h: float = 700.0
 var pitch_deg: float = 0.0
 var dist: float = 3000.0       # the camera's distance to the fighter plane's point at the screen's centre
+var focus_z: float = 0.0       # the depth of the plane the zoom is defined at (SplitFrame.focus_z): the camera stands `dist` from it
 
 
 func _ready() -> void:
@@ -27,8 +28,9 @@ func _ready() -> void:
 
 ## cam_y and cam_z from the reference camera; jitter is the screen shake in pixels (+x right, +y down); pitch in
 ## degrees (0: straight on).
-func frame(cam_y: float, cam_z: float, jitter: Vector2, vh: float, pitch: float = 0.0) -> void:
+func frame(cam_y: float, cam_z: float, jitter: Vector2, vh: float, pitch: float = 0.0, p_focus_z: float = 0.0) -> void:
 	zoom = cam_z
+	focus_z = p_focus_z
 	view_h = vh
 	pitch_deg = pitch
 	dist = distance_for(cam_z, vh)
@@ -36,7 +38,7 @@ func frame(cam_y: float, cam_z: float, jitter: Vector2, vh: float, pitch: float 
 	basis = Basis(Vector3.RIGHT, -p)
 	# The shake's offset and the distance, turned by the pitch (in float64, so pitch 0 gives the same numbers as before).
 	var oy: float = jitter.y / cam_z
-	position = Vector3(-jitter.x / cam_z, cam_y + 0.2 * vh / cam_z + oy * cos(p) + dist * sin(p), dist * cos(p) - oy * sin(p))
+	position = Vector3(-jitter.x / cam_z, cam_y + 0.2 * vh / cam_z + oy * cos(p) + dist * sin(p), dist * cos(p) - oy * sin(p) + p_focus_z)
 	# The ground runs past the camera. The foreground rule keeps it at least FORE_DROP of its depth under the sight lines
 	# to the fighter plane, so the lowest view ray can't meet it closer than FORE_DROP * dist / (tan + FORE_DROP + 2)
 	# (allowing the fighter plane's profile up to 2 x dist above the camera); near sits at half that, as far out as the

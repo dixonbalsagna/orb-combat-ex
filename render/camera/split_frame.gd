@@ -33,10 +33,12 @@ var flash: float = 0.0               # seconds left of the divider's slam flash
 var shake: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # each pane's shake amount, px, before the cap and the player's scale
 var fade: float = 0.0                # 0..1: a safety cut's brightness dip, fading in (the compositor darkens by CUT_DIM x this)
 var pitch: float = 0.0               # the cameras' pitch in degrees (0: straight on); Rendering's CameraRig takes it
+var focus_z: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # per pane: the depth the zoom is defined at, the pivot of the camera's orbit (units, positive toward the camera). 0 with depth off or the dolly off: the fighter plane
 var scroll: Array = [0.0, 0.0]          # per pane: how fast the scenery crosses it, in px a tick at 1024 wide (eased; in one view both are the shared camera's). Rendering fades the windows' and facades' contrast with it
 var incoming: Array = [{}, {}]       # per fighter: the other fighter coming at him: {active, aimed, eta, dist_u, dist_bh, closing, side, shown, screen_dir} (the HUD's edge marker reads it)
 var panel: Dictionary = {}           # the panel cut-in, or {}: kind, slot, open (0..1), still, rect (px), slant (px, signed), size, cam_x, cam_y, cam_z (the inset's own viewport)
 var cutaway: Array = [{}, {}]        # per pane: the occlusion hole's request {request, radius_px, only}
+var clear: Array = [{}, {}]          # per pane: what the foreground must open (docs/camera/city-in-depth.md sections 2 and 3): {rect (px, the action's, already held and rate-limited), p (its share of the pane), sigma (0 patch only .. 1 stubs), y_top (world units, the top of the action), x0, x1 (world x of the rect's sides at the focus plane), holding (a hold is running: nothing narrows), cut (true on a cut tick: jump to the target), hole (the floor's radius, px)}
 var slam: bool = false               # true on the one frame the slam closes
 var cut: bool = true                 # a hard cut: do not interpolate into this frame
 
@@ -59,6 +61,7 @@ func duplicate() -> SplitFrame:
 	f.cam_x = cam_x.duplicate()
 	f.cam_y = cam_y.duplicate()
 	f.cam_z = cam_z.duplicate()
+	f.focus_z = focus_z.duplicate()
 	f.anchor = anchor.duplicate()
 	f.active = active.duplicate()
 	f.panel = panel.duplicate()
@@ -73,6 +76,7 @@ func duplicate() -> SplitFrame:
 	f.slam = slam
 	f.pitch = pitch
 	f.cutaway = cutaway.duplicate(true)
+	f.clear = clear.duplicate(true)
 	f.fade = fade
 	f.shake = shake.duplicate()
 	f.cut = cut
@@ -96,6 +100,7 @@ func weight1(p: Vector2) -> float:
 ## wz is the fighter's depth (Fighter.z, positive toward the camera): a deep fighter draws at s = d / (d + w) of the way
 ## out from the camera's axis (docs/camera/depth-and-chains.md section 2), d being the camera's distance to the plane.
 func screen_pos(i: int, wx: float, wy: float, wz: float = 0.0) -> Vector2:
+	wz -= focus_z[i]   # the pane's camera stands at the focus plane's depth (the dolly): a point is placed by its depth from it
 	if pitch == 0.0 and wz == 0.0:
 		return Vector2(SimWrap.sdx(cam_x[i], wx) * cam_z[i] + vw * 0.5, vh * CamParams.PLANE_Y - (wy - cam_y[i]) * cam_z[i])
 	return project(cam_x[i], cam_y[i], cam_z[i], pitch, vw, vh, wx, wy, wz)
@@ -120,6 +125,7 @@ static func project(cx: float, cy: float, zoom: float, pitch_deg: float, vw_: fl
 
 ## The perspective scale of a fighter at depth wz (positive toward the camera) in pane i.
 func depth_scale(i: int, wz: float) -> float:
+	wz -= focus_z[i]
 	var d: float = CamParams.K_FACTOR * vh / cam_z[i]
 	return maxf(d / maxf(d - wz, 1.0), CamParams.DEPTH_S_MIN)
 
@@ -192,12 +198,20 @@ static func lerp_frames(a: SplitFrame, b: SplitFrame, t: float) -> SplitFrame:
 		f.cam_x[i] = SimWrap.wrap(a.cam_x[i] + SimWrap.sdx(a.cam_x[i], b.cam_x[i]) * t)
 		f.cam_y[i] = lerpf(a.cam_y[i], b.cam_y[i], t)
 		f.cam_z[i] = exp(lerpf(log(a.cam_z[i]), log(b.cam_z[i]), t))
+		f.focus_z[i] = lerpf(a.focus_z[i], b.focus_z[i], t)
 		f.anchor[i] = a.anchor[i].lerp(b.anchor[i], t)
 		f.ring[i] = a.ring[i] + angle_difference(a.ring[i], b.ring[i]) * t
 	f.swing = lerpf(a.swing, b.swing, t) if a.swing >= 0.0 and b.swing >= 0.0 else b.swing
 	f.flash = lerpf(a.flash, b.flash, t)
 	f.pitch = lerpf(a.pitch, b.pitch, t)
 	f.held_u = lerpf(a.held_u, b.held_u, t)
+	for i in range(2):
+		if not a.clear[i].is_empty() and not b.clear[i].is_empty() and not bool(b.clear[i].get("cut", false)):
+			var ra: Rect2 = a.clear[i]["rect"]
+			var rb: Rect2 = b.clear[i]["rect"]
+			f.clear[i]["rect"] = Rect2(ra.position.lerp(rb.position, t), ra.size.lerp(rb.size, t))
+			f.clear[i]["sigma"] = lerpf(float(a.clear[i]["sigma"]), float(b.clear[i]["sigma"]), t)
+			f.clear[i]["p"] = lerpf(float(a.clear[i]["p"]), float(b.clear[i]["p"]), t)
 	if not a.panel.is_empty() and not b.panel.is_empty() and a.panel["kind"] == b.panel["kind"] and a.panel["slot"] == b.panel["slot"]:
 		var pa: Dictionary = a.panel
 		var pb: Dictionary = f.panel

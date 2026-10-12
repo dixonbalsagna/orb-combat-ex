@@ -148,6 +148,14 @@ func ask_register(source: String, area: float, step: float = -1.0) -> bool:
 	return bool(h.vfx.flashes.ask(source, Color(0.3, 0.3, 0.35), int(h.S.tick), area * 1024.0 * 768.0, step))
 
 
+## The dolly (docs/camera/city-in-depth.md section 6): the camera's focus plane follows the pair's depth, so a fight in the middle
+## or the back street is drawn at the plane's size. Takes effect on the picture when Rendering's panes pass `frame.focus_z[i]` to
+## CameraRig.frame. Off: focus_z is 0 and the picture is today's, bit for bit. Build-time switch, not a player option.
+func set_depth_dolly(on: bool) -> void:
+	if main != null:
+		main.split_rig.depth_dolly = on
+
+
 ## The travel budget (docs/camera/split-screen.md section 24h): a pane's picture changes by at most 0.045 of the width a tick
 ## (0.03 under reduced flashing), and the pane cuts when a subject has been gone for 0.6 s. Off by default until the flash set has
 ## measured it. Not a player option: a build-time switch (`camera_travel_budget` in the debug options).
