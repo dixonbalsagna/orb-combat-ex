@@ -885,3 +885,9 @@ Asked what "the reworked arenas" are, Orb said (2026-10-11):
 > the band that the fighters travel, extra Z-axis space for engaging and believable building layouts and dectruction
 
 Standing from this: Orb wants to see World's fight lanes, buildings in depth and district layouts with destruction reading in depth, as soon as there is something to look at.
+
+## The web build comes back when the build is upgraded (Orb, 2026-10-11, evening)
+
+> when the build is playable and appreciably upgraded from where we had it, please be sure to get the web browser version working again so I can share my progress and get fresh eyes on it. at a minimum I want the updated Z axis to stand out as a new feature.
+
+Standing from this: Orb wants the browser build back online to share once it is playable and clearly better than the build taken down, with the city's depth standing out as a new feature. The flash conditions for the site's return (Legal RL-119/121/123) still have to be met or Orb has to rule on them.
