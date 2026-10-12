@@ -153,6 +153,8 @@ The prototype's `draw*` functions show how each one was drawn.
 
 Every positioned effect event carries `z`, the depth it happens at (0 is the fighter plane, positive toward the camera): `spark`, `ring`, `debris`, `dust`, `splash`, `fire`, `after`, `charge`, `beamSplash`, `damage`, `scorch`, `slide` (with `z1` for its far end), `slide_dust`, `skim` and `shake`. An emitter that takes a fighter reads his depth; one that takes a position takes `z` last and sends 0 when the caller gives none. The core's own calls pass the fighter's depth; World's and the director's pass theirs in their depth slices. Until the depth switch-on a fighter's `z` is 0 except during a flight aimed at a building.
 
+**The reference consumer keeps the depth (2026-10-12).** Each particle it makes carries the event's `z` (`SimFxView.Part.z`), and so does each damage number (`DmgFloat.z`). A part does not move in depth. A debris part lands on the ground at its depth, which is the plane's ground when depth is off. Neither `z` is in the presentation hash's lists, so no golden moved; adding them there would move every golden's view hash, and waits for a regeneration. Check: "the view's particles carry their depth".
+
 World's ground contact (G3) sends `left_ground`, `bounce`, `land`, `tumble_end` and `journey_end` (fields in docs/world/ground-contact.md section 4). `tumble_end`: `kind` (stop, recover, air), `contacts`, `n`, and `dur`, the **ticks the body rolled in the tumble** (0 to 72; `journey_end.dur` is the whole journey in seconds).
 
 ## The intro phase and the last stand

@@ -317,12 +317,23 @@ static func tierByPower(f) -> float:
 	return nt
 
 
+## The ladder's last tier: 1 plus its thresholds (four tiers today). No fighter goes past it. In a match the core readies
+## a form only when his power's tier is above his own, so the three guards that read this (transform, formBreak and
+## stepFighter) never act there. They hold the line for whatever sets act.formReady by hand, such as a test's staging.
+static func topTier(f) -> float:
+	return 1.0 + float(f.ld.thresholds.size())
+
+
 ## I2a: take a ready form (ladder.json manualTierUp): the tier rises one step with today's power-up. The director's
-## placeholder transform calls it between exchanges (I2b). Returns false if nothing was ready.
+## placeholder transform calls it between exchanges (I2b). Returns false if nothing was ready, or if he is on the
+## ladder's last tier: the form is dropped, with any gather asked for it.
 static func transform(S: SimState, f) -> bool:
 	if not f.act.formReady:
 		return false
 	f.act.formReady = false
+	if f.tier >= topTier(f):
+		f.act.breakIn = -1
+		return false
 	if f.act.breakIn <= 0:   # no gather was asked for (SimPause.request sets it), or it is 0: the break is now
 		formBreak(S, f)
 	return true
@@ -334,6 +345,8 @@ static func transform(S: SimState, f) -> bool:
 ## ready at once.
 static func formBreak(S: SimState, f) -> void:
 	f.act.breakIn = -1
+	if f.tier >= topTier(f):   # the one line that raises a tier by a step never passes the ladder's last
+		return
 	f.tier += 1.0
 	tierUp(S, f)
 	if tierByPower(f) > f.tier:
@@ -384,6 +397,8 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 	var i: SimIntent = f.input
 	f.power = SimMathx.jmin(100.0, f.power + f.ld.fill * dt)
 	var nt: float = tierByPower(f)
+	if f.act.formReady and f.tier >= topTier(f):   # a form readied with no tier above it is dropped, before the director can take it
+		f.act.formReady = false
 	if f.act.breakIn > 0 and S.game.ko == null:   # a live transformation's gather: the break lands here
 		f.act.breakIn -= 1
 		if f.act.breakIn == 0:

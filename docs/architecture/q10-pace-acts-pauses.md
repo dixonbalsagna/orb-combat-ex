@@ -206,6 +206,11 @@ One slice: QA's re-tune values, the tier-up at the break (section 8), a forced p
 
 **Differences from the plan**
 - Nothing in `sim/director` changed. The rival's push stays at the request; the hook `DirExchange.formBreak` was not added. Moving the push to the break is Encounter's to do.
+- **No tier past the ladder's last (2026-10-12).** `SimFighter.topTier(f)` is 1 plus the ladder's thresholds: four tiers today. In a match the core readies a form only when the power's tier is above the fighter's, so a fighter never passes it. A test that set `act.formReady` by hand on tier 4 raised a fifth tier, and the collateral ceiling's table has four entries. Three guards hold the line, and none acts in a real match:
+  - `transform` refuses on the last tier and clears the gather;
+  - `formBreak` raises nothing there. This one is needed because the director asks `SimPause.request` for the gather before it calls `transform`, so a refusal in `transform` alone still broke through the countdown;
+  - `stepFighter` drops a ready flag on the last tier before the director's update, so no pause starts and no `transform` event is sent.
+  - No state, no data and no golden changed. Check: "no tier past the ladder's last".
 - `SimFx.transform` looks the gather up itself from the version, so Encounter's call is unchanged.
 - A direct call to `SimFighter.transform` with no request before it (the tests) breaks at once.
 - While a taken step waits for its break, the fighter cannot become ready again; a further step already earned becomes ready at the break, with its `transform_ready`.

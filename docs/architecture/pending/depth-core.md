@@ -2,6 +2,15 @@
 
 Owner: Simulation and Engine. **Paper only: nothing here is built.** It answers the EP's five asks on Orb's depth headline. It builds on Game Design's `docs/design/depth.md`, World's `docs/world/depth-streets.md`, Encounter's `docs/director/fight-lanes-director.md` and Rendering's `docs/rendering/fighters-in-depth.md`. Line numbers are HEAD's (f659a95a). bh is a fighter height, 75 units.
 
+## Rulings (the EP, 2026-10-12)
+
+- The depth file is `data/combat/depth.json`, and it is Simulation's. Encounter's plan follows it.
+- The core may read `WorldLanes.limits()` in place of its two constants.
+- Part (a) is planned on the split below, which is with Encounter. It is built in scratch next, bit-identical with depth off, for the L4 window with Encounter.
+- Whether a shove's depth part is held to the cap is with Game Design.
+- The camera's start is "the pair's middle less 100". Camera sends the lines, or Simulation writes them in the scratch build.
+- **Part (c) is built** (`fx-events.md`, "Depth on events"). The weight on the damage event is parked as `weight_event.py` and rides with the next regeneration.
+
 ## In short
 
 | Part | What | Size | Golden |

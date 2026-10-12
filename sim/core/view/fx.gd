@@ -14,6 +14,8 @@ var rng: Dictionary = {}     # stream id -> SimRng
 
 
 ## A particle. The defaults are fx.js P()'s; face exists only on afterimages (null elsewhere, like JS undefined).
+## z is the depth it was made at, the event's z (0 is the fighter plane, positive toward the camera): a part does not
+## move in depth. The renderer draws it there. It is not in the presentation hash's list (SimHash.PART).
 class Part:
 	var life: float = 1.0
 	var age: float = 0.0
@@ -28,12 +30,14 @@ class Part:
 	var gr: float = 0.0
 	var x: float = 0.0
 	var y: float = 0.0
+	var z: float = 0.0
 	var face = null
 
 
 class DmgFloat:
 	var x: float = 0.0
 	var y: float = 0.0
+	var z: float = 0.0   # the hit's depth (the event's z); not in the presentation hash's list
 	var txt: String = ""
 	var t: float = 0.0
 	var col: String = ""
@@ -66,12 +70,12 @@ func _P(p: Part) -> void:
 	parts.append(p)
 
 
-func _spark(x: float, y: float, n: int, col: String, spd: float, r: SimRng) -> void:
+func _spark(x: float, y: float, n: int, col: String, spd: float, r: SimRng, z: float = 0.0) -> void:
 	for i in range(n):
 		var a: float = r.range_(0.0, 6.283)
 		var s: float = r.range_(0.3, 1.0) * spd
 		var p := Part.new()
-		p.type = "spark"; p.x = x; p.y = y
+		p.type = "spark"; p.x = x; p.y = y; p.z = z
 		p.vx = SimDetMath.cos(a) * s
 		p.vy = SimDetMath.sin(a) * s
 		p.life = r.range_(0.15, 0.4)
@@ -80,12 +84,12 @@ func _spark(x: float, y: float, n: int, col: String, spd: float, r: SimRng) -> v
 		_P(p)
 
 
-func _debris(x: float, y: float, n: int, col: String, spd: float, r: SimRng) -> void:
+func _debris(x: float, y: float, n: int, col: String, spd: float, r: SimRng, z: float = 0.0) -> void:
 	for i in range(n):
 		var a: float = r.range_(0.2, 2.9)
 		var s: float = r.range_(0.2, 1.0) * spd
 		var p := Part.new()
-		p.type = "deb"
+		p.type = "deb"; p.z = z
 		p.x = x + r.range_(-20.0, 20.0)
 		p.y = y
 		p.vx = SimDetMath.cos(a) * s * (-1.0 if r.next() < 0.5 else 1.0)
@@ -97,10 +101,10 @@ func _debris(x: float, y: float, n: int, col: String, spd: float, r: SimRng) -> 
 		_P(p)
 
 
-func _dust(x: float, y: float, n: int, col: String, r: SimRng) -> void:
+func _dust(x: float, y: float, n: int, col: String, r: SimRng, z: float = 0.0) -> void:
 	for i in range(n):
 		var p := Part.new()
-		p.type = "dust"
+		p.type = "dust"; p.z = z
 		p.x = x + r.range_(-40.0, 40.0)
 		p.y = y + r.range_(0.0, 20.0)
 		p.vx = r.range_(-90.0, 90.0)
@@ -112,10 +116,10 @@ func _dust(x: float, y: float, n: int, col: String, r: SimRng) -> void:
 		_P(p)
 
 
-func _splash(x: float, y: float, n: int, r: SimRng) -> void:
+func _splash(x: float, y: float, n: int, r: SimRng, z: float = 0.0) -> void:
 	for i in range(n):
 		var p := Part.new()
-		p.type = "splash"
+		p.type = "splash"; p.z = z
 		p.x = x + r.range_(-30.0, 30.0)
 		p.y = y
 		p.vx = r.range_(-160.0, 160.0)
@@ -127,10 +131,10 @@ func _splash(x: float, y: float, n: int, r: SimRng) -> void:
 		_P(p)
 
 
-func _fire(x: float, y: float, n: int, r: SimRng) -> void:
+func _fire(x: float, y: float, n: int, r: SimRng, z: float = 0.0) -> void:
 	for i in range(n):
 		var p := Part.new()
-		p.type = "flame"
+		p.type = "flame"; p.z = z
 		p.x = x + r.range_(-25.0, 25.0)
 		p.y = y + r.range_(0.0, 30.0)
 		p.vx = r.range_(-30.0, 30.0)
@@ -160,7 +164,7 @@ func _stepParts(S: SimState, dt: float) -> void:
 		if p.type == "ring":
 			p.r += p.gr * dt
 		if p.type == "deb":
-			var g: float = WorldTerrain.groundY(S, p.x)
+			var g: float = WorldTerrain.groundY(S, p.x, p.z)   # the ground at its depth (the plane's when depth is off)
 			if p.y < g:
 				p.y = g
 				p.vy *= -0.3
@@ -180,28 +184,28 @@ func consume(S: SimState, events: Array) -> void:
 	for e in events:
 		match e.type:
 			"spark":
-				_spark(e.x, e.y, e.n, e.col, e.spd, rng["vfx.spark"])
+				_spark(e.x, e.y, e.n, e.col, e.spd, rng["vfx.spark"], e.z)
 			"debris":
-				_debris(e.x, e.y, e.n, e.col, e.spd, rng["vfx.debris"])
+				_debris(e.x, e.y, e.n, e.col, e.spd, rng["vfx.debris"], e.z)
 			"dust":
-				_dust(e.x, e.y, e.n, e.col, rng["vfx.dust"])
+				_dust(e.x, e.y, e.n, e.col, rng["vfx.dust"], e.z)
 			"splash":
-				_splash(e.x, e.y, e.n, rng["vfx.splash"])
+				_splash(e.x, e.y, e.n, rng["vfx.splash"], e.z)
 			"fire":
-				_fire(e.x, e.y, e.n, rng["vfx.fire"])
+				_fire(e.x, e.y, e.n, rng["vfx.fire"], e.z)
 			"ring":
 				var p := Part.new()
-				p.type = "ring"; p.x = e.x; p.y = e.y; p.r = e.r0; p.gr = e.gr; p.life = e.life; p.col = e.col
+				p.type = "ring"; p.x = e.x; p.y = e.y; p.z = e.z; p.r = e.r0; p.gr = e.gr; p.life = e.life; p.col = e.col
 				_P(p)
 			"after":
 				var p := Part.new()
-				p.type = "after"; p.x = e.x; p.y = e.y; p.life = e.life; p.col = e.col; p.face = e.face
+				p.type = "after"; p.x = e.x; p.y = e.y; p.z = e.z; p.life = e.life; p.col = e.col; p.face = e.face
 				_P(p)
 			"charge":
 				var r: SimRng = rng["vfx.charge"]
 				if r.next() < 0.4:
 					var p := Part.new()
-					p.type = "spark"
+					p.type = "spark"; p.z = e.z
 					p.x = e.x + r.range_(-40.0, 40.0)
 					p.y = e.y + r.range_(0.0, 70.0)
 					p.vx = r.range_(-40.0, 40.0)
@@ -211,14 +215,14 @@ func consume(S: SimState, events: Array) -> void:
 					p.size = 2.0
 					_P(p)
 				if r.next() < 0.06 and e.y < e.ground + 30.0:
-					_dust(e.x, e.ground, 1, "#9b8f7e", rng["vfx.dust"])
+					_dust(e.x, e.ground, 1, "#9b8f7e", rng["vfx.dust"], e.z)
 			"beamSplash":
 				if rng["vfx.water"].next() < 0.6:
-					_splash(e.x, 0.0, 3, rng["vfx.splash"])
+					_splash(e.x, 0.0, 3, rng["vfx.splash"], e.z)
 			"damage":
 				if e.number:   # landings and collisions carry no damage number
 					var fl := DmgFloat.new()
-					fl.x = e.x; fl.y = e.y; fl.txt = SimMathx.jstr(SimMathx.jround(e.amount)); fl.t = 0.0; fl.col = e.col
+					fl.x = e.x; fl.y = e.y; fl.z = e.z; fl.txt = SimMathx.jstr(SimMathx.jround(e.amount)); fl.t = 0.0; fl.col = e.col
 					floats.append(fl)
 			"banner":
 				var b := Banner.new()

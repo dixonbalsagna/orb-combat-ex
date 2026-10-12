@@ -63,6 +63,8 @@ func _init() -> void:
 	check("the stick as held, through a stun", _heldStick())
 	check("a medium blow, rule by rule", _mediumWeight())
 	check("a blow that names its region", _namedRegion())
+	check("no tier past the ladder's last", _tierCap())
+	check("the view's particles carry their depth", _partDepth())
 	check("depth in the core", _depth())
 	check("the intro phase", _intro())
 	check("composed intros", _introComposed())
@@ -2471,6 +2473,144 @@ func _blockedShots() -> String:
 	var sum: int = f.wear[0] + f.wear[1] + f.wear[2] + f.wear[3]
 	if sum != int(SimMathx.jround(dealt2 * SimWounds.wearK(S, f))):
 		return "an unguarded shot wore %d in all, and %d was dealt" % [sum, int(SimMathx.jround(dealt2 * SimWounds.wearK(S, f)))]
+	SimCore.dispose(S)
+	return ""
+
+
+## The view's particles carry a depth (SimFxView.Part.z): the event's z, on every kind the view spawns, and a damage
+## number its hit's. A part does not move in depth and nothing else about it depends on its depth: with depth off the
+## same events on the plane and at a depth make the same parts but for z, tick after tick. With depth on, a debris part
+## lands on the ground at its depth, not on the plane's.
+func _partDepth() -> String:
+	var runs: Array = []
+	for z in [0.0, -1000.0]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+		var V := SimFxView.new(5)
+		var f = S.fighters[0]
+		var g: float = WorldTerrain.groundY(S, f.x)
+		S.out.fx.clear()
+		f.z = z   # the after-image and the charge take their depth from the fighter
+		f.y = g   # on the ground, so the charge raises dust
+		SimFx.spark(S, f.x, g + 200.0, 12, "#ffffff", 600.0, z)
+		SimFx.debris(S, f.x, g + 40.0, 10, "#666666", 600.0, z)
+		SimFx.dust(S, f.x, g, 6, "#998877", z)
+		SimFx.splash(S, f.x, g, 5, z)
+		SimFx.fire(S, f.x, g, 5, z)
+		SimFx.ring(S, f.x, g + 34.0, 1300.0, "#ffffff", 0.8, 20.0, z)
+		SimFx.afterimage(S, f)
+		for n in range(200):
+			SimFx.chargeFx(S, f, g)
+			SimFx.beamSplash(S, f.x, z)
+		SimFx.damage(S, f, null, 12.0, "core", "light", "#ffffff", true)
+		V.consume(S, S.out.fx)
+		var kinds := {}
+		for p in V.parts:
+			kinds[p.type] = int(kinds.get(p.type, 0)) + 1
+			if p.z != z:
+				return "a %s part made at depth %s reads %s" % [p.type, str(z), str(p.z)]
+		for k in ["spark", "deb", "dust", "splash", "flame", "ring", "after"]:
+			if int(kinds.get(k, 0)) == 0:
+				return "the view made no %s part" % k
+		if kinds["spark"] <= 12 or kinds["splash"] <= 5 or kinds["dust"] <= 6:
+			return "the charge or the beam's splash made no part"
+		if V.floats.size() != 1 or V.floats[0].z != z:
+			return "the damage number's depth reads %s" % ("nothing" if V.floats.is_empty() else str(V.floats[0].z))
+		var sig: Array = []
+		for t in range(100):
+			S.out.fx.clear()
+			SimFx.tickMark(S, SimConst.DT, false)
+			V.consume(S, S.out.fx)
+			for p in V.parts:
+				if p.z != z:
+					return "tick %d: a %s part moved in depth to %s" % [t, p.type, str(p.z)]
+				sig.append("%s %s %s %s %s %s" % [p.type, str(p.x), str(p.y), str(p.vx), str(p.vy), str(p.age)])
+		runs.append(sig)
+		SimCore.dispose(S)
+	if runs[0].size() == 0 or runs[0] != runs[1]:
+		return "with depth off, the same events on the plane and at a depth made different parts (%d and %d records)" % [runs[0].size(), runs[1].size()]
+	# depth on: the plane's ground lowered under the debris, the rows of ground at its depth left as they are
+	var D := SimCore.createSim()
+	SimCore.newMatch(D, 5, {"p1": false, "p2": false}, {"intro": false, "depth": true})
+	if not D.depthOn or D.deformZ.is_empty():
+		return "the setup's depth did not give the rows of ground"
+	var W := SimFxView.new(5)
+	var x: float = D.fighters[0].x
+	var zd: float = -1050.0
+	var c: int = int(floor(SimWrap.wrap(x) / SimConst.COL))
+	for i in range(c - 70, c + 71):
+		D.deform[posmod(i, SimConst.NC)] -= 300.0
+	var plane: float = WorldTerrain.groundY(D, x)
+	var row: float = WorldTerrain.groundY(D, x, zd)
+	if row - plane < 250.0:
+		return "the ground at depth reads %s over a plane lowered to %s" % [str(row), str(plane)]
+	D.out.fx.clear()
+	SimFx.debris(D, x, row + 60.0, 10, "#666666", 500.0, zd)
+	W.consume(D, D.out.fx)
+	var landed: int = 0
+	for t in range(110):
+		D.out.fx.clear()
+		SimFx.tickMark(D, SimConst.DT, false)
+		W.consume(D, D.out.fx)
+		for p in W.parts:
+			var gz: float = WorldTerrain.groundY(D, p.x, p.z)
+			if p.y < gz:
+				return "tick %d: a debris part at depth %s is %s under the ground at its depth" % [t, str(p.z), str(gz - p.y)]
+			if p.y == gz:
+				landed += 1
+	if landed == 0:
+		return "no debris part came down onto the ground at its depth"
+	SimCore.dispose(D)
+	return ""
+
+
+## The tier cap (SimFighter.topTier): 1 plus the ladder's thresholds. The last real step is still taken. On the last tier
+## a form set ready by hand is refused by transform, a break asked for raises nothing, and through the sim's own step the
+## flag is dropped before the director can start the set piece: no transform or tier_up event, no pause, and the world's
+## highest tier stays inside the collateral ceiling's table.
+func _tierCap() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+	var f = S.fighters[0]
+	var top: float = SimFighter.topTier(f)
+	if top != 1.0 + float(f.ld.thresholds.size()) or top != 4.0:
+		return "the ladder's last tier reads %s" % str(top)
+	f.y = WorldTerrain.groundY(S, f.x) + 900.0
+	# the last real step is taken
+	f.tier = top - 1.0
+	f.act.breakIn = -1
+	f.act.formReady = true
+	if not SimFighter.transform(S, f) or f.tier != top or f.act.formReady:
+		return "the step to the last tier was not taken (tier %s)" % str(f.tier)
+	# on the last tier a ready form is refused, and its gather with it
+	f.act.formReady = true
+	f.act.breakIn = 30
+	if SimFighter.transform(S, f) or f.tier != top or f.act.formReady or f.act.breakIn != -1:
+		return "a form on the last tier was taken (tier %s, gather %d)" % [str(f.tier), f.act.breakIn]
+	# a break asked for on the last tier raises nothing
+	f.act.breakIn = 1
+	S.out.fx.clear()
+	SimFighter.formBreak(S, f)
+	for e in S.out.fx:
+		if e.type == "tier_up":
+			return "a break on the last tier sent tier_up"
+	if f.tier != top or f.act.breakIn != -1:
+		return "a break on the last tier raised it to %s" % str(f.tier)
+	# through the step, with the form set ready by hand on every tick and the transform asked for
+	var press := SimIntent.new()
+	press.transform = true
+	var quiet := SimIntent.new()
+	for t in range(240):
+		f.act.formReady = true
+		S.out.fx.clear()
+		SimCore.step(S, [press, quiet])
+		for e in S.out.fx:
+			if e.type == "transform" or e.type == "tier_up" or e.type == "transform_ready":
+				return "tick %d on the last tier: the sim sent %s" % [t, e.type]
+		if f.tier != top or f.act.formReady or f.act.breakIn > 0 or S.world.maxTier > top or S.pause.left != 0:
+			return "tick %d on the last tier: tier %s, ready %s, gather %d, the world's highest %s, pause %d" % [t, str(f.tier), str(f.act.formReady), f.act.breakIn, str(S.world.maxTier), S.pause.left]
+		if WorldCollateral.ceilingLeft(S) < 0.0:
+			return "the collateral ceiling read below 0"
 	SimCore.dispose(S)
 	return ""
 
