@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Long batches run at below-normal priority so other sessions' short gate runs finish in normal time (CLAUDE.md, machine discipline); children inherit it. QA_PRIORITY=normal turns it off.
+try { if (process.env.QA_PRIORITY !== 'normal') require('os').setPriority(0, require('os').constants.priority.PRIORITY_BELOW_NORMAL); } catch (e) { /* the run goes on at the priority it has */ }
 // QA on the GDScript sim (ADR 0006): plays seeded AI-vs-AI batches in headless Godot, checks the bands in
 // docs/design/balance-targets.md, runs the acceptance-test skeletons, and re-tests slice S0. From the repo root:
 //   node qa/run-godot.js                     400 matches per arm, all eight arms, 20 or so minutes on 6 jobs

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Long batches run at below-normal priority so other sessions' short gate runs finish in normal time (CLAUDE.md, machine discipline); children inherit it. QA_PRIORITY=normal turns it off.
+try { if (process.env.QA_PRIORITY !== 'normal') require('os').setPriority(0, require('os').constants.priority.PRIORITY_BELOW_NORMAL); } catch (e) { /* the run goes on at the priority it has */ }
 // The masher stage on its own, with its results kept as they finish (docs/qa/baseline-fb8aafac.md: a stop used to lose the whole stage). From the repo root:
 //   QA_GODOT_ROOT=<clean export> QA_MASHER_SAVE=<file.json> [QA_MASHER_ONLY=<regex on job names>] node qa/godot/masher-only.js [--n=100] [--base=1] [--jobs=3] [--md=<file.md>]
 // Jobs already in the save file are not run again, so a run that was stopped is resumed by running the same command. The rows are printed (and written to --md) for the jobs that have results.

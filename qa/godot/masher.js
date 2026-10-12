@@ -10,7 +10,7 @@ function _runLevel(level, n, base, forms = false, gap = 8) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/masher.gd', '--', String(n), String(base), `--level=${level}`, `--forms=${forms ? 1 : 0}`, `--gap=${gap}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/masher.gd', '--', String(n), String(base), `--level=${level}`, `--forms=${forms ? 1 : 0}`, `--gap=${gap}`, ...capArgs()], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -28,7 +28,7 @@ function _runMirror(n, base, specA = 'masher:forms=1', specB = null, tag = 'live
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${specA}`, `--b=${specB || specA}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${specA}`, `--b=${specB || specA}`, ...capArgs()], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -36,7 +36,7 @@ function _runMirror(n, base, specA = 'masher:forms=1', specB = null, tag = 'live
       const line = out.split(String.fromCharCode(10)).find(l => l.startsWith('{') && l.includes('"players"'));
       if (code !== 0 || !line) return reject(new Error('players.gd failed for the mirror (exit ' + code + ')' + String.fromCharCode(10) + out.slice(0, 1200)));
       const r = JSON.parse(line);
-      resolve({ mirror: true, tag, specA, specB: specB || specA, n: r.n, aWins: r.aWins, bWins: r.bWins, finished: r.aWins + r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, brink: r.brinkToKoMedian, brawl: r.brawl, stats: r.stats });
+      resolve({ mirror: true, tag, specA, specB: specB || specA, requested: r.requested, wallCapped: r.wallCapped, budgetStopped: r.budgetStopped, n: r.n, aWins: r.aWins, bWins: r.bWins, finished: r.aWins + r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, brink: r.brinkToKoMedian, brawl: r.brawl, stats: r.stats });
     });
   });
 }
@@ -46,7 +46,7 @@ function _runPair(tag, a, b, n, base, extra = []) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${a}`, `--b=${b}`, ...extra], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(n), String(base), `--a=${a}`, `--b=${b}`, ...capArgs(), ...extra], { stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);
@@ -54,10 +54,15 @@ function _runPair(tag, a, b, n, base, extra = []) {
       const line = out.split(String.fromCharCode(10)).find(l => l.startsWith('{') && l.includes('"players"'));
       if (code !== 0 || !line) return reject(new Error('players.gd failed for ' + tag + ' (exit ' + code + ')' + String.fromCharCode(10) + out.slice(0, 1200)));
       const r = JSON.parse(line);
-      resolve({ pair: tag, stats: r.stats, brawl: r.brawl, zips: (r.brawl || {}).zips, zipEnds: (r.brawl || {}).zipEnds, n: r.n, aWins: r.aWins, bWins: r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, strings: r.stats[0].blurStrings, locked: r.stats[0].blurLocked });
+      resolve({ pair: tag, requested: r.requested, wallCapped: r.wallCapped, budgetStopped: r.budgetStopped, stats: r.stats, brawl: r.brawl, zips: (r.brawl || {}).zips, zipEnds: (r.brawl || {}).zipEnds, n: r.n, aWins: r.aWins, bWins: r.bWins, timeouts: r.timeouts, medianSec: r.medianSec, strings: r.stats[0].blurStrings, locked: r.stats[0].blurLocked });
     });
   });
 }
+
+// The wall cap (real seconds one match may take) and the budget (real seconds a job may keep starting matches): the defaults are the scripts' own, 300 and 3600; QA_WALL and QA_BUDGET raise them for a machine that other
+// sessions share. A job in which a match was wall-capped, or that stopped starting matches at its budget, is NOT a measurement of the build: it is returned marked `invalid` and is not saved, so a resume runs it again.
+const capArgs = () => [`--wall=${process.env.QA_WALL || '300'}`, `--budget=${process.env.QA_BUDGET || '3600'}`];
+const isInvalid = r => !!r && ((r.budgetStopped === true) || (r.wallCapped > 0) || (r.requested > 0 && r.n < r.requested));
 
 // Resuming and selecting (QA_MASHER_ONLY, QA_MASHER_SAVE): the stage is many Godot jobs and the runner holds their results in memory, so a stop used to lose all of them.
 // QA_MASHER_SAVE=<file> writes each job's result there as it finishes and, when the file exists, reads the finished ones back and skips them; QA_MASHER_ONLY=<regex> runs only the jobs whose name matches
@@ -69,7 +74,7 @@ try { if (SAVE && fs.existsSync(SAVE)) LOADED = JSON.parse(fs.readFileSync(SAVE,
 function gate(name, spawn) {
   if (LOADED[name]) return Promise.resolve(LOADED[name]);
   if (ONLY && !ONLY.test(name)) return Promise.resolve(null);
-  return spawn().then(r => { if (SAVE) { LOADED[name] = r; try { fs.writeFileSync(SAVE, JSON.stringify(LOADED)); } catch (e) { /* the run goes on */ } } return r; });
+  return spawn().then(r => { if (isInvalid(r)) { r.invalid = true; process.stderr.write(`  INVALID ${name}: ${r.n} of ${r.requested || '?'} matches, ${r.wallCapped || 0} wall-capped, budget stop ${!!r.budgetStopped}\n`); return r; } if (SAVE) { LOADED[name] = r; try { fs.writeFileSync(SAVE, JSON.stringify(LOADED)); } catch (e) { /* the run goes on */ } } return r; });
 }
 const runLevel = (level, n, base, forms = false, gap = 8) => gate(`level:${level}:${forms ? 'forms' : 'noforms'}:${gap}`, () => _runLevel(level, n, base, forms, gap));
 const runMirror = (n, base, specA = 'masher:forms=1', specB = null, tag = 'live') => gate('mirror:' + tag, () => _runMirror(n, base, specA, specB, tag));
