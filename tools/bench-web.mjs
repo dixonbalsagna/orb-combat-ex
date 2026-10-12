@@ -23,6 +23,7 @@
 // integrated GPU, memory or a thermally limited laptop. SwiftShader is a pessimistic GPU-free floor. The real number
 // is the /bench/ page run on an actual old laptop. Docs: docs/tools/README.md
 import { spawn, spawnSync } from 'node:child_process';
+import { launchBrowser } from './machine/browser.mjs';
 import { createServer } from 'node:http';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir, platform, cpus } from 'node:os';
@@ -128,40 +129,20 @@ class Cdp {
 
 // ---------------------------------------------------------------- one run
 async function oneRun(run, url) {
-  const profile = mkdtempSync(join(tmpdir(), 'bench-web-'));
+  // The browser is started by tools/machine/browser.mjs: a hard time limit, gone with this process, an owner tag in its profile folder (docs/tools/machine-captures.md). A bench measures the
+  // machine, so it takes NO CPU cap and normal priority, and it is a real window (not headless) because the GPU path is what is timed.
   const flags = [
-    `--user-data-dir=${profile}`, '--remote-debugging-port=0',
     '--disable-gpu-vsync', '--disable-frame-rate-limit',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
-    '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-sync', '--disable-component-update',
     `--window-size=${WIDTH + 20},${HEIGHT + 140}`, '--window-position=0,0',
-    ...run.flags, 'about:blank',
+    ...run.flags,
   ];
-  const child = spawn(exe, flags, { stdio: 'ignore', detached: false });
-  const cleanup = () => {
-    try {
-      if (platform() === 'win32') spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', timeout: 15000 });
-      else child.kill('SIGKILL');
-    } catch { /* already gone */ }
-    for (let i = 0; i < 5; i++) {
-      try { rmSync(profile, { recursive: true, force: true }); break; } catch { spawnSync(process.execPath, ['-e', 'setTimeout(()=>{},400)']); }
-    }
-  };
+  let browser;
+  const cleanup = async () => { if (browser) await browser.close(); browser = null; };
   let page;
   try {
-    const portFile = join(profile, 'DevToolsActivePort');
-    let port;
-    for (let i = 0; i < 100 && !port; i++) {
-      if (existsSync(portFile)) port = Number(readFileSync(portFile, 'utf8').split('\n')[0]);
-      else await sleep(200);
-    }
-    if (!port) throw new Error('the browser did not open a DevTools port in 20 s');
-    let target;
-    for (let i = 0; i < 50 && !target; i++) {
-      try { target = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find((t) => t.type === 'page'); } catch { /* not up yet */ }
-      if (!target) await sleep(200);
-    }
-    if (!target) throw new Error('no page target');
+    browser = await launchBrowser({ exe, flags, purpose: 'bench', timeoutS: TIMEOUT_S + 60, cpuPercent: 0, priority: 'normal', headless: false, log: () => {} });
+    const target = browser.target;
     page = await Cdp.open(target.webSocketDebuggerUrl);
     await page.send('Emulation.setDeviceMetricsOverride', { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: false });
     await page.send('Emulation.setCPUThrottlingRate', { rate: run.throttle });
@@ -178,7 +159,7 @@ async function oneRun(run, url) {
     return { result, info };
   } finally {
     if (page) page.close();
-    cleanup();
+    await cleanup();
   }
 }
 

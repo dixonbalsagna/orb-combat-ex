@@ -88,6 +88,10 @@
       "schema": "audio-brawl-cues.schema.json"
     },
     {
+      "match": "audio/data/beat_cues.json",
+      "schema": "audio-beat-cues.schema.json"
+    },
+    {
       "match": "audio/data/babble.json",
       "schema": "audio-babble.schema.json"
     },

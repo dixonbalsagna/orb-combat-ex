@@ -247151,6 +247151,6060 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "audio-beat-cues-valid",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/schema": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-beat-cues-key-required-schema",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-key-required-note",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-key-required-perfect",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-key-required-held",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-key-required-grind",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/grind"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-key-required-rest",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/rest"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-key-required-charge-y",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-note-key-ok",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-beat-cues-schema-version",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-bus-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/bus"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-bus-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/bus": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/bus"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-bus-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/bus": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/bus"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-bus-not-a-bus",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/bus": "NoSuchBus"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-bus",
+        "pointer": "/perfect/bus"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/land": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/land"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/land/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/land/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/land"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-before-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/land/before"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/land"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-before-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/land/before": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/land/before"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-before-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/land/before": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/land/before"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-before-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/land/before": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/land/before"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-after-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/land/after"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/land"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-after-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/land/after": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/land/after"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-after-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/land/after": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/land/after"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-land-after-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/land/after": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/land/after"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/own/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/own"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-ratios-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/own/ratios"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/own"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-ratios-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/ratios": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own/ratios"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-ratios-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/ratios": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/perfect/own/ratios"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-ratios-item-zero",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/ratios": [
+              0,
+              1.2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/perfect/own/ratios/0"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-ratios-item-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/ratios": [
+              "x"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own/ratios/0"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own/by_strength"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/own/by_strength/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/own/by_strength"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/own"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-light-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/own/by_strength/light"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/own/by_strength"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-light-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/light": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own/by_strength/light"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-light-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/light": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/by_strength/light"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-light-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/light": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/by_strength/light"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-light-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/light": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/own/by_strength/light"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-medium-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/own/by_strength/medium"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/own/by_strength"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-medium-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/medium": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own/by_strength/medium"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-medium-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/medium": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/by_strength/medium"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-medium-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/medium": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/by_strength/medium"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-medium-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/medium": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/own/by_strength/medium"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-heavy-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/own/by_strength/heavy"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/own/by_strength"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-heavy-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/heavy": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own/by_strength/heavy"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-heavy-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/heavy": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/by_strength/heavy"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-heavy-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/heavy": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/by_strength/heavy"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-by-strength-heavy-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/by_strength/heavy": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/own/by_strength/heavy"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-close-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/own/close"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/own"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-close-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/close": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-close-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/close": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-close-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/close": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-close-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/close": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/own/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-spark-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/own/spark"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/own"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-spark-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/spark": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/own/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-spark-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/spark": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-spark-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/spark": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/own/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-own-spark-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/spark": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/own/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/foe"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/foe/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/foe"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-ratios-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/foe/ratios"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/foe"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-ratios-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/ratios": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/foe/ratios"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-ratios-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/ratios": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/perfect/foe/ratios"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-ratios-item-zero",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/ratios": [
+              0,
+              1.2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/perfect/foe/ratios/0"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-ratios-item-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/ratios": [
+              "x"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/foe/ratios/0"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-note-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/foe/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/foe"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-note-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/foe/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-note-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/note": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/foe/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-note-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/note": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/foe/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-note-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/note": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/foe/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-close-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/foe/close"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/foe"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-close-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/close": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/foe/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-close-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/close": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/foe/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-close-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/close": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/foe/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-close-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/close": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/foe/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-spark-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/foe/spark"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/foe"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-spark-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/spark": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/foe/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-spark-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/spark": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/foe/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-spark-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/spark": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/foe/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-foe-spark-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/spark": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/foe/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/link"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/link/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/link"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-sound-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/link/sound"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/link"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-sound-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/link/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-sound-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link/sound": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/link/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-sound-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link/sound": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/link/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-sound-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link/sound": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/link/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-gain-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/link/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/link"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-gain-db-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link/gain_db": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/link/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-gain-db-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link/gain_db": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/perfect/link/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-link-gain-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/link/gain_db": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/link/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/gain_db/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-spark-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/gain_db/spark"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-spark-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/spark": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/gain_db/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-spark-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/spark": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/perfect/gain_db/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-spark-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/spark": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/gain_db/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-note-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/gain_db/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-note-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/note": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/gain_db/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-note-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/note": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/perfect/gain_db/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-note-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/note": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/gain_db/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-close-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/gain_db/close"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-close-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/close": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/gain_db/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-close-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/close": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/perfect/gain_db/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-gain-db-close-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/gain_db/close": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/gain_db/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/priority/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/priority"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-spark-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/priority/spark"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-spark-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/spark": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-spark-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/spark": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/priority/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-spark-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/spark": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-note-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/priority/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-note-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/note": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-note-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/note": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/priority/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-note-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/note": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-close-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/priority/close"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-close-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/close": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-close-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/close": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/priority/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-close-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/close": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-tick-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/priority/tick"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-tick-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/tick": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-tick-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/tick": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/priority/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-tick-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/tick": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-break-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/priority/break"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-break-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/break": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/break"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-break-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/break": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/priority/break"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-priority-break-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/priority/break": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/priority/break"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/cls/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cls"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-spark-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cls/spark"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-spark-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/spark": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cls/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-spark-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/spark": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/perfect/cls/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-note-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cls/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-note-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cls/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-note-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/note": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/perfect/cls/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-close-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cls/close"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-close-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/close": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cls/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-close-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/close": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/perfect/cls/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-link-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cls/link"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-link-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/link": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cls/link"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-link-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/link": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/perfect/cls/link"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-tick-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cls/tick"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-tick-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/tick": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cls/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-tick-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/tick": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/perfect/cls/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-break-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cls/break"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-break-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/break": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cls/break"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cls-break-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cls/break": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/perfect/cls/break"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/cap/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cap"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-spark-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cap/spark"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-spark-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/spark": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-spark-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/spark": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/cap/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-spark-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/spark": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/spark"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-note-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cap/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-note-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/note": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-note-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/note": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/cap/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-note-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/note": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/note"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-close-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cap/close"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-close-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/close": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-close-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/close": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/cap/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-close-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/close": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/close"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-link-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cap/link"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-link-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/link": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/link"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-link-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/link": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/cap/link"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-link-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/link": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/link"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-tick-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cap/tick"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-tick-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/tick": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-tick-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/tick": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/cap/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-tick-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/tick": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-break-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/cap/break"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-break-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/break": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/break"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-break-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/break": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/cap/break"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-cap-break-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/cap/break": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/cap/break"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/tick/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/tick"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-sound-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/tick/sound"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-sound-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/tick/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-sound-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/sound": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/tick/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-sound-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/sound": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/tick/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-sound-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/sound": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/tick/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-gain-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/tick/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-gain-db-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/gain_db": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/tick/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-gain-db-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/gain_db": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/perfect/tick/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-gain-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/gain_db": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/tick/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-caption-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/tick/caption"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-caption-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/caption": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/tick/caption"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-tick-caption-empty-ok",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/tick/caption": ""
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/broken"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/broken/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/broken"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-sound-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/broken/sound"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/broken"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-sound-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/broken/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-sound-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/sound": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/broken/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-sound-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/sound": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/perfect/broken/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-sound-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/sound": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/perfect/broken/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-gain-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/broken/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/broken"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-gain-db-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/gain_db": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/broken/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-gain-db-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/gain_db": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/perfect/broken/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-gain-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/gain_db": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/broken/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-texts-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/broken/texts"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/broken"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-texts-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/texts": "a"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/broken/texts"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-texts-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/texts": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/perfect/broken/texts"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-broken-texts-item-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/broken/texts": [
+              1
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/broken/texts/0"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/spark_clear"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/perfect/spark_clear/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/spark_clear"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-ticks-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/spark_clear/ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/spark_clear"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-ticks-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/ticks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/spark_clear/ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-ticks-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/spark_clear/ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-ticks-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/ticks": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/spark_clear/ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-look-ahead-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/spark_clear/look_ahead"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/spark_clear"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-look-ahead-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/look_ahead": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/spark_clear/look_ahead"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-look-ahead-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/look_ahead": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/spark_clear/look_ahead"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-look-ahead-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/look_ahead": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/spark_clear/look_ahead"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-max-wait-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/perfect/spark_clear/max_wait"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/perfect/spark_clear"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-max-wait-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/max_wait": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/spark_clear/max_wait"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-max-wait-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/max_wait": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/perfect/spark_clear/max_wait"
+      }
+    },
+    {
+      "id": "audio-beat-cues-perfect-spark-clear-max-wait-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/max_wait": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/perfect/spark_clear/max_wait"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/held/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-after-gap-ticks-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held/after_gap_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/held"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-after-gap-ticks-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/after_gap_ticks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/after_gap_ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-after-gap-ticks-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/after_gap_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/held/after_gap_ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-after-gap-ticks-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/after_gap_ticks": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/after_gap_ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-complete-blows-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held/complete_blows"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/held"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-complete-blows-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/complete_blows": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/complete_blows"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-complete-blows-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/complete_blows": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/held/complete_blows"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-complete-blows-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/complete_blows": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/complete_blows"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-lite-gap-max-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held/lite_gap_max"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/held"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-lite-gap-max-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/lite_gap_max": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/lite_gap_max"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-lite-gap-max-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/lite_gap_max": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/held/lite_gap_max"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-lite-gap-max-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/lite_gap_max": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/lite_gap_max"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-pitch-from-gap-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held/pitch_from_gap"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/held"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-pitch-from-gap-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/pitch_from_gap": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/pitch_from_gap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-pitch-from-gap-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/pitch_from_gap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/held/pitch_from_gap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-pitch-from-gap-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/pitch_from_gap": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/pitch_from_gap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-pitch-st-per-tick-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held/pitch_st_per_tick"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/held"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-pitch-st-per-tick-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/pitch_st_per_tick": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/pitch_st_per_tick"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-pitch-min-st-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held/pitch_min_st"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/held"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-pitch-min-st-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/pitch_min_st": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/pitch_min_st"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-gain-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/held/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/held"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-gain-db-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/gain_db": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/held/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-gain-db-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/gain_db": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/held/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-held-gain-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/held/gain_db": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/held/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grind/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/grind"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-sound-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/grind/sound"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/grind"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-sound-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-sound-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/sound": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/grind/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-sound-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/sound": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/grind/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-sound-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/sound": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/grind/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-window-ticks-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/grind/window_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/grind"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-window-ticks-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/window_ticks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind/window_ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-window-ticks-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/window_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grind/window_ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-window-ticks-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/window_ticks": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind/window_ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-after-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/grind/after"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/grind"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-after-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/after": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind/after"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-after-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/after": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grind/after"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-after-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/after": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind/after"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-step-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/grind/step_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/grind"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-step-db-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/step_db": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grind/step_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-step-db-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/step_db": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/grind/step_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-step-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/step_db": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind/step_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-drop-st-per-blow-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/grind/drop_st_per_blow"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/grind"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-drop-st-per-blow-negative",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/drop_st_per_blow": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grind/drop_st_per_blow"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-drop-st-per-blow-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/drop_st_per_blow": "big"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind/drop_st_per_blow"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-max-drop-st-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/grind/max_drop_st"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/grind"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-max-drop-st-negative",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/max_drop_st": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grind/max_drop_st"
+      }
+    },
+    {
+      "id": "audio-beat-cues-grind-max-drop-st-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/grind/max_drop_st": "big"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grind/max_drop_st"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/rest/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/rest"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-sound-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/rest/sound"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/rest"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-sound-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-sound-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/sound": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/rest/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-sound-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/sound": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/rest/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-sound-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/sound": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/rest/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-gain-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/rest/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/rest"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-gain-db-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/gain_db": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rest/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-gain-db-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/gain_db": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/rest/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-gain-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/gain_db": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-priority-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/rest/priority"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/rest"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-priority-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/priority": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-priority-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rest/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-priority-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/priority": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-cls-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/rest/cls"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/rest"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-cls-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-cls-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/cls": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/rest/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-cap-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/rest/cap"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/rest"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-cap-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/cap": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-cap-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/cap": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rest/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-cap-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/cap": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-caption-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/rest/caption"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/rest"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-caption-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/caption": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rest/caption"
+      }
+    },
+    {
+      "id": "audio-beat-cues-rest-caption-empty-ok",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/rest/caption": ""
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-beat-cues-charge-y-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/charge_y/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/charge_y/hum/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/hum"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-sound-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/hum/sound"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/hum"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-sound-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-sound-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/sound": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/charge_y/hum/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-sound-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/sound": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/charge_y/hum/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-sound-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/sound": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/charge_y/hum/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-gain-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/hum/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/hum"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-gain-db-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/gain_db": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/charge_y/hum/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-gain-db-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/gain_db": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/charge_y/hum/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-gain-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/gain_db": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-priority-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/hum/priority"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/hum"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-priority-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/priority": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-priority-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/charge_y/hum/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-priority-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/priority": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-cls-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/hum/cls"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/hum"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-cls-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-cls-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/cls": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/charge_y/hum/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-cap-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/hum/cap"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/hum"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-cap-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/cap": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-cap-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/cap": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/charge_y/hum/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-cap-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/cap": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-stop-ms-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/hum/stop_ms"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/hum"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-stop-ms-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/stop_ms": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/stop_ms"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-stop-ms-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/stop_ms": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/charge_y/hum/stop_ms"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-hum-stop-ms-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/hum/stop_ms": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/hum/stop_ms"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-unknown-key",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/charge_y/full/extra"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/full"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-sound-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/full/sound"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/full"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-sound-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-sound-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/sound": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/charge_y/full/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-sound-shape",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/sound": "Hit Light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/charge_y/full/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-sound-not-synthesised",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/sound": "impact.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-sound",
+        "pointer": "/charge_y/full/sound"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-gain-db-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/full/gain_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/full"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-gain-db-below",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/gain_db": -61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/charge_y/full/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-gain-db-above",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/gain_db": 25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/charge_y/full/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-gain-db-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/gain_db": "loud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/gain_db"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-priority-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/full/priority"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/full"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-priority-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/priority": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-priority-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/charge_y/full/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-priority-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/priority": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/priority"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-bus-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/full/bus"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/full"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-bus-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/bus": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/bus"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-bus-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/bus": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/charge_y/full/bus"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-bus-not-a-bus",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/bus": "NoSuchBus"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-bus",
+        "pointer": "/charge_y/full/bus"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-cls-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/full/cls"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/full"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-cls-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-cls-empty",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/cls": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/charge_y/full/cls"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-cap-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/full/cap"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/full"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-cap-integer",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/cap": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-cap-below-min",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/cap": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/charge_y/full/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-cap-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/cap": "many"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/cap"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-caption-required",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "del": [
+            "/charge_y/full/caption"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/charge_y/full"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-caption-type",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/caption": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/charge_y/full/caption"
+      }
+    },
+    {
+      "id": "audio-beat-cues-charge-y-full-caption-empty-ok",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/caption": ""
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-beat-cues-own-ratios-fall",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/ratios": [
+              1,
+              1.5,
+              1.2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-order",
+        "pointer": "/perfect/own/ratios/2"
+      }
+    },
+    {
+      "id": "audio-beat-cues-own-ratios-equal",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/ratios": [
+              1,
+              1.2,
+              1.2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-order",
+        "pointer": "/perfect/own/ratios/2"
+      }
+    },
+    {
+      "id": "audio-beat-cues-foe-ratios-fall",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/foe/ratios": [
+              1.5,
+              1.2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-order",
+        "pointer": "/perfect/foe/ratios/1"
+      }
+    },
+    {
+      "id": "audio-beat-cues-ratios-rise-ok",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/own/ratios": [
+              1,
+              1.1,
+              1.3,
+              1.5
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-beat-cues-spark-clear-order",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/ticks": 8,
+            "/perfect/spark_clear/max_wait": 6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:beat-cue-order",
+        "pointer": "/perfect/spark_clear/ticks"
+      }
+    },
+    {
+      "id": "audio-beat-cues-spark-clear-equal-ok",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/perfect/spark_clear/ticks": 6,
+            "/perfect/spark_clear/max_wait": 6
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-beat-cues-bus-ok",
+      "schema": "audio-beat-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/beat_cues.json",
+          "set": {
+            "/charge_y/full/bus": "Sfx"
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

@@ -8,7 +8,7 @@
 //
 // Writes <out>/<id>/ (frames and clip.json), <out>/summary.json and a table. Frames of clips that show no failure are deleted unless --keep. Exit 0 when every clip shows
 // no failure under the reading (docs/tools/flash-check.md) and every cross-check agrees, 1 otherwise. On Git Bash set MSYS_NO_PATHCONV=1 or quote --path.
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,10 +21,14 @@ const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const DIR = opt('--dir'), PATH = opt('--path', '/index.html?flashcap=1'), OUT = opt('--out'), FLASH = opt('--flash');
 const JOBS = Number(opt('--jobs', 3));
+// every capture browser runs on the same CPU_CAP percent of the machine's logical processors (tools/machine/browser.mjs: an affinity mask on the same cores for all of them, so the whole set
+// together stays inside it), at below-normal priority, and is ended by its own guard at CLIP_TIMEOUT_S plus 5 minutes (docs/tools/machine-captures.md)
+const CPU_CAP = Number(opt('--cpu-cap', 40));
+const CLIP_TIMEOUT_S = Number(opt('--clip-timeout', 3600));
 const ONLY = opt('--only') ? opt('--only').split(',') : null;
 const W = 1024, H = 768;
 const TICKS_OVERRIDE = opt('--ticks') ? Number(opt('--ticks')) : 0;   // a shorter clip, for a speed measurement (the verdict then covers only those ticks)
-if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--ticks N]'); process.exit(2); }
+if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--ticks N] [--cpu-cap 40] [--clip-timeout 3600]'); process.exit(2); }
 const src = JSON.parse(readFileSync(join(here, 'sources.json'), 'utf8'));
 const CLIP = opt('--clip') ? opt('--clip').split(',') : null;
 // the required set (sources.json, tools/flash/clips.mjs): the five fixed cases, and for `ai` every pairing at every seed, each in both modes
@@ -32,11 +36,16 @@ const jobs = requiredClips(src).filter((j) => (!ONLY || ONLY.includes(j.scenario
 if (!jobs.length) { console.error('no clip matches (ids look like collapse-normal, ai-12345-reduced, mash-reduced; --only takes scenario names)'); process.exit(2); }
 mkdirSync(OUT, { recursive: true });
 
-const run = (args) => new Promise((ok) => {
+// a child that has not finished by timeoutMs is ended (with its browser: the capture's own guard ends that too) and reported as a failure: nothing here waits forever (2026-10-12: a capture whose browser
+// was stopped by hand kept this run waiting for 15 hours)
+const run = (args, timeoutMs = 0) => new Promise((ok) => {
   const c = spawn(process.execPath, args, { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
   let out = '';
+  let timedOut = false;
   c.stdout.on('data', (d) => { out += d; }); c.stderr.on('data', (d) => { out += d; });
-  c.on('close', (code) => ok({ code, out }));
+  const timer = timeoutMs > 0 ? setTimeout(() => { timedOut = true; out += `
+[run-pixels] FAILED: no result in ${Math.round(timeoutMs / 1000)} s, ended`; try { if (process.platform === 'win32') spawnSync('taskkill', ['/PID', String(c.pid), '/T', '/F'], { stdio: 'ignore', timeout: 15000 }); else c.kill('SIGKILL'); } catch { /* gone */ } }, timeoutMs) : null;
+  c.on('close', (code) => { if (timer) clearTimeout(timer); ok({ code: timedOut ? 1 : code, out }); });
 });
 
 /** The register's count at each tick, rebuilt from a headless run's rows (granted flashes in (t-60, t]). */
@@ -50,7 +59,7 @@ function seriesFromRows(rows, ticks) {
 async function one(job) {
   const dir = join(OUT, job.id);
   const t0 = Date.now();
-  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.slots ? ['--slots', job.slots.join(',')] : []), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(TICKS_OVERRIDE || job.ticks), ...(argv.includes('--software') ? ['--software'] : []), ...(argv.includes('--budget') ? ['--budget'] : []), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', '1800']);
+  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.slots ? ['--slots', job.slots.join(',')] : []), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(TICKS_OVERRIDE || job.ticks), ...(argv.includes('--software') ? ['--software'] : []), ...(argv.includes('--budget') ? ['--budget'] : []), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', String(CLIP_TIMEOUT_S), '--cpu-cap', String(CPU_CAP)], (CLIP_TIMEOUT_S + 900) * 1000);
   if (cap.code !== 0) return { ...job, error: cap.out.trim().split('\n').pop() };
   if (argv.includes('--capture-only')) return { ...job, captured: true };
   const an = await run([join(here, 'analyse-frames.js'), dir, '--scale', '1', '--json', join(dir, 'analysis.json')]);
