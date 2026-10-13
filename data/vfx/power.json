@@ -13,7 +13,7 @@
     "mult_t1": 0.0, "mult_t2": 0.45, "mult_t3": 1.0, "mult_t4": 1.7,
     "r_ref": 160.0, "rs_min": 0.6, "rs_max": 2.2, "gap_s": 0.25,
     "ring_life": 0.5, "ring_r0": 0.75, "ring_r1": 1.7, "ring_r1_t": 0.5, "ring2_delay": 0.12,
-    "chunks": 4.0, "lob": 0.3, "pebbles": 6.0, "pebble_delay": 0.5, "dome": 5.0, "settle": 4.0, "settle_from": 0.4, "settle_to": 1.6,
+    "chunks": 3.0, "lob": 0.3, "pebbles": 4.0, "pebble_delay": 0.5, "dome": 5.0, "settle": 4.0, "settle_from": 0.4, "settle_to": 1.6,
     "chunk_min": 10.0, "chunk_max": 22.0
   },
   "pressure": {

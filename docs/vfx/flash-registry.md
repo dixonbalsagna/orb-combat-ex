@@ -155,6 +155,21 @@ In the nine-cells chain (Encounter's parked chain on main 996bf933) the headless
 - **The margin:** the small sources end 0.5 under the gate by construction. Three big ones can still sit near it (a beam, a panel and a clash is 2.4751, margin 0.025): the clash's weight is Rendering's `clash_px` and the panel's is Camera's, so a margin beyond that is theirs to give.
 - **Readings** (headless flash count, 56 runs each): main with this change passes, worst 2.34 (ai seed 43); the chain with this change passes, worst 2.48 (ai seed 7, the three big events), from 2.50006 and a FAIL.
 
+## ai seed 38, ticks 3484 to 3494: a landing's world burst (2026-10-13)
+
+Tools' three-arm table had the clip at 4 / 5 / 3 normal and 4 / 5 / 2 reduced from tick 3484. Pinned commit 7b0d03cf, then 38eaaf8d (the clip reads the same on both); `capture-web` ai seed 38, `--skip 3380 --ticks 190`, session vfx, one capture at a time, about 5 frames a second:
+
+| Arm | Primary / area-15% (normal) | The four events (clip frames 106-, 107+, 112-, 114+) |
+| :-- | :-- | :-- |
+| as built | 4 / 5 | 1.7, 1.8, 1.3, 1.4 times the threshold |
+| each VFX layer off by switch (one at a time) | 3.5 / 4 | 1.7, 1.8, 1.2, 1.4 |
+| the whole VFX hub off | 3.5 / 4 | 1.7, 1.8, 1.2, 1.4 |
+
+- **The four are not VFX's**: they are the same, to a tenth, with VFX off. The sim sends one `slide`, `tumble_end` and `journey_end` at 3482 and VFX makes 10 bits from it. What is on screen is the terrain's own deformation: a dark triangular shadow (the dune's wall lit and shaded as it is pushed) sweeping 300 px across the ground, tick by tick; that is Rendering's ground shader reading the sim's deformed heightfield.
+- **VFX's share is a half point**: 4 against 3.5. It is the leftover of the crater made at 3384 (98 chunks and 15 puffs in the air, 80 to 120 chunks alive from 3384 to 3510), which adds 130-, 139- and 143+ in the window.
+- **What I changed** (counts and lives, nothing removed): a crater's ejecta at most 16 chunks (was 30) living 0.9 to 1.5 s (was 1.0 to 2.0); the blast's rim chunks 3 (was 4), at most 12 (was 18), living 1.0 to 1.6 s and 1.6 to 2.4 s lobbed (were 1.2 to 2.0 and 2.0 to 3.0); the second fall 4 pebbles (was 6), at most 12 (was 20); a `debris` event at most 10 chunks (was 14). Result on the same commit: 139- gone, 143+ from 1.8 to 1.4 (reduced 1.4 to 1.1), reduced area-higher 4 to 3.5; the primary stays 4 and the area-15% 5. A further round (dust counts and lives, the dome and the bowl's settling) changed nothing counted and was dropped.
+- **NEEDS (Rendering):** the deformation shadow at 3482 to 3494 is a 1.3 to 1.8 times threshold change four times in 12 ticks with no VFX in it; to bring the clip under, that sweep has to ease or stop alternating (a shadow that grows over 0.5 s and is not redrawn each tick).
+
 ## What I could and could not do about the held files
 
 `transform_view.gd` and `vfx_layer.gd` stay untouched. The transformation's flash is brought under the register through `transform.gd` alone (a static scale the view's own `VfxTransform.p("break", "flash_alpha")` call already passes through), so **nothing is needed from those two files for the transformation**. The pressure rings are thin rings (not a flash) and need nothing.

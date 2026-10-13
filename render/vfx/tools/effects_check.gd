@@ -1213,7 +1213,7 @@ func _earth() -> void:
 	# The data.
 	var saved: Dictionary = VfxEarth._data
 	VfxEarth._data = {}
-	var fallback: bool = VfxEarth.p("deb", "max_per_event") == 14.0 and VfxEarth.p("flame", "alive_cap") == 40.0
+	var fallback: bool = VfxEarth.p("deb", "max_per_event") == 10.0 and VfxEarth.p("flame", "alive_cap") == 40.0
 	VfxEarth._data = saved
 	_check(fallback, "missing data falls back to the defaults")
 	var same: bool = true
@@ -1658,7 +1658,7 @@ func _blast() -> void:
 	_check(rings[0] == 0 and rings[1] == 1 and rings[2] == 1 and rings[3] == 2, "one shock ring at tiers 2 and 3, a second behind it at tier 4 (%s)" % str(rings))
 	var h4: VfxHub = run.call(4.0, true, [crater.call(0.0, "impact", 0.0)], none)
 	_check(h4.debris.jobs.is_empty(), "the pebble fall and the settling dust have all come due and run within two seconds")
-	_check(h4.blast.chunks >= 8, "tier 4 throws a good handful of rim chunks (%d)" % h4.blast.chunks)
+	_check(h4.blast.chunks >= 5, "tier 4 throws a good handful of rim chunks (%d)" % h4.blast.chunks)
 	# Ground-level power-up craters (RL-059): only at the transformation's break, one a transformation, never in the air, never in the gather.
 	var xf_ev := func(tier: float): return VfxMock.ev("transform", {"actor": 0, "tier": tier, "source": "ai", "dur": 0.0, "version": "live"})
 	var break_run := func(tier: float, pre_ticks: int, after: Array, setup: Callable, powerup_flag: bool) -> VfxHub:

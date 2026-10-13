@@ -10,7 +10,7 @@ extends RefCounted
 ## streams. The pool's caps and the per-tick spawn budget keep every burst bounded.
 
 const DEFAULTS: Dictionary = {
-	"deb": {"size_min": 6.0, "size_max": 15.0, "life_min": 1.2, "life_max": 2.4, "max_per_event": 14, "spin": 10.0, "speed_scale": 1.0},
+	"deb": {"size_min": 6.0, "size_max": 15.0, "life_min": 1.2, "life_max": 2.4, "max_per_event": 10, "spin": 10.0, "speed_scale": 1.0},
 	"flame": {"per_unit": 1.0, "max_per_event": 8, "size_min": 22.0, "size_max": 46.0, "life_min": 0.7, "life_max": 1.5, "rise_min": 70.0, "rise_max": 190.0, "smoke_every": 3, "smoke_life": 1.6, "alive_cap": 40},
 	"land": {"speed_ref": 2500.0, "chunks_slam": 10, "chunks_skid": 5, "chunks_tumble": 6, "size_min": 8.0, "size_max": 16.0, "dust_slam": 5, "dust_skid": 3, "dust_tumble": 3, "sand_chunks": 0.5, "sand_dust": 1.6, "paving_chunks": 1.2, "paving_dust": 0.8},
 	"bounce": {"vn_ref": 1500.0, "chunks": 4, "dust": 2},
@@ -323,13 +323,13 @@ func on_crater_ejecta(e) -> void:
 	var tones: Array = tones_for_surface("soil", x)
 	var sws: float = sqrt(SimConst.WS)             # the sim's world-scale factor for speeds of things thrown by world-scale events
 	var sp: float = (260.0 + 90.0 * sqrt(maxf(E, 0.0))) * sws
-	var nch: int = clampi(int(3.0 + E * 2.0), 3, 30)
+	var nch: int = clampi(int(3.0 + E * 1.0), 3, 16)      # was up to 30: a hundred chunks in the air for two seconds is a churn the analyser counts (ai seed 38, tick 3500)
 	for k in range(nch):
 		var off: float = debris._rd.range_(-0.6, 0.6) * r
 		var vx: float = (1.0 if off >= 0.0 else -1.0) * debris._rd.range_(0.3, 1.0) * sp
 		var vy: float = debris._rd.range_(0.6, 1.4) * sp
 		var sz: float = debris._rd.range_(8.0, 13.0 + 2.0 * sqrt(maxf(E, 0.0)))
-		var life: float = debris._rd.range_(1.0, 2.0) * _lk()
+		var life: float = debris._rd.range_(0.9, 1.5) * _lk()
 		if debris._rd.next() < _q():
 			debris.chunk(x + off, float(e.y) + 6.0, z + 6.0, vx, vy, sz, life, tones, 2, 10.0)
 			contact_made += 1

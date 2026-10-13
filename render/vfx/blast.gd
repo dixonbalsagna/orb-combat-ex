@@ -17,7 +17,7 @@ extends RefCounted
 
 const DEFAULTS: Dictionary = {
 	"blast": {"mult_t1": 0.0, "mult_t2": 0.45, "mult_t3": 1.0, "mult_t4": 1.7, "r_ref": 160.0, "rs_min": 0.6, "rs_max": 2.2, "gap_s": 0.25,
-		"ring_life": 0.5, "ring_r0": 0.75, "ring_r1": 1.7, "ring_r1_t": 0.5, "ring2_delay": 0.12, "chunks": 4.0, "lob": 0.3, "pebbles": 6.0, "pebble_delay": 0.5,
+		"ring_life": 0.5, "ring_r0": 0.75, "ring_r1": 1.7, "ring_r1_t": 0.5, "ring2_delay": 0.12, "chunks": 3.0, "lob": 0.3, "pebbles": 4.0, "pebble_delay": 0.5,
 		"dome": 5.0, "settle": 4.0, "settle_from": 0.4, "settle_to": 1.6, "chunk_min": 10.0, "chunk_max": 22.0},
 }
 
@@ -134,7 +134,7 @@ func on_crater(S: SimState, e, debris: VfxDebris, now: float, powerup_ok: bool, 
 			debris.jobs.append(j)
 			rings += 1
 	# 2. Chunks thrown from the rim, bigger and more by tier; some lobbed so high that they come down about a second later.
-	var nch: int = clampi(int(round(p("blast", "chunks") * k)), 0, 18)
+	var nch: int = clampi(int(round(p("blast", "chunks") * k)), 0, 12)
 	var csz: float = 0.8 + 0.2 * m
 	for i in range(nch):
 		var side: float = 1.0 if rd.next() < 0.5 else -1.0
@@ -143,7 +143,7 @@ func on_crater(S: SimState, e, debris: VfxDebris, now: float, powerup_ok: bool, 
 		var vx: float = side * rd.range_(120.0, 420.0) * (0.7 + 0.3 * sqrt(m)) * sws
 		var vy: float = (rd.range_(1100.0, 1700.0) if lob else rd.range_(450.0, 1000.0)) * (0.8 + 0.2 * sqrt(m)) * sws
 		var sz: float = rd.range_(p("blast", "chunk_min"), p("blast", "chunk_max")) * csz
-		var life2: float = (rd.range_(2.0, 3.0) if lob else rd.range_(1.2, 2.0))
+		var life2: float = (rd.range_(1.6, 2.4) if lob else rd.range_(1.0, 1.6))
 		if rd.next() < q:
 			debris.chunk(x + off, y + 8.0, z + 8.0, vx, vy, sz, life2, tones, 2, 8.0)
 			chunks += 1
@@ -159,7 +159,7 @@ func on_crater(S: SimState, e, debris: VfxDebris, now: float, powerup_ok: bool, 
 		if rd.next() < q:
 			debris.dust_puff(biome, x + (rd.range_(-0.3, 0.3) * r if up else side * r * rd.range_(0.2, 0.9)), y + rd.range_(0.0, 30.0), z + rd.range_(2.0, 26.0), vx, vy, sz * 0.6, sz * 2.0, lf, i % 3)
 	# 4. The second fall: pebbles dropping out of the air half a second on.
-	var npb: int = clampi(int(round(p("blast", "pebbles") * k)), 0, 20)
+	var npb: int = clampi(int(round(p("blast", "pebbles") * k)), 0, 12)
 	if npb > 0:
 		var j2 := VfxDebris.Job.new()
 		j2.at = now + p("blast", "pebble_delay")
