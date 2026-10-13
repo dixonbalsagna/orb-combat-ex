@@ -307,6 +307,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_bld_evt_t = [-1.0e9, -1.0e9]
 	_lh = [0, 0]
 	_lh_gone = [0, 0]
+	_lh_rel_t = [-1.0e9, -1.0e9]
 	fold_active = false
 	_below_t = 0.0
 	_above_t = 0.0
@@ -1411,7 +1412,7 @@ func _update_solo(S: SimState) -> void:
 				if f.state == "launched":
 					solo_phase = "follow"
 					solo_t = 0.0
-				elif _land_t >= CamParams.LAND_HOLD and f.slide <= 0.0:
+				elif _land_t >= CamParams.LAND_HOLD and f.slide <= 0.0 and not _lh_catching(S, solo_slot):
 					_end_solo(S)
 		"hold":
 			# On the attacker until the impact (a building hit, or the landing, or the cap), then the cut to the victim.
@@ -2369,6 +2370,10 @@ var stage_moves: int = 0                               # stages set or moved (co
 var launch_hold: bool = false
 var _lh: Array = [0, 0]                                # 0 none, 1 holding the frame, 2 panning to him
 var _lh_gone: Array = [0, 0]
+var merge_zoom_limit: bool = false                      # the zoom comes in slowly while the panes merge (docs/camera/buildings-in-frame.md section 13); off by default
+var _lh_dist: Array = [0.0, 0.0]                       # the width a fast body has covered since he became fast (the rule engages at LH_ENGAGE_W)
+var _lh_rel_t: Array = [-1.0e9, -1.0e9]               # when the rule last ended for this pane (it engages at once again within a second)
+var _lh_slow: Array = [0, 0]                           # ticks he has been under LH_SLOW of the threshold
 var launch_holds: int = 0                              # (counted for the tests)
 var launch_pans: int = 0
 var launch_hold_cuts: int = 0
@@ -2484,6 +2489,29 @@ func _snap_focus_depth(S: SimState) -> void:
 
 ## A stage for the launched fighter v: the frame of the two buildings x0 (the one he is at) and x1 (the next), the zoom that puts
 ## their near edges in with STAGE_MARGIN of the width each side. Held when the new pair is already inside the stage there is.
+## Whether the panes are merging: a launch shot is giving the screen back, or the layout became one view within MZ_WINDOW.
+func _merging_now() -> bool:
+	if solo_slot >= 0 and solo_w > 0.0 and solo_target <= 0.0:
+		return true
+	return not split_wanted and _layout_age < CamParams.MZ_WINDOW and sep < 0.999
+
+
+## Whether pane i is the only picture on the screen (the launch shot has taken it): the shared camera is hidden then.
+func _pane_is_shown_alone(i: int) -> bool:
+	return solo_slot == i and solo_w >= 0.99
+
+
+## A launch shot's pane is still catching up with him (his offset from its focus over LH_CATCH_W, a second at most past the hold):
+## the shot does not end and the panes do not merge over it.
+func _lh_catching(S: SimState, i: int) -> bool:
+	if not launch_hold or reduced_motion or _land_t > CamParams.LAND_HOLD + CamParams.LH_CATCH_MAX:
+		return false
+	var f = S.fighters[i]
+	var ex: float = SimWrap.sdx(_fx[i], f.x) * _zo[i]
+	var ey: float = (f.y + CamParams.CHEST - _fy[i]) * _zo[i]
+	return sqrt(ex * ex + ey * ey) / vw > CamParams.LH_CATCH_W
+
+
 func _stage_set(v: int, x0: float, y0: float, x1: float, y1: float) -> void:
 	if not depth_dolly or reduced_motion or v < 0 or v > 1:
 		return
@@ -2584,39 +2612,51 @@ func _update_cameras(S: SimState) -> void:
 			lh_ph = int(_lh[i])
 			var spd_l: float = sqrt(vxm * vxm + vym * vym)
 			var z_fl: float = CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H
-			# A launch through buildings is the spectacle, not a fling across open ground: a stage's with the dolly on, the
-			# ordinary follow's (its aim lead and the governor) with it off. The rule leaves it for the chain and 2.5 s after.
-			var bld: bool = time - float(_bld_evt_t[i]) < 2.5
+			# A launch through buildings is the spectacle: a stage's, with the dolly on, and the rule leaves it for the chain and
+			# 2.5 s after. With the dolly off there is no stage, and a launch is judged by its speed alone (the clip's victim at
+			# 32,000 units a second crosses a city of buildings: the follow at 0.06 to 0.09 of the width a tick was the failure).
+			var bld: bool = depth_dolly and time - float(_bld_evt_t[i]) < 2.5
 			if bld:
 				lh_ph = 0   # a building is in the flight: the follow takes him (a hold or pan under way ends)
-			var fast: bool = f.state == "launched" and spd_l * z_fl / 60.0 / vw > CamParams.LH_SPEED and not bld
+			var speed_w: float = spd_l * z_fl / 60.0 / vw   # the picture's step at the floor's zoom, in widths a tick
+			var fast: bool = f.state == "launched" and speed_w > CamParams.LH_SPEED and not bld
 			if lh_ph == 0:
+				# Engage when a fast body has covered LH_ENGAGE_W of the width (at the pane's zoom): a spike that dies in a few
+				# ticks (a knock-back out of a lock, 7,000 units a second for 5 ticks and then 1,200) is the ordinary follow's.
 				if fast:
-					lh_ph = 1
-					_lh_gone[i] = 0
-					launch_holds += 1
+					var step_w: float = spd_l * zc / 60.0 / vw   # his step this tick at the pane's own zoom, in widths
+					_lh_dist[i] = float(_lh_dist[i]) + step_w
+					if float(_lh_dist[i]) >= CamParams.LH_ENGAGE_W or step_w >= CamParams.LH_BIG or time - float(_lh_rel_t[i]) < 1.0:
+						lh_ph = 1
+						_lh_slow[i] = 0
+						launch_holds += 1
+				else:
+					_lh_dist[i] = 0.0
 			elif lh_ph == 1:
-				# The frame is held for the flight, however long. He is brought back by one cut when he has landed (a flash, once a
-				# launch: a cut mid-flight would be one more every second or two of a long flight); a landing near the frame is a pan.
-				var dx_l: float = SimWrap.sdx(_fx[i], f.x)
-				var dy_l: float = f.y + CamParams.CHEST - _fy[i]
-				var far_u: float = sqrt(dx_l * dx_l + dy_l * dy_l)
-				if f.state != "launched":
-					if far_u * zc > CamParams.LH_NEAR * vw:
+				# The frame is held while he is fast. When he has slowed (under LH_SLOW of the threshold for LH_SLOW_TICKS) or has
+				# landed the rule ends: one cut if he is far from the frame (a flash, once a launch), else the ordinary follow takes
+				# him, never a pan (a pan sweeps the scenery for ten ticks: five to ten counted changes).
+				# (the sim's own velocity counts too: a hit-stop holds the body still for a few ticks with his speed intact, and
+				# that is not a body that has slowed)
+				var sim_w: float = sqrt(float(f.vx) * float(f.vx) + float(f.vy) * float(f.vy)) * z_fl / 60.0 / vw
+				_lh_slow[i] = int(_lh_slow[i]) + 1 if (f.state != "launched" or maxf(speed_w, sim_w) < CamParams.LH_SLOW * CamParams.LH_SPEED) else 0
+				if f.state != "launched" or int(_lh_slow[i]) >= CamParams.LH_SLOW_TICKS:
+					var dx_l: float = SimWrap.sdx(_fx[i], f.x)
+					var dy_l: float = f.y + CamParams.CHEST - _fy[i]
+					var far_w: float = sqrt(dx_l * dx_l + dy_l * dy_l) * zc / vw
+					if far_w > CamParams.LH_CUT_OFFSET:
 						_fx[i] = f.x
 						_fy[i] = f.y + CamParams.CHEST
 						_cut_now = true
 						_cut_dip()
 						launch_hold_cuts += 1
-						lh_ph = 0
-					else:
-						lh_ph = 2
-						launch_pans += 1
-			elif lh_ph == 2:
-				var ex: float = SimWrap.sdx(_fx[i], f.x) * zc
-				var ey: float = (f.y + CamParams.CHEST - _fy[i]) * zc
-				if sqrt(ex * ex + ey * ey) / vw < 0.15 and not fast:
+					# the shared camera was frozen with the pane: it joins where it is wanted while it is hidden, so the merge that
+					# follows has no offset left in it
+					if solo_w >= 0.99 or not _pane_is_shown_alone(i):
+						_snap_merged(S)
 					lh_ph = 0
+					_lh_dist[i] = 0.0
+					_lh_rel_t[i] = time
 			_lh[i] = lh_ph
 		else:
 			_lh[i] = 0
@@ -2839,7 +2879,9 @@ func _update_cameras(S: SimState) -> void:
 		if lh_ph == 1:
 			dz = 0.0   # the frame is held: no zoom either (a zoom is the whole picture moving)
 		elif lh_ph == 2:
-			dz = clampf(dz, -CamParams.LH_ZOOM_STEP, CamParams.LH_ZOOM_STEP)   # the pan's budget is the position's
+			dz = clampf(dz, -CamParams.LH_ZOOM_STEP, CamParams.LH_ZOOM_STEP)   # (no pan any more: phase 2 is never entered)
+		elif merge_zoom_limit and not reduced_motion and _merging_now():
+			dz = minf(dz, CamParams.MZ_RATE)   # the zoom comes in slowly while the panes merge
 		_zo[i] = exp(log(_zo[i]) + dz)
 	# the merged shadow camera: the reference camera's ease, snapped while two full panes are up
 	var mt: Vector3 = _merged_target(S)
@@ -2875,6 +2917,8 @@ func _update_cameras(S: SimState) -> void:
 		var dzm: float = (log(mt.z) - log(_mz)) * kzm
 		var capm: float = (CamParams.SLAM_ZOOM_RATE if stiff else CamParams.ZOOM_RATE_TRANS) * DT
 		dzm = clampf(dzm, -capm, capm)
+		if merge_zoom_limit and not reduced_motion and _merging_now():
+			dzm = minf(dzm, CamParams.MZ_RATE)
 		_mz = exp(log(_mz) + dzm)
 	_pmx = mt.x
 	_pmy = mt.y
@@ -2911,7 +2955,10 @@ func _outputs(S: SimState) -> void:
 		# higher SLAM_ZOOM_RATE (it was exempt: 0.2 of a log unit in one tick, the largest jolt in the sweep's scan).
 		if _oz_valid:
 			var cap: float = (CamParams.SLAM_ZOOM_RATE if slam_now else CamParams.ZOOM_RATE_TRANS) * DT
-			var z_held: float = exp(log(_oz[i]) + clampf(log(o.z) - log(_oz[i]), -cap, cap))
+			var cap_up: float = cap
+			if merge_zoom_limit and not reduced_motion and _merging_now():
+				cap_up = minf(cap, CamParams.MZ_RATE)
+			var z_held: float = exp(log(_oz[i]) + clampf(log(o.z) - log(_oz[i]), -cap, cap_up))
 			# The approach cap's other half: the lens (the focus depth plus the camera's distance to it) is the same whatever moves
 			# it, so a zoom that comes in while the focus goes deeper is held when the lens would close on the face ahead faster
 			# than DOLLY_NEAR_RATE of its distance a second (by at most 2% a tick: never a pop).

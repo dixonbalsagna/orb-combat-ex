@@ -215,6 +215,10 @@ func _run() -> void:
 	await _scenario("dolly launch across a street", func(): return _dolly_launch(), {})
 	for on in [false, true]:
 		await _scenario("dolly near facade %s" % ("cap" if on else "free"), func(): return _dolly_near(bool(on)), {})
+	await _scenario("launch spike that dies", func(): return _launch_profile(7000.0, 5.0 / 60.0, 1200.0, 1.0, false, false), {})
+	await _scenario("launch fast then slow", func(): return _launch_profile(9000.0, 0.4, 1000.0, 1.0, true, false), {})
+	await _scenario("launch fast then slow with the merge zoom limit", func(): return _launch_profile(9000.0, 0.4, 1000.0, 1.0, true, true), {})
+	await _scenario("launch short with the merge zoom limit", func(): return _launch_profile(3000.0, 0.3, 500.0, 0.5, false, true), {})
 	for lh in [[6600.0, 13200.0, true], [6600.0, 13200.0, false], [9000.0, 18000.0, true], [3000.0, 6000.0, true]]:
 		await _scenario("launch hold %s %d u/s" % ["on" if bool(lh[2]) else "off", int(lh[0])], func(): return _launch_hold_run(float(lh[0]), float(lh[1]), bool(lh[2])), {})
 	for ln in [2, 3, 5]:
@@ -1248,6 +1252,61 @@ func _dolly_near(on: bool) -> Dictionary:
 	return {}
 
 
+## A launch whose speed changes (docs/camera/buildings-in-frame.md section 10, the rule's engage and release): B flung at `v0`
+## for `t0` seconds and then at `v1` for `t1` while still launched, the rule on. A spike that dies at once (7,000 units a second
+## for five ticks, then 1,200) is the ordinary follow's: the rule does not engage. A fast flight that then slows (9,000 for 0.4 s,
+## then 1,000) engages and ends when he slows (6 ticks under 0.8 of the threshold): at most one cut, and no pan, no hold at
+## the end. `mz` runs it with the merge zoom limit on and checks the zoom comes in no faster than MZ_RATE in the merge.
+func _launch_profile(v0: float, t0: float, v1: float, t1: float, expect_engage: bool, mz: bool) -> Dictionary:
+	_rig.launch_hold = true
+	_rig.merge_zoom_limit = mz
+	var ax: float = 60000.0
+	_pose(ax, 40.0, ax + 500.0, 40.0)
+	_seed_rig()
+	for _i in range(120):
+		_tick_rig()
+	var B = _S.fighters[1]
+	B.state = "launched"
+	var n0: int = int(t0 * 60.0)
+	var n1: int = int(t1 * 60.0)
+	var cuts: int = 0
+	var prev_z: float = -1.0
+	var worst_up: float = 0.0
+	var merging_ticks: int = 0
+	var end_ph: int = 0
+	for k in range(n0 + n1 + 420):
+		if k < n0:
+			B.vx = v0
+		elif k < n0 + n1:
+			B.vx = v1
+		else:
+			B.vx = 0.0
+			B.state = "down"
+		B.x = SimWrap.wrap(B.x + B.vx * SplitRig.DT)
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		if cur.cut and k > 0:
+			cuts += 1
+		var pc: int = 1 if cur.shows(1) and not cur.shows(0) else 0
+		var z: float = cur.cam_z[pc]
+		if prev_z > 0.0 and not cur.cut and k > n0 + n1:
+			if _rig._merging_now():
+				merging_ticks += 1
+				worst_up = maxf(worst_up, log(z / prev_z))
+		prev_z = z
+		end_ph = int(_rig._lh[1])
+	if expect_engage:
+		_check(_rig.launch_holds >= 1, "%s: the rule did not engage (holds %d)" % [_label, _rig.launch_holds])
+		_check(end_ph == 0 and _rig.launch_pans == 0, "%s: the rule was still on at the end (phase %d) or panned (%d)" % [_label, end_ph, _rig.launch_pans])
+		_check(_rig.launch_hold_cuts <= 1, "%s: %d hold cuts (at most one)" % [_label, _rig.launch_hold_cuts])
+	else:
+		_check(_rig.launch_holds == 0, "%s: the rule engaged for a spike that died (%d holds)" % [_label, _rig.launch_holds])
+	if mz:
+		_check(worst_up <= CamParams.MZ_RATE * 1.1 + 0.0005, "%s: the zoom came in by %.4f in a tick while merging (limit %.4f)" % [_label, worst_up, CamParams.MZ_RATE])
+	stats["detail " + _label] = "holds %d, hold cuts %d, pans %d, cut frames %d, ended in phase %d, merging ticks %d, fastest zoom-in while merging %.4f" % [_rig.launch_holds, _rig.launch_hold_cuts, _rig.launch_pans, cuts, end_ph, merging_ticks, worst_up]
+	return {}
+
+
 ## The apparent size of fighter i in pane p against his size on the plane at the zoom drawn: 1.0 is plane size.
 func _size_ratio(cur: SplitFrame, p: int, f) -> float:
 	var h: float = cur.apparent_height(p, f.x, f.y, float(f.z))
@@ -1490,6 +1549,10 @@ func _depth(zrow: float, gap: float, pitch: float = 0.0) -> Dictionary:
 	# The travel budget: a brunt at 5,000 units a second in a foreground row is faster than the picture may change by, so he may
 	# leave his pane's screen for the ticks it takes the pane to cut to him (TRAVEL_COOL), once; not for longer.
 	var off_bound: int = int(CamParams.TRAVEL_WAIT * 60.0) + (28 if pitch > 0.0 else 16)
+	if _rig.launch_hold:
+		# a building launch at 5,000 units a second with the dolly off is judged by its speed (section 13): the frame is held for
+		# the flight and he is brought back on landing, one cut: he is off the screen for the flight
+		off_bound += 60
 	_check(off_run_max <= off_bound, "%s: the deep fighter was off the screen for a run of %d ticks (bound %d; %.0f px at most)" % [_label, off_run_max, off_bound, max_off])
 	stats["depth min px " + _label] = "%.1f px, worst off-screen %.0f px, %d ticks off in a run of at most %d" % [min_px, max_off, off_ticks, off_run_max]
 	return {}

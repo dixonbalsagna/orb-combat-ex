@@ -156,6 +156,14 @@ func set_depth_dolly(on: bool) -> void:
 		main.split_rig.depth_dolly = on
 
 
+## The zoom comes in slowly while the panes merge (docs/camera/buildings-in-frame.md section 13): no faster than 0.21 of a log unit
+## a second, from a launch shot's end to two seconds after the layout is one view. Off by default until Tools has run it. A
+## build-time switch.
+func set_merge_zoom_limit(on: bool) -> void:
+	if main != null:
+		main.split_rig.merge_zoom_limit = on
+
+
 ## A launch too fast to follow (docs/camera/buildings-in-frame.md section 7): a body whose speed would move the picture by more than
 ## 0.03 of the width a tick at the launch floor's zoom is not followed. The pane holds its frame, he leaves it, and after 0.6 s of
 ## his being gone (or his landing) the pane pans to him at 0.03 a tick, or cuts when he is farther than 20,000 units. Off by default

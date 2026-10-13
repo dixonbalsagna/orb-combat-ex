@@ -2,7 +2,8 @@ extends SceneTree
 ## The collapse clip's sim staging (render/tools/flash_capture.gd: AI against AI, a blast through the front row every 150
 ## ticks from tick 90) through the rig, headless: what the displayed camera does around the launch at about tick 724, one line
 ## a tick, and the worst travel in the window. The rig is the one the game builds; --hold turns the launch rule on.
-##   godot --headless --path . --script res://render/camera/tests/collapse_probe.gd -- [--hold] [--from=700 --to=900] [--seed=12345]
+##   godot --headless --path . --script res://render/camera/tests/collapse_probe.gd -- [--hold] [--mz] [--ai] [--from=700 --to=900] [--seed=12345]
+## --ai plays the `ai` clip's staging instead (the real AI match with its writes).
 
 func _to_the_city(S: SimState) -> void:
 	var tall = null
@@ -17,6 +18,20 @@ func _to_the_city(S: SimState) -> void:
 		f.y = WorldTerrain.groundY(S, f.x) + 10.0
 		f.vx = 0.0
 		f.vy = 0.0
+
+
+var scenario: String = "collapse"
+
+
+## The `ai` clip's writes (render/tools/flash_capture.gd): the forms readied at 300 and 1500, a tier raised at 900, a stage at 1200.
+func _stage_ai(S: SimState, t: int) -> void:
+	if t == 300 or t == 1500:
+		for f in S.fighters:
+			f.act.formReady = true
+	if t == 900:
+		S.fighters[0].tier = 3.0
+	if t == 1200:
+		S.fighters[1].stage[1] = 2
 
 
 func _stage_collapse(S: SimState, t: int) -> void:
@@ -45,6 +60,7 @@ func _initialize() -> void:
 	var t0: int = 700
 	var t1: int = 800
 	var hold: bool = false
+	var mz: bool = false
 	var vw: float = 1280.0
 	var vh: float = 720.0
 	for a in OS.get_cmdline_user_args():
@@ -52,6 +68,10 @@ func _initialize() -> void:
 			seed_v = int(a.substr(7))
 		elif a == "--hold":
 			hold = true
+		elif a == "--mz":
+			mz = true
+		elif a == "--ai":
+			scenario = "ai"
 		elif a.begins_with("--from="):
 			t0 = int(a.substr(7))
 		elif a.begins_with("--to="):
@@ -61,13 +81,17 @@ func _initialize() -> void:
 	S.dt = SplitRig.DT
 	var rig := SplitRig.new()
 	rig.launch_hold = hold
+	rig.merge_zoom_limit = mz
 	rig.reset(S, vw, vh)
 	var prev: Vector3 = Vector3.ZERO
 	var prev_ok: bool = false
 	var worst: float = 0.0
 	var over: int = 0
 	for t in range(t1 + 1):
-		_stage_collapse(S, t)
+		if scenario == "ai":
+			_stage_ai(S, t)
+		else:
+			_stage_collapse(S, t)
 		SimCore.step(S)
 		var ev: Array = S.out.fx.duplicate()
 		S.out.fx.clear()
