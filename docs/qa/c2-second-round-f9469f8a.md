@@ -447,3 +447,24 @@ PASS: the Protagonist 51.4% [47.9, 54.8] over both slots (50.5% from P1, 52.3% f
 | PENDING | SB5 | stage-c-tests §3 | Ki fairness: sticky heavy against sticky light, neither above 55%; ki-starved fallbacks per match reported | waiting for Controls Stage C (+ Encounter scheduler for B1, B2): no press_ack event in the sim |
 | PENDING | SB6 | stage-c-tests §3 | Determinism: 100 seeds with random queue presses, run twice, identical hashes | waiting for Controls Stage C (+ Encounter scheduler for B1, B2): no press_ack event in the sim |
 | PENDING | C-human | stage-c-tests §4 | Human checks: readability (80% say what the next attack is and why it has not fired), weightlessness (each "nothing happened" is a missing ack), agency survey against the prototype baseline | waiting for playtest: no playtest event in the sim |
+
+---
+
+## Addendum (2026-10-13): World's wall slam, HEAD f5c001e6 (579dd984) against f9469f8a
+
+Paired by seed on the default arm (seeds 1 to 100; f9469f8a from the clean pass's records, HEAD fresh) and on one arm from World's demo start at a crossing (`--start=crossing`, an option added to `records.gd` for this; 100 matches each build). Below-normal priority, `--jobs=3` in three waves, 6 to 7 minutes a wave; no job wall-capped or budget-stopped. Harness `.gd` files are the working tree's (records.gd with `--start`) on both exports.
+
+| Per match (100 matches) | f9469f8a default | HEAD default | f9469f8a crossing | HEAD crossing |
+| :--- | ---: | ---: | ---: | ---: |
+| **Wall slams (a `lodge` event)** | 0 | **0.34** | 0 | **0.40** |
+| Bodies into buildings (landings that end on a building) | 0.39 | 0.45 | 1.15 | 1.18 |
+| Landings against a wall (the older slope class) | 1.85 | 1.82 | 1.57 | 1.33 |
+| Damage from impacts (the only kind a slam can land in) | 985 | 997 (+12) | 1,033 | 1,033 |
+| Match length: median / 10th percentile | 432.0 / 313.2 s | 434.4 / 312.7 s | 464.0 / 357.8 s | 466.6 / 357.8 s |
+| First slot (the Protagonist's side) wins | 50% | 55% | 43% | 51% |
+| Civilians lost | 21.1% | 20.9% | 22.4% | 22.8% |
+
+- **Damage from walls a match is not separable in the records:** a slam's extra hit lands in the damage kind `impact` with every other impact, so the only figure is the impact total, up 12 a match (1.2%) on the default arm and unchanged from the crossing. A `wall` damage kind (or the lodge event carrying its damage) would give the number exactly.
+- **Paired by seed:** on the default arm 67 of 100 matches are identical to f9469f8a (the same length and winner) and 13 changed winner; from the crossing 29 of 100 are identical and 32 changed winner. The mean change in length is +0.8 s and -1.9 s. A slam changes a match from that point on, so the win split moves by chance rather than by a rule (the interval at 100 matches is about 10 points on each).
+- **Bands:** of 161 rows the default arm's evaluation compares, 155 keep their status. The six that crossed their lines are all on a band edge and inside the noise: `10.end.launch` 29.8 to 30.1% (band 18 to 30), `10.longHaul` 30.2 to 29.6% (at least 30), `10.gap10` 100 to 98% of matches with no gap over 10 s (at least 95; the interval is the cause), `8.limbBreaks` 0.29 to 0.34 (now in 0.3 to 0.5), `7.beamEscape` 24.1 to 26.4% (the interval), and `4.struct.row1` (a display change). None is the wall slam's doing that a larger sample would not move back and forth.
+- **So:** the slam is rare (one body in three matches), costs about 12 damage a match, and moves nothing that is not already on an edge.

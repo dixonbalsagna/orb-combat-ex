@@ -26,6 +26,7 @@ func _init() -> void:
 	var out: String = ""
 	var cap: int = 200000        # tick safety only; the match cap is in sim seconds (hit-stop ticks do not advance S.T)
 	var capsec: float = 900.0     # the S4 ruling: 15:00 of sim time
+	var start_mode: String = ""   # --start=crossing: World's demo start astride a crossing (setup.start); default off
 	var wall: float = 300.0       # real seconds one match may take before it is ended as a timeout (rec.wallCapped)
 	var budget: float = 5400.0    # real seconds the whole run may take before it stops starting matches (the runner then reports the batch as short)
 	var level: String = ""        # the AI level for the run (DirAI.level): easy, medium or hard; "" follows data/director/ai.json
@@ -44,6 +45,8 @@ func _init() -> void:
 			level = a.substr(8)
 		elif a.begins_with("--cap="):
 			cap = int(a.substr(6))
+		elif a.begins_with("--start="):
+			start_mode = a.substr(8)
 		else:
 			pos.append(a)
 	var n: int = int(pos[0]) if pos.size() > 0 else 10
@@ -61,16 +64,16 @@ func _init() -> void:
 		if float(Time.get_ticks_msec() - t_proc) > budget * 1000.0:
 			print("records: time budget of %d s used after %d of %d matches" % [int(budget), i, n])
 			break
-		recs.append(run_match(base + i, arm, cap, capsec, int(wall * 1000.0)))
+		recs.append(run_match(base + i, arm, cap, capsec, int(wall * 1000.0), start_mode))
 	var f := FileAccess.open(out, FileAccess.WRITE)
 	f.store_string(JSON.stringify(recs))
 	f.close()
 	quit(0)
 
 
-func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 300000) -> Dictionary:
+func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 300000, start_mode: String = "") -> Dictionary:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed)
+	SimCore.newMatch(S, seed, {}, ({"start": start_mode} if start_mode != "" else {}))
 	SimGolden.applyArm(arm, S.fighters)
 	var fs: Array = S.fighters
 	var slot := {}
