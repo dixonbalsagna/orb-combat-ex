@@ -46,7 +46,7 @@ Measured today on a loaded machine, one capture at a time, the game's own web bu
 | 12 more AI seeds, both modes | 86,400 | 4.8 |
 | **the full release set** | about 214,000 | **about 12, plus analysis (a minute a clip)** |
 
-At three jobs under the 40% cap: **about 5.5 hours**, a night. One at a time per session, as the rule says: half a day.
+At three jobs under the 40% cap: **about 3.9 hours measured** (the first estimate was 5.5), a night. One at a time per session, as the rule says: half a day.
 
 ## 4. How to afford it: three tiers
 
@@ -78,6 +78,36 @@ To make the windows cheap the hook needs one thing: **`skip`**, the ticks run wi
 | 6. another start for steadiness: 600 ticks later is enough; for a clip flagged sensitive the re-capture is a different run (start position, distance, direction or camera phase), not a later window | `--how "skip N"` is refused for a sensitive clip; `--variant N` (the pair set down N x 450 units further along the world: another place, scenery and camera phase) on `run-pixels.mjs`, `capture-web.mjs` and `flash_worst.gd`, with the hook patch `flash-capture-variant.patch`; an AI clip's different run is another seed. |
 | 7. the HUD's own rate as a separate line | `--record --hud-rate <n from ui/tools/hud_check.gd>`: the record has a `hud` line and fails at more than 3 a second. |
 
-**The clips above 2.0 and their second capture.** On the last whole run (b1b2ed6a, 28 clips) 10 clips read between 2.0 and 3.0 on the primary reading (mash normal and reduced, signature reduced, ai 12345 normal, ai 7 normal, ai 1 normal and reduced, ai 3 normal, ai 38 normal, ai 39 normal): 36% of the set would need a second capture, besides the 7 that fail and are fixed first. Reading the table of the repair run (below) adds the exact list for the current build.
+**The clips above 2.0 and their second capture.** Section 7 has the measured list for the current build: 10 of 28 clips (36%) read above 2.0 and up to 3.0 on the primary reading; 8 of them need the second capture, the other 2 already fail on a sensitivity reading and are fixed first.
 
-**A release night, now.** The set is 56 clips (28 + 4 city + 24 AI at 20 seeds) plus the scenes that wait on other directors (`openfloors`, `zipcity`, `skyextremes`, `crown`, `flyby`, `aidepth`: 12 more clips). At 5 frames a second a capture and three jobs under the 40% budget (2.1 times one at a time): the 56 clips are about 5.5 hours; the second captures of the 36% between 2.0 and 3.0 add about 36%, the sensitive re-captures (a spread over 1.0: about 4 clips of 28 on the last run) about 7%: **about 8 hours at three jobs, about 17 hours one capture at a time**, and about 10 hours at three jobs when the 12 waiting scenes are in. That is a night and a morning, so the nightly set is the unit and the release pass is the nightly run of the commit being published with its second captures.
+**A release night, now (measured, replaces the estimate).** The set is 56 clips (28 + 4 city + 24 AI at 20 seeds) plus the scenes that wait on other directors (12 more clips). Measured on the repair run: 28 clips in 1 h 44 min at three jobs under the 40% budget with another session's long run beside them (a fixed clip 5 to 7 minutes, an AI clip 10 to 16 minutes each, three at a time; every capture 7.8 to 13 frames a second, none starved), so 3.7 minutes a clip, not the 5.9 of the estimate. The 56 clips: **about 3.9 hours**; second captures of the 36% above 2.0 (about 20 clips): about 1.5 hours; sensitive re-captures (2 of 28 on this run, about 7%): about 20 minutes. **About 5.7 hours at three jobs, about 12 hours one capture at a time**, and about 6.5 hours at three jobs when the 12 waiting scenes are in. A night, so the nightly set is the unit and the release pass is the nightly run of the commit being published with its second captures.
+
+## 7. The repair run (2026-10-12, commit f9469f8a, 28 clips, the travel budget off and on)
+
+Every clip was captured twice through the guarded launcher (three jobs, 40% of the cores, below normal, 7.8 to 13 frames a second, none under the 1.0 that voids a clip). The 15 clips of the first pass taken inside the incident window (07:15 to 12:25) were void and are the repair's; the other 13 stand. Readings are primary / area-15% / 2 s memory; the budget on and off read the same on every clip.
+
+| clip | normal (primary / area-15% / 2 s memory) | reduced | counted changes in the worst second (n, r) | within 15% above the threshold (n, r) | margin rule met (n, r) | second capture |
+|---|---|---|---|---|---|---|
+| mash | 0 / 0 / 0 | 0 / 0 / 0 | 0, 0 | 0, 0 | yes, yes | no |
+| mashcity | 1 / 1 / 0 | 1 / 1 / 0 | 2, 2 | 2, 2 | yes, yes | no |
+| clash | 1.5 / 2.5 / 2 | 2 / 2 / 2 | 3, 5 | 2, 2 | yes, yes | no |
+| transform | 1.5 / 2 / 2 | 2 / 2 / 2 | 3, 4 | 1, 4 | yes, yes | no |
+| signature | 2 / 3 / 2.5 | 2.5 / 2.5 / 2.5 | 4, 5 | 2, 2 | yes, no | reduced |
+| collapse | **FAIL** 3.5 / 3.5 / 3.5 | 2.5 / 2.5 / 2.5 | 8, 6 | 2, 3 | no, no | reduced |
+| ai-12345 | 2.5 / 3 / 2.5 | **FAIL** 2.5 / 3.5 / 2.5 | 6, 7 | 1, 5 | no, no | normal and reduced |
+| ai-4 | 1.5 / 1.5 / 2 | 1.5 / 2.5 / 1.5 | 4, 3 | 4, 1 | yes, yes | no |
+| ai-7 | 2.5 / 2.5 / 2 | 2 / 1.5 / 1.5 | 5, 5 | 5, 4 | no, yes | normal |
+| ai-1 | 2.5 / 3 / 2 | **OVER GATE** 3 / 3 / 3 | 6, 6 | 1, 2 | no, no | normal and reduced |
+| ai-3 | 2.5 / 2.5 / 2.5 | 2 / 2 / 2 | 7, 5 | 3, 3 | no, yes | normal |
+| ai-5 | 2 / 2 / 2.5 | **OVER GATE** 3 / 2.5 / 2.5 | 4, 7 | 4, 4 | yes, no | reduced |
+| ai-38 | **FAIL** 3 / 4 / 3 | **FAIL** 4 / 5 / 2 | 8, 9 | 4, 3 | no, no | normal |
+| ai-39 | 2 / 2.5 / 1.5 | 1.5 / 3 / 1.5 | 5, 4 | 3, 2 | yes, yes | no |
+
+What the table says:
+
+1. **The travel budget does nothing to the worst seconds.** On 27 of 28 clips the verdict, the three readings, the worst second's tick and its counted changes are identical off and on; on the 28th (mashcity normal) two changes differ in size, not in count or verdict. It changes counts elsewhere in the clip (the headless count half moves by a few changes in AI matches), but it does not touch the second that decides. The fails are not the budget's to fix.
+2. **Six clips are not a pass:** collapse normal (3.5, camera 7 of 8 changes), ai 12345 reduced (3.5 on the area reading, camera 5 of 7), ai 38 normal and reduced (4 and 5; world and camera mixed), ai 1 reduced and ai 5 reduced (3, OVER GATE; world-heavy). The two seeds new this week (38, 39) were picked by the scan to have both signatures: seed 38 is the worst clip of the set and a release seed that stays until its cause is fixed (Legal's RL-131 item 3).
+3. **Second captures (the tool's rule: primary above 2.0 and up to 3.0):** ai 1 normal and reduced, ai 12345 normal, ai 3 normal, ai 7 normal, ai 5 reduced, signature reduced, collapse reduced: 8 clips (6 AI, 2 fixed), about 45 minutes at three jobs. ai 12345 reduced and ai 38 normal are also in the band but fail on a sensitivity reading, so they wait for the fix. By any of the three readings the list grows by six (signature normal, clash normal, ai 4 reduced, ai 5 normal, ai 39 normal and reduced): the tool does not require them; Legal may want them.
+4. **Sensitive (spread over 1.0, re-run as another run, not a later window):** ai 38 reduced (4 / 5 / 2) and ai 39 reduced (1.5 / 3 / 1.5).
+5. **Margins:** 26 of 28 clips have at least one counted change within 15% above the threshold in their worst second (only mash has none). The margin rule (a second with such a change must total 2.0 or less) is met by the 16 clips whose primary reading is 2.0 or less, and **not met by 12: ai 1 both, ai 12345 both, ai 3 normal, ai 38 both, ai 5 reduced, ai 7 normal, signature reduced, collapse both.** Six of those 12 (ai 1 normal, ai 12345 normal, ai 3 normal, ai 7 normal, signature reduced, collapse reduced) are a combined PASS and would still be refused at --record: for them the fix is a second of 2.0 or less, or taking the changes that sit at 100 to 115% out. Legal should know that a combined PASS and a clear margin are two different bars.
+6. **Not guard-recorded:** 22 of the 28 off-pass clips carry no load or rate (the first launcher): 13 are the clips before the incident or the 12:37 to 13:04 captures, 9 are the repair's first batch; the rate floor is judged by their capture times. A release record needs them re-captured through the present launcher, which the nightly does anyway.

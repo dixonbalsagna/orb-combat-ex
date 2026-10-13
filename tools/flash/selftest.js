@@ -281,5 +281,49 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
   check('the register own worst weight must agree with the recount', !L.checkRun({ scenario: 't', reduced: false, rows: [wr(1, 'a', true, 'ok', 1)], summary: { worst_second: 1, worst_weight: 2 } }).pass);
 }
 
+// ---- the GIF check (tools/flash/gif.mjs and analyse-gif.mjs): GIFs built here, run through the real command
+{
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const { spawnSync } = require('child_process');
+  // a GIF of black and white full frames, each held `delayCs` hundredths of a second; LZW with a clear code every two pixels (min code size 2, so every code is 3 bits)
+  const gif = (frames, delayCs, size) => {
+    const out = [Buffer.from('GIF89a'), Buffer.from([size & 255, size >> 8, size & 255, size >> 8, 0x80, 0, 0, 0, 0, 0, 255, 255, 255])];
+    for (const white of frames) {
+      out.push(Buffer.from([0x21, 0xf9, 4, 0, delayCs & 255, delayCs >> 8, 0, 0]));
+      out.push(Buffer.from([0x2c, 0, 0, 0, 0, size & 255, size >> 8, size & 255, size >> 8, 0, 2]));
+      let acc = 0, nb = 0;
+      const bytes = [];
+      const put = (code) => { acc |= code << nb; nb += 3; while (nb >= 8) { bytes.push(acc & 255); acc >>= 8; nb -= 8; } };
+      const px = size * size, v = white ? 1 : 0;
+      for (let i = 0; i < px; i += 2) { put(4); put(v); if (i + 1 < px) put(v); }
+      put(5);
+      if (nb > 0) bytes.push(acc & 255);
+      for (let i = 0; i < bytes.length; i += 255) { const n = Math.min(255, bytes.length - i); out.push(Buffer.from([n]), Buffer.from(bytes.slice(i, i + n))); }
+      out.push(Buffer.from([0]));
+    }
+    out.push(Buffer.from([0x3b]));
+    return Buffer.concat(out);
+  };
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gifcheck-'));
+  const go = (name, buf) => {
+    const f = path.join(dir, name + '.gif');
+    fs.writeFileSync(f, buf);
+    const r = spawnSync(process.execPath, [path.join(__dirname, 'analyse-gif.mjs'), f], { encoding: 'utf8', timeout: 120000 });
+    return { code: r.status, out: (r.stdout || '') + (r.stderr || '') };
+  };
+  const alt = (n) => Array.from({ length: n }, (_, i) => i % 2 === 1);
+  const fast = go('fast', gif(alt(60), 3, 64));        // 33 a second, black and white, the whole frame: a strobe
+  check('a GIF of the whole frame flipping black and white every 30 ms fails the check (exit 1)', fast.code === 1 && /FAIL|OVER GATE/.test(fast.out), fast.out.slice(0, 200));
+  const slow = go('slow', gif(alt(8), 50, 64));        // one change every half second
+  check('a GIF of the whole frame flipping every half second passes (exit 0)', slow.code === 0 && /PASS/.test(slow.out), slow.out.slice(0, 200));
+  const still = go('still', gif([false], 100, 32));
+  check('a one-frame GIF has nothing to analyse (exit 2, says it does not move)', still.code === 2 && /does not move/.test(still.out), still.out.slice(0, 200));
+  const bad = go('bad', Buffer.from('not a gif at all'));
+  check('a file that is not a GIF is refused (exit 2)', bad.code === 2, bad.out.slice(0, 200));
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(failed ? `flash self-test FAILED: ${failed} of ${ran} checks` : `flash self-test ok: ${ran} checks`);
 process.exit(failed ? 1 : 0);
