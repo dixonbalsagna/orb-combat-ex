@@ -1,6 +1,6 @@
 # The fighter pipeline: how a fighter gets into the build, and what it does to the balance
 
-Owner: Game Design. Date: 2026-10-12, second version, with Animation's, Combat's, Art's and Narrative's parts folded in (`docs/animation/fighter-onboarding.md`, `docs/combat/fighter-onboarding.md`, `docs/art/fighter-design-workflow.md`, `docs/narrative/fighter-identity-workflow.md`). Their sizes are their own estimates. Every number of mine is a first value. Co-op is not designed here.
+Owner: Game Design. Date: 2026-10-12, second version, with Animation's, Combat's, Art's and Narrative's parts folded in (`docs/animation/fighter-onboarding.md`, `docs/combat/fighter-onboarding.md`, `docs/art/fighter-design-workflow.md`, `docs/narrative/fighter-identity-workflow.md`). Their sizes are their own estimates. Amended the same day with the borrowing policy (§1). Every number of mine is a first value. Co-op is not designed here.
 
 **Orb,** 2026-10-12: "right now we're building a moveset and calibrating balance on two generic stand-in characters, once we start introducing actual fighters intended for the release version how will the balance be affected? how much retooling will need to happen? Ideally each character should have their own 'flavor' of attack animations and movesets, with a large common pool of attacks to pull from. Can we establish a workflow for the characters so I can get at least four into the playable build soon?"
 
@@ -39,6 +39,21 @@ Owner: Game Design. Date: 2026-10-12, second version, with Animation's, Combat's
 **Two calls Combat asked for.**
 - **A cell's count may differ by fighter.** The Protagonist can have 36 lights where another has 30: that is his "huge repertoire", and it is variety and nothing else, since worth and time go by strength. Two conditions: Combat's floors hold for everyone, and his spread of places and sends stays in its band whatever the count.
 - **Fighters may share heavies.** Today none is shared: 10 each. Four fighters would need 40 and twelve would need 120, which nobody can pose. A fighter's heavy tier is a shared core with his own on top. At tier 1 he needs 2 that are his alone. At tier 2 he needs 4. No two fighters share more than half their heavies with each other, and a shared heavy is thrown through his own pose profile.
+
+**The borrowing policy** (ruled on Combat's measure, `docs/combat/roster-rows.md`). With the Cyborg and the Empress added, the share of a fighter's blows that are a piece only he has is 33 to 37% today, 27% if newcomers borrow the common pieces only, and 1 to 12% if they may read every pack. So who may borrow what decides whether a fighter is his own, and weights and bans alone don't carry him.
+
+1. **A piece is his, or it is common.** A common piece is in the common pool by a decision, and anyone may have it. A piece that is one fighter's own is never lent. That is Combat's "common only", taken.
+2. **Lights and mediums have a floor, as heavies do.** They are most of what is thrown, so they are where a fighter is seen most.
+
+| His own, at least | Lights | Mediums | Heavies | With his energy pieces |
+| :--- | ---: | ---: | ---: | :--- |
+| Tier 1 | 3 | 2 | 2 | Borrowed |
+| Tier 2 | 5 | 3 | 4 | Six of his own |
+
+3. **His own are his favourites.** They carry his highest weights, so they are the blows he throws most. A few pieces then go a long way.
+4. **The gate is on the blows, and not on the pieces.** At least a quarter of the blows he throws in a match are pieces only he has, by Combat's measure. Under a fifth, he gets more of his own or his weights change. The two in the build read 27% under this rule.
+5. **Heavies and bolts are the one exception, for a time.** There is no common heavy yet, so at tier 1 a newcomer takes heavies and bolts from the others' packs, down to each lender's floor, as Combat has built it. They go back as his own are posed.
+6. **Tier 1 fits Animation's size:** 3 lights, 2 mediums and 2 heavies are 7 key sets, inside its 6 to 8.
 
 ## 2. What happens to the balance
 
@@ -141,7 +156,14 @@ With four fighters that is four mirrors and six pairings. With twelve it is twel
 - **The narrow parts are Orb's picks first, then Animation's days.** Everything else is pages and data.
 - **Tier 2 is a second trip** through steps 5 to 13 for one mechanic, with its off switch. Animation sizes a fighter's tier 2 at 8 to 12 days.
 
-**The common pool, by Combat's count.** 95 strikes are posed: 39 for both fighters and 28 for each alone. At that rate four fighters need about 55 more. For twelve, the share that is a fighter's alone has to fall to about 15, his heavies and energy pieces, and the common lights and mediums have to grow from 65 to about 120, so that weights and bans alone can tell fighters apart. Sharing heavies (§1) is the first step of that. The pool is thin in elbows, knees, shoulders and the head, which is the Cyborg's ground.
+**The common pool, by Combat's count.** 95 strikes are posed: 39 for both fighters and 28 for each alone. At that rate four fighters need about 55 more. The pool is thin in elbows, knees, shoulders and the head, which is the Cyborg's ground.
+
+**For twelve.** I had folded in a plan where every light and medium is common and a fighter's own are his heavies and energy pieces. Combat's measure shows that leaves him about a tenth of his blows, so that plan is withdrawn. A fighter's own set is about 18 pieces at tier 2, spread over all three strengths and his energy pieces (§1), and the common pool grows beside it. That is about 216 own pieces for twelve, and a common pool of about 100. Whether that many can be posed is Animation's to say.
+
+**The Empress's silhouette changes her moveset** (Combat). The Regent strikes as the parked row does. The Tabard loses a knee and a straight kick. **The Bell has no kick and no knee at all,** so by today's grammar she has no heavy that lands on the legs, and her row doesn't generate.
+- **The floor of a heavy to an arm and one to the legs is a rule about the target.** It is there so that the wrench can go after either limb. How she reaches the legs is her own.
+- **If Orb picks the Bell, that floor is waived for her at tier 1.** She wrenches arms only, and her sheet says so. It comes back at tier 2, when her mantle strikes as a limb: its hem is what reaches low.
+- It doesn't hold up the pick. Orb should know when picking that the Bell means she never kicks, and that her low blows wait for the mantle, which is the most work of anything on the four.
 
 ## 5. The first two: what ends "generic"
 
