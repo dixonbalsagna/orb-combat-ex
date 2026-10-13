@@ -82,7 +82,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var rec := {"seed": seed, "arm": arm, "names": [fs[0].name, fs[1].name], "attacks": {"light": 0, "heavy": 0, "sig": 0}, "ambush": 0,
 		"launches": {}, "melee": {}, "beams": [], "parries": [0, 0], "chains": [], "hides": [0, 0], "found": 0, "seam": 0, "maxMove": 0.0,
 		"bad": "", "koAt": -1.0, "winner": -1, "maxTier": [1, 1], "lowSec": 0.0, "lowCas": 0.0, "casByTier": [0.0, 0.0, 0.0, 0.0, 0.0],
-		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "cueText": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "fronts": 0}
+		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "bh": {}, "cueText": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "fronts": 0}
 	var prev_x: Array = [fs[0].x, fs[1].x]
 	# the zip (docs/design/melee-press-feel.md section 2c; docs/director/brawl-plan.md section 7.4): one record a zip, from the zip_light or zip_heavy cue to its zip_end;
 	# the build may not have it yet, and then the list stays empty
@@ -303,6 +303,14 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 					last_play = S.T
 			if e.type == "drop_start" or e.type == "drop_land" or e.type == "drop_end":   # an event type of its own (sim/core/fx.gd), not a cue
 				rec.drops[str(e.type).substr(5)] = int(rec.drops.get(str(e.type).substr(5), 0)) + 1
+			if e.type == "building_hit" or e.type == "lodge" or e.type == "floor_hit":   # World's brunt events by outcome (wall, crack, pass ...): counts, the building's damage and the launch speed fraction
+				var bo: String = e.type if e.type != "building_hit" else str(e.get("outcome"))
+				var bh: Dictionary = rec.bh.get(bo, {"n": 0, "amount": 0.0, "spd": 0.0})
+				bh.n = int(bh.n) + 1
+				if e.type == "building_hit":
+					bh.amount = float(bh.amount) + float(e.get("amount"))
+					bh.spd = float(bh.spd) + float(e.get("spd"))
+				rec.bh[bo] = bh
 			if e.type == "launch":
 				ex_launch = true
 			elif e.type == "exchange_end":   # slice 3: one per exchange, kind continue | knockback | launch; a "continue" also covers an exchange that never reached a launch decision, so the decision itself is read from launch_plan
