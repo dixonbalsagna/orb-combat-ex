@@ -89,7 +89,7 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
 	# a pairing other than the roster's first two: the page's `slots` (two fighter ids, tools/flash/capture-web.mjs --slots), as flash_worst.gd's --slots does
 	main.start_match(seed if seed != 0 else SEED, {"p1": ai[0], "p2": ai[1]}, {} if slots.size() != 2 else {"slots": slots})   # its own setup: no intro, not filed
 	# Camera's travel budget (off by default): the page's `budget=1`, set by tools/flash/run-pixels.mjs --budget, so a run with and without it is the same sim
-	var applied: Dictionary = {"budget": false, "hold": false}   # what the hook really switched on: capture-web.mjs refuses a clip whose switch was asked for and not applied
+	var applied: Dictionary = {"budget": false, "hold": false, "mergezoom": false}   # what the hook really switched on: capture-web.mjs refuses a clip whose switch was asked for and not applied
 	if main.split_view != null and _page_flag("budget"):
 		main.split_view.set_travel_budget(true)
 		applied["budget"] = true
@@ -97,6 +97,10 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
 	if main.split_view != null and _page_flag("hold"):
 		main.split_view.set_launch_hold(true)
 		applied["hold"] = true
+	# Camera's merge-zoom limit (off by default): the page's `mergezoom=1`, set by tools/flash/run-pixels.mjs --merge-zoom
+	if main.split_view != null and _page_flag("mergezoom"):
+		main.split_view.set_merge_zoom_limit(true)
+		applied["mergezoom"] = true
 	JavaScriptBridge.eval("window.__flashcap.switches = %s;" % JSON.stringify(applied), true)
 	main.started = true              # the demo's prompt is not part of a worst case
 	host.vfx.auto_quality = false

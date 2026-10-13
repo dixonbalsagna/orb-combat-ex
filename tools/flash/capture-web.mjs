@@ -28,7 +28,7 @@ const usage = () => {
     '       [--ticks 1800] [--reduced] [--seed N] [--slots A,B] [--skip N] [--width 960] [--height 540] [--software] [--browser chrome|edge] [--browser-path <exe>] [--timeout 900]\n       [--session <name>] [--time-limit <hard limit, seconds>] [--cpu-cap 25]');
   process.exit(2);
 };
-const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--variant', '--width', '--height', '--software', '--budget', '--hold', '--browser', '--browser-path', '--timeout', '--session', '--purpose', '--time-limit', '--cpu-cap']);
+const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--variant', '--width', '--height', '--software', '--budget', '--hold', '--merge-zoom', '--browser', '--browser-path', '--timeout', '--session', '--purpose', '--time-limit', '--cpu-cap']);
 for (const a of argv) if (a.startsWith('--') && !known.has(a)) { console.error(`unknown option ${a}`); usage(); }
 const here = dirname(fileURLToPath(import.meta.url));
 const DIR = has('--mock') ? join(here, 'mock-page') : opt('--dir');
@@ -60,6 +60,8 @@ if (DIR) {
 if (has('--budget') && !has('--mock')) pageUrl += (pageUrl.includes('?') ? '&' : '?') + 'budget=1';
 // Camera's launch hold (SplitRig.launch_hold, off by default): the page's `hold=1`, read by the hook the same way
 if (has('--hold') && !has('--mock')) pageUrl += (pageUrl.includes('?') ? '&' : '?') + 'hold=1';
+// Camera's merge-zoom limit (SplitRig.merge_zoom_limit, off by default): the page's `mergezoom=1`
+if (has('--merge-zoom') && !has('--mock')) pageUrl += (pageUrl.includes('?') ? '&' : '?') + 'mergezoom=1';
 mkdirSync(OUT, { recursive: true });
 // The browser is started by tools/machine/browser.mjs: a hard time limit (--time-limit, default the page timeout plus 5 minutes), below-normal priority, a CPU cap (--cpu-cap, default 25% of the
 // machine), a profile folder cap-<session>-flash-<id>, gone when this process is. A cold machine can take far longer than a warm one to open its DevTools port; it waits up to 90 s and tries 3 times.
@@ -100,7 +102,7 @@ try {
       // a switch asked for and not applied is a clip of the wrong build, not a clip of the switch: the hook reports what it set (render/tools/flash_capture.gd `switches`).
       // (Until docs/tools/pending/flash-capture-page-flags.patch the hook read main.args, which keeps only URL_ARGS: budget=1 and hold=1 never reached it.)
       applied = got && got.sw ? got.sw : null;
-      for (const [flag, key] of [['--budget', 'budget'], ['--hold', 'hold']]) {
+      for (const [flag, key] of [['--budget', 'budget'], ['--hold', 'hold'], ['--merge-zoom', 'mergezoom']]) {
         if (has(flag) && !has('--mock') && !(applied && applied[key] === true)) throw new Error(`${flag} was asked for and the page did not apply it (the hook reports ${JSON.stringify(applied)}): the build's hook is older than flash-capture-page-flags.patch`);
       }
     }
@@ -112,7 +114,7 @@ try {
   }
   const loadAfter = await cpuLoad(1000);
   const guard = browser ? { tag: String(browser.profile).split(/[\\/]/).pop(), session: browser.entry.session, purpose: browser.entry.purpose, cpuPercent: browser.entry.cpuPercent, timeoutS: browser.entry.timeoutS, priority: 'below-normal', hardEndMs: browser.deadlineMs } : null;
-  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, budget: has('--budget'), hold: has('--hold'), applied, variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
+  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, budget: has('--budget'), hold: has('--hold'), mergeZoom: has('--merge-zoom'), applied, variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
   log(`${TICKS} frames in ${Math.round((Date.now() - tStart) / 1000)} s of capture (${(TICKS / Math.max(1, (Date.now() - tStart) / 1000)).toFixed(2)} frames a second${has('--software') ? ', software rendering' : ''})`);
   log(`wrote ${TICKS} frames to ${OUT}; next: node tools/flash/analyse-frames.js ${OUT}`);
 } catch (e) {

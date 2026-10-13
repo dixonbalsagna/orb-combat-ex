@@ -30,7 +30,7 @@ const CLIP_TIMEOUT_S = Number(opt('--clip-timeout', 3600));
 const ONLY = opt('--only') ? opt('--only').split(',') : null;
 const W = 1024, H = 768;
 const TICKS_OVERRIDE = opt('--ticks') ? Number(opt('--ticks')) : 0;   // a shorter clip, for a speed measurement (the verdict then covers only those ticks)
-if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--hold] [--ticks N] [--skip N] [--variant N] [--cpu-cap 40] [--clip-timeout 3600]'); process.exit(2); }
+if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--hold] [--merge-zoom] [--ticks N] [--skip N] [--variant N] [--cpu-cap 40] [--clip-timeout 3600]'); process.exit(2); }
 const src = JSON.parse(readFileSync(join(here, 'sources.json'), 'utf8'));
 const CLIP = opt('--clip') ? opt('--clip').split(',') : null;
 // the required set (sources.json, tools/flash/clips.mjs): the five fixed cases, and for `ai` every pairing at every seed, each in both modes
@@ -61,7 +61,7 @@ function seriesFromRows(rows, ticks, skip = 0) {
 async function one(job) {
   const dir = join(OUT, job.id);
   const t0 = Date.now();
-  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.slots ? ['--slots', job.slots.join(',')] : []), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(TICKS_OVERRIDE || job.ticks), ...(argv.includes('--software') ? ['--software'] : []), ...(argv.includes('--budget') ? ['--budget'] : []), ...(argv.includes('--hold') ? ['--hold'] : []), ...(SKIP > 0 ? ['--skip', String(SKIP)] : []), ...(VARIANT !== 0 ? ['--variant', String(VARIANT)] : []), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', String(CLIP_TIMEOUT_S), '--cpu-cap', String(CPU_CAP)], (CLIP_TIMEOUT_S + 900) * 1000);
+  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.slots ? ['--slots', job.slots.join(',')] : []), ...(job.reduced ? ['--reduced'] : []), '--ticks', String(TICKS_OVERRIDE || job.ticks), ...(argv.includes('--software') ? ['--software'] : []), ...(argv.includes('--budget') ? ['--budget'] : []), ...(argv.includes('--hold') ? ['--hold'] : []), ...(argv.includes('--merge-zoom') ? ['--merge-zoom'] : []), ...(SKIP > 0 ? ['--skip', String(SKIP)] : []), ...(VARIANT !== 0 ? ['--variant', String(VARIANT)] : []), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', String(CLIP_TIMEOUT_S), '--cpu-cap', String(CPU_CAP)], (CLIP_TIMEOUT_S + 900) * 1000);
   if (cap.code !== 0) return { ...job, error: cap.out.trim().split('\n').pop() };
   if (argv.includes('--capture-only')) return { ...job, captured: true };
   const an = await run([join(here, 'analyse-frames.js'), dir, '--scale', '1', '--json', join(dir, 'analysis.json')]);
