@@ -93,12 +93,13 @@ The gap shows its columns on the outermost walls, the plates of the standing flo
 
 - **Before:** a blast or a wall slam changed a building's whole face in one frame.
 - **Now the new stage spreads from where the building was hit.** It grows as a disc on the screen that takes 8,000 pixels a tick on a screen of 1024 by 768 (`SPREAD_AREA_TICK`, scaled with the screen's area). Inside the disc the building is at its new stage, outside at the stage before. So at any zoom the picture changes by no more than that area in a tick.
-- **Where it starts:** where a lodged body lies; the edge a brunt or a shot came in by, at its height; for a blast, the building's foot on the blast's side.
+- **Where it starts:** where a lodged body lies; the edge a brunt or a shot came in by, at its height; for a blast, the building's side toward the blast at the height of the blast's crater (the foot when no crater came with it).
 - **A wall goes a window cell at a time.** The disc is measured at each cell's middle, so a cell's panes go out together, and each cell is up to 35% late (`SPREAD_LAG`), so the edge is ragged. Roofs and blank walls go in blocks of 31 units.
-- **Pace:** the disc is 226 pixels across its radius after a third of a second and 391 after a second. A face that fills the screen takes about 1.6 seconds. Buildings hit in the same tick share the area. With reduced flashing the area a tick is halved (`SPREAD_CALM`).
+- **Pace:** the disc is 226 pixels across its radius after a third of a second and 391 after a second. A face that fills the screen takes about 1.6 seconds. Each building's wave has the whole area. With reduced flashing the area a tick is halved (`SPREAD_CALM`).
+- **A second change is a second wave** inside the first, which keeps what it has not reached at the stage before it. A window cell large on the screen is taken in pieces. The floors a blow-out puts out go as a wave too.
 - **It ends after 150 ticks** (2.5 seconds; 300 with reduced flashing): what the wave has not reached by then changes at once. That is the far end of a tower that crosses the whole screen and was hit at the screen's edge.
 - **Only with an event.** A stage that changes with no event in the same frame (a seek, a late join, a tool) changes at once: a seek shows the state and replays nothing.
-- **Height is not spread.** A building that shrinks with its hit points still changes height in one frame, as before. Only the stage's look spreads.
+- **The top comes down:** a building that a hit brings lower comes down to its new height at 900 units a second (`DROP_SPEED`), not in one frame.
 - **Not built: the face that peels.** Going to a shell, the cladding should leave the frame a panel at a time behind the wave, with VFX throwing a panel for each. The cells the wave takes are the hook for that; the panels are VFX's.
 - `RenderLook.SPREAD_ON` false puts back the change in one frame.
 

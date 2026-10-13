@@ -187,7 +187,7 @@ const MARK_CRACK := Vector2(3.0, 2.2)
 const MARK_RUNS: int = 4
 ## A stage that spreads (3.7). A building's new damage stage, and a new mark, spread over its face from where it was
 ## hit instead of changing in one frame: SPREAD_AREA_TICK pixels a tick on a screen of 1024 by 768 (scaled with the
-## screen's area, and shared among the buildings hit in the same tick), SPREAD_CALM of that with reduced flashing. What
+## screen's area; each building's wave has the whole of it), SPREAD_CALM of that with reduced flashing. What
 ## the wave has not reached after SPREAD_TICKS (as many more with reduced flashing) changes at once. Its edge is ragged
 ## in blocks of SPREAD_BLOCK units, a block as much as SPREAD_LAG late. SPREAD_ON false: every change is at once, as it
 ## was. A change with no event behind it (a replay seek, a late join, a tool) is always at once.
@@ -197,6 +197,16 @@ const SPREAD_CALM: float = 0.5
 const SPREAD_TICKS: int = 150
 const SPREAD_LAG: float = 0.35
 const SPREAD_BLOCK: float = 31.0
+const SPREAD_CELL_PX: float = 1200.0     # a window cell larger than this on a screen of 1024 by 768 (pixels; scaled with the screen's area) is taken in pieces no larger
+## A building that a hit brings lower (it shrinks with its hit points, or loses its top floors) comes down to its new
+## height at DROP_SPEED units a second, reached over its first DROP_RAMP ticks, instead of in one frame: at a close
+## brawl a tower's top then uncovers about 6,000 pixels of sky a tick. SPREAD_CALM of that speed with reduced flashing.
+## A change smaller than DROP_MIN units is at once. With no event behind the change (a seek) it is at once, and
+## SPREAD_ON false puts back the change in one frame.
+const NEAR_MID: float = 0.6               # Camera's rule for a near tower: the middle of the view, as a share of its width (a tower there, its near face inside NEAR_CLIP.y of the lens, opens its lobby)
+const DROP_SPEED: float = 900.0
+const DROP_RAMP: int = 8
+const DROP_MIN: float = 8.0
 const OPEN_FRAME_COL: String = "#8d95a1" # the columns' and the beam's stone, mixed half with the wall's own colour: a neutral pale, no fighter's hue
 const OPEN_FAR: float = 0.7              # the far side's columns and beam, in the lobby's shade
 const OPEN_CEIL: String = "#a39679"      # the lobby's ceiling, lit warm (a lit lobby, not the tower's dark inside),

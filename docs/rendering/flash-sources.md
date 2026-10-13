@@ -227,6 +227,51 @@ On the shorter city with three streets the collapse clip passed in normal mode a
 - **What it costs the look in reduced mode:** for a second and a half a fresh crater is a dent in painted street, lane marks and all, before it is earth.
 - `tools/flash_reg_check.gd` asserts the ease is on under UI's Reduce flashing and off without it.
 
+## The collapse clip's first blast, and what fails the clip (2026-10-13)
+
+The brief: the clip's first blast (seed 12345, ticks 84 to 144) read 2.5 / 3.5 and was taken for the last thing between the clip and a pass. Measured on main (bc4b3972), which has the stage spread of that morning:
+
+- **The first blast reads 1.5 / 2.5 in normal mode and 1 / 1.5 in reduced** (primary, then the area threshold 15% lower). The 2.5 / 3.5 is that second without the spread: a scratch export with the spread switched off reads 2.5 / 3.5 again.
+- **What fails the clip on Tools' path is ticks 731 to 752,** after the fifth blast. The camera travels after a launched body, and 20 to 30% of the screen turns each way on every tick for twenty ticks: seven counted swings in a second, 3.5. No layer of mine is changing then. With Camera's launch hold switched on (`--hold`) the first 800 ticks read 1.5 / 2.5 / 1.5, a pass.
+
+**The first blast, a layer at a time.** A scratch export of bc4b3972 with a switch a layer, read from the page, the first 200 ticks in normal mode. An event is a run of ticks that turn mostly one way; its size is the pixels it turned in the fullest window as a share of the threshold.
+
+| Scratch switch | Reading | Counted events |
+| :-- | :-- | :-- |
+| None (main) | 1.5 / 2.5 | 84+ 271%, 93- 285%, 103+ 121%, 110+ 298% |
+| No stage spread | 2.5 / 3.5 | 84+ 251%, 91- 253%, 94+ 265%, 98- 132%, 103+ 125%, 110+ 264% |
+| The ground's calm form in normal mode | 0.5 / 1.5 | 84+ 350%, 110+ 208%, 149+ 129% |
+| No ground at all | 0.5 / 1.5 | 84+ 341%, 104+ 115%, 111+ 181% |
+| The glow cooling four times slower, or held 1.2 s | 1.5 / 2.5 | as main |
+| No shock rings | 1.5 / 2.5 | 84+ 282%, 94- 254%, 115+ 263% |
+| A building never shrinks | 1.5 / 2.5 | as main |
+| No camera shake (on the build with changes 1, 2 and 4 below) | 1.5 / 2.5 | 84+ 269%, 94- 288%, 103+ 129%, 110+ 264% |
+
+- **84+ is the camera,** before the blast: the two panes merging, and then the crater's tick joins the same run.
+- **What the 285% darkening was** (the frames and the pooled mask). The second blast lands three ticks after the first, and the spread began again on it: everything the first wave had not reached jumped to the stage between, so the near tower went black in one tick (63,000 pixels). Its top half went in one frame. Whole rows of lit windows went out with VFX's blow-outs, 12,000 pixels a lit cell on a near tower. And the camera, zooming in after the merge, carries the bright crater off the bottom of the frame.
+- **The glow's cooling is not it:** four times slower, or held, changes nothing.
+- **The calm form's low reading is the pooling, not a quieter picture.** Only a frame's dominant direction is pooled. With a faint glow the brightening outweighs the darkening on those ticks, and the darkening is dropped whole. Not a way to pass in normal mode.
+- **The shake is not it either:** with none, the darkening is one longer run.
+
+**What was changed, all in my layers, in every match** (`building-stages.md` has the rules):
+
+1. A second stage change while a spread is going spreads inside it as a second wave. The first wave keeps what it has not reached at the stage before it.
+2. A building brought lower by a hit comes down at 900 units a second.
+3. The floors a blow-out puts out go as a wave, like a stage.
+4. A window cell that is large on the screen is taken in pieces of 1,200 pixels at most.
+5. A blast's wave starts at the blast's own height (its crater's event), and each building's wave has the whole area a tick. Shared among every building a blast touched, most of them off the screen, the near tower stayed lit for 2.5 seconds and then changed at once: a counted event of its own at tick 241.
+
+| The first blast, first 260 ticks | Normal | Reduced |
+| :-- | :-- | :-- |
+| Main (bc4b3972) | 1.5 / 2.5: 84+ 271%, 93- 285%, 103+ 121%, 110+ 298% | 1 / 1.5: 77- 179%, 84+ 344%, 110+ 201%, 147+ 141% |
+| With the five changes | 1.5 / 2.5: 84+ 271%, 93- 119%, 97- 139%, 104+ 109%, 110+ 275% | 1 / 1.5: 77- 179%, 84+ 302%, 102+ 165%, 109+ 212%, 145+ 156% |
+
+- **The count is the same; the largest darkening is half the size** (285% of the threshold to 139%), and nothing of mine changes more than the wave's area in one tick at that blast.
+- **The whole clip:** Tools' path, both modes, before (bc4b3972) and after: the same worst second, 3.5 / 3.5 / 3.5 in normal mode (ticks 731 to 754, the camera's travel: a fail that is main's own) and 2.5 / 2.5 / 2.5 in reduced (a pass). From tick 303 on the two clips count the same events.
+- **With Camera's launch hold on:** the first 800 ticks read 1.5 / 2.5 / 1.5 in normal mode and 1 / 1.5 / 1 in reduced, before and after: a pass both ways. I ran the first 800 ticks only; Tools has the full clips with Camera's switches.
+- **Why the count does not fall further.** From tick 92 to tick 112 about 20,000 pixels turn each way on every tick with nothing of mine changing: the camera's pan and zoom over lit windows and over the glowing crater. A run of two or three such ticks reaches the threshold whichever way it tips. More margin at this blast is in the camera's travel, or in the contrast of lit windows and glow against the dusk, which is a look decision. It is not in more spreading.
+- **Scratch tools:** `tog16.py` (the switches), `pool.js` (the pooling tick by tick, and a run's mask), `turnmap.js`, `boxlum.js`.
+
 ## The capture hook for Tools' frame analyser
 
 Tools' analyser measures pixels against the standard (`docs/tools/flash-check.md`). It needs clips that are exactly one tick a frame, so the game offers a hook, **only** when started with `--flashcap` or, on the web, `/play/?flashcap=1` (`render/tools/flash_capture.gd`, `FlashCapture`; the contract is at the top of `tools/flash/capture-web.mjs`). Normal play never makes one: without the argument the page has no `window.__flashcap`.

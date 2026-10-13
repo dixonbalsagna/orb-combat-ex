@@ -529,6 +529,7 @@ func render_view(a: float) -> void:
 				panes[i].occlusion = occlusion
 				panes[i].cutaway = PaneWorld.request(cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {}), cl[i] if cl is Array and i < cl.size() else null)
 				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
+				panes[i].near_lobbies = bool(split_rig.get("depth_dolly")) if split_rig != null else false   # Camera's depth follow: its rule for a near tower goes with it
 				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch)
 				if float(split_frame.cam_z[i]) > zmax:
 					zmax = float(split_frame.cam_z[i])
@@ -547,6 +548,7 @@ func render_view(a: float) -> void:
 		pane.occlusion = occlusion
 		pane.cutaway = {}
 		pane.focus_z = 0.0
+		pane.near_lobbies = false
 		pane.render(host, a, host.camera_x(a), host.camera(a), PaneShake.capped(host.jitter, vh, _shake()), cam_pitch)
 		_flash_scale(host.camera(a).z)
 	view_cam_x = pane.view_cam_x

@@ -83,9 +83,13 @@ var _falls: Dictionary = {}          # building -> [sim time its sink starts, st
 var _spread: Dictionary = {}         # building -> [x from its shell's middle, y over its base, the tick it started, the stage before, sharing]: a stage spreading over it from where it was hit (shared by panes)
 var _marks: Dictionary = {}          # building -> its held hits' marks as written: [[first floor, floors, share, side, the share before, the tick it grows from, sharing], ...] (shared by panes)
 var _busy: Dictionary = {}           # building -> the tick its spread or its mark's growth is over (shared by panes)
+var _drops: Dictionary = {}          # building -> [the height it is coming down from, the tick it started]: a top coming down to its new height (RenderLook.DROP_SPEED)
+var _blowing: Dictionary = {}        # building -> [the floors a blow-out has just put out (a bit a floor), x from its shell's middle, y over its base, the tick, sharing]: their panes go out as a wave
+var _hit_last: Dictionary = {}       # building -> [x from its shell's middle, y over its base, the tick]: where it was last hit (a blow-out comes some ticks after the hit)
 var _hit_at: Dictionary = {}         # building -> [world x or NAN, world y or NAN, rank, side]: where this frame's events hit it (consume; refresh empties it)
 var _hit_side: Dictionary = {}       # building -> {floor: the side a held blow came from, -1 its left, 1 its right}
-var _share_n: int = 1                # the buildings sharing the spread's area this frame
+var _share_n: int = 1                # the buildings sharing a wave's area: always one (each building's wave has the whole area a tick; the rows still carry the number)
+var _blasts: Array = []              # this frame's craters, [x, y]: a blast's wave starts at its height (consume; refresh empties it)
 var _last_tick: int = -1             # the sim's tick at the last refresh (a seek back settles every spread)
 var _spread_sent: float = -1.0       # the tick last sent to this pane's building shaders
 var _fold: Array = []                # [cx, sim time]: a district of implodes folded into one event this tick
@@ -234,6 +238,8 @@ func consume(events: Array, T: float = 0.0) -> void:
 	for e in events:
 		if e.type == "crater" or e.type == "scorch" or e.type == "debris":
 			_blows.append(e.x)
+			if e.type == "crater":
+				_blasts.append([float(e.x), float(e.y)])
 		elif e.type == "building_fall" and String(e.mode) == "implode":
 			if int(e.b) >= 0:
 				_falls[int(e.b)] = [T + float(e.delay), -1.0]
@@ -282,6 +288,15 @@ func _hit_place(S: SimState, bi: int, b) -> Vector2:
 	var ps: Array = _parts[bi]
 	var dx: float = clampf(SimWrap.sdx(b.x, x), -0.5 * b.w, 0.5 * b.w) - float(ps[RenderShapes.shell(ps)][RenderShapes.X])
 	var y: float = float(at[1])
+	if is_nan(y):
+		# A blast: the height of its crater (the nearest of this frame's along x), which is in the picture; the
+		# building's own foot may be at the bottom of the bowl.
+		var best: float = 400.0
+		for bl in _blasts:
+			var d: float = absf(SimWrap.sdx(float(bl[0]), x))
+			if d < best:
+				best = d
+				y = float(bl[1])
 	return Vector2(dx, 0.0 if is_nan(y) else clampf(y - WorldStructures.baseY(S, b), 0.0, WorldStructures.curH(b)))
 
 
@@ -335,6 +350,14 @@ func _marks_of(S: SimState, bi: int, b) -> Array:
 	return out
 
 
+## How far a top has come down `ticks` after it started (RenderLook.DROP_SPEED, reached over DROP_RAMP ticks; the
+## slower pace with reduced flashing).
+static func dropped(ticks: float, calm: bool) -> float:
+	var r: float = float(RenderLook.DROP_RAMP)
+	var k: float = maxf(ticks, 0.0)
+	return RenderLook.DROP_SPEED * (RenderLook.SPREAD_CALM if calm else 1.0) * SimConst.DT * (k * k / (2.0 * r) if k <= r else k - 0.5 * r)
+
+
 ## The ticks a spread is given: RenderLook.SPREAD_TICKS, as many more at the slower pace of reduced flashing.
 func _spread_ticks() -> float:
 	return float(RenderLook.SPREAD_TICKS) / (RenderLook.SPREAD_CALM if _calm else 1.0)
@@ -347,9 +370,16 @@ func _settle(S: SimState) -> void:
 		all[bi] = true
 	for bi in _marks:
 		all[bi] = true
+	for bi in _blowing:
+		all[bi] = true
+	_blowing.clear()
+	_hit_last.clear()
 	_busy.clear()
 	_spread.clear()
 	_hit_at.clear()
+	for bi in _drops.keys():
+		_bld_seen[bi] = [-1.0, _bld_seen[bi][1], _bld_seen[bi][2], -1.0, _bld_seen[bi][4]]   # placed again at its own height
+	_drops.clear()
 	for bi in all:
 		for run in _marks.get(bi, []):
 			run[4] = 0.0
@@ -436,7 +466,7 @@ func refresh(S: SimState, force: bool) -> void:
 	if int(S.tick) < _last_tick:
 		_settle(S)
 	_last_tick = int(S.tick)
-	_share_n = clampi(_hit_at.size() + _busy.size(), 1, 15)
+	_share_n = 1
 	for bi in range(S.buildings.size()):
 		var b = S.buildings[bi]
 		var h: float = WorldStructures.curH(b)
@@ -460,7 +490,7 @@ func refresh(S: SimState, force: bool) -> void:
 		# A fallen building is set once, when it falls (and while it sinks): its height is not compared, so the fallen
 		# ones cost nothing a frame. A standing one is set again when its height, floors or hit points change (a cut
 		# tower's stage moves with its hit points alone).
-		if moved or (b.alive and (h != seen[0] or b.hp != seen[3])) or b.alive != seen[1] or b.fmask != seen[2] or _falls.has(bi):
+		if moved or (b.alive and (h != seen[0] or b.hp != seen[3])) or b.alive != seen[1] or b.fmask != seen[2] or _falls.has(bi) or _drops.has(bi):
 			var st: int = _set_building(S, bi, b, h)
 			_bld_seen[bi] = [h if b.alive else seen[0], b.alive, b.fmask, b.hp, st]
 		if moved or show != _shown[bi]:
@@ -489,18 +519,35 @@ func refresh(S: SimState, force: bool) -> void:
 				_tree.set_instance_transform(ti, Transform3D(Basis.from_scale(Vector3(RenderLook.TREE_W, t.h, RenderLook.TREE_W)), Vector3(t.x, g + t.h * 0.5, _tree_z[ti])))
 			else:
 				_tree.set_instance_transform(ti, _hidden(t.x))
-	# A spread is over: the building as it stands, its marks whole (what the wave has not reached changes now).
+	# A wave is over: what it has not reached changes now. A second wave inside it goes on alone; with none, the
+	# building is as it stands, its marks whole.
 	if not _busy.is_empty():
 		for bi in _busy.keys():
+			var done: bool = false
+			if _spread.has(bi) and float(S.tick) >= float(_spread[bi][2]) + _spread_ticks():
+				if (_spread[bi] as Array).size() > 5:
+					_spread[bi] = (_spread[bi] as Array).slice(5)
+				else:
+					_spread.erase(bi)
+				done = true
+			if _blowing.has(bi) and float(S.tick) >= float(_blowing[bi][3]) + _spread_ticks():
+				_blowing.erase(bi)
+				done = true
 			if float(S.tick) >= float(_busy[bi]):
 				_busy.erase(bi)
 				_spread.erase(bi)
+				_blowing.erase(bi)
 				for run in _marks.get(bi, []):
 					run[4] = 0.0
 					run[5] = -1.0e6
-				if S.buildings[bi].alive and not _falls.has(bi):
-					_write_windows(S, bi, S.buildings[bi])
+				done = true
+			if done and S.buildings[bi].alive and not _falls.has(bi):
+				_write_windows(S, bi, S.buildings[bi])
+	for bi in _hit_at:
+		var hp: Vector2 = _hit_place(S, bi, S.buildings[bi])
+		_hit_last[bi] = [hp.x, hp.y, float(S.tick)]
 	_hit_at.clear()
+	_blasts.clear()
 	for ct in [_cut, _cut0, _win, _win0]:
 		if ct[2]:
 			(ct[1] as ImageTexture).update(ct[0])
@@ -571,14 +618,32 @@ func _set_building(S: SimState, bi: int, b, h: float) -> int:
 	var mm: MultiMesh = _bld0 if front else _bld
 	var ct: Array = _cut0 if front else _cut
 	var was: Array = _drawn[bi] if bi < _drawn.size() else []
+	# A standing building that an event of this frame brought lower comes down to its new height at a set speed (a
+	# later hit while it comes down changes where it stops, not its pace).
+	if RenderLook.SPREAD_ON and b.alive and not _falls.has(bi) and was.size() == 3 and bool(was[2]):
+		if not _drops.has(bi) and _hit_at.has(bi) and float(was[0]) > h + RenderLook.DROP_MIN:
+			_drops[bi] = [float(was[0]), float(S.tick)]
+		if _drops.has(bi):
+			var dr: Array = _drops[bi]
+			var at_h: float = float(dr[0]) - dropped(float(S.tick) - float(dr[1]), _calm)
+			if at_h > h:
+				h = at_h
+			else:
+				_drops.erase(bi)
+	else:
+		_drops.erase(bi)
 	_drawn[bi] = [h, stage, standing]
 	if not b.alive or _falls.has(bi):
 		_spread.erase(bi)
 		_busy.erase(bi)
+		_blowing.erase(bi)
 	elif RenderLook.SPREAD_ON and _hit_at.has(bi) and was.size() == 3 and bool(was[2]) and stage > int(was[1]):
-		# Its stage went up, and an event of this frame says where it was hit: the new stage spreads from there.
+		# Its stage went up, and an event of this frame says where it was hit: the new stage spreads from there. A
+		# spread still going keeps its wave (what that has not reached stays at the stage before it) and the new stage
+		# spreads inside it as a second wave; a third change takes the second wave's place.
 		var at: Vector2 = _hit_place(S, bi, b)
-		_spread[bi] = [at.x, at.y, float(S.tick), float(int(was[1])), _share_n]
+		var wave: Array = [at.x, at.y, float(S.tick), float(int(was[1])), _share_n]
+		_spread[bi] = ((_spread[bi] as Array).slice(0, 5) + wave) if _spread.has(bi) else wave
 		_busy[bi] = float(S.tick) + _spread_ticks()
 	# The sim's footing (World's T4): the highest ground under the footprint on the fighter plane. The fighter's brunt
 	# geometry uses it, so the drawn top is base + height; a part on the ground runs down to the lowest ground as drawn
@@ -649,6 +714,8 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 	var floors: int = maxi(int(b.floors), 1)
 	var fh: float = b.h / float(floors)
 	var m: int = int(_blown[bi])
+	var going: int = int(_blowing[bi][0]) if _blowing.has(bi) else 0   # floors a blow-out is still putting out: not in the first row's mask yet
+	m &= ~going
 	var base: float = WorldStructures.baseY(S, b) - sink
 	var ps: Array = _parts[bi]
 	var ix: PackedInt32Array = _inst[bi]
@@ -662,17 +729,25 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 		_marks.erase(bi)
 	else:
 		_marks[bi] = runs
-	var more: Array = [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0)]
+	var more: Array = [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0)]
 	var flags: float = 0.0
 	if not runs.is_empty():
 		flags += 1.0
 		for i in range(mini(runs.size(), 4)):
 			var run: Array = runs[i]
 			more[1 + i] = Color(float(int(run[0]) + 64 * int(run[1]) + 4096 * clampi(int(run[6]), 1, 15)), float(run[2]), float(run[3]) * (1.0 + float(run[4])), float(run[5]))
+	if going != 0:
+		var bw: Array = _blowing[bi]
+		flags += 8.0
+		more[6] = Color(float(going & 0xFFFFFF), float((going >> 24) & 0xFFFFFF), float((going >> 48) & 0x3FFF), 0.0)
+		more[7] = Color(float(bw[1]), float(bw[2]), float(bw[3]), float(bw[4]))
 	if _spread.has(bi):
 		var sp: Array = _spread[bi]
 		flags += 2.0
 		more[0] = Color(float(sp[0]), float(sp[1]), float(sp[2]), float(sp[3]) + 4.0 * float(clampi(int(sp[4]), 1, 15)))
+		if sp.size() > 5:
+			flags += 4.0
+			more[5] = Color(float(sp[5]), float(sp[6]), float(sp[7]), float(sp[8]) + 4.0 * float(clampi(int(sp[9]), 1, 15)))
 	for j in range(ps.size()):
 		var p: Array = ps[j]
 		var k: int = ix[j]
@@ -696,7 +771,7 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 			img.set_pixel(k, 3, f)
 			img.set_pixel(k, 4, fr)
 			wt[2] = true
-		for i in range(5):
+		for i in range(8):
 			if img.get_pixel(k, 5 + i) != more[i]:
 				img.set_pixel(k, 5 + i, more[i])
 				wt[2] = true
@@ -722,7 +797,22 @@ func blow_windows(S: SimState, list: Array) -> void:
 		var m: int = int(_blown[bi])
 		for r in range(rows):
 			m |= 1 << mini(int(floor((float(r) + 0.5) / float(rows) * float(floors))), mini(floors - 1, 61))
+		var fresh: int = m & ~int(_blown[bi])
 		_blown[bi] = m
+		if RenderLook.SPREAD_ON and fresh != 0 and b.alive and not _falls.has(bi):
+			# The floors this blow-out puts out go as a wave from where the building was last hit (the middle of those
+			# floors when nothing says where). A wave still going is over at once: its floors are out.
+			var src: Array = _hit_last.get(bi, [])
+			if src.is_empty() or float(S.tick) - float(src[2]) > 120.0:
+				var lo: int = 0
+				while ((fresh >> lo) & 1) == 0:
+					lo += 1
+				var hi: int = 61
+				while ((fresh >> hi) & 1) == 0:
+					hi -= 1
+				src = [0.0, 0.5 * float(lo + hi + 1) * b.h / float(floors), 0.0]
+			_blowing[bi] = [fresh, float(src[0]), float(src[1]), float(S.tick), 1]
+			_busy[bi] = maxf(float(_busy.get(bi, 0.0)), float(S.tick) + _spread_ticks())
 		_write_windows(S, bi, b)
 	if _blow_seen.size() > 256:
 		for key in _blow_seen.keys():
@@ -1565,6 +1655,7 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("spread_area", RenderLook.SPREAD_AREA_TICK * (RenderLook.SPREAD_CALM if _calm else 1.0))
 	m.set_shader_parameter("spread_lag", RenderLook.SPREAD_LAG)
 	m.set_shader_parameter("spread_block", RenderLook.SPREAD_BLOCK)
+	m.set_shader_parameter("spread_cell", RenderLook.SPREAD_CELL_PX)
 	var lu: Dictionary = RenderShapes.look_uniforms()
 	for key in lu:
 		m.set_shader_parameter(key, lu[key])
@@ -1573,14 +1664,17 @@ func _building_mat() -> ShaderMaterial:
 	return m
 
 
-## A ten-row float texture of window, shape and damage data, a column an instance: [image, texture, dirty]. A column
-## not written yet is a plain box with no shell. Rows 0 to 4: _write_windows. Row 5: a stage spreading over the
+## An eleven-row float texture of window, shape and damage data, a column an instance: [image, texture, dirty]. A
+## column not written yet is a plain box with no shell. Rows 0 to 4: _write_windows. Row 5: a stage spreading over the
 ## building (x from its shell's middle, y over its base, the tick it started, the stage before plus four times the
 ## buildings sharing the area). Rows 6 to 9: its marks (first floor plus 64 times the floors plus 4,096 times the
 ## sharing; the share of the floor's strength taken; the side, -1 or 1, times one plus the share before; the tick it
-## grows from). The fifth row's blue says which are there: 1 marks, 2 a spread.
+## grows from). Row 10: a second wave inside the first, as row 5 (its stage before is the stage inside the first
+## wave). Rows 11 and 12: floors a blow-out is putting out (a bit a floor, packed as the first row's; then x, y, the
+## tick and the sharing of their wave). The fifth row's blue says which are there: 1 marks, 2 a spread, 4 its second
+## wave, 8 a blow-out's wave.
 static func _win_texture(n: int) -> Array:
-	var img := Image.create_empty(maxi(1, n), 10, false, Image.FORMAT_RGBAF)
+	var img := Image.create_empty(maxi(1, n), 13, false, Image.FORMAT_RGBAF)
 	img.fill(Color(0, 0, 0, 0))
 	img.fill_rect(Rect2i(0, 2, maxi(1, n), 1), Color(1.0, 1.0, 0.0, 0.0))
 	return [img, ImageTexture.create_from_image(img), false]
@@ -1677,6 +1771,10 @@ func _make_props(S: SimState) -> void:
 	_spread.clear()
 	_marks.clear()
 	_busy.clear()
+	_drops.clear()
+	_blowing.clear()
+	_hit_last.clear()
+	_blasts.clear()
 	_hit_at.clear()
 	_hit_side.clear()
 	_last_tick = -1

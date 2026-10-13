@@ -14,7 +14,10 @@ extends SceneTree
 ##   spreads from the stage before, from that edge at the hit's height; the spread is over after
 ##   RenderLook.SPREAD_TICKS; a heavier blow grows the mark from the share it had; the tick gone back settles
 ##   everything; a floor that breaks is no mark; a blast spreads a house's stage from its foot on the blast's side; a
-##   lodge spreads it from where the body lies; a building that falls drops its spread. The tool makes its own events.
+##   lodge spreads it from where the body lies; a building that falls drops its spread. The tool makes its own events;
+## - a second stage change while a spread is going is a second wave inside the first (row 10), which goes on alone when
+##   the first is over; a top brought lower by a hit comes down at RenderLook.DROP_SPEED and is at its height at once
+##   with no event; floors a blow-out puts out are kept from the first row's mask and go as a wave (rows 11 and 12).
 ## (A headless run cannot read an instance's place back from a MultiMesh, so the roof going at stage 3 is not checked
 ## here: it is in the stills.)
 ##   godot --headless --path . --script res://render/tools/stage_check.gd -- [--s=4]
@@ -200,11 +203,55 @@ func _marks_and_spread(S: SimState, P: PlanetView) -> void:
 	hb.hp = hb.maxhp * 0.2
 	P.refresh(S, false)
 	sp = img.get_pixel(hk, 5)
-	_expect(_stage(P, hi) == 3 and img.get_pixel(hk, 4).b == 2.0 and absf(sp.r - (0.5 * hb.w - hshx)) < 0.01 and sp.g == 0.0 and sp.b == 3100.0 and int(sp.a) % 4 == 0 and int(sp.a) >> 2 == 2, "a blast to the right of a house takes it to a shell: the stage spreads from its right edge at its foot, sharing the area with the tower's (%s)" % str(sp))
+	_expect(_stage(P, hi) == 3 and img.get_pixel(hk, 4).b == 2.0 and absf(sp.r - (0.5 * hb.w - hshx)) < 0.01 and sp.g == 0.0 and sp.b == 3100.0 and int(sp.a) % 4 == 0 and int(sp.a) >> 2 == 1, "a blast to the right of a house takes it to a shell: the stage spreads from its right edge at its foot, with the whole area a tick though the tower's spread is still going (%s)" % str(sp))
 	hb.hp = 0.0
 	hb.alive = false
 	P.refresh(S, false)
 	_expect(not P._spread.has(hi) and not P._busy.has(hi), "... and when it falls its spread is dropped")
+	# Two stage changes three ticks apart (a blast and its second): the second spreads inside the first.
+	var ti: int = _fresh(S, P, "tower", 8)
+	if ti < 0:
+		_expect(false, "a second fresh tower to test")
+		return
+	var t = S.buildings[ti]
+	var tk: int = (P._inst[ti] as PackedInt32Array)[0]
+	var h_full: float = WorldStructures.curH(t)
+	S.tick = 5000
+	P.consume([_ev("building_stage", ti, {"cx": t.x - 900.0})], S.T)
+	t.hp = t.maxhp * 0.8
+	P.refresh(S, false)
+	var w1: Color = img.get_pixel(tk, 5)
+	_expect(_stage(P, ti) == 1 and img.get_pixel(tk, 4).b == 2.0 and w1.b == 5000.0 and int(w1.a) % 4 == 0 and img.get_pixel(tk, 10) == none, "a blast takes a tower to stage 1: one wave from the stage before (0) (%s)" % str(w1))
+	_expect(P._drops.has(ti) and absf(float(P._drawn[ti][0]) - h_full) < 0.01 and WorldStructures.curH(t) < h_full - 50.0, "... and its top, which the sim brought %.0f units lower, is still where it was: it comes down at a set speed" % (h_full - WorldStructures.curH(t)))
+	S.tick = 5003
+	var blast_y: float = WorldStructures.baseY(S, t) + 220.0
+	P.consume([_ev("building_stage", ti, {"cx": t.x - 900.0}), _ev("crater", -1, {"x": t.x - 900.0, "y": blast_y})], S.T)
+	t.hp = t.maxhp * 0.5
+	P.refresh(S, false)
+	var w2: Color = img.get_pixel(tk, 10)
+	_expect(_stage(P, ti) == 2 and img.get_pixel(tk, 4).b == 6.0 and img.get_pixel(tk, 5) == w1 and w2.b == 5003.0 and int(w2.a) % 4 == 1 and absf(w2.g - 220.0) < 0.01 and w1.g == 0.0, "its second three ticks later, with its crater: the first wave is kept as it was, and the new stage spreads inside it as a second wave from the stage between (1), from the blast's own height (%s)" % str(w2))
+	var d3: float = PlanetView.dropped(3.0, false)
+	_expect(absf(float(P._drawn[ti][0]) - (h_full - d3)) < 0.01 and d3 > 0.0 and d3 < 15.0, "... and its top has come down %.2f units in three ticks, on the way to its new height" % d3)
+	S.tick = 5000 + RenderLook.SPREAD_TICKS
+	P.refresh(S, false)
+	_expect(img.get_pixel(tk, 4).b == 2.0 and img.get_pixel(tk, 5).b == 5003.0 and int(img.get_pixel(tk, 5).a) % 4 == 1 and img.get_pixel(tk, 10) == none and P._busy.has(ti), "the first wave over, the second goes on alone")
+	S.tick = 5003 + RenderLook.SPREAD_TICKS
+	P.refresh(S, false)
+	_expect(img.get_pixel(tk, 4).b == 0.0 and img.get_pixel(tk, 5) == none and not P._busy.has(ti) and not P._drops.has(ti) and absf(float(P._drawn[ti][0]) - WorldStructures.curH(t)) < 0.01, "... and when that is over the tower is as it stands, at its own height")
+	t.hp = t.maxhp * 0.3
+	P.refresh(S, false)
+	_expect(not P._drops.has(ti) and absf(float(P._drawn[ti][0]) - WorldStructures.curH(t)) < 0.01 and not P._spread.has(ti), "hit points lowered with no event (a seek): its height and its stage change at once")
+	# A blow-out: the floors it puts out go as a wave.
+	S.tick = 6000
+	var before: Color = img.get_pixel(tk, 0)
+	P.blow_windows(S, [{"b": ti, "at": S.T, "strength": 0.5, "lo": 0, "hi": 0}])
+	var fresh: Color = img.get_pixel(tk, 11)
+	var bw: Color = img.get_pixel(tk, 12)
+	_expect(P._blowing.has(ti) and img.get_pixel(tk, 0) == before and fresh.r + fresh.g + fresh.b > 0.0 and img.get_pixel(tk, 4).b == 8.0 and bw.b == 6000.0 and P._blown[ti] != 0, "a blow-out's floors are kept from the first row's mask and written as a wave from this tick (%s, %s)" % [str(fresh), str(bw)])
+	S.tick = 6000 + RenderLook.SPREAD_TICKS
+	P.refresh(S, false)
+	var after: Color = img.get_pixel(tk, 0)
+	_expect(not P._blowing.has(ti) and after.r == fresh.r and after.g == fresh.g and after.b == fresh.b and img.get_pixel(tk, 11) == none and img.get_pixel(tk, 4).b == 0.0, "... and when the wave is over they are in the first row's mask")
 
 
 ## The stage PlanetView wrote for the shader (win_tex's second texel, blue).

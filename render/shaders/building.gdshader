@@ -130,6 +130,7 @@ uniform float spread_now = 0.0;      // the sim's tick (PlanetView._send_spread)
 uniform float spread_area = 8000.0;  // RenderLook.SPREAD_AREA_TICK: the pixels a tick the wave takes, on a screen of 1024 by 768
 uniform float spread_lag = 0.35;     // RenderLook.SPREAD_LAG and SPREAD_BLOCK: the wave's edge is ragged in blocks, a block as much as this late
 uniform float spread_block = 31.0;
+uniform float spread_cell = 1200.0;  // RenderLook.SPREAD_CELL_PX: a window cell larger than this on the screen is taken in pieces
 uniform vec2 mark_reach = vec2(90.0, 330.0);   // RenderLook.MARK_REACH: a held hit's dent, from the corner he came in by, at none and at all of the floor's strength taken
 uniform vec2 mark_tall = vec2(0.5, 0.9);       // RenderLook.MARK_TALL: its height as a share of the floors hit
 uniform vec2 mark_crack = vec2(3.0, 2.2);      // RenderLook.MARK_CRACK: cracks a mark, and how far they run as a multiple of the dent's reach
@@ -206,7 +207,7 @@ void vertex() {
 	v_dmg = vec3(wb.z, min(top, stubbed), sx);
 	v_look = vec3(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0));
 	vec4 fr4 = texelFetch(win_tex, ivec2(id, 4), 0);
-	v_frame = vec2(fr4.x, fr4.y + 4.0 * fr4.z);   // the core's state, and four times what rows 5 to 9 hold (1 marks, 2 a stage spreading)
+	v_frame = vec2(fr4.x, fr4.y + 4.0 * fr4.z);   // the core's state, and four times what rows 5 to 12 hold (1 marks, 2 a stage spreading, 4 a second wave inside it, 8 a blow-out's wave)
 	vec4 shl = texelFetch(win_tex, ivec2(id, 3), 0);
 	v_shell = vec4(MODEL_MATRIX[3].x + shl.x, MODEL_MATRIX[3].z + shl.y, shl.z, shl.w);
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
@@ -360,37 +361,55 @@ void fragment() {
 	// spreading from where it was hit, and the marks its held hits left. Both grow as a disc on the screen from their
 	// point, the same area a tick, so the picture never changes by more than that in a frame. A wall with windows is
 	// taken a window cell at a time (the cell's middle is where the disc is measured, so its panes go out together),
-	// anything else in blocks; each cell or block is a little late (lag), never early.
+	// anything else in blocks; each cell or block is a little late (lag), never early. A cell that is large on the
+	// screen is cut into pieces of spread_cell pixels at most, or a near tower's lit cells would each change more of
+	// the picture in one tick than the wave is allowed.
 	float fxf = floor(v_frame.y * 0.25 + 0.01);
 	float core_state = v_frame.y - 4.0 * fxf;
+	bool f_wave = mod(floor(fxf * 0.5), 2.0) > 0.5;
+	bool f_wave2 = mod(floor(fxf * 0.25), 2.0) > 0.5;
+	bool f_blow = fxf > 7.5;
 	int iid = min(int(bid), textureSize(win_tex, 0).x - 1);
 	float toward_z = v_shell.y + (v_shell.y < 0.0 ? v_shell.w : -v_shell.w);   // the shell's face toward the fighter plane
 	float px_area = spread_area * VIEWPORT_SIZE.x * VIEWPORT_SIZE.y / 786432.0 / PI;
 	float lag = 1.0;
 	vec2 at_px = FRAGCOORD.xy;
+	float per_px_u = fwidth(v_face.x);   // world units a pixel along the wall and up it: worked out for every pixel
+	float per_px_y = fwidth(v_wy);
 	if (fxf > 0.5) {
 		vec2 blk = vec2(floor(v_face.x / spread_block), floor(v_wy / spread_block));
 		if (v_face.z > 0.5 && v_win.w > 0.0) {
 			float nc = max(1.0, floor(v_face.y / look_a[clamp(int(v_look.x + 0.5), 0, 9)].x));
-			blk = vec2(floor((v_face.x / v_face.y + 0.5) * nc), floor((v_wy - v_winb.x) / v_win.w * v_look.y));
+			float side = sqrt(spread_cell * VIEWPORT_SIZE.x * VIEWPORT_SIZE.y / 786432.0);   // a piece's side, in pixels
+			float cut_u = nc * clamp(ceil(v_face.y / nc / max(per_px_u, 0.0001) / side), 1.0, 16.0);   // pieces along the wall
+			float cut_y = v_look.y * clamp(ceil(v_win.w / v_look.y / max(per_px_y, 0.0001) / side), 1.0, 16.0);   // ... and up a floor
+			blk = vec2(floor((v_face.x / v_face.y + 0.5) * cut_u), floor((v_wy - v_winb.x) / v_win.w * cut_y));
 			vec3 mid = eye + v_view;
-			float du = ((blk.x + 0.5) / nc - 0.5) * v_face.y - v_face.x;
+			float du = ((blk.x + 0.5) / cut_u - 0.5) * v_face.y - v_face.x;
 			if (fract(v_winb.z) < 0.25) {
 				mid.x += du;
 			} else {
 				mid.z += du;
 			}
-			mid.y += v_winb.x + (blk.y + 0.5) / v_look.y * v_win.w - v_wy;
+			mid.y += v_winb.x + (blk.y + 0.5) / cut_y * v_win.w - v_wy;
 			at_px = screen_px(VIEW_MATRIX, PROJECTION_MATRIX, mid, VIEWPORT_SIZE);
 		}
 		lag += spread_lag * win_hash(vec3(bid, blk.x + 40.0 * fract(v_winb.z), blk.y));
 	}
-	if (fxf > 1.5) {
+	if (f_wave) {
 		vec4 sp = texelFetch(win_tex, ivec2(iid, 5), 0);
 		float sn = floor(sp.a * 0.25 + 0.01);
 		vec2 dp = at_px - screen_px(VIEW_MATRIX, PROJECTION_MATRIX, bent_world(mat4(1.0), vec3(v_shell.x + sp.x, v_winb.x + sp.y, toward_z)).xyz, VIEWPORT_SIZE);
 		if (dot(dp, dp) * lag * lag > px_area * max(spread_now - sp.z, 0.0) / max(sn, 1.0)) {
 			st = sp.a - 4.0 * sn;   // the wave has not reached this pixel: the stage before
+		} else if (f_wave2) {
+			// A later change spreads inside the first wave as a second one (row 10): outside it, the stage between.
+			vec4 s2 = texelFetch(win_tex, ivec2(iid, 10), 0);
+			float n2 = floor(s2.a * 0.25 + 0.01);
+			vec2 d2 = at_px - screen_px(VIEW_MATRIX, PROJECTION_MATRIX, bent_world(mat4(1.0), vec3(v_shell.x + s2.x, v_winb.x + s2.y, toward_z)).xyz, VIEWPORT_SIZE);
+			if (dot(d2, d2) * lag * lag > px_area * max(spread_now - s2.z, 0.0) / max(n2, 1.0)) {
+				st = s2.a - 4.0 * n2;
+			}
 		}
 	}
 	if (st > 2.5) {
@@ -495,6 +514,16 @@ void fragment() {
 					float yl = corner.y + (fj - 0.5 * (mark_crack.x - 1.0)) * (0.3 * half_h + 0.45 * d * (0.5 + h3)) + sway * dmg_crack.z;
 					mk_line = max(mk_line, (1.0 - smoothstep(0.5 * wdt, wdt, abs(v_wy - yl))) * step(d, mark_crack.y * reach * (0.6 + 0.4 * h3)));
 				}
+			}
+		}
+		// Floors VFX's blow-out has just put out (rows 11 and 12): their panes go as a wave from where the building
+		// was hit, like a stage.
+		if (f_blow && kf >= 0.0 && kf < v_winb.y) {
+			vec4 bm = texelFetch(win_tex, ivec2(iid, 11), 0);
+			if (bit_on(kf, bm.xyz)) {
+				vec4 bw = texelFetch(win_tex, ivec2(iid, 12), 0);
+				vec2 db = at_px - screen_px(VIEW_MATRIX, PROJECTION_MATRIX, bent_world(mat4(1.0), vec3(v_shell.x + bw.x, v_winb.x + bw.y, toward_z)).xyz, VIEWPORT_SIZE);
+				mk_pane = mk_pane || dot(db, db) * lag * lag <= px_area * max(spread_now - bw.z, 0.0) / max(bw.a, 1.0);
 			}
 		}
 		if (soft && (st > 0.5 || mk_pane || (kf >= 0.0 && kf < v_winb.y && bit_on(kf, v_win.xyz)))) {

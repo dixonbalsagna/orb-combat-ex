@@ -35,6 +35,7 @@ var occlusion: int = OCCL_HOLE     # main sets it (a debug toggle)
 ## RenderLook's rule), only (a fighter slot: only his; absent or -1: both fighters').
 var cutaway: Dictionary = {}
 var focus_z: float = 0.0            # the depth of this pane's focus plane this frame (Camera's dolly: SplitFrame.focus_z, which main hands over when the frame carries it). 0: the fighter plane, as ever
+var near_lobbies: bool = false       # Camera's depth follow is on (main sets it each frame): a tower near the lens in the middle of the view opens its lobby whether or not the fight is behind it (_open_floors)
 var occluded: Array = []           # per fighter: a building stands between this pane's camera and him (for Camera)
 var _join: float = 0.0             # 0 to 1: the two fighters' holes grown into one
 var _join_t: float = -1.0
@@ -504,6 +505,27 @@ func _open_floors(S: SimState, cam_x: float, vp: Vector2, aim: PackedInt32Array)
 				var wpx: float = maxf(minf(c1.x, vp.x) - maxf(c0.x, 0.0), 0.0)
 				var ppu: float = absf(cam_rig.unproject_position(Vector3(bx, eye.y + 100.0, zf)).y - cam_rig.unproject_position(Vector3(bx, eye.y, zf)).y) / 100.0
 				want[bi] = Vector3(1.0 if under else 0.0, 1.0 if over else 0.0, maxf(wpx * ppu, 0.001))
+	if near_lobbies:
+		# Camera's rule for a near tower (2026-10-13): its dolly brings the lens into the rows, and a face 340 units
+		# from the lens is wider than the screen. A tower with a lobby whose near face is inside NEAR_CLIP.y of the
+		# lens, and which stands in the middle NEAR_MID of the view, opens its lobby whether or not the fight is behind
+		# it (one the fight is behind is in `want` already). One wholly behind the lens is not drawn at all.
+		var lens: Vector3 = cam_rig.position
+		var reach: float = RenderLook.NEAR_CLIP.y
+		var mid: float = RenderLook.NEAR_MID * cam_rig.half_width(vp.x, lens.z - reach - focus_z)
+		for bi in planet.occluder_candidates(S, cam_x, lens.x - mid, lens.x + mid, lens.z - reach, 400.0):
+			if want.has(bi) or not planet.opens_floors(bi) or aim.has(bi) or planet.lobby_span(S, bi) == Vector2.ZERO:
+				continue
+			var b = S.buildings[bi]
+			var zd: Vector2 = PlanetView._depth(b)
+			if zd.x - zd.y * 0.5 >= lens.z:
+				continue
+			var far: float = maxf(lens.z - (zd.x + zd.y * 0.5), 60.0)   # the lens to its near face (the lens may stand inside it)
+			var half: float = cam_rig.half_width(vp.x, lens.z - far - focus_z)
+			if absf(SimWrap.sdx(cam_x, b.x) - lens.x) > 0.5 * b.w + RenderLook.NEAR_MID * half:
+				continue
+			var ppu: float = 0.5 * vp.x / maxf(half, 1.0)
+			want[bi] = Vector3(1.0, 0.0, maxf(minf(b.w * ppu, vp.x) * ppu, 0.001))
 	planet.set_open(S, want, vp, left, patch_px)
 
 

@@ -201,6 +201,23 @@ func _run() -> void:
 	fz = [0.0, 0.0]
 	_settle()
 	_expect(P._open.is_empty() and _texel(ti).b == PlanetView.OPEN_SHUT and _texel(ti).g == 0.0, "a pair in the front street in front of a tower: nothing opens")
+	# Camera's rule for a near tower: the lens brought to 300 units from the tower's near face (the pair still in front
+	# of it), with Camera's depth follow on and off.
+	var near_zf: float = PlanetView._depth(tower).x + 0.5 * PlanetView._depth(tower).y
+	var lens_gap: float = main.pane.cam_rig.position.z - near_zf
+	main.pane.focus_z = -(lens_gap - 300.0)
+	_pane_ticks(3, {})
+	var off_shut: bool = P._open.is_empty() and absf(main.pane.cam_rig.position.z - near_zf - 300.0) < 1.0
+	main.pane.near_lobbies = true
+	_pane_ticks(260, {})
+	var near_open: float = P.lobby_share(ti)
+	main.pane.focus_z = -(lens_gap - 700.0)
+	_pane_ticks(460, {})
+	var far_shut: bool = not P._open.has(ti)
+	main.pane.focus_z = 0.0
+	main.pane.near_lobbies = false
+	_settle()
+	_expect(off_shut and near_open == 1.0 and far_shut and P._open.is_empty(), "Camera's rule for a near tower: the lens 300 units from its near face and the pair in front of it, nothing opens; with Camera's depth follow on its lobby opens (%.2f); the lens back at 700 units, it shuts" % near_open)
 	# Behind it, at once.
 	fz = [z_mid, z_mid]
 	most = 0.0

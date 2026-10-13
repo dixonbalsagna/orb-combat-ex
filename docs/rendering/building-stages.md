@@ -43,7 +43,22 @@ The two steps of `destruction-look.md` that waited for no one (its sections 3.1 
 - **Measured (the frame analyser, 1024 by 768):** a wall slam with the game's own camera (a scratch scene: two aimed launches into a tower, 640 ticks) reads 1.5 flashes in the worst second before and after, in normal and in reduced mode, and 2 on the two-second run in normal both ways. In reduced mode the run with the area threshold 15% lower read 2.5 in one take of two and 1.5 in the other (1.5 before): one event of 113% of the threshold, where the split view swings across pale walls. Every take passes. Tools' collapse clip has the same worst second before and after: 3.5 on all three runs in normal mode (a fail that is main's own, and Camera's to settle) and 2.5 on all three in reduced (a pass). The first blast's counted darkening is smaller in normal mode (252% of the threshold area before, 114% after) and is not counted at all in reduced. From tick 496 on the two clips count the same events.
 - **Cost:** Tools' bench, the standard match of 1,200 frames, one run each, before and after: unthrottled 6.7 and 7.2 ms a frame (95th percentile 7.6 and 7.9); CPU slowed four times 23.1 and 22.7 ms (31.4 and 31.0); software-rendered 231 and 227 ms (418 and 413). The same within the bench's spread. A building with neither a mark nor a spread costs one more test a pixel. One with either reads a texel or two and projects a point or two a pixel; that cost on a marked tower filling the screen is not measured on its own.
 - **Pictures** (uncommitted, Orb's to decide): `img/lanes/INDEX.md`, "A held hit's mark".
-- **Not built:** the face that peels a panel at a time (VFX's panels); the side of a mark after a seek (the state does not hold it: `destruction-look.md` section 8); a building's height still changes in one frame.
+- **Not built:** the face that peels a panel at a time (VFX's panels); the side of a mark after a seek (the state does not hold it: `destruction-look.md` section 8).
+
+### Later the same day: two blasts three ticks apart
+
+The collapse clip's first blast showed four things the spread did not cover (`flash-sources.md`, "The collapse clip's first blast"). In every match:
+
+- **A second wave.** A stage that changes again while a spread is going no longer starts the spread over (which changed everything the first wave had not reached at once). The first wave is kept, and the new stage spreads inside it as a second wave (row 10 of the window texture). When the first is over the second goes on alone. A third change takes the second wave's place.
+- **A top comes down.** A building that a hit brings lower (it shrinks with its hit points, or loses its top floors) comes down to its new height at 900 units a second (`DROP_SPEED`), reached over its first 8 ticks, where its top half used to go in one frame. A later hit while it comes down changes where it stops. Under 8 units it is at once. With reduced flashing: half the speed.
+- **A blow-out is a wave.** The floors VFX's blow-out puts out went dark a whole row in one tick. Their panes now go as a wave from where the building was last hit, at the spread's pace (rows 11 and 12).
+- **A large cell goes in pieces.** A window cell larger than 1,200 pixels on the screen (`SPREAD_CELL_PX`) is cut into pieces no larger for the wave. A near tower's lit cell is 12,000 pixels.
+- **A blast's wave starts at the blast's height,** read from its crater's event: the building's own foot may be at the bottom of the bowl, out of the picture.
+- **Each building's wave has the whole area a tick.** It was shared among every building a blast touched, most of them off the screen, and the near tower stayed lit for seconds.
+- **With no event** (a seek, a tool) all of these are at once, as before. `SPREAD_ON` false puts back every change in one frame.
+- **Measured:** `flash-sources.md`. The first blast counts the same (1.5 / 2.5 in normal mode, 1 / 1.5 in reduced) and its largest darkening is half the size.
+- **Cost:** Tools' bench, the standard match of 1,200 frames, one run each with other sessions' jobs running, before and after: unthrottled 6.4 and 6.3 ms a frame (95th percentile 6.9 and 6.8); CPU slowed four times 26.4 and 23.5 ms (36.2 and 32.4); software-rendered 228 and 219 ms (395 and 389). The same within the bench's spread.
+- **Not built:** a crater still opens in one tick (its bowl, and in normal mode its colours); a building whose footing a crater lowers drops with it in one frame.
 
 ## Stills (web build, headless Chrome, 1280×720)
 
@@ -104,7 +119,8 @@ Orb's direction is that pavement cracks and shatters differently from dirt. Worl
 
 ## Checks
 
-- **2026-10-13, the mark and the spread:** `tools/stage_check.gd` has 22 checks (12 new: what `PlanetView` hands the shader for a mark and a spread, with events of the tool's own making). Gated on a scratch export of 78bfa86b with the change, and again on 5d3df22e with the repo's copies: open, depth, shape, patch, pane, stage, lane, ground, after, sky, flash register, hud words, seam, determinism plain and `--intro`, every run headless, all pass. The web build compiles the shader (headless Chrome, ANGLE on Direct3D 11).
+- **2026-10-13, the blast batch:** `tools/stage_check.gd` has 31 checks (9 more: a second wave inside a spread and its hand-over, a top that comes down and is at once with no event, a blow-out's wave, a blast's wave from its crater's height). Gated on a scratch export of bc4b3972 with the change, and again on 38eaaf8d with the repo's copies: open, depth, shape, patch, pane, stage, lane, ground, after, sky, flash register, hud words, seam, determinism plain and `--intro`, every run headless, all pass.
+- **2026-10-13, the mark and the spread:** `tools/stage_check.gd` had 22 checks (12 new: what `PlanetView` hands the shader for a mark and a spread, with events of the tool's own making). Gated on a scratch export of 78bfa86b with the change, and again on 5d3df22e with the repo's copies: open, depth, shape, patch, pane, stage, lane, ground, after, sky, flash register, hud words, seam, determinism plain and `--intro`, every run headless, all pass. The web build compiles the shader (headless Chrome, ANGLE on Direct3D 11).
 
 On an export of HEAD (014c56a) plus this change, every Godot run headless.
 
