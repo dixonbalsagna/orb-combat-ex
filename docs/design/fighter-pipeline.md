@@ -55,6 +55,15 @@ Owner: Game Design. Date: 2026-10-12, second version, with Animation's, Combat's
 5. **Heavies and bolts are the one exception, for a time.** There is no common heavy yet, so at tier 1 a newcomer takes heavies and bolts from the others' packs, down to each lender's floor, as Combat has built it. They go back as his own are posed.
 6. **Tier 1 fits Animation's size:** 3 lights, 2 mediums and 2 heavies are 7 key sets, inside its 6 to 8.
 
+**As built, and four more rulings** (Combat, 66a3cf27). In a roster of four the Protagonist reads 27% and the Anti-hero 28%. The Cyborg's three silhouettes read 27%, 25% and 30%. The Empress reads 19%.
+
+7. **The gate has three readings.** A quarter or more is a pass. Between a fifth and a quarter is a pass printed as short: he can be built and played, and he isn't called done at his tier until he reads a quarter. Under a fifth is a fail, and his row isn't accepted. Everyone is read on the same matches.
+8. **His floor lights must fit the flurry's gap** (Combat's addition, agreed). The flurry is where lights are thrown, so a light it never throws does nothing for him. A kick that only comes out as a single blow doesn't count toward the three.
+9. **The Empress needs a ground of her own for her quick hands. No waiver.** Open and bladed hands are the Protagonist's, and fists and plates are the Anti-hero's, so only two quick hands were left for her and her other own lights are kicks. A waiver would ship her as somebody else's hands, which is what the gate is there to stop.
+   - **A first proposal, for Narrative, Art and Orb to change: the back of the hand.** Backhands, flicks of the wrist and a ringed knuckle: she strikes as one dismisses. They are new shapes, since the tip is new, and Combat has said a hand state can be swapped on key sets that exist. Legal screens it like any other.
+   - She is last in the order, so this holds nobody up.
+10. **A draw weight on a fighter's own pieces is the lever for "short", later.** Rule 3 says his own are his favourites, and the generator's weights only decide what is in a cell, not how often it is drawn. So Encounter's pick should draw his own half again as often as a common piece (first value 1.5). It is outside the recipes window, and it isn't the Empress's fix: it would hide that her quick hands aren't hers.
+
 ## 2. What happens to the balance
 
 **Rows that belong to the system.** They are tuned once, on a reference, and carry to any fighter inside the band.
@@ -162,8 +171,8 @@ With four fighters that is four mirrors and six pairings. With twelve it is twel
 
 **The Empress's silhouette changes her moveset** (Combat). The Regent strikes as the parked row does. The Tabard loses a knee and a straight kick. **The Bell has no kick and no knee at all,** so by today's grammar she has no heavy that lands on the legs, and her row doesn't generate.
 - **The floor of a heavy to an arm and one to the legs is a rule about the target.** It is there so that the wrench can go after either limb. How she reaches the legs is her own.
-- **If Orb picks the Bell, that floor is waived for her at tier 1.** She wrenches arms only, and her sheet says so. It comes back at tier 2, when her mantle strikes as a limb: its hem is what reaches low.
-- It doesn't hold up the pick. Orb should know when picking that the Bell means she never kicks, and that her low blows wait for the mantle, which is the most work of anything on the four.
+- **The Bell has no tier 1 without the mantle** (re-ruled on Combat's build). I had waived the leg floor for her. Even so she has only two own lights to find where the floor asks three, and a second waiver would mean she isn't a tier-1 fighter at all. So no waiver: if Orb picks the Bell, the Empress comes into the build when her mantle strikes as a limb, and not before.
+- **For Orb's pick sheet, plainly.** The Regent can come in first, on hand strikes. The Tabard can too, with a knee and a straight kick fewer. The Bell never kicks, and waits for the mantle, which is the most work of anything on the four.
 
 ## 5. The first two: what ends "generic"
 
