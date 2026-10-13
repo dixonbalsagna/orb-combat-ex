@@ -2,6 +2,8 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
+**A parked build:** `fighters-w23/`: windows 2 and 3 of `../fighters-as-data.md`, on top of window 1 (on main since 89b3e2f8). `bench_fighter.py` adds the reference fighter on a bench beside the roster (`data/fighters/REFERENCE/fighter.json`, `data/fighters/bench.json`) and a hash a fighter; `select_guards.py` adds the slot guard in `SimCore.newMatch` and `--a` and `--b` in `batch.gd`. Applied in that order, from the repo root. No golden moves: parity on the committed golden and a byte-for-byte regeneration prove it.
+
 **One script is parked:** `weight_event.py`, the blow's weight on the damage event, for Audio. It moves every golden's light digest and no state hash, so by the EP's ruling it rides with the next golden regeneration and has none of its own. Prove it alone on a clean export first.
 
 **A parked build:** `depth-a/`: a fighter's depth outside a flight (two depth velocities, a capped ease, the contact rule against buildings, the director's step call, the camera's start at a crossing), with its new `SimDepth` loader and `data/combat/depth.json`. Proved on a clean export of 33c6f5bd: no golden moves with depth off. It is applied in the depth window, with Encounter's D1a. The plan, what the director calls and the proof are in `depth-core.md`, which also holds the snapshot design (paper).

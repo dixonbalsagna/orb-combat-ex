@@ -1,15 +1,15 @@
 # Fighters as data: what the core assumes today, and the windows to four fighters
 
-Owner: Simulation and Engine. 2026-10-12. **Window 1 is built (section 2). The rest is paper,** and its sizes are estimates. It answers the five questions Game Design's `docs/design/fighter-pipeline.md` puts to Simulation and Tools. Line numbers are HEAD's (f4e57e63).
+Owner: Simulation and Engine. 2026-10-12. **Window 1 is built (section 2). Windows 2 and 3 are built in scratch and parked in `pending/fighters-w23/` (sections 3 and 5). Window 4 is paper.** It answers the five questions Game Design's `docs/design/fighter-pipeline.md` puts to Simulation and Tools. Line numbers are HEAD's (f4e57e63).
 
 ## In short
 
 | Question | Answer |
 | :--- | :--- |
 | Can `wounds.json` and `ladder.json` each become one shared file, with a fighter's differences beside it? | **Yes, and the goldens need not move at all.** The two fighters' copies are identical today, value for value. The data hash is taken over what a fighter resolves to, so it stays the same to the bit |
-| Does a new fighter folder and roster entry leave every existing golden unchanged? | **Every match, replay and checkpoint: yes. One recorded vector moves:** the roster's data hash covers the whole roster. Window 2 makes it one hash a fighter, so that it never moves again for a fighter nobody in the match is |
+| Does a new fighter folder and roster entry leave every existing golden unchanged? | **Every match, replay and checkpoint: yes.** A fighter added to the roster moves one recorded vector, the roster's data hash. **A fighter added to the bench moves nothing:** window 2 puts the reference fighter there, outside the roster, and he is hashed into a replay only when it names him |
 | What assumes two fighters, or these two ids? | **The sim's rules name no id.** A match has exactly two fighters, and that stays. The ids are named only in my check and batch tools, and in other owners' data (section 4) |
-| What does a match setup need to name any two of N? | **Nothing new:** `{"slots": [id, id]}` has been there since D1a, and a replay records it. Three small guards are worth adding (section 5) |
+| What does a match setup need to name any two of N? | **Nothing new:** `{"slots": [id, id]}` has been there since D1a, and a replay records it. Window 3 adds two guards (section 5) |
 | What does `care` switched on do? | It moves where launches go, where the AI leads a fight and which way it leans in a brawl: three reads, all Encounter's. It is in the state hash, so every golden match moves from tick 0. **It is a re-baseline, once,** as Game Design says: one regeneration, and QA's bands read before and after |
 
 ## 1. What is there today
@@ -52,12 +52,19 @@ Owner: Simulation and Engine. 2026-10-12. **Window 1 is built (section 2). The r
 
 **Tools' part** is Tools' own (`tools/lib/shared.js`): the full schemas on the two shared files, a fighter's file with nothing required, the merged result checked, and its fixtures split the same way. The loader's rule and the validator's are written to be the same rule.
 
-## 3. Adding a fighter: what moves
+## 3. Adding a fighter: what moves, and the bench (window 2, built in scratch)
 
 - **No match moves.** A match reads only the two fighters in it.
-- **The default pairing must stay.** It is the roster's first two. A new id goes after them. Section 5 pins it.
-- **The roster's hash moves,** because it is one hash over everyone. That is the `rosterHash` vector in the golden, and it is in every replay's data hash. So adding the reference fighter would today turn away every stored replay of the first two.
-- **Window 2 makes it one hash a fighter.** A replay's data hash then takes the game's data and the two fighters in its slots. Adding or tuning a third fighter leaves every replay and every vector of the first two alone, for good. The golden's one vector becomes one a fighter, once.
+- **A fighter added to the roster moves the roster's hash,** because it is one hash over everyone: the `rosterHash` vector in the golden, and a part of every replay's data hash. He also joins what reads the roster as the list to cover: Tools' flash tools and Legal's list of pairings take one entry for every pair in `roster.json`.
+- **So the reference fighter is not in the roster. He is on the bench:** `data/fighters/bench.json`, a list beside the roster. A bench fighter loads as any other and can be named in a match's slots. He is not on the select screen, not in the roster's hash, and not in the pairings.
+- **A hash a fighter.** The loader keeps the hash of what each fighter resolves to (`FighterData.hashOf`). A replay's data hash is what it was, and a bench fighter's hash is folded in only when the replay's slots name him. So his data can change without turning away a replay of the roster's fighters, and a replay of his own is refused when they do.
+- **No golden moves in window 2:** the roster file, its order and its hash are untouched.
+- Moving him into the roster later, if Orb wants him on the select screen, is one line in each of the two lists, and then the roster's hash moves once.
+- **The roster's own fighters still share one hash.** The Cyborg will move it when he joins, and with it every stored replay. Making the roster's hash one a fighter as well changes the golden's replay line, so it rides with a window that regenerates anyway.
+
+**The reference fighter, as built.** `data/fighters/REFERENCE/fighter.json`: damage 1.0, speed 1.0, care 0, no meter file, no wounds or ladder file of his own, so the game's. Three values are provisional until Game Design rules: his role word (`reference`, which the loader now accepts), his Rally rule (`second_wind`, as the two in the build have) and his finisher (`generic`, which belongs to nobody).
+
+**Proof,** on a clean export of 89b3e2f8, which has window 1: parity against the committed golden, unregenerated, 54 of 54; the golden regenerated byte-identical. The new check, "the bench, and the reference fighter": he loads plain, with the game's wounds and ladder; every fighter has a hash of his own; a replay of the roster's fighters keeps its data hash; matches of him against himself and against each of the two run; a replay that names him carries his hash and plays back; and after his data change, the roster's hash and a roster replay hold while his own replay is refused.
 
 ## 4. What assumes two fighters, or these two ids
 
@@ -69,17 +76,19 @@ Owner: Simulation and Engine. 2026-10-12. **Window 1 is built (section 2). The r
 | The state hash | His id, name, role and colours are in it | Nothing |
 | A replay | Its header keeps the setup, slots included. With no slots it means the roster's first two. Its data hash covers the whole roster | Section 3, and the pin in section 5 |
 | The JS parity copy | The frozen JS core carries its own two fighters as constants and reads no fighter file. Its golden is frozen (ADR 0006) | Nothing: it is untouched by any of this |
-| My tools | `parity.gd` checks the roster's order against the two ids; the golden's arms (swap, the two mirrors) and `batch.gd --arm` name them | Window 2: the check reads the pairing from data; window 3: `--a` and `--b` take any id |
+| My tools | `parity.gd` checks the roster's order against the two ids; the golden's arms (swap, the two mirrors) and `batch.gd --arm` name them | The roster check stays: it is what pins the default pairing. Window 3: `--a` and `--b` take any id |
 | Other owners' data, as far as I saw | `data/director/ai.json` has one entry keyed by id (`digInBy`); the finisher's key is in his `fighter.json`; Combat's pools, Animation's `data/anim/fighters.json`, UI's `fighter_names.json` and Audio's voices are keyed by fighter | Each owner's part of a grey copy. A parity fixture already plays a match with an id nobody else knows (`TEST`), so the sim itself copes |
 
-## 5. Naming any two of N
+## 5. Naming any two of N (window 3, built in scratch)
 
-- `SimCore.newMatch(S, seed, ai, {"slots": ["A", "B"]})` picks them. `"flip": true` swaps the sides. The same id twice is a mirror, with `"names"` to tell the two apart in the feed. A replay keeps all three.
-- **Three guards for window 3.**
-  1. An id the roster does not have is refused with an error, and the match falls back to the default pairing. Today it would fail inside the fighter's construction.
-  2. The default pairing is written in the roster file (`"default": ["PROTAGONIST", "RIVAL"]`; the loader already takes the roster as an object). Then the order of the roster is the select screen's and can change freely, and a replay with no slots keeps its meaning.
-  3. `batch.gd` and the golden's arms take ids, not the two names.
+- `SimCore.newMatch(S, seed, ai, {"slots": ["A", "B"]})` picks them, from the roster or the bench. `"flip": true` swaps the sides. The same id twice is a mirror, with `"names"` to tell the two apart in the feed. A replay keeps all three.
+- **Two guards, built.**
+  1. Slots that are not two fighters the data has are refused with an error, and the default pairing plays: the match is the default match to the hash. Before, it failed inside the fighter's construction.
+  2. `batch.gd` takes ids: `--a=ID --b=ID`, a mirror with the same id twice. With the two real ids its digest is the default arm's.
+- **The third guard is not built:** the default pairing written in the roster file. It would turn `roster.json` from a list into an object, and Tools' flash tools and Legal's pairing list read it as a list. The default pairing stays the roster's first two, a new roster id goes after them, and parity's roster check holds the order.
 - The select screen, QA's runner and Rendering's host each pass the setup they want. Those are theirs.
+
+**Proof,** on the same export: the check "a match's slots name two fighters the data has" (an id nobody has, one id, three, numbers and none each play the default match to the hash; good slots are taken). `batch.gd -- 4 1` and `-- 4 1 --a=PROTAGONIST --b=RIVAL` give the same digest; the reference fighter against the rival, and against himself with the sides swapped, run; an unknown id is refused with exit 2.
 
 ## 6. `care` switched on
 
@@ -97,12 +106,12 @@ Owner: Simulation and Engine. 2026-10-12. **Window 1 is built (section 2). The r
 | Window | What | Mine | Others | Golden |
 | ---: | :--- | :--- | :--- | :--- |
 | 1 | **One wounds file and one ladder file,** with a fighter's differences beside them (section 2) | The loader's merge and the resolved hash, about 60 lines; the parity cases, about 80; two files moved and four deleted; the loader's test hook gains the shared folder | Tools: the two schemas, the merged check, the fixtures. A session | **None,** proved byte for byte |
-| 2 | **The reference fighter, and a hash a fighter** (sections 3 and 4) | `data/fighters/REFERENCE/` (base stats, care 0, no meter); the role; one hash a fighter in the loader, the golden and the replay's data hash; the roster check from data. About 80 lines and a folder | Tools: the roster's schema. UI, Animation, Audio, Combat: his rows as a grey copy. Combat: which finisher a plain fighter has | Only the data-hash vectors change shape. No match moves |
-| 3 | **Selection** (section 5) | The three guards; `--a` and `--b` in `batch.gd`. About 50 lines | QA's runner; Rendering's host; UI's select | None |
+| 2 | **The reference fighter on the bench, and a hash a fighter** (section 3). **Built in scratch, parked** | `data/fighters/REFERENCE/fighter.json`, `data/fighters/bench.json`; the loader's bench, `has` and `hashOf`; the replay's data hash by setup; the role word. About 70 lines, a check of 75, a folder | Tools: a schema for `bench.json` (a list of ids that are not in the roster; the validator warns until then). UI, Animation, Audio, Combat: his rows as a grey copy, before he can be drawn or heard | **None** |
+| 3 | **Selection** (section 5). **Built in scratch, parked** | The slot guard in `newMatch`; `--a` and `--b` in `batch.gd`. About 30 lines and a check of 35 | QA's runner; Rendering's host; UI's select | **None** |
 | 4 | **`care` on** (section 6) | Two data lines, one regeneration | QA: before and after. Encounter and Game Design: the bands | **Every match moves.** The one re-baseline |
 | Later | A fighter's own wound profile, a third meter, forms | With his tier 2 | | With his mechanic's switch |
 
-- Windows 1 to 3 change no match, so each can be proved against the golden as it stands and can land between other people's work.
+- Windows 1 to 3 change no match and no golden, so each is proved against the golden as it stands and can land between other people's work. Windows 2 and 3 apply together: `pending/fighters-w23/bench_fighter.py`, then `select_guards.py`.
 - Window 1 is worth doing first whatever follows: it ends the double edit that Encounter's tunes made.
 - The parked `weight_event.py` moves every golden's event digest and no state. It can ride with window 4's regeneration, proved alone first.
 
@@ -110,7 +119,7 @@ Owner: Simulation and Engine. 2026-10-12. **Window 1 is built (section 2). The r
 
 | For | Question |
 | :--- | :--- |
-| The EP | The shared files' home: `data/fight/` as here, or a folder under `data/fighters/` |
-| Game Design | The reference fighter's role word, and whether he has a Rally rule and a finisher |
-| Tools | Whether the validator can check a merged file, or wants the fighter's file complete and generated |
+| Game Design | The reference fighter's role word, his Rally rule and his finisher. The build has `reference`, `second_wind` and `generic` |
+| Tools | A schema for `data/fighters/bench.json`, and the rule that a bench id has a folder and is not in the roster |
+| Orb | The reference fighter on the select screen, or out of sight. He is out of sight on the bench; the roster is one line away |
 | Game Design and Tools | Whether the stat band (0.95 to 1.05) is held by the schema |
