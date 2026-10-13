@@ -192,3 +192,25 @@ Also: a launch through buildings is exempt from the rule **only with the dolly o
 **Measured** (the clip staging through the real rig, rule on): collapse ticks 700 to 900: worst displayed travel 0.0307 (3 ticks over 0.03; off 0.3234, 166 ticks); ai 12345 ticks 1300 to 1440: the rule does not engage, the picture is the follow's (worst 0.0624 at the launch's onset in both arms, 8 ticks over 0.03 in both). Rows `launch spike that dies` (no engage), `launch fast then slow` (engages, ends when he slows, one cut at most, no pan), and the older `launch hold on / off` rows pass.
 
 **The merge zoom limit** (`SplitRig.merge_zoom_limit`, `SplitView.set_merge_zoom_limit`, default off). While the panes merge (a launch shot giving the screen back, or the layout one view for `MZ_WINDOW` = 2 s) the zoom comes in no faster than `MZ_RATE` = 0.0035 of a log unit a tick (0.21 a second), for the pane's own zoom, the shared camera's and the displayed zoom; zooming out is not limited. On ai 12345's re-merge (tick 1401): zoom 0.739 to 1.002 in 48 ticks without, 0.739 to 0.873 with. **Cost:** the pair is drawn at 0.87 of the zoom it asks for for about two seconds after a re-merge. I could not reproduce ai 38's solo-and-merge window (3440 to 3504) on this commit: the sim has moved since f5c001e6 and the clip at those ticks is a locked brawl in one view; the limit is measured on ai 12345's merge and in its rows (`launch fast then slow with the merge zoom limit`: fastest zoom-in while merging 0.0001 against 0.0004 without).
+
+## 14. The divider slam, and what the merge zoom limit does where (2026-10-13, after Tools' eight clips on the third version)
+
+Tools' reading of ai 12345 with the launch rule and the merge zoom limit both on: 2.5 / 4 / 2.5 FAIL, attributed to the divider slam (ticks 680 to 712: the rusher's pane taking the screen, the door shut over 0.14 s). Measured with Tools' own path (web export of each arm, `capture-web.mjs` and `analyse-frames.js` at 1,024 x 768, the whole 3,600-tick clip):
+
+| Arm (ai 12345, normal) | General | Area -15% | 2 s memory | Worst second |
+| :--- | ---: | ---: | ---: | :--- |
+| Rule on, merge zoom limit off | 2.5 | 2.5 | 2.5 | the slam, 661 to 703, at most 3.5 times the threshold: **PASS** |
+| Rule on, merge zoom limit on (0.0035 a tick) | 3 | 4 | 2.5 | **1376 to 1432: the launch shot's re-merge** |
+| ... at 0.008 a tick | 3 | 4 | 2.5 | the same second |
+| ... and no divider slam | 3 | 4 | 2 | the same second |
+| ... and a 0.30 s door | (3.5 area; 2.5 general) | | | worse: two slams in a row, a 0.24 jump between them |
+| Rule on, the limit only at the layout's own closing (built) | **2.5** | **2.5** | **2.5** | PASS |
+| (collapse normal, the same arm) | **1.5** | **2.5** | **1.5** | PASS, margin 1 of 3 |
+
+**What the findings are.**
+- **The slam was not the failing second.** With the limit off the slam region reads at most 3.5 times the threshold and the clip passes. The failing second is 1376 to 1432, six counted changes of 1.2 to 1.9 times each, after the launch shot gives the screen back.
+- **The limit was.** Slowing the zoom ramp of that re-merge (from 0.739 to 1.002 in 48 ticks, to 0.873) stretched the picture's movement over a few seconds and, in this clip, onto the line; at 0.0035 and at 0.008 alike. The ramp unlimited reads no counted change there.
+- **At 604 to 631** (the closing that ends in a re-opening, which Tools suspected): the limit did act (pane 1's zoom 0.608 against 0.597 at tick 610, a few thousandths), and it is narrowed so it does not: a closing counts only once the pair is within 300 units of each other (or the layout is one view), and a launch shot's end is not limited at all. That narrowing was not what moved ai 12345's verdict, and it costs nothing in the arms measured.
+- **What the limit is for:** collapse-normal's closing (the pair rushing together at ticks 84 to 104, one view): with hold and the closing-only limit it reads 1.5 / 2.5 / 1.5.
+
+**Built.** `merge_zoom_limit` acts only on the layout's closing into one view (the pair within 300 units, or already one view, for 2 s), not on a launch shot's end. A new switch `slam_off` (`SplitView.set_slam_off`, default off): a rush's contact does not shut the door; the panes merge the ordinary way. It reads 2 / 2 / 2 on the ticks 0 to 760 of ai 12345 (against 2.5 / 2.5 / 2.5 with the door); the full clip with it and the old limit is the arm above that fails at 1376, so it is not needed for any pass measured. **Not built:** a softer door (worse), a vertical-rate cap on the slam's dive (the dive's follow is 0.029 of the width a tick for 15 ticks, inside the bound; the door's pane-to-shared sweep, 330 units in 4 ticks, is the one tick over). The cost of `slam_off`: a rush's contact loses its punch (the divider's slam, the push and the shake carry it today).

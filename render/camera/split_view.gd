@@ -156,6 +156,14 @@ func set_depth_dolly(on: bool) -> void:
 		main.split_rig.depth_dolly = on
 
 
+## No divider slam (docs/camera/buildings-in-frame.md section 14): a rush's contact does not close the door over the pane (the
+## 0.14 s slam: the pane's camera sweeping into the shared one, the divider shut in 8 ticks); the panes merge the ordinary way, by
+## the closing. Off by default: the slam is a feel Orb may want. A build-time switch.
+func set_slam_off(on: bool) -> void:
+	if main != null:
+		main.split_rig.slam_off = on
+
+
 ## The zoom comes in slowly while the panes merge (docs/camera/buildings-in-frame.md section 13): no faster than 0.21 of a log unit
 ## a second, from a launch shot's end to two seconds after the layout is one view. Off by default until Tools has run it. A
 ## build-time switch.

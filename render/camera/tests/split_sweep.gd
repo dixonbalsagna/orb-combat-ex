@@ -185,6 +185,7 @@ func _run() -> void:
 	await _scenario("split line jitter", func(): return _line_jitter(0.90, 1.10, CamParams.R_SPLIT), {"max_changes_per_second": 1.3})
 	# 5. Merges and the slam.
 	await _scenario("slam", func(): return _slam(false), {"slams": 1})
+	await _scenario("slam off", func(): return _slam(false, true), {"slams": 0})
 	await _scenario("slam feint", func(): return _slam(true), {"slams": 0})
 	# 6. Launches.
 	for sp in [1677.0, 10816.0, 26718.0, 45606.0]:
@@ -896,7 +897,8 @@ func _line_jitter(lo: float, hi: float, r_line: float) -> Dictionary:
 	return {}
 
 
-func _slam(feint: bool) -> Dictionary:
+func _slam(feint: bool, off: bool = false) -> Dictionary:
+	_rig.slam_off = off   # the switch of section 14: no door, the ordinary merge
 	var ax: float = 50000.0
 	var sep: float = 5000.0
 	_pose(ax, 40.0, ax + sep, 40.0)

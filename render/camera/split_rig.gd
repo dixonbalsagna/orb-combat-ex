@@ -579,7 +579,7 @@ func _set_split(want: bool, why: String = "trigger") -> void:
 ## The slam: a rush toward the other fighter, seen while split, starts a lean, then a 0.14 s door-shut timed to the
 ## contact. Returns true while a slam owns the layout.
 func _slam_step(S: SimState) -> bool:
-	if not split_wanted or sep < 0.5 or _solo_follow(S) or _lg_slot >= 0:
+	if slam_off or not split_wanted or sep < 0.5 or _solo_follow(S) or _lg_slot >= 0:
 		return false
 	# Not while a pane still holds the screen (e above 0.05, the ease back from a shot): the door sets e from its own clock,
 	# so starting it then moved the divider 0.4 of the width in a tick (found by the jolt scan).
@@ -2370,7 +2370,9 @@ var stage_moves: int = 0                               # stages set or moved (co
 var launch_hold: bool = false
 var _lh: Array = [0, 0]                                # 0 none, 1 holding the frame, 2 panning to him
 var _lh_gone: Array = [0, 0]
+var slam_off: bool = false                             # no divider slam: a rush's contact merges the panes the ordinary way (docs/camera/buildings-in-frame.md section 14); off by default
 var merge_zoom_limit: bool = false                      # the zoom comes in slowly while the panes merge (docs/camera/buildings-in-frame.md section 13); off by default
+var _pair_near: bool = false                           # the pair is within MZ_NEAR of each other (for the merge zoom limit)
 var _lh_dist: Array = [0.0, 0.0]                       # the width a fast body has covered since he became fast (the rule engages at LH_ENGAGE_W)
 var _lh_rel_t: Array = [-1.0e9, -1.0e9]               # when the rule last ended for this pane (it engages at once again within a second)
 var _lh_slow: Array = [0, 0]                           # ticks he has been under LH_SLOW of the threshold
@@ -2491,9 +2493,16 @@ func _snap_focus_depth(S: SimState) -> void:
 ## their near edges in with STAGE_MARGIN of the width each side. Held when the new pair is already inside the stage there is.
 ## Whether the panes are merging: a launch shot is giving the screen back, or the layout became one view within MZ_WINDOW.
 func _merging_now() -> bool:
+	# A launch shot giving the screen back is not limited (ai 12345's re-merge at tick 1376 to 1432 went from a pass to 3 / 4 / 2.5
+	# with the zoom ramp slowed, at 0.0035 and at 0.008 a tick, where the unlimited ramp read 2.5 / 2.5 / 2.5): only the layout's
+	# own closing into one view is.
 	if solo_slot >= 0 and solo_w > 0.0 and solo_target <= 0.0:
-		return true
-	return not split_wanted and _layout_age < CamParams.MZ_WINDOW and sep < 0.999
+		return false
+	if split_wanted or _layout_age >= CamParams.MZ_WINDOW or sep >= 0.999:
+		return false
+	# a closing counts once the pair is near enough to be merging for certain: the closing that ends in a split's re-opening
+	# (ai 12345, ticks 604 to 631: the pair at 490 units, then a dive) is not a merge
+	return sep <= 0.001 or _pair_near
 
 
 ## Whether pane i is the only picture on the screen (the launch shot has taken it): the shared camera is hidden then.
@@ -2558,6 +2567,7 @@ func _update_stage(S: SimState) -> void:
 func _update_cameras(S: SimState) -> void:
 	_update_focus_depth(S)
 	_update_stage(S)
+	_pair_near = sqrt(pow(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x), 2.0) + pow(S.fighters[1].y - S.fighters[0].y, 2.0)) < CamParams.MZ_NEAR
 	if _slam_slot >= 0:
 		_slam_run(S)
 	var stiff: bool = _slam_slot >= 0 and e > 0.0

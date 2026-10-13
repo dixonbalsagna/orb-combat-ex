@@ -2,7 +2,7 @@ extends SceneTree
 ## A flash clip's camera, per tick, through the real game scene (the way tools/flash/flash_worst.gd plays it: render/main.tscn,
 ## the host's own step, the compositor attached), headless. One line a tick in the window: mode, layout, the displayed camera
 ## and its travel, the launch rule's phase. For reproducing what Tools' per-tick probe sees.
-##   godot --headless --path . --script res://render/camera/tests/clip_probe.gd -- --scenario=ai --seed=38 --from=3440 --to=3560 [--hold] [--mz] [--budget]
+##   godot --headless --path . --script res://render/camera/tests/clip_probe.gd -- --scenario=ai --seed=38 --from=3440 --to=3560 [--hold] [--mz] [--slam] [--budget]
 ## Scenarios: ai (the real match with its writes) and collapse (a blast through the front row every 150 ticks).
 
 const DT: float = 1.0 / 60.0
@@ -16,7 +16,7 @@ var t1: int = 200
 var hold: bool = false
 var mz: bool = false
 var budget: bool = false
-var calm: bool = false
+var slam: bool = false
 
 
 func _initialize() -> void:
@@ -33,6 +33,8 @@ func _initialize() -> void:
 			hold = true
 		elif a == "--mz":
 			mz = true
+		elif a == "--slam":
+			slam = true
 		elif a == "--budget":
 			budget = true
 	var vpn := SubViewport.new()
@@ -58,6 +60,8 @@ func _run() -> void:
 		sv.set_launch_hold(true)
 	if mz:
 		main.split_rig.merge_zoom_limit = true
+	if slam:
+		sv.set_slam_off(true)
 	main.host.vfx.auto_quality = false
 	main.host.vfx.destruction_enabled = true
 	main.start_match(seed_v, {"p1": true, "p2": true}, null)
@@ -95,7 +99,7 @@ func _run() -> void:
 			var B = host.S.fighters[1]
 			print("P t ", host.ticks, " mode ", fr.mode, " sep ", snappedf(fr.sep, 0.01), " e ", snappedf(fr.e, 0.01), " solo ", rig.solo_kind, "/", snappedf(rig.solo_w, 0.01),
 				" st ", A.state, "/", B.state, " gap ", snappedf(absf(SimWrap.sdx(A.x, B.x)), 1.0), " mx ", snappedf(rig._mx, 1.0), " mz ", snappedf(rig._mz, 0.001),
-				" cam ", snappedf(cam.x, 1.0), " ", snappedf(cam.z, 0.001), " travel ", snappedf(tr, 0.0001), " lh ", rig._lh, " cut ", fr.cut)
+				" cam ", snappedf(cam.x, 1.0), " y ", snappedf(cam.y, 1.0), " ", snappedf(cam.z, 0.001), " travel ", snappedf(tr, 0.0001), " lh ", rig._lh, " cut ", fr.cut)
 	print("SUMMARY worst travel ", snappedf(worst, 0.0001), " ticks over 0.03: ", over)
 	quit(0)
 
