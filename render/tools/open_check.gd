@@ -16,8 +16,12 @@ extends SceneTree
 ##   fighters on that frame, and the lobby opens;
 ## - the pair lifted over the lobby's ceiling behind the tower: the tower takes its share of the patch, by area; back
 ##   on the ground it gives the share up after its hold;
-## - the tower damaged while its lobby is open: the lobby shuts with no hold and the tower takes the patch; damaged, it
-##   never opens;
+## - the tower damaged while its lobby is open: by RenderLook.OPEN_DAMAGED the lobby stays open at every stage (the
+##   shader shows the stage) or shuts with no hold and the tower takes the patch; a floor of the lobby cleared by a
+##   brunt: the lobby shuts with no hold and the tower takes the patch, either way;
+## - Camera's cut flag reaches a pane's request from the frame's `clear`, and the frame's own dictionary is not changed;
+## - what holds a cleared floor up: each part knows from what height it is the building's outermost wall, and the
+##   core's state follows the building's hit points;
 ## - a stepped tower's lobby: one part, its shell at the street, carries the colonnade, and the others are marked
 ##   as inside it;
 ## - behind a low building the low building has no lobby: the patch is handed to the blocks' material;
@@ -279,23 +283,67 @@ func _run() -> void:
 	lift = 0.0
 	_ticks(int(RenderLook.PATCH_HOLD_S / DT) + 120)
 	_expect(p_up == 1.0 and a_up == 1.0 and most <= budget + 1.0 and took > 1 and P.patch_share(ti) == 0.0 and _texel(ti).a == 0.0 and P.lobby_share(ti) == 1.0, "the pair lifted %.0f units, over the lobby's ceiling: the tower takes its share of the patch, at most %.0f pixels a tick (the lobby is %.0f%% open meanwhile); back on the ground it gives the share up and its lobby is open" % [o.y - foot + 80.0, most, 100.0 * k_up])
-	# Damaged while its lobby is open: the lobby goes and the patch takes the tower.
+	# Damaged while its lobby is open. By the switch the lobby stays (the shader shows the stage) or goes at once. A
+	# lobby floor cleared: the patch, either way.
 	WorldStructures.stage(tower)   # loads the stages' thresholds
 	var at: Array = WorldStructures._hpAt
 	var hp_was: float = tower.hp
-	tower.hp = tower.maxhp * (float(at[0]) + float(at[1])) * 0.5
-	var st_now: int = WorldStructures.stage(tower)
+	var mask_was: int = int(tower.fmask)
+	var stages: Array = []
+	var kept: bool = true
+	var gone: bool = true
+	for frac in [(float(at[0]) + float(at[1])) * 0.5, (float(at[1]) + float(at[2])) * 0.5, float(at[2]) * 0.5]:
+		tower.hp = tower.maxhp * float(frac)
+		_ticks(2)
+		var k2: float = P.lobby_share(ti)
+		_ticks(120)
+		stages.append(WorldStructures.stage(tower))
+		kept = kept and PlanetView.lobby_ok(tower) and P.lobby_share(ti) == 1.0 and P.patch_share(ti) == 0.0
+		gone = gone and not PlanetView.lobby_ok(tower) and P.lobby_share(ti) == 0.0 and P.patch_share(ti) == 1.0 and (stages.size() > 1 or k2 < 1.0)
+	tower.hp = hp_was
+	_ticks(hold_ticks + 240)
+	var back: bool = P.lobby_share(ti) == 1.0 and P.patch_share(ti) == 0.0
+	_expect(stages == [1, 2, 3] and back and (kept if RenderLook.OPEN_DAMAGED else gone), "the tower damaged to stages %s while its lobby is open, with RenderLook.OPEN_DAMAGED %s: %s; whole again (the tool's own state), its lobby is open" % [str(stages), "on" if RenderLook.OPEN_DAMAGED else "off", "the lobby stays open at each and the tower takes no share of the patch" if RenderLook.OPEN_DAMAGED else "the lobby starts to shut on the first tick and is shut, and the tower takes the patch"])
+	tower.fmask = mask_was & ~1   # the ground floor cleared (the tool's own state)
 	_ticks(2)
 	var k_first: float = P.lobby_share(ti)
 	_ticks(120)
-	var k_dmg: float = P.lobby_share(ti)
-	var p_dmg: float = P.patch_share(ti)
+	var k_cut: float = P.lobby_share(ti)
+	var p_cut: float = P.patch_share(ti)
 	fz = [0.0, 0.0]
 	_ticks(hold_ticks + 240)
 	fz = [z_mid, z_mid]
 	_ticks(120)
-	_expect(st_now >= 1 and not PlanetView.lobby_ok(tower) and k_first < 1.0 and k_dmg == 0.0 and p_dmg == 1.0 and P.lobby_share(ti) == 0.0 and P.patch_share(ti) == 1.0 and _texel(ti).g == 0.0, "the tower damaged (stage %d) while its lobby is open: the lobby starts to shut at once (%.0f%% two ticks on) and is shut, and the tower takes the patch; with the pair gone and back behind it, it does not open again" % [st_now, 100.0 * k_first])
+	_expect(not PlanetView.lobby_ok(tower) and k_first < 1.0 and k_cut == 0.0 and p_cut == 1.0 and P.lobby_share(ti) == 0.0 and P.patch_share(ti) == 1.0 and _texel(ti).g == 0.0, "the tower's ground floor cleared by a brunt: the lobby starts to shut at once (%.0f%% two ticks on) and is shut, the tower takes the patch, and with the pair gone and back behind it, it does not open" % (100.0 * k_first))
+	# What holds a cleared floor up: the core's state by the hit points, on the tower's own texel.
+	var wi: int = (P._inst[ti] as PackedInt32Array)[0]
+	var fr0: Color = (P._win[0] as Image).get_pixel(wi, 4)
+	tower.hp = tower.maxhp * (RenderLook.CORE_HP.x - 0.05)
+	_ticks(2)
+	var fr1: Color = (P._win[0] as Image).get_pixel(wi, 4)
+	tower.hp = tower.maxhp * (RenderLook.CORE_HP.y - 0.05)
+	_ticks(2)
+	var fr2: Color = (P._win[0] as Image).get_pixel(wi, 4)
 	tower.hp = hp_was
+	tower.fmask = mask_was
+	_ticks(2)
+	var frame_ok: bool = fr0.r == 0.0 and fr0.g == 0.0 and fr1.g == 1.0 and fr2.g == 2.0 and (P._win[0] as Image).get_pixel(wi, 4).g == 0.0
+	if stepped != null:
+		# A stepped tower: its skirts are outermost from the ground, its core only above the taller skirt.
+		var sps: Array = P._parts[int(stepped.idx)]
+		var tops: Array = []
+		for j in range(sps.size()):
+			if (int(sps[j][RenderShapes.FLAGS]) & (RenderShapes.ROOF | RenderShapes.PLAIN)) == 0 and float(sps[j][RenderShapes.Y0]) <= 0.0:
+				tops.append([float(sps[j][RenderShapes.W]), float(sps[j][RenderShapes.Y1]), RenderShapes.outer_from(sps, j)])
+		tops.sort_custom(func(p, q): return p[0] > q[0])
+		frame_ok = frame_ok and tops.size() == 3 and tops[0][2] == 0.0 and tops[1][2] == tops[0][1] and tops[2][2] == tops[1][1]
+		for j in range(sps.size()):
+			frame_ok = frame_ok and absf((P._win[0] as Image).get_pixel((P._inst[int(stepped.idx)] as PackedInt32Array)[j], 4).r - RenderShapes.outer_from(sps, j)) < 0.5
+	_expect(frame_ok, "what holds a cleared floor up: the tower's wall is its outermost from the ground; its core reads whole, cracked under %.0f%% of its hit points and broken under %.0f%%; a stepped tower's widest skirt is outermost from the ground, the next from the first one's top, its core from the second's" % [100.0 * RenderLook.CORE_HP.x, 100.0 * RenderLook.CORE_HP.y])
+	# Camera's cut flag, from the frame's clear to the pane's request.
+	var given: Dictionary = {"only": 1, "radius_px": 40.0}
+	var with_cut: Dictionary = PaneWorld.request(given, {"cut": true, "p": 0.2})
+	_expect(with_cut.get("cut", false) == true and int(with_cut["only"]) == 1 and not given.has("cut") and PaneWorld.request(given, {"cut": false}) == given and PaneWorld.request(given, null) == given and PaneWorld.request(given, {}) == given, "Camera's cut flag: a pane's request carries `cut` when the frame's clear says so, keeps the rest of its request, and the frame's own dictionary is not changed; with no cut, or no clear, the request is as given")
 	fz = [0.0, 0.0]
 	_ticks(hold_ticks + 240)
 	# A stepped tower: its shell at the street carries the colonnade.

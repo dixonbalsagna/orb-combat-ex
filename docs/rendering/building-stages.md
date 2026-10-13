@@ -17,6 +17,19 @@ Owner: Rendering and Technical Art. Status: built 2026-10-04, for World's staged
 - **Stage 1 is by damage.** Windows blown by a shock wave alone are still VFX's list, a floor at a time, as before. They now get the same soot.
 - **A falling building keeps its look.** While it sinks it is drawn at the stage it last stood at, windows and all. Before, it lost its windows the moment it fell.
 
+## What holds a cleared floor up (2026-10-12)
+
+Orb, 2026-10-12: "gaps between floors without realistic looking supports will make players lose their suspension of disbelief". A brunt's cleared floor was a gap across the tower's whole width with the dark back wall behind it and nothing under the floors above. Now what holds them is drawn, in every match:
+
+- **The frame's columns stand in the gap,** on the building's outermost walls that face the camera: four a face, each a twelfth of the face wide. They are the lobby's own (`OPEN_COL`, `open-floors.md`), so a lobby's columns and a cleared floor's are on the same lines up the building.
+- **The plates show their edges:** the floor over the gap and the floor under it, 9 units deep (`CUT_PLATE`), a step paler than the frame. Between two cleared floors no plate is drawn: the columns run through.
+- **The core stands against the dark inside:** the lift and stair shafts, a box in the middle of the footprint (`OPEN_CORE`), with its lift doors a floor. It is **whole, cracked under 35% of the building's hit points, and broken under 15%** (`CORE_HP`, World's reading in `docs/world/destruction-state.md`): a jagged line up it, then a bite out of its middle.
+- **In the bare frame's tone,** as a shell's posts: this is damage, and it is sooted with the walls.
+- **A stepped tower:** its skirts stand outside its core up to their tops, so each part knows from what height it is the outermost wall (`RenderShapes.outer_from`) and only that wall carries the columns.
+- **The fighter flying through** is drawn at his own depth, in front of the core and behind the near columns.
+- **How it is drawn:** no geometry. The columns and plates are pixels of the box's own walls that are kept. The core is found by meeting the eye's ray with its box, and is painted on the far wall's inside. The window texture has a fifth row for it (the outermost height and the core's state).
+- **Not built:** a column broken where the body went through. The sim does not yet say where across the floor he went (World's breach, its window B); `destruction-look.md` has what follows.
+
 ## Stills (web build, headless Chrome, 1280×720)
 
 Four neighbours set to stages 0, 1, 2 and 3, left to right, in a scratch copy (their hit points at 100, 80, 50 and 20%; the repo never writes the sim).

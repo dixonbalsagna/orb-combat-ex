@@ -334,6 +334,25 @@ static func shell(ps: Array) -> int:
 	return best
 
 
+## From what height over the building's footing part j is its outermost wall: the top of the tallest part that is
+## wider than it (a stepped tower's skirts stand outside its core up to their tops), 0 for the shell at the street.
+## There the part carries the frame's columns in a cleared floor (building.gdshader). A part that is not a centred,
+## walled box (a roof, a porch, a stair bump, a ledge) never does: a huge number.
+static func outer_from(ps: Array, j: int) -> float:
+	var p: Array = ps[j]
+	if (int(p[FLAGS]) & ROOF) != 0 or absf(float(p[X])) > 1.0 or absf(float(p[Z])) > 1.0:
+		return 1.0e9
+	var a: float = float(p[W]) * float(p[D])
+	var y: float = 0.0
+	for i in range(ps.size()):
+		var q: Array = ps[i]
+		if i == j or (int(q[FLAGS]) & ROOF) != 0 or absf(float(q[X])) > 1.0 or absf(float(q[Z])) > 1.0:
+			continue
+		if float(q[W]) * float(q[D]) > a + 0.5 and float(q[Y0]) <= float(p[Y0]) + 0.5:
+			y = maxf(y, float(q[Y1]))
+	return y
+
+
 ## Whether a building of this shape has a lobby to open (RenderLook.OPEN_SHAPES): the towers with straight walls. A
 ## tapered stack, a lighthouse, a hall and a chapel do not, whatever their floors.
 static func has_lobby(shape: String) -> bool:

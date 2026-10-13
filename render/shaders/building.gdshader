@@ -11,7 +11,10 @@
 //    it, so the box sinks to a solid stub with its own top, and a roof (instance colour alpha 0) folds flat under it.
 // 3. The floor cut. World's skyscrapers lose floors to a brunt (Building.fmask): a cleared floor under a standing one
 //    is a tunnel. Its front and side walls open (discard) and the back wall shows its dark inside, so the fighter is
-//    seen flying through the building at his own depth. The mask comes from cut_tex, a float texel a building read by
+//    seen flying through the building at his own depth. What holds the floors above is drawn (Orb, 2026-10-12: a gap
+//    with no real-looking supports breaks belief): on the building's outermost walls the frame's columns stand in the
+//    gap (the lobby's own, item 9, so they line up) and the plate of the floor over it and under it shows its edge;
+//    behind them, against the dark, stands the core, whole, cracked or broken by the building's hit points. The mask comes from cut_tex, a float texel a building read by
 //    the instance's index (planet_view.gd; a MultiMesh's own custom data is half floats here, too coarse for it): r and
 //    g hold floors 0 to 47 (24 bits each), b floors 48 to 61 plus 16,384 times the top standing floor, a the height
 //    of a floor (0: nothing to cut). The box's top is that floor's ceiling, which gives the base.
@@ -57,8 +60,13 @@
 //    its lamps in rows). It fades in by stipple: a share of the lobby's pixels is through, the rest still the wall.
 //    Only the tower's shell at the street carries the colonnade (win_tex's fourth texel: the shell's footprint from
 //    this part); a part inside the shell, or stuck onto it, is simply gone under the lobby's top (g is negative on it).
-//    Inside the patch (the hole's capsule) a column or the beam is thinned to a ghost, not removed. No soot, no
-//    cracks, no broken line, nothing dark painted in.
+//    Inside the patch (the hole's capsule) a column or the beam is thinned to a ghost, not removed.
+//    In the middle of the lobby stands the core, the lift and stair shafts that hold a tower up: a box of the
+//    columns' stone a step darker, with lift doors. There is no geometry for it: the eye's ray through an opened
+//    pixel of the shell's wall is met with the box, and the pixel is drawn as the core where it hits.
+//    A damaged tower's lobby opens too, and shows its stage: from "windows out" the lamps are out; from "a part
+//    gone" the stone is sooted with the walls and one front column is cracked; a shell has the bare frame's tone, no
+//    ceiling, and that column broken off above a stump.
 //    The patch on a tower: a building that never has a lobby (b under -1.5e9) is holed as ever. A tower is holed only
 //    by its share of the patch (a: the hole's radius is scaled by it), which planet_view.gd raises when the fight is
 //    above the lobby's ceiling or the tower is damaged.
@@ -113,6 +121,11 @@ uniform vec4 open_ceil : source_color = vec4(0.64, 0.59, 0.47, 1.0);    // Rende
 uniform vec4 open_lamp : source_color = vec4(0.72, 0.65, 0.52, 1.0);    // RenderLook.OPEN_LAMP: its lamp panels (held to pattern_budget from the ceiling)
 uniform float open_grid = 75.0;      // RenderLook.OPEN_GRID: a ceiling bay
 uniform float open_ghost = 0.72;
+uniform vec2 open_core = vec2(0.24, 0.4);   // RenderLook.OPEN_CORE: the lift and stair core in the middle of a lobby, as shares of the shell's width and depth
+uniform float open_core_tone = 0.8;  // ... its stone against the columns'
+uniform float open_door = 105.0;     // RenderLook.OPEN_DOOR: a lift door's height
+uniform float open_core_ghost = 0.85; // RenderLook.OPEN_CORE_GHOST: the share of the core's pixels gone inside the patch (it is the widest thing in a lobby)
+uniform float cut_plate = 9.0;       // RenderLook.CUT_PLATE: the edge of a floor's plate over and under a cleared floor
 uniform vec2 open_near = vec2(300.0, 600.0);   // RenderLook.NEAR_CLIP: a column nearer the lens than the second is thinned toward a ghost, and is one at the first     // RenderLook.OPEN_GHOST: the share of a column's pixels gone inside the patch
 
 varying flat vec4 v_cut;      // x, y, z: the mask's three parts; w: floor height
@@ -129,6 +142,7 @@ varying vec3 v_view;          // from the camera, in world axes, for the sky's c
 varying flat vec3 v_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1
 varying flat vec3 v_open;     // this pane's lobby: x the share of it open (0: shut; negative on a part inside the shell or stuck onto it), y its top (world y; under -1.5e9: a building with no lobby), z the tower's share of the patch
 varying flat vec4 v_shell;    // the footprint of the tower's shell at the street: xy its middle (x across from the camera, z in depth), zw half its width and depth (0: none)
+varying flat vec2 v_frame;    // x: the height over the building's base from which this part is its outermost wall (it carries the frame's columns there; huge: never); y: the core's state (0 whole, 1 cracked, 2 broken)
 
 // A world point on this pane's screen, in FRAGCOORD's pixels.
 vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
@@ -184,6 +198,7 @@ void vertex() {
 	v_face = vec4(zface ? v0.x * sx : v0.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(n0.y) < 0.5 ? 1.0 : 0.0), v0.x * sx);
 	v_dmg = vec3(wb.z, min(top, stubbed), sx);
 	v_look = vec3(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0));
+	v_frame = texelFetch(win_tex, ivec2(id, 4), 0).xy;
 	vec4 shl = texelFetch(win_tex, ivec2(id, 3), 0);
 	v_shell = vec4(MODEL_MATRIX[3].x + shl.x, MODEL_MATRIX[3].z + shl.y, shl.z, shl.w);
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
@@ -243,6 +258,61 @@ float win_hash(vec3 p) {
 	p = fract(p * vec3(0.1031, 0.1030, 0.0973));
 	p += dot(p, p.yxz + 33.33);
 	return fract((p.x + p.y) * p.z);
+}
+
+// The frame's columns along a wall: open_col.y of them, the two corners and those between, evenly, each open_col.x of
+// the wall wide (never thinner than `edge`, a pixel and a bit). at: along the wall from its middle; len: its length.
+// which: the nearest column's number from the wall's start; across: how far `at` is from that column's middle; wide:
+// a column's width. Returns whether `at` is on a column.
+bool on_column(float at, float len, float edge, out float which, out float across, out float wide) {
+	float n = max(2.0, open_col.y);
+	wide = max(open_col.x * len, 1.3 * edge);
+	float pitch = (len - wide) / (n - 1.0);
+	float u = at + 0.5 * len - 0.5 * wide;
+	which = clamp(floor(u / pitch + 0.5), 0.0, n - 1.0);
+	across = u - which * pitch;
+	return abs(across) < 0.5 * wide;
+}
+
+// The core (the lift and stair shafts that hold a tower up): a box in the middle of the shell's footprint (shell: xy
+// its middle across and in depth, zw half its width and depth). Where the ray eye + view * t enters it: t (this pixel
+// is at 1), or -1 when it misses. xface: it enters by a face that looks along x.
+float core_in(vec4 shell, vec3 eye, vec3 view, out bool xface) {
+	vec2 h = open_core * shell.zw;
+	vec2 dir = vec2(abs(view.x) < 0.0001 ? 0.0001 : view.x, abs(view.z) < 0.0001 ? 0.0001 : view.z);
+	vec2 ta = (-h - (eye.xz - shell.xy)) / dir;
+	vec2 tb = (h - (eye.xz - shell.xy)) / dir;
+	vec2 lo = min(ta, tb);
+	vec2 hi = max(ta, tb);
+	xface = lo.x > lo.y;
+	float t = max(lo.x, lo.y);
+	return (shell.z > 0.0 && t < min(hi.x, hi.y)) ? t : -1.0;
+}
+
+// The core's face where that ray meets it, shaded. stone: the frame's stone here; floor_y and room: the storey's
+// floor and its height; state: 0 whole, 1 cracked, 2 broken (the building's hit points); lit: the lift signs are on.
+vec3 core_look(vec4 shell, vec3 eye, vec3 view, float t, bool xface, vec3 stone, float floor_y, float room, float state, bool lit, float bid, mat4 to_view) {
+	vec2 h = max(open_core * shell.zw, vec2(0.001));
+	vec3 nrm = xface ? vec3(-sign(view.x), 0.0, 0.0) : vec3(0.0, 0.0, -sign(view.z));
+	float along = xface ? (eye.z + view.z * t - shell.y) / h.y : (eye.x + view.x * t - shell.x) / h.x;   // -1 to 1 across the face
+	float up = eye.y + view.y * t - floor_y;
+	float door_h = min(open_door, 0.72 * room);
+	bool door = abs(fract((along * 0.5 + 0.5) * 3.0) - 0.5) < 0.3;   // three lift doors a face
+	vec3 c = stone * open_core_tone;
+	if (door && up < door_h) {
+		c = mix(inside.rgb, stone, 0.3);
+	} else if (door && lit && up > door_h + 6.0 && up < door_h + 13.0) {
+		c = toward(stone, open_lamp.rgb, 2.0 * pattern_budget);
+	}
+	if (state > 0.5) {
+		// Cracked: a line up it in straight jags.
+		float jag = (win_hash(vec3(bid, floor(up / 14.0), 29.0)) - 0.5) * 0.22;
+		c = mix(c, inside.rgb, 0.8 * (1.0 - smoothstep(0.025, 0.05, abs(along - 0.24 - jag))));
+	}
+	if (state > 1.5 && up > 0.2 * room && up < 0.74 * room && abs(along + 0.12) < 0.3 + 0.22 * win_hash(vec3(bid, floor(up / 16.0), 31.0))) {
+		c = inside.rgb;   // broken: a bite out of its middle, the dark inside showing
+	}
+	return flat_shade(c, (to_view * vec4(nrm, 0.0)).xyz, 0.35);
 }
 
 void fragment() {
@@ -404,13 +474,41 @@ void fragment() {
 			}
 		}
 	}
+	vec3 eye = INV_VIEW_MATRIX[3].xyz;
+	float edge_x = fwidth(v_face.x);   // worked out for every pixel, so it is defined wherever a branch below uses it
+	bool core_x = false;
+	float core_t = -1.0;   // where the eye's ray enters the core (this pixel at 1); under 0: it misses. Worked out only in an opening
+	float col_i = 0.0;
+	float col_u = 0.0;
+	float col_w = 1.0;
 	if (v_cut.w > 0.0) {
-		float k = floor((v_wy - v_base.x) / v_cut.w);
+		float fk = (v_wy - v_base.x) / v_cut.w;
+		float k = floor(fk);
 		if (k >= 0.0 && k < v_base.y && cleared(k, v_cut.xyz)) {
+			// A cleared floor: a gap, and what holds it open. The bare frame's tone, as a shell's.
+			vec3 bare = mix(wallc, dmg_frame.rgb, 0.6);
 			if (FRONT_FACING || v_back < 0.5) {
-				discard;
+				// The walls are gone. On the outermost walls that face the camera the columns stand, and the plates
+				// of the standing floors over and under the gap show their edges.
+				float in_floor = fract(fk) * v_cut.w;
+				bool col_on = on_column(v_face.x, v_face.y, edge_x, col_i, col_u, col_w);
+				bool plate = (in_floor > v_cut.w - cut_plate && (k + 1.0 >= v_base.y || !cleared(k + 1.0, v_cut.xyz))) || (in_floor < cut_plate && k > 0.5 && !cleared(k - 1.0, v_cut.xyz));
+				if (!(wall && FRONT_FACING && v_wy - v_winb.x >= v_frame.x - 0.5 && (col_on || plate))) {
+					discard;
+				}
+				col = flat_shade(plate ? mix(bare, open_frame_col.rgb, 0.35) : bare, NORMAL, 0.35);
+			} else {
+				// The far wall's dark inside, and in front of it the core where the ray passes through it on a
+				// cleared floor.
+				col = inside.rgb;
+				core_t = core_in(v_shell, eye, v_view, core_x);
+				if (core_t > 0.0 && core_t < 1.0) {
+					float ck = floor((eye.y + v_view.y * core_t - v_base.x) / v_cut.w);
+					if (ck >= 0.0 && ck < v_base.y && cleared(ck, v_cut.xyz)) {
+						col = core_look(v_shell, eye, v_view, core_t, core_x, bare, v_base.x + ck * v_cut.w, v_cut.w, v_frame.y, false, bid, VIEW_MATRIX);
+					}
+				}
 			}
-			col = inside.rgb;
 		}
 	}
 	float open_k = abs(v_open.x);
@@ -418,48 +516,65 @@ void fragment() {
 		float ltop = v_open.y;
 		float ceil_y = ltop - open_beam;
 		bool inner = v_open.x < 0.0;
-		vec3 eye = INV_VIEW_MATRIX[3].xyz;
-		float edge_x = fwidth(v_face.x);
 		// Where the eye's ray to this pixel passes the ceiling's height (worked out for every pixel, so its rate of
 		// change across the screen is defined wherever it is used).
 		vec2 at = eye.xz + v_view.xz * ((ceil_y - eye.y) / max(v_view.y, 0.0001)) - v_shell.xy;
 		float edge_c = max(fwidth(at.x), fwidth(at.y));
+		// The lobby's stone, by the tower's stage: sooted with its walls from "a part gone" (wallc carries it), the bare
+		// frame's tone in a shell.
+		vec3 frame = st > 2.5 ? mix(wallc, dmg_frame.rgb, 0.6) : mix(wallc, open_frame_col.rgb, 0.5);
+		core_t = core_in(v_shell, eye, v_view, core_x);
+		float core_y = eye.y + v_view.y * core_t;
+		bool core_hit = core_t > 1.0 && core_y < ceil_y && core_y >= v_winb.x;   // the core, beyond this wall, between the lobby's floor and its ceiling
+		bool col_on = on_column(v_face.x, v_face.y, edge_x, col_i, col_u, col_w);
 		bool ceiling = false;
 		if (v_shell.z > 0.0 && eye.y < ceil_y && v_wy >= ceil_y && v_view.y > 0.0001) {
 			// Seen from under it. Inside the shell's footprint that point is on the lobby's ceiling, whatever wall the
-			// ray goes on to meet.
+			// ray goes on to meet. Lit where the tower is whole; the lamps are out in a damaged one; a shell has no
+			// ceiling, only its dark inside.
 			if (abs(at.x) < v_shell.z - 1.0 && abs(at.y) < v_shell.w - 1.0) {
 				vec2 bay = abs(fract(at / open_grid + 0.5) - 0.5);
 				float near_c = 1.0 - smoothstep(0.3, 0.75, edge_c / open_grid);
-				col = mix(open_ceil.rgb, toward(open_ceil.rgb, open_lamp.rgb, pattern_budget), mix(0.31, step(max(bay.x, bay.y), 0.28), near_c));   // too far to draw the lamps, their share of a bay
+				vec3 lit = mix(open_ceil.rgb, toward(open_ceil.rgb, open_lamp.rgb, pattern_budget), mix(0.31, step(max(bay.x, bay.y), 0.28), near_c));   // too far to draw the lamps, their share of a bay
+				col = st > 2.5 ? mix(inside.rgb, open_ceil.rgb, 0.12) : (st > 0.5 ? mix(open_ceil.rgb, inside.rgb, 0.55) : lit);
 				ceiling = true;
 			}
 		}
 		if (!ceiling && v_wy < ltop + (inner ? 0.5 : 0.0) && dith < open_k) {
 			// Under the lobby's top, on the share of its pixels that is through: nothing of a part inside the shell,
-			// no lid; of the shell's walls the beam and the columns.
+			// no lid; of the shell's walls the beam and the columns; and through them the core.
 			if (inner || !wall) {
 				discard;
 			}
-			bool stands = v_wy >= ceil_y;   // the beam
-			if (!stands) {
-				float n = max(2.0, open_col.y);
-				float cw = max(open_col.x * v_face.y, 1.3 * edge_x);
-				float pitch = (v_face.y - cw) / (n - 1.0);
-				float u = v_face.x + 0.5 * v_face.y - 0.5 * cw;
-				stands = abs(u - clamp(floor(u / pitch + 0.5), 0.0, n - 1.0) * pitch) < 0.5 * cw;
+			float dg = fract(dot(FRAGCOORD.xy, vec2(0.5698403, 0.7548777)) + 0.37);
+			float in_p = in_patch ? 1.0 : 0.0;
+			float mid = 1.0 + floor(win_hash(vec3(bid, 4.0, 9.0)) * max(open_col.y - 2.0, 1.0));   // one of the columns between the corners: the building's own
+			bool front = v_back < 0.5 && fract(v_winb.z) < 0.25 && FRONT_FACING;
+			bool stands = v_wy >= ceil_y || col_on;   // the beam, or a column
+			// A shell: on the front, that column has broken off above a stump with a ragged top. The beam spans two
+			// bays there: it stands, and reads as about to go.
+			if (stands && v_wy < ceil_y && st > 2.5 && front && col_i == mid && v_wy > v_winb.x + (0.3 + 0.12 * win_hash(vec3(bid, floor(col_u / 7.0), 17.0))) * (ceil_y - v_winb.x)) {
+				stands = false;
 			}
 			// Inside the patch a column is a ghost, so the fight shows through it. So near the lens that it is in it
 			// (Camera's near-clip distances), it thins to one too: a solid column a fifth of the screen wide, swept
 			// past by a travelling camera, is a large change every time it crosses.
-			float thin = max(in_patch ? 1.0 : 0.0, 1.0 - smoothstep(open_near.x, open_near.y, -VERTEX.z));
-			if (!stands || fract(dot(FRAGCOORD.xy, vec2(0.5698403, 0.7548777)) + 0.37) < open_ghost * thin) {
-				discard;
-			}
-			vec3 frame = mix(wallc, open_frame_col.rgb, 0.5);
-			col = FRONT_FACING ? flat_shade(frame, NORMAL, 0.35) : frame * open_far;
-			if (FRONT_FACING && v_wy >= ceil_y && v_wy < ceil_y + 3.0) {
-				col *= 0.8;   // the beam's foot, in its own shade
+			float thin = max(in_p, 1.0 - smoothstep(open_near.x, open_near.y, -VERTEX.z));
+			if (stands && dg >= open_ghost * thin) {
+				col = FRONT_FACING ? flat_shade(frame, NORMAL, 0.35) : frame * open_far;
+				if (FRONT_FACING && v_wy >= ceil_y && v_wy < ceil_y + 3.0) {
+					col *= 0.8;   // the beam's foot, in its own shade
+				}
+				if (st > 1.5 && front && col_i == mid && v_wy < ceil_y) {
+					// A part gone: a crack up that column, in straight jags.
+					float jag = (win_hash(vec3(bid, floor((v_wy - v_winb.x) / 14.0), 23.0)) - 0.5) * 0.45 * col_w;
+					col = mix(col, inside.rgb, 0.8 * (1.0 - smoothstep(0.5, 1.0, abs(col_u - jag) / max(1.6, 1.3 * edge_x))));
+				}
+			} else if (FRONT_FACING && core_hit && fract(dg + 0.5) >= open_core_ghost * max(in_p, 1.0 - smoothstep(open_near.x, open_near.y, -VERTEX.z * core_t))) {
+				// The core, seen through the opening.
+				col = core_look(v_shell, eye, v_view, core_t, core_x, frame, v_winb.x, ceil_y - v_winb.x, v_frame.y, st < 0.5, bid, VIEW_MATRIX);
+			} else {
+				discard;   // no wall here
 			}
 		}
 	}

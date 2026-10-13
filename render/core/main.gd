@@ -521,12 +521,13 @@ func render_view(a: float) -> void:
 		var pitch: float = float(fp) if fp != null else cam_pitch
 		var cw = split_frame.get("cutaway")
 		var fzs = split_frame.get("focus_z")   # Camera's dolly: each pane's focus depth, once the frame carries it
+		var cl = split_frame.get("clear")      # Camera's clear a pane: its cut flag is handed on; the rest is not read yet
 		var two: bool = panes.size() > 1 and split_frame.shows(0) and split_frame.shows(1)
 		for i in range(panes.size()):
 			if i == 0 or split_frame.shows(i):
 				var j: Vector2 = compositor.pane_jitter(i) if compositor.has_method("pane_jitter") else (host.jitter if i == 0 else Vector2.ZERO)
 				panes[i].occlusion = occlusion
-				panes[i].cutaway = cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {})
+				panes[i].cutaway = PaneWorld.request(cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {}), cl[i] if cl is Array and i < cl.size() else null)
 				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
 				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch)
 				if float(split_frame.cam_z[i]) > zmax:

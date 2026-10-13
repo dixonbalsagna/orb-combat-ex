@@ -153,8 +153,9 @@ const CLEAR_GAP: float = 30.0
 ## it is built so: a regular row of columns on every side, each a twelfth of its face wide; a deep beam on them; a warm
 ## lit ceiling. It fades in and out by stipple, inside the area budget and never faster than OPEN_FADE_S.
 ## The lobby is the building's and the patch is the fight's. What the lobby cannot show (a fighter above its ceiling),
-## the see-through patch shows, as on a low building. A damaged or breaking tower never opens a lobby and does not keep
-## one open: the patch alone. A tall building that is not a tower (a stack, a lighthouse, a hall, a chapel) has no
+## the see-through patch shows, as on a low building. A damaged tower's lobby opens too and shows its stage: the lamps
+## out, then soot and a cracked column, then in a shell the bare frame with a column broken off. A tower whose lobby
+## floors a brunt has cleared, or that is coming down, has no lobby: the patch alone. A tall building that is not a tower (a stack, a lighthouse, a hall, a chapel) has no
 ## lobby: the patch. No tall building is sunk to a stub in a match with depth on.
 const OPEN_FLOORS_MIN: int = 5           # World's FLOORS_MIN: the buildings whose floors a brunt can clear (from about 7 fighter heights)
 const OPEN_SHAPES: Array = ["shaft", "slab", "block", "stepped", "crown", "spire"]   # the towers with straight walls: these have a lobby
@@ -164,6 +165,16 @@ const OPEN_TALL: int = 10
 const OPEN_LOBBY_MAX: int = 4
 const OPEN_COL := Vector2(0.0833, 4.0)   # the colonnade: a column's width as a share of its face (a twelfth: sturdy against the first build's thin posts), and columns a face (the two corners and those between, evenly)
 const OPEN_BEAM: float = 26.0            # the beam the columns carry: this deep, under the lobby's top
+const OPEN_CORE := Vector2(0.24, 0.4)    # the core in the middle of the lobby (the lift and stair shafts that hold a tower up: "a spine"): its width and depth as shares of the shell's,
+const OPEN_CORE_TONE: float = 0.8        # ... its stone against the columns',
+const OPEN_DOOR: float = 105.0           # ... and a lift door's height (three doors a face; a lit sign over each where the tower is whole)
+const OPEN_CORE_GHOST: float = 0.85      # inside the patch the core is thinned more than a column: it is the widest thing in a lobby and stands in its middle
+const OPEN_DAMAGED: bool = false         # whether a damaged tower opens its lobby (and shows its stage in it). Off: a damaged tower takes the patch, as committed in 60f82149. Orb has the question
+## What holds a brunt's cleared floor up (building.gdshader item 3; Orb, 2026-10-12): the frame's columns (OPEN_COL,
+## the lobby's own) on the outermost walls, the plates' edges, and the core. The core's state is the building's hit
+## points (World's reading, docs/world/destruction-state.md): cracked under CORE_HP.x of them, broken under CORE_HP.y.
+const CUT_PLATE: float = 9.0             # the edge of a floor's plate over and under a cleared floor
+const CORE_HP := Vector2(0.35, 0.15)
 const OPEN_FRAME_COL: String = "#8d95a1" # the columns' and the beam's stone, mixed half with the wall's own colour: a neutral pale, no fighter's hue
 const OPEN_FAR: float = 0.7              # the far side's columns and beam, in the lobby's shade
 const OPEN_CEIL: String = "#a39679"      # the lobby's ceiling, lit warm (a lit lobby, not the tower's dark inside),

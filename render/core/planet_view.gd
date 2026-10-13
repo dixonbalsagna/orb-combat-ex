@@ -464,9 +464,11 @@ func _set_crowd(S: SimState, bi: int, b, alive: int) -> void:
 			_crowd.set_instance_transform(ci, _hidden(x))
 
 
-## A building's windows, damage stage and shape for building.gdshader (four texels of win_tex an instance, so one
+## A building's windows, damage stage and shape for building.gdshader (five texels of win_tex an instance, so one
 ## for each of its parts; the fourth is the footprint of the building's shell at the street as seen from this part, its
-## middle across and in depth and half its width and depth, for a lobby's ceiling): a bit per floor whose windows are out (24, 24 and 14 bits, as the floor cut packs them) and
+## middle across and in depth and half its width and depth, for a lobby's ceiling and the core; the fifth is the height
+## from which this part is the building's outermost wall (RenderShapes.outer_from) and the core's state, whole, cracked
+## or broken by the building's hit points (RenderLook.CORE_HP)): a bit per floor whose windows are out (24, 24 and 14 bits, as the floor cut packs them) and
 ## the height of a floor (0: no windows on this part, or it does not stand); then the wall's base, how many floors
 ## stand under the part's top, the stage it is drawn at (_drawn) and the rows of windows a floor; then the part's
 ## shape (its top's width and depth shares, its lean) and its district's look. The shader draws the look's windows from
@@ -483,6 +485,8 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 	var ix: PackedInt32Array = _inst[bi]
 	var img: Image = wt[0]
 	var sh: Array = ps[RenderShapes.shell(ps)]
+	var left: float = b.hp / maxf(b.maxhp, 1.0)
+	var core: float = 2.0 if left < RenderLook.CORE_HP.y else (1.0 if left < RenderLook.CORE_HP.x else 0.0)
 	for j in range(ps.size()):
 		var p: Array = ps[j]
 		var k: int = ix[j]
@@ -498,11 +502,13 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 		var c := Color(base, ceilf(up / maxf(fh, 1.0)), float(dr[1]), float(RenderShapes.rows(fh)))
 		var s := Color(float(p[RenderShapes.TX]), float(p[RenderShapes.TZ]), float(p[RenderShapes.LEAN]), float(int(p[RenderShapes.LOOKX]) if int(p[RenderShapes.LOOKX]) >= 0 else _look[bi]))
 		var f := Color(float(sh[RenderShapes.X]) - float(p[RenderShapes.X]), float(sh[RenderShapes.Z]) - float(p[RenderShapes.Z]), 0.5 * float(sh[RenderShapes.W]), 0.5 * float(sh[RenderShapes.D]))
-		if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c or img.get_pixel(k, 2) != s or img.get_pixel(k, 3) != f:
+		var fr := Color(RenderShapes.outer_from(ps, j), core, 0.0, 0.0)
+		if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c or img.get_pixel(k, 2) != s or img.get_pixel(k, 3) != f or img.get_pixel(k, 4) != fr:
 			img.set_pixel(k, 0, a)
 			img.set_pixel(k, 1, c)
 			img.set_pixel(k, 2, s)
 			img.set_pixel(k, 3, f)
+			img.set_pixel(k, 4, fr)
 			wt[2] = true
 
 
@@ -1083,11 +1089,15 @@ func lobby_span(S: SimState, bi: int) -> Vector2:
 	return Vector2(foot, foot + float(lobby_floors(b)) * b.h / float(maxi(int(b.floors), 1)))
 
 
-## Whether building b may have its lobby open now: standing, undamaged, no floor cleared. A damaged or breaking tower
-## never opens it and does not keep it open (a clean lit lobby under a burnt-out frame is not one building): the patch
-## shows the fight through it instead.
+## Whether building b may have its lobby open now. Always: standing, with none of the lobby's own floors cleared by a
+## brunt (a tunnel there is the tower's damage, and shows as one). With RenderLook.OPEN_DAMAGED off (as committed in
+## 60f82149; Orb has the question) also undamaged and whole. With it on a damaged tower's lobby opens and shows its
+## stage (building.gdshader). Otherwise the patch shows the fight through the tower.
 static func lobby_ok(b) -> bool:
-	return b.alive and WorldStructures.stage(b) == 0 and b.fmask == (1 << int(b.floors)) - 1
+	var need: int = (1 << lobby_floors(b)) - 1
+	if not b.alive or (int(b.fmask) & need) != need:
+		return false
+	return RenderLook.OPEN_DAMAGED or (WorldStructures.stage(b) == 0 and b.fmask == (1 << int(b.floors)) - 1)
 
 
 ## The share of building bi's lobby that is open in this pane (0 to 1).
@@ -1160,10 +1170,10 @@ static func _patch_area(patch: Vector2, p: float) -> float:
 ## want: building -> Vector3(1 if the action is seen under its lobby's ceiling, 1 if it is seen over it, the pixels of
 ## this pane's screen a unit of its height covers across its face). Only a tower with a lobby (opens) is taken.
 ## patch: the patch on this pane's screen, its length and its radius in pixels.
-## - A lobby opens when the action is seen under its ceiling and the tower is whole (lobby_ok). It shuts OPEN_HOLD_S
-##   after nothing has asked for it, and with no hold on a tower that is no longer whole.
+## - A lobby opens when the action is seen under its ceiling and the tower may open it (lobby_ok). It shuts OPEN_HOLD_S
+##   after nothing has asked for it, and with no hold on a tower that may no longer open it.
 ## - A tower takes its share of the patch when the action is seen over the ceiling, or when it stands in front of the
-##   action and is not whole. It gives the share up PATCH_HOLD_S after.
+##   action and may not open its lobby. It gives the share up PATCH_HOLD_S after.
 ## - Both fade. All of them together turn at most a tick's share of RenderLook.PATCH_AREA_TICK pixels (at 1024 by 768),
 ##   less what the patch itself turned this frame (`left`: what it left of the budget, under 0 for all of it), a
 ##   closing at OPEN_CLOSE of that; and none goes faster than over OPEN_FADE_S.
@@ -1351,6 +1361,11 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("open_grid", RenderLook.OPEN_GRID)
 	m.set_shader_parameter("open_ghost", RenderLook.OPEN_GHOST)
 	m.set_shader_parameter("open_near", RenderLook.NEAR_CLIP)
+	m.set_shader_parameter("open_core", RenderLook.OPEN_CORE)
+	m.set_shader_parameter("open_core_tone", RenderLook.OPEN_CORE_TONE)
+	m.set_shader_parameter("open_door", RenderLook.OPEN_DOOR)
+	m.set_shader_parameter("open_core_ghost", RenderLook.OPEN_CORE_GHOST)
+	m.set_shader_parameter("cut_plate", RenderLook.CUT_PLATE)
 	var lu: Dictionary = RenderShapes.look_uniforms()
 	for key in lu:
 		m.set_shader_parameter(key, lu[key])
@@ -1359,10 +1374,10 @@ func _building_mat() -> ShaderMaterial:
 	return m
 
 
-## A four-row float texture of window and shape data, a column an instance: [image, texture, dirty]. A column not
+## A five-row float texture of window and shape data, a column an instance: [image, texture, dirty]. A column not
 ## written yet is a plain box with no shell.
 static func _win_texture(n: int) -> Array:
-	var img := Image.create_empty(maxi(1, n), 4, false, Image.FORMAT_RGBAF)
+	var img := Image.create_empty(maxi(1, n), 5, false, Image.FORMAT_RGBAF)
 	img.fill(Color(0, 0, 0, 0))
 	img.fill_rect(Rect2i(0, 2, maxi(1, n), 1), Color(1.0, 1.0, 0.0, 0.0))
 	return [img, ImageTexture.create_from_image(img), false]

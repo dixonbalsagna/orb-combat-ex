@@ -164,7 +164,7 @@ No hue, and nothing moves along it, as before.
 | How many floors open: the capsule's sight lines at the building, whole floors | Camera's `y_top` in the same sight-line sum. Camera adds a floor of margin; I add 20 units. One of the two goes |
 | A floor's pace: by area, a continuous edge | Kept. Camera's "a floor every 3 ticks" is a step of a whole floor across a tower's width, about 38,000 pixels in one tick |
 | `request` and `only` | Gone: no `clear[i]` is no request, and each pane's rectangle is already its own |
-| Nothing eased across a cut: only when a pane was not drawn for half a second | Camera's `clear[i].cut` (on main since b6cc22a5; also true on a pane's first frame). The pane's read is in and checked: it takes `cut` in its request. `main` hands a pane its `cutaway` only, so nothing sets it yet. That one line goes in with the rest of `clear[i]` |
+| Nothing eased across a cut: only when a pane was not drawn for half a second | **Done** (the frame batch): Camera's `clear[i].cut` reaches the pane's request (`PaneWorld.request`), in every match. The flag is also true on a pane's first frame and while its subject is off its screen |
 | Which buildings, the near-clip rule, the clear query, the look | Stay Rendering's |
 
 **The line for Simulation's depth window.** `render/core/sim_host.gd`, in `new_match`: `cam.reset()` becomes `cam.reset(S)` when Simulation's build lands, so a start at a crossing is framed. Not changed yet, as asked.

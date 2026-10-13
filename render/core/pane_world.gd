@@ -235,6 +235,18 @@ func _pan_haze(host: SimHost, a: float, cam_x: float, vp: Vector2) -> void:
 	mats.set_haze(pan_haze, _pan_ground)
 
 
+## A pane's cut-away request for this frame, from Camera's frame: its `cutaway` a pane (request, only, radius_px), with
+## `cut` set when its `clear` a pane says the picture has cut (docs/camera/city-in-depth.md section 3): on that frame
+## the patch, the stubs, the lobbies and the towers' shares are at their targets. The rest of `clear` is not read yet.
+## The dictionary given is not changed.
+static func request(cutaway_i: Dictionary, clear_i) -> Dictionary:
+	if clear_i is Dictionary and bool((clear_i as Dictionary).get("cut", false)) and not bool(cutaway_i.get("cut", false)):
+		var r: Dictionary = cutaway_i.duplicate()
+		r["cut"] = true
+		return r
+	return cutaway_i
+
+
 ## Keep the fighters in view behind buildings, by this pane's method. Either way a building counts as in front of a
 ## fighter when it stands between this pane's camera and his chest, and the building a launched fighter is aimed at
 ## stays whole (its cut floors show him inside).
