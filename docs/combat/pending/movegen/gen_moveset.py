@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 14
+VERSION = 15
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -239,8 +239,12 @@ def posed(parts, idn, tips):
     """His posed strikes as shapes of the grammar: fingerprint -> the key set it comes from and how."""
     g = parts["strike"]
     rows = {}
+    only = idn.get("borrowIds")   # a list of strike ids: of a pack he borrows he reads no other (the common pieces). The heavy tier goes by the cell's share rule
     for wave in idn["waves"]:
+        lent = only is not None and wave in idn.get("borrows", []) and wave not in idn.get("tierWaves", [])
         for s in load(anim("waves", wave + ".manifest.json"))["strikes"]:
+            if lent and s["combat"] not in only:
+                continue
             rows[s["combat"]] = (wave, s)
     cover, unread = {}, []
     for sid in sorted(rows):
@@ -359,6 +363,10 @@ def weight_of(idn, m):
 
 
 def quota_ok(q, m):
+    if "own" in q:   # a piece that is his alone (a cell's share rule)
+        return bool(m.get("_own"))
+    if "form" in q and "sends" in q:   # a launcher that sends one way: both must hold
+        return q["form"] in m["_forms"] and m.get("_sends") == q["sends"]
     if "form" in q:
         return q["form"] in m["_forms"]
     if "sends" in q:
@@ -366,11 +374,16 @@ def quota_ok(q, m):
     return match({"any": q["any"]} if "any" in q else q["filter"], m)
 
 
-def greedy(cand, count, quotas, penalty, locked=()):
-    """Pick one at a time: quotas first, then the best score, each pick marking down what resembles it."""
+def greedy(cand, count, quotas, penalty, locked=(), allow=None):
+    """Pick one at a time: quotas first, then the best score, each pick marking down what resembles it. allow(picked, m): whether the cell may still take a
+    candidate (a cell's share rule)."""
     picked = list(locked)
     cand = [m for m in cand if all(m is not p for p in picked)]
     while cand and len(picked) < count:
+        if allow is not None:
+            cand = [m for m in cand if allow(picked, m)]
+            if not cand:
+                break
         pool = cand
         for q in quotas:
             if sum(1 for p in picked if quota_ok(q, p)) < q["min"] and any(quota_ok(q, m) for m in cand):
@@ -469,7 +482,47 @@ def strike_cell(ctx, who, cid, cell):
             w *= sp.get("look", 1.0)   # the same blow at another place: a cell whose blows are each seen whole marks it down hard
         return w
     pins =[by_fp[tuple(s)] for s in idn.get("pinned", {}).get(cid, []) if tuple(s) in by_fp]   # shapes the cell takes first (identity.json pinned)
-    picked = greedy(cand, cell["count"], cell.get("quotas", []), penalty, locked + [m for m in pins if all(m is not x for x in locked)])
+    quotas, allow, share = cell.get("quotas", []), None, cell.get("share")
+    if share:
+        # A shared tier (Game Design, fighter-pipeline.md section 1): so many pieces that are his alone by his tier, no more than a part of the cell shared with
+        # any one other fighter, and the fighter he takes a piece from keeps his own share. Two fighters share a piece when both cells hold its shape, or when
+        # he takes it from a pack that is the other's (identity `borrows`). Options for one place in the roster (identity `alt`) never count each other.
+        fs = ctx["fighters"]
+        alt = lambda f: fs[f].get("alt")
+        others = [o for o in sorted(fs) if o != who and not (alt(who) and alt(who) == alt(o))]
+        def cell_shapes(o):
+            if o in ctx["built"] and cid in ctx["built"][o]["cells"]:
+                return set(fp(mv) for mv in ctx["built"][o]["cells"][cid]["moves"])
+            return set(tuple(e[1]) for e in ctx["locks"].get(o, {}).get(cid, []))
+        shapes_of = {o: cell_shapes(o) for o in others}
+        groups = {}
+        for o in others:
+            groups.setdefault(alt(o) or ("#" + o), []).append(o)
+        worlds = [list(w) for w in itertools.product(*groups.values())]   # the rosters he may be in: one option of every other alt group
+        borrows = set(idn.get("borrows", []))
+        need_of = lambda f: int(share["own"][str(fs[f].get("tier", 1))])
+        cap_n = int(cell["count"] * share["maxWithOne"])
+        for m in cand:
+            c = cover.get(fp(m))
+            sh = set(o for o in others if fp(m) in shapes_of[o])
+            borrowed = c is not None and c["wave"] in borrows
+            if borrowed and ctx["waveOwner"].get(c["wave"]) in others:
+                sh.add(ctx["waveOwner"][c["wave"]])
+            m["_shared"] = sh
+            m["_own"] = not sh and not borrowed
+        def allow(picked, m):
+            for o in m["_shared"]:
+                if sum(1 for p in picked if o in p.get("_shared", ())) >= cap_n:
+                    return False   # more than the cell's share with that fighter
+                if fp(m) in shapes_of[o]:
+                    for w in worlds:   # and that fighter keeps his own: what nobody else in the roster holds
+                        if o in w:
+                            taken = set(s for x in w if x != o for s in shapes_of[x] if s in shapes_of[o]) | set(fp(p) for p in picked if fp(p) in shapes_of[o])
+                            if len(shapes_of[o]) - len(taken | set([fp(m)])) < need_of(o):
+                                return False
+            return True
+        quotas = [{"name": "his alone", "min": need_of(who), "own": True}] + list(quotas)
+    picked = greedy(cand, cell["count"], quotas, penalty, locked + [m for m in pins if all(m is not x for x in locked)], allow)
     used = set(m["_id"] for m in picked if "_id" in m)
     free = [n for n in ("mv.%s.%s.%02d" % (who, cid, i + 1) for i in range(len(picked) + len(dropped) + 5)) if n not in used]
     moves = []
@@ -505,6 +558,13 @@ def strike_cell(ctx, who, cid, cell):
         moves.append(mv)
     moves.sort(key=lambda x: x["id"])
     met = {q["name"]: sum(1 for p in picked if quota_ok(q, p)) for q in cell.get("quotas", [])}
+    if share:   # his alone: in the roster that leaves him fewest (one option of each alt group)
+        lent = lambda p: cover.get(fp(p)) is not None and cover[fp(p)]["wave"] in borrows
+        met["his alone"] = min(sum(1 for p in picked if not lent(p) and not (p.get("_shared", set()) & set(w))) for w in worlds)
+        for o in others:
+            n = sum(1 for p in picked if o in p.get("_shared", ()))
+            if n:
+                met["shared with " + o] = n
     was = set(m["_id"] for m in picked if "_id" in m)
     ctx["changes"][cid] = {"dropped": dropped, "reread": reread, "new": [] if cell.get("temporary") else [m["id"] for m in moves if m["id"] not in was]}
     res = {"kind": "strikes", "valid": valid, "refused": refused, "quotas": met, "moves": moves}
@@ -724,10 +784,32 @@ def reach_run(parts, pool, length, key, loop=False):
     rr = parts["reach"]["run"]
     need, span = rr["pathsIn"]
     arm_words = ("e09: the free arm", "e09: one arm pumping")
+    def arms_for(seq):
+        def arm(arms):
+            if len(arms) == length:
+                return arms if not reach_run_breaks(parts, seq + seq if loop else seq, arms + arms if loop else arms) else None
+            first = "free" if jitter(*key, "arm", len(arms)) > 1.06 else "lead"
+            for a in (first, "lead" if first == "free" else "free"):
+                trial = arms + [a]
+                if not [b for b in reach_run_breaks(parts, seq[:len(trial)], trial) if "no bolt from the free arm" not in b or len(trial) >= rr["freeArm"]["atLeastOneIn"]]:
+                    got = arm(trial)
+                    if got:
+                        return got
+            return None
+        return arm([])
+    orders = [400]   # how many whole orders of pieces may be tried for arms before giving up
     def grow(seq):
         if len(seq) == length:
             twice = seq + seq if loop else seq
-            return seq if not [b for b in reach_run_breaks(parts, twice, ["lead"] * len(twice)) if not b.startswith(arm_words)] else None
+            if [b for b in reach_run_breaks(parts, twice, ["lead"] * len(twice)) if not b.startswith(arm_words)]:
+                return None
+            arms = arms_for(seq)   # an order of pieces is a run only when arms can be given to it: if not, the search goes on to the next order
+            if arms:
+                return (seq, arms)
+            orders[0] -= 1
+            return None
+        if orders[0] <= 0:
+            return None
         cand = [n for n in pool if all(n["id"] != p["id"] for p in seq[-2:]) and not string_breaks(parts, seq[-2:] + [n])
                 and (len(seq) < span - 1 or len(set(x["path"] for x in seq[-(span - 1):] + [n])) >= need)]
         for n in sorted(cand, key=lambda n: (-jitter(*key, "piece", len(seq), n["id"]), n["id"])):
@@ -735,22 +817,7 @@ def reach_run(parts, pool, length, key, loop=False):
             if got:
                 return got
         return None
-    seq = grow([])
-    if seq is None:
-        return None
-    def arm(arms):
-        if len(arms) == length:
-            return arms if not reach_run_breaks(parts, seq + seq if loop else seq, arms + arms if loop else arms) else None
-        first = "free" if jitter(*key, "arm", len(arms)) > 1.06 else "lead"
-        for a in (first, "lead" if first == "free" else "free"):
-            trial = arms + [a]
-            if not [b for b in reach_run_breaks(parts, seq[:len(trial)], trial) if "no bolt from the free arm" not in b or len(trial) >= rr["freeArm"]["atLeastOneIn"]]:
-                got = arm(trial)
-                if got:
-                    return got
-        return None
-    arms = arm([])
-    return (seq, arms) if arms else None
+    return grow([])
 
 
 def run_cell(ctx, who, cid, cell, done):
@@ -835,7 +902,13 @@ def build():
             rows = load(anim("waves", wave + ".manifest.json"))["strikes"]
             h.update(json.dumps([[s["id"], s["combat"], s["limb"], s.get("tip"), s.get("path"), s["target"], s["weight"], s.get("legal", []), s.get("flags", [])] for s in rows], sort_keys=True).encode("utf-8"))
         h.update(json.dumps({k: v for k, v in tips.get("reaim", {}).items() if any(v2["set"] == k for v2 in cover.values())}, sort_keys=True).encode("utf-8"))
+        wave_owner = {}   # a pack is his who lists it and does not borrow it
+        for f2 in sorted(identity["fighters"]):
+            for w2 in identity["fighters"][f2]["waves"]:
+                if w2 not in identity["fighters"][f2].get("borrows", []):
+                    wave_owner.setdefault(w2, f2)
         ctx = {"parts": parts, "idn": idn, "cover": cover, "seed": seed, "spread": spread, "entries": entries_of(idn), "lock": lock.get(who, {}),
+               "locks": lock, "built": out, "fighters": identity["fighters"], "waveOwner": wave_owner,
                "rejected": [r["shape"] for r in identity.get("rejected", []) if r.get("fighter") in (who, "*")], "changes": {}}
         doc = {
             "schema": "combat.moveset/1",
@@ -1177,6 +1250,25 @@ def string_report(docs, parts, cells):
     return rep
 
 
+def share_findings(out, cells, identity):
+    """A cell with a share rule (cells.json `share`) keeps it for every fighter: enough pieces that are his alone for his tier, and no more than its part shared
+    with any one other fighter."""
+    bad = []
+    for stance, btn, press, cid, cell in cell_ids(cells):
+        sh = cell.get("share")
+        if not sh:
+            continue
+        for who, doc in out.items():
+            q = doc["cells"][cid]["quotas"]
+            need = int(sh["own"][str(identity["fighters"][who].get("tier", 1))])
+            if q.get("his alone", 0) < need:
+                bad.append("%s: %s has %d pieces that are his alone, and his tier needs %d" % (who, cid, q.get("his alone", 0), need))
+            for k, v in q.items():
+                if k.startswith("shared with ") and v > int(cell["count"] * sh["maxWithOne"]):
+                    bad.append("%s: %s shares %d with %s, more than %d" % (who, cid, v, k[12:], int(cell["count"] * sh["maxWithOne"])))
+    return bad
+
+
 def string_findings(rep):
     bad = []
     for who, r in sorted(rep.items()):
@@ -1356,7 +1448,7 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
                     continue
                 st = [m["status"] for m in c["moves"]]
                 mins = {q["name"]: q["min"] for q in cell.get("quotas", [])}
-                qt = "; ".join("%s %d of %d" % (k, v, mins[k]) for k, v in c["quotas"].items())
+                qt = "; ".join(("%s %d of %d" % (k, v, mins[k])) if k in mins else ("%s %d" % (k, v)) for k, v in c["quotas"].items())
                 if c["kind"] == "run":
                     L.append("**The %s:** %d runs of %d from his %d bolts, each a loop: played round and round it still keeps the rule. Legal's e09: never the same arm, path and place twice running; three paths in any five; the free arm now and then, never on a regular count." % (nm(who), len(st), cell["length"], c["valid"]))
                 elif c["kind"] == "string":
@@ -1564,6 +1656,11 @@ def self_test(parts, identity):
         good = got == want
         ok = ok and good
         print("%s  %s" % ("pass" if good else "FAIL", name) + ("" if good else "  got %r, want %r" % (got, want)))
+    expect("a quota for what is his alone takes only that (a cell's share rule)", [quota_ok({"own": True}, {"_own": True}), quota_ok({"own": True}, {"_own": False})], [True, False])
+    expect("a quota for a launcher that sends down asks for both", [quota_ok({"form": "launch", "sends": "down"}, {"_forms": ["launch"], "_sends": s_}) for s_ in ("down", "up")], [True, False])
+    six = [{"_w": 6.0 - i, "_shared": set(["a"]) if i < 4 else set(), "n": i} for i in range(6)]
+    capped = greedy(list(six), 4, [], lambda p, m: 1.0, (), lambda picked, m: not m["_shared"] or sum(1 for p in picked if "a" in p["_shared"]) < 2)
+    expect("a cell takes no more than its share from one other fighter, however well his pieces score", sorted(m["n"] for m in capped), [0, 1, 4, 5])
     palm_head = {"limb": "hand", "tip": "palm", "path": "line", "target": "head", "weight": "light"}
     fl = flags_of(g, rival, palm_head, None)
     expect("the rival's palm to the head is refused (b06)", [r["id"] for r in g["banned"] if banned_hit(r, palm_head, ["light", "flurry"], 1, fl) == "match"], ["b06"])
@@ -1696,7 +1793,7 @@ def main():
         print("self-test " + ("passed" if ok else "FAILED"))
         sys.exit(0 if ok else 1)
     rep = string_report(out, parts, cells)
-    dead = string_findings(rep) + recipes_findings(parts)
+    dead = string_findings(rep) + recipes_findings(parts) + share_findings(out, cells, identity)
     files = {"moveset.%s.json" % who: dump(doc) for who, doc in out.items()}
     files["lock.json"] = lock_text(out)
     files["review-sheet.md"] = sheet(out, parts, cells, notes, rep, identity)

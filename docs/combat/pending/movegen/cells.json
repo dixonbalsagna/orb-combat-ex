@@ -312,6 +312,30 @@
     },
     "quotas": [
      {
+      "name": "launcher up",
+      "min": 1,
+      "form": "launch",
+      "sends": "up"
+     },
+     {
+      "name": "launcher down",
+      "min": 1,
+      "form": "launch",
+      "sends": "down"
+     },
+     {
+      "name": "launcher across",
+      "min": 1,
+      "form": "launch",
+      "sends": "across"
+     },
+     {
+      "name": "launcher turned",
+      "min": 1,
+      "form": "launch",
+      "sends": "turned"
+     },
+     {
       "name": "across",
       "min": 2,
       "sends": "across"
@@ -424,7 +448,7 @@
       }
      }
     ],
-    "_quotas": "two for each way a charged heavy can send the rival (the two that send up are also the lift), then two for each lean of the stick, so a flurry of four held on one lean still shows four blows",
+    "_quotas": "a launcher for each way the stick can send him first (the check holds every tier to it, and a fighter who borrows under the share rule would else end without one); then two for each way a charged heavy can send the rival (the two that send up are also the lift), then two for each lean of the stick, so a flurry of four held on one lean still shows four blows",
     "needs": [
      {
       "who": "Animation",
@@ -442,7 +466,15 @@
       "who": "VFX and World",
       "what": "how the ground answers a heavy that lands"
      }
-    ]
+    ],
+    "share": {
+     "_about": "Game Design's rule for a shared heavy tier (docs/design/fighter-pipeline.md section 1). own: how many of the cell's pieces are his alone, by his tier (identity.json `tier`, 1 when it is not said): of a pack of his own, or a new shape that no other fighter's cell holds. maxWithOne: the most of the cell he may share with any one other fighter, as a part of its count. The fighter he takes a piece from keeps his own share as well. A pack he lists under `borrows` is another fighter's. Fighters with the same `alt` are options for one place in the roster and never count each other",
+     "own": {
+      "1": 2,
+      "2": 4
+     },
+     "maxWithOne": 0.5
+    }
    }
   },
   "manoeuvre": {

@@ -17,7 +17,7 @@ Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here i
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, on any match with Legal's rows, or when a string runs out of blows (a strike button left with fewer than 3 pieces after some two blows, or a light that cannot open a burst). It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 80 cases.
+- **To prove the refusals:** `--self-test`, 83 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -57,6 +57,17 @@ Animation posed the ten heavies of each tier (rows 09 and 10 are provisional, an
 - `--check` also tests the hand-kept data: each energy key set named in `identity.json` is a row of its pack, on the rule's path and place.
 - The energy ids are Animation's. A rule may carry `strikeNow` while a rename is on its way; none does now.
 - **Version 14 (2026-10-12, later):** Legal's e06 counts the delivery, so a blast after a bolt of the same hand is not a repeat. Legal's file now also holds groups no move is made of (`world`, `withdrawn`, `public`). `parts.json` `legal.mirrored` names the groups that are copied and compared, and `--check` names the others on its Legal line with their row counts, so a new group is seen.
+
+## 0c. The sharing rule, and rows for fighters who are not in the build (2026-10-12, version 15)
+
+The note is `../../roster-rows.md`; the rows and their generated files are in `../roster/`.
+
+- **`share` on a cell** (`cells.json`, the heavy cell): `own` by tier and `maxWithOne`. A fighter has so many pieces that are his alone, shares no more than that part of the cell with any one other fighter, and leaves the fighter he borrows from his own share. `--check` fails when a cell breaks it.
+- **In a fighter's identity:** `tier` (1 when it is not said); `borrows`, the packs that are another fighter's; `alt`, a word shared by rows that are options for one place in the roster; `borrowIds`, a list of strike ids, the only ones he reads from a pack he borrows.
+- **A quota may ask for a form and a send together.** The heavy cell has one for a launcher that sends each way, filled first.
+- **The search for a mashed run of bolts** goes on to another order of pieces when the first has no arms that keep Legal's e09. The two fighters' runs are as before.
+- **The two fighters' files** changed by their inputs line and by the counts of the heavy cell's quotas. No move changed, and `../recipes.brawl.json` is byte for byte the same.
+- **The data scripts' order** is now `merge_legal2.py`, `three_strengths_data.py`, `c2t_data.py`, `nine_cells_data.py`, `share_data.py`.
 
 ## 1. The martial arts stance, regenerated on Animation's data
 

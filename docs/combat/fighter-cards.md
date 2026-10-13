@@ -72,7 +72,7 @@ Proved in scratch on a roster of three: the two in the tree and a third made fro
 
 Two checks the builder gained: no pool that a cell names may be empty, and no piece in it may be a shape the fighter's own bans refuse.
 
-**Sharing heavies by Game Design's rule: built in scratch** (the EP's go of 2026-10-12; `share_quota.py` makes a copy of the generator with it).
+**Sharing heavies by Game Design's rule: built in scratch first, and since then in the generator itself** (version 15; `roster-rows.md` has it as built, with the pairwise cap and the lender's own share, and the rows for the Cyborg and the Empress). What follows is the first scratch trial.
 - **The rule as data,** on the heavy cell: `"share": {"own": {"1": 2, "2": 4}, "maxWithOne": 0.5}`. A fighter says his tier in his identity (`tier`, 1 when it is not said) and which packs are another fighter's (`borrows`).
 - **His alone** is a piece from a pack of his own, or a new shape that no other fighter's cell holds. A new shape waits for Animation, so the rule is also his list of what to pose.
 - **The cap** counts what he takes from one other fighter's packs, and stops at half the cell.

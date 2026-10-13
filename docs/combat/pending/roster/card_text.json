@@ -1,0 +1,67 @@
+{
+ "_about": "The hand-kept words of the sketches' cards (the card generator's text file has the two fighters of the build). `never` has one plain line for each `never` row of the sketch in identity.candidates.json, in the same order; the card generator refuses to run when the counts differ.",
+ "fighters": {
+  "cyborg_press": {
+   "name": "The Demon Cyborg as the Press",
+   "short": "the Press",
+   "sketch": true,
+   "who": [
+    "Mass that arrives late and all at once. He is slow to look at and then he is on you: a forearm plate, a hammer fist or a shoulder, coming down or straight through with his whole body behind it.",
+    "He works on the chest and the arms, the parts a clamp would hold. The clamps and throws themselves are not in this row: nobody in the game has them yet."
+   ],
+   "never": [
+    "His hands are plates and hammers, never a blade hand.",
+    "He never spins.",
+    "He never kicks above the gut."
+   ]
+  },
+  "cyborg_courier": {
+   "name": "The Demon Cyborg as the Courier",
+   "short": "the Courier",
+   "sketch": true,
+   "who": [
+    "The fastest thing in the fight. He is in, the blow is thrown from where the limb already is, and he is gone: elbows, knees and straight hands on short lines.",
+    "Nothing is wound up for show, and nothing is left out after it lands."
+   ],
+   "never": [
+    "He never spins: he never turns his back.",
+    "He never kicks above the chest."
+   ]
+  },
+  "cyborg_hopper": {
+   "name": "The Demon Cyborg as the Hopper",
+   "short": "the Hopper",
+   "sketch": true,
+   "who": [
+    "He leaves the ground to hit. A knee carries him up or a heel brings him down, and the funnel tips with it.",
+    "The legs do the work. His arms stay below the rim, so his hands are quick, low and straight."
+   ],
+   "never": [
+    "Nothing by hand or elbow comes down from above: his arms stay below the rim.",
+    "He never headbutts: his head sits inside the funnel.",
+    "His rising blows go to the gut and the chest, never the jaw or the head.",
+    "He never brings the sole of his foot down from above. That waits for Legal's ruling on the stomp, and nothing of his is a blow on a downed opponent."
+   ]
+  },
+  "empress": {
+   "name": "The Empress",
+   "short": "the Empress",
+   "sketch": true,
+   "pron": {
+    "he": "she",
+    "his": "her",
+    "him": "her"
+   },
+   "who": [
+    "She barely moves. One open hand held as a blade and the heel of her foot: one clean line or one cut downward, from a body that stays upright.",
+    "Each blow ends exactly where it was aimed, and then she is still again. Her mantle is not in this row: it is a limb of its own, and comes later."
+   ],
+   "never": [
+    "She never closes her hand: no fist and no hammer fist.",
+    "She never spins: she does not turn her back on anyone.",
+    "She never headbutts.",
+    "She never leans her weight on anyone: no shoulder."
+   ]
+  }
+ }
+}

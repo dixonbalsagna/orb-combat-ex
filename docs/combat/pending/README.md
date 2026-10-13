@@ -2,6 +2,8 @@
 
 **Start here (2026-10-12): `nine-cells.md`.** It is the next thing to land: `recipes.brawl.json` with a pool for every cell of the brawl, the heavy tier and the energy pieces in them, how it was measured, the apply list, and the lists for Tools and Animation. The change that reads it is `../brawl-hook.md`, for Encounter.
 
+`roster/` holds sketches for fighters who are not in the build: identity rows for the Demon Cyborg (three options) and the Empress, their generated movesets, and the builder that makes them (`../roster-rows.md`). Their cards are in `cards/` beside the first two. None of it is part of the recipes window.
+
 `retired/` holds parked files that have landed or been overtaken, with a README. The step 2b files described below are there now; the text is kept as the record.
 
 ## Parked data for Encounter's step 2b (landed)
