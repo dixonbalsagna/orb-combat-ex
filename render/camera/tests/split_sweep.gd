@@ -66,6 +66,7 @@ var dump_from: int = 0
 var dump_to: int = 0
 var shots_dir: String = ""
 var only: String = ""
+var launch_hold_on: bool = false   # --launch-hold runs every row with the launch rule on (off is the shipped default)
 var budget_on: bool = true   # --budget=off runs every row with the travel budget switched off (the shipped default)
 var _clear_prev: SplitFrame = null   # the last tick's frame, for the foreground's clear[i] rules
 var _clear_grow_tick: Array = [-1000, -1000]
@@ -129,6 +130,8 @@ func _initialize() -> void:
 			_jolt_t1 = float(jp[2])
 		elif a == "--budget=off":
 			budget_on = false
+		elif a == "--launch-hold":
+			launch_hold_on = true
 		elif a.begins_with("--only="):
 			only = a.substr(7)
 		elif a.begins_with("--shots="):
@@ -210,6 +213,10 @@ func _run() -> void:
 	await _scenario("dolly sidestep 4 bh a second", func(): return _dolly_sidestep(), {})
 	await _scenario("dolly pair at a crossing", func(): return _dolly_crossing(), {})
 	await _scenario("dolly launch across a street", func(): return _dolly_launch(), {})
+	for lh in [[6600.0, 13200.0, true], [6600.0, 13200.0, false], [9000.0, 18000.0, true], [3000.0, 6000.0, true]]:
+		await _scenario("launch hold %s %d u/s" % ["on" if bool(lh[2]) else "off", int(lh[0])], func(): return _launch_hold_run(float(lh[0]), float(lh[1]), bool(lh[2])), {})
+	for ln in [2, 3, 5]:
+		await _scenario("stage chain of %d" % int(ln), func(): return _stage_chain(int(ln)), {})
 	for lv in ["one view", "split", "reduced", "over a shot"]:
 		await _scenario("last stand %s" % lv, func(): return _last_stand(lv), {})
 	for iv in ["full", "humans", "reduced", "skip"]:
@@ -343,6 +350,7 @@ func _begin(label: String) -> void:
 		f.hidden = false
 	_rig = SplitRig.new()
 	_rig.travel_budget = budget_on
+	_rig.launch_hold = launch_hold_on
 	_tick = 0
 	_trav_prev = null
 	_clear_prev = null
@@ -509,6 +517,9 @@ func _frame_checks(fr: SplitFrame, cur: SplitFrame, alpha: float = 1.0) -> void:
 		# A pair that has just passed each other and whose split opens before the flip can happen (the flip waits for the
 		# dwell, for them to stop being merge-close and for the panes to be one view or full apart) opens with the old sides.
 		excluded = excluded or ((fr.mode == "opening" or fr.mode == "closing") and _rig.orientation_pending())
+		# A launch the rule does not follow (docs/camera/buildings-in-frame.md section 7) leaves his pane by design while the pane holds
+		# and pans; its own rows bound the absence by the distance (LH_CUT_UNITS) and the return after landing.
+		excluded = excluded or (_rig.launch_hold and int(_rig._lh[i]) != 0)
 		if share < 0.15 or not bool(fr.active[i]) or excluded:
 			_offscreen_t[i] = 0.0
 			continue
@@ -982,12 +993,195 @@ func _launch(speed: float, dist: float, vertical: bool = false, gap: float = 500
 		# points at him) and the pane cuts to him, after TRAVEL_WAIT of his being gone. So: he is never off his pane's
 		# screen for longer than that wait and the cut's own latency, and the pane does not cut more often than the rule says.
 		var flight_s: float = clampf(dist / maxf(speed, 1.0), 0.2, 6.0)
-		var max_off: int = int((CamParams.TRAVEL_WAIT + 0.6) * 60.0)
+		var max_off: int = int((CamParams.TRAVEL_WAIT + 0.6 + (5.0 if _rig.launch_hold else 0.0)) * 60.0)
 		_check(_launch_off_max <= max_off, "%s: the launched fighter was off his pane's screen for %d ticks of one flight (bound %d)" % [_label, _launch_off_max, max_off])
 		var max_cuts: int = 2 * (int(ceil(flight_s / CamParams.TRAVEL_COOL)) + 1)   # two panes, each at most once in TRAVEL_COOL
 		_check(_rig.travel_cuts <= max_cuts, "%s: %d cuts for the travel budget in a %.1f s flight (bound %d)" % [_label, _rig.travel_cuts, flight_s, max_cuts])
 		_check(_rig.lag_cuts == 0, "%s: %d safety cuts in a launch" % [_label, _rig.lag_cuts])
 		stats["lag bound " + _label] = "worst %.3f of the width, off the screen at most %d ticks, whips %d, safety cuts %d, budget cuts %d, ticks held back %d" % [_probe_max, _launch_off_max, _rig.lag_whips, _rig.lag_cuts, _rig.travel_cuts, _rig.travel_limited]
+	return {}
+
+
+## A launch too fast to follow (docs/camera/buildings-in-frame.md section 7): B flung along the street at `speed`, `dist` units.
+## With the rule on and the speed over the threshold the pane holds its frame, then pans to him at no more than LH_STEP a tick
+## (no cut under LH_CUT_UNITS, no safety cut); he is back on his pane's screen a few seconds after landing; at a speed under the
+## threshold the rule does nothing. Off: the numbers are reported for comparison.
+func _launch_hold_run(speed: float, dist: float, on: bool) -> Dictionary:
+	_rig.launch_hold = on
+	var ax: float = 60000.0
+	_pose(ax, 40.0, ax + 500.0, 40.0)
+	_seed_rig()
+	for _i in range(120):
+		_tick_rig()
+	var B = _S.fighters[1]
+	B.state = "launched"
+	var flight: float = clampf(dist / maxf(speed, 1.0), 0.2, 6.0)
+	B.vx = dist / flight
+	var n: int = int(flight * 60.0)
+	var prev: Vector3 = Vector3.ZERO
+	var prev_pane: int = -1
+	var max_travel: float = 0.0
+	var max_all: float = 0.0
+	var max_all_k: int = -1
+	var cuts: int = 0
+	var off_run: int = 0
+	var off_max: int = 0
+	var back_at: int = -1
+	var total: int = n + 480
+	for k in range(total):
+		if k < n:
+			B.x = SimWrap.wrap(B.x + B.vx * SplitRig.DT)
+		elif k == n:
+			B.state = "down"
+			B.vx = 0.0
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		var pc: int = 1 if cur.shows(1) else 0
+		var cam: Vector3 = Vector3(cur.cam_x[pc], cur.cam_y[pc], cur.cam_z[pc])
+		if cur.cut:
+			cuts += 1
+		elif prev_pane == pc:
+			var dx: float = SimWrap.sdx(prev.x, cam.x)
+			var dy: float = cam.y - prev.y
+			var tr: float = sqrt(dx * dx + dy * dy) * cam.z / vw + 0.5 * absf(log(cam.z / maxf(prev.z, 0.0001)))
+			# the rule's own bound is read while it is on (holding or panning): the onset and the landing are other rules'
+			if int(_rig._lh[pc]) != 0:
+				max_travel = maxf(max_travel, tr)
+			max_all = maxf(max_all, tr)
+			if tr >= max_all:
+				max_all_k = k
+		prev = cam
+		prev_pane = pc
+		if _on_screen(cur, 1):
+			if k >= n and back_at < 0:
+				back_at = k - n
+			off_run = 0
+		else:
+			off_run += 1
+			off_max = maxi(off_max, off_run)
+	var thr: float = CamParams.LH_SPEED * 1.1 + 0.002
+	if on and speed * (CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H) / 60.0 / vw > CamParams.LH_SPEED:
+		_check(_rig.launch_holds >= 1 and _rig.launch_pans >= 1, "%s: the rule did not engage (holds %d, pans %d)" % [_label, _rig.launch_holds, _rig.launch_pans])
+		_check(max_travel <= thr, "%s: the picture moved %.4f of the width in a tick with the rule on (bound %.4f)" % [_label, max_travel, thr])
+		_check(_rig.lag_cuts == 0 and _rig.launch_hold_cuts == 0 and cuts <= 1, "%s: %d safety cuts, %d hold cuts, %d cut frames" % [_label, _rig.lag_cuts, _rig.launch_hold_cuts, cuts])
+		_check(back_at >= 0 and back_at <= 300, "%s: he was back on his pane's screen %d ticks after landing (bound 300)" % [_label, back_at])
+	elif on:
+		_check(_rig.launch_holds == 0, "%s: the rule engaged for a launch under its threshold (%d holds)" % [_label, _rig.launch_holds])
+	stats["detail " + _label] = "max travel while the rule is on %.4f (any tick %.4f at %d of %d) of the width a tick, %d cut frames, holds %d, pans %d, hold cuts %d, off his pane at most %d ticks, back %d ticks after landing" % [max_travel, max_all, max_all_k - 120, n, cuts, _rig.launch_holds, _rig.launch_pans, _rig.launch_hold_cuts, off_max, back_at]
+	return {}
+
+
+## A launch through `links` buildings 700 units apart (docs/camera/buildings-in-frame.md section 3), the dolly's switch on, the
+## events the sim sends (launch_depth, then for each building building_hit and, but the last, chain_link): the body is on his
+## pane's screen at every tick, the picture moves by at most STAGE_STEP (+10%) a tick during the chain, no cut after the first
+## frame, no smash cut-in, and the stage moves at most ceil(links / 2) + 1 times.
+func _stage_chain(links: int) -> Dictionary:
+	_rig.depth_dolly = true
+	var ax: float = 60000.0
+	_pose(ax, 40.0, ax + 400.0, 40.0)
+	_seed_rig()
+	for _i in range(90):
+		_tick_rig()
+	var B = _S.fighters[1]
+	B.state = "launched"
+	var speed: float = 4500.0   # over LAUNCH_MIN_SPEED, as a building launch is (the sim's are 5,000 and up), under the rule's threshold
+	B.vx = speed
+	var b0: float = B.x + 900.0
+	var spacing: float = 700.0
+	var last_hit_k: int = -1
+	var next_b: int = 0
+	var prev: Vector3 = Vector3.ZERO
+	var prev_pane: int = -1
+	var max_travel: float = 0.0
+	var max_k: int = -1
+	var cuts: int = 0
+	var off: int = 0
+	var smash: int = 0
+	var end_k: int = int((900.0 + float(links) * spacing) / (speed * 0.45) * 60.0) + 70
+	for k in range(end_k + 240):
+		var evs: Array = []
+		if k == 0:
+			var ld := SimState.FxEvent.new()
+			ld.type = "launch_depth"
+			ld.x = B.x
+			ld.y = B.y
+			ld.x1 = b0
+			ld.y1 = 60.0
+			ld.z = -190.0
+			ld.b = 0.0
+			ld.dur = 0.45
+			ld.n = float(links)
+			ld.owner = 0.0
+			ld.victim = 1.0
+			var le := SimState.FxEvent.new()
+			le.type = "launch"
+			le.actor = 1.0
+			evs = [le, ld]
+		if last_hit_k < 0:
+			B.x = SimWrap.wrap(B.x + speed * 0.7 ** float(next_b) * SplitRig.DT)   # a building keeps 0.7 of his speed
+		B.y = 40.0 + 20.0 * sin(float(k) * 0.05)
+		B.z = -190.0 * smoothstep(0.0, 0.5, float(k) * SplitRig.DT)
+		if next_b < links and SimWrap.sdx(b0 + float(next_b) * spacing - 225.0, B.x) >= 0.0:
+			var bh := SimState.FxEvent.new()
+			bh.type = "building_hit"
+			bh.victim = 1.0
+			bh.actor = 1.0
+			bh.link = next_b + 1
+			bh.x = b0 + float(next_b) * spacing
+			bh.y = 60.0
+			bh.z = -190.0
+			bh.h = 900.0
+			bh.w = 450.0
+			evs.append(bh)
+			if next_b + 1 < links:
+				var cl := SimState.FxEvent.new()
+				cl.type = "chain_link"
+				cl.victim = 1.0
+				cl.owner = 0.0
+				cl.link = next_b + 1
+				cl.x = B.x
+				cl.y = 60.0
+				cl.z = -190.0
+				cl.x1 = b0 + float(next_b + 1) * spacing
+				cl.y1 = 60.0
+				cl.z1 = -190.0
+				cl.dur = spacing / (speed * 0.7 ** float(next_b + 1))
+				evs.append(cl)
+			else:
+				last_hit_k = k
+			next_b += 1
+		if last_hit_k >= 0 and k >= last_hit_k + 40:
+			B.state = "down"
+			B.vx = 0.0
+		_tick_rig(evs)
+		var cur: SplitFrame = _rig.current()
+		var pc: int = 1 if cur.shows(1) else 0
+		var cam: Vector3 = Vector3(cur.cam_x[pc], cur.cam_y[pc], cur.cam_z[pc])
+		# the chain: from the launch to ten ticks after the last hit (the landing and the panes coming back are other rules')
+		var in_chain: bool = last_hit_k < 0 or k <= last_hit_k + 10
+		if cur.cut and in_chain:
+			cuts += 1
+		elif in_chain and prev_pane == pc and k > 3 + CamParams.CAP_MAX + 10:   # (the flight's onset is the re-frame limiter's)
+			var dx: float = SimWrap.sdx(prev.x, cam.x)
+			var dy: float = cam.y - prev.y
+			var trv: float = sqrt(dx * dx + dy * dy) * cam.z / vw + 0.5 * absf(log(cam.z / maxf(prev.z, 0.0001)))
+			if trv > max_travel:
+				max_travel = trv
+				max_k = k
+		prev = cam
+		prev_pane = pc
+		if k > 2 and k < end_k and not _on_screen(cur, 1):
+			off += 1
+		if _rig._ov_kind == "smash":
+			smash += 1
+	var thr: float = CamParams.STAGE_STEP * 1.1 + 0.004
+	_check(off == 0, "%s: he was off his pane's screen on %d ticks of the chain" % [_label, off])
+	_check(max_travel <= thr, "%s: the picture moved %.4f of the width in a tick (bound %.4f)" % [_label, max_travel, thr])
+	_check(cuts <= 1, "%s: %d cut frames" % [_label, cuts])
+	_check(smash == 0, "%s: the smash cut-in played on %d ticks" % [_label, smash])
+	# two buildings in frame at a time: the stage moves once a link (the launch sets the first), never more
+	_check(_rig.stage_moves >= 1 and _rig.stage_moves <= links, "%s: the stage moved %d times (1 to %d)" % [_label, _rig.stage_moves, links])
+	stats["detail " + _label] = "off his pane %d ticks, max travel %.4f of the width a tick (tick %d), %d cut frames (safety %d, budget %d, rush %d), stage moves %d, smash ticks %d" % [off, max_travel, max_k, cuts, _rig.lag_cuts, _rig.travel_cuts, _rig.rush_cuts, _rig.stage_moves, smash]
 	return {}
 
 

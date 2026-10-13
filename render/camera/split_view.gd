@@ -156,6 +156,15 @@ func set_depth_dolly(on: bool) -> void:
 		main.split_rig.depth_dolly = on
 
 
+## A launch too fast to follow (docs/camera/buildings-in-frame.md section 7): a body whose speed would move the picture by more than
+## 0.03 of the width a tick at the launch floor's zoom is not followed. The pane holds its frame, he leaves it, and after 0.6 s of
+## his being gone (or his landing) the pane pans to him at 0.03 a tick, or cuts when he is farther than 20,000 units. Off by default
+## until Tools has run collapse-normal both ways. A build-time switch.
+func set_launch_hold(on: bool) -> void:
+	if main != null:
+		main.split_rig.launch_hold = on
+
+
 ## The travel budget (docs/camera/split-screen.md section 24h): a pane's picture changes by at most 0.045 of the width a tick
 ## (0.03 under reduced flashing), and the pane cuts when a subject has been gone for 0.6 s. Off by default until the flash set has
 ## measured it. Not a player option: a build-time switch (`camera_travel_budget` in the debug options).

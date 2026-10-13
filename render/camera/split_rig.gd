@@ -301,6 +301,11 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_shk = PackedFloat64Array([0.0, 0.0])
 	_aim = [null, null]
 	_hit_t = [-1.0, -1.0]
+	_stg_on = [false, false]
+	_stg_rel = [0, 0]
+	_bld_evt_t = [-1.0e9, -1.0e9]
+	_lh = [0, 0]
+	_lh_gone = [0, 0]
 	fold_active = false
 	_below_t = 0.0
 	_above_t = 0.0
@@ -1123,13 +1128,16 @@ func _read_events(S: SimState, events: Array) -> void:
 				var v: int = int(_ef(ev, "victim", -1))
 				if v >= 0 and v < 2:
 					_aim[v] = Vector2(float(_ef(ev, "x1", 0.0)), float(_ef(ev, "y1", 0.0)))
+					_bld_evt_t[v] = time
+					_stage_set(v, float(_ef(ev, "x", S.fighters[v].x)), float(_ef(ev, "y", S.fighters[v].y)), float(_ef(ev, "x1", 0.0)), float(_ef(ev, "y1", 0.0)))
 			"building_hit":
 				# B2: an impact push, inside the sim's hold (0.35 s on the first hit, 0.12 s on each further one).
 				var hv: int = int(_ef(ev, "victim", -1))
 				if hv >= 0 and hv < 2:
 					_impact_evt[hv] = true
+					_bld_evt_t[hv] = time
 					# The building-smash cut: the first hit on a building of some size cuts to a wide, low view of the wall.
-					if int(_ef(ev, "link", 1)) <= 1 and float(_ef(ev, "h", 0.0)) >= 300.0:
+					if int(_ef(ev, "link", 1)) <= 1 and float(_ef(ev, "h", 0.0)) >= 300.0 and not (depth_dolly and not reduced_motion):
 						var bh: float = float(_ef(ev, "h", 0.0))
 						var r_fit: float = clampf(0.7 * CamParams.BODY_H / minf(bh, 2500.0), CamParams.R_FLOOR, CamParams.R_FIGHT)
 						_start_overlay("smash", -1, Vector3(float(_ef(ev, "x", 0.0)), float(_ef(ev, "y", 0.0)), float(_ef(ev, "z", 0.0))), r_fit, r_fit * 1.08, CamParams.OV_SMASH_DUR)
@@ -2184,6 +2192,9 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 		var gvl: float = _scroll_gov(maxf(float(_vsm[i]), _body_speed(f)), z * pz)
 		_gov_bind[i] = gvl < 0.999
 		z = maxf(z * gvl, minf(z, zl))
+	if bool(_stg_on[i]) and depth_dolly and not reduced_motion:
+		# a stage frames both links: no larger than the zoom that puts them in (never under STAGE_ZOOM_MIN), nor than the shot's own
+		z = minf(z, maxf(float(_stg_z[i]), CamParams.STAGE_ZOOM_MIN * vh / 720.0))
 	if solo_kind == "launch" and solo_slot == i and solo_phase == "land":
 		z *= 1.0 + CamParams.LAND_PUSH * sin(PI * clampf(_land_t / 0.3, 0.0, 1.0))
 	var zmax: float = _zcap() * (1.0 + CamParams.TIER_PUSH)
@@ -2335,6 +2346,27 @@ var _cl_pc_ok: Array = [false, false]
 # The dolly (docs/camera/city-in-depth.md section 6): the depth the frame's scale is defined at follows the pair's depth, so a
 # fight in any street is drawn at the plane's size. A switch until Rendering applies SplitFrame.focus_z (and the proof).
 var depth_dolly: bool = false
+# The building stage (docs/camera/buildings-in-frame.md section 3), behind the dolly's switch: a launch through buildings is a
+# relay of held frames (the building he is in and the next), not a chase. Per launched fighter: the frame's centre, the zoom that
+# fits both links, its age.
+var _stg_on: Array = [false, false]
+var _stg_x: Array = [0.0, 0.0]
+var _stg_y: Array = [0.0, 0.0]
+var _stg_z: Array = [0.0, 0.0]
+var _stg_age: Array = [0, 0]
+var _stg_post: Array = [0, 0]
+var _bld_evt_t: Array = [-1.0e9, -1.0e9]               # when this fighter's last launch_depth, chain_link or building_hit arrived
+var _stg_rel: Array = [0, 0]                           # ticks left of the hand-over from a stage to the ordinary follow
+var stage_moves: int = 0                               # stages set or moved (counted for the tests)
+# A launch too fast to follow (section 7), its own switch: the pane holds its frame, the body leaves it (a subject off the screen
+# costs no flash), and after LH_WAIT of his being gone, or his landing, the pane pans to him at LH_STEP a tick (a cut only
+# when he is farther than LH_CUT_UNITS).
+var launch_hold: bool = false
+var _lh: Array = [0, 0]                                # 0 none, 1 holding the frame, 2 panning to him
+var _lh_gone: Array = [0, 0]
+var launch_holds: int = 0                              # (counted for the tests)
+var launch_pans: int = 0
+var launch_hold_cuts: int = 0
 var _fz: Array = [0.0, 0.0]            # each pane's own camera's focus depth (units, positive toward the camera)
 var _fzm: float = 0.0                  # the merged camera's
 var _fzt: Array = [0.0, 0.0]           # where each target was last tick (for its step)
@@ -2406,8 +2438,54 @@ func _snap_focus_depth(S: SimState) -> void:
 	_fzmt = _fzm
 
 
+## A stage for the launched fighter v: the frame of the two buildings x0 (the one he is at) and x1 (the next), the zoom that puts
+## their near edges in with STAGE_MARGIN of the width each side. Held when the new pair is already inside the stage there is.
+func _stage_set(v: int, x0: float, y0: float, x1: float, y1: float) -> void:
+	if not depth_dolly or reduced_motion or v < 0 or v > 1:
+		return
+	var dx: float = SimWrap.sdx(x0, x1)
+	if bool(_stg_on[v]):
+		var zs: float = maxf(float(_stg_z[v]), 0.001)
+		var room: float = (0.5 - CamParams.STAGE_MARGIN) * vw / zs - CamParams.STAGE_BLD_HALF
+		if absf(SimWrap.sdx(float(_stg_x[v]), x0)) <= room and absf(SimWrap.sdx(float(_stg_x[v]), x1)) <= room:
+			_stg_age[v] = 0
+			return
+	var need: float = absf(dx) + 2.0 * CamParams.STAGE_BLD_HALF
+	var zf: float = (1.0 - 2.0 * CamParams.STAGE_MARGIN) * vw / maxf(need, 1.0)
+	_stg_z[v] = maxf(zf, CamParams.STAGE_ZOOM_MIN * vh / 720.0)
+	_stg_x[v] = SimWrap.wrap(x0 + dx * 0.5)
+	_stg_y[v] = (y0 + y1) * 0.5
+	_stg_on[v] = true
+	_stg_age[v] = 0
+	_stg_post[v] = 0
+	stage_moves += 1
+
+
+func _update_stage(S: SimState) -> void:
+	for i in range(2):
+		if not bool(_stg_on[i]):
+			continue
+		var f = S.fighters[i]
+		_stg_age[i] = int(_stg_age[i]) + 1
+		var off: bool = (not depth_dolly) or reduced_motion or int(_stg_age[i]) > CamParams.STAGE_MAX
+		if f.state != "launched":
+			_stg_post[i] = int(_stg_post[i]) + 1
+			if int(_stg_post[i]) > CamParams.STAGE_LODGE:
+				off = true
+		else:
+			_stg_post[i] = 0
+		# he has left the stage (faster than its relay): the ordinary follow takes him
+		if absf(SimWrap.sdx(_fx[i], f.x)) * maxf(_zo[i], 0.001) > CamParams.STAGE_EXIT * vw:
+			off = true
+		if off:
+			_stg_on[i] = false
+			if depth_dolly and not reduced_motion:
+				_stg_rel[i] = CamParams.STAGE_HANDOVER
+
+
 func _update_cameras(S: SimState) -> void:
 	_update_focus_depth(S)
+	_update_stage(S)
 	if _slam_slot >= 0:
 		_slam_run(S)
 	var stiff: bool = _slam_slot >= 0 and e > 0.0
@@ -2456,6 +2534,47 @@ func _update_cameras(S: SimState) -> void:
 			_vlx[i] = float(_vlx[i]) + clampf(vxm - float(_vlx[i]), -CamParams.LEAD_SLEW, CamParams.LEAD_SLEW)
 			_vly[i] = float(_vly[i]) + clampf(vym - float(_vly[i]), -CamParams.LEAD_SLEW, CamParams.LEAD_SLEW)
 		var zc: float = maxf(_zo[i], 0.001)
+		# A launch too fast to follow (launch_hold): the pane holds, then pans (see the variable's note).
+		var lh_ph: int = 0
+		if launch_hold and not reduced_motion:
+			lh_ph = int(_lh[i])
+			var spd_l: float = sqrt(vxm * vxm + vym * vym)
+			var z_fl: float = CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H
+			# A launch through buildings is the spectacle, not a fling across open ground: a stage's with the dolly on, the
+			# ordinary follow's (its aim lead and the governor) with it off. The rule leaves it for the chain and 2.5 s after.
+			var bld: bool = time - float(_bld_evt_t[i]) < 2.5
+			if bld:
+				lh_ph = 0   # a building is in the flight: the follow takes him (a hold or pan under way ends)
+			var fast: bool = f.state == "launched" and spd_l * z_fl / 60.0 / vw > CamParams.LH_SPEED and not bld
+			if lh_ph == 0:
+				if fast:
+					lh_ph = 1
+					_lh_gone[i] = 0
+					launch_holds += 1
+			elif lh_ph == 1:
+				var out_l: bool = absf(SimWrap.sdx(_fx[i], f.x)) * zc > 0.5 * vw or absf(f.y + CamParams.CHEST - _fy[i]) * zc > 0.5 * vh
+				_lh_gone[i] = int(_lh_gone[i]) + 1 if out_l else 0
+				if int(_lh_gone[i]) >= int(CamParams.LH_WAIT * 60.0 + 0.5) or f.state != "launched":
+					lh_ph = 2
+					launch_pans += 1
+			elif lh_ph == 2:
+				var ex: float = SimWrap.sdx(_fx[i], f.x) * zc
+				var ey: float = (f.y + CamParams.CHEST - _fy[i]) * zc
+				if sqrt(ex * ex + ey * ey) / vw < 0.15 and not fast:
+					lh_ph = 0
+			_lh[i] = lh_ph
+		else:
+			_lh[i] = 0
+		var staged: bool = bool(_stg_on[i]) and depth_dolly and not reduced_motion
+		var handover: float = 0.0
+		if staged:
+			tau_x = CamParams.STAGE_TAU
+			tau_y = CamParams.STAGE_TAU
+		elif int(_stg_rel[i]) > 0:
+			handover = float(_stg_rel[i]) / float(CamParams.STAGE_HANDOVER)
+			_stg_rel[i] = int(_stg_rel[i]) - 1
+		if lh_ph == 1:
+			freeze = true
 		# Lead room: while a launched fighter is chased (a pane's chase, or a launch shot's follow) the focus sits a little
 		# ahead of him, so more of the pane is in front of him than behind; smoothed so it never moves the picture quickly.
 		var lead_t: float = 0.0
@@ -2510,16 +2629,33 @@ func _update_cameras(S: SimState) -> void:
 			var rx: float = (SimWrap.sdx(_fx[i], f.x) + lead_c) * zc
 			var ry: float = (fy_ref - _fy[i]) * zc
 			var e_w: float = sqrt(rx * rx + ry * ry) / vw
-			if e_w > CamParams.LAG_SOFT:
-				var gain: float = 1.0 + CamParams.LAG_GAIN * (minf(e_w, CamParams.LAG_HARD) - CamParams.LAG_SOFT) / (CamParams.LAG_HARD - CamParams.LAG_SOFT)
+			var lag_soft: float = CamParams.LAG_SOFT
+			var lag_hard: float = CamParams.LAG_HARD
+			var cut_w: float = CamParams.LAG_CUT
+			if staged:
+				lag_soft = CamParams.STAGE_LAG_HARD
+				lag_hard = CamParams.STAGE_LAG_HARD + 0.01
+			elif handover > 0.0:
+				lag_soft = lerpf(CamParams.LAG_SOFT, CamParams.STAGE_LAG_HARD, handover)
+				lag_hard = lerpf(CamParams.LAG_HARD, CamParams.STAGE_LAG_HARD + 0.01, handover)
+			if lh_ph == 2:
+				lag_soft = 1.0e9
+				lag_hard = 1.0e9 + 1.0
+				cut_w = CamParams.LH_CUT_UNITS * zc / vw
+			if e_w > lag_soft:
+				var gain: float = 1.0 + CamParams.LAG_GAIN * (minf(e_w, lag_hard) - lag_soft) / (lag_hard - lag_soft)
 				if reduced_motion:
 					gain = minf(gain, 3.0)
 				tau_x /= gain
 				tau_y /= gain
-			if e_w > CamParams.LAG_CUT:
+			if e_w > cut_w:
 				_fx[i] = f.x
 				_fy[i] = f.y + CamParams.CHEST
-				lag_cuts += 1
+				if lh_ph == 2:
+					launch_hold_cuts += 1
+					_lh[i] = 0
+				else:
+					lag_cuts += 1
 				_cut_now = true
 				_cut_dip()
 			var kx: float = 1.0 - exp(-DT / tau_x)
@@ -2548,19 +2684,32 @@ func _update_cameras(S: SimState) -> void:
 				if absf(off_y) > room_y:
 					ty = f.y + CamParams.CHEST - signf(off_y) * room_y
 			# Aimed at a building (B2): the focus leads toward it, a bounded distance on screen, so it is in frame.
-			if _aim[i] != null and f.state == "launched":
+			if staged:
+				# the stage's own frame: the centre of the building he is in and the next, held while he crosses it
+				tx = float(_stg_x[i])
+				ty = float(_stg_y[i]) + CamParams.CHEST
+			elif _aim[i] != null and f.state == "launched":
 				var zz: float = maxf(_zo[i], 0.001)
 				tx += clampf(CamParams.LEAD_FRAC * SimWrap.sdx(f.x, _aim[i].x), -CamParams.LEAD_MAX_X * vw / zz, CamParams.LEAD_MAX_X * vw / zz)
 				ty += clampf(CamParams.LEAD_FRAC * (_aim[i].y - f.y), -CamParams.LEAD_MAX_Y * vh / zz, CamParams.LEAD_MAX_Y * vh / zz)
-			_fx[i] = SimWrap.wrap(_fx[i] + SimWrap.sdx(_fx[i], tx) * kx)
-			_fy[i] += (ty - _fy[i]) * ky
+			var stp_x: float = SimWrap.sdx(_fx[i], tx) * kx
+			var stp_y: float = (ty - _fy[i]) * ky
+			if staged or handover > 0.0 or lh_ph == 2:
+				# the relay, the hand-over and the pan move the picture by at most STAGE_STEP (LH_STEP) of the width a tick
+				var cap_u: float = (CamParams.LH_STEP if lh_ph == 2 else CamParams.STAGE_STEP) * vw / zc
+				var len_u: float = sqrt(stp_x * stp_x + stp_y * stp_y)
+				if len_u > cap_u:
+					stp_x *= cap_u / len_u
+					stp_y *= cap_u / len_u
+			_fx[i] = SimWrap.wrap(_fx[i] + stp_x)
+			_fy[i] += stp_y
 			if not reduced_motion:
 				var qd: float = SimWrap.sdx(_fx[i], f.x) + lead_c
 				var qx: float = qd * zc
 				var qy: float = (f.y + CamParams.CHEST - _fy[i]) * zc
 				var q_w: float = sqrt(qx * qx + qy * qy) / vw
-				if q_w > CamParams.LAG_HARD:
-					var back: float = (q_w - CamParams.LAG_HARD) / q_w   # hold him at the bound: move the focus the excess toward him
+				if q_w > lag_hard:
+					var back: float = (q_w - lag_hard) / q_w   # hold him at the bound: move the focus the excess toward him
 					_fx[i] = SimWrap.wrap(_fx[i] + qd * back)
 					_fy[i] += (f.y + CamParams.CHEST - _fy[i]) * back
 					lag_whips += 1
