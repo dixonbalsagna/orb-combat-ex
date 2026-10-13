@@ -207,6 +207,7 @@ func _run() -> void:
 	_ghosts()
 	_vision()
 	_wall_outcome()
+	_flash_reserve()
 	_stage_stagger()
 	_depth()
 	_panes()
@@ -4606,6 +4607,32 @@ func _stage_stagger() -> void:
 			slab_max = maxf(slab_max, bt.sx)
 	_check(h.debris.spawned < 120 and slab_max <= 70.0 and chunks > 0, "and the debris is %d bits in all, %d slabs none over %.0f units (a slab of a facade's panel size, 28 to 70 at the base scale)" % [h.debris.spawned, chunks, slab_max])
 	_check(bits1 < h.debris.spawned, "the first tick drew less than the whole (%d of %d)" % [bits1, h.debris.spawned])
+
+
+## The reserve for the big flashes (the nine-cells chain's seed 7: a beam, its cut-in, a clash and a head flash met at 2.5001 of weight): the small ones give way, the sum ends under the gate.
+func _flash_reserve() -> void:
+	print("the register's reserve")
+	var white := Color(1.0, 1.0, 1.0)
+	var R := VfxFlashRegistry.new()
+	R.begin_tick(false)
+	var got: Array = [R.ask("beam", white, 1, VfxFlashRegistry.AREA_FULL, 0.6), R.ask("cut_in_panel", white, 1, VfxFlashRegistry.AREA_FULL, 0.6), R.ask("beam_clash", white, 1, 0.4751 * VfxFlashRegistry.AREA_FULL, 0.7)]
+	for k in range(4):
+		got.append(R.ask("head_flash", white, 1, 0.0249 * VfxFlashRegistry.AREA_FULL, 0.5))
+	_check(got == [true, true, true, false, false, false, false] and R.sum_in_window() <= 2.5 and absf(R.sum_in_window() - 2.4751) < 0.001, "a beam, its cut-in and a clash are granted and the head's pulses give way (%s, sum %.4f)" % [str(got), R.sum_in_window()])
+	var R2 := VfxFlashRegistry.new()
+	R2.begin_tick(false)
+	var got2: Array = [R2.ask("beam", white, 1, VfxFlashRegistry.AREA_FULL, 0.6), R2.ask("beam_clash", white, 1, 0.4751 * VfxFlashRegistry.AREA_FULL, 0.7), R2.ask("cut_in_panel", white, 1, VfxFlashRegistry.AREA_FULL, 0.6)]
+	_check(got2 == [true, true, false], "with the clash first, the decorative cut-in is the one refused (%s)" % str(got2))
+	var R3 := VfxFlashRegistry.new()
+	R3.begin_tick(false)
+	var small_sum: int = 0
+	for k in range(40):
+		R3.begin_tick(false)
+		R3.ask("body_hit", white, k, 0.17 * VfxFlashRegistry.AREA_FULL, 0.7)
+	_check(R3.worst_weight_from_log() <= 2.0 + 1e-6, "a mash of body hits alone never passes 2.0 of weight in a second (%.2f)" % R3.worst_weight_from_log())
+	var Rr := VfxFlashRegistry.new()
+	Rr.begin_tick(true)
+	_check(Rr.ask("beam", white, 1, VfxFlashRegistry.AREA_FULL, 0.6), "reduced mode keeps its whole 1.0: one weight-1 flash fits")
 
 
 ## The colour-blind presets (Art's data/art/colour-vision.json by way of UI's `colour_vision`): everything drawn in a lane colour reads the preset, and with the option off nothing changes.

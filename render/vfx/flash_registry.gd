@@ -14,6 +14,8 @@ extends RefCounted
 ##   - the SUM of the granted weights is at most BUDGET (2.5, Legal's gate); with `reduced` (reduced motion or the reduced-flashing setting) at most BUDGET_REDUCED (1.0);
 ##   - the low-priority sources (a fight makes many of them: energy, block, shot hits, mines, a guard break's ring, Rendering's body hit, head flash and cue flare) take at most LOW_BUDGET (1.5: the EP asked for 2 of the 2.5, which leaves 0.5, and a weight-1 explosion could then never be granted)
 ##     of it, none when reduced, so a slot is always left for the big events and for a perfect block's guard flash;
+##   - the last RESERVE_BIG (0.5) of a normal second is for the big flashes: the low-priority sources and Camera's cut-in panel are not granted past BUDGET - RESERVE_BIG, so a clash or a beam is never refused for
+##     a head's icon pulse and a recount cannot sit on the gate (the sum of the small ones ends at 2.0);
 ##   - today's count stays as a ceiling: at most BIG_CAP (3) granted flashes of weight BIG_W (0.5) or more (1 when reduced), and at most RATE_CAP (6) flashes of any weight (3 when reduced).
 ## Nothing red is ever granted. A refused flash is not drawn in its flash form (the source draws what is left: the table says what).
 ##
@@ -28,6 +30,13 @@ const AREA_FULL: float = 21824.0         # px: 25% of the standard's 341 by 256 
 const STEP_MIN: float = 0.10             # a luminance swing under this is not a flash
 const BUDGET: float = 2.5                # the sum of weights in any WINDOW ticks (Legal's gate)
 const BUDGET_REDUCED: float = 1.0
+## The last RESERVE_BIG of a normal-mode second is kept for the gameplay's big flashes (a beam's core, a beam clash, an explosion, a transformation's break): the low-priority sources (the
+## fight's many small ones) and the decorative one (Camera's cut-in panel) are not granted past BUDGET - RESERVE_BIG. A seed-7 match in the nine-cells chain read 2.50006 of weight (a beam 1.0, its
+## cut-in 1.0, a clash 0.4751 and a head flash 0.0249 granted at 2.5001 by a 0.0001 tolerance) against the gate's 2.5: the clash is a gameplay flare and the head's icon pulse is not, so the pulse gives
+## way, and by construction the small sources' share ends 0.5 under the gate. Reduced mode keeps its whole 1.0 (one weight-1 flash must fit; its low class is none).
+const RESERVE_BIG: float = 0.5
+const DECOR: Array = ["cut_in_panel"]
+const EPS: float = 0.000001                # the tolerance of a sum (the check's own is 1e-6)
 const LOW_BUDGET: float = 1.5            # of it, the low-priority class's share
 const BIG_W: float = 0.5                 # a flash of at least this weight counts toward BIG_CAP
 const BIG_CAP: int = 3
@@ -146,6 +155,8 @@ func ask(source: String, col: Color = Color.WHITE, tick: int = -1, area_px: floa
 	var low: bool = LOW.has(source)
 	var w: float = weight_of(source, area_px)
 	var budget: float = BUDGET_REDUCED if reduced else BUDGET
+	var small_cap: float = budget if reduced else budget - RESERVE_BIG     # what the small and decorative sources may fill to
+	var small: bool = low or DECOR.has(source)
 	var low_budget: float = 0.0 if reduced else LOW_BUDGET
 	var big_cap: int = BIG_CAP_REDUCED if reduced else BIG_CAP
 	var rate_cap: int = RATE_CAP_REDUCED if reduced else RATE_CAP
@@ -154,10 +165,10 @@ func ask(source: String, col: Color = Color.WHITE, tick: int = -1, area_px: floa
 	if is_red(col):
 		ok = false
 		why = "red"
-	elif sum_in_window() + w > budget + 0.0001:
+	elif sum_in_window() + w > (small_cap if small else budget) + EPS:
 		ok = false
 		why = "budget"
-	elif low and _low_sum() + w > low_budget + 0.0001:
+	elif low and _low_sum() + w > low_budget + EPS:
 		ok = false
 		why = "reduced" if reduced else "low_priority"
 	elif w >= BIG_W and _count(BIG_W) >= big_cap:
