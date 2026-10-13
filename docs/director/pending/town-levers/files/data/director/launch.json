@@ -1,0 +1,84 @@
+{
+  "schema": "director.launch/1",
+  "_about": "The launch planner's landing-mix numbers (sim/director/launch.gd, DirLaunch; balance-targets.md section 19; docs/combat/launch-vectors.md). DRIVE DOWN (the old SLAM DOWN) sends the target down and forward, at an angle set by its height above the ground, with no draw. The straight-down slam is its own gated candidate, CRATER SLAM. Heights are in body heights (1 bh is 75 units).",
+  "drive": {
+    "lowDeg": 25.0,
+    "highDeg": 50.0,
+    "lowBh": 2.0,
+    "highBh": 12.0,
+    "_note": "lowDeg and highDeg: degrees below level, 0 to 90, lowDeg at most highDeg. lowBh and highBh: the target's height above the ground in body heights, lowBh less than highBh. The angle is lowDeg at lowBh or lower, rising evenly to highDeg at highBh and above"
+  },
+  "uppercut": {
+    "ux": 0.25,
+    "uy": 1.0,
+    "_note": "UPPERCUT's direction, no unit: ux along the launcher's facing, uy up. Kept at the old 0.25: with the ground-contact model on, a forward carry of 0.85 did not make its fall shallower (it still ended in a slam 44% of the time, against 46%) and the planner picked it twice as often, so slams rose from 15.9% to 20.1% of launches (docs/director/landing-mix.md)"
+  },
+  "craterSlam": {
+    "ux": 0.2,
+    "uy": -1.25,
+    "_dir": "a direction, no unit: ux along the launcher's facing (0 or more), uy up (negative is down). The direction SLAM DOWN had before it became DRIVE DOWN",
+    "below": {
+      "sideBh": 1.0,
+      "dropBh": 3.0,
+      "_note": "gate 1, a rival directly below. Both in body heights, 0 or more: the target is within sideBh sideways of the launcher and at least dropBh lower"
+    },
+    "setPiece": {
+      "minTier": 3,
+      "everySec": 30.0,
+      "_note": "gate 2, the crater set piece. minTier: the launcher's power tier, an integer 1 to 4. everySec: seconds of match time, 0 or more; at most one CRATER SLAM per fighter in that time"
+    },
+    "score": {
+      "base": 12.0,
+      "perTier": 4.0,
+      "high": 18.0,
+      "highAlt": 140.0,
+      "_note": "planner score points (no unit), except highAlt, which is the target's height above the ground in units. The base score is base + perTier x tier, + high when the target is over highAlt up. The planner's shared terms (personality, repeats, water, noise) are added as for any launch"
+    }
+  },
+  "town": {
+    "biomes": ["city", "village"],
+    "haulTarget": 3500.0,
+    "haulMin": 2400.0,
+    "distMul": 0.5,
+    "newBiomeEveryS": 60.0,
+    "bruntFromTier": 2,
+    "bruntPrefer": 40.0,
+    "stickWins": 200.0,
+    "_note": "Staying in town and aiming for a building (docs/design/buildings.md section 3). biomes: the settlement biomes. haulTarget, haulMin: from a settlement SMASH ACROSS carries him haulTarget units along the street and no further, kept while he lands inside the settlement and at least haulMin on; where the street does not run that far it is the long haul. distMul: from a settlement the distance bonus of a landing on open ground is this share of itself. newBiomeEveryS: the new-biome bonus is paid once in this many seconds of the match. bruntFromTier, bruntPrefer: with no stick held, a building on the line scores bruntPrefer more from this tier. stickWins: with the stick toward a building that has a plan, it scores this much more, which is always enough"
+  },
+  "knockBack": {
+    "score": 25.0,
+    "distBh": [3.5, 5.0, 6.5, 8.0],
+    "groundMode": "skid",
+    "skidSpeed": [900.0, 1100.0, 1250.0, 1450.0],
+    "skidUy": 0.05,
+    "groundWithinBh": 0.5,
+    "driftTicks": 20,
+    "chain": false,
+    "slideUnderBh": 4.0,
+    "slideTicks": 18,
+    "wear": 0.5,
+    "impactPerSpeed": 0.018,
+    "_wear": "A knock-back hurts (agency-pass.md section 13, rule 4): a knock-back the director carries (the upright slide, the drift in the air) costs 'wear' of a launch's impact at the speed he is carried: wear x impactPerSpeed x distance over its time. impactPerSpeed is World's single-impact figure (damage per unit a second of the first contact, sim/world/contact.gd). The skid of 4 bh and over is a journey and pays World's own slide wear",
+    "_slide": "slideUnderBh: a ground knock-back shorter than this is the upright slide: the director carries him back distBh along the ground over slideTicks (Combat's 18), with no launch, no journey and no trench. At this length and over it is the skid: a launch whose plan carries slide 'feet' and the distance in units, for World's slide on the feet",
+    "_note": "The knock-back: a short send that is not a launch across the map (agency-pass.md section 3; Combat's brawl-endings-and-trades.md section 2). score: its base score against the launch candidates (it was the planner's NONE, 25). distBh: how far it sends the rival, in body heights, by the striker's tier (Combat's proposal). On the ground (within groundWithinBh of it, not over the sea) with groundMode 'skid' it is a low send with no travel boost that the ground-contact model skids: skidSpeed is its speed by tier, in units a second, sized to slide about distBh on open ground, and skidUy its small lift. Otherwise ('shove', or in the air: the drift) the rival is carried back distBh over driftTicks and stays upright. chain: whether a chain window may open after it"
+  },
+  "setup": {
+    "weight": {"default": 1.0, "blurPlain": 0.34, "barragePlain": 0.5, "riposte": 0.34},
+    "_note": "Set-ups against a fighter on the brink (agency-pass.md sections 14.4 and 16). Opening him needs finishers.json contest.brinkSetups set-ups. weight: what a decisive win is worth, by its kind (launch, clash, guard_break, interrupt, knockback, beam, beam_clash, blast, barrage: default), blurPlain for the mash's close (the flurry's stagger in a brawl, and a plain blur's own ender in a planned exchange): about a third of one, so a masher needs three (melee-press-feel.md section 9d: it was a quarter while one fighter made nearly every close; with the momentum rule Game Design's range for it is 0.34 to 0.5, and it sits at the bottom of that because the lights-only mirror's brink to KO reads 26.9 s at 0.5 and 28.2 s at 0.34, against 30 to 55 s; brawl.flurry.momentum does not move that row); and barragePlain for a barrage's ender when any of its bolts was spammed: half of one, so a spammer needs twice as many"
+  },
+  "blur": {
+    "enderAfter": 4,
+    "enderDist": 0.6,
+    "strikeMul": 0.8,
+    "perfectDist": 1.0,
+    "_note": "A blur always closes (agency-pass.md section 13). enderAfter: the light that follows this many landed strikes of the string is the blur's own ender, a knock-back and never a launch; if no press comes, the chain window's end plays it, free. enderDist: the share of the tier's knock-back distance the plain blur's ender goes. strikeMul: the damage of a blow from a mashed light press (three presses inside 20 ticks)"
+  },
+  "earned": {
+    "enabled": true,
+    "enderAfter": 4,
+    "cleanTaken": 1,
+    "forceMul": 1.6,
+    "_note": "The earned launch (agency-pass.md section 3). enabled: the switch; off, every launch beat goes to the planner as before. With it on, a launch beat launches only when earned, by four things (Orb, questionnaire 14): a held heavy that lands; a heavy after enderAfter or more of the string's strikes landed (the ender of a full string); a heavy pressed with a stick direction that lands clean, which means the striker has taken no more than cleanTaken blows in the exchange; a clash won. A guard break and a riposte end in the knock-back. Not earned: a heavy gives the knock-back and a light leaves both fighters in reach. forceMul: the launch force of an earned launch, so fewer launches can be bigger ones (the impact wear itself is World's)"
+  }
+}

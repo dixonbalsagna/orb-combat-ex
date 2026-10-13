@@ -1,0 +1,143 @@
+{
+  "schema": "wounds/1",
+  "_about": "The game's wounds model: every fighter's, unless his own data/fighters/<id>/wounds.json says otherwise for a key (that file is optional and holds only his differences; docs/architecture/fighters-as-data.md). D1a: the wound numbers (spec-wounds.md sections 1 and 2), loaded by sim/core/fighter_data.gd into a WoundsDef (f.wd). Wear is fixed-point: 6000 units per wear point. Units and ticks are integers. The rules stay code (sim/core/wounds.gd); this file only holds their numbers. Values marked pinned are also read as SimWounds constants by another owner's file, so the loader requires them to equal the constant until that reader moves to f.wd.",
+  "regions": {
+    "head": {
+      "brink": false,
+      "spill": true
+    },
+    "core": {
+      "brink": true,
+      "spill": false
+    },
+    "arms": {
+      "brink": false,
+      "spill": true
+    },
+    "legs": {
+      "brink": false,
+      "spill": true
+    }
+  },
+  "_regions": "pitch A, the crippling moment (pitches.md section 5, balance-targets.md section 13): the brink is the core broken; limbs (spill) wear to battered and stop, and wear past battered spills into the core. A limb breaks only in a crippling moment (cripple)",
+  "stageAt": [
+    180000,
+    360000,
+    540000
+  ],
+  "_stageAt": "bruised 30, battered 60, broken 90 (pinned: sim/director/ai.gd, qa/godot/records.gd)",
+  "wearPerDamage": 225.0,
+  "_wearPerDamage": "330 (Game Design, 2026-10-05, on the brawl's riposte build: with the second breath waiting for quiet, brinks came sooner and the 10th-percentile length fell to 293 s; at 330 it reads 316 and 319 s, medians 408 and 450 s). It was 350 (QA's combined list on 9da6e07, docs/qa/baseline-9da6e07.md: median length 492 to 469 s, first brink 417 to 387 s). It was 336, k 0.056 x 6000 (QA's +8% on the first agency build, docs/qa/baseline-agency1.md, accepted in agency-pass.md section 13), and 312 before that (QA's Q10 re-tune, docs/qa/retune-q10.md)",
+  "act1Damping": 1.0,
+  "_act1Damping": "wear x this while the act index is 1 (SimMood.act). Below 1 it slows act 1's wear; above 1 it speeds it, so the first wound beats and act 2 come sooner (QA's M1b tuning: 1.3 with k 0.036, docs/qa/tuning-m1b.md)",
+  "overtime": {
+    "startTicks": 28800,
+    "perMin": 0.25,
+    "cap": 3.0,
+    "_note": "k x min(cap, 1 + perMin x minutes past start). Candidate A (default): 28800 ticks (8:00), 0.25. Candidate B: 30600 ticks (8:30), 0.40. QA picks by editing both fighters' files"
+  },
+  "fade": {
+    "out": 25,
+    "breath": 100,
+    "breathAfterTicks": 240,
+    "hidden": 300,
+    "hiddenFloor": 354000,
+    "_note": "per tick: out 0.25/s below 60 out of exchanges; breath 1/s for battered regions after 240 ticks of quiet (no exchange, no hit taken, landed or blocked, and no approach of his own; his own shots do not count: spec-wounds.md section 1c), down to hiddenFloor (59; pinned: sim/director/ai.gd); hidden 3/s with the hiding kit"
+  },
+  "focusWear": 30.0,
+  "family": {
+    "light": [
+      12.0,
+      4.0,
+      8.0,
+      8.0
+    ],
+    "medium": [
+      8.0,
+      8.0,
+      7.0,
+      9.0
+    ],
+    "heavy": [
+      1.0,
+      3.0,
+      1.0,
+      3.0
+    ],
+    "guard": [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    "spread": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "_note": "region pick weights (head, core, arms, legs) by hit family. medium: the third weight (brawl-second-pass.md section 2): nearly even, a little off the arms and onto the legs. light: a landed light picks the arms 10 times in 32 and the legs 6 (it was 11 and 5 until the riposte build, where more blows land and the arms went back to 73% of limb breaks; and 12 and 4 before that, as 3, 1, 3, 1: a brawl is mostly lights, and the arms took 83% of limb breaks; melee-press-feel.md section 9d). Game Design's next step if the arms are still over 65%: 12, 4, 10, 6"
+  },
+  "guardWearSplit": {
+    "arms": 0.7,
+    "legs": 0.3,
+    "_note": "a guard hit's wear: this share to the arms, this to the legs (Game Design: spread so legs can become battered). A blocked heavy's; a blocked light's is block's"
+  },
+  "block": {
+    "streamArmShare": 0.5,
+    "armWearCap": 180000,
+    "shotArmShare": 0.5,
+    "shotArmWearCap": 180000,
+    "_shots": "blocked shots, ruled apart from blocked blows (melee-press-feel.md section 9d). shotArmShare: a blocked shot of any kind puts this share of its wear on the arms; the lever, inside 0.45 to 0.6. shotArmWearCap: the arms take a blocked shot's wear only up to this, in wear units (180000 is 30 points), and what is over it goes into the core: a guard shot at long enough leaks, where a blocked blow's wear over its own cap is soaked. The loader keeps it under broken. A blocked heavy or charged shot (power 2 or more) also keeps guardWearSplit's share to the legs; a blocked bolt puts nothing there. The two keys above are for blocked melee blows only",
+    "_note": "blocked blows and the arms (melee-press-feel.md section 9d, ruling 1). streamArmShare: a blocked light or flurry blow puts this share of its chip wear on the arms, and the rest is soaked (nothing goes to the legs); the lever is 0.3 to 0.7. armWearCap: no blocked blow, light or heavy, takes the arms past this, in wear units: 180000 is 30 points, where bruised begins (re-ruled from 45: a block that fills an arm to 45 of the 60 that batter it does three quarters of the work), so blocking alone never batters an arm"
+  },
+  "penalties": {
+    "coreKiRegen": 0.7,
+    "legsSpeed": 0.85,
+    "legsLockBreak": 2.0,
+    "staggerTicks": 12,
+    "dazeTicks": 24,
+    "armsGuardMul": 0.55,
+    "armsBrokenMul": 0.8,
+    "armsBrokenLightMul": 1.15,
+    "armsBrokenMediumMul": 1.0,
+    "legsBrokenGuardScale": 0.8,
+    "headParryNarrow": 0.2,
+    "headDefence": 0.08,
+    "legsSlip": 0.1,
+    "_note": "S3a and S3b stage penalties; pitch A's post-break modifiers: a broken arm deals lights x1.15 (heavies and signatures x0.8), broken legs scale the DEFENSIVE multiplier by 0.8 (a stronger guard; the dash is gone). headParryNarrow (sim/director/melee.gd), headDefence and legsSlip (sim/director/data.gd) are pinned"
+  },
+  "lastStand": {
+    "windowS": 20,
+    "_note": "the last stand (spec-wounds section 1b, point 7): the first time this fighter reaches the brink in a match, one signature is free and off cooldown for windowS seconds, counted while he is free. 0 switches it off"
+  },
+  "cripple": {
+    "regions": [
+      "arms",
+      "legs"
+    ],
+    "blows": [
+      "heavy",
+      "beam",
+      "guard_break",
+      "chain"
+    ],
+    "base": 0.04,
+    "tierAhead": 0.03,
+    "lateAct": 3,
+    "lateBonus": 0.03,
+    "defensive": -0.03,
+    "maxPerFighter": 1,
+    "legWeight": 0.8,
+    "surgePower": 10.0,
+    "_note": "a heavy-class blow (a heavy, a signature, a guard break or a chain strike) that lands on a battered limb in a decisive exchange breaks it on a keyed roll: base, + tierAhead if the attacker is a tier ahead, + lateBonus from act lateAct, + defensive (negative) if the victim holds DEFENSIVE. At most maxPerFighter limbs a match; the breaker's power rises by surgePower. The pick: among the victim's eligible limbs (cripple regions, battered at the exchange's start and still battered), the legs weigh legWeight against the arms' 1"
+  },
+  "profile": {
+    "type": "plain"
+  },
+  "rally": {
+    "rallyWear": 534000,
+    "coolTicks": 900,
+    "_note": "a mended region returns battered at 89; 15 s between Rallies"
+  }
+}
