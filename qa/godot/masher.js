@@ -131,7 +131,7 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   T.push(() => runPair('str-y', Y, ai, nm, base));
   T.push(() => runPair('str-b', B, ai, nm, base));
   T.push(() => runPair('str-alt', 'mix:forms=1:mix=XYB:gap=12:tap=4', ai, nm, base));
-  T.push(() => runPair('str-holdx', 'holder:forms=1:kind=L:hold=60:rest=8', ai, nm, base));
+  T.push(() => runPair('str-holdx', 'holder:forms=1:kind=L:hold=100000:rest=2:rehold=1', ai, nm, base));
   T.push(() => runPair('str-x10b', 'mix:forms=1:mix=XXB:gap=10:tap=4', ai, nm, base));
   T.push(() => runPair('fl-xy', X6, Y + ':off=7', nm, base));
   T.push(() => runPair('fl-yb', Y, B + ':off=7', nm, base));
@@ -287,18 +287,27 @@ function c2Rows(r, results) {
     return rows;
   }
   if (/^str-/.test(r.pair)) {
-    const label = { 'str-y': 'a Y masher (a medium every 12 ticks)', 'str-b': 'a B masher (a heavy every 30 ticks)', 'str-alt': 'the alternator (X, Y, B in turn, a press every 12 ticks)', 'str-holdx': 'the player who only holds X (60 ticks down, 8 up)', 'str-x10b': 'the 10-tick tapper with B (X X B)' }[r.pair];
+    const label = { 'str-y': 'a Y masher (a medium every 12 ticks)', 'str-b': 'a B masher (a heavy every 30 ticks)', 'str-alt': 'the alternator (X, Y, B in turn, a press every 12 ticks)', 'str-holdx': 'the player who only holds X (he lets go and holds again whenever no hold is running: one press an approach)', 'str-x10b': 'the 10-tick tapper with B (X X B)' }[r.pair];
     const banded = r.pair === 'str-y' || r.pair === 'str-b', inBand = dec && r.aWins / dec >= 0.20 && r.aWins / dec <= 0.50;
     rows.push({ id: 'masher.' + r.pair, ref: '§14 second pass', what: `${label} against the medium AI (${banded ? '20 to 50%: no single button mashed should beat medium more than half the time, and none should be shut out' : (r.pair === 'str-holdx' ? '10 to 35%: Game Design, third round' : 'reported; the X masher\'s 35 to 50% is kept')})`, status: !has3 && r.pair !== 'str-holdx' ? 'PENDING' : (banded ? (inBand ? 'PASS' : 'FAIL') : (r.pair === 'str-holdx' ? (dec && r.aWins / dec >= 0.10 && r.aWins / dec <= 0.35 ? 'PASS' : 'FAIL') : 'INFO')), value: has3 || r.pair === 'str-holdx' ? `${dec ? pct(r.aWins / dec) : '-'} (${r.aWins} of ${dec}); ${r.timeouts} ran to the cap` : 'the build has no three strengths: Y and B are the old heavy and the beam', band: banded ? '20 to 50%' : (r.pair === 'str-holdx' ? '10 to 35%' : 'reported'), note: `${r.n} matches; blows ${JSON.stringify(blows)}` });
     if (r.pair === 'str-alt') rows.push({ id: 'cell.mix.alone', ref: '§15 second pass', what: 'The three mashed in turn (X, Y, B, a press every 12 ticks), alone against the medium AI (30 to 55%: it takes no thought, and should not beat medium this often)', status: !has3 ? 'PENDING' : (dec ? (r.aWins / dec >= 0.30 && r.aWins / dec <= 0.55 ? 'PASS' : 'FAIL') : 'PENDING'), value: !has3 ? 'the build has no three strengths' : (dec ? `${pct(r.aWins / dec)} (${r.aWins} of ${dec})` : 'no decided match'), band: '30 to 55%', note: `${r.n} matches` });
     if (r.pair === 'str-y') rows.push({ id: 'cell.y.mashed', ref: '§15 second pass', what: 'Y mashed (a Y every 12 ticks), alone against the medium AI (20 to 50%)', status: !has3 ? 'PENDING' : (dec ? (r.aWins / dec >= 0.20 && r.aWins / dec <= 0.50 ? 'PASS' : 'FAIL') : 'PENDING'), value: dec ? `${pct(r.aWins / dec)} (${r.aWins} of ${dec})` : 'no decided match', band: '20 to 50%', note: 'the same read as masher.str-y, under the nine-cell id' });
     if (r.pair === 'str-b') rows.push({ id: 'cell.b.mashed', ref: '§15 second pass', what: 'B mashed (a B every 30 ticks), alone against the medium AI (20 to 50%)', status: !has3 ? 'PENDING' : (dec ? (r.aWins / dec >= 0.20 && r.aWins / dec <= 0.50 ? 'PASS' : 'FAIL') : 'PENDING'), value: dec ? `${pct(r.aWins / dec)} (${r.aWins} of ${dec})` : 'no decided match', band: '20 to 50%', note: 'the same read as masher.str-b, under the nine-cell id' });
+    if (r.pair === 'str-holdx') {
+      const xm = (results || []).find(x => x.pair === 'x-medium'), xdec = xm ? xm.aWins + xm.bWins : 0, rt = dec && xdec && xm.aWins > 0 ? (r.aWins / dec) / (xm.aWins / xdec) : null;
+      rows.push({ id: 'cell.x.held.ratio', ref: '§14 second pass', what: 'The X holder against the same script\'s masher (the pair masher), both against the medium AI: between a third and two thirds as often (the reading that travels to any probe)', status: rt === null ? 'PENDING' : (rt >= 1 / 3 && rt <= 2 / 3 ? 'PASS' : 'FAIL'), value: rt === null ? 'no masher read in this run (x-medium)' : `${rt.toFixed(2)} (holder ${pct(r.aWins / dec)}, masher ${pct(xm.aWins / xdec)})`, band: '0.33 to 0.67', note: `${r.n} and ${xm ? xm.n : 0} matches` });
+    }
     if (r.pair === 'str-holdx') rows.push({ id: 'cell.x.held', ref: '§15 second pass', what: 'X held down, alone against the medium AI (10 to 35%)', status: dec ? (r.aWins / dec >= 0.10 && r.aWins / dec <= 0.35 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${pct(r.aWins / dec)} (${r.aWins} of ${dec})` : 'no decided match', band: '10 to 35%', note: 'the same read as masher.str-holdx, under the nine-cell id' });
     return rows;
   }
   if (/^fl-/.test(r.pair)) {
-    const [what, id] = { 'fl-xy': ['The X flurry beats the Y flurry (it lands twice as many blows)', 'flurry.xy'], 'fl-yb': ['The Y flurry beats the B flurry (a medium lands inside the 20 ticks in which a heavy can be stopped)', 'flurry.yb'], 'fl-bx': ['The B flurry beats the X flurry (lights do not stop a heavy)', 'flurry.bx'] }[r.pair];
-    rows.push({ id, ref: '§14 second pass', what: what + ' (60 to 90%: two fixed rhythms give nearly the same result every time, and a lock at 100% leaves the loser nothing)', status: !has3 ? 'PENDING' : (dec ? (r.aWins / dec >= 0.60 && r.aWins / dec <= 0.90 ? 'PASS' : 'FAIL') : 'PENDING'), value: !has3 ? 'the build has no three strengths' : (dec ? `${pct(r.aWins / dec)} (${r.aWins} of ${dec})` : 'no decided match'), band: '60 to 90%', note: `${r.n} matches, the second player on a seeded offset of 0 to 7 ticks; point estimate (about ±10 points)` });
+    // Game Design, fifth round: X over Y is withdrawn (reported only); Y over B and B over X each take the first decisive exchange of a match at least 60% of the time, no upper bound (two fixed scripts lock);
+    // read on the first flurry close, because a B masher is out of ki after about 20 s. The match wins are reported beside it.
+    const [what, id] = { 'fl-xy': ['The X flurry against the Y flurry (the edge is withdrawn: reported only)', 'flurry.xy'], 'fl-yb': ['The Y flurry takes the first decisive exchange against the B flurry', 'flurry.yb'], 'fl-bx': ['The B flurry takes the first decisive exchange against the X flurry', 'flurry.bx'] }[r.pair];
+    const fc = (b.firstCloser || []), n0 = fc.filter(v => v === 0).length, n1 = fc.filter(v => v === 1).length, fd = n0 + n1, share = fd ? n0 / fd : -1;
+    const wins = dec ? `${pct(r.aWins / dec)} of matches (${r.aWins} of ${dec})` : 'no decided match';
+    if (r.pair === 'fl-xy') rows.push({ id, ref: '§14 second pass', what: what + ': no band', status: has3 ? 'INFO' : 'PENDING', value: has3 ? `first close ${fd ? pct(share) : '-'} (${n0} of ${fd}); match wins ${wins}` : 'the build has no three strengths', band: 'reported', note: `${r.n} matches` });
+    else rows.push({ id, ref: '§14 second pass', what: what + ' (at least 60%, no upper bound; read on the first close, the match wins reported beside it)', status: !has3 ? 'PENDING' : (fd ? (share >= 0.60 ? 'PASS' : 'FAIL') : 'PENDING'), value: !has3 ? 'the build has no three strengths' : (fd ? `first close ${pct(share)} (${n0} of ${fd}); match wins ${wins}` : 'no flurry close in these matches'), band: 'at least 60%', note: `${r.n} matches, the second player on a seeded offset of 0 to 7 ticks; point estimate (about ±10 points)` });
     return rows;
   }
   if (r.pair === 'x-medium') {
@@ -350,9 +359,9 @@ function c2Rows(r, results) {
   if (r.pair === 'burst-dummy') {
     const mash = results.find(x => x.pair === 'mash-dummy');
     const dps = x => { const st = (x.stats || [])[0]; return st && x.medianSec > 0 ? st.damagePerMatch / x.medianSec : 0; };
-    if (!((b.burst || {}).n > 0) || !mash) { rows.push(pend('burst.share', '§11 second pass', 'The burst against a mash over the same time: 70 to 80% of the mash\'s damage, never over', '70 to 80%', 'the build has no burst cue')); return rows; }
+    if (!((b.burst || {}).n > 0) || !mash) { rows.push(pend('burst.share', '§11 second pass', 'The burst against a mash over the same time: 80 to 90% of the mash\'s damage, never over', '80 to 90%', 'the build has no burst cue')); return rows; }
     const ratio = dps(r) / Math.max(1e-9, dps(mash));
-    rows.push({ id: 'burst.share', ref: '§11 second pass', what: 'The burst (a held X) against a mash (X every 8 ticks), damage a second against a rival who never moves: 70 to 80%, never over', status: ratio >= 0.70 && ratio <= 0.80 ? 'PASS' : 'FAIL', value: `${pct(ratio)} (${dps(r).toFixed(1)} against ${dps(mash).toFixed(1)} damage a second; ${b.burst.n} bursts, ${(b.burst.blows || []).filter(k => k === 8).length} of eight blows)`, band: '70 to 80%', note: `${r.n} matches each; damage per match over the match's median length, a rough read` });
+    rows.push({ id: 'burst.share', ref: '§11 second pass', what: 'The burst (a held X) against a mash (X every 8 ticks), damage a second against a rival who never moves: 80 to 90%, never over (Game Design, fifth round)', status: ratio >= 0.80 && ratio <= 0.90 ? 'PASS' : 'FAIL', value: `${pct(ratio)} (${dps(r).toFixed(1)} against ${dps(mash).toFixed(1)} damage a second; ${b.burst.n} bursts, ${(b.burst.blows || []).filter(k => k === 8).length} of eight blows)`, band: '80 to 90%', note: `${r.n} matches each; damage per match over the match's median length, a rough read` });
   }
   return rows;
 }
