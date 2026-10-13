@@ -260,6 +260,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
         // Camera's travel budget switch: the web hook reads the page's `budget=1`, the headless run reads --budget, and both turn on the same rule
     check('the travel budget switch (budget=1 on the web hook, --budget on flash_worst.gd) sets the same rule', /"budget"/.test(theirs) && /set_travel_budget\(true\)/.test(theirs) && /--budget/.test(mine) && /set_travel_budget\(true\)/.test(mine));
     check('the launch hold switch (hold=1 on the web hook, --hold on flash_worst.gd) sets the same rule', /"hold"/.test(theirs) && /set_launch_hold\(true\)/.test(theirs) && /--hold/.test(mine) && /set_launch_hold\(true\)/.test(mine));
+    check('the hook reads its page switches from location.search itself (main.parse_args keeps only URL_ARGS, so budget=1 and hold=1 never reached main.args) and reports what it applied', theirs.includes('_page_flag("budget")') && theirs.includes('_page_flag("hold")') && theirs.includes('location.search') && theirs.includes('__flashcap.switches'));
     for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms', '_mash', '_signature', '_rush', '_apply_variant']) {
       const a = fn(mine, name), b = fn(theirs, name);
       check(`Rendering's capture hook stages the same collapse ${name} as flash_worst.gd`, !!a && !!b && JSON.stringify(a) === JSON.stringify(b), JSON.stringify([a && a.length, b && b.length]));

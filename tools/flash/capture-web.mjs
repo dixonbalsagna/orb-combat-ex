@@ -75,6 +75,7 @@ const cleanup = async () => {
   if (server) server.close();
 };
 let page, code = 0;
+let applied = null;   // the switches the page reports it set (budget, hold)
 try {
   const loadBefore = await cpuLoad(1000);   // the machine's load before this capture starts: a recorded condition of a release pass (a starved machine voids a clip)
   const target = await launchBrowserGuarded();
@@ -92,9 +93,17 @@ try {
   const inWindow = [];
   for (let i = 1; i <= TICKS; i++) {
     if (Date.now() > deadline) throw new Error(`timed out after ${i - 1} ticks`);
-    const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, win: window.__flashcap.in_window, err: window.__flashcap.error || null }))', true);
+    const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, win: window.__flashcap.in_window, err: window.__flashcap.error || null, sw: window.__flashcap.switches || null }))', true);
     const tick = got && got.tick;
     if (got && got.err) throw new Error(`the page reported an error: ${got.err}`);
+    if (i === 1) {
+      // a switch asked for and not applied is a clip of the wrong build, not a clip of the switch: the hook reports what it set (render/tools/flash_capture.gd `switches`).
+      // (Until docs/tools/pending/flash-capture-page-flags.patch the hook read main.args, which keeps only URL_ARGS: budget=1 and hold=1 never reached it.)
+      applied = got && got.sw ? got.sw : null;
+      for (const [flag, key] of [['--budget', 'budget'], ['--hold', 'hold']]) {
+        if (has(flag) && !has('--mock') && !(applied && applied[key] === true)) throw new Error(`${flag} was asked for and the page did not apply it (the hook reports ${JSON.stringify(applied)}): the build's hook is older than flash-capture-page-flags.patch`);
+      }
+    }
     inWindow.push(got && typeof got.win === 'number' ? got.win : null);
     if (typeof tick !== 'number' || tick <= last) throw new Error(`step() returned ${tick} after ${last}: the page did not advance exactly one tick`);
     last = tick;
@@ -103,7 +112,7 @@ try {
   }
   const loadAfter = await cpuLoad(1000);
   const guard = browser ? { tag: String(browser.profile).split(/[\\/]/).pop(), session: browser.entry.session, purpose: browser.entry.purpose, cpuPercent: browser.entry.cpuPercent, timeoutS: browser.entry.timeoutS, priority: 'below-normal', hardEndMs: browser.deadlineMs } : null;
-  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, budget: has('--budget'), hold: has('--hold'), variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
+  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, budget: has('--budget'), hold: has('--hold'), applied, variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
   log(`${TICKS} frames in ${Math.round((Date.now() - tStart) / 1000)} s of capture (${(TICKS / Math.max(1, (Date.now() - tStart) / 1000)).toFixed(2)} frames a second${has('--software') ? ', software rendering' : ''})`);
   log(`wrote ${TICKS} frames to ${OUT}; next: node tools/flash/analyse-frames.js ${OUT}`);
 } catch (e) {
