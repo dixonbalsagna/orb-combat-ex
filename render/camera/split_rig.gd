@@ -2552,11 +2552,29 @@ func _update_cameras(S: SimState) -> void:
 					_lh_gone[i] = 0
 					launch_holds += 1
 			elif lh_ph == 1:
-				var out_l: bool = absf(SimWrap.sdx(_fx[i], f.x)) * zc > 0.5 * vw or absf(f.y + CamParams.CHEST - _fy[i]) * zc > 0.5 * vh
-				_lh_gone[i] = int(_lh_gone[i]) + 1 if out_l else 0
-				if int(_lh_gone[i]) >= int(CamParams.LH_WAIT * 60.0 + 0.5) or f.state != "launched":
-					lh_ph = 2
-					launch_pans += 1
+				# The frame is held for the flight. He is brought back by one cut when he has landed (or, in a flight so long it
+				# would leave the frame by more than LH_CUT_UNITS, when he is that far: and the frame is held again); a landing
+				# near the frame is a pan.
+				var dx_l: float = SimWrap.sdx(_fx[i], f.x)
+				var dy_l: float = f.y + CamParams.CHEST - _fy[i]
+				var far_u: float = sqrt(dx_l * dx_l + dy_l * dy_l)
+				if f.state != "launched":
+					if far_u * zc > CamParams.LH_NEAR * vw:
+						_fx[i] = f.x
+						_fy[i] = f.y + CamParams.CHEST
+						_cut_now = true
+						_cut_dip()
+						launch_hold_cuts += 1
+						lh_ph = 0
+					else:
+						lh_ph = 2
+						launch_pans += 1
+				elif far_u > CamParams.LH_CUT_UNITS:
+					_fx[i] = f.x
+					_fy[i] = f.y + CamParams.CHEST
+					_cut_now = true
+					_cut_dip()
+					launch_hold_cuts += 1
 			elif lh_ph == 2:
 				var ex: float = SimWrap.sdx(_fx[i], f.x) * zc
 				var ey: float = (f.y + CamParams.CHEST - _fy[i]) * zc
@@ -2781,10 +2799,20 @@ func _update_cameras(S: SimState) -> void:
 		var cap: float = (CamParams.SLAM_ZOOM_RATE if stiff else zrate) * DT
 		_zr_pane[i] = zrate
 		dz = clampf(dz, -cap, cap)
+		if lh_ph == 1:
+			dz = 0.0   # the frame is held: no zoom either (a zoom is the whole picture moving)
+		elif lh_ph == 2:
+			dz = clampf(dz, -CamParams.LH_ZOOM_STEP, CamParams.LH_ZOOM_STEP)   # the pan's budget is the position's
 		_zo[i] = exp(log(_zo[i]) + dz)
 	# the merged shadow camera: the reference camera's ease, snapped while two full panes are up
 	var mt: Vector3 = _merged_target(S)
-	if sep >= 0.999 and _slam_slot < 0 and solo_kind == "":
+	# A launch the rule does not follow holds the shared frame too: the displayed camera is the blend of the shared and the
+	# launched pane's while the pane takes the screen, and the shared one would otherwise zoom out and travel for the pair
+	# (4% a tick, 200 units a tick) under it.
+	var m_held: bool = launch_hold and not reduced_motion and (int(_lh[0]) != 0 or int(_lh[1]) != 0)
+	if m_held:
+		pass
+	elif sep >= 0.999 and _slam_slot < 0 and solo_kind == "":
 		_mx = mt.x
 		_my = mt.y
 		_mz = mt.z
@@ -2813,6 +2841,8 @@ func _update_cameras(S: SimState) -> void:
 		_mz = exp(log(_mz) + dzm)
 	_pmx = mt.x
 	_pmy = mt.y
+	if m_held:
+		_vsm_m *= 0.8
 	_outputs(S)
 
 

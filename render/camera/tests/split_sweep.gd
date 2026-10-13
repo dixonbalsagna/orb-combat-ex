@@ -1061,9 +1061,10 @@ func _launch_hold_run(speed: float, dist: float, on: bool) -> Dictionary:
 			off_max = maxi(off_max, off_run)
 	var thr: float = CamParams.LH_SPEED * 1.1 + 0.002
 	if on and speed * (CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H) / 60.0 / vw > CamParams.LH_SPEED:
-		_check(_rig.launch_holds >= 1 and _rig.launch_pans >= 1, "%s: the rule did not engage (holds %d, pans %d)" % [_label, _rig.launch_holds, _rig.launch_pans])
+		_check(_rig.launch_holds >= 1 and _rig.launch_pans + _rig.launch_hold_cuts >= 1, "%s: the rule did not engage (holds %d, pans %d, cuts %d)" % [_label, _rig.launch_holds, _rig.launch_pans, _rig.launch_hold_cuts])
 		_check(max_travel <= thr, "%s: the picture moved %.4f of the width in a tick with the rule on (bound %.4f)" % [_label, max_travel, thr])
-		_check(_rig.lag_cuts == 0 and _rig.launch_hold_cuts == 0 and cuts <= 1, "%s: %d safety cuts, %d hold cuts, %d cut frames" % [_label, _rig.lag_cuts, _rig.launch_hold_cuts, cuts])
+		# the first frame, and one cut when he has landed far from the held frame (none for a flight under LH_CUT_UNITS in the air)
+		_check(_rig.lag_cuts == 0 and _rig.launch_hold_cuts <= 1 and cuts <= 2, "%s: %d safety cuts, %d hold cuts, %d cut frames" % [_label, _rig.lag_cuts, _rig.launch_hold_cuts, cuts])
 		_check(back_at >= 0 and back_at <= 300, "%s: he was back on his pane's screen %d ticks after landing (bound 300)" % [_label, back_at])
 	elif on:
 		_check(_rig.launch_holds == 0, "%s: the rule engaged for a launch under its threshold (%d holds)" % [_label, _rig.launch_holds])
