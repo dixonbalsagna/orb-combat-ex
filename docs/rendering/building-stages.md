@@ -30,6 +30,21 @@ Orb, 2026-10-12: "gaps between floors without realistic looking supports will ma
 - **How it is drawn:** no geometry. The columns and plates are pixels of the box's own walls that are kept. The core is found by meeting the eye's ray with its box, and is painted on the far wall's inside. The window texture has a fifth row for it (the outermost height and the core's state).
 - **Not built:** a column broken where the body went through. The sim does not yet say where across the floor he went (World's breach, its window B); `destruction-look.md` has what follows.
 
+## A held hit's mark, and a stage that spreads (2026-10-13)
+
+The two steps of `destruction-look.md` that waited for no one (its sections 3.1 and 3.7). In every match.
+
+- **A held hit leaves a mark on the floors it covered.** World's wall slam (579dd984) holds a body at a tower and adds the blow to those floors' damage (`fdmg`). Each run of damaged floors is drawn as a dent at the corner he came in by, the cladding gone and the frame's plates and columns showing, with three cracks running from it. Its size is the share of the floor's strength taken. It is read from the state, so it stays, and a seek draws it.
+- **A new stage spreads from the hit.** A tower with a damaged floor is at World's stage 2 at once, so a wall slam used to change its whole face in one frame, and a blast took a building from whole to a shell in one frame. Now the stage spreads over the building from where it was hit, a window cell at a time, at 8,000 pixels a tick on a screen of 1024 by 768. The mark grows the same way.
+- **With reduced flashing** the spread takes half the area a tick.
+- **A change with no event** (a seek, a late join, a tool) is at once: nothing replays.
+- **Numbers:** `RenderLook.MARK_*` and `SPREAD_*`. `SPREAD_ON` false puts back the change in one frame.
+- **How it is drawn:** no geometry and no new varying. The window texture has ten rows now: row 5 is a spread (where from, the tick it started, the stage before), rows 6 to 9 a building's four heaviest marks. The fragment shader reads them only on a building that has any (a flag beside the core's state), and measures a disc on the screen from the hit's point against the sim's tick. The tick runs through a hit-stop, so a mark grows while the body is held at the wall.
+- **Measured (the frame analyser, 1024 by 768):** a wall slam with the game's own camera (a scratch scene: two aimed launches into a tower, 640 ticks) reads 1.5 flashes in the worst second before and after, in normal and in reduced mode, and 2 on the two-second run in normal both ways. In reduced mode the run with the area threshold 15% lower read 2.5 in one take of two and 1.5 in the other (1.5 before): one event of 113% of the threshold, where the split view swings across pale walls. Every take passes. Tools' collapse clip has the same worst second before and after: 3.5 on all three runs in normal mode (a fail that is main's own, and Camera's to settle) and 2.5 on all three in reduced (a pass). The first blast's counted darkening is smaller in normal mode (252% of the threshold area before, 114% after) and is not counted at all in reduced. From tick 496 on the two clips count the same events.
+- **Cost:** Tools' bench, the standard match of 1,200 frames, one run each, before and after: unthrottled 6.7 and 7.2 ms a frame (95th percentile 7.6 and 7.9); CPU slowed four times 23.1 and 22.7 ms (31.4 and 31.0); software-rendered 231 and 227 ms (418 and 413). The same within the bench's spread. A building with neither a mark nor a spread costs one more test a pixel. One with either reads a texel or two and projects a point or two a pixel; that cost on a marked tower filling the screen is not measured on its own.
+- **Pictures** (uncommitted, Orb's to decide): `img/lanes/INDEX.md`, "A held hit's mark".
+- **Not built:** the face that peels a panel at a time (VFX's panels); the side of a mark after a seek (the state does not hold it: `destruction-look.md` section 8); a building's height still changes in one frame.
+
 ## Stills (web build, headless Chrome, 1280×720)
 
 Four neighbours set to stages 0, 1, 2 and 3, left to right, in a scratch copy (their hit points at 100, 80, 50 and 20%; the repo never writes the sim).
@@ -52,6 +67,7 @@ The split view, towers in one pane and houses in the other: ![split](img/bstage-
 - **All in `building.gdshader`.** No textures, no new geometry, no draw call. The sheared corner, the broken top and the missing lid are discards; the cracks, soot, panes and frame are colour.
 - **Insides.** A building at stage 2 or 3 draws its back faces, dark, so the gap and the open top show an inside. Stages 0 and 1 keep their back faces culled as before.
 - **Numbers** are `RenderLook.DMG_*`.
+- **A stage that spreads and a held hit's mark** (2026-10-13) are in the same shader, from rows 5 to 9 of the window texture: the section above.
 - **A fallen building costs nothing a frame now.** Before, every fallen building was placed again each frame (its height never matched what was remembered). It is placed once, when it falls.
 
 ## Cost
@@ -87,6 +103,8 @@ Orb's direction is that pavement cracks and shatters differently from dirt. Worl
 - **Size.** About a day once World's slice is in the sim. No sim change is needed from Rendering.
 
 ## Checks
+
+- **2026-10-13, the mark and the spread:** `tools/stage_check.gd` has 22 checks (12 new: what `PlanetView` hands the shader for a mark and a spread, with events of the tool's own making). Gated on a scratch export of 78bfa86b with the change, and again on 5d3df22e with the repo's copies: open, depth, shape, patch, pane, stage, lane, ground, after, sky, flash register, hud words, seam, determinism plain and `--intro`, every run headless, all pass. The web build compiles the shader (headless Chrome, ANGLE on Direct3D 11).
 
 On an export of HEAD (014c56a) plus this change, every Godot run headless.
 

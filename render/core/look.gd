@@ -175,6 +175,28 @@ const OPEN_DAMAGED: bool = false         # whether a damaged tower opens its lob
 ## points (World's reading, docs/world/destruction-state.md): cracked under CORE_HP.x of them, broken under CORE_HP.y.
 const CUT_PLATE: float = 9.0             # the edge of a floor's plate over and under a cleared floor
 const CORE_HP := Vector2(0.35, 0.15)
+## A held hit's mark (docs/rendering/destruction-look.md 3.1). The floors a held blow covered (World's fdmg) keep a
+## dent at the corner he came in by, where the cladding is gone and the frame shows, and cracks running from it.
+## MARK_REACH: how far the dent reaches along the wall from that corner, on a floor that has taken none of its strength
+## and on one that has taken all of it (units). MARK_TALL: the dent's height as a share of the floors hit, the same two
+## ends. MARK_CRACK: cracks a mark (four at most), and how far they run as a multiple of the dent's reach. MARK_RUNS:
+## the marks a building keeps drawn, its heaviest (the shader reads this many rows: four).
+const MARK_REACH := Vector2(90.0, 330.0)
+const MARK_TALL := Vector2(0.5, 0.9)
+const MARK_CRACK := Vector2(3.0, 2.2)
+const MARK_RUNS: int = 4
+## A stage that spreads (3.7). A building's new damage stage, and a new mark, spread over its face from where it was
+## hit instead of changing in one frame: SPREAD_AREA_TICK pixels a tick on a screen of 1024 by 768 (scaled with the
+## screen's area, and shared among the buildings hit in the same tick), SPREAD_CALM of that with reduced flashing. What
+## the wave has not reached after SPREAD_TICKS (as many more with reduced flashing) changes at once. Its edge is ragged
+## in blocks of SPREAD_BLOCK units, a block as much as SPREAD_LAG late. SPREAD_ON false: every change is at once, as it
+## was. A change with no event behind it (a replay seek, a late join, a tool) is always at once.
+const SPREAD_ON: bool = true
+const SPREAD_AREA_TICK: float = 8000.0
+const SPREAD_CALM: float = 0.5
+const SPREAD_TICKS: int = 150
+const SPREAD_LAG: float = 0.35
+const SPREAD_BLOCK: float = 31.0
 const OPEN_FRAME_COL: String = "#8d95a1" # the columns' and the beam's stone, mixed half with the wall's own colour: a neutral pale, no fighter's hue
 const OPEN_FAR: float = 0.7              # the far side's columns and beam, in the lobby's shade
 const OPEN_CEIL: String = "#a39679"      # the lobby's ceiling, lit warm (a lit lobby, not the tower's dark inside),

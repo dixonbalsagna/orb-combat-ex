@@ -6,10 +6,10 @@ It is written against World's `docs/world/destruction-state.md` (the state: brea
 
 ## 0. The short version
 
-1. **One frame, drawn in every state.** A tower has a frame: four columns a face, a plate a floor, a core in its middle. The lobby, a breach, a cleared floor, a shell and a ruin all show that same frame, so what is left standing always looks like it is carrying load. The lobby and the cleared floor are **built**.
+1. **One frame, drawn in every state.** A tower has a frame: four columns a face, a plate a floor, a core in its middle. The lobby, a breach, a cleared floor, a shell and a ruin all show that same frame, so what is left standing always looks like it is carrying load. The lobby, the cleared floor and a held hit's mark are **built**.
 2. **The fight sees four floors.** At a close brawl the frame is 626 units tall, about four floors of a downtown tower. A tower's top is far out of the picture. So every state has to read between the street and the fourth floor, or send something down into the picture: glass, dust, a shadow, the floors themselves.
 3. **World's three questions** (its section 5) are answered in section 8: one interval a floor is enough, with one rule about what the interval is; the sim should hold the fall's time; and what the warning shows.
-4. **The flash check shapes it from the start.** Every change of mine is spread by area as the patch and the lobby are: a breach opens outward from the body, a stage spreads from the hit, a floor comes down over a quarter of a second, and nothing large changes brightness in one tick.
+4. **The flash check shapes it from the start.** Every change of mine is spread by area as the patch and the lobby are: a breach opens outward from the body, a stage spreads from the hit (**built**, section 3.7), a floor comes down over a quarter of a second, and nothing large changes brightness in one tick.
 5. **A known fault:** a crater made in the middle street shows in the front street. Section 7 has why and the fix.
 
 ## 1. What is drawn today, and what does not read
@@ -39,23 +39,29 @@ It is written against World's `docs/world/destruction-state.md` (the state: brea
 
 ## 3. The states, and what each would look like
 
-### 3.1 A held hit: the wall slam's mark (World's window A, in the tree)
+### 3.1 A held hit: the wall slam's mark (World's window A): **built** (2026-10-13)
 
-- **Reads:** `fdmg`, the damage a floor has taken, and the `floor_hit` event (floor, how many, outcome, x, y).
-- **Drawn:** on the floors he covered, the cladding breaks where he hit: panes out and soot on those floors only, cracks running from the hit point, and at the point a dent the body's size where the frame shows. On the floor above and the floor below, panes out. So three or four floors of damage, which is what Game Design's ladder asks to be readable at the fight's zoom, and it is inside the four floors the fight sees.
-- **The mark stays** because it is read from `fdmg`, not from the event.
-- **Needs from me:** a small texture of a number a floor a building (the floor's damage as a share of its strength), beside the window texture. A building's stage look stays as the look of the whole.
-- **VFX:** the glass and the dust at the point, falling to the street for a second or more. **Camera:** its held stage centred on the mark. **Audio:** the building is heard to take it.
-- **Size:** one window. It can start now: the state is in the tree.
+- **Reads:** `fdmg`, the damage a floor has taken, as a share of that floor's strength (`WorldBrunt.floorStr`). For the side only, the `floor_hit` and `building_hit` events.
+- **One mark for each run of floors** a held blow covered (a body covers two). It is at the corner he came in by, on the face toward the fight and round onto the side wall.
+- **The dent:** the cladding is gone to the dark inside, a window cell at a time, and the frame shows in it: the edge of each floor's plate and the frame's columns, in the stone a lobby's are. They are the same columns on the same lines as the lobby's and a cleared floor's.
+- **The cracks:** three jagged lines from the corner, fanning out. Dark on a pale wall, the stone's tone on a wall as dark as its empty panes, so they show on both.
+- **Panes** are out on those floors and on the floor over and the floor under.
+- **Its size is the damage.** The dent reaches 90 units along the wall on a floor barely touched and 330 on one about to break (`MARK_REACH`), and is half to nine tenths as tall as the floors hit (`MARK_TALL`). The cracks run 2.2 times as far (`MARK_CRACK`). A second blow on the same floors grows the mark from what it was.
+- **It stays,** because it is read from the state: a replay seek or a late join draws the same mark. A floor that breaks stops being a mark and is a cleared floor.
+- **It grows from the corner** at the pace of section 3.7, when an event of that frame says a blow landed. With no event (a seek) it is whole at once.
+- **The side is not in the state.** `fdmg` says which floors, not from where. The side comes from the event's direction; after a seek or a late join the building chooses one for itself, the same every time. World's `fhole` could carry it: section 8.
+- **A building keeps four marks drawn,** its heaviest (`MARK_RUNS`). At stage 3 none is drawn: a shell's face is bare frame already.
+- **A wall slam sends no `lodge` event** (World sends one only when the body ends inside the building). The mark needs none: `building_hit` and `floor_hit` carry the height and the direction.
+- **VFX:** the glass and the dust at the point, falling to the street for a second or more. **Camera:** its held stage centred on the mark. **Audio:** the building is heard to take it. (Theirs; not in this change.)
 
 ### 3.2 A breach: a hole on a floor that keeps its plate (window B)
 
-- **Reads:** `fhole`, an interval of the plate a floor (its middle and its width along x).
+- **Reads:** `fhole`, three numbers a floor since World's re-cut (75c9894f): the slot's two ends as fractions of the half width, and how much of the story is gone. Section 8, answer 4: the look can be built from it.
 - **Drawn:** on that floor the wall is gone inside the interval and stands outside it, with a ragged edge in steps. In the hole: the columns that fall inside it, bare; the plates over and under; the core if the interval crosses it, in its state; the dark inside behind. Where the interval reaches the building's edge the side wall is open on that floor too, so the way in or out shows from the side.
 - **It opens outward from the body,** by area, over six ticks or more: the patch's rule. A hole that appears whole in one tick is a counted change at fight framing.
 - **Tier reads as size:** a body-wide hole and cracks on its neighbours at a low tier; most of the plate gone and the columns left at tier 4. That is World's width rule and needs nothing more from me.
 - **The body in the breach** (the lodge) is drawn at his own depth, inside the building, seen through the hole.
-- **Size:** one window, with window B. The floor texture of 3.1 carries the two numbers.
+- **Size:** one window, with window B. The rows of the window texture that carry the marks (3.1) carry the slots too: a run of floors with one slot is two texels.
 
 ### 3.3 A cleared floor (`fmask`): **built**
 
@@ -83,13 +89,18 @@ The gap shows its columns on the outermost walls, the plates of the standing flo
 - **Drawn:** today nothing stands. It should leave a ruin: the core's stump a floor or two high with a ragged top, a few columns broken at different heights, the lowest plate hanging. World's rubble heap is the ground under it.
 - **Size:** one small window.
 
-### 3.7 A stage that spreads, and a face that peels
+### 3.7 A stage that spreads: **built** (2026-10-13). A face that peels: not yet
 
-- A blast takes a building from whole to a shell in one frame today: the whole face changes at once.
-- **Drawn instead:** the new stage spreads over the face from the hit, at the area budget: panes going out in a wave, then the cladding. On a house it is over in a few ticks; on a tower's face in view it takes a third of a second. The crater's ease under reduced flashing is the pattern.
-- **The face peels.** Going to a shell, the cladding leaves the frame a panel at a time behind the wave, top of each bay first, and VFX throws a panel for each one that goes. What is left is the frame of section 2, not a darker box.
-- **Needs:** where it was hit (`building_stage` carries a point for VFX already).
-- **Size:** one window.
+- **Before:** a blast or a wall slam changed a building's whole face in one frame.
+- **Now the new stage spreads from where the building was hit.** It grows as a disc on the screen that takes 8,000 pixels a tick on a screen of 1024 by 768 (`SPREAD_AREA_TICK`, scaled with the screen's area). Inside the disc the building is at its new stage, outside at the stage before. So at any zoom the picture changes by no more than that area in a tick.
+- **Where it starts:** where a lodged body lies; the edge a brunt or a shot came in by, at its height; for a blast, the building's foot on the blast's side.
+- **A wall goes a window cell at a time.** The disc is measured at each cell's middle, so a cell's panes go out together, and each cell is up to 35% late (`SPREAD_LAG`), so the edge is ragged. Roofs and blank walls go in blocks of 31 units.
+- **Pace:** the disc is 226 pixels across its radius after a third of a second and 391 after a second. A face that fills the screen takes about 1.6 seconds. Buildings hit in the same tick share the area. With reduced flashing the area a tick is halved (`SPREAD_CALM`).
+- **It ends after 150 ticks** (2.5 seconds; 300 with reduced flashing): what the wave has not reached by then changes at once. That is the far end of a tower that crosses the whole screen and was hit at the screen's edge.
+- **Only with an event.** A stage that changes with no event in the same frame (a seek, a late join, a tool) changes at once: a seek shows the state and replays nothing.
+- **Height is not spread.** A building that shrinks with its hit points still changes height in one frame, as before. Only the stage's look spreads.
+- **Not built: the face that peels.** Going to a shell, the cladding should leave the frame a panel at a time behind the wave, with VFX throwing a panel for each. The cells the wave takes are the hook for that; the panels are VFX's.
+- `RenderLook.SPREAD_ON` false puts back the change in one frame.
 
 ## 4. Through and through: one launch, tick by tick
 
@@ -141,18 +152,19 @@ The gap shows its columns on the outermost walls, the plates of the standing flo
 1. **One interval a floor, or two?** One is enough for the picture, with one rule: the interval is the span of the plate the body swept on that floor, clipped to the building, not a hole centred on a point. A lodge is then a slot from the face he entered to where he lies, with him in it. A pass-through is a slot from side to side, which is the true picture of a body going through a floor. A hole centred on the body's x at the hit would show the way in and no way out. Tier then reads in how tall the slot is (floors) and in how much is left standing in it, not in its length. If World would rather keep width as the tier's measure, two intervals are needed (one from each side) and I would draw both.
 2. **Who times the fall?** The sim. I read `failT`, `failDir` and `failK` and draw them. A fall timed by the renderer could not hurt a fighter, and would differ after a seek.
 3. **What the warning shows:** section 3.5. The lean, the lights going out upward from the breach, VFX's dust and glass. No shake.
+4. **World's re-cut of window B (75c9894f, 2026-10-12): yes, the look can be built from it.** `Building.fhole` is three numbers a floor: the slot's two ends as fractions of the half width, and how much of the story is gone. That is the span swept and the share, which is what section 3.2 draws: on that floor the wall is gone between the two ends, as tall as the share says; the columns that fall inside the slot stand bare; the plates over and under show; the core shows where the slot crosses it. A slot that reaches the building's edge opens the side wall there. It reads `fhole` from the state, so a seek agrees, and it opens at the pace of 3.7 from the `floor_hit` event's `x0`, `x1`. **One thing I would ask of it:** a held hit writes its side there too (both ends at the edge he came in by, nothing gone). Then a mark's side is in the state and survives a seek; today only the event knows it. I draw the slot on the face toward the fighter plane, as World's events place it (`faceZ`).
 
 ## 9. Order and sizes
 
 | Step | Size | Waits for |
 |---|---|---|
 | The frame in the lobby and in a cleared floor | **Built** | |
-| 3.1 A held hit's mark, a floor at a time | One window | Nothing: `fdmg` is in the tree |
-| 3.7 A stage that spreads | One window | Nothing |
+| 3.1 A held hit's mark, a floor at a time | **Built** (2026-10-13) | |
+| 3.7 A stage that spreads | **Built** (2026-10-13); the face that peels is not | VFX's panels, for the peel |
 | 3.2 A breach | One window | World's window B |
 | 3.4 A lean | Small | 3.2 |
 | 3.5 Failing: the pancake, then the tip | Two windows | World's window C |
 | 3.6 The ruin | Small | Nothing |
 | 7 The ground in depth | One window | Simulation's depth window (the crater's `z`) |
 
-I would take 3.1 and 3.7 first: they need nothing new from anyone, and they are what a viewer sees most, since blasts and held hits are nearly all of today's destruction.
+3.1 and 3.7 were taken first (2026-10-13): they needed nothing new from anyone, and they are what a viewer sees most, since blasts and held hits are nearly all of today's destruction. Next is 3.2, with World's window B.

@@ -126,6 +126,13 @@ uniform float open_core_tone = 0.8;  // ... its stone against the columns'
 uniform float open_door = 105.0;     // RenderLook.OPEN_DOOR: a lift door's height
 uniform float open_core_ghost = 0.85; // RenderLook.OPEN_CORE_GHOST: the share of the core's pixels gone inside the patch (it is the widest thing in a lobby)
 uniform float cut_plate = 9.0;       // RenderLook.CUT_PLATE: the edge of a floor's plate over and under a cleared floor
+uniform float spread_now = 0.0;      // the sim's tick (PlanetView._send_spread): a new stage and a new mark spread from where the building was hit
+uniform float spread_area = 8000.0;  // RenderLook.SPREAD_AREA_TICK: the pixels a tick the wave takes, on a screen of 1024 by 768
+uniform float spread_lag = 0.35;     // RenderLook.SPREAD_LAG and SPREAD_BLOCK: the wave's edge is ragged in blocks, a block as much as this late
+uniform float spread_block = 31.0;
+uniform vec2 mark_reach = vec2(90.0, 330.0);   // RenderLook.MARK_REACH: a held hit's dent, from the corner he came in by, at none and at all of the floor's strength taken
+uniform vec2 mark_tall = vec2(0.5, 0.9);       // RenderLook.MARK_TALL: its height as a share of the floors hit
+uniform vec2 mark_crack = vec2(3.0, 2.2);      // RenderLook.MARK_CRACK: cracks a mark, and how far they run as a multiple of the dent's reach
 uniform vec2 open_near = vec2(300.0, 600.0);   // RenderLook.NEAR_CLIP: a column nearer the lens than the second is thinned toward a ghost, and is one at the first     // RenderLook.OPEN_GHOST: the share of a column's pixels gone inside the patch
 
 varying flat vec4 v_cut;      // x, y, z: the mask's three parts; w: floor height
@@ -142,7 +149,7 @@ varying vec3 v_view;          // from the camera, in world axes, for the sky's c
 varying flat vec3 v_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1
 varying flat vec3 v_open;     // this pane's lobby: x the share of it open (0: shut; negative on a part inside the shell or stuck onto it), y its top (world y; under -1.5e9: a building with no lobby), z the tower's share of the patch
 varying flat vec4 v_shell;    // the footprint of the tower's shell at the street: xy its middle (x across from the camera, z in depth), zw half its width and depth (0: none)
-varying flat vec2 v_frame;    // x: the height over the building's base from which this part is its outermost wall (it carries the frame's columns there; huge: never); y: the core's state (0 whole, 1 cracked, 2 broken)
+varying flat vec2 v_frame;    // x: the height over the building's base from which this part is its outermost wall (it carries the frame's columns there; huge: never); y: four times what rows 5 to 9 of win_tex hold (1 marks, 2 a stage spreading) plus the core's state (0 whole, 1 cracked, 2 broken)
 
 // A world point on this pane's screen, in FRAGCOORD's pixels.
 vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
@@ -198,7 +205,8 @@ void vertex() {
 	v_face = vec4(zface ? v0.x * sx : v0.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(n0.y) < 0.5 ? 1.0 : 0.0), v0.x * sx);
 	v_dmg = vec3(wb.z, min(top, stubbed), sx);
 	v_look = vec3(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0));
-	v_frame = texelFetch(win_tex, ivec2(id, 4), 0).xy;
+	vec4 fr4 = texelFetch(win_tex, ivec2(id, 4), 0);
+	v_frame = vec2(fr4.x, fr4.y + 4.0 * fr4.z);   // the core's state, and four times what rows 5 to 9 hold (1 marks, 2 a stage spreading)
 	vec4 shl = texelFetch(win_tex, ivec2(id, 3), 0);
 	v_shell = vec4(MODEL_MATRIX[3].x + shl.x, MODEL_MATRIX[3].z + shl.y, shl.z, shl.w);
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
@@ -347,6 +355,44 @@ void fragment() {
 	bool roof = v_face.z < -0.5;
 	float hgt = max(v_dmg.y - v_winb.x, 1.0);
 	float bid = floor(v_winb.z);
+	vec3 eye = INV_VIEW_MATRIX[3].xyz;
+	// What rows 5 to 9 of win_tex hold for this building, read here and only for a building that has any: a stage
+	// spreading from where it was hit, and the marks its held hits left. Both grow as a disc on the screen from their
+	// point, the same area a tick, so the picture never changes by more than that in a frame. A wall with windows is
+	// taken a window cell at a time (the cell's middle is where the disc is measured, so its panes go out together),
+	// anything else in blocks; each cell or block is a little late (lag), never early.
+	float fxf = floor(v_frame.y * 0.25 + 0.01);
+	float core_state = v_frame.y - 4.0 * fxf;
+	int iid = min(int(bid), textureSize(win_tex, 0).x - 1);
+	float toward_z = v_shell.y + (v_shell.y < 0.0 ? v_shell.w : -v_shell.w);   // the shell's face toward the fighter plane
+	float px_area = spread_area * VIEWPORT_SIZE.x * VIEWPORT_SIZE.y / 786432.0 / PI;
+	float lag = 1.0;
+	vec2 at_px = FRAGCOORD.xy;
+	if (fxf > 0.5) {
+		vec2 blk = vec2(floor(v_face.x / spread_block), floor(v_wy / spread_block));
+		if (v_face.z > 0.5 && v_win.w > 0.0) {
+			float nc = max(1.0, floor(v_face.y / look_a[clamp(int(v_look.x + 0.5), 0, 9)].x));
+			blk = vec2(floor((v_face.x / v_face.y + 0.5) * nc), floor((v_wy - v_winb.x) / v_win.w * v_look.y));
+			vec3 mid = eye + v_view;
+			float du = ((blk.x + 0.5) / nc - 0.5) * v_face.y - v_face.x;
+			if (fract(v_winb.z) < 0.25) {
+				mid.x += du;
+			} else {
+				mid.z += du;
+			}
+			mid.y += v_winb.x + (blk.y + 0.5) / v_look.y * v_win.w - v_wy;
+			at_px = screen_px(VIEW_MATRIX, PROJECTION_MATRIX, mid, VIEWPORT_SIZE);
+		}
+		lag += spread_lag * win_hash(vec3(bid, blk.x + 40.0 * fract(v_winb.z), blk.y));
+	}
+	if (fxf > 1.5) {
+		vec4 sp = texelFetch(win_tex, ivec2(iid, 5), 0);
+		float sn = floor(sp.a * 0.25 + 0.01);
+		vec2 dp = at_px - screen_px(VIEW_MATRIX, PROJECTION_MATRIX, bent_world(mat4(1.0), vec3(v_shell.x + sp.x, v_winb.x + sp.y, toward_z)).xyz, VIEWPORT_SIZE);
+		if (dot(dp, dp) * lag * lag > px_area * max(spread_now - sp.z, 0.0) / max(sn, 1.0)) {
+			st = sp.a - 4.0 * sn;   // the wave has not reached this pixel: the stage before
+		}
+	}
 	if (st > 2.5) {
 		// A shell: no lid, and the walls end in a broken line, a step every half column. The far walls break
 		// elsewhere, so their dark inside shows over the near ones.
@@ -389,7 +435,69 @@ void fragment() {
 		float kf = floor(fy);
 		float fine = 1.0 - smoothstep(0.3, 0.75, max(fwidth(cx), fwidth(fr)));
 		bool soft = mod(floor(lb.w / 16.0), 2.0) > 0.5;
-		if (soft && (st > 0.5 || (kf >= 0.0 && kf < v_winb.y && bit_on(kf, v_win.xyz)))) {
+		// A held hit's marks on this floor (rows 6 to 9): the dent at the corner he came in by, by window cells where
+		// they can be drawn, and the cracks that run from it.
+		bool mk_pane = false;   // a floor a held blow covered, or the one over or under it: its panes are out
+		float mk_cell = 0.0;    // this cell's cladding is gone
+		float mk_far = 0.0;     // ... and the dent itself, on a wall too far to draw cells
+		float mk_line = 0.0;    // on a crack
+		float edge_y = fwidth(v_wy);
+		float edge_u = fwidth(v_face.x);
+		if (mod(fxf, 2.0) > 0.5 && st < 2.5 && kf >= 0.0 && kf < v_winb.y) {
+			vec3 pw = eye + v_view;
+			bool zf = fract(v_winb.z) < 0.25;
+			float cell_u = ((floor(cx) + 0.5) / ncol - 0.5) * v_face.y - v_face.x;   // from this pixel to its cell's middle, along the wall
+			float cell_y = v_winb.x + (floor(fr) + 0.5) / v_look.y * v_win.w;
+			vec3 pc = pw + (zf ? vec3(cell_u, 0.0, 0.0) : vec3(0.0, 0.0, cell_u));
+			for (int i = 0; i < 4; i++) {
+				vec4 run = texelFetch(win_tex, ivec2(iid, 6 + i), 0);
+				if (run.x < 0.5) {
+					break;
+				}
+				float rn = floor(run.x / 4096.0);
+				float cnt = floor((run.x - rn * 4096.0) / 64.0);
+				float f0 = run.x - rn * 4096.0 - cnt * 64.0;
+				if (kf < f0 - 1.0 || kf > f0 + cnt) {
+					continue;
+				}
+				float side = run.z < 0.0 ? -1.0 : 1.0;
+				vec3 corner = vec3(v_shell.x + side * v_shell.z, v_winb.x + (f0 + 0.5 * cnt) * v_win.w, toward_z);
+				// Grown this far: the mark as it is now inside the disc, as it was before this hit outside it. A mark that
+				// is whole (its tick far in the past) has no disc to measure.
+				float q = run.y;
+				if (run.w > -1.0e5) {
+					vec2 dp = at_px - screen_px(VIEW_MATRIX, PROJECTION_MATRIX, bent_world(mat4(1.0), corner).xyz, VIEWPORT_SIZE);
+					if (dot(dp, dp) * lag * lag > px_area * max(spread_now - run.w, 0.0) / max(rn, 1.0)) {
+						q = abs(run.z) - 1.0;
+					}
+				}
+				if (q <= 0.0) {
+					continue;
+				}
+				mk_pane = true;
+				float reach = mix(mark_reach.x, mark_reach.y, q);
+				float half_h = 0.5 * cnt * v_win.w * mix(mark_tall.x, mark_tall.y, q);
+				float d = abs(pw.x - corner.x) + abs(pw.z - corner.z);   // along the walls from the corner
+				float dc = abs(pc.x - corner.x) + abs(pc.z - corner.z);
+				if (length(vec2(dc / reach, (cell_y - corner.y) / half_h)) + 0.35 * (win_hash(vec3(v_winb.z, floor(cx), floor(fr) + 17.0)) - 0.5) < 1.0) {
+					mk_cell = 1.0;
+				}
+				mk_far = max(mk_far, 1.0 - smoothstep(0.8, 1.0, length(vec2(d / reach, (v_wy - corner.y) / half_h))));
+				float wdt = max(dmg_crack.x, 1.3 * edge_y);
+				for (int j = 0; j < 4; j++) {
+					float fj = float(j);
+					if (fj >= mark_crack.x) {
+						break;
+					}
+					float h3 = win_hash(vec3(bid, f0 + 3.0 * fj, 23.0 + side));
+					float t = d / dmg_crack.y + fj * 5.7;
+					float sway = mix(win_hash(vec3(bid, floor(t), 29.0 + fj + f0)), win_hash(vec3(bid, floor(t) + 1.0, 29.0 + fj + f0)), fract(t)) - 0.5;
+					float yl = corner.y + (fj - 0.5 * (mark_crack.x - 1.0)) * (0.3 * half_h + 0.45 * d * (0.5 + h3)) + sway * dmg_crack.z;
+					mk_line = max(mk_line, (1.0 - smoothstep(0.5 * wdt, wdt, abs(v_wy - yl))) * step(d, mark_crack.y * reach * (0.6 + 0.4 * h3)));
+				}
+			}
+		}
+		if (soft && (st > 0.5 || mk_pane || (kf >= 0.0 && kf < v_winb.y && bit_on(kf, v_win.xyz)))) {
 			// A row whose panes are out, on a look with the contrast budget: its wall is as dark as they are.
 			wallc = toward(inside.rgb, wallc, pattern_budget);
 			col = flat_shade(wallc, NORMAL, 0.35);
@@ -402,7 +510,7 @@ void fragment() {
 			vec3 cell = post ? bare : (win_hash(vec3(v_winb.z, floor(cx), kf + 31.0)) < dmg_panels ? col : inside.rgb);
 			col = mix(mix(inside.rgb, bare, 0.4), cell, fine);
 		} else if (windows > 0.5 && kf >= 0.0 && kf < v_winb.y) {
-			bool gone = st > 0.5 || bit_on(kf, v_win.xyz);
+			bool gone = st > 0.5 || mk_pane || bit_on(kf, v_win.xyz);
 			float row = floor(fr);
 			float flags = lb.w;
 			bool top_only = mod(flags, 2.0) > 0.5;
@@ -459,6 +567,21 @@ void fragment() {
 			}
 			col = mix(far, near, fine);
 		}
+		if (mk_cell + mk_far + mk_line > 0.0) {
+			// The dent: the cladding is gone to the dark inside, and the frame shows in it, the edge of each floor's
+			// plate and the frame's columns, in the stone a lobby's are. They are large and few, so they keep their
+			// tone on a wall whose own pattern is held to the contrast budget. The cracks are dark on a wall and the
+			// stone's tone on a wall as dark as its empty panes: whichever shows.
+			vec3 stone = flat_shade(mix(open_frame_col.rgb, COLOR.rgb, 0.5), NORMAL, 0.35);
+			float in_fl = fract(fy) * v_win.w;
+			float plate_h = max(cut_plate, 1.3 * edge_y);
+			float ci = 0.0;
+			float cu = 0.0;
+			float cw = 1.0;
+			bool frame_on = in_fl < plate_h || in_fl > v_win.w - plate_h || on_column(v_face.x, v_face.y, edge_u, ci, cu, cw);
+			col = mix(col, frame_on ? stone : inside.rgb, mix(mk_far, mk_cell, fine));
+			col = mix(col, abs(lum(stone) - lum(wallc)) > abs(lum(inside.rgb) - lum(wallc)) ? stone : inside.rgb, 0.8 * mk_line);
+		}
 		if (st > 1.5 && st < 2.5) {
 			// Two cracks: one from the top down, one from the ground up. Each wanders in straight jags and never thins
 			// below a pixel and a bit, so it holds from far off.
@@ -474,7 +597,6 @@ void fragment() {
 			}
 		}
 	}
-	vec3 eye = INV_VIEW_MATRIX[3].xyz;
 	float edge_x = fwidth(v_face.x);   // worked out for every pixel, so it is defined wherever a branch below uses it
 	bool core_x = false;
 	float core_t = -1.0;   // where the eye's ray enters the core (this pixel at 1); under 0: it misses. Worked out only in an opening
@@ -505,7 +627,7 @@ void fragment() {
 				if (core_t > 0.0 && core_t < 1.0) {
 					float ck = floor((eye.y + v_view.y * core_t - v_base.x) / v_cut.w);
 					if (ck >= 0.0 && ck < v_base.y && cleared(ck, v_cut.xyz)) {
-						col = core_look(v_shell, eye, v_view, core_t, core_x, bare, v_base.x + ck * v_cut.w, v_cut.w, v_frame.y, false, bid, VIEW_MATRIX);
+						col = core_look(v_shell, eye, v_view, core_t, core_x, bare, v_base.x + ck * v_cut.w, v_cut.w, core_state, false, bid, VIEW_MATRIX);
 					}
 				}
 			}
@@ -572,7 +694,7 @@ void fragment() {
 				}
 			} else if (FRONT_FACING && core_hit && fract(dg + 0.5) >= open_core_ghost * max(in_p, 1.0 - smoothstep(open_near.x, open_near.y, -VERTEX.z * core_t))) {
 				// The core, seen through the opening.
-				col = core_look(v_shell, eye, v_view, core_t, core_x, frame, v_winb.x, ceil_y - v_winb.x, v_frame.y, st < 0.5, bid, VIEW_MATRIX);
+				col = core_look(v_shell, eye, v_view, core_t, core_x, frame, v_winb.x, ceil_y - v_winb.x, core_state, st < 0.5, bid, VIEW_MATRIX);
 			} else {
 				discard;   // no wall here
 			}
