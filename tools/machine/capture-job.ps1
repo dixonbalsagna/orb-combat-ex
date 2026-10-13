@@ -1,7 +1,7 @@
 # Starts a capture browser inside a Windows Job Object and keeps it there (tools/machine/browser.mjs starts this, nobody else should):
 #   - the job is KILL_ON_JOB_CLOSE: when this script ends for ANY reason (it is killed, the machine logs it off) the whole browser tree dies with it;
 #   - the job runs on at most -CpuPercent of the machine's logical processors (an affinity mask on the highest-numbered ones: 25 is 4 of 16 cores; the software renderer, SwiftShader, is otherwise free to take every core);
-#   - the browser tree runs at below-normal priority;
+#   - the browser tree runs at below-normal priority (idle for software rendering, which cannot take an affinity mask: see browser.mjs);
 #   - this script is the watchdog: it polls the launching node process (-ParentPid) and the deadline (-DeadlineMs, Unix milliseconds) and ends the job when the parent is gone, the
 #     deadline passes, or the browser tree has exited. It writes why into the registry file (-Registry) before it does.
 # No install: Windows PowerShell 5.1 and the .NET Framework that ship with Windows (Add-Type compiles the few P/Invoke lines below).
@@ -11,7 +11,7 @@ param(
   [Parameter(Mandatory = $true)][int]$ParentPid,
   [Parameter(Mandatory = $true)][long]$DeadlineMs,
   [int]$CpuPercent = 25,
-  [ValidateSet('BelowNormal', 'Normal')][string]$Priority = 'BelowNormal',
+  [ValidateSet('BelowNormal', 'Normal', 'Idle')][string]$Priority = 'BelowNormal',
   [int]$IdleSeconds = 0,
   [string]$Registry = ''
 )
@@ -39,12 +39,12 @@ public static class CapJob {
     finally { Marshal.FreeHGlobal(p); }
   }
   // creates the job (kill on close, below-normal priority, a hard CPU cap) and puts THIS process in it, so everything this process starts is in it too
-  public static void Create(int cpuPercent, bool belowNormal) {
+  public static void Create(int cpuPercent, uint priorityClass) {   // priorityClass: 0x4000 below normal, 0x40 idle, 0 none
     job = CreateJobObject(IntPtr.Zero, null);
     if (job == IntPtr.Zero) throw new Exception("CreateJobObject failed: " + Marshal.GetLastWin32Error());
     EXT e = new EXT();
-    e.Basic.LimitFlags = 0x2000 | (belowNormal ? 0x20u : 0u);   // KILL_ON_JOB_CLOSE | PRIORITY_CLASS
-    e.Basic.PriorityClass = 0x4000;                              // BELOW_NORMAL_PRIORITY_CLASS
+    e.Basic.LimitFlags = 0x2000 | (priorityClass != 0 ? 0x20u : 0u);   // KILL_ON_JOB_CLOSE | PRIORITY_CLASS
+    e.Basic.PriorityClass = priorityClass;
     // the CPU cap is an affinity mask: the highest-numbered logical processors, cpuPercent of them (at least one). A hard CPU RATE cap was tried first and starved the browser's start-up
     // on a busy machine (its threads are frozen for the rest of each interval and the start-up's handshakes crawl); a mask lets the threads run at full speed on fewer cores, and
     // every capture started this way shares the same cores, so together they cannot take more than the share.
@@ -74,7 +74,7 @@ public static class CapJob {
 # compiling the C# costs seconds on an idle machine and minutes on a busy one: it is compiled once into <temp>/meridian-captures/CapJob-v3.dll and loaded from there afterwards
 if (-not ('CapJob' -as [type])) {
   $dir = Join-Path ([System.IO.Path]::GetTempPath()) 'meridian-captures'
-  $dll = Join-Path $dir 'CapJob-v3.dll'
+  $dll = Join-Path $dir 'CapJob-v4.dll'
   if (-not (Test-Path -LiteralPath $dll)) {
     try {
       New-Item -ItemType Directory -Force -Path $dir | Out-Null
@@ -100,7 +100,8 @@ function Note([string]$state, [string]$reason) {
   } catch { }
 }
 
-[CapJob]::Create($CpuPercent, ($Priority -eq 'BelowNormal'))
+$prio = switch ($Priority) { 'Idle' { [uint32]0x40 } 'BelowNormal' { [uint32]0x4000 } default { [uint32]0 } }
+[CapJob]::Create($CpuPercent, $prio)
 $list = @(Get-Content -LiteralPath $ArgsFile -Raw | ConvertFrom-Json)
 Remove-Item -LiteralPath $ArgsFile -Force -ErrorAction SilentlyContinue
 $quoted = ($list | ForEach-Object { if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ } }) -join ' '

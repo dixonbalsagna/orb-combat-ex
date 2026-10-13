@@ -95,7 +95,7 @@ async function waitGone(profile, ms) {
 if (!quick) {
   const cores = cpus().length;
   const measure = async (cpuPercent) => {
-    const b = await launchBrowser({ session: 'selftest', purpose: 'cpu', timeoutS: 120, cpuPercent, portWaitMs: 240000, attempts: 1, flags: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--window-size=640,360'], log: () => {} });
+    const b = await launchBrowser({ session: 'selftest', purpose: 'cpu', timeoutS: 120, cpuPercent, portWaitMs: 240000, attempts: 1, flags: ['--window-size=640,360'], log: () => {} });   // no software-rendering flags: a software browser takes no mask (check 4b)
     const page = await Cdp.open(b.target.webSocketDebuggerUrl);
     // one busy worker for every core, twice
     await page.eval(`(() => { const src = 'for(;;){}'; const u = URL.createObjectURL(new Blob([src])); window.__w = []; for (let i = 0; i < ${cores * 2}; i++) window.__w.push(new Worker(u)); return 1; })()`);
@@ -112,6 +112,13 @@ if (!quick) {
   const free = await measure(0);
   const want = cores * 0.25;
   check('4 the CPU cap holds (25% of the machine)', capped <= want * 1.35 && free > capped * 1.5, `${cores} cores: capped ${capped.toFixed(1)} cores busy (cap ${want.toFixed(1)}), uncapped ${free.toFixed(1)}`);
+  // 4b: software rendering (SwiftShader) never gets an affinity mask, because a page under one never answers (measured 2026-10-13): it runs unmasked at idle priority instead
+  {
+    const sw = await launchBrowser({ session: 'selftest', purpose: 'sw', timeoutS: 90, cpuPercent: 25, portWaitMs: 240000, attempts: 1, flags: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--window-size=640,360'], log: () => {} });
+    const asked = sw.entry && sw.entry.cpuPercent;
+    await sw.close();
+    check('4b software rendering is started without an affinity mask (cpuPercent 0 in its registry entry although 25 was asked)', asked === 0, `cpuPercent ${asked}`);
+  }
 }
 console.log(failed ? `capture guards: ${failed} FAILED` : 'capture guards ok');
 process.exit(failed ? 1 : 0);

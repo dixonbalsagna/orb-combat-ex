@@ -112,7 +112,11 @@ export async function launchBrowser(o = {}) {
   const session = slug(o.session || process.env.MERIDIAN_SESSION, 'nosession');
   const purpose = slug(o.purpose, 'capture');
   const timeoutS = Number(o.timeoutS || 5400);
-  const cpuPercent = o.cpuPercent === undefined ? 25 : Number(o.cpuPercent);
+  // Software rendering (SwiftShader) cannot take an affinity mask: a page under ANY mask (94%, 75%, 50%, 25% of the cores) never answers a screenshot, with the same page at no mask
+  // done in 43 s (measured 2026-10-13). A software browser therefore runs on every core at IDLE priority, which yields to everything else and is still bounded by the time limit and the job.
+  const software = o.software === true || (Array.isArray(o.flags) && o.flags.some((f) => /swiftshader/i.test(String(f))));
+  const cpuPercent = software ? 0 : o.cpuPercent === undefined ? 25 : Number(o.cpuPercent);
+  const priority = o.priority || (software ? 'idle' : 'belownormal');
   const portWaitMs = o.portWaitMs || 90000, attempts = o.attempts || 3;
   const idleS = o.idleS === undefined ? 900 : Number(o.idleS);   // no protocol call for this long (and the launcher still alive): the capture is done or stuck, so the browser is ended; 0 is off
   const win = platform() === 'win32';
@@ -160,7 +164,7 @@ export async function launchBrowser(o = {}) {
       const argsFile = join(profile, '..', `cap-${session}-${purpose}-${id}.args.json`);
       writeFileSync(argsFile, JSON.stringify(flags));
       helper = spawn('powershell', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', join(here, 'capture-job.ps1'), '-Exe', exe, '-ArgsFile', argsFile, '-ParentPid', String(process.pid),
-        '-DeadlineMs', String(deadlineMs), '-CpuPercent', String(cpuPercent), '-Priority', o.priority === 'normal' ? 'Normal' : 'BelowNormal', '-IdleSeconds', String(idleS), '-Registry', registry], { stdio: ['ignore', 'ignore', process.env.MERIDIAN_CAPTURE_DEBUG ? 'inherit' : 'ignore'], windowsHide: true });
+        '-DeadlineMs', String(deadlineMs), '-CpuPercent', String(cpuPercent), '-Priority', priority === 'normal' ? 'Normal' : priority === 'idle' ? 'Idle' : 'BelowNormal', '-IdleSeconds', String(idleS), '-Registry', registry], { stdio: ['ignore', 'ignore', process.env.MERIDIAN_CAPTURE_DEBUG ? 'inherit' : 'ignore'], windowsHide: true });
       // the helper only ends before the browser is up when it was killed, failed to build the job or hit the deadline: that is a failed start, now
       helper.on('exit', (code) => { if (!up) failed = `the capture job helper ended (exit ${code}) before the browser was up`; });
       entry.argsFile = argsFile;
@@ -171,7 +175,7 @@ export async function launchBrowser(o = {}) {
     }
     helper.on('error', (e) => { failed = e.message; });
     live = { helper, profile, registry, port: 0, argsFile: entry.argsFile };
-    log(`browser ${slug(`${session}-${purpose}-${id}`)}: time limit ${timeoutS} s of work (hard end ${new Date(deadlineMs).toTimeString().slice(0, 8)}, with ${graceS} s allowed for a busy machine's start), ${cpuPercent > 0 ? `CPU cap ${cpuPercent}% of the machine` : 'no CPU cap'}, ${o.priority === 'normal' ? 'normal' : 'below-normal'} priority, profile ${profile}`);
+    log(`browser ${slug(`${session}-${purpose}-${id}`)}: time limit ${timeoutS} s of work (hard end ${new Date(deadlineMs).toTimeString().slice(0, 8)}, with ${graceS} s allowed for a busy machine's start), ${cpuPercent > 0 ? `CPU cap ${cpuPercent}% of the machine` : 'no CPU cap'}, ${priority === 'normal' ? 'normal' : priority === 'idle' ? 'idle' : 'below-normal'} priority${software ? ' (software rendering: no affinity mask, it hangs under one)' : ''}, profile ${profile}`);
     const t0 = Date.now();
     let port;
     while (!port && !failed && Date.now() - t0 < portWaitMs) {
