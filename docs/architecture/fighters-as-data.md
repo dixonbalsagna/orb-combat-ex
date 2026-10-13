@@ -1,6 +1,6 @@
 # Fighters as data: what the core assumes today, and the windows to four fighters
 
-Owner: Simulation and Engine. 2026-10-12. **Paper only: nothing here is built or run.** Sizes are estimates. It answers the five questions Game Design's `docs/design/fighter-pipeline.md` puts to Simulation and Tools. Line numbers are HEAD's (f4e57e63).
+Owner: Simulation and Engine. 2026-10-12. **Window 1 is built (section 2). The rest is paper,** and its sizes are estimates. It answers the five questions Game Design's `docs/design/fighter-pipeline.md` puts to Simulation and Tools. Line numbers are HEAD's (f4e57e63).
 
 ## In short
 
@@ -19,7 +19,7 @@ Owner: Simulation and Engine. 2026-10-12. **Paper only: nothing here is built or
 - **What differs between the two.** `fighter.json`: role, three colours, `dmgMul` (0.95 and 1.02), `spd` (1.0 and 0.95) and the finisher's key. `meters.json`: one has anguish and the other menace. **`wounds.json` (7.3 KB) and `ladder.json` (2.9 KB) do not differ in any value.**
 - The data hash folds, in order: the roster, then for each id his four files under their names. A `_` key is skipped, so a note is free to change.
 
-## 2. One wounds file and one ladder file
+## 2. One wounds file and one ladder file (built, 2026-10-12)
 
 **The layout.**
 
@@ -29,14 +29,28 @@ Owner: Simulation and Engine. 2026-10-12. **Paper only: nothing here is built or
 | `data/fight/ladder.json` | The ladder, whole: today's file |
 | `data/fighters/<id>/wounds.json`, `ladder.json` | **Optional.** Only what differs for him. Absent for both fighters today |
 
+**Absent, and not an empty file.** A new fighter's folder then needs `fighter.json`, and `meters.json` if he has a meter. A wounds or ladder file appears in his folder only when he differs, so its being there says so. An empty file in every folder would say nothing, and would invite a full copy back.
+
+**Where a tune goes now.** One edit each, in the game's files:
+
+| What | Path |
+| :--- | :--- |
+| Wear for a point of damage | `data/fight/wounds.json`, `wearPerDamage` |
+| The wait before the second breath | `data/fight/wounds.json`, `fade.breathAfterTicks` |
+| Where a light lands | `data/fight/wounds.json`, `family.light` |
+| The crippling roll's base | `data/fight/wounds.json`, `cripple.base` |
+| The ladder's two rates | `data/fight/ladder.json`, `takenPerDamage` and `dealtPerDamage` |
+
 - `data/fight/` is where the fight's own numbers live (the mood, the pauses, the shots), and Game Design's line puts the wounds model there: it is the game's.
 - **The merge rule.** A fighter's file is laid over the shared one key by key. A dictionary is merged; a number, a word or a list replaces the shared one whole. A key the shared file does not have is refused, so a slip of spelling cannot hide. A `_` key is a note.
 - **The hash is taken over what he resolves to,** under the names it uses today. With no differences, each fighter resolves to exactly today's file, so the roster's hash is the same to the bit and `golden.json` does not change by a byte.
 - A tune of the game's wounds is then one edit. A fighter's own wound profile, at his tier 2, is a short file of his own.
 
-**Proof for the window.** Parity against the committed golden, unregenerated; the golden regenerated and compared byte for byte; and new cases: no file of his own gives the shared one; a difference replaces one leaf and nothing else; an unknown key is refused; the roster's hash equals the number it has today.
+**As built.** `FighterData` reads the game's two files once (`_load`), resolves each fighter (`_resolve`: his own file laid over the game's by `_over`, or the game's alone) and folds what he resolves to into the data hash under his own file's name. A test may point it at other folders (`loadFrom(dir, sharedDir)`); with no game's file a fighter's own file is the whole, as it was.
 
-**For Tools.** The full schemas move to the two shared files. A fighter's file takes the same shape with nothing required. The validator checks the merged result against the full schema, and its fixtures split the same way.
+**Proof,** on a clean export of bc74150c. Parity against the committed golden, unregenerated: 52 of 52. The golden regenerated: byte-identical. The 30-match batch: the same digest before and after (`4d3ea14fa90475d9`), and the same report but for its timing line. The new check, "the game's wounds and ladder files, and a fighter's differences": no file of his own gives the game's, and the same hash; a full copy in each folder hashes the same again; his own file with one number, one nested number and one list changes those for him and nothing else, for nobody else; a misspelt key is refused, at the top and inside; with no game's file a fighter needs his own.
+
+**Tools' part** is Tools' own (`tools/lib/shared.js`): the full schemas on the two shared files, a fighter's file with nothing required, the merged result checked, and its fixtures split the same way. The loader's rule and the validator's are written to be the same rule.
 
 ## 3. Adding a fighter: what moves
 

@@ -1,6 +1,6 @@
 {
   "schema": "wounds/1",
-  "_about": "D1a: one fighter's wound numbers (spec-wounds.md sections 1 and 2), loaded by sim/core/fighter_data.gd into a WoundsDef (f.wd). Wear is fixed-point: 6000 units per wear point. Units and ticks are integers. The rules stay code (sim/core/wounds.gd); this file only holds their numbers. Values marked pinned are also read as SimWounds constants by another owner's file, so the loader requires them to equal the constant until that reader moves to f.wd.",
+  "_about": "The game's wounds model: every fighter's, unless his own data/fighters/<id>/wounds.json says otherwise for a key (that file is optional and holds only his differences; docs/architecture/fighters-as-data.md). D1a: the wound numbers (spec-wounds.md sections 1 and 2), loaded by sim/core/fighter_data.gd into a WoundsDef (f.wd). Wear is fixed-point: 6000 units per wear point. Units and ticks are integers. The rules stay code (sim/core/wounds.gd); this file only holds their numbers. Values marked pinned are also read as SimWounds constants by another owner's file, so the loader requires them to equal the constant until that reader moves to f.wd.",
   "regions": {
     "head": {
       "brink": false,

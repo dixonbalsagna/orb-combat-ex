@@ -1,5 +1,7 @@
 # D1: the roster as data (plan)
 
+**Since 2026-10-12 (fighters as data, window 1):** the wounds model and the power ladder are the game's, one file each: `data/fight/wounds.json` and `data/fight/ladder.json`. A fighter's own `data/fighters/<id>/wounds.json` or `ladder.json` is optional and holds only his differences, laid over the game's file key by key. Neither fighter has one today. Read `data/fighters/<id>/wounds.json` and `ladder.json` below as the game's files. The rule, the hash and the checks are in `fighters-as-data.md` section 2.
+
 **Since 2026-10-06 (the fighter rename):** the roster ids are `PROTAGONIST` and `RIVAL`, and their folders are `data/fighters/PROTAGONIST/` and `data/fighters/RIVAL/`. Read `KAI` and `VORR` below as those. `identity` holds no words any more: `name`, `title` and `sigName` left `fighter.json` and the loader refuses them. In the sim a fighter's name is his id and his signature's name is a key, `PROTAGONIST.SIG`; the fighter has no `title`. The words a player reads are in `ui/data/fighter_names.json`, which the sim never opens, so they are in no hash and no golden. The plan and the proofs: `pending/fighter-split.md` sections 9 and 10.
 
 Status: plan only (Simulation, 2026-09-29). D1 runs after World's B1 and Controls' Stage A. F1 (the Anti-hero) builds on it. The model is in `wounds-plan.md` §2. This page fixes the schema, the loader and the proof, so Tools, Narrative, Game Design and Combat can review before any code lands.

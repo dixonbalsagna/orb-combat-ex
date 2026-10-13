@@ -1,6 +1,6 @@
 {
   "schema": "ladder/1",
-  "_about": "D1b: the power ladder, loaded by sim/core/fighter_data.gd into a LadderDef (f.ld). Power fills by fillPerSec up to 100; each threshold starts the next tier (four tiers until forms, F1). Per tier above 1: free-flight speed, damage and launch force x (1 + value x (tier - 1)). A power-up at ground level damages an area of radius (areaR + tier x areaRPerTier) x WS with damage areaDmg + tier x areaDmgPerTier.",
+  "_about": "The game's power ladder: every fighter's, unless his own data/fighters/<id>/ladder.json says otherwise for a key (that file is optional and holds only his differences; docs/architecture/fighters-as-data.md). D1b: the power ladder, loaded by sim/core/fighter_data.gd into a LadderDef (f.ld). Power fills by fillPerSec up to 100; each threshold starts the next tier (four tiers until forms, F1). Per tier above 1: free-flight speed, damage and launch force x (1 + value x (tier - 1)). A power-up at ground level damages an area of radius (areaR + tier x areaRPerTier) x WS with damage areaDmg + tier x areaDmgPerTier.",
   "fillPerSec": 0.05,
   "chargePerSec": 0.5,
   "_chargePerSec": "power per second while the fighter charges (Q10: it was a constant 9 in the sim; with fillPerSec 0.05 and thresholds 30, 65 and 100 the pace is about three form steps a fighter, the first at about 1:30, spec-wounds section 8b)",

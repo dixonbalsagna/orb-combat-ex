@@ -37,6 +37,25 @@ For Game Design's `docs/design/buildings.md` and World's `docs/world/destruction
 | **The collapse that takes seconds** | | World's three fields a building (`failT`, `failDir`, `failK`), by Simulation's lines in `state.gd` and `hash.gd`; its warning and fall events, by lines in `fx.gd`, the hash's event table and the view | Every checkpoint's building list gains three numbers: a regeneration. The feature then changes matches |
 | **No approach for 45 ticks** after a launch, a wall slam or a knock-back | The director's per-fighter integers, which are hashed | Nothing: the rule and its count are Encounter's. It sees him come free each tick, and it knows its own shoves | One more director integer a fighter: a regeneration in Encounter's window, with no digest moved until the rule acts |
 
+## An intro that is only a staredown (sizing only, 2026-10-12)
+
+Camera's ask, for a match that starts at a crossing: both fighters on their craters at tick 0, a 72-tick staredown, the clock at 72, skippable. It is a question with Orb. Nothing here is built.
+
+| What | Where | Size |
+| :--- | :--- | :--- |
+| A template with no entrance: `"start": "landed"`, one look slot at tick 0, `clock` 72, weight 0 so it is never drawn and only played when named | `data/fight/intro.json` | About 12 lines of data |
+| The setup places both fighters and digs both craters before tick 0, as the skip does, and then runs the pre-clock. No fall and no landing is sent | `sim/core/intro.gd` (`setup`) | About 15 lines |
+| The timeline takes a template with no entrance as both landed at tick 0. Today it refuses a staredown that does not follow two landings | `sim/core/intro.gd` (the timeline and the template's checks) | About 15 lines |
+| The match's facts may bend a clock by up to 60 ticks either way. A 72-tick clock needs its own floor, or no bend | `sim/core/intro.gd`, one rule | 3 lines |
+| Who picks it: the host names it (`"intro": {"play": true, "scenario": "staredown"}`), which needs nothing; or the composer picks it when the setup's start is a crossing | `sim/director/intro.gd`, if the composer | 0 or about 5 lines |
+| The checks: the composed-intros check walks every template and expects two entrances | `sim/core/tools/parity.gd` | About 25 lines |
+| The schema for the new word | Tools | Small |
+
+- **Golden.** No match moves: a default match takes the skip. The intro file's hash moves, so the fight data hash and the replay's data-hash line do; and the golden gains one composed-intro vector, since it records every template. One regeneration, in which every match, replay and checkpoint is identical.
+- **Events.** `intro_start`, `staredown_start` and `clock_start` come as today. No `entrance_fall` or `entrance_land` comes before the staredown. Camera, Rendering, Audio and UI each check that they do not wait for a landing.
+- **The skip** is from tick 30 (`skipFrom`), as for every intro: 42 ticks of the 72 can be skipped.
+- About half a day with its proof.
+
 ## Smaller, approved or noted
 
 - **Done 2026-10-02:** the intro phase, the last stand, the mood's form impulse.

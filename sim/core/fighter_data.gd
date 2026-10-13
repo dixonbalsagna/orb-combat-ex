@@ -1,13 +1,18 @@
 class_name FighterData
 ## D1a, the roster as data (docs/architecture/d1-roster-data.md): data/fighters/roster.json and, per fighter,
-## data/fighters/<id>/fighter.json, wounds.json, meters.json and ladder.json (D1b). Loaded once per process, like DirData; the data are match inputs.
+## data/fighters/<id>/fighter.json and meters.json (D1b). The wounds model and the power ladder are the game's:
+## data/fight/wounds.json and ladder.json, every fighter's. A fighter's own data/fighters/<id>/wounds.json or ladder.json
+## is optional and holds only his differences, laid over the game's file key by key (docs/architecture/fighters-as-data.md).
+## Loaded once per process, like DirData; the data are match inputs.
 ## createFighter copies each def's scalars into Fighter fields and points f.wd at one immutable WoundsDef, so the tick
 ## never reads a Dictionary. dataHash() is the canonical hash of the parsed content (sorted keys, "_" keys skipped):
 ## comments and whitespace are free to change, any number or rule change shows (goldens, replay header). Every problem is
 ## collected in errors(), which the parity gate checks; the numbers are exact (the D1a proof reproduced the pre-D1a
-## goldens bit for bit).
+## goldens bit for bit). The hash folds what each fighter resolves to, under his own files' names: a fighter with no
+## differences hashes exactly as he did when his folder carried a full copy of both files.
 
 const ROOT: String = "res://data/fighters/"
+const SHARED: String = "res://data/fight/"   # the game's wounds.json and ladder.json
 const RALLY_RULES: Array = ["second_wind", "spite", "reboot", "encore", "none"]
 const PROFILES: Array = ["plain"]
 const METERS: Array = ["anguish", "menace"]
@@ -115,6 +120,7 @@ class LadderDef:
 
 
 static var root: String = ROOT   # tests only: loadFrom() points the loader at a fixture folder
+static var shared: String = SHARED   # tests only: where the game's two files are read from ("" for none: each fighter's own file is then the whole)
 static var quiet: bool = false   # tests only: collect errors without printing them (the negative controls)
 static var _defs = null          # id -> the createFighter Dictionary (with "wd", a WoundsDef)
 static var _order: Array = []
@@ -137,14 +143,17 @@ static func _ensure() -> void:
 		ids = roster.order
 	else:
 		_err("roster.json: expected an array of fighter ids")
+	# the game's wounds model and ladder: every fighter's, unless his own file says otherwise for a key
+	var sw = _load(shared + "wounds.json", "fight/wounds.json") if shared != "" else null
+	var sl = _load(shared + "ladder.json", "fight/ladder.json") if shared != "" else null
 	for id in ids:
 		if not (id is String) or _defs.has(id):
 			_err("roster.json: bad or duplicate id " + str(id))
 			continue
 		var fj = _read(id + "/fighter.json", h)
-		var wj = _read(id + "/wounds.json", h)
+		var wj = _resolve(id, "wounds.json", sw, h)
 		var mj = _read(id + "/meters.json", h) if FileAccess.file_exists(root + id + "/meters.json") else {}
-		var lj = _read(id + "/ladder.json", h)
+		var lj = _resolve(id, "ladder.json", sl, h)
 		if not (fj is Dictionary and wj is Dictionary and lj is Dictionary):
 			continue
 		var def := _fighter(id, fj)
@@ -162,9 +171,11 @@ static func _ensure() -> void:
 	_hash = h.hex()
 
 
-## Tests only: load again from dir (the parity gate's negative controls), then back from ROOT.
-static func loadFrom(dir: String = ROOT) -> void:
+## Tests only: load again from dir (the parity gate's negative controls), then back from ROOT. The game's two files
+## come from sharedDir: the real ones unless the test says otherwise, "" for none.
+static func loadFrom(dir: String = ROOT, sharedDir: String = SHARED) -> void:
 	root = dir
+	shared = sharedDir
 	_defs = null
 	_ensure()
 
@@ -199,10 +210,61 @@ static func _err(msg: String) -> void:
 		push_error("FighterData: " + msg)
 
 
-## Read, lint (at most 15 significant digits per number, as for literals) and parse one file, and fold its canonical form
-## into the data hash.
+## Read, lint and parse one file of the roster (_load), and fold its canonical form into the data hash under its name.
 static func _read(rel: String, h: SimHash.Hasher):
-	var path: String = root + rel
+	var v = _load(root + rel, rel)
+	if v == null:
+		return null
+	h.text(rel)
+	_canon(h, v)
+	return v
+
+
+## One of the two files a fighter shares with the game (wounds.json, ladder.json): the game's file, base, with his own
+## laid over it if he has one. What he resolves to is folded into the data hash under his own file's name. With no base
+## (a test's fixture folder), his own file is the whole.
+static func _resolve(id: String, fname: String, base, h: SimHash.Hasher):
+	var rel: String = id + "/" + fname
+	var v = null
+	if FileAccess.file_exists(root + rel):
+		v = _load(root + rel, rel)
+		if v == null:
+			return null
+		if not (v is Dictionary):
+			_err(rel + ": expected an object")
+			return null
+		if base is Dictionary:
+			v = _over(base, v, rel, "")
+	elif base is Dictionary:
+		v = base.duplicate(true)
+	else:
+		_err(rel + ": missing, and the game's " + fname + " is missing too")
+		return null
+	h.text(rel)
+	_canon(h, v)
+	return v
+
+
+## base with own laid over it: a dictionary is merged key by key; a number, a word or a list replaces the base's whole.
+## A key the base does not have is refused, so a misspelt key cannot hide. A "_" key is a note and is free.
+static func _over(base: Dictionary, own: Dictionary, rel: String, at: String) -> Dictionary:
+	var out: Dictionary = base.duplicate(true)
+	for k in own:
+		if String(k).begins_with("_"):
+			out[k] = own[k]
+		elif not base.has(k):
+			_err(rel + ": " + at + String(k) + " is not a key of the game's file (a fighter's own file holds only differences from it)")
+		elif base[k] is Dictionary and own[k] is Dictionary:
+			out[k] = _over(base[k], own[k], rel, at + String(k) + ".")
+		elif own[k] is Dictionary or own[k] is Array:
+			out[k] = own[k].duplicate(true)
+		else:
+			out[k] = own[k]
+	return out
+
+
+## Read, lint (at most 15 significant digits per number, as for literals) and parse one file. rel is its name in messages.
+static func _load(path: String, rel: String):
 	if not FileAccess.file_exists(path):
 		_err(rel + ": missing")
 		return null
@@ -216,8 +278,6 @@ static func _read(rel: String, h: SimHash.Hasher):
 	if v == null:
 		_err(rel + ": not valid JSON")
 		return null
-	h.text(rel)
-	_canon(h, v)
 	return v
 
 

@@ -43,6 +43,7 @@ func _init() -> void:
 	check("fight data", _fightData(g))
 	check("roster data", _roster(g))
 	check("roster loader rejects bad data", _rosterRejects())
+	check("the game's wounds and ladder files, and a fighter's differences", _sharedFiles())
 	check("wired numbers change a match", _wiredNumbers())
 	check("keyed draws", _keyedDraws(g))
 	check("arm setups", _armSetups())
@@ -428,7 +429,7 @@ func _actState() -> String:
 	for id in ["PROTAGONIST", "RIVAL"]:
 		DirAccess.make_dir_recursive_absolute(dir + id)
 		for fname in ["fighter.json", "wounds.json", "meters.json", "ladder.json"]:
-			var text: String = FileAccess.get_file_as_string(FighterData.ROOT + id + "/" + fname)
+			var text: String = _fighterText(id, fname)
 			if fname == "ladder.json":
 				var d = JSON.parse_string(text)
 				d.manualTierUp = false
@@ -3278,14 +3279,112 @@ func _roster(g: Dictionary) -> String:
 	return ""
 
 
+## The text of one of a fighter's four files, for the fixtures below: his own file where he has one, and the game's
+## (data/fight/) for a wounds.json or ladder.json he does not have. A fixture fighter then carries a full copy, laid
+## over the game's file by the loader: the same keys, so every edit a fixture makes shows.
+func _fighterText(id: String, fname: String) -> String:
+	var own: String = FighterData.ROOT + id + "/" + fname
+	if FileAccess.file_exists(own) or not (fname == "wounds.json" or fname == "ladder.json"):
+		return FileAccess.get_file_as_string(own)
+	return FileAccess.get_file_as_string(FighterData.SHARED + fname)
+
+
+## The game's wounds model and ladder are one file each (docs/architecture/fighters-as-data.md, window 1): a fighter with
+## no file of his own resolves to the game's; his own file replaces one leaf and nothing else; a list is replaced whole; a
+## key the game's file does not have is refused; a note is free; and the roster's hash is the hash of what each fighter
+## resolves to, so a full copy in his folder, or none, hash alike.
+func _sharedFiles() -> String:
+	for id in FighterData.order():
+		for fname in ["wounds.json", "ladder.json"]:
+			if FileAccess.file_exists(FighterData.ROOT + id + "/" + fname):
+				return "%s has a %s of his own: this check is for a roster with no differences" % [id, fname]
+	if not FileAccess.file_exists(FighterData.SHARED + "wounds.json") or not FileAccess.file_exists(FighterData.SHARED + "ladder.json"):
+		return "data/fight/wounds.json or ladder.json is missing"
+	var h0: String = FighterData.dataHash()
+	var wd0 = FighterData.def("PROTAGONIST").wd
+	var w0: float = wd0.wearPerDamage
+	var light0: Array = wd0.family.light.duplicate()
+	var crip0: float = wd0.cripBase
+	var taken0: float = FighterData.def("PROTAGONIST").ld.taken
+	if FighterData.def("RIVAL").wd.wearPerDamage != w0 or FighterData.def("RIVAL").ld.taken != taken0:
+		return "the two fighters resolve to different numbers with no file of their own"
+	var out: String = ""
+	FighterData.quiet = true
+	var mk := func(tag: String, files: Dictionary) -> String:
+		var dir: String = "user://shared_files/%s/" % tag
+		for id in ["PROTAGONIST", "RIVAL"]:
+			DirAccess.make_dir_recursive_absolute(dir + id)
+			for fname in ["fighter.json", "meters.json"]:
+				var fw := FileAccess.open(dir + id + "/" + fname, FileAccess.WRITE)
+				fw.store_string(_fighterText(id, fname))
+				fw.close()
+			for fname in ["wounds.json", "ladder.json"]:
+				if FileAccess.file_exists(dir + id + "/" + fname):
+					DirAccess.remove_absolute(dir + id + "/" + fname)
+		for key in files:
+			var fo := FileAccess.open(dir + key, FileAccess.WRITE)
+			fo.store_string(files[key])
+			fo.close()
+		var rf := FileAccess.open(dir + "roster.json", FileAccess.WRITE)
+		rf.store_string("[\"PROTAGONIST\", \"RIVAL\"]")
+		rf.close()
+		return dir
+	# no file of his own: the game's, and the same hash
+	FighterData.loadFrom(mk.call("none", {}))
+	if not FighterData.errors().is_empty() or FighterData.dataHash() != h0:
+		out = "a roster with no wounds or ladder file of its own: %s" % ("; ".join(FighterData.errors()) if not FighterData.errors().is_empty() else "the hash differs")
+	# a full copy in each folder: the same hash again
+	if out == "":
+		var full := {}
+		for id in ["PROTAGONIST", "RIVAL"]:
+			for fname in ["wounds.json", "ladder.json"]:
+				full[id + "/" + fname] = FileAccess.get_file_as_string(FighterData.SHARED + fname)
+		FighterData.loadFrom(mk.call("full", full))
+		if not FighterData.errors().is_empty() or FighterData.dataHash() != h0:
+			out = "a full copy of both files in each folder does not hash as none"
+	# his own file with one number, one nested number, one list and a note: those change for him, and nothing else, for nobody else
+	if out == "":
+		FighterData.loadFrom(mk.call("diff", {"RIVAL/wounds.json": "{\"_note\": \"his own\", \"wearPerDamage\": 123.0, \"cripple\": {\"base\": 0.5}, \"family\": {\"light\": [1.0, 2.0, 3.0, 4.0]}}", "RIVAL/ladder.json": "{\"takenPerDamage\": 0.25}"}))
+		var rw = FighterData.def("RIVAL").wd
+		var pw = FighterData.def("PROTAGONIST").wd
+		if not FighterData.errors().is_empty():
+			out = "a fighter's own differences were refused: " + "; ".join(FighterData.errors())
+		elif rw.wearPerDamage != 123.0 or rw.cripBase != 0.5 or rw.family.light != [1.0, 2.0, 3.0, 4.0] or FighterData.def("RIVAL").ld.taken != 0.25:
+			out = "a fighter's own differences did not reach him"
+		elif rw.focusWear != wd0.focusWear or rw.cripTierAhead != wd0.cripTierAhead or rw.family.heavy != wd0.family.heavy or FighterData.def("RIVAL").ld.dealt != FighterData.def("PROTAGONIST").ld.dealt:
+			out = "a fighter's own differences changed a number they do not name"
+		elif pw.wearPerDamage != w0 or pw.cripBase != crip0 or pw.family.light != light0 or FighterData.def("PROTAGONIST").ld.taken != taken0:
+			out = "one fighter's differences reached the other"
+		elif FighterData.dataHash() == h0:
+			out = "a fighter's own differences did not change the data hash"
+	# a key the game's file does not have is refused, at the top and inside
+	if out == "":
+		FighterData.loadFrom(mk.call("typo", {"RIVAL/wounds.json": "{\"wearPerDamge\": 123.0}"}))
+		if not "; ".join(FighterData.errors()).contains("wearPerDamge is not a key"):
+			out = "a misspelt key in a fighter's own file was not refused"
+	if out == "":
+		FighterData.loadFrom(mk.call("typo2", {"RIVAL/wounds.json": "{\"cripple\": {\"bass\": 0.5}}"}))
+		if not "; ".join(FighterData.errors()).contains("cripple.bass is not a key"):
+			out = "a misspelt key inside a fighter's own file was not refused"
+	# with no game's file (a fixture folder that is the whole), a fighter needs his own
+	if out == "":
+		FighterData.loadFrom(mk.call("alone", {}), "")
+		if not "; ".join(FighterData.errors()).contains("the game's wounds.json is missing too"):
+			out = "a fighter with no wounds file anywhere was not refused"
+	FighterData.quiet = false
+	FighterData.loadFrom()
+	if out == "" and (FighterData.dataHash() != h0 or not FighterData.errors().is_empty()):
+		out = "reloading data/fighters/ changed the hash"
+	return out
+
+
 ## D1a negative controls: fixtures made from PROTAGONIST's real files with one fault each (edits keyed to the key name, not its
 ## value, so a retune does not break them; the old value stays behind as a "_was" note), in user://, must each be rejected with
 ## the right message; a changed _note must not change the data hash, and a changed number must. Reloads data/fighters/
 ## at the end.
 func _rosterRejects() -> String:
-	var src: String = FighterData.ROOT + "PROTAGONIST/"
-	var base := {"fighter.json": FileAccess.get_file_as_string(src + "fighter.json"), "wounds.json": FileAccess.get_file_as_string(src + "wounds.json"),
-		"meters.json": FileAccess.get_file_as_string(src + "meters.json"), "ladder.json": FileAccess.get_file_as_string(src + "ladder.json")}
+	var base := {"fighter.json": _fighterText("PROTAGONIST", "fighter.json"), "wounds.json": _fighterText("PROTAGONIST", "wounds.json"),
+		"meters.json": _fighterText("PROTAGONIST", "meters.json"), "ladder.json": _fighterText("PROTAGONIST", "ladder.json")}
 	var h0: String = FighterData.dataHash()
 	var cases: Array = [
 		["note", "", "", "", ""],
@@ -3442,7 +3541,7 @@ func _wiredNumbers() -> String:
 	var files := {}
 	for id in FighterData.order():
 		for fname in ["fighter.json", "wounds.json", "meters.json", "ladder.json"]:
-			files[id + "/" + fname] = FileAccess.get_file_as_string(FighterData.ROOT + id + "/" + fname)
+			files[id + "/" + fname] = _fighterText(id, fname)
 	var base := {}
 	for c in WIRED:
 		if not base.has(c[3]):
