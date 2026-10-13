@@ -209,6 +209,21 @@
         ]
       },
       "why": "no vanish or blink between blows; the fighter is drawn the whole way"
+    },
+    {
+      "id": "b14",
+      "match": {
+        "flags": [
+          "leap"
+        ],
+        "limb": [
+          "hand",
+          "elbow",
+          "head"
+        ]
+      },
+      "rule": "a leap is allowed for a knee or a foot to the gut, chest or legs (the Hopper's hop; the cleared drop kick); never with a hand, elbow or the head as the striking limb, and never to the jaw or head by any limb (b03); one body height at most, the landing drawn, no hover or held flight pose, a single turn at most (b04)",
+      "why": "the jumping rising uppercut and its kin; ruled 2026-10-12 for the Hopper"
     }
   ],
   "bannedSequences": [
@@ -251,6 +266,11 @@
       "id": "s08",
       "rule": "inside a hold, vicious blows run no more than 2 in a row to the same place, and the arm counts as three places (shoulder, elbow, wrist) and the head, core and legs as two each, so four taps on one region alternate places; vicious blows are strikes, never a grip on the throat, hair or tail, and never a clawed hand on the face; the sound rule f03 holds across the taps",
       "why": "s02 applied to the clinch; Orb's design and the rating question are still open (not cleared by this row)"
+    },
+    {
+      "id": "s09",
+      "rule": "a sole or heel brought down from above: on a standing opponent, any target above the knee is allowed (the cleared stomp and axe kick); on a downed opponent, the torso and limbs only; the head, face, neck and groin of a downed opponent are out of the base moveset until the rating decision (a finisher only, not repeatable, never in a public trailer, run through the questionnaires first)",
+      "why": "ratings (PEGI 18 treats violence towards defenceless people as its own descriptor; stricter markets) rather than IP; the Hopper's stomp, ruled 2026-10-12"
     }
   ],
   "motion": [
@@ -562,6 +582,13 @@
       "id": "p02",
       "rule": "a store listing's content descriptors, age gate and the questionnaire answers match the real build (graphic violence, the Cyborg's consumption, civilian casualties); public trailers and screenshots on each platform use that platform's mature-content marking and age restriction",
       "why": "ratings and platform rules; the Mature target frees the content, not the labelling"
+    }
+  ],
+  "signature": [
+    {
+      "id": "sg01",
+      "rule": "the barrage signature: three volleys, each one motion of one hand and each different (a sweep fanning five shards, a thrust sending three in a line, a flick sending one shot that splits), thrown from an upright, unhurried walk with the hands open and low between volleys; never both palms in turn, never one hand pumping, no shouted syllable repeated across the three (e05, e06, f03); the hand lit as a thin edge, never a ball; no aura, no crouch, no charge pose in the walk (k01, k02, h01); the close by hand is a heavy from his cleared pool; the three volleys carry at most one full flash (the last) and two lesser ones in any second, counted over the whole screen (k05, the margin rule); a rim on the rival on a landing, no whole-screen flash",
+      "why": "built from cleared parts; screened as a whole 2026-10-12"
     }
   ]
 }
