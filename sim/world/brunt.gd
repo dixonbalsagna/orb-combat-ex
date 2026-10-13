@@ -32,6 +32,11 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
 	"towerPunches": [0, 1, 99, 99], "giveWay": 2.0, "wallMemory": 0.25, "wallMin": 0.25, "heldDeathShare": 0.6,
 	"lodgeSeconds": [0.5, 0.5, 0.7, 0.9], "lodgeSpecialSeconds": 0.9, "lodgeDump": 1.0,
 	"keepHi": 0.8, "keepK": 0.45, "keepRef": 3000.0, "keepMin": 0.35, "keepFree": 0.95, "heavyKeep": 0.7,
+	# the wall slam (buildings.md section 2): twice the building's hit, a stagger at the wall
+	"wallSlamMul": 2.0, "wallStaggerTicks": 24,
+}
+const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
+	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
 }
 const MARK_TOWER: int = -1                 # in Fighter.splashed (a list of building ids): a -1 for each tower this flight went through ...
 const MARK_HOUSE: int = -2                 # ... and a -2 for each house
@@ -87,6 +92,8 @@ static func _cLoad() -> void:
 	_cLoaded = true
 	_cErrors = []
 	_c = BRUNT_KEYS.duplicate(true)
+	for k in BRUNT_STRINGS:
+		_c[k] = BRUNT_STRINGS[k][1]
 	var f := FileAccess.open(BRUNT_PATH, FileAccess.READ)
 	if f == null:
 		_cErrors.append("brunt.json: cannot open " + BRUNT_PATH)
@@ -115,6 +122,12 @@ static func _cLoad() -> void:
 			_cErrors.append("brunt.json: %s is a number" % k)
 			continue
 		_c[k] = v
+	for k in BRUNT_STRINGS:
+		if j.has(k):
+			if BRUNT_STRINGS[k][0].has(str(j[k])):
+				_c[k] = str(j[k])
+			else:
+				_cErrors.append("brunt.json: %s is one of %s" % [k, str(BRUNT_STRINGS[k][0])])
 	var h := SimHash.Hasher.new()
 	h.text("biomes.brunt")
 	FighterData._canon(h, j)
@@ -668,6 +681,8 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	if lodge:
 		oce = oc.duplicate()
 		oce.keep = 0.0   # (a building_hit that passes with keep 0 is a lodge: the body ends inside the building)
+	if not passes:
+		hitText = "wall"   # a building that holds him: a wall (the floor_hit says crack or dent)
 	SimFx.buildingHitB2(S, f, b, y, link, by, oce, hitText, spN)
 	# --- splash on the neighbours, once per launch ---
 	_splash(S, f, b, oc.dmg, by, evt, cx, far, dir, passes and nx.b >= 0)
@@ -683,16 +698,22 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		if b.alive and rest > 0.0:
 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
 		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
-		S.dirS.stop = SimMathx.jmax(S.dirS.stop, lodgeSeconds(by.tier, f.launchSpecial))
+		var holdS: float = lodgeSeconds(by.tier, f.launchSpecial)
+		_hold(S, f, holdS)
 		var bodyW: float = WorldLanes.body()[0]
 		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
 		f.y = y
 		f.vx = 0.0
 		f.vy = 0.0
+		SimFx.lodge(S, f, b, f.x, f.y, holdS, link, by)
 		endFlight(S, f)
 		return
 	if not passes:
-		S.dirS.stop = SimMathx.jmax(S.dirS.stop, lodgeSeconds(by.tier, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
+		_hold(S, f, lodgeSeconds(by.tier, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
+		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice); the stagger is set below
+		var slam: float = float(cm.wallSlamMul) - 1.0
+		if slam > 0.0:
+			SimDamage.hurt(S, f, spN * FIGHTER_DMG * slam, by)
 	if passes:
 		f.vx *= keep
 		f.vy *= keep
@@ -715,7 +736,26 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		f.vx = -dir * absf(f.vx) * 0.25
 		f.vy *= 0.85
 		f.x = SimWrap.wrap(edge - dir * 18.0)
+		# the stagger (wallStaggerTicks): stunTicks counts down on every live tick, flight included, and not in the hit-stop, so it is set to the flight
+		# to the ground and then the data's ticks: he is staggered that long after he lands. A max, never assigned or lowered; the core sends no event.
+		f.stunTicks = maxi(f.stunTicks, int(cm.wallStaggerTicks) + _flightTicks(S, f))
 		endFlight(S, f)
+
+
+## The live ticks a body at (f.x, f.y) with f.vy takes to reach the ground under it (gravity 1000, as stepLaunched and flightTo), at most 240.
+static func _flightTicks(S: SimState, f) -> int:
+	var h: float = maxf(f.y - WorldTerrain.groundY(S, f.x), 0.0)
+	var t: float = (f.vy + sqrt(f.vy * f.vy + 2.0 * 1000.0 * h)) / 1000.0
+	return clampi(int(ceil(t / SimConst.DT)), 0, 240)
+
+
+## The hold in a wall or a lodge: the whole sim stops for it (a hit-stop, today's behaviour) or only the body is held (lodgeHold "body": he is stunned for
+## the seconds, the fight goes on around him). Orb's homework: which of the two.
+static func _hold(S: SimState, f, seconds: float) -> void:
+	if str(cfg().lodgeHold) == "body":
+		f.stunTicks = maxi(f.stunTicks, int(ceil(seconds * 60.0)))
+	else:
+		S.dirS.stop = SimMathx.jmax(S.dirS.stop, seconds)
 
 
 ## Splash: buildings beside b (within SPLASH_W of its width in x and SPLASH_Z in depth) take SPLASH_FRAC of the hit's damage,

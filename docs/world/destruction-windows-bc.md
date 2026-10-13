@@ -2,6 +2,8 @@
 
 Owner: World and Environment. **Nothing here is in the tree**: Simulation holds the sim tree. Everything is three cumulative patches (made on 60f82149, applied clean on c13deb6b) in `docs/world/scratch-build/windows-bc/` (`stage-w.diff`, `stage-b.diff`, `stage-c.diff`, the scripts that make them `mk_w.py`, `mk_b.py`, `mk_c.py`, `mk_wbc_lib.py`, `struct_fail.gd.txt`, and the check `bc_check.gd`). Each is its own window with one golden when applied. A fresh checkout takes `git apply stage-w.diff`, then `stage-b.diff`, then `stage-c.diff` (checked: the three give the same files as the scripts).
 
+**Status 2026-10-12 (late): stage W is applied to the tree** (on 66a3cf27; golden regenerated and unchanged, as no golden match touches a building). One change from the patch as parked: **the stagger counts down on every live tick, flight included, and not in the hit-stop** (Simulation's condition), so it is set to the flight to the ground plus `wallStaggerTicks` (`_flightTicks`): he is staggered 24 ticks after he lands, as a max, never assigned or lowered. `stage-w.diff` is regenerated to match; `stage-b.diff` and `stage-c.diff` still apply on it. B and C wait.
+
 ## 1. What each stage is, and the lines in other directors' files
 
 | Stage | What | World's files | Lines in Simulation's files |

@@ -152,7 +152,7 @@ func _init() -> void:
 			continue
 		flights += 1
 		var last: Dictionary = hits[hits.size() - 1]
-		var held: bool = last.outcome in ["crack", "dent", "wreck"]
+		var held: bool = last.outcome in ["crack", "dent", "wreck", "wall"]
 		var lodged: bool = last.outcome in ["punch", "collapse", "pancake", "heavy"] and last.keep == 0.0
 		if held or lodged:
 			ended_ok += 1

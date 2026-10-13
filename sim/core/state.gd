@@ -416,6 +416,7 @@ class FxEvent:
 	var p: float = 0.0           # intro_line: the chance the line is spoken (the line system's to use)
 	var source: String = ""      # hazard_telegraph, danger: what is coming (brunt, windup, ambush; World adds collapse, landslide, lava)
 	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
+	var hold: float = 0.0        # lodge: the seconds the body is held in the building
 
 
 class Fighter:

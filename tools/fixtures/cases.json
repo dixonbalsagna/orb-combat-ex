@@ -244600,6 +244600,96 @@
       "expect": null
     },
     {
+      "id": "brunt-wall-slam-below-one",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/wallSlamMul": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/wallSlamMul"
+      }
+    },
+    {
+      "id": "brunt-wall-slam-above-six",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/wallSlamMul": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/wallSlamMul"
+      }
+    },
+    {
+      "id": "brunt-wall-stagger-fraction",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/wallStaggerTicks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/wallStaggerTicks"
+      }
+    },
+    {
+      "id": "brunt-lodge-hold-unknown",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeHold": "half"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/lodgeHold"
+      }
+    },
+    {
+      "id": "brunt-lodge-hold-body-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/lodgeHold": "body"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "brunt-wall-slam-one-ok",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/wallSlamMul": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
       "id": "lanes-key-required-schema",
       "schema": "biomes-lanes.schema.json",
       "mutate": [

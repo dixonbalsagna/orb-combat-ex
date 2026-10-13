@@ -166,6 +166,25 @@
       "type": "number",
       "exclusiveMinimum": 0,
       "maximum": 1
+    },
+    "wallSlamMul": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 6,
+      "description": "A body held at a wall takes this many times the building's hit (Game Design: twice)."
+    },
+    "wallStaggerTicks": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 240,
+      "description": "The ticks a body held at a wall is staggered (input gated)."
+    },
+    "lodgeHold": {
+      "enum": [
+        "world",
+        "body"
+      ],
+      "description": "Does a lodge or a wall hold the whole sim (world: a hit-stop) or only the body (body: he is stunned for the seconds and the fight goes on)."
     }
   },
   "additionalProperties": false,

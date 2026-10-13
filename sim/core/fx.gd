@@ -443,6 +443,14 @@ static func buildingHitB2(S: SimState, f, b, y: float, link: int, by, oc: Dictio
 	e.owner = float(S.fighters.find(by)); e.victim = e.actor
 
 
+## The lodge: a body ends inside the last building of a chain, held hold seconds (World, docs/world/destruction-hook.md). b the building, actor the
+## fighter's slot, n the chain's link, x y z where he is.
+static func lodge(S: SimState, f, b, x: float, y: float, hold: float, link: int, by) -> void:
+	var e := _ev(S, "lodge")
+	e.actor = float(S.fighters.find(f)); e.b = float(b.idx); e.x = x; e.y = y; e.z = WorldBrunt.faceZ(b); e.hold = hold; e.n = link
+	e.owner = float(S.fighters.find(by)); e.victim = e.actor
+
+
 ## B2: after a burst through building b the fighter heads for nb: from b's far face at height y to nb's near face.
 static func chainLink(S: SimState, f, att, b, nb, y: float, r: Dictionary, link: int) -> void:
 	var e := _ev(S, "chain_link")

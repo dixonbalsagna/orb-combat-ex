@@ -43,7 +43,7 @@ index 8ad6597b..9cf709ea 100644
  static func chainLink(S: SimState, f, att, b, nb, y: float, r: Dictionary, link: int) -> void:
  	var e := _ev(S, "chain_link")
 diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
-index 22a5b778..f16b1e72 100644
+index 22a5b778..a3903ae6 100644
 --- a/sim/world/brunt.gd
 +++ b/sim/world/brunt.gd
 @@ -32,6 +32,11 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
@@ -89,7 +89,7 @@ index 22a5b778..f16b1e72 100644
  	SimFx.buildingHitB2(S, f, b, y, link, by, oce, hitText, spN)
  	# --- splash on the neighbours, once per launch ---
  	_splash(S, f, b, oc.dmg, by, evt, cx, far, dir, passes and nx.b >= 0)
-@@ -683,16 +698,23 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+@@ -683,16 +698,22 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
  		if b.alive and rest > 0.0:
  			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
  		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
@@ -107,18 +107,30 @@ index 22a5b778..f16b1e72 100644
  	if not passes:
 -		S.dirS.stop = SimMathx.jmax(S.dirS.stop, lodgeSeconds(by.tier, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
 +		_hold(S, f, lodgeSeconds(by.tier, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
-+		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice), and is staggered at the wall
++		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice); the stagger is set below
 +		var slam: float = float(cm.wallSlamMul) - 1.0
 +		if slam > 0.0:
 +			SimDamage.hurt(S, f, spN * FIGHTER_DMG * slam, by)
-+		f.stunTicks = maxi(f.stunTicks, int(cm.wallStaggerTicks))
  	if passes:
  		f.vx *= keep
  		f.vy *= keep
-@@ -718,6 +740,15 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+@@ -715,9 +736,28 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 		f.vx = -dir * absf(f.vx) * 0.25
+ 		f.vy *= 0.85
+ 		f.x = SimWrap.wrap(edge - dir * 18.0)
++		# the stagger (wallStaggerTicks): stunTicks counts down on every live tick, flight included, and not in the hit-stop, so it is set to the flight
++		# to the ground and then the data's ticks: he is staggered that long after he lands. A max, never assigned or lowered; the core sends no event.
++		f.stunTicks = maxi(f.stunTicks, int(cm.wallStaggerTicks) + _flightTicks(S, f))
  		endFlight(S, f)
  
  
++## The live ticks a body at (f.x, f.y) with f.vy takes to reach the ground under it (gravity 1000, as stepLaunched and flightTo), at most 240.
++static func _flightTicks(S: SimState, f) -> int:
++	var h: float = maxf(f.y - WorldTerrain.groundY(S, f.x), 0.0)
++	var t: float = (f.vy + sqrt(f.vy * f.vy + 2.0 * 1000.0 * h)) / 1000.0
++	return clampi(int(ceil(t / SimConst.DT)), 0, 240)
++
++
 +## The hold in a wall or a lodge: the whole sim stops for it (a hit-stop, today's behaviour) or only the body is held (lodgeHold "body": he is stunned for
 +## the seconds, the fight goes on around him). Orb's homework: which of the two.
 +static func _hold(S: SimState, f, seconds: float) -> void:
