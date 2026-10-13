@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fighter-bench",
+  "title": "the bench (fighters as data, window 2)",
+  "description": "data/fighters/bench.json: fighters that load as the roster's do and can be named in a match's slots, but are not on the select screen and not in the roster (the reference fighter). A bare array of ids, as the loader reads it (sim/core/fighter_data.gd: anything else is refused). Each id has data/fighters/<id>/fighter.json and is not in the roster (checked by tools/lib/xref.js, rule bench-id). May be empty. Policy: a bare array, so there are no object keys to close; each item is an id string only.",
+  "type": "array",
+  "uniqueItems": true,
+  "items": {
+    "type": "string",
+    "pattern": "^[A-Z][A-Z0-9_]*$"
+  }
+}

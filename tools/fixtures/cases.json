@@ -255318,6 +255318,125 @@
         "rule": "maximum",
         "pointer": "/lodgeSeconds/3"
       }
+    },
+    {
+      "id": "bench-empty-ok",
+      "schema": "fighter-bench.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/bench.json",
+          "root": []
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "bench-one-ok",
+      "schema": "fighter-bench.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/bench.json",
+          "root": [
+            "FIXTURE_BENCH"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "bench-not-an-array",
+      "schema": "fighter-bench.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/bench.json",
+          "root": {}
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "bench-bad-id",
+      "schema": "fighter-bench.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/bench.json",
+          "root": [
+            "fixture-bench"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/0"
+      }
+    },
+    {
+      "id": "bench-not-a-string",
+      "schema": "fighter-bench.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/bench.json",
+          "root": [
+            7
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/0"
+      }
+    },
+    {
+      "id": "bench-duplicate",
+      "schema": "fighter-bench.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/bench.json",
+          "root": [
+            "FIXTURE_BENCH",
+            "FIXTURE_BENCH"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/1"
+      }
+    },
+    {
+      "id": "bench-in-the-roster",
+      "schema": "fighter-bench.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/bench.json",
+          "root": [
+            "FIXTURE_HERO"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:bench-id",
+        "pointer": "/0"
+      }
+    },
+    {
+      "id": "bench-no-folder",
+      "schema": "fighter-bench.schema.json",
+      "mutate": [
+        {
+          "file": "data/fighters/bench.json",
+          "root": [
+            "GHOST"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:bench-id",
+        "pointer": "/0"
+      }
     }
   ],
   "text": [

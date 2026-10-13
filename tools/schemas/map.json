@@ -52,6 +52,10 @@
       "schema": "fighter-roster.schema.json"
     },
     {
+      "match": "data/fighters/bench.json",
+      "schema": "fighter-bench.schema.json"
+    },
+    {
       "match": "data/fighters/*/fighter.json",
       "schema": "fighter.schema.json"
     },

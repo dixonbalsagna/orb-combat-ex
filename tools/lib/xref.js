@@ -824,6 +824,16 @@ function xref(docs, root = repoRoot) {
     });
   }
 
+  // The bench (data/fighters/bench.json): fighters that load but are not in the roster. Each has a fighter.json, and none is on the roster.
+  const bench = get('data/fighters/bench.json');
+  if (Array.isArray(bench)) {
+    bench.forEach((id, i) => {
+      if (typeof id !== 'string') return;
+      if (Array.isArray(rosterIds) && rosterIds.includes(id)) err('data/fighters/bench.json', `/${i}`, 'bench-id', `bench lists "${id}", who is in the roster already (a fighter is on the roster or on the bench, not both)`);
+      else if (fighterFiles.length && !seenIds.has(id)) err('data/fighters/bench.json', `/${i}`, 'bench-id', `bench lists "${id}", but no data/fighters/${id}/fighter.json defines it`);
+    });
+  }
+
   // A fighter's voice bible is a real file.
   for (const file of fighterFiles) {
     const f = get(file);
