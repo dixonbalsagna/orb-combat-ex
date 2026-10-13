@@ -1,0 +1,525 @@
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 0cd21db2..35f6f3e8 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -225,6 +225,12 @@ class Building:
+ 	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
+ 	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
+ 	var fhole := PackedFloat32Array()  # B: the broken run of each floor, two numbers a floor (its centre as a fraction of the half width, its share of the width), allocated with fdmg
++	var failT: float = 0.0     # C: seconds into a collapse; negative is the warning before it
++	var failK: int = -1        # C: the lowest floor not yet landed while it fails (-1: standing)
++	var failDir: int = 0       # C: -1 or 1, the way it tips; 0 a pancake
++	var failBy: int = -1       # C: the slot of the fighter who brought it down (-1: none)
++	var failN: int = 0         # C: floors landed so far
++	var failHurt := PackedFloat32Array()   # C: the damage the falling stack has done each fighter (two numbers, allocated when it starts)
+ 	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
+ 	var fled: float = 0.0     # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
+ 	var z: float = 0.0        # depth of the building's centre from the fighter plane (negative: behind), world units
+@@ -419,6 +425,8 @@ class FxEvent:
+ 	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
+ 	var x0: float = 0.0          # floor_hit: where the breach starts (x1 is where it ends)
+ 	var hold: float = 0.0        # lodge: the seconds the body is held in the building
++	var t_warn: float = 0.0      # building_failing: seconds of warning before the first floor lands
++	var t_fall: float = 0.0      # building_failing: seconds the stack takes to come down once it starts
+ 
+ 
+ class Fighter:
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index 5c5bc48f..72d6ec29 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -9,7 +9,7 @@ const FIGHTER: Array = ["name", "role", "col", "aura", "hair", "care", "dmgMul",
+ 	"canHide", "lockBackT", "exT", "dropT", "breathT", "heldMx", "heldMy"]
+ ## Intent v2 (I1): the v2 fields in the record's order, then today's dash, charge and stance until I3, then the agency fields.
+ const INTENT: Array = ["mx", "my", "guard", "guardPress", "dodge", "sprint", "power", "powerPress", "powerTap", "mode", "light", "heavy", "sig", "upgrade", "special", "context", "transform", "dash", "charge", "stance", "lightHeld", "heavyHeld", "escape", "waited", "stanceMask", "contextHeld", "sigHeld"]
+-const BUILDING: Array = ["x", "w", "h", "maxhp", "hp", "alive", "kind", "pop", "seed", "popAlive", "z", "d", "row", "fled", "floors", "fmask", "wear", "district", "shape", "landmark"]
++const BUILDING: Array = ["x", "w", "h", "maxhp", "hp", "alive", "kind", "pop", "seed", "popAlive", "z", "d", "row", "fled", "floors", "fmask", "wear", "failT", "failK", "failDir", "failBy", "failN", "district", "shape", "landmark"]
+ const SHOT: Array = ["id", "owner", "kind", "mode", "x", "y", "z", "vx", "vy", "tgt", "left", "total", "x0", "y0", "px", "py", "power", "dmg", "group", "deflected", "fresh", "dead", "passed", "ax", "ay", "arc", "lastB", "wild", "safe", "safeT", "arm", "fuse", "ground"]
+ const TREE: Array = ["x", "h", "alive", "burn"]
+ const BEAM: Array = ["ox", "oy", "ux", "uy", "len", "p", "t", "life", "w", "variant", "col", "pw", "struck", "sf", "cap", "levelled", "oz", "zs"]
+@@ -181,6 +181,9 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 		out.append(float(b.fhole.size()))   # B: the broken run of each floor
+ 		for v in b.fhole:
+ 			out.append(v)
++		out.append(float(b.failHurt.size()))   # C: what a falling stack has done each fighter
++		for v in b.failHurt:
++			out.append(v)
+ 	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
+ 	out.append(float(S.trees.size()))
+ 	for t in S.trees:
+@@ -285,7 +288,7 @@ const FX_FIELDS: Dictionary = {
+ 	"dust": ["x", "y", "n", "col", "z"], "splash": ["x", "y", "n", "z"], "fire": ["x", "y", "n", "z"], "after": ["x", "y", "life", "col", "face", "z"],
+ 	"charge": ["x", "y", "col", "ground", "z"], "beamSplash": ["x", "z"], "damage": ["x", "y", "amount", "col", "attacker", "victim", "region", "kind", "number", "z", "mode"], "banner": ["text", "col", "dur"],
+ 	"crater": ["x", "y", "r", "depth", "energy", "cause", "rim", "skid", "owner", "special"], "scorch": ["x", "y", "w", "power", "variant", "owner", "z"],
+-	"slide": ["x", "x1", "w", "depth", "energy", "variant", "owner", "pop", "z", "z1"], "slide_dust": ["x", "y", "spd", "w", "variant", "n", "z"], "skim": ["x", "y", "spd", "n", "z"], "evacuate": ["b", "x", "n", "cx", "reason", "owner", "dest", "floor"], "launch_depth": ["x", "y", "x1", "y1", "z", "b", "dur", "n", "owner", "victim"], "chain_link": ["from", "to", "x", "y", "z", "x1", "y1", "z1", "dur", "link", "owner", "victim"], "floor_hit": ["b", "floor", "n", "outcome", "ratio", "x", "y", "z", "ux", "uy", "kind", "owner", "victim", "x0", "x1"], "building_stage": ["b", "from", "to", "x", "y", "z", "w", "h", "kind", "cx", "owner", "n"], "lodge": ["actor", "b", "x", "y", "z", "hold", "n", "owner", "victim"], "floors_fall": ["b", "from", "to", "n", "x", "z", "w"], "building_fall": ["b", "x", "y", "w", "depth", "mode", "delay", "cx", "rubble", "n", "landmark"], "collateral_state": ["room", "budget", "left", "over"],
++	"slide": ["x", "x1", "w", "depth", "energy", "variant", "owner", "pop", "z", "z1"], "slide_dust": ["x", "y", "spd", "w", "variant", "n", "z"], "skim": ["x", "y", "spd", "n", "z"], "evacuate": ["b", "x", "n", "cx", "reason", "owner", "dest", "floor"], "launch_depth": ["x", "y", "x1", "y1", "z", "b", "dur", "n", "owner", "victim"], "chain_link": ["from", "to", "x", "y", "z", "x1", "y1", "z1", "dur", "link", "owner", "victim"], "floor_hit": ["b", "floor", "n", "outcome", "ratio", "x", "y", "z", "ux", "uy", "kind", "owner", "victim", "x0", "x1"], "building_stage": ["b", "from", "to", "x", "y", "z", "w", "h", "kind", "cx", "owner", "n"], "lodge": ["actor", "b", "x", "y", "z", "hold", "n", "owner", "victim"], "building_failing": ["b", "x", "y", "w", "h", "t_warn", "t_fall", "n", "owner", "kind"], "floors_fall": ["b", "from", "to", "n", "x", "z", "w"], "building_fall": ["b", "x", "y", "w", "depth", "mode", "delay", "cx", "rubble", "n", "landmark"], "collateral_state": ["room", "budget", "left", "over"],
+ 	"shake": ["k", "x", "z"], "tick": ["dt", "frozen"],
+ 	"region_stage": ["actor", "region", "stage"], "rally": ["actor", "region", "kind"], "limb_break": ["actor", "victim", "region"], "region_broken": ["actor", "region"], "brink_enter": ["actor"], "brink_exit": ["actor"], "brink_open": ["actor", "target", "kind", "text"], "brink_close": ["actor", "kind"],
+ 	"mood_band": ["kind", "amount", "n"], "act_change": ["n", "kind"], "style_label": ["actor", "kind", "text"], "crowd_state": ["kind"], "building_hit": ["actor", "x", "n", "b", "y", "z", "amount", "ratio", "outcome", "link", "spd", "keep", "ux", "uy", "kind", "w", "h", "owner", "victim"],
+diff --git a/sim/core/fx.gd b/sim/core/fx.gd
+index 6f0d6879..22529108 100644
+--- a/sim/core/fx.gd
++++ b/sim/core/fx.gd
+@@ -451,6 +451,13 @@ static func lodge(S: SimState, f, b, x: float, y: float, hold: float, link: int,
+ 	e.owner = float(S.fighters.find(by)); e.victim = e.actor
+ 
+ 
++## A tower begins to fail (World, the failing state): b, where it stands (x, y its ground, w its width, h its standing height), the seconds of warning
++## and the seconds the stack takes to come down once it starts, dir the way it tips (0 a pancake), owner the slot that brought it down.
++static func buildingFailing(S: SimState, b, y: float, h: float, t_warn: float, t_fall: float, dir: int, owner: float) -> void:
++	var e := _ev(S, "building_failing")
++	e.b = float(b.idx); e.x = b.x; e.y = y; e.w = b.w; e.h = h; e.t_warn = t_warn; e.t_fall = t_fall; e.n = dir; e.owner = owner; e.kind = b.kind
++
++
+ ## B2: after a burst through building b the fighter heads for nb: from b's far face at height y to nb's near face.
+ static func chainLink(S: SimState, f, att, b, nb, y: float, r: Dictionary, link: int) -> void:
+ 	var e := _ev(S, "chain_link")
+diff --git a/sim/core/sim.gd b/sim/core/sim.gd
+index f1d3531a..3ce91a3d 100644
+--- a/sim/core/sim.gd
++++ b/sim/core/sim.gd
+@@ -125,6 +125,7 @@ static func step(S: SimState, inputs = null) -> bool:
+ 	DirExchange.dirUpdate(S, dt)
+ 	DirBeam.beamStep(S, dt)
+ 	SimShots.step(S, dt)   # energy blasts in flight: they move, trade, and meet fighters and the ground
++	WorldStructures.stepFailing(S, dt)   # World: the towers that are coming down (a floor lands each step)
+ 	WorldWater.step(S)
+ 	SimMood.tick(S)   # M1: reads this tick's events; writes only its own state and events
+ 	WorldCollateral.tick(S)
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index cf674484..22377f26 100644
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -37,9 +37,14 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
+ 	# B: breaches. A punch breaks a run of the story: breachBase + breachPerRatio * ratio fighter heights of the width, kept in fhole; the story is gone
+ 	# (its fmask bit clears) at clearAt of the width. breachDeath: the share of a holed story's people a punch kills before the width counts.
+ 	"breaches": 1, "breachBase": 0.8, "breachPerRatio": 0.6, "clearAt": 0.7, "breachDeath": 0.25, "breachWeakens": 0.5, "breachGrow": 0.5,
++	# C: the failing state. failing 1 brings a tower down over seconds (0: in the tick, as before); failWarn seconds of warning (over any hold a
++	# fighter in its reach is in by failWarnOver); failMin the least time the stack takes; failStep the most time a floor takes to land.
++	"failing": 1, "failWarn": 1.5, "failWarnOver": 0.6, "failMin": 2.0, "failStep": 0.25,
++	"failDamageFloor": 6.0, "failDamageCap": 100.0, "failBuryTicks": 45, "failReachZ": 4.0, "failBesideBh": 0.5, "failTipAt": 0.5, "failTipFar": 3.0, "failTipReach": 0.4, "failTipMaxBh": 6.0,
+ }
+ const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
+ 	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
++	"failHurts": [["none", "both", "rival"], "none"],   # whom a falling stack hurts: nobody (today), both fighters, or the one who did not bring it down
+ }
+ const MARK_TOWER: int = -1                 # in Fighter.splashed (a list of building ids): a -1 for each tower this flight went through ...
+ const MARK_HOUSE: int = -2                 # ... and a -2 for each house
+@@ -335,6 +340,8 @@ static func outcomeOf(S: SimState, b, y: float, spN: float, tier: float, punched
+ 	var c: Dictionary = cfg()
+ 	var ti: int = tierIx(tier, special)
+ 	var dmg: float = spN * float(c.tierFactor[ti]) * float(c.bruntMul)
++	if b.failK >= 0:   # a tower already coming down: he goes through it, and it takes nothing more
++		return {"floors": false, "dmg": 0.0, "ratio": 99.0, "outcome": "collapse", "pass": true, "keep": float(c.houseKeep), "deaths": 0.0}
+ 	if isHouse(b):
+ 		var r: float = dmg / b.maxhp
+ 		return {"floors": false, "dmg": maxf(dmg, b.hp), "ratio": r, "outcome": "collapse", "pass": true, "keep": float(c.houseKeep), "deaths": b.popAlive}
+@@ -897,6 +904,8 @@ static func punchFloors(b, oc: Dictionary, centre: float) -> Dictionary:
+ static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
+ 	var res := {"pancake": false, "collapse": false}
+ 	var F: int = b.floors
++	if b.failK >= 0:
++		return res   # already coming down
+ 	# the longest cleared run that contains a just-cleared floor and has standing floors above it
+ 	var top: int = topFloor(b)
+ 	if top < 0:
+@@ -925,15 +934,18 @@ static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
+ 	var popF: float = floorPop(b)
+ 	var from_floor: int = run_lo
+ 	var lost: int = m
+-	# clear the stack
+-	for j in range(run_hi + 1, F):
+-		b.fmask = b.fmask & ~(1 << j)
++	var failing: bool = int(cfg().failing) != 0
++	# clear the stack (in the tick, or: it comes down over seconds from from_floor, below)
++	if not failing:
++		for j in range(run_hi + 1, F):
++			b.fmask = b.fmask & ~(1 << j)
+ 	var j2: int = run_lo - 1
+ 	var stack: float = float(m)
+ 	while j2 >= 0:
+ 		if isStanding(b, j2):
+ 			if PANCAKE_K * stack >= floorStr(b, j2):
+-				b.fmask = b.fmask & ~(1 << j2)
++				if not failing:
++					b.fmask = b.fmask & ~(1 << j2)
+ 				stack += 1.0
+ 				lost += 1
+ 				from_floor = j2
+@@ -941,6 +953,9 @@ static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
+ 				break
+ 		j2 -= 1
+ 	res.pancake = true
++	if failing:
++		WorldStructures.startFail(S, b, from_floor, by, cx)
++		return res
+ 	WorldCollateral.kill(S, b.idx, popF * float(lost), by, evt, cx, from_floor)
+ 	SimFx.floorsFall(S, b, from_floor, F - 1, lost + (run_hi - run_lo + 1))
+ 	if standingCount(b) == 0:
+diff --git a/sim/world/structures.gd b/sim/world/structures.gd
+index c1ff05f0..b810d3c6 100644
+--- a/sim/world/structures.gd
++++ b/sim/world/structures.gd
+@@ -111,7 +111,7 @@ static func stage(b) -> int:
+ 			s = 2
+ 			if f < float(_hpAt[2]):
+ 				s = 3
+-	if b.floors >= WorldBrunt.FLOORS_MIN and b.fmask != (1 << b.floors) - 1:
++	if b.floors >= WorldBrunt.FLOORS_MIN and (b.fmask != (1 << b.floors) - 1 or b.failK >= 0):
+ 		s = maxi(s, _cutStage)
+ 	elif b.floors >= WorldBrunt.FLOORS_MIN and b.fhole.size() > 0 and _holed(b):
+ 		s = maxi(s, _cutStage)   # B: a floor with a breach counts like a cut one
+@@ -190,7 +190,7 @@ static func stageEmit(S: SimState, b, s0: int, cause, cx: float, n: int = 0) ->
+ static func curH(b) -> float:
+ 	if not b.alive:
+ 		return 1.0
+-	if b.floors >= WorldBrunt.FLOORS_MIN and b.fmask != (1 << b.floors) - 1:
++	if b.floors >= WorldBrunt.FLOORS_MIN and (b.fmask != (1 << b.floors) - 1 or b.failK >= 0):
+ 		# a skyscraper with floors gone stands as tall as its top standing floor
+ 		return float(WorldBrunt.topFloor(b) + 1) * WorldBrunt.floorH(b)
+ 	return b.h * (0.3 + 0.7 * b.hp / b.maxhp)
+@@ -438,6 +438,136 @@ static func nearestFace(S: SimState, x: float, y: float, z: float, reach: float)
+ 	return best
+ 
+ 
++# ===================================================================== C: the failing state (docs/world/destruction-state.md section 3)
++
++## Is x, z (a fighter's place) under the stack of building b while it falls? A pancake drops straight down over the footprint and 1 bh beside it; a tip
++## also throws the stack out on its side (failTipReach of the height above the break, at most failTipMaxBh). In depth: within failReachZ of the footprint.
++static func _inFailReach(S: SimState, b, f) -> bool:
++	var c: Dictionary = WorldBrunt.cfg()
++	var ex: float = SimWrap.sdx(b.x, f.x)
++	var half: float = b.w * 0.5 + float(c.failBesideBh) * 75.0
++	var lo: float = -half
++	var hi: float = half
++	if b.failDir != 0:
++		var reach: float = minf(float(c.failTipReach) * curH(b), float(c.failTipMaxBh) * 75.0)
++		if b.failDir > 0:
++			hi = b.w * 0.5 + reach
++		else:
++			lo = -(b.w * 0.5 + reach)
++	if ex < lo or ex > hi:
++		return false
++	if absf(f.z - b.z) > b.d * 0.5 + float(c.failReachZ) * 75.0:
++		return false
++	return f.y <= baseY(S, b) + curH(b) + WorldBrunt.FLOOR_H
++
++
++## A tower begins to come down: a warning (failWarn seconds, and over any hold a fighter under it is in by failWarnOver), then a floor lands each step
++## from from_floor up. cx is where the blow fell (see failTipAt, failTipFar for which way it tips, if it does).
++static func startFail(S: SimState, b, from_floor: int, cause, cx: float) -> void:
++	if b.failK >= 0 or not b.alive:
++		return
++	var c: Dictionary = WorldBrunt.cfg()
++	var warn: float = float(c.failWarn)
++	var hurts: String = str(c.failHurts)
++	b.failK = from_floor
++	var u: float = SimWrap.sdx(b.x, cx) / (b.w * 0.5)
++	if absf(u) > 1.0:   # a blow from beside it pushes it over, away from the blow (a far one, past failTipFar half widths, leaves it to fall in place)
++		b.failDir = 0 if absf(u) > float(c.failTipFar) else (-1 if u > 0.0 else 1)
++	else:   # a hit in the footprint: it tips toward the side of the breach once that is failTipAt of the half width off the middle
++		b.failDir = 0 if absf(u) < float(c.failTipAt) else (1 if u > 0.0 else -1)
++	for f in S.fighters:
++		if _inFailReach(S, b, f):
++			var hold: float = maxf(maxf(float(f.stunTicks), float(f.embedT)) / 60.0, maxf(S.dirS.stop, 0.0))
++			warn = maxf(warn, hold + float(c.failWarnOver))
++	b.failT = -warn
++	b.failN = 0
++	b.failBy = int(WorldCrater._slot(S, cause)) if cause != null else -1
++	b.failHurt = PackedFloat32Array()
++	b.failHurt.resize(2)
++	b.failHurt.fill(0.0)
++	var m: int = 0
++	for k in range(from_floor, b.floors):
++		if WorldBrunt.isStanding(b, k):
++			m += 1
++	var stepDur: float = maxf(float(c.failStep), float(c.failMin) / float(maxi(m, 1)))
++	SimFx.buildingFailing(S, b, baseY(S, b), curH(b), warn, stepDur * float(m), b.failDir, float(b.failBy))
++	for f in S.fighters:
++		if _inFailReach(S, b, f):
++			SimFx.hazardTelegraph(S, f, "collapse", warn, b.x)
++
++
++## One tick of every tower that is coming down.
++static func stepFailing(S: SimState, dt: float) -> void:
++	for b in S.buildings:
++		if b.failK >= 0:
++			_failStep(S, b, dt)
++
++
++static func _failStep(S: SimState, b, dt: float) -> void:
++	var c: Dictionary = WorldBrunt.cfg()
++	b.failT += dt
++	if b.failT < 0.0:
++		return   # the warning
++	var m: int = 0
++	for k in range(b.failK, b.floors):
++		if WorldBrunt.isStanding(b, k):
++			m += 1
++	var stepDur: float = maxf(float(c.failStep), float(c.failMin) / float(maxi(m + b.failN, 1)))
++	var due: int = int(floor(b.failT / stepDur))
++	var cause = S.fighters[b.failBy] if b.failBy >= 0 and b.failBy < S.fighters.size() else null
++	while b.failN < due and b.failK < b.floors:
++		var k: int = b.failK
++		while k < b.floors and not WorldBrunt.isStanding(b, k):
++			k += 1
++		if k >= b.floors:
++			b.failK = b.floors
++			break
++		var s0: int = stage(b)
++		var popF: float = WorldBrunt.floorPop(b)
++		b.fmask = b.fmask & ~(1 << k)
++		b.failK = k + 1
++		b.failN += 1
++		if popF > 0.0:
++			WorldCollateral.kill(S, b.idx, popF, cause, 0.0, b.x, k)
++		SimFx.floorsFall(S, b, k, k, 1)
++		stageEmit(S, b, s0, cause, b.x, 1)
++		_failHurt(S, b, k, cause)
++	# the stack is down
++	var left: bool = false
++	for k2 in range(b.failK, b.floors):
++		if WorldBrunt.isStanding(b, k2):
++			left = true
++			break
++	if not left:
++		b.failK = -1
++		b.failT = 0.0
++		b.failDir = 0
++		if WorldBrunt.standingCount(b) == 0 and b.alive:
++			b.hp = minf(b.hp, 0.0)
++			damageBuilding(S, b, 0.001, cause, "implode", b.x, 0.0, true)   # the whole building is down: it falls, the heap and the people as always
++
++
++## A floor lands: a fighter under it takes failDamageFloor, up to failDamageCap from this building, and is buried failBuryTicks. Whom: failHurts.
++static func _failHurt(S: SimState, b, k: int, cause) -> void:
++	var c: Dictionary = WorldBrunt.cfg()
++	var hurts: String = str(c.failHurts)
++	if hurts == "none":
++		return
++	for slot in range(S.fighters.size()):
++		var f = S.fighters[slot]
++		if hurts == "rival" and slot == b.failBy:
++			continue
++		if not _inFailReach(S, b, f) or b.failHurt.size() < 2:
++			continue
++		var room: float = float(c.failDamageCap) - b.failHurt[slot]
++		if room <= 0.0:
++			continue
++		var d: float = minf(float(c.failDamageFloor), room)
++		b.failHurt[slot] += d
++		SimDamage.hurt(S, f, d, cause if cause != null else SimRoster.opp(S, f))
++		f.stunTicks = maxi(f.stunTicks, int(c.failBuryTicks))
++
++
+ ## The index of the lowest building whose box the body overlaps right now, or -1.
+ static func blocked(S: SimState, x: float, y: float, z: float, rx: float, ry: float, rz: float) -> int:
+ 	for bi in along(S, x, x, rx):
+@@ -458,8 +588,8 @@ static func damageBuilding(S: SimState, b, d: float, cause, mode: String = "burs
+ 	# keep (the beam tier gate, balance-targets.md §15): the blow leaves the building standing at keep x maxhp at least.
+ 	if keep > 0.0:
+ 		d = SimMathx.jmin(d, b.hp - keep * b.maxhp)
+-	if not b.alive or d <= 0.0:
+-		return
++	if not b.alive or d <= 0.0 or b.failK >= 0:
++		return   # (a tower already coming down takes nothing more)
+ 	var before: float = b.hp
+ 	var s0: int = stage(b)
+ 	b.hp -= d
+@@ -468,6 +598,13 @@ static func damageBuilding(S: SimState, b, d: float, cause, mode: String = "burs
+ 	if dead > 0.0 and not local:
+ 		WorldCollateral.kill(S, b.idx, dead, cause, evt, cx)
+ 	var gy: float = baseY(S, b)
++	if b.hp <= 0.0 and b.floors >= WorldBrunt.FLOORS_MIN and int(WorldBrunt.cfg().failing) != 0 and WorldBrunt.standingCount(b) > 0:
++		# a tower that is spent comes down over seconds (a warning, then a floor a step): the failing state; the last floor to land takes it
++		if b.failK < 0:
++			startFail(S, b, 0, cause, cx)
++		if not local:
++			stageEmit(S, b, s0, cause, cx)
++		return
+ 	if b.hp <= 0.0:
+ 		b.alive = false
+ 		S.world.structuresLost += 1.0
+diff --git a/sim/world/tools/probe.gd b/sim/world/tools/probe.gd
+index 4e94a4d1..e1a91545 100644
+--- a/sim/world/tools/probe.gd
++++ b/sim/world/tools/probe.gd
+@@ -33,6 +33,19 @@ func check(ok: bool, what: String) -> void:
+ 		fails += 1
+ 
+ 
++## A tower that is spent comes down over seconds (the failing state): run it to the end.
++func settleFail(S: SimState) -> void:
++	for i in range(2400):
++		var any: bool = false
++		for b in S.buildings:
++			if b.failK >= 0:
++				any = true
++				break
++		if not any:
++			return
++		WorldStructures.stepFailing(S, SimConst.DT)
++
++
+ func fresh(seed: int = 1) -> SimState:
+ 	var S := SimCore.createSim()
+ 	SimCore.newMatch(S, seed, {}, {"intro": false})   # a flat start: the probe assumes untouched ground at tick 0 (the intro digs two entrance craters)
+@@ -477,6 +490,7 @@ func _init() -> void:
+ 	Sr.out.fx.clear()
+ 	WorldStructures.damageArea(Sr, tw.x + 4000.0, 0.0, 6000.0, 1.0e7, Sr.fighters[1])
+ 	WorldStructures.damageArea(Sr, tw.x + 4000.0, 0.0, 6000.0, 1.0e7, Sr.fighters[1])   # (the stage cap: the first blast leaves them standing, the second finishes them)
++	settleFail(Sr)
+ 	var fell: int = 0
+ 	var implode: int = 0
+ 	for e in Sr.out.fx:
+@@ -764,6 +778,7 @@ func _init() -> void:
+ 				break
+ 		WorldStructures.damageArea(Sh, tall3.x, 0.0, 600.0, 1.0e8, Sh.fighters[1])
+ 		WorldStructures.damageArea(Sh, tall3.x, 0.0, 600.0, 1.0e8, Sh.fighters[1])   # (the second blast of the stage cap)
++		settleFail(Sh)
+ 		check(not tall3.alive, "an area blast still levels a skyscraper whole")
+ 
+ 	print("== terrain fixes T1 to T4 (docs/world/terrain-audit.md) ==")
+@@ -837,6 +852,7 @@ func _init() -> void:
+ 		changed2 += absf(Sr_t.deform[i] - d0_t[i])
+ 	var d1_t := Sr_t.deform.duplicate()
+ 	WorldStructures.damageBuilding(Sr_t, f1_t, 1.0e9, Sr_t.fighters[1], "implode", f1_t.x, 0.0)
++	settleFail(Sr_t)
+ 	var heap_max: float = 0.0
+ 	var heap_step: float = 0.0
+ 	var under_t: float = 0.0
+diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
+index 0247c482..1cdf1599 100644
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.brunt/1",
+-  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width, and the story is gone at clearAt of the width (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union.",
++  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width, and the story is gone at clearAt of the width (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union. failing: a tower that is spent or pancaked comes down over seconds (failWarn of warning, failWarnOver more over any hold a fighter under it is in; the stack takes at least failMin and a floor lands at most each failStep); failHurts: whom the falling stack hurts (none, both, or rival: the one who did not bring it down; Orb's homework); failDamageFloor a floor on a fighter under it, failDamageCap the most from one building, failBuryTicks the stagger; failReachZ the depth and failBesideBh the width beside the footprint it reaches; failTipAt the share of the half width a hit must be off the middle to tip it toward the breach, failTipFar how far (in half widths) a blow from outside still pushes it over, failTipReach the share of the height thrown to the side, failTipMaxBh at most.",
+   "bruntMul": 1.8,
+   "tierFactor": [
+     0.12,
+@@ -51,5 +51,20 @@
+   "clearAt": 0.7,
+   "breachDeath": 0.25,
+   "breachWeakens": 0.5,
+-  "breachGrow": 0.5
++  "breachGrow": 0.5,
++  "failing": 1,
++  "failWarn": 1.5,
++  "failWarnOver": 0.6,
++  "failMin": 2.0,
++  "failStep": 0.25,
++  "failHurts": "both",
++  "failDamageFloor": 6.0,
++  "failDamageCap": 100.0,
++  "failBuryTicks": 45,
++  "failReachZ": 4.0,
++  "failBesideBh": 0.5,
++  "failTipAt": 0.5,
++  "failTipFar": 3.0,
++  "failTipReach": 0.4,
++  "failTipMaxBh": 6.0
+ }
+diff --git a/tools/schemas/biomes-brunt.schema.json b/tools/schemas/biomes-brunt.schema.json
+index 70d6ec4e..6df4047d 100644
+--- a/tools/schemas/biomes-brunt.schema.json
++++ b/tools/schemas/biomes-brunt.schema.json
+@@ -225,6 +225,96 @@
+       "minimum": 0,
+       "maximum": 1,
+       "description": "A floor already broken: a further breach widens it by this share of its own width on top of the union."
++    },
++    "failing": {
++      "type": "integer",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "1: a tower that is spent or pancaked comes down over seconds; 0: in the tick, as before."
++    },
++    "failWarn": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 10,
++      "description": "Seconds of warning before the first floor lands (Game Design: at least 1.5)."
++    },
++    "failWarnOver": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 5,
++      "description": "The warning is at least this long over any hold a fighter under the tower is in."
++    },
++    "failMin": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 20,
++      "description": "The least seconds the stack takes to come down (Game Design: at least 2)."
++    },
++    "failStep": {
++      "type": "number",
++      "exclusiveMinimum": 0,
++      "maximum": 5,
++      "description": "The most seconds a floor takes to land."
++    },
++    "failHurts": {
++      "enum": [
++        "none",
++        "both",
++        "rival"
++      ],
++      "description": "Whom the falling stack hurts: nobody (today), both fighters, or the one who did not bring it down."
++    },
++    "failDamageFloor": {
++      "type": "number",
++      "minimum": 0,
++      "description": "The damage a landing floor does a fighter under it."
++    },
++    "failDamageCap": {
++      "type": "number",
++      "minimum": 0,
++      "description": "The most one building's stack does one fighter."
++    },
++    "failBuryTicks": {
++      "type": "integer",
++      "minimum": 0,
++      "maximum": 300,
++      "description": "The ticks a fighter is buried under a landing floor."
++    },
++    "failReachZ": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 20,
++      "description": "How far beside the footprint in depth, in fighter heights, the stack reaches."
++    },
++    "failBesideBh": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 10,
++      "description": "How far beside the footprint, in fighter heights, a falling stack reaches."
++    },
++    "failTipAt": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "A blow this share of the half width off the middle tips the building that way."
++    },
++    "failTipFar": {
++      "type": "number",
++      "minimum": 1,
++      "maximum": 20,
++      "description": "A blow from beside the footprint within this many half widths of the middle pushes it over, away from the blow; a farther one leaves it to fall in place."
++    },
++    "failTipReach": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 2,
++      "description": "The share of its height a tipping stack is thrown to its side."
++    },
++    "failTipMaxBh": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 40,
++      "description": "... at most this many fighter heights."
+     }
+   },
+   "additionalProperties": false,
