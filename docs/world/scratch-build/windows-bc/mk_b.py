@@ -7,7 +7,7 @@ R = root()
 def state(s):
     s = rep(s, '''	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
 ''', '''	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
-	var fhole := PackedFloat32Array()  # B: the broken run of each floor, two numbers a floor (its centre as a fraction of the half width, its share of the width), allocated with fdmg
+	var fhole := PackedFloat32Array()  # B: the slot broken on each floor, three numbers a floor (its two ends as fractions of the half width, -1 to 1, and how much of the story is gone, 0 to 1), allocated with fdmg
 ''')
     s = rep(s, '''	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
 ''', '''	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
@@ -61,8 +61,8 @@ def brunt(s):
 }''')
     s = rep(s, '''			var st: float = floorStr(b, j)
 			if haveD and b.fdmg[j] > 0.0:''', '''			var st: float = floorStr(b, j)
-			if b.fhole.size() == 2 * b.floors and b.fhole[2 * j + 1] > 0.0:   # B: a floor with a breach carries less
-				st = maxf(st * float(cm.wallMin), st * (1.0 - float(cm.breachWeakens) * b.fhole[2 * j + 1]))
+			if b.fhole.size() == 3 * b.floors and b.fhole[3 * j + 2] > 0.0:   # B: a floor with a breach carries less
+				st = maxf(st * float(cm.wallMin), st * (1.0 - float(cm.breachWeakens) * b.fhole[3 * j + 2]))
 			if haveD and b.fdmg[j] > 0.0:''')
     s = rep(s, '''	var lowest: int = oc.k
 	if oc.outcome == "punch":
@@ -76,18 +76,19 @@ def brunt(s):
 			WorldCollateral.kill(S, b.idx, popF * float(cleared), by, evt, cx, lowest)
 		SimFx.floorHit(S, f, b, lowest, cleared, "punch", oc.ratio, y, by)''', '''	var lowest: int = oc.k
 	if oc.outcome == "punch":
-		var pr: Dictionary = punchFloors(b, oc, 0.0)   # a body crosses the building: the breach is centred on it
+		var pr: Dictionary = punchFloors(b, oc, 0.0, true)   # a body crosses the building: the slot runs from side to side
 		lowest = mini(lowest, pr.lowest)
 		var dead: float = popF * pr.deaths
 		if dead > 0.0:
 			WorldCollateral.kill(S, b.idx, dead, by, evt, cx, lowest)
 		SimFx.floorHit(S, f, b, lowest, pr.cleared, "punch", oc.ratio, y, by, pr.x0, pr.x1)''')
-    s = rep(s, '''## A cleared span longer than TUNNEL_MAX drops the floors above it''', '''## B: a punch on the floors a body covers (oc.hit). Each floor takes a breach of breachBase + breachPerRatio * ratio fighter heights of the width, centred
-## at centre (a fraction of the half width: 0 for a body that crosses the building, a shot's x for a shot), merged with what is there; the floor is gone
-## (its fmask bit clears, as a punch always cleared it) when the breach is clearAt of the width. With breaches off every punch clears, as before.
-## Returns {"cleared", "lowest", "deaths" (the floors' share of their people to kill: a gone floor all of it, a holed one breachDeath + the share),
-## "x0", "x1" (the breach on the lowest floor hit, in world x)}.
-static func punchFloors(b, oc: Dictionary, centre: float) -> Dictionary:
+    s = rep(s, '''## A cleared span longer than TUNNEL_MAX drops the floors above it''', '''## B: a punch on the floors a body covers (oc.hit). The blow breaks a SLOT of each floor (the span of the plate it swept: from side to side for a body
+## that crosses the building, full is true; a run centred at centre for a shot) and takes a share of the story with it: breachBase + breachPerRatio * ratio
+## fighter heights of its width, so the slot says WHERE it is broken and g (kept in fhole) says HOW MUCH of the story is gone. A floor already broken adds
+## breachGrow of the new share. The floor is gone (its fmask bit clears, as a punch always cleared it) when g is clearAt. With breaches off every punch
+## clears, as before. Returns {"cleared", "lowest", "deaths" (the floors' share of their people to kill: a gone floor all of it, a holed one
+## breachDeath + the share), "x0", "x1" (the slot on the lowest floor hit, in world x)}.
+static func punchFloors(b, oc: Dictionary, centre: float, full: bool = false) -> Dictionary:
 	var c: Dictionary = cfg()
 	var res := {"cleared": 0, "lowest": oc.k, "deaths": 0.0, "x0": b.x, "x1": b.x}
 	var wbh: float = maxf(b.w / BH, 0.5)
@@ -98,24 +99,23 @@ static func punchFloors(b, oc: Dictionary, centre: float) -> Dictionary:
 		var gone: bool = true
 		var share: float = 1.0
 		if on:
-			var bw: float = float(c.breachBase) + float(c.breachPerRatio) * minf(float(oc.ratio), 40.0)
-			share = minf(bw / wbh, 1.0)
-			if b.fhole.size() != 2 * F:
+			var gnew: float = minf((float(c.breachBase) + float(c.breachPerRatio) * minf(float(oc.ratio), 40.0)) / wbh, 1.0)
+			if b.fhole.size() != 3 * F:
 				b.fhole = PackedFloat32Array()
-				b.fhole.resize(2 * F)
+				b.fhole.resize(3 * F)
 				b.fhole.fill(0.0)
-			var lo: float = centre - share
-			var hi: float = centre + share
-			var grow: float = 0.0
-			if b.fhole[2 * j + 1] > 0.0:
-				lo = minf(lo, b.fhole[2 * j] - b.fhole[2 * j + 1])
-				hi = maxf(hi, b.fhole[2 * j] + b.fhole[2 * j + 1])
-				grow = float(c.breachGrow) * share   # a floor that was already broken: the breach widens by half of this one's width on top of the union
-			lo = maxf(lo, -1.0)
-			hi = minf(hi, 1.0)
-			share = minf((hi - lo) * 0.5 + grow, 1.0)
-			b.fhole[2 * j] = (lo + hi) * 0.5
-			b.fhole[2 * j + 1] = share
+			var lo: float = -1.0 if full else maxf(centre - gnew, -1.0)
+			var hi: float = 1.0 if full else minf(centre + gnew, 1.0)
+			var g0: float = b.fhole[3 * j + 2]
+			if g0 > 0.0:
+				lo = minf(lo, b.fhole[3 * j])
+				hi = maxf(hi, b.fhole[3 * j + 1])
+				share = minf(g0 + float(c.breachGrow) * gnew, 1.0)   # a floor that was already broken: the story goes a further breachGrow of this blow's share
+			else:
+				share = gnew
+			b.fhole[3 * j] = lo
+			b.fhole[3 * j + 1] = hi
+			b.fhole[3 * j + 2] = share
 			gone = share >= float(c.clearAt)
 			if first:
 				res.x0 = b.x + lo * b.w * 0.5
@@ -150,7 +150,7 @@ def blast(s):
 		if cleared > 0:
 			WorldCollateral.kill(S, b.idx, popF * float(cleared), by, 0.0, cx, lowest)
 		SimFx.floorHitShot(S, b, lowest, cleared, "punch", oc.ratio, y, slot, ux, uy)''', '''	if oc.outcome == "punch":
-		var pr: Dictionary = WorldBrunt.punchFloors(b, oc, clampf(SimWrap.sdx(b.x, cx) / (b.w * 0.5), -1.0, 1.0))   # a shot breaks the story where it lands
+		var pr: Dictionary = WorldBrunt.punchFloors(b, oc, clampf(SimWrap.sdx(b.x, cx) / (b.w * 0.5), -1.0, 1.0), false)   # a shot breaks the story where it lands
 		lowest = mini(lowest, pr.lowest)
 		var dead: float = popF * pr.deaths
 		if dead > 0.0:
@@ -168,7 +168,7 @@ def struct(s):
 	elif b.floors >= WorldBrunt.FLOORS_MIN and b.fdmg.size() > 0:''')
     s = rep(s, '''## The most of a building's hit points one floors hit may take from its core''', '''static func _holed(b) -> bool:
 	for k in range(b.floors):
-		if 2 * k + 1 < b.fhole.size() and b.fhole[2 * k + 1] > 0.0:
+		if 3 * k + 2 < b.fhole.size() and b.fhole[3 * k + 2] > 0.0:
 			return true
 	return false
 
@@ -184,7 +184,7 @@ rw(R, 'sim/world/brunt.gd', brunt)
 rw(R, 'sim/world/blast.gd', blast)
 rw(R, 'sim/world/structures.gd', struct)
 data_keys(R, {"breaches": 1, "breachBase": 0.8, "breachPerRatio": 0.6, "clearAt": 0.7, "breachDeath": 0.25, "breachWeakens": 0.5, "breachGrow": 0.5},
-          "breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width, and the story is gone at clearAt of the width (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union.",
+          "breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width is the share of the story a punch takes (the slot it breaks is the span it swept), and the story is gone at clearAt (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union.",
           {
               "breaches": {"type": "integer", "minimum": 0, "maximum": 1, "description": "1: a punch breaks a run of the story and it is gone at clearAt of the width; 0: every punch clears the story, as before."},
               "breachBase": {"type": "number", "exclusiveMinimum": 0, "description": "The breach a punch makes, in fighter heights of the width, before the ratio."},

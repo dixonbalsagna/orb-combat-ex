@@ -6,8 +6,8 @@ R = root()
 
 
 def state(s):
-    s = rep(s, '''	var fhole := PackedFloat32Array()  # B: the broken run of each floor, two numbers a floor (its centre as a fraction of the half width, its share of the width), allocated with fdmg
-''', '''	var fhole := PackedFloat32Array()  # B: the broken run of each floor, two numbers a floor (its centre as a fraction of the half width, its share of the width), allocated with fdmg
+    s = rep(s, '''	var fhole := PackedFloat32Array()  # B: the slot broken on each floor, three numbers a floor (its two ends as fractions of the half width, -1 to 1, and how much of the story is gone, 0 to 1), allocated with fdmg
+''', '''	var fhole := PackedFloat32Array()  # B: the slot broken on each floor, three numbers a floor (its two ends as fractions of the half width, -1 to 1, and how much of the story is gone, 0 to 1), allocated with fdmg
 	var failT: float = 0.0     # C: seconds into a collapse; negative is the warning before it
 	var failK: int = -1        # C: the lowest floor not yet landed while it fails (-1: standing)
 	var failDir: int = 0       # C: -1 or 1, the way it tips; 0 a pancake

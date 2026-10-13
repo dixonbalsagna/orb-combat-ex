@@ -16,10 +16,10 @@ Every held hit adds the hit's damage to `fdmg` of the floors it covered; three w
 
 ## 2. Breaches: a hole on a floor that keeps its plate (window B)
 
-- **State:** `Building.fhole: PackedFloat32Array`, two numbers a floor, allocated with `fdmg` on the first local hit: `[2k]` the centre of the breach as a fraction of the building's half width (-1 to 1, seen along x), `[2k + 1]` its width as a share of the plate (0 to 1; 0 is whole). Two breaches on one floor merge into the interval that holds both.
-- **Rule:** a punch makes a breach of `clamp(0.8 + 0.6 * ratio, 0.8, w)` fighter heights centred on the body's x; the floor's `fmask` bit clears only when the width reaches `clearAt` (0.7 of the plate) or a pancake takes it. The cleared floor then reads as today (the tunnel and the pancake rule are unchanged).
-- **Event:** `floor_hit` gains `x0` and `x1` (the breach's world x at the floor, the face the body entered by is `z`), so VFX can put dust and glass at the hole.
-- **Cost:** 2 floats a damaged floor (a hit tower of 13 floors: 26 floats), the whole city under 1 KB; hash: the array's length and values like `fdmg`; the JS parity copy is frozen and untouched.
+- **State:** `Building.fhole: PackedFloat32Array`, **three numbers a floor**, allocated with `fdmg` on the first local hit: `[3k]` and `[3k + 1]` the two ends of the slot the blow broke on that floor, as fractions of the building's half width (-1 to 1, seen along x; the span of the plate it swept: side to side for a body that crosses the building, a local run for a shot), `[3k + 2]` how much of the story is gone (0 whole, 0.7 and over: the floor is gone and its `fmask` bit is clear). Two blows on one floor merge into the span that holds both and add to how much is gone. (Rendering's `destruction-look.md` section 8 asked for exactly this: the slot is where, the share is how much.)
+- **Rule:** a punch takes `(0.8 + 0.6 * ratio)` fighter heights of the building's width as a share of the story (`g`), adds `breachGrow` of that to a floor already broken, and the floor's `fmask` bit clears only when `g` reaches `clearAt` (0.7) or a pancake takes it. The slot it breaks is the span it swept, whatever `g` is: tier reads in how much is left standing in the slot, and in how many floors. The cleared floor then reads as today (the tunnel and the pancake rule are unchanged).
+- **Event:** `floor_hit` gains `x0` and `x1` (the slot's world x on the lowest floor hit; the face the body entered by is `z`), so VFX can put dust and glass at it.
+- **Cost:** 3 floats a damaged floor (a hit tower of 13 floors: 39 floats), the whole city under 2 KB; hash: the array's length and values like `fdmg`; the JS parity copy is frozen and untouched.
 - **A look reads:** the slab with a hole of that width at that x (the plate drawn on both sides of it), the core and the corner columns showing in the hole, the floors above on their plate. A tier-1 hit: a body-sized hole and cracks on the neighbours; tier 4: most of the plate gone and the columns left.
 
 ## 3. The failing state: a collapse that takes seconds (window C)
@@ -47,6 +47,6 @@ Costs in time: B is one World window (a field, a rule, a golden); C is one to tw
 
 ## 5. What I need to agree with Rendering
 
-1. The breach as an interval of the plate in x (centre, width): is one interval a floor enough for the picture, or does a floor need two (a hole each side)? Two doubles the state; I would take one.
+1. **Answered by Rendering (destruction-look.md section 8):** one interval a floor, the span the body swept, clipped to the building; World's state is now that (two ends and how much of the story is gone).
 2. Whether Rendering would rather time the fall itself from the existing events (no failing state) and keep the sim instant. It is simpler for me, but the fall then cannot hurt a fighter: the falling stack is Game Design's ruling, so the sim has to hold the time.
 3. The warning: 1.5 s minimum is Game Design's. What it shows (dust, glass, a shake), Audio's groan; I only supply `failT < 0`.

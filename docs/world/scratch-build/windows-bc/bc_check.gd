@@ -116,12 +116,13 @@ func _init() -> void:
 	var t2 = tower(Sk)
 	var y: float = WorldStructures.baseY(Sk, t2) + (float(t2.floors / 2) + 0.5) * WorldBrunt.floorH(t2)
 	var oc: Dictionary = {"k": t2.floors / 2, "hit": [t2.floors / 2, t2.floors / 2 + 1], "ratio": 3.0, "dmg": 900.0}
-	var pr: Dictionary = WorldBrunt.punchFloors(t2, oc, 0.0)
-	var share: float = t2.fhole[2 * (t2.floors / 2) + 1]
+	var pr: Dictionary = WorldBrunt.punchFloors(t2, oc, 0.0, true)
+	var share: float = t2.fhole[3 * (t2.floors / 2) + 2]
+	ok(t2.fhole[3 * (t2.floors / 2)] == -1.0 and t2.fhole[3 * (t2.floors / 2) + 1] == 1.0, "a body that crosses the building breaks a slot from side to side of the floor (%.1f to %.1f)" % [t2.fhole[3 * (t2.floors / 2)], t2.fhole[3 * (t2.floors / 2) + 1]])
 	ok(pr.cleared == 0 and share > 0.2 and share < float(c.clearAt), "a ratio-3 punch breaks a run of the story and leaves it standing (share %.2f of the width, clearAt %.2f)" % [share, float(c.clearAt)])
-	ok(pr.x0 >= t2.x - t2.w * 0.5 and pr.x1 <= t2.x + t2.w * 0.5 and pr.x0 < pr.x1, "floor_hit x0 and x1 lie in the building (%.0f to %.0f of %.0f +- %.0f)" % [pr.x0, pr.x1, t2.x, t2.w * 0.5])
+	ok(pr.x0 >= t2.x - t2.w * 0.5 and pr.x1 <= t2.x + t2.w * 0.5 and pr.x0 < pr.x1, "floor_hit x0 and x1 are the slot, inside the building (%.0f to %.0f of %.0f +- %.0f)" % [pr.x0, pr.x1, t2.x, t2.w * 0.5])
 	oc.ratio = 12.0
-	var pr2: Dictionary = WorldBrunt.punchFloors(t2, oc, 0.0)
+	var pr2: Dictionary = WorldBrunt.punchFloors(t2, oc, 0.0, true)
 	ok(pr2.cleared == 2, "a ratio-12 punch (tier 4) clears the story (%d floors)" % pr2.cleared)
 	var Sm := fresh(1)
 	var t3 = tower(Sm)
@@ -129,15 +130,20 @@ func _init() -> void:
 	var tot: int = 0
 	var rounds: int = 0
 	while tot == 0 and rounds < 6:
-		var p3: Dictionary = WorldBrunt.punchFloors(t3, oc3, 0.0)
+		var p3: Dictionary = WorldBrunt.punchFloors(t3, oc3, 0.0, true)
 		tot += p3.cleared
 		rounds += 1
 	ok(tot > 0 and rounds >= 2, "breaches add up: the story goes at the %s punch of ratio 3" % ["second" if rounds == 2 else str(rounds) + "th"])
+	var Ss := fresh(1)
+	var t5 = tower(Ss)
+	var oc5: Dictionary = {"k": 4, "hit": [4, 5], "ratio": 3.0, "dmg": 900.0}
+	var ps: Dictionary = WorldBrunt.punchFloors(t5, oc5, 0.5, false)
+	ok(ps.x0 > t5.x and ps.x1 <= t5.x + t5.w * 0.5 + 0.01 and ps.x1 - ps.x0 < t5.w * 0.9, "a shot breaks a local slot where it lands (%.0f to %.0f of a building %.0f wide at x %.0f)" % [ps.x0, ps.x1, t5.w, t5.x])
 	c.breaches = 0
 	var Sz := fresh(1)
 	var t4 = tower(Sz)
 	var oc4: Dictionary = {"k": 4, "hit": [4, 5], "ratio": 1.2, "dmg": 900.0}
-	var p4: Dictionary = WorldBrunt.punchFloors(t4, oc4, 0.0)
+	var p4: Dictionary = WorldBrunt.punchFloors(t4, oc4, 0.0, true)
 	ok(p4.cleared == 2, "breaches 0: every punch clears the story as before")
 	c.breaches = 1
 

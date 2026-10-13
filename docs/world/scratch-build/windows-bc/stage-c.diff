@@ -1,11 +1,11 @@
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index 0cd21db2..35f6f3e8 100644
+index f53cfc40..017db28b 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
 @@ -225,6 +225,12 @@ class Building:
  	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
  	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
- 	var fhole := PackedFloat32Array()  # B: the broken run of each floor, two numbers a floor (its centre as a fraction of the half width, its share of the width), allocated with fdmg
+ 	var fhole := PackedFloat32Array()  # B: the slot broken on each floor, three numbers a floor (its two ends as fractions of the half width, -1 to 1, and how much of the story is gone, 0 to 1), allocated with fdmg
 +	var failT: float = 0.0     # C: seconds into a collapse; negative is the warning before it
 +	var failK: int = -1        # C: the lowest floor not yet landed while it fails (-1: standing)
 +	var failDir: int = 0       # C: -1 or 1, the way it tips; 0 a pancake
@@ -87,7 +87,7 @@ index f1d3531a..3ce91a3d 100644
  	SimMood.tick(S)   # M1: reads this tick's events; writes only its own state and events
  	WorldCollateral.tick(S)
 diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
-index cf674484..22377f26 100644
+index e2725ead..66f81808 100644
 --- a/sim/world/brunt.gd
 +++ b/sim/world/brunt.gd
 @@ -37,9 +37,14 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
@@ -114,7 +114,7 @@ index cf674484..22377f26 100644
  	if isHouse(b):
  		var r: float = dmg / b.maxhp
  		return {"floors": false, "dmg": maxf(dmg, b.hp), "ratio": r, "outcome": "collapse", "pass": true, "keep": float(c.houseKeep), "deaths": b.popAlive}
-@@ -897,6 +904,8 @@ static func punchFloors(b, oc: Dictionary, centre: float) -> Dictionary:
+@@ -906,6 +913,8 @@ static func punchFloors(b, oc: Dictionary, centre: float, full: bool = false) ->
  static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
  	var res := {"pancake": false, "collapse": false}
  	var F: int = b.floors
@@ -123,7 +123,7 @@ index cf674484..22377f26 100644
  	# the longest cleared run that contains a just-cleared floor and has standing floors above it
  	var top: int = topFloor(b)
  	if top < 0:
-@@ -925,15 +934,18 @@ static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
+@@ -934,15 +943,18 @@ static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
  	var popF: float = floorPop(b)
  	var from_floor: int = run_lo
  	var lost: int = m
@@ -146,7 +146,7 @@ index cf674484..22377f26 100644
  				stack += 1.0
  				lost += 1
  				from_floor = j2
-@@ -941,6 +953,9 @@ static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
+@@ -950,6 +962,9 @@ static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
  				break
  		j2 -= 1
  	res.pancake = true
@@ -157,7 +157,7 @@ index cf674484..22377f26 100644
  	SimFx.floorsFall(S, b, from_floor, F - 1, lost + (run_hi - run_lo + 1))
  	if standingCount(b) == 0:
 diff --git a/sim/world/structures.gd b/sim/world/structures.gd
-index c1ff05f0..b810d3c6 100644
+index ce75dc33..7e3b5ce2 100644
 --- a/sim/world/structures.gd
 +++ b/sim/world/structures.gd
 @@ -111,7 +111,7 @@ static func stage(b) -> int:
@@ -389,14 +389,14 @@ index 4e94a4d1..e1a91545 100644
  	var heap_step: float = 0.0
  	var under_t: float = 0.0
 diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
-index 0247c482..1cdf1599 100644
+index 25cba48c..b473c63f 100644
 --- a/data/biomes/brunt.json
 +++ b/data/biomes/brunt.json
 @@ -1,6 +1,6 @@
  {
    "schema": "biomes.brunt/1",
--  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width, and the story is gone at clearAt of the width (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union.",
-+  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width, and the story is gone at clearAt of the width (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union. failing: a tower that is spent or pancaked comes down over seconds (failWarn of warning, failWarnOver more over any hold a fighter under it is in; the stack takes at least failMin and a floor lands at most each failStep); failHurts: whom the falling stack hurts (none, both, or rival: the one who did not bring it down; Orb's homework); failDamageFloor a floor on a fighter under it, failDamageCap the most from one building, failBuryTicks the stagger; failReachZ the depth and failBesideBh the width beside the footprint it reaches; failTipAt the share of the half width a hit must be off the middle to tip it toward the breach, failTipFar how far (in half widths) a blow from outside still pushes it over, failTipReach the share of the height thrown to the side, failTipMaxBh at most.",
+-  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width is the share of the story a punch takes (the slot it breaks is the span it swept), and the story is gone at clearAt (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union.",
++  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width is the share of the story a punch takes (the slot it breaks is the span it swept), and the story is gone at clearAt (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union. failing: a tower that is spent or pancaked comes down over seconds (failWarn of warning, failWarnOver more over any hold a fighter under it is in; the stack takes at least failMin and a floor lands at most each failStep); failHurts: whom the falling stack hurts (none, both, or rival: the one who did not bring it down; Orb's homework); failDamageFloor a floor on a fighter under it, failDamageCap the most from one building, failBuryTicks the stagger; failReachZ the depth and failBesideBh the width beside the footprint it reaches; failTipAt the share of the half width a hit must be off the middle to tip it toward the breach, failTipFar how far (in half widths) a blow from outside still pushes it over, failTipReach the share of the height thrown to the side, failTipMaxBh at most.",
    "bruntMul": 1.8,
    "tierFactor": [
      0.12,
@@ -411,7 +411,7 @@ index 0247c482..1cdf1599 100644
 +  "failWarnOver": 0.6,
 +  "failMin": 2.0,
 +  "failStep": 0.25,
-+  "failHurts": "both",
++  "failHurts": "none",
 +  "failDamageFloor": 6.0,
 +  "failDamageCap": 100.0,
 +  "failBuryTicks": 45,
