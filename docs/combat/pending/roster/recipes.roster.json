@@ -30,13 +30,13 @@
    "waiting": []
   },
   "cyborg_courier": {
-   "pieces": 42,
-   "posed": 42,
+   "pieces": 41,
+   "posed": 41,
    "waiting": []
   },
   "cyborg_hopper": {
-   "pieces": 35,
-   "posed": 35,
+   "pieces": 38,
+   "posed": 38,
    "waiting": []
   },
   "empress": {
@@ -573,7 +573,7 @@
     "toward": [
      "strike.knee_hook",
      "strike.spear_hand",
-     "strike.hook",
+     "strike.backfist",
      "strike.cross",
      "strike.rising_elbow",
      "strike.jab",
@@ -582,50 +582,101 @@
     ],
     "away": [
      "strike.sweep",
+     "strike.spear_hand",
      "strike.backfist",
      "strike.cross",
-     "strike.hook",
-     "strike.short_knee",
      "strike.short_elbow",
-     "strike.front_kick",
-     "strike.jab"
+     "strike.short_knee",
+     "strike.side_kick",
+     "strike.low_kick"
     ],
     "none": [
-     "strike.backfist",
+     "strike.shoulder_check",
      "strike.spear_hand",
-     "strike.hook",
+     "strike.backfist",
      "strike.cross",
      "strike.knee_hook",
-     "strike.short_knee",
-     "strike.low_kick",
-     "strike.side_kick"
+     "strike.jab",
+     "strike.front_kick",
+     "strike.sweep"
     ],
     "down": [
      "strike.sweep",
+     "strike.cross",
      "strike.backfist",
      "strike.spear_hand",
-     "strike.hook",
-     "strike.short_knee",
      "strike.rising_elbow",
+     "strike.short_knee",
      "strike.low_kick",
      "strike.side_kick"
     ],
     "up": [
-     "strike.hook",
+     "strike.short_elbow",
      "strike.cross",
      "strike.backfist",
      "strike.spear_hand",
-     "strike.short_elbow",
+     "strike.rising_elbow",
      "strike.jab",
+     "strike.lift_kick",
+     "strike.side_kick"
+    ]
+   },
+   "cyborg_hopper": {
+    "toward": [
+     "strike.short_elbow",
+     "strike.backfist",
+     "strike.palm_heel",
+     "strike.hook",
+     "strike.short_knee",
+     "strike.knee_hook",
      "strike.shoulder_check",
+     "strike.front_kick"
+    ],
+    "away": [
+     "strike.snap_round",
+     "strike.backfist",
+     "strike.palm_heel",
+     "strike.hook",
+     "strike.short_knee",
+     "strike.short_elbow",
+     "strike.side_kick",
+     "strike.lift_kick"
+    ],
+    "none": [
+     "strike.sweep",
+     "strike.backfist",
+     "strike.palm_heel",
+     "strike.hook",
+     "strike.knee_hook",
+     "strike.short_knee",
+     "strike.low_kick",
+     "strike.front_kick"
+    ],
+    "down": [
+     "strike.knee_hook",
+     "strike.backfist",
+     "strike.palm_heel",
+     "strike.hook",
+     "strike.short_elbow",
+     "strike.short_knee",
+     "strike.low_kick",
+     "strike.shoulder_check"
+    ],
+    "up": [
+     "strike.short_elbow",
+     "strike.backfist",
+     "strike.palm_heel",
+     "strike.hook",
+     "strike.knee_hook",
+     "strike.short_knee",
+     "strike.snap_round",
      "strike.lift_kick"
     ]
    },
-   "cyborg_hopper": {},
    "empress": {
     "toward": [
      "strike.rising_elbow",
-     "strike.cross",
+     "strike.palm_heel",
      "strike.hook",
      "strike.spear_hand",
      "strike.short_elbow",
@@ -637,7 +688,7 @@
      "strike.low_kick",
      "strike.spear_hand",
      "strike.hook",
-     "strike.cross",
+     "strike.palm_heel",
      "strike.short_knee",
      "strike.knee_hook",
      "strike.front_kick",
@@ -645,29 +696,29 @@
     ],
     "none": [
      "strike.rising_elbow",
-     "strike.cross",
-     "strike.hook",
      "strike.spear_hand",
-     "strike.knee_hook",
+     "strike.hook",
+     "strike.palm_heel",
      "strike.short_knee",
-     "strike.snap_round",
-     "strike.jab"
+     "strike.short_elbow",
+     "strike.jab",
+     "strike.snap_round"
     ],
     "down": [
      "strike.sweep",
      "strike.spear_hand",
      "strike.hook",
-     "strike.cross",
-     "strike.short_elbow",
+     "strike.palm_heel",
+     "strike.knee_hook",
      "strike.short_knee",
      "strike.snap_round",
      "strike.front_kick"
     ],
     "up": [
      "strike.rising_elbow",
-     "strike.spear_hand",
+     "strike.palm_heel",
      "strike.hook",
-     "strike.cross",
+     "strike.spear_hand",
      "strike.short_elbow",
      "strike.jab",
      "strike.side_kick",
@@ -769,30 +820,30 @@
    "cyborg_press": {
     "heavies": 8,
     "heavy": {
-     "pool": 546
+     "pool": 540
     },
     "mashedB": {
      "pool": 50
     },
     "launcher": {
-     "pool": 546
+     "pool": 540
     },
     "bySend": {
      "up": {
-      "pool": 438,
-      "lower": 105,
-      "repeat": 3
+      "pool": 420,
+      "lower": 118,
+      "repeat": 2
      },
      "down": {
       "lower": "always: no piece of the tier sends that way"
      },
      "across": {
-      "pool": 478,
-      "lower": 30,
-      "repeat": 38
+      "pool": 472,
+      "repeat": 38,
+      "lower": 30
      },
      "turned": {
-      "pool": 544,
+      "pool": 538,
       "repeat": 2
      }
     }
@@ -800,27 +851,27 @@
    "cyborg_courier": {
     "heavies": 8,
     "heavy": {
-     "pool": 872
+     "pool": 810
     },
     "mashedB": {
      "pool": 46
     },
     "launcher": {
-     "pool": 872
+     "pool": 810
     },
     "bySend": {
      "up": {
-      "lower": 151,
-      "pool": 715,
+      "pool": 660,
+      "lower": 144,
       "repeat": 6
      },
      "down": {
-      "pool": 780,
+      "pool": 730,
       "repeat": 50,
-      "lower": 42
+      "lower": 30
      },
      "across": {
-      "pool": 861,
+      "pool": 799,
       "repeat": 11
      },
      "turned": {
@@ -831,32 +882,32 @@
    "cyborg_hopper": {
     "heavies": 7,
     "heavy": {
-     "pool": 510
+     "pool": 640
     },
     "mashedB": {
-     "pool": 40
+     "pool": 38
     },
     "launcher": {
-     "pool": 510
+     "pool": 640
     },
     "bySend": {
      "up": {
-      "pool": 374,
-      "lower": 119,
-      "repeat": 17
+      "pool": 558,
+      "lower": 77,
+      "repeat": 5
      },
      "down": {
-      "pool": 422,
-      "repeat": 32,
-      "lower": 56
+      "pool": 516,
+      "repeat": 34,
+      "lower": 90
      },
      "across": {
-      "pool": 502,
-      "repeat": 8
+      "pool": 631,
+      "repeat": 9
      },
      "turned": {
-      "pool": 464,
-      "repeat": 44,
+      "pool": 588,
+      "repeat": 50,
       "lower": 2
      }
     }
@@ -867,7 +918,7 @@
      "pool": 648
     },
     "mashedB": {
-     "pool": 52
+     "pool": 54
     },
     "launcher": {
      "pool": 648
@@ -878,13 +929,14 @@
       "lower": 86
      },
      "down": {
-      "pool": 566,
-      "repeat": 40,
-      "lower": 42
+      "pool": 576,
+      "repeat": 42,
+      "lower": 30
      },
      "across": {
-      "pool": 640,
-      "repeat": 8
+      "pool": 586,
+      "lower": 18,
+      "repeat": 44
      },
      "turned": {
       "pool": 640,
@@ -971,7 +1023,8 @@
    },
    "cyborg_hopper": {
     "up": [
-     "strike.su_ball_heave"
+     "strike.su_ball_heave",
+     "strike.su_palm_heave"
     ],
     "down": [
      "strike.su_heel"
@@ -990,10 +1043,9 @@
      "strike.su_elbow_heave"
     ],
     "down": [
-     "strike.su_heel"
+     "strike.su_drive"
     ],
     "across": [
-     "strike.su_edge_step",
      "strike.su_blade_jaw"
     ],
     "turned": [
@@ -1043,15 +1095,15 @@
    },
    "cyborg_press": {
     "up": [
-     "strike.uppercut"
+     "strike.uppercut",
+     "strike.rising_knee"
     ],
     "down": [
      "strike.dropping_elbow"
     ],
     "across": [
      "strike.body_ram",
-     "strike.headbutt",
-     "strike.driving_knee"
+     "strike.headbutt"
     ],
     "turned": []
    },
@@ -1079,13 +1131,15 @@
      "strike.rising_knee"
     ],
     "down": [
-     "strike.axe_kick"
+     "strike.axe_kick",
+     "strike.stomp"
     ],
     "across": [
-     "strike.driving_knee",
-     "strike.body_ram"
+     "strike.body_ram",
+     "strike.driving_knee"
     ],
     "turned": [
+     "strike.roundhouse",
      "strike.haymaker"
     ]
    },
@@ -1094,7 +1148,7 @@
     "down": [
      "strike.overhand",
      "strike.axe_kick",
-     "strike.dropping_elbow"
+     "strike.stomp"
     ],
     "across": [],
     "turned": [
@@ -5047,6 +5101,10 @@
   "cyborg_press": {
    "combo.link": [
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.shoulder_check",
      "status": "posed"
     },
@@ -5055,15 +5113,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.knee_hook",
-     "status": "posed"
-    },
-    {
      "id": "strike.short_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -5072,14 +5130,6 @@
     },
     {
      "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
-     "id": "strike.lift_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -5092,11 +5142,19 @@
     },
     {
      "id": "strike.palm_heel",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
      "status": "posed"
     }
    ],
    "blur.base": [
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.shoulder_check",
      "status": "posed"
     },
@@ -5105,15 +5163,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.knee_hook",
-     "status": "posed"
-    },
-    {
      "id": "strike.short_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -5122,14 +5180,6 @@
     },
     {
      "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
-     "id": "strike.lift_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -5143,9 +5193,17 @@
     {
      "id": "strike.palm_heel",
      "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
+     "status": "posed"
     }
    ],
    "blur.toward": [
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
     {
      "id": "strike.shoulder_check",
      "status": "posed"
@@ -5155,15 +5213,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
      "id": "strike.knee_hook",
-     "status": "posed"
-    },
-    {
-     "id": "strike.short_knee",
      "status": "posed"
     }
    ],
@@ -5173,6 +5227,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.dropping_elbow",
      "status": "posed"
     },
@@ -5182,10 +5240,6 @@
     },
     {
      "id": "strike.headbutt",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
      "status": "posed"
     }
    ],
@@ -5195,6 +5249,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.dropping_elbow",
      "status": "posed"
     },
@@ -5204,10 +5262,6 @@
     },
     {
      "id": "strike.headbutt",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
      "status": "posed"
     }
    ],
@@ -5217,6 +5271,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.double_hammer",
      "status": "posed"
     },
@@ -5233,15 +5291,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross_arm_ram",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
-     "status": "posed"
-    },
-    {
      "id": "strike.double_palm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross_arm_ram",
      "status": "posed"
     }
    ],
@@ -5251,6 +5305,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.double_hammer",
      "status": "posed"
     },
@@ -5267,15 +5325,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross_arm_ram",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
-     "status": "posed"
-    },
-    {
      "id": "strike.double_palm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross_arm_ram",
      "status": "posed"
     }
    ],
@@ -5285,6 +5339,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.dropping_elbow",
      "status": "posed"
     },
@@ -5295,15 +5353,15 @@
     {
      "id": "strike.headbutt",
      "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
-     "status": "posed"
     }
    ],
    "brawl.medium.held": [
     {
      "id": "strike.uppercut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_knee",
      "status": "posed"
     },
     {
@@ -5323,15 +5381,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross_arm_ram",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
-     "status": "posed"
-    },
-    {
      "id": "strike.double_palm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross_arm_ram",
      "status": "posed"
     }
    ],
@@ -5401,6 +5455,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.rising_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.dropping_elbow",
      "status": "posed"
     },
@@ -5410,10 +5468,6 @@
     },
     {
      "id": "strike.headbutt",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
      "status": "posed"
     }
    ],
@@ -5437,17 +5491,21 @@
      "status": "posed"
     },
     {
-     "id": "strike.headbutt",
+     "id": "strike.rising_knee",
      "status": "posed"
     },
     {
-     "id": "strike.driving_knee",
+     "id": "strike.headbutt",
      "status": "posed"
     }
    ],
    "brawl.lift": [
     {
      "id": "strike.uppercut",
+     "status": "posed"
+    },
+    {
+     "id": "strike.rising_knee",
      "status": "posed"
     }
    ],
@@ -5467,15 +5525,11 @@
    ],
    "burst.mid": [
     {
-     "id": "strike.short_elbow",
-     "status": "posed"
-    },
-    {
      "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.knee_hook",
+     "id": "strike.short_elbow",
      "status": "posed"
     },
     {
@@ -5493,9 +5547,17 @@
     {
      "id": "strike.palm_heel",
      "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
+     "status": "posed"
     }
    ],
    "burst.slow": [
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
     {
      "id": "strike.shoulder_check",
      "status": "posed"
@@ -5505,15 +5567,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.knee_hook",
-     "status": "posed"
-    },
-    {
      "id": "strike.short_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -5525,14 +5587,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.lift_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.low_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.backfist",
      "status": "posed"
     },
@@ -5542,6 +5596,10 @@
     },
     {
      "id": "strike.palm_heel",
+     "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
      "status": "posed"
     }
    ],
@@ -5575,6 +5633,10 @@
    ],
    "brawl.light": [
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.shoulder_check",
      "status": "posed"
     },
@@ -5583,15 +5645,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.knee_hook",
-     "status": "posed"
-    },
-    {
      "id": "strike.short_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -5600,14 +5662,6 @@
     },
     {
      "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
-     "id": "strike.lift_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -5621,45 +5675,45 @@
     {
      "id": "strike.palm_heel",
      "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
+     "status": "posed"
     }
    ],
    "brawl.light.toward": [
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
     {
      "id": "strike.shoulder_check",
      "status": "posed"
     },
     {
      "id": "strike.short_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.rising_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.knee_hook",
      "status": "posed"
     },
     {
      "id": "strike.short_knee",
      "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
+     "status": "posed"
     }
    ],
    "brawl.flurry": [
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
     {
      "id": "strike.shoulder_check",
      "status": "posed"
     },
     {
      "id": "strike.short_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.rising_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.knee_hook",
      "status": "posed"
     },
     {
@@ -5673,15 +5727,15 @@
     {
      "id": "strike.palm_heel",
      "status": "posed"
+    },
+    {
+     "id": "strike.knee_hook",
+     "status": "posed"
     }
    ],
    "brawl.skill": [
     {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.sweep",
+     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -5689,7 +5743,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.front_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.sweep",
      "status": "posed"
     },
     {
@@ -5701,11 +5759,11 @@
   "cyborg_courier": {
    "combo.link": [
     {
-     "id": "strike.short_knee",
+     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -5717,10 +5775,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.shoulder_check",
-     "status": "posed"
-    },
-    {
      "id": "strike.lift_kick",
      "status": "posed"
     },
@@ -5729,23 +5783,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
      "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.sweep",
      "status": "posed"
     },
     {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.backfist",
      "status": "posed"
     },
     {
@@ -5753,7 +5799,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.backfist",
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.shoulder_check",
+     "status": "posed"
+    },
+    {
+     "id": "strike.jab",
      "status": "posed"
     },
     {
@@ -5763,11 +5817,11 @@
    ],
    "blur.base": [
     {
-     "id": "strike.short_knee",
+     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -5779,10 +5833,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.shoulder_check",
-     "status": "posed"
-    },
-    {
      "id": "strike.lift_kick",
      "status": "posed"
     },
@@ -5791,23 +5841,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
      "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.sweep",
      "status": "posed"
     },
     {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.backfist",
      "status": "posed"
     },
     {
@@ -5815,7 +5857,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.backfist",
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.shoulder_check",
+     "status": "posed"
+    },
+    {
+     "id": "strike.jab",
      "status": "posed"
     },
     {
@@ -5825,11 +5875,11 @@
    ],
    "blur.toward": [
     {
-     "id": "strike.short_knee",
+     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -5863,10 +5913,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.hammer",
-     "status": "posed"
-    },
-    {
      "id": "strike.driving_knee",
      "status": "posed"
     },
@@ -5880,6 +5926,10 @@
     },
     {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer",
      "status": "posed"
     }
    ],
@@ -5901,10 +5951,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.hammer",
-     "status": "posed"
-    },
-    {
      "id": "strike.driving_knee",
      "status": "posed"
     },
@@ -5918,6 +5964,10 @@
     },
     {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer",
      "status": "posed"
     }
    ],
@@ -5939,15 +5989,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.hammer",
-     "status": "posed"
-    },
-    {
      "id": "strike.driving_knee",
-     "status": "posed"
-    },
-    {
-     "id": "strike.cross_arm_ram",
      "status": "posed"
     },
     {
@@ -5959,7 +6001,15 @@
      "status": "posed"
     },
     {
+     "id": "strike.cross_arm_ram",
+     "status": "posed"
+    },
+    {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer",
      "status": "posed"
     }
    ],
@@ -5981,15 +6031,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.hammer",
-     "status": "posed"
-    },
-    {
      "id": "strike.driving_knee",
-     "status": "posed"
-    },
-    {
-     "id": "strike.cross_arm_ram",
      "status": "posed"
     },
     {
@@ -6001,7 +6043,15 @@
      "status": "posed"
     },
     {
+     "id": "strike.cross_arm_ram",
+     "status": "posed"
+    },
+    {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer",
      "status": "posed"
     }
    ],
@@ -6023,10 +6073,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.hammer",
-     "status": "posed"
-    },
-    {
      "id": "strike.driving_knee",
      "status": "posed"
     },
@@ -6040,6 +6086,10 @@
     },
     {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer",
      "status": "posed"
     }
    ],
@@ -6061,15 +6111,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.hammer",
-     "status": "posed"
-    },
-    {
      "id": "strike.driving_knee",
-     "status": "posed"
-    },
-    {
-     "id": "strike.cross_arm_ram",
      "status": "posed"
     },
     {
@@ -6081,7 +6123,15 @@
      "status": "posed"
     },
     {
+     "id": "strike.cross_arm_ram",
+     "status": "posed"
+    },
+    {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer",
      "status": "posed"
     }
    ],
@@ -6163,10 +6213,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.hammer",
-     "status": "posed"
-    },
-    {
      "id": "strike.driving_knee",
      "status": "posed"
     },
@@ -6180,6 +6226,10 @@
     },
     {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hammer",
      "status": "posed"
     }
    ],
@@ -6227,11 +6277,7 @@
    ],
    "burst.fast": [
     {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.backfist",
      "status": "posed"
     },
     {
@@ -6239,7 +6285,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.backfist",
+     "id": "strike.jab",
      "status": "posed"
     },
     {
@@ -6249,11 +6295,11 @@
    ],
    "burst.mid": [
     {
-     "id": "strike.short_knee",
+     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -6265,11 +6311,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.backfist",
      "status": "posed"
     },
     {
@@ -6277,7 +6319,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.backfist",
+     "id": "strike.jab",
      "status": "posed"
     },
     {
@@ -6287,11 +6329,11 @@
    ],
    "burst.slow": [
     {
-     "id": "strike.short_knee",
+     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -6300,10 +6342,6 @@
     },
     {
      "id": "strike.short_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.shoulder_check",
      "status": "posed"
     },
     {
@@ -6315,23 +6353,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
      "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.sweep",
      "status": "posed"
     },
     {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.backfist",
      "status": "posed"
     },
     {
@@ -6339,7 +6369,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.backfist",
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.shoulder_check",
+     "status": "posed"
+    },
+    {
+     "id": "strike.jab",
      "status": "posed"
     },
     {
@@ -6377,11 +6415,11 @@
    ],
    "brawl.light": [
     {
-     "id": "strike.short_knee",
+     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -6393,10 +6431,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.shoulder_check",
-     "status": "posed"
-    },
-    {
      "id": "strike.lift_kick",
      "status": "posed"
     },
@@ -6405,23 +6439,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
      "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.sweep",
      "status": "posed"
     },
     {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.backfist",
      "status": "posed"
     },
     {
@@ -6429,7 +6455,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.backfist",
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.shoulder_check",
+     "status": "posed"
+    },
+    {
+     "id": "strike.jab",
      "status": "posed"
     },
     {
@@ -6439,11 +6473,11 @@
    ],
    "brawl.light.toward": [
     {
-     "id": "strike.short_knee",
+     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -6461,11 +6495,11 @@
    ],
    "brawl.flurry": [
     {
-     "id": "strike.short_knee",
+     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.short_knee",
      "status": "posed"
     },
     {
@@ -6477,19 +6511,15 @@
      "status": "posed"
     },
     {
+     "id": "strike.cross",
+     "status": "posed"
+    },
+    {
      "id": "strike.shoulder_check",
      "status": "posed"
     },
     {
      "id": "strike.jab",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
-     "status": "posed"
-    },
-    {
-     "id": "strike.cross",
      "status": "posed"
     },
     {
@@ -6507,19 +6537,19 @@
      "status": "posed"
     },
     {
-     "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
      "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.sweep",
      "status": "posed"
     },
     {
      "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
      "status": "posed"
     }
    ]
@@ -6539,6 +6569,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.lift_kick",
      "status": "posed"
     },
@@ -6547,19 +6581,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.side_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.snap_round",
-     "status": "posed"
-    },
-    {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -6567,11 +6589,23 @@
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.short_elbow",
+     "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.side_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
      "status": "posed"
     }
    ],
@@ -6589,6 +6623,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.lift_kick",
      "status": "posed"
     },
@@ -6597,19 +6635,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.side_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.snap_round",
-     "status": "posed"
-    },
-    {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -6617,11 +6643,23 @@
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.short_elbow",
+     "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.side_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
      "status": "posed"
     }
    ],
@@ -6653,11 +6691,19 @@
      "status": "posed"
     },
     {
-     "id": "strike.driving_knee",
+     "id": "strike.stomp",
      "status": "posed"
     },
     {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.roundhouse",
      "status": "posed"
     },
     {
@@ -6675,11 +6721,19 @@
      "status": "posed"
     },
     {
-     "id": "strike.driving_knee",
+     "id": "strike.stomp",
      "status": "posed"
     },
     {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.roundhouse",
      "status": "posed"
     },
     {
@@ -6697,11 +6751,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.drop_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
+     "id": "strike.stomp",
      "status": "posed"
     },
     {
@@ -6709,7 +6759,15 @@
      "status": "posed"
     },
     {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.spinning_heel",
+     "status": "posed"
+    },
+    {
+     "id": "strike.roundhouse",
      "status": "posed"
     },
     {
@@ -6727,11 +6785,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.drop_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
+     "id": "strike.stomp",
      "status": "posed"
     },
     {
@@ -6739,7 +6793,15 @@
      "status": "posed"
     },
     {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.spinning_heel",
+     "status": "posed"
+    },
+    {
+     "id": "strike.roundhouse",
      "status": "posed"
     },
     {
@@ -6757,11 +6819,19 @@
      "status": "posed"
     },
     {
-     "id": "strike.driving_knee",
+     "id": "strike.stomp",
      "status": "posed"
     },
     {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.roundhouse",
      "status": "posed"
     },
     {
@@ -6779,11 +6849,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.drop_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.driving_knee",
+     "id": "strike.stomp",
      "status": "posed"
     },
     {
@@ -6791,7 +6857,15 @@
      "status": "posed"
     },
     {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
      "id": "strike.spinning_heel",
+     "status": "posed"
+    },
+    {
+     "id": "strike.roundhouse",
      "status": "posed"
     },
     {
@@ -6801,11 +6875,11 @@
    ],
    "brawl.heavy": [
     {
-     "id": "strike.su_heel",
+     "id": "strike.su_ball_heave",
      "status": "posed"
     },
     {
-     "id": "strike.su_knee",
+     "id": "strike.su_heel",
      "status": "posed"
     },
     {
@@ -6813,7 +6887,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.su_edge_legs",
+     "id": "strike.su_knee",
      "status": "posed"
     },
     {
@@ -6821,7 +6895,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.su_ball_heave",
+     "id": "strike.su_palm_heave",
      "status": "posed"
     },
     {
@@ -6831,11 +6905,11 @@
    ],
    "brawl.launcher": [
     {
-     "id": "strike.su_heel",
+     "id": "strike.su_ball_heave",
      "status": "posed"
     },
     {
-     "id": "strike.su_knee",
+     "id": "strike.su_heel",
      "status": "posed"
     },
     {
@@ -6843,7 +6917,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.su_ball_heave",
+     "id": "strike.su_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_palm_heave",
      "status": "posed"
     },
     {
@@ -6861,11 +6939,19 @@
      "status": "posed"
     },
     {
-     "id": "strike.driving_knee",
+     "id": "strike.stomp",
      "status": "posed"
     },
     {
      "id": "strike.body_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.driving_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.roundhouse",
      "status": "posed"
     },
     {
@@ -6913,11 +6999,15 @@
    ],
    "burst.fast": [
     {
-     "id": "strike.hook",
+     "id": "strike.palm_heel",
      "status": "posed"
     },
     {
-     "id": "strike.palm_heel",
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
      "status": "posed"
     }
    ],
@@ -6931,7 +7021,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.hook",
+     "id": "strike.short_elbow",
      "status": "posed"
     },
     {
@@ -6939,7 +7029,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.short_elbow",
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
      "status": "posed"
     }
    ],
@@ -6957,6 +7051,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.lift_kick",
      "status": "posed"
     },
@@ -6965,19 +7063,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.side_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.snap_round",
-     "status": "posed"
-    },
-    {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -6985,11 +7071,23 @@
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.short_elbow",
+     "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.side_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
      "status": "posed"
     }
    ],
@@ -7035,6 +7133,10 @@
      "status": "posed"
     },
     {
+     "id": "strike.short_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.lift_kick",
      "status": "posed"
     },
@@ -7043,19 +7145,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.side_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.snap_round",
-     "status": "posed"
-    },
-    {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
+     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -7063,11 +7153,23 @@
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.front_kick",
      "status": "posed"
     },
     {
-     "id": "strike.short_elbow",
+     "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.side_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.hook",
      "status": "posed"
     }
    ],
@@ -7103,7 +7205,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.hook",
+     "id": "strike.short_elbow",
      "status": "posed"
     },
     {
@@ -7111,7 +7213,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.short_elbow",
+     "id": "strike.hook",
      "status": "posed"
     }
    ],
@@ -7125,11 +7227,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.side_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.snap_round",
+     "id": "strike.low_kick",
      "status": "posed"
     },
     {
@@ -7137,7 +7235,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.low_kick",
+     "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.backfist",
+     "status": "posed"
+    },
+    {
+     "id": "strike.side_kick",
      "status": "posed"
     }
    ]
@@ -7145,6 +7251,10 @@
   "empress": {
    "combo.link": [
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.short_knee",
      "status": "posed"
     },
@@ -7153,7 +7263,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.knee_hook",
      "status": "posed"
     },
     {
@@ -7161,11 +7271,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.sweep",
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -7173,7 +7279,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross",
+     "id": "strike.sweep",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_heel",
      "status": "posed"
     },
     {
@@ -7185,24 +7299,20 @@
      "status": "posed"
     },
     {
-     "id": "strike.lift_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.low_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.snap_round",
      "status": "posed"
     },
     {
-     "id": "strike.knee_hook",
+     "id": "strike.front_kick",
      "status": "posed"
     }
    ],
    "blur.base": [
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.short_knee",
      "status": "posed"
     },
@@ -7211,7 +7321,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.knee_hook",
      "status": "posed"
     },
     {
@@ -7219,11 +7329,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.sweep",
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -7231,7 +7337,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross",
+     "id": "strike.sweep",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_heel",
      "status": "posed"
     },
     {
@@ -7243,33 +7357,25 @@
      "status": "posed"
     },
     {
-     "id": "strike.lift_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.low_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.snap_round",
      "status": "posed"
     },
     {
-     "id": "strike.knee_hook",
+     "id": "strike.front_kick",
      "status": "posed"
     }
    ],
    "blur.toward": [
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
     {
      "id": "strike.short_knee",
      "status": "posed"
     },
     {
      "id": "strike.short_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
@@ -7295,7 +7401,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.dropping_elbow",
+     "id": "strike.stomp",
      "status": "posed"
     }
    ],
@@ -7317,7 +7423,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.dropping_elbow",
+     "id": "strike.stomp",
      "status": "posed"
     }
    ],
@@ -7331,10 +7437,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.drop_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.haymaker",
      "status": "posed"
     },
@@ -7343,7 +7445,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.dropping_elbow",
+     "id": "strike.stomp",
+     "status": "posed"
+    },
+    {
+     "id": "strike.double_palm",
      "status": "posed"
     }
    ],
@@ -7357,10 +7463,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.drop_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.haymaker",
      "status": "posed"
     },
@@ -7369,7 +7471,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.dropping_elbow",
+     "id": "strike.stomp",
+     "status": "posed"
+    },
+    {
+     "id": "strike.double_palm",
      "status": "posed"
     }
    ],
@@ -7391,7 +7497,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.dropping_elbow",
+     "id": "strike.stomp",
      "status": "posed"
     }
    ],
@@ -7405,10 +7511,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.drop_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.haymaker",
      "status": "posed"
     },
@@ -7417,7 +7519,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.dropping_elbow",
+     "id": "strike.stomp",
+     "status": "posed"
+    },
+    {
+     "id": "strike.double_palm",
      "status": "posed"
     }
    ],
@@ -7427,11 +7533,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.su_edge_step",
+     "id": "strike.su_edge_unwind",
      "status": "posed"
     },
     {
-     "id": "strike.su_edge_unwind",
+     "id": "strike.su_edge_legs",
      "status": "posed"
     },
     {
@@ -7443,7 +7549,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.su_heel",
+     "id": "strike.su_drive",
      "status": "posed"
     },
     {
@@ -7451,7 +7557,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.su_edge_legs",
+     "id": "strike.su_plate_arm",
      "status": "posed"
     }
    ],
@@ -7461,10 +7567,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.su_edge_step",
-     "status": "posed"
-    },
-    {
      "id": "strike.su_edge_unwind",
      "status": "posed"
     },
@@ -7477,7 +7579,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.su_heel",
+     "id": "strike.su_drive",
      "status": "posed"
     },
     {
@@ -7503,7 +7605,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.dropping_elbow",
+     "id": "strike.stomp",
      "status": "posed"
     }
    ],
@@ -7533,7 +7635,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross",
+     "id": "strike.palm_heel",
      "status": "posed"
     },
     {
@@ -7547,6 +7649,10 @@
    ],
    "burst.mid": [
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.short_knee",
      "status": "posed"
     },
@@ -7555,7 +7661,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.knee_hook",
      "status": "posed"
     },
     {
@@ -7563,7 +7669,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross",
+     "id": "strike.palm_heel",
      "status": "posed"
     },
     {
@@ -7573,13 +7679,13 @@
     {
      "id": "strike.spear_hand",
      "status": "posed"
-    },
-    {
-     "id": "strike.knee_hook",
-     "status": "posed"
     }
    ],
    "burst.slow": [
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
     {
      "id": "strike.short_knee",
      "status": "posed"
@@ -7589,7 +7695,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.knee_hook",
      "status": "posed"
     },
     {
@@ -7597,11 +7703,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.sweep",
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -7609,7 +7711,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross",
+     "id": "strike.sweep",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_heel",
      "status": "posed"
     },
     {
@@ -7621,19 +7731,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.lift_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.low_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.snap_round",
      "status": "posed"
     },
     {
-     "id": "strike.knee_hook",
+     "id": "strike.front_kick",
      "status": "posed"
     }
    ],
@@ -7667,6 +7769,10 @@
    ],
    "brawl.light": [
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.short_knee",
      "status": "posed"
     },
@@ -7675,7 +7781,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.knee_hook",
      "status": "posed"
     },
     {
@@ -7683,11 +7789,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.front_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.sweep",
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -7695,7 +7797,15 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross",
+     "id": "strike.sweep",
+     "status": "posed"
+    },
+    {
+     "id": "strike.low_kick",
+     "status": "posed"
+    },
+    {
+     "id": "strike.palm_heel",
      "status": "posed"
     },
     {
@@ -7707,33 +7817,25 @@
      "status": "posed"
     },
     {
-     "id": "strike.lift_kick",
-     "status": "posed"
-    },
-    {
-     "id": "strike.low_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.snap_round",
      "status": "posed"
     },
     {
-     "id": "strike.knee_hook",
+     "id": "strike.front_kick",
      "status": "posed"
     }
    ],
    "brawl.light.toward": [
+    {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
     {
      "id": "strike.short_knee",
      "status": "posed"
     },
     {
      "id": "strike.short_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.rising_elbow",
      "status": "posed"
     },
     {
@@ -7743,6 +7845,10 @@
    ],
    "brawl.flurry": [
     {
+     "id": "strike.rising_elbow",
+     "status": "posed"
+    },
+    {
      "id": "strike.short_knee",
      "status": "posed"
     },
@@ -7751,7 +7857,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.rising_elbow",
+     "id": "strike.knee_hook",
      "status": "posed"
     },
     {
@@ -7759,7 +7865,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.cross",
+     "id": "strike.palm_heel",
      "status": "posed"
     },
     {
@@ -7769,10 +7875,6 @@
     {
      "id": "strike.spear_hand",
      "status": "posed"
-    },
-    {
-     "id": "strike.knee_hook",
-     "status": "posed"
     }
    ],
    "brawl.skill": [
@@ -7781,15 +7883,11 @@
      "status": "posed"
     },
     {
-     "id": "strike.front_kick",
+     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
      "id": "strike.sweep",
-     "status": "posed"
-    },
-    {
-     "id": "strike.lift_kick",
      "status": "posed"
     },
     {
@@ -7798,6 +7896,10 @@
     },
     {
      "id": "strike.snap_round",
+     "status": "posed"
+    },
+    {
+     "id": "strike.front_kick",
      "status": "posed"
     }
    ]

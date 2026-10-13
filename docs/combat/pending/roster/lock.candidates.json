@@ -7,27 +7,49 @@
     [
      "mv.cyborg_press.martial.x.01",
      [
-      "shoulder",
-      "plate",
-      "line",
+      "hand",
+      "heel",
+      "drop",
       "chest",
       "light"
      ],
-     "w1.shoulder_check"
+     null
     ],
     [
      "mv.cyborg_press.martial.x.02",
      [
       "elbow",
-      "point",
-      "arc_in",
-      "jaw",
+      "plate",
+      "line",
+      "chest",
       "light"
      ],
-     "w1.short_elbow"
+     null
     ],
     [
      "mv.cyborg_press.martial.x.03",
+     [
+      "hand",
+      "fist",
+      "arc_in",
+      "gut",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_press.martial.x.04",
+     [
+      "hand",
+      "fist",
+      "arc_in",
+      "head",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_press.martial.x.05",
      [
       "elbow",
       "point",
@@ -38,18 +60,29 @@
      "w1.rising_elbow"
     ],
     [
-     "mv.cyborg_press.martial.x.04",
+     "mv.cyborg_press.martial.x.06",
      [
-      "knee",
-      "cap",
-      "arc_in",
-      "legs",
+      "shoulder",
+      "plate",
+      "line",
+      "chest",
       "light"
      ],
-     "rm.knee_hook"
+     "w1.shoulder_check"
     ],
     [
-     "mv.cyborg_press.martial.x.05",
+     "mv.cyborg_press.martial.x.07",
+     [
+      "elbow",
+      "point",
+      "arc_in",
+      "jaw",
+      "light"
+     ],
+     "w1.short_elbow"
+    ],
+    [
+     "mv.cyborg_press.martial.x.08",
      [
       "knee",
       "cap",
@@ -58,39 +91,6 @@
       "light"
      ],
      "w1.short_knee"
-    ],
-    [
-     "mv.cyborg_press.martial.x.06",
-     [
-      "foot",
-      "ball",
-      "line",
-      "gut",
-      "light"
-     ],
-     "w1.front_kick"
-    ],
-    [
-     "mv.cyborg_press.martial.x.07",
-     [
-      "foot",
-      "instep",
-      "arc_in",
-      "shins",
-      "light"
-     ],
-     "w1.sweep"
-    ],
-    [
-     "mv.cyborg_press.martial.x.08",
-     [
-      "foot",
-      "ball",
-      "rise",
-      "gut",
-      "light"
-     ],
-     "rm.lift_kick"
     ],
     [
      "mv.cyborg_press.martial.x.09",
@@ -107,6 +107,39 @@
      "mv.cyborg_press.martial.x.10",
      [
       "foot",
+      "ball",
+      "rise",
+      "gut",
+      "light"
+     ],
+     "rm.lift_kick"
+    ],
+    [
+     "mv.cyborg_press.martial.x.11",
+     [
+      "foot",
+      "ball",
+      "line",
+      "gut",
+      "light"
+     ],
+     "w1.front_kick"
+    ],
+    [
+     "mv.cyborg_press.martial.x.12",
+     [
+      "foot",
+      "instep",
+      "arc_in",
+      "shins",
+      "light"
+     ],
+     "w1.sweep"
+    ],
+    [
+     "mv.cyborg_press.martial.x.13",
+     [
+      "foot",
       "edge",
       "line",
       "legs",
@@ -115,7 +148,7 @@
      null
     ],
     [
-     "mv.cyborg_press.martial.x.11",
+     "mv.cyborg_press.martial.x.14",
      [
       "hand",
       "heel",
@@ -126,7 +159,18 @@
      "w1.backfist"
     ],
     [
-     "mv.cyborg_press.martial.x.12",
+     "mv.cyborg_press.martial.x.15",
+     [
+      "hand",
+      "palm",
+      "line",
+      "arm",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_press.martial.x.16",
      [
       "hand",
       "plate",
@@ -137,56 +181,12 @@
      "w1.hook"
     ],
     [
-     "mv.cyborg_press.martial.x.13",
-     [
-      "hand",
-      "palm",
-      "line",
-      "chest",
-      "light"
-     ],
-     "w1.palm_heel"
-    ],
-    [
-     "mv.cyborg_press.martial.x.14",
-     [
-      "hand",
-      "heel",
-      "arc_out",
-      "arm",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_press.martial.x.15",
-     [
-      "hand",
-      "fist",
-      "line",
-      "head",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_press.martial.x.16",
-     [
-      "hand",
-      "heel",
-      "drop",
-      "arm",
-      "light"
-     ],
-     null
-    ],
-    [
      "mv.cyborg_press.martial.x.17",
      [
       "hand",
-      "plate",
-      "arc_in",
-      "jaw",
+      "fist",
+      "drop",
+      "chest",
       "light"
      ],
      null
@@ -197,18 +197,18 @@
       "hand",
       "palm",
       "line",
-      "arm",
+      "chest",
       "light"
      ],
-     null
+     "w1.palm_heel"
     ],
     [
      "mv.cyborg_press.martial.x.19",
      [
       "hand",
-      "fist",
-      "drop",
-      "chest",
+      "heel",
+      "arc_out",
+      "arm",
       "light"
      ],
      null
@@ -218,14 +218,47 @@
      [
       "hand",
       "heel",
-      "drop",
-      "head",
+      "arc_out",
+      "jaw",
       "light"
      ],
      null
     ],
     [
      "mv.cyborg_press.martial.x.21",
+     [
+      "hand",
+      "plate",
+      "arc_in",
+      "jaw",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_press.martial.x.22",
+     [
+      "hand",
+      "palm",
+      "line",
+      "head",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_press.martial.x.23",
+     [
+      "knee",
+      "cap",
+      "arc_in",
+      "legs",
+      "light"
+     ],
+     "rm.knee_hook"
+    ],
+    [
+     "mv.cyborg_press.martial.x.24",
      [
       "hand",
       "fist",
@@ -236,44 +269,11 @@
      null
     ],
     [
-     "mv.cyborg_press.martial.x.22",
-     [
-      "elbow",
-      "point",
-      "drop",
-      "chest",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_press.martial.x.23",
+     "mv.cyborg_press.martial.x.25",
      [
       "hand",
       "palm",
       "line",
-      "gut",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_press.martial.x.24",
-     [
-      "hand",
-      "palm",
-      "rise",
-      "jaw",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_press.martial.x.25",
-     [
-      "hand",
-      "plate",
-      "arc_in",
       "gut",
       "light"
      ],
@@ -285,7 +285,7 @@
       "hand",
       "heel",
       "arc_out",
-      "jaw",
+      "chest",
       "light"
      ],
      null
@@ -294,9 +294,9 @@
      "mv.cyborg_press.martial.x.27",
      [
       "hand",
-      "plate",
-      "drop",
-      "arm",
+      "palm",
+      "line",
+      "jaw",
       "light"
      ],
      null
@@ -306,8 +306,8 @@
      [
       "hand",
       "fist",
-      "rise",
-      "chest",
+      "arc_out",
+      "arm",
       "light"
      ],
      null
@@ -316,8 +316,8 @@
      "mv.cyborg_press.martial.x.29",
      [
       "hand",
-      "heel",
-      "arc_out",
+      "plate",
+      "arc_in",
       "chest",
       "light"
      ],
@@ -340,6 +340,28 @@
      "mv.cyborg_press.martial.y.01",
      [
       "hand",
+      "plate",
+      "arc_in",
+      "gut",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_press.martial.y.02",
+     [
+      "hand",
+      "fist",
+      "line",
+      "head",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_press.martial.y.03",
+     [
+      "hand",
       "fist",
       "rise",
       "jaw",
@@ -348,18 +370,7 @@
      "w1.uppercut"
     ],
     [
-     "mv.cyborg_press.martial.y.02",
-     [
-      "hand",
-      "fist",
-      "rise",
-      "gut",
-      "medium"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_press.martial.y.03",
+     "mv.cyborg_press.martial.y.04",
      [
       "hand",
       "palm",
@@ -370,7 +381,18 @@
      null
     ],
     [
-     "mv.cyborg_press.martial.y.04",
+     "mv.cyborg_press.martial.y.05",
+     [
+      "knee",
+      "cap",
+      "rise",
+      "gut",
+      "medium"
+     ],
+     "w1.rising_knee"
+    ],
+    [
+     "mv.cyborg_press.martial.y.06",
      [
       "hand",
       "plate",
@@ -381,7 +403,7 @@
      "w1.double_hammer"
     ],
     [
-     "mv.cyborg_press.martial.y.05",
+     "mv.cyborg_press.martial.y.07",
      [
       "elbow",
       "point",
@@ -392,7 +414,7 @@
      "w1.dropping_elbow"
     ],
     [
-     "mv.cyborg_press.martial.y.06",
+     "mv.cyborg_press.martial.y.08",
      [
       "hand",
       "heel",
@@ -403,7 +425,7 @@
      null
     ],
     [
-     "mv.cyborg_press.martial.y.07",
+     "mv.cyborg_press.martial.y.09",
      [
       "shoulder",
       "plate",
@@ -414,7 +436,7 @@
      "rb.body_ram"
     ],
     [
-     "mv.cyborg_press.martial.y.08",
+     "mv.cyborg_press.martial.y.10",
      [
       "head",
       "brow",
@@ -423,28 +445,6 @@
       "medium"
      ],
      "w1.headbutt"
-    ],
-    [
-     "mv.cyborg_press.martial.y.09",
-     [
-      "elbow",
-      "plate",
-      "line",
-      "chest",
-      "medium"
-     ],
-     "w1.cross_arm_ram"
-    ],
-    [
-     "mv.cyborg_press.martial.y.10",
-     [
-      "hand",
-      "fist",
-      "arc_in",
-      "gut",
-      "medium"
-     ],
-     null
     ],
     [
      "mv.cyborg_press.martial.y.11",
@@ -461,9 +461,9 @@
      "mv.cyborg_press.martial.y.12",
      [
       "hand",
-      "heel",
-      "arc_out",
-      "arm",
+      "fist",
+      "arc_in",
+      "gut",
       "medium"
      ],
      null
@@ -482,17 +482,6 @@
     [
      "mv.cyborg_press.martial.y.14",
      [
-      "knee",
-      "cap",
-      "line",
-      "gut",
-      "medium"
-     ],
-     "w1.driving_knee"
-    ],
-    [
-     "mv.cyborg_press.martial.y.15",
-     [
       "hand",
       "palm",
       "line",
@@ -500,6 +489,17 @@
       "medium"
      ],
      "w1.double_palm"
+    ],
+    [
+     "mv.cyborg_press.martial.y.15",
+     [
+      "elbow",
+      "plate",
+      "line",
+      "chest",
+      "medium"
+     ],
+     "w1.cross_arm_ram"
     ],
     [
      "mv.cyborg_press.martial.y.16",
@@ -767,16 +767,49 @@
     [
      "mv.cyborg_courier.martial.x.01",
      [
-      "knee",
-      "cap",
+      "elbow",
+      "plate",
       "line",
-      "gut",
+      "chest",
       "light"
      ],
-     "w1.short_knee"
+     null
     ],
     [
      "mv.cyborg_courier.martial.x.02",
+     [
+      "hand",
+      "fist",
+      "arc_in",
+      "gut",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_courier.martial.x.03",
+     [
+      "hand",
+      "blade",
+      "drop",
+      "head",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_courier.martial.x.04",
+     [
+      "hand",
+      "fist",
+      "arc_in",
+      "head",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_courier.martial.x.05",
      [
       "elbow",
       "point",
@@ -787,7 +820,18 @@
      "w1.rising_elbow"
     ],
     [
-     "mv.cyborg_courier.martial.x.03",
+     "mv.cyborg_courier.martial.x.06",
+     [
+      "knee",
+      "cap",
+      "line",
+      "gut",
+      "light"
+     ],
+     "w1.short_knee"
+    ],
+    [
+     "mv.cyborg_courier.martial.x.07",
      [
       "knee",
       "cap",
@@ -798,7 +842,7 @@
      "rm.knee_hook"
     ],
     [
-     "mv.cyborg_courier.martial.x.04",
+     "mv.cyborg_courier.martial.x.08",
      [
       "elbow",
       "point",
@@ -809,18 +853,7 @@
      "w1.short_elbow"
     ],
     [
-     "mv.cyborg_courier.martial.x.05",
-     [
-      "shoulder",
-      "plate",
-      "line",
-      "chest",
-      "light"
-     ],
-     "w1.shoulder_check"
-    ],
-    [
-     "mv.cyborg_courier.martial.x.06",
+     "mv.cyborg_courier.martial.x.09",
      [
       "foot",
       "ball",
@@ -831,7 +864,7 @@
      "rm.lift_kick"
     ],
     [
-     "mv.cyborg_courier.martial.x.07",
+     "mv.cyborg_courier.martial.x.10",
      [
       "foot",
       "edge",
@@ -842,18 +875,7 @@
      "w1.side_kick"
     ],
     [
-     "mv.cyborg_courier.martial.x.08",
-     [
-      "foot",
-      "instep",
-      "arc_in",
-      "shins",
-      "light"
-     ],
-     "w1.sweep"
-    ],
-    [
-     "mv.cyborg_courier.martial.x.09",
+     "mv.cyborg_courier.martial.x.11",
      [
       "foot",
       "ball",
@@ -864,45 +886,23 @@
      "w1.front_kick"
     ],
     [
-     "mv.cyborg_courier.martial.x.10",
+     "mv.cyborg_courier.martial.x.12",
      [
       "foot",
       "instep",
       "arc_in",
-      "legs",
+      "shins",
       "light"
      ],
-     "w1.low_kick"
-    ],
-    [
-     "mv.cyborg_courier.martial.x.11",
-     [
-      "hand",
-      "fist",
-      "arc_out",
-      "head",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_courier.martial.x.12",
-     [
-      "hand",
-      "blade",
-      "line",
-      "head",
-      "light"
-     ],
-     "w1.jab"
+     "w1.sweep"
     ],
     [
      "mv.cyborg_courier.martial.x.13",
      [
-      "hand",
-      "fist",
+      "foot",
+      "ball",
       "line",
-      "arm",
+      "legs",
       "light"
      ],
      null
@@ -911,12 +911,12 @@
      "mv.cyborg_courier.martial.x.14",
      [
       "hand",
-      "plate",
-      "arc_in",
+      "heel",
+      "arc_out",
       "head",
       "light"
      ],
-     "w1.hook"
+     "w1.backfist"
     ],
     [
      "mv.cyborg_courier.martial.x.15",
@@ -934,7 +934,7 @@
      [
       "hand",
       "fist",
-      "drop",
+      "line",
       "arm",
       "light"
      ],
@@ -942,50 +942,6 @@
     ],
     [
      "mv.cyborg_courier.martial.x.17",
-     [
-      "elbow",
-      "point",
-      "drop",
-      "chest",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_courier.martial.x.18",
-     [
-      "knee",
-      "cap",
-      "rise",
-      "gut",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_courier.martial.x.19",
-     [
-      "hand",
-      "heel",
-      "arc_out",
-      "head",
-      "light"
-     ],
-     "w1.backfist"
-    ],
-    [
-     "mv.cyborg_courier.martial.x.20",
-     [
-      "hand",
-      "heel",
-      "arc_out",
-      "arm",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_courier.martial.x.21",
      [
       "knee",
       "cap",
@@ -996,18 +952,40 @@
      null
     ],
     [
-     "mv.cyborg_courier.martial.x.22",
+     "mv.cyborg_courier.martial.x.18",
      [
       "hand",
       "fist",
-      "rise",
-      "jaw",
+      "arc_out",
+      "head",
       "light"
      ],
      null
     ],
     [
-     "mv.cyborg_courier.martial.x.23",
+     "mv.cyborg_courier.martial.x.19",
+     [
+      "hand",
+      "heel",
+      "drop",
+      "chest",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_courier.martial.x.20",
+     [
+      "foot",
+      "instep",
+      "arc_in",
+      "legs",
+      "light"
+     ],
+     "w1.low_kick"
+    ],
+    [
+     "mv.cyborg_courier.martial.x.21",
      [
       "knee",
       "cap",
@@ -1018,18 +996,51 @@
      null
     ],
     [
-     "mv.cyborg_courier.martial.x.24",
+     "mv.cyborg_courier.martial.x.22",
      [
       "hand",
-      "blade",
-      "drop",
-      "head",
+      "heel",
+      "arc_out",
+      "arm",
       "light"
      ],
      null
     ],
     [
+     "mv.cyborg_courier.martial.x.23",
+     [
+      "shoulder",
+      "plate",
+      "line",
+      "chest",
+      "light"
+     ],
+     "w1.shoulder_check"
+    ],
+    [
+     "mv.cyborg_courier.martial.x.24",
+     [
+      "hand",
+      "blade",
+      "line",
+      "head",
+      "light"
+     ],
+     "w1.jab"
+    ],
+    [
      "mv.cyborg_courier.martial.x.25",
+     [
+      "hand",
+      "fist",
+      "arc_out",
+      "jaw",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_courier.martial.x.26",
      [
       "elbow",
       "point",
@@ -1040,7 +1051,7 @@
      null
     ],
     [
-     "mv.cyborg_courier.martial.x.26",
+     "mv.cyborg_courier.martial.x.27",
      [
       "hand",
       "blade",
@@ -1051,23 +1062,12 @@
      "w1.spear_hand"
     ],
     [
-     "mv.cyborg_courier.martial.x.27",
-     [
-      "hand",
-      "fist",
-      "arc_out",
-      "jaw",
-      "light"
-     ],
-     null
-    ],
-    [
      "mv.cyborg_courier.martial.x.28",
      [
       "hand",
-      "heel",
-      "drop",
-      "arm",
+      "plate",
+      "arc_in",
+      "jaw",
       "light"
      ],
      null
@@ -1076,8 +1076,8 @@
      "mv.cyborg_courier.martial.x.29",
      [
       "hand",
-      "palm",
-      "rise",
+      "fist",
+      "drop",
       "chest",
       "light"
      ],
@@ -1087,9 +1087,9 @@
      "mv.cyborg_courier.martial.x.30",
      [
       "hand",
-      "plate",
-      "arc_in",
-      "jaw",
+      "blade",
+      "arc_out",
+      "arm",
       "light"
      ],
      null
@@ -1098,6 +1098,28 @@
    "martial.y": [
     [
      "mv.cyborg_courier.martial.y.01",
+     [
+      "hand",
+      "fist",
+      "line",
+      "jaw",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_courier.martial.y.02",
+     [
+      "elbow",
+      "point",
+      "arc_in",
+      "chest",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_courier.martial.y.03",
      [
       "knee",
       "cap",
@@ -1108,7 +1130,7 @@
      "w1.rising_knee"
     ],
     [
-     "mv.cyborg_courier.martial.y.02",
+     "mv.cyborg_courier.martial.y.04",
      [
       "hand",
       "fist",
@@ -1119,7 +1141,7 @@
      "w1.uppercut"
     ],
     [
-     "mv.cyborg_courier.martial.y.03",
+     "mv.cyborg_courier.martial.y.05",
      [
       "hand",
       "fist",
@@ -1130,7 +1152,7 @@
      null
     ],
     [
-     "mv.cyborg_courier.martial.y.04",
+     "mv.cyborg_courier.martial.y.06",
      [
       "elbow",
       "point",
@@ -1141,7 +1163,7 @@
      "w1.dropping_elbow"
     ],
     [
-     "mv.cyborg_courier.martial.y.05",
+     "mv.cyborg_courier.martial.y.07",
      [
       "hand",
       "blade",
@@ -1152,18 +1174,18 @@
      "w1.overhand"
     ],
     [
-     "mv.cyborg_courier.martial.y.06",
+     "mv.cyborg_courier.martial.y.08",
      [
       "hand",
-      "fist",
+      "blade",
       "drop",
-      "head",
+      "arm",
       "medium"
      ],
-     "w1.hammer"
+     null
     ],
     [
-     "mv.cyborg_courier.martial.y.07",
+     "mv.cyborg_courier.martial.y.09",
      [
       "knee",
       "cap",
@@ -1174,18 +1196,7 @@
      "w1.driving_knee"
     ],
     [
-     "mv.cyborg_courier.martial.y.08",
-     [
-      "elbow",
-      "plate",
-      "line",
-      "chest",
-      "medium"
-     ],
-     "w1.cross_arm_ram"
-    ],
-    [
-     "mv.cyborg_courier.martial.y.09",
+     "mv.cyborg_courier.martial.y.10",
      [
       "knee",
       "cap",
@@ -1196,7 +1207,7 @@
      null
     ],
     [
-     "mv.cyborg_courier.martial.y.10",
+     "mv.cyborg_courier.martial.y.11",
      [
       "hand",
       "blade",
@@ -1207,7 +1218,7 @@
      "w1.haymaker"
     ],
     [
-     "mv.cyborg_courier.martial.y.11",
+     "mv.cyborg_courier.martial.y.12",
      [
       "hand",
       "blade",
@@ -1218,18 +1229,18 @@
      "rb.body_hook"
     ],
     [
-     "mv.cyborg_courier.martial.y.12",
+     "mv.cyborg_courier.martial.y.13",
      [
-      "hand",
-      "blade",
-      "arc_in",
-      "jaw",
+      "elbow",
+      "plate",
+      "line",
+      "chest",
       "medium"
      ],
-     null
+     "w1.cross_arm_ram"
     ],
     [
-     "mv.cyborg_courier.martial.y.13",
+     "mv.cyborg_courier.martial.y.14",
      [
       "shoulder",
       "plate",
@@ -1238,17 +1249,6 @@
       "medium"
      ],
      "rb.body_ram"
-    ],
-    [
-     "mv.cyborg_courier.martial.y.14",
-     [
-      "hand",
-      "palm",
-      "line",
-      "arm",
-      "medium"
-     ],
-     null
     ],
     [
      "mv.cyborg_courier.martial.y.15",
@@ -1265,12 +1265,12 @@
      "mv.cyborg_courier.martial.y.16",
      [
       "hand",
-      "heel",
+      "fist",
       "drop",
-      "arm",
+      "head",
       "medium"
      ],
-     null
+     "w1.hammer"
     ]
    ],
    "martial.b": [
@@ -1527,6 +1527,72 @@
     [
      "mv.cyborg_hopper.martial.x.01",
      [
+      "foot",
+      "heel",
+      "line",
+      "gut",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.02",
+     [
+      "foot",
+      "heel",
+      "line",
+      "legs",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.03",
+     [
+      "foot",
+      "sole",
+      "line",
+      "chest",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.04",
+     [
+      "hand",
+      "fist",
+      "arc_in",
+      "head",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.05",
+     [
+      "hand",
+      "fist",
+      "arc_in",
+      "gut",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.06",
+     [
+      "hand",
+      "fist",
+      "arc_in",
+      "chest",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.07",
+     [
       "knee",
       "cap",
       "line",
@@ -1536,7 +1602,7 @@
      "pr.short_knee"
     ],
     [
-     "mv.cyborg_hopper.martial.x.02",
+     "mv.cyborg_hopper.martial.x.08",
      [
       "knee",
       "cap",
@@ -1547,7 +1613,7 @@
      "pm.knee_hook"
     ],
     [
-     "mv.cyborg_hopper.martial.x.03",
+     "mv.cyborg_hopper.martial.x.09",
      [
       "shoulder",
       "plate",
@@ -1558,7 +1624,7 @@
      "pr.shoulder_check"
     ],
     [
-     "mv.cyborg_hopper.martial.x.04",
+     "mv.cyborg_hopper.martial.x.10",
      [
       "knee",
       "cap",
@@ -1569,18 +1635,18 @@
      null
     ],
     [
-     "mv.cyborg_hopper.martial.x.05",
+     "mv.cyborg_hopper.martial.x.11",
      [
-      "knee",
-      "cap",
-      "rise",
-      "gut",
+      "elbow",
+      "point",
+      "arc_in",
+      "jaw",
       "light"
      ],
-     null
+     "pr.short_elbow"
     ],
     [
-     "mv.cyborg_hopper.martial.x.06",
+     "mv.cyborg_hopper.martial.x.12",
      [
       "foot",
       "ball",
@@ -1591,7 +1657,7 @@
      "pm.lift_kick"
     ],
     [
-     "mv.cyborg_hopper.martial.x.07",
+     "mv.cyborg_hopper.martial.x.13",
      [
       "foot",
       "instep",
@@ -1602,78 +1668,12 @@
      "pr.sweep"
     ],
     [
-     "mv.cyborg_hopper.martial.x.08",
-     [
-      "foot",
-      "edge",
-      "line",
-      "chest",
-      "light"
-     ],
-     "pr.side_kick"
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.09",
-     [
-      "foot",
-      "instep",
-      "arc_in",
-      "chest",
-      "light"
-     ],
-     "pr.snap_round"
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.10",
-     [
-      "foot",
-      "ball",
-      "line",
-      "gut",
-      "light"
-     ],
-     "pr.front_kick"
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.11",
-     [
-      "hand",
-      "fist",
-      "arc_out",
-      "head",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.12",
-     [
-      "hand",
-      "fist",
-      "arc_out",
-      "arm",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.13",
-     [
-      "hand",
-      "plate",
-      "arc_in",
-      "head",
-      "light"
-     ],
-     "pr.hook"
-    ],
-    [
      "mv.cyborg_hopper.martial.x.14",
      [
       "hand",
       "fist",
       "arc_out",
-      "jaw",
+      "head",
       "light"
      ],
      null
@@ -1682,12 +1682,12 @@
      "mv.cyborg_hopper.martial.x.15",
      [
       "hand",
-      "palm",
-      "line",
-      "chest",
+      "fist",
+      "arc_out",
+      "arm",
       "light"
      ],
-     "pr.palm_heel"
+     null
     ],
     [
      "mv.cyborg_hopper.martial.x.16",
@@ -1703,6 +1703,116 @@
     [
      "mv.cyborg_hopper.martial.x.17",
      [
+      "hand",
+      "palm",
+      "line",
+      "head",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.18",
+     [
+      "hand",
+      "palm",
+      "line",
+      "chest",
+      "light"
+     ],
+     "pr.palm_heel"
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.19",
+     [
+      "hand",
+      "blade",
+      "arc_out",
+      "jaw",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.20",
+     [
+      "foot",
+      "ball",
+      "line",
+      "gut",
+      "light"
+     ],
+     "pr.front_kick"
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.21",
+     [
+      "foot",
+      "instep",
+      "arc_in",
+      "chest",
+      "light"
+     ],
+     "pr.snap_round"
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.22",
+     [
+      "hand",
+      "heel",
+      "arc_out",
+      "head",
+      "light"
+     ],
+     "pr.backfist"
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.23",
+     [
+      "foot",
+      "edge",
+      "line",
+      "chest",
+      "light"
+     ],
+     "pr.side_kick"
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.24",
+     [
+      "hand",
+      "blade",
+      "arc_out",
+      "arm",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.25",
+     [
+      "hand",
+      "fist",
+      "arc_out",
+      "jaw",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.26",
+     [
+      "knee",
+      "cap",
+      "arc_in",
+      "gut",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.x.27",
+     [
       "foot",
       "edge",
       "line",
@@ -1712,133 +1822,23 @@
      null
     ],
     [
-     "mv.cyborg_hopper.martial.x.18",
-     [
-      "elbow",
-      "point",
-      "arc_in",
-      "jaw",
-      "light"
-     ],
-     "pr.short_elbow"
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.19",
-     [
-      "hand",
-      "palm",
-      "rise",
-      "gut",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.20",
-     [
-      "hand",
-      "fist",
-      "line",
-      "head",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.21",
-     [
-      "foot",
-      "heel",
-      "arc_out",
-      "chest",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.22",
-     [
-      "foot",
-      "heel",
-      "arc_out",
-      "gut",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.23",
-     [
-      "hand",
-      "palm",
-      "rise",
-      "chest",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.24",
-     [
-      "foot",
-      "ball",
-      "line",
-      "legs",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.25",
-     [
-      "hand",
-      "blade",
-      "arc_out",
-      "head",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.26",
+     "mv.cyborg_hopper.martial.x.28",
      [
       "hand",
       "plate",
       "arc_in",
-      "jaw",
+      "head",
       "light"
      ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.27",
-     [
-      "hand",
-      "palm",
-      "line",
-      "arm",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.x.28",
-     [
-      "foot",
-      "instep",
-      "arc_in",
-      "gut",
-      "light"
-     ],
-     null
+     "pr.hook"
     ],
     [
      "mv.cyborg_hopper.martial.x.29",
      [
       "hand",
-      "fist",
-      "rise",
-      "chest",
+      "palm",
+      "line",
+      "arm",
       "light"
      ],
      null
@@ -1847,9 +1847,9 @@
      "mv.cyborg_hopper.martial.x.30",
      [
       "hand",
-      "blade",
+      "fist",
       "arc_out",
-      "arm",
+      "chest",
       "light"
      ],
      null
@@ -1858,6 +1858,28 @@
    "martial.y": [
     [
      "mv.cyborg_hopper.martial.y.01",
+     [
+      "foot",
+      "heel",
+      "line",
+      "legs",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.y.02",
+     [
+      "knee",
+      "cap",
+      "arc_in",
+      "gut",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.cyborg_hopper.martial.y.03",
      [
       "knee",
       "cap",
@@ -1868,7 +1890,7 @@
      "pr.rising_knee"
     ],
     [
-     "mv.cyborg_hopper.martial.y.02",
+     "mv.cyborg_hopper.martial.y.04",
      [
       "hand",
       "fist",
@@ -1879,34 +1901,12 @@
      null
     ],
     [
-     "mv.cyborg_hopper.martial.y.03",
-     [
-      "foot",
-      "ball",
-      "rise",
-      "gut",
-      "medium"
-     ],
-     null
-    ],
-    [
-     "mv.cyborg_hopper.martial.y.04",
-     [
-      "foot",
-      "heel",
-      "drop",
-      "chest",
-      "medium"
-     ],
-     "pr.axe_kick"
-    ],
-    [
      "mv.cyborg_hopper.martial.y.05",
      [
-      "foot",
-      "heel",
-      "drop",
-      "legs",
+      "hand",
+      "fist",
+      "rise",
+      "gut",
       "medium"
      ],
      null
@@ -1917,32 +1917,32 @@
       "foot",
       "heel",
       "drop",
-      "gut",
+      "chest",
       "medium"
      ],
-     null
+     "pr.axe_kick"
     ],
     [
      "mv.cyborg_hopper.martial.y.07",
      [
       "foot",
       "sole",
-      "line",
-      "chest",
+      "drop",
+      "gut",
       "medium"
      ],
-     "pr.drop_kick"
+     "pr.stomp"
     ],
     [
      "mv.cyborg_hopper.martial.y.08",
      [
-      "knee",
-      "cap",
-      "line",
-      "gut",
+      "foot",
+      "sole",
+      "drop",
+      "legs",
       "medium"
      ],
-     "pr.driving_knee"
+     null
     ],
     [
      "mv.cyborg_hopper.martial.y.09",
@@ -1958,13 +1958,13 @@
     [
      "mv.cyborg_hopper.martial.y.10",
      [
-      "foot",
-      "instep",
-      "arc_in",
-      "shins",
+      "knee",
+      "cap",
+      "line",
+      "gut",
       "medium"
      ],
-     null
+     "pr.driving_knee"
     ],
     [
      "mv.cyborg_hopper.martial.y.11",
@@ -1972,7 +1972,7 @@
       "foot",
       "instep",
       "arc_in",
-      "legs",
+      "shins",
       "medium"
      ],
      null
@@ -1991,27 +1991,16 @@
     [
      "mv.cyborg_hopper.martial.y.13",
      [
-      "knee",
-      "cap",
-      "line",
-      "legs",
+      "foot",
+      "instep",
+      "arc_in",
+      "chest",
       "medium"
      ],
-     null
+     "pr.roundhouse"
     ],
     [
      "mv.cyborg_hopper.martial.y.14",
-     [
-      "hand",
-      "blade",
-      "arc_in",
-      "head",
-      "medium"
-     ],
-     "pr.haymaker"
-    ],
-    [
-     "mv.cyborg_hopper.martial.y.15",
      [
       "hand",
       "palm",
@@ -2022,12 +2011,23 @@
      null
     ],
     [
-     "mv.cyborg_hopper.martial.y.16",
+     "mv.cyborg_hopper.martial.y.15",
      [
       "hand",
-      "fist",
-      "arc_out",
-      "arm",
+      "blade",
+      "arc_in",
+      "head",
+      "medium"
+     ],
+     "pr.haymaker"
+    ],
+    [
+     "mv.cyborg_hopper.martial.y.16",
+     [
+      "knee",
+      "cap",
+      "line",
+      "legs",
       "medium"
      ],
      null
@@ -2048,9 +2048,9 @@
     [
      "mv.cyborg_hopper.martial.b.02",
      [
-      "knee",
-      "cap",
-      "rise",
+      "foot",
+      "ball",
+      "line",
       "gut",
       "heavy"
      ],
@@ -2060,23 +2060,23 @@
      "mv.cyborg_hopper.martial.b.03",
      [
       "foot",
+      "ball",
+      "rise",
+      "gut",
+      "heavy"
+     ],
+     "pu.su_ball_heave"
+    ],
+    [
+     "mv.cyborg_hopper.martial.b.04",
+     [
+      "foot",
       "heel",
       "drop",
       "chest",
       "heavy"
      ],
      "ru.su_heel"
-    ],
-    [
-     "mv.cyborg_hopper.martial.b.04",
-     [
-      "knee",
-      "cap",
-      "line",
-      "gut",
-      "heavy"
-     ],
-     "ru.su_knee"
     ],
     [
      "mv.cyborg_hopper.martial.b.05",
@@ -2092,13 +2092,13 @@
     [
      "mv.cyborg_hopper.martial.b.06",
      [
-      "foot",
-      "edge",
+      "knee",
+      "cap",
       "line",
-      "legs",
+      "gut",
       "heavy"
      ],
-     "ru.su_edge_legs"
+     "ru.su_knee"
     ],
     [
      "mv.cyborg_hopper.martial.b.07",
@@ -2114,13 +2114,13 @@
     [
      "mv.cyborg_hopper.martial.b.08",
      [
-      "foot",
-      "ball",
+      "hand",
+      "palm",
       "rise",
-      "gut",
+      "chest",
       "heavy"
      ],
-     "pu.su_ball_heave"
+     "pu.su_palm_heave"
     ],
     [
      "mv.cyborg_hopper.martial.b.09",
@@ -2137,8 +2137,8 @@
      "mv.cyborg_hopper.martial.b.10",
      [
       "hand",
-      "fist",
-      "arc_out",
+      "palm",
+      "line",
       "arm",
       "heavy"
      ],
@@ -2287,32 +2287,32 @@
     [
      "mv.empress.martial.x.01",
      [
-      "knee",
-      "cap",
+      "foot",
+      "heel",
       "line",
-      "gut",
+      "chest",
       "light"
      ],
-     "w1.short_knee"
+     null
     ],
     [
      "mv.empress.martial.x.02",
      [
-      "elbow",
-      "point",
+      "hand",
+      "blade",
       "arc_in",
-      "jaw",
+      "gut",
       "light"
      ],
-     "w1.short_elbow"
+     null
     ],
     [
      "mv.empress.martial.x.03",
      [
-      "elbow",
-      "point",
-      "drop",
-      "chest",
+      "foot",
+      "sole",
+      "line",
+      "gut",
       "light"
      ],
      null
@@ -2320,10 +2320,10 @@
     [
      "mv.empress.martial.x.04",
      [
-      "knee",
-      "cap",
-      "line",
-      "legs",
+      "hand",
+      "blade",
+      "arc_in",
+      "chest",
       "light"
      ],
      null
@@ -2342,6 +2342,50 @@
     [
      "mv.empress.martial.x.06",
      [
+      "knee",
+      "cap",
+      "line",
+      "gut",
+      "light"
+     ],
+     "w1.short_knee"
+    ],
+    [
+     "mv.empress.martial.x.07",
+     [
+      "elbow",
+      "point",
+      "arc_in",
+      "jaw",
+      "light"
+     ],
+     "w1.short_elbow"
+    ],
+    [
+     "mv.empress.martial.x.08",
+     [
+      "knee",
+      "cap",
+      "line",
+      "legs",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.empress.martial.x.09",
+     [
+      "knee",
+      "cap",
+      "arc_in",
+      "legs",
+      "light"
+     ],
+     "rm.knee_hook"
+    ],
+    [
+     "mv.empress.martial.x.10",
+     [
       "foot",
       "edge",
       "line",
@@ -2351,18 +2395,7 @@
      "w1.side_kick"
     ],
     [
-     "mv.empress.martial.x.07",
-     [
-      "foot",
-      "ball",
-      "line",
-      "gut",
-      "light"
-     ],
-     "w1.front_kick"
-    ],
-    [
-     "mv.empress.martial.x.08",
+     "mv.empress.martial.x.11",
      [
       "foot",
       "edge",
@@ -2373,59 +2406,26 @@
      null
     ],
     [
-     "mv.empress.martial.x.09",
+     "mv.empress.martial.x.12",
      [
       "foot",
-      "instep",
-      "arc_in",
-      "shins",
-      "light"
-     ],
-     "w1.sweep"
-    ],
-    [
-     "mv.empress.martial.x.10",
-     [
-      "foot",
-      "heel",
-      "arc_out",
+      "ball",
+      "rise",
       "gut",
       "light"
      ],
-     null
-    ],
-    [
-     "mv.empress.martial.x.11",
-     [
-      "hand",
-      "blade",
-      "arc_out",
-      "head",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.empress.martial.x.12",
-     [
-      "hand",
-      "blade",
-      "line",
-      "head",
-      "light"
-     ],
-     "w1.jab"
+     "rm.lift_kick"
     ],
     [
      "mv.empress.martial.x.13",
      [
       "hand",
       "blade",
-      "line",
-      "chest",
+      "arc_out",
+      "head",
       "light"
      ],
-     "w1.cross"
+     null
     ],
     [
      "mv.empress.martial.x.14",
@@ -2442,81 +2442,26 @@
      "mv.empress.martial.x.15",
      [
       "hand",
-      "palm",
+      "blade",
       "line",
-      "arm",
+      "head",
       "light"
      ],
-     null
+     "w1.jab"
     ],
     [
      "mv.empress.martial.x.16",
      [
-      "hand",
-      "blade",
-      "drop",
-      "arm",
+      "foot",
+      "instep",
+      "arc_in",
+      "shins",
       "light"
      ],
-     null
+     "w1.sweep"
     ],
     [
      "mv.empress.martial.x.17",
-     [
-      "hand",
-      "blade",
-      "drop",
-      "head",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.empress.martial.x.18",
-     [
-      "hand",
-      "plate",
-      "arc_in",
-      "head",
-      "light"
-     ],
-     "w1.hook"
-    ],
-    [
-     "mv.empress.martial.x.19",
-     [
-      "hand",
-      "palm",
-      "line",
-      "jaw",
-      "light"
-     ],
-     null
-    ],
-    [
-     "mv.empress.martial.x.20",
-     [
-      "hand",
-      "blade",
-      "line",
-      "gut",
-      "light"
-     ],
-     "w1.spear_hand"
-    ],
-    [
-     "mv.empress.martial.x.21",
-     [
-      "foot",
-      "ball",
-      "rise",
-      "gut",
-      "light"
-     ],
-     "rm.lift_kick"
-    ],
-    [
-     "mv.empress.martial.x.22",
      [
       "foot",
       "instep",
@@ -2527,21 +2472,43 @@
      "w1.low_kick"
     ],
     [
-     "mv.empress.martial.x.23",
+     "mv.empress.martial.x.18",
      [
       "hand",
-      "blade",
-      "drop",
+      "palm",
+      "line",
       "chest",
+      "light"
+     ],
+     "w1.palm_heel"
+    ],
+    [
+     "mv.empress.martial.x.19",
+     [
+      "hand",
+      "palm",
+      "line",
+      "arm",
       "light"
      ],
      null
     ],
     [
-     "mv.empress.martial.x.24",
+     "mv.empress.martial.x.20",
      [
-      "foot",
-      "heel",
+      "hand",
+      "blade",
+      "arc_out",
+      "jaw",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.empress.martial.x.21",
+     [
+      "hand",
+      "blade",
       "arc_out",
       "chest",
       "light"
@@ -2549,11 +2516,44 @@
      null
     ],
     [
+     "mv.empress.martial.x.22",
+     [
+      "hand",
+      "palm",
+      "line",
+      "head",
+      "light"
+     ],
+     null
+    ],
+    [
+     "mv.empress.martial.x.23",
+     [
+      "hand",
+      "plate",
+      "arc_in",
+      "head",
+      "light"
+     ],
+     "w1.hook"
+    ],
+    [
+     "mv.empress.martial.x.24",
+     [
+      "hand",
+      "blade",
+      "line",
+      "gut",
+      "light"
+     ],
+     "w1.spear_hand"
+    ],
+    [
      "mv.empress.martial.x.25",
      [
       "hand",
       "palm",
-      "rise",
+      "line",
       "jaw",
       "light"
      ],
@@ -2573,21 +2573,21 @@
     [
      "mv.empress.martial.x.27",
      [
-      "hand",
-      "blade",
-      "arc_out",
-      "jaw",
+      "foot",
+      "ball",
+      "line",
+      "gut",
       "light"
      ],
-     null
+     "w1.front_kick"
     ],
     [
      "mv.empress.martial.x.28",
      [
       "hand",
       "plate",
-      "drop",
-      "arm",
+      "arc_in",
+      "jaw",
       "light"
      ],
      null
@@ -2596,9 +2596,9 @@
      "mv.empress.martial.x.29",
      [
       "hand",
-      "palm",
+      "blade",
       "line",
-      "head",
+      "arm",
       "light"
      ],
      null
@@ -2606,13 +2606,13 @@
     [
      "mv.empress.martial.x.30",
      [
-      "knee",
-      "cap",
-      "arc_in",
+      "foot",
+      "ball",
+      "line",
       "legs",
       "light"
      ],
-     "rm.knee_hook"
+     null
     ]
    ],
    "martial.y": [
@@ -2620,9 +2620,9 @@
      "mv.empress.martial.y.01",
      [
       "hand",
-      "palm",
-      "rise",
-      "jaw",
+      "blade",
+      "arc_out",
+      "head",
       "medium"
      ],
      null
@@ -2630,9 +2630,9 @@
     [
      "mv.empress.martial.y.02",
      [
-      "hand",
-      "palm",
-      "rise",
+      "foot",
+      "heel",
+      "line",
       "chest",
       "medium"
      ],
@@ -2644,13 +2644,35 @@
       "hand",
       "palm",
       "rise",
-      "gut",
+      "jaw",
       "medium"
      ],
      null
     ],
     [
      "mv.empress.martial.y.04",
+     [
+      "hand",
+      "palm",
+      "rise",
+      "gut",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.empress.martial.y.05",
+     [
+      "hand",
+      "palm",
+      "rise",
+      "chest",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.empress.martial.y.06",
      [
       "hand",
       "blade",
@@ -2661,18 +2683,7 @@
      "w1.overhand"
     ],
     [
-     "mv.empress.martial.y.05",
-     [
-      "foot",
-      "heel",
-      "drop",
-      "chest",
-      "medium"
-     ],
-     "w1.axe_kick"
-    ],
-    [
-     "mv.empress.martial.y.06",
+     "mv.empress.martial.y.07",
      [
       "hand",
       "blade",
@@ -2683,18 +2694,18 @@
      null
     ],
     [
-     "mv.empress.martial.y.07",
+     "mv.empress.martial.y.08",
      [
-      "hand",
-      "blade",
-      "line",
+      "foot",
+      "heel",
+      "drop",
       "chest",
       "medium"
      ],
-     null
+     "w1.axe_kick"
     ],
     [
-     "mv.empress.martial.y.08",
+     "mv.empress.martial.y.09",
      [
       "hand",
       "blade",
@@ -2705,18 +2716,18 @@
      null
     ],
     [
-     "mv.empress.martial.y.09",
+     "mv.empress.martial.y.10",
      [
-      "foot",
-      "sole",
+      "hand",
+      "blade",
       "line",
-      "chest",
+      "jaw",
       "medium"
      ],
-     "w1.drop_kick"
+     null
     ],
     [
-     "mv.empress.martial.y.10",
+     "mv.empress.martial.y.11",
      [
       "hand",
       "blade",
@@ -2727,7 +2738,7 @@
      "w1.haymaker"
     ],
     [
-     "mv.empress.martial.y.11",
+     "mv.empress.martial.y.12",
      [
       "hand",
       "blade",
@@ -2738,18 +2749,18 @@
      "rb.body_hook"
     ],
     [
-     "mv.empress.martial.y.12",
+     "mv.empress.martial.y.13",
      [
       "foot",
-      "heel",
-      "arc_out",
+      "sole",
+      "drop",
       "gut",
       "medium"
      ],
-     null
+     "w1.stomp"
     ],
     [
-     "mv.empress.martial.y.13",
+     "mv.empress.martial.y.14",
      [
       "foot",
       "sole",
@@ -2760,26 +2771,15 @@
      null
     ],
     [
-     "mv.empress.martial.y.14",
+     "mv.empress.martial.y.15",
      [
-      "elbow",
-      "point",
-      "drop",
+      "hand",
+      "palm",
+      "line",
       "chest",
       "medium"
      ],
-     "w1.dropping_elbow"
-    ],
-    [
-     "mv.empress.martial.y.15",
-     [
-      "foot",
-      "edge",
-      "line",
-      "legs",
-      "medium"
-     ],
-     null
+     "w1.double_palm"
     ],
     [
      "mv.empress.martial.y.16",
@@ -2787,7 +2787,7 @@
       "hand",
       "palm",
       "line",
-      "jaw",
+      "arm",
       "medium"
      ],
      null
@@ -2799,7 +2799,7 @@
      [
       "hand",
       "blade",
-      "drop",
+      "line",
       "chest",
       "heavy"
      ],
@@ -2808,10 +2808,10 @@
     [
      "mv.empress.martial.b.02",
      [
-      "hand",
-      "blade",
-      "line",
-      "arm",
+      "foot",
+      "heel",
+      "drop",
+      "gut",
       "heavy"
      ],
      null
@@ -2832,22 +2832,22 @@
      [
       "foot",
       "edge",
-      "line",
+      "arc_out",
       "gut",
       "heavy"
      ],
-     "pu.su_edge_step"
+     "pu.su_edge_unwind"
     ],
     [
      "mv.empress.martial.b.05",
      [
       "foot",
       "edge",
-      "arc_out",
-      "gut",
+      "line",
+      "legs",
       "heavy"
      ],
-     "pu.su_edge_unwind"
+     "ru.su_edge_legs"
     ],
     [
      "mv.empress.martial.b.06",
@@ -2874,13 +2874,13 @@
     [
      "mv.empress.martial.b.08",
      [
-      "foot",
-      "heel",
+      "hand",
+      "palm",
       "drop",
       "chest",
       "heavy"
      ],
-     "ru.su_heel"
+     "pu.su_drive"
     ],
     [
      "mv.empress.martial.b.09",
@@ -2896,13 +2896,13 @@
     [
      "mv.empress.martial.b.10",
      [
-      "foot",
-      "edge",
-      "line",
-      "legs",
+      "hand",
+      "plate",
+      "drop",
+      "arm",
       "heavy"
      ],
-     "ru.su_edge_legs"
+     "ru.su_plate_arm"
     ]
    ],
    "defensive.x": [

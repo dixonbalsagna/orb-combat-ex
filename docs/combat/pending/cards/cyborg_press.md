@@ -13,13 +13,13 @@ Each line names three of the pieces that press draws on, his own first. A star m
 - **Tapped with the stick toward the opponent:** 5 to draw on, none his alone. Shoulder check to the chest; Hooking elbow to the jaw; Rising elbow to the jaw.
 - **Mashed, the flurry:** 7 to draw on, none his alone. Shoulder check to the chest; Forearm swing to the head; Palm strike to the chest.
 - **Held, the burst's quick first blows:** 3 to draw on, none his alone. Forearm swing to the head; Palm strike to the chest; Backhand hammer fist to the head.
-- **Held, its middle:** 7 to draw on, none his alone. The slower gap lets in hooking elbow to the jaw; rising elbow to the jaw; round knee to the legs.
-- **Held, its slow last blows, and the pace it settles to:** 12 to draw on, none his alone. The slowest gap lets in shoulder check to the chest; front kick to the gut; round kick to the shins. His burst ends on a drop.
+- **Held, its middle:** 7 to draw on, none his alone. The slower gap lets in hooking elbow to the jaw; rising elbow to the jaw; driving knee to the gut.
+- **Held, its slow last blows, and the pace it settles to:** 12 to draw on, none his alone. The slowest gap lets in shoulder check to the chest; front kick to the gut; round kick to the legs. His burst ends on a drop.
 
 **Y, the mediums**
 - **Tapped or mashed:** 5 to draw on, none his alone. Shoulder check to the chest; Dropping elbow to the chest; Headbutt to the jaw.
 - **Held, the charged medium:** 8 to draw on, none his alone. It adds the ones that need the longer wind-up: forearm drop to the head (two hands); crossed-forearm ram to the chest; palm strike to the chest (two hands).
-- **Out of a perfect block:** 3 to draw on, none his alone. Headbutt to the jaw; Uppercut to the jaw; Driving knee to the gut.
+- **Out of a perfect block:** 3 to draw on, none his alone. Headbutt to the jaw; Uppercut to the jaw; Rising knee to the gut.
 
 **B, the heavies**
 - **Tapped, mashed or held:** 8 to draw on, none his alone: the 6 launchers listed below, and falling forearm plate to the arm; stepping edge of the foot to the legs.
@@ -39,8 +39,8 @@ Each line names three of the pieces that press draws on, his own first. A star m
 
 ## What only he has
 
-Nothing he throws today is his alone: all 34 of his posed pieces are borrowed. What would be his alone waits to be drawn: 2 heavies (named above) and 8 lights and mediums.
-- **The lights and mediums that wait:** hammer fist to the arm; overhand punch to the chest; hammer fist to the head; dropping elbow to the chest; rising palm to the jaw; forearm drop to the arm; uppercut to the chest; backhand hammer fist to the arm.
+Nothing he throws today is his alone: all 34 of his posed pieces are borrowed. What would be his alone waits to be drawn: 2 heavies (named above) and 7 lights and mediums.
+- **The lights and mediums that wait:** hammer fist to the chest; crossed-forearm ram to the chest; hook to the gut; hook to the head; overhand punch to the chest; forearm swing to the gut; straight punch to the head.
 - **His energy hands:** clawed palm, open palm.
 
 ## What he never does
@@ -49,12 +49,11 @@ Nothing he throws today is his alone: all 34 of his posed pieces are borrowed. W
 - He never spins.
 - He never kicks above the gut.
 
-## Three things that set him apart
+## Two things that set him apart
 
 Counted over the 56 strikes of his three buttons.
 
-- **Hammer fists.** 10 of his 56 are hammer fists, the most in the roster. Next is the Anti-hero with 4 of 56.
-- **Hands.** 34 of his 56 are hand strikes, the most in the roster. Next is the Anti-hero with 29 of 56.
-- **The arms.** 7 of his 56 go to an arm, the most in the roster. Next is the Anti-hero with 6 of 56.
+- **Hammer fists.** 8 of his 56 are hammer fists, the most in the roster. Next is the Anti-hero with 4 of 56.
+- **Hands.** 34 of his 56 are hand strikes, the most in the roster. Next is the Empress with 32 of 56.
 
-**How much of him is drawn.** Across all five stances he has 126 moves: 61 are posed, 39 borrow a nearby pose, and 26 wait to be drawn.
+**How much of him is drawn.** Across all five stances he has 126 moves: 60 are posed, 41 borrow a nearby pose, and 25 wait to be drawn.

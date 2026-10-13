@@ -24,6 +24,12 @@
     "count": 30,
     "quotas": [
      {
+      "name": "his own, in the flurry",
+      "min": 3,
+      "own": true,
+      "form": "flurry"
+     },
+     {
       "name": "toward",
       "min": 5,
       "filter": {
@@ -203,7 +209,16 @@
        }
       ]
      }
-    }
+    },
+    "share": {
+     "_about": "his own lights, at least, by his tier (Game Design: 3 at tier 1, 5 at tier 2). A light that is one fighter's own is never lent, so there is no cap to keep: maxWithOne is the whole cell",
+     "own": {
+      "1": 3,
+      "2": 5
+     },
+     "maxWithOne": 1.0
+    },
+    "_ownFlurry": "Combat's, for Game Design's gate: three of his own lights fit the flurry's gap (the whole of a tier-1 floor), since two blows in three of a match are flurry blows and a fighter whose own lights are all kicks would be seen throwing nobody's hands"
    },
    "y": {
     "kind": "strikes",
@@ -241,7 +256,15 @@
       "form": "quick"
      }
     ],
-    "_quotas": "the first four are how the cell was filled when these were the heavies, by where each sends; a medium no longer knocks back. quick is the count that read on a 12-tick wind-up: the rest are thrown on a held Y only"
+    "_quotas": "the first four are how the cell was filled when these were the heavies, by where each sends; a medium no longer knocks back. quick is the count that read on a 12-tick wind-up: the rest are thrown on a held Y only",
+    "share": {
+     "_about": "his own mediums, at least, by his tier (Game Design: 2 at tier 1, 3 at tier 2). Never lent, as his lights are",
+     "own": {
+      "1": 2,
+      "2": 3
+     },
+     "maxWithOne": 1.0
+    }
    },
    "a": {
     "kind": "context",
@@ -1334,6 +1357,69 @@
      "H1",
      "K1"
     ]
+   }
+  }
+ },
+ "gate": {
+  "_about": "Game Design's gate on blows (fighter-pipeline.md section 1): at least a quarter of the blows a fighter throws in a match are pieces only he has; under a fifth, he gets more of his own or his weights change. gen_moveset.py --check reads it on the generated moves: mix is the part of a fighter's blows each cell throws, cells says which generated moves a cell draws on (as the recipes' pools do), and a piece is only his when it is his own and no other fighter of the roster has it. ownWeight: how many times likelier one of his own is drawn than another piece; 1 is the even draw of today's picker",
+  "quarter": 0.25,
+  "fifth": 0.2,
+  "ownWeight": 1,
+  "mix": {
+   "flurry": 0.6683,
+   "light": 0.1346,
+   "bolt": 0.084,
+   "burst": 0.0819,
+   "reversal": 0.0116,
+   "heavy": 0.009,
+   "medium": 0.0083,
+   "launcher": 0.0022,
+   "blast": 0.0001
+  },
+  "_mix": "measured on main 6581ede7: four seeded AI matches at medium, both fighters, 7,238 blows, the mean of the two. A player who holds, or who never mashes, throws another mix",
+  "cells": {
+   "flurry": {
+    "from": "martial.x",
+    "form": "flurry"
+   },
+   "light": {
+    "from": "martial.x"
+   },
+   "burst": {
+    "from": "martial.x"
+   },
+   "bolt": {
+    "from": "energy.x.reach"
+   },
+   "reversal": {
+    "from": "martial.y",
+    "form": "quick",
+    "filter": {
+     "path": [
+      "line",
+      "rise"
+     ],
+     "limb": [
+      "hand",
+      "elbow",
+      "knee",
+      "head"
+     ]
+    }
+   },
+   "medium": {
+    "from": "martial.y",
+    "form": "quick"
+   },
+   "heavy": {
+    "from": "martial.b"
+   },
+   "launcher": {
+    "from": "martial.b",
+    "form": "launch"
+   },
+   "blast": {
+    "from": "energy.y.reach"
    }
   }
  }

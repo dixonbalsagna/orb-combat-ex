@@ -1128,6 +1128,21 @@
      ]
     },
     "why": "no vanish or blink between blows; the fighter is drawn the whole way"
+   },
+   {
+    "id": "b14",
+    "match": {
+     "flags": [
+      "leap"
+     ],
+     "limb": [
+      "hand",
+      "elbow",
+      "head"
+     ]
+    },
+    "rule": "a leap is allowed for a knee or a foot to the gut, chest or legs (the Hopper's hop; the cleared drop kick); never with a hand, elbow or the head as the striking limb, and never to the jaw or head by any limb (b03); one body height at most, the landing drawn, no hover or held flight pose, a single turn at most (b04)",
+    "why": "the jumping rising uppercut and its kin; ruled 2026-10-12 for the Hopper"
    }
   ],
   "_banned": "Legal's shape rows (docs/legal/movegen-banned.json, RL-073), merged as they stand. A row matches when every field it names matches; a list matches on any of its values; form matches any of a move's forms; flags matches any flag the move is known to have. The generator never emits a match, and --check fails on one. Rows are only added, never removed, without Legal",
@@ -1257,6 +1272,12 @@
     "max": 2,
     "rule": "inside a hold, vicious blows run no more than 2 in a row to the same place, and the arm counts as three places (shoulder, elbow, wrist) and the head, core and legs as two each, so four taps on one region alternate places; vicious blows are strikes, never a grip on the throat, hair or tail, and never a clawed hand on the face; the sound rule f03 holds across the taps",
     "why": "s02 applied to the clinch; Orb's design and the rating question are still open (not cleared by this row)"
+   },
+   {
+    "id": "s09",
+    "kind": "drawn",
+    "rule": "a sole or heel brought down from above: on a standing opponent, any target above the knee is allowed (the cleared stomp and axe kick); on a downed opponent, the torso and limbs only; the head, face, neck and groin of a downed opponent are out of the base moveset until the rating decision (a finisher only, not repeatable, never in a public trailer, run through the questionnaires first)",
+    "why": "ratings (PEGI 18 treats violence towards defenceless people as its own descriptor; stricter markets) rather than IP; the Hopper's stomp, ruled 2026-10-12"
    }
   ],
   "_bannedSequences": "Legal's sequence rules, each with a form a program can check beside Legal's words. run: at most `max` blows in a row that share the parts in `same` (tighter: a smaller max where a filter holds). after: a blow matching `after` is never followed by one matching a `never` filter (state: only in that state at run time; the generator's own strings obey it always). steps: a string uses only drawn steps. audio: not checkable from parts; Audio and the director's line picker hold it",

@@ -1,5 +1,5 @@
 {
- "_about": "The hand-kept words of the sketches' cards (the card generator's text file has the two fighters of the build). `never` has one plain line for each `never` row of the sketch in identity.candidates.json, in the same order; the card generator refuses to run when the counts differ.",
+ "_about": "The hand-kept words of the sketches' cards (the card generator's text file has the two fighters of the build). `never` has one plain line for each `never` row of the sketch in identity.candidates.json, in the same order; the card generator refuses to run when the counts differ. `also`: plain lines printed with his bans that are not a ban in his row (a rule that is Legal's or the game's).",
  "fighters": {
   "cyborg_press": {
    "name": "The Demon Cyborg as the Press",
@@ -39,8 +39,10 @@
    "never": [
     "Nothing by hand or elbow comes down from above: his arms stay below the rim.",
     "He never headbutts: his head sits inside the funnel.",
-    "His rising blows go to the gut and the chest, never the jaw or the head.",
-    "He never brings the sole of his foot down from above. That waits for Legal's ruling on the stomp, and nothing of his is a blow on a downed opponent."
+    "His rising blows go to the gut and the chest, never the jaw or the head."
+   ],
+   "also": [
+    "Nothing of his is a blow on a downed opponent's head. That waits for the rating decision, and the game has no blow on a downed opponent at all yet."
    ]
   },
   "empress": {

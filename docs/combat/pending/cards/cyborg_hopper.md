@@ -9,22 +9,22 @@ A sketch for Orb's pick. Combat and Choreography, generated on 2026-10-12. It is
 Each line names three of the pieces that press draws on, his own first. A star marks a piece only he has. Within a press the game draws evenly, so a player sees them all.
 
 **X, the lights**
-- **Tapped:** 12 to draw on, none his alone. Rising kick to the gut; Driving knee to the gut; Front kick to the gut.
+- **Tapped:** 13 to draw on, none his alone. Rising kick to the gut; Driving knee to the gut; Front kick to the gut.
 - **Tapped with the stick toward the opponent:** 4 to draw on, none his alone. Driving knee to the gut; Round knee to the legs; Shoulder check to the chest.
 - **Mashed, the flurry:** 6 to draw on, none his alone. Driving knee to the gut; Round knee to the legs; Shoulder check to the chest.
-- **Held, the burst's quick first blows:** 2 to draw on, none his alone. Palm strike to the chest; Forearm swing to the head.
-- **Held, its middle:** 5 to draw on, none his alone. The slower gap lets in driving knee to the gut; round knee to the legs; hooking elbow to the jaw.
-- **Held, its slow last blows, and the pace it settles to:** 12 to draw on, none his alone. The slowest gap lets in rising kick to the gut; front kick to the gut; side kick to the chest. His burst ends on a drop.
+- **Held, the burst's quick first blows:** 3 to draw on, none his alone. Palm strike to the chest; Backhand hammer fist to the head; Forearm swing to the head.
+- **Held, its middle:** 6 to draw on, none his alone. The slower gap lets in driving knee to the gut; round knee to the legs; hooking elbow to the jaw.
+- **Held, its slow last blows, and the pace it settles to:** 13 to draw on, none his alone. The slowest gap lets in rising kick to the gut; front kick to the gut; side kick to the chest. His burst ends on a drop.
 
 **Y, the mediums**
-- **Tapped or mashed:** 5 to draw on, none his alone. Axe kick to the chest; Rising knee to the gut; Driving knee to the gut.
-- **Held, the charged medium:** 7 to draw on, none his alone. It adds the ones that need the longer wind-up: push kick to the chest; spinning heel kick to the chest.
+- **Tapped or mashed:** 7 to draw on, none his alone. Axe kick to the chest; Rising knee to the gut; Stomp to the gut.
+- **Held, the charged medium:** 8 to draw on, none his alone. It adds the ones that need the longer wind-up: spinning heel kick to the chest.
 - **Out of a perfect block:** 2 to draw on, none his alone. Rising knee to the gut; Driving knee to the gut.
 
 **B, the heavies**
-- **Tapped, mashed or held:** 7 to draw on, none his alone: the 5 launchers listed below, and stepping edge of the foot to the legs; turning knee to the legs.
-- **On a staggered opponent, the launcher:** 5 of those heavies, the ones that read on half the wind-up. Which one depends on the stick (below).
-- **Waiting to be drawn, and his alone:** falling heel to the legs; heaving knee to the gut; unwinding fist to the arm.
+- **Tapped, mashed or held:** 7 to draw on, none his alone: the 6 launchers listed below, and turning knee to the legs.
+- **On a staggered opponent, the launcher:** 6 of those heavies, the ones that read on half the wind-up. Which one depends on the stick (below).
+- **Waiting to be drawn, and his alone:** falling heel to the legs; stepping ball of the foot to the gut; stepping palm to the arm.
 
 **RB held in reach, the energy pieces**
 - **RB + X, the point-blank bolt:** 4 to draw on, none his alone. Palm thrust on the chest; Flat palm thrust on the gut; Palm flick on the chest; Flat palm sweep on the gut.
@@ -32,15 +32,15 @@ Each line names three of the pieces that press draws on, his own first. A star m
 
 ## Where his launcher sends you
 
-- **Stick up, he lifts you:** heaving ball of the foot to the gut.
+- **Stick up, he lifts you:** heaving ball of the foot to the gut; heaving palm to the chest.
 - **Stick down, he drives you under:** falling heel to the chest.
 - **Stick toward, he drives you back:** stepping knee to the gut; stepping fist to the chest.
 - **Stick away, he turns you past him:** turning fist to the jaw.
 
 ## What only he has
 
-Nothing he throws today is his alone: all 35 of his posed pieces are borrowed. What would be his alone waits to be drawn: 3 heavies (named above) and 8 lights and mediums.
-- **The lights and mediums that wait:** rising knee to the gut; rising palm to the gut; hook kick to the chest; hook kick to the gut; rising palm to the chest; uppercut to the chest; rising kick to the gut; backfist to the arm.
+Nothing he throws today is his alone: all 38 of his posed pieces are borrowed. What would be his alone waits to be drawn: 3 heavies (named above) and 8 lights and mediums.
+- **The lights and mediums that wait:** back kick to the gut; back kick to the legs (two of them); push kick to the chest; hook to the head; hook to the gut; hook to the chest; round knee to the gut.
 - **His energy hands:** clawed palm, open palm.
 
 ## What he never does
@@ -48,14 +48,14 @@ Nothing he throws today is his alone: all 35 of his posed pieces are borrowed. W
 - Nothing by hand or elbow comes down from above: his arms stay below the rim.
 - He never headbutts: his head sits inside the funnel.
 - His rising blows go to the gut and the chest, never the jaw or the head.
-- He never brings the sole of his foot down from above. That waits for Legal's ruling on the stomp, and nothing of his is a blow on a downed opponent.
+- Nothing of his is a blow on a downed opponent's head. That waits for the rating decision, and the game has no blow on a downed opponent at all yet.
 
 ## Three things that set him apart
 
 Counted over the 56 strikes of his three buttons.
 
-- **The legs.** 11 of his 56 go to the legs, the most in the roster. Next is the Empress with 7 of 56.
-- **Kicks.** 23 of his 56 are kicks, the most in the roster. Next is the Protagonist with 20 of 56.
-- **Arcs.** 22 of his 56 come round in an arc, the most in the roster. Next is the Protagonist with 21 of 56.
+- **Knees.** 10 of his 56 are knees, the most in the roster. Next is the Anti-hero with 6 of 56.
+- **The legs.** 10 of his 56 go to the legs, the most in the roster. Next is the Empress with 7 of 56.
+- **Arcs.** 23 of his 56 come round in an arc, the most in the roster. Next is the Protagonist with 21 of 56.
 
-**How much of him is drawn.** Across all five stances he has 128 moves: 60 are posed, 40 borrow a nearby pose, and 28 wait to be drawn.
+**How much of him is drawn.** Across all five stances he has 128 moves: 63 are posed, 37 borrow a nearby pose, and 28 wait to be drawn.

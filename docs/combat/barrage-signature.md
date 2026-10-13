@@ -22,4 +22,6 @@ Owner: Combat and Choreography. Date: 2026-10-12. A sketch on paper, half a page
 
 **From the others.** Audio: no shouted syllable repeats across the three volleys. Animation: nothing new for the volleys; the walk between them is the one new thing.
 
-**Legal first.** Its rules already shape this: each volley is one motion of one hand, never two palms in turn and never one hand pumping, and the three volleys differ in hand or release (`docs/legal/movegen-banned.json` e05 and e06). A signature built on them still wants Legal's screen as a whole before anything is built.
+**Legal passed it on paper** on 2026-10-12 (`docs/legal/roster-sketches-screen.md`, row sg01 of its file), and it must be seen drawn. Its conditions add to what is above: the walk is upright and unhurried with the hands open and low between volleys, with no aura, no crouch and no charge pose; and the three volleys carry at most one full flash, the last.
+
+**What Legal's rules already asked.** Its rules already shape this: each volley is one motion of one hand, never two palms in turn and never one hand pumping, and the three volleys differ in hand or release (`docs/legal/movegen-banned.json` e05 and e06). A signature built on them still wants Legal's screen as a whole before anything is built.

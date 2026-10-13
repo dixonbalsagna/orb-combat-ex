@@ -53,6 +53,7 @@ def resolve(key, row, base, file_doc, borrowing="common"):
     for k in ("reaimed", "_reaimed", "_pinned", "_tipOf", "_tipFlags", "_waves", "_tierWaves"):
         out.pop(k, None)
     out.update({"pinned": {}, "tipOf": {}, "tipFlags": {}})
+    out["armsOf"] = {k: v for b_ in base.values() for k, v in b_.get("armsOf", {}).items()}   # what a fighter of the build says of a key set's arms holds for whoever borrows it
     packs = list(row.get("waves", file_doc["packs"]))
     out["waves"] = packs
     out["tierWaves"] = [w for w in packs if any(w in base[b].get("tierWaves", []) for b in base)]
@@ -123,7 +124,9 @@ def main():
             # the generator's own check would call the two fighters' files out of date (their inputs line names this roster), so compare the moves here
             out, parts, identity, cells, notes = gen.build()
             rep = gen.string_report(out, parts, cells)
-            dead = gen.string_findings(rep) + gen.share_findings(out, cells, identity)
+            dead = gen.string_findings(rep, identity) + gen.share_findings(out, cells, identity)
+            gate = gen.gate_shares(out, cells, identity)
+            under = gen.gate_findings(gate, cells)
             bad = gen.legal_findings(out, parts, identity)
             stale = [k for k in mine if not os.path.exists(os.path.join(HERE, "moveset.%s.json" % k))
                      or load(os.path.join(HERE, "moveset.%s.json" % k))["cells"] != json.loads(gen.dump(out[k]))["cells"]]
@@ -137,7 +140,14 @@ def main():
             print("strings and shares: " + ("no dead end" if not dead else "%d PROBLEM" % len(dead)))
             for b in dead:
                 print("  " + b)
-            sys.exit(1 if (stale or moved or bad or dead) else 0)
+            # Game Design's gate on blows: the part of what he throws that only he has. today: what is posed; planned: with his own that wait drawn; and the draw
+            # weight his own would need for a quarter. Each is his worst over the rosters he may be in (one option of every `alt` group)
+            print("own blows, of the gate's quarter (today; with his own drawn; the draw weight on his own that reaches a quarter):")
+            for k in sorted(gate, key=lambda f: (f not in base_idn["fighters"], f)):
+                r = gate[k]
+                print("  %-15s %3d%%  %3d%%  %s%s" % (k, round(100 * r["today"]), round(100 * r["planned"]), ("x%g" % r["weight"]) if r["weight"] else "none reaches it",
+                                              "" if r["planned"] >= cells["gate"]["quarter"] else ("  short of a quarter" if r["planned"] >= cells["gate"]["fifth"] else "  UNDER a fifth")))
+            sys.exit(1 if (stale or moved or bad or dead or under) else 0)
         argv, sys.argv = sys.argv, [os.path.join(BASE, "gen_moveset.py"), "--recipes", recipes]
         try:
             # twice: the first run locks every sketch's moves, and the second counts what each shares with the others now that all of them are locked.

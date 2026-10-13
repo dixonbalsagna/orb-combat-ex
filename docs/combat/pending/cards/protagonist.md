@@ -32,7 +32,7 @@ Each line names three of the pieces that press draws on, his own first. A star m
 ## Where his launcher sends you
 
 - **Stick up, he lifts you:** heaving palm to the chest; heaving ball of the foot to the gut.
-- **Stick down, he drives you under:** falling palm to the chest (both arms).
+- **Stick down, he drives you under:** falling palm to the chest.
 - **Stick toward, he drives you back:** stepping edge of the foot to the gut; stepping blade hand to the jaw.
 - **Stick away, he turns you past him:** unwinding edge of the foot to the gut; turning elbow to the jaw.
 

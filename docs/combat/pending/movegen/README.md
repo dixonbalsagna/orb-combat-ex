@@ -17,7 +17,7 @@ Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here i
 
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, on any match with Legal's rows, or when a string runs out of blows (a strike button left with fewer than 3 pieces after some two blows, or a light that cannot open a burst). It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 83 cases.
+- **To prove the refusals:** `--self-test`, 88 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 
@@ -68,6 +68,18 @@ The note is `../../roster-rows.md`; the rows and their generated files are in `.
 - **The search for a mashed run of bolts** goes on to another order of pieces when the first has no arms that keep Legal's e09. The two fighters' runs are as before.
 - **The two fighters' files** changed by their inputs line and by the counts of the heavy cell's quotas. No move changed, and `../recipes.brawl.json` is byte for byte the same.
 - **The data scripts' order** is now `merge_legal2.py`, `three_strengths_data.py`, `c2t_data.py`, `nine_cells_data.py`, `share_data.py`.
+
+## 0d. A fighter's own, the floors and the gate on blows (2026-10-12, version 16)
+
+Game Design's borrowing policy (`docs/design/fighter-pipeline.md` section 1). The note is `../../roster-rows.md`.
+
+- **`own` on a move:** it is his own piece. It is of a pack of his own and not a common piece (one that more than one fighter has posed), or it is a new shape nobody else holds. A blow that is another fighter's own is no candidate for a new one of his, at any strength.
+- **`share` on the light and medium cells** beside the heavy's: his own, at least, by tier (3 and 2 at tier 1; 5 and 3 at tier 2). The light cell also has a quota for three of his own that fit the flurry.
+- **`gate` in `cells.json`:** the measured mix of blows by cell, which generated moves each cell draws on, a quarter and a fifth, and `ownWeight` (1: today's even draw). `--check` prints a fourth line, `own blows`, and fails when a fighter is under a fifth. It is never a reason to refuse to write.
+- **`waives` in a fighter's identity:** a floor Game Design has let him off (`wrench.legs`, for the Bell). **`armsOf`:** how many arms a key set uses, where its pack is stale (Legal's RL-133).
+- **Legal's b14 and s09 are merged** (a leap by hand, elbow or head; the stomp). Its `signature` group is not mirrored: no generated move is made of it.
+- **The two fighters' files** gained the `own` mark and the counts of the new quotas. No move changed; the Protagonist's falling palm lost "(both arms)" from its name. `../recipes.brawl.json` is byte for byte the same.
+- **The data scripts' order** now ends `share_data.py`, `rl133_data.py`.
 
 ## 1. The martial arts stance, regenerated on Animation's data
 

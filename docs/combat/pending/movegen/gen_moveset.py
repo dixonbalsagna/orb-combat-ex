@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 15
+VERSION = 16
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -260,7 +260,7 @@ def posed(parts, idn, tips):
                     or any(match(r["shape"], hm) for r in g["heavy"].get("never", []))):
                 unread.append("%s (%s %s %s to the %s, a heavy)" % (s["id"], limb, tip, path, target))
                 continue
-            arms_ = int(s.get("uses", {}).get("arms", 1 if limb in ("hand", "elbow") else 0))
+            arms_ = int(idn.get("armsOf", {}).get(sid, s.get("uses", {}).get("arms", 1 if limb in ("hand", "elbow") else 0)))   # armsOf: his identity's word, where a pack's is stale
             cover[(limb, tip, path, target, "heavy")] = {"level": "posed", "from": sid, "set": s["id"], "wave": wave, "legal": list(s.get("legal", [])), "flags": list(s.get("flags", [])),
                                                          "measured": "flags" in s, "arms": arms_, "ground": s.get("ground", "ok"), "_rank": (0, 0 if arms_ <= 1 else 1)}
             continue
@@ -363,8 +363,8 @@ def weight_of(idn, m):
 
 
 def quota_ok(q, m):
-    if "own" in q:   # a piece that is his alone (a cell's share rule)
-        return bool(m.get("_own"))
+    if "own" in q:   # a piece that is his own (a cell's share rule), and of a form when the quota names one
+        return bool(m.get("_own")) and ("form" not in q or q["form"] in m["_forms"])
     if "form" in q and "sends" in q:   # a launcher that sends one way: both must hold
         return q["form"] in m["_forms"] and m.get("_sends") == q["sends"]
     if "form" in q:
@@ -509,7 +509,15 @@ def strike_cell(ctx, who, cid, cell):
             if borrowed and ctx["waveOwner"].get(c["wave"]) in others:
                 sh.add(ctx["waveOwner"][c["wave"]])
             m["_shared"] = sh
-            m["_own"] = not sh and not borrowed
+            # his own: a piece of a pack of his own that is not a common piece (one that more than one fighter has posed), or a new shape nobody else holds
+            m["_own"] = (not borrowed and c["from"] not in ctx["common"]) if c is not None else not sh
+        # a piece that is one fighter's own is never lent (Game Design): a shape that is another fighter's own piece is no candidate for a new one of his
+        # The blow is what is his, at whatever strength: another fighter's own uppercut to the chest is not drawn again as somebody's light.
+        theirs_own = set()
+        for o in others:
+            if o in ctx["built"]:
+                theirs_own |= set(fp(mv)[:4] for c2 in ctx["built"][o]["cells"].values() for mv in c2.get("moves", []) if isinstance(mv, dict) and mv.get("own"))
+        cand = [m for m in cand if "_id" in m or cover.get(fp(m)) is not None or fp(m)[:4] not in theirs_own]
         def allow(picked, m):
             for o in m["_shared"]:
                 if sum(1 for p in picked if o in p.get("_shared", ())) >= cap_n:
@@ -550,6 +558,8 @@ def strike_cell(ctx, who, cid, cell):
               "flags": m["_flags"]["has"], "legal": sorted(c["legal"]) if c else [], "asks": asks, "review": "stand-in" if cell.get("temporary") else "locked"}
         if m["_wind"] is not None and "readings" not in cell:   # a medium: the rule that says how it reads on Y's wind-up
             mv["wind"] = m["_wind"]["id"]
+        if share and m.get("_own"):
+            mv["own"] = True   # his own piece: never lent, and counted by the gate on blows
         if m["weight"] == "heavy":
             mv["drive"] = g["heavy"]["drive"][m["path"]]["id"]
             mv["name"] = name_of(g, m, m["_arms"])
@@ -559,8 +569,7 @@ def strike_cell(ctx, who, cid, cell):
     moves.sort(key=lambda x: x["id"])
     met = {q["name"]: sum(1 for p in picked if quota_ok(q, p)) for q in cell.get("quotas", [])}
     if share:   # his alone: in the roster that leaves him fewest (one option of each alt group)
-        lent = lambda p: cover.get(fp(p)) is not None and cover[fp(p)]["wave"] in borrows
-        met["his alone"] = min(sum(1 for p in picked if not lent(p) and not (p.get("_shared", set()) & set(w))) for w in worlds)
+        met["his alone"] = min(sum(1 for p in picked if p.get("_own") and not (p.get("_shared", set()) & set(w))) for w in worlds)
         for o in others:
             n = sum(1 for p in picked if o in p.get("_shared", ()))
             if n:
@@ -891,7 +900,16 @@ def build():
     lock = load(lock_path)["fighters"] if (os.path.exists(lock_path) and "--relock" not in sys.argv) else {}
     seed, spread = cells["seed"], cells["spread"]
     out, notes = {}, {}
-    for who in sorted(identity["fighters"]):
+    seen_ids = {}   # a strike id -> the fighters who have it in a pack of their own (the heavy tier apart)
+    for f2 in sorted(identity["fighters"]):
+        d2 = identity["fighters"][f2]
+        for w2 in d2["waves"]:
+            if w2 in d2.get("borrows", []) or w2 in d2.get("tierWaves", []):
+                continue
+            for s2 in load(anim("waves", w2 + ".manifest.json"))["strikes"]:
+                seen_ids.setdefault(s2["combat"], set()).add(f2)
+    common = set(k for k, v in seen_ids.items() if len(v) > 1)   # a common piece: more than one fighter has it posed
+    for who in sorted(identity["fighters"], key=lambda f: (bool(identity["fighters"][f].get("borrows")), f)):
         idn = identity["fighters"][who]
         cover, unread = posed(parts, idn, tips)
         notes[who] = {"unread": unread}
@@ -908,7 +926,7 @@ def build():
                 if w2 not in identity["fighters"][f2].get("borrows", []):
                     wave_owner.setdefault(w2, f2)
         ctx = {"parts": parts, "idn": idn, "cover": cover, "seed": seed, "spread": spread, "entries": entries_of(idn), "lock": lock.get(who, {}),
-               "locks": lock, "built": out, "fighters": identity["fighters"], "waveOwner": wave_owner,
+               "locks": lock, "built": out, "fighters": identity["fighters"], "waveOwner": wave_owner, "common": common,
                "rejected": [r["shape"] for r in identity.get("rejected", []) if r.get("fighter") in (who, "*")], "changes": {}}
         doc = {
             "schema": "combat.moveset/1",
@@ -1250,6 +1268,74 @@ def string_report(docs, parts, cells):
     return rep
 
 
+def blow_share(pools, mix, weight=1.0):
+    """The part of a fighter's blows that are pieces only he has. pools: a cell of the mix -> (pieces only he has, every piece it draws on). mix: the part of his blows
+    each cell throws. weight: how many times likelier one of his own is drawn than another piece (1: the even draw of today's picker)."""
+    got = 0.0
+    for c, (mine, every) in pools.items():
+        if every > 0:
+            got += mix.get(c, 0.0) * (mine * weight) / (mine * weight + (every - mine))
+    return got / sum(mix.values())
+
+
+def gate_shares(out, cells, identity):
+    """Game Design's gate (fighter-pipeline.md section 1): of the blows a fighter throws, the part that are pieces only he has, read on cells.json `gate` (the measured
+    mix of blows by cell, and which generated moves each cell draws on). For each fighter: `today` (what is posed), `planned` (with his own pieces that wait counted
+    as drawn), and `weight`, the least draw weight on his own pieces at which the planned share reaches a quarter. Each is the least over the rosters he may be in."""
+    g, fs = cells["gate"], identity["fighters"]
+    sources = sorted(set(spec["from"] for spec in g["cells"].values()))
+    shared_cells = set(cid for stance, btn, press, cid, cell in cell_ids(cells) if cell.get("share"))
+    def piece(m):   # what makes two fighters' moves one piece: the strike it is posed on (and for an energy piece its hand), or its shape while it is new
+        k = m.get("keys", {})
+        if "strike" in k:
+            return ("reach", k["strike"], m.get("hand"))
+        return ("strike", k["from"]) if k.get("from") else ("shape", m["limb"], m["tip"], m["path"], m["target"], m["weight"])
+    def thrown(m, planned):
+        return m["status"] == "posed" or (planned and m["status"] == "waiting" and m.get("own"))
+    res = {}
+    for who, doc in out.items():
+        alt = fs[who].get("alt")
+        others = [o for o in sorted(out) if o != who and not (alt and fs[o].get("alt") == alt)]
+        groups = {}
+        for o in others:
+            groups.setdefault(fs[o].get("alt") or ("#" + o), []).append(o)
+        worlds = [list(w) for w in itertools.product(*groups.values())]
+        def share(planned, weight):
+            worst = 1.0
+            for w in worlds:
+                theirs = set(piece(m) for o in w for cid in sources for m in out[o]["cells"].get(cid, {}).get("moves", []) if thrown(m, planned))
+                pools = {}
+                for cell, spec in g["cells"].items():
+                    ms = [m for m in doc["cells"].get(spec["from"], {}).get("moves", []) if thrown(m, planned)
+                          and ("form" not in spec or spec["form"] in m.get("forms", [])) and ("filter" not in spec or match(spec["filter"], m))]
+                    mine = [m for m in ms if (m.get("own") or spec["from"] not in shared_cells) and piece(m) not in theirs]
+                    pools[cell] = (len(mine), len(ms))
+                worst = min(worst, blow_share(pools, g["mix"], weight))
+            return worst
+        base_w = float(g.get("ownWeight", 1))
+        need = next((x for x in (1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10) if share(True, x) >= g["quarter"]), None)
+        res[who] = {"today": share(False, base_w), "planned": share(True, base_w), "weight": need}
+    return res
+
+
+def gate_findings(gate, cells):
+    """Under a fifth, he gets more of his own or his weights change (Game Design): a failure. Between a fifth and a quarter he is short of the gate, which is said and
+    is not a failure."""
+    g = cells.get("gate", {})
+    return ["%s: %d%% of his blows would be pieces only he has, under a fifth%s" % (
+        who, round(100 * r["planned"]), (": a quarter needs his own drawn %s times as often" % ("%g" % r["weight"])) if r["weight"] else ": no weight on his own reaches a quarter")
+        for who, r in sorted(gate.items()) if r["planned"] < g["fifth"]]
+
+
+def gate_line(gate, cells):
+    g = cells.get("gate", {})
+    if not gate:
+        return ""
+    def word(r):
+        return "" if r["planned"] >= g["quarter"] else (" (short of a quarter)" if r["planned"] >= g["fifth"] else " (UNDER a fifth)")
+    return "own blows: " + ", ".join("%s %d%%%s" % (who, round(100 * r["planned"]), word(r)) for who, r in sorted(gate.items()))
+
+
 def share_findings(out, cells, identity):
     """A cell with a share rule (cells.json `share`) keeps it for every fighter: enough pieces that are his alone for his tier, and no more than its part shared
     with any one other fighter."""
@@ -1269,7 +1355,7 @@ def share_findings(out, cells, identity):
     return bad
 
 
-def string_findings(rep):
+def string_findings(rep, identity=None):
     bad = []
     for who, r in sorted(rep.items()):
         for b, v in r["mix"].items():
@@ -1282,7 +1368,7 @@ def string_findings(rep):
             if not ids:
                 bad.append("%s: no heavy of his tier is a launcher that sends %s" % (who, sd))
         for lb, ids in sorted(r.get("wrench", {}).items()):
-            if not ids:
+            if not ids and ("wrench." + lb) not in ((identity or {}).get("fighters", {}).get(who, {}).get("waives", [])):   # waives: a floor Game Design has let him off (the Bell's legs)
                 bad.append("%s: no heavy of his tier lands on the %s, so he cannot wrench it" % (who, "arm" if lb == "arm" else lb))
         bu = r.get("burst")
         if bu and bu["openers"] < bu["lights"]:
@@ -1656,6 +1742,12 @@ def self_test(parts, identity):
         good = got == want
         ok = ok and good
         print("%s  %s" % ("pass" if good else "FAIL", name) + ("" if good else "  got %r, want %r" % (got, want)))
+    expect("a quarter of the blows: half of a cell that is half of what he throws", round(blow_share({"flurry": (5, 10), "light": (0, 10)}, {"flurry": 0.5, "light": 0.5}), 3), 0.25)
+    expect("his own drawn three times as often: one in four becomes one in two", round(blow_share({"flurry": (1, 4)}, {"flurry": 1.0}, 3.0), 3), 0.5)
+    expect("a cell with nothing to throw gives him nothing", round(blow_share({"flurry": (0, 0), "light": (2, 4)}, {"flurry": 0.6, "light": 0.4}), 3), 0.2)
+    leap_knee = {"limb": "knee", "tip": "cap", "path": "rise", "target": "gut", "weight": "heavy"}
+    expect("a leaping knee to the gut passes: Legal's b14 allows a leap for a knee or a foot below the jaw", [r["id"] for r in shape_rows(parts) if banned_hit(r, leap_knee, ["heavy"], 0, {"has": ["leap"], "not": []}) == "match"], [])
+    expect("a leaping hand to the chest is refused by b14 alone", [r["id"] for r in shape_rows(parts) if banned_hit(r, {"limb": "hand", "tip": "fist", "path": "drop", "target": "chest", "weight": "heavy"}, ["heavy"], 1, {"has": ["leap"], "not": []}) == "match"], ["b14"])
     expect("a quota for what is his alone takes only that (a cell's share rule)", [quota_ok({"own": True}, {"_own": True}), quota_ok({"own": True}, {"_own": False})], [True, False])
     expect("a quota for a launcher that sends down asks for both", [quota_ok({"form": "launch", "sends": "down"}, {"_forms": ["launch"], "_sends": s_}) for s_ in ("down", "up")], [True, False])
     six = [{"_w": 6.0 - i, "_shared": set(["a"]) if i < 4 else set(), "n": i} for i in range(6)]
@@ -1670,7 +1762,7 @@ def self_test(parts, identity):
     expect("the same blow on a key set tagged wrists apart is cleared", [banned_hit(r, clasp, ["heavy"], 2, flags_of(g, proto, clasp, {"legal": ["wrists_apart", "no_clasp"], "flags": []})) for r in g["banned"] if r["id"] == "b05"], [None])
     expect("the same blow on a key set Animation measured with no flag is cleared", [banned_hit(r, clasp, ["heavy"], 2, flags_of(g, proto, clasp, {"legal": [], "flags": [], "measured": True})) for r in g["banned"] if r["id"] == "b05"], [None])
     rise = {"limb": "hand", "tip": "fist", "path": "rise", "target": "jaw", "weight": "heavy"}
-    expect("a rising fist on a key set Animation flags with a leap is refused (b03)", [r["id"] for r in g["banned"] if banned_hit(r, rise, ["heavy"], 1, flags_of(g, rival, rise, {"legal": [], "flags": ["leap"], "measured": True})) == "match"], ["b03"])
+    expect("a rising fist on a key set Animation flags with a leap is refused (b03)", [r["id"] for r in g["banned"] if banned_hit(r, rise, ["heavy"], 1, flags_of(g, rival, rise, {"legal": [], "flags": ["leap"], "measured": True})) == "match"], ["b03", "b14"])
     expect("a lit move is refused whatever its parts (b09)", [r["id"] for r in g["banned"] if banned_hit(r, clasp, ["heavy"], 1, {"has": ["glow"], "not": []}) == "match"], ["b09"])
     expect("a held heavy chambered at a hip is refused (b02, b12)", [r["id"] for r in g["banned"] if banned_hit(r, clasp, ["heavy", "held"], 1, {"has": ["hip_chamber", "cupped_at_hip"], "not": []}) == "match"], ["b02", "b12"])
     parts_ = parts
@@ -1705,8 +1797,8 @@ def self_test(parts, identity):
     expect("a tapped medium loaded at a hip is refused: a 12-tick wind-up is a held pose (h05)", [banned_hit(r, med, ["quick", "charged"], 1, {"has": ["hip_chamber"], "not": []}) for r in h05], ["match"])
     expect("a light loaded at a hip is not h05's", [banned_hit(r, dict(med, weight="light"), ["light"], 1, {"has": ["hip_chamber"], "not": []}) for r in h05], [None])
     elb = {"limb": "elbow", "tip": "point", "path": "rise", "target": "jaw", "weight": "heavy"}
-    expect("a rising elbow to the jaw that leaps is refused: b03 binds an elbow whatever its tip", [r["id"] for r in g["banned"] if banned_hit(r, elb, ["quick", "charged"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03"])
-    expect("a rising blade hand that leaps is refused too: Legal's row names every tip of a hand, elbow or knee (b03)", [r["id"] for r in g["banned"] if banned_hit(r, dict(elb, limb="hand", tip="blade"), ["quick"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03"])
+    expect("a rising elbow to the jaw that leaps is refused: b03 binds an elbow whatever its tip", [r["id"] for r in g["banned"] if banned_hit(r, elb, ["quick", "charged"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03", "b14"])
+    expect("a rising blade hand that leaps is refused too: Legal's row names every tip of a hand, elbow or knee (b03)", [r["id"] for r in g["banned"] if banned_hit(r, dict(elb, limb="hand", tip="blade"), ["quick"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03", "b14"])
     foreign = {"id": "t", "match": {"limb": ["hand", "elbow"], "tip": ["fist"], "flags": ["leap"]}}
     expect("a tip list binds only the limbs that can have those tips: an elbow is bound whatever its tip, a blade hand is not", [banned_hit(foreign, dict(elb, limb=lb, tip=tp), ["quick"], 1, {"has": ["leap"], "not": []}) for lb, tp in (("elbow", "point"), ("hand", "blade"), ("hand", "fist"))], ["match", None, "match"])
     expect("a rising elbow carries the rising blow's condition (L1)", [c["id"] for c in g["conditions"] if "when" in c and match(c["when"], dict(elb, arms=1))], ["L1", "L6", "W1", "D4"])
@@ -1753,7 +1845,7 @@ def self_test(parts, identity):
     expect("every heavy has a drive and a plain name", [m for m in hv if m["path"] not in g["heavy"]["drive"] or not name_of(g, m, 1)], [])
     expect("a heavy's name", name_of(g, {"limb": "hand", "tip": "fist", "path": "line", "target": "chest"}, 1), "stepping fist to the chest")
     expect("a heavy that Animation flags with a leap, rising to the jaw by hand, is refused (b03)",
-           [r["id"] for r in g["banned"] if banned_hit(r, dict(rise, weight="heavy"), ["quick", "charged"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03"])
+           [r["id"] for r in g["banned"] if banned_hit(r, dict(rise, weight="heavy"), ["quick", "charged"], 1, {"has": ["leap"], "not": []}) == "match"], ["b03", "b14"])
     expect("the Protagonist never brings a heavy down on a head", any(match(n["shape"], {"limb": "hand", "tip": "blade", "path": "drop", "target": "head", "weight": "heavy"}) for n in proto["never"]), True)
     expect("the rival's heavies and mediums are never a blade hand", [wt for wt in ("light", "medium", "heavy") if any(match(n["shape"], {"limb": "hand", "tip": "blade", "path": "line", "target": "chest", "weight": wt}) for n in rival["never"])], ["medium", "heavy"])
     bu = g["burst"]
@@ -1793,7 +1885,9 @@ def main():
         print("self-test " + ("passed" if ok else "FAILED"))
         sys.exit(0 if ok else 1)
     rep = string_report(out, parts, cells)
-    dead = string_findings(rep) + recipes_findings(parts) + share_findings(out, cells, identity)
+    dead = string_findings(rep, identity) + recipes_findings(parts) + share_findings(out, cells, identity)
+    gate = gate_shares(out, cells, identity) if "gate" in cells else {}
+    under = gate_findings(gate, cells)   # said by --check, and never a reason to refuse to write: a row has to be seen to be mended
     files = {"moveset.%s.json" % who: dump(doc) for who, doc in out.items()}
     files["lock.json"] = lock_text(out)
     files["review-sheet.md"] = sheet(out, parts, cells, notes, rep, identity)
@@ -1817,7 +1911,11 @@ def main():
         print("strings: " + ("no dead end" if not dead else "%d PROBLEM" % len(dead)))
         for b in dead:
             print("  " + b)
-        sys.exit(1 if (stale or bad or dead) else 0)
+        if gate:
+            print(gate_line(gate, cells))
+            for b in under:
+                print("  " + b)
+        sys.exit(1 if (stale or bad or dead or under) else 0)
     if fresh or dead:
         print("REFUSED TO WRITE: " + ("Legal's rows match" if fresh else "a string runs out of blows"))
         for b in fresh + dead:

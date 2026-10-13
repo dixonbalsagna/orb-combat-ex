@@ -975,7 +975,11 @@
    "_tierWaves": "packs whose strikes are heavies of the new tier: Animation's weight heavy there is this file's heavy, and each row is read by the heavy tier's own tips",
    "energyWaves": [
     "protag11"
-   ]
+   ],
+   "armsOf": {
+    "strike.su_drive": 1
+   },
+   "_armsOf": "how many arms a key set uses, where it is not what its pack says. Legal's RL-133: the falling palm is one arm; Animation redrew pu.su_drive so, and the pack's uses.arms still says 2. It goes when the pack says 1"
   }
  },
  "_reuse": "how strongly a shape that is already posed, or one swap or re-aim from it, is preferred. A re-aim Animation measured as ok is free; one at the edge needs a look, so it is preferred less. These are the first slice's values: lower them toward 1 and identity decides more, at the cost of new key sets",
