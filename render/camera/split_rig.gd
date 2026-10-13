@@ -303,6 +303,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_hit_t = [-1.0, -1.0]
 	_stg_on = [false, false]
 	_stg_rel = [0, 0]
+	_lens_ok = [false, false]
 	_bld_evt_t = [-1.0e9, -1.0e9]
 	_lh = [0, 0]
 	_lh_gone = [0, 0]
@@ -2346,6 +2347,10 @@ var _cl_pc_ok: Array = [false, false]
 # The dolly (docs/camera/city-in-depth.md section 6): the depth the frame's scale is defined at follows the pair's depth, so a
 # fight in any street is drawn at the plane's size. A switch until Rendering applies SplitFrame.focus_z (and the proof).
 var depth_dolly: bool = false
+var dolly_near_cap: bool = true                        # the approach cap (part of the dolly; a test can switch it off to compare)
+var _lens_d: Array = [0.0, 0.0]                      # the displayed lens's depth last tick (for the approach cap)
+var _lens_ok: Array = [false, false]
+var dolly_near_caps: int = 0                           # ticks the approach cap held the focus back (counted for the tests)
 # The building stage (docs/camera/buildings-in-frame.md section 3), behind the dolly's switch: a launch through buildings is a
 # relay of held frames (the building he is in and the next), not a chase. Per launched fighter: the frame's centre, the zoom that
 # fits both links, its age.
@@ -2418,12 +2423,51 @@ func _update_focus_depth(S: SimState) -> void:
 		var di: float = clampf(ti - float(_fzt[i]), -cap, cap)
 		_fzt[i] = ti
 		var fi: float = float(_fz[i]) + CamParams.DOLLY_FEED * di + clampf((ti - float(_fz[i])) * k, -cap, cap)
-		_fz[i] = clampf(fi, ti - CamParams.DOLLY_LAG, ti + CamParams.DOLLY_LAG)
+		var lag_hi: float = CamParams.DOLLY_LAG   # (the focus trails a target that goes deeper from above: its bound is the upper one)
+		# The lens does not run at a facade: going deeper, its approach to the nearest face straight ahead is no faster than
+		# DOLLY_NEAR_RATE of the distance a second (a building 340 units off filled the screen and changed scale 4.4% a tick).
+		if dolly_near_cap and fi < float(_fz[i]):
+			var lens_i: float = float(_fz[i]) + CamParams.K_FACTOR * vh / maxf(float(_zo[i]), 0.05)
+			var d_i: float = _face_ahead(S, float(_fx[i]), lens_i)
+			var v_max: float = maxf(CamParams.DOLLY_NEAR_MIN, CamParams.DOLLY_NEAR_RATE * d_i) * DT
+			if float(_fz[i]) - fi > v_max:
+				fi = float(_fz[i]) - v_max
+				lag_hi = CamParams.DOLLY_LAG_NEAR
+				dolly_near_caps += 1
+		_fz[i] = clampf(fi, ti - CamParams.DOLLY_LAG, ti + lag_hi)
 	var tm: float = clampf((float(A.z) + float(B.z)) * 0.5, CamParams.DOLLY_Z_BACK, CamParams.DOLLY_Z_FRONT)
 	var dm: float = clampf(tm - _fzmt, -cap, cap)
 	_fzmt = tm
 	var fm: float = _fzm + CamParams.DOLLY_FEED * dm + clampf((tm - _fzm) * k, -cap, cap)
-	_fzm = clampf(fm, tm - CamParams.DOLLY_LAG, tm + CamParams.DOLLY_LAG)
+	var lag_hi_m: float = CamParams.DOLLY_LAG
+	if dolly_near_cap and fm < _fzm:
+		var lens_m: float = _fzm + CamParams.K_FACTOR * vh / maxf(_mz, 0.05)
+		var d_m: float = _face_ahead(S, _mx, lens_m)
+		var vm_max: float = maxf(CamParams.DOLLY_NEAR_MIN, CamParams.DOLLY_NEAR_RATE * d_m) * DT
+		if _fzm - fm > vm_max:
+			fm = _fzm - vm_max
+			lag_hi_m = CamParams.DOLLY_LAG_NEAR
+	_fzm = clampf(fm, tm - CamParams.DOLLY_LAG, tm + lag_hi_m)
+
+
+## The distance from the lens (at depth `lens`, over x `cam_x`) to the nearest building face straight ahead of it: a standing
+## building between the lens and the plane whose camera-facing face is inside DOLLY_NEAR_LOOK and whose span meets the central
+## DOLLY_NEAR_CENTRE of the view's width at that distance. 1e9 when there is none. Reads S.buildings and nothing else.
+func _face_ahead(S: SimState, cam_x: float, lens: float) -> float:
+	var best: float = 1.0e9
+	var half_h: float = 0.5 / CamParams.K_FACTOR   # tan of the half vertical field
+	var aspect: float = vw / maxf(vh, 1.0)
+	for b in S.buildings:
+		if not b.alive or b.h < 150.0:
+			continue
+		var face: float = b.z + b.d * 0.5   # the face toward the camera
+		var d: float = lens - face
+		if d <= 1.0 or d >= CamParams.DOLLY_NEAR_LOOK or d >= best:
+			continue
+		var half_w: float = half_h * aspect * d
+		if absf(SimWrap.sdx(cam_x, b.x)) < 0.5 * b.w + CamParams.DOLLY_NEAR_CENTRE * half_w:
+			best = d
+	return best
 
 
 func _snap_focus_depth(S: SimState) -> void:
@@ -2552,9 +2596,8 @@ func _update_cameras(S: SimState) -> void:
 					_lh_gone[i] = 0
 					launch_holds += 1
 			elif lh_ph == 1:
-				# The frame is held for the flight. He is brought back by one cut when he has landed (or, in a flight so long it
-				# would leave the frame by more than LH_CUT_UNITS, when he is that far: and the frame is held again); a landing
-				# near the frame is a pan.
+				# The frame is held for the flight, however long. He is brought back by one cut when he has landed (a flash, once a
+				# launch: a cut mid-flight would be one more every second or two of a long flight); a landing near the frame is a pan.
 				var dx_l: float = SimWrap.sdx(_fx[i], f.x)
 				var dy_l: float = f.y + CamParams.CHEST - _fy[i]
 				var far_u: float = sqrt(dx_l * dx_l + dy_l * dy_l)
@@ -2569,12 +2612,6 @@ func _update_cameras(S: SimState) -> void:
 					else:
 						lh_ph = 2
 						launch_pans += 1
-				elif far_u > CamParams.LH_CUT_UNITS:
-					_fx[i] = f.x
-					_fy[i] = f.y + CamParams.CHEST
-					_cut_now = true
-					_cut_dip()
-					launch_hold_cuts += 1
 			elif lh_ph == 2:
 				var ex: float = SimWrap.sdx(_fx[i], f.x) * zc
 				var ey: float = (f.y + CamParams.CHEST - _fy[i]) * zc
@@ -2875,6 +2912,20 @@ func _outputs(S: SimState) -> void:
 		if _oz_valid:
 			var cap: float = (CamParams.SLAM_ZOOM_RATE if slam_now else CamParams.ZOOM_RATE_TRANS) * DT
 			var z_held: float = exp(log(_oz[i]) + clampf(log(o.z) - log(_oz[i]), -cap, cap))
+			# The approach cap's other half: the lens (the focus depth plus the camera's distance to it) is the same whatever moves
+			# it, so a zoom that comes in while the focus goes deeper is held when the lens would close on the face ahead faster
+			# than DOLLY_NEAR_RATE of its distance a second (by at most 2% a tick: never a pop).
+			if depth_dolly and dolly_near_cap and bool(_lens_ok[i]) and not _cut_now:
+				var lens_prev_i: float = float(_lens_d[i])
+				var d_held: float = CamParams.K_FACTOR * vh / maxf(z_held, 0.05)
+				if lens_prev_i - (fzo_i + d_held) > 0.0:
+					var dface_i: float = _face_ahead(S, o.x, lens_prev_i)
+					var vmax_i: float = maxf(CamParams.DOLLY_NEAR_MIN, CamParams.DOLLY_NEAR_RATE * dface_i) * DT
+					if lens_prev_i - (fzo_i + d_held) > vmax_i:
+						var d_need: float = lens_prev_i - vmax_i - fzo_i
+						if d_need > d_held:
+							z_held = maxf(CamParams.K_FACTOR * vh / d_need, z_held * 0.98)
+							dolly_near_caps += 1
 			var z_mis: float = absf(log(z_held) - log(o.z))
 			if w <= 0.0 and z_mis > 0.02 and _ov_kind == "":
 				# The comfort limit held the drawn zoom back from the pane's own: aim the camera for the zoom that is drawn, so the
@@ -2885,6 +2936,8 @@ func _outputs(S: SimState) -> void:
 				var k_aim: float = smoothstep(0.02, 0.15, z_mis)
 				o = Vector3(SimWrap.wrap(o.x + SimWrap.sdx(o.x, aimed.x) * k_aim), lerpf(o.y, aimed.y, k_aim), z_held)
 			o.z = z_held
+		_lens_d[i] = fzo_i + CamParams.K_FACTOR * vh / maxf(o.z, 0.05)
+		_lens_ok[i] = true
 		_outs[i] = o
 		_oz[i] = o.z
 	if _ov_kind != "":

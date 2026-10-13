@@ -213,6 +213,8 @@ func _run() -> void:
 	await _scenario("dolly sidestep 4 bh a second", func(): return _dolly_sidestep(), {})
 	await _scenario("dolly pair at a crossing", func(): return _dolly_crossing(), {})
 	await _scenario("dolly launch across a street", func(): return _dolly_launch(), {})
+	for on in [false, true]:
+		await _scenario("dolly near facade %s" % ("cap" if on else "free"), func(): return _dolly_near(bool(on)), {})
 	for lh in [[6600.0, 13200.0, true], [6600.0, 13200.0, false], [9000.0, 18000.0, true], [3000.0, 6000.0, true]]:
 		await _scenario("launch hold %s %d u/s" % ["on" if bool(lh[2]) else "off", int(lh[0])], func(): return _launch_hold_run(float(lh[0]), float(lh[1]), bool(lh[2])), {})
 	for ln in [2, 3, 5]:
@@ -518,7 +520,7 @@ func _frame_checks(fr: SplitFrame, cur: SplitFrame, alpha: float = 1.0) -> void:
 		# dwell, for them to stop being merge-close and for the panes to be one view or full apart) opens with the old sides.
 		excluded = excluded or ((fr.mode == "opening" or fr.mode == "closing") and _rig.orientation_pending())
 		# A launch the rule does not follow (docs/camera/buildings-in-frame.md section 7) leaves his pane by design while the pane holds
-		# and pans; its own rows bound the absence by the distance (LH_CUT_UNITS) and the return after landing.
+		# and pans; its own rows bound the return after landing (one cut).
 		excluded = excluded or (_rig.launch_hold and int(_rig._lh[i]) != 0)
 		if share < 0.15 or not bool(fr.active[i]) or excluded:
 			_offscreen_t[i] = 0.0
@@ -1004,7 +1006,7 @@ func _launch(speed: float, dist: float, vertical: bool = false, gap: float = 500
 
 ## A launch too fast to follow (docs/camera/buildings-in-frame.md section 7): B flung along the street at `speed`, `dist` units.
 ## With the rule on and the speed over the threshold the pane holds its frame, then pans to him at no more than LH_STEP a tick
-## (no cut under LH_CUT_UNITS, no safety cut); he is back on his pane's screen a few seconds after landing; at a speed under the
+## (one cut at the landing, none in the air, no safety cut); he is back on his pane's screen a few seconds after landing; at a speed under the
 ## threshold the rule does nothing. Off: the numbers are reported for comparison.
 func _launch_hold_run(speed: float, dist: float, on: bool) -> Dictionary:
 	_rig.launch_hold = on
@@ -1063,7 +1065,7 @@ func _launch_hold_run(speed: float, dist: float, on: bool) -> Dictionary:
 	if on and speed * (CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H) / 60.0 / vw > CamParams.LH_SPEED:
 		_check(_rig.launch_holds >= 1 and _rig.launch_pans + _rig.launch_hold_cuts >= 1, "%s: the rule did not engage (holds %d, pans %d, cuts %d)" % [_label, _rig.launch_holds, _rig.launch_pans, _rig.launch_hold_cuts])
 		_check(max_travel <= thr, "%s: the picture moved %.4f of the width in a tick with the rule on (bound %.4f)" % [_label, max_travel, thr])
-		# the first frame, and one cut when he has landed far from the held frame (none for a flight under LH_CUT_UNITS in the air)
+		# the first frame, and one cut when he has landed far from the held frame (none in the air)
 		_check(_rig.lag_cuts == 0 and _rig.launch_hold_cuts <= 1 and cuts <= 2, "%s: %d safety cuts, %d hold cuts, %d cut frames" % [_label, _rig.lag_cuts, _rig.launch_hold_cuts, cuts])
 		_check(back_at >= 0 and back_at <= 300, "%s: he was back on his pane's screen %d ticks after landing (bound 300)" % [_label, back_at])
 	elif on:
@@ -1183,6 +1185,66 @@ func _stage_chain(links: int) -> Dictionary:
 	# two buildings in frame at a time: the stage moves once a link (the launch sets the first), never more
 	_check(_rig.stage_moves >= 1 and _rig.stage_moves <= links, "%s: the stage moved %d times (1 to %d)" % [_label, _rig.stage_moves, links])
 	stats["detail " + _label] = "off his pane %d ticks, max travel %.4f of the width a tick (tick %d), %d cut frames (safety %d, budget %d, rush %d), stage moves %d, smash ticks %d" % [off, max_travel, max_k, cuts, _rig.lag_cuts, _rig.travel_cuts, _rig.rush_cuts, _rig.stage_moves, smash]
+	return {}
+
+
+## The dolly's approach cap (docs/camera/buildings-in-frame.md section 12): a building stands ahead of a close pair (its near face
+## 190 units behind the plane, in the lens's line) and the pair is carried at 12 bh a second to the middle street. With the cap
+## the lens closes on the face by no more than DOLLY_NEAR_RATE of its distance a second (a facade at 340 units no longer fills the
+## screen and changes scale 4% a tick); both fighters stay on the screen, drawn no under 0.6 of their plane size.
+func _dolly_near(on: bool) -> Dictionary:
+	_rig.depth_dolly = true
+	_rig.dolly_near_cap = on
+	var ax: float = 70000.0
+	_pose(ax, 40.0, ax + 110.0, 40.0)
+	var b := SimState.Building.new()
+	b.x = ax + 55.0
+	b.w = 500.0
+	b.d = 300.0
+	b.z = -190.0 - 150.0
+	b.h = 1200.0
+	b.row = 1.0
+	b.alive = true
+	_S.buildings.append(b)
+	_seed_rig()
+	for _i in range(120):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	B.state = "launched"   # a flight: the dolly's own cap is 12 bh a second
+	var z: float = 0.0
+	var prev_d: float = -1.0
+	var worst_rate: float = 0.0
+	var min_d: float = 1.0e9
+	var min_size: float = 1.0e9
+	var off: int = 0
+	for k in range(300):
+		z = maxf(z - 900.0 / 60.0, -1012.0)
+		A.z = z
+		B.z = z
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		var lens: float = cur.focus_z[0] + CamParams.K_FACTOR * vh / maxf(cur.cam_z[0], 0.05)
+		var d: float = lens - (b.z + b.d * 0.5)
+		if d > 1.0:
+			min_d = minf(min_d, d)
+			if prev_d > 1.0 and d < prev_d:
+				worst_rate = maxf(worst_rate, (prev_d - d) / prev_d * 60.0)   # the share of its distance closed in a second
+			prev_d = d
+		for i in range(2):
+			var f = _S.fighters[i]
+			if _size_ratio(cur, 0 if cur.shows(0) else 1, f) > 0.0:
+				min_size = minf(min_size, _size_ratio(cur, 0 if cur.shows(0) else 1, f))
+		if not _on_screen(cur, 0) or not _on_screen(cur, 1):
+			off += 1
+	if on:
+		# once the lens is inside the cap's range it closes at no more than the rate (+10%), except at the floor of DOLLY_NEAR_MIN
+		var bound: float = maxf(CamParams.DOLLY_NEAR_RATE * 1.1, CamParams.DOLLY_NEAR_MIN / maxf(min_d, 1.0) * 1.1)
+		_check(worst_rate <= bound + 0.02, "%s: the lens closed %.2f of its distance in a second (bound %.2f)" % [_label, worst_rate, bound])
+		_check(_rig.dolly_near_caps > 0, "%s: the cap never held the focus back" % _label)
+		_check(off == 0, "%s: a fighter was off the screen on %d ticks" % [_label, off])
+		_check(min_size >= 0.6, "%s: a fighter was drawn at %.2f of his plane size" % [_label, min_size])
+	stats["detail " + _label] = "closest the lens got to the face %.0f units, fastest it closed %.2f of its distance a second, cap held %d ticks, smallest %.2f of plane size, off the screen %d ticks" % [min_d, worst_rate, _rig.dolly_near_caps, min_size, off]
 	return {}
 
 

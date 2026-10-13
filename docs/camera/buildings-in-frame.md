@@ -146,3 +146,31 @@ What the table is: with the rule on the picture does not move while the body is 
 The body leaves 4,500 units a second and keeps 0.7 of his speed a building (the sim's `keep`), so the first links go by faster than the relay's cap and the whip takes the focus along at his speed, and the later links are held. The moves are one a link (two buildings in frame), not one per two links as the first paper said: three buildings do not fit the margin at the zoom floor.
 
 **Not built, in this batch:** the lodge push and the wall slam's and stack's stages (they need `lodge`, the wall outcome and `building_failing` from World), the `clear[i].cut` hand-off (Rendering), and any change to the travel budget's default.
+
+## 11. The first blast of collapse-normal, and what a cut can be made to cost (2026-10-13)
+
+Measured with Tools' own path (`capture-web.mjs` and `analyse-frames.js` at 1,024 x 768, collapse seed 12345, a web export of the commit; the page's `budget` and `hold` flags did not reach the build then, so the arms below are scratch exports with the switches set in the rig).
+
+| Arm | Ticks | General | Area -15% | 2 s memory |
+| :--- | :--- | ---: | ---: | ---: |
+| HEAD, every switch off | 1,500 | 3.5 | 3.5 | 3.5 |
+| HEAD, ticks 0 to 170 only | 170 | 2.5 | 3.5 | 0.5 |
+| The displayed camera frozen over ticks 84 to 144 (scratch) | 170 | **2.0** | **3.0** | 0.5 |
+| Travel bound 0.045 with the budget on | 170 | 2.5 | 3.0 | 0.5 |
+| Travel bound 0.020 / 0.012 with the budget on | 170 | 1.5 / 3.0 | 3.5 / 4.5 | 0.5 |
+| "Destruction calm" (focus and zoom held back for 1.5 s after a building is lost) | 1,500 | 2.5 | 3.5 | n/a |
+
+- **The first blast is the blast.** With the camera frozen over it the clip reads 2.0 / 3.0: the staged double blast (800 radius, tier 3, 3 ticks apart) is at the strict line by itself (events at 84+, 91-, 94+, 102-). The camera's own closing (the pair rushing together, `closing` mode, shared zoom 0.53 to 0.87 and pane zoom 0.75 to 0.93, 0.010 to 0.023 of the width a tick) adds 98-, 103+ and 109+ (3.9 times the area threshold): one change over the primary gate and one over the sensitivity line.
+- **The camera cannot take it under with margin.** A travel bound is not monotone (0.045 helps by luck of where the cuts fall; 0.020 and 0.012 make it worse by adding cuts). A calm window that holds the focus and zoom for 1.5 s after a building is lost removes 109+ and brings others (115+, 142+): the debris and dust events move when the camera does. A dead-band variant (hold the picture still while the fighters are near the focus) catches up in bursts (0.0115 of the width a tick against 0.0082 smooth in its row). None is built. The remaining lever is the blast's: the area it changes at once (the plume, the front row's collapse, the stage-change flash) is Rendering's and VFX's.
+
+**A cut and what it counts.** The dip is at most `CUT_DIM` = 0.09 of luminance, by design under the 0.10 change threshold, so the dip is not counted. What is counted is the picture on the two sides of the cut compared with the last second: for the landing cut 74,000 to 87,000 pixels (9 to 11% of the frame, 3.4 to 4.0 times the threshold). A dissolve of a few ticks would count the same pixels (each pixel's total difference is what crosses 0.10), and a deeper dip would be a pair. What lowers a cut's count: fewer cuts, or a destination nearer the picture it leaves. The launch rule now has one cut a launch (at the landing), none in the air.
+
+## 12. The dolly's approach cap (2026-10-13)
+
+*Rendering's finding:* with the dolly on, a rush along the middle street reads 2.5 on the primary gate, and for part of the way the screen is the face of a tower 340 units from the lens. A building 450 units wide fills the screen's width inside 470 units; the dolly at 12 bh a second changes its scale 4.4% a tick, 29 px a tick at the screen's edge, on a high-contrast face.
+
+**The rule** (inside `depth_dolly`; `SplitRig.dolly_near_cap`, true, is for tests to switch off): going deeper, the lens (the focus depth plus the camera's distance to it) closes on the nearest standing building face straight ahead (its camera-facing face, `b.z + b.d / 2`, inside `DOLLY_NEAR_LOOK` = 1,500 units, its span meeting the central 0.6 of the view's width at that distance; read from `S.buildings`, nothing else) by no more than `DOLLY_NEAR_RATE` = 0.6 of its distance a second (204 units a second at 340), and never slower than `DOLLY_NEAR_MIN` = 60 units a second (slowed, not stopped). Two halves: the focus's deeper step is capped, with the focus allowed to trail the pair by `DOLLY_LAG_NEAR` = 600 units (0.66 of his size at the close brawl) while it binds; and the displayed zoom may not come in (by at most 2% a tick) so as to close the lens faster than that. The shared (merged) focus has the same cap.
+
+**Measured** (`dolly near facade cap / free`, a close pair carried at 12 bh a second to the middle street with a 500-unit-wide, 1,200-unit-tall building 190 units behind the plane in the line): free, the lens closes at most 1.53 of its distance a second; with the cap 0.60; the closest it gets is the same 344 units (the pair does end in the middle street), reached more slowly; the smallest a fighter is drawn is 0.76 of his plane size (0.86 free); both on the screen throughout.
+
+**What it costs:** while the cap binds the pair is deeper than the focus by up to 600 units and drawn at 0.66 to 0.8 of plane size, and the lens spends longer in the street (it is a slower approach, not a different place). The lobby opening is Rendering's.
