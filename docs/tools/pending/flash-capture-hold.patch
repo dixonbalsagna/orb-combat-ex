@@ -1,0 +1,14 @@
+diff --git a/render/tools/flash_capture.gd b/render/tools/flash_capture.gd
+index dba444c..b97c549 100644
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -91,6 +91,9 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
+ 	# Camera's travel budget (off by default): the page's `budget=1`, set by tools/flash/run-pixels.mjs --budget, so a run with and without it is the same sim
+ 	if main.split_view != null and str(main.args.get("budget", "0")) == "1":
+ 		main.split_view.set_travel_budget(true)
++	# Camera's launch hold (off by default): the page's `hold=1`, set by tools/flash/run-pixels.mjs --hold, so a run with and without it is the same sim
++	if main.split_view != null and str(main.args.get("hold", "0")) == "1":
++		main.split_view.set_launch_hold(true)
+ 	main.started = true              # the demo's prompt is not part of a worst case
+ 	host.vfx.auto_quality = false
+ 	host.vfx.destruction_enabled = true

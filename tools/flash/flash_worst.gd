@@ -15,7 +15,7 @@ extends SceneTree
 ## the rows are written out and the Node tool recounts them.
 ##
 ## Usage (from the repo root):
-##   godot --headless --path . --script res://tools/flash/flash_worst.gd [-- --out=build/flash --only=mash,clash --ticks=1800 --seeds=12345,4 --budget]
+##   godot --headless --path . --script res://tools/flash/flash_worst.gd [-- --out=build/flash --only=mash,clash --ticks=1800 --seeds=12345,4 --budget --hold]
 ## --negative-control adds four unrefusable flashes (the register's `note`) at ticks 100 to 130 of every run: check-log.js must then FAIL, which proves the chain from the register's log to the verdict can fail.
 ## Exit 0 when every run was played and written (the verdict is check-log.js's), 1 on a tool error. At most one Godot process; the scenes run one after another.
 
@@ -42,6 +42,7 @@ var trace: bool = false
 var negative: bool = false
 var VARIANT: int = 0           # --variant=N: a different run of a fixed scene (the pair set down N x 450 units further along the world)
 var budget: bool = false         # --budget: Camera's travel budget on (SplitRig.travel_budget, off by default), as the web hook's `budget=1`
+var hold: bool = false           # --hold: Camera's launch hold on (SplitRig.launch_hold, off by default), as the web hook's `hold=1`
 
 
 func _initialize() -> void:
@@ -56,6 +57,8 @@ func _initialize() -> void:
 			VARIANT = int(a.substr(10))
 		elif a == "--budget":
 			budget = true
+		elif a == "--hold":
+			hold = true
 		elif a == "--trace":
 			trace = true
 		elif a.begins_with("--ticks="):
@@ -91,6 +94,8 @@ func _run() -> void:
 	sv.attach(main)
 	if budget:
 		sv.set_travel_budget(true)
+	if hold:
+		sv.set_launch_hold(true)
 	main.host.vfx.auto_quality = false
 	main.host.vfx.destruction_enabled = true
 	if not DirAccess.dir_exists_absolute(_abs(out_dir)):
