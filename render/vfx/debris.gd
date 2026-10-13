@@ -96,8 +96,6 @@ func step(S: SimState, dt: float) -> void:
 	_spawned_tick = 0
 	_ember_tick = 0
 	_ember_alive = 0
-	_ember_area = 0.0
-	_puff_area = 0.0
 	var spray_n: int = 0   # recounted below, after the jobs, so a job's throws see the real count
 	var rubble_n: int = 0
 	var flame_n: int = 0
@@ -111,6 +109,8 @@ func step(S: SimState, dt: float) -> void:
 				_run_job(S, j)
 			else:
 				i += 1
+	_ember_area = 0.0       # recounted over the pool below, after the jobs have made theirs (a bit a job made is counted once)
+	_puff_area = 0.0
 	for i in range(bits.size() - 1, -1, -1):
 		var b: Bit = bits[i]
 		b.age += dt
@@ -202,6 +202,11 @@ func _run_job_kind(S: SimState, j: Job) -> void:
 
 # ---------------------------------------------------------------------------------------------------------- spawners
 
+## A hit that does not come out the far side: a `crack`, and a `wall` (a held hit, the wall slam: World's building_hit outcome, 2026-10-12). No exit burst, no exit ring.
+static func stays_in(outcome: String) -> bool:
+	return outcome == "crack" or outcome == "wall"
+
+
 ## The burst-through: in one side, out the other. b: the building {x, w, h, front_z}; the fighter enters at (xi, yi) and
 ## leaves at (xo, yo) travelling along (dx, dy) at speed sp. size: a scale for the bits from the building's size.
 func burst_through(S: SimState, bx: float, w: float, h: float, front_z: float, xi: float, yi: float, xo: float, yo: float, dx: float, dy: float, sp: float, outcome: String, link: int) -> void:
@@ -219,7 +224,7 @@ func burst_through(S: SimState, bx: float, w: float, h: float, front_z: float, x
 		_shard(STEEL, xi, yi, front_z, -ux, sp * 0.16, 0.6, kscale, q, 0.4)
 	_puffs(xi, yi, front_z, 5 + int(6 * heavy), 90.0 * kscale, 200.0 * kscale, q, 1.0)
 	# Out: the cone the fighter carries along, and a bigger burst of dust.
-	if outcome != "crack":
+	if not stays_in(outcome):
 		var n_out: int = int(round(lerpf(VfxLook.GLASS_OUT_MIN, VfxLook.GLASS_OUT_MAX, clampf(sp / 12000.0, 0.0, 1.0)) * heavy))
 		for k in range(n_out):
 			_shard(GLASS if k % 3 != 0 else TRI, xo, yo, front_z, ux, sp * 0.62, 0.42, kscale, q, 0.2)
@@ -230,7 +235,7 @@ func burst_through(S: SimState, bx: float, w: float, h: float, front_z: float, x
 		_puffs(xo, yo, front_z, 8 + int(10 * heavy), 110.0 * kscale, 320.0 * kscale, q, 1.2)
 	# A ring where the wall gave way.
 	_ring(xi, yi, front_z + 6.0, 30.0 * kscale, 520.0 * kscale, 0.24)
-	if outcome != "crack":
+	if not stays_in(outcome):
 		_ring(xo, yo, front_z + 6.0, 30.0 * kscale, 700.0 * kscale, 0.28)
 
 

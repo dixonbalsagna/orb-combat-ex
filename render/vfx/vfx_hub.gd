@@ -490,7 +490,7 @@ func _on_building_hit(S: SimState, e, floored: Dictionary) -> void:
 	var size: float = clampf(90.0 + 0.02 * b.h, 110.0, 260.0)
 	if outcome != "collapse":
 		_add_hole(bi, xi, yi, fz, size * 0.85, size * 1.1)
-	if outcome != "crack" and outcome != "collapse":
+	if not VfxDebris.stays_in(outcome) and outcome != "collapse":
 		_add_hole(bi, xo, yo, fz, size * 1.1, size * 1.4)
 
 

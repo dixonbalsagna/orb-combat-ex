@@ -206,6 +206,7 @@ func _run() -> void:
 	_brawl()
 	_ghosts()
 	_vision()
+	_wall_outcome()
 	_depth()
 	_panes()
 	_scorch_budget()
@@ -4540,6 +4541,35 @@ func _depth() -> void:
 		_check(seen_all >= 6 and seen_none == 0, "a window row is thrown without a query (%d slivers) and not at all where the patch or an opened floor says it is not seen (%d)" % [seen_all, seen_none])
 	else:
 		_check(false, "a tower to throw glass from")
+
+
+## building_hit.outcome "wall" (a held hit, the wall slam): in on the near face and no burst or ring on the far one, as a crack.
+func _wall_outcome() -> void:
+	print("the wall outcome")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var tower = null
+	for b in S.buildings:
+		if b.alive and int(b.floors) >= 3:
+			tower = b
+			break
+	if tower == null:
+		_check(false, "a building to hit")
+		return
+	var bits_of := func(outcome: String) -> Array:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.destruction_enabled = true
+		var fz: float = h.front_z(tower)
+		h.debris.burst_through(S, tower.x, tower.w, tower.h, fz, tower.x - tower.w * 0.5, WorldStructures.baseY(S, tower) + tower.h * 0.3, tower.x + tower.w * 0.5, WorldStructures.baseY(S, tower) + tower.h * 0.3, 1.0, 0.0, 6000.0, outcome, 1)
+		var rings: int = h.debris.bits.filter(func(b): return b.kind == VfxDebris.RING).size()
+		return [h.debris.bits.size(), rings]
+	var crack: Array = bits_of.call("crack")
+	var wall: Array = bits_of.call("wall")
+	var heavy: Array = bits_of.call("heavy")
+	_check(VfxDebris.stays_in("wall") and VfxDebris.stays_in("crack") and not VfxDebris.stays_in("punch") and not VfxDebris.stays_in("collapse"), "a wall hit stays in, as a crack does; a punch and a collapse come out")
+	_check(int(wall[1]) == 1 and int(crack[1]) == 1 and int(heavy[1]) == 2, "one ring on the near face and none on the far one for a wall hit (%d), a crack (%d); two for a heavy hit (%d)" % [int(wall[1]), int(crack[1]), int(heavy[1])])
+	_check(int(wall[0]) > 0 and int(wall[0]) < int(heavy[0]), "and fewer bits than a hit that comes out (%d against %d)" % [int(wall[0]), int(heavy[0])])
 
 
 ## The colour-blind presets (Art's data/art/colour-vision.json by way of UI's `colour_vision`): everything drawn in a lane colour reads the preset, and with the option off nothing changes.
