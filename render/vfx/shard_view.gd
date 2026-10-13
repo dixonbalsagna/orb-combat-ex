@@ -76,7 +76,8 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 			var ring_w: float = 0.16
 			match b.kind:
 				VfxDebris.PUFF:
-					c.a = 0.82 * (1.0 - smoothstep(0.5, 1.0, f)) * minf(1.0, b.age / 0.06)
+					# It fades in over a time that grows with its size: a puff 500 units across is a step of 0.1 and over on a large area in four frames (a flash by the standard's area test).
+					c.a = 0.82 * (1.0 - smoothstep(0.5, 1.0, f)) * minf(1.0, b.age / (0.06 + b.sx / 2500.0))
 					if hub.reduced_motion:
 						c.a *= 0.6
 					puffs += 1
@@ -96,6 +97,8 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 						ring_w = clampf(35.0 / maxf(sx * 0.5, 1.0), 0.02, 0.16)
 				_:
 					c.a = 1.0 - smoothstep(0.7, 1.0, f)
+					if b.kind == VfxDebris.GLASS or b.kind == VfxDebris.TRI:
+						c.a *= 0.75        # lit glass on a dark shell is a step of 0.9 at every pixel it crosses; three quarters of it still reads
 					shards += 1
 			if use_cq:
 				c.a *= clampf(float(cq.call(Vector3(b.x, b.y, b.z))), 0.0, 1.0)

@@ -11,8 +11,8 @@
     "grow_s": 2.5, "fade_in_ticks": 20, "fade_out_ticks": 60, "stay_ticks": 90, "move_radius": 220
   },
   "windows": {
-    "min_tier": 3, "min_energy": 8, "reach_t3": 1800, "reach_t4": 3200, "speed": 2600, "min_floors": 3, "floors_max": 6,
-    "max_buildings": 10, "scale": 0.8, "keep_s": 6
+    "min_tier": 3, "min_energy": 8, "reach_t3": 1800, "reach_t4": 3200, "speed": 2600, "min_floors": 3, "floors_max": 4,
+    "max_buildings": 6, "scale": 0.6, "keep_s": 6
   },
   "speed": {
     "lines": 7, "ticks": 6, "dist_bh": 3.6, "len_min_bh": 1.4, "len_max_bh": 3.0, "spread_bh": 1.15, "gap_min_bh": 0.35, "gap_max_bh": 0.8,

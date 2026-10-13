@@ -207,6 +207,7 @@ func _run() -> void:
 	_ghosts()
 	_vision()
 	_wall_outcome()
+	_stage_stagger()
 	_depth()
 	_panes()
 	_scorch_budget()
@@ -4570,6 +4571,41 @@ func _wall_outcome() -> void:
 	_check(VfxDebris.stays_in("wall") and VfxDebris.stays_in("crack") and not VfxDebris.stays_in("punch") and not VfxDebris.stays_in("collapse"), "a wall hit stays in, as a crack does; a punch and a collapse come out")
 	_check(int(wall[1]) == 1 and int(crack[1]) == 1 and int(heavy[1]) == 2, "one ring on the near face and none on the far one for a wall hit (%d), a crack (%d); two for a heavy hit (%d)" % [int(wall[1]), int(crack[1]), int(heavy[1])])
 	_check(int(wall[0]) > 0 and int(wall[0]) < int(heavy[0]), "and fewer bits than a hit that comes out (%d against %d)" % [int(wall[0]), int(heavy[0])])
+
+
+## A blast that changes five towers at once (the collapse clip's first blast): the debris is staggered over 12 ticks, the slabs are panels and not boulders, and the whole is a small fraction of what it was.
+func _stage_stagger() -> void:
+	print("stage changes in one tick")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var towers: Array = []
+	for b in S.buildings:
+		if b.alive and int(b.floors) >= 5:
+			towers.append(b)
+		if towers.size() >= 5:
+			break
+	var h := VfxHub.new()
+	h.reset(S, 6)
+	h.destruction_enabled = true
+	h.stages_enabled = true
+	var evs: Array = []
+	for t in towers:
+		evs.append(VfxMock.ev("building_stage", {"b": t.idx, "from": 0, "to": 3, "x": t.x, "y": WorldStructures.baseY(S, t), "z": t.z, "w": t.w, "h": t.h, "kind": "blast", "cx": t.x - 900.0, "owner": 0, "n": 1}))
+	_tick(S, h, evs)
+	var first: int = int(h.stages.made.get("shed", 0))
+	var bits1: int = h.debris.spawned
+	for k in range(14):
+		_tick(S, h, [])
+	var all: int = int(h.stages.made.get("shed", 0))
+	_check(towers.size() == 5 and first == 1 and all == 5, "five towers change stage in one tick: %d draw at once, the rest follow within 12 ticks (%d in all)" % [first, all])
+	var slab_max: float = 0.0
+	var chunks: int = 0
+	for bt in h.debris.bits:
+		if bt.kind == VfxDebris.CHUNK:
+			chunks += 1
+			slab_max = maxf(slab_max, bt.sx)
+	_check(h.debris.spawned < 120 and slab_max <= 70.0 and chunks > 0, "and the debris is %d bits in all, %d slabs none over %.0f units (a slab of a facade's panel size, 28 to 70 at the base scale)" % [h.debris.spawned, chunks, slab_max])
+	_check(bits1 < h.debris.spawned, "the first tick drew less than the whole (%d of %d)" % [bits1, h.debris.spawned])
 
 
 ## The colour-blind presets (Art's data/art/colour-vision.json by way of UI's `colour_vision`): everything drawn in a lane colour reads the preset, and with the option off nothing changes.

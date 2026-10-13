@@ -600,7 +600,7 @@ func stage_glass(bx: float, w: float, y0: float, y1: float, front_z: float, dirx
 			py = pn.y + _rs.range_(-0.3, 0.3) * pn.w
 		if not _visible_at(px, py, front_z):
 			continue
-		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), dirx * _rs.range_(40.0, 200.0) + _rs.range_(-40.0, 40.0), _rs.range_(-60.0, 220.0), 1.0, _rs.range_(1.0, 1.9))
+		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), dirx * _rs.range_(40.0, 200.0) + _rs.range_(-40.0, 40.0), _rs.range_(-60.0, 220.0), 1.0, _rs.range_(0.7, 1.3))      # a second of falling glass, not two: the collapse clip's churn
 		_add(b)
 
 
@@ -618,7 +618,7 @@ func stage_shed(bx: float, w: float, y0: float, y1: float, front_z: float, dirx:
 		if not _visible_at(px, py, front_z):
 			continue
 		var kind: int = CHUNK if k % 5 != 0 else STEEL
-		var b: Bit = _bit(kind, px, py, front_z + VfxLook.Z_SHARD_OVER + _rs.range_(0.0, 30.0), dirx * _rs.range_(30.0, 160.0) + _rs.range_(-30.0, 30.0), _rs.range_(-40.0, 120.0), kscale, _rs.range_(1.2, 2.2))
+		var b: Bit = _bit(kind, px, py, front_z + VfxLook.Z_SHARD_OVER + _rs.range_(0.0, 30.0), dirx * _rs.range_(30.0, 160.0) + _rs.range_(-30.0, 30.0), _rs.range_(-40.0, 120.0), kscale, _rs.range_(0.9, 1.5))
 		_add(b)
 
 
@@ -666,7 +666,7 @@ func window_row(bx: float, w: float, ym: float, half_band: float, front_z: float
 		var kp: float = _rs.next()
 		if not _visible_at(px, py, front_z):
 			continue      # an opened floor has no window to blow out, and nothing is thrown across the patch
-		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), _rs.range_(-70.0, 70.0), _rs.range_(-60.0, 200.0), 1.0, _rs.range_(1.0, 1.9))
+		var b: Bit = _bit(GLASS if k % 4 != 0 else TRI, px, py, front_z + _rs.range_(6.0, 40.0), _rs.range_(-70.0, 70.0), _rs.range_(-60.0, 200.0), 1.0, _rs.range_(0.7, 1.3))
 		if kp < q:
 			_add(b)
 

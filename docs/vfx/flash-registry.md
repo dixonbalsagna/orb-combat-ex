@@ -127,6 +127,24 @@ What I did (render/vfx only, data in `vfx_look.gd`): the register's area thresho
 
 Result (`check-clip`, my tree, normal): see the table in the report; reduced was already thinner and reads 2.5.
 
+## Collapse's first blast (collapse scene, seed 12345, ticks 84 to 144; 2026-10-13)
+
+Camera isolated it at 2.0 / 3.0 on a held camera and asked for the debris and dust under the line on a still camera. Same commit (91b3722f), `capture-web` through the guarded launcher (tag vfx, one capture at a time, 8 to 11 frames a second), 200 ticks, and the layers switched off one at a time in a scratch export:
+
+| Variant | Normal: primary / area-15% | Reduced: primary / area-15% |
+| :-- | :-- | :-- |
+| as built (before) | 2.5 / 3.5 | 2 / 2.5 |
+| all of VFX off | 2.5 / 3.5 | 1.5 / 2.5 |
+| stage layer off | 2.5 / 3.5 (109+ at 3.9x gone) | |
+| **after** | **2.5 / 3.5, with 109+ at 2.0x (was 3.9x) and 158+ at 1.6x (was 2.9x)** | **1.5 / 2.5** |
+
+(200 ticks a clip, so the two-second memory reading is not meaningful and is left out; both sets are the primary reading of the analyser's current combined rule.)
+
+- **The events at 84+, 91- and 94+ (2.5 to 2.6 times the threshold) are not VFX's.** They are the same with every VFX layer off: at tick 91 a quarter of the frame goes dark (257,000 pixels, 11 times the threshold) and at 94 a seventh comes back (103,000): the camera's cut at the blast. The 84+ is the start of the analysed window. They set the primary and the area-15% reading; nothing on my side moves them.
+- **What was VFX's** was the stage layer's: five towers change stage in the same tick, and each threw up to 24 cladding slabs of 45 to 112 units (grey boulders of 30 to 80 px) and up to 20 glass slivers, and the window blow-outs of the crater (10 buildings, 6 rows, 8 slivers) followed for 40 ticks. Changed pixels a tick above the no-VFX baseline: tick 109 +24,600 before, +11,200 after; tick 120 +23,300, +12,200; tick 158 +40,800, +14,200.
+- **What changed** (data and layer, nothing in the held files): the stage events are drawn nearest first and the rest follow two ticks apart up to 12 (`stagger_ticks`); two towers at full strength (was six), up to six at 0.4 (was twenty); slabs at `0.75 + 0.12 x width` scale (28 to 70 units; were up to 112), cladding counts halved (`shed_big` 12 to 6, `shed_small` 6 to 3), glass 5 to 10 (was 8 to 20), the spend budget 300 to 160; stage glass and slabs live 0.7 to 1.3 and 0.9 to 1.5 seconds (were 1.0 to 1.9 and 1.2 to 2.2); glass at 0.75 alpha; a puff fades in over `0.06 + size / 2500` seconds (fix c of docs/vfx/windows-bc.md); the crater's window blow-outs are 4 rows (was 6) of 6 buildings (was 10) at 0.6 scale (was 0.8) and 0.7 to 1.3 seconds.
+- **Not mine, for Rendering:** the concentric orange and pale rings (up to 5 at once, 270 px) and the brown squares at ticks 100 to 125 are Rendering's own (they are drawn with VFX off), and the cut at 91 and 94 is Camera's.
+
 ## What I could and could not do about the held files
 
 `transform_view.gd` and `vfx_layer.gd` stay untouched. The transformation's flash is brought under the register through `transform.gd` alone (a static scale the view's own `VfxTransform.p("break", "flash_alpha")` call already passes through), so **nothing is needed from those two files for the transformation**. The pressure rings are thin rings (not a flash) and need nothing.
