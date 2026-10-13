@@ -6,3 +6,4 @@ a2d945b0f0aeb46e21c494fe63ff6c56d5a765d3 sim/director/bands.gd
 bd4b65b1624feb23abfb3480af07a418ae465980 data/director/interrupts.json
 5cdaf7fb190ff30d38c3571c6b6bda3b44e74e9c data/director/ai.json
 e0ba6a2f9e80104647e31fba64ea210d4f22636d docs/director/brawl-c2.md
+new sim/director/tools/brawl_cases.gd
