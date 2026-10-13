@@ -263,14 +263,14 @@ The press throws the light, as always. **The burst starts when the hold is certa
 - **It is still one move of eight blows in under a second,** and it is worth 5.2 brawl lights in all. The second blow is a full light, since it is the one he set. Each of the six after it is worth 0.085 for each tick of its gap (0.07 until §14's fifth round).
 - **It doesn't beat a mash or a timed string.** Over the same 56 ticks a mash is worth 6.4, so the burst is 82% of it. A light and one skill strike are worth 5 in 32 ticks.
 - **It is the easy option.** A player who can't mash holds, and gets about 85% of a mash at the same pace.
-- Its blows reel the rival for 2 ticks each. Each one after the first adds half a point to his run, so if nothing answers it, the eighth blow is the close.
+- Its blows reel the rival for 2 ticks each. Each adds a full point to his run, as a tap's does. It was half a point until §14's sixth round.
 - Letting go stops it after the blow in hand. Any other press replaces it. After the eighth it goes on at a floor pace (below).
 
 **After the burst, a held X keeps throwing** (re-ruled on the built chain, §14). As first ruled the burst ended after its eighth blow, and a player who only held X won 0 of 40. Nothing came until his next press, and any stagger threw the hold away.
 - **A held X is the flurry played for him, in the shape Orb drew.** It opens as the burst and slows on the curve. From the eighth blow it holds a floor pace of one blow every 8 ticks, for as long as X is held and the brawl lasts. It waits a stagger out. It doesn't carry on once the two are parted: a new approach takes a new press (§14, the fifth round).
 - **Each blow goes through a tap's own path** (Encounter's proposal, taken). A reel carries it, and after a stagger the hold picks up again at the floor pace. A new burst needs a new press.
 - **It is worth 85% of a mash,** as the burst's blows are: 0.085 for each tick of its gap, against a mash's 0.10. It is never over a mash's.
-- **The run.** The burst's quick blows add half a point each, as now. At the floor pace each adds 1, as a tap does.
+- **The run.** Every blow of a held X adds 1, as a tap does.
 - **One press is still one attack.** A hold is one press and one move. A tap is still one light.
 - **Its blows can't be perfect-blocked** (new, §15): its rhythm changes with every blow.
 - **Its row:** the player who only holds X wins 10 to 35% against medium. That sits under the masher's band, because holding is the easy option and should cost. The lever is the floor pace, between 8 and 12 ticks (`burst.floorGap`).
@@ -319,7 +319,7 @@ The press throws the light, as always. **The burst starts when the hold is certa
 
 - **The rule.** A tap of B while the rival is staggered by an opening is the launcher. The openings are the staggers a fighter earns: a flurry's close, a broken guard, a perfect block, a zip's tech counter and a punished taunt. A landed heavy's stagger isn't one, and a shove's isn't.
 - **It always lands.** Its wind-up is halved to 14 ticks, as on the beat (§9), and the stagger holds until it lands.
-- **It always lands, and it launches when the launcher is ready.** When it launches, the stick nudges the launch and the director stages it, as for every launch. After any launch of a fighter, the launcher rests on him for 40 s of fight time. **In that time the same B is the hammer:** it still always lands, as a full heavy worth 6, and the brawl goes on. It doesn't part them (re-ruled in §14's fourth round: as a knock-back it cost the launcher's player matches). The launching blow is worth 3 brawl lights, which is half a heavy for half the wind-up. Either one costs a heavy's 5 ki. The launch's landing is the rest of its worth.
+- **It always lands, and it launches when the launcher is ready.** When it launches, the stick nudges the launch and the director stages it, as for every launch. After any launch of a fighter, the launcher rests on him for 40 s of fight time. **In that time the same B is the hammer:** it still always lands, as a full heavy worth 6, and the brawl goes on. It doesn't part them (re-ruled in §14's fourth round: as a knock-back it cost the launcher's player matches). The launching blow is worth 6 too. It was 3 until §14's sixth round: a launch shouldn't hit softer than the blow that stands in for it. Either one costs a heavy's 5 ki. The launch's landing is the rest of its worth.
 - **A B pressed early is kept.** Pressed in the 10 ticks before the stagger begins, it is held and thrown as the launcher, by §2's rule for a held press. So "X, then B" rolled off the closing blow works, and so does a B pressed on seeing the stagger. A kept B goes before any X pressed after it, so mashing on doesn't lose it (Encounter's decision, confirmed).
 - **A held B loses the guarantee.** The stagger holds for the 14 ticks only. Held past that, it is a charged heavy like any other.
 - **The staggered fighter keeps half his nudge** (§1), so he has a say in where he is launched from. Nothing gets him out: a stagger takes his buttons, as it does today.
@@ -389,7 +389,7 @@ Reliable had become constant. Two things in my rule caused it, and both change n
 
 **A failed option hurts 3 of 10** (Orb, questionnaire 19). A whiffed heavy leaves him open for 20 ticks. The rule for every flashy option: failing never leaves him open for more than 20 ticks, and never adds damage of its own.
 
-**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.085; reel 2; run 0.5 a blow; then a floor gap of 8 at a run of 1 a blow); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (the openings, wind-up 14, worth 3, ki 5, held press 10, rest 40 s, flight ×1.0, and the AI's shares 0.15, 0.35 and 0.6).
+**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.085; reel 2; run 1 a blow; then a floor gap of 8); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (the openings, wind-up 14, worth 6, ki 5, held press 10, rest 40 s, flight ×1.0, and the AI's shares 0.15, 0.35 and 0.6).
 
 ## 4. A: the shove, the clinch and the tackle
 
@@ -1163,3 +1163,49 @@ Encounter's numbers, 200 matches on the default arm unless said: a median of 442
 **6. The hard AI's perfect blocks.** Its share against a heavy moved the row from 5.82 to 5.72, so it isn't the cause. The lever is the hard AI's general perfect-block share, ×0.9. The share against a heavy can stay at 0.3. The band doesn't move for a tenth of a block a minute.
 
 **The granted lines:** `wearPerDamage` 240 and the second breath's wait back at 240 ticks, with the second breath giving back 23.0%. No objection: that is the ruling of the third round, and the give-back is under its 25% again.
+
+### The sixth round: the chain as parked (2026-10-13)
+
+Encounter's chain of the nine cells' first pass, the recipes hook and the fourth round is parked and gated, and lands as it is. These rulings are for the tune after it. Its numbers, 200 matches on the default arm: a median of 440 s, a 10th percentile of 324 s, act 4 before the first brink in 90.5% of matches, with `wearPerDamage` at 225. Nothing below has been run by me: every new value is a first value.
+
+| | The row | Reads | The ruling |
+| :--- | :--- | :--- | :--- |
+| a | The route's player against the same script's masher | 14 of 100 against 50 | **Three things change, and the bound stays.** The pursuit is wanted. The route's script presses B in every opening. The launching blow is worth a full heavy |
+| b | B mashed | 6 of 60 | **A lever:** what a landed heavy counts toward the run, at 4 |
+| c | X held | 3 of 120, against a masher at 14 of 80 | **A rule change:** every blow of a held X counts a full point toward the run |
+| d | Double hits for a steady presser | 1.18 a match, in 68% of matches | **A lever:** the medium AI's `digIn`, from 0.55 to 0.45 |
+| e | Knock-backs' share; launches' share of partings | 21.2%; 63.2% | **One is retired and one waits for C2b,** on a new base |
+| f | Perfect blocks a minute | 2.13 at easy, 5.93 at hard | **The bands move a little, and an order is added** |
+
+**a. The launcher's route.** A player who uses the launcher must never do worse than the same player who doesn't. That bound stands: within 3 points, or above. It is far from met, and it is the main target of the next tune.
+- **The pursuit is wanted.** While the first move is his, the launcher's attack press from beyond reach flies him in. Today a tap from the far band opens a taunt, so the first move I gave him was a move he couldn't take. It also keeps the launched fighter from a quiet 4 s and a second breath. It is pillar 3: an attack closes the gap.
+- **It starts while the rival's launch is still in flight,** so he can arrive as the rival lands or lodges. It costs nothing. The zip at a launched rival, which hits him on and costs ki, is a different move and stays for Z2.
+- **Outside the first move a far tap stays as it is today.** The taunt's home is A (§4). Whether a light in the far band should ever taunt is read with the stances.
+- **The route's script is wrong for the rule.** QA's route taps B only on the ping, so the hammer never plays in it. The route is B in every opening: a launch when the launcher is ready, and the hammer when it isn't.
+- **The launching blow is worth 6,** where it was 3. The hammer is worth 6, and a launch shouldn't hit softer than the blow that stands in for it.
+- **If the route is still under its masher** with all three in: the launch's landing, ×1.25. The rest stays at 40 s until Orb has played it.
+
+**b. B mashed.** `flurry.runBy` counts a medium as 3 and a heavy as 1 or little more, so a B masher's run barely moves and the AI's mediums empty it. A landed heavy counts 4: it fills the run, and his next blow closes. The close guard still spaces his closes 90 ticks apart. Range 4 to 6.
+
+**c. X held.** At the pace and worth of the fifth round he still wins about a sixth as often as his masher. Each hold opens with a 16-tick set and then seven blows at half a run point, so in its first second a hold gains 4.5 toward the run where a masher gains 7.
+- **Every blow of a held X adds a full point to the run,** as a tap's does. Unanswered, the burst then closes about 31 ticks after the press, which is where a masher at 8 ticks closes.
+- The pace stays 8 and the worth 0.085. **If he passes two thirds of his masher, the worth comes down toward 0.07.** Ease should still cost.
+
+**d. Double hits.** 1.18 a match is inside 0.5 to 2. Matches with at least one read 68%, just over 35 to 65%. The medium AI's share goes from 0.55 to 0.45.
+
+**e. The partings.**
+- **"Exchanges that end in a knock-back, of those that reach a launch decision" is retired.** A brawl has no launch decision for each exchange. It belonged to the planned exchange.
+- **"Launches as a share of the partings" waits for C2b, as before, on a new base:** the brawls that end with the two parted, by a launch, a knock-back, a throw, a shove or a double hit. The hammer parts nobody, the ender is gone, and the throws, the shove and the breaker aren't built, so today nearly every parting is a launch.
+- **Its band stays 25 to 40% for when C2b is in.** That figure is Orb's, from when a knock-back ended every string. If it can't hold beside a launcher that is reliable, it is a question for Orb then, and not a band I move now.
+- **Partings a match, by kind, are reported** until then.
+
+**f. Perfect blocks.** Easy and hard keep reading a tenth or two over their tops, whatever the last lever was. The brawl now has two wound-up strengths to read where it had one, so more perfect blocks happen at every level.
+- **The bands:** 0.5 to 2.5 at easy, 1 to 4 at medium, 2 to 6.5 at hard.
+- **An order is added, and it is what matters:** hard reads at least half again medium, and medium at least a fifth over easy. Today: 2.13, 2.86 and 5.93, which holds.
+- No lever this time.
+
+**Two findings, noted.**
+- **The Y holder closes twice as often with the charged medium, and still wins 0 of 60.** So the principle of the fifth round needs its other half: a close wins for a fighter who can stay off the brink himself while he earns it. The Y holder takes every light in full while he charges. His first lever is the full charged medium's worth, from 4 to 5.5. If he is still under a tenth after that, his row is read on his proof rows alone, and I say so plainly: a held Y is an answer to lights and to charges, and may not be a way to play a whole match.
+- **Buildings.** Wall slams read 0.10 a match from the default start and 0.76 from a crossing, at about 24 damage, which is a building's single hit: the ladder and the slam's doubling aren't in yet. Encounter's town levers take bodies into buildings from 1.67 to 4.17 a match from a crossing, which is inside the 4 to 8 of `buildings.md` at its lower edge, on 12 matches.
+
+**The wear is at its floor.** 225 was needed because the hammer keeps a brawl going. The 10th percentile has 24 s of room. If the next tune shortens matches again, the lever is the hammer's worth, and not the wear.
