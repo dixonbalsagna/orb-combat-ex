@@ -171,7 +171,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 
 - **Damage a second is level within a button,** as it is for lights today. Between buttons it rises with the strength, and so does the price.
 - **Each flurry beats one of the others:**
-  - **the X flurry beats the Y flurry.** It lands twice as many blows, so its run climbs faster and it takes the close (`melee-press-feel.md` §3);
+  - **the X flurry no longer beats the Y flurry** (re-ruled in §14's fifth round). A landed medium counts 3 toward the run, so a Y flurry out-runs lights. What beats it is a perfect block, a medium into its wind-up, and its price in ki;
   - **the Y flurry beats the B flurry.** A medium lands every 12 ticks, inside the 20 in which a heavy's wind-up can still be stopped;
   - **the B flurry beats the X flurry.** Lights don't stop a heavy, and 6 brawl lights come back for the 1.4 he takes through the armour.
 - **The run and the close don't change.** Every landed flurry blow of any button adds 1 to his run, and a reply takes 1 off. At a run of 4 his next blow staggers the rival in place. That is the next blow of any strength, and the stagger is the close's 12 ticks whatever threw it.
@@ -255,21 +255,21 @@ The press throws the light, as always. **The burst starts when the hold is certa
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Lands, in ticks from the press | 2 | 18 | 22 | 26 | 31 | 37 | 45 | 56 |
 | The gap before it | | 16 | 4 | 4 | 5 | 6 | 8 | 11 |
-| Worth, in brawl lights | 1 | 1 | 0.28 | 0.28 | 0.35 | 0.42 | 0.56 | 0.77 |
+| Worth, in brawl lights | 1 | 1 | 0.34 | 0.34 | 0.43 | 0.51 | 0.68 | 0.94 |
 
 - **A tap of X never throws two lights.** My first table landed the second blow 6 ticks after the press, which needs the burst to start at 4. Taps run 3 to 6 ticks on a pad, 4 to 8 on a keyboard and 5 to 12 on touch. So at 4 nearly every keyboard and touch tap threw a second light, and at 8, as Controls built it, most touch taps still would. That breaks "one press is one attack" (the EP's finding, from `docs/controls/windup-read.md` §5).
 - **So the hold is read on the same line as Y's and A's: 16 live ticks.** By Controls' model no pad or keyboard tap reaches it, and under 2% of touch taps do, which is inside the band for a tap read as a hold (§11). That figure is modelled and not measured. A hold now begins at 16 ticks on X, Y and A alike, and the energy stance's volley already sits there.
 - **Until 16 ticks a held X is a tap:** one light, and then he sets himself for about 10 ticks. Let go in that time, nothing more is thrown. The set is the burst's tell, and the rival can answer in it.
-- **It is still one move of eight blows in under a second,** and it is still worth 4.7 brawl lights in all. The second blow is a full light, since it is the one he set. Each of the six after it is worth 0.07 for each tick of its gap.
-- **It doesn't beat a mash or a timed string.** Over the same 56 ticks a mash is worth 6.4, so the burst is 73% of it. A light and one skill strike are worth 5 in 32 ticks.
-- **It is the easy option.** A player who can't mash holds, and gets about three quarters of a mash.
+- **It is still one move of eight blows in under a second,** and it is worth 5.2 brawl lights in all. The second blow is a full light, since it is the one he set. Each of the six after it is worth 0.085 for each tick of its gap (0.07 until §14's fifth round).
+- **It doesn't beat a mash or a timed string.** Over the same 56 ticks a mash is worth 6.4, so the burst is 82% of it. A light and one skill strike are worth 5 in 32 ticks.
+- **It is the easy option.** A player who can't mash holds, and gets about 85% of a mash at the same pace.
 - Its blows reel the rival for 2 ticks each. Each one after the first adds half a point to his run, so if nothing answers it, the eighth blow is the close.
 - Letting go stops it after the blow in hand. Any other press replaces it. After the eighth it goes on at a floor pace (below).
 
 **After the burst, a held X keeps throwing** (re-ruled on the built chain, §14). As first ruled the burst ended after its eighth blow, and a player who only held X won 0 of 40. Nothing came until his next press, and any stagger threw the hold away.
-- **A held X is the flurry played for him, in the shape Orb drew.** It opens as the burst and slows on the curve. From the eighth blow it holds a floor pace of one blow every 10 ticks, for as long as X is held.
+- **A held X is the flurry played for him, in the shape Orb drew.** It opens as the burst and slows on the curve. From the eighth blow it holds a floor pace of one blow every 8 ticks, for as long as X is held and the brawl lasts. It waits a stagger out. It doesn't carry on once the two are parted: a new approach takes a new press (§14, the fifth round).
 - **Each blow goes through a tap's own path** (Encounter's proposal, taken). A reel carries it, and after a stagger the hold picks up again at the floor pace. A new burst needs a new press.
-- **It is worth 70% of a mash,** as the burst's blows already are: 0.07 for each tick of its gap, against a mash's 0.10.
+- **It is worth 85% of a mash,** as the burst's blows are: 0.085 for each tick of its gap, against a mash's 0.10. It is never over a mash's.
 - **The run.** The burst's quick blows add half a point each, as now. At the floor pace each adds 1, as a tap does.
 - **One press is still one attack.** A hold is one press and one move. A tap is still one light.
 - **Its blows can't be perfect-blocked** (new, §15): its rhythm changes with every blow.
@@ -389,7 +389,7 @@ Reliable had become constant. Two things in my rule caused it, and both change n
 
 **A failed option hurts 3 of 10** (Orb, questionnaire 19). A whiffed heavy leaves him open for 20 ticks. The rule for every flashy option: failing never leaves him open for more than 20 ticks, and never adds damage of its own.
 
-**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.07; reel 2; run 0.5 a blow; then a floor gap of 10 at a run of 1 a blow); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (the openings, wind-up 14, worth 3, ki 5, held press 10, rest 40 s, flight ×1.0, and the AI's shares 0.15, 0.35 and 0.6).
+**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.085; reel 2; run 0.5 a blow; then a floor gap of 8 at a run of 1 a blow); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (the openings, wind-up 14, worth 3, ki 5, held press 10, rest 40 s, flight ×1.0, and the AI's shares 0.15, 0.35 and 0.6).
 
 ## 4. A: the shove, the clinch and the tackle
 
@@ -565,7 +565,7 @@ They still read right with B as the heavy: each pair does what its two buttons m
 | :--- | :--- | ---: |
 | **X tapped** | A light, at once | 0 |
 | **X mashed** | The light flurry: 5 to 10 blows a second | 0 |
-| **X held** | The held flurry: it opens as the burst, eight blows in under a second, and slows to one every 10 ticks for as long as it is held | 0 |
+| **X held** | The held flurry: it opens as the burst, eight blows in under a second, and slows to one every 8 ticks for as long as it is held | 0 |
 | **Y tapped** | A medium, 12 ticks after the press | 2 |
 | **Y mashed** | The medium flurry: 4 to 5 full blows a second | 2 a blow |
 | **Y held** | A charged medium: full at 24 ticks, worth 3 to 4, no knock-back. It ends a charging heavy | 4 |
@@ -659,8 +659,8 @@ Still to be seen drawn: the tackle, the charged heavy's hold and its flash, the 
 | :--- | :--- | :--- |
 | Press to contact | 2 ticks for a light | **By button:** X at 2, with 95% inside 4. Y at 12, never past 16. B at 28, never past 32. Every press starts its move within 10 ticks |
 | A tap that is read as a hold, by device | Not a row | **New:** under 2% on a pad and a keyboard, and under 5% on touch. The lever is the grace. It covers X as well: a tap of X that throws a second light counts here, and the lever there is the burst's start |
-| The burst against a mash over the same time | Not a row | **New:** 70 to 80% of the mash's damage. Never over |
-| Each flurry against the one it beats, head to head | Not a row | **New:** X against Y, Y against B and B against X each take the first decisive exchange of a match at least 60% of the time. There is no upper bound: two fixed scripts lock. It is read on the first decisive exchange because a B masher is out of ki after about 20 s. The first chain read 100%, 92% and 52% by matches won (§14) |
+| The burst against a mash over the same time | Not a row | **New:** 80 to 90% of the mash's damage. Never over |
+| Each flurry against the one it beats, head to head | Not a row | **New:** Y against B and B against X each take the first decisive exchange of a match at least 60% of the time. X against Y is reported: that edge is withdrawn (§14, the fifth round). There is no upper bound: two fixed scripts lock. It is read on the first decisive exchange because a B masher is out of ki after about 20 s. The first chain read 100%, 92% and 52% by matches won (§14) |
 | The masher against the medium AI | 35 to 50%, tapping X every 8 ticks | Kept for the X masher. **New, reported:** the Y masher, the B masher, the alternator and the player who only holds X. **The slower masher's fall is intended.** At a 10-tick gap he fell from 33 to 16 of 100 on C1, because a level trade no longer ends in a draw and the medium AI taps at 8. The draw doesn't come back: a slower tapper should lose a trade of lights. His answer is a heavy into the flurry, which arrives with C2a. Reported there: the 10-tick tapper who throws B when the AI's run on him reaches 2. If he is still under 25%, the lever is a spread on the AI's tap gap, 8 to 10 at medium, so that its pace isn't one number to fall short of |
 | The Y masher and the B masher against the medium AI | Reported | **New:** 20 to 50% each. No single button mashed beats medium more than half the time, and none is shut out. The first chain read 0 of 60 and 60 of 60 (§14) |
 | The player who only holds X, against the medium AI | Reported | **New:** 10 to 35%. It read 0 of 40 on the chain as built, and the held X is re-ruled for it (§3, §14) |
@@ -908,8 +908,8 @@ Encounter's second tune is built and lands as it is. Nothing below has been run:
 
 | | **Tapped** | **Mashed** | **Held** |
 | :--- | :--- | :--- | :--- |
-| **X, the light** | **The beat.** A light placed on the beat is a skill strike: worth 4, and it clears his run. Three running close. Off the beat it is the link between slower blows and the quickest punish. **For:** stopping his flurry without out-mashing him. **Beaten by:** armour, a medium that lands in its wind-up, and a perfect block, which a steady beat invites (§16) | **The pressure.** It builds the run fastest: four blows he doesn't answer, and the next one closes. **For:** making an opening. **Beaten by:** a heavy's armour, a skill strike, a charged medium held through it | **The easy pressure.** The burst, slowing on its curve to a pace it keeps. It is 70% of a mash for no effort, and its changing rhythm can't be perfect-blocked. **For:** keeping him busy while the stick moves the fight, and a rival who turns flurries. **Beaten by:** a mash, which out-runs it, and armour |
-| **Y, the medium** | **The stop.** It ends a heavy in its first 20 ticks, and it punishes a miss: 16 ticks against the 20 he is open. On the beat it lands in 6 ticks and is worth 6. **For:** answering anything slow. **Beaten by:** a flurry of lights, which it can't out-run, and a heavy past tick 20 | **The grind.** The most damage and wear a second without armour. It chips a guard twice as hard, and it beats a flurry of heavies. **For:** the race to the brink, and a rival who turtles. **Beaten by:** the X flurry, which closes first, and his own ki | **The patient close.** A charged medium: lights don't stop it, and at full it staggers him as a close does. It ends any charge, always. **For:** closing through a flurry of lights, and punishing a rival who holds something. **Beaten by:** a medium, a fast mash that closes first, giving ground |
+| **X, the light** | **The beat.** A light placed on the beat is a skill strike: worth 4, and it clears his run. Three running close. Off the beat it is the link between slower blows and the quickest punish. **For:** stopping his flurry without out-mashing him. **Beaten by:** armour, a medium that lands in its wind-up, and a perfect block, which a steady beat invites (§16) | **The pressure.** It is free, it lands at once and it can't be read: four blows he doesn't answer, and the next one closes. **For:** making an opening. **Beaten by:** a heavy's armour, a skill strike, a charged medium held through it | **The easy pressure.** The burst, slowing on its curve to a pace it keeps. It is 85% of a mash for no effort, and its changing rhythm can't be perfect-blocked. **For:** keeping him busy while the stick moves the fight, and a rival who turns flurries. **Beaten by:** a mash, which out-runs it, and armour |
+| **Y, the medium** | **The stop.** It ends a heavy in its first 20 ticks, and it punishes a miss: 16 ticks against the 20 he is open. On the beat it lands in 6 ticks and is worth 6. **For:** answering anything slow. **Beaten by:** a flurry of lights, which it can't out-run, and a heavy past tick 20 | **The grind.** The most damage and wear a second without armour. It chips a guard twice as hard, and it beats a flurry of heavies. **For:** the race to the brink, and a rival who turtles. **Beaten by:** a perfect block, since its drum roll is the plainest rhythm to read; a medium into its wind-up; and its price, which is all the ki he gets back | **The patient close.** A charged medium: lights don't stop it, and at full it staggers him as a close does. It ends any charge, always. **For:** closing through a flurry of lights, and punishing a rival who holds something. **Beaten by:** a medium, a fast mash that closes first, giving ground |
 | **B, the heavy** | **The hammer.** In an opening it is the launcher. Thrown cold it trades through lights on its armour and staggers him. **For:** the decisive hit when he is open. **Beaten by:** a medium in its first 20 ticks, giving ground, a perfect block | **The advance.** Heavy after heavy. Lights don't answer armour, so his run climbs while theirs doesn't. **For:** walking through a masher. **Beaten by:** a flurry of mediums, giving ground and the punish, ki: it costs twice what comes back | **The big read.** A charged heavy: a knock-back with no opening needed, and a launch at full. **For:** making space, and punishing a rival who has committed to a flurry. **Beaten by:** a medium early, a charged medium always, giving ground, a fresh guard |
 
 **No cell is another one made smaller.** Within a button the three differ by what the player brings: timing for a tap, effort for a mash, patience for a hold. Across buttons the mashes are the triangle of §2, and the holds answer it: a held Y goes through X's lights, a held B through anything light, and a held X through a perfect block.
@@ -920,7 +920,7 @@ Encounter's second tune is built and lands as it is. Nothing below has been run:
 | :--- | :--- | :--- |
 | X tapped | A light. The beat isn't built for any button | **The perfect follow-up, on all three** (§16, which re-rules §9's skill strike on Orb's anchor: his own hit), with one new rule: **three perfects running close.** The third staggers him for the close's 12 ticks, under the close guard |
 | X mashed | The flurry. The masher reads 37.5% on one of QA's scripts and 12% on the other | None in the rule. QA says which script the band is read on, and all nine rows use that one |
-| X held | The burst, and then nothing. The holder wins 0 of 40 | **The floor pace,** ruled in §3: one blow every 10 ticks through a tap's path. **New:** the held flurry's blows can't be perfect-blocked |
+| X held | The burst, and then nothing. The holder wins 0 of 40 | **The floor pace,** ruled in §3: one blow every 8 ticks through a tap's path, at 0.085 a tick. **New:** the held flurry's blows can't be perfect-blocked |
 | Y tapped | A medium, 12 ticks | The beat, as for X |
 | Y mashed | 2 of 60: he is out of ki in seconds | **The medium's price, 2 ki to 1** (§14). `flurry.runBy.medium` stays at 2 |
 | Y held | **A trap.** It goes by itself at 16 ticks at a tap's strength, so it is a medium that lands late | **The charged medium, brought forward from C2b,** with two changes: lights don't end it, as they don't end a tap's wind-up; and **at full it closes.** Charged from 16 ticks, full at 24, worth 3 to 4, 4 ki |
@@ -1118,3 +1118,48 @@ QA's two scripts now press at the same pace, so these are like for like. Nothing
 - **`digIn` becomes a share of matches.** It is drawn once as a match starts: this AI digs in during this match, or it doesn't. If it does, it digs in to the first level trade after the first 30 s, and at most once more, after `digInRestS`.
 - **First values:** 0.3, 0.55 and 0.75 by level, and `digInRestS` 120. `digInMax` stays 2, and `digInBoth` stays false.
 - **What that should read:** for any presser who trades, at least one double hit in about 55% of matches at medium, and under 1 a match on average. Both are inside the band.
+
+### The fifth round: the nine cells, pass 1, as built in scratch (2026-10-12)
+
+Encounter's numbers, 200 matches on the default arm unless said: a median of 442 s; X mashed 86 of 200; B mashed 19 of 60; Y mashed 3 of 60; X held 3 of 60. Nothing below has been run by me: every new value is a first value.
+
+**Encounter's finding, which I take as a principle: what wins a match is the close, and not the damage.** The Y masher deals 9,026 against 9,326 and wins 3 of 60, because he closes 1.5 times a match and is closed on 37 times. So every cell needs its own way to a close, and a cell's row is moved by that way first and by its worth second.
+
+| | The question | The ruling |
+| ---: | :--- | :--- |
+| 1 | Does a held X outlive its brawl and press as a tap out of reach? Does it wait a stagger out? | **It waits a stagger out: yes. It doesn't carry out of reach: no,** as the default. One question for Orb |
+| 2 | The held pace at 8 ticks | **Yes** |
+| 3 | The held X's worth, or its band | **The worth goes to 0.085 a tick,** and the band is also read against the same script's masher |
+| 4 | `flurry.runBy.medium` at 3 | **Land it.** The X-over-Y edge goes, and what beats a Y flurry is restated |
+| 5 | The ladder's rates one step back up | **Yes:** 0.006 and 0.0037 |
+| 6 | The hard AI's perfect blocks | **A different lever:** its general share, ×0.9 |
+
+**1. The hold.**
+- **Through a stagger: yes.** It is §3's rule, and the core dropping a held button 27 to 32 times a match was working against it.
+- **Out of reach: no.** A held X that lunges back in after the two are parted is an attack nobody pressed. Orb's rules are that every attack on screen matches a press, and that a hold is one press and one move. A new approach takes a new press.
+- **The row's script changes instead.** The player who only holds X lets go and holds again when he has no hold running. That is one press for each approach, which is no more effort than a tap.
+- **The carry may live in the hold-to-flurry setting,** which is off by default and is Controls'. That is the player who has asked the game to keep fighting for him.
+- Encounter's numbers with the carry on stand in for the new script, which should read a little under them.
+
+**2. The pace.** One blow every 8 ticks, inside my 8 to 12. At 10 he closes 11 times a match and at 8 he closes 27 times, and closes are what win.
+
+**3. The worth.**
+- **0.085 for each tick of its gap, for the whole held flurry,** where it was 0.07. That is 85% of a mash at the same pace. On Encounter's probe 0.07 read 7 of 120, 0.093 read 6 of 40 and 0.10 read 8 of 40, with the masher at 17 of 80. So 0.07 was a little under a third of the masher, and 0.10 was the masher.
+- **It is never over 0.10.** A hold is never worth more than a mash.
+- **The band is read two ways.** On QA's script it stays 10 to 35%. On any other probe the holder wins between a third and two thirds as often as that probe's masher. The second reading is the one that travels.
+- **What holding still costs:** 15% of the worth, a pace he can't raise where a masher can reach 6 ticks, and the 16-tick set before each burst.
+- "Can't be perfect-blocked" stays. It didn't move the row and wasn't meant to: it is the hold's own use against a rival who turns flurries.
+
+**4. The Y flurry.**
+- **`flurry.runBy.medium` is 3.** It reads 18 of 60 for the Y masher, with X at 78 of 200, B at 10 of 60 and a median of 470 s. At 2 a Y masher never closes against lights, and Orb's rule is that no cell is hopeless. That rule comes before my triangle.
+- **The triangle loses one edge.** With a medium counting 3, a Y flurry out-runs a flurry of lights. So "the X flurry beats the Y flurry" is withdrawn (§2), and the edge row becomes a reported one.
+- **What beats a Y flurry now:** a perfect block, since a drum roll every 12 ticks is the plainest rhythm in the game to read; a medium of his own into its wind-up; and its price, which is all the ki he gets back, so a Y masher has nothing left for a heavy, a zip or a signature.
+- **What the X flurry is still for:** it is free, it lands at once, and it can't be read or stopped. It is how a fighter with no ki keeps pressing.
+- **B mashed at 10 of 60 is just under its band.** The lever is the one already named: the medium AI's perfect block against a heavy, from 0.2 to 0.15.
+- **The median at 470 s** is inside QA's band and over my target. If the 10th percentile has room, `wearPerDamage` goes back up one step, to 255.
+
+**5. The acts.** 0.006 and 0.0037, for 83% of matches reaching act 4 before the first brink, and the acts at 106, 193 and 294 s. All inside their bands. My ×0.75 was a first value and it overshot.
+
+**6. The hard AI's perfect blocks.** Its share against a heavy moved the row from 5.82 to 5.72, so it isn't the cause. The lever is the hard AI's general perfect-block share, ×0.9. The share against a heavy can stay at 0.3. The band doesn't move for a tenth of a block a minute.
+
+**The granted lines:** `wearPerDamage` 240 and the second breath's wait back at 240 ticks, with the second breath giving back 23.0%. No objection: that is the ruling of the third round, and the give-back is under its 25% again.
