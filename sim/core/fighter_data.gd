@@ -3,6 +3,8 @@ class_name FighterData
 ## data/fighters/<id>/fighter.json and meters.json (D1b). The wounds model and the power ladder are the game's:
 ## data/fight/wounds.json and ladder.json, every fighter's. A fighter's own data/fighters/<id>/wounds.json or ladder.json
 ## is optional and holds only his differences, laid over the game's file key by key (docs/architecture/fighters-as-data.md).
+## data/fighters/bench.json, optional, lists fighters that load and can be named in a match's setup but are not in the
+## roster: not on the select screen, and not in the roster's data hash. The reference fighter is one.
 ## Loaded once per process, like DirData; the data are match inputs.
 ## createFighter copies each def's scalars into Fighter fields and points f.wd at one immutable WoundsDef, so the tick
 ## never reads a Dictionary. dataHash() is the canonical hash of the parsed content (sorted keys, "_" keys skipped):
@@ -124,6 +126,8 @@ static var shared: String = SHARED   # tests only: where the game's two files ar
 static var quiet: bool = false   # tests only: collect errors without printing them (the negative controls)
 static var _defs = null          # id -> the createFighter Dictionary (with "wd", a WoundsDef)
 static var _order: Array = []
+static var _bench: Array = []        # the bench's ids, in the file's order
+static var _hashes: Dictionary = {}  # id -> the hash of what he resolves to, for every fighter loaded
 static var _hash: String = ""
 static var _errors: Array = []
 
@@ -133,6 +137,8 @@ static func _ensure() -> void:
 		return
 	_defs = {}
 	_order = []
+	_bench = []
+	_hashes = {}
 	_errors = []
 	var h := SimHash.Hasher.new()
 	var roster = _read("roster.json", h)
@@ -150,25 +156,50 @@ static func _ensure() -> void:
 		if not (id is String) or _defs.has(id):
 			_err("roster.json: bad or duplicate id " + str(id))
 			continue
-		var fj = _read(id + "/fighter.json", h)
-		var wj = _resolve(id, "wounds.json", sw, h)
-		var mj = _read(id + "/meters.json", h) if FileAccess.file_exists(root + id + "/meters.json") else {}
-		var lj = _resolve(id, "ladder.json", sl, h)
-		if not (fj is Dictionary and wj is Dictionary and lj is Dictionary):
-			continue
-		var def := _fighter(id, fj)
-		def.wd = _wounds(id, wj)
-		var meters: Dictionary = mj.get("meters", {}) if mj is Dictionary else {}
-		for m in meters:
-			if not String(m).begins_with("_") and not METERS.has(m):
-				_err(id + "/meters.json: unknown meter '" + m + "' (D1b knows anguish and menace)")
-		def.anguish = meters.has("anguish")
-		def.menace = meters.has("menace")
-		def.md = _meters(id, meters)
-		def.ld = _ladder(id, lj)
-		_defs[id] = def
-		_order.append(id)
+		if _one(id, h, sw, sl):
+			_order.append(id)
 	_hash = h.hex()
+	# the bench: loaded as the roster's fighters are, and left out of the roster's hash
+	if FileAccess.file_exists(root + "bench.json"):
+		var bj = _load(root + "bench.json", "bench.json")
+		if not (bj is Array):
+			_err("bench.json: expected an array of fighter ids")
+			bj = []
+		for id in bj:
+			if not (id is String) or _defs.has(id):
+				_err("bench.json: bad id, or one the roster already has: " + str(id))
+				continue
+			if _one(id, SimHash.Hasher.new(), sw, sl):
+				_bench.append(id)
+
+
+## Load one fighter into _defs, folding his files into h under their names, and keep the hash of what he resolves to.
+## False when a file of his is missing or does not parse.
+static func _one(id: String, h: SimHash.Hasher, sw, sl) -> bool:
+	var fj = _read(id + "/fighter.json", h)
+	var wj = _resolve(id, "wounds.json", sw, h)
+	var mj = _read(id + "/meters.json", h) if FileAccess.file_exists(root + id + "/meters.json") else {}
+	var lj = _resolve(id, "ladder.json", sl, h)
+	if not (fj is Dictionary and wj is Dictionary and lj is Dictionary):
+		return false
+	var def := _fighter(id, fj)
+	def.wd = _wounds(id, wj)
+	var meters: Dictionary = mj.get("meters", {}) if mj is Dictionary else {}
+	for m in meters:
+		if not String(m).begins_with("_") and not METERS.has(m):
+			_err(id + "/meters.json: unknown meter '" + m + "' (D1b knows anguish and menace)")
+	def.anguish = meters.has("anguish")
+	def.menace = meters.has("menace")
+	def.md = _meters(id, meters)
+	def.ld = _ladder(id, lj)
+	_defs[id] = def
+	var hf := SimHash.Hasher.new()
+	hf.text(id)
+	for part in [["fighter.json", fj], ["wounds.json", wj], ["meters.json", mj], ["ladder.json", lj]]:
+		hf.text(part[0])
+		_canon(hf, part[1])
+	_hashes[id] = hf.hex()
+	return true
 
 
 ## Tests only: load again from dir (the parity gate's negative controls), then back from ROOT. The game's two files
@@ -184,6 +215,25 @@ static func loadFrom(dir: String = ROOT, sharedDir: String = SHARED) -> void:
 static func order() -> Array:
 	_ensure()
 	return _order
+
+
+## The bench: fighters a match's setup may name that are not in the roster.
+static func bench() -> Array:
+	_ensure()
+	return _bench
+
+
+## True when id is a fighter the data has, in the roster or on the bench.
+static func has(id: String) -> bool:
+	_ensure()
+	return _defs.has(id)
+
+
+## The hash of what one fighter resolves to (his fighter.json and meters.json, and the game's wounds and ladder with his
+## differences). A replay folds it in for a bench fighter it names.
+static func hashOf(id: String) -> String:
+	_ensure()
+	return String(_hashes.get(id, ""))
 
 
 static func def(id: String) -> Dictionary:
@@ -338,7 +388,7 @@ static func _fighter(id: String, j: Dictionary) -> Dictionary:
 		"sigCooldown": float(j.get("sigCooldown", 0.0))}
 	if not (d.sigCooldown > 0.0):
 		_err(where + ": sigCooldown must be a positive number of seconds")
-	if not ["hero", "villain", "rival"].has(d.role):
+	if not ["hero", "villain", "rival", "reference"].has(d.role):
 		_err(where + ": unknown role '" + d.role + "'")
 	return d
 

@@ -1,0 +1,27 @@
+{
+  "schema": "fighter/1",
+  "id": "REFERENCE",
+  "identity": {
+    "role": "reference",
+    "col": "#b9b9b9",
+    "aura": "#e8e8e8",
+    "hair": "#6f6f6f"
+  },
+  "stats": {
+    "care": 0.0,
+    "dmgMul": 1.0,
+    "spd": 1.0,
+    "maxhp": 1600.0
+  },
+  "kit": {
+    "canHide": false
+  },
+  "rally": {
+    "rule": "second_wind",
+    "_note": "the rule the two fighters in the build have, so the yardstick plays the system as they do. Provisional until Game Design rules"
+  },
+  "finishers": {
+    "base": "generic"
+  },
+  "sigCooldown": 120
+}

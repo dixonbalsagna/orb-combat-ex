@@ -1,6 +1,8 @@
 extends SceneTree
 ## AI-vs-AI batch runner on the GDScript sim: the successor of prototype/tools/sim-stats.js. From the repo root:
-##   godot --headless --path . --script res://sim/core/tools/batch.gd -- [matches=60] [baseSeed=1] [--arm=NAME] [--json] [--jobs=N]
+##   godot --headless --path . --script res://sim/core/tools/batch.gd -- [matches=60] [baseSeed=1] [--arm=NAME] [--json] [--jobs=N] [--a=ID --b=ID]
+## --a=ID --b=ID plays any two fighters the data has, by id, in place of an arm's pairing (the same id twice is a mirror;
+## with them --arm may only be default or default-flip).
 ## --jobs=N splits the seed range over N child Godot processes (contiguous blocks) and aggregates their records in seed
 ## order, so the output and digest are the same as a single-process run. (--records=PATH is the children's mode.)
 ## Match i uses seed baseSeed+i, so the output is identical on every run (no clock in it); the digest hashes every
@@ -15,6 +17,8 @@ const MAX_T: float = 900.0
 const MAX_STEPS: int = 120000
 const KO_TAIL: float = 3.0
 const STANCES: Array = ["AGGRESSIVE", "DEFENSIVE", "EVASIVE", "ESCAPE"]
+
+var pair: Array = []   # --a and --b: the two fighters by id; empty for the arm's pairing
 
 var re_atk := RegEx.create_from_string("^([A-Z][A-Z0-9-]*) (LIGHT|HEAVY|SIG) vs (\\w+)$")
 var re_beam := RegEx.create_from_string("^(.+) over (\\w+) \\((.+)\\) → (\\w+)")
@@ -40,10 +44,18 @@ func _init() -> void:
 			jobs = maxi(1, int(a.substr(7)))
 		elif a.begins_with("--records="):
 			records_out = a.substr(10)
+		elif a.begins_with("--a="):
+			pair = [a.substr(4), pair[1] if pair.size() == 2 else ""]
+		elif a.begins_with("--b="):
+			pair = [pair[0] if pair.size() == 2 else "", a.substr(4)]
 		else:
 			pos.append(a)
 	var n: int = int(pos[0]) if pos.size() > 0 else 60
 	var base: int = int(pos[1]) if pos.size() > 1 else 1
+	if not pair.is_empty() and (not FighterData.has(pair[0]) or not FighterData.has(pair[1]) or arm.trim_suffix("-flip") != "default"):
+		print("--a and --b take two fighter ids the data has (%s), with --arm=default or default-flip" % ", ".join(FighterData.order() + FighterData.bench()))
+		quit(2)
+		return
 	if n < 1 or not (arm.trim_suffix("-flip") in ["default", "swap", "mirror-villain", "mirror-hero"]):
 		print("usage: godot --headless --path . --script res://sim/core/tools/batch.gd -- [matches=60] [baseSeed=1] [--arm=default|swap|mirror-villain|mirror-hero[-flip]] [--json]")
 		quit(2)
@@ -92,7 +104,7 @@ func run_jobs(n: int, base: int, arm: String, jobs: int) -> Array:
 		var count: int = n / jobs + (1 if j < n % jobs else 0)
 		var out: String = OS.get_user_data_dir().path_join("batch_%d_%d.json" % [OS.get_process_id(), j])
 		files.append(out)
-		pids.append(OS.create_process(exe, ["--headless", "--path", root, "--script", "res://sim/core/tools/batch.gd", "--", str(count), str(start), "--arm=" + arm, "--records=" + out]))
+		pids.append(OS.create_process(exe, ["--headless", "--path", root, "--script", "res://sim/core/tools/batch.gd", "--", str(count), str(start), "--arm=" + arm, "--records=" + out] + ([] if pair.is_empty() else ["--a=" + pair[0], "--b=" + pair[1]])))
 		start += count
 	while pids.any(func(pid): return OS.is_process_running(pid)):
 		OS.delay_msec(100)
@@ -109,8 +121,16 @@ func run_jobs(n: int, base: int, arm: String, jobs: int) -> Array:
 
 func run_match(seed: int, arm: String) -> Dictionary:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed)
-	SimGolden.applyArm(arm, S.fighters)
+	if pair.is_empty():
+		SimCore.newMatch(S, seed)
+		SimGolden.applyArm(arm, S.fighters)
+	else:   # any two fighters by id; a mirror's two are told apart by name
+		var su := {"slots": pair}
+		if pair[0] == pair[1]:
+			su.names = [pair[0] + "-A", pair[0] + "-B"]
+		if arm.ends_with("-flip"):
+			su.flip = true
+		SimCore.newMatch(S, seed, {}, su)
 	var fs: Array = S.fighters
 	var slot := {}
 	for i in range(2):

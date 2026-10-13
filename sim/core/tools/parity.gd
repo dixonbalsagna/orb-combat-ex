@@ -44,6 +44,8 @@ func _init() -> void:
 	check("roster data", _roster(g))
 	check("roster loader rejects bad data", _rosterRejects())
 	check("the game's wounds and ladder files, and a fighter's differences", _sharedFiles())
+	check("the bench, and the reference fighter", _benchFighter())
+	check("a match's slots name two fighters the data has", _slotGuard())
 	check("wired numbers change a match", _wiredNumbers())
 	check("keyed draws", _keyedDraws(g))
 	check("arm setups", _armSetups())
@@ -3375,6 +3377,133 @@ func _sharedFiles() -> String:
 	FighterData.loadFrom()
 	if out == "" and (FighterData.dataHash() != h0 or not FighterData.errors().is_empty()):
 		out = "reloading data/fighters/ changed the hash"
+	return out
+
+
+## The bench (data/fighters/bench.json): fighters that load and can be named in a match's setup but are not in the
+## roster. The reference fighter is on it: base stats, no care, no meter, the game's wounds and ladder. The roster, its
+## order and its hash are as they were (the roster check above holds them to the golden). A match can name him in either
+## slot, or twice. A replay that names him carries his data in its data hash, plays back, and is refused when his data
+## change; a replay that does not name him is as it was.
+func _benchFighter() -> String:
+	if FighterData.bench() != ["REFERENCE"] or not FighterData.has("REFERENCE") or FighterData.order().has("REFERENCE") or FighterData.has("NOBODY"):
+		return "the bench reads %s" % str(FighterData.bench())
+	var d: Dictionary = FighterData.def("REFERENCE")
+	var p: Dictionary = FighterData.def("PROTAGONIST")
+	if d.dmgMul != 1.0 or d.spd != 1.0 or d.care != 0.0 or d.anguish or d.menace or d.role != "reference":
+		return "the reference fighter is not plain: damage %s, speed %s, care %s" % [str(d.dmgMul), str(d.spd), str(d.care)]
+	if d.wd.wearPerDamage != p.wd.wearPerDamage or d.wd.family.light != p.wd.family.light or d.ld.taken != p.ld.taken or d.ld.thresholds != p.ld.thresholds:
+		return "the reference fighter's wounds or ladder are not the game's"
+	var hs := {}
+	for id in ["PROTAGONIST", "RIVAL", "REFERENCE"]:
+		var hx: String = FighterData.hashOf(id)
+		if hx == "" or hs.has(hx):
+			return "the hash of %s is empty, or another fighter's" % id
+		hs[hx] = true
+	var d0: String = SimReplay.dataHash()
+	if SimReplay.dataHash({"slots": ["RIVAL", "PROTAGONIST"]}) != d0 or SimReplay.dataHash({"flip": true}) != d0:
+		return "a replay of the roster's fighters changed its data hash"
+	var dref: String = SimReplay.dataHash({"slots": ["REFERENCE", "RIVAL"]})
+	if dref == d0:
+		return "a replay that names the reference fighter does not carry his data"
+	for slots in [["REFERENCE", "REFERENCE"], ["REFERENCE", "PROTAGONIST"], ["RIVAL", "REFERENCE"]]:
+		var S := SimCore.createSim()
+		var su := {"slots": slots}
+		if slots[0] == slots[1]:
+			su.names = ["REFERENCE-A", "REFERENCE-B"]
+		SimCore.newMatch(S, 5, {}, su)
+		for t in range(900):
+			SimCore.step(S)
+			S.out.fx.clear()
+			S.out.feed.clear()
+		for i in range(2):
+			var f = S.fighters[i]
+			if f.id != slots[i] or not is_finite(f.x) or not is_finite(f.y) or (f.id == "REFERENCE" and (f.hasAnguish or f.hasMenace or f.dmgMul != 1.0)):
+				return "a match of %s: slot %d did not play as %s" % [str(slots), i, slots[i]]
+		SimCore.dispose(S)
+	var R := SimCore.createSim()
+	var rec := SimReplay.recorder(R, 7, {}, {"slots": ["REFERENCE", "RIVAL"]})
+	for t in range(600):
+		rec.step([null, null])
+		R.out.fx.clear()
+		R.out.feed.clear()
+	var rp: Dictionary = rec.finish()
+	SimCore.dispose(R)
+	if rp.data != dref:
+		return "a recorded match of the reference fighter does not carry his data hash"
+	var res: Dictionary = SimReplay.play(JSON.parse_string(JSON.stringify(rp)))
+	if not res.ok:
+		return "a replay of the reference fighter: %s at tick %d" % [res.reason, res.firstBadTick]
+	# his data change: the roster's hash and a roster replay hold, and his own replay is refused
+	var h0: String = FighterData.dataHash()
+	var dir := "user://bench_fixture/"
+	for id in ["PROTAGONIST", "RIVAL", "REFERENCE"]:
+		DirAccess.make_dir_recursive_absolute(dir + id)
+		for fname in ["fighter.json", "meters.json"]:
+			if not FileAccess.file_exists(FighterData.ROOT + id + "/" + fname):
+				continue
+			var text: String = FileAccess.get_file_as_string(FighterData.ROOT + id + "/" + fname)
+			if id == "REFERENCE" and fname == "fighter.json":
+				if text.count("\"dmgMul\": 1.0") != 1:
+					return "the fixture's pattern is not in the reference fighter's file once"
+				text = text.replace("\"dmgMul\": 1.0", "\"dmgMul\": 1.04")
+			var fw := FileAccess.open(dir + id + "/" + fname, FileAccess.WRITE)
+			fw.store_string(text)
+			fw.close()
+	for name in ["roster.json", "bench.json"]:
+		var fr := FileAccess.open(dir + name, FileAccess.WRITE)
+		fr.store_string(FileAccess.get_file_as_string(FighterData.ROOT + name))
+		fr.close()
+	FighterData.quiet = true
+	FighterData.loadFrom(dir)
+	var out: String = ""
+	if not FighterData.errors().is_empty():
+		out = "the bench fixture: " + "; ".join(FighterData.errors())
+	elif FighterData.dataHash() != h0 or SimReplay.dataHash() != d0:
+		out = "a change to a bench fighter's data changed the roster's hash, or a roster replay's"
+	elif SimReplay.dataHash({"slots": ["REFERENCE", "RIVAL"]}) == dref or SimReplay.play(JSON.parse_string(JSON.stringify(rp))).reason != "data":
+		out = "a replay of the reference fighter was not refused after his data changed"
+	FighterData.quiet = false
+	FighterData.loadFrom()
+	return out
+
+
+## A match's setup names any two fighters the data has. Slots that are not two such fighters (an id nobody has, one id,
+## three, a number) play the default pairing: the match is the default match to the hash.
+func _slotGuard() -> String:
+	var want: String = ""
+	var D := SimCore.createSim()
+	SimCore.newMatch(D, 5)
+	for t in range(300):
+		SimCore.step(D)
+		D.out.fx.clear()
+		D.out.feed.clear()
+	want = SimHash.stateHash(D).gameplay
+	SimCore.dispose(D)
+	FighterData.quiet = true
+	var out: String = ""
+	for bad in [["NOBODY", "RIVAL"], ["PROTAGONIST"], ["PROTAGONIST", "RIVAL", "REFERENCE"], [1, 2], []]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {}, {"slots": bad})
+		if S.fighters.size() != 2 or S.fighters[0].id != "PROTAGONIST" or S.fighters[1].id != "RIVAL":
+			out = "slots %s did not play the default pairing" % str(bad)
+		else:
+			for t in range(300):
+				SimCore.step(S)
+				S.out.fx.clear()
+				S.out.feed.clear()
+			if SimHash.stateHash(S).gameplay != want:
+				out = "slots %s played a match that is not the default match" % str(bad)
+		SimCore.dispose(S)
+		if out != "":
+			break
+	FighterData.quiet = false
+	if out == "":
+		var G := SimCore.createSim()
+		SimCore.newMatch(G, 5, {}, {"slots": ["RIVAL", "REFERENCE"]})
+		if G.fighters[0].id != "RIVAL" or G.fighters[1].id != "REFERENCE":
+			out = "good slots were refused"
+		SimCore.dispose(G)
 	return out
 
 

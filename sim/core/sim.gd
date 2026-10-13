@@ -33,7 +33,8 @@ static func dispose(S: SimState) -> void:
 
 
 ## ai is {"p1": bool, "p2": bool}; a missing entry keeps the previous fighter's setting, or true with no fighters yet.
-## setup (D1a; the replay header's `setup`): {"slots": [id, id]} picks the fighters (default: the roster's first two),
+## setup (D1a; the replay header's `setup`): {"slots": [id, id]} picks any two fighters the data has, from the roster
+## or the bench (default: the roster's first two; slots that are not two such fighters play the default, with an error),
 ## "names": [name, name] renames them (the mirror arms), "flip": true swaps the spawn sides. {} is the default match.
 ## Fight lanes: "depth": true makes depth physical for this match (S.depthOn).
 ## The intro phase: "intro": true plays the entrance before the clock; "intro": "skip" (the default) applies its effects at
@@ -49,6 +50,11 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	var p2ai: bool = bool(ai["p2"]) if ai.has("p2") and ai["p2"] != null else (S.fighters[1].ai != null if S.fighters.size() > 1 else true)
 	dispose(S)
 	var slots: Array = setup.get("slots", FighterData.order().slice(0, 2))
+	if slots.size() != 2 or not (slots[0] is String and slots[1] is String) or not FighterData.has(slots[0]) or not FighterData.has(slots[1]):
+		# slots that are not two fighters the data has (the roster's or the bench's): the default pairing plays
+		if not FighterData.quiet:
+			push_error("SimCore.newMatch: the setup's slots %s are not two fighters the data has; the default pairing plays" % str(slots))
+		slots = FighterData.order().slice(0, 2)
 	var start_x: float = SimConst.START_X
 	if setup.get("start", "") == "crossing":   # a demo start astride a crossing of the city (World: lanes.json demo_start); default off
 		start_x = WorldLanes.demoStartX(S, SimConst.START_GAP, SimConst.START_X)

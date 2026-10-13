@@ -2,7 +2,7 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**A parked build:** `fighters-w23/`: windows 2 and 3 of `../fighters-as-data.md`, on top of window 1 (on main since 89b3e2f8). `bench_fighter.py` adds the reference fighter on a bench beside the roster (`data/fighters/REFERENCE/fighter.json`, `data/fighters/bench.json`) and a hash a fighter; `select_guards.py` adds the slot guard in `SimCore.newMatch` and `--a` and `--b` in `batch.gd`. Applied in that order, from the repo root. No golden moves: parity on the committed golden and a byte-for-byte regeneration prove it.
+Windows 2 and 3 of `../fighters-as-data.md` (the reference fighter on a bench, the selection guards) were applied on f5c001e6 (2026-10-13) and their scripts are deleted.
 
 **One script is parked:** `weight_event.py`, the blow's weight on the damage event, for Audio. It moves every golden's light digest and no state hash, so by the EP's ruling it rides with the next golden regeneration and has none of its own. Prove it alone on a clean export first.
 

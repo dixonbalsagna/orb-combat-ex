@@ -36,7 +36,7 @@ static func recorder(S_: SimState, seed: int, ai: Dictionary = {}, setup: Dictio
 	SimCore.newMatch(S_, seed, ai, setup)
 	var rec := SimReplay.new()
 	rec.S = S_
-	rec.replay = {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(), "seed": seed, "setup": setup.duplicate(true),
+	rec.replay = {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(setup), "seed": seed, "setup": setup.duplicate(true),
 		"ai": {"p1": S_.fighters[0].ai != null, "p2": S_.fighters[1].ai != null},
 		"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
 	return rec
@@ -110,7 +110,7 @@ static func play(rp: Dictionary) -> Dictionary:
 			if it == null:
 				return refuse
 		packed.append(it)
-	if rp.get("data", "") != dataHash():
+	if rp.get("data", "") != dataHash(rp.get("setup", {})):
 		return {"ok": false, "firstBadTick": -1, "reason": "data", "final": ""}
 	var S_ := SimCore.createSim()
 	SimCore.newMatch(S_, int(rp.seed), rp.ai, rp.get("setup", {}))
@@ -143,7 +143,9 @@ static func play(rp: Dictionary) -> Dictionary:
 
 ## The data a replay depends on: Combat's data (DirData), the roster (FighterData) and the fight's mood and style data
 ## (SimMood, M1), one hash.
-static func dataHash() -> String:
+## setup is the match's: a fighter from the bench that its slots name is folded in too. He is not in the roster, so he is
+## not in the roster's hash; a replay that does not name him is the same whatever his data are.
+static func dataHash(setup: Dictionary = {}) -> String:
 	var h := SimHash.Hasher.new()
 	h.text(DirData.dataHash())
 	h.text(FighterData.dataHash())
@@ -156,4 +158,8 @@ static func dataHash() -> String:
 	h.text(WorldBlast.dataHash())     # World's shot blast: data/biomes/blast.json
 	h.text(WorldStructures.stagesHash())   # World's building stages: data/biomes/stages.json
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
+	for id in setup.get("slots", []):
+		if id is String and FighterData.bench().has(id):
+			h.text(id)
+			h.text(FighterData.hashOf(id))
 	return h.hex()
