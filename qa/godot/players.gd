@@ -61,6 +61,9 @@ class Pl:
 	var gv_x0: float = 0.0
 	var gv_y0: float = 0.0
 	var gv_lat: int = -1
+	var gv_live: int = -1          # giver: live ticks since his window opened (-1: not open). It opens on the first live tick from gv_from on which he is not staggered (stunTicks 0): a staggered fighter does not give ground (EP, 2026-10-13)
+	var gv_last: int = -1          # the S.tick of the last read, so a hit freeze's repeated calls are not counted
+	var gv_stun: int = 0           # his stunTicks at the last read: a live tick he began staggered is not counted against the first step
 	var gv_dur: int = 0
 	var last_live: bool = true     # did the last SimCore.step run a live tick (false in a hit freeze: S.tick advances and nothing can move)
 	var dr_fx: Array = []          # the drifting fighter's own x on each live sample
@@ -382,11 +385,20 @@ class Pl:
 		var toward: float = SimMathx.jsign(SimWrap.sdx(f.x, o.x))
 		if kind == "giver" and gv_from >= 0 and S.tick >= gv_from and S.tick < gv_to:
 			it.mx = -toward
-			if S.tick == gv_from:
-				gv_x0 = f.x
-				gv_y0 = f.y
-			elif gv_lat < 0 and (absf(SimWrap.sdx(gv_x0, f.x)) > 0.05 or absf(f.y - gv_y0) > 0.05):
-				gv_lat = S.tick - gv_from
+			# the first step is read in LIVE ticks from the tick his window opens (a 7-tick hit freeze runs while S.tick counts straight through it, and a staggered fighter gives no ground by rule)
+			if S.tick != gv_last:
+				if gv_live < 0:
+					if last_live and int(f.stunTicks) == 0:
+						gv_live = 0
+						gv_x0 = f.x
+						gv_y0 = f.y
+				else:
+					if last_live and gv_stun == 0:
+						gv_live += 1
+					if gv_lat < 0 and gv_live > 0 and (absf(SimWrap.sdx(gv_x0, f.x)) > 0.05 or absf(f.y - gv_y0) > 0.05):
+						gv_lat = gv_live
+				gv_last = S.tick
+				gv_stun = int(f.stunTicks)
 		if int(P.get("follow", "0")) != 0 and winding_n >= S.tick:
 			it.mx = toward
 
@@ -403,8 +415,11 @@ class Pl:
 			gv_from = S.tick + gv_off
 			gv_to = int(e.get("n")) + 10
 			gv_lat = -1
+			gv_live = -1
+			gv_last = -1
+			gv_stun = 0
 		elif txt == "end":
-			var en: Dictionary = {"off": gv_off, "dur": gv_dur, "k": int(e.get("k")), "lat": gv_lat, "miss": "", "t": S.tick}
+			var en: Dictionary = {"off": gv_off, "dur": gv_dur, "k": int(e.get("k")), "lat": gv_lat, "open": gv_live >= 0, "miss": "", "t": S.tick}
 			if S.tick - int(G.lastMissTick) <= 2:
 				en.miss = String(G.lastMissText)
 			G.giveLog.append(en)
@@ -525,6 +540,17 @@ class Pl:
 			return _kind_at(String(P.get("mix", "L")))
 		return -1
 
+	## A press is due on the gap cadence: clock=tick the absolute S.tick count (every gap-th S.tick from start_off), since a gap of S.ticks after the last consumed press, live a gap of live ticks.
+	func _due(S, lt: int, ck: String) -> bool:
+		var gap: int = int(P.get("gap", "8"))
+		if S.tick < start_off:
+			return false
+		if ck == "tick":
+			return (S.tick - start_off) % gap == 0
+		if ck == "since":
+			return S.tick - last_press_tick >= gap
+		return lt - last_press >= gap
+
 	## The press to send this call: -1 none, 0 light, 1 heavy. `hold` is set when the button stays down.
 	func decide(S, slot: int, lt: int) -> int:
 		if carry >= 0:
@@ -556,11 +582,18 @@ class Pl:
 						return 0
 					return 1 if String(P.get("kind", "L")) == "H" else 0
 			"route":
-				# Orb's test 3 (brawl-second-pass.md section 13): mash X every gap ticks (default 8) until a launcher_open names him, then one B tap while the stagger lasts, then X again
-				if open_n >= S.tick and S.tick - route_b > 40:
+				# Orb's test 3 (brawl-second-pass.md section 13; the sixth round, a): mash X every gap ticks (default 8) and press B in EVERY opening (the rival staggered for the launcher's minimum): a launch when the
+				# launcher is ready, the hammer when it is not; then X again. An opening is read from DirBrawl.launcherOpen (pinged or not); a build without it falls back to the launcher_open ping (open_n).
+				var ob: int = open_n
+				var ob_min: int = S.tick
+				if brawl != null and Pl.has_m(brawl, "launcherOpen"):
+					ob = int(brawl.call("launcherOpen", S, S.fighters[slot]))
+					ob_min = S.tick + 1   # the stagger has ticks left (launcherOpen is S.tick plus his stunTicks)
+				if ob >= ob_min and S.tick - route_b > 40:
 					route_b = S.tick
 					return 2
-				if S.tick - last_press_tick >= int(P.get("gap", "8")) and S.tick >= start_off:
+				# one clock with the pair masher (clock=tick: the absolute S.tick cadence): the route's X count differs from its masher's only by the B's it pressed
+				if _due(S, lt, String(P.get("clock", "since"))):
 					return 0
 			"mix":
 				var gap2: int = int(P.get("gap", "12"))
@@ -756,9 +789,14 @@ func _ei(e, k: String) -> int:
 
 ## The giver's log: wind-ups that were given ground against, by the blow's strength (dur 20 or more is the heavy) and by how late the stick went away (off, ticks after the wind-up started).
 func _givesum(g: Dictionary) -> Dictionary:
-	var out: Dictionary = {"n": 0, "latMax": 0, "heavy": {"n16": 0, "m16": 0, "nl": 0, "ml": 0}, "medium": {"n6": 0, "m6": 0, "nl": 0, "ml": 0}, "missTexts": {}}
+	var out: Dictionary = {"n": 0, "notOpen": 0, "noMove": 0, "latMax": 0, "heavy": {"n16": 0, "m16": 0, "nl": 0, "ml": 0}, "medium": {"n6": 0, "m6": 0, "nl": 0, "ml": 0}, "missTexts": {}}
 	for en in g.giveLog:
 		out.n += 1
+		# a wind-up whose window never opened (he was staggered to its end) has no first step to read; one that opened and never moved is counted apart
+		if not bool(en.get("open", true)):
+			out.notOpen += 1
+		elif int(en.lat) < 0:
+			out.noMove += 1
 		out.latMax = maxi(int(out.latMax), int(en.lat))
 		var gave: bool = String(en.miss) == "gave_ground"
 		if String(en.miss) != "":

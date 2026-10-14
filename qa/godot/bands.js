@@ -337,7 +337,7 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     // control-rules 6 / moveset-rules 11: perfect blocks per 100 melee exchanges by AI level (the main run is the data's level, medium)
     if (D.every(r => r.cues)) {
       const pbn = sum(D.map(r => r.cues.perfect_block || 0)), mins = sum(D.map(r => r.koAt)) / 60;
-      R.point('7.pb.perMin.medium', '§7', 'Perfect blocks a minute, medium AI (1 to 4; Game Design, melee-press-feel 9f)', { v: pbn / mins, lo: 1, hi: 4, unit: 'num' });
+      R.point('7.pb.perMin.medium', '§7', 'Perfect blocks a minute, medium AI (1 to 4; Game Design, melee-press-feel 9f; sixth round: easy 0.5 to 2.5, hard 2 to 6.5)', { v: pbn / mins, lo: 1, hi: 4, unit: 'num' });
       R.info('7.pb.medium', '§7', 'Perfect blocks per 100 melee exchanges, medium AI (the old basis, reported; 5 to 15 before the brawl)', (pbn / m * 100).toFixed(2), 'a brawl is one exchange of many blows; the rows above and below read it a minute and per 100 blows');
     }
     // ---- the rows counted per exchange, re-based for a brawl (docs/qa/brawl-rebase.md): one brawl is one exchange of many blows, so the per-exchange rows above read against a different unit.
@@ -354,6 +354,12 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
         const ends = {}; for (const r of D) for (const [k, v] of Object.entries(r.brawl.ends)) ends[k] = (ends[k] || 0) + v;
         const tot = sum(Object.values(ends));
         if (tot) R.info('10.brawl.ends', '§10 brawl', 'How brawls end, as shares of brawls (the basis for "knock-backs" and "continues": a brawl continues until it ends; the 25 to 35% and 40 to 50% bands read against launch decisions)', Object.entries(ends).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${(v / tot * 100).toFixed(1)}%`).join(', '), `${tot} brawl endings`);
+        // the sixth round (e): partings a match by kind (the brawls that end with the two parted: a launch, a knock-back, a throw, a shove or a double hit), reported until C2b; the endings that are not partings are listed apart
+        if (tot) {
+          const PART = ['launch', 'knockback', 'throw', 'shove', 'double'], per = k => (ends[k] || 0) / D.length;
+          const rest = Object.entries(ends).filter(([k]) => !PART.includes(k)).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${(v / D.length).toFixed(2)}`).join(', ');
+          R.info('10.partings.byKind', '§14 sixth round', 'Partings a match, by kind: launch, knock-back, throw, shove, double hit (reported until C2b)', PART.map(k => `${k} ${per(k).toFixed(2)}`).join(', '), `${D.length} matches; the endings that are not partings a match: ${rest || 'none'}`);
+        }
       }
     }
     zipBlock(R, D, wl, sum);
@@ -508,13 +514,13 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
         R.rate('10.end.launch', '§10', 'Exchanges that end in a launch, of those that reach a launch decision (18 to 30%, agency pass 14)', { v: ls.p, ci: ls.ci, lo: 0.18, hi: 0.30 });
         if (kinds) {
           const kb = S.clusterShare(D, r => E(r).knockback || 0, dec), ct = S.clusterShare(D, r => E(r).continue || 0, dec);
-          R.rate('10.end.knockback', '§10', 'Exchanges that end in a knock-back, of those that reach a launch decision (25 to 35%, agency pass 14)', { v: kb.p, ci: kb.ci, lo: 0.25, hi: 0.35 });
-          { const sep = S.clusterShare(D, r => E(r).launch || 0, r => (E(r).launch || 0) + (E(r).knockback || 0)); R.rate('10.end.separating', '§10', 'Launches as a share of the exchanges that separate the fighters (a knock-back or a launch; 25 to 40%, around Orb 30)', { v: sep.p, ci: sep.ci, lo: 0.25, hi: 0.40 }); }
+          R.info('10.end.knockback', '§10', 'Exchanges that end in a knock-back, of those that reach a launch decision (RETIRED in the sixth round: a brawl has no launch decision for each exchange; it belonged to the planned exchange)', fmt.pct(kb.p), 'reported only; the partings a match by kind are 10.partings.byKind');
+          { const sep = S.clusterShare(D, r => E(r).launch || 0, r => (E(r).launch || 0) + (E(r).knockback || 0)); R.pending('10.end.separating', '§14 sixth round', 'Launches as a share of the partings (the brawls that end with the two parted: a launch, a knock-back, a throw, a shove or a double hit; 25 to 40%, the figure from Orb)', 'waits for C2b: the hammer parts nobody, the throws, the shove and the breaker are not built, so nearly every parting is a launch (reported beside it: ' + fmt.pct(sep.p) + ' of launches and knock-backs on the old base)'); }
           R.rate('10.end.continue', '§10', 'Exchanges after which the brawl continues (STAY), of those that reach a launch decision (40 to 50%)', { v: ct.p, ci: ct.ci, lo: 0.40, hi: 0.50 });
           R.info('10.end.split', '§10', 'Melee exchanges: reach a launch decision / of those launch, knock-back, stay', `${fmt.pct(sum(D.map(dec)) / Math.max(1, sum(D.map(all))))} reach one; ${fmt.pct(ls.p)} / ${fmt.pct(kb.p)} / ${fmt.pct(ct.p)}`, 'the rest end with no launch decision (a light string that never reaches a launch beat)');
         } else {
           R.info('10.end.rest', '§10', 'Melee exchanges that do not end in a launch (knock-back and continue are not told apart yet)', fmt.pct(1 - ls.p), 'the knock-back (20 to 30%) and continue (40 to 50%) rows switch on with launch_plan KNOCK BACK and STAY (agency slice 1) or exchange_end events');
-          R.pending('10.end.knockback', '§10', 'Exchanges that end in a knock-back (20 to 30%)', 'needs launch_plan KNOCK BACK or exchange_end events (the agency pass slice)');
+          R.info('10.end.knockback', '§10', 'Exchanges that end in a knock-back (RETIRED in the sixth round)', 'retired', 'a brawl has no launch decision for each exchange');
           R.pending('10.end.continue', '§10', 'Exchanges after which the brawl continues (40 to 50%)', 'needs launch_plan STAY or exchange_end events (the agency pass slice)');
         }
       } else R.pending('10.end.launch', '§10', 'How melee exchanges end: continue 40 to 50%, knock-back 20 to 30%, launch 25 to 35%', 'records without exchange endings');
@@ -639,8 +645,9 @@ function secondPassRows(R, D, sum) {
   else R.pending('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10)', 'the build has no windup cue (the three strengths are C2a)');
 }
 
-function levelRows(byLevel) {
-  const MIN = { easy: [0.5, 2], hard: [2, 5.5] }, OLD = { easy: [3, 8], hard: [12, 20] }, rows = [];
+// mediumRecs: the main default arm's records (the medium AI), read only for the order row; the medium band itself is 7.pb.perMin.medium in evaluate.
+function levelRows(byLevel, mediumRecs) {
+  const MIN = { easy: [0.5, 2.5], hard: [2, 6.5] }, OLD = { easy: [3, 8], hard: [12, 20] }, rows = [];
   for (const [level, recs] of Object.entries(byLevel)) {
     const m = recs.reduce((a, r) => a + Object.values(r.melee).reduce((x, y) => x + y, 0), 0), pb = recs.reduce((a, r) => a + ((r.cues || {}).perfect_block || 0), 0);
     const mins = recs.reduce((a, r) => a + r.koAt, 0) / 60, blows = recs.reduce((a, r) => a + Object.values((r.brawl || {}).blows || {}).reduce((x, y) => x + y, 0), 0);
@@ -648,6 +655,13 @@ function levelRows(byLevel) {
     rows.push({ id: '7.pb.perMin.' + level, ref: '§7', what: `Perfect blocks a minute, ${level} AI (${lo} to ${hi}; Game Design, melee-press-feel 9f)`, status: Number.isFinite(v) ? (v >= lo && v <= hi ? 'PASS' : 'FAIL') : 'PENDING', value: Number.isFinite(v) ? v.toFixed(2) : 'no data', band: `${lo} to ${hi}`, note: `${recs.length} default-arm matches at ${level}; point estimate; per 100 blows ${Number.isFinite(perBlow) ? perBlow.toFixed(2) : '-'}` });
     rows.push({ id: '7.pb.' + level, ref: '§7', what: `Perfect blocks per 100 melee exchanges, ${level} AI (the old basis, reported; ${OLD[level][0]} to ${OLD[level][1]} before the brawl)`, status: 'INFO', value: Number.isFinite(old) ? old.toFixed(2) : 'no data', band: '', note: `${recs.length} default-arm matches at ${level}` });
   }
+  // the sixth round (f): the order is what matters: hard at least 1.5 times medium, and medium at least 1.2 times easy
+  const pm = recs => { const mins = (recs || []).reduce((a, r) => a + r.koAt, 0) / 60, pb = (recs || []).reduce((a, r) => a + ((r.cues || {}).perfect_block || 0), 0); return mins ? pb / mins : NaN; };
+  const e = pm(byLevel.easy), h = pm(byLevel.hard), md = pm(mediumRecs);
+  if ([e, h, md].every(Number.isFinite)) {
+    const okH = h >= 1.5 * md, okM = md >= 1.2 * e;
+    rows.push({ id: '7.pb.order', ref: '§14 sixth round', what: 'Perfect blocks a minute keep their order across the levels: hard at least 1.5 times medium, and medium at least 1.2 times easy', status: okH && okM ? 'PASS' : 'FAIL', value: `easy ${e.toFixed(2)}, medium ${md.toFixed(2)}, hard ${h.toFixed(2)}: hard over medium ${(h / md).toFixed(2)}, medium over easy ${(md / e).toFixed(2)}`, band: 'hard/medium at least 1.5; medium/easy at least 1.2', note: 'point estimates, one run per level' });
+  } else rows.push({ id: '7.pb.order', ref: '§14 sixth round', what: 'Perfect blocks a minute keep their order across the levels (hard at least 1.5 times medium; medium at least 1.2 times easy)', status: 'PENDING', value: 'needs the easy and hard level runs and the medium default arm', band: 'hard/medium at least 1.5; medium/easy at least 1.2', note: '' });
   return rows;
 }
 

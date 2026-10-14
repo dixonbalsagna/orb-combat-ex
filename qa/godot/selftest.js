@@ -138,14 +138,14 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const bad = evaluate({ default: Array.from({ length: 40 }, () => jm({ slide: 30, wall: 30, slam: 12, caught: 17, water: 6, brunt: 5, bounce: 0, other: 0 }, { capped: 10, long: 20 })) }), idb = k => bad.find(r => r.id === k);
     assert.strictEqual(idb('5c.mix.halted:').status, 'FAIL'); assert.strictEqual(idb('5c.largest').status, 'FAIL'); assert.strictEqual(idb('5c.capped').status, 'FAIL'); assert.strictEqual(idb('5c.long').status, 'FAIL');
   });
-  await t('exchange endings: the launch share is judged against 25 to 35%; knock-back and continue stay PENDING until exchange_end events give them, then judge 20 to 30 and 40 to 50', async () => {
+  await t('exchange endings: the launch share is judged against 25 to 35%; the knock-back share is retired (reported only), continue stays PENDING until exchange_end events give it, then judges 40 to 50; the separating share waits for C2b', async () => {
     const er = (e, extra = {}) => rec({ exEnds: e, ...extra });
     const only = evaluate({ default: Array.from({ length: 40 }, () => er({ launch: 30, other: 70 })) }), id1 = k => only.find(r => r.id === k);
-    assert.strictEqual(id1('10.end.launch').status, 'PASS'); assert.strictEqual(id1('10.end.knockback').status, 'PENDING'); assert.strictEqual(id1('10.end.continue').status, 'PENDING');
+    assert.strictEqual(id1('10.end.launch').status, 'PASS'); assert.strictEqual(id1('10.end.knockback').status, 'INFO'); assert.strictEqual(id1('10.end.continue').status, 'PENDING');   // the knock-back share is retired (sixth round): reported only
     const hi = evaluate({ default: Array.from({ length: 40 }, () => er({ launch: 60, other: 40 })) });
     assert.strictEqual(hi.find(r => r.id === '10.end.launch').status, 'FAIL');
     const full = evaluate({ default: Array.from({ length: 40 }, () => er({ launch: 30, knockback: 25, continue: 45 })) }), id2 = k => full.find(r => r.id === k);
-    assert.strictEqual(id2('10.end.launch').status, 'PASS'); assert.strictEqual(id2('10.end.knockback').status, 'PASS'); assert.strictEqual(id2('10.end.continue').status, 'PASS');
+    assert.strictEqual(id2('10.end.launch').status, 'PASS'); assert.strictEqual(id2('10.end.knockback').status, 'INFO'); assert.strictEqual(id2('10.end.continue').status, 'PASS'); assert.strictEqual(id2('10.end.separating').status, 'PENDING');   // waits for C2b
   });
   await t('zip rows: PENDING without zip records; a good set judges clean 35 to 55, countered, caught, ki share, price, travel, exits, no brawl without a catch; a bad set fails the hard tests', async () => {
     const none = evaluate({ default: [rec()] });
@@ -256,13 +256,18 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     })), b = k => bad.find(r => r.id === k);
     for (const k of ['flurry.yb', 'route.every.medium', 'give.lat.b-free', 'give.out.b', 'energy.bolt', 'energy.flash', 'energy.blast']) assert.strictEqual(b(k).status, 'FAIL', k + ' ' + b(k).value);
   });
-  await t('perfect blocks a minute: easy 0.5 to 2, hard 2 to 5.5 from the level runs; the per-exchange row is reported only', async () => {
+  await t('perfect blocks a minute: easy 0.5 to 2.5, hard 2 to 6.5, and the order hard 1.5 x medium, medium 1.2 x easy', async () => {
     const { levelRows } = require('./bands');
     const mk = pb => Array.from({ length: 10 }, () => rec({ koAt: 300, melee: { 'TRADE BLOWS': 20 }, cues: { perfect_block: pb }, brawl: { blows: { light: 500 } } }));
     const rows = levelRows({ easy: mk(15), hard: mk(15) }), id = k => rows.find(r => r.id === k);
-    assert.strictEqual(id('7.pb.perMin.easy').status, 'FAIL');   // 150 over 50 minutes: 3 a minute is over easy's 2
-    assert.strictEqual(id('7.pb.perMin.hard').status, 'PASS');   // and inside hard's 2 to 5.5
+    assert.strictEqual(id('7.pb.perMin.easy').status, 'FAIL');   // 150 over 50 minutes: 3 a minute is over easy's 2.5
+    assert.strictEqual(id('7.pb.perMin.hard').status, 'PASS');   // and inside hard's 2 to 6.5
     assert.strictEqual(id('7.pb.easy').status, 'INFO');
+    const ord = (e, m, h) => levelRows({ easy: mk(e), hard: mk(h) }, mk(m)).find(r => r.id === '7.pb.order').status;
+    assert.strictEqual(ord(10, 15, 25), 'PASS');    // 2.0, 3.0, 5.0 a minute: 1.5 and 1.67
+    assert.strictEqual(ord(10, 15, 20), 'FAIL');    // hard 4.0 is under 1.5 x 3.0
+    assert.strictEqual(ord(13, 15, 25), 'FAIL');    // medium 3.0 is under 1.2 x 2.6
+    assert.strictEqual(levelRows({ easy: mk(10), hard: mk(25) }).find(r => r.id === '7.pb.order').status, 'PENDING');
   });
   console.log(`godot qa selftest: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);

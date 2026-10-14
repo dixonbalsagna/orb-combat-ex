@@ -60,7 +60,7 @@ async function main() {
       try { const feel = require('./godot/feel'); rows.push(...feel.feelRows(await feel.runFeel({ matches: FEEL, base: BASE }), FEEL)); } catch (e) { console.log('feel probe skipped: ' + String(e.message).split(String.fromCharCode(10))[0]); }
     }
     if (LEVELRUNS > 0 && !load) {
-      try { const { levelRows } = require('./godot/bands'); const byLevel = {}; for (const lv of ['easy', 'hard']) byLevel[lv] = await runRecords({ arm: 'default', base: BASE, count: LEVELRUNS, jobs: JOBS, capSec: CAP, level: lv }); rows.push(...levelRows(byLevel)); } catch (e) { console.log('level runs skipped: ' + String(e.message).split(String.fromCharCode(10))[0]); }
+      try { const { levelRows } = require('./godot/bands'); const byLevel = {}; for (const lv of ['easy', 'hard']) byLevel[lv] = await runRecords({ arm: 'default', base: BASE, count: LEVELRUNS, jobs: JOBS, capSec: CAP, level: lv }); rows.push(...levelRows(byLevel, A.default)); } catch (e) { console.log('level runs skipped: ' + String(e.message).split(String.fromCharCode(10))[0]); }
     }
     if (MASHER > 0 && !load) {
       try { const m = require('./godot/masher'); rows.push(...m.masherRows(await m.runMasher({ n: MASHER, base: BASE, jobs: JOBS }))); } catch (e) { console.log('masher skipped: ' + String(e.message).split(String.fromCharCode(10))[0]); }
