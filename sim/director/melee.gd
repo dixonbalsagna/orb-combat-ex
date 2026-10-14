@@ -341,6 +341,8 @@ static func _breakChapter(S: SimState, ex, a, d) -> void:
 	var all: bool = not DirData.contact().is_empty()
 	for b in ex.beats:
 		if not b.done and (all or b.op == "launch" or b.op == "window"):
+			if b.op == "strike" and b.args != null and bool(b.args.get("double", false)):
+				continue   # the other blow of a double hit lands on this tick too, whatever this one broke (DirBrawl.contact)
 			b.done = true
 	ex.ext = null
 	DirExchange.schedule(ex, ex.t + BREAK_LAUNCH_AT, "breakLaunch", {"w": "A" if a == ex.A else "D", "force": BREAK_FORCE})

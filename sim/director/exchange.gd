@@ -44,11 +44,17 @@ static func requestAttack(S: SimState, A, kind: String) -> void:
 	if DirBeam.inClash(S, A):
 		return
 	var big: bool = DirBrawl.isB(A, kind)   # B with no stance held is the heavy (brawl-second-pass.md section 2)
-	DirAlchemy.log(S, A, SimAct.HEAVY if big else KIND.find(kind), A.act.mode, big)   # the press log
+	if not DirBrawl.holding:
+		DirAlchemy.log(S, A, SimAct.HEAVY if big else KIND.find(kind), A.act.mode, big)   # the press log (a hold's own press is the director's, and not in it)
 	if DirBrawl.takes(S, A, kind):
 		return   # a brawl is on and he is in it: the press is a blow on his own line, never a request
+	if not DirBrawl.holding:
+		DirBrawl.pressedOut(S, A, kind)   # an X that stays down is a hold; any other press ends one
 	if DirZip.takes(S, A, kind):
 		return   # a zip: its start with LT held in the mid band, a zipper's own press, or his rival's answer where he stands
+	if DirBrawl.moveLocked(S, A) and (kind != "sig" or big) and A.act.mode != 1 and DirBands.band(A, SimRoster.opp(S, A)) != DirBands.CLOSE:
+		DirBrawl.moveRefused(S, A, kind)
+		return   # the first move is the rival's (the fourth round): sent by his blow, he can't start an approach yet. He can shoot, and strike in reach
 	if big:
 		# Out of reach B is the heavy's lunge: it travels as today's heavy lunge does, and it arrives as the heavy.
 		DirBrawl.noteBig(A, S.tick)
@@ -578,6 +584,8 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	if S.dirS.cool > 0.0:
 		S.dirS.cool -= dt
 	DirBands.tick(S)   # the approach before an exchange: it counts down, and the exchange starts at its end
+	DirBrawl.sentTick(S)   # the first move after a launch or a knock-back is the rival's
+	DirBrawl.holdTick(S)   # a held X that outlives its brawl presses again, as a tap does (burst.holdCarries)
 	DirZip.tick(S)   # a zip's phases: the tell, the way in, the ticks in reach, the way out
 	DirAlchemy.tick(S)   # the flow count lapses
 	DirBlast.tick(S)   # blasts winding up leave; the AI weighs a perfect block against a shot about to arrive

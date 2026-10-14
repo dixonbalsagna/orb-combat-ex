@@ -1725,6 +1725,11 @@
       "minimum": -1,
       "description": "The AI digs in only while the match has had fewer double hits than this (-1: no bound)."
     },
+    "digInAfterS": {
+      "type": "number",
+      "minimum": 0,
+      "description": "An AI that digs in during a match does not in its first seconds: this many."
+    },
     "digInRestS": {
       "type": "number",
       "minimum": 0,

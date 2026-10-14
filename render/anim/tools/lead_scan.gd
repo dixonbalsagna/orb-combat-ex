@@ -3,7 +3,7 @@ extends SceneTree
 ## leading shoulder) leading, never his feet, unless he was hit and is tumbling. Seeded AI matches, every fighter-frame of the finished solve; the body's axis
 ## (pelvis to head centre: the spine's line) is turned the way the pivot turns it on screen (the sim's f.rot, the facing mirror) and set against the velocity.
 ##   a frame is "feet first" when his speed is over --speed (default 500 units/s) and the axis points against the velocity (axis . velocity < -cos 50 deg:
-##   the feet on the leading side), and he is not falling steeply (a landing, upright, is natural) and not tumbling: a launched fighter whose |spin| is over --tumble (default 3 rad/s) is in a tumble and is allowed.
+##   the feet on the leading side), and he is not falling steeply (a landing, upright, is natural) and not tumbling: a fighter (launched, or locked and thrown) whose |spin| is over --tumble (default 3 rad/s) is in a tumble and is allowed.
 ##   godot --headless --path . -s res://render/anim/tools/lead_scan.gd -- [--seeds=4,12345,7,99,5,6,8,9] [--ticks=3000] [--speed=500] [--tumble=3]
 ##       [--json=out.json] [--strict [--max=N]] [--examples=14]
 ## Exit 1 with --strict when more than N frames (default 0) are feet first. The shipped budget is --max=40: the first two or three frames of a knockback, before the
@@ -100,7 +100,7 @@ func _run() -> void:
 					continue   # a steep fall feet first is a landing, upright: not laid out along the flight line
 				if not (f.state == "launched" and f.slide <= 0.0) and absf(ax.y) > 0.64:
 					continue   # on his feet or driven back in an exchange and tilted under 50 degrees from upright: leaning, not laid out
-				var tumbling: bool = f.state == "launched" and absf(f.spin) > tumble_min
+				var tumbling: bool = absf(f.spin) > tumble_min   # the sim spins the body (a launched one, or a locked fighter thrown on a bounce): a tumble in any state
 				if tumbling:
 					allowed += 1
 					continue

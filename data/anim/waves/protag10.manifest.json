@@ -8,7 +8,7 @@
    "weight": "heavy",
    "target": "chest",
    "limb": "hand_r",
-   "limb2": "hand_l",
+   "limb2": null,
    "offset": 50,
    "reach": 92,
    "band": "mid",
@@ -19,7 +19,7 @@
    },
    "ground": "ok",
    "uses": {
-    "arms": 2
+    "arms": 1
    },
    "from": null,
    "legal": [

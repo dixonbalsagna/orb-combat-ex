@@ -458,6 +458,9 @@ func _lead_layer(S: SimState, f, dt: float) -> void:
 	var aim: float = 0.0
 	if f.state == "launched" or f.state == "dropped":
 		var v := Vector2(f.vx, f.vy)
+		var vmv: Vector2 = _lead_measure(S, f)   # a knockback carries him by position and leaves f.vx small: the motion he has is what he is turned along
+		if vmv.length() > v.length() * 1.5:
+			v = vmv
 		var sp: float = v.length()
 		var head_first: float = atan2(-v.x, v.y)   # the spine along the velocity: (-sin a, cos a) = v
 		if f.slide > 0.0:

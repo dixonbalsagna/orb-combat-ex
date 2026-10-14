@@ -17,7 +17,8 @@ static func jor(v: float, d: float) -> float:
 ## Returns the region the damage wore, or -1.
 ## form: what kind of blow it was, for the mood (brawl, skill, or empty). block: what was blocked, for a guard hit's wear
 ## (SimWounds.BLOCK_HEAVY and the rest). named: the region a landed blow names (0 to 3), or -1 to draw it by the family.
-static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: String = "impact", col: String = "", number: bool = false, form: String = "", block: int = 0, named: int = -1) -> int:
+## weight: the blow's weight for the event (light, medium, heavy), or empty.
+static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: String = "impact", col: String = "", number: bool = false, form: String = "", block: int = 0, named: int = -1, weight: String = "") -> int:
 	# Since S2 hp is a readout only (the HUD bar): it floors at 0, and wounds and finishers decide the match.
 	f.hp = f.hp - amt if SimWounds.HP_ENDS_MATCH else SimMathx.jmax(0.0, f.hp - amt)
 	f.hurtT = S.T
@@ -26,7 +27,7 @@ static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: S
 	var region: int = -1
 	if amt > 0.0:
 		region = named if (named >= 0 and named < 4 and fam != "guard") else SimWounds.pickRegion(S, f, fam)
-	SimFx.damage(S, f, by, amt, SimWounds.REGIONS[region] if region >= 0 else "", kind, col, number, form)
+	SimFx.damage(S, f, by, amt, SimWounds.REGIONS[region] if region >= 0 else "", kind, col, number, form, weight)
 	if region >= 0:
 		if fam == "guard":
 			SimWounds.addGuardWear(S, f, amt, block)   # by what was blocked: a heavy blow, a light one, a bolt or a heavy shot
@@ -108,7 +109,9 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	# A blow may name where it lands (o.region: head, core, arms or legs). A landed blow then wears that region, with no
 	# draw; a blocked blow ignores it, and the block's rule decides.
 	var named: int = SimWounds.REGIONS.find(String(o.get("region", ""))) if fam != "guard" else -1
-	var region: int = hurt(S, D, dd, A, fam, kind, "#ffd45a" if o.get("ignoreStance", false) else "#ffffff", true, form, block, named)
+	# The blow's weight, for the event: the exchange's kind, kept when the blow is guarded (the event's kind is then guard).
+	var weight: String = ex.kind if (ex != null and (ex.kind == "light" or ex.kind == "medium" or ex.kind == "heavy")) else ""
+	var region: int = hurt(S, D, dd, A, fam, kind, "#ffd45a" if o.get("ignoreStance", false) else "#ffffff", true, form, block, named, weight)
 	if kind == "heavy" and dd > 0.0:
 		SimWounds.stagger(S, D)
 	SimWounds.noteBlow(S, ex, A, D, region, kind, o)

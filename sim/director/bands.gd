@@ -190,6 +190,8 @@ static func farPressNow(S: SimState, A, weight: int, entry: int) -> bool:
 	A.state = "free"
 	if taunting(D):
 		meet(S, A, D, weight, entry, S.tick)
+	elif DirBrawl.pursues(S, A, D):
+		begin(S, A, D, weight, entry, S.tick)   # the first move is his: his press from afar flies in, where a tap would open a taunt
 	else:
 		farPress(S, A, D, weight, entry, S.tick)
 	return true

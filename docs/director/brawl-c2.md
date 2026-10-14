@@ -302,3 +302,194 @@ The other arms read medians of 422, 369 and 371 s, and 10th percentiles of 305, 
 **The hard AI's perfect blocks** read 5.82 a minute against a band of 2 to 5.5, and 5.61 with its brawl `perfectMul` at 0.45. One step doesn't reach the band, so it stays at 0.5.
 
 **The second breath's wait costs two rows.** Taking each length lever back alone, the blast script reads 42 of 60 without the ladder's rates, 37 without the wear, and 30 with the wait back at 240. So it is the wait that lifts the blast script, as it lifts the wear given back. The blast's price is not its lever here: at 12 ki it reads 40 of 60, and the script wins on its bolts. With the wait at 240 the 10th percentile reads about 287 s.
+
+## 14. The nine cells, pass 1 (2026-10-12, scratch copy of main 68c1bbbb)
+
+Game Design's order (`docs/design/brawl-second-pass.md` section 15, pass 1): the held X's floor pace, the medium at 1 ki, `wearPerDamage` 240 with the second breath's wait back at 240, and the readings. Main has not changed under `sim/`, `data/`, `tools/` or `qa/` up to c6f58415.
+
+**A held X, as built.**
+- **The hold is one state.** An X press whose button stays down is a hold. Its burst comes first, as before. After the burst's last blow, or after a stagger, it goes on at the floor pace: one blow every `burst.floorGap` ticks, each through a tap's own path. A reel carries it, as it carries a mashed press. Letting go ends it, and so does any other press.
+- **A floor blow** is worth `burst.rate` for each tick of its gap (0.07 against a mash's 0.10), adds a full point to his run, and reels as a tap does. It is not in his press log, and it has no `press_ack`. The blow carries `floor` in its arguments.
+- **A new burst needs a new press.** After the burst's last blow he is no longer open for `burst.openTicks`: the floor pace follows it. With `burst.floorGap` at 0 the old rule plays.
+- **The AI is untouched.** It lets go 2 ticks after its burst's last blow, before a floor blow is due, and it never carries a hold.
+
+**Two things threw the hold away, and both are closed.**
+1. **A stagger takes a fighter's buttons.** The core drops his held levels while he is staggered, and on the tick a stagger ends that tick's were dropped before the director sees it over. So the hold read "let go" at every stagger: 27 to 32 times a match. This is what "any stagger threw the hold away" was. Now X is not read while he is staggered, and it counts as let go only when it has read up on two live ticks running (decision 22).
+2. **Nothing pressed again when a brawl ended.** A brawl ends about 17 times a match: a launch, a knock-back, a trade thrown apart, a perfect block's turn. With X still down his fighter then stood still. `burst.holdCarries` (decision 23) lets the hold outlive its brawl: a brawl that starts with X already down goes on at the floor pace, and out of reach a free fighter's hold presses as a tap does, `floorGap` apart, so it closes the gap. The blow it arrives with is the floor's. With the key off the hold ends with its brawl, as first ruled.
+
+**What wins a match is the close, not the damage.** A KO comes only from a decisive win on the brink, and in a brawl that is a close or a launch. The Y masher deals 9,026 a match against 9,326 and wins 3 of 60: he closes 1.5 times a match, and the AI closes on him 37 times and launches him 9.3 times. The holder's rows read the same way: his pace decides how often he closes, and his worth moves little.
+
+**The holder, read.** One script against the medium AI, forms taken as they come. "As ruled" is the hold that ends with its brawl, read with a script that presses again after his fighter has stood idle for 30 ticks (a hold that never presses again deals 15 damage a minute). "Carries" is X held down for the whole match.
+
+| The hold | Pace, worth a tick | Wins | Damage a minute, dealt and taken | Closes a match |
+| :--- | :--- | ---: | :--- | ---: |
+| As ruled | 10, 0.07 | 0 of 20 | 1,650 and 2,296 | 11 |
+| As ruled | 8, 0.07 | 0 of 20 | 1,587 and 2,220 | 25 |
+| As ruled | 10, 0.10 | 0 of 40 | 2,190 and 2,311 | 10 |
+| As ruled | 8, 0.10 | 0 of 40 | 2,181 and 2,253 | 22 |
+| As ruled | 10, 0.12 | 1 of 40 | 2,603 and 2,299 | 10 |
+| Carries | 10, 0.07 | 0 of 20 | 1,687 and 2,327 | 11 |
+| Carries | 10, 0.10 | 1 of 40 | 2,345 and 2,317 | 11 |
+| **Carries** | **8, 0.07** | **7 of 120** | 1,680 and 2,225 | 27 |
+| Carries | 8, 0.085 | 1 of 40 | 1,974 and 2,211 | 26 |
+| Carries | 8, 0.093 | 6 of 40 | 2,210 and 2,200 | 26 |
+| Carries | 8, 0.10 | 8 of 40 | 2,384 and 2,206 | 27 |
+| The X masher, on the same probe | 8, 0.10 | 17 of 80 | 2,387 and 2,150 | 22 |
+
+- **As ruled, no pace and no worth wins a match.** The hold that ends with its brawl never starts the next one well: his press from afar is a held press, which is a charge, and it arrives as a set piece and not as a brawl.
+- **The ruled lever works once the hold carries.** At 8 ticks he closes as often as a masher does.
+- **At the ruled worth he sits under his band:** 7 of 120 on my probe, and 3 of 60 on QA's holder with `hold=100000`. At a mash's worth he reads as the masher does on the same probe.
+- **QA's holder as it stands (hold 60, rest 8) can't read this row.** The floor pace begins at tick 66 of a hold.
+
+**The data, first.** These reads were taken with `burst.floorGap` 8, `burst.holdCarries` true and the worth at `burst.rate` 0.07 where the table says so. Game Design has since ruled on all three (section 15): the pace at 8, no carry by default, and the worth at 0.085.
+
+**The other levers of the pass.**
+
+| Lever | From, to | What it read | Kept |
+| :--- | :--- | :--- | :--- |
+| `medium.ki` | 2, 1 | The Y masher 3 of 60, as before | Yes, as ruled. **It moves nothing:** ki was not his limit |
+| `wearPerDamage`, with `fade.breathAfterTicks` | 255 and 150, to 240 and 240 | On 200 matches: median 432 to 442 s; 10th percentile 313 to 326 s; first brink 342 to 349 s. The wear the second breath gives back 44.9% to 23.0% | Yes |
+| The AI's `perfectVsHeavy` at medium | 0.2 | The B masher reads 19 of 60 | Left, as ruled: he is in his band |
+
+**The build, as measured.** QA's scripts and the default arm on 200 matches.
+
+| Row | Main | Pass 1 | Band |
+| :--- | :--- | :--- | :--- |
+| Match median | 432 s | 442 s | 360 to 480 s |
+| 10th percentile | 313 s | 326 s | 300 s or more |
+| First brink; brink to KO | 342 s; 69 s | 349 s; 69 s | 270 to 420 s; 45 to 90 s |
+| Limb breaks a match; the arms' share | 0.29; 48% | 0.43; 45% | 0.3 to 0.5; 35 to 65% |
+| Calm; Frenzied; Frenzied in act 4 | 32%; 11%; 17.5% | 32%; 11.5%; 19.8% | 20 to 40%; 5 to 20%; 15% or more |
+| Acts 2, 3 and 4 start at | 111, 193, 302 s | 111, 203, 310 s | 90 to 150, 150 to 240, 270 to 345 s |
+| Act 4 before the first brink | 63% | 71%. **Under** | 80% or more |
+| The wear the second breath gives back | 44.9% | 23.0% | At most 25% |
+| Launches a match, the AI against itself | 14.3 | 13.1 | 6 to 12; 14 if the length and the collateral hold, and they do |
+| Civilians lost; front-row structures lost |  | 20.4%; 36.4% | 12 to 30%; 25 to 50% |
+| Perfect blocks a minute at medium |  | 3.07 | 1 to 4 |
+| **X held:** QA's holder with X down for good | 0 of 40 | 3 of 60. **Under** | 10 to 35% |
+| X mashed | 73 of 200 | 86 of 200 | 35 to 50% |
+| Y mashed | 3 of 60 | 3 of 60. **Under** | 20 to 50% |
+| B mashed | 20 of 60 | 19 of 60 | 20 to 50% |
+
+**A light on a medium held past its wind-up gave him a reel that never ended** (found by reading, and closed here). The reel was counted from his blow's landing tick, and a blow that waits for its button has none yet. So a player who held Y for 12 to 16 ticks and took a light in that time threw nothing more in that brawl. It is counted from the tick the light lands. **Proved by a scripted case,** `sim/director/tools/brawl_cases.gd` (new, two scripted players and no AI): on main at 8e2ee750 it fails on seed 1 at tick 77, where his reel has 1,048,577 live ticks to run; on the chain it passes, and his next X puts a blow on its way.
+
+**A double hit lands on both, whatever the first blow breaks** (QA's hard test; it failed once in 7 on this build's default arm, on seed 188, and it could have on main). The first of the two blows broke a region, the break's chapter dropped every pending beat, the second blow with them, and the brawl handed over before it could land. With limb breaks at 0.43 a match that is no longer rare. Now the chapter keeps a double hit's blow that is still to land (`DirMelee._breakChapter`), and the brawl hands over to the break when both have landed. On seed 188 both now take their damage on the landing tick, and the break plays.
+
+**The blast as an ender is marked.** The `energy_land` cue of a blast that lands as a string's ender carries `amount` 1; its own knock-back follows on that tick. Any other landing carries 0.
+
+**Decisions** (the numbering runs on from section 8).
+22. The hold's button is read with a debounce of two live ticks, and never while he is staggered. A real release is seen one tick late, and nothing is thrown on that tick.
+23. `burst.holdCarries`: a held X outlives its brawl. It is a player's only: the AI's far charge holds X while its approach lasts, and that is no held X.
+24. Any X press that stays down is a hold, and not only one whose burst ran. So a press whose own throw lapsed in a long reel still picks up at the floor pace.
+25. A floor blow kept behind a busy line is thrown as one when the line frees (the held press's bit 32), and its lapse sends no cue.
+26. The burst's `openTicks` apply only with the floor pace off.
+27. A double hit's two blows both land before a break's chapter takes the exchange.
+
+**New state.** Three integers a fighter: `FLOOR` (0 none, 1 an X press still down, 2 at the floor pace), `FLOOR_AT` and `FLOOR_T`. Their count is in the gameplay hash, so every golden moves.
+
+**New keys,** for Tools: `brawl.burst.floorGap` (an integer, 0 or more) and `brawl.burst.holdCarries` (true or false).
+
+## 15. Pass 1 as Game Design ruled it (the fifth round), the recipes hook and the fourth round: one chain (2026-10-13, built on main 91b3722f)
+
+Everything in sections 14 to 17 is one chain with one golden. It is built in scratch from main by the scripts named in each section, and parked together.
+
+**The fifth round's rulings on pass 1** (`docs/design/brawl-second-pass.md` section 16, "The fifth round"), as data.
+
+| Ruling | Key | From, to |
+| :--- | :--- | :--- |
+| The hold waits a stagger out | (code, section 14) | |
+| It does not carry out of reach by default | `burst.holdCarries` | false. The switch stays for Controls' hold-to-flurry setting |
+| The pace | `burst.floorGap` | 8 |
+| The worth of the whole held flurry | `burst.rate` | 0.07, 0.085 |
+| A landed medium on the run | `flurry.runBy.medium` | 2, 3 |
+| The medium AI's perfect block against a heavy it sees | `perfectVsHeavy` | 0.2, 0.15 |
+| The hard AI's perfect blocks | `perfectMul`; `perfectVsHeavy` | 0.5, 0.45; 0.4, 0.3 |
+| The ladder's two rates (granted lines) | `takenPerDamage`, `dealtPerDamage` | 0.0056, 0.006; 0.0034, 0.0037 |
+| The wear, with room in the 10th percentile (granted lines) | `wearPerDamage`; `fade.breathAfterTicks` | 255, as on main; 150, 240 |
+
+**As measured on the chain.**
+
+| Row | Reads | Band |
+| :--- | :--- | :--- |
+| Match median; 10th percentile (the default arm, 200 matches) | 440 s; 324 s | 360 to 480 s; 300 s or more |
+| First brink; brink to KO | 347 s; 71 s | 270 to 420 s; 45 to 90 s |
+| Limb breaks a match; the arms' share | 0.31; 48% | 0.3 to 0.5; 35 to 65% |
+| Acts 2, 3 and 4 start at | 106, 183, 283 s | 90 to 150, 150 to 240, 270 to 345 s |
+| Act 4 before the first brink | 90.5% | 80% or more |
+| The wear the second breath gives back | 23.2% | At most 25% |
+| Launches a match; people lost; front-row structures lost | 12.8; 21.3%; 38.5% | 6 to 12, or 14 while length and collateral hold; 12 to 30%; 25 to 50% |
+| A damaging strike from beyond 68 units | 0 of 416,670 | None |
+| X mashed | 85 of 200 | 35 to 50% |
+| Y mashed | 22 of 60 | 20 to 50% |
+| B mashed | 6 of 60. **Under** | 20 to 50% |
+| X held: a holder who lets go and holds again when no hold is running (my probe) | 3 of 120, where that probe's masher reads 14 of 80. **Under** | A third to two thirds of the same probe's masher |
+| X held: QA's holder with X down for good | 0 of 60. The script has to let go and hold again | 10 to 35% |
+| Perfect blocks a minute at easy, medium and hard | 2.13, 2.86 and 5.93. **Easy and hard over** | 0.5 to 2; 1 to 4; 2 to 5.5 |
+| The harness on the default arm | 96 pass, 14 fail, no hard test among them |  |
+
+**The wear, with the fourth round in.** At 255 the default arm read a median of 366 s and a 10th percentile of 272 s; at 240, 400 s and 296 s; at 225, Game Design's floor, 444 s and 330 s (100 matches each, on f631d1b1). The hammer keeps a brawl going where a resting launcher used to part the two, so damage comes faster. It is parked at 225.
+
+**The chain's gates, in scratch on 91b3722f:** 28 of 30. The golden regenerated, parity, npm's five stages, the loader on 200 matches, the nine input tests, determinism plain and with intros, the seam sweep, the cue check, the mash probe, World's five, the HUD check, the validator and its self-test (6,444 data cases) and the brawl's read check (16 of 16) pass. Two do not, and neither is in the brawl.
+- **Animation's check, two asserts.** Both hold the picture from before the recipes: "his blows were all his own key sets" lists the old pools' prefixes (`pr`, `ph`, `w1`, `rb`), and "by default a mashed Y plays today's heavy row" is the default the hook ends. Animation's to move, in the same chain.
+- **The flash count, one run.** The AI against itself on seed 7, normal mode: the register grants 2.50006 of weight in the 60 ticks from tick 2939, against 2.5: a beam, its cut-in panel, a beam clash and a head flash of 0.0249 that had 0.0249 of room. Clean main reads 2.36 on that seed, because the match is a different match. No brawl effect is among the four. VFX's register and Tools' check, for the edge.
+
+## 16. The recipes hook (Combat's `docs/combat/brawl-hook.md`, its seven parts)
+
+Built by `h1.cjs` to `h4.cjs` on pass 1, with Combat's parked recipes as `data/combat/recipes.json` and Tools' `apply-brawl-recipes.cjs` for the schema.
+
+| Part | As built |
+| :--- | :--- |
+| 1. The cell | `_piece(S, f, st, toward, cell, want)` reads the cell's pool from the recipes' `brawl` block. A press: `launcher`, `blast`, `bolt`, `heavy`, `medium`, `burstFloor`, `lightToward`, `flurry`, `light`. A burst's blow by `burst.slots`: `burstFast`, `burstMid`, `burstSlow`. The reversal: `reversal`. A pressed blow thrown by rule takes its strength's cell. A zip's blow and the double hit's have no cell and keep the pool of their strength. A wound blow that becomes a charge picks again, from `heavyHeld` |
+| 2. The launcher's send | The piece is one whose row sends where the stick's quarter says, through `launcher.aim`. With no stick there is no filter: the launch planner picks its send 14 ticks after the piece is thrown |
+| 3. No style | No blow of the brawl names a style. A zip's and the double hit's still do: their callers set it |
+| 4. The bolt's arm | A bolt that follows a bolt in his string takes the next piece and arm of one of his runs (`reach.runs`), drawn when the mash starts and entered just past the bolt he has thrown. `hand` is `r` for the lead arm and `l` for the free one |
+| 5. The gut rule | The pool is asked for a piece that is not to the gut and is not one of his last two. A blow lost before it lands, and a piece chosen at the press and replaced at a charge, still count: his next is not to the gut if the lost one or the one before it was |
+| 6. The fallback | In order: the cell's pool; one of his last two again, the older first; the pool one strength down (`fallback.lower`). Then the same with the stick's send dropped, since a send nobody has is a wish and not a rule. Legal's rule is never dropped |
+| 7. What moves | `data/combat/recipes.json` is in the data hash and the picks change: the golden is regenerated once, with the chain |
+
+**Not built:** the wrench (C2b); a rise after a rise and the other string rules of part 5 (they need two more integers a fighter and a juggle to matter); the piece following the planner's pick with no stick.
+
+**As measured** (the probe `hookprobe.gd`, six matches each of seven players against the medium AI, 79,552 blows, on the chain as built on 91b3722f).
+
+| Row | Reads |
+| :--- | :--- |
+| A blow with no piece | 0 |
+| A piece outside its cell's pool | 0 (a launcher held into a charge picks again from the heavies: the probe's label, not a fault) |
+| Two blows running to the gut, over the blows that reached their contact | 0 in all seven |
+| An aimed launcher whose piece does not send where its quarter says | 0 of 28 (across 6, down 6, turned 6, up 10) |
+| Bolts thrown running | 6,506 from the runs, a fifth on the free arm, never the same piece twice running |
+| Blows that name a style | Only zips and double hits |
+
+**New state.** Three integers a fighter for the bolts' run (`BOLT_N`, `BOLT_RUN`, `BOLT_I`), and `GUT` keeps two bits.
+
+## 17. The fourth round (`docs/design/brawl-second-pass.md` section 16, "The fourth round")
+
+Built by `f1.cjs` and `f2.cjs`.
+
+| Ruling | As built |
+| :--- | :--- |
+| A resting launcher is the hammer | B in an opening while the launcher rests still always lands, on the launcher's wind-up. It is a full heavy (`heavy.worth`), it staggers him in place as a landed heavy does, and the brawl goes on. Its beat carries `hammer` |
+| The first move | A fighter sent by a launch, a wall slam or a knock-back is marked while he is sent. For `firstMove.lockTicks` (45) after he is free, a light, a medium or B of his from outside the close band is refused (`press_ack`, `refused`). A signature, a blast and a strike in reach pass. A zip's start is not gated |
+| Digging in, once a match | One keyed draw a match at the level's share (0.3, 0.55, 0.75). An AI that digs in does so at the first trade after `digInAfterS` (30), and to `digInMax` (2) double hits at most, `digInRestS` (120) apart. `digInBy` for the rival is 1: the shares are by level |
+
+**As measured.**
+
+| Row | Reads | Bound |
+| :--- | :--- | :--- |
+| The route's player against the same script's masher (QA's pairs, 100 matches each) | 14 against 50. **Out** | Within 3 points, or above |
+| Double hits, a steady presser: a match; matches with one; the most | 1.18; 68%; 2 | 0.5 to 2; 35 to 65% (Game Design expected about 55%, and under 1 a match); 4 |
+| Exchanges that end in a knock-back, of those that reach a launch decision | 21.2% | 25 to 35%. The hammer parts nobody: the band wants a new base |
+| Launches as a share of the exchanges that separate the two | 63.2% | 25 to 40%. The same |
+
+**The route's player still loses, and why.** QA's route taps B only on the ping, which sounds for a ready launcher. So the hammer never plays in that script, and what it measures is the launch alone. After his launch the rival still starts the next exchange 128 times of 172 on my probe, lock or no lock: a tap from the far band opens a taunt and is no approach, so a player who taps has no first move to take. On my own probe, where the route's player and the masher share one press clock, they read 7 of 40 and 5 of 40. QA's route presses 1,902 times a match against its masher's 2,152, and lands 1,204 hits against 1,572.
+
+**A proposal, built and off** (`firstMove.pursue`): while the first move is his, the launcher's press from the far band flies in, where a tap there would open a taunt. With it on, QA's route reads 19 of 100 against the masher's 37, and the rival starts 4.8 exchanges a match where he started 9.1.
+
+**Decisions.**
+28. The hammer takes the launcher's price (5 ki), its wind-up and its cell.
+29. The first move's lock is read from the fighter's state: launched, dropped or down marks him, and the lock runs from the first tick he is free and not staggered.
+30. `digInBy` goes to 1 for the rival, so the levels' shares are what they say.
+
+**New state.** Two integers a fighter (`SENT`, `MOVE_AT`), kept across brawls.
+
+**New keys,** for Tools: `brawl.firstMove` (`lockTicks`, `pursue`) and `digInAfterS`.

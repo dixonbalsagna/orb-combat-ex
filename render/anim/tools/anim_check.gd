@@ -1453,7 +1453,8 @@ func _test_cells() -> void:
 	var forced_was: bool = RenderAnim.strength_styles
 	RenderAnim.strength_styles = false
 	var yd: Dictionary = _cells_run("north", func(t): return (t % 12) < 3, 200, 21)
-	_expect(yd.styles.has("heavy") and not yd.styles.has("medium") and not RenderAnim.hook_seen and yd.cue_windups == 0, "cells: by default a mashed Y plays today's heavy row (%s, hook seen %s, %d wind-ups drawn whole)" % [str(yd.styles.keys()), str(RenderAnim.hook_seen), yd.cue_windups])
+	# with the recipes' hook in (the brawl asks by cell and names no style) the cells' looks are the picture with the switch off: a mashed Y plays the medium row, wound in plain sight, and the hook has been seen
+	_expect(yd.styles.has("medium") and not yd.styles.has("heavy") and RenderAnim.hook_seen and yd.cue_windups > 0, "cells: by default (the hook landed) a mashed Y plays the medium row with the sim's wind-ups drawn whole (%s, hook seen %s, %d wind-ups drawn whole)" % [str(yd.styles.keys()), str(RenderAnim.hook_seen), yd.cue_windups])
 	RenderAnim.strength_styles = true
 	var xh: Dictionary = _cells_run("west", func(t): return true, 140, 21)
 	_expect(xh.styles.has("burst") and float(xh.set) > 0.5, "cells: a held X plays the burst row and its set pose (styles %s, set %.2f)" % [str(xh.styles.keys()), float(xh.set)])
@@ -2512,6 +2513,12 @@ func _test_pair_live() -> void:
 		main.frame(1.0 / 60.0)
 		for i in range(2):
 			RenderAnim.solve(S, S.fighters[i])
+	# "his own": a key set of one of the packs his pick list is built from (the recipes' pieces now include the tier, the energy pieces and the mediums, so the prefixes are read off his own lists)
+	var mine: Array = [{}, {}]
+	for i2 in range(2):
+		var lst: Dictionary = AnimData.pair_lists.get(kp if i2 == 0 else kr, {})
+		for nm2 in lst.get("by_name", {}):
+			mine[i2][String(lst.by_name[nm2]).get_slice(".", 0)] = true
 	var own := [true, true]
 	var n_picks := 0
 	for i in range(2):
@@ -2519,10 +2526,8 @@ func _test_pair_live() -> void:
 		n_picks += int(af0.debug.get("pair_picks", 0))
 		for ksid in af0.debug.get("keysets", {}):
 			var pre: String = String(ksid).get_slice(".", 0)
-			if i == 0 and not (pre == "pr" or pre == "ph"):
-				own[0] = false
-			if i == 1 and not (pre == "w1" or pre == "rb"):
-				own[1] = false
+			if not mine[i].has(pre):
+				own[i] = false
 	_expect(own[0] and own[1] and n_picks > 20, "pair live test: in a 1500-tick match his blows were not all his own key sets (protagonist own %s, rival own %s, %d picks)" % [own[0], own[1], n_picks])
 	# the energy press and the pair's own events, on stub bodies outside an exchange: the match is stepped on until no exchange runs (the poses do not start for a fighter in
 	# one, and a brawl's lunge may be mid-flight at tick 1,500), and if one still runs after 400 ticks it is cleared: this test is of the stub bodies, not of the match

@@ -357,6 +357,930 @@
       "type": "string",
       "minLength": 1
     },
+    "beat": {
+      "type": "object",
+      "description": "Optional. The beat point of a light or a skill strike: ticks after its contact at which the next press is on the beat, by the piece's path (20 to 28); `default` serves a piece with no path.",
+      "properties": {
+        "default": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 28
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 28
+        },
+        "arc_in": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 28
+        },
+        "arc_out": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 28
+        },
+        "rise": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 28
+        },
+        "drop": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 28
+        },
+        "spin": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 28
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "brawl": {
+      "type": "object",
+      "description": "Optional. Which pool each kind of press in the martial arts stance draws on (a pool name every fighter has).",
+      "properties": {
+        "light": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "lightToward": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "flurry": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "skill": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "juggle": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "medium": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "mediumHeld": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "reversal": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "heavy": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "heavyHeld": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "launcher": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "bolt": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "blast": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "burstFast": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "burstMid": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "burstSlow": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "burstFloor": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "lift": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "burst": {
+      "type": "object",
+      "required": [
+        "slots",
+        "pools",
+        "rules",
+        "close",
+        "samples"
+      ],
+      "properties": {
+        "slots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "open",
+              "fast",
+              "mid",
+              "slow"
+            ]
+          },
+          "description": "The class of each blow of a burst, in order: open (the light the press threw), then fast, mid or slow by the gap before it."
+        },
+        "pools": {
+          "type": "object",
+          "required": [
+            "fast",
+            "mid",
+            "slow"
+          ],
+          "properties": {
+            "fast": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+            },
+            "mid": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+            },
+            "slow": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+            }
+          },
+          "description": "The pool each class of gap draws on (a pool every fighter has).",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "description": "What keeps a short gap from reading as a stutter: judged on the pieces table.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "rule"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "rule": {
+                "type": "string",
+                "minLength": 1
+              },
+              "same": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "limb",
+                    "path",
+                    "target",
+                    "tip"
+                  ]
+                },
+                "description": "The parts a run must not share more than `max` times."
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "At most this many in a row sharing the parts."
+              },
+              "once": {
+                "type": "boolean",
+                "description": "No piece twice in one burst."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          }
+        },
+        "close": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "line",
+                "arc_in",
+                "arc_out",
+                "rise",
+                "drop",
+                "spin"
+              ]
+            }
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A fighter to the paths his last blow may take."
+        },
+        "samples": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "propertyNames": {
+              "enum": [
+                "toward",
+                "away",
+                "none",
+                "down",
+                "up"
+              ]
+            },
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "pattern": "^strike\\.[a-z0-9_]+$"
+              }
+            },
+            "description": "A lean of the stick to one whole burst (a piece for each slot)."
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A fighter to one whole burst for each lean of the stick."
+        }
+      },
+      "description": "A held X (docs/design/brawl-second-pass.md section 3): lights that slow on a curve.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "required": [
+        "steps",
+        "lower"
+      ],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "step",
+              "what"
+            ],
+            "properties": {
+              "step": {
+                "enum": [
+                  "pool",
+                  "repeat",
+                  "lower"
+                ]
+              },
+              "what": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "description": "The steps, tried in order."
+        },
+        "lower": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "enum": [
+              "light",
+              "lightToward",
+              "flurry",
+              "skill",
+              "juggle",
+              "medium",
+              "mediumHeld",
+              "reversal",
+              "heavy",
+              "heavyHeld",
+              "launcher",
+              "bolt",
+              "blast",
+              "burstFast",
+              "burstMid",
+              "burstSlow",
+              "burstFloor",
+              "lift"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+          },
+          "description": "A brawl kind to the pool one strength down, for the step `lower`."
+        },
+        "onTheTier": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "heavies",
+              "heavy",
+              "mashedB",
+              "launcher",
+              "bySend"
+            ],
+            "properties": {
+              "heavies": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many heavies the tier has."
+              },
+              "heavy": {
+                "type": "object",
+                "propertyNames": {
+                  "enum": [
+                    "pool",
+                    "repeat",
+                    "lower"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "How many times each step is reached."
+              },
+              "mashedB": {
+                "type": "object",
+                "propertyNames": {
+                  "enum": [
+                    "pool",
+                    "repeat",
+                    "lower"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "How many times each step is reached."
+              },
+              "launcher": {
+                "type": "object",
+                "propertyNames": {
+                  "enum": [
+                    "pool",
+                    "repeat",
+                    "lower"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "How many times each step is reached."
+              },
+              "bySend": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": [
+                    "across",
+                    "up",
+                    "down",
+                    "turned"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "propertyNames": {
+                    "enum": [
+                      "pool",
+                      "repeat",
+                      "lower"
+                    ]
+                  },
+                  "additionalProperties": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "description": "How many times each step is reached."
+                },
+                "description": "A send to how often each step is reached when the stick asks for it."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "How often each step is reached with B on the heavy tier's posed pieces, by fighter (the count is made on the pieces table): heavy (a tapped or mashed B), mashedB (two heavies running), launcher and bySend."
+        }
+      },
+      "description": "What a press throws when its pool has nothing it may throw. No press is silent.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "launcher": {
+      "type": "object",
+      "required": [
+        "aim",
+        "noStick",
+        "bySend",
+        "bySendLower"
+      ],
+      "properties": {
+        "aim": {
+          "type": "object",
+          "required": [
+            "up",
+            "down",
+            "toward",
+            "away"
+          ],
+          "properties": {
+            "up": {
+              "enum": [
+                "across",
+                "up",
+                "down",
+                "turned"
+              ]
+            },
+            "down": {
+              "enum": [
+                "across",
+                "up",
+                "down",
+                "turned"
+              ]
+            },
+            "toward": {
+              "enum": [
+                "across",
+                "up",
+                "down",
+                "turned"
+              ]
+            },
+            "away": {
+              "enum": [
+                "across",
+                "up",
+                "down",
+                "turned"
+              ]
+            }
+          },
+          "description": "The stick's quarter to the send wanted.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "noStick": {
+          "enum": [
+            "planner"
+          ],
+          "description": "With no stick the launch planner's pick decides the send."
+        },
+        "bySend": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "enum": [
+                "across",
+                "up",
+                "down",
+                "turned"
+              ]
+            },
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "pattern": "^strike\\.[a-z0-9_]+$"
+              }
+            },
+            "description": "A send to the strikes that send that way."
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A fighter to his tier's launcher pieces by where each sends (each in his brawl.launcher pool and with that send in its row's sends)."
+        },
+        "bySendLower": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "enum": [
+                "across",
+                "up",
+                "down",
+                "turned"
+              ]
+            },
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "pattern": "^strike\\.[a-z0-9_]+$"
+              }
+            },
+            "description": "A send to the strikes that send that way."
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A fighter to his posed mediums by send, for the fallback step lower (each in his brawl.launcher.lower pool)."
+        }
+      },
+      "description": "A tap of B on a staggered rival: it always lands and launches (docs/design/brawl-second-pass.md section 3); this is the blow that starts it, picked by where it sends.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "reach": {
+      "type": "object",
+      "required": [
+        "rule",
+        "run",
+        "pieces",
+        "runs",
+        "after"
+      ],
+      "properties": {
+        "rule": {
+          "type": "object",
+          "required": [
+            "id",
+            "same",
+            "max"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "same": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "hand",
+                  "release"
+                ]
+              }
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "description": "Legal's e06: a piece counts by its hand and release, and a mash never throws the same twice running.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "run": {
+          "type": "object",
+          "required": [
+            "samePlacePathArm",
+            "pathsIn",
+            "freeArm",
+            "notPeriodic",
+            "proof"
+          ],
+          "properties": {
+            "samePlacePathArm": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Never the same arm, path and place twice running (the most in a row)."
+            },
+            "pathsIn": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": "At least this many different paths in any this many bolts running: [paths, bolts]."
+            },
+            "freeArm": {
+              "type": "object",
+              "required": [
+                "atMostOneIn",
+                "atLeastOneIn",
+                "gapsDiffer"
+              ],
+              "properties": {
+                "atMostOneIn": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "atLeastOneIn": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "gapsDiffer": {
+                  "type": "boolean"
+                }
+              },
+              "description": "The free arm takes a bolt now and then: at most one in this many, at least one in this many, and on no regular count.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "notPeriodic": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "integer",
+                "minimum": 2
+              },
+              "description": "The order never repeats on a fixed count of these."
+            },
+            "proof": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "A run of this many bolts must exist for each fighter."
+            }
+          },
+          "description": "Legal's e09 for a mashed run, as numbers the director can order by.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pieces": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "bolt",
+              "blast"
+            ],
+            "properties": {
+              "bolt": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "set",
+                    "hand",
+                    "release",
+                    "target",
+                    "path"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^strike\\.[a-z0-9_]+$"
+                    },
+                    "set": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                    },
+                    "hand": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "release": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "target": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "path": {
+                      "enum": [
+                        "line",
+                        "arc_in",
+                        "arc_out",
+                        "rise",
+                        "drop",
+                        "spin"
+                      ]
+                    }
+                  },
+                  "description": "A bolt or a blast: the piece, its set, the energy hand, how it is let go, the place it is set on and its path in a string.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                }
+              },
+              "blast": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "set",
+                    "hand",
+                    "release",
+                    "target",
+                    "path"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^strike\\.[a-z0-9_]+$"
+                    },
+                    "set": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                    },
+                    "hand": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "release": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "target": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "path": {
+                      "enum": [
+                        "line",
+                        "arc_in",
+                        "arc_out",
+                        "rise",
+                        "drop",
+                        "spin"
+                      ]
+                    }
+                  },
+                  "description": "A bolt or a blast: the piece, its set, the energy hand, how it is let go, the place it is set on and its path in a string.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                }
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A fighter to his bolt and blast pieces (each a row of pieces with that target and path, and in his reach.bolt or reach.blast pool)."
+        },
+        "runs": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "blows",
+                "arms"
+              ],
+              "properties": {
+                "blows": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^strike\\.[a-z0-9_]+$"
+                  }
+                },
+                "arms": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "enum": [
+                      "lead",
+                      "free"
+                    ]
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A fighter to sample runs of twenty, each a loop (the blows are his reach.bolt pieces; arms is as long as blows)."
+        },
+        "after": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A fighter to, for each run, the runs that may follow it."
+        }
+      },
+      "description": "Energy in reach (docs/design/brawl-second-pass.md section 5b): with RB held in a brawl, X is the point-blank bolt and Y the blast.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
     "pieces": {
       "type": "object",
       "minProperties": 1,
@@ -368,7 +1292,8 @@
         "type": "object",
         "required": [
           "limb",
-          "target"
+          "target",
+          "path"
         ],
         "properties": {
           "limb": {
@@ -387,6 +1312,31 @@
             "type": "string",
             "pattern": "^[a-z][a-z_]*$",
             "description": "A socket (region) of data/anim/sockets.json."
+          },
+          "path": {
+            "enum": [
+              "line",
+              "arc_in",
+              "arc_out",
+              "rise",
+              "drop",
+              "spin"
+            ],
+            "description": "The strike's path: line, arc_in, arc_out, rise, drop or spin. It picks the beat point (the `beat` block)."
+          },
+          "sends": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "across",
+                "up",
+                "down",
+                "turned"
+              ]
+            },
+            "description": "Where the piece can send the rival (across, up, down or turned), for the heavies."
           }
         },
         "additionalProperties": false,

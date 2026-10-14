@@ -21,7 +21,8 @@ export function rows(wave1) {
   const by = Object.fromEntries(wave1.map(r => [r.id.replace('strike.', ''), r]));
   return Object.entries(NEW).map(([n, o]) => {
     const b = by[o.like];
-    return { ...b, id: 'strike.' + n, limb: o.limb, target: o.target, weight: o.weight, look: o.look,
+    // one limb, one arm or one leg: the base row's second limb and `uses` are the double hammer's, which su_drive is not (Legal RL-133: drawn and worded as one arm)
+    return { ...b, id: 'strike.' + n, limb: o.limb, limb2: null, uses: (o.limb === 'foot' || o.limb === 'knee') ? { legs: 1 } : { arms: 1 }, target: o.target, weight: o.weight, look: o.look,
       range: { ...b.range, lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) }, ticks: { load: 28, follow: 8, recover: 14 },
       _estimate: 'PROVISIONAL: range and ticks borrowed from strike.' + o.like + ' (lunge 1.25 times, reach 1.1 times); the load is the 28-tick wind-up of B (docs/design/brawl-second-pass.md) for the look study' };
   });

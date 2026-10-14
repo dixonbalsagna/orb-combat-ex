@@ -64,7 +64,7 @@ const RUN: int = BASE + 12      # his run against the rival, in quarters of a po
 const BLOWS: int = BASE + 13    # blows he has thrown in this brawl
 const HOLD_AT: int = BASE + 14  # the live tick his heavy's press went down; 0 none
 const LAST_AT: int = BASE + 15  # S.tick of his last attack press in this brawl
-const GUT: int = BASE + 16      # 1 when his last blow went to the gut (Combat's sequence rule: no two gut blows running)
+const GUT: int = BASE + 16      # bit 1: his last pick went to the gut (Legal's rule: no two blows running to the gut); bit 2: the pick before it did, for a blow that is lost before it lands
 const AI_NEXT: int = BASE + 17  # the AI: S.tick of its next choice
 const AI_LEFT: int = BASE + 18  # ... the lights left in its string; -1 after a guard: its next choice is an attack
 const AI_CLOSE: int = BASE + 19 # ... 1 while its string still has its closing heavy to weigh
@@ -138,7 +138,15 @@ const MATCH_DBL: int = BASE + 86   # the double hits of this match so far (kept 
 const MATCH_DBL_AT: int = BASE + 87   # the live tick of the last one (kept across brawls): the AI does not dig in within digInRestS of it
 const LAST2: int = BASE + 88      # his last two blows thrown in this brawl, newest in the low 3 bits: 0 none, else the kind plus 1
 const AI_MEDS: int = BASE + 89    # the AI: 1 while its string is mediums (against a rival whose last two blows were heavies)
-const END: int = BASE + 90
+const FLOOR: int = BASE + 90      # his held X: 0 none; 1 an X press still down, its burst to come or running; 2 at the floor pace (its burst is spent)
+const FLOOR_AT: int = BASE + 91   # S.tick of its next press at that pace
+const FLOOR_T: int = BASE + 92    # the live tick X was last seen down, or he was staggered and it could not be read
+const BOLT_N: int = BASE + 93     # point-blank bolts he has thrown running in his string; 0 when his last blow was no bolt
+const BOLT_RUN: int = BASE + 94   # the run his mashed bolts follow, plus 1 (the recipes' reach.runs); 0 none
+const BOLT_I: int = BASE + 95     # ... and his place in it
+const SENT: int = BASE + 96       # 1 while he is sent (launched, knocked back, down) and not yet free (kept across brawls)
+const MOVE_AT: int = BASE + 97    # S.tick from which he may start an approach again: the first move is the rival's until then (kept across brawls)
+const END: int = BASE + 98
 const RUN_U: int = 4   # the run is counted in quarters of a point
 const HEAVY2: int = ((3 + 1) << 3) | (3 + 1)   # LAST2 when both were heavies (BIG)
 const LIGHT: int = 0
@@ -179,6 +187,14 @@ static func _s(f, k: int, v: int) -> void:
 ## The live clock in ticks (it stops in a hit-stop, as the exchange's clock does).
 static func _now(S: SimState) -> int:
 	return int(round(S.T * DirData.TICKS_PER_SEC))
+
+
+## True while a blow of a double hit is still to land.
+static func _doubleLeft(ex) -> bool:
+	for b in ex.beats:
+		if not b.done and b.op == "strike" and b.args != null and bool(b.args.get("double", false)):
+			return true
+	return false
 
 
 ## True when ex is a brawl.
@@ -348,11 +364,22 @@ static func blowAt(S: SimState, ex, f, kind: int, lead: int, dmg: float, extra: 
 		o2["region"] = "head"   # ... and each lands on the head (the core's named region)
 	var args := {"a": role, "d": "D" if role == "A" else "A", "dmg": dmg, "o": o2, "brawl": true, "bk": kind,
 		"strength": STRENGTH[kind], "flurry": false,
-		"style": "heavy" if _wound(kind) else "speed", "grade": "none", "k": k, "n": k, "closing": false, "charge": 0.0,
+		"grade": "none", "k": k, "n": k, "closing": false, "charge": 0.0,
 		"hand": "r" if (k % 2) == 1 else "l", "ender": false}
 	for key in extra:
 		args[key] = extra[key]
-	var piece: String = _piece(S, f, 2 if kind == BIG else (1 if kind == MEDIUM else 0), false)
+	# The piece, by the blow's cell: a burst's blow by the class of the gap before it (the recipes' burst.slots). A zip's
+	# blow and the double hit's have no cell, and keep the pool of their strength. Any other takes its strength's cell.
+	var cell: String = ""
+	if extra.has("burst"):
+		var slots = DirRecipe.rec().get("burst", {}).get("slots", []) if DirRecipe.on() else []
+		var bn: int = int(extra.burst) - 1
+		if slots is Array and bn >= 0 and bn < slots.size():
+			cell = {"fast": "burstFast", "mid": "burstMid", "slow": "burstSlow"}.get(String(slots[bn]), "")
+	elif not bool(extra.get("zip", false)) and not bool(extra.get("double", false)):
+		cell = "heavy" if kind == BIG else ("medium" if kind == MEDIUM else "light")   # a pressed blow thrown by rule: its strength's cell
+	_s(f, BOLT_N, 0)
+	var piece: String = _piece(S, f, 2 if kind == BIG else (1 if kind == MEDIUM else 0), false, cell)
 	if piece != "":
 		args["piece"] = piece
 	DirExchange.schedule(ex, ex.t + (float(lead + (0 if _inTick else 1)) - 0.25) / DirData.TICKS_PER_SEC, "strike", args)
@@ -501,9 +528,9 @@ static func reversed(S: SimState, ex, f, att) -> void:
 	_s(f, STR_K, 1)
 	var args := {"a": role, "d": "D" if role == "A" else "A", "dmg": float(c.medium.worth) * _unit(), "strength": "medium", "flurry": false,
 		"o": {"class": "heavy", "stop": float(int(c.hitstop.medium)) / DirData.TICKS_PER_SEC, "big": true, "kb": float(c.recoil), "ignoreStance": true, "noParry": true, "weighed": true},
-		"brawl": true, "bk": MEDIUM, "style": "heavy", "grade": "none", "k": 1, "n": 1, "closing": false, "charge": 0.0, "hand": "r", "ender": false,
+		"brawl": true, "bk": MEDIUM, "grade": "none", "k": 1, "n": 1, "closing": false, "charge": 0.0, "hand": "r", "ender": false,
 		"sure": true, "reversal": true}
-	var piece: String = _piece(S, f, 1, false)
+	var piece: String = _piece(S, f, 1, false, "reversal")
 	if piece != "":
 		args["piece"] = piece
 	DirExchange.schedule(ex, ex.t + (float(lead + (0 if _inTick else 1)) - 0.25) / DirData.TICKS_PER_SEC, "strike", args)
@@ -544,6 +571,7 @@ static func allows(name: String) -> bool:
 
 static func _strEnd(f) -> void:
 	_s(f, STR_ON, 0)
+	_s(f, BOLT_N, 0)
 	_s(f, ANSWERED, 0)
 	_s(f, STR_K, 0)
 	_s(f, STRING_N, 0)
@@ -629,8 +657,9 @@ static func press(S: SimState, f, st: int, energy: bool = false) -> void:
 	var p: int = S.tick - _waited(f)
 	_s(f, LAST_AT, S.tick)
 	f.lastAtkT = S.T   # (the core marks it for a light and a medium; B's edge is the signature's)
-	_burstEnd(S, f)   # any press replaces a burst
+	_burstEnd(S, f)   # any press replaces a burst, and a hold at its floor pace
 	_s(f, X_LIVE, 0)
+	_hold(S, f, st == 0 and not energy)
 	if st == 0:
 		var last: int = _g(f, LAST_TAP)
 		var gap: int = p - last
@@ -680,13 +709,15 @@ static func press(S: SimState, f, st: int, energy: bool = false) -> void:
 ## wind-up begins when the gap is closed.
 ## The launcher (section 3): a B thrown while the rival's stagger holds its window open winds for
 ## launcher.windupTicks, always lands, and launches.
-static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, already: bool = false, energy: bool = false) -> int:
+static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, already: bool = false, energy: bool = false, floor: bool = false) -> int:
 	var ex = S.dirS.ex
 	var c: Dictionary = cfg()
 	var now: int = _now(S)
 	var o = ex.D if f == ex.A else ex.A
 	var role: String = "A" if f == ex.A else "D"
 	var er: Dictionary = c.energy.reach
+	if st == 0 and not energy and _g(f, FLOOR) == 2:
+		floor = true   # his hold is at its floor pace: the light that starts or goes on with a brawl is the floor's (a real press has set the hold again before it comes here)
 	if energy and (st == 2 or paid):
 		energy = false   # B with the energy family held is the beam, and never comes here
 	if energy:
@@ -757,7 +788,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		if energy:
 			worth = float(er.blast.worth)
 		elif lau:
-			worth = float(c.launcher.worth)
+			worth = float(c.launcher.worth) if launcherRest(S, o) == 0 else float(c.heavy.worth)   # a resting launcher is the hammer: a full heavy on the launcher's wind-up
 		elif st == 1 and inFl:
 			worth = clampf(float(w.rate) * float(gapW), float(w.rate) * float(w.gap[0]), float(w.worth))   # a medium flurry's blow, by its gap
 		stop = int(c.hitstop.heavy if st == 2 else c.hitstop.medium)
@@ -768,9 +799,11 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		lead = int(er.bolt.contactTicks) if energy else int(c.light.contactTicks)
 		length = _g(f, TAP_GAP) if kind == FLURRY else int(c.light.blowTicks)
 		worth = (_flurryMul(_g(f, TAP_GAP)) if kind == FLURRY else 1.0) * (float(er.bolt.worth) if energy else 1.0)
+		if floor:
+			worth = float(c.burst.rate) * float(int(c.burst.floorGap))   # the hold's price: the burst's rate for each tick of its gap, where a mash has the flurry's
 		stop = int(c.hitstop.light)
 		_s(f, HOLD_AT, 0)
-		_s(f, X_LIVE, now if (f.input.lightHeld and rip == 0 and not energy) else 0)   # still down: it may become the burst (a held bolt is its tap)
+		_s(f, X_LIVE, now if (f.input.lightHeld and rip == 0 and not energy and not floor) else 0)   # still down: it may become the burst (a held bolt is its tap; a new burst needs a new press)
 	lead += d
 	_s(f, CLOSE_N, d)
 	_s(f, PRE, 0)
@@ -798,15 +831,19 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	var called: String = ("blast" if st == 1 else "bolt") if energy else String(STRENGTH[kind])
 	var args := {"a": role, "d": "D" if role == "A" else "A", "dmg": dmg, "o": o2, "brawl": true, "bk": kind,
 		"strength": STRENGTH[kind], "flurry": inFl,
-		"style": "heavy" if wound else "speed", "grade": "none", "k": k, "n": k, "closing": _closes(S, ex, f),
+		"grade": "none", "k": k, "n": k, "closing": _closes(S, ex, f),
 		"charge": 0.0, "hand": "r" if (k % 2) == 1 else "l", "ender": false, "wind": held}
+	if floor:
+		args["floor"] = true   # a blow of a held X's floor pace
 	if energy:
 		args["energy"] = called
 	args["close"] = d   # the ticks its closing adds, and the gap it closes, in body heights
 	args["gap"] = snappedf(gapBh, 0.01)
 	if lau:
 		args["launcher"] = true
-		args["ready"] = launcherRest(S, o) == 0   # a launch when one is ready on him; while the launcher rests, the knock-back
+		args["ready"] = launcherRest(S, o) == 0   # a launch when one is ready on him; while the launcher rests, the hammer
+		if not args["ready"]:
+			args["hammer"] = true   # it always lands, it staggers him in place, and the brawl goes on
 		args["aim"] = _quarter(f, o)   # the stick's quarter, read once, at the press
 	if rip > 0 or lau:
 		args["sure"] = true
@@ -820,7 +857,15 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		rp.n = S.tick + lead
 	if quiet(ex) and f == ex.D:
 		DirZip.markAnswer(S, ex, f, kind, p, args)
-	var piece: String = _piece(S, f, st, ((pp >> 2) & 3) == 2)
+	# The piece, by the blow's cell (docs/combat/brawl-hook.md). A bolt that follows a bolt in his string is the next
+	# of his run, with its arm; the launcher's is one that sends where his stick's quarter says.
+	var toward: bool = ((pp >> 2) & 3) == 2
+	var bolt: bool = energy and st == 0
+	var cell: String = "launcher" if lau else (("blast" if st == 1 else "bolt") if energy else ("heavy" if st == 2 else ("medium" if st == 1 else ("burstFloor" if floor else ("lightToward" if toward else ("flurry" if kind == FLURRY else "light"))))))
+	var piece: String = _boltRun(S, f, args) if (bolt and _g(f, BOLT_N) >= 1) else ""
+	if piece == "":
+		piece = _piece(S, f, st, toward, cell, _sendOf(int(args.get("aim", 0))) if lau else "")
+	_s(f, BOLT_N, (_g(f, BOLT_N) + 1) if bolt else 0)
 	if piece != "":
 		args["piece"] = piece
 	# Two light blows that land within tradeTicks of each other are a trade: both land (melee-press-feel.md section 7).
@@ -904,25 +949,98 @@ static func _flurryMul(gap: int) -> float:
 ## The piece for his blow, from Combat's pools, by its strength. Combat's sequence rules that the pieces' data can
 ## say are hard rules here: never one of his last two pieces (DirRecipe.pick, so never three of one running), and no
 ## two blows running to the gut. The repeat rules count the whole string, whatever the button.
-static func _piece(S: SimState, f, st: int, toward: bool) -> String:
+static func _piece(S: SimState, f, st: int, toward: bool, cell: String = "", want: String = "") -> String:
 	if not DirRecipe.on():
 		return ""
 	var pool: String = "power.last" if st == 2 else ("combo.accent" if st == 1 else ("blur.toward" if toward else "blur.base"))
-	var pieces = DirRecipe.rec().get("pieces", {})
+	var named = DirRecipe.rec().get("brawl", {})   # Combat's recipes: the pool each cell draws on
+	if cell != "" and named is Dictionary and named.has(cell):
+		return _cellPiece(S, f, cell, String(named[cell]), want)
+	return _cellPiece(S, f, "", pool, "")   # no cell (a zip's blow, the double hit's), or recipes with no brawl block: the pool of its strength, under the same rules
+
+
+## A cell's piece, by the recipes' fallback (docs/combat/brawl-hook.md parts 5 and 6). The steps, in order: a piece of
+## the cell's pool that is not one of his last two; one of his last two again, the older first; a piece of the pool
+## one strength down (fallback.lower), the same two ways. No two blows running go to the gut, at any step: the pool
+## is asked for one that does not, where six blind tries were made before. want: the send a launcher's piece must
+## have. A send nobody has is the stick's wish and not a rule: it is dropped before a press goes without a piece.
+static func _cellPiece(S: SimState, f, cell: String, pool: String, want: String) -> String:
+	var was: int = _g(f, GUT) & 1
+	var noGut: bool = was == 1
+	var salt: int = _g(f, BLOWS) * 8
+	var lower: String = String(DirRecipe.rec().get("fallback", {}).get("lower", {}).get(cell, ""))
 	var id: String = ""
-	var p1: int = f.act.dirI[DirAlchemy.PIECE_1]
-	var p2: int = f.act.dirI[DirAlchemy.PIECE_2]
-	for salt in range(6):
-		f.act.dirI[DirAlchemy.PIECE_1] = p1
-		f.act.dirI[DirAlchemy.PIECE_2] = p2
-		id = DirRecipe.pick(S, f, pool, _g(f, BLOWS) * 8 + salt)
-		var pc = pieces.get(id) if pieces is Dictionary else null
-		var gut: bool = pc is Dictionary and String(pc.get("target", "")) == "gut"
-		if not (gut and _g(f, GUT) == 1):
-			_s(f, GUT, 1 if gut else 0)
-			return id
-	_s(f, GUT, 0)
+	for w in ([want, ""] if want != "" else [""]):
+		for p in ([pool, lower] if lower != "" else [pool]):
+			id = DirRecipe.pickWhere(S, f, p, salt, noGut, w, false)
+			if id == "":
+				id = DirRecipe.pickWhere(S, f, p, salt, noGut, w, true)
+			if id != "":
+				break
+		if id != "":
+			break
+	if id == "":
+		return ""   # no piece: his sequence stands as it was
+	DirRecipe.took(f, id)
+	_s(f, GUT, (1 if DirRecipe.toGut(id) else 0) | (was << 1))
 	return id
+
+
+## The send a launcher's piece must have for the stick's quarter (the recipes' launcher.aim: up, down, toward as
+## across, away as turned). "" with no stick: the launch planner picks the send then, after the piece is thrown.
+static func _sendOf(quarter: int) -> String:
+	if quarter <= 0 or quarter > 4:
+		return ""
+	var aim = DirRecipe.rec().get("launcher", {}).get("aim", {}) if DirRecipe.on() else {}
+	return String(aim.get(["up", "toward", "down", "away"][quarter - 1], "")) if aim is Dictionary else ""
+
+
+## A bolt that follows a bolt in his string (docs/combat/brawl-hook.md part 4): the next piece of one of his runs,
+## with the arm that throws it, and never the pool's. The run is drawn when the mash starts, and entered just past
+## the bolt he has thrown, so the order Legal passed is kept from the first. "" when the recipes have no runs.
+static func _boltRun(S: SimState, f, args: Dictionary) -> String:
+	var runs = DirRecipe.rec().get("reach", {}).get("runs", {}).get(DirRecipe.poolKey(f)) if DirRecipe.on() else null
+	if not (runs is Array) or runs.is_empty():
+		return ""
+	if _g(f, BOLT_N) == 1 or _g(f, BOLT_RUN) <= 0 or _g(f, BOLT_RUN) > runs.size():
+		var r: int = mini(runs.size() - 1, int(SimRng.keyed(int(S.game.seed), "brawl.boltRun", S.dirS.exN * 4096 + _g(f, BLOWS)) * float(runs.size())))
+		var first: Array = runs[r].blows
+		var i0: int = 0
+		for i in range(first.size()):
+			if (String(first[i]).hash() & 0x7fffffff) == f.act.dirI[DirAlchemy.PIECE_1]:
+				i0 = i + 1
+				break
+		_s(f, BOLT_RUN, r + 1)
+		_s(f, BOLT_I, i0)
+	var row = runs[_g(f, BOLT_RUN) - 1]
+	var blows: Array = row.blows
+	if blows.is_empty():
+		return ""
+	var at: int = _g(f, BOLT_I) % blows.size()
+	_s(f, BOLT_I, (at + 1) % blows.size())
+	var id: String = String(blows[at])
+	var arms = row.get("arms", [])
+	if arms is Array and at < arms.size():
+		args["hand"] = "r" if String(arms[at]) == "lead" else "l"   # lead and free are which arm: Animation mirrors the piece for the free one
+	DirRecipe.took(f, id)
+	_s(f, GUT, (1 if DirRecipe.toGut(id) else 0) | ((_g(f, GUT) & 1) << 1))
+	return id
+
+
+## His wound blow on its way takes a new piece from a cell (a blow that has become a charge: its piece was chosen
+## at the press, before anyone knew the button would stay down).
+static func _repiece(S: SimState, ex, f, st: int, cell: String) -> void:
+	var named = DirRecipe.rec().get("brawl", {}) if DirRecipe.on() else {}
+	if not (named is Dictionary) or not named.has(cell):
+		return
+	var role: String = "A" if f == ex.A else "D"
+	for b in ex.beats:
+		if not b.done and b.op == "strike" and b.args != null and b.args.get("brawl", false) and String(b.args.a) == role:
+			_s(f, GUT, 3 if (_g(f, GUT) & 3) != 0 else 0)   # the piece chosen at the press was wound and not thrown: the new one is not to the gut if it, or the one before it, was
+			var id: String = _piece(S, f, st, false, cell)
+			if id != "":
+				b.args["piece"] = id
+			return
 
 
 # ---------------------------------------------------------------- the run and the trade (melee-press-feel.md section 3)
@@ -1018,6 +1136,8 @@ static func contact(S: SimState, ex, b) -> void:
 				_wEnd(S, f, kind, 3)
 		if energy != "":
 			_eLand(S, ex, f, o, energy, "miss")
+		if bool(a.get("double", false)) and ex.branch == "" and _setPiece(ex):
+			over(S, ex, "break")   # the double hit's other blow broke a region and this one is lost: the break plays
 		return   # he was staggered, or one of them was sent off, before it landed: the blow is lost
 	var special: bool = bool(a.get("double", false)) or bool(a.get("sure", false)) or bool(a.get("zip", false))
 	# The reach, read as it lands. A blow by rule (the double hit's, a sure one, a zip's) keeps the strike's own limit.
@@ -1032,10 +1152,14 @@ static func contact(S: SimState, ex, b) -> void:
 		_miss(S, ex, f, o, kind, wind, energy)
 		return
 	_stepIn(S, ex, f, o, 1)   # he is placed for the contact, and never further than a closing step
-	if not special and absf(SimWrap.sdx(f.x, o.x)) > float(ct.reach):
+	var zipOnly: bool = bool(a.get("zip", false)) and not bool(a.get("sure", false)) and not bool(a.get("double", false))
+	if (not special or zipOnly) and absf(SimWrap.sdx(f.x, o.x)) > float(ct.reach):
 		# Placed, the two still stand beyond the strike's reach: it meets nothing. No damaging strike of a brawl lands
-		# from beyond contact.reach of horizontal distance, whatever its own reach said before the step.
+		# from beyond contact.reach of horizontal distance, whatever its own reach said before the step. A zip's blow
+		# keeps to it too: its exit is then read as for a blow that did not land.
 		_miss(S, ex, f, o, kind, wind, energy, true)
+		if zipOnly and S.dirS.ex == ex and ex.branch == "" and not _setPiece(ex):
+			DirZip.onBlow(S, ex, f, o, a, 0)
 		return
 	if wind:
 		_wEnd(S, f, kind, 1)
@@ -1078,6 +1202,8 @@ static func contact(S: SimState, ex, b) -> void:
 	if bool(a.get("double", false)):
 		# One of the double hit's two blows: no run, no reel, no close. When both have landed they are thrown apart.
 		_s(ex.A, DBL_N, _g(ex.A, DBL_N) + 1)
+		if _g(ex.A, DBL_N) < 2 and _doubleLeft(ex):
+			return   # the other's blow lands on this tick too, whatever this one broke: both are hit
 		if _setPiece(ex):
 			over(S, ex, "break")
 		elif _g(ex.A, DBL_N) >= 2:
@@ -1125,7 +1251,7 @@ static func contact(S: SimState, ex, b) -> void:
 			_eLand(S, ex, f, o, energy, "armour")
 		return   # it met a heavy's armour: its damage, and nothing more (no run, no reel, no close)
 	if energy != "":
-		_eLand(S, ex, f, o, energy, "hit")
+		_eLand(S, ex, f, o, energy, "hit", energy == "blast" and _g(f, RUN) >= RUN_U * int(c.energy.reach.blast.enderRun))
 	# A wound blow ends the wind-up it lands on: a medium's always, a heavy's before its armour holds a medium.
 	if wound and oWinding and _g(o, LINE) != 0:
 		_wEnd(S, o, oKind, 2)
@@ -1182,7 +1308,7 @@ static func contact(S: SimState, ex, b) -> void:
 		return
 	var reel: int = (int(c.energy.reach.blast.reelTicks) if energy == "blast" else int(c.medium.reelTicks)) if kind == MEDIUM else (int(c.burst.reelTicks) if bool(a.get("burst", false)) else (int(c.energy.reach.bolt.reelTicks) if bolt else int(c.flurry.reelTicks)))
 	if oWinding:
-		_s(o, REEL_AT, maxi(_g(o, REEL_AT), _g(o, CONTACT) + reel))   # a light on a winding medium: its reel waits until his blow has landed
+		_s(o, REEL_AT, maxi(_g(o, REEL_AT), (_g(o, CONTACT) if _g(o, LINE) == 1 else now) + reel))   # a light on a winding medium: its reel waits until his blow has landed (one held past its wind-up has no landing tick yet: the reel counts from now)
 	else:
 		_reel(S, o, reel)
 
@@ -1201,6 +1327,8 @@ static func _drop(S: SimState, ex, f) -> void:
 			b.done = true
 	if _g(f, LINE) != 0 and _wound(_g(f, KIND)) and _g(f, HOLD_AT) > 0:
 		_wEnd(S, f, _g(f, KIND), 3)   # his wind-up is lost with it
+	if _g(f, LINE) != 0 and _g(f, GUT) != 0:
+		_s(f, GUT, 3 if (_g(f, GUT) & 3) != 0 else 0)   # a blow lost before it lands: his next is not to the gut if the lost one, or the one before it, was
 	_s(f, LINE, 0)
 	_s(f, HOLD_AT, 0)
 	_s(f, CHG, 0)
@@ -1575,8 +1703,10 @@ static func _miss(S: SimState, ex, f, o, kind: int, wind: bool, energy: String, 
 ## An energy art in reach lands, or doesn't (brawl-second-pass.md section 5b). what: bolt, blast. how: hit, guard,
 ## armour, miss. k is 1 on the one landing in energy.reach.flashEveryTicks that may take the full flash, for both
 ## fighters together; the rest get sparks at the hand.
-static func _eLand(S: SimState, ex, f, o, what: String, how: String) -> void:
+static func _eLand(S: SimState, ex, f, o, what: String, how: String, ender: bool = false) -> void:
 	var e = _ev(S, f, "energy_land", what, how)
+	if ender:
+		e.amount = 1.0   # a blast that lands as a string's ender: its own knock-back follows on this tick
 	e.target = float(S.fighters.find(o))
 	e.n = S.tick
 	e.x = f.input.mx
@@ -1657,8 +1787,18 @@ static func _reset(ex) -> void:
 		var launchedAt: int = f.act.dirI[LAUNCH_AT]
 		var doubles: int = f.act.dirI[MATCH_DBL]
 		var doubleAt: int = f.act.dirI[MATCH_DBL_AT]
+		var hold: int = f.act.dirI[FLOOR] if (carries() and f.ai == null) else 0   # a player's hold that outlives the brawl (burst.holdCarries)
+		var holdAt: int = f.act.dirI[FLOOR_AT]
+		var holdT: int = f.act.dirI[FLOOR_T]
+		var sent: int = f.act.dirI[SENT]
+		var moveAt: int = f.act.dirI[MOVE_AT]
 		for k in range(BASE, END):
 			f.act.dirI[k] = 0
+		f.act.dirI[SENT] = sent
+		f.act.dirI[MOVE_AT] = moveAt
+		f.act.dirI[FLOOR] = hold
+		f.act.dirI[FLOOR_AT] = holdAt if hold != 0 else 0
+		f.act.dirI[FLOOR_T] = holdT if hold != 0 else 0
 		f.act.dirI[LAUNCH_AT] = launchedAt
 		f.act.dirI[MATCH_DBL] = doubles
 		f.act.dirI[MATCH_DBL_AT] = doubleAt
@@ -1992,7 +2132,7 @@ static func afterBlow(S: SimState, ex, b) -> void:
 		return
 	var was: bool = _inTick
 	_inTick = true
-	_throw(S, f, (hp & 7) - 1, _g(f, HELD_AT), false, false, (hp & 8) != 0, (hp & 16) != 0)
+	_throw(S, f, (hp & 7) - 1, _g(f, HELD_AT), false, false, (hp & 8) != 0, (hp & 16) != 0, (hp & 32) != 0)
 	_inTick = was
 
 
@@ -2101,6 +2241,7 @@ static func _windTick(S: SimState, ex, f, kind: int, now: int, up: bool = false)
 			_s(f, CHG, 1)
 			var cs = _ev(S, f, "windup", "charge", "b")
 			cs.n = S.tick + int(ch.fullTicks) - n   # the tick of its flash
+			_repiece(S, ex, f, 2, "heavyHeld")   # it is a charge from here: its piece is the held cell's
 		else:
 			_letGo(S, ex, f, 0, -1.0)   # a medium has no charge yet, and a heavy he can't pay for: it goes by itself, a tap
 
@@ -2145,8 +2286,8 @@ static func _letGo(S: SimState, ex, f, lead: int, charge: float) -> void:
 		return
 
 
-## A heavy landed clean. A tap staggers him in place. The launcher launches him when a launch is ready, and knocks
-## him back while it rests. A charged heavy knocks him back, and at a full charge it launches him. A launch is aimed
+## A heavy landed clean. A tap staggers him in place. The launcher launches him when a launch is ready; while it
+## rests it is the hammer, and staggers him in place. A charged heavy knocks him back, and at a full charge it launches him. A launch is aimed
 ## by the stick's quarter.
 static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 	var c: Dictionary = cfg()
@@ -2155,7 +2296,9 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 		if bool(a.get("ready", false)):
 			_send(S, ex, f, o, int(a.get("aim", 0)), "the launcher", float(c.launcher.flightMul))
 		else:
-			_knock(S, ex, f, o, 0.0, int(a.get("aim", 0)))
+			# The hammer (the fourth round): a resting launcher parts nobody. He staggers in place, as from a landed
+			# heavy, and the brawl goes on: so using the launcher never breaks off a player's own pressure.
+			_stagger(S, ex, f, o, int(c.heavy.staggerTicks), "heavy")
 		return
 	if bool(a.get("charged", false)):
 		if float(a.get("charge", 0.0)) >= 1.0:
@@ -2176,9 +2319,19 @@ static func _burstTick(S: SimState, ex, f, now: int) -> void:
 	if x <= 0:
 		return
 	var n: int = _g(f, BURST_N)
-	if not f.input.lightHeld or f.stunTicks > 0:
+	if f.stunTicks > 0:
+		# A stagger ends the burst. It takes his buttons too (the core drops his held levels while it lasts), so the
+		# hold can't be read here: it waits, and picks up at the floor pace when the stagger ends if X is still down.
 		_burstEnd(S, f)
-		_s(f, X_LIVE, 0)   # he let go: this press can't burst any more
+		_s(f, X_LIVE, 0)
+		if int(cfg().burst.floorGap) > 0:
+			_s(f, FLOOR, 2)
+			_s(f, FLOOR_AT, S.tick)
+			_s(f, FLOOR_T, now)
+		return
+	if not f.input.lightHeld:
+		_burstEnd(S, f)
+		_s(f, X_LIVE, 0)   # he let go: this press can't burst any more (the hold itself ends when X has read up two ticks: _held)
 		return
 	var c: Dictionary = cfg()
 	var bu: Dictionary = c.burst
@@ -2200,9 +2353,147 @@ static func _burstTick(S: SimState, ex, f, now: int) -> void:
 	blowAt(S, ex, f, LIGHT, maxi(1, at - now), worth * _unit(), {"burst": n + 1, "flurry": true})   # burst: the blow's number in it, 2 to 8 (the press's own light was the first)
 	_s(f, BURST_N, n + 1)
 	if n + 1 > lands.size():
-		_s(f, FREE_AT, _g(f, FREE_AT) + int(bu.openTicks))   # after the last he is open
 		_burstEnd(S, f)
 		_s(f, X_LIVE, 0)
+		if int(bu.floorGap) > 0:
+			_s(f, FLOOR, 2)   # X is still down: it goes on at the floor pace, its next blow floorGap after this one
+			_s(f, FLOOR_AT, S.tick + int(bu.floorGap))
+			_s(f, FLOOR_T, now)
+		else:
+			_s(f, FREE_AT, _g(f, FREE_AT) + int(bu.openTicks))   # with no floor pace, after the last he is open
+
+
+## The first move (the fourth round), once a director's tick: a fighter sent by a launch, a wall slam or a knock-back
+## is marked while he is sent, and from the tick he is free again he can't start an approach for firstMove.lockTicks.
+static func sentTick(S: SimState) -> void:
+	if not on():
+		return
+	var lock: int = int(cfg().get("firstMove", {}).get("lockTicks", 0))
+	if lock <= 0:
+		return
+	for f in S.fighters:
+		if f.state == "launched" or f.state == "dropped" or f.state == "down":
+			if _g(f, SENT) == 0:
+				_s(f, SENT, 1)
+		elif _g(f, SENT) == 1 and f.state == "free" and f.stunTicks <= 0:
+			_s(f, SENT, 0)
+			_s(f, MOVE_AT, S.tick + lock)
+
+
+## True while the first move is the rival's: f was sent, and is free for fewer than firstMove.lockTicks.
+static func moveLocked(S: SimState, f) -> bool:
+	return on() and (_g(f, SENT) == 1 or S.tick < _g(f, MOVE_AT))
+
+
+## True while A has the first move on D (firstMove.pursue): D was sent, is free again, and may not yet start an
+## approach. A's press from the far band then flies in.
+static func pursues(S: SimState, A, D) -> bool:
+	return on() and bool(cfg().get("firstMove", {}).get("pursue", false)) and _g(D, SENT) == 0 and S.tick < _g(D, MOVE_AT) and not moveLocked(S, A)
+
+
+## A press of his that would have started an approach while the first move is the rival's: it is spent, and says so.
+static func moveRefused(S: SimState, f, kind: String) -> void:
+	var a = _ev(S, f, "press_ack", "refused", _cell(kind))
+	a.n = _g(f, MOVE_AT)
+
+
+## Whether a held X outlives the brawl it was pressed in (burst.holdCarries).
+static func carries() -> bool:
+	return bool(cfg().get("burst", {}).get("holdCarries", false)) and int(cfg().burst.get("floorGap", 0)) > 0
+
+
+## A press of f's, for his hold. x: it is an X with the button down and no energy family held, so it is a hold from
+## here: its burst first, then the floor pace. Any other press ends the hold he had.
+static func _hold(S: SimState, f, x: bool) -> void:
+	if x and f.input.lightHeld and int(cfg().burst.floorGap) > 0:
+		_s(f, FLOOR, 1)
+		_s(f, FLOOR_AT, S.tick + int(cfg().burst.floorGap))
+		_s(f, FLOOR_T, _now(S))
+	elif _g(f, FLOOR) != 0:
+		_s(f, FLOOR, 0)
+
+
+## An attack press of f's that no brawl took (DirExchange.requestAttack), with burst.holdCarries: an X that stays
+## down is a hold from here, and any other press ends the hold he had. Never the AI's: it holds X while its far
+## charge lasts, and that is no held X.
+static func pressedOut(S: SimState, f, kind: String) -> void:
+	if on() and carries() and f.ai == null:
+		_hold(S, f, kind == "light" and f.act.mode != 1 and not isB(f, kind))
+
+
+## True while holdTick's press is being asked for: it is the hold's, and no press of his (not state: it lives for
+## one call).
+static var holding: bool = false
+
+
+## With burst.holdCarries, once a live tick outside a brawl: a hold whose fighter is free, with no exchange, approach
+## or taunt of his own going, presses as a tap does, floorGap apart. Out of reach that tap is an approach, so a held
+## X closes the gap again after a brawl has ended. The blow it arrives with is the floor's: no new burst.
+static func holdTick(S: SimState) -> void:
+	if not on() or not carries() or S.game.ko != null:
+		return
+	for f in S.fighters:
+		if f.ai != null or _held(S, f) == 0:
+			continue   # the AI carries no hold; no hold, or one whose button can't be read on this tick
+		if S.dirS.ex != null or S.tick < _g(f, FLOOR_AT) or f.state != "free" or f.rush != null or f.act.mode == 1:
+			continue
+		if DirBands.pending(f) or DirBands.taunting(f):
+			continue
+		_s(f, FLOOR, 2)
+		_s(f, FLOOR_AT, S.tick + int(cfg().burst.floorGap))
+		holding = true
+		DirExchange.requestAttack(S, f, "light")
+		holding = false
+
+
+## His hold as it reads on this tick: its state (1 or 2) while X is down, else 0. A stagger takes his buttons: the
+## core drops his held levels while it lasts, and on the tick it ends that tick's were dropped before the director
+## sees the stagger over. So X is not read while he is staggered, and it counts as let go only when it has read up
+## on two live ticks running. Then the hold is over. Safe to call more than once a tick.
+static func _held(S: SimState, f) -> int:
+	var h: int = _g(f, FLOOR)
+	if h == 0:
+		return 0
+	var now: int = _now(S)
+	if f.stunTicks > 0:
+		if _g(f, FLOOR_T) != now:
+			_s(f, FLOOR_T, now)
+		return 0
+	if f.input.lightHeld:
+		if _g(f, FLOOR_T) != now:
+			_s(f, FLOOR_T, now)
+		return h
+	if now - _g(f, FLOOR_T) >= 2:
+		_s(f, FLOOR, 0)   # up two live ticks running: he let go
+	return 0
+
+
+## A held X after its burst (brawl-second-pass.md section 3, re-ruled in 14): it keeps throwing, one blow every
+## burst.floorGap ticks for as long as X stays down. Each is a press through the tap's own path: a reel carries it
+## as it carries a mashed press, and after a stagger the hold picks up again. It is worth the burst's rate for each
+## tick of its gap and adds a full point to his run, as a tap does. Letting go ends it; a new burst needs a new press.
+static func _floorTick(S: SimState, ex, f) -> void:
+	if _held(S, f) == 0:
+		return   # no hold, or one that waits a stagger out
+	var hp: int = _g(f, HELD_P)
+	if S.tick < _g(f, FLOOR_AT) or _g(f, X_LIVE) != 0 or (hp != 0 and (hp & 32) == 0):
+		return   # not due, its burst still to come or running, or a press of his own is waiting
+	var c: Dictionary = cfg()
+	var gap: int = int(c.burst.floorGap)
+	var last: int = _g(f, LAST_TAP)
+	_s(f, FLOOR, 2)
+	_s(f, FLOOR_AT, S.tick + gap)
+	_s(f, LAST_AT, S.tick)
+	f.lastAtkT = S.T
+	_s(f, TAP_GAP, clampi(gap, int(c.flurry.minGap), int(c.flurry.maxGap)))
+	_s(f, LAST_TAP, S.tick)
+	if _g(f, LINE) == 0 and not _wound(_g(f, KIND)):
+		_s(f, FREE_AT, mini(_g(f, FREE_AT), last + _g(f, TAP_GAP)))   # as a tap: the blow before lasts one tap gap
+	if not _free(S, f):
+		_s(f, HELD_P, 1 | 32)   # held as a press is, and thrown as his line frees
+		_s(f, HELD_AT, S.tick)
+		return
+	_throw(S, f, 0, S.tick, false, false, false, false, true)
 
 
 ## His burst is over: he let go, he was staggered, another press replaced it, or its last blow is thrown.
@@ -2322,11 +2613,13 @@ static func tick(S: SimState, ex) -> void:
 		if hp != 0:
 			if S.tick - _g(f, HELD_AT) > int(c.heldPressTicks):
 				_s(f, HELD_P, 0)
-				var a = _ev(S, f, "press_ack", "lapsed", _cellOf((hp & 7) - 1))
-				a.n = _g(f, HELD_AT)
+				if (hp & 32) == 0:   # a blow of the floor pace was no press: it has no ack
+					var a = _ev(S, f, "press_ack", "lapsed", _cellOf((hp & 7) - 1))
+					a.n = _g(f, HELD_AT)
 			elif _free(S, f):
-				_throw(S, f, (hp & 7) - 1, _g(f, HELD_AT), false, false, (hp & 8) != 0, (hp & 16) != 0)
+				_throw(S, f, (hp & 7) - 1, _g(f, HELD_AT), false, false, (hp & 8) != 0, (hp & 16) != 0, (hp & 32) != 0)
 		_burstTick(S, ex, f, now)
+		_floorTick(S, ex, f)
 		# His string is over when nothing of his was thrown or landed for a while.
 		if _g(f, STR_ON) == 1 and _g(f, LINE) == 0 and S.tick - _g(f, LAND_AT) > int(c.stringLapseTicks):
 			_strEnd(f)
@@ -2506,12 +2799,17 @@ static func aiInput(S: SimState, f) -> void:
 			return
 		else:
 			return   # its line is busy: the riposte waits
-	# Digging in (section 7, as re-ruled in 14): decided as a trade starts. At its share the AI matches his pace for
-	# that trade, blow for blow, and holds it until the trade breaks or the double hit lands.
+	# Digging in (section 7, as re-ruled in 14 and in the fourth round): an AI that digs in during this match does so
+	# as a trade starts. It matches his pace for that trade, blow for blow, until the trade breaks or the double hit lands.
 	var t0: int = _g(ex.A, TRADE_T0)
 	if t0 > 0 and _g(ex.A, TRADE_WIN) == 0:
 		if (_g(f, AI_DIG) & m30) != t0:
+			# Drawn once a match (the fourth round): at its level's share this AI digs in during this match, or it doesn't.
+			# A share for each trade served nobody: a steady presser reached the cap in every match.
 			var share: float = float(bl.get("digIn", 0.0)) * float(DirAI.skill().get("digInBy", {}).get(String(f.id), 1.0))
+			share = 1.0 if SimRng.keyed(seed, "brawl.dig.match", slot) < share else 0.0
+			if S.T < float(DirAI.skill().get("digInAfterS", 0.0)):
+				share = 0.0   # not in the match's first seconds
 			# Two AIs never both dig in to one trade (digInBoth): each would match the other, and every such trade would
 			# run level to the double hit. One of the two, drawn for the trade, may. Against a player he is the one who
 			# presses on, and nothing changes.

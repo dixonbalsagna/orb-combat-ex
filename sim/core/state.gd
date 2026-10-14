@@ -369,6 +369,7 @@ class FxEvent:
 	var cx: float = 0.0          # evacuate, building_fall: the event's x (the crowd flees from it; the ripple starts there)
 	var reason: String = ""      # evacuate: "budget", "ceiling" or "flight"
 	var mode: String = ""        # building_fall: "implode" or "burst"
+	var weight: String = ""      # damage: the blow's weight (light, medium, heavy), kept on a guarded blow; "" for a hit that is not a blow of an exchange
 	var delay: float = 0.0       # building_fall: the ripple delay in seconds (cosmetic)
 	var rubble: float = 0.0      # building_fall: the heap height left
 	var landmark: bool = false   # building_fall: the fallen building is a landmark (Game Design's mood reads it: landmarkFall)

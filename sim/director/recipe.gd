@@ -122,6 +122,58 @@ static func pick(S: SimState, f, pool: String, salt: int) -> String:
 	return id
 
 
+## One piece of a pool of his that may be thrown (docs/combat/brawl-hook.md parts 5 and 6): not waiting; not one of
+## his last two picks, unless `again`; never to the gut when `noGut` (Legal's rule: no two blows running to the gut);
+## and one that sends `want` when a send is named (pieces[id].sends). With `again` it is one of his last two, the
+## older first. The walk starts at a keyed draw. "" when the pool has none. It records nothing: took() does.
+static func pickWhere(S: SimState, f, pool: String, salt: int, noGut: bool, want: String, again: bool = false) -> String:
+	var list = _rec.pools.get(poolKey(f), {}).get(pool)
+	if not (list is Array):
+		return ""
+	var ok: Array = []
+	for row in list:
+		if String(row.get("status", "live")) != "waiting":
+			ok.append(String(row.id))
+	if ok.is_empty():
+		return ""
+	var pieces = _rec.get("pieces", {})
+	var p1: int = f.act.dirI[DirAlchemy.PIECE_1]
+	var p2: int = f.act.dirI[DirAlchemy.PIECE_2]
+	var start: int = int(SimRng.keyed(int(S.game.seed), "alchemy.piece", S.dirS.exN * 4096 + f.act.dirI[DirAlchemy.COUNT] * 16 + salt) * float(ok.size()))
+	var older: String = ""
+	var newer: String = ""
+	for step in range(ok.size()):
+		var id: String = ok[(start + step) % ok.size()]
+		var pc = pieces.get(id) if pieces is Dictionary else null
+		if noGut and pc is Dictionary and String(pc.get("target", "")) == "gut":
+			continue
+		if want != "" and not (pc is Dictionary and (pc.get("sends", []) as Array).has(want)):
+			continue
+		var hsh: int = id.hash() & 0x7fffffff
+		if hsh == p2:
+			older = id
+		elif hsh == p1:
+			newer = id
+		elif not again:
+			return id
+	if not again:
+		return ""
+	return older if older != "" else newer
+
+
+## A piece was thrown: it is the newest of his last two.
+static func took(f, id: String) -> void:
+	f.act.dirI[DirAlchemy.PIECE_2] = f.act.dirI[DirAlchemy.PIECE_1]
+	f.act.dirI[DirAlchemy.PIECE_1] = id.hash() & 0x7fffffff
+
+
+## True when a piece lands on the gut (pieces[id].target).
+static func toGut(id: String) -> bool:
+	var pieces = _rec.get("pieces", {}) if _rec is Dictionary else {}
+	var pc = pieces.get(id) if pieces is Dictionary else null
+	return pc is Dictionary and String(pc.get("target", "")) == "gut"
+
+
 ## What a blow tells Animation and VFX (docs/director/brawl-plan.md section 2.7), on its beat's args: style (speed, a
 ## plain or mashed light; tech, a light from a timed press; heavy), grade (Controls' grade of the press's beat), k (its
 ## place among his strikes of the exchange) and n (how many of his there are so far), closing (the blur's own closing

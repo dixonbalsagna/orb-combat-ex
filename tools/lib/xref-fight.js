@@ -1308,6 +1308,121 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       if (!(isObj(rec.blurPatterns) && gname in rec.blurPatterns)) err(RC, `/patternGates/${esc(gname)}`, 'recipes-gates', `a gate for "${gname}", which is no pattern of blurPatterns`);
       if (Array.isArray(g.fighters)) g.fighters.forEach((x, i) => { if (!fighters.includes(x)) err(RC, `/patternGates/${esc(gname)}/fighters/${i}`, 'recipes-gates', `gate fighter "${x}" is no key of pools (${fighters.join(', ')})`); });
     }
+    // the brawl: its pools exist for every fighter, a power.last piece has sends, the beat covers every path in use
+    if (isObj(rec.brawl)) for (const [kind, pn] of Object.entries(rec.brawl)) {
+      if (kind.startsWith('_') || typeof pn !== 'string') continue;
+      for (const fid of fighters) if (isObj(pools[fid]) && !(pn in pools[fid])) err(RC, `/brawl/${esc(kind)}`, 'recipes-brawl', `brawl ${kind} draws on pool "${pn}", which fighter "${fid}" does not have`);
+    }
+    if (prow) {
+      const noSends = new Set();
+      for (const fid of fighters) {
+        const last = isObj(pools[fid]) ? pools[fid]['power.last'] : null;
+        if (Array.isArray(last)) for (const e of last) if (isObj(e) && typeof e.id === 'string' && isObj(prow[e.id]) && !(Array.isArray(prow[e.id].sends) && prow[e.id].sends.length) && !noSends.has(e.id)) { noSends.add(e.id); err(RC, `/pieces/${esc(e.id)}`, 'recipes-brawl', `"${e.id}" is in ${fid}'s power.last but has no sends`); }
+      }
+      if (isObj(rec.beat) && typeof rec.beat.default !== 'number') {
+        const usedPaths = new Set();
+        for (const [id, row] of Object.entries(prow)) if (!id.startsWith('_') && isObj(row) && typeof row.path === 'string') usedPaths.add(row.path);
+        for (const p of usedPaths) if (!(p in rec.beat)) err(RC, '/beat', 'recipes-brawl', `a piece uses path "${p}", but beat has no value for it and no default`);
+      }
+    }
+    // the burst: its pools exist for every fighter, its slots have pools, close and samples are fighters' with pieces that exist
+    if (isObj(rec.burst)) {
+      const bu = rec.burst;
+      if (isObj(bu.pools)) for (const [cls, pn] of Object.entries(bu.pools)) {
+        if (cls.startsWith('_') || typeof pn !== 'string') continue;
+        for (const fid of fighters) if (isObj(pools[fid]) && !(pn in pools[fid])) err(RC, `/burst/pools/${esc(cls)}`, 'recipes-burst', `burst ${cls} draws on pool "${pn}", which fighter "${fid}" does not have`);
+      }
+      if (Array.isArray(bu.slots) && isObj(bu.pools)) bu.slots.forEach((c, i) => { if (c !== 'open' && !(c in bu.pools)) err(RC, `/burst/slots/${i}`, 'recipes-burst', `slot class "${c}" has no pool in burst.pools`); });
+      for (const key of ['close', 'samples']) if (isObj(bu[key])) for (const fid of Object.keys(bu[key])) if (!fid.startsWith('_') && !fighters.includes(fid)) err(RC, `/burst/${key}/${esc(fid)}`, 'recipes-burst', `burst ${key} names fighter "${fid}", who is not a key of pools`);
+      if (isObj(bu.samples)) for (const [fid, leans] of Object.entries(bu.samples)) {
+        if (fid.startsWith('_') || !isObj(leans)) continue;
+        for (const [lean, ids] of Object.entries(leans)) {
+          if (!Array.isArray(ids)) continue;
+          if (Array.isArray(bu.slots) && ids.length !== bu.slots.length) err(RC, `/burst/samples/${esc(fid)}/${esc(lean)}`, 'recipes-burst', `a sample has ${ids.length} blows, but burst.slots has ${bu.slots.length}`);
+          if (prow) ids.forEach((id, i) => { if (typeof id === 'string' && !(id in prow)) err(RC, `/burst/samples/${esc(fid)}/${esc(lean)}/${i}`, 'recipes-burst', `piece "${id}" is not a row of pieces`); });
+        }
+      }
+    }
+    // the fallback: lower names brawl kinds and pools every fighter has; the stand-in counts name fighters, pieces and steps that exist
+    if (isObj(rec.fallback)) {
+      const fb = rec.fallback;
+      const kinds = isObj(rec.brawl) ? Object.keys(rec.brawl).filter((k) => !k.startsWith('_')) : [];
+      if (isObj(fb.lower)) for (const [kind, pn] of Object.entries(fb.lower)) {
+        if (kind.startsWith('_')) continue;
+        if (kinds.length && !kinds.includes(kind)) err(RC, `/fallback/lower/${esc(kind)}`, 'recipes-fallback', `lower names kind "${kind}", which brawl does not have`);
+        if (typeof pn === 'string') for (const fid of fighters) if (isObj(pools[fid]) && !(pn in pools[fid])) err(RC, `/fallback/lower/${esc(kind)}`, 'recipes-fallback', `lower ${kind} draws on pool "${pn}", which fighter "${fid}" does not have`);
+      }
+      const stepNames = Array.isArray(fb.steps) ? fb.steps.filter(isObj).map((s) => s.step) : [];
+      void stepNames;
+      if (isObj(fb.onTheTier)) for (const fid of Object.keys(fb.onTheTier)) {
+        if (fid.startsWith('_')) continue;
+        if (!fighters.includes(fid)) err(RC, `/fallback/onTheTier/${esc(fid)}`, 'recipes-fallback', `onTheTier names fighter "${fid}", who is not a key of pools`);
+      }
+    }
+    // the launcher: a fighter's tier launchers, by send, are rows that send that way and are in his pools
+    if (isObj(rec.launcher)) {
+      const ln = rec.launcher;
+      for (const key of ['bySend', 'bySendLower']) {
+        if (!isObj(ln[key])) continue;
+        const poolKey = key === 'bySend' ? 'brawl.launcher' : 'brawl.launcher.lower';
+        for (const [fid, sends] of Object.entries(ln[key])) {
+          if (fid.startsWith('_') || !isObj(sends)) continue;
+          if (!fighters.includes(fid)) { err(RC, `/launcher/${key}/${esc(fid)}`, 'recipes-launcher', `${key} names fighter "${fid}", who is not a key of pools`); continue; }
+          const inPool = new Set((isObj(pools[fid]) && Array.isArray(pools[fid][poolKey]) ? pools[fid][poolKey] : []).filter(isObj).map((e) => e.id));
+          for (const [send, list] of Object.entries(sends)) {
+            if (!Array.isArray(list)) continue;
+            list.forEach((id, i) => {
+              if (typeof id !== 'string') return;
+              const at = `/launcher/${key}/${esc(fid)}/${esc(send)}/${i}`;
+              if (prow && !(id in prow)) err(RC, at, 'recipes-launcher', `piece "${id}" is not a row of pieces`);
+              else if (prow && isObj(prow[id]) && !(Array.isArray(prow[id].sends) && prow[id].sends.includes(send))) err(RC, at, 'recipes-launcher', `piece "${id}" does not send "${send}" (its sends: ${JSON.stringify(prow[id].sends || [])})`);
+              if (inPool.size && !inPool.has(id)) err(RC, at, 'recipes-launcher', `piece "${id}" is not in ${fid}'s pool ${poolKey}`);
+            });
+          }
+        }
+      }
+    }
+    // energy in reach: a fighter's bolts and blasts are rows with that target and path and are in his reach pools; his runs use his bolts; after has a list for each run
+    if (isObj(rec.reach)) {
+      const rc = rec.reach;
+      const bolts = {};
+      if (isObj(rc.pieces)) for (const [fid, row] of Object.entries(rc.pieces)) {
+        if (fid.startsWith('_') || !isObj(row)) continue;
+        if (!fighters.includes(fid)) { err(RC, `/reach/pieces/${esc(fid)}`, 'recipes-reach', `reach.pieces names fighter "${fid}", who is not a key of pools`); continue; }
+        for (const kind of ['bolt', 'blast']) {
+          const list = Array.isArray(row[kind]) ? row[kind] : [];
+          const poolKey = 'reach.' + kind;
+          const inPool = new Set((isObj(pools[fid]) && Array.isArray(pools[fid][poolKey]) ? pools[fid][poolKey] : []).filter(isObj).map((e) => e.id));
+          if (kind === 'bolt') bolts[fid] = new Set(list.filter(isObj).map((e) => e.id));
+          list.forEach((e, i) => {
+            if (!isObj(e) || typeof e.id !== 'string') return;
+            const at = `/reach/pieces/${esc(fid)}/${kind}/${i}`;
+            if (prow && !(e.id in prow)) err(RC, `${at}/id`, 'recipes-reach', `piece "${e.id}" is not a row of pieces`);
+            else if (prow && isObj(prow[e.id])) {
+              if (typeof e.target === 'string' && prow[e.id].target !== e.target) err(RC, `${at}/target`, 'recipes-reach', `target "${e.target}" is not the piece's own (${JSON.stringify(prow[e.id].target)})`);
+              if (typeof e.path === 'string' && prow[e.id].path !== e.path) err(RC, `${at}/path`, 'recipes-reach', `path "${e.path}" is not the piece's own (${JSON.stringify(prow[e.id].path)})`);
+            }
+            if (inPool.size && !inPool.has(e.id)) err(RC, `${at}/id`, 'recipes-reach', `piece "${e.id}" is not in ${fid}'s pool ${poolKey}`);
+          });
+        }
+      }
+      if (isObj(rc.runs)) for (const [fid, runs] of Object.entries(rc.runs)) {
+        if (fid.startsWith('_') || !Array.isArray(runs)) continue;
+        if (!fighters.includes(fid)) { err(RC, `/reach/runs/${esc(fid)}`, 'recipes-reach', `reach.runs names fighter "${fid}", who is not a key of pools`); continue; }
+        runs.forEach((r, i) => {
+          if (!isObj(r)) return;
+          if (Array.isArray(r.blows) && Array.isArray(r.arms) && r.blows.length !== r.arms.length) err(RC, `/reach/runs/${esc(fid)}/${i}/arms`, 'recipes-reach', `arms has ${r.arms.length} entries, but blows has ${r.blows.length}`);
+          if (Array.isArray(r.blows) && bolts[fid] && bolts[fid].size) r.blows.forEach((id, j) => { if (typeof id === 'string' && !bolts[fid].has(id)) err(RC, `/reach/runs/${esc(fid)}/${i}/blows/${j}`, 'recipes-reach', `"${id}" is not one of ${fid}'s reach.bolt pieces`); });
+        });
+      }
+      if (isObj(rc.after)) for (const [fid, lists] of Object.entries(rc.after)) {
+        if (fid.startsWith('_') || !Array.isArray(lists)) continue;
+        if (!fighters.includes(fid)) { err(RC, `/reach/after/${esc(fid)}`, 'recipes-reach', `reach.after names fighter "${fid}", who is not a key of pools`); continue; }
+        const n = isObj(rc.runs) && Array.isArray(rc.runs[fid]) ? rc.runs[fid].length : null;
+        if (n !== null && lists.length !== n) err(RC, `/reach/after/${esc(fid)}`, 'recipes-reach', `after has ${lists.length} lists, but ${fid} has ${n} runs`);
+        if (n !== null) lists.forEach((l, i) => { if (Array.isArray(l)) l.forEach((x, k) => { if (Number.isInteger(x) && x >= n) err(RC, `/reach/after/${esc(fid)}/${i}/${k}`, 'recipes-reach', `run ${x} does not exist (${fid} has ${n})`); }); });
+      }
+    }
     // a blur pattern's steps [limb, target] are filled from the fighter's blur.base and blur.toward pieces that are not waiting; a step used k times needs k
     const bp = isObj(rec.blurPatterns) ? rec.blurPatterns : {};
     for (const [pname, steps] of Object.entries(bp)) {

@@ -324,14 +324,14 @@
       "tradeMaxTicks": 120,
       "staggeredAddsRun": false,
       "levelWithin": 1,
-      "runBy": {"medium": 2},
+      "runBy": {"medium": 3},
       "doubleTicks": 240,
       "closeGuardTicks": 90
     },
     "medium": {
       "windupTicks": 12,
       "worth": 2.5,
-      "ki": 2,
+      "ki": 1,
       "gap": [12, 16],
       "rate": 0.156,
       "reelTicks": 6,
@@ -370,10 +370,12 @@
     "burst": {
       "lands": [18, 22, 26, 31, 37, 45, 56],
       "second": 1,
-      "rate": 0.07,
+      "rate": 0.085,
       "reelTicks": 2,
       "runHalves": 1,
-      "openTicks": 8
+      "openTicks": 8,
+      "floorGap": 8,
+      "holdCarries": false
     },
     "give": {
       "bhPerSec": 5,
@@ -388,6 +390,10 @@
       "closeSlackBh": 0.07,
       "lightReachBh": 0.6,
       "edgeBh": 0.033
+    },
+    "firstMove": {
+      "lockTicks": 45,
+      "pursue": false
     },
     "launcher": {
       "minStagger": 12,

@@ -2674,8 +2674,8 @@ func _mediumWeight() -> String:
 			return "a landed %s takes the wound family %s" % [kind, SimWounds.family(ex, d, {}, ex.sD)]
 		var dealt: float = SimDamage.hit(S, ex, a, d, 10.0, {})
 		var e = last.call()
-		if dealt <= 0.0 or e == null or e.kind != kind or e.mode != "brawl":
-			return "a landed %s sent a damage event of kind %s" % [kind, "none" if e == null else e.kind]
+		if dealt <= 0.0 or e == null or e.kind != kind or e.mode != "brawl" or e.weight != kind:
+			return "a landed %s sent a damage event of kind %s and weight %s" % [kind, "none" if e == null else e.kind, "none" if e == null else e.weight]
 		# a battered head: only a heavy staggers (a medium's short reel is the director's)
 		reset.call()
 		d.wear[SimWounds.HEAD] = wd.stageAt[1] + 6000
@@ -2694,6 +2694,8 @@ func _mediumWeight() -> String:
 		var wantA: int = int(SimMathx.jround(dealt * (wd.blockArmShare if asLight else wd.guardArms) * k))
 		var wantL: int = 0 if asLight else int(SimMathx.jround(dealt * wd.guardLegs * k))
 		e = last.call()
+		if e != null and e.weight != kind:
+			return "a blocked %s sent a damage event of weight %s" % [kind, e.weight]
 		if e == null or e.kind != "guard" or wantA <= 0 or d.wear[A] != wantA or d.wear[L] != wantL:
 			return "a blocked %s wore the arms %d (expected %d) and the legs %d (expected %d)" % [kind, d.wear[A], wantA, d.wear[L], wantL]
 		# a battered arm: only a heavy marks it for the crippling roll
@@ -2730,7 +2732,7 @@ func _mediumWeight() -> String:
 	d.stance = 1.0
 	SimDamage.hit(S, null, a, d, 10.0, {"kind": "blast", "shot": 1.0, "form": "brawl_light"})
 	var be = last.call()
-	if be == null or be.kind != "blast" or be.mode != "":
+	if be == null or be.kind != "blast" or be.mode != "" or be.weight != "":
 		return "a blocked point-blank shot kept its form (%s)" % ("none" if be == null else be.mode)
 	d.stance = 0.0
 	SimDamage.hit(S, null, a, d, 10.0, {"kind": "blast", "shot": 1.0, "form": "brawl_light"})
