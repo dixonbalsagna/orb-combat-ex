@@ -52,6 +52,8 @@ World's second experiment, taken, with one addition for houses.
 
 **The AI votes by its care.** A fighter who cares takes a building only when nobody is in it, or late and behind. A fighter who doesn't takes it when it is there.
 
+**What the share of buildings taken means** (ruled on Encounter's town levers, 2026-10-13). QA's band of 35 to 60% averaged two personalities, and with both cares at 0 it read one of them. "Preferred" means taken. So the share is read by care, in two rows (§4). `bruntPrefer` stays at 40, where a fighter with no care takes a building in reach 97 times in 100. The 35 to 60% band is retired. Bodies into buildings read 3.58 a match from a crossing on 12 matches, against 4 to 8. That is read again on QA's 100 matches before any lever moves. The ladder's wall slam then makes a tier-1 building a play, and is the next step if it is still short.
+
 **What keeps a fight in town, without pinning it.**
 
 | Today | The rule | Whose lever |
@@ -78,6 +80,8 @@ World's second experiment, taken, with one addition for houses.
 | A fighter hurt by a falling stack | | 0.2 to 1 a match. It should be rare and remembered |
 | A launch through one building against one across open ground; a full chain | | At least 1.5 times the damage; at least 2 times |
 | With the stick toward a building in reach, the launch takes it | | At least 90% of the times a plan exists |
+| With no stick, a building in reach is taken by a fighter whose care is 0 or less | 97% at `bruntPrefer` 40 | At least 80%: "preferred" means taken |
+| With no stick, a building in reach is taken by a fighter who cares, while people are inside | Not read: both cares are 0 today | Under 35% |
 | The collateral budgets, the people lost in a match, the match's length | In band | Their bands. More fighting in town will press all three, and they are read first |
 
 ## 5. The order, and what it asks

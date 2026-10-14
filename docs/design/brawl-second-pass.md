@@ -61,7 +61,7 @@ Today a brawl stops both fighters dead and pulls them to one spot. The stick onl
 - **What his stick does.** Any lean that doesn't point at the rival moves him alone, the way it points, and the rival isn't drawn along. A lean at the rival is the nudge, as always. Straight away he opens 1 bh in 12 ticks: 5 bh a second, the same for every fighter. Behind a guard it is 0.6 of that. It answers within 2 ticks, as the nudge does. (Encounter first built it as a straight line off, and the stick slice widened it: §14.)
 - **What the rival's stick does.** It still nudges the centre, so he can aim his blow with it. Only its part toward the giver follows him, at 0.6 of the giver's rate. So a fighter can walk a wound blow after a rival who backs off, and the gap still opens, slowly.
 - **A leash.** He opens no more than 2.4 bh past striking distance. That is what a light can close in its 4 ticks, and it is well inside the 4.5 bh where a brawl lets go. Giving ground never ends a brawl.
-- **A wound blow has a reach,** read as it lands: striking distance and 0.5 bh more for a medium, 1 bh more for a heavy, and 1 to 1.5 bh more for a charged heavy as it fills. Out of reach it misses, and he is open for 20 ticks (§3). At the very edge it misses too: a tie goes to the fighter who gave ground. Open means he can't guard, dodge, give ground or strike for those ticks, so a medium does punish it.
+- **A wound blow has a reach,** read as it lands: striking distance and 0.5 bh more for a medium, 1 bh more for a heavy, 0.5 to 1 bh more for a charged medium as it fills, and 1 to 1.5 bh more for a charged heavy as it fills. Out of reach it misses, and he is open for 20 ticks (§3). At the very edge it misses too: a tie goes to the fighter who gave ground. Open means he can't guard, dodge, give ground or strike for those ticks, so a medium does punish it. After a medium's miss, tapped or charged, he is open for 12 ticks (§14, the seventh round).
 - **Afterwards** the brawl takes hold again. A press by either closes the gap as part of the blow, which lands 2 ticks later for each bh, and never more than 4 later. He is drawn closing on every one of those ticks, and never moves more than 0.6 bh in one. A light from further than 2.4 bh, which only happens when the two have come apart some other way, is thrown, closes what it can, and misses if it is still out of reach. So a medium punishes a missed heavy: 16 ticks against the 20 he is open.
 
 | The rival's blow | If the rival stands still | If the rival holds toward him |
@@ -286,7 +286,7 @@ The press throws the light, as always. **The burst starts when the hold is certa
 | It goes | 4 ticks after he lets go. Held to 40 ticks, it goes by itself | 4 ticks after he lets go. Held to 70 ticks, it goes by itself |
 | Worth, in brawl lights | 3, rising to 4 at full | 8, rising to 10 at full |
 | Ki | 4 | 8 |
-| While he holds it | **No armour.** A medium or a heavier blow that lands on him ends it. A light doesn't: it does its full damage (§15) | **Armoured,** as its wind-up is (§2) |
+| While he holds it | **No armour.** A medium or a heavier blow that lands on him ends it. A light doesn't: it does its full damage, and adds nothing to the rival's run, so a flurry of lights can't close on him while he holds it (§15; §14, the seventh round) | **Armoured,** as its wind-up is (§2) |
 | A clean hit | The rival reels for 10 ticks. **At full he staggers for 12, as from a close** (§15). No knock-back | **A knock-back.** At a full charge, a launch that the stick nudges and the director stages, or a lift of 45 ticks with no stick |
 | Its job | Quick to charge. **It ends a charging heavy, always** | It punishes a flurry, breaks a guard and ends a string |
 | On a guard | Chips | A guard raised in the last 30 ticks blocks it, with a quarter of the damage through. **A set guard breaks:** he staggers for 20 ticks and half goes through |
@@ -1209,3 +1209,20 @@ Encounter's chain of the nine cells' first pass, the recipes hook and the fourth
 - **Buildings.** Wall slams read 0.10 a match from the default start and 0.76 from a crossing, at about 24 damage, which is a building's single hit: the ladder and the slam's doubling aren't in yet. Encounter's town levers take bodies into buildings from 1.67 to 4.17 a match from a crossing, which is inside the 4 to 8 of `buildings.md` at its lower edge, on 12 matches.
 
 **The wear is at its floor.** 225 was needed because the hammer keeps a brawl going. The 10th percentile has 24 s of room. If the next tune shortens matches again, the lever is the hammer's worth, and not the wear.
+
+### The seventh round: the held Y (2026-10-13)
+
+Encounter followed every charge of QA's Y holder to its end (`docs/director/pending/nine-cells-pass2/README.md`): 345 charges a match. 28% miss because the AI gives ground. 25% come to nothing, most of them inside the 20 ticks he is open after a miss. 18% are cut by the AI's close, when its fourth light staggers him. 15% land and close. He takes 2,250 a minute and deals 700, and the worth of 5.5 changed nothing.
+
+**What it shows.** The cell isn't doing what §15 says it is for. "Lights don't stop it" holds one light at a time, and then the fourth light closes on him and the stagger takes the charge. So even its proof row fails: a full charged medium held through lights lands and closes 15 times in 100, where the row asks 80. A charged blow also reaches only as far as a tap, so it is easier to walk away from than a heavy, though it is just as slow. Three of Encounter's four answers make the cell what it claims to be, and I take them. The fourth is the AI's.
+
+| Order | What changes | Why |
+| ---: | :--- | :--- |
+| 1 | **While he holds a charge, the rival's lights add nothing to the rival's run.** They still do their full damage. A medium or anything heavier still ends the charge, and a close from anything else still does | "Lights don't stop it" has to include what lights add up to. This isn't armour: he takes every light in full, and armour stays the heavy's |
+| 2 | **A charged medium's reach grows as it fills,** from 0.5 bh past striking distance to 1 bh at full, as a charged heavy's grows from 1 to 1.5 | A charge as slow as a heavy shouldn't be the easiest blow to walk out of |
+| 3 | **A missed medium, tapped or charged, leaves him open for 12 ticks,** and a missed heavy for 20 as before | A medium is the smaller commitment, and its miss should cost less. Inside 12 ticks the punish is still a light |
+| 4 | **The AI's giving ground against a charging medium** gets a share of its own, under its share against a heavy: 0.05, 0.25 and 0.4 by level | Encounter's lever |
+
+- **The full charged medium's worth goes back to 4.** The worth wasn't the cause.
+- **Then his alone row is read again.** If he is still under 10%, it is read on his proof rows alone, and I say so plainly: a held Y is an answer to lights and to charges, and not a way to play a whole match. Orb's rule asks that each of the nine has a meaningful use, and that use is in its proof rows.
+- **The proof row that matters most:** a full charged medium held through a flurry of lights lands and closes at least 80% of the times no medium answers.
