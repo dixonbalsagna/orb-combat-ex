@@ -269,6 +269,14 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(ord(13, 15, 25), 'FAIL');    // medium 3.0 is under 1.2 x 2.6
     assert.strictEqual(levelRows({ easy: mk(10), hard: mk(25) }).find(r => r.id === '7.pb.order').status, 'PENDING');
   });
+  await t('crossing rows: bodies into buildings 4 to 8, wall slams 1 to 3, the depth rows PENDING while depth is off', async () => {
+    const { crossingRows } = require('./bands');
+    const mk = (b, w) => Array.from({ length: 20 }, () => rec({ koAt: 400, landingsAll: { brunt: b }, bh: w ? { wall: { n: w, amount: 1, spd: 1 } } : {} })), id = (rows, k) => rows.find(r => r.id === k);
+    const good = crossingRows(mk(5, 2)), low = crossingRows(mk(2, 0));
+    assert.strictEqual(id(good, 'x.bodies').status, 'PASS'); assert.strictEqual(id(good, 'x.wall').status, 'PASS');
+    assert.strictEqual(id(low, 'x.bodies').status, 'FAIL'); assert.strictEqual(id(low, 'x.wall').status, 'FAIL');
+    assert.strictEqual(id(good, 'x.depth.cap').status, 'PENDING'); assert.strictEqual(id(good, 'x.depth.streets').status, 'PENDING');
+  });
   console.log(`godot qa selftest: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

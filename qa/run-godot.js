@@ -30,6 +30,7 @@ const ARMS = (val('arms', quick ? 'default,swap' : 'default,swap,mirror-villain,
 const ONLY = val('only', null);
 const MASHER = parseInt(val('masher', '100'), 10);          // matches per level for the scripted masher (0 skips it)
 const LEVELRUNS = parseInt(val('levelruns', '100'), 10);     // default-arm matches at the easy and hard AI levels for the perfect-block rates (0 skips them)
+const CROSSING = parseInt(val('crossing', '100'), 10);       // default-arm matches from World's crossing start for the building rows (0 skips them)
 const FEEL = parseInt(val('feel', '40'), 10);            // matches for Combat's dynamic-feel probe (0 skips it)
 const ROOT = path.join(__dirname, '..');
 
@@ -61,6 +62,9 @@ async function main() {
     }
     if (LEVELRUNS > 0 && !load) {
       try { const { levelRows } = require('./godot/bands'); const byLevel = {}; for (const lv of ['easy', 'hard']) byLevel[lv] = await runRecords({ arm: 'default', base: BASE, count: LEVELRUNS, jobs: JOBS, capSec: CAP, level: lv }); rows.push(...levelRows(byLevel, A.default)); } catch (e) { console.log('level runs skipped: ' + String(e.message).split(String.fromCharCode(10))[0]); }
+    }
+    if (CROSSING > 0 && !load) {
+      try { const { crossingRows } = require('./godot/bands'); const X = await runRecords({ arm: 'default', base: BASE, count: CROSSING, jobs: JOBS, capSec: CAP, startMode: 'crossing' }); if (val('save-records', null)) fs.writeFileSync(path.resolve(val('save-records')).replace(/\.json$/, '') + '-crossing.json', JSON.stringify(X)); rows.push(...crossingRows(X)); } catch (e) { console.log('crossing run skipped: ' + String(e.message).split(String.fromCharCode(10))[0]); }
     }
     if (MASHER > 0 && !load) {
       try { const m = require('./godot/masher'); rows.push(...m.masherRows(await m.runMasher({ n: MASHER, base: BASE, jobs: JOBS }))); } catch (e) { console.log('masher skipped: ' + String(e.message).split(String.fromCharCode(10))[0]); }

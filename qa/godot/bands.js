@@ -190,7 +190,17 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     if (hasEvent(A, 'launch_plan')) {
       const plans = D.flatMap(r => (r.events || []).filter(e => e.type === 'launch_plan' && /BUILDING|BRUNT/.test(e.text || '')));
       const picked = plans.filter(e => /BUILDING|BRUNT/.test(e.chosen || '')).length;
-      R.rate('5b.reach', '§5b', 'Launches that pick a building, out of those with a building candidate in reach (35 to 60% pooled)', { v: picked / plans.length, ci: wl(picked, plans.length), lo: 0.35, hi: 0.60, note: `${plans.length} plans with a candidate; from launch_plan events` });
+      // buildings.md §4 (0c677f0c): the old 35 to 60% pooled band averaged two personalities and is RETIRED. "Preferred" means taken: a fighter whose care is 0 or less takes a building in reach at least 80% of the time; one who cares, while people are inside, under 35% (pending until a fighter has care above 0). The stick is not in the event: the rows read every plan with a candidate in reach.
+      const careOf = (r, a) => ((r.care || [0, 0])[a] || 0);
+      const plans0 = D.flatMap(r => (r.events || []).filter(e => e.type === 'launch_plan' && /BUILDING|BRUNT/.test(e.text || '') && careOf(r, e.actor) <= 0));
+      const picked0 = plans0.filter(e => /BUILDING|BRUNT/.test(e.chosen || '')).length;
+      R.info('5b.reach', '§5b', 'Launches that pick a building, out of those with a building candidate in reach, pooled (the 35 to 60% band is RETIRED: buildings.md section 3, 0c677f0c)', fmt.pct(picked / plans.length), `${plans.length} plans with a candidate; replaced by the rows by care`);
+      if (plans0.length) R.rate('5b.reach.care0', '§5b', 'A building in reach is taken by a fighter whose care is 0 or less (at least 80%: "preferred" means taken; buildings.md section 4)', { v: picked0 / plans0.length, ci: wl(picked0, plans0.length), lo: 0.80, hi: 1.0, note: `${plans0.length} plans with a candidate in reach, the stick not read (it is not in the event)` });
+      else R.pending('5b.reach.care0', '§5b', 'A building in reach is taken by a fighter whose care is 0 or less (at least 80%)', 'no plan with a building candidate in reach');
+      if (D.some(r => (r.care || [0, 0]).some(c => c > 0))) {
+        const pc = D.flatMap(r => (r.events || []).filter(e => e.type === 'launch_plan' && /BUILDING|BRUNT/.test(e.text || '') && careOf(r, e.actor) > 0)), pk = pc.filter(e => /BUILDING|BRUNT/.test(e.chosen || '')).length;
+        R.info('5b.reach.cares', '§5b', 'A building in reach is taken by a fighter who cares (under 35% while people are inside; the people inside are not in the event, so this is all plans, reported)', pc.length ? fmt.pct(pk / pc.length) : 'no plan', `${pc.length} plans by a fighter with care above 0`);
+      } else R.pending('5b.reach.cares', '§5b', 'A building in reach is taken by a fighter who cares, while people are inside (under 35%)', 'not read: both cares are 0 on this build (data/fighters care 0.0)');
     } else R.pending('5b.reach', '§5b', 'Launches that pick a building, out of those with a candidate in reach (35 to 60%)', 'needs launch_plan events');
     R.pending('5b.chains', '§5b', 'Chains among brunts, chain lengths, the per-tier casualty budget for one chain (hard test), the launcher tier cap (hard test)', 'needs brunt-chain events (World, buildings-in-depth §4b); skeleton in qa/godot/pending-tests.js');
   }
@@ -645,6 +655,20 @@ function secondPassRows(R, D, sum) {
   else R.pending('10.windup.perMin', '§1 second pass', 'The AI winds up or charges a medium or a heavy, a minute of brawl (4 to 10)', 'the build has no windup cue (the three strengths are C2a)');
 }
 
+// The crossing start (World's demo start; 100 matches): buildings.md section 4 and depth.md section 9. Rows read from default-arm records played with --start=crossing.
+function crossingRows(recs) {
+  const rows = [], n = recs.length;
+  if (!n) return [{ id: 'x.bodies', ref: 'buildings §4', what: 'Bodies into buildings a match, from a crossing start (4 to 8)', status: 'PENDING', value: 'no crossing run', band: '4 to 8', note: '' }];
+  const bodies = recs.map(r => (r.landingsAll || {}).brunt || 0), walls = recs.map(r => ((r.bh || {}).wall || {}).n || 0);
+  const mean = a => a.reduce((x, y) => x + y, 0) / a.length, mb = mean(bodies), mw = mean(walls), len = recs.map(r => r.koAt).filter(x => x > 0).sort((a, b) => a - b);
+  rows.push({ id: 'x.bodies', ref: 'buildings §4', what: 'Bodies into buildings a match, from a crossing start (4 to 8; landings that end on a building over every launch)', status: mb >= 4 && mb <= 8 ? 'PASS' : 'FAIL', value: mb.toFixed(2) + ' a match', band: '4 to 8', note: `${n} matches; point estimate` });
+  rows.push({ id: 'x.wall', ref: 'buildings §4', what: 'Wall slams a match, from a crossing start (1 to 3; building_hit with outcome wall)', status: mw >= 1 && mw <= 3 ? 'PASS' : 'FAIL', value: mw.toFixed(2) + ' a match', band: '1 to 3', note: `${n} matches; point estimate` });
+  rows.push({ id: 'x.length', ref: 'balance §9', what: 'Match length from a crossing start: median, 10th percentile (reported; the bands are those of the default arm)', status: 'INFO', value: len.length ? `${median(len).toFixed(1)} s, p10 ${len[Math.floor(len.length * 0.1)].toFixed(1)} s` : 'no data', band: 'reported', note: `${n} matches` });
+  rows.push({ id: 'x.depth.cap', ref: 'depth §9', what: 'The brawl centre, in depth, outside a flight, a knock-back or a blow closing step: never over 1.2 bh a second (hard)', status: 'PENDING', value: 'depth is off on main: no depth state in the records', band: 'never over 1.2 bh a second', note: 'waits for depth D1a on main and a records field for the centre in depth' });
+  rows.push({ id: 'x.depth.streets', ref: 'depth §9', what: 'Changes of street a match, from a crossing start (reported, then a band; first guess 2 to 6)', status: 'PENDING', value: 'depth is off on main', band: 'reported', note: 'waits for depth D1a' });
+  return rows;
+}
+
 // mediumRecs: the main default arm's records (the medium AI), read only for the order row; the medium band itself is 7.pb.perMin.medium in evaluate.
 function levelRows(byLevel, mediumRecs) {
   const MIN = { easy: [0.5, 2.5], hard: [2, 6.5] }, OLD = { easy: [3, 8], hard: [12, 20] }, rows = [];
@@ -665,4 +689,4 @@ function levelRows(byLevel, mediumRecs) {
   return rows;
 }
 
-module.exports = { levelRows, evaluate, hasEvent, protagonistRate, mirrorEffects, median, q, fmt, SCALES, PLANET };
+module.exports = { crossingRows, levelRows, evaluate, hasEvent, protagonistRate, mirrorEffects, median, q, fmt, SCALES, PLANET };
