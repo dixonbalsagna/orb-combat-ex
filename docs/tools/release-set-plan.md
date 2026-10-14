@@ -78,36 +78,49 @@ To make the windows cheap the hook needs one thing: **`skip`**, the ticks run wi
 | 6. another start for steadiness: 600 ticks later is enough; for a clip flagged sensitive the re-capture is a different run (start position, distance, direction or camera phase), not a later window | `--how "skip N"` is refused for a sensitive clip; `--variant N` (the pair set down N x 450 units further along the world: another place, scenery and camera phase) on `run-pixels.mjs`, `capture-web.mjs` and `flash_worst.gd`, with the hook patch `flash-capture-variant.patch`; an AI clip's different run is another seed. |
 | 7. the HUD's own rate as a separate line | `--record --hud-rate <n from ui/tools/hud_check.gd>`: the record has a `hud` line and fails at more than 3 a second. |
 
-**The clips above 2.0 and their second capture.** Section 7 has the measured list for the current build: 10 of 28 clips (36%) read above 2.0 and up to 3.0 on the primary reading; 8 of them need the second capture, the other 2 already fail on a sensitivity reading and are fixed first.
+**The clips above 2.0 and their second capture.** Section 7 has the measured list for the current build (3198301f, switches off): 4 of 28 clips need the second capture (ai-12345-reduced, ai-7-normal, ai-38-reduced, ai-39-normal), the margin rule is not met on 8, and 4 clips fail (two of them world bursts at a body coming down, one a launch, one a launch and merge).
 
 **A release night, now (measured, replaces the estimate).** The set is 56 clips (28 + 4 city + 24 AI at 20 seeds) plus the scenes that wait on other directors (12 more clips). Measured on the repair run: 28 clips in 1 h 44 min at three jobs under the 40% budget with another session's long run beside them (a fixed clip 5 to 7 minutes, an AI clip 10 to 16 minutes each, three at a time; every capture 7.8 to 13 frames a second, none starved), so 3.7 minutes a clip, not the 5.9 of the estimate. The 56 clips: **about 3.9 hours**; second captures of the 36% above 2.0 (about 20 clips): about 1.5 hours; sensitive re-captures (2 of 28 on this run, about 7%): about 20 minutes. **About 5.7 hours at three jobs, about 12 hours one capture at a time**, and about 6.5 hours at three jobs when the 12 waiting scenes are in. A night, so the nightly set is the unit and the release pass is the nightly run of the commit being published with its second captures.
 
-## 7. The repair run (2026-10-12, commit f9469f8a, 28 clips, captured twice)
+## 7. The whole set with the camera switches off (2026-10-14, commit 3198301f, 28 clips)
 
-Every clip was captured twice through the guarded launcher (three jobs, 40% of the cores, below normal, 7.8 to 13 frames a second, none under the 1.0 that voids a clip). The 15 clips of the first pass taken inside the incident window (07:15 to 12:25) were void and are the repair's; the other 13 stand. Readings are primary / area-15% / 2 s memory; the "budget on" pass is void (see item 1): it is a second off capture, and it shows that two captures of one clip agree to the reading.
+Captured through the guarded launcher (three jobs, 40% of the cores, below normal; QA's long run beside it; every capture 7.7 to 14.4 frames a second, none under the 1.0 that voids a clip) on one web build of 3198301f with the nine cells' chain in. The earlier run of this section (f9469f8a, the repair run) is superseded: the chain moved the seeds and the sim, and its "travel budget on" pass was never on (the page's switch did not reach the hook, retracted 2026-10-13; the hook now reports what it applied and capture-web.mjs refuses a clip where it was not). Readings are primary / area-15% / 2 s memory at the tick the worst second starts. "Kind" is read from a headless per-tick probe of the same sim (slam: the divider's slam; launch: a body launched; merge: the pair closing or opening; ground: a body coming down; blast / brawl: none of those). "Whose" is the analyser's reading of each counted change: the picture moved (camera) or the world's own brightness changed (world: a blast, debris, a beam).
 
-| clip | normal (primary / area-15% / 2 s memory) | reduced | counted changes in the worst second (n, r) | within 15% above the threshold (n, r) | margin rule met (n, r) | second capture |
+| clip | verdict: primary / area-15% / memory @tick | counted / within 15% of threshold | margin rule | second capture | kind of the worst second | whose changes |
 |---|---|---|---|---|---|---|
-| mash | 0 / 0 / 0 | 0 / 0 / 0 | 0, 0 | 0, 0 | yes, yes | no |
-| mashcity | 1 / 1 / 0 | 1 / 1 / 0 | 2, 2 | 2, 2 | yes, yes | no |
-| clash | 1.5 / 2.5 / 2 | 2 / 2 / 2 | 3, 5 | 2, 2 | yes, yes | no |
-| transform | 1.5 / 2 / 2 | 2 / 2 / 2 | 3, 4 | 1, 4 | yes, yes | no |
-| signature | 2 / 3 / 2.5 | 2.5 / 2.5 / 2.5 | 4, 5 | 2, 2 | yes, no | reduced |
-| collapse | **FAIL** 3.5 / 3.5 / 3.5 | 2.5 / 2.5 / 2.5 | 8, 6 | 2, 3 | no, no | reduced |
-| ai-12345 | 2.5 / 3 / 2.5 | **FAIL** 2.5 / 3.5 / 2.5 | 6, 7 | 1, 5 | no, no | normal and reduced |
-| ai-4 | 1.5 / 1.5 / 2 | 1.5 / 2.5 / 1.5 | 4, 3 | 4, 1 | yes, yes | no |
-| ai-7 | 2.5 / 2.5 / 2 | 2 / 1.5 / 1.5 | 5, 5 | 5, 4 | no, yes | normal |
-| ai-1 | 2.5 / 3 / 2 | **OVER GATE** 3 / 3 / 3 | 6, 6 | 1, 2 | no, no | normal and reduced |
-| ai-3 | 2.5 / 2.5 / 2.5 | 2 / 2 / 2 | 7, 5 | 3, 3 | no, yes | normal |
-| ai-5 | 2 / 2 / 2.5 | **OVER GATE** 3 / 2.5 / 2.5 | 4, 7 | 4, 4 | yes, no | reduced |
-| ai-38 | **FAIL** 3 / 4 / 3 | **FAIL** 4 / 5 / 2 | 8, 9 | 4, 3 | no, no | normal |
-| ai-39 | 2 / 2.5 / 1.5 | 1.5 / 3 / 1.5 | 5, 4 | 3, 2 | yes, yes | no |
+| mash-normal | 0 / 0 / 0 @0 | 0 / 0 | met | no | blast / brawl | - |
+| mash-reduced | 0 / 0 / 0 @0 | 0 / 0 | met | no | blast / brawl | - |
+| mashcity-normal | 1 / 1 / 0 @85 | 2 / 2 | met | no | merge | camera (2 of 2) |
+| mashcity-reduced | 1 / 1 / 0 @81 | 2 / 2 | met | no | merge | camera (2 of 2) |
+| clash-normal | 1.5 / 2.5 / 2 @191 | 3 / 2 | met | no | launch+merge | camera (2 of 3) |
+| clash-reduced | 2 / 2 / 2 @182 | 5 / 2 | met | no | launch+merge | mixed (3 world, 2 camera) |
+| signature-normal | 2 / 2 / 2 @1400 | 4 / 1 | met | no | launch | world (4 of 4) |
+| signature-reduced | 2 / 2 / 2.5 @85 | 4 / 2 | met | no | blast / brawl | mixed (2 world, 2 camera) |
+| transform-normal | 1.5 / 2 / 2 @516 | 3 / 1 | met | no | blast / brawl | world (2 of 3) |
+| transform-reduced | 2 / 2 / 2 @517 | 4 / 4 | met | no | blast / brawl | world (3 of 4) |
+| collapse-normal | 1.5 / 3 / 1 @84 | 4 / 2 | met | no | merge | camera (4 of 4) |
+| collapse-reduced | **FAIL** 3 / 4 / 3 @1137 | 11 / 6 | **not met** | fails first | launch+merge | mixed (7 world, 4 camera) |
+| ai-12345-normal | 2 / 2.5 / 2 @365 | 5 / 2 | met | no | blast / brawl | world (4 of 5) |
+| ai-12345-reduced | 2.5 / 2.5 / 2 @239 | 5 / 2 | **not met** | **yes** | blast / brawl | world (5 of 5) |
+| ai-4-normal | **FAIL** 4 / 4 / 2.5 @2505 | 9 / 4 | **not met** | no | ground | world (6 of 9) |
+| ai-4-reduced | **FAIL** 4 / 4 / 2 @2505 | 9 / 4 | **not met** | no | ground | world (7 of 9) |
+| ai-7-normal | 2.5 / 2.5 / 2 @1102 | 5 / 5 | **not met** | **yes** | blast / brawl | world (5 of 5) |
+| ai-7-reduced | 2 / 2 / 2 @856 | 5 / 4 | met | no | blast / brawl | world (5 of 5) |
+| ai-1-normal | 1.5 / 1.5 / 2 @153 | 3 / 1 | met | no | launch+merge | world (2 of 3) |
+| ai-1-reduced | 1.5 / 2 / 2 @522 | 3 / 2 | met | no | blast / brawl | world (3 of 3) |
+| ai-3-normal | 1.5 / 2.5 / 2 @1557 | 5 / 3 | met | no | launch | camera (4 of 5) |
+| ai-3-reduced | 1.5 / 1.5 / 1.5 @2018 | 3 / 1 | met | no | slam+merge | world (2 of 3) |
+| ai-5-normal | 1.5 / 1.5 / 1.5 @904 | 4 / 2 | met | no | launch+merge | world (3 of 4) |
+| ai-5-reduced | 1.5 / 1.5 / 2 @904 | 4 / 2 | met | no | launch+merge | world (4 of 4) |
+| ai-38-normal | 1.5 / 2.5 / 1.5 @772 | 4 / 0 | met | no | launch | camera (3 of 4) |
+| ai-38-reduced | 2.5 / 2.5 / 1.5 @2084 | 7 / 3 | **not met** | **yes** | launch | mixed (4 world, 3 camera) |
+| ai-39-normal | 2.5 / 2.5 / 2.5 @1631 | 7 / 3 | **not met** | **yes** | launch | camera (6 of 7) |
+| ai-39-reduced | **FAIL** 3 / 3.5 / 2.5 @2741 | 7 / 4 | **not met** | fails first | launch | camera (6 of 7) |
 
-What the table says:
+**24 of 28 clips pass the combined rule. 4 do not:** collapse-reduced (FAIL 3 / 4 / 3; launch+merge, mixed (7 world, 4 camera)); ai-4-normal (FAIL 4 / 4 / 2.5; ground, world (6 of 9)); ai-4-reduced (FAIL 4 / 4 / 2; ground, world (7 of 9)); ai-39-reduced (FAIL 3 / 3.5 / 2.5; launch, camera (6 of 7)).
 
-1. **RETRACTED (2026-10-13): the travel budget was never on in the "on" clips.** The page's `budget=1` never reached the hook (main.parse_args keeps only the keys of URL_ARGS, and the hook read main.args), so the 28 "on" clips are 28 more "off" clips: they measure the capture's own repeatability (the same readings and the same counted changes, a few hundred pixels apart), not the budget. The budget's effect on the pixels is not measured; the headless count half applied it and moved a few counted changes in AI matches. Fixed by `docs/tools/pending/flash-capture-page-flags.patch` (the hook reads location.search and reports what it applied; capture-web.mjs refuses a clip whose switch was not applied). The 28-clip pass has to be re-run for the budget; the launch hold (Camera) was measured after the fix, below.
-2. **Six clips are not a pass:** collapse normal (3.5, camera 7 of 8 changes), ai 12345 reduced (3.5 on the area reading, camera 5 of 7), ai 38 normal and reduced (4 and 5; world and camera mixed), ai 1 reduced and ai 5 reduced (3, OVER GATE; world-heavy). The two seeds new this week (38, 39) were picked by the scan to have both signatures: seed 38 is the worst clip of the set and a release seed that stays until its cause is fixed (Legal's RL-131 item 3).
-3. **Second captures (the tool's rule: primary above 2.0 and up to 3.0):** ai 1 normal and reduced, ai 12345 normal, ai 3 normal, ai 7 normal, ai 5 reduced, signature reduced, collapse reduced: 8 clips (6 AI, 2 fixed), about 45 minutes at three jobs. ai 12345 reduced and ai 38 normal are also in the band but fail on a sensitivity reading, so they wait for the fix. By any of the three readings the list grows by six (signature normal, clash normal, ai 4 reduced, ai 5 normal, ai 39 normal and reduced): the tool does not require them; Legal may want them.
-4. **Sensitive (spread over 1.0, re-run as another run, not a later window):** ai 38 reduced (4 / 5 / 2) and ai 39 reduced (1.5 / 3 / 1.5).
-5. **Margins:** 26 of 28 clips have at least one counted change within 15% above the threshold in their worst second (only mash has none). The margin rule (a second with such a change must total 2.0 or less) is met by the 16 clips whose primary reading is 2.0 or less, and **not met by 12: ai 1 both, ai 12345 both, ai 3 normal, ai 38 both, ai 5 reduced, ai 7 normal, signature reduced, collapse both.** Six of those 12 (ai 1 normal, ai 12345 normal, ai 3 normal, ai 7 normal, signature reduced, collapse reduced) are a combined PASS and would still be refused at --record: for them the fix is a second of 2.0 or less, or taking the changes that sit at 100 to 115% out. Legal should know that a combined PASS and a clear margin are two different bars.
-6. **Not guard-recorded:** 22 of the 28 off-pass clips carry no load or rate (the first launcher): 13 are the clips before the incident or the 12:37 to 13:04 captures, 9 are the repair's first batch; the rate floor is judged by their capture times. A release record needs them re-captured through the present launcher, which the nightly does anyway.
+**Margin rule** (a second with a change within 15% above the threshold must total 2.0 or less): not met by 8 clips: collapse-reduced, ai-12345-reduced, ai-4-normal, ai-4-reduced, ai-7-normal, ai-38-reduced, ai-39-normal, ai-39-reduced.
+
+**Second capture** (primary above 2.0 and up to 3.0, not already failing; RL-131): 4 clips: ai-12345-reduced, ai-7-normal, ai-38-reduced, ai-39-normal.
+
+**What the camera switches did on this commit.** Camera's launch hold and merge-zoom limit (SplitRig.launch_hold, merge_zoom_limit) were run together on all 28 clips. 7 clips read a higher primary reading with them on, and 4 went from a pass to OVER GATE (ai-12345-normal, ai-12345-reduced, ai-39-normal, ai-7-normal); the ones that read lower did so by tenths, on clips that already passed. The cost is a cut a launch (one change at up to 3.2 times the threshold in ai-12345). The EP's decision (2026-10-14): both switches stay off on main and the launch rule is not offered on this evidence. The failing seconds above that are not a launch (a world burst at a body coming down: ai 4, collapse reduced; the divider's slam) are not reached by either switch.
