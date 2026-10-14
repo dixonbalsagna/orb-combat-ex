@@ -75,6 +75,7 @@ def brunt(s):
 		if cleared > 0:
 			WorldCollateral.kill(S, b.idx, popF * float(cleared), by, evt, cx, lowest)
 		SimFx.floorHit(S, f, b, lowest, cleared, "punch", oc.ratio, y, by)''', '''	var lowest: int = oc.k
+	var side: float = -1.0 if f.vx >= 0.0 else 1.0   # the edge he came in by (a held hit's mark keeps it)
 	if oc.outcome == "punch":
 		var pr: Dictionary = punchFloors(b, oc, 0.0, true)   # a body crosses the building: the slot runs from side to side
 		lowest = mini(lowest, pr.lowest)
@@ -82,7 +83,39 @@ def brunt(s):
 		if dead > 0.0:
 			WorldCollateral.kill(S, b.idx, dead, by, evt, cx, lowest)
 		SimFx.floorHit(S, f, b, lowest, pr.cleared, "punch", oc.ratio, y, by, pr.x0, pr.x1)''')
-    s = rep(s, '''## A cleared span longer than TUNNEL_MAX drops the floors above it''', '''## B: a punch on the floors a body covers (oc.hit). The blow breaks a SLOT of each floor (the span of the plate it swept: from side to side for a body
+    s = rep(s, '''	elif oc.outcome == "crack":
+		for j in oc.hit:
+			b.fdmg[j] += oc.dmg
+		var share: float = minf(1.0, oc.ratio * FLOOR_DEATH)''', '''	elif oc.outcome == "crack":
+		for j in oc.hit:
+			b.fdmg[j] += oc.dmg
+			markSide(b, j, side)
+		var share: float = minf(1.0, oc.ratio * FLOOR_DEATH)''')
+    s = rep(s, '''	else:
+		for j in oc.hit:
+			b.fdmg[j] += oc.dmg
+		SimFx.floorHit(S, f, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, by)''', '''	else:
+		for j in oc.hit:
+			b.fdmg[j] += oc.dmg
+			markSide(b, j, side)
+		SimFx.floorHit(S, f, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, by)''')
+    s = rep(s, '''## A cleared span longer than TUNNEL_MAX drops the floors above it''', '''## B: a held hit (a crack or a dent) writes its SIDE into the floor's slot: both ends at the edge the body came in by (-1 or 1), nothing gone, so a
+## mark's side survives a seek and a late join (Rendering's destruction-look.md section 8). A floor already broken keeps its slot.
+static func markSide(b, j: int, side: float) -> void:
+	if int(cfg().breaches) == 0:
+		return
+	var F: int = b.floors
+	if b.fhole.size() != 3 * F:
+		b.fhole = PackedFloat32Array()
+		b.fhole.resize(3 * F)
+		b.fhole.fill(0.0)
+	if b.fhole[3 * j + 2] > 0.0:
+		return
+	b.fhole[3 * j] = side
+	b.fhole[3 * j + 1] = side
+
+
+## B: a punch on the floors a body covers (oc.hit). The blow breaks a SLOT of each floor (the span of the plate it swept: from side to side for a body
 ## that crosses the building, full is true; a run centred at centre for a shot) and takes a share of the story with it: breachBase + breachPerRatio * ratio
 ## fighter heights of its width, so the slot says WHERE it is broken and g (kept in fhole) says HOW MUCH of the story is gone. A floor already broken adds
 ## breachGrow of the new share. The floor is gone (its fmask bit clears, as a punch always cleared it) when g is clearAt. With breaches off every punch
@@ -140,7 +173,7 @@ static func punchFloors(b, oc: Dictionary, centre: float, full: bool = false) ->
 
 
 def blast(s):
-    return rep(s, '''	if oc.outcome == "punch":
+    s = rep(s, '''	if oc.outcome == "punch":
 		var cleared: int = 0
 		for j in oc.hit:
 			b.fmask = b.fmask & ~(1 << j)
@@ -149,13 +182,31 @@ def blast(s):
 			lowest = mini(lowest, j)
 		if cleared > 0:
 			WorldCollateral.kill(S, b.idx, popF * float(cleared), by, 0.0, cx, lowest)
-		SimFx.floorHitShot(S, b, lowest, cleared, "punch", oc.ratio, y, slot, ux, uy)''', '''	if oc.outcome == "punch":
+		SimFx.floorHitShot(S, b, lowest, cleared, "punch", oc.ratio, y, slot, ux, uy)''', '''	var side: float = -1.0 if ux >= 0.0 else 1.0   # the edge the shot came in by (a held hit's mark keeps it)
+	if oc.outcome == "punch":
 		var pr: Dictionary = WorldBrunt.punchFloors(b, oc, clampf(SimWrap.sdx(b.x, cx) / (b.w * 0.5), -1.0, 1.0), false)   # a shot breaks the story where it lands
 		lowest = mini(lowest, pr.lowest)
 		var dead: float = popF * pr.deaths
 		if dead > 0.0:
 			WorldCollateral.kill(S, b.idx, dead, by, 0.0, cx, lowest)
 		SimFx.floorHitShot(S, b, lowest, pr.cleared, "punch", oc.ratio, y, slot, ux, uy, pr.x0, pr.x1)''')
+    s = rep(s, '''	elif oc.outcome == "crack":
+		for j in oc.hit:
+			b.fdmg[j] += oc.dmg
+		var d: float = popF * float(oc.hit.size()) * minf(1.0, oc.ratio * WorldBrunt.FLOOR_DEATH)''', '''	elif oc.outcome == "crack":
+		for j in oc.hit:
+			b.fdmg[j] += oc.dmg
+			WorldBrunt.markSide(b, j, side)
+		var d: float = popF * float(oc.hit.size()) * minf(1.0, oc.ratio * WorldBrunt.FLOOR_DEATH)''')
+    s = rep(s, '''	else:
+		for j in oc.hit:
+			b.fdmg[j] += oc.dmg
+		SimFx.floorHitShot(S, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, slot, ux, uy)''', '''	else:
+		for j in oc.hit:
+			b.fdmg[j] += oc.dmg
+			WorldBrunt.markSide(b, j, side)
+		SimFx.floorHitShot(S, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, slot, ux, uy)''')
+    return s
 
 
 def struct(s):

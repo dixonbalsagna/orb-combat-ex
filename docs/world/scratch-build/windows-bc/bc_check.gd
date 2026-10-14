@@ -65,6 +65,16 @@ func _init() -> void:
 	var fh: Array = ev.filter(func(e): return e.type == "floor_hit")
 	ok(fh.size() == 1 and fh[0].outcome in ["crack", "dent"], "and the floor_hit says how it broke (%s)" % str(fh.map(func(e): return e.outcome)))
 	ok(D.stunTicks >= int(c.wallStaggerTicks) - 1, "he is staggered at the wall (%d ticks, wallStaggerTicks %d)" % [D.stunTicks, int(c.wallStaggerTicks)])
+	# a held hit writes its side into fhole: both ends at the edge he came in by (flying toward +x: the left edge, -1), nothing gone
+	var marked: int = 0
+	var side_ok: bool = true
+	var gone_any: bool = false
+	for k in range(tw.floors):
+		if tw.fhole.size() == 3 * tw.floors and tw.fhole[3 * k] != 0.0:
+			marked += 1
+			side_ok = side_ok and tw.fhole[3 * k] == tw.fhole[3 * k + 1] and absf(tw.fhole[3 * k]) == 1.0
+			gone_any = gone_any or tw.fhole[3 * k + 2] > 0.0
+	ok(marked >= 1 and side_ok and not gone_any, "a held hit writes its side into fhole: %d floors marked at one edge, nothing gone" % marked)
 	# the slam doubles the building's hit to the body: compare with wallSlamMul 1
 	var S1 := fresh(1)
 	var D1 = S1.fighters[0]

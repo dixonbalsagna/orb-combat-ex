@@ -1,5 +1,5 @@
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index 0ea4d9fc..f53cfc40 100644
+index e3c9ac21..358f75a2 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
 @@ -224,6 +224,7 @@ class Building:
@@ -10,7 +10,7 @@ index 0ea4d9fc..f53cfc40 100644
  	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
  	var fled: float = 0.0     # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
  	var z: float = 0.0        # depth of the building's centre from the fighter plane (negative: behind), world units
-@@ -416,6 +417,7 @@ class FxEvent:
+@@ -417,6 +418,7 @@ class FxEvent:
  	var p: float = 0.0           # intro_line: the chance the line is spoken (the line system's to use)
  	var source: String = ""      # hazard_telegraph, danger: what is coming (brunt, windup, ambush; World adds collapse, landslide, lava)
  	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
@@ -19,7 +19,7 @@ index 0ea4d9fc..f53cfc40 100644
  
  
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index 3347fc6f..5c5bc48f 100644
+index 2e0aee42..3fa8bb77 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
 @@ -178,6 +178,9 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
@@ -34,7 +34,7 @@ index 3347fc6f..5c5bc48f 100644
  	for t in S.trees:
 @@ -282,7 +285,7 @@ const FX_FIELDS: Dictionary = {
  	"dust": ["x", "y", "n", "col", "z"], "splash": ["x", "y", "n", "z"], "fire": ["x", "y", "n", "z"], "after": ["x", "y", "life", "col", "face", "z"],
- 	"charge": ["x", "y", "col", "ground", "z"], "beamSplash": ["x", "z"], "damage": ["x", "y", "amount", "col", "attacker", "victim", "region", "kind", "number", "z", "mode"], "banner": ["text", "col", "dur"],
+ 	"charge": ["x", "y", "col", "ground", "z"], "beamSplash": ["x", "z"], "damage": ["x", "y", "amount", "col", "attacker", "victim", "region", "kind", "number", "z", "mode", "weight"], "banner": ["text", "col", "dur"],
  	"crater": ["x", "y", "r", "depth", "energy", "cause", "rim", "skid", "owner", "special"], "scorch": ["x", "y", "w", "power", "variant", "owner", "z"],
 -	"slide": ["x", "x1", "w", "depth", "energy", "variant", "owner", "pop", "z", "z1"], "slide_dust": ["x", "y", "spd", "w", "variant", "n", "z"], "skim": ["x", "y", "spd", "n", "z"], "evacuate": ["b", "x", "n", "cx", "reason", "owner", "dest", "floor"], "launch_depth": ["x", "y", "x1", "y1", "z", "b", "dur", "n", "owner", "victim"], "chain_link": ["from", "to", "x", "y", "z", "x1", "y1", "z1", "dur", "link", "owner", "victim"], "floor_hit": ["b", "floor", "n", "outcome", "ratio", "x", "y", "z", "ux", "uy", "kind", "owner", "victim"], "building_stage": ["b", "from", "to", "x", "y", "z", "w", "h", "kind", "cx", "owner", "n"], "lodge": ["actor", "b", "x", "y", "z", "hold", "n", "owner", "victim"], "floors_fall": ["b", "from", "to", "n", "x", "z", "w"], "building_fall": ["b", "x", "y", "w", "depth", "mode", "delay", "cx", "rubble", "n", "landmark"], "collateral_state": ["room", "budget", "left", "over"],
 +	"slide": ["x", "x1", "w", "depth", "energy", "variant", "owner", "pop", "z", "z1"], "slide_dust": ["x", "y", "spd", "w", "variant", "n", "z"], "skim": ["x", "y", "spd", "n", "z"], "evacuate": ["b", "x", "n", "cx", "reason", "owner", "dest", "floor"], "launch_depth": ["x", "y", "x1", "y1", "z", "b", "dur", "n", "owner", "victim"], "chain_link": ["from", "to", "x", "y", "z", "x1", "y1", "z1", "dur", "link", "owner", "victim"], "floor_hit": ["b", "floor", "n", "outcome", "ratio", "x", "y", "z", "ux", "uy", "kind", "owner", "victim", "x0", "x1"], "building_stage": ["b", "from", "to", "x", "y", "z", "w", "h", "kind", "cx", "owner", "n"], "lodge": ["actor", "b", "x", "y", "z", "hold", "n", "owner", "victim"], "floors_fall": ["b", "from", "to", "n", "x", "z", "w"], "building_fall": ["b", "x", "y", "w", "depth", "mode", "delay", "cx", "rubble", "n", "landmark"], "collateral_state": ["room", "budget", "left", "over"],
@@ -42,7 +42,7 @@ index 3347fc6f..5c5bc48f 100644
  	"region_stage": ["actor", "region", "stage"], "rally": ["actor", "region", "kind"], "limb_break": ["actor", "victim", "region"], "region_broken": ["actor", "region"], "brink_enter": ["actor"], "brink_exit": ["actor"], "brink_open": ["actor", "target", "kind", "text"], "brink_close": ["actor", "kind"],
  	"mood_band": ["kind", "amount", "n"], "act_change": ["n", "kind"], "style_label": ["actor", "kind", "text"], "crowd_state": ["kind"], "building_hit": ["actor", "x", "n", "b", "y", "z", "amount", "ratio", "outcome", "link", "spd", "keep", "ux", "uy", "kind", "w", "h", "owner", "victim"],
 diff --git a/sim/core/fx.gd b/sim/core/fx.gd
-index 9cf709ea..6f0d6879 100644
+index ed115d31..8de44811 100644
 --- a/sim/core/fx.gd
 +++ b/sim/core/fx.gd
 @@ -461,10 +461,10 @@ static func chainLink(S: SimState, f, att, b, nb, y: float, r: Dictionary, link:
@@ -72,7 +72,7 @@ index 9cf709ea..6f0d6879 100644
  	e.ux = f.vx / f.launchT / maxf(l, 0.000001); e.uy = f.vy / maxf(l, 0.000001)
  	e.kind = b.kind; e.owner = float(S.fighters.find(by)); e.victim = float(S.fighters.find(f))
 diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
-index a3903ae6..e2725ead 100644
+index a3903ae6..9e5b543b 100644
 --- a/sim/world/brunt.gd
 +++ b/sim/world/brunt.gd
 @@ -34,6 +34,9 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
@@ -94,9 +94,11 @@ index a3903ae6..e2725ead 100644
  			if haveD and b.fdmg[j] > 0.0:   # a building that remembers its walls: damage already taken weakens the floor (not below wallMin of it)
  				st = maxf(st * float(cm.wallMin), st - float(cm.wallMemory) * b.fdmg[j])
  			sumS += st
-@@ -809,15 +814,12 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+@@ -808,19 +813,18 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+ 	var popF: float = floorPop(b)
  	var slot: float = float(S.fighters.find(f))
  	var lowest: int = oc.k
++	var side: float = -1.0 if f.vx >= 0.0 else 1.0   # the edge he came in by (a held hit's mark keeps it)
  	if oc.outcome == "punch":
 -		var cleared: int = 0
 -		for j in oc.hit:
@@ -116,10 +118,38 @@ index a3903ae6..e2725ead 100644
  	elif oc.outcome == "crack":
  		for j in oc.hit:
  			b.fdmg[j] += oc.dmg
-@@ -845,6 +847,59 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
++			markSide(b, j, side)
+ 		var share: float = minf(1.0, oc.ratio * FLOOR_DEATH)
+ 		if oc.get("held", false):
+ 			share = minf(share, float(cfg().heldDeathShare))
+@@ -831,6 +835,7 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+ 	else:
+ 		for j in oc.hit:
+ 			b.fdmg[j] += oc.dmg
++			markSide(b, j, side)
+ 		SimFx.floorHit(S, f, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, by)
+ 	# local damage wears the core; the building goes when it is spent
+ 	b.hp -= minf(CORE_SHARE * oc.dmg, WorldStructures.coreCap() * b.maxhp)   # the cap: one floors hit takes at most this share of the core
+@@ -845,6 +850,75 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
  	return res
  
  
++## B: a held hit (a crack or a dent) writes its SIDE into the floor's slot: both ends at the edge the body came in by (-1 or 1), nothing gone, so a
++## mark's side survives a seek and a late join (Rendering's destruction-look.md section 8). A floor already broken keeps its slot.
++static func markSide(b, j: int, side: float) -> void:
++	if int(cfg().breaches) == 0:
++		return
++	var F: int = b.floors
++	if b.fhole.size() != 3 * F:
++		b.fhole = PackedFloat32Array()
++		b.fhole.resize(3 * F)
++		b.fhole.fill(0.0)
++	if b.fhole[3 * j + 2] > 0.0:
++		return
++	b.fhole[3 * j] = side
++	b.fhole[3 * j + 1] = side
++
++
 +## B: a punch on the floors a body covers (oc.hit). The blow breaks a SLOT of each floor (the span of the plate it swept: from side to side for a body
 +## that crosses the building, full is true; a run centred at centre for a shot) and takes a share of the story with it: breachBase + breachPerRatio * ratio
 +## fighter heights of its width, so the slot says WHERE it is broken and g (kept in fhole) says HOW MUCH of the story is gone. A floor already broken adds
@@ -177,12 +207,14 @@ index a3903ae6..e2725ead 100644
  ## PANCAKE_K * m >= its strength, joining it. The floors it breaks, and the stack itself, are gone (their occupants die
  ## through the collateral module); if it reaches the ground the whole building goes. Returns {"pancake", "collapse"}.
 diff --git a/sim/world/blast.gd b/sim/world/blast.gd
-index 23d8fbc7..90eb1bc8 100644
+index 23d8fbc7..4a85a9e8 100644
 --- a/sim/world/blast.gd
 +++ b/sim/world/blast.gd
-@@ -161,15 +161,12 @@ static func _floors(S: SimState, b, oc: Dictionary, by, cx: float, y: float, slo
+@@ -160,19 +160,18 @@ static func _floors(S: SimState, b, oc: Dictionary, by, cx: float, y: float, slo
+ 		b.fdmg.fill(0.0)
  	var popF: float = WorldBrunt.floorPop(b)
  	var lowest: int = oc.k
++	var side: float = -1.0 if ux >= 0.0 else 1.0   # the edge the shot came in by (a held hit's mark keeps it)
  	if oc.outcome == "punch":
 -		var cleared: int = 0
 -		for j in oc.hit:
@@ -202,6 +234,18 @@ index 23d8fbc7..90eb1bc8 100644
  	elif oc.outcome == "crack":
  		for j in oc.hit:
  			b.fdmg[j] += oc.dmg
++			WorldBrunt.markSide(b, j, side)
+ 		var d: float = popF * float(oc.hit.size()) * minf(1.0, oc.ratio * WorldBrunt.FLOOR_DEATH)
+ 		if d > 0.0:
+ 			WorldCollateral.kill(S, b.idx, d, by, 0.0, cx, oc.hit[0])
+@@ -180,6 +179,7 @@ static func _floors(S: SimState, b, oc: Dictionary, by, cx: float, y: float, slo
+ 	else:
+ 		for j in oc.hit:
+ 			b.fdmg[j] += oc.dmg
++			WorldBrunt.markSide(b, j, side)
+ 		SimFx.floorHitShot(S, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, slot, ux, uy)
+ 	b.hp -= minf(WorldBrunt.CORE_SHARE * oc.dmg, WorldStructures.coreCap() * b.maxhp)
+ 	if b.hp <= 0.0:
 diff --git a/sim/world/structures.gd b/sim/world/structures.gd
 index 7f2a58da..ce75dc33 100644
 --- a/sim/world/structures.gd

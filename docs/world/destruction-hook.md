@@ -173,3 +173,29 @@ Game Design's ruling (`docs/design/buildings.md`) took V2 with houses added. In 
 **What it says.** The ladder does what Game Design ruled: tier 1 is a wall (0 punches of 166 links), the first minute breaks houses and shows a tower hit, and tier 3 and 4 go through nearly every tower. **The bodies-into-buildings row went down** (2.4 to 1.7), not up: with tier 1 and 2 held at the first tower the flights that used to punch through and chain on now end there, and the planner's choice of a building is what it was (1.2 a match, 7% of launches). The 4 to 8 band and the 30 to 50% time-in-town are step 4 of the order, Encounter's: the haul, the distance bonus, the stick's vote. The chain counted in links is limited by the buildings ahead, not by the cap: at tier 4, of 324 plans 118 end with nothing ahead and 190 at the cap. Wall slams (0.7 a match) are below 1 to 3 for the same reason: there are few bodies.
 
 **Gates:** `npm test --prefix sim` 5 of 5 (the golden moved by one line: the replay's data hash; no golden match changed, as none of the nine touches a building); probe 0 failed (plan equals outcome in 218 launches, none over the cap); `brunt_check.gd` (13 checks: the ladder over 90 speed and height pairs, a house at every tier, the remembered walls, 230 flights); `probe_collide`, `lane_check`, `isect_check`, `depthreads_check`, `demostart_check`, `stagecheck`, `blockcheck`, `directcheck`, `minecheck` 0 failed; render lane, stage, shape, ground, patch, depth and effects checks pass; determinism plain and `--intro`, seam sweep pass; the flash count passes (collapse 70 falls, mashcity as before); `lead_scan --strict --max=40` 0 feet-first frames in the shipped run and 3 in a run from the crossing start (64,000 fighter-frames; all three a locked rush or a held drift, none a launched flight, none a wall rebound).
+
+## 9. More building plans for the planner (paper, 2026-10-13; scratch probes on 3198301f, from the crossing start, 20 matches a variant)
+
+Encounter asked what World can offer so that bodies into buildings can go toward 8 a match: plans nearer than 720 units, the side behind the launcher, a plan from a brawl at a face. **The supply is not the bottleneck; the vote is.**
+
+**What exists today** (a sample every 3 s, both fighters as the launcher, force 2000, tier 2): the planner sees 2.3 candidates and 2.3 plans a sample, half ahead of the launcher and half behind him (1.1 each); a plan exists at 68% of the moments and one ahead of him at 58%; houses are 0.6 of the plans and towers 1.7. A call (`candidates` and `aim` for one launcher) costs about 0.6 ms. The launcher's decision picks BUILDING SMASH 1.35 times a match of about 15 launches.
+
+**What World can offer, and what each buys:**
+
+| Offer | What it is | Plans a sample | Bodies into buildings a match (20 matches) | Cost |
+| :--- | :--- | ---: | ---: | :--- |
+| Today | `BR_MIN` 720 units, best two by the cheap score a side | 2.3 | 1.8 | |
+| **Nearer than 720** | `BR_MIN` 160 (a body's own width and a margin): the near edge of a building the brawl stands beside | 2.3, 0.19 of them within 720 | 2.35 (noise: 1.8 to 2.4) | one constant; 0 ms |
+| **The nearest on each side** | the nearest building a side is always a candidate, beside the best two by score (the cheap score is tall and populated: it never picks a house when a tower is near) | 2.9, 0.6 within 720 | 1.8 | 8 lines in `candidates`; plans 25% more, 0 ms |
+| **The side behind the launcher** | already in the supply (half of all plans are behind him); Encounter's `fwdOnly` filter (the contact rule: no launch goes back through the launcher) removes them. The arc **over** the launcher is not a cheap offer: at force 2000 the four aim angles peak at 5 to 320 units, so a body that starts a body's width from the launcher passes him within his own height; a lob that clears him needs a much steeper angle than any aim uses and lands far from the fight | | | not offered |
+| **A plan from a brawl at a face** | when the brawl stands in front of a building (his x inside its x extent) the plan cannot enter by the near edge: it needs the depth model. With depth on, the body is sent along z into the face: `WorldStructures.sweep` finds the face and `nearestFace` its normal; the launch needs a depth velocity in the flight (`stepZ` is kinematic today: z follows the waypoint). The planner then has "into the row behind", which Game Design's `depth.md` lists | | | with L4's core part: one World slice (`aimFace`, on L3's sweep) and Simulation's flight in depth |
+
+**The vote is the lever** (Encounter's `BRUNT_BASE`, 14 today; scratch only, `launch.gd`):
+
+| `BRUNT_BASE` | BUILDING SMASH chosen a match | Body hits a match | Fight time within 1,500 units of a building, by minute (0-30 s, 30-60, 1-2, 2-4, 4+) | People lost | Structures lost |
+| ---: | ---: | ---: | :--- | ---: | ---: |
+| 14 | 1.35 | 1.8 | 75, 38, 17, 13, 23% | 26% | 47 |
+| 24 | 1.65 | 2.25 | 75, 38, 25, 13, 26% | 19.7% | 36 |
+| 40 | 2.7 | 2.85 | 95, 71, 43, 16, 19% | 21.6% | 35 |
+
+Even at 40 the bodies are 2.85 a match, because about half of what the planner builds is a held hit (a wall ends the chain at one building) and there are about 15 launches in a match; 4 to 8 bodies a match needs both a vote near 40 **and** more chains (houses are half a link, so a chain through a row of houses and a tower counts three hits) or more launches. The people and structures stayed in band at every value. So the order I would take: the vote and the stay-in-town rules (Encounter, buildings.md section 3) first; then the nearest-on-each-side offer (it is cheap and makes the plan exist when the cheap score looks elsewhere); the near edge (one constant); the face plan with L4.
