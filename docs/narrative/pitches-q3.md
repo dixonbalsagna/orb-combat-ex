@@ -546,7 +546,7 @@ Orb: "I don't like the idea of visible paperwork or stamps. She could have voice
 
 ### Clue pass after Orb's ruling on the guard (fallen guards leave)
 
-Orb rejected the three comebacks: he wants a straightforward brawl in which the opponent must defeat the guard before reaching her, and fallen guards leave (no retinue). Game Design is pitching the mechanic. The clues are adjusted so that the guard-based ones come only from **surviving guard members**, and **move onto her own body** once they are gone. The empire shrinks to her.
+Orb rejected the three comebacks: they want a straightforward brawl in which the opponent must defeat the guard before reaching her, and fallen guards leave (no retinue). Game Design is pitching the mechanic. The clues are adjusted so that the guard-based ones come only from **surviving guard members**, and **move onto her own body** once they are gone. The empire shrinks to her.
 
 | # | Clue | While a guard survives | When the guard is gone |
 |---|---|---|---|

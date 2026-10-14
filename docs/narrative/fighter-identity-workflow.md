@@ -5,8 +5,8 @@ Owner: Narrative and Fighter Identity. Version 1, 2026-10-12. Answers the EP's b
 ## 1. The short version
 
 - **Before Combat, Animation, Audio, UI or Art can start a fighter, they need one page from Narrative.** The page is eight fields (section 2). Game Design's step 0 asks Orb for five of them in three sentences; the rest I pre-fill so Orb marks and changes, and does not write from nothing.
-- **The page already exists, in draft, for all four.** Section 3 shows what, and section 5 pre-fills the page for each. What does not exist is **anything Orb has marked**: he has marked no line in the voice lab (0 of 1,386 rows), and the lists he said he would hand back on 2026-10-06 are not in the repository that I can find.
-- **The smallest thing Orb must do per fighter for tier 1** is mark one page: six choices and ten lines, about fifteen minutes (section 6). Nothing else of his is needed for a fighter to play with his own look, voice and moveset flavour on today's systems.
+- **The page already exists, in draft, for all four.** Section 3 shows what, and section 5 pre-fills the page for each. What does not exist is **anything Orb has marked**: they have marked no line in the voice lab (0 of 1,386 rows), and the lists they said they would hand back on 2026-10-06 are not in the repository that I can find.
+- **The smallest thing Orb must do per fighter for tier 1** is mark one page: six choices and ten lines, about fifteen minutes (section 6). Nothing else from Orb is needed for a fighter to play with a look, voice and moveset flavour of their own on today's systems.
 - **No line is written in volume again.** A fighter's voice grows ten lines at a time, each with a speaker and a moment, marked by Orb (`writing-quality.md`).
 
 ## 2. The one-page identity: eight fields, and who reads each
@@ -42,7 +42,7 @@ Owner: Narrative and Fighter Identity. Version 1, 2026-10-12. Answers the EP's b
 
 **What this shows.** Two fighters are nearly complete on paper and built in the build (as stand-ins). The other two have voices and no body. And for the Empress and the Cyborg the identity is **leaning on the mechanic**: her paperwork joke needs revisions to be said about, and his appetite needs a crowd to eat. A tier-1 page for them has to say what they *lack* (section 7).
 
-## 4. What Orb has written or approved himself
+## 4. What Orb has written or approved themselves
 
 So far as the repository records it. **Everything not on this list is a template of ours.**
 
@@ -54,9 +54,9 @@ So far as the repository records it. **Everything not on this list is a template
 | **The Empress** | **Approved: the voice** (revisions, "we" to "I", "petitioner"); the guard of honour; paperwork **diegetic only**; the Encore comeback; goons fall and leave | same |
 | **The Cyborg** | Likes the manager; sandwiches, not sweets; graphic consumption in tone (Mature target) | `vision.md` |
 | **Lines** | "get the voice line packet ready for me to edit"; dialogue density 6 of 10; faces on every quip; Banjo-Kazooie-style grunts under captions | `vision.md`, 2026-10-01 and earlier |
-| **The lists** | Orb said he would hand back taunt, quote and canon-ledger lists on 2026-10-06 evening | `vision.md`, 2026-10-05 |
+| **The lists** | Orb said they would hand back taunt, quote and canon-ledger lists on 2026-10-06 evening | `vision.md`, 2026-10-05 |
 
-**What is not there:** a single marked row in the voice lab (0 of 1,386, counting the 156 rows of batch 1 he was sent first, which the Protagonist's sheet repeats), and the lists. Game Design's pipeline says the Protagonist's "lines are in Orb's hands already"; they are in his hands, **unmarked**. That is what I read the pipeline's gate as: *no fighter's lines are used until Orb has marked ten of them.*
+**What is not there:** a single marked row in the voice lab (0 of 1,386, counting the 156 rows of batch 1 they were sent first, which the Protagonist's sheet repeats), and the lists. Game Design's pipeline says the Protagonist's "lines are in Orb's hands already"; they are in Orb's hands, **unmarked**. That is what I read the pipeline's gate as: *no fighter's lines are used until Orb has marked ten of them.*
 
 ## 5. Each fighter's page, pre-filled (Orb marks: keep, change, or cut)
 
@@ -106,7 +106,7 @@ These are **our proposals**, drawn from the bibles and from Orb's own notes (sec
 
 **One page, six marks, about fifteen minutes.** Everything else is ours to prefill and Orb's to veto.
 
-| # | Orb does | Takes | If he does nothing |
+| # | Orb does | Takes | If Orb does nothing |
 |---|---|---|---|
 | 1 | **Says yes or no to the page above** (fields 1, 2, 6, 7: how he fights, what he wants, his look in words, how he moves) | 3 minutes | The draft stands; Art offers three silhouettes from it |
 | 2 | **Marks ten lines**: keep, cut or rewrite (the batch in `writing-quality.md` for the pilot pair; a new ten per fighter after) | 5 minutes | No line of his is used in the build; the fighter has grunts and captions only |
@@ -115,7 +115,7 @@ These are **our proposals**, drawn from the bibles and from Orb's own notes (sec
 | 5 | **Names two stances he never speaks in** (my veto list is the default) | 1 minute | The defaults stand |
 | 6 | **Says whether he wants the two thin ones shown at tier 1** (Game Design's question 2) | 1 minute | They wait for their mechanics |
 
-**What is deliberately not asked of Orb at tier 1:** the universe, the backstory, the canon ledger, the intros' plotlines, the names of anything in the world, the taunt and quote lists. Those arrive in his time (his lists were due 2026-10-06) and the fighter does not wait for them.
+**What is deliberately not asked of Orb at tier 1:** the universe, the backstory, the canon ledger, the intros' plotlines, the names of anything in the world, the taunt and quote lists. Those arrive in Orb's time (the lists were due 2026-10-06) and the fighter does not wait for them.
 
 ## 7. The workflow, in order
 
@@ -137,7 +137,7 @@ These are **our proposals**, drawn from the bibles and from Orb's own notes (sec
 - **The pilot's lines are unmarked.** Game Design plans the Anti-hero first and the Protagonist second. Neither has a marked line. Step 1 above makes the first ten lines the gate.
 - **"Edits the dialogue by hand."** The About page (`ui/data/howto.json`, the About page) says Orb "edits the dialogue by hand". No dialogue is in the build and none is marked yet, so the sentence is true only after the first batch is marked. UI and Legal should hold it until then, or reword it.
 - **Voice volume.** The packet I sent has 1,386 draft rows. That was a mistake of method: no one can mark that many with care. They are now a reservoir, not content.
-- **Names.** Placeholders stay in the build. A name that is not Orb's will sound machine-made to him, as he has said; nothing named by us is final.
+- **Names.** Placeholders stay in the build. A name that is not Orb's will sound machine-made to Orb, as they have said; nothing named by us is final.
 
 ## 9. What I would do next, if the EP agrees
 

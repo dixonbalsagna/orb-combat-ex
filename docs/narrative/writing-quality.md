@@ -1,6 +1,6 @@
 # Writing quality: why it reads rushed, and what a line must pass
 
-Owner: Narrative and Fighter Identity. Version 1, 2026-10-12. Orb, 2026-10-12: "I just get frustrated that the quality of writing I'm presented with for forward facing things like web-pages and in-game dialogue seems so rushed and bizarre." He is right, and this is a diagnosis, not a defence. He has also rejected "bring the towers down" ("an extraordinarily out-of-place piece of writing"), "Every press is a blow" (generic) and "a brawl you can move with the stick" (reads like a forgotten basic feature). Those three are the pattern in miniature.
+Owner: Narrative and Fighter Identity. Version 1, 2026-10-12. Orb, 2026-10-12: "I just get frustrated that the quality of writing I'm presented with for forward facing things like web-pages and in-game dialogue seems so rushed and bizarre." They are right, and this is a diagnosis, not a defence. They have also rejected "bring the towers down" ("an extraordinarily out-of-place piece of writing"), "Every press is a blow" (generic) and "a brawl you can move with the stick" (reads like a forgotten basic feature). Those three are the pattern in miniature.
 
 ## 1. What went wrong, in four sentences
 
@@ -46,7 +46,7 @@ A line fails if any answer is no. The writer answers them aloud, and a second re
 ## 4. A working method that respects Orb's time
 
 - **Ten lines, not two hundred.** Each batch is ten, each with the **speaker and the moment** beside it. Orb marks each *keep*, *cut* or *rewrite* in one pass (about five minutes).
-- **The rules grow from his marks.** Every cut or rewrite is read for the rule behind it, and the rule goes into a short list per fighter (and into the lint). The next ten is written against the rules he has actually shown.
+- **The rules grow from Orb's marks.** Every cut or rewrite is read for the rule behind it, and the rule goes into a short list per fighter (and into the lint). The next ten is written against the rules Orb has actually shown.
 - **Nothing forward-facing ships unseen.** Lines, the holding page, the guide and tooltips carry a status: *marked by Orb*, or *not used*. Unmarked text may exist in drafts and never in the build. If the deadline is near, the build ships with captions and grunts, not unmarked lines.
 - **The 1,386 drafts are a reservoir.** I mine them for lines worth putting in a batch of ten, rewritten to the standard; I do not send them on as they are.
 - **Orb is never the proofreader of last resort.** The writer's tests (section 3) and a cold reader come first; Orb sees what has passed them.
