@@ -1,0 +1,129 @@
+diff --git a/render/vfx/blast.gd b/render/vfx/blast.gd
+index 0f5349de..4a57616f 100644
+--- a/render/vfx/blast.gd
++++ b/render/vfx/blast.gd
+@@ -145,7 +145,7 @@ func on_crater(S: SimState, e, debris: VfxDebris, now: float, powerup_ok: bool,
+ 		var sz: float = rd.range_(p("blast", "chunk_min"), p("blast", "chunk_max")) * csz
+ 		var life2: float = (rd.range_(1.6, 2.4) if lob else rd.range_(1.0, 1.6))
+ 		if rd.next() < q:
+-			debris.chunk(x + off, y + 8.0, z + 8.0, vx, vy, sz, life2, tones, 2, 8.0)
++			debris.chunk(x + off, y + 8.0, z + 8.0, vx, vy, sz, life2, tones, 2, 8.0, VfxLook.CHUNK_CRATER_K)
+ 			chunks += 1
+ 	# 3. The dust dome and the skirt along the ground.
+ 	var ndome: int = clampi(int(round(p("blast", "dome") * k)), 0, 20)
+diff --git a/render/vfx/debris.gd b/render/vfx/debris.gd
+index fb7e303e..31846044 100644
+--- a/render/vfx/debris.gd
++++ b/render/vfx/debris.gd
+@@ -54,6 +54,9 @@ var clear_query: Callable = Callable()   # Rendering's read of what the patch an
+ var pane: Dictionary = {}       # the facade's pane grid (VfxPanes.grid) while a caller throws glass from one building: window glass starts at a pane, not at a spot on the wall
+ var puff_area_cap: float = INF  # the most of it the pool keeps: the hub sets it from the register's area threshold and the camera's scale; a puff over it is not made (the oldest keep fading)
+ var ember_area_cap: float = INF # the most of it a scorch may keep alive: the hub sets it from the register's area threshold and the camera's scale (a flash's bright pixels, docs/vfx/flash-registry.md)
++var chunk_area_cap: float = INF # the most drawn area of earth chunks (mode 2) the pool keeps, world units squared: the hub sets it from the register's area threshold and the camera's scale; a chunk over it is not made (ambient ones stop at CHUNK_AMBIENT_K of it; a crater's own are counted and never turned away)
++var _chunk_area: float = 0.0    # their drawn area now, recounted each step (a chunk made since is added when it is made)
++var chunks_refused: int = 0     # chunks the cap turned away (tools and tests)
+ var _spray_alive: int = 0       # water streaks in the pool (cap data/vfx/water.json caps.spray_alive)
+ var _rubble_alive: int = 0      # slow rising rubble bits in the pool (cap data/vfx/react.json rubble.alive_cap)
+ var _flame_alive: int = 0       # flames in the pool (cap data/vfx/earth.json flame.alive_cap)
+@@ -111,6 +114,7 @@ func step(S: SimState, dt: float) -> void:
+ 				i += 1
+ 	_ember_area = 0.0       # recounted over the pool below, after the jobs have made theirs (a bit a job made is counted once)
+ 	_puff_area = 0.0
++	_chunk_area = 0.0
+ 	for i in range(bits.size() - 1, -1, -1):
+ 		var b: Bit = bits[i]
+ 		b.age += dt
+@@ -127,6 +131,8 @@ func step(S: SimState, dt: float) -> void:
+ 		elif b.kind == PUFF:
+ 			var fin: float = b.sx + b.grow * maxf(b.life - b.age, 0.0)
+ 			_puff_area += 0.785 * fin * fin
++		elif b.kind == CHUNK and b.mode == 2 and b.grav >= 0.0:
++			_chunk_area += b.sx * b.sy
+ 		if b.age >= b.life:
+ 			bits[i] = bits[bits.size() - 1]
+ 			bits.pop_back()
+@@ -790,7 +796,13 @@ func _blow(_S: SimState, a: Dictionary) -> void:
+ ## One chunk of earth, paving, rock or whatever the event named, tumbling: it flies under gravity, spins, bounces off the
+ ## ground twice and fades. tones: [mid, light, shadow] colours of its material. mode 2 draws it with a lit and a shaded side of
+ ## its own colour (the shared concrete rim is only for steel and concrete).
+-func chunk(x: float, y: float, z: float, vx: float, vy: float, size: float, life: float, tones: Array, mode: int, spin: float = 9.0) -> void:
++func chunk(x: float, y: float, z: float, vx: float, vy: float, size: float, life: float, tones: Array, mode: int, spin: float = 9.0, cap_k: float = VfxLook.CHUNK_AMBIENT_K) -> void:
++	if mode == 2 and chunk_area_cap < INF:
++		var a2: float = size * size * 0.78
++		if _chunk_area + a2 > chunk_area_cap * cap_k:
++			chunks_refused += 1
++			return
++		_chunk_area += a2
+ 	var b := Bit.new()
+ 	b.kind = CHUNK
+ 	b.x = SimWrap.wrap(x)
+diff --git a/render/vfx/earth.gd b/render/vfx/earth.gd
+index 225e68bb..a0391384 100644
+--- a/render/vfx/earth.gd
++++ b/render/vfx/earth.gd
+@@ -331,7 +331,7 @@ func on_crater_ejecta(e) -> void:
+ 		var sz: float = debris._rd.range_(8.0, 13.0 + 2.0 * sqrt(maxf(E, 0.0)))
+ 		var life: float = debris._rd.range_(0.9, 1.5) * _lk()
+ 		if debris._rd.next() < _q():
+-			debris.chunk(x + off, float(e.y) + 6.0, z + 6.0, vx, vy, sz, life, tones, 2, 10.0)
++			debris.chunk(x + off, float(e.y) + 6.0, z + 6.0, vx, vy, sz, life, tones, 2, 10.0, VfxLook.CHUNK_CRATER_K)
+ 			contact_made += 1
+ 	var nd: int = clampi(int(4.0 + r / 20.0), 4, 18)
+ 	for k in range(nd):
+diff --git a/render/vfx/tools/effects_check.gd b/render/vfx/tools/effects_check.gd
+index 4a3d2e3b..a944421a 100644
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -1396,6 +1396,26 @@ func _intro() -> void:
+ 		if b.kind == VfxDebris.CHUNK:
+ 			left_t = b.life - b.age
+ 	_check(left_t < 0.0 or left_t <= 0.31, "an earth chunk at rest has at most 0.3 s left (%.2f)" % left_t)
++	# The earth chunks' area cap: a skid's and a bounce's chunks stop at CHUNK_AMBIENT_K of it, a crater's own are not turned away; building chunks (mode 0) are not counted.
++	var hck := VfxHub.new()
++	hck.reset(S, 6)
++	_tick(S, hck, [])
++	hck.debris.chunk_area_cap = 1000.0
++	var am: int = 0
++	for k in range(40):
++		hck.debris.chunk(plains, gy + 40.0, 0.0, 0.0, 300.0, 10.0, 2.0, [Color.GRAY, Color.WHITE, Color.BLACK], 2, 0.0)
++	for b in hck.debris.bits:
++		if b.kind == VfxDebris.CHUNK:
++			am += 1
++	var am_area: float = float(am) * 100.0 * 0.78
++	_check(am > 0 and am_area <= 1000.0 * VfxLook.CHUNK_AMBIENT_K + 0.01 and hck.debris.chunks_refused == 40 - am, "ambient earth chunks stop at their share of the cap (%d made, %d refused, %.0f of %.0f)" % [am, hck.debris.chunks_refused, am_area, 1000.0 * VfxLook.CHUNK_AMBIENT_K])
++	for k in range(20):
++		hck.debris.chunk(plains, gy + 40.0, 0.0, 0.0, 300.0, 10.0, 2.0, [Color.GRAY, Color.WHITE, Color.BLACK], 2, 0.0, VfxLook.CHUNK_CRATER_K)
++	var all_n: int = hck.debris.bits.filter(func(b): return b.kind == VfxDebris.CHUNK).size()
++	_check(all_n == am + 20, "a crater's own chunks are never turned away, whatever the pool holds (%d, then %d)" % [am, all_n])
++	var mode0: int = hck.debris.bits.size()
++	hck.debris.chunk(plains, gy + 40.0, 0.0, 0.0, 300.0, 10.0, 2.0, [Color.GRAY, Color.WHITE, Color.BLACK], 0, 0.0)
++	_check(hck.debris.bits.size() == mode0 + 1, "a building's chunk (mode 0) is not under the cap")
+ 	# The trail's break ring is for flight, not for the scripted entrance fall.
+ 	var tf := VfxTrailState.new()
+ 	var rgi := SimRng.new(8)
+diff --git a/render/vfx/vfx_hub.gd b/render/vfx/vfx_hub.gd
+index a576144f..e8d5185c 100644
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -236,6 +236,7 @@ func _consume(S: SimState, events: Array) -> void:
+ 	flashes.begin_tick(reduced_motion or reduced_flashing)
+ 	debris.puff_area_cap = VfxLook.PUFF_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05)
+ 	debris.ember_area_cap = VfxLook.EMBER_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.5 if (reduced_motion or reduced_flashing) else 1.0)
++	debris.chunk_area_cap = VfxLook.CHUNK_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.6 if (reduced_motion or reduced_flashing) else 1.0)
+ 	_sync_vision(S)
+ 	var dt: float = SimConst.DT
+ 	var frozen: bool = true
+diff --git a/render/vfx/vfx_look.gd b/render/vfx/vfx_look.gd
+index 75557b03..15f74570 100644
+--- a/render/vfx/vfx_look.gd
++++ b/render/vfx/vfx_look.gd
+@@ -145,6 +145,9 @@ const EMBER_PER_TICK: int = 12          # scorch embers spawned per tick, at mos
+ const EMBER_CAP: int = 100              # and alive at once
+ const PUFF_AREA_SHARE: float = 1.5      # the same for the dust and smoke puffs alive at once, at their widest
+ const EMBER_AREA_SHARE: float = 0.4     # a scorch column's drawn area, as a share of the register's area threshold (21,824 px at 1024 by 768): whatever the camera does to it, it is never a flash of its own
++const CHUNK_AREA_SHARE: float = 0.15     # the earth chunks alive at once (mode 2, drawn area), as a share of the register's area threshold: a dark chunk on pale ground is a changed pixel at every move, and a skid's bounces keep fifty of them alive (docs/vfx/flash-registry.md, ai seed 4)
++const CHUNK_AMBIENT_K: float = 0.7      # a bounce's, a skid's, a landing's chunks stop at this share of that cap; a crater's own ejecta are not throttled (CHUNK_CRATER_K)
++const CHUNK_CRATER_K: float = 1000.0    # a crater's own ejecta and the blast's rim chunks are the tier's weight (power has weight): they are counted in the area but never turned away
+ const HOLES_MAX: int = 24
+ const HOLES_PER_BUILDING: int = 3
+ const GLASS_IN_MIN: int = 10            # a burst-through: glass thrown back at the entry ...

@@ -1,0 +1,5 @@
+# Parked by VFX (2026-10-14)
+
+`chunk-area-cap.patch`: a pool cap on the drawn area of earth chunks (mode 2): ambient chunks (skid spray, bounces, landings) stop at 0.7 of CHUNK_AREA_SHARE (0.15) of the register's area threshold; a crater's own chunks (earth.gd crater ejecta, blast.gd rim) are counted and never turned away (CHUNK_CRATER_K 1000); with a test in `effects_check`. A diff against 3198301f for `render/vfx/`, effects_check passing with it.
+
+Measured in four clips (ai 4 normal and reduced, ai 39 reduced, collapse reduced): **no change in any** with the crater chunks exempt. Setting `CHUNK_CRATER_K` to 1.0 (a crater's chunks under the cap too) removed 64+ from ai 4 normal (4.5 to 4) and 116+ from collapse reduced, and nothing else; it breaks the tier-escalation check of `effects_check` at the close framing (tiers 3 and 4 spawn the same). Not applied; see `docs/vfx/flash-registry.md`, "The chain's last three failing seconds". Apply from the repo root with `git apply docs/vfx/pending/chunk-area-cap.patch`.
