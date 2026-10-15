@@ -1220,3 +1220,91 @@ You hold X and your fighter flurries. Then the two are knocked apart. Game Desig
 - [ ] Only as an accessibility setting, off by default
 - [x] Your call
 - Notes: err on the side of player agency, but the fights move so fast that the ability to 'chase' a knocked back opponent and continue a beatdown in midair might fulfill 'rule of cool' and add to player agency at the same time. lets work on this and get it feeling really good in playtests.
+
+## Orb answers homework 3, fighters (2026-10-15)
+
+Verbatim from homework/3-fighters.md (questions, ticked boxes and notes):
+
+---
+
+**1. Do all fighters share one clock?**
+Under this rule a heavy-handed fighter's heavy takes exactly as long as anyone else's. Fighters differ in what they throw, how it looks, where it lands, their toughness and their signature, but not in timing. This is what lets the balance work done so far carry over to every new fighter.
+
+- [x] Yes, one clock for everyone, at least until all four are in
+- [ ] No, fighters should have their own speeds. (This means re-balancing per fighter.)
+- [ ] Your call
+- Notes:
+
+**2. The Cyborg and the Empress without their special mechanics yet?**
+A first version of each could be playable soon with their own look, voice and moveset, but without minions, stages, consumption or the companion hunt. Those would follow one at a time.
+
+- [ ] Yes, show them early without their mechanics
+- [x] No, hold each back until their mechanic exists
+- [ ] Yes for one of them: ____________
+- Notes:
+
+**3. The order.**
+Proposed: the Anti-hero first (he is nearest to done), the Protagonist alongside, then the Cyborg (the cheapest new body), then the Empress (her mantle needs the most rig work).
+
+- [x] That order
+- [ ] A different order:
+- Notes:
+
+**4. Which fighter's one-page brief do you want to write or mark first?**
+Narrative has pre-filled a page for each from your notes; marking one takes about fifteen minutes.
+
+- [x] Protagonist  - [x] Anti-hero  - [ ] Demon Cyborg  - [ ] Empress
+- Notes:
+
+**5. A plain "reference" fighter.**
+Game Design wants a plain fighter with base stats as a measuring stick: new fighters are compared against it, which shows whether a problem is the fighter or the game.
+
+- [ ] Keep it out of sight, a testing tool only
+- [x] Put it in the roster as a training dummy
+- [ ] Your call
+
+---
+
+**5b. Borrowed heavies at first?**
+A new fighter would draw most of his heaviest blows from the shared pool at first, each thrown in his own style, with two that are his alone. More of his own come later.
+
+- [ ] Fine
+- [ ] Each fighter needs his own heavies from the start
+- [x] Your call
+
+**5c. Signatures for the two in the build.**
+Proposed: the Anti-hero's signature is a barrage of shots; the Protagonist keeps the beam.
+
+- [ ] Yes
+- [ ] No. What I want:
+- [x] Your call
+
+**5d. Choosing a fighter.**
+There is no fighter-select screen yet: a match starts as the Protagonist against the Anti-hero. One will be needed for the third fighter. When should it appear?
+
+- [ ] Once, when the game starts
+- [ ] Before every new match
+- [x] Your call
+
+---
+
+## The Anti-hero: two small things Art is waiting on
+
+**6. His aura.** Art has a set of options and needs your pick. Do you want a sheet to choose from, or to describe what you want?
+
+- [x] Send me a sheet
+- [ ] I'll describe it:
+
+**7. His glasses: always on?**
+
+- [x] Always on {{spitballing: lenses, frames can crack, bend, some dialogue could reference this briefly like bragging about paying extra for the best frames, or lamenting needing to buy a new pair when the match is over}}
+- [ ] They come off (when?):
+- [ ] Your call
+
+---
+
+## Do the two in the build feel like themselves yet?
+
+You called them "generic stand-ins". They wear the approved looks, but right now they both fight with the same borrowed moves, which is being fixed. Is there anything else that makes them feel generic to you?
+
+Your notes: two guys with different colored shirts wearing backpacks. perfectly fine for a test environment, but more personality, style, and distinction would go a long way.
