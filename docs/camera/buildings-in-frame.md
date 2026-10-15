@@ -214,3 +214,38 @@ Tools' reading of ai 12345 with the launch rule and the merge zoom limit both on
 - **What the limit is for:** collapse-normal's closing (the pair rushing together at ticks 84 to 104, one view): with hold and the closing-only limit it reads 1.5 / 2.5 / 1.5.
 
 **Built.** `merge_zoom_limit` acts only on the layout's closing into one view (the pair within 300 units, or already one view, for 2 s), not on a launch shot's end. A new switch `slam_off` (`SplitView.set_slam_off`, default off): a rush's contact does not shut the door; the panes merge the ordinary way. It reads 2 / 2 / 2 on the ticks 0 to 760 of ai 12345 (against 2.5 / 2.5 / 2.5 with the door); the full clip with it and the old limit is the arm above that fails at 1376, so it is not needed for any pass measured. **Not built:** a softer door (worse), a vertical-rate cap on the slam's dive (the dive's follow is 0.029 of the width a tick for 15 ticks, inside the bound; the door's pane-to-shared sweep, 330 units in 4 ticks, is the one tick over). The cost of `slam_off`: a rush's contact loses its punch (the divider's slam, the push and the shake carry it today).
+
+## 15. ai 39 reduced: the launch's first ticks and the divider's door (2026-10-15)
+
+Tools: ai 39 reduced reads 3 / 3.5 / 2.5 with every switch off, "a launch, camera 6 of 7 changes, a solo shot into the split ending in the divider's slam at 2828 to 2860". Reproduced through the real scene (`render/camera/tests/clip_probe.gd --scenario=ai --seed=39 --reduced`) and with Tools' own capture path on scratch exports of HEAD, the whole 3,600-tick clip, 1,024 x 768 (primary / area -15% / 2 s memory):
+
+| Arm (ai 39 reduced) | Reading | Worst second |
+| :--- | :--- | :--- |
+| Switches off | 3.5 / 3.5 / 3 FAIL | 2831 to 2875: the divider's slam |
+| Launch rule on | 3.5 / 3.5 / 2.5 FAIL | the same |
+| Launch rule on, engaging sooner under reduced flashing | 2.5 / 3.5 / 2.5 FAIL (area) | the slam, 2833 to 2875 |
+| No slam door only | 3 / 3 / 3 OVER GATE | 2729 to 2761: the launch's chase |
+| **Both: the rule engaging sooner, and no door, under reduced flashing** | **1.5 / 2.5 / 1.5 PASS** | nothing over 1.7 times |
+
+**What in the camera makes it.** Two things, one second each:
+1. **The launch's first ticks** (2736 to 2756): the victim leaves a lock at 7,800 units a second (0.045 to 0.066 of the width a tick at the zoom floor, over the reduced line of 0.03 and the ordinary 0.045) for 20 ticks before anything holds it. The launch rule engages after the body has covered 0.6 of the width (8 ticks) or at one step of 0.15 of the width; this launch is 0.06 a tick. Under reduced flashing the line is 0.03, so the engage thresholds are scaled with it (0.25 of the width, or a step of 0.05): `SplitRig.launch_hold_eager` (default off; it acts only with `launch_hold`, and only under reduced flashing).
+2. **The divider's door** (2826 to 2860): the rusher's pane follows at 0.041 to 0.043 for 12 ticks, and the door's pane-to-shared sweep reads 0.05 to 0.076 for 18. Its changes are 2831+, 2843+, 2864-, 2875+ at 3.1 to 3.3 times the threshold. Without the door, the same rush merges by the ordinary closing and the worst second falls to the launch, which the sooner engage then holds.
+
+**Built.** `launch_hold_eager` (behind `launch_hold`, reduced flashing only) and `slam_off` scoped to reduced flashing or reduced motion (`SplitView.set_slam_off`): in the ordinary mode the door stays. A reduced-flashing viewer loses the door's punch; the ordinary mode keeps it.
+
+**The ordinary mode, and a third piece: the sky latch.** With the rule on, ai 12345 normal went from 2 / 2.5 / 2 to 3 / 3 / 3: a flight that begins thousands of units up is a chase over open sky, and the rule turned it into one cut onto the city. `SplitRig._lh_sky`: a launch whose flight began more than `LH_SKY_ALT` (1,500 units) above the ground is not engaged by the rule (latched until he is no longer launched); the ordinary follow takes it, as in the clip's original run. The ground-level launches the rule is for (ai 39's, collapse's fling) are unaffected.
+
+**Measured on the final tree** (switches `launch_hold`, `launch_hold_eager`, `merge_zoom_limit`, `slam_off` all on; web exports of the tree on current HEAD 4cc7319a plus my files unless marked; primary / area -15% / 2 s memory):
+
+| Clip | Switches off | Set on |
+| :--- | :--- | :--- |
+| ai 39 reduced | 3.5 / 3.5 / 3 FAIL (above, 3198301f) | 2 / 2.5 / 2 PASS |
+| ai 12345 normal | 2 / 2.5 / 2 PASS (older base) | 2.5 / 2.5 / 2 PASS |
+| collapse normal | 3 / 3 / 3 OVER GATE | 3 / 3 / 1 OVER GATE |
+| collapse reduced | not measured | 2 / 3 / 1 PASS |
+| ai 39 normal (older base, b. 3198301f) | 3 / 3 / 3 FAIL | 2.5 / 3 / 2.5 PASS |
+| ai 12345 reduced (older base) | | 2.5 / 2.5 / 2 PASS |
+
+Collapse normal fails at current HEAD with every switch off, and the set does not move its primary reading (3 either way; the memory reading falls from 3 to 1). On the older base (f5c001e6) the same arm read 1.5 / 2.5 / 1.5, so the change is in what has landed since (the animation styles and the chain), not in the rig. I have not chased it: the clip is VFX's first blast, and a camera cut cannot take what the picture adds. **Recommendation:** the set ships as `launch_hold` + `launch_hold_eager` + `slam_off` (+ `merge_zoom_limit`), each default off, for Tools' table to weigh; the reduced-flashing viewer gains most (ai 39, ai 1, ai 5, ai 12345 all inside the gate), the ordinary mode is neutral to better on the clips measured.
+
+**Gates** (current HEAD plus my files): split_sweep default seed 10 full, `--launch-hold` seeds 10 and 17, real seeds 3 and 17: passed; seam_sweep, pane_check, determinism plain and `--intro --seeds=2 --ticks=900`: passed (run on the same files over the older base, f5c001e6's neighbour; the camera files do not touch what they read); `depth_inert` digests with the switches off equal to a clean HEAD export's (881773481156056933 and 1623366814117928698, the scripted and the real-sim runs).
