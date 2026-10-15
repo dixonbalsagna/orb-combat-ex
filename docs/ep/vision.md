@@ -1114,3 +1114,11 @@ When LLMs write fight dialogue without strict guardrails, they default to "Silve
 > * **Lock in the Dynamic:**
 > * **The Protagonist** sounds like an excited athlete in a heavy sparring match. He is casual, disrespectful by accident, grinning through pain, and only cares about drawing out the Rival's top gear.
 > * **The Rival** sounds impatient, abrasive, and insulted. He hates being pitied, hates when the Protagonist smiles, and treats anything less than a 100% lethal effort from the Protagonist as a personal humiliation.
+
+## The ellipsis, and keep refining for multi-fighting (Orb, 2026-10-15)
+
+Verbatim:
+
+> I think the ellipsis can be used to signify hesitation, regret, perhaps performative exhaustion among others, they should be used sparingly but in context it's a good literary device for what we're trying to do.
+>
+> keep working, I want the depth and breadth of animations and mechanics continually refined and enhanced in preparation for multi-fighting and improvements to the dynamic fight choreography
