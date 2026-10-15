@@ -1,0 +1,155 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 1df34197..9f1ce15a 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -260,6 +260,14 @@ const LH_ENGAGE_W: float = 0.6         # the rule engages once a fast body has c
+ const LH_BIG: float = 0.15            # ... or at once when his step at the pane's own zoom is over this much of the width a tick (a fling: 32,000 units a second is 0.3; 7,000 at the close zoom is 0.09)
+ const LH_ENGAGE_W_REDUCED: float = 0.25   # under reduced flashing the rule engages sooner: after this much of the width covered ...
+ const LH_BIG_REDUCED: float = 0.05     # ... or at once at this step a tick (the reduced line is 0.03 where the ordinary is 0.045)
++const WHIP_W: float = 0.025           # the whip cap (docs/camera/whip-pan.md): a pane's focus moves at most this much of the width a tick (1.5 widths a second) ...
++const WHIP_W_REDUCED: float = 0.018   # ... and this much under reduced motion or reduced flashing ...
++const WHIP_ROOM: float = 0.18         # ... until he is this far (of the width) from the focus: from there he is followed at his speed (the cap never loses him; a pane is 0.5 wide)
++const WHIP_ON: float = 0.03           # a pane is in a whip when its picture would scroll at this much of the width a tick (1.8 widths a second) or more
++const R_FLOOR_WHIP: float = 0.02     # in a whip the smallest a fighter is shown: 14 px at 720p (R_FLOOR is 23)
++const WHIP_GOV: float = 0.03          # the scroll governor aims at this much of the width a tick under the whip cap (SCROLL_MAX otherwise)
++const WHIP_LOOK: float = 10.0         # the governor reads the speed the body will have in this many ticks at the acceleration he has now (a flight that is still gaining speed)
++const WHIP_ZOOM_RATE: float = 2.4     # and a zoom-out the governor asks for may go at this many e-folds a second
+ const LH_SKY_ALT: float = 1500.0      # the rule does not engage for a body this high above the ground (units): the picture under a high flight is sky, which a chase does not change
+ const LH_SLOW: float = 0.8             # ... and ends when his speed has been under this share of the threshold ...
+ const LH_SLOW_TICKS: int = 6           # ... for this many ticks (or he has landed): one cut if he is far, else the ordinary follow takes him
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index e362d3c7..b7245a90 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -892,8 +892,10 @@ func _body_speed(f) -> float:
+ 
+ ## `headroom` scales the limit: the governor aims at 0.9 of the travel budget, so the displayed camera (held to the budget) has a tenth
+ ## of it to catch up with a lag the budget made, and a steady pursuit settles at no lag instead of a slow drift and a cut every half second.
+-func _scroll_gov(speed: float, z: float, headroom: float = CamParams.GOV_HEADROOM) -> float:
++func _scroll_gov(speed: float, z: float, headroom: float = CamParams.GOV_HEADROOM, whip: bool = false) -> float:
+ 	var lim: float = (CamParams.SCROLL_MAX_REDUCED if (reduced_motion or flash_reduced) else CamParams.SCROLL_MAX) * headroom
++	if whip and not reduced_motion:
++		lim = minf(lim, CamParams.WHIP_GOV * headroom)
+ 	var w: float = speed * DT * z / vw
+ 	if w <= lim:
+ 		return 1.0
+@@ -2183,8 +2185,14 @@ func _own_zoom_target(S: SimState, i: int) -> float:
+ 	z *= _push_mult(i) * _hit_mult(i)
+ 	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
+ 		var zfl: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
+-		var gv: float = _scroll_gov(maxf(maxf(float(_vsm[i]), _gov_armed()), _body_speed(f)), z * pz)
++		var sp_g: float = maxf(maxf(float(_vsm[i]), _gov_armed()), _body_speed(f))
++		var whipping: bool = whip_cap and bool(_whip_on[i])
++		if whipping and not reduced_motion:
++			sp_g = maxf(sp_g, _body_speed(f) + float(_whip_acc[i]) * CamParams.WHIP_LOOK * DT)
++		var gv: float = _scroll_gov(sp_g, z * pz, CamParams.GOV_HEADROOM, whipping)
+ 		_gov_bind[i] = gv < 0.999
++		if whipping and not reduced_motion:
++			zfl = CamParams.R_FLOOR_WHIP * vh / CamParams.BODY_H   # in a whip he may be smaller: a dot he can be followed by, over a picture that does not sweep
+ 		z = maxf(z * gv, minf(z, zfl))
+ 	elif f.state == "launched" and not reduced_motion:
+ 		# A launched body is followed at his size, but the scenery behind a launch at 6,000 units a second crosses a pane at
+@@ -2378,6 +2386,11 @@ var _lh_dist: Array = [0.0, 0.0]                       # the width a fast body h
+ var _lh_rel_t: Array = [-1.0e9, -1.0e9]               # when the rule last ended for this pane (it engages at once again within a second)
+ var _lh_sky: Array = [false, false]                   # this flight began above LH_SKY_ALT: the rule leaves it
+ var _lh_slow: Array = [0, 0]                           # ticks he has been under LH_SLOW of the threshold
++var whip_cap: bool = false                              # a pane's pan is capped for a whip, and the governor zooms out sooner (docs/camera/whip-pan.md); off by default
++var _whip_on: Array = [false, false]                   # pane i is in a whip: a flight whose picture would scroll at WHIP_ON of the width a tick or more (whip cap)
++var _wv: Array = [0.0, 0.0]                             # the body speed last tick (whip cap)
++var _whip_acc: Array = [0.0, 0.0]                      # the speed he gained this tick, units a second (whip cap)
++var whip_caps: int = 0                                  # ticks the whip cap held a pane's focus back (counted for the tests)
+ var launch_hold_eager: bool = false                     # under reduced flashing the rule engages sooner (section 15); off by default
+ var launch_holds: int = 0                              # (counted for the tests)
+ var launch_pans: int = 0
+@@ -2868,6 +2881,35 @@ func _update_cameras(S: SimState) -> void:
+ 					scroll_caps += 1
+ 					if int(_onset_run[i]) < CamParams.CAP_MAX:
+ 						_onset[i] = maxi(int(_onset[i]), 1)
++		# The whip cap (off by default, docs/camera/whip-pan.md): a pane that is in a whip (a flight whose picture would scroll at WHIP_ON of
++		# the width a tick or more, judged on the speed he will have in WHIP_LOOK ticks at the acceleration he has) takes no larger a focus
++		# step than WHIP_W of the width a tick until he is WHIP_ROOM from the focus, from where he is followed at his speed; and the scroll
++		# governor aims at WHIP_GOV and zooms out sooner. The pursuit's velocity lead and the lag bound otherwise take the focus to his
++		# speed within ten ticks (0.06 to 0.08 of the width a tick over World's row-1 houses: Tools' signaturecity, 6 counted
++		# alternations in 10 ticks) while the zoom governor, at its rate, is still on its way out.
++		_whip_on[i] = false
++		if whip_cap and not reduced_motion and not _cut_now and lh_ph == 0 and f.state != "launched" and f.rush == null and not freeze and not (solo_kind != "" and solo_slot == i):
++			var bs0: float = _body_speed(f)
++			_whip_acc[i] = maxf(0.0, bs0 - float(_wv[i])) / DT
++			var pred_w: float = maxf(bs0 + float(_whip_acc[i]) * CamParams.WHIP_LOOK * DT, float(_vsm[i])) * DT * zc / vw
++			_whip_on[i] = pred_w >= CamParams.WHIP_ON
++			if bool(_whip_on[i]):
++				var wl: float = (CamParams.WHIP_W_REDUCED if flash_reduced else CamParams.WHIP_W) * vw / zc
++				var wroom: float = CamParams.WHIP_ROOM * vw / zc
++				var wsx: float = SimWrap.sdx(_pfx[i], _fx[i])
++				var wsy: float = _fy[i] - float(_pfy[i])
++				var wlx: float = maxf(wl, absf(SimWrap.sdx(_pfx[i], f.x) + lead_c) - wroom)
++				var wly: float = maxf(wl, absf(f.y + CamParams.CHEST - float(_pfy[i])) - wroom * vh / vw)
++				var wcap: bool = false
++				if absf(wsx) > wlx and absf(wsx) < 1500.0:
++					_fx[i] = SimWrap.wrap(_pfx[i] + signf(wsx) * wlx)
++					wcap = true
++				if absf(wsy) > wly and absf(wsy) < 1500.0:
++					_fy[i] = float(_pfy[i]) + signf(wsy) * wly
++					wcap = true
++				if wcap:
++					whip_caps += 1
++		_wv[i] = _body_speed(f)
+ 		# own zoom: first-order filter, then the rate cap
+ 		# the scroll governor reads how fast the pane's camera is actually moving (a pinned pane is not: it waits)
+ 		var dfx: float = absf(SimWrap.sdx(_pfx[i], _fx[i]))
+@@ -2899,6 +2941,8 @@ func _update_cameras(S: SimState) -> void:
+ 		var kz: float = 1.0 - exp(-DT / tau_z)
+ 		var dz: float = (log(zt) - log(_zo[i])) * kz
+ 		var cap: float = (CamParams.SLAM_ZOOM_RATE if stiff else zrate) * DT
++		if whip_cap and bool(_whip_on[i]) and gov_out and not reduced_motion:
++			cap = maxf(cap, CamParams.WHIP_ZOOM_RATE * DT)
+ 		_zr_pane[i] = zrate
+ 		dz = clampf(dz, -cap, cap)
+ 		if lh_ph == 1:
+diff --git a/render/camera/split_view.gd b/render/camera/split_view.gd
+index 4ad3f707..0d7938ef 100644
+--- a/render/camera/split_view.gd
++++ b/render/camera/split_view.gd
+@@ -159,6 +159,13 @@ func set_depth_dolly(on: bool) -> void:
+ ## The launch rule engages sooner under reduced flashing (docs/camera/buildings-in-frame.md section 15): after 0.25 of the width
+ ## covered, or at a step of 0.05 of the width a tick, where the ordinary mode takes 0.6 and 0.15 (the reduced line is 0.03 where the
+ ## ordinary is 0.045). Acts only with the launch rule on. Off by default. A build-time switch.
++## The whip cap (docs/camera/whip-pan.md): a pane's pan is held to 1.5 widths a second for a fast flight, until he is 0.36 of the
++## width from the focus, and the scroll governor aims lower and zooms out faster. Off by default. A build-time switch.
++func set_whip_cap(on: bool) -> void:
++	if main != null:
++		main.split_rig.whip_cap = on
++
++
+ func set_launch_hold_eager(on: bool) -> void:
+ 	if main != null:
+ 		main.split_rig.launch_hold_eager = on
+diff --git a/render/camera/tests/split_sweep.gd b/render/camera/tests/split_sweep.gd
+index ab00190c..d3d834fc 100644
+--- a/render/camera/tests/split_sweep.gd
++++ b/render/camera/tests/split_sweep.gd
+@@ -66,6 +66,7 @@ var dump_from: int = 0
+ var dump_to: int = 0
+ var shots_dir: String = ""
+ var only: String = ""
++var whip_cap_on: bool = false      # --whip-cap runs every row with the whip cap on (off is the shipped default)
+ var launch_hold_on: bool = false   # --launch-hold runs every row with the launch rule on (off is the shipped default)
+ var budget_on: bool = true   # --budget=off runs every row with the travel budget switched off (the shipped default)
+ var _clear_prev: SplitFrame = null   # the last tick's frame, for the foreground's clear[i] rules
+@@ -132,6 +133,8 @@ func _initialize() -> void:
+ 			budget_on = false
+ 		elif a == "--launch-hold":
+ 			launch_hold_on = true
++		elif a == "--whip-cap":
++			whip_cap_on = true
+ 		elif a.begins_with("--only="):
+ 			only = a.substr(7)
+ 		elif a.begins_with("--shots="):
+@@ -358,6 +361,7 @@ func _begin(label: String) -> void:
+ 	_rig = SplitRig.new()
+ 	_rig.travel_budget = budget_on
+ 	_rig.launch_hold = launch_hold_on
++	_rig.whip_cap = whip_cap_on
+ 	_tick = 0
+ 	_trav_prev = null
+ 	_clear_prev = null
