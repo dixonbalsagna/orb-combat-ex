@@ -7,6 +7,8 @@ extends SceneTree
 ##    the fighter plane join it without a step;
 ## 3. rebuild: a fresh GroundField rebuilt from state alone (as for a replay seek or a snapshot restore) holds the same
 ##    crater lists, residual and crater data as the one the renderer kept up to date frame by frame.
+## 4. span: both materials that draw the ground (terrain and water) hold RenderLook.FORE_SPAN, the columns either side
+##    over which the foreground rule reads the fighter plane's lowest ground.
 ## Then, on a staged state, a crater on the wrap seam (x = 0) must be mirror-symmetric across it at every depth.
 ## Also checks the mesh: every column has exactly one top-grid vertex on z = 0, flagged exact.
 ##   godot --headless --path . --script res://render/tools/ground_check.gd [-- --seeds=4,12345,7 --ticks=5400]
@@ -112,6 +114,10 @@ func _check(S: SimState, label: String) -> void:
 	fresh.rebuild(S)
 	if fresh.lists != gfld.lists or fresh.g != gfld.g or fresh.cdata != gfld.cdata:
 		fails.append("%s: a rebuild from state differs from the kept-up-to-date field (lists %s, residual %s, craters %s)" % [label, fresh.lists == gfld.lists, fresh.g == gfld.g, fresh.cdata == gfld.cdata])
+	for m in [main.planet._terrain_mat, main.planet._water_mat]:
+		if float(m.get_shader_parameter("fore_span")) != float(RenderLook.FORE_SPAN):
+			fails.append("%s: a ground material's foreground span is %s, not RenderLook.FORE_SPAN" % [label, str(m.get_shader_parameter("fore_span"))])
+			break
 	var wet: int = 0
 	var burnt: int = 0
 	for i in range(SimConst.NC):

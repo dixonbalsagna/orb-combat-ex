@@ -28,6 +28,10 @@ const Z_TERRAIN_FRONT: float = 600.0     # the ground's shading reference in fro
 ## the ground or under water, and a ridge or sea the camera is below shows as a soft face under its own profile.
 const Z_FORE: float = 1.0e6
 const FORE_DROP: float = 0.03
+## ... and the fighter plane's profile it reads is the lowest within FORE_SPAN columns either side (at most 3) of where
+## the sight line meets it. A narrow rise there (a slide's heap three columns long, ai seed 38) threw a ridge of the cap
+## toward the camera that swept across the foreground, lit face and shaded face by turns, as the camera moved.
+const FORE_SPAN: int = 2
 const WATER_FALL_BODY: float = 4.0   # water that fell this far under the foreground rule shows its body, not its surface
 const Z_TERRAIN_BACK: float = -1125.0 * WS   # back of the crater rows: tier-4 rims reach about 2 x 4,300
 ## Ground rows are generated, not listed: spacing ROW_STEP0 at the fighter plane (fighter scale), growing by

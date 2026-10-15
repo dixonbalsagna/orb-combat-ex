@@ -272,6 +272,39 @@ The brief: the clip's first blast (seed 12345, ticks 84 to 144) read 2.5 / 3.5 a
 - **Why the count does not fall further.** From tick 92 to tick 112 about 20,000 pixels turn each way on every tick with nothing of mine changing: the camera's pan and zoom over lit windows and over the glowing crater. A run of two or three such ticks reaches the threshold whichever way it tips. More margin at this blast is in the camera's travel, or in the contrast of lit windows and glow against the dusk, which is a look decision. It is not in more spreading.
 - **Scratch tools:** `tog16.py` (the switches), `pool.js` (the pooling tick by tick, and a run's mask), `turnmap.js`, `boxlum.js`.
 
+## The foreground rule at a landing: ai 38, ai 4, collapse (2026-10-13 and 14)
+
+**What it was.** VFX traced the AI clips' last failing seconds to the ground: they read the same with the VFX hub off. A scratch probe ran ai seed 38 headless and printed the ground's inputs every tick. At its landing (tick 3482) they change once: a slide's record, and a heap three columns long and 64 units tall at its end, on the fighter plane. For the next twelve ticks nothing in the ground's data changes, while a dark triangle comes and goes in front of the bowl. It goes with render/core's particles all off too, and only a frozen ground removes it.
+
+What draws it is the **foreground rule** (`fore_fall` in `ground.gdshaderinc`). In front of the fighter plane no ground rises above the sight line from the camera to the plane's own ground. A sharp rise in the plane's profile made the rule's cap throw a ridge toward the camera, and its lit and its shaded face swept across the foreground as the camera moved. ai seed 4's failing second (ticks 2504 to 2522, a fighter down at 2500) and the collapse clip's in reduced mode (1137, round the grounded fighter) are the same thing.
+
+**The fix, in every match.** The rule reads the fighter plane's **lowest ground within two columns either side** (`FORE_SPAN`) of where the sight line meets it, and the slope it shades by is that profile's **difference across one column**. A rise narrower than that throws no ridge, and the cap can only come out lower, so nothing in front hides more of the fight.
+
+- **A first version took the slope of whichever column was lowest.** Where two columns stood near the same height that choice flipped from tick to tick as the camera moved. On the chain's fights it made new one-to-three-tick flickers: a stretch of the collapse clip in reduced mode (ticks 1101 to 1260) read 5.5 / 7.5 where main reads 3.5 / 4.5. With the slope from the profile's own difference, which changes smoothly, the same stretch read 1.5 / 2.5. Both of those builds also had the crater opening and the reduced-mode earth below.
+- **Three columns either side** took ai seed 39 normal from 2.5 to 3 / 4.5. At its divider slam the camera's travel turns 40,000 to 50,000 pixels each way every tick, and the cap's change of a thousand or two tipped one tick the other way. Two columns keep every win measured and leave that second as main has it (on 3dda977f, a stretch of ticks 2651 to 2850: 2.5 / 2.5); one column reads 2.5 / 3 there.
+- **A narrower fix was tried and is not enough:** the rule's heights as they were, with only the slope it shades by held under 0.35. Seed 38's landing still read 3 and 4.
+
+**Measured** with Tools' `check-clip`, primary / area threshold 15% lower / two-second memory, main and main with the fix both on 4cc7319a (the same scenes; Animation's three styles of that commit moved the clips' pixels from Tools' table on 3198301f):
+
+| Clip | Main | With the fix |
+| :-- | :-- | :-- |
+| ai-4-normal | **FAIL** 4 / 4 / 1.5 | 2 / 2 / 1.5 |
+| ai-4-reduced | **FAIL** 4 / 4 / 2 | 2 / 2 / 2 |
+| collapse-reduced | **FAIL** 3 / 4 / 3 | 2 / 2 / 1 |
+| collapse-normal | **OVER GATE** 3 / 3 / 3 | 2 / 2 / 0.5 |
+| ai-38-normal | **OVER GATE** 3 / 3 / 3 | **OVER GATE** 3 / 3 / 3 |
+| ai-38-reduced | 2.5 / 2.5 / 1.5 | 2.5 / 2.5 / 2.5 |
+| ai-39-normal | **FAIL** 3 / 3.5 / 3 | **FAIL** 3 / 3.5 / 3 |
+
+- **ai seed 39 normal** fails on main itself since 4cc7319a (Tools' table on 3198301f read it 2.5). Its worst second is the divider's slam (ticks 2736 to 2750, the camera's travel), the same events with the fix and without. It is Camera's, as the same clip's reduced mode is.
+- **ai seed 38 normal** is over the gate on main since 4cc7319a (on 7fef83e3 it read 1.5 / 2.5 / 1.5), at ticks 2055 to 2104: the same events, tick for tick, with the fix and without. Not traced here. With the fix its reduced mode's two-second-memory reading goes from 1.5 to 2.5 (at 2099); its primary and area readings and its events at 2055 to 2136 are unchanged.
+- **The other 21 clips** were swept on 3dda977f with the fix at three columns, against Tools' table on 3198301f; nothing that runs in a clip changed between those two commits. Not re-run at two columns. Lower: ai-12345 normal 2 / 2.5 / 2 to 2 / 2 / 2 and reduced 2.5 / 2.5 / 2 to 2 / 2 / 2 (out of the second capture); clash reduced 2 / 2 / 2 to 1 / 2 / 1; ai-5 reduced 1.5 / 1.5 / 2 to 1 / 2 / 1. Higher, all passing: ai-5 normal 1.5 / 1.5 / 1.5 to 2 / 2 / 2.5; ai-3 reduced 1.5 / 1.5 / 1.5 to 2 / 2 / 1.5; ai-7 normal 2.5 / 2.5 / 2 to 2.5 / 3 / 2.5 and reduced 2 / 2 / 2 to 2 / 2.5 / 2; signature reduced 2 / 2 / 2.5 to 2.5 / 2.5 / 2.5. The same: both mash clips and both mashcity clips, clash normal, signature normal, both transform clips, both ai-1 clips, ai-3 normal, and ai-39 reduced (still **FAIL** 3 / 3.5 / 2.5 at the divider's slam, Camera's).
+- On 39f93535, before the chain, the fix took ai seed 38 from 4 / 5 to 2.5 in both modes. That was the clip the brief named.
+
+**A crater that opens: built, measured, parked** (`pending/crater-open/`). A new crater's bowl, colours and glow came in one tick, the largest one-tick change left at a blast. A version opens them from the crater's centre to the edge of its apron over 0.4 s. On 39f93535, built together with the first foreground fix, collapse normal went from 3.5 to 2.5 (its swings at ticks 733 and 734 went); which of the two did that was not separated. On the chain's scenes it costs ai seed 38 normal half a flash and its lower-area run 1.5 (1.5 / 2.5 to 2 / 4). A crater that appears at once sinks inside its tick's larger brightening, since only a tick's dominant direction is pooled; opened over 24 ticks, its darkening becomes a run of its own between brightenings. Spreading is not always better for this count. It waits for a decision.
+
+**Tried and dropped:** under reduced flashing, a crater's earth drawn at a third of its strength. It took one stretch of ai seed 38 reduced from 3 to 1 and another from 2.5 to 3.5.
+
 ## The capture hook for Tools' frame analyser
 
 Tools' analyser measures pixels against the standard (`docs/tools/flash-check.md`). It needs clips that are exactly one tick a frame, so the game offers a hook, **only** when started with `--flashcap` or, on the web, `/play/?flashcap=1` (`render/tools/flash_capture.gd`, `FlashCapture`; the contract is at the top of `tools/flash/capture-web.mjs`). Normal play never makes one: without the argument the page has no `window.__flashcap`.

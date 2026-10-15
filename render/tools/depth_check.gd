@@ -149,7 +149,9 @@ func _run() -> void:
 	_expect(n_off == 0 and n_far == 1 and pv.count == 0, "a particle 700 units from the camera, where the plane's view ends at 580: with depth off it is not drawn (%d); with depth on it is drawn at depth -300, where the view ends at 730 (%d), and not at -100, where it ends at 630 (%d)" % [n_off, n_far, pv.count])
 	pv.widen = 0.0
 	pv.deep = was_deep
-	# --- depth on: the tool's own match
+	# --- depth on: the tool's own match, in normal mode (Reduce flashing is on by default since UI's start menu; its
+	# own checks below switch it on and off again)
+	main.ui_hud.set_option("reduce_flashing", false)
 	main.start_match(4, {"p1": false, "p2": false}, {"intro": "skip", "depth": true})
 	host = main.host
 	var S: SimState = host.S

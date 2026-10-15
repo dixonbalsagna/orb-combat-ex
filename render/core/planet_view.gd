@@ -905,6 +905,7 @@ func _make_materials() -> void:
 		m.set_shader_parameter("fog_near", RenderLook.FOG_NEAR)
 		m.set_shader_parameter("fog_far", RenderLook.FOG_FAR)
 		m.set_shader_parameter("fore_drop", RenderLook.FORE_DROP)
+		m.set_shader_parameter("fore_span", float(RenderLook.FORE_SPAN))
 		m.set_shader_parameter("rubble_edge", RenderLook.RUBBLE_EDGE)
 		m.set_shader_parameter("shore_flood", RenderLook.SHORE_FLOOD)
 		mats.track(m)

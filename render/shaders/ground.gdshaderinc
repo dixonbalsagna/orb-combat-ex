@@ -35,6 +35,7 @@ uniform float meander_amp = 600.0;   // RenderLook.MEANDER: how far (in x) the f
 uniform vec4 biome_colors[7] : source_color;   // RenderLook.BIOME in ground_field.gd's BIOME_ORDER
 uniform vec3 fore_cam = vec3(0.0, 0.0, 3000.0);  // the camera's world position, every frame (planet_view.gd)
 uniform float fore_drop = 0.03;                  // RenderLook.FORE_DROP
+uniform float fore_span = 2.0;                   // RenderLook.FORE_SPAN: the fighter plane's profile the rule reads is its lowest within this many columns either side
 
 float gf(int i, int row) {
 	return texelFetch(heights, ivec2(i % tw, row * rpl + i / tw), 0).r;
@@ -265,12 +266,31 @@ vec3 fore_cap3(float xr, float z, float ox, bool top) {
 	float xs = fore_cam.x + (xr - fore_cam.x) / (1.0 - min(t, 0.9));   // where the sight line meets the fighter plane
 	float c = (xs - ox) / col_w;
 	float c0 = floor(c);
-	int i0 = int(mod(c0, float(nc)));
-	int i1 = (i0 + 1) % nc;
-	float y0 = top ? fp_top(i0) : fp_ground(i0);
-	float y1 = top ? fp_top(i1) : fp_ground(i1);
-	float yp = mix(y0, y1, c - c0);
-	float dy = (y1 - y0) / col_w;
+	// The fighter plane's lowest within fore_span columns either side of where the sight line meets it: a narrow rise
+	// in the plane throws no ridge toward the camera, and the cap is never higher. Its slope is that profile's
+	// difference across one column, which changes smoothly as the camera moves (the lowest column's own slope flipped
+	// from tick to tick where two columns stood near the same height). The columns are read once.
+	float ys[10];
+	for (int k = 0; k < 10; k++) {
+		int ii = int(mod(c0 + float(k - 4), float(nc)));
+		ys[k] = top ? fp_top(ii) : fp_ground(ii);
+	}
+	float span = min(fore_span, 3.0);
+	float lows[3] = {1.0e9, 1.0e9, 1.0e9};   // the profile's lowest at c - 0.5, c and c + 0.5
+	for (int q = 0; q < 3; q++) {
+		float p = c - c0 + 0.5 * float(q - 1);   // -0.5 to 1.5 columns from c0
+		float pf = floor(p);
+		float fr = p - pf;
+		for (int k = -3; k <= 3; k++) {
+			if (abs(float(k)) > span) {
+				continue;
+			}
+			int j = int(pf) + k + 4;
+			lows[q] = min(lows[q], mix(ys[j], ys[j + 1], fr));
+		}
+	}
+	float yp = lows[1];
+	float dy = (lows[2] - lows[0]) / col_w;
 	return vec3(mix(yp, fore_cam.y, t) - fore_drop * z, dy, (dy * (xs - fore_cam.x) + fore_cam.y - yp) / fore_cam.z - fore_drop);
 }
 
