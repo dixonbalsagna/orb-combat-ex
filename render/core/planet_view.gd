@@ -906,6 +906,8 @@ func _make_materials() -> void:
 		m.set_shader_parameter("fog_far", RenderLook.FOG_FAR)
 		m.set_shader_parameter("fore_drop", RenderLook.FORE_DROP)
 		m.set_shader_parameter("fore_span", float(RenderLook.FORE_SPAN))
+		m.set_shader_parameter("fore_far", RenderLook.FORE_FAR)
+		m.set_shader_parameter("fore_strides", Vector3(RenderLook.STRIDES[0][0], RenderLook.STRIDES[1][0], RenderLook.STRIDES[2][0]))
 		m.set_shader_parameter("rubble_edge", RenderLook.RUBBLE_EDGE)
 		m.set_shader_parameter("shore_flood", RenderLook.SHORE_FLOOD)
 		mats.track(m)
@@ -1042,6 +1044,16 @@ func set_camera(p: Vector3) -> void:
 		return
 	_terrain_mat.set_shader_parameter("fore_cam", p)
 	_water_mat.set_shader_parameter("fore_cam", p)
+
+
+## The foreground rule's reading near the lens (RenderLook.FORE_FAR): the fighter plane's lowest ground and top in
+## this pane's view, and how far its camera travels along x a tick, both eased by the pane (PaneWorld._fore_low).
+func set_fore_low(ground: float, top: float, sweep: float) -> void:
+	if _terrain_mat == null:
+		return
+	for m in [_terrain_mat, _water_mat]:
+		m.set_shader_parameter("fore_low", Vector2(ground, top))
+		m.set_shader_parameter("fore_sweep", sweep)
 
 
 static func _planet_aabb(y0: float, y1: float, z0: float, z1: float) -> AABB:

@@ -69,6 +69,10 @@ static var sky_react_on: bool = false      # the clouds part for a fighter at ti
 static var flash_calm: bool = false        # reduced flashing or reduced motion: the grooves' glow and char are drawn calm (main sets it)
 static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
 var pan_haze: float = 0.0                  # 0 to 1, this frame
+var fore_low := Vector2(NAN, NAN)          # the fighter plane's lowest ground and top in this pane's view, eased (RenderLook.FORE_FAR)
+var fore_sweep: float = 0.0                # how far this pane's camera travels along x a tick, eased
+var _fl_x: float = NAN                     # the camera's x and the time at the last frame the rule's reading saw
+var _fl_t: float = NAN
 var _sky_glows: int = 0                    # the town glows handed to the sky last frame
 var _glow_seen: Dictionary = {}            # a town's index -> how far its glow has come into this pane's view, 0 to 1 (it comes in over SKY_GLOW_IN_S)
 var _glow_t: float = NAN
@@ -146,6 +150,7 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	_pan_haze(host, a, cam_x, vp)
 	_sky_drive(host, a, cam_x)
 	planet.set_camera(cam_rig.position)
+	_fore_low(host, a, cam_x, vp)
 	planet.set_calm(flash_calm)
 	_view_cues(cam, vp)
 	if source == null and host.vfx.enabled and host.vfx.react_enabled:
@@ -210,6 +215,41 @@ func _sky_drive(host: SimHost, a: float, cam_x: float) -> void:
 	if n > 0 or _sky_glows > 0:
 		_sky_mat.set_shader_parameter("sky_glow", glows)
 	_sky_glows = n
+
+
+## The foreground rule's reading near the lens (RenderLook.FORE_FAR): the fighter plane's lowest ground and top within
+## FORE_LOW_REACH half widths of this pane's camera, and how far the camera travels along x a tick, each eased over
+## FORE_LOW_S of match time (a new match or a seek takes them at once). Presentation only: it reads the sim's profile.
+func _fore_low(host: SimHost, a: float, cam_x: float, vp: Vector2) -> void:
+	var S: SimState = host.S
+	var t: float = (float(host.ticks) + a) * SimConst.DT
+	var dt: float = t - _fl_t
+	if not is_nan(_fl_t) and dt == 0.0:
+		return   # the same instant again (a frozen tick)
+	var reach: float = RenderLook.FORE_LOW_REACH * cam_rig.half_width(vp.x)
+	var nc: int = SimConst.NC
+	var c0: int = int(floor((cam_x - reach) / SimConst.COL))
+	var c1: int = int(ceil((cam_x + reach) / SimConst.COL))
+	var lo_g: float = INF
+	var lo_t: float = INF
+	for c in range(c0, c1 + 1):
+		var i: int = posmod(c, nc)
+		var gy: float = S.base[i] + S.deform[i]
+		var wd: float = S.water[i]
+		lo_g = minf(lo_g, gy)
+		lo_t = minf(lo_t, gy + (wd if wd >= WorldWater.MIN_DEPTH else 0.0))
+	var sweep: float = 0.0
+	if is_nan(_fl_x) or dt < 0.0 or dt > 0.5:
+		fore_low = Vector2(lo_g, lo_t)
+		fore_sweep = 0.0
+	else:
+		sweep = absf(SimWrap.sdx(_fl_x, cam_x)) / dt * SimConst.DT
+		var k: float = clampf(dt / RenderLook.FORE_LOW_S, 0.0, 1.0)
+		fore_low = fore_low.lerp(Vector2(lo_g, lo_t), k)
+		fore_sweep = lerpf(fore_sweep, sweep, k)
+	_fl_x = cam_x
+	_fl_t = t
+	planet.set_fore_low(fore_low.x, fore_low.y, fore_sweep)
 
 
 ## The pan haze (RenderLook.PAN_HAZE_*; docs/rendering/flash-sources.md): how fast this pane's camera travels along the

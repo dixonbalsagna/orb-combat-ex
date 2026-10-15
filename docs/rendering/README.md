@@ -149,6 +149,7 @@ Orb's notes on the live build: a mountain the fighters clip against was "replica
 - Where water has to fall (the camera near or below the waterline), it shows its body colour, so a fighter under the sea reads as under it.
 - The camera sits about a tenth of its distance above the fighters, so in normal play the rule never bites. It acts only in the cases the old face existed for: a ridge higher than the camera, and a camera at the waterline. In 20 AI-vs-AI matches the camera was below the ground under it in 1.5% of frames and below sea level in 15%.
 - **It reads the fighter plane's lowest ground within two columns either side** (2026-10-14, `FORE_SPAN`) of where the sight line meets it, and shades by that profile's slope across one column. A narrow rise in the plane (a fighter down, a slide's heap) threw a ridge of the cap toward the camera that swept across the foreground as the camera moved: ai seeds 4 and 38 and the collapse clip in reduced mode (`flash-sources.md`). Gated on 4cc7319a: all 15 of render's gates.
+- **Near the lens it gives way to the plane's lowest ground in view** (2026-10-15, `FORE_FAR`). There the sight line meets the plane many columns from where a vertex's neighbour, or its own last tick, read it; where that step passes 2 columns the cap's profile gives way to the fighter plane's lowest ground within 1.25 half widths of the camera, whole at 6, eased over 0.25 s. The near cap strobed at 30 Hz in a fast pan over dunes and in a shaking brawl in a crater: ai seeds 106 and 104 (`flash-sources.md`). Gated on 125296e5: all 15 of render's gates.
 - The near plane comes from the same rule: the lowest view ray can't meet the ground closer than `FORE_DROP` × distance / (tan 15° + `FORE_DROP` + 2). At far zoom it sits about 1,400 units out instead of 20, which also improves depth precision.
 
 Before and after, left to right. Far zoom (pose `far`): ![far](img/fore-far.png) Camera below the sea (`sea`): ![sea](img/fore-sea.png) Camera below a ridge between the fighters (`ridge`; the right-hand fighter was hidden behind the old face): ![ridge](img/fore-ridge.png) The close and mid-zoom poses (`craters`, `coast`, `lake`, `stage_close`, `wide`, `high`) are unchanged. Cost on desktop (1280×720, seed 4, 4,800 frames, before → after): render CPU mean 0.490 → 0.491 ms, GPU 0.298 → 0.301 ms, draw calls about 155 both.
@@ -703,7 +704,7 @@ All commands run from the repo root; each exits 0 on success.
 - the GPU's base, deform, scorch and water rows are the sim's bytes;
 - the fighter-plane row reads `S.deform` directly, and the bowl formula at z = 0 is within 0.000002 units of it;
 - a field rebuilt from state alone, as for a seek or a snapshot restore, equals the one kept up to date frame by frame, bit for bit;
-- both materials that draw the ground (terrain and water) hold RenderLook's foreground span (2026-10-14).
+- both materials that draw the ground (terrain and water) hold RenderLook's foreground span (2026-10-14), and its near-lens thresholds and the mesh's stride depths; the pane's reading of the plane's lowest ground in view is set, is what the materials hold, and its top is no lower than its ground (2026-10-15).
 
 A crater dug on the seam (x = 0) is exactly symmetric across it at every depth. The mesh has one exact row per column. Three matches gave 49 craters, 12 of them with furrows.
 

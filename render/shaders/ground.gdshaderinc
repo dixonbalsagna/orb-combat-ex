@@ -35,6 +35,10 @@ uniform float meander_amp = 600.0;   // RenderLook.MEANDER: how far (in x) the f
 uniform vec4 biome_colors[7] : source_color;   // RenderLook.BIOME in ground_field.gd's BIOME_ORDER
 uniform vec3 fore_cam = vec3(0.0, 0.0, 3000.0);  // the camera's world position, every frame (planet_view.gd)
 uniform float fore_drop = 0.03;                  // RenderLook.FORE_DROP
+uniform vec2 fore_low = vec2(-1.0e9);          // the fighter plane's lowest ground and top in this pane's view, eased (PaneWorld._fore_low)
+uniform float fore_sweep = 0.0;                   // ... and how far this pane's camera travels along x a tick, eased
+uniform vec2 fore_far = vec2(2.0, 6.0);           // RenderLook.FORE_FAR
+uniform vec3 fore_strides = vec3(400.0, 2000.0, 3375.0);   // RenderLook.STRIDES' depths: the ground mesh's column stride is 1, 2, 4 and 8 up to each
 uniform float fore_span = 2.0;                   // RenderLook.FORE_SPAN: the fighter plane's profile the rule reads is its lowest within this many columns either side
 
 float gf(int i, int row) {
@@ -291,6 +295,16 @@ vec3 fore_cap3(float xr, float z, float ox, bool top) {
 	}
 	float yp = lows[1];
 	float dy = (lows[2] - lows[0]) / col_w;
+	// Near the lens a vertex reads the plane many columns from its neighbour's reading (its mesh stride over 1 - t)
+	// and from its own last tick's (the camera's travel, spread the same way). Past FORE_FAR the profile gives way to
+	// the plane's lowest ground in view: a smooth surface, never higher than the plane's ground on screen.
+	float az = abs(z);
+	float stride = az <= fore_strides.x ? 1.0 : (az <= fore_strides.y ? 2.0 : (az <= fore_strides.z ? 4.0 : 8.0));
+	float tc = min(t, 0.9);
+	float stp = (stride + fore_sweep / col_w * tc) / (1.0 - tc);
+	float lw = smoothstep(fore_far.x, fore_far.y, stp) * step(-1.0e8, fore_low.x);
+	yp = mix(yp, top ? fore_low.y : fore_low.x, lw);
+	dy *= 1.0 - lw;
 	return vec3(mix(yp, fore_cam.y, t) - fore_drop * z, dy, (dy * (xs - fore_cam.x) + fore_cam.y - yp) / fore_cam.z - fore_drop);
 }
 

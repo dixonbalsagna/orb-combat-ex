@@ -32,6 +32,17 @@ const FORE_DROP: float = 0.03
 ## the sight line meets it. A narrow rise there (a slide's heap three columns long, ai seed 38) threw a ridge of the cap
 ## toward the camera that swept across the foreground, lit face and shaded face by turns, as the camera moved.
 const FORE_SPAN: int = 2
+## Near the lens the sight line meets the fighter plane far from the point it passes, and farther the nearer: a vertex
+## of the ground there reads the plane's profile many columns from its neighbour's reading (the mesh's stride over 1 -
+## t, t its depth over the camera's), and many columns from its own last tick's while the camera travels. In ai seed
+## 106 (ticks 3343 to 3393, a camera 60 units up travelling 70 a tick over dunes) each tick read a different profile,
+## and the near ground's edge jumped across the frame at 30 Hz. So where that step passes FORE_FAR.x columns the cap's
+## profile gives way to the plane's lowest ground within FORE_LOW_REACH half widths of the camera, and has given way
+## whole at FORE_FAR.y: a smooth surface that does not depend on where each sight line lands, and is never higher
+## than the plane's ground in view. That lowest ground, and the camera's travel a tick, ease over FORE_LOW_S.
+const FORE_FAR := Vector2(2.0, 6.0)
+const FORE_LOW_REACH: float = 1.25
+const FORE_LOW_S: float = 0.25
 const WATER_FALL_BODY: float = 4.0   # water that fell this far under the foreground rule shows its body, not its surface
 const Z_TERRAIN_BACK: float = -1125.0 * WS   # back of the crater rows: tier-4 rims reach about 2 x 4,300
 ## Ground rows are generated, not listed: spacing ROW_STEP0 at the fighter plane (fighter scale), growing by

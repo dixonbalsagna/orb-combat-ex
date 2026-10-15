@@ -8,7 +8,10 @@ extends SceneTree
 ## 3. rebuild: a fresh GroundField rebuilt from state alone (as for a replay seek or a snapshot restore) holds the same
 ##    crater lists, residual and crater data as the one the renderer kept up to date frame by frame.
 ## 4. span: both materials that draw the ground (terrain and water) hold RenderLook.FORE_SPAN, the columns either side
-##    over which the foreground rule reads the fighter plane's lowest ground.
+##    over which the foreground rule reads the fighter plane's lowest ground; and RenderLook.FORE_FAR and the ground
+##    mesh's stride depths (RenderLook.STRIDES), by which it gives way to the plane's lowest ground in view near the
+##    lens. The pane's reading of that lowest ground is set, is what the materials hold, is no higher than the plane's
+##    highest ground within three times its reach (it eases), and its top (with water) is no lower than its ground.
 ## Then, on a staged state, a crater on the wrap seam (x = 0) must be mirror-symmetric across it at every depth.
 ## Also checks the mesh: every column has exactly one top-grid vertex on z = 0, flagged exact.
 ##   godot --headless --path . --script res://render/tools/ground_check.gd [-- --seeds=4,12345,7 --ticks=5400]
@@ -114,10 +117,25 @@ func _check(S: SimState, label: String) -> void:
 	fresh.rebuild(S)
 	if fresh.lists != gfld.lists or fresh.g != gfld.g or fresh.cdata != gfld.cdata:
 		fails.append("%s: a rebuild from state differs from the kept-up-to-date field (lists %s, residual %s, craters %s)" % [label, fresh.lists == gfld.lists, fresh.g == gfld.g, fresh.cdata == gfld.cdata])
+	var strides := Vector3(RenderLook.STRIDES[0][0], RenderLook.STRIDES[1][0], RenderLook.STRIDES[2][0])
+	var pw: PaneWorld = main.pane
 	for m in [main.planet._terrain_mat, main.planet._water_mat]:
 		if float(m.get_shader_parameter("fore_span")) != float(RenderLook.FORE_SPAN):
 			fails.append("%s: a ground material's foreground span is %s, not RenderLook.FORE_SPAN" % [label, str(m.get_shader_parameter("fore_span"))])
 			break
+		if Vector2(m.get_shader_parameter("fore_far")) != RenderLook.FORE_FAR or Vector3(m.get_shader_parameter("fore_strides")) != strides:
+			fails.append("%s: a ground material's FORE_FAR or stride depths are not RenderLook's" % label)
+			break
+		if Vector2(m.get_shader_parameter("fore_low")) != pw.fore_low:
+			fails.append("%s: a ground material's lowest ground in view is not the pane's (%s, %s)" % [label, str(m.get_shader_parameter("fore_low")), str(pw.fore_low)])
+			break
+	var reach: float = 3.0 * RenderLook.FORE_LOW_REACH * pw.cam_rig.half_width(main.get_viewport().get_visible_rect().size.x)
+	var hi: float = -INF
+	for c in range(int(floor((pw.view_cam_x - reach) / SimConst.COL)), int(ceil((pw.view_cam_x + reach) / SimConst.COL)) + 1):
+		var i: int = posmod(c, SimConst.NC)
+		hi = maxf(hi, S.base[i] + S.deform[i])
+	if is_nan(pw.fore_low.x) or pw.fore_low.x > hi + 0.01 or pw.fore_low.y < pw.fore_low.x - 0.001:
+		fails.append("%s: the pane's lowest ground in view (%s) is unset, above the plane's highest ground there (%.1f), or its top is lower than its ground" % [label, str(pw.fore_low), hi])
 	var wet: int = 0
 	var burnt: int = 0
 	for i in range(SimConst.NC):

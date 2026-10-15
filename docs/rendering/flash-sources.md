@@ -305,6 +305,33 @@ What draws it is the **foreground rule** (`fore_fall` in `ground.gdshaderinc`). 
 
 **Tried and dropped:** under reduced flashing, a crater's earth drawn at a third of its strength. It took one stretch of ai seed 38 reduced from 3 to 1 and another from 2.5 to 3.5.
 
+## The foreground rule near the lens: ai seeds 106 and 104 (2026-10-15)
+
+**What it was.** Tools' targeted run on d3cd19d5 read ai seed 106 normal at 10 / 11 / 7.5 (7.5 on 10c2d177, before the ground batch) and ai seed 104 at 4.5 in both modes. Tools' per-tick reading put ai 106's worst second on the foreground ground: a 30 Hz alternation from tick 3343 to 3393, 33,000 to 62,000 pixels a tick over the lower three quarters of the frame, the near dune's dark wedge jumping across it. A headless probe (the split attached) found the ground field unchanged through those ticks, and the camera 60 units up, travelling about 70 units a tick, with a shake of 1.5. Switches on a stretch of the clip (ticks 3201 to 3420; main 10 / 11 / 7.5): the foreground rule off, 1.5; the rule's one-point read from before the batch, 8.5; the cap drawn flat (its shading off), 9.5. So it was the cap's height.
+
+**Why.** Near the lens the sight line from the camera through a point of the ground meets the fighter plane far from that point: 1 / (1 - t) times as far, t being the point's depth over the camera's. A vertex of the ground mesh there read the plane's profile its stride times that many columns from its neighbour's reading (8 to 40 columns), and the camera's travel a tick times that from its own reading the tick before (up to 80). The near cap was the plane's profile sampled almost at random each tick: over dunes in a fast pan (ai 106), over a crater bowl's walls in a shaking brawl (ai 104). The batch's two-column read covers only the middle depths, which is why it made ai 106 worse without being its cause.
+
+**The fix, in every match** (`RenderLook.FORE_FAR`, `FORE_LOW_REACH`, `FORE_LOW_S`). Where a vertex's step (its mesh stride and its camera's travel a tick, both spread by the sight line) passes 2 columns, the cap's profile gives way to the fighter plane's lowest ground within 1.25 half widths of that pane's camera, and has given way whole at 6. That lowest ground and the camera's travel each ease over 0.25 s. The near cap is a smooth surface that does not depend on where each sight line lands, and it can only come out lower, so nothing in front hides more of the fight. The cost is in the half of the depth nearest the lens: ground there that rises above the cap is cut flatter than before.
+
+- **Thresholds 4 and 8** took the ai 106 stretch to 3 / 4.5 / 1 and the ai 104 stretch (ticks 601 to 840, main 4.5 / 4.5 / 4.5) to 1 / 2 / 1. **2 and 6** took them to 3 / 3 / 1 and 1 / 1 / 1. 8 and 12 left ai 106 at 4.
+- What the rule still does in ai 106 (ticks 3325, 3331, 3350) is a slide's trench opening in front of the fighter plane and the camera rising: one way each, not a strobe.
+
+**Measured** with Tools' `check-clip` (primary / area threshold 15% lower / two-second memory), against main's readings on the same scenes (Tools' d3cd19d5 run for ai 106 and 104; the ground batch's same-commit readings for the rest):
+
+| Clip | Main | With the fix |
+| :-- | :-- | :-- |
+| ai-106-normal | **FAIL** 10 / 11 / 7.5 | 2.5 / 2.5 / 2.5 |
+| ai-106-reduced | **FAIL** 10 / 11 / 6.5 | 2 / 2 / 3 |
+| ai-104-normal | **FAIL** 4.5 / 4.5 / 4.5 | **FAIL** 2.5 / 3.5 / 2 |
+| ai-104-reduced | **FAIL** 4.5 / 4.5 / 4.5 | **FAIL** 2.5 / 3.5 / 2.5 |
+| ai-38-normal | **OVER GATE** 3 / 3 / 3 | 2 / 2 / 2 |
+| ai-4-normal | 2 / 2 / 1.5 | 2 / 2 / 1.5 |
+| collapse-normal | 2 / 2 / 0.5 | 1.5 / 2 / 0.5 |
+| ai-39-normal | **FAIL** 3 / 3.5 / 3 | **FAIL** 3 / 3.5 / 3 |
+
+- **ai seed 104's 3.5 is not the cap strobing.** Its worst second is now a crater forming in the brawl (tick 327); main reads that second 2.5 at the lower threshold. With the fix one brightening there splits in two around a small darkening at 106% of the lower threshold. Easing the camera's travel term out over 1.5 s instead of 0.25 s changed nothing.
+- **ai seed 39 normal** is Camera's divider slam, as before.
+
 ## A whip pan through a town: signaturecity (2026-10-15)
 
 **What fails it.** Tools' 56-clip run on the demo commit (10c2d177) read the signature clip in the city (seed 12345) at 4 / 5 / 4 in both modes. Its worst second counts 8 turns between ticks 738 and 779. Six of them, at 738 to 748, are a row of village houses sliding about 40 pixels a tick across the left pane: about 40,000 pixels darken and 40,000 brighten each tick (brick and roofs against grass), and which wins turns every tick. A headless probe of the clip with the split attached shows that pane's camera going from standing to 3.5 screen widths a second in four ticks (736 to 740), 4.5 by 746. The houses are World's row 1, about 400 units behind the fighter plane, low in the pane because the fighters fly high. Nothing changes stage and nothing is carved. Of the other two turns, one is the ground turning from the village's colour to the forest's as the pan crosses the biome edge (769), and the other is a stand of trees leaving the pane (779).
