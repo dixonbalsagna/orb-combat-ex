@@ -19,6 +19,7 @@ Owner: Art Director. 2026-09-29. Art owns `art/` and `docs/art/`.
 | `fighter-design-workflow.md` | The four fighters' status, the nine-step workflow from Orb's one-page brief to a fighter on rig R1 (silhouettes, palette and colour-blind triple, parts off bones, forms per tier, hand-offs, gates), what a re-skin gives for free, estimates, and the city list | v0 draft, pending Legal review |
 | `fighter-picks-round1.md` | Step 2 for the Cyborg and the Empress: three silhouettes each (the Press, the Courier, the Hopper; the Regent, the Bell, the Tabard), the silhouette gate's number (the launch pair 0.620), what each costs downstream, and one colour search across the four lanes. Sheets in `art/concepts/picks/`, kept on this PC only | v0 draft, pending Legal review, Orb picks |
 | `sky-and-distance.md` | Audit of the sky, stars, distance haze, far mountains, sea and altitude on main's HEAD (42 stills, contact sheet `img/sky-and-distance-sheet.png`), and a target per layer with the depth order and the colour and contrast relationships. Rendering's next brief | v0 draft, Orb's direction of 2026-10-15 |
+| `homework-3-sheets.md` | The three sheets for Orb's homework 3: the Anti-hero's aura (five options), his glasses' damage states (clean, cracked, bent, both, and when each shows), and a look pass for the two in the build (three directions each, with costs). Sheets in `art/concepts/looks/`, kept on this PC only | v0 draft, pending Legal review, Orb picks |
 | `launch-pair-look.md` | The launch pair's look (the Protagonist and the rival): approved by Orb on 2026-10-04, and where the reference sheets are | Approved by Orb |
 | `../../art/concepts/refine/README.md` | Index of the refinement sheets (the Cyborg's six directions; the other three's unmasked faces and silhouette options) and the question each asks Orb | v0 draft, pending Legal review, Orb picks |
 | `closeup-directions.md` | Orb's request for memorable, recognisable face close-ups: three directions (the mask as a face, the mask partly broken, no mask), six rounds of criticism and revision, the damage stages on the face, and a recommendation | v0 draft, pending Legal review, Orb picks |
@@ -26,7 +27,7 @@ Owner: Art Director. 2026-09-29. Art owns `art/` and `docs/art/`.
 | `cosmetics-plan.md` | The plan for a vast unlockable cosmetic set by data: categories, what keeps each fighter readable, counts per fighter, and what the fighter mesh needs from day one | v0 draft |
 | `ai-prompt-policy.md` | How AI-assisted art is made, recorded and reviewed | v0 draft, for Legal and Orb to review |
 | `../../art/concepts/anti-hero/` | The SVG sheets and the deterministic generator that writes them | v0 |
-| `../../art/prompts/` | Prompt records (`TEMPLATE.md`, `ART-0001` to `ART-0019`) | v0 |
+| `../../art/prompts/` | Prompt records (`TEMPLATE.md`, `ART-0001` to `ART-0020`) | v0 |
 
 **Superseded.** The wave-1 art brief (three whole-game directions, `docs/art-bible/`) is replaced by Orb's answers: 2.5D side-on, cel-shaded plus low-poly. Nothing under `docs/art-bible/` was written. The parts that still fit are in the style guide: biome look notes and destruction states (section 8), the silhouette test (3.1) and the palette rules (3).
 
