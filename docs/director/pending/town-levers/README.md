@@ -13,4 +13,21 @@ Owner: Encounter Systems Director. Game Design's `docs/design/buildings.md` sect
 
 **World's offers (`docs/world/destruction-hook.md` section 9), read on the levers.** My town probe, 24 matches from the crossing on the same seeds. Bodies into buildings by my count (every `building_hit`), 3.54 a match with the levers alone, 4.29 with World's `BR_MIN` at 160 units instead of 720 (a scratch edit of World's constant). A building is taken in 22% of launches, then 26%. Offers go from 4.6 to 4.8 a match. People lost 24.0% then 24.4%, structures lost 43.3 then 46.2 of 118, length level. **I want built, in this order:** `BR_MIN` 160 (one constant, and the one that moved the count); the nearest building on each side as a candidate (more plans, so the vote has more to take); the face plan with depth, later. QA's count, which takes a chain's landing once, will still be under 4 with both. Reaching its band needs what World names, more chains or more launches, and that isn't the planner's.
 
+**With World's offers built (2026-10-15; `docs/world/scratch-build/near-offers/`, World's `sim/world/brunt.gd`), on the levers, main dfcb3ca1:**
+
+| Row | Levers | + offer 1 (`BR_MIN` 160) | + offers 1 and 2 (the nearest building on each side too) |
+| :--- | ---: | ---: | ---: |
+| Bodies into buildings a match from the crossing, my count (24 matches) | 3.54 | 4.29 | 4.34 |
+| The same, QA's count, a chain's landing once (100 matches; band 4 to 8) | 2.55 | 2.66 | 2.84 |
+| Wall slams a match from the crossing (1 to 3) | 1.60 | 1.64 | 1.85 |
+| Launches that end in a building first, default arm (4 to 10%) | 9.3% | 9.8% | 10.4% |
+| A building in reach taken by a fighter whose care is 0 or less (at least 80%) | 97.0% | 95.0% | 93.5% |
+| People lost; front-row structures lost (default arm) | 21.5%; 41.4% | 21.2%; 40.8% | 22.3%; 42.3% |
+| Median; 10th percentile (default arm) | 434 s; 331 s | 428 s; 329 s | 435 s; 326 s |
+| QA's harness | 91 pass, 19 fail | 91, 19 | 92, 18 |
+
+- **Both offers together are best on both counts, and I'd take both,** in one window with the levers. No hard test fails in any build. Gates on that build, all 35 pass: the golden regenerated (it moves), npm, parity, the validator and its self-test, determinism plain and with intros, the seam sweep, `anim_check`, the three `--strict` scans, the cue, read and HUD checks, `brawl_cases.gd`, World's five, QA's run-all, the flash count, the mash probe, the nine input tests and the loader on 200 matches. The window: this park, then World's two diffs in order, then `schema9.cjs`, one golden.
+- **QA's count is still under 4.** A chain counts once there, and the levers already vote for a building 93 to 97 times in 100 that one is in reach. The rest is World's "more chains or more launches", and that isn't the planner's.
+- **The brunt share per launch reaches 10.4%,** a point over its band's top, with its interval to 12.6%. If that band holds, `bruntPrefer` comes down from 40, and the bodies with it.
+
 Neither file is touched by the nine cells' chain (`../nine-cells-chain/`). By the EP's word it goes in after the chain, as its own window with its own golden and QA's 100 matches from the crossing.
