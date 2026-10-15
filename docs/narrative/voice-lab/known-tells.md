@@ -10,7 +10,7 @@ Counts are in the current drafts (`protagonist.csv`, `anti_hero.csv`, `empress.c
 |---|---|---|---|
 | 1 | **Triple repetition** (a word or phrase said three times) | "Okay. Okay okay okay." / "Sorry. Sorry. Sorry." / "Error. Error. Error. Rude." / "Guard, guard, guard." | Protagonist, Cyborg, Anti-hero |
 | 2 | **"Hold on. Hold on."** stalling when hurt | "Hold on. Hold on. I've got one more." | Protagonist, KAI |
-| 3 | **Staccato fragments with a dramatic ellipsis** | "I'll go easy. ...I'll try." / "I can't... I don't want a refund. I want you gone." | Everyone. About 60 lines use an ellipsis. |
+| 3 | **Staccato fragments with a dramatic ellipsis** (Orb, 2026-10-15: an ellipsis is fine for hesitation, regret or performative exhaustion, sparingly and in context; the tell is the *dramatic, frequent* one) | "I'll go easy. ...I'll try." / "I can't... I don't want a refund. I want you gone." | Everyone. About 60 lines use an ellipsis. |
 | 4 | **"Not X. Y."** antithesis | "Not yet. Not for you." / "Not bad. Not bad at all." / "Not like this. ...Quite like this, in fact." | Everyone |
 | 5 | **The neat button**: a one-word zinger at the end | "...Filed under Cute." / "Error. Error. Error. Rude." / "You thought that was it? Cute." | Empress, Cyborg, Protagonist, Anti-hero |
 | 6 | **Repeated "I'll..." promises** | "I'll fix it. I'll fix all of it. Give me a week." | Protagonist, KAI |

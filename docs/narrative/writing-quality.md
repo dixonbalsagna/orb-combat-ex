@@ -1,6 +1,6 @@
 # Writing quality: why it reads rushed, and what a line must pass
 
-Owner: Narrative and Fighter Identity. Version 2, 2026-10-15 (section 0 added: Orb's marks and the rules; the first sample batch withdrawn). Version 1, 2026-10-12. Orb, 2026-10-12: "I just get frustrated that the quality of writing I'm presented with for forward facing things like web-pages and in-game dialogue seems so rushed and bizarre." They are right, and this is a diagnosis, not a defence. They have also rejected "bring the towers down" ("an extraordinarily out-of-place piece of writing"), "Every press is a blow" (generic) and "a brawl you can move with the stick" (reads like a forgotten basic feature). Those three are the pattern in miniature.
+Owner: Narrative and Fighter Identity. Version 2, 2026-10-15 (section 0 added: Orb's marks and the rules; the first sample batch withdrawn; R8 revised the same day: the ellipsis is allowed, sparingly). Version 1, 2026-10-12. Orb, 2026-10-12: "I just get frustrated that the quality of writing I'm presented with for forward facing things like web-pages and in-game dialogue seems so rushed and bizarre." They are right, and this is a diagnosis, not a defence. They have also rejected "bring the towers down" ("an extraordinarily out-of-place piece of writing"), "Every press is a blow" (generic) and "a brawl you can move with the stick" (reads like a forgotten basic feature). Those three are the pattern in miniature.
 
 ## 0. Orb's marks, and the rules they set (2026-10-15)
 
@@ -17,7 +17,7 @@ Orb marked the first ten lines. **Every one was rewritten**, and Orb wrote the r
 | R5 | **Never explain the dynamic aloud.** A line that says what the relationship is has failed. | Directive "Write for the English Dub" |
 | R6 | **Say it to the opponent:** second person ("you", "your"). | All ten rewrites are addressed to the other fighter |
 | R7 | **No passivity.** The speaker acts or answers as a person; he does not describe the blow ("that one was harder than I meant"). | Mark 1 ("less passivity") |
-| R8 | **Punctuation is the speaker's:** exclamation marks are natural for the Protagonist; an ellipsis only where Orb used one. | Orb's rewrites 2, 3, 4 ("!"); 1, 4, 5 (the only "...") |
+| R8 | **Punctuation is the speaker's:** exclamation marks are natural for the Protagonist. **An ellipsis marks hesitation, regret or performative exhaustion; use it sparingly and in context**, at most one line in ten per fighter. | Orb's rewrites 2, 3, 4 ("!") and 1, 4, 5 ("..."); Orb, 2026-10-15: "the ellipsis can be used to signify hesitation, regret, perhaps performative exhaustion among others, they should be used sparingly but in context it's a good literary device" |
 | R9 | **Reference lines are a target, never reused.** | "sound like these, but just trimmed down and punchier" |
 
 ### The two voices, from Orb's rewrites and whys

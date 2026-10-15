@@ -41,9 +41,19 @@
       "why": "mark 1"
     },
     "R8_punctuation": {
-      "ellipsis": "only where Orb used one",
+      "ellipsis": {
+        "means": [
+          "hesitation",
+          "regret",
+          "performative exhaustion"
+        ],
+        "use": "sparingly and in context",
+        "cap": "at most one line in ten per fighter in any batch (at least one is allowed for a block under ten)",
+        "per_line": 1,
+        "check_by_hand": "whether the line really is hesitation, regret or performative exhaustion"
+      },
       "exclamation": "natural for the Protagonist",
-      "why": "Orb's rewrites"
+      "why": "Orb's rewrites 1, 4, 5 and Orb's note of 2026-10-15"
     },
     "R9_reference_lines": {
       "reuse": false,
