@@ -372,7 +372,7 @@
       "second": 1,
       "rate": 0.085,
       "reelTicks": 2,
-      "runHalves": 1,
+      "runHalves": 2,
       "openTicks": 8,
       "floorGap": 8,
       "holdCarries": false
