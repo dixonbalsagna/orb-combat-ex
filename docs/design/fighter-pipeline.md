@@ -137,7 +137,7 @@ With four fighters that is four mirrors and six pairings. With twelve it is twel
 | **The Empress** | Not in. Three silhouettes are with Orb: the Regent, the Bell, the Tabard | The fighter of her late revisions, alone: precise, cold, cutting. Her mantle needs the chain solver from the first day, or it reads as a board | **Her guard of honour first. The long ladder of revisions.** The mantle as a limb that strikes. A beam that cuts differently in the world |
 
 - **The first two lose little at tier 1.** Their mechanics deepen a fighter who already reads as himself, once §5 is done.
-- **The last two lose their premise.** An Empress with no guard and no revisions, and a Cyborg who eats nobody, are a look and a moveset. It is honest to show them as "the fighter, before her mechanic", and it is Orb's call whether to (§7).
+- **The last two lose their premise.** An Empress with no guard and no revisions, and a Cyborg who eats nobody, are a look and a moveset. Orb has held both back until their mechanic exists (§8), so each ships at tier 2.
 
 ## 4. The pipeline for one fighter
 
@@ -200,11 +200,11 @@ That list is the tier 1 of the two who are already in. None of it is a unique me
 
 **What "soon" can honestly mean.**
 - The first two can stop feeling generic without waiting for anyone's art: the recipes window, the care values and ten lines each.
-- **The Cyborg is the next fighter in.** After Orb's silhouette pick: Art's 3 to 4 rounds, Animation's half-day study and then about 4 days, Combat's hour or two.
-- **The Empress follows the chain solver.**
-- Each tier 2 mechanic is a slice of its own, in the order Orb wants them. None is needed for four fighters to be playable.
+- **The Cyborg is the next fighter in,** and he ships with his consumption (§8). After Orb's silhouette pick: Art's 3 to 4 rounds, Animation's half-day study and then about 4 days for tier 1, and then his mechanic as a slice of its own.
+- **The Empress follows the chain solver,** and ships with her guards.
+- Each tier 2 mechanic is a slice of its own. Orb has asked for the two new fighters to wait for theirs.
 
-## 7. For Orb
+## 7. For Orb (answered in homework 3: §8)
 
 1. **One clock for all fighters.** A heavy-handed fighter looks heavier, hits a little harder and moves a little slower, but his blows take the same ticks. That is what lets the balance carry.
 2. **The Empress and the Cyborg before their mechanics:** show each as a look and a moveset, or hold each until her guard and his consumption exist.
@@ -212,3 +212,55 @@ That list is the tier 1 of the two who are already in. None of it is a unique me
 4. **Shared heavies.** At first a new fighter borrows most of his heaviest blows from the common pool, with two of his own.
 5. **The Anti-hero's signature is the barrage,** and the Protagonist keeps the beam.
 6. **A plain reference fighter** stays in the build as the yardstick and the training dummy: in the player's roster, or out of sight.
+
+## 8. Orb's answers (homework 3, 2026-10-15), and three rulings
+
+**What Orb decided** (`docs/ep/vision.md`, "Orb answers homework 3"):
+- **One clock for everyone,** at least until all four are in.
+- **The Cyborg and the Empress are held back until their mechanic exists.** So each ships at tier 2. The Empress ships with her guards (`empress-guards.md`), and the Cyborg with his consumption.
+- **The order stands:** the Anti-hero, the Protagonist alongside, the Cyborg, the Empress.
+- **The reference fighter goes in the roster, as a training dummy.**
+
+**Three left to us, ruled.**
+
+| | Orb's question | The ruling |
+| :--- | :--- | :--- |
+| 5b | Borrowed heavies at first? | **Only while a fighter is being made.** Since the Cyborg and the Empress ship at tier 2, each ships with at least 4 heavies of his own out of 10. The borrowing of §1 happens in work in progress, and no fighter is ever shown to players with fewer than 4. The two in the build already have 10 each |
+| 5c | The Anti-hero's barrage, and the Protagonist's beam | **Yes,** and the Protagonist's beam becomes his own (below) |
+| 5d | When fighter select appears | **Before every match,** with the last picks remembered |
+
+**5c, the signatures.**
+- **The Anti-hero's barrage,** as Combat drew it (`docs/combat/barrage-signature.md`): three volleys and then a heavy by hand, which is the vision's "barrages until... brutal finish by hand". Legal passed it on paper (sg01), and VFX's flash plan (`docs/vfx/barrage-flash-plan.md`) keeps it inside the register: one full flash and two lesser ones in its worst second.
+- **The Protagonist keeps the beam, and it is made his.** It leaves from the heel of the palm, in his colour, with his stance. His tier 2 adds an art of the redirecting kind, which fits him: a counter that catches a blow and turns it. One kept the shared beam, and the other a signature of his own, would leave the two less distinct than Orb is asking for.
+
+**5d, fighter select.**
+- **Before every match.** A rematch keeps both picks with one press, and "change fighters" opens the screen. The demo plays until somebody presses start, and the screen comes first.
+- **It is one screen:** both players pick at once, with a random pick, and the training dummy is listed last.
+- Its look is UI's.
+
+**What a training dummy needs that a reference fighter doesn't.** The reference is a data folder and a yardstick. The dummy is a fighter a player picks.
+
+| Needs | What |
+| :--- | :--- |
+| **A training mode** | A sandbox: a plain stretch of street with a crossing, no timer and no KO, a reset to the start, and health and ki that can be set to refill |
+| **Behaviours to pick** | Stand. Guard. Perfect-block at a rate. Give ground against wind-ups. Mash X back. Charge a heavy again and again, to practise the answers to it. Fight as the AI at easy, medium or hard. Recording and replaying the player's own inputs on the dummy comes later |
+| **A readout** | The perfect window drawn on the hit, early or late by how many ticks, the run's pips, and what the last blow was worth. The nine ways to press are learnt here |
+| **A look and a name** | A sparring frame of our own, not anybody's training robot: the shared mannequin with plain markings. Art's look, and Narrative's name |
+| **Its numbers stay frozen** | It is still the reference. Its stats and its kit are never tuned for how it plays, since a change to it is a change to the yardstick, and every fighter is read again after one |
+| **In versus** | It may be picked. It fights with base stats and the common pool, so it wins about half its matches by definition. It is exempt from the gate on a fighter's own blows |
+
+**"Two guys with different colored shirts wearing backpacks."** Art and Narrative have the look and the identity. What the moveset adds, beyond the recipes window and §5:
+
+| | The Protagonist | The Anti-hero |
+| :--- | :--- | :--- |
+| **How a blow moves, inside the one clock** | Fluid: arcs, a follow-through that carries on | Snappy: straight lines, a dead stop at the end |
+| **What he throws most** | Open hands, blade hands, the edge of the foot; arcs and spins | Fists, the forearm plate, elbows and knees; lines and drops |
+| **His held X** | A circling flurry of palms | Piston jabs |
+| **His charged heavy** | A coiled palm strike | A ram behind the plate |
+| **His perfect follow-up** | A palm that turns the rival | A fist behind the plate |
+| **Where the director sends him** (§14's tenth round) | Up, and away from people, with a turning send | Down and back, into buildings and the ground |
+| **His AI** | Guards and redirects: perfect blocks and giving ground a little more often | Opens at range with bolts and the barrage, then mashes and charges heavies |
+| **His taunt** | A ready stance, and a short bow | He settles his glasses |
+
+- **His glasses show his head's wear.** They are always on, as Orb ticked. A lens cracks when his head is battered, and a frame arm bends when it is broken. That is personality and a readout at once. Narrative has Orb's note to work from (paying extra for the frames; buying a new pair after the match). The look is Art's, inside Legal's rules on the glasses.
+- None of this changes a tick of timing or a number of worth. All of it is what they throw, how it looks, where it goes and how the AI plays them.
