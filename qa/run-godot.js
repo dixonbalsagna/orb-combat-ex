@@ -44,7 +44,18 @@ async function main() {
   const A = {}, t0 = Date.now();
   const load = val('load-records', null);          // re-evaluate saved records without replaying (after a band change)
   if (load) Object.assign(A, JSON.parse(fs.readFileSync(path.resolve(load), 'utf8')));
-  else for (const arm of ARMS) A[arm] = await runRecords({ arm, base: BASE, count: N, jobs: JOBS, capSec: CAP });
+  else {
+    // each finished arm is kept as <save-records>.<arm>.json and a run that was stopped (a restart of the PC took four finished arms on 2026-10-14) is resumed by running the same command: an arm whose file holds N matches from BASE is not played again
+    const keep = val('save-records', null), armFile = arm => path.resolve(keep).replace(/\.json$/, '') + '.' + arm + '.json';
+    for (const arm of ARMS) {
+      let got = null;
+      if (keep && fs.existsSync(armFile(arm))) { try { const r = JSON.parse(fs.readFileSync(armFile(arm), 'utf8')); if (Array.isArray(r) && r.length === N && r[0] && r[0].seed === BASE) got = r; } catch (e) { /* played again */ } }
+      if (got) process.stderr.write(`  ${arm}: ${N} matches read from ${path.basename(armFile(arm))}
+`);
+      A[arm] = got || await runRecords({ arm, base: BASE, count: N, jobs: JOBS, capSec: CAP });
+      if (keep && !got) fs.writeFileSync(armFile(arm), JSON.stringify(A[arm]));
+    }
+  }
   if (val('save-records', null)) fs.writeFileSync(path.resolve(val('save-records')), JSON.stringify(A));
   if (SCALE === 'auto') SCALE = require('./godot/bands').hasEvent(A, 'finisher_start') ? 'game' : 'testbed';
   const bad = Object.values(A).flat().filter(r => r.bad);
