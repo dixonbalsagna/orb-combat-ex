@@ -59,17 +59,36 @@ say "margins"
 node tools/flash/margins.mjs "$W/clips" --json "$W/margins.json" --md "$W/margins.md" > "$W/margins.txt" 2>&1
 [ -n "$SECOND" ] && node tools/flash/margins.mjs "$W/clips_second" --json "$W/margins_second.json" > "$W/margins_second.txt" 2>&1
 
+# the condition of the EP's word: record ONLY if no clip reads over 3 on the primary reading (the worse of a clip and its second capture); otherwise stop here, with the clips
+OVER=$(node -e "
+const fs = require('fs');
+const rd = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return []; } };
+const base = rd(process.argv[1]), sec = rd(process.argv[2]);
+const out = [];
+for (const e of base) { if (e.error || !e.result) { out.push(e.id + ' (no result)'); continue; }
+  const s = sec.find((x) => x.id === e.id && !x.error && x.result);
+  const p = Math.max(e.result.general.flashes, s ? s.result.general.flashes : 0);
+  if (p > 3) out.push(e.id + ' primary ' + p + ' (' + [e.result.combined.primary, e.result.combined.lower, e.result.combined.stricter].join('/') + ')'); }
+console.log(out.join('; '));
+" "$W/clips/summary.json" "$W/clips_second/summary.json")
+if [ -n "$OVER" ]; then
+  echo "NOT RECORDED: clips over 3 on the primary reading: $OVER" | tee -a "$LOG"
+  echo "$OVER" > "$W/NOT-RECORDED.txt"
+  exit 5
+fi
 say "record the interim pass for $SHORT"
 # the AI seeds of the set and the rule that picked them (sources.json at the commit); the HUD's own worst flicker is the largest UiLook.HZ_* of the commit
+git -C "$ROOT" show "$FULL:tools/flash/sources.json" > "$W/sources.at.commit.json"
+git -C "$ROOT" show "$FULL:ui/core/ui_look.gd" > "$W/ui_look.at.commit.gd"
 node -e "
-const { execFileSync } = require('child_process');
-const src = JSON.parse(execFileSync('git', ['show', process.argv[1] + ':tools/flash/sources.json'], { cwd: process.argv[2], encoding: 'utf8' }));
+const fs = require('fs');
+const src = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
 const seeds = [...new Set((src.pairings || []).flatMap((p) => p.seeds || []))];
-const look = execFileSync('git', ['show', process.argv[1] + ':ui/core/ui_look.gd'], { cwd: process.argv[2], encoding: 'utf8' });
+const look = fs.readFileSync(process.argv[2], 'utf8');
 const hz = [...look.matchAll(/const HZ_[A-Z_]+ := ([0-9.]+)/g)].map((m) => Number(m[1]));
-require('fs').writeFileSync(process.argv[3], JSON.stringify({ rule: 'tools/flash/pick-seeds.mjs: the seeds of tools/flash/sources.json at the commit', seeds, pairings: (src.pairings || []).map((p) => ({ slots: p.slots, seeds: p.seeds })) }, null, 2));
-require('fs').writeFileSync(process.argv[4], String(hz.length ? Math.max(...hz) : 0));
-" "$FULL" "$ROOT" "$W/pick.json" "$W/hud-rate.txt"
+fs.writeFileSync(process.argv[3], JSON.stringify({ rule: 'tools/flash/pick-seeds.mjs: the seeds of tools/flash/sources.json at the commit', seeds, pairings: (src.pairings || []).map((p) => ({ slots: p.slots, seeds: p.seeds })) }, null, 2));
+fs.writeFileSync(process.argv[4], String(hz.length ? Math.max(...hz) : 0));
+" "$W/sources.at.commit.json" "$W/ui_look.at.commit.gd" "$W/pick.json" "$W/hud-rate.txt"
 node tools/flash/release-pass.mjs --record --summary "$W/clips/summary.json" "${SECOND_ARGS[@]}" --hud-rate "$(cat "$W/hud-rate.txt")" --hud-source "ui/core/ui_look.gd HZ_* (the largest, read from the commit)" \
   --seed-pick "$W/pick.json" --interim RL-136 --from "$FROM" --expires "$EXPIRES" --commit "$FULL" 2>&1 | tee -a "$LOG"
 node tools/flash/release-pass.mjs --verify --commit "$FULL" 2>&1 | tee -a "$LOG"
@@ -80,7 +99,7 @@ cat > "$W/site.json" <<EOF2
 EOF2
 rm -rf "$W/site"
 node tools/build-site.mjs --web "$W/web" --out "$W/site" --commit "$FULL" --config "$W/site.json" 2>&1 | tee -a "$LOG"
-node tools/check-site-interim.mjs --site "$W/site" --config "$W/site.json" --today "$FROM" 2>&1 | tee -a "$LOG"
+node tools/check-site-interim.mjs --site "$W/site" --config "$W/site.json" --root "$W/x" --today "$FROM" 2>&1 | tee -a "$LOG"
 
 say "the stills"
 mkdir -p "$W/stills"
