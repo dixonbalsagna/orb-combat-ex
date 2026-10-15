@@ -908,7 +908,7 @@ Encounter's second tune is built and lands as it is. Nothing below has been run:
 
 | | **Tapped** | **Mashed** | **Held** |
 | :--- | :--- | :--- | :--- |
-| **X, the light** | **The beat.** A light placed on the beat is a skill strike: worth 4, and it clears his run. Three running close. Off the beat it is the link between slower blows and the quickest punish. **For:** stopping his flurry without out-mashing him. **Beaten by:** armour, a medium that lands in its wind-up, and a perfect block, which a steady beat invites (§16) | **The pressure.** It is free, it lands at once and it can't be read: four blows he doesn't answer, and the next one closes. **For:** making an opening. **Beaten by:** a heavy's armour, a skill strike, a charged medium held through it | **The easy pressure.** The burst, slowing on its curve to a pace it keeps. It is 85% of a mash for no effort, and its changing rhythm can't be perfect-blocked. **For:** keeping him busy while the stick moves the fight, and a rival who turns flurries. **Beaten by:** a mash, which out-runs it, and armour |
+| **X, the light** | **The beat.** A light placed on the beat is a skill strike: worth 4, and it clears his run. A perfect B ends the chain, and the director shapes the ender. Off the beat it is the link between slower blows and the quickest punish. **For:** stopping his flurry without out-mashing him. **Beaten by:** armour, a medium that lands in its wind-up, and a perfect block, which a steady beat invites (§16) | **The pressure.** It is free, it lands at once and it can't be read: four blows he doesn't answer, and the next one closes. **For:** making an opening. **Beaten by:** a heavy's armour, a skill strike, a charged medium held through it | **The easy pressure.** The burst, slowing on its curve to a pace it keeps. It is 85% of a mash for no effort, and its changing rhythm can't be perfect-blocked. **For:** keeping him busy while the stick moves the fight, and a rival who turns flurries. **Beaten by:** a mash, which out-runs it, and armour |
 | **Y, the medium** | **The stop.** It ends a heavy in its first 20 ticks, and it punishes a miss: 16 ticks against the 20 he is open. On the beat it lands in 6 ticks and is worth 6. **For:** answering anything slow. **Beaten by:** a flurry of lights, which it can't out-run, and a heavy past tick 20 | **The grind.** The most damage and wear a second without armour. It chips a guard twice as hard, and it beats a flurry of heavies. **For:** the race to the brink, and a rival who turtles. **Beaten by:** a perfect block, since its drum roll is the plainest rhythm to read; a medium into its wind-up; and its price, which is all the ki he gets back | **The patient close.** A charged medium: lights don't stop it, and at full it staggers him as a close does. It ends any charge, always. **For:** closing through a flurry of lights, and punishing a rival who holds something. **Beaten by:** a medium, a fast mash that closes first, giving ground |
 | **B, the heavy** | **The hammer.** In an opening it is the launcher. Thrown cold it trades through lights on its armour and staggers him. **For:** the decisive hit when he is open. **Beaten by:** a medium in its first 20 ticks, giving ground, a perfect block | **The advance.** Heavy after heavy. Lights don't answer armour, so his run climbs while theirs doesn't. **For:** walking through a masher. **Beaten by:** a flurry of mediums, giving ground and the punish, ki: it costs twice what comes back | **The big read.** A charged heavy: a knock-back with no opening needed, and a launch at full. **For:** making space, and punishing a rival who has committed to a flurry. **Beaten by:** a medium early, a charged medium always, giving ground, a fresh guard |
 
@@ -987,9 +987,9 @@ This is the tapped column of §15. It replaces §9's beat point and its window: 
 
 | The follow-up | Lands, after the tap | Worth | Ki | Its own bonus |
 | :--- | ---: | ---: | ---: | :--- |
-| **Light** | 10 ticks | 4 | 0 | The quickest chain, and free |
-| **Medium** | 6 ticks | 6 | A medium's | It stops a heavy at any tick of its wind-up, where a plain medium stops it only in its first 20 |
-| **Heavy** | 14 ticks | 9 | 5 | Armoured, and it staggers him for 12 |
+| **Light** | 10 ticks | 4 | 0 | The quickest link |
+| **Medium** | 6 ticks | 6 | 0 | It stops a heavy at any tick of its wind-up, where a plain medium stops it only in its first 20 |
+| **Heavy** | 14 ticks | 9 | 0 | Armoured. From a chain's second perfect it is the ender (§14, the tenth round) |
 
 Every follow-up clears his run, as a skill strike did.
 
@@ -1012,15 +1012,15 @@ Every follow-up clears his run, as a skill strike did.
 ### The chain
 
 - **It counts perfects in a row.** It is the flow of §9, under its own name.
-- **The blow that brings the chain to 3 closes.** He staggers for the close's 12 ticks, which is an opening, under the close guard. A fourth tap, of B on that hit, is the launcher.
-- **Against a guard the third perfect breaks it.** So timing matters when he blocks, and nobody is taught to stop.
-- **A link counts double.** A follow-up of a different strength from the blow that landed adds 2 to the chain. So a light, a perfect medium and a perfect heavy close in three blows, where three lights need four. A mixed chain is harder to keep, since its beats are 10, 6 and 14 ticks apart.
+- **The chain has no fixed length** (re-ruled in §14's tenth round). From its second perfect, a perfect B ends it with an ender that the director shapes from the world. A perfect X or Y keeps it going. A soft limit makes a long chain pay less and break more easily.
+- **Against a guard, the ender breaks it.** So timing matters when he blocks, and nobody is taught to stop.
+- **Every perfect follow-up is free** (the tenth round, on Orb's note). The count of three and the double link are retired with the fixed close.
 - **It ends** on a missed window, when a medium or a heavier blow lands on him in a follow-up's wind-up, when he is staggered, and 90 ticks after his last perfect.
 - **The stick at the tap aims the follow-up,** by the stick map of §3, as it aims any blow. It does nothing more in depth: that question is with Orb (`depth.md` §8).
 
 ### What beats it
 
-- **A perfect block.** A follow-up can be perfect-blocked, and a steady beat is the easiest thing to read. Timing answers timing.
+- **A perfect block.** A follow-up can be perfect-blocked, and a steady beat is the easiest thing to read. Timing answers timing. A perfect block of a perfect can open the duel of perfects (§14, the tenth round).
 - **A stop.** A medium or a heavier blow that lands in a follow-up's wind-up ends it. A light doesn't.
 - **Armour.** A winding heavy takes a perfect light at half and isn't stopped by it.
 - **A dodge.** The follow-up misses, and he is open for 20 ticks.
@@ -1283,3 +1283,68 @@ Encounter read B mashed again on 120 matches, and the eighth round as one build 
 - **The launching blow goes back to 3,** as my own order of the eighth round said. At 6 the route was over both edges, 72% and 32 points, and the B masher halved.
 - **The route at 66% and 27 points over its masher is accepted.** It is inside the 70% edge, and two points over the 25-point one, which is inside noise on 100 matches. QA reads the edge on 200.
 - **The masher's fall from 50 to 39 or 40** is inside his band of 35 to 50%. It comes from the split, the full point or `digIn`, and isn't yet isolated. QA isolates it in the first baseline after the window. It doesn't hold the window.
+
+### The tenth round: Orb's answers on the brawl's feel (2026-10-15)
+
+Orb answered homework 2 (`docs/ep/vision.md`, "Orb answers homework 2"). Most answers are "your call" with a note that sets the direction. They are ruled here in that spirit: rule of cool, without costing the player any agency. Nothing below has been run: every new value is a first value. Encounter builds it after the demo's window.
+
+| | Orb's question, and note | The ruling |
+| ---: | :--- | :--- |
+| 1 | A chain from a light: "whatever works in favor of 'rule of cool' without negatively impacting player agency" | **Yes, by the held hit,** made to read as a moment |
+| 2 | How quick is perfect: an instant heavy "could be worth investigating" if high-level players could explain its use | **Investigated.** No instant follow-ups in general. **One instant move is worth building later: the cash-in** |
+| 3 | Perfect block against a perfect: "perfect responses back and forth escalating into an amplified knockback with potentially higher levels of destruction" | **The duel of perfects** |
+| 4 | The chain's cap: "Give the choreographer leeway to dynamically decide combo enders and chains" | **No fixed length. A perfect B ends a chain, and the director shapes the ender from the world.** A soft limit, and no hard one |
+| 5 | Charge for perfects: "at the very least, not expending energy" | **Every perfect follow-up is free** |
+| 6 | The charged medium | **As built** (the seventh round) |
+| 7 | The held X when the two are knocked apart: a "chase" that keeps agency | **The chase: his own send, his own press** |
+| 8 | Rumble on a perfect | **On by default,** as Orb ticked. Hints 9 and 10 go to UI and Narrative to rewrite |
+
+**1. A chain from a light.** A light lands 2 ticks after its press, so its hit holds and the window opens as the hand lets go (§16). Requiring a chain to start from a medium or a heavy would take the commonest blow away from the player, so the light stays a start.
+- **For the cool of it:** the hit is seen to hold. The fist stays planted, his flinch hangs for a beat, and the striking hand takes a small shine while the window is open. It reads as a punch, a held breath, and the bang of the follow-up.
+- **To start a chain in the middle of a flurry,** he stops mashing for a moment and taps on the let-go (§16's mash test). Changing from a mash to a timed tap is a choice the player can see himself make.
+
+**2. "Instant", investigated.**
+- **No instant follow-ups in general.** A follow-up with no wind-up lands 2 ticks after the tap, so there is no next hit to tap and the chain dies. An instant heavy can't be read or answered, which is what makes it sound like an exploit. Online, a window can't sit on the hit's own tick when the picture runs 3 frames late.
+- **One instant move is worth building, as a choice with a price: the cash-in.** RT + B tapped inside a perfect window throws a heavy at once. It can't be perfect-blocked. It ends the chain. It costs 25 ki, an art's price. It launches if the launcher is ready, and is the director's ender (point 4) if not. Today a tap of RT + B does nothing but the "not ready" cue, so it needs no new input.
+- **What a high-level player would say it is for:** ending a duel of perfects (point 3) before the other player wins it; cashing in a chain before it lapses, or before a reader has caught its rhythm; a sure hit on a rival on the brink. Each time he trades the chain's future and his ki for certainty.
+- It is built after the perfect follow-up has been played (step 3e of §16), so that it can be judged against a chain that already feels good.
+
+**3. The duel of perfects.**
+- **How it starts.** When a perfect follow-up is perfect-blocked, the block doesn't stagger him as a plain perfect block would. It opens a window for the blocker, of the same length as a follow-up's. A tap in it is his own perfect follow-up, a riposte in kind, and it can be perfect-blocked in turn.
+- **It escalates.** Each perfect block that is answered adds a level. Each level shows more: the sparks grow, the camera closes in, the sound rises a step, the pads pulse. From level 3, every block sends a shockwave out from the pair: glass goes from the buildings within 4 bh, and the ground cracks under them.
+- **It ends in one of four ways:**
+  1. **Someone misses the timing.** The last fighter to make a perfect lands it, and it is an **amplified knock-back**: a quarter further for each level, and it meets buildings as if his tier were one higher for every two levels, up to a finisher's (`buildings.md` §1).
+  2. **Someone cashes in** (point 2). The cash-in can't be perfect-blocked, so it ends the duel on the spot, with the same amplified send.
+  3. **It runs long.** From level 5, each window is a tick narrower, so a duel ends by itself.
+  4. **Level 8.** Both fighters are thrown apart, as a double hit is, amplified at level 8, with destruction on both sides.
+- **The perfect-blocked blows do only chip.** The pay is the ending: the amplified send and the world it breaks.
+- **The mood** takes a clash's units at level 3, and again at each further level.
+- **Who can do it.** Two players, and the AI by level: its share of riposting a perfect it has blocked is 0.05, 0.2 and 0.45. Its share of perfect-blocking a riposte is its share against a follow-up.
+- **Collateral** is counted as for any knock-back: the fighter who sent him pays.
+
+**4. The chain: no fixed length.**
+- **The close at three is retired, and so is the double link.** A chain goes on for as long as the player keeps his perfects.
+- **From the second perfect, a perfect B ends it with an ender.** The director shapes the ender from what is there: a building in the stick's direction and in reach (a wall slam, or a launch into it), height (a spike to the ground), open sky (an uppercut), and his state (near the brink, the biggest send there is). The stick picks the direction. The launcher's rest decides whether it may launch, and otherwise it is a knock-back or a wall slam.
+- **A perfect X or Y keeps the chain going.** So the player decides when it ends and the director decides how it looks.
+- **Against a guard,** the ender breaks the guard.
+- **The soft limit, for fairness.** From the sixth link each link is worth 15% less than the one before, never under half. The defender's perfect-block window against a follow-up widens by a tick for each link past the fifth. A long chain is never stopped, but it becomes easier to break and pays less.
+- **It still ends** on a missed window, a medium or heavier blow into a follow-up's wind-up, a stagger on him, and 90 ticks with no perfect.
+
+**5. Every perfect follow-up is free.** No ki for a perfect light, medium or heavy. The cash-in is the one exception, because it is an instant move bought on purpose.
+
+**6. The charged medium** stays as built in the seventh round.
+
+**7. The chase.**
+- **When.** His own blow has just sent the rival: a knock-back, a wall slam's rebound, the hammer's push, a blast. Not a parting the rival caused, and not a launch: chasing a launch stays the zip of Z2, with its ki.
+- **How he chooses it.** He keeps X held through the send, or presses X in the first 20 ticks of the rival's flight. Either is his own press. Letting go, or not pressing, lets the rival go.
+- **What it plays as.** He follows the flying body as drawn travel, inside Legal's travel floor and drawn every tick, and the brawl goes on in the air: a beatdown in mid-air. Each blow of it sends the rival 1 bh further along the stick's lean.
+- **How it ends.** After six blows, or 90 ticks, or when the rival meets the ground or a building, which is a landing or a wall slam. A perfect B in it is an ender, as in any chain.
+- **The rival's answers.** A tech in the air, by a guard press timed to the chaser's arrival, breaks the chase and leaves them in an ordinary brawl in the air. A perfect block of the arriving blow turns it. And the first move still holds: after the chase he can't start an approach for 45 ticks after he is free.
+- **It costs nothing,** because it only follows a short send. It is tuned by feel in playtests, as Orb asked: the distance it will follow, the pace of its blows, and the tech's window are its levers.
+- **It refines the fifth round.** A held X still never carries the player back in after a parting the rival caused. It does carry through a send that his own blow made.
+
+**8. Rumble and the hints.**
+- **Rumble on a perfect is on by default.** It pulses once on a perfect, and harder on an ender and on each level of a duel. A setting turns it off.
+- **Hints 9 and 10,** for UI and Narrative to rewrite: Orb read neither. Hint 9 meant that if you hold B until the charge clicks and then let go, the blow knocks him back. Hint 10 meant that when his heavy misses, a medium punishes it.
+
+**What changes in §16:** perfect follow-ups cost no ki. The chain has no count, and a perfect B ends it. The duel of perfects is a new answer to a perfect, beside the plain perfect block. The order gains two steps: 3e, the cash-in; and 3f, the duel of perfects. The chase comes with them.

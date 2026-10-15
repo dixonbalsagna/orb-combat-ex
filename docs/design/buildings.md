@@ -20,6 +20,7 @@ World's second experiment, taken, with one addition for houses.
 
 - **So the first minute already breaks buildings.** A house comes apart at tier 1, and a tower shows the hit. "Through several towers" is what the late tiers and the finisher are for, which is where Orb puts it: the climax.
 - **A house counts as half a link** of a chain.
+- **The duel of perfects** (`brawl-second-pass.md` §14, the tenth round) ends in an amplified knock-back that meets buildings as if the sender's tier were one higher for every two levels the duel reached, up to a finisher's.
 - **The lodge.** The last building of a chain takes what is left of the launch. He ends inside the breach, held for 0.5 s at tiers 1 and 2, 0.7 s at tier 3 and 0.9 s at tier 4 and in a finisher. That building takes the rest of the launch as one more hit. The hold is part of the launch, so it is inside "except in knock-backs".
 
 **What a tier-1 hit on a tower must show,** since it doesn't go through:
