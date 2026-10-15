@@ -5,7 +5,7 @@
   "gate": {
     "heading": "This game contains flashing effects",
     "blocks": [
-      { "p": "This game contains flashing effects, and our own automated check found scenes that reach or go over the recommended limit of three flashes a second. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version." }
+      { "p": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version." }
     ],
     "button": "I understand, start",
     "not_now": "Not now",
@@ -22,7 +22,7 @@
       { "h2": "Privacy" },
       { "p": "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game." },
       { "h2": "Flashing effects" },
-      { "p": "This game contains flashing effects, and our own automated check found scenes that reach or go over the recommended limit of three flashes a second. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version. Reduce flashing is on by default. It lowers some effects but does not remove the flagged scenes." },
+      { "p": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version. Reduce flashing is on by default. It lowers some effects but does not remove the flagged scenes." },
       { "h2": "Notices" },
       { "p": "Made with Godot Engine. Copyright (c) 2014-present Godot Engine contributors; copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur. Released under the MIT licence." },
       { "p": "Open Sans: Copyright 2020 The Open Sans Project Authors. Released under the SIL Open Font Licence 1.1." },

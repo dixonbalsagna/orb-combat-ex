@@ -30,11 +30,16 @@ const CLIP_TIMEOUT_S = Number(opt('--clip-timeout', 3600));
 const ONLY = opt('--only') ? opt('--only').split(',') : null;
 const W = 1024, H = 768;
 const TICKS_OVERRIDE = opt('--ticks') ? Number(opt('--ticks')) : 0;   // a shorter clip, for a speed measurement (the verdict then covers only those ticks)
-if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--hold] [--merge-zoom] [--ticks N] [--skip N] [--variant N] [--cpu-cap 40] [--clip-timeout 3600]'); process.exit(2); }
+if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--hold] [--merge-zoom] [--ticks N] [--skip N] [--variant N] [--seeds a,b,c] [--cpu-cap 40] [--clip-timeout 3600]'); process.exit(2); }
 const src = JSON.parse(readFileSync(join(here, 'sources.json'), 'utf8'));
 const CLIP = opt('--clip') ? opt('--clip').split(',') : null;
 // the required set (sources.json, tools/flash/clips.mjs): the five fixed cases, and for `ai` every pairing at every seed, each in both modes
-const jobs = requiredClips(src).filter((j) => (!ONLY || ONLY.includes(j.scenario)) && (!CLIP || CLIP.includes(j.id)));
+let jobs = requiredClips(src).filter((j) => (!ONLY || ONLY.includes(j.scenario)) && (!CLIP || CLIP.includes(j.id)));
+// --seeds 1001,1002: AI matches of those seeds (the default pair), each in both modes, in place of the required set (the interim's nightly seeds, tools/flash/nightly-seeds.mjs); ids ai-<seed>-normal and -reduced
+if (opt('--seeds')) {
+  const ai = src.scenarios.find((s) => s.id === 'ai');
+  jobs = opt('--seeds').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0).flatMap((seed) => [false, true].map((reduced) => ({ id: `ai-${seed}-${reduced ? 'reduced' : 'normal'}`, scenario: 'ai', seed, reduced, ticks: ai ? ai.ticks : 3600, multi: true, slots: null, label: '' })));
+}
 if (!jobs.length) { console.error('no clip matches (ids look like collapse-normal, ai-12345-reduced, mash-reduced; --only takes scenario names)'); process.exit(2); }
 mkdirSync(OUT, { recursive: true });
 

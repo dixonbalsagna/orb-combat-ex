@@ -44,6 +44,24 @@ Orb wants the mechanics and the animation refined continuously, so main moves wh
 
 **What it does not do:** the rest of the site (the holding page, the About page, the gate and its words, the CI checks) is built from HEAD's tools, so a change to the words or the gate goes live with the next push; the game inside `/play/` does not. A new fix to the game goes up only with a new recorded run.
 
+## The nightly seeds (Legal, RL-137): the take-down trigger, read every night
+
+While the interim is up a few new AI seeds are captured each night against the **pinned** build, in both modes, reading **only the primary reading**; any clip over 3 on it is the take-down trigger (RL-136 item 3). It is run by us, not by CI, so it costs no minutes.
+
+```
+node tools/flash/nightly-seeds.mjs            # 8 new seeds, both modes, pinned commit, three at a time, one report line
+```
+
+- **The seeds**: the next 8 integers from 1000 that are in neither the recorded set (`tools/flash/sources.json`) nor the history (`tools/flash/nightly-seeds.json`, one row a night), so a seed is never read twice. Deterministic: the history is the only state. `--count`, `--base` change it.
+- **The build**: the commit the pass file recorded (`tools/site-pin.mjs`), exported once into `<temp>/nightly-seeds/<sha7>/web` and reused each night (`$GODOT` must be set the first time).
+- **The run**: `tools/flash/run-pixels.mjs --seeds ...` through the guarded launcher, below-normal priority, 25% of the cores, a time limit; about 16 captures at three jobs: **roughly 80 minutes**, plus 3 minutes for the first export. Nothing but the primary reading is read; the clips stay in `<temp>/nightly-seeds/<sha7>/<date>/clips` for `tools/flash/margins.mjs` if one is over.
+- **The report line** (also in `<date>/report.txt` and the history): `nightly seeds 2026-10-16 on the pinned d3f1ca0e: seeds 1000,...,1007 x 2 modes, 16 of 16 clips read; largest primary 2.5 (ai-1003-normal); none over 3`. Exit 0 when none is over 3. **Exit 1 and the words `TAKE DOWN: <clip> reads <n>`** when one is; exit 2 when a clip was not read or the run failed (a missing clip is not a pass).
+- **On exit 1**: `node tools/site-offline.mjs`, commit and push `tools/site.json`, tell the EP and Legal with the clip, its kind and owner (`margins.mjs` and a per-tick probe).
+
+**Schedule (ours, by the machine):** once a night, started at 01:00, below-normal, so it finishes before 03:00 and before the morning's work. On this machine: `schtasks /Create /SC DAILY /ST 01:00 /TN "OrbCombat nightly seeds" /TR "cmd /c cd /d <repo> && set GODOT=<godot console exe> && node toolslash
+ightly-seeds.mjs >> %TEMP%
+ightly-seeds.log 2>&1"`. It reads the log's last line each morning. The seeds are not stable across sim changes, but the pinned commit does not change, so a seed read once keeps its reading. `tools/flash/nightly-selftest.mjs` (12 checks, CI) covers the pick, the line and the trigger.
+
 ## What CI checks (`tools/check-site-interim.mjs`, with `tools/site-interim-selftest.mjs`, 50 checks, and the interim cases of `tools/flash/release-pass-selftest.mjs`)
 
 The check passes at once without an `interim` block. With one it fails on:

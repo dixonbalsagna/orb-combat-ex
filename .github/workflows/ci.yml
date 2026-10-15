@@ -106,6 +106,8 @@ jobs:
         run: node tools/site-interim-selftest.mjs
       - name: Pinned deploy self-test (a later game commit leaves the published /play/ byte-identical)
         run: node tools/site-pin-selftest.mjs
+      - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
+        run: node tools/flash/nightly-selftest.mjs
       # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
