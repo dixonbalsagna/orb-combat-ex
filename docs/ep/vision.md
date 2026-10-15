@@ -991,3 +991,126 @@ Verbatim:
 > I want all elements of distance fog, background mountains, skies to all look fantastic and not overlapping in a strange way, in the original demo the sky and stars would appear as a close fog that obstructed view of the mountains, I want all the visuals to get tightened so the lighting can be fully appreciated when flying around the planet
 
 What follows from it: a visual pass on the layering of sky, stars, distance fog and background mountains, so each sits at its own depth (no sky or stars drawn as a near fog in front of the mountains) and the lighting reads when flying around the planet.
+
+## Orb marks the first ten lines (2026-10-15)
+
+Orb rewrote all ten and wrote the rules below. Verbatim from homework/1-ten-lines.md:
+
+## The Protagonist
+
+**1. He lands a clean hit.**
+> "That one was harder than I meant."
+"I didn't mean to hit you that hard..."
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: less passivity
+
+**2. He takes a hit.**
+> "Okay, that one counted."
+"You're really strong!"
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: protagonist should show interest in his opponents technique, he is fascinated by martial arts
+
+**3. His swing misses.**
+> "I was showing off. I missed."
+"Hey, you're fast!"
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: respectful banter, minimal chattiness
+
+**4. He launches the rival.**
+> "Mind the roofs!"
+"I want to see your new technique..."
+"Everyone, get to safety!"
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: always wants rival to fight without restraint to test his own abilities; if he launches any opponent towards a crowd he should seem concerned
+
+**5. He makes a perfect block.**
+> "Your shoulder dropped. I saw it."
+"Try not to rotate your shoulder like that..."
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: playful, puts other fighter's ability into question (disrespectful by accident)
+
+## The rival (the Anti-hero)
+
+**6. He lands a hit.**
+> "You blinked before it landed."
+"This is the fight you wanted, right?"
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: Ego, mocking
+
+**7. He takes a hit.**
+> "I allowed that one."
+"You're not holding back, are you?"
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: probing opponent for hidden strength
+
+**8. His blow misses.**
+> "That was aimed where you should have been."
+"You're agile, I'll give you that."
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: tepid, ego-driven compliments; rival is capable of recognizing worthiness but 'plays his hand close to his chest' 
+
+**9. He launches the Protagonist.**
+> "Take your time coming back."
+"Are we here to play games?"
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: Rival shouldn't sound too patient.
+
+**10. He makes a perfect block.**
+> "I watched the whole wind-up."
+"I'm not impressed."
+- [ ] keep  - [ ] cut  - [x] rewrite:
+- Why: short, simple, ego-driven
+
+---
+
+## Anything about the voices in general?
+
+(For example: too wordy, not funny enough, too modern, wrong for this fighter.)
+
+Your notes: just strange, lame, wording, most reeked of LLM generated nonsense and hardly felt believable for something anyone would say in a real animated shonen fight. quips should be pithy, punchy, passable.
+
+The following is twenty lines I received from gemini, specifically for battles between protagonist and rival, not necessarily intended to be used between any other fighters. They're almost all just a little wordy for my taste, but with one or two exceptions they all sound miles better than what I've received. If future voice lines I receive sound like these, but just trimmed down and punchier, I'll be exceptionally pleased.
+
+**20 Shonen Rivalry Battle Lines**
+
+**The Protagonist (The Battle-Hungry Brawler)**
+
+1. "Now we’re talking! Don't hold back on me now!"
+2. "Man, I really felt that last one. My turn!"
+3. "You’ve gotten way faster. Guess I gotta step it up too!"
+4. "Come on, is that all that big pride of yours gets you?"
+5. "I’ve been waiting all day to see that look on your face!"
+6. "Take a breather if you need it—I want you at your best."
+7. "Haha! You almost took my head off with that one!"
+8. "Quit overthinking it and just hit me!"
+9. "Everything hurts... man, I haven't had this much fun in years!"
+10. "Alright, warm-up's over. Let’s see if you can keep up with this!"
+
+**The Rival (The Proud Elite)**
+11. "Wipe that stupid grin off your face and fight me!"
+12. "Don't you dare hold back on me, you idiot!"
+13. "You call that a punch? You’re insulting us both!"
+14. "Stay down! Actually—get up so I can put you in the dirt again!"
+15. "I didn't train through hell just to watch you pace yourself!"
+16. "Keep laughing. Let's see you smile with broken ribs."
+17. "You're always one step ahead... and it makes me sick!"
+18. "Shut up and take this at full power!"
+19. "I’m the one who finishes you today. Nobody else!"
+20. "Drop the act! Show me the power you're hiding!"
+
+---
+
+**Why LLMs Fail at Shonen Banter (And How to Fix It)**
+
+When LLMs write fight dialogue without strict guardrails, they default to "Silver Age comic book villain" or purple prose. They use ornate metaphors (*"We dance upon the edge of oblivion!"*), overly formal grammar, and multi-clause sentences that no human could actually yell while throwing a punch. Good shonen localization sounds like a mix of high-level locker-room trash talk and bar-fight adrenaline.
+
+**Expanded Prompt Instructions (Copy & Paste for Future LLM Sessions)**
+
+> **Voice & Dialogue Directives for Shonen Combat Banter:**
+> * **The "Mid-Punch" Brevity Rule:** Every line must be between 4 and 12 words. If a voice actor cannot scream the line in a single breath while throwing a haymaker or spitting blood, cut it in half. Use sentence fragments, interruptions, and contractions (*don't, gonna, gotta, you're*).
+> * **Ban "LLM Thesaurus" Words:** Strictly avoid theatrical, archaic, or overly literary vocabulary. Do NOT use words like: *commence, futile, demise, symphony, dance, crescendo, reckon, mere, behold, destiny, abyss, limit, surpass,* or *eternal*.
+> * **Use Physical, Blue-Collar Verbs & Nouns:** Anchor the dialogue in immediate physical reality. Use words like *dirt, teeth, ribs, breath, warm-up, hit, drop, bleed, grin, pace,* and *choke*.
+> * **Write for the English Dub, Not a Philosophy Essay:** Characters should never explain their dynamic out loud (e.g., *"As your rival, I will prove my superiority!"*). Instead, have them react to immediate physical triggers: the speed of that last kick, the other guy smiling after taking a hit, heavy breathing, or the suspicion that the opponent is holding back.
+> * **Lock in the Dynamic:**
+> * **The Protagonist** sounds like an excited athlete in a heavy sparring match. He is casual, disrespectful by accident, grinning through pain, and only cares about drawing out the Rival's top gear.
+> * **The Rival** sounds impatient, abrasive, and insulted. He hates being pitied, hates when the Protagonist smiles, and treats anything less than a 100% lethal effort from the Protagonist as a personal humiliation.
