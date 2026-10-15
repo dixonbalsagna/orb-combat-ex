@@ -979,3 +979,7 @@ What follows from it:
 - Orb's word to bring the playable web build back (the site has been offline since 2026-10-06), with a photosensitivity notice. It replaces "wait for the pass" for this return; Legal's interim terms apply (a click-through first screen, no autoplay, "Reduce flashing" on by default, the finding stated truthfully, no promotion while clips fail).
 - A simple pre-fight menu: radio buttons for one or two players and for controller or keyboard; checkboxes for settings such as intros.
 - Target: by 7am on 2026-10-15.
+
+## Whip-pan haze or a pan cap (Orb, 2026-10-15, morning)
+
+Asked whether to clear the signature-in-the-city flash failure by melting buildings into the background during a whip pan (a stronger form of the pan haze Orb turned off on 2026-10-06) or by Camera capping whip-pan speed, Orb chose "Camera's cap first". The haze is held as the fallback, used only if the cap does not clear the scene.
