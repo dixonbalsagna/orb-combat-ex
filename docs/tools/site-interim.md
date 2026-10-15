@@ -32,6 +32,18 @@ Sets `"offline": true`, `"approved": null` and `"interim": null` in `tools/site.
 
 `tools/flash/interim-run.sh` exports the commit's web build in a scratch tree, captures all 28 clips (both modes) through the guarded launcher, captures the second captures, reads the margins and **records the pass with the interim** in `tools/flash/release-pass.json`: the commit's four hashes (so the published build is the measured commit: a later commit that changes anything the player runs makes the record stale and the build refuses), every row with its real verdict (the failing ones stay in the file), the capture conditions, the HUD line (2.0 Hz, the largest `UiLook.HZ_*`), the seeds, and an `interim` block: `{legal: RL-136, from, expires, waives: [whole-set-combined-rule, margin-rule-and-second-captures, ci-gate-on-the-full-set], standing: {pass, notPass, marginRuleNotMet, needSecondCapture}}`. The record stops holding the day after `expires` (`release-pass.mjs --verify`, the build, and CI). Starved or unrecorded captures, a missing clip, a changed hash, the dips cap, the HUD line and the seeds are not waived.
 
+## The pinned deploy: main keeps moving, the demo does not
+
+Orb wants the mechanics and the animation refined continuously, so main moves while the demo is up, and a record is stale for any commit that changes what the player runs. So when the site is online (an `interim`, or a full release pass) **its `/play/` is built from the commit the pass file recorded, not from HEAD** (`tools/site-pin.mjs`, the `site` job):
+
+1. `node tools/site-pin.mjs` prints the recorded commit (`commit` in `tools/flash/release-pass.json`), or nothing when the site is offline. `tools/site.json` may also carry `"pin": "<sha>"`; if it does it must equal the record's (a mismatch fails the job), so the site's target is one visible value.
+2. CI exports HEAD's Web build as it always did (a broken export still fails CI) and, when pinned, also `git archive`s the pinned commit into a scratch tree, imports and exports it the same way (`node tools/site-pin.mjs --export <dir>`; a shallow checkout fetches just that SHA), writing its own `build_info.json` (its short SHA and date).
+3. `tools/build-site.mjs` builds the site from the pinned export with `--commit <pin>`, so the record is verified against the pinned commit's hashes (it holds) and not HEAD's (it would not); `check-site-interim.mjs` reads the shipped prefs and the feedback target from the pinned tree (`--root`), because those are what is published.
+
+**What changes the published game:** recording a new run (`bash tools/flash/interim-run.sh <commit> <from> <expires>`, which writes the record for that commit) and committing the record (and `"pin"`, if used). A later game commit does neither: the site job stays green and `/play/` is byte-identical. `tools/site-pin-selftest.mjs` (14 checks, CI) proves that on a throwaway repository: a later game commit makes the recorded pass stale against the branch tip, holds against the pinned commit, and the pinned export is byte-identical to the first.
+
+**What it does not do:** the rest of the site (the holding page, the About page, the gate and its words, the CI checks) is built from HEAD's tools, so a change to the words or the gate goes live with the next push; the game inside `/play/` does not. A new fix to the game goes up only with a new recorded run.
+
 ## What CI checks (`tools/check-site-interim.mjs`, with `tools/site-interim-selftest.mjs`, 50 checks, and the interim cases of `tools/flash/release-pass-selftest.mjs`)
 
 The check passes at once without an `interim` block. With one it fails on:

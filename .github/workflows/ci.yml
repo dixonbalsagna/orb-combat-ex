@@ -104,6 +104,8 @@ jobs:
       # The interim playable site (Legal's interim terms): the gate, the links, the shipped defaults and the expiry are checked on a stub export, every way they can be broken.
       - name: Interim site self-test (the click-through, no autoplay, no skip link, Reduce flashing on by default, the expiry)
         run: node tools/site-interim-selftest.mjs
+      - name: Pinned deploy self-test (a later game commit leaves the published /play/ byte-identical)
+        run: node tools/site-pin-selftest.mjs
       # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
@@ -172,8 +174,26 @@ jobs:
           "$GODOT" --headless --path research/band-proto --import
           mkdir -p "${RUNNER_TEMP}/band"
           "$GODOT" --headless --path research/band-proto --export-release "Web" "${RUNNER_TEMP}/band/index.html"
-      - name: Assemble the site (/, /play/, /bench/, /band/; the plain notice only while tools/site.json says offline)
-        run: node tools/build-site.mjs --web "${RUNNER_TEMP}/web" --out "${RUNNER_TEMP}/site" --commit "${GITHUB_SHA}" --band "${RUNNER_TEMP}/band"
+      # PINNED DEPLOY (docs/tools/site-interim.md): when the site is online (an interim, or a full release pass) its /play/ is the Web build of the commit the pass file RECORDED, not of
+      # HEAD, so main keeps moving while the published game stays the measured one. HEAD's export above is still built and checked on every run. Offline: no pin, nothing changes.
+      - name: Resolve the pinned commit (the recorded pass's, when the site is online)
+        id: pin
+        run: |
+          # an online site with no usable record fails here, with the reason
+          PIN=$(node tools/site-pin.mjs)
+          echo "sha=$PIN" >> "$GITHUB_OUTPUT"
+      - name: Export the pinned commit's Web build (same way as HEAD's)
+        if: steps.pin.outputs.sha != ''
+        run: node tools/site-pin.mjs --export "${RUNNER_TEMP}/pinned-web" --tree "${RUNNER_TEMP}/pinned-tree"
+      - name: Assemble the site (/, /play/, /bench/, /band/; the plain notice only while tools/site.json says offline; the pinned build when online)
+        env:
+          PIN: ${{ steps.pin.outputs.sha }}
+        run: |
+          if [ -n "$PIN" ]; then
+            node tools/build-site.mjs --web "${RUNNER_TEMP}/pinned-web" --out "${RUNNER_TEMP}/site" --commit "$PIN" --band "${RUNNER_TEMP}/band"
+          else
+            node tools/build-site.mjs --web "${RUNNER_TEMP}/web" --out "${RUNNER_TEMP}/site" --commit "${GITHUB_SHA}" --band "${RUNNER_TEMP}/band"
+          fi
       # With "offline": true in tools/site.json the output must hold no game: no .wasm, no .pck, no script, only the notice pages. Fails the job if it does.
       - name: Check the offline site holds no game
         run: |
@@ -184,7 +204,12 @@ jobs:
       # With an "interim" block in tools/site.json the playable site is built under Legal's interim terms. The check fails the job if the page autoplays, if any page or link leads
       # around the click-through, if Reduce flashing is not on by default in the shipped prefs, if the interim has expired or its words are a draft. Without the block it passes.
       - name: Check the interim site (click-through, no autoplay, no skip, Reduce flashing default, expiry)
-        run: node tools/check-site-interim.mjs --site "${RUNNER_TEMP}/site"
+        env:
+          PIN: ${{ steps.pin.outputs.sha }}
+        run: |
+          # the shipped prefs and the feedback target are the pinned tree's, not HEAD's
+          if [ -n "$PIN" ]; then ROOT="${RUNNER_TEMP}/pinned-tree"; else ROOT="."; fi
+          node tools/check-site-interim.mjs --site "${RUNNER_TEMP}/site" --root "$ROOT"
       - name: Upload the Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
