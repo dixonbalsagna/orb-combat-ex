@@ -1,17 +1,35 @@
-# One versus many, stage 1: N bodies in the core (parked build)
+# One versus many, stage 1: N bodies in the core, and the training dummy in the roster (parked builds)
 
 Owner: Simulation and Engine. 2026-10-15. **Built and proved in scratch; nothing is in the tree.** It is the core's part of stage 1 in Encounter's `docs/director/one-v-many.md`: N bodies in the roster, the hash and the replay. The director's part of stage 1 (`DirBrawl.partner`, the keyed draws given a namespace of their own) is Encounter's.
 
-**Apply** from the repo root: `python docs/architecture/pending/n-bodies/n_bodies.py .`. No class is new, so no import is needed. Re-run the proof below on the HEAD of the day first.
+**Two scripts, applied in this order from the repo root, with one golden regeneration after the second:**
+
+1. `python docs/architecture/pending/n-bodies/n_bodies.py .`: stage 1, with Game Design's four rulings on what the core counts of a guard. **No golden moves.**
+2. `python docs/architecture/pending/n-bodies/dummy_roster.py .`: the reference fighter into the roster as the training dummy (Orb, homework 3). **The golden's `rosterHash` moves, and nothing else in it.** It needs other owners' rows in the same commit (section "The dummy").
+
+No class is new, so no import is needed. Re-run the proof below on the HEAD of the day first.
 
 ## What a match of N bodies is
 
 - A match holds 2 to 5 fighters (`SimRoster.MAX_BODIES`). The setup names them: `{"slots": ["PROTAGONIST", "RIVAL", "REFERENCE", ...]}`, from the roster or the bench, an id more than once if wanted, with `"names"` to tell them apart in the feed.
-- **Slots 0 and 1 are the pair, exactly as in a 1v1:** where they stand, which way they face, who they fight. Slot 0 is the one.
-- **A body past the pair** stands beyond the second, `SimRoster.GUARD_SPACING` (240 units) apart and as far again for the next, on the side away from the first. He faces the first, and the first is his opponent: `SimRoster.opp` already gives every fighter but the first the first.
+- **Slots 0 and 1 are the pair, exactly as in a 1v1,** and they are the principals, the two the match is between (`SimRoster.isPrincipal`): where they stand, which way they face, who they fight. Slot 0 is the one; slot 1 is the Empress, and her guards stand behind her.
+- **A body past the pair** (a guard) stands beyond the second, `SimRoster.GUARD_SPACING` (150 units, 2 bh: "her guards stand 2 bh behind her, along the street") apart and as far again for the next, on the side away from the first. He faces the first, and the first is his opponent: `SimRoster.opp` already gives every fighter but the first the first.
 - **He is idle unless the setup's `ai` names him** (`"p3"` to `"p5"`): no AI and no intent, so he stands. Stage 2 gives the ring its AI.
 - **The step** controls the pair in today's order (one draw of the seeded stream a tick, as now) and the bodies past it after them, in slot order. A host that passes two intents gives the others none.
 - **The intro** brings in the pair only. The others stand on the ground from tick 0, take no entrance and dig no crater.
+
+## Game Design's rulings on a guard (docs/design/empress-guards.md), in the build
+
+| Ruling | In the core |
+| :--- | :--- |
+| Only a principal's KO ends the match | `SimDamage.ko` returns at once for a guard: his fall is the director's (he leaves, and his place reopens after its cooldown). A principal felled by a guard's blow loses to the principal that guard fights for |
+| A guard has no brink and no finisher | `SimWounds.updateStages` never puts a guard on the brink. The finisher is the director's |
+| A guard's stance does not set the mood | The mood's AGGRESSIVE column is read from a principal's stance only; "both aggressive" and "both guarded" read the principals, as they did |
+| A guard's landed blow feeds the mood at half | Every impulse of a damage event a guard caused is halved, rounded as the core rounds (`_impBlow`). A cue of his (a flurry's close, a guard break) is not halved: the ruling names blows |
+| The acts count the principals only | The act's form steps read the principals' tiers; a guard's wounds make no act beat and his tier no form impulse |
+| One hit-stop for the whole match | As it is: one `S.dirS.stop`, and freezes that overlap merge (the larger wins). An interjection's freeze is the director's |
+
+With two fighters both are principals, so each rule is today's rule.
 
 ## The replay and the hash (Encounter's question)
 
@@ -56,9 +74,31 @@ Owner: Simulation and Engine. 2026-10-15. **Built and proved in scratch; nothing
 
 **The director** (Encounter's count, for the record): `S.dirS.ex` read in 116 places, 26 calls of `opp`, 21 "the other one", 8 keyed draws built as `n * 2 + slot`. With the guards idle none of them reaches a guard in stage 1.
 
+## The dummy (dummy_roster.py)
+
+- `data/fighters/roster.json` becomes `["PROTAGONIST", "RIVAL", "REFERENCE"]`: he is listed last, and the default pairing is still the first two. `data/fighters/bench.json` is left empty, for the Empress's guards.
+- **A replay's data hash takes the fighters in its slots,** one hash each, in place of the whole roster's. So the dummy's data can change without turning away a replay of the other two; his own replays are refused when they do. (This was planned for the first window that regenerates anyway.)
+- **His numbers are frozen** (Game Design's §8): the check holds him to base stats, no care, no meter and no wounds or ladder file of his own.
+- **The golden:** only `rosterHash` moves. The golden's replays and matches are the same.
+
+**What the others need in the same commit** (from running their checks with him in the roster):
+
+| Who | What | Without it |
+| :--- | :--- | :--- |
+| **Art** | A colour row for him in `data/art/colour-vision.json` | The validator fails (`xref:colour-vision-fighters`), so CI's data job fails |
+| **Tools** | `tools/flash/pick-seeds.mjs` run again, so he is in at least five of the picked AI matches; the two new pairings (the Protagonist and the dummy, the Anti-hero and the dummy) in `tools/flash/seed-history.json` and the pairing list in `sources.json` | The flash self-test fails (2 of 83), so CI's flash job fails |
+| **Legal** | The pixel gate's pairing list grows by the same two pairings, and their clips are read | The release pass asks for clips that do not exist |
+| **Encounter and Combat** | His moveset: an entry in `data/director/alchemy.json`, or a `reference` pool in `data/combat/recipes.json` (Game Design: he fights with the common pool) | A warning only: he gets no pieces of his own |
+| UI, Audio | Nothing found: UI's two checks and Audio's two pass with him in the roster | |
+| Animation, Rendering | Not run here: his rows for the select screen and the training mode are theirs to check | |
+
 ## Proof
 
-On a clean export of 63e3b9b4:
+**Stage 1 with the rulings,** on a clean export of 88d13195: parity against the committed golden, unregenerated, **56 of 56** with no script error, and the golden regenerated **byte-identical**. The new check, "one versus many: what the core counts of a guard": a guard's KO does not end the match, and a principal felled by a guard loses to slot 1; a guard's broken core puts him on no brink; a guard's landed light feeds the mood half the data's units, and his AGGRESSIVE stance changes nothing; a guard's tier and wounds move no act, while a principal's battered limb makes its beat.
+
+**With the dummy in the roster,** on a clean export of 4a3ecb74, both scripts: the golden regenerated differs from HEAD's in `rosterHash` alone (golden_cmp: light digests, tick counts and checkpoints identical); parity on it, **56 of 56** with no script error. The new check, "the training dummy in the roster", replaces the bench's. Two earlier checks built their fixtures for a roster of two and now take the roster as it is.
+
+**Stage 1 as first parked,** on a clean export of 63e3b9b4:
 
 - **Parity against the committed golden, unregenerated: 55 of 55,** with no script error. **The golden regenerated is byte-identical** to HEAD's. So every 1v1 match, replay and checkpoint is the same to the bit.
 - **The new check, "one versus many: a match of three to five bodies":**
@@ -84,13 +124,18 @@ An idle body costs about 35 to 60 µs a tick: his step, and the loops that walk 
 
 ## Size
 
+Both scripts, against 4a3ecb74:
+
 | File | Lines added | Lines removed |
 | :--- | ---: | ---: |
-| `sim/core/roster.gd` | 20 | 1 |
+| `sim/core/roster.gd` | 28 | 1 |
 | `sim/core/sim.gd` | 24 | 14 |
-| `sim/core/replay.gd` | 19 | 8 |
-| `sim/core/mood.gd` | 1 | 1 |
+| `sim/core/replay.gd` | 25 | 15 |
+| `sim/core/mood.gd` | 21 | 10 |
 | `sim/core/intro.gd` | 8 | 4 |
-| `sim/core/tools/parity.gd` | 120 | 3 |
+| `sim/core/damage.gd` | 7 | 0 |
+| `sim/core/wounds.gd` | 2 | 0 |
+| `sim/core/tools/parity.gd` | 251 | 37 |
+| `data/fighters/roster.json`, `bench.json` | 2 | 2 |
 
-No data file, no new class, no event. **No golden moves.**
+No new class, no event, no data key. **The golden moves only by `rosterHash`, and only with the second script.**

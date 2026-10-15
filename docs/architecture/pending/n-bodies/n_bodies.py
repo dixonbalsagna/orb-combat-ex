@@ -18,10 +18,18 @@ def edit(p, pairs):
 edit('sim/core/roster.gd', [
 ('''## The other fighter: anything that is not fighters[0] gets fighters[0], as in the prototype.
 ''','''## One versus many (docs/director/one-v-many.md, stage 1): a match holds 2 to MAX_BODIES fighters. Slots 0 and 1 are
-## the pair as in a 1v1; a body past them stands GUARD_SPACING units beyond the second, and the next as far again, on the
-## side away from the first. The director places the ring from stage 2 on; until then they stand.
+## the pair as in a 1v1, and they are the principals: the two the match is between. A body past them (a guard) stands
+## GUARD_SPACING units beyond the second, and the next as far again, on the side away from the first. The director places
+## the ring from stage 2 on; until then they stand.
 const MAX_BODIES: int = 5
-const GUARD_SPACING: float = 240.0
+const GUARD_SPACING: float = 150.0   # 2 bh: "her guards stand 2 bh behind her, along the street" (empress-guards.md)
+
+
+## True when f is one of the two principals (slots 0 and 1), the fighters the match is between; false for a guard.
+## Game Design's rulings for more than two bodies read it: only a principal's KO ends a match, a guard has no brink, a
+## guard's stance does not set the mood and his blow feeds it at half, and the acts count the principals only.
+static func isPrincipal(S: SimState, f) -> bool:
+	return S.fighters.find(f) < 2
 
 
 ## True when slots names 2 to MAX_BODIES fighters the data has (the roster's or the bench's). The same id may come more
@@ -317,4 +325,185 @@ func _nBodies() -> String:
 
 ## A match's setup names the fighters the data has.'''),
 ])
-print("one versus many, stage 1: N bodies in the core")
+
+# ---------------------------------------------------------------- Game Design's rulings for more than two bodies
+# (docs/design/empress-guards.md, "What the core counts, with more than two bodies"). With two fighters both are
+# principals, so every rule below is today's rule.
+edit('sim/core/damage.gd', [
+('''static func ko(S: SimState, D, A) -> void:
+	if S.game.ko != null:
+		return
+''','''static func ko(S: SimState, D, A) -> void:
+	if S.game.ko != null:
+		return
+	# One versus many: only a principal's KO ends the match. A guard's fall is the director's (he leaves the field, and
+	# his place reopens after its cooldown). A principal felled by a guard's blow loses to the principal that guard
+	# fights for.
+	if not SimRoster.isPrincipal(S, D):
+		return
+	if not SimRoster.isPrincipal(S, A):
+		A = S.fighters[1] if D == S.fighters[0] else S.fighters[0]
+'''),
+])
+edit('sim/core/wounds.gd', [
+('''	var brink: bool = false
+	for r in range(4):
+		if f.wd.brinkRegion[r] and f.stage[r] == 3:
+			brink = true
+''','''	var brink: bool = false
+	for r in range(4):
+		if f.wd.brinkRegion[r] and f.stage[r] == 3:
+			brink = true
+	if brink and not SimRoster.isPrincipal(S, f):   # a guard has no brink and no finisher (empress-guards.md)
+		brink = false
+'''),
+])
+s_mood = open('sim/core/mood.gd', encoding='utf-8').read()
+i = s_mood.index('\t\t\t"damage":')
+j = s_mood.index('\t\t\t"cue":', i)
+blk = s_mood[i:j]
+assert blk.count('_imp(fs, ') == 5, blk.count('_imp(fs, ')
+s_mood = s_mood[:i] + blk.replace('_imp(fs, ', '_impBlow(fs, ') + s_mood[j:]
+open('sim/core/mood.gd', 'w', encoding='utf-8', newline='\n').write(s_mood)
+edit('sim/core/mood.gd', [
+('''static func _imp(fs: Array, name: String, slot: int) -> int:
+	return imp[name][1] if slot >= 0 and fs[slot].stance == 0.0 else imp[name][0]
+''','''static func _imp(fs: Array, name: String, slot: int) -> int:
+	# a guard's stance is his order, not a choice: it never sets the AGGRESSIVE column (empress-guards.md)
+	return imp[name][1] if slot >= 0 and slot < 2 and fs[slot].stance == 0.0 else imp[name][0]
+
+
+## A blow's impulse: a guard's landed blow feeds the mood at half its units, as it is worth half (empress-guards.md).
+static func _impBlow(fs: Array, name: String, slot: int) -> int:
+	var u: int = _imp(fs, name, slot)
+	return u if slot < 2 else int(SimMathx.jround(float(u) * 0.5))
+'''),
+('''	var steps: int = 0
+	for f in S.fighters:
+		steps = maxi(steps, int(f.tier) - 1)
+''','''	var steps: int = 0
+	for k in range(mini(2, S.fighters.size())):   # the principals' form steps only: a guard has no forms (empress-guards.md)
+		steps = maxi(steps, int(S.fighters[k].tier) - 1)
+'''),
+('''static func onForm(S: SimState, f = null) -> void:
+	_ensure()
+''','''static func onForm(S: SimState, f = null) -> void:
+	_ensure()
+	if f != null and not SimRoster.isPrincipal(S, f):   # the acts and the mood count the principals' forms only
+		return
+'''),
+('''static func onStage(S: SimState, f, r: int, st: int, prev: int) -> void:
+	_ensure()
+''','''static func onStage(S: SimState, f, r: int, st: int, prev: int) -> void:
+	_ensure()
+	if not SimRoster.isPrincipal(S, f):   # the acts count the principals' wounds only (empress-guards.md)
+		return
+'''),
+('''	if fs[0].stance == 0.0 and fs[1].stance == 0.0:
+		v += mood.bothAggressive
+''','''	if fs[0].stance == 0.0 and fs[1].stance == 0.0:   # the principals' stances: a guard's never sets the mood
+		v += mood.bothAggressive
+'''),
+])
+edit('sim/core/tools/parity.gd', [
+('''	check("one versus many: a match of three to five bodies", _nBodies())
+''','''	check("one versus many: a match of three to five bodies", _nBodies())
+	check("one versus many: what the core counts of a guard", _guardRules())
+'''),
+('''## One versus many, stage 1 (docs/director/one-v-many.md): a match holds''','''## One versus many: Game Design's rulings on what the core counts of a guard (docs/design/empress-guards.md). Only a
+## principal's KO ends the match, and a principal felled by a guard loses to the guard's principal. A guard has no brink.
+## A guard's stance never sets the mood's AGGRESSIVE column, and his landed blow feeds the mood at half. The acts count the
+## principals' form steps and wounds only. The hit-stop stays one for the whole match.
+func _guardRules() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"slots": ["PROTAGONIST", "RIVAL", "REFERENCE"], "intro": false})
+	var one = S.fighters[0]
+	var emp = S.fighters[1]
+	var guard = S.fighters[2]
+	if not SimRoster.isPrincipal(S, one) or not SimRoster.isPrincipal(S, emp) or SimRoster.isPrincipal(S, guard):
+		return "the principals are not slots 0 and 1"
+	# KO
+	SimDamage.ko(S, guard, one)
+	if S.game.ko != null:
+		return "a guard's KO ended the match"
+	S.out.fx.clear()
+	SimDamage.ko(S, one, guard)
+	var won: float = -1.0
+	for e in S.out.fx:
+		if e.type == "ko":
+			won = e.winner
+	if S.game.ko != one or won != 1.0:
+		return "a principal felled by a guard: the KO is %s, won by slot %s" % [str(S.game.ko != null), str(won)]
+	SimCore.dispose(S)
+	# the brink
+	var B := SimCore.createSim()
+	SimCore.newMatch(B, 5, {"p1": false, "p2": false}, {"slots": ["PROTAGONIST", "RIVAL", "REFERENCE"], "intro": false})
+	for k in [0, 2]:
+		var f = B.fighters[k]
+		f.wear[SimWounds.CORE] = f.wd.stageAt[2]
+		SimWounds.updateStages(B, f)
+		if f.brink != (k == 0):
+			return "slot %d's core broken: the brink reads %s" % [k, str(f.brink)]
+	SimCore.dispose(B)
+	# the mood: a blow's units by who threw it, and the stance column
+	var M := SimCore.createSim()
+	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"slots": ["PROTAGONIST", "RIVAL", "REFERENCE"], "intro": false})
+	var gain := func(make: Callable) -> int:
+		var out: Array = [0, 0]
+		for pass_ in range(2):
+			M.mood.v = SimMood.mood.range / 2
+			M.out.fx.clear()
+			if pass_ == 1:
+				make.call()
+			var v0: int = M.mood.v
+			SimMood.tick(M)
+			out[pass_] = M.mood.v - v0
+		M.out.fx.clear()
+		return out[1] - out[0]
+	var I: Dictionary = SimMood.imp
+	for f in M.fighters:
+		f.stance = 1.0
+	M.fighters[2].stance = 0.0   # the guard AGGRESSIVE: it must not pick the AGGRESSIVE column
+	var byOne: int = gain.call(func(): SimFx.damage(M, M.fighters[1], M.fighters[0], 5.0, "core", "light", "", true, "brawl"))
+	var byGuard: int = gain.call(func(): SimFx.damage(M, M.fighters[0], M.fighters[2], 5.0, "core", "light", "", true, "brawl"))
+	if byOne != I.brawlLight[0] or byGuard != int(SimMathx.jround(float(I.brawlLight[0]) * 0.5)):
+		return "a brawl's light fed %d from a principal and %d from a guard; the data say %d and half of it" % [byOne, byGuard, I.brawlLight[0]]
+	# both principals AGGRESSIVE add to the mood; a guard's stance changes nothing
+	for f in M.fighters:
+		f.stance = 1.0
+	M.fighters[2].stance = 0.0
+	var calm: int = gain.call(func(): pass)
+	M.mood.v = SimMood.mood.range / 2
+	M.out.fx.clear()
+	var v1: int = M.mood.v
+	SimMood.tick(M)
+	var withGuard: int = M.mood.v - v1
+	M.fighters[2].stance = 1.0
+	M.mood.v = SimMood.mood.range / 2
+	M.out.fx.clear()
+	var v2: int = M.mood.v
+	SimMood.tick(M)
+	if M.mood.v - v2 != withGuard or calm != 0:
+		return "a guard's stance changed the mood's tick"
+	SimCore.dispose(M)
+	# the acts: a guard's tier and wounds do not count
+	var A := SimCore.createSim()
+	SimCore.newMatch(A, 5, {"p1": false, "p2": false}, {"slots": ["PROTAGONIST", "RIVAL", "REFERENCE"], "intro": false})
+	var a0: int = SimMood.act(A)
+	var mask0: int = A.mood.onceMask
+	A.fighters[2].tier = 4.0
+	SimMood.onStage(A, A.fighters[2], SimWounds.ARMS, 2, 1)
+	SimMood.onStage(A, A.fighters[2], SimWounds.CORE, 3, 2)
+	if SimMood.act(A) != a0 or A.mood.onceMask != mask0:
+		return "a guard's tier or wounds moved the act (%d, was %d)" % [SimMood.act(A), a0]
+	SimMood.onStage(A, A.fighters[1], SimWounds.ARMS, 2, 1)
+	if A.mood.onceMask == mask0:
+		return "a principal's battered limb made no act beat"
+	SimCore.dispose(A)
+	return ""
+
+
+## One versus many, stage 1 (docs/director/one-v-many.md): a match holds'''),
+])
+
+print("one versus many, stage 1: N bodies in the core, with Game Design's rulings")

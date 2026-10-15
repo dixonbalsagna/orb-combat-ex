@@ -6,7 +6,7 @@ Windows 2 and 3 of `../fighters-as-data.md` (the reference fighter on a bench, t
 
 **A parked build:** `n-bodies/`: stage 1 of Encounter's `docs/director/one-v-many.md`, the core's plumbing for one versus many: a match of 2 to 5 bodies, the replay's slots, the intro and the mood made general, and the inventory of every place in `sim/core` that assumed two. No golden moves. Its page has the proof and the cost a tick at 2 to 5 bodies.
 
-**One script is parked:** `weight_event.py`, the blow's weight on the damage event, for Audio. It moves every golden's light digest and no state hash, so by the EP's ruling it rides with the next golden regeneration and has none of its own. Prove it alone on a clean export first.
+The weight on the damage event (`weight_event.py`) was applied with Encounter's chain (3198301f), and its script is deleted.
 
 **A parked build:** `depth-a/`: a fighter's depth outside a flight (two depth velocities, a capped ease, the contact rule against buildings, the director's step call, the camera's start at a crossing), with its new `SimDepth` loader and `data/combat/depth.json`. Proved on a clean export of 33c6f5bd: no golden moves with depth off. It is applied in the depth window, with Encounter's D1a. The plan, what the director calls and the proof are in `depth-core.md`, which also holds the snapshot design (paper).
 
