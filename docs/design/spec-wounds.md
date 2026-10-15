@@ -339,6 +339,7 @@ Orb picked **the aura crown with wound cards, plus the silhouette, varied per fi
     - *Stopping it.* If the opponent wins a decisive exchange against her while it fills, the gauge resets to empty and starts again. There is no other penalty.
     - *When it completes,* the revision's cinematic (2 to 3 s) plays and is respected. The refit applies on revisions 9 to 11. Tiers: 3 for revisions 9 and 10, 4 for revisions 11 and 12.
     - *State.* The processing gauge only.
+  - **Revised by `empress-guards.md` (2026-10-14, Orb's pet class).** Her guards now fight beside her, at most two at once, called with a press and resummoned on a cooldown. The act-1 goon phase below is retired, and the Encore brings two. The salute and "fallen guards leave" stand.
   - **Guard of honour.** Each tag-in is a fixed 1 s salute, during which the incoming guard can't be hit. It counts as downtime, and there is at most one tag-in per 5 s.
   - **The fold.** Her gauges work everywhere, the fold included.
   - **Her comeback: Encore** (Orb's pick; binding). A straightforward brawl through her guard, with no damage transfer and no paperwork UI.

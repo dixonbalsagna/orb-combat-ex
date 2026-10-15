@@ -1226,3 +1226,36 @@ Encounter followed every charge of QA's Y holder to its end (`docs/director/pend
 - **The full charged medium's worth goes back to 4.** The worth wasn't the cause.
 - **Then his alone row is read again.** If he is still under 10%, it is read on his proof rows alone, and I say so plainly: a held Y is an answer to lights and to charges, and not a way to play a whole match. Orb's rule asks that each of the nine has a meaningful use, and that use is in its proof rows.
 - **The proof row that matters most:** a full charged medium held through a flurry of lights lands and closes at least 80% of the times no medium answers.
+
+### The eighth round: Encounter's reads, one change at a time (2026-10-14)
+
+Encounter read each change of the sixth round alone and in order, on main, on QA's same-cadence pair, 100 matches against the medium AI. Nothing below has been run by me: every new value is a first value.
+
+| Step | The route's player | Its masher |
+| :--- | ---: | ---: |
+| QA's new route script: B in every opening | 61 | 50 |
+| + the pursuit | 82 | 43 |
+| + the launching blow at 6 | 76 | 44 |
+| + a landed heavy counting 4 on the run | 78 | 39 |
+
+**Orb's bar for tonight:** every face button's mash, timed press and hold "responsive, useful, and visually engaging each in their own way". Useful is read on each cell's proof rows, and on its alone row where the cell can carry a match. Responsive and engaging are §15's table for UI, Animation and Audio.
+
+| | The question | The ruling |
+| :--- | :--- | :--- |
+| a | Does the route's bound want an upper edge? | **Yes.** The route wins 0 to 25 points over the same script's masher, and no more than 70% against medium. **The pursuit is parked.** The launching blow at 6 stays, and is read without the pursuit |
+| b | A lever for B mashed that helps only the masher | **What a heavy counts is split:** 4 to the run of the fighter who lands it, 1 off the run of the fighter it lands on |
+| c | The held Y: its proof rows only, or one more lever? | **Its proof rows only.** They pass, at 99.6% and 20 of 20 |
+
+**a. The route.**
+- **The script was the fault.** With B in every opening the route already beats its masher, 61 to 50. The bound that a launcher never costs is met before any change.
+- **The pursuit makes it far too strong,** for both sides. The route goes to 82, and the masher falls from 50 to 43, because the AI pursues after its own launches. A habit the game cues with a ping shouldn't win four matches in five against medium.
+- **The upper edge:** the route's player wins between 0 and 25 points more than the same script's masher, and at most 70% against medium. A launch should pay, and not decide matches by itself.
+- **The pursuit stays built and switched off.** It is a good answer to "a far tap is a taunt". It comes back with the stances' re-read of the far band, if the route has room under its edge.
+- **The launching blow stays at 6,** to match the hammer. If the route without the pursuit goes over its edge, the blow goes back to 3 before anything else moves.
+
+**b. B mashed.** A heavy that counts 4 both ways drained his run as fast as it filled it, so he fell from 6 of 60 to 2: each heavy the AI landed on him emptied it.
+- **Split the count:** a landed heavy adds 4 to the run of the fighter who lands it, and takes 1 off the run of the fighter it lands on. A heavy already staggers him for 12, which is its punishment. Emptying his run too was a second one.
+- **It helps the fighter who lands heavies back to back,** which is the B masher. The AI's few heavies still add to its own run.
+- **The next lever, if he is still under 20%:** a heavy thrown inside a B flurry, within 34 ticks of his last landed heavy, costs 3 ki where it costs 5. A heavy every 30 ticks costs twice the ki that comes back, so half his presses become mediums.
+
+**c. The held Y is read on its proof rows only.** 243 of 244 full charges held through lights land and close, and against a masher of lights it is 20 of 20. It is the answer it was meant to be. Alone it wins 1 of 60, because 31% of its full charges miss when the AI gives ground, which is the counter it is meant to have. Its alone row is reported, and no lever follows it. Every other cell keeps its alone row.
