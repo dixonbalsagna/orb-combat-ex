@@ -161,7 +161,7 @@ With four fighters that is four mirrors and six pairings. With twelve it is twel
 | 13 | **Orb plays him** | Orb | Orb | |
 
 - **What runs together.** Steps 1, 2 and 3 start the day Orb marks the page. Steps 5 and 6 need only the page. Steps 7 and 8 need the silhouette and the study. Step 10 runs beside everything.
-- **Orb's eye, in order:** the page's marks, the silhouette, the ten-second study, Combat's card, the ten lines, and then playing him. The first four are early and cheap, and together they are under an hour of his time.
+- **Orb's eye, in order:** the page's marks, the silhouette, the ten-second study, Combat's card, the ten lines, and then playing him. The first four are early and cheap, and together they are under an hour of Orb's time.
 - **The narrow parts are Orb's picks first, then Animation's days.** Everything else is pages and data.
 - **Tier 2 is a second trip** through steps 5 to 13 for one mechanic, with its off switch. Animation sizes a fighter's tier 2 at 8 to 12 days.
 

@@ -1,6 +1,6 @@
 # The Empress's guards: a fighter who brings her own
 
-Owner: Game Design. Date: 2026-10-14. **Paper only.** Nothing here is built or run, and **every number is a first value.** Versus only: co-op is held. Encounter is sizing the director's limit (`one-v-many.md`), and Camera the framing. This page gives them the rules to size.
+Owner: Game Design. Date: 2026-10-14. **Paper only.** Nothing here is built or run, and **every number is a first value.** Versus only: co-op is held. Encounter has sized the director's limit (`docs/director/one-v-many.md`), and its rules are folded into §5. Camera is sizing the framing.
 
 **Orb,** 2026-10-14 (`docs/ep/vision.md`, last section): "Her base form should be able to summon elite troopers to fight alongside her, turning fights into multi-fighter brawls. there should be a compromise of losing certain energy attacks, grabs et cetera, in order to give commands to the semi-autonomous elite guards... I want the empress to, at most, be able to have two elite guards at once, meaning the empress can, with minimal setup, fight 3v1 in her base form in versus mode." And on the same evening: the commands are our call; a guard who falls is resummoned on a cooldown; versus only.
 
@@ -39,7 +39,7 @@ Orb's compromise, made structural, so that it is plain on the pad.
 | Input | The order | What the guards do |
 | :--- | :--- | :--- |
 | **RB + X** | Not an order: **her bolt** | |
-| **RB + Y** | **Engage** | One guard goes in and takes him on: the point. The other supports: a covering volley no more than once in 3 s, or a flank that cuts off his way out. They change roles after each decisive exchange, after a parting, or after 3 s on point |
+| **RB + Y** | **Engage** | One guard goes in and takes him on: the point. The other supports: a covering volley no more than once in 3 s, or a flank that cuts off his way out. They change places by the tag of §5 |
 | **RB + B** | **Fall in** | Both come to her side, 2 bh off her shoulders. When he comes at her, the nearer one steps in front and takes the first blow of his approach. Each guard does that at most once in 3 s |
 | **RB + A** | **Summon** | A guard, if a place is free (§1) |
 
@@ -63,7 +63,21 @@ Orb's compromise, made structural, so that it is plain on the pad.
 
 ## 5. Facing three: why it is fair
 
-**One striker at a time.** Only one fighter lands blows on him in a brawl at a time: her or the guard on point. The others support at range, flank, or wait. They change places only after a decisive exchange, a parting, or 3 s. **He is never hit by melee blows from two fighters within 12 ticks** (a hard test). So he reads one rhythm, as in any brawl.
+**One striker at a time.** Only one fighter brawls with him at a time: her or the guard on point. The others support at range, flank, or wait. **He is never hit by blows from two fighters within 8 ticks** (a hard test). So he reads one rhythm, as in any brawl.
+
+**A partner and a ring** (Encounter's `docs/director/one-v-many.md`, ruled 2026-10-15). At most two bodies touch him at a time. One is his partner, in an ordinary brawl with him. The rest are the ring: in reach, outside the brawl's pull, circling, feinting and waiting. The director may grant one ring blow into the brawl: an interjection.
+
+| | The rule | First value |
+| :--- | :--- | :--- |
+| **His partner** | The one his stick points at within striking distance; else the partner he has; else the nearest in front of him | |
+| **The tag** | A ring body becomes the partner when the partner is sent (a launch, a knock-back, a wall slam), when he turns his stick on a ring body in reach, when the partner has held him for a slice with nothing decisive, or on the Empress's order. **No guard tags himself in** in any other way | The slice: 6 s. At most one tag in 30 ticks |
+| **The Empress as partner** | No slice. She keeps the brawl until a decisive exchange, a parting or her own order | |
+| **His run on a tag** | **Carried.** His pressure is against all of them. If a tag wiped his run, she could rotate guards to keep him from ever closing | |
+| **A partner's run on a tag** | Fresh. A guard's blows build no run against him anyway (§4) | |
+| **An interjection** | One blow from the ring: **a light or a medium, never a heavy, a launcher or a grab.** Its wind-up is in sight for at least 8 ticks, and it can be guarded and perfect-blocked like any blow. A guard's covering volley is an interjection too, by bolt | At most one in 1.5 s, and never within 8 ticks of the partner's contact |
+| **A press of his across a tag** | Goes to the new partner, and is still one blow | |
+
+**The cap** (Encounter's sizing). 3v1 is built and ships. 4v1 waits behind a cap until a measured probe shows the old machines can carry it. There is no 5v1. The Empress's two guards make her a 3v1, so she needs nothing past the first.
 
 **What he has, and it is plenty:**
 1. **Break the escort.** Two decisive exchanges and a guard is gone for 20 s and 20 of her ki. Each one gives him 10 ki.
@@ -88,7 +102,7 @@ Orb's compromise, made structural, so that it is plain on the pad.
 
 ## 7. Open questions, for the homework sheet
 
-Each is a short choice. "Orb" marks the ones that are his. "Ours" marks the ones we have decided and Orb may change.
+Each is a short choice. "Orb" marks the ones that are theirs. "Ours" marks the ones we have decided and Orb may change.
 
 | # | Question | Choices | Whose |
 | ---: | :--- | :--- | :--- |
@@ -103,6 +117,7 @@ Each is a short choice. "Orb" marks the ones that are his. "Ours" marks the ones
 | 9 | A guard falls to two decisive exchanges or 250 damage, and comes back 20 s after he falls | **Yes** / tougher / weaker / your call | Ours |
 | 10 | The fighter facing her guards gets his ki back half again as fast while outnumbered | **Yes** / no help / your call | Ours |
 | 11 | When the guards fight beside her, can she be the striker too, taking turns with the guard on point? | **Yes, one striker at a time** / she stays back while they engage / your call | Ours |
+| 13 | When the fighter facing her is passed from one partner to the next, does the pressure he has built carry over? | **Yes: his run carries** / it starts again / your call | Ours |
 | 12 | The cap on how many fight one, for later fighters | **Three on one at most for now, and four on one only if the director keeps it readable** / your call | Orb, with Encounter's sizing |
 
 ## 8. QA's rows, and the order
@@ -111,7 +126,9 @@ Each is a short choice. "Orb" marks the ones that are his. "Ours" marks the ones
 | :--- | :--- |
 | Her win rate in each pairing, with her guards on | 45 to 55% |
 | The same, with her guards switched off | Read beside it, to see what the mechanic does |
-| Melee blows from two fighters on him within 12 ticks | Never (hard) |
+| Blows from two fighters on him within 8 ticks | Never (hard) |
+| An interjection that isn't a light, a medium or a volley's bolt; two in 1.5 s | Never (hard) |
+| His run kept across a tag | Every tag (hard) |
 | A guard closing on him, launching him or knocking him back | Never (hard) |
 | A guard striking during his salute | Never (hard) |
 | Guards fallen a match | 2 to 6 |

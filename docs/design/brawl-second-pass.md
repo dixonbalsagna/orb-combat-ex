@@ -319,7 +319,7 @@ The press throws the light, as always. **The burst starts when the hold is certa
 
 - **The rule.** A tap of B while the rival is staggered by an opening is the launcher. The openings are the staggers a fighter earns: a flurry's close, a broken guard, a perfect block, a zip's tech counter and a punished taunt. A landed heavy's stagger isn't one, and a shove's isn't.
 - **It always lands.** Its wind-up is halved to 14 ticks, as on the beat (§9), and the stagger holds until it lands.
-- **It always lands, and it launches when the launcher is ready.** When it launches, the stick nudges the launch and the director stages it, as for every launch. After any launch of a fighter, the launcher rests on him for 40 s of fight time. **In that time the same B is the hammer:** it still always lands, as a full heavy worth 6, and the brawl goes on. It doesn't part them (re-ruled in §14's fourth round: as a knock-back it cost the launcher's player matches). The launching blow is worth 6 too. It was 3 until §14's sixth round: a launch shouldn't hit softer than the blow that stands in for it. Either one costs a heavy's 5 ki. The launch's landing is the rest of its worth.
+- **It always lands, and it launches when the launcher is ready.** When it launches, the stick nudges the launch and the director stages it, as for every launch. After any launch of a fighter, the launcher rests on him for 40 s of fight time. **In that time the same B is the hammer:** it still always lands, as a full heavy worth 6, and the brawl goes on. It doesn't part them (re-ruled in §14's fourth round: as a knock-back it cost the launcher's player matches). The launching blow is worth 3 brawl lights, which is half a heavy for half the wind-up. The sixth round put it at 6, and the ninth put it back: at 6 the route was over both its edges, and the B masher halved. Either one costs a heavy's 5 ki. The launch's landing is the rest of its worth.
 - **A B pressed early is kept.** Pressed in the 10 ticks before the stagger begins, it is held and thrown as the launcher, by §2's rule for a held press. So "X, then B" rolled off the closing blow works, and so does a B pressed on seeing the stagger. A kept B goes before any X pressed after it, so mashing on doesn't lose it (Encounter's decision, confirmed).
 - **A held B loses the guarantee.** The stagger holds for the 14 ticks only. Held past that, it is a charged heavy like any other.
 - **The staggered fighter keeps half his nudge** (§1), so he has a say in where he is launched from. Nothing gets him out: a stagger takes his buttons, as it does today.
@@ -389,7 +389,7 @@ Reliable had become constant. Two things in my rule caused it, and both change n
 
 **A failed option hurts 3 of 10** (Orb, questionnaire 19). A whiffed heavy leaves him open for 20 ticks. The rule for every flashy option: failing never leaves him open for more than 20 ticks, and never adds damage of its own.
 
-**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.085; reel 2; run 1 a blow; then a floor gap of 8); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (the openings, wind-up 14, worth 6, ki 5, held press 10, rest 40 s, flight ×1.0, and the AI's shares 0.15, 0.35 and 0.6).
+**Data:** `burst` (start 16, as `read.burstStart`; gaps 4, 4, 5, 6, 8, 11; the second blow worth 1; rate 0.085; reel 2; run 1 a blow; then a floor gap of 8); `charge.y` (from 16, full 24, lands 4, worth 3 to 4, ki 4, reel 10, max 40); `charge.b` (from 32, full 44, lands 4, worth 8 to 10, ki 8, max 70, whiff 20); `charge.justTicks` 4; `guard.freshTicks` 30; `launcher` (the openings, wind-up 14, worth 3, ki 5, held press 10, rest 40 s, flight ×1.0, and the AI's shares 0.15, 0.35 and 0.6).
 
 ## 4. A: the shove, the clinch and the tackle
 
@@ -519,7 +519,7 @@ They still read right with B as the heavy: each pair does what its two buttons m
 | **The mood** | The clash's 480 units |
 
 - **Why 240 ticks.** With the limit alone, every even mash would end this way every 2 s, and it would be the default. A median brawl is about 3 s and the 90th percentile about 10 s, so a trade that stays level for 4 s is the slightly uncommon thing Orb asked for.
-- **The band is for a player who presses, and not for the AI against itself.** It is re-based on C1 as built (`docs/director/brawl-c1.md`). Orb's "slightly uncommon" is about his own trades. Against the medium AI, a lights-only presser and a mixing presser each see 0.5 to 2 double hits a match, and at least one in 35 to 65% of matches. As built they see 0.3 and 0.2, which is under.
+- **The band is for a player who presses, and not for the AI against itself.** It is re-based on C1 as built (`docs/director/brawl-c1.md`). Orb's "slightly uncommon" is about their own trades. Against the medium AI, a lights-only presser and a mixing presser each see 0.5 to 2 double hits a match, and at least one in 35 to 65% of matches. As built they see 0.3 and 0.2, which is under.
 - **The AI against itself is reported, and none is in order.** Its strings are 3 to 5 blows and then a heavy or a guard, so no level trade between AIs lasts 240 ticks. Of about 18 that reach 120 ticks in twelve matches, none does.
 - **It is measured now and tuned on C2a,** as the EP leans. Three strengths change how a level trade forms, so a number tuned today would be tuned twice.
 - **The limit is not the lever.** One a match between AIs would need about 120 to 130 ticks, which makes the double hit the default again. The 240 stays, and it never goes under 180. The lever is the AI's `digIn`. As first ruled, it dug in when a trade was still level at the limit. On the first chain that moment never comes, so it is re-ruled (§14): it is decided as a trade starts, and at its share the AI matches his pace for that trade until the trade breaks or the double hit lands. First shares: 0.1, 0.2 and 0.3 by level, and half as much again for the rival, who doesn't give a level trade up. As built it is 0.3 at medium. Two AIs never both dig in to one trade, and the AI digs in only while the match has had fewer than 2 double hits and not within 45 s of the last (Encounter's, confirmed in §14). **Re-ruled in §14's fourth round:** the share is of matches and not of trades, at 0.3, 0.55 and 0.75, with 120 s between the two.
@@ -640,7 +640,7 @@ C1 is unchanged and is being built. After it, the buttons come in two halves, so
 - **The heavy tier is built,** by the EP's call, which Orb gave it: 16 key sets first, with today's heavies standing in on B until it is posed.
 - **C2a and C2t are built as one chain, in two steps** (Encounter's cut, `docs/director/brawl-plan.md` §10, which the EP accepted). C2a alone has nothing that separates the fighters, so its pacing rows would mean nothing.
 - **Encounter's nine defaults for that chain are ruled,** each in its own place: §1 (a light from too far), §2 (what ends a medium's wind-up, a hold before the charges, the lunges, the close), §3 (the riposte and the reversal), §5b (energy held) and §9 (the zip's counters and the zip heavy's worth). All nine are confirmed. Two came with a change of mine: the leash is shorter, and a held energy press is its tap.
-- **The heavy's charge comes forward into that chain, cut small.** Orb's second question is about an opponent charging up, and he will hold B himself and expect a charge. With wind-ups of 12 and 28 ticks only, the answer would be half honest.
+- **The heavy's charge comes forward into that chain, cut small.** Orb's second question is about an opponent charging up, and they will hold B themselves and expect a charge. With wind-ups of 12 and 28 ticks only, the answer would be half honest.
   - **In:** a B still down at 32 ticks keeps charging. It is full at 44, with its flash. It goes 4 ticks after he lets go, and by itself at 70. It is armoured as its wind-up is. It is worth 8, rising to 10, for 8 ki: 5 at the press and 3 at tick 32 (Encounter's decision, confirmed). Without the 3 it goes at 32 as a tap. A clean hit knocks back, and at full it launches, aimed as the launcher is, with the planner's pick when there is no stick. Its reach grows to 1.5 bh past striking distance. A miss leaves him open for 20 ticks. The AI charges 0.15, 0.3 and 0.45 of its heavies by level, and lets go within 8 ticks of the flash.
   - **Out, and still C2b's:** the charged medium, the just release, the fresh and the set guard, the wrench, the shove, and the lift with no stick. On a guard a charged heavy is blocked as a tapped heavy is. A held Y goes by itself at 16 ticks, at a tap's strength.
 - **Animation's earlier sizes** (`docs/animation/brawl-second-pass-view.md`) were for two strengths. The new tier of heavy blows is the largest new item, and it needs sizing again.
@@ -918,7 +918,7 @@ Encounter's second tune is built and lands as it is. Nothing below has been run:
 
 | Cell | Today, as built | The gap |
 | :--- | :--- | :--- |
-| X tapped | A light. The beat isn't built for any button | **The perfect follow-up, on all three** (§16, which re-rules §9's skill strike on Orb's anchor: his own hit), with one new rule: **three perfects running close.** The third staggers him for the close's 12 ticks, under the close guard |
+| X tapped | A light. The beat isn't built for any button | **The perfect follow-up, on all three** (§16, which re-rules §9's skill strike on Orb's anchor: the player's own hit), with one new rule: **three perfects running close.** The third staggers him for the close's 12 ticks, under the close guard |
 | X mashed | The flurry. The masher reads 37.5% on one of QA's scripts and 12% on the other | None in the rule. QA says which script the band is read on, and all nine rows use that one |
 | X held | The burst, and then nothing. The holder wins 0 of 40 | **The floor pace,** ruled in §3: one blow every 8 ticks through a tap's path, at 0.085 a tick. **New:** the held flurry's blows can't be perfect-blocked |
 | Y tapped | A medium, 12 ticks | The beat, as for X |
@@ -1259,3 +1259,27 @@ Encounter read each change of the sixth round alone and in order, on main, on QA
 - **The next lever, if he is still under 20%:** a heavy thrown inside a B flurry, within 34 ticks of his last landed heavy, costs 3 ki where it costs 5. A heavy every 30 ticks costs twice the ki that comes back, so half his presses become mediums.
 
 **c. The held Y is read on its proof rows only.** 243 of 244 full charges held through lights land and close, and against a masher of lights it is 20 of 20. It is the answer it was meant to be. Alone it wins 1 of 60, because 31% of its full charges miss when the AI gives ground, which is the counter it is meant to have. Its alone row is reported, and no lever follows it. Every other cell keeps its alone row.
+
+### The ninth round: a correction, and the window (2026-10-15)
+
+Encounter read B mashed again on 120 matches, and the eighth round as one build (`docs/director/pending/sixth-round/README.md`). Nothing below has been run by me: every new value is a first value.
+
+**A correction to my eighth round.** I split the heavy's count because Encounter's interim had it draining the B masher. On 120 matches that was noise. Main reads 13 of 120; with the heavy's count both ways, 6; without it, 5; with my split, 5. The count makes no difference either way. What halved him was the launching blow at 6: back at 3 he reads 10 of 120. My ruling b rested on the wrong reading.
+
+| | The question | The ruling |
+| :--- | :--- | :--- |
+| 1 | B mashed, re-ruled | **Its band's floor comes down to 10%, and its proof is its edge over the light masher.** One lever, held: a heavy inside a B flurry costs 3 ki |
+| 2 | The window Encounter applies | **Encounter's recommendation, with `digIn` at 0.4.** The route at 27 points over its masher is accepted as inside noise |
+
+**1. B mashed.**
+- **What beats him is what was designed to.** He lands about 92 heavies a match. He deals 5,683 and takes 10,434, and he is launched about eight times. A B flurry is the slowest and plainest rhythm in the game. The medium AI perfect-blocks it, steps out of it and punishes the miss, which opens him for its launcher. Those are the answers §15 gives the B flurry.
+- **Its alone row is 10 to 50%,** where it was 20 to 50%. Mashing the heaviest button against an AI that reads heavies should lose most matches. Under a tenth would be hopeless, and that is the line.
+- **Its proof row is the edge it is for:** a B flurry against the lights-only masher's script takes the first decisive exchange at least 60% of the time. That is "B over X" of §11, read as it stands.
+- **The heavy's count stays split,** 4 up and 1 down. It moves nothing that was measured, and it is the rule as written.
+- **The lever held, if he is under a tenth:** a heavy thrown inside a B flurry, within 34 ticks of his last landed heavy, costs 3 ki where it costs 5. Only a fighter who lands heavies back to back ever meets it.
+
+**2. The window.**
+- **In it:** the pursuit off (built and parked); **the launching blow back at 3**; the heavy's count split; every blow of a held X a full point; the medium AI's `digIn` at **0.4**. At 0.45 it read 66 matches in 100 with a double hit, one over the band's top, and 0.4 is Encounter's next value.
+- **The launching blow goes back to 3,** as my own order of the eighth round said. At 6 the route was over both edges, 72% and 32 points, and the B masher halved.
+- **The route at 66% and 27 points over its masher is accepted.** It is inside the 70% edge, and two points over the 25-point one, which is inside noise on 100 matches. QA reads the edge on 200.
+- **The masher's fall from 50 to 39 or 40** is inside his band of 35 to 50%. It comes from the split, the full point or `digIn`, and isn't yet isolated. QA isolates it in the first baseline after the window. It doesn't hold the window.

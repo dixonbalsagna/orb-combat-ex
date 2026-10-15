@@ -64,7 +64,7 @@ World's streets (option P, on main): three along-streets of 5 bh each, at depths
 
 - **A drifting brawl never damages a building,** in depth as along the street. Only a flight does: a launch, a throw, a rush that ploughs.
 - **A face gives no bonus.** There is no pin and no wall hit in a brawl.
-- **Orb's four-by-four grid.** Three streets are in, which gives 15 crossings round downtown. The literal four streets need a deeper band, and World has costed that as option Q. It is a layout and not a rule: nothing here changes for it but the numbers in §3. It waits for Orb, after he has seen three streets with depth on.
+- **Orb's four-by-four grid.** Three streets are in, which gives 15 crossings round downtown. The literal four streets need a deeper band, and World has costed that as option Q. It is a layout and not a rule: nothing here changes for it but the numbers in §3. It waits for Orb, after they have seen three streets with depth on.
 
 ## 3. How fast it drifts, and how it comes back
 
