@@ -13,6 +13,8 @@ Owner: Encounter Systems Director. The director's part of a brawl that stands on
 - With depth off the golden regenerated is the chain's own, byte for byte. Simulation's parity checks pass, its two for depth among them. Determinism passes. The validator is clean.
 - With depth on (a forced setup; three stick habits, 8 matches each from the crossing): the pair stands between 10 and 30 degrees on every tick, the drift never passes 1.2 bh a second, and no brawl goes through a face.
 
+**Re-based on main 3198301f (2026-10-14).** Simulation's part (a) and `d1a.cjs` apply clean on main as it is. With depth off the golden is main's own, byte for byte; parity, with Simulation's two depth checks, and determinism pass. The validator warns only that `data/combat/depth.json` has no schema yet, which is Simulation's file.
+
 **Not gated beyond that.** The full gate list was not run with part (a) and D1a in: with depth off they are the chain to the bit, and depth on is no shipped setup yet.
 
 **For Simulation:** my numbers for `data/combat/depth.json` under `director`: `lineSinMin` 0.1736, `lineSinMax` 0.5, `arriveSin` 0.342, `homeAfterTicks` 30, `homeBhPerSec` 0.5. The script adds them; they are Simulation's file to carry.
