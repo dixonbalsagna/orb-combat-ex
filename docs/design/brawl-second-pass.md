@@ -1348,3 +1348,16 @@ Orb answered homework 2 (`docs/ep/vision.md`, "Orb answers homework 2"). Most an
 - **Hints 9 and 10,** for UI and Narrative to rewrite: Orb read neither. Hint 9 meant that if you hold B until the charge clicks and then let go, the blow knocks him back. Hint 10 meant that when his heavy misses, a medium punishes it.
 
 **What changes in §16:** perfect follow-ups cost no ki. The chain has no count, and a perfect B ends it. The duel of perfects is a new answer to a perfect, beside the plain perfect block. The order gains two steps: 3e, the cash-in; and 3f, the duel of perfects. The chase comes with them.
+
+**The tenth round, an addition: the masher's fall, isolated** (Encounter, each change alone on main, the X masher against medium, 100 matches).
+
+| Change alone | The X masher | What it bought |
+| :--- | ---: | :--- |
+| Main | 50 | |
+| The heavy's count split, 4 up and 1 down | 41 | Nothing measured. The B masher reads 5 of 120 with it or without it |
+| The medium AI's `digIn` at 0.45 | 43 | Matches with a double hit, 68 in 100 to 66 |
+| Every blow of a held X a full point | 50 | It is the rule, and it costs nothing |
+
+- **The heavy's count is dropped.** A heavy counts toward the run as any blow does, 1 each way, as before the sixth round. The medium AI lands about 8.5 heavies a match on the masher, and at 4 each that closed on him. It cost a cell 9 points and helped nobody, and it was ruled on a reading that turned out to be noise. Encounter's other form, 4 only for a second running heavy, has nothing measured behind it either. The B masher's lever stays the ki discount inside a B flurry.
+- **`digIn` stays at 0.55,** and the ninth round's 0.4 is withdrawn. Moving it bought two matches in a hundred, which is inside the noise, and cost the masher seven points. **The band for matches with a double hit becomes 35 to 70%,** so that a row three over its top on 100 matches isn't chased again.
+- **The held X's full point stays.**

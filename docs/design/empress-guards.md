@@ -89,6 +89,23 @@ Orb's compromise, made structural, so that it is plain on the pad.
 
 **The bands:** she wins 45 to 55% of each pairing, as every fighter does. Her guards fall 2 to 6 times a match. The fight is 3v1 for 20 to 60% of her base form's time. Encounter's director keeps it readable or the cap comes down (§7).
 
+### What the core counts, with more than two bodies
+
+Ruled for Simulation's stage 1 (`docs/architecture/pending/n-bodies/`) and World's notes (`docs/world/scratch-build/near-offers/README.md`), 2026-10-15. "The principals" are the two fighters the match is between: the Empress and the one she fights.
+
+| | The ruling | Why |
+| :--- | :--- | :--- |
+| **A guard knocked out** | **Doesn't end the match.** Only a principal's KO does. A guard falls: he salutes, leaves the field, and his place reopens after its cooldown (§1). Only a principal can win a finisher | A guard has no brink and no finisher (§4) |
+| **The mood's "both aggressive" and "both guarded"** | **The principals' stances only.** A guard's landed blow feeds the mood at half its units, as it is worth half | A guard's stance is his order, not a choice. Counting it would let the AI set the mood |
+| **The acts** | **The principals' forms and wounds only.** Guards have neither. Their falls reach the acts through her Wrath, which drives her revisions | |
+| **The hit-stop and the pauses** | **One for the whole match, as now.** It is one fight: a partner, a ring, and one interjection at most. Freezes that overlap merge and don't add. An interjection or a volley's bolt freezes as a light does, 2 ticks at most | So the freeze share stays readable, and nobody is frozen twice by one moment |
+| **Later, when a 2v2 splits into two 1v1s** | **Each fight gets its own hit-stop.** A hit in one fight mustn't still the other | Not needed for the Empress's 3v1. It is written down now so the core isn't built against it |
+| **The collateral budget** | **Unchanged by the number of bodies.** The window and the ceiling go by the highest tier, as now. More launches spend it sooner, and the director then picks sends that miss buildings | The budget is the world's pace of loss. People are people, whoever's flight hit them |
+| **Room in a street** | **The ring stands along the street and in the air, not across it.** A 5 bh street has 4 bh of depth (`depth.md` §2), which holds the pair at its line's angle. The ring takes two places a side along the street, at striking distance and 2 bh more, and the air above it. An avenue or a crossing gives it the whole band. The streets aren't widened, and the bodies aren't spread over two streets | Flight goes over anything. The ring is three-dimensional where the street is narrow |
+| **The start** | **The principals stand astride the crossing as now. Her guards stand 2 bh behind her, along the street** | One x for each body, from World's start |
+
+- **QA reads** launches that take a building in a 3v1 beside a 1v1. If a 3v1 reads tamer in its buildings than a 1v1, that is the budget binding, and it is a question for Orb then, not a number to move now.
+
 ## 6. Wrath, collateral, and what carries over
 
 - **Her meter is Wrath, filled by her own losses.** A guard who falls adds to it. Losing her escort drives her toward her revisions, and toward fighting alone.
