@@ -56,6 +56,7 @@ OPTIONS = docs['options'].get('options', {})
 
 ORDER = [
     'The flashing-effects gate (the first thing in a session)',
+    'The start menu and the match-over card',
     'The turn-your-phone card',
     'How to play (cards, first run and from the pause menu)',
     'Plates: names, tiers and meters',
@@ -84,34 +85,36 @@ def where(f, path):
             k = path[1] if len(path) > 1 else ''
             if k.startswith('photo_'):
                 return ORDER[0]
-            if k.startswith('turn_'):
+            if k.startswith('menu_') or k in ('pause_menu', 'pause_again', 'pause_over_title'):
                 return ORDER[1]
-            if k.startswith('pause_') or k.startswith('confirm') or k.startswith('menu'):
-                return ORDER[11]
-            return ORDER[7]
+            if k.startswith('turn_'):
+                return ORDER[2]
+            if k.startswith('pause_') or k.startswith('confirm'):
+                return ORDER[12]
+            return ORDER[8]
         if g in ('tier', 'meter'):
-            return ORDER[3]
-        if g in ('stance', 'state', 'chip_stage'):
             return ORDER[4]
-        if g in ('region', 'stage', 'internal_stage', 'card', 'station'):
+        if g in ('stance', 'state', 'chip_stage'):
             return ORDER[5]
-        if g in ('toll', 'banner_rename'):
+        if g in ('region', 'stage', 'internal_stage', 'card', 'station'):
             return ORDER[6]
+        if g in ('toll', 'banner_rename'):
+            return ORDER[7]
         if g == 'caption':
-            return ORDER[10]
+            return ORDER[11]
         if g in ('planet', 'places'):
-            return ORDER[15]
-        return ORDER[17]
+            return ORDER[16]
+        return ORDER[18]
     if f == 'howto':
         if path[0] == 'pages' and len(path) > 1 and path[1].isdigit():
             return 'How to play, page %d: %s' % (int(path[1]) + 1, PAGES[int(path[1])] if int(path[1]) < len(PAGES) else '')
         return ORDER[2]
     if f == 'hints':
         if path[0] == 'you':
-            return ORDER[8]
+            return ORDER[9]
         if path[0] == 'schemes' and len(path) > 1:
             return 'The control legend (%s layout)' % path[1]
-        return ORDER[8]
+        return ORDER[9]
     if f == 'stances':
         if path[0] == 'stances' and len(path) > 1:
             return 'Stances: %s (the stance page, the legend and the remap screen)' % path[1]
@@ -121,16 +124,16 @@ def where(f, path):
             return 'Settings: the section and row names'
         if path[0] == 'remap':
             return 'The Remap controls screen'
-        return ORDER[13]
-    if f == 'options':
-        return ORDER[12]
-    if f in ('feedback', 'send'):
         return ORDER[14]
+    if f == 'options':
+        return ORDER[13]
+    if f in ('feedback', 'send'):
+        return ORDER[15]
     if f == 'reads':
-        return ORDER[9]
+        return ORDER[10]
     if f in ('fighter_names', 'readout_profiles'):
-        return ORDER[16]
-    return ORDER[17]
+        return ORDER[17]
+    return ORDER[18]
 
 
 NARRATIVE = ('b7.nudge', 'b5.done', 'boiled', 'boil')   # lines Narrative named in docs/narrative/writing-quality.md

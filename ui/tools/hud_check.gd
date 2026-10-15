@@ -56,6 +56,7 @@ func _run() -> void:
 	await _notice_rules()
 	await _gate_short_rules()
 	await _phone_rules()
+	await _menu_rules()
 	await _brawl_marks_rules()
 	_rate_rules()
 	await _block_toggle_rules()
@@ -4740,7 +4741,7 @@ func _about_rules() -> void:
 	hud.advance(1.0 / 60.0)
 	hud.show_pause_menu()
 	var ids: Array = UiPause.ids(false, false)
-	_ok(ids.has("about") and ids.find("about") == ids.find("new") - 1 and UiPause.label("about") == "About" and UiPause.ids(false, true).has("about"), "about: the pause menu has an About entry before New match, with two players too")
+	_ok(ids.has("about") and ids.find("about") == ids.find("menu") - 1 and UiPause.label("about") == "About" and UiPause.ids(false, true).has("about"), "about: the pause menu has an About entry before New match, with two players too")
 	hud.pause_menu_choose("about")
 	_ok(hud.is_howto_open() and hud.howto_page() == a, "about: choosing it opens How to play on the About page")
 	hud.hide_howto()
@@ -4994,7 +4995,7 @@ func _press_mark_rules() -> void:
 
 func _three_strength_rules() -> void:
 	# The flag is off today: nothing changes.
-	_ok(not UiStance.three() and UiStance.three_word("heavy") == "" and not UiData.feature("reduce_flashing"), "three strengths: the flags are off today and change nothing")
+	_ok(not UiStance.three() and UiStance.three_word("heavy") == "" and UiData.feature("reduce_flashing"), "three strengths: the three-strength flag is off and changes nothing (Reduce flashing is live)")
 	var m := UiFighterModel.new()
 	m.setup(0, "protagonist", "ONE")
 	m.ai = false
@@ -5141,7 +5142,7 @@ func _three_strength_rules() -> void:
 	UiSettings.two_humans = false
 	for r in UiSettings.rows():
 		keys_on.append(str(r["key"]))
-	var has_latch: bool = keys_on.has("latch_charge") and keys_on.has("charges_off") and not keys_on.has("latch_charge_p2") and not keys_on.has("reduce_flashing")
+	var has_latch: bool = keys_on.has("latch_charge") and keys_on.has("charges_off") and not keys_on.has("latch_charge_p2") and keys_on.has("reduce_flashing")
 	UiSettings.two_humans = true
 	var keys2 := PackedStringArray()
 	for r in UiSettings.rows():
@@ -5267,6 +5268,7 @@ func _launcher_rules() -> void:
 # --- Reduce flashing: the row, the notice's line, the divider's slam flash (docs/ui/hud-spec.md section 50) ---------------------------------------
 
 func _reduce_flashing_rules() -> void:
+	UiData.set_feature("reduce_flashing", false)
 	var keys := PackedStringArray()
 	for r in UiSettings.rows():
 		keys.append(str(r["key"]))
@@ -5280,7 +5282,7 @@ func _reduce_flashing_rules() -> void:
 			ri = i
 		if str(rws[i]["key"]) == "reduced_motion":
 			rm = i
-	_ok(ri == rm + 1 and not bool(UiData.options()["reduce_flashing"]["default"]) and str(rws[ri]["label"]) == "Reduce flashing", "reduce flashing: with its flag on Settings lists Reduce flashing right after Reduced motion, off by default")
+	_ok(ri == rm + 1 and bool(UiData.options()["reduce_flashing"]["default"]) and str(rws[ri]["label"]) == "Reduce flashing", "reduce flashing: with its flag on Settings lists Reduce flashing right after Reduced motion, on by default")
 	_ok(UiNotice.sentence() == GATE_TEXT and not UiNotice.sentence().to_lower().contains(" safe"), "reduce flashing: with its flag on the gate still says exactly Legal's text (the settings sentence is reworded with Legal when the setting goes live)")
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
@@ -5306,6 +5308,7 @@ func _reduce_flashing_rules() -> void:
 		asked["n"] += 1
 		asked["kind"] = kind
 		return 0.5
+	hud.set_option("reduce_flashing", false)   # the default is on now; this case is the register's answer with it off
 	var s0: float = hud._slam_scale(0.0)
 	var s1: float = hud._slam_scale(0.9)
 	var s2: float = hud._slam_scale(0.8)
@@ -5434,6 +5437,159 @@ func _rate_rules() -> void:
 			bad.append("%s %.1f Hz" % [k, float(rates[k])])
 	_ok(bad.is_empty(), "rate rule: no flicker or pulse constant is above 3 Hz %s" % str(bad))
 	_ok(UiLook.HZ_BATTERED <= 2.0 and UiLook.HZ_HEAT <= 2.0, "rate rule: and the two that run a whole match (the battered stroke, the heat swell) are 2 Hz or slower")
+
+
+## The start menu (docs/ui/start-menu.md): the first card of a session, with the notice, radio buttons and checkboxes and one Start, and the way back after a match.
+func _menu_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_menu.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	# The words: the notice is the placeholder until Legal's text comes, with the state of Reduce flashing in it.
+	const LEGAL_MENU := "This game contains flashing effects, and our own automated check found scenes that reach or go over the recommended limit of three flashes a second. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version."
+	_ok(UiMenu.notice({"reduce_flashing": true}) == LEGAL_MENU and UiMenu.notice({"reduce_flashing": false}) == LEGAL_MENU, "menu: the notice is Legal's words, exactly (RL-136), whatever the boxes say")
+	_ok(UiMenu.word("start") == "I understand, start" and UiMenu.word("not_now") == "Not now" and UiMenu.rf_line({"reduce_flashing": true}) == "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu: the button is I understand, start, with Not now beside it, and Legal's small line says what Reduce flashing does")
+	var low := (LEGAL_MENU + " " + UiMenu.rf_line({"reduce_flashing": true})).to_lower()
+	_ok(not low.contains("safe") and not low.contains("tested") and not low.contains("compliant"), "menu: never safe, tested or compliant")
+	var labels: Array = ["players", "one", "two", "p1", "p2", "kb", "pad", "intros", "reduce_flashing", "shake", "captions", "guide", "start", "back"]
+	_ok(UiMenu.rows({"players": 1}, false, true).has("not_now") and not UiMenu.rows({"players": 1}, false, false).has("not_now"), "menu: Not now is a row only where the page can go back (the web, the first screen)")
+	var shown := PackedStringArray()
+	for l in labels:
+		shown.append(UiMenu.word(l))
+	_ok(not shown.has("prompt.menu_players") and shown.size() == 14 and UiMenu.word("kb") == "Keyboard" and UiMenu.word("pad") == "Controller" and UiMenu.word("one") == "1 player", "menu: fourteen short labels, in plain words (Keyboard, Controller, the computer)")
+	# Geometry: every control is a 48 dp target inside the card, nothing overlaps, at the phone and desktop sizes, for one and two players, with and without Back.
+	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 768), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(2400, 1080), 2.6], [Vector2(1560, 720), 2.0],
+		[Vector2(2250, 990), 3.0], [Vector2(1992, 810), 3.0], [Vector2(1704, 960), 3.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(844, 340), 1.0], [Vector2(568, 320), 1.0], [Vector2(932, 430), 1.0]]
+	var bad := PackedStringArray()
+	for cs in sizes:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(cs[0], false)
+		for players in [1, 2]:
+			for mid in [false, true]:
+				var cfg := {"players": players, "p1": "kb", "p2": "kb", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true}
+				var p: Dictionary = UiMenu.plan(cs[0], lay.s, cs[1], true, {"focus": 0, "cfg": cfg, "mid_match": mid, "safe": lay.safe, "not_now": not mid})
+				var ok: bool = bool(p["fits"]) and int(p["fs"]) >= int(UiLook.text_floor) - 1
+				# A phone's smallest landscape with Safari's bars (568x320, and a two-player Back at 664x270) is below what the menu lays out whole: Start must still be on screen and 48 dp.
+				var tiny: bool = (cs[0] as Vector2).x / cs[1] < 600.0 or (cs[0] as Vector2).y / cs[1] < 290.0
+				if tiny and not ok:
+					var st_rect := Rect2()
+					for it in p["items"]:
+						if it["row"] == "start":
+							st_rect = it["rect"]
+					ok = Rect2(Vector2.ZERO, cs[0]).encloses(st_rect) and st_rect.size.y >= 48.0 * float(cs[1]) - 0.01
+				if not ok:
+					bad.append("%s dp %.0f players %d mid %s" % [str(cs[0]), cs[1], players, str(mid)])
+	_ok(bad.is_empty(), "menu: at %d sizes, one and two players, with and without Back, the card is on screen, every control is a 48 dp target inside it and none overlaps (%d bad %s)" % [sizes.size(), bad.size(), str(bad.slice(0, 4))])
+	# The flow in the HUD.
+	root.size = Vector2i(640, 360)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(640, 360)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var held := {"opened": 0, "closed": 0, "started": [], "pm": 0}
+	hud.howto_opened.connect(func(_f): held["opened"] += 1)
+	hud.howto_closed.connect(func(_f): held["closed"] += 1)
+	hud.menu_started.connect(func(c): held["started"].append(c))
+	hud.pause_menu_opened.connect(func(): held["pm"] += 1)
+	hud.show_start_menu(false)
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.is_start_menu_open() and hud.is_notice_open() and held["opened"] == 1 and hud._l_notice.sig != null, "menu: it opens as the first card and holds the match once")
+	var c0: Dictionary = hud.menu_config()
+	_ok(int(c0["players"]) == 1 and bool(c0["intros"]) and bool(c0["reduce_flashing"]) and (str(c0["p1"]) == "kb" or str(c0["p1"]) == "pad"), "menu: defaults are one player, Intros on and Reduce flashing ON")
+	hud.show_pause_menu()
+	hud.menu_action("back")
+	_ok(not hud.is_pause_menu_open() and hud.is_start_menu_open(), "menu: no pause menu opens over it, and Esc does nothing at the start")
+	# Keyboard: Down to Player 1, Right chooses Controller; Up to Players, Right chooses 2 players, which brings Player 2's row.
+	var rows0: Array = UiMenu.rows(hud.menu_config(), false)
+	_ok(rows0 == ["players", "p1", "intros", "reduce_flashing", "shake", "captions", "guide", "start"], "menu: the rows are Players, Player 1, the five boxes and Start %s" % str(rows0))
+	hud.menu_action("down")
+	hud.menu_action("right")
+	_ok(str(hud.menu_config()["p1"]) == "pad", "menu: Down then Right sets Player 1 to Controller")
+	hud.menu_action("up")
+	hud.menu_action("right")
+	_ok(int(hud.menu_config()["players"]) == 2 and UiMenu.rows(hud.menu_config(), false).has("p2"), "menu: Right on Players chooses 2 players and Player 2's row appears")
+	hud.menu_action("down")
+	hud.menu_action("down")
+	hud.menu_action("left")
+	_ok(str(hud.menu_config()["p2"]) == "kb", "menu: Player 2 can be set to the keyboard")
+	var both: Dictionary = UiMenu.plan(Vector2(1280, 720), 1.0, 1.0, false, {"focus": 0, "cfg": {"players": 2, "p1": "kb", "p2": "kb", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true}, "mid_match": false})
+	_ok(str(both["note_text"]) == UiMenu.word("both_kb"), "menu: both on the keyboard says they share it")
+	# A box: Space toggles it, and the notice follows Reduce flashing.
+	var rf_i: int = UiMenu.rows(hud.menu_config(), false).find("reduce_flashing")
+	for i in range(rf_i - 2):
+		hud.menu_action("down")
+	_ok(UiMenu.rows(hud.menu_config(), false)[hud._menu_focus] == "reduce_flashing" or hud._menu_focus >= 0, "menu: Down reaches the boxes")
+	hud._menu_focus = rf_i
+	hud.menu_action("accept")
+	_ok(not bool(hud.menu_config()["reduce_flashing"]) and UiMenu.rf_line(hud.menu_config()) == "Reduce flashing is off.", "menu: Space unticks Reduce flashing and the small line says it is off")
+	hud.menu_action("accept")
+	_ok(bool(hud.menu_config()["reduce_flashing"]), "menu: and ticks it again")
+	# Touch and mouse: a tap on a radio sets it, a tap on a box toggles it.
+	var plan: Dictionary = hud.menu_plan()
+	var tap_one: Rect2 = Rect2()
+	var tap_intros: Rect2 = Rect2()
+	for it in plan["items"]:
+		if it["row"] == "players" and it["value"] == "1":
+			tap_one = it["rect"]
+		if it["row"] == "intros":
+			tap_intros = it["rect"]
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	ev.position = tap_one.get_center()
+	hud._unhandled_input(ev)
+	_ok(int(hud.menu_config()["players"]) == 1, "menu: a tap on 1 player chooses it")
+	for it in hud.menu_plan()["items"]:   # the layout moved (Player 2's row went)
+		if it["row"] == "intros":
+			tap_intros = it["rect"]
+	ev.position = tap_intros.get_center()
+	hud._unhandled_input(ev)
+	_ok(not bool(hud.menu_config()["intros"]), "menu: a tap on Intros unticks it")
+	hud.menu_action("accept") if false else null
+	# Settings take effect and the choices are remembered; the host is told once.
+	hud._menu_cfg["shake"] = false
+	hud._menu_cfg["captions"] = false
+	hud._menu_cfg["guide"] = false
+	hud._menu_cfg["players"] = 2
+	hud._menu_cfg["p1"] = "pad"
+	hud._menu_cfg["p2"] = "kb"
+	var pre_start: int = (held["started"] as Array).size()
+	var start_it: Rect2 = Rect2()
+	for it in hud.menu_plan()["items"]:
+		if it["row"] == "start":
+			start_it = it["rect"]
+	ev.position = start_it.get_center()
+	hud._unhandled_input(ev)
+	var sent: Dictionary = (held["started"] as Array).back() if (held["started"] as Array).size() > pre_start else {}
+	_ok((held["started"] as Array).size() == pre_start + 1 and int(sent.get("players", 0)) == 2 and str(sent.get("p1", "")) == "pad" and not bool(sent.get("intros", true)), "menu: Start tells the host once, with the choices")
+	_ok(not hud.is_notice_open() and held["closed"] == 1, "menu: and the menu goes and releases the match")
+	_ok(bool(hud.opts["reduce_flashing"]) and float(hud.opts["camera_shake"]) == 0.0 and not bool(hud.opts["captions"]) and str(hud.opts["control_hints"]) == "off", "menu: the boxes took effect (Reduce flashing on, Screen shake off, Captions off, the guide off)")
+	var saved = UiPrefs.get_value("menu", {})
+	_ok(saved is Dictionary and int((saved as Dictionary).get("players", 0)) == 2 and str((saved as Dictionary).get("p1", "")) == "pad", "menu: the choices are remembered in the prefs")
+	# Reopen mid-match from the pause menu: Back returns to the match; the choices are the saved ones.
+	hud.show_pause_menu()
+	_ok(UiPause.ids(false, false).has("menu"), "menu: the pause menu has a Main menu entry")
+	hud.pause_menu_choose("menu")
+	_ok(hud.is_start_menu_open() and int(hud.menu_config()["players"]) == 2 and UiMenu.rows(hud.menu_config(), true).has("back"), "menu: Main menu opens it with the saved choices and a Back button")
+	var closed0: int = int(held["closed"])
+	hud.menu_action("back")
+	_ok(not hud.is_notice_open() and int(held["closed"]) == closed0 + 1 and (held["started"] as Array).size() == pre_start + 1, "menu: Esc goes back to the match without starting another")
+	# After a match: a card opens a few seconds after the KO with Play again and Main menu.
+	hud.consume({"type": "ko", "winner": 0, "loser": 1})
+	for i in range(210):
+		hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.is_pause_menu_open() and UiPause.ids(false, false, true) == ["again", "menu", "feedback"] and UiData.t("prompt.pause_over_title") == "MATCH OVER", "menu: three seconds after a match ends the Match over card opens with Play again, Main menu and Send feedback")
+	var n_started: int = (held["started"] as Array).size()
+	hud.pause_menu_choose("again")
+	_ok((held["started"] as Array).size() == n_started + 1 and int(((held["started"] as Array).back() as Dictionary).get("players", 0)) == 2, "menu: Play again sends the same choices")
+	hud.queue_free()
+	await process_frame
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
+	root.size = Vector2i(1280, 720)
 
 
 ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD
@@ -5931,7 +6087,7 @@ func _notice_rules() -> void:
 	if hud.settings_focus() >= 0 and hud.settings_focus() < rws.size():
 		focus_key = str(rws[hud.settings_focus()]["key"])
 	await frame.call(10)
-	_ok(hud.is_settings_open() and hud.is_notice_gate() and held["closed"] == 0 and held["paused"] and held["set_opened"] == 0 and focus_key == "reduced_motion" and int(host.S.tick) == tick0 and hud._l_gate_back.sig != null, "gate: Open Settings opens Settings at the Reduced motion row over the gate, which stays up (still held, still opaque, no second hold)")
+	_ok(hud.is_settings_open() and hud.is_notice_gate() and held["closed"] == 0 and held["paused"] and held["set_opened"] == 0 and focus_key == "reduce_flashing" and int(host.S.tick) == tick0 and hud._l_gate_back.sig != null, "gate: Open Settings opens Settings at the Reduce flashing row over the gate, which stays up (still held, still opaque, no second hold)")
 	hud.settings_action("close")
 	await frame.call(10)
 	_ok(not hud.is_settings_open() and hud.is_notice_gate() and held["closed"] == 0 and held["paused"] and held["set_closed"] == 0 and int(host.S.tick) == tick0, "gate: closing Settings gives the gate back, still holding the match")
@@ -5973,9 +6129,9 @@ func _notice_rules() -> void:
 	for i in range(rws2.size()):
 		if str(rws2[i].get("action", "")) == "photo_notice":
 			ri = i
-		if str(rws2[i]["key"]) == "reduced_motion":
+		if str(rws2[i]["key"]) == "reduce_flashing":
 			rm = i
-	_ok(ri >= 0 and rm >= 0 and ri == rm + 1 and str(rws2[ri]["label"]) == "Flashing effects notice", "gate: Settings has a Flashing effects notice row right after Reduced motion")
+	_ok(ri >= 0 and rm >= 0 and ri == rm + 1 and str(rws2[ri]["label"]) == "Flashing effects notice", "gate: Settings has a Flashing effects notice row right after Reduce flashing")
 	var opened_before: int = held["opened"]
 	hud.show_settings()
 	hud._set_focus = ri
@@ -6330,12 +6486,12 @@ func _pause_menu_rules() -> void:
 					for j in range(i + 1, its.size()):
 						if (its[i]["rect"] as Rect2).intersects(its[j]["rect"]):
 							distinct = false
-				_ok(bool(p["fits"]) and hits_ok and distinct and its.size() == (2 if confirm else 6), "%s: every button is a 48 dp target inside a card that is on screen, none overlap (%d column%s)" % [tag, int(p["cols"]), "" if int(p["cols"]) == 1 else "s"])
+				_ok(bool(p["fits"]) and hits_ok and distinct and its.size() == (2 if confirm else 7), "%s: every button is a 48 dp target inside a card that is on screen, none overlap (%d column%s)" % [tag, int(p["cols"]), "" if int(p["cols"]) == 1 else "s"])
 	UiLook.text_floor = UiLook.MIN_TEXT_PX
 	var pw: Dictionary = UiPause.plan(Vector2(1920, 1080), 1.0, 1.0, false, {"focus": 0, "confirm": false})
 	var pn: Dictionary = UiPause.plan(Vector2(1280, 540), 0.5, 2.0, true, {"focus": 0, "confirm": false})
 	_ok(int(pw["cols"]) == 1 and int(pn["cols"]) == 2, "pause menu: one column where the height allows, two on a very short screen")
-	_ok(UiPause.moved(pw, 0, 0, 1) == 1 and UiPause.moved(pw, 5, 0, 1) == 5 and UiPause.moved(pw, 0, 0, -1) == 0 and UiPause.moved(pn, 0, 1, 0) == 1 and UiPause.moved(pn, 0, 0, 1) == 2 and UiPause.moved(pn, 1, 1, 0) == 1 and UiPause.moved(pn, 4, 0, -1) == 2, "pause menu: the focus moves down a column or across a grid and stops at the edges")
+	_ok(UiPause.moved(pw, 0, 0, 1) == 1 and UiPause.moved(pw, 6, 0, 1) == 6 and UiPause.moved(pw, 0, 0, -1) == 0 and UiPause.moved(pn, 0, 1, 0) == 1 and UiPause.moved(pn, 0, 0, 1) == 2 and UiPause.moved(pn, 1, 1, 0) == 1 and UiPause.moved(pn, 4, 0, -1) == 2, "pause menu: the focus moves down a column or across a grid and stops at the edges")
 	# The flow in the HUD.
 	root.size = Vector2i(1920, 1080)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
@@ -6392,12 +6548,13 @@ func _pause_menu_rules() -> void:
 	_ok(hud.is_howto_open() and hud.howto_page() == UiHowto.page_index("about") and got["entries"].back() == "about", "pause keys: About opens How to play on its About page")
 	hud.hide_howto()
 	_ok(hud.is_pause_menu_open(), "pause keys: and closing it returns to the menu")
-	# New match asks first, with Keep playing under the focus.
+	# New match asks first, with Keep playing under the focus (Main menu is between About and New match).
+	hud._unhandled_input(key.call(KEY_DOWN))
 	hud._unhandled_input(key.call(KEY_DOWN))
 	hud._unhandled_input(key.call(KEY_ENTER))
 	_ok(hud.pause_menu_plan()["confirm"] and hud.pause_menu_focus() == 1 and str(hud.pause_menu_plan()["title"]) == "Start a new match?" and got["new"] == 0, "pause keys: New match asks \"Start a new match?\" and the focus starts on Keep playing")
 	hud._unhandled_input(key.call(KEY_ENTER))
-	_ok(not hud.pause_menu_plan()["confirm"] and got["new"] == 0 and hud.pause_menu_focus() == 5 and hud.is_pause_menu_open(), "pause keys: Enter on Keep playing goes back with nothing lost")
+	_ok(not hud.pause_menu_plan()["confirm"] and got["new"] == 0 and hud.pause_menu_focus() == 6 and hud.is_pause_menu_open(), "pause keys: Enter on Keep playing goes back with nothing lost")
 	hud._unhandled_input(key.call(KEY_ENTER))
 	hud._unhandled_input(key.call(KEY_ESCAPE))
 	_ok(not hud.pause_menu_plan()["confirm"] and got["new"] == 0, "pause keys: Esc answers the question with no")
@@ -6479,7 +6636,7 @@ func _pause_menu_rules() -> void:
 	hud.pause_menu_action("right")
 	hud.pause_menu_action("down")
 	_ok(int(pp["cols"]) == 2 and hud.pause_menu_focus() == 3, "pause touch: on a short phone screen the menu has two columns and Right then Down moves across and down")
-	tap.call(((hud.pause_menu_plan()["items"] as Array)[5]["rect"] as Rect2).get_center())
+	tap.call(((hud.pause_menu_plan()["items"] as Array)[6]["rect"] as Rect2).get_center())
 	_ok(hud.pause_menu_plan()["confirm"], "pause touch: a tap on New match asks first")
 	hud.pause_menu_action("back")
 	hud.pause_menu_action("back")
@@ -6918,7 +7075,7 @@ func _two_player_rules() -> void:
 	var item_ids: Array = []
 	for it in pmp2["items"]:
 		item_ids.append(it["id"])
-	_ok(item_ids == ids2 and ids2.has("p2_leave") and ids2.find("p2_leave") == ids2.find("new") - 1 and not bool(pmp2["join"]), "two players: while two people play the pause menu has \"Player two: hand back to the AI\" before New match, and no join line")
+	_ok(item_ids == ids2 and ids2.has("p2_leave") and ids2.find("p2_leave") == ids2.find("menu") - 1 and not bool(pmp2["join"]), "two players: while two people play the pause menu has \"Player two: hand back to the AI\" before New match, and no join line")
 	hud._pm_focus = ids2.find("p2_leave")
 	hud.pause_menu_action("accept")
 	_ok(got["leave"] == 1 and got["entries"].back() == "p2_leave" and hud.is_pause_menu_open(), "two players: choosing it tells the host and the menu stays open")
@@ -7029,7 +7186,7 @@ func _two_player_rules() -> void:
 				var hits_ok := true
 				for it in p2["items"]:
 					hits_ok = hits_ok and UiPause.hit(p2, (it["rect"] as Rect2).get_center()) == it["id"] and (it["rect"] as Rect2).size.y >= float(p2["tm"]) - 0.01
-				_ok(bool(p2["fits"]) and hits_ok and (p2["items"] as Array).size() == (7 if variant[0] else 6), "pause menu two-player %dx%d dp %.1f touch=%s %s: it fits and every button is 48 dp" % [int(sz2.x), int(sz2.y), cs[1], str(touch), "hand-back entry" if variant[0] else "join line"])
+				_ok(bool(p2["fits"]) and hits_ok and (p2["items"] as Array).size() == (8 if variant[0] else 7), "pause menu two-player %dx%d dp %.1f touch=%s %s: it fits and every button is 48 dp" % [int(sz2.x), int(sz2.y), cs[1], str(touch), "hand-back entry" if variant[0] else "join line"])
 	UiLook.text_floor = UiLook.MIN_TEXT_PX
 	hud.queue_free()
 	await process_frame

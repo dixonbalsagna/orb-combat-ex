@@ -5,14 +5,18 @@ extends RefCounted
 ## playing). `plan` is pure geometry (so hud_check proves every button is a 48 dp target inside the card at every size, one column when the
 ## height allows and two when it does not), `hit` says what a point is on, `draw` paints from a plan. Every word is in terms.json (prompt.pause_*).
 
-const ENTRIES: Array = ["resume", "howto", "settings", "feedback", "about", "new"]
+const ENTRIES: Array = ["resume", "howto", "settings", "feedback", "about", "menu", "new"]
 ## While two people play, player two can be handed back to the AI from here.
-const ENTRIES_TWO: Array = ["resume", "howto", "settings", "feedback", "about", "p2_leave", "new"]
+const ENTRIES_TWO: Array = ["resume", "howto", "settings", "feedback", "about", "p2_leave", "menu", "new"]
+## The card that opens a few seconds after a match ends.
+const ENTRIES_OVER: Array = ["again", "menu", "feedback"]
 const CONFIRM: Array = ["new_yes", "new_no"]
 const KEYS: Dictionary = {"resume": "pause_resume_key", "howto": "pause_howto_key", "new": "pause_new_key"}
 
 
-static func ids(confirm: bool, two: bool = false) -> Array:
+static func ids(confirm: bool, two: bool = false, over: bool = false) -> Array:
+	if over and not confirm:
+		return ENTRIES_OVER
 	return CONFIRM if confirm else (ENTRIES_TWO if two else ENTRIES)
 
 
@@ -25,7 +29,8 @@ static func label(id: String) -> String:
 ## cols, tm, fs_body, fs_title, fs_small, fits, bw}.
 static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) -> Dictionary:
 	var confirm: bool = bool(st.get("confirm", false))
-	var list: Array = ids(confirm, bool(st.get("two", false)))
+	var over: bool = bool(st.get("over", false))
+	var list: Array = ids(confirm, bool(st.get("two", false)), over)
 	var join: bool = bool(st.get("join", false)) and not confirm
 	var tm: float = maxf(48.0 * dp, 44.0)
 	var margin: float = maxf(vp.x * 0.03, 12.0)
@@ -36,7 +41,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var fs_body: int = UiText.px(22.0, cs)
 	var fs_small: int = UiText.px(18.0, cs)
 	var gap: float = maxf(10.0 * cs, 6.0)
-	var title: String = UiData.t("prompt.pause_new_ask") if confirm else UiData.t("prompt.pause_title")
+	var title: String = UiData.t("prompt.pause_new_ask") if confirm else (UiData.t("prompt.pause_over_title") if over else UiData.t("prompt.pause_title"))
 	var title_h: float = UiText.height(fs_title) * 1.15 + gap
 	var avail_w: float = vp.x - 2.0 * margin - 2.0 * pad
 	var avail_h: float = vp.y - 2.0 * my - 2.0 * pad

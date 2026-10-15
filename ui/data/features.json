@@ -8,6 +8,7 @@
     "about_music": false,
     "about_voice": false,
     "three_strengths": false,
-    "reduce_flashing": false
+    "reduce_flashing": true,
+    "start_menu": true
   }
 }

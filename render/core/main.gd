@@ -168,6 +168,7 @@ func _ready() -> void:
 	ui_hud.pause_menu_opened.connect(_on_pause_menu_opened)
 	ui_hud.pause_menu_closed.connect(_on_pause_menu_closed)
 	ui_hud.new_match_requested.connect(func(): start_match(fresh_seed()))
+	ui_hud.menu_started.connect(_on_menu_started)   # the start menu's Start, and the match-over card's Play again (docs/ui/start-menu.md)
 	ui_hud.option_changed.connect(_on_option_changed)
 	# The hub's defaults go into the HUD first (its legend and prompts show the layouts in use) ...
 	ui_hud.set_option("pad_preset", host.hub.pad_preset)
@@ -872,6 +873,32 @@ func _on_pause_menu_opened() -> void:
 
 func _on_pause_menu_closed(_reason: String) -> void:
 	host.paused = false
+
+
+## The start menu's Start (UI, docs/ui/start-menu.md): the choices become the match. `players` 1 is one human against the computer and 2 is two humans. Each human's device is
+## claimed before the first press (a controller is the first connected pad, a second one the second; the keyboard otherwise), and two on the keyboard share it (Controls' shared
+## layouts). Intros off starts from the intro's end state, as --nointro does. Nothing of the match exists until this runs.
+func _on_menu_started(cfg: Dictionary) -> void:
+	var two: bool = int(cfg.get("players", 1)) == 2
+	var ai := {"p1": false, "p2": not two}
+	var sd: int = fresh_seed()
+	if bool(cfg.get("intros", true)):
+		start_match(sd, ai)
+	else:
+		start_match(sd, ai, {})
+	var pads: Array = Input.get_connected_joypads()
+	var next_pad := 0
+	for s in range(2 if two else 1):
+		var want: String = str(cfg.get("p1" if s == 0 else "p2", "kb"))
+		if want == "pad" and next_pad < pads.size():
+			host.hub.slot_device[s] = "pad"
+			host.hub.slot_pad[s] = int(pads[next_pad])
+			next_pad += 1
+		else:
+			host.hub.slot_device[s] = "kb"
+			host.hub.slot_pad[s] = -1
+		host.hub.claimed[s] = true
+	started = true
 
 
 ## P, a pad's Start and the touch pause button: UI's pause menu. With the greybox HUD (F2) UI's HUD is hidden, its menu

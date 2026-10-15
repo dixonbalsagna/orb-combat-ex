@@ -25,6 +25,8 @@ signal feedback_closed()                  # it closed: the host restores the pau
 signal option_changed(key: String, value)   # set_option changed an option's value: the host applies the ones it owns (pad_preset to SimInputHub.pad_preset)
 signal settings_opened                     # the Settings screen opened: the host pauses the sim and releases held keys (as for How to play)
 signal settings_closed                     # it closed: the host restores the pause it found
+signal menu_started(config: Dictionary)      # the start menu's Start (or Play again): {players 1 or 2, p1 and p2 "kb" or "pad", intros bool, and the checkboxes}; the host starts the match from it (docs/ui/start-menu.md)
+signal menu_not_now(url: String)             # "Not now" on the start menu: back to the holding page (the HUD navigates on the web itself; a host may too)
 signal notice_closed(opened_settings: bool)     # the photosensitivity notice was dismissed (true: its OPEN SETTINGS button, which has then opened Settings at the Reduced motion row)
 signal settings_action_requested(action: String)   # a button on the screen was pressed ("remap"): the host opens what it names
 signal remap_slot_changed(layout_id: String, overrides: Array, slot: int)   # the same, with whose layout it is (0 player one, 1 player two): UI has applied and saved it; the host calls reload_layouts
@@ -44,7 +46,7 @@ var strip_fn: Callable = Callable()    # () -> Dictionary for UiStrip
 var split_fn: Callable = Callable()    # () -> Dictionary: Camera's split record (see UiSplit); empty or invalid = one camera
 var opts: Dictionary = {
 	"silhouette": false,       # the body figure beside each plate: off by default; the host turns it on in training and as the accessibility default
-	"reduce_flashing": false,  # fewer and gentler flashes (VFX's register; the divider's slam flash); a row in Settings once the feature flag is on
+	"reduce_flashing": true,  # fewer and gentler flashes (VFX's register; the divider's slam flash); a row in Settings once the feature flag is on
 	"latch_charge": false,     # three strengths: a tap starts a charge and the next press lets it go (per player; the host passes them to Controls' hub)
 	"latch_charge_p2": false,
 	"charges_off": false,      # three strengths: every press is a tap
@@ -192,6 +194,14 @@ var _turn_held := false               # ... and it is the one holding the match
 var _turn_t := -1.0e9
 var _turn_anyway := false             # "Play upright anyway" was pressed this session
 var _l_turn: UiLayer
+var _menu_kind := false               # the notice slot is showing the start menu (UiMenu), not the gate's text
+var _menu_focus := 0
+var _menu_cfg: Dictionary = {}
+var _menu_mid := false                # the menu was opened mid-match (from the pause menu): Back returns to the match
+var _menu_last_cfg: Dictionary = {}   # what Start last sent (Play again sends it again)
+var _over_t := 0.0                    # seconds since the match ended (the match-over card opens after the KO has been read)
+var _over_shown := false
+var _pm_over := false                 # the pause card is the match-over card
 var _notice_scroll := 0.0              # the card's text scrolled up by this many pixels, on a screen too short to show it all
 var _notice_drag := false              # a finger or the mouse is dragging the text
 var _l_gate_back: UiLayer
@@ -377,7 +387,10 @@ func setup(ids: Array, names: Array) -> void:
 	_relayout()
 	if notice_auto_allowed(DisplayServer.get_name(), notice_args_text(), bypass_allowed()):
 		notice_seen_session = true
-		show_photo_notice(true)
+		if UiData.feature("start_menu"):
+			show_start_menu(false)   # the menu carries the notice and is the way in: nothing plays until Start
+		else:
+			show_photo_notice(true)
 
 
 func consume(e) -> void:
@@ -401,6 +414,14 @@ func advance(dt: float) -> void:
 	_split = split_fn.call() if split_fn.is_valid() else {}
 	_step_swap(dt)
 	hub.advance(dt)
+	if hub.match_over and not _menu_last_cfg.is_empty():   # only in a session that came through the menu
+		_over_t += dt
+		if _over_t >= MATCH_OVER_DELAY and not _over_shown and not (_notice_open or _pm_open or _howto_open or _set_open or _fb_open or _turn_open):
+			_over_shown = true
+			show_pause_menu(true)
+	elif not hub.match_over:
+		_over_t = 0.0
+		_over_shown = false
 	var want_lb: bool = hub.mode == UiEventHub.Mode.CINEMATIC
 	# The letterbox bars and the HUD they take away are blocks of tens of thousands of px: once in, they hold LETTERBOX_HOLD seconds; once out, LETTERBOX_REST before the next.
 	if want_lb != _lb_on:
@@ -421,6 +442,7 @@ func advance(dt: float) -> void:
 ## wherever the fighters are. With the Fighter panels setting on Follow they move over to the side their fighter is on (Camera's sigma in a split screen, else the fighters' screen positions
 ## from the host's anchors), but only after the fighters have held their sides for FOLLOW_DWELL seconds, never while an exchange, a hazard moment, a cinematic or a pause is on, and not at
 ## all with two humans (each keeps their own corner). A swap fades the plates out and in over 0.2 s (instant under reduced motion).
+const MATCH_OVER_DELAY := 3.0          # seconds after the KO before the match-over card opens (the KO is read first)
 const FOLLOW_DWELL := 1.5
 const FOLLOW_DEADBAND := 0.06          # of the screen's width: fighters closer than this in x do not count as having crossed
 var _side_goal := false                # the side the columns are heading to (true: slot 0 on the right)
@@ -746,7 +768,10 @@ func _update_layers() -> void:
 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
 	_turn_step()
 	_l_turn.update_sig(UiTurn.sig(turn_plan()) if _turn_open else null)
-	_l_notice.update_sig(UiNotice.sig(notice_plan()) if (_notice_open and (_notice_gate and not _set_open or not _notice_gate)) else null)
+	if _menu_kind and _notice_open:
+		_l_notice.update_sig(UiMenu.sig(menu_plan()) if not _set_open else null)
+	else:
+		_l_notice.update_sig(UiNotice.sig(notice_plan()) if (_notice_open and (_notice_gate and not _set_open or not _notice_gate)) else null)
 	_l_gate_back.update_sig([_set_open] if (_notice_open and _notice_gate) else null)
 	_l_settings.update_sig(_settings_sig() if (_set_open and not _rm_open) else null)
 	_l_remap.update_sig(_remap_sig() if _rm_open else null)
@@ -1229,6 +1254,7 @@ func hide_photo_notice(open_settings: bool = false) -> void:
 			_settings_focus_key(fk)
 		return
 	_notice_open = false
+	_menu_kind = false
 	_l_notice.update_sig(null)
 	_l_gate_back.update_sig(null)
 	_notice_gate = false
@@ -1240,6 +1266,207 @@ func hide_photo_notice(open_settings: bool = false) -> void:
 	_notice_pending = []
 	if not pending.is_empty():
 		show_howto(bool(pending[0]), int(pending[1]))
+
+
+# --- The start menu (docs/ui/start-menu.md) ---------------------------------------------------------------------------------------------
+
+func _pads_connected() -> int:
+	return Input.get_connected_joypads().size()
+
+
+## The choices as the menu shows them: what was saved, else the defaults (one player, a controller if one is plugged in, Intros on, Reduce flashing ON, the rest as the options are).
+func _menu_load() -> void:
+	var saved = UiPrefs.get_value("menu", {})
+	var s: Dictionary = saved if saved is Dictionary else {}
+	var pads: int = _pads_connected()
+	_menu_cfg = {
+		"players": clampi(int(s.get("players", 1)), 1, 2),
+		"p1": str(s.get("p1", "pad" if pads > 0 else "kb")),
+		"p2": str(s.get("p2", "pad" if pads > 1 else "kb")),
+		"intros": bool(s.get("intros", true)),
+		"reduce_flashing": bool(s["reduce_flashing"]) if s.has("reduce_flashing") else true,
+		"shake": bool(s["shake"]) if s.has("shake") else float(opts["camera_shake"]) > 0.0,
+		"captions": bool(s["captions"]) if s.has("captions") else bool(opts["captions"]),
+		"guide": bool(s["guide"]) if s.has("guide") else str(opts["control_hints"]) != "off",
+	}
+	for k in ["p1", "p2"]:
+		if not ["kb", "pad"].has(str(_menu_cfg[k])):
+			_menu_cfg[k] = "kb"
+
+
+## Open the start menu: at boot, and from the pause menu's Main menu or the match-over card. It holds the match like the gate (nothing of it is shown) and Start hands the
+## choices to the host through `menu_started`. `mid_match` adds a Back button that returns to the match.
+func show_start_menu(mid_match: bool = false) -> void:
+	if _notice_open:
+		return
+	_menu_load()
+	_menu_kind = true
+	_menu_mid = mid_match
+	_menu_focus = 0
+	show_photo_notice(true)
+
+
+func is_start_menu_open() -> bool:
+	return _notice_open and _menu_kind
+
+
+func menu_config() -> Dictionary:
+	return _menu_cfg.duplicate()
+
+
+## "Not now" goes back to the holding page (Tools' URL, data prompt.menu_holding_url; the browser's back when it is empty). Only on the web, and only on the first screen.
+func _menu_not_now_allowed() -> bool:
+	return OS.has_feature("web") and not _menu_mid
+
+
+func _menu_not_now() -> void:
+	var url: String = UiData.t("prompt.menu_holding_url")
+	if url == "prompt.menu_holding_url":
+		url = ""
+	menu_not_now.emit(url)
+	if OS.has_feature("web"):
+		if url != "":
+			JavaScriptBridge.eval("window.location.href = " + JSON.stringify(url) + ";", true)
+		else:
+			JavaScriptBridge.eval("if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/'; }", true)
+
+
+func menu_plan() -> Dictionary:
+	var missing: bool = _pads_connected() == 0 and (str(_menu_cfg.get("p1", "kb")) == "pad" or (int(_menu_cfg.get("players", 1)) == 2 and str(_menu_cfg.get("p2", "kb")) == "pad"))
+	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed()})
+
+
+func _menu_rows() -> Array:
+	return UiMenu.rows(_menu_cfg, _menu_mid, _menu_not_now_allowed())
+
+
+func _menu_invalidate() -> void:
+	_menu_focus = clampi(_menu_focus, 0, _menu_rows().size() - 1)
+	_l_notice.invalidate()
+
+
+## One of "up", "down", "left", "right", "accept", "back".
+func menu_action(act: String) -> void:
+	if not (_notice_open and _menu_kind):
+		return
+	var rows: Array = _menu_rows()
+	_menu_focus = clampi(_menu_focus, 0, rows.size() - 1)
+	var row: String = str(rows[_menu_focus])
+	match act:
+		"up":
+			_menu_focus = UiMenu.moved(_menu_focus, -1, rows.size())
+		"down":
+			_menu_focus = UiMenu.moved(_menu_focus, 1, rows.size())
+		"left", "right":
+			var d: int = -1 if act == "left" else 1
+			if row == "players":
+				_menu_cfg["players"] = 1 if d < 0 else 2
+			elif row == "p1" or row == "p2":
+				_menu_cfg[row] = "kb" if d < 0 else "pad"
+			elif UiMenu.CHECKS.has(row):
+				_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
+		"accept":
+			if row == "players":
+				_menu_cfg["players"] = 2 if int(_menu_cfg.get("players", 1)) == 1 else 1
+			elif row == "p1" or row == "p2":
+				_menu_cfg[row] = "pad" if str(_menu_cfg.get(row, "kb")) == "kb" else "kb"
+			elif UiMenu.CHECKS.has(row):
+				_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
+			elif row == "start":
+				_menu_start()
+				return
+			elif row == "back":
+				hide_photo_notice(false)
+				return
+			elif row == "not_now":
+				_menu_not_now()
+				return
+		"back":
+			if _menu_mid:
+				hide_photo_notice(false)
+				return
+	_menu_invalidate()
+
+
+func _menu_press(h: Dictionary) -> void:
+	var row: String = str(h.get("row", ""))
+	match str(h.get("kind", "")):
+		"radio":
+			if row == "players":
+				_menu_cfg["players"] = int(h["value"])
+			else:
+				_menu_cfg[row] = str(h["value"])
+		"check":
+			_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
+		"button":
+			if row == "start":
+				_menu_start()
+				return
+			if row == "back":
+				hide_photo_notice(false)
+				return
+			if row == "not_now":
+				_menu_not_now()
+				return
+	var rows: Array = _menu_rows()
+	if rows.has(row):
+		_menu_focus = rows.find(row)
+	_menu_invalidate()
+
+
+## Start: the checkboxes take effect and are remembered, the choices are filed in the prefs, the host is told, and the menu goes (the match is released by the hold's end).
+func _menu_start() -> void:
+	var cfg: Dictionary = _menu_cfg.duplicate()
+	settings_set("reduce_flashing", bool(cfg["reduce_flashing"]))
+	var shake_now: float = float(opts["camera_shake"])
+	settings_set("camera_shake", (shake_now if shake_now > 0.0 else 2.0) if bool(cfg["shake"]) else 0.0)
+	settings_set("captions", bool(cfg["captions"]))
+	settings_set("control_hints", "auto" if bool(cfg["guide"]) else "off")
+	UiPrefs.set_value("menu", cfg)
+	_menu_last_cfg = cfg.duplicate()
+	_over_shown = false
+	_over_t = 0.0
+	menu_started.emit(cfg)
+	hide_photo_notice(false)
+
+
+func _menu_input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		if event.pressed and not event.echo:
+			match event.keycode:
+				KEY_UP, KEY_W:
+					menu_action("up")
+				KEY_DOWN, KEY_S, KEY_TAB:
+					menu_action("down")
+				KEY_LEFT, KEY_A:
+					menu_action("left")
+				KEY_RIGHT, KEY_D:
+					menu_action("right")
+				KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
+					menu_action("accept")
+				KEY_ESCAPE:
+					menu_action("back")
+	elif event is InputEventJoypadButton:
+		if event.pressed:
+			match event.button_index:
+				JOY_BUTTON_DPAD_UP:
+					menu_action("up")
+				JOY_BUTTON_DPAD_DOWN:
+					menu_action("down")
+				JOY_BUTTON_DPAD_LEFT:
+					menu_action("left")
+				JOY_BUTTON_DPAD_RIGHT:
+					menu_action("right")
+				JOY_BUTTON_A:
+					menu_action("accept")
+				JOY_BUTTON_B, JOY_BUTTON_START:
+					menu_action("back")
+	elif event is InputEventMouseButton:
+		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			var h: Dictionary = UiMenu.hit(menu_plan(), event.position)
+			if not h.is_empty():
+				_menu_press(h)
+	get_viewport().set_input_as_handled()
 
 
 # --- The "turn your phone" card (docs/ui/hud-spec.md section 56) ---------------------------------------------------------------------
@@ -1311,6 +1538,8 @@ func notice_focus() -> int:
 
 
 func notice_plan() -> Dictionary:
+	if _menu_kind:
+		return menu_plan()
 	return UiNotice.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _notice_focus, "gate": _notice_gate, "scroll": _notice_scroll, "safe": layout.safe})
 
 
@@ -1326,6 +1555,9 @@ func notice_scroll_by(dy: float) -> void:
 
 
 func _paint_notice(ci: CanvasItem) -> void:
+	if _menu_kind and _notice_open:
+		UiMenu.draw(ci, menu_plan())
+		return
 	if _notice_open and (_notice_gate and not _set_open or not _notice_gate):
 		UiNotice.draw(ci, notice_plan())
 
@@ -1368,6 +1600,9 @@ func notice_action(act: String) -> void:
 
 
 func _notice_input(event: InputEvent) -> void:
+	if _menu_kind:
+		_menu_input(event)
+		return
 	if event is InputEventKey:
 		if event.pressed and not event.echo:
 			match event.keycode:
@@ -1439,9 +1674,10 @@ func toggle_pause_menu() -> void:
 		show_pause_menu()
 
 
-func show_pause_menu() -> void:
+func show_pause_menu(over: bool = false) -> void:
 	if _pm_open or _howto_open or _fb_open or _set_open or _notice_open or _turn_open:
 		return
+	_pm_over = over
 	_pm_open = true
 	_pm_confirm = false
 	_pm_focus = 0
@@ -1453,6 +1689,7 @@ func show_pause_menu() -> void:
 func _pm_close(reason: String) -> void:
 	if not _pm_open:
 		return
+	_pm_over = false
 	_pm_open = false
 	_pm_confirm = false
 	_pm_down = ""
@@ -1469,7 +1706,7 @@ func pause_menu_focus() -> int:
 
 
 func pause_menu_plan() -> Dictionary:
-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due()})
+	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over})
 
 
 func _paint_pmenu(ci: CanvasItem) -> void:
@@ -1496,12 +1733,21 @@ func pause_menu_choose(id: String) -> void:
 		"new":
 			_pm_confirm = true
 			_pm_focus = 1   # Keep playing is where the focus starts: the match is not lost by a stray Enter
+		"menu":
+			_pm_close("menu")
+			show_start_menu(not hub.match_over)   # mid-match, Back returns to the fight; after a match there is nothing to return to
+		"again":
+			_pm_close("again")
+			if _menu_last_cfg.is_empty():
+				new_match_requested.emit()
+			else:
+				menu_started.emit(_menu_last_cfg)   # the same choices, a new match
 		"new_yes":
 			_pm_close("new")
 			new_match_requested.emit()
 		"new_no":
 			_pm_confirm = false
-			_pm_focus = UiPause.ids(false, _humans() >= 2).find("new")
+			_pm_focus = UiPause.ids(false, _humans() >= 2, _pm_over).find("new")
 		"p2_leave":
 			player_two_leave_requested.emit()
 	_l_pmenu.invalidate()
@@ -1512,7 +1758,7 @@ func pause_menu_action(act: String) -> void:
 	if not _pm_open:
 		return
 	var p: Dictionary = pause_menu_plan()
-	var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2)
+	var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2, _pm_over)
 	_pm_focus = clampi(_pm_focus, 0, list.size() - 1)
 	match act:
 		"up":
@@ -1597,7 +1843,7 @@ func _pause_input(event: InputEvent) -> void:
 			var id: String = UiPause.hit(pause_menu_plan(), event.position)
 			if event.pressed:
 				_pm_down = id
-				var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2)
+				var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2, _pm_over)
 				if id != "" and list.has(id):
 					_pm_focus = list.find(id)
 					_l_pmenu.invalidate()
