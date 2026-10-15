@@ -156,6 +156,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-134 | The stomp: standing opponent clear; downed torso and limbs clear; downed head, face, neck, groin out of the base moveset until the rating decision (s09) | Combat | Medium | Ruled on ratings grounds | Open until the questionnaires |
 | RL-135 | The barrage as the Anti-hero's signature (barrage-signature.md) | Combat, Encounter, VFX | Medium | Pass on paper with conditions (sg01); seen drawn first; flash plan right (one full flash on the last volley) | Open until drawn |
 | RL-136 | Interim return of the playable build (Orb's decision, 2026-10-14): conditions, waivers for seven days, the first screen's words, About and notices, fighters' looks (photosensitivity-note.md addendum 8) | EP, Tools, UI | High | Acceptable for seven days with a click-through, Reduce flashing on, truthful notice, measured commit, kill switch; stops at once on any new scene over 3 | Open; expires 7 days from the return |
+| RL-137 | RL-136 on the full facts (56 clips on d3f1ca0e: none over 3 on the primary reading) | EP, Tools | High | Holds, with one wording change ('reach ... and a few that go over it on stricter readings'); extra AI seeds nightly during the interim | Open; expires 2026-10-22 |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
