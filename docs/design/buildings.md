@@ -70,6 +70,7 @@ World's second experiment, taken, with one addition for houses.
 | :--- | :--- | :--- |
 | Bodies into buildings a match, from a start in town | 1.35; 2.5 from a crossing | 4 to 8 |
 | Launches that take a building, in a settlement | 5 to 9% | 15 to 30% |
+| Launches that end in a building, every launch from the default start | 10.4% at `bruntPrefer` 40 | **4 to 15%,** where it was 4 to 10% (ruled 2026-10-15). Orb has made destruction a priority, and the lever is doing what it was set for. The settlement row above is the one that matters |
 | Fight time within 1,500 units of a building, from a start in town | 15%, or 41% and falling | 30 to 50% |
 | Fight time outside every settlement | | At least 25%: the fight isn't pinned |
 | A tier-1 body through a tower | | Never (hard) |
