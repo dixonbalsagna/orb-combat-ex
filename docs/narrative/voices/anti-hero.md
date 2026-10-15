@@ -2,6 +2,8 @@
 
 Owner: Narrative and Fighter Identity. Version 1, 2026-09-29. He/him. Working draft. Lines are original and unsearched.
 
+> **Update 2026-10-15: Orb's marks (`writing-quality.md` section 0).** Orb rewrote all ten of this fighter's first lines and wrote the rules. Where this bible disagrees with them, **the rules win**. What changed: lines are **4 to 12 words**; he is **ego-driven and mocking**, **probes for hidden strength**, gives **tepid compliments** and **plays his hand close**, is **impatient and short**, and **hates being pitied or smiled at**. **He uses contractions** (Orb's own rewrites do: "You're not holding back, are you?", "I'll give you that"), so the no-contraction rule, the past-tense obituaries and the rank gag are **retired as defaults** until Orb asks for any back. The lines below are the older drafts and are **not** to be used unmarked.
+
 **In one sentence.** A brooding rival whose pride outranks his justice: cold, clipped and formal, who ranks people and speaks about his opponent as if he were already finished, until the facade cracks.
 
 ## Speech rhythm

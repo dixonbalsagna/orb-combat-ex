@@ -4,6 +4,8 @@ Owner: Narrative and Fighter Identity. Version 3, 2026-09-29. She/her. Working d
 
 **Orb's rule for her paperwork: it is diegetic only.** There are no stamp cards, no visible forms, and no REJECTED or REGISTERED text. The paperwork lives in **her voice** (dread of the mountain of filing she will face later, complaints about her legal status, muttered form numbers) and in **in-world clues** her body and her guard give off.
 
+> **Update 2026-10-15: Orb's marks (`writing-quality.md` section 0).** Orb rewrote all ten of this fighter's first lines and wrote the rules. Where this bible disagrees with them, **the rules win**. The same rules apply to this fighter's lines (4 to 12 words, plain, contractions, a reaction to what just happened), in this fighter's established voice. The lines below are the older drafts and are not to be used unmarked.
+
 **In one sentence.** A galactic empress obsessed with her public image, who settled on one form to keep her records tidy and dreads every transformation because of the paperwork it will cost her later: confident, leering, boastful, quick to anger, and always watching from behind her guard of honour.
 
 ## What she is

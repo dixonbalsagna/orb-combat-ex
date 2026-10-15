@@ -2,6 +2,8 @@
 
 Owner: Narrative and Fighter Identity. Version 1, 2026-09-29. He/him. Working draft. Lines are original and unsearched. Press is his food mechanic (Orb's pick); sandwiches, not sweets. Graphic beats are in tone for the Mature target, but store content ratings are still unchecked.
 
+> **Update 2026-10-15: Orb's marks (`writing-quality.md` section 0).** Orb rewrote all ten of this fighter's first lines and wrote the rules. Where this bible disagrees with them, **the rules win**. The same rules apply to this fighter's lines (4 to 12 words, plain, contractions, a reaction to what just happened), in this fighter's established voice. The lines below are the older drafts and are not to be used unmarked.
+
 **In one sentence.** A cheerful, polite, corporate machine with a bottomless appetite, who treats mass violence as good service and glitches when someone touches his chip.
 
 ## Speech rhythm

@@ -1,0 +1,124 @@
+{
+  "schema": "narrative.line_lint/1",
+  "_about": "The lint for forward-facing lines, from Orb's marks on the first ten (docs/ep/vision.md, 'Orb marks the first ten lines', 2026-10-15). Each rule is traced in docs/narrative/writing-quality.md section 0. Narrative's additions to the banned list are marked proposed: Orb may veto them.",
+  "rules": {
+    "R1_length": {
+      "min_words": 4,
+      "max_words": 12,
+      "why": "Orb's directive: Mid-Punch Brevity; marks 3 and 10"
+    },
+    "R2_contractions": {
+      "expect": true,
+      "why": "Orb's directive and rewrites"
+    },
+    "R3_banned_words": {
+      "why": "Orb's directive: Ban LLM Thesaurus Words"
+    },
+    "R4_physical_trigger": {
+      "prefer_words": [
+        "dirt",
+        "teeth",
+        "ribs",
+        "breath",
+        "warm-up",
+        "hit",
+        "drop",
+        "bleed",
+        "grin",
+        "pace",
+        "choke"
+      ],
+      "why": "Orb's directive: physical, blue-collar words; a line reacts to what just happened"
+    },
+    "R5_no_dynamic_explained": {
+      "why": "Orb's directive: write for the English dub"
+    },
+    "R6_second_person": {
+      "expect": true,
+      "why": "all ten of Orb's rewrites address the opponent"
+    },
+    "R7_no_passivity": {
+      "why": "mark 1"
+    },
+    "R8_punctuation": {
+      "ellipsis": "only where Orb used one",
+      "exclamation": "natural for the Protagonist",
+      "why": "Orb's rewrites"
+    },
+    "R9_reference_lines": {
+      "reuse": false,
+      "why": "Orb: a style target, trimmed down and punchier"
+    }
+  },
+  "banned_words_orb": [
+    "commence",
+    "futile",
+    "demise",
+    "symphony",
+    "dance",
+    "crescendo",
+    "reckon",
+    "mere",
+    "behold",
+    "destiny",
+    "abyss",
+    "limit",
+    "surpass",
+    "eternal"
+  ],
+  "banned_words_proposed": [
+    "indeed",
+    "shall",
+    "hence",
+    "thus",
+    "whom",
+    "regalia",
+    "splendid",
+    "sovereign",
+    "endure",
+    "adequate",
+    "dignity",
+    "courtesy",
+    "permit",
+    "allowed"
+  ],
+  "tells": [
+    "a word or phrase said three times for feeling",
+    "a one-word zinger as the last sentence",
+    "'Not X. Y.' antithesis",
+    "the same joke device on every line of one fighter",
+    "a line that describes the blow or the mechanic",
+    "the opponent explained to the opponent (the dynamic said aloud)"
+  ],
+  "speakers": {
+    "protagonist": {
+      "stance": [
+        "fascinated by technique",
+        "respectful banter",
+        "minimal chattiness",
+        "wants the rival at full strength",
+        "concerned when a launch heads at a crowd",
+        "playfully disrespectful by accident"
+      ],
+      "never_say": [
+        "pity",
+        "weakness insults"
+      ]
+    },
+    "rival": {
+      "stance": [
+        "ego-driven",
+        "mocking",
+        "probes for hidden strength",
+        "tepid compliments",
+        "plays his hand close",
+        "impatient",
+        "short"
+      ],
+      "never_say": [
+        "patient",
+        "kind pity"
+      ]
+    }
+  }
+}

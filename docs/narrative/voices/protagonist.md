@@ -2,6 +2,8 @@
 
 Owner: Narrative and Fighter Identity. Version 1, 2026-09-29. He/him. Working draft; the hero's name is still open. Lines are original and unsearched; Legal searches the boldest before they ship.
 
+> **Update 2026-10-15: Orb's marks (`writing-quality.md` section 0).** Orb rewrote all ten of this fighter's first lines and wrote the rules. Where this bible disagrees with them, **the rules win**. What changed: lines are **4 to 12 words**, plain and in one breath; he is **fascinated by technique**, a **respectful, minimal-chatter** sparring partner, wants the rival **at full strength**, is **concerned when a launch heads at a crowd**, and is **playfully disrespectful by accident** ("Try not to rotate your shoulder like that..."). He speaks to the opponent in the second person and reacts to what just happened. **Retired as defaults:** the promise gag ("I'll fix it after") and passive descriptions of a blow ("that one was harder than I meant"). The lines below are the older drafts and are **not** to be used unmarked.
+
 **In one sentence.** An earnest, delighted fighter who talks in promises, loves a real fight more than he sees the wreckage, and is sincere even when he is funny. **The fight has his attention first; repairs come after.** He cares, but he says "once I'm done with you", not "right now".
 
 ## Speech rhythm

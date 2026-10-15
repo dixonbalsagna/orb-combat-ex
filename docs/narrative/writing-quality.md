@@ -1,6 +1,49 @@
 # Writing quality: why it reads rushed, and what a line must pass
 
-Owner: Narrative and Fighter Identity. Version 1, 2026-10-12. Orb, 2026-10-12: "I just get frustrated that the quality of writing I'm presented with for forward facing things like web-pages and in-game dialogue seems so rushed and bizarre." They are right, and this is a diagnosis, not a defence. They have also rejected "bring the towers down" ("an extraordinarily out-of-place piece of writing"), "Every press is a blow" (generic) and "a brawl you can move with the stick" (reads like a forgotten basic feature). Those three are the pattern in miniature.
+Owner: Narrative and Fighter Identity. Version 2, 2026-10-15 (section 0 added: Orb's marks and the rules; the first sample batch withdrawn). Version 1, 2026-10-12. Orb, 2026-10-12: "I just get frustrated that the quality of writing I'm presented with for forward facing things like web-pages and in-game dialogue seems so rushed and bizarre." They are right, and this is a diagnosis, not a defence. They have also rejected "bring the towers down" ("an extraordinarily out-of-place piece of writing"), "Every press is a blow" (generic) and "a brawl you can move with the stick" (reads like a forgotten basic feature). Those three are the pattern in miniature.
+
+## 0. Orb's marks, and the rules they set (2026-10-15)
+
+Orb marked the first ten lines. **Every one was rewritten**, and Orb wrote the rules (verbatim in `docs/ep/vision.md`, "Orb marks the first ten lines", and in `homework/done/1-ten-lines.md`). Orb's verdict: "just strange, lame, wording, most reeked of LLM generated nonsense and hardly felt believable for something anyone would say in a real animated shonen fight. quips should be pithy, punchy, passable." **These rules replace sections 3 and 5 where they differ, and the old sample batch below is withdrawn.** Orb's twenty reference lines and the directives that came with them are a style target, not material: none of the twenty is reused.
+
+### The rules, each traced to Orb's own words
+
+| # | Rule | Traced to |
+|---|---|---|
+| R1 | **Four to twelve words.** One breath, said mid-punch. If it cannot be shouted in one breath, cut it in half. | Directive "Mid-Punch Brevity"; marks 3 ("minimal chattiness") and 10 ("short, simple") |
+| R2 | **Talk like a person:** contractions, fragments, interruptions, a question with a tag ("right?", "are you?"). | Directive; Orb's own rewrites ("You're really strong!", "I'll give you that", "aren't you") |
+| R3 | **Plain words only.** No theatrical, archaic or literary word (the banned list below). | Directive "Ban LLM Thesaurus Words"; the general note ("strange, lame, wording") |
+| R4 | **React to what just happened:** the speed of a kick, a smile after a hit, heavy breathing, a suspicion that the opponent is holding back. Physical, blue-collar words (*dirt, teeth, ribs, breath, hit, drop, bleed, grin, pace, choke*). | Directive "Physical, Blue-Collar"; marks 3 ("you're fast"), 5 ("rotate your shoulder"), 7 |
+| R5 | **Never explain the dynamic aloud.** A line that says what the relationship is has failed. | Directive "Write for the English Dub" |
+| R6 | **Say it to the opponent:** second person ("you", "your"). | All ten rewrites are addressed to the other fighter |
+| R7 | **No passivity.** The speaker acts or answers as a person; he does not describe the blow ("that one was harder than I meant"). | Mark 1 ("less passivity") |
+| R8 | **Punctuation is the speaker's:** exclamation marks are natural for the Protagonist; an ellipsis only where Orb used one. | Orb's rewrites 2, 3, 4 ("!"); 1, 4, 5 (the only "...") |
+| R9 | **Reference lines are a target, never reused.** | "sound like these, but just trimmed down and punchier" |
+
+### The two voices, from Orb's rewrites and whys
+
+| | The Protagonist | The rival (the Anti-hero) |
+|---|---|---|
+| **What he is** | An excited athlete in a heavy sparring match: casual, grinning through pain | Impatient, abrasive, insulted |
+| **His interest** | **Fascinated by technique** and martial arts (mark 2) | **Probes for hidden strength** (mark 7); treats less than full effort as an insult (directive) |
+| **How he talks** | **Respectful banter, minimal chattiness** (mark 3); playful, **disrespectful by accident** (mark 5: "Try not to rotate your shoulder like that...") | **Ego-driven and mocking** (mark 6); **tepid compliments**, plays his hand close (mark 8); **short, simple** (mark 10); **never patient** (mark 9) |
+| **What he wants** | The rival **at full strength, without restraint**, to test himself (mark 4) | The Protagonist's **hundred percent**; hates pity and hates the grin (directive) |
+| **When a crowd is near** | **Concerned** when a launch heads at people (mark 4: "Everyone, get to safety!") | Indifferent |
+| **What Orb's rewrites retire** | The promise gag ("I'll fix it after") as a default; the passive description of a blow | The no-contractions rule, the past-tense obituaries, and the rank gag as a default: his own rewrites use contractions and plain questions ("You're not holding back, are you?", "I'll give you that") |
+
+The Empress and the Cyborg **keep their established voices** (her royal "we" and "petitioner", his service script and sandwiches) but meet the same rules: four to twelve words, contractions, plain words, a reaction to what just happened.
+
+### The banned-words list
+
+In `docs/narrative/line-lint.json`, for the lint. **Orb's list** (from the directive): *commence, futile, demise, symphony, dance, crescendo, reckon, mere, behold, destiny, abyss, limit, surpass, eternal*. **Narrative's additions** (the same family of literary or archaic words, and words from lines Orb rewrote; for Orb to veto): *indeed, shall, hence, thus, whom, regalia, splendid, sovereign, endure, adequate, dignity, courtesy, permit, allowed*.
+
+### What this does to the method
+
+- A batch is still small and every line still has a speaker and a moment. **Orb asked for thirty at a time for the six homework batches**, which overrides "ten at a time" for those six; the rest of the method stands.
+- **Every batch is linted before Orb sees it** against R1 to R9 and the banned list, and against the known tells (`voice-lab/known-tells.md`).
+- **The rules are Orb's, not ours.** Each new rule is added only with the line it came from.
+
+---
 
 ## 1. What went wrong, in four sentences
 
@@ -51,7 +94,7 @@ A line fails if any answer is no. The writer answers them aloud, and a second re
 - **The 1,386 drafts are a reservoir.** I mine them for lines worth putting in a batch of ten, rewritten to the standard; I do not send them on as they are.
 - **Orb is never the proofreader of last resort.** The writer's tests (section 3) and a cold reader come first; Orb sees what has passed them.
 
-## 5. A sample batch: ten lines for the pair in a brawl
+## 5. The first sample batch (WITHDRAWN: Orb rewrote all ten; see section 0)
 
 For the Protagonist and the stand-in rival, in a brawl: a hit landed, a hit taken, a miss, a launch, a perfect block. Each is at most eight words (a caption of about a second). **Mark each keep, cut or rewrite, and a word of why if you can.**
 
