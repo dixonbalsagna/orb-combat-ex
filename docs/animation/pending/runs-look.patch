@@ -1,5 +1,5 @@
 diff --git a/data/anim/press_styles.json b/data/anim/press_styles.json
-index 2f15190..6fdf7bf 100644
+index 2f15190..b69916d 100644
 --- a/data/anim/press_styles.json
 +++ b/data/anim/press_styles.json
 @@ -27,10 +27,11 @@
@@ -15,15 +15,18 @@ index 2f15190..6fdf7bf 100644
     "hold": {"from": 10, "to": 28, "squash": 0.45, "lean_back": 0.08, "pose": {"protagonist": "ch.y_p.load", "antihero": "ch.y_r.load"}}
    },
    "_super": "PROVISIONAL (the flurry look study): B, the top strength. A whole-body blow that reads as far bigger than a medium at a glance: a wind-up of 18 that starts on the press, the full squash, a long lean back and step back, a big stretch with a lead of 9 units and two smear frames, an 8-tick hold, two ghosts (Legal f01: at most 2 ghosts of a limb at any instant).",
-@@ -38,6 +39,7 @@
+@@ -38,7 +39,9 @@
     "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.0, "load_ticks": {"light": 18, "heavy": 18}, "hold_ticks": 8, "follow_ticks": 8, "recover_ticks": 8, "overshoot": 0.12, "lag": 0.45},
     "alternate": false, "carry": true, "carry_ticks": 6,
     "squash": 1.0, "lean_back": 0.34, "back": 5.0,
+-   "squash_by_drive": {"step_through": 0.35, "turn": 0.4, "unwind": 0.4, "full_turn": 0.3, "heave": 0.15, "fall": 0.0},
 +   "march": {"gap": 140, "step": 5.0, "dip": 0.3, "dip_ticks": 5},
-    "squash_by_drive": {"step_through": 0.35, "turn": 0.4, "unwind": 0.4, "full_turn": 0.3, "heave": 0.15, "fall": 0.0},
++   "squash_pose": {"protagonist": "ch.b_p.load", "antihero": "ch.b_r.load"},
++   "squash_by_drive": {"step_through": 0.7, "turn": 0.8, "unwind": 0.8, "full_turn": 0.6, "heave": 0.3, "fall": 0.0},
     "stretch": {"spine": 0.34, "rise": 3.0, "lead": 9.0, "ticks": 5, "smear_ticks": 2},
     "twist": 0.0, "twist_ticks": 6, "ghosts": 2,
-@@ -55,7 +57,8 @@
+    "hold": {"from": 28, "to": 46, "squash": 0.6, "lean_back": 0.12, "pose": {"protagonist": "ch.b_p.load", "antihero": "ch.b_r.load"}}
+@@ -55,7 +58,8 @@
     "alternate": true, "carry": true, "carry_ticks": 5,
     "squash": 0.0, "lean_back": 0.0, "back": 0.0,
     "stretch": {"spine": 0.0, "rise": 0.0, "lead": 0.0, "ticks": 3, "smear_ticks": 0},
@@ -34,7 +37,7 @@ index 2f15190..6fdf7bf 100644
    "heavy": {
     "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.6, "load_ticks": {"light": 22, "heavy": 24}, "hold_ticks": 10, "follow_ticks": 8, "recover_ticks": 14, "overshoot": 0.06, "lag": 0.45},
 diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
-index fb20216..0e25cf8 100644
+index fb20216..85b72a9 100644
 --- a/render/anim/anim_fighter.gd
 +++ b/render/anim/anim_fighter.gd
 @@ -267,6 +267,11 @@ var _dz_prev: float = 0.0
@@ -123,6 +126,15 @@ index fb20216..0e25cf8 100644
  ## The held X digs in (data `styles.burst.dig`; the nine cells' look audit, number 2): through a burst's stream the legs and the pelvis keep the set pose, wide, low and planted, and only the arms and the shoulders
  ## move, so a held X is a different body from a mashed one. In from a few ticks before the first blow of the stream, out over a few after the last; a blow of the foot or the knee keeps its legs (0 for it).
  ## Drawn after the contact-frame check and before the contact solve, so the hand still reaches and a blow's key pose is still what the check holds.
+@@ -2658,7 +2714,7 @@ func _press_body(row: Dictionary, style: String, ul: float, dtc: float, sn: floa
+ 		s *= sq * wsc * swk
+ 		if s > 0.001:
+ 			var sp: Dictionary = AnimData.press.get("squash_pose", {})
+-			var pid: String = String(sp.get("by_fighter", {}).get(pair_key, sp.get("default", "brace")))
++			var pid: String = String(row.get("squash_pose", {}).get(pair_key, sp.get("by_fighter", {}).get(pair_key, sp.get("default", "brace"))))   # a style's own sink pose (data `squash_pose` on the row: the heavy's tell sinks to the coil's depth)
+ 			if AnimData.pose_exists(pid):
+ 				var spp: AnimPose = AnimData.pose(pid)
+ 				for bn in sp.get("bones", []):
 diff --git a/render/anim/render_anim.gd b/render/anim/render_anim.gd
 index f27dd22..db1e084 100644
 --- a/render/anim/render_anim.gd
@@ -137,7 +149,7 @@ index f27dd22..db1e084 100644
  static var plain_pin: bool = true              # a plain light (one light, no flurry, no chain) keeps its hand set on the target for the data's `beat.plain_light.pin_ticks` while the body goes on (the perfect follow-up's window opens as it lets go); a beat's own `plain: true` does the same. false is today's picture
  static var hook_seen: bool = false            # set by the first brawl beat that carries a strength and no style row of its own: Encounter's hook (the brawl asks by cell and no longer names a style) has landed, so the nine cells' looks are the picture with no switch to flip
 diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
-index 9808f47..03870c9 100644
+index 9808f47..c5f931f 100644
 --- a/render/anim/tools/anim_check.gd
 +++ b/render/anim/tools/anim_check.gd
 @@ -750,6 +750,7 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
@@ -180,20 +192,25 @@ index 9808f47..03870c9 100644
  	host.take_players()
  	var S: SimState = host.S
 -	var res := {"hold": 0, "held_coil": 0.0, "set": 0.0, "styles": {}, "phases": {}, "blows": 0, "cue_windups": 0, "ttc_first": [], "dig": 0.0}
-+	var res := {"hold": 0, "held_coil": 0.0, "set": 0.0, "styles": {}, "phases": {}, "blows": 0, "cue_windups": 0, "ttc_first": [], "dig": 0.0, "lean": 0.0, "march": 0.0}
++	var res := {"hold": 0, "held_coil": 0.0, "set": 0.0, "styles": {}, "phases": {}, "blows": 0, "cue_windups": 0, "ttc_first": [], "dig": 0.0, "lean": 0.0, "march": 0.0, "drop": 0.0, "_idle_y": -1.0}
  	var t0: int = -1
  	var stick: float = 0.0
  	var last_blow: int = -1
-@@ -1530,6 +1551,8 @@ func _cells_run(btn: String, pat: Callable, ticks: int, seed: int) -> Dictionary
+@@ -1530,6 +1551,13 @@ func _cells_run(btn: String, pat: Callable, ticks: int, seed: int) -> Dictionary
  				res.blows += 1
  		res.held_coil = maxf(float(res.held_coil), a0.hold_coil)
  		res.dig = maxf(float(res.dig), a0.dig_w)
 +		res.lean = maxf(float(res.lean), a0.press_lean)
++		var py: float = a0.socket("pelvis").y
++		if float(res._idle_y) < 0.0 and rel >= 0:
++			res._idle_y = py
++		if rel >= 0 and not a0.press.is_empty():
++			res.drop = maxf(float(res.drop), float(res._idle_y) - py)
 +		res.march = maxf(float(res.march), a0.march_w)
  		res.set = maxf(float(res.set), a0.burst_set)
  		if t0 >= 0 and rel > ticks + 60:
  			break
-@@ -1553,9 +1576,12 @@ func _test_cells() -> void:
+@@ -1553,10 +1581,15 @@ func _test_cells() -> void:
  	var xh: Dictionary = _cells_run("west", func(t): return true, 140, 21)
  	_expect(xh.styles.has("burst") and float(xh.set) > 0.5, "cells: a held X plays the burst row and its set pose (styles %s, set %.2f)" % [str(xh.styles.keys()), float(xh.set)])
  	var xm: Dictionary = _cells_run("west", func(t): return (t % 7) < 3, 200, 21)
@@ -204,9 +221,12 @@ index 9808f47..03870c9 100644
  	var ym: Dictionary = _cells_run("north", func(t): return (t % 12) < 3, 200, 21)
 +	_expect(float(ym.lean) >= 0.1, "cells: a mashed Y leans in (%.2f rad)" % float(ym.lean))
  	_expect(ym.styles.has("medium") and not ym.styles.has("heavy") and ym.cue_windups > 0, "cells: a mashed Y plays the medium row with the sim's wind-up (%s, %d wind-ups drawn whole)" % [str(ym.styles.keys()), ym.cue_windups])
++	var bt: Dictionary = _cells_run("east", func(t): return (t % 130) < 4, 150, 33)
++	_expect(float(bt.drop) >= 4.0, "cells: a tapped B sinks %.1f units over its tell in the live brawl (4 or more)" % float(bt.drop))
  	var bh: Dictionary = _cells_run("east", func(t): return t >= 70 and t < 125, 200, 33)
  	_expect(bh.styles.has("super") and bh.hold >= 10 and float(bh.held_coil) >= 0.9, "cells: a held B is drawn in its chamber and loads (%d hold ticks, coil %.2f)" % [bh.hold, float(bh.held_coil)])
-@@ -3659,6 +3685,7 @@ func _run() -> void:
+ 	RenderAnim.strength_styles = forced_was
+@@ -3659,6 +3692,7 @@ func _run() -> void:
  	_test_tier_drives()
  	_test_tell_sinks()
  	_test_many_bodies()

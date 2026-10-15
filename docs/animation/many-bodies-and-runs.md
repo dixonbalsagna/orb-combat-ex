@@ -51,3 +51,23 @@ What was built, from poses that exist, and what it was read against:
 - **VFX:** `press.march` on the contact of a marching heavy (a footfall's dust); `AnimFighter.waiting_kind` if a guard's circle wants a marker.
 - **Simulation and Encounter:** nothing needed for the look; for real N bodies, `S.fighters` longer than two and an exchange that may name a non-partner. `AnimFighter._opponent` and `_waiting_layer` already read the exchange's A and D.
 - **Camera:** a body that is a stand-in is solved like any other; the marker rule is yours.
+
+## 6. The held-X and heavy re-check (2026-10-15), and a correction to the first batch
+
+The nine cells were re-read in the live brawl (scripted pad, medium AI, seeds 21 and 33), the same harness as the audit of 2026-10-14.
+
+| Cell | The audit's first read | Now (all three patches) |
+| :--- | :--- | :--- |
+| X tapped | drop 0.0, no lean | drop 0.0, lean 0.00; the pin on (6 ticks) |
+| X mashed | drop 0.2 | lean **0.17 rad (10 degrees)** after a run; drop 0.2 |
+| X held | the set: drop 3.3 to 5.7 | dig-in **0.80**, drop **12.5** (the set and the planted stance), lean 0.17 from its speed-row blows |
+| Y tapped | drop 1.3 to 1.8 (haymaker) | 4.3 (the uppercut piece); the chamber held 2 ticks |
+| Y mashed | drop up to 4.3 | lean **0.21 rad (12 degrees)** after a run; the carry flows blow to blow |
+| Y held | = tap | = tap (pass 2's charged medium not in) |
+| B tapped | drop **0.1** | drop **7.4** (see the correction) |
+| B mashed | = tap | = tap; a second heavy within 140 ticks marches (1.00 in the tier scene) |
+| B held | 8.9, coil 1.00 | 8.9, coil 1.00 (unchanged) |
+
+**The correction.** In the first batch (7f820320) I read the heavy's sink as 7.6 to 8.8 units on the tier scene, which stages a fighter in a free, upright stance. **In the live brawl the fighter is in `locked` and already low** (pelvis 31.7 against 36 standing), and the generic brace pose is about where he already is: the same data sank him **1.1 units**, not 8. This patch gives the `super` row its own sink pose, the held coil's (`styles.super.squash_pose`: `ch.b_p.load`, `ch.b_r.load`), and raises `squash_by_drive` (step 0.7, turn 0.8, unwind 0.8, full turn 0.6, heave 0.3, fall 0): in the live brawl the pelvis now goes **31.7 to 25.6 over the 28 ticks** (a sink of 6.1 units, 7.4 at its lowest), and a new assert holds it (`_test_cells`: a tapped B sinks 4 or more). In the free stance of the tier scenes it is 14 to 19 units (a deeper crouch than a fighter ever uses there). A new key for the schema: `styles.<style>.squash_pose` (a map of fighter to a pose id).
+
+**The clips and the sheet** (this PC only, Tools' launcher; `art/animation/review/nine-cells-look/`): `cells-sheet-runs-before-after.png` (five pairs of rows at fight size: X mashed, Y mashed, B mashed, X held, B tapped; before above, after below) and five side-by-side clips, before on the left and after on the right, `clip-xmash-`, `clip-ymash-`, `clip-bmash-`, `clip-btap-`, `clip-xhold-before-after.gif` (about 2.3 to 4.1 MB each). At fight size the lean and the march are small by design (10 to 14 degrees, 5 units): they are the kind of change that reads in motion and not in a still; the tapped heavy's sink and the held X's planted stance read in both.
