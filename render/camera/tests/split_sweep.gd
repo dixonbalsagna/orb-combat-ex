@@ -898,7 +898,8 @@ func _line_jitter(lo: float, hi: float, r_line: float) -> Dictionary:
 
 
 func _slam(feint: bool, off: bool = false) -> Dictionary:
-	_rig.slam_off = off   # the switch of section 14: no door, the ordinary merge
+	_rig.slam_off = off   # the switch of section 15: no door, the ordinary merge, under reduced flashing
+	_rig.flash_reduced = off
 	var ax: float = 50000.0
 	var sep: float = 5000.0
 	_pose(ax, 40.0, ax + sep, 40.0)

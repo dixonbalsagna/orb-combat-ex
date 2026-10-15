@@ -2,7 +2,7 @@ extends SceneTree
 ## A flash clip's camera, per tick, through the real game scene (the way tools/flash/flash_worst.gd plays it: render/main.tscn,
 ## the host's own step, the compositor attached), headless. One line a tick in the window: mode, layout, the displayed camera
 ## and its travel, the launch rule's phase. For reproducing what Tools' per-tick probe sees.
-##   godot --headless --path . --script res://render/camera/tests/clip_probe.gd -- --scenario=ai --seed=38 --from=3440 --to=3560 [--hold] [--mz] [--slam] [--budget]
+##   godot --headless --path . --script res://render/camera/tests/clip_probe.gd -- --scenario=ai --seed=38 --from=3440 --to=3560 [--hold] [--mz] [--slam] [--budget] [--reduced]
 ## Scenarios: ai (the real match with its writes) and collapse (a blast through the front row every 150 ticks).
 
 const DT: float = 1.0 / 60.0
@@ -17,6 +17,7 @@ var hold: bool = false
 var mz: bool = false
 var budget: bool = false
 var slam: bool = false
+var reduced: bool = false
 
 
 func _initialize() -> void:
@@ -35,6 +36,8 @@ func _initialize() -> void:
 			mz = true
 		elif a == "--slam":
 			slam = true
+		elif a == "--reduced":
+			reduced = true
 		elif a == "--budget":
 			budget = true
 	var vpn := SubViewport.new()
@@ -66,7 +69,7 @@ func _run() -> void:
 	main.host.vfx.destruction_enabled = true
 	main.start_match(seed_v, {"p1": true, "p2": true}, null)
 	var host: SimHost = main.host
-	host.vfx.force_reduced = false
+	host.vfx.force_reduced = reduced
 	host.release_all()
 	var rig: SplitRig = main.split_rig
 	var prev: Vector3 = Vector3.ZERO

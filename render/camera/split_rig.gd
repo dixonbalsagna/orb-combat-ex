@@ -308,6 +308,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_lh = [0, 0]
 	_lh_gone = [0, 0]
 	_lh_rel_t = [-1.0e9, -1.0e9]
+	_lh_sky = [false, false]
 	fold_active = false
 	_below_t = 0.0
 	_above_t = 0.0
@@ -579,7 +580,7 @@ func _set_split(want: bool, why: String = "trigger") -> void:
 ## The slam: a rush toward the other fighter, seen while split, starts a lean, then a 0.14 s door-shut timed to the
 ## contact. Returns true while a slam owns the layout.
 func _slam_step(S: SimState) -> bool:
-	if slam_off or not split_wanted or sep < 0.5 or _solo_follow(S) or _lg_slot >= 0:
+	if (slam_off and (flash_reduced or reduced_motion)) or not split_wanted or sep < 0.5 or _solo_follow(S) or _lg_slot >= 0:
 		return false
 	# Not while a pane still holds the screen (e above 0.05, the ease back from a shot): the door sets e from its own clock,
 	# so starting it then moved the divider 0.4 of the width in a tick (found by the jolt scan).
@@ -2370,12 +2371,14 @@ var stage_moves: int = 0                               # stages set or moved (co
 var launch_hold: bool = false
 var _lh: Array = [0, 0]                                # 0 none, 1 holding the frame, 2 panning to him
 var _lh_gone: Array = [0, 0]
-var slam_off: bool = false                             # no divider slam: a rush's contact merges the panes the ordinary way (docs/camera/buildings-in-frame.md section 14); off by default
+var slam_off: bool = false                             # no divider slam UNDER REDUCED FLASHING (or reduced motion): a rush's contact merges the panes the ordinary way (docs/camera/buildings-in-frame.md sections 14 and 15); off by default
 var merge_zoom_limit: bool = false                      # the zoom comes in slowly while the panes merge (docs/camera/buildings-in-frame.md section 13); off by default
 var _pair_near: bool = false                           # the pair is within MZ_NEAR of each other (for the merge zoom limit)
 var _lh_dist: Array = [0.0, 0.0]                       # the width a fast body has covered since he became fast (the rule engages at LH_ENGAGE_W)
 var _lh_rel_t: Array = [-1.0e9, -1.0e9]               # when the rule last ended for this pane (it engages at once again within a second)
+var _lh_sky: Array = [false, false]                   # this flight began above LH_SKY_ALT: the rule leaves it
 var _lh_slow: Array = [0, 0]                           # ticks he has been under LH_SLOW of the threshold
+var launch_hold_eager: bool = false                     # under reduced flashing the rule engages sooner (section 15); off by default
 var launch_holds: int = 0                              # (counted for the tests)
 var launch_pans: int = 0
 var launch_hold_cuts: int = 0
@@ -2629,14 +2632,26 @@ func _update_cameras(S: SimState) -> void:
 			if bld:
 				lh_ph = 0   # a building is in the flight: the follow takes him (a hold or pan under way ends)
 			var speed_w: float = spd_l * z_fl / 60.0 / vw   # the picture's step at the floor's zoom, in widths a tick
-			var fast: bool = f.state == "launched" and speed_w > CamParams.LH_SPEED and not bld
+			# (a flight high above the ground is over sky: a chase there changes no more than a gradient, and the rule's cut to the
+			# landing would put a contrasty city on screen where the follow had shown none: ai 12345 at tick 2066, on 3dda977f,
+			# read 2 / 2.5 / 2 with the follow and 3 / 3 / 3 with the rule)
+			# Latched for the flight: he began it high, so the follow's picture is sky until his last few ticks, and the rule's
+			# hold would put the camera behind and cut onto the city where he lands.
+			if f.state != "launched":
+				_lh_sky[i] = false
+			elif lh_ph == 0 and not bool(_lh_sky[i]) and float(f.y) - WorldTerrain.groundY(S, f.x) > CamParams.LH_SKY_ALT:
+				_lh_sky[i] = true
+			var high: bool = bool(_lh_sky[i])
+			var fast: bool = f.state == "launched" and speed_w > CamParams.LH_SPEED and not bld and not high
 			if lh_ph == 0:
 				# Engage when a fast body has covered LH_ENGAGE_W of the width (at the pane's zoom): a spike that dies in a few
 				# ticks (a knock-back out of a lock, 7,000 units a second for 5 ticks and then 1,200) is the ordinary follow's.
 				if fast:
 					var step_w: float = spd_l * zc / 60.0 / vw   # his step this tick at the pane's own zoom, in widths
 					_lh_dist[i] = float(_lh_dist[i]) + step_w
-					if float(_lh_dist[i]) >= CamParams.LH_ENGAGE_W or step_w >= CamParams.LH_BIG or time - float(_lh_rel_t[i]) < 1.0:
+					var eng_w: float = CamParams.LH_ENGAGE_W_REDUCED if (flash_reduced and launch_hold_eager) else CamParams.LH_ENGAGE_W
+					var big_w: float = CamParams.LH_BIG_REDUCED if (flash_reduced and launch_hold_eager) else CamParams.LH_BIG
+					if float(_lh_dist[i]) >= eng_w or step_w >= big_w or time - float(_lh_rel_t[i]) < 1.0:
 						lh_ph = 1
 						_lh_slow[i] = 0
 						launch_holds += 1

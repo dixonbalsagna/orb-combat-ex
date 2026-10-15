@@ -156,9 +156,18 @@ func set_depth_dolly(on: bool) -> void:
 		main.split_rig.depth_dolly = on
 
 
-## No divider slam (docs/camera/buildings-in-frame.md section 14): a rush's contact does not close the door over the pane (the
-## 0.14 s slam: the pane's camera sweeping into the shared one, the divider shut in 8 ticks); the panes merge the ordinary way, by
-## the closing. Off by default: the slam is a feel Orb may want. A build-time switch.
+## The launch rule engages sooner under reduced flashing (docs/camera/buildings-in-frame.md section 15): after 0.25 of the width
+## covered, or at a step of 0.05 of the width a tick, where the ordinary mode takes 0.6 and 0.15 (the reduced line is 0.03 where the
+## ordinary is 0.045). Acts only with the launch rule on. Off by default. A build-time switch.
+func set_launch_hold_eager(on: bool) -> void:
+	if main != null:
+		main.split_rig.launch_hold_eager = on
+
+
+## No divider slam under reduced flashing (docs/camera/buildings-in-frame.md section 15): a rush's contact does not close the
+## door over the pane (the 0.14 s slam: the pane's camera sweeping into the shared one, the divider shut in 8 ticks); the panes
+## merge the ordinary way, by the closing. In the ordinary mode the slam stays: it is the feel, and ai 12345 in it reads worse
+## without. Off by default. A build-time switch.
 func set_slam_off(on: bool) -> void:
 	if main != null:
 		main.split_rig.slam_off = on
