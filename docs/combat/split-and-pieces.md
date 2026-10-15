@@ -89,6 +89,8 @@ Counts are Anti-hero / Protagonist. "Exists" means a posed piece in the live poo
 - **The two new pieces are key sets on the mannequin.**
 - **Each common piece names one of the two fighters' key sets.** Whether the mannequin can play them, and on which body, is Animation's to say: the reference fighter has no animation data yet. Simulation's dummy script lists "his moveset" as Combat's and Encounter's: this row is it, once it is a pool in the recipes.
 
+**The training dummy** (the EP's addition, 2026-10-15) is a kit row of the same kind, `reference`: every common light (17) and medium (16); for B and the launcher, the common stand-ins (no heavy of the tier is common), with the common uppercut and rising knee for an upward launch; and no energy in reach. It is parked as a patch on `data/combat/recipes.json`, for the window with Simulation's dummy (`pending/reference/`).
+
 ## 4. The two apart: Game Design's §8, against the data
 
 Read from the measure above (what the AI throws, every cell but energy, zips and the double hit), the pools and the packs.

@@ -622,6 +622,56 @@
     "posed": [],
     "posedHands": {}
    }
+  },
+  "reference": {
+   "like": "rival",
+   "tier": 1,
+   "_who": "The reference fighter, in the roster as Orb's training dummy (docs/design/fighter-pipeline.md section 8): base stats and the common pool, frozen, exempt from the gate on a fighter's own blows. A kit row: every cell of the brawl, only pieces more than one fighter has posed, nothing new, no share rule. His lock keeps it as it is: he is the yardstick, and a change to him is a change to every reading",
+   "kit": {
+    "cells": {
+     "martial.x": 30,
+     "martial.y": 16,
+     "martial.b": 10,
+     "martial.b.standin": 12
+    },
+    "from": "common",
+    "levels": [
+     "posed",
+     "stand_in"
+    ],
+    "newOf": [],
+    "_about": "No heavy of the tier is common (each fighter's ten are his own), so his B is the common pieces that stand in at B's wind-up, as both fighters' did before the tier was posed. No energy piece is common: his bolt and blast in reach go without a piece"
+   },
+   "weights": {
+    "limb": {},
+    "path": {},
+    "tip": {},
+    "entry": {}
+   },
+   "weightsBy": [],
+   "never": [],
+   "burst": {
+    "close": {
+     "path": [
+      "line"
+     ]
+    }
+   },
+   "manner": {
+    "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
+    "light": "Plain and even: the common pieces as both fighters' packs have them, so a reading against him is a reading against the game, not a style"
+   },
+   "energy": {
+    "hands": {
+     "open_palm": 1
+    },
+    "release": {
+     "thrust": 1
+    },
+    "split": false,
+    "posed": [],
+    "posedHands": {}
+   }
   }
  },
  "reach": {

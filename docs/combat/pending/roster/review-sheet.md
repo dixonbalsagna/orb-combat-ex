@@ -51,34 +51,34 @@ Legal screened the martial arts stance (`docs/legal/movegen-screen.md`, RL-072):
 
 ## Summary
 
-| Stance | Cell | What it holds | cyborg_courier: moves, posed, derived, waiting | cyborg_hopper: moves, posed, derived, waiting | cyborg_press: moves, posed, derived, waiting | empress: moves, posed, derived, waiting | guard: moves, posed, derived, waiting | protagonist: moves, posed, derived, waiting | rival: moves, posed, derived, waiting |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| martial | X | light strikes | 30, 14, 10, 6 | 30, 13, 11, 6 | 30, 12, 13, 5 | 30, 14, 12, 4 | 16, 16, 0, 0 | 30, 24, 6, 0 | 30, 27, 3, 0 |
-| martial | X held | the burst | 5, 0, 5, 0 | 5, 0, 5, 0 | 5, 0, 5, 0 | 5, 0, 5, 0 | 5, 5, 0, 0 | 5, 0, 5, 0 | 5, 1, 4, 0 |
-| martial | Y | medium strikes, which were the heavy strikes | 16, 10, 4, 2 | 16, 8, 6, 2 | 16, 8, 6, 2 | 16, 6, 8, 2 | 10, 10, 0, 0 | 17, 14, 3, 0 | 16, 14, 2, 0 |
-| martial | A | today's context actions | not generated | not generated | not generated | not generated | not generated | not generated | not generated |
-| martial | B | heavy strikes, a new tier of whole-body blows | 10, 8, 0, 2 | 10, 7, 0, 3 | 10, 8, 0, 2 | 10, 8, 0, 2 | 1, 0, 0, 1 | 11, 10, 0, 1 | 11, 10, 0, 1 |
-| martial | B, stand-ins | the fallback for B | 4, 0, 4, 0 | 5, 0, 5, 0 | 3, 0, 3, 0 | 4, 0, 4, 0 | 0, 0, 0, 0 | 5, 0, 5, 0 | 5, 0, 5, 0 |
-| manoeuvre | X | the zip strike from the mid band (20 ki), the step strike in reach (5 ki), a piloted light charge from far | 8, 6, 2, 0 | 8, 5, 3, 0 | 8, 4, 4, 0 | 8, 3, 5, 0 | 0, 0, 0, 0 | 8, 7, 1, 0 | 8, 7, 1, 0 |
-| manoeuvre | Y | the zip heavy from the mid band (30 ki), a heavy on the move in reach (10 ki), a piloted heavy charge, and the pursuit past charge range | 8, 7, 1, 0 | 8, 6, 2, 0 | 8, 4, 4, 0 | 8, 5, 3, 0 | 0, 0, 0, 0 | 8, 6, 2, 0 | 8, 6, 2, 0 |
-| manoeuvre | A | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated |
-| manoeuvre | B | his signature as a zip | a frame | a frame | a frame | a frame | a frame | a frame | a frame |
-| energy | X | bolts | 6, 5, 0, 1 | 6, 6, 0, 0 | 6, 6, 0, 0 | 6, 5, 0, 1 | 1, 0, 0, 1 | 6, 5, 1, 0 | 6, 6, 0, 0 |
-| energy | X reach | the point-blank bolt | 4, 4, 0, 0 | 4, 4, 0, 0 | 4, 4, 0, 0 | 4, 4, 0, 0 | 0, 0, 0, 0 | 4, 4, 0, 0 | 4, 4, 0, 0 |
-| energy | X run | a mashed run of point-blank bolts, ordered by Legal's e09 | 2, 0, 2, 0 | 2, 0, 2, 0 | 2, 0, 2, 0 | 2, 0, 2, 0 | 0, 0, 0, 0 | 2, 0, 2, 0 | 2, 0, 2, 0 |
-| energy | Y | the heavy shot (speed, tech), the charged shot and the short beam (heavy), and for the rival the split on a second press | 6, 5, 0, 1 | 6, 5, 0, 1 | 6, 5, 0, 1 | 6, 6, 0, 0 | 0, 0, 0, 0 | 6, 4, 1, 1 | 6, 5, 0, 1 |
-| energy | Y reach | the blast | 2, 2, 0, 0 | 2, 2, 0, 0 | 2, 2, 0, 0 | 2, 2, 0, 0 | 0, 0, 0, 0 | 2, 2, 0, 0 | 2, 2, 0, 0 |
-| energy | A | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated |
-| energy | B | the beam, as built | a frame | a frame | a frame | a frame | a frame | a frame | a frame |
-| defensive | X | the check, a short blow from behind the guard | 6, 5, 1, 0 | 6, 4, 1, 1 | 6, 3, 3, 0 | 6, 4, 2, 0 | 0, 0, 0, 0 | 6, 5, 1, 0 | 6, 5, 1, 0 |
-| defensive | Y | the push | 6, 4, 2, 0 | 6, 3, 2, 1 | 6, 4, 1, 1 | 6, 3, 2, 1 | 0, 0, 0, 0 | 6, 4, 2, 0 | 6, 3, 3, 0 |
-| defensive | A | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated |
-| defensive | B | a counter | a frame | a frame | a frame | a frame | a frame | a frame | a frame |
-| charging | X | his quick special | 5, 0, 0, 5 | 5, 0, 0, 5 | 5, 0, 0, 5 | 5, 0, 0, 5 | 0, 0, 0, 0 | 5, 0, 0, 5 | 5, 0, 0, 5 |
-| charging | Y | his strong special, in the same three readings | 5, 0, 0, 5 | 5, 0, 0, 5 | 5, 0, 0, 5 | 5, 0, 0, 5 | 0, 0, 0, 0 | 5, 0, 0, 5 | 5, 0, 0, 5 |
-| charging | A | his utility special | 4, 0, 0, 4 | 4, 0, 0, 4 | 4, 0, 0, 4 | 4, 0, 0, 4 | 0, 0, 0, 0 | 4, 0, 0, 4 | 4, 0, 0, 4 |
-| charging | B | his defining signature, on RT + B and held (docs/design/brawl-second-pass.md section 5) | a frame | a frame | a frame | a frame | a frame | a frame | a frame |
-| **all** | | | **127, 70, 31, 26** | **128, 63, 37, 28** | **126, 60, 41, 25** | **127, 60, 43, 24** | **33, 31, 0, 2** | **130, 85, 29, 16** | **129, 90, 23, 16** |
+| Stance | Cell | What it holds | cyborg_courier: moves, posed, derived, waiting | cyborg_hopper: moves, posed, derived, waiting | cyborg_press: moves, posed, derived, waiting | empress: moves, posed, derived, waiting | guard: moves, posed, derived, waiting | protagonist: moves, posed, derived, waiting | reference: moves, posed, derived, waiting | rival: moves, posed, derived, waiting |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| martial | X | light strikes | 30, 14, 10, 6 | 30, 13, 11, 6 | 30, 12, 13, 5 | 30, 14, 12, 4 | 16, 16, 0, 0 | 30, 24, 6, 0 | 17, 17, 0, 0 | 30, 27, 3, 0 |
+| martial | X held | the burst | 5, 0, 5, 0 | 5, 0, 5, 0 | 5, 0, 5, 0 | 5, 0, 5, 0 | 5, 5, 0, 0 | 5, 0, 5, 0 | 5, 5, 0, 0 | 5, 1, 4, 0 |
+| martial | Y | medium strikes, which were the heavy strikes | 16, 10, 4, 2 | 16, 8, 6, 2 | 16, 8, 6, 2 | 16, 6, 8, 2 | 10, 10, 0, 0 | 17, 14, 3, 0 | 16, 16, 0, 0 | 16, 14, 2, 0 |
+| martial | A | today's context actions | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated |
+| martial | B | heavy strikes, a new tier of whole-body blows | 10, 8, 0, 2 | 10, 7, 0, 3 | 10, 8, 0, 2 | 10, 8, 0, 2 | 1, 0, 0, 1 | 11, 10, 0, 1 | 0, 0, 0, 0 | 11, 10, 0, 1 |
+| martial | B, stand-ins | the fallback for B | 4, 0, 4, 0 | 5, 0, 5, 0 | 3, 0, 3, 0 | 4, 0, 4, 0 | 0, 0, 0, 0 | 5, 0, 5, 0 | 6, 0, 6, 0 | 5, 0, 5, 0 |
+| manoeuvre | X | the zip strike from the mid band (20 ki), the step strike in reach (5 ki), a piloted light charge from far | 8, 6, 2, 0 | 8, 5, 3, 0 | 8, 4, 4, 0 | 8, 3, 5, 0 | 0, 0, 0, 0 | 8, 7, 1, 0 | 0, 0, 0, 0 | 8, 7, 1, 0 |
+| manoeuvre | Y | the zip heavy from the mid band (30 ki), a heavy on the move in reach (10 ki), a piloted heavy charge, and the pursuit past charge range | 8, 7, 1, 0 | 8, 6, 2, 0 | 8, 4, 4, 0 | 8, 5, 3, 0 | 0, 0, 0, 0 | 8, 6, 2, 0 | 0, 0, 0, 0 | 8, 6, 2, 0 |
+| manoeuvre | A | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated |
+| manoeuvre | B | his signature as a zip | a frame | a frame | a frame | a frame | a frame | a frame | a frame | a frame |
+| energy | X | bolts | 6, 5, 0, 1 | 6, 6, 0, 0 | 6, 6, 0, 0 | 6, 5, 0, 1 | 1, 0, 0, 1 | 6, 5, 1, 0 | 0, 0, 0, 0 | 6, 6, 0, 0 |
+| energy | X reach | the point-blank bolt | 4, 4, 0, 0 | 4, 4, 0, 0 | 4, 4, 0, 0 | 4, 4, 0, 0 | 0, 0, 0, 0 | 4, 4, 0, 0 | 0, 0, 0, 0 | 4, 4, 0, 0 |
+| energy | X run | a mashed run of point-blank bolts, ordered by Legal's e09 | 2, 0, 2, 0 | 2, 0, 2, 0 | 2, 0, 2, 0 | 2, 0, 2, 0 | 0, 0, 0, 0 | 2, 0, 2, 0 | 0, 0, 0, 0 | 2, 0, 2, 0 |
+| energy | Y | the heavy shot (speed, tech), the charged shot and the short beam (heavy), and for the rival the split on a second press | 6, 5, 0, 1 | 6, 5, 0, 1 | 6, 5, 0, 1 | 6, 6, 0, 0 | 0, 0, 0, 0 | 6, 4, 1, 1 | 0, 0, 0, 0 | 6, 5, 0, 1 |
+| energy | Y reach | the blast | 2, 2, 0, 0 | 2, 2, 0, 0 | 2, 2, 0, 0 | 2, 2, 0, 0 | 0, 0, 0, 0 | 2, 2, 0, 0 | 0, 0, 0, 0 | 2, 2, 0, 0 |
+| energy | A | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated |
+| energy | B | the beam, as built | a frame | a frame | a frame | a frame | a frame | a frame | a frame | a frame |
+| defensive | X | the check, a short blow from behind the guard | 6, 5, 1, 0 | 6, 4, 1, 1 | 6, 3, 3, 0 | 6, 4, 2, 0 | 0, 0, 0, 0 | 6, 5, 1, 0 | 0, 0, 0, 0 | 6, 5, 1, 0 |
+| defensive | Y | the push | 6, 4, 2, 0 | 6, 3, 2, 1 | 6, 4, 1, 1 | 6, 3, 2, 1 | 0, 0, 0, 0 | 6, 4, 2, 0 | 0, 0, 0, 0 | 6, 3, 3, 0 |
+| defensive | A | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated | not generated |
+| defensive | B | a counter | a frame | a frame | a frame | a frame | a frame | a frame | a frame | a frame |
+| charging | X | his quick special | 5, 0, 0, 5 | 5, 0, 0, 5 | 5, 0, 0, 5 | 5, 0, 0, 5 | 0, 0, 0, 0 | 5, 0, 0, 5 | 0, 0, 0, 0 | 5, 0, 0, 5 |
+| charging | Y | his strong special, in the same three readings | 5, 0, 0, 5 | 5, 0, 0, 5 | 5, 0, 0, 5 | 5, 0, 0, 5 | 0, 0, 0, 0 | 5, 0, 0, 5 | 0, 0, 0, 0 | 5, 0, 0, 5 |
+| charging | A | his utility special | 4, 0, 0, 4 | 4, 0, 0, 4 | 4, 0, 0, 4 | 4, 0, 0, 4 | 0, 0, 0, 0 | 4, 0, 0, 4 | 0, 0, 0, 0 | 4, 0, 0, 4 |
+| charging | B | his defining signature, on RT + B and held (docs/design/brawl-second-pass.md section 5) | a frame | a frame | a frame | a frame | a frame | a frame | a frame | a frame |
+| **all** | | | **127, 70, 31, 26** | **128, 63, 37, 28** | **126, 60, 41, 25** | **127, 60, 43, 24** | **33, 31, 0, 2** | **130, 85, 29, 16** | **44, 38, 6, 0** | **129, 90, 23, 16** |
 
 ## The martial arts stance
 
@@ -280,6 +280,28 @@ Legal screened the martial arts stance (`docs/legal/movegen-screen.md`, RL-072):
 | 29 | hand | palm | rise | chest | light, flurry, burst | up | 24 | posed: `pm.palm_heave` | posed | L1, L2; carries: hands open or claw, no leap, not at hip |
 | 30 | foot | instep | arc in | gut | light, skill, juggle | turned | 24 | re-aim: `pr.low_kick`, to the gut | derived | - |
 
+**The Reference:** 17 moves from 17 candidates; 17 posed, 0 derived, 0 waiting. Quotas: his own, in the flurry 0 of 3; toward 5 of 5; away 6 of 5; none 6 of 5; down 3 of 5; up 6 of 5; flurry 10 of 10; skill 7 of 10.
+
+| # | Limb | Tip | Path | Target | Readings | Sends | Beat | Keys | Status | Legal |
+| ---: | :--- | :--- | :--- | :--- | :--- | :--- | ---: | :--- | :--- | :--- |
+| 01 | knee | cap | arc in | legs | light, flurry, burst | turned | 24 | posed: `rm.knee_hook` | posed | - |
+| 02 | elbow | point | rise | jaw | light, flurry, burst | up | 24 | posed: `w1.rising_elbow` | posed | L1 |
+| 03 | elbow | point | arc in | jaw | light, flurry, burst | turned | 24 | posed: `w1.short_elbow` | posed | - |
+| 04 | shoulder | plate | line | chest | light, flurry | across | 20 | posed: `w1.shoulder_check` | posed | - |
+| 05 | knee | cap | line | gut | light, flurry, burst | across | 20 | posed: `w1.short_knee` | posed | - |
+| 06 | foot | instep | arc in | shins | light, skill, juggle | turned | 24 | posed: `w1.sweep` | posed | - |
+| 07 | foot | instep | arc in | legs | light, skill, juggle | turned | 24 | posed: `w1.low_kick` | posed | - |
+| 08 | foot | ball | rise | gut | light, skill, juggle | up | 24 | posed: `rm.lift_kick` | posed | - |
+| 09 | foot | edge | line | chest | light, skill, juggle | across | 20 | posed: `w1.side_kick` | posed | - |
+| 10 | foot | ball | line | gut | light, skill, juggle | across | 20 | posed: `w1.front_kick` | posed | - |
+| 11 | hand | blade | line | head | light, flurry, burst | across | 20 | posed: `w1.jab` | posed | L8 |
+| 12 | hand | plate | arc in | head | light, flurry, burst | turned | 24 | posed: `w1.hook` | posed | - |
+| 13 | hand | palm | line | chest | light, flurry, burst | across | 20 | posed: `w1.palm_heel` | posed | L2; carries: hands open or claw, not at hip |
+| 14 | hand | blade | line | gut | light, flurry, burst | across | 20 | posed: `w1.spear_hand` | posed | L4 |
+| 15 | hand | blade | line | chest | light, flurry, burst | across | 20 | posed: `w1.cross` | posed | L4 |
+| 16 | hand | heel | arc out | head | light, burst, skill, juggle | turned | 24 | posed: `w1.backfist` | posed | - |
+| 17 | foot | instep | arc in | chest | light, skill, juggle | turned | 24 | posed: `w1.snap_round` | posed | - |
+
 **The rival:** 30 moves from 77 candidates; 27 posed, 3 derived, 0 waiting. Quotas: his own, in the flurry 3 of 3; toward 7 of 5; away 7 of 5; none 9 of 5; down 10 of 5; up 13 of 5; flurry 14 of 10; skill 16 of 10; his alone 9; shared with cyborg_courier 15; shared with cyborg_hopper 13; shared with cyborg_press 14; shared with empress 15; shared with protagonist 15.
 
 | # | Limb | Tip | Path | Target | Readings | Sends | Beat | Keys | Status | Legal |
@@ -376,6 +398,16 @@ Legal screened the martial arts stance (`docs/legal/movegen-screen.md`, RL-072):
 | 03 | none | hand heel, arc out to the head (11) | hand palm, rise to the chest (29) | hand blade, line to the head (13) | hand palm, line to the arm (25) | hand palm, rise to the jaw (19) | hand blade, arc in to the head (12) | foot heel, arc out to the chest (06) | foot instep, arc in to the gut (30) | derived |
 | 04 | down | hand blade, drop to the arm (16) | hand palm, rise to the gut (18) | hand blade, arc in to the jaw (26) | hand blade, arc out to the arm (15) | hand palm, line to the chest (14) | hand heel, arc out to the jaw (23) | hand blade, drop to the chest (22) | foot instep, arc in to the legs (08) | derived |
 | 05 | up | hand palm, rise to the chest (29) | hand blade, line to the head (13) | hand palm, rise to the gut (18) | hand palm, line to the arm (25) | hand palm, rise to the jaw (19) | hand blade, arc in to the head (12) | foot edge, arc out to the gut (27) | foot instep, arc in to the chest (20) | derived |
+
+**The Reference:** 5 strings of 8 from his 17 lights; 5 posed, 0 derived. 
+
+| # | Stick | 1: open | 2: fast | 3: fast | 4: fast | 5: mid | 6: mid | 7: slow | 8: slow | Status |
+| ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 01 | toward | elbow point, arc in to the jaw (03) | hand heel, arc out to the head (16) | hand palm, line to the chest (13) | hand blade, line to the head (11) | elbow point, rise to the jaw (02) | hand blade, line to the gut (14) | knee cap, arc in to the legs (01) | shoulder plate, line to the chest (04) | posed |
+| 02 | away | foot instep, arc in to the legs (07) | hand blade, line to the chest (15) | hand plate, arc in to the head (12) | hand blade, line to the gut (14) | hand palm, line to the chest (13) | knee cap, arc in to the legs (01) | foot ball, line to the gut (10) | foot edge, line to the chest (09) | posed |
+| 03 | none | hand blade, line to the chest (15) | hand plate, arc in to the head (12) | hand blade, line to the gut (14) | hand palm, line to the chest (13) | elbow point, arc in to the jaw (03) | knee cap, line to the gut (05) | foot instep, arc in to the shins (06) | hand blade, line to the head (11) | posed |
+| 04 | down | foot instep, arc in to the shins (06) | hand heel, arc out to the head (16) | hand blade, line to the chest (15) | hand plate, arc in to the head (12) | knee cap, line to the gut (05) | elbow point, rise to the jaw (02) | foot instep, arc in to the chest (17) | foot ball, line to the gut (10) | posed |
+| 05 | up | foot ball, rise to the gut (08) | hand blade, line to the head (11) | hand palm, line to the chest (13) | hand plate, arc in to the head (12) | knee cap, line to the gut (05) | knee cap, arc in to the legs (01) | shoulder plate, line to the chest (04) | foot ball, line to the gut (10) | posed |
 
 **The rival:** 5 strings of 8 from his 30 lights; 1 posed, 4 derived. A show of speed: blade hands that flick out and back with the elbow high, then a straight he leaves out for a beat
 
@@ -525,6 +557,27 @@ For every medium: a medium does not knock back, charged or not: `sends` on a med
 | 16 | **held only** (w2) | foot | heel | spin | chest | charged | turned | 28 | posed: `pr.spinning_heel` | posed | L5, L6, W1; carries: single turn |
 | 17 | quick (w8) | hand | palm | rise | gut | quick, charged, lift | up | 24 | re-aim: `pr.rising_palm`, to the gut | derived | L1, L2, L6, W1; carries: hands open or claw, no held raise, no leap |
 
+**The Reference:** 16 moves from 19 candidates; 16 posed, 0 derived, 0 waiting. Quotas: up 2 of 3; down 5 of 3; across 4 of 3; turned 5 of 3; quick 12 of 12; the stop: quick, on a line or a rise 5 of 5; the grind: quick, a drop or an arc 7 of 5.
+
+| # | On 12 ticks | Limb | Tip | Path | Target | Readings | Sends | Beat | Keys | Status | Legal |
+| ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | ---: | :--- | :--- | :--- |
+| 01 | quick (w8) | hand | fist | rise | jaw | quick, charged, lift | up | 24 | posed: `w1.uppercut` | posed | L1, L6, W1; carries: no held raise, no leap |
+| 02 | quick (w8) | knee | cap | rise | gut | quick, charged, lift | up | 24 | posed: `w1.rising_knee` | posed | L1, L6, W1 |
+| 03 | quick (w5) | elbow | point | drop | chest | quick, charged | down | 26 | posed: `w1.dropping_elbow` | posed | L6, W1 |
+| 04 | quick (w5) | hand | blade | drop | head | quick, charged | down | 26 | posed: `w1.overhand` | posed | L3, L6, L8, W1 |
+| 05 | quick (w4) | foot | sole | drop | gut | quick, charged | down | 26 | posed: `w1.stomp` | posed | L6, W1 |
+| 06 | quick (w6) | shoulder | plate | line | chest | quick, charged | across | 20 | posed: `rb.body_ram` | posed | L6, W1; carries: no cross hold |
+| 07 | quick (w6) | head | brow | line | jaw | quick, charged | across | 20 | posed: `w1.headbutt` | posed | L6, W1 |
+| 08 | quick (w6) | knee | cap | line | gut | quick, charged | across | 20 | posed: `w1.driving_knee` | posed | L6, W1 |
+| 09 | quick (w7) | hand | blade | arc in | head | quick, charged | turned | 24 | posed: `w1.haymaker` | posed | L6, L8, W1 |
+| 10 | quick (w7) | foot | instep | arc in | chest | quick, charged | turned | 24 | posed: `w1.roundhouse` | posed | L6, W1 |
+| 11 | quick (w7) | hand | blade | arc in | gut | quick, charged | turned | 24 | posed: `rb.body_hook` | posed | L6, W1 |
+| 12 | quick (w4) | foot | heel | drop | chest | quick, charged | down | 26 | posed: `w1.axe_kick` | posed | L6, W1 |
+| 13 | **held only** (w2) | elbow | point | spin | jaw | charged | turned | 28 | posed: `w1.spinning_elbow` | posed | L5, L6, W1; carries: single turn |
+| 14 | **held only** (w2) | foot | heel | spin | chest | charged | turned | 28 | posed: `w1.spinning_heel` | posed | L5, L6, W1; carries: single turn |
+| 15 | **held only** (w3) | hand | palm | line | chest | charged | across | 20 | posed: `w1.double_palm` | posed | L2, L6, W1; carries: hands open or claw, not at hip, wrists apart |
+| 16 | **held only** (w3) | hand | plate | drop | head | charged | down | 26 | posed: `w1.double_hammer` | posed | L3, L6, W1; carries: no clasp, wrists apart |
+
 **The rival:** 16 moves from 78 candidates; 14 posed, 2 derived, 0 waiting. Quotas: up 3 of 3; down 4 of 3; across 5 of 3; turned 4 of 3; quick 12 of 12; the stop: quick, on a line or a rise 6 of 5; the grind: quick, a drop or an arc 6 of 5; his alone 2; shared with cyborg_courier 7; shared with cyborg_hopper 5; shared with cyborg_press 7; shared with empress 1; shared with protagonist 5.
 
 | # | On 12 ticks | Limb | Tip | Path | Target | Readings | Sends | Beat | Keys | Status | Legal |
@@ -574,6 +627,8 @@ Pressed: grab and quick throw; pick-up; lift a civilian clear; dive grab from ab
 **How the Guard throws one:** 
 
 **How the Protagonist throws one:** Pointed, not cruel. One line to one point: the tell is compact and close to the body, the turn does the work, the blow stops at the target and he is back in his guard at once. No flourish before it and none after
+
+**How the Reference throws one:** 
 
 **How the rival throws one:** A show-off. He lets the rival see it coming: the tell is held open to view with the chin up, the blow travels in the straightest line that drive allows, and he leaves the limb out for a beat after it lands, 12 ticks or fewer. The limb stays drawn back through the tell: never arms spread as an invitation, never a beckon, and no taunt is part of a blow (Legal's h07). Never a second motion on the same wind-up
 
@@ -683,6 +738,15 @@ Pressed: grab and quick throw; pick-up; lift a civilian clear; dive grab from ab
 
 **The wrench** (a held B on a battered limb; the stick picks the limb and the piece lands there): the arm: 08, 11; the legs: 09. It never launches.
 
+**The Reference:** 0 moves from 0 candidates; 0 posed, 0 derived, 0 waiting. Quotas: launcher up 0 of 1; launcher down 0 of 1; launcher across 0 of 1; launcher turned 0 of 1; across 0 of 2; turned 0 of 2; up 0 of 2; down 0 of 2; lean toward 0 of 2; lean away 0 of 2; lean none 0 of 2; lean down 0 of 2; lean up 0 of 2; launch 0 of 6; wrench, an arm 0 of 1; wrench, a leg 0 of 1; the advance: a line or a drop 0 of 5; the big read: an arc, a rise or a spin 0 of 5.
+
+| # | Name | Limb | Tip | Path | Target | Readings | Sends | Beat | Keys | Status | Legal |
+| ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | ---: | :--- | :--- | :--- |
+
+**The launcher** (a tap of B on a staggered rival, on half the wind-up), by where it sends: up: none; down: none; across: none; turned: none. With no stick, the launch planner's pick decides the send.
+
+**The wrench** (a held B on a battered limb; the stick picks the limb and the piece lands there): the arm: none; the legs: none. It never launches.
+
 **The rival:** 11 moves from 69 candidates; 10 posed, 0 derived, 1 waiting. Quotas: launcher up 2 of 1; launcher down 2 of 1; launcher across 2 of 1; launcher turned 3 of 1; across 3 of 2; turned 3 of 2; up 2 of 2; down 3 of 2; lean toward 2 of 2; lean away 2 of 2; lean none 4 of 2; lean down 4 of 2; lean up 6 of 2; launch 9 of 6; wrench, an arm 1 of 1; wrench, a leg 1 of 1; the advance: a line or a drop 6 of 5; the big read: an arc, a rise or a spin 5 of 5; his alone 4; shared with cyborg_courier 5; shared with cyborg_hopper 4; shared with cyborg_press 5; shared with empress 3.
 
 | # | Name | Limb | Tip | Path | Target | Readings | Sends | Beat | Keys | Status | Legal |
@@ -762,6 +826,19 @@ Pressed: grab and quick throw; pick-up; lift a civilian clear; dive grab from ab
 | 05 | stepping crossed forearms to the chest (both arms) | elbow | plate | line | chest | quick, charged, launch | across | 20 | stands in, played at B's wind-up: `pr.cross_arm_ram` | derived | L6, L7, W1, D1, B1; carries: no cross hold, wrists apart |
 
 **Launchers among these** (they read on half the wind-up): across: `pr.double_palm`, `pr.cross_arm_ram`. A spin or a leap needs the whole wind-up.
+
+**The Reference:** 6 moves from 6 candidates; 0 posed, 6 derived, 0 waiting.
+
+| # | Name | Limb | Tip | Path | Target | Readings | Sends | Beat | Keys | Status | Legal |
+| ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | ---: | :--- | :--- | :--- |
+| 01 | stepping sole to the chest | foot | sole | line | chest | quick, charged | across | 20 | stands in, played at B's wind-up: `w1.drop_kick` | derived | L6, W1, D1, B1 |
+| 02 | falling forearm plate to the head (both arms) | hand | plate | drop | head | quick, charged, launch | down | 26 | stands in, played at B's wind-up: `w1.double_hammer` | derived | L3, L6, W1, D5, B1; carries: no clasp, wrists apart |
+| 03 | spinning elbow to the jaw | elbow | point | spin | jaw | quick, charged | turned | 28 | stands in, played at B's wind-up: `w1.spinning_elbow` | derived | L5, L6, W1, B1; carries: single turn |
+| 04 | stepping palm to the chest (both arms) | hand | palm | line | chest | quick, charged, launch | across | 20 | stands in, played at B's wind-up: `w1.double_palm` | derived | L2, L6, W1, D1, B1; carries: hands open or claw, not at hip, wrists apart |
+| 05 | spinning heel to the chest | foot | heel | spin | chest | quick, charged | turned | 28 | stands in, played at B's wind-up: `w1.spinning_heel` | derived | L5, L6, W1, B1; carries: single turn |
+| 06 | stepping crossed forearms to the chest (both arms) | elbow | plate | line | chest | quick, charged, launch | across | 20 | stands in, played at B's wind-up: `w1.cross_arm_ram` | derived | L6, L7, W1, D1, B1; carries: no cross hold |
+
+**Launchers among these** (they read on half the wind-up): down: `w1.double_hammer`; across: `w1.double_palm`, `w1.cross_arm_ram`. A spin or a leap needs the whole wind-up.
 
 **The rival:** 5 moves from 5 candidates; 0 posed, 5 derived, 0 waiting.
 
@@ -858,6 +935,8 @@ Pressed: grab and quick throw; pick-up; lift a civilian clear; dive grab from ab
 | 07 | charge | far | toward | `pe.spiral` | stays | hand blade, drop to the arm (`pr.knife_chop`) | posed | L3; carries: hands open or claw |
 | 08 | zip away | close | away | `pe.rooted` | `pe.fade` | hand blade, line to the head (`pr.jab`) | posed | Z1, L8 |
 
+**The reference:** none (not in his kit).
+
 **The rival:** 8 moves from 214 candidates; 7 posed, 1 derived, 0 waiting. Quotas: zip 3 of 3; step 3 of 3; charge 1 of 1; zip away 1 of 1.
 
 | # | Kind | Band | Direction | Entry | Way out | Blow on arrival | Status | Legal |
@@ -939,6 +1018,8 @@ Pressed: grab and quick throw; pick-up; lift a civilian clear; dive grab from ab
 | 06 | charge | far | toward | `pe.spiral` | stays | hand palm, rise to the jaw (`pr.rising_palm`) | posed | L1, L2, L6, L8, W1; carries: hands open or claw, no held raise, no leap |
 | 07 | pursuit | beyond | toward | `pe.arc_dive` | stays | hand palm, line to the chest (`pr.palm_push`) | posed | L2, L6, W1; carries: hands open or claw, no cross hold, not at hip |
 | 08 | zip away | close | away | `pe.rooted` | `pe.fade` | hand palm, line to the arm (`pr.double_palm`) | derived | Z1, L2, L6, W1; carries: hands open or claw, not at hip, wrists apart |
+
+**The reference:** none (not in his kit).
 
 **The rival:** 8 moves from 133 candidates; 6 posed, 2 derived, 0 waiting. Quotas: zip 3 of 3; step 2 of 2; charge 1 of 1; pursuit 1 of 1; zip away 1 of 1.
 
@@ -1039,6 +1120,8 @@ Readings: speed: the quick form, as a zip; tech: the same on the mark; heavy: th
 | 05 | flat palm | lob | backpedal | bolt | speed | `pg.lob` | derived | E1 |
 | 06 | palm thrust | flick | rising | volley | heavy | `pg.volley_arc`, `pn.hold.palm_thrust` | posed | E1 |
 
+**The reference:** none (not in his kit).
+
 **The rival:** 6 moves from 100 candidates; 6 posed, 0 derived, 0 waiting. Quotas: heavy 3 of 2; tech 2 of 2; speed 3 of 3.
 
 | # | Hand | Release | Body | Delivery | Readings | Keys | Status | Legal |
@@ -1099,6 +1182,8 @@ Readings: speed: the quick form, as a zip; tech: the same on the mark; heavy: th
 | 03 | palm thrust | flick | the chest, arc out | point-blank bolt | bolt | `pk.bolt_flick`, `pn.hold.palm_thrust` | posed | E1, R1 |
 | 04 | flat palm | sweep | the gut, arc in | point-blank bolt | bolt | `pk.bolt_sweep` | posed | E1, R1 |
 
+**The reference:** none (not in his kit).
+
 **The rival:** 4 moves from 12 candidates; 4 posed, 0 derived, 0 waiting. Quotas: thrust 2 of 2; flick 1 of 1; sweep 1 of 1; chest 2 of 2; gut 2 of 2.
 
 | # | Hand | Release | Set on, and its path | Delivery | Readings | Keys | Status | Legal |
@@ -1156,6 +1241,8 @@ His bolts: 01 is palm thrust on a thrust to the chest (line); 02 is flat palm on
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 01 | 02, lead | 01, lead | 04, lead | 03, **free** | 01, lead | 04, lead | 03, lead | 01, lead | 02, **free** | 03, lead | 04, lead | 01, lead | 02, lead | 03, lead | 01, **free** | 04, lead | 03, lead | 01, lead | 04, lead | 03, **free** | derived |
 | 02 | 02, lead | 01, lead | 03, lead | 04, lead | 01, **free** | 02, lead | 03, lead | 04, lead | 01, **free** | 02, lead | 03, lead | 01, lead | 04, lead | 03, lead | 01, **free** | 04, lead | 03, lead | 01, lead | 04, **free** | 03, lead | derived |
+
+**The reference:** none (not in his kit).
 
 **The rival:** 2 runs of 20 from his 4 bolts, each a loop: played round and round it still keeps the rule. Legal's e09: never the same arm, path and place twice running; three paths in any five; the free arm now and then, never on a regular count.
 
@@ -1225,6 +1312,8 @@ His bolts: 01 is blade hand on a thrust to the gut (line); 02 is lit fist on a t
 | 05 | flat palm | drop | rising | charged | heavy | `pg.hold.blast_down` | derived | E1 |
 | 06 | flat palm | thrust | kiting turn | short beam | heavy | new poses | waiting | E1 |
 
+**The reference:** none (not in his kit).
+
 **The rival:** 6 moves from 120 candidates; 5 posed, 0 derived, 1 waiting. Quotas: speed 2 of 2; tech 1 of 1; heavy 4 of 3; short beam 1 of 1; split 1 of 1.
 
 | # | Hand | Release | Body | Delivery | Readings | Keys | Status | Legal |
@@ -1274,6 +1363,8 @@ His bolts: 01 is blade hand on a thrust to the gut (line); 02 is lit fist on a t
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 01 | palm thrust | thrust | the chest, line | blast | blast | `pk.blast_chest`, `pn.hold.palm_thrust` | posed | E1, R1, H1, K1 |
 | 02 | palm thrust | thrust | the gut, line | blast | blast | `pk.blast_gut`, `pn.hold.palm_thrust` | posed | E1, R1, H1, K1 |
+
+**The reference:** none (not in his kit).
 
 **The rival:** 2 moves from 4 candidates; 2 posed, 0 derived, 0 waiting. Quotas: chest 1 of 1; gut 1 of 1.
 
@@ -1372,6 +1463,8 @@ Readings: speed: the quick form; tech: on his firing beat; heavy: the held form.
 | 05 | knee | cap | arc in | legs | speed, tech, heavy | turned | 24 | posed: `pm.knee_hook`, over the guard | posed | - |
 | 06 | elbow | point | arc in | jaw | speed, tech, heavy | turned | 24 | posed: `pr.short_elbow`, over the guard | posed | - |
 
+**The reference:** none (not in his kit).
+
 **The rival:** 6 moves from 29 candidates; 5 posed, 1 derived, 0 waiting. Quotas: high 2 of 2; mid 3 of 2; close limb 2 of 2.
 
 | # | Limb | Tip | Path | Target | Readings | Sends | Beat | Keys | Status | Legal |
@@ -1441,6 +1534,8 @@ Readings: speed: the quick form; tech: on his firing beat; heavy: the held form.
 | 04 | foot | ball | line | gut | speed, tech, heavy | across | 20 | posed: `pr.front_kick` | posed | P1 |
 | 05 | elbow | plate | line | chest | speed, tech, heavy | across | 20 | posed: `pr.cross_arm_ram` | posed | P1, L7; carries: no cross hold, wrists apart |
 | 06 | shoulder | plate | line | chest | speed, tech, heavy | across | 20 | posed: `pr.shoulder_check` | posed | P1 |
+
+**The reference:** none (not in his kit).
 
 **The rival:** 6 moves from 6 candidates; 3 posed, 3 derived, 0 waiting. Quotas: chest 4 of 2; gut 2 of 1.
 
@@ -1534,6 +1629,8 @@ A turn that carries him round the rival, and an arc as he arrives (`special.turn
 | 04 | air roll | over | hook kick | speed, tech, heavy | waiting |
 | 05 | pivot | around | hook kick | speed, tech, heavy | waiting |
 
+**The reference:** none (not in his kit).
+
 **The rival:** 5 moves from 16 candidates; 0 posed, 0 derived, 5 waiting.
 A sudden change of level and a wide cutting blow as he arrives (`special.cutting_step`; designed (wave 7), not posed).
 
@@ -1604,6 +1701,8 @@ Three curving shots released one after another from the ring hand, each bent a d
 | 04 | over, left, right | backpedal | speed, tech, heavy | waiting |
 | 05 | right, over, left | rising | speed, tech, heavy | waiting |
 
+**The reference:** none (not in his kit).
+
 **The rival:** 5 moves from 9 candidates; 0 posed, 0 derived, 5 waiting.
 Both arms open through a half turn and a fan of shards leaves along the sweep (`special.barrage_volley`; designed (wave 7), hands and brace posed).
 
@@ -1669,6 +1768,8 @@ An open-hand redirect that takes the rival's line past him and leaves him on the
 | 03 | lead palm | under | at his flank | pressed, held | waiting |
 | 04 | rear palm | around | behind him | pressed, held | waiting |
 
+**The reference:** none (not in his kit).
+
 **The rival:** 4 moves from 8 candidates; 0 posed, 0 derived, 4 waiting.
 A grab at speed, a drag along the ground on the rival's back, and a throw (`special.grip_and_drag`; designed (wave 7), waits for the held state).
 
@@ -1695,18 +1796,18 @@ Readings: held to the first flash: his art; held to the second: his signature; h
 
 Legal's string rules count the whole string, whatever buttons made it (f02). So the check is made on the three pools together: after any two blows of X, Y and B that the rules allow, how many pieces of each button may still be thrown, never one of his last two. A medium is counted only if it reads on Y's wind-up. `--check` fails if a button is left with fewer than 3, or if any light cannot open a whole burst.
 
-| | Cyborg_courier | Cyborg_hopper | Cyborg_press | Empress | Guard | Protagonist | rival |
-| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Lights that may follow, of the pool: fewest, median | 21 and 28 of 30 | 22 and 28 of 30 | 21 and 28 of 30 | 22 and 28 of 30 | 10 and 14 of 16 | 19 and 28 of 30 | 19 and 28 of 30 |
-| Quick mediums that may follow: fewest, median | 8 and 14 of 15 | 7 and 13 of 14 | 7 and 12 of 13 | 6 and 11 of 12 | 4 and 8 of 9 | 4 and 11 of 12 | 6 and 11 of 12 |
-| Heavies that may follow: fewest, median | 5 and 9 of 10 | 5 and 9 of 10 | 4 and 9 of 10 | 5 and 9 of 10 | 0 and 1 of 1 | 6 and 10 of 11 | 7 and 10 of 11 |
-| Point-blank bolts that may follow (energy in reach): fewest, median | 1 and 4 of 4 | 1 and 4 of 4 | 1 and 4 of 4 | 1 and 4 of 4 | 0 and 0 of 0 | 1 and 4 of 4 | 1 and 4 of 4 |
-| A mashed run of 30 point-blank bolts ordered by e09, from his four | made | made | made | made | **cannot be made** | made | made |
-| Two blows drawn blind that break a rule | 7.7% | 7.8% | 5.5% | 6.4% | 8.0% | 11.3% | 7.1% |
-| **On what is posed today:** heavies that can play (the stand-ins), and the fewest that may follow | 12, fewest 5 | 12, fewest 4 | 11, fewest 5 | 12, fewest 6 | 0, fewest 0 | 15, fewest 7 | 15, fewest 8 |
-| The burst: lights that can open a whole one | 24 of 24 | 24 of 24 | 25 of 25 | 26 of 26 | 16 of 16 | 30 of 30 | 30 of 30 |
-| The burst: lights that fit a fast gap, a middle gap, a slow gap | 10, 17, 24 | 11, 16, 24 | 14, 19, 25 | 13, 18, 26 | 6, 10, 16 | 11, 15, 30 | 11, 16, 30 |
-| The burst: fewest lights that may be its second blow | 5 | 4 | 6 | 6 | 1 | 6 | 5 |
+| | Cyborg_courier | Cyborg_hopper | Cyborg_press | Empress | Guard | Protagonist | Reference | rival |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Lights that may follow, of the pool: fewest, median | 21 and 28 of 30 | 22 and 28 of 30 | 21 and 28 of 30 | 22 and 28 of 30 | 10 and 14 of 16 | 19 and 28 of 30 | 11 and 15 of 17 | 19 and 28 of 30 |
+| Quick mediums that may follow: fewest, median | 8 and 14 of 15 | 7 and 13 of 14 | 7 and 12 of 13 | 6 and 11 of 12 | 4 and 8 of 9 | 4 and 11 of 12 | 6 and 10 of 12 | 6 and 11 of 12 |
+| Heavies that may follow: fewest, median | 5 and 9 of 10 | 5 and 9 of 10 | 4 and 9 of 10 | 5 and 9 of 10 | 0 and 1 of 1 | 6 and 10 of 11 | 0 and 0 of 0 | 7 and 10 of 11 |
+| Point-blank bolts that may follow (energy in reach): fewest, median | 1 and 4 of 4 | 1 and 4 of 4 | 1 and 4 of 4 | 1 and 4 of 4 | 0 and 0 of 0 | 1 and 4 of 4 | 0 and 0 of 0 | 1 and 4 of 4 |
+| A mashed run of 30 point-blank bolts ordered by e09, from his four | made | made | made | made | **cannot be made** | made | **cannot be made** | made |
+| Two blows drawn blind that break a rule | 7.7% | 7.8% | 5.5% | 6.4% | 8.0% | 11.3% | 8.1% | 7.1% |
+| **On what is posed today:** heavies that can play (the stand-ins), and the fewest that may follow | 12, fewest 5 | 12, fewest 4 | 11, fewest 5 | 12, fewest 6 | 0, fewest 0 | 15, fewest 7 | 6, fewest 1 | 15, fewest 8 |
+| The burst: lights that can open a whole one | 24 of 24 | 24 of 24 | 25 of 25 | 26 of 26 | 16 of 16 | 30 of 30 | 17 of 17 | 30 of 30 |
+| The burst: lights that fit a fast gap, a middle gap, a slow gap | 10, 17, 24 | 11, 16, 24 | 14, 19, 25 | 13, 18, 26 | 6, 10, 16 | 11, 15, 30 | 6, 10, 17 | 11, 16, 30 |
+| The burst: fewest lights that may be its second blow | 5 | 4 | 6 | 6 | 1 | 6 | 1 | 5 |
 
 s01 allows three pieces running with one limb, tip and path. "Never one of his last two" does not stop a fourth, so the director counts that run itself.
 
@@ -1806,20 +1907,27 @@ What the three strengths added. **Legal passed all of these rows with conditions
 | 88 | `pr.drop_kick` as a stand-in on B | Protagonist | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L6, W1, D1, B1 | passes with B1 |
 | 89 | `pr.spinning_elbow` as a stand-in on B | Protagonist | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L5, L6, W1, B1; carries single turn | passes with B1 |
 | 90 | `pr.cross_arm_ram` as a stand-in on B | Protagonist | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L6, L7, W1, D1, B1; carries no cross hold, wrists apart | passes with B1; its gather on 28 ticks is seen drawn first |
-| 91 | `w1.double_hammer` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L3, L6, W1, D5, B1; carries no clasp, wrists apart | passes with B1; its gather on 28 ticks is seen drawn first |
-| 92 | `w1.drop_kick` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L6, W1, D1, B1 | passes with B1 |
-| 93 | `w1.cross_arm_ram` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L6, L7, W1, D1, B1; carries no cross hold | passes with B1; its gather on 28 ticks is seen drawn first |
-| 94 | `w1.spinning_elbow` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L5, L6, W1, B1; carries single turn | passes with B1 |
-| 95 | `w1.spinning_heel` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L5, L6, W1, B1; carries single turn | passes with B1 |
-| 96 | The burst (a held X) | both | eight lights in under a second; its first three gaps are shorter than a mashed flurry's fastest. Every blow is a posed light; what is new is the pace, and the rules that keep it from stuttering: never the same limb, tip and path twice running; never the same place twice running; no more than two blows running on one path; no piece twice in one burst | U1; f01 to f05; s01, s02, s03 | passes with U1; its opening three blows are seen drawn first |
-| 97 | The mediums on a 12-tick wind-up | both | no new shape: the strikes that were the heavies, thrown on a wind-up of 12 ticks where they had 26, and up to five a second in a flurry. The ones that do not fit are flagged and keep a long wind-up | W1; f01 to f04 for the flurry; L6 for the charged ones | passes |
-| 98 | How the Cyborg_courier throws a heavy | Cyborg_courier | Short and exact. He is in, the blow is thrown from where the limb already is, and he is gone: no more tell than the timing asks for, and nothing left out after it lands | W1, H1, K1 | passes |
-| 99 | How the Cyborg_hopper throws a heavy | Cyborg_hopper | He leaves the ground to hit. A knee carries him up or a heel brings him down, the funnel tips with it, and he lands square. The arms never rise over the rim | W1, H1, K1 | passes |
-| 100 | How the Cyborg_press throws a heavy | Cyborg_press | Mass that arrives late and all at once. The tell is slow and plain, the blow comes down or straight through with the whole body behind the plate, and he does not hurry back | W1, H1, K1 | passes |
-| 101 | How the Empress throws a heavy | Empress | She barely moves. One hand, one clean line or one cut downward, from a body that stays upright; the blow ends exactly where it was aimed and she is still again. Nothing is shown before it but the hand rising to its place | W1, H1, K1 | passes |
-| 102 | How the Guard throws a heavy | Guard |  | W1, H1, K1 | passes |
-| 103 | How the Protagonist throws a heavy | Protagonist | Pointed, not cruel. One line to one point: the tell is compact and close to the body, the turn does the work, the blow stops at the target and he is back in his guard at once. No flourish before it and none after | W1, H1, K1 | passes |
-| 104 | How the rival throws a heavy | rival | A show-off. He lets the rival see it coming: the tell is held open to view with the chin up, the blow travels in the straightest line that drive allows, and he leaves the limb out for a beat after it lands, 12 ticks or fewer. The limb stays drawn back through the tell: never arms spread as an invitation, never a beckon, and no taunt is part of a blow (Legal's h07). Never a second motion on the same wind-up | W1, H1, K1, h07 | passes with h07 |
+| 91 | `w1.drop_kick` as a stand-in on B | Reference | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L6, W1, D1, B1 | passes with B1 |
+| 92 | `w1.double_hammer` as a stand-in on B | Reference | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L3, L6, W1, D5, B1; carries no clasp, wrists apart | passes with B1; its gather on 28 ticks is seen drawn first |
+| 93 | `w1.spinning_elbow` as a stand-in on B | Reference | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L5, L6, W1, B1; carries single turn | passes with B1 |
+| 94 | `w1.double_palm` as a stand-in on B | Reference | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L2, L6, W1, D1, B1; carries hands open or claw, not at hip, wrists apart | passes with B1; its gather on 28 ticks is seen drawn first |
+| 95 | `w1.spinning_heel` as a stand-in on B | Reference | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L5, L6, W1, B1; carries single turn | passes with B1 |
+| 96 | `w1.cross_arm_ram` as a stand-in on B | Reference | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L6, L7, W1, D1, B1; carries no cross hold | passes with B1; its gather on 28 ticks is seen drawn first |
+| 97 | `w1.double_hammer` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L3, L6, W1, D5, B1; carries no clasp, wrists apart | passes with B1; its gather on 28 ticks is seen drawn first |
+| 98 | `w1.drop_kick` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L6, W1, D1, B1 | passes with B1 |
+| 99 | `w1.cross_arm_ram` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L6, L7, W1, D1, B1; carries no cross hold | passes with B1; its gather on 28 ticks is seen drawn first |
+| 100 | `w1.spinning_elbow` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L5, L6, W1, B1; carries single turn | passes with B1 |
+| 101 | `w1.spinning_heel` as a stand-in on B | rival | a posed strike Legal screened as a heavy of the old kind, now played on B's 28-tick wind-up, longer than it was posed for | L5, L6, W1, B1; carries single turn | passes with B1 |
+| 102 | The burst (a held X) | both | eight lights in under a second; its first three gaps are shorter than a mashed flurry's fastest. Every blow is a posed light; what is new is the pace, and the rules that keep it from stuttering: never the same limb, tip and path twice running; never the same place twice running; no more than two blows running on one path; no piece twice in one burst | U1; f01 to f05; s01, s02, s03 | passes with U1; its opening three blows are seen drawn first |
+| 103 | The mediums on a 12-tick wind-up | both | no new shape: the strikes that were the heavies, thrown on a wind-up of 12 ticks where they had 26, and up to five a second in a flurry. The ones that do not fit are flagged and keep a long wind-up | W1; f01 to f04 for the flurry; L6 for the charged ones | passes |
+| 104 | How the Cyborg_courier throws a heavy | Cyborg_courier | Short and exact. He is in, the blow is thrown from where the limb already is, and he is gone: no more tell than the timing asks for, and nothing left out after it lands | W1, H1, K1 | passes |
+| 105 | How the Cyborg_hopper throws a heavy | Cyborg_hopper | He leaves the ground to hit. A knee carries him up or a heel brings him down, the funnel tips with it, and he lands square. The arms never rise over the rim | W1, H1, K1 | passes |
+| 106 | How the Cyborg_press throws a heavy | Cyborg_press | Mass that arrives late and all at once. The tell is slow and plain, the blow comes down or straight through with the whole body behind the plate, and he does not hurry back | W1, H1, K1 | passes |
+| 107 | How the Empress throws a heavy | Empress | She barely moves. One hand, one clean line or one cut downward, from a body that stays upright; the blow ends exactly where it was aimed and she is still again. Nothing is shown before it but the hand rising to its place | W1, H1, K1 | passes |
+| 108 | How the Guard throws a heavy | Guard |  | W1, H1, K1 | passes |
+| 109 | How the Protagonist throws a heavy | Protagonist | Pointed, not cruel. One line to one point: the tell is compact and close to the body, the turn does the work, the blow stops at the target and he is back in his guard at once. No flourish before it and none after | W1, H1, K1 | passes |
+| 110 | How the Reference throws a heavy | Reference |  | W1, H1, K1 | passes |
+| 111 | How the rival throws a heavy | rival | A show-off. He lets the rival see it coming: the tell is held open to view with the chin up, the blow travels in the straightest line that drive allows, and he leaves the limb out for a beat after it lands, 12 ticks or fewer. The limb stays drawn back through the tell: never arms spread as an invitation, never a beckon, and no taunt is part of a blow (Legal's h07). Never a second motion on the same wind-up | W1, H1, K1, h07 | passes with h07 |
 
 **Not in this list:** the vicious blows, which wait on Orb; the charge flashes and the heavy's armour cue, which are VFX's; how the ground answers a heavy, which is VFX's and World's.
 
@@ -1871,8 +1979,9 @@ What the three strengths added. **Legal passed all of these rows with conditions
 | 40 | How the Empress lets one go | Empress | A blade hand laid flat on him and the shot let go off its edge: a cut, not a burst. Never a pointed finger | R1 | passes; not drawn |
 | 41 | How the Guard lets one go | Guard |  | R1 | passes; not drawn |
 | 42 | How the Protagonist lets one go | Protagonist | Pointed, not cruel: the heel of the palm set on one point, the chest or the ribs, and the shot let go as a short cone that moves him. It is placed, never swung, and never at the face | R1 | passes; not drawn |
-| 43 | How the rival lets one go | rival | A show of it, in straight lines. A blade hand driven in flat with the forearm plate behind it, the light a thin edge along the plate and off the flat of the hand: a flat blade, never a pointed finger. And the lit fist, thrown as a straight punch whose shot leaves the knuckle edges. His blast is the lit fist braced against him and let go along the forearm | R1 | passes; not drawn |
-| 44 | The launcher | both | no new shape: a heavy thrown on half of B's wind-up at a staggered rival. Its tell is cut to its last third, and the drive is whole. A spin or a leap is never thrown this way | W1, and the drive's own (D1 to D5) | passes, judged as a held pose of 14 ticks; the tier's first 16 are drawn, and the stand-ins that read are posed |
+| 43 | How the Reference lets one go | Reference |  | R1 | passes; not drawn |
+| 44 | How the rival lets one go | rival | A show of it, in straight lines. A blade hand driven in flat with the forearm plate behind it, the light a thin edge along the plate and off the flat of the hand: a flat blade, never a pointed finger. And the lit fist, thrown as a straight punch whose shot leaves the knuckle edges. His blast is the lit fist braced against him and let go along the forearm | R1 | passes; not drawn |
+| 45 | The launcher | both | no new shape: a heavy thrown on half of B's wind-up at a staggered rival. Its tell is cut to its last third, and the drive is whole. A spin or a leap is never thrown this way | W1, and the drive's own (D1 to D5) | passes, judged as a held pose of 14 ticks; the tier's first 16 are drawn, and the stand-ins that read are posed |
 
 ## For Legal's person screen
 
