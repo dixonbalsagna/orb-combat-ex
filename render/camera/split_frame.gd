@@ -40,6 +40,7 @@ var panel: Dictionary = {}           # the panel cut-in, or {}: kind, slot, open
 var cutaway: Array = [{}, {}]        # per pane: the occlusion hole's request {request, radius_px, only}
 var clear: Array = [{}, {}]          # per pane: what the foreground must open (docs/camera/city-in-depth.md sections 2 and 3): {rect (px, the action's, already held and rate-limited), p (its share of the pane), sigma (0 patch only .. 1 stubs), y_top (world units, the top of the action), x0, x1 (world x of the rect's sides at the focus plane), holding (a hold is running: nothing narrows), cut (true on a cut tick: jump to the target), hole (the floor's radius, px)}
 var slam: bool = false               # true on the one frame the slam closes
+var many_off: Array = []             # one versus many (docs/camera/one-v-many.md): the bodies outside the frame, each [slot, side (-1 left, +1 right, 0 above)]: UI's markers; empty with two bodies
 var cut: bool = true                 # a hard cut: do not interpolate into this frame
 
 
@@ -74,6 +75,7 @@ func duplicate() -> SplitFrame:
 	f.held_u = held_u
 	f.flash = flash
 	f.slam = slam
+	f.many_off = many_off.duplicate(true)
 	f.pitch = pitch
 	f.cutaway = cutaway.duplicate(true)
 	f.clear = clear.duplicate(true)

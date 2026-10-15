@@ -249,3 +249,22 @@ Tools: ai 39 reduced reads 3 / 3.5 / 2.5 with every switch off, "a launch, camer
 Collapse normal fails at current HEAD with every switch off, and the set does not move its primary reading (3 either way; the memory reading falls from 3 to 1). On the older base (f5c001e6) the same arm read 1.5 / 2.5 / 1.5, so the change is in what has landed since (the animation styles and the chain), not in the rig. I have not chased it: the clip is VFX's first blast, and a camera cut cannot take what the picture adds. **Recommendation:** the set ships as `launch_hold` + `launch_hold_eager` + `slam_off` (+ `merge_zoom_limit`), each default off, for Tools' table to weigh; the reduced-flashing viewer gains most (ai 39, ai 1, ai 5, ai 12345 all inside the gate), the ordinary mode is neutral to better on the clips measured.
 
 **Gates** (current HEAD plus my files): split_sweep default seed 10 full, `--launch-hold` seeds 10 and 17, real seeds 3 and 17: passed; seam_sweep, pane_check, determinism plain and `--intro --seeds=2 --ticks=900`: passed (run on the same files over the older base, f5c001e6's neighbour; the camera files do not touch what they read); `depth_inert` digests with the switches off equal to a clean HEAD export's (881773481156056933 and 1623366814117928698, the scripted and the real-sim runs).
+
+## 16. The flash bundle, as one switch (2026-10-15, after the recorded pass read ai 39 at 3 / 3.5)
+
+The recorded pass (switches off) reads ai 39 3 / 3.5 / 3 FAIL normal and 3 / 3.5 / 2.5 FAIL reduced: the launch's first ticks and the divider's door (section 15). The pieces of sections 10 to 15 that fix it are now one build-time switch, `SplitView.set_flash_bundle(on, reduced_only = false)` (`SplitRig.flash_bundle`; default off): each tick it sets the launch hold (`launch_hold`), its eager engage under reduced flashing (`launch_hold_eager`), the merge zoom limit at a closing (`merge_zoom_limit`) and the divider's door off under reduced flashing or reduced motion (`slam_off`, which does nothing in the ordinary mode), and the sky latch (always in the rule). `reduced_only` keeps all of it to the reduced-flashing setting, so the ordinary mode is exactly what it was.
+
+**Measured** (scratch exports of HEAD plus the files, Tools' capture path, 1,024 x 768, primary / area -15% / 2 s memory):
+
+| Clip | Bundle off | Bundle on |
+| :--- | :--- | :--- |
+| ai 39 normal | 3 / 3.5 / 3 FAIL | **2 / 2 / 2 PASS** |
+| ai 39 reduced | 3 / 3.5 / 2.5 FAIL | **2 / 2.5 / 1.5 PASS** |
+| ai 12345 normal (4cc7319a base, section 15) | 2 / 2.5 / 2 | 2.5 / 2.5 / 2 PASS |
+| ai 12345 reduced (older base) | | 2.5 / 2.5 / 2 PASS |
+| collapse reduced (4cc7319a base) | | 2 / 3 / 1 PASS |
+| collapse normal | 3 / 3 / 3 OVER GATE | 3 / 3 / 1 OVER GATE (the switches do not move its primary reading) |
+
+**Costs:** a reduced-flashing viewer loses the door's punch at a rush's contact; every viewer with the rule on sees a fast launch's frame held for its flight and brought back by one cut (section 10); the pair is drawn at 0.87 of the zoom it asks for for about two seconds after a re-merge (section 13).
+
+**Gates** (HEAD plus my files, bundle off and its pieces default off): `depth_inert` digests equal a clean HEAD's, the default sweep, seam sweep, pane check, determinism plain and `--intro` pass.

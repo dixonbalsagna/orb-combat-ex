@@ -340,6 +340,12 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	time += DT
 	_layout_age += DT
 	_flip_age += DT
+	if flash_bundle:
+		var bundle_on: bool = flash_reduced or not flash_bundle_reduced_only
+		launch_hold = bundle_on
+		launch_hold_eager = bundle_on
+		merge_zoom_limit = bundle_on
+		slam_off = bundle_on
 	var cut: bool = false
 	for ev in events:
 		if String(_ef(ev, "type", "")) == "relocate":
@@ -2084,6 +2090,16 @@ func _merged_target(S: SimState) -> Vector3:
 		my = clampf(y_mid + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
 	if time >= _dbl_contact - DT and time < _dbl_until:
 		ahead = maxf(ahead, CamParams.DOUBLE_SLIDE_SPAN)   # the pull-back starts at the contact, to hold both slides (6 bh each way)
+	var many_z: float = 0.0
+	_many_marks = []
+	if many_framing and S.fighters.size() > 2:
+		var ms: Dictionary = _many_set(S, mx, ahead, dy_pair, y_mid)
+		mx = float(ms["mx"])
+		ahead = float(ms["ahead"])
+		dy_pair = float(ms["dy"])
+		y_mid = float(ms["y_mid"])
+		my = clampf(y_mid + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
+		many_z = CamParams.MANY_PIX_FLOOR / CamParams.BODY_H
 	var z: float = zoom_u(vw, vh, ahead, dy_pair, maxf(A.tier, B.tier), _m(), true)
 	var mult: float = maxf(_push_mult(0), _push_mult(1)) * _intro_mult()
 	if solo_kind == "ko":
@@ -2093,7 +2109,7 @@ func _merged_target(S: SimState) -> Vector3:
 	if A.state != "launched" and B.state != "launched":
 		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
 	_gov_bind_m = gov_m < 0.999
-	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(CamParams.ZOOM_MIN, CamParams.R_FLOOR * vh / CamParams.BODY_H * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
+	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(CamParams.ZOOM_MIN, maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
 	if _pitch_now != 0.0:
 		# Put the pair's chest midpoint at 0.7 of the height, as the straight-on camera does: a few Newton steps on cam_y.
 		var cwx: float = SimWrap.wrap(mx)
@@ -2109,6 +2125,106 @@ func _merged_target(S: SimState) -> Vector3:
 			cy += (vh * CamParams.PLANE_Y - s0) / slope
 		my = clampf(cy, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
 	return Vector3(SimWrap.wrap(mx), my, z)
+
+
+## The framing set of a match of more than two bodies (docs/camera/one-v-many.md section 3): the principals are the one
+## (slot 0), the second principal (slot 1) and the one's partner now (the nearest of the others: a tag hands the fight to a
+## guard, and he stands to striking distance). The others, nearest first, count by a weight: 1 while the zoom that fits them
+## stays above the principals' pixel floor and MANY_KEEP of the principals' own, falling to 0 across a band of 10% either side of
+## that limit, and the weight each body has *moves* (MANY_RATE a tick), so a body that joins or leaves never steps the frame:
+## the extents, the focus pull and the span are weighted sums. A body higher than MANY_UP_BH over the principals, or deeper than
+## MANY_DEPTH, has no weight (the first is a marker). The focus is the principals' midpoint, pulled toward the set's bounding
+## centre by at most MANY_PULL of the width. Returns the target's mx, span (ahead), vertical spread and mid height, and
+## fills `_many_marks`.
+func _many_set(S: SimState, mx: float, ahead: float, dy: float, y_mid: float) -> Dictionary:
+	var one = S.fighters[0]
+	var n: int = mini(S.fighters.size(), _many_w.size())
+	var near_k: int = 1
+	var near_d: float = 1.0e18
+	for k in range(1, n):
+		var dk: float = absf(SimWrap.sdx(one.x, S.fighters[k].x))
+		if dk < near_d:
+			near_d = dk
+			near_k = k
+	var cur_d: float = absf(SimWrap.sdx(one.x, S.fighters[clampi(_many_partner, 1, n - 1)].x))
+	if near_d + CamParams.MANY_PARTNER_BH * CamParams.BODY_H < cur_d:
+		_many_partner = near_k
+	var ps: int = clampi(_many_partner, 1, n - 1)
+	var lo: float = 0.0
+	var hi: float = 0.0
+	var y_lo: float = float(one.y)
+	var y_hi: float = float(one.y)
+	var r1: float = SimWrap.sdx(one.x, S.fighters[1].x)
+	lo = minf(lo, r1)
+	hi = maxf(hi, r1)
+	y_lo = minf(y_lo, float(S.fighters[1].y))
+	y_hi = maxf(y_hi, float(S.fighters[1].y))
+	var tier: float = 1.0
+	for f in S.fighters:
+		tier = maxf(tier, float(f.tier))
+	var m: float = _m()
+	var rel_mid: float = SimWrap.sdx(one.x, mx)
+	var z0: float = zoom_u(vw, vh, maxf(ahead, hi - lo), maxf(dy, y_hi - y_lo), tier, m, false)
+	var z_lim: float = minf(maxf(CamParams.MANY_PIX_PRINCIPAL / CamParams.BODY_H, z0 * CamParams.MANY_KEEP), z0)
+	var order: Array = []
+	if ps >= 2:
+		order.append(ps)
+	var rest: Array = []
+	for k in range(2, n):
+		if k != ps:
+			rest.append(k)
+	rest.sort_custom(func(a, b): return absf(SimWrap.sdx(one.x, S.fighters[a].x) - rel_mid) < absf(SimWrap.sdx(one.x, S.fighters[b].x) - rel_mid))
+	order.append_array(rest)
+	if ps == 1:
+		order.push_front(-1)   # the second principal is already in; his weight stays 1
+	var fz: float = (float(S.fighters[0].z) + float(S.fighters[1].z)) * 0.5
+	var members: Array = []   # [slot, weight]
+	for k in order:
+		if k < 0:
+			continue
+		var g = S.fighters[k]
+		var gy: float = float(g.y)
+		var rk: float = SimWrap.sdx(one.x, g.x)
+		var tgt: float = 0.0
+		var side: int = 1 if rk >= rel_mid else -1
+		var marked: bool = false
+		if gy - maxf(y_hi, float(one.y)) > CamParams.MANY_UP_BH * CamParams.BODY_H:
+			marked = true
+			side = 0
+		elif absf(float(g.z) - fz) > CamParams.MANY_DEPTH:
+			tgt = 0.0   # out of the frame for sizing; drawn if he is on the screen
+		elif k == ps:
+			tgt = 1.0
+		else:
+			var nlo: float = minf(lo, rk)
+			var nhi: float = maxf(hi, rk)
+			var zc: float = zoom_u(vw, vh, maxf(ahead, nhi - nlo), maxf(dy, maxf(y_hi, gy) - minf(y_lo, gy)), tier, m, false)
+			tgt = smoothstep(CamParams.MANY_JOIN * z_lim, CamParams.MANY_LEAVE * z_lim, zc)
+		var w: float = float(_many_w[k])
+		w = move_toward(w, tgt, CamParams.MANY_RATE)
+		_many_w[k] = w
+		if w > 0.0:
+			var wlo: float = minf(lo, rk)
+			var whi: float = maxf(hi, rk)
+			lo = lerpf(lo, wlo, w)
+			hi = lerpf(hi, whi, w)
+			var wyl: float = minf(y_lo, gy)
+			var wyh: float = maxf(y_hi, gy)
+			y_lo = lerpf(y_lo, wyl, w)
+			y_hi = lerpf(y_hi, wyh, w)
+			members.append([k, w])
+		if marked or w < 0.5:
+			_many_marks.append([k, side])
+	var centre: float = (lo + hi) * 0.5
+	var pull_max: float = CamParams.MANY_PULL * vw / maxf(_mz, 0.1)
+	var pull: float = clampf(centre - rel_mid, -pull_max, pull_max)
+	var fx: float = SimWrap.wrap(mx + pull)
+	_many_dbg = [snappedf(rel_mid, 1.0), snappedf(centre, 1.0), snappedf(pull, 1.0), _bc_on, snappedf(lo, 1.0), snappedf(hi, 1.0)]
+	var rel_f: float = SimWrap.sdx(one.x, fx)
+	var half: float = maxf(absf(rel_f), absf(r1 - rel_f))
+	for mw in members:
+		half = maxf(half, float(mw[1]) * absf(SimWrap.sdx(one.x, S.fighters[int(mw[0])].x) - rel_f))
+	return {"mx": fx, "ahead": minf(SimConst.HALF, maxf(ahead, 2.0 * half)), "dy": maxf(dy, y_hi - y_lo), "y_mid": (y_lo + y_hi) * 0.5 if not _bc_on else y_mid}
 
 
 func _snap_merged(S: SimState) -> void:
@@ -2378,6 +2494,13 @@ var _lh_dist: Array = [0.0, 0.0]                       # the width a fast body h
 var _lh_rel_t: Array = [-1.0e9, -1.0e9]               # when the rule last ended for this pane (it engages at once again within a second)
 var _lh_sky: Array = [false, false]                   # this flight began above LH_SKY_ALT: the rule leaves it
 var _lh_slow: Array = [0, 0]                           # ticks he has been under LH_SLOW of the threshold
+var flash_bundle: bool = false                          # the launch hold, its eager engage, the merge zoom limit and the reduced slam off, as one switch (docs/camera/buildings-in-frame.md section 15); off by default
+var flash_bundle_reduced_only: bool = false             # ... and only while the reduced-flashing setting is on
+var many_framing: bool = false                         # one versus many (docs/camera/one-v-many.md): the shared view frames the principals and the bodies that fit; off by default
+var _many_w: Array = [1.0, 1.0, 0.0, 0.0, 0.0]          # each body's weight in the framing set, moved toward its target by MANY_RATE a tick (no step when one joins or leaves)
+var _many_dbg: Array = []
+var _many_partner: int = 1                              # the one's partner for framing: the nearest of the others, with a hold
+var _many_marks: Array = []                             # the bodies outside the frame this tick, [slot, side]
 var launch_hold_eager: bool = false                     # under reduced flashing the rule engages sooner (section 15); off by default
 var launch_holds: int = 0                              # (counted for the tests)
 var launch_pans: int = 0
@@ -3414,6 +3537,7 @@ func _make_frame(S: SimState) -> SplitFrame:
 	f.e = e
 	f.e_slot = e_slot
 	f.sliver = sliver if e_slot >= 0 else 0.0
+	f.many_off = _many_marks.duplicate(true)
 	f.theta = theta
 	f.n = Vector2(cos(theta), sin(theta))
 	var hn: float = _half_extent_along_n(f.n)

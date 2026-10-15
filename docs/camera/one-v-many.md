@@ -119,3 +119,36 @@ Build order (all behind switches, default off, each with a `split_sweep` row):
 4. **The summon strip** (with Encounter's event).
 
 **Open for Orb:** whether a phone gets multi-brawls in landscape only (my recommendation), and whether a guard beyond the frame should be a marker or may simply be lost (a guard the player never sees is a guard the Empress's player cannot command by sight).
+
+## 9. Built (2026-10-15): the shared view's framing set, behind a switch (scratch on stages 1 to 3, not applied)
+
+**Switch:** `SplitView.set_many_framing(on)` (build-time, default off; `SplitRig.many_framing`). With two bodies, or with it off, nothing changes: `depth_inert` digests equal a clean HEAD's with it on at two bodies, and `split_sweep`, `seam_sweep`, `pane_check` and `determinism` (plain and `--intro`) pass.
+
+**What it does** (`SplitRig._many_set`, in `_merged_target`; `SplitFrame.many_off`):
+- The principals are the one (slot 0), the second principal (slot 1) and the one's *partner now*: the nearest of the others, held unless another is a body height nearer (a tag hands the fight to a guard, who steps in to striking distance). The pair's own focus, brawl centre and zip box stay the base.
+- Every other body counts by a **weight** between 0 and 1, from the zoom that fits him together with the set: 0 at 0.9 of the limit (the principals' pixel floor, 32 px, or three quarters of the principals' own zoom, whichever is higher) and 1 at 1.1 of it. The weight *moves* at 0.025 a tick, so a body that joins or leaves never steps the frame (the first build used a hysteresis on a boolean and stepped the focus 270 units in one tick when a guard flew off; the weights fixed it: worst travel 0.2016 to 0.0391 on the same seed).
+- The focus is the principals' midpoint pulled toward the set's bounding centre by at most 0.15 of the width; the span is the weighted farthest member.
+- A body more than 8 body heights above the principals, or 600 units deeper than their plane, has no weight (the first is a marker). A body with a weight under 0.5 is listed in `SplitFrame.many_off` as `[slot, side]` (-1 left, +1 right, 0 above): UI's markers.
+- The zoom floor in the merged view is 24 px for any body when there are more than two (it is the share `R_FLOOR` otherwise).
+
+**Measured** (`render/camera/tests/many_probe.gd`, the real scene, the AI on every body, 3,000 ticks, seeds 2 to 4, 3 / 4 / 5 bodies, 1,280 x 720 and 812 x 375; Encounter's stage 3 on Simulation's stage 1, scratch on HEAD 4a3ecb74):
+
+| Row | Off | On |
+| :--- | :--- | :--- |
+| The one off the picture, ticks (all 18 desktop matches and 8 phone) | 0 | 0 |
+| The Empress off the picture | 0 | 0 |
+| Interjections landed off the picture | 0 of 1 to 6 a match | 0 |
+| The partner (a guard after a tag) off the picture, ticks of 3,000: seed 3 with 4 and 5 bodies; seed 4 with 4 and 5 | 89, 89; 86, 84 | **0, 0; 38, 42** |
+| ... the same in a split view (seeds 2 and 3 with three bodies, seed 2 with 4 and 5) | 48, 439, 70, 133 | **unchanged** (the panes are slot-bound, section 2) |
+| The guards' share of ticks off the picture | 0.155 0.179 0.114 0.056 0.203 0.104 0.098 | 0.131 0.152 0.096 0.030 0.141 0.043 0.094 |
+| Worst travel a tick in the merged view (bound 0.045) | 0.0407, 0.0538 | 0.0391, 0.0534 |
+| Ticks over 0.045, merged-view matches (seed 4: 4 and 5 bodies; seed 3: 4 and 5 bodies) | 0, 1; 10, 10 | 0, 1; **12, 12** (the two are a launch's solo shot, whose blend with the shared camera sweeps a little more) |
+| Cuts | as the match makes them | the same |
+| Smallest principal drawn, seed 4 (merged all match) with 4 and 5 bodies | 55.6, 55.6 | **49.5, 43.0** (a guard pulls the zoom out by up to a quarter; the other seeds are split views and unchanged, 23 to 37) |
+| Ticks a body on screen is under 24 px (desktop) | 11 (3 bodies seed 2, both arms) | 11 |
+| Phone landscape (4 and 5 bodies, seeds 2 and 3): partner off the picture | 47, 79, 69, 79 | 47, **2**, 69, **2** |
+| ... markers the frame lists, most at once | 0 | 1 to 3 |
+
+The `worst_travel` of 7 to 8 in the table's raw output is the probe's pane flip at a launch shot (a measurement artifact in both arms; the notes of `buildings-in-frame.md` section 15).
+
+**What it does not do yet** (the build order's 2 and 3): in the split view each pane frames its own principal, slot 0 and slot 1, whatever the director has made of the fight; after a tag the partner is a guard who can be outside both panes (439 ticks of 3,000 at three bodies on seed 3). That is the assignment of section 2: a pane frames its principal *and the partner or bodies assigned to him*. It needs the pane's framing set (`_own_zoom_target` and the focus take a list), a `clear[i]` union, and is the next window. A flash clip of a 3v1 is Tools' to stage (`flash_capture.gd` takes two `slots`); the camera's own read is the table above.

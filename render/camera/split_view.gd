@@ -159,6 +159,24 @@ func set_depth_dolly(on: bool) -> void:
 ## The launch rule engages sooner under reduced flashing (docs/camera/buildings-in-frame.md section 15): after 0.25 of the width
 ## covered, or at a step of 0.05 of the width a tick, where the ordinary mode takes 0.6 and 0.15 (the reduced line is 0.03 where the
 ## ordinary is 0.045). Acts only with the launch rule on. Off by default. A build-time switch.
+## One versus many (docs/camera/one-v-many.md): with more than two bodies the shared view frames the principals first and
+## then as many of the others as keep the zoom at three quarters of the principals' own, the pixel floor applies, and the
+## bodies left out are listed in the frame (`many_off`) for UI's markers. Off by default; with two bodies it changes
+## nothing. A build-time switch.
+func set_many_framing(on: bool) -> void:
+	if main != null:
+		main.split_rig.many_framing = on
+
+
+## The flash bundle (docs/camera/buildings-in-frame.md section 15): the launch hold, its eager engage under reduced flashing, the merge
+## zoom limit at a closing and the slam's door off under reduced flashing, together. `reduced_only` keeps all of it to the
+## reduced-flashing setting, so the ordinary mode is exactly what it was. Off by default. A build-time switch.
+func set_flash_bundle(on: bool, reduced_only: bool = false) -> void:
+	if main != null:
+		main.split_rig.flash_bundle = on
+		main.split_rig.flash_bundle_reduced_only = reduced_only
+
+
 func set_launch_hold_eager(on: bool) -> void:
 	if main != null:
 		main.split_rig.launch_hold_eager = on
