@@ -25,7 +25,7 @@ func tower(S: SimState, lo: int = 9, hi: int = 15):
 
 
 ## Drive one launched flight at a building and return its events.
-func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
+func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0, stopAtLodge: bool = false) -> Array:
 	A.tier = tier
 	D.hp = 1.0e9
 	A.hp = 1.0e9
@@ -45,13 +45,15 @@ func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
 			ev.append(e)
 		S.out.fx.clear()
 		g += 1
+		if stopAtLodge and ev.any(func(e): return e.type == "lodge"):
+			break   # (the pin is read the tick it begins: the flight ends when it runs out)
 	return ev
 
 
 func _init() -> void:
 	var c: Dictionary = WorldBrunt.cfg()
 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
-	ok(c.lodgeHold == "world" and c.failHurts == "none", "the homework switches stand at today's behaviour (lodgeHold %s, failHurts %s, towerPunches[0] %d)" % [c.lodgeHold, c.failHurts, int(c.towerPunches[0])])
+	ok(c.lodgeHold in ["world", "auto"] and c.failHurts == "none", "the homework switches stand at today's behaviour (lodgeHold %s, failHurts %s, towerPunches[0] %d)" % [c.lodgeHold, c.failHurts, int(c.towerPunches[0])])
 
 	# ---- the wall slam: a tier-1 body at a tower
 	var S := fresh(1)
@@ -113,12 +115,12 @@ func _init() -> void:
 	var stop_seen: float = 0.0
 	for n in range(40):
 		var Sy := fresh(1 + n % 5)
-		var evy: Array = fly(Sy, Sy.fighters[1], Sy.fighters[0], Sy.buildings[(n * 7) % Sy.buildings.size()], 4.0)
+		var evy: Array = fly(Sy, Sy.fighters[1], Sy.fighters[0], Sy.buildings[(n * 7) % Sy.buildings.size()], 4.0, 2000.0, true)
 		if evy.any(func(e): return e.type == "lodge"):
 			Sb = Sy
 			Db = Sy.fighters[0]
 			break
-	ok(Db.stunTicks >= 20, "lodgeHold body: the body is stunned for the hold (%d ticks)" % Db.stunTicks)
+	ok(Db.stunTicks >= 20 or Db.holdT >= 20, "lodgeHold body: the body is held for the hold (stun %d, pin %d ticks)" % [Db.stunTicks, Db.holdT])
 	c.lodgeHold = "world"
 
 	# ---- B: breaches
@@ -222,6 +224,36 @@ func _init() -> void:
 	ok(res.none[0] == 0.0 and res.none[1] == 0.0, "failHurts none: nobody is hurt (%s)" % str(res.none))
 	ok(res.both[0] > 0.0 and res.both[1] > 0.0 and res.both[0] <= 100.01 and res.both[1] <= 100.01, "failHurts both: either fighter is hurt, at most 100 (%s)" % str(res.both))
 	ok(res.rival[0] > 0.0 and res.rival[1] == 0.0, "failHurts rival: only the one who did not bring it down (%s)" % str(res.rival))
+
+	# four bodies: failHurt has a number a body; "rival" is not the causer nor his team
+	var rf := {}
+	for mode in ["both", "rival"]:
+		c.failHurts = mode
+		var S4 := fresh(1)
+		var order: Array = FighterData.order()
+		for i in range(2, 4):
+			S4.fighters.append(SimRoster.createFighter(FighterData.def(order[i % 2]), S4.fighters[0].x, "p%d" % (i + 1), true))
+		var t4f = tower(S4)
+		for i in range(4):
+			var fi = S4.fighters[i]
+			fi.x = SimWrap.wrap(t4f.x + 60.0 * float(i))
+			fi.z = 0.0
+			fi.y = WorldStructures.baseY(S4, t4f) + 10.0
+			fi.hp = 1.0e6
+		if mode == "rival":
+			S4.fighters[0].set("team", 0)
+		WorldStructures.startFail(S4, t4f, 0, S4.fighters[1], t4f.x)   # body 1 brought it down
+		ok(t4f.failHurt.size() == 4, "failHurt has one number a body in a four-body match (%d)" % t4f.failHurt.size())
+		for i in range(1500):
+			WorldStructures.stepFailing(S4, SimConst.DT)
+			for fi in S4.fighters:
+				fi.stunTicks = 0
+			if t4f.failK < 0:
+				break
+		rf[mode] = [1.0e6 - S4.fighters[0].hp, 1.0e6 - S4.fighters[1].hp, 1.0e6 - S4.fighters[2].hp, 1.0e6 - S4.fighters[3].hp]
+	c.failHurts = "none"
+	ok(rf.both[2] > 0.0 and rf.both[3] > 0.0 and rf.both[2] <= 100.01 and rf.both[3] <= 100.01, "four bodies, failHurts both: bodies 2 and 3 are hurt, at most 100 (%s)" % str(rf.both))
+	ok(rf.rival[1] == 0.0 and rf.rival[0] > 0.0 and rf.rival[2] > 0.0 and rf.rival[3] > 0.0, "four bodies, failHurts rival: all but the one who brought it down (%s)" % str(rf.rival))
 
 	# the switch: failing 0 brings a tower down in the tick as before
 	c.failing = 0

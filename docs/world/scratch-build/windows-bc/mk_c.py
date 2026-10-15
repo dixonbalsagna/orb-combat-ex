@@ -13,7 +13,7 @@ def state(s):
 	var failDir: int = 0       # C: -1 or 1, the way it tips; 0 a pancake
 	var failBy: int = -1       # C: the slot of the fighter who brought it down (-1: none)
 	var failN: int = 0         # C: floors landed so far
-	var failHurt := PackedFloat32Array()   # C: the damage the falling stack has done each fighter (two numbers, allocated when it starts)
+	var failHurt := PackedFloat32Array()   # C: the damage the falling stack has done each fighter (one number a body in the match, allocated when it starts)
 ''')
     s = rep(s, '''	var hold: float = 0.0        # lodge: the seconds the body is held in the building
 ''', '''	var hold: float = 0.0        # lodge: the seconds the body is held in the building
@@ -64,8 +64,8 @@ def brunt(s):
 	"failing": 1, "failWarn": 1.5, "failWarnOver": 0.6, "failMin": 2.0, "failStep": 0.25,
 	"failDamageFloor": 6.0, "failDamageCap": 100.0, "failBuryTicks": 45, "failReachZ": 4.0, "failBesideBh": 0.5, "failTipAt": 0.5, "failTipFar": 3.0, "failTipReach": 0.4, "failTipMaxBh": 6.0,
 }''')
-    s = rep(s, '''	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
-}''', '''	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
+    s = rep(s, '''	"lodgeHold": [["world", "body", "auto"], "auto"],   # does a lodge hold the whole fight (world: a hit-stop), or only the body (body: pinned in the building while the fight goes on), or auto: the first with two bodies, the second with more
+}''', '''	"lodgeHold": [["world", "body", "auto"], "auto"],   # does a lodge hold the whole fight (world: a hit-stop), or only the body (body: pinned in the building while the fight goes on), or auto: the first with two bodies, the second with more
 	"failHurts": [["none", "both", "rival"], "none"],   # whom a falling stack hurts: nobody (today), both fighters, or the one who did not bring it down
 }''')
     s = rep(s, '''	if isHouse(b):

@@ -43,7 +43,7 @@ static func startFail(S: SimState, b, from_floor: int, cause, cx: float) -> void
 	b.failN = 0
 	b.failBy = int(WorldCrater._slot(S, cause)) if cause != null else -1
 	b.failHurt = PackedFloat32Array()
-	b.failHurt.resize(2)
+	b.failHurt.resize(maxi(S.fighters.size(), 2))   # one number a body in the match
 	b.failHurt.fill(0.0)
 	var m: int = 0
 	for k in range(from_floor, b.floors):
@@ -115,16 +115,16 @@ static func _failHurt(S: SimState, b, k: int, cause) -> void:
 		return
 	for slot in range(S.fighters.size()):
 		var f = S.fighters[slot]
-		if hurts == "rival" and slot == b.failBy:
+		if hurts == "rival" and cause != null and not WorldCollateral.foes(S, f, cause):   # not the one who brought it down, nor his team
 			continue
-		if not _inFailReach(S, b, f) or b.failHurt.size() < 2:
+		if not _inFailReach(S, b, f) or slot >= b.failHurt.size():
 			continue
 		var room: float = float(c.failDamageCap) - b.failHurt[slot]
 		if room <= 0.0:
 			continue
 		var d: float = minf(float(c.failDamageFloor), room)
 		b.failHurt[slot] += d
-		SimDamage.hurt(S, f, d, cause if cause != null else SimRoster.opp(S, f))
+		SimDamage.hurt(S, f, d, cause if cause != null else WorldCollateral.launcherOf(S, f))
 		f.stunTicks = maxi(f.stunTicks, int(c.failBuryTicks))
 
 
