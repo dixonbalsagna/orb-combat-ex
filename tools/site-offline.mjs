@@ -1,7 +1,7 @@
 // The kill switch: takes the playable site down in ONE command (Legal's RL-136 condition 4).
 //   node tools/site-offline.mjs [--config <site.json>] [--check]
-// Sets "offline": true, "approved": null and "interim": null in tools/site.json, so the next build is the plain holding page of tools/site-notice.json and nothing else (the full-set
-// path and the interim both end). Commit and push the file to publish it. --check only reports the state (exit 0 when the site is offline, 1 when it is not). Idempotent.
+// Sets "offline": true, "approved": null and "interim": null in tools/site.json, so the next build is the plain holding page of tools/site-notice-offline.json ("The playable build is
+// offline for now.", "We have taken the build down while we fix them.": Legal's RL-121 words, restored by being offline, not by an edit) and nothing else (the full-set path and the interim both end). Commit and push the file to publish it. --check only reports the state (exit 0 when the site is offline, 1 when it is not). Idempotent.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
@@ -11,6 +11,12 @@ const file = resolve(opt('--config') || join(import.meta.dirname, 'site.json'));
 const raw = readFileSync(file, 'utf8');
 const crlf = raw.includes('\r\n');
 const c = JSON.parse(raw);
+// the words the holding page will say are the offline file's; a kill switch that would publish other words fails before it changes anything
+const NOTICE = JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice-offline.json'), 'utf8'));
+const said = JSON.stringify(NOTICE);
+for (const w of ['The playable build is offline for now.', 'We have taken the build down while we fix them.']) {
+  if (!said.includes(w)) { console.error(`site-offline: tools/site-notice-offline.json does not say "${w}" (Legal's RL-121 words): not changing anything`); process.exit(3); }
+}
 const offline = c.offline === true && (c.approved === null || c.approved === undefined) && !c.interim;
 if (args.includes('--check')) {
   console.log(offline ? `site: offline (${file})` : `site: ONLINE (${file}): offline ${c.offline}, approved ${c.approved}, interim ${c.interim ? c.interim.legal + ' until ' + c.interim.expires : 'none'}`);
@@ -23,4 +29,4 @@ c.approved = null;
 c.interim = null;
 const out = JSON.stringify(c, null, 2) + '\n';
 writeFileSync(file, crlf ? out.replace(/\n/g, '\r\n') : out);
-console.log(`site: taken OFFLINE (${file}); it was ${was}. Commit and push tools/site.json to publish the holding page.`);
+console.log(`site: taken OFFLINE (${file}); it was ${was}. The holding page will say "The playable build is offline for now." and "We have taken the build down while we fix them.". Commit and push tools/site.json to publish it.`);

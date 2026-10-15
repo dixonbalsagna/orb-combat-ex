@@ -212,6 +212,9 @@ try {
     const bo = node('build-site.mjs', ['--web', web, '--out', out, '--config', f]);
     const co = node('check-site-offline.mjs', ['--site', out, '--config', f]);
     check('the build after the kill switch is the holding page alone and passes the offline check', bo.status === 0 && co.status === 0 && !existsSync(join(out, 'play/index.pck')), (bo.stderr || co.stderr).slice(0, 300));
+    const page = existsSync(join(out, 'index.html')) ? readFileSync(join(out, 'index.html'), 'utf8') : '';
+    check('after the kill switch the holding page says the build is offline again (Legal: "The playable build is offline for now." and "We have taken the build down while we fix them.")', page.includes('The playable build is offline for now.') && page.includes('We have taken the build down while we fix them.') && !page.includes('limited test build'));
+    check('the same holding page is /bench/, /band/, /404.html and /play/ (no game, no link)', ['bench/index.html', 'band/index.html', '404.html', 'play/index.html'].every((p) => existsSync(join(out, p)) && readFileSync(join(out, p), 'utf8') === page));
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });

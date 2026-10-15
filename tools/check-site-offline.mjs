@@ -1,5 +1,5 @@
 // Checks a built site against tools/site.json: with "offline": true the site directory must hold NO game (no .wasm, no .pck, no script, no manifest, no icon, nothing but the notice pages)
-// and each notice page must be exactly the plain page of tools/site-notice.json (no <script>, no external address, noindex, no description, keywords, og: or twitter: tag). With
+// and each notice page must be exactly the plain page of tools/site-notice-offline.json (no <script>, no external address, noindex, no description, keywords, og: or twitter: tag). With
 // "offline": false it only says so and passes.
 //   node tools/check-site-offline.mjs --site <site dir> [--config <site.json>]
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -23,11 +23,11 @@ for (const f of files) {
   if (/\.(wasm|pck|js|mjs|webmanifest|png|ico|json|worklet)$/i.test(f)) problems.push(`${f} is a game or app file`);
 }
 for (const p of PAGES) if (!files.includes(p)) problems.push(`${p} is missing: an old link would not land on the notice`);
-const expect = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice.json'), 'utf8')));
+const expect = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice-offline.json'), 'utf8')));
 for (const p of PAGES) {
   if (!files.includes(p)) continue;
   const html = readFileSync(join(root, p), 'utf8');
-  if (html !== expect) problems.push(`${p} is not the notice page of tools/site-notice.json`);
+  if (html !== expect) problems.push(`${p} is not the notice page of tools/site-notice-offline.json`);
   if (/<script/i.test(html)) problems.push(`${p} has a script`);
   if (/(https?:)?\/\/[a-z0-9]/i.test(html.replace(/<!doctype[^>]*>/i, ''))) problems.push(`${p} names an external address`);
   if (!html.includes('<meta name="robots" content="noindex">')) problems.push(`${p} is not noindex`);

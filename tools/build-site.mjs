@@ -1,6 +1,6 @@
 // Assembles the GitHub Pages site. Node built-ins only; deterministic (no clock, no random).
 //   node tools/build-site.mjs --web <dir with the Godot web export> --out <site dir> [--commit <sha>] [--band <dir>] [--config <site.json>] [--local]
-// OFFLINE SWITCH: tools/site.json {"offline": true} (Orb's order, 2026-10-06) makes the site the plain notice of tools/site-notice.json and nothing else: /, /play/, /bench/, /band/ and
+// OFFLINE SWITCH: tools/site.json {"offline": true} (Orb's order, 2026-10-06) makes the site the plain notice of tools/site-notice-offline.json and nothing else: /, /play/, /bench/, /band/ and
 // /404.html are that one static page and no game file is copied. The export is still required and checked, so a broken export still fails CI. Set it to false to publish as below.
 // INTERIM SWITCH: tools/site.json {"offline": false, "approved": "<date>", "interim": {"legal": "RL-<n>", "approved": "<date>", "expires": "<date>", "notice": "site-interim.json"}} builds the playable
 // site under Legal's interim terms in place of a recorded full-set pass: /play/ is the Godot export behind a click-through (the engine starts only from its button, no autoplay), and
@@ -57,7 +57,8 @@ mkdirSync(outDir, { recursive: true });
 
 if (config.offline) {
   // The notice, and no game: no wasm, pck, script, manifest or icon of the export, and no /bench/ or /band/ build either (the bench runs a match with no gate; the band is playable).
-  const page = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice.json'), 'utf8')));
+  // the offline words (RL-121: "The playable build is offline for now.", "We have taken the build down while we fix them."): tools/site-notice-offline.json, whatever the interim's holding page says
+  const page = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice-offline.json'), 'utf8')));
   for (const where of ['index.html', 'play/index.html', 'bench/index.html', 'band/index.html', '404.html']) {
     mkdirSync(join(outDir, where, '..'), { recursive: true });
     writeFileSync(join(outDir, where), page);

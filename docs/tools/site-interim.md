@@ -9,7 +9,7 @@ Legal's ruling RL-136 (`docs/legal/photosensitivity-note.md`, addendum 8): the p
 | Page | What it is |
 |---|---|
 | `/play/` | The Godot export, noindex, with the engine's start wrapped in `window.__startGame` and called once, from the gate's button. The gate (Legal's words, verbatim, `tools/site-interim.json`) is the first thing in the body, fits a phone, and nothing but the loader script downloads before the click. **"Not now"** is a link to `../`, the holding page. |
-| `/`, `/bench/`, `/band/`, `/404.html` | The holding page, exactly the plain notice of `tools/site-notice.json` (no script, no link, no game, noindex). **This is where "Not now" goes: its URL is the site root; from the game at `/play/` it is `../`** (UI: `JavaScriptBridge.eval("window.location.href = new URL('../', window.location.href).href")`, so it works under the Pages project path). |
+| `/`, `/bench/`, `/band/`, `/404.html` | The holding page, exactly the plain notice of `tools/site-notice.json` (the "limited test build is up" words while the interim is up) (no script, no link, no game, noindex). **This is where "Not now" goes: its URL is the site root; from the game at `/play/` it is `../`** (UI: `JavaScriptBridge.eval("window.location.href = new URL('../', window.location.href).href")`, so it works under the Pages project path). |
 | `/about/` | How the game was made (Legal's AI line), privacy (the target-none line), the flashing-effects finding, Godot's MIT line and Open Sans' OFL line, then the engine's own full licence and copyright texts: Godot's MIT text, OFL-1.1 and the roughly 100 components the engine lists, written from the engine itself by `tools/site_licences.gd` into `tools/site-licences.json` (run again when the engine version changes). Reached from the gate's "Licences, notices and privacy". |
 
 Nothing links to `/play/` from the holding page or from any page of ours except the About page's "I understand, start: the game's first screen" link, which leads to the gate, not past it.
@@ -19,7 +19,7 @@ Nothing links to `/play/` from the holding page or from any page of ours except 
 ```
 node tools/site-offline.mjs
 ```
-Sets `"offline": true`, `"approved": null` and `"interim": null` in `tools/site.json`; the next build is the holding page and nothing else (the interim self-test runs this command, builds the result and passes `tools/check-site-offline.mjs`). `--check` only reports the state. Then commit and push `tools/site.json`.
+Sets `"offline": true`, `"approved": null` and `"interim": null` in `tools/site.json`; the next build is the holding page and nothing else, **with the offline words**: the offline build and its check read `tools/site-notice-offline.json` (Legal's RL-121 text: "The playable build is offline for now.", "We have taken the build down while we fix them."), not `tools/site-notice.json`, so the words come back by being offline and cannot be forgotten (the command refuses if that file lacks either sentence; the self-test builds the result and reads both) (the interim self-test runs this command, builds the result and passes `tools/check-site-offline.mjs`). `--check` only reports the state. Then commit and push `tools/site.json`.
 
 ## To switch it on (the EP's word)
 
