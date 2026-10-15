@@ -2001,6 +2001,9 @@
         "rushcity-normal",
         "rushcity-reduced"
       ]
-    }
+    },
+    "notes": [
+      "RL-137 (Legal, 2026-10-15): the page's gate (tools/site-interim.json, built from HEAD) carries RL-137's first sentence (\"... found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings\"); the pinned game's own start menu, recorded here at d3f1ca0e, carries RL-136's (\"... reach or go over the recommended limit ...\"), which is true and the more cautious. They differ on purpose for the interim; the menu is updated in the next recorded build. The pin, the hashes and the dates above are unchanged."
+    ]
   }
 }
