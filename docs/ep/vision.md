@@ -968,3 +968,14 @@ What follows from it:
 - Every face button's tapped (timed), mashed and held use must feel responsive, useful and visually distinct.
 - The fight choreographer learns one-versus-many: at most 4v1; a 2v2 always splits into two 1v1s; a 2v1 is allowed. The Empress has at most two elite guards at once, so 3v1 in her base form.
 - Commanding the guards costs the Empress some of her energy attacks and grabs.
+
+## The browser demo comes back, with a menu (Orb, 2026-10-14, night)
+
+Verbatim:
+
+> keep going, I'm heading to bed. can we put a playable browser demo back up, with a disclaimer for the photosensitive if necessary? can we have a simple menu with basic controller options (1p, 2p, controller/keyboard, presented in radio buttons?) to set before beginning the fight? give some checkmark options to turn on/off settings like intros. if this is feasible to have done by 7am, lets get it done. I'm going to sleep.
+
+What follows from it:
+- Orb's word to bring the playable web build back (the site has been offline since 2026-10-06), with a photosensitivity notice. It replaces "wait for the pass" for this return; Legal's interim terms apply (a click-through first screen, no autoplay, "Reduce flashing" on by default, the finding stated truthfully, no promotion while clips fail).
+- A simple pre-fight menu: radio buttons for one or two players and for controller or keyboard; checkboxes for settings such as intros.
+- Target: by 7am on 2026-10-15.
