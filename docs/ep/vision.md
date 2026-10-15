@@ -1122,3 +1122,101 @@ Verbatim:
 > I think the ellipsis can be used to signify hesitation, regret, perhaps performative exhaustion among others, they should be used sparingly but in context it's a good literary device for what we're trying to do.
 >
 > keep working, I want the depth and breadth of animations and mechanics continually refined and enhanced in preparation for multi-fighting and improvements to the dynamic fight choreography
+
+## Orb answers homework 2, the brawl feel (2026-10-15)
+
+Verbatim from homework/2-brawl-feel.md (questions, ticked boxes and notes):
+
+## The perfect follow-up
+
+**1. The quick light lands too soon to tap on the hit.**
+It lands two ticks after its press, faster than a hand can press again. The current answer: the light's striking hand stays planted on the opponent for a moment, and your window opens as it lets go.
+
+- [ ] Yes, a chain can start from a light that way
+- [ ] No, a chain should have to start from a medium or a heavy
+- [x] Your call
+- Notes: whatever works in favor of "rule of cool" without negatively impacting player agency
+
+**2. How quick is "perfect"?**
+The current rule gives the follow-up a shortened wind-up: a perfect light lands 10 ticks after your tap, a medium 6, a heavy 14. (Sixty ticks is one second.) With no wind-up at all it could not be tapped again, and an instant heavy would be a sure thing.
+
+- [ ] Shortened wind-up, as written
+- [ ] It should be instant
+- [x] Your call
+- Notes: the term 'instant heavy' sounds like an exploit, but if it's a functional mechanic that high-level players could explain use cases for then it could be worth investigating. 
+
+**3. Can a perfect block answer a perfect follow-up?**
+Game Design says yes: a chain needs an answer in its own language.
+
+- [ ] Yes
+- [ ] No, a perfect follow-up cannot be perfect-blocked
+- [x] Your call
+- Notes: the idea of perfect responses back and forth escalating into an amplified knockback with potentially higher levels of destruction to the environment sounds fun to me, please explore this
+
+**4. Should mixing strengths close the chain sooner?**
+As written, a follow-up of a different strength counts double. Light, medium, heavy opens the opponent in three blows; three lights need four.
+
+- [ ] Yes, reward mixing
+- [ ] No, three perfects is three perfects
+- [x] Your call
+- Notes: I don't necessarily like the idea of an 'upper limit' to chained combos though I can understand how they could be necessary. Give the choreographer leeway to dynamically decide combo enders and chains based on the environment and other factors.
+
+**5. Does a perfect follow-up cost Charge?**
+As written: a perfect light is free; a medium and a heavy cost their normal Charge.
+
+- [ ] As written
+- [ ] All perfect follow-ups are free
+- [ ] All cost their normal Charge
+- [x] Your call
+- Notes: I think pulling off perfects should reward the player by, at the very least, not expending energy
+
+---
+
+## The nine ways to press
+
+Light, medium and heavy, each tapped, mashed or held. The table is in `docs/design/brawl-second-pass.md`, section 15.
+
+**6. Holding medium becomes a "charged medium":** lights cannot stop it, and at full charge it staggers the opponent. Is that the move you want on a held medium?
+
+- [ ] Yes
+- [ ] No. What I want instead:
+- [x] Your call
+
+**7. Anything in the nine you would change?**
+
+Your notes:
+
+---
+
+## Three on-screen hints
+
+Each would show once, ever, the first time it applies.
+
+**8.** "Tap as your hit lands."
+
+- [x] keep  - [ ] cut  - [x] rewrite:
+its good, revisit if the mechanic changes or is enhanced
+**9.** "Held to the click: a knock-back."
+
+- [ ] keep  - [ ] cut  - [x] rewrite:
+i don't even know what this means
+**10.** "He missed. Medium stops him."
+
+- [ ] keep  - [ ] cut  - [x] rewrite:
+i don't even know what this means
+**11. Controller rumble on a perfect: on by default?**
+
+- [x] On by default
+- [ ] Off by default
+- [ ] Your call
+
+---
+
+**New (12 October). Holding X when the fighters get knocked apart.**
+You hold X and your fighter flurries. Then the two are knocked apart. Game Design's ruling is that he waits for you to press again, because every attack on screen should match a press. In testing, a held X that does not carry back in wins almost nothing.
+
+- [ ] He waits for me to press again (the ruling)
+- [ ] He flies back in and keeps attacking by himself
+- [ ] Only as an accessibility setting, off by default
+- [x] Your call
+- Notes: err on the side of player agency, but the fights move so fast that the ability to 'chase' a knocked back opponent and continue a beatdown in midair might fulfill 'rule of cool' and add to player agency at the same time. lets work on this and get it feeling really good in playtests.
