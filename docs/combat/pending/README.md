@@ -4,6 +4,8 @@
 
 `roster/` holds sketches for fighters who are not in the build: identity rows for the Demon Cyborg (three options) and the Empress, their generated movesets, and the builder that makes them (`../roster-rows.md`). Their cards are in `cards/` beside the first two. None of it is part of the recipes window.
 
+`split/` (2026-10-15) holds the split by path as the next recipes file, in two forms: `recipes.held-only.json` (the held styles only, no new key) and `recipes.split.json` (all of it, with Encounter's mash key and Tools' two schema keys). The note is `../split-and-pieces.md`. `roster/` also holds the guards' kit, generated (`moveset.guard.json`).
+
 `retired/` holds parked files that have landed or been overtaken, with a README. The step 2b files described below are there now; the text is kept as the record.
 
 ## Parked data for Encounter's step 2b (landed)

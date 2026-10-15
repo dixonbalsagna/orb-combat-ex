@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 16
+VERSION = 17
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -367,16 +367,16 @@ def quota_ok(q, m):
         return bool(m.get("_own")) and ("form" not in q or q["form"] in m["_forms"])
     if "form" in q and "sends" in q:   # a launcher that sends one way: both must hold
         return q["form"] in m["_forms"] and m.get("_sends") == q["sends"]
-    if "form" in q:
-        return q["form"] in m["_forms"]
+    if "form" in q:   # of a form, and of a shape when the quota names one too (the split by path: a quick medium on a line or a rise)
+        return q["form"] in m["_forms"] and ("filter" not in q and "any" not in q or match({"any": q["any"]} if "any" in q else q["filter"], m))
     if "sends" in q:
         return m.get("_sends") == q["sends"]
     return match({"any": q["any"]} if "any" in q else q["filter"], m)
 
 
-def greedy(cand, count, quotas, penalty, locked=(), allow=None):
+def greedy(cand, count, quotas, penalty, locked=(), allow=None, many=False):
     """Pick one at a time: quotas first, then the best score, each pick marking down what resembles it. allow(picked, m): whether the cell may still take a
-    candidate (a cell's share rule)."""
+    candidate (a cell's share rule). many: a pick meets as many of the short quotas as it can (a strike cell's; a table's picks stay as they were)."""
     picked = list(locked)
     cand = [m for m in cand if all(m is not p for p in picked)]
     while cand and len(picked) < count:
@@ -385,10 +385,13 @@ def greedy(cand, count, quotas, penalty, locked=(), allow=None):
             if not cand:
                 break
         pool = cand
-        for q in quotas:
-            if sum(1 for p in picked if quota_ok(q, p)) < q["min"] and any(quota_ok(q, m) for m in cand):
-                pool = [m for m in cand if quota_ok(q, m)]
-                break
+        short = [q for q in quotas if sum(1 for p in picked if quota_ok(q, p)) < q["min"] and any(quota_ok(q, m) for m in cand)]
+        if short:   # the first quota still short, and (many) as many of the others as one pick can meet with it
+            pool = [m for m in cand if quota_ok(short[0], m)]
+            for q in (short[1:] if many else []):
+                both = [m for m in pool if quota_ok(q, m)]
+                if both:
+                    pool = both
         best, bs = None, -1.0
         for m in pool:
             w = m["_w"]
@@ -424,6 +427,12 @@ def strike_cell(ctx, who, cid, cell):
             continue   # a posed strike this cell leaves out for this fighter (cells.json says why)
         if c is not None and c["level"] in cell.get("notLevels", []):
             continue   # a tier of new looks leaves out what a posed piece only stands in for
+        kit = idn.get("kit")
+        if kit and kit.get("from") == "common" and not (c is not None and c["level"] in kit.get("levels", ["posed"]) and c["from"] in ctx["common"]):
+            if not (m["weight"] in kit.get("newOf", []) and c is None):
+                continue   # a kit row (the guards): only what more than one fighter has posed, or a new shape of a weight his kit allows
+            if fp(m)[:4] in set(fp(mv)[:4] for o, d_ in ctx["built"].items() for c2 in d_["cells"].values() for mv in c2.get("moves", []) if isinstance(mv, dict) and mv.get("own")):
+                continue   # ... and never another fighter's own blow, at any strength (Game Design: a fighter's own is never lent)
         m["_arms"] = c["arms"] if c else (1 if m["limb"] in ("hand", "elbow") else 0)
         m["_flags"] = flags_of(g, idn, m, c)
         if m["weight"] == "heavy" and c is None:   # a new heavy has the flags its drive brings (a spring is a leap)
@@ -482,14 +491,14 @@ def strike_cell(ctx, who, cid, cell):
             w *= sp.get("look", 1.0)   # the same blow at another place: a cell whose blows are each seen whole marks it down hard
         return w
     pins =[by_fp[tuple(s)] for s in idn.get("pinned", {}).get(cid, []) if tuple(s) in by_fp]   # shapes the cell takes first (identity.json pinned)
-    quotas, allow, share = cell.get("quotas", []), None, cell.get("share")
+    quotas, allow, share = cell.get("quotas", []), None, (None if idn.get("kit") else cell.get("share"))
     if share:
         # A shared tier (Game Design, fighter-pipeline.md section 1): so many pieces that are his alone by his tier, no more than a part of the cell shared with
         # any one other fighter, and the fighter he takes a piece from keeps his own share. Two fighters share a piece when both cells hold its shape, or when
         # he takes it from a pack that is the other's (identity `borrows`). Options for one place in the roster (identity `alt`) never count each other.
         fs = ctx["fighters"]
         alt = lambda f: fs[f].get("alt")
-        others = [o for o in sorted(fs) if o != who and not (alt(who) and alt(who) == alt(o))]
+        others = [o for o in sorted(fs) if o != who and not fs[o].get("kit") and not (alt(who) and alt(who) == alt(o))]
         def cell_shapes(o):
             if o in ctx["built"] and cid in ctx["built"][o]["cells"]:
                 return set(fp(mv) for mv in ctx["built"][o]["cells"][cid]["moves"])
@@ -530,7 +539,8 @@ def strike_cell(ctx, who, cid, cell):
                                 return False
             return True
         quotas = [{"name": "his alone", "min": need_of(who), "own": True}] + list(quotas)
-    picked = greedy(cand, cell["count"], quotas, penalty, locked + [m for m in pins if all(m is not x for x in locked)], allow)
+    count = cell["count"] + int(idn.get("adds", {}).get(cid, 0))   # a fighter's row may add places to a cell (identity `adds`), each filled as the quotas ask
+    picked = greedy(cand, count, quotas, penalty, locked + [m for m in pins if all(m is not x for x in locked)], allow, many=True)
     used = set(m["_id"] for m in picked if "_id" in m)
     free = [n for n in ("mv.%s.%s.%02d" % (who, cid, i + 1) for i in range(len(picked) + len(dropped) + 5)) if n not in used]
     moves = []
@@ -903,6 +913,8 @@ def build():
     seen_ids = {}   # a strike id -> the fighters who have it in a pack of their own (the heavy tier apart)
     for f2 in sorted(identity["fighters"]):
         d2 = identity["fighters"][f2]
+        if d2.get("kit"):
+            continue   # a kit row (the guards) holds only common pieces: he never makes one
         for w2 in d2["waves"]:
             if w2 in d2.get("borrows", []) or w2 in d2.get("tierWaves", []):
                 continue
@@ -940,8 +952,14 @@ def build():
             "cells": {},
         }
         ctx["done"] = doc["cells"]
+        kit = idn.get("kit")
         for stance, btn, press, cid, cell in cell_ids(cells):
             k = cell["kind"]
+            if kit and cid not in kit["cells"] and k not in ("context", "frame") and not (k == "string" and cell.get("from") in kit["cells"]):
+                doc["cells"][cid] = dict({"kind": k, "valid": 0, "refused": [], "quotas": {}, "moves": [], "kit": "not in his kit"}, **({"from": cell["from"]} if "from" in cell else {}))
+                continue   # a kit row (the guards): a cell his kit does not name is empty
+            if kit:
+                cell = dict(cell, count=int(kit["cells"].get(cid, cell.get("count", 0))), **({"quotas": kit["quotas"][cid]} if cid in kit.get("quotas", {}) else {}))
             if k == "strikes":
                 doc["cells"][cid] = strike_cell(ctx, who, cid, cell)
             elif k == "string":
@@ -1294,8 +1312,10 @@ def gate_shares(out, cells, identity):
         return m["status"] == "posed" or (planned and m["status"] == "waiting" and m.get("own"))
     res = {}
     for who, doc in out.items():
+        if fs[who].get("kit"):
+            continue   # a kit row (the guards) is outside the gate, as the training dummy is: troopers, not fighters
         alt = fs[who].get("alt")
-        others = [o for o in sorted(out) if o != who and not (alt and fs[o].get("alt") == alt)]
+        others = [o for o in sorted(out) if o != who and not fs[o].get("kit") and not (alt and fs[o].get("alt") == alt)]
         groups = {}
         for o in others:
             groups.setdefault(fs[o].get("alt") or ("#" + o), []).append(o)
@@ -1345,6 +1365,8 @@ def share_findings(out, cells, identity):
         if not sh:
             continue
         for who, doc in out.items():
+            if identity["fighters"][who].get("kit"):
+                continue   # a kit row (the guards) has no floor of his own: troopers, not fighters
             q = doc["cells"][cid]["quotas"]
             need = int(sh["own"][str(identity["fighters"][who].get("tier", 1))])
             if q.get("his alone", 0) < need:
@@ -1358,6 +1380,10 @@ def share_findings(out, cells, identity):
 def string_findings(rep, identity=None):
     bad = []
     for who, r in sorted(rep.items()):
+        kit = (identity or {}).get("fighters", {}).get(who, {}).get("kit")
+        if kit:   # a kit row (the guards): only his strings of lights and mediums are read. He has no bolts in reach, his launcher is never ready
+            # (Encounter's stage 3: his B in an opening is the hammer) and he wrenches nothing
+            r = dict(r, run=None, launch={}, wrench={}, mix={b: v for b, v in r["mix"].items() if b in ("x", "y")})
         for b, v in r["mix"].items():
             floor = 1 if b == "rx" else FLOOR   # four point-blank bolts: one must always be left to throw
             if v["fewest"] < floor:
@@ -1532,6 +1558,10 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
                 c = out[who]["cells"][cid]
                 if "moves" not in c:
                     continue
+                if c.get("kit"):   # a kit row (the guards): a cell his kit does not name
+                    L.append("**The %s:** none (%s)." % (who, c["kit"]))
+                    L.append("")
+                    continue
                 st = [m["status"] for m in c["moves"]]
                 mins = {q["name"]: q["min"] for q in cell.get("quotas", [])}
                 qt = "; ".join(("%s %d of %d" % (k, v, mins[k])) if k in mins else ("%s %d" % (k, v)) for k, v in c["quotas"].items())
@@ -1576,6 +1606,9 @@ def sheet(out, parts, cells, notes, rep=None, identity=None):
                     if c["refused"]:
                         L.append("Refused by Legal's rows, so never offered: " + "; ".join("%s (%s)" % (" ".join(w(x) for x in r["shape"]), ", ".join(r["rows"])) for r in c["refused"]) + ".")
                         L.append("")
+                elif c["kind"] == "run" and not c["moves"]:
+                    L.append("None: " + (c.get("kit") or "no run") + ".")
+                    L.append("")
                 elif c["kind"] == "run":
                     by_id = {x["id"]: x for x in out[who]["cells"][c["from"]]["moves"]}
                     L.append("His bolts: " + "; ".join("%s is %s on a %s to the %s (%s)" % (i.rsplit(".", 1)[1], w(x["hand"]), x["release"], x["target"], w(x["path"])) for i, x in by_id.items()) + ".")
@@ -1749,6 +1782,10 @@ def self_test(parts, identity):
     expect("a leaping knee to the gut passes: Legal's b14 allows a leap for a knee or a foot below the jaw", [r["id"] for r in shape_rows(parts) if banned_hit(r, leap_knee, ["heavy"], 0, {"has": ["leap"], "not": []}) == "match"], [])
     expect("a leaping hand to the chest is refused by b14 alone", [r["id"] for r in shape_rows(parts) if banned_hit(r, {"limb": "hand", "tip": "fist", "path": "drop", "target": "chest", "weight": "heavy"}, ["heavy"], 1, {"has": ["leap"], "not": []}) == "match"], ["b14"])
     expect("a quota for what is his alone takes only that (a cell's share rule)", [quota_ok({"own": True}, {"_own": True}), quota_ok({"own": True}, {"_own": False})], [True, False])
+    _q1, _q2 = {"name": "a", "min": 1, "filter": {"path": ["line"]}}, {"name": "b", "min": 1, "filter": {"limb": ["foot"]}}
+    _c = [{"path": "line", "limb": "hand", "_w": 2.0}, {"path": "line", "limb": "foot", "_w": 1.0}, {"path": "drop", "limb": "foot", "_w": 3.0}]
+    expect("one pick meets as many of the short quotas as it can", [m["limb"] + " " + m["path"] for m in greedy(list(_c), 1, [_q1, _q2], lambda p, m: 1.0, many=True)], ["foot line"])
+    expect("a quota of a form and a shape asks for both (the split by path)", [quota_ok({"form": "quick", "filter": {"path": ["line", "rise"]}}, {"_forms": f_, "path": p_}) for f_, p_ in ((["quick"], "rise"), (["quick"], "drop"), ([], "line"))], [True, False, False])
     expect("a quota for a launcher that sends down asks for both", [quota_ok({"form": "launch", "sends": "down"}, {"_forms": ["launch"], "_sends": s_}) for s_ in ("down", "up")], [True, False])
     six = [{"_w": 6.0 - i, "_shared": set(["a"]) if i < 4 else set(), "n": i} for i in range(6)]
     capped = greedy(list(six), 4, [], lambda p, m: 1.0, (), lambda picked, m: not m["_shared"] or sum(1 for p in picked if "a" in p["_shared"]) < 2)
@@ -1926,7 +1963,7 @@ def main():
             f.write(text)
     for who, doc in out.items():
         for cid, c in doc["cells"].items():
-            if "moves" in c:
+            if "moves" in c and not c.get("kit"):
                 st = [m["status"] for m in c["moves"]]
                 ch = notes[who]["changes"].get(cid, {})
                 extra = (" | refused %d, dropped %d, re-read %d, new since the lock %d" % (len(c["refused"]), len(ch["dropped"]), len(ch["reread"]), len(ch["new"]))) if c["kind"] == "strikes" else ""

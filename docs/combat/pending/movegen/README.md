@@ -81,6 +81,17 @@ Game Design's borrowing policy (`docs/design/fighter-pipeline.md` section 1). Th
 - **The two fighters' files** gained the `own` mark and the counts of the new quotas. No move changed; the Protagonist's falling palm lost "(both arms)" from its name. `../recipes.brawl.json` is byte for byte the same.
 - **The data scripts' order** now ends `share_data.py`, `rl133_data.py`.
 
+## 0e. The split by path, places added to a cell, and kit rows (2026-10-15, version 17)
+
+The EP's brief of 2026-10-15. The note is `../../split-and-pieces.md`.
+
+- **The split as quotas** in `cells.json` (`_quotasSplit`). Y: the stop (a quick medium on a line or a rise) and the grind (a quick one that drops or arcs), at least 5 each. B: the advance (a line or a drop) and the big read (an arc, a rise or a spin), at least 5 each. A quota may now name a form and a shape together.
+- **`adds` in a fighter's identity:** places added to a cell whose locked moves leave a group short. The Protagonist +1 medium and +1 heavy, the Anti-hero +1 heavy; the quotas fill them. A roster sketch never inherits them.
+- **One pick meets as many short quotas as it can,** in strike cells. Without it, the Protagonist's added medium went to an older quota first. The energy tables keep the old rule, so their picks stay as they were.
+- **`chargedHeavy` in a fighter's identity:** his charged heavy as Game Design names it. The pool builder keeps it in the held B's pool; the generator doesn't read it.
+- **A kit row** (`kit` in an identity row: the Empress's guards). It has only the cells its kit names, with its counts and any quotas of its own. It draws only on posed common pieces, or a new shape of a weight the kit allows. It is never another fighter's own blow. It has no share rule and no floors, is outside the gate, is never counted when the common pieces are found, and only its lights and mediums are read for the string rules.
+- **The two fighters' files** gained the three added moves and the new quotas' counts. No move changed, and `../recipes.brawl.json` is byte for byte the same.
+
 ## 1. The martial arts stance, regenerated on Animation's data
 
 The generator no longer uses my reading of each strike. It reads the tip, the path and the pose flags from Animation's manifests, and how far a key set can be re-aimed from `data/anim/tips.json`. My strike table and my guessed neighbour table are gone from `parts.json`.

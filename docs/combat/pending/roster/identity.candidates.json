@@ -523,6 +523,105 @@
     "split": false,
     "reach": "blade_hands"
    }
+  },
+  "guard": {
+   "like": "rival",
+   "tier": 1,
+   "_who": "The Empress's guards (docs/design/empress-guards.md): troopers, not fighters, on the shared mannequin. Their kit is lights and mediums from the common pool, one heavy and a bolt; no signature, no forms, no grabs. A kit row: only the cells the kit names, only pieces more than one fighter has posed, no share rule, outside the gate (as the training dummy is)",
+   "kit": {
+    "cells": {
+     "martial.x": 16,
+     "martial.y": 10,
+     "martial.b": 1,
+     "energy.x": 1
+    },
+    "from": "common",
+    "levels": [
+     "posed"
+    ],
+    "newOf": [
+     "heavy"
+    ],
+    "_about": "cells: the cells he has and how many places each; from: common, only what more than one fighter of the build has posed; newOf: a weight he may take a new shape of when nothing common is posed (no heavy of the tier is common: each fighter's ten are his own); quotas: a cell's quotas of his own (his one bolt is the measured bolt, one hand, thrust, planted)",
+    "quotas": {
+     "energy.x": [
+      {
+       "name": "the measured bolt",
+       "min": 1,
+       "form": "tech"
+      }
+     ]
+    }
+   },
+   "weights": {
+    "limb": {},
+    "path": {
+     "spin": 0.1
+    },
+    "tip": {},
+    "entry": {
+     "step_in": 2,
+     "rooted": 2
+    }
+   },
+   "weightsBy": [
+    {
+     "when": {
+      "weight": [
+       "heavy"
+      ]
+     },
+     "target": {
+      "chest": 1.5,
+      "gut": 1.2
+     },
+     "_why": "a plain blow to the body"
+    }
+   ],
+   "never": [
+    {
+     "shape": {
+      "path": [
+       "spin"
+      ]
+     },
+     "why": "a trooper's blows are plain: no spin"
+    },
+    {
+     "shape": {
+      "limb": [
+       "head"
+      ]
+     },
+     "why": "no headbutt: the guards are a screen, not brawlers"
+    }
+   ],
+   "burst": {
+    "close": {
+     "path": [
+      "line"
+     ]
+    }
+   },
+   "manner": {
+    "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
+    "light": "Plain and drilled: straight hands and short knees, the same way every time, so the gang reads as one unit",
+    "interjection": "Thrown from the side of the pair while following the one, with a wind-up he can see for 10 ticks"
+   },
+   "energy": {
+    "hands": {
+     "open_palm": 1
+    },
+    "release": {
+     "thrust": 1,
+     "flick": 0.1,
+     "lob": 0.1,
+     "drop": 0.1
+    },
+    "split": false,
+    "posed": [],
+    "posedHands": {}
+   }
   }
  },
  "reach": {

@@ -494,7 +494,13 @@
    "_tierWaves": "packs whose strikes are heavies of the new tier: Animation's weight heavy there is this file's heavy, and each row is read by the heavy tier's own tips",
    "energyWaves": [
     "rival8"
-   ]
+   ],
+   "adds": {
+    "martial.b": 1
+   },
+   "_adds": "Places added to a cell for the split by path (cells.json `_quotasSplit`): his locked moves leave a group under 5, and the added place is filled by that group's quota",
+   "chargedHeavy": "strike.su_ram",
+   "_chargedHeavy": "His charged heavy as Game Design names it (fighter-pipeline.md section 8: the Protagonist's a coiled palm strike, the Anti-hero's a ram behind the plate). The pool builder keeps it in the held B's pool whatever its path; not read by the generator"
   },
   "protagonist": {
    "waves": [
@@ -979,7 +985,14 @@
    "armsOf": {
     "strike.su_drive": 1
    },
-   "_armsOf": "how many arms a key set uses, where it is not what its pack says. Legal's RL-133: the falling palm is one arm; Animation redrew pu.su_drive so, and the pack's uses.arms still says 2. It goes when the pack says 1"
+   "_armsOf": "how many arms a key set uses, where it is not what its pack says. Legal's RL-133: the falling palm is one arm; Animation redrew pu.su_drive so, and the pack's uses.arms still says 2. It goes when the pack says 1",
+   "adds": {
+    "martial.y": 1,
+    "martial.b": 1
+   },
+   "_adds": "Places added to a cell for the split by path (cells.json `_quotasSplit`): his locked moves leave a group under 5, and the added place is filled by that group's quota",
+   "chargedHeavy": "strike.su_palm_heave",
+   "_chargedHeavy": "His charged heavy as Game Design names it (fighter-pipeline.md section 8: the Protagonist's a coiled palm strike, the Anti-hero's a ram behind the plate). The pool builder keeps it in the held B's pool whatever its path; not read by the generator"
   }
  },
  "_reuse": "how strongly a shape that is already posed, or one swap or re-aim from it, is preferred. A re-aim Animation measured as ok is free; one at the edge needs a look, so it is preferred less. These are the first slice's values: lower them toward 1 and identity decides more, at the cost of new key sets",

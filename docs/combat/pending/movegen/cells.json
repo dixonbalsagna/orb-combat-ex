@@ -254,6 +254,29 @@
       "name": "quick",
       "min": 12,
       "form": "quick"
+     },
+     {
+      "name": "the stop: quick, on a line or a rise",
+      "min": 5,
+      "form": "quick",
+      "filter": {
+       "path": [
+        "line",
+        "rise"
+       ]
+      }
+     },
+     {
+      "name": "the grind: quick, a drop or an arc",
+      "min": 5,
+      "form": "quick",
+      "filter": {
+       "path": [
+        "drop",
+        "arc_in",
+        "arc_out"
+       ]
+      }
      }
     ],
     "_quotas": "the first four are how the cell was filled when these were the heavies, by where each sends; a medium no longer knocks back. quick is the count that read on a 12-tick wind-up: the rest are thrown on a held Y only",
@@ -264,7 +287,8 @@
       "2": 3
      },
      "maxWithOne": 1.0
-    }
+    },
+    "_quotasSplit": "The split by path (docs/combat/nine-cells-look.md; the EP's go of 2026-10-15): each style of the button draws on its own pieces, so each group keeps 5, one above the picker's least (never one of his last two). Y: tapped, the stop (a quick medium on a line or a rise); mashed, the grind (a drop or an arc); held, the mediums with a long wind-up. B: tapped, all of them; mashed, the advance (a line or a drop); held, the big read (an arc, a rise or a spin). A fighter whose locked moves fall short gets a place added in his row (identity `adds`), and the quota fills it"
    },
    "a": {
     "kind": "context",
@@ -469,6 +493,28 @@
         "legs"
        ]
       }
+     },
+     {
+      "name": "the advance: a line or a drop",
+      "min": 5,
+      "filter": {
+       "path": [
+        "line",
+        "drop"
+       ]
+      }
+     },
+     {
+      "name": "the big read: an arc, a rise or a spin",
+      "min": 5,
+      "filter": {
+       "path": [
+        "arc_in",
+        "arc_out",
+        "rise",
+        "spin"
+       ]
+      }
      }
     ],
     "_quotas": "a launcher for each way the stick can send him first (the check holds every tier to it, and a fighter who borrows under the share rule would else end without one); then two for each way a charged heavy can send the rival (the two that send up are also the lift), then two for each lean of the stick, so a flurry of four held on one lean still shows four blows",
@@ -497,7 +543,8 @@
       "2": 4
      },
      "maxWithOne": 0.5
-    }
+    },
+    "_quotasSplit": "The split by path (docs/combat/nine-cells-look.md; the EP's go of 2026-10-15): each style of the button draws on its own pieces, so each group keeps 5, one above the picker's least (never one of his last two). Y: tapped, the stop (a quick medium on a line or a rise); mashed, the grind (a drop or an arc); held, the mediums with a long wind-up. B: tapped, all of them; mashed, the advance (a line or a drop); held, the big read (an arc, a rise or a spin). A fighter whose locked moves fall short gets a place added in his row (identity `adds`), and the quota fills it"
    }
   },
   "manoeuvre": {

@@ -511,6 +511,17 @@
       "medium"
      ],
      "pr.spinning_heel"
+    ],
+    [
+     "mv.protagonist.martial.y.17",
+     [
+      "hand",
+      "palm",
+      "rise",
+      "gut",
+      "medium"
+     ],
+     null
     ]
    ],
    "martial.b": [
@@ -623,6 +634,17 @@
       "heavy"
      ],
      "pu.su_elbow_jaw"
+    ],
+    [
+     "mv.protagonist.martial.b.11",
+     [
+      "hand",
+      "palm",
+      "line",
+      "arm",
+      "heavy"
+     ],
+     null
     ]
    ],
    "defensive.x": [
@@ -1383,6 +1405,17 @@
       "heavy"
      ],
      "ru.su_plate_arm"
+    ],
+    [
+     "mv.rival.martial.b.11",
+     [
+      "hand",
+      "fist",
+      "arc_out",
+      "jaw",
+      "heavy"
+     ],
+     null
     ]
    ],
    "defensive.x": [
