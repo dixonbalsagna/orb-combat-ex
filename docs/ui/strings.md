@@ -22,7 +22,7 @@ Mark column: **keep**, **rewrite** (Narrative drafts), or **cut**. A flag in the
 
 | # | Text | Key | Mark |
 | ---: | :-- | :-- | :-- |
-| 10 | This game contains flashing effects, and our own automated check found scenes that reach or go over the recommended limit of three flashes a second. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version. | `terms:prompt.menu_notice` | |
+| 10 | This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version. | `terms:prompt.menu_notice` | |
 | 11 | Reduce flashing is on. It lowers some effects but does not remove the flagged scenes. | `terms:prompt.menu_rf_on` | |
 | 12 | Reduce flashing is off. | `terms:prompt.menu_rf_off` | |
 | 13 | Not now | `terms:prompt.menu_not_now` | |

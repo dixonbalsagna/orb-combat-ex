@@ -5445,7 +5445,7 @@ func _menu_rules() -> void:
 	if FileAccess.file_exists(UiPrefs.path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
 	# The words: the notice is the placeholder until Legal's text comes, with the state of Reduce flashing in it.
-	const LEGAL_MENU := "This game contains flashing effects, and our own automated check found scenes that reach or go over the recommended limit of three flashes a second. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version."
+	const LEGAL_MENU := "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version."
 	_ok(UiMenu.notice({"reduce_flashing": true}) == LEGAL_MENU and UiMenu.notice({"reduce_flashing": false}) == LEGAL_MENU, "menu: the notice is Legal's words, exactly (RL-136), whatever the boxes say")
 	_ok(UiMenu.word("start") == "I understand, start" and UiMenu.word("not_now") == "Not now" and UiMenu.rf_line({"reduce_flashing": true}) == "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu: the button is I understand, start, with Not now beside it, and Legal's small line says what Reduce flashing does")
 	var low := (LEGAL_MENU + " " + UiMenu.rf_line({"reduce_flashing": true})).to_lower()
@@ -5458,7 +5458,8 @@ func _menu_rules() -> void:
 	_ok(not shown.has("prompt.menu_players") and shown.size() == 14 and UiMenu.word("kb") == "Keyboard" and UiMenu.word("pad") == "Controller" and UiMenu.word("one") == "1 player", "menu: fourteen short labels, in plain words (Keyboard, Controller, the computer)")
 	# Geometry: every control is a 48 dp target inside the card, nothing overlaps, at the phone and desktop sizes, for one and two players, with and without Back.
 	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 768), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(2400, 1080), 2.6], [Vector2(1560, 720), 2.0],
-		[Vector2(2250, 990), 3.0], [Vector2(1992, 810), 3.0], [Vector2(1704, 960), 3.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(844, 340), 1.0], [Vector2(568, 320), 1.0], [Vector2(932, 430), 1.0]]
+		[Vector2(2250, 990), 3.0], [Vector2(1992, 810), 3.0], [Vector2(1704, 960), 3.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(844, 340), 1.0], [Vector2(568, 320), 1.0], [Vector2(932, 430), 1.0],
+		[Vector2(390, 844), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.8], [Vector2(768, 1024), 1.0], [Vector2(414, 896), 1.0]]   # the last five are phones and a tablet upright
 	var bad := PackedStringArray()
 	for cs in sizes:
 		var lay := UiLayout.new()
@@ -5469,8 +5470,18 @@ func _menu_rules() -> void:
 				var cfg := {"players": players, "p1": "kb", "p2": "kb", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true}
 				var p: Dictionary = UiMenu.plan(cs[0], lay.s, cs[1], true, {"focus": 0, "cfg": cfg, "mid_match": mid, "safe": lay.safe, "not_now": not mid})
 				var ok: bool = bool(p["fits"]) and int(p["fs"]) >= int(UiLook.text_floor) - 1
+				# Each label's text sits inside its own control's rect (a radio's ring and words, a box's tick and words), so none runs under its neighbour.
+				for it in p["items"]:
+					var ir: Rect2 = it["rect"]
+					if it["kind"] == "radio":
+						var rad: float = minf(float(p["tm"]) * 0.2, 12.0 * float(p["cs"]) + 4.0)
+						ok = ok and ir.position.x + rad * 2.0 + 12.0 * float(p["cs"]) + UiText.width(str(it["label"]), int(p["fs"])) <= ir.end.x + 1.0
+					elif it["kind"] == "check":
+						var side: float = minf(float(p["tm"]) * 0.46, 26.0 * float(p["cs"]) + 8.0)
+						ok = ok and ir.position.x + 2.0 + side + 8.0 * float(p["cs"]) + UiText.width(str(it["label"]), int(p["fs"])) <= ir.end.x + 1.0
 				# A phone's smallest landscape with Safari's bars (568x320, and a two-player Back at 664x270) is below what the menu lays out whole: Start must still be on screen and 48 dp.
-				var tiny: bool = (cs[0] as Vector2).x / cs[1] < 600.0 or (cs[0] as Vector2).y / cs[1] < 290.0
+				var landscape: bool = (cs[0] as Vector2).x > (cs[0] as Vector2).y   # an upright phone gets the whole promise
+				var tiny: bool = landscape and ((cs[0] as Vector2).x / cs[1] < 600.0 or (cs[0] as Vector2).y / cs[1] < 290.0)
 				if tiny and not ok:
 					var st_rect := Rect2()
 					for it in p["items"]:

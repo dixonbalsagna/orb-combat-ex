@@ -56,74 +56,95 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var cw: float = minf(area.size.x, maxf(900.0 * cs, 760.0 * maxf(dp, 1.0)))   # wide enough that a radio row is its label and its two options on one line
 	var card_x: float = area.position.x + (area.size.x - cw) * 0.5
 	var inner_w: float = cw - 2.0 * pad
+	var pad0: float = pad
+	var gap0: float = gap
 	var best: Dictionary = {}
 	var fs0: int = UiText.px(22.0, cs)
-	for fs in range(fs0, floor_px - 1, -1):
-		var fs_s: int = maxi(int(round(float(fs) * 0.82)), floor_px)
-		var back_w: float = UiText.width(word("back"), fs) + tm * 0.9   # Back (mid-match) sits at the top right, on the notice's line
-		# Mid-match the notice is not repeated (the visitor read it before the first fight): the Back button has the top line to itself.
-		var nn_w0: float = minf(UiText.width(word("not_now"), fs) + tm * 1.2, inner_w * 0.34) if not_now else 0.0   # Not now sits at the top right, as Back does mid-match
-		var lines: PackedStringArray = PackedStringArray() if mid else UiText.wrap(notice(cfg), fs, inner_w - (nn_w0 + gap if not_now else 0.0))
-		var lh: float = UiText.height(fs) * 1.2
-		var notice_h: float = maxf(float(lines.size()) * lh, tm if (mid or not_now) else 0.0)
-		var colw: float = (inner_w - gap * 2.0) * 0.5
-		# Left column: the radio rows, one line each: the label, then its options side by side; a row that does not fit inline puts its options under the label.
-		var left_h: float = 0.0
-		var radio_rows: Array = []
-		for id in ["players", "p1", "p2"]:
-			if not list.has(id):
-				continue
-			var opts: Array = _options(id)
-			var lab: String = word("players") if id == "players" else word(id)
-			var label_w: float = UiText.width(lab, fs) + gap
-			var opt_ws: Array = []
-			var total: float = label_w
-			for o in opts:
-				var w: float = 30.0 * maxf(dp, 1.0) * 0.8 + UiText.width(str(o[1]), fs) + gap
-				opt_ws.append(w)
-				total += w
-			var inline: bool = total <= colw
-			radio_rows.append({"id": id, "label": lab, "inline": inline, "opt_ws": opt_ws, "h": tm if inline else (tm * 2.0 + gap * 0.5)})
-			left_h += float(radio_rows[radio_rows.size() - 1]["h"]) + gap
-		var note_h: float = 0.0
-		var note_text: String = ""
-		if int(cfg.get("players", 1)) == 1:
-			note_text = word("one_note")
-		elif str(cfg.get("p1", "kb")) == "kb" and str(cfg.get("p2", "kb")) == "kb":
-			note_text = word("both_kb")
-		elif bool(st.get("pad_missing", false)):
-			note_text = word("no_pad")
-		if note_text != "":
-			var note_lines: PackedStringArray = UiText.wrap(note_text, fs_s, colw)
-			note_h = float(note_lines.size()) * UiText.height(fs_s) * 1.2 + gap * 0.5
-		var left_h_note: float = left_h + note_h
-		left_h = left_h_note
-		# Right column: the checkboxes, in one or two sub-columns by what fits.
-		var cws: float = 0.0
-		for c in CHECKS:
-			cws = maxf(cws, UiText.width(word(c), fs) + tm * 0.55 + gap)
-		var subcols: int = 1 if cws * 2.0 + gap > colw else 2
-		var check_rows: int = int(ceil(float(CHECKS.size()) / float(subcols)))
-		var right_h: float = float(check_rows) * (tm + gap * 0.5)
-		var btn_h: float = tm
-		var sub_lines: PackedStringArray = UiText.wrap(rf_line(cfg), fs_s, inner_w)
-		var sub_h: float = float(sub_lines.size()) * UiText.height(fs_s) * 1.2 + gap * 0.5   # the small line under the button
-		var total_h: float = pad * 2.0 + notice_h + gap * 1.5 + maxf(left_h, right_h) + gap + btn_h + sub_h
-		if total_h > area.size.y and note_h > 0.0:
-			# Too tall with its one line of help: the line goes (it is a courtesy), and the layout is tried again without it.
-			left_h -= note_h
-			note_h = 0.0
-			note_text = ""
-			total_h = pad * 2.0 + notice_h + gap * 1.5 + maxf(left_h, right_h) + gap + btn_h + sub_h
-		# A short screen: Start takes the empty cell of the boxes (the five boxes in two columns leave one) and Back sits under the left column.
-		var corner: bool = subcols == 2 and CHECKS.size() < subcols * check_rows
-		var total_a: float = pad * 2.0 + notice_h + gap * 1.5 + maxf(left_h, right_h) + sub_h
-		var use_corner: bool = corner and total_h > area.size.y
-		if use_corner:
-			total_h = total_a
-		best = {"fs": fs, "fs_s": fs_s, "lines": lines, "lh": lh, "notice_h": notice_h, "colw": colw, "radio_rows": radio_rows, "left_h": left_h, "note_text": note_text, "note_h": note_h,
-			"subcols": subcols, "check_rows": check_rows, "right_h": right_h, "cws": cws, "total_h": total_h, "corner": use_corner, "back_w": back_w, "sub_h": sub_h, "sub_lines": sub_lines}
-		if total_h <= area.size.y:
+	# A short screen with a long notice: if the floor font still does not fit, the padding and gaps are halved and the search runs again.
+	for squeeze in [1.0, 0.5]:
+		pad = maxf(pad0 * squeeze, 6.0)
+		gap = maxf(gap0 * squeeze, 3.0)
+		inner_w = cw - 2.0 * pad
+		for fs in range(fs0, floor_px - 1, -1):
+			var fs_s: int = maxi(int(round(float(fs) * 0.82)), floor_px)
+			var back_w: float = UiText.width(word("back"), fs) + tm * 0.9   # Back (mid-match) sits at the top right, on the notice's line
+			# Mid-match the notice is not repeated (the visitor read it before the first fight): the Back button has the top line to itself.
+			var nn_w0: float = minf(UiText.width(word("not_now"), fs) + tm * 1.2, inner_w * 0.34) if not_now else 0.0   # Not now sits at the top right, as Back does mid-match
+			var lines: PackedStringArray = PackedStringArray() if mid else UiText.wrap(notice(cfg), fs, inner_w - (nn_w0 + gap if not_now else 0.0))
+			var lh: float = UiText.height(fs) * 1.2
+			var notice_h: float = maxf(float(lines.size()) * lh, tm if (mid or not_now) else 0.0)
+			var colw: float = (inner_w - gap * 2.0) * 0.5
+			# A narrow card (a phone upright): if a radio row's two options cannot sit side by side in half the card, the boxes go under the radios and the radios have the full width.
+			var need_w: float = 0.0
+			for id0 in ["players", "p1", "p2"]:
+				if not list.has(id0):
+					continue
+				var ow: float = 0.0
+				for o0 in _options(id0):
+					ow += 30.0 * maxf(dp, 1.0) * 0.8 + UiText.width(str(o0[1]), fs) + gap
+				need_w = maxf(need_w, ow)
+			var stack: bool = need_w > colw
+			if stack:
+				colw = inner_w
+			# Left column: the radio rows, one line each: the label, then its options side by side; a row that does not fit inline puts its options under the label.
+			var left_h: float = 0.0
+			var radio_rows: Array = []
+			for id in ["players", "p1", "p2"]:
+				if not list.has(id):
+					continue
+				var opts: Array = _options(id)
+				var lab: String = word("players") if id == "players" else word(id)
+				var label_w: float = UiText.width(lab, fs) + gap
+				var opt_ws: Array = []
+				var total: float = label_w
+				for o in opts:
+					var w: float = 30.0 * maxf(dp, 1.0) * 0.8 + UiText.width(str(o[1]), fs) + gap
+					opt_ws.append(w)
+					total += w
+				var inline: bool = total <= colw
+				radio_rows.append({"id": id, "label": lab, "inline": inline, "opt_ws": opt_ws, "h": tm if inline else (tm * 2.0 + gap * 0.5)})
+				left_h += float(radio_rows[radio_rows.size() - 1]["h"]) + gap
+			var note_h: float = 0.0
+			var note_text: String = ""
+			if int(cfg.get("players", 1)) == 1:
+				note_text = word("one_note")
+			elif str(cfg.get("p1", "kb")) == "kb" and str(cfg.get("p2", "kb")) == "kb":
+				note_text = word("both_kb")
+			elif bool(st.get("pad_missing", false)):
+				note_text = word("no_pad")
+			if note_text != "":
+				var note_lines: PackedStringArray = UiText.wrap(note_text, fs_s, colw)
+				note_h = float(note_lines.size()) * UiText.height(fs_s) * 1.2 + gap * 0.5
+			var left_h_note: float = left_h + note_h
+			left_h = left_h_note
+			# Right column: the checkboxes, in one or two sub-columns by what fits.
+			var cws: float = 0.0
+			for c in CHECKS:
+				cws = maxf(cws, UiText.width(word(c), fs) + tm * 0.55 + gap)
+			var subcols: int = 1 if cws * 2.0 + gap > colw else 2
+			var check_rows: int = int(ceil(float(CHECKS.size()) / float(subcols)))
+			var right_h: float = float(check_rows) * (tm + gap * 0.5)
+			var btn_h: float = tm
+			var sub_lines: PackedStringArray = UiText.wrap(rf_line(cfg), fs_s, inner_w)
+			var sub_h: float = float(sub_lines.size()) * UiText.height(fs_s) * 1.2 + gap * 0.5   # the small line under the button
+			var total_h: float = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_h)) + gap + btn_h + sub_h
+			if total_h > area.size.y and note_h > 0.0:
+				# Too tall with its one line of help: the line goes (it is a courtesy), and the layout is tried again without it.
+				left_h -= note_h
+				note_h = 0.0
+				note_text = ""
+				total_h = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_h)) + gap + btn_h + sub_h
+			# A short screen: Start takes the empty cell of the boxes (the five boxes in two columns leave one) and Back sits under the left column.
+			var corner: bool = subcols == 2 and CHECKS.size() < subcols * check_rows
+			var total_a: float = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_h)) + sub_h
+			var use_corner: bool = corner and total_h > area.size.y
+			if use_corner:
+				total_h = total_a
+			best = {"fs": fs, "fs_s": fs_s, "lines": lines, "lh": lh, "notice_h": notice_h, "colw": colw, "radio_rows": radio_rows, "left_h": left_h, "note_text": note_text, "note_h": note_h,
+				"subcols": subcols, "check_rows": check_rows, "right_h": right_h, "cws": cws, "total_h": total_h, "corner": use_corner, "back_w": back_w, "sub_h": sub_h, "sub_lines": sub_lines, "stack": stack}
+			if total_h <= area.size.y:
+				break
+		if float(best["total_h"]) <= area.size.y + 0.5:
 			break
 	var ch: float = minf(float(best["total_h"]), area.size.y)
 	var card := Rect2(card_x, area.position.y + (area.size.y - ch) * 0.5, cw, ch)
@@ -153,12 +174,14 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 		yl += h + gap
 	var note_pos := Vector2(x0, yl)
 	var note_extra: float = float(best["note_h"])
-	var xr: float = x0 + colw2 + gap * 2.0
+	var stacked: bool = bool(best["stack"])
+	var xr: float = x0 if stacked else x0 + colw2 + gap * 2.0
+	var cy: float = (yl + note_extra + gap) if stacked else y   # stacked: the boxes sit under the radios and their line
 	var cwid: float = (colw2 - gap * float(int(best["subcols"]) - 1)) / float(best["subcols"])
 	for i in range(CHECKS.size()):
 		var col: int = i / int(best["check_rows"])
 		var rowi: int = i % int(best["check_rows"])
-		var r := Rect2(xr + float(col) * (cwid + gap), y + float(rowi) * (tm + gap * 0.5), cwid, tm)
+		var r := Rect2(xr + float(col) * (cwid + gap), cy + float(rowi) * (tm + gap * 0.5), cwid, tm)
 		items.append({"row": CHECKS[i], "kind": "check", "value": "", "label": word(CHECKS[i]), "rect": r})
 		row_boxes[CHECKS[i]] = r
 	var by: float = card.end.y - pad - float(best["sub_h"]) - tm
@@ -168,7 +191,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var back := Rect2(card.end.x - pad - float(best["back_w"]), card.position.y + pad, float(best["back_w"]), tm)
 	if bool(best["corner"]):
 		var crow: int = int(best["check_rows"]) - 1
-		start = Rect2(xr + (cwid + gap) * float(int(best["subcols"]) - 1), y + float(crow) * (tm + gap * 0.5), cwid, tm)
+		start = Rect2(xr + (cwid + gap) * float(int(best["subcols"]) - 1), cy + float(crow) * (tm + gap * 0.5), cwid, tm)
 	items.append({"row": "start", "kind": "button", "value": "", "label": word("start"), "rect": start})
 	row_boxes["start"] = start
 	if not_now:
@@ -190,7 +213,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	if float(best["total_h"]) > area.size.y + 0.5:
 		fits = false
 	return {"sub_lines": best["sub_lines"], "sub_pos": Vector2(x0, card.end.y - pad - float(best["sub_h"]) + gap * 0.25), "card": card, "notice_lines": best["lines"], "notice_pos": notice_pos, "lh": best["lh"], "fs": best["fs"], "fs_s": best["fs_s"], "items": items, "rows": list, "row_boxes": row_boxes,
-		"radio_rows": best["radio_rows"], "note_text": best["note_text"], "note_pos": note_pos, "note_w": colw2, "tm": tm, "pad": pad, "gap": gap, "cs": cs, "fits": fits,
+		"stack": best["stack"], "total_h": best["total_h"], "area_h": area.size.y, "radio_rows": best["radio_rows"], "note_text": best["note_text"], "note_pos": note_pos, "note_w": colw2, "tm": tm, "pad": pad, "gap": gap, "cs": cs, "fits": fits,
 		"focus": clampi(int(st.get("focus", 0)), 0, list.size() - 1), "touch": touch, "cfg": cfg}
 
 
