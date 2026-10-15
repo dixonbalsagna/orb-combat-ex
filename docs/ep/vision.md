@@ -983,3 +983,11 @@ What follows from it:
 ## Whip-pan haze or a pan cap (Orb, 2026-10-15, morning)
 
 Asked whether to clear the signature-in-the-city flash failure by melting buildings into the background during a whip pan (a stronger form of the pan haze Orb turned off on 2026-10-06) or by Camera capping whip-pan speed, Orb chose "Camera's cap first". The haze is held as the fallback, used only if the cap does not clear the scene.
+
+## Sky, fog and mountains, tightened (Orb, 2026-10-15, morning)
+
+Verbatim:
+
+> I want all elements of distance fog, background mountains, skies to all look fantastic and not overlapping in a strange way, in the original demo the sky and stars would appear as a close fog that obstructed view of the mountains, I want all the visuals to get tightened so the lighting can be fully appreciated when flying around the planet
+
+What follows from it: a visual pass on the layering of sky, stars, distance fog and background mountains, so each sits at its own depth (no sky or stars drawn as a near fog in front of the mountains) and the lighting reads when flying around the planet.
