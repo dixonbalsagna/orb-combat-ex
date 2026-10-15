@@ -47,13 +47,17 @@ Orb: "two guys with different colored shirts wearing backpacks ... perfectly fin
 2. **The Rank Sash**: one armoured shoulder, a diagonal sash with **five rank studs** (his ranking gag, worn), boots to the knee; weight back, arms folded high.
 3. **The Long Gloves**: a sleeveless high-collar vest, narrow trousers, long pale gloves; the slimmest read and the cheapest; a duellist's side-on line.
 
+**Narrative's read (added 2026-10-15, from `docs/narrative` identity pages; options for Orb to tick, not rules)**: the useful contrast is how they stand and what they carry, not their colours.
+4. **The Worker** (Protagonist): bouncing on his toes, weight forward, always facing you; sleeves rolled, patched where he has fixed things, **a tool roll across the back instead of a backpack**, tape at the wrists above the plated fists; rolls his shoulders before a heavy and nods at a technique he likes. About +90 triangles, no bones; about 4 poses.
+4. **The Pressed One** (Anti-hero): chin up and still, **one limb left out for a beat after each blow**; a coat he never lets crease (pressed edges, pale piping), plates polished until they shine even when filthy, buttoned cuffs; **the frames are the one expensive thing**; fixes a cuff before a heavy and a finger to the frames before he commits. About +130 triangles, no bones; about 4 poses and a pose hold.
+
 Each is drawn at twice fight size and at fight size beside the other fighter as approved (so the pair has to read apart), then flat black at 86 and 46 px. **Costs** are in parts and are estimates: none needs a new skeleton; the cheapest is the Long Gloves (about +80 triangles, no bones); the dearest are the Fixer (6 rigid parts) and the Long Coat (5). The sash bones R1 already has can carry a towel, tags, a robe or coat tails. Legal's rules on hair and transformation looks hold: no hair-colour ladder, no pale-and-purple regal for the Anti-hero, no cape (Orb), no red or gold glow.
 
 ## Questions for Orb (one sitting)
 1. **Aura:** which of the five (or a mix, say 3's colours with 5's shape)?
 2. **Glasses:** the four states and the three triggers (head wound, a head throw, the final break), and the nudge that undoes a bend?
-3. **Protagonist look:** the Sparring Partner, the Fixer or the Showman (or a mix: the tags on the Fixer's apron, say)?
-4. **Anti-hero look:** the Long Coat, the Rank Sash or the Long Gloves?
+3. **Protagonist look:** the Sparring Partner, the Fixer, the Showman or the Worker (or a mix: the tags on the Fixer's apron, say)?
+4. **Anti-hero look:** the Long Coat, the Rank Sash, the Long Gloves or the Pressed One?
 
 ## What goes to whom after Orb picks
 Narrative writes the glasses' and the tags' lines; Rendering and Animation build them later (the costs above); Legal screens the picks before any build (the studs and the ring are marks, not a sigil, but Legal should see them); I redraw the turnarounds of the two picked looks and put the aura set into `data/art/auras.json` and `flashes.json` (Tools' schema unchanged).
