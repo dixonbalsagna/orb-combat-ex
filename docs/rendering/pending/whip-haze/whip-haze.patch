@@ -1,0 +1,180 @@
+diff --git a/render/core/look.gd b/render/core/look.gd
+index 410168d..68494b0 100644
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -580,6 +580,15 @@ const PAN_HAZE_MIX: float = 0.7
+ const PAN_HAZE_IN_S: float = 0.1
+ const PAN_HAZE_OUT_S: float = 0.6
+ const PAN_HAZE_CUT: float = 20.0
++## ... but a whip pan hazes every building in every match (PAN_WHIP_ON), whatever the switch: from PAN_WHIP.x screen
++## widths a second to whole at PAN_WHIP.y, melting as far as PAN_WHIP_MIX into the sky and ground behind, in over
++## PAN_HAZE_IN_S and out over PAN_HAZE_OUT_S. In the signature clip in the city (seed 12345) a pane's camera went from
++## standing to 3.5 widths a second in four ticks past a row of houses (736 to 740), and a launch threw another at 10 to
++## 20 widths a second through the towers (428 on): a facade swept that fast flipped 40,000 pixels each way a tick, and
++## which way won turned every tick. Hazed at PAN_HAZE_MIX the pale towers still did; melted fully they do not.
++const PAN_WHIP_ON: bool = true
++const PAN_WHIP := Vector2(1.5, 2.5)
++const PAN_WHIP_MIX: float = 1.0
+ 
+ static var _colors: Dictionary = {}
+ 
+diff --git a/render/core/mats.gd b/render/core/mats.gd
+index f830b22..de99533 100644
+--- a/render/core/mats.gd
++++ b/render/core/mats.gd
+@@ -19,6 +19,7 @@ var _focus: float = 0.0       # the depth of the camera's focus plane (Camera's
+ var _sky: Dictionary = {}     # sky uniforms the tracked (fogging) materials share
+ var _haze: float = 0.0        # this pane's pan haze (pane_world.gd), for the tracked materials that take it
+ var _haze_ground := Color.BLACK
++var _haze_whip: float = 0.0   # ... and the whip haze (RenderLook.PAN_WHIP)
+ 
+ 
+ ## This pane's opaque flat material. shade 0 is fully flat (no fake light).
+@@ -106,6 +107,7 @@ func track(m: ShaderMaterial) -> void:
+ 	m.set_shader_parameter("bend", _bend)
+ 	m.set_shader_parameter("cam_dist", _dist)
+ 	m.set_shader_parameter("pan_haze", _haze)
++	m.set_shader_parameter("pan_whip", _haze_whip)
+ 	m.set_shader_parameter("pan_ground", _haze_ground)
+ 	for k in _sky:
+ 		m.set_shader_parameter(k, _sky[k])
+@@ -153,12 +155,16 @@ func set_sky(name: String, v) -> void:
+ 
+ ## This pane's pan haze, 0 to 1 (PaneWorld.pan_haze), and the ground's colour under its camera, for the tracked
+ ## materials (building.gdshader reads them). The colour is only sent while there is a haze to use it.
+-func set_haze(v: float, ground: Color) -> void:
++func set_haze(v: float, ground: Color, whip: float = 0.0) -> void:
+ 	if v != _haze:
+ 		_haze = v
+ 		for m in _tracked:
+ 			m.set_shader_parameter("pan_haze", v)
+-	if v > 0.0 and ground != _haze_ground:
++	if whip != _haze_whip:
++		_haze_whip = whip
++		for m in _tracked:
++			m.set_shader_parameter("pan_whip", whip)
++	if maxf(v, whip) > 0.0 and ground != _haze_ground:
+ 		_haze_ground = ground
+ 		for m in _tracked:
+ 			m.set_shader_parameter("pan_ground", ground)
+diff --git a/render/core/pane_world.gd b/render/core/pane_world.gd
+index 22cd3ef..d1af5e9 100644
+--- a/render/core/pane_world.gd
++++ b/render/core/pane_world.gd
+@@ -69,6 +69,7 @@ static var sky_react_on: bool = false      # the clouds part for a fighter at ti
+ static var flash_calm: bool = false        # reduced flashing or reduced motion: the grooves' glow and char are drawn calm (main sets it)
+ static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
+ var pan_haze: float = 0.0                  # 0 to 1, this frame
++var pan_whip: float = 0.0                  # 0 to 1, this frame: the whip haze (RenderLook.PAN_WHIP), in every match
+ var _sky_glows: int = 0                    # the town glows handed to the sky last frame
+ var _glow_seen: Dictionary = {}            # a town's index -> how far its glow has come into this pane's view, 0 to 1 (it comes in over SKY_GLOW_IN_S)
+ var _glow_t: float = NAN
+@@ -222,6 +223,7 @@ func _pan_haze(host: SimHost, a: float, cam_x: float, vp: Vector2) -> void:
+ 	var ground: Color = RenderLook.col(RenderLook.BIOME[WorldBiomes.biomeAt(SimWrap.wrap(cam_x))])
+ 	if is_nan(_pan_x) or dt < 0.0 or dt > 0.5:
+ 		pan_haze = 0.0   # a new match, or a seek
++		pan_whip = 0.0
+ 		_pan_ground = ground
+ 	elif dt > 0.0:
+ 		_pan_ground = _pan_ground.lerp(ground, clampf(dt / RenderLook.PAN_HAZE_OUT_S, 0.0, 1.0))
+@@ -229,11 +231,13 @@ func _pan_haze(host: SimHost, a: float, cam_x: float, vp: Vector2) -> void:
+ 		if speed < RenderLook.PAN_HAZE_CUT:
+ 			var want: float = smoothstep(RenderLook.PAN_HAZE_FROM, RenderLook.PAN_HAZE_FULL, speed) if pan_haze_on else 0.0
+ 			pan_haze = move_toward(pan_haze, want, dt / (RenderLook.PAN_HAZE_IN_S if want > pan_haze else RenderLook.PAN_HAZE_OUT_S))
++			var whip: float = smoothstep(RenderLook.PAN_WHIP.x, RenderLook.PAN_WHIP.y, speed) if RenderLook.PAN_WHIP_ON else 0.0
++			pan_whip = move_toward(pan_whip, whip, dt / (RenderLook.PAN_HAZE_IN_S if whip > pan_whip else RenderLook.PAN_HAZE_OUT_S))
+ 	else:
+ 		return   # the same instant again (a frozen tick): nothing moves
+ 	_pan_x = cam_x
+ 	_pan_t = t
+-	mats.set_haze(pan_haze, _pan_ground)
++	mats.set_haze(pan_haze, _pan_ground, pan_whip)
+ 
+ 
+ ## A pane's cut-away request for this frame, from Camera's frame: its `cutaway` a pane (request, only, radius_px), with
+diff --git a/render/core/planet_view.gd b/render/core/planet_view.gd
+index 94c61dc..bf116e3 100644
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -1634,6 +1634,7 @@ func _building_mat() -> ShaderMaterial:
+ 	m.set_shader_parameter("dmg_frame", RenderLook.col(RenderLook.DMG_FRAME))
+ 	m.set_shader_parameter("roof_over", RenderLook.ROOF_OVER)
+ 	m.set_shader_parameter("pan_mix", RenderLook.PAN_HAZE_MIX)
++	m.set_shader_parameter("pan_whip_mix", RenderLook.PAN_WHIP_MIX)
+ 	m.set_shader_parameter("dmg_holes", RenderLook.DMG_HOLES)
+ 	m.set_shader_parameter("pattern_budget", RenderLook.PATTERN_BUDGET)
+ 	m.set_shader_parameter("open_col", RenderLook.OPEN_COL)
+diff --git a/render/shaders/building.gdshader b/render/shaders/building.gdshader
+index 71ef275..1b9c43a 100644
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -102,6 +102,8 @@ uniform vec4 dmg_frame : source_color = vec4(0.29, 0.29, 0.31, 1.0);
+ uniform float roof_over = 1.2;
+ uniform float pan_haze = 0.0;        // 0 to 1: this pane's camera is travelling fast (PaneWorld.pan_haze); the wall loses its panes and marks and melts toward the sky behind it
+ uniform float pan_mix = 0.7;         // RenderLook.PAN_HAZE_MIX: how far it melts at full haze
++uniform float pan_whip = 0.0;        // 0 to 1: this pane's camera whips along the ground (PaneWorld.pan_whip), in every match
++uniform float pan_whip_mix = 1.0;    // RenderLook.PAN_WHIP_MIX: how far a wall melts at a full whip
+ uniform vec4 pan_ground : source_color = vec4(0.37, 0.57, 0.25, 1.0);   // the ground's colour under this pane's camera: what is behind a wall below the horizon line
+ uniform float ref_cull = 0.0;        // 1: leave the back faces to the rasterizer (tools/cull_check.gd's reference picture)
+ uniform vec4 look_a[10];             // a look's windows: the pitch of a column, the pane's span across its cell (from, to), the share of cells with one
+@@ -733,13 +735,14 @@ void fragment() {
+ 		// The rows' haze: the air's colour toward the horizon in this direction, more of it the farther back the row.
+ 		col = mix(col, sky_color(min(elevation(v_view), horizon + 0.3 * sky_tan)), v_look.z);
+ 	}
+-	if (pan_haze > 0.001) {
++	float ph = max(pan_haze, pan_whip);   // the whole town's haze behind its switch, or a whip's
++	if (ph > 0.001) {
+ 		// A fast pan: the plain wall in place of its panes, soot and cracks, then toward what is behind it: the sky's
+ 		// colour in this direction above the horizon line, the ground's below it.
+ 		vec3 plain = FRONT_FACING ? flat_shade(COLOR.rgb, NORMAL, 0.35) : inside.rgb;
+ 		float q = elevation(v_view);
+ 		vec3 behind = mix(pan_ground.rgb, sky_color(q), smoothstep(-0.03, 0.03, (q - horizon) / sky_tan));
+-		col = mix(mix(col, plain, pan_haze), behind, pan_haze * pan_mix);
++		col = mix(mix(col, plain, ph), behind, max(pan_haze * pan_mix, pan_whip * pan_whip_mix));
+ 	}
+ 	ALBEDO = col;
+ }
+diff --git a/render/tools/flash_reg_check.gd b/render/tools/flash_reg_check.gd
+index 2efc37d..bbdea63 100644
+--- a/render/tools/flash_reg_check.gd
++++ b/render/tools/flash_reg_check.gd
+@@ -391,6 +391,39 @@ func _run() -> void:
+ 		pw._pan_haze(host, t, x, vp)
+ 	_expect(pw.pan_haze == 0.0, "... and with its switch off there is none")
+ 	PaneWorld.pan_haze_on = RenderLook.PAN_HAZE_DEFAULT
++	# 10b. The whip haze (RenderLook.PAN_WHIP): on in every match, with the whole town's switch off.
++	for k in range(60):   # the camera stands: what the tests above left of it clears
++		t += 1.0
++		pw._pan_haze(host, t, x, vp)
++	var w_rush: float = 0.0
++	for k in range(60):   # a rush: a screen width a second
++		t += 1.0
++		x += 1.0 * wide * SimConst.DT
++		pw._pan_haze(host, t, x, vp)
++		w_rush = maxf(w_rush, pw.pan_whip)
++	var w_fast: Array = []
++	for k in range(12):   # a whip: four screen widths a second
++		t += 1.0
++		x += 4.0 * wide * SimConst.DT
++		pw._pan_haze(host, t, x, vp)
++		w_fast.append(pw.pan_whip)
++	var w_sent: bool = is_equal_approx(pw.mats._haze_whip, pw.pan_whip) and pw.pan_haze == 0.0
++	t += 1.0
++	pw._pan_haze(host, t, x + 5.0 * wide, vp)
++	var w_cut: float = pw.pan_whip
++	x += 5.0 * wide
++	var w_still: Array = []
++	for k in range(60):
++		t += 1.0
++		pw._pan_haze(host, t, x, vp)
++		w_still.append(pw.pan_whip)
++	_expect(RenderLook.PAN_WHIP_ON and w_rush == 0.0 and w_fast[5] >= 0.99 and _turns(w_fast) == 0 and w_sent, "the whip haze ships on, with the whole town's off: none in a rush of a screen width a second, whole within 6 ticks of four, and the materials have it (%.2f, %.2f)" % [w_rush, w_fast[5]])
++	_expect(w_cut == w_fast[11] and w_still[20] > 0.0 and w_still[59] == 0.0 and _turns(w_still) == 0, "... a cut leaves it as it was (%.2f), and it clears in one fall once the camera stands (%.2f after 20 ticks, %.2f after 60)" % [w_cut, w_still[20], w_still[59]])
++	var wm_ok: bool = true
++	for m in [main.planet._front_mat, main.planet._bld_mat]:
++		if m == null or not is_equal_approx(float(m.get_shader_parameter("pan_whip_mix")), RenderLook.PAN_WHIP_MIX):
++			wm_ok = false
++	_expect(wm_ok, "... and both building materials (the front row's and the other rows') hold RenderLook.PAN_WHIP_MIX")
+ 	# 11. A public page's link cannot reach the capture hook or the study route (they start with no notice).
+ 	var pub: Dictionary = main.gate_args({"flashcap": "1", "study": "zip", "nointro": "1", "sky": "night", "skymood": "1,1,1", "staticsky": "1", "skyreact": "1", "panhaze": "1", "nopanhaze": "1"}, false)
+ 	var loc: Dictionary = main.gate_args({"flashcap": "1", "study": "zip", "nointro": "1"}, true)

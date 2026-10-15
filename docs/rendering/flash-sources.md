@@ -305,6 +305,16 @@ What draws it is the **foreground rule** (`fore_fall` in `ground.gdshaderinc`). 
 
 **Tried and dropped:** under reduced flashing, a crater's earth drawn at a third of its strength. It took one stretch of ai seed 38 reduced from 3 to 1 and another from 2.5 to 3.5.
 
+## A whip pan through a town: signaturecity (2026-10-15)
+
+**What fails it.** Tools' 56-clip run on the demo commit (10c2d177) read the signature clip in the city (seed 12345) at 4 / 5 / 4 in both modes. Its worst second counts 8 turns between ticks 738 and 779. Six of them, at 738 to 748, are a row of village houses sliding about 40 pixels a tick across the left pane: about 40,000 pixels darken and 40,000 brighten each tick (brick and roofs against grass), and which wins turns every tick. A headless probe of the clip with the split attached shows that pane's camera going from standing to 3.5 screen widths a second in four ticks (736 to 740), 4.5 by 746. The houses are World's row 1, about 400 units behind the fighter plane, low in the pane because the fighters fly high. Nothing changes stage and nothing is carved. Of the other two turns, one is the ground turning from the village's colour to the forest's as the pan crosses the biome edge (769), and the other is a stand of trees leaving the pane (779).
+
+**Orb's ruling: Camera's cap first.** Camera's whip-pan speed cap is measured first. Rendering's whip haze is parked as the fallback (`pending/whip-haze/`), used only if the cap does not clear the clip.
+
+- **The front row only, as first asked:** buildings in front of the focus plane hazed in a fast pan, eased over 0.3 s. It did nothing (4 / 5 / 4 and 4 / 4 / 4): the houses stand behind the fight, and the ease came too late for a camera that whips in four ticks. Dropped. It cost nothing on collapse normal, ai-4, ai-38 or ai-39 normal.
+- **The whole town's pan haze switched on for a whip only** (from 1.5 widths a second, at its own 70%): the houses' turns went, but a launch at tick 428 throws the other pane's camera at 10 to 20 widths a second through the towers for about a second and a half, and the pale towers it left sweeping made new turns at 444 to 510 (4 / 4 / 4 in both modes).
+- **The same, melted fully into the sky and ground behind** (the parked fallback): 2 / 3 / 2 normal and 2 / 2 / 2 reduced. That build also carried the front-row form; the parked patch is the whip alone, and it has not been captured.
+
 ## The capture hook for Tools' frame analyser
 
 Tools' analyser measures pixels against the standard (`docs/tools/flash-check.md`). It needs clips that are exactly one tick a frame, so the game offers a hook, **only** when started with `--flashcap` or, on the web, `/play/?flashcap=1` (`render/tools/flash_capture.gd`, `FlashCapture`; the contract is at the top of `tools/flash/capture-web.mjs`). Normal play never makes one: without the argument the page has no `window.__flashcap`.
