@@ -1,0 +1,346 @@
+diff --git a/data/anim/flight.json b/data/anim/flight.json
+index aea71aa1..7d3c1a08 100644
+--- a/data/anim/flight.json
++++ b/data/anim/flight.json
+@@ -21,5 +21,5 @@
+   0.95
+  ],
+  "tilt": 35.0,
+- "tilt_rate": 45.0
++ "tilt_rate": 150.0
+ }
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index 32e0d249..fb20216d 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -266,6 +266,7 @@ var depth_vz: float = 0.0                # his speed in depth, units a tick (pos
+ var _dz_prev: float = 0.0
+ var _dz_tick: int = -1
+ var _stride: float = 0.0                 # footfall phase of a step in depth
++var waiting_kind: String = ""            # what a body that is in the fight and not the partner is doing (circle, guard, step_in, settle, flinch); "" with two bodies or in his own exchange
+ var dig_w: float = 0.0                   # the held X's dig-in weight this solve (debug and tests)
+ var burst_set: float = 0.0               # how far the burst's set pose is laid over the body this tick (0 to 0.9; VFX and the tools read it)
+ var _ci_step_k: float = 1.0                # the share of that step a medium on 12 ticks takes (Combat's w6: a half step)
+@@ -482,13 +483,14 @@ func _lead_layer(S: SimState, f, dt: float) -> void:
+ 				gain *= 1.0 - smoothstep(float(st[0]), float(st[1]), -f.vy / maxf(absf(f.vx), 1.0))
+ 			aim = head_first
+ 		var delta: float = wrapf(aim - net, -PI, PI)
++		var fastk: float = 1.0 + 3.0 * smoothstep(float(L.speed[1]), float(L.speed[1]) * 3.0, sp)   # a body flying at 2,000 units a second is aligned in a few ticks, not in a tenth of a second
+ 		if sp > 300.0 and absf(delta) > 1.2:
+ 			# a turn that has to pass through "feet first" on the short way (an upside-down body landing into a skid, turned upright through the horizontal) goes the long way, through head first
+ 			var mid: float = net + delta * 0.5
+ 			var dm: float = (-sin(mid) * v.x + cos(mid) * v.y) / sp
+ 			if dm < -0.5:
+ 				delta -= signf(delta) * TAU
+-		_lead_d += delta * (1.0 - exp(-dt * rate * gain))
++		_lead_d += delta * (1.0 - exp(-dt * rate * gain * fastk))
+ 	else:
+ 		# on his feet or flying free and carried fast (a knockback moves him by position, not by velocity): a body folded or laid out with the feet leading is stood up
+ 		# to a tilt of `tilt` degrees at most; otherwise the turn is let go, back to the sim's own angle, the short way
+@@ -748,7 +750,7 @@ func _agency_layer(S: SimState, f, T: float) -> void:
+ 		var ex = S.dirS.ex
+ 		if T - _ag_t0 > cap or f.state == "launched" or f.state == "down" or f.state == "dropped" or (ex != null and (ex.A == f or ex.D == f)):
+ 			_ag_t1 = T
+-			_ag_fast = f.state == "launched" or f.state == "dropped"
++			_ag_fast = f.state == "launched" or f.state == "dropped" or f.state == "down"   # a charge's lean does not ride a flight or a get-up
+ 	var wgt: float = smoothstep(0.0, _ag_in, T - _ag_t0)
+ 	if _ag_t1 >= 0.0:
+ 		var out_t: float = minf(_ag_out, 0.05) if _ag_fast else _ag_out
+@@ -1241,11 +1243,73 @@ func _depth_step_layer(S: SimState, f) -> void:
+ 		_mix_pose(AnimData.pose("dp.cross_b.step", mir), sin(PI * (ph - 0.5) * 2.0) * amp)
+ 
+ 
++## His rival: the one in his exchange, else the nearest (shortest arc, and depth when it is on). With two bodies it is the other one, as it always was; with more (a guard beside the Empress, one versus many) a body that
++## is in the fight and not the partner looks at, and is looked at by, the nearest.
+ func _opponent(S: SimState, f):
++	var ex = S.dirS.ex
++	if ex != null:
++		if ex.A == f and ex.D != null:
++			return ex.D
++		if ex.D == f and ex.A != null:
++			return ex.A
++	var best = null
++	var best_d: float = 1.0e18
+ 	for o in S.fighters:
+-		if o != f:
+-			return o
+-	return null
++		if o == f:
++			continue
++		var dx: float = SimWrap.sdx(f.x, o.x)
++		var dz: float = (o.z - f.z) if S.depthOn else 0.0
++		var d: float = dx * dx + dz * dz
++		if d < best_d:
++			best_d = d
++			best = o
++	return best
++
++
++## A body that is in the fight and not the partner (a guard waiting his turn, the Empress's other guard: one versus many, Encounter's model): free, with an exchange running that is not his. He does not stand in his
++## idle: ninety ticks (1.5 s) make one round, so he interjects at most once in that time: he circles (a shuffle of small steps), raises his guard, takes one step in, and settles; and a blow that lands on the partner's
++## rival within 400 units makes him flinch. From poses that exist (stance, move, react); the weights are the whole of it. Nothing with two bodies: `waiting_kind` stays "".
++func _waiting_layer(S: SimState, f) -> void:
++	waiting_kind = ""
++	if S.fighters.size() <= 2 or f.state != "free":
++		return
++	var ex = S.dirS.ex
++	if ex == null or ex.A == f or ex.D == f:
++		return
++	var ph: int = (S.tick + slot * 23) % 90
++	var kind: String = "circle"
++	var w_g: float = 0.35   # the guard's baseline: a little raised
++	if ph >= 45 and ph < 61:
++		kind = "guard"
++		w_g = lerpf(0.35, 0.75, smoothstep(45.0, 50.0, float(ph)) * (1.0 - smoothstep(56.0, 61.0, float(ph))))
++	elif ph >= 61 and ph < 73:
++		kind = "step_in"
++	elif ph >= 73:
++		kind = "settle"
++		w_g = lerpf(0.5, 0.35, smoothstep(73.0, 89.0, float(ph)))
++	var sd: AnimPose = AnimData.pose("stance.defensive")
++	_mix_pose(sd, w_g)
++	var vface_s: bool = vface < 0.0
++	match kind:
++		"circle":
++			var half: int = (ph / 22) % 2
++			var tt: float = float(ph % 22) / 22.0
++			_mix_pose(AnimData.pose("move.step_f" if half == 0 else "move.step_b", vface_s), 0.3 * sin(PI * tt))
++		"step_in":
++			var tt2: float = float(ph - 61) / 12.0
++			_mix_pose(AnimData.pose("move.step_f", vface_s), 0.55 * sin(PI * tt2))
++			_mix_pose(AnimData.pose("stance.aggressive"), 0.35 * sin(PI * tt2))
++	# a blow lands on one of the two in the exchange close by: a flinch for the length of his reaction, by distance
++	for rv in [ex.A, ex.D]:
++		if rv == null or rv == f:
++			continue
++		var rf: AnimFighter = RenderAnim.fighter(S, rv)
++		if not rf._reacts.is_empty():
++			var near: float = 1.0 - smoothstep(150.0, 400.0, absf(SimWrap.sdx(f.x, rv.x)))
++			if near > 0.01:
++				kind = "flinch"
++				_mix_pose(AnimData.pose("react.flinch_b", vface_s), 0.5 * near)
++	waiting_kind = kind
+ 
+ 
+ func _wanted_face(S: SimState, f) -> float:
+@@ -1324,6 +1388,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
+ 	hips = _base_hips
+ 	curl = _base_curl
+ 	_depth_step_layer(S, f)
++	_waiting_layer(S, f)
+ 	# 2. a cue pose from Combat's cue events
+ 	if not _cue.is_empty():
+ 		var t: float = T - float(_cue.t0)
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index f3b339d2..9808f478 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -1159,6 +1159,61 @@ func _test_windups() -> void:
+ 	print("windups: %d medium and heavy wind-ups judged on the real solve: no limb above 80 before the last 6 ticks, every contact solved; after a super-heavy's blow no hand is above %.0f from 6 ticks on" % [judged, fol_max])
+ 
+ 
++## Many bodies (nine-cells-look.md section 5; `AnimMany`): a body's rival is the one in his exchange, else the nearest; with two bodies it is the other one, always; two stand-ins in a ring about the pair are solved
++## with the real two for 300 ticks: each picks the nearest real fighter, the waiting repertoire shows (circle, guard, step in, settle; a flinch when a blow lands near), no joint is past a limit on a stand-in,
++## no NaN, and the real pair's own rival is still his partner.
++func _test_many_bodies() -> void:
++	AnimData.load_every_wave()
++	RenderAnim._fighters.clear()
++	main.start_match(4, {"p1": true, "p2": true})
++	var S: SimState = main.host.S
++	var two_ok: bool = true
++	for k in range(120):
++		main.frame(1.0 / 60.0)
++		var a0: AnimFighter = RenderAnim.fighter(S, S.fighters[0])
++		two_ok = two_ok and a0._opponent(S, S.fighters[0]) == S.fighters[1] and a0._opponent(S, S.fighters[1]) == S.fighters[0]
++	_expect(two_ok, "many bodies: with two bodies each one's rival is the other")
++	var stands: Array = AnimMany.make(S, 2)
++	var kinds := {}
++	var nearest_ok: bool = true
++	var partner_ok: bool = true
++	var bad: int = 0
++	var nan: int = 0
++	var in_exchange: int = 0
++	for k in range(300):
++		main.frame(1.0 / 60.0)
++		AnimMany.step(S, stands, 1.0 / 60.0)
++		var ex = S.dirS.ex
++		if ex != null:
++			in_exchange += 1
++			var a1: AnimFighter = RenderAnim.fighter(S, ex.A)
++			partner_ok = partner_ok and a1._opponent(S, ex.A) == ex.D and a1._opponent(S, ex.D) == ex.A
++		for st in stands:
++			var af: AnimFighter = RenderAnim.fighter(S, st)
++			var near = null
++			var nd: float = 1.0e18
++			for o in S.fighters:
++				if o != st:
++					var d: float = absf(SimWrap.sdx(st.x, o.x))
++					if d < nd:
++						nd = d
++						near = o
++			if ex == null or (ex.A != st and ex.D != st):
++				nearest_ok = nearest_ok and af._opponent(S, st) == near
++			if af.waiting_kind != "":
++				kinds[af.waiting_kind] = int(kinds.get(af.waiting_kind, 0)) + 1
++			bad += AnimJoints.violations(af.q, af._rd.shape_key).size()
++			for qq in af.q:
++				if is_nan(qq.x) or is_nan(qq.w):
++					nan += 1
++		AnimMany.detach(S, stands)
++	_expect(nearest_ok, "many bodies: a stand-in outside the exchange looks at the nearest")
++	_expect(partner_ok, "many bodies: the two in the exchange are each other's rival, with four bodies in the list")
++	_expect(bad == 0 and nan == 0, "many bodies: %d joint violations and %d NaN on the stand-ins" % [bad, nan])
++	_expect(in_exchange > 40 and kinds.has("circle") and kinds.has("guard") and kinds.has("step_in"), "many bodies: the waiting repertoire showed %s over %d exchange ticks" % [str(kinds), in_exchange])
++	print("many bodies: 2 stand-ins about the pair for 300 ticks, waiting %s, %d joint violations" % [str(kinds), bad])
++
++
+ ## The heavy's tell sinks (the nine cells' look audit, number 1): on the 28-tick wind-up the pelvis goes down 5 units or more by the end of the tell for a step, a turn or an unwind, and a fall (which
+ ## rises to come down) does not sink. Read off the real solve's trace of the pelvis, 32 ticks before the contact (not started) against the lowest point up to 4 before it.
+ func _test_tell_sinks() -> void:
+@@ -3603,6 +3658,7 @@ func _run() -> void:
+ 	_test_windups()
+ 	_test_tier_drives()
+ 	_test_tell_sinks()
++	_test_many_bodies()
+ 	_test_medium_wind()
+ 	_test_energy_reach()
+ 	_test_free_arm()
+diff --git a/render/anim/tools/joint_scan.gd b/render/anim/tools/joint_scan.gd
+index 1ea09aef..cf237453 100644
+--- a/render/anim/tools/joint_scan.gd
++++ b/render/anim/tools/joint_scan.gd
+@@ -17,6 +17,7 @@ const DT := 1.0 / 60.0
+ var seeds: Array = [4, 12345, 7, 99]
+ var max_ticks: int = 3000
+ var json_out: String = ""
++var bodies: int = 2     # --bodies=N: N-2 stand-ins in a ring about the pair (AnimMany: one versus many), scanned in the live source with the real two
+ var strict: bool = false
+ var nopass: bool = false
+ var legacy: bool = false
+@@ -30,7 +31,9 @@ var report: Dictionary = {}
+ 
+ func _initialize() -> void:
+ 	for a in OS.get_cmdline_user_args():
+-		if a.begins_with("--seeds="):
++		if a.begins_with("--bodies="):
++			bodies = clampi(int(a.substr(9)), 2, 5)
++		elif a.begins_with("--seeds="):
+ 			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
+ 		elif a.begins_with("--ticks="):
+ 			max_ticks = int(a.substr(8))
+@@ -106,8 +109,13 @@ func _live() -> void:
+ 	for seed in seeds:
+ 		main.start_match(seed, {"p1": true, "p2": true})
+ 		var S: SimState = main.host.S
++		var stands: Array = AnimMany.make(S, bodies - 2) if bodies > 2 else []
+ 		while main.host.ticks < max_ticks and not (S.game.ko != null and S.game.koT > 3.0):
++			if not stands.is_empty():
++				AnimMany.detach(S, stands)   # the sim never steps with a stand-in in its list
+ 			main.frame(DT)
++			if not stands.is_empty():
++				AnimMany.step(S, stands, DT)
+ 			for f in S.fighters:
+ 				var af: AnimFighter = RenderAnim.fighter(S, f)
+ 				if af.version == 0:
+diff --git a/render/anim/tools/lead_scan.gd b/render/anim/tools/lead_scan.gd
+index 14c59038..7ba29e05 100644
+--- a/render/anim/tools/lead_scan.gd
++++ b/render/anim/tools/lead_scan.gd
+@@ -20,6 +20,7 @@ var strict: bool = false
+ var max_bad: int = 0
+ var json_out: String = ""
+ var n_examples: int = 14
++var bodies: int = 2     # --bodies=N: N-2 stand-ins in a ring about the pair (AnimMany: one versus many), scanned with the real two
+ var main: Node
+ 
+ 
+@@ -37,6 +38,8 @@ func _initialize() -> void:
+ 			json_out = a.substr(7)
+ 		elif a.begins_with("--examples="):
+ 			n_examples = int(a.substr(11))
++		elif a.begins_with("--bodies="):
++			bodies = clampi(int(a.substr(9)), 2, 5)
+ 		elif a.begins_with("--max="):
+ 			max_bad = int(a.substr(6))
+ 		elif a == "--strict":
+@@ -75,8 +78,13 @@ func _run() -> void:
+ 	for seed in seeds:
+ 		main.start_match(seed, {"p1": true, "p2": true})
+ 		var S: SimState = main.host.S
++		var stands: Array = AnimMany.make(S, bodies - 2) if bodies > 2 else []
+ 		while main.host.ticks < max_ticks and not (S.game.ko != null and S.game.koT > 3.0):
++			if not stands.is_empty():
++				AnimMany.detach(S, stands)   # the sim never steps with a stand-in in its list
+ 			main.frame(DT)
++			if not stands.is_empty():
++				AnimMany.step(S, stands, DT)
+ 			for f in S.fighters:
+ 				var af: AnimFighter = RenderAnim.fighter(S, f)
+ 				if af.version == 0:
+@@ -109,6 +117,8 @@ func _run() -> void:
+ 				by_key[key] = int(by_key.get(key, 0)) + 1
+ 				if examples.size() < n_examples:
+ 					examples.append("seed %d tick %d fighter %d: %s speed %.0f v (%.0f, %.0f) sim v (%.0f, %.0f) rot %.0f deg spin %.1f face %.0f (sim %.0f) axis (%.2f, %.2f) axis.vel %.2f lead w %.2f d %.0f phi %.0f hold '%s' ag %s toward-rival %.0f" % [seed, S.tick, S.fighters.find(f), key, sp, v.x, v.y, f.vx, f.vy, rad_to_deg(f.rot), f.spin, af.vface, f.face, ax.x, ax.y, lead, float(af.debug.get("lead_w", 0.0)), rad_to_deg(float(af.debug.get("lead_d", 0.0))), rad_to_deg(float(af.debug.get("lead_phi", 0.0))), af._ag_hold, (af._ag_kind if af._ag_t0 >= 0.0 else "-"), signf(SimWrap.sdx(f.x, S.fighters[1 - S.fighters.find(f)].x))])
++		if not stands.is_empty():
++			AnimMany.detach(S, stands)
+ 		print("seed %d done" % seed)
+ 	print("\n== feet first (speed over %.0f, not a tumble over %.1f rad/s) ==" % [speed_min, tumble_min])
+ 	print("fighter-frames %d, fast %d, feet leading in a tumble (allowed) %d, feet leading and not a tumble %d" % [frames, fast, allowed, bad])
+diff --git a/render/anim/anim_many.gd b/render/anim/anim_many.gd
+new file mode 100644
+index 00000000..07715600
+--- /dev/null
++++ b/render/anim/anim_many.gd
+@@ -0,0 +1,52 @@
++class_name AnimMany
++extends RefCounted
++## Many bodies on the one rig (nine-cells-look.md section 5; Encounter's one-versus-many model: a partner in the brawl and the others in a ring, one interjection at most every 1.5 s). The sim is two fighters
++## long today, so a scene or a scan that wants three to five bodies puts stand-ins beside the pair for the length of one solve: `step` makes them (once), places them in a ring about the pair, ticks and solves
++## them with the real pair, and `detach` takes them out of `S.fighters` before the sim next runs. RENDER-SIDE ONLY: nothing is written to the sim's state that the sim reads, because the stand-ins are
++## never in `S.fighters` while it steps, and the real fighters' fields are only read. Used by `anim_check` (`_test_many_bodies`) and the scans' `--bodies=N`.
++
++const RING: Array = [420.0, -520.0, 640.0]   # units from the pair's middle, a stand-in each (the third is far: the camera's marker case)
++
++
++## The stand-ins for a match, made once (the same count every call).
++static func make(S: SimState, count: int) -> Array:
++	var out: Array = []
++	var order: Array = FighterData.order()
++	for i in range(count):
++		var def: Dictionary = FighterData.def(order[i % order.size()])
++		var st: SimState.Fighter = SimRoster.createFighter(def, S.fighters[0].x, "p2", false)
++		out.append(st)
++	return out
++
++
++## Places the stand-ins about the real pair, adds them to `S.fighters`, ticks and solves everything once. Call after the sim's step and the real fighters' own render; call `detach` before the sim steps again.
++static func step(S: SimState, stands: Array, dt: float) -> void:
++	var real: Array = []
++	for f in S.fighters:
++		if not stands.has(f):
++			real.append(f)
++	if real.size() < 2:
++		return
++	var mid: float = real[0].x + SimWrap.sdx(real[0].x, real[1].x) * 0.5
++	for i in range(stands.size()):
++		var st = stands[i]
++		var r: float = float(RING[i % RING.size()])
++		var px: float = st.x
++		st.x = SimWrap.wrap(mid + r)
++		st.y = WorldTerrain.groundY(S, st.x, st.z)
++		st.vx = SimWrap.sdx(px, st.x) / maxf(dt, 0.0001) if px != 0.0 else 0.0
++		st.vy = 0.0
++		st.state = "free"
++		st.face = -1.0 if r > 0.0 else 1.0
++		if not S.fighters.has(st):
++			S.fighters.append(st)
++	for st in stands:
++		var af: AnimFighter = RenderAnim.fighter(S, st)
++		af.on_tick(dt, false, S, st)
++		RenderAnim.solve(S, st)
++
++
++## Takes the stand-ins out of the match's list.
++static func detach(S: SimState, stands: Array) -> void:
++	for st in stands:
++		S.fighters.erase(st)

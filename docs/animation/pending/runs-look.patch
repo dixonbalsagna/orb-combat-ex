@@ -1,0 +1,216 @@
+diff --git a/data/anim/press_styles.json b/data/anim/press_styles.json
+index 2f15190..6fdf7bf 100644
+--- a/data/anim/press_styles.json
++++ b/data/anim/press_styles.json
+@@ -27,10 +27,11 @@
+   "_medium": "PROVISIONAL (the flurry look study, docs/animation/flurry-study.md): Y, the middle strength. Today's heavy pieces and looks at a blow about every 14 ticks: a wind-up of 8, a partial squash and stretch, a smear frame, two ghosts, the carry blend between blows.",
+   "medium": {
+    "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.6, "load_ticks": {"light": 8, "heavy": 8}, "hold_ticks": 3, "follow_ticks": 5, "recover_ticks": 5, "overshoot": 0.08, "lag": 0.45},
+-   "alternate": true, "carry": true, "carry_ticks": 4,
++   "alternate": true, "carry": true, "carry_ticks": 8, "breath_ticks": 2,
+    "squash": 0.55, "lean_back": 0.10, "back": 1.4,
+    "stretch": {"spine": 0.10, "rise": 1.0, "lead": 2.0, "ticks": 3, "smear_ticks": 1},
+    "twist": 0.06, "twist_ticks": 6, "ghosts": 2,
++   "press_run": {"gap": 18, "deg_per_blow": 3.0, "max_deg": 14.0},
+    "hold": {"from": 10, "to": 28, "squash": 0.45, "lean_back": 0.08, "pose": {"protagonist": "ch.y_p.load", "antihero": "ch.y_r.load"}}
+   },
+   "_super": "PROVISIONAL (the flurry look study): B, the top strength. A whole-body blow that reads as far bigger than a medium at a glance: a wind-up of 18 that starts on the press, the full squash, a long lean back and step back, a big stretch with a lead of 9 units and two smear frames, an 8-tick hold, two ghosts (Legal f01: at most 2 ghosts of a limb at any instant).",
+@@ -38,6 +39,7 @@
+    "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.0, "load_ticks": {"light": 18, "heavy": 18}, "hold_ticks": 8, "follow_ticks": 8, "recover_ticks": 8, "overshoot": 0.12, "lag": 0.45},
+    "alternate": false, "carry": true, "carry_ticks": 6,
+    "squash": 1.0, "lean_back": 0.34, "back": 5.0,
++   "march": {"gap": 140, "step": 5.0, "dip": 0.3, "dip_ticks": 5},
+    "squash_by_drive": {"step_through": 0.35, "turn": 0.4, "unwind": 0.4, "full_turn": 0.3, "heave": 0.15, "fall": 0.0},
+    "stretch": {"spine": 0.34, "rise": 3.0, "lead": 9.0, "ticks": 5, "smear_ticks": 2},
+    "twist": 0.0, "twist_ticks": 6, "ghosts": 2,
+@@ -55,7 +57,8 @@
+    "alternate": true, "carry": true, "carry_ticks": 5,
+    "squash": 0.0, "lean_back": 0.0, "back": 0.0,
+    "stretch": {"spine": 0.0, "rise": 0.0, "lead": 0.0, "ticks": 3, "smear_ticks": 0},
+-   "twist": 0.16, "twist_ticks": 7, "ghosts": 2
++   "twist": 0.16, "twist_ticks": 7, "ghosts": 2,
++   "press_run": {"gap": 10, "deg_per_blow": 2.0, "max_deg": 10.0}
+   },
+   "heavy": {
+    "prof": {"solve_hz": 60, "snap_ticks": 1, "load_ease": 1.6, "load_ticks": {"light": 22, "heavy": 24}, "hold_ticks": 10, "follow_ticks": 8, "recover_ticks": 14, "overshoot": 0.06, "lag": 0.45},
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index fb20216..0e25cf8 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -267,6 +267,11 @@ var _dz_prev: float = 0.0
+ var _dz_tick: int = -1
+ var _stride: float = 0.0                 # footfall phase of a step in depth
+ var waiting_kind: String = ""            # what a body that is in the fight and not the partner is doing (circle, guard, step_in, settle, flinch); "" with two bodies or in his own exchange
++var _mr_blow: int = -1                   # the march's memory: the blow being drawn, the contact of this one and of the one before
++var _mr_cur_tc: float = -1.0
++var _mr_prev_tc: float = -1.0
++var press_lean: float = 0.0              # the mash's forward lean this solve (radians; debug and tests)
++var march_w: float = 0.0                 # the mashed heavy's footfall pulse this solve (0 to 1; debug and tests)
+ var dig_w: float = 0.0                   # the held X's dig-in weight this solve (debug and tests)
+ var burst_set: float = 0.0               # how far the burst's set pose is laid over the body this tick (0 to 0.9; VFX and the tools read it)
+ var _ci_step_k: float = 1.0                # the share of that step a medium on 12 ticks takes (Combat's w6: a half step)
+@@ -2107,7 +2112,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
+ 	if pstyle != "":
+ 		_press_track(blow_id, T)
+ 	if dtc < -Sn:
+-		var u: float = clampf((tq2 - (tc2 - L2)) / maxf(L2 - Sn, DT), 0.0, 1.0)
++		var u: float = clampf((tq2 - (tc2 - L2)) / maxf(L2 - Sn - float(prow.get("breath_ticks", 0)) * DT, DT), 0.0, 1.0)   # a style's held breath (data `breath_ticks`): the chamber is reached that many ticks early and held in plain sight
+ 		ul = u
+ 		hw = smoothstep(0.0, 0.7, u)
+ 		u = clampf(u / maxf(0.05, float(ks.get("tell_at", 1.0))), 0.0, 1.0)   # a super-heavy's tell (data `tell_at`): the chamber is reached this far into the wind-up and held in plain sight to the blow
+@@ -2184,6 +2189,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
+ 		_contact_now = true
+ 		debug["contact_frames"] += 1
+ 		debug["contact_err_max"] = maxf(float(debug["contact_err_max"]), err)
++	_run_layers(strikes, best, gaps, prow, dtc, ul, blow_id, tc2, String(ks.get("_combat", "")))
+ 	_dig_in(strikes, psts, T, String(ks.get("limb", "hand_r")))
+ 	# the contact solve's weight: in over the snap, full at the contact tick and through the first of the follow-through,
+ 	# out over the rest of it
+@@ -2514,6 +2520,56 @@ func _hold_coil(row: Dictionary, elapsed: float, span: float, dtc: float, t_now:
+ 		hips.y += 0.25 * sin(tt * 3.1 + 1.0)
+ 
+ 
++## What a run of blows adds to the body (the nine cells' look audit, numbers 4 and 7; data on the style rows, drawn after the contact-frame check like the dig-in):
++## `press_run` (the mash presses): a forward lean that grows with each blow of a run (gaps of `gap` ticks or less), `deg_per_blow` to `max_deg`, with a dip of the head, so a mashed X or Y is pressure and not
++## six taps; it fades over 10 ticks after the last blow's contact. `march` (a mashed heavy advances): a heavy that follows another within `gap` ticks takes a footfall, `step` units forward and a dip of the legs
++## by `dip` of the squash pose at the contact, for `dip_ticks` (the dust is VFX's: `press.march` is set on the contact).
++func _run_layers(strikes: Array, best: int, gaps: Array, prow: Dictionary, dtc: float, ul: float, blow_id: int, tc: float, piece: String) -> void:
++	press_lean = 0.0
++	march_w = 0.0
++	# the contact of the blow before this one (a heavy's own blows are far apart: the exchange keeps one beat at a time, so his own memory holds it)
++	if blow_id != _mr_blow:
++		_mr_prev_tc = _mr_cur_tc
++		_mr_blow = blow_id
++	_mr_cur_tc = tc
++	var ix: Dictionary = AnimRig.index
++	var pr: Dictionary = prow.get("press_run", {})
++	if not pr.is_empty() and RenderAnim.mash_press and best < gaps.size() and not piece.begins_with("strike.bolt_") and not piece.begins_with("strike.blast_"):   # energy in reach keeps the heads a hand's width apart (Legal e09)
++		var gmax: float = float(pr.get("gap", 10.0))
++		var n: int = 1
++		var k: int = best
++		while k > 0 and float(gaps[k]) <= gmax:
++			n += 1
++			k -= 1
++		var deg: float = minf(float(pr.get("max_deg", 10.0)), float(pr.get("deg_per_blow", 2.0)) * float(n - 1))
++		if deg > 0.01:
++			var env: float = smoothstep(0.0, 0.8, ul)
++			if dtc > 0.0:
++				env *= 1.0 - smoothstep(0.0, 10.0 * DT, dtc)
++			var ang: float = deg_to_rad(deg) * env
++			q[ix["spine_1"]] = q[ix["spine_1"]] * Quaternion(Vector3(0, 0, 1), -ang * 0.5)
++			q[ix["spine_2"]] = q[ix["spine_2"]] * Quaternion(Vector3(0, 0, 1), -ang * 0.5)
++			q[ix["head"]] = q[ix["head"]] * Quaternion(Vector3(0, 0, 1), ang * 0.4)
++			press_lean = ang
++	var mr: Dictionary = prow.get("march", {})
++	if not mr.is_empty() and RenderAnim.march and _mr_prev_tc >= 0.0 and tc - _mr_prev_tc <= float(mr.get("gap", 140.0)) * DT and tc > _mr_prev_tc:
++		var pulse: float = smoothstep(-2.0 * DT, 0.0, dtc) * (1.0 - smoothstep(0.0, float(mr.get("dip_ticks", 5)) * DT, dtc))
++		var fwd: float = smoothstep(-8.0 * DT, 0.0, dtc) * (1.0 - smoothstep(0.0, 12.0 * DT, dtc))
++		_pr_dx += float(mr.get("step", 5.0)) * fwd
++		var sp: Dictionary = AnimData.press.get("squash_pose", {})
++		var pid: String = String(sp.get("by_fighter", {}).get(pair_key, sp.get("default", "brace")))
++		if pulse > 0.001 and AnimData.pose_exists(pid):
++			var spp: AnimPose = AnimData.pose(pid)
++			var w: float = float(mr.get("dip", 0.3)) * pulse
++			for bn in sp.get("bones", []):
++				var bi: int = ix[String(bn)]
++				_press_slerp(bi, spp.q[bi], w)
++			hips.y = minf(hips.y, lerpf(hips.y, spp.hips.y, w))
++		march_w = pulse
++		if pulse > 0.5 and not press.is_empty():
++			press["march"] = true
++
++
+ ## The held X digs in (data `styles.burst.dig`; the nine cells' look audit, number 2): through a burst's stream the legs and the pelvis keep the set pose, wide, low and planted, and only the arms and the shoulders
+ ## move, so a held X is a different body from a mashed one. In from a few ticks before the first blow of the stream, out over a few after the last; a blow of the foot or the knee keeps its legs (0 for it).
+ ## Drawn after the contact-frame check and before the contact solve, so the hand still reaches and a blow's key pose is still what the check holds.
+diff --git a/render/anim/render_anim.gd b/render/anim/render_anim.gd
+index f27dd22..db1e084 100644
+--- a/render/anim/render_anim.gd
++++ b/render/anim/render_anim.gd
+@@ -29,6 +29,8 @@ static var pair_live: bool = true           # the launch pair play their own wav
+ static var hand_tips: bool = true             # a blow shows the hand state of its tip (data/anim/tips.json: the rival's heavies close to a fist); --no-hand-tips switches it off
+ static var intro_gestures: bool = true         # the sim's intro_gesture events play the fighter's own motion for the intent (docs/animation/intro-gestures.md); inert until the composer sends them; --no-intro-gestures switches it off
+ static var strength_styles: bool = false      # force a brawl beat's strength and burst number over the beat's own explicit `style` (`speed` for a light, `heavy` for a wound blow): the nine cells' looks (Y the medium row, B the super row, a held X's blows the burst row, the wind-ups whole, the held charge, the armour read) on a sim that still stamps the style. false (the shipped default) is today's picture.
++static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
++static var march: bool = true                  # a mashed heavy takes a footfall (data styles.super.march); false is the before
+ static var dig_in: bool = true               # the held X digs in: the legs keep the set pose through a burst's stream (data styles.burst.dig); false is the before
+ static var plain_pin: bool = true              # a plain light (one light, no flurry, no chain) keeps its hand set on the target for the data's `beat.plain_light.pin_ticks` while the body goes on (the perfect follow-up's window opens as it lets go); a beat's own `plain: true` does the same. false is today's picture
+ static var hook_seen: bool = false            # set by the first brawl beat that carries a strength and no style row of its own: Encounter's hook (the brawl asks by cell and no longer names a style) has landed, so the nine cells' looks are the picture with no switch to flip
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index 9808f47..03870c9 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -750,6 +750,7 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
+ 		hxl.append(af0.socket("hand_l").x - af0.socket("pelvis").x)
+ 		var lfix: float = float(af0.debug.get("limit_fix", 0.0))   # what the solve's last pass had to pull back this frame (radians, the worst joint)
+ 		res["fix_max"] = maxf(float(res.get("fix_max", 0.0)), lfix)
++		res["march"] = maxf(float(res.get("march", 0.0)), af0.march_w)
+ 		if lfix > deg_to_rad(30.0):
+ 			res["fix_n30"] = int(res.get("fix_n30", 0)) + 1
+ 			var fl: Array = res.get("fix_log", [])
+@@ -1216,6 +1217,26 @@ func _test_many_bodies() -> void:
+ 
+ ## The heavy's tell sinks (the nine cells' look audit, number 1): on the 28-tick wind-up the pelvis goes down 5 units or more by the end of the tell for a step, a turn or an unwind, and a fall (which
+ ## rises to come down) does not sink. Read off the real solve's trace of the pelvis, 32 ticks before the contact (not started) against the lowest point up to 4 before it.
++func _test_march() -> void:
++	AnimData.load_every_wave()
++	main.start_match(4, {"p1": false, "p2": false})
++	for i in range(10):
++		main.frame(1.0 / 60.0)
++	var S: SimState = main.host.S
++	var ground_was: bool = RenderAnim.ground_feet
++	var styles_was: bool = RenderAnim.press_styles
++	RenderAnim.ground_feet = false
++	RenderAnim.press_styles = true
++	var one: Dictionary = _tier_scene(S, "protagonist", "super", ["su_edge_step"], [64], {"windup": 28, "hand": "r"}, "heavy")
++	var two: Dictionary = _tier_scene(S, "protagonist", "super", ["su_edge_step", "su_edge_step"], [64, 150], {"windup": 28, "hand": "r"}, "heavy")
++	_expect(float(one.get("march", 0.0)) == 0.0 and float(two.get("march", 0.0)) >= 0.5, "march: a lone heavy does not march (%.2f), a second within 140 ticks does (%.2f)" % [float(one.get("march", 0.0)), float(two.get("march", 0.0))])
++	_expect(int(two.nan) == 0 and int(two.screen) == 0 and int(two.frames) == 2 and float(two.err) < 0.25, "march: two heavies: %d NaN, %d on screen, %d of 2 contacts, error %.3f" % [int(two.nan), int(two.screen), int(two.frames), float(two.err)])
++	RenderAnim.ground_feet = ground_was
++	RenderAnim.press_styles = styles_was
++	S.dirS.ex = null
++	print("march: a second heavy within 140 ticks marches %.2f, a lone one %.2f" % [float(two.get("march", 0.0)), float(one.get("march", 0.0))])
++
++
+ func _test_tell_sinks() -> void:
+ 	AnimData.load_every_wave()
+ 	main.start_match(4, {"p1": false, "p2": false})
+@@ -1498,7 +1519,7 @@ func _cells_run(btn: String, pat: Callable, ticks: int, seed: int) -> Dictionary
+ 	host.hub.pad_button(0, "back", false)
+ 	host.take_players()
+ 	var S: SimState = host.S
+-	var res := {"hold": 0, "held_coil": 0.0, "set": 0.0, "styles": {}, "phases": {}, "blows": 0, "cue_windups": 0, "ttc_first": [], "dig": 0.0}
++	var res := {"hold": 0, "held_coil": 0.0, "set": 0.0, "styles": {}, "phases": {}, "blows": 0, "cue_windups": 0, "ttc_first": [], "dig": 0.0, "lean": 0.0, "march": 0.0}
+ 	var t0: int = -1
+ 	var stick: float = 0.0
+ 	var last_blow: int = -1
+@@ -1530,6 +1551,8 @@ func _cells_run(btn: String, pat: Callable, ticks: int, seed: int) -> Dictionary
+ 				res.blows += 1
+ 		res.held_coil = maxf(float(res.held_coil), a0.hold_coil)
+ 		res.dig = maxf(float(res.dig), a0.dig_w)
++		res.lean = maxf(float(res.lean), a0.press_lean)
++		res.march = maxf(float(res.march), a0.march_w)
+ 		res.set = maxf(float(res.set), a0.burst_set)
+ 		if t0 >= 0 and rel > ticks + 60:
+ 			break
+@@ -1553,9 +1576,12 @@ func _test_cells() -> void:
+ 	var xh: Dictionary = _cells_run("west", func(t): return true, 140, 21)
+ 	_expect(xh.styles.has("burst") and float(xh.set) > 0.5, "cells: a held X plays the burst row and its set pose (styles %s, set %.2f)" % [str(xh.styles.keys()), float(xh.set)])
+ 	var xm: Dictionary = _cells_run("west", func(t): return (t % 7) < 3, 200, 21)
++	var xt: Dictionary = _cells_run("west", func(t): return (t % 70) < 2, 220, 21)
++	_expect(float(xm.lean) >= 0.08 and float(xt.lean) == 0.0, "cells: a mashed X leans in (%.2f rad) and a tapped X does not (%.2f)" % [float(xm.lean), float(xt.lean)])
+ 	_expect(float(xh.dig) >= 0.5 and float(xm.dig) == 0.0, "cells: a held X digs in (%.2f) and a mashed X does not (%.2f)" % [float(xh.dig), float(xm.dig)])
+ 	_expect(xm.styles.has("speed") and not xm.styles.has("burst") and xm.blows >= 12, "cells: a mashed X plays the speed row (%s, %d blows)" % [str(xm.styles.keys()), xm.blows])
+ 	var ym: Dictionary = _cells_run("north", func(t): return (t % 12) < 3, 200, 21)
++	_expect(float(ym.lean) >= 0.1, "cells: a mashed Y leans in (%.2f rad)" % float(ym.lean))
+ 	_expect(ym.styles.has("medium") and not ym.styles.has("heavy") and ym.cue_windups > 0, "cells: a mashed Y plays the medium row with the sim's wind-up (%s, %d wind-ups drawn whole)" % [str(ym.styles.keys()), ym.cue_windups])
+ 	var bh: Dictionary = _cells_run("east", func(t): return t >= 70 and t < 125, 200, 33)
+ 	_expect(bh.styles.has("super") and bh.hold >= 10 and float(bh.held_coil) >= 0.9, "cells: a held B is drawn in its chamber and loads (%d hold ticks, coil %.2f)" % [bh.hold, float(bh.held_coil)])
+@@ -3659,6 +3685,7 @@ func _run() -> void:
+ 	_test_tier_drives()
+ 	_test_tell_sinks()
+ 	_test_many_bodies()
++	_test_march()
+ 	_test_medium_wind()
+ 	_test_energy_reach()
+ 	_test_free_arm()
