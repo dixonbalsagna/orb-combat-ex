@@ -28,6 +28,9 @@ const PIECES := {   # blows that land on the chest or the gut (a blow aimed at t
 }
 ## contacts are ticks from the scenario's start; `pre` and `post` are the idle ticks before the first and after the last contact
 const SCENARIOS := [
+	{"id": "xtap", "label": "X tap: one light", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30], "post": 44},
+	{"id": "ytap", "label": "Y tap: one medium on its 12-tick wind-up", "style": "medium", "set": "medium", "kind": "heavy", "dmg": 50.0, "contacts": [44], "windup": 12, "post": 48},
+	{"id": "btap", "label": "B tap: one heavy on its 28-tick wind-up", "style": "super", "set": "super", "kind": "heavy", "dmg": 90.0, "contacts": [60], "windup": 28, "post": 60},
 	{"id": "xmash", "label": "X mash: a light about every 6 ticks", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30, 36, 42, 48, 54, 60, 66, 72], "post": 40},
 	{"id": "xhold", "label": "X held: one light, a 16-tick set, then the stream, gaps 4 4 5 6 8 11", "style": "burst", "set": "burst", "kind": "light", "dmg": 12.0,
 		"contacts": [30, 46, 50, 54, 59, 65, 73, 84], "post": 44},
