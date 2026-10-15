@@ -949,3 +949,22 @@ Standing from this:
 - **Building destruction is a priority and a hook:** smashing an opponent through several buildings is to be climactic, catastrophic and good to look at, and part of how the game is played. Buildings must look structurally believable, including where floors are opened or cut: real-looking supports.
 - **Fighters:** each has his own flavour of attack animations and moveset, drawn from a large common pool. A workflow is wanted that gets at least four fighters into the playable build soon. The four of the vision: the Protagonist, the Anti-hero, the Galactic Tyrant, the Demon Cyborg.
 - **Writing:** Orb finds the forward-facing writing shown so far (web pages, in-game dialogue) rushed and bizarre. Forward-facing text is to be written with care and seen by Orb before it is used.
+
+## Three styles on every button, grappling on A, and the Empress's guards (Orb, 2026-10-14)
+
+Verbatim:
+
+> go ahead and start. I want the three face-button striking styles (mash, timed, hold) across each face button feeling responsive, useful, and visually engaging each in their own way. I still want to work on how the grappling could work on the fourth face-button.
+>
+> spitball mode: additionally, populate the homework folder with as many assignments as necessary to guide the game mechanics into incorporating the "pet class" that I want incorporated in the Empress as a character. Her base form should be able to summon elite troopers to fight alongside her, turning fights into multi-fighter brawls. there should be a compromise of losing certain energy attacks, grabs et cetera, in order to give commands to the semi-autonomous elite guards. What's the upper limit we can realistically push the fight-choreographer to accept? Ideally I want multi-brawls to work as one versus many -- -- that is to say, a 2v2 fight will only ever be two 1v1s, or a 2v1, 2v2 always breaks off into two 1v1s. The most I would like to see is a 4v1, as long as the fight choreographer can meaningfully keep the battle looking exciting and feeling responsive. I want the empress to, at most, be able to have two elite guards at once, meaning the empress can, with minimal setup, fight 3v1 in her base form in versus mode.
+
+Answers to the EP's questions the same evening:
+- How the Empress gives orders to her guards: "Your call" (Game Design and Controls propose; Orb marks it in homework).
+- A guard knocked out: "Resummon on a cooldown".
+- Scope: "Versus only, co-op held". The one-versus-many choreographer is built for the Empress's guards in versus; co-op stays unbuilt.
+- Grappling on A: "Let the team pitch it" (Combat, Game Design and Animation pitch ways in a homework file before anything is built).
+
+What follows from it:
+- Every face button's tapped (timed), mashed and held use must feel responsive, useful and visually distinct.
+- The fight choreographer learns one-versus-many: at most 4v1; a 2v2 always splits into two 1v1s; a 2v1 is allowed. The Empress has at most two elite guards at once, so 3v1 in her base form.
+- Commanding the guards costs the Empress some of her energy attacks and grabs.
