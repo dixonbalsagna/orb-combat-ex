@@ -39,6 +39,13 @@ export const SECOND_DIFF = 0.5;           // two captures that differ by more th
 export const MIN_FRAMES_A_SECOND = 1.0;   // a capture slower than this ran on a starved machine: void
 export const HUD_LIMIT = 3;               // the HUD's own flicker rate, a second, shown as its own line
 export const CLEAR_SECOND = 2.0;        // a second with a change within 15% above the threshold must total no more than this
+// An interim record (Legal's RL-136, photosensitivity-note.md addendum 8): the playable build may return for a limited time with these three conditions waived and the waiver recorded.
+export const INTERIM_WAIVES = ['whole-set-combined-rule', 'margin-rule-and-second-captures', 'ci-gate-on-the-full-set'];
+const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+/** The interim block of the pass file, or null. */
+export function interimOf(file = RECORD) {
+  try { const r = JSON.parse(readFileSync(file, 'utf8')); return r && r.interim && typeof r.interim === 'object' ? r.interim : null; } catch { return null; }
+}
 const NOT_THE_PLAYER = new Set(['prototype', 'qa', 'research', 'docs', 'tools', '.github', '.git', 'CLAUDE.md', 'DIRECTORS.md', 'README.md', '.gitignore', '.gitattributes', '.gdignore', '.editorconfig', 'LICENSE', 'LICENSE.md']);
 
 const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).trim();
@@ -91,11 +98,12 @@ export function effective(r) {
   };
 }
 /** What RL-131 says about how a row was captured and whether it needs, and has, a second capture. */
-export function captureProblems(r) {
+export function captureProblems(r, opts = {}) {
   const out = [];
   const g = r.guard;
   if (!g || typeof g !== 'object') out.push(`${r.id} has no recorded capture condition (the guard, the machine's load before and after, the rate): RL-131`);
   else if (typeof g.framesPerSecond === 'number' && g.framesPerSecond < MIN_FRAMES_A_SECOND) out.push(`${r.id} was captured at ${g.framesPerSecond} frames a second: the machine was starved and the clip is void`);
+  if (opts.interim) return out;   // the second captures and the sensitive re-captures are waived by an interim
   if (typeof r.primary === 'number' && r.primary > SECOND_CAPTURE_ABOVE && r.primary <= 3) {
     const s = r.second;
     if (!s || typeof s !== 'object') out.push(`${r.id} reads ${r.primary} in its worst second (above ${SECOND_CAPTURE_ABOVE}): it needs a second independent capture, and the worse reading counts`);
@@ -130,9 +138,18 @@ export function marginProblems(r) {
 }
 
 /** The reasons a record does not hold for the hashes of a commit and the required clip ids (an empty list: it holds). Pure, so it can be tested without git. */
-export function problemsWith(record, now, ids) {
+export function problemsWith(record, now, ids, opts = {}) {
   const out = [];
   if (!record || typeof record !== 'object') return ['there is no recorded full-set pass (tools/flash/release-pass.json)'];
+  const interim = record.interim && typeof record.interim === 'object' ? record.interim : null;
+  if (interim) {
+    const today = opts.today || new Date().toISOString().slice(0, 10);
+    if (!/^RL-\d+/.test(String(interim.legal))) out.push("the interim has no Legal ruling id (RL-<n>)");
+    if (!isDate(interim.from)) out.push('the interim has no start date');
+    if (!isDate(interim.expires)) out.push('the interim has no expiry date');
+    else if (today > interim.expires) out.push(`the interim expired on ${interim.expires} (today is ${today}): the waivers no longer hold and the full set must pass`);
+    for (const w of INTERIM_WAIVES) if (!Array.isArray(interim.waives) || !interim.waives.includes(w)) out.push(`the interim does not record the waiver ${w}`);
+  }
   for (const k of ['contentHash', 'requiredSetHash', 'analyserHash', 'hookHash']) {
     if (record[k] !== now[k]) out.push(`${k} differs: the pass was recorded for other ${{ contentHash: 'game content (what the player runs changed since)', requiredSetHash: 'required set (tools/flash/sources.json changed)', analyserHash: 'analyser (wcag.js or verdict.js changed)', hookHash: 'capture staging (render/tools/flash_capture.gd changed)' }[k]}`);
   }
@@ -141,9 +158,9 @@ export function problemsWith(record, now, ids) {
   for (const id of ids) if (!have.has(id)) out.push(`the record has no row for required clip ${id}`);
   for (const r of rows) {
     if (!ids.includes(r.id)) out.push(`the record has a row for ${r.id}, which is not in the required set`);
-    if (r.verdict !== 'PASS') out.push(`${r.id} is ${r.verdict}, not PASS`);
-    for (const m of marginProblems(r)) out.push(m);
-    for (const m of captureProblems(r)) out.push(m);
+    if (r.verdict !== 'PASS' && !interim) out.push(`${r.id} is ${r.verdict}, not PASS`);
+    if (!interim) for (const m of marginProblems(r)) out.push(m);
+    for (const m of captureProblems(r, { interim })) out.push(m);
     if (typeof r.shortestDipGapTicks === 'number' && r.shortestDipGapTicks < DIP_GAP_TICKS) out.push(`${r.id} has two whole-screen dips ${r.shortestDipGapTicks} ticks apart (the cap is ${DIP_GAP_TICKS})`);
   }
   // the HUD's own rate, a separate line of the pass (k06), and the seeds with the rule that picked them
@@ -154,12 +171,12 @@ export function problemsWith(record, now, ids) {
 }
 
 /** Verify the record file against a commit of a repository. Returns the list of problems. */
-export function verify(root = REPO, sha = 'HEAD', file = RECORD) {
+export function verify(root = REPO, sha = 'HEAD', file = RECORD, opts = {}) {
   if (!existsSync(file)) return ['there is no recorded full-set pass (tools/flash/release-pass.json)'];
   let record;
   try { record = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { return [`tools/flash/release-pass.json is not valid JSON: ${e.message}`]; }
   const ids = requiredClips(JSON.parse(showAt(root, sha, 'tools/flash/sources.json')), JSON.parse(showAt(root, sha, 'data/fighters/roster.json'))).map((c) => c.id);
-  return problemsWith(record, hashesAt(root, sha), ids);
+  return problemsWith(record, hashesAt(root, sha), ids, opts);
 }
 
 /** A row of the record from one clip's analysis result (run-pixels summary.json: { id, result }). */
@@ -182,7 +199,8 @@ function main(argv) {
   if (argv.includes('--verify')) {
     const problems = verify(REPO, sha);
     if (problems.length) { for (const p of problems) console.error(`release pass: ${p}`); return 1; }
-    console.log(`release pass holds for ${sha}: the recorded full-set pass matches the game content, the required set, the analyser and the staging, and every clip is PASS`);
+    const im = interimOf();
+    console.log(`release pass holds for ${sha}: ${im ? `the INTERIM record (${im.legal}, until ${im.expires}) matches the game content, the required set, the analyser and the staging; the waivers are recorded` : 'the recorded full-set pass matches the game content, the required set, the analyser and the staging, and every clip is PASS'}`);
     return 0;
   }
   if (argv.includes('--record')) {
@@ -205,26 +223,42 @@ function main(argv) {
     // second independent captures of the clips above 2.0 (a run-pixels summary of those clips, captured again; the worse reading counts)
     const sec = opt('--seconds');
     if (sec) for (const e of JSON.parse(readFileSync(sec, 'utf8'))) { const base = rows.find((r) => r.id === e.id); if (base && !e.error) base.second = { ...rowOf(e), how: 'second capture' }; }
+    const interimId = opt('--interim');
+    let interim = null;
+    if (interimId) {
+      interim = { legal: interimId, from: opt('--from'), expires: opt('--expires'), waives: INTERIM_WAIVES.slice() };
+      if (!/^RL-\d+/.test(interimId) || !isDate(interim.from) || !isDate(interim.expires)) { console.error('--interim needs a Legal id (RL-<n>), --from <YYYY-MM-DD> and --expires <YYYY-MM-DD>'); return 2; }
+    }
     const hudRate = opt('--hud-rate');
     const hud = hudRate === undefined ? null : { perSecond: Number(hudRate), limit: HUD_LIMIT, source: opt('--hud-source') || 'ui/tools/hud_check.gd' };
     const pick = opt('--seed-pick');
     const seedPick = pick ? JSON.parse(readFileSync(pick, 'utf8')) : null;
     for (const id of ids) if (!rows.some((r) => r.id === id)) bad.push(`no result for ${id}`);
     for (const e of entries) if (e.error) bad.push(`${e.id}: capture failed`);
-    for (const r of rows) if (r.verdict !== 'PASS') bad.push(`${r.id} is ${r.verdict}`);
-    for (const r of rows) for (const m of marginProblems(r)) bad.push(m);
-    for (const r of rows) for (const m of captureProblems(r)) bad.push(m);
+    if (!interim) for (const r of rows) if (r.verdict !== 'PASS') bad.push(`${r.id} is ${r.verdict}`);
+    if (!interim) for (const r of rows) for (const m of marginProblems(r)) bad.push(m);
+    for (const r of rows) for (const m of captureProblems(r, { interim })) bad.push(m);
     if (!hud) bad.push('no HUD line: pass --hud-rate <the HUD\'s own worst rate a second from hud_check>');
     else if (hud.perSecond > HUD_LIMIT) bad.push(`the HUD's own rate is ${hud.perSecond} a second`);
     if (!seedPick) bad.push('no seed pick: pass --seed-pick <the output of tools/flash/pick-seeds.mjs>');
     if (bad.length) { console.error('not recorded: the summary is not a full passing run of the required set:'); for (const b of bad) console.error('  ' + b); return 1; }
     const full = git(REPO, ['rev-parse', sha]);
-    const record = { _why: 'A recorded full-set pass of the pixel check (tools/flash/release-pass.mjs --record). tools/build-site.mjs refuses to publish the playable site unless this file matches the commit being published and every row is PASS. Do not edit by hand.', commit: full, recorded: new Date().toISOString().slice(0, 10), ...hashesAt(REPO, full), rows: ids.map((id) => rows.find((r) => r.id === id)), hud, seedPick };
+    if (interim) {
+      // the honest state at the time of recording, so the pass file says what was waived and why
+      interim.standing = {
+        clips: rows.length,
+        pass: rows.filter((r) => r.verdict === 'PASS').length,
+        notPass: rows.filter((r) => r.verdict !== 'PASS').map((r) => ({ id: r.id, verdict: r.verdict, primary: r.primary, areaLower: r.areaLower, stricter: r.stricter })),
+        marginRuleNotMet: rows.filter((r) => marginProblems(r).length).map((r) => r.id),
+        needSecondCapture: rows.filter((r) => captureProblems(r).some((p) => /needs a second independent capture/.test(p))).map((r) => r.id),
+      };
+    }
+    const record = { _why: 'A recorded full-set pass of the pixel check (tools/flash/release-pass.mjs --record). tools/build-site.mjs refuses to publish the playable site unless this file matches the commit being published and every row is PASS. Do not edit by hand.', commit: full, recorded: new Date().toISOString().slice(0, 10), ...hashesAt(REPO, full), rows: ids.map((id) => rows.find((r) => r.id === id)), hud, seedPick, ...(interim ? { interim } : {}) };
     writeFileSync(RECORD, JSON.stringify(record, null, 2) + '\n');
-    console.log(`recorded a pass of ${ids.length} clips for ${full.slice(0, 8)} in tools/flash/release-pass.json`);
+    console.log(`recorded ${interim ? `an INTERIM pass (${interim.legal}, until ${interim.expires}; ${interim.standing.pass} of ${interim.standing.clips} clips PASS)` : `a pass of ${ids.length} clips`} for ${full.slice(0, 8)} in tools/flash/release-pass.json`);
     return 0;
   }
-  console.error('usage: node tools/flash/release-pass.mjs (--record --summary <summary.json> [--recaptures <summary.json> --how "seed N"] [--seconds <summary.json>] --hud-rate <n> [--hud-source <text>] --seed-pick <pick.json> | --verify) [--commit <sha>]');
+  console.error('usage: node tools/flash/release-pass.mjs (--record --summary <summary.json> [--recaptures <summary.json> --how "seed N"] [--seconds <summary.json>] --hud-rate <n> [--hud-source <text>] --seed-pick <pick.json> | --verify) [--commit <sha>]\n  interim: --record ... --interim RL-<n> --from <date> --expires <date>  (the waivers of Legal\'s RL-136 are recorded in the file)');
   return 2;
 }
 

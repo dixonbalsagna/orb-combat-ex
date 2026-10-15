@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { contentHash, hashesAt, problemsWith, DIP_GAP_TICKS, verdictOf, effective } from './release-pass.mjs';
+import { contentHash, hashesAt, problemsWith, DIP_GAP_TICKS, verdictOf, effective, INTERIM_WAIVES } from './release-pass.mjs';
 import { setFor } from './which-set.mjs';
 import { pickSeeds, worstSeedsOf, parseScan } from './pick-seeds.mjs';
 
@@ -86,6 +86,26 @@ check('a change within 15% above the threshold in a second that totals 2.5 does 
 check('the same change in a second that totals 2.0 holds', pM([rowM('collapse-normal', { primary: 2, marginal: '1/4' }), rowM('collapse-reduced')]).length === 0);
 check('the numeric marginalCount is read as well as the older string', pM([rowM('collapse-normal', { primary: 2.5, areaLower: 2.5, stricter: 2.5, marginal: undefined, marginalCount: 2 }), rowM('collapse-reduced')]).some((p) => /2 counted changes/.test(p)));
 check('a clip at exactly 3 on the primary reading is OVER GATE and does not hold', pM([rowM('collapse-normal', { verdict: 'OVER GATE', primary: 3 }), rowM('collapse-reduced')]).some((p) => /OVER GATE, not PASS/.test(p)));
+
+// an interim record (Legal's RL-136): the three waivers, recorded, with an expiry; everything else still holds
+{
+  const interim = { legal: 'RL-136', from: '2026-10-15', expires: '2026-10-22', waives: INTERIM_WAIVES.slice() };
+  const bad = [row('collapse-normal', { verdict: 'FAIL', primary: 4, areaLower: 4, stricter: 3 }), row('collapse-reduced', { verdict: 'OVER GATE', primary: 3, areaLower: 3, stricter: 3, marginal: '2/6' })];
+  const R = (rows, extra = {}) => ({ ...now, ...RECORD_LINES, rows, interim, ...extra });
+  const P = (rec, today = '2026-10-16', n = now) => problemsWith(rec, n, ids, { today });
+  check('the same failing rows do not hold without an interim', problemsWith({ ...now, ...RECORD_LINES, rows: bad }, now, ids).length > 0);
+  check('an interim record holds with a FAIL and an OVER GATE row (the whole-set and margin waivers)', P(R(bad)).length === 0, JSON.stringify(P(R(bad))));
+  check('an interim record holds with a clip above 2.0 and no second capture (the second-capture waiver)', P(R([row('collapse-normal', { primary: 2.5, areaLower: 2.5, stricter: 2.5 }), row('collapse-reduced')])).length === 0);
+  check('an interim record stops holding the day after its expiry', P(R(bad), '2026-10-23').some((p) => /expired on 2026-10-22/.test(p)) && P(R(bad), '2026-10-22').length === 0);
+  for (const k of Object.keys(now)) check(`an interim record of other ${k} does not hold: the published build is the measured commit`, P(R(bad), '2026-10-16', { ...now, [k]: 'z' }).some((p) => p.startsWith(k)));
+  check('an interim record still needs every required clip', P(R([bad[0]])).some((p) => /no row for required clip collapse-reduced/.test(p)));
+  check('an interim record does not waive a starved capture', P(R([row('collapse-normal', { guard: { ...GUARD, framesPerSecond: 0.3 } }), row('collapse-reduced')])).some((p) => /starved/.test(p)));
+  check('an interim record does not waive a missing capture condition', P(R([row('collapse-normal', { guard: null }), row('collapse-reduced')])).some((p) => /no recorded capture condition/.test(p)));
+  check('an interim record does not waive the dips cap', P(R([row('collapse-normal', { shortestDipGapTicks: 10 }), row('collapse-reduced')])).some((p) => /dips/.test(p)));
+  check('an interim record does not waive the HUD line or the seed pick', P({ ...R(bad), hud: undefined }).some((p) => /HUD line/.test(p)) && P({ ...R(bad), seedPick: undefined }).some((p) => /seeds/.test(p)));
+  check('an interim record must name all three waivers', P(R(bad, { interim: { ...interim, waives: ['whole-set-combined-rule'] } })).some((p) => /does not record the waiver/.test(p)));
+  check('an interim record needs a Legal id, a start and an expiry', P(R(bad, { interim: { waives: INTERIM_WAIVES } })).length >= 3);
+}
 
 // which set a change needs (docs/tools/release-set-plan.md)
 check('a change to the camera needs the full set', setFor(['render/camera/split_rig.gd', 'docs/x.md']).set === 'FULL');

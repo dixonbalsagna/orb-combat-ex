@@ -2,6 +2,10 @@
 //   node tools/build-site.mjs --web <dir with the Godot web export> --out <site dir> [--commit <sha>] [--band <dir>] [--config <site.json>] [--local]
 // OFFLINE SWITCH: tools/site.json {"offline": true} (Orb's order, 2026-10-06) makes the site the plain notice of tools/site-notice.json and nothing else: /, /play/, /bench/, /band/ and
 // /404.html are that one static page and no game file is copied. The export is still required and checked, so a broken export still fails CI. Set it to false to publish as below.
+// INTERIM SWITCH: tools/site.json {"offline": false, "approved": "<date>", "interim": {"legal": "RL-<n>", "approved": "<date>", "expires": "<date>", "notice": "site-interim.json"}} builds the playable
+// site under Legal's interim terms in place of a recorded full-set pass: /play/ is the Godot export behind a click-through (the engine starts only from its button, no autoplay), and
+// /, /bench/, /band/, /404.html and /about/ are static pages that lead to it and hold no game. tools/check-site-interim.mjs gates the result in CI. Without "interim" the full-set
+// path below is unchanged. Docs: docs/tools/site-interim.md
 // Layout of <site dir>:
 //   index.html               landing page linking to the Godot build
 //   play/                    the Godot web export (index.html, .js, .wasm, .pck, ...)
@@ -18,7 +22,8 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { siteNotice } from './site-notice.mjs';
-import { verify as verifyReleasePass } from './flash/release-pass.mjs';
+import { verify as verifyReleasePass, interimOf } from './flash/release-pass.mjs';
+import { aboutPage, gateOverlay, GATE_SCRIPT } from './site-interim.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -61,12 +66,72 @@ if (config.offline) {
   process.exit(0);
 }
 
+// INTERIM: Legal's interim terms (RL-136, docs/legal/photosensitivity-note.md addendum 8): the playable build behind a click-through, no autoplay, the finding stated, seven days.
+// It does not need the whole set to pass, but it needs Orb's word (approved), Legal's ruling (legal), an expiry, Legal's words (site-interim.json is not a draft) and a recorded
+// pass FOR THIS COMMIT with the interim and its waivers in it (tools/flash/release-pass.json; the published build is the measured commit). --local skips the record, not on Actions.
+if (config.interim) {
+  const problems = [];
+  const I = config.interim;
+  const dateOk = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+  if (config.offline !== false) problems.push('"interim" needs "offline": false');
+  if (!dateOk(config.approved)) problems.push("tools/site.json has no \"approved\" date: the site goes online only on Orb's word, recorded there");
+  if (!(typeof I.legal === 'string' && /^RL-\d+/.test(I.legal))) problems.push("\"interim.legal\" is not a Legal ruling id (RL-<n>): the interim terms are Legal's");
+  if (!dateOk(I.approved)) problems.push('"interim.approved" is not a date');
+  if (!dateOk(I.expires)) problems.push('"interim.expires" is not a date: an interim build has a time limit');
+  const noticeFile = resolve(import.meta.dirname, I.notice || 'site-interim.json');
+  let text = null;
+  try { text = JSON.parse(readFileSync(noticeFile, 'utf8')); } catch (e) { problems.push(`the interim words ${noticeFile} could not be read: ${e.message}`); }
+  if (text && text.draft !== false) problems.push(`${noticeFile} is still a draft: Legal's text replaces it and "draft" goes to false`);
+  let lic = null;
+  try { lic = JSON.parse(readFileSync(join(import.meta.dirname, 'site-licences.json'), 'utf8')); } catch (e) { problems.push(`tools/site-licences.json could not be read (run tools/site_licences.gd): ${e.message}`); }
+  // the measured commit: the recorded pass holds for this commit's content, with the interim and its waivers, and agrees with site.json
+  const verifyInterimRecord = () => {
+    const out = [];
+    try { out.push(...verifyReleasePass(undefined, opt('--commit') || 'HEAD')); } catch (e) { out.push(`the recorded pass could not be checked: ${e.message}`); }
+    const rec = interimOf();
+    if (!rec) out.push('tools/flash/release-pass.json has no "interim" block: the interim is recorded in the pass file with its waivers and its expiry');
+    else {
+      if (rec.legal !== I.legal) out.push(`the pass file's interim is ${rec.legal}, tools/site.json's is ${I.legal}`);
+      if (rec.expires !== I.expires) out.push(`the pass file's interim expires ${rec.expires}, tools/site.json's ${I.expires}`);
+    }
+    return out;
+  };
+  if (!args.includes('--local') || process.env.GITHUB_ACTIONS) problems.push(...verifyInterimRecord());
+  if (problems.length) {
+    console.error('error: the interim playable site is not allowed online:');
+    for (const p of problems) console.error(`  ${p}`);
+    process.exit(1);
+  }
+  const shell = resolve(import.meta.dirname, '..', 'docs', 'perf', 'web-shell');
+  for (const f of ['manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png']) {
+    if (!existsSync(join(shell, f))) { console.error(`error: ${join(shell, f)} is missing`); process.exit(1); }
+  }
+  cpSync(webDir, join(outDir, 'play'), { recursive: true });
+  cpSync(join(shell, 'manifest.webmanifest'), join(outDir, 'play', 'manifest.webmanifest'));
+  cpSync(join(shell, 'icons'), join(outDir, 'play', 'icons'), { recursive: true });
+  // /play/index.html: the export's page, noindex, with the engine's start moved behind the gate's button
+  let play = readFileSync(join(webDir, 'index.html'), 'utf8');
+  play = replaceOnce(play, '<title>Orb Combat EX</title>', '<title>Orb Combat EX</title>\n\t\t<meta name="robots" content="noindex">');
+  play = replaceOnce(play, "\t\tsetStatusMode('progress');\n\t\tengine.startGame({", "\t\twindow.__startGame = function () {\n\t\tsetStatusMode('progress');\n\t\tengine.startGame({");
+  play = replaceOnce(play, '\t\t}, displayFailureNotice);\n\t}\n}());', '\t\t}, displayFailureNotice);\n\t\t};\n\t}\n}());');
+  play = replaceOnce(play, '\t<body>\n', `\t<body>\n${gateOverlay(text, { holding: '../', about: '../about/' })}\n`);
+  play = replaceOnce(play, '\t</body>', `\t\t${GATE_SCRIPT}\n\t</body>`);
+  writeFileSync(join(outDir, 'play', 'index.html'), play);
+  const put = (where, html) => { mkdirSync(join(outDir, where, '..'), { recursive: true }); writeFileSync(join(outDir, where), html); };
+  // the holding page (the plain notice) is /, /bench/, /band/ and /404.html: no game, no link, and where "Not now" goes
+  const holding = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice.json'), 'utf8')));
+  for (const where of ['index.html', 'bench/index.html', 'band/index.html', '404.html']) put(where, holding);
+  put('about/index.html', aboutPage(text, lic, { play: '../play/' }));
+  console.log(`site built in ${outDir}: INTERIM (${I.legal}, until ${I.expires}): /play/ behind the click-through; /, /bench/, /band/ and /404.html are the holding page; /about/ has the notices`);
+  process.exit(0);
+}
+
 // GOING ONLINE: the playable site is published only with Orb's word (site.json "approved": a date) and a recorded full-set pass of the pixel check that matches the commit being
 // published (tools/flash/release-pass.json: tools/flash/release-pass.mjs says what makes it stale). --local skips both for a local test build and is refused on GitHub Actions.
 if (!args.includes('--local') || process.env.GITHUB_ACTIONS) {
   const problems = [];
   if (!(typeof config.approved === 'string' && /^\d{4}-\d{2}-\d{2}/.test(config.approved))) problems.push('tools/site.json has no "approved" date: the site goes online only on Orb\'s word, recorded there');
-  try { problems.push(...verifyReleasePass()); } catch (e) { problems.push(`the recorded pass could not be checked: ${e.message}`); }
+  try { problems.push(...verifyReleasePass(undefined, opt('--commit') || 'HEAD')); } catch (e) { problems.push(`the recorded pass could not be checked: ${e.message}`); }
   if (problems.length) {
     console.error('error: the playable site is not allowed online:');
     for (const p of problems) console.error(`  ${p}`);

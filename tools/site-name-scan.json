@@ -1,0 +1,13 @@
+{
+  "_why": "The files of the game's pack (play/index.pck) that may hold KAI, VORR, Meridian or Calamity because a player never sees them (tools/site-name-scan.mjs, run by tools/check-site-interim.mjs). Legal's rule (RL-136): no placeholder name as visible text on the published build. A hit in any file NOT listed here fails the check. Each entry says why it is not visible text; Legal may withdraw one.",
+  "allow": [
+    {
+      "path": "data/combat/recipes.json",
+      "why": "a note string (\"Nothing in these pools does yet: KAI and VORR still draw on the placeholder key sets ...\") in the combat recipes' header; no screen reads it"
+    },
+    {
+      "path": "sim/core/test/frozen/golden-js.json",
+      "why": "the JS parity oracle's frozen golden: the old test fighters' internal names (KAI, VORR, Meridian ..., Calamity ...); a test fixture the game never loads or shows"
+    }
+  ]
+}

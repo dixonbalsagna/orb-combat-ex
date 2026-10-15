@@ -101,6 +101,9 @@ jobs:
         run: node tools/flash/selftest.js
       - name: Release-pass rules self-test (what makes a recorded pass stale)
         run: node tools/flash/release-pass-selftest.mjs
+      # The interim playable site (Legal's interim terms): the gate, the links, the shipped defaults and the expiry are checked on a stub export, every way they can be broken.
+      - name: Interim site self-test (the click-through, no autoplay, no skip link, Reduce flashing on by default, the expiry)
+        run: node tools/site-interim-selftest.mjs
       # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
@@ -178,6 +181,10 @@ jobs:
           if grep -q '"offline": true' tools/site.json; then
             if find "${RUNNER_TEMP}/site" \( -name '*.wasm' -o -name '*.pck' \) | grep -q .; then echo "an offline site holds a .wasm or .pck"; exit 1; fi
           fi
+      # With an "interim" block in tools/site.json the playable site is built under Legal's interim terms. The check fails the job if the page autoplays, if any page or link leads
+      # around the click-through, if Reduce flashing is not on by default in the shipped prefs, if the interim has expired or its words are a draft. Without the block it passes.
+      - name: Check the interim site (click-through, no autoplay, no skip, Reduce flashing default, expiry)
+        run: node tools/check-site-interim.mjs --site "${RUNNER_TEMP}/site"
       - name: Upload the Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
