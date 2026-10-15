@@ -59,6 +59,7 @@ Not Rendering's, though they are drawn near these: the glare on the rival's glas
 - **Controls' two charge settings:** with Controls' uncommitted hub copied in, each goes to the hub for the player who set it and off again. On HEAD the hub has no such functions and the check says so.
 - **A beam and a clash:** each strength curve has one rise and one fall. A new beam asks with its own weight and is granted; under UI's Reduce flashing it does not ask and is calm.
 - **The pan haze:** off unless switched on; then none at a fifth of a screen width a second, full within 6 ticks of two a second, unmoved by a cut, cleared in one fall.
+- **The whip haze:** on in every match, with the whole town's off; none in a rush of a screen width a second, whole within 6 ticks of four, unmoved by a cut, cleared in one fall; both building materials hold its strength.
 
 In the table a hit past Legal's ceilings does not ask, so it is in neither column. A granted hit before (left, pure white) and now (right, a light tint with the outline lit), on the web build: ![tint](img/flash-hit-tint.png)
 
@@ -73,7 +74,7 @@ A hit granted (left) and a hit refused (right), on the web build: ![hits](img/fl
 - **A beam and a beam clash:** always calm, and they do not ask, so the one slot is left to others. A beam is a thin line with a faint glow; a clash has no flare.
 - **The divider's slam flash:** UI draws none and does not ask.
 - **A groove's glow and char:** the glow at 30% of its strength with no brightening past its colour, the char at 35%.
-- **The pan haze** does not follow the setting: it is off unless switched on.
+- **The pan haze** does not follow the setting: it is off unless switched on. The whip haze is on in both modes.
 - **Nothing of Rendering's reads the option itself.** Each source asks the register, so there is one rule and one log.
 
 The setting is behind UI's `reduce_flashing` flag, which is off, so today the option is always false.
@@ -336,11 +337,32 @@ What draws it is the **foreground rule** (`fore_fall` in `ground.gdshaderinc`). 
 
 **What fails it.** Tools' 56-clip run on the demo commit (10c2d177) read the signature clip in the city (seed 12345) at 4 / 5 / 4 in both modes. Its worst second counts 8 turns between ticks 738 and 779. Six of them, at 738 to 748, are a row of village houses sliding about 40 pixels a tick across the left pane: about 40,000 pixels darken and 40,000 brighten each tick (brick and roofs against grass), and which wins turns every tick. A headless probe of the clip with the split attached shows that pane's camera going from standing to 3.5 screen widths a second in four ticks (736 to 740), 4.5 by 746. The houses are World's row 1, about 400 units behind the fighter plane, low in the pane because the fighters fly high. Nothing changes stage and nothing is carved. Of the other two turns, one is the ground turning from the village's colour to the forest's as the pan crosses the biome edge (769), and the other is a stand of trees leaving the pane (779).
 
-**Orb's ruling: Camera's cap first.** Camera's whip-pan speed cap is measured first. Rendering's whip haze is parked as the fallback (`pending/whip-haze/`), used only if the cap does not clear the clip.
+**Orb's ruling: Camera's cap first.** Camera's whip-pan speed cap was measured first; it cleared the clip only by letting the fighter leave his pane for 1.5 s (`docs/camera/whip-pan.md`). So the fallback ships.
+
+**The whip haze, in every match** (`RenderLook.PAN_WHIP_ON`, `PAN_WHIP`, `PAN_WHIP_MIX`). While a pane's camera travels along the ground faster than 1.5 screen widths a second, every building melts into the sky and ground behind it, whole at 2.5 widths a second: the plain wall in place of its windows and marks, then fully the colour behind. It comes in over 0.1 s and clears over 0.6 s. A rush under 1.5 widths a second is untouched. In a launch or a whip through a city the town is gone into its sky and ground for the length of the whip, and comes back over about half a second. The whole town's pan haze (`--panhaze`, 70%, from 0.35 widths a second) stays behind its switch.
+
+**Measured** with Tools' `check-clip` (primary / area threshold 15% lower / two-second memory), with the near-lens foreground fix under it (24ad84ce). Main is Tools' 10c2d177 run for signaturecity, Tools' 3198301f table for clash and signature (no same-commit reading), and the near-lens fix's own readings for the rest:
+
+| Clip | Main | With the whip haze |
+| :-- | :-- | :-- |
+| signaturecity-normal | **FAIL** 4 / 5 / 4 | 2 / 3 / 2 |
+| signaturecity-reduced | **FAIL** 4 / 4 / 4 | 2 / 2 / 2 |
+| clash-normal | 1.5 / 2.5 / 2 | 2 / 2 / 2 |
+| clash-reduced | 2 / 2 / 2 | 2 / 2 / 2 |
+| signature-normal | 2 / 2 / 2 | 2 / 2 / 2.5 |
+| signature-reduced | 2 / 2 / 2.5 | 1.5 / 2.5 / 2.5 |
+| collapse-normal | 1.5 / 2 / 0.5 | 1.5 / 2 / 0.5 |
+| ai-4-normal | 2 / 2 / 1.5 | 2 / 2 / 1.5 |
+| ai-38-normal | 2 / 2 / 2 | 2 / 2 / 2 |
+| ai-39-normal | **FAIL** 3 / 3.5 / 3 | **FAIL** 3 / 3.5 / 3 |
+
+ai seed 39 normal is Camera's divider slam, as before. Gated on 2b047018: all 15 of render's gates (the flash register check 35).
+
+What was tried first:
 
 - **The front row only, as first asked:** buildings in front of the focus plane hazed in a fast pan, eased over 0.3 s. It did nothing (4 / 5 / 4 and 4 / 4 / 4): the houses stand behind the fight, and the ease came too late for a camera that whips in four ticks. Dropped. It cost nothing on collapse normal, ai-4, ai-38 or ai-39 normal.
 - **The whole town's pan haze switched on for a whip only** (from 1.5 widths a second, at its own 70%): the houses' turns went, but a launch at tick 428 throws the other pane's camera at 10 to 20 widths a second through the towers for about a second and a half, and the pale towers it left sweeping made new turns at 444 to 510 (4 / 4 / 4 in both modes).
-- **The same, melted fully into the sky and ground behind** (the parked fallback): 2 / 3 / 2 normal and 2 / 2 / 2 reduced. That build also carried the front-row form; the parked patch is the whip alone, and it has not been captured.
+- **The same, melted fully into the sky and ground behind:** what ships.
 
 ## The capture hook for Tools' frame analyser
 

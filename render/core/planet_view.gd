@@ -1646,6 +1646,7 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("dmg_frame", RenderLook.col(RenderLook.DMG_FRAME))
 	m.set_shader_parameter("roof_over", RenderLook.ROOF_OVER)
 	m.set_shader_parameter("pan_mix", RenderLook.PAN_HAZE_MIX)
+	m.set_shader_parameter("pan_whip_mix", RenderLook.PAN_WHIP_MIX)
 	m.set_shader_parameter("dmg_holes", RenderLook.DMG_HOLES)
 	m.set_shader_parameter("pattern_budget", RenderLook.PATTERN_BUDGET)
 	m.set_shader_parameter("open_col", RenderLook.OPEN_COL)

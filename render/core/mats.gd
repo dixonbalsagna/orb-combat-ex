@@ -19,6 +19,7 @@ var _focus: float = 0.0       # the depth of the camera's focus plane (Camera's 
 var _sky: Dictionary = {}     # sky uniforms the tracked (fogging) materials share
 var _haze: float = 0.0        # this pane's pan haze (pane_world.gd), for the tracked materials that take it
 var _haze_ground := Color.BLACK
+var _haze_whip: float = 0.0   # ... and the whip haze (RenderLook.PAN_WHIP)
 
 
 ## This pane's opaque flat material. shade 0 is fully flat (no fake light).
@@ -106,6 +107,7 @@ func track(m: ShaderMaterial) -> void:
 	m.set_shader_parameter("bend", _bend)
 	m.set_shader_parameter("cam_dist", _dist)
 	m.set_shader_parameter("pan_haze", _haze)
+	m.set_shader_parameter("pan_whip", _haze_whip)
 	m.set_shader_parameter("pan_ground", _haze_ground)
 	for k in _sky:
 		m.set_shader_parameter(k, _sky[k])
@@ -153,12 +155,16 @@ func set_sky(name: String, v) -> void:
 
 ## This pane's pan haze, 0 to 1 (PaneWorld.pan_haze), and the ground's colour under its camera, for the tracked
 ## materials (building.gdshader reads them). The colour is only sent while there is a haze to use it.
-func set_haze(v: float, ground: Color) -> void:
+func set_haze(v: float, ground: Color, whip: float = 0.0) -> void:
 	if v != _haze:
 		_haze = v
 		for m in _tracked:
 			m.set_shader_parameter("pan_haze", v)
-	if v > 0.0 and ground != _haze_ground:
+	if whip != _haze_whip:
+		_haze_whip = whip
+		for m in _tracked:
+			m.set_shader_parameter("pan_whip", whip)
+	if maxf(v, whip) > 0.0 and ground != _haze_ground:
 		_haze_ground = ground
 		for m in _tracked:
 			m.set_shader_parameter("pan_ground", ground)

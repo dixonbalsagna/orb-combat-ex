@@ -69,6 +69,7 @@ static var sky_react_on: bool = false      # the clouds part for a fighter at ti
 static var flash_calm: bool = false        # reduced flashing or reduced motion: the grooves' glow and char are drawn calm (main sets it)
 static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
 var pan_haze: float = 0.0                  # 0 to 1, this frame
+var pan_whip: float = 0.0                  # 0 to 1, this frame: the whip haze (RenderLook.PAN_WHIP), in every match
 var fore_low := Vector2(NAN, NAN)          # the fighter plane's lowest ground and top in this pane's view, eased (RenderLook.FORE_FAR)
 var fore_sweep: float = 0.0                # how far this pane's camera travels along x a tick, eased
 var _fl_x: float = NAN                     # the camera's x and the time at the last frame the rule's reading saw
@@ -262,6 +263,7 @@ func _pan_haze(host: SimHost, a: float, cam_x: float, vp: Vector2) -> void:
 	var ground: Color = RenderLook.col(RenderLook.BIOME[WorldBiomes.biomeAt(SimWrap.wrap(cam_x))])
 	if is_nan(_pan_x) or dt < 0.0 or dt > 0.5:
 		pan_haze = 0.0   # a new match, or a seek
+		pan_whip = 0.0
 		_pan_ground = ground
 	elif dt > 0.0:
 		_pan_ground = _pan_ground.lerp(ground, clampf(dt / RenderLook.PAN_HAZE_OUT_S, 0.0, 1.0))
@@ -269,11 +271,13 @@ func _pan_haze(host: SimHost, a: float, cam_x: float, vp: Vector2) -> void:
 		if speed < RenderLook.PAN_HAZE_CUT:
 			var want: float = smoothstep(RenderLook.PAN_HAZE_FROM, RenderLook.PAN_HAZE_FULL, speed) if pan_haze_on else 0.0
 			pan_haze = move_toward(pan_haze, want, dt / (RenderLook.PAN_HAZE_IN_S if want > pan_haze else RenderLook.PAN_HAZE_OUT_S))
+			var whip: float = smoothstep(RenderLook.PAN_WHIP.x, RenderLook.PAN_WHIP.y, speed) if RenderLook.PAN_WHIP_ON else 0.0
+			pan_whip = move_toward(pan_whip, whip, dt / (RenderLook.PAN_HAZE_IN_S if whip > pan_whip else RenderLook.PAN_HAZE_OUT_S))
 	else:
 		return   # the same instant again (a frozen tick): nothing moves
 	_pan_x = cam_x
 	_pan_t = t
-	mats.set_haze(pan_haze, _pan_ground)
+	mats.set_haze(pan_haze, _pan_ground, pan_whip)
 
 
 ## A pane's cut-away request for this frame, from Camera's frame: its `cutaway` a pane (request, only, radius_px), with

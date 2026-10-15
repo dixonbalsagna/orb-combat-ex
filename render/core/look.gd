@@ -591,6 +591,15 @@ const PAN_HAZE_MIX: float = 0.7
 const PAN_HAZE_IN_S: float = 0.1
 const PAN_HAZE_OUT_S: float = 0.6
 const PAN_HAZE_CUT: float = 20.0
+## ... but a whip pan hazes every building in every match (PAN_WHIP_ON), whatever the switch: from PAN_WHIP.x screen
+## widths a second to whole at PAN_WHIP.y, melting as far as PAN_WHIP_MIX into the sky and ground behind, in over
+## PAN_HAZE_IN_S and out over PAN_HAZE_OUT_S. In the signature clip in the city (seed 12345) a pane's camera went from
+## standing to 3.5 widths a second in four ticks past a row of houses (736 to 740), and a launch threw another at 10 to
+## 20 widths a second through the towers (428 on): a facade swept that fast flipped 40,000 pixels each way a tick, and
+## which way won turned every tick. Hazed at PAN_HAZE_MIX the pale towers still did; melted fully they do not.
+const PAN_WHIP_ON: bool = true
+const PAN_WHIP := Vector2(1.5, 2.5)
+const PAN_WHIP_MIX: float = 1.0
 
 static var _colors: Dictionary = {}
 

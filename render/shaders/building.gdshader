@@ -102,6 +102,8 @@ uniform vec4 dmg_frame : source_color = vec4(0.29, 0.29, 0.31, 1.0);
 uniform float roof_over = 1.2;
 uniform float pan_haze = 0.0;        // 0 to 1: this pane's camera is travelling fast (PaneWorld.pan_haze); the wall loses its panes and marks and melts toward the sky behind it
 uniform float pan_mix = 0.7;         // RenderLook.PAN_HAZE_MIX: how far it melts at full haze
+uniform float pan_whip = 0.0;        // 0 to 1: this pane's camera whips along the ground (PaneWorld.pan_whip), in every match
+uniform float pan_whip_mix = 1.0;    // RenderLook.PAN_WHIP_MIX: how far a wall melts at a full whip
 uniform vec4 pan_ground : source_color = vec4(0.37, 0.57, 0.25, 1.0);   // the ground's colour under this pane's camera: what is behind a wall below the horizon line
 uniform float ref_cull = 0.0;        // 1: leave the back faces to the rasterizer (tools/cull_check.gd's reference picture)
 uniform vec4 look_a[10];             // a look's windows: the pitch of a column, the pane's span across its cell (from, to), the share of cells with one
@@ -733,13 +735,14 @@ void fragment() {
 		// The rows' haze: the air's colour toward the horizon in this direction, more of it the farther back the row.
 		col = mix(col, sky_color(min(elevation(v_view), horizon + 0.3 * sky_tan)), v_look.z);
 	}
-	if (pan_haze > 0.001) {
+	float ph = max(pan_haze, pan_whip);   // the whole town's haze behind its switch, or a whip's
+	if (ph > 0.001) {
 		// A fast pan: the plain wall in place of its panes, soot and cracks, then toward what is behind it: the sky's
 		// colour in this direction above the horizon line, the ground's below it.
 		vec3 plain = FRONT_FACING ? flat_shade(COLOR.rgb, NORMAL, 0.35) : inside.rgb;
 		float q = elevation(v_view);
 		vec3 behind = mix(pan_ground.rgb, sky_color(q), smoothstep(-0.03, 0.03, (q - horizon) / sky_tan));
-		col = mix(mix(col, plain, pan_haze), behind, pan_haze * pan_mix);
+		col = mix(mix(col, plain, ph), behind, max(pan_haze * pan_mix, pan_whip * pan_whip_mix));
 	}
 	ALBEDO = col;
 }

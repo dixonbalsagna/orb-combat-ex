@@ -391,6 +391,39 @@ func _run() -> void:
 		pw._pan_haze(host, t, x, vp)
 	_expect(pw.pan_haze == 0.0, "... and with its switch off there is none")
 	PaneWorld.pan_haze_on = RenderLook.PAN_HAZE_DEFAULT
+	# 10b. The whip haze (RenderLook.PAN_WHIP): on in every match, with the whole town's switch off.
+	for k in range(60):   # the camera stands: what the tests above left of it clears
+		t += 1.0
+		pw._pan_haze(host, t, x, vp)
+	var w_rush: float = 0.0
+	for k in range(60):   # a rush: a screen width a second
+		t += 1.0
+		x += 1.0 * wide * SimConst.DT
+		pw._pan_haze(host, t, x, vp)
+		w_rush = maxf(w_rush, pw.pan_whip)
+	var w_fast: Array = []
+	for k in range(12):   # a whip: four screen widths a second
+		t += 1.0
+		x += 4.0 * wide * SimConst.DT
+		pw._pan_haze(host, t, x, vp)
+		w_fast.append(pw.pan_whip)
+	var w_sent: bool = is_equal_approx(pw.mats._haze_whip, pw.pan_whip) and pw.pan_haze == 0.0
+	t += 1.0
+	pw._pan_haze(host, t, x + 5.0 * wide, vp)
+	var w_cut: float = pw.pan_whip
+	x += 5.0 * wide
+	var w_still: Array = []
+	for k in range(60):
+		t += 1.0
+		pw._pan_haze(host, t, x, vp)
+		w_still.append(pw.pan_whip)
+	_expect(RenderLook.PAN_WHIP_ON and w_rush == 0.0 and w_fast[5] >= 0.99 and _turns(w_fast) == 0 and w_sent, "the whip haze ships on, with the whole town's off: none in a rush of a screen width a second, whole within 6 ticks of four, and the materials have it (%.2f, %.2f)" % [w_rush, w_fast[5]])
+	_expect(w_cut == w_fast[11] and w_still[20] > 0.0 and w_still[59] == 0.0 and _turns(w_still) == 0, "... a cut leaves it as it was (%.2f), and it clears in one fall once the camera stands (%.2f after 20 ticks, %.2f after 60)" % [w_cut, w_still[20], w_still[59]])
+	var wm_ok: bool = true
+	for m in [main.planet._front_mat, main.planet._bld_mat]:
+		if m == null or not is_equal_approx(float(m.get_shader_parameter("pan_whip_mix")), RenderLook.PAN_WHIP_MIX):
+			wm_ok = false
+	_expect(wm_ok, "... and both building materials (the front row's and the other rows') hold RenderLook.PAN_WHIP_MIX")
 	# 11. A public page's link cannot reach the capture hook or the study route (they start with no notice).
 	var pub: Dictionary = main.gate_args({"flashcap": "1", "study": "zip", "nointro": "1", "sky": "night", "skymood": "1,1,1", "staticsky": "1", "skyreact": "1", "panhaze": "1", "nopanhaze": "1"}, false)
 	var loc: Dictionary = main.gate_args({"flashcap": "1", "study": "zip", "nointro": "1"}, true)
