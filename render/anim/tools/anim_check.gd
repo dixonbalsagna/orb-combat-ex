@@ -988,6 +988,8 @@ func _test_zip_view() -> void:
 
 func _test_flurry_tiers() -> void:
 	AnimData.load_every_wave()
+	var dig_was: bool = RenderAnim.dig_in
+	RenderAnim.dig_in = false   # this test is about the burst's narrowing (arm distance from guard): the held X's dig-in moves the legs and is tested in _test_cells
 	var P: Dictionary = AnimData.press.get("styles", {})
 	_expect(P.has("medium") and P.has("super") and P.has("speed"), "flurry tiers: press_styles.json needs the speed, medium and super rows")
 	var sp: Dictionary = P.get("speed", {})
@@ -1093,6 +1095,7 @@ func _test_flurry_tiers() -> void:
 	RenderAnim.press_styles = styles_was
 	S.dirS.ex = null
 	print("flurry tiers: %s; held Y and B coil for the whole hold; the tiers are ordered X < Y < B in the data and on the body" % " | ".join(summary))
+	RenderAnim.dig_in = dig_was
 
 
 ## Legal's h05 on the real wind-up (RL-105; the held lint judges the chamber pose, this the path to it): every medium (on 12 ticks) and every piece of the super-heavy tier (on 28) of both fighters
@@ -1154,6 +1157,41 @@ func _test_windups() -> void:
 	RenderAnim.press_styles = styles_was
 	S.dirS.ex = null
 	print("windups: %d medium and heavy wind-ups judged on the real solve: no limb above 80 before the last 6 ticks, every contact solved; after a super-heavy's blow no hand is above %.0f from 6 ticks on" % [judged, fol_max])
+
+
+## The heavy's tell sinks (the nine cells' look audit, number 1): on the 28-tick wind-up the pelvis goes down 5 units or more by the end of the tell for a step, a turn or an unwind, and a fall (which
+## rises to come down) does not sink. Read off the real solve's trace of the pelvis, 32 ticks before the contact (not started) against the lowest point up to 4 before it.
+func _test_tell_sinks() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var ground_was: bool = RenderAnim.ground_feet
+	var styles_was: bool = RenderAnim.press_styles
+	RenderAnim.ground_feet = false
+	RenderAnim.press_styles = true
+	var seen: Array = []
+	for pc in [["protagonist", "su_edge_step", true], ["protagonist", "su_blade_jaw", true], ["protagonist", "su_edge_unwind", true], ["antihero", "su_ram", true], ["antihero", "su_plate", true],
+			["antihero", "su_hook", true], ["antihero", "su_knee", true], ["antihero", "su_heel", false], ["protagonist", "su_drive", false]]:
+		var r: Dictionary = _tier_scene(S, String(pc[0]), "super", [String(pc[1])], [64], {"windup": 28, "hand": "r"}, "heavy")
+		var base_y: float = -1.0
+		var low_y: float = 1.0e9
+		for tr in r.get("trace", []):
+			if int(tr.dt) == -32:
+				base_y = float(tr.pv_y)
+			elif int(tr.dt) >= -28 and int(tr.dt) <= -4:
+				low_y = minf(low_y, float(tr.pv_y))
+		var drop: float = base_y - low_y
+		seen.append("%s %.1f" % [pc[1], drop])
+		if bool(pc[2]):
+			_expect(drop >= 5.0, "tell sinks: %s %s sinks %.1f units over its wind-up (5 or more)" % [pc[0], pc[1], drop])
+		else:
+			_expect(drop <= 2.5, "tell sinks: %s %s, a fall, sinks %.1f units (it rises: 2.5 or less)" % [pc[0], pc[1], drop])
+	RenderAnim.ground_feet = ground_was
+	RenderAnim.press_styles = styles_was
+	S.dirS.ex = null
+	print("tell sinks: %s" % ", ".join(seen))
 
 
 ## The super-heavy tier's drives (docs/combat/pending/movegen/three-strengths.md section 3, Legal D1 to D5), read off the three key poses of every piece: where the body is at the tell and where it ends, so a flurry's next
@@ -1405,7 +1443,7 @@ func _cells_run(btn: String, pat: Callable, ticks: int, seed: int) -> Dictionary
 	host.hub.pad_button(0, "back", false)
 	host.take_players()
 	var S: SimState = host.S
-	var res := {"hold": 0, "held_coil": 0.0, "set": 0.0, "styles": {}, "phases": {}, "blows": 0, "cue_windups": 0, "ttc_first": []}
+	var res := {"hold": 0, "held_coil": 0.0, "set": 0.0, "styles": {}, "phases": {}, "blows": 0, "cue_windups": 0, "ttc_first": [], "dig": 0.0}
 	var t0: int = -1
 	var stick: float = 0.0
 	var last_blow: int = -1
@@ -1436,6 +1474,7 @@ func _cells_run(btn: String, pat: Callable, ticks: int, seed: int) -> Dictionary
 				last_blow = int(a0.press.blow)
 				res.blows += 1
 		res.held_coil = maxf(float(res.held_coil), a0.hold_coil)
+		res.dig = maxf(float(res.dig), a0.dig_w)
 		res.set = maxf(float(res.set), a0.burst_set)
 		if t0 >= 0 and rel > ticks + 60:
 			break
@@ -1459,6 +1498,7 @@ func _test_cells() -> void:
 	var xh: Dictionary = _cells_run("west", func(t): return true, 140, 21)
 	_expect(xh.styles.has("burst") and float(xh.set) > 0.5, "cells: a held X plays the burst row and its set pose (styles %s, set %.2f)" % [str(xh.styles.keys()), float(xh.set)])
 	var xm: Dictionary = _cells_run("west", func(t): return (t % 7) < 3, 200, 21)
+	_expect(float(xh.dig) >= 0.5 and float(xm.dig) == 0.0, "cells: a held X digs in (%.2f) and a mashed X does not (%.2f)" % [float(xh.dig), float(xm.dig)])
 	_expect(xm.styles.has("speed") and not xm.styles.has("burst") and xm.blows >= 12, "cells: a mashed X plays the speed row (%s, %d blows)" % [str(xm.styles.keys()), xm.blows])
 	var ym: Dictionary = _cells_run("north", func(t): return (t % 12) < 3, 200, 21)
 	_expect(ym.styles.has("medium") and not ym.styles.has("heavy") and ym.cue_windups > 0, "cells: a mashed Y plays the medium row with the sim's wind-up (%s, %d wind-ups drawn whole)" % [str(ym.styles.keys()), ym.cue_windups])
@@ -1508,14 +1548,14 @@ func _test_strength_map() -> void:
 	af._pr_cache.clear()
 	var forced: String = af._press_style(S, f, {"n": n + 1}, [0.0, 1, {"brawl": true, "strength": "medium", "style": "heavy", "flurry": false}, "light"])
 	_expect(forced == "medium", "strength map forced: an explicit heavy on a medium plays %s, wanted medium" % forced)
-	# the plain light's pin (the perfect follow-up's window opens as it lets go): off by default, on for a beat that says `plain` or, with the switch, for one light that is no flurry's
+	# the plain light's pin (the perfect follow-up's window opens as it lets go): on by default for one brawl light that is no flurry's or chain's (no change to a sim data file), on for a beat that says `plain`, off with the switch
 	var pin_was: bool = RenderAnim.plain_pin
-	RenderAnim.plain_pin = false
 	var lt := {"brawl": true, "strength": "light", "flurry": false, "k": 1, "burst": 0}
-	_expect(not af._press_prof({}, "speed", lt).has("ci_pin"), "plain pin: off by default")
+	_expect(RenderAnim.plain_pin and int(af._press_prof({}, "speed", lt).get("ci_pin", 0)) == 6, "plain pin: on by default, a plain light pins 6 ticks")
 	_expect(int(af._press_prof({}, "speed", {"plain": true}).get("ci_pin", 0)) == 6, "plain pin: a beat that says plain pins 6 ticks")
+	RenderAnim.plain_pin = false
+	_expect(not af._press_prof({}, "speed", lt).has("ci_pin"), "plain pin: with the switch off a plain light does not")
 	RenderAnim.plain_pin = true
-	_expect(int(af._press_prof({}, "speed", lt).get("ci_pin", 0)) == 6, "plain pin: with the switch a plain light pins 6 ticks")
 	var fl: Dictionary = lt.duplicate()
 	fl["flurry"] = true
 	_expect(not af._press_prof({}, "speed", fl).has("ci_pin"), "plain pin: a flurry's light does not")
@@ -3562,6 +3602,7 @@ func _run() -> void:
 	_test_flurry_tiers()
 	_test_windups()
 	_test_tier_drives()
+	_test_tell_sinks()
 	_test_medium_wind()
 	_test_energy_reach()
 	_test_free_arm()

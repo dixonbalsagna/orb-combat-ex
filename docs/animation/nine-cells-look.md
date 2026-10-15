@@ -69,3 +69,16 @@ In all three: **the sim carries the victim by position** (the animation only dra
 **What the scans do.** The joint scan, the lead scan and `anim_check` walk every fighter of the sim; the seeded matches for them would need a four-body scenario (QA's, the brawl's pairing rules) and their frame count doubles, so the scans' wall time does: `lead_scan` is about 8 minutes a run today. The per-frame cost and the scan time are the two budgets to watch; neither is a barrier.
 
 **What does not exist yet:** collisions between bodies in the ragdoll (a thrown guard passes through a standing one), the layering of four bodies in a split view, and the clinch's pairing with a third body near: Rendering's and the sim's. From the animation side: **about 3 to 4 days** for the opponent pick, the waiting stances and the checks, plus the guards' own look as above.
+
+## 6. Built (2026-10-14, the EP's go on the first three; render side only)
+
+| # | What | Where | Read |
+| ---: | :--- | :--- | :--- |
+| 1 | **The heavy's tell sinks.** The `super` row sinks by the piece's drive (`styles.super.squash_by_drive`: step through 0.35, turn 0.4, unwind 0.4, full turn 0.3, heave 0.15, fall 0.0: a fall rises to come down) | `press_styles.json`, `_press_body` | The pelvis sinks **7.6 to 8.8 units** over the 28 ticks on the tier's step, turn and unwind pieces (before 0.1); pieces already drawn low (`su_ram` 16.4, `su_hook` 14.4) are unchanged; the falls (`su_heel`, `su_drive`) do not sink (0.1, 0.7) |
+| 2 | **The held X digs in.** Through a burst's stream the legs and pelvis keep the set pose (`styles.burst.dig`: weight 0.8, in 3, out 6 ticks, a blow of the foot or the knee keeps its legs); the check of the contact pose and the contact solve are untouched | `press_styles.json`, `_dig_in`, `RenderAnim.dig_in` | Held X digs in at 0.90; a mashed X 0.00 (`_test_cells`). The sheet's fourth row |
+| 3 | **The plain light's pin is ON by default** (`RenderAnim.plain_pin` true): a brawl light that is the first of its string, no burst, no flurry, pins its hand on him 6 ticks, then lets go over 3. **No sim data file needs a change**: the live beat's own fields (`strength`, `flurry`, `k`, `burst`) say it | `render_anim.gd`, `_press_prof` | On the live X tap the contact weight holds 1.00 for 6 ticks and is gone by 9 (before: gone by 5); a mashed X does not pin. The sheet's second row against the first |
+
+**Gates** on a scratch export of main (1ea5f963) with these files: `anim_check`, `joint_scan --strict` (0 of 896 poses, 0 on screen), `lead_scan --strict` (0 feet first outside a tumble), `held_scan --strict` (0 fail), `determinism` plain and `-- --intro --seeds=2 --ticks=900`, the flash count (`flash_worst.gd` and `check-log.js`: passed in 56 runs; no source asks the register). The study clip: `art/animation/review/nine-cells-look/cells-sheet-after.png` (ten rows: X tap without the pin, X tap with it, X mashed, X held, Y tapped, Y mashed, Y held, B tapped on a turn and an unwind, B mashed, B held; the before sheet is `cells-sheet-fight-size.png`; this PC only).
+
+**New keys for the schema (Tools):** `styles.<style>.squash_by_drive` (a map of drive to a number 0 to 1), `styles.<style>.dig` (`w`, `lead`, `in`, `out`, `bones`).
+**Switches:** `RenderAnim.dig_in` and `RenderAnim.plain_pin`, both true; false is the before.

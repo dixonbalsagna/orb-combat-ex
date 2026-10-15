@@ -2180,6 +2180,44 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "dig": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "w",
+                "lead",
+                "in",
+                "out",
+                "bones"
+              ],
+              "description": "Held X digs in: through the stream the legs and pelvis keep the set pose (Animation, 2026-10-14).",
+              "properties": {
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "lead": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "in": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "out": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "bones": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                }
+              }
             }
           },
           "additionalProperties": false,
@@ -2869,6 +2907,15 @@
               "additionalProperties": false,
               "patternProperties": {
                 "^_": true
+              }
+            },
+            "squash_by_drive": {
+              "type": "object",
+              "description": "The heavy tell sinks: squash by the piece drive, 0 to 1 (Animation, 2026-10-14).",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
               }
             }
           },

@@ -266,6 +266,7 @@ var depth_vz: float = 0.0                # his speed in depth, units a tick (pos
 var _dz_prev: float = 0.0
 var _dz_tick: int = -1
 var _stride: float = 0.0                 # footfall phase of a step in depth
+var dig_w: float = 0.0                   # the held X's dig-in weight this solve (debug and tests)
 var burst_set: float = 0.0               # how far the burst's set pose is laid over the body this tick (0 to 0.9; VFX and the tools read it)
 var _ci_step_k: float = 1.0                # the share of that step a medium on 12 ticks takes (Combat's w6: a half step)
 var _ci_opp = null
@@ -1831,6 +1832,7 @@ func _entry_layer(es: float, dur: float, id: String, T: float, dq: float, wt: fl
 
 func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 	burst_set = 0.0
+	dig_w = 0.0
 	hold_coil = 0.0
 	var role: String = "A" if ex.A == f else "D"
 	var t0: float = T - ex.t
@@ -1946,6 +1948,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 			if brow.has("set"):
 				_burst_set(brow.set, strikes, float(strikes[prev][0]), T)
 		_x_hold_set(S, f, T, strikes)
+		_dig_in(strikes, psts, T, "")
 		return
 	var prof: Dictionary = profs[best]
 	_set_lag(float(prof.get("lag", 0.3)))
@@ -2116,6 +2119,7 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		_contact_now = true
 		debug["contact_frames"] += 1
 		debug["contact_err_max"] = maxf(float(debug["contact_err_max"]), err)
+	_dig_in(strikes, psts, T, String(ks.get("limb", "hand_r")))
 	# the contact solve's weight: in over the snap, full at the contact tick and through the first of the follow-through,
 	# out over the rest of it
 	var cw: float = 0.0
@@ -2445,6 +2449,39 @@ func _hold_coil(row: Dictionary, elapsed: float, span: float, dtc: float, t_now:
 		hips.y += 0.25 * sin(tt * 3.1 + 1.0)
 
 
+## The held X digs in (data `styles.burst.dig`; the nine cells' look audit, number 2): through a burst's stream the legs and the pelvis keep the set pose, wide, low and planted, and only the arms and the shoulders
+## move, so a held X is a different body from a mashed one. In from a few ticks before the first blow of the stream, out over a few after the last; a blow of the foot or the knee keeps its legs (0 for it).
+## Drawn after the contact-frame check and before the contact solve, so the hand still reaches and a blow's key pose is still what the check holds.
+func _dig_in(strikes: Array, psts: Array, T: float, limb: String) -> void:
+	var brow: Dictionary = AnimData.press.get("styles", {}).get("burst", {})
+	var dg: Dictionary = brow.get("dig", {})
+	if dg.is_empty() or not RenderAnim.dig_in:
+		return
+	var t_first: float = 1.0e9
+	var t_last: float = -1.0e9
+	for n in range(strikes.size()):
+		if n < psts.size() and String(psts[n]) == "burst":
+			t_first = minf(t_first, float(strikes[n][0]))
+			t_last = maxf(t_last, float(strikes[n][0]))
+	if t_last < 0.0:
+		return
+	var a: float = t_first - float(dg.get("lead", 6)) * DT
+	var w: float = smoothstep(a, a + float(dg.get("in", 3)) * DT, T) * (1.0 - smoothstep(t_last, t_last + float(dg.get("out", 6)) * DT, T)) * float(dg.get("w", 0.8))
+	if limb.begins_with("foot") or limb.begins_with("knee"):
+		w = 0.0
+	if w <= 0.001:
+		return
+	var pid: String = String(brow.get("set", {}).get("pose", {}).get(pair_key, ""))
+	if pid == "" or not AnimData.pose_exists(pid):
+		return
+	var spp: AnimPose = AnimData.pose(pid)
+	for bn in dg.get("bones", []):
+		var bi: int = AnimRig.index[String(bn)]
+		_press_slerp(bi, spp.q[bi], w)
+	hips.y = minf(hips.y, lerpf(hips.y, spp.hips.y, w))
+	dig_w = maxf(dig_w, w)
+
+
 ## A held X before its burst begins (Game Design section 3: until 16 ticks a held X is a tap, one light, and then he sets himself for about 10 ticks): the sim creates a burst's blows only as they are due, so there is no
 ## next beat to key the set on. The set is laid by the brawl's own slots instead: X_LIVE (the live tick of the light press while the button is still down) and BURST_N 0 (no burst yet): a pure read, as
 ## `DirBrawl.winding` is. It comes in 5 ticks after the press (the light's own follow-through is done) and is gone by 16, where the burst's first blow is already winding. Same pose, same row as `_burst_set`.
@@ -2549,7 +2586,11 @@ func _press_body(row: Dictionary, style: String, ul: float, dtc: float, sn: floa
 	var sq: float = float(row.get("squash", 0.0))
 	if sq > 0.0:
 		s = smoothstep(0.0, 0.85, ul) * (1.0 - smoothstep(-3.0 * DT, 0.0, dtc))   # gone on the contact tick: the key pose is the blow
-		s *= sq * wsc * float(ks.get("squash_w", 1.0))   # a key set may carry its own squash (data `squash_w`): the drive's tell is drawn in its chamber, not a crouch
+		var swk: float = float(ks.get("squash_w", 1.0))   # a key set may carry its own squash (data `squash_w`): the drive's tell is drawn in its chamber, not a crouch
+		var sbd: Dictionary = row.get("squash_by_drive", {})
+		if sbd.has(String(ks.get("drive", ""))):
+			swk = float(sbd[String(ks.drive)])   # the style's own sink by the piece's drive (the heavy's tell sinks at fight size: a step, a turn or an unwind 0.55, a fall rises and does not sink)
+		s *= sq * wsc * swk
 		if s > 0.001:
 			var sp: Dictionary = AnimData.press.get("squash_pose", {})
 			var pid: String = String(sp.get("by_fighter", {}).get(pair_key, sp.get("default", "brace")))

@@ -21,16 +21,17 @@ const DIST := 60.0
 const PIECES := {   # blows that land on the chest or the gut (a blow aimed at the head reaches over the dummy's head at this distance)
 	"protagonist": {"light": ["cross", "palm_heel", "spear_hand", "cross", "palm_heel", "spear_hand", "cross", "palm_heel"], "burst": ["cross", "pm.palm_rise", "pm.back_chop", "palm_heel", "spear_hand", "pm.fist_chop", "pm.palm_heave", "jab"],
 		"medium": ["double_palm", "roundhouse", "cross_arm_ram", "spinning_heel", "axe_kick", "roundhouse"], "gather": ["double_palm", "cross_arm_ram", "double_hammer"],
-		"super": ["su_drive", "su_turn", "su_drive", "su_turn"], "super2": ["roundhouse", "double_palm", "spinning_heel", "axe_kick"], "hold_m": "roundhouse", "hold_s": "su_drive"},
+		"super": ["su_drive", "su_turn", "su_drive", "su_turn"], "super2": ["roundhouse", "double_palm", "spinning_heel", "axe_kick"], "tap_heavy": ["su_edge_unwind"], "hold_m": "roundhouse", "hold_s": "su_drive"},
 	"antihero": {"light": ["cross", "palm_heel", "spear_hand", "cross", "palm_heel", "spear_hand", "cross", "palm_heel"], "burst": ["cross", "rm.gut_rise", "rm.fist_sweep", "palm_heel", "spear_hand", "rm.arm_chop", "rm.plate_drop", "jab"],
 		"medium": ["double_palm", "roundhouse", "cross_arm_ram", "spinning_heel", "axe_kick", "roundhouse"], "gather": ["double_palm", "cross_arm_ram", "double_hammer"],
-		"super": ["su_ram", "su_heel", "su_ram", "su_heel"], "super2": ["roundhouse", "double_palm", "spinning_heel", "axe_kick"], "hold_m": "roundhouse", "hold_s": "su_ram"},
+		"super": ["su_ram", "su_heel", "su_ram", "su_heel"], "super2": ["roundhouse", "double_palm", "spinning_heel", "axe_kick"], "tap_heavy": ["su_plate"], "hold_m": "roundhouse", "hold_s": "su_ram"},
 }
 ## contacts are ticks from the scenario's start; `pre` and `post` are the idle ticks before the first and after the last contact
 const SCENARIOS := [
-	{"id": "xtap", "label": "X tap: one light", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30], "post": 44},
+	{"id": "xtap", "label": "X tap: one light, the plain light's pin (the hand set on him 6 ticks)", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30], "plain": true, "post": 44},
+	{"id": "xtap0", "label": "X tap: one light, no pin (before)", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30], "post": 44},
 	{"id": "ytap", "label": "Y tap: one medium on its 12-tick wind-up", "style": "medium", "set": "medium", "kind": "heavy", "dmg": 50.0, "contacts": [44], "windup": 12, "post": 48},
-	{"id": "btap", "label": "B tap: one heavy on its 28-tick wind-up", "style": "super", "set": "super", "kind": "heavy", "dmg": 90.0, "contacts": [60], "windup": 28, "post": 60},
+	{"id": "btap", "label": "B tap: one heavy on its 28-tick wind-up (a turn, an unwind)", "style": "super", "set": "tap_heavy", "kind": "heavy", "dmg": 90.0, "contacts": [60], "windup": 28, "post": 60},
 	{"id": "xmash", "label": "X mash: a light about every 6 ticks", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30, 36, 42, 48, 54, 60, 66, 72], "post": 40},
 	{"id": "xhold", "label": "X held: one light, a 16-tick set, then the stream, gaps 4 4 5 6 8 11", "style": "burst", "set": "burst", "kind": "light", "dmg": 12.0,
 		"contacts": [30, 46, 50, 54, 59, 65, 73, 84], "post": 44},
@@ -298,6 +299,8 @@ func _start_scenario() -> void:
 		var bargs := {"a": "A", "dmg": float(sc.dmg), "piece": "strike." + piece, "style": String(sc.style), "o": {"big": String(sc.kind) == "heavy"}}
 		if sc.has("windup"):
 			bargs["windup"] = int(sc.windup)
+		if sc.has("plain"):
+			bargs["plain"] = true
 		if String(sc.id) == "tier":
 			var hl: Array = tier_hands_pk if fighter == "protagonist" else tier_hands_rk
 			bargs["hand"] = String(hl[i % hl.size()]) if not hl.is_empty() else "r"   # the tier's stills are the drawn side unless a run names the arm of each blow
