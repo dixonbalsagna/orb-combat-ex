@@ -1337,3 +1337,4 @@ Orb's marks, in short (their words quoted where they matter):
 - **The three styles on each button:** not distinct enough yet; "arms still seem to bend in weird, unnatural ways".
 - **Each fighter moving his own way:** yes, they move like different people. In cue-tech the legs fold up and look strange.
 - **The flight round the planet:** the direction is right; the distant mountains and the sky colour look right. The fighters flew underwater around dusk, so the evening light was mostly dark ocean: show it again over land.
+- **Clarified the same day:** "thinner still" for the core meant the depth of the see-through effect, not the core's size. Orb likes the core's size as it is; some variety in size per building is welcome. Orb wants more city variety: the skyscrapers' "black and grey grid" look should get more visual appeal.
