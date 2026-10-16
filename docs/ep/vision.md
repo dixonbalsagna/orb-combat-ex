@@ -1323,3 +1323,17 @@ What follows from it:
 5. Small energy attacks' explosions need flames and smoke.
 6. Town destruction looked good.
 7. The computer perfect-blocks charged attacks too easily.
+
+## Orb answers homework 4, watch and listen (2026-10-16)
+
+Orb's marks, in short (their words quoted where they matter):
+
+- **See-through patch on low foreground houses:** the window is the right size and the sinking is good: "looks cool, felt natural". Wants more dynamic damage patches on the nearby buildings.
+- **The lobby under a tower:** close, needs changes. The ghosted columns are distracting and the see-through is not strong enough: "fighters are still obscured partly, would be better to see all the way thru the inner lobby pieces". The core: thinner still. A damaged tower keeps its lobby (the built, switched-off damaged stages). Cleared floors are believable. The hit mark is good. The glass tower near black at its first stage is fine. A blast's speed is right. If blasts need more flash margin from lit windows or the crater's glow: "show me first".
+- **The perfect follow-up's sound:** the rising note is too much. The opponent's chain needn't sound different. "needed to sound 'chunkier', kind of sounds metallic and high pitched".
+- **The brawl's sounds:** "a little too high pitched, hits sounded a little 'tinny'".
+- **The city:** the crossing looks good; Orb wants to see it in motion in their own play. The skyline "looks great"; up close the buildings need more detail so players don't "just see a bunch of dark grid lines". The crowd is good but still too busy, "a little too clustered"; cars on the roads for realism.
+- **The HUD's teaching sheet:** needs editing and plainer language ("the bolt's land" and "ink on the dark scrim" read as nonsense).
+- **The three styles on each button:** not distinct enough yet; "arms still seem to bend in weird, unnatural ways".
+- **Each fighter moving his own way:** yes, they move like different people. In cue-tech the legs fold up and look strange.
+- **The flight round the planet:** the direction is right; the distant mountains and the sky colour look right. The fighters flew underwater around dusk, so the evening light was mostly dark ocean: show it again over land.
