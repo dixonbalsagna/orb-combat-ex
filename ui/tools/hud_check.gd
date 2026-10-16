@@ -60,6 +60,8 @@ func _run() -> void:
 	await _rival_pointer_rules()
 	await _many_marker_rules()
 	await _lost_rival_rules()
+	await _civilian_bar_rules()
+	await _plain_words_rules()
 	await _launch_marks_rules()
 	await _tug_rules()
 	await _brawl_marks_rules()
@@ -101,7 +103,7 @@ func _terms() -> void:
 		_ok(UiData.t(k) != k, "term exists: " + k)
 	_ok(UiData.t("stance.press") == "PRESS", "glossary: stance press")
 	_ok(UiData.tier_name(1) == "TREMOR" and UiData.tier_name(4) == "CATACLYSM", "glossary: tier names")
-	_ok(UiData.fmt("state.chain", {"n": 3}) == "CHAIN ×3", "glossary: CHAIN ×N")
+	_ok(UiData.fmt("state.chain", {"n": 3}) == "COMBO ×3", "glossary: COMBO ×N")
 	_ok(UiData.banner("NEED 45 KI") == "NEED 45 CHARGE", "banner rename: ki becomes charge")
 	_ok(UiData.place_at(3100.0) == "BELLGATE", "place label lookup")
 	# No banned words in any term (Legal's glossary rules: no ki, no aura, no scouter, no "power level").
@@ -319,7 +321,7 @@ func _hub_rules() -> void:
 	hub.consume({"type": "hatch_open", "actor": 1, "station": 3, "dur": 1.5})
 	hub.consume({"type": "chip_stage", "actor": 1, "stage": 2})
 	_step(hub, 0.1)
-	_ok(hub.cards_of(1).any(func(c): return c.title == "HATCH OPEN: HIP") and hub.cards_of(1).any(func(c): return c.title == "CHIP: CRACKED"), "cyborg: hatch and chip cards")
+	_ok(hub.cards_of(1).any(func(c): return c.title == "ARMOUR OPEN: HIP") and hub.cards_of(1).any(func(c): return c.title == "WEAK SPOT: CRACKED"), "cyborg: armour and weak-spot cards")
 	# Windows and hiding.
 	hub = _hub()
 	hub.consume({"type": "window_open", "actor": 1, "kind": "parry", "dur": 0.33})
@@ -1575,7 +1577,7 @@ func _reads_hud() -> void:
 		await process_frame
 	_ok(hud.hub.banner.is_empty() and hud._l_hint.sig != null, "reads: and the hint returns when the banner is gone")
 	hud.consume({"type": "chain_ender", "actor": 0, "n": 3})
-	_ok(str(hud.hub.banner.get("text", "")).begins_with("CHAIN") and str(hud.hub.banner["text"]).contains("3"), "reads: chain_ender puts CHAIN x3 in the banner")
+	_ok(str(hud.hub.banner.get("text", "")).begins_with("COMBO") and str(hud.hub.banner["text"]).contains("3"), "reads: chain_ender puts COMBO x3 in the banner")
 	hud.consume({"type": "chain_ender", "actor": 0, "n": 1})
 	_ok(str(hud.hub.banner.get("text", "")).contains("3"), "reads: a chain of one gets no banner (the earlier one stands)")
 	# Weight, signature and stance edges redraw the plate within a frame.
@@ -2870,7 +2872,7 @@ func _key_help_rules() -> void:
 				out.append(r["label"])
 		return out
 	var want := {0: ["Light strikes", "Heavy strikes", "Grab and throw", "Signature"], 1: ["Check", "Push", "Reversal", "Counter"], 2: ["Bolts", "Charged shot", "Mine", "Beam"], 3: ["Quick special", "Strong special", "Utility special", "Ultimate (hold)"], 4: ["Zip strike", "Zip heavy", "Zip tackle", "Terrain art"]}
-	var old_words := ["Light", "Heavy", "Context", "Signature"]
+	var old_words := ["Light", "Heavy", "Action", "Signature"]
 	var head_ok := true
 	for k in want:
 		for preset in ["arena", "kb-solo", "kb-shared-p2"]:
@@ -3003,7 +3005,7 @@ func _stances_page_rules() -> void:
 			if int(c["kind"]) == kind:
 				out.append(" ".join(c["lines"]))
 		return out
-	_ok(cell_words.call(st, 2) == ["Bolts", "Charged shot", "Mine", "Beam"] and cell_words.call(st, 0) == ["Light", "Heavy", "Context", "Signature"] and cell_words.call(st, 4) == ["Light", "Heavy", "Context", "Signature"], "stances page: the live stance (energy) shows its four names and a not-live stance shows what the buttons really do today, at normal weight, with no tag")
+	_ok(cell_words.call(st, 2) == ["Bolts", "Charged shot", "Mine", "Beam"] and cell_words.call(st, 0) == ["Light", "Heavy", "Action", "Signature"] and cell_words.call(st, 4) == ["Light", "Heavy", "Action", "Signature"], "stances page: the live stance (energy) shows its four names and a not-live stance shows what the buttons really do today, at normal weight, with no tag")
 	var tags := false
 	for hd in st["heads"]:
 		tags = tags or str(hd.get("enter", "")).contains("soon")
@@ -3057,7 +3059,7 @@ func _stances_page_rules() -> void:
 		narrow_info += "%s:%s " % [cs[0], sn["mode"]]
 	_ok(narrow_ok, "stances page narrow (360x640, 390x844, 750x1334, 1170x2532): five tabs of at least a touch target, the held stance's tab selected, its four rows, and it fits (%s)" % narrow_info)
 	var pt: Dictionary = _stances_plan(Vector2(360, 640), 1.0, false, "kb-solo", {"held": 0, "tab": 4})
-	_ok(int(pt["stances"]["sel"]) == 4 and cell_words.call(pt["stances"], 4) == ["Light", "Heavy", "Context", "Signature"] and (pt["stances"]["title"] as Dictionary)["text"] == "Manoeuvre", "stances page narrow: choosing a tab shows that stance (its full name, and its real words while it is not live)")
+	_ok(int(pt["stances"]["sel"]) == 4 and cell_words.call(pt["stances"], 4) == ["Light", "Heavy", "Action", "Signature"] and (pt["stances"]["title"] as Dictionary)["text"] == "Manoeuvre", "stances page narrow: choosing a tab shows that stance (its full name, and its real words while it is not live)")
 	set_live.call([true, true, true, true, true])
 	var pt2: Dictionary = _stances_plan(Vector2(360, 640), 1.0, false, "kb-solo", {"held": 0, "tab": 4})
 	_ok(cell_words.call(pt2["stances"], 4) == ["Zip strike", "Zip heavy", "Zip tackle", "Terrain art"] and str((pt2["stances"]["notes"] as Array)[0]["lines"][0]).begins_with("Dodge, boost"), "stances page narrow: a live stance shows its names and its one line")
@@ -3079,7 +3081,7 @@ func _stances_page_rules() -> void:
 	_ok(str(pts["stances"]["mode"]) == "none" and str(notes_of.call(pts["stances"])).begins_with("The game picks your stance for you."), "stances page: Simple touch has no table either")
 	var ptf: Dictionary = _stances_plan(Vector2(2400, 1080), 2.6, true, "touch-simple", {"held": 0, "full_touch": true}, "touch")
 	var stf: Dictionary = ptf["stances"]
-	_ok(str(stf["mode"]) != "none" and not (stf["cells"] as Array).is_empty() and str(notes_of.call(stf)).begins_with("Use the stance buttons to change stance.") and str(notes_of.call(stf)).contains("Tap a stance button to use it for your next blow, or hold it to stay in the stance.") and rowhead_words.call(stf) == ["LIGHT", "HEAVY", "CONTEXT", "SIGN"], "stances page: Full touch has the table (its own button words) and the arming line")
+	_ok(str(stf["mode"]) != "none" and not (stf["cells"] as Array).is_empty() and str(notes_of.call(stf)).begins_with("Use the stance buttons to change stance.") and str(notes_of.call(stf)).contains("Tap a stance button to use it for your next blow, or hold it to stay in the stance.") and rowhead_words.call(stf) == ["LIGHT", "HEAVY", "ACTION", "SIGNATURE"], "stances page: Full touch has the table (its own button words) and the arming line")
 	# The page fits at the 15 sizes for every kind of layout.
 	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0], [Vector2(2560, 1600), 2.0], [Vector2(3840, 2160), 1.0],
 		[Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(1125, 2436), 3.0], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0]]
@@ -4938,7 +4940,7 @@ func _press_mark_rules() -> void:
 	for row in pl["rows"]:
 		if str(row.get("cell", "")) == m0.press_ack_cell:
 			marked.append(str(row["label"]))
-	_ok(s0 != s1 and s1 != s2 and marked == ["Context"] and s_red != s1 and s_red != s2, "press marks: the legend row for the pressed button carries the mark, and the layer redraws as it fades (and once under reduced motion) %s %s %s" % [str(marked), str(s0 != s1), str(s1 != s2)])
+	_ok(s0 != s1 and s1 != s2 and marked == ["Action"] and s_red != s1 and s_red != s2, "press marks: the legend row for the pressed button carries the mark, and the layer redraws as it fades (and once under reduced motion) %s %s %s" % [str(marked), str(s0 != s1), str(s1 != s2)])
 	# Full touch: the same greying on the buttons (and the mark), from the model of the first human.
 	hud.set_option("touch_ui", true)
 	hud.set_option("touch_preset", "touch-full")
@@ -5013,17 +5015,17 @@ func _three_strength_rules() -> void:
 		return out
 	var before: Dictionary = labels_of.call(0, "arena")
 	UiData.set_feature("three_strengths", true)
-	_ok(UiStance.three() and UiStance.three_word("light") == "Light" and UiStance.three_word("heavy") == "Medium" and UiStance.three_word("signature") == "Heavy" and UiStance.three_word("context") == "Context" and UiStance.three_word("mode") == "", "three strengths: Y reads Medium and B reads Heavy (the action ids stay)")
+	_ok(UiStance.three() and UiStance.three_word("light") == "Light" and UiStance.three_word("heavy") == "Medium" and UiStance.three_word("signature") == "Heavy" and UiStance.three_word("context") == "Action" and UiStance.three_word("mode") == "", "three strengths: Y reads Medium and B reads Heavy (the action ids stay)")
 	var bad := PackedStringArray()
 	for preset in ["arena", "kb-solo", "kb-shared-p1"]:
 		var mart: Dictionary = labels_of.call(0, preset)
 		var chrg: Dictionary = labels_of.call(3, preset)
 		var enrg: Dictionary = labels_of.call(2, preset)
-		if mart.get("light") != ["Light", false] or mart.get("heavy") != ["Medium", false] or mart.get("signature") != ["Heavy", false] or mart.get("context") != ["Context", true]:
+		if mart.get("light") != ["Light", false] or mart.get("heavy") != ["Medium", false] or mart.get("signature") != ["Heavy", false] or mart.get("context") != ["Action", true]:
 			bad.append("%s martial %s" % [preset, str(mart)])
 		if not mart.has("power,signature") or mart["power,signature"] != ["Signature (hold)", false]:
 			bad.append("%s chord row %s" % [preset, str(mart.keys())])
-		if chrg.get("light") != ["Light", true] or chrg.get("heavy") != ["Medium", true] or chrg.get("context") != ["Context", true] or chrg.get("signature") != ["Signature (hold)", false] or chrg.has("power,signature"):
+		if chrg.get("light") != ["Light", true] or chrg.get("heavy") != ["Medium", true] or chrg.get("context") != ["Action", true] or chrg.get("signature") != ["Signature (hold)", false] or chrg.has("power,signature"):
 			bad.append("%s charging %s" % [preset, str(chrg)])
 		if enrg.get("signature") == null or str(enrg["signature"][0]) != "Beam" or str(enrg["light"][0]) != "Bolts":
 			bad.append("%s energy %s" % [preset, str(enrg)])
@@ -5052,7 +5054,7 @@ func _three_strength_rules() -> void:
 	UiText.tracing = false
 	var tr: Array = UiText.trace.duplicate()
 	UiText.trace = []
-	_ok(tr.has("MEDIUM") and tr.has("HEAVY") and tr.has("LIGHT") and tr.has("CONTEXT") and not tr.has("SIGN"), "three strengths: Full touch's buttons read LIGHT, MEDIUM, HEAVY and CONTEXT (no SIGN)")
+	_ok(tr.has("MEDIUM") and tr.has("HEAVY") and tr.has("LIGHT") and tr.has("ACTION") and not tr.has("SIGN"), "three strengths: Full touch's buttons read LIGHT, MEDIUM, HEAVY and CONTEXT (no SIGN)")
 	var howto_text := ""
 	var hp: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "kbd", 0)
 	for rec in hp["items"]:
@@ -6034,6 +6036,172 @@ func _lost_rival_rules() -> void:
 	_ok(is_equal_approx(m1.launcher_rest_total, 30.0), "launch ring: and follows the director's number when it sends one (30 s later)")
 	hud.queue_free()
 	await process_frame
+
+
+## The civilian bar and the match-over card's facts (docs/ui/civilian-bar.md), behind features.json civilian_bar.
+func _civilian_bar_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_bar.json"
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var world := func(civ: int, pop: int, st: int, cr: int) -> void:
+		hud.consume({"type": "world", "civilians": civ, "pop0": pop, "structures": st, "craters": cr})
+	var words := func():
+		UiText.tracing = true
+		UiText.trace = []
+		hud._l_toll.invalidate()
+		for i in range(2):
+			await process_frame
+		UiText.tracing = false
+		var seen: Array = UiText.trace.duplicate()
+		UiText.trace = []
+		return seen
+	_ok(UiData.feature("civilian_bar"), "civilian bar: on by default")
+	UiData.set_feature("civilian_bar", false)
+	world.call(120, 425, 3, 9)
+	hud.advance(1.0 / 60.0)
+	var off_words: Array = await words.call()
+	_ok(" ".join(PackedStringArray(off_words)).contains("120 / 425"), "civilian bar: with the switch off the chip still says CIVILIANS LOST 120 / 425")
+	UiData.set_feature("civilian_bar", true)
+	hud.advance(1.0 / 60.0)
+	var on_words: Array = await words.call()
+	var joined := " ".join(PackedStringArray(on_words))
+	_ok(joined.contains("CIVILIANS LOST") and not joined.contains("/ 425") and not joined.contains("120"), "civilian bar: with it on the chip has the words and no count (%s)" % joined.substr(0, 90))
+	# The share is in whole percents, and the bar redraws only when the percent, the structures or the craters change.
+	hud.hub.toll_age = 99.0
+	world.call(0, 425, 0, 0)
+	hud.advance(1.0 / 60.0)
+	_ok(UiCenter.civilian_share(hud.hub) == 0.0 and absf(UiCenter.civilian_share(hud.hub) - 0.0) < 0.0001, "civilian bar: empty at zero")
+	world.call(212, 425, 0, 0)
+	hud.advance(1.0 / 60.0)
+	var sig_a: Variant = hud._l_toll.sig
+	_ok(is_equal_approx(UiCenter.civilian_share(hud.hub), 0.49), "civilian bar: 212 of 425 is 49 percent (whole percents, rounded down)")
+	world.call(211, 425, 0, 0)
+	hud.advance(1.0 / 60.0)
+	var sig_b: Variant = hud._l_toll.sig
+	_ok(sig_a == sig_b, "civilian bar: one fewer person inside the same percent redraws nothing")
+	world.call(240, 425, 0, 0)
+	hud.advance(1.0 / 60.0)
+	var sig_c: Variant = hud._l_toll.sig
+	_ok(sig_c != sig_b and (sig_c as Array)[3] == (sig_b as Array)[3], "civilian bar: a rise changes the picture by its percent only, and the opacity does not change (no brightening, no blink)")
+	hud.hub.toll_age = 0.0
+	hud.advance(1.0 / 60.0)
+	_ok((hud._l_toll.sig as Array)[3] == (sig_c as Array)[3], "civilian bar: and a fresh change of the toll does not brighten it either")
+	# At the sizes (one view and the split share the chip's rectangle): the bar is inside the chip and wide enough to read.
+	var bad := PackedStringArray()
+	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1170, 2532), 3.0]]:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(cs[0], false)
+		var bp: Dictionary = UiCenter.bar_plan(lay, lay.s)
+		var tr: Rect2 = bp["track"]
+		if not lay.toll.encloses(tr) or tr.size.x < 50.0 or float(bp["x0"]) < lay.toll.position.x or float(bp["x0"]) + float(bp["lw"]) > tr.position.x:
+			bad.append("%s track %s" % [str(cs[0]), str(tr)])
+	_ok(bad.is_empty(), "civilian bar: at eight sizes (phone landscape and upright, desktop) the words and the bar are inside the chip, the bar at least 50 px (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	# The anguish and menace link is not touched: the toll events change no fighter's meter, with the switch on or off.
+	var m0: UiFighterModel = hud.hub.model(0)
+	var m1: UiFighterModel = hud.hub.model(1)
+	hud.hub.patch(0, {"ego": 37.0})
+	hud.hub.patch(1, {"ego": 61.0})
+	world.call(300, 425, 5, 12)
+	hud.advance(0.5)
+	UiData.set_feature("civilian_bar", false)
+	world.call(310, 425, 5, 12)
+	hud.advance(0.5)
+	UiData.set_feature("civilian_bar", true)
+	_ok(is_equal_approx(m0.ego, 37.0) and is_equal_approx(m1.ego, 61.0), "civilian bar: the toll events change no meter (the anguish and menace link is the sim's, unchanged)")
+	# The results card: the exact counts, in plain words, only with the switch on.
+	world.call(123, 425, 12, 40)
+	hud.advance(1.0 / 60.0)
+	var facts: Array = hud.over_facts()
+	_ok(facts == ["Civilians lost: 123 of 425", "Buildings lost: 12", "Craters: 40"], "civilian bar: the match-over card's facts (%s)" % str(facts))
+	UiData.set_feature("civilian_bar", false)
+	_ok(hud.over_facts().is_empty(), "civilian bar: and none with the switch off")
+	UiData.set_feature("civilian_bar", true)
+	var bad2 := PackedStringArray()
+	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(568, 320), 1.0]]:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(cs[0], false)
+		for touch in [false, true]:
+			var p: Dictionary = UiPause.plan(cs[0], lay.s, cs[1], touch, {"focus": 0, "over": true, "facts": facts})
+			if not bool(p["fits"]) or (p["facts_lines"] as PackedStringArray).size() < 3:
+				bad2.append("%s touch %s" % [str(cs[0]), str(touch)])
+	_ok(bad2.is_empty(), "civilian bar: the match-over card with its three facts fits at nine sizes, touch off and on, every button a 48 dp target inside it (%d bad %s)" % [bad2.size(), str(bad2.slice(0, 3))])
+	# In the HUD, the card draws the facts.
+	hud._menu_last_cfg = {"players": 1}
+	hud.show_pause_menu(true)
+	hud.advance(1.0 / 60.0)
+	UiText.tracing = true
+	UiText.trace = []
+	hud._l_pmenu.invalidate()
+	for i in range(2):
+		await process_frame
+	UiText.tracing = false
+	var card_words := " ".join(PackedStringArray(UiText.trace))
+	UiText.trace = []
+	_ok(card_words.contains("Civilians lost: 123 of 425") and card_words.contains("Buildings lost: 12") and card_words.contains("MATCH OVER"), "civilian bar: the open card draws MATCH OVER and the exact counts")
+	UiData.set_feature("civilian_bar", null)
+	hud.queue_free()
+	await process_frame
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path)) if FileAccess.file_exists(UiPrefs.path) else null
+	UiPrefs.path = "user://ui_prefs.json"
+
+
+## Narrative's plain words (docs/narrative/plain-words.md, merged 2026-10-16) fit where they are drawn, the Cyborg's WEAK SPOT card included; a run needs a length (run_to above 0).
+func _plain_words_rules() -> void:
+	var want := {"card.facade_crack": "RATTLED", "card.hatch_open": "ARMOUR OPEN: {station}", "card.chip_stage": "WEAK SPOT: {stage}", "card.revision": "NEW FORM", "state.brink": "NEARLY BEATEN",
+		"card.brink": "NEARLY BEATEN", "card.boil_over": "CORE: OVERHEATED", "state.lost_trail": "LOST HIM", "state.chain": "COMBO \u00d7{n}", "state.finisher_melee": "BLOWS",
+		"prompt.full_signature": "SIGNATURE", "prompt.full_context": "ACTION", "prompt.full_transform": "TRANSFORM"}
+	var bad := PackedStringArray()
+	for k in want:
+		var got: String = UiData.t(k)
+		if got != str(want[k]):
+			bad.append("%s = %s" % [k, got])
+	_ok(bad.is_empty(), "plain words: Narrative's words are in the data (%d wrong %s)" % [bad.size(), str(bad.slice(0, 3))])
+	var sizes: Array = [[Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0]]
+	var missing := PackedStringArray()
+	for cs in sizes:
+		for which in ["hatch", "chip"]:
+			root.size = Vector2i(cs[0])
+			var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+			hud.size = cs[0]
+			root.add_child(hud)
+			await process_frame
+			hud.setup(["empress", "cyborg"], ["ONE", "TWO"])
+			if which == "hatch":
+				hud.consume({"type": "hatch_open", "actor": 1, "station": 1, "dur": 3.0})
+			else:
+				hud.consume({"type": "chip_stage", "actor": 1, "stage": 1})
+			for i in range(30):
+				hud.advance(1.0 / 60.0)
+			UiText.tracing = true
+			UiText.trace = []
+			for l in hud._all_layers():
+				if l != null:
+					l.invalidate()
+			for i in range(3):
+				await process_frame
+			UiText.tracing = false
+			var words := " ".join(PackedStringArray(UiText.trace))
+			UiText.trace = []
+			for w in (["ARMOUR OPEN", "CHEST"] if which == "hatch" else ["WEAK SPOT", "SCRATCHED"]):
+				if not words.contains(w):
+					missing.append("%s: %s" % [str(cs[0]), w])
+			hud.queue_free()
+			await process_frame
+	_ok(missing.is_empty(), "plain words: the Cyborg's WEAK SPOT and ARMOUR OPEN cards draw whole (or split at the colon on a narrow card) at four sizes (%s)" % str(missing.slice(0, 4)))
+	# A run needs a length: the blow cue's run with run_to 0 (Simulation's default on every cue) is not a run.
+	var hub := UiEventHub.new()
+	hub.setup_fighters(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hub.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "target": 1, "run": 3, "run_to": 0})
+	hub.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "target": 1, "run": 0, "run_to": 0})
+	_ok(hub.model(1).run_n == 0, "plain words: a blow cue with run_to 0 shows no run")
+	hub.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "target": 1, "run": 3, "run_to": 4})
+	_ok(hub.model(1).run_n == 3 and hub.model(1).run_to == 4, "plain words: and with run_to above 0 it does")
 
 
 ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD

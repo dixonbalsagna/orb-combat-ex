@@ -99,7 +99,7 @@
       "dodge": "Dodge",
       "power": "Power",
       "mode": "Energy",
-      "context": "Context",
+      "context": "Action",
       "escape": "Escape",
       "transform": "Transform"
     },
@@ -112,7 +112,7 @@
       "dodge": "Tap to dodge, hold to sprint.",
       "power": "Hold to charge. Held with a face button it calls a special.",
       "mode": "Hold for energy attacks: blasts instead of blows. Let go for physical. Settings can make it a toggle.",
-      "context": "The move that fits the moment. The third special while Power is held.",
+      "context": "The move that fits the moment, such as a grab. The third special while Power is held.",
       "escape": "A way out of a fight.",
       "transform": "Takes a form that is ready: hold it for half a second."
     },

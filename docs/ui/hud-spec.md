@@ -1466,3 +1466,10 @@ Game Design's eleventh round, as built in scratch (`docs/ui/launch-teaching.md` 
 ## 64. The civilian bar (2026-10-16, parked: docs/ui/pending/civilian-bar; `civilian_bar`, off)
 
 No running civilian count in the fight (EP decision on Orb's homework 5). With `civilian_bar` on, the toll chip is CIVILIANS LOST and a thin outlined bar filled to the share lost in whole percents (quarter marks, ink, no number); the bar and the structures line hold one opacity (no brightening, no blink); the chip's rectangle is unchanged, so one view, the split, the divider and the phone layouts are as they were. The exact counts (civilians of the total, buildings, craters) are three plain lines on the match-over card. See `docs/ui/civilian-bar.md`.
+
+## 65. The civilian bar is on; Narrative's words; a run needs a length; the tug's legend (2026-10-16)
+
+- **`civilian_bar` is on** (section 64): the chip says CIVILIANS LOST with a bar, and the match-over card (for a session that came through the menu) says "Civilians lost: n of N", "Buildings lost: n" and "Craters: n". Stills: `docs/ui/img/civilian-bar-1280.png` and `-844.png`. The demo takes `?toll=61:425:9:14` to hold a toll on screen.
+- **Narrative's plain words** are in (table in `docs/ui/plain-words.md`): RATTLED, ARMOUR OPEN, WEAK SPOT, NEW FORM, NEARLY BEATEN, OVERHEATED, LOST HIM, COMBO, BLOWS, SIGNATURE, ACTION, TRANSFORM.
+- **A run needs a length:** the blow cue's `run` counts only with `run_to` above 0 (Simulation's FxEvent fields are 0 on every cue by default).
+- **The struggle's legend** is parked (`docs/ui/pending/tug-legend/`): LET GO on A (on Guard for Simple), "on the beat" on the buttons that surge, a tap (never a swipe) taught by a caption on touch.

@@ -256,6 +256,14 @@ func _process(delta: float) -> void:
 		m0.charge_t = m0.charge_dur * (float(cpp[1]) if cpp.size() > 1 else 0.6)   # hold the ring where it is
 	if args.has("ack"):
 		hud.hub.model(0).press_ack_t = 0.08   # the mark lasts half a second: hold it in view
+	if args.has("toll"):
+		# A still of the toll chip with something on it: toll=civilians:population:structures:craters (e.g. toll=61:425:9:14), held there every frame.
+		var tp: PackedStringArray = str(args["toll"]).split(":")
+		if tp.size() >= 4:
+			hud.hub.toll["civilians"] = int(tp[0])
+			hud.hub.toll["pop0"] = int(tp[1])
+			hud.hub.toll["structures"] = int(tp[2])
+			hud.hub.toll["craters"] = int(tp[3])
 	if args.has("public"):
 		# A picture meant for a public page never shows a toll above zero (Legal, 2026-10-12): the chip is pinned at its start.
 		for k in ["civilians", "structures", "craters"]:

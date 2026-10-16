@@ -656,7 +656,11 @@ func _update_layers() -> void:
 		_l_sil[m.slot].update_sig(_sil_sig(m, reduced) if layout.silhouette_on else null)
 
 	var a_toll: float = lerpf(UiLook.TOLL_REST_ALPHA, 1.0, clampf(1.0 - hub.toll_age / UiLook.TOLL_SHOW, 0.0, 1.0)) * (0.45 if cin else 1.0)
-	_l_toll.update_sig([hub.toll["civilians"], hub.toll["pop0"], hub.toll["structures"], hub.toll["craters"], int(a_toll * 20.0)])
+	if UiData.feature("civilian_bar"):
+		# The bar: whole percents, and one opacity (no brightening when it grows): the layer redraws only when the share's percent, the structures or the craters change.
+		_l_toll.update_sig([int(UiCenter.civilian_share(hub) * 100.0), hub.toll["structures"], hub.toll["craters"], int(UiCenter.BAR_ALPHA * (0.45 if cin else 1.0) * 20.0), true])
+	else:
+		_l_toll.update_sig([hub.toll["civilians"], hub.toll["pop0"], hub.toll["structures"], hub.toll["craters"], int(a_toll * 20.0)])
 
 	if strip_fn.is_valid() and _lb < 0.5:
 		_strip_data = strip_fn.call()
@@ -1698,6 +1702,15 @@ func toggle_pause_menu() -> void:
 		show_pause_menu()
 
 
+## What the match-over card says the fight cost (civilian_bar on): the exact counts the chip no longer shows during the fight. Plain words, one line each.
+func over_facts() -> Array:
+	if not UiData.feature("civilian_bar"):
+		return []
+	return [UiData.fmt("prompt.over_civilians", {"n": int(hub.toll["civilians"]), "total": int(hub.toll["pop0"])}),
+		UiData.fmt("prompt.over_structures", {"n": int(hub.toll["structures"])}),
+		UiData.fmt("prompt.over_craters", {"n": int(hub.toll["craters"])})]
+
+
 func show_pause_menu(over: bool = false) -> void:
 	if _pm_open or _howto_open or _fb_open or _set_open or _notice_open or _turn_open:
 		return
@@ -1730,7 +1743,7 @@ func pause_menu_focus() -> int:
 
 
 func pause_menu_plan() -> Dictionary:
-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over})
+	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts": over_facts() if _pm_over else []})
 
 
 func _paint_pmenu(ci: CanvasItem) -> void:

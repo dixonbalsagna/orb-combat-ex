@@ -28,7 +28,7 @@
         { "action": "light", "col": 0, "text": "Light" },
         { "action": "heavy", "col": 0, "text": "Heavy" },
         { "action": "signature", "col": 0, "text": "Signature (45 Charge)" },
-        { "action": "context", "col": 0, "text": "Context" },
+        { "action": "context", "col": 0, "text": "Action (grab, throw: it depends on your stance)" },
         { "action": "mode", "col": 0, "text": "Energy (hold; Settings can make it a toggle)" },
         { "action": "guard", "col": 1, "text": "Guard (hold)" },
         { "action": "dodge", "col": 1, "text": "Dodge (tap), sprint (hold)" },

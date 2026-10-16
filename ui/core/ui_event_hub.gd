@@ -751,7 +751,7 @@ func _on_blow(m: UiFighterModel, d: Dictionary) -> void:
 	if int(d.get("k", 0)) == 1:
 		m.flurry_dots = (m.flurry_dots % 10) + 1
 		m.flurry_t = 0.0
-	if d.has("run"):
+	if d.has("run") and int(d.get("run_to", 0)) > 0:   # Simulation's FxEvent carries run and run_to as 0 on every cue by default: only a run with a length is a run
 		var tm: UiFighterModel = model(int(d.get("target", -1)))
 		if tm != null:
 			tm.run_n = clampi(int(d["run"]), 0, 8)

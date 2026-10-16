@@ -46,12 +46,21 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var avail_w: float = vp.x - 2.0 * margin - 2.0 * pad
 	var avail_h: float = vp.y - 2.0 * my - 2.0 * pad
 	var widest: float = UiText.width(title, fs_title) - tm * 0.9
+	var facts: Array = st.get("facts", []) if over else []
+	for ft in facts:
+		widest = maxf(widest, UiText.width(str(ft), fs_small) + tm * 0.9)   # a line of facts may widen the card (up to the screen)
 	for id in list:
 		var w: float = UiText.width(label(id), fs_body) + (UiText.width(UiData.t("prompt." + str(KEYS[id])) , fs_small) + pad if (not touch and KEYS.has(id)) else 0.0)
 		widest = maxf(widest, w)
 	var bw0: float = maxf(maxf(300.0 * cs, tm * 4.0), widest + tm * 0.9)
 	var join_text: String = UiData.t("prompt.pause_p2_join") if join else ""
 	var lh_small: float = UiText.height(fs_small) * 1.15
+	var facts_lines := PackedStringArray()
+	for ft in facts:
+		for wl in UiText.wrap(str(ft), fs_small, avail_w):
+			facts_lines.append(wl)
+	var facts_h: float = (float(facts_lines.size()) * lh_small + gap) if facts_lines.size() > 0 else 0.0
+	title_h += facts_h   # the buttons start below the facts
 	var cols: int = 1
 	var join_h1: float = (lh_small * 2.0 + gap) if join else 0.0
 	if title_h + float(list.size()) * (tm + gap) - gap + join_h1 > avail_h:
@@ -77,7 +86,8 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 			fits = false
 	var join_pos := Vector2(card.position.x + pad, card.end.y - pad - float(join_lines.size()) * lh_small + UiText.ascent(fs_small))
 	return {"join_lines": join_lines, "join_pos": join_pos, "lh_small": lh_small, "card": card, "title": title, "title_pos": Vector2(card.position.x + pad, card.position.y + pad + UiText.ascent(fs_title)), "items": items, "cols": cols, "tm": tm,
-		"fs_body": fs_body, "fs_title": fs_title, "fs_small": fs_small, "fits": fits, "bw": bw, "focus": int(st.get("focus", 0)), "confirm": confirm, "two": bool(st.get("two", false)), "join": join, "touch": touch, "cs": cs, "pad": pad, "gap": gap}
+		"fs_body": fs_body, "fs_title": fs_title, "fs_small": fs_small, "fits": fits, "bw": bw, "focus": int(st.get("focus", 0)), "confirm": confirm, "two": bool(st.get("two", false)), "join": join, "touch": touch, "cs": cs, "pad": pad, "gap": gap,
+		"facts_lines": facts_lines, "facts_pos": Vector2(card.position.x + pad, card.position.y + pad + UiText.height(fs_title) * 1.15 + gap * 0.5 + UiText.ascent(fs_small))}
 
 
 ## The id of the button a point is on, or "".
@@ -107,7 +117,7 @@ static func moved(p: Dictionary, focus: int, dx: int, dy: int) -> int:
 
 
 static func sig(p: Dictionary) -> Array:
-	return [int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(p["cs"] * 100.0), p["touch"], int(p["focus"]), p["confirm"], p["two"], p["join"]]
+	return [int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(p["cs"] * 100.0), p["touch"], int(p["focus"]), p["confirm"], p["two"], p["join"], str(p["facts_lines"])]
 
 
 static func draw(ci: CanvasItem, p: Dictionary) -> void:
@@ -125,6 +135,10 @@ static func draw(ci: CanvasItem, p: Dictionary) -> void:
 	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.02, 0.03, 0.06, 0.62))
 	UiIcons.rrect(ci, card, 18.0 * float(p["cs"]), Color(scrim, 0.97), edge, 2.0)
 	UiText.draw(ci, str(p["title"]), p["title_pos"], int(p["fs_title"]), ink, -1)
+	var fp: Vector2 = p["facts_pos"]
+	for fl in p["facts_lines"]:
+		UiText.draw(ci, str(fl), fp, int(p["fs_small"]), Color(ink, 0.95), -1)
+		fp.y += float(p["lh_small"])
 	var items: Array = p["items"]
 	for i in range(items.size()):
 		var it: Dictionary = items[i]

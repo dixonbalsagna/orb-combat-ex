@@ -1,0 +1,207 @@
+diff -ruN a/ui/core/ui_fighter_model.gd b/ui/core/ui_fighter_model.gd
+--- a/ui/core/ui_fighter_model.gd	2026-10-16 16:36:31.064778300 -0700
++++ b/ui/core/ui_fighter_model.gd	2026-10-16 16:36:31.743156600 -0700
+@@ -91,6 +91,7 @@
+ var run_t: float = 99.0
+ var flurry_dots: int = 0                # the flurry's blows by this fighter in the current burst, for X's ring of dots (0 to 10)
+ var flurry_t: float = 99.0
++var in_struggle: bool = false          # a human in a beam struggle (the HUD derives it from the tug): the legend says LET GO and on the beat (docs/controls/struggle-input.md)
+ var gauge_full: bool = false           # the rival's run of unanswered blows is full (4 of 4) and this fighter's launcher is ready: B lights with the word LAUNCH (the HUD derives it; docs/ui/launch-teaching.md)
+ var launcher_open: bool = false        # this fighter may launch the staggered rival now (the `launcher_open` cue): B's glyph is lit
+ var parry_clean: float = 0.0        # retired (timing presses are gone): always 0
+diff -ruN a/ui/data/terms.json b/ui/data/terms.json
+--- a/ui/data/terms.json	2026-10-16 16:36:30.942624700 -0700
++++ b/ui/data/terms.json	2026-10-16 16:36:31.575153700 -0700
+@@ -90,7 +90,7 @@
+     "full_light": "LIGHT", "full_heavy": "HEAVY", "full_signature": "SIGNATURE", "full_context": "ACTION", "full_mode": "ENERGY", "full_transform": "TRANSFORM", "full_dodge": "DODGE",
+     "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy (hold the power button with it for your signature, 45 Charge)", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing is off.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
+     "pause_new_ask": "Start a new match?", "pause_new_yes": "New match", "pause_new_no": "Keep playing", "pause_resume_key": "P", "pause_howto_key": "F1", "pause_new_key": "N",
+-    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "Keep hitting, then press the lit button to launch him.", "over_civilians": "Civilians lost: {n} of {total}", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
++    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "Keep hitting, then press the lit button to launch him.", "over_civilians": "Civilians lost: {n} of {total}", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "struggle_beat": "on the beat", "struggle_letgo": "LET GO", "tug_beat_simple": "Tap Attack on the beat", "tug_letgo_simple": "Tap Guard to let go", "tug_beat_full": "Tap on the beat", "tug_letgo_full": "Tap Action to let go", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
+   "planet": "EVERHOLD",
+   "places": [
+     { "x0": 0,    "x1": 1200, "name": "LONGWATER" },
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-16 16:36:31.118161000 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-16 16:36:31.884351000 -0700
+@@ -696,7 +696,7 @@
+ 	_l_many.update_sig(UiMany.sig(_many_marks, hub) if (not _many_marks.is_empty() and _lb < 0.5) else null)
+ 	# The beam struggle's tug of war: between the two fighters' hands while one is on (UiTug); nothing otherwise.
+ 	if not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
+-		_tug_plan = UiTug.plan(layout, hub.tug, [anchor_fn.call(int(hub.tug["a"])), anchor_fn.call(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
++		_tug_plan = UiTug.plan(layout, hub.tug, [anchor_fn.call(int(hub.tug["a"])), anchor_fn.call(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]), _tug_caps())
+ 	else:
+ 		_tug_plan = {}
+ 	_l_tug.update_sig(UiTug.sig(_tug_plan))
+@@ -3443,6 +3443,9 @@
+ ## steady highlight under reduced motion. Also the rising edge of a ready form, for the host's haptic.
+ ## The launch marks' two edge events: the pad's pulse when a launch opens for a human, and the once-only hint when his rival's gauge first fills (never again, never with Control hints off).
+ func _update_launch() -> void:
++	var in_tug: bool = not hub.tug.is_empty() and str(hub.tug["end"]) == ""
++	for sm in hub.models:
++		sm.in_struggle = in_tug and not sm.ai and (sm.slot == int(hub.tug["a"]) or sm.slot == int(hub.tug["d"]))
+ 	for i in range(mini(2, hub.models.size())):
+ 		var m: UiFighterModel = hub.models[i]
+ 		var open_now: bool = m.launcher_open and not m.ai
+@@ -3605,6 +3608,17 @@
+ 	UiSplit.draw_ring_marks(ci, layout, hub, _split, layout.s, _o())
+ 
+ 
++## The lines that teach the struggle's inputs on a touch screen (no legend there): a tap on the beat, and a tap to let go; Simple names Attack and Guard, Full touch the buttons' own words.
++func _tug_caps() -> Array:
++	if not bool(opts["touch_ui"]):
++		return []
++	for m in hub.models:
++		if m.in_struggle:
++			var simple: bool = UiHints.preset_id(m, _o()) == "touch-simple"
++			return [UiData.t("prompt.tug_beat_simple" if simple else "prompt.tug_beat_full"), UiData.t("prompt.tug_letgo_simple" if simple else "prompt.tug_letgo_full")]
++	return []
++
++
+ func _paint_tug(ci: CanvasItem) -> void:
+ 	UiTug.draw(ci, hub, _tug_plan, _o())
+ 
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-16 16:36:31.088502600 -0700
++++ b/ui/tools/hud_check.gd	2026-10-16 16:36:31.826149800 -0700
+@@ -62,6 +62,7 @@
+ 	await _lost_rival_rules()
+ 	await _civilian_bar_rules()
+ 	await _plain_words_rules()
++	await _tug_legend_rules()
+ 	await _launch_marks_rules()
+ 	await _tug_rules()
+ 	await _brawl_marks_rules()
+@@ -6204,6 +6205,58 @@
+ 	_ok(hub.model(1).run_n == 3 and hub.model(1).run_to == 4, "plain words: and with run_to above 0 it does")
+ 
+ 
++## The beam struggle's legend (docs/controls/struggle-input.md): LET GO on A (on Guard for Simple), "on the beat" on the buttons that surge, and on a touch screen a caption that teaches a tap, never a swipe.
++func _tug_legend_rules() -> void:
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	hud.hub.patch(0, {"ai": false})
++	hud.hub.patch(1, {"ai": true})
++	var m0: UiFighterModel = hud.hub.model(0)
++	var m1: UiFighterModel = hud.hub.model(1)
++	var notes := func(m: UiFighterModel, scheme: String) -> Dictionary:
++		var out := {}
++		m.stance_kind = 0
++		for r in UiHints.rows(m, scheme, "hold"):
++			out[str((r["acts"] as Array)[0])] = str(r.get("note", ""))
++		return out
++	hud.advance(1.0 / 60.0)
++	var before: Dictionary = notes.call(m0, "arena")
++	_ok(not m0.in_struggle and str(before.get("context", "")) != "LET GO" and str(before.get("light", "")) != "on the beat", "tug legend: nothing about a struggle while there is none")
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
++	hud.advance(1.0 / 60.0)
++	_ok(m0.in_struggle and not m1.in_struggle, "tug legend: a human in the struggle is marked, the computer is not")
++	for sc in ["arena", "kb-solo", "kb-shared-p1", "kb-shared-p2"]:
++		var n: Dictionary = notes.call(m0, sc)
++		_ok(str(n.get("context", "")) == "LET GO" and str(n.get("light", "")) == "on the beat" and str(n.get("heavy", "")) == "on the beat" and str(n.get("signature", "")) == "on the beat", "tug legend: %s says LET GO on A and on the beat on X, Y and B (%s)" % [sc, str(n)])
++	var ns: Dictionary = notes.call(m0, "simple-pad")
++	_ok(str(ns.get("guard", "")) == "LET GO" and str(ns.get("light", "")) == "on the beat" and str(ns.get("context", "")) == "", "tug legend: Simple says LET GO on Guard and on the beat on Attack (%s)" % str(ns))
++	# A touch screen has no legend: a caption teaches a tap.
++	hud.set_option("touch_ui", true)
++	hud.advance(1.0 / 60.0)
++	var caps_simple: Array = hud._tug_caps()
++	hud._slot_presets[0] = "touch-full"
++	var caps_full: Array = hud._tug_caps()
++	_ok(caps_simple == ["Tap Attack on the beat", "Tap Guard to let go"] and caps_full == ["Tap on the beat", "Tap Action to let go"], "tug legend: touch captions %s %s" % [str(caps_simple), str(caps_full)])
++	var no_swipe := true
++	for c in caps_simple + caps_full:
++		no_swipe = no_swipe and not str(c).to_lower().contains("swipe") and str(c).to_lower().contains("tap")
++	_ok(no_swipe, "tug legend: the captions teach a tap and never a swipe")
++	hud._slot_presets.erase(0)
++	hud.set_option("touch_ui", false)
++	_ok(hud._tug_caps().is_empty(), "tug legend: no captions off a touch screen (the legend says it)")
++	# The end clears it.
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "time", "x": 0.5})
++	hud.advance(1.0 / 60.0)
++	var after: Dictionary = notes.call(m0, "arena")
++	_ok(not m0.in_struggle and str(after.get("context", "")) != "LET GO", "tug legend: the words go when the struggle ends")
++	hud.queue_free()
++	await process_frame
++
++
+ ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD
+ ## (a refused or empty press every 4 ticks, a wind-up on and off every 6, a stance change every 10, the launch window, banners, the touch flag flipping), at a keyboard-and-pad size and on a
+ ## phone, and every layer's presence is sampled each tick; a layer that changes state twice in 60 ticks (after the first 30 ticks) fails.
+diff -ruN a/ui/widgets/ui_hints.gd b/ui/widgets/ui_hints.gd
+--- a/ui/widgets/ui_hints.gd	2026-10-16 16:36:30.827557000 -0700
++++ b/ui/widgets/ui_hints.gd	2026-10-16 16:36:31.290616100 -0700
+@@ -234,6 +234,18 @@
+ 		var row_note: String = UiData.t("prompt.not_yet") if dim else ""
+ 		if UiStance.launch_marks() and m.launcher_known and row_cell == "b" and by_stance and m.stance_kind != UiStance.CHARGING and not dim:
+ 			row_note = UiData.t("state.launcher_note_ready" if m.launcher_ready else "state.launcher_note_rest")   # the heavy row says whether a launch is ready (steady words, no countdown)
++		if m.in_struggle:
++			# A beam struggle (docs/controls/struggle-input.md): X, Y and B surge alike on the pulse; A lets go (on Simple, Guard does); a hold, a second press or a press off the beat is a stray.
++			var simple_layout: bool = scheme == "simple-pad" or scheme == "touch-simple"
++			if aid == "context" and not simple_layout:
++				row_note = UiData.t("prompt.struggle_letgo")
++				dim = false   # A has no move of its own in a stance, but it lets go
++			elif aid == "guard" and simple_layout:
++				row_note = UiData.t("prompt.struggle_letgo")
++			elif (aid == "light" or aid == "heavy" or aid == "signature") and not simple_layout:
++				row_note = UiData.t("prompt.struggle_beat")
++			elif aid == "light" and simple_layout:
++				row_note = UiData.t("prompt.struggle_beat")
+ 		if UiStance.launch_marks() and m.gauge_full and row_cell == "b" and not dim:
+ 			row_note = UiData.t("state.launcher_ready")   # the word LAUNCH beside the lit B
+ 		out.append({"acts": acts, "label": label, "held": held, "dim": dim, "note": row_note, "cell": row_cell})
+@@ -336,7 +348,7 @@
+ 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
+ 	var cf: float = charge_frac(m, reduced)
+ 	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
+-		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full]
++		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full, m.in_struggle]
+ 
+ 
+ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:
+diff -ruN a/ui/widgets/ui_tug.gd b/ui/widgets/ui_tug.gd
+--- a/ui/widgets/ui_tug.gd	2026-10-16 16:36:30.831585300 -0700
++++ b/ui/widgets/ui_tug.gd	2026-10-16 16:36:31.304660900 -0700
+@@ -15,7 +15,7 @@
+ 
+ 
+ ## The plan, or {} when there is no struggle or a fighter cannot be placed. `anchors` is the host's anchor_fn for the two slots ({pos, h, visible}); `steady` is Reduced motion or Reduce flashing.
+-static func plan(lay: UiLayout, tug: Dictionary, anchors: Array, s: float, steady: bool) -> Dictionary:
++static func plan(lay: UiLayout, tug: Dictionary, anchors: Array, s: float, steady: bool, caps: Array = []) -> Dictionary:
+ 	if tug.is_empty() or anchors.size() < 2:
+ 		return {}
+ 	var aa: Dictionary = anchors[0]
+@@ -39,7 +39,7 @@
+ 	for mk in tug.get("marks", []):
+ 		marks.append({"slot": int(mk["slot"]), "kind": str(mk["kind"]), "age": float(mk["age"]), "side": 0 if int(mk["slot"]) == int(tug["a"]) else 1})
+ 	return {"a": pa, "d": pd, "pm": pm, "mid": mid, "r1": r1, "phase": phase, "step": step, "steady": steady, "s": s, "slot_a": int(tug["a"]), "slot_d": int(tug["d"]),
+-		"marks": marks, "ended": str(tug.get("end", "")) != "", "beat": pulse_t < 0.12}
++		"marks": marks, "ended": str(tug.get("end", "")) != "", "beat": pulse_t < 0.12, "caps": caps}
+ 
+ 
+ static func _clamp(p: Vector2, box: Rect2) -> Vector2:
+@@ -56,7 +56,7 @@
+ 		ms.append([int(mk["slot"]), str(mk["kind"]), int(float(mk["age"]) / UiEventHub.TUG_MARK_LIFE * 5.0)])
+ 	var pa: Vector2 = p["a"]
+ 	var pd: Vector2 = p["d"]
+-	return [int(pm.x), int(pm.y), int(pa.x), int(pa.y), int(pd.x), int(pd.y), 0 if bool(p["steady"]) else int(p["step"]), bool(p["steady"]), bool(p["beat"]), p["ended"], ms]
++	return [int(pm.x), int(pm.y), int(pa.x), int(pa.y), int(pd.x), int(pd.y), 0 if bool(p["steady"]) else int(p["step"]), bool(p["steady"]), bool(p["beat"]), p["ended"], ms, str(p["caps"])]
+ 
+ 
+ static func draw(ci: CanvasItem, hub: UiEventHub, p: Dictionary, o: Dictionary) -> void:
+@@ -106,6 +106,12 @@
+ 	var dia := PackedVector2Array([pm + Vector2(0, -dr), pm + Vector2(dr, 0), pm + Vector2(0, dr), pm + Vector2(-dr, 0), pm + Vector2(0, -dr)])
+ 	ci.draw_polyline(dia, key, w + 3.0, true)
+ 	UiIcons.fill_poly(ci, PackedVector2Array([dia[0], dia[1], dia[2], dia[3]]), ink)
++	# A touch screen has no legend: the two lines that teach a tap (never a swipe) under the point.
++	var cy: float = pm.y + r1 * 3.2
++	var cfs: int = UiText.px(16.0, s)
++	for cap in p["caps"]:
++		UiText.draw(ci, str(cap), Vector2(pm.x, cy + UiText.ascent(cfs)), cfs, ink, 0, 2.0)
++		cy += UiText.height(cfs) * 1.25
+ 	# What the presses did.
+ 	for mk in p["marks"]:
+ 		var life: float = clampf(float(mk["age"]) / UiEventHub.TUG_MARK_LIFE, 0.0, 1.0)

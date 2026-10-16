@@ -1,6 +1,6 @@
 # The civilian bar: no running count in the fight (UI, 2026-10-16)
 
-Owner: UI & UX. Orb's homework 5 left the civilian count to us; the EP's decision: **no running number during the fight, a small steady bar for the share of the city's civilians lost, and the exact count on the results screen.** Built in scratch, **parked** (`docs/ui/pending/civilian-bar/`), behind `features.json` `civilian_bar` (off).
+Owner: UI & UX. Orb's homework 5 left the civilian count to us; the EP's decision: **no running number during the fight, a small steady bar for the share of the city's civilians lost, and the exact count on the results screen.** **Applied to the tree on 2026-10-16 with `civilian_bar` ON** (the EP's go; the card only for menu sessions and "Buildings" accepted). The park is kept in `docs/ui/pending/civilian-bar/` as the record. Stills with a toll above zero (134 of 425, 9 buildings, 14 craters): `img/civilian-bar-1280.png`, `img/civilian-bar-844.png`.
 
 ## What the player sees
 
@@ -16,7 +16,7 @@ Owner: UI & UX. Orb's homework 5 left the civilian count to us; the EP's decisio
 - **Public pictures:** the demo's `--public` pin keeps the toll at zero, so the bar is empty there too. The match-over card shows real counts in a live match; the rule is about pictures and clips.
 - **Sessions that did not come through the menu** get no match-over card (as today), so no counts: if Orb wants the counts there too, the card can open for every session (one condition in the HUD).
 - The word "Civilians" stays (it is the word Orb used). "Structures" became "Buildings" on the card.
-- No still taken: the chip needs a fight with a toll above zero; I can take one from a scratch export on request.
+- Stills: from a scratch export of the HUD demo with `?toll=134:425:9:14` (a flag added to `ui/demo/hud_demo.gd`).
 
 ## To apply
 
