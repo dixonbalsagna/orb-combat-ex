@@ -1,0 +1,518 @@
+{
+ "schema": "narrative.intro_lines/1",
+ "_about": "PARKED DRAFT (docs/narrative/pending/). Dynamic introduction lines (docs/narrative/intro-lines.md), keyed by phase, speaker, matchup, place, time of day and history. A line is picked by how many of its keys the match satisfies (the most specific wins), with no repeat inside the last ten intros. 'dummy' is the training dummy (the reference fighter), who does not speak. Every line passes the lint; unsearched by Legal; for Orb's marks.",
+ "keys": {
+  "phase": "touchdown (the speaker lands) | first_sight (each sees the other) | staredown (a call and an answer, left fighter first)",
+  "who": "protagonist | rival",
+  "vs": "rival | protagonist | dummy",
+  "place": "city | town | ice | ocean | desert | mountains",
+  "tod": "dawn | day | dusk | night",
+  "history": "first | rematch | after_loss (the speaker lost last time) | after_win (the speaker won last time) | flattened_city (a city was flattened last stage)",
+  "pair": "staredown lines with the same pair id are said together: the first, then the answer"
+ },
+ "lines": [
+  {
+   "id": "intro.001",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Lots of windows here. Careful!",
+   "place": "city"
+  },
+  {
+   "id": "intro.002",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Nice skyline. Shame about it.",
+   "place": "city"
+  },
+  {
+   "id": "intro.003",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Small town. Let's take it somewhere empty.",
+   "place": "town"
+  },
+  {
+   "id": "intro.004",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Small place. Try not to trip.",
+   "place": "town"
+  },
+  {
+   "id": "intro.005",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Brr! It's freezing! Good, I need warming up!",
+   "place": "ice"
+  },
+  {
+   "id": "intro.006",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Cold enough? Good. It'll keep you sharp.",
+   "place": "ice"
+  },
+  {
+   "id": "intro.007",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Wide open water! Nothing to break out here!",
+   "place": "ocean"
+  },
+  {
+   "id": "intro.008",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Nowhere to hide out here.",
+   "place": "ocean"
+  },
+  {
+   "id": "intro.009",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "No buildings for miles. Perfect! Let's go!",
+   "place": "desert"
+  },
+  {
+   "id": "intro.010",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Sand. Great. At least it's quiet.",
+   "place": "desert"
+  },
+  {
+   "id": "intro.011",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Great view! Let's not knock down a mountain.",
+   "place": "mountains"
+  },
+  {
+   "id": "intro.012",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Rocks. Good. Plenty to throw you into.",
+   "place": "mountains"
+  },
+  {
+   "id": "intro.013",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Early start! I'm already warmed up!",
+   "tod": "dawn"
+  },
+  {
+   "id": "intro.014",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Dawn. Couldn't sleep either, huh?",
+   "tod": "dawn"
+  },
+  {
+   "id": "intro.015",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Perfect day for a fight!",
+   "tod": "day"
+  },
+  {
+   "id": "intro.016",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Daylight. Fine. Everyone can watch you lose.",
+   "tod": "day"
+  },
+  {
+   "id": "intro.017",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Sunset! Best light for a fight!",
+   "tod": "dusk"
+  },
+  {
+   "id": "intro.018",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Sun's going down. Same as you.",
+   "tod": "dusk"
+  },
+  {
+   "id": "intro.019",
+   "phase": "touchdown",
+   "who": "protagonist",
+   "text": "Dark out! Hope you can see me!",
+   "tod": "night"
+  },
+  {
+   "id": "intro.020",
+   "phase": "touchdown",
+   "who": "rival",
+   "text": "Night. Good. Nobody sees me beat you.",
+   "tod": "night"
+  },
+  {
+   "id": "intro.021",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "There you are! Ready to go?",
+   "vs": "rival",
+   "history": "first"
+  },
+  {
+   "id": "intro.022",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "So that's you! I've heard things.",
+   "vs": "rival",
+   "history": "first"
+  },
+  {
+   "id": "intro.023",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "Back for round two? Good, so am I!",
+   "vs": "rival",
+   "history": "rematch"
+  },
+  {
+   "id": "intro.024",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "Hey! Missed you. Let's go again!",
+   "vs": "rival",
+   "history": "rematch"
+  },
+  {
+   "id": "intro.025",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "I've been training since last time!",
+   "vs": "rival",
+   "history": "after_loss"
+  },
+  {
+   "id": "intro.026",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "I'm not letting you win again.",
+   "vs": "rival",
+   "history": "after_loss"
+  },
+  {
+   "id": "intro.027",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "Don't be sore about last time!",
+   "vs": "rival",
+   "history": "after_win"
+  },
+  {
+   "id": "intro.028",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "Last time was close. Show me more!",
+   "vs": "rival",
+   "history": "after_win"
+  },
+  {
+   "id": "intro.029",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "Last stage went badly. Not this time.",
+   "vs": "rival",
+   "history": "flattened_city"
+  },
+  {
+   "id": "intro.030",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "Let's keep the buildings standing today.",
+   "vs": "rival",
+   "history": "flattened_city"
+  },
+  {
+   "id": "intro.031",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "That's the guy? Smaller than I thought.",
+   "vs": "protagonist",
+   "history": "first"
+  },
+  {
+   "id": "intro.032",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "So you're the one everyone talks about.",
+   "vs": "protagonist",
+   "history": "first"
+  },
+  {
+   "id": "intro.033",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "You again. Try to keep up this time.",
+   "vs": "protagonist",
+   "history": "rematch"
+  },
+  {
+   "id": "intro.034",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "Back already? You must be bored.",
+   "vs": "protagonist",
+   "history": "rematch"
+  },
+  {
+   "id": "intro.035",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "Last time was a fluke. Watch this.",
+   "vs": "protagonist",
+   "history": "after_loss"
+  },
+  {
+   "id": "intro.036",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "I haven't forgotten. Don't smile.",
+   "vs": "protagonist",
+   "history": "after_loss"
+  },
+  {
+   "id": "intro.037",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "I won last time. You remember that?",
+   "vs": "protagonist",
+   "history": "after_win"
+  },
+  {
+   "id": "intro.038",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "Still smiling? Let's fix that.",
+   "vs": "protagonist",
+   "history": "after_win"
+  },
+  {
+   "id": "intro.039",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "That city was in my way. So are you.",
+   "vs": "protagonist",
+   "history": "flattened_city"
+  },
+  {
+   "id": "intro.040",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "You broke a city? Finally, some nerve.",
+   "vs": "protagonist",
+   "history": "flattened_city",
+   "note": "said when the PROTAGONIST flattened a city last stage"
+  },
+  {
+   "id": "intro.041",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "A training dummy! Warm-up time!",
+   "vs": "dummy"
+  },
+  {
+   "id": "intro.042",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "Okay, stand still. I'll be gentle.",
+   "vs": "dummy"
+  },
+  {
+   "id": "intro.043",
+   "phase": "first_sight",
+   "who": "protagonist",
+   "text": "Don't mind me. Just testing something.",
+   "vs": "dummy"
+  },
+  {
+   "id": "intro.044",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "A dummy? Is this a joke?",
+   "vs": "dummy"
+  },
+  {
+   "id": "intro.045",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "At least it doesn't talk back.",
+   "vs": "dummy"
+  },
+  {
+   "id": "intro.046",
+   "phase": "first_sight",
+   "who": "rival",
+   "text": "Fine. I'll hit it until it breaks.",
+   "vs": "dummy"
+  },
+  {
+   "id": "intro.047",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "Don't hold back this time!",
+   "vs": "rival",
+   "history": "first",
+   "pair": "s_first"
+  },
+  {
+   "id": "intro.048",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "Don't smile when I hit you.",
+   "vs": "rival",
+   "history": "first",
+   "pair": "s_first"
+  },
+  {
+   "id": "intro.049",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "I've been waiting for this all week!",
+   "vs": "rival",
+   "history": "rematch",
+   "pair": "s_rematch"
+  },
+  {
+   "id": "intro.050",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "Then stop talking and start swinging.",
+   "vs": "rival",
+   "history": "rematch",
+   "pair": "s_rematch"
+  },
+  {
+   "id": "intro.051",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "I'm faster now. Just watch me.",
+   "vs": "rival",
+   "history": "after_loss",
+   "pair": "s_after_loss"
+  },
+  {
+   "id": "intro.052",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "Talk's cheap. Prove it.",
+   "vs": "rival",
+   "history": "after_loss",
+   "pair": "s_after_loss"
+  },
+  {
+   "id": "intro.053",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "No hard feelings about last time, right?",
+   "vs": "rival",
+   "history": "after_win",
+   "pair": "s_after_win"
+  },
+  {
+   "id": "intro.054",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "I'll show you hard feelings.",
+   "vs": "rival",
+   "history": "after_win",
+   "pair": "s_after_win"
+  },
+  {
+   "id": "intro.055",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "Let's keep it off the streets, okay?",
+   "vs": "rival",
+   "place": "city",
+   "pair": "s_city"
+  },
+  {
+   "id": "intro.056",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "Streets are where the fight is.",
+   "vs": "rival",
+   "place": "city",
+   "pair": "s_city"
+  },
+  {
+   "id": "intro.057",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "Slippery! I like it. Don't fall!",
+   "vs": "rival",
+   "place": "ice",
+   "pair": "s_ice"
+  },
+  {
+   "id": "intro.058",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "Worry about yourself. I never slip.",
+   "vs": "rival",
+   "place": "ice",
+   "pair": "s_ice"
+  },
+  {
+   "id": "intro.059",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "Can you see me in the dark?",
+   "vs": "rival",
+   "tod": "night",
+   "pair": "s_night"
+  },
+  {
+   "id": "intro.060",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "I can hear that grin from here.",
+   "vs": "rival",
+   "tod": "night",
+   "pair": "s_night"
+  },
+  {
+   "id": "intro.061",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "No more broken cities, okay? Deal?",
+   "vs": "rival",
+   "history": "flattened_city",
+   "pair": "s_flattened"
+  },
+  {
+   "id": "intro.062",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "Deal? You don't make the rules.",
+   "vs": "rival",
+   "history": "flattened_city",
+   "pair": "s_flattened"
+  },
+  {
+   "id": "intro.063",
+   "phase": "staredown",
+   "who": "protagonist",
+   "text": "Ready when you are, buddy!",
+   "vs": "dummy",
+   "note": "the dummy does not answer"
+  },
+  {
+   "id": "intro.064",
+   "phase": "staredown",
+   "who": "rival",
+   "text": "Move. Or don't. Same result.",
+   "vs": "dummy",
+   "note": "the dummy does not answer"
+  }
+ ]
+}

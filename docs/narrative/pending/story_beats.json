@@ -1,0 +1,1263 @@
+{
+ "schema": "narrative.story_beats/1",
+ "_about": "PARKED DRAFT (docs/narrative/pending/). Between-stage beats for a run across one planet (docs/narrative/story-beats.md). Each beat names the run state it needs; a beat is two to four short lines. The state fields are Narrative's proposal; Game Design's run-mode.md (docs/design) decides the real ones. Every line passes the lint (4 to 12 words, banned words, ellipsis cap). Speakers: hero (the player's fighter, voiced as the Protagonist for now), rival, boss, crowd, radio (an in-world broadcast, never a narrator). Unsearched by Legal; for Orb's marks.",
+ "state": {
+  "stage": "early (stages 1 to 2) | mid | late (the stage before the boss approach)",
+  "cities": "none | some | many (cities fallen this run)",
+  "city_cause": "hero | rival | boss | both (who did the most damage to cities)",
+  "casualties": "none | some | many (this stage's gap, or the run so far: Game Design decides the window)",
+  "casualty_cause": "hero | rival | boss",
+  "branch": "none | witnessed | tested (the hero's branch; anguish-branches.md)",
+  "branch_event": "entered | carried | faded",
+  "menace": "low | mid | high (the rival's meter)",
+  "result": "won | won_close | lost_close | lost (the stage just finished)",
+  "comeback": "brink | after_loss | streak",
+  "boss_in": "3 | 2 | 1 | 0 (stages until the boss; 0 is the final approach)",
+  "boss": "empress | cyborg | any",
+  "avoided_towns": "true when the hero kept the fight away from settlements",
+  "rival_here": "true when the rival appears in this gap",
+  "step": "1 to 8, for a set piece"
+ },
+ "beats": [
+  {
+   "id": "city_clean_start",
+   "slot": "aftermath",
+   "needs": {
+    "stage": [
+     "early"
+    ],
+    "cities": [
+     "none"
+    ],
+    "result": [
+     "won",
+     "won_close"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Nothing broken. Good. Let's keep it that way."
+    },
+    {
+     "who": "radio",
+     "text": "The city's untouched. Stay clear of the fighting."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A clean first stage."
+  },
+  {
+   "id": "city_clean_streak",
+   "slot": "aftermath",
+   "needs": {
+    "stage": [
+     "mid",
+     "late"
+    ],
+    "cities": [
+     "none"
+    ],
+    "result": [
+     "won"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Three fights and no city's hurt. Keep going."
+    },
+    {
+     "who": "rival",
+     "text": "Don't get smug. I'm still here."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A clean run so far; the rival is in the gap."
+  },
+  {
+   "id": "city_hero_one",
+   "slot": "aftermath",
+   "needs": {
+    "cities": [
+     "some"
+    ],
+    "city_cause": [
+     "hero"
+    ],
+    "casualties": [
+     "none"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "I broke that street. I know it."
+    },
+    {
+     "who": "crowd",
+     "text": "Look at the windows. All of them."
+    },
+    {
+     "who": "hero",
+     "text": "Next time I'm taking it somewhere empty."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "One city damaged by the hero's own blows: shame, not power."
+  },
+  {
+   "id": "city_rival_one",
+   "slot": "aftermath",
+   "needs": {
+    "cities": [
+     "some"
+    ],
+    "city_cause": [
+     "rival"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "You didn't have to hit the street!"
+    },
+    {
+     "who": "rival",
+     "text": "It was in the way."
+    },
+    {
+     "who": "hero",
+     "text": "People live on that street!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A city damaged by the rival, who is present."
+  },
+  {
+   "id": "city_hero_many",
+   "slot": "aftermath",
+   "needs": {
+    "cities": [
+     "many"
+    ],
+    "city_cause": [
+     "hero"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Two cities down. Both because of me."
+    },
+    {
+     "who": "crowd",
+     "text": "We trusted you to keep it away."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The cost of fighting in cities, owned by the hero."
+  },
+  {
+   "id": "city_rival_many",
+   "slot": "aftermath",
+   "needs": {
+    "cities": [
+     "many"
+    ],
+    "city_cause": [
+     "rival"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "He flattened three cities and kept walking."
+    },
+    {
+     "who": "radio",
+     "text": "Three cities lost. The fighting follows him."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The rival's trail of damage."
+  },
+  {
+   "id": "city_both",
+   "slot": "aftermath",
+   "needs": {
+    "cities": [
+     "some",
+     "many"
+    ],
+    "city_cause": [
+     "both"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "Look at that. We did that together."
+    },
+    {
+     "who": "hero",
+     "text": "Don't say 'we'. I didn't want this."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Both fighters share the damage; the rival needles."
+  },
+  {
+   "id": "town_spared",
+   "slot": "aftermath",
+   "needs": {
+    "avoided_towns": true,
+    "cities": [
+     "none",
+     "some"
+    ]
+   },
+   "lines": [
+    {
+     "who": "crowd",
+     "text": "You took it out to the hills. Thank you."
+    },
+    {
+     "who": "hero",
+     "text": "Just doing my job. Is everyone okay?"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The hero lured the fight away from people."
+  },
+  {
+   "id": "casualties_none",
+   "slot": "aftermath",
+   "needs": {
+    "casualties": [
+     "none"
+    ],
+    "stage": [
+     "mid",
+     "late"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Is everybody out? Count them again."
+    },
+    {
+     "who": "crowd",
+     "text": "We're all safe. Thanks to you."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "No one died; a check anyway."
+  },
+  {
+   "id": "casualties_hero_some",
+   "slot": "aftermath",
+   "needs": {
+    "casualties": [
+     "some"
+    ],
+    "casualty_cause": [
+     "hero"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "People got hurt. Because of me."
+    },
+    {
+     "who": "crowd",
+     "text": "My brother was in that building."
+    },
+    {
+     "who": "hero",
+     "text": "I'm sorry. I should've been faster."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Casualties the hero caused: grief and apology, no power-up."
+  },
+  {
+   "id": "casualties_hero_many",
+   "slot": "aftermath",
+   "needs": {
+    "casualties": [
+     "many"
+    ],
+    "casualty_cause": [
+     "hero"
+    ]
+   },
+   "lines": [
+    {
+     "who": "crowd",
+     "text": "You were supposed to protect us!"
+    },
+    {
+     "who": "hero",
+     "text": "I know. I'm sorry."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Many casualties, hero's fault: the crowd turns on him."
+  },
+  {
+   "id": "casualties_rival_some",
+   "slot": "aftermath",
+   "needs": {
+    "casualties": [
+     "some"
+    ],
+    "casualty_cause": [
+     "rival"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "They were just standing there. Why?"
+    },
+    {
+     "who": "rival",
+     "text": "They shouldn't have stayed."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The rival's casualties: the setup for the witnessed branch."
+  },
+  {
+   "id": "casualties_rival_many",
+   "slot": "aftermath",
+   "needs": {
+    "casualties": [
+     "many"
+    ],
+    "casualty_cause": [
+     "rival"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "That's too many. I'm done being polite."
+    },
+    {
+     "who": "rival",
+     "text": "Finally. Now you look like you mean it."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Many casualties by the rival: the Protagonist stops playing."
+  },
+  {
+   "id": "casualties_boss",
+   "slot": "aftermath",
+   "needs": {
+    "casualties": [
+     "some",
+     "many"
+    ],
+    "casualty_cause": [
+     "boss"
+    ]
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "Two districts didn't make it out."
+    },
+    {
+     "who": "hero",
+     "text": "Whoever's behind this did it on purpose."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Casualties the boss caused."
+  },
+  {
+   "id": "witnessed_enter",
+   "slot": "aftermath",
+   "needs": {
+    "branch": [
+     "witnessed"
+    ],
+    "branch_event": [
+     "entered"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "I'm not playing anymore."
+    },
+    {
+     "who": "rival",
+     "text": "Good. That's the look I wanted."
+    },
+    {
+     "who": "hero",
+     "text": "Stay behind me. All of you."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Branch A begins (anguish-branches.md)."
+  },
+  {
+   "id": "witnessed_carry",
+   "slot": "ahead",
+   "needs": {
+    "branch": [
+     "witnessed"
+    ],
+    "branch_event": [
+     "carried"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "No jokes. Not tonight."
+    },
+    {
+     "who": "rival",
+     "text": "You finally look dangerous."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Branch A continues across a stage."
+  },
+  {
+   "id": "witnessed_fade",
+   "slot": "aftermath",
+   "needs": {
+    "branch": [
+     "witnessed"
+    ],
+    "branch_event": [
+     "faded"
+    ],
+    "casualties": [
+     "none"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Is anyone hurt? Anyone at all?"
+    },
+    {
+     "who": "crowd",
+     "text": "We're okay. We're all okay."
+    },
+    {
+     "who": "hero",
+     "text": "Good. I can breathe again."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Branch A fades when no one else is hurt."
+  },
+  {
+   "id": "tested_enter",
+   "slot": "aftermath",
+   "needs": {
+    "branch": [
+     "tested"
+    ],
+    "branch_event": [
+     "entered"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "That form of yours was incredible. Seriously."
+    },
+    {
+     "who": "rival",
+     "text": "Don't compliment me. Fight me."
+    },
+    {
+     "who": "hero",
+     "text": "I am! This is what I wanted!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Branch B begins: the hero let the rival power up first."
+  },
+  {
+   "id": "tested_carry",
+   "slot": "ahead",
+   "needs": {
+    "branch": [
+     "tested"
+    ],
+    "branch_event": [
+     "carried"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Higher every fight. I love it."
+    },
+    {
+     "who": "rival",
+     "text": "You're enjoying this too much."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Branch B continues."
+  },
+  {
+   "id": "tested_boss",
+   "slot": "ahead",
+   "needs": {
+    "branch": [
+     "tested"
+    ],
+    "boss_in": [
+     2,
+     1
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Let the boss go first. I want to see it."
+    },
+    {
+     "who": "rival",
+     "text": "You're insane. That's why you're annoying."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Branch B looks ahead to the boss."
+  },
+  {
+   "id": "menace_low",
+   "slot": "ahead",
+   "needs": {
+    "menace": [
+     "low"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "That's it? I'm barely warm."
+    },
+    {
+     "who": "hero",
+     "text": "Then let's get you warm!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The rival is bored; the hero is eager."
+  },
+  {
+   "id": "menace_mid",
+   "slot": "ahead",
+   "needs": {
+    "menace": [
+     "mid"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "You're improving. Don't let it go to your head."
+    },
+    {
+     "who": "hero",
+     "text": "Thanks! Hey, you're good too!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A tepid compliment from the rival."
+  },
+  {
+   "id": "menace_high",
+   "slot": "ahead",
+   "needs": {
+    "menace": [
+     "high"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "You asked for my best. Here it comes."
+    },
+    {
+     "who": "hero",
+     "text": "Everybody back! He's serious this time!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The rival at full menace."
+  },
+  {
+   "id": "menace_crowd",
+   "slot": "ahead",
+   "needs": {
+    "menace": [
+     "mid",
+     "high"
+    ]
+   },
+   "lines": [
+    {
+     "who": "crowd",
+     "text": "That man in the glasses scares me."
+    },
+    {
+     "who": "hero",
+     "text": "He's rough, but he's not here for you."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A civilian's view of the rival."
+  },
+  {
+   "id": "menace_boss_edge",
+   "slot": "ahead",
+   "needs": {
+    "menace": [
+     "high"
+    ],
+    "boss_in": [
+     1,
+     0
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "Don't lose to the boss. That's my job."
+    },
+    {
+     "who": "hero",
+     "text": "Is that your way of saying good luck?"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The rival's pride claims the boss."
+  },
+  {
+   "id": "close_win",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "won_close"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "That was close! My arms are shaking!"
+    },
+    {
+     "who": "rival",
+     "text": "Lucky. That's all that was."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A narrow win."
+  },
+  {
+   "id": "close_loss",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "lost_close"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "One more hit. I was that close."
+    },
+    {
+     "who": "rival",
+     "text": "Close doesn't count. Try again."
+    },
+    {
+     "who": "crowd",
+     "text": "Get up! You almost had him!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A narrow loss: the retry beat."
+  },
+  {
+   "id": "loss_clear",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "lost"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "He's faster than me. I need to see why."
+    },
+    {
+     "who": "rival",
+     "text": "You're not even trying to win."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A clear loss; the hero is curious, not crushed."
+  },
+  {
+   "id": "comeback_brink",
+   "slot": "aftermath",
+   "needs": {
+    "comeback": [
+     "brink"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "I was down to my last breath."
+    },
+    {
+     "who": "rival",
+     "text": "And you got up. Annoying."
+    },
+    {
+     "who": "crowd",
+     "text": "He almost fell! And then he didn't!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A win after being nearly beaten."
+  },
+  {
+   "id": "comeback_after_loss",
+   "slot": "aftermath",
+   "needs": {
+    "comeback": [
+     "after_loss"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Round two. Same fight, smarter me."
+    },
+    {
+     "who": "rival",
+     "text": "Again? You never learn."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A win after losing the stage before."
+  },
+  {
+   "id": "comeback_streak",
+   "slot": "aftermath",
+   "needs": {
+    "comeback": [
+     "streak"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Three wins since that loss. Feels good."
+    },
+    {
+     "who": "rival",
+     "text": "Don't count them. I'm still counting."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A run of wins since a loss."
+  },
+  {
+   "id": "boss_far",
+   "slot": "ahead",
+   "needs": {
+    "boss_in": [
+     3
+    ]
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "Something's coming. The sky's gone dark up north."
+    },
+    {
+     "who": "hero",
+     "text": "Whatever it is, we'll be ready."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Three stages out: the first sign."
+  },
+  {
+   "id": "boss_mid",
+   "slot": "ahead",
+   "needs": {
+    "boss_in": [
+     2
+    ]
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "Three more districts evacuated. The ground's shaking."
+    },
+    {
+     "who": "crowd",
+     "text": "Do you feel that? The whole street's humming."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Two stages out."
+  },
+  {
+   "id": "boss_near",
+   "slot": "ahead",
+   "needs": {
+    "boss_in": [
+     1
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "It's close. I can feel it in my teeth."
+    },
+    {
+     "who": "hero",
+     "text": "Stay with me. Last one before it."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "One stage out."
+  },
+  {
+   "id": "final_1_sky",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 1
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "The sky's gone black. Ash everywhere."
+    },
+    {
+     "who": "crowd",
+     "text": "It's the middle of the day!"
+    },
+    {
+     "who": "hero",
+     "text": "Everyone inside! Now! Move!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 1 of 8: the sky changes."
+  },
+  {
+   "id": "final_2_evacuate",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 2
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "Final evacuation order. Leave the cities now."
+    },
+    {
+     "who": "crowd",
+     "text": "Take the children! Go!"
+    },
+    {
+     "who": "hero",
+     "text": "Go! I'll hold it off."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 2 of 8: the last evacuation."
+  },
+  {
+   "id": "final_3_rival",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 3,
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "Don't misunderstand. I just want the first hit."
+    },
+    {
+     "who": "hero",
+     "text": "I wasn't going to say anything."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 3 of 8: the rival joins, on his own terms."
+  },
+  {
+   "id": "final_4_arrive",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 4,
+    "boss": [
+     "any"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "There you are. I was getting bored."
+    },
+    {
+     "who": "hero",
+     "text": "You're the one behind all this?"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 4 of 8: the boss arrives (generic)."
+  },
+  {
+   "id": "final_4_arrive_empress",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 4,
+    "boss": [
+     "empress"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "Petitioners! You're late. We've started without you."
+    },
+    {
+     "who": "rival",
+     "text": "Spare me the speech."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 4 of 8: the Empress arrives."
+  },
+  {
+   "id": "final_4_arrive_cyborg",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 4,
+    "boss": [
+     "cyborg"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "Welcome, gentlemen! Your table's been waiting."
+    },
+    {
+     "who": "rival",
+     "text": "I'm not eating here."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 4 of 8: the Cyborg arrives."
+  },
+  {
+   "id": "final_5_hero_witnessed",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 5,
+    "branch": [
+     "witnessed"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "You hurt them. That ends now."
+    },
+    {
+     "who": "boss",
+     "text": "They were scenery. You're next."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 5 of 8: the hero in branch A."
+  },
+  {
+   "id": "final_5_hero_tested",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 5,
+    "branch": [
+     "tested"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Show me everything. I'll wait."
+    },
+    {
+     "who": "boss",
+     "text": "Careful. I don't do half measures."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 5 of 8: the hero in branch B."
+  },
+  {
+   "id": "final_5_hero_plain",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 5,
+    "branch": [
+     "none"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Let's finish this. Everybody back!"
+    },
+    {
+     "who": "boss",
+     "text": "Everyone back? How sweet of you."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 5 of 8: the hero, no branch."
+  },
+  {
+   "id": "final_6_together",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 6,
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "Stay out of my way. This one's mine."
+    },
+    {
+     "who": "hero",
+     "text": "Not a chance. We do this together."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 6 of 8: the two argue over the boss."
+  },
+  {
+   "id": "final_7_threat",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 7,
+    "boss": [
+     "any"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "Look at the sky. That's what I do."
+    },
+    {
+     "who": "hero",
+     "text": "Stop it! There are people down there!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 7 of 8: the boss's threat (generic)."
+  },
+  {
+   "id": "final_7_threat_empress",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 7,
+    "boss": [
+     "empress"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "Watch the sky, petitioners. It's our province now."
+    },
+    {
+     "who": "hero",
+     "text": "Stop it! There are people down there!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 7 of 8: the Empress's threat."
+  },
+  {
+   "id": "final_7_threat_cyborg",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 7,
+    "boss": [
+     "cyborg"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "Dinner is served, gentlemen. The whole planet."
+    },
+    {
+     "who": "hero",
+     "text": "Stop it! There are people down there!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 7 of 8: the Cyborg's threat."
+  },
+  {
+   "id": "final_8_strike",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 8
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Here we go! Give me everything!"
+    },
+    {
+     "who": "rival",
+     "text": "Don't die before I hit it."
+    },
+    {
+     "who": "boss",
+     "text": "Come on, then. Entertain us."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 8 of 8: the first blow."
+  }
+ ]
+}
