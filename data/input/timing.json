@@ -37,17 +37,97 @@
   },
   "haptics": {
     "minGapMs": 80,
+    "padMinMs": 20,
+    "handheldMinMs": 10,
     "launch_open": {
-      "weak": 0.7,
-      "strong": 0.0,
-      "ms": 25,
-      "handheldMs": 25
+      "pad": [
+        {
+          "at": 0,
+          "weak": 0.3,
+          "strong": 0.7,
+          "ms": 80
+        },
+        {
+          "at": 90,
+          "weak": 0.2,
+          "strong": 0.0,
+          "ms": 60
+        }
+      ],
+      "handheld": [
+        {
+          "at": 0,
+          "ms": 25
+        },
+        {
+          "at": 85,
+          "ms": 10
+        }
+      ]
     },
     "form_prompt": {
-      "weak": 0.3,
-      "strong": 0.3,
-      "ms": 15,
-      "handheldMs": 15
+      "pad": [
+        {
+          "at": 0,
+          "weak": 0.3,
+          "strong": 0.3,
+          "ms": 20
+        }
+      ],
+      "handheld": [
+        {
+          "at": 0,
+          "ms": 15
+        }
+      ]
+    },
+    "struggle_pulse": {
+      "pad": [
+        {
+          "at": 0,
+          "weak": 0.0,
+          "strong": 0.4,
+          "ms": 20
+        }
+      ],
+      "handheld": [
+        {
+          "at": 0,
+          "ms": 10
+        }
+      ]
+    },
+    "struggle_surge": {
+      "pad": [
+        {
+          "at": 0,
+          "weak": 0.5,
+          "strong": 0.3,
+          "ms": 30
+        }
+      ],
+      "handheld": [
+        {
+          "at": 0,
+          "ms": 15
+        }
+      ]
+    },
+    "struggle_lose": {
+      "pad": [
+        {
+          "at": 0,
+          "weak": 0.4,
+          "strong": 0.8,
+          "ms": 60
+        }
+      ],
+      "handheld": [
+        {
+          "at": 0,
+          "ms": 40
+        }
+      ]
     }
   },
   "aim": {
