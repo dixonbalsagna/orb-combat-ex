@@ -92,6 +92,15 @@ The EP's brief of 2026-10-15. The note is `../../split-and-pieces.md`.
 - **A kit row** (`kit` in an identity row: the Empress's guards). It has only the cells its kit names, with its counts and any quotas of its own. It draws only on posed common pieces, or a new shape of a weight the kit allows. It is never another fighter's own blow. It has no share rule and no floors, is outside the gate, is never counted when the common pieces are found, and only its lights and mediums are read for the string rules.
 - **The two fighters' files** gained the three added moves and the new quotas' counts. No move changed, and `../recipes.brawl.json` is byte for byte the same.
 
+## 0g. Animation's eighth pieces read as posed (2026-10-16, version 19)
+
+The note is `../../split-and-pieces.md` section 5c.
+
+- **A pack may mix lights with its heavies.** In a pack of the tier only the heavy rows are tier heavies. The fighters now list protag12 and rival9 among their packs and their tier packs.
+- **`ownPacks` in a kit:** packs drawn for that kit alone, the guards' rival10. The guard row names Animation's `bm.guard_bolt` as his bolt.
+- **A pack the tree doesn't have yet reads as empty,** and `--check` names it. The files are made against Animation's fourth patch; until it lands, the check on main says "out of date".
+- **The Anti-hero's three straight fists** (two more places, his row's quota) are pinned in his skill pool. Legal's e10 is mirrored.
+
 ## 0f. A fighter's named pieces, and the burst's lean (2026-10-16, version 18)
 
 The note is `../../split-and-pieces.md` section 5b.

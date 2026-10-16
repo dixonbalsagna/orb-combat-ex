@@ -4,9 +4,7 @@
 
 `roster/` holds sketches for fighters who are not in the build: identity rows for the Demon Cyborg (three options) and the Empress, their generated movesets, and the builder that makes them (`../roster-rows.md`). Their cards are in `cards/` beside the first two. None of it is part of the recipes window.
 
-`split/` (2026-10-15) holds the split by path as the next recipes file, in two forms: `recipes.held-only.json` (the held styles only, no new key) and `recipes.split.json` (all of it, with Encounter's mash key and Tools' two schema keys). `recipes.leans.json` (2026-10-16) is the live file with each fighter's look in the held X's burst. The note is `../split-and-pieces.md`. `roster/` also holds the guards' kit, generated (`moveset.guard.json`).
-
-`reference/` (2026-10-15) holds the training dummy's moveset for the roster window: `reference_recipes.py` adds his common-only entries to `data/combat/recipes.json`, after Simulation's `dummy_roster.py` (its README).
+`split/` holds the next recipes file, `recipes.split.json` (2026-10-16): the split by path, the held X's leans and the new posed pieces, built on the live file with the training dummy's pools in. It lands with Animation's fourth patch, Encounter's mash key and Tools' two schema keys. The note is `../split-and-pieces.md`. `roster/` also holds the guards' kit, generated (`moveset.guard.json`).
 
 `retired/` holds parked files that have landed or been overtaken, with a README. The step 2b files described below are there now; the text is kept as the record.
 

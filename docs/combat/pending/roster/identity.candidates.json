@@ -542,7 +542,7 @@
     "newOf": [
      "heavy"
     ],
-    "_about": "cells: the cells he has and how many places each; from: common, only what more than one fighter of the build has posed; newOf: a weight he may take a new shape of when nothing common is posed (no heavy of the tier is common: each fighter's ten are his own); quotas: a cell's quotas of his own (his one bolt is the measured bolt, one hand, thrust, planted)",
+    "_about": "cells: the cells he has and how many places each; from: common, only what more than one fighter of the build has posed; newOf: a weight he may take a new shape of when nothing common is posed (no heavy of the tier is common: each fighter's ten are his own); quotas: a cell's quotas of his own (his one bolt is the measured bolt, one hand, thrust, planted); ownPacks: packs drawn for the guards alone (Animation's rival10, the falling sole), read though nobody else has them",
     "quotas": {
      "energy.x": [
       {
@@ -551,7 +551,10 @@
        "form": "tech"
       }
      ]
-    }
+    },
+    "ownPacks": [
+     "rival10"
+    ]
    },
    "weights": {
     "limb": {},
@@ -619,9 +622,43 @@
      "drop": 0.1
     },
     "split": false,
-    "posed": [],
-    "posedHands": {}
-   }
+    "posed": [
+     {
+      "when": {
+       "delivery": [
+        "bolt"
+       ],
+       "release": [
+        "thrust"
+       ],
+       "hand": [
+        "open_palm"
+       ]
+      },
+      "set": "bm.guard_bolt"
+     }
+    ],
+    "posedHands": {
+     "open_palm": "bm.guard_bolt"
+    },
+    "_posed": "Animation's sequence bm.guard_bolt (beam1, played through fighters.json roles.common.bolt): the measured bolt, one open palm thrown flat"
+   },
+   "waves": [
+    "protag1",
+    "protag6",
+    "protag7",
+    "wave1",
+    "rival2",
+    "rival4",
+    "rival7",
+    "protag10",
+    "rival10"
+   ],
+   "tierWaves": [
+    "protag10",
+    "rival7",
+    "rival10"
+   ]
   },
   "reference": {
    "like": "rival",

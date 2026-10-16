@@ -43,7 +43,7 @@ All three are his own and pass Legal's rows.
 - **The AI uses the split little.** It taps Y and B. It almost never mashes them, and never holds Y. The split shows on QA's masher and holder scripts and in a player's hands.
 - **The B held row** was read before each fighter's charged heavy was pinned into his pool, which adds the Anti-hero's ram.
 
-**Two ways to land it** (`pending/split/`):
+**Two ways to land it** (`pending/split/`), as first parked. Withdrawn on 2026-10-16 for the one file of section 5c, which is the full split with the leans:
 
 | File | What changes | Who else |
 | :--- | :--- | :--- |
@@ -89,7 +89,7 @@ Counts are Anti-hero / Protagonist. "Exists" means a posed piece in the live poo
 - **The two new pieces are key sets on the mannequin.**
 - **Each common piece names one of the two fighters' key sets.** Whether the mannequin can play them, and on which body, is Animation's to say: the reference fighter has no animation data yet. Simulation's dummy script lists "his moveset" as Combat's and Encounter's: this row is it, once it is a pool in the recipes.
 
-**The training dummy** (the EP's addition, 2026-10-15) is a kit row of the same kind, `reference`: every common light (17) and medium (16); for B and the launcher, the common stand-ins (no heavy of the tier is common), with the common uppercut and rising knee for an upward launch; and no energy in reach. It is parked as a patch on `data/combat/recipes.json`, for the window with Simulation's dummy (`pending/reference/`).
+**The training dummy** (the EP's addition, 2026-10-15) is a kit row of the same kind, `reference`: every common light (17) and medium (16); for B and the launcher, the common stand-ins (no heavy of the tier is common), with the common uppercut and rising knee for an upward launch; and no energy in reach. His entries went into `data/combat/recipes.json` with Simulation's dummy in 06b0200e. The spent patch is removed.
 
 ## 4. The two apart: Game Design's §8, against the data
 
@@ -141,7 +141,61 @@ The EP's go of 2026-10-16. Generator version 18, the pool builder's `--lean`. Pa
 - **The Anti-hero:** pistons, the straight and rising hands: jab, spear hand, cross, short uppercut, gut riser. Out go the backfist, the hook and the fist sweep.
 - **Unchanged:** elbows and knees stay in mid, and the slow class keeps every light.
 - **The generated burst strings** lean the same way.
-- **The file:** `pending/split/recipes.leans.json` is the live file with the leans only, and it passes Tools' validator. The builder makes the leans with the split too, on request.
+- **The file:** the leans are in `pending/split/recipes.split.json`, with the split (section 5c).
+
+## 5c. Regenerated on Animation's pieces, and the next recipes file (2026-10-16)
+
+**Animation's fourth patch** (`docs/animation/pending/combat-pieces.patch`, 03330fcc) draws eight key sets. Generator version 19 reads them, and every one is `posed`:
+
+| Key set | Fighter | Move |
+| :--- | :--- | :--- |
+| `pv.su_blade_fall` | The Protagonist | His falling blade hand to the chest |
+| `pv.su_palm_arm` | The Protagonist | His stepping palm to the arm |
+| `pv.palm_turn` | The Protagonist | His turning palm-heel to the chest |
+| `rq.jab_fist`, `rq.cross_fist`, `rq.spear_fist` | The Anti-hero | The jab, the cross and the spear hand as fists |
+| `rq.su_fist_unwind` | The Anti-hero | His unwinding fist to the jaw |
+| `gd.su_sole_fall` | The guards | Their falling sole |
+
+- **The guards' measured bolt is posed too,** on Animation's sequence `bm.guard_bolt`.
+- **Animation's reading of "the two new heavies"** (the stepping palm and the unwinding fist) was right.
+- **The cross and the spear hand as fists** came in as two places added to the Anti-hero's lights. All three straight fists are pinned in his skill pool.
+- **Legal passed the eight pieces** (RL-141 to RL-143). Its new row e10, beam cast poses, is mirrored; no generated move is a cast.
+- **The Anti-hero's own blows** read 47% where they read 35%.
+
+**What version 19 changed in the generator:**
+- **A pack may mix lights with its heavies** (protag12, rival9): in a tier pack only the heavy rows are tier heavies.
+- **A kit row may name packs of its own:** the guards' rival10.
+- **A pack the tree doesn't have yet reads as empty,** and `--check` names it. So on main, before Animation's patch lands, the check says "out of date (protag12, rival9 not in the tree)". The files are made against the patch.
+
+**The next recipes file is `pending/split/recipes.split.json`:** the split by path, the leans, and the new posed pieces in the fighters' pools.
+- **It is built on the live file, so the training dummy's pools are in it.** They are byte for byte the live ones. He gains the split's pools; his held Y is narrowed to the long wind-ups by the same rule; his B styles all draw on his stand-ins.
+- **It lands with three other changes, in one commit:**
+  - Animation's fourth patch, since the file names its pieces.
+  - Encounter's mash key (`docs/director/pending/recipe-keys`, `keys.cjs mash`).
+  - Tools' `mediumMash` and `heavyMash` in `combat-recipes.schema.json`.
+- **The held-only and leans-only files are withdrawn.**
+- **Checks.** Tools' validator, in a scratch copy with Animation's patches, reads only those two keys against the recipes. The other errors there are Animation's data against the schema.
+- **Smoke run:** three seeded matches with Encounter's key applied. Every blow had a piece, and each new piece was thrown: the fists mostly in the Anti-hero's mash, the palm-heel in the Protagonist's held X.
+
+## 5d. The beam struggle's inputs, as Combat sent them (2026-10-16)
+
+Sent to the EP for Game Design's ruling, kept here so it can be found:
+- **Today the clash is decided when it starts.** `startClash` (sim/director/beam.gd) picks the winner from tier, ki, a random draw, menace and flow, and nothing pressed in its 1.6 s counts.
+- **The inputs I proposed** were the brawl's own grammar, each shown by a body pose while the beam stays the beam:
+  - X tapped on the pulse is a surge.
+  - X mashed feeds the beam, with a diminishing return: an off-pulse press pushes a little, and never cancels.
+  - Y is a step along the beam, for ki.
+  - B held is an overpower at the flash, lost to a surge on the pulse during the charge.
+  - The stick angles the meeting point.
+  - A lets go.
+- **The score would start from today's edge** and move with each press. The CPU's share of on-pulse surges goes by level.
+
+**Game Design ruled one input rule instead** (8c8368b3, `rule-of-cool.md` §2):
+- X, Y and B surge alike, and Combat's per-button pieces become the looks of a surge.
+- Mash-feeding, the off-pulse push and the held-B overpower are out.
+- The stick aims the overwhelm's launch, and A lets go.
+
+**From the moveset side, the ruling is simpler and needs less.** The struggle's looks are three surge poses a fighter (one per button), where the proposal asked for about four. The pumping hand Legal forbids no longer arises, since nothing is mashed.
 
 ## 6. To run it
 

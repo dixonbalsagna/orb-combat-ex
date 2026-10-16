@@ -42,7 +42,8 @@ def common_ids(base):
         for w in d["waves"]:
             if w in d.get("tierWaves", []):
                 continue
-            for s in load(os.path.join(BASE, "..", "..", "..", "..", "data", "anim", "waves", w + ".manifest.json"))["strikes"]:
+            mp = os.path.join(BASE, "..", "..", "..", "..", "data", "anim", "waves", w + ".manifest.json")
+            for s in (load(mp)["strikes"] if os.path.exists(mp) else []):   # a pack the tree does not have yet reads as empty
                 seen.setdefault(s["combat"], set()).add(who)
     return sorted(k for k, v in seen.items() if len(v) > 1)
 

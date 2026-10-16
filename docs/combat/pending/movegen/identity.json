@@ -8,7 +8,8 @@
     "wave1",
     "rival2",
     "rival4",
-    "rival7"
+    "rival7",
+    "rival9"
    ],
    "_waves": "Animation's manifests that hold his posed strikes; a later wave's row replaces an earlier one's for the same strike",
    "weights": {
@@ -503,7 +504,8 @@
    },
    "_reaimed": "rows whose place was moved after Legal screened them (Game Design's ruling on the wrench, 68b9a586): the same limb, tip, path and drive, another place. The sheet marks them for Legal",
    "tierWaves": [
-    "rival7"
+    "rival7",
+    "rival9"
    ],
    "_tierWaves": "packs whose strikes are heavies of the new tier: Animation's weight heavy there is this file's heavy, and each row is read by the heavy tier's own tips",
    "energyWaves": [
@@ -511,7 +513,7 @@
    ],
    "adds": {
     "martial.b": 1,
-    "martial.x": 1
+    "martial.x": 3
    },
    "_adds": "Places added to a cell for the split by path (cells.json `_quotasSplit`): his locked moves leave a group under 5, and the added place is filled by that group's quota",
    "chargedHeavy": "strike.su_ram",
@@ -519,8 +521,8 @@
    "cellQuotas": {
     "martial.x": [
      {
-      "name": "a straight fist behind the plate, for his perfect follow-up",
-      "min": 1,
+      "name": "straight fists behind the plate (the jab, the cross and the spear hand as fists), for his perfect follow-up",
+      "min": 3,
       "filter": {
        "limb": [
         "hand"
@@ -532,27 +534,29 @@
         "line"
        ],
        "target": [
+        "head",
         "chest",
-        "gut",
-        "jaw",
-        "head"
+        "gut"
        ]
       }
      }
     ]
    },
-   "_cellQuotas": "Quotas of his row, read before the cell's, so a place added in `adds` goes to the piece Game Design's section 8 and the tenth round name (docs/combat/split-and-pieces.md section 5): the Protagonist's second falling launcher (the spike) and his turning palm (a palm travels only straight or up, so it is the heel of the hand on an arc); the Anti-hero's straight fist behind the plate (the plate never travels straight)",
+   "_cellQuotas": "Quotas of his row, read before the cell's, so a place added in `adds` goes to the piece Game Design's section 8 and the tenth round name (docs/combat/split-and-pieces.md section 5): the Protagonist's second falling launcher (the spike) and his turning palm (a palm travels only straight or up, so it is the heel of the hand on an arc); the Anti-hero's straight fists behind the plate, the jab, the cross and the spear hand as fists (the plate never travels straight; Animation drew all three in rival9)",
    "skillAlso": [
-    "mv.rival.martial.x.31"
+    "mv.rival.martial.x.31",
+    "mv.rival.martial.x.32",
+    "mv.rival.martial.x.33"
    ],
-   "_skillAlso": "Moves pinned into the skill strike's pool whatever their form, once posed: his straight fist behind the plate (the jab as a fist) is a flurry light by the grammar, and Game Design names it his perfect follow-up (fighter-pipeline.md section 8)"
+   "_skillAlso": "Moves pinned into the skill strike's pool whatever their form, once posed: his straight fists behind the plate (the jab, the cross and the spear hand as fists) are flurry lights by the grammar, and Game Design names it his perfect follow-up (fighter-pipeline.md section 8)"
   },
   "protagonist": {
    "waves": [
     "protag1",
     "protag6",
     "protag7",
-    "protag10"
+    "protag10",
+    "protag12"
    ],
    "weights": {
     "limb": {
@@ -1035,7 +1039,8 @@
     "_favour": "His look in the held X (fighter-pipeline.md section 8: the Protagonist's circling palms, the Anti-hero's piston jabs): the strings lean toward these, and the pool builder keeps only these hands in the burst's fast and mid classes when at least `min` are posed"
    },
    "tierWaves": [
-    "protag10"
+    "protag10",
+    "protag12"
    ],
    "_tierWaves": "packs whose strikes are heavies of the new tier: Animation's weight heavy there is this file's heavy, and each row is read by the heavy tier's own tips",
    "energyWaves": [

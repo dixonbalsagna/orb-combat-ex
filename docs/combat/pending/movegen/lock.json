@@ -343,7 +343,7 @@
       "chest",
       "light"
      ],
-     null
+     "pv.palm_turn"
     ]
    ],
    "martial.y": [
@@ -655,7 +655,7 @@
       "arm",
       "heavy"
      ],
-     null
+     "pv.su_palm_arm"
     ],
     [
      "mv.protagonist.martial.b.12",
@@ -666,7 +666,7 @@
       "chest",
       "heavy"
      ],
-     null
+     "pv.su_blade_fall"
     ]
    ],
    "defensive.x": [
@@ -1147,7 +1147,29 @@
       "head",
       "light"
      ],
-     null
+     "rq.jab_fist"
+    ],
+    [
+     "mv.rival.martial.x.32",
+     [
+      "hand",
+      "fist",
+      "line",
+      "chest",
+      "light"
+     ],
+     "rq.cross_fist"
+    ],
+    [
+     "mv.rival.martial.x.33",
+     [
+      "hand",
+      "fist",
+      "line",
+      "gut",
+      "light"
+     ],
+     "rq.spear_fist"
     ]
    ],
    "martial.y": [
@@ -1448,7 +1470,7 @@
       "jaw",
       "heavy"
      ],
-     null
+     "rq.su_fist_unwind"
     ]
    ],
    "defensive.x": [

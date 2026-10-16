@@ -2425,6 +2425,12 @@
     "uses": "reach.run",
     "rule": "a mashed run of point-blank bolts must read as varied on screen, not only in data: no two bolts in a row with the same arm, path and place; no regular left-right alternation (an irregular order, with the free arm taking a bolt now and then); at least three different paths (line, outward arc, inward arc) in any five; each hand lands below the collar line on the chest or gut and never at the neck, throat or face; the two bodies keep a hand's width between the heads",
     "why": "e06 for a mashed run: the same arm pumping, or two palms pumping in turn, is the barrage image"
+   },
+   {
+    "id": "e10",
+    "rule": "a beam cast pose (the signature beam and any other): one arm out, the palm or its heel leading, is allowed when the other hand never grips, braces or cups the firing wrist or forearm and stays at least shoulder width from it (open, in guard, or low at the rear); never both palms; no ball, sphere or glow held in either hand; no scream; the charge pose keeps h05 (one arm drawn back at shoulder height or lower, never at a hip); the beam is a plain straight line (e04, e07)",
+    "why": "RL-038's condition was the wrist-gripped palm-forward brace; the palm-forward one-arm release without that brace is an ordinary energy-in-reach hand. Closed 2026-10-16",
+    "_form": "none: a beam cast pose; no generated move is a beam cast (the shot table's bolts and volleys and energy in reach are not beams)"
    }
   ],
   "grabs": [

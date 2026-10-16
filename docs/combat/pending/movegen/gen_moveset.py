@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 18
+VERSION = 19
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -235,6 +235,18 @@ def group_hits(parts, m, kind):
 
 # ---------------------------------------------------------------- what is posed (Animation's data)
 
+MISSING = set()   # packs an identity lists that the tree does not have yet (Animation's parked packs): read as empty, and named by --check
+
+
+def manifest_of(wave):
+    """A pack's manifest, or an empty one when the tree does not have it yet."""
+    path = anim("waves", wave + ".manifest.json")
+    if not os.path.exists(path):
+        MISSING.add(wave)
+        return {"strikes": []}
+    return load(path)
+
+
 def posed(parts, idn, tips):
     """His posed strikes as shapes of the grammar: fingerprint -> the key set it comes from and how."""
     g = parts["strike"]
@@ -242,7 +254,7 @@ def posed(parts, idn, tips):
     only = idn.get("borrowIds")   # a list of strike ids: of a pack he borrows he reads no other (the common pieces). The heavy tier goes by the cell's share rule
     for wave in idn["waves"]:
         lent = only is not None and wave in idn.get("borrows", []) and wave not in idn.get("tierWaves", [])
-        for s in load(anim("waves", wave + ".manifest.json"))["strikes"]:
+        for s in manifest_of(wave)["strikes"]:
             if lent and s["combat"] not in only:
                 continue
             rows[s["combat"]] = (wave, s)
@@ -253,7 +265,8 @@ def posed(parts, idn, tips):
         tip = idn.get("tipOf", {}).get(sid, s.get("tip"))
         path = s.get("path")
         target = "arm" if s["target"].startswith("arm") else s["target"]
-        tier = wave in idn.get("tierWaves", [])   # a pack of the heavy tier: its rows are heavies, read by the tier's own tips
+        tier = wave in idn.get("tierWaves", []) and s.get("weight", "heavy") == "heavy"   # a heavy of a pack of the tier, read by the tier's own tips; a pack
+        # may mix lights with its heavies (Animation's protag12, rival9), and those are read as any pack's rows
         if tier:
             hm = {"limb": limb, "tip": tip, "path": path, "target": target, "weight": "heavy"}
             if (path not in g["heavy"]["tips"].get(limb, {}).get(tip, []) or target not in g["targets"][limb].get(path, [])
@@ -428,7 +441,7 @@ def strike_cell(ctx, who, cid, cell):
         if c is not None and c["level"] in cell.get("notLevels", []):
             continue   # a tier of new looks leaves out what a posed piece only stands in for
         kit = idn.get("kit")
-        if kit and kit.get("from") == "common" and not (c is not None and c["level"] in kit.get("levels", ["posed"]) and c["from"] in ctx["common"]):
+        if kit and kit.get("from") == "common" and not (c is not None and c["level"] in kit.get("levels", ["posed"]) and (c["from"] in ctx["common"] or c["wave"] in kit.get("ownPacks", []))):
             if not (m["weight"] in kit.get("newOf", []) and c is None):
                 continue   # a kit row (the guards): only what more than one fighter has posed, or a new shape of a weight his kit allows
             if fp(m)[:4] in set(fp(mv)[:4] for o, d_ in ctx["built"].items() for c2 in d_["cells"].values() for mv in c2.get("moves", []) if isinstance(mv, dict) and mv.get("own")):
@@ -925,7 +938,7 @@ def build():
         for w2 in d2["waves"]:
             if w2 in d2.get("borrows", []) or w2 in d2.get("tierWaves", []):
                 continue
-            for s2 in load(anim("waves", w2 + ".manifest.json"))["strikes"]:
+            for s2 in manifest_of(w2)["strikes"]:
                 seen_ids.setdefault(s2["combat"], set()).add(f2)
     common = set(k for k, v in seen_ids.items() if len(v) > 1)   # a common piece: more than one fighter has it posed
     for who in sorted(identity["fighters"], key=lambda f: (bool(identity["fighters"][f].get("borrows")), f)):
@@ -936,7 +949,7 @@ def build():
         for name in ("parts.json", "identity.json", "cells.json"):
             h.update(raw(os.path.join(HERE, name)))
         for wave in idn["waves"] + idn.get("energyWaves", []):
-            rows = load(anim("waves", wave + ".manifest.json"))["strikes"]
+            rows = manifest_of(wave)["strikes"]
             h.update(json.dumps([[s["id"], s["combat"], s["limb"], s.get("tip"), s.get("path"), s["target"], s["weight"], s.get("legal", []), s.get("flags", [])] for s in rows], sort_keys=True).encode("utf-8"))
         h.update(json.dumps({k: v for k, v in tips.get("reaim", {}).items() if any(v2["set"] == k for v2 in cover.values())}, sort_keys=True).encode("utf-8"))
         wave_owner = {}   # a pack is his who lists it and does not borrow it
@@ -1949,7 +1962,7 @@ def main():
         stale = [n for n, t in files.items() if not os.path.exists(os.path.join(HERE, n)) or raw(os.path.join(HERE, n)).decode("utf-8") != t]
         on_disk = {who: load(os.path.join(HERE, "moveset.%s.json" % who)) for who in out if os.path.exists(os.path.join(HERE, "moveset.%s.json" % who))}
         bad = sorted(set(fresh + legal_findings(on_disk, parts, identity)))
-        print("files: " + ("up to date" if not stale else "OUT OF DATE: " + ", ".join(stale)))
+        print("files: " + ("up to date" if not stale else "OUT OF DATE: " + ", ".join(stale)) + ((" (packs the tree does not have yet, read as empty: " + ", ".join(sorted(MISSING)) + ")") if MISSING else ""))
         print("Legal's rows: " + ("no match" if not bad else "%d MATCH" % len(bad)) + legal_unread(parts))
         for b in bad:
             print("  " + b)
