@@ -13,6 +13,8 @@ render_mode unshaded, cull_back;
 
 #include "res://render/shaders/color.gdshaderinc"
 
+uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
 uniform float boost = 1.0;
 uniform vec2 crowd_near = vec2(0.0, 0.0);   // RenderLook.NEAR_CLIP in a match with depth on: a figure nearer the lens than y shrinks, and is nothing nearer than x. (0, 0): off
 uniform float outline = 0.7;
@@ -104,5 +106,5 @@ void fragment() {
 	} else {
 		c = legs.rgb;
 	}
-	ALBEDO = v_kind < 0.25 ? c : flat_shade(c, NORMAL, 0.3);
+	ALBEDO = v_kind < 0.25 ? c : flat_shade(c, NORMAL, 0.3) * wl_mul + wl_add;   // the keyline is never dimmed
 }

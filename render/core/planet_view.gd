@@ -42,6 +42,9 @@ var _terrain_mat: ShaderMaterial
 var _water_mat: ShaderMaterial
 var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
 var _tree: MultiMesh
+var _tree_mat: ShaderMaterial        # this pane's trees (their own, so the world's light tints them alone)
+var _wl: Array = []                  # the world's light (SkyDrive.world_at), kept for materials made later
+var _wl_win: float = RenderLook.WINDOW_LIT_SHARE
 var _crowd: MultiMesh
 var _bld0: MultiMesh                 # row 0, in front of the fighter plane: its own MultiMesh (bodies by row-0 index, then the other parts)
 var _parts: Array = []               # per building: its parts as it stands whole (RenderShapes.parts), the body first; shared by panes
@@ -123,6 +126,7 @@ func build(S: SimState) -> void:
 		_make_materials()
 		if source == null:
 			_make_ground_meshes()
+		_tree_mat = mats.flat_named("trees", Color.WHITE)
 		_crowd_mat = ShaderMaterial.new()
 		_crowd_mat.shader = CROWD_SHADER
 		_crowd_mat.set_shader_parameter("outline_col", RenderLook.col(RenderLook.CROWD_OUTLINE))
@@ -170,6 +174,7 @@ func build(S: SimState) -> void:
 	_stub.fill(0.0)
 	_stub_live.clear()
 	_gone.clear()
+	_apply_wl()
 	_stub_t = -1.0
 	_stub_tex = _stub_texture(_bld_mat, _n_inst)
 	_stub_tex0 = _stub_texture(_front_mat, _n_inst0)
@@ -194,7 +199,7 @@ func build(S: SimState) -> void:
 		if absi(k) <= 1:
 			_mm_child(n, "Buildings", _bld, _bld_mat)
 			_mm_child(n, "Buildings0", _bld0, _front_mat)
-			_mm_child(n, "Trees", _tree)
+			_mm_child(n, "Trees", _tree, _tree_mat)
 			_mm_child(n, "Crowd", _crowd, _crowd_mat)
 		_copies.append(n)
 	if source == null:
@@ -902,7 +907,6 @@ func _make_materials() -> void:
 		m.set_shader_parameter("far_blend", RenderLook.FAR_BLEND)
 		m.set_shader_parameter("meander_amp", RenderLook.MEANDER)
 		m.set_shader_parameter("biome_colors", GroundField.BIOME_ORDER.map(func(b): return RenderLook.col(RenderLook.BIOME[b])))
-		m.set_shader_parameter("fog_near", RenderLook.FOG_NEAR)
 		m.set_shader_parameter("fog_far", RenderLook.FOG_FAR)
 		m.set_shader_parameter("fore_drop", RenderLook.FORE_DROP)
 		m.set_shader_parameter("fore_span", float(RenderLook.FORE_SPAN))
@@ -1037,6 +1041,28 @@ func set_focus(z: float) -> void:
 	_focus_z = z
 	for m in [_bld_mat, _front_mat]:
 		m.set_shader_parameter("haze_focus", z)
+
+
+## The world's light on this pane's layers (SkyDrive.world_at: RenderLook.WORLD_LAYERS order, each [mul, add] in linear
+## light) and the share of windows lit (SkyDrive.win_at). Kept, so a material made later takes it too.
+func set_world_light(world: Array, win: float) -> void:
+	_wl = world
+	_wl_win = win
+	_apply_wl()
+
+
+func _apply_wl() -> void:
+	if _wl.is_empty() or _terrain_mat == null:
+		return
+	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat], "trees": [_tree_mat], "civilians": [_crowd_mat]}
+	for li in range(RenderLook.WORLD_LAYERS.size()):
+		for m in by.get(RenderLook.WORLD_LAYERS[li], []):
+			if m != null:
+				m.set_shader_parameter("wl_mul", _wl[li][0])
+				m.set_shader_parameter("wl_add", _wl[li][1])
+	for m in [_bld_mat, _front_mat]:
+		if m != null:
+			m.set_shader_parameter("wl_lit", _wl_win / RenderLook.WINDOW_LIT_SHARE)
 
 
 func set_camera(p: Vector3) -> void:

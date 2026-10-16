@@ -18,6 +18,8 @@ render_mode unshaded, cull_back;
 #include "res://render/shaders/bend.gdshaderinc"
 #include "res://render/shaders/ortho.gdshaderinc"
 
+uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
 uniform vec4 albedo : source_color = vec4(1.0);
 uniform float shade : hint_range(0.0, 1.0) = 0.35;
 // The world's light on the body (AnimBody.set_tint, set each frame from the sky): one multiply colour, plain values like the palette's, white (no change) unless set. The mesh's vertex alpha is its mask: 1 on the
@@ -108,5 +110,5 @@ void fragment() {
 			}
 		}
 	}
-	ALBEDO = mix(flat_shade(albedo.rgb * c * mix(vec3(1.0), tint.rgb, COLOR.a), n, shade), vec3(1.0), hit_mix);
+	ALBEDO = mix(flat_shade(albedo.rgb * c * mix(vec3(1.0), tint.rgb, COLOR.a), n, shade) * wl_mul + wl_add, vec3(1.0), hit_mix);   // a hit's white is never dimmed
 }

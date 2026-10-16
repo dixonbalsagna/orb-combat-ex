@@ -41,6 +41,16 @@ static var _lab := PackedFloat64Array()    # N x 4 x 3: each band's OKLab along 
 static var _lum := PackedFloat64Array()    # N x 4: each band's relative luminance
 static var _stars := PackedFloat64Array()  # N
 static var _key := PackedInt32Array()      # N: the key a sample stands on exactly (inside a hold), or -1
+const WL_N: int = 36                       # RenderLook.WORLD_LAYERS x (mul RGB, add RGB)
+static var _wl_keys: Array = []            # per key: its world light (WL_N)
+static var _win_keys: Array = []           # per key: the share of windows lit
+static var wl_mood: Dictionary = {}        # frenzy, ruin: per layer the multiply at full mood
+static var _wl := PackedFloat64Array()     # N x WL_N: the world's light along the lap
+static var _win := PackedFloat64Array()    # N: the share of windows lit along the lap
+var wl_p: float = 0.0                      # the place of the lap the world is lit for: the fight's middle, eased (_light)
+var world: Array = []                      # the world's light there (world_at), for every pane
+var win: float = RenderLook.WINDOW_LIT_SHARE
+var _wl_t: float = NAN
 
 var frenzy: float = 0.0              # the eased drivers, 0 to 1
 var ruin: float = 0.0
@@ -154,6 +164,19 @@ static func ensure() -> void:
 		ember = Color.html(str(d.mood.colours.ember))
 		for k in ["ember", "smoke", "ash", "deep"]:
 			mood_lab[k] = to_lab(Color.html(str(d.mood.colours[k])))
+		var wl = d.get("_world_light")
+		if wl is Dictionary and wl.get("keys") is Dictionary:
+			var lit: Dictionary = wl.windows.lit_share if wl.get("windows") is Dictionary else {}
+			for k in d.keys:
+				_wl_keys.append(_wl_row(wl.keys.get(str(k.id))))
+				_win_keys.append(float(lit.get(str(k.id), RenderLook.WINDOW_LIT_SHARE)))
+			var md = wl.get("mood")
+			for m in ["frenzy", "ruin"]:
+				var rows: Array = []
+				for layer in RenderLook.WORLD_LAYERS:
+					var v = md[m].get(layer) if md is Dictionary and md.get(m) is Dictionary else null
+					rows.append(Vector3(float(v[0]), float(v[1]), float(v[2])) if v is Array else Vector3.ONE)
+				wl_mood[m] = rows
 	if mood_lab.is_empty():
 		for k in [["ember", "#d9603c"], ["smoke", "#2e221c"], ["ash", "#2b2724"], ["deep", "#05060f"]]:
 			mood_lab[k[0]] = to_lab(Color.html(k[1]))
@@ -161,12 +184,23 @@ static func ensure() -> void:
 	_lum.resize(N * 4)
 	_stars.resize(N)
 	_key.resize(N)
+	if _wl_keys.size() != keys.size():
+		_wl_keys = []
+		_win_keys = []
+		for k in keys:
+			_wl_keys.append(_wl_row(null))
+			_win_keys.append(RenderLook.WINDOW_LIT_SHARE)
+	_wl.resize(N * WL_N)
+	_win.resize(N)
 	var n: int = keys.size()
 	for i in range(N):
 		var phase: float = float(i) / float(N)
 		var labs: Array = []
 		var st: float = float(keys[0].stars)
 		var on: int = 0 if n == 1 else -1
+		var wa: int = 0     # the world's light blends between the same two keys, by the same t
+		var wb: int = 0
+		var wt: float = 0.0
 		if n == 1:
 			for c in keys[0].cols:
 				labs.append(to_lab(c))
@@ -184,6 +218,9 @@ static func ensure() -> void:
 				for bi in range(4):
 					labs.append(_path(to_lab(a.cols[bi]), to_lab(b.cols[bi]), t, str(trans[ki].get(BANDS[bi], "lab"))))
 				st = lerpf(float(a.stars), float(b.stars), t)
+				wa = ki
+				wb = (ki + 1) % n
+				wt = t
 				break
 		for bi in range(4):
 			var v: Vector3 = labs[bi]
@@ -193,6 +230,53 @@ static func ensure() -> void:
 			_lum[i * 4 + bi] = lum_lin(lab_to_lin(v))
 		_stars[i] = st
 		_key[i] = on
+		for q in range(WL_N):
+			_wl[i * WL_N + q] = lerpf(float(_wl_keys[wa][q]), float(_wl_keys[wb][q]), wt)
+		_win[i] = lerpf(float(_win_keys[wa]), float(_win_keys[wb]), wt)
+
+
+## One key's world light from the data (null: none, every layer as authored).
+static func _wl_row(kd) -> PackedFloat64Array:
+	var row := PackedFloat64Array()
+	row.resize(WL_N)
+	for li in range(RenderLook.WORLD_LAYERS.size()):
+		var ld = kd.get(RenderLook.WORLD_LAYERS[li]) if kd is Dictionary else null
+		var mul = ld.get("mul") if ld is Dictionary else null
+		var add = ld.get("add") if ld is Dictionary else null
+		for c in range(3):
+			row[li * 6 + c] = float(mul[c]) if mul is Array else 1.0
+			row[li * 6 + 3 + c] = float(add[c]) if add is Array else 0.0
+	return row
+
+
+## The world's light at a place of the lap: per layer (RenderLook.WORLD_LAYERS order) [mul, add] in linear light, the
+## mood's multiplies (frenzy f, ruin r) on top and RenderLook.WORLD_LIGHT's strength. On a key with no mood it is the
+## key's own to the bit.
+static func world_at(phase: float, f: float, r: float) -> Array:
+	var x: float = fposmod(phase, 1.0) * float(N)
+	var i: int = int(x) % N
+	var j: int = (i + 1) % N
+	var t: float = x - floor(x)
+	var s: float = RenderLook.WORLD_LIGHT
+	var out: Array = []
+	for li in range(RenderLook.WORLD_LAYERS.size()):
+		var a: int = i * WL_N + li * 6
+		var b: int = j * WL_N + li * 6
+		var mul := Vector3(lerpf(_wl[a], _wl[b], t), lerpf(_wl[a + 1], _wl[b + 1], t), lerpf(_wl[a + 2], _wl[b + 2], t))
+		var add := Vector3(lerpf(_wl[a + 3], _wl[b + 3], t), lerpf(_wl[a + 4], _wl[b + 4], t), lerpf(_wl[a + 5], _wl[b + 5], t))
+		if f > 0.0 and wl_mood.has("frenzy"):
+			mul *= Vector3.ONE.lerp(wl_mood.frenzy[li], f)
+		if r > 0.0 and wl_mood.has("ruin"):
+			mul *= Vector3.ONE.lerp(wl_mood.ruin[li], r)
+		out.append([Vector3.ONE.lerp(mul, s), add * s])
+	return out
+
+
+## The share of windows lit at a place of the lap (they come on with the dark, a few at a time).
+static func win_at(phase: float) -> float:
+	var x: float = fposmod(phase, 1.0) * float(N)
+	var i: int = int(x) % N
+	return lerpf(_win[i], _win[(i + 1) % N], x - floor(x))
 
 
 ## The four bands' OKLab at a place of the lap (BANDS order), from the table.
@@ -336,6 +420,7 @@ func reset(S: SimState) -> void:
 ## Once a frame, before the panes: the drift and the eased drivers at time t (seconds on the host's clock).
 func advance(S: SimState, t: float) -> void:
 	ensure()
+	_light(S, t)
 	var dt: float = 0.0 if is_nan(_t) or t < _t else minf(t - _t, 0.5)
 	_t = t
 	if not hold_mood.is_empty():
@@ -362,6 +447,29 @@ func advance(S: SimState, t: float) -> void:
 			tw.want = clampf(float(hurt) / maxf(float(tw.ids.size()), 1.0) / RenderLook.SKY_GLOW_FULL, 0.0, 1.0)
 	for tw in towns:
 		tw.glow = move_toward(float(tw.glow), float(tw.want), dt / float(ease_s.glow))
+
+
+## The world's light for every pane: the place of the lap at the fight's middle (the fighters' mean x), eased with the
+## sky's own slew, so a split screen's two halves are lit alike (each pane's sky stays its own); a new match, a seek or
+## a held place (--sky) takes it at once.
+func _light(S: SimState, t: float) -> void:
+	var mid: float = spawn_x
+	var n: int = S.fighters.size()
+	if n > 0:
+		var x0: float = S.fighters[0].x
+		var acc: float = 0.0
+		for f in S.fighters:
+			acc += SimWrap.sdx(x0, f.x)
+		mid = SimWrap.wrap(x0 + acc / float(n))
+	var want: float = target(mid)
+	var dt: float = t - _wl_t
+	if is_nan(_wl_t) or dt < 0.0 or dt > 0.5 or not is_nan(hold_phase) or world.is_empty():
+		wl_p = want
+	elif dt > 0.0:
+		wl_p = slew(wl_p, want, dt)
+	_wl_t = t
+	world = world_at(wl_p, frenzy, ruin)
+	win = lerpf(RenderLook.WINDOW_LIT_SHARE, win_at(wl_p), RenderLook.WORLD_LIGHT)
 
 
 ## The place of the lap a camera at world x wants: the start's at the spawn, a lap round the planet a day on, plus

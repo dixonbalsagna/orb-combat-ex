@@ -24,10 +24,11 @@ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
 #include "res://render/shaders/ground.gdshaderinc"
 #include "res://render/shaders/skycol.gdshaderinc"
 
+uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
 uniform vec4 water : source_color;
 uniform vec4 surface : source_color;
 uniform float fall_body = 4.0;   // RenderLook.WATER_FALL_BODY: a sheet that fell this far shows its body
-uniform float fog_near = 700.0;
 uniform float fog_far = 12000.0;
 
 varying float v_wet;
@@ -111,13 +112,16 @@ void fragment() {
 	}
 	vec3 c;
 	float a;
-	c = mix(surface.rgb, water.rgb, v_under);
+	c = mix(surface.rgb, water.rgb, v_under) * wl_mul + wl_add;   // the world's light; the lane cue is never dimmed
 	a = mix(surface.a, 0.5 + 0.25 * clamp(v_depth / 340.0, 0.0, 1.0), v_under);
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));   // the lane cue lies on the surface
 	c = mix(c, cue.rgb, cue.a);
 	a = max(a, cue.a);
 	c = pair_mark_on(c, v_px, fwidth(v_px.y));   // ... and so does the pair's mark
-	float fog = ground_fog(elevation(v_view), -v_wz, fog_near, fog_far);
-	ALBEDO = mix(c, sky_color(elevation(v_view)), fog);
-	ALPHA = mix(a, 1.0, fog);
+	// The sea takes the sky: by depth toward the horizon band at haze_sea of its value, and at the far edge it ends there
+	// (not in the sky's own colour), one clear step below the sky at the horizon. It turns opaque as it hazes.
+	vec2 hz = haze_parts(v_view, -v_wz, fog_far);
+	float hs = max(hz.x, hz.y);
+	ALBEDO = mix(c, sky_horizon.rgb * haze_sea, hs);
+	ALPHA = mix(a, 1.0, hs);
 }

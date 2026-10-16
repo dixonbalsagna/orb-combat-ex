@@ -76,6 +76,8 @@ var hit_white_T: float = -INF
 var _edge: bool = false            # the outline is lit for a refused hit
 var _faded: bool = false
 var _flash: bool = false
+var _wl_mul := Vector3.ONE           # the world's light on his body (SkyDrive.world_at's bodies layer)
+var _wl_add := Vector3.ZERO
 var _stance: int = -1
 var _aura_col := Color.WHITE
 var _pal: Dictionary = {}      # the body's palette as built (AnimRig.mesh_for); its accent is the lane colour (set_lane)
@@ -451,6 +453,7 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 			p[3].set_shader_parameter("albedo", c)
 			p[4].set_shader_parameter("albedo", Color(c, RenderLook.HIDDEN_ALPHA))
 			p[0].material_override = p[4] if _faded else p[3]
+		_apply_wl()
 	var fade: float = RenderLook.HIDDEN_ALPHA if f.hidden else 1.0
 	var tier: float = f.tier
 	var ch: bool = f.state == "charging"
@@ -525,6 +528,28 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 		flash_view.step(T, f.hidden, to_local(head.global_position), m, anchor, WorldTerrain.groundY(S, f.x) - pose.y)
 	else:
 		flash_view.visible = false
+
+
+## The world's light on his body: [mul, add] in linear light (the pane's bodies layer). His aura, guard, badge, cues,
+## flashes and keyline are never dimmed, and a part lit white by a hit takes none while it is.
+func set_world_light(w: Array) -> void:
+	if w.is_empty() or (w[0] == _wl_mul and w[1] == _wl_add):
+		return
+	_wl_mul = w[0]
+	_wl_add = w[1]
+	_apply_wl()
+
+
+func _apply_wl() -> void:
+	if anim_body != null and anim_body.mi != null and anim_body.mi.material_override is ShaderMaterial:
+		var bm := anim_body.mi.material_override as ShaderMaterial
+		bm.set_shader_parameter("wl_mul", _wl_mul)
+		bm.set_shader_parameter("wl_add", _wl_add)
+	for p in solid:
+		var white: bool = _flash and p[2]
+		for m in [p[3], p[4]]:
+			m.set_shader_parameter("wl_mul", Vector3.ONE if white else _wl_mul)
+			m.set_shader_parameter("wl_add", Vector3.ZERO if white else _wl_add)
 
 
 func _part(mesh: Mesh, at: Vector3, c: Color, flashes: bool, parent: Node3D = null) -> MeshInstance3D:

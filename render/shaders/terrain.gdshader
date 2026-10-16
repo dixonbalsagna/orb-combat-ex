@@ -18,6 +18,8 @@ render_mode unshaded, cull_disabled;
 #include "res://render/shaders/ground.gdshaderinc"
 #include "res://render/shaders/skycol.gdshaderinc"
 
+uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
 uniform vec4 sea_floor : source_color;
 uniform vec4 crater : source_color;
 uniform vec4 crater_desert : source_color;
@@ -35,7 +37,6 @@ uniform float z_front = 140.0;   // RenderLook.Z_TERRAIN_FRONT: the top brighten
 uniform vec2 char_fresh = vec2(0.04, 0.2);   // RenderLook.CHAR_FRESH: a groove warmer than y is not charred yet; the char comes in as its heat falls to x
 uniform float char_gain = 1.0;               // 1; under reduced flashing RenderLook.CHAR_CALM
 uniform float heat_gain = 1.0;               // 1; under reduced flashing RenderLook.HEAT_CALM
-uniform float fog_near = 700.0;
 uniform float fog_far = 12000.0;
 
 varying float v_base;
@@ -129,6 +130,7 @@ void fragment() {
 	float fresh = smoothstep(char_fresh.x, char_fresh.y, v_heat);
 	c = mix(c, char_col.rgb, clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new));
 	c = flat_shade(c, NORMAL, 0.55) * mix(1.2, 0.95, v_back);
+	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
 	c = mix(c, cue.rgb, cue.a);
 	c = pair_mark_on(c, v_px, fwidth(v_px.y));
@@ -137,6 +139,5 @@ void fragment() {
 	// The glow's tint comes in gently at low heat (a weak beam's groove is a faint red, not a dark one, at first).
 	c = mix(c, glow, smoothstep(0.2, 1.0, hh) * 0.85 * heat_gain) + glow * max(0.0, hh - 1.0) * 0.6 * heat_gain * heat_gain;
 	// Aerial perspective: hazing toward the horizon, the ground takes the sky's colour in its own direction.
-	float fog = ground_fog(elevation(v_view), -v_wz, fog_near, fog_far);
-	ALBEDO = mix(c, sky_color(elevation(v_view)), fog);
+	ALBEDO = haze_ground(c, v_view, -v_wz, fog_far);   // the haze by depth (skycol.gdshaderinc)
 }

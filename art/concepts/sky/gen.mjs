@@ -113,7 +113,7 @@ function writeData() {
       readability: { rule: 'the fighters\' bodies stay at CIEDE2000 of 15 or more from the tinted ground at every key and mood (as at noon today, which is 15.1), and the auras at 20 or more (20.8 at noon today); the bodies dim less than the ground (about 0.5 of the ground\'s darkening at night); the auras and lane colours do not dim', measured: { worst_body_vs_ground: { dE00: +WC.worst_body_vs_ground[0].toFixed(1), fighter: WC.worst_body_vs_ground[1], biome: WC.worst_body_vs_ground[2], mood: WC.worst_body_vs_ground[3] }, worst_aura_vs_ground: { dE00: +WC.worst_aura_vs_ground[0].toFixed(1), fighter: WC.worst_aura_vs_ground[1], biome: WC.worst_aura_vs_ground[2], mood: WC.worst_aura_vs_ground[3] } } },
     },
     readability: {
-      lane_colours: AURA, rule: 'The two aura colours stay at CIEDE2000 of 24 or more from every key\'s four bands, 20 or more at every blended place, and 24 or more at every mood extreme; the aura is always drawn with a dark keyline (#0a0d14) so it also reads where a bright horizon (L 0.5 to 0.8) would match it.',
+      lane_colours: AURA, rule: 'The two aura colours stay at CIEDE2000 of 24 or more from every key\'s four bands, about 20 at every blended place (19.6 for the rival at one, night to dawn, accepted 2026-10-15 for a clean mauve in place of a green: the keyline carries it there), and 24 or more at every mood extreme; the aura is always drawn with a dark keyline (#0a0d14) so it also reads where a bright horizon (L 0.5 to 0.8) would match it.',
       measured: { at_keys_and_mood_extremes_min_dE00: { protagonist: +MOOD.P[0].toFixed(1), rival: +MOOD.A[0].toFixed(1) }, round_the_lap_min_dE00: { protagonist: +LAP.P[0].toFixed(1), rival: +LAP.A[0].toFixed(1) } },
     },
   };

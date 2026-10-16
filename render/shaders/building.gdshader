@@ -102,6 +102,9 @@ uniform vec4 dmg_frame : source_color = vec4(0.29, 0.29, 0.31, 1.0);
 uniform float roof_over = 1.2;
 uniform float pan_haze = 0.0;        // 0 to 1: this pane's camera is travelling fast (PaneWorld.pan_haze); the wall loses its panes and marks and melts toward the sky behind it
 uniform float pan_mix = 0.7;         // RenderLook.PAN_HAZE_MIX: how far it melts at full haze
+uniform vec3 wl_mul = vec3(1.0);     // the world's light (SkyDrive.world_at's buildings layer); lit panes are never dimmed
+uniform vec3 wl_add = vec3(0.0);
+uniform float wl_lit = 1.0;          // the share of windows lit against the sunset's (SkyDrive.win_at / RenderLook.WINDOW_LIT_SHARE)
 uniform float pan_whip = 0.0;        // 0 to 1: this pane's camera whips along the ground (PaneWorld.pan_whip), in every match
 uniform float pan_whip_mix = 1.0;    // RenderLook.PAN_WHIP_MIX: how far a wall melts at a full whip
 uniform vec4 pan_ground : source_color = vec4(0.37, 0.57, 0.25, 1.0);   // the ground's colour under this pane's camera: what is behind a wall below the horizon line
@@ -327,6 +330,7 @@ vec3 core_look(vec4 shell, vec3 eye, vec3 view, float t, bool xface, vec3 stone,
 }
 
 void fragment() {
+	float lit_w = 0.0;   // the share of this pixel that is a lit pane (the world's light leaves it)
 	if (ref_cull > 0.5 && v_cut.w <= 0.0 && !FRONT_FACING) {
 		discard;
 	}
@@ -560,12 +564,14 @@ void fragment() {
 			}
 			// Too far to draw panes, the wall is the average of wall and glass (the dark inside where they are out).
 			float cover = top_only ? 0.0 : (la.z - la.y) * (lb.y - lb.x) * la.w;
-			vec3 avg = flat_shade(mix(mix(glass, bright, 0.1), win_lit.rgb, look_glass[lk].a), NORMAL, 0.35);
+			float lit_sh = min(look_glass[lk].a * wl_lit, 1.0);   // the panes lit warm: more with the dark
+			vec3 avg = flat_shade(mix(mix(glass, bright, 0.1), win_lit.rgb, lit_sh), NORMAL, 0.35);
 			vec3 far = mix(col, gone ? inside.rgb : avg, cover);
 			// A pane's own colour (lit, bright or dark) shows from near only: from the middle distance every pane is the
 			// glass's average, so a far tower is bands, not a sparkle that shimmers as the camera moves.
 			float vary = 1.0 - smoothstep(0.06, 0.2, max(fwidth(cx), fwidth(fr)));
 			vec3 near = col;
+			float near_lit = 0.0;   // the share of this pixel that is a lit pane (never dimmed)
 			bool ground = row < 0.5;
 			if (ground && panels) {
 				// Wide door panels along the ground row, every other cell.
@@ -580,7 +586,9 @@ void fragment() {
 				vec3 wc = inside.rgb;
 				if (!gone) {
 					float hsh = win_hash(vec3(v_winb.z, floor(cx), row));
-					wc = mix(avg, hsh < look_glass[lk].a ? win_lit.rgb : flat_shade(hsh > 0.9 ? bright : glass, NORMAL, 0.35), vary);
+					bool on = hsh < lit_sh;
+					wc = mix(avg, on ? win_lit.rgb : flat_shade(hsh > 0.9 ? bright : glass, NORMAL, 0.35), vary);
+					near_lit = (on ? vary : 0.0) + (1.0 - vary) * lit_sh;
 				}
 				near = wc;
 			} else if (has && shutters && tall && r.x > la.y - 0.11 && r.x < la.z + 0.11) {
@@ -597,6 +605,7 @@ void fragment() {
 				}
 			}
 			col = mix(far, near, fine);
+			lit_w = mix(gone ? 0.0 : cover * lit_sh, near_lit, fine);
 		}
 		if (mk_cell + mk_far + mk_line > 0.0) {
 			// The dent: the cladding is gone to the dark inside, and the frame shows in it, the edge of each floor's
@@ -731,6 +740,7 @@ void fragment() {
 			}
 		}
 	}
+	col = mix(col * wl_mul + wl_add, col, lit_w);   // the world's light, but not on a lit pane
 	if (v_look.z > 0.001) {
 		// The rows' haze: the air's colour toward the horizon in this direction, more of it the farther back the row.
 		col = mix(col, sky_color(min(elevation(v_view), horizon + 0.3 * sky_tan)), v_look.z);

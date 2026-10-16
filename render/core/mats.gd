@@ -37,6 +37,22 @@ func flat(c: Color, shade: float = 0.35) -> ShaderMaterial:
 	return m
 
 
+## This pane's own opaque flat material under a name, not shared by colour: a layer the world's light tints alone (the
+## trees). It takes this pane's bend like the rest of the cache.
+func flat_named(name: String, c: Color, shade: float = 0.35) -> ShaderMaterial:
+	var key := "n|" + name
+	var m = _cache.get(key)
+	if m == null:
+		m = ShaderMaterial.new()
+		m.shader = FLAT
+		m.set_shader_parameter("albedo", c)
+		m.set_shader_parameter("shade", shade)
+		m.set_shader_parameter("bend", _bend)
+		m.set_shader_parameter("cam_dist", _dist)
+		_cache[key] = m
+	return m
+
+
 ## This pane's translucent flat material.
 func flat_alpha(c: Color, alpha: float, shade: float = 0.35) -> ShaderMaterial:
 	var key := "a|%s|%s|%s" % [c.to_html(), alpha, shade]

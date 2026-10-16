@@ -5,13 +5,15 @@
 
 uniform vec4 albedo : source_color = vec4(1.0);
 uniform float shade : hint_range(0.0, 1.0) = 0.35;
+uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at) where a layer takes it: the trees, a fighter's parts
+uniform vec3 wl_add = vec3(0.0);
 
 void vertex() {
 	POSITION = ortho > 0.5 ? ortho_clip(MODEL_MATRIX, VIEW_MATRIX, PROJECTION_MATRIX, VERTEX) : bent_clip(MODEL_MATRIX, VIEW_MATRIX, PROJECTION_MATRIX, VERTEX);
 }
 
 void fragment() {
-	ALBEDO = flat_shade(albedo.rgb * COLOR.rgb, NORMAL, shade);
+	ALBEDO = flat_shade(albedo.rgb * COLOR.rgb, NORMAL, shade) * wl_mul + wl_add;
 #ifdef FLAT_ALPHA
 	ALPHA = albedo.a * COLOR.a;
 #endif

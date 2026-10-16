@@ -23,7 +23,7 @@ export const BLEND = [
   { horizon: 'lab', lower: 'lch-', upper: 'lab', top: 'lab' },   // noon -> golden
   { horizon: 'lab', lower: 'lab', upper: 'lab', top: 'lab' },   // golden -> sunset
   { horizon: 'lab', lower: 'lab', upper: 'lab', top: 'lab' },   // sunset -> night
-  { horizon: 'lch-', lower: 'lch-', upper: 'lab', top: 'lab' },   // night -> dawn
+  { horizon: 'lab', lower: 'lab', upper: 'lab', top: 'lab' },   // night -> dawn (2026-10-15: lch- went through a saturated green at 0.70 to 0.74; straight OKLab goes through a muted mauve)
   { horizon: 'lab', lower: 'lch+', upper: 'lab', top: 'lab' },   // dawn -> noon
 ];
 export function pathLab(a, b, t, mode = 'lab') {

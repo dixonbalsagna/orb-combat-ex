@@ -14,7 +14,12 @@ uniform float sky_lower_at = 0.12;
 uniform float sky_upper_at = 0.55;
 uniform float sky_top_at = 1.45;
 uniform float sky_thin = 2.5;
-uniform float fog_band = 0.25;     // haze depth below the horizon line, in half-screen heights (thins with altitude)
+uniform vec4 haze_at = vec4(1500.0, 2500.0, 6000.0, 40000.0);   // RenderLook.HAZE_AT: distances from the camera
+uniform vec3 haze_mix = vec3(0.2, 0.45, 0.8);                    // RenderLook.HAZE_MIX: the haze reached at each
+uniform vec2 haze_line = vec2(0.04, 0.5);                        // RenderLook.HAZE_LINE: the glow at the horizon line
+uniform float haze_sea = 0.9;                                    // RenderLook.HAZE_SEA: the sea's haze, of the horizon band's value
+uniform float haze_value = 0.6;                                  // RenderLook.HAZE_VALUE: the ground's haze, of the horizon band's value
+uniform float haze_sat = 0.7;                                    // RenderLook.HAZE_SAT: ... and of its saturation
 
 // Height above the horizon in half-screen heights, thinned with altitude, for the tan of an elevation q.
 float sky_height(float q) {
@@ -41,13 +46,27 @@ float elevation(vec3 v) {
 	return v.y / max(0.0001, length(v.xz));
 }
 
-// Aerial haze for ground seen at elevation q, depth `depth` behind the fighter plane: thickest along grazing views
-// near the horizon line and clearing below it (looking down through less air), thinning as the camera climbs like the
-// sky's rim; a light overall haze with distance; and the last eighth before the far edge fading out completely, so
-// the ground's end never shows, even where the curvature drops it below the horizon line at the screen sides.
-float ground_fog(float q, float depth, float near, float far) {
-	float band = fog_band / (1.0 + sky_thin * space);
-	float fh = 1.0 - smoothstep(0.0, band, (horizon - q) / sky_tan);
-	float f = max(fh * smoothstep(near, 3.0 * near, depth), smoothstep(0.88 * far, far, depth));
-	return max(f, 0.25 * smoothstep(near, far, depth));
+// Aerial haze for the ground and the water seen along `view` (from the camera, world axes), `depth` behind the fighter
+// plane: by that depth, not by height on the screen (RenderLook.HAZE_*), so the fight's own ground and all in front of
+// it take none, toward the horizon band's
+// colour, the distances stretched as the camera climbs (the air thins as the sky's rim does); a thin glow right at the
+// horizon line beyond the second distance; and the last eighth before the far edge fading into the sky in its own
+// direction, so the ground's end never shows, even where the curvature drops it below the line at the screen's sides.
+// Returns (toward the horizon band, into the sky at the far edge).
+vec2 haze_parts(vec3 view, float depth, float far) {
+	float q = elevation(view);
+	float d = max(depth, 0.0) / (1.0 + sky_thin * space);
+	float f = haze_mix.x * smoothstep(haze_at.x, haze_at.y, d) + (haze_mix.y - haze_mix.x) * smoothstep(haze_at.y, haze_at.z, d) + (haze_mix.z - haze_mix.y) * smoothstep(haze_at.z, haze_at.w, d);
+	float band = haze_line.x / (1.0 + sky_thin * space);
+	float fl = haze_line.y * (1.0 - smoothstep(0.0, band, abs(horizon - q) / sky_tan)) * smoothstep(haze_at.y, haze_at.z, d);
+	return vec2(max(f, fl), smoothstep(0.88 * far, far, depth));
+}
+
+// The ground's colour hazed (haze_parts: x toward the horizon band taken down to haze_value of its value and haze_sat
+// of its saturation, the far mountains' ladder; y into the sky at the far edge).
+vec3 haze_ground(vec3 c, vec3 view, float depth, float far) {
+	vec2 h = haze_parts(view, depth, far);
+	vec3 band = sky_horizon.rgb;
+	vec3 toward = mix(vec3(dot(band, vec3(0.2126, 0.7152, 0.0722))), band, haze_sat) * haze_value;
+	return mix(mix(c, toward, h.x), sky_color(elevation(view)), h.y);
 }

@@ -17,6 +17,12 @@ extends SceneTree
 ## - the mood eases over Art's least durations, and with reduced motion the drift and the mood hold;
 ## - a town's glow comes into a pane's view over at least a second, however fast the camera arrives (Legal's RL-122);
 ## - the switches (--staticsky, --sky, --skymood), and what a pane's sky costs a frame.
+## The world takes the key (Art's docs/art/dynamic-sky.md section 6, data/art/sky.json _world_light), numbers too:
+## - on each key the world's light is the key's own from the data; at noon it is none;
+## - at night the ground is about a tenth of noon and the bodies dim about half as much as it; windows lit go up;
+## - the mood's multiplies ride on top (ruin at noon is the ruin's own), and the bodies are never touched by it;
+## - the pane hands it to the materials: the ground's, the water's, both buildings', the trees', the crowd's and each
+##   fighter's body; it is one for every pane, lit for the fight's middle, so a split screen's halves agree.
 ## The pictures (with a window only): with the reaction on, the clouds part and that is all the sky does (it once
 ## paled the sky in a tall opening down to the horizon, which read as a pale pillar from a high camera and hung in the
 ## sky for a fighter nobody could see). The sky is drawn with both at tier 1 and again with both at tier 4, from a low
@@ -93,10 +99,10 @@ func _run() -> void:
 # ------------------------------------------------------------------ the dynamic sky
 
 ## Art's reference code (art/concepts/sky/keys.mjs skyAt and moodSky) at places between the keys and at the mood's
-## extremes: horizon, lower, upper, top.
+## extremes: horizon, lower, upper, top. 0.7 is after Art's night-to-dawn fix (2026-10-15: through mauve, not green).
 const REF: Dictionary = {
 	0.1: ["#f1deb2", "#6fac66", "#0060a1", "#182f73"], 0.25: ["#f6ca8d", "#dd8e6a", "#385595", "#162455"], 0.45: ["#6d6b74", "#5a485d", "#212651", "#090e27"],
-	0.7: ["#207279", "#005857", "#0c2a4d", "#091028"], 0.92: ["#eed8b7", "#4fa168", "#005c93", "#152c67"],
+	0.7: ["#5d657a", "#494761", "#0c2a4d", "#091028"], 0.92: ["#eed8b7", "#4fa168", "#005c93", "#152c67"],
 }
 const REF_MOOD: Array = [[0.33, 1.0, 0.0, ["#f2af74", "#c06a61", "#3b386e", "#0f1635"]], [0.33, 0.0, 1.0, ["#775940", "#6d423a", "#3f3759", "#171e38"]], [0.02, 1.0, 1.0, ["#726456", "#314354", "#243d5e", "#192a55"]]]
 const REF_LAP_S: float = 48.68   # one lap at the limit, by the reference slewStep
@@ -144,6 +150,45 @@ func _dynamic(S: SimState) -> void:
 		var o: Dictionary = sky.pane({}, x_of.call(float(k.phase)), 0.0)
 		keys_ok = keys_ok and o.cols == k.cols and absf(float(o.star_low) - minf(1.0, 0.25 * float(k.stars) / 0.15)) < 1e-9
 	_expect(keys_ok, "each of the %d keys is its own colours on its place of the lap, and the stars follow the key" % SkyDrive.keys.size())
+	# The world takes the key.
+	var d = JSON.parse_string(FileAccess.get_file_as_string(SkyDrive.DATA_PATH))
+	var wkeys: Dictionary = d._world_light.keys
+	var own: bool = true
+	var lum3: Callable = func(v: Vector3) -> float: return 0.2126 * v.x + 0.7152 * v.y + 0.0722 * v.z
+	var night: Array = []
+	var noon: Array = []
+	for k in SkyDrive.keys:
+		var o: Dictionary = {"world": SkyDrive.world_at(float(k.phase), 0.0, 0.0), "win": SkyDrive.win_at(float(k.phase))}
+		for li in range(RenderLook.WORLD_LAYERS.size()):
+			var ld: Dictionary = wkeys[str(k.id)][RenderLook.WORLD_LAYERS[li]]
+			var mul := Vector3(float(ld.mul[0]), float(ld.mul[1]), float(ld.mul[2]))
+			var add := Vector3(float(ld.add[0]), float(ld.add[1]), float(ld.add[2]))
+			own = own and (o.world[li][0] as Vector3).is_equal_approx(Vector3.ONE.lerp(mul, RenderLook.WORLD_LIGHT)) and (o.world[li][1] as Vector3).is_equal_approx(add * RenderLook.WORLD_LIGHT)
+			if str(k.id) == "night":
+				night.append(mul)
+		if str(k.id) == "noon":
+			noon = o.world
+	var gi: int = RenderLook.WORLD_LAYERS.find("ground")
+	var bi_: int = RenderLook.WORLD_LAYERS.find("bodies")
+	var none: bool = not noon.is_empty()
+	for w in noon:
+		none = none and w[0] == Vector3.ONE and w[1] == Vector3.ZERO
+	var g_night: float = lum3.call(night[gi]) if not night.is_empty() else 1.0
+	var b_night: float = lum3.call(night[bi_]) if not night.is_empty() else 0.0
+	_expect(own and none and g_night < 0.15 and b_night > 3.0 * g_night, "the world takes the key at WORLD_LIGHT %.1f: on each key its light is the data's own scaled by the knob, none at noon; the data's night has the ground at %.2f of noon and the bodies at %.2f (they dim about half as much)" % [RenderLook.WORLD_LIGHT, g_night, b_night])
+	var ruined: Array = SkyDrive.world_at(0.0, 0.0, 1.0)
+	var rv = d._world_light.mood.ruin.ground
+	_expect((ruined[gi][0] as Vector3).is_equal_approx(Vector3.ONE.lerp(Vector3(float(rv[0]), float(rv[1]), float(rv[2])), RenderLook.WORLD_LIGHT)) and ruined[bi_][0] == Vector3.ONE, "... the mood rides on top: full ruin at noon is the ruin's own multiply on the ground (scaled by the knob), and the bodies are untouched")
+	var wpane: PaneWorld = main.pane
+	var w0: Array = sky.world
+	var handed: bool = Vector3(wpane.planet._terrain_mat.get_shader_parameter("wl_mul")) == w0[gi][0] and Vector3(wpane.planet._tree_mat.get_shader_parameter("wl_mul")) == w0[RenderLook.WORLD_LAYERS.find("trees")][0]
+	handed = handed and Vector3(wpane.planet._bld_mat.get_shader_parameter("wl_mul")) == w0[RenderLook.WORLD_LAYERS.find("buildings")][0] and Vector3(wpane.planet._crowd_mat.get_shader_parameter("wl_mul")) == w0[RenderLook.WORLD_LAYERS.find("civilians")][0]
+	handed = handed and Vector3(wpane.planet._water_mat.get_shader_parameter("wl_mul")) == w0[RenderLook.WORLD_LAYERS.find("water")][0]
+	for v in wpane.fighter_views:
+		if v.anim_body != null:
+			var bm = (v.anim_body.mi.material_override as ShaderMaterial).get_shader_parameter("wl_mul")
+			handed = handed and (Vector3.ONE if bm == null else Vector3(bm)) == w0[bi_][0]   # unset: the shader's own (none)
+	_expect(handed and (w0[gi][0] != Vector3.ONE) == (RenderLook.WORLD_LIGHT > 0.0), "... and the pane hands it on: the ground, the water, the buildings, the trees, the crowd and each fighter's body hold the start's (sunset) light %s (none at WORLD_LIGHT 0)" % str(w0[gi][0]))
 	var worst: float = 0.0
 	for ph in REF.keys():
 		worst = maxf(worst, _off(sky.pane({}, x_of.call(float(ph)), 0.0).cols, REF[ph]))

@@ -117,8 +117,8 @@
       {
         "from": "night",
         "to": "dawn",
-        "horizon": "lch-",
-        "lower": "lch-",
+        "horizon": "lab",
+        "lower": "lab",
         "upper": "lab",
         "top": "lab"
       },
@@ -167,7 +167,7 @@
     },
     "measured": {
       "seconds_for_one_lap_at_the_limit": 49,
-      "stress_test_worst_1s_mean": 0.0148,
+      "stress_test_worst_1s_mean": 0.0142,
       "stress_test_worst_1s_band": 0.035,
       "stress_test": "target phase flying round at 0.25 cycles a second and reversing every 3 seconds, 180 seconds"
     },
@@ -837,7 +837,7 @@
       "P": "#8fd6ff",
       "A": "#9a80d8"
     },
-    "rule": "The two aura colours stay at CIEDE2000 of 24 or more from every key's four bands, 20 or more at every blended place, and 24 or more at every mood extreme; the aura is always drawn with a dark keyline (#0a0d14) so it also reads where a bright horizon (L 0.5 to 0.8) would match it.",
+    "rule": "The two aura colours stay at CIEDE2000 of 24 or more from every key's four bands, about 20 at every blended place (19.6 for the rival at one, night to dawn, accepted 2026-10-15 for a clean mauve in place of a green: the keyline carries it there), and 24 or more at every mood extreme; the aura is always drawn with a dark keyline (#0a0d14) so it also reads where a bright horizon (L 0.5 to 0.8) would match it.",
     "measured": {
       "at_keys_and_mood_extremes_min_dE00": {
         "protagonist": 24.6,
@@ -845,7 +845,7 @@
       },
       "round_the_lap_min_dE00": {
         "protagonist": 20.3,
-        "rival": 23.1
+        "rival": 19.6
       }
     }
   }

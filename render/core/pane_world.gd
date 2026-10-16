@@ -84,6 +84,8 @@ var _react := PackedFloat32Array()         # per fighter: the sky's reaction to 
 var _react_t: float = -1.0
 var _sky_mat: ShaderMaterial
 var _sky_st: Dictionary = {}               # this pane's place in the dynamic sky (SkyDrive.pane)
+var _wl_body: Array = []                   # the world's light on the fighters' bodies, [mul, add] (SkyDrive.world_at)
+var _wl_seen: Array = []                   # the world's light this pane last handed on (SkyDrive.world, shared by every pane)
 
 
 func _init() -> void:
@@ -194,6 +196,13 @@ func _sky_drive(host: SimHost, a: float, cam_x: float) -> void:
 			_sky_mat.set_shader_parameter(SkyDrive.UNIFORMS[bi], out.cols[bi])
 			mats.set_sky(SkyDrive.UNIFORMS[bi], out.cols[bi])
 		_sky_mat.set_shader_parameter("star_low", out.star_low)
+		_sky_mat.set_shader_parameter("star_turn", RenderLook.STAR_TURN * float(_sky_st.p))
+	if host.sky.world != _wl_seen:   # the world's light, one for every pane (SkyDrive._light)
+		_wl_seen = host.sky.world
+		planet.set_world_light(host.sky.world, host.sky.win)
+		_wl_body = host.sky.world[RenderLook.WORLD_LAYERS.find("bodies")]
+	for v in fighter_views:
+		v.set_world_light(_wl_body)
 	# A town's glow comes into view over at least SKY_GLOW_IN_S, however fast the camera brings the town onto the
 	# screen, and leaves the same way; a pane that was not being drawn starts from what is in front of it.
 	var now: float = (float(host.ticks) + a) * SimConst.DT
@@ -1003,10 +1012,14 @@ func _setup_environment() -> void:
 		"sky_lower": RenderLook.col(RenderLook.SKY[2]), "sky_horizon": RenderLook.col(RenderLook.SKY[3]),
 		"sky_tan": tan(deg_to_rad(RenderLook.FOV_DEG) * 0.5), "sky_lower_at": RenderLook.SKY_LOWER_AT,
 		"sky_upper_at": RenderLook.SKY_UPPER_AT, "sky_top_at": RenderLook.SKY_TOP_AT, "sky_thin": RenderLook.SKY_THIN,
-		"fog_band": RenderLook.FOG_BAND,
+		"haze_at": RenderLook.HAZE_AT, "haze_mix": RenderLook.HAZE_MIX, "haze_line": RenderLook.HAZE_LINE, "haze_sea": RenderLook.HAZE_SEA,
+		"haze_value": RenderLook.HAZE_VALUE, "haze_sat": RenderLook.HAZE_SAT,
 	}
 	SkyDrive.ensure()
 	_sky_mat.set_shader_parameter("glow_col", SkyDrive.ember)
+	_sky_mat.set_shader_parameter("star_floor", RenderLook.STAR_FLOOR)
+	_sky_mat.set_shader_parameter("star_period", RenderLook.STAR_TURN)
+	_sky_mat.set_shader_parameter("star_dark", RenderLook.STAR_DARK)
 	_sky_mat.set_shader_parameter("glow_mix", RenderLook.SKY_GLOW_MIX)
 	_sky_mat.set_shader_parameter("glow_shape", RenderLook.SKY_GLOW_SHAPE)
 	for k in [["cloud_period", RenderLook.CLOUD_PERIOD], ["cloud_cover", RenderLook.CLOUD_COVER], ["react_r", RenderLook.SKY_REACT_R], ["react_at", RenderLook.SKY_REACT_AT]]:

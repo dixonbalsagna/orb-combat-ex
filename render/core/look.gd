@@ -259,10 +259,9 @@ const Z_PARTICLES: float = 10.0
 const Z_BEAMS: float = 6.0
 ## The ground continues behind the crater rows to the horizon as one surface (no separate backdrop): the far terrain
 ## blends in from the band's own heights over FAR_BLEND and is the same planet (each column's base height and biome,
-## with relief). It fades into the sky between FOG_NEAR and FOG_FAR, so its far edge never shows.
+## with relief). Its last eighth before FOG_FAR fades into the sky, so its far edge never shows.
 const FAR_BLEND: float = 900.0 * WS
 const MEANDER: float = 600.0 * PS        # how far (in x) the far land's biomes wander with depth
-const FOG_NEAR: float = 700.0 * WS
 const FOG_FAR: float = 15000.0 * WS       # far enough that the planet fills the lower screen from the ceiling
 ## Far relief per biome: [height multiplier on the base terrain, relief amplitude at the original scale]; the relief is
 ## multiplied by WS (MS for mountains) and smoothed across biome borders.
@@ -368,7 +367,39 @@ const SKY_LOWER_AT: float = 0.12
 const SKY_UPPER_AT: float = 0.55
 const SKY_TOP_AT: float = 1.45
 const SKY_THIN: float = 5.0
-const FOG_BAND: float = 0.25             # ground haze depth below the horizon line, half-screen heights
+## The haze by depth (Art: docs/art/sky-and-distance.md layer 5; Orb: "the sky and stars would appear as a close fog that
+## obstructed view of the mountains"). The ground and the water mix toward the horizon band's colour by their depth
+## behind the fighter plane, not by their height on the screen: none inside HAZE_AT[0] (the fight's own ground); HAZE_MIX[0] by HAZE_AT[1]; HAZE_MIX[1] by
+## HAZE_AT[2]; HAZE_MIX[2] by HAZE_AT[3]; eased between. The distances stretch as the camera climbs (the air thins as the
+## sky's rim does). Right at the horizon line, beyond HAZE_AT[1], a thin glow: HAZE_LINE.x half-screen heights deep, as
+## much as HAZE_LINE.y of the horizon's colour.
+const HAZE_AT := Vector4(1500.0, 2500.0, 6000.0, 40000.0)
+const HAZE_MIX := Vector3(0.2, 0.45, 0.8)
+const HAZE_LINE := Vector2(0.04, 0.5)
+## The sea takes the sky (Art's layer 8): the water hazes toward the horizon band at HAZE_SEA of its value, and at its far
+## edge it ends there instead of dissolving into the sky, so the sea meets the sky in one clear step at the horizon.
+const HAZE_SEA: float = 0.9
+## The far mountains' value ladder (Art's layer 6): the ground hazes toward the horizon band's colour at HAZE_VALUE of
+## its value and HAZE_SAT of its saturation (Art: at noon the farthest ridge no more than about 60% as bright as the
+## horizon band; at sunset a silhouette against the glow; at night darker than the band), so further is lighter and
+## greyer and a ridge never reaches the colour of the sky behind it. The water hazes toward the band itself.
+const HAZE_VALUE: float = 0.6
+const HAZE_SAT: float = 0.7
+## The world takes the sky's key (Art: docs/art/dynamic-sky.md section 6; data/art/sky.json _world_light): each
+## layer's colour times a multiply in linear light, plus a small lift at night so the dark ground is cool, blended with
+## the sky's own phase, hold and smoothstep (SkyDrive.world_at), the mood's multiplies on top. Lit windows, the lane
+## colours, auras, the keylines, flashes, particles and the HUD are never dimmed. WORLD_LIGHT scales every tint toward
+## none, and the windows' lit share toward WINDOW_LIT_SHARE (1: Art's; 0: the world as it was before the sky moved).
+## It lands at 0 (EP, 2026-10-16): at 1 it tipped the near-lens and divider movement of AI clips over the flash line
+## (docs/rendering/sky-and-distance.md); it follows as its own batch.
+const WORLD_LIGHT: float = 0.0
+const WORLD_LAYERS: Array = ["ground", "buildings", "trees", "water", "civilians", "bodies"]
+## The stars (Art's layer 1): on the sky's sphere, turning STAR_TURN sky-widths (tan units) a lap; none below STAR_FLOOR
+## (from x to y half-screen heights above the horizon line); and only where the sky behind is dark: full below
+## STAR_DARK.x relative luminance, none above STAR_DARK.y. Their strength is the key's (the data's), whatever the height.
+const STAR_TURN: float = 6.0
+const STAR_FLOOR := Vector2(0.4, 0.8)
+const STAR_DARK := Vector2(0.02, 0.08)
 ## The dynamic sky (render/core/sky_drive.gd; Art's docs/art/dynamic-sky.md and data/art/sky.json, which hold the
 ## keys, the blend paths, the drift, the rate limits and the mood's colours and least durations). SKY above is the
 ## sunset key and the fallback when the data is missing. These are the numbers the data gives only in words (from
