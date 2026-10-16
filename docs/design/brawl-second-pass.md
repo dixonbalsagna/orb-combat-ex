@@ -1249,7 +1249,7 @@ Encounter read each change of the sixth round alone and in order, on main, on QA
 **a. The route.**
 - **The script was the fault.** With B in every opening the route already beats its masher, 61 to 50. The bound that a launcher never costs is met before any change.
 - **The pursuit makes it far too strong,** for both sides. The route goes to 82, and the masher falls from 50 to 43, because the AI pursues after its own launches. A habit the game cues with a ping shouldn't win four matches in five against medium.
-- **The upper edge:** the route's player wins between 0 and 25 points more than the same script's masher, and at most 70% against medium. A launch should pay, and not decide matches by itself.
+- **The upper edge:** the route's player wins between 0 and 25 points more than the same script's masher, and at most 70% against medium (80% since §14's twelfth round). A launch should pay, and not decide matches by itself.
 - **The pursuit stays built and switched off.** It is a good answer to "a far tap is a taunt". It comes back with the stances' re-read of the far band, if the route has room under its edge.
 - **The launching blow stays at 6,** to match the hammer. If the route without the pursuit goes over its edge, the blow goes back to 3 before anything else moves.
 
@@ -1382,17 +1382,46 @@ Orb played the live demo (`docs/ep/vision.md`, last section): "in a lot of ways 
   5. **The launch is followed by the camera** (Camera's fix from the same playtest).
 - **The window is wider.** A B counts as the launcher from 10 ticks before the close until 24 ticks after it. Inside the stagger it always lands, as now. After the stagger it is still the launcher, with its 14-tick wind-up, but he can answer it. A player who reacts late still launches if it connects.
 - **The launcher's readiness shows.** Beside the B, a lit mark means a launch is ready. A dim mark with a ring filling is the rest, and B in an opening is the hammer then.
-- **The rest goes from 40 s to 30 s,** the value named for "Orb finds launches too rare". It is read with the route's edge (the eighth round): if the route passes its 70%, the rest comes back first.
+- **The rest goes from 40 s to 30 s,** the value named for "Orb finds launches too rare". It is read with the route's edge (the eighth round): if the route passes its edge (80% since the twelfth round), the rest comes back first.
 - **The first-time hint,** once, at the first full gauge: "Gauge full: hit, then B to launch." UI and Narrative word it. The training dummy's "stand" with the readout is where it is learnt properly (`fighter-pipeline.md` §8).
 - **QA's row:** a first launch inside 60 s of the first brawl in at least 90% of matches for a scripted newcomer, who presses B within 20 ticks of the gauge's flash.
 
 **3. The computer and charged attacks.**
 - **Why it blocks them all.** A charged blow lands 4 ticks after the release. No player can react in 4 ticks, but the AI reads the release on the tick it happens. That is a reaction no human has.
 - **The rule: the AI never reacts to a release.** It decides to perfect-block a charge before he lets go, at a tick it picks across the charge, and the block works only if that tick falls inside the window when the blow comes. Its picks aren't keyed to the full charge's flash, so a player who releases on the flash isn't punished for timing it well.
-- **Its shares:** it tries against 0.1, 0.3 and 0.5 of the charged blows it sees, by level. With guessing, that comes to about 3, 10 and 20% of charged heavies and charged mediums perfect-blocked.
+- **Its shares:** it tries against 0.1, 0.3 and 0.5 of the charged blows it sees, by level (easy 0.05 since the twelfth round). With guessing, that comes to about 3, 10 and 20% of charged heavies and charged mediums perfect-blocked.
 - **The same holds for every blow whose landing follows a release:** the held X's set, a signature's hold, a tackle's coil.
-- **QA's row, a hard test:** the AI never starts a perfect block within its reaction time of a release. A band: at medium, 5 to 15% of the charged blows thrown at it are perfect-blocked.
+- **QA's row, a hard test:** the AI never starts a perfect block within its reaction time of a release. A band: at medium, 2 to 5% of the charged blows thrown at it are perfect-blocked (5 to 15% until the twelfth round).
 
 **Two small rulings.**
 - **The held X's floor draws from the burst's mid class** (Combat's ask). Its pace is 8 ticks, which is the mid class's, and the slow class is for longer gaps.
 - **A guard's cues count at full,** as Simulation built them, and I withdraw my "half" (`empress-guards.md`). Only one fighter strikes at a time, so a guard's blows replace hers in the brawl and don't add to them. At half, a 3v1 would read calmer than a 1v1.
+
+### The twelfth round: the route's edge, the guess, the launch marks (2026-10-16)
+
+Encounter built the eleventh round and read it (`docs/director/pending/return/`, `perfect-guess/` and `beam-struggle/`). UI found the launch marks switched off (`docs/ui/launch-teaching.md`). The beam struggle's rulings, and Combat's struggle inputs, are in `rule-of-cool.md` §2.
+
+**1. The route's edge moves to 80%.**
+- **Why.** With Encounter's return fix the route reads 76% on 200 matches, against 66% on main. The 70% was set while the AI's first blow back after a launch came in free, 79% of the time against the route's player. That is the cheap hit Orb named. Without it a launch is worth what it should be, so the edge moves and the fix stays as built.
+- **The edges:** at most 80% against medium, read on 200 matches. The other edge stands: the route wins 0 to 25 points over the same script's masher. A launch pays, and still doesn't decide matches by itself.
+- **The rest at 30 s is read with it,** on the same 200 matches. If either edge is passed, the rest goes back to 40 s first. The wider window stays, since it is the teaching fix, and a scripted route that presses B at once hardly uses it. After that, the launching blow's worth (3) comes back to me.
+
+**2. The AI's guess against a charge.**
+- **The lever is the tries, and the band was wrong.** On main the AI perfect-blocked 6% of charged heavies at medium, and Orb felt it was every one. A perfect block against a charge should be an event. **The band at medium is now 2 to 5%,** where it was 5 to 15%. Medium's 2.7% at 0.3 is inside it.
+- **The tries:** easy 0.05 (from 0.1), medium 0.3, hard 0.5. Easy then sits under medium.
+- **What rises by level is the answers, not the perfect blocks.** Hard reads lowest because it stops more charges with a blow before the release, and that is the right answer to a charge (§15: "a medium early"). So the row by level counts the charged blows the AI answers: a perfect block, a blow that stops the charge, or giving ground. That share rises from easy to hard. The perfect block alone is held to its band at medium only.
+- **The span stays the whole charge.** A narrower one leans toward where players let go, which is reading their habits. **Picks after the release stay out,** and the hard test stands.
+- **The charged medium gets the same guess,** across its own charge. The eleventh round named both, and Orb said "every charged attack". Encounter reads both.
+- **A player may guess too, and that is intended,** with the AI's limit: **one guess a charge.** His first guard press after the charge has begun is his guess, and later presses in the same charge don't replace it. This replaces "his last fresh press, free of the lockout": with that, a mash of guard through the charge would put the last press inside the window nearly every time. A held guard is no guess, and blocks as a guard.
+
+**3. The launch marks go on now.** UI's own flag, `launch_marks`, apart from `three_strengths`. Today's marks are true to today's sim:
+- the lit B and the word LAUNCH, from `launcher_open`, which goes out only when a launch is ready;
+- the LAUNCH or RESTING chip and the legend's note, from the launcher's rest;
+- the readiness mark and its ring (4, below), with the rest's length read from data: 40 s today, and 30 s once Encounter lands the change.
+
+Three conditions:
+- **One line is untrue to today's sim, and changes first.** How to play says that while the launcher rests "the same button only knocks him back". Since the fourth round it is the hammer: a full heavy that staggers him in place, and the brawl goes on. UI words it.
+- **The run's pips, the full gauge and the first-time hint stay dark** until Encounter's `run` and `run_to` on the `blow` cue land. UI shows nothing before its cue, so nothing false shows in between.
+- **Two of UI's asks from the same paper.** The full gauge is a steady state, not a repeated flash, with at most one 0.2 s step up through the register (Legal's k06): I meant a mark you can't miss, not a blink. The hint is UI's option A, "Keep hitting, then press B to launch him." Narrative may polish it, and Orb has the last word.
+
+**4. The rest's ring is a countdown in shape, and it is meant.** It is the one exception to "nothing counts down in a fight", because the question it answers, "is the launcher broken?", is the one Orb hit. It stays a countdown nobody has to watch: no number, steps no faster than one a second, and no flash or pulse when it fills. Full, it simply becomes the lit mark.

@@ -48,11 +48,18 @@ Orb set spectacle at **4 of 10** and the top-tier finisher at **7 of 10**.
 | **The meeting point** | Where the two beams meet. It starts in the middle, and moves along the line between the two fighters' hands. Whoever it reaches is overwhelmed | |
 | **State is a head start, and no more** | Tier, the beam's own tier, and ki move the start toward the weaker side | At most 15% of the distance |
 | **The pulse** | Shown and heard, as a beat the player can follow. Both fighters press on the same pulse | One every 20 ticks |
-| **A surge** | Any face button pressed on the pulse | Inside 4 ticks of it: the point moves 10% toward the rival. Inside 1 tick: 15% |
-| **A stray** | A press off the pulse moves nothing, and costs a half step back | 5% toward himself. So mashing does no better than not pressing, as in the finisher's struggle |
+| **A surge** | X, Y or B pressed on the pulse. One a pulse | Inside 4 ticks of it: the point moves 10% toward the rival. Inside 2 ticks: 15% (1 tick until 2026-10-16: a sixtieth of a second either side was too tight on a pad or a web build) |
+| **A stray** | A press off the pulse, or a second press in its window, moves nothing and voids his next surge | As in the finisher's struggle and the other clashes. So a masher does as well as a fighter who doesn't press: no better, and no faster to lose. (Until 2026-10-16 a stray cost 5% back, and a masher lost four times faster than a fighter who didn't press) |
 | **The comeback** | Surges from close to his own hands push harder | Inside the quarter of the line nearest his hands, ×1.5 |
 | **Its length** | Until the point reaches a fighter, or a time limit | 15 pulses, 5 s |
-| **The stick** | Held toward the rival, it leans the fighter in, so it can be seen who is pushing. It adds nothing to the point | |
+| **The stick** | Held toward the rival, it leans the fighter in, so it can be seen who is pushing. Up or down aims the overwhelm: the winner's stick nudges the line the loser is launched along, as it nudges every launch (`brawl-second-pass.md` §3) | It adds nothing to the point |
+| **Letting go: A** | The gamble for the side that is losing. A on the pulse, inside 4 ticks: he slips aside, and the rival's beam carries on past him and carves by its tier. He takes half of it with no launch, as a loss on time. A off the pulse: he is caught letting go, and is overwhelmed | The AI never lets go, for now |
+
+**One rule for the inputs** (2026-10-16, reconciling Combat's struggle inputs from the moveset side). The beat decides, and nothing else moves the point.
+- **X, Y and B surge alike.** Combat's pieces for them are the looks of a surge: what his body does on that pulse. The button changes the look, never the push. In the Simple layout and on touch, Attack surges, and Controls maps the let-go.
+- **Mashing feeds nothing, and a press off the pulse pushes nothing.** Combat's diminishing return on a mashed X, and its small push off the pulse, are out. They make finger speed beat timing, so a pad's turbo or a phone's fast taps would decide it, and they reopen the mash Combat's own finisher rule closed.
+- **A held B doesn't overpower.** A right thumb can't hold B and press X or Y on the beat. And ki spent to push would bring state back into the outcome, which is what Orb's complaint was about. Its press is a surge like any press, and holding it is the heave's look.
+- **The stick and A** are as in the table.
 
 **How it ends.**
 - **The point reaches him:** he is overwhelmed. He takes the winner's beam and half of his own, and is launched along the beam's line, carving what is there by the winner's tier. It counts as a launch for the rest.
@@ -61,13 +68,14 @@ Orb set spectacle at **4 of 10** and the top-tier finisher at **7 of 10**.
 
 **What a player sees and hears.** Each surge bulges the meeting point toward the rival and pushes his beam back. A stray flickers his own. The camera holds both fighters side-on and tightens as the point nears a side. The pulse is a beat the music and the pad follow. The sound rises as the point nears either fighter. This is VFX's, Camera's and Audio's to make look and sound like a fight.
 
-**The AI** hits 40%, 65% and 85% of pulses by level, as in every clash, and never makes a 1-tick surge. A player who keeps the beat usually overwhelms the medium AI before the time runs out from an even start, and still wins on time from a 15% deficit, with the comeback's help. Two players who keep the beat equally swing it back and forth, and the comeback keeps either from running away with it.
+**The AI** hits 40%, 65% and 85% of pulses by level, as in every clash, and never makes a sharp surge: it presses 3 or 4 ticks off the pulse. A player who keeps the beat usually overwhelms the medium AI before the time runs out from an even start, and still wins on time from a 15% deficit, with the comeback's help. Two players who keep the beat equally swing it back and forth, and the comeback keeps either from running away with it.
 
 **QA's rows:**
 - the winner is the one who made more surges in at least 80% of struggles where the head start was under 10%;
-- a scripted masher wins no more often than a fighter who doesn't press;
+- a scripted masher wins no more often than a fighter who doesn't press, and his struggles last about as long (the medians within 20%);
 - in at least 25% of struggles the point crosses the middle at least once;
-- at least 15% of struggles are won from behind, by the side that was more than 10% down at some point.
+- at least 15% of the struggles that end with a winner are won from behind, by the side that was more than 10% down at some point. A detonation has no winner. Encounter's first read, 21%, is accepted;
+- a scripted player 2 ticks off the beat overwhelms the medium AI in at least 75% of struggles from an even start, and one 3 ticks late still wins at least 90% of them.
 
 **Answering a beam costs tight timing only.** The three answers Orb picked are the three looks of a perfect block against a signature, which is already a DEFLECT (`control-rules.md` §1). The direction held on the press picks the look:
 
