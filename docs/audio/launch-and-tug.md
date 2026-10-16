@@ -2,6 +2,8 @@
 
 Owner: Audio and Music. Answers the EP's brief on the eleventh round (`docs/design/brawl-second-pass.md` §14 item 1 and 2; the beam struggle in `docs/design/rule-of-cool.md` §2 and Encounter's park `docs/director/pending/beam-struggle/README.md`). **Paper only.** Nothing in `audio/` is changed; the recipes are proposals, and every number is a first value. The family is the one Orb asked for on 2026-10-16: lower, chunkier, short rings, nothing metallic (`brawl-rework.md`).
 
+**Applied 2026-10-16 (the EP's go): the ping change alone.** `ui.launcher` is now the §1.1 recipe (the proposal's `ui.launcher.v2`, in place under the same id so every reference keeps working), at gain +1 dB; `tone_check` limits it (900 Hz heard, 3% over 2 kHz) and `beat_check` gates its audibility (at least 9 dB over the stand-in music with the duck). The rest of this page is still paper.
+
 **To hear a sketch:** `docs/audio/proposed/launch-and-tug-sketch.wav` (13.7 s, over the 180 BPM stand-in loop): the launcher's ping as it is now, then the proposed one; a beam struggle that ends overwhelmed; a struggle that ends on time and detonates. It is mixed offline in a scratch script, because the struggle's bed needs a runtime capability that does not exist yet (§2.5). Recipes: `docs/audio/proposed/launch-and-tug-recipes.json`.
 
 ## 1. The launch opens: the ping and the pad's pulse

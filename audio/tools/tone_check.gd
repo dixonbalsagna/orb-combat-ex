@@ -23,6 +23,7 @@ const LIMITS: Dictionary = {
 	"impact.whiff": [1900.0, 0.30],
 	"energy.bolt": [1450.0, 0.24],
 	"energy.blast": [1400.0, 0.22],
+	"ui.launcher": [900.0, 0.03],
 }
 var fails: int = 0
 

@@ -80,7 +80,7 @@
   },
   "launcher": {
     "sound": "ui.launcher",
-    "gain_db": -2.0,
+    "gain_db": 1.0,
     "priority": 95,
     "cls": "launcher",
     "cap": 1,
@@ -106,7 +106,7 @@
       "stop_ms": 40,
       "note": "Encounter's C2: text `used` when his B is thrown (the ping is cut, the launch's own sound confirms), `lapsed` when the opening ends (it rings out)."
     },
-    "note": "One sound for every fighter, with no random spread in pitch or level: it is learned by ear, and both players hear it (EP ruling). It plays on its own bus (Alert), because it ducks Sfx and Music and must not duck itself.",
+    "note": "One sound for every fighter, with no random spread in pitch or level: it is learned by ear, and both players hear it (EP ruling). It plays on its own bus (Alert), because it ducks Sfx and Music and must not duck itself. Reworked 2026-10-16 (docs/audio/launch-and-tug.md): a G5 wooden pluck over its octave with a short thump, no hiss; +1 dB so it is as findable over the music as the old ring (beat_check).",
     "bus": "Alert"
   },
   "windup": {

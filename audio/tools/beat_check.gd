@@ -101,5 +101,51 @@ func _run() -> void:
 	var d: float = _db(i_all / maxf(n_all, 1e-9))
 	print("   impact.light over perfect.tok: the hit's first 60 ms is %.1f dB above the tok's" % d)
 	ok(d > 6.0, "a hit leads a tok in its first 60 ms, so a tok never hides it")
+	print("3. is the launcher's ping findable over the music (the stand-in 180 BPM loop, its band 400 to 3000 Hz)")
+	var bj: Dictionary = AudioBank.load_json("res://audio/data/brawl_cues.json")
+	var ping_gain: float = float(bj.launcher.gain_db)
+	var duck_db: float = 0.0
+	for dk in bj.launcher.duck:
+		if String(dk.bus) == "Music":
+			duck_db = -float(dk.db)
+	var mus: PackedFloat32Array = _wav_samples("res://audio/preview/suno-reference/suno-ref-riff-180bpm-E.wav")
+	if mus.is_empty():
+		print("   (the reference loop is not here: skipped)")
+	else:
+		var mg: float = AudioDsp.db_to_lin(-8.0 - 1.3)       # the Music bus level the demos use
+		for k in range(mus.size()):
+			mus[k] *= mg
+		AudioDsp.filter(mus, "hp", 400.0, 400.0, 0.0, 0.7, 22050)
+		AudioDsp.filter(mus, "lp", 3000.0, 3000.0, 0.0, 0.7, 22050)
+		var m_rms: float = AudioDsp.rms(mus)
+		var pb: PackedFloat32Array = bank.buffer("ui.launcher", 0).duplicate()
+		var prate: int = bank.rate_of("ui.launcher")
+		AudioDsp.filter(pb, "hp", 400.0, 400.0, 0.0, 0.7, prate)
+		AudioDsp.filter(pb, "lp", 3000.0, 3000.0, 0.0, 0.7, prate)
+		var p_rms: float = _rms_at(pb, prate, 0.0, 150.0) * AudioDsp.db_to_lin(ping_gain)
+		var over: float = _db(p_rms / m_rms)
+		print("   ping at %+.1f dB: its first 150 ms is %.1f dB over the music, %.1f dB with the music's %.0f dB duck" % [ping_gain, over, over + duck_db, duck_db])
+		ok(over + duck_db >= 9.0, "the ping is at least 9 dB over the music in its band with the duck (the old ring was 9.9)")
+
 	print("\nbeat check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
 	quit(1 if fails > 0 else 0)
+
+
+## The samples of a 16-bit mono WAV, as -1 to 1.
+func _wav_samples(path: String) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return out
+	var bytes: PackedByteArray = f.get_buffer(f.get_length())
+	var pos: int = 12
+	while pos + 8 <= bytes.size():
+		var id: String = bytes.slice(pos, pos + 4).get_string_from_ascii()
+		var size: int = bytes.decode_u32(pos + 4)
+		if id == "data":
+			out.resize(size / 2)
+			for i in range(size / 2):
+				out[i] = float(bytes.decode_s16(pos + 8 + i * 2)) / 32768.0
+			return out
+		pos += 8 + size + (size & 1)
+	return out
