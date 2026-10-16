@@ -50,7 +50,7 @@ def common_ids(base):
 def resolve(key, row, base, file_doc, borrowing="common"):
     """A sketch row as a full identity row: the row it is `like`, with what the sketch says laid over it."""
     out = copy.deepcopy(base[row["like"]])
-    for k in ("reaimed", "_reaimed", "_pinned", "_tipOf", "_tipFlags", "_waves", "_tierWaves", "adds", "_adds"):   # adds: places added to his locked cells, his alone
+    for k in ("reaimed", "_reaimed", "_pinned", "_tipOf", "_tipFlags", "_waves", "_tierWaves", "adds", "_adds", "cellQuotas", "_cellQuotas", "chargedHeavy", "_chargedHeavy", "skillAlso", "_skillAlso"):   # his named pieces and the places added for them are his alone
         out.pop(k, None)
     out.update({"pinned": {}, "tipOf": {}, "tipFlags": {}})
     out["armsOf"] = {k: v for b_ in base.values() for k, v in b_.get("armsOf", {}).items()}   # what a fighter of the build says of a key set's arms holds for whoever borrows it

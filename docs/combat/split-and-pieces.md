@@ -111,11 +111,37 @@ Read from the measure above (what the AI throws, every cell but energy, zips and
 | The Protagonist | A rising palm to the gut (re-aim) | The split | Generated |
 | The Protagonist | A stepping palm to the arm | The split | Generated, waiting |
 | The Anti-hero | An unwinding fist to the jaw | The split | Generated, waiting |
-| The Protagonist | A second falling heavy | The spike ender | Not yet generated |
+| The Protagonist | A falling blade hand to the chest: a launcher that sends down | The spike ender | Generated, waiting (2026-10-16) |
 | The guards | A falling sole to the chest; the measured bolt from an open palm | On the mannequin | Generated, waiting |
-| The Protagonist | A turning palm light | His perfect follow-up | Not yet generated |
-| The Anti-hero | A straight light behind the plate | His perfect follow-up | Not yet generated |
-| The Anti-hero | Fist versions of the jab, the cross and the spear hand | Hand-state swaps | Not yet generated |
+| The Protagonist | A turning palm-heel to the chest: his backfist's arc, re-aimed | His perfect follow-up | Generated, a re-aim (2026-10-16) |
+| The Anti-hero | A straight fist: the jab as a fist, the forearm plate behind it | His perfect follow-up | Generated, a hand-state swap (2026-10-16) |
+| The Anti-hero | Fist versions of the cross and the spear hand | Hand-state swaps | Not yet generated (the jab is above) |
+
+## 5b. The four pieces and the leans (2026-10-16)
+
+The EP's go of 2026-10-16. Generator version 18, the pool builder's `--lean`. Parked.
+
+**The three pieces, generated:**
+
+| Fighter | Piece | What it is | What Animation draws |
+| :--- | :--- | :--- | :--- |
+| The Protagonist | **A falling blade hand to the chest** | A launcher that sends down. It's his own, so his spike ender has two pieces | One new key set. Legal's conditions for its pose: L3, a dropping blow by one hand, the two hands apart and never clasped; L6, charged with one arm back at shoulder height; W1, a wind-up of 12 ticks or more; D5, the rise is the body straightening, never a leap |
+| The Protagonist | **A turning palm-heel to the chest** | The heel of the hand on an outward arc, which sends him turned. A skill-strike light, so it lands in the perfect follow-up's pool | A re-aim of his backfist's arc, from the head to the chest. To read as a palm rather than a backfist, the palm leads |
+| The Anti-hero | **A straight fist** | The jab as a fist, with the forearm plate behind it | A hand-state swap on the jab's key set |
+
+- **The two forms the grammar won't take.** An open palm travels only straight or up, so the palm that turns the rival is the heel of the hand. The forearm plate never travels straight, so the light behind the plate is a straight fist.
+- **The straight fist is a flurry light by the form rules.** His row pins it into the skill strike's pool (`skillAlso`) once it is posed.
+- **The quotas are the fighter's own.** They sit in his row (`cellQuotas`), read before the cell's, on places added for them. Sketches built like a fighter of the build inherit none of them.
+- **Legal's rows:** no match for any of the three.
+- **One rule tightened.** "A fighter's own is never lent" now also reads the own marks in the other fighters' current files, not only those built earlier in the run. The Protagonist is built first, and his added heavy had taken the Anti-hero's falling heel to the chest.
+- **No sketch's moves changed.**
+
+**The leans** (`--lean`, from each fighter's `burst.favour`). The held X draws its quick and middle blows from the burst's fast and mid classes. Each fighter now keeps only the hands of his look there:
+- **The Protagonist:** palm heel, rising palm, lifting palm, heaving palm and the heel-of-hand backfist. Out go the hook, the jab and the back chop.
+- **The Anti-hero:** pistons, the straight and rising hands: jab, spear hand, cross, short uppercut, gut riser. Out go the backfist, the hook and the fist sweep.
+- **Unchanged:** elbows and knees stay in mid, and the slow class keeps every light.
+- **The generated burst strings** lean the same way.
+- **The file:** `pending/split/recipes.leans.json` is the live file with the leans only, and it passes Tools' validator. The builder makes the leans with the split too, on request.
 
 ## 6. To run it
 

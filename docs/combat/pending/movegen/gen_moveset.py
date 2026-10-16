@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 17
+VERSION = 18
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -365,8 +365,8 @@ def weight_of(idn, m):
 def quota_ok(q, m):
     if "own" in q:   # a piece that is his own (a cell's share rule), and of a form when the quota names one
         return bool(m.get("_own")) and ("form" not in q or q["form"] in m["_forms"])
-    if "form" in q and "sends" in q:   # a launcher that sends one way: both must hold
-        return q["form"] in m["_forms"] and m.get("_sends") == q["sends"]
+    if "form" in q and "sends" in q:   # a launcher that sends one way: both must hold (and a shape, when the quota names one)
+        return q["form"] in m["_forms"] and m.get("_sends") == q["sends"] and ("filter" not in q and "any" not in q or match({"any": q["any"]} if "any" in q else q["filter"], m))
     if "form" in q:   # of a form, and of a shape when the quota names one too (the split by path: a quick medium on a line or a rise)
         return q["form"] in m["_forms"] and ("filter" not in q and "any" not in q or match({"any": q["any"]} if "any" in q else q["filter"], m))
     if "sends" in q:
@@ -491,7 +491,8 @@ def strike_cell(ctx, who, cid, cell):
             w *= sp.get("look", 1.0)   # the same blow at another place: a cell whose blows are each seen whole marks it down hard
         return w
     pins =[by_fp[tuple(s)] for s in idn.get("pinned", {}).get(cid, []) if tuple(s) in by_fp]   # shapes the cell takes first (identity.json pinned)
-    quotas, allow, share = cell.get("quotas", []), None, (None if idn.get("kit") else cell.get("share"))
+    own_q = list(idn.get("cellQuotas", {}).get(cid, []))   # quotas of his row for this cell, read first: the piece a place he was given is for
+    quotas, allow, share = own_q + list(cell.get("quotas", [])), None, (None if idn.get("kit") else cell.get("share"))
     if share:
         # A shared tier (Game Design, fighter-pipeline.md section 1): so many pieces that are his alone by his tier, no more than a part of the cell shared with
         # any one other fighter, and the fighter he takes a piece from keeps his own share. Two fighters share a piece when both cells hold its shape, or when
@@ -526,6 +527,9 @@ def strike_cell(ctx, who, cid, cell):
         for o in others:
             if o in ctx["built"]:
                 theirs_own |= set(fp(mv)[:4] for c2 in ctx["built"][o]["cells"].values() for mv in c2.get("moves", []) if isinstance(mv, dict) and mv.get("own"))
+            elif os.path.exists(os.path.join(HERE, "moveset.%s.json" % o)):   # not built yet in this run: his own as his current file has them
+                theirs_own |= set(fp(mv)[:4] for c2 in load(os.path.join(HERE, "moveset.%s.json" % o))["cells"].values() for mv in c2.get("moves", [])
+                                  if isinstance(mv, dict) and mv.get("own") and "limb" in mv)
         cand = [m for m in cand if "_id" in m or cover.get(fp(m)) is not None or fp(m)[:4] not in theirs_own]
         def allow(picked, m):
             for o in m["_shared"]:
@@ -577,7 +581,7 @@ def strike_cell(ctx, who, cid, cell):
             mv["as"] = cell["as"]
         moves.append(mv)
     moves.sort(key=lambda x: x["id"])
-    met = {q["name"]: sum(1 for p in picked if quota_ok(q, p)) for q in cell.get("quotas", [])}
+    met = {q["name"]: sum(1 for p in picked if quota_ok(q, p)) for q in own_q + list(cell.get("quotas", []))}
     if share:   # his alone: in the roster that leaves him fewest (one option of each alt group)
         met["his alone"] = min(sum(1 for p in picked if p.get("_own") and not (p.get("_shared", set()) & set(w))) for w in worlds)
         for o in others:
@@ -746,6 +750,9 @@ def burst_cell(ctx, who, cid, cell, done):
             first, last = not seq, len(seq) == len(cell["slots"]) - 1
             def score(n):
                 s = weight_of(idn, n) * jitter(seed, who, cid, lean["name"], len(seq), n["id"]) * (0.5 ** used.get(n["id"], 0))
+                fav = idn.get("burst", {}).get("favour")
+                if fav and match(fav["filter"], n):
+                    s *= float(fav.get("factor", 2.0))   # his look in the burst (identity burst.favour): the Protagonist's palms, the Anti-hero's pistons
                 if seq and n["path"] in g["links"][seq[-1]["path"]]:
                     s *= 2.0   # it starts where the last one ended
                 if last and match(flt, n):
@@ -1784,6 +1791,7 @@ def self_test(parts, identity):
     expect("a quota for what is his alone takes only that (a cell's share rule)", [quota_ok({"own": True}, {"_own": True}), quota_ok({"own": True}, {"_own": False})], [True, False])
     _q1, _q2 = {"name": "a", "min": 1, "filter": {"path": ["line"]}}, {"name": "b", "min": 1, "filter": {"limb": ["foot"]}}
     _c = [{"path": "line", "limb": "hand", "_w": 2.0}, {"path": "line", "limb": "foot", "_w": 1.0}, {"path": "drop", "limb": "foot", "_w": 3.0}]
+    expect("his own quota is read before the cell's (identity cellQuotas)", [m["limb"] + " " + m["path"] for m in greedy(list(_c), 1, [_q2, _q1], lambda p, m: 1.0)], ["foot drop"])
     expect("one pick meets as many of the short quotas as it can", [m["limb"] + " " + m["path"] for m in greedy(list(_c), 1, [_q1, _q2], lambda p, m: 1.0, many=True)], ["foot line"])
     expect("a quota of a form and a shape asks for both (the split by path)", [quota_ok({"form": "quick", "filter": {"path": ["line", "rise"]}}, {"_forms": f_, "path": p_}) for f_, p_ in ((["quick"], "rise"), (["quick"], "drop"), ([], "line"))], [True, False, False])
     expect("a quota for a launcher that sends down asks for both", [quota_ok({"form": "launch", "sends": "down"}, {"_forms": ["launch"], "_sends": s_}) for s_ in ("down", "up")], [True, False])

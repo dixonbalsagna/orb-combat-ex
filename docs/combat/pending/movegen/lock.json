@@ -333,6 +333,17 @@
       "light"
      ],
      null
+    ],
+    [
+     "mv.protagonist.martial.x.31",
+     [
+      "hand",
+      "heel",
+      "arc_out",
+      "chest",
+      "light"
+     ],
+     null
     ]
    ],
    "martial.y": [
@@ -642,6 +653,17 @@
       "palm",
       "line",
       "arm",
+      "heavy"
+     ],
+     null
+    ],
+    [
+     "mv.protagonist.martial.b.12",
+     [
+      "hand",
+      "blade",
+      "drop",
+      "chest",
       "heavy"
      ],
      null
@@ -1115,6 +1137,17 @@
       "light"
      ],
      "rm.knee_hook"
+    ],
+    [
+     "mv.rival.martial.x.31",
+     [
+      "hand",
+      "fist",
+      "line",
+      "head",
+      "light"
+     ],
+     null
     ]
    ],
    "martial.y": [

@@ -92,6 +92,16 @@ The EP's brief of 2026-10-15. The note is `../../split-and-pieces.md`.
 - **A kit row** (`kit` in an identity row: the Empress's guards). It has only the cells its kit names, with its counts and any quotas of its own. It draws only on posed common pieces, or a new shape of a weight the kit allows. It is never another fighter's own blow. It has no share rule and no floors, is outside the gate, is never counted when the common pieces are found, and only its lights and mediums are read for the string rules.
 - **The two fighters' files** gained the three added moves and the new quotas' counts. No move changed, and `../recipes.brawl.json` is byte for byte the same.
 
+## 0f. A fighter's named pieces, and the burst's lean (2026-10-16, version 18)
+
+The note is `../../split-and-pieces.md` section 5b.
+
+- **`cellQuotas` in a fighter's row:** quotas of his own for a cell, read before the cell's. With `adds` they generate the pieces Game Design names. The Protagonist's second falling launcher is by an open or bladed hand; his turning palm-heel goes to the body; the Anti-hero's straight fist. A launcher's quota may now name a shape as well as a send.
+- **`burst.favour`:** a filter and a factor. The burst's strings lean toward it, and the pool builder's `--lean` keeps only those hands in the fast and mid classes, when at least `min` are posed.
+- **`skillAlso`:** a move pinned into the skill strike's pool, whatever its form, once it is posed.
+- **Never lent, everywhere.** A fighter's own blow is no candidate for another fighter even when he hasn't been built yet in this run: his current file's own marks are read.
+- **The roster builder** keeps a fighter's named pieces (`adds`, `cellQuotas`, `chargedHeavy`, `skillAlso`) out of the sketches built like him.
+
 ## 1. The martial arts stance, regenerated on Animation's data
 
 The generator no longer uses my reading of each strike. It reads the tip, the path and the pose flags from Animation's manifests, and how far a key set can be re-aimed from `data/anim/tips.json`. My strike table and my guessed neighbour table are gone from `parts.json`.

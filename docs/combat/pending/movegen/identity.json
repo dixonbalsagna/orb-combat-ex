@@ -475,7 +475,21 @@
       "line"
      ]
     },
-    "_close": "what his burst's eighth blow is, when the rules allow: a straight"
+    "_close": "what his burst's eighth blow is, when the rules allow: a straight",
+    "favour": {
+     "filter": {
+      "limb": [
+       "hand"
+      ],
+      "path": [
+       "line",
+       "rise"
+      ]
+     },
+     "factor": 3.0,
+     "min": 4
+    },
+    "_favour": "His look in the held X (fighter-pipeline.md section 8: the Protagonist's circling palms, the Anti-hero's piston jabs): the strings lean toward these, and the pool builder keeps only these hands in the burst's fast and mid classes when at least `min` are posed"
    },
    "reaimed": {
     "mv.rival.martial.b.09": {
@@ -496,11 +510,42 @@
     "rival8"
    ],
    "adds": {
-    "martial.b": 1
+    "martial.b": 1,
+    "martial.x": 1
    },
    "_adds": "Places added to a cell for the split by path (cells.json `_quotasSplit`): his locked moves leave a group under 5, and the added place is filled by that group's quota",
    "chargedHeavy": "strike.su_ram",
-   "_chargedHeavy": "His charged heavy as Game Design names it (fighter-pipeline.md section 8: the Protagonist's a coiled palm strike, the Anti-hero's a ram behind the plate). The pool builder keeps it in the held B's pool whatever its path; not read by the generator"
+   "_chargedHeavy": "His charged heavy as Game Design names it (fighter-pipeline.md section 8: the Protagonist's a coiled palm strike, the Anti-hero's a ram behind the plate). The pool builder keeps it in the held B's pool whatever its path; not read by the generator",
+   "cellQuotas": {
+    "martial.x": [
+     {
+      "name": "a straight fist behind the plate, for his perfect follow-up",
+      "min": 1,
+      "filter": {
+       "limb": [
+        "hand"
+       ],
+       "tip": [
+        "fist"
+       ],
+       "path": [
+        "line"
+       ],
+       "target": [
+        "chest",
+        "gut",
+        "jaw",
+        "head"
+       ]
+      }
+     }
+    ]
+   },
+   "_cellQuotas": "Quotas of his row, read before the cell's, so a place added in `adds` goes to the piece Game Design's section 8 and the tenth round name (docs/combat/split-and-pieces.md section 5): the Protagonist's second falling launcher (the spike) and his turning palm (a palm travels only straight or up, so it is the heel of the hand on an arc); the Anti-hero's straight fist behind the plate (the plate never travels straight)",
+   "skillAlso": [
+    "mv.rival.martial.x.31"
+   ],
+   "_skillAlso": "Moves pinned into the skill strike's pool whatever their form, once posed: his straight fist behind the plate (the jab as a fist) is a flurry light by the grammar, and Game Design names it his perfect follow-up (fighter-pipeline.md section 8)"
   },
   "protagonist": {
    "waves": [
@@ -973,7 +1018,21 @@
       "arc_out"
      ]
     },
-    "_close": "what his burst's eighth blow is, when the rules allow: an arc"
+    "_close": "what his burst's eighth blow is, when the rules allow: an arc",
+    "favour": {
+     "filter": {
+      "limb": [
+       "hand"
+      ],
+      "tip": [
+       "palm",
+       "heel"
+      ]
+     },
+     "factor": 3.0,
+     "min": 4
+    },
+    "_favour": "His look in the held X (fighter-pipeline.md section 8: the Protagonist's circling palms, the Anti-hero's piston jabs): the strings lean toward these, and the pool builder keeps only these hands in the burst's fast and mid classes when at least `min` are posed"
    },
    "tierWaves": [
     "protag10"
@@ -988,11 +1047,56 @@
    "_armsOf": "how many arms a key set uses, where it is not what its pack says. Legal's RL-133: the falling palm is one arm; Animation redrew pu.su_drive so, and the pack's uses.arms still says 2. It goes when the pack says 1",
    "adds": {
     "martial.y": 1,
-    "martial.b": 1
+    "martial.b": 2,
+    "martial.x": 1
    },
    "_adds": "Places added to a cell for the split by path (cells.json `_quotasSplit`): his locked moves leave a group under 5, and the added place is filled by that group's quota",
    "chargedHeavy": "strike.su_palm_heave",
-   "_chargedHeavy": "His charged heavy as Game Design names it (fighter-pipeline.md section 8: the Protagonist's a coiled palm strike, the Anti-hero's a ram behind the plate). The pool builder keeps it in the held B's pool whatever its path; not read by the generator"
+   "_chargedHeavy": "His charged heavy as Game Design names it (fighter-pipeline.md section 8: the Protagonist's a coiled palm strike, the Anti-hero's a ram behind the plate). The pool builder keeps it in the held B's pool whatever its path; not read by the generator",
+   "cellQuotas": {
+    "martial.b": [
+     {
+      "name": "a second falling launcher by an open or bladed hand, for the spike ender",
+      "min": 2,
+      "form": "launch",
+      "sends": "down",
+      "filter": {
+       "limb": [
+        "hand"
+       ],
+       "tip": [
+        "blade",
+        "palm",
+        "heel"
+       ]
+      }
+     }
+    ],
+    "martial.x": [
+     {
+      "name": "a turning palm-heel to the body, for his perfect follow-up",
+      "min": 1,
+      "form": "skill",
+      "filter": {
+       "limb": [
+        "hand"
+       ],
+       "tip": [
+        "heel"
+       ],
+       "path": [
+        "arc_out",
+        "arc_in"
+       ],
+       "target": [
+        "chest",
+        "gut"
+       ]
+      }
+     }
+    ]
+   },
+   "_cellQuotas": "Quotas of his row, read before the cell's, so a place added in `adds` goes to the piece Game Design's section 8 and the tenth round name (docs/combat/split-and-pieces.md section 5): the Protagonist's second falling launcher (the spike) and his turning palm (a palm travels only straight or up, so it is the heel of the hand on an arc); the Anti-hero's straight fist behind the plate (the plate never travels straight)"
   }
  },
  "_reuse": "how strongly a shape that is already posed, or one swap or re-aim from it, is preferred. A re-aim Animation measured as ok is free; one at the edge needs a look, so it is preferred less. These are the first slice's values: lower them toward 1 and identity decides more, at the cost of new key sets",
