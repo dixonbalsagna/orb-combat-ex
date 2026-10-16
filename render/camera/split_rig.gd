@@ -1093,6 +1093,18 @@ func _read_events(S: SimState, events: Array) -> void:
 				# then takes 20 ticks to arrive); a swat or a split adds beams to the state in the tick of its cue, and those
 				# are the defender's play, not signatures: no panel for them.
 				var cue_kind: String = String(_ef(ev, "kind", ""))
+				if struggle_framing and not reduced_motion:
+					var ctext: String = String(_ef(ev, "text", ""))
+					if cue_kind == "beam_struggle":
+						_st_t0 = time
+						_st_t1 = time + maxf(float(_ef(ev, "n", 0.0)) - float(S.tick), 60.0) * DT
+					elif cue_kind == "beam_surge" and not flash_reduced:
+						_punch_t = 0.0
+						_punch_len = 6.0 * DT
+						_punch_amp = CamParams.STRUGGLE_SHARP_PUNCH if ctext == "sharp" else CamParams.STRUGGLE_SURGE_PUNCH
+					elif cue_kind == "beam_end" and ctext == "detonate" and _wide_t < 0.0:
+						_wide_t = 0.0
+						_wide_dur = CamParams.STRUGGLE_DETONATE_WIDE
 				if cue_kind == "beam_fire":
 					_panel_request(S, "signature", int(_ef(ev, "actor", -1)))
 				elif cue_kind == "beam_swat" or cue_kind == "beam_split":
@@ -2097,6 +2109,30 @@ func _snap_cameras(S: SimState) -> void:
 	_outputs(S)
 
 
+## The beam struggle's state this tick (Encounter's tug of war: `S.game.clash.mid`, 0 at the attacker's hands, 1 at the defender's, -1 none): the
+## meeting point eased, and whether the struggle framing applies.
+func _struggle_tick(S: SimState) -> void:
+	var cl = S.game.clash
+	var mv = null
+	if struggle_framing and not reduced_motion and cl != null:
+		mv = cl.get("mid")   # (Clash.mid is Simulation's slice: absent on a tree without it)
+	var on: bool = mv != null and float(mv) >= 0.0
+	if on:
+		var m: float = float(mv)
+		if not _st_on:
+			_st_mid = m
+			if _st_t1 <= time:
+				_st_t0 = time
+				_st_t1 = time + 3.0
+		else:
+			_st_mid += (m - _st_mid) * (1.0 - exp(-DT / CamParams.STRUGGLE_MID_TAU))
+	_st_on = on
+	if on:
+		_st_a = maxi(0, S.fighters.find(cl.A))
+		_st_d = maxi(0, S.fighters.find(cl.D))
+	_st_w = move_toward(_st_w, 1.0 if on else 0.0, DT / CamParams.STRUGGLE_FADE)
+
+
 func _merged_target(S: SimState) -> Vector3:
 	if fold_active:
 		var fit: float = minf(vw, vh) / (CamParams.FOLD_FIT * maxf(_fold.z, 1.0))
@@ -2135,6 +2171,27 @@ func _merged_target(S: SimState) -> Vector3:
 		many_z = CamParams.MANY_PIX_FLOOR / CamParams.BODY_H
 	var z: float = zoom_u(vw, vh, ahead, dy_pair, maxf(A.tier, B.tier), _m(), true)
 	var mult: float = maxf(_push_mult(0), _push_mult(1)) * _intro_mult()
+	if _st_w > 0.0:
+		# the struggle: the focus leans toward the meeting point, and the view tightens as the decision nears (all of it eased in and out by _st_w)
+		var sw_st: float = smoothstep(0.0, 1.0, _st_w)
+		var ca = S.fighters[_st_a]
+		var cd = S.fighters[_st_d]
+		var meet: float = SimWrap.wrap(ca.x + _st_mid * SimWrap.sdx(ca.x, cd.x))
+		var shift: float = CamParams.STRUGGLE_FOCUS * sw_st * SimWrap.sdx(mx, meet)
+		# the lean never takes a fighter toward the edge of the one view (a fighter lost off its edge opens the split): both stay inside 0.42 of the width
+		var half_free: float = 0.42 * vw / maxf(z * mult, 0.001)
+		var d_a: float = SimWrap.sdx(mx, ca.x)
+		var d_d: float = SimWrap.sdx(mx, cd.x)
+		var lo_s: float = maxf(d_a, d_d) - half_free
+		var hi_s: float = minf(d_a, d_d) + half_free
+		shift = clampf(shift, lo_s, hi_s) if lo_s <= hi_s else 0.0
+		mx = SimWrap.wrap(mx + shift)
+		var lean: float = absf(_st_mid - 0.5) * 2.0
+		var frac: float = clampf((time - _st_t0) / maxf(_st_t1 - _st_t0, 0.5), 0.0, 1.0)
+		var tight: float = CamParams.STRUGGLE_PUSH * smoothstep(0.3, 0.9, lean) + CamParams.STRUGGLE_TIME_PUSH * smoothstep(0.6, 1.0, frac)
+		var d_far: float = maxf(absf(SimWrap.sdx(mx, ca.x)), absf(SimWrap.sdx(mx, cd.x)))
+		var tight_cap: float = maxf(0.0, 0.44 * vw / maxf(d_far * z * mult, 1.0) - 1.0)   # the tightening leaves both fighters inside 0.44 of the width
+		mult *= 1.0 + minf(tight * sw_st * (0.5 if flash_reduced else 1.0), tight_cap)
 	if solo_kind == "ko":
 		pass
 	var pz: float = 1.0 / cos(deg_to_rad(_pitch_now))
@@ -2610,6 +2667,14 @@ var _many_pzf: Array = [1.0, 1.0]                       # pane i's zoom factor f
 var _many_pull: Array = [0.0, 0.0]                      # pane i's focus pull toward them, world units
 var _many_partner: int = 1                              # the one's partner for framing: the nearest of the others, with a hold
 var _many_marks: Array = []                             # the bodies outside the frame this tick, [slot, side]
+var struggle_framing: bool = false                      # the beam struggle: the shared view centred toward the meeting point, tightening as it nears a fighter, a punch at each surge (docs/camera/beam-struggle.md); off by default
+var _st_mid: float = 0.5                                # the meeting point, eased (0 at the attacker's hands to 1 at the defender's)
+var _st_on: bool = false
+var _st_w: float = 0.0                                  # the framing's weight: 0 to 1 over STRUGGLE_FADE seconds in, and back out when the struggle ends (no step)
+var _st_a: int = 0
+var _st_d: int = 1
+var _st_t0: float = 0.0
+var _st_t1: float = 0.0                                 # the latest time the struggle ends by
 var launch_hold_eager: bool = false                     # under reduced flashing the rule engages sooner (section 15); off by default
 var launch_holds: int = 0                              # (counted for the tests)
 var launch_pans: int = 0
@@ -2800,6 +2865,7 @@ func _update_stage(S: SimState) -> void:
 
 
 func _update_cameras(S: SimState) -> void:
+	_struggle_tick(S)
 	_update_focus_depth(S)
 	_update_stage(S)
 	_pair_near = sqrt(pow(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x), 2.0) + pow(S.fighters[1].y - S.fighters[0].y, 2.0)) < CamParams.MZ_NEAR

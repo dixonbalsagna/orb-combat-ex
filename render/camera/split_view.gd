@@ -177,6 +177,14 @@ func set_flash_bundle(on: bool, reduced_only: bool = false) -> void:
 		main.split_rig.flash_bundle_reduced_only = reduced_only
 
 
+## The beam struggle's framing (docs/camera/beam-struggle.md): the shared view leans toward the meeting point (`Clash.mid`), tightens as it nears a
+## fighter and punches at each surge; a detonation pulls the view out. Needs Encounter's struggle and Simulation's `Clash.mid`; without them there is
+## nothing to read and the switch does nothing. Off by default. A build-time switch.
+func set_struggle_framing(on: bool) -> void:
+	if main != null:
+		main.split_rig.struggle_framing = on
+
+
 func set_launch_hold_eager(on: bool) -> void:
 	if main != null:
 		main.split_rig.launch_hold_eager = on

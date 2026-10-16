@@ -20,6 +20,13 @@ var budget: bool = false
 var slam: bool = false
 var reduced: bool = false
 var nobundle: bool = false
+var struggle: bool = false
+var surges: bool = false
+var sweepmid: bool = false
+var sweep_t0: int = -1
+var pulse_ticks: Array = []
+var pulse_n: int = 0
+var cue_seen: Dictionary = {}
 var human0: bool = false
 var held: Dictionary = {}
 
@@ -44,6 +51,12 @@ func _initialize() -> void:
 			reduced = true
 		elif a == "--nobundle":
 			nobundle = true
+		elif a == "--struggle":
+			struggle = true
+		elif a == "--surges":
+			surges = true
+		elif a == "--sweepmid":
+			sweepmid = true
 		elif a == "--human0":
 			human0 = true
 		elif a == "--budget":
@@ -76,7 +89,10 @@ func _run() -> void:
 	main.host.vfx.auto_quality = false
 	main.host.vfx.destruction_enabled = true
 	var human: bool = scenario == "signaturecity"
-	main.start_match(seed_v, {"p1": not human, "p2": true}, null)
+	var both: bool = scenario == "clash"
+	main.start_match(seed_v, {"p1": not (human or both), "p2": not both}, null)
+	if struggle:
+		sv.set_struggle_framing(true)
 	if nobundle:
 		main.split_rig.flash_bundle = false
 	if human0:
@@ -85,11 +101,25 @@ func _run() -> void:
 	var host: SimHost = main.host
 	host.vfx.force_reduced = reduced
 	host.release_all()
-	if human:
+	if human or both:
 		host.hub.pad_button(0, "back", true)
 		host.hub.pad_button(0, "back", false)
 		host.take_players()
+	if both:
+		host.hub.pad_button(1, "back", true)
+		host.hub.pad_button(1, "back", false)
+		host.take_players()
 	var rig: SplitRig = main.split_rig
+	var cb := func(evs: Array, _lines: Array):
+		for e in evs:
+			if e.type == "cue":
+				cue_seen[str(e.kind)] = int(cue_seen.get(str(e.kind), 0)) + 1
+			if e.type == "cue" and str(e.kind) == "beam_pulse":
+				pulse_ticks.append(host.ticks)
+			elif e.type == "cue" and str(e.kind) == "beam_struggle":
+				pulse_ticks.clear()
+				pulse_n = 0
+	host.drained.connect(cb)
 	var prev: Vector3 = Vector3.ZERO
 	var prev_ok: bool = false
 	var prev1: Vector3 = Vector3.ZERO
@@ -128,7 +158,8 @@ func _run() -> void:
 			var B = host.S.fighters[1]
 			print("P t ", host.ticks, " mode ", fr.mode, " sep ", snappedf(fr.sep, 0.01), " e ", snappedf(fr.e, 0.01), " solo ", rig.solo_kind, "/", snappedf(rig.solo_w, 0.01),
 				" st ", A.state, "/", B.state, " gap ", snappedf(absf(SimWrap.sdx(A.x, B.x)), 1.0), " mx ", snappedf(rig._mx, 1.0), " mz ", snappedf(rig._mz, 0.001),
-				" cam ", snappedf(cam.x, 1.0), " y ", snappedf(cam.y, 1.0), " ", snappedf(cam.z, 0.001), " travel ", snappedf(tr, 0.0001), " | p1 cam ", snappedf(cam1.x, 1.0), " ", snappedf(cam1.z, 0.001), " travel1 ", snappedf(tr1, 0.0001), " lh ", rig._lh, " cut ", fr.cut, " mt_z ", snappedf(rig._merged_target(host.S).z, 0.001), " vsm_m ", snappedf(rig._vsm_m, 1.0), " gov_m ", rig._gov_bind_m)
+				" cam ", snappedf(cam.x, 1.0), " y ", snappedf(cam.y, 1.0), " ", snappedf(cam.z, 0.001), " travel ", snappedf(tr, 0.0001), " | p1 cam ", snappedf(cam1.x, 1.0), " ", snappedf(cam1.z, 0.001), " travel1 ", snappedf(tr1, 0.0001), " lh ", rig._lh, " cut ", fr.cut, " st ", rig._st_on, "/", snappedf(rig._st_mid, 0.01), "/m", (snappedf(float(host.S.game.clash.get("mid")), 0.01) if host.S.game.clash != null and host.S.game.clash.get("mid") != null else -9), " clash ", host.S.game.clash != null, " mt_z ", snappedf(rig._merged_target(host.S).z, 0.001), " vsm_m ", snappedf(rig._vsm_m, 1.0), " gov_m ", rig._gov_bind_m)
+	print("PULSE cues seen: ", pulse_ticks.size(), " cue kinds: ", cue_seen)
 	print("SUMMARY worst travel ", snappedf(worst, 0.0001), " ticks over 0.03: ", over)
 	quit(0)
 
@@ -162,6 +193,32 @@ func _drive(t: int, S: SimState) -> void:
 		_btn(0, "rt", t % 90 < 60)
 		_btn(0, "east", t % 90 > 2 and t % 90 < 14)
 		_btn(0, "west", t % 90 > 40 and (t % 6) < 2)
+	elif scenario == "clash":
+		# both human, ki kept full, both firing the signature together every 30 ticks (tools/flash's clash scenario)
+		var cdx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
+		var cfar: bool = absf(cdx) > 1500.0
+		_stick(0, signf(cdx) if cfar else 0.0)
+		_stick(1, -signf(cdx) if cfar else 0.0)
+		for f in S.fighters:
+			f.ki = 100.0
+		_btn(0, "rt", true)
+		_btn(1, "rt", true)
+		_btn(0, "east", t % 30 < 12)
+		_btn(1, "east", t % 30 < 12)
+		if sweepmid and S.game.clash != null and S.game.clash.get("mid") != null:
+			# a test of the camera alone: the meeting point driven from the middle to a fighter's hands and back over 240 ticks, whatever the presses did
+			if sweep_t0 < 0:
+				sweep_t0 = t
+			var ph: float = float(t - sweep_t0) / 240.0
+			S.game.clash.mid = 0.5 + 0.42 * (1.0 - absf(2.0 * fposmod(ph, 1.0) - 1.0)) * (1.0 if int(ph) % 2 == 0 else -1.0)
+		elif sweepmid:
+			sweep_t0 = -1
+		if surges and not pulse_ticks.is_empty():
+			# P1 hits the beat the tick after each pulse (a sharp surge), except every third; P2 is three ticks late on every second one
+			var lp: int = int(pulse_ticks[-1])
+			var k: int = pulse_ticks.size()
+			_btn(0, "west", t >= lp + 1 and t <= lp + 2 and k % 3 != 0)
+			_btn(1, "west", t >= lp + 3 and t <= lp + 4 and k % 2 == 0)
 	elif scenario == "collapse":
 		if t == 0:
 			var tall = null

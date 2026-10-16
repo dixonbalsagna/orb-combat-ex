@@ -222,6 +222,8 @@ func _run() -> void:
 	await _scenario("launch short with the merge zoom limit", func(): return _launch_profile(3000.0, 0.3, 500.0, 0.5, false, true), {})
 	for kind in ["walk", "tag", "launched", "split"]:
 		await _scenario("many bodies %s" % kind, func(): return _many_row(String(kind)), {})
+	await _scenario("beam struggle framing off", func(): return _struggle_row(false), {})
+	await _scenario("beam struggle framing on", func(): return _struggle_row(true), {})
 	for lh in [[6600.0, 13200.0, true], [6600.0, 13200.0, false], [9000.0, 18000.0, true], [3000.0, 6000.0, true]]:
 		await _scenario("launch hold %s %d u/s" % ["on" if bool(lh[2]) else "off", int(lh[0])], func(): return _launch_hold_run(float(lh[0]), float(lh[1]), bool(lh[2])), {})
 	for ln in [2, 3, 5]:
@@ -1395,6 +1397,72 @@ func _many_row(kind: String) -> Dictionary:
 			var gp: Vector2 = cur2.screen_pos(0, g2.x, g2.y + CamParams.CHEST, float(g2.z))
 			_check(Rect2(rc["rect"]).grow(24.0).has_point(gp), "%s: the foreground's opening %s does not cover the guard with the one (%s)" % [_label, str(rc["rect"]), str(gp)])
 	stats["detail " + _label] = "worst travel %.4f, worst zoom step %.4f, off screen %d, markers %s, mode %s" % [worst_travel, worst_zstep, off_screen, str(cur2.many_off), cur2.mode]
+	return {}
+
+
+## The beam struggle's framing (docs/camera/beam-struggle.md): a stand-in for Encounter's tug of war (`S.game.clash` with A, D and `mid`, which Simulation's
+## slice adds to Clash), the point driven from the middle to the defender's hands and back, 240 ticks, then no clash. With the framing on: the focus leans
+## toward the point by at most STRUGGLE_FOCUS of its offset, the view tightens by at most STRUGGLE_PUSH + STRUGGLE_TIME_PUSH, no tick travels over the
+## bound, the end of the struggle is no step (the weight fades over STRUGGLE_FADE), both fighters stay on the screen. With it off nothing moves.
+class FakeClash:
+	var A = null
+	var D = null
+	var mid: float = 0.5
+
+
+func _struggle_row(on: bool) -> Dictionary:
+	_rig.struggle_framing = on
+	var ax: float = 60000.0
+	_pose(ax, 40.0, ax + 800.0, 40.0)
+	_seed_rig()
+	for _i in range(90):
+		_tick_rig()
+	var z0: float = _rig.current().cam_z[0]
+	var x0: float = _rig.current().cam_x[0]
+	var fc := FakeClash.new()
+	fc.A = _S.fighters[0]
+	fc.D = _S.fighters[1]
+	_S.game.clash = fc
+	var prev: Vector3 = Vector3.ZERO
+	var prev_ok: bool = false
+	var worst_travel: float = 0.0
+	var max_lean: float = 0.0
+	var max_tight: float = 0.0
+	var worst_k: int = -1
+	var off_screen: int = 0
+	for k in range(420):
+		if k < 240:
+			fc.mid = 0.5 + 0.4 * (1.0 - absf(2.0 * float(k) / 240.0 - 1.0))
+		elif k == 240:
+			_S.game.clash = null
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		var cam: Vector3 = Vector3(cur.cam_x[0], cur.cam_y[0], cur.cam_z[0])
+		if prev_ok and not cur.cut:
+			var dx: float = SimWrap.sdx(prev.x, cam.x)
+			var dy: float = cam.y - prev.y
+			var trv: float = sqrt(dx * dx + dy * dy) * cam.z / vw + 0.5 * absf(log(cam.z / maxf(prev.z, 0.0001)))
+			if trv > worst_travel:
+				worst_travel = trv
+				worst_k = k
+		prev = cam
+		prev_ok = true
+		max_lean = maxf(max_lean, absf(SimWrap.sdx(x0, cam.x)))
+		max_tight = maxf(max_tight, cam.z / z0 - 1.0)
+		for si in range(2):
+			var f = _S.fighters[si]
+			var sp: Vector2 = cur.screen_pos(0, f.x, f.y + CamParams.CHEST, float(f.z))
+			if sp.x < 0.0 or sp.x > vw or sp.y < 0.0 or sp.y > vh:
+				off_screen += 1
+	_S.game.clash = null
+	if on:
+		_check(max_lean <= CamParams.STRUGGLE_FOCUS * 0.45 * 800.0 + 40.0, "%s: the focus leaned %.0f units (limit %.0f)" % [_label, max_lean, CamParams.STRUGGLE_FOCUS * 0.45 * 800.0 + 40.0])
+		_check(max_lean > 20.0, "%s: the focus did not lean toward the meeting point (%.0f units)" % [_label, max_lean])
+		_check(worst_travel <= CamParams.SCROLL_MAX, "%s: the camera travelled %.4f of the width in a tick (bound %.3f)" % [_label, worst_travel, CamParams.SCROLL_MAX])
+		_check(off_screen == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off_screen])
+	else:
+		_check(max_lean < 1.0, "%s: the focus moved %.1f units with the framing off" % [_label, max_lean])
+	stats["detail " + _label] = "focus lean %.0f units, view tightened %.3f, worst travel %.4f at tick %d, off screen %d" % [max_lean, max_tight, worst_travel, worst_k, off_screen]
 	return {}
 
 
