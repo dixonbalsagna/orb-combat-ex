@@ -19,6 +19,8 @@ var mz: bool = false
 var budget: bool = false
 var slam: bool = false
 var reduced: bool = false
+var nobundle: bool = false
+var human0: bool = false
 var held: Dictionary = {}
 
 
@@ -40,6 +42,10 @@ func _initialize() -> void:
 			slam = true
 		elif a == "--reduced":
 			reduced = true
+		elif a == "--nobundle":
+			nobundle = true
+		elif a == "--human0":
+			human0 = true
 		elif a == "--budget":
 			budget = true
 	var vpn := SubViewport.new()
@@ -71,6 +77,10 @@ func _run() -> void:
 	main.host.vfx.destruction_enabled = true
 	var human: bool = scenario == "signaturecity"
 	main.start_match(seed_v, {"p1": not human, "p2": true}, null)
+	if nobundle:
+		main.split_rig.flash_bundle = false
+	if human0:
+		main.split_rig.test_human_slot = 0
 	main.started = true   # the demo prompt is not part of the clip (the capture hook does the same)
 	var host: SimHost = main.host
 	host.vfx.force_reduced = reduced
@@ -118,7 +128,7 @@ func _run() -> void:
 			var B = host.S.fighters[1]
 			print("P t ", host.ticks, " mode ", fr.mode, " sep ", snappedf(fr.sep, 0.01), " e ", snappedf(fr.e, 0.01), " solo ", rig.solo_kind, "/", snappedf(rig.solo_w, 0.01),
 				" st ", A.state, "/", B.state, " gap ", snappedf(absf(SimWrap.sdx(A.x, B.x)), 1.0), " mx ", snappedf(rig._mx, 1.0), " mz ", snappedf(rig._mz, 0.001),
-				" cam ", snappedf(cam.x, 1.0), " y ", snappedf(cam.y, 1.0), " ", snappedf(cam.z, 0.001), " travel ", snappedf(tr, 0.0001), " | p1 cam ", snappedf(cam1.x, 1.0), " ", snappedf(cam1.z, 0.001), " travel1 ", snappedf(tr1, 0.0001), " lh ", rig._lh, " cut ", fr.cut)
+				" cam ", snappedf(cam.x, 1.0), " y ", snappedf(cam.y, 1.0), " ", snappedf(cam.z, 0.001), " travel ", snappedf(tr, 0.0001), " | p1 cam ", snappedf(cam1.x, 1.0), " ", snappedf(cam1.z, 0.001), " travel1 ", snappedf(tr1, 0.0001), " lh ", rig._lh, " cut ", fr.cut, " mt_z ", snappedf(rig._merged_target(host.S).z, 0.001), " vsm_m ", snappedf(rig._vsm_m, 1.0), " gov_m ", rig._gov_bind_m)
 	print("SUMMARY worst travel ", snappedf(worst, 0.0001), " ticks over 0.03: ", over)
 	quit(0)
 

@@ -152,3 +152,25 @@ Build order (all behind switches, default off, each with a `split_sweep` row):
 The `worst_travel` of 7 to 8 in the table's raw output is the probe's pane flip at a launch shot (a measurement artifact in both arms; the notes of `buildings-in-frame.md` section 15).
 
 **What it does not do yet** (the build order's 2 and 3): in the split view each pane frames its own principal, slot 0 and slot 1, whatever the director has made of the fight; after a tag the partner is a guard who can be outside both panes (439 ticks of 3,000 at three bodies on seed 3). That is the assignment of section 2: a pane frames its principal *and the partner or bodies assigned to him*. It needs the pane's framing set (`_own_zoom_target` and the focus take a list), a `clear[i]` union, and is the next window. A flash clip of a 3v1 is Tools' to stage (`flash_capture.gd` takes two `slots`); the camera's own read is the table above.
+
+## 10. Built (2026-10-16): the pane's framing set, the pixel floor in a pane, the sweep rows (behind `many_framing`, off)
+
+The next window of section 8's build order. In a split view each pane frames its principal (slot 0, slot 1) as before, **and the bodies assigned to him** (`SplitRig._many_pane_tick`): the one's partner (the nearest of the others, section 9) and the guards nearer the one by more than 4 body heights go with pane 0; the others with the second principal's pane. Each assigned body counts by a weight that moves at 0.025 a tick (no step when one joins or leaves), 1 while the zoom that fits him with the pane's other bodies stays above three quarters of the pane's own size and the principal's 32 px floor (the partner is held down to the floor alone). The pane's zoom takes the weighted fit (`_many_pzf`, never under the floor) and its focus is pulled toward the set's centre by at most 0.15 of the pane's width (`_many_pull`, into the focus target, so the filters take it). A body out of both panes is listed in `SplitFrame.many_off` ([slot, side], 0 above) for UI's markers. In a many-body match the pane's governor floor is 24 px (`MANY_PIX_FLOOR`), not the 3.2% share (12 px on a phone).
+
+**Measured** (`many_probe.gd`, scratch with Simulation's stage 1 and Encounter's stages 2 and 3, seeds 2 to 4, 3,000 ticks; "off" is the switch off on the same tree):
+
+| The partner (a guard after a tag) off the picture, ticks | Off | On |
+| :--- | :--- | :--- |
+| 4 bodies, seed 2 (a split view of 1,045 ticks) / seed 3 | 70 / 89 | **12 / 0** |
+| 5 bodies, seed 2 / seed 3 | 133 / 89 | **0 / 0** |
+| 3 bodies, seed 2 / seed 3 (a guard that stands 600 to 1,100 units from the one) | 48 / 439 | 48 / 333 |
+| Phone (812 x 375), 4 and 5 bodies, seed 2 | 47 / 69 | **14 / 0** |
+| Phone, 4 and 5 bodies, seed 3 | 79 / 79 | **2 / 2** |
+| Guards' share of ticks off the picture, 4 bodies, seeds 2 to 4 | 0.114 0.056 0.203 | 0.048 0.000 0.141 |
+| The one, the Empress off the picture | 0 | 0 |
+
+**The limit:** a partner that stands more than about 1,000 units from the one cannot be held in a half-width pane at the principal's 32 px floor; he is then a marker (3 bodies, seed 3: 333 ticks). Encounter's stage 3 steps a tag's partner in to striking distance; the guard in that match did not.
+
+**Sweep rows** (`split_sweep.gd`, a synthetic guard appended to the two-body state): "many bodies walk" (a guard out to 3,000 units and back over twenty seconds: worst zoom step 0.0108 against the comfort 0.04, worst travel 0.0109, the one and the Empress always on screen), "tag" (the nearest guard changes at once: worst travel 0.0450 at the bound, zoom 0.04 at the rate cap), "launched" (a guard 20 body heights up is marked above and the frame does not zoom), "split" (a guard with the one is in the one's pane, the one at 32 px or more, no marker).
+
+**Not done:** `clear[i]`'s union over the assigned bodies (the foreground's opening is still the principal's and the strip to his rival); a 2v2 as two cells; the summon strip.

@@ -220,6 +220,8 @@ func _run() -> void:
 	await _scenario("launch fast then slow", func(): return _launch_profile(9000.0, 0.4, 1000.0, 1.0, true, false), {})
 	await _scenario("launch fast then slow with the merge zoom limit", func(): return _launch_profile(9000.0, 0.4, 1000.0, 1.0, true, true), {})
 	await _scenario("launch short with the merge zoom limit", func(): return _launch_profile(3000.0, 0.3, 500.0, 0.5, false, true), {})
+	for kind in ["walk", "tag", "launched", "split"]:
+		await _scenario("many bodies %s" % kind, func(): return _many_row(String(kind)), {})
 	for lh in [[6600.0, 13200.0, true], [6600.0, 13200.0, false], [9000.0, 18000.0, true], [3000.0, 6000.0, true]]:
 		await _scenario("launch hold %s %d u/s" % ["on" if bool(lh[2]) else "off", int(lh[0])], func(): return _launch_hold_run(float(lh[0]), float(lh[1]), bool(lh[2])), {})
 	for ln in [2, 3, 5]:
@@ -271,7 +273,8 @@ func _run() -> void:
 	await _scenario("shot crippling cut-in and cooldown", func(): return _shot_cripple(), {})
 	await _scenario("shot building smash cut-in", func(): return _shot_smash(), {})
 	await _scenario("shot beam struggle push", func(): return _shot_clash(), {})
-	await _scenario("hybrid hold and cut", func(): return _hybrid(1, 20000.0), {})
+	await _scenario("hybrid hold and cut (launch_follow hold)", func(): return _hybrid(1, 20000.0), {})
+	await _scenario("hybrid keeps the computer in a pane", func(): return _hybrid(1, 8000.0, "auto"), {})
 	await _scenario("hybrid launched human chases", func(): return _hybrid_chased(), {})
 	await _scenario("hybrid two humans split", func(): return _hybrid(2, 20000.0), {})
 	_static_equals_reference()
@@ -356,6 +359,7 @@ func _begin(label: String) -> void:
 		f.state = "free"
 		f.hidden = false
 	_rig = SplitRig.new()
+	_rig.flash_bundle = false   # the rows set the pieces they test; the shipped default (the bundle under reduced flashing) has its own row
 	_rig.travel_budget = budget_on
 	_rig.launch_hold = launch_hold_on
 	_tick = 0
@@ -1310,6 +1314,86 @@ func _launch_profile(v0: float, t0: float, v1: float, t1: float, expect_engage: 
 	return {}
 
 
+## One versus many (docs/camera/one-v-many.md sections 3 and 9): a match of three or four bodies, the framing on. The synthetic guards are
+## `SimState.Fighter`s appended to the two-body state (the rig reads `S.fighters.size()`). Kinds: "walk" (a guard goes out to 3,000 units and back
+## over twenty seconds: no zoom step over the comfort rate, no camera step over the travel bound, the one and the Empress always on the screen),
+## "tag" (the nearest guard changes at once: the same bounds), "launched" (a guard 20 body heights up is a marker above, and the frame does not
+## zoom), "split" (the pair 6,000 apart, a guard with the one: he is in the one's pane, the one is drawn at 32 px or more, and no marker).
+func _add_guard(x: float, y: float):
+	var g = SimState.Fighter.new()
+	g.x = SimWrap.wrap(x)
+	g.y = y
+	g.state = "free"
+	g.hidden = false
+	g.tier = 1.0
+	_S.fighters.append(g)
+	return g
+
+
+func _many_row(kind: String) -> Dictionary:
+	_rig.many_framing = true
+	var ax: float = 60000.0
+	_pose(ax, 40.0, ax + (6000.0 if kind == "split" else 300.0), 40.0)
+	var g2 = _add_guard(ax + (350.0 if kind != "tag" else 450.0), 40.0)
+	var g3 = _add_guard(ax + (1400.0 if kind != "split" else 400.0), 40.0)
+	_seed_rig()
+	for _i in range(120):
+		_tick_rig()
+	var prev: Vector3 = Vector3.ZERO
+	var prev_ok: bool = false
+	var worst_travel: float = 0.0
+	var worst_zstep: float = 0.0
+	var off_screen: int = 0
+	var z0: float = _rig.current().cam_z[0]
+	var n: int = 1200 if kind == "walk" else 420
+	for k in range(n):
+		if kind == "walk":
+			g3.x = SimWrap.wrap(ax + 700.0 + 1400.0 * (1.0 + sin(TAU * float(k) / 1200.0 - 0.5 * PI)))
+		elif kind == "tag" and k == 150:
+			var tmp: float = g2.x
+			g2.x = g3.x
+			g3.x = tmp
+		elif kind == "launched" and k == 30:
+			g3.y = 40.0 + 20.0 * CamParams.BODY_H
+			g3.state = "launched"
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		var cam: Vector3 = Vector3(cur.cam_x[0], cur.cam_y[0], cur.cam_z[0])
+		if prev_ok and not cur.cut:
+			var dx: float = SimWrap.sdx(prev.x, cam.x)
+			var dy: float = cam.y - prev.y
+			worst_travel = maxf(worst_travel, sqrt(dx * dx + dy * dy) * cam.z / vw + 0.5 * absf(log(cam.z / maxf(prev.z, 0.0001))))
+			worst_zstep = maxf(worst_zstep, absf(log(cam.z / prev.z)))
+		prev = cam
+		prev_ok = true
+		if kind != "split":
+			for si in range(2):
+				var f = _S.fighters[si]
+				var sp: Vector2 = cur.screen_pos(0, f.x, f.y + CamParams.CHEST, float(f.z))
+				if sp.x < 0.0 or sp.x > vw or sp.y < 0.0 or sp.y > vh:
+					off_screen += 1
+	var cur2: SplitFrame = _rig.current()
+	if kind == "walk" or kind == "tag":
+		_check(worst_zstep <= CamParams.ZOOM_RATE_TRANS * SplitRig.DT * 1.1 + 1e-6, "%s: the zoom stepped %.4f in a tick (comfort %.4f)" % [_label, worst_zstep, CamParams.ZOOM_RATE_TRANS * SplitRig.DT])
+		_check(worst_travel <= CamParams.SCROLL_MAX * 1.05, "%s: the camera travelled %.4f of the width in a tick (bound %.3f)" % [_label, worst_travel, CamParams.SCROLL_MAX])
+		_check(off_screen == 0, "%s: the one or the Empress was off the screen for %d ticks" % [_label, off_screen])
+	elif kind == "launched":
+		var marked: bool = false
+		for m in cur2.many_off:
+			if int(m[0]) == 3 and int(m[1]) == 0:
+				marked = true
+		_check(marked, "%s: a guard 20 body heights up is not marked above (%s)" % [_label, str(cur2.many_off)])
+		_check(absf(log(cur2.cam_z[0] / z0)) < 0.05, "%s: the frame zoomed %.3f for a launched guard" % [_label, log(cur2.cam_z[0] / z0)])
+	elif kind == "split":
+		_check(cur2.mode == "split", "%s: not a split view (%s)" % [_label, cur2.mode])
+		var one = _S.fighters[0]
+		_check(bool(cur2.hud_anchor(0, g2.x, g2.y, float(g2.z))["visible"]), "%s: the guard with the one is not in the one's pane" % _label)
+		_check(cur2.apparent_height(0, one.x, one.y, float(one.z)) >= 31.0 * vh / 720.0, "%s: the one is drawn at %.1f px" % [_label, cur2.apparent_height(0, one.x, one.y, float(one.z))])
+		_check(cur2.many_off.is_empty(), "%s: a marker for a body that is in a pane (%s)" % [_label, str(cur2.many_off)])
+	stats["detail " + _label] = "worst travel %.4f, worst zoom step %.4f, off screen %d, markers %s, mode %s" % [worst_travel, worst_zstep, off_screen, str(cur2.many_off), cur2.mode]
+	return {}
+
+
 ## The apparent size of fighter i in pane p against his size on the plane at the zoom drawn: 1.0 is plane size.
 func _size_ratio(cur: SplitFrame, p: int, f) -> float:
 	var h: float = cur.apparent_height(p, f.x, f.y, float(f.z))
@@ -1563,7 +1647,8 @@ func _depth(zrow: float, gap: float, pitch: float = 0.0) -> Dictionary:
 
 ## The hybrid launch rule. humans = 1: the human is slot 0, who launches slot 1 (AI) 20,000 units away: the camera stays on
 ## the human, cuts to the impact for 0.5 s, then returns. humans = 2: both are human, so the split opens and a pane chases.
-func _hybrid(humans: int, dist: float) -> Dictionary:
+func _hybrid(humans: int, dist: float, follow: String = "hold") -> Dictionary:
+	_rig.launch_follow = follow
 	var ax: float = 70000.0
 	_S.fighters[0].ai = null
 	if humans >= 2:
@@ -1582,6 +1667,8 @@ func _hybrid(humans: int, dist: float) -> Dictionary:
 	var cuts: int = 0
 	var cut_visible: bool = true
 	var saw_split: bool = false
+	var v_vis: int = 0
+	var h_vis: int = 0
 	for k in range(60):
 		B.x = SimWrap.wrap(B.x + B.vx * SplitRig.DT)
 		B.y = 40.0 + 200.0 * smoothstep(0.0, 0.7, float(k) * SplitRig.DT)
@@ -1595,6 +1682,10 @@ func _hybrid(humans: int, dist: float) -> Dictionary:
 			cut_visible = cut_visible and pv.x >= 0.0 and pv.x <= vw and pv.y >= 0.0 and pv.y <= vh
 		if cur.mode == "split" or cur.mode == "opening":
 			saw_split = true
+		if bool(cur.hud_anchor(0, B.x, B.y, float(B.z))["visible"]) or bool(cur.hud_anchor(1, B.x, B.y, float(B.z))["visible"]):
+			v_vis += 1
+		if bool(cur.hud_anchor(0, A.x, A.y, float(A.z))["visible"]) or bool(cur.hud_anchor(1, A.x, A.y, float(A.z))["visible"]):
+			h_vis += 1
 		if _rig.solo_kind == "hold":
 			var ph: Vector2 = cur.screen_pos(0, A.x, A.y + CamParams.CHEST, A.z)
 			max_human_off = maxf(max_human_off, maxf(maxf(-ph.x, ph.x - vw), maxf(-ph.y, ph.y - vh)))
@@ -1608,7 +1699,13 @@ func _hybrid(humans: int, dist: float) -> Dictionary:
 			cuts += 1
 		if _rig.current().cut:
 			cut_frames += 1
-	if humans == 1:
+	if humans == 1 and follow == "auto":
+		# Orb's first playtest (2026-10-16): the computer a human launched stays in a pane for the whole flight, and so does the human
+		_check(holds == 0 and cuts == 0, "%s: the camera held or cut instead of keeping the computer in view (holds %d cuts %d)" % [_label, holds, cuts])
+		_check(saw_split, "%s: the computer was not given a pane" % _label)
+		# (how long the computer stays in his pane is read from real launches, launch_probe.gd: this body is thrown at 8,000 units a second from rest)
+		_check(h_vis >= 52, "%s: the human was in the picture %d of 60 ticks" % [_label, h_vis])
+	elif humans == 1:
 		_check(holds > 0, "%s: the camera never held on the attacker" % _label)
 		_check(cuts > 0 and cuts <= int(CamParams.CUT_SHOT * 60.0) + 2, "%s: the impact cut lasted %d ticks (want about %d)" % [_label, cuts, int(CamParams.CUT_SHOT * 60.0)])
 		_check(cut_visible, "%s: the victim was off screen during the impact cut" % _label)
@@ -1618,7 +1715,7 @@ func _hybrid(humans: int, dist: float) -> Dictionary:
 	else:
 		_check(holds == 0 and cuts == 0, "%s: two humans got a hold or a cut (holds %d cuts %d)" % [_label, holds, cuts])
 		_check(saw_split, "%s: the split did not open for the launch" % _label)
-	stats["hybrid " + _label] = "holds %d, cut ticks %d, cut frames %d, human off %.0f px, split %s" % [holds, cuts, cut_frames, max_human_off, str(saw_split)]
+	stats["hybrid " + _label] = "holds %d, cut ticks %d, cut frames %d, human off %.0f px, split %s, victim in picture %d, human %d" % [holds, cuts, cut_frames, max_human_off, str(saw_split), v_vis, h_vis]
 	return {}
 
 

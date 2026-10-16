@@ -268,3 +268,11 @@ The recorded pass (switches off) reads ai 39 3 / 3.5 / 3 FAIL normal and 3 / 3.5
 **Costs:** a reduced-flashing viewer loses the door's punch at a rush's contact; every viewer with the rule on sees a fast launch's frame held for its flight and brought back by one cut (section 10); the pair is drawn at 0.87 of the zoom it asks for for about two seconds after a re-merge (section 13).
 
 **Gates** (HEAD plus my files, bundle off and its pieces default off): `depth_inert` digests equal a clean HEAD's, the default sweep, seam sweep, pane check, determinism plain and `--intro` pass.
+
+## 17. The flash bundle is the default under reduced flashing, without the merge zoom limit (2026-10-16)
+
+The EP's decision of 2026-10-16: `flash_bundle` is on by default for reduced flashing only (Reduce flashing is the game's default). Two changes to section 16's bundle:
+
+- **`merge_zoom_limit` is not in the bundle any more.** With it, a pair that has come back together after a launch was drawn at 26 px for two to five seconds (the zoom crawling in at 0.21 e-folds a second, `MZ_RATE`), which is the picture Orb described ("I had no idea what they were doing"). The switch still exists (`SplitView.set_merge_zoom_limit`), default off. Without it the bundle (the launch hold, its eager engage, the reduced slam off) still passes the reduced clips: scratch exports of HEAD plus the files, Tools' path, 1,024 x 768, primary / area -15% / 2 s memory: ai 39 2.5 / 2.5 / 2.5, ai 12345 1.5 / 2.5 / 2, collapse 2 / 2.5 / 1, ai 1 1.5 / 2 / 1, ai 5 2 / 2 / 1.5 (all reduced), and ai 39 in the ordinary run 2.5 / 2.5 / 2 (the capture hook runs with Reduce flashing at its default, so the bundle is on in it).
+- **It is edge-triggered** (`_fb_prev`): the pieces are set when the bundle turns on or off (the setting changing), so a tool that sets one of them by hand is not overwritten every tick. With `flash_bundle_reduced_only` the ordinary mode (Reduce flashing off) is exactly what it was: `depth_inert` digests equal a clean HEAD's.
+- **The launch hold does not apply to a computer a human launched** (`keep_opponent_in_view`; docs/camera/launch-follow.md): the hold's frozen frame is the opposite of keeping him in view. AI against AI and two humans get the rule as before.
