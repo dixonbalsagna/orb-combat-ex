@@ -160,14 +160,19 @@ static func beginEvent(S: SimState, kind: String, cause) -> float:
 	return w.tokenSeq
 
 
-## Whether b is an enemy of a: by team when both bodies have one (Simulation's N-body stage), else any other body is. With two bodies: the other one.
+## Whether b is an enemy of a: by team when both bodies have one, else by Simulation's stage 1 shape (SimRoster.opp: slot 0 is the opponent of every
+## other body, and the others are his), so a guard is no foe of the principal he stands for. With two bodies: the other one.
 static func foes(S: SimState, a, b) -> bool:
 	if a == b:
 		return false
 	var ta = a.get("team")
 	var tb = b.get("team")
 	if ta == null or tb == null:
-		return true
+		var ia: int = S.fighters.find(a)
+		var ib: int = S.fighters.find(b)
+		if ia < 0 or ib < 0:
+			return true
+		return (ia == 0) != (ib == 0)
 	return ta != tb
 
 

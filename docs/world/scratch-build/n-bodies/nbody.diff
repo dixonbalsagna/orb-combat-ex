@@ -113,7 +113,7 @@ index a3903ae..ca5c291 100644
  		S.dirS.stop = SimMathx.jmax(S.dirS.stop, seconds)
  
 diff --git a/sim/world/collateral.gd b/sim/world/collateral.gd
-index 3cd262e..76d008d 100644
+index 3cd262e..4ae90c4 100644
 --- a/sim/world/collateral.gd
 +++ b/sim/world/collateral.gd
 @@ -63,6 +63,7 @@ static func init(S: SimState) -> void:
@@ -124,7 +124,7 @@ index 3cd262e..76d008d 100644
  	w.tokenSeq = 0.0
  	w.heavyX = -1.0
  	w.heavyT = -1.0e9
-@@ -123,25 +124,107 @@ static func isOver(S: SimState) -> bool:
+@@ -123,25 +124,112 @@ static func isOver(S: SimState) -> bool:
  	return room(S) <= 0.000001 or ceilingLeft(S) <= 0.000001
  
  
@@ -203,14 +203,19 @@ index 3cd262e..76d008d 100644
 +	return w.tokenSeq
 +
 +
-+## Whether b is an enemy of a: by team when both bodies have one (Simulation's N-body stage), else any other body is. With two bodies: the other one.
++## Whether b is an enemy of a: by team when both bodies have one, else by Simulation's stage 1 shape (SimRoster.opp: slot 0 is the opponent of every
++## other body, and the others are his), so a guard is no foe of the principal he stands for. With two bodies: the other one.
 +static func foes(S: SimState, a, b) -> bool:
 +	if a == b:
 +		return false
 +	var ta = a.get("team")
 +	var tb = b.get("team")
 +	if ta == null or tb == null:
-+		return true
++		var ia: int = S.fighters.find(a)
++		var ib: int = S.fighters.find(b)
++		if ia < 0 or ib < 0:
++			return true
++		return (ia == 0) != (ib == 0)
 +	return ta != tb
 +
 +
@@ -240,7 +245,7 @@ index 3cd262e..76d008d 100644
  		r.dead = w.evtDead
  		r.evac = w.evtEvac
  		w.evtKind = ""
-@@ -149,6 +232,14 @@ static func endEvent(S: SimState, token: float) -> Dictionary:
+@@ -149,6 +237,14 @@ static func endEvent(S: SimState, token: float) -> Dictionary:
  		w.evtToken = 0.0
  		w.evtDead = 0.0
  		w.evtEvac = 0.0
@@ -255,7 +260,7 @@ index 3cd262e..76d008d 100644
  	return r
  
  
-@@ -191,19 +282,30 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
+@@ -191,19 +287,30 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
  		b.popAlive -= want
  		S.popHist[histBucket(b.x)] -= want
  	var rm: float = maxf(0.0, budget(S) - w.cbSum)

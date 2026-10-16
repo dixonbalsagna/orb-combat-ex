@@ -106,6 +106,7 @@ func _init() -> void:
 	ok(S4.fighters.size() == 4 and WorldCollateral.launcherOf(S4, S4.fighters[0]) == S4.fighters[2], "with four, the nearest foe: body 2 for body 0 (not 'the other of two')")
 	S4.fighters[0].launchBy = S4.fighters[3]
 	ok(WorldCollateral.launcherOf(S4, S4.fighters[0]) == S4.fighters[3], "launchBy wins when it is set")
+	ok(WorldCollateral.launcherOf(S4, S4.fighters[3]) == S4.fighters[0] and WorldCollateral.launcherOf(S4, S4.fighters[2]) == S4.fighters[0] and not WorldCollateral.foes(S4, S4.fighters[2], S4.fighters[3]), "stage 1's sides: slot 0 against every other body, the others are allies (a guard's launcher is slot 0, not the nearer guard)")
 	var a := TeamBody.new()
 	var b2 := TeamBody.new()
 	var c3 := TeamBody.new()

@@ -83,10 +83,10 @@ index 5a27cbf..cfd52cb 100644
  	"region_stage": ["actor", "region", "stage"], "rally": ["actor", "region", "kind"], "limb_break": ["actor", "victim", "region"], "region_broken": ["actor", "region"], "brink_enter": ["actor"], "brink_exit": ["actor"], "brink_open": ["actor", "target", "kind", "text"], "brink_close": ["actor", "kind"],
  	"mood_band": ["kind", "amount", "n"], "act_change": ["n", "kind"], "style_label": ["actor", "kind", "text"], "crowd_state": ["kind"], "building_hit": ["actor", "x", "n", "b", "y", "z", "amount", "ratio", "outcome", "link", "spd", "keep", "ux", "uy", "kind", "w", "h", "owner", "victim"],
 diff --git a/sim/core/sim.gd b/sim/core/sim.gd
-index d37ea53..9c0bd99 100644
+index f25a280..cf3bb9f 100644
 --- a/sim/core/sim.gd
 +++ b/sim/core/sim.gd
-@@ -131,6 +131,7 @@ static func step(S: SimState, inputs = null) -> bool:
+@@ -141,6 +141,7 @@ static func step(S: SimState, inputs = null) -> bool:
  	DirExchange.dirUpdate(S, dt)
  	DirBeam.beamStep(S, dt)
  	SimShots.step(S, dt)   # energy blasts in flight: they move, trade, and meet fighters and the ground

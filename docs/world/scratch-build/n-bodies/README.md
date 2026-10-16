@@ -1,6 +1,6 @@
 # World's side of more than two bodies (World, 2026-10-15): parked patches, not applied
 
-EP's brief: four items, in scratch on main's HEAD, parked, each with a test and the 1v1 golden identical where it should be. Built on main 2b047018. **Not applied** (the game stays frozen for the demo's flash run). Simulation's N-body stage 1 interface was not in the tree, so everything keeps to its **slots-by-index shape** (`S.fighters.size()`, `a.get("team")` with a fallback): nothing reads a name that Simulation has not published.
+EP's brief: four items, in scratch on main's HEAD, parked, each with a test and the 1v1 golden identical where it should be. First built on main 2b047018; **re-checked 2026-10-16 on f9a06368: the three patches apply in order, unchanged.** Simulation's stage 1 (N bodies in the core, main 06b0200e) is described in `docs/architecture/one-v-many-core.md`; this work is built to its shape (slots by index; slot 0 the opponent of every other body, as `SimRoster.opp`; slots 0 and 1 the principals, the rest guards). **Not applied** (the game stays frozen for the demo's flash run).
 
 ## Apply order (a chain: each on the one before)
 
@@ -15,9 +15,9 @@ EP's brief: four items, in scratch on main's HEAD, parked, each with a test and 
 ## What each does
 
 1. **A set-piece token per flight.** `S.world.evtToken/evtKind/evtLeft/evtDead/evtEvac` stays the first slot (one set piece: exactly as before); further set pieces open in `World.evtMore` (five numbers each), keyed by the token the flight holds (`Fighter.chainEvt`, `Fighter.slideEvt`). Two overlapping chains each borrow their own allowance and each `endEvent` returns its own casualties. A token no fighter holds any more is closed by the next `beginEvent` (the old single slot overwrote it: this keeps 1v1 behaviour) and the oldest extra is promoted into the first slot.
-2. **The launcher.** `WorldCollateral.launcherOf(S, f)` = `launchBy` if set, else the nearest foe (`foes`: by `team` when both have one, else any other body); with two bodies it is `SimRoster.opp`'s answer. Replaces the three `SimRoster.opp` calls in `brunt.hit`, `contact` and `slide`, and the one in stage C's `_failHurt`.
+2. **The launcher.** `WorldCollateral.launcherOf(S, f)` = `launchBy` if set, else the nearest foe (`foes`: by `team` when both have one, else stage 1's sides: slot 0 against every other body, the others allies of one another, so a guard is no foe of the principal he stands for); with two bodies it is `SimRoster.opp`'s answer. Replaces the three `SimRoster.opp` calls in `brunt.hit`, `contact` and `slide`, and the one in stage C's `_failHurt`.
 3. **The lodge hold.** `lodgeHold` is now `world`, `body` or `auto`; the data default is `auto`: a hit-stop of the sim with two bodies (today, byte for byte), a per-body pin with more. A pinned body keeps `Fighter.holdT` ticks (not moving, no gravity, the fight goes on) and then falls. A wall (not a lodge) in body mode only staggers, as before.
-4. **`failHurt` by count, "rival" by team.** `failHurt` is sized `max(fighters, 2)`; "rival" is `not foes(f, causer)`, so the causer and his team are spared and the cap of 100 stays per fighter per building; an out-of-range slot is skipped.
+4. **`failHurt` by count, "rival" by team.** `failHurt` is sized `max(fighters, 2)`; "rival" is `not foes(f, causer)`: with the causer in slot 1 only slot 0 is hurt, the causer and his guards are spared (Orb, homework 5: a falling building hurts only the fighter it was aimed at) and the cap of 100 stays per fighter per building; an out-of-range slot is skipped.
 
 ## Golden and cost (what moves)
 

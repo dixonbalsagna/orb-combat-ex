@@ -240,8 +240,6 @@ func _init() -> void:
 			fi.z = 0.0
 			fi.y = WorldStructures.baseY(S4, t4f) + 10.0
 			fi.hp = 1.0e6
-		if mode == "rival":
-			S4.fighters[0].set("team", 0)
 		WorldStructures.startFail(S4, t4f, 0, S4.fighters[1], t4f.x)   # body 1 brought it down
 		ok(t4f.failHurt.size() == 4, "failHurt has one number a body in a four-body match (%d)" % t4f.failHurt.size())
 		for i in range(1500):
@@ -253,7 +251,7 @@ func _init() -> void:
 		rf[mode] = [1.0e6 - S4.fighters[0].hp, 1.0e6 - S4.fighters[1].hp, 1.0e6 - S4.fighters[2].hp, 1.0e6 - S4.fighters[3].hp]
 	c.failHurts = "none"
 	ok(rf.both[2] > 0.0 and rf.both[3] > 0.0 and rf.both[2] <= 100.01 and rf.both[3] <= 100.01, "four bodies, failHurts both: bodies 2 and 3 are hurt, at most 100 (%s)" % str(rf.both))
-	ok(rf.rival[1] == 0.0 and rf.rival[0] > 0.0 and rf.rival[2] > 0.0 and rf.rival[3] > 0.0, "four bodies, failHurts rival: all but the one who brought it down (%s)" % str(rf.rival))
+	ok(rf.rival[0] > 0.0 and rf.rival[1] == 0.0 and rf.rival[2] == 0.0 and rf.rival[3] == 0.0, "four bodies, failHurts rival: only the principal he fights; the causer and his guards are spared (%s)" % str(rf.rival))
 
 	# the switch: failing 0 brings a tower down in the tick as before
 	c.failing = 0
