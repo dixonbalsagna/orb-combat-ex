@@ -15,7 +15,8 @@ The modes, their stable ids, what each one is, and the 1.0 scope. Orb set the 1.
 | `versus-local` | Versus | 2, local | The core match: one planet, two fighters, one KO | **Yes** |
 | `versus-ai` | Versus CPU | 1 | The core match against the AI, with difficulty levels | **Yes** |
 | `arcade` | Arcade | 1 | A ladder through the roster, each fight a rivalry finale with pre-fight and KO lines | **Yes** (Orb's "arcade or survival": recommended first) |
-| `survival` | Survival | 1 | Opponents one after another on one planet whose damage persists | **Yes, as a rule set of `arcade`**, if it fits; otherwise after 1.0 |
+| `survival` | Survival | 1 | Opponents one after another on one planet whose damage persists | **Folded into `run`** as its endless rule set (`run-mode.md` §4.5, 2026-10-16) |
+| `run` | Run (working) | 1 | A roguelike run across one planet: stages on its slices picked from offers, the damage kept, story beats between, a boss at the catastrophe tier (`run-mode.md`) | After World's planet and slice windows; the MVP first |
 | `training` | Training | 1 | A sandbox with toggles, visible windows and the full director feed | **Yes** |
 | `team-2v2` | Team Battle | 2 to 4, local; AI fills empty slots | Two against two on one planet | **Yes** (Orb's "2v2 or free-for-all": recommended first) |
 | `ffa` | Free-for-all | 3 or 4, local; AI fills empty slots | Everyone against everyone | After 1.0, unless `team-2v2` proves the camera and director cheaply |
