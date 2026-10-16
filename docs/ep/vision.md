@@ -1308,3 +1308,18 @@ There is no fighter-select screen yet: a match starts as the Protagonist against
 You called them "generic stand-ins". They wear the approved looks, but right now they both fight with the same borrowed moves, which is being fixed. Is there anything else that makes them feel generic to you?
 
 Your notes: two guys with different colored shirts wearing backpacks. perfectly fine for a test environment, but more personality, style, and distinction would go a long way.
+
+## Orb plays the live demo against the computer (2026-10-16)
+
+Verbatim:
+
+> I played a match against CPU opponent. in a lot of ways its in a good spot. I couldn't quite figure out how to launch my opponent, I did successfully maybe once or twice. when I did manage to launch them, the split screen didn't really catch up with them, and I felt like I had no idea what they were doing until they rushed back at me at full speed and got some cheap hits. the game is really fast paced so losing track of your opponent can be a little disruptive. the beam struggles need to feel more dynamic, it felt like the winner of the beam struggle was determined as soon as the beams were fired and that nothing I pressed during it could affect the outcome. the beams are too thin right now. it would be cool if a particular beam attack for one fighter in the roster was thin, but for all of them to be tiny doesn't look right. I really want the beams and energy attacks to have cool, rippling, glowing, fluid-looking shaders, each character should have their own flavor of energy attack. the explosions from the small energy attacks should be more explosive, flames and smoke. I did manage to bring the fight to a small town and the building destruction looked cool. it felt like the CPU opponent was able to easily perfect block every charged attack I used.
+
+What follows from it:
+1. Launching is not discoverable: the player could launch only once or twice.
+2. After a launch the split view did not keep the opponent in view; the opponent returned at full speed for cheap hits. Losing track of the opponent is disruptive.
+3. The beam struggle must be decided by what the players press during it, not when the beams fire.
+4. Beams are too thin; each fighter's energy has its own flavour, with rippling, glowing, fluid shaders (a thin beam can be one fighter's particular move).
+5. Small energy attacks' explosions need flames and smoke.
+6. Town destruction looked good.
+7. The computer perfect-blocks charged attacks too easily.
