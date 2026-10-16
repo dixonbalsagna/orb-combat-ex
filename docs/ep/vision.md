@@ -1359,3 +1359,16 @@ Orb's marks, in short (their words quoted where they matter):
 
 - **A staredown before the clock:** wait until Orb plays it. "I want dynamic fighter introductions, I want them to play out different every time based on who is fighting, where they spawn in at, any other variables we can think of."
 - **The city overall:** "its looking great". The high-altitude skyline impressed Orb: taller high-rises clustered in a denser centre, smaller buildings on the outskirts. Today's stills lessened the worry that the towers were too packed and the black-and-grey grid confusing up close.
+
+## Orb on the stored planet: a run across slices, and ice caps (2026-10-16)
+
+Orb looked at World's picture A (the planet stored) and is "very pleased". Verbatim:
+
+> ideally if the destruction could be stored across a run, spitballing here: the brawler game-mode could be like a roguelike, with multiple stages across different slices of the planet, small dynamic storyline exposition between each stage. the cities would remain damaged between fights, until the final fight against the boss, where world-catastrophe level variants of abilities can cause large scale destruction; beam damage that goes through the crust and magma bubbles up from the mantle; giant mushroom cloud explosions throw smoke into the upper atmosphere that darkens the entire planet sky; fighters take to the upper exosphere and throw energy blasts that cause visible glow and enormous explosions to the planet surface far below them.
+>
+> I want icecaps on the northern and southern poles, inspired by our real-life poles, a big icy landmass south, broken up icebergs, floes, sea ice on the north. show me a new prototype that iterates on the one I just looked at.
+
+What follows from it:
+1. Damage persists across a run (homework 22's third question, answered for a run).
+2. A spitball, recorded, not yet briefed: a roguelike brawler mode, stages on different slices of one planet, short story beats between stages, cities staying damaged until a boss fight with world-catastrophe variants (beams through the crust to magma, a mushroom cloud that darkens the planet's sky, an exosphere fight bombarding the surface).
+3. Asked now: a new planet prototype iterating on picture A with polar ice. South: a big icy landmass. North: sea ice broken into icebergs and floes.
